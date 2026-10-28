@@ -27,8 +27,8 @@ import {
   type BillSlot, type Installment, type TimeSplit,
 } from './club-schedule-bill';
 import {
-  SCHEDULE_NOTICES, SCHEDULE_REFUSALS as R, SCHEDULE_WORDS as W, changeLine, changesEmail, patternLine, placeWords,
-  teamEmail, unreachableSentence, type EmailWords, type ScheduleUnreachableWhy, type TeamChange,
+  SCHEDULE_NOTICES, SCHEDULE_REFUSALS as R, SCHEDULE_WORDS as W, changeLine, changesEmail, houseLeagueUse, patternLine,
+  placeWords, teamEmail, unreachableSentence, type EmailWords, type ScheduleUnreachableWhy, type TeamChange,
 } from './club-schedule-words';
 import {
   billSlotsOf, computeBill, liveSlots, readClubTeams, readPrices, stepRefusal, teamNamer,
@@ -43,11 +43,11 @@ import { formatVenueLocation } from './venue-label';
 import { weekdayOf } from './permit-time';
 import {
   isEmptyLeagueStep, leagueFingerprint, leagueRows, planLeagueChanges,
-  type LeagueSlot, type LeagueStepArg, type PracticeFace,
+  type LeagueSlot, type LeagueSlotGame, type LeagueStepArg, type PracticeFace,
 } from './club-schedule-league-plan';
 import {
-  LEAGUE_ADMIN_NOTICE, familyRowLines, leagueCoachEmail, leagueGroupLine, leagueRowLine,
-  type FamilyPart, type LeaguePlace,
+  LEAGUE_ADMIN_NOTICE, NO_LEAGUE_COUNTS, familyRowLines, leagueCoachEmail, leagueGamesLine, leagueGamesSub, leagueGroupLine,
+  leagueRowLine, type FamilyPart, type LeagueNoticeCounts, type LeaguePlace,
 } from './club-schedule-league-words';
 import { readHouseholds, sendPracticeChangeNotices, type Household } from './club-schedule-league-mail';
 
@@ -126,8 +126,21 @@ export interface SendPreview {
   handedBack: { teamId: string; teamName: string; lines: string[] }[];
   /** People who'd be emailed. */
   recipientCount: number;
-  /** Stage 11b Part 5 (h4): Send the changes' house-league rows — null when nothing house-league changes. */
-  league: { teams: PreviewLeagueTeam[]; seen: string } | null;
+  /** Stage 11b Part 5 (h4): Send the changes' house-league rows — null when nothing house-league changes. `games`: House
+   *  League 9d-2b Part 5's division games rows (they email nobody from here). */
+  league: { teams: PreviewLeagueTeam[]; games: PreviewLeagueGames[]; seen: string } | null;
+}
+
+/** A house-league division's games the send moves or takes off their time, one row per slot (9d-2b Part 5; 9d2·13,
+ *  9d2·16): "U9 Rookie games · Sun, Nov 15: Field 2 → Field 4" over "2 games move. A league admin sends them …". */
+export interface PreviewLeagueGames {
+  key: string;
+  seasonId: string;
+  divisionName: string;
+  /** "U9 Rookie games" (`houseLeagueUse`). */
+  name: string;
+  line: string;
+  sub: string;
 }
 
 /** A house-league team whose practices the send moves or cancels (h4). */
@@ -366,8 +379,10 @@ interface LeagueHalf {
   seasons: Map<string, string>;
   /** Per season, its one division when the changed teams are all of one (the history row names it). */
   divisionOf: Map<string, string | null>;
-  /** Per season, the practices the plan moves and cancels (the league admins' notice). */
-  counts: Map<string, { moved: number; cancelled: number }>;
+  /** Per season, the practices and games the plan changes (the league admins' notice). */
+  counts: Map<string, LeagueNoticeCounts>;
+  /** The divisions' games rows (9d-2b Part 5). */
+  games: PreviewLeagueGames[];
 }
 
 /**
@@ -381,13 +396,20 @@ async function leagueHalf(c: Context, opts: { audience?: boolean } = {}): Promis
   const audience = opts.audience !== false;
   const slotIds = c.loaded.slots.map(s => s.id);
   if (!slotIds.length) return null;
-  const [uses, practices] = await Promise.all([
+  const [uses, practices, gameRows] = await Promise.all([
     usesOf(c.orgId, slotIds),
     fetchAllIn<{ id: string; team_id: string; season_id: string; division_id: string | null; club_schedule_slot_id: string; scheduled_at: string; ends_at: string | null; status: string }>(slotIds, (ch, a, b) => supabaseAdmin
       .from('league_practices').select('id, team_id, season_id, division_id, club_schedule_slot_id, scheduled_at, ends_at, status')
       .eq('org_id', c.orgId).in('club_schedule_slot_id', ch).order('id').range(a, b)),
+    // 9d-2b Part 5: the games on a division's game time (`slot_use_id` is the use's slot).
+    fetchAllIn<{ id: string; season_id: string; division_id: string; slot_use_id: string; scheduled_at: string | null; ends_at: string | null; status: LeagueSlotGame['status'] }>(slotIds, (ch, a, b) => supabaseAdmin
+      .from('league_games').select('id, season_id, division_id, slot_use_id, scheduled_at, ends_at, status')
+      .eq('org_id', c.orgId).in('slot_use_id', ch).order('id').range(a, b)),
   ]);
   if (!uses.size && !practices.length) return null;
+  const gameDivisions = await fetchAllIn<{ id: string; name: string; schedule_published_at: string | null }>([...new Set(gameRows.map(g => g.division_id))], (ch, a, b) => supabaseAdmin
+    .from('league_divisions').select('id, name, schedule_published_at').in('id', ch).order('id').range(a, b));
+  const gameDivision = new Map(gameDivisions.map(d => [d.id, d]));
   // Time house league came to hold since the last send — a slot made since, or given to house league since (a hand drag
   // on the grid swaps holders, it makes no slot) — is the only place a moved use can have gone (/review 2026-10-27).
   const [{ told }, made, held] = await Promise.all([
@@ -419,8 +441,12 @@ async function leagueHalf(c: Context, opts: { audience?: boolean } = {}): Promis
     id: p.id, teamId: p.team_id, seasonId: p.season_id, divisionId: p.division_id, slotId: p.club_schedule_slot_id,
     startMs: Date.parse(p.scheduled_at), endMs: p.ends_at ? Date.parse(p.ends_at) : null, cancelled: p.status === 'cancelled',
   }));
+  const games: LeagueSlotGame[] = gameRows.filter(g => g.scheduled_at && slotById.has(g.slot_use_id)).map(g => ({
+    id: g.id, seasonId: g.season_id, divisionId: g.division_id, slotId: g.slot_use_id, startMs: Date.parse(g.scheduled_at!),
+    endMs: g.ends_at ? Date.parse(g.ends_at) : null, status: g.status, published: !!gameDivision.get(g.division_id)?.schedule_published_at,
+  }));
   const plan = planLeagueChanges({
-    slots, practices: sent, nowMs, locationOf,
+    slots, practices: sent, games, nowMs, locationOf,
     uses: [...uses.values()].map(u => ({ slotId: u.slot_id, seasonId: u.season_id, divisionId: u.division_id, kind: u.kind })),
     weekOfMs: ms => mondayOfDay(utcToZonedInputs(new Date(ms).toISOString()).date),
   });
@@ -441,7 +467,7 @@ async function leagueHalf(c: Context, opts: { audience?: boolean } = {}): Promis
   const teamRows = await fetchAllIn<{ id: string; name: string; season_id: string; division_id: string | null }>([...new Set(rows.map(r => r.teamId))], (ch, a, b) => supabaseAdmin
     .from('league_teams').select('id, name, season_id, division_id').in('id', ch).order('id').range(a, b));
   const [seasonRows, divisionRows] = await Promise.all([
-    fetchAllIn<{ id: string; name: string; slug: string }>([...new Set(teamRows.map(t => t.season_id))], (ch, a, b) => supabaseAdmin
+    fetchAllIn<{ id: string; name: string; slug: string }>([...new Set([...teamRows.map(t => t.season_id), ...plan.gameChanges.map(g => g.seasonId)])], (ch, a, b) => supabaseAdmin
       .from('league_seasons').select('id, name, slug').eq('org_id', c.orgId).in('id', ch).order('id').range(a, b)),
     fetchAllIn<{ id: string; name: string }>([...new Set(teamRows.map(t => t.division_id).filter((d): d is string => !!d))], (ch, a, b) => supabaseAdmin
       .from('league_divisions').select('id, name').in('id', ch).order('id').range(a, b)),
@@ -506,16 +532,43 @@ async function leagueHalf(c: Context, opts: { audience?: boolean } = {}): Promis
     const ids = [...new Set([...teamOf.values()].filter(t => t.season_id === s).map(t => t.division_id))];
     divisionOf.set(s, ids.length === 1 ? ids[0] : null);
   }
-  const counts = new Map<string, { moved: number; cancelled: number }>();
+  const counts = new Map<string, LeagueNoticeCounts>();
+  const countsOf = (s: string) => counts.get(s) ?? counts.set(s, { ...NO_LEAGUE_COUNTS }).get(s)!;
   for (const ch of plan.changes) {
     const s = teamOf.get(ch.teamId)?.season_id;
     if (!s) continue;
-    const n = counts.get(s) ?? counts.set(s, { moved: 0, cancelled: 0 }).get(s)!;
+    const n = countsOf(s);
     if (ch.kind === 'moved') n.moved += 1; else n.cancelled += 1;
   }
+
+  // The divisions' games (9d-2b Part 5): one row per division and slot it sat on. Only a season of this club's is named.
+  const gameGroups = new Map<string, { seasonId: string; divisionId: string; published: boolean; fromSlotId: string; toSlotId: string | null; moved: number; needsDate: number; removed: number }>();
+  for (const g of plan.gameChanges) {
+    if (!seasonOf.has(g.seasonId)) continue;
+    const key = `${g.divisionId}:${g.fromSlotId}`;
+    const grp = gameGroups.get(key) ?? gameGroups.set(key, { seasonId: g.seasonId, divisionId: g.divisionId, published: g.published, fromSlotId: g.fromSlotId, toSlotId: null, moved: 0, needsDate: 0, removed: 0 }).get(key)!;
+    if (g.toSlotId) grp.toSlotId = g.toSlotId;
+    if (g.kind === 'moved') grp.moved += 1; else if (g.kind === 'needsDate') grp.needsDate += 1; else grp.removed += 1;
+    const n = countsOf(g.seasonId);
+    if (g.kind === 'moved') n.gamesMoved += 1; else if (g.kind === 'needsDate') n.gamesNeedDate += 1; else n.gamesRemoved += 1;
+    if (g.published && g.kind !== 'removed') n.gamesWaiting += 1;
+  }
+  const divisionNameOf = (id: string) => gameDivision.get(id)?.name ?? '';
+  const gamesOut: PreviewLeagueGames[] = [...gameGroups]
+    .sort(([, a], [, b]) => divisionNameOf(a.divisionId).localeCompare(divisionNameOf(b.divisionId), 'en-CA', { numeric: true })
+      || slotById.get(a.fromSlotId)!.startMs - slotById.get(b.fromSlotId)!.startMs)
+    .map(([key, grp]) => {
+      const from = slotById.get(grp.fromSlotId)!, to = grp.toSlotId ? slotById.get(grp.toSlotId)! : null;
+      const division = divisionNameOf(grp.divisionId);
+      return {
+        key, seasonId: grp.seasonId, divisionName: division, name: houseLeagueUse(division, 'games'),
+        line: leagueGamesLine(faceOf(from.startMs, from.endMs, from.id), to ? faceOf(to.startMs, to.endMs, to.id) : null, placeOf),
+        sub: leagueGamesSub({ division, published: grp.published, moved: grp.moved, needsDate: grp.needsDate, removed: grp.removed }),
+      };
+    });
   return {
     teams, seen: leagueFingerprint(plan.step), step: plan.step, households, partOf,
-    seasons: new Map(seasonRows.map(s => [s.id, s.name])), divisionOf, counts,
+    seasons: new Map(seasonRows.map(s => [s.id, s.name])), divisionOf, counts, games: gamesOut,
   };
 }
 
@@ -712,7 +765,7 @@ export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, ki
   const changedTeams = plan ? plan.byTeam.size : 0;
   const statement = kind === 'review' ? W.reviewStatement(replyBy)
     : kind === 'final' ? W.finalStatement(c.slots.filter(s => teamsOnly(c.assignments.get(s.key) ?? []).length).length, scheduled.length)
-    : W.changesStatement(changedTeams, handedBack.map(h => h.teamName), leagueTeams.length);
+    : W.changesStatement(changedTeams, handedBack.map(h => h.teamName), leagueTeams.length, new Set((half?.games ?? []).map(g => g.divisionName)).size);
   return {
     kind, scheduleId: row.id, version: row.version, statement, teams, unreachable, blockers, correctionBlocked, replyBy,
     lastSent: last ? { at: last.sent_at, by: nameOf(last.sent_by), kind: last.kind } : null,
@@ -720,7 +773,7 @@ export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, ki
     // People who'd be emailed: the rep teams' coaches, and each house-league team's coaches and households (9d2·2).
     recipientCount: teams.reduce((n, t) => n + t.recipients.length, 0) + leagueTeams.reduce((n, t) => n + t.coaches.length, 0)
       + new Set(leagueTeams.flatMap(t => t.households)).size,
-    league: half ? { teams: leagueTeams, seen: half.seen } : null,
+    league: half ? { teams: leagueTeams, games: half.games, seen: half.seen } : null,
     plan, finalRows, splits, rate, teamValues, correction, lost, half,
   };
 }
@@ -784,7 +837,7 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
   let allocationId: string | null = null;
   let version = row.version;
   let written: { slotIds: string[]; teamIds: Set<string> | null } = { slotIds: [], teamIds: null };
-  let leagueDone: { moved: number; cancelled: number; uses: number } | null = null;
+  let leagueDone: { moved: number; cancelled: number; uses: number; gamesMoved?: number; gamesPostponed?: number; gamesRemoved?: number } | null = null;
   // Each step marks the claimed log row landed and writes its money (the next Send the changes' baseline) itself — never
   // after the emails, where a failure left `{}` and the next send billed every team its whole share again (/review).
   if (kind === 'review') {
@@ -842,7 +895,7 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
     // send again — never a raw error (/review 2026-10-13).
     if (error && /changed:/.test(error.message ?? '')) { await release(); return { ok: false, response: stepRefusal({ code: 'changed' }, teamName) }; }
     if (error) { await release(); throw error; }
-    const r = data as { ok: boolean; code?: string; teamId?: string; left?: number; allocationId?: string | null; league?: { moved: number; cancelled: number; uses: number } };
+    const r = data as { ok: boolean; code?: string; teamId?: string; left?: number; allocationId?: string | null; league?: NonNullable<typeof leagueDone> };
     if (!r.ok) { await release(); return { ok: false, response: stepRefusal(r, teamName) }; }
     allocationId = r.allocationId ?? null;
     version = row.version + 1;
@@ -917,11 +970,14 @@ async function tellHouseLeague(sctx: SchedulerCtx, scheduleName: string, half: L
     if (userIds.length) {
       for (const [seasonId] of half.seasons) {
         const mine = half.teams.filter(t => t.seasonId === seasonId);
-        if (!mine.length) continue;
+        // 9d2·13: a season whose games moved is told too, even when no practice changed.
+        const myGames = half.games.filter(g => g.seasonId === seasonId);
+        if (!mine.length && !myGames.length) continue;
+        const counts = half.counts.get(seasonId) ?? NO_LEAGUE_COUNTS;
         await notify({
           orgId: org.id, eventType: 'club_schedule_league_changes', userIds, excludeUserIds: [sctx.ctx.user.id],
-          title: LEAGUE_ADMIN_NOTICE.title(scheduleName),
-          body: LEAGUE_ADMIN_NOTICE.body({ divisions: [...new Set(mine.map(t => t.divisionName).filter(Boolean))], ...(half.counts.get(seasonId) ?? { moved: 0, cancelled: 0 }) }),
+          title: LEAGUE_ADMIN_NOTICE.title(scheduleName, counts),
+          body: LEAGUE_ADMIN_NOTICE.body({ divisions: [...new Set([...mine, ...myGames].map(t => t.divisionName).filter(Boolean))], ...counts }),
           link: `/${org.slug}/admin/house-league/seasons/${seasonId}/schedule`, metadata: { seasonId, sendId },
         });
       }
@@ -1062,6 +1118,8 @@ export async function changesSummary(sctx: SchedulerCtx, loaded: LoadedSchedule)
     teams: [
       ...[...plan.byTeam].map(([teamId, list]) => ({ teamId, teamName: name(teamId), lines: list.map(ch => changeLine(ch, clockOf)) })),
       ...(half?.teams ?? []).map(t => ({ teamId: t.teamId, teamName: t.teamName, lines: t.lines })),
+      // 9d-2b Part 5: a change that moves only a division's games waits for the send too.
+      ...(half?.games ?? []).map(g => ({ teamId: `games:${g.key}`, teamName: g.name, lines: [g.line] })),
     ],
   };
 }

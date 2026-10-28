@@ -15,14 +15,17 @@ import type { LeagueDivision, LeagueGame } from './types';
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-export function snapshotOf(g: Pick<LeagueGame, 'scheduledAt' | 'endsAt' | 'location' | 'orgVenueId' | 'orgVenueFacilityId' | 'status' | 'movedFrom'>): GameSnapshot {
+/** The fields of a game families read (mig 409's `league_game_snapshot`), plus its id. */
+export type GameFaceFields = Pick<LeagueGame, 'id' | 'scheduledAt' | 'endsAt' | 'location' | 'orgVenueId' | 'orgVenueFacilityId' | 'status' | 'movedFrom'>;
+
+export function snapshotOf(g: Omit<GameFaceFields, 'id'>): GameSnapshot {
   return {
     scheduledAt: g.scheduledAt, endsAt: g.endsAt, location: g.location, venueId: g.orgVenueId,
     facilityId: g.orgVenueFacilityId, status: g.status, movedFrom: g.movedFrom,
   };
 }
 
-function withSnapshot(g: LeagueGame, s: GameSnapshot): LeagueGame {
+function withSnapshot<G extends GameFaceFields>(g: G, s: GameSnapshot): G {
   return {
     ...g, scheduledAt: s.scheduledAt, endsAt: s.endsAt, location: s.location, orgVenueId: s.venueId,
     orgVenueFacilityId: s.facilityId, status: s.status, movedFrom: s.movedFrom,
@@ -50,10 +53,10 @@ export async function heldChangesOf(seasonId: string, divisionId?: string): Prom
 }
 
 /** These games as families last heard them: a held change reads its `before`; a game added since is dropped. */
-export function asLastSent(games: readonly LeagueGame[], held: readonly HeldChange[]): LeagueGame[] {
+export function asLastSent<G extends GameFaceFields>(games: readonly G[], held: readonly HeldChange[]): G[] {
   const byGame = new Map<string, HeldChange[]>();
   for (const c of held) (byGame.get(c.gameId) ?? byGame.set(c.gameId, []).get(c.gameId)!).push(c);
-  const out: LeagueGame[] = [];
+  const out: G[] = [];
   for (const g of games) {
     const seen = lastSentView(snapshotOf(g), byGame.get(g.id) ?? []);
     if (seen) out.push(withSnapshot(g, seen));

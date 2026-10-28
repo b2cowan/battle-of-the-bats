@@ -99,6 +99,8 @@ export const CHANGES_TO_SEND_WORDS = {
   /** The window's stale press (the 9d-2a review): what it saw is not the game any more. */
   gameChanged: 'This game changed while its window was open. Close it and look again.',
   undoPlayed: 'This game has already been played, so its result stays.',
+  /** [marketing] 9d-2b Part 5: a change the club made can't be undone onto time it gave away (mig 411's 'club'). */
+  undoClub: 'The club moved this game’s time, so it can’t go back. Give it a new date instead.',
   /** Build words for a refusal the window never offers (9d2·9): reached only by a stale window or a hand-made call. */
   deletePublished: 'This schedule is published, so its games are cancelled, not deleted.',
   /** f5's change was saved, and its send was refused or failed: it waits with the rest. */
@@ -127,6 +129,7 @@ export const SCHEDULE_PUBLIC_WORDS = {
   movedWas: (day: string, clock: string) => `Was ${day} · ${clock}`,
   coachUnpublished: (division: string) => `${possessive(division)} schedule isn’t published yet. Your games show here when it is.`,
   coachNoneAhead: 'No games from today on.',
+  coachSeeSeason: 'See the season’s schedule',
 } as const;
 
 /** "Blue Jays’ schedule is up" · "The schedule is up for Blue Jays and Rays" — one team named once. */

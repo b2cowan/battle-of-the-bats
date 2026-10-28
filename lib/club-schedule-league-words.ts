@@ -58,6 +58,37 @@ export function leagueRowLine(r: LeagueRow, placeOf: (f: PracticeFace) => League
   return `${when}: ${parts.length ? parts.join(', ') : `${short(was)} → ${short(now)}`}`;
 }
 
+/**
+ * h4's games row, after "{division} games · " (House League 9d-2b Part 5, 9d2·13): time that moved reads as a practice's
+ * row does ("Sun, Nov 15: Field 2 → Field 4", settled); time that went is [marketing]: "Thu, Jun 3, 6:00 p.m. · Diamond 1:
+ * taken back".
+ */
+export function leagueGamesLine(was: PracticeFace, now: PracticeFace | null, placeOf: (f: PracticeFace) => LeaguePlace): string {
+  if (now) return leagueRowLine({ teamId: '', kind: 'moved', days: [was.day], throughEnd: true, was, now }, placeOf);
+  return `${formatShortWeekdayDate(was.day)}, ${formatTime(was.startClock)} · ${short(placeOf(was))}: taken back`;
+}
+
+const moves = (n: number) => (n === 1 ? 'moves' : 'move');
+
+/**
+ * The line under a games row: what happens to the division's games, and who tells families. Settled (h4): "2 games move.
+ * A league admin sends them to families from U9 Rookie's Changes to send." The rest is [marketing].
+ */
+export function leagueGamesSub(p: { division: string; published: boolean; moved: number; needsDate: number; removed: number }): string {
+  if (p.published) {
+    return [
+      p.moved ? `${pluralize(p.moved, 'game')} ${moves(p.moved)}.` : '',
+      p.needsDate ? `${pluralize(p.needsDate, 'game')} ${moves(p.needsDate)} to Needs a new date.` : '',
+      `A league admin sends ${p.moved + p.needsDate === 1 ? 'it' : 'them'} to families from ${possessive(p.division)} Changes to send.`,
+    ].filter(Boolean).join(' ');
+  }
+  return [
+    p.moved ? `${pluralize(p.moved, 'draft game')} ${moves(p.moved)}.` : '',
+    p.removed ? `${pluralize(p.removed, 'draft game')} ${p.removed === 1 ? 'comes' : 'come'} off the draft.` : '',
+    `Nobody is told: ${possessive(p.division)} schedule isn’t published yet.`,
+  ].filter(Boolean).join(' ');
+}
+
 /** h4's line under a house-league team's row: "House league · U9 Rookie · 2 coaches and 11 families". */
 export function leagueGroupLine(division: string, coaches: number, families: number): string {
   const who = [coaches ? pluralize(coaches, 'coach', 'coaches') : '', families ? pluralize(families, 'family', 'families') : ''].filter(Boolean);
@@ -157,11 +188,26 @@ export const PRACTICES_CHANGED_NOTICE = {
 
 // ── The league admins' notice (9d2·13; [marketing]) ───────────────────────────────────────────────
 
+/** A season's counts for the league admins' notice: practices (11b Part 5) and games (9d-2b Part 5). */
+/** `gamesWaiting`: the published games among them, which wait in Changes to send (a draft's move tells nobody). */
+export interface LeagueNoticeCounts { moved: number; cancelled: number; gamesMoved: number; gamesNeedDate: number; gamesRemoved: number; gamesWaiting: number }
+export const NO_LEAGUE_COUNTS: LeagueNoticeCounts = { moved: 0, cancelled: 0, gamesMoved: 0, gamesNeedDate: 0, gamesRemoved: 0, gamesWaiting: 0 };
+
 export const LEAGUE_ADMIN_NOTICE = {
-  title: (scheduleName: string) => `${scheduleName} changed house league’s practices`,
-  body: (p: { divisions: string[]; moved: number; cancelled: number }) => {
-    const what = [p.moved ? `${pluralize(p.moved, 'practice')} moved` : '', p.cancelled ? `${pluralize(p.cancelled, 'practice')} cancelled` : ''].filter(Boolean);
+  title: (scheduleName: string, c: LeagueNoticeCounts = NO_LEAGUE_COUNTS) => {
+    const practices = c.moved + c.cancelled > 0, games = c.gamesMoved + c.gamesNeedDate + c.gamesRemoved > 0;
+    return `${scheduleName} changed house league’s ${games && practices ? 'practices and game time' : games ? 'game time' : 'practices'}`;
+  },
+  body: (p: { divisions: string[] } & LeagueNoticeCounts) => {
+    const what = [
+      p.moved ? `${pluralize(p.moved, 'practice')} moved` : '', p.cancelled ? `${pluralize(p.cancelled, 'practice')} cancelled` : '',
+      p.gamesMoved ? `${pluralize(p.gamesMoved, 'game')} moved` : '',
+      p.gamesNeedDate ? `${pluralize(p.gamesNeedDate, 'game')} ${p.gamesNeedDate === 1 ? 'needs' : 'need'} a new date` : '',
+      p.gamesRemoved ? `${pluralize(p.gamesRemoved, 'draft game')} removed` : '',
+    ].filter(Boolean);
     const told = `${joinWithAnd(what)}.`;
-    return p.divisions.length ? `${joinWithAnd(p.divisions)}: ${told}` : told.charAt(0).toUpperCase() + told.slice(1);
+    const lead = p.divisions.length ? `${joinWithAnd(p.divisions)}: ${told}` : told.charAt(0).toUpperCase() + told.slice(1);
+    // 9d2·13: families hear about a published game once, from the league admin's send.
+    return p.gamesWaiting > 0 ? `${lead} ${pluralize(p.gamesWaiting, 'game')} ${p.gamesWaiting === 1 ? 'waits' : 'wait'} in Changes to send.` : lead;
   },
 } as const;

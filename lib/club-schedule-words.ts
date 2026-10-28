@@ -49,14 +49,18 @@ export const SCHEDULE_WORDS = {
     `Each team’s coaches see their slots and their bill${replyBy ? `, and reply by ${formatShortWeekdayDate(replyBy)}` : ''}. Nothing is booked or billed yet. You finalize when you’re ready, whether or not every team has replied.`,
   // [marketing] Stage 11b Part 5: house-league teams' practices, and their families, join the statement ("Only those teams'
   // coaches are told" was untrue once families of a house-league team hear too, 9d2·2).
-  changesStatement: (changedTeams: number, handedBack: string[], leagueTeams = 0) => {
+  // [marketing] House League 9d-2b Part 5: a house-league division's games join it (9d2·13) — families hear about those
+  // from the league admin's send, never from this one.
+  changesStatement: (changedTeams: number, handedBack: string[], leagueTeams = 0, leagueDivisions = 0) => {
     const reach = [
-      changedTeams || !leagueTeams ? `${possessive(pluralize(changedTeams, 'team'))} schedules` : '',
+      changedTeams || (!leagueTeams && !leagueDivisions) ? `${possessive(pluralize(changedTeams, 'team'))} schedules` : '',
       leagueTeams ? `${possessive(pluralize(leagueTeams, 'house-league team'))} practices` : '',
+      leagueDivisions ? `${possessive(pluralize(leagueDivisions, 'house-league division'))} games` : '',
     ].filter(Boolean);
     const told = leagueTeams
       ? `Their coaches are told, and so ${leagueTeams === 1 ? 'are the house-league team’s' : 'are the house-league teams’'} families`
-      : 'Only those teams’ coaches are told';
+      : changedTeams || !leagueDivisions ? 'Only those teams’ coaches are told'
+      : 'Their league admins are told';
     return `The changes reach ${joinWithAnd(reach)}. ${told}${handedBack.length ? `; ${joinWithAnd(handedBack)} handed ${handedBack.length === 1 ? 'its slot' : 'their slots'} back ${handedBack.length === 1 ? 'itself' : 'themselves'}` : ''}. Nothing else on the schedule moves.`;
   },
 } as const;
@@ -738,13 +742,19 @@ export const SCHEDULE_SCREEN_WORDS = {
   repTeams: 'Rep teams',
   heldByHouseLeague: 'House league',
   repSlotReads: 'A rep team holds this time. An owner or an admin can give it to house league.',
-  // The club takes time back (k5, 9d2·16 — the practices half; the games half arrives with 9d-2b).
+  // The club takes time back (k5, 9d2·16 — the practices half (11b) and the games half (9d-2b Part 5)).
   // One slot (the settled repeating form is k5's "Give every Thursday at 6:00 p.m. on {facility} to {team}?"; the window's
   // identity line already names the facility). Settled by /marketing 2026-10-27 (HOUSE_LEAGUE_STAGE9D2_11B_COPY.md).
   takeBackTitle: (day: string, start: string, to: string) => `Give ${day} at ${start} to ${to}?`,
   takeBackClearTitle: (day: string, start: string) => `Clear ${day} at ${start}?`,
   takeBackPractices: (teams: string[]) =>
     `House league uses this time: the ${joinWithAnd(teams.map(possessive))} practices. Their coaches and families are told when you send the changes.`,
+  /** k5's games (9d2·16). Published, settled ("House league uses this time: 12 published U12 games, from Thu, Jun 3."; one
+   *  slot has one date, so no "from", as the practices' one-slot line); a draft's is [marketing]. A slot is one division's
+   *  game time, so its games are all published or all draft. */
+  takeBackGames: (division: string, count: number, published: boolean) => published
+    ? `House league uses this time: ${pluralize(count, `published ${division} game`)}. When you send the changes, these games move to Needs a new date in ${possessive(division)} Changes to send. Families keep the old dates until a league admin gives new ones and sends. Games already played stay; draft games come off the draft.`
+    : `House league uses this time: ${pluralize(count, `draft ${division} game`)}. When you send the changes, ${count === 1 ? 'it comes' : 'they come'} off the draft. Nobody has been told about ${count === 1 ? 'it' : 'them'}.`,
   // k5's foot, settled: "U12's league admins are told then." returns now that Send the changes tells them (Part 5).
   takeBackWait: (division: string | null) =>
     `Nothing changes until you send the changes.${division ? ` ${possessive(division)} league admins are told then.` : ''}`,
@@ -840,6 +850,8 @@ export const SCHEDULE_SCREEN_WORDS = {
   changesHint: 'Each team’s coaches get one email listing what changed for that team; a reply comes to you.',
   // Stage 11b Part 5 (h4, settled): the sentence changesHint gains when house league is in the send.
   changesHintLeague: 'A house-league team’s families get one email too. House league’s game changes go out from the season.',
+  /** 9d-2b Part 5: only a division's games in the send — its second sentence alone (no house-league family hears here). */
+  changesHintLeagueGames: 'House league’s game changes go out from the season.',
   lastSent: (day: string, by: string | null) => `Last sent ${day}${by ? ` by ${by}` : ''}.`,
   notSentYet: 'Not sent yet.',
   seeEmail: (who: string) => `See ${possessive(who)} email`,

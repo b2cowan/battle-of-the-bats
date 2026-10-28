@@ -149,7 +149,8 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
                     : <span className={t.sub}>{W.who(teamName(row.homeTeamId), teamName(row.awayTeamId), row.families)}</span>}
                   {row.news?.byClub && <span className={t.sub}>{W.byClub(division.name)}</span>}
                 </div>
-                {!row.played && (
+                {/* No Undo on the club's change (9d-2b Part 5): it would put the game back on time the club gave away. */}
+                {!row.played && !row.news?.byClub && (
                   <button type="button" className={t.undo} onClick={() => void undo(row.gameId)} disabled={busy} aria-label={W.undoAria(title)}>
                     <RotateCcw size={13} aria-hidden /> {W.undo}
                   </button>

@@ -8,7 +8,8 @@ import { coachTeamPath } from '@/lib/house-league-coach-invites';
 import { formatStoredDate } from '@/lib/timezone';
 import { coachesLine } from '@/lib/house-league-teams-words';
 import CopyEmails from './CopyEmails';
-import CoachPractices from './CoachPractices';
+import CoachSchedule from './CoachSchedule';
+import { SCHEDULE_PUBLIC_WORDS } from '@/lib/league-schedule-words';
 import column from '../../../league-column.module.css';
 import kit from '@/components/public/ClubKit.module.css';
 import styles from './CoachTeam.module.css';
@@ -114,8 +115,11 @@ export default async function CoachTeamPage({ params }: { params: Promise<{ orgS
 
       <section className={styles.section} aria-labelledby="coach-schedule">
         <h2 id="coach-schedule" className={styles.sectionTitle}>Schedule</h2>
-        {view === 'open' && <CoachPractices practices={page.practices} />}
-        <p className={kit.sub}>Your games aren’t listed on this page yet. <Link href={scheduleHref} className={styles.link}>See the season’s schedule</Link></p>
+        {/* g3 (9d2·7): the team's published games and its practices, from today on — a live season only. */}
+        {view === 'open' && (
+          <CoachSchedule practices={page.practices} games={page.games} gamesPublished={page.gamesPublished} divisionName={team.divisionName} />
+        )}
+        <p className={kit.sub}><Link href={scheduleHref} className={styles.link}>{SCHEDULE_PUBLIC_WORDS.coachSeeSeason}</Link></p>
       </section>
 
       <section className={styles.section} aria-labelledby="coach-scores">

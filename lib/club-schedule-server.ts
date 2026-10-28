@@ -431,8 +431,9 @@ export interface SlotView {
   /** Given to a team while a booking holds it — the amber flag (6a's rule). */
   clash: boolean;
   /** A slot House league holds (Stage 11b): how its league admins used it ("U12 games", "U12 practice time" — null: Not
-   *  given yet), and the teams with a practice on it still to come (k5 names them before the club takes it back). */
-  houseLeague?: { use: string | null; division: string | null; practiceTeams: string[] } | null;
+   *  given yet), and the teams with a practice on it still to come (k5 names them before the club takes it back). `games`:
+   *  the division's games on it still to come and on (House League 9d-2b Part 5; k5's games half) — null when none. */
+  houseLeague?: HouseLeagueSlot | null;
 }
 
 export interface BillView {
@@ -561,20 +562,34 @@ export interface ScheduleAsk {
   sundays: { slotId: string | null; startsAt: string; venueId: string | null; facilityId: string | null }[];
 }
 
+/** A slot house league holds, as the club's schedule reads it. */
+export interface HouseLeagueSlot {
+  use: string | null; division: string | null; practiceTeams: string[];
+  games: { count: number; published: boolean } | null;
+}
+
 /** House league's slots as the club's schedule reads them (Stage 11b): each one's use ("U12 games"), and the teams with a
- *  live practice on it still to come. The club never divides house league's time; it only reads how it was divided. */
-async function houseLeagueSlots(orgId: string, slotIds: readonly string[]): Promise<Map<string, { use: string | null; division: string | null; practiceTeams: string[] }>> {
-  const out = new Map<string, { use: string | null; division: string | null; practiceTeams: string[] }>();
+ *  live practice on it still to come — and, 9d-2b Part 5, the games on it still to come and on (a slot is one division's
+ *  game time, so they are all published or all draft). The club never divides house league's time; it only reads how. */
+async function houseLeagueSlots(orgId: string, slotIds: readonly string[]): Promise<Map<string, HouseLeagueSlot>> {
+  const out = new Map<string, HouseLeagueSlot>();
   if (!slotIds.length) return out;
   const now = new Date().toISOString();
-  const [uses, practices] = await Promise.all([
+  const [uses, practices, games] = await Promise.all([
     fetchAllIn<{ slot_id: string; kind: 'games' | 'practices'; league_divisions: { name: string } | null }>(slotIds, (c, a, b) => supabaseAdmin
       .from('league_slot_uses').select('slot_id, kind, league_divisions ( name )').eq('org_id', orgId).in('slot_id', c).order('slot_id').range(a, b)),
     fetchAllIn<{ club_schedule_slot_id: string; league_teams: { name: string } | null }>(slotIds, (c, a, b) => supabaseAdmin
       .from('league_practices').select('club_schedule_slot_id, league_teams ( name )').eq('org_id', orgId).in('club_schedule_slot_id', c)
       .eq('status', 'scheduled').gt('scheduled_at', now).order('id').range(a, b)),
+    fetchAllIn<{ slot_use_id: string; league_divisions: { schedule_published_at: string | null } | null }>(slotIds, (c, a, b) => supabaseAdmin
+      .from('league_games').select('slot_use_id, league_divisions ( schedule_published_at )').eq('org_id', orgId).in('slot_use_id', c)
+      .eq('status', 'scheduled').gt('scheduled_at', now).order('id').range(a, b)),
   ]);
-  for (const id of slotIds) out.set(id, { use: null, division: null, practiceTeams: [] });
+  for (const id of slotIds) out.set(id, { use: null, division: null, practiceTeams: [], games: null });
+  for (const g of games) {
+    const slot = out.get(g.slot_use_id)!;
+    slot.games = { count: (slot.games?.count ?? 0) + 1, published: !!g.league_divisions?.schedule_published_at };
+  }
   for (const u of uses) {
     const slot = out.get(u.slot_id)!;
     slot.use = u.league_divisions ? houseLeagueUse(u.league_divisions.name, u.kind) : null;
@@ -648,7 +663,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
         handedBack: s.handedBack ? { at: s.handedBack.at, teamId: s.handedBack.teamId } : null,
         heldBy: h ? { ownerName: h.ownerName, kind: h.kind ?? null } : null,
         clash: !!h && s.teamIds.length > 0,
-        houseLeague: s.teamIds.some(isProgramHolder) ? houseLeagueOf.get(s.id) ?? { use: null, division: null, practiceTeams: [] } : null,
+        houseLeague: s.teamIds.some(isProgramHolder) ? houseLeagueOf.get(s.id) ?? { use: null, division: null, practiceTeams: [], games: null } : null,
       };
     }),
     fairness: {

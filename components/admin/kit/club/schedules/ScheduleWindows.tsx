@@ -115,9 +115,11 @@ export function SlotWindow({ view, slot, sharing, nameOf, colourOf, placeOf, bus
   const houseLeagueHere = slot.teamIds.some(isProgramHolder);
   const offerHouseLeague = view.houseLeague || houseLeagueHere;
   const [confirmTo, setConfirmTo] = useState<string[] | null>(null);
-  /** A change away from house league with practices on the slot asks first (k5, 9d2·16); unused time goes with no question. */
+  /** A change away from house league with practices or games on the slot asks first (k5, 9d2·16); unused time goes with
+   *  no question. */
+  const inUse = !!slot.houseLeague && (slot.houseLeague.practiceTeams.length > 0 || !!slot.houseLeague.games);
   const change = (teamIds: string[]) => {
-    if (houseLeagueHere && !teamIds.some(isProgramHolder) && slot.houseLeague?.practiceTeams.length) setConfirmTo(teamIds);
+    if (houseLeagueHere && !teamIds.some(isProgramHolder) && inUse) setConfirmTo(teamIds);
     else onChangeTeams(teamIds);
   };
   const one = slot.teamIds[0] ?? null;
@@ -148,7 +150,10 @@ export function SlotWindow({ view, slot, sharing, nameOf, colourOf, placeOf, bus
             </button>
           </>
         )}>
-        <p>{W.takeBackPractices(slot.houseLeague!.practiceTeams)}</p>
+        {slot.houseLeague!.practiceTeams.length > 0 && <p>{W.takeBackPractices(slot.houseLeague!.practiceTeams)}</p>}
+        {slot.houseLeague!.games && (
+          <p>{W.takeBackGames(slot.houseLeague!.division ?? '', slot.houseLeague!.games.count, slot.houseLeague!.games.published)}</p>
+        )}
         <p className={sch.quiet}>{W.takeBackWait(slot.houseLeague!.division)}</p>
       </KitDialog>
     );
@@ -221,7 +226,7 @@ export function SlotWindow({ view, slot, sharing, nameOf, colourOf, placeOf, bus
           )}
           {slot.teamIds.length > 0 && (
             <RecordAction icon={<Eraser size={14} aria-hidden />} disabled={busy}
-              onClick={() => (houseLeagueHere && slot.houseLeague?.practiceTeams.length ? setConfirmTo([]) : onClear())}>{W.clearSlot}</RecordAction>
+              onClick={() => (houseLeagueHere && inUse ? setConfirmTo([]) : onClear())}>{W.clearSlot}</RecordAction>
           )}
         </div>
       )}

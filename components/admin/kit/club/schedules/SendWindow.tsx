@@ -58,6 +58,8 @@ interface Preview {
   /** Stage 11b Part 5 (h4): the house-league teams whose practices move or are cancelled, and the plan the POST returns. */
   league: {
     teams: { teamId: string; teamName: string; lines: string[]; group: string; coaches: { userId: string | null; name: string | null; email: string }[]; families: number; households: string[]; sample: EmailWords }[];
+    /** House League 9d-2b Part 5: a division's games that move with its time or leave it — no tick, they email nobody here. */
+    games?: { key: string; name: string; line: string; sub: string }[];
     seen: string;
   } | null;
 }
@@ -104,6 +106,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
   // A house-league team's row reaches its coaches and its households (9d2·2); unticked, neither is emailed (its practices
   // still move — the send is the schedule's, the email is the row's).
   const league = shown?.league?.teams ?? [];
+  const leagueGames = shown?.league?.games ?? [];
   const leagueTicked = league.filter(t => !unticked.has(t.teamId));
   // A family with children on two ticked teams gets one email: households are counted once (opaque keys from the server).
   const people = ticked.reduce((n, t) => n + t.recipients.length, 0) + leagueTicked.reduce((n, t) => n + t.coaches.length, 0)
@@ -211,7 +214,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
               {shown.blockers.map(b => <span key={b.code + b.error} className={repKit.calloutSub}>{b.error}</span>)}
             </Callout>
           )}
-          {(teams.length > 0 || league.length > 0) && (
+          {(teams.length > 0 || league.length > 0 || leagueGames.length > 0) && (
             <>
               <p className={repKit.factsLabel}>{head}</p>
               <SendRows>
@@ -234,6 +237,11 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
                       onChange: checked => setUnticked(u => { const n = new Set(u); if (checked) n.delete(t.teamId); else n.add(t.teamId); return n; }),
                     }} />
                 ))}
+                {/* h4 (9d2·13): "U9 Rookie games · Sun, Nov 15: Field 2 → Field 4" over who sends them to families. No tick:
+                    the games move with the send, and families hear from the league admin, never from here. */}
+                {leagueGames.map(g => (
+                  <SendRow key={g.key} title={<><b>{g.name}</b> · {g.line}</>} sub={g.sub} />
+                ))}
               </SendRows>
             </>
           )}
@@ -255,7 +263,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
           )}
           <p className={ck.hint}>
             {kind === 'review' ? W.reviewHint : kind === 'changes' ? W.changesHint : W.emailHint}{' '}
-            {league.length > 0 && <>{W.changesHintLeague}{' '}</>}
+            {league.length > 0 ? <>{W.changesHintLeague}{' '}</> : leagueGames.length > 0 && <>{W.changesHintLeagueGames}{' '}</>}
             {shown.lastSent ? W.lastSent(formatStoredDate(shown.lastSent.at), shown.lastSent.by) : W.notSentYet}
           </p>
           {sample?.sample && <SendDoor onOpen={() => lv.open('email')}>{W.seeEmail(sampleName ?? sample.teamName)}</SendDoor>}

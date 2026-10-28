@@ -1,0 +1,9 @@
+/* The team's schedule (House League 9d-2b Part 5, g3; 11b·C's practices): the public kit's list, each row the public
+   schedule's game row (league-column.module.css), read-only. */
+.heading {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--club-text);
+}
+.list { margin: 0 0 0.75rem; padding: 0; list-style: none; }

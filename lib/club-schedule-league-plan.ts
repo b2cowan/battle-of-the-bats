@@ -22,6 +22,13 @@
  *     is a hand-out, the league admin's, never the club's send.
  *   · Every other practice STILL TO COME on time house league no longer has is cancelled, so the step's last check never
  *     finds one. One already held is history: untouched (the step clears its link).
+ *   · ⚖ GAMES FOLLOW THEIR DIVISION'S GAME TIME (House League 9d-2b Part 5; 9d2·13, 9d2·16). A game sits on a use by
+ *     `league_games.slot_use_id`; carried, its use takes the game's link with it (ON UPDATE CASCADE), and the plan moves
+ *     the game by the slot's shift, as a practice. One that won't fit, or whose time was taken back or cleared, LEAVES:
+ *     a published division's game is postponed (Needs a new date, waiting in the division's Changes to send — families
+ *     hear once, from the league admin), a draft's comes off the draft (deleted; nobody was told of it). A game played,
+ *     started, cancelled or already postponed stays exactly as it is. Never a new time chosen for it: that is the league
+ *     admin's, never the club's send.
  * Pure and client-safe: the send module reads, this plans, the words say it.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
@@ -35,25 +42,46 @@ export interface LeagueUse { slotId: string; seasonId: string; divisionId: strin
 /** A house-league practice on the schedule's time. `endMs` null: no end was stored — read as running to its slot's end. */
 export interface LeaguePractice { id: string; teamId: string; seasonId: string; divisionId: string | null; slotId: string; startMs: number; endMs: number | null; cancelled: boolean }
 
-/** The step's `p_league` (mig 392 §6, made whole by mig 393). */
+/** A house-league game on the schedule's time, by its division game time (9d-2b; `slotId` = its `slot_use_id`).
+ *  `endMs` null: no end was stored. `published`: its division's schedule is published (9d2·1). */
+export interface LeagueSlotGame {
+  id: string; seasonId: string; divisionId: string; slotId: string; startMs: number; endMs: number | null;
+  status: 'scheduled' | 'completed' | 'cancelled' | 'postponed'; published: boolean;
+}
+
+/** The step's `p_league` (mig 392 §6, made whole by mig 393; `games` by mig 411). */
 export interface LeagueStepArg {
   uses: { from: string; to: string }[];
   cancel: string[];
   updates: { practiceId: string; slotId: string; scheduledAt: string; endsAt: string; location: string }[];
+  /** 9d-2b Part 5: games moved with their time; a published division's postponed, a draft's removed. */
+  games: { move: { gameId: string; slotId: string; scheduledAt: string; endsAt: string | null; location: string }[]; postpone: string[]; remove: string[] };
 }
 
 export type LeagueChange =
   | { kind: 'moved'; practiceId: string; teamId: string; fromSlotId: string; toSlotId: string; fromStartMs: number; fromEndMs: number; toStartMs: number; toEndMs: number }
   | { kind: 'cancelled'; practiceId: string; teamId: string; slotId: string; startMs: number; endMs: number };
 
-export interface LeaguePlan { step: LeagueStepArg; changes: LeagueChange[] }
+/** What the send does to one game: moved with its time, to Needs a new date (published), or off the draft. */
+export interface LeagueGameChange {
+  kind: 'moved' | 'needsDate' | 'removed';
+  gameId: string; seasonId: string; divisionId: string; published: boolean;
+  fromSlotId: string;
+  /** A move's new slot; null when the game leaves. */
+  toSlotId: string | null;
+}
 
-export const isEmptyLeagueStep = (s: LeagueStepArg) => !s.uses.length && !s.cancel.length && !s.updates.length;
+export interface LeaguePlan { step: LeagueStepArg; changes: LeagueChange[]; gameChanges: LeagueGameChange[] }
+
+export const isEmptyLeagueStep = (s: LeagueStepArg) => !s.uses.length && !s.cancel.length && !s.updates.length
+  && !s.games.move.length && !s.games.postpone.length && !s.games.remove.length;
 
 export function planLeagueChanges(p: {
   slots: readonly LeagueSlot[];
   uses: readonly LeagueUse[];
   practices: readonly LeaguePractice[];
+  /** 9d-2b Part 5: the games on the schedule's time (absent: none). */
+  games?: readonly LeagueSlotGame[];
   nowMs: number;
   weekOfMs: (ms: number) => string;
   /** The display place a moved practice is written with (the hand-out's cache: venue — facility). */
@@ -79,7 +107,7 @@ export function planLeagueChanges(p: {
     taken.add(pr.to);
   }
 
-  const step: LeagueStepArg = { uses: [...carried].map(([from, to]) => ({ from, to })), cancel: [], updates: [] };
+  const step: LeagueStepArg = { uses: [...carried].map(([from, to]) => ({ from, to })), cancel: [], updates: [], games: { move: [], postpone: [], remove: [] } };
   const changes: LeagueChange[] = [];
   for (const pr of [...p.practices].sort((a, b) => a.teamId.localeCompare(b.teamId) || a.startMs - b.startMs)) {
     const from = slotById.get(pr.slotId);
@@ -104,7 +132,38 @@ export function planLeagueChanges(p: {
       changes.push({ kind: 'cancelled', practiceId: pr.id, teamId: pr.teamId, slotId: from.id, startMs: pr.startMs, endMs: fromEndMs });
     }
   }
-  return { step, changes };
+
+  // Games (9d-2b Part 5): only one still to come and on (`scheduled`) follows; the rest is history or already off its time.
+  const gameChanges: LeagueGameChange[] = [];
+  for (const g of [...(p.games ?? [])].sort((a, b) => a.divisionId.localeCompare(b.divisionId) || a.startMs - b.startMs || a.id.localeCompare(b.id))) {
+    const from = slotById.get(g.slotId);
+    if (!from || g.status !== 'scheduled' || g.startMs <= p.nowMs) continue;
+    if (!from.removed && from.houseLeague) continue;
+    const toId = carried.get(from.id);
+    const to = toId ? slotById.get(toId) : undefined;
+    const use = useBySlot.get(from.id);
+    const shift = to ? to.startMs - from.startMs : 0;
+    const startMs = g.startMs + shift, endMs = g.endMs == null ? null : g.endMs + shift;
+    const fits = !!to && !!use && use.kind === 'games' && use.seasonId === g.seasonId && use.divisionId === g.divisionId
+      && startMs >= to.startMs && startMs < to.endMs && (endMs ?? startMs) <= to.endMs;
+    const base = { gameId: g.id, seasonId: g.seasonId, divisionId: g.divisionId, published: g.published, fromSlotId: from.id };
+    if (fits) {
+      // The same time and place (a slot saved again): the game's link follows its use, and there is nothing to write.
+      if (shift === 0 && to!.venueId === from.venueId && to!.facilityId === from.facilityId) continue;
+      step.games.move.push({
+        gameId: g.id, slotId: to!.id, scheduledAt: new Date(startMs).toISOString(),
+        endsAt: endMs == null ? null : new Date(endMs).toISOString(), location: p.locationOf(to!.id),
+      });
+      gameChanges.push({ ...base, kind: 'moved', toSlotId: to!.id });
+    } else if (g.published) {
+      step.games.postpone.push(g.id);
+      gameChanges.push({ ...base, kind: 'needsDate', toSlotId: null });
+    } else {
+      step.games.remove.push(g.id);
+      gameChanges.push({ ...base, kind: 'removed', toSlotId: null });
+    }
+  }
+  return { step, changes, gameChanges };
 }
 
 // ── A team's changes as rows (h4: "Sundays from Nov 8: Field 1 → Field 3, 11:00 a.m. → 12:30 p.m.") ─────────────────
@@ -159,6 +218,9 @@ export function leagueFingerprint(step: LeagueStepArg): string {
     ...step.uses.map(u => `u:${u.from}>${u.to}`),
     ...step.cancel.map(id => `c:${id}`),
     ...step.updates.map(u => `m:${u.practiceId}>${u.slotId}@${u.scheduledAt}`),
+    ...step.games.move.map(g => `gm:${g.gameId}>${g.slotId}@${g.scheduledAt}`),
+    ...step.games.postpone.map(id => `gp:${id}`),
+    ...step.games.remove.map(id => `gr:${id}`),
   ].sort();
   // FNV-1a, 32 bits: a short tag, not a secret.
   let h = 0x811c9dc5;

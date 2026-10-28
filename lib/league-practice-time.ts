@@ -389,9 +389,10 @@ export const PRACTICE_WINDOW_WORDS = {
   },
 } as const;
 
-/** [marketing] The house-league coach's team page (11b·C): the team's practices from today on. */
+/** [marketing] The house-league coach's team page (11b·C): the team's practices from today on — since 9d-2b Part 5 one
+ *  Schedule list with the games (g3: "Practice · 6:00 – 7:00 p.m."). */
 export const COACH_PRACTICE_WORDS = {
-  heading: 'Practices',
+  practice: 'Practice',
   none: 'No practices yet.',
   from: PRACTICE_WINDOW_WORDS.fromCard,
   cancelled: 'Cancelled',

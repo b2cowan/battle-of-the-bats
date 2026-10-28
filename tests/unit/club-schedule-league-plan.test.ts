@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   isEmptyLeagueStep, leagueFingerprint, leagueRows, planLeagueChanges,
-  type LeaguePractice, type LeagueSlot, type LeagueUse, type PracticeFace,
+  type LeaguePractice, type LeagueSlot, type LeagueSlotGame, type LeagueUse, type PracticeFace,
 } from '../../lib/club-schedule-league-plan.ts';
 import {
-  familyClose, familyPartOpening, familyRowLines, familySubject, leagueCoachEmail, leagueGroupLine, leagueRowLine, type LeaguePlace,
+  LEAGUE_ADMIN_NOTICE, NO_LEAGUE_COUNTS, familyClose, familyPartOpening, familyRowLines, familySubject, leagueCoachEmail,
+  leagueGamesLine, leagueGamesSub, leagueGroupLine, leagueRowLine, type LeaguePlace,
 } from '../../lib/club-schedule-league-words.ts';
 import { mondayOfDay, utcToZonedInputs, zonedWallClockToUtc } from '../../lib/timezone.ts';
 import { weekdayOf } from '../../lib/permit-time.ts';
@@ -115,7 +116,7 @@ describe('time house league loses (k5, 9d2·16)', () => {
   it('a slot cleared from the schedule, nothing in its week: cancelled', () => {
     const slots = [slot('c', '2026-11-12', '18:00', '21:00', { removed: true })];
     const p = plan(slots, [use('c')], [practice('p1', 'reds', 'c', '2026-11-12', '18:00', '19:00')]);
-    assert.deepEqual(p.step, { uses: [], cancel: ['p1'], updates: [] });
+    assert.deepEqual(p.step, { uses: [], cancel: ['p1'], updates: [], games: { move: [], postpone: [], remove: [] } });
   });
   it('a moved slot too short for a practice: the use still carries, that practice is cancelled (never a refused move)', () => {
     const slots = [slot('a', '2026-11-08', '11:00', '14:00', { removed: true }), slot('a2', '2026-11-08', '12:30', '14:00', { isNew: true })];
@@ -191,11 +192,111 @@ describe('what the send leaves alone', () => {
 });
 
 describe('the plan\'s fingerprint (what the owner saw)', () => {
+  const noGames = { move: [], postpone: [], remove: [] };
   it('is the same whatever the order, and changes when a practice is added', () => {
-    const a = { uses: [{ from: 'x', to: 'y' }], cancel: ['1', '2'], updates: [] };
-    const b = { uses: [{ from: 'x', to: 'y' }], cancel: ['2', '1'], updates: [] };
+    const a = { uses: [{ from: 'x', to: 'y' }], cancel: ['1', '2'], updates: [], games: noGames };
+    const b = { uses: [{ from: 'x', to: 'y' }], cancel: ['2', '1'], updates: [], games: noGames };
     assert.equal(leagueFingerprint(a), leagueFingerprint(b));
     assert.notEqual(leagueFingerprint(a), leagueFingerprint({ ...a, cancel: ['1', '2', '3'] }));
+  });
+  it('changes when a game\'s fate changes (9d-2b Part 5: a draft published since reads remove → postpone)', () => {
+    const a = { uses: [], cancel: [], updates: [], games: { ...noGames, remove: ['g1'] } };
+    assert.notEqual(leagueFingerprint(a), leagueFingerprint({ ...a, games: { ...noGames, postpone: ['g1'] } }));
+    assert.notEqual(leagueFingerprint(a), leagueFingerprint({ ...a, games: noGames }));
+  });
+});
+
+describe('a division\'s games follow the club\'s time (House League 9d-2b Part 5; 9d2·13, 9d2·16)', () => {
+  const game = (id: string, slotId: string, day: string, start: string, end: string | null, o: Partial<LeagueSlotGame> = {}): LeagueSlotGame =>
+    ({ id, seasonId: 'fall', divisionId: 'u12', slotId, startMs: ms(day, start), endMs: end ? ms(day, end) : null, status: 'scheduled', published: true, ...o });
+  const gamesUse = (slotId: string) => use(slotId, { kind: 'games', divisionId: 'u12' });
+  const planG = (slots: LeagueSlot[], uses: LeagueUse[], games: LeagueSlotGame[]) =>
+    planLeagueChanges({ slots, uses, practices: [], games, nowMs: NOW, weekOfMs, locationOf: id => `Lakeshore Dome — ${id}` });
+  const moved = [slot('a', '2026-11-08', '11:00', '14:00', { removed: true }), slot('a2', '2026-11-08', '12:30', '15:30', { facilityId: F3, isNew: true })];
+
+  it('a published game moves by the slot\'s shift, at the new place, and is the club\'s change', () => {
+    const p = planG(moved, [gamesUse('a')], [game('g1', 'a', '2026-11-08', '11:00', '12:30')]);
+    assert.deepEqual(p.step.uses, [{ from: 'a', to: 'a2' }]);
+    assert.deepEqual(p.step.games.move, [{
+      gameId: 'g1', slotId: 'a2', scheduledAt: new Date(ms('2026-11-08', '12:30')).toISOString(),
+      endsAt: new Date(ms('2026-11-08', '14:00')).toISOString(), location: 'Lakeshore Dome — a2',
+    }]);
+    assert.deepEqual(p.gameChanges.map(g => [g.kind, g.toSlotId]), [['moved', 'a2']]);
+  });
+  it('a game with no end moves by its start alone', () => {
+    const p = planG(moved, [gamesUse('a')], [game('g1', 'a', '2026-11-08', '11:00', null)]);
+    assert.equal(p.step.games.move[0].endsAt, null);
+  });
+  it('one that won\'t fit the new slot leaves it: published → Needs a new date, draft → off the draft', () => {
+    const short = [slot('a', '2026-11-08', '11:00', '14:00', { removed: true }), slot('a2', '2026-11-08', '12:30', '14:00', { isNew: true })];
+    const p = planG(short, [gamesUse('a')], [
+      game('g1', 'a', '2026-11-08', '11:00', '12:30'), game('g2', 'a', '2026-11-08', '12:30', '14:00'),
+    ]);
+    assert.deepEqual(p.step.games.move.map(g => g.gameId), ['g1']);
+    assert.deepEqual(p.step.games.postpone, ['g2']);
+    const d = planG(short, [gamesUse('a')], [game('g2', 'a', '2026-11-08', '12:30', '14:00', { published: false })]);
+    assert.deepEqual(d.step.games.remove, ['g2']);
+  });
+  it('time taken back: a published game needs a new date, a draft\'s comes off the draft (k5)', () => {
+    const slots = [slot('thu', '2026-11-12', '18:00', '21:00', { houseLeague: false })];
+    const p = planG(slots, [gamesUse('thu')], [
+      game('g1', 'thu', '2026-11-12', '18:00', '19:30'), game('g2', 'thu', '2026-11-12', '19:30', '21:00', { divisionId: 'u9', published: false }),
+    ]);
+    assert.deepEqual(p.step.uses, []);
+    assert.deepEqual(p.step.games.postpone, ['g1']);
+    assert.deepEqual(p.step.games.remove, ['g2']);
+    assert.deepEqual(p.gameChanges.map(g => g.kind).sort(), ['needsDate', 'removed']);
+  });
+  it('a played, started, cancelled or postponed game stays as it is', () => {
+    const slots = [slot('thu', '2026-11-12', '18:00', '21:00', { houseLeague: false }), slot('old', '2026-10-29', '18:00', '21:00', { houseLeague: false })];
+    const p = planG(slots, [gamesUse('thu'), gamesUse('old')], [
+      game('done', 'thu', '2026-11-12', '18:00', '19:30', { status: 'completed' }),
+      game('off', 'thu', '2026-11-12', '19:30', '21:00', { status: 'cancelled' }),
+      game('pp', 'thu', '2026-11-12', '18:00', '19:30', { status: 'postponed' }),
+      game('past', 'old', '2026-10-29', '18:00', '19:30'),
+    ]);
+    assert.ok(isEmptyLeagueStep(p.step));
+    assert.deepEqual(p.gameChanges, []);
+  });
+  it('a game on time house league still holds is untouched, and a slot saved again at the same time and place writes nothing', () => {
+    const held = planG([slot('a', '2026-11-08', '11:00', '14:00')], [gamesUse('a')], [game('g1', 'a', '2026-11-08', '11:00', '12:30')]);
+    assert.ok(isEmptyLeagueStep(held.step));
+    const again = [slot('a', '2026-11-08', '11:00', '14:00', { removed: true }), slot('a2', '2026-11-08', '11:00', '14:00', { isNew: true })];
+    const p = planG(again, [gamesUse('a')], [game('g1', 'a', '2026-11-08', '11:00', '12:30')]);
+    assert.deepEqual(p.step.uses, [{ from: 'a', to: 'a2' }]);
+    assert.deepEqual(p.step.games.move, []);
+    assert.deepEqual(p.gameChanges, []);
+  });
+  it('a game is never carried onto a PRACTICE use, nor another division\'s', () => {
+    const p = planG(moved, [use('a', { kind: 'practices', divisionId: 'u12' })], [game('g1', 'a', '2026-11-08', '11:00', '12:30')]);
+    assert.deepEqual(p.step.games.move, []);
+    assert.deepEqual(p.step.games.postpone, ['g1']);
+    const q = planG(moved, [use('a', { kind: 'games', divisionId: 'u9' })], [game('g1', 'a', '2026-11-08', '11:00', '12:30')]);
+    assert.deepEqual(q.step.games.postpone, ['g1']);
+  });
+});
+
+describe('the games words (9d-2b Part 5; h4 settled, the rest /marketing\'s)', () => {
+  const was: PracticeFace = { day: '2026-11-15', weekday: 7, startClock: '11:00', endClock: '14:00', venueId: DOME, facilityId: F1 };
+  const now: PracticeFace = { ...was, facilityId: F3 };
+  it('time that moved reads as the settled row; time that went says so', () => {
+    assert.equal(leagueGamesLine(was, now, placeOf), 'Sun, Nov 15: Field 1 → Field 3');
+    assert.equal(leagueGamesLine(was, null, placeOf), 'Sun, Nov 15, 11:00 a.m. · Field 1: taken back');
+  });
+  it('who tells families: the settled "2 games move. A league admin sends them …"; a draft tells nobody', () => {
+    assert.equal(leagueGamesSub({ division: 'U9 Rookie', published: true, moved: 2, needsDate: 0, removed: 0 }),
+      '2 games move. A league admin sends them to families from U9 Rookie’s Changes to send.');
+    assert.equal(leagueGamesSub({ division: 'U12', published: true, moved: 0, needsDate: 1, removed: 0 }),
+      '1 game moves to Needs a new date. A league admin sends it to families from U12’s Changes to send.');
+    assert.equal(leagueGamesSub({ division: 'U9', published: false, moved: 0, needsDate: 0, removed: 3 }),
+      '3 draft games come off the draft. Nobody is told: U9’s schedule isn’t published yet.');
+  });
+  it('the league admins\' notice names the games and where they wait', () => {
+    const c = { ...NO_LEAGUE_COUNTS, gamesMoved: 2, gamesNeedDate: 1, gamesWaiting: 3 };
+    assert.equal(LEAGUE_ADMIN_NOTICE.title('Summer field time', c), 'Summer field time changed house league’s game time');
+    assert.equal(LEAGUE_ADMIN_NOTICE.body({ divisions: ['U12'], ...c }),
+      'U12: 2 games moved and 1 game needs a new date. 3 games wait in Changes to send.');
+    assert.equal(LEAGUE_ADMIN_NOTICE.title('Summer field time', { ...NO_LEAGUE_COUNTS, moved: 1 }), 'Summer field time changed house league’s practices');
   });
 });
 

@@ -30,6 +30,8 @@ export const POST = withObservability(async (req: Request,
     // Sent or undone by someone else since the window read it.
     case 'nothing': return NextResponse.json({ error: W.gameChanged, code: 'changed' }, { status: 409 });
     case 'played': return NextResponse.json({ error: W.undoPlayed, code: 'played' }, { status: 409 });
+    // 9d-2b Part 5 (mig 411): the club's move is never undone onto time it gave away (9d2·3).
+    case 'club': return NextResponse.json({ error: W.undoClub, code: 'club' }, { status: 409 });
   }
   return NextResponse.json({ ok: true });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule/[gameId]/undo' });

@@ -5,6 +5,10 @@ import {
 } from './house-league-access';
 import { clubPublicContact } from './club-email-context';
 import { orgDayKey, zonedWallClockToUtc } from './timezone';
+import { asLastSent, heldChangesOf, type GameFaceFields } from './league-game-changes-server';
+import { getOrgPlaceNames } from './db';
+import { resultWords } from './league-season-calendar';
+import type { LeagueGame } from './types';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -57,6 +61,27 @@ export interface CoachTeamPage {
   myTeams: CoachTeamCard[];
   /** The team's practices from today on (Club Tier Stage 11b Part 4, 11b·C): a live season only. */
   practices: CoachPractice[];
+  /** The team's games (House League 9d-2b Part 5, 9d2·7): a live season only, and only once the division's schedule is
+   *  published — as families last heard them, never a change still waiting to be sent. */
+  games: CoachGame[];
+  /** False while the division's schedule is a draft: "{division}'s schedule isn't published yet." */
+  gamesPublished: boolean;
+}
+
+/** A game on the coach's page (g3): from today on, or waiting for a new date (postponed, or saved with no date). */
+export interface CoachGame {
+  id: string;
+  /** Null: a game saved with no date ("Date to come"). A postponed game keeps the date it had ("Was …"). */
+  startsAt: string | null;
+  /** "Twins vs Royals". */
+  title: string;
+  /** "Maple Grove Park · Diamond 2", or the typed place. */
+  place: string | null;
+  state: 'on' | 'cancelled' | 'postponed';
+  /** Re-dated since families first heard, once sent: the date they heard ("Moved · Was …"). */
+  movedFrom: string | null;
+  /** "Final 7–4". */
+  result: string | null;
 }
 
 /** A practice on the coach's page: handed out from the club's time ("From {schedule}") or booked by hand (null). */
@@ -80,6 +105,8 @@ interface LinkRow {
 interface TeamRow {
   id: string;
   name: string;
+  season_id: string;
+  division_id: string | null;
   league_divisions: { name: string } | { name: string }[] | null;
   league_seasons: {
     name: string; slug: string; status: string; finished_at: string | null; org_id: string;
@@ -90,7 +117,7 @@ interface TeamRow {
 const one = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
 
 const TEAM_SELECT =
-  'id, name, league_divisions(name), league_seasons(name, slug, status, finished_at, org_id, organizations(slug, name))';
+  'id, name, season_id, division_id, league_divisions(name), league_seasons(name, slug, status, finished_at, org_id, organizations(slug, name))';
 
 function toCard(t: TeamRow): CoachTeamCard | null {
   const season = t.league_seasons;
@@ -157,12 +184,15 @@ export async function readCoachTeamPage(
     { status: season.status, finishedAt: season.finished_at }, now);
   if (view === 'none') return null;
 
-  const [coachRows, players, myTeams, contactEmail, practices] = await Promise.all([
+  const [coachRows, players, myTeams, contactEmail, practices, games] = await Promise.all([
     view === 'gone' ? Promise.resolve([] as { name: string }[]) : readCoachNames(teamId),
     view === 'open' || view === 'finished' ? readTeamPlayers(teamId) : Promise.resolve([] as CoachPlayer[]),
     getCoachTeamCards(userId, now),
     clubPublicContact(card.orgId),
     view === 'open' ? readTeamPractices(card.orgId, teamId, now) : Promise.resolve([] as CoachPractice[]),
+    view === 'open' && team.division_id
+      ? readTeamGames(card.orgId, team.season_id, team.division_id, teamId, now)
+      : Promise.resolve({ published: false, games: [] as CoachGame[] }),
   ]);
   const until = coachPageOpenUntil(season.finished_at, now);
   return {
@@ -171,6 +201,60 @@ export async function readCoachTeamPage(
     contactEmail,
     myTeams,
     practices,
+    games: games.games,
+    gamesPublished: games.published,
+  };
+}
+
+/**
+ * The team's games as families know them (9d2·7, g3): nothing until the division's schedule is published; then the
+ * team's games from the start of today in the club's zone — and every game waiting for a new date, whatever its old
+ * day — each as last SENT (a held change shows only once the league admin sends it; a game added since isn't shown).
+ * ⚠ A failed read THROWS: "No games from today on" must never stand in for a read that failed.
+ */
+async function readTeamGames(orgId: string, seasonId: string, divisionId: string, teamId: string, now: Date): Promise<{ published: boolean; games: CoachGame[] }> {
+  const { data: division, error } = await supabaseAdmin.from('league_divisions')
+    .select('schedule_published_at').eq('id', divisionId).eq('season_id', seasonId).maybeSingle();
+  if (error) throw new Error(`Couldn't read the team's division: ${error.message}`);
+  if (!division?.schedule_published_at) return { published: false, games: [] };
+
+  const [gameRes, held, teamRes, places] = await Promise.all([
+    supabaseAdmin.from('league_games')
+      .select('id, home_team_id, away_team_id, scheduled_at, ends_at, location, org_venue_id, org_venue_facility_id, status, moved_from, home_score, away_score')
+      // The team id was checked as a UUID before any read (readCoachTeamPage), so the filter string is safe.
+      .eq('org_id', orgId).eq('division_id', divisionId).or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`)
+      .order('scheduled_at', { nullsFirst: false }).order('id').limit(500),
+    heldChangesOf(seasonId, divisionId),
+    supabaseAdmin.from('league_teams').select('id, name').eq('division_id', divisionId),
+    getOrgPlaceNames(orgId),
+  ]);
+  if (gameRes.error) throw new Error(`Couldn't read the team's games: ${gameRes.error.message}`);
+  if (teamRes.error) throw new Error(`Couldn't read the division's teams: ${teamRes.error.message}`);
+  type Row = { id: string; home_team_id: string; away_team_id: string; status: LeagueGame['status']; home_score: number | null; away_score: number | null }
+    & { [K in 'scheduled_at' | 'ends_at' | 'location' | 'org_venue_id' | 'org_venue_facility_id' | 'moved_from']: string | null };
+  const games = ((gameRes.data ?? []) as Row[]).map(r => ({
+    id: r.id, homeTeamId: r.home_team_id, awayTeamId: r.away_team_id, scheduledAt: r.scheduled_at, endsAt: r.ends_at,
+    location: r.location, orgVenueId: r.org_venue_id, orgVenueFacilityId: r.org_venue_facility_id, status: r.status,
+    movedFrom: r.moved_from, homeScore: r.home_score, awayScore: r.away_score,
+  } satisfies GameFaceFields & Pick<LeagueGame, 'homeTeamId' | 'awayTeamId' | 'homeScore' | 'awayScore'>));
+  const teamName = new Map(((teamRes.data ?? []) as { id: string; name: string }[]).map(t => [t.id, t.name]));
+  const name = (id: string) => teamName.get(id) ?? 'A team';
+  const placeOf = (g: GameFaceFields) => {
+    const venue = g.orgVenueId ? places.venues.get(g.orgVenueId)?.name : null;
+    if (!venue) return g.location || null;
+    const facility = g.orgVenueFacilityId ? places.facilities.get(g.orgVenueFacilityId) : null;
+    return facility ? `${venue} · ${facility}` : venue;
+  };
+  const from = Date.parse(zonedWallClockToUtc(orgDayKey(now.toISOString()), '00:00') ?? now.toISOString());
+  return {
+    published: true,
+    games: asLastSent(games, held)
+      .filter(g => g.status === 'postponed' || !g.scheduledAt || Date.parse(g.scheduledAt) >= from)
+      .map(g => ({
+        id: g.id, startsAt: g.scheduledAt, title: `${name(g.homeTeamId)} vs ${name(g.awayTeamId)}`, place: placeOf(g),
+        state: g.status === 'cancelled' ? 'cancelled' : g.status === 'postponed' ? 'postponed' : 'on',
+        movedFrom: g.movedFrom, result: resultWords(g),
+      })),
   };
 }
 
