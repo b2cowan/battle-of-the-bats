@@ -47,6 +47,11 @@
   frame, tiles and rows, worked out from the season the page already reads; the old strip and its route are gone; plan §9
   entry). **Owner ruled the owed ask:** the foot says the rules in words, no "Adjust the rules" door until 9d-2b. **Resume
   at step 7 (Permit links).**
+- **2026-10-27, session 7: Step 7 is BUILT and committed `7c2f0c0d2`** ("See the permit" from the game window, read and
+  form, and Generate's permit warning; the permit window opens raised over them; plan §9 entry). **Owner ruled a build
+  ask, 9d2a·H:** the "the permit ended {date}" line is in the ONE permit rule, on every surface (the coach's Where form
+  and the club calendar included — say it at the walk and in `/docs`). The season read sends each game's permit answer
+  only to whoever runs the season. **Resume at step 8 (Retire the old look),** then the Checks and done list.
 - **Facts found that the steps below must respect:** the club's cross-program clash rule never compares two house-league
   bookings (`comparable`: same owner) — house league's own clashes are `lib/league-schedule-conflict.ts`; a postponed game
   keeps its `scheduled_at`; `league_games.status` is scheduled|completed|cancelled|postponed only; `houseLeagueSlotRows`

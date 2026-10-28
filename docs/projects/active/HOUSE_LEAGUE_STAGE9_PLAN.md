@@ -278,6 +278,12 @@ team) was not ruled: it is ask **9d2·15**, open.
   - **9d2a·G Schedule health SAYS its rules, 2026-10-27 (step 6, as recommended).** No column holds a season's rules, so
     the window's foot states the three rules the score uses and has no "Adjust the rules" door; the door and its save
     come with 9d-2b's migrations.
+  - **9d2a·H The permit line says when a permit ENDED — on every surface, one rule, 2026-10-27 (step 7, as recommended).**
+    The copy file's frame-i case ("Outside the club's permit for {facility}: the permit ended {Sep 30, 2026}.") did not
+    exist: the shipped rule said NOTHING once the club's permits at a venue had all ended (the drawing marked it as
+    existing). Ruled into the ONE permit rule, so the coach's Where form, the club calendar, rep saves, the tournament
+    generator's count and house league all say it. Not taken: house league only (a second permit rule — a coach booking
+    the same field that evening would hear nothing); leaving it out (Draft Test 2027's permit warning would stay silent).
 
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 
@@ -1021,3 +1027,40 @@ open it, and the menu's top level is Stage 13's.
   "Kinsmen Park · Diamond B is booked twice on Thu, Oct 22 at 6:00 p.m.: Reds vs Blues and Reds practice."; the page serves
   200. **Not run:** `check:layout --changed` (it widens to every screen once the tournament's shared health parts are
   touched — a whole-product sweep, which runs on staging, never the dev server).
+- **2026-10-27 — 9d-2a STEP 7 BUILT and committed `7c2f0c0d2` (Permit links, frames b4, c3, i).** **Owner ruling, step 7
+  (raised by the build): 9d2a·H** — the "ended" line, in the one rule, everywhere (§0h). The rule's answer (`permitAnswer`,
+  lib/permit-time.ts) gains `ended` and `permitId`; `namePermitOutside` carries both onto the wire (`PermitOutside`), so
+  every check and save reply has them. "See the permit" is one component (`SeePermitDoor`, beside `useLeagueLine`), on the
+  quiet line through `WhereLine`'s new `door` slot. **Argued, five calls:**
+  1. **Ended is the last permit there to end, with no time to move inside.** When no permit holds the venue that day and
+     some had ended before it, the answer is outside, `covers` empty, `until` the last one's last day; a venue whose only
+     permits start later still says nothing. No time limit: a club that stops using a venue stops booking it, and the
+     line is quiet, never a refusal. A series says "It ended {date}." after its count (the copy file's phone sentence).
+     The year is said when it isn't the booking's, as the shipped "until" is ("ended Oct 29" in the same year).
+  2. **The permit id is the one permit the line is about, or none.** A date off: its permit. Otherwise the permits whose
+     blocks the line describes; two or more (two permits holding one diamond) = null = no door, never a guess. An ended
+     line: the last to end (two ending the same day = no door).
+  3. **The read now reaches a venue's earlier permits** (`checkClubPermits` reads by venue up to the last day, without the
+     `ends_on` floor). A club keeps a handful a year, so the history costs little; the read is still one per check.
+  4. **Who sees it:** the season's schedule read (`GET …/schedule`) sends each game's answer only to someone who runs the
+     season (owner, admin, league admin on a live season) — frame i's "A reader doesn't see the line". Every runner opens
+     the Venue library, and the permits route refuses only a coach login, so a runner's door always opens (proved for the
+     league admin on dev; without Accounting the window carries no cost, Stage 10's own rule). A finished season reads.
+  5. **The permit window opens RAISED over the window that asked** (KitDialog's `raised`, the kit's one form-over-form):
+     the game window or Generate's check waits underneath and is there, unchanged, when the permit closes. `PermitWindow`
+     gains a `raised` prop; nothing else of Stage 10's window changed ("opens as it is"). A change to the permit reads
+     the season again. The game window shows the line in the record (from the season read) and under Where in the form
+     (the live check's answer), each with the door; Generate's permit warning carries `permitId` and the door.
+  **Not built:** the door on the practice window's line (11b's `PracticeWindow`; not in b4/c3/i), and on the after-save
+  notice (`permitAfterSave`, a notice, not a line). **Checks:** typecheck clean; 11,400 unit tests, the only failures in
+  another session's in-flight files (support console 4b: `portal-keep-premium` audit reason; sign-up / plan door earlier,
+  cleared); new tests in `permit-time.test.ts` (ended, the id, the words) and `house-league-game-window-guard` §5 (the read
+  is a runner's, the record's line and door, the raised window); `check:spelling` clean; `lint:focused` no errors; the PDF
+  set's coverage hook named the season page (it now reaches the renderers through the permit window) — it joins
+  `NO_PDF_SCREENS` beside `PermitWindows.tsx`, same reason. **On dev** (`.probe/9d2a/step7-e2e.mjs`, UAT Rep Club, a probe
+  division and two games at Kinsmen Park, removed after): a 2 a.m. game inside "Fall diamonds 2026" is outside, not ended,
+  with that permit's id; a game a month after it ended (Nov 19) is ENDED, until 2026-11-19, the same id, no covers; the
+  league admin opens the permit window's read (200, no cost); the registrar reads the season's games and no permit answer.
+  **Not run:** `check:layout --changed` (an open window, not a page). **⚠ For the walk and `/docs`:** a coach booking a
+  practice at a field whose club permit has ended now sees the quiet line — a behaviour change outside house league, as
+  ruled.
