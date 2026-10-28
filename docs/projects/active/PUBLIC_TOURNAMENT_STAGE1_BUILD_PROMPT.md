@@ -286,6 +286,21 @@ those commits' changes (`git show <hash> -- <path>`). Hand broad reading to a he
    live feed refreshes; the × key is per tournament per day; reduced motion never starts the reel; the moved bracket
    styles render identically with the switch off (admin bracket builder and preview too); the Teams monogram ink is
    frame-only. Fix what it confirms; report what it only suspects.
+   > **Done 2026-10-28, committed `5dbf3cd91` + `27de6a895`** (owner yes). Five lenses (security, ticker state,
+   > switch-off parity, CSS scoping, correctness). **Fixed:** an open redirect in the shared `lib/safe-redirect.ts`
+   > (`/.//evil.com` kept our origin, then collapsed to `//evil.com`; it reached the preview link and, being shared, the
+   > sign-in/sign-up/callback/proxy returns, so it is its own commit); the dock's share menu wore `--shadow-lg` (the dock
+   > rides outside the desk shell; now zeroed on `.frame` too); the bracket halo is the rect's `filter` attribute again,
+   > not a stylesheet `url(#…)` (switch OFF draws it); the ticker's focus hold covers the × and pressing × lets go of
+   > both holds; the hook catches a failed first fetch. **Held:** switch-off parity (markup gains only inert attributes
+   > and a `display: contents` rail wrapper), server-decided switch, no shared cache, contact cache per request, timers,
+   > the × key, reduced motion, monogram. **Owner call, open:** the band says "Live now" after a champion is crowned on
+   > the last day (the club's one status rule ignores the crown; changing it moves the club home's word too).
+   > **Reported, not fixed:** the guard test's "keyed to the marker" checks only lines already carrying the marker
+   > (tighten before Stage 2); ticker edge cases (a midnight backlog all reading New; a dropped game re-fading once;
+   > reduced motion turned on mid-pass). **`check:layout`:** all 13 `pubt-*` screens rendered; only tap-floor/banner
+   > kinds, except one run that flagged 6 `content-overflow` on the first six screens, which could not be re-run (the
+   > machine fell under the memory floor): restart the dev server and re-run those six before the walk.
 3. **Commit** each step's changes only after the owner says yes (explicit pathspecs; other sessions share the tree).
 4. **The walk** (step 4 below): one purpose — *"with the preview on, every tournament page wears the new frame and
    reads on light; with it off, nothing changed"*. A checkable Artifact in §406's build, next free § in
