@@ -1,0 +1,393 @@
+<title>9d-2b Part 3 · Editing a published game, and the changes that wait</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the 12c walks' frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.opts { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.opt { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--fg); cursor: pointer; }
+.opt input { margin-top: 0; }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · House League · Stage 9d-2b · Part 3 · §420</span>
+    <h1>Editing a published game, and the changes that wait</h1>
+    <p class="sub">Written 2026-10-28 for Stage 9d-2b, Part 3. One purpose; sign it off on its own.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Once a division’s schedule is published, a game is no longer deleted or quietly rewritten: it is edited, and the change waits under Changes to send until the league admin sends it. This walk edits Walk U11’s published games and watches that happen: what a game’s window offers before and after publishing, a move that saves at once but waits, the public schedule keeping the old time until the send, Undo, a game moved twice or moved back, a window that has gone stale, a postponed game given a new date, and where a league admin may place a game compared with the owner.</p></section>
+  <section class="card"><h2>It passes when</h2><ul><li>A draft game offers Delete this game and no Cancel; the same game once published offers Cancel this game and no Delete, and its Home and Away read as facts.</li><li>A moved game is saved at once, the header shows Changes to send with an amber count, the list marks the row “Moved · not sent”, and the public schedule still shows the old time until the send.</li><li>Undo puts one game back (its row and the count go). A game moved twice reads once, with the date families heard. A game moved and moved back reads nothing.</li><li>A window left open while the game changed refuses the press with “This game changed while its window was open…”, refreshes to the new record, and the next press works.</li><li>A postponed game given a new date reads “Moved” with “Was …”, and families will hear it as one move.</li><li>A league admin can place a game only on Walk U11’s own game times (anything else is refused in words); the owner can place it anywhere.</li><li>One Send makes the changes live: the count clears and the public schedule shows the new time, marked Moved.</li></ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul><li>The families’ emails and the history that records them, the coaches’ copy, and the urgent cancel that goes on its own: walk §418. Dev has no email key, so nothing is mailed here either.</li><li>The club moving a division’s game time, and the coach’s own games page (Part 5).</li><li>Deleting a team on a published schedule. The server refuses it, but the screen no longer offers Delete on a published division’s teams, so there is nothing to press. It is covered by an automatic test, not by this walk.</li><li>The free League plan, where there is no club schedule and so no limit on where a game goes. The dev club (UAT Rep Club) is on the Club plan, so that half cannot be walked here.</li><li>Adding a game to a published schedule, Cancel this game and Put it back on. The cancel is walked in §418; the others are the same rules.</li></ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts"><dt>Needs</dt><dd>Walks §410 (Walk U11 and its six games) done. Then, in the project folder, run these two commands, in this order: <code>node --env-file=.env.local .probe/9d2b-p4/fixture.mjs</code> (gives Walk U11’s four teams eight children in seven households, so the family counts below are right) and then <code>node --env-file=.env.local .probe/9d2b-p4/fixture.mjs --reset</code> (Walk U11 back to a <strong>draft</strong>, its six games as generated, its changes and emails gone). Made 2026-10-28. <strong>Publishing can’t be undone in the product</strong>, so to walk this a second time run the <code>--reset</code> again first. If you have just walked §418, you need the <code>--reset</code> anyway: this walk starts with Walk U11 as a draft.</dd><dt>Start state</dt><dd>Walk U11 is a draft with six games: Sun, Nov 8, Nov 15 and Nov 22, at 8:00 a.m. and 9:30 a.m., Kinsmen Park · Diamond A. Nov 8: Bears vs Foxes, Owls vs Hawks. Nov 15: Hawks vs Bears, Foxes vs Owls. Nov 22: Owls vs Bears, Foxes vs Hawks. Walk U11’s own game times are the ten Sunday slots at 8:00 and 9:30 a.m. from Nov 8 to Dec 6, so Nov 29 and Dec 6 are free game times it can move onto.</dd><dt>End state</dt><dd>Walk U11 is published with nothing waiting to send. Five games are on their original times; <strong>Foxes vs Hawks</strong> has moved to Sun, Nov 29 at 9:30 a.m. and reads Moved. The <code>--reset</code> puts everything back.</dd><dt>Dev server</dt><dd>Restart it first: Part 3 added files. If a screen looks like the old one, restart it.</dd></dl></section>
+  <section class="card"><h2>Sign in as</h2><p>One browser window per person (a private window for the second). Dev only, keep this page private.</p><dl class="facts"><dt>League admin</dt><dd><code>uat-club-league-admin@uat-rep-club.local</code> · <code>UATPassword2026!</code> (Jordan Pike) — Parts A to F, and G1 and H</dd><dt>Owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> — Part G2 and G3 (a private window)</dd></dl><p class="sub">Sign in at <code>http://localhost:3000/login</code>.</p></section>
+  <section class="card"><h2>Where and on what</h2><dl class="facts"><dt>Club</dt><dd><code>uat-rep-club</code> (UAT Rep Club, the Club plan). House league: <strong>2026 Fall House League</strong>, division <strong>Walk U11</strong> (Hawks, Owls, Foxes, Bears).</dd><dt>Season schedule</dt><dd><code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code> — pick <strong>Walk U11</strong> in the division pill.</dd><dt>Public schedule</dt><dd><code>http://localhost:3000/uat-rep-club/league/2026-fall-house-league/schedule?d=a5b02ad7-49f4-4588-84dd-69321981bf83</code> — Walk U11’s tab. Keep it open in its own browser tab and reload it where a step says to. No sign-in is needed.</dd></dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul><li>A league admin’s move off Walk U11’s game times is refused in words (Part G1), and the form does not list the open times to pick from. Say if you want a picker.</li><li>Home and away are plain facts on a published game; a different match-up means cancelling the game and adding a new one (Part B2). Say if that is the right way round.</li><li>A game postponed and then given a new date before you send reads to families as ONE move, not a postpone and then a new date (Part F5).</li></ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "hl9d2b-p3-editing-v1";
+  var TITLE = "9d-2b Part 3 walk §420 · Editing a published game, and the changes that wait (2026-10-28)";
+  var LA = "League admin · uat-club-league-admin@uat-rep-club.local";
+  var OW = "Owner · uat-club-owner@uat-rep-club.local";
+  var SCHED = "<code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code>";
+  var PUB = "<code>http://localhost:3000/uat-rep-club/league/2026-fall-house-league/schedule?d=a5b02ad7-49f4-4588-84dd-69321981bf83</code>";
+  var PARTS = [
+ {
+  "id": "A",
+  "title": "Before publishing: a draft game",
+  "steps": [
+   {
+    "who": LA,
+    "do": "Sign in and open the season’s Schedule (" + SCHED + "). Pick <strong>Walk U11</strong>.",
+    "see": "<strong>Stop check:</strong> the division’s line reads <strong>Draft · 6 games · families see nothing yet</strong> and the header has a <strong>Publish schedule</strong> button; there is no <strong>Changes to send</strong>. If it already says Published, run the <code>--reset</code> above, reload, and start again."
+   },
+   {
+    "who": LA,
+    "do": "Open <strong>Owls vs Bears</strong> (Sun, Nov 22, 8:00 a.m.) and look at the doors at the foot of its window.",
+    "see": "<strong>Postpone this game</strong> and <strong>Delete this game</strong>. There is no <strong>Cancel this game</strong>: a draft deletes, and only a published schedule cancels."
+   },
+   {
+    "who": LA,
+    "do": "Press <strong>Edit this game</strong>. Look at the form, then press ✓ without changing anything, and close the window.",
+    "see": "The line <strong>Nobody is told: this schedule isn’t published yet.</strong> <strong>Home team</strong> and <strong>Away team</strong> are dropdowns you could change. ✓ with nothing changed just goes back to the record."
+   },
+   {
+    "who": LA,
+    "do": "Press <strong>Publish schedule</strong>, then <strong>Publish</strong> in the question.",
+    "see": "The button reads “Publishing…”, the window closes, and the division’s line reads <strong>Published {today} · 7 families told</strong>. The Publish schedule button is gone. (The emails this sends are walk §418’s.)"
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "A published game’s window",
+  "steps": [
+   {
+    "who": LA,
+    "do": "Open <strong>Owls vs Bears</strong> again and look at the doors at the foot of its window.",
+    "see": "<strong>Postpone this game</strong> and <strong>Cancel this game</strong>. <strong>Delete this game</strong> is gone: families have been told about this game, so it can only be cancelled."
+   },
+   {
+    "who": LA,
+    "do": "Press <strong>Edit this game</strong>. Look at the form, then press ✓ without changing anything, and close the window.",
+    "see": "The line <strong>Families hear about this when you send changes.</strong> <strong>Home</strong> (Owls) and <strong>Away</strong> (Bears) are plain facts, not dropdowns, with “Home and away can’t change on a published game. To play a different match-up, cancel this game and add a new one.” Date, Time, End time, Where and Notes are still editable."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "A move saves at once, and waits",
+  "steps": [
+   {
+    "who": LA,
+    "do": "Open <strong>Hawks vs Bears</strong> (Sun, Nov 15, 8:00 a.m.), press <strong>Edit this game</strong>, set the Date to <strong>Sun, Dec 6, 2026</strong> (leave the Time at 8:00 a.m. and the End time at 9:30 a.m.), and press ✓. Dec 6 at 8:00 a.m. is one of Walk U11’s own game times, which is what a league admin is allowed to use.",
+    "see": "The window goes straight back to the record. <strong>When</strong> reads “Sun, Dec 6, 2026 · 8:00–9:30 a.m.” with, under it, <strong>Moved · Was Sun, Nov 15 · 8:00 a.m.</strong>. It was saved at once, not held in the form."
+   },
+   {
+    "who": LA,
+    "do": "Close the window and look at the header, the division’s line and the list.",
+    "see": "The header shows <strong>Changes to send</strong> with an amber <strong>1</strong>. The division’s line gains “· 1 change not sent”, and a quiet line under it says “Until you send, the public schedule and the coaches’ pages still show the old games.” In the list, the Hawks vs Bears row (now in the Dec 6 week) is marked <strong>Moved · not sent</strong>."
+   },
+   {
+    "who": "Anyone · the public schedule, its own browser tab",
+    "do": "Open or reload the public schedule (" + PUB + ") and look at the weeks of Nov 15 and Dec 6.",
+    "see": "<strong>Hawks vs Bears is still on Sun, Nov 15 at 8:00 a.m.</strong>, with no Moved mark, and it is not listed on Dec 6. Families see the old time until you send. (The page says “Times in Eastern time.”)"
+   },
+   {
+    "who": LA,
+    "do": "Back on the Schedule, press <strong>Changes to send</strong>.",
+    "see": "One row with an <strong>Undo</strong>: <em>Hawks vs Bears · Sun, Nov 15: now Sun, Dec 6, 8:00 a.m.</em> and under it “Hawks and Bears families · 4 families”. The foot: “Reaches 4 families, one email each. The 2 teams’ coaches get a copy. Doesn’t count toward today’s …”. Buttons: <strong>Not yet</strong> and <strong>Send 1 change</strong>. Do not send."
+   },
+   {
+    "who": LA,
+    "do": "Press <strong>Undo</strong> on the row, then close the tray.",
+    "see": "A passing line “Undone. Hawks vs Bears is back as families last heard.” and the tray now reads <strong>Nothing is waiting to send.</strong> After closing: the header’s Changes to send is gone, Hawks vs Bears is back on Sun, Nov 15 at 8:00 a.m. with no Moved mark, and its window has no “Was” line."
+   }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "Moved twice reads once; moved back reads nothing",
+  "steps": [
+   {
+    "who": LA,
+    "do": "Open <strong>Foxes vs Owls</strong> (Sun, Nov 15, 9:30 a.m.), Edit, set the Date to <strong>Sun, Nov 29</strong>, ✓. Then open it again (it is in the Nov 29 week now), Edit, set the Date to <strong>Sun, Dec 6</strong>, ✓. Nov 29 and Dec 6 at 9:30 a.m. are both Walk U11’s game times.",
+    "see": "After the second ✓ the header’s count is still <strong>1</strong>, not 2. The window reads “Sun, Dec 6, 2026 · 9:30–11:00 a.m.” and <strong>Moved · Was Sun, Nov 15 · 9:30 a.m.</strong> — the day families heard, not the Nov 29 stop in between."
+   },
+   {
+    "who": LA,
+    "do": "Close the window and press <strong>Changes to send</strong>.",
+    "see": "<strong>One</strong> row: <em>Foxes vs Owls · Sun, Nov 15: now Sun, Dec 6, 9:30 a.m.</em> and “Foxes and Owls families · 4 families”. Moved twice reads as one move. Close the tray."
+   },
+   {
+    "who": LA,
+    "do": "Move it back: open <strong>Foxes vs Owls</strong>, Edit, set the Date to <strong>Sun, Nov 15</strong>, ✓. Then look at the header.",
+    "see": "The game is back on Sun, Nov 15 at 9:30 a.m. with no Moved mark. The header has no Changes to send button at all, because nothing is waiting. Moved and moved back reads nothing."
+   }
+  ]
+ },
+ {
+  "id": "E",
+  "title": "A window that has gone stale",
+  "steps": [
+   {
+    "who": LA,
+    "do": "Open the same Schedule (Walk U11) in a <strong>second browser tab</strong>. In <strong>both</strong> tabs open <strong>Owls vs Bears</strong> (Sun, Nov 22, 8:00 a.m.). In the <strong>first</strong> tab press Edit this game and type <strong>Gate opens at 7:30 a.m.</strong> in Notes. Do not press ✓ yet.",
+    "see": "Both tabs show the same game. Nothing has been saved."
+   },
+   {
+    "who": LA,
+    "do": "In the <strong>second</strong> tab press Edit this game, type <strong>Bring the big bases</strong> in Notes, and press ✓.",
+    "see": "It saves: the record shows Notes “Bring the big bases”. The header still has no Changes to send: a note is never news to families."
+   },
+   {
+    "who": LA,
+    "do": "Back in the <strong>first</strong> tab, press ✓.",
+    "see": "The line <strong>This game changed while its window was open. Close it and look again.</strong> The window has gone back to the record, which now shows the Notes from the second tab (“Bring the big bases”), not what you typed. Your note was not saved."
+   },
+   {
+    "who": LA,
+    "do": "In the first tab press Edit this game again, clear the Notes box, and press ✓. Then close the second tab.",
+    "see": "This time it saves (the next press works). The record has no Notes line. This also puts the game back as you found it."
+   }
+  ]
+ },
+ {
+  "id": "F",
+  "title": "Postpone, then give it a new date",
+  "steps": [
+   {
+    "who": LA,
+    "do": "Open <strong>Foxes vs Hawks</strong> (Sun, Nov 22, 9:30 a.m.) and press <strong>Postpone this game</strong>.",
+    "see": "One question, <strong>Postpone Foxes vs Hawks?</strong>: “Sun, Nov 22 · 9:30 a.m. · {the place}. The Foxes and Hawks families (4) can be emailed now, or with your other changes.” and “It moves to Needs a new date and stops holding its time and place. Families hear when you send changes, and the public schedule says Postponed from then.” Three buttons: <strong>Keep it</strong>, <strong>Postpone, send later</strong>, <strong>Postpone and tell families now</strong>."
+   },
+   {
+    "who": LA,
+    "do": "Press <strong>Postpone, send later</strong>.",
+    "see": "The record: <strong>Needs a new date</strong> under the title, <strong>When</strong> reading “Was Sun, Nov 22, 2026 · 9:30–11:00 a.m.”. The doors are now <strong>Give it a new date</strong> and <strong>Cancel this game</strong> (no Delete). The header shows <strong>Changes to send</strong> <strong>1</strong>, and in the list the game sits under <strong>Needs a new date</strong>. In Changes to send the row reads <em>Foxes vs Hawks · Sun, Nov 22: postponed</em>."
+   },
+   {
+    "who": "Anyone · the public schedule, its own browser tab",
+    "do": "Reload the public schedule and look at the week of Nov 22.",
+    "see": "<strong>Foxes vs Hawks is still on Sun, Nov 22 at 9:30 a.m.</strong>, as if nothing happened: no “Postponed”, and no “Needs a new date” section. Families hear it only when you send."
+   },
+   {
+    "who": LA,
+    "do": "Back on the Schedule, open <strong>Foxes vs Hawks</strong>, press <strong>Give it a new date</strong>, set the Date to <strong>Sun, Nov 29, 2026</strong> (leave the Time at 9:30 a.m. and the End time at 11:00 a.m.), and press ✓.",
+    "see": "The record: no state under the title, <strong>When</strong> “Sun, Nov 29, 2026 · 9:30–11:00 a.m.” and <strong>Moved · Was Sun, Nov 22 · 9:30 a.m.</strong>. In the list the game is back in the Nov 29 week, marked <strong>Moved · not sent</strong>, and it has left Needs a new date."
+   },
+   {
+    "who": LA,
+    "do": "Close the window and press <strong>Changes to send</strong>. Close the tray and leave it waiting.",
+    "see": "<strong>One</strong> row, not two: <em>Foxes vs Hawks · Sun, Nov 22: now Sun, Nov 29, 9:30 a.m.</em> and “Foxes and Hawks families · 4 families”. A postpone followed by a new date reads as the one move families will hear. The header count is <strong>1</strong>."
+   }
+  ]
+ },
+ {
+  "id": "G",
+  "title": "Where a game may go: league admin and owner",
+  "steps": [
+   {
+    "who": LA,
+    "do": "Open <strong>Owls vs Bears</strong> (Sun, Nov 22, 8:00 a.m.), Edit, set the Time to <strong>7:00 a.m.</strong> and the End time to <strong>8:30 a.m.</strong>, and press ✓. 7:00 a.m. is not one of Walk U11’s game times (they are 8:00 and 9:30 a.m.).",
+    "see": "The form stays open and says <strong>That’s outside Walk U11’s game time. Pick one of its open times, or give it more in House league’s time.</strong> Nothing was saved: the header’s count is still 1. Close the window (if it asks whether to leave without saving, leave).",
+    "call": "The form does not list the open times; you have to know them. See the call above."
+   },
+   {
+    "who": OW,
+    "do": "In a private window sign in as the owner, open the same Schedule on <strong>Walk U11</strong>, open <strong>Owls vs Bears</strong>, Edit, set the Time to <strong>7:00 a.m.</strong> and the End time to <strong>8:30 a.m.</strong>, and press ✓.",
+    "see": "It saves: the record shows “Sun, Nov 22, 2026 · 7:00–8:30 a.m.” and the header’s count is <strong>2</strong>. The owner gives the club’s game times, so the owner may place a game anywhere."
+   },
+   {
+    "who": OW,
+    "do": "Press <strong>Changes to send</strong>, then <strong>Undo</strong> on the Owls vs Bears row.",
+    "see": "Two rows: <em>Foxes vs Hawks · Sun, Nov 22: now Sun, Nov 29, 9:30 a.m.</em> and <em>Owls vs Bears · Sun, Nov 22: 8:00 a.m. → 7:00 a.m.</em> (“Owls and Bears families · 4 families”). A note about the Okafor household (a child on the Hawks and a child on the Owls) also appears under the rows; that is walk §418’s. After Undo: “Undone. Owls vs Bears is back as families last heard.”, one row is left (Foxes vs Hawks), and Owls vs Bears is back at 8:00 a.m."
+   }
+  ]
+ },
+ {
+  "id": "H",
+  "title": "Send, and the public page catches up",
+  "steps": [
+   {
+    "who": LA,
+    "do": "On the Schedule (Walk U11) press <strong>Changes to send</strong>, then <strong>Send 1 change</strong>.",
+    "see": "The button reads “Sending…” and can’t be pressed twice. The window closes with <strong>Sent to 4 families.</strong> and the header’s Changes to send is gone. The division’s line has no “· change not sent”. (Dev can’t mail, so nothing arrives; the emails are walk §418’s.)"
+   },
+   {
+    "who": "Anyone · the public schedule, its own browser tab",
+    "do": "Reload the public schedule and look at the weeks of Nov 22 and Nov 29.",
+    "see": "<strong>Foxes vs Hawks</strong> is now in the Nov 29 week at 9:30 a.m., marked <strong>Moved</strong> with <strong>Was Sun, Nov 22 · 9:30 a.m.</strong>, and it is no longer in the Nov 22 week. Hawks vs Bears, Foxes vs Owls and Owls vs Bears are all on their original days and times, with no Moved mark."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      function mk(key, label) {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + key.replace(/[^A-Za-z0-9]/g, '-'); cb.checked = !!state.ticks[key];
+        cb.addEventListener('change', function () { state.ticks[key] = cb.checked; save(); refresh(); });
+        boxes.push({ part: p.id, step: id, key: key, label: label, cb: cb });
+        return cb;
+      }
+      if (!s.opts) {
+        var row = el('label', 'step');
+        row.appendChild(mk(id, null)); row.appendChild(t); body.appendChild(row);
+      } else {
+        var row2 = el('div', 'step'); var col = el('div', 'txt'); col.appendChild(t);
+        var opts = el('div', 'opts');
+        s.opts.forEach(function (label) {
+          var ol = el('label', 'opt'); ol.appendChild(mk(id + ':' + label, label)); ol.appendChild(document.createTextNode(label)); opts.appendChild(ol);
+        });
+        col.appendChild(opts); row2.appendChild(col); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  /* A step counts as done when any of its boxes is ticked (one box, "Did it" or "Held"). */
+  function doneSteps(partId) {
+    var seen = {};
+    boxes.forEach(function (b) { if ((!partId || b.part === partId) && b.cb.checked) seen[b.step] = true; });
+    return Object.keys(seen);
+  }
+  var totalSteps = PARTS.reduce(function (n, p) { return n + p.steps.length; }, 0);
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = [];
+      boxes.filter(function (b) { return b.part === p.id && b.cb.checked; }).forEach(function (b) {
+        var plain = b.label === null || b.label === 'Did it';
+        ticked.push(plain ? b.step : b.step + ' (' + b.label + ')');
+      });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + doneSteps(p.id).length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

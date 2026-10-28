@@ -1,0 +1,343 @@
+<title>9d-2b Part 6 · Adjust the rules, a season’s Schedule health</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the 12c walks' frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.opts { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.opt { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--fg); cursor: pointer; }
+.opt input { margin-top: 0; }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · House League · Stage 9d-2b · Part 6 · §422</span>
+    <h1>Adjust the rules: a season’s Schedule health, scored by rules you set</h1>
+    <p class="sub">Written 2026-10-28 for Stage 9d-2b, Part 6. One purpose; sign it off on its own.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Schedule health’s window already says the rules a house league season is scored by (walk §411 said there was no way to change them). It now has the tournament’s <strong>Adjust the rules</strong> door at its foot, for whoever runs the season: three rules, saved on the season. The score above follows each rule as you change it, before anything is saved. This walk changes a season’s rules, watches the score move, closes without saving, saves, and puts the defaults back.</p></section>
+  <section class="card"><h2>It passes when</h2><ul><li>The door is at the window’s foot for the owner; the three rules open under it: A team can play twice in a day, Home and away can differ by, and one Games per team field for each division.</li><li>The score and tiles follow the draft live: on Dev House League 2026, 65 becomes 70 with Home and away at 2 games, and 60 with Division A at 3 games per team.</li><li>Unsaved rules ask before the window closes, and the issue doors that leave the window are gone until they are saved or discarded.</li><li>Save rules keeps them on the season; Restore defaults and Save puts the defaults back.</li><li>A registrar reads the rules in words with no door; a finished season has no door either.</li><li>Generate games’ check follows the season’s rules, and the tournament’s own Adjust the rules still works as before.</li></ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul><li>A finished season’s refusal on a Save. There is no door to press on one, so the server’s refusal (“This season is finished, so its rules can’t change.”) can’t be reached from the screen.</li><li>Generate games dropping “plays twice” where the season allows it. Dev data can’t make a team play twice in a day, so Part F reads the other half: the check’s score following the rules.</li><li>The help articles: they are rewritten once for all of 9d-2b in Part 7.</li></ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts"><dt>Needs</dt><dd>Nothing to make. Parts A to E use <strong>Dev House League 2026</strong> in <code>dev-league-org</code>. Part F uses UAT Rep Club’s <strong>2026 Fall House League</strong> and the Part 4 / 9d-2a fixture (see F1). The numbers 65, 70 and 60 are from the dev data on 2026-10-28 (the build’s oracle); if its games have changed since, the numbers move with them. What matters is that each one goes the same way.</dd><dt>Dev server</dt><dd>Restart it first: Part 6 added a route (saving the rules) and new files, and migration 412 (dev only) is what keeps the rules. If the window has no Adjust the rules door, restart it.</dd><dt>Known gap</dt><dd>The save route and the window were committed without being run through the dev server (it needed a restart). This is their first real run, so a Save that says “The rules didn’t save. Try again.” is a finding, not a slip.</dd><dt>Start state</dt><dd>Both seasons on the default rules: <strong>A team can play twice in a day</strong> No, <strong>Home and away can differ by</strong> 1 game, <strong>Games per team</strong> empty for every division. Open Adjust the rules once and look before you begin; if a season is not on these, press Restore defaults and Save rules.</dd><dt>End state</dt><dd>The same defaults on both seasons. D3 puts back Dev House League 2026’s, F3 puts back 2026 Fall House League’s. Nothing else is left changed (Part G saves nothing).</dd></dl></section>
+  <section class="card"><h2>Sign in as</h2><p>One browser window per person (a private window for the second). Dev only, keep this page private.</p><dl class="facts"><dt>Owner (Parts A to D, E2)</dt><dd><code>league-owner@dev.local</code> · <code>devpass123</code></dd><dt>Registrar (E1)</dt><dd><code>uat-club-registrar@uat-rep-club.local</code> · <code>UATPassword2026!</code></dd><dt>Owner (Part F)</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code></dd><dt>Tournament admin (G)</dt><dd>The sign-in your earlier tournament walks used, on any tournament that has games with times.</dd></dl><p class="sub">Sign in at <code>http://localhost:3000/login</code>.</p></section>
+  <section class="card"><h2>Where and on what</h2><dl class="facts"><dt>Dev House League 2026</dt><dd><code>http://localhost:3000/dev-league-org/admin/house-league/seasons/a13b2a3b-b0da-4b1b-bccb-c4425504c3c6/schedule</code> (Playing; divisions <strong>Division A</strong>: Cardinals, Jays, Orioles, and <strong>Division B</strong>: Tigers, Cubs, Braves)</dd><dt>Dev House League 2025</dt><dd><code>http://localhost:3000/dev-league-org/admin/house-league/seasons/7b930339-3dde-4253-af16-0826ef590db3/schedule</code> (Finished)</dd><dt>2026 Fall House League</dt><dd><code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code> (UAT Rep Club, the Club plan)</dd></dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul><li>Games per team is one field for each division, not one number for the season (a round robin gives 8 teams 7 games and 5 teams 4). Empty means “the number most of its teams were given”. Say if one number for the whole season would do (Part A step 2).</li><li>The door sits at the window’s foot, under the rules said in words, and the rules open under it, as the tournament’s do. Say if it should sit higher.</li><li>While rules are unsaved, the issue doors that close the window are gone rather than greyed (Part B step 2). Say if you would rather see them greyed.</li></ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "hl9d2b-p6-rules-door-v1";
+  var TITLE = "9d-2b Part 6 walk §422 · Adjust the rules, a season’s Schedule health (2026-10-28)";
+  var PARTS = [
+ {
+  "id": "A",
+  "title": "The door and the three rules",
+  "steps": [
+   {
+    "who": "Owner · league-owner@dev.local",
+    "do": "Open Dev House League 2026’s Schedule (<code>http://localhost:3000/dev-league-org/admin/house-league/seasons/a13b2a3b-b0da-4b1b-bccb-c4425504c3c6/schedule</code>), press <strong>Schedule health</strong>, and scroll to the window’s foot.",
+    "see": "<strong>Stop check:</strong> the score reads <strong>65</strong>. The foot says “The score uses this season’s rules.”, then <strong>Games per team</strong> 2 with “Games per team is the number most of a division’s teams were given.”, <strong>A team can play twice in a day</strong> No, and <strong>Home and away can differ by</strong> 1 game. Under them a button, <strong>Adjust the rules</strong>. If a rule reads otherwise, press Adjust the rules, Restore defaults and Save rules, then start again."
+   },
+   {
+    "who": "Owner · league-owner@dev.local",
+    "do": "Press <strong>Adjust the rules</strong>.",
+    "see": "The door reads as pressed and the rules open under it, replacing the words: <strong>A team can play twice in a day</strong> (a choice, No), <strong>Home and away can differ by</strong> (a choice, 1 game; 0 games to 5 games), then <strong>Games per team · Division A</strong> and <strong>Games per team · Division B</strong>, each an empty number field showing a faint 2. Buttons <strong>Restore defaults</strong> and <strong>Save rules</strong> (Save is dimmed; there is no Discard yet). Under them: “The score above follows as you change them. Leave games per team empty to use the number most of the division’s teams were given.”",
+    "call": "Games per team is one field per division, not one number for the season. Say if one number would do."
+   },
+   {
+    "who": "Owner · league-owner@dev.local",
+    "do": "Press <strong>Adjust the rules</strong> again without changing anything.",
+    "see": "The rules close and the words are back. No question is asked, because nothing was changed."
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "The score follows the rules as you change them",
+  "steps": [
+   {
+    "who": "Owner · league-owner@dev.local",
+    "do": "Open <strong>Adjust the rules</strong> and set <strong>Home and away can differ by</strong> to <strong>2 games</strong>. Do not save.",
+    "see": "The score above the issues moves as you choose, <strong>65 to 70</strong>. The <strong>Home/away</strong> tile goes from “2 off” to <strong>0 off</strong>, its line from “off by more than 1” to “off by more than 2”, and the home-and-away issue is gone from the list. A <strong>Discard</strong> button now sits beside <strong>Save rules</strong>, and Save is no longer dimmed."
+   },
+   {
+    "who": "Owner · league-owner@dev.local",
+    "do": "Look at the issues’ doors while the rules are unsaved.",
+    "see": "The postponed game’s <strong>Give it a new date</strong> is gone, and so is any door that would close the window onto the schedule: leaving would drop the rules unasked. <strong>Team detail</strong> still opens inside the window.",
+    "call": "Doors that leave are removed, not greyed. Say if you would rather see them greyed."
+   },
+   {
+    "who": "Owner · league-owner@dev.local",
+    "do": "Press <strong>Discard</strong> (beside Save rules).",
+    "see": "Home and away is back to 1 game, the score is back to <strong>65</strong>, the Home/away tile says “2 off” again, the doors are back, and Discard is gone."
+   },
+   {
+    "who": "Owner · league-owner@dev.local",
+    "do": "Type <strong>3</strong> in <strong>Games per team · Division A</strong>. Leave it unsaved (Part C needs it).",
+    "see": "The score goes from 65 to <strong>60</strong>. The Games tile reads “1 of 6” (it was “2 of 6”): Division A’s teams are now measured against 3 games. In <strong>Team detail</strong>, Cardinals and Orioles read “1 of 3” (with their postponed game after it) and Jays “2 of 3”; Division B’s teams still read “of 2”."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "Unsaved rules ask before the window closes",
+  "steps": [
+   {
+    "who": "Owner · league-owner@dev.local",
+    "do": "With Division A at 3 still unsaved, press the window’s <strong>×</strong> (or Escape).",
+    "see": "The window does not close. Its foot asks “Close without saving? What you typed won’t be kept.” with <strong>Keep writing</strong> and <strong>Discard</strong>. Press <strong>Keep writing</strong>: the rules are as you left them, Division A still 3, the score still 60."
+   },
+   {
+    "who": "Owner · league-owner@dev.local",
+    "do": "Press <strong>×</strong> again and this time <strong>Discard</strong> (the one in the question, not the rules’ own).",
+    "see": "The window closes. Press <strong>Schedule health</strong> again: the score is <strong>65</strong> and the foot’s words are the defaults. Nothing was saved."
+   }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "Save keeps them, and the defaults come back",
+  "steps": [
+   {
+    "who": "Owner · league-owner@dev.local",
+    "do": "Open <strong>Adjust the rules</strong>, set <strong>Home and away can differ by</strong> to <strong>2 games</strong> and <strong>Games per team · Division A</strong> to <strong>3</strong>, then press <strong>Save rules</strong>.",
+    "see": "The button reads “Saving…”, then the rules close and the window stays open. The foot says them in words: <strong>Games per team</strong> named by division (Division A 3, Division B 2), <strong>A team can play twice in a day</strong> No, <strong>Home and away can differ by</strong> 2 games. The score is the one the editor showed a moment ago. Close the window and reload the page: reopen Schedule health and the same rules and score are there.",
+    "call": "Known gap: this is the save route’s first run on the dev server. “The rules didn’t save. Try again.” is a finding."
+   },
+   {
+    "who": "Owner · league-owner@dev.local",
+    "do": "Open <strong>Adjust the rules</strong> and press <strong>Restore defaults</strong>.",
+    "see": "The fields go to No, 1 game, and both Games per team fields empty. Nothing is saved yet: Save rules is lit and the score above shows the defaults’ score."
+   },
+   {
+    "who": "Owner · league-owner@dev.local",
+    "do": "Press <strong>Save rules</strong>.",
+    "see": "Back to the start state: the foot reads Games per team 2, No, 1 game, and the score is <strong>65</strong>. The season is left on its defaults."
+   }
+  ]
+ },
+ {
+  "id": "E",
+  "title": "A reader, and a finished season",
+  "steps": [
+   {
+    "who": "Registrar · uat-club-registrar@uat-rep-club.local",
+    "do": "Open 2026 Fall House League’s Schedule (<code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code>), press <strong>Schedule health</strong> and read the foot.",
+    "see": "“The score uses this season’s rules.” and the rules in words (<strong>A team can play twice in a day</strong> No, <strong>Home and away can differ by</strong> 1 game, Games per team). <strong>No Adjust the rules</strong> door and no editor."
+   },
+   {
+    "who": "Owner · league-owner@dev.local",
+    "do": "Open Dev House League 2025’s Schedule (<code>http://localhost:3000/dev-league-org/admin/house-league/seasons/7b930339-3dde-4253-af16-0826ef590db3/schedule</code>) and press <strong>Schedule health</strong>.",
+    "see": "Dev House League 2025 has no games on dev, so the window says “Nothing to score yet. Schedule health appears once games have a time.”, with the rules in words below it and <strong>no Adjust the rules</strong> door, even for the owner.",
+    "opts": [
+     "Saw it",
+     "No Schedule health button on a Finished season"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "F",
+  "title": "Generate games’ check follows the season’s rules",
+  "steps": [
+   {
+    "who": "You · the project folder, then Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Run <code>node --env-file=.env.local .probe/9d2a-walk/fixture.mjs --remove</code> and then <code>node --env-file=.env.local .probe/9d2a-walk/fixture.mjs</code> (it gives Walk U11 four teams and no games again; Part 4’s email walk needs its own fixture run again afterwards). Then sign in as the owner, open 2026 Fall House League’s Schedule, pick <strong>Walk U11</strong>, press <strong>Generate games</strong>, press <strong>Next: match-ups</strong> (if it says Walk U11 has no game time yet, give it the time it offers first), leave <strong>Once</strong> and press <strong>Check the games</strong>.",
+    "see": "The check: “Every team plays 3 games, 1 or 2 at home.” and a line <strong>Schedule health N.</strong> Write N down. Close the window without saving.",
+    "opts": [
+     "Did it",
+     "Skipped it: no fixture"
+    ]
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Open <strong>Schedule health</strong>, press <strong>Adjust the rules</strong>, set <strong>Home and away can differ by</strong> to <strong>0 games</strong> and press <strong>Save rules</strong>.",
+    "see": "Saved: next to “Home and away can differ by” the foot reads <strong>0 games</strong>."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Run Generate games on Walk U11 again to the check (Once). Then Cancel, and put the rules back: Schedule health, <strong>Adjust the rules</strong>, <strong>Restore defaults</strong>, <strong>Save rules</strong>.",
+    "see": "<strong>Schedule health</strong> reads lower than N: with 3 games each, no Walk U11 team can split home and away evenly, so the stricter rule counts them. After the restore, the foot reads 1 game again (End state)."
+   }
+  ]
+ },
+ {
+  "id": "G",
+  "title": "The tournament’s own Adjust the rules, as before",
+  "steps": [
+   {
+    "who": "Tournament admin · the sign-in your tournament walks used",
+    "do": "On a tournament’s Schedule, press <strong>Schedule health</strong>, press <strong>Adjust the rules</strong> at the window’s end, change <strong>Target games / team</strong>, then press <strong>Discard</strong> (do not save).",
+    "see": "Under “The score uses this tournament's rules.” the rules open: <strong>Max games / day</strong>, <strong>Min rest between games (min)</strong> and <strong>Target games / team</strong> (a faint “No target”), with Restore defaults, Discard and Save rules, and “The score and warnings above update live as you adjust. Saved per tournament.” The score follows the field; Discard puts it back. Nothing like a house league’s three rules shows here."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      function mk(key, label) {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + key.replace(/[^A-Za-z0-9]/g, '-'); cb.checked = !!state.ticks[key];
+        cb.addEventListener('change', function () { state.ticks[key] = cb.checked; save(); refresh(); });
+        boxes.push({ part: p.id, step: id, key: key, label: label, cb: cb });
+        return cb;
+      }
+      if (!s.opts) {
+        var row = el('label', 'step');
+        row.appendChild(mk(id, null)); row.appendChild(t); body.appendChild(row);
+      } else {
+        var row2 = el('div', 'step'); var col = el('div', 'txt'); col.appendChild(t);
+        var opts = el('div', 'opts');
+        s.opts.forEach(function (label) {
+          var ol = el('label', 'opt'); ol.appendChild(mk(id + ':' + label, label)); ol.appendChild(document.createTextNode(label)); opts.appendChild(ol);
+        });
+        col.appendChild(opts); row2.appendChild(col); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  /* A step counts as done when any of its boxes is ticked (one box, "Did it" or "Held"). */
+  function doneSteps(partId) {
+    var seen = {};
+    boxes.forEach(function (b) { if ((!partId || b.part === partId) && b.cb.checked) seen[b.step] = true; });
+    return Object.keys(seen);
+  }
+  var totalSteps = PARTS.reduce(function (n, p) { return n + p.steps.length; }, 0);
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = [];
+      boxes.filter(function (b) { return b.part === p.id && b.cb.checked; }).forEach(function (b) {
+        var plain = b.label === null || b.label === 'Did it';
+        ticked.push(plain ? b.step : b.step + ' (' + b.label + ')');
+      });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + doneSteps(p.id).length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
