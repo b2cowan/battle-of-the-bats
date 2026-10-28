@@ -1,15 +1,14 @@
 'use client';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { AlertTriangle, Calendar, CalendarClock, Clock, MoreHorizontal, Plus, X, Wand2 } from 'lucide-react';
+import { AlertTriangle, Calendar, CalendarClock, CalendarDays, CalendarRange, Clock, List, MoreHorizontal, Plus, X, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
-import { ORG_TIME_ZONE, formatInOrgZone, orgWeekKey, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
+import { ORG_TIME_ZONE, mondayOfDay, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
 import { isFreeFloorLeague } from '@/lib/free-floor';
 import { useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import { fieldNounFor } from '@/lib/sports';
 import FeedbackModal from '@/components/FeedbackModal';
-import HelpCallout from '@/components/help/HelpCallout';
 import WhereField, { WhereLine } from '@/components/venue/WhereField';
 import { useClashCheck } from '@/components/venue/useClashCheck';
 import { EMPTY_WHERE, clubVenueOptions, pickedVenueKinds, whereLibraryBody, whereOfLibraryRow, type WhereValue } from '@/lib/where-field';
@@ -20,6 +19,22 @@ import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICSFromInstants, houseLeagueCalendarEntries,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
 } from '@/lib/export';
+import { pluralize } from '@/lib/utils';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { monthWords } from '@/lib/calendar-recipe';
+import { EVENT_COLORS } from '@/lib/coach-schedule-vocab';
+import { rangeFor, stepCursor, type CalendarView } from '@/lib/club-calendar-view';
+import { SEASON_SCHEDULE_WORDS as W, seasonCalendar, seasonClashes, seasonOpeningDay, type SeasonBooking } from '@/lib/league-season-calendar';
+import ExportMenu from '@/components/admin/ExportMenu';
+import { CoachListToolbar } from '@/components/coaches/kit';
+import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
+import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
+import FilterGroup from '@/components/coaches/FilterGroup';
+import { WeekView } from '@/components/admin/kit/club/ClubCalendarViews';
+import { CalendarViewSwitch, ScheduleDateNav } from '@/components/coaches/ScheduleCalendarViews';
+import { NeedsDateFold, SeasonListView, SeasonMonthView } from '@/components/admin/kit/club/league/schedule/SeasonScheduleViews';
+import cal from '@/components/admin/kit/club/ClubCalendar.module.css';
+import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import HouseLeagueTimeWindow from '@/components/admin/kit/club/league/time/HouseLeagueTimeWindow';
@@ -29,7 +44,7 @@ import PracticeTimeWindow from '@/components/admin/kit/club/league/time/Practice
 import PracticeWindow from '@/components/admin/kit/club/league/practices/PracticeWindow';
 import { PRACTICE_TIME_WORDS, PRACTICE_WINDOW_WORDS } from '@/lib/league-practice-time';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { RecordDelete, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
+import { LoadFailed, RecordDelete, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
 import { useKitButtons, useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
@@ -83,6 +98,8 @@ interface GenerateConfig {
 }
 
 interface PracticeForm {
+  /** The team it is for — chosen on Add (the schedule draws every team's practices together), fixed on an edit. */
+  teamId: string;
   recurring: boolean;
   scheduledDate: string;
   dayOfWeek: string;
@@ -142,26 +159,11 @@ function isoToTimeInput(iso: string): string {
   return utcToZonedInputs(iso).time;
 }
 
-// ⚠ A game files under the week of its day IN THE ORG'S ZONE (`orgWeekKey`, Club Tier Stage 6b, Ask 8): this page kept its
-// own key on the device's clock, and its label read the key's midnight in UTC — so the heading named the Sunday before
-// ("Week of October 18" over a week that starts Monday the 19th) and a Sunday game after 8 p.m. on a UTC device filed
-// into the next week.
-function weekLabel(key: string): string {
-  return `Week of ${formatInOrgZone(`${key}T12:00:00Z`, { month: 'long', day: 'numeric', year: 'numeric' })}`;
-}
-
 const STATUS_LABELS: Record<LeagueGameStatus, string> = {
   scheduled: 'Scheduled',
   completed: 'Completed',
   postponed: 'Postponed',
   cancelled: 'Cancelled',
-};
-
-const STATUS_CLASS: Record<LeagueGameStatus, string> = {
-  scheduled: styles.gameStatusScheduled,
-  completed: styles.gameStatusCompleted,
-  postponed: styles.gameStatusPostponed,
-  cancelled: styles.gameStatusCancelled,
 };
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -664,6 +666,7 @@ function GenerateModal({
 
 function PracticeModal({
   team,
+  teams,
   venues,
   sport,
   checkPath,
@@ -673,7 +676,10 @@ function PracticeModal({
   onSave,
   onClose,
 }: {
-  team: LeagueTeam;
+  /** The practice's team on an edit; null on Add, which asks (`teams`). */
+  team: LeagueTeam | null;
+  /** Add's choice of team: the division's (9d-2a step 3 — Add › A practice). */
+  teams: LeagueTeam[];
   venues: ClubVenueOption[];
   sport: string | null | undefined;
   checkPath: string;
@@ -692,6 +698,7 @@ function PracticeModal({
     const start = p?.scheduledAt ? utcToZonedInputs(p.scheduledAt) : null;
     const end = p?.endsAt ? utcToZonedInputs(p.endsAt) : null;
     return {
+      teamId: team?.id ?? teams[0]?.id ?? '',
       recurring: false,
       scheduledDate: start?.date || today,
       dayOfWeek: '2',
@@ -704,7 +711,7 @@ function PracticeModal({
     };
   });
   const rest = editing?.scope === 'rest';
-  const title = editing ? PRACTICE_WINDOW_WORDS.editTitle(team.name) : `Add practice — ${team.name}`;
+  const title = editing && team ? PRACTICE_WINDOW_WORDS.editTitle(team.name) : 'Add practice';
 
   function set(k: keyof PracticeForm, v: string | boolean) {
     setForm(f => ({ ...f, [k]: v }));
@@ -714,7 +721,7 @@ function PracticeModal({
   // write — and its refusal names the date; another program's booking names its dates in amber. An edit checks the
   // dates it reaches, leaving out the practices it moves.
   const { refused, line, checking, lineIsCurrent } = useLeagueLine({
-    checkPath, sport, where: form.where, venues, kind: 'practice', teamId: team.id,
+    checkPath, sport, where: form.where, venues, kind: 'practice', teamId: form.teamId,
     series: !editing && form.recurring
       ? { dayOfWeek: Number(form.dayOfWeek), startDate: form.startDate, endDate: form.endDate, startTime: form.startTime, endTime: form.endTime }
       : null,
@@ -732,6 +739,15 @@ function PracticeModal({
         </div>
 
         {rest && <p style={{ fontSize: '0.88rem', color: 'var(--white-60)', marginBottom: '1rem' }}>{PRACTICE_WINDOW_WORDS.editRestHint}</p>}
+
+        {!editing && (
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="hl-practice-team">Team</label>
+            <select id="hl-practice-team" className={styles.select} value={form.teamId} onChange={e => set('teamId', e.target.value)}>
+              {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </div>
+        )}
 
         {!editing && <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
           <button
@@ -803,7 +819,7 @@ function PracticeModal({
           <button
             style={refused ? { ...B.primary, ...REFUSED_LOOK } : B.primary}
             onClick={async () => { if (await lineIsCurrent()) await onSave(form); }}
-            disabled={saving || refused || checking}
+            disabled={saving || refused || checking || !form.teamId}
           >
             {saving ? 'Saving…' : editing ? PRACTICE_WINDOW_WORDS.save : form.recurring ? 'Create series' : 'Create practice'}
           </button>
@@ -884,6 +900,26 @@ function CancelPracticeModal({
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
+/*
+ * THE SEASON'S SCHEDULE (House League 9d-2a step 3; ruling 9d2·12, frames b1–b3). List · Week · Month with games and
+ * practices together, on the club calendar's own parts — the switch (`CalendarViewSwitch`), the date row
+ * (`ScheduleDateNav`), the Week (`WeekView`), the quiet Show pill — and the season's List, Month and "Needs a new date"
+ * fold (`SeasonScheduleViews`). The page reads the WHOLE season once (teams, games, practices) and the division is a scope
+ * over it: switching is instant, and a clash with another division's booking on the same diamond is still marked.
+ *   the toolbar — the division (the scope pill, leading — C4) · the switch · the dates (Week and Month; List is the season,
+ *                 R1) · Show · Export · Add · Tools. On a phone the switch is the View drawer's glyph in the title row, Week
+ *                 and Month only (on a phone List and Week both stack a week's days).
+ *   ⚰ the Practices view (→ 2026-10-27): a third kind of view, where C1 says a view is a span of time. A practice is a
+ *     booking in every view and opens its window (h2); Add asks a game or a practice, and a practice asks its team.
+ */
+const VIEWS: CalendarView[] = ['list', 'week', 'month'];
+/** The phone's View drawer — no List: on a phone it is the same stack of day frames as Week. */
+const PHONE_VIEWS: CalendarView[] = ['week', 'month'];
+const VIEW_WORD: Record<CalendarView, string> = { list: 'List', week: 'Week', month: 'Month' };
+const VIEW_GLYPH: Record<CalendarView, React.ElementType> = { list: List, week: CalendarRange, month: CalendarDays };
+/** A booking's edge on one division's calendar is its KIND (R4: the kind on a one-team calendar), the coach's two colours. */
+const KIND_COLOUR = { game: EVENT_COLORS.league_game, practice: EVENT_COLORS.practice } as const;
+
 export default function SchedulePage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
   const { currentOrg } = useOrg();
@@ -898,13 +934,24 @@ export default function SchedulePage() {
   const [health, setHealth] = useState<ScheduleHealth | null>(null);
   const [divisions, setDivisions] = useState<LeagueDivision[]>([]);
   const [selectedDivId, setSelectedDivId] = useState('');
+  // The whole season's (step 3): the division is a scope over them, never a second read.
   const [teams, setTeams] = useState<LeagueTeam[]>([]);
   const [games, setGames] = useState<LeagueGame[]>([]);
   const [practices, setPractices] = useState<LeaguePractice[]>([]);
-  const [selectedTeamId, setSelectedTeamId] = useState('');
-  const [viewMode, setViewMode] = useState<'week' | 'list' | 'practices'>('week');
+  const [scheduleRead, setScheduleRead] = useState<'loading' | 'ok' | 'failed'>('loading');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // The calendar (9d2·12): the view, the cursor's day, and the Show filter (not remembered between visits — the club
+  // calendar's 2026-10-01 rule). A desk opens on List, the season (R1); a phone draws Week for it.
+  const phone = useIsPhone();
+  const [view, setView] = useState<CalendarView>('list');
+  const shownView: CalendarView = phone && view === 'list' ? 'week' : view;
+  /** The day the admin moved the dates to; until then the season's own opening day (C3, below). */
+  const [cursorPick, setCursorPick] = useState<string | null>(null);
+  const [show, setShow] = useState<Set<string>>(() => new Set());
+  /** Month's day, opened in List (Week on a phone) — scrolled to once that view is drawn. */
+  const jumpTo = useRef<string | null>(null);
 
   const [showGenerate, setShowGenerate] = useState(false);
   const [gameModalOpen, setGameModalOpen] = useState(false);
@@ -981,23 +1028,24 @@ export default function SchedulePage() {
     if (res.ok) setHealth(await res.json());
   }, [seasonId, orgQuery]);
 
-  const loadTeamsAndGames = useCallback(async (divId: string) => {
-    const orgParam = orgQuery ? orgQuery.replace('?', '&') : '';
-    const [teamsRes, gamesRes] = await Promise.all([
-      fetch(`/api/admin/house-league/seasons/${seasonId}/teams?divisionId=${divId}${orgParam}`),
-      fetch(`/api/admin/house-league/seasons/${seasonId}/schedule?divisionId=${divId}${orgParam}`),
-    ]);
-    const newTeams = teamsRes.ok ? ((await teamsRes.json()).teams ?? []) : [];
-    setTeams(newTeams);
-    setSelectedTeamId(t => t || (newTeams[0]?.id ?? ''));
-    if (gamesRes.ok) setGames((await gamesRes.json()).games ?? []);
-  }, [seasonId, orgQuery]);
-
-  const loadPractices = useCallback(async (teamId: string) => {
-    const orgParam = orgQuery ? orgQuery.replace('?', '&') : '';
-    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/practices?teamId=${teamId}${orgParam}`);
-    if (res.ok) setPractices((await res.json()).practices ?? []);
-  }, [seasonId, orgQuery]);
+  /** The whole season's teams, games and practices — one read, every division (step 3). A failed read says so; it never
+   *  draws an empty season. */
+  const beginRead = useLatestRead();
+  const loadSchedule = useCallback(async () => {
+    const current = beginRead();
+    const get = (path: string) => fetch(`/api/admin/house-league/seasons/${seasonId}/${path}${orgQuery}`, { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null)).catch(() => null);
+    const [t, g, p] = await Promise.all([get('teams'), get('schedule'), get('practices')]);
+    if (!current()) return;
+    if (!t || !g || !p) { setScheduleRead(r => (r === 'ok' ? r : 'failed')); return; }
+    setTeams(t.teams ?? []);
+    setGames(g.games ?? []);
+    setPractices(p.practices ?? []);
+    setScheduleRead('ok');
+  }, [seasonId, orgQuery, beginRead]);
+  useDeferredLoad(!!orgQuery, loadSchedule);
+  /** After a write: the schedule and the season's health strip read again. */
+  const reload = () => Promise.all([loadSchedule(), loadHealth()]);
 
   useEffect(() => {
     setLoading(true);
@@ -1007,61 +1055,60 @@ export default function SchedulePage() {
   useEffect(() => { void loadVenues(); }, [loadVenues]);
   useEffect(() => { void loadHealth(); }, [loadHealth]);
 
-  useEffect(() => {
-    if (selectedDivId) {
-      setSelectedTeamId('');
-      loadTeamsAndGames(selectedDivId);
-    }
-  }, [selectedDivId, loadTeamsAndGames]);
-
-  useEffect(() => {
-    if (viewMode === 'practices' && selectedTeamId) {
-      void loadPractices(selectedTeamId);
-    }
-  }, [viewMode, selectedTeamId, loadPractices]);
-
   // ── Derived ────────────────────────────────────────────────────────────────
 
   const selectedDiv = divisions.find(d => d.id === selectedDivId);
   const teamMap = useMemo(() => new Map(teams.map(t => [t.id, t])), [teams]);
+  const teamName = useMemo(() => new Map(teams.map(t => [t.id, t.name])), [teams]);
+  /** The division's teams — its games' and its practices' (a practice belongs to its team's division). */
+  const divTeams = useMemo(() => teams.filter(t => t.divisionId === selectedDivId), [teams, selectedDivId]);
+  const divGames = useMemo(() => games.filter(g => g.divisionId === selectedDivId), [games, selectedDivId]);
+  const divPractices = useMemo(() => practices.filter(p => teamMap.get(p.teamId)?.divisionId === selectedDivId), [practices, teamMap, selectedDivId]);
 
   // Sport-neutral surface noun ("Diamond" / "Court" / "Field") — never hard-coded.
   const noun = fieldNounFor(season?.sport);
   // The club's venues as the Venue field offers them (Club Tier Stage 6a), and the windows' live check.
   const clubVenues = useMemo(() => clubVenueOptions(venues), [venues]);
   const checkPath = `/api/admin/house-league/seasons/${seasonId}/venue-check${orgQuery}`;
-  const conflictKeys = useMemo(
-    () => new Set((health?.conflicts ?? []).map(c => `${c.kind}:${c.id}`)),
-    [health],
-  );
 
-  const weekGroups = useMemo(() => {
-    const map = new Map<string, LeagueGame[]>();
-    const unscheduled: LeagueGame[] = [];
-    for (const g of games) {
-      if (!g.scheduledAt) { unscheduled.push(g); continue; }
-      const key = orgWeekKey(g.scheduledAt);
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(g);
-    }
-    const sorted = [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
-    if (unscheduled.length) sorted.push(['unscheduled', unscheduled]);
-    return sorted;
-  }, [games]);
+  // The season as the calendar's bookings (step 1's `seasonCalendar`): every view draws these. The clashes are the whole
+  // season's (`seasonClashes`), so another division's booking on the same facility still marks this one.
+  const calendar = useMemo(() => {
+    const venueById = new Map(venues.map(v => [v.id, v]));
+    const c = seasonCalendar({
+      seasonName: season?.name ?? '', sport: season?.sport ?? null, games: divGames, practices: divPractices, teamName,
+      divisionName: new Map(divisions.map(d => [d.id, d.name])),
+      placeOf: (venueId, facilityId) => {
+        const v = venueById.get(venueId);
+        if (!v) return null;
+        return { venue: v.name, facility: (facilityId && v.facilities?.find(f => f.id === facilityId)?.name) || null, address: v.address ?? null };
+      },
+      clashes: seasonClashes({ games, practices, teamName }),
+    });
+    const paint = (b: SeasonBooking): SeasonBooking => ({ ...b, colour: b.kind === 'practice' ? KIND_COLOUR.practice : KIND_COLOUR.game });
+    return { bookings: c.bookings.map(paint), needsDate: c.needsDate.map(paint) };
+  }, [season, divGames, divPractices, games, practices, teamName, divisions, venues]);
 
-  const practiceWeekGroups = useMemo(() => {
-    const map = new Map<string, LeaguePractice[]>();
-    const unscheduled: LeaguePractice[] = [];
-    for (const p of practices) {
-      if (!p.scheduledAt) { unscheduled.push(p); continue; }
-      const key = orgWeekKey(p.scheduledAt);
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(p);
-    }
-    const sorted = [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
-    if (unscheduled.length) sorted.push(['unscheduled', unscheduled]);
-    return sorted;
-  }, [practices]);
+  // Show (9d2·12): empty = both kinds; a choice ON stays listed with 0 so it can always be taken off.
+  const shown = calendar.bookings.filter(b => !show.size || show.has(b.kind));
+  const showOptions = (['game', 'practice'] as const)
+    .map(k => ({ id: k, label: W.showWord[k], count: calendar.bookings.filter(b => b.kind === k).length }))
+    .filter(o => o.count > 0 || show.has(o.id));
+  const today = tournamentToday();
+  // C3 — Week and Month open on today when this week holds something; otherwise on the season's next day with something on
+  // it, and a finished season on its last — until the admin moves the dates.
+  const cursor = cursorPick ?? seasonOpeningDay(calendar.bookings, today);
+  const range = rangeFor(shownView === 'list' ? 'week' : shownView, cursor);
+  const inRange = (b: SeasonBooking) => b.day >= range.from && b.day <= range.to;
+
+  useEffect(() => {
+    const day = jumpTo.current;
+    if (!day || shownView === 'month') return;
+    jumpTo.current = null;
+    const el = [document.getElementById(`season-week-${mondayOfDay(day)}`), document.getElementById(`cal-day-${day}`)]
+      .find(x => x && x.offsetParent !== null);
+    el?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }, [shownView, cursor]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -1071,6 +1118,13 @@ export default function SchedulePage() {
 
   function openCreate() { setActiveGame(null); setGameModalOpen(true); }
   function openEdit(g: LeagueGame) { setActiveGame(g); setGameModalOpen(true); }
+  /** A booking opens its own window: a game its game window, a practice its practice window (h2). */
+  const openBooking = (b: SeasonBooking) => {
+    if (b.source.kind === 'game') openEdit(b.source.game);
+    else setOpenPractice(b.source.practice);
+  };
+  const pickView = (v: CalendarView) => { jumpTo.current = null; setView(v); };
+  const step = (dir: -1 | 1) => { jumpTo.current = null; setCursorPick(stepCursor(shownView, cursor, dir)); };
 
   // ── Generate schedule ──────────────────────────────────────────────────────
 
@@ -1120,8 +1174,7 @@ export default function SchedulePage() {
     } else if (outside) {
       setFeedback({ isOpen: true, title: outside.title, message: `The schedule was saved. ${outside.sentence}`, type: 'info' });
     }
-    await loadTeamsAndGames(selectedDivId);
-    await loadHealth();
+    await reload();
   }
 
   // ── Game CRUD ──────────────────────────────────────────────────────────────
@@ -1135,7 +1188,7 @@ export default function SchedulePage() {
     const method = isCreate ? 'POST' : 'PATCH';
 
     const body: Record<string, unknown> = {
-      divisionId:    selectedDivId,
+      divisionId:    activeGame?.divisionId ?? selectedDivId,
       homeTeamId:    form.homeTeamId,
       awayTeamId:    form.awayTeamId,
       scheduledDate: form.scheduledDate || undefined,
@@ -1170,8 +1223,7 @@ export default function SchedulePage() {
     if (Array.isArray(data.warnings) && data.warnings.length) {
       setFeedback({ isOpen: true, title: 'Saved — possible clash', message: data.warnings[0], type: 'info' });
     }
-    await loadTeamsAndGames(selectedDivId);
-    await loadHealth();
+    await reload();
   }
 
   // The question opens on top of Edit Game; Keep it leaves the window as it was.
@@ -1210,8 +1262,7 @@ export default function SchedulePage() {
     }
     setGameModalOpen(false);
     setActiveGame(null);
-    await loadTeamsAndGames(selectedDivId);
-    await loadHealth();
+    await reload();
   }
 
   // ── Practice CRUD ──────────────────────────────────────────────────────────
@@ -1234,23 +1285,22 @@ export default function SchedulePage() {
     if (!res?.ok) {
       showError(res?.status === 409 && !data?.code ? `That ${noun.toLowerCase()} is already booked` : 'Could not save practice', data?.error ?? 'Unknown error');
       // A series that moved part of the way before a failure reads as it now is (/review).
-      void loadPractices(selectedTeamId);
+      void loadSchedule();
       return;
     }
     setEditingPractice(null);
     if (Array.isArray(data?.warnings) && data.warnings.length) {
       setFeedback({ isOpen: true, title: PRACTICE_WINDOW_WORDS.saved(data.count ?? 1), message: `Possible clash: ${data.warnings[0]}`, type: 'info' });
     }
-    await loadPractices(selectedTeamId);
-    await loadHealth();
+    await reload();
   }
 
   async function handleSavePractice(form: PracticeForm) {
     if (editingPractice) return handleEditPractice(form);
     setSaving(true);
     const body: Record<string, unknown> = {
-      teamId:     selectedTeamId,
-      divisionId: selectedDivId || null,
+      teamId:     form.teamId,
+      divisionId: teamMap.get(form.teamId)?.divisionId ?? (selectedDivId || null),
       recurring:  form.recurring,
       startTime:  form.startTime,
       endTime:    form.endTime || null,
@@ -1290,8 +1340,7 @@ export default function SchedulePage() {
       message: `${count} practice${count !== 1 ? 's' : ''} added successfully.${warningNote}`,
       type: warningNote ? 'info' : 'success',
     });
-    await loadPractices(selectedTeamId);
-    await loadHealth();
+    await reload();
   }
 
   async function handleCancelPractice(scope: 'one' | 'remaining' | 'all') {
@@ -1312,14 +1361,15 @@ export default function SchedulePage() {
     }
     setShowCancelModal(false);
     setActivePractice(null);
-    await loadPractices(selectedTeamId);
-    await loadHealth();
+    await reload();
   }
 
   // ── Export ─────────────────────────────────────────────────────────────────
 
+  // The division's games, as before (one row a game, home and away, the score): what a convenor sends on. Practices stay
+  // out of the file — they were never in it, and a team's practices are its coach's to send.
   function buildGameExportRows() {
-    return games.map(g => {
+    return divGames.map(g => {
       const home = teamMap.get(g.homeTeamId);
       const away = teamMap.get(g.awayTeamId);
       const dt   = g.scheduledAt ? formatDateTime(g.scheduledAt) : null;
@@ -1340,37 +1390,30 @@ export default function SchedulePage() {
     });
   }
 
+  const exportFile = (ext: string) => buildFilename(
+    { org: currentOrg?.slug, dataset: 'hl-schedule', scope: [season?.name, selectedDiv?.name].filter(Boolean).join(' ') },
+    ext,
+  );
+
   function handleExportXLSX() {
     const rows     = buildGameExportRows();
     const headers  = serializeHeaders(SCHEDULE_EXPORT_COLS);
     const data     = serializeRows(rows, SCHEDULE_EXPORT_COLS);
-    const filename = buildFilename(
-      { org: currentOrg?.slug, dataset: 'hl-schedule', scope: season?.name },
-      'xlsx',
-    );
-    downloadXLSX(filename, headers, data, 'Schedule');
+    return downloadXLSX(exportFile('xlsx'), headers, data, 'Schedule');
   }
 
   function handleExportCSV() {
     const rows     = buildGameExportRows();
     const headers  = serializeHeaders(SCHEDULE_EXPORT_COLS);
     const data     = serializeRows(rows, SCHEDULE_EXPORT_COLS);
-    const filename = buildFilename(
-      { org: currentOrg?.slug, dataset: 'hl-schedule', scope: season?.name },
-      'csv',
-    );
-    downloadCSVBlob(filename, generateCSV(headers, data));
+    downloadCSVBlob(exportFile('csv'), generateCSV(headers, data));
   }
 
   // From the instant, never a universal date beside a zoned clock — see `lib/export/schedule-calendar`.
   async function handleExportICS() {
-    const filename = buildFilename(
-      { org: currentOrg?.slug, dataset: 'hl-schedule', scope: season?.name },
-      'ics',
-    );
     await downloadICSFromInstants(
-      filename,
-      houseLeagueCalendarEntries(games, id => teamMap.get(id)?.name),
+      exportFile('ics'),
+      houseLeagueCalendarEntries(divGames, id => teamMap.get(id)?.name),
       `${season?.name ?? 'House league'} schedule`,
     );
   }
@@ -1402,9 +1445,7 @@ export default function SchedulePage() {
       }}
       onHandedOut={() => {
         setPracticeTimeOpen(false);
-        setViewMode('practices');
-        if (selectedTeamId) void loadPractices(selectedTeamId);
-        void loadHealth();
+        void reload();
         void loadLeagueTime();
       }} />
   ) : null;
@@ -1422,130 +1463,149 @@ export default function SchedulePage() {
   }
 
   const backHref = `/${orgSlug}/admin/house-league/seasons/${seasonId}`;
+  const divName = selectedDiv?.name ?? '';
+  /** Generate games: the old generator, on a division with two teams or more (step 5 rebuilds it). */
+  const canGenerate = canManage && divTeams.length >= 2;
+  const freeFloor = !!currentOrg && isFreeFloorLeague(currentOrg);
+
+  const ViewGlyph = VIEW_GLYPH[shownView];
+  const dateNav = shownView === 'list' ? null : <ScheduleDateNav view={shownView} cursor={cursor} onStep={step} />;
+
+  // ⚖ ONE Export (C11): Excel first, then CSV and the calendar file — the division's games. The free League plan reads why
+  // it can't, in Tools, as it did (exports are a paid-League capability; 100% client-side today — a server export route
+  // added later MUST guard isFreeFloorLeague(org) → 403).
+  const exportMenu = freeFloor ? null : (
+    <ExportMenu formats={['xlsx', 'csv', 'ics']} disabled={divGames.length === 0}
+      holds={{ title: `${divName ? `${divName} · ` : ''}${pluralize(divGames.length, 'game')}` }}
+      onExportXLSX={handleExportXLSX} onExportCSV={handleExportCSV} onExportICS={handleExportICS} />
+  );
+  // Add (b1): "Add to the schedule" — a game, or a practice (which asks its team). The league's runners on a live season.
+  const addMenu = canManage && divTeams.length > 0 ? (
+    <CoachToolbarMenu label="Add" icon={<Plus size={15} aria-hidden />} variant="primary" drawerOnPhone drawerTitle={W.addTitle}>
+      <CoachToolbarMenuHeading>{W.addTitle}</CoachToolbarMenuHeading>
+      {divTeams.length >= 2 && <CoachToolbarMenuItem label={W.addGame} onSelect={openCreate} />}
+      <CoachToolbarMenuItem label={W.addPractice} onSelect={() => setShowPracticeModal(true)} />
+    </CoachToolbarMenu>
+  ) : null;
+  // Tools ⋯ (Stage 11b Part 3; ruled 9d-2, card 7): House league's time, Practice time, Generate games — and the free plan's
+  // locked export.
+  const toolsMenu = (
+    <CoachToolbarMenu label={LEAGUE_TIME_WORDS.tools} icon={<MoreHorizontal size={18} className={tb.toolsGlyph} aria-hidden />}
+      collapseOnPhone bareOnPhone drawerOnPhone drawerTitle={LEAGUE_TIME_WORDS.tools} triggerClassName={tb.tool}>
+      <CoachToolbarMenuItem icon={<Clock size={15} aria-hidden />} label={LEAGUE_TIME_WORDS.title} onSelect={openLeagueTime} />
+      {/* Practice time (Part 4): the league's runners on a live season, for the division picked. */}
+      {canManage && selectedDiv && (
+        <CoachToolbarMenuItem icon={<CalendarClock size={15} aria-hidden />} label={PRACTICE_TIME_WORDS.title} onSelect={() => setPracticeTimeOpen(true)} />
+      )}
+      {canGenerate && <CoachToolbarMenuItem icon={<Wand2 size={15} aria-hidden />} label={W.generate} onSelect={() => setShowGenerate(true)} />}
+      {freeFloor && <>
+        <CoachToolbarMenuSeparator />
+        <CoachToolbarMenuHeading>{LEAGUE_TIME_WORDS.exportHeading}</CoachToolbarMenuHeading>
+        <CoachToolbarMenuItem disabled label={LEAGUE_TIME_WORDS.exportsLocked} hint={LEAGUE_TIME_WORDS.exportsLockedHint} onSelect={() => {}} />
+      </>}
+    </CoachToolbarMenu>
+  );
+
+  // What the chosen view draws, or why it draws nothing (the settled words, b1–b3).
+  const all = calendar.bookings.length + calendar.needsDate.length;
+  let body: React.ReactNode;
+  if (scheduleRead === 'failed') {
+    body = <LoadFailed title="We couldn’t load the schedule." onRetry={() => void loadSchedule()} />;
+  } else if (scheduleRead === 'loading') {
+    body = <LoadingState label="Loading the schedule…" />;
+  } else if (all === 0) {
+    body = (
+      <div className={styles.emptyState}>
+        <p><strong>{W.emptyDivision(divName)}</strong></p>
+        <p>{divTeams.length < 2 && canManage ? 'Create at least 2 teams before generating a schedule.' : W.emptyDivisionHint}</p>
+      </div>
+    );
+  } else if (divGames.length === 0 && shownView === 'list') {
+    // Edge k: practices but no games — the division's next step is its games.
+    body = (
+      <>
+        <div className={styles.emptyState}>
+          <p><strong>{W.noGamesYet(divName)}</strong></p>
+          <p>{W.noGamesHint}</p>
+          {canGenerate && <button style={B.primary} onClick={() => setShowGenerate(true)}>{W.generate}</button>}
+        </div>
+        {shown.length > 0 && <SeasonListView bookings={shown} today={today} sport={season?.sport ?? null} teamName={teamName} onOpen={openBooking} />}
+      </>
+    );
+  } else if (shownView === 'list') {
+    body = shown.length === 0
+      ? <p className={styles.hint}>{W.nothingMatches}</p>
+      : <SeasonListView bookings={shown} today={today} sport={season?.sport ?? null} teamName={teamName} onOpen={openBooking} />;
+  } else if (shownView === 'week') {
+    const week = shown.filter(inRange);
+    body = (
+      <>
+        <WeekView cursor={cursor} bookings={week} onOpen={b => openBooking(b as SeasonBooking)} multiProgram={false} />
+        {week.length === 0 && <p className={styles.hint}>{show.size ? W.nothingMatches : W.emptyWeek}</p>}
+      </>
+    );
+  } else {
+    // Month draws a postponed game on the day it had, "· Postponed" (b2); List and Week never draw it as on.
+    const month = [...shown, ...calendar.needsDate.filter(b => b.startMs && (!show.size || show.has(b.kind)))]
+      .filter(inRange).sort((a, b) => a.startMs - b.startMs);
+    body = (
+      <>
+        <SeasonMonthView cursor={cursor} bookings={month} today={today} onOpen={openBooking}
+          onDay={d => { jumpTo.current = d; setCursorPick(d); setView(phone ? 'week' : 'list'); }} />
+        {month.length === 0 && <p className={styles.hint}>{show.size ? W.nothingMatches : W.emptyMonth(monthWords(cursor))}</p>}
+      </>
+    );
+  }
 
   return (
     <>
     <div className={styles.page}>
       {/* Header — today's as `legacy` while the switch is off. On the kit (F3) the season's name (the
-          subtitle) is the way up, in the leading corner. */}
+          subtitle) is the way up, in the leading corner. On a phone the view's glyph opens the View drawer (Week, Month). */}
       <AdminPageHeader
         eyebrow="House league"
         title="Schedule"
         backTo={{ href: backHref, label: season?.name ?? 'Season' }}
+        inlineActions
+        actions={
+          <span className={cal.viewPhone}>
+            <CoachToolbarMenu label={`Change view · ${VIEW_WORD[shownView]}`} icon={<ViewGlyph size={20} aria-hidden />} variant="glyph" drawerOnPhone drawerTitle="View">
+              {PHONE_VIEWS.map(v => {
+                const Glyph = VIEW_GLYPH[v];
+                return <CoachToolbarMenuItem key={v} icon={<Glyph size={16} aria-hidden />} label={VIEW_WORD[v]} checked={shownView === v} onSelect={() => pickView(v)} />;
+              })}
+            </CoachToolbarMenu>
+          </span>
+        }
       />
 
       {/* The time line (Stage 11b Part 3): where this division's time comes from, and the door to House league's time. */}
       {leagueTime && selectedDivId && showTimeLine(leagueTime, buildsSchedules) && (
-        <HouseLeagueTimeLine time={leagueTime} divisionId={selectedDivId}
-          divisionName={divisions.find(d => d.id === selectedDivId)?.name ?? ''} onOpen={openLeagueTime} />
+        <HouseLeagueTimeLine time={leagueTime} divisionId={selectedDivId} divisionName={divName} onOpen={openLeagueTime} />
       )}
 
-      {/* Toolbar */}
-      <div className={styles.scheduleToolbar}>
+      {/* ⚖ ONE LINE (C4): the division leads (the scope), then the switch and — wider than 900 px — the dates; Show right of
+          the gap; Export, Add and Tools at the end. */}
+      <CoachListToolbar
+        actions={<>{exportMenu}{addMenu}{toolsMenu}</>}
+        filters={(
+          <FilterGroup>
+            <MultiSelectDropdown restQuiet label={W.show} options={showOptions} selected={show} onChange={setShow} allLabel={W.showAll} />
+          </FilterGroup>
+        )}
+      >
         {divisions.length > 1 && (
-          <>
-            <select
-              className={styles.divSelect}
-              value={selectedDivId}
-              onChange={e => setSelectedDivId(e.target.value)}
-            >
-              {divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
-            <div className={styles.toolbarSep} />
-          </>
+          <SingleSelectDropdown label={W.division} lead value={selectedDivId} onChange={setSelectedDivId}
+            options={divisions.map(d => ({ id: d.id, label: d.name }))} />
         )}
-
-        <div className={styles.viewToggle}>
-          <button
-            className={`${styles.viewToggleBtn} ${viewMode === 'week' ? styles.viewToggleBtnActive : ''}`}
-            onClick={() => setViewMode('week')}
-          >
-            Week
-          </button>
-          <button
-            className={`${styles.viewToggleBtn} ${viewMode === 'list' ? styles.viewToggleBtnActive : ''}`}
-            onClick={() => setViewMode('list')}
-          >
-            List
-          </button>
-          <button
-            className={`${styles.viewToggleBtn} ${viewMode === 'practices' ? styles.viewToggleBtnActive : ''}`}
-            onClick={() => setViewMode('practices')}
-          >
-            Practices
-          </button>
-        </div>
-
-        {viewMode !== 'practices' && canManage && (
-          <>
-            <div className={styles.toolbarSep} />
-            {teams.length >= 2 && (
-              <button style={B.secondary} onClick={() => setShowGenerate(true)}>
-                <Wand2 size={14} style={{ marginRight: 4 }} />
-                Generate schedule
-              </button>
-            )}
-            <button style={B.secondary} onClick={openCreate}>
-              <Plus size={14} style={{ marginRight: 4 }} />
-              Add game
-            </button>
-          </>
-        )}
-
-        {viewMode === 'practices' && (
-          <>
-            {teams.length > 0 && (
-              <>
-                <div className={styles.toolbarSep} />
-                <select
-                  className={styles.divSelect}
-                  value={selectedTeamId}
-                  onChange={e => setSelectedTeamId(e.target.value)}
-                >
-                  {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                </select>
-              </>
-            )}
-            {canManage && selectedTeamId && (
-              <>
-                <div className={styles.toolbarSep} />
-                <button style={B.secondary} onClick={() => setShowPracticeModal(true)}>
-                  <Plus size={14} style={{ marginRight: 4 }} />
-                  Add practice
-                </button>
-              </>
-            )}
-          </>
-        )}
-
-        {/* Tools ⋯ at the toolbar's right end (Stage 11b Part 3; ruled 9d-2, card 7): House league's time, then Export as
-            a flat group — where 9d-2a's toolbar rebuild puts it, so that rebuild never moves it. Export shows where it
-            showed before (not on Practices), and keeps its free-floor case: exports are a paid-League capability, so the
-            free League Starter floor reads why instead. NOTE: exports are 100% client-side today (no server route). If a
-            server export route is ever added for house-league it MUST guard isFreeFloorLeague(org) → 403. */}
-        <div style={{ marginLeft: 'auto' }}>
-          <CoachToolbarMenu label={LEAGUE_TIME_WORDS.tools} icon={<MoreHorizontal size={18} className={tb.toolsGlyph} aria-hidden />}
-            collapseOnPhone bareOnPhone drawerOnPhone drawerTitle={LEAGUE_TIME_WORDS.tools} triggerClassName={tb.tool}>
-            <CoachToolbarMenuItem icon={<Clock size={15} aria-hidden />} label={LEAGUE_TIME_WORDS.title} onSelect={openLeagueTime} />
-            {/* Practice time (Part 4): the league's runners on a live season, for the division picked. */}
-            {canManage && selectedDiv && (
-              <CoachToolbarMenuItem icon={<CalendarClock size={15} aria-hidden />} label={PRACTICE_TIME_WORDS.title} onSelect={() => setPracticeTimeOpen(true)} />
-            )}
-            {viewMode !== 'practices' && <>
-              <CoachToolbarMenuSeparator />
-              <CoachToolbarMenuHeading>{LEAGUE_TIME_WORDS.exportHeading}</CoachToolbarMenuHeading>
-              {currentOrg && isFreeFloorLeague(currentOrg)
-                ? <CoachToolbarMenuItem disabled label={LEAGUE_TIME_WORDS.exportsLocked}
-                    hint={LEAGUE_TIME_WORDS.exportsLockedHint} onSelect={() => {}} />
-                : <>
-                    <CoachToolbarMenuItem label={LEAGUE_TIME_WORDS.excel} disabled={games.length === 0} onSelect={() => void handleExportXLSX()} />
-                    <CoachToolbarMenuItem label={LEAGUE_TIME_WORDS.csv} disabled={games.length === 0} onSelect={() => void handleExportCSV()} />
-                    <CoachToolbarMenuItem label={LEAGUE_TIME_WORDS.calendar} disabled={games.length === 0} onSelect={() => void handleExportICS()} />
-                  </>}
-            </>}
-          </CoachToolbarMenu>
-        </div>
-      </div>
+        {/* The switch hides on a phone through its wrapper (the club calendar's). */}
+        <span className={cal.viewDesk}>
+          <CalendarViewSwitch views={VIEWS} value={view} onChange={pickView} label={W.viewLabel} />
+        </span>
+        {dateNav && <div className={coach.calNavOnLine}>{dateNav}</div>}
+      </CoachListToolbar>
+      {/* The dates on their own row at 900 px and narrower. */}
+      {dateNav && <div className={cal.dateRow}>{dateNav}</div>}
 
       {/* Schedule health — clashes + what could not be checked (games AND practices) */}
       {health && health.conflicts.length > 0 && (
@@ -1583,232 +1643,16 @@ export default function SchedulePage() {
         </p>
       )}
 
-      {/* Empty state (games views) */}
-      {viewMode !== 'practices' && games.length === 0 && (
-        <div className={styles.emptyState}>
-          {teams.length >= 2 && canManage ? (
-            <HelpCallout
-              variant="info"
-              title="No games scheduled yet"
-              body="Generate your schedule by selecting the number of rounds and time slots — the generator creates a round-robin where every team plays every other team once. Games can be edited individually after generation, or added manually one at a time."
-            />
-          ) : (
-            <p>
-              {teams.length < 2
-                ? 'Create at least 2 teams before generating a schedule.'
-                : 'No games scheduled yet.'}
-            </p>
-          )}
-        </div>
-      )}
+      {/* Postponed games wait above every view until they have a date (9d2·10). */}
+      {scheduleRead === 'ok' && <NeedsDateFold bookings={calendar.needsDate} onOpen={openBooking} />}
 
-      {/* Week view */}
-      {viewMode === 'week' && games.length > 0 && (
-        <>
-          {weekGroups.map(([key, weekGames]) => (
-            <div key={key} className={styles.weekGroup}>
-              <div className={styles.weekLabel}>
-                {key === 'unscheduled' ? 'Unscheduled' : weekLabel(key)}
-              </div>
-              <div className={styles.weekGames}>
-                {weekGames.map(g => {
-                  const home = teamMap.get(g.homeTeamId);
-                  const away = teamMap.get(g.awayTeamId);
-                  const dt = g.scheduledAt ? formatDateTime(g.scheduledAt) : null;
-                  return (
-                    <div
-                      key={g.id}
-                      className={`${styles.gameCard} ${g.status === 'cancelled' ? styles.gameCardCancelled : ''}`}
-                      onClick={() => openEdit(g)}
-                    >
-                      <div className={styles.gameCardTeams}>
-                        {home?.color && <span className={styles.teamDot} style={{ background: home.color }} />}
-                        <span className={styles.gameTeamName}>{home?.name ?? '—'}</span>
-                        <span className={styles.gameVs}>vs</span>
-                        {away?.color && <span className={styles.teamDot} style={{ background: away.color }} />}
-                        <span className={styles.gameTeamName}>{away?.name ?? '—'}</span>
-                      </div>
-                      {g.status === 'completed' && g.homeScore != null && g.awayScore != null && (
-                        <div className={styles.gameScore}>
-                          {g.homeScore} – {g.awayScore}
-                        </div>
-                      )}
-                      {dt && (
-                        <div className={styles.gameCardMeta}>
-                          <span>{dt.date}</span>
-                          <span>{dt.time}</span>
-                          {g.location && <span>{g.location}</span>}
-                        </div>
-                      )}
-                      <div className={styles.gameCardFooter}>
-                        <span className={`${styles.statusBadge} ${STATUS_CLASS[g.status]}`}>
-                          {STATUS_LABELS[g.status]}
-                        </span>
-                        {conflictKeys.has(`game:${g.id}`) && (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.68rem', fontWeight: 700, color: 'var(--warning)' }}>
-                            <AlertTriangle size={11} /> Double-booked
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </>
-      )}
-
-      {/* List view */}
-      {viewMode === 'list' && games.length > 0 && (
-        <div style={{ overflowX: 'auto' }}>
-          <table className={styles.scheduleTable}>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Home</th>
-                <th>Away</th>
-                <th>Location</th>
-                <th>Score</th>
-                <th>Status</th>
-                {canManage && <th></th>}
-              </tr>
-            </thead>
-            <tbody>
-              {games.map(g => {
-                const home = teamMap.get(g.homeTeamId);
-                const away = teamMap.get(g.awayTeamId);
-                const dt = g.scheduledAt ? formatDateTime(g.scheduledAt) : null;
-                return (
-                  <tr key={g.id} className={g.status === 'cancelled' ? styles.gameCancelled : undefined}>
-                    <td style={{ whiteSpace: 'nowrap' }}>
-                      {dt ? `${dt.date} ${dt.time}` : <span style={{ opacity: 0.4 }}>—</span>}
-                    </td>
-                    <td>
-                      {home?.color && <span className={styles.teamDot} style={{ background: home.color }} />}
-                      {home?.name ?? '—'}
-                    </td>
-                    <td>
-                      {away?.color && <span className={styles.teamDot} style={{ background: away.color }} />}
-                      {away?.name ?? '—'}
-                    </td>
-                    <td>
-                      {g.location ?? <span style={{ opacity: 0.4 }}>—</span>}
-                      {conflictKeys.has(`game:${g.id}`) && (
-                        <span title="Another booking shares this surface at the same time" style={{ marginLeft: '0.35rem', color: 'var(--warning)', verticalAlign: 'middle', display: 'inline-flex' }}>
-                          <AlertTriangle size={12} />
-                        </span>
-                      )}
-                    </td>
-                    <td className={styles.scoreCell}>
-                      {g.status === 'completed' && g.homeScore != null
-                        ? `${g.homeScore} – ${g.awayScore}`
-                        : <span style={{ opacity: 0.3, fontWeight: 400 }}>—</span>}
-                    </td>
-                    <td>
-                      <span className={`${styles.statusBadge} ${STATUS_CLASS[g.status]}`}>
-                        {STATUS_LABELS[g.status]}
-                      </span>
-                    </td>
-                    {canManage && (
-                      <td>
-                        <button className={styles.iconBtn} onClick={() => openEdit(g)} style={{ fontSize: '0.72rem', padding: '0.2rem 0.45rem' }}>
-                          Edit
-                        </button>
-                      </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Practices view */}
-      {viewMode === 'practices' && (
-        <>
-          {teams.length === 0 && (
-            <div className={styles.emptyState}>
-              <p>No teams in this division yet. Create teams before scheduling practices.</p>
-            </div>
-          )}
-
-          {teams.length > 0 && practices.length === 0 && (
-            <div className={styles.emptyState}>
-              <p>
-                {canManage
-                  ? 'No practices scheduled for this team. Use "Add practice" to get started.'
-                  : 'No practices scheduled yet.'}
-              </p>
-            </div>
-          )}
-
-          {practices.length > 0 && practiceWeekGroups.map(([key, weekPractices]) => (
-            <div key={key} className={styles.weekGroup}>
-              <div className={styles.weekLabel}>
-                {key === 'unscheduled' ? 'Unscheduled' : weekLabel(key)}
-              </div>
-              <div className={styles.weekGames}>
-                {weekPractices.map(p => {
-                  const team = teamMap.get(p.teamId);
-                  const dt = p.scheduledAt ? formatDateTime(p.scheduledAt) : null;
-                  const endDt = p.endsAt ? formatDateTime(p.endsAt) : null;
-                  // Every practice opens its window, read first (Part 4, h2); its doors are the window's.
-                  return (
-                    <div
-                      key={p.id}
-                      className={`${styles.practiceCard} ${p.status === 'cancelled' ? styles.gameCardCancelled : ''}`}
-                      style={{ cursor: 'pointer' }}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => setOpenPractice(p)}
-                      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenPractice(p); } }}
-                    >
-                      <div className={styles.practiceCardHeader}>
-                        {team?.color && <span className={styles.teamDot} style={{ background: team.color }} />}
-                        <span className={styles.gameTeamName}>{team?.name ?? 'Unknown team'}</span>
-                        {p.recurrenceGroupId && (
-                          <span className={styles.recurrenceBadge}>↻ Series</span>
-                        )}
-                      </div>
-                      {dt && (
-                        <div className={styles.gameCardMeta}>
-                          <span>{dt.date}</span>
-                          <span>{dt.time}{endDt ? ` – ${endDt.time}` : ''}</span>
-                          {p.location && <span>{p.location}</span>}
-                          {p.clubScheduleSlotId && <span>{PRACTICE_WINDOW_WORDS.fromCard(p.fromSchedule)}</span>}
-                        </div>
-                      )}
-                      {p.notes && (
-                        <div style={kx({ fontSize: '0.72rem', color: 'var(--white-35)', marginTop: '0.3rem', fontStyle: 'italic' }, KIT_INK.tertiary)}>
-                          {p.notes}
-                        </div>
-                      )}
-                      <div className={styles.gameCardFooter}>
-                        <span className={`${styles.statusBadge} ${p.status === 'cancelled' ? styles.gameStatusCancelled : styles.practiceBadge}`}>
-                          {p.status === 'cancelled' ? 'Cancelled' : 'Practice'}
-                        </span>
-                        {conflictKeys.has(`practice:${p.id}`) && (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.68rem', fontWeight: 700, color: 'var(--warning)' }}>
-                            <AlertTriangle size={11} /> Double-booked
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </>
-      )}
+      {body}
 
       {/* Generate modal */}
       {showGenerate && selectedDiv && (
         <GenerateModal
           divisionName={selectedDiv.name}
-          teams={teams}
+          teams={divTeams}
           venues={clubVenues}
           sport={season?.sport}
           orgSlug={orgSlug}
@@ -1819,11 +1663,11 @@ export default function SchedulePage() {
         />
       )}
 
-      {/* Game create/edit modal */}
+      {/* Game create/edit modal — a game edits among its own division's teams. */}
       {gameModalOpen && (
         <GameModal
           game={activeGame}
-          teams={teams}
+          teams={activeGame ? teams.filter(t => t.divisionId === activeGame.divisionId) : divTeams}
           venues={clubVenues}
           sport={season?.sport}
           checkPath={checkPath}
@@ -1836,10 +1680,11 @@ export default function SchedulePage() {
         />
       )}
 
-      {/* Practice create modal */}
-      {showPracticeModal && selectedTeamId && teamMap.get(selectedTeamId) && (
+      {/* Add › A practice: the form asks its team (the division's). */}
+      {showPracticeModal && (
         <PracticeModal
-          team={teamMap.get(selectedTeamId)!}
+          team={null}
+          teams={divTeams}
           venues={clubVenues}
           sport={season?.sport}
           checkPath={checkPath}
@@ -1853,7 +1698,8 @@ export default function SchedulePage() {
       {/* A practice's window, read first (Part 4, h2) */}
       {openPractice && (
         <PracticeWindow practice={openPractice} teamName={teamMap.get(openPractice.teamId)?.name ?? 'Team'}
-          divisionName={selectedDiv?.name ?? ''} teamPractices={practices} canRun={canManage}
+          divisionName={divisions.find(d => d.id === teamMap.get(openPractice.teamId)?.divisionId)?.name ?? divName}
+          teamPractices={practices.filter(x => x.teamId === openPractice.teamId)} canRun={canManage}
           onClose={() => setOpenPractice(null)}
           onEdit={scope => {
             const p = openPractice;
@@ -1875,6 +1721,7 @@ export default function SchedulePage() {
       {editingPractice && teamMap.get(editingPractice.practice.teamId) && (
         <PracticeModal
           team={teamMap.get(editingPractice.practice.teamId)!}
+          teams={[]}
           venues={clubVenues}
           sport={season?.sport}
           checkPath={checkPath}

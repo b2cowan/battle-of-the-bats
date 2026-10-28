@@ -68,13 +68,13 @@ export function bookingCaption(b: CalendarBooking, multiProgram: boolean): strin
 }
 
 /** The called-off word as the kit's chip — "Cancelled"; "Postponed" in amber (C9). */
-function StateChip({ b }: { b: CalendarBooking }) {
+export function StateChip({ b }: { b: CalendarBooking }) {
   if (!b.state) return null;
   return <RepChip tone={b.state === 'postponed' ? 'warn' : 'neutral'}>{STATE_WORDS[b.state]}</RepChip>;
 }
 
 /** The clash in words, under the place: "Clashes with 13U AAA practice" / "Busy then: …". */
-function ClashLine({ b, size }: { b: CalendarBooking; size: number }) {
+export function ClashLine({ b, size }: { b: CalendarBooking; size: number }) {
   const line = clashLineWords(b);
   if (!line) return null;
   return (

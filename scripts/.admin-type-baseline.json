@@ -1,11 +1,7 @@
 {
   "app/[orgSlug]/admin/house-league/house-league.module.css": {
     "caps": 8,
-    "face": 5,
-    "heavy": 1
-  },
-  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx": {
-    "face": 1
+    "face": 5
   },
   "app/[orgSlug]/admin/org/billing/mock-portal/mock-portal.module.css": {
     "caps": 1

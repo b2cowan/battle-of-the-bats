@@ -590,8 +590,6 @@
 }
 
 /* ── Week view ────────────────────────────────────────────────────────────── */
-.weekGroup { margin-bottom: 1.75rem; }
-
 .weekLabel {
   font-size: 0.7rem;
   font-weight: 700;
@@ -601,11 +599,6 @@
   margin-bottom: 0.65rem;
 }
 
-.weekGames {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 0.65rem;
-}
 
 .gameCard {
   padding: 0.9rem 1rem;
@@ -621,56 +614,11 @@
 }
 .gameCardCancelled { opacity: 0.45; }
 
-.gameCardTeams {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.4rem;
-}
 
-.gameTeamName {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--white-80);
-}
 
-.gameVs {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-support);
-  font-weight: 400;
-  color: rgba(255,255,255,0.25);
-}
 
-.gameScore {
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--logic-lime);
-  font-variant-numeric: tabular-nums;
-  margin-bottom: 0.35rem;
-}
 
-.gameCardMeta {
-  font-size: 0.72rem;
-  color: var(--white-40);
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
 
-.gameCardFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--white-05);
-}
-
-/* Game status badges (extends .statusBadge) */
-.gameStatusScheduled  { background: rgba(var(--info-rgb), 0.1);    color: var(--info);    border: 1px solid rgba(var(--info-rgb), 0.25); }
-.gameStatusCompleted  { background: rgba(var(--success-rgb), 0.1); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.25); }
-.gameStatusPostponed  { background: rgba(var(--warning-rgb), 0.1); color: var(--warning); border: 1px solid rgba(var(--warning-rgb), 0.25); }
-.gameStatusCancelled  { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.3); }
 
 /* ── List view ────────────────────────────────────────────────────────────── */
 .scheduleTable {
@@ -698,7 +646,6 @@
 }
 
 .scheduleTable tr:hover td { background: rgba(255,255,255,0.02); }
-.scheduleTable tr.gameCancelled td { opacity: 0.45; }
 
 .scoreCell {
   font-weight: 700;
@@ -785,17 +732,6 @@
   border: 1px solid rgba(167,139,250,0.25);
 }
 
-.recurrenceBadge {
-  margin-left: auto;
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: rgba(167,139,250,0.7);
-  background: rgba(167,139,250,0.08);
-  border: 1px solid rgba(167,139,250,0.15);
-  border-radius: 2px;
-  padding: 0.1rem 0.4rem;
-  white-space: nowrap;
-}
 
 /* ═══ ON THE KIT (Admin Design Continuity slice 2 — only with the switch on) ═══════════════════════
    House league on the coaches portal's kit: the same screens, words, columns and actions, in both
@@ -834,8 +770,7 @@
 
 /* ── Chips: status, division, game state, round, practice → the kit's chips ── */
 :global([data-admin-kit]) .statusBadge,
-:global([data-admin-kit]) .roundBadge,
-:global([data-admin-kit]) .recurrenceBadge {
+:global([data-admin-kit]) .roundBadge {
   font-family: var(--font-data);
   font-size: var(--type-token);
   font-weight: 700;
@@ -844,36 +779,20 @@
   padding: 0.14rem 0.5rem;
   border: 1px solid transparent;
 }
-:global([data-admin-kit]) .gameStatusCancelled,
 :global([data-admin-kit]) .roundBadge {
   color: var(--text-secondary);
   background: var(--home-olive-soft);
   border-color: var(--home-line-strong);
 }
-:global([data-admin-kit]) .gameStatusCompleted {
-  color: var(--badge-success-ink);
-  background: rgba(var(--success-rgb), 0.08);
-  border-color: rgba(var(--success-rgb), 0.28);
-}
-:global([data-admin-kit]) .gameStatusPostponed {
-  color: var(--badge-warning-ink);
-  background: rgba(var(--warning-rgb), 0.08);
-  border-color: rgba(var(--warning-rgb), 0.3);
-}
-:global([data-admin-kit]) .statusActive,
-:global([data-admin-kit]) .gameStatusScheduled {
+:global([data-admin-kit]) .statusActive {
   color: var(--info);
   background: rgba(var(--info-rgb), 0.08);
   border-color: rgba(var(--info-rgb), 0.3);
 }
-/* The "Scheduled" label's WORDS take the light blue: --info on its tint over a Dark card is 4.40:1 at 10px.
-   Warm's --info-light is --info, so Warm is unchanged. */
-:global([data-admin-kit]) .gameStatusScheduled { color: var(--info-light); }
 /* "Completed" was a hand-set purple with no token: a finished season is not a verdict, so on the
    kit it is the quiet chip. Practices were the same purple; on the kit they wear the portal's own
    practice colour (`--evt-practice`: purple in dark, plum in warm — the coach schedule's). */
-:global([data-admin-kit]) .practiceBadge,
-:global([data-admin-kit]) .recurrenceBadge {
+:global([data-admin-kit]) .practiceBadge {
   color: var(--text-secondary);
   background: color-mix(in srgb, var(--evt-practice) 12%, transparent);
   border-color: color-mix(in srgb, var(--evt-practice) 45%, transparent);
@@ -992,12 +911,7 @@
   border-radius: 8px;
 }
 :global([data-admin-kit]) .gameCard:hover { border-color: var(--home-line-strong); background: var(--card-bg); }
-:global([data-admin-kit]) .gameTeamName { color: var(--text-primary); }
-:global([data-admin-kit]) .gameVs { color: var(--text-tertiary); }
-:global([data-admin-kit]) .gameScore,
 :global([data-admin-kit]) .scoreCell { color: var(--text-primary); }
-:global([data-admin-kit]) .gameCardMeta { color: var(--text-tertiary); }
-:global([data-admin-kit]) .gameCardFooter { border-top-color: var(--home-line); }
 
 /* The tables → the standard's ground: quiet body-face heads, hairline rows. */
 :global([data-admin-kit]) .scheduleTable th,

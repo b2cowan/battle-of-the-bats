@@ -1,0 +1,25 @@
+/* A house-league season's schedule views (9d-2a step 3) — only what the shared parts don't already draw: the club
+   calendar's rows, chips and switch carry the rest. */
+
+/* "Show 2 earlier weeks": a door, in the quiet olive of the calendar's other doors. */
+.earlier { color: var(--home-olive); font-weight: 600; }
+
+/* A night's places, after its teams, on the caption's line. */
+.nightPlace::before { content: ' · '; }
+
+/* "Needs a new date" — collapsed above the views; its count is the amber pill (the waiting-count ruling). */
+.fold { margin: 0 0 0.9rem; }
+.foldHead {
+  display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px;
+  cursor: pointer; list-style: none; font-weight: 700; color: var(--text-primary);
+}
+.foldHead::-webkit-details-marker { display: none; }
+.foldHead::after { content: '▸'; color: var(--text-tertiary); font-size: 0.8em; }
+.fold[open] > .foldHead::after { content: '▾'; }
+.foldTitle { font-size: var(--type-body); }
+.foldCount {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 1.6rem; min-height: 22px; padding: 0 0.45rem;
+  border-radius: 999px; font-size: var(--type-token); font-weight: 700;
+  color: var(--home-amber); background: rgba(var(--home-amber-rgb), 0.11); border: 1px solid rgba(var(--home-amber-rgb), 0.32);
+}
+.fold[open] > .foldHead { margin-bottom: 0.4rem; }

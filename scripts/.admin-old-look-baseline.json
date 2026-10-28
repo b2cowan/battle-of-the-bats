@@ -3,11 +3,10 @@
     "kitScope": 11
   },
   "app/[orgSlug]/admin/house-league/house-league.module.css": {
-    "kitScope": 87
+    "kitScope": 75
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx": {
-    "useAdminKit": 1,
-    "kx": 9,
+    "kx": 7,
     "helpers": 8
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx": {

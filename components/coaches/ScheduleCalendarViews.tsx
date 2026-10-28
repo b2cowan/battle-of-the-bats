@@ -88,7 +88,7 @@ const edge = (colour: string): CSSProperties => ({ ['--chip-edge' as string]: co
  */
 const CHIP_VARIANT = { tryout: styles.calChipDashed, scrimmage: styles.calChipOutline, tournament: styles.calChipTournament };
 
-function CellChip({ as, href, onClick, colour, time, states, name, flag, title, cancelled, variant }: {
+export function CellChip({ as, href, onClick, colour, time, states, name, flag, title, cancelled, variant }: {
   as: 'button' | 'link' | 'static';
   href?: string;
   onClick?: () => void;

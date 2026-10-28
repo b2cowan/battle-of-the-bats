@@ -143,7 +143,7 @@ type RowBase = {
 export type ClubRowProps =
   /** `external`: a door OUT of the admin (a sealed event's public record) — a new tab, the caller's ↗ as its trail. */
   | (RowBase & { as: 'link'; href: string; external?: boolean })
-  | (RowBase & { as: 'button'; onClick: MouseEventHandler<HTMLButtonElement>; 'aria-haspopup'?: 'dialog' })
+  | (RowBase & { as: 'button'; onClick: MouseEventHandler<HTMLButtonElement>; 'aria-haspopup'?: 'dialog'; /** A row that opens rows under it (a season's night of practices). */ 'aria-expanded'?: boolean })
   | (RowBase & { as?: 'static' });
 
 export function ClubRow(props: ClubRowProps) {
@@ -181,7 +181,7 @@ export function ClubRow(props: ClubRowProps) {
           {inner}
         </Link>
       ) : props.as === 'button' ? (
-        <button type="button" className={cls} onClick={props.onClick} aria-haspopup={props['aria-haspopup']} aria-label={props['aria-label']}>
+        <button type="button" className={cls} onClick={props.onClick} aria-haspopup={props['aria-haspopup']} aria-expanded={props['aria-expanded']} aria-label={props['aria-label']}>
           {inner}
         </button>
       ) : (

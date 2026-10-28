@@ -60,9 +60,18 @@ describe('every week grouping reads the org-zone key (no device or server clock 
   const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
   // The public league schedule (9d-2a) no longer files its own weeks: it reads the season's bookings, whose day is
   // `orgDayKey`'s, and `seasonWeeks` takes that day's Monday — held below, with the page barred from a clock of its own.
-  const files = [
-    'app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx',
-  ];
+  // The admin season schedule followed in 9d-2a step 3 (the same bookings; its List files by `seasonWeeks`, its Week and
+  // Month step a calendar-date cursor through `rangeFor`) — held in its own case below.
+  const files: string[] = [];
+  it('the admin season schedule files by its bookings\' org-zone day, never a clock of its own (9d-2a step 3)', () => {
+    const page = read('app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx');
+    assert.match(page, /seasonCalendar\(\{/);
+    assert.match(page, /const range = rangeFor\(/);
+    assert.doesNotMatch(page, /getDay\(\)|function weekKey/);
+    const views = read('components/admin/kit/club/league/schedule/SeasonScheduleViews.tsx');
+    assert.match(views, /seasonWeeks\(items, today\)/);
+    assert.doesNotMatch(views, /getDay\(\)|toLocale(Date|Time)?String\(/);
+  });
   it('the public league schedule files a game by the Monday of its org-zone day, and reads today in the org zone', () => {
     const page = read('app/[orgSlug]/league/[seasonSlug]/schedule/page.tsx');
     assert.match(page, /seasonWeeks\(bookings, today\)/);

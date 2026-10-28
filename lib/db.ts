@@ -2769,6 +2769,18 @@ export async function getPracticesForTeam(teamId: string): Promise<LeaguePractic
   return (data ?? []).map(mapLeaguePractice);
 }
 
+/** Every practice in a season, every team and every status (House League 9d-2a step 3: the season's schedule draws games and
+ *  practices together across its divisions, and its clash marks read the whole season). Throws on a failed read. */
+export async function getPracticesForSeason(seasonId: string): Promise<LeaguePractice[]> {
+  const { data, error } = await supabaseAdmin
+    .from('league_practices')
+    .select('*')
+    .eq('season_id', seasonId)
+    .order('scheduled_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapLeaguePractice);
+}
+
 interface LeaguePracticeInput {
   orgId: string;
   seasonId: string;

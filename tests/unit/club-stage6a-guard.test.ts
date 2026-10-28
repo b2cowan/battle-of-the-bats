@@ -261,7 +261,8 @@ describe('the review\'s fixes hold (Stage 6a /review, 2026-10-08)', () => {
     assert.match(readCode('components/venue/useClashCheck.ts'), /if \(inFlight\.current\) return false;/);
     const hl = readCode(HL_PAGE);
     assert.equal((hl.match(/onClick=\{async \(\) => \{ if \(await lineIsCurrent\(\)\)/g) ?? []).length, 2, 'house league\'s two Create buttons');
-    assert.equal((hl.match(/disabled=\{saving \|\| refused \|\| checking\}/g) ?? []).length, 2, 'both disable while the check is out');
+    // The practice form's also waits for its team (9d-2a step 3: Add › A practice asks which team).
+    assert.equal((hl.match(/disabled=\{saving \|\| refused \|\| checking(?: \|\| !form\.teamId)?\}/g) ?? []).length, 2, 'both disable while the check is out');
     assert.match(readCode('components/rep-teams/TryoutDayCard.tsx'), /onClick=\{saveSession\} disabled=\{saving \|\| checking\}/);
     // The coach's form marks itself saving BEFORE it asks — both of its saves.
     const form = readCode('components/coaches/ScheduleEventForm.tsx');

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { foldNights, gameSlotOf, resultWords, seasonCalendar, seasonWeeks, todayLineAt, type SeasonCalendarInput, type SeasonGameSlot } from '../../lib/league-season-calendar.ts';
+import { foldNights, gameSlotOf, resultWords, seasonCalendar, seasonClashes, seasonOpeningDay, seasonWeeks, todayLineAt, type SeasonCalendarInput, type SeasonGameSlot } from '../../lib/league-season-calendar.ts';
 import type { LeagueGame, LeaguePractice } from '../../lib/types.ts';
 
 /**
@@ -178,5 +178,46 @@ describe('the public schedule (g1) reads every game and never a practice', () =>
     const db = read('lib/db.ts');
     const fn = db.slice(db.indexOf('export async function getSeasonGamesEveryStatus'), db.indexOf('export async function getOrgPlaceNames'));
     assert.doesNotMatch(fn, /\.neq\('status'|\.in\('status'|\.eq\('status'/);
+  });
+});
+
+describe('seasonClashes (step 3: the season page marks its own clashes)', () => {
+  const names = new Map([['red', 'Red Sox'], ['blue', 'Blue Jays'], ['cards', 'Cardinals']]);
+  it('a game and a practice on one facility at once clash, each side naming the other', () => {
+    const m = seasonClashes({
+      games: [game('g1')],
+      practices: [practice('p1', 'cards', '18:30', { scheduledAt: at('2027-06-15', '18:30') })],
+      teamName: names,
+    });
+    assert.equal(m.get('league_game:g1')?.clash, 'booked_by');
+    assert.deepEqual(m.get('league_game:g1')?.clashesWith.map(o => o.label), ['Cardinals practice']);
+    assert.deepEqual(m.get('league_practice:p1')?.clashesWith.map(o => o.label), ['Red Sox vs Blue Jays']);
+  });
+  it('a cancelled or postponed game holds no slot; another facility is no clash', () => {
+    const m = seasonClashes({
+      games: [game('g1'), game('g2', { status: 'cancelled' }), game('g3', { status: 'postponed' }), game('g4', { orgVenueFacilityId: 'f2' })],
+      practices: [],
+      teamName: names,
+    });
+    assert.equal(m.size, 0);
+  });
+  it('two identical typed places MAY be one place: busy then, never booked by', () => {
+    const typed = { orgVenueId: null, orgVenueFacilityId: null, location: 'Eastview Park' };
+    const m = seasonClashes({ games: [game('g1', typed), game('g2', typed)], practices: [], teamName: names });
+    assert.equal(m.get('league_game:g1')?.clash, 'busy_then');
+  });
+});
+
+describe('seasonOpeningDay (C3)', () => {
+  const days = (...d: string[]) => d.map(day => ({ day }));
+  it('today when this week holds something', () => {
+    assert.equal(seasonOpeningDay(days('2027-06-15', '2027-06-22'), '2027-06-17'), '2027-06-17');
+  });
+  it('the next day with something on it when this week is empty', () => {
+    assert.equal(seasonOpeningDay(days('2027-06-01', '2027-06-29'), '2027-06-17'), '2027-06-29');
+  });
+  it('a finished season on its last day; nothing at all, today', () => {
+    assert.equal(seasonOpeningDay(days('2027-06-01', '2027-06-08'), '2027-09-01'), '2027-06-08');
+    assert.equal(seasonOpeningDay([], '2027-09-01'), '2027-09-01');
   });
 });

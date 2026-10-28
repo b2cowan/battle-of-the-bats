@@ -24,7 +24,8 @@
 import { mondayOfDay, orgDayKey } from './timezone.ts';
 import { DEFAULT_BOOKING_MINUTES } from './booking-length.ts';
 import { pluralize } from './utils.ts';
-import type { CalendarBooking, CalendarWhere } from './club-calendar-view.ts';
+import { bookingWindow, findLeagueBookingConflicts, isBlockingConflict, type LeagueBooking } from './league-schedule-conflict.ts';
+import type { CalendarBooking, CalendarOther, CalendarWhere } from './club-calendar-view.ts';
 import type { PermitOutside } from './permit-words.ts';
 import type { LeagueGame, LeaguePractice } from './types.ts';
 
@@ -149,7 +150,8 @@ export function seasonCalendar(input: SeasonCalendarInput): SeasonCalendar {
       day: orgDayKey(p.scheduledAt),
       ...span(p.scheduledAt, p.endsAt),
       teamId: p.teamId,
-      who: team(p.teamId),
+      // The club calendar's spelling ("13U AAA practice"), so a practice reads as one in every view and window title.
+      who: SEASON_SCHEDULE_WORDS.practiceTitle(team(p.teamId)),
       what: 'Practice',
       where: where(p.orgVenueId, p.orgVenueFacilityId, p.location),
       state: p.status === 'cancelled' ? 'cancelled' : null,
@@ -167,6 +169,55 @@ export function seasonCalendar(input: SeasonCalendarInput): SeasonCalendar {
   needsDate.sort(byStart);
   return { bookings, needsDate };
 }
+
+/**
+ * THE SEASON'S OWN CLASHES (9d-2a step 3): every game and practice of the season against every other, by house league's own
+ * rule (`findLeagueBookingConflicts` — the save routes refuse by the same one; the club's cross-program rule never compares
+ * two house-league bookings). The pool is the WHOLE season, not the division on screen: two divisions booked onto one
+ * diamond at once is a clash the U12 page must still mark. A structured match (facility or venue) is `booked_by`; two
+ * identical typed places are `busy_then` — they MAY be one place (the save warns and never refuses there). A called-off or
+ * postponed booking holds no slot and clashes with nothing. Keyed as `seasonCalendar`'s `clashes` input.
+ */
+export function seasonClashes(input: {
+  games: readonly LeagueGame[];
+  practices: readonly LeaguePractice[];
+  teamName: ReadonlyMap<string, string>;
+}): Map<string, Pick<CalendarBooking, 'clash' | 'clashesWith'>> {
+  const team = (id: string) => input.teamName.get(id) ?? 'A team';
+  const pool: LeagueBooking[] = [
+    ...input.games.map((g): LeagueBooking => ({
+      id: g.id, kind: 'game', startsAt: g.scheduledAt, endsAt: g.endsAt, status: g.status,
+      orgVenueId: g.orgVenueId, orgVenueFacilityId: g.orgVenueFacilityId, location: g.location,
+      label: `${team(g.homeTeamId)} vs ${team(g.awayTeamId)}`,
+    })),
+    ...input.practices.map((p): LeagueBooking => ({
+      id: p.id, kind: 'practice', startsAt: p.scheduledAt, endsAt: p.endsAt, status: p.status,
+      orgVenueId: p.orgVenueId, orgVenueFacilityId: p.orgVenueFacilityId, location: p.location,
+      label: `${team(p.teamId)} practice`,
+    })),
+  ];
+  const out = new Map<string, Pick<CalendarBooking, 'clash' | 'clashesWith'>>();
+  for (const b of pool) {
+    const found = findLeagueBookingConflicts(b, pool);
+    if (!found.length) continue;
+    const clashesWith: CalendarOther[] = found.map(c => {
+      const w = bookingWindow(c.partner)!;
+      return {
+        key: `league_${c.partner.kind}:${c.partner.id}`, program: 'league', kind: c.partner.kind,
+        label: c.partner.label ?? '', startMs: w.startMs, endMs: w.endMs, where: c.partner.location ?? '', contact: null,
+        clash: isBlockingConflict(c) ? 'booked_by' : 'busy_then',
+      };
+    });
+    out.set(`league_${b.kind}:${b.id}`, {
+      clash: clashesWith.some(o => o.clash === 'booked_by') ? 'booked_by' : 'busy_then',
+      clashesWith,
+    });
+  }
+  return out;
+}
+
+/** The Show filter's kinds (9d2·12): empty = both. */
+export type SeasonShow = 'game' | 'practice';
 
 /** One List row: a booking, or a night of one division's practices folded (9d2·12). */
 export type SeasonListRow =
@@ -225,6 +276,17 @@ export function seasonWeeks<B extends { day: string }>(bookings: readonly B[], t
 }
 
 /**
+ * The day a season's Week and Month open on (C3): today when this week holds something; otherwise the next day with
+ * something on it; a finished season on its last. Today when the season has nothing at all.
+ */
+export function seasonOpeningDay(bookings: readonly { day: string }[], today: string): string {
+  const days = bookings.map(b => b.day).filter(Boolean).sort();
+  const monday = mondayOfDay(today);
+  if (!days.length || days.some(d => mondayOfDay(d) === monday)) return today;
+  return days.find(d => d >= today) ?? days[days.length - 1];
+}
+
+/**
  * Where the "Today · Thu, Jun 17" line sits in a week (C7): before its first booking on or after today, or after the last
  * when the week's bookings are all behind today; null in any week but this one.
  */
@@ -258,4 +320,16 @@ export const SEASON_SCHEDULE_WORDS = {
   addTitle: 'Add to the schedule',
   addGame: 'A game',
   addPractice: 'A practice',
+  /** Edge k: a division with practices and no games. */
+  noGamesYet: (division: string) => `${division} has no games yet`,
+  noGamesHint: 'Generate the whole season, or add games one at a time.',
+  generate: 'Generate games',
+  /** The toolbar's scope and filter (b1; the club calendar's quiet pill and its "Every …" row). */
+  division: 'Division',
+  show: 'Show',
+  showAll: 'Games and practices',
+  showWord: { game: 'Games', practice: 'Practices' } as Record<SeasonShow, string>,
+  viewLabel: 'Show the schedule as',
+  /** A practice on a calendar cell or row: the club calendar's spelling ("13U AAA practice"). */
+  practiceTitle: (team: string) => `${team} practice`,
 } as const;

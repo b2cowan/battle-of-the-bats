@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { randomUUID } from 'crypto';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
-import { getLeagueSeasonById, getPracticesForTeam, createPractices } from '@/lib/db';
+import { getLeagueSeasonById, getPracticesForSeason, getPracticesForTeam, createPractices } from '@/lib/db';
 import { resolveLeagueVenueSelection, checkLeagueBookings, resolveEndInstant } from '@/lib/league-venue';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { divisionInSeason } from '@/lib/league-season-scope';
@@ -39,12 +39,20 @@ export const GET = withObservability(async (req: NextRequest,
   const season = await getLeagueSeasonById(seasonId, ctx.org.id);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
 
+  // One team's practices, or — with no team named — the whole season's (House League 9d-2a step 3: the Schedule draws every
+  // division's games and practices together, and reads its clashes across the season). The season row was checked above.
   const teamId = req.nextUrl.searchParams.get('teamId');
-  if (!teamId) return NextResponse.json({ error: 'teamId required' }, { status: 400 });
-  const team = await verifyTeamInSeason(teamId, seasonId);
-  if (!team) return NextResponse.json({ error: 'Team not found' }, { status: 404 });
+  if (teamId) {
+    const team = await verifyTeamInSeason(teamId, seasonId);
+    if (!team) return NextResponse.json({ error: 'Team not found' }, { status: 404 });
+  }
 
-  const practices = await getPracticesForTeam(teamId);
+  let practices;
+  try {
+    practices = teamId ? await getPracticesForTeam(teamId) : await getPracticesForSeason(seasonId);
+  } catch {
+    return NextResponse.json({ error: 'We couldn’t load the practices.' }, { status: 500 });
+  }
   // A practice handed out from the club's time reads "From {schedule}" (Stage 11b Part 4, h2): its slot's schedule.
   const slotIds = [...new Set(practices.map(p => p.clubScheduleSlotId).filter((x): x is string => !!x))];
   const scheduleOf = new Map<string, string>();
