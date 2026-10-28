@@ -932,3 +932,51 @@ open it, and the menu's top level is Stage 13's.
   retired with it; `club-stage6a` — the window joins WEARS_THE_FIELD / SHOWS_THE_PERMIT, the live line asserted in its own
   file, the page's Create counts now one); old-look baseline lowered (helpers 8 → 7); `check:spelling` clean. **Not run:**
   `check:layout --changed` (it measures pages, not an open window; the page around it is step 3's, unchanged).
+- **2026-10-27 — 9d-2a STEP 5 BUILT and committed `ed6c34db3` (Generate games, c1–c4 + k3/k4; step 4's tidy committed
+  separately just before it, `8dbc2dc01`).** One window (`components/admin/kit/club/league/schedule/GenerateGamesWindow.tsx`), two steps
+  and a check, on one route with three steps (`generate/route.ts` `plan` · `check` · `save`; `lib/league-generate-server.ts`).
+  **Step 1** reads the division's game time from House league's time (its rows, "{n} games a week", "{dates} · {n} game
+  slots in all.", "Each game is 90 minutes, the length of a slot.", door "Change it in House league's time"). With none
+  (k3), house league's time not given yet, a row at a time, ticked; **Next gives it** (House league's time's own write) and
+  goes on. With nothing to give (k4), the league admin is told who can (and "Take time back from another division" when
+  another division holds time); an owner or an admin gets "Give house league more time" to Schedules. **Step 2** is Once /
+  Twice with the server's exact plan for both (counts, the hints). **The check** is passing / warning / blocking, with
+  "Checking…" and "The check didn't finish. Your choices are kept." · Try again. Save puts the games on the public schedule
+  at once and says so, "Families aren't emailed." (9d2a·A, ·F), then "Saved {n} games. They're on the public schedule now."
+  with the shipped `permitAfterSave` when games fall outside a permit. **Argued, eight calls:**
+  1. **The free League plan's branch (9d2a·B) is the club's schedule, not the free floor by name.** The route and the page
+     both ask `clubSchedulerOn(planId)`; League Plus and both Club bands carry it, so today the old generator is exactly the
+     free League floor's, kept verbatim below the new path. An org with house league and no club's schedule would otherwise
+     open a Generate that can never have time.
+  2. **k3 gives whole rows; part of a row is House league's time's job** (the hint's door). Next writes before the games, so
+     a convenor who then closes keeps the game time — it is undone in House league's time, and Step 2 plans against real
+     slots rather than a promise.
+  3. **"Has any games" is 9d2·11's test until 9d-2b** (recommended in the prompt): any `league_games` row, whatever its
+     state. Tools › Generate games is absent when no division qualifies (b3); "Every division already has games…" shows only
+     if the list empties while the window is open.
+  4. **Save plans again and refuses a check it no longer matches** (`changed`, when the slots differ from the check's).
+     ⚠ **Not atomic across two people:** two league admins who both pass the check before either saves would both insert.
+     The fix is a database step (a lock on the division), and 9d-2a adds no migration — **for 9d-2b's migrations.**
+  5. **The check's "Schedule health {score}" is the division's planned games against its own practices** (step 1's league
+     rule set). Another program's booking and the permit are warnings, never points, as the health header already says.
+  6. **"Prime time" is counted as it is said** — a weekday and its part of the day. Found on the dev probe: all games on
+     Sunday mornings at 8:00 and 9:30 read "Every team gets 1 or 2 Sunday mornings"; now nothing is shared out there.
+  7. **"See the permit" in the permit warning is step 7's** (with the permit id and the ended-permit line, frame i); the
+     warning carries `permitLine` as shipped meanwhile. The phone (c4) is the same window (the dialog fills a phone); c4's
+     shorter phone sentences were not built.
+  8. **⚠ A behaviour change on production, as ruled:** a club with the club's schedule (League Plus, Club) that has given
+     house league no time can no longer generate games — it reads k4 and is sent to Schedules. That is the owner's
+     amendment ("we can't have the house league people allowed to click any day or time before the club allocates"), and
+     today's production generator still asks a date, a clock and a field. Say it at the walk and in `/docs`.
+  **Build words** (marked `[build]` in `GENERATE_WORDS`): "{dates} · {n} game slots in all.", "Each game is the length of its
+  slot." (mixed lengths), "Only {placed} of the {n} games fit without a team playing two games at once." (crowded), "{Division}
+  needs at least 2 teams.", "{Division}'s game time changed while you were looking. Check the games again.", "{Division} has
+  games now. Add more one at a time, with Add.", "Loading the match-ups…". **Checks:** typecheck clean; 11,318 unit tests pass
+  (6 new: the window's sentences, the spoken prime time); `club-stage6a`'s writer census gains `lib/league-generate-server.ts`
+  (it checks the proposed games and what it wrote); `check:spelling`, `check:org-slug-callers` (the two windows' base `api`
+  props marked: each window adds `orgQuery`) and the restyle gates clean on these files. **End to end on dev**
+  (`.probe/9d2a/step5-e2e.mjs`, UAT Rep Club as its league admin, a probe division and ten probe slots, all removed after):
+  no time → short; the slots read Not given yet; given; once fits (6 of 10, 1 or 2 home each), twice blocks (12 need 12,
+  10 by Dec 6); the check names a permit warning (Kinsmen Park's permit ends Nov 19) with health 100; a stale Save → 409
+  `changed`; Save → 6 games, each exactly on its slot, venue and facility, every pairing once; again → 409 `has_games`; a
+  foreign division → 404. **Not run:** `check:layout --changed` (an open window, not a page).

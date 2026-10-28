@@ -36,6 +36,13 @@
   9d-2b, "Time from" reads the season's game slots (past ones too) on the page's schedule read. The window's permit line
   and "See the permit" are step 7's. **Owner ask raised:** moving a game is not limited to the division's time (plan §9:
   recommended with 9d-2b's slot link). **Resume at step 5 (Generate games, c1–c4).**
+- **2026-10-27, session 5: Step 5 is BUILT and committed `ed6c34db3`** (Generate games: step 1 from House league's time,
+  k3 gives a row of time not given yet, k4 names who can; step 2 Once / Twice; the check passing / warning / blocking; a
+  stale Save refused; plan §9 entry). The free League plan keeps its old generator (the branch is the club's schedule).
+  Step 4's leftover tidy went in first as `8dbc2dc01`. **Tell the owner at the walk:** a club with the club's schedule and no
+  house-league time can no longer generate (k4, as ruled); two league admins saving at the same moment could both insert
+  (a lock needs 9d-2b's migrations). The check's "See the permit" is step 7's. **Resume at step 6 (Schedule health, d1–d4)**
+  — the old health strip above the views is still there.
 - **Owed to the owner at step 6:** "Adjust the rules" has nowhere to save without a migration (recommended: the rules as
   words in 9d-2a, the door with 9d-2b).
 - **Facts found that the steps below must respect:** the club's cross-program clash rule never compares two house-league
