@@ -2703,14 +2703,39 @@ export async function getGamesForDivision(divisionId: string): Promise<LeagueGam
   return (data ?? []).map(mapLeagueGame);
 }
 
-export async function getGamesForSeason(seasonId: string): Promise<LeagueGame[]> {
-  const { data } = await supabaseAdmin
+/**
+ * Every game in a season, cancelled and postponed included (House League 9d-2a, defect C6-04): the public schedule shows
+ * a cancelled game struck and a postponed one in words. It replaced `getGamesForSeason`, whose only caller was that page
+ * and which dropped `cancelled` — so a cancelled game vanished and a postponed one read as on.
+ * ⚠ A failed read THROWS: an empty list would tell families the season has no games.
+ */
+export async function getSeasonGamesEveryStatus(seasonId: string): Promise<LeagueGame[]> {
+  const { data, error } = await supabaseAdmin
     .from('league_games')
     .select('*')
     .eq('season_id', seasonId)
-    .neq('status', 'cancelled')
     .order('scheduled_at', { ascending: true });
+  if (error) throw error;
   return (data ?? []).map(mapLeagueGame);
+}
+
+/**
+ * Every club venue's and facility's name, a closed venue's too — a game played at a venue the club has since closed was
+ * still played there, so the record keeps naming it. Throws on a failed read.
+ */
+export async function getOrgPlaceNames(orgId: string): Promise<{ venues: Map<string, { name: string; address: string | null }>; facilities: Map<string, string> }> {
+  const { data, error } = await supabaseAdmin
+    .from('org_venues')
+    .select('id, name, address, org_venue_facilities(id, name)')
+    .eq('org_id', orgId);
+  if (error) throw error;
+  const venues = new Map<string, { name: string; address: string | null }>();
+  const facilities = new Map<string, string>();
+  for (const v of (data ?? []) as { id: string; name: string; address: string | null; org_venue_facilities: { id: string; name: string }[] | null }[]) {
+    venues.set(v.id, { name: v.name, address: v.address ?? null });
+    for (const f of v.org_venue_facilities ?? []) facilities.set(f.id, f.name);
+  }
+  return { venues, facilities };
 }
 
 // ─── League practices ─────────────────────────────────────────────────────────

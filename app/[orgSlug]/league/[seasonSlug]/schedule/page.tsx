@@ -5,13 +5,20 @@ import type { Metadata } from 'next';
 import {
   getDivisionsForSeason,
   getTeamsForSeason,
-  getGamesForSeason,
+  getSeasonGamesEveryStatus,
+  getOrgPlaceNames,
 } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
 import { orgLinks } from '@/lib/org-links';
-import { ORG_TIME_ZONE, addCalendarDays, formatInOrgZone, orgWeekKey } from '@/lib/timezone';
-import type { LeagueDivision, LeagueTeam, LeagueGame } from '@/lib/types';
+import { orgDayKey, timesInZoneSentence } from '@/lib/timezone';
+import { STATE_WORDS, dayHeading, dayWords, weekRangeWords } from '@/lib/calendar-recipe';
+import { clockOf, whereWords } from '@/lib/club-calendar-view';
+import {
+  SEASON_PUBLIC_WORDS, SEASON_SCHEDULE_WORDS, seasonCalendar, seasonWeeks, todayLineAt,
+  type SeasonBooking, type SeasonWeek,
+} from '@/lib/league-season-calendar';
+import type { LeagueDivision } from '@/lib/types';
 import column from '../../league-column.module.css';
 import kit from '@/components/public/ClubKit.module.css';
 
@@ -26,34 +33,16 @@ export async function generateMetadata({ params }: { params: Promise<{ orgSlug: 
   }, { path: `/league/${seasonSlug}/schedule` });
 }
 
-function formatDateTime(iso: string | null): { date: string; time: string } | null {
-  if (!iso) return null;
-  // J3-047: this is a SERVER component — without an explicit timeZone, toLocale* renders in
-  // the server's zone (UTC on Amplify), so parents saw game times 4–5h off. Pin to the org
-  // zone (America/Toronto V1) so 6:00 PM reads as 6:00 PM for every family.
-  const d = new Date(iso);
-  return {
-    date: d.toLocaleDateString('en-CA', { timeZone: ORG_TIME_ZONE, weekday: 'short', month: 'short', day: 'numeric' }),
-    time: d.toLocaleTimeString('en-CA', { timeZone: ORG_TIME_ZONE, hour: 'numeric', minute: '2-digit', hour12: true }),
-  };
-}
-
-// ⚠ THE WEEK IS THE ORG'S, NOT THE SERVER'S (Club Tier Stage 6b, Ask 8 — S6-12): this is a server page, and
-// `getDay()` here read the host's clock (UTC on Amplify), so a Sunday game after 8 p.m. Eastern filed into the next
-// week for every family. Filed by the game's org-zone day instead.
-function weekKey(iso: string | null): string {
-  if (!iso) return 'unscheduled';
-  return orgWeekKey(iso);
-}
-
-function weekLabel(key: string): string {
-  if (key === 'unscheduled') return 'Unscheduled';
-  // A week key is a calendar date: name it and its Sunday by date arithmetic, read at noon in the org's zone.
-  const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-  const day = (date: string) => formatInOrgZone(`${date}T12:00:00Z`, opts);
-  return `Week of ${day(key)} – ${day(addCalendarDays(key, 6))}`;
-}
-
+/**
+ * THE PUBLIC SCHEDULE (House League 9d-2a, frames g1/g2; words HOUSE_LEAGUE_STAGE9D2_11B_COPY.md "Stage 9d-2a" g).
+ * Games only — a practice is never public. Every game reads through the season page's own bookings
+ * (`seasonCalendar`), so its state, its result and its place are the same words the convenor reads:
+ *   - a CANCELLED game stays in its week, struck, with its word (it used to vanish: the read dropped it — C6-04);
+ *   - a POSTPONED game leaves its week for "Needs a new date" (it used to read as on, at its old time);
+ *   - the place is on every game; "Times in Eastern time." is said once (C10).
+ * ⚠ THE WEEK AND THE DAY ARE THE CLUB'S (S6-12): this is a server page, so every day is `orgDayKey`'s, never the host's
+ * clock — `seasonWeeks` files a booking by the Monday of its org-zone day.
+ */
 export default async function PublicSchedulePage({
   params,
   searchParams,
@@ -73,49 +62,43 @@ export default async function PublicSchedulePage({
   if (!season) notFound();
   if (season.status === 'draft') notFound();
 
-  const [divisions, teams, games] = await Promise.all([
+  const [divisions, teams, games, places] = await Promise.all([
     getDivisionsForSeason(season.id),
     getTeamsForSeason(season.id),
-    getGamesForSeason(season.id),
+    getSeasonGamesEveryStatus(season.id),
+    getOrgPlaceNames(org.id),
   ]);
-
-  const teamMap = new Map<string, LeagueTeam>(teams.map(t => [t.id, t]));
 
   const activeDivision: LeagueDivision | null =
     divisions.find(d => d.id === divisionIdParam) ?? divisions[0] ?? null;
 
-  const filteredGames = activeDivision
-    ? games.filter(g => g.divisionId === activeDivision.id)
-    : games;
-
-  // Group by week
-  const weekGroups = new Map<string, LeagueGame[]>();
-  for (const game of filteredGames) {
-    const key = weekKey(game.scheduledAt);
-    if (!weekGroups.has(key)) weekGroups.set(key, []);
-    weekGroups.get(key)!.push(game);
-  }
-  const sortedWeeks = [...weekGroups.entries()].sort(([a], [b]) => a.localeCompare(b));
-
-  const teamName: React.CSSProperties = { fontWeight: 700, color: 'var(--club-text)', fontSize: '1rem' };
+  const { bookings, needsDate } = seasonCalendar({
+    seasonName: season.name,
+    sport: season.sport,
+    games: activeDivision ? games.filter(g => g.divisionId === activeDivision.id) : games,
+    practices: [],
+    teamName: new Map(teams.map(t => [t.id, t.name])),
+    divisionName: new Map(divisions.map(d => [d.id, d.name])),
+    placeOf: (venueId, facilityId) => {
+      const venue = places.venues.get(venueId);
+      return venue ? { venue: venue.name, facility: facilityId ? places.facilities.get(facilityId) ?? null : null, address: venue.address } : null;
+    },
+  });
+  const today = orgDayKey(new Date().toISOString());
+  const { earlier, ahead } = seasonWeeks(bookings, today);
+  const hasGames = bookings.length + needsDate.length > 0;
 
   // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
   return (
     <div>
       {/* R6: the shared 1200px page column; this page's 800px measure left-aligns inside it. */}
       <div className={`container ${column.column}`} style={{ '--league-measure': '800px' } as React.CSSProperties}>
-        {/* Back */}
         <Link href={href(`/league/${seasonSlug}`)} className={kit.back}>
           ← {season.name}
         </Link>
 
-        {/* Title */}
-        <div style={{ marginBottom: '1.75rem' }}>
-          <h1 className={kit.title}>Schedule</h1>
-          <p className={kit.sub}>{season.name}</p>
-        </div>
+        <h1 className={kit.title} style={{ marginBottom: '1.5rem' }}>Schedule</h1>
 
-        {/* Division tabs */}
         {divisions.length > 1 && (
           <div className={column.tabs}>
             {divisions.map(d => {
@@ -133,107 +116,78 @@ export default async function PublicSchedulePage({
           </div>
         )}
 
-        {/* Game weeks */}
-        {filteredGames.length === 0 ? (
-          <div className={kit.empty}>No games scheduled yet.</div>
+        {!hasGames ? (
+          <div className={kit.empty}>{SEASON_PUBLIC_WORDS.noGames}</div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            {sortedWeeks.map(([key, weekGames]) => (
-              <div key={key}>
-                <div
-                  className={kit.band}
-                  style={{ borderBottom: '1px solid var(--club-line)', paddingBottom: '0.4rem' }}
-                >
-                  {weekLabel(key)}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {weekGames.map(game => {
-                    const home = teamMap.get(game.homeTeamId);
-                    const away = teamMap.get(game.awayTeamId);
-                    const dt   = formatDateTime(game.scheduledAt);
-                    const isDone = game.status === 'completed';
-
-                    return (
-                      <div
-                        key={game.id}
-                        className={kit.card}
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: '1fr auto 1fr',
-                          alignItems: 'center',
-                          gap: '0.75rem',
-                          padding: '0.75rem 1rem',
-                        }}
-                      >
-                        {/* Home team */}
-                        <div style={{ textAlign: 'right' }}>
-                          {home?.color && (
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                width: 8, height: 8,
-                                borderRadius: '50%',
-                                background: home.color,
-                                marginRight: 6,
-                                verticalAlign: 'middle',
-                              }}
-                            />
-                          )}
-                          <span style={teamName}>{home?.name ?? 'TBD'}</span>
-                        </div>
-
-                        {/* Score / time */}
-                        <div style={{ textAlign: 'center', minWidth: '5rem' }}>
-                          {isDone ? (
-                            <span
-                              style={{
-                                fontWeight: 700,
-                                fontSize: '1rem',
-                                color: 'var(--club-text)',
-                                fontVariantNumeric: 'tabular-nums',
-                              }}
-                            >
-                              {game.homeScore ?? 0} – {game.awayScore ?? 0}
-                            </span>
-                          ) : (
-                            <div style={{ fontSize: '0.75rem', color: 'var(--club-soft)', lineHeight: 1.4 }}>
-                              {dt ? (
-                                <>
-                                  <div>{dt.date}</div>
-                                  <div>{dt.time}</div>
-                                </>
-                              ) : (
-                                <span>TBD</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Away team */}
-                        <div>
-                          {away?.color && (
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                width: 8, height: 8,
-                                borderRadius: '50%',
-                                background: away.color,
-                                marginRight: 6,
-                                verticalAlign: 'middle',
-                              }}
-                            />
-                          )}
-                          <span style={teamName}>{away?.name ?? 'TBD'}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
+          <>
+            <p className={column.zone}>{timesInZoneSentence()}</p>
+            <div className={column.weeks}>
+              {earlier.length > 0 && (
+                <details className={column.earlier}>
+                  <summary>{SEASON_SCHEDULE_WORDS.earlierWeeks(earlier.length)}</summary>
+                  {earlier.map(w => <Week key={w.monday} week={w} today={today} />)}
+                </details>
+              )}
+              {ahead.map(w => <Week key={w.monday} week={w} today={today} />)}
+              {needsDate.length > 0 && (
+                <section className={column.week}>
+                  <h2 className={column.weekHead}>{SEASON_SCHEDULE_WORDS.needsDate}</h2>
+                  <div className={kit.list}>
+                    {needsDate.map(b => <GameRow key={b.key} booking={b} />)}
+                  </div>
+                </section>
+              )}
+            </div>
+          </>
         )}
       </div>
+    </div>
+  );
+}
+
+/** A week: "Jun 14 – 20, 2027 · this week", its games, and the today line in this week only. */
+function Week({ week, today }: { week: SeasonWeek<SeasonBooking>; today: string }) {
+  const line = todayLineAt(week, today);
+  const head = weekRangeWords(week.monday) + (line === null ? '' : ` · ${SEASON_SCHEDULE_WORDS.thisWeek}`);
+  const todayLine = <div key="today" className={column.todayLine}>{dayHeading(today, today)}</div>;
+  const rows = week.bookings.map(b => <GameRow key={b.key} booking={b} />);
+  if (line !== null) rows.splice(line, 0, todayLine);
+  return (
+    <section className={column.week}>
+      <h2 className={column.weekHead}>{head}</h2>
+      <div className={kit.list}>{rows}</div>
+    </section>
+  );
+}
+
+/** One game: when · the match and its place · the result, or the state in words. */
+function GameRow({ booking: b }: { booking: SeasonBooking }) {
+  const game = b.source.kind === 'game' ? b.source.game : null;
+  const postponed = b.state === 'postponed';
+  const cancelled = b.state === 'cancelled';
+  const place = whereWords(b);
+  return (
+    <div className={`${column.game}${cancelled ? ` ${column.struck}` : ''}`}>
+      {game?.scheduledAt ? (
+        <time className={column.when} dateTime={game.scheduledAt}>
+          {postponed ? SEASON_PUBLIC_WORDS.was(dayWords(b.day)) : dayWords(b.day)}
+          <span>{clockOf(b.startMs)}</span>
+        </time>
+      ) : (
+        <span className={column.when}>{SEASON_PUBLIC_WORDS.dateToCome}</span>
+      )}
+      <div className={column.match}>
+        <span className={column.matchName}>
+          {b.who}
+          {cancelled && <span className={`${kit.chip} ${kit.chipNeutral}`}>{STATE_WORDS.cancelled}</span>}
+        </span>
+        {place && <span className={column.place}>{place}</span>}
+      </div>
+      {postponed ? (
+        <span className={`${column.state} ${column.postponed}`}>{SEASON_PUBLIC_WORDS.postponed}</span>
+      ) : b.result ? (
+        <span className={column.state}>{b.result}</span>
+      ) : null}
     </div>
   );
 }

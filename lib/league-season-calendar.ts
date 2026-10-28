@@ -21,7 +21,7 @@
  * ⚖ NO "MOVED" IN 9d-2a (owner 2026-10-27): a game holds one date and no history, so a postponed game given a new date reads
  * as an ordinary game in its new week. "Moved" comes with 9d-2b's change record.
  */
-import { orgDayKey } from './timezone.ts';
+import { mondayOfDay, orgDayKey } from './timezone.ts';
 import { DEFAULT_BOOKING_MINUTES } from './booking-length.ts';
 import { pluralize } from './utils.ts';
 import type { CalendarBooking, CalendarWhere } from './club-calendar-view.ts';
@@ -203,6 +203,46 @@ export function foldNights(bookings: readonly SeasonBooking[]): SeasonListRow[] 
 /** A night's places: "Maple Grove Park · Diamonds 1, 2" is the view's to say; this is the distinct facilities in order. */
 export const nightPlaces = (night: { practices: readonly SeasonBooking[] }) =>
   [...new Map(night.practices.map(p => [`${p.where.venueId ?? ''}|${p.where.facility ?? p.where.text ?? ''}`, p.where])).values()];
+
+/** A week as a list heads it: its Monday and what falls in it, by start. */
+export interface SeasonWeek<B> { monday: string; bookings: B[] }
+
+/**
+ * The weeks a season list draws (g1, b1): it opens on this week, and the weeks before it fold behind "Show {n} earlier
+ * weeks". A season wholly behind today folds nothing — there is no this-week to open on, and the whole season is the
+ * record. The week is the club's (C2): `day` is already the org-zone day (`orgDayKey`), so its Monday is the org's week.
+ */
+export function seasonWeeks<B extends { day: string }>(bookings: readonly B[], today: string): { earlier: SeasonWeek<B>[]; ahead: SeasonWeek<B>[] } {
+  const byMonday = new Map<string, B[]>();
+  for (const b of bookings) {
+    const monday = mondayOfDay(b.day);
+    const week = byMonday.get(monday);
+    if (week) week.push(b); else byMonday.set(monday, [b]);
+  }
+  const weeks = [...byMonday].sort(([a], [b]) => a.localeCompare(b)).map(([monday, bs]) => ({ monday, bookings: bs }));
+  const at = weeks.findIndex(w => w.monday >= mondayOfDay(today));
+  return at <= 0 ? { earlier: [], ahead: weeks } : { earlier: weeks.slice(0, at), ahead: weeks.slice(at) };
+}
+
+/**
+ * Where the "Today · Thu, Jun 17" line sits in a week (C7): before its first booking on or after today, or after the last
+ * when the week's bookings are all behind today; null in any week but this one.
+ */
+export function todayLineAt(week: SeasonWeek<{ day: string }>, today: string): number | null {
+  if (week.monday !== mondayOfDay(today)) return null;
+  const at = week.bookings.findIndex(b => b.day >= today);
+  return at < 0 ? week.bookings.length : at;
+}
+
+/** The public schedule's own words (g1, g2). Settled: HOUSE_LEAGUE_STAGE9D2_11B_COPY.md "Stage 9d-2a" g. */
+export const SEASON_PUBLIC_WORDS = {
+  /** "Was Sat, Jun 12" — a postponed game's old day; its clock follows. */
+  was: (day: string) => `Was ${day}`,
+  postponed: 'Postponed · new date to come',
+  /** A game that has never had a date (the admin can save one without): nothing to say it "was". */
+  dateToCome: 'Date to come',
+  noGames: 'No games scheduled yet.',
+} as const;
 
 /** Words. Settled: HOUSE_LEAGUE_STAGE9D2_11B_COPY.md "Stage 9d-2a" (b1–b4). */
 export const SEASON_SCHEDULE_WORDS = {

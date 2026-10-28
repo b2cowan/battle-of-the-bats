@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { foldNights, gameSlotOf, resultWords, seasonCalendar, type SeasonCalendarInput, type SeasonGameSlot } from '../../lib/league-season-calendar.ts';
+import { foldNights, gameSlotOf, resultWords, seasonCalendar, seasonWeeks, todayLineAt, type SeasonCalendarInput, type SeasonGameSlot } from '../../lib/league-season-calendar.ts';
 import type { LeagueGame, LeaguePractice } from '../../lib/types.ts';
 
 /**
@@ -133,5 +134,49 @@ describe('resultWords', () => {
     assert.equal(resultWords({ status: 'completed', homeScore: 7, awayScore: 4 }), 'Final 7–4');
     assert.equal(resultWords({ status: 'completed', homeScore: 7, awayScore: null }), null);
     assert.equal(resultWords({ status: 'scheduled', homeScore: 7, awayScore: 4 }), null);
+  });
+});
+
+describe('seasonWeeks and the today line (g1: the public schedule opens on this week)', () => {
+  const b = (day: string) => ({ day });
+  const days = ['2027-06-01', '2027-06-08', '2027-06-09', '2027-06-15', '2027-06-18', '2027-06-22'].map(b);
+  it('folds the weeks before this one and opens on this week, Monday first', () => {
+    const { earlier, ahead } = seasonWeeks(days, '2027-06-17');
+    assert.deepEqual(earlier.map(w => w.monday), ['2027-05-31', '2027-06-07']);
+    assert.deepEqual(ahead.map(w => w.monday), ['2027-06-14', '2027-06-21']);
+    assert.equal(earlier[1].bookings.length, 2);
+  });
+  it('a Sunday belongs to the week before it', () => {
+    assert.deepEqual(seasonWeeks([b('2027-06-20')], '2027-06-14').ahead.map(w => w.monday), ['2027-06-14']);
+  });
+  it('a week with nothing in it opens on the next week that has games', () => {
+    const { earlier, ahead } = seasonWeeks([b('2027-06-01'), b('2027-06-22')], '2027-06-17');
+    assert.equal(earlier.length, 1);
+    assert.deepEqual(ahead.map(w => w.monday), ['2027-06-21']);
+  });
+  it('a season wholly behind today folds nothing: the whole season is the record', () => {
+    const { earlier, ahead } = seasonWeeks(days, '2027-09-01');
+    assert.equal(earlier.length, 0);
+    assert.equal(ahead.length, 4);
+  });
+  it('the today line sits before the first booking on or after today, after the last when all are behind, and only in this week', () => {
+    const { ahead } = seasonWeeks(days, '2027-06-17');
+    assert.equal(todayLineAt(ahead[0], '2027-06-17'), 1, 'after Jun 15, before Jun 18');
+    assert.equal(todayLineAt(ahead[0], '2027-06-15'), 0, 'a game today: the line heads it');
+    assert.equal(todayLineAt(ahead[0], '2027-06-19'), 2, 'every game behind today: the line closes the week');
+    assert.equal(todayLineAt(ahead[1], '2027-06-17'), null, 'not this week');
+  });
+});
+
+describe('the public schedule (g1) reads every game and never a practice', () => {
+  const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+  it('reads every status (a cancelled game used to vanish — C6-04) and passes no practices', () => {
+    const page = read('app/[orgSlug]/league/[seasonSlug]/schedule/page.tsx');
+    assert.match(page, /getSeasonGamesEveryStatus\(season\.id\)/);
+    assert.match(page, /practices: \[\],/);
+    assert.equal(page.match(/timesInZoneSentence\(\)/g)?.length, 1, 'the zone is said once');
+    const db = read('lib/db.ts');
+    const fn = db.slice(db.indexOf('export async function getSeasonGamesEveryStatus'), db.indexOf('export async function getOrgPlaceNames'));
+    assert.doesNotMatch(fn, /\.neq\('status'|\.in\('status'|\.eq\('status'/);
   });
 });

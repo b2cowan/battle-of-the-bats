@@ -62,3 +62,110 @@
   color: var(--club-on-fill);
   border: 1.5px solid var(--club-edge);
 }
+
+/* ── The public schedule (House League 9d-2a, frames g1/g2) ──────────────────────────────────────────────────────────
+   The weeks open on this week; the earlier ones fold behind one door. A game row is NOT the kit's `.row` (that row is a
+   door and draws its chevron); it is when · the match and its place · the result or the state. Cancelled is struck with
+   its word; Postponed is said in the warning ink, never by colour alone. Type steps 12 · 14 · 16 only. */
+.zone {
+  margin: 0 0 1rem;
+  font: 400 0.875rem/1.4 var(--club-text-face);
+  color: var(--club-soft);
+}
+.weeks {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.week {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.weekHead {
+  margin: 0;
+  font: 600 0.875rem/1.3 var(--club-text-face);
+  color: var(--club-text);
+}
+.earlier > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font: 600 0.875rem var(--club-text-face);
+  color: var(--club-ink);
+  cursor: pointer;
+  list-style: none;
+}
+.earlier > summary::-webkit-details-marker { display: none; }
+.earlier > summary:hover { text-decoration: underline; }
+.earlier > summary:focus-visible { outline: 2px solid var(--club-ink); outline-offset: 2px; }
+/* Opened, the door has done its work: the weeks take its place. */
+.earlier[open] > summary { display: none; }
+.earlier[open] { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.game {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 60px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--club-line);
+}
+.game:first-child { border-top: 0; }
+.when {
+  flex: none;
+  width: 7.5rem;
+  font: 600 0.875rem/1.35 var(--club-text-face);
+  color: var(--club-text);
+  font-variant-numeric: tabular-nums;
+}
+.when > span {
+  display: block;
+  font-weight: 400;
+  color: var(--club-soft);
+}
+.match {
+  flex: 1;
+  min-width: 0;
+}
+.matchName {
+  display: block;
+  font: 600 1rem/1.3 var(--club-text-face);
+  color: var(--club-text);
+  overflow-wrap: anywhere;
+}
+.matchName > span { margin-left: 8px; vertical-align: 1px; }
+.place {
+  display: block;
+  font: 400 0.875rem/1.4 var(--club-text-face);
+  color: var(--club-soft);
+}
+.state {
+  font: 600 0.875rem/1.2 var(--club-text-face);
+  color: var(--club-text);
+  white-space: nowrap;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.postponed { color: var(--club-warn); }
+/* The chip inside the name is an atomic inline, so the strike never runs through "Cancelled". */
+.struck .matchName,
+.struck .when { text-decoration: line-through; color: var(--club-dim); }
+.struck .when > span { color: var(--club-dim); }
+.todayLine {
+  padding: 8px 16px;
+  border-top: 1px solid var(--club-line);
+  font: 600 0.75rem/1.2 var(--club-text-face);
+  color: var(--club-ink);
+}
+.todayLine:first-child { border-top: 0; }
+
+/* A phone (g2): the when runs on one line with the result at its right, and the match takes the full width under it. */
+@media (max-width: 480px) {
+  .game { flex-wrap: wrap; gap: 4px 12px; }
+  .when { width: auto; }
+  .when > span { display: inline; }
+  .when > span::before { content: ' · '; }
+  .match { flex-basis: 100%; order: 3; }
+  .state { margin-left: auto; }
+}
