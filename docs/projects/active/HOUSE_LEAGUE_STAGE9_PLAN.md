@@ -873,3 +873,24 @@ open it, and the menu's top level is Stage 13's.
   one list, and `club-stage6c-screens-guard`'s switch assertions are for the three staff calendars, so they did not move).
   A game saved with no date at all reads **"Date to come"** (a build word; it is not postponed, so it has no "Was").
   Checked on Dev House League 2026 and a rolled-back five-game fixture around today.
+- **2026-10-27 — 9d-2a STEP 3 BUILT and committed `58ecf0ee6` (the admin screen, b1–b3).** The Week · List · Practices pills
+  are gone: **List · Week · Month** on the shared `CalendarViewSwitch`, the phone's View drawer (Week, Month), the shared
+  `ScheduleDateNav` (Week and Month only — List is the season, R1), **Division** as the leading scope pill, **Show** (games,
+  practices) as the quiet `MultiSelectDropdown`, then Export · Add · Tools. Games and practices together; the Practices
+  view is retired and a practice opens the existing `PracticeWindow` (h2 — already editable by hand since 11b Part 4; a club
+  practice stays read-only). **Add** asks "a game or a practice", and a practice now asks its team (the practice form gained
+  a Team field on create). **Generate games** moved into Tools (step 5 rebuilds it). The page reads the **whole season
+  once** — teams, games and practices (the practices read returns the season's when no team is named) — and the division
+  is a scope over it, so its clash marks (`seasonClashes`, house league's own rule) see another division's booking on the
+  same facility. **Argued, the recipe's line over the drawing (§11's own rule):** the List is the row list (C5 — no column
+  in the drawn When · What · Place table is compared or totalled), and the phone's Week is the stacked week (C13), not the
+  drawn one-day pager. Week reuses the club calendar's `WeekView`; Month is the season's own (a division's day holds a few
+  bookings, so it NAMES them, R2's reason — the coach's grid and `CellChip`, exported for it); a postponed game shows in
+  Month on the day it had ("· Postponed"), never in List or Week. Week and Month open on the season's own day (C3,
+  `seasonOpeningDay`). A practice is spelled "Tigers practice" (the club calendar's). **Kept for later steps:** the game
+  window (4), Generate games (5), the old health strip (6). Export stays the division's games (Home / Away / Score columns,
+  as before) — practices were never in the file. **Checks:** typecheck clean; 11,211 unit tests pass (`seasonClashes`,
+  `seasonOpeningDay` new); guards moved with the reason (`org-week-clock`, `club-stage6a`); the retired views' 18 unused
+  styles deleted and the old-look / lettering baselines lowered. The three reads probed on UAT Rep Club as a league admin
+  and a registrar (200; a foreign team still 404). **Not run:** `check:layout --changed` widened itself to every screen
+  (shared calendar parts touched) — a whole-product sweep, which runs on staging, never the dev server (owner 2026-10-13).

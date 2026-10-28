@@ -25,6 +25,12 @@
   Dev House League 2026 and a rolled-back fixture). Its pure parts (`seasonWeeks`, `todayLineAt`) live in
   `lib/league-season-calendar.ts` beside step 1's. One word chosen by the build, not by /marketing: **"Date to come"** for a
   game saved with no date at all (the admin can save one; it is not postponed, so it has no "Was"). **Resume at step 3.**
+- **2026-10-27, session 3: Step 3 is BUILT and committed `58ecf0ee6`** (List · Week · Month, games and practices together,
+  Division · switch · dates · Show · Export · Add · Tools; plan §9 entry). The page now reads the whole season once; the
+  game window is still today's `GameModal` (opened from every view), Generate is in Tools, and the old health strip still
+  sits above the views — steps 4, 5 and 6 replace them. Two drawn shapes were not built, argued from the recipe (C5: List
+  is the row list; C13: the phone's Week is the stacked week, not a day pager) — tell the owner at the walk. **Resume at
+  step 4 (the game window, b4).**
 - **Owed to the owner at step 6:** "Adjust the rules" has nowhere to save without a migration (recommended: the rules as
   words in 9d-2a, the door with 9d-2b).
 - **Facts found that the steps below must respect:** the club's cross-program clash rule never compares two house-league
