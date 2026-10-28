@@ -67,7 +67,7 @@ interface BrandingSettings {
   coachNamesShowOnPublic: boolean;
 }
 
-/** What the page edits — sent whole on every save (the route takes the same body the old Save sent). */
+/** What the page edits — sent on every save, the theme only once it was changed (`bodyOf`). */
 type Draft = {
   presetKey: string;
   customPrimary: string;
@@ -106,12 +106,22 @@ function draftOf(data: BrandingSettings, advanced: boolean): Draft {
   };
 }
 
-function bodyOf(d: Draft, advanced: boolean) {
+/** The draft fields that ARE the theme. Touching one is choosing a theme; nothing else is. */
+const THEME_FIELDS = ['presetKey', 'customPrimary', 'customAccent'] as const satisfies readonly (keyof Draft)[];
+
+/**
+ * The PATCH body. The theme rides along only once the organizer has changed it on this visit: an unset theme drafts as
+ * 'platform' (the swatch the card shows), so sending it with every save — a page switch, the colour mode — wrote
+ * theme_preset='platform' and the club's colours stopped applying to the tournament (public pages D7, 2026-10-27).
+ * The route updates only the keys it is sent, so a body without them leaves the stored theme exactly as it was.
+ */
+function bodyOf(d: Draft, advanced: boolean, themeChanged: boolean) {
   const pages = { publicHiddenPages: normalizeHiddenPublicPages(d.publicHiddenPages), coachNamesShowOnPublic: d.coachNamesShowOnPublic };
   if (!advanced) return pages;
-  const theme = d.presetKey === 'custom'
-    ? { themePreset: 'platform', themePrimary: d.customPrimary, themeAccent: d.customAccent }
-    : { themePreset: d.presetKey, themePrimary: null, themeAccent: null };
+  const theme = !themeChanged ? {}
+    : d.presetKey === 'custom'
+      ? { themePreset: 'platform', themePrimary: d.customPrimary, themeAccent: d.customAccent }
+      : { themePreset: d.presetKey, themePrimary: null, themeAccent: null };
   return {
     ...theme,
     themeFont: d.fontKey,
@@ -124,12 +134,14 @@ function bodyOf(d: Draft, advanced: boolean) {
   };
 }
 
-/** The draft with the address it was read from (and the plan's body): a save always goes to ITS tournament. */
-type Held = { url: string; advanced: boolean; draft: Draft };
+/** The draft with the address it was read from (and the plan's body): a save always goes to ITS tournament.
+ *  `themeChanged` stays true from the first theme change until the next read, so choosing a theme and then
+ *  choosing back still writes the second choice. */
+type Held = { url: string; advanced: boolean; draft: Draft; themeChanged: boolean };
 const send = (held: Held, keepalive = false) => fetch(held.url, {
   method: 'PATCH',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(bodyOf(held.draft, held.advanced)),
+  body: JSON.stringify(bodyOf(held.draft, held.advanced, held.themeChanged)),
   keepalive,
 });
 
@@ -231,7 +243,7 @@ export default function TournamentBrandingPage() {
       // An edit made while this read was out stays: a late read never overwrites it.
       if (edits.current !== editsAtStart && latest.current?.url === brandingUrl) return;
       const d = draftOf(data, advanced);
-      latest.current = { url: brandingUrl, advanced, draft: d };
+      latest.current = { url: brandingUrl, advanced, draft: d, themeChanged: false };
       setDraft(d);
     } catch {
       if (currentUrl.current === brandingUrl) setLoadError(true);
@@ -267,7 +279,11 @@ export default function TournamentBrandingPage() {
     const held = latest.current;
     if (!held) return;
     edits.current += 1;
-    latest.current = { ...held, draft: { ...held.draft, ...patch } };
+    latest.current = {
+      ...held,
+      draft: { ...held.draft, ...patch },
+      themeChanged: held.themeChanged || THEME_FIELDS.some(k => k in patch),
+    };
     setDraft(latest.current.draft);
     if (!later) { saveNow(); return; }
     setWaiting(true);

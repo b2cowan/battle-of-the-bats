@@ -13,7 +13,7 @@ import type { Game, PublicTeam, Division, Venue } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { useOrgHref } from '@/lib/use-public-pathname';
 import { useFollowedTeam } from '@/lib/follow';
-import { isGameLive, gameStartMs, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
+import { isGameLive, gameStartMs, hasNoScoreYet, NO_SCORE_YET, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
 import { downloadTeamScheduleICS } from '@/lib/team-calendar';
 import LocationLink from '@/components/LocationLink';
@@ -175,7 +175,7 @@ function MyTournamentCard({
   const nextStartMs = nextGame ? gameStartMs(nextGame) : null;
   const countdownMs = nextStartMs != null ? nextStartMs - nowMs : null;
 
-  // A game can be live before its first run is entered → show 0–0 rather than blank.
+  // A game can be live before anyone enters a score → "No score yet", never an invented 0–0 (D2).
   const liveAway = liveGame?.awayScore ?? 0;
   const liveHome = liveGame?.homeScore ?? 0;
   const liveScore = liveGame
@@ -223,7 +223,9 @@ function MyTournamentCard({
         <div className={`${homeStyles.myTeamGame} ${homeStyles.myTeamLive}`}>
           <div className={homeStyles.myTeamLiveTop}>
             <span className={homeStyles.myTeamLiveBadge}><span className={homeStyles.myTeamLiveDot} /> LIVE</span>
-            <span className={homeStyles.myTeamLiveScore}>{liveScore}</span>
+            {hasNoScoreYet(liveGame)
+              ? <span className={homeStyles.liveNowNoScore}>{NO_SCORE_YET}</span>
+              : <span className={homeStyles.myTeamLiveScore}>{liveScore}</span>}
           </div>
           <strong>vs {opponent}</strong>
           <LocationLink location={resolveGameVenueLabel(liveGame, venues)} venue={venue} size="sm" />

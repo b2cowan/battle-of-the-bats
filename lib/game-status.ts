@@ -117,6 +117,15 @@ export function publicGameStatusLabel(state: PublicGameState): string {
   }
 }
 
+/** What a live game says before anyone has entered a score — never a lone "–", never an
+ *  invented 0–0 (public tournament pages D2, 2026-10-27). One spelling on every fan surface. */
+export const NO_SCORE_YET = 'No score yet';
+
+/** Live by the clock with neither side's score entered. */
+export function hasNoScoreYet(game: { homeScore?: number | null; awayScore?: number | null }): boolean {
+  return game.homeScore == null && game.awayScore == null;
+}
+
 export interface TeamGameSelection {
   live: Game | null;
   next: Game | null;

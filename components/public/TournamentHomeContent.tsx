@@ -17,7 +17,7 @@ import {
 } from '@/lib/tournament-hero-copy';
 import { deriveTierChampions, tierBadgeLabel, isTournamentPlayoffsComplete } from '@/lib/champions';
 import { fanRoundLabel } from '@/lib/playoff-bracket';
-import { isGameLive, gameStartMs, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
+import { isGameLive, gameStartMs, hasNoScoreYet, NO_SCORE_YET, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import SharePageButton from '@/components/public/SharePageButton';
 import LocationLink from '@/components/LocationLink';
 import { resolveGameVenueLabel } from '@/lib/venue-label';
@@ -166,7 +166,7 @@ export default async function TournamentHomeContent({
   // with the finished body rather than reading "in progress".
   if (isFinished) countdownText = 'Tournament complete';
 
-  // Pre-event "first pitch in…" — counts down to the earliest scheduled game on or
+  // Pre-event "Starts in…" (sport-neutral, D4) — counts down to the earliest scheduled game on or
   // after the start date (falling back to the start date at a sensible default).
   const isPreEvent = Boolean(startDate && now < startDate);
   const firstScheduledGame = sortedGames.find(g => g.status === 'scheduled' && (!startDate || g.date >= startDate));
@@ -316,7 +316,10 @@ export default async function TournamentHomeContent({
           <span className={styles.liveNowContext}>{liveRowContext(game)}</span>
         </div>
         <div className={styles.liveNowScore}>
-          <span className={styles.liveNowDigits}>{game.awayScore}–{game.homeScore}</span>
+          {/* Live by the clock before anyone has entered a score: say so, never a lone "–" or an invented 0–0 (D2). */}
+          {hasNoScoreYet(game)
+            ? <span className={styles.liveNowNoScore}>{NO_SCORE_YET}</span>
+            : <span className={styles.liveNowDigits}>{a}–{h}</span>}
           <span className={styles.liveNowCaption}><span className="live-dot" /> Live</span>
         </div>
       </Link>
@@ -477,7 +480,7 @@ export default async function TournamentHomeContent({
           </div>
         ) : isPreEvent && firstPitchISO ? (
           <div className={styles.preCountdownCard}>
-            <span className={styles.preCountdownLabel}>First pitch in</span>
+            <span className={styles.preCountdownLabel}>Starts in</span>
             <span className={styles.preCountdownValue}>
               <Countdown target={firstPitchISO} whenPast="Under way" />
             </span>
@@ -971,7 +974,7 @@ export default async function TournamentHomeContent({
               {isPreEvent && firstPitchISO ? (
                 <span className={styles.countdown}>
                   <span className={styles.badgeSeparator}>·</span>
-                  <Countdown target={firstPitchISO} prefix="First pitch in " whenPast={countdownText} />
+                  <Countdown target={firstPitchISO} prefix="Starts in " whenPast={countdownText} />
                 </span>
               ) : countdownText ? (
                 <span className={styles.countdown}>

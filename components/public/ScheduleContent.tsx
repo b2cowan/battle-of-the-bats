@@ -16,7 +16,7 @@ import { hasPlayoffs as resolveHasPlayoffs, hasRoundRobin as resolveHasRoundRobi
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 import { readFollowedTeamId, clearFollowedTeam, isTournamentInProgress, followKey } from '@/lib/follow';
-import { isGameLive, gameStartMs, isGameUpcoming, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
+import { isGameLive, gameStartMs, isGameUpcoming, hasNoScoreYet, NO_SCORE_YET, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { resolveGameFieldLabel } from '@/lib/venue-label';
 import { tournamentToday } from '@/lib/timezone';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
@@ -923,6 +923,8 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     const homeTotal = (game.homeScore ?? 0);
     const scoreSum = awayTotal + homeTotal;
     const awayShare = scoreSum > 0 ? Math.round((awayTotal / scoreSum) * 100) : 50;
+    // Live before anyone enters a score: say so, never an invented 0–0 over a 50/50 bar (D2).
+    const noScoreYet = hasNoScoreYet(game);
     const awayHue = awayName !== 'TBD' ? `hsl(${teamAvatarHue(awayName)}, 58%, 42%)` : 'var(--white-20)';
     const homeHue = homeName !== 'TBD' ? `hsl(${teamAvatarHue(homeName)}, 58%, 42%)` : 'var(--white-20)';
 
@@ -941,20 +943,24 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
               {awayName !== 'TBD' ? teamInitials(awayName) : '?'}
             </span>
             <span className={styles.bcName} title={awayName}>{awayName}</span>
-            <RollingNumber value={game.awayScore ?? 0} className={styles.bcScore} />
+            {!noScoreYet && <RollingNumber value={game.awayScore ?? 0} className={styles.bcScore} />}
           </div>
           <div className={`${styles.bcTeam} ${winner === 'home' ? styles.bcLead : ''}`}>
             <span className={styles.bcAvatar} style={{ background: homeHue }}>
               {homeName !== 'TBD' ? teamInitials(homeName) : '?'}
             </span>
             <span className={styles.bcName} title={homeName}>{homeName}</span>
-            <RollingNumber value={game.homeScore ?? 0} className={styles.bcScore} />
+            {!noScoreYet && <RollingNumber value={game.homeScore ?? 0} className={styles.bcScore} />}
           </div>
         </div>
-        <div className={styles.bcBar} aria-hidden="true">
-          <span className={styles.bcBarSeg} style={{ width: `${awayShare}%`, background: awayHue }} />
-          <span className={styles.bcBarSeg} style={{ width: `${100 - awayShare}%`, background: homeHue }} />
-        </div>
+        {noScoreYet ? (
+          <p className={styles.bcNoScore}>{NO_SCORE_YET}</p>
+        ) : (
+          <div className={styles.bcBar} aria-hidden="true">
+            <span className={styles.bcBarSeg} style={{ width: `${awayShare}%`, background: awayHue }} />
+            <span className={styles.bcBarSeg} style={{ width: `${100 - awayShare}%`, background: homeHue }} />
+          </div>
+        )}
       </>
     );
 

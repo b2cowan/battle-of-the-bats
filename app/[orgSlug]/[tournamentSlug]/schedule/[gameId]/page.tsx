@@ -6,7 +6,7 @@ import { ArrowLeft, Calendar, Clock, ExternalLink, Info, MapPin, Navigation, Tro
 import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
 import type { Game, PublicTeam, Venue } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
-import { isGameLive, isGameUpcoming, publicGameStatus, publicGameStatusLabel, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
+import { isGameLive, isGameUpcoming, publicGameStatus, publicGameStatusLabel, hasNoScoreYet, NO_SCORE_YET, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
 import { bracketRoundInfo, bracketRoundLabel } from '@/lib/playoff-bracket';
 import { teamAvatarHue, teamInitials } from '@/lib/team-color';
@@ -380,11 +380,13 @@ export default async function PublicGameDetailsPage({
                   </div>
                 </div>
 
-                {/* Live shows the running score from 0–0 (broadcast-card precedent)
-                    even before the first submission; the countdown belongs to
-                    still-scheduled games only — never to a live window or a
-                    cancelled/forfeited game whose rail badge says otherwise. */}
-                {hasScore || isLiveGame ? (
+                {/* Live shows the running score once one is entered; before that it
+                    says "No score yet" — never an invented 0–0 (D2, 2026-10-27). The
+                    countdown belongs to still-scheduled games only — never to a live
+                    window or a cancelled/forfeited game whose rail badge says otherwise. */}
+                {isLiveGame && hasNoScoreYet(game) ? (
+                  <div className={styles.detailScorePending}>{NO_SCORE_YET}</div>
+                ) : hasScore || isLiveGame ? (
                   <div className={styles.detailScoreWrap}>
                     <div className={styles.detailScoreBand}>
                       <div className={styles.detailScoreCol}>
@@ -408,7 +410,7 @@ export default async function PublicGameDetailsPage({
                   <div className={styles.detailScorePending}>
                     <Countdown
                       target={`${game.date}T${game.time.slice(0, 5)}:00`}
-                      prefix="First pitch in "
+                      prefix="Starts in "
                       whenPast="Starting soon"
                     />
                   </div>

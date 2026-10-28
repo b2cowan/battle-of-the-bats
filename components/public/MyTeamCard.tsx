@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { Star, ChevronRight } from 'lucide-react';
 import RollingNumber from '@/components/public/RollingNumber';
 import { teamAvatarHue, teamInitials } from '@/lib/team-color';
+import { hasNoScoreYet, NO_SCORE_YET } from '@/lib/game-status';
 import styles from './MyTeamCard.module.css';
 
 /** The single most-relevant status shown in the card's right-hand block. */
@@ -52,6 +53,8 @@ export default function MyTeamCard({
 }: Props) {
   const avatarStyle = { background: `hsl(${teamAvatarHue(teamName)}, 58%, 38%)` };
   const initials = teamInitials(teamName);
+  // Live before anyone has entered a score: "No score yet", never an invented 0-0 (D2).
+  const liveNoScore = status.kind === 'live' && hasNoScoreYet({ homeScore: status.myScore, awayScore: status.oppScore });
   const identityLabel = `${teamName} — view team page`;
 
   if (layout === 'rail') {
@@ -76,11 +79,15 @@ export default function MyTeamCard({
             {status.kind === 'live' ? (
               <>
                 <span className={styles.railLive}><span className={styles.liveDot} />LIVE</span>
-                <div className={styles.railScoreNum}>
-                  <RollingNumber value={status.myScore} />
-                  <span className={styles.railScoreDash}>-</span>
-                  <RollingNumber value={status.oppScore} />
-                </div>
+                {liveNoScore ? (
+                  <div className={styles.noScore}>{NO_SCORE_YET}</div>
+                ) : (
+                  <div className={styles.railScoreNum}>
+                    <RollingNumber value={status.myScore} />
+                    <span className={styles.railScoreDash}>-</span>
+                    <RollingNumber value={status.oppScore} />
+                  </div>
+                )}
               </>
             ) : status.kind === 'next' ? (
               <>
@@ -125,11 +132,15 @@ export default function MyTeamCard({
           {status.kind === 'live' ? (
             <>
               <span className={styles.live}><span className={styles.liveDot} />LIVE</span>
-              <div className={styles.score}>
-                <RollingNumber value={status.myScore} />
-                <span className={styles.scoreDash}>-</span>
-                <RollingNumber value={status.oppScore} />
-              </div>
+              {liveNoScore ? (
+                <div className={styles.noScore}>{NO_SCORE_YET}</div>
+              ) : (
+                <div className={styles.score}>
+                  <RollingNumber value={status.myScore} />
+                  <span className={styles.scoreDash}>-</span>
+                  <RollingNumber value={status.oppScore} />
+                </div>
+              )}
             </>
           ) : status.kind === 'next' ? (
             <>

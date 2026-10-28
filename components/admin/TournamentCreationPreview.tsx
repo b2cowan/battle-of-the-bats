@@ -178,7 +178,7 @@ export default function TournamentCreationPreview({
             {isPreEvent && firstPitchISO ? (
               <>
                 <span className={styles.badgeSeparator}>·</span>
-                <Countdown target={firstPitchISO} prefix="First pitch in " whenPast={countdownText} />
+                <Countdown target={firstPitchISO} prefix="Starts in " whenPast={countdownText} />
               </>
             ) : countdownText ? (
               <>

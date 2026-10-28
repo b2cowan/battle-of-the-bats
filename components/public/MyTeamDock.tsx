@@ -19,7 +19,7 @@ import type { Game, PublicTeam, Venue } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { resolveGameVenueLabel } from '@/lib/venue-label';
 import { useFollowedTeam } from '@/lib/follow';
-import { isGameLive, gameStartMs, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
+import { isGameLive, gameStartMs, hasNoScoreYet, NO_SCORE_YET, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
@@ -189,17 +189,19 @@ function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAlertsEnabled = fa
     ?? (game.homeTeamId === team.id ? game.awayPlaceholder : game.homePlaceholder)
     ?? 'TBD';
 
-  // A game can be live before its first run is entered → show 0–0 rather than blank.
+  // A game can be live before anyone enters a score → "No score yet", never an invented 0–0 (D2).
+  const noScoreYet = !!liveGame && hasNoScoreYet(liveGame);
   const myScore = liveGame ? ((liveGame.homeTeamId === team.id ? liveGame.homeScore : liveGame.awayScore) ?? 0) : null;
   const oppScore = liveGame ? ((liveGame.homeTeamId === team.id ? liveGame.awayScore : liveGame.homeScore) ?? 0) : null;
 
-  // Most recent scored game (live or final) → a shareable result card.
+  // Most recent scored game (live or final) → a shareable result card. A live game nobody has scored yet has no
+  // result to share, so the card offers the latest final until it does (D2: never a shared "LIVE 0–0").
   const latestResult = teamGames
     .filter(g => (g.status === 'completed' || g.status === 'submitted') && g.homeScore != null && g.awayScore != null)
     .slice()
     .sort((a, b) => (b.date.localeCompare(a.date) || (b.time ?? '').localeCompare(a.time ?? '')))[0] ?? null;
-  const shareGame = liveGame ?? latestResult;
-  const shareIsLive = !!liveGame;
+  const shareGame = liveGame && !noScoreYet ? liveGame : latestResult;
+  const shareIsLive = !!liveGame && shareGame === liveGame;
   const shareAwayName = shareGame ? (teams.find(t => t.id === shareGame.awayTeamId)?.name ?? shareGame.awayPlaceholder ?? 'TBD') : '';
   const shareHomeName = shareGame ? (teams.find(t => t.id === shareGame.homeTeamId)?.name ?? shareGame.homePlaceholder ?? 'TBD') : '';
 
@@ -219,11 +221,15 @@ function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAlertsEnabled = fa
   const scoreOrNext = liveGame ? (
     <>
       <span className={styles.dockLive}><span className={styles.dockLiveDot} />LIVE</span>
-      <span className={styles.dockScore}>
-        <RollingNumber value={myScore} />
-        <span className={styles.dockDash}>-</span>
-        <RollingNumber value={oppScore} />
-      </span>
+      {noScoreYet ? (
+        <span className={styles.dockNoScore}>{NO_SCORE_YET}</span>
+      ) : (
+        <span className={styles.dockScore}>
+          <RollingNumber value={myScore} />
+          <span className={styles.dockDash}>-</span>
+          <RollingNumber value={oppScore} />
+        </span>
+      )}
     </>
   ) : (
     <span className={styles.dockNext}>

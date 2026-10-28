@@ -304,6 +304,14 @@
   text-transform: uppercase;
 }
 
+/* A live game nobody has scored yet (D2): quiet words in place of the numbers. */
+.noScore {
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  color: var(--white-70);
+}
+
 .railScoreNum {
   font-family: var(--font-data);
   font-size: 1.05rem;

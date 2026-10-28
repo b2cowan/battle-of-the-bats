@@ -2,7 +2,7 @@ import { forwardToOwnAddress } from '@/lib/club-forward';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { Calendar, ChevronRight, Star, Users } from 'lucide-react';
+import { Calendar, ChevronRight, Users } from 'lucide-react';
 import { getTournamentsByOrg, getLeagueSeasons, getOpenTryoutsByOrg } from '@/lib/db';
 import type { OpenTryout } from '@/lib/db';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
@@ -10,7 +10,8 @@ import { isFollowableOrg } from '@/lib/directory';
 import { requirePublicClubPage } from '@/lib/public-club-page';
 import { clubPageMetadata } from '@/lib/club-page-meta';
 import { orgLinks } from '@/lib/org-links';
-import { loadClubHome } from '@/lib/club-home-data';
+import { clubTournamentRows, loadClubHome } from '@/lib/club-home-data';
+import { TOURNAMENT_STATUS_WORD } from '@/lib/club-site-home';
 import FollowOrgButton from '@/components/public/FollowOrgButton';
 import ClubSiteHome from '@/components/public/ClubSiteHome';
 import LeagueSeasonRows from '@/components/public/LeagueSeasonRows';
@@ -195,7 +196,11 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
     );
   }
 
-  // 2+ active tournaments — tournament selector
+  // 2+ active tournaments — tournament selector. Each card's status is the club home's own, true to its dates
+  // (Live now / This weekend / Registration open / Finished, or its dates alone) — never "Live" on every card (D3).
+  const statusById = new Map(
+    (await clubTournamentRows(activeTournaments, tournamentToday(), href)).map(row => [row.id, row.status]),
+  );
   return (
     <div className={`${styles.page} ${club.home}`}>
       <section className={`${styles.hero} ${club.hero}`}>
@@ -219,12 +224,16 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
             <h2 className={club.sectionTitle}>Active tournaments</h2>
           </div>
           <div className={`${styles.tournamentCards} ${club.tournamentCards}`}>
-            {activeTournaments.map(t => (
+            {activeTournaments.map(t => {
+              const status = statusById.get(t.id) ?? null;
+              return (
               <Link key={t.id} href={href(`/${t.slug}`)} className={`card ${styles.tournamentCard} ${club.tournamentCard}`}>
                 <div className={`${styles.tournamentCardHeader} ${club.tournamentCardHeader}`}>
-                  <span className={`${kit.chip} ${kit.chipOk}`}>
-                    <Star size={10} fill="currentColor" /> Live
-                  </span>
+                  {status && (
+                    <span className={`${kit.chip} ${status === 'finished' ? kit.chipNeutral : kit.chipOk}`}>
+                      {TOURNAMENT_STATUS_WORD[status]}
+                    </span>
+                  )}
                   {formatDateRange(t.startDate, t.endDate) && (
                     <span className={`${styles.tournamentCardDate} ${club.tournamentCardDate}`}>
                       {formatDateRange(t.startDate, t.endDate)}
@@ -236,7 +245,8 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
                   View schedule <ChevronRight size={14} />
                 </span>
               </Link>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

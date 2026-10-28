@@ -45,7 +45,7 @@ describe('the screen (E7)', () => {
     assert.ok(page.indexOf('{door}') < page.indexOf('<ClubSection id="pages"'));
   });
   it('a save goes to the tournament its draft was read from, never another (a switch mid-edit)', () => {
-    assert.match(page, /type Held = \{ url: string; advanced: boolean; draft: Draft \}/);
+    assert.match(page, /type Held = \{ url: string; advanced: boolean; draft: Draft; themeChanged: boolean \}/);
     assert.match(page, /latest\.current && latest\.current\.url === held\.url \? latest\.current : held/);
     assert.match(page, /if \(edits\.current !== editsAtStart && latest\.current\?\.url === brandingUrl\) return;/);
   });

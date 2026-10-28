@@ -1540,6 +1540,15 @@
   color: var(--white-30);
 }
 
+.liveNowNoScore {
+  display: block;
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  line-height: 1.1;
+  white-space: nowrap;
+  color: var(--white-70);
+}
+
 .liveNowCaption {
   display: inline-flex;
   align-items: center;

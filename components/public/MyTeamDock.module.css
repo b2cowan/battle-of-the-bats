@@ -176,6 +176,13 @@
 
 .dockDash { color: var(--white-40); margin: 0 0.12rem; }
 
+.dockNoScore {
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  color: var(--white-70);
+}
+
 .dockNext {
   display: flex;
   flex-direction: column;

@@ -77,7 +77,7 @@ export default function TournamentNavStatus() {
       <div className={styles.status}>
         <span className={styles.pillUpcoming}><CalendarClock size={13} /> Upcoming</span>
         <span className={styles.text}>
-          {dateRange}{days > 0 ? ` · First pitch in ${days} day${days === 1 ? '' : 's'}` : ''}
+          {dateRange}{days > 0 ? ` · Starts in ${days} day${days === 1 ? '' : 's'}` : ''}
         </span>
       </div>
     );

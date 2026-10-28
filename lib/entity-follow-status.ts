@@ -19,7 +19,7 @@ import type { TournamentFollowCard, OrgFollowCard } from './home-following';
  * (F5: computed entirely from already-public data — NO activity feed, NO new push). Shared by
  * Home's whole-event cards + Organizations section (and reused by Scores org tiles).
  *
- * Whole-tournament line: dates/starts-in → REGISTRATION OPEN → FIRST PITCH → live/today →
+ * Whole-tournament line: dates/starts-in → REGISTRATION OPEN → FIRST GAME → live/today →
  * PLAYOFFS ARE SET → CHAMPIONS CROWNED → COMPLETED. Org rollup line: live → next-event →
  * upcoming count → quiet off-season.
  *
@@ -125,7 +125,7 @@ function computeTournamentStatus(
     return { group: 'playoffs_set', text: 'Playoffs are set', live: false, finished: false };
   }
 
-  // ── Pre-event: first pitch (schedule published) → registration open → dates/starts-in ──
+  // ── Pre-event: first game (schedule published; sport-neutral, D4) → registration open → dates/starts-in ──
   const isPreEvent = !!startDate && today < startDate;
   if (isPreEvent && pageEnabled) {
     const firstScheduled = playable
@@ -134,7 +134,7 @@ function computeTournamentStatus(
     if (firstScheduled?.date) {
       const when = [relativeDayLabel(firstScheduled.date, today), firstScheduled.time ? formatTime(firstScheduled.time) : null]
         .filter(Boolean).join(' · ');
-      return { group: 'scheduled', text: `First pitch · ${when}`, live: false, finished: false };
+      return { group: 'scheduled', text: `First game · ${when}`, live: false, finished: false };
     }
   }
 

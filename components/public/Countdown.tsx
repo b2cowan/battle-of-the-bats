@@ -1,7 +1,7 @@
 'use client';
 /**
  * components/public/Countdown.tsx
- * Live "time until <target>" label (e.g. "First pitch in 2 days"). Ticks each
+ * Live "time until <target>" label (e.g. "Starts in 2 days"). Ticks each
  * minute. Renders `whenPast` (default nothing) once the target has passed.
  *
  * ⚠ BROWSER-ONLY, ON PURPOSE (2026-10-13). It used to compute its first value on the

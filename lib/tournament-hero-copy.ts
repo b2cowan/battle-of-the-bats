@@ -91,7 +91,7 @@ export function formatCountdownDuration(ms: number): string {
 }
 
 /**
- * The ISO instant the "First pitch in …" countdown targets: the first scheduled game's
+ * The ISO instant the "Starts in …" countdown targets: the first scheduled game's
  * start, or 9 AM on the given day when nothing is scheduled yet (the wizard preview is
  * always in that second case — a draft has no games). `time` may arrive as "HH:MM" or
  * "HH:MM:SS"; normalised so the ISO string is always parseable (an invalid one makes

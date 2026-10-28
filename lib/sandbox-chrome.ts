@@ -100,7 +100,7 @@ export function sandboxMoments(
       operatorPath: operatorPath(`${adminBase}/registrations`),
       said: 'You’ve jumped three weeks back. Registration is open — eleven teams are in, U11 is already full, and this page is what families are watching fill up.',
       saidOperator: 'You’ve jumped three weeks back. Fifteen teams are in the pipeline, U11 is full with a waitlist, and this screen is where that week gets managed.',
-      bannerNote: 'First pitch in 3 weeks',
+      bannerNote: 'Starts in 3 weeks',
     },
     {
       key: 'game-day',

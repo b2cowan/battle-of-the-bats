@@ -12,7 +12,7 @@ import { useParams } from 'next/navigation';
 import { Star } from 'lucide-react';
 import type { Game, PublicTeam } from '@/lib/types';
 import { useFollowedTeam } from '@/lib/follow';
-import { isGameLive, gameStartMs, isGameUpcoming, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
+import { isGameLive, gameStartMs, isGameUpcoming, hasNoScoreYet, NO_SCORE_YET, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import { formatTime } from '@/lib/utils';
@@ -67,7 +67,9 @@ function DesktopMyTeamRailCard() {
     const oppId = g.homeTeamId === team.id ? g.awayTeamId : g.homeTeamId;
     return teams.find(t => t.id === oppId)?.name ?? (g.homeTeamId === team.id ? g.awayPlaceholder : g.homePlaceholder) ?? 'TBD';
   };
-  const liveScore = liveGame
+  // A live game nobody has scored yet says so, never an invented 0-0 (D2).
+  const liveScore = liveGame && hasNoScoreYet(liveGame) ? NO_SCORE_YET
+    : liveGame
     ? `${(liveGame.awayTeamId === team.id ? liveGame.awayScore : liveGame.homeScore) ?? 0}-${(liveGame.awayTeamId === team.id ? liveGame.homeScore : liveGame.awayScore) ?? 0}`
     : null;
   const scheduleHref = href(`/${tournamentSlug}/schedule`);

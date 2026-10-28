@@ -1629,6 +1629,13 @@ a.broadcastCard { cursor: pointer; }
   text-shadow: 0 0 18px rgba(var(--primary-rgb), 0.45);
 }
 
+.bcNoScore {
+  margin: 0.7rem 0 0;
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  color: var(--white-70);
+}
+
 .bcBar {
   display: flex;
   height: 5px;
