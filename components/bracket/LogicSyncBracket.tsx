@@ -217,10 +217,13 @@ function MatchNode({
       {/* card background */}
       {/* The card: fill, edge, and the soft primary halo that lifts a live game OR the followed team's cards forward
           (the emphasis half of the spotlight; context recedes via the group opacity above). In the module CSS so the
-          public pages' new frame can re-point it. */}
+          public pages' new frame can re-point it. The halo stays an SVG attribute, not a CSS `url(#…)`: a fragment
+          reference from a stylesheet is not resolved alike in every browser, while any CSS rule (the frame's
+          `filter: none`) still outranks the attribute. */}
       <rect
         width={NODE_WIDTH} height={NODE_HEIGHT} rx={8}
         className={`${styles.nodeCard}${node.isLive ? ` ${styles.nodeCardLive}` : ''}${node.isLive || showHighlightRing ? ` ${styles.nodeCardHalo}` : ''}`}
+        filter={node.isLive || showHighlightRing ? 'url(#glow-primary)' : undefined}
       />
       {/* hover / focus affordance — transparent until a .clickableNode ancestor is
           hovered or keyboard-focused (see module CSS); invisible when not clickable. */}

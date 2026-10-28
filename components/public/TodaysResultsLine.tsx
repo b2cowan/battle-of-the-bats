@@ -75,6 +75,10 @@ export default function TodaysResultsLine() {
     setHiddenOn(stored);
   }, [hideKey]);
   function hide() {
+    // The pointer and focus that pressed the × never leave the line it removes; let go of the hold here, or the pass
+    // would stay paused if the line comes back with this page still open.
+    setPointerHeld(false);
+    setFocusHeld(false);
     setHiddenOn(today);
     try { localStorage.setItem(hideKey, today); } catch { /* ignore */ }
   }
@@ -213,13 +217,13 @@ export default function TodaysResultsLine() {
       onPointerEnter={() => setPointerHeld(true)}
       onPointerLeave={() => setPointerHeld(false)}
       onPointerCancel={() => setPointerHeld(false)}
+      onFocus={e => setFocusHeld(e.target.matches(':focus-visible'))}
+      onBlur={() => setFocusHeld(false)}
     >
       <Link
         href={g.href}
         className={`${styles.game}${out ? ` ${styles.out}` : ''}`}
         aria-label={lineLabel(g)}
-        onFocus={e => setFocusHeld(e.currentTarget.matches(':focus-visible'))}
-        onBlur={() => setFocusHeld(false)}
       >
         <span className={g.kind === 'live' ? `${styles.word} ${styles.live}` : styles.word}>
           {g.kind === 'live' && <span className={styles.dot} aria-hidden="true" />}

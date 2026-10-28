@@ -22,6 +22,9 @@
      frame they are a white card like everything else. The app's own bottom bar is mounted outside the frame (its rule
      is in ConsumerShell.module.css). */
   --nav-mobile-bg: var(--club-card);
+  /* No large shadow anywhere under the frame. Re-stated on the desk shell below (its colour-mode block re-declares it);
+     here for what rides outside the shell — the My Team dock's share menu. */
+  --shadow-lg: none;
 }
 
 /* A desk (above 900 px) keeps the club bar's one band, scrolling away whole; nothing pins. Above 1,023 px the side rail

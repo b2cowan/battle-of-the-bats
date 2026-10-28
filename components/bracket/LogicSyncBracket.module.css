@@ -130,7 +130,6 @@
   stroke: var(--primary);
   stroke-width: 1;
 }
-.nodeCardHalo { filter: url(#glow-primary); }
 .nodeMeta { fill: rgba(var(--primary-rgb), 0.08); }
 .championTrophy {
   color: var(--warning);

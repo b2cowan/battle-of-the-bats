@@ -384,7 +384,10 @@ describe('Part 4: the readable baseline, B', () => {
     assert.doesNotMatch(bracket, /drop-shadow/);
     const css = readCode('components/bracket/LogicSyncBracket.module.css');
     assert.match(css, /^\.nodeCard \{\s*fill: var\(--bracket-card, var\(--surface\)\);\s*stroke: rgba\(var\(--primary-rgb\), 0\.85\);\s*stroke-width: 1\.25;/m);
-    assert.match(css, /^\.nodeCardHalo \{ filter: url\(#glow-primary\); \}/m);
+    // The halo is an SVG attribute (a stylesheet's url(#…) is not resolved alike everywhere); the frame's CSS outranks it.
+    assert.match(bracket, /filter=\{node\.isLive \|\| showHighlightRing \? 'url\(#glow-primary\)' : undefined\}/);
+    assert.doesNotMatch(css, /url\(#/, 'no fragment reference from the stylesheet');
+    assert.match(css, /:global\(\[data-public-frame='light'\]\) \.nodeCardHalo,/);
     assert.match(css, /^\.nodeMeta \{ fill: rgba\(var\(--primary-rgb\), 0\.08\); \}/m);
   });
 

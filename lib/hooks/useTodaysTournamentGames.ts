@@ -65,7 +65,7 @@ export function useTodaysTournamentGames() {
     let cancelled = false;
     void fetchPublicTournamentData(orgSlug, tournamentSlug, 'schedule').then(d => {
       if (!cancelled && d) setFeed(readFeed(d));
-    });
+    }).catch(() => { /* a network blip: the live poll below fills the feed on its next turn */ });
     return () => { cancelled = true; };
   }, [active, orgSlug, tournamentSlug]);
 
