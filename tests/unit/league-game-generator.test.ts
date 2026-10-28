@@ -245,6 +245,9 @@ describe('the window says the plan (step 5, the copy file "Stage 9d-2a" c)', () 
     assert.equal(warningWords({ kind: 'booking', place: 'Diamond 1', other: 'a Spring Classic game, Sat, Jun 12, 10:00–11:30 a.m.' }, 'U12', team),
       'U12’s game time overlaps a booking at Diamond 1: a Spring Classic game, Sat, Jun 12, 10:00–11:30 a.m.');
     assert.equal(W.warnTitle(45, 1), '45 games, with 1 thing to look at');
+    // A read that failed is said, never passed (9d-2a /review call 5).
+    assert.equal(warningWords({ kind: 'unread', what: 'permit' }, 'U12', team), 'We couldn’t check the club’s permit just now, so this game time may be outside it.');
+    assert.equal(warningWords({ kind: 'unread', what: 'schedule' }, 'U12', team), 'We couldn’t check the club’s schedule just now, so this game time may overlap another booking.');
   });
 });
 

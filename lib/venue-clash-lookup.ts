@@ -36,7 +36,7 @@ import {
   type ClashFinding,
 } from './venue-clash';
 import { clashLine, clashLineText } from './venue-clash-words';
-import { checkClubPermitsQuietly } from './permit-lookup';
+import { checkClubPermitsOrFlag, checkClubPermitsQuietly } from './permit-lookup';
 import { permitLine, type PermitOutside } from './permit-words';
 import type { ClubVenueOption, FacilityType, OrgPlan, RepTeamEvent, RepTryoutSession } from './types';
 
@@ -403,6 +403,9 @@ export interface ClashReport {
   permits: Record<string, PermitOutside>;
   /** Per booking id: the permit's quiet line, in the program's sport's words (`lib/permit-words.ts`). */
   permitLines: Record<string, string>;
+  /** Which read failed, when one did: the report then says nothing about it. Absent when both read. Every save reply
+   *  ignores it (its shipped policy); Generate games' check says so instead of reading clean. */
+  unread?: ('clashes' | 'permit')[];
 }
 
 /** A report that found nothing (a fresh object every time — callers fill their own). */
@@ -437,10 +440,11 @@ async function report(orgId: string, bookings: readonly (ClubBooking | null)[], 
     }
   };
   // The clash report and the permit's answer are independent: read together, each with its own failure.
-  const [, outside] = await Promise.all([
-    clashes().catch(e => { console.error('[venue-clash] report failed (the save stands):', e); }),
-    checkClubPermitsQuietly(orgId, placed),
+  const [, { outside, failed: permitFailed }] = await Promise.all([
+    clashes().catch(e => { console.error('[venue-clash] report failed (the save stands):', e); (out.unread ??= []).push('clashes'); }),
+    checkClubPermitsOrFlag(orgId, placed),
   ]);
+  if (permitFailed) (out.unread ??= []).push('permit');
   for (const [key, o] of outside) {
     const b = placed.find(x => x.key === key)!;
     out.permits[idOf(key)] = o;

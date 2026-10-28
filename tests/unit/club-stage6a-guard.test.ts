@@ -366,7 +366,10 @@ describe('the permit\'s answer rides every check and every form that asks where 
   });
   it('every writer\'s reply carries it: the shared report, and each rep writer\'s own field', () => {
     const lookup = readCode('lib/venue-clash-lookup.ts');
-    assert.match(functionBody(lookup, 'report'), /checkClubPermitsQuietly\(orgId, placed\)/);
+    // The report reads the quiet answer WITH its failure flag (Generate games' check says "couldn't check" instead of
+    // reading clean); the quiet read is that same read with the flag dropped, so a save reply's policy is unchanged.
+    assert.match(functionBody(lookup, 'report'), /checkClubPermitsOrFlag\(orgId, placed\)/);
+    assert.match(functionBody(readCode('lib/permit-lookup.ts'), 'checkClubPermitsQuietly'), /\(await checkClubPermitsOrFlag\(orgId, proposed\)\)\.outside/);
     // The rep writers' one read answers both, side by side — never a permit folded into the findings.
     assert.match(functionBody(lookup, 'checksFor'), /checkClubClashes\(orgId, placed\)[\s\S]*checkClubPermitsQuietly\(orgId,/);
     const repWriters: Record<string, number> = {

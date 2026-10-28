@@ -105,6 +105,9 @@ export interface LeagueConflictReport {
 export interface LeagueBookingCheck {
   blocking: LeagueConflictReport[];
   warnings: LeagueConflictReport[];
+  /** The pool could not be read, so the lists above say nothing. Only the Generate check reads it (it must not read clean);
+   *  every save keeps its shipped policy of proceeding on an empty pool. */
+  unread?: boolean;
 }
 
 /** Row shape shared by the two pool queries. */
@@ -235,6 +238,7 @@ export async function checkLeagueBookings(args: {
   ];
 
   const result: LeagueBookingCheck = { blocking: [], warnings: [] };
+  if (gamesRes.error || practicesRes.error) result.unread = true;
   const seen = new Set<string>();
 
   proposed.forEach((b, i) => {

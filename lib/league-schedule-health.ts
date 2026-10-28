@@ -44,6 +44,7 @@ import { formatTime, pluralize } from './utils.ts';
 import { weekdayOf } from './permit-time.ts';
 import { dayWords } from './calendar-recipe.ts';
 import type { ScheduleHealthTone } from './schedule-metrics.ts';
+import { SEASON_SCHEDULE_WORDS } from './league-season-calendar.ts';
 import type { LeagueGame, LeaguePractice } from './types.ts';
 
 /** A `league_games` row as health reads a game. Typed `Required` on purpose (as `scheduleMetricGameFromRow`): a field health
@@ -111,6 +112,8 @@ export type LeagueHealthIssue =
   /** A team (or a cancelled game's two teams) short of its division's plan. `cancelled` names the game that was never
    *  replayed when that is why. */
   | { kind: 'short'; teamIds: string[]; have: number; plan: number; cancelled: { gameId: string; day: string } | null }
+  /** A division with teams and no game at all, in a season that has games elsewhere: not on plan, and it says so. */
+  | { kind: 'no_games'; divisionId: string; teams: number }
   | { kind: 'postponed'; gameId: string; homeTeamId: string; awayTeamId: string; day: string | null }
   | { kind: 'clash'; keys: [string, string]; venueId: string; facilityId: string | null; day: string; startMs: number }
   | { kind: 'twice_in_a_day'; teamId: string; day: string }
@@ -196,6 +199,12 @@ export function buildLeagueScheduleHealth(input: {
   }
   const short = (id: string) => have.get(id)! < (plan.get(id) ?? 0);
 
+  // A division whose teams have no game at all, while the season has games elsewhere: not on plan. It used to drop out of
+  // the score altogether (U10 clean + U12 empty = 100); now its teams count as short and the window names the division.
+  const emptyDivisions = divisionIds.length ? [...new Set(teams.map(t => t.divisionId))].filter(d => !divisionIds.includes(d)) : [];
+  const emptyTeams = teams.filter(t => emptyDivisions.includes(t.divisionId)).length;
+  for (const d of emptyDivisions) issues.push({ kind: 'no_games', divisionId: d, teams: teams.filter(t => t.divisionId === d).length });
+
   // Postponed (and undated) games first: each says so, with its date.
   for (const g of input.games.filter(x => x.status === 'postponed' || (x.status === 'scheduled' && !x.scheduledAt))) {
     issues.push({ kind: 'postponed', gameId: g.id, homeTeamId: g.homeTeamId, awayTeamId: g.awayTeamId, day: g.scheduledAt ? orgDayKey(g.scheduledAt) : null });
@@ -275,10 +284,12 @@ export function buildLeagueScheduleHealth(input: {
   const teamsWithGames = teams.filter(t => divisionIds.includes(t.divisionId));
   const n = teamsWithGames.length || 1;
   const onPlan = teamsWithGames.filter(t => !short(t.id)).length;
+  // The games weight is measured over every team in the season: the ones with no games at all are not on plan.
+  const allTeams = teamsWithGames.length + emptyTeams;
   const coverage = bookings ? (bookings - notChecked) / bookings : 1;
   const W = LEAGUE_HEALTH_WEIGHTS;
   const breakdown = {
-    games: W.games * (onPlan / n),
+    games: W.games * (onPlan / (allTeams || 1)),
     clashes: W.clashes * Math.max(0, 1 - clashes.length * CLASH_COST) * coverage,
     twice: W.twice * (1 - Math.min(1, new Set(twice.map(w => w.teamId)).size / n)),
     homeAway: W.homeAway * (1 - offTeams.length / n),
@@ -319,7 +330,7 @@ export function buildLeagueScheduleHealth(input: {
   return {
     timedGames, divisions: divisionIds.length, score, tone,
     tiles: {
-      games: { onPlan, teams: teamsWithGames.length },
+      games: { onPlan, teams: allTeams },
       homeAway: { off: offTeams.length },
       byes: { backToBack: byes.length },
       clashes: { pairs: clashes.length, notChecked },
@@ -330,7 +341,7 @@ export function buildLeagueScheduleHealth(input: {
 }
 
 /** The window's order: what a family would notice first. */
-const ORDER: Record<LeagueHealthIssue['kind'], number> = { short: 0, postponed: 1, clash: 2, twice_in_a_day: 3, byes_back_to_back: 4, home_away: 5, unchecked: 6 };
+const ORDER: Record<LeagueHealthIssue['kind'], number> = { short: 0, no_games: 0, postponed: 1, clash: 2, twice_in_a_day: 3, byes_back_to_back: 4, home_away: 5, unchecked: 6 };
 const orderIssues = (list: LeagueHealthIssue[]) => list.map((x, i) => ({ x, i })).sort((a, b) => ORDER[a.x.kind] - ORDER[b.x.kind] || a.i - b.i).map(e => e.x);
 
 // ── THE WINDOW'S WORDS (copy file "Stage 9d-2a" d; [build] = chosen by the build, not settled by /marketing) ──────────
@@ -375,7 +386,7 @@ export const LEAGUE_HEALTH_WORDS = {
 } as const;
 
 /** What an issue's one door does: show its bookings in the schedule, open the postponed game, or open team detail. */
-export type LeagueIssueDoor = 'show' | 'showIt' | 'date' | 'teams';
+export type LeagueIssueDoor = 'show' | 'showIt' | 'date' | 'teams' | 'none';
 
 /** An issue, said, with its door and tone. `team` names a team by id, `label` a booking by the page's key ("Tigers vs
  *  Braves", "Tigers practice"), `place` a venue and facility ("Kinsmen Park · Diamond 2"). */
@@ -383,6 +394,7 @@ export function leagueIssueWords(issue: LeagueHealthIssue, ctx: {
   team: (id: string) => string;
   label: (key: string) => string;
   place: (venueId: string, facilityId: string | null) => string;
+  division: (id: string) => string;
 }): { text: string; door: LeagueIssueDoor; tone: 'error' | 'warning' | 'info' } {
   const day = (d: string) => formatStoredDate(d, { withYear: false });
   switch (issue.kind) {
@@ -393,6 +405,9 @@ export function leagueIssueWords(issue: LeagueHealthIssue, ctx: {
       const whose = names.length === 1 ? 'Its' : 'Their';
       return { text: `${head} ${whose} ${issue.cancelled.day ? `${day(issue.cancelled.day)} ` : ''}game was cancelled and not replayed.`, door: 'show', tone: 'warning' };
     }
+    case 'no_games':
+      // The calendar's settled pair for a division with no games (copy file "Stage 9d-2a" edge k), said as one issue.
+      return { text: `${SEASON_SCHEDULE_WORDS.noGamesYet(ctx.division(issue.divisionId))}. ${SEASON_SCHEDULE_WORDS.noGamesHint}`, door: 'none', tone: 'warning' };
     case 'postponed': {
       const match = `${ctx.team(issue.homeTeamId)} vs ${ctx.team(issue.awayTeamId)}`;
       // [build] a game saved with no date at all is not postponed (the public page's "Date to come"): it needs a date.

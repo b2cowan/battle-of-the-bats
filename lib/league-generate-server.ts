@@ -89,8 +89,8 @@ export async function checkGeneratedGames(p: {
   const rows = proposedRows(plan, slotOf);
   const nameOf = new Map(p.teams.map(t => [t.id, t.name]));
   const [club, own, practices] = await Promise.all([
-    // Another program's booking there, and the permit (the report reads both; a failed read says nothing, as every save
-    // reply does).
+    // Another program's booking there, and the permit (the report reads both; a failed read is flagged `unread`, and the
+    // check warns that it could not look).
     clashReportForLeagueRows(p.orgId, p.season, 'game', rows),
     // House league's own bookings there (a typed place, a hand-booked game or practice, another season's).
     checkLeagueBookings({
@@ -135,6 +135,10 @@ export async function checkGeneratedGames(p: {
     const time = formatTimeRange(s.time, c.partnerEndsAt ? utcToZonedInputs(c.partnerEndsAt).time : null);
     booking(c.fieldLabel, `${c.partnerLabel}, ${dayWords(s.date)}, ${time}`);
   }
+  // A read that failed says nothing, and a check that says nothing reads as "passes": say that it did not look instead
+  // (the save replies keep their quiet policy; this check is the one place a person decides on what it shows).
+  if (club.unread?.includes('permit')) warnings.push({ kind: 'unread', what: 'permit' });
+  if (club.unread?.includes('clashes') || own.unread) warnings.push({ kind: 'unread', what: 'schedule' });
   warnings.push(...plan.warnings);
 
   const games: CheckedGame[] = plan.games.map(g => ({

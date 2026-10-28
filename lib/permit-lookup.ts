@@ -248,10 +248,19 @@ export async function checkClubPermitsQuietly(
   orgId: string,
   proposed: readonly Pick<ClubBooking, 'key' | 'venueId' | 'facilityId' | 'startMs' | 'endMs'>[],
 ): Promise<Map<string, PermitOutside>> {
+  return (await checkClubPermitsOrFlag(orgId, proposed)).outside;
+}
+
+/** The quiet answer, plus whether the read failed — for the one place that must not read clean when it could not look
+ *  (Generate games' check, which warns instead). */
+export async function checkClubPermitsOrFlag(
+  orgId: string,
+  proposed: readonly Pick<ClubBooking, 'key' | 'venueId' | 'facilityId' | 'startMs' | 'endMs'>[],
+): Promise<{ outside: Map<string, PermitOutside>; failed: boolean }> {
   try {
-    return await checkClubPermits(orgId, proposed);
+    return { outside: await checkClubPermits(orgId, proposed), failed: false };
   } catch (e) {
     console.error('[permits] the permit read failed (said nothing):', e);
-    return new Map();
+    return { outside: new Map(), failed: true };
   }
 }

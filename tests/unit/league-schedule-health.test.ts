@@ -57,7 +57,7 @@ describe('Dev House League 2026', () => {
 
   it('says the four issues in the copy file\'s words, each with its door (step 6, d2)', () => {
     const name = new Map(teams.map(t => [t.id, t.name]));
-    const said = r.issues.map(i => leagueIssueWords(i, { team: id => name.get(id)!, label: k => k, place: () => 'Kinsmen Park · Diamond 2' }));
+    const said = r.issues.map(i => leagueIssueWords(i, { team: id => name.get(id)!, label: k => k, place: () => 'Kinsmen Park · Diamond 2', division: d => `Division ${d}` }));
     assert.deepEqual(said.map(x => [x.text, x.door]), [
       ['Tigers and Braves have 1 of 2 games. Their Jun 14 game was cancelled and not replayed.', 'show'],
       ['Cardinals vs Orioles was postponed from Jun 14 and still needs a new date.', 'date'],
@@ -144,7 +144,7 @@ describe('the league rule set', () => {
 });
 
 describe('the window\'s other sentences', () => {
-  const ctx = { team: (id: string) => id[0].toUpperCase() + id.slice(1), label: (k: string) => (k.endsWith('p1') ? 'Twins practice' : 'Cards vs Orioles'), place: () => 'Kinsmen Park · Diamond 2' };
+  const ctx = { team: (id: string) => id[0].toUpperCase() + id.slice(1), label: (k: string) => (k.endsWith('p1') ? 'Twins practice' : 'Cards vs Orioles'), place: () => 'Kinsmen Park · Diamond 2', division: (d: string) => (d === 'U12' ? 'U12' : `Division ${d}`) };
 
   it('a clash names the place, the day, the clock and both bookings', () => {
     const issue: LeagueHealthIssue = { kind: 'clash', keys: ['league_game:g1', 'league_practice:p1'], venueId: 'v1', facilityId: 'f1', day: '2027-06-17', startMs: Date.parse('2027-06-17T22:00:00Z') };
@@ -164,6 +164,37 @@ describe('the window\'s other sentences', () => {
     assert.equal(leagueIssueWords({ kind: 'postponed', gameId: 'g', homeTeamId: 'cards', awayTeamId: 'twins', day: null }, ctx).text, 'Cards vs Twins still needs a date.');
     assert.equal(leagueIssueWords({ kind: 'unchecked', games: 1, practices: 1, keys: [] }, ctx).text, '1 game and 1 practice are at a typed place, so they can’t be checked for clashes.');
     assert.equal(leagueIssueWords({ kind: 'unchecked', games: 0, practices: 1, keys: [] }, ctx).text, '1 practice is at a typed place, so it can’t be checked for clashes.');
+  });
+});
+
+describe('a division with teams and no games (9d-2a /review call 2)', () => {
+  const u10 = [{ id: 'a1', name: 'Aces', divisionId: 'U10' }, { id: 'a2', name: 'Bats', divisionId: 'U10' }];
+  const u12 = [{ id: 'c1', name: 'Cubs', divisionId: 'U12' }, { id: 'c2', name: 'Dukes', divisionId: 'U12' }];
+  const clean = [g('U10', 'a1', 'a2', '2027-06-07'), g('U10', 'a2', 'a1', '2027-06-14')];
+
+  it('is an issue, and its teams are not on plan (it used to fall out of the score: 100)', () => {
+    const r = buildLeagueScheduleHealth({ games: clean, practices: [], teams: [...u10, ...u12] });
+    assert.deepEqual(r.issues.filter(i => i.kind === 'no_games'), [{ kind: 'no_games', divisionId: 'U12', teams: 2 }]);
+    assert.deepEqual(r.tiles.games, { onPlan: 2, teams: 4 });
+    assert.equal(r.breakdown.games, 15);
+    assert.ok(r.score < 100);
+    const alone = buildLeagueScheduleHealth({ games: clean, practices: [], teams: u10 });
+    assert.equal(alone.score, 100);
+    assert.equal(alone.issues.some(i => i.kind === 'no_games'), false);
+  });
+
+  it('says the calendar\'s settled pair, and has no door', () => {
+    const r = buildLeagueScheduleHealth({ games: clean, practices: [], teams: [...u10, ...u12] });
+    const said = leagueIssueWords(r.issues.find(i => i.kind === 'no_games')!, { team: id => id, label: k => k, place: () => '', division: d => d });
+    assert.equal(said.text, 'U12 has no games yet. Generate the whole season, or add games one at a time.');
+    assert.equal(said.door, 'none');
+    assert.equal(said.tone, 'warning');
+  });
+
+  it('a season with no games at all has nothing to score, so no division is flagged', () => {
+    const r = buildLeagueScheduleHealth({ games: [], practices: [], teams: [...u10, ...u12] });
+    assert.deepEqual(r.issues, []);
+    assert.equal(r.timedGames, 0);
   });
 });
 

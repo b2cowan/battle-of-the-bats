@@ -7,6 +7,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { zonedWallClockToUtc } from '@/lib/timezone';
 import { clashReportForLeagueRows, emptyReport } from '@/lib/venue-clash-lookup';
+import { invalidGamePatch } from '@/lib/league-game-patch';
 
 async function verifyGame(gameId: string, seasonId: string) {
   const { data } = await supabaseAdmin
@@ -34,7 +35,10 @@ export const PATCH = withObservability(async (req: Request,
   const game = await verifyGame(gameId, seasonId);
   if (!game) return NextResponse.json({ error: 'Game not found' }, { status: 404 });
 
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return NextResponse.json({ error: 'The request was not understood' }, { status: 400 });
+  const invalid = invalidGamePatch(body);
+  if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
   const patch: Parameters<typeof updateLeagueGame>[1] = {};
 
   // Combine date + time into ISO timestamp if provided separately.

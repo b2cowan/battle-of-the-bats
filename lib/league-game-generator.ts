@@ -350,7 +350,9 @@ export type GenerateWarning =
   | PlanWarning
   /** `permitId`: the permit the line is about, for "See the permit" (step 7); null when it is about several. */
   | { kind: 'permit'; venue: string; line: string; permitId: string | null }
-  | { kind: 'booking'; place: string; other: string };
+  | { kind: 'booking'; place: string; other: string }
+  /** The club's records could not be read, so the check could not look: it says so rather than reading clean. */
+  | { kind: 'unread'; what: 'permit' | 'schedule' };
 
 /** A game as "See the games" lists it. */
 export interface CheckedGame { homeTeamId: string; awayTeamId: string; scheduledAt: string; endsAt: string; place: string }
@@ -399,6 +401,7 @@ export function warningWords(w: GenerateWarning, division: string, team: (id: st
       return GENERATE_WORDS.warnByes(team(w.teamId), formatStoredDate(w.weeks[0], { withYear: false }), formatStoredDate(w.weeks[1], { withYear: false }));
     case 'permit': return GENERATE_WORDS.warnPermit(division, w.venue);
     case 'booking': return GENERATE_WORDS.warnBooking(division, w.place, w.other);
+    case 'unread': return w.what === 'permit' ? GENERATE_WORDS.warnPermitUnread : GENERATE_WORDS.warnScheduleUnread;
   }
 }
 
@@ -480,6 +483,9 @@ export const GENERATE_WORDS = {
   /** Ends once: the booking's clock already ends in "a.m." or "p.m.". */
   warnBooking: (division: string, place: string, other: string) =>
     `${possessive(division)} game time overlaps a booking at ${place}: ${other}${other.endsWith('.') ? '' : '.'}`,
+  /** [marketing] drafts: the check could not read the club's records, so it says it did not look (never "passes"). */
+  warnPermitUnread: 'We couldn’t check the club’s permit just now, so this game time may be outside it.',
+  warnScheduleUnread: 'We couldn’t check the club’s schedule just now, so this game time may overlap another booking.',
   warnTwice: (team: string, day: string) => `${team} plays twice on ${day}.`,
   warnByes: (team: string, a: string, b: string) => `${team} has a bye two weeks running, ${a} and ${b}.`,
   elsePasses: 'Everything else passes',

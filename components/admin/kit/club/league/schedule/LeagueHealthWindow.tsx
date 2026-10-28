@@ -54,7 +54,7 @@ export default function LeagueHealthWindow({ health, eyebrow, team, label, place
   const [scrollTeams, setScrollTeams] = useState(0);
   useEffect(() => { if (scrollTeams) teamsRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [scrollTeams]);
 
-  const said = health.issues.map(issue => ({ issue, ...leagueIssueWords(issue, { team, label, place }) }));
+  const said = health.issues.map(issue => ({ issue, ...leagueIssueWords(issue, { team, label, place, division: divisionName }) }));
   const shownIssues = phone && !allIssues ? said.slice(0, PHONE_ISSUES) : said;
   const doorOf = (x: (typeof said)[number]) => {
     switch (x.door) {
@@ -65,6 +65,7 @@ export default function LeagueHealthWindow({ health, eyebrow, team, label, place
       case 'teams': return { label: H.show, onClick: () => { setTeamsOpen(true); setScrollTeams(n => n + 1); } };
       case 'show': return { label: H.show, onClick: () => onShow(x.issue) };
       case 'showIt': return { label: H.showIt, onClick: () => onShow(x.issue) };
+      case 'none': return null;
     }
   };
 
