@@ -176,7 +176,7 @@ belongs to the bookkeeping session.
 | S1 Warm foundation — **BUILT 2026-10-24, walk §371 owed** | Kit, Warm / Dark, `NAV_STANDARD` in full, the 1200 frame, type ladder, words. No job changes | F1 + D1–D5. Shared: `admin-kit-switch-guard` must allow the platform shell. `NAV_STANDARD.md` drops its platform line. K-10 and the "operator shells stay dark" log line retired. Console CSS written as plain rules, so the old-look gate stays at 0 |
 | S2 Find, menu, Today, record — **BUILT 2026-10-25 on dev, walked 2026-10-25 (§377, 60 of 60, all calls accepted)** (drawings Ub7fXLh29SC34Zp4oqKUx1, walk GqozHVh1Bg2FLqSKEM78Xs) | Global Find (server-side, no 1,000 cap), menu by job, one rulebook (matrix = APIs), Today, a record with Story; a person record (new) | Find is a new read surface: drawn and reviewed as a security change. No proxy change. One migration: the read-only lookup over sign-in records |
 | S3 Money — **BUILT + COMMITTED 2026-10-26 (`270211ca0` · `4bfc9ca41` · `6c6d0da7e` · `d77ee9da9` · `e764efd90` · docs `bc9616345`); walks §384 + §385 both ✅ 2026-10-26; mig 380 prod at release** (DRAWN + RULED 2026-10-26, all 12 as recommended; build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE3_BUILD_PROMPT.md`) (drawings FdTWB58ne1jgsBXSwutdLX, source `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE3_DRAWINGS.html`, captures `.probe/pasc/cap-s3/` via `capture-s3b.mjs`, render check `render-s3.mjs`; see "Stage 3 findings") | Stripe read on the Money tab, duplicate labels, refund (Q7), reason column in the audit log, bulk = single plan change (closed; the shared rule carries M6), M6 (widened: every staff plan change on a paying club) | Migration (audit reason + a refunds record + one running plan grant per club if ask 8). Adversarial review on the refund write. No webhook change unless ask 4 = B |
-| S4b Coaches Portal free time — **PROPOSED 2026-10-25, not ruled** | A Premium Coaches Portal reads free time from the same door S4 builds (liveness today reads the portal's own record, which grants never touch), the door shown on a portal record, and the coach Founding comp moved with the Founding access step. Sequenced by dependency: after S4 is built and walked, and together with the Founding access move (Q4), because both change the portal's own billing record and the coach Founding audience (which today ends with no warning) | /billing (coach billing). Drawn first |
+| S4b Coaches Portal free time — **owner ruled YES 2026-10-26; DRAWN 2026-10-27; ALL 12 ASKS RULED as recommended 2026-10-27 (see "Owner rulings 2026-10-27 (Stage 4b drawings)"); build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE4B_BUILD_PROMPT.md`** | A Premium Coaches Portal reads free time from the same door S4 builds (liveness today reads the portal's own record, which grants never touch), the door shown on a portal record, and the coach Founding comp moved with the Founding access step. Sequenced by dependency: after S4 is built and walked, and together with the Founding access move (Q4), because both change the portal's own billing record and the coach Founding audience (which today ends with no warning) | /billing (coach billing). Drawn first |
 | S4 Free time — **BUILT + COMMITTED 2026-10-25 (`6c8f8fb89` · `5353f2cf3` · `e9bb0b059` · `a26ec5165`; finish pass `4071179f0` · `48205738a` · `7bc6b5441`), walk §379 ✅ (owner, in chat 2026-10-27)** (drawings 5eawvGUPwQVPoWiAV7vQY5, all 11 as recommended; build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE4_BUILD_PROMPT.md`; mig 373 prod at release) | `plan_tier` grant (read-time revert, no cron) read through ONE effective-plan door with a build guard (Q1), one Give free time window, Founding as a group in a Free time list (view now, access at the Founding turn-off: Q4), customer billing page shows "Free through" (Q8), `comp_period` no longer offered (Q5), server-side past-expiry check | Prod `ENTITLEMENT_GRANTS_ENABLED=true` confirmed by the owner 2026-10-25. /billing for the customer pages and the effective-plan door. `proxy.ts` is one of the plan readers (its Tournament-tier redirect) |
 | S5 Health — **BUILT 2026-10-26 on dev (gate G1–G4 ruled; mig 389 dev; committed e0fc859d8 · ea0a5ff06 · 202cc2907 · 83b658dfb · df4cbfb7a · 806a477ef + help + fixes; all three walks done 2026-10-27: §391 31/32 https://claude.ai/artifact/8qgZHaUXyygTUssRxJ4dHz · §392 25/30 https://claude.ai/artifact/Rd7zbLU8X31somGq8d21dA · §393 37/44 https://claude.ai/artifact/VmRfEkbaGrMfvYSr8zoAQ5, no failures, 13 steps Held to the release)**; drawn + ruled 2026-10-26, build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE5_BUILD_PROMPT.md` (drawings BQmiMi3jXGKBwXQHr8UugB, source `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE5_DRAWINGS.html`; see "Stage 5 findings") | Status (reads on open), Errors restyled with a person link, Feedback record page + Reply, Sent email log + delivery callback, a kind on every send | One migration (joins 365/367/373/380); Resend webhook + signing secret, AWS list-builds key and a scoped read-only Supabase token are release owner steps (`/release`). Morning check stays on the owner's PC unchanged (Q2 = B) |
 | S6 Club release jobs | Club web addresses list + quota, set up a club from a lead, H03 | Rides the Club release |
@@ -598,6 +598,268 @@ before drawing):**
 - **Basic write APIs may not refuse while Premium is live** (only the pages redirect): re-verify.
 - The first trial would use the existing copy; a SECOND trial or a later real upgrade must reuse the same workspace
   (the claim guard prevents a second copy, and one live portal per owner).
+
+## Stage 4b drawings (2026-10-27; drawn, NOT ruled; nothing built)
+
+Drawings https://claude.ai/artifact/4qzTiG3rUBTmihqPSUAzrW (source `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE4B_DRAWINGS.html`; captures
+`.probe/pasc/cap-s4b/` via `capture-s4b.mjs`; render `render-s4b.mjs`; assembled from Stage 4's head/CSS/scripts by a scratchpad
+`assemble-s4b.cjs`). One example coach through every frame: Frankie Okafor, UAT Free Team (dev: 12 players, 6 events, 3 fees);
+given Oct 27, 2026, free through Dec 26, 2026. **12 asks owed** (1 what "back" does with Premium-era work: A keep whole + say so,
+recommended; 2 lengths and cap: shared date field, 90 days Support/Billing, 6 months Super admin; 3 who: a new power for Super admin,
+Billing and Support; 4 refuse paying/Founding/cancelled, second give Super admin only; 5 change the running end, measured from the first
+give; 6 Founding beside: two builds, 4b first; 7 told in the product only, no email; 8 Stage 4's Q10 replaced; 9 every bulk action skips
+portals; 10 no hosting, reminders to families start off, family-facing words proved at the gate; 11 four fixes inside 4b, four logged;
+12 rule meetings D-1..D-5). The prompt's asks 6 and 9 were reframed (Founding sits beside, not decided; both "still open from earlier
+stages" items were closed by Stage 3).
+
+**Findings (the lines marked ✔ were opened by hand after helpers reported):**
+- ✔ A free (Basic) coach has **no organization, billing page or console record**; the console's person record says "0 clubs". The door is
+  a Coaches Portal tab on the person record; the portal's own record takes over once it exists.
+- ✔ Forward copy only (roster, events, fees; once, behind an atomic claim); **no reverse copy**; Premium-only data (practice plans,
+  attendance, lineups, playing time, money book, awards, tryouts, notes, documents) has no free home. Tournament entries and chat are shared.
+- ✔ The free team's 11 write routes check only free-team membership (never the workspace); only pages redirect. The announcement route
+  emails real contacts.
+- ✔ `team_entitlements.ends_at` is enforced at read time (only in `team-workspace-entitlements.ts`); nothing writes a future one.
+  Stripe's sync rewrites the three records' status and leaves `ends_at` alone.
+- ✔ **Scheduled sweeps (dues reminders, digest) decide from the organization's status through Stage 4's door and nothing changes it at an end
+  date; reminders default ON and the copy creates dues schedules.** Build shape drawn: store the portal ended, a timed billing-status grant
+  holds it open, the entitlement's end set in the same insert, the workspace-status readers learn one question; census of three reader
+  families as a build check. Rejected: tidy-on-first-visit, and leaving the organization active.
+- ✔ `findReactivationWorkspace` refuses a comp-mode portal; no path from a free-time portal to a paid one exists (Keep Premium is new work).
+  Coach cancel and staff cancel must refuse a portal on free time. Retry route cannot repair a null summary (claim spent, nothing copied).
+- Bulk status override (and plan change) do not refuse a portal. Give order: record first, then portal with the end in the same insert.
+- Dev: 24 real free teams, 13 shadow rows; production unknown (not queried).
+- Design pass (fresh reviewer): 17 defects, mostly coach frames drawn with stubs that hid two real lime buttons; all fixed. Safety review
+  (fresh, adversarial): changed the central design (above) and added threats T29–T36.
+
+## Owner rulings 2026-10-27 (Stage 4b drawings)
+
+Paste-back from https://claude.ai/artifact/4qzTiG3rUBTmihqPSUAzrW. **Every recommended box ticked, all twelve** (Q11 with the
+owner's note "go with your recommendations on these"). Logged in `memory/design_decisions.md` 2026-10-27. Build prompt:
+`PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE4B_BUILD_PROMPT.md`.
+- **Q1 What "back" does:** A. Premium work is kept whole and hidden; the free team reads as it did on the day of the upgrade;
+  one band says so. No copy back (B, a "Bring my changes back" button, and C, an automatic copy back, are not built).
+- **Q2 Lengths:** the shared date field, no quick picks; **90 days for Support and Billing, 6 months for Super admin**.
+- **Q3 Who:** a **new power** for portal free time, held by Super admin, Billing and Support. Product, Growth and Read only see
+  it and cannot give it. (The "sixth give in a week needs a Super admin" line is in the drawings' safety section, not in this
+  option's text: NOT ruled, a gate ask.)
+- **Q4 Refusals:** a portal that pays, is Founding, or was cancelled gets no door (absent, one line says why). A second give
+  to a coach who has had free time needs a Super admin.
+- **Q5 More time:** change the running end, **measured from the first give**; a give after it ended reuses the same portal
+  (nothing copied again) and is a Super admin's.
+- **Q6 Founding beside:** two builds, 4b first, sharing the one question "is this portal in force right now?" (written to
+  take any end). **4b touches no Founding row.**
+- **Q7 Told:** in the product only (billing line, home band, amber last-14-days band, the free portal's day-after band for 30
+  days). **No email.**
+- **Q8:** Stage 4's Q10 ("no free time on a portal") is **replaced** by this stage's rules.
+- **Q9:** **every bulk action skips a Coaches Portal** (status override and plan change), with the window's refusal, and says so
+  in its summary line.
+- **Q10:** free time **does not include hosting**; automatic reminders to families **start off** on a free-time portal; what a
+  family sees after the end is written as plain sentences and **proved at the build gate** (free time does not ship until it is).
+- **Q11 Found along the way:** **fix in 4b:** (1) the free team's save routes, announcements included, refuse while a Premium
+  portal is in force; (2) Keep Premium, a real path from free time to paid; (3) the copy saves a pending summary at the claim so
+  Try again can always repair; (4) coach cancel and staff cancel refuse a portal holding free time and point to End it now.
+  **Log only:** (5) staff cancel sets all three records; (6) one name for the plan in the console's lists (Premium Coaches
+  Portal); (7) the billing page says Organization and shows a price for a no-Stripe portal (the price and the Stripe door are
+  hidden for free time inside 4b; the rest logged); (8) three definitions of "live portal" disagree on incomplete and unpaid
+  (4b's one question replaces all three).
+- **Q12 Rule meetings, D-1 to D-5 as drawn:** End it now stays lime; Keep Premium is the billing page's one lime and Join a
+  club is outlined; the free Overview's day-after band is new ground; the hosting line stays, worded through /billing; Keep
+  Premium is 44px tall and full width on a phone.
+
+**Not ruled (carried as gate asks in the build prompt):** the sixth-give-in-a-week rule (T2); the exact customer words (through
+/billing and /marketing); the Free time list and Clubs & portals list rows, the Premium home band, the Premium welcome and the
+"check these" notice, which the drawings describe but did not draw (they are drawn at the build's first walk).
+
+## Stage 4b build gate (2026-10-27; findings, before any code)
+
+The build prompt's §6 run against the code (five read-only censuses, the cited lines opened). Owner asks at the end.
+- **§4 re-verified.** All rows hold except: the free team's save routes are **14**, not 11 (announcements, events ×3, features,
+  fees ×4, interest, roster ×4; all `requireBasicCoachTeamOwner`, none reads the workspace); staff cancel also archives,
+  retention-tags and cancels Stripe, but writes only the organization of the three records; the copy's result is
+  `team_workspaces.migration_summary` (jsonb, null = never ran, no `pending`); reminders default ON
+  (`rep_program_years.auto_reminders_enabled` DEFAULT true) and the copy does create dues schedules. Next migration **406**
+  (none claimed). No owner-unique rule on `team_workspaces` (snapshot).
+- **Write order (T31) cannot be literal.** A Stage 4 grant is an `org_overrides` row (`org_id` NOT NULL), and
+  `provisionStandaloneTeamWorkspace` creates the organization first. Safety-equivalent order: the organization is born
+  **cancelled** → the billing-status grant (bounded by the last free day) → workspace born `canceled`, entitlement born
+  `active` with `ends_at` = the grant's end, both in their inserts → the claim → the copy (reminders off). Any throw rolls the
+  organization back; any stop leaves nothing in force past the last free day.
+- **Census: six definitions of "live portal"** (`isLivePortalStatus` any-but-canceled; `LIVE_TEAM_WORKSPACE_SUB_STATUSES`;
+  `isOrgBillingSuspended` through the door; `user-contexts` private copy; `getActiveTeamEntitlement` with `ends_at`; the
+  people-rows inline copy). **Must move (8):** `getActivePremiumPortal`, `excludeActivePremiumUpgrades`,
+  `getRegistrableTeamsForUser`, `isLivePortalTwin`, `getActiveOwnedTeamWorkspace` (+ 5 callers), people-rows, user-contexts.
+  **Door already (a):** `getAuthContext`, the coaches layout wall, `getOrgForGate` (families), public team schedule,
+  `getInsightsDigestTeams` (both sweeps). **Allowlist:** every writer and Stripe sync, reactivation (`team-checkout.ts:350/367`,
+  it changes the rows), lead-book "pays now", the needs-attention payment bell (stored billing standing), `team_workspace_status`
+  (adopted-by-a-club, a different question), the console's stored displays. **Schedule-change notices** read no liveness: they
+  go to a team's coaches about a tournament game, and the tournament entry is shared by both portals, so a coach whose free time
+  ended should still hear it: allowlist with that reason.
+- **The end with a lapsed grant:** both sweeps skip it (door → stored `canceled`); the per-team gate returns not entitled
+  (`ends_at` past), which also closes the family layer, the staff chat room and the calendar feed. The free-team redirect,
+  list and registration picker read only the workspace's status: stored `canceled`, they would send the coach to the free team
+  DURING free time too, so they must ask the one question (as planned). `ends_at` and the grant's end are one value; Change the
+  end and End it now write both.
+- **Churn (step 3): two lists count it, everything else is safe.** Retention (keyed on retained records: none written),
+  `subscription_canceled` churn counts (no event written), MRR (status active only), lead book "pays now" (platform override
+  never pays) are safe. **Not safe:** the Orgs list "Cancelled (N)" + its needs-attention callout, and Business numbers
+  `byStatus.canceled`, read the stored status with no kind filter, so a free-time portal reads as a cancelled customer for its
+  whole life. Lead book "New accounts" counts it as a new account. Today's "Free time ending" lists it (wanted, needs a kind).
+- **What a family sees after the end (Q10/T25/T36), from the code:** public team page: the existing refusal ("This club's site
+  isn't available. {name} has turned off its public site here, or no longer uses it. If a coach or the club sent you this link,
+  ask them for an up-to-date one."); the family app's team page: "Schedule not available. This team's schedule isn't being shared
+  with families right now. Your connection is still active — check back, or ask the coach."; the public calendar feed: empty under
+  the team's name. **There is no family pay link for a portal's dues** (rep-team dues online are not built; the reminder email
+  has no link); tournament-entry pay links belong to the host. **There is no family chat** (two surfaces, tournament and coach
+  peer; all chat is paused). Nothing is deleted, refunded or emailed at the end.
+- **Keep Premium (step 5):** today a coach who pays DURING free time is refused at checkout (once the one question sees the
+  portal) or, at the webhook, returns `already_exists` and nothing attaches; AFTER the end the free Overview's Upgrade makes a
+  blank second portal (claim lost), and the cancel email's reactivate link throws for a platform-override portal. Needed: checkout
+  and `provisionTeamWorkspaceFromCheckoutMetadata` reuse the coach's staff-given portal BEFORE the owner-live guard; the
+  conversion writes `billing_mode='team_direct'`, the Stripe ids (org + workspace), clears `ends_at`, sets the entitlement source
+  `team_plan`, ends the grant (Story entry), clears the stored ended state; idempotent on the subscription id. Stripe (docs read
+  2026-10-27): fulfil on `checkout.session.completed`, the handler may run more than once and concurrently; nothing else changes.
+- **Migration 406:** one staff-given portal per coach (partial unique on the owner for `source='platform_admin'`) and one
+  staff-given portal per free team; a second give reuses, so neither blocks a legitimate give. No pending-summary column needed
+  (jsonb).
+- **Owner gate rulings 2026-10-27 (all as recommended):** (a) a giver's **sixth portal give inside seven days needs a Super
+  admin** (T2; Stage 3's refund shape); (b) **the reordered give is accepted** (organization born cancelled → grant → workspace
+  and entitlement born ended/bounded → claim → copy); (c) **families after the end see the existing words** (the public refusal
+  page and the family app's "Schedule not available"); "club" on the public refusal for a coach's team is **logged** for a later
+  reword, not changed here.
+- **Builder's calls (recorded, not asked):** the one question = the organization through Stage 4's door is not cancelled AND
+  the team has a running entitlement; the workspace's own `subscription_status` becomes a Stripe mirror read only by writers and
+  reactivation. An `incomplete`/`unpaid` paid portal (org not cancelled) therefore still reads in force, as the redirect does
+  today. The free team's ordinary Upgrade after the end reattaches to the saved portal (Q1's "comes back if Premium does").
+- **Customer words (gate step 6, `/billing` + `/marketing` review 2026-10-27; final).** Stage 4's club bands are the pattern:
+  the day shown is the LAST free day, so "runs through" / "ran through", never "ends on". One wording for desk and phone.
+  1. Price line "Free through {December 26, 2026}" · sub "from FieldLogicHQ · then the free Coaches Portal, automatically".
+  2. Band running: eyebrow "Free time" · title "Premium Coaches Portal is free through {day}." · text "FieldLogicHQ gave you
+     Premium for a while. On {day after} you go back to the free Coaches Portal automatically. Nothing is charged, and nothing
+     you made is deleted. Everything you made on Premium is saved, and it comes back if you choose Premium again." (phone: the
+     same without the first sentence).
+  3. Last 14 days (amber): eyebrow "Free time · {n} days left" / "· 1 day left" / "· last day" · title "Your free time runs
+     through {day}." (last day: "Your free time ends today.") · text "On {day after} you go back to the free Coaches Portal
+     automatically, and everything you made on Premium is saved. To keep Premium, choose it below."
+  4. Billing card: running "No billing action needed: your free time runs through {day}."; last 14 days "Your free time runs
+     through {day}. To keep Premium, choose it below. Otherwise there is nothing to do."
+  5. Keep Premium (lime) · line "Next you choose how to pay. Your team and everything you made stay as they are." (never imply
+     unused free days carry over).
+  6. Free Overview, day-after band (30 days): eyebrow "Free time ended" · title "Your Premium free time ran through {day}." ·
+     text "You're back on the free Coaches Portal, with your team as it was when your free time started. Everything you made on
+     Premium is saved, and it comes back if you choose Premium again." Upgrade card's added line (while Premium work is saved):
+     "Everything you made on Premium is saved and comes back with Premium." (no month).
+  7. Hosting: one line on the plan card where the hosting clause was: "Hosting a tournament isn't part of free time."
+  8. The wall (a Premium page after the end; never "subscription ended"): title "Your free time has ended" · "Your Premium
+     free time ran through {day}. Your team is back on the free Coaches Portal, and everything you made on Premium is saved. It
+     comes back if you choose Premium again." · button "Go to your team".
+  9. Free-team save refused: "{Team} is on Premium right now, so make changes in your Premium Coaches Portal."
+  10. Coach cancel refused: "There's nothing to cancel. Your Premium Coaches Portal is free through {day}, then goes back to the
+     free Coaches Portal by itself."
+  11. Staff: cancel refused "{Portal} has free time through {Dec 26, 2026}. End it now from its Access list instead of
+     cancelling." · bulk "Skipped {n} Coaches Portals: their plan and free time can only be changed on each portal's own record."
+     (one: "Skipped 1 Coaches Portal: its plan and free time can only be changed on its own record.")
+- **Build progress (resume here).** **Part 0 committed `0f6ca5433` 2026-10-27:** the 14 free-team write
+  handlers use `requireBasicCoachTeamWriter` (refuses 409 while `getActivePremiumPortal` sees a live portal; reads stay on the
+  owner gate); `pendingMigrationSummary` saved right after the claim in `provisionStandaloneTeamWorkspace` (the banner's auto
+  Try again repairs a stopped copy; copy rows are unique by source per season, so a concurrent retry cannot duplicate);
+  coach cancel and staff cancel (window + save) refuse via `runningPortalFreeTime` before anything is written; every bulk action
+  skips `account_kind='team_workspace'` with `bulkPortalSkipLine`. New: `lib/portal-free-time.ts` (pure rules + words),
+  `lib/portal-free-time-server.ts`, `tests/unit/support-console-stage4b-guard.test.ts` (25), door-guard allowlist +1. Typecheck
+  clean on these files (the only errors are another session's house-league schedule page). **Resume at Part 1** (the power),
+  then Part 2: `isPortalInForce` = the org through Stage 4's door is not cancelled AND a running team entitlement; move the 8
+  census readers; a new guard pattern for `team_workspaces`+`subscription_status`, `team_entitlements`, `ends_at` and the private
+  predicates (the old door guard is file-level and cannot tell a liveness read from a writer); fix the Orgs list "Cancelled"
+  count + callout and Business numbers `byStatus.canceled` + lead book "New accounts" for staff-given portals. Part 3 needs an
+  `endsAt` input on `provisionStandaloneTeamWorkspace`, entitlement born `active`, `source:'platform_admin'`, event source
+  `platform_admin`, reminders off on the new program year.
+  - **Parts 1–2 committed `6b20a0763` 2026-10-27.** Part 1: `portal_free_time` in `PLATFORM_POWERS`
+    (Super admin, Billing, Support), on the People and Clubs & portals pages' write side. **Builder's call:** Billing's
+    read-only eye on People goes (it can now give free time from a person record); the Stage 2 eye guard updated.
+    Part 2: the one question `lib/portal-in-force.ts` (pure) + `lib/portal-in-force-server.ts` (`portalsInForce`,
+    `workspacesInForce`); moved onto it: `getActivePremiumPortal`, `excludeActivePremiumUpgrades`, `isLivePortalTwin`,
+    `getRegistrableTeamsForUser`, `getActiveOwnedTeamWorkspace` (its 5 callers unchanged), the People rows' live-portal
+    count; `isLivePortalStatus` and `LIVE_TEAM_WORKSPACE_SUB_STATUSES` deleted. Dev check (read-only, 6 portals): old
+    and new answers agree on every one. The wall: `FreeTimeEndedWall` (copy 8) in the coaches layout for a
+    `platform_override` portal whose portal grant ended. Churn: `freeTimePortalOrgIds` leaves free-time portals out of
+    Business numbers, the lead book's New accounts and the Clubs list's Cancelled count, callout and filter. Guard:
+    `tests/unit/support-console-stage4b-inforce-guard.test.ts` (census allowlist with reasons); the Stage 4 door guard
+    lost three allowlist rows. Typecheck clean.
+    - **Builder's calls:** (1) `user-contexts` stays on the door (allowlisted in spirit: it already folds grants, and a
+      portal grant and its entitlement end at one instant); (2) a team MOVED into its club (mig 313/351: workspace left
+      `active`, org cancelled, entitlement cancelled) now reads NOT in force, so its free twin is the coach's again
+      instead of redirecting into the dead portal; (3) the Clubs list keeps a free-time portal in the list and search,
+      out of the Cancelled count and filter only.
+    - **⚠ Found: migration 406 as written collides.** Dev has 3 portals that are `source='platform_admin'` +
+      `platform_override` TODAY (comped/Founding), so "one staff-given portal per coach" keyed on `source` would mark
+      them as free-time portals. Part 3 needs its own mark (the portal grant, or a dedicated column). Also logged for
+      `/review`: the club billing takeover (`canTransferBillingMode`) accepts a `platform_override` portal, i.e. one on
+      free time.
+    - **Resume at Part 3** (the give), with the migration redesigned first.
+  - **Part 3 BUILT 2026-10-27 (committed `66da38203`).** Migration **406 redesigned and applied to dev**:
+    `team_workspaces.free_time_given_at` (set once by the give, never cleared) is the portal's own mark and the anchor
+    the limits are measured from; two partial unique indexes on it (one staff-given portal per coach, per free team).
+    Keyed on the mark, so the 3 comped/Founding `platform_admin` portals are untouched. Visible to the drift check (a
+    column), so no MANUAL_PROD_STEPS entry; prod step = apply 406 before the promote that ships Part 3. Dictionary +
+    snapshots refreshed. Code: `lib/portal-free-time.ts` (pure: caps from the first give, the sixth-in-7-days rule, the
+    nine absent-door lines `portalGiveBlockOf`, `decidePortalGive`, `portalChangeRefusal`); `lib/portal-free-time-give.ts`
+    (server: `readPortalGiveFacts`, `givePortalFreeTime`, a later give `giveAgain`, `changePortalFreeTimeEnd`,
+    `endPortalFreeTimeNow`, `readFreeTimePortal`); `provisionStandaloneTeamWorkspace` gains `freeTime` (grant right after
+    the organization, entitlement `ends_at` in its insert, the mark, reminders off, a lost claim throws and rolls back,
+    the start door kept); routes `POST /api/platform-admin/people/[id]/portal-free-time` and `PATCH|DELETE
+    /api/platform-admin/orgs/[id]/portal-free-time/[oid]` (both `portal_free_time`); `freeTimePortalOrgIds` reads the
+    mark. Guard `tests/unit/support-console-stage4b-give-guard.test.ts` (36); T15 import scan covers the give file.
+    Dev read-only probe `.probe/pasc/s4b-give-facts.mjs`: every fact query runs; Frankie Okafor reads one unclaimed
+    free team, no portal (fixture left untouched for the walk).
+    - **Builder's calls:** a coach with ANY portal other than their staff-given one (paying, comped, Founding,
+      club-billed, cancelled) gets no door, coach-level (the drawn lines 1–5); a comped non-Founding portal gets its own
+      line ("already free from FieldLogicHQ"); line 3 and line 5 drop the drawn date/club name (not read cheaply);
+      line 4 drops "or change the end of the first" (an ended grant has no end to change); the give normalizes the free
+      team's sport label ("Baseball") to the sport id; the free-team giver check is any active membership (free-team
+      membership is role-agnostic) plus the wide own-club check on each of the coach's portals.
+    - **Found and fixed:** Stage 4's club "End it now" (DELETE `orgs/[id]/overrides/[oid]`, `club_billing`) would revoke
+      a portal's grant and leave its entitlement running (a half-end the per-team gate would not see); it now refuses a
+      free-time portal and points to the portal's own Access list.
+    - **Residual (named):** the database rule does not cover a give racing a paid checkout for the same coach (liveness
+      moves with the clock; the application check holds it). Guard 4 (stop between each step) is proven by order + the
+      cascading rollback in source, not by a live stop on the database.
+    - **Owner ask:** "measured from the first give" (Q5) means a second give more than 6 months after the first is
+      impossible for anyone, Super admin included. Built as ruled; confirm that is meant.
+    - **Resume at Part 4** (the console: the person record's Coaches Portal tab + window, the portal record's chip,
+      band, Access list, Story, Put it back; Today and the Free time list).
+  - **Part 3 committed `66da38203` and Part 4 committed `856fc9caa` 2026-10-28 (owner OK).**
+  - **Part 4 BUILT 2026-10-27.** The person record gains the "Coaches
+    Portal" band figure (opens the tab) and tab (free teams with players/events/fees, tournament entries, created; Premium
+    portals with their state; the door or one of the nine lines, decided by `portalGiveBlockOf` on the give's own facts:
+    `lib/portal-free-time-tab.ts`). Shared windows `app/platform-admin/orgs/[id]/PortalFreeTimeWindows.tsx` (Give, a later
+    give, Change the end date, End it now; the date field greys past the cap from the first give). The portal's record: chip
+    "Free time" + "Premium free through …", band (Tournaments "hosting is not part of free time", Free time "ends … · n days
+    left", Billing "Free through … · Given by staff, no Stripe subscription"), its own Access section, its own windows. Story:
+    portal words for given / changed / ended early / ended by itself, plus "Coaches Portal created from the free team …" and
+    "Free team brought across: …" (from the give's audit entry and the stored copy summary; never Put it back). Put it back
+    has two new kinds `portal_end_now` / `portal_end` under `portal_free_time`. Today's sentence and the Free time list
+    ("Club or portal" column, "Premium Coaches Portal") count a portal. The give returns the F2 shortfall line. Guard
+    `tests/unit/support-console-stage4b-console-guard.test.ts` (21); Stage 2's Put it back guard now names six kinds.
+    Typecheck clean (whole tree); 293 related tests pass; spelling clean. Dev smoke (read-only, `.probe/pasc/s4b-console-smoke.mjs`):
+    Frankie's tab, band and Give window render; a Founding portal keeps its own Access row; no page errors, no overflow.
+    - **Found and fixed:** Put it back on a portal's "given" entry would have gone through the CLUB override end (grant
+      revoked, entitlement left running, the same half-end Part 3 fixed on the club DELETE). The Story now gives a portal
+      its own kinds, and the route also refuses a club override end on a free-time portal. Stage 4's retired amber line
+      ("can't be given free time yet") now says where a portal's free time is given.
+    - **Builder's calls:** (1) the status chip on a free-time portal reads "Active" while it runs and "Free time ended"
+      after (the drawing said "Active" after the end; the stored status is cancelled; neither "Active" nor "Cancelled" is
+      true then); (2) while free time runs, the portal record's Give door is absent with the drawn sentence as a line
+      (absent beats a door that only refuses); (3) the F2 shortfall shows as an amber note with "Open the portal" on the
+      person record after the window closes, not as a second window state; (4) a paying, Founding or comped portal's record
+      keeps Stage 4's Access list, door-less (the reasons live on the coach's tab); (5) "brought across" and "created" only
+      on a portal staff gave free time; (6) drawing A's line 7 ("Read only: this role sees the tab…") is a note, not
+      shown. Not drawn, still owed at the first walk: Premium home band, welcome, "check these" notice.
+    - **Not live-tested:** the portal record's Story, Access row and windows with a running give (Frankie's fixture is left
+      untouched for walk A; a one-day give on a scratch coach is the way to see it end).
+    - **Resume at Part 5** (the coach's Plan & billing states, the free Overview's day-after band), then Part 6 (Keep
+      Premium, with `/billing`).
+  - **For `/strategy` at hand-off:** `PLAN_PRICING_FACTS.md` line 124 ("A Coaches Portal gets none yet") goes stale with 4b; the
+    naming canon still ratifies "Basic Coaches Portal" for the free tier while the product says "free Coaches Portal".
 
 ## Stage 3 build gate (2026-10-26)
 

@@ -7,6 +7,19 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-27 — SUPPORT CONSOLE STAGE 4b (FREE TIME ON THE COACHES PORTAL), TWELVE ASKS RULED, EVERY RECOMMENDED BOX TICKED (owner, paste-back from the drawings https://claude.ai/artifact/4qzTiG3rUBTmihqPSUAzrW)
+
+**Decision (as ruled):**
+- **Q1 "back":** A. Premium work kept whole and hidden; the free team shows as it was on the upgrade day; one band says so. No copy back.
+- **Q2:** the shared date field; 90 days for Support and Billing, 6 months for Super admin. **Q3:** a new power for portal free time: Super admin, Billing, Support.
+- **Q4:** refuse paying, Founding and cancelled (door absent, one line); a second give needs a Super admin. **Q5:** change the running end, measured from the first give; a later give reuses the portal, Super admin only.
+- **Q6:** two builds, 4b first, sharing the one "is this portal in force?" question; 4b touches no Founding row. **Q7:** in the product only, no email. **Q8:** Stage 4's "no free time on a portal" is replaced.
+- **Q9:** every bulk action skips a Coaches Portal. **Q10:** no hosting; family reminders start off; what families see after the end proved at the build gate.
+- **Q11:** fix in 4b: free-team save routes refuse while Premium is in force, Keep Premium, pending summary at the claim, cancel refuses a portal on free time. Log: staff cancel's three records, the plan's one name in the console, billing page "Organization" and price, three "live portal" definitions.
+- **Q12 (D-1..D-5):** End it now lime; Keep Premium the one lime with Join a club outlined; the free Overview's day-after band is new ground; the hosting line kept (words via /billing); Keep Premium 44px, full width on a phone.
+
+**Not ruled:** the sixth-give-in-a-week rule; the customer words. **Weight:** binding for the 4b build; REFERENCE for anything else (see feedback_past_decisions_are_reference_not_authority).
+
 ### 2026-10-27 — PUBLIC TOURNAMENT PAGES: ALL SEVENTEEN ASKS RULED AS RECOMMENDED; THE LIGHT CLUB FRAME REPLACES THE DARK VENUE; ALERTS ONLY IN THE INSTALLED APP (owner, paste-back from the review hub https://claude.ai/artifact/19ueNt47f4x3kGFktd8oTU)
 
 **Decision (as ruled):** every ask 1–17 as recommended; full text in `docs/projects/active/PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §10. The ones that reverse or replace standing entries:

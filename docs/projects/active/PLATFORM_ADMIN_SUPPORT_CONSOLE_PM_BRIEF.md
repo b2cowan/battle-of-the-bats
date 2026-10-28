@@ -6,8 +6,14 @@ https://claude.ai/artifact/Ub7fXLh29SC34Zp4oqKUx1). **Stage 2 built 2026-10-25 o
 (https://claude.ai/artifact/GqozHVh1Bg2FLqSKEM78Xs, ledger §377), and its one database change goes to production with the release.
 Runs in parallel with Club Tier (owner, 2026-10-24). **Stage 2 walked 2026-10-25 (60 of 60). Stage 4 (free time) drawn
 2026-10-25** (https://claude.ai/artifact/5eawvGUPwQVPoWiAV7vQY5) **and ruled the same day, all eleven as recommended**;
-the build prompt is written. Free time on a Premium Coaches Portal is proposed as a follow-on (S4b), done together with
-moving Founding Season's access, and is not yet ruled. **Stage 4 built 2026-10-25 on dev and committed** (walk ledger §379); the owner's
+the build prompt is written. Free time on a Premium Coaches Portal (S4b) was ruled YES by the owner on 2026-10-26 and **drawn
+2026-10-27** (https://claude.ai/artifact/4qzTiG3rUBTmihqPSUAzrW): in plain words, support gives a free-portal coach Premium for up to 90
+days from the coach's person record; the coach's Premium is real while it runs; when it ends they land back on their free team as it was,
+with everything they made on Premium kept (and a plain band saying so); families stop getting reminders the same minute. All twelve
+questions were ruled as recommended on 2026-10-27. Success: a coach can try Premium for a set time and return with nothing lost, and
+nobody on staff can give it quietly. **Building:** the safety fixes, the giving itself and the support team's screens (the coach's
+Coaches Portal tab and the portal's record) are done on dev; the coach's own Plan &amp; billing screens and Keep Premium come next, then
+the walks. **Stage 4 built 2026-10-25 on dev and committed** (walk ledger §379); the owner's
 walk is next, and its one database change (tournament fees post to the club's book during free time) goes to production
 with the release. **Stage 3 (money) drawn 2026-10-26** (https://claude.ai/artifact/FdTWB58ne1jgsBXSwutdLX) **and ruled the same day, all
 twelve as recommended**; the build prompt is written. The owner also moved the audit log's raw values into its entry window
