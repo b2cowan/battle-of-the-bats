@@ -21,6 +21,9 @@ import { formatTime } from '@/lib/utils';
 import { publicGameStatus, isGameUpcoming, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import { useTodaysTournamentGames, teamShort, isPendingPlayoffSlot } from '@/lib/hooks/useTodaysTournamentGames';
+import { useParams } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
+import { pageCarriesTicker } from '@/lib/public-ticker-pages';
 import styles from './TodaysResultsLine.module.css';
 
 const HOLD_MS = 5000;
@@ -60,7 +63,14 @@ function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 }
 
+/** The line asks whether this page carries it before it loads a game (Ask 17: not on the Overview — lib/public-ticker-pages.ts). */
 export default function TodaysResultsLine() {
+  const pathname = usePublicPathname();
+  const params = useParams<{ orgSlug?: string; tournamentSlug?: string }>();
+  return pageCarriesTicker(pathname, params?.orgSlug ?? '', params?.tournamentSlug ?? '') ? <ResultsLine /> : null;
+}
+
+function ResultsLine() {
   const { tournamentSlug, today, teams, todayGames, requireFinalization, gameHref } = useTodaysTournamentGames();
 
   // The × — hidden for the rest of the tournament's day on this device. `undefined` until storage is read, so the line

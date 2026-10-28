@@ -11,9 +11,10 @@ import { filesUnder, readCode, readSource } from './_source-code.ts';
  */
 
 const HOME = 'components/public/TournamentHomeContent.tsx';
-const PARTS = ['PublicGameRow', 'PublicLiveCard', 'PublicSectionHead', 'PublicDoorRow'];
-/** The files that may draw the shared parts: each renders only with the switch on. Part 2 adds the frame-on body. */
-const FRAME_ONLY_USERS: string[] = [];
+const PARTS = ['PublicGameRow', 'PublicLiveCard', 'PublicSectionHead', 'PublicDoorRow', 'PublicPostList', 'FollowTournamentLine', 'TournamentOverview'];
+/** The files that may draw the shared parts: each renders only with the switch on (Part 2: the frame-on body, and the
+ *  old Overview's one frame branch that hands over to it — held below). */
+const FRAME_ONLY_USERS = ['components/public/TournamentOverview.tsx', HOME];
 
 describe('the shared parts render only inside the new frame', () => {
   it('no page or component outside the frame-on Overview imports them', () => {
@@ -67,5 +68,49 @@ describe('the host card\'s Open now list (Ask 4 / Ask B)', () => {
     const body = data.slice(data.indexOf('export async function loadHostClubOpenNow'));
     assert.match(body, /if \(!isPublicClubSiteOpen\(org\) \|\| !hasModuleEntitlement\(org, 'module_public_site'\)\) return null;/);
     assert.match(body, /clubOpenNowRows\(leagueSeasons\.filter\(s => s\.status !== 'draft'\), tryouts, today, href\)/);
+  });
+});
+
+describe('game day (Part 2): the new body is the frame\'s alone, and the old one is untouched', () => {
+  it('the old Overview hands over only inside its frame branch, and only on game day', () => {
+    const home = readCode(HOME);
+    const branch = home.slice(home.indexOf('if (frameOn) {'), home.indexOf('// Honor the tournament'));
+    assert.match(branch, /if \(moment\.moment === 'gameDay'\) \{/);
+    assert.match(branch, /<TournamentOverview/);
+    assert.equal(home.split('<TournamentOverview').length, 2, 'one hand-over, inside the branch');
+  });
+  it('Up next, Latest results and Live now come from the games families can see (a held-back division never, D1)', () => {
+    const home = readCode(HOME);
+    assert.match(home, /const \{ games: allGames, withheld: scheduleWithheld \} = await readPublicGames\(/);
+    assert.match(home.slice(home.indexOf('<TournamentOverview')), /games=\{allGames\}/);
+  });
+  it('no follow-a-team, no alerts, no star in the band: the Overview carries the tournament\'s follow alone (owner, 2026-10-28)', () => {
+    const body = readCode('components/public/TournamentOverview.tsx');
+    for (const gone of ['MyTournamentCard', 'FollowTeamPicker', 'FollowAlertsToggle', 'FollowTournamentStrip', 'ScoreTicker', 'TodaysResultsLine']) {
+      assert.doesNotMatch(body, new RegExp(gone), gone);
+    }
+    assert.doesNotMatch(readCode('components/public/TournamentBand.tsx'), /Follow/);
+  });
+  it('following lives inside the installed app only, and never on a club\'s own address', () => {
+    const line = readCode('components/public/FollowTournamentLine.tsx');
+    assert.match(line, /className=\{`\$\{styles\.appOnly\}/);
+    assert.match(line, /export default hideOnClubOwnHost\(FollowTournamentLine\)/);
+    const css = readSource('components/public/PublicParts.module.css');
+    assert.match(css, /\.appOnly \{ display: none; \}\s*@media \(display-mode: standalone\) \{\s*\.appOnly \{ display: block; \}/);
+    assert.match(css, /\.followStar \{[^}]*width: 44px;[^}]*height: 44px/);
+  });
+  it('today\'s follow strip and the new line are one behaviour', () => {
+    for (const f of ['components/public/FollowTournamentStrip.tsx', 'components/public/FollowTournamentLine.tsx']) {
+      assert.match(readCode(f), /useTournamentFollowToggle\(orgSlug, tournamentSlug, tournamentName\)/, f);
+    }
+  });
+});
+
+describe('the ticker leaves the Overview (Ask 17)', () => {
+  it('the line asks its page list before it loads a game; the switch-off ticker is unchanged', () => {
+    const line = readCode('components/public/TodaysResultsLine.tsx');
+    assert.match(line, /return pageCarriesTicker\(pathname, [^)]*\) \? <ResultsLine \/> : null;/);
+    const layout = readCode('app/[orgSlug]/[tournamentSlug]/layout.tsx');
+    assert.match(layout, /\{!frameOn && <ScoreTicker \/>\}/);
   });
 });

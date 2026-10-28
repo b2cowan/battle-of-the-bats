@@ -41,6 +41,9 @@ export interface TournamentMomentState {
   /** The one-time "Champions crowned" stamp — what the band's Finished reads (lib/club-site-home.ts). */
   championCrowned: boolean;
   scheduleWithheld: boolean;
+  /** Today's Overview's `playoffsSet`, exactly: playoff games exist, the event has started, every pool game is played or
+   *  cancelled, and it is not finished (a pre-built bracket before the event is not "the playoffs are here"). */
+  bracketSet: boolean;
 }
 
 const isTerminal = (g: Game) => g.status === 'completed' || g.status === 'forfeit' || g.status === 'cancelled';
@@ -72,5 +75,8 @@ export function tournamentMoment(input: TournamentMomentInput): TournamentMoment
     gamesToday: games.some(g => g.date === today && g.status !== 'cancelled'),
     championCrowned: !!tournament.championsCrownedAt,
     scheduleWithheld,
+    bracketSet:
+      hasPlayoffGames && !finished && (!startDate || today >= startDate) &&
+      games.filter(g => !g.isPlayoff).every(g => g.status === 'completed' || g.status === 'cancelled'),
   };
 }

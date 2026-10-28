@@ -95,4 +95,16 @@ describe('the flags', () => {
     assert.equal(tournamentMoment(at('2026-10-24', { games: [game({ status: 'cancelled' })] })).gamesToday, false);
     assert.equal(tournamentMoment(at('2026-10-23', { games: [game({})] })).gamesToday, false);
   });
+  it('the bracket is set: playoffs exist, the event has started, every pool game played or cancelled, not finished', () => {
+    const pool = played({ date: '2026-10-24' });
+    const semi = game({ isPlayoff: true, bracketCode: 'SF1', date: '2026-10-25' });
+    assert.equal(tournamentMoment(at('2026-10-25', { games: [pool, semi] })).bracketSet, true);
+    assert.equal(tournamentMoment(at('2026-10-25', { games: [game({ status: 'cancelled' }), semi] })).bracketSet, true);
+    // a pre-built bracket before the event, a pool game still to play, a forfeit pool game (today's rule: not played), no bracket, finished
+    assert.equal(tournamentMoment(at('2026-10-20', { games: [pool, semi] })).bracketSet, false);
+    assert.equal(tournamentMoment(at('2026-10-25', { games: [game({}), semi] })).bracketSet, false);
+    assert.equal(tournamentMoment(at('2026-10-25', { games: [game({ status: 'forfeit' }), semi] })).bracketSet, false);
+    assert.equal(tournamentMoment(at('2026-10-25', { games: [pool] })).bracketSet, false);
+    assert.equal(tournamentMoment(at('2026-10-25', { games: [pool, decidedFinal()] })).bracketSet, false);
+  });
 });

@@ -31,6 +31,8 @@ import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import { orgLinks } from '@/lib/org-links';
 import { isPublicFrameOn, publicTournamentContactEmail } from '@/lib/public-frame-server';
 import { TOURNAMENT_STATUS_WORD } from '@/lib/club-site-home';
+import { tournamentMoment } from '@/lib/tournament-moment';
+import TournamentOverview from '@/components/public/TournamentOverview';
 import styles from '@/app/[orgSlug]/Home.module.css';
 
 export default async function TournamentHomeContent({
@@ -92,6 +94,41 @@ export default async function TournamentHomeContent({
   const showStandingsPage = isPublicPageEnabled(tournament, 'standings');
   const showTeamsPage = isPublicPageEnabled(tournament, 'teams');
   const showRulesPage = isPublicPageEnabled(tournament, 'rules');
+
+  // Public tournament pages Stage 2: under the frame, game day is the new body (TournamentOverview), fed by what is
+  // loaded above. Everything below is today's Overview, untouched, which Stage 8 deletes; before and after the event keep
+  // it until Part 3 draws them.
+  if (frameOn) {
+    const moment = tournamentMoment({
+      tournament, today: now, games: allGames, divisions, scheduleWithheld,
+      registrationOpen: registerOn && !!registration.cta,
+    });
+    if (moment.moment === 'gameDay') {
+      const frameScheduleHref = `${isPreview ? previewBase : publicBase}/schedule`;
+      return (
+        <TournamentOverview
+          orgSlug={orgSlug}
+          tournamentSlug={tournamentSlug}
+          tournament={tournament}
+          isPreview={isPreview}
+          today={now}
+          games={allGames}
+          teamName={id => teams.find(t => t.id === id)?.name ?? 'TBD'}
+          divisions={divisions}
+          venues={venues}
+          announcements={announcements}
+          scheduleWithheld={scheduleWithheld}
+          showSchedulePage={showSchedulePage}
+          showNewsPage={showNewsPage}
+          playoffPictureHref={moment.bracketSet && showStandingsPage && !isPreview ? `${publicBase}/playoffs` : null}
+          scheduleHref={frameScheduleHref}
+          newsHref={`${isPreview ? previewBase : publicBase}/news`}
+          gameHref={id => (isPreview ? frameScheduleHref : `${frameScheduleHref}/${id}`)}
+        />
+      );
+    }
+  }
+
   // Honor the tournament's "show contact email publicly" privacy toggle and resolve
   // the designated contact (member email) — the raw `tournament.contactEmail ?? org`
   // fallback skipped both (J1-045). Returns null when the organizer hid it.
