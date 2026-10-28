@@ -2,7 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { getBasicCoachTeamsForUser, resolveBasicCoachTeamIdForWorkspace } from './basic-coach-teams';
 import { getTeamStaffMembershipById, listActiveStaffForTeams, listActiveStaffTeamIdsForUser } from './coach-membership';
-import { isLivePortalStatus } from './coach-team-page';
+import { keysOf, portalsInForce } from './portal-in-force-server';
 import { resolveCoachUserIdentities } from './db';
 import { buildRegistrableTeams, findRegistrableTeam, type LivePortal, type RegistrableTeam } from './registrable-teams';
 
@@ -12,7 +12,7 @@ import { buildRegistrableTeams, findRegistrableTeam, type LivePortal, type Regis
  *
  *   1. their free-team memberships, and their ACTIVE staff memberships (the access truth, mig 245);
  *   2. every workspace either one reaches — by rep team (staff) or by back-link (free team);
- *   3. for the LIVE ones (`isLivePortalStatus` — the free shell's own test): the team's current name,
+ *   3. for the LIVE ones (the one question, `lib/portal-in-force.ts` — the free shell's own test): the team's current name,
  *      its org's slug, its active staff, and its twin;
  *   4. names, only where a card shows one — who can register a LOCKED card, and an OPEN card's head
  *      coaches (Stage 1b) — since each name is an auth lookup.
@@ -44,11 +44,12 @@ export async function getRegistrableTeamsForUser(
   ].filter(Boolean).join(',');
   const { data: workspaceRows, error: workspaceError } = await supabaseAdmin
     .from('team_workspaces')
-    .select('id, rep_team_id, subscription_status, workspace_state, primary_owner_user_id, source_tournament_team_id, basic_coach_team_id')
+    .select('id, workspace_org_id, rep_team_id, workspace_state, primary_owner_user_id, source_tournament_team_id, basic_coach_team_id')
     .or(reach);
   if (workspaceError) throw workspaceError;
 
-  const live = (workspaceRows ?? []).filter(w => isLivePortalStatus(w.subscription_status as string | null));
+  const inForce = await portalsInForce(keysOf((workspaceRows ?? []) as Array<{ id: string; workspace_org_id: string; rep_team_id: string }>));
+  const live = (workspaceRows ?? []).filter(w => inForce.has(w.id as string));
   if (live.length === 0) return buildRegistrableTeams({ userId, freeTeams, portals: [] });
 
   const staffTeamSet = new Set(staffTeamIds);

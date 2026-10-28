@@ -1,4 +1,4 @@
-import { formatLongDay, formatShortDay } from './free-time';
+import { formatLongDay, formatShortDay, lastDayOfInstant } from './free-time';
 
 /**
  * Free time on a Coaches Portal (Support console Stage 4b): the rules and words, with no database in them. The reads
@@ -25,6 +25,28 @@ export function coachCancelRefusal(lastDay: string): string {
 /** The console's cancel, refused while free time runs: End it now is the way (Q11-4). */
 export function staffCancelRefusal(portalName: string, lastDay: string): string {
   return `${portalName} has free time through ${formatShortDay(lastDay)}. End it now from its Access list instead of cancelling.`;
+}
+
+/**
+ * The last free day of a free time that has ended: the day it was ended early (End it now revokes it), else its own
+ * last day. Null while it still runs.
+ */
+export function endedLastDay(
+  grant: { starts_at: string | null; expires_at: string | null; revoked_at: string | null },
+  now: Date = new Date(),
+): string | null {
+  if (grant.revoked_at) return lastDayOfInstant(grant.revoked_at);
+  if (grant.expires_at && new Date(grant.expires_at) <= now) return lastDayOfInstant(grant.expires_at);
+  return null;
+}
+
+/** The Premium portal's wall once free time has ended (copy 8): never "subscription ended". */
+export function freeTimeEndedWallWords(lastDay: string): { title: string; text: string; door: string } {
+  return {
+    title: 'Your free time has ended',
+    text: `Your Premium free time ran through ${formatLongDay(lastDay)}. Your team is back on the free Coaches Portal, and everything you made on Premium is saved. It comes back if you choose Premium again.`,
+    door: 'Go to your team',
+  };
 }
 
 /** A bulk action's summary line for the portals it skipped (Q9, T8/T33). */

@@ -102,10 +102,8 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'app/platform-admin/dev-tools/page.tsx': ['stored', 'console dev tools'],
   'app/platform-admin/dev-tools/AgentPlaybook.tsx': ['stored', 'console dev tools'],
   'app/api/platform-admin/product-catalog/change-requests/validate-price/route.ts': ['stored', 'plan catalogue changes'],
-  // ── Coaches Portal (team_workspaces) ──
-  'lib/basic-coach-teams.ts': ['portal', 'team_workspaces status'],
-  'lib/coach-team-page.ts': ['portal', 'team_workspaces status'],
-  'lib/registrable-teams-server.ts': ['portal', 'team_workspaces status'],
+  // ── Coaches Portal (team_workspaces) ── (Stage 4b moved the free team's three liveness readers onto the one
+  // question, lib/portal-in-force.ts; its own census guard is support-console-stage4b-inforce-guard.test.ts)
   'lib/team-workspace-entitlements.ts': ['portal', 'team_workspaces status'],
   'lib/team-org-billing.ts': ['portal', 'team_workspaces billing'],
   'lib/team-workspace-provisioning.ts': ['portal', 'portal provisioning'],

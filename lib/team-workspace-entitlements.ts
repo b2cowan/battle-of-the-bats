@@ -1,4 +1,5 @@
 import { supabaseAdmin } from './supabase-admin';
+import { keysOf, portalsInForce } from './portal-in-force-server';
 
 export type TeamWorkspaceState = 'independent' | 'linked' | 'org_owned' | 'archived';
 export type TeamWorkspaceBillingMode =
@@ -139,26 +140,24 @@ function mapTeamEntitlement(row: TeamEntitlementRow): TeamEntitlement {
    it too (Club Tier S2-01); re-exported here so every existing importer keeps working. */
 export { isTeamWorkspaceOrg } from './team-workspace-kind';
 
-const LIVE_TEAM_WORKSPACE_SUB_STATUSES: TeamWorkspaceSubscriptionStatus[] = ['active', 'trialing', 'past_due'];
-
 /**
  * The LIVE Coaches Portal this user already OWNS, if any — enforcing "one paid Coaches Portal per
- * email" (decision 2026-06-19). Returns its org id + slug (to route them to it), or null. A
- * canceled/incomplete workspace does NOT count — they can reactivate it or start fresh — so only an
- * active / trialing / past_due subscription blocks a second purchase.
+ * email" (decision 2026-06-19). Returns its org id + slug (to route them to it), or null. "Live" is the
+ * one question (`lib/portal-in-force.ts`, Support console Stage 4b): an ended portal does NOT count —
+ * they can reactivate it or start fresh — and a portal on free time DOES, until its last free day.
  */
 export async function getActiveOwnedTeamWorkspace(
   userId: string,
 ): Promise<{ orgSlug: string; workspaceOrgId: string } | null> {
   const { data, error } = await supabaseAdmin
     .from('team_workspaces')
-    .select('workspace_org_id, subscription_status')
+    .select('id, workspace_org_id, rep_team_id')
     .eq('primary_owner_user_id', userId);
   if (error) throw error;
 
-  const live = (data ?? []).find(w =>
-    LIVE_TEAM_WORKSPACE_SUB_STATUSES.includes(w.subscription_status as TeamWorkspaceSubscriptionStatus),
-  );
+  const rows = (data ?? []) as Array<{ id: string; workspace_org_id: string; rep_team_id: string }>;
+  const inForce = await portalsInForce(keysOf(rows));
+  const live = rows.find(w => inForce.has(w.id));
   if (!live) return null;
 
   const { data: org } = await supabaseAdmin

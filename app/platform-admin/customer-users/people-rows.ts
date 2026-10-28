@@ -5,6 +5,7 @@
  */
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { personAuthStatus, searchPeople, type PersonAuthStatus } from '@/lib/platform-people-lookup';
+import { keysOf, portalsInForce } from '@/lib/portal-in-force-server';
 
 export const PEOPLE_PAGE_SIZE = 50;
 
@@ -58,14 +59,16 @@ export async function readPeoplePage(opts: { query: string; status: PersonAuthSt
         .select('user_id, role, status, organizations(id, name, slug, plan_id, subscription_status)')
         .in('user_id', ids)
         .limit(2000),
-      // Watch-only one-portal safeguard (detect, NEVER block): each owner's LIVE Premium Coaches Portals.
+      // Watch-only one-portal safeguard (detect, NEVER block): each owner's LIVE Premium Coaches Portals (the one
+      // question, lib/portal-in-force.ts: a portal on free time counts until its last free day).
       supabaseAdmin
         .from('team_workspaces')
-        .select('primary_owner_user_id')
-        .in('subscription_status', ['active', 'trialing', 'past_due'])
+        .select('id, workspace_org_id, rep_team_id, primary_owner_user_id')
         .in('primary_owner_user_id', ids)
         .limit(2000),
     ]);
+  const portalRows = (portalsRes.data ?? []) as Array<{ id: string; workspace_org_id: string; rep_team_id: string; primary_owner_user_id: string | null }>;
+  const portalsLive = await portalsInForce(keysOf(portalRows));
 
   const memberships = new Map<string, PeopleRow['memberships']>();
   for (const m of (membersRes.data ?? []) as unknown as MemberRow[]) {
@@ -84,8 +87,8 @@ export async function readPeoplePage(opts: { query: string; status: PersonAuthSt
     memberships.set(m.user_id, list);
   }
   const portals = new Map<string, number>();
-  for (const w of (portalsRes.data ?? []) as Array<{ primary_owner_user_id: string | null }>) {
-    if (w.primary_owner_user_id) portals.set(w.primary_owner_user_id, (portals.get(w.primary_owner_user_id) ?? 0) + 1);
+  for (const w of portalRows) {
+    if (w.primary_owner_user_id && portalsLive.has(w.id)) portals.set(w.primary_owner_user_id, (portals.get(w.primary_owner_user_id) ?? 0) + 1);
   }
 
   return {

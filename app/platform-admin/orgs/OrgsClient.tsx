@@ -37,6 +37,8 @@ interface OrgRow {
   enabledAddons: string[];
   internalNotes: string | null;
   isFoundingSeason: boolean;
+  /** A Coaches Portal staff gave free time (Stage 4b): never a cancelled customer. */
+  isFreeTimePortal: boolean;
   isFreeFloor: boolean;
   missingOwner: boolean;
   ownerInactive: boolean;
@@ -100,7 +102,11 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
     if (handed) setSearch(handed);
   }, []);
 
+  // A portal staff gave free time is stored cancelled for its whole life (Stage 4b, T35): it is not a cancelled
+  // customer, so neither the count, the callout nor the Cancelled filter counts it. It stays in the list and in search.
+  const isCancelledCustomer = (org: OrgRow) => org.subscriptionStatus === 'canceled' && !org.isFreeTimePortal;
   const statusCounts = orgs.reduce<Record<string, number>>((acc, org) => {
+    if (org.subscriptionStatus === 'canceled' && !isCancelledCustomer(org)) return acc;
     acc[org.subscriptionStatus] = (acc[org.subscriptionStatus] ?? 0) + 1;
     return acc;
   }, {});
@@ -119,6 +125,7 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
     }
     if (planFilter         && o.planId             !== planFilter)   return false;
     if (statusFilter       && o.subscriptionStatus !== statusFilter) return false;
+    if (statusFilter === 'canceled' && !isCancelledCustomer(o)) return false;
     if (foundingSeasonOnly && !o.isFoundingSeason)                   return false;
     if (freeFloorOnly      && !o.isFreeFloor)                        return false;
     if (emptyOrgOnly       && !o.emptyOrg)                           return false;

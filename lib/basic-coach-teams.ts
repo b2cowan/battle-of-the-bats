@@ -5,7 +5,8 @@ import { deriveCoachLifecycleChip } from './coach-tournament-lifecycle';
 import { buildCoachTournamentStatus } from './coach-status-model';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
 import { ourTeamIdsAmong } from './club-own-tournament-team';
-import { excludeActivePremiumUpgrades, isLivePortalStatus } from './coach-team-page';
+import { excludeActivePremiumUpgrades } from './coach-team-page';
+import { workspacesInForce } from './portal-in-force-server';
 import { tournamentNow, tournamentToday, zonedWallClockToUtc } from './timezone';
 import { formatGameDateLabel, formatGameTimeLabel } from './game-clock-labels';
 import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from './game-status';
@@ -567,7 +568,7 @@ export async function createBasicCoachTeam(params: {
   return team.id;
 }
 
-/** Is this free team the twin of a LIVE Premium portal (its back-link points at a workspace that is live)? */
+/** Is this free team the twin of a LIVE Premium portal (its back-link points at a workspace in force, the one question)? */
 async function isLivePortalTwin(basicCoachTeamId: string): Promise<boolean> {
   const { data: team, error } = await supabaseAdmin
     .from('basic_coach_teams')
@@ -576,13 +577,7 @@ async function isLivePortalTwin(basicCoachTeamId: string): Promise<boolean> {
     .maybeSingle<{ team_workspace_id: string | null }>();
   if (error) throw error;
   if (!team?.team_workspace_id) return false;
-  const { data: workspace, error: wsError } = await supabaseAdmin
-    .from('team_workspaces')
-    .select('subscription_status')
-    .eq('id', team.team_workspace_id)
-    .maybeSingle<{ subscription_status: string | null }>();
-  if (wsError) throw wsError;
-  return isLivePortalStatus(workspace?.subscription_status);
+  return (await workspacesInForce([team.team_workspace_id])).has(team.team_workspace_id);
 }
 
 export async function linkTournamentRegistrationToBasicCoachTeam(params: {

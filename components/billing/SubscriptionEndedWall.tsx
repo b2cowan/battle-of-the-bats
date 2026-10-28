@@ -3,6 +3,8 @@ import { isOrgBillingSuspended } from '@/lib/org-billing-access';
 import type { Organization } from '@/lib/types';
 import styles from './SubscriptionEndedWall.module.css';
 import { possessive } from '@/lib/utils';
+import { freeTimeEndedWallWords } from '@/lib/portal-free-time';
+import { coachTeamPath, COACHES_HOME_PATH } from '@/lib/coaches-portal-routes';
 
 /**
  * The goodbye a cancelled organization sees on a surface it can no longer use.
@@ -48,6 +50,24 @@ export default function SubscriptionEndedWall({
       </p>
       <div className={styles.doors}>
         <Link href="/discover" className={styles.door}>Go to Home</Link>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The same wall for a Premium Coaches Portal whose free time from FieldLogicHQ has ended (Support console Stage 4b,
+ * copy 8). The coach did not cancel anything and nothing lapsed, so it never says "subscription ended": it says when
+ * the free time ran through and sends them to their free team, which reads as it did on the upgrade day.
+ */
+export function FreeTimeEndedWall({ lastDay, basicTeamId }: { lastDay: string; basicTeamId: string | null }) {
+  const words = freeTimeEndedWallWords(lastDay);
+  return (
+    <div className={styles.wall}>
+      <h2>{words.title}</h2>
+      <p>{words.text}</p>
+      <div className={styles.doors}>
+        <Link href={basicTeamId ? coachTeamPath(basicTeamId) : COACHES_HOME_PATH} className={styles.door}>{words.door}</Link>
       </div>
     </div>
   );

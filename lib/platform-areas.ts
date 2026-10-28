@@ -75,6 +75,14 @@ export type PlatformPower =
    * Super admin only (the readers filter them in the query).
    */
   | 'sent_log'
+  /**
+   * Give, change and end free time on a Coaches Portal (Support console Stage 4b, owner Q3 2026-10-27): Super admin,
+   * Billing and Support. The door is the person record's Coaches Portal tab (a free coach has no club record); the
+   * portal's Access list reads the same line. Product, Growth and Read only see the tab and the record, never a door
+   * (R6). The give route holds the caps (90 days, 6 months for Super admin, from the first give), the second-give and
+   * sixth-in-a-week Super admin rules; this list says only who may.
+   */
+  | 'portal_free_time'
   /** The dev-only seed console (and only where NEXT_PUBLIC_ENABLE_DEV_TOOLS is on). */
   | 'dev_tools';
 
@@ -107,6 +115,7 @@ export const PLATFORM_POWERS: Record<PlatformPower, readonly PlatformRole[]> = {
   refund:           ['super_admin', 'billing'],
   reply:            ['super_admin', 'support'],
   sent_log:         ['super_admin', 'support', 'billing'],
+  portal_free_time: ['super_admin', 'billing', 'support'],
   run_jobs:         ['super_admin'],
   dev_tools:        ['super_admin'],
 };
@@ -152,8 +161,9 @@ type AreaAccess = { viewRoles: readonly PlatformRole[]; powers: readonly Platfor
 export const PLATFORM_AREAS: Record<PlatformArea, AreaAccess> = {
   // Today, and the two customer lists — every role opens them (the Find row of the rulebook)
   overview:        { viewRoles: ALL_ROLES, powers: [] },
-  organizations:   { viewRoles: ALL_ROLES, powers: ['club_support', 'club_billing', 'club_sections', 'delete_records'] },
-  customer_users:  { viewRoles: ALL_ROLES, powers: ['person_support', 'delete_records'] },
+  organizations:   { viewRoles: ALL_ROLES, powers: ['club_support', 'club_billing', 'club_sections', 'delete_records', 'portal_free_time'] },
+  // Stage 4b: a person's Coaches Portal tab gives free time, so Billing's eye on People went with it (it can now act there).
+  customer_users:  { viewRoles: ALL_ROLES, powers: ['person_support', 'delete_records', 'portal_free_time'] },
   audit:           { viewRoles: ALL_ROLES, powers: [] },
   help:            { viewRoles: ALL_ROLES, powers: [] },
 

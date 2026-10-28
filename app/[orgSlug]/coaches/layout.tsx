@@ -29,7 +29,8 @@ import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
 import ConfirmProvider from '@/components/coaches/ConfirmProvider';
 import { coachWarmAttr } from '@/lib/coach-warm-preview';
 import { isOrgBillingSuspended } from '@/lib/org-billing-access';
-import SubscriptionEndedWall from '@/components/billing/SubscriptionEndedWall';
+import SubscriptionEndedWall, { FreeTimeEndedWall } from '@/components/billing/SubscriptionEndedWall';
+import { endedPortalFreeTime } from '@/lib/portal-free-time-server';
 import CoachPlanWall from '@/components/coaches/CoachPlanWall';
 import { orgPlanCarriesCoachesPortal } from '@/lib/coach-portal-plan';
 import { orgOwnerDisplayName } from '@/lib/member-names';
@@ -117,6 +118,8 @@ export default async function CoachesLayout({
   // fetches and says why instead. Placed BEFORE the assignment/season lookups so a cancelled club
   // costs no queries, and inside the portal frame so it reads as this product, not an error page.
   if (isOrgBillingSuspended(authCtx.org)) {
+    // A portal whose free time from FieldLogicHQ ended reads its own wall (Stage 4b): the coach cancelled nothing.
+    const freeTimeEnded = authCtx.org.accountKind === 'team_workspace' ? await endedPortalFreeTime(authCtx.org.id) : null;
     return (
       <OrgProvider initialOrg={authCtx.org} initialUserRole={null}>
         <div style={{ display: 'contents' }} {...coachWarmAttr}>
@@ -127,11 +130,15 @@ export default async function CoachesLayout({
                 feedback row in the account menu; identity + exits stay. */}
             <CoachTopStrip wall />
             <main className={styles.coachesMain}>
-              <SubscriptionEndedWall
-                orgName={authCtx.org.name}
-                contactEmail={authCtx.org.contactEmail}
-                surface="coaches"
-              />
+              {freeTimeEnded ? (
+                <FreeTimeEndedWall lastDay={freeTimeEnded.lastDay} basicTeamId={freeTimeEnded.basicTeamId} />
+              ) : (
+                <SubscriptionEndedWall
+                  orgName={authCtx.org.name}
+                  contactEmail={authCtx.org.contactEmail}
+                  surface="coaches"
+                />
+              )}
             </main>
           </div>
         </div>

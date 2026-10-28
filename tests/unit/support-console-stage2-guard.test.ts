@@ -368,7 +368,8 @@ describe('9 · the menu by job', () => {
     // Stage 4: Free time's write side is the plan-and-billing power (it is given on the record), so Support and Product
     // read it with the eye.
     assert.deepEqual(eyes('support'), ['Free time', 'Retention', 'Errors']);
-    assert.deepEqual(eyes('billing'), ['People', 'Plans & pricing', 'Approval queue']);
+    // Stage 4b: Billing gives a Coaches Portal free time from a person's record, so People is no longer read-only for it.
+    assert.deepEqual(eyes('billing'), ['Plans & pricing', 'Approval queue']);
     assert.deepEqual(eyes('product'), ['People', 'Free time']);
     assert.deepEqual(eyes('growth'), ['Clubs & portals', 'People']);
     assert.deepEqual(eyes('read_only'), ['Clubs & portals', 'People']);

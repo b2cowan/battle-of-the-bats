@@ -5,18 +5,16 @@ import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { getBasicCoachTeamForUser } from '@/lib/basic-coach-teams';
 import { coachTeamPath } from '@/lib/coaches-portal-routes';
 import type { BasicCoachTeam } from '@/lib/basic-coach-teams';
+import { portalsInForce, workspacesInForce } from '@/lib/portal-in-force-server';
 
-/**
- * Is a Premium portal LIVE — the coach's home rather than history? Any subscription status but
- * canceled (and not none). ONE test for the three readers that must agree: the free shell's
- * redirect into the portal ({@link getActivePremiumPortal}), the free team list that hides an upgraded
- * team ({@link excludeActivePremiumUpgrades}), and the registration form's team cards
- * (`getRegistrableTeamsForUser`) — the portal the shell sends a coach to is the portal the form offers.
- * ⚠ Wider than `LIVE_TEAM_WORKSPACE_SUB_STATUSES` (billing's "one paid portal per email" test), on purpose.
+/*
+ * Is a Premium portal LIVE — the coach's home rather than history? The one question
+ * (`lib/portal-in-force.ts`, Support console Stage 4b), so the three readers that must agree still do: the free
+ * shell's redirect into the portal ({@link getActivePremiumPortal}), the free team list that hides an upgraded team
+ * ({@link excludeActivePremiumUpgrades}), and the registration form's team cards (`getRegistrableTeamsForUser`) —
+ * the portal the shell sends a coach to is the portal the form offers. A portal on free time is in force until its
+ * last free day, then the free team is the coach's again, as it was on the upgrade day.
  */
-export function isLivePortalStatus(status: string | null | undefined): boolean {
-  return !!status && status !== 'canceled';
-}
 /**
  * The LIVE Premium portal a free Basic team has been upgraded to — its org slug + the premium
  * (rep) team id inside that workspace — or null. Keeps an upgraded free team from becoming a
@@ -31,14 +29,16 @@ export async function getActivePremiumPortal(
   if (!teamWorkspaceId) return null;
   const { data } = await supabaseAdmin
     .from('team_workspaces')
-    .select('subscription_status, rep_team_id, organizations!workspace_org_id(slug)')
+    .select('workspace_org_id, rep_team_id, organizations!workspace_org_id(slug)')
     .eq('id', teamWorkspaceId)
     .maybeSingle<{
-      subscription_status: string | null;
+      workspace_org_id: string;
       rep_team_id: string;
       organizations: { slug: string | null } | { slug: string | null }[] | null;
     }>();
-  if (!data || !isLivePortalStatus(data.subscription_status)) return null;
+  if (!data) return null;
+  const inForce = await portalsInForce([{ workspaceId: teamWorkspaceId, orgId: data.workspace_org_id, repTeamId: data.rep_team_id }]);
+  if (!inForce.has(teamWorkspaceId)) return null;
   const org = Array.isArray(data.organizations) ? data.organizations[0] : data.organizations;
   return org?.slug ? { slug: org.slug, repTeamId: data.rep_team_id } : null;
 }
@@ -51,23 +51,15 @@ export async function getActivePremiumPortalSlug(teamWorkspaceId: string | null)
 /**
  * Drop any free Basic teams that have been upgraded to a LIVE Premium portal. To the coach those are
  * now their Premium team (reached via the Premium workspace), not a free team — so they must not
- * appear in the free "Your teams" list. Canceled upgrades are kept (the free team is usable again).
- * Batched: one lookup covers all of the listed teams' workspaces.
+ * appear in the free "Your teams" list. Ended upgrades are kept (the free team is usable again).
+ * Batched: one question for all of the listed teams' workspaces.
  */
 export async function excludeActivePremiumUpgrades<T extends { teamWorkspaceId: string | null }>(
   teams: T[],
 ): Promise<T[]> {
   const workspaceIds = teams.map(t => t.teamWorkspaceId).filter((id): id is string => !!id);
   if (workspaceIds.length === 0) return teams;
-  const { data } = await supabaseAdmin
-    .from('team_workspaces')
-    .select('id, subscription_status')
-    .in('id', workspaceIds);
-  const liveWorkspaceIds = new Set(
-    (data ?? [])
-      .filter(w => isLivePortalStatus(w.subscription_status))
-      .map(w => w.id as string),
-  );
+  const liveWorkspaceIds = await workspacesInForce(workspaceIds);
   return teams.filter(t => !(t.teamWorkspaceId && liveWorkspaceIds.has(t.teamWorkspaceId)));
 }
 

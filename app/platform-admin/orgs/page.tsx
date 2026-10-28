@@ -5,6 +5,7 @@ import OrgsClient from './OrgsClient';
 import { clubDomainStore } from '@/lib/club-domain-store';
 import { peopleByIds } from '@/lib/platform-people-lookup';
 import { fetchAll } from '@/lib/supabase-paging';
+import { freeTimePortalOrgIds } from '@/lib/portal-free-time-server';
 
 /**
  * ⚠ RECOGNITION IS THE SHARED RULE, NEVER A HAND-TYPED DATE (fixed 2026-09-07).
@@ -52,9 +53,11 @@ async function getOrgs() {
   const trialWindowEnd = new Date(Date.now() + 14 * 86_400_000).toISOString();
   const inactiveOwnerCutoff = new Date(Date.now() - 30 * 86_400_000).toISOString();
 
-  const [orgsResult, foundingSeasonOrgIds, ownersResult, overridesResult, ownAddressRows] = await Promise.all([
+  const [orgsResult, foundingSeasonOrgIds, freeTimePortals, ownersResult, overridesResult, ownAddressRows] = await Promise.all([
     readEveryOrganization(),
     getFoundingSeasonOrgIds(),
+    // Stage 4b (T35): a portal staff gave free time is stored cancelled; it is not a cancelled customer.
+    freeTimePortalOrgIds().catch(() => new Set<string>()),
     supabaseAdmin
       .from('organization_members')
       .select('organization_id, user_id, status')
@@ -170,6 +173,7 @@ async function getOrgs() {
         ? `${noteCount} internal note${noteCount === 1 ? '' : 's'}`
         : ((r.internal_notes as string | null) ?? null),
       isFoundingSeason:   foundingSeasonOrgIds.has(id),
+      isFreeTimePortal:   freeTimePortals.has(id),
       isFreeFloor:        (r.free_floor as string | null) === 'league_starter',
       missingOwner:       !ownerOrgIds.has(id),
       ownerInactive:      ownerIds.length > 0 && (!mostRecentOwnerSignIn || mostRecentOwnerSignIn < inactiveOwnerCutoff),

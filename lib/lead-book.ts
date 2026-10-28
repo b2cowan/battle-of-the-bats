@@ -10,6 +10,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { isDemoOrgId } from './demo-org-server';
 import { getBootstrapAdminEmails } from './platform-auth';
 import { effectiveOrgFactsById } from './entitlement-grants';
+import { freeTimePortalOrgIds } from './portal-free-time-server';
 import { paysNow } from './plan-growth';
 import { isEarlyAccessStatus, type EarlyAccessStatus } from './early-access-admin';
 import { sourceFromHeard } from './lead-form-answers';
@@ -210,14 +211,15 @@ export async function readPaying(orgIds: string[], opts: { started?: boolean } =
   }
 }
 
-/** Every club and portal ever created, demo clubs left out (New accounts). */
+/** Every club and portal ever created, demo clubs and portals staff gave free time left out (New accounts; Stage 4b, T35). */
 export async function readAccounts(): Promise<AccountsRead> {
   const rows = await readAll<{ id: string; created_at: string }>((from, to) => supabaseAdmin.from('organizations')
     .select('id, created_at').order('created_at').order('id').range(from, to));
   if (!rows) return { kind: 'not_read' };
   try {
+    const freeTimePortals = await freeTimePortalOrgIds();
     const out: { id: string; createdAt: string }[] = [];
-    for (const r of rows) if (!(await isDemoOrgId(r.id))) out.push({ id: r.id, createdAt: r.created_at });
+    for (const r of rows) if (!freeTimePortals.has(r.id) && !(await isDemoOrgId(r.id))) out.push({ id: r.id, createdAt: r.created_at });
     return { kind: 'read', created: out };
   } catch {
     return { kind: 'not_read' };

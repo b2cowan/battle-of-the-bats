@@ -4,6 +4,7 @@ import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
 import { tournamentToday } from './timezone';
 import { countPeople, peopleByIds } from './platform-people-lookup';
+import { freeTimePortalOrgIds } from './portal-free-time-server';
 
 type OrgMetricRow = {
   id: string;
@@ -205,7 +206,10 @@ export async function getCommandCenterStats(options: { since?: string | null } =
   // Sandbox orgs are dropped here rather than in the query so the exclusion is stated in one place
   // and reads the same hardcoded allow-list everything else does.
   const sandboxOrgIdSet = new Set(sandboxOrgIds);
-  const orgs = ((orgsRes.data ?? []) as OrgMetricRow[]).filter(org => !sandboxOrgIdSet.has(org.id));
+  // A Coaches Portal staff gave free time is not a customer (Support console Stage 4b, T35): it is stored cancelled
+  // for its whole life, so it would read as churn in the status counts. A read failure leaves them counted, as before.
+  const freeTimePortals = await freeTimePortalOrgIds().catch(() => new Set<string>());
+  const orgs = ((orgsRes.data ?? []) as OrgMetricRow[]).filter(org => !sandboxOrgIdSet.has(org.id) && !freeTimePortals.has(org.id));
   const members = ((membersRes.data ?? []) as MemberRow[])
     .filter(member => !sandboxOrgIdSet.has(member.organization_id));
   const overrides = ((overridesRes.data ?? []) as OverrideRow[])
