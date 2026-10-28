@@ -2371,6 +2371,16 @@
   },
   {
     "table_name": "league_divisions",
+    "constraint_name": "league_divisions_schedule_published_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "schedule_published_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_divisions",
     "constraint_name": "league_divisions_season_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "season_id",
@@ -2417,6 +2427,66 @@
     "foreign_table": null,
     "foreign_column": null,
     "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_game_changes",
+    "constraint_name": "league_game_changes_division_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "division_id",
+    "foreign_table": "league_divisions",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_game_changes",
+    "constraint_name": "league_game_changes_game_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "game_id",
+    "foreign_table": "league_games",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_game_changes",
+    "constraint_name": "league_game_changes_notice_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "notice_id",
+    "foreign_table": "league_season_notices",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_game_changes",
+    "constraint_name": "league_game_changes_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_game_changes",
+    "constraint_name": "league_game_changes_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_game_changes",
+    "constraint_name": "league_game_changes_season_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "season_id",
+    "foreign_table": "league_seasons",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
   {
@@ -2498,6 +2568,16 @@
     "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_games",
+    "constraint_name": "league_games_slot_use_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "slot_use_id",
+    "foreign_table": "league_slot_uses",
+    "foreign_column": "slot_id",
+    "delete_rule": "SET NULL",
+    "update_rule": "CASCADE"
   },
   {
     "table_name": "league_notification_log",
@@ -2897,6 +2977,56 @@
     "foreign_table": "league_teams",
     "foreign_column": "id",
     "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_schedule_emails",
+    "constraint_name": "league_schedule_emails_division_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "division_id",
+    "foreign_table": "league_divisions",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_schedule_emails",
+    "constraint_name": "league_schedule_emails_notice_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "notice_id",
+    "foreign_table": "league_season_notices",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_schedule_emails",
+    "constraint_name": "league_schedule_emails_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_schedule_emails",
+    "constraint_name": "league_schedule_emails_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_schedule_emails",
+    "constraint_name": "league_schedule_emails_season_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "season_id",
+    "foreign_table": "league_seasons",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
   {

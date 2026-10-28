@@ -86,16 +86,20 @@ id (uuid), venue_id (uuid) → diamonds.id NOT NULL, tournament_id (uuid) → to
 ## Module: League
 
 ### league_divisions
-id (uuid), season_id (uuid) → league_seasons.id NOT NULL, name NOT NULL, capacity (integer), sort_order (integer), created_at, born_from_year, born_to_year, price (numeric), early_price (numeric), note, teams_published_at, teams_published_by (uuid)
+id (uuid), season_id (uuid) → league_seasons.id NOT NULL, name NOT NULL, capacity (integer), sort_order (integer), created_at, born_from_year, born_to_year, price (numeric), early_price (numeric), note, teams_published_at, teams_published_by (uuid), schedule_published_at, schedule_published_by (uuid)
 - Indexes: league_divisions_season_id_idx
 
 ### league_email_log
 id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, sent_by (uuid) NOT NULL, sent_at, subject NOT NULL, scope NOT NULL, audience NOT NULL, count_sent (integer), count_skipped (integer)
 - Indexes: league_email_log_org_id_idx, league_email_log_season_id_idx
 
+### league_game_changes
+id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id NOT NULL, game_id (uuid) → league_games.id NOT NULL, kind NOT NULL, before (jsonb), after (jsonb) NOT NULL, source, created_at, sent_at, notice_id (uuid) → league_season_notices.id
+- Indexes: league_game_changes_game_idx, league_game_changes_held_idx, league_game_changes_notice_idx, league_game_changes_org_idx, league_game_changes_season_idx
+
 ### league_games
-id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id NOT NULL, home_team_id (uuid) → league_teams.id NOT NULL, away_team_id (uuid) → league_teams.id NOT NULL, scheduled_at, location, home_score (integer), away_score (integer), status, notes, created_at, updated_at, org_id (uuid) → organizations.id NOT NULL, org_venue_id (uuid) → org_venues.id, org_venue_facility_id (uuid) → org_venue_facilities.id, ends_at
-- Indexes: idx_league_games_org_venue, idx_league_games_org_venue_facility, league_games_away_team_id_idx, league_games_division_idx, league_games_home_team_id_idx, league_games_org_idx, league_games_schedule_idx, league_games_season_idx
+id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id NOT NULL, home_team_id (uuid) → league_teams.id NOT NULL, away_team_id (uuid) → league_teams.id NOT NULL, scheduled_at, location, home_score (integer), away_score (integer), status, notes, created_at, updated_at, org_id (uuid) → organizations.id NOT NULL, org_venue_id (uuid) → org_venues.id, org_venue_facility_id (uuid) → org_venue_facilities.id, ends_at, slot_use_id (uuid) → league_slot_uses.slot_id, moved_from
+- Indexes: idx_league_games_org_venue, idx_league_games_org_venue_facility, league_games_away_team_id_idx, league_games_division_idx, league_games_home_team_id_idx, league_games_org_idx, league_games_schedule_idx, league_games_season_idx, league_games_slot_use_idx
 
 ### league_notification_log
 id (uuid), season_id (uuid) → league_seasons.id NOT NULL, sent_by (uuid), audience_type NOT NULL, audience_label, subject NOT NULL, recipient_count (integer) NOT NULL, sent_at
@@ -124,6 +128,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → lea
 ### league_registrations
 id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, player_first_name NOT NULL, player_last_name NOT NULL, player_date_of_birth, player_jersey_pref, player_position_pref, player_notes, guardian_first_name NOT NULL, guardian_last_name NOT NULL, guardian_email NOT NULL, guardian_phone, status, waitlist_position (integer), team_id (uuid) → league_teams.id, registration_fee_paid (boolean), fee_entry_id (uuid), admin_notes, source, registered_at, updated_at, org_id (uuid) → organizations.id NOT NULL, person_id (uuid) → org_people.id, waiver_accepted_at, signup_ref, signup_position, fee_amount (numeric), accepted_at, ended_at, spot_released (boolean), end_money, end_money_reason, withdraw_requested_at, withdraw_request_note, pay_link_sent_at, team_locked_at, draft_team_id (uuid) → league_teams.id, previous_team_id (uuid) → league_teams.id, team_changed_at
 - Indexes: league_registrations_division_idx, league_registrations_guardian_idx, league_registrations_org_id_idx, league_registrations_person_id_idx, league_registrations_season_idx, league_registrations_signup_ref_idx, league_registrations_status_idx, league_registrations_team_id_idx
+
+### league_schedule_emails
+id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, notice_id (uuid) → league_season_notices.id NOT NULL, guardian_email NOT NULL, registration_ids NOT NULL, status, created_at, updated_at
+- Indexes: league_schedule_emails_notice_idx, league_schedule_emails_org_idx, league_schedule_emails_season_idx
 
 ### league_season_fee_words
 season_id (uuid) → league_seasons.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, category_id (uuid) → budget_categories.id NOT NULL, item_id (uuid) → budget_items.id NOT NULL, created_at
@@ -478,7 +486,7 @@ id (uuid), tournament_id (uuid) → tournaments.id NOT NULL, tournament_team_id 
 - Indexes: team_workspace_claims_contact_email_idx, team_workspace_claims_team_workspace_id_idx, team_workspace_claims_token_hash_unique, team_workspace_claims_tournament_idx
 
 ### team_workspaces
-id (uuid), workspace_org_id (uuid) → organizations.id NOT NULL, rep_team_id (uuid) → rep_teams.id NOT NULL, active_program_year_id (uuid) → rep_program_years.id, primary_owner_user_id (uuid), source, source_tournament_id (uuid) → tournaments.id, source_tournament_team_id (uuid), workspace_state, billing_mode, billing_owner_org_id (uuid) → organizations.id, billing_owner_user_id (uuid), stripe_customer_id, stripe_subscription_id, subscription_status, current_period_end, created_at, updated_at, basic_coach_team_id (uuid) → basic_coach_teams.id, migration_summary (jsonb), free_time_given_at
+id (uuid), workspace_org_id (uuid) → organizations.id NOT NULL, rep_team_id (uuid) → rep_teams.id NOT NULL, active_program_year_id (uuid) → rep_program_years.id, primary_owner_user_id (uuid), source, source_tournament_id (uuid) → tournaments.id, source_tournament_team_id (uuid), workspace_state, billing_mode, billing_owner_org_id (uuid) → organizations.id, billing_owner_user_id (uuid), stripe_customer_id, stripe_subscription_id, subscription_status, current_period_end, created_at, updated_at, basic_coach_team_id (uuid) → basic_coach_teams.id, migration_summary (jsonb), free_time_given_at, free_time_reminded_14_for, free_time_reminded_3_for
 - Indexes: team_workspaces_active_program_year_id_idx, team_workspaces_basic_coach_team_idx, team_workspaces_billing_owner_org_id_idx, team_workspaces_one_free_time_portal_per_coach, team_workspaces_one_free_time_portal_per_free_team, team_workspaces_rep_team_unique, team_workspaces_source_tournament_idx, team_workspaces_state_idx, team_workspaces_stripe_subscription_id_uniq, team_workspaces_workspace_org_unique
 
 ## Module: Accounting
@@ -1010,10 +1018,10 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **246 tables** across 10 modules.
+Total: **248 tables** across 10 modules.
 
 - Tournament: 17 tables
-- League: 16 tables
+- League: 18 tables
 - Rep Teams: 76 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables

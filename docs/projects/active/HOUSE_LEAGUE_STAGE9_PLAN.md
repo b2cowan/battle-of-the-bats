@@ -284,6 +284,24 @@ team) was not ruled: it is ask **9d2·15**, open.
     existing). Ruled into the ONE permit rule, so the coach's Where form, the club calendar, rep saves, the tournament
     generator's count and house league all say it. Not taken: house league only (a second permit rule — a coach booking
     the same field that evening would hear nothing); leaving it out (Draft Test 2027's permit warning would stay silent).
+- **9d-2b build-start rulings, 2026-10-28 (all four as recommended; build prompt `HOUSE_LEAGUE_STAGE9D2B_BUILD_PROMPT.md`):**
+  - **9d2b·A Backfill = games AND published teams.** The migration marks a division's schedule published, silently, no
+    email (the mig 377 rule), only when it already has games **and** its teams are published. Every other division with
+    games returns to draft and its games leave the public page. Raised by the build: the prompt's rule ("every division with
+    games") would have broken 9d2·8 for 4 of dev's 6 divisions with games, Walk U11 (the walk fixture) among them — and the
+    9d-2a public read never checked team publishing, so those divisions were showing team names families had not been told.
+    Not taken: every division with games; none.
+  - **9d2b·B A game links to its division game time, and a convenor moves a game only within it.** `league_games` gains a
+    link to the `league_slot_uses` row it sits on (set by Generate and by a move onto division time). The link is to the USE,
+    not the slot: a use keeps its id when the club moves it to another slot, so its games follow (9d2·13). A convenor moves a
+    game only into time the club gave the division; the owner/admin who allocates may pick any date, time and place. A game
+    outside every use stays as it is and says nothing. Not taken: a link with no limit; no link.
+  - **9d2b·C "Adjust the rules" (d3) is the last Part, cut first** if the build runs long: games per team, twice in a day
+    allowed, home/away tolerance, stored on the season.
+  - **9d2b·D Moved keeps its earlier date on the game** (`league_games.moved_from`, the date it had before its latest
+    re-date). "Was {date}" on a postponed game keeps working from `scheduled_at`. Not taken: deriving it from the change record.
+  - **Build defaults stated at the start (not asked):** a published game's Home and Away read as facts (a different matchup is
+    cancel + add); the coach's page shows what families see — the last-SENT values, never a held change.
 
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 

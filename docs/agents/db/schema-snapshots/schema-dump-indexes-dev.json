@@ -1295,6 +1295,36 @@
     "indexdef": "CREATE INDEX league_email_log_season_id_idx ON public.league_email_log USING btree (season_id)"
   },
   {
+    "tablename": "league_game_changes",
+    "indexname": "league_game_changes_game_idx",
+    "indexdef": "CREATE INDEX league_game_changes_game_idx ON public.league_game_changes USING btree (game_id, created_at)"
+  },
+  {
+    "tablename": "league_game_changes",
+    "indexname": "league_game_changes_held_idx",
+    "indexdef": "CREATE INDEX league_game_changes_held_idx ON public.league_game_changes USING btree (division_id, created_at) WHERE (sent_at IS NULL)"
+  },
+  {
+    "tablename": "league_game_changes",
+    "indexname": "league_game_changes_notice_idx",
+    "indexdef": "CREATE INDEX league_game_changes_notice_idx ON public.league_game_changes USING btree (notice_id) WHERE (notice_id IS NOT NULL)"
+  },
+  {
+    "tablename": "league_game_changes",
+    "indexname": "league_game_changes_org_idx",
+    "indexdef": "CREATE INDEX league_game_changes_org_idx ON public.league_game_changes USING btree (org_id)"
+  },
+  {
+    "tablename": "league_game_changes",
+    "indexname": "league_game_changes_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_game_changes_pkey ON public.league_game_changes USING btree (id)"
+  },
+  {
+    "tablename": "league_game_changes",
+    "indexname": "league_game_changes_season_idx",
+    "indexdef": "CREATE INDEX league_game_changes_season_idx ON public.league_game_changes USING btree (season_id) WHERE (sent_at IS NULL)"
+  },
+  {
     "tablename": "league_games",
     "indexname": "idx_league_games_org_venue",
     "indexdef": "CREATE INDEX idx_league_games_org_venue ON public.league_games USING btree (org_venue_id)"
@@ -1338,6 +1368,11 @@
     "tablename": "league_games",
     "indexname": "league_games_season_idx",
     "indexdef": "CREATE INDEX league_games_season_idx ON public.league_games USING btree (season_id)"
+  },
+  {
+    "tablename": "league_games",
+    "indexname": "league_games_slot_use_idx",
+    "indexdef": "CREATE INDEX league_games_slot_use_idx ON public.league_games USING btree (slot_use_id) WHERE (slot_use_id IS NOT NULL)"
   },
   {
     "tablename": "league_notification_log",
@@ -1523,6 +1558,26 @@
     "tablename": "league_registrations",
     "indexname": "league_registrations_team_id_idx",
     "indexdef": "CREATE INDEX league_registrations_team_id_idx ON public.league_registrations USING btree (team_id)"
+  },
+  {
+    "tablename": "league_schedule_emails",
+    "indexname": "league_schedule_emails_notice_idx",
+    "indexdef": "CREATE INDEX league_schedule_emails_notice_idx ON public.league_schedule_emails USING btree (notice_id, status)"
+  },
+  {
+    "tablename": "league_schedule_emails",
+    "indexname": "league_schedule_emails_org_idx",
+    "indexdef": "CREATE INDEX league_schedule_emails_org_idx ON public.league_schedule_emails USING btree (org_id)"
+  },
+  {
+    "tablename": "league_schedule_emails",
+    "indexname": "league_schedule_emails_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_schedule_emails_pkey ON public.league_schedule_emails USING btree (id)"
+  },
+  {
+    "tablename": "league_schedule_emails",
+    "indexname": "league_schedule_emails_season_idx",
+    "indexdef": "CREATE INDEX league_schedule_emails_season_idx ON public.league_schedule_emails USING btree (season_id)"
   },
   {
     "tablename": "league_season_fee_words",

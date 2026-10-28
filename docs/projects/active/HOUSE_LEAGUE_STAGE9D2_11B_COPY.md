@@ -292,3 +292,108 @@ Frames b1–b4, c1–c4, d1–d4, g1/g2 (this-week frame), i, k of the drawings 
 | Permit line | `permitLine` as shipped for the covers case and the date-off case, plus **one new case** when the permit ended before the game: **Outside the club's permit for {facility}: the permit ended {Sep 30, 2026}.** | The shipped line would otherwise say "until Sep 30, 2026" of a booking after it. |
 | Typed place | **A typed place isn't checked for clashes** | |
 | Edge k | **{Division} has no games yet** · **Generate the whole season, or add games one at a time.** · **Generate games** | |
+
+## Stage 9d-2b: Publish schedule, Changes to send, the families' game emails (settled by /marketing 2026-10-28)
+
+Frames e1–e2, f1–f5, g2, g3 of the drawings (TdXm5jmTEJ9qPvR3T5H9qU v4). Where a drawing and this section differ, **this section wins**. Build-start rulings 9d2b·A–D (plan §0h). The 9d-2a lines above that say "A Save is live" / "Families aren't emailed." are **replaced** by the state-true pairs below (9d2a·F ends here).
+
+**One word each, everywhere:** the count is **families** (`pluralize(n, 'family', 'families')`), the shipped Email families noun — a family is a household (grouped by the guardian's email, as Publish teams groups them), never one per child. Undoing a held change is **Undo** (9d-2a's **Put it back on** un-cancels a game; "Put it back" would sit one word away). The re-dated state is **Moved** + **Was {date}**.
+
+### e1 · e2: the draft and Publish schedule
+
+| id | Settled | Note |
+|---|---|---|
+| Draft line | **Draft · {45} games · families see nothing yet** | A reader sees "Draft", no button. |
+| Teams first | **Publish {U12 Division}'s teams first, so every family knows its child's team.** | 9d2·8; no button until then. |
+| Button | **Publish schedule** (phone **Publish**) | |
+| Published line | **Published {May 25} · {101} families told** · + **· {3} changes not sent** while any wait | |
+| Partial | **reached {99} of {101} families · {2} didn't send. See them** | |
+| Confirm title | **Publish {U12 Division}'s schedule?** | possessive() |
+| Confirm body | **{45} games go on the public schedule. Each family gets one email with its children's games, and the {10} teams' coaches see them on their team page. After this, changes wait for you to send them.** · link **See the email** | |
+| Confirm foot | **Reaches {101} families. An automatic notice: it doesn't count toward today's {cap}.** · **Keep as a draft** / **Publish** | footerStart, sentence left. |
+| Phone confirm | **{101} families get one email each. The {10} coaches see their games.** · **Not yet** / **Publish** | |
+| Pending | **Publishing…** | |
+| Done | **Published {May 25} · {101} families emailed.** | |
+| Already | **{Sam Lee} published {U12 Division}'s schedule at {8:14 p.m.}. Nothing more was sent.** | 9c §7 pattern. |
+| Changed | **{U12 Division} changed while this window was open. Close it and look again.** | |
+| After Generate's Save | **Saved {45} games as a draft. Publish when you're ready.** | Replaces "They're on the public schedule now." |
+
+### f1: a game's window on a published schedule
+
+| id | Settled | Note |
+|---|---|---|
+| Form line, published | **Families hear about this when you send changes.** | |
+| Form line, draft | **Nobody is told: this schedule isn't published yet.** | |
+| Home/Away as facts | **Home and away can't change on a published game. To play a different match-up, cancel this game and add a new one.** | Build default (plan §0h). |
+| Move refusal (league admin) | **That's outside {U12 Division}'s game time. Pick one of its open times, or give it more in House league's time.** | 9d2b·B. Corrected from the helper's "ask an owner": 9d2·15 makes dividing house league's time the league admin's own job. |
+| List markers | **Cancelled · not sent** · **Moved · not sent** · **Added · not sent** | Until the send. |
+| List note | **Until you send, the public schedule and the coaches' pages still show the old games.** | Under the waiting count. |
+| After the send | **Moved** · **Was {Thu, Jun 17} · 6:00 p.m.** | |
+| Postpone, draft | **It moves to Needs a new date and stops holding its time and place. Nobody is told: the schedule isn't published yet.** | |
+| Postpone, published | **It moves to Needs a new date and stops holding its time and place. Families hear when you send changes, and the public schedule says Postponed from then.** | |
+| Cancel, published | **It stays on the schedule, struck through. Families hear when you send changes, and the public schedule shows it Cancelled from then.** | Draft: no Cancel (9d2·9). |
+| Delete, draft | **Delete {Home} vs {Away}? It leaves the draft for good. Nobody is told.** | Published: no Delete. |
+| Add, published | **Families hear about this game when you send changes.** | |
+| Generate passing foot | **Saving puts these {n} games in {U12 Division}'s draft. Nobody sees them until you publish.** | Only a draft division generates (9d2·11). |
+| Generate division list | none left: **Every division already has games. Add more one at a time, with Add.** | Unchanged. |
+
+### f2: Changes to send
+
+| id | Settled | Note |
+|---|---|---|
+| Title | **Changes to send** · eyebrow **{U12 Division}** | |
+| Row, moved | **{Orioles vs Twins} · {Thu, Jun 24}: 6:00 p.m. → 7:30 p.m.** (a new day: **: now {Thu, Jul 1}, 6:00 p.m.**) | `→` as Send the changes. |
+| Row, place | **{Royals vs Rays} · {Sat, Jun 26}: {Diamond 1} → {Diamond 2}** | |
+| Row, other | **: cancelled** · **: postponed** · **: added** · **: back on** | |
+| Who | **{Blue Jays} and {Red Sox} families · {22} families** | |
+| Club-moved | sub-line **The club moved {U12 Division}'s game time.** | 9d2·13. |
+| Two children | **The {Kims} have {Ava} on the {Twins} and {Henry} on the {Rays}. They get one email with both changes.** · **See their email** | |
+| Undo | **Undo** · aria **Undo the change to {Orioles vs Twins}** · toast **Undone. {Orioles vs Twins} is back as families last heard.** | |
+| Foot | **Reaches {66} families, one email each. The {6} teams' coaches get a copy. Doesn't count toward today's {cap}.** · **Not yet** / **Send {3} changes** (**Send 1 change**) | |
+| Sending · done | **Sending…** · **Reached {64} of {66} families · {2} didn't send. See them.** | |
+| Played since | **This game has already been played, so it isn't emailed.** | |
+| Empty | **Nothing is waiting to send.** | |
+| Second press | **{Jordan Lee} sent these at {2:14 p.m.}. Nothing more was sent.** | |
+| Net nothing | **Nothing was waiting, so nothing was sent.** | e.g. moved and moved back. |
+
+### f3: the families' emails
+
+| id | Settled | Note |
+|---|---|---|
+| Published, subject | **{Team}'s schedule is up** · several: **The schedule is up for {Team} and {Team}** | |
+| Published, part | **{Club} published the {season} schedule. Here are {child}'s games with {Team}:** · lines **{Tue, Jun 1} · 6:00 p.m. · {Cardinals vs Rays} · {Maple Grove Park · Diamond 1}** | One part per child. |
+| Changes, subject | **{Team}'s games changed** · several: **Games changed for {Team} and {Team}** | The practice email's shape. |
+| Changes, part | **{Club} changed {child}'s games with {Team}:** | |
+| Moved | **{Orioles vs Twins}** / **Now: {Thu, Jun 24}, 7:30 p.m. · {place}** / **Was: 6:00 p.m.** (only what changed) | |
+| Cancelled | **Cancelled: {Orioles vs Twins}, {Thu, Jun 24}, 6:00 p.m. · {place}. The club will tell you if it is replayed.** | |
+| Postponed | **Postponed: {Orioles vs Twins}, {Thu, Jun 24}. A new date is to come.** | |
+| Added · back on | **Added: {Orioles vs Twins}, {Thu, Jun 24}, 7:30 p.m. · {place}.** · **Back on: …** same shape | |
+| Close, foot | **See the full schedule →** · **Questions? Ask {Team}'s coach.** · **Sent by {club} because your family is registered in {season}.** + the zone sentence | `seasonEmailReason`. Coach's copy reuses `coachLead`. |
+
+### f4: the season's history (Automatic)
+
+| id | Settled | Note |
+|---|---|---|
+| Subjects | **Schedule published: {U12 Division}** · **Schedule changes: {U12 Division}** | The "Teams published: {division}" pattern. |
+| Bodies | **FieldLogicHQ sent this when {U12 Division}'s schedule was published: one email per family, about their own children's teams. Automatic emails don't count toward the season's {cap}.** · the same with **…'s schedule changes were sent: …** | |
+| To | **{U12 Division} · {66} families · reached {66}** | |
+
+### f5: cancel or postpone now (published division)
+
+| id | Settled | Note |
+|---|---|---|
+| Title | **Cancel {Red Sox vs Mariners}?** · **Postpone {Red Sox vs Mariners}?** | "tonight" goes stale. |
+| Body | **{Thu, Jun 17} · 6:00 p.m. · {place}. The {Red Sox} and {Mariners} families ({21}) can be emailed now, or with your other changes.** + the cancel or postpone sentence from f1 | |
+| Buttons | **Keep it** · **Cancel, send later** · **Cancel and tell families now** (postpone: **Postpone, send later** · **Postpone and tell families now**) | The drawing had no held path; the one question offers both (build prompt: "anything else waiting keeps waiting"). |
+| Done | **Sent to {21} families. Your {3} other changes keep waiting.** | |
+
+### g2 · g3: the public schedule, the coach's page
+
+| id | Settled | Note |
+|---|---|---|
+| Public, unpublished | **{U12 Division}'s schedule is coming** · **Registered families get an email when it's up.** · tab **{U13} · coming** | |
+| Public, Moved | **Moved** · **Was {Thu, Jun 17} · 6:00 p.m.** | Shows only once sent. |
+| Public, no games | **No games scheduled yet.** | Unchanged. |
+| Coach, heading | **Schedule** · link **See the season's schedule** | Games and practices together, from today on. |
+| Coach, unpublished | **{U12 Division}'s schedule isn't published yet. Your games show here when it is.** | |
+| Coach, none ahead | **No games from today on.** | |

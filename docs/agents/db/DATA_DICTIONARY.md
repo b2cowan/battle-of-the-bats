@@ -6812,6 +6812,66 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 <!-- dict:col:league_divisions.teams_published_by -->
 **`teams_published_at` / `teams_published_by`** (timestamptz / uuid, nullable; mig 377, Club Tier 9c, ruling 9c·6) — the division's teams were **published**: each family emailed once, each child's team on the family's status page, each coach invited. Written only by `league_division_publish` (one transaction with the family email rows and the coach invites). **There is no unpublish.** Once set, the draft and "Take all players off teams" are refused, and a move asks first and emails the family (`league_team_place`, 9c·12). Mig 377 backfilled every division that already had accepted players on teams with `now()` and **no email** (a season being played never emails because 9c turned on); `teams_published_by` is NULL on those.
 
+<!-- dict:col:league_divisions.schedule_published_at -->
+<!-- dict:col:league_divisions.schedule_published_by -->
+**`schedule_published_at` / `schedule_published_by`** (timestamptz / uuid FK → `auth.users` ON DELETE SET NULL, nullable; **mig 409**, House League 9d-2b, ruling 9d2·1) — the division's **schedule** was published: its games go on the public schedule and each family was emailed once. **Null = a draft**: the public page says the schedule is coming, and the coach's page lists no games. Separate from `teams_published_at` and offered only after it (9d2·8). Written only by `league_division_schedule_publish` (advisory-locked on the division; one transaction with the `schedule_published` notice and its `league_schedule_emails` rows). **There is no unpublish.** Once set, every change to the division's games is recorded in `league_game_changes` (the trigger reads this mark), Generate's Save refuses (`published`), and a game is cancelled, never deleted (9d2·9). Mig 409 backfilled it with `now()`, **no email**, on every division that already had games **and** published teams (ruling 9d2b·A); every other division with games returned to draft. `schedule_published_by` is NULL on those.
+
+---
+
+## `league_game_changes`
+<!-- dict:table:league_game_changes -->
+
+**Purpose:** **Changes to send** (House League 9d-2b, frame f2, **mig 409**): one row per change to a **published** division's game — when, where or whether it is on — since families last heard. **Never a score or a note.** Held while `sent_at` is null. ⚠ **Written only by the `league_games_record_change` trigger** (BEFORE UPDATE / AFTER INSERT on `league_games`), so every writer — the add, the window's save, Postpone, Cancel, a put-back, the club's time move — records its change in its own statement without knowing to; no route inserts here. Removed by `league_game_undo`; stamped sent by `league_division_changes_send`. **Service-role only** (RLS enabled, no policies).
+
+**Gotchas (read first):**
+1. **What a send says is the NET effect**, not the rows: the earliest held row's `before` (the game as families last heard it; null for a game added since) against the game now (`lib/league-game-changes.ts`). Moved twice reads once; added then cancelled reads nothing; moved and moved back reads nothing. `kind` labels the list only.
+2. **The public page and the coach's page read the earliest held `before`** for a game with held rows, and hide a game added since (9d2·16: until the send, families see the old dates).
+
+<!-- dict:col:league_game_changes.id -->
+<!-- dict:col:league_game_changes.org_id -->
+<!-- dict:col:league_game_changes.season_id -->
+<!-- dict:col:league_game_changes.division_id -->
+<!-- dict:col:league_game_changes.game_id -->
+**`id`** / **`org_id`** / **`season_id`** / **`division_id`** (FKs CASCADE) / **`game_id`** (FK → `league_games` ON DELETE CASCADE) — whose change, on which game. Partial index on held rows `(division_id, created_at) WHERE sent_at IS NULL`.
+
+<!-- dict:col:league_game_changes.kind -->
+**`kind`** (text NOT NULL, CHECK `added` · `moved` · `place` · `cancelled` · `postponed` · `given_date` · `back_on`) — the edit, as the tray lists it. `given_date` = a postponed game given its new date; `back_on` = a cancelled game put back on. CHECK `(kind = 'added') = (before IS NULL)`.
+
+<!-- dict:col:league_game_changes.before -->
+<!-- dict:col:league_game_changes.after -->
+**`before`** / **`after`** (jsonb; `league_game_snapshot()`: `scheduledAt`, `endsAt`, `location`, `venueId`, `facilityId`, `status`, `movedFrom`) — the game before and after this edit. `before` is null only for `added`.
+
+<!-- dict:col:league_game_changes.source -->
+**`source`** (text NOT NULL default `league`, CHECK `league` · `club`) — `club` when the club's Send the changes moved the division's game time (9d2·13; the writer sets `league.change_source = 'club'` for its transaction). The tray's "The club moved …" line.
+
+<!-- dict:col:league_game_changes.created_at -->
+<!-- dict:col:league_game_changes.sent_at -->
+<!-- dict:col:league_game_changes.notice_id -->
+**`created_at`** (default `clock_timestamp()`, so two edits in one transaction keep their order) / **`sent_at`** (null = held) / **`notice_id`** (FK → `league_season_notices` ON DELETE SET NULL) — the `games_changed` notice that emailed it; null while held and for a sent change that emailed nobody (net nothing, or played since).
+
+---
+
+## `league_schedule_emails`
+<!-- dict:table:league_schedule_emails -->
+
+**Purpose:** one row per **family** a `schedule_published` or `games_changed` notice was going to (House League 9d-2b, frame f3, **mig 409**) — the 9c placement-email grouping (`lower(btrim(guardian_email))`) with the children it is about. Written `pending` in the publish / send transaction (`league_schedule_emails_write`); the app marks each `sent` or `failed` as it goes, so a stopped send finishes from its pending rows. A **service** notice about the family's own children (`sendFamilyServiceBatch`): it reaches a family who left club news. **Service-role only** (RLS enabled, no policies). Holds an address, as `league_placement_emails` does.
+
+<!-- dict:col:league_schedule_emails.id -->
+<!-- dict:col:league_schedule_emails.org_id -->
+<!-- dict:col:league_schedule_emails.season_id -->
+<!-- dict:col:league_schedule_emails.division_id -->
+<!-- dict:col:league_schedule_emails.notice_id -->
+**`id`** / **`org_id`** / **`season_id`** (FKs CASCADE) / **`division_id`** (FK SET NULL) / **`notice_id`** (FK → `league_season_notices` ON DELETE CASCADE, NOT NULL; indexed with `status`) — whose email, for which notice.
+
+<!-- dict:col:league_schedule_emails.guardian_email -->
+<!-- dict:col:league_schedule_emails.registration_ids -->
+**`guardian_email`** (text NOT NULL, CHECK lower-cased and trimmed, non-empty) / **`registration_ids`** (uuid[] NOT NULL, non-empty) — the family, and its children whose teams' games the email is about, in name order (one part each).
+
+<!-- dict:col:league_schedule_emails.status -->
+<!-- dict:col:league_schedule_emails.created_at -->
+<!-- dict:col:league_schedule_emails.updated_at -->
+**`status`** (text NOT NULL default `pending`, CHECK `pending` · `sent` · `failed`) / **`created_at`** / **`updated_at`** — how it went.
+
 ---
 
 ## `league_teams`
@@ -6948,7 +7008,7 @@ any allowance and never in `family_email_sends`** (9d1·7). Written by `league_d
 was about.
 
 <!-- dict:col:league_season_notices.kind -->
-**`kind`** (text NOT NULL, CHECK `teams_published` · `practices_changed`) — what the notice was. **`practices_changed`**
+**`kind`** (text NOT NULL, CHECK `teams_published` · `practices_changed` · `schedule_published` · `games_changed`) — what the notice was. **`schedule_published`** / **`games_changed`** (**mig 409**, House League 9d-2b): Publish schedule, and a division's Changes to send (or one urgent cancel or postpone), each written in its SQL function's transaction with its `league_schedule_emails` rows; the history's "Schedule published: {division}" / "Schedule changes: {division}". **`practices_changed`**
 (**mig 400**, Club Tier Stage 11b Part 5, ruling 9d2·2): the club's Send the changes moved or cancelled this season's
 house-league practices and emailed the teams' families (one service notice per household); one row per season a send
 touched, written by `lib/club-schedule-league-mail.ts` AFTER the send's step landed, its counts set from the emails'
@@ -7020,6 +7080,12 @@ Sent and By).
 
 <!-- dict:col:league_games.notes -->
 **`notes`** (text, nullable) — free-text game notes.
+
+<!-- dict:col:league_games.slot_use_id -->
+**`slot_use_id`** (uuid, nullable, FK → `league_slot_uses(slot_id)` **ON UPDATE CASCADE ON DELETE SET NULL**; partial index; **mig 409**, ruling 9d2b·B) — the division game time the game sits on. ⚠ It references the use's KEY: the club moving house league's time re-keys the use (`club_schedule_apply_changes`) and the game's link follows (9d2·13); the club taking the time back nulls it (9d2·16 decides what becomes of the game). Set by Generate's Save and by a move onto division game time. A league admin may move a game only onto the division's game time; an owner or admin may type any date, time and place. Null for a game outside every use (it stays as it is).
+
+<!-- dict:col:league_games.moved_from -->
+**`moved_from`** (timestamptz, nullable; **mig 409**, ruling 9d2b·D) — a published game re-dated since families last heard: the date they heard ("Moved · Was {date}"). Kept by the `league_games_record_change` trigger, never by a route: on a re-date it is the last-SENT date (the earliest held change's `before`), so moved twice it still says the date families know, and moved back it reads as it was. Null on a draft game, a game never re-dated, a game added since the last send. ⚠ The trigger also writes `league_game_changes` on every insert/update of a published division's game (see that table).
 
 <!-- dict:col:league_games.org_id -->
 **`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL; index `org_idx`) — denormalized org for the 1-hop RLS policy (mig 075). Now written by all insert paths from `ctx.org.id` (fixed 2026-06-10 — gotcha 1; was previously read-only by RLS → the write-blocking bug). Redundant with `season_id → league_seasons.org_id`.

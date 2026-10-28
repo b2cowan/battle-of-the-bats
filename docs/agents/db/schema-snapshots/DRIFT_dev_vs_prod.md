@@ -2,26 +2,55 @@
 
 **Generated:** 2026-10-28 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 3 divergence(s)** across dev/prod.
+**⚠️ 64 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 0 | 0 | — |
-| Columns | 1 | 0 | 0 |
-| Indexes | 2 | 0 | 0 |
-| Constraints | 0 | 0 | — |
-| RLS / CHECK | 0 | 0 | 0 (RLS state) |
+| Tables | 2 | 0 | — |
+| Columns | 29 | 0 | 0 |
+| Indexes | 13 | 0 | 0 |
+| Constraints | 13 | 0 | — |
+| RLS / CHECK | 6 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (0)
-_none_
+### Only in DEV (2)
+- `league_game_changes`
+- `league_schedule_emails`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (1)
+### Only in DEV (29)
+- `league_divisions.schedule_published_at`
+- `league_divisions.schedule_published_by`
+- `league_game_changes.after`
+- `league_game_changes.before`
+- `league_game_changes.created_at`
+- `league_game_changes.division_id`
+- `league_game_changes.game_id`
+- `league_game_changes.id`
+- `league_game_changes.kind`
+- `league_game_changes.notice_id`
+- `league_game_changes.org_id`
+- `league_game_changes.season_id`
+- `league_game_changes.sent_at`
+- `league_game_changes.source`
+- `league_games.moved_from`
+- `league_games.slot_use_id`
+- `league_schedule_emails.created_at`
+- `league_schedule_emails.division_id`
+- `league_schedule_emails.guardian_email`
+- `league_schedule_emails.id`
+- `league_schedule_emails.notice_id`
+- `league_schedule_emails.org_id`
+- `league_schedule_emails.registration_ids`
+- `league_schedule_emails.season_id`
+- `league_schedule_emails.status`
+- `league_schedule_emails.updated_at`
 - `team_workspaces.free_time_given_at`
+- `team_workspaces.free_time_reminded_14_for`
+- `team_workspaces.free_time_reminded_3_for`
 
 ### Only in PROD (0)
 _none_
@@ -30,7 +59,18 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (2)
+### Only in DEV (13)
+- `league_game_changes_game_idx`
+- `league_game_changes_held_idx`
+- `league_game_changes_notice_idx`
+- `league_game_changes_org_idx`
+- `league_game_changes_pkey`
+- `league_game_changes_season_idx`
+- `league_games_slot_use_idx`
+- `league_schedule_emails_notice_idx`
+- `league_schedule_emails_org_idx`
+- `league_schedule_emails_pkey`
+- `league_schedule_emails_season_idx`
 - `team_workspaces_one_free_time_portal_per_coach`
 - `team_workspaces_one_free_time_portal_per_free_team`
 
@@ -41,8 +81,20 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (0)
-_none_
+### Only in DEV (13)
+- `league_divisions.league_divisions_schedule_published_by_fkey`
+- `league_game_changes.league_game_changes_division_id_fkey`
+- `league_game_changes.league_game_changes_game_id_fkey`
+- `league_game_changes.league_game_changes_notice_id_fkey`
+- `league_game_changes.league_game_changes_org_id_fkey`
+- `league_game_changes.league_game_changes_pkey`
+- `league_game_changes.league_game_changes_season_id_fkey`
+- `league_games.league_games_slot_use_id_fkey`
+- `league_schedule_emails.league_schedule_emails_division_id_fkey`
+- `league_schedule_emails.league_schedule_emails_notice_id_fkey`
+- `league_schedule_emails.league_schedule_emails_org_id_fkey`
+- `league_schedule_emails.league_schedule_emails_pkey`
+- `league_schedule_emails.league_schedule_emails_season_id_fkey`
 
 ### Only in PROD (0)
 _none_
@@ -51,8 +103,13 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (0)
-_none_
+### CHECK only in DEV (6)
+- `league_game_changes.league_game_changes_check`
+- `league_game_changes.league_game_changes_kind_check`
+- `league_game_changes.league_game_changes_source_check`
+- `league_schedule_emails.league_schedule_emails_guardian_email_check`
+- `league_schedule_emails.league_schedule_emails_registration_ids_check`
+- `league_schedule_emails.league_schedule_emails_status_check`
 
 ### CHECK only in PROD (0)
 _none_
