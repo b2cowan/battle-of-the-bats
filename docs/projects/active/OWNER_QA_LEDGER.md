@@ -26949,3 +26949,69 @@ republished; tick positions unchanged).
 
 **✅ CLOSED 2026-10-27 on the owner’s word** (*"mark it closed"*). The walk summary pasted back read 20 of 20 PASS. The dev server’s request log shows Parts A and B, C1–C3 and the D1 stop check were walked there (the live game, Bears U11’s team page, both club lists, the Invitational countdown, tomorrow’s semifinal, the demos page, the Invitational’s public page). It holds no trace of C4 (the setup wizard) or D2–D6 (no Branding page load, no save), and the Invitational’s stored theme was empty afterwards although D6 picks one. So the Branding page’s save (D7) has had no rendered check; a defect found there later is a new item, not a reopen. The Invitational’s theme read back empty 2026-10-27 (nothing to put back); the live-game fixture is back where the seed left it.
 <!-- /§407 -->
+
+## §408 · House League · Stage 9d-2a, walk 1 of 6: the season's schedule, List · Week · Month — **the season's schedule is one calendar of games and practices together in List, Week and Month (Division · the view switch · Show · Export · Add · Tools, Schedule health leading the header; the old Week · List · Practices pills gone); List opens on this week with a Today line and folds earlier weeks behind a counted door; a night of practices is one row; a cancelled game is struck in place; Month names each booking with the whole clock; on a phone Week and Month sit behind a View drawer and Tools holds Show, Export and Generate games; the registrar reads it all and adds nothing**
+<!-- §408 -->
+**Built:** 9d-2a steps 1 and 3 (`1da5751e8`, `58ecf0ee6`). No migration.
+
+**The walk (checkable):** https://claude.ai/artifact/5w7hNE5HLR96cWXW3XmUPr (source [HOUSE_LEAGUE_STAGE9D2A_WALK_1_VIEWS.html](HOUSE_LEAGUE_STAGE9D2A_WALK_1_VIEWS.html)). One purpose, 14 steps in five parts. Walk it before §410 (it reads Walk U11 with no games). Changes nothing.
+
+**Sign in:** league admin `uat-club-league-admin@uat-rep-club.local` and registrar `uat-club-registrar@uat-rep-club.local`, both `UATPassword2026!`. UAT Rep Club, 2026 Fall House League (U9 Rookie: Reds, Blues; the 11b walks left its Thursdays as game time and Tuesdays as practice time).
+
+**Two calls for the owner, built from the recipe over the drawing:** List is the row list, not the drawn When · What · Place table (C5); the phone's Week is the stacked week, not the drawn one-day pager (C13).
+<!-- /§408 -->
+
+## §409 · House League · Stage 9d-2a, walk 2 of 6: a game's window — **every game opens one window that reads first (When · Where · Home · Away · Time from · Notes); the pencil turns the whole record into its form and ✓ saves, a score both or neither; the Status dropdown is gone: Postpone, Cancel, Give it a new date, Put it back on and Delete are doors at the end of the body, each asking first ("Keep it" against the act) and saying families aren't emailed; a postponed game reads "Was {its date}" under Needs a new date and comes back as an ordinary game (no "Moved"); the registrar reads facts only**
+<!-- §409 -->
+**Built:** 9d-2a step 4 (`a67509976`, tidy `8dbc2dc01`). No migration.
+
+**The walk (checkable):** https://claude.ai/artifact/FoBRTRWTtZ7ZHpy3KcJi5k (source [HOUSE_LEAGUE_STAGE9D2A_WALK_2_GAME_WINDOW.html](HOUSE_LEAGUE_STAGE9D2A_WALK_2_GAME_WINDOW.html)). One purpose, 16 steps in five parts. **Leaves** the Thu, Oct 22 game scored 7–4 and a Reds vs Blues game postponed from Thu, Nov 12, which §411 and §412 read.
+
+**Sign in:** league admin and registrar, as §408.
+
+**Owner ask still open (raised by the step 4 build):** the drawing limits moving a game to time the division holds; not built (any date and time, as before). Recommended with 9d-2b's slot link.
+<!-- /§409 -->
+
+## §410 · House League · Stage 9d-2a, walk 3 of 6: Generate games — **Generate games reads the division's game time from House league's time and never asks a date, a clock or a field; with none it offers house league's time not given yet and Next gives it; step 2 is Once or Twice with the counts and hints; the check blocks what doesn't fit ("12 games need 12 slots"), warns what is worth a look (the permit, with See the permit opening on top and closing back to the check) and passes the rest; Save says the games are on the public schedule now and families aren't emailed; a division with games is not offered, and with none left Generate games is absent**
+<!-- §410 -->
+**Built:** 9d-2a steps 1 and 5 (`1da5751e8`, `ed6c34db3`), the permit door step 7 (`7c2f0c0d2`). No migration.
+
+**The walk (checkable):** https://claude.ai/artifact/M4iz4JeCoi8SXcJx7PTYSx (source [HOUSE_LEAGUE_STAGE9D2A_WALK_3_GENERATE.html](HOUSE_LEAGUE_STAGE9D2A_WALK_3_GENERATE.html)). One purpose, 13 steps in four parts. Walk it after §408. **Leaves** Walk U11 with six games on Sundays Nov 8 – 22 at Kinsmen Park · Diamond A.
+
+**Fixture:** `node --env-file=.env.local .probe/9d2a-walk/fixture.mjs` (dev only, re-runnable, never touches a sign-in; made 2026-10-28): division **Walk U11** (Hawks, Owls, Foxes, Bears, no games) and ten house-league slots not given to a division yet, Sundays Nov 8 – Dec 6, 8:00 and 9:30 a.m., Kinsmen Park · Diamond A, in *Walk · House league weeknights*. `--remove` takes it all away; to walk again, remove and make it again.
+
+**Sign in:** league admin and registrar, as §408.
+
+**What dev cannot show:** the k4 behaviour change (a club with the club's schedule that has given house league no time can no longer generate, as ruled) without taking time away from the 11b walks' state; the free League plan's old generator (9d2a·B, untouched). Two league admins saving at the same moment could both insert (a lock needs 9d-2b's migrations).
+<!-- /§410 -->
+
+## §411 · House League · Stage 9d-2a, walk 4 of 6: Schedule health — **the season's schedule wears the tournament's Schedule health button and window, scored by a league's rules: tiles Games · Home/away · Byes · Clashes, the issues each with a door (Show them closes onto the day in List; Give it a new date opens the game), Team detail, and the rules said in words with no "Adjust the rules" door; a postponed game is not counted as played and a cancelled one is named not replayed; the permit is never a point; the registrar's doors read**
+<!-- §411 -->
+**Built:** 9d-2a steps 1 and 6 (`1da5751e8`, `c9a03a4bc`; ruling 9d2a·G). No migration.
+
+**The walk (checkable):** https://claude.ai/artifact/8V7iXGjciziD1uGb8TTegv (source [HOUSE_LEAGUE_STAGE9D2A_WALK_4_HEALTH.html](HOUSE_LEAGUE_STAGE9D2A_WALK_4_HEALTH.html)). One purpose, 9 steps in three parts. Needs §409 and §410. Changes nothing.
+
+**Sign in:** league admin and registrar, as §408.
+
+**What dev cannot show:** a clash (house league refuses two of its own bookings on one diamond at once, so the walk cannot make one; the builder proved the clash sentence on dev, plan §9 step 6).
+<!-- /§411 -->
+
+## §412 · House League · Stage 9d-2a, walk 5 of 6: the public schedule — **families see every game as it is: a cancelled game struck through in its week (it used to vanish), a postponed one under Needs a new date with "Was {day}" (it used to read as on), the place on every game, "Times in Eastern time." once; it opens on this week with earlier weeks folded; practices never show; a league admin's save shows on the next load (a save is live, 9d2a·A) with no "Moved"**
+<!-- §412 -->
+**Built:** 9d-2a step 2 (`47fbd7d0a`). No migration.
+
+**The walk (checkable):** https://claude.ai/artifact/DZNbSziPXsYH2WRx9x6EvW (source [HOUSE_LEAGUE_STAGE9D2A_WALK_5_PUBLIC.html](HOUSE_LEAGUE_STAGE9D2A_WALK_5_PUBLIC.html)). One purpose, 8 steps in two parts. Needs §409 and §410; walk §411 first (B1 gives the postponed game a date, Thu, Nov 19).
+
+**Sign in:** none for the family half (a private window); the league admin for B1.
+<!-- /§412 -->
+
+## §413 · House League · Stage 9d-2a, walk 6 of 6: See the permit, and "the permit ended" — **a game outside the club's permit says so in its window, in the record and in the form, with See the permit, which opens the club's permit on top and closes back to the window (a half-typed form kept); the registrar sees no line; and by ruling 9d2a·H the permit line now says when a permit ENDED on every surface (house league, a coach's practice form with no door, the club calendar), where it used to say nothing**
+<!-- §413 -->
+**Built:** 9d-2a step 7 (`7c2f0c0d2`; ruling 9d2a·H). No migration. **A behaviour change outside house league:** the coach's Where form, the club calendar, rep saves and the tournament generator's permit count all say the ended line.
+
+**The walk (checkable):** https://claude.ai/artifact/K9npaNg3RH58UgKGrMEarH (source [HOUSE_LEAGUE_STAGE9D2A_WALK_6_SEE_THE_PERMIT.html](HOUSE_LEAGUE_STAGE9D2A_WALK_6_SEE_THE_PERMIT.html)). One purpose, 11 steps in three parts. Fits best after §409–§410. **Leaves** a Reds vs Blues game on Thu, Nov 26.
+
+**Sign in:** league admin, registrar, owner (`uat-club-owner@uat-rep-club.local`) and the 15U AAA head coach (`uat-club-coach-15aaa@uat-rep-club.local`), all `UATPassword2026!`. The permit: *Fall diamonds 2026* holds Kinsmen Park · Diamond B on Tuesdays 6:00–9:00 p.m. until Nov 19.
+
+**Proven by the builder:** `.probe/9d2a/step7-e2e.mjs` on dev (the ended answer, the permit id, the league admin opening the permit without its cost, the registrar getting no answer).
+<!-- /§413 -->

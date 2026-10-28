@@ -1,0 +1,309 @@
+<title>9d-2a · The schedule’s views</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the 12c walks' frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.opts { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.opt { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--fg); cursor: pointer; }
+.opt input { margin-top: 0; }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · House League · Stage 9d-2a · §408</span>
+    <h1>The season’s schedule: List, Week and Month</h1>
+    <p class="sub">Written 2026-10-28, walk 1 of 6 for Stage 9d-2a (the season’s schedule, rebuilt). One purpose; sign it off on its own.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>The season’s schedule is one calendar of games and practices together, read three ways (List, Week, Month), on the same parts as the club’s calendar. The old Week · List · Practices pills are gone, and a practice is a booking in the same views.</p></section>
+  <section class="card"><h2>It passes when</h2><ul><li>The toolbar is Division · List · Week · Month · Show · Export · Add · Tools, with Schedule health leading the header.</li><li>List opens on this week with a Today line; earlier weeks fold behind a counted door.</li><li>Games and practices share every view; a night of practices folds into one row in List.</li><li>A cancelled game is struck through where it was; Month names each booking with the whole clock.</li><li>On a phone: Week and Month only, behind a View drawer; Tools holds Show, Export and Generate games.</li></ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul><li>A game’s window and its states (walk §409).</li><li>Generate games (walk §410), Schedule health (walk §411), the public page (walk §412), the permit line (walk §413).</li></ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts"><dt>Needs</dt><dd>Nothing before it. Walk it <strong>before §410</strong> (C4 reads Walk U11 with no games). The fixture must be made (it is, as of 2026-10-28).</dd><dt>Dev server</dt><dd>Restarted after the 9d-2a commits (step 7 changed the permit rule). If a screen looks like the old one, restart it.</dd></dl></section>
+  <section class="card"><h2>Sign in as</h2><p>One browser window per person (a private window for the second). Dev only, keep this page private.</p><dl class="facts"><dt>League admin</dt><dd><code>uat-club-league-admin@uat-rep-club.local</code> · <code>UATPassword2026!</code> (Jordan Pike)</dd><dt>Registrar</dt><dd><code>uat-club-registrar@uat-rep-club.local</code> · <code>UATPassword2026!</code></dd></dl><p class="sub">Sign in at <code>http://localhost:3000/login</code>.</p></section>
+  <section class="card"><h2>Where and on what</h2><dl class="facts"><dt>Club</dt><dd><code>uat-rep-club</code> (UAT Rep Club, the Club plan). House league: <strong>2026 Fall House League</strong>. Divisions: <strong>U9 Rookie</strong> (Reds, Blues) and, from the walk fixture, <strong>Walk U11</strong> (Hawks, Owls, Foxes, Bears).</dd><dt>Season schedule</dt><dd><code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code></dd></dl></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "hl9d2a-walk1-views-v1";
+  var TITLE = "9d-2a walk §408 · The season’s schedule: List, Week and Month (2026-10-28)";
+  var PARTS = [
+ {
+  "id": "A",
+  "title": "List, the season",
+  "steps": [
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Open the season’s Schedule (<code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code>) with <strong>U9 Rookie</strong> picked.",
+    "see": "Under the title, a line saying U9 Rookie’s time comes from the club’s schedule, <em>Walk · House league weeknights</em> (games on Thursdays, practices on Tuesdays), with the door <strong>House league’s time →</strong>. The toolbar: the <strong>U9 Rookie</strong> pill, then <strong>List · Week · Month</strong>, <strong>Show</strong>, <strong>Export</strong>, <strong>Add</strong>, <strong>Tools ⋯</strong>. <strong>Schedule health</strong> leads the header. No Week · List · Practices pills."
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Read the List.",
+    "see": "It opens on <strong>Oct 26 – Nov 1, 2026 · this week</strong> with a <strong>Today · Wed, Oct 28</strong> line (your own today if you walk later). Games and practices together, each row its time, what it is and its place.",
+    "call": "Built differently from the drawing (C5): List is the row list, not the drawn When · What · Place table, because no column in it is compared or totalled. Say if you want the table."
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Above it, press <strong>Show 1 earlier week</strong> (counted: it may say more).",
+    "see": "The week of Oct 19 opens: Reds vs Blues on Tue, Oct 20 and Thu, Oct 22, and Sun, Oct 25 <strong>struck through</strong>, reading Cancelled."
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Find a Tuesday where both teams practise.",
+    "see": "One row, <strong>Practices · 2 teams</strong>, naming Reds and Blues, not two rows. Opening it opens each practice’s own window (“Reds practice”)."
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "Week and Month",
+  "steps": [
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Press <strong>Week</strong>.",
+    "see": "The club calendar’s week grid on <strong>Oct 26 – Nov 1, 2026</strong>, with previous and next arrows; Tuesday’s practices are in it. Next takes you to Nov 2 – 8."
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Press <strong>Month</strong> and go to October 2026.",
+    "see": "One chip per booking, time first and the whole clock (“6:00 p.m. Reds vs Blues”, never “6p”); the Oct 25 chip struck through with no pill. A day with more than fits says <strong>+N more</strong>.",
+    "opts": [
+     "Saw +N more",
+     "No crowded day to see it on"
+    ]
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Press a game’s chip.",
+    "see": "The game’s window opens (walk §409 reads it). Close it."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "Show, Add, Export, Division",
+  "steps": [
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Open <strong>Show</strong>, tick Practices only, then Games only, then clear it.",
+    "see": "The quiet filter: only practices, then only games, then both again. With a choice on that matches nothing: “Nothing here matches the filters.”"
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Press <strong>Add</strong>.",
+    "see": "<strong>Add to the schedule</strong> · <strong>A game</strong> · <strong>A practice</strong>. A practice asks its team. Close without saving."
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Press <strong>Export</strong>.",
+    "see": "One button; U9 Rookie’s games download as a spreadsheet (practices were never in the file).",
+    "opts": [
+     "Downloaded",
+     "Skipped"
+    ]
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Switch the Division pill to <strong>Walk U11</strong>. Look at List, then Week, then Month. Do not generate (that is §410). Switch back to U9 Rookie.",
+    "see": "List: “Walk U11 has no games or practices yet.” · “Add one, or generate the season’s games.” Week: “Nothing is scheduled this week.” Month: “Nothing is scheduled in October 2026.”"
+   }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "On a phone",
+  "steps": [
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Open the same page on a phone (or a window about 390 px wide).",
+    "see": "The view control is one symbol, <strong>Change view · Week</strong>; it opens a drawer titled <strong>View</strong> with Week and Month only (no List). <strong>Tools ⋯</strong> holds Show, Export and Generate games; Add and Schedule health stay. Every control is at least 44 px."
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Read Week.",
+    "see": "The week’s days stacked one under another, each with its bookings.",
+    "call": "Built differently from the drawing (C13): the phone’s Week is the stacked week, not the drawn one-day pager with Previous day / Next day. Say if you want the pager."
+   }
+  ]
+ },
+ {
+  "id": "E",
+  "title": "The registrar reads",
+  "steps": [
+   {
+    "who": "Registrar · uat-club-registrar@uat-rep-club.local",
+    "do": "Open the season’s Schedule.",
+    "see": "The same views and dates. No Add, and no Generate games in Tools. Everything reads."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      function mk(key, label) {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + key.replace(/[^A-Za-z0-9]/g, '-'); cb.checked = !!state.ticks[key];
+        cb.addEventListener('change', function () { state.ticks[key] = cb.checked; save(); refresh(); });
+        boxes.push({ part: p.id, step: id, key: key, label: label, cb: cb });
+        return cb;
+      }
+      if (!s.opts) {
+        var row = el('label', 'step');
+        row.appendChild(mk(id, null)); row.appendChild(t); body.appendChild(row);
+      } else {
+        var row2 = el('div', 'step'); var col = el('div', 'txt'); col.appendChild(t);
+        var opts = el('div', 'opts');
+        s.opts.forEach(function (label) {
+          var ol = el('label', 'opt'); ol.appendChild(mk(id + ':' + label, label)); ol.appendChild(document.createTextNode(label)); opts.appendChild(ol);
+        });
+        col.appendChild(opts); row2.appendChild(col); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  /* A step counts as done when any of its boxes is ticked (one box, "Did it" or "Held"). */
+  function doneSteps(partId) {
+    var seen = {};
+    boxes.forEach(function (b) { if ((!partId || b.part === partId) && b.cb.checked) seen[b.step] = true; });
+    return Object.keys(seen);
+  }
+  var totalSteps = PARTS.reduce(function (n, p) { return n + p.steps.length; }, 0);
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = [];
+      boxes.filter(function (b) { return b.part === p.id && b.cb.checked; }).forEach(function (b) {
+        var plain = b.label === null || b.label === 'Did it';
+        ticked.push(plain ? b.step : b.step + ' (' + b.label + ')');
+      });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + doneSteps(p.id).length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

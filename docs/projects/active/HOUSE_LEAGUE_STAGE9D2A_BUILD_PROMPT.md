@@ -55,6 +55,11 @@
   entry is what still runs: the free plan's generator and the practice forms). **All eight build steps are done. Resume
   at "Checks and done":** `/review` (high) over steps 1–8, then `/simplify`, then `/docs` (say 9d2a·H's coach-side change
   and step 5's k4 behaviour change), the PM brief, TODO, and the walk in `OWNER_QA_LEDGER.md` (one purpose per part).
+- **2026-10-28: the walks are WRITTEN — §408–§413, six walks, one purpose each** (views · game window · Generate games ·
+  health · public page · See the permit), sources `HOUSE_LEAGUE_STAGE9D2A_WALK_1…6_*.html`, the links in each §. Written
+  alongside the review, not after it (owner: the walk tests what people see, which review fixes should not change). **If
+  /review or /simplify changes anything a walk step quotes, update that step and republish** (grep every walk). The one
+  fixture: `.probe/9d2a-walk/fixture.mjs` (Walk U11 + ten Sunday slots not given yet), made 2026-10-28.
 - **Facts found that the steps below must respect:** the club's cross-program clash rule never compares two house-league
   bookings (`comparable`: same owner) — house league's own clashes are `lib/league-schedule-conflict.ts`; a postponed game
   keeps its `scheduled_at`; `league_games.status` is scheduled|completed|cancelled|postponed only; `houseLeagueSlotRows`

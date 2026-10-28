@@ -1,0 +1,266 @@
+<title>9d-2a · Schedule health</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the 12c walks' frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.opts { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.opt { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--fg); cursor: pointer; }
+.opt input { margin-top: 0; }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · House League · Stage 9d-2a · §411</span>
+    <h1>Schedule health, scored by a league’s rules</h1>
+    <p class="sub">Written 2026-10-28, walk 4 of 6 for Stage 9d-2a (the season’s schedule, rebuilt). One purpose; sign it off on its own.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>The season’s schedule gets the tournament’s Schedule health button and window, scored by a house league’s own rules: games on plan, home and away, byes, and clashes between games and practices. A postponed game isn’t counted as played, and a cancelled one is named as not replayed. Each issue has a door to the game or the day.</p></section>
+  <section class="card"><h2>It passes when</h2><ul><li>The header button shows a score and an amber issue count.</li><li>The window has four tiles (Games, Home/away, Byes, Clashes), the issues with their doors, Team detail, and the rules said in words.</li><li>Show them closes onto the day in List; Give it a new date opens the game.</li><li>The permit is never a point.</li><li>A reader’s doors read, never change.</li></ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul><li>Changing the rules: there is no “Adjust the rules” door until 9d-2b (ruling 9d2a·G).</li><li>A clash: house league refuses two of its own bookings on one diamond at once, so the walk can’t make one.</li></ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts"><dt>Needs</dt><dd>Walks <strong>§409</strong> (the postponed Nov 12 game, the cancelled Oct 25 one) and <strong>§410</strong> (Walk U11’s six games) done.</dd><dt>Dev server</dt><dd>Restarted after the 9d-2a commits (step 7 changed the permit rule). If a screen looks like the old one, restart it.</dd></dl></section>
+  <section class="card"><h2>Sign in as</h2><p>One browser window per person (a private window for the second). Dev only, keep this page private.</p><dl class="facts"><dt>League admin</dt><dd><code>uat-club-league-admin@uat-rep-club.local</code> · <code>UATPassword2026!</code> (Jordan Pike)</dd><dt>Registrar</dt><dd><code>uat-club-registrar@uat-rep-club.local</code> · <code>UATPassword2026!</code></dd></dl><p class="sub">Sign in at <code>http://localhost:3000/login</code>.</p></section>
+  <section class="card"><h2>Where and on what</h2><dl class="facts"><dt>Club</dt><dd><code>uat-rep-club</code> (UAT Rep Club, the Club plan). House league: <strong>2026 Fall House League</strong>. Divisions: <strong>U9 Rookie</strong> (Reds, Blues) and, from the walk fixture, <strong>Walk U11</strong> (Hawks, Owls, Foxes, Bears).</dd><dt>Season schedule</dt><dd><code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code></dd></dl></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "hl9d2a-walk4-health-v1";
+  var TITLE = "9d-2a walk §411 · Schedule health, scored by a league’s rules (2026-10-28)";
+  var PARTS = [
+ {
+  "id": "A",
+  "title": "The button and the window",
+  "steps": [
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "On the season’s Schedule, look at the header.",
+    "see": "<strong>Schedule health</strong> with a score and an amber count of issues (the old warning strip above the views is gone)."
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Press it.",
+    "see": "The tournament’s health window: tiles <strong>Games</strong> (“{a} of {b}”, teams on plan), <strong>Home/away</strong>, <strong>Byes</strong>, <strong>Clashes</strong> (“all checked”), then the issues, each with a door."
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Read the issues.",
+    "see": "Among them: Reds and Blues short a game because the Oct 25 game was cancelled and not replayed (door <strong>Show them</strong>), and “Reds vs Blues was postponed from Nov 12 and still needs a new date.” (door <strong>Give it a new date</strong>). No issue for Walk U11’s games being outside the permit."
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Press <strong>Show them</strong> on the cancelled game’s issue.",
+    "see": "The window closes onto List, U9 Rookie, on that day, with Show cleared so the struck game is drawn."
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Open health again and press <strong>Give it a new date</strong>.",
+    "see": "The postponed game’s window (walk §409’s), on its division. Close it without changing anything."
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "Team detail and the rules",
+  "steps": [
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Open <strong>Team detail</strong>.",
+    "see": "Columns Team · Games · Home–away · Byes · Prime time · Places, a row for each of Reds, Blues, Hawks, Owls, Foxes, Bears. Reds and Blues show the postponed game in Games (“… · 1 postponed”)."
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Read the foot.",
+    "see": "“The score uses this season’s rules.” · <strong>Games per team</strong> (said per division when they differ, with “Games per team is the number most of a division’s teams were given.”) · “A team can play twice in a day: No” · “Home and away can differ by: 1 game”. No Adjust the rules door."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "On a phone, and the registrar",
+  "steps": [
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Open it on a phone.",
+    "see": "The same window filling the screen; with more than two issues, two show, then “{n} more. Show all”.",
+    "opts": [
+     "Saw it",
+     "Two issues or fewer: nothing folded"
+    ]
+   },
+   {
+    "who": "Registrar · uat-club-registrar@uat-rep-club.local",
+    "do": "Open Schedule health and press the postponed game’s door.",
+    "see": "The door says <strong>Show it</strong> (not Give it a new date) and the game opens read-only."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      function mk(key, label) {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + key.replace(/[^A-Za-z0-9]/g, '-'); cb.checked = !!state.ticks[key];
+        cb.addEventListener('change', function () { state.ticks[key] = cb.checked; save(); refresh(); });
+        boxes.push({ part: p.id, step: id, key: key, label: label, cb: cb });
+        return cb;
+      }
+      if (!s.opts) {
+        var row = el('label', 'step');
+        row.appendChild(mk(id, null)); row.appendChild(t); body.appendChild(row);
+      } else {
+        var row2 = el('div', 'step'); var col = el('div', 'txt'); col.appendChild(t);
+        var opts = el('div', 'opts');
+        s.opts.forEach(function (label) {
+          var ol = el('label', 'opt'); ol.appendChild(mk(id + ':' + label, label)); ol.appendChild(document.createTextNode(label)); opts.appendChild(ol);
+        });
+        col.appendChild(opts); row2.appendChild(col); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  /* A step counts as done when any of its boxes is ticked (one box, "Did it" or "Held"). */
+  function doneSteps(partId) {
+    var seen = {};
+    boxes.forEach(function (b) { if ((!partId || b.part === partId) && b.cb.checked) seen[b.step] = true; });
+    return Object.keys(seen);
+  }
+  var totalSteps = PARTS.reduce(function (n, p) { return n + p.steps.length; }, 0);
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = [];
+      boxes.filter(function (b) { return b.part === p.id && b.cb.checked; }).forEach(function (b) {
+        var plain = b.label === null || b.label === 'Did it';
+        ticked.push(plain ? b.step : b.step + ' (' + b.label + ')');
+      });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + doneSteps(p.id).length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
