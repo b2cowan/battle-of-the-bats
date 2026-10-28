@@ -576,7 +576,7 @@ const orgHelp: HelpPageContent = {
                 <HelpDef term="The amber count">With the filters, the week&rsquo;s number of clashes. Click it to show only the clashes; click again to show everything.</HelpDef>
               </HelpDefs>
               <p>Open a booking to read both sides together: when, where (with the address), the team and its head coach, then <strong>Clashes with</strong> &mdash; the other booking, its diamond and its head coach. The link at the bottom opens that team&rsquo;s schedule (or <strong>Open in the Coaches Portal</strong>, if you coach the team), a house-league season&rsquo;s schedule, or the tournament. Nobody is notified about a clash; the club settles it.</p>
-              <p>When the club holds a permit at the venue that day and the booking falls outside it, the window says so once, in a quiet grey line: <em>Outside the club&rsquo;s permit for Diamond 2</em> (or <em>Outside the club&rsquo;s permit at Lions Park</em> when no diamond is set). It never shows on the rows and never counts as a clash. Permits live in the <a href="#venue-library-t-permits">Venue library</a>.</p>
+              <p>When the club holds a permit at the venue that day and the booking falls outside it, the window says so once, in a quiet grey line: <em>Outside the club&rsquo;s permit for Diamond 2</em> (or <em>Outside the club&rsquo;s permit at Lions Park</em> when no diamond is set). It never shows on the rows and never counts as a clash. When every permit the club held at that venue ended before the booking&rsquo;s day, the line says so instead: <em>Outside the club&rsquo;s permit for Diamond 1: the permit ended Sep 30, 2026.</em> Permits live in the <a href="#venue-library-t-permits">Venue library</a>.</p>
             </>
           ),
         },
@@ -1112,10 +1112,10 @@ const orgHelp: HelpPageContent = {
           id: 'faq-venue-library-permit-blocks',
           question: 'Does a permit stop anyone booking outside it?',
           answer: (
-            <p>No. A booking at a venue where the club holds a permit, outside the permit&rsquo;s time, gets one quiet grey line under Venue (&ldquo;Outside the club&rsquo;s permit for Diamond 2&rdquo;) and still saves. The club calendar says it once more, in that booking&rsquo;s window. Nothing appears at a venue the club holds no permit at.</p>
+            <p>No. A booking at a venue where the club holds a permit, outside the permit&rsquo;s time, gets one quiet grey line under Venue (&ldquo;Outside the club&rsquo;s permit for Diamond 2&rdquo;) and still saves. The club calendar says it once more, in that booking&rsquo;s window. After the club&rsquo;s last permit at the venue has ended, the line reads &ldquo;&hellip;: the permit ended Sep 30, 2026&rdquo;. Nothing appears at a venue the club holds no permit at.</p>
           ),
-          answerText: 'No. A booking outside the club’s permit gets one quiet grey line under Venue — “Outside the club’s permit for Diamond 2” — and still saves. The club calendar says it once more, in that booking’s window. Nothing appears at a venue the club holds no permit at.',
-          keywords: ['permit', 'outside the permit', 'not inside the club’s permit', 'blocked', 'booking', 'rental'],
+          answerText: 'No. A booking outside the club’s permit gets one quiet grey line under Venue — “Outside the club’s permit for Diamond 2” — and still saves. The club calendar says it once more, in that booking’s window. After the club’s last permit at the venue has ended, the line reads “…: the permit ended Sep 30, 2026”. Nothing appears at a venue the club holds no permit at.',
+          keywords: ['permit', 'outside the permit', 'permit ended', 'the permit ended', 'not inside the club’s permit', 'blocked', 'booking', 'rental'],
         },
       ],
     },

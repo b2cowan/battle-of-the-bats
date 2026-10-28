@@ -506,36 +506,169 @@ const houseLeagueHelp: HelpPageContent = {
     {
       id: 'recipe-generate-house-league-schedule',
       group: 'How-to recipes',
-      heading: 'How to generate a schedule and add practices',
-      summary: 'Generate a round-robin after teams exist, pick fields from your Venue library, and let the schedule catch double-bookings.',
-      keywords: ['generate schedule', 'round robin', 'games', 'preview', 'practices', 'recurring', 'field', 'venue', 'double-booked'],
-      searchText: 'generate schedule house league round robin games preview teams divisions location field diamond court venue library pick a field time end time rounds per week add game practices recurring practice start end time cancel a game status cancelled call off a game delete a game remove a game cancel series double booking double-booked conflict clash overlap somewhere else off-site not inside the club’s permit outside the permit grey line permit',
+      heading: 'How to generate games and run the schedule',
+      summary: 'Generate a division’s games from the time the club gave house league, then run the season from one schedule: List, Week and Month with games and practices together, a window for each game, and Schedule health.',
+      keywords: ['generate games', 'generate schedule', 'round robin', 'games', 'practices', 'schedule', 'list week month', 'game window', 'postpone', 'cancel a game', 'put it back on', 'needs a new date', 'give it a new date', 'schedule health', 'see the permit', 'permit ended', 'public schedule', 'double-booked', 'field', 'venue'],
+      searchText: 'generate games generate schedule house league round robin every team plays every other team once twice match-ups step 1 of 2 when and where game time from house league’s time not given yet give it some of house league’s time check the games ready to save passing warning blocking this doesn’t fit game time changed while you were looking check again has games now add more one at a time every division already has games no house league time the club hasn’t given house league any time yet a club with the club’s schedule and no house-league time can no longer generate games league plan free league keeps its own generator schedule page list week month show division add game add practice tools export needs a new date postponed cancelled struck through final score earlier weeks night of practices folded game window read first edit this game pencil ✓ save postpone this game cancel this game keep it put it back on put back on the schedule delete this game time from the club’s schedule score both scores or neither families aren’t emailed public schedule at once no publish step schedule health score 100 healthy review needs work tiles games home away byes clashes team detail the score uses this season’s rules see the permit outside the club’s permit the permit ended date off venue library diamond double booking double-booked conflict clash overlap red amber grey line typed location off-site practices recurring cancel series',
       content: (
         <>
-          <p>Generate a schedule only after the division&apos;s teams are created.</p>
-          <ol>
-            <li>Open the season, go to <strong>Schedule</strong>, and select the division.</li>
-            <li>Click <strong>Generate schedule</strong> to build a round-robin (every team plays every other team once).</li>
-            <li>Enter the first game date, default time, <strong>rounds per week</strong>, and a default field.</li>
-            <li>Preview the generated games and look for date, field, or matchup problems.</li>
-            <li>Save the schedule. Edit individual games afterward for exceptions, or use <strong>Add game</strong> for one-off games. A game can carry an optional <strong>end time</strong>; without one, the schedule assumes 90 minutes when checking for overlaps. To call a game off, open it, set <strong>Status</strong> to <strong>Cancelled</strong> and <strong>Save</strong>; it stays on the schedule, marked cancelled, and frees its diamond. To remove a game that should never have been on the schedule, open it and choose <strong>Delete this game</strong> at the end of the window; it asks first, then leaves the schedule and the public page for good, and a played game&apos;s score comes out of the standings.</li>
-          </ol>
-          <p><strong>Where games are played.</strong> Every game and practice window asks <strong>Venue</strong>, then the diamond beside it. For one of your club&apos;s venues the label is what the Venue library says its facilities are (for example <strong>Diamond</strong> or <strong>Field</strong>), or <strong>Facility</strong> where a venue has more than one kind; for a typed venue it&apos;s your season&apos;s sport&apos;s own word. Type to find one of your club&apos;s venues from the <strong>Venue library</strong> (under Organization), set up once for every season, then pick its diamond. An archived venue leaves this list; the games already on it keep it. <strong>Not set</strong> means anywhere at that venue. A venue you just type, for an away facility, saves as plain text, but typed venues can only be matched against identically typed text, so picking from the library is what makes clash checking reliable.</p>
-          <p><strong>Double-booking protection.</strong> The schedule treats games and practices as one pool of bookings. When the date, time and diamond are set, the window checks before you press <strong>Create</strong>: another league game or practice on that diamond at that time shows in <strong>red</strong> under the field, naming it, and <strong>Create</strong> stays greyed until you change the time or the diamond. A recurring practice series names the date it clashes on. The schedule page also shows a warning strip listing any existing clashes, and a count of bookings with no diamond set (those can&apos;t be checked at all). The generator is the one exception: it saves and <em>warns</em> instead of blocking, because a generated round places several games at the same default time on purpose. Spread them across times or diamonds afterward.</p>
-          <p><strong>Your club&apos;s other teams and tournaments.</strong> If one of the club&apos;s rep teams or tournaments holds the diamond, an <strong>amber</strong> line says so under the field, for example <em>&ldquo;Diamond B is booked by 11U AA practice, 6:00–7:30 p.m.&rdquo;</em> That one never blocks: the game or practice still saves, because a diamond shared between two programs is for the club to settle, not for either form to refuse. The generator&apos;s after-save summary counts these too.</p>
-          <p><strong>Practices</strong> are tracked on their own tab. Add a single or recurring practice per team with a start and end time and a field. When you cancel a recurring practice, you choose whether to cancel just that one, this and the rest of the series, or the whole series. Practices handed out from time the club gave house league read <strong>From</strong> the club&apos;s schedule and can&apos;t be cancelled or edited here (see <em>House league&apos;s time</em>).</p>
-          <p><strong>Tools</strong> (⋯) at the right end of the toolbar holds <strong>House league&apos;s time</strong> and the schedule&apos;s <strong>Export</strong> (Excel, CSV, or calendar file). Exporting the schedule is part of League Plus.</p>
+          <p>A season&apos;s <strong>Schedule</strong> page is where games and practices are built and run. <strong>Generate games</strong> lays out a division&apos;s whole season of match-ups in the time the club gave house league; after that you work from the schedule itself. Every game you save is on the public schedule at once, and no change here emails families.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'recipe-generate-house-league-schedule-t-page',
+          title: 'The Schedule page: List, Week and Month',
+          content: (
+            <>
+              <p>The Schedule page shows one division at a time, with its games and practices together. Owners, admins and league admins change things on a live season; the registrar, and anyone on a finished season, can only read.</p>
+              <HelpDefs>
+                <HelpDef term="Views">
+                  <strong>List</strong>, <strong>Week</strong> and <strong>Month</strong>. List opens on this week, with earlier weeks folded under <strong>Show 3 earlier weeks</strong>; a night of practices folds into one row, <strong>Practices &middot; 3 teams</strong>, that opens to the team names. On a phone the views are <strong>Week</strong> and <strong>Month</strong> (the view button opens a <strong>View</strong> drawer).
+                </HelpDef>
+                <HelpDef term="The toolbar"><strong>Division</strong> picks the division; <strong>Show</strong> narrows to games or to practices; <strong>Export</strong> is part of League Plus. <strong>Add</strong> offers <strong>Game</strong> or <strong>Practice</strong>. <strong>Tools</strong> (⋯) holds <strong>House league&apos;s time</strong>, <strong>Practice time</strong> and <strong>Generate games</strong>.</HelpDef>
+                <HelpDef term="A played game">Says its result, such as <strong>Final 7&ndash;4</strong>.</HelpDef>
+                <HelpDef term="A cancelled game">Stays in its week, struck through, marked <strong>Cancelled</strong>. Nothing is hidden.</HelpDef>
+                <HelpDef term="A postponed game">Leaves its week for <strong>Needs a new date</strong>, with an amber count, and shows <strong>Was</strong> its old day until you give it a new one.</HelpDef>
+                <HelpDef term="A clash">A booking that overlaps another at the same place says so on its row. <strong>Schedule health</strong> counts them too.</HelpDef>
+              </HelpDefs>
+              <p><strong>Practices</strong> are added with <strong>Add</strong> &rsaquo; <strong>Practice</strong>: one practice or a recurring series for a team, with a start and end time and a field. Cancelling a recurring practice asks whether to cancel just that one, this and the rest of the series, or the whole series. Practices handed out from the time the club gave house league read <strong>From</strong> the club&apos;s schedule and can&apos;t be edited or cancelled here (see <em>House league&apos;s time</em>).</p>
+            </>
+          ),
+        },
+        {
+          id: 'recipe-generate-house-league-schedule-t-generate',
+          title: 'Generate games',
+          content: (
+            <>
+              <p>Open <strong>Tools</strong> &rsaquo; <strong>Generate games</strong>. It is offered to owners, admins and league admins, for a division that has two or more teams and no games yet. A division that already has games adds more one at a time with <strong>Add</strong>; with none left the window says <em>Every division already has games. Add more one at a time, with Add.</em></p>
+              <ol>
+                <li><strong>Step 1 &middot; when and where.</strong> The division&apos;s game time is read from House league&apos;s time: the days, hours and facilities, the number of game slots, and <em>Each game is 90 minutes, the length of a slot.</em> You don&apos;t type dates here. <strong>Change it in House league&apos;s time</strong> opens that window and brings you back.</li>
+                <li><strong>Step 2 &middot; match-ups.</strong> Choose <strong>Once</strong> or <strong>Twice</strong> through; the window counts the games (<em>9 games each &middot; 45 games</em>) and says what you&apos;ll get: whether there are byes, that home and away are balanced, and that prime-time slots are shared out evenly.</li>
+                <li><strong>Check the games.</strong> Nothing is saved yet. The result is explained under <em>What the check tells you</em>.</li>
+                <li><strong>Save.</strong> <em>Saved 45 games. They&apos;re on the public schedule now.</em></li>
+              </ol>
+              <p>A division with no game time yet lists house league&apos;s time that is <strong>Not given yet</strong>; tick the rows to give to it (a whole row at a time) and press <strong>Next: match-ups</strong>. To give only part of a row, such as one facility, use <strong>Divide it in House league&apos;s time first</strong>.</p>
+              <HelpNote variant="warning" title="No house league time, no games">
+                A club on League Plus or Club generates games into the time the club gave house league, and nothing else: a club whose schedule has given house league no time can no longer generate. An owner or an admin gives house league its time in the club&apos;s <strong>Schedules</strong> first (the window offers <strong>Give house league time</strong>); a league admin sees who can. The free League plan has no club schedule, so it keeps its own form, which asks when and where once and saves only the games.
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'recipe-generate-house-league-schedule-t-check',
+          title: 'What the check tells you',
+          content: (
+            <>
+              <p>The check lays the games out and reads them back before anything is saved. It comes back one of three ways.</p>
+              <HelpDefs>
+                <HelpDef term="Passing">The title reads <strong>Ready to save: 45 games</strong>, with the dates and weeks, that every team plays the same number of games with a fair home count, how many prime-time slots each team gets, and the season&apos;s <strong>Schedule health</strong>. <strong>See the 45 games</strong> lists them. The foot says <em>Saving puts these 45 games on the public schedule at once. Families aren&apos;t emailed.</em></HelpDef>
+                <HelpDef term="Warning">The title reads <strong>45 games, with 2 things to look at</strong>, then names each, and <strong>Everything else passes</strong>. A warning never stops you: <em>You can save now and sort it out later.</em> The things it looks for are game time outside the club&apos;s permit (with the permit line and <strong>See the permit</strong>), game time that overlaps another booking at the same place, a team playing twice in one day, and a team with a bye two weeks running. If the club&apos;s permit or schedule can&apos;t be read just now, the check says so (<em>We couldn&apos;t check the club&apos;s permit just now, so this game time may be outside it.</em>) instead of passing quietly.</HelpDef>
+                <HelpDef term="Blocking"><strong>This doesn&apos;t fit U12&apos;s time</strong>, for example <em>45 games need 45 slots. U12&apos;s game time has 30 by Aug 31.</em> (Or only some of the games fit without a team playing two at once.) <em>Nothing is saved.</em> The button, <strong>Give U12 more time</strong>, opens House league&apos;s time; with <strong>Twice</strong> chosen it also suggests playing every team once.</HelpDef>
+              </HelpDefs>
+              <ul>
+                <li><strong>A stale check is refused.</strong> If the division&apos;s game time changes between the check and Save, nothing is saved: <em>U12&apos;s game time changed while you were looking. Check the games again.</em> The window goes back to step 2.</li>
+                <li><strong>Someone else got there first.</strong> If another admin generated the same division meanwhile, you read <em>U12 has games now. Add more one at a time, with Add.</em></li>
+                <li><strong>The check can fail to finish.</strong> <em>The check didn&apos;t finish. Your choices are kept.</em> Press <strong>Try again</strong>.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'recipe-generate-house-league-schedule-t-game',
+          title: 'A game’s window: edit, postpone, cancel, delete',
+          content: (
+            <>
+              <p>Click a game in any view. It <strong>reads first</strong>: <strong>When</strong>, <strong>Where</strong>, <strong>Home</strong>, <strong>Away</strong> and <strong>Notes</strong>. For someone who runs the season it also shows <strong>Time from</strong> and the club schedule&apos;s name when the game sits on one of the division&apos;s game-time slots; a game moved off them says nothing. A reader sees the facts and no buttons.</p>
+              <HelpDefs>
+                <HelpDef term="Edit this game">The pencil turns the whole record into a form: the teams, date, time and end time, the venue and diamond, and notes. Press <strong>✓</strong> to save; nothing saves as you type, and closing with unsaved changes asks first. Once a game has started, score boxes appear: enter both, or neither (<em>Enter both scores, or neither.</em>). Both in makes the game played (<strong>Final</strong>); both empty puts it back to scheduled.</HelpDef>
+                <HelpDef term="Postpone this game">Asks first (<strong>Keep it</strong> backs out). The game moves to <strong>Needs a new date</strong>, stops holding its time and place, and the public schedule says it is postponed. <em>Families aren&apos;t emailed.</em></HelpDef>
+                <HelpDef term="Give it a new date">On a postponed game. Enter a date and a time and press <strong>✓</strong>; the game returns to the schedule in its new week as an ordinary game. Schedule health&apos;s postponed issue opens the same form.</HelpDef>
+                <HelpDef term="Cancel this game">Asks first. The game stays on the schedule struck through, and the public schedule shows it <strong>Cancelled</strong>. A postponed game can be cancelled too. <em>Families aren&apos;t emailed.</em></HelpDef>
+                <HelpDef term="Put it back on">On a cancelled game: it returns to the schedule (<em>Put back on the schedule.</em>).</HelpDef>
+                <HelpDef term="Delete this game">At the end of the window, on every state. It asks first, then the game leaves the schedule and the public page for good, and a played game&apos;s score comes out of the standings. To call a game off but keep it listed, cancel it instead.</HelpDef>
+              </HelpDefs>
+              <HelpNote variant="info" title="Families hear nothing from here">
+                A saved or changed game is on the public schedule at once, and neither Generate, Save, Postpone nor Cancel emails anyone. Tell families yourself with <strong>Email families</strong>.
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'recipe-generate-house-league-schedule-t-places',
+          title: 'Where games are played, clashes and the permit',
+          content: (
+            <>
+              <p>Every game and practice window asks <strong>Venue</strong>, then the diamond beside it. For one of your club&apos;s venues the label is what the Venue library says its facilities are (for example <strong>Diamond</strong> or <strong>Field</strong>); for a typed venue it&apos;s your season&apos;s sport&apos;s own word. Type to find a venue from the <strong>Venue library</strong> (under Organization), set up once for every season, then pick its diamond. An archived venue leaves the list; games already on it keep it. <strong>Not set</strong> means anywhere at that venue. A venue you just type, for an away facility, saves as plain text and can&apos;t be checked for clashes, so picking from the library is what makes clash checking reliable.</p>
+              <HelpDefs>
+                <HelpDef term="Double-booking">Games and practices are one pool of bookings. When the date, time and diamond are set, the window checks before you press <strong>Create</strong> or <strong>✓</strong>: another league game or practice on that diamond at that time shows in <strong>red</strong> under the field, naming it, and the button stays greyed until you change the time or the diamond. Entering a score or a note on a game is never held by an old clash; only moving a game is checked. Existing clashes show on their rows and in Schedule health.</HelpDef>
+                <HelpDef term="Rep teams and tournaments">If one of the club&apos;s rep teams or tournaments holds the diamond, an <strong>amber</strong> line says so. It never blocks.</HelpDef>
+                <HelpDef term="The permit line">If the club holds a permit at that venue and the time falls outside it, a quiet grey line says so and still lets you save: <em>Outside the club&apos;s permit for Diamond 2. It covers Tue and Thu, 5:30&ndash;9:00 p.m., until Oct 29.</em> Next to it, <strong>See the permit</strong> opens that permit over the window, for someone who can open permits.</HelpDef>
+                <HelpDef term="When the permit has ended">If every permit the club held at that venue ended before the game&apos;s day, the line says <em>Outside the club&apos;s permit for Diamond 1: the permit ended Sep 30, 2026.</em> This is the same line on every screen that shows a permit: a house-league game or practice, a coach&apos;s Where form on a team&apos;s schedule, and the club calendar&apos;s booking window.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'recipe-generate-house-league-schedule-t-health',
+          title: 'Schedule health',
+          content: (
+            <>
+              <p>The score button at the top of the Schedule page (<strong>—</strong> until a game has a time) opens <strong>Schedule health</strong> for the whole season: the same window a tournament has, scored by a league&apos;s rules. It reads <strong>Healthy</strong> at 85 and up, <strong>Review</strong> at 70, and <strong>Needs work</strong> below that.</p>
+              <HelpDefs>
+                <HelpDef term="Four tiles"><strong>Games</strong> (teams on plan), <strong>Home/away</strong> (teams off by more than the rule), <strong>Byes</strong> (none back to back) and <strong>Clashes</strong> (with how many bookings could not be checked, such as a practice at a typed place).</HelpDef>
+                <HelpDef term="Issues">Each is a sentence with a door: a team short of games after a cancelled game was not replayed, a postponed game still needing a date (<strong>Give it a new date</strong>), a division with teams and no games yet, home and away out of balance, a team playing twice in a day, a bye two weeks running, two bookings at one place and time. <strong>Show them</strong> closes the window on the booking in the schedule. On a phone it shows two issues, then <strong>Show all</strong>.</HelpDef>
+                <HelpDef term="Team detail">A table under the issues: games, home&ndash;away, byes, prime time and places for each team.</HelpDef>
+                <HelpDef term="The rules">The foot says them in words: <em>The score uses this season&apos;s rules</em>: games per team, whether a team can play twice in a day (no), and that home and away can differ by 1 game. There is no door to change them yet.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'recipe-generate-house-league-schedule-t-public',
+          title: 'What families see on the public schedule',
+          content: (
+            <>
+              <p>The season&apos;s public <strong>Schedule</strong> page lists games only, a division at a time (tabs when there is more than one), with a line saying which time zone the times are in. It never shows practices.</p>
+              <ul>
+                <li><strong>By week</strong>, opening on this week (<em>Jun 14 &ndash; 20, 2027 &middot; this week</em>), with a line for today. Earlier weeks are folded under <strong>Show 3 earlier weeks</strong>.</li>
+                <li><strong>The place on every game</strong>, as venue and diamond.</li>
+                <li><strong>A played game</strong> says its result; <strong>a cancelled game</strong> stays in its week, struck through and marked <strong>Cancelled</strong>.</li>
+                <li><strong>A postponed game</strong> sits under <strong>Needs a new date</strong> with <em>Was Sat, Jun 12 &middot; 10:00 a.m.</em> until you give it a new date. A game saved with no date at all says <strong>Date to come</strong>.</li>
+                <li>With no games, the page reads <em>No games scheduled yet.</em></li>
+              </ul>
+              <p>There is no publish step yet: a game is public the moment it is saved, and a change shows at once.</p>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-house-league-double-booked',
           question: 'Why is Create greyed out — the line under the diamond is red?',
           answer: (
-            <p>Another <strong>league</strong> game or practice holds that diamond at an overlapping time, and the red line under the field names it. Pick a different time or diamond, or move the other booking first. If the game genuinely shares the facility (say, two mini-games on one surface), record the second one with a typed venue instead of the picked diamond. An <strong>amber</strong> line is different: one of your club&apos;s rep teams or tournaments holds the diamond, and you can still save. A quiet <strong>grey</strong> line (&ldquo;Outside the club&rsquo;s permit for Diamond B&rdquo;) means the time falls outside the club&rsquo;s permit there; it never stops you saving, and the schedule generator says after saving how many games fall outside. Entering scores on an existing game is never blocked. Only changes to where or when it&apos;s played are checked.</p>
+            <p>Another <strong>league</strong> game or practice holds that diamond at an overlapping time, and the red line under the field names it. Pick a different time or diamond, or move the other booking first. If the game genuinely shares the facility (say, two mini-games on one surface), record the second one with a typed venue instead of the picked diamond. An <strong>amber</strong> line is different: one of your club&apos;s rep teams or tournaments holds the diamond, and you can still save. A quiet <strong>grey</strong> line (&ldquo;Outside the club&rsquo;s permit for Diamond B&rdquo;, or &ldquo;&hellip;: the permit ended Sep 30, 2026&rdquo;) means the time falls outside the club&apos;s permit there; it never stops you saving, and the generator&apos;s check warns about games outside the permit before you save. Entering scores on an existing game is never blocked. Only changes to where or when it&apos;s played are checked.</p>
           ),
-          answerText: 'A red line under the diamond means another league game or practice holds it at an overlapping time: pick a different time or diamond, or move the other booking. An amber line means one of your club’s rep teams or tournaments holds it, and the game still saves. A quiet grey line — “Outside the club’s permit for Diamond B” — means the time is outside the club’s permit there; it never blocks, and the generator says after saving how many games fall outside. Entering scores is never blocked — only changes to where or when a game is played are checked against double-bookings.',
-          keywords: ['double-booked', 'field already booked', 'diamond already booked', 'already booked', 'conflict', 'cannot save game', 'create greyed out', 'overlap', 'red line', 'amber line', 'rep team practice', 'clash', 'location', 'venue', 'grey line', 'permit', 'outside the permit'],
+          answerText: 'A red line under the diamond means another league game or practice holds it at an overlapping time: pick a different time or diamond, or move the other booking. An amber line means one of your club’s rep teams or tournaments holds it, and the game still saves. A quiet grey line — “Outside the club’s permit for Diamond B”, or “the permit ended Sep 30, 2026” — means the time is outside the club’s permit there; it never blocks, and the generator’s check warns about games outside the permit before you save. Entering scores is never blocked — only changes to where or when a game is played are checked against double-bookings.',
+          keywords: ['double-booked', 'field already booked', 'diamond already booked', 'already booked', 'conflict', 'cannot save game', 'create greyed out', 'overlap', 'red line', 'amber line', 'rep team practice', 'clash', 'location', 'venue', 'grey line', 'permit', 'outside the permit', 'permit ended'],
+        },
+        {
+          id: 'faq-house-league-cant-generate',
+          question: 'Why can’t I generate games — Generate games is missing, or says the club hasn’t given house league any time?',
+          answer: (
+            <p>On League Plus and Club, Generate games uses the time the club gave house league and nothing else, so with none given it can&apos;t build a schedule. An owner or an admin gives house league time in the club&apos;s <strong>Schedules</strong> (the window offers <strong>Give house league time</strong>); a league admin asks them, then divides it in <strong>House league&apos;s time</strong>. The menu item is absent, not greyed, when no division can be generated: every division with two or more teams already has games, or you aren&apos;t an owner, admin or league admin.</p>
+          ),
+          answerText: 'On League Plus and Club, Generate games uses the time the club gave house league and nothing else, so with none given it can’t build a schedule. An owner or an admin gives house league time in the club’s Schedules (Give house league time); a league admin asks them, then divides it in House league’s time. The menu item is absent when no division can be generated: every division with two or more teams already has games, or you aren’t an owner, admin or league admin.',
+          keywords: ['generate games missing', 'no generate button', 'cannot generate', 'the club hasn’t given house league any time', 'no game time', 'not given yet', 'give house league time', 'every division already has games'],
+        },
+        {
+          id: 'faq-house-league-game-disappeared',
+          question: 'A game left its week — where did it go, and do families hear about changes?',
+          answer: (
+            <p>A postponed game moves to <strong>Needs a new date</strong> (with an amber count) and shows <strong>Was</strong> its old day; open it and choose <strong>Give it a new date</strong>. Families aren&apos;t emailed by Generate, Save, Postpone or Cancel, and a saved game is on the public schedule at once, so use <strong>Email families</strong> to tell them.</p>
+          ),
+          answerText: 'A postponed game moves to Needs a new date (with an amber count) and shows Was its old day; open it and choose Give it a new date. Families aren’t emailed by Generate, Save, Postpone or Cancel, and a saved game is on the public schedule at once, so use Email families to tell them.',
+          keywords: ['game disappeared', 'postponed', 'needs a new date', 'give it a new date', 'reschedule a game', 'families emailed', 'notify families', 'cancel a game', 'put it back on'],
         },
       ],
     },
@@ -543,19 +676,20 @@ const houseLeagueHelp: HelpPageContent = {
       id: 'recipe-record-house-league-scores',
       group: 'How-to recipes',
       heading: 'How to record scores and read standings',
-      summary: 'Complete games, enter results, and understand the points-based standings.',
-      keywords: ['scores', 'standings', 'completed games', 'points', 'tiebreaker'],
-      searchText: 'record scores update standings completed games home score away score points win two tie one loss zero differential GF GA standings page tiebreaker',
+      summary: 'Open a played game, enter both scores, and understand the points-based standings.',
+      keywords: ['scores', 'standings', 'completed games', 'points', 'tiebreaker', 'final', 'correct a score'],
+      searchText: 'record scores update standings completed games played final home score away score both scores or neither points win two tie one loss zero differential GF GA standings page tiebreaker edit this game pencil correct a score score boxes',
       content: (
         <>
-          <p>Standings are based on completed games, so score entry and game status matter.</p>
+          <p>Standings are based on played games, so a game needs both scores.</p>
           <ol>
-            <li>Open the season schedule and click the game that has been played.</li>
-            <li>Set its status to <strong>Completed</strong> — the score fields appear.</li>
-            <li>Enter the home and away scores and save.</li>
+            <li>Open the season&apos;s <strong>Schedule</strong> and click the game that has been played.</li>
+            <li>Choose the pencil, <strong>Edit this game</strong>. Once a game&apos;s start time has passed, the two score boxes appear.</li>
+            <li>Enter the home and away scores and press <strong>✓</strong>. The game reads <strong>Final</strong> with its result.</li>
             <li>Open <strong>Standings</strong> (its own page, reached from the division) to see the updated table.</li>
           </ol>
-          <p>Standings rank teams by <strong>points</strong> — a win is worth 2, a tie 1, and a loss 0. Ties in points are broken by score differential, then by total scored (the GF/GA columns). If standings look wrong, check for games still scheduled, postponed, or missing scores — only completed games count.</p>
+          <p>Enter both scores or neither. A single score is held with <em>Enter both scores, or neither.</em> To correct a result, edit the game and change the numbers; clearing both puts the game back to scheduled. A game that hasn&apos;t started has no score boxes.</p>
+          <p>Standings rank teams by <strong>points</strong> — a win is worth 2, a tie 1, and a loss 0. Ties in points are broken by score differential, then by total scored (the GF/GA columns). If standings look wrong, check for games still scheduled, postponed, or missing scores — only played games count.</p>
         </>
       ),
     },
