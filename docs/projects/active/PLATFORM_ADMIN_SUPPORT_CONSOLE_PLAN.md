@@ -858,8 +858,71 @@ The build prompt's §6 run against the code (five read-only censuses, the cited 
       untouched for walk A; a one-day give on a scratch coach is the way to see it end).
     - **Resume at Part 5** (the coach's Plan & billing states, the free Overview's day-after band), then Part 6 (Keep
       Premium, with `/billing`).
-  - **For `/strategy` at hand-off:** `PLAN_PRICING_FACTS.md` line 124 ("A Coaches Portal gets none yet") goes stale with 4b; the
-    naming canon still ratifies "Basic Coaches Portal" for the free tier while the product says "free Coaches Portal".
+  - **Parts 5 + 6 BUILT 2026-10-28 (not committed; owner OK owed).**
+    - **Part 5 · the coach's screens.** Pure state + words in `lib/portal-free-time.ts` (`portalCustomerFreeTime`:
+      running / ending (last 14 days) / ended (30 days), from the portal's newest billing-status grant;
+      `portalFreeTimeCopy`: the gate's copy table 1–7 verbatim; `KEEP_PREMIUM_LINE`, `PORTAL_FREE_TIME_HOSTING_LINE`,
+      `PREMIUM_WORK_SAVED_LINE`). Server reads in `lib/portal-free-time-server.ts` (`customerPortalFreeTime`,
+      `savedFreeTimePortalOfTeam`; only a staff-given portal still `platform_override`; the grant's select is
+      `starts_at, expires_at, revoked_at` only, T24). `/api/admin/org/free-time` answers a team workspace with `portal`
+      alone. Plan & billing (`app/[orgSlug]/admin/org/billing/page.tsx`): price line → "Free through…" + sub line;
+      tagline without its hosting clause; meta line ends with the hosting line; the band; Billing card "No billing
+      action needed…"; Payment method & invoices, Cancel Premium and Tournament slots not rendered; Keep Premium card
+      (owner only, lime, 44px, full width on a phone); Join a club outlined. Free Overview: the day-after band above
+      "Your tournament" (reuses the Stage 4 band), and the Scope shelf's added line while the portal is saved.
+    - **Part 6 · Keep Premium.** `lib/portal-keep-premium.ts`: `findKeepPremiumPortal` (the coach's staff-given portal,
+      named by the checkout: the billing page's slug or the free team's id; never a tournament claim) and
+      `convertFreeTimePortal` (compare-and-set the billing mode `platform_override` → `team_direct` with the Stripe
+      ids; then the organization's stored ended state cleared; then a running grant revoked with a `revoke_override`
+      audit entry `{ portal, subscribed }`; LAST the entitlement → `team_plan`, `ends_at` null; then a `keep_premium`
+      audit entry + `subscription_started` event on the fresh claim only). A repeat delivery of the same subscription is
+      taken again only while an end is still on the entitlement, so a stop halfway is repaired and later Stripe events
+      take the ordinary path. Wired into `provisionTeamWorkspaceFromCheckoutMetadata` BEFORE the owner-live guard, the
+      reactivation and the fresh provision; the checkout route lets the coach's own free-time portal through
+      (`existingPortal.workspaceOrgId !== keepPortal?.orgId`) and never takes the Founding comp path for it. The start
+      page reads "Keep Premium" + the reviewed line (`&keep=1`). Story: "Free time ended: the coach chose Premium",
+      never Put it back.
+    - **Guards:** new `tests/unit/support-console-stage4b-coach-guard.test.ts` (25); the T15 import scan now covers
+      `lib/portal-keep-premium.ts`; census allowlist +1 (a writer's repair check, not a liveness read); door guard +1
+      (`portal`); the account-first pin follows the Founding line. 497 related tests pass; typecheck clean (the only
+      errors are another session's `league-game-generator` test); lint clean on changed files; spelling clean. Dev
+      probe `.probe/pasc/s4b-coach-reads.mjs` (read-only): every new select chain runs; dev has **0** staff-given
+      portals, so the screens were NOT rendered live.
+    - **Builder's calls (show the owner at the walk):** (1) Plan & billing after the end (not drawn): the plan card
+      without a price, the chip "Free time ended", the ended band (copy 6, one wording), and Keep Premium under the
+      same name; never "cancelled", retention or Reactivate. (2) Keep Premium rides the reactivation route with
+      `keep=1`; the start page says "Keep Premium" + line 5. (3) A coach whose free time runs and who starts a checkout
+      for a DIFFERENT team (not named) is still refused as "already has a Coaches Portal". (4) Reminders to families
+      stay off after Keep Premium (the coach turns them on). (5) The Story entry is kind `billing`, "who" the coach.
+    - **Owner / `/billing` asks:** (a) the Keep Premium checkout still adds the plan's ordinary Stripe trial on top of
+      free time (gate step 5 said "nothing else changes", so it was not touched) — keep or drop? (b) a stop between the
+      entitlement write and the `keep_premium` audit entry leaves the Story's "chose Premium" entry but no
+      `keep_premium` audit row (named residual).
+    - **Not proven live:** pay-before-end, pay-after-end, cancel-then-resubscribe (guard 11) are proven by source and
+      order only; prove them in walk C on a scratch coach with the mock checkout.
+    - **Walks WRITTEN 2026-10-28 (owed to the owner):** §414 A give + end by itself
+      https://claude.ai/artifact/25n21n9VmtFMMZ6ysWGuJJ · §415 B refusals https://claude.ai/artifact/3TErAyK1Zv7s1UfQGCajkH
+      · §416 C Keep Premium https://claude.ai/artifact/G6iXm9QvjKSKN88eNms2xb (sources `…_STAGE4B_WALK_{A,B,C}.html`;
+      §408–§413 belong to house league). Found while writing, for `/review`: **a Super admin can delete a portal on free
+      time** (`orgs/[id]/delete` refuses only a live Stripe subscription); the staff Cancel door is hidden on a free-time
+      portal so its refusal is never seen; Stage 4's amber line cannot render on a portal record (`freeTime` passed null);
+      12 kinds of absent-door line, not nine. Owner call 1 restated: Premium has NO trial (code + Facts + dev overrides),
+      so the real question is whether the first charge waits until the day after the last free day (recommended B).
+    - **Resume:** walks A/B/C (`/design` first, checkable Artifacts, matching ledger §s), records (PM brief, TODO,
+      `PROGRAM_BILLING_AND_ENTITLEMENTS.md`, design_decisions for the builder's calls), `/docs`, `/simplify` → `/review`,
+      `/billing` drift check, `/strategy`, the index `stages/s4b`, a dev-server restart (new file), then the commit.
+  - **The ending reminders, BUILT 2026-10-28 on the owner's word ("go with b"; reverses Q7's "no email"):** the Overview
+    band for the last 14 days and two emails to the portal's owner at 14 and 3 days (`lib/portal-free-time-reminders.ts`,
+    daily job `portal-free-time-daily`, mig 407 columns, mig 408 schedule; logged kind "Free time ending"). `/simplify` +
+    `/review` ran the same day. Fixed in review: a send that threw left the stamp unreleased; the 14-day email first
+    fired at 13 days left; the claim ignored a Keep Premium that landed first; the release could undo a newer stamp; the
+    checkout could add a Stripe trial for a keep portal; the `keep_premium` audit entry had no reason and the daily job's
+    audit row read "Not recorded". **Open for the owner:** portal delete while free time runs; who sees the Overview Keep
+    button (head coach versus the portal's owner); Keep Premium after the 30-day window; the Stripe webhook gaps Keep
+    Premium reaches (a second subscription left live, `past_due` not synced, conversion on an incomplete status).
+    Prod: mig 407, then 408 once the code is serving.
+  - **`/strategy`, done 2026-10-28:** logged in `BUSINESS_DECISIONS.md`; `PLAN_PRICING_FACTS.md` line 124 updated. The naming
+    canon still ratifies "Basic Coaches Portal" for the free tier while the product says "free Coaches Portal".
 
 ## Stage 3 build gate (2026-10-26)
 

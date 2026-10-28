@@ -121,7 +121,10 @@ or gate value moved.**) Before that, 2026-10-16 (**the invite-only event BUILT**
   Club, Club · Association), sections, or a billing status, free through a last free day (Super admin up to 12 months,
   Billing up to 6). The club is treated as on that plan until the day, then on its own plan, automatically. It is **not an
   offer**: never advertised, never on a pricing surface, never revenue. Every billing action reads the plan the club pays
-  for. A Coaches Portal gets none yet. Customers read only "Free through {day}". No price, name, band, SKU or gate value moved.
+  for. A Coaches Portal can be given Premium free time the same way (Support console Stage 4b, **built on dev, not
+  released**; `BUSINESS_DECISIONS.md` 2026-10-28): the coach is told before it ends (a band on the Overview and emails at
+  14 and 3 days) and can Keep Premium on the same portal, with no trial on top. Customers read only "Free through {day}". No
+  price, name, band, SKU or gate value moved.
 - **Club Shared Book = Club only** (Decided 2026-08-04, `BUSINESS_DECISIONS.md`; **BUILT on dev 2026-08-05**). A club's teams can opt in to read each other's opponent scouting books — book line, observations, and each team's own record against a shared opponent, labelled by team and writer, read-only across team lines. Gated by the feature key **`club_shared_book` → `club`** (so Club and Club · Association; League Plus and below get nothing). **Explicitly excluded from the standalone Premium Coaches Portal (`team`)**: the feature's value is a club with several teams, and the ruling is **absent, not upsold** — a single-team customer sees no switch, no layer and no locked tease anywhere in the app. **No new SKU, no price change, no per-team fee, no capacity implication.** Two opt-ins guard it: the club admin enables it for the org, then each head coach opts their own team in, and a team reads the club's books only while sharing its own.
 
 ## Email / communications split (ratified 2026-06-22; table corrected to the product 2026-10-16)

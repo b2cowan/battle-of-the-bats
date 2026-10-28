@@ -8,6 +8,45 @@
 
 ---
 
+### 2026-10-28 — Free time that staff gave a Coaches Portal is told to the coach BEFORE it ends (the band and two emails); this reverses "no email"; Keep Premium buys on the same portal, with no trial on top
+**Status:** **Decided** (owner, 2026-10-28, "go with b": the Overview band AND the email reminders). **Built on dev, uncommitted
+when logged; walks owed; not released.** Plan: `PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md` (Stage 4b, Parts 5 + 6 and the
+reminders).
+**Decision:**
+1. **The coach is told before the end, in two places.** In the last 14 days of free time staff gave a Coaches Portal, the
+   Premium Overview shows an amber band (the head coach also gets an outlined Keep Premium button), and the portal's owner
+   gets **one email 14 days and one 3 days before the last free day**, each sent once per end by a daily job. Moving the end
+   re-arms both. Nothing is sent to a portal that already pays, to a Founding or comped portal (those cannot be given free
+   time), to a demo coach, or to anyone but the portal's owner.
+2. **This reverses Stage 4b's Q7, "in the product only, no email".**
+3. **The words:** the day is the last free day, "runs through" it, never "ends on". No price, nothing is deleted, and the
+   coach is never told who gave the time or why.
+4. **Keep Premium attaches the purchase to the SAME portal** (before or after the last free day), so the coach ends on one
+   portal with everything they made. Buying ends any free days still left (they do not carry over: the copy table's
+   D-2/D-5 words, built that way). It never takes the Founding path. **No Stripe trial is added on top of free time**
+   (applied in the 2026-10-28 review: the coach already had Premium free, so a trial would only push the first charge out).
+**Rationale:** a coach who loses track of the date must not find out afterwards. The ending is the one moment free time
+costs the customer something, and an unannounced ending reads as a trap, not a gift. The cost is two short emails a year
+per given portal. The reminders add no price, plan or gate.
+**Affects:** the coach's Overview and Plan & billing screens · the owner's email (new logged kind "Free time ending") · a
+new daily job (migration 408; production still needs migration 407 first) · the staff-side Story and audit log. No price,
+plan or gate change: `PLAN_PRICING_FACTS.md` untouched.
+**Open, not decided here (owner rulings still to make):** whether a Super admin may delete a portal while free time is
+running; who sees the Overview Keep Premium button (head coach versus the portal's owner); whether Keep Premium should
+outlive the 30 days after the end.
+**Handoff:**
+```
+HANDOFF → /docs: the coach's help for the Overview band and the two emails; staff help for the daily job and the Story.
+HANDOFF → /marketing + /billing: read the two emails' copy (subject, lead, body, button) in lib/portal-free-time.ts
+  (portalEndingEmailWords) against the brand voice and the no-price, no-"lose" rule; /billing confirms Keep Premium's
+  no-trial checkout.
+HANDOFF → /plan: nothing new; the plan's Stage 4b record carries the build. Walks and the production steps (mig 407, then
+  408 after the code is serving) are the owner's.
+```
+**Supersedes:** Stage 4b Q7 ("in the product only, no email"; plan record, not a log entry).
+
+---
+
 ### 2026-10-27 — A card from outside the club's country: the club is billed Stripe's extra cost, never the family; comped clubs get their own invoice for Stripe fees
 **Status:** **Decided** (owner, 2026-10-27, Club Tier Stage 12d, round 3). **Decided, not built**: the 12d-1 build carries
 it. Online payments stay off in production until counsel signs off.
