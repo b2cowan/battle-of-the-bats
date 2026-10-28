@@ -85,7 +85,31 @@
     the send writes rows and sends nothing yet); no runtime probe of the new routes yet (Part 7's e2e).
   - ⚠ The help (`lib/help-content/house-league.tsx` ~565, ~585, ~587, ~668) still says "Families aren't emailed" and "a
     saved game is on the public schedule at once" — `/docs` in Part 7 rewrites it.
-- **▶ NEXT: Part 4 (the emails and the history), in a FRESH session.** Then Parts 5–7.
+- **Part 4 — COMMITTED `670b00682` 2026-10-28.** **Mig 410** (dev only, MANUAL_PROD_STEPS pending, after 409): the
+  family rows gain `sending` + `skipped` and `league_schedule_emails_claim` (the mig 378 pattern). `lib/league-schedule-mail.ts`
+  `sendScheduleNotice` (claim → build each family's email at send time → `sendFamilyServiceBatch` kinds
+  `house_league_schedule_published` / `house_league_games_changed` → outcome → recount; never throws) and
+  `sendChangesAndTell` (wraps `sendHeldChanges`; Changes to send AND f5 go through it). Pure words in
+  `lib/league-schedule-email.ts` + `SCHEDULE_EMAIL_WORDS` / `SCHEDULE_NOTICE_WORDS` / `reachedLine`; template
+  `leagueScheduleNoticeHtml`. ⚖ A "games changed" email is read from the rows the send STAMPED (`notice_id`), so a
+  resend says what was sent; a game played since is left out. ⚖ `failed_count` = every family still to reach (failed
+  or never tried) = what "Send to the N it missed" can send; `skipped` (nothing left to say, and every row on dev — no
+  key) is neither reached nor missed. Coaches copied on a change's FIRST send only; Publish copies nobody. History:
+  two new Automatic rows, stopped → `resendNotice` on the season emails route. Previews: "See the email" (e2) and "See
+  their email" (f2) via SendParts' MailView level (Publish's question is drawn as a form only while the email shows —
+  only a form has the named back; **ask at the walk**). The division line's partial links "See them" to the season's
+  history (`/seasons/{id}/notifications`). Dev e2e `.probe/9d2b-p4/e2e.ts` passed (run:
+  `npx --yes tsx@4.19.2 --env-file=.env.local --require ./.probe/9d2b-p4/stub.cjs .probe/9d2b-p4/e2e.ts`). Also fixed:
+  `team-move-coverage` now names Part 1's two tables.
+  - **No bell in Part 4, said out loud:** 9d2·13's bell is the club's Send telling league admins their time moved
+    (Part 5, the 11b bell); no ruling or settled word sends a bell on a league admin's own publish or send.
+  - Build calls for the walk: a moved game is one email item with Now / Was on their own lines; Postponed-then-given-a-
+    date in one send reads as a move (families never heard it was postponed); a partly-reached f5 says
+    "Reached 19 of 21 families · 2 didn't send." + the others-waiting sentence (build word `sentNowPartly`).
+  - Known, not mine: `check:schema-parity` lists 409/410 as dev-only until prod applies them (a gate baseline — not
+    re-baselined); the committed tree's 2 type errors are support-console 4b's (`portal-free-time-give.ts`).
+- **▶ NEXT: Part 5 (the coach's page g3 + the owner moving time, 9d2·13 / 9d2·16), in a FRESH session.** Then 6–7.
+  The dev server needs a restart before any browser check (new files + mig 410).
 - Part 3's list, as it was handed over (all done in `b508c95e9`):
   (1) `gameWindowDoors(status, published)`: Delete only before, Cancel only after; DELETE route refuses a published
   division's game. (2) PATCH stale-window refusal: the body carries `seen: {status, updatedAt}`; update with
