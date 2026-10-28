@@ -362,8 +362,21 @@ export interface GenerateCheckReply {
   warnings: GenerateWarning[];
   /** The planned games' Schedule health (lib/league-schedule-health.ts), or null when blocked. */
   health: number | null;
-  /** The slots the games sit on: Save sends them back, and refuses when the game time changed under the check. */
-  slotIds: string[];
+  /** What the check showed, as one short key (`planFingerprint`): Save sends it back and refuses when the plan it re-works is not that one. */
+  fingerprint: string;
+}
+
+/**
+ * A plan as one short key — each game's slot, teams and time, in order — so Save can tell whether the plan it re-works is the one
+ * the check showed. The slots alone would miss a team renamed, added or removed (the pairings shift) or a slot moved under the
+ * same id. Not a secret: a stale-screen guard, so a plain 32-bit hash is enough.
+ */
+export function planFingerprint(games: readonly Pick<PlannedGame, 'slotId' | 'homeTeamId' | 'awayTeamId' | 'scheduledAt' | 'endsAt'>[]): string {
+  let h = 0x811c9dc5;
+  for (const ch of games.map(g => `${g.slotId}|${g.homeTeamId}|${g.awayTeamId}|${g.scheduledAt}|${g.endsAt}`).join(';')) {
+    h = Math.imul(h ^ ch.charCodeAt(0), 0x01000193) >>> 0;
+  }
+  return `${games.length}-${h.toString(16)}`;
 }
 
 /** Save's answer (`step: 'save'`): the count, and the permit's lines for the games outside it (the shipped after-save). */

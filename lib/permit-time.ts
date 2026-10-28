@@ -164,8 +164,9 @@ const sameCover = (a: PermitCover, b: PermitCover) =>
  * facility (every facility counts; with no facility set, any block at the venue counts), on that weekday, inside the
  * block's dates, the day not a date off — whose window holds the booking's WHOLE time. Inside any one permit is inside.
  * OUTSIDE when the club holds a permit at that venue covering that day and none of that holds (a date off is outside,
- * and says so). ENDED (owner 2026-10-27, 9d2a·H — every surface, one rule) when every permit the club held at that venue
- * had ended by that day: outside, and the line says when the last one ended. NONE when the club holds no permit at that
+ * and says so). ENDED (owner 2026-10-27, 9d2a·H — every surface, one rule) when no permit holds that day and some permit the club held
+ * at that venue had ended before it: outside, and the line says when the last one ended (a permit starting LATER does not
+ * undo that: a booking in the gap between two seasons' permits is outside both). NONE when the club holds no permit at that
  * venue that day and none ended before it (only later ones, or none at all) — the line says nothing, and so does a
  * booking on a place that isn't one of the club's venues.
  */

@@ -162,7 +162,7 @@ export default function GenerateGamesWindow({
     if (!check) return;
     setBusy(true);
     setError(null);
-    const { ok, data } = await readReply<GenerateSaveReply>(await post({ step: 'save', through, slotIds: check.slotIds }));
+    const { ok, data } = await readReply<GenerateSaveReply>(await post({ step: 'save', through, fingerprint: check.fingerprint }));
     setBusy(false);
     if (ok && data) {
       onSaved(W.saved(data.saved), permitAfterSave(data.permitLines, 'game'));

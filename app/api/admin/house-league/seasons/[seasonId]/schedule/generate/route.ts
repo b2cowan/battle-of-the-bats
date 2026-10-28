@@ -10,7 +10,7 @@ import { withObservability } from '@/lib/observability';
 import { zonedWallClockToUtc } from '@/lib/timezone';
 import { clashReportForLeagueRows } from '@/lib/venue-clash-lookup';
 import { clubSchedulerOn } from '@/lib/club-schedule-gate';
-import { GENERATE_WORDS as W, planGames, summaryOf, type GeneratePlanReply, type GenerateSaveReply } from '@/lib/league-game-generator';
+import { GENERATE_WORDS as W, planFingerprint, planGames, summaryOf, type GeneratePlanReply, type GenerateSaveReply } from '@/lib/league-game-generator';
 import {
   checkGeneratedGames, divisionGameTime, divisionHasGames, insertGeneratedGames, slotMinutesOf,
 } from '@/lib/league-generate-server';
@@ -55,9 +55,8 @@ async function fromClubTime(orgId: string, season: LeagueSeason, body: Record<st
   if (step === 'check') return NextResponse.json(await checkGeneratedGames({ orgId, season, divisionId, teams, slots, plan }));
 
   if (plan.block) return NextResponse.json({ code: 'blocked', error: W.changed(division.name) }, { status: 409 });
-  const shown = Array.isArray(body?.slotIds) ? new Set((body.slotIds as unknown[]).filter((x): x is string => typeof x === 'string')) : null;
-  const now = plan.games.map(g => g.slotId);
-  if (!shown || shown.size !== now.length || now.some(id => !shown.has(id))) {
+  // The plan Save re-works must be the one the check showed: same slots, same pairings, same times.
+  if (body?.fingerprint !== planFingerprint(plan.games)) {
     return NextResponse.json({ code: 'changed', error: W.changed(division.name) }, { status: 409 });
   }
   // The writer runs the cross-program check on what it wrote; its permit lines are the shipped after-save (Stage 10a).

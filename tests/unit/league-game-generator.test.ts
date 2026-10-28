@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  GENERATE_WORDS as W, matchupHints, planGames, primeTimeWords, roundRobinRounds, spanWords, summaryOf, warningWords,
+  GENERATE_WORDS as W, matchupHints, planGames, primeTimeWords, planFingerprint, roundRobinRounds, spanWords, summaryOf, warningWords,
   type GameTeam, type GameTimeSlot,
 } from '../../lib/league-game-generator.ts';
 
@@ -237,7 +237,7 @@ describe('the window says the plan (step 5, the copy file "Stage 9d-2a" c)', () 
 
   it('says each warning in the generator\'s sentence', () => {
     const team = (id: string) => ({ t01: 'Cardinals', t02: 'Rays' } as Record<string, string>)[id] ?? '';
-        assert.equal(warningWords({ kind: 'twice_in_a_day', teamId: 't01', day: '2027-06-17' }, 'U12', team), 'Cardinals plays twice on Thu, Jun 17.');
+    assert.equal(warningWords({ kind: 'twice_in_a_day', teamId: 't01', day: '2027-06-17' }, 'U12', team), 'Cardinals plays twice on Thu, Jun 17.');
     assert.equal(warningWords({ kind: 'byes_back_to_back', teamId: 't02', weeks: ['2027-06-07', '2027-06-14'] }, 'U12', team),
       'Rays has a bye two weeks running, Jun 7 and Jun 14.');
     assert.equal(warningWords({ kind: 'permit', venue: 'Maple Grove Park', line: '', permitId: null }, 'U12', team),
@@ -245,5 +245,17 @@ describe('the window says the plan (step 5, the copy file "Stage 9d-2a" c)', () 
     assert.equal(warningWords({ kind: 'booking', place: 'Diamond 1', other: 'a Spring Classic game, Sat, Jun 12, 10:00–11:30 a.m.' }, 'U12', team),
       'U12’s game time overlaps a booking at Diamond 1: a Spring Classic game, Sat, Jun 12, 10:00–11:30 a.m.');
     assert.equal(W.warnTitle(45, 1), '45 games, with 1 thing to look at');
+  });
+});
+
+describe('the plan fingerprint (review 2026-10-28: Save refuses a plan that is not the one the check showed)', () => {
+  const game = (slotId: string, homeTeamId: string, awayTeamId: string) => ({ slotId, homeTeamId, awayTeamId, scheduledAt: '2027-06-01T22:00:00.000Z', endsAt: '2027-06-01T23:30:00.000Z' });
+  it('is the same for the same plan, and changes with a pairing, a slot, a time or a home/away swap', () => {
+    const plan = [game('s1', 'a', 'b'), game('s2', 'c', 'd')];
+    assert.equal(planFingerprint(plan), planFingerprint([game('s1', 'a', 'b'), game('s2', 'c', 'd')]));
+    assert.notEqual(planFingerprint(plan), planFingerprint([game('s1', 'a', 'c'), game('s2', 'b', 'd')]), 'same slots, other pairings');
+    assert.notEqual(planFingerprint(plan), planFingerprint([game('s1', 'b', 'a'), game('s2', 'c', 'd')]), 'home and away swapped');
+    assert.notEqual(planFingerprint(plan), planFingerprint([game('s1', 'a', 'b'), game('s3', 'c', 'd')]), 'another slot');
+    assert.notEqual(planFingerprint(plan), planFingerprint([{ ...plan[0], scheduledAt: '2027-06-02T22:00:00.000Z' }, plan[1]]), 'the slot moved under the same id');
   });
 });

@@ -62,14 +62,20 @@ export const GET = withObservability(async (req: Request,
     q = q.gte('scheduled_at', start.toISOString()).lt('scheduled_at', end.toISOString());
   }
 
-  const [{ data, error }, gameSlots] = await Promise.all([q, seasonGameSlots(ctx!.org.id, seasonId)]);
+  // The season's game time and each game's permit line are for someone who runs the season (the window shows "Time from" and
+  // "See the permit" to them alone), so a reader is sent neither. The game time is decoration on the read: a failed read of
+  // it leaves the schedule loading, as a failed permit read does.
+  const runs = !houseLeagueRefusal(ctx, 'run', season);
+  const [{ data, error }, gameSlots] = await Promise.all([
+    q, runs ? seasonGameSlots(ctx!.org.id, seasonId).catch(() => []) : Promise.resolve([]),
+  ]);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   const games = (data ?? []).map(mapGame);
 
   // The permit's quiet line on each game (9d-2a step 7, frame i), by booking key — only for someone who runs the season:
   // "A reader doesn't see the line", and only they get "See the permit". A failed read says nothing, as every check does.
   let permits: Record<string, PermitOutside> = {};
-  if (!houseLeagueRefusal(ctx, 'run', season)) {
+  if (runs) {
     const placed = games.map(g => bookingOfLeagueRow(g, 'game', season.name)).filter((b): b is ClubBooking => !!b);
     permits = Object.fromEntries(await checkClubPermitsQuietly(ctx!.org.id, placed));
   }

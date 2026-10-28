@@ -17,6 +17,12 @@ export function SeePermitDoor({ permitId, onOpen }: { permitId: string | null | 
   return <button type="button" className={ck.link} onClick={() => onOpen(permitId)}>{PERMIT_WORDS.seeThePermit}</button>;
 }
 
+/** The one permit a line is about: every date outside a permit names the same one, else none (never a guess). */
+const theOnePermit = (permits: readonly (PermitOutside | null)[]) => {
+  const ids = new Set(permits.filter((p): p is PermitOutside => !!p).map(p => p.permitId ?? null));
+  return ids.size === 1 ? [...ids][0] : null;
+};
+
 /** One live-check answer per date (`/venue-check`). */
 interface LeagueCheckResult {
   date: string;
@@ -110,7 +116,7 @@ export function useLeagueLine(opts: {
         {refusal && <WhereLine tone="refuse" lead={refusal.lead} rest={refusal.rest} />}
         {cross && <WhereLine tone={cross.tone} lead={cross.lead} rest={cross.rest} />}
         {outside && <WhereLine tone="quiet" mark="clock" rest={outside}
-          door={<SeePermitDoor permitId={permits.find(Boolean)?.permitId} onOpen={onSeePermit} />} />}
+          door={<SeePermitDoor permitId={theOnePermit(permits)} onOpen={onSeePermit} />} />}
       </>
     ) : null,
     checking,

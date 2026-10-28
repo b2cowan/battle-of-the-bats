@@ -133,14 +133,20 @@ export default function GameWindow({ game, booking, divisionId, divisionName, te
 
   // The league's line under Venue (Club Tier Stage 6a), checked only while the form is open: a postponed game given a new
   // date holds a slot again, so it is checked as one.
+  // Asked only of a booking that is being placed or moved: a score or a note on a game that already shares its place is
+  // recorded, not moved, so an old clash never holds the ✓ (the route skips its own re-check the same way).
+  const placing = creating || mode === 'redate' || draft.date !== seed.date || draft.time !== seed.time || draft.endTime !== seed.endTime
+    || JSON.stringify(draft.where) !== JSON.stringify(seed.where);
   const { refused, line, checking, lineIsCurrent } = useLeagueLine({
     checkPath, sport, where: draft.where, venues, kind: 'game',
-    occurrence: editing ? { date: draft.date, startTime: draft.time, endTime: draft.endTime } : null,
+    occurrence: editing && placing ? { date: draft.date, startTime: draft.time, endTime: draft.endTime } : null,
     excludeGameId: game?.id ?? null,
     onSeePermit,
   });
+  /** A re-date has to be given a date and a time: a game put back on with neither is still waiting for one. */
+  const undated = mode === 'redate' && (!draft.date || !draft.time);
   /** The ✓ waits while the line is refused or still being checked, or while a started game is missing a score. */
-  const blocked = refused || checking || !!held;
+  const blocked = refused || checking || !!held || undated;
 
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => { setDraft(d => ({ ...d, [k]: v })); setError(null); };
   const openForm = (next: 'edit' | 'redate') => {

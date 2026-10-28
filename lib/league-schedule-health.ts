@@ -207,7 +207,11 @@ export function buildLeagueScheduleHealth(input: {
     const both = [g.homeTeamId, g.awayTeamId].filter(t => short(t) && !explained.has(t));
     if (!both.length) continue;
     both.forEach(t => explained.add(t));
-    issues.push({ kind: 'short', teamIds: both, have: have.get(both[0])!, plan: plan.get(both[0])!, cancelled: { gameId: g.id, day: g.scheduledAt ? orgDayKey(g.scheduledAt) : '' } });
+    // The issue says ONE count for its teams, so two teams short by different amounts are two issues, each naming the game.
+    for (const haveN of new Set(both.map(t => have.get(t)!))) {
+      const teamIds = both.filter(t => have.get(t) === haveN);
+      issues.push({ kind: 'short', teamIds, have: haveN, plan: plan.get(teamIds[0])!, cancelled: { gameId: g.id, day: g.scheduledAt ? orgDayKey(g.scheduledAt) : '' } });
+    }
   }
   for (const t of teams) {
     if (!short(t.id) || explained.has(t.id)) continue;
@@ -234,7 +238,7 @@ export function buildLeagueScheduleHealth(input: {
       if (slotA && slotA === slotB) continue;
       clashes.push({
         kind: 'clash', keys: [pageKey(b), pageKey(c.partner)], venueId: b.orgVenueId ?? '', facilityId: b.orgVenueFacilityId ?? null,
-        day: orgDayKey(b.startsAt!), startMs: Math.max(Date.parse(b.startsAt!), Date.parse(c.partner.startsAt!)),
+        day: orgDayKey(new Date(Math.max(Date.parse(b.startsAt!), Date.parse(c.partner.startsAt!))).toISOString()), startMs: Math.max(Date.parse(b.startsAt!), Date.parse(c.partner.startsAt!)),
       });
     }
   }

@@ -13,7 +13,7 @@ import { dayWords } from './calendar-recipe';
 import { houseLeagueSlotRows, usesOf } from './league-time-server';
 import { buildLeagueScheduleHealth, leagueHealthPracticeFromRow } from './league-schedule-health';
 import {
-  summaryOf,
+  planFingerprint, summaryOf,
   type CheckedGame, type GamePlan, type GameTeam, type GameTimeSlot, type GenerateCheckReply, type GenerateSaveReply, type GenerateWarning,
 } from './league-game-generator';
 import type { LeagueSeason } from './types';
@@ -83,7 +83,7 @@ export async function checkGeneratedGames(p: {
 }): Promise<GenerateCheckReply> {
   const { plan } = p;
   const summary = summaryOf(plan);
-  if (plan.block) return { plan: summary, games: [], warnings: [], health: null, slotIds: [] };
+  if (plan.block) return { plan: summary, games: [], warnings: [], health: null, fingerprint: '' };
 
   const slotOf = new Map(p.slots.map(s => [s.id, s]));
   const rows = proposedRows(plan, slotOf);
@@ -149,7 +149,7 @@ export async function checkGeneratedGames(p: {
     practices: practices.map(leagueHealthPracticeFromRow),
     teams: p.teams.map(t => ({ id: t.id, name: t.name, divisionId: p.divisionId })),
   });
-  return { plan: summary, games, warnings, health: health.score, slotIds: plan.games.map(g => g.slotId) };
+  return { plan: summary, games, warnings, health: health.score, fingerprint: planFingerprint(plan.games) };
 }
 
 /**

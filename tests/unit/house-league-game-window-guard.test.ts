@@ -100,12 +100,31 @@ describe('4. the save sends only what changed, and a score is both or neither', 
   });
 });
 
+describe('6. the ✓ (review 2026-10-28)', () => {
+  it('a score or a note on a game that already shares its place is recorded, not moved: the live clash line is asked only of a booking being placed', () => {
+    const w = readCode(WINDOW);
+    assert.match(w, /const placing = creating \|\| mode === 'redate'/);
+    assert.match(w, /occurrence: editing && placing \? \{/);
+  });
+  it('a re-date is held until it has a date and a time', () => {
+    const w = readCode(WINDOW);
+    assert.match(w, /const undated = mode === 'redate' && \(!draft\.date \|\| !draft\.time\);/);
+    assert.match(w, /const blocked = refused \|\| checking \|\| !!held \|\| undated;/);
+  });
+});
+
 describe('5. the permit line and "See the permit" (9d-2a step 7, frames b4, c3, i)', () => {
   const SCHEDULE_ROUTE = 'app/api/admin/house-league/seasons/[seasonId]/schedule/route.ts';
   it('the season read carries a permit answer only for someone who runs the season ("A reader doesn\'t see the line")', () => {
     const get = readCode(SCHEDULE_ROUTE);
     const body = get.slice(get.indexOf('export const GET'), get.indexOf('export const POST'));
-    assert.match(body, /if \(!houseLeagueRefusal\(ctx, 'run', season\)\) \{[\s\S]*checkClubPermitsQuietly\(/);
+    assert.match(body, /const runs = !houseLeagueRefusal\(ctx, 'run', season\);/);
+    assert.match(body, /if \(runs\) \{[\s\S]*checkClubPermitsQuietly\(/);
+  });
+  it('the season\'s game time goes to someone who runs the season too, and a failed read of it never fails the schedule (review 2026-10-28)', () => {
+    const get = readCode(SCHEDULE_ROUTE);
+    const body = get.slice(get.indexOf('export const GET'), get.indexOf('export const POST'));
+    assert.match(body, /runs \? seasonGameSlots\(ctx!\.org\.id, seasonId\)\.catch\(\(\) => \[\]\) : Promise\.resolve\(\[\]\)/);
   });
   it('the record says the line from the season read, for whoever runs it, with the door', () => {
     const w = readCode(WINDOW);
