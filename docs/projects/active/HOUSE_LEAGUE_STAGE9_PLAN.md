@@ -894,3 +894,41 @@ open it, and the menu's top level is Stage 13's.
   styles deleted and the old-look / lettering baselines lowered. The three reads probed on UAT Rep Club as a league admin
   and a registrar (200; a foreign team still 404). **Not run:** `check:layout --changed` widened itself to every screen
   (shared calendar parts touched) — a whole-product sweep, which runs on staging, never the dev server (owner 2026-10-13).
+- **2026-10-27 — 9d-2a STEP 4 BUILT (the game window, b4).** The page's Edit Game form is gone; every game opens one
+  window, read first (`components/admin/kit/club/league/schedule/GameWindow.tsx`, on `KitDialog`): eyebrow "{Division} ·
+  a game", title "{Home} vs {Away}", the state under it ("Final 7–4", "Cancelled", "Needs a new date"), then When · Where
+  · Home · Away · Time from · Notes. A reader (the registrar; anyone on a finished season) gets the facts and nothing else.
+  Whoever runs the season gets the pencil (a game that's on or played) and the doors at the end of the body
+  (`gameWindowDoors`): on → Postpone this game · Cancel this game; postponed → Give it a new date · Cancel this game;
+  cancelled → Put it back on (9d2a·E, said "Put back on the schedule."); Delete this game on every state. Postpone, Cancel
+  and Delete ask first as a level in the window, "Keep it" against the act, with the copy file's sentences ("Families
+  aren't emailed.", 9d2a·F). **Argued, five calls:**
+  1. **✓ saves; nothing saves as you type.** Until 9d-2b every saved game is on the public schedule at once (9d2a·A), the
+     ruled exception to "edit autosaves" holds a change families can see until ✓ (2026-10-09), and the league's refusal
+     needs the whole when and where. 9d-2b's draft games are where autosave would return, if anywhere.
+  2. **The save sends only what changed.** The old form sent every field, so the route always saw "the time moved" and
+     re-checked — a score on a game that already clashed was refused (the route's own comment says it must never be).
+  3. **The Status dropdown is gone, so the score is the pencil's:** two boxes, asked once the game has started or when
+     it has a score (`asksScores`); both in = played, both empty = on again, one alone is held ("Enter both scores, or
+     neither." — a **build word**, /marketing did not settle it). Add › A game no longer offers a score: a past game is
+     added, then scored with the pencil (one more step than the old dropdown).
+  4. **Delete stays on every state** (9d2·9 is "Delete before publishing, Cancel after"; nothing is published until
+     9d-2b, which takes Delete off a published game).
+  5. **"Give it a new date" is the same form, opened on the old date; its ✓ puts the game back on** (even unchanged —
+     "it's on again at its old time" is a true thing to say). It then reads as an ordinary game (no Moved, 9d2a·D).
+  **"Time from {schedule}, the club's schedule"** (editor only) needed the season's game slots, past ones too — the
+  window's read has a `now` filter — so `seasonGameSlots` (lib/league-time-server.ts) rides the page's existing
+  schedule read (no new route, no year: the season's own). Matched by step 1's exact rule; otherwise nothing. Probed on
+  dev's "2026 Fall House League" (13 game slots from "Walk · House league weeknights"; its 3 games sit on none, so all
+  three say nothing). The live check moved out of the page into `useLeagueLine.tsx` beside the window, so the window and
+  the practice forms share it. **Not in step 4:** the read window's permit line and "See the permit" (step 7 — the line
+  needs a permit read per game the page does not have yet, and the id). **⚠ OWNER ASK (raised by the build):** the
+  drawing's caption limits moving a game to time the division holds ("time the division doesn't hold is offered only if
+  it is free"). **Not built:** the pencil moves a game to any date and time, as the old form and Add › A game did. The
+  amendment's words govern Generate and handing out time; a game has no slot link until 9d-2b; and every season with no
+  house-league time (all of production today, the free League plan) could not move a game at all. **Recommended:** build
+  it with 9d-2b's slot link, for a division that has game time. **Checks:** typecheck clean; guards moved with the reason
+  (`house-league-game-window-guard` rewritten for the read-first window — Delete's rules kept, the old look's sticky bands
+  retired with it; `club-stage6a` — the window joins WEARS_THE_FIELD / SHOWS_THE_PERMIT, the live line asserted in its own
+  file, the page's Create counts now one); old-look baseline lowered (helpers 8 → 7); `check:spelling` clean. **Not run:**
+  `check:layout --changed` (it measures pages, not an open window; the page around it is step 3's, unchanged).

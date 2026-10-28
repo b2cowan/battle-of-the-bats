@@ -10,6 +10,7 @@ import {
   groupLeagueTime, LEAGUE_TIME_REFUSALS as R,
   type LeagueTime, type LeagueTimeChange, type LeagueTimeSchedule, type LeagueTimeSlot, type LeagueUseKind,
 } from './league-time';
+import type { SeasonGameSlot } from './league-season-calendar';
 import type { LeagueSeason } from './types';
 
 /**
@@ -59,6 +60,29 @@ export async function usesOf(orgId: string, slotIds: readonly string[]) {
   const rows = await fetchAllIn<{ slot_id: string; season_id: string; division_id: string; kind: LeagueUseKind }>(slotIds, (c, a, b) => supabaseAdmin
     .from('league_slot_uses').select('slot_id, season_id, division_id, kind').eq('org_id', orgId).in('slot_id', c).order('slot_id').range(a, b));
   return new Map(rows.map(r => [r.slot_id, r]));
+}
+
+/**
+ * THE SEASON'S GAME TIME, slot by slot, PAST ONES TOO (9d-2a step 4): what a game's "Time from {schedule}" is matched
+ * against (`gameSlotOf`, an exact start and facility — a game has no slot link until 9d-2b). Unlike the window's read it
+ * has no `now` filter: a game played last week still came from the club's schedule. Live slots of final schedules only.
+ */
+export async function seasonGameSlots(orgId: string, seasonId: string): Promise<SeasonGameSlot[]> {
+  const uses = await fetchAll<{ slot_id: string; division_id: string }>((a, b) => supabaseAdmin
+    .from('league_slot_uses').select('slot_id, division_id').eq('org_id', orgId).eq('season_id', seasonId).eq('kind', 'games')
+    .order('slot_id').range(a, b));
+  if (!uses.length) return [];
+  const division = new Map(uses.map(u => [u.slot_id, u.division_id]));
+  const rows = await fetchAllIn<SlotRow & { club_schedules: { name: string } | { name: string }[] }>([...division.keys()], (c, a, b) => supabaseAdmin
+    .from('club_schedule_slots').select('id, schedule_id, block_id, org_venue_id, facility_id, starts_at, ends_at, club_schedules!inner(name, state)')
+    .eq('org_id', orgId).in('id', c).is('removed_at', null).eq('club_schedules.state', 'final').order('id').range(a, b));
+  return rows.map(r => {
+    const schedule = Array.isArray(r.club_schedules) ? r.club_schedules[0] : r.club_schedules;
+    return {
+      slotId: r.id, divisionId: division.get(r.id)!, startsAt: r.starts_at, venueId: r.org_venue_id, facilityId: r.facility_id,
+      scheduleId: r.schedule_id, scheduleName: schedule?.name ?? '',
+    };
+  });
 }
 
 /** THE WINDOW: everything the club gave house league that this season can divide, grouped. */

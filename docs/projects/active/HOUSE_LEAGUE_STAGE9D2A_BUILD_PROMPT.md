@@ -31,6 +31,11 @@
   sits above the views — steps 4, 5 and 6 replace them. Two drawn shapes were not built, argued from the recipe (C5: List
   is the row list; C13: the phone's Week is the stacked week, not a day pager) — tell the owner at the walk. **Resume at
   step 4 (the game window, b4).**
+- **2026-10-27, session 4: Step 4 is BUILT** (the game window, read first; plan §9 entry). The Status dropdown is gone (a
+  state is a door), ✓ saves and sends only what changed, the score is the pencil's, Delete stays on every state until
+  9d-2b, "Time from" reads the season's game slots (past ones too) on the page's schedule read. The window's permit line
+  and "See the permit" are step 7's. **Owner ask raised:** moving a game is not limited to the division's time (plan §9:
+  recommended with 9d-2b's slot link). **Resume at step 5 (Generate games, c1–c4).**
 - **Owed to the owner at step 6:** "Adjust the rules" has nowhere to save without a migration (recommended: the rules as
   words in 9d-2a, the door with 9d-2b).
 - **Facts found that the steps below must respect:** the club's cross-program clash rule never compares two house-league

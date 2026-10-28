@@ -7,6 +7,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { zonedWallClockToUtc } from '@/lib/timezone';
 import { clashReportForLeagueRows } from '@/lib/venue-clash-lookup';
+import { seasonGameSlots } from '@/lib/league-time-server';
 
 function mapGame(row: any) {
   return {
@@ -58,10 +59,11 @@ export const GET = withObservability(async (req: Request,
     q = q.gte('scheduled_at', start.toISOString()).lt('scheduled_at', end.toISOString());
   }
 
-  const { data, error } = await q;
+  const [{ data, error }, gameSlots] = await Promise.all([q, seasonGameSlots(ctx!.org.id, seasonId)]);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ games: (data ?? []).map(mapGame) });
+  // The season's game time (9d-2a step 4): the game window's "Time from {schedule}" matches a game to it.
+  return NextResponse.json({ games: (data ?? []).map(mapGame), gameSlots });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule' });
 
 export const POST = withObservability(async (req: Request,

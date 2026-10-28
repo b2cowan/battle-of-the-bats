@@ -145,6 +145,8 @@ describe('the tournament mirror is skipped (S6-06)', () => {
 const WEARS_THE_FIELD = [
   'components/coaches/ScheduleEventForm.tsx',
   'app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx',
+  // House league's game window (9d-2a step 4: the page's Edit Game form became the read-first window).
+  'components/admin/kit/club/league/schedule/GameWindow.tsx',
   'components/rep-teams/TryoutDayCard.tsx',
   'app/[orgSlug]/admin/tournaments/schedule/components/GameWindow.tsx',
   'app/[orgSlug]/admin/tournaments/schedule/components/MoveSheet.tsx',
@@ -260,9 +262,15 @@ describe('the review\'s fixes hold (Stage 6a /review, 2026-10-08)', () => {
     // marks itself saving must disable on `checking`, or a double press writes the game (or the series) twice.
     assert.match(readCode('components/venue/useClashCheck.ts'), /if \(inFlight\.current\) return false;/);
     const hl = readCode(HL_PAGE);
-    assert.equal((hl.match(/onClick=\{async \(\) => \{ if \(await lineIsCurrent\(\)\)/g) ?? []).length, 2, 'house league\'s two Create buttons');
+    assert.equal((hl.match(/onClick=\{async \(\) => \{ if \(await lineIsCurrent\(\)\)/g) ?? []).length, 1, 'house league\'s practice Create button');
     // The practice form's also waits for its team (9d-2a step 3: Add › A practice asks which team).
-    assert.equal((hl.match(/disabled=\{saving \|\| refused \|\| checking(?: \|\| !form\.teamId)?\}/g) ?? []).length, 2, 'both disable while the check is out');
+    assert.equal((hl.match(/disabled=\{saving \|\| refused \|\| checking \|\| !form\.teamId\}/g) ?? []).length, 1, 'it disables while the check is out');
+    // The game's window (9d-2a step 4) marks itself saving in `write`, after it asks the check: Create and ✓ disable on
+    // `checking` meanwhile, and `save` returns while a write is out.
+    const gw = readCode('components/admin/kit/club/league/schedule/GameWindow.tsx');
+    assert.match(functionBody(gw, 'save'), /if \(held \|\| refused \|\| saving\) return;[\s\S]*if \(!\(await lineIsCurrent\(\)\)\) return;/);
+    assert.match(gw, /disabled=\{saving \|\| refused \|\| checking\}/);
+    assert.match(gw, /disabled: saving \|\| refused \|\| checking \|\| !!held/);
     assert.match(readCode('components/rep-teams/TryoutDayCard.tsx'), /onClick=\{saveSession\} disabled=\{saving \|\| checking\}/);
     // The coach's form marks itself saving BEFORE it asks — both of its saves.
     const form = readCode('components/coaches/ScheduleEventForm.tsx');
@@ -313,8 +321,11 @@ describe('the review\'s fixes hold (Stage 6a /review, 2026-10-08)', () => {
 const SHOWS_THE_PERMIT: Record<string, RegExp> = {
   // The coach's Add / Edit Event — one line or a series' summary, and each date outside marked in its list.
   'components/coaches/ScheduleEventForm.tsx': /permitSeriesLine\([\s\S]*permitLine\([\s\S]*<WhereLine tone="quiet" mark="clock"[\s\S]*permitDateMark\(/,
-  // House league's game, practice and series windows (`useLeagueLine`), and the generator's after-save summary.
-  'app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx': /permitSeriesLine\([\s\S]*<WhereLine tone="quiet" mark="clock"[\s\S]*permitAfterSave\(/,
+  // House league's practice and series windows, through the one live line (`useLeagueLine`, which 9d-2a step 4 moved beside
+  // the game window so both wear it — the line itself is checked below), and the generator's after-save summary.
+  'app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx': /useLeagueLine\([\s\S]*permitAfterSave\(/,
+  // House league's game window: the same live line, under its Venue field.
+  'components/admin/kit/club/league/schedule/GameWindow.tsx': /useLeagueLine\([\s\S]*<WhereField\b[\s\S]*line=\{line\}/,
   // The tryout day.
   'components/rep-teams/TryoutDayCard.tsx': /permitLine\(check\?\.permits\[0\][\s\S]*<WhereLine tone="quiet" mark="clock"/,
   // The tournament's game window — from its save reply, as its clash line is (no live hook in the tournament).
@@ -330,6 +341,8 @@ describe('the permit\'s answer rides every check and every form that asks where 
     for (const [f, shows] of Object.entries(SHOWS_THE_PERMIT)) assert.match(readCode(f), shows, f);
     // The move sheet's line: the timeline's note, from the move's own reply.
     assert.match(readCode('app/[orgSlug]/admin/tournaments/schedule/page.tsx'), /setPermitNote\(reply\.permitLine[\s\S]*<WhereLine tone="quiet" mark="clock" rest=\{permitNote\}/);
+    // House league's one live line (its game, practice and series windows): a date or a series outside the permit.
+    assert.match(readCode('components/admin/kit/club/league/schedule/useLeagueLine.tsx'), /permitSeriesLine\([\s\S]*permitLine\([\s\S]*<WhereLine tone="quiet" mark="clock"/);
   });
   it('the clash check is the Venue library\'s and checks the plan itself — every caller, the save replies included', () => {
     const body = functionBody(readCode('lib/venue-clash-lookup.ts'), 'checkClubClashes');

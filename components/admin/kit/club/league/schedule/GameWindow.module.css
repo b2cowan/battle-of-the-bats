@@ -1,0 +1,15 @@
+/* A game's window (9d-2a step 4, frame b4). Its facts are the club slot window's (`LeagueTime.facts`). */
+
+/* The form's fields side by side on a `medium` window: Home · Away, Date · Time · End time, the two scores. */
+.pair,
+.three { display: grid; gap: 0 0.75rem; }
+.pair { grid-template-columns: 1fr 1fr; }
+.three { grid-template-columns: 1.4fr 1fr 1fr; }
+
+/* The doors end the body, one under another (a rare door ends the body, 2026-10-09). */
+.doors { margin-top: 1rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem; }
+
+@media (max-width: 640px) {
+  .pair,
+  .three { grid-template-columns: 1fr; }
+}

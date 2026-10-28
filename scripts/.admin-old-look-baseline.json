@@ -7,7 +7,7 @@
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx": {
     "kx": 7,
-    "helpers": 8
+    "helpers": 7
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx": {
     "kx": 7,

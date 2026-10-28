@@ -333,3 +333,89 @@ export const SEASON_SCHEDULE_WORDS = {
   /** A practice on a calendar cell or row: the club calendar's spelling ("13U AAA practice"). */
   practiceTitle: (team: string) => `${team} practice`,
 } as const;
+
+// ── A game's window (9d-2a step 4, frame b4) ────────────────────────────────────────────────────────────────────
+
+/**
+ * What a game's window offers whoever runs the season, by the game's state (a reader gets none of it). ⚖ The Status
+ * dropdown is gone: a state is a door. On, a game is edited (the pencil), postponed or cancelled; played, only corrected
+ * (its score is the pencil's); postponed, it is given a new date or cancelled; cancelled, it is put back on (9d2a·E).
+ * Delete is on every state until 9d-2b publishes (9d2·9: Delete before publishing, Cancel after — there is no "after" yet).
+ */
+export function gameWindowDoors(status: LeagueGame['status']) {
+  return {
+    pencil: status === 'scheduled' || status === 'completed',
+    postpone: status === 'scheduled',
+    cancel: status === 'scheduled' || status === 'postponed',
+    giveDate: status === 'postponed',
+    putBack: status === 'cancelled',
+  };
+}
+
+/** The window's state word under its title: "Final 7–4", "Cancelled", "Needs a new date"; a game that's on has none. */
+export function gameStateWords(g: Pick<LeagueGame, 'status' | 'homeScore' | 'awayScore'>): string | null {
+  if (g.status === 'cancelled') return GAME_WINDOW_WORDS.cancelled;
+  if (g.status === 'postponed') return SEASON_SCHEDULE_WORDS.needsDate;
+  return resultWords(g);
+}
+
+/** The form asks the score once the game has started, or when it has one to correct. */
+export const asksScores = (g: Pick<LeagueGame, 'status' | 'scheduledAt'>, nowMs: number) =>
+  g.status === 'completed' || (g.status === 'scheduled' && !!g.scheduledAt && Date.parse(g.scheduledAt) <= nowMs);
+
+/**
+ * The two score boxes as the save sends them. Both in: the game is played (`completed`). Both empty: no score, and a game
+ * that had one is on again (`scheduled`). One alone is held — a half score is neither, and the standings read it as a
+ * result (`null`).
+ */
+export function scoresToSave(home: string, away: string): { homeScore: number | null; awayScore: number | null; status: 'scheduled' | 'completed' } | null {
+  const h = home.trim(), a = away.trim();
+  if (!h && !a) return { homeScore: null, awayScore: null, status: 'scheduled' };
+  if (!/^\d+$/.test(h) || !/^\d+$/.test(a)) return null;
+  return { homeScore: Number(h), awayScore: Number(a), status: 'completed' };
+}
+
+/** Words. Settled: HOUSE_LEAGUE_STAGE9D2_11B_COPY.md "Stage 9d-2a" b4, except where marked a build word. */
+export const GAME_WINDOW_WORDS = {
+  eyebrow: (division: string) => `${division} · a game`,
+  title: (home: string, away: string) => `${home} vs ${away}`,
+  /** Add › A game: the shipped create words. */
+  addTitle: 'Add game',
+  create: 'Create game',
+  saving: 'Saving…',
+  when: 'When',
+  where: 'Where',
+  home: 'Home',
+  away: 'Away',
+  notes: 'Notes',
+  none: 'None',
+  timeFrom: 'Time from',
+  timeFromValue: (schedule: string) => `${schedule}, the club’s schedule`,
+  edit: 'Edit this game',
+  postpone: 'Postpone this game',
+  cancel: 'Cancel this game',
+  keep: 'Keep it',
+  postponeAsk: (game: string) => `Postpone ${game}?`,
+  postponeSays: 'It moves to Needs a new date and stops holding its time and place. The public schedule says Postponed until you give it a new date. Families aren’t emailed.',
+  cancelAsk: (game: string) => `Cancel ${game}?`,
+  cancelSays: 'It stays on the schedule, struck through, and the public schedule shows it Cancelled. Families aren’t emailed.',
+  giveDate: 'Give it a new date',
+  cancelled: 'Cancelled',
+  putBack: 'Put it back on',
+  putBackSaid: 'Put back on the schedule.',
+  deleteDoor: 'Delete this game',
+  deleteAsk: (game: string) => `Delete ${game}?`,
+  deleteSays: (scored: boolean) => `It leaves the schedule and the public page for good.${scored ? ' Its score comes out of the standings.' : ''} To call a game off but keep it listed, cancel it instead.`,
+  deleteYes: 'Delete',
+  /** The form's fields: the shipped labels, the "(optional)" tags gone (a field is marked required, never optional). */
+  homeTeam: 'Home team',
+  awayTeam: 'Away team',
+  date: 'Date',
+  time: 'Time',
+  endTime: 'End time',
+  score: (team: string) => `${team} score`,
+  /** A build word (/marketing did not settle it): one score box filled and the other empty. */
+  bothScores: 'Enter both scores, or neither.',
+  /** The shipped words a save's league warning is said with (Practice's window says the same). */
+  possibleClash: (warning: string) => `Possible clash: ${warning}`,
+} as const;

@@ -9,12 +9,9 @@ import { isFreeFloorLeague } from '@/lib/free-floor';
 import { useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import { fieldNounFor } from '@/lib/sports';
 import FeedbackModal from '@/components/FeedbackModal';
-import WhereField, { WhereLine } from '@/components/venue/WhereField';
-import { useClashCheck } from '@/components/venue/useClashCheck';
-import { EMPTY_WHERE, clubVenueOptions, pickedVenueKinds, whereLibraryBody, whereOfLibraryRow, type WhereValue } from '@/lib/where-field';
-import { clashLine, leagueRefusalLine, leagueSeriesLine } from '@/lib/venue-clash-words';
-import { permitAfterSave, permitLine, permitSeriesLine, type PermitOutside } from '@/lib/permit-words';
-import type { ClashFinding } from '@/lib/venue-clash';
+import WhereField from '@/components/venue/WhereField';
+import { EMPTY_WHERE, clubVenueOptions, whereLibraryBody, whereOfLibraryRow, type WhereValue } from '@/lib/where-field';
+import { permitAfterSave } from '@/lib/permit-words';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICSFromInstants, houseLeagueCalendarEntries,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -24,7 +21,7 @@ import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { monthWords } from '@/lib/calendar-recipe';
 import { EVENT_COLORS } from '@/lib/coach-schedule-vocab';
 import { rangeFor, stepCursor, type CalendarView } from '@/lib/club-calendar-view';
-import { SEASON_SCHEDULE_WORDS as W, seasonCalendar, seasonClashes, seasonOpeningDay, type SeasonBooking } from '@/lib/league-season-calendar';
+import { SEASON_SCHEDULE_WORDS as W, seasonCalendar, seasonClashes, seasonOpeningDay, type SeasonBooking, type SeasonGameSlot } from '@/lib/league-season-calendar';
 import ExportMenu from '@/components/admin/ExportMenu';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
@@ -33,6 +30,8 @@ import FilterGroup from '@/components/coaches/FilterGroup';
 import { WeekView } from '@/components/admin/kit/club/ClubCalendarViews';
 import { CalendarViewSwitch, ScheduleDateNav } from '@/components/coaches/ScheduleCalendarViews';
 import { NeedsDateFold, SeasonListView, SeasonMonthView } from '@/components/admin/kit/club/league/schedule/SeasonScheduleViews';
+import GameWindow from '@/components/admin/kit/club/league/schedule/GameWindow';
+import { useLeagueLine } from '@/components/admin/kit/club/league/schedule/useLeagueLine';
 import cal from '@/components/admin/kit/club/ClubCalendar.module.css';
 import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
@@ -44,7 +43,7 @@ import PracticeTimeWindow from '@/components/admin/kit/club/league/time/Practice
 import PracticeWindow from '@/components/admin/kit/club/league/practices/PracticeWindow';
 import { PRACTICE_TIME_WORDS, PRACTICE_WINDOW_WORDS } from '@/lib/league-practice-time';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { LoadFailed, RecordDelete, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
+import { LoadFailed, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
 import { useKitButtons, useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
@@ -75,19 +74,6 @@ interface PreviewGame {
   awayTeamId: string;
   scheduledAt: string;
   location: string | null;
-}
-
-interface GameForm {
-  homeTeamId: string;
-  awayTeamId: string;
-  scheduledDate: string;
-  scheduledTime: string;
-  endTime: string;
-  where: WhereValue;
-  status: LeagueGameStatus;
-  homeScore: string;
-  awayScore: string;
-  notes: string;
 }
 
 interface GenerateConfig {
@@ -155,10 +141,6 @@ function isoToDateInput(iso: string): string {
   return utcToZonedInputs(iso).date;
 }
 
-function isoToTimeInput(iso: string): string {
-  return utcToZonedInputs(iso).time;
-}
-
 const STATUS_LABELS: Record<LeagueGameStatus, string> = {
   scheduled: 'Scheduled',
   completed: 'Completed',
@@ -221,104 +203,6 @@ function LeagueWhere({
   );
 }
 
-/** One live-check answer per date (`/venue-check`). */
-interface LeagueCheckResult {
-  date: string;
-  refusal: {
-    partnerLabel: string; partnerKind: 'game' | 'practice';
-    partnerStartsAt: string | null; partnerEndsAt: string | null; matchedOn: 'facility' | 'venue';
-  } | null;
-  crossProgram: ClashFinding[];
-  /** The date OUTSIDE a permit the club holds at that venue (Club Tier Stage 10a, Ask 3), else null. */
-  permit?: PermitOutside | null;
-}
-const readLeagueCheck = (json: unknown): LeagueCheckResult[] => {
-  const results = (json as { results?: unknown } | null)?.results;
-  return Array.isArray(results) ? results as LeagueCheckResult[] : [];
-};
-/** What Create compares with the line on screen: the cross-program findings, and a refusal. */
-const countLeagueCheck = (r: LeagueCheckResult[]) => r.reduce((n, x) => n + x.crossProgram.length + (x.refusal ? 1 : 0), 0);
-
-/**
- * House league's window line (specimen 3, Asks 4–5): the league's own refusal in red under the field, before
- * Create (Create greyed) — what it refuses is unchanged — and another program's booking in amber, never blocking.
- * The check runs as soon as a date, a time and one of the club's venues are set, and again on any change; Create
- * asks once more first (the hook's one rule). The words are `lib/venue-clash-words.ts`'s.
- */
-function useLeagueLine(opts: {
-  checkPath: string;
-  sport: string | null | undefined;
-  where: WhereValue;
-  /** The club's venues — the picked one's facilities give the line its noun ("can't share a field"). */
-  venues: readonly ClubVenueOption[];
-  kind: 'game' | 'practice';
-  /** One booking… */
-  occurrence?: { date: string; startTime: string; endTime: string } | null;
-  /** …or a practice series (expanded on the server by the save's own generator)… */
-  series?: { dayOfWeek: number; startDate: string; endDate: string; startTime: string; endTime: string } | null;
-  /** …or the dates an edit of a series reaches (Stage 11b Part 4). */
-  occurrences?: { date: string; startTime: string; endTime: string }[] | null;
-  excludeGameId?: string | null;
-  /** The practices an edit moves: never a clash with themselves. */
-  excludePracticeIds?: string[] | null;
-  teamId?: string | null;
-}) {
-  const { checkPath, sport, where, venues, kind, occurrence, series, occurrences, excludeGameId, excludePracticeIds, teamId } = opts;
-  const ready = where.source === 'club' && !!where.orgVenueId && (
-    series ? !!(series.startDate && series.endDate && series.startTime && series.endTime)
-      : occurrences ? occurrences.length > 0 && occurrences.every(o => o.date && o.startTime)
-        : !!(occurrence?.date && occurrence.startTime)
-  );
-  const { result, checking, lineIsCurrent } = useClashCheck(
-    ready ? {
-      path: checkPath,
-      body: {
-        kind, orgVenueId: where.orgVenueId, orgVenueFacilityId: where.orgVenueFacilityId,
-        ...(series ? { series } : { occurrences: occurrences ?? [occurrence] }),
-        excludeGameId: excludeGameId ?? null, excludePracticeIds: excludePracticeIds ?? [], teamId: teamId ?? null,
-      },
-    } : null,
-    readLeagueCheck,
-    countLeagueCheck,
-  );
-
-  const ctx = {
-    sport, venueName: where.location, facilityName: where.orgVenueFacilityId ? where.fieldNumber : null,
-    kinds: pickedVenueKinds(where, venues),
-  };
-  const refusalAt = (result ?? []).find(r => r.refusal);
-  const refusal = refusalAt?.refusal
-    ? leagueRefusalLine({
-        sport, kinds: ctx.kinds, matchedOn: refusalAt.refusal.matchedOn, venueName: ctx.venueName, facilityName: ctx.facilityName,
-        partnerLabel: refusalAt.refusal.partnerLabel, partnerKind: refusalAt.refusal.partnerKind, proposedKind: kind,
-        startIso: refusalAt.refusal.partnerStartsAt, endIso: refusalAt.refusal.partnerEndsAt,
-        date: series || occurrences ? refusalAt.date : null,
-      })
-    : null;
-  const cross = result?.some(r => r.crossProgram.length)
-    ? (series || occurrences
-        ? leagueSeriesLine(result.map(r => ({ date: r.date, findings: r.crossProgram })), ctx)
-        : clashLine(result[0]?.crossProgram ?? [], ctx))
-    : null;
-  // The permit's quiet line (Stage 10a, Ask 3): under the league's own and the amber line, never merged, never a refusal.
-  const permits = (result ?? []).map(r => r.permit ?? null);
-  const outside = permits.some(Boolean)
-    ? (series || occurrences ? permitSeriesLine(permits, (result ?? []).map(r => r.date), sport, { nameTheDates: true }) : permitLine(permits[0], sport))
-    : '';
-  return {
-    refused: !!refusal,
-    line: refusal || cross || outside ? (
-      <>
-        {refusal && <WhereLine tone="refuse" lead={refusal.lead} rest={refusal.rest} />}
-        {cross && <WhereLine tone={cross.tone} lead={cross.lead} rest={cross.rest} />}
-        {outside && <WhereLine tone="quiet" mark="clock" rest={outside} />}
-      </>
-    ) : null,
-    checking,
-    lineIsCurrent,
-  };
-}
-
 const BTN_PRIMARY: React.CSSProperties = {
   background: 'var(--logic-lime)', color: '#1a1f2e', border: 'none',
   borderRadius: '2px', padding: '0.4rem 0.85rem', fontSize: '0.82rem', fontWeight: 700,
@@ -341,183 +225,6 @@ const LEGACY_BUTTONS = { primary: BTN_PRIMARY, secondary: BTN_SECONDARY, danger:
 /** Create, greyed while the league refuses the slot (specimen 3): these buttons are styled inline, so `disabled` alone
  *  changes nothing anyone can see. */
 const REFUSED_LOOK: React.CSSProperties = { opacity: 0.45, cursor: 'not-allowed' };
-
-// ── Game Modal (create + edit) ────────────────────────────────────────────────
-
-function GameModal({
-  game,
-  teams,
-  venues,
-  sport,
-  checkPath,
-  orgSlug,
-  canManage,
-  saving,
-  onSave,
-  onDelete,
-  onClose,
-}: {
-  game: LeagueGame | null;
-  teams: LeagueTeam[];
-  venues: ClubVenueOption[];
-  /** The season's sport — the facility's word. */
-  sport: string | null | undefined;
-  /** The window's live check (`/venue-check`). */
-  checkPath: string;
-  orgSlug: string;
-  canManage: boolean;
-  saving: boolean;
-  onSave: (form: GameForm) => Promise<void>;
-  /** Asks, then deletes the game — the question is the page's, on top of this window. */
-  onDelete: (game: LeagueGame) => void;
-  onClose: () => void;
-}) {
-  const B = useKitButtons(LEGACY_BUTTONS);
-  const [form, setForm] = useState<GameForm>(() => {
-    if (game) {
-      return {
-        homeTeamId:    game.homeTeamId,
-        awayTeamId:    game.awayTeamId,
-        scheduledDate: game.scheduledAt ? isoToDateInput(game.scheduledAt) : '',
-        scheduledTime: game.scheduledAt ? isoToTimeInput(game.scheduledAt) : '',
-        endTime:       game.endsAt ? isoToTimeInput(game.endsAt) : '',
-        where:         whereOfLibraryRow(game, venues),
-        status:        game.status,
-        homeScore:     game.homeScore != null ? String(game.homeScore) : '',
-        awayScore:     game.awayScore != null ? String(game.awayScore) : '',
-        notes:         game.notes ?? '',
-      };
-    }
-    return {
-      homeTeamId: teams[0]?.id ?? '',
-      awayTeamId: teams[1]?.id ?? '',
-      scheduledDate: '', scheduledTime: '18:00', endTime: '',
-      where: EMPTY_WHERE, status: 'scheduled',
-      homeScore: '', awayScore: '', notes: '',
-    };
-  });
-
-  function set(k: keyof GameForm, v: string) { setForm(f => ({ ...f, [k]: v })); }
-
-  // The line under the field (Club Tier Stage 6a): the league's own refusal before Create, another program's
-  // booking in amber. A cancelled or postponed game holds no slot, so it is never checked.
-  const holdsSlot = form.status !== 'cancelled' && form.status !== 'postponed';
-  const { refused, line, checking, lineIsCurrent } = useLeagueLine({
-    checkPath, sport, where: form.where, venues, kind: 'game',
-    occurrence: holdsSlot ? { date: form.scheduledDate, startTime: form.scheduledTime, endTime: form.endTime } : null,
-    excludeGameId: game?.id ?? null,
-  });
-
-  const isCreate = !game;
-  const showScores = form.status === 'completed';
-  const homeTeam = teams.find(t => t.id === form.homeTeamId);
-  const awayTeam = teams.find(t => t.id === form.awayTeamId);
-
-  return (
-    <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && !saving && onClose()}>
-      <div className={styles.modal} role="dialog" aria-modal="true" aria-label={isCreate ? 'Add game' : 'Edit game'}>
-        <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>{isCreate ? 'Add game' : 'Edit game'}</h2>
-          <button className={styles.modalCloseBtn} onClick={onClose} disabled={saving}><X size={18} /></button>
-        </div>
-
-        <div className={styles.formGrid}>
-          <div className={styles.field}>
-            <label className={styles.label}>Home team</label>
-            <select className={styles.select} value={form.homeTeamId} onChange={e => set('homeTeamId', e.target.value)} disabled={!canManage}>
-              {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label}>Away team</label>
-            <select className={styles.select} value={form.awayTeamId} onChange={e => set('awayTeamId', e.target.value)} disabled={!canManage}>
-              {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label}>Date</label>
-            <DateInput className={styles.input} value={form.scheduledDate} onChange={v => set('scheduledDate', v)} disabled={!canManage} />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label}>Time</label>
-            <TimeInput className={styles.input} value={form.scheduledTime} onChange={v => set('scheduledTime', v)} disabled={!canManage} />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label}>End time <span style={{ fontWeight: 400, opacity: 0.5 }}>(optional)</span></label>
-            <TimeInput className={styles.input} value={form.endTime} onChange={v => set('endTime', v)} disabled={!canManage} />
-          </div>
-        </div>
-
-        <div className={styles.formGrid}>
-          <LeagueWhere
-            idPrefix="hl-game"
-            venues={venues}
-            sport={sport}
-            value={form.where}
-            onChange={w => setForm(f => ({ ...f, where: w }))}
-            orgSlug={orgSlug}
-            canManage={canManage}
-            disabled={!canManage}
-            line={line}
-          />
-          <div className={styles.field}>
-            <label className={styles.label}>Status</label>
-            <select className={styles.select} value={form.status} onChange={e => set('status', e.target.value as LeagueGameStatus)} disabled={!canManage}>
-              <option value="scheduled">Scheduled</option>
-              <option value="completed">Completed</option>
-              <option value="postponed">Postponed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
-        </div>
-
-        {showScores && (
-          <div className={styles.formGrid} style={{ marginTop: '0.25rem' }}>
-            <div className={styles.field}>
-              <label className={styles.label}>{homeTeam?.name ?? 'Home'} score</label>
-              <input type="number" min={0} className={styles.input} value={form.homeScore} onChange={e => set('homeScore', e.target.value)} disabled={!canManage} />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>{awayTeam?.name ?? 'Away'} score</label>
-              <input type="number" min={0} className={styles.input} value={form.awayScore} onChange={e => set('awayScore', e.target.value)} disabled={!canManage} />
-            </div>
-          </div>
-        )}
-
-        <div className={styles.field} style={{ marginTop: '0.25rem' }}>
-          <label className={styles.label}>Notes <span style={{ fontWeight: 400, opacity: 0.5 }}>(optional)</span></label>
-          <textarea className={styles.textarea} value={form.notes} onChange={e => set('notes', e.target.value)} disabled={!canManage} rows={2} />
-        </div>
-
-        {/* Delete ends the body, alone, red, and asks first (owner, 2026-10-09, §288 W9) — a rare door never takes the
-            foot, which stays the form's. Calling a game off is Status → Cancelled; Delete is for a game that should
-            never have been on the schedule. Not on Add Game: there is nothing to delete yet. */}
-        {game && canManage && (
-          <div style={{ marginTop: '0.75rem' }}>
-            <RecordDelete onClick={() => onDelete(game)} disabled={saving}>Delete this game</RecordDelete>
-          </div>
-        )}
-
-        {/* The foot is the form's: Cancel and the one save (owner, 2026-10-09 — the portal's create-form pair; the ×
-            above also closes). ⚰ "Cancel Game" is gone: it only set Status to Cancelled, which the Status field above
-            already does, and it sat beside this Cancel meaning the opposite. A reader who can't change the game has
-            no foot — the × is the way out, as on every record window. */}
-        {canManage && (
-          <div className={styles.modalFooter}>
-            <button style={B.secondary} onClick={onClose} disabled={saving}>Cancel</button>
-            <button
-              style={refused ? { ...B.primary, ...REFUSED_LOOK } : B.primary}
-              onClick={async () => { if (await lineIsCurrent()) await onSave(form); }}
-              disabled={saving || refused || checking}
-            >
-              {saving ? 'Saving…' : isCreate ? 'Create game' : 'Save'}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // ── Generate Modal ────────────────────────────────────────────────────────────
 
@@ -938,6 +645,8 @@ export default function SchedulePage() {
   const [teams, setTeams] = useState<LeagueTeam[]>([]);
   const [games, setGames] = useState<LeagueGame[]>([]);
   const [practices, setPractices] = useState<LeaguePractice[]>([]);
+  /** The season's game time, slot by slot (step 4): "Time from {schedule}" on a game that sits on one. */
+  const [gameSlots, setGameSlots] = useState<SeasonGameSlot[]>([]);
   const [scheduleRead, setScheduleRead] = useState<'loading' | 'ok' | 'failed'>('loading');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -954,8 +663,9 @@ export default function SchedulePage() {
   const jumpTo = useRef<string | null>(null);
 
   const [showGenerate, setShowGenerate] = useState(false);
-  const [gameModalOpen, setGameModalOpen] = useState(false);
-  const [activeGame, setActiveGame] = useState<LeagueGame | null>(null);
+  // A game's window (step 4, b4): the game it reads, by id — after a write the page reads again and the window reads the
+  // fresh row — or Add › A game.
+  const [gameWindow, setGameWindow] = useState<{ id: string } | 'create' | null>(null);
 
   const [showPracticeModal, setShowPracticeModal] = useState(false);
   const [activePractice, setActivePractice] = useState<LeaguePractice | null>(null);
@@ -1040,6 +750,7 @@ export default function SchedulePage() {
     if (!t || !g || !p) { setScheduleRead(r => (r === 'ok' ? r : 'failed')); return; }
     setTeams(t.teams ?? []);
     setGames(g.games ?? []);
+    setGameSlots(g.gameSlots ?? []);
     setPractices(p.practices ?? []);
     setScheduleRead('ok');
   }, [seasonId, orgQuery, beginRead]);
@@ -1076,7 +787,7 @@ export default function SchedulePage() {
   const calendar = useMemo(() => {
     const venueById = new Map(venues.map(v => [v.id, v]));
     const c = seasonCalendar({
-      seasonName: season?.name ?? '', sport: season?.sport ?? null, games: divGames, practices: divPractices, teamName,
+      seasonName: season?.name ?? '', sport: season?.sport ?? null, games: divGames, practices: divPractices, teamName, gameSlots,
       divisionName: new Map(divisions.map(d => [d.id, d.name])),
       placeOf: (venueId, facilityId) => {
         const v = venueById.get(venueId);
@@ -1087,7 +798,7 @@ export default function SchedulePage() {
     });
     const paint = (b: SeasonBooking): SeasonBooking => ({ ...b, colour: b.kind === 'practice' ? KIND_COLOUR.practice : KIND_COLOUR.game });
     return { bookings: c.bookings.map(paint), needsDate: c.needsDate.map(paint) };
-  }, [season, divGames, divPractices, games, practices, teamName, divisions, venues]);
+  }, [season, divGames, divPractices, games, practices, teamName, divisions, venues, gameSlots]);
 
   // Show (9d2·12): empty = both kinds; a choice ON stays listed with 0 so it can always be taken off.
   const shown = calendar.bookings.filter(b => !show.size || show.has(b.kind));
@@ -1116,11 +827,12 @@ export default function SchedulePage() {
     setFeedback({ isOpen: true, title, message, type: 'danger' });
   }
 
-  function openCreate() { setActiveGame(null); setGameModalOpen(true); }
-  function openEdit(g: LeagueGame) { setActiveGame(g); setGameModalOpen(true); }
+  function openCreate() { setGameWindow('create'); }
+  /** The window's game as last read; a game deleted elsewhere closes its window on the next read. */
+  const openedGame = gameWindow && gameWindow !== 'create' ? games.find(x => x.id === gameWindow.id) ?? null : null;
   /** A booking opens its own window: a game its game window, a practice its practice window (h2). */
   const openBooking = (b: SeasonBooking) => {
-    if (b.source.kind === 'game') openEdit(b.source.game);
+    if (b.source.kind === 'game') setGameWindow({ id: b.source.game.id });
     else setOpenPractice(b.source.practice);
   };
   const pickView = (v: CalendarView) => { jumpTo.current = null; setView(v); };
@@ -1174,94 +886,6 @@ export default function SchedulePage() {
     } else if (outside) {
       setFeedback({ isOpen: true, title: outside.title, message: `The schedule was saved. ${outside.sentence}`, type: 'info' });
     }
-    await reload();
-  }
-
-  // ── Game CRUD ──────────────────────────────────────────────────────────────
-
-  async function handleSaveGame(form: GameForm) {
-    setSaving(true);
-    const isCreate = !activeGame;
-    const url = isCreate
-      ? `/api/admin/house-league/seasons/${seasonId}/schedule${orgQuery}`
-      : `/api/admin/house-league/seasons/${seasonId}/schedule/${activeGame!.id}${orgQuery}`;
-    const method = isCreate ? 'POST' : 'PATCH';
-
-    const body: Record<string, unknown> = {
-      divisionId:    activeGame?.divisionId ?? selectedDivId,
-      homeTeamId:    form.homeTeamId,
-      awayTeamId:    form.awayTeamId,
-      scheduledDate: form.scheduledDate || undefined,
-      scheduledTime: form.scheduledTime || undefined,
-      endTime:       form.endTime || null,
-      ...whereLibraryBody(form.where),
-      status:        form.status,
-      notes:         form.notes || null,
-    };
-
-    if (form.status === 'completed') {
-      body.homeScore = form.homeScore !== '' ? Number(form.homeScore) : null;
-      body.awayScore = form.awayScore !== '' ? Number(form.awayScore) : null;
-    }
-
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    setSaving(false);
-    if (!res.ok) {
-      const data = await res.json();
-      showError(
-        res.status === 409 ? `That ${noun.toLowerCase()} is already booked` : 'Could not save game',
-        data.error ?? 'Unknown error',
-      );
-      return;
-    }
-    const data = await res.json();
-    setGameModalOpen(false);
-    if (Array.isArray(data.warnings) && data.warnings.length) {
-      setFeedback({ isOpen: true, title: 'Saved — possible clash', message: data.warnings[0], type: 'info' });
-    }
-    await reload();
-  }
-
-  // The question opens on top of Edit Game; Keep it leaves the window as it was.
-  function askDeleteGame(g: LeagueGame) {
-    const name = `${teamMap.get(g.homeTeamId)?.name ?? 'Home'} vs ${teamMap.get(g.awayTeamId)?.name ?? 'Away'}`;
-    const scored = g.status === 'completed' && g.homeScore != null && g.awayScore != null;
-    setFeedback({
-      isOpen: true,
-      title: `Delete ${name}?`,
-      message: `It leaves the schedule and the public page for good.${scored ? ' Its score comes out of the standings.' : ''}`
-        + ' To call a game off but keep it listed, set Status to Cancelled instead.',
-      type: 'danger',
-      confirmText: 'Delete',
-      cancelText: 'Keep it',
-      onConfirm: () => { void deleteGame(g); },
-    });
-  }
-
-  async function deleteGame(g: LeagueGame) {
-    setSaving(true);
-    let res: Response;
-    // ⚠ A dropped connection must not leave `saving` on: the window's ×, Save and Delete all wait on it (/review).
-    try {
-      res = await fetch(`/api/admin/house-league/seasons/${seasonId}/schedule/${g.id}${orgQuery}`, { method: 'DELETE' });
-    } catch {
-      showError('Could not delete game', 'The connection dropped. Check it and try again.');
-      return;
-    } finally {
-      setSaving(false);
-    }
-    // A 404 is a game someone else already deleted — what was asked for, so the window closes on the fresh list
-    // rather than holding a game that no longer exists.
-    if (!res.ok && res.status !== 404) {
-      showError('Could not delete game', (await res.json().catch(() => ({}))).error ?? 'Unknown error');
-      return;
-    }
-    setGameModalOpen(false);
-    setActiveGame(null);
     await reload();
   }
 
@@ -1663,20 +1287,30 @@ export default function SchedulePage() {
         />
       )}
 
-      {/* Game create/edit modal — a game edits among its own division's teams. */}
-      {gameModalOpen && (
-        <GameModal
-          game={activeGame}
-          teams={activeGame ? teams.filter(t => t.divisionId === activeGame.divisionId) : divTeams}
+      {/* A game's window, read first (step 4, b4) — or Add › A game. A game edits among its own division's teams. */}
+      {gameWindow && (gameWindow === 'create' || openedGame) && (
+        <GameWindow
+          key={gameWindow === 'create' ? 'create' : gameWindow.id}
+          game={openedGame}
+          booking={openedGame ? [...calendar.bookings, ...calendar.needsDate].find(b => b.key === `league_game:${openedGame.id}`) ?? null : null}
+          divisionId={openedGame?.divisionId ?? selectedDivId}
+          divisionName={(openedGame ? divisions.find(d => d.id === openedGame.divisionId)?.name : null) ?? divName}
+          teams={openedGame ? teams.filter(t => t.divisionId === openedGame.divisionId) : divTeams}
           venues={clubVenues}
           sport={season?.sport}
+          api={`/api/admin/house-league/seasons/${seasonId}/schedule`}
+          orgQuery={orgQuery}
           checkPath={checkPath}
           orgSlug={orgSlug}
-          canManage={canManage}
-          saving={saving}
-          onSave={handleSaveGame}
-          onDelete={askDeleteGame}
-          onClose={() => setGameModalOpen(false)}
+          canRun={canManage}
+          onChanged={reload}
+          onCreated={warning => {
+            setGameWindow(null);
+            if (warning) setFeedback({ isOpen: true, title: 'Saved — possible clash', message: warning, type: 'info' });
+            void reload();
+          }}
+          onDeleted={() => { setGameWindow(null); void reload(); }}
+          onClose={() => setGameWindow(null)}
         />
       )}
 
