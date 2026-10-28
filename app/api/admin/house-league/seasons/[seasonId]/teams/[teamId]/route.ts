@@ -4,6 +4,7 @@ import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getLeagueSeasonById, updateLeagueTeam, deleteLeagueTeam } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { CHANGES_TO_SEND_WORDS } from '@/lib/league-schedule-words';
 
 async function verifyTeam(teamId: string, seasonId: string) {
   const { data } = await supabaseAdmin
@@ -74,6 +75,19 @@ export const DELETE = withObservability(async (_req: Request,
       { error: 'Remove all players from this team before deleting it.' },
       { status: 409 },
     );
+  }
+
+  // ⚖ A team's games go with it (the foreign key cascades). On a published schedule those are games families were told
+  // about, and a published game is cancelled, never removed (9d2·9, 9d-2b): the team stays.
+  const { data: team } = await supabaseAdmin.from('league_teams')
+    .select('name, league_divisions(schedule_published_at)').eq('id', teamId).single();
+  const div = Array.isArray(team?.league_divisions) ? team?.league_divisions[0] : team?.league_divisions;
+  if ((div as { schedule_published_at?: string | null } | null)?.schedule_published_at) {
+    const { count: games } = await supabaseAdmin.from('league_games').select('id', { count: 'exact', head: true })
+      .or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`);
+    if ((games ?? 0) > 0) {
+      return NextResponse.json({ error: CHANGES_TO_SEND_WORDS.teamHasPublishedGames((team?.name as string) ?? 'This team') }, { status: 409 });
+    }
   }
 
   await deleteLeagueTeam(teamId);

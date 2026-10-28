@@ -134,8 +134,8 @@ export function lastSentView(now: GameSnapshot, rows: readonly HeldChange[]): Ga
 
 /** The households a send reaches: each family once, one part per child whose team is in the changed games (f2, f3). */
 export interface FamilyChild { registrationId: string; email: string; childName: string; teamId: string }
-export function familiesFor(children: readonly FamilyChild[], teamIds: ReadonlySet<string>) {
-  const out = new Map<string, FamilyChild[]>();
+export function familiesFor<C extends FamilyChild>(children: readonly C[], teamIds: ReadonlySet<string>) {
+  const out = new Map<string, C[]>();
   for (const c of children) {
     const email = c.email.trim().toLowerCase();
     if (!email || !teamIds.has(c.teamId)) continue;

@@ -41,6 +41,67 @@ export const SCHEDULE_PUBLISH_WORDS = {
   failed: 'That didn’t publish. Try again.',
 } as const;
 
+/** f1 · f2 · f5: a published game's edit, and Changes to send. */
+export const CHANGES_TO_SEND_WORDS = {
+  title: 'Changes to send',
+  /** The header's button; its count is the amber pill beside it. */
+  button: 'Changes to send',
+  /** "Orioles vs Twins · Thu, Jun 24: 6:00 p.m. → 7:30 p.m." (`→` as the club's Send the changes). */
+  rowFromTo: (game: string, day: string, from: string, to: string) => `${game} · ${day}: ${from} → ${to}`,
+  /** A new day: "Orioles vs Twins · Thu, Jun 24: now Thu, Jul 1, 6:00 p.m." */
+  rowNow: (game: string, day: string, now: string) => `${game} · ${day}: now ${now}`,
+  rowState: (game: string, day: string, state: string) => `${game} · ${day}: ${state}`,
+  state: { cancelled: 'cancelled', postponed: 'postponed', added: 'added', back_on: 'back on' } as Record<string, string>,
+  /** "Blue Jays and Red Sox families · 22 families" */
+  who: (home: string, away: string, n: number) => `${home} and ${away} families · ${families(n)}`,
+  byClub: (division: string) => `The club moved ${possessive(division)} game time.`,
+  /** "The Kims have Ava on the Twins and Henry on the Rays. They get one email with both changes." */
+  oneHousehold: (family: string, parts: readonly { child: string; team: string }[]) => {
+    const list = parts.map(p => `${p.child} on the ${p.team}`);
+    const joined = list.length > 1 ? `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}` : list[0];
+    return `The ${family} have ${joined}. They get one email with ${parts.length === 2 ? 'both' : 'all their'} changes.`;
+  },
+  undo: 'Undo',
+  undoAria: (game: string) => `Undo the change to ${game}`,
+  undone: (game: string) => `Undone. ${game} is back as families last heard.`,
+  foot: (n: number, teams: number) =>
+    `Reaches ${families(n)}, one email each. The ${possessive(pluralize(teams, 'team'))} coaches get a copy. Doesn’t count toward today’s ${CLUB_EMAIL_CAP}.`,
+  notYet: 'Not yet',
+  send: (n: number) => `Send ${pluralize(n, 'change')}`,
+  sending: 'Sending…',
+  /** A build word until Part 4 sends: what was written for families ("Reached 64 of 66 …" comes with the send). */
+  sent: (n: number) => `Sent to ${families(n)}.`,
+  played: 'This game has already been played, so it isn’t emailed.',
+  empty: 'Nothing is waiting to send.',
+  already: (by: string | null, at: string | null) =>
+    `${by ?? 'Someone'} sent these${at ? ` at ${at}` : ''}${at?.endsWith('.') ? '' : '.'} Nothing more was sent.`,
+  netNothing: 'Nothing was waiting, so nothing was sent.',
+  /** Under the waiting count (f1). */
+  listNote: 'Until you send, the public schedule and the coaches’ pages still show the old games.',
+  /** The list's marker on a game whose change waits: "Moved · not sent". A place change is a move to families. */
+  marker: (kind: string | null) => `${MARKER_WORD[kind ?? ''] ?? 'Changed'} · not sent`,
+  /** 9d2b·B: a league admin places a game only on the division's game time. */
+  outsideTime: (division: string) =>
+    `That’s outside ${possessive(division)} game time. Pick one of its open times, or give it more in House league’s time.`,
+  /** The window's stale press (the 9d-2a review): what it saw is not the game any more. */
+  gameChanged: 'This game changed while its window was open. Close it and look again.',
+  undoPlayed: 'This game has already been played, so its result stays.',
+  /** Build words for a refusal the window never offers (9d2·9): reached only by a stale window or a hand-made call. */
+  deletePublished: 'This schedule is published, so its games are cancelled, not deleted.',
+  /** f5's change was saved, and its send was refused or failed: it waits with the rest. */
+  sendNowFailed: 'Saved, but it didn’t send. It’s waiting in Changes to send.',
+  /** A build word: deleting a team takes its games with it, and a published game is never just removed (9d2·9). */
+  teamHasPublishedGames: (team: string) =>
+    `${team} has games on the published schedule, so it can’t be deleted. Families have been told about them.`,
+  failed: 'That didn’t send. Try again.',
+} as const;
+
+/** The list's word for a held kind ("Postponed" and "Back on" are build words in the settled pattern). */
+const MARKER_WORD: Record<string, string> = {
+  moved: 'Moved', place: 'Moved', given_date: 'Moved', cancelled: 'Cancelled', added: 'Added', postponed: 'Postponed',
+  back_on: 'Back on',
+};
+
 /** g2 · g3: what families and coaches read. */
 export const SCHEDULE_PUBLIC_WORDS = {
   coming: (division: string) => `${possessive(division)} schedule is coming`,

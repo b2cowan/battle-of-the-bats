@@ -1,7 +1,8 @@
 'use client';
 import { Megaphone } from 'lucide-react';
 import { formatStoredDate } from '@/lib/timezone';
-import { SCHEDULE_PUBLISH_WORDS as W } from '@/lib/league-schedule-words';
+import { CHANGES_TO_SEND_WORDS as CW, SCHEDULE_PUBLISH_WORDS as W } from '@/lib/league-schedule-words';
+import ck from '../../ClubKit.module.css';
 import s from '../time/LeagueTime.module.css';
 
 /** A published division's facts from the schedule read (the route's `schedulePublishing`). */
@@ -38,10 +39,14 @@ export default function SchedulePublishLine({ divisionName, games, teamsPublishe
     words = W.draft(games) + (teamsPublished ? '' : `. ${W.teamsFirst(divisionName)}`);
   }
   return (
-    <p className={s.line}>
-      <Megaphone size={15} aria-hidden className={s.lineIcon} />
-      <span>{words}</span>
-    </p>
+    <>
+      <p className={s.line}>
+        <Megaphone size={15} aria-hidden className={s.lineIcon} />
+        <span>{words}</span>
+      </p>
+      {/* Under the waiting count (f1): what families see meanwhile. */}
+      {canRun && publishing && publishing.held > 0 && <p className={ck.hint}>{CW.listNote}</p>}
+    </>
   );
 }
 

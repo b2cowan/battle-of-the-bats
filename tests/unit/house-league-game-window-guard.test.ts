@@ -4,13 +4,14 @@
  * rules carry over.
  *
  *   1. DELETE DELETES. The route's DELETE was a soft cancel behind "Cancel Game"; house league was left with no way to
- *      remove a game added by mistake (Cancelled keeps it on the public schedule). 9d2·9: Delete before publishing —
- *      nothing is published until 9d-2b, so it stays on every state.
+ *      remove a game added by mistake (Cancelled keeps it on the public schedule). 9d2·9 (9d-2b): Delete before
+ *      publishing, Cancel after — the doors, and the route refuses deleting a published division's game.
  *   2. A RECORD READS FIRST AND EDITS WHOLE: the pencil (whoever runs the season, a game that's on or played) turns the
  *      whole record into its form; ✓ saves; a reader gets no pencil and no doors.
  *   3. THE STATUS DROPDOWN IS GONE. Postpone · Cancel · Give it a new date · Put it back on are doors at the end of the
- *      body; Postpone, Cancel and Delete ask first, "Keep it" against the act, and Postpone and Cancel say families aren't
- *      emailed (9d2a·F).
+ *      body; Postpone, Cancel and Delete ask first, "Keep it" against the act. 9d-2b replaced 9d2a·F's "Families aren't
+ *      emailed." with the state-true pairs: on a draft nobody is told; on a published division families hear when the
+ *      changes are sent, or now (f5).
  *   4. THE SAVE SENDS ONLY WHAT CHANGED, so a score on a game that already clashes is a record, never a move the route
  *      re-checks and refuses (the route's own rule, which the old every-field save broke).
  *   (⚰ 3, "the pinned head and foot sit flush": the old look's sticky bands; the window is the kit's KitDialog now.)
@@ -33,10 +34,13 @@ describe('1. the route\'s DELETE removes the game', () => {
     assert.doesNotMatch(del, /updateLeagueGame\(/, 'DELETE went back to a soft cancel');
     // Who may: the one house-league gate (Stage 9a Part 1), on this season — a finished season's games are locked (Q16).
     assert.match(del, /houseLeagueRefusal\(ctx, 'run', season\)/);
+    // 9d2·9: a published division's game is cancelled, never deleted.
+    const refuse = del.indexOf('(await divisionOf(game.division_id)).published');
+    assert.ok(refuse > 0 && refuse < del.indexOf(".from('league_games').delete()"), 'DELETE lost its published refusal');
   });
   it('Delete ends the body for whoever runs the season, and asks first in the window', () => {
     const w = readCode(WINDOW);
-    assert.match(w, /\{canRun && doors && \([\s\S]*<RecordDelete onClick=\{\(\) => setMode\('delete'\)\}/);
+    assert.match(w, /\{canRun && doors && \([\s\S]*\{doors\.delete && <RecordDelete onClick=\{\(\) => setMode\('delete'\)\}/);
     assert.match(w, /W\.deleteAsk\(name\), says: W\.deleteSays\(scoredGame\), yes: W\.deleteYes, cls: 'btn btn-danger'/);
     const write = functionBody(w, 'write');
     assert.match(write, /\} finally \{\s*setSaving\(false\);\s*\}/, 'a dropped connection leaves the window locked on `saving`');
@@ -60,19 +64,38 @@ describe('2. a record reads first and edits whole', () => {
 });
 
 describe('3. a state is a door', () => {
-  it('each state offers its own doors (9d2·9, ·10, 9d2a·E)', () => {
-    assert.deepEqual(gameWindowDoors('scheduled'), { pencil: true, postpone: true, cancel: true, giveDate: false, putBack: false });
-    assert.deepEqual(gameWindowDoors('completed'), { pencil: true, postpone: false, cancel: false, giveDate: false, putBack: false });
-    assert.deepEqual(gameWindowDoors('postponed'), { pencil: false, postpone: false, cancel: true, giveDate: true, putBack: false });
-    assert.deepEqual(gameWindowDoors('cancelled'), { pencil: false, postpone: false, cancel: false, giveDate: false, putBack: true });
+  it('each state offers its own doors on a published division (9d2·10, 9d2a·E)', () => {
+    assert.deepEqual(gameWindowDoors('scheduled', true), { pencil: true, postpone: true, cancel: true, delete: false, giveDate: false, putBack: false });
+    assert.deepEqual(gameWindowDoors('completed', true), { pencil: true, postpone: false, cancel: false, delete: false, giveDate: false, putBack: false });
+    assert.deepEqual(gameWindowDoors('postponed', true), { pencil: false, postpone: false, cancel: true, delete: false, giveDate: true, putBack: false });
+    assert.deepEqual(gameWindowDoors('cancelled', true), { pencil: false, postpone: false, cancel: false, delete: false, giveDate: false, putBack: true });
   });
-  it('Postpone and Cancel ask, Keep it against the act, and say families aren\'t emailed', () => {
+  it('9d2·9: Delete before publishing, Cancel after', () => {
+    for (const st of ['scheduled', 'completed', 'postponed', 'cancelled'] as const) {
+      assert.equal(gameWindowDoors(st, false).delete, true, st);
+      assert.equal(gameWindowDoors(st, false).cancel, false, st);
+      assert.equal(gameWindowDoors(st, true).delete, false, st);
+    }
+  });
+  it('Postpone and Cancel ask, Keep it against the act, and say who hears (9d-2b f1, f5)', () => {
     const w = readCode(WINDOW);
     assert.doesNotMatch(w, /<option value="cancelled"/, 'the Status dropdown came back');
     assert.match(w, />\{W\.keep\}<\/button>/);
     const words = readCode('lib/league-season-calendar.ts');
-    assert.match(words, /postponeSays: '[^']*Families aren’t emailed\.'/);
-    assert.match(words, /cancelSays: '[^']*Families aren’t emailed\.'/);
+    assert.doesNotMatch(words, /Families aren’t emailed/, '9d2a·F ends with 9d-2b');
+    assert.match(words, /Nobody is told: the schedule isn’t published yet\./);
+    assert.match(words, /Families hear when you send changes, and the public schedule shows it Cancelled from then\./);
+    // f5: on a published division the one question offers both ways.
+    assert.match(w, /const urgent = published && mode !== 'delete';/);
+    assert.match(w, /onClick=\{\(\) => void act\(status, true\)\}/);
+  });
+  it('every press carries what the window saw, and the route refuses a game changed since (the stale window)', () => {
+    const w = readCode(WINDOW);
+    assert.match(functionBody(w, 'changes'), /seen: \{ status: game\.status, updatedAt: game\.updatedAt \}/);
+    assert.match(functionBody(w, 'act'), /seen: \{ status: game\.status, updatedAt: game\.updatedAt \}/);
+    const patch = readCode(ROUTE);
+    assert.match(patch, /seen\.status !== game\.status \|\| !sameInstant\(seen\.updatedAt, game\.updated_at\)/);
+    assert.match(patch, /if \(!\(await updateLeagueGame\(gameId, patch, game\.updated_at\)\)\)/);
   });
   it('a re-dated game is put back on by the same form', () => {
     assert.match(functionBody(readCode(WINDOW), 'changes'), /if \(mode === 'redate'\) out\.status = 'scheduled';/);

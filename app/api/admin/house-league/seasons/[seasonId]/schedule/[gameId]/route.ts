@@ -8,16 +8,30 @@ import { withObservability } from '@/lib/observability';
 import { zonedWallClockToUtc } from '@/lib/timezone';
 import { clashReportForLeagueRows, emptyReport } from '@/lib/venue-clash-lookup';
 import { invalidGamePatch } from '@/lib/league-game-patch';
+import { houseLeagueAccess } from '@/lib/house-league-access';
+import { placeGame } from '@/lib/league-game-place';
+import { heldChangesOf, heldGamesOf, isShownHeld, sendHeldChanges } from '@/lib/league-game-changes-server';
+import { CHANGES_TO_SEND_WORDS as CW } from '@/lib/league-schedule-words';
+import { GAME_WINDOW_WORDS } from '@/lib/league-season-calendar';
 
 async function verifyGame(gameId: string, seasonId: string) {
   const { data } = await supabaseAdmin
     .from('league_games')
-    .select('id, status, scheduled_at, ends_at, org_venue_id, org_venue_facility_id, location, home_team_id, away_team_id')
+    .select('id, division_id, status, scheduled_at, ends_at, org_venue_id, org_venue_facility_id, location, home_team_id, away_team_id, updated_at')
     .eq('id', gameId)
     .eq('season_id', seasonId)
     .single();
   return data;
 }
+
+/** The game's division: its name (the move refusal's words) and whether its schedule is published (9d-2b). */
+async function divisionOf(divisionId: string) {
+  const { data } = await supabaseAdmin.from('league_divisions').select('name, schedule_published_at').eq('id', divisionId).single();
+  return { name: (data?.name as string | undefined) ?? '', published: !!data?.schedule_published_at };
+}
+
+const sameInstant = (a: unknown, b: string | null) =>
+  typeof a === 'string' && b != null && Date.parse(a) === Date.parse(b);
 
 export const PATCH = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string; gameId: string }> },) => {
@@ -39,7 +53,30 @@ export const PATCH = withObservability(async (req: Request,
   if (!body || typeof body !== 'object' || Array.isArray(body)) return NextResponse.json({ error: 'The request was not understood' }, { status: 400 });
   const invalid = invalidGamePatch(body);
   if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
+
+  // ⚖ THE PRESS IS ABOUT THE GAME THE WINDOW SAW (9d-2a review, 9d-2b Part 3): `seen` is its status and `updated_at` when
+  // it opened. A game changed since — postponed, scored or moved by someone else — is refused, never written over; and
+  // the write itself is conditional on the row read here, so a change landing between this read and the write loses too.
+  const seen = body.seen as { status?: unknown; updatedAt?: unknown } | undefined;
+  if (seen && (seen.status !== game.status || !sameInstant(seen.updatedAt, game.updated_at))) {
+    return NextResponse.json({ error: CW.gameChanged, code: 'changed' }, { status: 409 });
+  }
+  const division = await divisionOf(game.division_id);
   const patch: Parameters<typeof updateLeagueGame>[1] = {};
+
+  // Home and away. A published game's teams are facts (plan §0h build default): a different match-up is a new game,
+  // which the change record explains as a cancel and an add. A draft's teams are the form's to change.
+  const homeTeamId = typeof body.homeTeamId === 'string' ? body.homeTeamId : game.home_team_id;
+  const awayTeamId = typeof body.awayTeamId === 'string' ? body.awayTeamId : game.away_team_id;
+  if (homeTeamId !== game.home_team_id || awayTeamId !== game.away_team_id) {
+    if (division.published) return NextResponse.json({ error: GAME_WINDOW_WORDS.teamsFixed }, { status: 409 });
+    if (homeTeamId === awayTeamId) return NextResponse.json({ error: 'Home and away teams must be different' }, { status: 400 });
+    const { count } = await supabaseAdmin.from('league_teams').select('id', { count: 'exact', head: true })
+      .in('id', [homeTeamId, awayTeamId]).eq('season_id', seasonId).eq('division_id', game.division_id);
+    if (count !== 2) return NextResponse.json({ error: 'Team not found' }, { status: 404 });
+    patch.homeTeamId = homeTeamId;
+    patch.awayTeamId = awayTeamId;
+  }
 
   // Combine date + time into ISO timestamp if provided separately.
   // J3-047: interpret the wall-clock in the org's zone (America/Toronto V1), not the
@@ -112,7 +149,7 @@ export const PATCH = withObservability(async (req: Request,
     const { data: teamRows } = await supabaseAdmin
       .from('league_teams')
       .select('id, name')
-      .in('id', [game.home_team_id, game.away_team_id]);
+      .in('id', [homeTeamId, awayTeamId]);
     const names = new Map((teamRows ?? []).map(t => [t.id, t.name]));
     const check = await checkLeagueBookings({
       orgId: ctx!.org.id,
@@ -124,7 +161,7 @@ export const PATCH = withObservability(async (req: Request,
         orgVenueId:         patch.orgVenueId !== undefined ? patch.orgVenueId : game.org_venue_id,
         orgVenueFacilityId: patch.orgVenueFacilityId !== undefined ? patch.orgVenueFacilityId : game.org_venue_facility_id,
         location:           (patch.location !== undefined ? patch.location : game.location) as string | null,
-        label: `${names.get(game.home_team_id) ?? 'Home'} vs ${names.get(game.away_team_id) ?? 'Away'}`,
+        label: `${names.get(homeTeamId) ?? 'Home'} vs ${names.get(awayTeamId) ?? 'Away'}`,
       }],
     });
     if (check.blocking.length) {
@@ -136,7 +173,49 @@ export const PATCH = withObservability(async (req: Request,
     warnings = check.warnings.map(w => w.message);
   }
 
-  await updateLeagueGame(gameId, patch);
+  // ⚖ WHERE IT MAY GO (9d2b·B, `placeGame`): a game whose start or place moves, and that is on, lands on its division's
+  // game time and links to it — or, for a league admin on the club's schedule, is refused. A game left where it was
+  // (a score, a note, an end time, put back on) keeps its link, even one outside every use: it says nothing.
+  const effStart = (patch.scheduledAt !== undefined ? patch.scheduledAt : game.scheduled_at) as string | null;
+  const effVenue = patch.orgVenueId !== undefined ? patch.orgVenueId : game.org_venue_id;
+  const effFacility = patch.orgVenueFacilityId !== undefined ? patch.orgVenueFacilityId : game.org_venue_facility_id;
+  const moved = !(effStart == null ? game.scheduled_at == null : sameInstant(effStart, game.scheduled_at))
+    || (effVenue ?? null) !== (game.org_venue_id ?? null) || (effFacility ?? null) !== (game.org_venue_facility_id ?? null)
+    || (patch.location !== undefined && (patch.location ?? null) !== (game.location ?? null));
+  if (moved && effectiveStatus !== 'cancelled' && effectiveStatus !== 'postponed') {
+    const placed = await placeGame({
+      orgId: ctx!.org.id, seasonId, divisionId: game.division_id, divisionName: division.name,
+      scheduledAt: effStart, orgVenueId: effVenue, orgVenueFacilityId: effFacility,
+      placeAnywhere: houseLeagueAccess(ctx!, ctx!.org, season).placeAnywhere,
+    });
+    if ('refusal' in placed) return NextResponse.json({ error: placed.refusal, code: 'outside_time' }, { status: 409 });
+    patch.slotUseId = placed.slotUseId;
+  }
+
+  // On a published division the database records the change as it writes it (mig 409's trigger): it waits in Changes to
+  // send, and the public page keeps what families last heard until it goes.
+  if (!(await updateLeagueGame(gameId, patch, game.updated_at))) {
+    return NextResponse.json({ error: CW.gameChanged, code: 'changed' }, { status: 409 });
+  }
+
+  // ⚖ f5, THE URGENT CANCEL OR POSTPONE: "tell families now" sends this one game's change on its own; anything else waiting
+  // keeps waiting. The change is saved first; a send refused or failed leaves it waiting with the rest, and says so.
+  let sent: { families: number; others: number } | null = null;
+  let sendFailed = false;
+  if (body.sendNow === true && division.published && (patch.status === 'cancelled' || patch.status === 'postponed')) {
+    try {
+      const mine = (await heldChangesOf(seasonId, game.division_id)).filter(c => c.gameId === gameId).map(c => c.id);
+      const r = await sendHeldChanges({
+        orgId: ctx!.org.id, seasonId, divisionId: game.division_id, actorId: ctx!.user.id, changeIds: mine,
+      });
+      if (r.refusal === null) {
+        const others = (await heldGamesOf(seasonId, game.division_id)).filter(isShownHeld).length;
+        sent = { families: r.families, others };
+      } else sendFailed = true;
+    } catch {
+      sendFailed = true;
+    }
+  }
 
   // Across programs (Club Tier Stage 6a): the moved or re-opened game against the club's other programs — warns
   // only, and only when where or when changed (a final score is a record, not a booking).
@@ -150,10 +229,10 @@ export const PATCH = withObservability(async (req: Request,
         orgVenueFacilityId: patch.orgVenueFacilityId !== undefined ? patch.orgVenueFacilityId : game.org_venue_facility_id,
       }])
     : emptyReport();
-  return NextResponse.json({ ok: true, warnings, crossProgram });
+  return NextResponse.json({ ok: true, warnings, crossProgram, sent, ...(sendFailed ? { sendFailed: CW.sendNowFailed } : {}) });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule/[gameId]' });
 
-// Delete removes the game for good (owner, 2026-10-09, at Edit Game walking Club Tier §288 W9: "I don't see delete
+// Delete removes a DRAFT's game for good (9d2·9, 9d-2b: a published division's game is cancelled instead) (owner, 2026-10-09, at Edit Game walking Club Tier §288 W9: "I don't see delete
 // anywhere"). ⚰ It used to be a soft cancel (status = 'cancelled') behind the window's "Cancel Game", which the Status
 // field already did; that button went the same day, and house league was left with no way to remove a game added by
 // mistake — Cancelled kept it on the public schedule, telling families a game that never existed was called off.
@@ -174,6 +253,10 @@ export const DELETE = withObservability(async (_req: Request,
 
   const game = await verifyGame(gameId, seasonId);
   if (!game) return NextResponse.json({ error: 'Game not found' }, { status: 404 });
+  // 9d2·9: Delete before publishing, Cancel after. A published game was told to families; it is cancelled, never removed.
+  if ((await divisionOf(game.division_id)).published) {
+    return NextResponse.json({ error: CW.deletePublished, code: 'published' }, { status: 409 });
+  }
 
   const { error } = await supabaseAdmin.from('league_games').delete().eq('id', gameId).eq('season_id', seasonId);
   if (error) return NextResponse.json({ error: 'Could not delete the game' }, { status: 500 });

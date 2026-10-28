@@ -71,6 +71,8 @@ export interface SeasonBooking extends CalendarBooking {
   result: string | null;
   /** The game or practice row it came from. */
   source: { kind: 'game'; game: LeagueGame } | { kind: 'practice'; practice: LeaguePractice };
+  /** A published game's change still waiting to be sent: "Moved · not sent" (9d-2b f1; set by the page, runners only). */
+  held?: string | null;
 }
 
 export interface SeasonCalendar {
@@ -349,15 +351,17 @@ export const SEASON_SCHEDULE_WORDS = {
 
 /**
  * What a game's window offers whoever runs the season, by the game's state (a reader gets none of it). ⚖ The Status
- * dropdown is gone: a state is a door. On, a game is edited (the pencil), postponed or cancelled; played, only corrected
- * (its score is the pencil's); postponed, it is given a new date or cancelled; cancelled, it is put back on (9d2a·E).
- * Delete is on every state until 9d-2b publishes (9d2·9: Delete before publishing, Cancel after — there is no "after" yet).
+ * dropdown is gone: a state is a door. On, a game is edited (the pencil) and postponed; played, only corrected (its score
+ * is the pencil's); postponed, it is given a new date; cancelled, it is put back on (9d2a·E).
+ * ⚖ 9d2·9, DELETE BEFORE PUBLISHING, CANCEL AFTER (9d-2b): a draft's game families never heard of is deleted; a published
+ * game is cancelled and stays on the schedule, struck through — families were told it, so it never just disappears.
  */
-export function gameWindowDoors(status: LeagueGame['status']) {
+export function gameWindowDoors(status: LeagueGame['status'], published: boolean) {
   return {
     pencil: status === 'scheduled' || status === 'completed',
     postpone: status === 'scheduled',
-    cancel: status === 'scheduled' || status === 'postponed',
+    cancel: published && (status === 'scheduled' || status === 'postponed'),
+    delete: !published,
     giveDate: status === 'postponed',
     putBack: status === 'cancelled',
   };
@@ -407,16 +411,41 @@ export const GAME_WINDOW_WORDS = {
   cancel: 'Cancel this game',
   keep: 'Keep it',
   postponeAsk: (game: string) => `Postpone ${game}?`,
-  postponeSays: 'It moves to Needs a new date and stops holding its time and place. The public schedule says Postponed until you give it a new date. Families aren’t emailed.',
+  /** 9d-2b f1: the state-true pair (9d2a·F's "Families aren't emailed." ends here). */
+  postponeSays: (published: boolean) => published
+    ? 'It moves to Needs a new date and stops holding its time and place. Families hear when you send changes, and the public schedule says Postponed from then.'
+    : 'It moves to Needs a new date and stops holding its time and place. Nobody is told: the schedule isn’t published yet.',
   cancelAsk: (game: string) => `Cancel ${game}?`,
-  cancelSays: 'It stays on the schedule, struck through, and the public schedule shows it Cancelled. Families aren’t emailed.',
+  /** A draft has no Cancel (9d2·9): this is the published sentence alone. */
+  cancelSays: 'It stays on the schedule, struck through. Families hear when you send changes, and the public schedule shows it Cancelled from then.',
+  /**
+   * f5, a published division: the one question offers both — this change held with the rest, or sent now on its own.
+   * "{Thu, Jun 17} · 6:00 p.m. · {place}. The {Red Sox} and {Mariners} families ({21}) can be emailed now, or with your
+   * other changes."
+   */
+  urgentSays: (when: string, home: string, away: string, families: number) =>
+    `${when}. The ${home} and ${away} families (${families}) can be emailed now, or with your other changes.`,
+  cancelLater: 'Cancel, send later',
+  cancelNow: 'Cancel and tell families now',
+  postponeLater: 'Postpone, send later',
+  postponeNow: 'Postpone and tell families now',
+  /** "Sent to 21 families. Your 3 other changes keep waiting." */
+  sentNow: (families: number, others: number) =>
+    `Sent to ${pluralize(families, 'family', 'families')}.${others > 0 ? ` Your ${pluralize(others, 'other change')} keep${others === 1 ? 's' : ''} waiting.` : ''}`,
+  /** The form's line (f1): who hears what ✓ saves. */
+  formPublished: 'Families hear about this when you send changes.',
+  formDraft: 'Nobody is told: this schedule isn’t published yet.',
+  addPublished: 'Families hear about this game when you send changes.',
+  /** A build default (plan §0h): a different match-up is a new game. */
+  teamsFixed: 'Home and away can’t change on a published game. To play a different match-up, cancel this game and add a new one.',
   giveDate: 'Give it a new date',
   cancelled: 'Cancelled',
   putBack: 'Put it back on',
   putBackSaid: 'Put back on the schedule.',
   deleteDoor: 'Delete this game',
   deleteAsk: (game: string) => `Delete ${game}?`,
-  deleteSays: (scored: boolean) => `It leaves the schedule and the public page for good.${scored ? ' Its score comes out of the standings.' : ''} To call a game off but keep it listed, cancel it instead.`,
+  /** Only a draft deletes (9d2·9): families never heard of the game. */
+  deleteSays: (scored: boolean) => `It leaves the draft for good.${scored ? ' Its score comes out of the standings.' : ''} Nobody is told.`,
   deleteYes: 'Delete',
   /** The form's fields: the shipped labels, the "(optional)" tags gone (a field is marked required, never optional). */
   homeTeam: 'Home team',

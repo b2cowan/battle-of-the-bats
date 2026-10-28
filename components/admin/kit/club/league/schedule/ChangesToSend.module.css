@@ -1,0 +1,31 @@
+/* Changes to send (House League 9d-2b, frame f2): the waiting changes, one row each, Undo at its end; and the header
+   button's amber count (the rail's waiting pill, decision 2026-10-01). */
+.rows { list-style: none; margin: 0; padding: 0; display: grid; }
+.row {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem;
+  padding: 0.65rem 0; border-top: 1px solid var(--home-line);
+}
+.row:first-child { border-top: 0; padding-top: 0; }
+.text { display: grid; gap: 0.15rem; min-width: 0; }
+.text b { font-weight: 600; overflow-wrap: anywhere; }
+.sub { font-size: var(--type-support); color: var(--text-secondary); }
+
+/* Undo: the record's quiet text door (RepKit's .recordAction), here with its own accessible name per row. */
+.undo {
+  display: inline-flex; align-items: center; gap: 0.35rem; flex: none;
+  min-height: var(--admin-control-h); padding: 0; border: 0; background: none;
+  font: inherit; font-size: var(--type-support); color: var(--text-primary); cursor: pointer;
+}
+.undo:hover { text-decoration: underline; }
+.undo:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.undo:disabled { opacity: 0.5; cursor: default; text-decoration: none; }
+
+.count {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 1.35rem; margin-left: 0.4rem;
+  padding: 0.05rem 0.4rem; border-radius: 999px;
+  background: rgba(var(--home-amber-rgb), 0.18); color: var(--badge-warning-ink); font-size: var(--type-support); font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .undo { min-height: var(--tap-min, 44px); }
+}

@@ -38,6 +38,7 @@ import { mondayOfDay } from '@/lib/timezone';
 import { clockOf, dayLong, timeWords, whereWords } from '@/lib/club-calendar-view';
 import { facilityWords } from '@/lib/venue-clash-words';
 import { pluralize } from '@/lib/utils';
+import { SCHEDULE_PUBLIC_WORDS } from '@/lib/league-schedule-words';
 import {
   SEASON_PUBLIC_WORDS, SEASON_SCHEDULE_WORDS as W, foldNights, nightPlaces, seasonWeeks, todayLineAt,
   type SeasonBooking, type SeasonListRow,
@@ -61,10 +62,17 @@ function nightPlaceWords(night: { practices: readonly SeasonBooking[] }, sport: 
   return [...byVenue].map(([venue, facs]) => (facs.length ? `${venue} · ${facs.join(', ')}` : venue)).filter(Boolean).join('; ');
 }
 
-/** The trail of a row: its result ("Final 7–4"), or its called-off word. */
+/**
+ * The trail of a row: a change still waiting to be sent ("Moved · not sent", 9d-2b f1), its result ("Final 7–4"), its
+ * called-off word, or "Moved" on a game re-dated since families first heard it, until it is played (9d2·10).
+ */
 function Trail({ b }: { b: SeasonBooking }) {
+  if (b.held) return <RepChip tone="warn">{b.held}</RepChip>;
   if (b.state) return <StateChip b={b} />;
   if (b.result) return <RepChip tone="neutral">{b.result}</RepChip>;
+  if (b.source.kind === 'game' && b.source.game.status === 'scheduled' && b.source.game.movedFrom) {
+    return <RepChip tone="neutral">{SCHEDULE_PUBLIC_WORDS.moved}</RepChip>;
+  }
   return null;
 }
 

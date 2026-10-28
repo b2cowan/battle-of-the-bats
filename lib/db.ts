@@ -2295,6 +2295,8 @@ export interface LeagueGameInput {
   orgVenueFacilityId?: string | null;
   location?: string | null;
   notes?: string | null;
+  /** The division game time it sits on (9d-2b, `lib/league-game-place.ts`); null off it. */
+  slotUseId?: string | null;
 }
 
 // ─── Mappers ──────────────────────────────────────────────────────────────────
@@ -2884,6 +2886,7 @@ export async function createLeagueGame(input: LeagueGameInput): Promise<LeagueGa
       org_venue_facility_id: input.orgVenueFacilityId ?? null,
       location:     input.location ?? null,
       notes:        input.notes ?? null,
+      slot_use_id:  input.slotUseId ?? null,
     })
     .select()
     .single();
@@ -2891,11 +2894,21 @@ export async function createLeagueGame(input: LeagueGameInput): Promise<LeagueGa
   return mapLeagueGame(data);
 }
 
+/**
+ * `ifUpdatedAt`: write only if the row is still the one read (House League 9d-2b, the stale window) — false when another
+ * write landed first and nothing was written.
+ */
 export async function updateLeagueGame(
   gameId: string,
-  input: Partial<LeagueGameInput> & { homeScore?: number | null; awayScore?: number | null; status?: string; notes?: string | null }
-): Promise<void> {
+  input: Partial<LeagueGameInput> & {
+    homeScore?: number | null; awayScore?: number | null; status?: string; notes?: string | null; slotUseId?: string | null;
+  },
+  ifUpdatedAt?: string,
+): Promise<boolean> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (input.homeTeamId  !== undefined) patch.home_team_id = input.homeTeamId;
+  if (input.awayTeamId  !== undefined) patch.away_team_id = input.awayTeamId;
+  if (input.slotUseId   !== undefined) patch.slot_use_id  = input.slotUseId;
   if (input.scheduledAt !== undefined) patch.scheduled_at = input.scheduledAt;
   if (input.endsAt      !== undefined) patch.ends_at      = input.endsAt;
   if (input.orgVenueId         !== undefined) patch.org_venue_id          = input.orgVenueId;
@@ -2905,8 +2918,11 @@ export async function updateLeagueGame(
   if (input.awayScore   !== undefined) patch.away_score   = input.awayScore;
   if (input.status      !== undefined) patch.status       = input.status;
   if (input.notes       !== undefined) patch.notes        = input.notes;
-  const { error } = await supabaseAdmin.from('league_games').update(patch).eq('id', gameId);
+  let q = supabaseAdmin.from('league_games').update(patch).eq('id', gameId);
+  if (ifUpdatedAt) q = q.eq('updated_at', ifUpdatedAt);
+  const { data, error } = await q.select('id');
   if (error) throw new Error(`updateLeagueGame failed: ${error.message}`);
+  return (data ?? []).length > 0;
 }
 
 // ─── Standings (computed, not stored) ────────────────────────────────────────

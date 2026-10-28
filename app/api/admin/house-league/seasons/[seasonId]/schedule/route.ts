@@ -11,6 +11,10 @@ import { checkClubPermitsQuietly } from '@/lib/permit-lookup';
 import type { ClubBooking } from '@/lib/venue-clash';
 import type { PermitOutside } from '@/lib/permit-words';
 import { seasonGameSlots } from '@/lib/league-time-server';
+import { houseLeagueAccess } from '@/lib/house-league-access';
+import { placeGame } from '@/lib/league-game-place';
+import { asLastSent, heldChangesOf, heldGamesOf, isShownHeld, type HeldGameOf } from '@/lib/league-game-changes-server';
+import type { ChangeKind } from '@/lib/league-game-changes';
 
 function mapGame(row: any) {
   return {
@@ -68,11 +72,18 @@ export const GET = withObservability(async (req: Request,
   // "See the permit" to them alone), so a reader is sent neither. The game time is decoration on the read: a failed read of
   // it leaves the schedule loading, as a failed permit read does.
   const runs = !houseLeagueRefusal(ctx, 'run', season);
-  const [{ data, error }, gameSlots, publishing] = await Promise.all([
-    q, runs ? seasonGameSlots(ctx!.org.id, seasonId).catch(() => []) : Promise.resolve([]), schedulePublishing(seasonId),
+  const [{ data, error }, gameSlots, held, heldRows] = await Promise.all([
+    q, runs ? seasonGameSlots(ctx!.org.id, seasonId).catch(() => []) : Promise.resolve([]), heldGamesOf(seasonId),
+    runs ? Promise.resolve([]) : heldChangesOf(seasonId),
   ]);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  const games = (data ?? []).map(mapGame);
+  // ⚖ Whoever runs the season reads the games as they are, each held change marked (`changes`); a reader (the registrar)
+  // reads what families read — the last-sent games, no count and no tray (f2's edges).
+  const all = (data ?? []).map(mapGame);
+  const games = runs ? all : asLastSent(all, heldRows);
+  const publishing = await schedulePublishing(seasonId, held);
+  const changes: Record<string, { kind: ChangeKind | null; played: boolean }> = {};
+  if (runs) for (const h of held) if (isShownHeld(h)) changes[h.gameId] = { kind: h.news?.kind ?? null, played: h.played };
 
   // The permit's quiet line on each game (9d-2a step 7, frame i), by booking key — only for someone who runs the season:
   // "A reader doesn't see the line", and only they get "See the permit". A failed read says nothing, as every check does.
@@ -83,23 +94,23 @@ export const GET = withObservability(async (req: Request,
   }
 
   // The season's game time (9d-2a step 4): the game window's "Time from {schedule}" matches a game to it.
-  return NextResponse.json({ games, gameSlots, permits, publishing });
+  return NextResponse.json({ games, gameSlots, permits, publishing, changes });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule' });
 
 /**
  * Each published division's line (9d-2b, e1): when, how many families its Publish emailed and how it went (the season's
- * `schedule_published` notice), and how many changes are waiting to be sent. A division absent from the map is a draft.
+ * `schedule_published` notice), and how many GAMES have a change waiting (one moved twice is one; one moved and moved back
+ * is none — `heldGamesOf`'s net). A division absent from the map is a draft.
  * ⚠ A failed read THROWS: a published division read as a draft would offer Publish again (the SQL refuses it, but the
  * screen would say the wrong thing).
  */
-async function schedulePublishing(seasonId: string) {
-  const [divs, notices, held] = await Promise.all([
+async function schedulePublishing(seasonId: string, held: readonly HeldGameOf[]) {
+  const [divs, notices] = await Promise.all([
     supabaseAdmin.from('league_divisions').select('id, schedule_published_at').eq('season_id', seasonId).not('schedule_published_at', 'is', null),
     supabaseAdmin.from('league_season_notices').select('division_id, family_count, reached_count, failed_count, created_at')
       .eq('season_id', seasonId).eq('kind', 'schedule_published').order('created_at', { ascending: false }),
-    supabaseAdmin.from('league_game_changes').select('division_id').eq('season_id', seasonId).is('sent_at', null),
   ]);
-  for (const r of [divs, notices, held]) if (r.error) throw r.error;
+  for (const r of [divs, notices]) if (r.error) throw r.error;
   const out: Record<string, { publishedAt: string; families: number | null; reached: number; failed: number; held: number }> = {};
   for (const d of divs.data ?? []) {
     const n = (notices.data ?? []).find(x => x.division_id === d.id);
@@ -107,7 +118,7 @@ async function schedulePublishing(seasonId: string) {
       publishedAt: d.schedule_published_at as string,
       // A silent backfill (9d2b·A) and a Publish that reached nobody have no notice: no count to say.
       families: n ? n.family_count as number : null, reached: (n?.reached_count as number) ?? 0, failed: (n?.failed_count as number) ?? 0,
-      held: (held.data ?? []).filter(h => h.division_id === d.id).length,
+      held: held.filter(h => h.divisionId === d.id && isShownHeld(h)).length,
     };
   }
   return out;
@@ -140,7 +151,7 @@ export const POST = withObservability(async (req: Request,
   // previously trusted, which both mis-filed rows against foreign orgs and — once conflict
   // messages started naming teams — would have echoed another org's team name back.
   const [{ data: division }, { data: teamRows }] = await Promise.all([
-    supabaseAdmin.from('league_divisions').select('id').eq('id', divisionId).eq('season_id', seasonId).single(),
+    supabaseAdmin.from('league_divisions').select('id, name').eq('id', divisionId).eq('season_id', seasonId).single(),
     supabaseAdmin.from('league_teams').select('id, name').in('id', [homeTeamId, awayTeamId]).eq('season_id', seasonId),
   ]);
   if (!division) return NextResponse.json({ error: 'Division not found' }, { status: 404 });
@@ -170,6 +181,20 @@ export const POST = withObservability(async (req: Request,
     locationText: body.location ?? null,
   });
   if (!selection.ok) return NextResponse.json({ error: selection.error }, { status: 400 });
+
+  // ⚖ Where it may go (9d2b·B, `placeGame`): on the division's game time it links to it; a league admin on the club's
+  // schedule places it nowhere else. A game saved with no date places nothing until it is given one. On a published
+  // division the database records the add (mig 409): families hear of it when the changes are sent.
+  let slotUseId: string | null = null;
+  if (scheduledAt) {
+    const placed = await placeGame({
+      orgId: ctx!.org.id, seasonId, divisionId, divisionName: (division.name as string) ?? '', scheduledAt,
+      orgVenueId: selection.value.orgVenueId, orgVenueFacilityId: selection.value.orgVenueFacilityId,
+      placeAnywhere: houseLeagueAccess(ctx!, ctx!.org, season).placeAnywhere,
+    });
+    if ('refusal' in placed) return NextResponse.json({ error: placed.refusal, code: 'outside_time' }, { status: 409 });
+    slotUseId = placed.slotUseId;
+  }
 
   // One booking pool, org-wide: a practice on this surface blocks this game too.
   const names = new Map((teamRows ?? []).map(t => [t.id, t.name]));
@@ -203,6 +228,7 @@ export const POST = withObservability(async (req: Request,
     orgVenueFacilityId: selection.value.orgVenueFacilityId,
     location: selection.value.location,
     notes:    body.notes ?? null,
+    slotUseId,
   });
 
   // Across programs (Club Tier Stage 6a, Ask 4): a rep team's or a tournament's booking on the same diamond WARNS —

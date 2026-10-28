@@ -1,8 +1,8 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
-import { fetchAll } from './supabase-paging';
+import { fetchAll, fetchAllIn } from './supabase-paging';
 import { getSeasonGamesEveryStatus } from './db';
-import { lastSentView, type GameSnapshot, type HeldChange } from './league-game-changes';
+import { heldGames, lastSentView, sendClaim, type GameSnapshot, type HeldChange, type HeldGame } from './league-game-changes';
 import type { LeagueDivision, LeagueGame } from './types';
 
 /**
@@ -59,6 +59,77 @@ export function asLastSent(games: readonly LeagueGame[], held: readonly HeldChan
     if (seen) out.push(withSnapshot(g, seen));
   }
   return out;
+}
+
+/** A held game with the division and the two teams it tells (f2's rows and who hears each). */
+export interface HeldGameOf extends HeldGame { divisionId: string; homeTeamId: string; awayTeamId: string }
+
+/** What families will be told about a game: something to send, or a game played since (listed, never emailed). */
+export const isShownHeld = (g: HeldGame) => !!g.news || g.played;
+
+/**
+ * Every held game of a season (or one division), reduced to what it will tell families (`heldGames`) against the game as it
+ * is now. ⚠ A failed read THROWS.
+ */
+export async function heldGamesOf(seasonId: string, divisionId?: string): Promise<HeldGameOf[]> {
+  const held = await heldChangesOf(seasonId, divisionId);
+  if (!held.length) return [];
+  // (A mapped type: league-game-changes-guard reads any object key named for the trigger's date as a write of it.)
+  type Nullable = 'scheduled_at' | 'ends_at' | 'location' | 'org_venue_id' | 'org_venue_facility_id' | 'moved_from';
+  const rows = await fetchAllIn<{ id: string; division_id: string; home_team_id: string; away_team_id: string; status: LeagueGame['status'] }
+    & { [K in Nullable]: string | null }>([...new Set(held.map(h => h.gameId))], (c, a, b) => supabaseAdmin.from('league_games')
+    .select('id, division_id, home_team_id, away_team_id, scheduled_at, ends_at, location, org_venue_id, org_venue_facility_id, status, moved_from')
+    .in('id', c).order('id').range(a, b));
+  const byId = new Map(rows.map(r => [r.id, r]));
+  const current = new Map(rows.map(r => [r.id, {
+    scheduledAt: r.scheduled_at, endsAt: r.ends_at, location: r.location, venueId: r.org_venue_id,
+    facilityId: r.org_venue_facility_id, status: r.status, movedFrom: r.moved_from,
+  } satisfies GameSnapshot]));
+  return heldGames(held, current).flatMap(g => {
+    const r = byId.get(g.gameId);
+    return r ? [{ ...g, divisionId: r.division_id, homeTeamId: r.home_team_id, awayTeamId: r.away_team_id }] : [];
+  });
+}
+
+/** A season's active children on these teams, with the guardian's email (the households a send reaches, f2). */
+export async function childrenOnTeams(seasonId: string, teamIds: readonly string[]) {
+  const rows = await fetchAllIn<{ id: string; team_id: string; guardian_email: string | null; player_first_name: string | null; player_last_name: string | null }>(
+    teamIds, (c, a, b) => supabaseAdmin.from('league_registrations')
+      .select('id, team_id, guardian_email, player_first_name, player_last_name')
+      .eq('season_id', seasonId).eq('status', 'active').in('team_id', c).order('id').range(a, b));
+  return rows.map(r => ({
+    registrationId: r.id, teamId: r.team_id, email: r.guardian_email ?? '',
+    childName: (r.player_first_name ?? '').trim(), lastName: (r.player_last_name ?? '').trim(),
+  }));
+}
+
+export type SendHeldResult =
+  | { refusal: null; families: number; sentAt: string; news: number }
+  | { refusal: 'nothing' | 'changed' | 'finished' }
+  | { refusal: 'already'; by: string | null; at: string | null };
+
+/**
+ * SEND THE CHANGES (f2), or one urgent cancel or postpone (f5): the held rows the sender saw (`changeIds`) are claimed once,
+ * in `league_division_changes_send` (locked on the division, refused `changed` when a change landed or was undone while
+ * the window was open). What families are told is worked out HERE from the rows and the game now — never taken from the
+ * client — so a stale or edited request can only be refused, not mis-sent.
+ */
+export async function sendHeldChanges(p: {
+  orgId: string; seasonId: string; divisionId: string; actorId: string; changeIds: readonly string[];
+}): Promise<SendHeldResult> {
+  const named = new Set(p.changeIds);
+  const games = (await heldGamesOf(p.seasonId, p.divisionId)).filter(g => g.changeIds.some(id => named.has(id)));
+  const { data, error } = await supabaseAdmin.rpc('league_division_changes_send', {
+    p_org: p.orgId, p_season: p.seasonId, p_division: p.divisionId, p_actor: p.actorId,
+    p_changes: [...named], p_news: sendClaim(games).newsGameIds,
+  });
+  if (error) throw new Error(`Changes to send didn't save: ${error.message}`);
+  const r = (Array.isArray(data) ? data[0] : data) as {
+    refusal: string | null; sent_at: string | null; sent_by: string | null; families: number;
+  };
+  if (r.refusal === 'already') return { refusal: 'already', by: r.sent_by, at: r.sent_at };
+  if (r.refusal === 'nothing' || r.refusal === 'changed' || r.refusal === 'finished') return { refusal: r.refusal };
+  return { refusal: null, families: r.families, sentAt: r.sent_at!, news: games.filter(g => g.news).length };
 }
 
 /**

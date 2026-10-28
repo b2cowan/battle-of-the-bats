@@ -21,7 +21,7 @@ import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { monthWords } from '@/lib/calendar-recipe';
 import { EVENT_COLORS } from '@/lib/coach-schedule-vocab';
 import { rangeFor, stepCursor, type CalendarView } from '@/lib/club-calendar-view';
-import { SEASON_SCHEDULE_WORDS as W, seasonCalendar, seasonClashes, seasonOpeningDay, type SeasonBooking, type SeasonGameSlot } from '@/lib/league-season-calendar';
+import { GAME_WINDOW_WORDS, SEASON_SCHEDULE_WORDS as W, seasonCalendar, seasonClashes, seasonOpeningDay, type SeasonBooking, type SeasonGameSlot } from '@/lib/league-season-calendar';
 import ExportMenu from '@/components/admin/ExportMenu';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
@@ -34,7 +34,10 @@ import GameWindow from '@/components/admin/kit/club/league/schedule/GameWindow';
 import GenerateGamesWindow from '@/components/admin/kit/club/league/schedule/GenerateGamesWindow';
 import PublishScheduleWindow from '@/components/admin/kit/club/league/schedule/PublishScheduleWindow';
 import SchedulePublishLine, { showPublishButton, type SchedulePublishing } from '@/components/admin/kit/club/league/schedule/SchedulePublishLine';
-import { SCHEDULE_PUBLISH_WORDS } from '@/lib/league-schedule-words';
+import { CHANGES_TO_SEND_WORDS, SCHEDULE_PUBLISH_WORDS } from '@/lib/league-schedule-words';
+import ChangesToSendWindow from '@/components/admin/kit/club/league/schedule/ChangesToSendWindow';
+import cts from '@/components/admin/kit/club/league/schedule/ChangesToSend.module.css';
+import type { ChangeKind, GameSnapshot } from '@/lib/league-game-changes';
 import LeagueHealthWindow from '@/components/admin/kit/club/league/schedule/LeagueHealthWindow';
 import { PermitWindow } from '@/components/admin/kit/club/PermitWindows';
 import type { PermitOutside } from '@/lib/permit-words';
@@ -654,6 +657,9 @@ export default function SchedulePage() {
   const [publishing, setPublishing] = useState<Record<string, SchedulePublishing>>({});
   /** Publish schedule's window (e2), on the picked division. */
   const [publishOpen, setPublishOpen] = useState(false);
+  /** Each game with a change waiting to be sent (9d-2b f1/f2): its net kind, or played since. Runners only. */
+  const [changes, setChanges] = useState<Record<string, { kind: ChangeKind | null; played: boolean }>>({});
+  const [changesOpen, setChangesOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -758,6 +764,7 @@ export default function SchedulePage() {
     setGameSlots(g.gameSlots ?? []);
     setGamePermits(g.permits ?? {});
     setPublishing(g.publishing ?? {});
+    setChanges(g.changes ?? {});
     setPractices(p.practices ?? []);
     setScheduleRead('ok');
   }, [seasonId, orgQuery, beginRead]);
@@ -804,9 +811,14 @@ export default function SchedulePage() {
       clashes,
       permits: new Map(Object.entries(gamePermits)),
     });
-    const paint = (b: SeasonBooking): SeasonBooking => ({ ...b, colour: b.kind === 'practice' ? KIND_COLOUR.practice : KIND_COLOUR.game });
+    // A held change marks its row until it is sent ("Moved · not sent", f1); a game played since says nothing here.
+    const heldWords = (b: SeasonBooking) => {
+      const c = b.source.kind === 'game' ? changes[b.source.game.id] : undefined;
+      return c && !c.played ? CHANGES_TO_SEND_WORDS.marker(c.kind) : null;
+    };
+    const paint = (b: SeasonBooking): SeasonBooking => ({ ...b, colour: b.kind === 'practice' ? KIND_COLOUR.practice : KIND_COLOUR.game, held: heldWords(b) });
     return { bookings: c.bookings.map(paint), needsDate: c.needsDate.map(paint) };
-  }, [season, divGames, divPractices, clashes, teamName, divisions, venues, gameSlots, gamePermits]);
+  }, [season, divGames, divPractices, clashes, teamName, divisions, venues, gameSlots, gamePermits, changes]);
 
   // Show (9d2·12): empty = both kinds; a choice ON stays listed with 0 so it can always be taken off.
   const shown = calendar.bookings.filter(b => !show.size || show.has(b.kind));
@@ -1163,6 +1175,14 @@ export default function SchedulePage() {
   const divPublishing = selectedDivId ? publishing[selectedDivId] : undefined;
   const divTeamsPublished = !!selectedDiv?.teamsPublishedAt;
   const canPublish = showPublishButton({ canRun: canManage, published: !!divPublishing, teamsPublished: divTeamsPublished, games: divLiveGames });
+  // Changes to send (f2): the header's button once a published division has a change waiting, its count the amber pill.
+  const divHeld = canManage && divPublishing ? divPublishing.held : 0;
+  /** A place as a Changes to send row says it: the facility alone when it has one ("Diamond 2"), else the venue or the text. */
+  const placeWords = (snap: GameSnapshot) => {
+    const v = snap.venueId ? venues.find(x => x.id === snap.venueId) : null;
+    const fac = v && snap.facilityId ? v.facilities?.find(f => f.id === snap.facilityId)?.name : null;
+    return fac || v?.name || snap.location || '';
+  };
 
   const ViewGlyph = VIEW_GLYPH[shownView];
   const dateNav = shownView === 'list' ? null : <ScheduleDateNav view={shownView} cursor={cursor} onStep={step} />;
@@ -1288,6 +1308,12 @@ export default function SchedulePage() {
               {phone ? SCHEDULE_PUBLISH_WORDS.buttonPhone : SCHEDULE_PUBLISH_WORDS.button}
             </button>
           )}
+          {divHeld > 0 && scheduleRead === 'ok' && (
+            <button type="button" className="btn btn-lime" onClick={() => setChangesOpen(true)}
+              aria-label={`${CHANGES_TO_SEND_WORDS.button}: ${divHeld}`}>
+              {CHANGES_TO_SEND_WORDS.button}<span className={cts.count} aria-hidden>{divHeld > 9 ? '9+' : divHeld}</span>
+            </button>
+          )}
         </>}
       />
 
@@ -1389,6 +1415,31 @@ export default function SchedulePage() {
         />
       )}
 
+      {/* Changes to send (9d-2b, f2): the division's waiting changes, Undo on each, one Send. */}
+      {changesOpen && selectedDiv && (
+        <ChangesToSendWindow
+          division={{ id: selectedDiv.id, name: selectedDiv.name }}
+          /* org-slug-ok: the window adds `orgQuery` (below) to every call it makes */
+          api={`/api/admin/house-league/seasons/${seasonId}/schedule`}
+          orgQuery={orgQuery}
+          titleOf={id => {
+            const g = games.find(x => x.id === id);
+            return g ? GAME_WINDOW_WORDS.title(teamName.get(g.homeTeamId) ?? GAME_WINDOW_WORDS.home, teamName.get(g.awayTeamId) ?? GAME_WINDOW_WORDS.away) : '';
+          }}
+          teamName={id => teamName.get(id) ?? ''}
+          placeOf={placeWords}
+          onSent={said => {
+            setChangesOpen(false);
+            setFeedback({ isOpen: true, title: said, message: '', type: 'success' });
+            void reload();
+          }}
+          onUndone={() => {
+            void reload();
+          }}
+          onClose={() => setChangesOpen(false)}
+        />
+      )}
+
       {/* A game's window, read first (step 4, b4) — or Add › A game. A game edits among its own division's teams. */}
       {gameWindow && (gameWindow === 'create' || openedGame) && (
         <GameWindow
@@ -1397,6 +1448,7 @@ export default function SchedulePage() {
           booking={openedGame ? [...calendar.bookings, ...calendar.needsDate].find(b => b.key === `league_game:${openedGame.id}`) ?? null : null}
           divisionId={openedGame?.divisionId ?? selectedDivId}
           divisionName={(openedGame ? divisions.find(d => d.id === openedGame.divisionId)?.name : null) ?? divName}
+          published={!!publishing[openedGame?.divisionId ?? selectedDivId]}
           teams={openedGame ? teams.filter(t => t.divisionId === openedGame.divisionId) : divTeams}
           venues={clubVenues}
           sport={season?.sport}

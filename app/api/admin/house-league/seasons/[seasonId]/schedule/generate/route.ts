@@ -139,7 +139,7 @@ export const POST = withObservability(async (req: Request,
   // otherwise be read (and its team names echoed back through conflict warnings).
   const { data: division } = await supabaseAdmin
     .from('league_divisions')
-    .select('id')
+    .select('id, name, schedule_published_at')
     .eq('id', divisionId)
     .eq('season_id', seasonId)
     .single();
@@ -182,6 +182,12 @@ export const POST = withObservability(async (req: Request,
 
   if (!save) {
     return NextResponse.json({ preview, roundCount: rounds.length, gameCount: preview.length });
+  }
+
+  // A published division adds games one at a time (9d2·11, 9d-2b): a whole generated season would reach families as a
+  // pile of "added" changes. The draft is generated exactly as before (9d2a·B).
+  if (division.schedule_published_at) {
+    return NextResponse.json({ code: 'has_games', error: W.hasGames(division.name as string) }, { status: 409 });
   }
 
   // Clash check — WARN ONLY, never block. A generated round puts several games at the same

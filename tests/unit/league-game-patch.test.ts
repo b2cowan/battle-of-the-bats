@@ -29,7 +29,7 @@ describe('a house-league game\'s patch: status and score', () => {
     const code = readFileSync(new URL('../../app/api/admin/house-league/seasons/[seasonId]/schedule/[gameId]/route.ts', import.meta.url), 'utf8');
     const patch = code.slice(code.indexOf('export const PATCH'), code.indexOf('export const DELETE'));
     assert.match(patch, /req\.json\(\)\.catch\(\(\) => null\)/);
-    assert.ok(patch.indexOf('invalidGamePatch(body)') > 0 && patch.indexOf('invalidGamePatch(body)') < patch.indexOf('updateLeagueGame(gameId, patch)'));
+    assert.ok(patch.indexOf('invalidGamePatch(body)') > 0 && patch.indexOf('invalidGamePatch(body)') < patch.indexOf('updateLeagueGame(gameId, patch'));
   });
 });
 
