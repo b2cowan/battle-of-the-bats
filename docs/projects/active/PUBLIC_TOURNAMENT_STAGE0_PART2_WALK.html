@@ -1,0 +1,196 @@
+<title>Small Fixes Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one column checklist, a sign-in card on top, four parts (one per fix), paste-back at the foot. Same build as §406. */
+:root {
+  --bg: #f6f7f4; --surface: #ffffff; --ink: #1d2420; --muted: #5a6560; --line: #d9ded8;
+  --accent: #2f6b4f; --accent-soft: #e3efe8; --warn: #8a5a00; --warn-soft: #fbf0d9; --bad: #9b2c2c; --bad-soft: #f8e2e2;
+  --display: "Fraunces", Georgia, serif; --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151a17; --surface: #1e2521; --ink: #e6ebe7; --muted: #9aa69f; --line: #34403a;
+  --accent: #7cc3a0; --accent-soft: #233a2f; --warn: #e8b45a; --warn-soft: #3a2f1a; --bad: #f08a8a; --bad-soft: #3d2222; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #151a17; --surface: #1e2521; --ink: #e6ebe7; --muted: #9aa69f; --line: #34403a;
+  --accent: #7cc3a0; --accent-soft: #233a2f; --warn: #e8b45a; --warn-soft: #3a2f1a; --bad: #f08a8a; --bad-soft: #3d2222; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body); }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
+h1 { font: 600 1.9rem/1.15 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 600 1.25rem/1.25 var(--display); margin: 0; text-wrap: balance; }
+.eyebrow { font: 600 .75rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+p { margin: 0; max-width: 65ch; }
+.intro { display: grid; gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; }
+.card dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.card dt { color: var(--muted); }
+.card dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--mono); font-size: .86em; overflow-wrap: anywhere; }
+.facts { display: grid; gap: 8px; }
+.facts h3 { font: 600 .95rem/1.3 var(--body); margin: 0; }
+.facts ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.progress { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.bar { flex: 1 1 200px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+.part { display: grid; gap: 12px; }
+.part header { display: grid; gap: 4px; }
+.who { display: inline-block; font: 600 .8rem/1 var(--body); padding: 5px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); justify-self: start; }
+.step { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.step input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .txt { display: grid; gap: 4px; min-width: 0; }
+.step .do { font-weight: 600; }
+.step .see { color: var(--ink); }
+.step .see::before { content: "You should see: "; color: var(--muted); font-weight: 600; }
+.step.stop { border-color: var(--warn); background: var(--warn-soft); }
+.step.done { opacity: .72; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; }
+.verdict button { font: 600 .9rem/1 var(--body); padding: 9px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button[aria-pressed="true"][data-v="pass"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.verdict button[aria-pressed="true"][data-v="issue"] { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.verdict button[aria-pressed="true"][data-v="call"] { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 70px; font: inherit; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { font: 600 .95rem/1 var(--body); padding: 11px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); }
+#summary { font-family: var(--mono); font-size: .85rem; min-height: 160px; }
+a { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+</style>
+
+<div class="wrap">
+  <div class="intro">
+    <span class="eyebrow">Owner QA · §407 · Public tournament pages Stage 0 · Part 2</span>
+    <h1>The small wrong things are right</h1>
+    <p><strong>What this walk is for.</strong> Four small things on the public pages said something untrue. A live game nobody had scored printed a lone "–" on the home and an invented 0–0 elsewhere. A club with no club site labelled every tournament "Live". The countdown said "First pitch", which is one sport's words. And on the Branding page, any save, even switching a page on, quietly stopped the club's colours applying to that tournament.</p>
+    <p><strong>It passes when</strong> a live, unscored game says "No score yet" everywhere it shows a score and its numbers appear once a score exists, the club list says each tournament's status from its dates, every countdown says "Starts in", and the Branding page leaves the club's colours applying until you choose a theme yourself.</p>
+  </div>
+
+  <div class="card">
+    <h2>Sign in as</h2>
+    <dl>
+      <dt>Parts A–C</dt><dd>Nobody. A <strong>private window</strong>, signed out, so you see what a family sees. (C4 signs in.)</dd>
+      <dt>C4</dt><dd>Your own account <span class="mono">b2cowan@outlook.com</span> (an admin of Dev Test Org on dev).</dd>
+      <dt>Part D</dt><dd>UAT Rep Club's owner <span class="mono">uat-club-owner@uat-rep-club.local</span> · <span class="mono">UATPassword2026!</span>, in a normal window. Keep the private window open beside it.</dd>
+      <dt>Where</dt><dd><span class="mono">http://localhost:3000</span>, dev server running.</dd>
+      <dt>Before A</dt><dd>Part A needs a game that is live right now. In a terminal at the project folder run <span class="mono">node --env-file=.env.local .probe/stage0p2/live-game.mjs</span> (dev only). It puts <strong>Bears U11 at Halton Hawks U11 Jr (Johnstone)</strong>, a U11 semifinal in Live Demo — Game Day, live with no score, for about two hours. Or ask me in the chat and I will run it.</dd>
+    </dl>
+  </div>
+
+  <div class="card facts">
+    <h3>Not in this walk</h3>
+    <ul>
+      <li>The Following page's tournament line now says "First game · Sat · 9:00 a.m." instead of "First pitch · …". It needs an account following an upcoming event with a published schedule; the build's guard test holds it.</li>
+      <li>The Theme card still shows the platform swatch as chosen when the tournament has no theme. Its visible "The club's colours" choice is Stage 1a (ruled, not built).</li>
+      <li>Production tournaments that already carry the platform theme from an accidental save. That is a count I report to you, not a data change.</li>
+    </ul>
+  </div>
+
+  <div class="progress"><strong id="count">0 of 0 checked</strong><div class="bar" aria-hidden="true"><span id="fill"></span></div><button class="btn ghost" id="reset" type="button">Clear my ticks</button></div>
+
+  <div id="parts"></div>
+
+  <div class="card">
+    <h2>Send me the results</h2>
+    <p>Build the summary, then paste it back into the chat.</p>
+    <div class="actions"><button class="btn" id="build" type="button">Build summary</button><button class="btn ghost" id="copy" type="button">Copy</button></div>
+    <textarea id="summary" readonly aria-label="Walk summary"></textarea>
+  </div>
+</div>
+
+<script>
+var HOST = "http://localhost:3000";
+var LIVE = HOST + "/dev-test-org/live-demo";
+var LIVE_GAME = "78165e47-0b29-4667-8dc0-cee61576793d";
+var BEARS = "8d9a61b8-1285-4ba6-8590-7ae0fd23315a";
+var NEXT_GAME = "d75af869-a3c5-443c-a58b-72921da2da67";
+var REP = HOST + "/uat-rep-club/uat-rep-club-invitational-2026";
+function a(href, label) { return '<a href="' + href + '" target="_blank" rel="noopener">' + label + '</a>'; }
+function cmd(s) { return '<span class="mono">' + s + '</span>'; }
+
+var PARTS = [
+  { id: "A", title: "Part A · A live game nobody has scored", who: "Private window, signed out", steps: [
+    { stop: true, do: "Stop check. Open " + a(LIVE + "/schedule/" + LIVE_GAME, "the live game's page") + ".", see: "A LIVE badge for Bears U11 at Halton Hawks U11 Jr (Johnstone). If it says Upcoming or Final, stop: run the command in the sign-in card (it restarts the game's clock), then reload." },
+    { do: "On that same game page, look where the big score would be.", see: "\"No score yet\". Not 0 – 0." },
+    { do: "Open " + a(LIVE, "the tournament home") + ". Find the game in the Live now list.", see: "Its score column says \"No score yet\" above the red ● Live. No lone \"–\"." },
+    { do: "Look at the live-scores strip across the top of the home.", see: "LIVE · Bears U11 vs Halton Hawks U11 Jr. No numbers and no dash (this one was already right; it should not have changed)." },
+    { do: "Open " + a(LIVE + "/schedule", "the Schedule tab") + " and find the game's large live card.", see: "Both teams with their initials and no numbers beside them, and \"No score yet\" where the coloured score bar sits." },
+    { do: "Open " + a(LIVE + "/teams/" + BEARS, "Bears U11's team page") + " and follow the team with its star. Go back to " + a(LIVE, "the home") + ".", see: "The My Team card for Bears U11 shows LIVE and \"No score yet\" (not 0-0). On a phone-width window, the team bar pinned at the bottom says the same; on a wide window, so does the My Team card on " + a(LIVE + "/standings", "Standings") + "." },
+    { do: "Put a running score on the game: run " + cmd("node --env-file=.env.local .probe/stage0p2/live-game.mjs --score") + " (or ask me). Reload the game page, the home, the Schedule tab and the My Team card.", see: "Every one shows the score, Bears U11 2, Halton Hawks 1, with the Bears' number lit as the leader; My Team reads 2-1. \"No score yet\" is gone everywhere." },
+    { do: "Put the game back: run " + cmd("node --env-file=.env.local .probe/stage0p2/live-game.mjs --undo") + " (or ask me).", see: "\"Put back\" in the terminal. Unfollow Bears U11 if you like; it only lives in this window." }
+  ]},
+  { id: "B", title: "Part B · A club with no club site lists its tournaments truthfully", who: "Private window, signed out", steps: [
+    { do: "Open " + a(HOST + "/fchp-plus-club", "FCHP Plus Club's home") + " (a Tournament Plus club with no club site, two active tournaments).", see: "FCHP Plus Cup (Oct 16–18) with a grey \"Finished\" chip. FCHP Open Cup (Nov 6–8) with \"Registration open\" if its sign-up is open, otherwise no chip and just its dates. Neither says \"Live\"." },
+    { do: "Open " + a(HOST + "/riverdale-minor-ball", "Riverdale's home") + ".", see: "Riverdale Summer Classic (Oct 25–27) says \"Live now\" on Oct 27 (\"Finished\" from Oct 28). Riverdale Invitational (Nov 17–18) says \"Registration open\". The words match the club home and Tournaments page of a club that has a club site." }
+  ]},
+  { id: "C", title: "Part C · The countdown says \"Starts in\"", who: "Private window, then signed in for C4", steps: [
+    { do: "Open " + a(HOST + "/riverdale-minor-ball/invitational", "Riverdale Invitational's home") + ". Read the line under the header and the countdown on the page.", see: "The header line reads \"Upcoming · Nov 17–18 · Starts in 21 days\" (the number counts down day by day), and the page's countdown reads \"Starts in …\". Nowhere \"First pitch\"." },
+    { do: "Open " + a(LIVE + "/schedule/" + NEXT_GAME, "tomorrow's U11 semifinal") + " in Live Demo.", see: "Where the score will go: \"Starts in … hours\"." },
+    { do: "Look at the demo banner: open " + a(HOST + "/demos", "the demos page") + " and jump to the tournament demo's \"Registration week\" moment.", see: "Its banner note reads \"Starts in 3 weeks\"." },
+    { do: "Signed in as b2cowan@outlook.com on a wide window, start a new tournament in Dev Test Org (Tournaments → New) and give it a start date a few weeks out. Do not finish it.", see: "The live preview beside the form counts down with \"Starts in …\". Leave the wizard without creating anything." }
+  ]},
+  { id: "D", title: "Part D · The Branding page keeps the club's colours", who: "Signed in as uat-club-owner@uat-rep-club.local", steps: [
+    { stop: true, do: "Stop check. In the private window open " + a(REP, "UAT Rep Club Invitational 2026") + ".", see: "The page wears the club's deep purple. If it is on the platform's look instead, stop and tell me: the fixture has a theme stored and I need to clear it first." },
+    { do: "Signed in, open the admin, choose UAT Rep Club Invitational 2026, and open its Public site page (the Branding page). In Pages, switch one page off (Rules, say). Wait for \"Saved\".", see: "\"Saved\" shows and fades. Nothing else on the page changes." },
+    { do: "Reload the private window.", see: "Still the club's purple. (Before this fix, that one switch stopped the club's colours applying.) The page you switched off is gone from its menu." },
+    { do: "Back on the Branding page, switch that page on again, and in the Theme card set Background to Light, then back to Dark.", see: "Each change says \"Saved\". The private window, reloaded, is still purple." },
+    { do: "Tell me you are at this step; I read the stored theme back on dev.", see: "I report \"no theme of its own\" (the club's colours), and the one page switched back on." },
+    { do: "Now choose a theme on purpose: open the Theme card and pick any swatch other than the first. Reload the private window.", see: "The tournament wears the swatch you picked. A real theme choice still saves. (I put it back to the club's colours after the walk; the card's own \"The club's colours\" choice is Stage 1a.)" }
+  ]}
+];
+
+var KEY = "qa-407-stage0-part2-walk-v1";
+var state = { ticks: {}, verdict: {}, notes: {} };
+try { var saved = JSON.parse(localStorage.getItem(KEY) || "null"); if (saved) state = saved; } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+var root = document.getElementById("parts");
+var total = 0;
+PARTS.forEach(function (p) {
+  var sec = document.createElement("section"); sec.className = "part";
+  var html = '<header><h2>' + p.title + '</h2><span class="who">' + p.who + '</span></header>';
+  p.steps.forEach(function (s, i) {
+    var id = p.id + (i + 1); total++;
+    html += '<label class="step' + (s.stop ? ' stop' : '') + '" id="row-' + id + '"><input type="checkbox" id="cb-' + id + '" data-id="' + id + '"><span class="txt"><span class="do">' + id + ' · ' + s.do + '</span><span class="see">' + s.see + '</span></span></label>';
+  });
+  html += '<div class="verdict" role="group" aria-label="' + p.title + ' verdict">' +
+    '<button type="button" data-p="' + p.id + '" data-v="pass" aria-pressed="false">Pass</button>' +
+    '<button type="button" data-p="' + p.id + '" data-v="issue" aria-pressed="false">Issue</button>' +
+    '<button type="button" data-p="' + p.id + '" data-v="call" aria-pressed="false">Needs a call</button></div>' +
+    '<textarea id="notes-' + p.id + '" data-p="' + p.id + '" placeholder="Notes for ' + p.title + ' (what you saw, anything odd)"></textarea>';
+  sec.innerHTML = html; root.appendChild(sec);
+});
+
+function render() {
+  var n = 0;
+  document.querySelectorAll("input[type=checkbox][data-id]").forEach(function (cb) {
+    cb.checked = !!state.ticks[cb.dataset.id]; if (cb.checked) n++;
+    document.getElementById("row-" + cb.dataset.id).classList.toggle("done", cb.checked);
+  });
+  document.querySelectorAll(".verdict button").forEach(function (b) { b.setAttribute("aria-pressed", String(state.verdict[b.dataset.p] === b.dataset.v)); });
+  document.querySelectorAll("textarea[data-p]").forEach(function (t) { t.value = state.notes[t.dataset.p] || ""; });
+  document.getElementById("count").textContent = n + " of " + total + " checked";
+  document.getElementById("fill").style.width = (total ? (100 * n / total) : 0) + "%";
+}
+root.addEventListener("change", function (e) { if (e.target.dataset.id) { state.ticks[e.target.dataset.id] = e.target.checked; save(); render(); } });
+root.addEventListener("click", function (e) { var b = e.target.closest(".verdict button"); if (!b) return; state.verdict[b.dataset.p] = state.verdict[b.dataset.p] === b.dataset.v ? null : b.dataset.v; save(); render(); });
+root.addEventListener("input", function (e) { if (e.target.dataset.p && e.target.tagName === "TEXTAREA") { state.notes[e.target.dataset.p] = e.target.value; save(); } });
+document.getElementById("reset").addEventListener("click", function () { state = { ticks: {}, verdict: {}, notes: {} }; save(); render(); });
+var WORD = { pass: "PASS", issue: "ISSUE", call: "NEEDS A CALL" };
+document.getElementById("build").addEventListener("click", function () {
+  var lines = ["§407 · Stage 0 Part 2 · The small wrong things are right"], all = 0;
+  PARTS.forEach(function (p) {
+    var done = p.steps.filter(function (s, i) { return state.ticks[p.id + (i + 1)]; }).length; all += done;
+    var missing = p.steps.map(function (s, i) { return p.id + (i + 1); }).filter(function (id) { return !state.ticks[id]; });
+    lines.push(p.title + " [" + (WORD[state.verdict[p.id]] || "no verdict") + "] " + done + "/" + p.steps.length + (missing.length ? " · unticked: " + missing.join(", ") : ""));
+    if (state.notes[p.id]) lines.push("  Notes: " + state.notes[p.id].replace(/\n+/g, " / "));
+  });
+  lines.splice(1, 0, "Checked " + all + " of " + total);
+  document.getElementById("summary").value = lines.join("\n");
+});
+document.getElementById("copy").addEventListener("click", function () {
+  var t = document.getElementById("summary");
+  if (!t.value) document.getElementById("build").click();
+  try { navigator.clipboard.writeText(t.value).catch(function () { t.select(); }); } catch (e) { t.select(); }
+});
+render();
+</script>

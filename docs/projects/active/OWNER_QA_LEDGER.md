@@ -26931,4 +26931,19 @@ republished; tick positions unchanged).
 **Proven by the builder:** the guard test (124 checks); a probe of every public page and the data feeds on live-demo (the 6 U13 games absent from every page source and feed, all 9 U11 games present on the home; a U13 game's link is a 404; U13 standings 0-0 with its games scored on dev). Production impact read-only 2026-10-27: 3 active tournaments, only the riverdale demo had unpublished games; no customer event.
 
 **Not in this walk:** the riverdale demo on dev (unpublished until re-seeded; production re-seeds at the next master build); phone alerts; the database permission that still lets the public key read every game (owner 2026-10-27: a separate follow-up); Stage 0 Part 2 (D2–D7).
+
+**✅ WALKED 2026-10-27 — 14 of 14 PASS** (Part A what a family sees 10/10, Part B publish and put it back 4/4). B4 read back on dev the same day: U13 `schedule_visibility` = `unpublished`, U11 = `published`, so the fixture is ready for the next walk. No defects found.
 <!-- /§406 -->
+
+## §407 · Public tournament pages · Stage 0 · Part 2, the small wrong things — **a live game nobody has scored says "No score yet" on every page that shows a live score (and its numbers once a score exists), a club with no club site lists each tournament's status from its dates instead of "Live" on every card, every countdown says "Starts in", and the Branding page leaves the club's colours applying until the organizer chooses a theme**
+<!-- §407 -->
+**Built and committed 2026-10-27:** `f8525e019` (D2 the one rule and spelling for a live game with no score, on all seven public live-score surfaces, and the follower dock shares the latest final until a live score exists; D3 the club fallback list reads the club home's status rule; D4 "Starts in" everywhere a countdown shows, "First game · …" on the Following page, help updated; D7 the Branding page sends the theme only once it was changed; guard test `tests/unit/public-tournament-stage0-small-fixes-guard.test.ts`). /review run (two lenses); its three missed live-score surfaces (the follower dock, the desktop rail card, the Schedule/Standings My Team card) fixed in the same commit. Plan: [PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md](PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md) §9, Stage 0.
+
+**The walk (checkable):** https://claude.ai/artifact/CTYnjcX2hHkznpTKYKZbCG (source [PUBLIC_TOURNAMENT_STAGE0_PART2_WALK.html](PUBLIC_TOURNAMENT_STAGE0_PART2_WALK.html)). One purpose, 20 steps in four parts: A a live game nobody has scored (8, a stop check first); B the club fallback list (2); C "Starts in" (4); D the Branding page keeps the club's colours (6, a stop check first). Fixtures: Part A puts a Live Demo U11 semifinal live with no score by `.probe/stage0p2/live-game.mjs` (dev only; `--score` adds a running 2–1, `--undo` puts it back; it stays live about two hours); Part B reads FCHP Plus Club and Riverdale on dev as they are; Part D uses UAT Rep Club Invitational 2026 (Club plan, the club's purple, no theme of its own on 2026-10-27). Step D5 is read back on dev with `.probe/stage0p2/d7-readback.mjs`; after D6 the session puts the theme back with `--reset`.
+
+**Production, read-only 2026-10-27 (owner yes):** 0 of the 6 tournaments on plans with tournament branding carry an accidental `theme_preset='platform'`, so no data question remains; 3 of them have no theme of their own and now keep the club's colours through any save.
+
+**Not built on dev in a browser by the builder:** every dev page returned 500 at build time, from another session's commit (support console 4b pulled a server-only module into the browser bundle; that session was told). The walk is the first rendered check.
+
+**Not in this walk:** the Following page's "First game · …" line (it needs an account following an upcoming event with a published schedule; the guard holds it); the Theme card still showing the platform swatch as chosen when nothing is (Stage 1a, ruled, not built).
+<!-- /§407 -->
