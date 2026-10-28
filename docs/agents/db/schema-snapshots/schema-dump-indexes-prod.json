@@ -16,6 +16,11 @@
   },
   {
     "tablename": "accounting_entries",
+    "indexname": "accounting_entries_league_registration_idx",
+    "indexdef": "CREATE INDEX accounting_entries_league_registration_idx ON public.accounting_entries USING btree (source_entity_id) WHERE (source_module = 'league_registration'::text)"
+  },
+  {
+    "tablename": "accounting_entries",
     "indexname": "accounting_entries_ledger_id_idx",
     "indexdef": "CREATE INDEX accounting_entries_ledger_id_idx ON public.accounting_entries USING btree (ledger_id)"
   },
@@ -540,6 +545,16 @@
     "indexdef": "CREATE INDEX club_schedule_sends_sent_by_idx ON public.club_schedule_sends USING btree (sent_by) WHERE (sent_by IS NOT NULL)"
   },
   {
+    "tablename": "club_schedule_slot_programs",
+    "indexname": "club_schedule_slot_programs_org_idx",
+    "indexdef": "CREATE INDEX club_schedule_slot_programs_org_idx ON public.club_schedule_slot_programs USING btree (org_id)"
+  },
+  {
+    "tablename": "club_schedule_slot_programs",
+    "indexname": "club_schedule_slot_programs_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_schedule_slot_programs_pkey ON public.club_schedule_slot_programs USING btree (slot_id)"
+  },
+  {
     "tablename": "club_schedule_slot_teams",
     "indexname": "club_schedule_slot_teams_org_idx",
     "indexdef": "CREATE INDEX club_schedule_slot_teams_org_idx ON public.club_schedule_slot_teams USING btree (org_id)"
@@ -680,14 +695,49 @@
     "indexdef": "CREATE INDEX divisions_tournament_id_idx ON public.divisions USING btree (tournament_id)"
   },
   {
+    "tablename": "early_access_lead_dismissed_offers",
+    "indexname": "early_access_lead_dismissed_offers_pkey",
+    "indexdef": "CREATE UNIQUE INDEX early_access_lead_dismissed_offers_pkey ON public.early_access_lead_dismissed_offers USING btree (lead_id, org_id)"
+  },
+  {
+    "tablename": "early_access_lead_notes",
+    "indexname": "early_access_lead_notes_lead_idx",
+    "indexdef": "CREATE INDEX early_access_lead_notes_lead_idx ON public.early_access_lead_notes USING btree (lead_id, created_at DESC)"
+  },
+  {
+    "tablename": "early_access_lead_notes",
+    "indexname": "early_access_lead_notes_pkey",
+    "indexdef": "CREATE UNIQUE INDEX early_access_lead_notes_pkey ON public.early_access_lead_notes USING btree (id)"
+  },
+  {
+    "tablename": "early_access_lead_submissions",
+    "indexname": "early_access_lead_submissions_lead_idx",
+    "indexdef": "CREATE INDEX early_access_lead_submissions_lead_idx ON public.early_access_lead_submissions USING btree (lead_id, submitted_at DESC)"
+  },
+  {
+    "tablename": "early_access_lead_submissions",
+    "indexname": "early_access_lead_submissions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX early_access_lead_submissions_pkey ON public.early_access_lead_submissions USING btree (id)"
+  },
+  {
     "tablename": "early_access_leads",
     "indexname": "early_access_leads_converted_org_id_idx",
     "indexdef": "CREATE INDEX early_access_leads_converted_org_id_idx ON public.early_access_leads USING btree (converted_org_id)"
   },
   {
     "tablename": "early_access_leads",
+    "indexname": "early_access_leads_converted_org_idx",
+    "indexdef": "CREATE INDEX early_access_leads_converted_org_idx ON public.early_access_leads USING btree (converted_org_id) WHERE (converted_org_id IS NOT NULL)"
+  },
+  {
+    "tablename": "early_access_leads",
     "indexname": "early_access_leads_email_normalized_key",
     "indexdef": "CREATE UNIQUE INDEX early_access_leads_email_normalized_key ON public.early_access_leads USING btree (email_normalized)"
+  },
+  {
+    "tablename": "early_access_leads",
+    "indexname": "early_access_leads_internal_status_idx",
+    "indexdef": "CREATE INDEX early_access_leads_internal_status_idx ON public.early_access_leads USING btree (internal_status, step_changed_at)"
   },
   {
     "tablename": "early_access_leads",
@@ -855,6 +905,36 @@
     "indexdef": "CREATE UNIQUE INDEX family_email_optouts_pkey ON public.family_email_optouts USING btree (id)"
   },
   {
+    "tablename": "family_email_recipients",
+    "indexname": "family_email_recipients_org_idx",
+    "indexdef": "CREATE INDEX family_email_recipients_org_idx ON public.family_email_recipients USING btree (org_id)"
+  },
+  {
+    "tablename": "family_email_recipients",
+    "indexname": "family_email_recipients_pkey",
+    "indexdef": "CREATE UNIQUE INDEX family_email_recipients_pkey ON public.family_email_recipients USING btree (id)"
+  },
+  {
+    "tablename": "family_email_recipients",
+    "indexname": "family_email_recipients_send_idx",
+    "indexdef": "CREATE INDEX family_email_recipients_send_idx ON public.family_email_recipients USING btree (send_id, status)"
+  },
+  {
+    "tablename": "family_email_sends",
+    "indexname": "family_email_sends_org_sent_idx",
+    "indexdef": "CREATE INDEX family_email_sends_org_sent_idx ON public.family_email_sends USING btree (org_id, sent_at DESC)"
+  },
+  {
+    "tablename": "family_email_sends",
+    "indexname": "family_email_sends_pkey",
+    "indexdef": "CREATE UNIQUE INDEX family_email_sends_pkey ON public.family_email_sends USING btree (id)"
+  },
+  {
+    "tablename": "family_email_sends",
+    "indexname": "family_email_sends_season_sent_idx",
+    "indexdef": "CREATE INDEX family_email_sends_season_sent_idx ON public.family_email_sends USING btree (season_id, sent_at DESC) WHERE (season_id IS NOT NULL)"
+  },
+  {
     "tablename": "family_links",
     "indexname": "family_links_calendar_token_hash_key",
     "indexdef": "CREATE UNIQUE INDEX family_links_calendar_token_hash_key ON public.family_links USING btree (calendar_token_hash)"
@@ -918,6 +998,11 @@
     "tablename": "family_messages",
     "indexname": "family_messages_pkey",
     "indexdef": "CREATE UNIQUE INDEX family_messages_pkey ON public.family_messages USING btree (id)"
+  },
+  {
+    "tablename": "family_messages",
+    "indexname": "family_messages_season_idx",
+    "indexdef": "CREATE INDEX family_messages_season_idx ON public.family_messages USING btree (season_id, sent_at DESC) WHERE (season_id IS NOT NULL)"
   },
   {
     "tablename": "family_notes",
@@ -1265,6 +1350,61 @@
     "indexdef": "CREATE INDEX league_notification_log_season_id_idx ON public.league_notification_log USING btree (season_id)"
   },
   {
+    "tablename": "league_placement_emails",
+    "indexname": "league_placement_emails_division_idx",
+    "indexdef": "CREATE INDEX league_placement_emails_division_idx ON public.league_placement_emails USING btree (division_id, status)"
+  },
+  {
+    "tablename": "league_placement_emails",
+    "indexname": "league_placement_emails_notice_idx",
+    "indexdef": "CREATE INDEX league_placement_emails_notice_idx ON public.league_placement_emails USING btree (notice_id) WHERE (notice_id IS NOT NULL)"
+  },
+  {
+    "tablename": "league_placement_emails",
+    "indexname": "league_placement_emails_org_id_idx",
+    "indexdef": "CREATE INDEX league_placement_emails_org_id_idx ON public.league_placement_emails USING btree (org_id)"
+  },
+  {
+    "tablename": "league_placement_emails",
+    "indexname": "league_placement_emails_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_placement_emails_pkey ON public.league_placement_emails USING btree (id)"
+  },
+  {
+    "tablename": "league_placement_emails",
+    "indexname": "league_placement_emails_season_idx",
+    "indexdef": "CREATE INDEX league_placement_emails_season_idx ON public.league_placement_emails USING btree (season_id)"
+  },
+  {
+    "tablename": "league_player_ratings",
+    "indexname": "league_player_ratings_org_id_idx",
+    "indexdef": "CREATE INDEX league_player_ratings_org_id_idx ON public.league_player_ratings USING btree (org_id)"
+  },
+  {
+    "tablename": "league_player_ratings",
+    "indexname": "league_player_ratings_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_player_ratings_pkey ON public.league_player_ratings USING btree (registration_id)"
+  },
+  {
+    "tablename": "league_player_ratings",
+    "indexname": "league_player_ratings_season_idx",
+    "indexdef": "CREATE INDEX league_player_ratings_season_idx ON public.league_player_ratings USING btree (season_id)"
+  },
+  {
+    "tablename": "league_practice_time",
+    "indexname": "league_practice_time_division_idx",
+    "indexdef": "CREATE INDEX league_practice_time_division_idx ON public.league_practice_time USING btree (division_id)"
+  },
+  {
+    "tablename": "league_practice_time",
+    "indexname": "league_practice_time_org_idx",
+    "indexdef": "CREATE INDEX league_practice_time_org_idx ON public.league_practice_time USING btree (org_id)"
+  },
+  {
+    "tablename": "league_practice_time",
+    "indexname": "league_practice_time_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_practice_time_pkey ON public.league_practice_time USING btree (season_id, division_id)"
+  },
+  {
     "tablename": "league_practices",
     "indexname": "idx_league_practices_org_venue",
     "indexdef": "CREATE INDEX idx_league_practices_org_venue ON public.league_practices USING btree (org_venue_id)"
@@ -1273,6 +1413,11 @@
     "tablename": "league_practices",
     "indexname": "idx_league_practices_org_venue_facility",
     "indexdef": "CREATE INDEX idx_league_practices_org_venue_facility ON public.league_practices USING btree (org_venue_facility_id)"
+  },
+  {
+    "tablename": "league_practices",
+    "indexname": "league_practices_club_slot_uq",
+    "indexdef": "CREATE UNIQUE INDEX league_practices_club_slot_uq ON public.league_practices USING btree (club_schedule_slot_id, team_id) WHERE (club_schedule_slot_id IS NOT NULL)"
   },
   {
     "tablename": "league_practices",
@@ -1310,6 +1455,31 @@
     "indexdef": "CREATE INDEX league_practices_team_idx ON public.league_practices USING btree (team_id)"
   },
   {
+    "tablename": "league_registration_price_changes",
+    "indexname": "league_registration_price_changes_org_idx",
+    "indexdef": "CREATE INDEX league_registration_price_changes_org_idx ON public.league_registration_price_changes USING btree (org_id)"
+  },
+  {
+    "tablename": "league_registration_price_changes",
+    "indexname": "league_registration_price_changes_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_registration_price_changes_pkey ON public.league_registration_price_changes USING btree (id)"
+  },
+  {
+    "tablename": "league_registration_price_changes",
+    "indexname": "league_registration_price_changes_refund_idx",
+    "indexdef": "CREATE INDEX league_registration_price_changes_refund_idx ON public.league_registration_price_changes USING btree (refund_entry_id) WHERE (refund_entry_id IS NOT NULL)"
+  },
+  {
+    "tablename": "league_registration_price_changes",
+    "indexname": "league_registration_price_changes_reg_idx",
+    "indexdef": "CREATE INDEX league_registration_price_changes_reg_idx ON public.league_registration_price_changes USING btree (registration_id)"
+  },
+  {
+    "tablename": "league_registration_price_changes",
+    "indexname": "league_registration_price_changes_season_idx",
+    "indexdef": "CREATE INDEX league_registration_price_changes_season_idx ON public.league_registration_price_changes USING btree (season_id, changed_at DESC)"
+  },
+  {
     "tablename": "league_registrations",
     "indexname": "league_registrations_division_idx",
     "indexdef": "CREATE INDEX league_registrations_division_idx ON public.league_registrations USING btree (division_id)"
@@ -1341,6 +1511,11 @@
   },
   {
     "tablename": "league_registrations",
+    "indexname": "league_registrations_signup_ref_idx",
+    "indexdef": "CREATE INDEX league_registrations_signup_ref_idx ON public.league_registrations USING btree (org_id, signup_ref) WHERE (signup_ref IS NOT NULL)"
+  },
+  {
+    "tablename": "league_registrations",
     "indexname": "league_registrations_status_idx",
     "indexdef": "CREATE INDEX league_registrations_status_idx ON public.league_registrations USING btree (season_id, status)"
   },
@@ -1348,6 +1523,51 @@
     "tablename": "league_registrations",
     "indexname": "league_registrations_team_id_idx",
     "indexdef": "CREATE INDEX league_registrations_team_id_idx ON public.league_registrations USING btree (team_id)"
+  },
+  {
+    "tablename": "league_season_fee_words",
+    "indexname": "league_season_fee_words_category_idx",
+    "indexdef": "CREATE INDEX league_season_fee_words_category_idx ON public.league_season_fee_words USING btree (category_id)"
+  },
+  {
+    "tablename": "league_season_fee_words",
+    "indexname": "league_season_fee_words_item_uniq",
+    "indexdef": "CREATE UNIQUE INDEX league_season_fee_words_item_uniq ON public.league_season_fee_words USING btree (item_id)"
+  },
+  {
+    "tablename": "league_season_fee_words",
+    "indexname": "league_season_fee_words_org_idx",
+    "indexdef": "CREATE INDEX league_season_fee_words_org_idx ON public.league_season_fee_words USING btree (org_id)"
+  },
+  {
+    "tablename": "league_season_fee_words",
+    "indexname": "league_season_fee_words_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_season_fee_words_pkey ON public.league_season_fee_words USING btree (season_id)"
+  },
+  {
+    "tablename": "league_season_notices",
+    "indexname": "league_season_notices_division_idx",
+    "indexdef": "CREATE INDEX league_season_notices_division_idx ON public.league_season_notices USING btree (division_id)"
+  },
+  {
+    "tablename": "league_season_notices",
+    "indexname": "league_season_notices_org_idx",
+    "indexdef": "CREATE INDEX league_season_notices_org_idx ON public.league_season_notices USING btree (org_id)"
+  },
+  {
+    "tablename": "league_season_notices",
+    "indexname": "league_season_notices_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_season_notices_pkey ON public.league_season_notices USING btree (id)"
+  },
+  {
+    "tablename": "league_season_notices",
+    "indexname": "league_season_notices_season_idx",
+    "indexdef": "CREATE INDEX league_season_notices_season_idx ON public.league_season_notices USING btree (season_id, created_at DESC)"
+  },
+  {
+    "tablename": "league_season_notices",
+    "indexname": "league_season_notices_send_idx",
+    "indexdef": "CREATE INDEX league_season_notices_send_idx ON public.league_season_notices USING btree (club_schedule_send_id) WHERE (club_schedule_send_id IS NOT NULL)"
   },
   {
     "tablename": "league_seasons",
@@ -1358,6 +1578,56 @@
     "tablename": "league_seasons",
     "indexname": "league_seasons_pkey",
     "indexdef": "CREATE UNIQUE INDEX league_seasons_pkey ON public.league_seasons USING btree (id)"
+  },
+  {
+    "tablename": "league_slot_uses",
+    "indexname": "league_slot_uses_division_idx",
+    "indexdef": "CREATE INDEX league_slot_uses_division_idx ON public.league_slot_uses USING btree (division_id)"
+  },
+  {
+    "tablename": "league_slot_uses",
+    "indexname": "league_slot_uses_org_idx",
+    "indexdef": "CREATE INDEX league_slot_uses_org_idx ON public.league_slot_uses USING btree (org_id)"
+  },
+  {
+    "tablename": "league_slot_uses",
+    "indexname": "league_slot_uses_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_slot_uses_pkey ON public.league_slot_uses USING btree (slot_id)"
+  },
+  {
+    "tablename": "league_slot_uses",
+    "indexname": "league_slot_uses_season_idx",
+    "indexdef": "CREATE INDEX league_slot_uses_season_idx ON public.league_slot_uses USING btree (season_id, division_id)"
+  },
+  {
+    "tablename": "league_team_coaches",
+    "indexname": "league_team_coaches_one_per_team",
+    "indexdef": "CREATE UNIQUE INDEX league_team_coaches_one_per_team ON public.league_team_coaches USING btree (team_id, email) WHERE (removed_at IS NULL)"
+  },
+  {
+    "tablename": "league_team_coaches",
+    "indexname": "league_team_coaches_org_id_idx",
+    "indexdef": "CREATE INDEX league_team_coaches_org_id_idx ON public.league_team_coaches USING btree (org_id)"
+  },
+  {
+    "tablename": "league_team_coaches",
+    "indexname": "league_team_coaches_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_team_coaches_pkey ON public.league_team_coaches USING btree (id)"
+  },
+  {
+    "tablename": "league_team_coaches",
+    "indexname": "league_team_coaches_season_idx",
+    "indexdef": "CREATE INDEX league_team_coaches_season_idx ON public.league_team_coaches USING btree (season_id)"
+  },
+  {
+    "tablename": "league_team_coaches",
+    "indexname": "league_team_coaches_token",
+    "indexdef": "CREATE UNIQUE INDEX league_team_coaches_token ON public.league_team_coaches USING btree (token_hash) WHERE (token_hash IS NOT NULL)"
+  },
+  {
+    "tablename": "league_team_coaches",
+    "indexname": "league_team_coaches_user_idx",
+    "indexdef": "CREATE INDEX league_team_coaches_user_idx ON public.league_team_coaches USING btree (user_id) WHERE (user_id IS NOT NULL)"
   },
   {
     "tablename": "league_teams",
@@ -1396,13 +1666,18 @@
   },
   {
     "tablename": "notifications",
+    "indexname": "notifications_one_open_online_payments_notice",
+    "indexdef": "CREATE UNIQUE INDEX notifications_one_open_online_payments_notice ON public.notifications USING btree (org_id, user_id, event_type, COALESCE((metadata ->> 'onlineDisputeId'::text), (metadata ->> 'stripeAccountId'::text), (metadata ->> 'onlinePaymentItemId'::text), (metadata ->> 'onlinePaymentId'::text), (metadata ->> 'unassignedRefundId'::text), (metadata ->> 'enrolledRefundId'::text), (metadata ->> 'unmatchedStripeRefundId'::text), (metadata ->> 'termsVersion'::text), (metadata ->> 'endingFor'::text))) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['payouts_need_attention'::text, 'online_payment_not_recorded'::text, 'card_refund_failed'::text, 'card_refund_whose'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'debit_returned'::text, 'debit_reversed'::text, 'card_disputed'::text, 'card_dispute_lost'::text, 'online_payment_over'::text, 'payments_terms_changed'::text, 'payments_ending'::text])))"
+  },
+  {
+    "tablename": "notifications",
     "indexname": "notifications_org_idx",
     "indexdef": "CREATE INDEX notifications_org_idx ON public.notifications USING btree (org_id, created_at DESC)"
   },
   {
     "tablename": "notifications",
     "indexname": "notifications_org_needs_attention_idx",
-    "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+    "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payments_ending'::text, 'payments_terms_changed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
   },
   {
     "tablename": "notifications",
@@ -1412,7 +1687,7 @@
   {
     "tablename": "notifications",
     "indexname": "notifications_user_needs_attention_idx",
-    "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+    "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payments_ending'::text, 'payments_terms_changed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
   },
   {
     "tablename": "notifications",
@@ -1423,6 +1698,231 @@
     "tablename": "observability_cron_heartbeat",
     "indexname": "observability_cron_heartbeat_pkey",
     "indexdef": "CREATE UNIQUE INDEX observability_cron_heartbeat_pkey ON public.observability_cron_heartbeat USING btree (job_name)"
+  },
+  {
+    "tablename": "online_payment_clear_decisions",
+    "indexname": "online_payment_clear_decisions_key",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_clear_decisions_key ON public.online_payment_clear_decisions USING btree (online_payment_id, COALESCE(online_payment_item_id, '00000000-0000-0000-0000-000000000000'::uuid))"
+  },
+  {
+    "tablename": "online_payment_clear_decisions",
+    "indexname": "online_payment_clear_decisions_open_idx",
+    "indexdef": "CREATE INDEX online_payment_clear_decisions_open_idx ON public.online_payment_clear_decisions USING btree (online_payment_id) WHERE (outcome IS NULL)"
+  },
+  {
+    "tablename": "online_payment_clear_decisions",
+    "indexname": "online_payment_clear_decisions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_clear_decisions_pkey ON public.online_payment_clear_decisions USING btree (id)"
+  },
+  {
+    "tablename": "online_payment_disputes",
+    "indexname": "online_payment_disputes_open_idx",
+    "indexdef": "CREATE INDEX online_payment_disputes_open_idx ON public.online_payment_disputes USING btree (org_id) WHERE (status = ANY (ARRAY['warning_needs_response'::text, 'warning_under_review'::text, 'needs_response'::text, 'under_review'::text]))"
+  },
+  {
+    "tablename": "online_payment_disputes",
+    "indexname": "online_payment_disputes_org_idx",
+    "indexdef": "CREATE INDEX online_payment_disputes_org_idx ON public.online_payment_disputes USING btree (org_id)"
+  },
+  {
+    "tablename": "online_payment_disputes",
+    "indexname": "online_payment_disputes_payment_idx",
+    "indexdef": "CREATE INDEX online_payment_disputes_payment_idx ON public.online_payment_disputes USING btree (online_payment_id)"
+  },
+  {
+    "tablename": "online_payment_disputes",
+    "indexname": "online_payment_disputes_pkey",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_disputes_pkey ON public.online_payment_disputes USING btree (id)"
+  },
+  {
+    "tablename": "online_payment_disputes",
+    "indexname": "online_payment_disputes_stripe_key",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_disputes_stripe_key ON public.online_payment_disputes USING btree (stripe_dispute_id)"
+  },
+  {
+    "tablename": "online_payment_items",
+    "indexname": "online_payment_items_entry_key",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_items_entry_key ON public.online_payment_items USING btree (entry_id) WHERE (entry_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payment_items",
+    "indexname": "online_payment_items_one_per_child",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_items_one_per_child ON public.online_payment_items USING btree (online_payment_id, registration_id) WHERE (registration_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payment_items",
+    "indexname": "online_payment_items_org_idx",
+    "indexdef": "CREATE INDEX online_payment_items_org_idx ON public.online_payment_items USING btree (org_id)"
+  },
+  {
+    "tablename": "online_payment_items",
+    "indexname": "online_payment_items_payment_idx",
+    "indexdef": "CREATE INDEX online_payment_items_payment_idx ON public.online_payment_items USING btree (online_payment_id)"
+  },
+  {
+    "tablename": "online_payment_items",
+    "indexname": "online_payment_items_pkey",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_items_pkey ON public.online_payment_items USING btree (id)"
+  },
+  {
+    "tablename": "online_payment_items",
+    "indexname": "online_payment_items_registration_idx",
+    "indexdef": "CREATE INDEX online_payment_items_registration_idx ON public.online_payment_items USING btree (registration_id) WHERE (registration_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payment_refunds",
+    "indexname": "online_payment_refunds_cost_entry_idx",
+    "indexdef": "CREATE INDEX online_payment_refunds_cost_entry_idx ON public.online_payment_refunds USING btree (processing_cost_entry_id) WHERE (processing_cost_entry_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payment_refunds",
+    "indexname": "online_payment_refunds_created_by_idx",
+    "indexdef": "CREATE INDEX online_payment_refunds_created_by_idx ON public.online_payment_refunds USING btree (created_by) WHERE (created_by IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payment_refunds",
+    "indexname": "online_payment_refunds_entry_idx",
+    "indexdef": "CREATE INDEX online_payment_refunds_entry_idx ON public.online_payment_refunds USING btree (refund_entry_id) WHERE (refund_entry_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payment_refunds",
+    "indexname": "online_payment_refunds_family_answer_by_idx",
+    "indexdef": "CREATE INDEX online_payment_refunds_family_answer_by_idx ON public.online_payment_refunds USING btree (family_answer_by) WHERE (family_answer_by IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payment_refunds",
+    "indexname": "online_payment_refunds_item_idx",
+    "indexdef": "CREATE INDEX online_payment_refunds_item_idx ON public.online_payment_refunds USING btree (online_payment_item_id) WHERE (online_payment_item_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payment_refunds",
+    "indexname": "online_payment_refunds_org_idx",
+    "indexdef": "CREATE INDEX online_payment_refunds_org_idx ON public.online_payment_refunds USING btree (org_id)"
+  },
+  {
+    "tablename": "online_payment_refunds",
+    "indexname": "online_payment_refunds_payment_idx",
+    "indexdef": "CREATE INDEX online_payment_refunds_payment_idx ON public.online_payment_refunds USING btree (online_payment_id)"
+  },
+  {
+    "tablename": "online_payment_refunds",
+    "indexname": "online_payment_refunds_pkey",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_refunds_pkey ON public.online_payment_refunds USING btree (id)"
+  },
+  {
+    "tablename": "online_payment_refunds",
+    "indexname": "online_payment_refunds_resolved_by_idx",
+    "indexdef": "CREATE INDEX online_payment_refunds_resolved_by_idx ON public.online_payment_refunds USING btree (resolved_by) WHERE (resolved_by IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payment_refunds",
+    "indexname": "online_payment_refunds_stripe_child_key",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_refunds_stripe_child_key ON public.online_payment_refunds USING btree (stripe_refund_id, online_payment_item_id) NULLS NOT DISTINCT WHERE (stripe_refund_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_clearing_idx",
+    "indexdef": "CREATE INDEX online_payments_clearing_idx ON public.online_payments USING btree (org_id) WHERE (status = 'clearing'::text)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_cost_entry_idx",
+    "indexdef": "CREATE INDEX online_payments_cost_entry_idx ON public.online_payments USING btree (processing_cost_entry_id) WHERE (processing_cost_entry_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_dispute_key",
+    "indexdef": "CREATE UNIQUE INDEX online_payments_dispute_key ON public.online_payments USING btree (stripe_dispute_id) WHERE (stripe_dispute_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_intent_key",
+    "indexdef": "CREATE UNIQUE INDEX online_payments_intent_key ON public.online_payments USING btree (stripe_payment_intent_id) WHERE (stripe_payment_intent_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_one_open_per_signup",
+    "indexdef": "CREATE UNIQUE INDEX online_payments_one_open_per_signup ON public.online_payments USING btree (season_id, signup_key) WHERE ((status = 'open'::text) AND (flow = 'league_signup'::text) AND (season_id IS NOT NULL))"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_one_open_per_team",
+    "indexdef": "CREATE UNIQUE INDEX online_payments_one_open_per_team ON public.online_payments USING btree (team_id) WHERE ((status = ANY (ARRAY['open'::text, 'clearing'::text])) AND (team_id IS NOT NULL))"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_open_idx",
+    "indexdef": "CREATE INDEX online_payments_open_idx ON public.online_payments USING btree (created_at) WHERE (status = 'open'::text)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_org_idx",
+    "indexdef": "CREATE INDEX online_payments_org_idx ON public.online_payments USING btree (org_id, created_at DESC)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_over_idx",
+    "indexdef": "CREATE INDEX online_payments_over_idx ON public.online_payments USING btree (team_id) WHERE ((over_amount IS NOT NULL) AND (over_kept_at IS NULL))"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_over_kept_by_idx",
+    "indexdef": "CREATE INDEX online_payments_over_kept_by_idx ON public.online_payments USING btree (over_kept_by) WHERE (over_kept_by IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_pkey",
+    "indexdef": "CREATE UNIQUE INDEX online_payments_pkey ON public.online_payments USING btree (id)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_receipt_key",
+    "indexdef": "CREATE UNIQUE INDEX online_payments_receipt_key ON public.online_payments USING btree (receipt_no) WHERE (receipt_no IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_season_idx",
+    "indexdef": "CREATE INDEX online_payments_season_idx ON public.online_payments USING btree (season_id) WHERE (season_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_session_key",
+    "indexdef": "CREATE UNIQUE INDEX online_payments_session_key ON public.online_payments USING btree (stripe_checkout_session_id) WHERE (stripe_checkout_session_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_team_idx",
+    "indexdef": "CREATE INDEX online_payments_team_idx ON public.online_payments USING btree (team_id) WHERE (team_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_tournament_idx",
+    "indexdef": "CREATE INDEX online_payments_tournament_idx ON public.online_payments USING btree (tournament_id) WHERE (tournament_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_refunds_unassigned",
+    "indexname": "online_refunds_unassigned_assigned_by_idx",
+    "indexdef": "CREATE INDEX online_refunds_unassigned_assigned_by_idx ON public.online_refunds_unassigned USING btree (assigned_by) WHERE (assigned_by IS NOT NULL)"
+  },
+  {
+    "tablename": "online_refunds_unassigned",
+    "indexname": "online_refunds_unassigned_org_idx",
+    "indexdef": "CREATE INDEX online_refunds_unassigned_org_idx ON public.online_refunds_unassigned USING btree (org_id)"
+  },
+  {
+    "tablename": "online_refunds_unassigned",
+    "indexname": "online_refunds_unassigned_payment_idx",
+    "indexdef": "CREATE INDEX online_refunds_unassigned_payment_idx ON public.online_refunds_unassigned USING btree (online_payment_id)"
+  },
+  {
+    "tablename": "online_refunds_unassigned",
+    "indexname": "online_refunds_unassigned_pkey",
+    "indexdef": "CREATE UNIQUE INDEX online_refunds_unassigned_pkey ON public.online_refunds_unassigned USING btree (id)"
+  },
+  {
+    "tablename": "online_refunds_unassigned",
+    "indexname": "online_refunds_unassigned_stripe_key",
+    "indexdef": "CREATE UNIQUE INDEX online_refunds_unassigned_stripe_key ON public.online_refunds_unassigned USING btree (stripe_refund_id)"
   },
   {
     "tablename": "org_audit_log",
@@ -1473,6 +1973,31 @@
     "tablename": "org_budget_periods",
     "indexname": "org_budget_periods_pkey",
     "indexdef": "CREATE UNIQUE INDEX org_budget_periods_pkey ON public.org_budget_periods USING btree (id)"
+  },
+  {
+    "tablename": "org_custom_domains",
+    "indexname": "org_custom_domains_domain_uidx",
+    "indexdef": "CREATE UNIQUE INDEX org_custom_domains_domain_uidx ON public.org_custom_domains USING btree (domain)"
+  },
+  {
+    "tablename": "org_custom_domains",
+    "indexname": "org_custom_domains_full_name_uidx",
+    "indexdef": "CREATE UNIQUE INDEX org_custom_domains_full_name_uidx ON public.org_custom_domains USING btree (full_name)"
+  },
+  {
+    "tablename": "org_custom_domains",
+    "indexname": "org_custom_domains_org_uidx",
+    "indexdef": "CREATE UNIQUE INDEX org_custom_domains_org_uidx ON public.org_custom_domains USING btree (org_id)"
+  },
+  {
+    "tablename": "org_custom_domains",
+    "indexname": "org_custom_domains_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_custom_domains_pkey ON public.org_custom_domains USING btree (id)"
+  },
+  {
+    "tablename": "org_custom_domains",
+    "indexname": "org_custom_domains_status_idx",
+    "indexdef": "CREATE INDEX org_custom_domains_status_idx ON public.org_custom_domains USING btree (status, last_checked_at)"
   },
   {
     "tablename": "org_fiscal_year_reopenings",
@@ -1586,6 +2111,11 @@
   },
   {
     "tablename": "org_overrides",
+    "indexname": "org_overrides_one_plan_grant_at_a_time",
+    "indexdef": "CREATE INDEX org_overrides_one_plan_grant_at_a_time ON public.org_overrides USING gist (org_id, tstzrange(starts_at, expires_at, '[)'::text)) WHERE ((type = 'plan_tier'::text) AND (revoked_at IS NULL))"
+  },
+  {
+    "tablename": "org_overrides",
     "indexname": "org_overrides_pkey",
     "indexdef": "CREATE UNIQUE INDEX org_overrides_pkey ON public.org_overrides USING btree (id)"
   },
@@ -1613,6 +2143,16 @@
     "tablename": "org_payees",
     "indexname": "org_payees_pkey",
     "indexdef": "CREATE UNIQUE INDEX org_payees_pkey ON public.org_payees USING btree (id)"
+  },
+  {
+    "tablename": "org_payment_accounts",
+    "indexname": "org_payment_accounts_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_payment_accounts_pkey ON public.org_payment_accounts USING btree (org_id)"
+  },
+  {
+    "tablename": "org_payment_accounts",
+    "indexname": "org_payment_accounts_stripe_account_key",
+    "indexdef": "CREATE UNIQUE INDEX org_payment_accounts_stripe_account_key ON public.org_payment_accounts USING btree (stripe_account_id)"
   },
   {
     "tablename": "org_people",
@@ -1768,6 +2308,16 @@
     "tablename": "org_public_site_content",
     "indexname": "org_public_site_content_pkey",
     "indexdef": "CREATE UNIQUE INDEX org_public_site_content_pkey ON public.org_public_site_content USING btree (id)"
+  },
+  {
+    "tablename": "org_site_notices",
+    "indexname": "org_site_notices_org_idx",
+    "indexdef": "CREATE INDEX org_site_notices_org_idx ON public.org_site_notices USING btree (org_id, posted_at DESC)"
+  },
+  {
+    "tablename": "org_site_notices",
+    "indexname": "org_site_notices_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_site_notices_pkey ON public.org_site_notices USING btree (id)"
   },
   {
     "tablename": "org_time_block_facilities",
@@ -1935,6 +2485,46 @@
     "indexdef": "CREATE UNIQUE INDEX plan_gating_pkey ON public.plan_gating USING btree (plan_key)"
   },
   {
+    "tablename": "platform_account_email_events",
+    "indexname": "platform_account_email_events_email_idx",
+    "indexdef": "CREATE INDEX platform_account_email_events_email_idx ON public.platform_account_email_events USING btree (email_id, occurred_at)"
+  },
+  {
+    "tablename": "platform_account_email_events",
+    "indexname": "platform_account_email_events_event_id_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_account_email_events_event_id_key ON public.platform_account_email_events USING btree (event_id)"
+  },
+  {
+    "tablename": "platform_account_email_events",
+    "indexname": "platform_account_email_events_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_account_email_events_pkey ON public.platform_account_email_events USING btree (id)"
+  },
+  {
+    "tablename": "platform_account_emails",
+    "indexname": "platform_account_emails_created_idx",
+    "indexdef": "CREATE INDEX platform_account_emails_created_idx ON public.platform_account_emails USING btree (created_at DESC)"
+  },
+  {
+    "tablename": "platform_account_emails",
+    "indexname": "platform_account_emails_feedback_idx",
+    "indexdef": "CREATE INDEX platform_account_emails_feedback_idx ON public.platform_account_emails USING btree (feedback_id) WHERE (feedback_id IS NOT NULL)"
+  },
+  {
+    "tablename": "platform_account_emails",
+    "indexname": "platform_account_emails_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_account_emails_pkey ON public.platform_account_emails USING btree (id)"
+  },
+  {
+    "tablename": "platform_account_emails",
+    "indexname": "platform_account_emails_recipient_idx",
+    "indexdef": "CREATE INDEX platform_account_emails_recipient_idx ON public.platform_account_emails USING btree (recipient_email, created_at DESC)"
+  },
+  {
+    "tablename": "platform_account_emails",
+    "indexname": "platform_account_emails_state_idx",
+    "indexdef": "CREATE INDEX platform_account_emails_state_idx ON public.platform_account_emails USING btree (state, created_at DESC)"
+  },
+  {
     "tablename": "platform_addon_catalog",
     "indexname": "idx_platform_addon_catalog_status_label",
     "indexdef": "CREATE INDEX idx_platform_addon_catalog_status_label ON public.platform_addon_catalog USING btree (status, label)"
@@ -2075,6 +2665,41 @@
     "indexdef": "CREATE UNIQUE INDEX platform_events_pkey ON public.platform_events USING btree (id)"
   },
   {
+    "tablename": "platform_fee_invoices",
+    "indexname": "platform_fee_invoices_period_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_fee_invoices_period_key ON public.platform_fee_invoices USING btree (org_id, livemode, period_start)"
+  },
+  {
+    "tablename": "platform_fee_invoices",
+    "indexname": "platform_fee_invoices_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_fee_invoices_pkey ON public.platform_fee_invoices USING btree (id)"
+  },
+  {
+    "tablename": "platform_fee_invoices",
+    "indexname": "platform_fee_invoices_stripe_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_fee_invoices_stripe_key ON public.platform_fee_invoices USING btree (stripe_invoice_id) WHERE (stripe_invoice_id IS NOT NULL)"
+  },
+  {
+    "tablename": "platform_fee_invoices",
+    "indexname": "platform_fee_invoices_unpaid_idx",
+    "indexdef": "CREATE INDEX platform_fee_invoices_unpaid_idx ON public.platform_fee_invoices USING btree (org_id) WHERE (status = 'open'::text)"
+  },
+  {
+    "tablename": "platform_feedback_replies",
+    "indexname": "platform_feedback_replies_feedback_idx",
+    "indexdef": "CREATE INDEX platform_feedback_replies_feedback_idx ON public.platform_feedback_replies USING btree (feedback_id, created_at)"
+  },
+  {
+    "tablename": "platform_feedback_replies",
+    "indexname": "platform_feedback_replies_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_feedback_replies_pkey ON public.platform_feedback_replies USING btree (id)"
+  },
+  {
+    "tablename": "platform_feedback_replies",
+    "indexname": "platform_feedback_replies_staff_idx",
+    "indexdef": "CREATE INDEX platform_feedback_replies_staff_idx ON public.platform_feedback_replies USING btree (staff_user_id, created_at DESC)"
+  },
+  {
     "tablename": "platform_metric_snapshots",
     "indexname": "idx_platform_metric_snapshots_date",
     "indexdef": "CREATE INDEX idx_platform_metric_snapshots_date ON public.platform_metric_snapshots USING btree (snapshot_date DESC)"
@@ -2108,6 +2733,96 @@
     "tablename": "platform_plan_versions",
     "indexname": "platform_plan_versions_version_key_key",
     "indexdef": "CREATE UNIQUE INDEX platform_plan_versions_version_key_key ON public.platform_plan_versions USING btree (version_key)"
+  },
+  {
+    "tablename": "platform_record_opens",
+    "indexname": "platform_record_opens_opened_at_idx",
+    "indexdef": "CREATE INDEX platform_record_opens_opened_at_idx ON public.platform_record_opens USING btree (opened_at DESC)"
+  },
+  {
+    "tablename": "platform_record_opens",
+    "indexname": "platform_record_opens_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_record_opens_pkey ON public.platform_record_opens USING btree (id)"
+  },
+  {
+    "tablename": "platform_refunds",
+    "indexname": "platform_refunds_actor_idx",
+    "indexdef": "CREATE INDEX platform_refunds_actor_idx ON public.platform_refunds USING btree (actor_email, created_at DESC)"
+  },
+  {
+    "tablename": "platform_refunds",
+    "indexname": "platform_refunds_charge_idx",
+    "indexdef": "CREATE INDEX platform_refunds_charge_idx ON public.platform_refunds USING btree (stripe_charge_id)"
+  },
+  {
+    "tablename": "platform_refunds",
+    "indexname": "platform_refunds_one_open_per_charge",
+    "indexdef": "CREATE UNIQUE INDEX platform_refunds_one_open_per_charge ON public.platform_refunds USING btree (stripe_charge_id) WHERE (status = ANY (ARRAY['started'::text, 'unknown'::text]))"
+  },
+  {
+    "tablename": "platform_refunds",
+    "indexname": "platform_refunds_org_idx",
+    "indexdef": "CREATE INDEX platform_refunds_org_idx ON public.platform_refunds USING btree (org_id, created_at DESC)"
+  },
+  {
+    "tablename": "platform_refunds",
+    "indexname": "platform_refunds_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_refunds_pkey ON public.platform_refunds USING btree (id)"
+  },
+  {
+    "tablename": "platform_refunds",
+    "indexname": "platform_refunds_stripe_refund_id_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_refunds_stripe_refund_id_key ON public.platform_refunds USING btree (stripe_refund_id)"
+  },
+  {
+    "tablename": "platform_sent_email_searches",
+    "indexname": "platform_sent_email_searches_actor_idx",
+    "indexdef": "CREATE INDEX platform_sent_email_searches_actor_idx ON public.platform_sent_email_searches USING btree (actor_user_id, searched_at DESC)"
+  },
+  {
+    "tablename": "platform_sent_email_searches",
+    "indexname": "platform_sent_email_searches_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_sent_email_searches_pkey ON public.platform_sent_email_searches USING btree (id)"
+  },
+  {
+    "tablename": "platform_status_reading",
+    "indexname": "platform_status_reading_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_status_reading_pkey ON public.platform_status_reading USING btree (id)"
+  },
+  {
+    "tablename": "platform_stripe_fees",
+    "indexname": "platform_stripe_fees_credit_note_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_stripe_fees_credit_note_key ON public.platform_stripe_fees USING btree (stripe_credit_note_id) WHERE (stripe_credit_note_id IS NOT NULL)"
+  },
+  {
+    "tablename": "platform_stripe_fees",
+    "indexname": "platform_stripe_fees_dispute_idx",
+    "indexdef": "CREATE INDEX platform_stripe_fees_dispute_idx ON public.platform_stripe_fees USING btree (dispute_id) WHERE (dispute_id IS NOT NULL)"
+  },
+  {
+    "tablename": "platform_stripe_fees",
+    "indexname": "platform_stripe_fees_invoice_idx",
+    "indexdef": "CREATE INDEX platform_stripe_fees_invoice_idx ON public.platform_stripe_fees USING btree (fee_invoice_id) WHERE (fee_invoice_id IS NOT NULL)"
+  },
+  {
+    "tablename": "platform_stripe_fees",
+    "indexname": "platform_stripe_fees_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_stripe_fees_key ON public.platform_stripe_fees USING btree (online_payment_id, kind, dispute_id) NULLS NOT DISTINCT"
+  },
+  {
+    "tablename": "platform_stripe_fees",
+    "indexname": "platform_stripe_fees_org_idx",
+    "indexdef": "CREATE INDEX platform_stripe_fees_org_idx ON public.platform_stripe_fees USING btree (org_id)"
+  },
+  {
+    "tablename": "platform_stripe_fees",
+    "indexname": "platform_stripe_fees_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_stripe_fees_pkey ON public.platform_stripe_fees USING btree (id)"
+  },
+  {
+    "tablename": "platform_stripe_fees",
+    "indexname": "platform_stripe_fees_unbilled_idx",
+    "indexdef": "CREATE INDEX platform_stripe_fees_unbilled_idx ON public.platform_stripe_fees USING btree (org_id) WHERE ((billed_at IS NULL) AND (exempt_reason IS NULL))"
   },
   {
     "tablename": "platform_user_notes",
@@ -4015,6 +4730,21 @@
     "indexdef": "CREATE UNIQUE INDEX rep_team_tournament_registrations_tournament_team_unique ON public.rep_team_tournament_registrations USING btree (tournament_team_id)"
   },
   {
+    "tablename": "rep_team_tryout_contacts",
+    "indexname": "idx_rep_team_tryout_contacts_org",
+    "indexdef": "CREATE INDEX idx_rep_team_tryout_contacts_org ON public.rep_team_tryout_contacts USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_team_tryout_contacts",
+    "indexname": "idx_rep_team_tryout_contacts_setter",
+    "indexdef": "CREATE INDEX idx_rep_team_tryout_contacts_setter ON public.rep_team_tryout_contacts USING btree (set_by_membership_id)"
+  },
+  {
+    "tablename": "rep_team_tryout_contacts",
+    "indexname": "rep_team_tryout_contacts_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_tryout_contacts_pkey ON public.rep_team_tryout_contacts USING btree (team_id)"
+  },
+  {
     "tablename": "rep_teams",
     "indexname": "idx_rep_teams_org_share_club_book",
     "indexdef": "CREATE INDEX idx_rep_teams_org_share_club_book ON public.rep_teams USING btree (org_id) WHERE share_club_book"
@@ -4315,6 +5045,26 @@
     "indexdef": "CREATE UNIQUE INDEX schedule_facility_lanes_unique_label ON public.schedule_facility_lanes USING btree (tournament_id, division_id, label)"
   },
   {
+    "tablename": "stripe_connect_events",
+    "indexname": "stripe_connect_events_org_id_idx",
+    "indexdef": "CREATE INDEX stripe_connect_events_org_id_idx ON public.stripe_connect_events USING btree (org_id)"
+  },
+  {
+    "tablename": "stripe_connect_events",
+    "indexname": "stripe_connect_events_pkey",
+    "indexdef": "CREATE UNIQUE INDEX stripe_connect_events_pkey ON public.stripe_connect_events USING btree (id)"
+  },
+  {
+    "tablename": "stripe_connect_events",
+    "indexname": "stripe_connect_events_received_idx",
+    "indexdef": "CREATE INDEX stripe_connect_events_received_idx ON public.stripe_connect_events USING btree (received_at)"
+  },
+  {
+    "tablename": "stripe_connect_events",
+    "indexname": "stripe_connect_events_unprocessed_idx",
+    "indexdef": "CREATE INDEX stripe_connect_events_unprocessed_idx ON public.stripe_connect_events USING btree (received_at) WHERE (processed_at IS NULL)"
+  },
+  {
     "tablename": "stripe_prices",
     "indexname": "stripe_prices_pkey",
     "indexdef": "CREATE UNIQUE INDEX stripe_prices_pkey ON public.stripe_prices USING btree (id)"
@@ -4495,6 +5245,41 @@
     "indexdef": "CREATE INDEX tournament_archives_winner_team_id_idx ON public.tournament_archives USING btree (winner_team_id)"
   },
   {
+    "tablename": "tournament_fee_book_settings",
+    "indexname": "tournament_fee_book_settings_org_id_idx",
+    "indexdef": "CREATE INDEX tournament_fee_book_settings_org_id_idx ON public.tournament_fee_book_settings USING btree (org_id)"
+  },
+  {
+    "tablename": "tournament_fee_book_settings",
+    "indexname": "tournament_fee_book_settings_pkey",
+    "indexdef": "CREATE UNIQUE INDEX tournament_fee_book_settings_pkey ON public.tournament_fee_book_settings USING btree (tournament_id)"
+  },
+  {
+    "tablename": "tournament_fee_receipt_allocations",
+    "indexname": "tournament_fee_allocations_team_idx",
+    "indexdef": "CREATE INDEX tournament_fee_allocations_team_idx ON public.tournament_fee_receipt_allocations USING btree (team_id)"
+  },
+  {
+    "tablename": "tournament_fee_receipt_allocations",
+    "indexname": "tournament_fee_receipt_allocations_pkey",
+    "indexdef": "CREATE UNIQUE INDEX tournament_fee_receipt_allocations_pkey ON public.tournament_fee_receipt_allocations USING btree (receipt_id, team_id)"
+  },
+  {
+    "tablename": "tournament_fee_receipts",
+    "indexname": "tournament_fee_receipts_entry_id_key",
+    "indexdef": "CREATE UNIQUE INDEX tournament_fee_receipts_entry_id_key ON public.tournament_fee_receipts USING btree (entry_id)"
+  },
+  {
+    "tablename": "tournament_fee_receipts",
+    "indexname": "tournament_fee_receipts_event_idx",
+    "indexdef": "CREATE INDEX tournament_fee_receipts_event_idx ON public.tournament_fee_receipts USING btree (tournament_id)"
+  },
+  {
+    "tablename": "tournament_fee_receipts",
+    "indexname": "tournament_fee_receipts_pkey",
+    "indexdef": "CREATE UNIQUE INDEX tournament_fee_receipts_pkey ON public.tournament_fee_receipts USING btree (id)"
+  },
+  {
     "tablename": "tournament_notification_preferences",
     "indexname": "tournament_notif_prefs_tournament_idx",
     "indexdef": "CREATE INDEX tournament_notif_prefs_tournament_idx ON public.tournament_notification_preferences USING btree (tournament_id)"
@@ -4563,6 +5348,66 @@
     "tablename": "tournament_roster_players",
     "indexname": "tournament_roster_players_source_player_id_idx",
     "indexdef": "CREATE INDEX tournament_roster_players_source_player_id_idx ON public.tournament_roster_players USING btree (source_player_id)"
+  },
+  {
+    "tablename": "tournament_team_entry_adjustments",
+    "indexname": "tournament_team_entry_adjustments_created_by_idx",
+    "indexdef": "CREATE INDEX tournament_team_entry_adjustments_created_by_idx ON public.tournament_team_entry_adjustments USING btree (created_by) WHERE (created_by IS NOT NULL)"
+  },
+  {
+    "tablename": "tournament_team_entry_adjustments",
+    "indexname": "tournament_team_entry_adjustments_org_idx",
+    "indexdef": "CREATE INDEX tournament_team_entry_adjustments_org_idx ON public.tournament_team_entry_adjustments USING btree (org_id)"
+  },
+  {
+    "tablename": "tournament_team_entry_adjustments",
+    "indexname": "tournament_team_entry_adjustments_pkey",
+    "indexdef": "CREATE UNIQUE INDEX tournament_team_entry_adjustments_pkey ON public.tournament_team_entry_adjustments USING btree (id)"
+  },
+  {
+    "tablename": "tournament_team_entry_adjustments",
+    "indexname": "tournament_team_entry_adjustments_refund_key",
+    "indexdef": "CREATE UNIQUE INDEX tournament_team_entry_adjustments_refund_key ON public.tournament_team_entry_adjustments USING btree (refund_id)"
+  },
+  {
+    "tablename": "tournament_team_entry_adjustments",
+    "indexname": "tournament_team_entry_adjustments_team_idx",
+    "indexdef": "CREATE INDEX tournament_team_entry_adjustments_team_idx ON public.tournament_team_entry_adjustments USING btree (team_id, created_at)"
+  },
+  {
+    "tablename": "tournament_team_entry_adjustments",
+    "indexname": "tournament_team_entry_adjustments_tournament_idx",
+    "indexdef": "CREATE INDEX tournament_team_entry_adjustments_tournament_idx ON public.tournament_team_entry_adjustments USING btree (tournament_id)"
+  },
+  {
+    "tablename": "tournament_team_payments",
+    "indexname": "tournament_team_payments_entry_idx",
+    "indexdef": "CREATE INDEX tournament_team_payments_entry_idx ON public.tournament_team_payments USING btree (entry_id) WHERE (entry_id IS NOT NULL)"
+  },
+  {
+    "tablename": "tournament_team_payments",
+    "indexname": "tournament_team_payments_online_payment_key",
+    "indexdef": "CREATE UNIQUE INDEX tournament_team_payments_online_payment_key ON public.tournament_team_payments USING btree (online_payment_id) WHERE (online_payment_id IS NOT NULL)"
+  },
+  {
+    "tablename": "tournament_team_payments",
+    "indexname": "tournament_team_payments_org_idx",
+    "indexdef": "CREATE INDEX tournament_team_payments_org_idx ON public.tournament_team_payments USING btree (org_id)"
+  },
+  {
+    "tablename": "tournament_team_payments",
+    "indexname": "tournament_team_payments_pkey",
+    "indexdef": "CREATE UNIQUE INDEX tournament_team_payments_pkey ON public.tournament_team_payments USING btree (id)"
+  },
+  {
+    "tablename": "tournament_team_payments",
+    "indexname": "tournament_team_payments_team_idx",
+    "indexdef": "CREATE INDEX tournament_team_payments_team_idx ON public.tournament_team_payments USING btree (team_id, status)"
+  },
+  {
+    "tablename": "tournament_team_payments",
+    "indexname": "tournament_team_payments_tournament_idx",
+    "indexdef": "CREATE INDEX tournament_team_payments_tournament_idx ON public.tournament_team_payments USING btree (tournament_id)"
   },
   {
     "tablename": "tournaments",
