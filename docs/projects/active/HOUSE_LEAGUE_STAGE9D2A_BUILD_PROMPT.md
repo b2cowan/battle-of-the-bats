@@ -20,6 +20,11 @@
   "Stage 9d-2a" section (it wins over the drawings). The UX summary was presented. **Step 1 is BUILT** (the generator, the
   season bookings, the league health; 33 tests; plan §9 entry of 2026-10-27). **Resume at step 2 (the public page).** The
   blocking steps below are DONE; do not re-ask them.
+- **2026-10-27, session 2: Step 2 is BUILT and committed** (the public page: every status read, Cancelled struck in its
+  week, Postponed under "Needs a new date", place on every game, opens on this week with earlier weeks folded; checked on
+  Dev House League 2026 and a rolled-back fixture). Its pure parts (`seasonWeeks`, `todayLineAt`) live in
+  `lib/league-season-calendar.ts` beside step 1's. One word chosen by the build, not by /marketing: **"Date to come"** for a
+  game saved with no date at all (the admin can save one; it is not postponed, so it has no "Was"). **Resume at step 3.**
 - **Owed to the owner at step 6:** "Adjust the rules" has nowhere to save without a migration (recommended: the rules as
   words in 9d-2a, the door with 9d-2b).
 - **Facts found that the steps below must respect:** the club's cross-program clash rule never compares two house-league

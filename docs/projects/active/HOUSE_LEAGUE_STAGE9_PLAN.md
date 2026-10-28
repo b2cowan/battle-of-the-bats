@@ -863,3 +863,13 @@ open it, and the menu's top level is Stage 13's.
   it finds the drawing's four issues and scores **65, Needs work** where the tournament engine says 97 (`.probe/9d2a/
   health-dev.mts`). **Open for step 6 (owner ask): "Adjust the rules" has nowhere to save** — no settings column on a season
   or a division; recommended: show the rules as words in 9d-2a and add the door with 9d-2b's migrations. 33 unit tests.
+- **2026-10-27 — 9d-2a STEP 2 BUILT (the public schedule, g1 + g2's this-week frame).** The read that dropped cancelled
+  games (`getGamesForSeason`, this page its only caller) is replaced by `getSeasonGamesEveryStatus` (throws on a failed
+  read); the page draws through step 1's `seasonCalendar`, so the public words are the convenor's: Cancelled struck in its
+  week, Postponed under "Needs a new date" with "Was {day}", "{Venue} · {Facility}" on every game (a closed venue still
+  named: `getOrgPlaceNames` reads every venue), "Times in Eastern time." once, games only. It opens on this week; earlier
+  weeks fold behind "Show {n} earlier weeks" (a disclosure, no script); a season wholly behind today folds nothing (the
+  whole season is the record). **Argued:** the page does not wear the calendar's view switch (the drawing gives the public
+  one list, and `club-stage6c-screens-guard`'s switch assertions are for the three staff calendars, so they did not move).
+  A game saved with no date at all reads **"Date to come"** (a build word; it is not postponed, so it has no "Was").
+  Checked on Dev House League 2026 and a rolled-back five-game fixture around today.
