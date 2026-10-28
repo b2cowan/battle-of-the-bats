@@ -244,7 +244,47 @@ page** as it renders today inside the tournament layout (its focused page is Sta
 > their stages) and the free plan's banner (Part 1's ruling). Left as written, per Part 3's call: words the source
 > writes in capitals (the team page's name, RECORD, NEXT GAME); the team page's team-colour hero tint (its identity,
 > Stage 5's). Not render-checked by Claude: the line's "New" arrival (needs a score entered while open) and a game
-> moving from its time to Live — both go to the walk.
+> moving from its time to Live — both go to the walk. **Committed `e01043e2c` 2026-10-28** after the owner's check.
+
+### Kick-off for steps 3–6 (a fresh chat; the owner pastes: "execute PUBLIC_TOURNAMENT_STAGE1_BUILD_PROMPT.md — Part 4, steps 3–6")
+
+Read this prompt's top section, the Part 2–4 "Built" notes above and this block; nothing else of the plan unless a step
+names it. Everything is committed, so the working tree holds none of it: **the diff under review is the four build
+commits, `21dac8e87` (Part 1), `b7639fe83` (Part 2), `d2b80b61a` (Part 3), `e01043e2c` (Part 4)**. Other sessions
+committed between them, so never review a range: list the files with `git show --stat` on each of the four and review
+those commits' changes (`git show <hash> -- <path>`). Hand broad reading to a helper (CLAUDE.md).
+
+1. **`/simplify` first** (built-in skill; point it at those four commits' code, not the working tree). The new shared
+   pieces worth its look: the preview helper and its route (`lib/public-frame.ts`, `app/api/public-frame/`), the band
+   (`TournamentBand`), the footer, the frame stylesheet's token re-pointing, the shared today's-games hook
+   (`lib/hooks/useTodaysTournamentGames.ts`) and `TodaysResultsLine`. Its question: duplication with the club site's
+   bar/footer/token block that should be one thing, and frame-keyed rules that repeat across page stylesheets. **Hold
+   the line on "no layout change" and "switch off = today's pages exactly"**: a simplification that changes either is a
+   finding to report, not to apply. Apply the rest; run the guard test, `verify:changed` (⚠ on 2026-10-28 two failures
+   in it were other sessions' work: the Keep Premium audit-reason test and the demo check's missing module — re-check,
+   don't assume) and `typecheck`.
+2. **`/review`** (`.claude/commands/review.md`) on the same four commits plus `/simplify`'s changes. Points to press:
+   the switch is decided on the server before first paint and nothing new renders without it; the redirect route
+   cannot be pointed off-site; the ticker's timers (fade, hold, minute clock) clear on unmount and never stack when the
+   live feed refreshes; the × key is per tournament per day; reduced motion never starts the reel; the moved bracket
+   styles render identically with the switch off (admin bracket builder and preview too); the Teams monogram ink is
+   frame-only. Fix what it confirms; report what it only suspects.
+3. **Commit** each step's changes only after the owner says yes (explicit pathspecs; other sessions share the tree).
+4. **The walk** (step 4 below): one purpose — *"with the preview on, every tournament page wears the new frame and
+   reads on light; with it off, nothing changed"*. A checkable Artifact in §406's build, next free § in
+   `OWNER_QA_LEDGER.md` (grep first). Fixtures: `node scripts/seed-public-frame-fixtures.mjs` (dev only; it prints the
+   on/off links) plus Riverdale. Parts: (a) the four organizers' bands on a phone (pale, own colour + logo, free, long
+   name); (b) every page readable, phone then desk — Overview (before/game day/after), Schedule, a game, Standings,
+   Playoffs, Teams, a team, News, Rules, Champions, Register; (c) **the ticker**: fades through once then rests; "Live"
+   / "Final" / a time; the × hides it and it stays hidden after a reload, and is back the next day (the walk can say
+   how to clear it: a private window); **a score entered while the page is open arrives marked New** (read-back: which
+   game, what it showed); a game moving from its time to Live; (d) the app bar in a phone browser and **inside the
+   installed app** (phone and desk — display mode cannot be emulated, so the owner's devices are the only check);
+   (e) what Claude could not render: the admin preview, the pay page (needs a payment link), the live broadcast card,
+   the follow picker and alerts panel opened, the desk My Team rail card; (f) switch off is today's site (the old
+   scrolling strip included); (g) the demo with the switch off. Stop check as §406/§407 had. ⚠ §407's lesson: ask for a
+   read-back on every step that writes, and compare the server log with what the owner ticked before recording a pass.
+5. Records and the tell: steps 5–6 below.
 
 1. Same rule, for **Standings** (keep the table; **pinning Team and PTS is Stage 4**, so don't do it here),
    **Playoffs** (the bracket stays where it is today; its move is Stage 4), **Teams**, **a team's page**, **News**,

@@ -35,7 +35,7 @@ p { margin: 0; max-width: 72ch; }
 .cap { font: 600 12px/1.3 var(--f-text); letter-spacing: .04em; text-transform: uppercase; color: var(--doc-soft); margin-bottom: 8px; }
 .tag { display: inline-block; font: 600 12px/1 var(--f-text); padding: 4px 8px; border-radius: 6px; background: var(--doc-tag); color: var(--doc-accent); vertical-align: 2px; }
 .scrollx { overflow-x: auto; border: 1px solid var(--doc-line); border-radius: 10px; max-width: 100%; }
-table.cmp { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 14px; }
+table.cmp { border-collapse: collapse; width: 100%; min-width: 1200px; font-size: 14px; }
 table.cmp th, table.cmp td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--doc-line); }
 table.cmp th { font-weight: 600; color: var(--doc-soft); background: var(--doc-card); }
 .ask { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
@@ -131,6 +131,48 @@ table.cmp th { font-weight: 600; color: var(--doc-soft); background: var(--doc-c
 .n.settle { animation: settle .6s ease-out; }
 @keyframes settle { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 
+.ql { height: 44px; background: #fff; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; padding: 0 12px; color: var(--soft); font: 500 13px/1.2 var(--f-text); }
+.ql .live-dot { width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--live); }
+.ql .summary { min-width: 0; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ql b { color: var(--ink); font-weight: 600; }
+.ql .open { min-height: 44px; display: flex; align-items: center; color: var(--cink); font-weight: 600; white-space: nowrap; }
+/* E · SCORES TAB: no strip; a quiet live count on the tab opens the full scores list. */
+.tabs .live-count, .rail .live-count { margin-left: 6px; padding: 3px 7px; border-radius: 10px; background: var(--livebg); color: var(--live); font: 600 12px/1 var(--f-text); }
+/* The My Team dock and its desk rail card — they ship today (MyTeamDock, DesktopMyTeamRailCard) and show the followed
+   team's live score on every page on game day; drawn here on light, as Part 3 makes them readable. */
+.dock { position: sticky; bottom: 0; z-index: 3; margin-top: auto; min-height: 56px; background: #fff; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 10px; padding: 0 12px; font: 500 14px/1.2 var(--f-text); color: var(--soft); }
+.dock .who { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dock b { color: var(--ink); font-weight: 600; }
+.dock .n { font: 700 18px/1 var(--f-title); font-variant-numeric: tabular-nums; color: var(--ink); }
+.phone.withdock { display: flex; flex-direction: column; }
+.railcard { margin: 12px 10px 0; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; font: 500 13px/1.3 var(--f-text); color: var(--soft); }
+.railcard b { color: var(--ink); font-weight: 600; }
+.railcard .n { font: 700 18px/1 var(--f-title); font-variant-numeric: tabular-nums; color: var(--ink); }
+/* F · TODAY'S RESULTS, ONE AT A TIME: one still line; a result fades in, holds, fades out, the next fades in. One pass
+   when the page opens, one showing when a new result lands, then it rests on the newest. */
+.reel { height: 56px; background: #fff; border-bottom: 1px solid var(--line); display: flex; align-items: stretch; }
+.desk .reel { height: 44px; }
+.reel .slot { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 0 4px 0 14px; color: var(--ink); text-decoration: none; transition: opacity .4s ease; }
+.desk .reel .slot { flex-direction: row; align-items: center; gap: 10px; padding-left: 16px; }
+.reel .slot.out { opacity: 0; }
+.reel .st { font: 600 12px/1.2 var(--f-text); color: var(--dim); white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+.reel .st.live { color: var(--live); }
+.reel .st .new { color: var(--ok); background: var(--okbg); border-radius: 10px; padding: 2px 7px; }
+.reel .gm { font: 500 14px/1.2 var(--f-text); color: var(--soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.reel .gm b { color: var(--ink); font-weight: 600; }
+.reel .gm .n { font: 700 16px/1 var(--f-title); font-variant-numeric: tabular-nums; color: var(--ink); }
+.reel .ctl { flex: none; width: 44px; border: 0; border-left: 1px solid var(--line); background: #fff; color: var(--soft); cursor: pointer; display: grid; place-items: center; }
+.reel .ctl svg { width: 18px; height: 18px; }
+.reel .ctl:focus-visible, .reel .slot:focus-visible { outline: 2px solid var(--cink); outline-offset: -2px; }
+.reel .all { flex: none; display: flex; align-items: center; padding: 0 12px; border-left: 1px solid var(--line); font: 600 13px/1 var(--f-text); color: var(--cink); white-space: nowrap; }
+.phone .reel .all { display: none; }
+.democtl { display: flex; flex-wrap: wrap; gap: 8px; }
+.democtl button { font: 600 13px/1 var(--f-text); min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-card); color: var(--doc-fg); cursor: pointer; }
+.democtl button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.reelstate { font: 500 13px/1.3 var(--f-text); color: var(--doc-soft); }
+@media (prefers-reduced-motion: reduce) { .reel .slot { transition: none; } }
+.review { border-left: 3px solid var(--doc-accent); padding-left: 16px; display: flex; flex-direction: column; gap: 10px; }
+.review ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; max-width: 80ch; }
 /* C · MY TEAM LINE: one line for the followed team's game, and how many are live. */
 .mt { height: 44px; background: #fff; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; padding: 0 0 0 12px; font: 500 14px/1.2 var(--f-text); }
 .mt .star { color: var(--cink); flex: none; display: grid; place-items: center; }
@@ -153,16 +195,19 @@ table.cmp th { font-weight: 600; color: var(--doc-soft); background: var(--doc-c
 
 <div class="wrap">
   <header style="display:flex;flex-direction:column;gap:8px">
-    <h1>Game-day ticker: four ways to carry today's scores</h1>
-    <p class="lede">Stage 1 restyles the scores strip that runs under the tab row on game day. You asked for better versions before it is built (Ask 17), "maybe like a soft flashing scoreboard". Below is today's strip as it now draws on the new frame, then three options at true size: a phone at 390 px and a desk at 1280 px. Which pages carry the strip is Stage 2's and 3's call (the Overview drops it; Schedule and a game's page drop it), so these show it on the Teams page.</p>
-    <p class="lede">The scores in options B and C change every few seconds so you can see how a goal or a run arrives. With reduced motion on, they change with no movement at all.</p>
+    <h1>Game-day scoring: seven ways to carry today's scores</h1>
+    <p class="lede">The question is how to keep scores useful without a moving ticker or a tall phone strip. Compare today's ticker and options A–E at a 390 px phone width. Options D and E came from a second opinion (Codex): D keeps one quiet 44 px score line; E removes the strip and puts a live count on the Schedule tab. F is your idea of 10-28: today's results fading in one at a time. Claude's review of D and E, and the recommendations, are on the last tab.</p>
+    <p class="lede">The score changes in B–D are only a demonstration. In a real experience, update only when the score changes. Push alerts are optional and belong in the installed app; the public tournament page stays a website, with no browser alert prompt.</p>
   </header>
 
-  <nav class="navtabs" role="tablist" aria-label="Ticker options">
+  <nav class="navtabs" role="tablist" aria-label="Scoring options">
     <button role="tab" id="t-today" aria-controls="today" data-tab="today">Today</button>
     <button role="tab" id="t-calm" aria-controls="calm" data-tab="calm">A · Calm marquee</button>
     <button role="tab" id="t-board" aria-controls="board" data-tab="board">B · Soft scoreboard</button>
     <button role="tab" id="t-mine" aria-controls="mine" data-tab="mine">C · My team line</button>
+    <button role="tab" id="t-quiet" aria-controls="quiet" data-tab="quiet">D · Quiet score line</button>
+    <button role="tab" id="t-badge" aria-controls="badge" data-tab="badge">E · Scores tab + alerts</button>
+    <button role="tab" id="t-reel" aria-controls="reel" data-tab="reel">F · Today's results, one at a time</button>
     <button role="tab" id="t-ask" aria-controls="ask" data-tab="ask">Compare and choose</button>
   </nav>
 
@@ -228,7 +273,7 @@ table.cmp th { font-weight: 600; color: var(--doc-soft); background: var(--doc-c
           </ul>
           <h3>What it costs</h3>
           <ul>
-            <li>It is taller: 75 px against today's 40. Pinned on a phone with the tab row that is 123 px of 667 (18%), still inside the Nav Unification budget (26%).</li>
+            <li>It is taller: 75 px against today's 40. At the top of a page (band, tabs and strip) that is 195 px of a 667 px phone (29%); once the page scrolls the band goes and 123 px stay pinned (18%). Both sit inside the Nav Unification budget (39% at rest, 26% pinned), but it is the tallest option here.</li>
             <li>It shows fewer games at once on a phone (one and a half, against a crawl that eventually shows all). Swiping or the last tile reaches the rest.</li>
           </ul>
           <p><span class="tag">Your idea, Ask 17</span> new behaviour, the existing live feed.</p>
@@ -265,33 +310,148 @@ table.cmp th { font-weight: 600; color: var(--doc-soft); background: var(--doc-c
     </div>
   </section>
 
+  <!-- ===== D ===== -->
+  <section role="tabpanel" id="quiet" aria-labelledby="t-quiet" data-panel hidden>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <p class="better">D · Quiet score line (recommended for the tournament page): one still, 44 px row. It shows the followed team’s live score; if no team is followed, it says how many games are live. Tap to open all live scores. No crawl, glow, pulse, or score animation.</p>
+      <div class="row">
+        <div><p class="cap">Phone · 390 px · Riverdale Rapids followed</p><div class="tf phone" data-frame="phone" data-ticker="quiet"></div></div>
+        <div class="notes">
+          <h3>How it behaves</h3>
+          <ul>
+            <li><b>One calm line.</b> “Live · Rapids 2–3 Cyclones” updates in place only when the score changes; the number does not move or flash. A screen reader can announce actual score changes politely, never routine refreshes.</li>
+            <li><b>One tap opens the complete live list.</b> Families who follow no team see “2 games live · View scores” instead. On the Schedule page, the row can be omitted because the scores are already there.</li>
+            <li><b>Same 44 px height as C.</b> It gives back 31 px compared with B and avoids repeating every game in a sideways strip.</li>
+          </ul>
+          <h3>Trade-off</h3>
+          <ul><li>Only the followed game’s score appears in the line. To scan other games, tap through to the Schedule.</li></ul>
+          <p><span class="tag">Best balance</span> current score, no constant movement, little phone space.</p>
+          <div class="review">
+            <h3>Claude's note on D</h3>
+            <ul>
+              <li><b>D is C without the score settling in.</b> Same 44 px, same followed game, same door to the rest.</li>
+              <li><b>The followed team's score is already on screen.</b> On game day the My Team dock (phone, at the foot) and its rail card (desk) show it on every page today. D and C would show it twice on the same screen.</li>
+              <li><b>"Rapids" and "Cyclones" need a short name the product does not have.</b> A team has one name; with full names the line cuts the opponent short on a phone.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div><p class="cap">Desk · 1280 px (scrolls sideways)</p><div class="scrollx"><div class="tf desk" data-frame="desk" data-ticker="quiet"></div></div></div>
+    </div>
+  </section>
+
+  <!-- ===== E ===== -->
+  <section role="tabpanel" id="badge" aria-labelledby="t-badge" data-panel hidden>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <p class="better">E · No strip, a live count on the Schedule tab, and optional alerts (best when every pixel matters): remove the persistent strip. A small live count sits on the Schedule tab; the followed team's score stays where it already is, in the My Team dock; people who want a prompt can enable team score alerts in the installed app.</p>
+      <div class="row">
+        <div><p class="cap">Phone · 390 px · no strip · Riverdale Rapids followed (the dock)</p><div class="tf phone withdock" data-frame="phone" data-ticker="badge"></div></div>
+        <div class="notes">
+          <h3>How it behaves</h3>
+          <ul>
+            <li><b>Zero extra vertical space.</b> The “2 live” count is part of the existing Schedule tab and opens the full live scores list.</li>
+            <li><b>Your team's score without a tap</b> comes from the My Team dock, which already ships: on a phone it sits at the foot of every page on game day (live score, or the countdown to the next game); on a desk it is the rail card. Drawn here on light.</li>
+            <li><b>Alerts are a choice.</b> In the installed app, a family can follow a team and turn on score alerts. Keep alerts off until requested; let people choose teams and avoid sending an alert for every routine refresh.</li>
+            <li>The public tournament page remains a website and does not ask for browser notification permission. Notifications complement the app’s Scores/Following views; they do not replace the in-page route to scores.</li>
+          </ul>
+          <h3>Trade-off</h3>
+          <ul><li>While reading another page, a family that follows no team sees only the live count, not the scores. They tap Schedule, or follow a team (the dock then carries its score).</li></ul>
+          <p><span class="tag">Smallest footprint</span> no score strip; app alerts stay opt-in.</p>
+        </div>
+      </div>
+      <div><p class="cap">Desk · 1280 px (scrolls sideways)</p><div class="scrollx"><div class="tf desk" data-frame="desk" data-ticker="badge"></div></div></div>
+    </div>
+  </section>
+
+  <!-- ===== F ===== -->
+  <section role="tabpanel" id="reel" aria-labelledby="t-reel" data-panel hidden>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <p class="better">F · Today's results, one at a time (your idea, 10-28): one still line. A result fades in, holds for five seconds, fades out, and the next fades in. It goes through the day once when the page opens, shows a new result when one lands, and otherwise rests on the newest. Your own team stays in the My Team dock at the foot, so the line carries everyone else's.</p>
+      <div class="democtl" aria-label="Try it">
+        <button type="button" data-demo="new">A result comes in</button>
+        <button type="button" data-demo="restart">Open the page again</button>
+        <span class="reelstate" data-reelstate aria-live="off"></span>
+      </div>
+      <div class="row">
+        <div><p class="cap">Phone · 390 px · Riverdale Rapids followed (the dock)</p><div class="tf phone withdock" data-frame="phone" data-ticker="reel"></div></div>
+        <div class="notes">
+          <h3>How it behaves</h3>
+          <ul>
+            <li><b>Made for results entered after games.</b> Most scores arrive when a game is over, so the line is a reel of today's results, newest first, then games on now (no score, as there usually is none), then the next to start. A score entered during a game simply shows on that game's turn.</li>
+            <li><b>Moves only when there is news.</b> One pass when the page opens (six games here, about 35 seconds), then it rests on the newest result. A new result fades in marked "New", holds, and rests there. Nothing moves the rest of the time.</li>
+            <li><b>Each result holds still while read:</b> a 0.4 s fade, five seconds held. No sliding, no blinking.</li>
+            <li><b>You can stop it.</b> A finger or pointer on the line pauses it; the button at the right pauses it, and when it rests the same button plays today's results again. Tapping the line opens the game shown.</li>
+            <li><b>Reduced motion:</b> no reel at all; the newest result stays, and the button steps to the next one by hand.</li>
+            <li><b>Screen readers</b> are not told about every turn (that would be noise); the line is read as a link to the game shown, and the desk carries "All results".</li>
+            <li><b>A busy day</b> keeps the latest eight results in the reel; the rest are on the Schedule.</li>
+          </ul>
+          <h3>What it costs</h3>
+          <ul>
+            <li>56 px on a phone (two short lines, so a long pair of names fits without cutting a team short): 176 px at the top of a page (26%), 104 px pinned (16%). A desk keeps one 44 px line.</li>
+            <li>A family wanting one particular game may wait for its turn; the Schedule has them all, one tap away.</li>
+          </ul>
+          <p><span class="tag">Calm and current</span> no crawl, no glow, motion only for news.</p>
+        </div>
+      </div>
+      <div><p class="cap">Desk · 1280 px (scrolls sideways)</p><div class="scrollx"><div class="tf desk" data-frame="desk" data-ticker="reel"></div></div></div>
+    </div>
+  </section>
+
   <!-- ===== ASK ===== -->
   <section role="tabpanel" id="ask" aria-labelledby="t-ask" data-panel hidden>
     <div style="display:flex;flex-direction:column;gap:18px">
       <h2>Side by side</h2>
       <div class="scrollx"><table class="cmp">
-        <thead><tr><th></th><th>Today</th><th>A · Calm marquee</th><th>B · Soft scoreboard</th><th>C · My team line</th></tr></thead>
+        <thead><tr><th></th><th>Today</th><th>A · Calm marquee</th><th>B · Soft scoreboard</th><th>C · My team line</th><th>D · Quiet score line</th><th>E · No strip, Schedule count</th><th>F · Today’s results, one at a time</th></tr></thead>
         <tbody>
-          <tr><th>Reading one score</th><td>Wait for it to come round</td><td>Wait, but it reads cleanly</td><td>At a glance, in place</td><td>At a glance, your team only</td></tr>
-          <tr><th>A changed score</th><td>Unnoticed</td><td>Unnoticed</td><td>That tile glows once, then fades</td><td>The number settles in</td></tr>
-          <tr><th>Your team</th><td>Wherever it falls</td><td>Wherever it falls</td><td>First tile, outlined</td><td>The whole line</td></tr>
-          <tr><th>Other games</th><td>All, moving</td><td>All, moving</td><td>One and a half on a phone, four and a half on a desk; swipe; a door to the rest</td><td>A count and a door</td></tr>
-          <tr><th>Movement</th><td>Constant; faster on a busy day</td><td>Constant, half speed, steady</td><td>None until a score moves</td><td>None until a score moves</td></tr>
-          <tr><th>Height (phone, pinned with tabs)</th><td>40 px (88 px)</td><td>44 px (92 px)</td><td>75 px (123 px)</td><td>44 px (92 px)</td></tr>
-          <tr><th>Build</th><td>Built</td><td>Restyle only</td><td>New strip on today's live feed</td><td>New strip on the feed and the follow</td></tr>
+          <tr><th>Reading one score</th><td>Wait for it to come round</td><td>Wait, but it reads cleanly</td><td>At a glance, in place</td><td>At a glance, your team only</td><td>At a glance, your team only</td><td>Your team: the dock. Others: tap Schedule</td><td>Each result held 5 s in turn; your team: the dock</td></tr>
+          <tr><th>A changed score</th><td>Unnoticed</td><td>Unnoticed</td><td>That tile glows once, then fades</td><td>The number settles in</td><td>The number changes, no cue</td><td>The dock's digits roll (as today); app alert if turned on</td><td>A new result fades in marked New, then rests there</td></tr>
+          <tr><th>Your team</th><td colspan="7">The My Team dock (phone) and rail card (desk) already show it on every page on game day, under every option. C and D show it a second time, at the top.</td></tr>
+          <tr><th>Other games</th><td>All, moving</td><td>All, moving</td><td>One and a half on a phone, four and a half on a desk; swipe; a door to the rest</td><td>A count and a door</td><td>A door to all scores</td><td>A count on the Schedule tab</td><td>Every result of the day, one at a time (latest eight)</td></tr>
+          <tr><th>Movement</th><td>Constant; faster on a busy day</td><td>Constant, half speed, steady</td><td>No crawl; tile tints on change</td><td>Score settles in</td><td>None</td><td>None</td><td>One pass on opening and one showing per new result; still otherwise</td></tr>
+          <tr><th>Top of a phone page (band + tabs + strip, of 667 px; budget 39%)</th><td>160 px (24%)</td><td>164 px (25%)</td><td>195 px (29%)</td><td>164 px (25%)</td><td>164 px (25%)</td><td>120 px (18%)</td><td>176 px (26%)</td></tr>
+          <tr><th>Pinned while scrolling (tabs + strip; budget 26%)</th><td>88 px (13%)</td><td>92 px (14%)</td><td>123 px (18%)</td><td>92 px (14%)</td><td>92 px (14%)</td><td>48 px (7%)</td><td>104 px (16%)</td></tr>
+          <tr><th>Build</th><td>Built</td><td>Restyle only</td><td>New strip on today’s live feed</td><td>New strip on the feed and the follow</td><td>New strip; needs short team names</td><td>Remove the strip; a count on an existing tab</td><td>New one-line strip on today’s feed; rests; pause</td></tr>
         </tbody>
       </table></div>
 
       <div class="ask">
-        <h2>My recommendation: B, the soft scoreboard</h2>
-        <p>The strip's job on game day is "what is the score now", and a family reads it standing at a fence with a phone. B is the only option where a score can be read without waiting and where a change is noticed without anyone watching the strip. It also keeps the other games, which C drops, and puts the parent's own team first, which is C's best idea. A is a fine restyle, but it keeps the thing that makes the strip hard to read: it moves.</p>
-        <p>The cost is about 35 px more pinned height on a phone than today (123 px against 88), still inside the budget. The trade is fewer games in view at once, with swiping and the full schedule one tap away.</p>
+        <p class="cap">Second opinion (Codex)</p>
+        <h2>D for the tournament page; E for the installed app</h2>
+        <p>Your two concerns point away from B as the default: its strip takes 75 px, and the score tint still calls attention to itself. D keeps the most useful part—your followed team’s current score—in a still 44 px line. It saves 31 px versus B and replaces the crawl with one predictable tap to all live games. If even that row feels too much, E removes it completely and leaves a live count on the existing Schedule tab.</p>
+        <p>When the app is open, prefer a quiet in-page score update; push alerts are mainly useful when the app is in the background. Keep them optional and team-specific, and avoid browser notification prompts on public tournament pages. A live-count badge is quieter, but it cannot say which score changed until someone opens the Schedule.</p>
+      </div>
+
+      <div class="ask">
+        <p class="cap">Claude's review of the second opinion</p>
+        <h2>Where Codex is right, and where the evidence goes further</h2>
+        <div class="review">
+          <h3>Agreed</h3>
+          <ul>
+            <li>The strip should not ask for attention on every page; calm beats clever. B's tint is the part of B most worth doubting.</li>
+            <li>Score alerts belong to the installed app, never a browser prompt. That is already your direction of 10-27 (alerts only inside the installed app).</li>
+            <li>E, no strip at all, is a real option I had not drawn.</li>
+          </ul>
+          <h3>Not agreed</h3>
+          <ul>
+            <li><b>D's job is already done.</b> "Your followed team's current score without a tap" is what the My Team dock (phone) and its rail card (desk) do today, on every tournament page on game day. D (and my C) would put the same score at the top while the dock shows it at the foot.</li>
+            <li><b>D is C without the score settling in,</b> and its short names ("Rapids", "Cyclones") need a short-name field the product does not have.</li>
+            <li><b>The height case against B was overstated.</b> On a phone the band scrolls away; what stays is the tabs and the strip (B: 123 px, 18%). At the top of a page B is 29%, inside the 39% budget. B is still the tallest; it is not over budget.</li>
+            <li>E's count was 11 px on a "Scores" tab; tournament pages have no Scores tab, and the floor is 12 px. Both fixed on the E tab (the Schedule tab, 12 px, the live red).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="ask">
+        <p class="cap">Claude's recommendation, revised</p>
+        <h2>F, your results reel, with the dock that already ships</h2>
+        <p>Your point that scores are mostly entered after games changes the job: the strip is not a live scoreboard, it is "what just finished, and what is next". F does exactly that, holding each result still while it is read, and moves only when there is news: one pass when the page opens, then a new result when one lands. Your own team stays in the My Team dock (phone) and rail card (desk), where it already is, so the reel carries everyone else and nothing shows twice. Alerts stay an opt-in inside the installed app.</p><p>E (no strip, a count on the Schedule tab) is the fallback if even one line is too much; B only if seeing several games at once on every page is worth 75 px and a tint.</p>
         <h3>What I need from you</h3>
         <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">
-          <li><b>Which one:</b> A, B or C.</li>
-          <li><b>B only:</b> is the soft green glow on a changed score right, or would you rather the number alone change (as in C)?</li>
+          <li><b>Which one:</b> F (recommended, your idea), E (no strip), D (Codex) or B (the soft scoreboard).</li><li><b>If F, the timing:</b> five seconds per result and a 0.4 s fade, as drawn? And one pass on opening, then rest (as drawn), or keep cycling?</li>
+          <li><b>If E:</b> removing the strip from every page is a bigger call than Stage 1’s restyle (which pages carry it was Stages 2–3). Say so and Part 4 removes it behind the switch and adds the Schedule count.</li>
         </ul>
-        <p class="lede">Not in this choice: which pages carry the strip (Stages 2 and 3), and whether the phone's My Team dock stays (Stage 2).</p>
+        <p class="lede">The public page and installed app are different surfaces: the tournament page links into its Schedule; the app’s Scores tab and Following settings are where people choose score alerts.</p>
       </div>
     </div>
   </section>
@@ -350,7 +510,15 @@ table.cmp th { font-weight: 600; color: var(--doc-soft); background: var(--doc-c
       '<span class="game" data-g="0"><span class="wd live">Live</span><span class="who"><b>' + esc(g.a) + '</b> <span class="n" data-side="a">' + g.as + '</span> – <span class="n" data-side="h">' + g.hs + '</span> <b>' + esc(g.h) + '</b></span><span class="go" aria-hidden="true">›</span></span>' +
       '<span class="count">2 live</span></div>';
   }
-  var TICK = { today: tickerToday, calm: tickerCalm, board: tickerBoard, mine: tickerMine };
+  function tickerQuiet() {
+    var g = G[0];
+    return '<div class="ql" aria-label="Live score for Riverdale Rapids"><span class="live-dot" aria-hidden="true"></span><span class="summary" aria-live="polite" aria-atomic="true">Live · <b>Rapids</b> <b data-side="a">' + g.as + '</b>–<b data-side="h">' + g.hs + '</b> <b>Cyclones</b></span><span class="open">View scores ›</span></div>';
+  }
+  function tickerReel() {
+    return '<div class="reel"><a class="slot" href="#reel" aria-label="Today\'s results"></a><span class="all">All results ›</span>' +
+      '<button type="button" class="ctl" aria-label="Pause today\'s results"></button></div>';
+  }
+  var TICK = { today: tickerToday, calm: tickerCalm, board: tickerBoard, mine: tickerMine, quiet: tickerQuiet, badge: function () { return ''; }, reel: tickerReel };
 
   var TEAMS = '<div class="card rows">' +
     '<div class="r"><div class="tm">1st<small>U11</small></div><div class="nm"><div class="w">Riverdale Rapids</div><div class="l">4–1 · next 6:30 p.m.</div></div><div class="sc">8</div></div>' +
@@ -360,12 +528,14 @@ table.cmp th { font-weight: 600; color: var(--doc-soft); background: var(--doc-c
 
   function phone(kind) {
     return '<div class="band"><div class="logo">RM</div><div class="bname"><b>Riverdale Summer Classic</b><span>Oct 26–28 <i class="bchip" style="font-style:normal">Live now</i></span></div><span class="signin">Sign in</span></div>' +
-      '<div class="tabs"><span>Overview</span><span>Schedule</span><span>Standings</span><span class="on">Teams</span><span>Playoffs</span></div>' +
-      TICK[kind]() + '<div class="body"><p class="pageh">Teams · U11</p>' + TEAMS + '</div>';
+      '<div class="tabs"><span>Overview</span><span>Schedule' + (kind === 'badge' ? '<b class="live-count">2 live</b>' : '') + '</span><span>Standings</span><span class="on">Teams</span><span>Playoffs</span></div>' +
+      TICK[kind]() + '<div class="body"><p class="pageh">Teams · U11</p>' + TEAMS + '</div>' +
+      (kind === 'badge' || kind === 'reel' ? '<div class="dock"><span class="wd live">Live</span><span class="who"><b>Riverdale Rapids</b> <span class="n">2</span> – <span class="n">3</span> Cedar Hollow Cyclones</span><span aria-hidden="true">›</span></div>' : '');
   }
   function desk(kind) {
     return '<div class="band"><div class="logo">RM</div><div class="bname"><b>Riverdale Summer Classic</b><span>Oct 26–28 · Riverdale Community Park <i class="bchip" style="font-style:normal">Live now</i></span></div><span class="hostlink">Hosted by Riverdale Minor Ball Association ›</span><span class="signin">Sign in</span></div>' +
-      '<div class="deskgrid"><div class="rail"><span>Overview</span><span>News</span><span>Schedule</span><span>Standings</span><span>Playoffs</span><span class="on">Teams</span><span>Rules</span></div>' +
+      '<div class="deskgrid"><div class="rail"><span>Overview</span><span>News</span><span>Schedule' + (kind === 'badge' ? '<b class="live-count">2 live</b>' : '') + '</span><span>Standings</span><span>Playoffs</span><span class="on">Teams</span><span>Rules</span>' +
+      (kind === 'badge' || kind === 'reel' ? '<div class="railcard"><span class="wd live">Live · Diamond 2</span><span><b>Riverdale Rapids</b> <span class="n">2</span></span><span>Cedar Hollow Cyclones <span class="n">3</span></span></div>' : '') + '</div>' +
       '<div class="main">' + TICK[kind]() + '<div class="body"><p class="pageh">Teams · U11</p>' + TEAMS + '</div></div></div>';
   }
   document.querySelectorAll('[data-frame]').forEach(function (el) {
@@ -373,20 +543,111 @@ table.cmp th { font-weight: 600; color: var(--doc-soft); background: var(--doc-c
     el.innerHTML = el.getAttribute('data-frame') === 'phone' ? phone(kind) : desk(kind);
   });
 
-  // A score moves every 7 s in B and C (the Cyclones go 3 → 4, then the demo resets), so the arrival can be judged.
+  // F · the reel. Today's results newest first, then games on now, then the next to start. One pass on opening, then it
+  // rests on the newest; a new result is shown (marked New) and rested on. Pauses under a pointer, a finger or focus.
+  var ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  var ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  var ICON_AGAIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>';
+  var ICON_NEXT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
+  function reelItems() {
+    return [
+      { st: 'Final · U13 · Diamond 3', a: G[5].a, as: G[5].as, h: G[5].h, hs: G[5].hs },
+      { st: 'Final · U13 · Diamond 1', a: G[4].a, as: G[4].as, h: G[4].h, hs: G[4].hs },
+      { st: 'Final · U11 · Diamond 2', a: G[3].a, as: G[3].as, h: G[3].h, hs: G[3].hs },
+      { st: 'On now · Diamond 2', live: true, a: G[0].a, as: G[0].as, h: G[0].h, hs: G[0].hs },
+      { st: 'On now · Diamond 4', live: true, a: G[1].a, h: G[1].h },
+      { st: 'Next · 6:30 p.m. · Diamond 1', a: G[2].a, h: G[2].h }
+    ];
+  }
+  var HOLD = 5000, FADE = 400;
+  var reels = [];
+  document.querySelectorAll('#reel .reel').forEach(function (el) {
+    var slot = el.querySelector('.slot'), btn = el.querySelector('.ctl');
+    var r = { el: el, items: reelItems(), idx: 0, mode: 'rest', timer: null, held: false, phone: !!el.closest('.phone') };
+    function line(it) {
+      var score = it.as == null ? ' vs ' : ' <span class="n">' + it.as + '</span> – <span class="n">' + it.hs + '</span> ';
+      var aw = it.as != null && !it.live && it.as > it.hs, hw = it.as != null && !it.live && it.hs > it.as;
+      return '<span class="st' + (it.live ? ' live' : '') + '">' + (it.isNew ? '<span class="new">New</span>' : '') + esc(it.st) + '</span>' +
+        '<span class="gm">' + (aw ? '<b>' + esc(it.a) + '</b>' : esc(it.a)) + score + (hw ? '<b>' + esc(it.h) + '</b>' : esc(it.h)) + '</span>';
+    }
+    function show(i) {
+      r.idx = i;
+      var it = r.items[i];
+      var label = it.st + ': ' + it.a + (it.as == null ? ' vs ' : ' ' + it.as + ' to ' + it.hs + ' ') + it.h;
+      if (reduce) { slot.innerHTML = line(it); slot.setAttribute('aria-label', label); return; }
+      slot.classList.add('out');
+      setTimeout(function () { slot.innerHTML = line(it); slot.setAttribute('aria-label', label); slot.classList.remove('out'); }, FADE);
+    }
+    function setBtn() {
+      if (reduce) { btn.innerHTML = ICON_NEXT; btn.setAttribute('aria-label', 'Next result'); return; }
+      if (r.mode === 'cycle') { btn.innerHTML = ICON_PAUSE; btn.setAttribute('aria-label', 'Pause today\'s results'); }
+      else if (r.mode === 'paused') { btn.innerHTML = ICON_PLAY; btn.setAttribute('aria-label', 'Play today\'s results'); }
+      else { btn.innerHTML = ICON_AGAIN; btn.setAttribute('aria-label', 'Play today\'s results again'); }
+      report();
+    }
+    function tick() {
+      clearTimeout(r.timer);
+      if (r.mode !== 'cycle' || r.held) return;
+      r.timer = setTimeout(function () {
+        if (r.mode !== 'cycle' || r.held) return;
+        if (r.idx + 1 < r.items.length) { show(r.idx + 1); tick(); }
+        else { r.mode = 'rest'; show(0); setBtn(); }
+      }, HOLD + FADE);
+      report();
+    }
+    r.play = function () { if (reduce) { r.mode = 'rest'; show(0); setBtn(); return; } r.mode = 'cycle'; show(0); setBtn(); tick(); };
+    r.arrive = function (it) {
+      r.items = r.items.filter(function (x) { return !(x.a === it.a && x.h === it.h); });
+      r.items.unshift(it);
+      clearTimeout(r.timer); r.mode = 'rest'; show(0); setBtn();
+    };
+    btn.addEventListener('click', function () {
+      if (reduce) { show((r.idx + 1) % r.items.length); return; }
+      if (r.mode === 'cycle') { r.mode = 'paused'; clearTimeout(r.timer); }
+      else if (r.mode === 'paused') { r.mode = 'cycle'; tick(); }
+      else { r.play(); return; }
+      setBtn();
+    });
+    slot.addEventListener('click', function (e) { e.preventDefault(); });
+    ['mouseenter', 'focusin', 'touchstart'].forEach(function (ev) { el.addEventListener(ev, function () { r.held = true; clearTimeout(r.timer); }, { passive: true }); });
+    ['mouseleave', 'focusout', 'touchend'].forEach(function (ev) { el.addEventListener(ev, function () { r.held = false; tick(); }, { passive: true }); });
+    reels.push(r);
+    r.play();
+  });
+  var stateEl = document.querySelector('[data-reelstate]');
+  function report() {
+    var r = reels[0]; if (!r || !stateEl) return;
+    stateEl.textContent = reduce ? 'Reduced motion: the newest result stays; the button steps through them.'
+      : r.mode === 'cycle' ? 'Going through today\'s results: ' + (r.idx + 1) + ' of ' + r.items.length + '.'
+      : r.mode === 'paused' ? 'Paused.' : 'Resting on the newest result. Nothing moves until the next result.';
+  }
+  report();
+  document.querySelectorAll('[data-demo]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (b.getAttribute('data-demo') === 'restart') { reels.forEach(function (r) { r.items = reelItems(); r.play(); }); return; }
+      var it = { st: 'Final · U13 · Diamond 4', isNew: true, a: 'Silver Creek Storm', as: 4, h: 'Maple Ridge Mustangs', hs: 5 };
+      reels.forEach(function (r) { r.arrive(it); });
+    });
+  });
+  // Start the reel when its tab is opened, as a family opening the page would see it.
+  window.addEventListener('hashchange', function () { if (location.hash === '#reel') reels.forEach(function (r) { r.items = reelItems(); r.play(); }); });
+
+  // B–D score changes are simulated for comparison; D updates in place without animation.
   var step = 0;
   function bump() {
     step = (step + 1) % 3;
     var h = step === 0 ? 3 : step === 1 ? 4 : 4, a = step === 2 ? 3 : 2;
-    document.querySelectorAll('[data-ticker="board"] .tile[data-g="0"], [data-ticker="mine"] .game[data-g="0"]').forEach(function (t) {
+    document.querySelectorAll('[data-ticker="board"] .tile[data-g="0"], [data-ticker="mine"] .game[data-g="0"], [data-ticker="quiet"] .ql').forEach(function (t) {
       var na = t.querySelector('[data-side="a"]'), nh = t.querySelector('[data-side="h"]');
       var changed = String(a) !== na.textContent || String(h) !== nh.textContent;
       if (!changed) return;
       [[na, a], [nh, h]].forEach(function (p) {
         if (p[0].textContent === String(p[1])) return;
         p[0].textContent = p[1];
-        if (!reduce) { p[0].classList.remove('settle'); void p[0].offsetWidth; p[0].classList.add('settle'); }
-        else { var el = p[0]; el.classList.add('changed'); setTimeout(function () { el.classList.remove('changed'); }, 10000); }
+        if (!t.classList.contains('ql')) {
+          if (!reduce) { p[0].classList.remove('settle'); void p[0].offsetWidth; p[0].classList.add('settle'); }
+          else { var el = p[0]; el.classList.add('changed'); setTimeout(function () { el.classList.remove('changed'); }, 10000); }
+        }
       });
       if (!reduce && t.classList.contains('tile')) {
         t.classList.add('moved');
