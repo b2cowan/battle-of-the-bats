@@ -51,7 +51,10 @@
   form, and Generate's permit warning; the permit window opens raised over them; plan §9 entry). **Owner ruled a build
   ask, 9d2a·H:** the "the permit ended {date}" line is in the ONE permit rule, on every surface (the coach's Where form
   and the club calendar included — say it at the walk and in `/docs`). The season read sends each game's permit answer
-  only to whoever runs the season. **Resume at step 8 (Retire the old look),** then the Checks and done list.
+  only to whoever runs the season. **Step 8 committed `f63d0cbd0`** (the two pages' colour baselines shrink; the old-look
+  entry is what still runs: the free plan's generator and the practice forms). **All eight build steps are done. Resume
+  at "Checks and done":** `/review` (high) over steps 1–8, then `/simplify`, then `/docs` (say 9d2a·H's coach-side change
+  and step 5's k4 behaviour change), the PM brief, TODO, and the walk in `OWNER_QA_LEDGER.md` (one purpose per part).
 - **Facts found that the steps below must respect:** the club's cross-program clash rule never compares two house-league
   bookings (`comparable`: same owner) — house league's own clashes are `lib/league-schedule-conflict.ts`; a postponed game
   keeps its `scheduled_at`; `league_games.status` is scheduled|completed|cancelled|postponed only; `houseLeagueSlotRows`

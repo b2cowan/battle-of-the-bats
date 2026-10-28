@@ -1064,3 +1064,11 @@ open it, and the menu's top level is Stage 13's.
   **Not run:** `check:layout --changed` (an open window, not a page). **⚠ For the walk and `/docs`:** a coach booking a
   practice at a field whose club permit has ended now sees the quiet line — a behaviour change outside house league, as
   ruled.
+- **2026-10-27 — 9d-2a STEP 8 committed `f63d0cbd0` (Retire the old look).** Baselines shrink to what the two pages hold:
+  the public schedule leaves `.tsx-token-baseline.json` (no raw colour left); the season page's hex 3 → 2 there and its
+  restyled `rgba(255,255,255,0.12)` 2 → 1. Edited by hand for these two files only (the `--init` modes rewrite every file
+  and would bless other sessions' in-flight literals). **Not retired, and why:** the old-look entry (kx 4, helpers 6) is
+  exactly what still runs — the free League plan's `GenerateModal` (9d2a·B, untouched), and `PracticeModal` /
+  `CancelPracticeModal` (Add › A practice and a hand-booked practice's cancel, 11b's, not this build's to redraw);
+  `.admin-type-baseline.json` has no entry for either page. **9d-2a's build steps are complete; next is the prompt's
+  "Checks and done": `/review` (high), `/simplify`, `/docs`, the PM brief, TODO, and the walk (one purpose per part).**
