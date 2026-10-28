@@ -196,6 +196,14 @@ far as both bodies need it, and do not change what the old body computes.
 
 ## Part 3 · Before, after, the host card, the desk
 
+> **Part 2 done (committed `705c63cdf` 2026-10-28; plan §9).** Read before starting: **following was RULED at Part 2
+> (plan §10a): the installed app only, and on the Overview "Follow this tournament" alone** (no My team line was built;
+> it is not in the before/after frames either). The new body is `components/public/TournamentOverview.tsx`; the old
+> Overview hands over to it in one `if (frameOn)` branch, today only when `moment === 'gameDay'` — Part 3 widens that
+> to every moment and adds the before/after sections there. Reuse `.note` (one-line fact card), `PublicDoorRow`,
+> `PublicPostList`, and the app-only follow line (top of every moment). The desk is still the phone column held to
+> 760 px; the columns are this part's.
+
 1. **Before the event** (hub: "Before the event, phone browser"). The **Register card**: "Starts {date}" and the
    countdown together with the button, "{n} of {total} team spots taken · {divisions}" **from data** (the code computes a
    total capacity only when every division has one, and counts follow the team list's visibility; capacity is never

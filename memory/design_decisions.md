@@ -7,6 +7,12 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-28 — FOLLOWING LIVES IN THE INSTALLED APP; THE TOURNAMENT OVERVIEW CARRIES "FOLLOW THIS TOURNAMENT" ALONE (owner, at Public tournament pages Stage 2 Part 2, on the two-option drawing https://claude.ai/artifact/MrhxuF7RtD7nLUCK8iCEFE, which it supersedes)
+
+**Decision (as ruled):** *"following should only be on the app version, not web or mobile web … we can remove following a team from the front page and just put the follow this tournament there with nothing in the header, follow a team can be on the specific team pages only. We don't need too many stars scattered around our app."* No follow control on a public tournament page opened in a browser (phone or desk). Inside the installed app the Overview's first line is "Follow this tournament" (its star the line's 44 px end); no follow-a-team line on the Overview, and nothing in the band. A team is followed on its own page, inside the app.
+**Rationale:** the band was already crowded at 360 px (a star there cost the name 44 px on every page) and the drawn options put two stars on the Overview; the owner wants few stars, and following becomes a reason to install (plan §10a). Neither drawn option was taken.
+**Applies to:** the public tournament pages behind the preview switch. Built on the Overview (`705c63cdf`). Supersedes, for these pages, the 2026-07-20 F1 placement (a strip under the header on the Home tab, in a browser) and its mobile-only refinement; the Teams list, the Schedule's team picker and *My games*, a game's star, the team page and the My-team bar follow in Stages 3 and 5 (plan §10a). Delivers the band-crowding ruling's held Q2 (Share once).
+
 ### 2026-10-27 — SUPPORT CONSOLE STAGE 4b (FREE TIME ON THE COACHES PORTAL), TWELVE ASKS RULED, EVERY RECOMMENDED BOX TICKED (owner, paste-back from the drawings https://claude.ai/artifact/4qzTiG3rUBTmihqPSUAzrW)
 
 **Decision (as ruled):**

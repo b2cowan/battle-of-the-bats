@@ -1,0 +1,190 @@
+<title>Following the Tournament</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: a sticky view switch over side-by-side phone screens at true size (360 / 390 px), each captioned with what it costs. */
+:root{
+  --bg:#EEEDEA; --panel:#FFFFFF; --ink:#1C1C1A; --muted:#5E5D59; --rule:#D9D7D1; --accent:#1E3A8A; --accent-ink:#FFFFFF; --warn:#8A4B00; --warnbg:#FFF2DF;
+  --f-ui: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#17181B;--panel:#212226;--ink:#EDECE8;--muted:#B2B0AA;--rule:#3A3B40;--accent:#9DB4F5;--accent-ink:#17181B;--warn:#F2C27A;--warnbg:#3A2C17;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17181B;--panel:#212226;--ink:#EDECE8;--muted:#B2B0AA;--rule:#3A3B40;--accent:#9DB4F5;--accent-ink:#17181B;--warn:#F2C27A;--warnbg:#3A2C17;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--f-ui);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1240px;margin:0 auto}
+header.top{padding-block:24px 8px}
+h1{font:700 26px/1.2 var(--f-ui);margin:0 0 6px;text-wrap:balance}
+.lede{margin:0;max-width:72ch;color:var(--muted)}
+.switch{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px;border-bottom:1px solid var(--rule);margin-bottom:20px}
+.track{display:inline-flex;background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.track button{font:600 14px/1 var(--f-ui);border:0;background:none;color:var(--muted);padding:0 14px;min-height:40px;border-radius:7px;cursor:pointer}
+.track button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.track button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+.col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.cap{font:700 15px/1.3 var(--f-ui);margin:0}
+.cap small{display:block;font-weight:400;color:var(--muted);font-size:13px;margin-top:2px}
+.note{max-width:390px;font-size:14px;color:var(--muted);margin:0}
+.note b{color:var(--ink)}
+.cost{background:var(--warnbg);color:var(--warn);border-radius:8px;padding:8px 12px;font-size:14px;max-width:390px}
+.read{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:16px 20px;max-width:760px;margin-top:28px}
+.read h2{font:700 18px/1.3 var(--f-ui);margin:0 0 8px}
+.read ul{margin:0;padding-left:20px}
+.read li+li{margin-top:6px}
+.scroll{overflow-x:auto;max-width:100%}
+
+/* ── The product drawing: fixed colours on purpose (a public tournament page is always the light frame) ── */
+.tf{--fill:#1E3A8A;--on:#FFFFFF;--tile:#FFFFFF;--tileink:#1E3A8A;--g:#F6F5F2;--card:#FFFFFF;--line:#E4E2DC;--line2:#CFCCC4;--t:#1C1C1A;--soft:#55544F;--dim:#66655F;--cink:#1E3A8A;--acc:#1E3A8A;--okbg:#E5F3EA;--ok:#17603A;
+  --f-title:"Source Sans 3","Segoe UI",system-ui,sans-serif;--f-text:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  background:var(--g);color:var(--t);border:1px solid var(--rule);border-radius:14px;overflow:hidden;height:600px;position:relative;flex:none}
+.tf.w360{width:360px}.tf.w390{width:390px}
+.tf::after{content:"";position:absolute;left:0;right:0;bottom:0;height:56px;background:linear-gradient(transparent,var(--g))}
+.tf .band{background:var(--fill);color:var(--on);height:72px;display:flex;align-items:center;gap:12px;padding:0 6px 0 16px}
+.tf .logo{width:44px;height:44px;border-radius:10px;flex:none;display:grid;place-items:center;font:700 16px/1 var(--f-title);background:var(--tile);color:var(--tileink)}
+.tf .bname{min-width:0;flex:1}
+.tf .bname b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font:700 20px/1.1 var(--f-title)}
+.tf .bname span{display:flex;align-items:center;gap:8px;font:500 12px/1.3 var(--f-text);white-space:nowrap;margin-top:3px}
+.tf .chip{display:inline-flex;align-items:center;gap:5px;font:600 12px/1 var(--f-text);padding:6px 10px;border-radius:20px;white-space:nowrap;background:var(--on);color:var(--fill)}
+.tf .chip::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.tf .bicons{display:flex;flex:none;align-items:center}
+.tf .ico{width:44px;height:44px;display:grid;place-items:center;color:inherit;position:relative}
+.tf .ico svg{width:22px;height:22px}
+.tf .ico.mark::after{content:"";position:absolute;inset:3px;border:2px dashed #FFD27A;border-radius:10px}
+.tf .signin{min-height:44px;display:inline-flex;align-items:center;padding:0 10px;font:600 14px/1 var(--f-text);white-space:nowrap}
+.tf .tabs{background:#fff;border-top:3px solid var(--acc);border-bottom:1px solid var(--line);display:flex;gap:4px;padding:0 8px;overflow:hidden;height:48px}
+.tf .tabs span{flex:none;display:flex;align-items:center;padding:3px 8px 0;font:600 14px/1 var(--f-text);color:var(--soft);border-bottom:3px solid transparent}
+.tf .tabs span.on{color:var(--t);border-bottom-color:var(--cink)}
+.tf .body{padding:16px;display:flex;flex-direction:column;gap:24px}
+.tf .card{background:var(--card);border:1px solid var(--line);border-radius:8px}
+.tf .line{display:flex;align-items:center;gap:12px;padding:10px 6px 10px 14px}
+.tf .line p{margin:0;font:500 14px/1.35 var(--f-text);color:var(--soft);flex:1}
+.tf .line p b{display:block;color:var(--t);font-weight:600}
+.tf .star{width:44px;height:44px;display:grid;place-items:center;color:var(--cink);flex:none;position:relative}
+.tf .star.mark::after{content:"";position:absolute;inset:2px;border:2px dashed #B86A00;border-radius:10px}
+.tf .pair .line+.line{border-top:1px solid var(--line)}
+.tf .sh{display:flex;align-items:center;gap:8px;font:700 16px/1.25 var(--f-text)}
+.tf .cnt{font:600 12px/1 var(--f-text);padding:6px 10px;border-radius:20px;background:var(--g);border:1px solid var(--line2);color:var(--soft)}
+.tf .live{padding:14px 16px}
+.tf .team{display:flex;justify-content:space-between;font:600 16px/1.3 var(--f-text)}
+.tf .team+.team{margin-top:6px}
+.tf .team.lose{color:var(--soft);font-weight:500}
+.tf .score{font:700 24px/1 var(--f-title);font-variant-numeric:tabular-nums}
+.tf .meta{display:flex;justify-content:space-between;align-items:center;min-height:44px;margin-top:8px;padding-top:4px;border-top:1px solid var(--line);font:400 14px/1.4 var(--f-text);color:var(--dim)}
+.tf .toast{position:absolute;left:12px;right:12px;bottom:16px;z-index:2;background:#1C1C1A;color:#fff;border-radius:10px;padding:10px 6px 10px 14px;display:flex;align-items:center;gap:8px;font:500 14px/1.35 var(--f-text)}
+.tf .toast u{color:#fff;font-weight:600}
+.tf .toast .x{width:44px;height:44px;display:grid;place-items:center;flex:none}
+.tf .measure{position:absolute;left:0;right:0;border-top:1px dashed #C2410C;z-index:3}
+.tf .measure span{position:absolute;right:6px;top:-18px;font:600 11px/1 var(--f-text);color:#9A3412;background:#FFF7ED;padding:3px 5px;border-radius:4px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <p class="cost" style="max-width:72ch;margin:0 0 12px"><b>Superseded 2026-10-28.</b> Neither option was taken. The ruling: following lives in the installed app only, and the Overview carries "Follow this tournament" alone, with nothing in the band. A team is followed on its own page. Built in Stage 2 Part 2.</p>
+    <h1>Following the tournament: where does it go?</h1>
+    <p class="lede">Today a family follows the whole tournament from a strip above the title. That follow is what fills the app's Home, Scores and Following lists. The Overview drawing has no strip, so the follow needs a new place. Two options, drawn at true size on a phone browser with today's demo data. The dashed outline marks the new control.</p>
+  </header>
+
+  <div class="switch" role="group" aria-label="View">
+    <div class="track">
+      <button type="button" id="v-360" aria-pressed="true" data-view="v360">At 360 px (the tight case)</button>
+      <button type="button" id="v-390" aria-pressed="false" data-view="v390">At 390 px</button>
+      <button type="button" id="v-after" aria-pressed="false" data-view="vafter">After the tap</button>
+    </div>
+  </div>
+
+  <section data-panel="v360">
+    <div class="scroll"><div class="row">
+      <div class="col">
+        <p class="cap">Today's band<small>No follow control in the band. For comparison.</small></p>
+        <div class="tf w360" data-band="today" data-name="Greater Hamilton-Wentworth Girls Fastpitch Invitational"></div>
+        <p class="note">With a long name, the band shows <b>2 lines at about 160 px wide</b>.</p>
+      </div>
+      <div class="col">
+        <p class="cap">A · A star in the band<small>Beside Share, on every tournament page.</small></p>
+        <div class="tf w360" data-band="star" data-name="Greater Hamilton-Wentworth Girls Fastpitch Invitational"></div>
+        <p class="cost">The name loses <b>44 px</b>: about 115 px wide, so long names cut after 2 short lines. The band then has 3 tap targets plus Sign in.</p>
+      </div>
+      <div class="col">
+        <p class="cap">B · A second line on the Overview<small>Joined to the My team line in one card.</small></p>
+        <div class="tf w360" data-band="today" data-body="pair" data-name="Greater Hamilton-Wentworth Girls Fastpitch Invitational"></div>
+        <p class="cost">The band is untouched. The Overview gains <b>about 65 px</b>, so Live now and Up next move down by that much. It only appears on the Overview.</p>
+      </div>
+    </div></div>
+  </section>
+
+  <section data-panel="v390" hidden>
+    <div class="scroll"><div class="row">
+      <div class="col">
+        <p class="cap">A · A star in the band<small>The demo's name, 390 px.</small></p>
+        <div class="tf w390" data-band="star" data-name="Riverdale Summer Classic"></div>
+        <p class="note">With a short name, it fits. The crowding shows only with long names and on 360 px phones.</p>
+      </div>
+      <div class="col">
+        <p class="cap">B · A second line on the Overview<small>The demo's name, 390 px.</small></p>
+        <div class="tf w390" data-band="today" data-body="pair" data-name="Riverdale Summer Classic"></div>
+        <p class="note">The two follows sit together, each with a line that says what it does.</p>
+      </div>
+    </div></div>
+  </section>
+
+  <section data-panel="vafter" hidden>
+    <div class="scroll"><div class="row">
+      <div class="col">
+        <p class="cap">A · After tapping the star<small>The star fills; a note appears once, at the foot of the screen.</small></p>
+        <div class="tf w390" data-band="star-on" data-name="Riverdale Summer Classic" data-toast="1"></div>
+        <p class="note">This is today's note from under the strip, now one you can dismiss. "Plus score alerts" is gone, because alerts now live in the installed app. It shows once per device, as today.</p>
+      </div>
+      <div class="col">
+        <p class="cap">B · After tapping the line<small>The line says Following; the note opens under it, as it does under today's strip.</small></p>
+        <div class="tf w390" data-band="today" data-body="pair-on" data-name="Riverdale Summer Classic"></div>
+        <p class="note">Tapping the filled star again stops following, as the strip does today. The note keeps its place under the follow, so nothing new appears on screen.</p>
+      </div>
+    </div></div>
+  </section>
+
+  <div class="read">
+    <h2>What each option means</h2>
+    <ul>
+      <li><b>A, the star in the band:</b> following the event becomes possible from every tab, not only the Overview, matching the star on a team's page. The cost is the band at 360 px, which is the crowding you raised. <b>It also reverses your 2026-07-20 ruling</b> (Unified Home F1): following the tournament is <i>never</i> a symbol in the header, because the header keeps only Share. The band is today's header, so choosing A means setting that ruling aside.</li>
+      <li><b>B, the line on the Overview:</b> the band stays as built in Stage 1, and the two follows read as a pair ("your team" and "the whole event"). The cost is one more row before Live now, and you can follow the event only from the Overview, as today.</li>
+      <li><b>Either way:</b> Share stays in the band, and the alerts bell stays in the installed app only (your 10-27 ruling). Following works without an account, as today. Following the event stays a phone thing: on a computer neither option shows it (your 2026-07-20 refinement), while Home and Scores still list what was followed.</li>
+      <li><b>My recommendation now is B.</b> Seeing the band at 360 px changed my mind: losing 44 px of the name on every page costs more than one row on one page. Today the follow lives only on the Overview too, so B takes nothing away, and it is where F1 already put it: on the Overview, under the title area.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+(function(){
+  var share='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>';
+  function star(filled,size){return '<svg width="'+(size||22)+'" height="'+(size||22)+'" viewBox="0 0 24 24" fill="'+(filled?'currentColor':'none')+'" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></svg>';}
+  var nav='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 11 22 2l-9 19-2-8z"/></svg>';
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  document.querySelectorAll('.tf[data-band]').forEach(function(el){
+    var kind=el.getAttribute('data-band'), body=el.getAttribute('data-body')||'', name=el.getAttribute('data-name');
+    var starBtn = kind==='star' ? '<span class="ico mark" aria-label="Follow this tournament">'+star(false)+'</span>'
+               : kind==='star-on' ? '<span class="ico mark" aria-label="Following this tournament">'+star(true)+'</span>' : '';
+    var band='<div class="band"><div class="logo">'+(name.indexOf('Greater')===0?'HW':'RM')+'</div><div class="bname"><b>'+esc(name)+'</b><span>Oct 25–27 <i class="chip" style="font-style:normal">Live now</i></span></div><div class="bicons">'+starBtn+'<span class="ico" aria-label="Share">'+share+'</span><span class="signin">Sign in</span></div></div>';
+    var tabs='<div class="tabs"><span class="on">Overview</span><span>Schedule</span><span>Standings</span><span>Teams</span><span>Playoffs</span></div>';
+    var myteam='<div class="line"><p>Follow a team to see its next game here.</p><span class="star">'+star(false)+'</span></div>';
+    var event = body==='pair-on'
+      ? '<div class="line"><p><b>Following this tournament</b>Its games show on your Home and Scores.</p><span class="star mark">'+star(true)+'</span></div>'
+      : '<div class="line"><p><b>Follow this tournament</b>Its games show on your Home and Scores.</p><span class="star mark">'+star(false)+'</span></div>';
+    var nudge = body==='pair-on' ? '<div class="line" style="background:var(--g)"><p style="font-size:14px">Following on this device · <u style="color:var(--cink);font-weight:600">Sign in</u> and it goes with you, on every device.</p><span class="star" aria-label="Dismiss" style="color:var(--soft)">✕</span></div>' : '';
+    var top = body ? '<div class="card pair">'+myteam+event+nudge+'</div>' : '<div class="card">'+myteam+'</div>';
+    var live='<div style="display:flex;flex-direction:column;gap:10px"><div class="sh">Live now <span class="cnt">2</span></div>'+
+      '<div class="card live"><div class="team"><span>Cedar Hollow Cyclones</span><span class="score">3</span></div><div class="team lose"><span>Riverdale Rapids</span><span class="score">2</span></div><div class="meta"><span>Championship · Diamond 2</span>'+nav+'</div></div>'+
+      '<div class="card live"><div class="team"><span>Silver Creek Storm</span><span style="font:500 14px/1.2 var(--f-text);color:var(--dim)">No score yet</span></div><div class="team"><span>Maple Ridge Mustangs</span><span></span></div><div class="meta"><span>U13 · Diamond 4</span>'+nav+'</div></div></div>';
+    var toast = el.hasAttribute('data-toast') ? '<div class="toast"><span style="flex:1">Following on this device · <u>Sign in</u> and it goes with you, on every device.</span><span class="x" aria-label="Dismiss">✕</span></div>' : '';
+    el.innerHTML=band+tabs+'<div class="body">'+top+live+'</div>'+toast;
+  });
+  var btns=document.querySelectorAll('.track button');
+  function show(v){
+    btns.forEach(function(b){b.setAttribute('aria-pressed', String(b.getAttribute('data-view')===v));});
+    document.querySelectorAll('[data-panel]').forEach(function(p){p.hidden = p.getAttribute('data-panel')!==v;});
+    try{localStorage.setItem('follow-opt-view',v);}catch(e){}
+  }
+  btns.forEach(function(b){b.addEventListener('click',function(){show(b.getAttribute('data-view'));});});
+  var saved=null; try{saved=localStorage.getItem('follow-opt-view');}catch(e){}
+  if(saved && document.querySelector('[data-panel="'+saved+'"]')) show(saved);
+})();
+</script>
