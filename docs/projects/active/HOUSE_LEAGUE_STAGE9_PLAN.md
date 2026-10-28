@@ -275,6 +275,9 @@ team) was not ruled: it is ask **9d2·15**, open.
     on a re-dated game come with 9d-2b's change record. A postponed game still reads "Was {its date}" (Postpone keeps it).
   - **9d2a·E "Put it back on"** for a cancelled game (today's Status dropdown could un-cancel; the read-first window keeps it).
   - **9d2a·F "Families aren't emailed."** on Postpone, Cancel and Generate's Save — true until 9d-2b rewrites those lines.
+  - **9d2a·G Schedule health SAYS its rules, 2026-10-27 (step 6, as recommended).** No column holds a season's rules, so
+    the window's foot states the three rules the score uses and has no "Adjust the rules" door; the door and its save
+    come with 9d-2b's migrations.
 
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 
@@ -980,3 +983,41 @@ open it, and the menu's top level is Stage 13's.
   10 by Dec 6); the check names a permit warning (Kinsmen Park's permit ends Nov 19) with health 100; a stale Save → 409
   `changed`; Save → 6 games, each exactly on its slot, venue and facility, every pairing once; again → 409 `has_games`; a
   foreign division → 404. **Not run:** `check:layout --changed` (an open window, not a page).
+- **2026-10-27 — 9d-2a STEP 6 BUILT and committed `c9a03a4bc` (Schedule health, d1–d4).** **Owner ruling, step 6 (the owed ask):** the foot SAYS the
+  rules ("The score uses this season's rules." · Games per team · A team can play twice in a day: No · Home and away can
+  differ by: 1 game) and has **no "Adjust the rules" door** until 9d-2b's migrations can hold them. The old warning strip
+  above the views is gone; the header carries the tournament's `HealthButton` ("—" until a game has a time, the amber
+  issue count) and it opens `LeagueHealthWindow` (components/admin/kit/club/league/schedule/), on the tournament's own
+  parts: its frame (`HealthWindowFrame`, split out of `ScheduleHealthWindow` so the two cannot drift), its tiles (`Metric`)
+  and issue rows (`IssueRow`, now exported; a row with no title says only its sentence). Tiles: Games · Home/away · Byes ·
+  Clashes; then the issues in step 1's order, each with its door; Team detail (Games · Home–away · Byes · Prime time ·
+  Places); the rules. **Argued, five calls:**
+  1. **Health is worked out in the browser from the season the page already reads** (every division's games and
+     practices), not by a route. It follows every write with no second read, and the clash pool is the season's. The old
+     `schedule/health` route (clashes by the text match too, no score) had this page as its only caller and is deleted;
+     `scanLeagueBookingConflicts` / `countUncheckedBookings` are now used only by their tests (left for /simplify).
+  2. **The doors.** "Show them" / "Show it" close the window on the issue's division and day, in List (Week on a phone),
+     with Show cleared so the booking is drawn — a cancelled game not replayed, a clash, twice in a day, byes (the first
+     week), a typed place (the first one). "Give it a new date" opens the postponed game's window on its division (a
+     reader's door says "Show it" and the window opens read-only). A short team with no cancelled game, and home and away,
+     open Team detail in the window (there is no team filter on the schedule to show "them" with).
+  3. **Prime time** is the generator's measure, said: each division's rarest time as a weekday and its part of the day;
+     the cell is "even" when every team's share is within one (or the division plays at one time), else the team's share
+     ("0 Saturday mornings"). It is a fact in team detail, never points.
+  4. **The phone (d4)** shows two issues, then "{n} more. Show all"; the desk shows all of them (the drawing's four).
+  5. **Games per team is said per division** when the divisions differ ("U10 4 · U12 6"), with the sentence that it is
+     the number most of a division's teams were given — there is no target to set until 9d-2b.
+  **Build words** (marked `[build]` in `LEAGUE_HEALTH_WORDS`): the Byes tile's "back to back" detail, the Clashes tile's
+  "all checked", "{n} more." / "Show all", "Nothing to look at. Every team has its games, and nothing clashes.", a lone short
+  team ("{Team} has {a} of {b} games." / "Its … game was cancelled"), home and away past two games ("all 3 games at home",
+  "1 game at home and 4 away"), an undated game ("{Home} vs {Away} still needs a date."), and the games-per-team hint.
+  **Checks:** typecheck clean (the one error is another session's untracked public-tournament test); 11,362 unit tests
+  pass (10 new in `league-schedule-health.test.ts`: the sentences, prime time, the page's rows, and the page wearing the
+  button and window with no route read and no strip); `schedule-health-one-number` unchanged and passing; old-look baseline
+  lowered (kx 7 → 4, helpers 7 → 6); `check:spelling` clean. **On dev** (`.probe/9d2a/step6-health.mts`, UAT Rep Club as
+  its league admin, a clash practice and a postponed game, both removed after): health from the page's three reads equals
+  health from the database rows (60, the same issues and team detail), and reads "Reds and Blues have 2 of 4 games. Their
+  Oct 25 game was cancelled and not replayed." · "Blues vs Reds was postponed from Nov 15 and still needs a new date." ·
+  "Kinsmen Park · Diamond B is booked twice on Thu, Oct 22 at 6:00 p.m.: Reds vs Blues and Reds practice."; the page serves
+  200. **Not run:** `check:layout --changed` (it widens to every screen once the tournament's shared health parts are
+  touched — a whole-product sweep, which runs on staging, never the dev server).

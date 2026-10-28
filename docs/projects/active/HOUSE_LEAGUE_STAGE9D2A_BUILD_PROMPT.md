@@ -43,8 +43,10 @@
   house-league time can no longer generate (k4, as ruled); two league admins saving at the same moment could both insert
   (a lock needs 9d-2b's migrations). The check's "See the permit" is step 7's. **Resume at step 6 (Schedule health, d1–d4)**
   — the old health strip above the views is still there.
-- **Owed to the owner at step 6:** "Adjust the rules" has nowhere to save without a migration (recommended: the rules as
-  words in 9d-2a, the door with 9d-2b).
+- **2026-10-27, session 6: Step 6 is BUILT and committed `c9a03a4bc`** (Schedule health: the header button, the league's window on the tournament's
+  frame, tiles and rows, worked out from the season the page already reads; the old strip and its route are gone; plan §9
+  entry). **Owner ruled the owed ask:** the foot says the rules in words, no "Adjust the rules" door until 9d-2b. **Resume
+  at step 7 (Permit links).**
 - **Facts found that the steps below must respect:** the club's cross-program clash rule never compares two house-league
   bookings (`comparable`: same owner) — house league's own clashes are `lib/league-schedule-conflict.ts`; a postponed game
   keeps its `scheduled_at`; `league_games.status` is scheduled|completed|cancelled|postponed only; `houseLeagueSlotRows`
