@@ -8,7 +8,7 @@ import type { Game, PublicTeam, Venue } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { isGameLive, isGameUpcoming, publicGameStatus, publicGameStatusLabel, hasNoScoreYet, NO_SCORE_YET, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
-import { bracketRoundInfo, bracketRoundLabel } from '@/lib/playoff-bracket';
+import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import { teamAvatarHue, teamInitials } from '@/lib/team-color';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import Countdown from '@/components/public/Countdown';
@@ -18,6 +18,9 @@ import ShareScoreButton from '@/components/public/ShareScoreButton';
 import TeamFollowStar from '@/components/public/TeamFollowStar';
 import styles from '@/app/[orgSlug]/schedule/schedule.module.css';
 import { orgLinks } from '@/lib/org-links';
+import { isPublicFrameOn } from '@/lib/public-frame-server';
+import { getPlayoffStakes, publicGameDetailView } from '@/lib/public-game-detail';
+import PublicGameDetails from '@/components/public/PublicGameDetails';
 
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 
@@ -67,32 +70,6 @@ function getWinner(game: Game): 'home' | 'away' | 'tie' | null {
   if (game.homeScore > game.awayScore) return 'home';
   if (game.awayScore > game.homeScore) return 'away';
   return 'tie';
-}
-
-/**
- * Plain-language stakes line for a playoff game. Finds the downstream game the
- * winner feeds into (a game whose placeholder references `Winner <thisCode>`)
- * and names that round; falls back to fixed labels for deciding games.
- * `gold` marks the title game so the strip can wear the champion treatment.
- */
-function getPlayoffStakes(game: Game, allGames: Game[]): { text: string; gold: boolean } | null {
-  if (!game.isPlayoff || !game.bracketCode) return null;
-  const code = game.bracketCode.toUpperCase();
-  const ref = `Winner ${game.bracketCode}`;
-  const myKey = bracketRoundInfo(game.bracketCode).key;
-  const next = allGames.find(other =>
-    other.isPlayoff && other.id !== game.id && other.bracketCode &&
-    (other.homePlaceholder?.includes(ref) || other.awayPlaceholder?.includes(ref)) &&
-    bracketRoundInfo(other.bracketCode).key !== myKey,
-  );
-  if (next?.bracketCode) {
-    return { text: `Winner advances to the ${bracketRoundInfo(next.bracketCode).title}`, gold: false };
-  }
-  // No downstream game references this winner — it's a deciding game.
-  if (code === 'FIN' || code === 'GF' || code === 'GF2') return { text: 'Championship — winner takes the title', gold: true };
-  if (code === 'P3' || code === '3RD') return { text: 'Battling for 3rd place', gold: false };
-  if (code.startsWith('CON')) return { text: 'Consolation final', gold: false };
-  return null;
 }
 
 function getStatusBadge(game: Game, requireFinalization: boolean, isLive: boolean) {
@@ -169,6 +146,14 @@ export async function generateMetadata({ params }: { params: GameDetailParams })
     const game = data?.games.find(item => item.id === gameId);
     if (!data?.tournament || !game) return {};
 
+    if (await isPublicFrameOn()) {
+      const view = publicGameDetailView(game, { ...data, requireFinalization: data.organization.requireScoreFinalization ?? true });
+      const [away, home] = view.sides;
+      const title = view.hasScore ? `${away.name} ${away.score} – ${home.score} ${home.name} · ${view.stateLabel}` : `${away.name} vs ${home.name}`;
+      const description = [data.tournament.name, view.round, view.date, view.field].join(' · ');
+      return { title, description, openGraph: { title, description }, twitter: { card: 'summary_large_image', title, description } };
+    }
+
     const away = getTeamDisplay(game, false, data.teams);
     const home = getTeamDisplay(game, true, data.teams);
     const hasScore = (game.status === 'completed' || game.status === 'submitted') &&
@@ -228,6 +213,9 @@ export default async function PublicGameDetailsPage({
 
   const game = data.games.find(item => item.id === gameId);
   if (!game) notFound();
+
+  const frameOn = await isPublicFrameOn();
+  if (frameOn) return <PublicGameDetails game={game} data={data} orgSlug={orgSlug} tournamentSlug={tournamentSlug} orgHref={orgHref} />;
 
   const division = data.divisions.find(item => item.id === game.divisionId) ?? null;
   const requireFinalization = data.organization.requireScoreFinalization ?? true;

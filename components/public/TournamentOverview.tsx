@@ -3,7 +3,7 @@ import { fanRoundLabel } from '@/lib/playoff-bracket';
 import { resolveGameVenueLabel } from '@/lib/venue-label';
 import { directionsHref } from '@/lib/family-schedule-format';
 import { gameDayLists } from '@/lib/public-overview';
-import { gameRowView, gameSideNames, liveCardView } from '@/lib/public-game-row';
+import { fanPlaceholder, gameRowView, gameSideNames, liveCardView } from '@/lib/public-game-row';
 import type { TournamentMoment } from '@/lib/tournament-moment';
 import type { FactRow, RegisterCardView } from '@/lib/public-pre-event';
 import type { ChampionCardView, HostCardView } from '@/lib/public-host-card';
@@ -108,9 +108,10 @@ export default function TournamentOverview({
   const context = (g: Game) => [label(g), field(g)].filter(Boolean).join(' · ');
   const directions = (g: Game) => directionsHref(venues.find(v => v.id === g.venueId)?.address ?? null);
 
-  const liveViews = live.map(g => liveCardView(g, gameSideNames(g, teamName), label(g), field(g), directions(g)));
-  const upNextViews = upNext.map(g => gameRowView(g, gameSideNames(g, teamName), context(g), today));
-  const latestViews = latest.map(g => gameRowView(g, gameSideNames(g, teamName), context(g), today));
+  const sides = (g: Game) => gameSideNames(g, teamName, fanPlaceholder);
+  const liveViews = live.map(g => liveCardView(g, sides(g), label(g), field(g), directions(g)));
+  const upNextViews = upNext.map(g => gameRowView(g, sides(g), context(g), today));
+  const latestViews = latest.map(g => gameRowView(g, sides(g), context(g), today));
   const posts = showNewsPage && moment !== 'after' ? announcements : [];
 
   // The parts, each null when it has nothing to say. The page hands over register / facts / champions / afterDoors only

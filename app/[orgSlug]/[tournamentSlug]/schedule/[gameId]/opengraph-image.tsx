@@ -4,6 +4,8 @@ import { resolveTheme } from '@/lib/themes';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import { publicGameStatus, publicGameStatusLabel, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
+import { isPublicFrameOn } from '@/lib/public-frame-server';
+import { publicGameDetailView } from '@/lib/public-game-detail';
 
 export const alt = 'Tournament score';
 export const size = { width: 1200, height: 630 };
@@ -49,13 +51,15 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
 
     const game = data.games.find(g => g.id === gameId);
     if (!game) return null;
+    // The preview's words follow its page; the existing artwork and switch-off data path stay intact.
+    const view = await isPublicFrameOn() ? publicGameDetailView(game, { ...data, requireFinalization: data.organization.requireScoreFinalization ?? true }) : null;
 
     const teams = data.teams.map(t => ({ id: t.id, name: t.name }));
-    const away = teamName(game.awayTeamId, game.awayPlaceholder, teams);
-    const home = teamName(game.homeTeamId, game.homePlaceholder, teams);
+    const away = view?.sides[0].name ?? teamName(game.awayTeamId, game.awayPlaceholder, teams);
+    const home = view?.sides[1].name ?? teamName(game.homeTeamId, game.homePlaceholder, teams);
 
-    const hasScore = (game.status === 'completed' || game.status === 'submitted') &&
-      game.homeScore != null && game.awayScore != null;
+    const hasScore = view?.hasScore ?? ((game.status === 'completed' || game.status === 'submitted') &&
+      game.homeScore != null && game.awayScore != null);
     const awayScore = game.awayScore ?? 0;
     const homeScore = game.homeScore ?? 0;
 
@@ -65,7 +69,7 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
     const state = publicGameStatus(game, game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES, requireFinalization);
     const isLive = state === 'live';
     const isUnofficial = state === 'unofficial';
-    const statusLabel = publicGameStatusLabel(state).toUpperCase();
+    const statusLabel = (view ? view.cancelled ? 'Cancelled' : view.stateLabel ?? 'Up next' : publicGameStatusLabel(state)).toUpperCase();
 
     const t = data.tournament;
     const theme = resolveTheme(t.themePreset, t.themePrimary, t.themeAccent);
@@ -73,7 +77,7 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
     const dateLabel = game.date
       ? new Date(`${game.date}T12:00:00`).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
       : '';
-    const gameType = game.isPlayoff ? bracketRoundLabel(game.bracketCode) : 'Pool Play';
+    const gameType = view?.round ?? (game.isPlayoff ? bracketRoundLabel(game.bracketCode) : 'Pool Play');
 
     return {
       tournamentName: t.name,

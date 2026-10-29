@@ -1861,6 +1861,37 @@ export const SCREENS = [
     route: 'app/[orgSlug]/[tournamentSlug]' },
   { id: 'pubt-schedule-pale',     session: 'anon', path: () => '/stage1-lakeshore-lightning/fall-classic/schedule', ready: '[data-public-frame-band]',
     route: 'app/[orgSlug]/[tournamentSlug]/schedule' },
+  // Stage 3: prepare + read back with seed-public-stage3-fixtures.mjs (DEV only). Each entry fails if its state is absent.
+  { id: 'pubt-schedule-live', session: 'anon', path: () => '/stage1-lakeshore-lightning/fall-classic/schedule', ready: '[data-public-schedule-ready]',
+    route: 'app/[orgSlug]/[tournamentSlug]/schedule',
+    interact: async (page) => {
+      await page.getByRole('button', { name: 'Playoffs', exact: true }).click();
+      await page.locator('[data-public-live-card]').first().waitFor({ state: 'visible' });
+    } },
+  { id: 'pubt-schedule-many-days', session: 'anon', path: () => '/stage1-lakeshore-lightning/fall-classic/schedule', ready: '[data-public-schedule-ready]',
+    route: 'app/[orgSlug]/[tournamentSlug]/schedule',
+    interact: async (page) => {
+      await page.getByRole('button', { name: 'Pool play', exact: true }).click();
+      const days = page.getByRole('group', { name: 'Game day', exact: true });
+      await days.locator('[data-today]').waitFor({ state: 'visible' });
+      await page.locator('[data-rail]').waitFor({ state: 'visible' });
+      await days.getByRole('button', { name: 'All', exact: true }).click();
+    } },
+  { id: 'pubt-schedule-playoffs', session: 'anon', path: () => '/stage1-lakeshore-lightning/fall-classic/schedule', ready: '[data-public-schedule-ready]',
+    route: 'app/[orgSlug]/[tournamentSlug]/schedule',
+    interact: async (page) => {
+      await page.getByRole('button', { name: 'Playoffs', exact: true }).click();
+      await page.getByRole('link', { name: /The bracket/ }).waitFor({ state: 'visible' });
+    } },
+  { id: 'pubt-game-live', session: 'anon', path: () => '/stage1-lakeshore-lightning/fall-classic/schedule', ready: '[data-public-schedule-ready]',
+    route: 'app/[orgSlug]/[tournamentSlug]/schedule/[gameId]',
+    interact: async (page) => {
+      await page.getByRole('button', { name: 'Playoffs', exact: true }).click();
+      const game = page.locator('[data-public-live-card] a[href*="/fall-classic/schedule/"]').first();
+      await game.waitFor({ state: 'visible' });
+      await Promise.all([page.waitForURL(/\/schedule\/[0-9a-f-]{36}/), game.click()]);
+      await page.locator('[data-public-game][data-state="live"]').waitFor({ state: 'visible' });
+    } },
   { id: 'pubt-standings-own',     session: 'anon', path: () => '/stage1-metro-sports/spring-showcase/standings',    ready: '[data-public-frame-band]',
     route: 'app/[orgSlug]/[tournamentSlug]/standings' },
   { id: 'pubt-teams-free',        session: 'anon', path: () => '/stage1-northfield/fall-ball/teams',                ready: '[data-public-frame-band]',
@@ -1874,7 +1905,9 @@ export const SCREENS = [
     route: 'app/[orgSlug]/[tournamentSlug]/schedule/[gameId]',
     interact: async (page) => {
       const game = page.locator('a[href*="/fall-classic/schedule/"]:visible').first();
-      if (await game.count()) { await Promise.all([page.waitForURL(/\/schedule\/[0-9a-f-]{36}/), game.click()]); await page.waitForSelector('[data-public-frame-band]'); }
+      await game.waitFor({ state: 'visible' });
+      await Promise.all([page.waitForURL(/\/schedule\/[0-9a-f-]{36}/), game.click()]);
+      await page.waitForSelector('[data-public-game]');
     } },
   { id: 'pubt-register-open',     session: 'anon', path: () => '/stage1-hamilton-wentworth/spring-invitational/register', ready: '[data-public-frame-band]',
     route: 'app/[orgSlug]/[tournamentSlug]/register' },

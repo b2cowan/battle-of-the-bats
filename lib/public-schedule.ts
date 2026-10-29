@@ -9,6 +9,25 @@ export type ScheduleStage = 'pool' | 'playoff';
 // Stage 4 changes the destination and its description together here.
 export const SCHEDULE_BRACKET_DOOR = { path: 'standings', label: 'The bracket', sub: 'On the Standings tab' };
 
+/**
+ * One day's playoff games, with each division's pool kept together: games sort by time first, so two pools playing the
+ * same slots would otherwise interleave and print "Pool A Playoffs" / "Pool B Playoffs" once per slot. A group sits where
+ * its first game is, a game with no pool (a cross-pool final) stays where it is, and nothing else moves.
+ */
+export function groupPoolPlayoffs(list: Game[], poolTags: Map<string, string | null>): Game[] {
+  const items: Game[][] = [];
+  const groups = new Map<string, Game[]>();
+  for (const g of list) {
+    const pool = poolTags.get(g.id);
+    if (!pool) { items.push([g]); continue; }
+    const key = `${g.divisionId}|${pool}`;
+    const group = groups.get(key);
+    if (group) group.push(g);
+    else { const created = [g]; groups.set(key, created); items.push(created); }
+  }
+  return items.flat();
+}
+
 export function visibleScheduleGames(games: Game[], divisions: Division[]): Game[] {
   const published = new Set(divisions.filter(d => d.scheduleVisibility === 'published').map(d => d.id));
   return games.filter(g => published.has(g.divisionId));

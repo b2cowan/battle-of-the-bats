@@ -5,7 +5,10 @@
 /* ── Section heading: "Live now 2" · "Up next   Full schedule" ───────────────────────────────── */
 .head {
   display: flex;
-  align-items: baseline;
+  /* Every heading row is the link's 44px tall and centres its title, so "Live now" (no door) and "Latest results"
+     (a door) sit on one line when they head the two columns side by side. */
+  align-items: center;
+  min-height: 44px;
   justify-content: space-between;
   gap: 12px;
 }
@@ -69,6 +72,7 @@ a.row:hover .teams { text-decoration: underline; }
 }
 .when small {
   display: block;
+  margin-top: 3px;
   font-size: 0.75rem;
   font-weight: 400;
   color: var(--club-dim);

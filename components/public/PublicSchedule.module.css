@@ -1,6 +1,9 @@
 /* Stage 3: only the switch-on Schedule and its explicit shared-part variants use these classes. */
 .schedule { display: flex; flex-direction: column; gap: 16px; padding: 16px; min-width: 0; background: var(--club-ground); color: var(--club-text); font-family: var(--club-text-face); }
 .controls { display: flex; flex-direction: column; gap: 10px; }
+.search { display: none; }
+.search[data-open='true'] { display: block; }
+.desktopLabel, .desktopLiveWhen, .desktopLiveContext, .inlineScore { display: none; }
 .controlRow { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .division { flex: 1; min-width: 0; }
 .division select, .search { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--club-field); border-radius: 8px; background: var(--club-card); color: var(--club-text); font: 400 1rem/1.4 var(--club-text-face); color-scheme: light; }
@@ -30,6 +33,8 @@ a.matchLink:hover .matchup { text-decoration: underline; }
 .matchup { display: block; min-width: 0; font: 500 1rem/1.3 var(--club-text-face); overflow-wrap: anywhere; }
 .matchup > span { display: block; }
 .matchup > span + span { margin-top: 4px; }
+.matchNames > span { display: block; }
+.matchNames > span + span { margin-top: 4px; }
 .matchup .rowSub { color: var(--club-dim); font: 400 0.875rem/1.4 var(--club-text-face); }
 .scores { font: 700 1.25rem/1.3 var(--club-title-face); font-variant-numeric: tabular-nums; text-align: right; }
 .scores > span { display: block; }
@@ -53,4 +58,39 @@ a.matchLink:hover .matchup { text-decoration: underline; }
 .placements li:last-child { border-bottom: 0; }
 .placements li > span { display: inline-block; min-width: 32px; font-variant-numeric: tabular-nums; }
 .schedule button:focus-visible, .schedule input:focus-visible, .schedule select:focus-visible, .matchLink:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 2px; }
+/* The frame's desktop breakpoint. At 901–1,023 px the same two phone control rows remain. */
+@media (min-width: 1024px) {
+  .controls { flex-direction: row; align-items: center; flex-wrap: wrap; }
+  .controlRow { display: contents; }
+  .division { order: 1; flex: 1 1 140px; max-width: 200px; }
+  .track { order: 2; flex: 1 1 180px; }
+  .search { display: block; order: 3; flex: 2 1 160px; width: auto; min-width: 140px; }
+  .searchToggle { display: none; }
+  .myGamesSlot { order: 4; }
+  .calendarSlot { order: 5; }
+  .calendarButton { width: auto; gap: 6px; padding: 0 8px; font: 600 0.875rem/1.3 var(--club-text-face); }
+  .desktopLabel { display: inline; }
+  .days { max-width: 560px; }
+  .matchLink { grid-template-columns: 84px minmax(0, 1fr); }
+  .matchup { display: grid; grid-template-columns: minmax(0, 1fr) minmax(100px, 180px); align-items: center; column-gap: 16px; }
+  .matchNames > span { display: inline; }
+  .matchNames > span + span { margin-top: 0; }
+  .matchNames > span + span::before { content: ' vs '; color: var(--club-dim); font-weight: 400; }
+  .gameRow[data-face='final'] .matchNames > span + span::before { content: ' · '; }
+  .matchup .rowSub { margin-top: 0; text-align: right; }
+  .inlineScore { display: inline; font-variant-numeric: tabular-nums; }
+  .scores { display: none; }
+  .liveCard { display: grid; grid-template-columns: 84px minmax(0, 1fr) minmax(100px, 180px) auto; align-items: center; gap: 8px; padding: 10px 14px; }
+  .liveTop { display: none; }
+  .desktopLiveWhen { display: block; font: 600 0.875rem/1.3 var(--club-text-face); font-variant-numeric: tabular-nums; }
+  .liveTeams { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; }
+  .liveSide { display: inline-flex; align-items: center; gap: 4px; font-size: 1rem; }
+  .liveSide + .liveSide { margin-top: 0; }
+  .liveSide > span:last-child { font-size: 1rem; }
+  .desktopLiveContext { display: block; text-align: right; color: var(--club-dim); font: 400 0.875rem/1.4 var(--club-text-face); }
+  .liveFooter { display: contents; }
+  .liveFooter > span:empty { display: none; }
+  .liveFooter > .stakes { grid-row: 2; grid-column: 2 / 4; font-size: 0.875rem; }
+  .liveFooter > a { grid-column: 4; grid-row: 1; }
+}
 @media (prefers-reduced-motion: reduce) { .gameBlock[data-flipped] { animation: none; } }

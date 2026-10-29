@@ -28,8 +28,9 @@ export function friendlyPlaceholder(placeholder: string | null | undefined): str
 }
 
 /** The new pages' words for a bracket slot (Stage 3, owner 2026-10-28): the bracket's own — "Semifinal 1 winner" — so the
- *  game leads and a cut-off name can't hide the number (the 2026-07-17 ruling, `fanSlotLabel`). The old Overview keeps
- *  `friendlyPlaceholder`'s "Winner of SF2" until Stage 8. */
+ *  game leads and a cut-off name can't hide the number (the 2026-07-17 ruling, `fanSlotLabel`). Every caller passes this
+ *  (the frame-on Overview too, which moved from "Winner of SF2" with this stage); `friendlyPlaceholder` stays the default
+ *  until the shared function's last old caller goes at Stage 8. */
 export function fanPlaceholder(placeholder: string | null | undefined): string {
   if (!placeholder) return 'TBD';
   return fanSlotLabel(placeholder.replace(/^(Winner|Loser)\s+of\s+/i, '$1 '));

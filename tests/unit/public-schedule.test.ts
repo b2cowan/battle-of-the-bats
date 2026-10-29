@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { changedScheduleGameIds, scheduleGames, scheduleInitialSelection, scheduleLandingDay, splitEarlierToday, visibleScheduleGames } from '../../lib/public-schedule.ts';
+import { changedScheduleGameIds, groupPoolPlayoffs, scheduleGames, scheduleInitialSelection, scheduleLandingDay, splitEarlierToday, visibleScheduleGames } from '../../lib/public-schedule.ts';
 import { gameRowView } from '../../lib/public-game-row.ts';
 import type { Division, Game, PublicTeam, Tournament } from '../../lib/types.ts';
 
@@ -112,5 +112,29 @@ describe('the preview Schedule: game lists and live updates', () => {
     assert.equal(view.sub, 'U11 · Diamond 2');
     assert.equal(view.status, 'unofficial');
     assert.equal(view.sides[0].name, 'Falcons');
+  });
+});
+
+describe('the preview Schedule: playoff pools stay together', () => {
+  const at = (id: string, time: string, extra: Partial<Game> = {}) => game(id, { time, isPlayoff: true, ...extra });
+  const ids = (list: Game[]) => list.map(g => g.id).join(',');
+
+  it('two pools playing the same slots print each pool once, not once per slot', () => {
+    const list = [at('a9', '09:00'), at('b9', '09:00'), at('a10', '10:00'), at('b10', '10:00')];
+    const tags = new Map<string, string | null>([['a9', 'Pool A'], ['b9', 'Pool B'], ['a10', 'Pool A'], ['b10', 'Pool B']]);
+    assert.equal(ids(groupPoolPlayoffs(list, tags)), 'a9,a10,b9,b10');
+  });
+
+  it('a different division with the same pool name is its own group', () => {
+    const list = [at('x1', '09:00'), at('y1', '09:30', { divisionId: 'u13' }), at('x2', '10:00')];
+    const tags = new Map<string, string | null>([['x1', 'Pool A'], ['y1', 'Pool A'], ['x2', 'Pool A']]);
+    assert.equal(ids(groupPoolPlayoffs(list, tags)), 'x1,x2,y1');
+  });
+
+  it('a game with no pool, and a list with no pools at all, keep their time order', () => {
+    const list = [at('p', '09:00'), at('final', '10:00'), at('q', '11:00')];
+    assert.equal(ids(groupPoolPlayoffs(list, new Map())), 'p,final,q');
+    const tags = new Map<string, string | null>([['p', 'Pool A'], ['final', null], ['q', 'Pool A']]);
+    assert.equal(ids(groupPoolPlayoffs(list, tags)), 'p,q,final');
   });
 });

@@ -8,6 +8,7 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
+import { publicGameRefreshSignature } from '@/lib/public-game-detail';
 
 interface Props {
   orgSlug: string;
@@ -18,6 +19,11 @@ interface Props {
   /** Gate — only poll while the tournament is in progress. */
   enabled: boolean;
   intervalMs?: number;
+  /**
+   * Set by the preview body: it also refreshes at kickoff/end and when a game is withheld/deleted, which needs the
+   * event's finalization rule. Left unset, only a score or status change refreshes (today's page).
+   */
+  requireFinalization?: boolean;
 }
 
 export default function GameDetailLiveRefresher({
@@ -27,6 +33,7 @@ export default function GameDetailLiveRefresher({
   initialSignature,
   enabled,
   intervalMs = 30_000,
+  requireFinalization,
 }: Props) {
   const router = useRouter();
   const signatureRef = useRef(initialSignature);
@@ -44,9 +51,12 @@ export default function GameDetailLiveRefresher({
       if (document.visibilityState === 'hidden') return;
       try {
         const data = await fetchPublicTournamentData(orgSlug, tournamentSlug, 'schedule');
-        const game = data?.games.find(g => g.id === gameId);
-        if (!game) return;
-        const signature = `${game.homeScore ?? ''}:${game.awayScore ?? ''}:${game.status}`;
+        if (!data) return;
+        const game = data.games.find(g => g.id === gameId);
+        let signature: string;
+        if (requireFinalization !== undefined) signature = publicGameRefreshSignature(game ?? null, requireFinalization);
+        else if (game) signature = `${game.homeScore ?? ''}:${game.awayScore ?? ''}:${game.status}`;
+        else return;
         if (!cancelled && signature !== signatureRef.current) {
           signatureRef.current = signature;
           router.refresh();
@@ -67,7 +77,7 @@ export default function GameDetailLiveRefresher({
       window.clearInterval(intervalId);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [orgSlug, tournamentSlug, gameId, enabled, intervalMs, router]);
+  }, [orgSlug, tournamentSlug, gameId, enabled, intervalMs, router, requireFinalization]);
 
   return null;
 }

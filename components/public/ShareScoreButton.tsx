@@ -27,6 +27,9 @@ type Props = Omit<ScoreCardData, 'primary'> & {
   wrapClassName?: string;
   menuAlign?: 'left' | 'right';
   menuPlacement?: 'up' | 'down';
+  /** The preview game page's 44 px share symbol; old callers keep their worded trigger. */
+  iconOnly?: boolean;
+  label?: string;
 };
 
 function slugify(s: string) {
@@ -39,6 +42,8 @@ export default function ShareScoreButton({
   gameHref,
   menuAlign = 'left',
   menuPlacement = 'down',
+  iconOnly = false,
+  label = 'Share this game',
   ...data
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -93,9 +98,9 @@ export default function ShareScoreButton({
         onClick={() => setOpen(o => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label="Share this game"
+        aria-label={label}
       >
-        <Share2 size={15} /> Share
+        <Share2 size={iconOnly ? 22 : 15} aria-hidden />{iconOnly ? null : ' Share'}
       </button>
 
       {open && (

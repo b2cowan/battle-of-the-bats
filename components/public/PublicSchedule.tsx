@@ -8,16 +8,15 @@ import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import { isTournamentInProgress, readFollowedTeamId, useFollowedTeam } from '@/lib/follow';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { tournamentToday, formatShortWeekdayDate, formatStoredDate } from '@/lib/timezone';
-import { publicGameState } from '@/lib/game-status';
-import { fanRoundLabel } from '@/lib/playoff-bracket';
+import { gameStartMs, publicGameState } from '@/lib/game-status';
 import { computePlacementStandings } from '@/lib/playoff-standings';
 import { hasPlayoffs, hasRoundRobin } from '@/lib/tournament-phase';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { getRegistrationState } from '@/lib/registration-state';
-import { resolveGameFieldLabel, resolveGameVenueLabel } from '@/lib/venue-label';
-import { directionsHref } from '@/lib/family-schedule-format';
+import { resolveGameFieldLabel } from '@/lib/venue-label';
 import { fanPlaceholder, gameRowView, gameSideNames, liveCardView } from '@/lib/public-game-row';
-import { changedScheduleGameIds, scheduleGames, scheduleInitialSelection, scheduleLandingDay, SCHEDULE_BRACKET_DOOR, splitEarlierToday, visibleScheduleGames, type ScheduleStage } from '@/lib/public-schedule';
+import { gameDirections, getPlayoffStakes, publicGameRound } from '@/lib/public-game-detail';
+import { changedScheduleGameIds, groupPoolPlayoffs, scheduleGames, scheduleInitialSelection, scheduleLandingDay, SCHEDULE_BRACKET_DOOR, splitEarlierToday, visibleScheduleGames, type ScheduleStage } from '@/lib/public-schedule';
 import { downloadTeamScheduleICS } from '@/lib/team-calendar';
 import { useOrgHref } from '@/lib/use-public-pathname';
 import { formatTime } from '@/lib/utils';
@@ -144,15 +143,18 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
     division, stage: effectiveStage, query, myTeamId: myGames ? followed?.id : null }), [games, data, division, effectiveStage, query, myGames, followed?.id]);
   const effectiveDay = scheduleLandingDay(selection.dates, today, day, Boolean(query.trim() || myGames));
   const datesVisible = selection.dates.length > 1 && !query.trim() && !myGames;
+  // The rail only exists once the page has left "Loading", so that moment is a dependency too.
+  const ready = Boolean(data && clock);
   useEffect(() => {
-    if (datesVisible && selection.dates.length > 5) rail.current?.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest', inline: 'center' });
-  }, [datesVisible, selection.dates.length, effectiveDay]);
+    if (ready && datesVisible && selection.dates.length > 5) rail.current?.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }, [ready, datesVisible, selection.dates.length, effectiveDay]);
 
   if (failed) return <div className={styles.schedule}><div className={styles.state} role="alert">The schedule could not be loaded. Please refresh to try again.</div></div>;
   if (!data || !clock) return <div className={styles.schedule} role="status">Loading schedule…</div>;
   const { tournament, divisions, teams, venues } = data;
   if (!tournament || !data.pageEnabled) return <div className={styles.schedule}><div className={styles.state}>The schedule is not available.</div></div>;
-  const requireFinalization = data.organization.requireScoreFinalization ?? tournament.requireScoreFinalization ?? true;
+  // The data layer already lays the tournament's own rule over the organization's.
+  const requireFinalization = data.organization.requireScoreFinalization ?? true;
   const allWithheld = divisions.length > 0 && divisions.every(d => d.scheduleVisibility !== 'published');
   const divisionWithheld = Boolean(division && divisions.find(d => d.id === division)?.scheduleVisibility !== 'published');
   const canRegister = isPublicPageEnabled(tournament, 'register') && Boolean(getRegistrationState(tournament, divisions, []).cta);
@@ -160,16 +162,20 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
   const gameHref = (id: string) => isPreview ? undefined : orgHref(`${basePath}/schedule/${id}`);
   const names = (g: Game) => gameSideNames(g, id => teams.find(t => t.id === id)?.name ?? 'TBD', fanPlaceholder);
   const divisionName = (g: Game) => divisions.find(d => d.id === g.divisionId)?.name ?? '';
-  const round = (g: Game) => g.isPlayoff ? (g.roundLabel === 'Final' ? 'Championship' : g.roundLabel) || fanRoundLabel(g.bracketCode) : null;
+  const round = (g: Game) => g.isPlayoff ? publicGameRound(g) : null;
   // Same live venue resolver as the Overview; compact rows show the facility, maps use its parent address/name.
   const field = (g: Game) => resolveGameFieldLabel(g, venues) || 'Location TBD';
-  const mapHref = (g: Game) => isPreview ? null : directionsHref(venues.find(v => v.id === g.venueId)?.address?.trim() || resolveGameVenueLabel(g, venues).trim() || null);
+  const mapHref = (g: Game) => isPreview ? null : gameDirections(g, venues);
   const row = (g: Game) => {
     const state = publicGameState(g, requireFinalization, clock);
     const context = [divisionName(g), field(g)].filter(Boolean).join(' · ');
-    if (state === 'live') return <PublicLiveCard view={liveCardView(g, names(g), round(g) || divisionName(g), field(g), mapHref(g))}
-      href={gameHref(g.id)} topLine={[g.time ? formatTime(g.time) : 'TBD', round(g) || divisionName(g), field(g)].join(' · ')}
-      foot={round(g) === 'Championship' ? 'The winner takes the title' : undefined} />;
+    if (state === 'live') {
+      const when = g.time ? formatTime(g.time) : 'TBD';
+      const lead = round(g) || divisionName(g);
+      const stakes = getPlayoffStakes(g, games, true);
+      return <PublicLiveCard view={liveCardView(g, names(g), lead, field(g), mapHref(g))} href={gameHref(g.id)}
+        time={when} topLine={[when, lead, field(g)].join(' · ')} foot={stakes?.gold ? stakes.text : undefined} />;
+    }
     return <ul className={parts.rows}><PublicGameRow view={gameRowView(g, names(g), context, today,
       { state, round: round(g), poolTag: selection.poolTags.get(g.id), schedule: true })}
       schedule href={gameHref(g.id)} directions={mapHref(g)} field={field(g)} /></ul>;
@@ -177,7 +183,10 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
   const gameBlock = (g: Game) => <div key={g.id} id={`public-game-${g.id}`} data-game-id={g.id} data-highlighted={highlight === g.id || undefined}
     data-flipped={flipped.has(g.id) || undefined} className={styles.gameBlock}>{row(g)}</div>;
   // Adjacent rows share one card; headings and live cards break it at their actual time slot.
-  const renderGames = (list: Game[], slotHeads = true) => {
+  // "Up next" names the slot after Live now on game day: only today, and only for a game that has not started (an
+  // unscored game whose time has passed is not "next", and a later day already has its date heading).
+  const renderGames = (input: Game[], slotHeads = true, upNextToday = false) => {
+    const list = slotHeads && effectiveStage === 'playoff' ? groupPoolPlayoffs(input, selection.poolTags) : input;
     const blocks: ReactNode[] = [];
     let rows: Game[] = [];
     let upNextShown = false;
@@ -191,7 +200,7 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
       const prev = list[index - 1];
       const poolHead = slotHeads && effectiveStage === 'playoff' && pool && (pool !== selection.poolTags.get(prev?.id ?? '') || prev?.divisionId !== g.divisionId);
       const state = publicGameState(g, requireFinalization, clock);
-      const nextHead = slotHeads && !upNextShown && state === 'upcoming';
+      const nextHead = slotHeads && upNextToday && !upNextShown && state === 'upcoming' && (gameStartMs(g) ?? 0) > clock.getTime();
       if (poolHead || nextHead || state === 'live') flush();
       if (poolHead) blocks.push(<PublicSectionHead key={`pool-${g.id}`} title={`${!division ? `${divisionName(g)} · ` : ''}${pool} Playoffs`} />);
       if (nextHead) { upNextShown = true; blocks.push(<PublicSectionHead key={`next-${g.id}`} title="Up next" />); }
@@ -220,7 +229,7 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
             setDivision(e.target.value); setQuery(''); setMyGames(false);
             if (!isPreview) setDivisionPref(orgSlug, divisions.find(d => d.id === e.target.value)?.name ?? '');
           }}><option value="">All divisions</option>{divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}</select></label>
-          {followed && <span className={parts.appOnly}><button type="button" className={styles.myGames} aria-pressed={myGames} onClick={() => {
+          {followed && <span className={`${parts.appOnly} ${styles.myGamesSlot}`}><button type="button" className={styles.myGames} aria-pressed={myGames} onClick={() => {
             setMyGames(!myGames); setQuery(''); setDivision(followed.divisionId);
             setDivisionPref(orgSlug, divisions.find(d => d.id === followed.divisionId)?.name ?? '');
           }}><Star size={18} aria-hidden />My games</button></span>}
@@ -229,10 +238,10 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
           {hasRoundRobin(tournament) && hasPlayoffs(tournament) && <div className={styles.track} role="group" aria-label="Schedule stage">
             {(['pool', 'playoff'] as const).map(s => <button key={s} type="button" aria-pressed={effectiveStage === s} onClick={() => setStage(s)}>{s === 'pool' ? 'Pool play' : 'Playoffs'}</button>)}
           </div>}
-          <button type="button" className={styles.symbol} aria-label={searchOpen ? 'Close search' : 'Search teams'} aria-expanded={searchOpen} aria-controls="public-schedule-search" onClick={() => { setSearchOpen(!searchOpen); setQuery(''); }}><Search size={22} aria-hidden /></button>
-          {followed && <span className={parts.appOnly}><button type="button" className={styles.symbol} aria-label="Add my team's schedule to my calendar" onClick={() => void downloadTeamScheduleICS({ team: followed, games, teams, divisions, tournamentName: tournament.name, orgSlug, tournamentSlug })}><CalendarPlus size={22} aria-hidden /></button></span>}
+          <button type="button" className={`${styles.symbol} ${styles.searchToggle}`} aria-label={searchOpen ? 'Close search' : 'Search teams'} aria-expanded={searchOpen} aria-controls="public-schedule-search" onClick={() => { setSearchOpen(!searchOpen); setQuery(''); }}><Search size={22} aria-hidden /></button>
+          {followed && <span className={`${parts.appOnly} ${styles.calendarSlot}`}><button type="button" className={`${styles.symbol} ${styles.calendarButton}`} aria-label="Add my team's schedule to my calendar" onClick={() => void downloadTeamScheduleICS({ team: followed, games, teams, divisions, tournamentName: tournament.name, orgSlug, tournamentSlug })}><CalendarPlus size={22} aria-hidden /><span className={styles.desktopLabel}>Calendar</span></button></span>}
         </div>
-        {searchOpen && <input id="public-schedule-search" className={styles.search} type="search" aria-label={teams.some(t => t.coach) ? 'Search team or coach' : 'Search team'} placeholder={teams.some(t => t.coach) ? 'Search team or coach…' : 'Search team…'} value={query} onChange={e => { setQuery(e.target.value); setMyGames(false); }} />}
+        <input id="public-schedule-search" className={styles.search} data-open={searchOpen || undefined} type="search" aria-label={teams.some(t => t.coach) ? 'Search team or coach' : 'Search team'} placeholder={teams.some(t => t.coach) ? 'Search team or coach…' : 'Search team…'} value={query} onChange={e => { setQuery(e.target.value); setMyGames(false); }} />
       </div>
       {!divisionWithheld && datesVisible && <div className={styles.days} data-rail={selection.dates.length > 5 || undefined} role="group" aria-label="Game day" ref={rail}>
         <button type="button" aria-pressed={effectiveDay === 'all'} onClick={() => setDay('all')}>All</button>
@@ -251,7 +260,7 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
           return <section key={date} className={styles.dateGroup}>
             {(effectiveDay === 'all' || !date) && <PublicSectionHead title={date ? date === today ? 'Today' : formatShortWeekdayDate(date) : 'Date to be confirmed'} />}
             {earlier.length > 0 && <PublicDisclosure title="Earlier today" sub={`${earlier.length} ${earlier.length === 1 ? 'game' : 'games'}, all final`} desktopOpen reveal={earlier.some(g => g.id === highlight)}>{renderGames(earlier, false)}</PublicDisclosure>}
-            {renderGames(remaining)}
+            {renderGames(remaining, true, date === today)}
           </section>;
         })}
         {dayGames.length === 0 && <div className={styles.state}><h2>{query.trim() || myGames ? 'No matching games' : 'No games scheduled'}</h2><p>{query.trim() || myGames ? 'Try another team or clear the search.' : 'Games will appear here once the organizer posts them.'}</p></div>}

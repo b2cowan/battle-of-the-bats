@@ -8,7 +8,7 @@ import styles from './PublicParts.module.css';
  * (`preEventFacts`); a row the event has nothing for is not in the list. A place opens its directions in a new tab, a
  * page opens in the same one.
  */
-export default function PublicFactsList({ rows }: { rows: FactRow[] }) {
+export default function PublicFactsList({ rows }: { rows: (Omit<FactRow, 'key'> & { key: string })[] }) {
   if (rows.length === 0) return null;
   return (
     <dl className={styles.facts}>

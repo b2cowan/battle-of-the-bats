@@ -21,7 +21,7 @@ export function PublicGameRow({ view, href, schedule = false, directions, field 
     const content = <>
       <span className={scheduleStyles.when}>{view.head}{view.when && <small>{view.when}</small>}</span>
       <span className={scheduleStyles.matchup}>
-        {view.sides.map((s, i) => <span key={i} className={s.result === 'win' ? styles.win : s.result === 'lose' ? styles.lose : undefined}>{s.name}</span>)}
+        <span className={scheduleStyles.matchNames}>{view.sides.map((s, i) => <span key={i} className={s.result === 'win' ? styles.win : s.result === 'lose' ? styles.lose : undefined}>{s.name}{final && <span className={scheduleStyles.inlineScore}> {s.score}</span>}</span>)}</span>
         <span className={scheduleStyles.rowSub}>
           {view.sub}
           {['final', 'unofficial', 'cancelled'].includes(view.status ?? '') && <>{' · '}<span className={view.status === 'unofficial' ? scheduleStyles.unofficial : view.cancelled ? scheduleStyles.cancelledChip : undefined}>
@@ -32,7 +32,7 @@ export function PublicGameRow({ view, href, schedule = false, directions, field 
       </span>
       {final && <span className={scheduleStyles.scores}>{view.sides.map((s, i) => <span key={i} className={s.result === 'lose' ? styles.lose : undefined}><RollingNumber value={s.score} /></span>)}</span>}
     </>;
-    return <li className={scheduleStyles.gameRow} data-cancelled={view.cancelled || undefined}>
+    return <li className={scheduleStyles.gameRow} data-face={view.face} data-cancelled={view.cancelled || undefined}>
       {href ? <Link href={href} className={scheduleStyles.matchLink}>{content}</Link> : <div className={scheduleStyles.matchLink}>{content}</div>}
       {directions && !view.cancelled && <DirectionsLink href={directions} name={`Directions to ${field || 'the game'}`} />}
     </li>;
