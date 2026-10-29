@@ -478,7 +478,7 @@ const houseLeagueHelp: HelpPageContent = {
                 <li><strong>Schedule</strong>: the team&apos;s games (once the division&apos;s schedule is published, as last sent to families) and its practices, from today on, with anything waiting for a new date after them, and a link to <strong>See the season&apos;s schedule</strong>. A line says the club enters scores.</li>
                 <li>A coach of two teams switches between them.</li>
               </ul>
-              <p>To get back to it, a coach signs in on the club&apos;s site and clicks <strong>My team</strong> at the top right. A coach of two or more teams clicks <strong>My teams</strong> and picks one. On a phone, tap the person icon: the team is the first row of the menu.</p>
+              <p>To get back to it, a coach signs in on the club&apos;s site and clicks <strong>My team</strong> at the top right. A coach of two or more teams taps the person icon and picks a team from the menu, then switches between them with the <strong>Your teams</strong> buttons at the top of each team page. On a phone, tap the person icon: the team is the first row of the menu.</p>
               <p>They never see ratings, fees or other teams, and never the Coaches Portal. The sign-up form tells families that their child&apos;s coach sees their name, email and phone.</p>
               <p>The page stays for 30 days after the season finishes, then it is gone.</p>
             </>

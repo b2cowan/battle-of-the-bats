@@ -91,8 +91,8 @@ export default function AccountMenu({
   /** False in the support console: no Notification settings / Account settings rows. */
   showAccount?: boolean;
   /** A house-league coach's teams at THIS club (the club site passes them): one is a "My team" row, two or more sit under
-   *  a "My teams" caption by name, the one being viewed shaded. The phone's way to the team; at a desk the bar's own "My
-   *  team" link leads too. Nothing renders when empty. */
+   *  a "My teams" caption by name, the one being viewed shaded. The phone's way to the team, and a desk coach of two or more
+   *  teams' only door from the bar; a desk coach of one also has the bar's own "My team" link. Nothing renders when empty. */
   teams?: { teamName: string; href: string; current: boolean }[];
   /** The host bar's icon-door class — the trigger wears that row's exact skin. */
   className?: string;
