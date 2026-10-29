@@ -237,20 +237,24 @@ interface Props {
     options: {
       id: string;
       name: string;
-      /** The fact that makes the row worth choosing — rendered at the row's end, e.g. "$400 owing". */
+      /** The fact that makes the row worth choosing — rendered at the row's end, e.g. "$350.00". */
       meta?: string;
+      /** A quiet second line under `meta`, e.g. "due Nov 15". */
+      metaDetail?: string;
+      /** A quiet second line under the name, e.g. the bill's whole balance. */
+      sub?: string;
+      /**
+       * Loud, on THIS row. Quiet by default, because this control is also the Budget Plan's and the
+       * Org Budget's and their trailing facts are not debts.
+       *
+       * ⚠ THE DEFAULT IS THE HONEST ONE (/simplify, altitude lens 2026-08-23): a group-wide colour
+       * would render every future lead group — "recently used", "from last season" — in alarm red.
+       * ⚠ PER ROW, NOT PER GROUP (owner 2026-10-29, "Bills you owe" next payment): red is the
+       * verdict on a bill that is behind, never the colour of an amount; a healthy bill in the same
+       * group reads as ink. The caller knows which is which, this control only draws it.
+       */
+      late?: boolean;
     }[];
-    /**
-     * How `meta` should READ. Quiet by default, because this control is also the Budget Plan's and
-     * the Org Budget's and their trailing facts are not debts.
-     *
-     * ⚠ THE DEFAULT IS THE HONEST ONE (/simplify, altitude lens 2026-08-23). The first cut hard-
-     * coded the portal's owing colour into the shared stylesheet, so every future lead group —
-     * "recently used", "from last season" — would have rendered its fact in alarm red with no way
-     * out, in a prop whose own documentation promises it is domain-agnostic. A caller that means
-     * "this is money owed" now says so.
-     */
-    metaTone?: 'quiet' | 'owing';
     selectedId: string | null;
     /**
      * The name to show at rest when `selectedId` points at something NOT in `options` — a caller
@@ -698,10 +702,14 @@ export default function BudgetItemPicker({
             onMouseDown={e => e.preventDefault()}
             onClick={() => chooseLead(o.id)}
           >
-            <span>{o.name}</span>
+            <span className={styles.optText}>
+              <span className={styles.optName}>{o.name}</span>
+              {o.sub && <span className={styles.optSub}>{o.sub}</span>}
+            </span>
             {o.meta && (
-              <span className={`${styles.optMeta} ${leadGroup!.metaTone === 'owing' ? styles.optMetaOwing : ''}`}>
-                {o.meta}
+              <span className={`${styles.optMeta} ${o.late ? styles.optMetaLate : ''}`}>
+                <span>{o.meta}</span>
+                {o.metaDetail && <span className={styles.optMetaDetail}>{o.late ? `⚠ ${o.metaDetail}` : o.metaDetail}</span>}
               </span>
             )}
           </button>

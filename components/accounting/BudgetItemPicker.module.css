@@ -166,21 +166,40 @@
    ⚠ QUIET BY DEFAULT, LOUD ONLY WHEN THE CALLER SAYS SO. This control is shared with the Budget
    Plan and the Org Budget; baking the portal's owing colour in here would render every future lead
    group's fact ("recently used", "from last season") as an overdue balance, in a prop documented as
-   domain-agnostic. `metaTone="owing"` is how a caller opts into the money reading.
+   domain-agnostic. A row's `late` flag is how a caller opts into the money reading.
    ⚠ `margin-left: auto` belongs here: a lead row has no tier chip, so this is its only trailing
-   element (see the `.optTier` note below for why exactly one element may carry it). */
+   element (see the `.optTier` note below for why exactly one element may carry it).
+   ⚠ A TWO-LINE ROW (owner 2026-10-29): the amount at the end with a quiet line under it. The end
+   column right-aligns so a column of amounts reads straight. */
 .optMeta {
   margin-left: auto;
   flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.3;
   font-size: var(--type-support);
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   color: var(--white-60, rgba(255,255,255,0.6));
   white-space: nowrap;
 }
-/* Money the team still owes — the portal's owing colour, so a figure means the same thing here as
-   on every money screen. */
-.optMetaOwing { color: var(--danger-light); }
+.optMetaDetail {
+  font-size: var(--type-label);
+  font-weight: 400;
+  color: var(--white-60, rgba(255,255,255,0.6));
+}
+.optText { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; line-height: 1.3; }
+.optName { overflow-wrap: anywhere; }
+.optSub {
+  font-size: var(--type-label);
+  color: var(--white-60, rgba(255,255,255,0.6));
+  font-variant-numeric: tabular-nums;
+}
+/* A bill that is behind — the portal's owing colour, so a figure means the same thing here as on
+   every money screen. Colour sits on the VERDICT (late), never on a healthy bill's amount. */
+.optMetaLate,
+.optMetaLate .optMetaDetail { color: var(--danger-light); }
 
 .opt {
   display: flex;

@@ -1,0 +1,300 @@
+<title>Bills You Owe Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: sticky section tabs, a View switch under them, one section at a time, framed specimens on a different ground. */
+:root {
+  --bg: #f4f4f1; --fg: #1d1f17; --muted: #5d6052; --line: #d9dbd0; --card: #ffffff; --ground: #e6e7df;
+  --accent: #4f5e16; --note: #fbfbf6; --ok: #2f6b2f; --warn-bg: #fff3d6;
+  /* the specimen is the coaches portal as it looks on a desk — it keeps its own light look in both themes */
+  --p-bg: #ffffff; --p-ink: #1b1c14; --p-quiet: #6a6c5c; --p-line: #dcddcf; --p-head: #eef0e4;
+  --p-olive: #5c6a1b; --p-owing: #a8321f; --p-lime: #d8f59a; --p-field: #eff0e6;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15160f; --fg: #ececdf; --muted: #a2a591; --line: #34362b; --card: #1e2017; --ground: #0e0f0a;
+  --accent: #c7dc7a; --note: #1a1c13; --ok: #8ccf8c; --warn-bg: #3a3017; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #15160f; --fg: #ececdf; --muted: #a2a591; --line: #34362b; --card: #1e2017; --ground: #0e0f0a;
+  --accent: #c7dc7a; --note: #1a1c13; --ok: #8ccf8c; --warn-bg: #3a3017; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); }
+header.top { padding-block: 20px 12px; }
+h1 { font-size: 22px; margin: 0 0 4px; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0; max-width: 70ch; }
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.tabs .wrap { display: flex; gap: 4px; overflow-x: auto; padding-block: 8px; }
+.tab { border: 0; background: none; color: var(--muted); font: inherit; font-weight: 600; padding: 8px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+.tab[aria-selected="true"] { background: var(--fg); color: var(--bg); }
+.tab:focus-visible, .seg button:focus-visible, .mk:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; align-items: center; gap: 12px; padding-block: 14px 4px; flex-wrap: wrap; }
+.viewrow label { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
+.seg { display: inline-flex; background: #fff; border: 1px solid #cfd1c4; border-radius: 10px; padding: 3px; }
+.seg button { border: 0; background: none; color: #4b4d3f; font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 7px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: #e7ecd2; color: #2f3a0a; }
+section.panel { padding-block: 12px 40px; }
+section.panel[hidden] { display: none; }
+h2 { font-size: 18px; margin: 12px 0 4px; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0 0 16px; max-width: 72ch; }
+.stage { background: var(--ground); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+.spec { flex: 1 1 340px; min-width: 0; }
+.cap { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; color: var(--muted); }
+.tag { font-size: 11px; letter-spacing: .05em; padding: 2px 7px; border-radius: 5px; font-weight: 700; }
+.tag.new { background: #dff3d5; color: #24591f; } .tag.rest { background: #ece9f7; color: #3f3677; } .tag.same { background: #e8e8e2; color: #55574a; } .tag.rec { background: #fff0b8; color: #6a5200; }
+:root[data-theme="dark"] .tag, :root:not([data-theme="light"]) .tag { filter: none; }
+.notes { margin: 16px 0 0; display: grid; gap: 8px; }
+.n { display: flex; gap: 10px; background: var(--note); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.n.on { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); }
+.n b.num, .mk { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; background: #1d4ed8; color: #fff; font: 700 12px/22px system-ui; text-align: center; border: 0; padding: 0; cursor: pointer; }
+.n p { margin: 0; } .n p small { color: var(--muted); display: block; }
+
+/* ---- the specimen: Record money window ---- */
+.dlg { background: var(--p-bg); color: var(--p-ink); border-radius: 16px; box-shadow: 0 12px 40px rgba(0,0,0,.28); width: 100%; max-width: 540px; padding: 22px 24px 18px; position: relative; font-size: 15px; }
+.dlg.narrow { max-width: 360px; padding: 18px 16px 14px; }
+.dlg h3 { margin: 0; font-size: 18px; } .dlg .dsub { color: var(--p-quiet); font-size: 14px; margin: 2px 0 14px; }
+.dlg .lab { font-weight: 700; font-size: 14px; margin: 12px 0 6px; } .dlg .req { color: var(--p-owing); }
+.fld { border: 1px solid var(--p-olive); border-radius: 8px; padding: 9px 12px; background: var(--p-field); font-weight: 700; display: flex; justify-content: space-between; }
+.fld.plain { background: #fff; font-weight: 400; color: var(--p-quiet); }
+.fld.val { background: #fff; font-weight: 600; }
+.menu { border: 1px solid var(--p-line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.16); margin-top: 6px; overflow: hidden; background: #fff; }
+.grp { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--p-quiet); padding: 7px 12px 5px; font-weight: 600; }
+.grp.lead { background: var(--p-head); color: var(--p-olive); }
+.opt { display: flex; align-items: center; gap: 8px; padding: 8px 12px; min-height: 44px; }
+.opt .l { flex: 1 1 auto; min-width: 0; } .opt .nm { display: block; overflow-wrap: anywhere; }
+.opt .tot { display: block; font-size: 12px; color: var(--p-quiet); font-variant-numeric: tabular-nums; }
+.opt .r { margin-left: auto; flex: 0 0 auto; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.opt .amt { display: block; font-size: 13px; font-weight: 650; }
+.opt .when { display: block; font-size: 12px; color: var(--p-quiet); }
+.opt.owingtoday .amt { color: var(--p-owing); }
+.opt .late { color: var(--p-owing); } .opt .late.amt { color: var(--p-owing); }
+.pill { font: 700 10px/1 ui-monospace, Menlo, monospace; letter-spacing: .06em; padding: 4px 8px; border-radius: 999px; border: 1px solid #b9c98a; background: #eef4d6; color: #4a5a12; margin-left: auto; }
+.pill.std { background: #fff; border-color: var(--p-line); color: var(--p-quiet); }
+.foot { display: flex; justify-content: flex-end; gap: 14px; align-items: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--p-line); }
+.foot .c { color: var(--p-quiet); } .foot .s { background: var(--p-lime); font-weight: 700; padding: 8px 18px; border-radius: 8px; }
+.hl { outline: 2px dashed #1d4ed8; outline-offset: 2px; border-radius: 6px; position: relative; }
+.mk { position: absolute; top: -10px; right: -10px; z-index: 3; }
+.hl.pad { margin-top: 2px; }
+body.diff .same { opacity: .22; filter: grayscale(.6); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.two > div { min-width: 0; }
+@media (max-width: 520px) { .two { grid-template-columns: 1fr; } .stage { padding: 12px; } }
+.asks { display: grid; gap: 12px; }
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.ask h3 { margin: 0 0 8px; font-size: 15px; } .ask label { display: flex; gap: 8px; padding: 4px 0; align-items: flex-start; cursor: pointer; }
+.ask input { margin-top: 4px; }
+button.copy { background: var(--fg); color: var(--bg); border: 0; border-radius: 8px; padding: 9px 16px; font: inherit; font-weight: 600; cursor: pointer; }
+pre.out { background: var(--note); border: 1px solid var(--line); border-radius: 10px; padding: 12px; white-space: pre-wrap; margin: 12px 0 0; }
+.facts { color: var(--muted); font-size: 13px; margin-top: 14px; }
+</style>
+
+<header class="top"><div class="wrap">
+  <h1>Bills You Owe</h1>
+  <p class="sub">Record money · "We paid for something" · what each bill row should say when the bill is paid over several months. Figures are examples, taken from the Milton Bats screenshot. The window is drawn at the size it opens on a desk.</p>
+</div></header>
+
+<nav class="tabs" aria-label="Sections"><div class="wrap" role="tablist" id="tabs"></div></nav>
+
+<div class="wrap">
+  <div class="viewrow" id="viewrow">
+    <label id="viewlbl">View</label>
+    <div class="seg" role="group" aria-labelledby="viewlbl">
+      <button id="v-all" aria-pressed="true">Everything</button>
+      <button id="v-diff" aria-pressed="false">Show only what differs</button>
+    </div>
+  </div>
+
+  <!-- 1 -->
+  <section class="panel" id="p-1" hidden>
+    <h2>1 · The whole window, before and after</h2>
+    <p class="lede">Same window, same list, same order (soonest due first). Only the figure at the right end of each "Bills you owe" row changes, and one grey line appears under the bill's name. The other groups do not move.</p>
+    <div class="stage">
+      <div class="spec"><div class="cap"><span>Today</span><span class="tag rest">UNCHANGED</span></div><div data-render="whole-today"></div></div>
+      <div class="spec"><div class="cap"><span>Proposed</span><span class="tag new">NEW</span></div><div data-render="whole-new"></div></div>
+    </div>
+    <div class="notes" id="n-1"></div>
+  </section>
+
+  <!-- 2 -->
+  <section class="panel" id="p-2" hidden>
+    <h2>2 · The row: what it says when nothing is late</h2>
+    <p class="lede">Two ways to draw it. Both lead with the next payment and its date. They differ in whether the bill's total stays visible.</p>
+    <div class="stage">
+      <div class="spec"><div class="cap"><span>A · Next payment only</span><span class="tag same">SIMPLER</span></div><div data-render="rows-a"></div></div>
+      <div class="spec"><div class="cap"><span>B · Next payment, total underneath the name</span><span class="tag rec">RECOMMENDED</span></div><div data-render="rows-b"></div></div>
+    </div>
+    <div class="notes" id="n-2"></div>
+  </section>
+
+  <!-- 3 -->
+  <section class="panel" id="p-3" hidden>
+    <h2>3 · A bill with payments that are late</h2>
+    <p class="lede">Today is Oct 29. Dallas has two installments behind, Hitting Instruction has one, The Yard has none. Both options use the bill's total from option B above. Only the right end differs.</p>
+    <div class="stage">
+      <div class="spec"><div class="cap"><span>X · Late amount, one line of reason</span><span class="tag rec">RECOMMENDED</span></div><div data-render="late-x"></div></div>
+      <div class="spec"><div class="cap"><span>Y · Late amount, then the next one</span><span class="tag same">MORE DETAIL</span></div><div data-render="late-y"></div></div>
+    </div>
+    <div class="notes" id="n-3"></div>
+  </section>
+
+  <!-- 4 -->
+  <section class="panel" id="p-4" hidden>
+    <h2>4 · After picking a bill</h2>
+    <p class="lede">Picking a bill fills in the Amount. Today it fills in everything still owing. If the row says $737.64 and the form opens on $4,425.86, the row has lied. The Amount follows the row.</p>
+    <div class="stage">
+      <div class="spec"><div class="cap"><span>Today · The Yard picked</span><span class="tag rest">UNCHANGED</span></div><div data-render="pick-today"></div></div>
+      <div class="spec"><div class="cap"><span>Proposed · The Yard picked</span><span class="tag new">NEW</span></div><div data-render="pick-new"></div></div>
+    </div>
+    <div class="notes" id="n-4"></div>
+  </section>
+
+  <!-- 5 -->
+  <section class="panel" id="p-5" hidden>
+    <h2>5 · Odd cases, and a phone</h2>
+    <p class="lede">The same rule on the bills that do not fit the pattern, and the longest bill name at phone width (360px).</p>
+    <div class="stage">
+      <div class="spec"><div class="cap"><span>Odd cases</span><span class="tag new">NEW</span></div><div data-render="odd"></div></div>
+      <div class="spec" style="flex-basis:360px"><div class="cap"><span>Phone · 360px</span><span class="tag new">NEW</span></div><div data-render="phone"></div></div>
+    </div>
+    <div class="notes" id="n-5"></div>
+  </section>
+
+  <!-- 6 -->
+  <section class="panel" id="p-6" hidden>
+    <h2>6 · Asks</h2>
+    <p class="lede">Recommended answers are ticked. Change any, then copy the answers back to me.</p>
+    <div class="asks" id="asks"></div>
+    <p style="margin-top:16px"><button class="copy" id="copy">Copy my answers</button> <span id="copied" class="sub" aria-live="polite"></span></p>
+    <pre class="out" id="out" hidden></pre>
+  </section>
+
+  <p class="facts">Open this page on the phone you use at the field to judge the 360px specimen. Late wording copies the club bill window's "Oct 1 · 15 days late" line.</p>
+</div>
+
+<script>
+var TABS = ["1 · Whole window", "2 · The row", "3 · Late bills", "4 · After picking", "5 · Odd cases", "6 · Asks"];
+var NOTES = {
+ 1: [["Right end of each bill row: next payment and its date, replacing the whole balance.", "Dallas $350.00 due Nov 15 instead of $1,050.00 owing."],
+     ["A grey line under the bill name keeps the total visible.", "So nobody loses the number they use to pay a bill off early."],
+     ["Everything else is untouched.", "Heading, search field, Miscellaneous, Tournaments, footer. Use Show only what differs to see this."]],
+ 2: [["Colour goes on the verdict, not the total.", "Past ruling 2026-10-16: red marks late, never the amount. So an on-time payment is ink with a quiet date, not red. Today every row is red, which makes a healthy bill look like a problem."],
+     ["Option A drops the total.", "Cleaner, but a coach who wants to clear the whole bill has to open it to find the figure."],
+     ["Option B costs one grey line, still two lines per row.", "The row grows from 44px to about 52px. Six bills would add roughly 50px to the open list."]],
+ 3: [["Late is the only red in the list.", "Red amount plus the warning mark, in the wording the club bill window already uses: date, then how long, or how many and since when."],
+     ["X says why you owe it, nothing more.", "Next payment is on the bill. The Amount still pre-fills with the late total."],
+     ["Y adds what is coming next.", "A fuller row, but a third fact the coach can read on the bill page. The meta-line rule says a row carries facts the columns do not, so I lean X."]],
+ 4: [["Amount pre-fills with what the row showed.", "Late total if late, otherwise the next installment. Still editable. A bigger payment spills onto the next installments as it does now."],
+     ["The For installment dropdown stays as it is.", "Its first choice, Wherever it is owed (oldest first), already matches this."],
+     ["Paying off the whole bill is one edit away.", "That is the reason the total stays under the name in option B."]],
+ 5: [["A single-payment bill shows its amount and due date.", "Today it shows no date at all."],
+     ["A part-paid installment shows only what is left on it.", "Not the full piece, not the bill's balance."],
+     ["Long names wrap, the figures never do.", "At 360px the figures stay at the right and the bill name takes the lines it needs."]]
+};
+var ASKS = [
+ ["Do not-yet-late rows keep the red owing colour?", [["No: ink figure, quiet date, red only when late (recommended)", true], ["Yes: keep every row red as today", false]]],
+ ["Does the bill total stay visible?", [["Yes: grey line under the name, option B (recommended)", true], ["No: next payment only, option A", false]]],
+ ["When a bill is late, the right end shows", [["Late amount and why, option X (recommended)", true], ["Late amount, then the next payment, option Y", false]]],
+ ["Amount pre-fill after picking a bill", [["Match the row: late total, else the next installment (recommended)", true], ["Keep filling the whole balance", false]]]
+];
+
+function R(name, o) { // one bill row. o: {tot, amt, line, late, today}
+  var l = '<span class="l"><span class="nm">' + name + '</span>' + (o.tot ? '<span class="tot">' + o.tot + '</span>' : '') + '</span>';
+  var r;
+  if (o.today) r = '<span class="r"><span class="amt">' + o.today + '</span></span>';
+  else r = '<span class="r"><span class="amt' + (o.late ? ' late' : '') + '">' + o.amt + '</span>' + (o.line ? '<span class="when' + (o.late ? ' late' : '') + '">' + o.line + '</span>' : '') + '</span>';
+  return '<div class="opt' + (o.today ? ' owingtoday' : '') + '">' + l + r + '</div>';
+}
+var WARN = "⚠ ";
+function menu(rows, hlNote) {
+  return '<div class="menu"><div class="grp lead">Bills you owe</div>' + rows +
+   '<div class="same"><div class="grp">Miscellaneous and fees</div><div class="opt"><span class="l">Miscellaneous</span><span class="pill">OUR OWN</span></div>' +
+   '<div class="grp">Tournaments</div><div class="opt"><span class="l">Entry Fees</span><span class="pill std">STANDARD</span></div></div></div>';
+}
+function dlg(inner, cls) {
+  return '<div class="dlg ' + (cls || '') + '"><div class="same"><h3>Record money</h3><div class="dsub">We paid for something</div>' +
+   '<div class="lab">What happened? <span class="req">*</span></div><div class="fld"><span>We paid for something</span><span>⌄</span></div>' +
+   '<div class="lab">What did this pay for? <span class="req">*</span></div><div class="fld plain">Search a bill you owe, or what the cost was for</div></div>' +
+   inner + '<div class="foot same"><span class="c">Cancel</span><span class="s">Save</span></div></div>';
+}
+function mark(n, inner) { return '<div class="hl" data-mk="' + n + '"><button class="mk" data-n="' + n + '" aria-label="Note ' + n + '">' + n + '</button>' + inner + '</div>'; }
+var BASE = [["Dallas", "$1,050.00", "$350.00", "Nov 15"], ["Hitting Instruction", "$2,310.00", "$385.00", "Nov 1"], ["The Yard - Thursdays offseason", "$4,425.86", "$737.64", "Dec 1"]];
+function todayRows() { return BASE.map(function (b) { return R(b[0], { today: b[1] + " owing" }); }).join(""); }
+function newRows(withTot) { return BASE.map(function (b) { return R(b[0], { tot: withTot ? b[1] + " total owing" : "", amt: b[2], line: "due " + b[3] }); }).join(""); }
+function lateRows(variant) {
+  var d = R("Dallas", { tot: "$1,050.00 total owing", amt: "$700.00", late: 1, line: variant === "x" ? WARN + "2 late · since Oct 1" : "then $350.00 on Nov 15" });
+  var h = R("Hitting Instruction", { tot: "$2,310.00 total owing", amt: "$385.00", late: 1, line: variant === "x" ? WARN + "Oct 15 · 14 days late" : "then $385.00 on Nov 15" });
+  var y = R("The Yard - Thursdays offseason", { tot: "$4,425.86 total owing", amt: "$737.64", line: "due Dec 1" });
+  return d + h + y;
+}
+var RENDER = {
+ "whole-today": function () { return dlg(menu(todayRows())); },
+ "whole-new": function () { return dlg(
+   '<div class="menu"><div class="grp lead">Bills you owe</div>' +
+   mark(1, R("Dallas", { tot: "$1,050.00 total owing", amt: "$350.00", line: "due Nov 15" })) +
+   R("Hitting Instruction", { tot: "$2,310.00 total owing", amt: "$385.00", line: "due Nov 1" }) +
+   R("The Yard - Thursdays offseason", { tot: "$4,425.86 total owing", amt: "$737.64", line: "due Dec 1" }) +
+   '<div class="same"><div class="grp">Miscellaneous and fees</div><div class="opt"><span class="l">Miscellaneous</span><span class="pill">OUR OWN</span></div><div class="grp">Tournaments</div><div class="opt"><span class="l">Entry Fees</span><span class="pill std">STANDARD</span></div></div></div>'); },
+ "rows-a": function () { return '<div class="dlg"><div class="menu"><div class="grp lead">Bills you owe</div>' + newRows(false) + '</div></div>'; },
+ "rows-b": function () { return '<div class="dlg"><div class="menu"><div class="grp lead">Bills you owe</div>' + newRows(true) + '</div></div>'; },
+ "late-x": function () { return '<div class="dlg"><div class="menu"><div class="grp lead">Bills you owe</div>' + lateRows("x") + '</div></div>'; },
+ "late-y": function () { return '<div class="dlg"><div class="menu"><div class="grp lead">Bills you owe</div>' + lateRows("y") + '</div></div>'; },
+ "pick-today": function () { return pick("$4,425.86"); },
+ "pick-new": function () { return pick("$737.64"); },
+ "odd": function () { return '<div class="dlg"><div class="menu"><div class="grp lead">Bills you owe</div>' +
+   R("Umpire fees", { tot: "$420.00 total owing", amt: "$420.00", line: "due Dec 1" }) +
+   R("Tournament hotel block", { tot: "$1,806.00 total owing", amt: "$212.40 left", line: "due Nov 15" }) +
+   R("Field rental", { tot: "$600.00 total owing", amt: "$600.00" }) + '</div>' + '</div><p class="facts">Top: a single payment, with its date. Middle: the next installment is part-paid, so it shows what is left on it. Bottom: no date on record, so the date line is simply absent.</p>'; },
+ "phone": function () { return '<div class="dlg narrow"><div class="menu"><div class="grp lead">Bills you owe</div>' + lateRows("x").replace(/Dallas/, "Dallas") + '</div></div>'; }
+};
+function pick(amt) {
+  return '<div class="dlg"><div class="same"><h3>Record money</h3><div class="dsub">We paid for something</div>' +
+  '<div class="lab">What did this pay for? <span class="req">*</span></div><div class="fld val"><span>The Yard - Thursdays offseason</span><span>✕</span></div></div>' +
+  '<div class="lab">Amount <span class="req">*</span></div><div class="hl pad"><div class="fld val"><span>' + amt + '</span></div></div>' +
+  '<div class="same"><div class="lab">For installment</div><div class="fld val"><span>Wherever it is owed (oldest first)</span><span>⌄</span></div>' +
+  '<div class="foot"><span class="c">Cancel</span><span class="s">Save</span></div></div></div>';
+}
+
+function $(s, r) { return (r || document).querySelector(s); }
+function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+$$("[data-render]").forEach(function (el) { el.innerHTML = RENDER[el.getAttribute("data-render")](); });
+Object.keys(NOTES).forEach(function (k) {
+  $("#n-" + k).innerHTML = NOTES[k].map(function (n, i) {
+    return '<div class="n" data-n="' + (i + 1) + '"><b class="num">' + (i + 1) + '</b><p><b>' + n[0] + '</b><small>' + n[1] + '</small></p></div>';
+  }).join("");
+});
+$("#asks").innerHTML = ASKS.map(function (a, i) {
+  return '<div class="ask"><h3>' + (i + 1) + ". " + a[0] + '</h3>' + a[1].map(function (o, j) {
+    return '<label><input type="radio" name="ask' + i + '" value="' + j + '"' + (o[1] ? " checked" : "") + '><span>' + o[0] + '</span></label>';
+  }).join("") + '</div>';
+}).join("");
+
+var tabsEl = $("#tabs");
+tabsEl.innerHTML = TABS.map(function (t, i) { return '<button class="tab" role="tab" id="t' + (i + 1) + '" data-i="' + (i + 1) + '">' + t + '</button>'; }).join("");
+function show(i) {
+  $$(".panel").forEach(function (p) { p.hidden = p.id !== "p-" + i; });
+  $$(".tab").forEach(function (t) { t.setAttribute("aria-selected", String(t.getAttribute("data-i") === String(i))); });
+  $("#viewrow").hidden = !(i === 1 || i === 4);
+  if (i !== 1 && i !== 4) setView(false);
+  try { location.hash = "s" + i; } catch (e) {}
+  window.scrollTo(0, 0);
+}
+function setView(diff) {
+  document.body.classList.toggle("diff", diff);
+  $("#v-all").setAttribute("aria-pressed", String(!diff)); $("#v-diff").setAttribute("aria-pressed", String(diff));
+}
+tabsEl.addEventListener("click", function (e) { var b = e.target.closest(".tab"); if (b) show(+b.getAttribute("data-i")); });
+$("#v-all").onclick = function () { setView(false); }; $("#v-diff").onclick = function () { setView(true); };
+document.addEventListener("click", function (e) {
+  var m = e.target.closest(".mk"); if (!m) return;
+  var n = m.getAttribute("data-n"), p = m.closest(".panel");
+  $$(".n", p).forEach(function (el) { el.classList.toggle("on", el.getAttribute("data-n") === n); });
+  var t = $('.n[data-n="' + n + '"]', p); if (t) t.scrollIntoView({ block: "nearest", behavior: "smooth" });
+});
+$("#copy").onclick = function () {
+  var lines = ASKS.map(function (a, i) {
+    var c = $('input[name="ask' + i + '"]:checked'); return (i + 1) + ". " + a[0] + " → " + a[1][+c.value][0];
+  }).join("\n");
+  var out = $("#out"); out.hidden = false; out.textContent = lines;
+  try { navigator.clipboard.writeText(lines).then(function () { $("#copied").textContent = "Copied."; }, function () { $("#copied").textContent = "Select the text below to copy."; }); } catch (e) { $("#copied").textContent = "Select the text below to copy."; }
+};
+var start = parseInt((location.hash || "").replace("#s", ""), 10); show(start >= 1 && start <= 6 ? start : 1);
+window.addEventListener("hashchange", function () { var s = parseInt(location.hash.replace("#s", ""), 10); if (s >= 1 && s <= 6) show(s); });
+</script>

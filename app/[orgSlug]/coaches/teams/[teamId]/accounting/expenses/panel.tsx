@@ -31,6 +31,7 @@ import {
   PAYABLE_STATUS_DEFAULT, effectivePayerId,
   type CommitmentStanding, type AppliedPayment, type PayableRowStatus,
 } from '@/lib/payable-standing';
+import { nextPayment } from '@/lib/bill-next-payment';
 import { whyPlanStrandsPaidMoney } from '@/lib/payable-scope-edit';
 import { parseInstallmentPlan } from '@/lib/expense-ledger';
 import InstallmentPlanEditor, { BLANK_PLAN_ROW, type PlanRow } from '../InstallmentPlanEditor';
@@ -3307,6 +3308,7 @@ function MoneyRecordsPanel({
    * likely reaching for is the first row under the heading.
    */
   const commitmentsAll = useMemo(() => {
+    const today = tournamentToday();
     const rows = allPayablesRaw.flatMap(e => {
       const standing = standings[e.id];
       if (!standing) return [];
@@ -3318,6 +3320,8 @@ function MoneyRecordsPanel({
         name: e.description,
         remaining: standing.remaining,
         nextDue: next?.dueDate ?? null,
+        /* What the bill asks NOW — the row's figure and the Amount a pick pre-fills, one answer. */
+        ask: nextPayment(standing.installments, today),
         expense: e,
         standing,
       }];
@@ -3393,14 +3397,23 @@ function MoneyRecordsPanel({
       : undefined;
     return {
       label: 'Bills you owe',
-      /* These trailing figures ARE debts, so they read as the portal's owing colour — the shared
-         control is quiet unless a caller says otherwise. */
-      metaTone: 'owing' as const,
-      options: openCommitments.map(c => ({
-        id: c.id,
-        name: c.name,
-        meta: `${fmt(c.remaining)} owing`,
-      })),
+      /* ⚠⚠ THE ROW SAYS WHAT THE BILL ASKS NOW, NOT WHAT IT WILL ASK IN TOTAL (owner 2026-10-29): a
+         dues plan spread over six months read as the whole balance on every row. The next payment
+         and its date lead, the whole balance sits quietly under the name, and RED IS FOR A BILL
+         THAT IS BEHIND — never for an amount (ruling 2026-10-16: colour on the verdict). The
+         balance line is dropped when it would only repeat the figure (a one-payment bill). */
+      options: openCommitments.map(c => {
+        const ask = c.ask;
+        if (!ask) return { id: c.id, name: c.name, meta: fmt(c.remaining) };
+        return {
+          id: c.id,
+          name: c.name,
+          sub: Math.round(ask.amount * 100) === Math.round(c.remaining * 100) ? undefined : `${fmt(c.remaining)} total owing`,
+          meta: ask.left ? `${fmt(ask.amount)} left` : fmt(ask.amount),
+          metaDetail: ask.line,
+          late: ask.late,
+        };
+      }),
       selectedId: conv.spendExpenseId || null,
       selectedName: selectedSettled?.name,
       /* ⚠ THE OTHER HALF OF THE FIELD CLEARS. One question, one answer: a record carrying both a
@@ -3414,10 +3427,12 @@ function MoneyRecordsPanel({
           ...f,
           budgetCategoryId: '', budgetItemId: '', budgetItemName: '', category: '',
           description: isItemLabel(f) ? '' : f.description,
-          /* The remainder, never the face value — the same rule the bill's own payment door
-             follows: pre-filling more invites a coach to confirm a figure larger than the payment
-             they actually made. Editable, like any suggestion. */
-          amount: f.amount || (bill ? String(bill.remaining) : ''),
+          /* What the row said — the late total, else the next installment (owner 2026-10-29) — so a
+             row that reads "$737.64" never opens a form that reads $4,425.86. Never the face value,
+             the same rule the bill's own payment door follows: pre-filling more invites a coach to
+             confirm a figure larger than the payment they actually made. Editable, like any
+             suggestion; a bigger payment spills forward onto the later installments. */
+          amount: f.amount || (bill ? String(bill.ask?.amount ?? bill.remaining) : ''),
         }));
       },
     };
