@@ -9,6 +9,7 @@ import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { X, CheckCircle } from 'lucide-react';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
+import ViewSwitch from '@/components/coaches/kit/ViewSwitch';
 import { COACHES_START_PATH } from '@/lib/coaches-portal-routes';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import { PLAN_CONFIG, showsFoundingZero, gatedPlanSentence, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
@@ -20,6 +21,8 @@ import styles from './PlanArticlePanel.module.css';
 interface Props {
   planKey: PlanKey | null;
   billingCycle: 'monthly' | 'annual';
+  /** Billing's door: the cycle is chosen here, beside the price it changes, because the Upgrade button below commits it. */
+  onBillingCycleChange?: (cycle: 'monthly' | 'annual') => void;
   onClose: () => void;
   onUpgrade: (planKey: PlanKey) => void;
   upgradeLoading: PlanKey | null;
@@ -37,6 +40,7 @@ interface Props {
 export default function PlanArticlePanel({
   planKey,
   billingCycle,
+  onBillingCycleChange,
   onClose,
   onUpgrade,
   upgradeLoading,
@@ -73,6 +77,7 @@ export default function PlanArticlePanel({
           ? `$${config.annualPrice} CAD / year`
           : `$${config.monthlyPrice} CAD / month`;
   const loadingLabel = promoActive ? 'Applying…' : 'Redirecting…';
+  const picksCycle = Boolean(onBillingCycleChange) && !promoActive && !readOnly && canUpgrade && !isComingSoon && config.monthlyPrice > 0;
 
   return (
     <>
@@ -95,6 +100,8 @@ export default function PlanArticlePanel({
         {/* Price strip */}
         <div className={styles.priceStrip}>
           <span className={styles.priceAmount}>{price}</span>
+          {picksCycle && <ViewSwitch label="Billing" value={billingCycle} onChange={onBillingCycleChange!}
+            views={[{ id: 'monthly', label: 'Monthly' }, { id: 'annual', label: 'Yearly' }]} />}
           {promoActive ? (
             <span className={styles.priceSavings}>
               then ${config.monthlyPrice}/mo · no credit card required
@@ -172,7 +179,7 @@ export default function PlanArticlePanel({
               onClick={() => onUpgrade(planKey)}
               disabled={upgradeLoading === planKey}
             >
-              {upgradeLoading === planKey ? loadingLabel : promoActive ? `Get ${config.label} free` : `Upgrade to ${config.label}`}
+              {upgradeLoading === planKey ? loadingLabel : promoActive ? `Get ${config.label} free` : `Upgrade to ${config.label}${picksCycle ? ` · ${billingCycle === 'annual' ? `$${config.annualPrice} / year` : `$${config.monthlyPrice} / month`}` : ''}`}
             </button>
           ) : null}
           <button className={`btn btn-ghost ${styles.cancelBtn}`} onClick={onClose}>

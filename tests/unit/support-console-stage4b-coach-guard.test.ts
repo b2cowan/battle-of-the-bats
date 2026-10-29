@@ -123,7 +123,7 @@ describe('Part 5 · Plan & billing on free time (drawing D)', () => {
     assert.match(body, /profile\.freeTimeOmittedBillingItems\?\.includes\(index\)/);
     assert.match(body, /portal \? 'btn-outline' : 'btn-lime'/);
     assert.match(body, /teamWorkspaceReactivatePath\(org\)\}&keep=1/);
-    assert.match(readCode('components/billing/Billing.module.css'), /\.keepPremiumButton \{ width: 100%; \}/);
+    assert.match(readCode('components/billing/Billing.module.css'), /\.keepPremiumButton, \.joinClubButton \{ width: 100%; \}/);
   });
   it('the price, the Stripe door, Cancel and the tournament slots are not rendered while it runs (Q10, Q11-7)', () => {
     assert.match(page, /controlsReady && paid && !staffFree && !endedPortal && !founding/);

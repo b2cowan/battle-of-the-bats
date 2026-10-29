@@ -72,7 +72,7 @@ describe('the Upgrade is Plan & billing’s', () => {
     assert.match(drawer, /upgradePlansFor\(/);
     const billing = read('components', 'billing', 'BillingBody.tsx');
     assert.match(billing, /ownProfile\.changes\.some/);
-    assert.match(billing, /post\('\/api\/billing\/create-checkout', \{ planKey: target, billingCycle: cycle, returnTo: billingBase \}\)/);
+    assert.match(billing, /post\('\/api\/billing\/create-checkout', \{ planKey: target, billingCycle: chosen, returnTo: billingBase \}\)/);
   });
   it('only the owner is offered Upgrade; the shared body locks before mounting reads', () => {
     assert.match(read('components', 'billing', 'PlanPanelDrawer.tsx'), /canUpgrade=\{hasBillingAccess\(userRole, userCapabilities\) && /);

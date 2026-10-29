@@ -51,6 +51,12 @@ export const PLAN_BILLING_WORDS = {
       ? `${days}-day trial — you add a payment method at checkout, and you're first charged when the trial ends.`
       : 'Payment details collected in Stripe',
   },
+  // The payment step an Upgrade opens: the cycle is chosen where the money is committed, not above a table that shows both.
+  pay: {
+    title: (label: string) => `How would you like to pay for ${label}?`,
+    monthlyHelp: 'Billed every month.', annualHelp: 'Billed once a year.',
+    cycleLabel: 'Billing', continue: 'Continue to checkout', cancel: 'Cancel',
+  },
   usage: {
     teams: 'Teams', tournaments: 'Tournament slots', seats: 'Staff seats', unlimited: 'Unlimited', loading: 'Loading…',
     teamCount: (count: number, limit: number) => `${count} of ${limit >= NO_LIMIT ? 'unlimited' : limit} teams`,

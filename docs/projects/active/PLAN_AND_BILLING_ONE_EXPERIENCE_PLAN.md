@@ -219,7 +219,7 @@ confirmation). What the drawings found against the original plan:
 9. The plan entry is the **only source** for days kept and for what goes offline: **365 for Premium, 90 for organizations; accounting words as the Club page says them.**
 10. The Premium cancel button reads **"Cancel Premium…"**.
 11. After paying, success and errors use **the Club page's fading line, everywhere** (no modal).
-12. "Managing more than tournaments?" stays as **a quiet last section on tournament plans only**.
+12. "Managing more than tournaments?" stays as **a quiet section on tournament plans only**. **Amended by the owner 2026-10-29:** it sits ABOVE Reduce or cancel, so Reduce or cancel is the last section on every plan (it was "last"; the cancel door now ends the page, matching Club and League).
 13. Stage 2 adds a **test for "owner of a standalone Coaches Portal"** and uses it for the row and for removing the Admin door.
 Earlier the same day the owner ruled **Plan & billing sits in the rail foot, beside Help, on every plan** (above).
 **Follow-through:** the small drawing for portal workspace links and the plan-details link is owed before Stage 3.

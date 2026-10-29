@@ -204,15 +204,33 @@ async function ownerHarness(options: { plan?: OrgPlan; search?: string; refresh?
 }
 
 describe('real owner billing action request contracts', () => {
-  it('the shipped upgrade-cycle select sends the selected cycle', async () => {
+  it('Upgrade asks how to pay first, and the payment step sends the chosen cycle', async () => {
     const h = await ownerHarness({ plan: 'tournament' });
     try {
-      change(find(h.renderedView(), element => element.type === 'select'), 'annual'); h.render();
-      // Choosing an upgrade cycle does not relabel the currently subscribed plan or its price.
-      assert.equal(h.view().snapshot.org.subscriptionPeriod, 'monthly');
+      // No cycle dropdown above the table, which already shows both prices.
+      assert.ok(!elements(h.renderedView()).some(element => element.type === 'select'));
       h.answer('/api/billing/create-checkout', { url: 'https://stripe.test/upgrade' });
       click(find(h.renderedView(), element => element.type === 'button' && elements(element.props.children).length === 0 && element.props.children === W.change.upgrade(planConfig.PLAN_CONFIG.tournament_plus.label)));
       await h.settle();
+      // Clicking Upgrade opens the payment step; nothing is requested until a cycle is chosen.
+      assert.equal(h.requests.length, 0);
+      const step = find(h.tree(), element => typeof element.props.onContinue === 'function');
+      assert.equal(step.props.initial, 'monthly');
+      // Choosing a cycle does not relabel the currently subscribed plan or its price.
+      assert.equal(h.view().snapshot.org.subscriptionPeriod, 'monthly');
+      (step.props.onContinue as (cycle: string) => void)('annual'); await h.settle();
+      assertRequest(h.requests[0], '/api/billing/create-checkout', 'POST', { planKey: 'tournament_plus', billingCycle: 'annual', returnTo: billingBase, orgSlug: h.org.slug });
+      assert.deepEqual(h.assigned, ['https://stripe.test/upgrade']);
+      assert.ok(!elements(h.tree()).some(element => typeof element.props.onContinue === 'function'), 'the payment step closes once checkout is requested');
+    } finally { h.dispose(); }
+  });
+  it('the details panel carries its own cycle, so its Upgrade goes straight to checkout', async () => {
+    const h = await ownerHarness({ plan: 'tournament', search: 'plan=tournament_plus' });
+    try {
+      h.answer('/api/billing/create-checkout', { url: 'https://stripe.test/panel' });
+      const panel = find(h.renderedView(), element => typeof element.props.onBillingCycleChange === 'function');
+      (panel.props.onBillingCycleChange as (cycle: string) => void)('annual'); h.render();
+      (find(h.renderedView(), element => typeof element.props.onUpgrade === 'function').props.onUpgrade as () => void)(); await h.settle();
       assertRequest(h.requests[0], '/api/billing/create-checkout', 'POST', { planKey: 'tournament_plus', billingCycle: 'annual', returnTo: billingBase, orgSlug: h.org.slug });
     } finally { h.dispose(); }
   });
@@ -221,7 +239,7 @@ describe('real owner billing action request contracts', () => {
     try {
       h.answer('/api/billing/create-checkout', { url: 'https://stripe.test/checkout' });
       h.view().actions.setCycle('annual'); h.render();
-      h.view().actions.change({ target: 'club', mechanism: 'checkout' }); await h.settle();
+      h.view().actions.change({ target: 'club', mechanism: 'checkout' }, 'annual'); await h.settle();
       assertRequest(h.requests[0], '/api/billing/create-checkout', 'POST', { planKey: 'club', billingCycle: 'annual', returnTo, orgSlug: h.org.slug });
       assert.deepEqual(h.assigned, ['https://stripe.test/checkout']);
       h.restorePage(); h.render(); h.requests.length = 0;

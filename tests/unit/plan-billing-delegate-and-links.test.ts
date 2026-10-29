@@ -106,6 +106,13 @@ describe('the plan panel offers Upgrade where the Change plan table does', () =>
   it('Tournament → Tournament Plus: the owner gets Upgrade', () => {
     assert.match(panelOnly(html(withDetail('tournament', 'tournament_plus'))), /Upgrade to Tournament Plus/);
   });
+  it('the panel offers Monthly / Yearly only where its Upgrade can commit one', () => {
+    const open = html(withDetail('tournament', 'tournament_plus'));
+    assert.match(open, /aria-pressed="true"[^>]*>Monthly<\/button>/); assert.match(open, />Yearly<\/button>/);
+    assert.match(open, /Upgrade to Tournament Plus · \$39 \/ month/);
+    const held = withDetail('tournament', 'tournament_plus'); held.snapshot.gating = ready({ tournament: false, tournament_plus: true });
+    assert.doesNotMatch(html(held), />Yearly<\/button>/);
+  });
   it('no Upgrade when the plan is held back, a staff grant is running, the org is cancelled, or the change is not a checkout', () => {
     const held = withDetail('tournament', 'tournament_plus'); held.snapshot.gating = ready({ tournament: false, tournament_plus: true });
     assert.doesNotMatch(html(held), /Upgrade to Tournament Plus<\/button>|btn-lime btn-data/);
@@ -117,10 +124,11 @@ describe('the plan panel offers Upgrade where the Change plan table does', () =>
     assert.doesNotMatch(html(withDetail('tournament_plus', 'club')), /btn-lime btn-data/);
     assert.doesNotMatch(html(withDetail('club', 'club_large')), /btn-lime btn-data/);
   });
-  it('the panel upgrade closes the panel and runs the table’s own checkout change, in the chosen cycle', () => {
+  it('the panel upgrade closes the panel and runs the table’s own checkout change, in the cycle chosen beside the price', () => {
     const body = readCode('components/billing/BillingBody.tsx');
-    assert.match(body, /onUpgrade=\{\(\) => \{ onCloseDetail\(\); if \(detailChange\) a\.change\(detailChange\); \}\}/);
+    assert.match(body, /onUpgrade=\{\(\) => \{ onCloseDetail\(\); if \(detailChange\) a\.change\(detailChange, a\.cycle\); \}\}/);
     assert.match(body, /billingCycle=\{a\.cycle\}/);
+    assert.match(body, /onBillingCycleChange=\{a\.setCycle\}/);
     assert.match(body, /canUpgrade=\{Boolean\(detailChange\) && controlsReady && ownBilling && !cancelled && sale\(detailProfile\.key\)\}/);
   });
 });
