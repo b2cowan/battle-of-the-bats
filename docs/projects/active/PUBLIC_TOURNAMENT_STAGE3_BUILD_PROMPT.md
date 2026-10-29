@@ -400,9 +400,155 @@ check, with no owner pass inferred from that authorization. **Good place to `/cl
 game's page and the desktop layouts**, using Part 1's amended cancelled/unofficial/notes/stakes/no-location rulings. The
 admin Schedule preview branch landed in Part 2; Part 3 checks it rather than building a game-page preview.
 
+## Part 3 implementation and handoff (2026-10-29)
+
+**Part 2 committed `68acfe331` 2026-10-29**, on the owner's instruction to commit and continue. Only its 17 files landed;
+the shared TODO was staged from HEAD plus this session's line change so the other sessions' records stayed separate.
+The owner instruction did not record a visual pass on the Part 2 checklist.
+
+Part 3 implements `PublicGameDetails.tsx` and its stylesheet, behind the server switch after the published-game lookup.
+The existing game body from its division lookup through the end of its JSX is byte-for-byte the Part 2 body, pinned by
+the Stage 3 guard. `lib/public-game-detail.ts` supplies the new body's state, names, round, Directions, countdown, facts
+and share eligibility. The stakes helper moved there: old callers keep today's text and matching; new callers use a
+whole Winner-code reference within the same division and bracket, and singular fan round names. The Schedule takes the
+same round/stakes helpers. Only preview metadata/OG wording takes the new names and Championship; the share artwork is
+not redesigned. Countdown receives the absolute venue-timezone instant rather than a viewer-local wall-clock string.
+
+The game page leads with time, field, address and primary worded Directions, then the visitor/home score card, then
+facts (Notes last, absent when empty). Cancelled keeps the address and soft time with its red chip, has no Directions,
+scores or share action, and says "This game will not be played." Unofficial keeps scores/share, has its amber chip and
+"Not yet confirmed by the organizer" foot. A venue name without an address still has Directions. No location at all
+reads Location TBD and has none. `DirectionsLink` and `ShareScoreButton` have optional primary/icon-only variants;
+their default variants retain the old callers' presentation.
+
+At 1,024 px the Schedule's division, track and search use one row, followed by the installed-app-only My games and
+worded Calendar when a team is followed. Rows use inline matchups/scores with their context on the right; live rows
+keep Live now and worded Directions. Below that breakpoint the phone controls remain. A game's page has location and
+score in the left column, facts on the right. The admin Schedule preview uses the same body with no destinations;
+it has no game page, so no game-page preview was added.
+
+**Live refresh proven:** the existing 30-second hooks are retained. The new game mode compares a signature including
+derived public state, so kickoff/end without a score edit also refreshes; missing/withheld games trigger a refresh
+instead of leaving the old game up. The old mode remains score/status-only. On the real new bodies, accelerated browser
+timers exercised the actual fetch and router-refresh path: score 3 → 4 updated both bodies; another unchanged poll
+caused no extra server refresh; Final moved the Schedule game into Earlier today exactly once with no duplicate ids.
+A final-game deep link selected its division/stage/day, expanded the fold and revealed it; the other query parameter
+and hash survived cleanup. The fixture was read back after each write and left prepared/live again.
+
+**Fixtures:** `node --env-file=.env.local scripts/seed-public-stage3-fixtures.mjs prepare` extends only the existing
+marked Lakeshore development fixture: seven pool-play dates and a scored live semifinal. `show` reads it back; `undo`
+restores and verifies its saved original game rows/dates. After prepare, `score`, `final`, `unofficial`, `cancelled`,
+`no-score` and `soon` change that same saved semifinal and verify each write. The undo record is in
+`.probe/stage3-fixture-undo.json`. Production and an unmarked org are refused. Four new layout entries explicitly wait
+for live Schedule, many-day rail, Playoffs and a live game; a missing state fails instead of silently measuring another
+page. The original game layout entry also now requires reaching the game's body.
+
+**Verification, 2026-10-29:** full typecheck passed; focused lint passed; the full unit suite passed **12,170** tests;
+the final focused public/guard suites passed **257** tests. CSS purity, spelling, date correctness, public lettering,
+palette and text contrast passed. The public token scope has zero literal debt. The combined `verify:changed` stops
+on three unrelated lint errors in `app/dev/crash-test/page.tsx`; the separately run all-scope token check reports the
+unrelated admin Schedule colour literal already noted in Part 2. These files and the shared checks were not edited.
+The five Schedule/game layout states passed at **361, 390 and 1280 px: 15 pairs, zero findings**, with the preview on,
+one worker, and no baseline change. Source/unit guards retain the server-side publish gates and old-body branch.
+
+**Measured on the prepared Lakeshore semifinal:** Directions starts **289 px down at 360 / 390 px**, **260 px at
+1280 px** (drawing about 303 px), with its 48 px height. Also checked 901 / 1023 px: Directions 289 px, phone controls
+and stacked facts retained. No horizontal overflow at any of those five widths. At 1280 the select/search share a row
+and facts are beside the main cards. The dev server was restarted for the new/shared files; the required login returned
+HTTP 200 and the log showed no Supabase EACCES failures.
+
+**Preview/demo limits:** the existing org-owner UAT session opened its own tournament preview (HTTP 200), which had
+no game or maps destinations; that fixture had no rows to exercise. The platform-admin session correctly returned to
+its separate console and no access rule was changed. The Riverdale demo's preview Schedule says Schedule coming soon:
+it has no published game rows, so no demo game body could be exercised. The demo seed was not edited. The switch-off
+Lakeshore game uses the legacy body; its Game Details heading is attached but intentionally hidden by the old phone
+live chrome. These checks are not an owner visual pass.
+
+**Owner check (360 / 390 / 1280):** use the prepared Lakeshore Schedule and the semifinal named in the fixture read-back.
+Check Directions first, visitor then home, team links, the round and share symbol, facts and notes. Use the fixture
+commands above for Cancelled, Unofficial, no score and before the game, reading each state back before ticking it.
+Check the desktop's one-row Schedule and the game's two columns, plus 901–1023 px. Check the preview with a published
+game in an org you administer, and revisit the demo game once its schedule is published. The whole Stage 3 walk is Part 4.
+
+**Good place to `/clear`: Part 4 starts with `/simplify`, then `/review` of Stage 3's own diff, then the QA walk and records.**
+
 ## Not in Stage 3 (say so if a step drifts toward one)
 The bracket's move, Standings pinning (D5) and the tie-breaker rows (Stage 4). Teams and a team's page, where following a
 team lives (Stage 5). Tabs following what there is, the tab order, Rules as tap-open sections (Stage 6). The pay page
 (Stage 7). Sponsors strip (side track). The club's rule for its tournaments' look (Stage 1a). Rewiring the six other
 copies of the finished rule. A whole-tournament calendar file (the calendar symbol is the followed team's, as today; a
 division-wide `.ics` would be new). Emails and link previews.
+
+## Part 4 progress (2026-10-29): /simplify and /review DONE, walk and records owed
+
+**Committed `5f2e3a81a` 2026-10-29** (25 files: Part 3 + the Part 4 fixes; the working copy also holds other sessions'
+hunks — `TodaysResultsLine.*`, `TournamentBand.tsx`, `TournamentFrame.module.css`, `TournamentTopTabs.tsx`, `ClubFrame`/
+`ClubKit`/`MyTeamCard` CSS, the ticker-fade edit in `public-tournament-stage1-frame-guard.test.ts`, the One Window files,
+the band-crowding mockup — never stage those). **Order of work left:** (1) the QA walk, next free § in
+`OWNER_QA_LEDGER.md` (§425 was the last seen; grep again). (2) records: the ledger entry; the plan §9 row and TODO line
+already carry `5f2e3a81a` and say the walk is next — add the walk's § and, once the owner has walked it, the result.
+
+**`/simplify` applied:** one `requireFinalization` prop on the refresher (unset = today's score/status-only signature; the
+guard test pins both branches); one `gameDirections` helper shared by the Schedule and the game page; one face-signature
+function; team lookups through one `knownTeam`; the live card's foot takes the stakes helper's own text; the tournament's
+finalization rule read one way everywhere (the data layer already lays it over the org's). **Skipped on purpose** (say so
+if asked): splitting the game row and live card into separate Schedule components and moving their CSS (a larger
+restructure; Stage 8 deletes the old paths); the one-DOM live card; a single-game refresh endpoint (the refresher downloads
+the event's payload every 30 s per open game page — worth a ticket, not a Stage 3 change); `next/dynamic` for
+`PublicSchedule` (vanishes at Stage 8); memoising the per-row team/venue lookups (about 100k comparisons at 300 games).
+`isTournamentInProgress` was NOT reused on the server game page: `lib/follow.ts` is a client module.
+
+**`/review` (4 lenses: correctness, held-back data + security, switch-off regression, live state) — Confirmed and fixed:**
+1. *Earlier today re-closed itself 2.6 s after a deep link opened it* (found independently by two lenses); the open row now
+   latches, and a tap closes it. (Part 2's check looked right after landing, so it never saw this.)
+2. *"Up next" printed above the first upcoming game of every date* and above a long-past unscored game; now today only and
+   only for a game that has not started (the drawing ties it to game day after Live now).
+3. *Pool playoff headers repeated per time slot* (A, B, A, B); `groupPoolPlayoffs` keeps each division's pool together.
+4. The day rail's active chip was not centred on a first load when the page was still "Loading" (effect now waits for ready).
+5. A misleading comment on the slot-words function.
+**Clean:** held-back divisions (D1) in the game page, metadata, OG image, refresher, search, chips, fold and deep link; the
+switch-off Schedule (`ScheduleContent`, its CSS, `TieredBracket`, `ScoreTicker` byte-for-byte empty diff) and the old
+game-page body (SHA-256 pinned by the guard); ticker lists; shared buttons' default output; admin preview rows are plain
+divs. **Known and accepted, put in the PO summary / walk:** the page's clock moves only on the 30 s poll (a kickoff or a
+live→final change can show up to 30 s late; with polling off — a preview, or a page left open from before the event — it
+never advances until reload); two polls landing out of order can show an older score for up to 30 s (the shared hook, also
+the old Schedule's); a deep link whose game is on the other stage in a one-stage event lands without flashing (rare);
+the game page is "enabled" for polling on the server at render, so a page opened the day before the event never starts
+polling until reload; the Overview preview's section heads are 44 px tall and its row sub-lines 3 px looser since Part 3
+(Stage 2 was walked before); the Overview's bracket slots read "Semifinal 2 winner" under the preview (ruled).
+**Gate:** typecheck clean; focused lint clean; 145 focused tests pass (incl. new pool-grouping tests); the rendered layout
+check on the live Schedule, many-day, Playoffs and live-game screens: 16 pairs, no new findings. `verify:changed` stops at
+`npm test` on a plan-billing test (`plan-panel-host`) that is another session's; run on their own, the public-token,
+public-type, CSS-purity, spelling, both contrast, date-correctness checks pass; the admin Schedule colour literal, the
+platform-admin dead classes and the demos script's `registration-attention` import are other sessions'.
+
+### Kick-off for the Stage 3 walk (a fresh chat; this is what the owner pastes)
+
+Write the **Stage 3 QA walk** for the public tournament pages — Part 4 step 2 and the records of step 3. Code is committed
+(`5f2e3a81a`, Part 3 + the `/simplify` and `/review` fixes; Parts 1–2 are `dda844ef3` and `68acfe331`). Read, in order, and
+nothing else unless a step names it: this prompt's **"Part 4 · Simplify, review, the walk, the records"** (step 2 and 3),
+**"Part 4 progress (2026-10-29)"** and the Part 2 / Part 3 "Owner check" lists; `AGENTS.md`; `AGENCY_RULES.md`.
+`PUBLIC_TOURNAMENT_STAGE2_WALK.html` is the shell (parts, fixtures, a stop check, read-backs on every step that writes).
+Do not read the 185 KB review hub whole.
+1. Present the product-owner summary first (what the walk proves, in plain words), then build the walk as a checkable
+   Claude Artifact (mockups/walks rule: HTML page, paste-back, ONE purpose: *with the preview on, the Schedule and a game's
+   page answer where and when; with it off, nothing changed*). Grep `OWNER_QA_LEDGER.md` for the next free § (other
+   sessions add §s); write the ledger entry in the §423 style.
+2. Cover: controls and day chips on a phone; the Earlier today fold and the live card (use
+   `node --env-file=.env.local scripts/seed-public-stage3-fixtures.mjs prepare|score|final|unofficial|cancelled|no-score|soon|show|undo`
+   and `.probe/stage1walk/walk.mjs live`); the Playoffs half and its door (points at **Standings**, "On the Standings tab");
+   pool headings once per pool; **"Up next" only on game day and only above a game that has not started**; held-back and
+   empty states; Cancelled and Unofficial on the Schedule AND on a game's page; a game's page (Directions first at about
+   289 px, visitor then home, no stars, "Championship" not "Final", Notes last); the desk (1,280 px and 901–1,023 px);
+   **the deep link: open `?highlightGameId=` of a finished game today, wait past 3 seconds, and confirm Earlier today is
+   still open and a tap closes it**; the ticker gone from the Schedule and a game's page and still on Standings, Playoffs,
+   Teams, a team's page, News and Rules; the admin preview (plain rows, no Directions, no links); the switch off = today's
+   pages; the demo. Installed-app steps optional.
+3. ⚠ §407's lesson: the walk is the only rendered check. Ask for a read-back on every step that writes (the fixture
+   commands print one) and compare the server log with what the owner ticked before recording a pass. Leave the fixture
+   prepared/live again at the end, or `undo` it, and say which.
+4. Records after the walk is written: ledger entry, plan §9 row (add the walk's §), TODO line. `/docs` and `/demos` wait for
+   Stage 8. Do not commit until the owner says so; stage explicit paths only (other sessions share this working copy).
+5. Then say Stage 3 is walk-ready and a good place to `/clear`; once he has walked it, next is Stage 4 (Standings +
+   Playoffs, where the bracket lands and the door is re-pointed to Playoffs in one edit — `SCHEDULE_BRACKET_DOOR` in
+   `lib/public-schedule.ts`) or Stage 1a (who owns the look); name both and let him choose.

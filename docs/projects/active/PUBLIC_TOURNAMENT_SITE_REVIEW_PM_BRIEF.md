@@ -1,7 +1,8 @@
 # PM brief — Public tournament pages: easy to read in a parking lot, and a door to the club
 
 **Status:** drawings ruled 2026-10-27; Stages 1 and 2 built and owner-walked (plan §9). Stage 3 Part 2 implements the
-phone Schedule behind the preview switch, 2026-10-29; owner visual check follows. Priority: the next public-page stage.
+phone Schedule behind the preview switch (committed `68acfe331`, 2026-10-29); Part 3 adds the game page and desktop
+arrangement on the same date. Owner visual checks are recorded separately. Priority: the next public-page stage.
 Plan: `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md`. Mockups: the review hub (Claude Artifact).
 
 ## Stage 3 Part 2 — the phone Schedule (2026-10-29)
@@ -19,6 +20,20 @@ customer-facing Schedule until Stage 8.
 Success: a family can find when and where without passing the old control stack; hidden games stay hidden, deep links
 open the right game, and live updates preserve each game's place. The owner checks the fixtures at 360 and 390 px;
 Part 3 adds the game page and the full desktop arrangement.
+
+## Stage 3 Part 3 — where and when first (2026-10-29)
+
+A family opening a game sees its time, field, address and a full Directions button before the score. The next card
+shows both teams, the round and the game's state; the last card holds the division, round, game length and any notes.
+Championship names the round; Final describes a confirmed result. A cancelled game keeps its address with no Directions,
+scores or share action. An unofficial result keeps the scores and share action and says it awaits confirmation.
+
+On a desktop, Schedule controls and rows use the available width; the game's facts sit beside its location and score.
+My games and calendar remain exclusive to the installed app. The admin preview keeps plain Schedule rows and has no
+separate game-page destination. The preview switch preserves the existing public pages until Stage 8.
+
+Success: Directions is on the first phone screen; the desktop adds room without changing the task; scores update as
+before, a game enters/leaves Live now at the correct time, and a newly withheld game disappears from an open page.
 
 ## What changes for a family
 - **The phone home answers "where is my next game" on the first screen.** On game day it opens with your team (if you
