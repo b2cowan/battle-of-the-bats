@@ -16,7 +16,7 @@ import { getRegistrationState } from '@/lib/registration-state';
 import { resolveGameFieldLabel } from '@/lib/venue-label';
 import { fanPlaceholder, gameRowView, gameSideNames, liveCardView } from '@/lib/public-game-row';
 import { gameDirections, getPlayoffStakes, publicGameRound } from '@/lib/public-game-detail';
-import { changedScheduleGameIds, groupPoolPlayoffs, scheduleGames, scheduleInitialSelection, scheduleLandingDay, SCHEDULE_BRACKET_DOOR, splitEarlierToday, visibleScheduleGames, type ScheduleStage } from '@/lib/public-schedule';
+import { changedScheduleGameIds, divisionPools, groupPoolPlayoffs, scheduleGames, scheduleInitialSelection, scheduleLandingDay, SCHEDULE_BRACKET_DOOR, splitEarlierToday, visibleScheduleGames, type ScheduleStage } from '@/lib/public-schedule';
 import { downloadTeamScheduleICS } from '@/lib/team-calendar';
 import { useOrgHref } from '@/lib/use-public-pathname';
 import { formatTime } from '@/lib/utils';
@@ -38,6 +38,8 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
   const [failed, setFailed] = useState(false);
   const [division, setDivision] = useState('');
   const [stage, setStage] = useState<ScheduleStage>('pool');
+  // A pool pick belongs to the division it was made in, so changing division drops it without anything resetting it.
+  const [poolPick, setPoolPick] = useState({ division: '', id: '' });
   const [day, setDay] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
@@ -139,8 +141,11 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
   const games = useMemo(() => visibleScheduleGames(data?.games ?? [], data?.divisions ?? []), [data]);
   const followed = !isPreview ? data?.teams.find(t => t.id === followedTeamId) : undefined;
   const effectiveStage = !hasRoundRobin(data?.tournament) ? 'playoff' : !hasPlayoffs(data?.tournament) ? 'pool' : stage;
+  // The Pool control exists only for one division with two or more pools, in pool play, while "My games" is off.
+  const pools = effectiveStage === 'pool' && !myGames ? divisionPools(data?.divisions ?? [], division) : [];
+  const pool = poolPick.division === division && pools.some(p => p.id === poolPick.id) ? poolPick.id : '';
   const selection = useMemo(() => scheduleGames({ games, teams: data?.teams ?? [], divisions: data?.divisions ?? [],
-    division, stage: effectiveStage, query, myTeamId: myGames ? followed?.id : null }), [games, data, division, effectiveStage, query, myGames, followed?.id]);
+    division, stage: effectiveStage, pool, query, myTeamId: myGames ? followed?.id : null }), [games, data, division, effectiveStage, pool, query, myGames, followed?.id]);
   const effectiveDay = scheduleLandingDay(selection.dates, today, day, Boolean(query.trim() || myGames));
   const datesVisible = selection.dates.length > 1 && !query.trim() && !myGames;
   // The rail only exists once the page has left "Loading", so that moment is a dependency too.
@@ -229,6 +234,8 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
             setDivision(e.target.value); setQuery(''); setMyGames(false);
             if (!isPreview) setDivisionPref(orgSlug, divisions.find(d => d.id === e.target.value)?.name ?? '');
           }}><option value="">All divisions</option>{divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}</select></label>
+          {pools.length > 0 && <label className={styles.pool}><span className={kit.srOnly}>Pool</span><select aria-label="Pool" value={pool}
+            onChange={e => setPoolPick({ division, id: e.target.value })}><option value="">All pools</option>{pools.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}
           {followed && <span className={`${parts.appOnly} ${styles.myGamesSlot}`}><button type="button" className={styles.myGames} aria-pressed={myGames} onClick={() => {
             setMyGames(!myGames); setQuery(''); setDivision(followed.divisionId);
             setDivisionPref(orgSlug, divisions.find(d => d.id === followed.divisionId)?.name ?? '');

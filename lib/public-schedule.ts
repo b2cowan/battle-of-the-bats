@@ -53,13 +53,22 @@ export function scheduleInitialSelection({ games, divisions, teams, tournament, 
   return { division, stage, day: target ? target.date || 'all' : null, highlight: target?.id ?? null };
 }
 
-export function scheduleGames({ games, teams, divisions, division, stage, query = '', myTeamId = null }: {
+/** The pools a visitor can narrow to: only a chosen division with two or more pools offers any. */
+export function divisionPools(divisions: Division[], division: string): { id: string; name: string }[] {
+  const pools = divisions.find(d => d.id === division)?.pools ?? [];
+  return pools.length < 2 ? [] : pools.map(p => ({ id: p.id, name: p.name }));
+}
+
+export function scheduleGames({ games, teams, divisions, division, stage, pool = '', query = '', myTeamId = null }: {
   games: Game[]; teams: PublicTeam[]; divisions: Division[]; division: string; stage: ScheduleStage;
-  query?: string; myTeamId?: string | null;
+  pool?: string; query?: string; myTeamId?: string | null;
 }) {
   const visible = visibleScheduleGames(games, divisions);
-  const stageGames = visible.filter(g => (!division || g.divisionId === division) && Boolean(g.isPlayoff) === (stage === 'playoff'));
   const teamMap = new Map(teams.map(t => [t.id, t]));
+  // A pool narrows pool play only, and only inside one division whose pools are real; anything else ignores it.
+  const poolId = stage === 'pool' && division && divisionPools(divisions, division).some(p => p.id === pool) ? pool : '';
+  const inPool = (g: Game) => !poolId || teamMap.get(g.homeTeamId)?.poolId === poolId || teamMap.get(g.awayTeamId)?.poolId === poolId;
+  const stageGames = visible.filter(g => (!division || g.divisionId === division) && Boolean(g.isPlayoff) === (stage === 'playoff') && inPool(g));
   const poolTags = new Map<string, string | null>();
   for (const d of divisions) {
     const pools = d.pools ?? [];

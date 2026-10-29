@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { changedScheduleGameIds, groupPoolPlayoffs, scheduleGames, scheduleInitialSelection, scheduleLandingDay, splitEarlierToday, visibleScheduleGames } from '../../lib/public-schedule.ts';
+import { changedScheduleGameIds, divisionPools, groupPoolPlayoffs, scheduleGames, scheduleInitialSelection, scheduleLandingDay, splitEarlierToday, visibleScheduleGames } from '../../lib/public-schedule.ts';
 import { gameRowView } from '../../lib/public-game-row.ts';
 import type { Division, Game, PublicTeam, Tournament } from '../../lib/types.ts';
 
@@ -136,5 +136,35 @@ describe('the preview Schedule: playoff pools stay together', () => {
     assert.equal(ids(groupPoolPlayoffs(list, new Map())), 'p,final,q');
     const tags = new Map<string, string | null>([['p', 'Pool A'], ['final', null], ['q', 'Pool A']]);
     assert.equal(ids(groupPoolPlayoffs(list, tags)), 'p,q,final');
+  });
+});
+
+describe('the Schedule pool control', () => {
+  const pooled = [{ ...divisions[0], pools: [{ id: 'pa', name: 'Pool A' }, { id: 'pb', name: 'Pool B' }] }, divisions[1]] as Division[];
+  const pooledTeams = [{ id: 'a1', divisionId: 'u11', poolId: 'pa' }, { id: 'a2', divisionId: 'u11', poolId: 'pa' },
+    { id: 'b1', divisionId: 'u11', poolId: 'pb' }, { id: 'b2', divisionId: 'u11', poolId: 'pb' }] as PublicTeam[];
+  const pooledGames = [game('ga', { homeTeamId: 'a1', awayTeamId: 'a2', date: '2026-10-28' }), game('gb', { homeTeamId: 'b1', awayTeamId: 'b2' })];
+  const run = (extra: Partial<Parameters<typeof scheduleGames>[0]>) =>
+    scheduleGames({ games: pooledGames, teams: pooledTeams, divisions: pooled, division: 'u11', stage: 'pool', ...extra });
+
+  it('offers pools only for one division that has two or more', () => {
+    assert.deepEqual(divisionPools(pooled, 'u11').map(p => p.name), ['Pool A', 'Pool B']);
+    assert.deepEqual(divisionPools(pooled, 'u13'), []);
+    assert.deepEqual(divisionPools(pooled, ''), []);
+    assert.deepEqual(divisionPools([{ ...divisions[0], pools: [{ id: 'solo', name: 'Pool A' }] }] as Division[], 'u11'), []);
+  });
+  it('narrows pool play to that pool, and the day chips follow', () => {
+    assert.deepEqual(run({ pool: 'pa' }).games.map(g => g.id), ['ga']);
+    assert.deepEqual(run({ pool: 'pa' }).dates, ['2026-10-28']);
+    assert.deepEqual(run({ pool: 'pb' }).dates, [today]);
+    assert.equal(run({}).games.length, 2);
+  });
+  it('ignores a pool outside pool play, outside a division, or from another division', () => {
+    assert.equal(run({ pool: 'pa', stage: 'playoff' }).games.length, 0);
+    assert.equal(scheduleGames({ games: pooledGames, teams: pooledTeams, divisions: pooled, division: '', stage: 'pool', pool: 'pa' }).games.length, 2);
+    assert.equal(run({ pool: 'not-a-pool' }).games.length, 2);
+  });
+  it('combines with a team search', () => {
+    assert.equal(run({ pool: 'pa', query: 'zzz' }).games.length, 0);
   });
 });
