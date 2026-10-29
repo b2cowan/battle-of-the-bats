@@ -298,6 +298,15 @@ describe('the games words (9d-2b Part 5; h4 settled, the rest /marketing\'s)', (
       'U12: 2 games moved and 1 game needs a new date. 3 games wait in Changes to send.');
     assert.equal(LEAGUE_ADMIN_NOTICE.title('Summer field time', { ...NO_LEAGUE_COUNTS, moved: 1 }), 'Summer field time changed house league’s practices');
   });
+  it('the notice says which games moved and when, a few lines and then "and N more"', () => {
+    const c = { ...NO_LEAGUE_COUNTS, gamesMoved: 1 };
+    assert.equal(LEAGUE_ADMIN_NOTICE.body({ divisions: ['U11'], gameLines: ['U11: Sun, Nov 8: Field 2 → Field 4'], ...c }),
+      'U11: 1 game moved.\nU11: Sun, Nov 8: Field 2 → Field 4');
+    const many = Array.from({ length: 9 }, (_, i) => `U11: line ${i + 1}`);
+    const lines = LEAGUE_ADMIN_NOTICE.body({ divisions: ['U11'], gameLines: many, ...c }).split('\n');
+    assert.equal(lines.length, 8);
+    assert.equal(lines[7], 'and 3 more');
+  });
 });
 
 describe('the words (h4, settled; a cancel is /marketing\'s)', () => {

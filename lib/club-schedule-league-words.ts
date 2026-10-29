@@ -195,12 +195,15 @@ export const PRACTICES_CHANGED_NOTICE = {
 export interface LeagueNoticeCounts { moved: number; cancelled: number; gamesMoved: number; gamesNeedDate: number; gamesRemoved: number; gamesWaiting: number }
 export const NO_LEAGUE_COUNTS: LeagueNoticeCounts = { moved: 0, cancelled: 0, gamesMoved: 0, gamesNeedDate: 0, gamesRemoved: 0, gamesWaiting: 0 };
 
+const LEAGUE_NOTICE_LINES = 6;
+
 export const LEAGUE_ADMIN_NOTICE = {
   title: (scheduleName: string, c: LeagueNoticeCounts) => {
     const practices = c.moved + c.cancelled > 0, games = c.gamesMoved + c.gamesNeedDate + c.gamesRemoved > 0;
     return `${scheduleName} changed house league’s ${games && practices ? 'practices and game time' : games ? 'game time' : 'practices'}`;
   },
-  body: (p: { divisions: string[] } & LeagueNoticeCounts) => {
+  /** `gameLines` names which games and when ("U12: Sun, Nov 8: Field 2 → Field 4"), a few and then "and 3 more". */
+  body: (p: { divisions: string[]; gameLines?: string[] } & LeagueNoticeCounts) => {
     const what = [
       p.moved ? `${pluralize(p.moved, 'practice')} moved` : '', p.cancelled ? `${pluralize(p.cancelled, 'practice')} cancelled` : '',
       p.gamesMoved ? `${pluralize(p.gamesMoved, 'game')} moved` : '',
@@ -210,6 +213,11 @@ export const LEAGUE_ADMIN_NOTICE = {
     const told = `${joinWithAnd(what)}.`;
     const lead = p.divisions.length ? `${joinWithAnd(p.divisions)}: ${told}` : told.charAt(0).toUpperCase() + told.slice(1);
     // 9d2·13: families hear about a published game once, from the league admin's send.
-    return p.gamesWaiting > 0 ? `${lead} ${pluralize(p.gamesWaiting, 'game')} ${p.gamesWaiting === 1 ? 'waits' : 'wait'} in Changes to send.` : lead;
+    const summary = p.gamesWaiting > 0 ? `${lead} ${pluralize(p.gamesWaiting, 'game')} ${p.gamesWaiting === 1 ? 'waits' : 'wait'} in Changes to send.` : lead;
+    const lines = p.gameLines ?? [];
+    if (!lines.length) return summary;
+    const shown = lines.slice(0, LEAGUE_NOTICE_LINES);
+    if (lines.length > shown.length) shown.push(`and ${lines.length - shown.length} more`);
+    return [summary, ...shown].join('\n');
   },
 } as const;

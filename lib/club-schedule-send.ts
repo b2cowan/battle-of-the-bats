@@ -136,7 +136,10 @@ export interface SendPreview {
 export interface PreviewLeagueGames {
   key: string;
   seasonId: string;
+  divisionId: string;
   divisionName: string;
+  /** The day the games now sit on (the day they left, for games taken off) — where the league admins' notice lands. */
+  day: string;
   /** "U9 Rookie games" (`houseLeagueUse`). */
   name: string;
   line: string;
@@ -561,7 +564,8 @@ async function leagueHalf(c: Context, opts: { audience?: boolean } = {}): Promis
       const from = slotById.get(grp.fromSlotId)!, to = grp.toSlotId ? slotById.get(grp.toSlotId)! : null;
       const division = divisionNameOf(grp.divisionId);
       return {
-        key, seasonId: grp.seasonId, divisionName: division, name: houseLeagueUse(division, 'games'),
+        key, seasonId: grp.seasonId, divisionId: grp.divisionId, divisionName: division, day: faceOf((to ?? from).startMs, (to ?? from).endMs, (to ?? from).id).day,
+        name: houseLeagueUse(division, 'games'),
         line: leagueGamesLine(faceOf(from.startMs, from.endMs, from.id), to ? faceOf(to.startMs, to.endMs, to.id) : null, placeOf),
         sub: leagueGamesSub({ division, published: grp.published, moved: grp.moved, needsDate: grp.needsDate, removed: grp.removed }),
       };
@@ -974,11 +978,21 @@ async function tellHouseLeague(sctx: SchedulerCtx, scheduleName: string, half: L
         const myGames = half.games.filter(g => g.seasonId === seasonId);
         if (!mine.length && !myGames.length) continue;
         const counts = half.counts.get(seasonId) ?? NO_LEAGUE_COUNTS;
+        // Open lands where the change is: the first changed game's division and day, else the season's one changed
+        // division (a practice-only change); a season with several still opens on its schedule.
+        const first = myGames[0];
+        const landing = first ? { division: first.divisionId, day: first.day } : { division: half.divisionOf.get(seasonId) ?? null, day: null };
+        const query = new URLSearchParams();
+        if (landing.division) query.set('division', landing.division);
+        if (landing.day) query.set('day', landing.day);
         await notify({
           orgId: org.id, eventType: 'club_schedule_league_changes', userIds, excludeUserIds: [sctx.ctx.user.id],
           title: LEAGUE_ADMIN_NOTICE.title(scheduleName, counts),
-          body: LEAGUE_ADMIN_NOTICE.body({ divisions: [...new Set([...mine, ...myGames].map(t => t.divisionName).filter(Boolean))], ...counts }),
-          link: `/${org.slug}/admin/house-league/seasons/${seasonId}/schedule`, metadata: { seasonId, sendId },
+          body: LEAGUE_ADMIN_NOTICE.body({
+            divisions: [...new Set([...mine, ...myGames].map(t => t.divisionName).filter(Boolean))],
+            gameLines: myGames.map(g => `${g.divisionName}: ${g.line}`), ...counts,
+          }),
+          link: `/${org.slug}/admin/house-league/seasons/${seasonId}/schedule${query.toString() ? `?${query}` : ''}`, metadata: { seasonId, sendId },
         });
       }
     }

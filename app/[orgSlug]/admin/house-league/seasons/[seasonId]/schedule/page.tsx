@@ -745,7 +745,9 @@ export default function SchedulePage() {
       twiceInADayAllowed: !!s.twiceInADayAllowed, homeAwayTolerance: s.homeAwayTolerance ?? 1,
     });
     setDivisions(divs ?? []);
-    if (divs?.length && !selectedDivId) setSelectedDivId(divs[0].id);
+    // A notice's Open names the division the change is in (`?division=`); an unknown one falls back to the first.
+    const asked = new URLSearchParams(window.location.search).get('division');
+    if (divs?.length && !selectedDivId) setSelectedDivId(divs.find((d: LeagueDivision) => d.id === asked)?.id ?? divs[0].id);
   }, [seasonId, selectedDivId, orgQuery]);
 
   // The org venue library feeds the field picker. A failed fetch (older plan, no access)
@@ -858,6 +860,28 @@ export default function SchedulePage() {
   // by the season's rules (9d-2b Part 6), and by the window's draft while the rules are being adjusted (`rescoreHealth`).
   const healthRules = useMemo(() => leagueHealthRulesOf(season, divisions), [season, divisions]);
   const rescoreHealth = useCallback((rules: LeagueHealthRules) => buildLeagueScheduleHealth({
+  // A notice's Open (`?division=&day=`): once the season has read, the page opens on that day in List (Week on a phone),
+  // as Schedule health's "Show them" does; the address is cleaned so a reload doesn't jump again.
+  const arrived = useRef(false);
+  useEffect(() => {
+    if (arrived.current || scheduleRead !== 'ok' || !selectedDivId) return;
+    arrived.current = true;
+    const params = new URLSearchParams(window.location.search);
+    const day = params.get('day');
+    if (!params.has('division') && !day) return;
+    params.delete('division');
+    params.delete('day');
+    const rest = params.toString();
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${rest ? `?${rest}` : ''}`);
+    if (!day || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return;
+    setShow(new Set());
+    jumpTo.current = day;
+    setRevealDay(day);
+    setCursorPick(day);
+    setView(phone ? 'week' : 'list');
+    setJumpTick(n => n + 1);
+  }, [scheduleRead, selectedDivId, phone]);
+
     games: games.map(leagueHealthGameOf),
     practices: practices.map(leagueHealthPracticeOf),
     teams: teams.map(t => ({ id: t.id, name: t.name, divisionId: t.divisionId })),
