@@ -8,7 +8,7 @@ import {
   LIST_TEMPLATE_HEADERS, PAYABLES_TEMPLATE_HEADERS,
   normalizeWord, snapBudgetRowsToLibrary, snapPayableRowsToLibrary,
   referenceSheetRows, templateChoiceLists, toKnownCategories, lineChoiceFormula,
-  matchPayee, toKnownPayees, payeeReferenceRows,
+  matchPayee, toKnownPayees, payeeReferenceRows, billsFromReviewed, paymentsOfBill, templateGuideLines,
   type KnownCategory, type KnownPayee, type ExistingBudgetLine, type DraftBudgetRow, type DraftPayableRow,
 } from '../../lib/coach-budget-import.ts';
 import type { ParsedImportFile } from '../../lib/import/types.ts';
@@ -640,6 +640,133 @@ describe('payees on a bills sheet', () => {
   function cats(): KnownCategory[] {
     return [...CATEGORIES, { id: 'c3', name: 'Facilities', items: [], incomeItems: [] }];
   }
+});
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   A BILL WITH MANY PAYMENTS (owner ruling 2026-10-29): rows that share a "Bill #" are the payments of
+   ONE bill. Before this, the sheet could say two (deposit + balance) and the guide said "one bill per
+   row" with no way out — while the bill itself has always been able to hold any number.
+   ══════════════════════════════════════════════════════════════════════════════════════════ */
+
+describe('Bill # — one bill, many payments', () => {
+  const cats = (): KnownCategory[] => [...CATEGORIES, { id: 'c3', name: 'Facilities', items: [], incomeItems: [] }];
+  const pay = (over: Partial<DraftPayableRow>): DraftPayableRow => ({
+    rowNumber: 1, payee: '', description: '', categoryName: '', amount: '600',
+    depositAmount: '600', depositDueDate: '2026-04-01', balanceAmount: '', balanceDueDate: '',
+    billNumber: '', ...over,
+  });
+  /** Three payments of one bill: the first row names it, the rest leave that blank on purpose. */
+  const three = (): DraftPayableRow[] => [
+    pay({ rowNumber: 1, billNumber: '7', payee: 'City Parks', description: 'Diamond permits', categoryName: 'Facilities', amount: '600', depositAmount: '600', depositDueDate: '2026-04-01' }),
+    pay({ rowNumber: 2, billNumber: '7', amount: '600', depositAmount: '600', depositDueDate: '2026-05-01' }),
+    pay({ rowNumber: 3, billNumber: '7', amount: '600', depositAmount: '600', depositDueDate: '2026-06-01' }),
+  ];
+
+  it('reads the Bill # column, and keeps a payment row that leaves payee and description blank', () => {
+    const file = sheet(
+      [...PAYABLES_TEMPLATE_HEADERS],
+      [
+        ['City Parks', 'Diamond permits', 'Facilities', '600', '2026-04-01', '', '', '', '', '7'],
+        ['', '', '', '600', '2026-05-01', '', '', '', '', '7'],
+        ['', '', '', '', '', '', '', '', '', ''],            // truly empty — still skipped
+        ['Pro Shop', 'Gloves', '', '80', '2026-04-10', '', '', '', '', ''],
+      ],
+    );
+    const rows = rowsFromPayables(file);
+    assert.equal(rows.length, 3);
+    assert.deepEqual(rows.map(r => r.billNumber), ['7', '7', '']);
+    assert.equal(rows[1].payee, '');
+  });
+
+  it('the template ends with an optional Bill # column and ships it blank', () => {
+    assert.equal(PAYABLES_TEMPLATE_HEADERS[PAYABLES_TEMPLATE_HEADERS.length - 1], 'Bill #');
+    for (const row of templateExampleRows(CATEGORIES, [...PAYABLES_TEMPLATE_HEADERS])) {
+      assert.equal(row[PAYABLES_TEMPLATE_HEADERS.indexOf('Bill #')], '');
+    }
+  });
+
+  it('three rows with one number are one bill of three payments — the later rows inherit its name', () => {
+    const reviewed = reviewPayableRows(three(), cats(), []);
+    assert.deepEqual(reviewed.map(r => r.outcome), ['add', 'add', 'add']);
+    assert.deepEqual(reviewed.map(r => r.description), ['Diamond permits', 'Diamond permits', 'Diamond permits']);
+    assert.deepEqual(reviewed.map(r => r.payee), ['City Parks', 'City Parks', 'City Parks']);
+    assert.deepEqual(reviewed.map(r => r.categoryName), ['Facilities', 'Facilities', 'Facilities']);
+    assert.match(reviewed[0].warning!, /One bill with 3 payments, \$1,800\.00 in all/);
+    assert.match(reviewed[1].warning!, /Payment 2 of 3 on the bill above/);
+    assert.match(reviewed[2].warning!, /Payment 3 of 3/);
+  });
+
+  it('the bill is written ONCE, with a payment per row, earliest first', () => {
+    const reviewed = reviewPayableRows(three().reverse(), cats(), []);
+    const bills = billsFromReviewed(committable(reviewed));
+    assert.equal(bills.length, 1);
+    assert.deepEqual(paymentsOfBill(bills[0]), [
+      { amount: 600, dueDate: '2026-04-01' },
+      { amount: 600, dueDate: '2026-05-01' },
+      { amount: 600, dueDate: '2026-06-01' },
+    ]);
+  });
+
+  it('rows with no Bill # stay one bill each, and a number used once is just a bill', () => {
+    const plain = [
+      pay({ rowNumber: 1, description: 'Gloves', payee: 'Pro Shop' }),
+      pay({ rowNumber: 2, description: 'Bats', payee: 'Pro Shop' }),
+      pay({ rowNumber: 3, description: 'Cones', billNumber: '9' }),
+    ];
+    const reviewed = reviewPayableRows(plain, cats(), []);
+    assert.equal(billsFromReviewed(committable(reviewed)).length, 3);
+    assert.ok(reviewed.every(r => !/payments? /i.test(r.warning ?? '')));
+  });
+
+  it('ALL OR NOTHING — one unreadable payment holds the whole bill', () => {
+    const rows = three();
+    rows[1] = { ...rows[1], depositDueDate: '' };          // the middle payment has no date
+    const reviewed = reviewPayableRows(rows, cats(), []);
+    assert.deepEqual(reviewed.map(r => r.outcome), ['blocked', 'blocked', 'blocked']);
+    assert.match(reviewed[1].reason!, /due date/);
+    assert.match(reviewed[0].reason!, /Another payment on this bill/);
+    assert.equal(committable(reviewed).length, 0);
+  });
+
+  it('a payment that names a DIFFERENT payee, description or category is refused, not outvoted', () => {
+    for (const [field, label] of [['payee', 'payee'], ['description', 'description'], ['categoryName', 'category']] as const) {
+      const rows = three();
+      rows[2] = { ...rows[2], [field]: field === 'categoryName' ? 'Officials' : 'Somebody Else' };
+      const reviewed = reviewPayableRows(rows, cats(), []);
+      assert.equal(reviewed[2].outcome, 'blocked', field);
+      assert.match(reviewed[2].reason!, new RegExp(`${label} doesn’t match the rest of Bill # 7`));
+      assert.equal(committable(reviewed).length, 0, 'the whole bill is held');
+    }
+    // The same name spelled differently (case, punctuation) is the same name.
+    const same = three();
+    same[1] = { ...same[1], description: 'diamond  PERMITS.' };
+    assert.equal(committable(reviewPayableRows(same, cats(), [])).length, 3);
+  });
+
+  it('refuses a deposit/balance split inside a group — one payment per row', () => {
+    const rows = three();
+    // A split that is fine on its own (600 + 300 = 900) — it is the GROUP that cannot hold it.
+    rows[1] = { ...rows[1], amount: '900', balanceAmount: '300', balanceDueDate: '2026-05-15' };
+    const reviewed = reviewPayableRows(rows, cats(), []);
+    assert.equal(reviewed[1].outcome, 'blocked');
+    assert.match(reviewed[1].reason!, /one payment each/);
+    assert.equal(committable(reviewed).length, 0);
+  });
+
+  it('says a new payee once, on the first row only', () => {
+    const payees: KnownPayee[] = [{ id: 'p', name: 'Somebody', scope: 'team' }];
+    const reviewed = reviewPayableRows(three(), cats(), [], payees);
+    assert.match(reviewed[0].warning!, /New payee/);
+    assert.ok(!/New payee/.test(reviewed[1].warning!));
+    assert.ok(!/New payee/.test(reviewed[2].warning!));
+  });
+
+  it('the guide explains Bill # and no longer leaves "one bill per row" without a way out', () => {
+    const said = templateGuideLines('payables').map(l => l.text ?? '').join('\n');
+    assert.match(said, /Bill # —/);
+    assert.match(said, /one payment per row when rows share a Bill #/);
+    assert.match(said, /three or more parts/);
+  });
 });
 
 describe('templates (D-G1: structure, never amounts)', () => {

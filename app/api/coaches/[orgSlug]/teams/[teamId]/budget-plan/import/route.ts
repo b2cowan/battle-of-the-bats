@@ -23,7 +23,7 @@ import {
 } from '@/lib/coach-budget-items';
 import {
   reviewBudgetRows, reviewPayableRows, moneyValue, toKnownCategories, wordsFor,
-  snapBudgetRowsToLibrary, snapPayableRowsToLibrary, matchPayee, toKnownPayees,
+  snapBudgetRowsToLibrary, snapPayableRowsToLibrary, matchPayee, toKnownPayees, billsFromReviewed, paymentsOfBill, committable,
   MAX_IMPORT_ROWS,
   type DraftBudgetRow, type DraftPayableRow, type KnownCategory, type KnownPayee, type ExistingBudgetLine,
 } from '@/lib/coach-budget-import';
@@ -93,6 +93,7 @@ function toPayableDraft(raw: unknown, index: number): DraftPayableRow {
     depositDueDate: str(source.depositDueDate, 10),
     balanceAmount: str(source.balanceAmount, 40),
     balanceDueDate: str(source.balanceDueDate, 10),
+    billNumber: str(source.billNumber, 40),
   };
 }
 
@@ -241,10 +242,17 @@ export const POST = withObservability(async (req: Request,
     );
 
     for (const row of reviewed) {
-      if (row.outcome === 'blocked') {
-        skipped.push({ rowNumber: row.rowNumber, name: row.description || `Row ${row.rowNumber}`, reason: row.reason ?? 'Could not be read' });
-        continue;
-      }
+      if (row.outcome !== 'blocked') continue;
+      skipped.push({ rowNumber: row.rowNumber, name: row.description || `Row ${row.rowNumber}`, reason: row.reason ?? 'Could not be read' });
+    }
+
+    /* ⚠ ONE BILL PER ENTRY — a row of its own, or ALL the payments of the rows that share a Bill #
+       (`billsFromReviewed`, the same fold the preview's notes describe). The review already held back
+       a whole bill when any one of its payments could not be read, so a group arrives here complete or
+       not at all; its payee, description and category are the first row's (the later rows were filled
+       from it before they were judged). */
+    for (const bill of billsFromReviewed(committable(reviewed))) {
+      const row = bill[0];
       const deposit = moneyValue(row.depositAmount);
       const balance = moneyValue(row.balanceAmount);
       /* The sheet's split, as the PLAN it means (Payables Rebuild P2). The sheet still speaks
@@ -253,7 +261,9 @@ export const POST = withObservability(async (req: Request,
          falls back to the other's) are `composeTwoPieceInstallments`, shared with the payables
          form so the sheet and the form cannot drift. */
       const split = (balance != null && balance > 0) || !!row.balanceDueDate;
-      const installments = split
+      const installments = bill.length > 1
+        ? paymentsOfBill(bill)
+        : split
         ? composeTwoPieceInstallments({
             total: row.total,
             depositAmount: deposit,

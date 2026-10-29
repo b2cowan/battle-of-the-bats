@@ -491,6 +491,61 @@ describe('the bills template’s Payees tab', () => {
     assert.ok(/Payees tab/.test(templateGuideLines('payables', true).map(l => l.text ?? '').join('\n')));
   });
 
+  it('carries an Example tab with the same headings as the Data sheet, showing all three kinds of bill', async () => {
+    const { book } = await reload(buildBills());
+    const example = book.getWorksheet('Example')!;
+    const data = book.getWorksheet('Data')!;
+    assert.ok(example, 'the bills template has an Example tab');
+    const heading = (s: ExcelJS.Worksheet) => BILLS.map((_, i) => String(s.getRow(1).getCell(i + 1).value));
+    assert.deepEqual(heading(example), heading(data));
+
+    const cell = (row: number, name: string) => String(example.getRow(row).getCell(BILLS.indexOf(name) + 1).value ?? '');
+    // Row 2: all at once. Row 3: two parts (Deposit / Balance). Rows 4–6: ONE bill, three payments.
+    assert.equal(cell(2, 'Bill #'), '');
+    assert.ok(cell(3, 'Deposit') && cell(3, 'Balance'));
+    assert.deepEqual([4, 5, 6].map(r => cell(r, 'Bill #')), ['1', '1', '1']);
+    assert.ok(cell(4, 'Description') && !cell(5, 'Description') && !cell(6, 'Description'), 'later payments leave the name blank');
+    assert.deepEqual([4, 5, 6].map(r => cell(r, 'Amount')), ['(first payment)', '(second payment)', '(third payment)']);
+  });
+
+  /* ⚠ D-G1 — THE EXAMPLE IS A PICTURE, NEVER A FIGURE. A sample dollar amount in a downloadable file is a
+     dollar amount the product proposed, and a sample payee is a made-up fact about who the team pays.
+     The only digit allowed anywhere on the tab is the Bill # that ties the three payments together. */
+  it('the Example tab proposes no figure, date or name — placeholders in words only', async () => {
+    const { book } = await reload(buildBills());
+    const example = book.getWorksheet('Example')!;
+    const billCol = BILLS.indexOf('Bill #') + 1;
+    for (let r = 2; r <= 6; r += 1) {
+      for (let c = 1; c <= BILLS.length; c += 1) {
+        if (c === billCol) continue;
+        const value = example.getRow(r).getCell(c).value;
+        assert.ok(typeof value === 'string' || value == null, `row ${r}, column ${c} is text`);
+        assert.ok(!/\d/.test(String(value ?? '')), `row ${r}, column ${c} ("${value}") must carry no digit`);
+      }
+    }
+  });
+
+  it('the parser skips the Example tab by name, and only the bills sheet ships one', async () => {
+    const book = new ExcelJS.Workbook();
+    const first = book.addWorksheet('Example');
+    first.addRow(['Payee', 'Description', 'Amount', 'Due Date']);
+    first.addRow(['(who you owe)', 'A bill paid all at once', '(the total)', '(date)']);
+    const real = book.addWorksheet('Sheet2');
+    real.addRow(['Payee', 'Description', 'Amount', 'Due Date']);
+    real.addRow(['Pro Shop', 'Gloves', '80', '2026-04-10']);
+    const bytes = await book.xlsx.writeBuffer() as ArrayBuffer;
+    const parsed = await parseXLSX(bytes, MAX_IMPORT_ROWS);
+    assert.deepEqual(parsed.rows.map(r => r.values['Description']), ['Gloves']);
+
+    const { options } = budgetTemplateWorkbook(HEADERS, CATEGORIES, 'month-grid', PAYEES);
+    assert.ok(!options.extraSheets!.some(s => s.name === 'Example'));
+  });
+
+  it('the guide points at the Example tab on the bills sheet only', () => {
+    assert.ok(/Example tab/.test(templateGuideLines('payables').map(l => l.text ?? '').join('\n')));
+    assert.ok(!/Example tab/.test(templateGuideLines('list').map(l => l.text ?? '').join('\n')));
+  });
+
   it('only the bills sheet ever gets one', async () => {
     const { options } = budgetTemplateWorkbook(HEADERS, CATEGORIES, 'month-grid', PAYEES);
     assert.ok(!options.extraSheets!.some(s => s.name === 'Payees'));

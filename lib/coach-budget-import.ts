@@ -75,6 +75,12 @@ export interface DraftPayableRow {
   depositDueDate: string;
   balanceAmount: string;
   balanceDueDate: string;
+  /**
+   * The sheet's "Bill #" — rows that share one are the PAYMENTS of a single bill (one row each), so a
+   * bill with three or more payments can be imported at all: the deposit/balance columns hold two.
+   * Blank = an ordinary bill of its own, exactly as every sheet read before this column existed.
+   */
+  billNumber?: string;
 }
 
 /**
@@ -129,6 +135,9 @@ export const ALIASES = {
   depositDue:  ['deposit due', 'deposit due date'],
   balance:     ['balance', 'balance amount'],
   balanceDue:  ['balance due', 'balance due date'],
+  /* Rows that share one of these are the payments of ONE bill. The template's own heading is "Bill #"
+     (which `normalizeHeader` reads as "bill"); the longer spellings are what a coach's own sheet says. */
+  billNumber:  ['bill #', 'bill number', 'bill no', 'bill id'],
 } as const;
 
 /**
@@ -514,7 +523,11 @@ export function rowsFromPayables(file: ParsedImportFile): DraftPayableRow[] {
   for (const source of file.rows) {
     const description = getCell(source, [...ALIASES.description]).value.trim()
       || getCell(source, [...ALIASES.line]).value.trim();
-    if (!description && !getCell(source, [...ALIASES.payee]).value.trim()) continue;
+    const billNumber = getCell(source, [...ALIASES.billNumber]).value.trim();
+    /* ⚠ A ROW WITH A BILL # IS KEPT EVEN WITH NO PAYEE AND NO DESCRIPTION: the second and third
+       payments of a bill leave those blank on purpose (they belong to the first row), and skipping
+       them as empty would drop every payment but the first without a word. */
+    if (!description && !billNumber && !getCell(source, [...ALIASES.payee]).value.trim()) continue;
     if (isDerivedRow(description)) continue;
 
     const deposit = parseMoneyCell(getCell(source, [...ALIASES.deposit]).value);
@@ -536,6 +549,7 @@ export function rowsFromPayables(file: ParsedImportFile): DraftPayableRow[] {
       depositDueDate: hasSplit ? depositDue : singleDue,
       balanceAmount: hasSplit ? balance : '',
       balanceDueDate: hasSplit ? balanceDue : '',
+      billNumber,
     });
     if (rows.length >= MAX_IMPORT_ROWS) break;
   }
@@ -1066,7 +1080,35 @@ export function reviewPayableRows(
   const categoryByName = new Map(categories.map(c => [key(c.name), c]));
   const existing = new Set(existingDescriptions.map(key));
 
-  return rows.map(row => {
+  /* ⚠ BILL # — rows that share one are the payments of ONE bill. The bill's payee, description and
+     category are the first value the group gives for each (a later payment may leave them blank, which
+     is the point of the column); a later row that names something DIFFERENT is refused rather than
+     quietly outvoted. Filled BEFORE the per-row review, so a payment row with no description of its own
+     is judged as the bill it belongs to, and the preview shows the name it inherits. */
+  const groups = billGroups(rows);
+  const filled = rows.slice();
+  const conflicts = new Map<number, string>();
+  const BILL_FIELDS = [['payee', 'payee'], ['description', 'description'], ['categoryName', 'category']] as const;
+  for (const idxs of groups.values()) {
+    const lead = Object.fromEntries(BILL_FIELDS.map(([field]) => [
+      field, idxs.map(i => rows[i][field].trim()).find(Boolean) ?? '',
+    ])) as Record<(typeof BILL_FIELDS)[number][0], string>;
+    for (const i of idxs) {
+      const row = rows[i];
+      for (const [field, label] of BILL_FIELDS) {
+        const typed = row[field].trim();
+        if (typed && lead[field] && (normalizeWord(typed) || key(typed)) !== (normalizeWord(lead[field]) || key(lead[field]))) {
+          conflicts.set(i, label);
+        }
+      }
+      filled[i] = { ...row, payee: row.payee.trim() || lead.payee, description: row.description.trim() || lead.description, categoryName: row.categoryName.trim() || lead.categoryName };
+    }
+  }
+  const leadIndex = new Set([...groups.values()].map(idxs => idxs[0]));
+  const followerIndex = new Set([...groups.values()].flatMap(idxs => idxs.slice(1)));
+
+  const reviewRow = (row: DraftPayableRow, at: number): ReviewedPayableRow => {
+    const follower = followerIndex.has(at);
     const deposit = moneyValue(row.depositAmount) ?? 0;
     const balance = moneyValue(row.balanceAmount) ?? 0;
     const stated = moneyValue(row.amount) ?? 0;
@@ -1101,8 +1143,9 @@ export function reviewPayableRows(
       };
     }
 
-    const payeeVerdict = payees ? newPayeeVerdict(row.payee, payees) : null;
-    const duplicate = existing.has(key(row.description))
+    // Said once per bill, on its first row — the later payments are the same payee and description.
+    const payeeVerdict = payees && !follower ? newPayeeVerdict(row.payee, payees) : null;
+    const duplicate = !follower && existing.has(key(row.description))
       ? 'A payable with this description already exists — this adds a second one.'
       : '';
     return {
@@ -1111,7 +1154,75 @@ export function reviewPayableRows(
       warning: [payeeVerdict?.warning, duplicate].filter(Boolean).join(' ') || undefined,
       suggestion: payeeVerdict?.suggestion,
     };
+  };
+
+  const out = filled.map(reviewRow);
+
+  const hold = (i: number, reason: string) => {
+    out[i] = { ...out[i], outcome: 'blocked', reason, warning: undefined, suggestion: undefined };
+  };
+  for (const idxs of groups.values()) {
+    for (const i of idxs) {
+      const conflict = conflicts.get(i);
+      if (conflict) {
+        hold(i, `This payment’s ${conflict} doesn’t match the rest of Bill # ${rows[i].billNumber?.trim()}. Make them the same, or leave it blank.`);
+      } else if (out[i].outcome !== 'blocked' && (rows[i].balanceAmount || rows[i].balanceDueDate)) {
+        hold(i, 'Rows that share a Bill # are one payment each — use Amount and Due Date here, not Deposit and Balance.');
+      }
+    }
+    /* ⚠ ALL OR NOTHING. A bill missing one of its payments is worse than no bill: it looks complete,
+       and its total is wrong by exactly the payment that was left behind. So one unreadable payment
+       holds the whole bill, and the reason on the others says why. */
+    if (idxs.some(i => out[i].outcome === 'blocked')) {
+      for (const i of idxs) {
+        if (out[i].outcome !== 'blocked') hold(i, 'Another payment on this bill can’t be imported yet — fix it, or leave the whole bill out.');
+      }
+      continue;
+    }
+    const total = Math.round(idxs.reduce((s, i) => s + out[i].total, 0) * 100) / 100;
+    idxs.forEach((i, n) => {
+      const note = leadIndex.has(i)
+        ? `One bill with ${idxs.length} payments, $${total.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} in all.`
+        : `Payment ${n + 1} of ${idxs.length} on the bill above.`;
+      out[i] = { ...out[i], warning: [note, out[i].warning].filter(Boolean).join(' ') };
+    });
+  }
+  return out;
+}
+
+/** The rows that share a Bill # — only groups of TWO OR MORE (a lone number is just a bill), by sheet position. */
+function billGroups(rows: DraftPayableRow[]): Map<string, number[]> {
+  const all = new Map<string, number[]>();
+  rows.forEach((row, i) => {
+    const k = key(row.billNumber ?? '');
+    if (k) all.set(k, [...(all.get(k) ?? []), i]);
   });
+  return new Map([...all].filter(([, idxs]) => idxs.length > 1));
+}
+
+/**
+ * The reviewed rows folded into BILLS, in sheet order: each is one row, or — for rows that share a
+ * Bill # — all the payments of one bill, placed where its first row was. The commit route writes one
+ * bill per entry, so the preview's idea of "a bill" and the write's cannot differ.
+ */
+export function billsFromReviewed<T extends { billNumber?: string }>(rows: T[]): T[][] {
+  const bills: T[][] = [];
+  const at = new Map<string, number>();
+  for (const row of rows) {
+    const k = key(row.billNumber ?? '');
+    const found = k ? at.get(k) : undefined;
+    if (found !== undefined) { bills[found].push(row); continue; }
+    if (k) at.set(k, bills.length);
+    bills.push([row]);
+  }
+  return bills;
+}
+
+/** A multi-row bill's payments: one per row (Amount + Due Date), earliest first. */
+export function paymentsOfBill(rows: Array<{ total: number; depositDueDate: string }>): Array<{ amount: number; dueDate: string }> {
+  return rows
+    .map(r => ({ amount: r.total, dueDate: r.depositDueDate }))
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
 }
 
 /** Rows that will actually be written. */
@@ -1137,6 +1248,8 @@ export const LIST_TEMPLATE_HEADERS = ['Category', 'Line', 'Amount', 'Notes'] as 
 export const PAYABLES_TEMPLATE_HEADERS = [
   'Payee', 'Description', 'Category', 'Amount', 'Due Date',
   'Deposit', 'Deposit Due', 'Balance', 'Balance Due',
+  // Last, and optional: it only matters to a bill with three or more payments. See `billNumber`.
+  'Bill #',
 ] as const;
 
 /**
@@ -1295,6 +1408,40 @@ export function referenceSheetRows(categories: KnownCategory[]): string[][] {
  * which is an exact `ALIASES.payee` match: were a coach to delete the Data tab, this sheet would be
  * parsed as a bills sheet of payees with no description. Same trap, same cure as the Lists sheet.
  */
+/**
+ * The bills template's worked example — the three ways a bill can be written, as a picture.
+ *
+ * ⚠ NAMED `Example`, AND `parseXLSX` SKIPS IT BY NAME for the reason `Payees` is: its headings are the
+ * Data sheet's own, so were a coach to delete the Data tab it would be read as three bills.
+ *
+ * ⚠ NO FIGURE, NAME OR DATE IN IT (D-G1). A sample "$600" is the product proposing a number, and a
+ * sample payee is a made-up fact about who the team pays — so every cell is a placeholder in words
+ * ("(payment 1)", "(who you owe)"). The sheet shows WHERE things go, never what they are.
+ */
+export const TEMPLATE_EXAMPLE_SHEET = 'Example';
+
+export const EXAMPLE_SHEET_NOTE =
+  'An example only — nothing on this tab is imported. Fill in the Data tab. The third bill is how to '
+  + 'enter a bill paid in three or more parts: give each of its rows the same Bill #, put the payee, '
+  + 'description and category on the first row, and each payment’s own amount and due date on its own row.';
+
+/** The three bills of the Example tab, each cell placed under the heading that names it. */
+export function payablesExampleRows(headers: readonly string[]): string[][] {
+  const who = '(who you owe)';
+  const pick = '(pick a category)';
+  const bills: Array<Record<string, string>> = [
+    { Payee: who, Description: 'A bill paid all at once', Category: pick, Amount: '(the total)', 'Due Date': '(date)' },
+    {
+      Payee: who, Description: 'A bill paid in two parts', Category: pick, Amount: '(the total)',
+      Deposit: '(first part)', 'Deposit Due': '(date)', Balance: '(the rest)', 'Balance Due': '(date)',
+    },
+    { Payee: who, Description: 'A bill paid in three or more parts', Category: pick, Amount: '(first payment)', 'Due Date': '(date)', 'Bill #': '1' },
+    { Amount: '(second payment)', 'Due Date': '(date)', 'Bill #': '1' },
+    { Amount: '(third payment)', 'Due Date': '(date)', 'Bill #': '1' },
+  ];
+  return bills.map(bill => headers.map(h => bill[h] ?? ''));
+}
+
 export const TEMPLATE_PAYEES_SHEET = 'Payees';
 export const PAYEES_SHEET_HEADERS = ['Payee', 'Where it comes from'] as const;
 
@@ -1517,7 +1664,7 @@ export function templateGuideLines(shape: BudgetImportShape, hasPayees = false):
       ],
     },
     payables: {
-      unit: 'one bill per row',
+      unit: 'one bill per row, or one payment per row when rows share a Bill #',
       hasCostNames: false,
       columns: [
         /* ⚠ THE PAYEES TAB IS ONLY NAMED WHEN IT IS IN THE FILE. A team with no payees yet gets no
@@ -1529,7 +1676,11 @@ export function templateGuideLines(shape: BudgetImportShape, hasPayees = false):
         bullet('Description — what the bill is for, in your own words.'),
         bullet('Category — pick from the dropdown.'),
         bullet('Due Date — use YYYY-MM-DD. An ambiguous date is left blank rather than guessed.'),
-        bullet('Deposit and Balance — fill these in only when the bill is paid in two parts.'),
+        bullet('Deposit and Balance — fill these in only when a bill on one row is paid in two parts.'),
+        /* ⚠ THE ONLY WAY IN FOR A BILL WITH THREE OR MORE PAYMENTS, and the guide used to say "one bill
+           per row" with no way out of it. Says what goes where, because the rule that surprises is the
+           blank cells: the later payments leave payee, description and category empty ON PURPOSE. */
+        bullet('Bill # — optional. For a bill paid in three or more parts, give each of its rows the same number. Every row is then one payment: put its own amount and due date on it, and the payee, description and category on the first row (the rest can stay blank).'),
       ],
     },
   };
@@ -1586,6 +1737,7 @@ export function templateGuideLines(shape: BudgetImportShape, hasPayees = false):
        for themselves that "us" is the column reading "Standard". */
     bullet('Every category and cost name your team can use, and whether each is marked Standard, Your club, or This team.'),
     ...(hasPayees ? [bullet('Payees tab — everyone your team can pay, and whether each is marked Your club or This team.')] : []),
+    ...(shape === 'payables' ? [bullet('Example tab — a bill paid all at once, in two parts, and in three or more, so you can see where everything goes. Nothing on it is imported.')] : []),
   ];
 }
 
@@ -1692,6 +1844,13 @@ export function budgetTemplateWorkbook(
           rows: referenceSheetRows(categories),
           note: REFERENCE_SHEET_NOTE,
         },
+        // Only the bills sheet has anything this needs showing — its three ways of writing a bill.
+        ...(shape === 'payables' ? [{
+          name: TEMPLATE_EXAMPLE_SHEET,
+          headers: [...headers],
+          rows: payablesExampleRows(headers),
+          note: EXAMPLE_SHEET_NOTE,
+        }] : []),
         ...(hasPayees ? [{
           name: TEMPLATE_PAYEES_SHEET,
           headers: [...PAYEES_SHEET_HEADERS],
