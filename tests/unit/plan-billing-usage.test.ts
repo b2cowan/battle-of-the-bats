@@ -42,11 +42,11 @@ describe('owner billing usage read', () => {
     const response = await route('owner', true).GET(new Request('http://local/api/billing/usage?orgSlug=org-b'));
     assert.equal(response.status, 503); assert.deepEqual(await response.json(), { error: 'Billing usage could not be read. Try again.' });
   });
-  it('an explicit billing grant permits suspended comeback reads; revoking it closes them', async () => {
+  it('a stray stored billing grant opens nothing: only the owner reads', async () => {
     for (const billing of [true, false]) {
       const r = route('treasurer', false, { billing });
-      assert.equal((await r.GET(new Request('http://local/api/billing/usage?orgSlug=org-b'))).status, billing ? 200 : 403);
-      assert.equal(r.reads.length, billing ? 1 : 0);
+      assert.equal((await r.GET(new Request('http://local/api/billing/usage?orgSlug=org-b'))).status, 403);
+      assert.equal(r.reads.length, 0);
     }
   });
 });
@@ -118,8 +118,8 @@ describe('billing free time never confuses an old ended grant or a read failure 
     assert.equal((await get(new Request('http://local/api/admin/org/free-time?orgSlug=org-b&billing=1'))).status, 503);
     assert.equal((await get(new Request('http://local/api/admin/org/free-time?orgSlug=org-b'))).status, 200);
   });
-  it('the extended billing read requires billing access', async () => {
+  it('the extended billing read is the owner’s alone', async () => {
     assert.equal((await freeTimeRoute(false, 'coach')(new Request('http://local/api/admin/org/free-time?orgSlug=org-b&billing=1'))).status, 403);
-    assert.equal((await freeTimeRoute(false, 'treasurer', { billing: true })(new Request('http://local/api/admin/org/free-time?orgSlug=org-b&billing=1'))).status, 200);
+    assert.equal((await freeTimeRoute(false, 'treasurer', { billing: true })(new Request('http://local/api/admin/org/free-time?orgSlug=org-b&billing=1'))).status, 403);
   });
 });

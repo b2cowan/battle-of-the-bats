@@ -26,7 +26,7 @@ export const PLAN_BILLING_WORDS = {
   page: {
     title: PLAN_BILLING_TITLE, eyebrow: 'Organization', loading: 'Loading plan & billing…',
     lockedTitle: 'Billing access required',
-    lockedBody: (org: string) => `Only ${possessive(org)} owner and members they’ve granted billing access can see and change the plan and how it’s paid.`,
+    lockedBody: (org: string) => `Only ${possessive(org)} owner can see and change the plan and how it’s paid.`,
     sections: { plan: 'Your plan', usage: "What's in use", change: 'Change plan', included: "What's included", cancel: 'Reduce or cancel' },
   },
   plan: {
@@ -153,10 +153,6 @@ export const PLAN_BILLING_WORDS = {
     downgraded: (label: string, count: number, days: number) => `Your plan is now ${label}.${count ? ` ${pluralize(count, 'tournament')} moved to retention for ${days} days.` : ''}`,
     cancelled: (org: string, days: number) => `${org} is cancelled. Your data is kept for ${days} days.`,
     premiumCancelled: (days: number) => `Premium is cancelled. Basic tournament records stay available. Premium team data is kept for ${days} days.`,
-  },
-  access: {
-    // What the Members → Manage switch gives. Cancelling or reducing the plan is the owner's alone (the four routes check the role).
-    grantHint: 'Can change the plan, payment method and invoices. Cancelling or reducing the plan stays with the owner.',
   },
   errors: {
     retry: 'Try again', retrying: 'Trying again…', refresh: 'We couldn’t refresh your organization. Try again.',

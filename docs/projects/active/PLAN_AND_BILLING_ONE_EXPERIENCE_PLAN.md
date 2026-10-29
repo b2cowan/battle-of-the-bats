@@ -31,7 +31,13 @@ free time, success, cancelled).
 3. **The Club redesign is extended to every plan.** This knowingly reverses the 2026-09-27 "restyle it
    here" ruling for the non-Club plans (that ruling was scoped to a restyle; this replaces it).
 4. **Built so a new or changed plan is a data edit, not a screen edit.**
-5. **Billing can be delegated through the `billing` capability** (owner, Part 3 build, 2026-10-28).
+5. **~~Billing can be delegated~~ — REVERSED 2026-10-29 (owner): Plan & billing is the OWNER's alone.** Why: it is
+   infrequent, the owner's responsibility, and every door a delegate could reach (checkout, plan moves, the Stripe
+   portal, reactivation) touches real money. `hasCapability` now returns false for `billing` and `org_settings` for every
+   role but owner, whatever a stored override says; Members → Manage no longer offers the switch; the PATCH route refuses
+   a grant. The text below is the superseded 2026-10-28 ruling, kept as the record. Delegation was never on production, so
+   no member loses access. Stripe's portal keeps cancel and plan-change OFF in both modes (walk 4 · Call 2).
+   Superseded: **Billing can be delegated through the `billing` capability** (owner, Part 3 build, 2026-10-28).
    No role acquires it by default. Only the owner grants/revokes it in Members; a member without billing access sees
    the locked card. Billing-capable members get the page, navigation and reads as well as the existing money actions.
    **Cancel and downgrade stay the owner's alone** (owner ruling 2026-10-29): the four routes check `role === 'owner'`

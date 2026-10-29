@@ -74,9 +74,9 @@ describe('the Upgrade is Plan & billing’s', () => {
     assert.match(billing, /ownProfile\.changes\.some/);
     assert.match(billing, /post\('\/api\/billing\/create-checkout', \{ planKey: target, billingCycle: cycle, returnTo: billingBase \}\)/);
   });
-  it('only billing users are offered Upgrade; the shared body locks before mounting reads', () => {
+  it('only the owner is offered Upgrade; the shared body locks before mounting reads', () => {
     assert.match(read('components', 'billing', 'PlanPanelDrawer.tsx'), /canUpgrade=\{hasBillingAccess\(userRole, userCapabilities\) && /);
-    assert.match(read('components', 'billing', 'BillingBody.tsx'), /if \(!hasCapability\(userRole, userCapabilities, 'billing'\)\) return <LockedCard/);
+    assert.match(read('components', 'billing', 'BillingBody.tsx'), /if \(userRole !== 'owner'\) return <LockedCard/);
   });
   it('an applied plan says "Plan updated" before the re-read, and a checkout keeps Upgrade busy as the page leaves', () => {
     const drawer = read('components', 'billing', 'PlanPanelDrawer.tsx');

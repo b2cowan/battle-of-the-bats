@@ -139,7 +139,7 @@ describe('Stripe and mock returns keep every plan inside its billing tier bounda
   });
 });
 
-describe('billing delegation is chosen by the owner, never by a delegate', () => {
+describe('billing and settings can never be handed out (owner, 2026-10-29)', () => {
   async function patch(role: OrgRole, capabilities: Record<string, boolean> | null, grant: Record<string, boolean> | null) {
     const writes: unknown[] = [], audits: unknown[] = [];
     const db = {
@@ -167,16 +167,16 @@ describe('billing delegation is chosen by the owner, never by a delegate', () =>
     const response = await PATCH(new Request('http://local/api/admin/members/member-b?orgSlug=falcons', { method: 'PATCH', body: JSON.stringify({ capabilities: grant }) }), { params: Promise.resolve({ memberId: 'member-b' }) });
     return { response, writes, audits };
   }
-  it('the owner can grant and revoke billing, and the existing audit records the change', async () => {
-    const granted = await patch('owner', null, { billing: true });
-    assert.equal(granted.response.status, 200); assert.deepEqual(granted.writes, [{ capabilities: { billing: true } }]); assert.equal(granted.audits.length, 1);
-    const revoked = await patch('owner', null, null);
-    assert.equal(revoked.response.status, 200); assert.deepEqual(revoked.writes, [{ capabilities: null }]);
-  });
-  it('an admin holding billing cannot grant it to another member or alter settings', async () => {
-    const denied = await patch('admin', { billing: true }, { billing: true });
-    assert.equal(denied.response.status, 403); assert.deepEqual(denied.writes, []);
+  it('even the owner cannot grant billing or settings: the request is refused and nothing is written', async () => {
+    const billing = await patch('owner', null, { billing: true });
+    assert.equal(billing.response.status, 400); assert.deepEqual(billing.writes, []); assert.deepEqual(billing.audits, []);
     const settings = await patch('owner', null, { org_settings: true });
     assert.equal(settings.response.status, 400); assert.deepEqual(settings.writes, []);
+  });
+  it('the owner can still clear a member’s overrides, and an admin cannot change access at all', async () => {
+    const cleared = await patch('owner', null, null);
+    assert.equal(cleared.response.status, 200); assert.deepEqual(cleared.writes, [{ capabilities: null }]);
+    const denied = await patch('admin', { billing: true }, { billing: true });
+    assert.equal(denied.response.status, 403); assert.deepEqual(denied.writes, []);
   });
 });

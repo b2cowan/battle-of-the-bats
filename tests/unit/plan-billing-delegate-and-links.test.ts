@@ -8,14 +8,15 @@ import { PLAN_CONFIG } from '../../lib/plan-config.ts';
 import { PLAN_BILLING_WORDS as W } from '../../lib/plan-billing-words.ts';
 import { getBillingHref } from '../../lib/billing-urls.ts';
 import { kitBillingLink } from '../../lib/admin-kit-nav.ts';
+import { hasCapability, hasBillingAccess } from '../../lib/roles.ts';
 import type { BillingSnapshot, BillingRead } from '../../lib/plan-billing-data.ts';
 import type { BillingBodyViewProps } from '../../components/billing/BillingBody.tsx';
 import type { OrgPlan, OrgRole } from '../../lib/types.ts';
 import { readCode } from './_source-code.ts';
 
 /**
- * Plan & billing Stage 1 Part 3 fix pass (owner ruling 2026-10-29): cancel and downgrade are the OWNER's alone;
- * a member granted `billing` never reaches a door the server refuses. Also pinned here: the demo sandboxes carry no
+ * Plan & billing is the OWNER's alone (owner ruling 2026-10-29, reversing the 2026-10-28 delegation): no grant exists and a
+ * stray stored one is inert. Also pinned here: the demo sandboxes carry no
  * billing row, every emailed/notified billing link resolves the tier, and the `?plan=` panel offers Upgrade.
  */
 const load = billingTestLoader();
@@ -23,99 +24,87 @@ const { BillingBodyView } = load('components/billing/BillingBody.tsx') as { Bill
 const ready = <T>(data: T): BillingRead<T> => ({ status: 'ready', data });
 const plans = Object.keys(PLAN_CONFIG) as OrgPlan[];
 
-function fixture(key: OrgPlan, canCancel: boolean): BillingBodyViewProps {
+function fixture(key: OrgPlan): BillingBodyViewProps {
   const profile = PLAN_BILLING_PROFILES[key];
   const impact = planCancellationImpact(profile, ['module_public_site'], 9);
   const snapshot: BillingSnapshot = {
     org: { id: 'org-a', slug: 'club-a', name: 'Falcons', planId: key, ownPlanId: key, enabledAddons: ['module_public_site'], subscriptionStatus: 'active', subscriptionPeriod: 'monthly', currentPeriodEnd: '2027-03-01', teamLimit: 15, tournamentLimit: 1 } as BillingSnapshot['org'],
-    canManageBilling: true, canCancel,
+    canManageBilling: true,
     usage: ready({ teams: { count: 9, limit: 15 }, tournament_slots: { count: 1, limit: 1 }, staff_seats: { count: 2, limit: profile.config.seatLimit }, officials: 4 }),
     freeTime: ready({ freeTime: null, portal: null, foundingThrough: null, overLimitAfter: false }),
     founding: ready({ isFoundingSeason: false, compUntil: null }),
     gating: ready({ tournament: false, tournament_plus: false, team: false, league: false, club: false, club_large: false }),
-    // A delegate never reads this; if a delegate's body ever reached it, the record below would show.
-    cancellation: canCancel ? ready({ currentPlan: key, ...impact, activeTeams: 9, activeTournamentCount: 0, tournaments: [], cancelled: null }) : { status: 'loading' },
+    cancellation: ready({ currentPlan: key, ...impact, activeTeams: 9, activeTournamentCount: 0, tournaments: [], cancelled: null }),
     move: ready({ live: false, scheduledMove: null }),
   };
   return { snapshot, profile, ownProfile: profile, actions: { busy: null, cycle: 'monthly', setCycle() {}, portal() {}, card() {}, reactivate() {}, keep() {}, cancel() {}, change() {}, details() {}, choose() {}, retry() {} } };
 }
 const html = (props: BillingBodyViewProps) => renderToStaticMarkup(createElement(BillingBodyView, props)).replaceAll('&#x27;', "'").replaceAll('&amp;', '&');
 
-describe('a billing delegate has no cancel or downgrade door', () => {
+describe('Plan & billing is the owner’s alone', () => {
   for (const key of plans) for (const state of ['active', 'past_due', 'trialing'] as const) {
-    it(`${key}/${state}: no Reduce or cancel, no Downgrade, no cancellation banner or retry`, () => {
-      const props = fixture(key, false); props.snapshot.org.subscriptionStatus = state;
-      for (const read of [{ status: 'loading' }, { status: 'error', error: 'x' }] as const) {
-        props.snapshot.cancellation = read;
-        const rendered = html(props);
-        assert.doesNotMatch(rendered, /billing-cancel-btn|Reduce or cancel|Downgrade to|cancellation details|cancellation record|Try again/);
-      }
-    });
-    it(`${key}/${state}: the owner still has both doors`, () => {
-      const props = fixture(key, true); props.snapshot.org.subscriptionStatus = state;
+    it(`${key}/${state}: the owner has both doors`, () => {
+      const props = fixture(key); props.snapshot.org.subscriptionStatus = state;
       const rendered = html(props);
       if (PLAN_BILLING_PROFILES[key].config.monthlyPrice > 0) assert.match(rendered, /billing-cancel-btn/);
       if (props.profile.changes.some(change => change.mechanism === 'downgrade')) assert.match(rendered, /Downgrade to/);
     });
   }
-  it('a failed cancellation read raises the retry banner for the owner only', () => {
-    const owner = fixture('club', true); owner.snapshot.cancellation = { status: 'error', error: 'x' };
+  it('a failed cancellation read raises the retry banner', () => {
+    const owner = fixture('club'); owner.snapshot.cancellation = { status: 'error', error: 'x' };
     assert.match(html(owner), /Try again/);
-    const delegate = fixture('club', false); delegate.snapshot.cancellation = { status: 'error', error: 'x' };
-    assert.doesNotMatch(html(delegate), /Try again|cancellation/);
   });
-  it('Tournament Plus: a delegate sees no row for the Tournament downgrade; the owner does', () => {
-    assert.match(html(fixture('tournament_plus', true)), /Downgrade to Tournament/);
-    const rendered = html(fixture('tournament_plus', false));
-    assert.doesNotMatch(rendered, /Downgrade to/);
-    assert.doesNotMatch(rendered, />Tournament<\/strong>/, 'the downgrade target is not even listed as a row');
+  it('Tournament Plus: the owner sees the Tournament downgrade', () => {
+    assert.match(html(fixture('tournament_plus')), /Downgrade to Tournament/);
   });
-  it('the host: only the owner reads the cancellation record, and the entry passes the role down', () => {
+  it('the host reads the cancellation record unconditionally and carries no delegate plumbing', () => {
     const body = readCode('components/billing/BillingBody.tsx');
-    assert.match(body, /canCancel \? `\/api\/billing\/cancel\/preflight\?\$\{scope\}` : null/);
-    assert.match(body, /canCancel=\{userRole === 'owner'\}/);
-    assert.match(body, /canManageBilling: true, canCancel,/);
+    assert.match(body, /useBillingRead<BillingCancellation>\(`\/api\/billing\/cancel\/preflight\?\$\{scope\}`, version\)/);
+    assert.doesNotMatch(body, /canCancel/);
+    assert.doesNotMatch(body, /userCapabilities/);
   });
-  it('the entry component hands the role to the owner body: owner true, delegate false', () => {
-    for (const role of ['owner', 'admin'] as OrgRole[]) {
+  it('the entry component opens for the owner only: a stray billing grant on any other role gets the locked card', () => {
+    for (const role of ['owner', 'admin', 'staff', 'treasurer'] as OrgRole[]) {
       const loader = billingTestLoader({
         '@/lib/org-context': { useOrg: () => ({ currentOrg: { id: 'org-b', name: 'Falcons', planId: 'club' }, userRole: role, userCapabilities: { billing: true }, loading: false, refresh: async () => {} }) },
       });
       const Body = (loader('components/billing/BillingBody.tsx') as { default: (props: { billingBase: string; teamsHref: string }) => ReturnType<typeof createElement> }).default;
       const element = Body({ billingBase: '/falcons/admin/org/billing', teamsHref: '/falcons/admin/rep-teams' });
-      assert.equal((element.props as { canCancel: boolean }).canCancel, role === 'owner');
+      assert.equal(typeof element.type === 'function' && element.type.name === 'BillingOwnerBody', role === 'owner', role);
     }
   });
-  it('the four server doors stay owner-only', () => {
+  it('the server doors stay owner-only', () => {
     for (const route of ['cancel/preflight', 'cancel/confirm', 'downgrade/preflight', 'downgrade/confirm']) {
       assert.match(readCode(`app/api/billing/${route}/route.ts`), /ctx\.role !== 'owner'\) return forbidden\(\)/, route);
     }
   });
+  it('no role default and no stored override can give billing or settings to anyone but the owner', () => {
+    for (const role of ['admin', 'staff', 'treasurer', 'coach', 'official', 'league_admin', 'league_registrar'] as OrgRole[]) {
+      assert.equal(hasCapability(role, { billing: true, org_settings: true }, 'billing'), false, role);
+      assert.equal(hasCapability(role, { billing: true, org_settings: true }, 'org_settings'), false, role);
+      assert.equal(hasBillingAccess(role, { billing: true }), false, role);
+    }
+    assert.equal(hasBillingAccess('owner', null), true);
+    assert.equal(hasBillingAccess(null, { billing: true }), false);
+  });
 });
 
-describe('a cancelled organization, seen by a billing delegate', () => {
-  for (const key of ['club', 'tournament_plus', 'team'] as OrgPlan[]) it(`${key}: reactivate works, with no cancelled date or kept-until line, and no error`, () => {
-    const props = fixture(key, false); props.snapshot.org.subscriptionStatus = 'canceled';
-    const rendered = html(props);
-    assert.match(rendered, /billing-reactivate-btn/);
-    assert.doesNotMatch(rendered, /Kept until|Try again|cancellation record/);
-    assert.ok(rendered.includes(W.reactivate.chip(null)), 'the chip reads the plain status, never an empty date');
-    assert.doesNotMatch(rendered, /Cancelled (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/);
-  });
-  it('the owner still sees the date and the kept-until line', () => {
-    const props = fixture('club', true); props.snapshot.org.subscriptionStatus = 'canceled';
+describe('a cancelled organization, seen by the owner', () => {
+  it('the owner sees the date and the kept-until line', () => {
+    const props = fixture('club'); props.snapshot.org.subscriptionStatus = 'canceled';
     const record = props.snapshot.cancellation;
     if (record.status === 'ready') record.data.cancelled = { at: '2027-01-05T12:00:00Z', keptUntil: '2027-04-05T12:00:00Z' };
     const rendered = html(props);
+    assert.match(rendered, /billing-reactivate-btn/);
     assert.match(rendered, /Kept until/); assert.match(rendered, /Cancelled Jan/);
   });
 });
 
 describe('the plan panel offers Upgrade where the Change plan table does', () => {
-  const withDetail = (key: OrgPlan, detail: string, canCancel = true) => { const props = fixture(key, canCancel); props.detail = detail; return props; };
+  const withDetail = (key: OrgPlan, detail: string) => { const props = fixture(key); props.detail = detail; return props; };
   const panelOnly = (rendered: string) => rendered.slice(rendered.indexOf('Not right now') - 600);
-  it('Tournament → Tournament Plus: the owner and a billing delegate both get Upgrade', () => {
-    for (const canCancel of [true, false]) assert.match(panelOnly(html(withDetail('tournament', 'tournament_plus', canCancel))), /Upgrade to Tournament Plus/);
+  it('Tournament → Tournament Plus: the owner gets Upgrade', () => {
+    assert.match(panelOnly(html(withDetail('tournament', 'tournament_plus'))), /Upgrade to Tournament Plus/);
   });
   it('no Upgrade when the plan is held back, a staff grant is running, the org is cancelled, or the change is not a checkout', () => {
     const held = withDetail('tournament', 'tournament_plus'); held.snapshot.gating = ready({ tournament: false, tournament_plus: true });
@@ -138,15 +127,15 @@ describe('the plan panel offers Upgrade where the Change plan table does', () =>
 
 describe('small states', () => {
   it('the Change plan cell renders nothing until the free-time and Founding reads are in (no "Contact us" flash)', () => {
-    const props = fixture('tournament_plus', true); props.snapshot.freeTime = { status: 'loading' };
+    const props = fixture('tournament_plus'); props.snapshot.freeTime = { status: 'loading' };
     assert.doesNotMatch(html(props), /Contact us to move/);
   });
   it('the retry button names what it is doing while it re-reads', () => {
-    const props = fixture('club', true); props.snapshot.usage = { status: 'error', error: 'x' }; props.actions.busy = 'retry';
+    const props = fixture('club'); props.snapshot.usage = { status: 'error', error: 'x' }; props.actions.busy = 'retry';
     assert.ok(html(props).includes(W.errors.retrying));
   });
   it('the reactivate cycle choice is disabled while a request is in flight', () => {
-    const props = fixture('club', true); props.snapshot.org.subscriptionStatus = 'canceled'; props.actions.busy = 'checkout';
+    const props = fixture('club'); props.snapshot.org.subscriptionStatus = 'canceled'; props.actions.busy = 'checkout';
     assert.match(html(props), /<select[^>]*disabled/);
   });
 });

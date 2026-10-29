@@ -4,7 +4,7 @@ import * as React from 'react';
 import { billingTestLoader } from './_billing-test-loader.ts';
 import type { BillingBodyViewProps } from '../../components/billing/BillingBody.tsx';
 import type { BillingCancellation, BillingDowngrade, BillingFounding } from '../../lib/plan-billing-data.ts';
-import type { Organization, OrgPlan, OrgRole } from '../../lib/types.ts';
+import type { Organization, OrgPlan } from '../../lib/types.ts';
 import * as planConfig from '../../lib/plan-config.ts';
 import { PLAN_BILLING_WORDS as W } from '../../lib/plan-billing-words.ts';
 
@@ -170,7 +170,7 @@ function assertRequest(request: Request | undefined, endpoint: string, method: s
   else assert.equal(request.init?.body, undefined);
 }
 
-async function ownerHarness(options: { plan?: OrgPlan; search?: string; refresh?: () => Promise<void>; returnTo?: string; founding?: BillingFounding; foundingActive?: boolean; role?: OrgRole; capabilities?: Record<string, boolean> } = {}) {
+async function ownerHarness(options: { plan?: OrgPlan; search?: string; refresh?: () => Promise<void>; returnTo?: string; founding?: BillingFounding; foundingActive?: boolean; } = {}) {
   const env = environment();
   if (options.founding) env.answer('/api/admin/org/founding-season-status?orgSlug=falcons-club', options.founding);
   const runner = hookRunner();
@@ -179,7 +179,7 @@ async function ownerHarness(options: { plan?: OrgPlan; search?: string; refresh?
   const loader = billingTestLoader({
     react: runner.hooks,
     '@/lib/plan-config': { ...planConfig, isFoundingSeasonActive: () => options.foundingActive ?? true, isFoundingSeasonCardWindowOpen: () => true },
-    '@/lib/org-context': { useOrg: () => ({ currentOrg: org, userRole: options.role ?? 'owner', userCapabilities: options.capabilities ?? null, loading: false, refresh }) },
+    '@/lib/org-context': { useOrg: () => ({ currentOrg: org, userRole: 'owner', userCapabilities: null, loading: false, refresh }) },
     'next/navigation': { useRouter: () => ({ replace() {} }), useSearchParams: () => new URLSearchParams(options.search) },
   });
   const bodyExports = loader('components/billing/BillingBody.tsx') as {
@@ -204,8 +204,8 @@ async function ownerHarness(options: { plan?: OrgPlan; search?: string; refresh?
 }
 
 describe('real owner billing action request contracts', () => {
-  it('the shipped upgrade-cycle select sends the selected cycle, including for delegated billing', async () => {
-    const h = await ownerHarness({ plan: 'tournament', role: 'treasurer', capabilities: { billing: true } });
+  it('the shipped upgrade-cycle select sends the selected cycle', async () => {
+    const h = await ownerHarness({ plan: 'tournament' });
     try {
       change(find(h.renderedView(), element => element.type === 'select'), 'annual'); h.render();
       // Choosing an upgrade cycle does not relabel the currently subscribed plan or its price.

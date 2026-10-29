@@ -116,7 +116,7 @@ describe('Part 5 · Plan & billing on free time (drawing D)', () => {
   const page = readCode('components/billing/BillingBody.tsx');
   it('the shared body keeps the same owner, hosting, payment and ended-grant boundaries', () => {
     const body = readCode('components/billing/BillingBody.tsx');
-    assert.match(body, /if \(!hasCapability\(userRole, userCapabilities, 'billing'\)\) return/);
+    assert.match(body, /if \(userRole !== 'owner'\) return/);
     assert.match(body, /const endedPortal = portal\?\.state === 'ended'/);
     assert.match(body, /&& !portal && !staffFree/);
     assert.match(body, /paid && !staffFree && !endedPortal && !founding/);

@@ -78,7 +78,7 @@ export default function PlanPanelDrawer({ plan, onClose }: { plan: PanelPlanKey;
         onUpgrade={key => { void upgrade(key); }}
         upgradeLoading={loading ? plan : null}
         isComingSoon={gating ? gating[plan] : isEffectivelyGated(plan)}
-        // Only the owner and members granted billing may change the plan (the server's 'billing' capability): anyone else reads what the plan
+        // Only the owner may change the plan (the server's 'billing' capability): anyone else reads what the plan
         // includes, with no Upgrade that would only be refused.
         canUpgrade={hasBillingAccess(userRole, userCapabilities) && (upgradePlansFor(currentOrg ? ownPlanOf(currentOrg) : undefined) as PanelPlanKey[]).includes(plan)}
       />

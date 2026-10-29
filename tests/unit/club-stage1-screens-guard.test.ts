@@ -86,8 +86,8 @@ describe('Members — J10-012, J10-021, J10-018, J10-022', () => {
     assert.match(manage, /viewerIsOwner && !targetIsOwner && member\.status === 'active'/, 'Suspend… is the owner\'s');
   });
 
-  it('billing is grantable by the owner, while settings remain owner-only (2026-10-28)', () => {
-    assert.match(manage, /canChangeAccess && <label[\s\S]*?setCap\('billing', on\)/);
+  it('billing and settings are both owner-only: Manage offers neither as a grant (2026-10-29)', () => {
+    assert.doesNotMatch(manage, /setCap\('billing'/);
     assert.doesNotMatch(manage, /setCap\('org_settings'/);
   });
 });

@@ -73,16 +73,20 @@ The Customer Portal is the Stripe-hosted page where subscribers manage their own
 Go to **Settings → Billing → Customer Portal** (or visit `dashboard.stripe.com/settings/billing/portal` directly).
 
 Turn on the following:
-- ✅ Allow customers to cancel subscriptions
-- ✅ Allow customers to update subscriptions (plan changes)
 - ✅ Allow customers to update payment methods
 - ✅ Show invoices
+
+Keep these **off** (owner ruling 2026-10-29):
+- ⛔ Allow customers to cancel subscriptions
+- ⛔ Allow customers to update subscriptions (plan changes)
+
+Cancelling and changing plans happen only on the app's Plan & billing page, which the owner alone can open. That is where the app records the change, so a cancel or plan switch made inside Stripe would leave the app out of step with the money.
 
 Under **Business information**, fill in your business name and support URL — Stripe requires this before the portal will activate.
 
 Click **Save**.
 
-> This configuration is shared between Test and Live mode. You only need to do this once.
+> Stripe keeps a separate portal configuration for Test and for Live mode. Set the same four options in each mode.
 
 ### Step 5 — Set up the webhook for local testing
 
@@ -171,7 +175,7 @@ Live mode has no knowledge of your test products. Repeat Step 3 from Stage 2 whi
 **Pro Plan** — $29.00/mo, 14-day trial → copy the new Live Price ID  
 **Elite Plan** — $79.00/mo, 14-day trial → copy the new Live Price ID
 
-> The Customer Portal settings from Step 4 of Stage 2 carry over to Live mode — you do not need to redo them.
+> Stripe keeps the Customer Portal configuration separately for Live mode. Repeat Step 4 of Stage 2 here: payment methods and invoices on, cancel and plan changes off.
 
 ### Step 4 — Create the production webhook endpoint
 

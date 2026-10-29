@@ -104,9 +104,9 @@ describe("the admin kit nav — today's gates", () => {
 describe('billing in the rail foot and More → You', () => {
   for (const planId of Object.keys(PLAN_CONFIG) as OrgPlan[]) {
     for (const role of ['owner', 'admin', 'staff', 'treasurer', 'coach', 'official', 'league_admin', 'league_registrar'] as OrgRole[]) {
-      for (const capabilities of [null, { billing: true }, { billing: false }]) it(`${planId}/${role}/${JSON.stringify(capabilities)}: the billing capability decides the door`, () => {
+      for (const capabilities of [null, { billing: true }, { billing: false }]) it(`${planId}/${role}/${JSON.stringify(capabilities)}: only the owner has the door, whatever a stored grant says`, () => {
         const link = kitBillingLink({ orgSlug: 'demo-club', planId, role, capabilities });
-        const allowed = role === 'owner' || capabilities?.billing === true;
+        const allowed = role === 'owner';
         if (!allowed) { assert.equal(link, null); return; }
         assert.equal(link?.href, getBillingHref('demo-club', planId));
         assert.equal(link?.label, 'Plan & billing'); assert.equal(link?.icon, CreditCard);

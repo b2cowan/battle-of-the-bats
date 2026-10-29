@@ -3,7 +3,6 @@ import { volunteerJobOf } from './volunteer-jobs';
 import { VOLUNTEER_OPENS } from './volunteer-words';
 import { hasModuleEntitlement, planCarriesModule, type EntitlementOrg } from './module-entitlements';
 import type { OrgRole } from './types';
-import { PLAN_BILLING_TITLE } from './plan-billing-title';
 
 /**
  * WHAT A MEMBER CAN OPEN — the one computation (Club Tier Stage 1, plan §4A A13 / J10-024).
@@ -139,10 +138,6 @@ export function describeAccessChange(
   const now = whatTheyCanOpen(after, org);
   const gained = now.filter(r => r.canOpen && !was.get(r.module)).map(r => r.label);
   const lost = now.filter(r => !r.canOpen && was.get(r.module)).map(r => r.label);
-  const hadBilling = hasCapability(before.role, before.capabilities, 'billing');
-  const hasBilling = hasCapability(after.role, after.capabilities, 'billing');
-  if (hasBilling && !hadBilling) gained.push(PLAN_BILLING_TITLE);
-  if (hadBilling && !hasBilling) lost.push(PLAN_BILLING_TITLE);
   if (gained.length) lines.push(`You can now open ${listOf(gained)}.`);
   if (lost.length) lines.push(`You can no longer open ${listOf(lost)}.`);
   return lines;
@@ -154,11 +149,12 @@ function listOf(items: string[]): string {
 }
 
 /**
- * Owner-only powers. Organization settings stay with the owner; billing can be granted (owner, 2026-10-28). These
+ * Owner-only powers (J10-022). Plan & billing and organization settings stay with the owner: they
  * are never offered as a grant, and the member PATCH refuses a body that tries to grant one.
+ * (Delegating billing, 2026-10-28, was taken back 2026-10-29: money stays with the owner.)
  * (The owner short-circuit in `hasCapability` is what gives the owner these; no role default does.)
  */
-export const OWNER_ONLY_CAPABILITIES: readonly Capability[] = ['org_settings'];
+export const OWNER_ONLY_CAPABILITIES: readonly Capability[] = ['billing', 'org_settings'];
 
 export function isOwnerOnlyCapability(cap: string): boolean {
   return (OWNER_ONLY_CAPABILITIES as readonly string[]).includes(cap);

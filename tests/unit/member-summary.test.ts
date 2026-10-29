@@ -38,10 +38,6 @@ describe('"What they can open" (J10-024) — read from the role, the plan and an
   it('an override that restates the default is not a change', () => {
     assert.deepEqual(overrideChips(access('admin', { module_accounting: true })), []);
   });
-  it('an explicit billing grant is visible in the member’s access chips, and disappears when revoked', () => {
-    assert.deepEqual(overrideChips(access('treasurer'), { billing: true }).map(c => c.text), ['+ Plan & billing']);
-    assert.deepEqual(overrideChips(access('treasurer'), { billing: false }), []);
-  });
 
   it('on a Tournament plan an admin still opens "every program on the plan"', () => {
     assert.equal(accessSummary('admin', access('admin', null, tournamentPlan)), 'Every program on the plan');

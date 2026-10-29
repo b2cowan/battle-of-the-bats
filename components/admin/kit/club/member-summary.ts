@@ -18,7 +18,6 @@ import { ROLE_DEFAULTS, type Capability } from '../../../../lib/roles';
 import type { ProgramAccess } from '../../../../lib/member-access';
 import type { OrgRole } from '../../../../lib/types';
 import { volunteerJobOf } from '../../../../lib/volunteer-jobs';
-import { PLAN_BILLING_TITLE } from '../../../../lib/plan-billing-title';
 import { VOLUNTEER_ACCESS } from '../../../../lib/volunteer-words';
 import { possessive } from '../../../../lib/utils';
 
@@ -63,12 +62,10 @@ export function accessShort(role: OrgRole, access: ProgramAccess[], capabilities
 export type OverrideChip = { key: string; text: string; tone: 'on' | 'off' };
 
 /** "+ Families" / "– Accounting": each change from the role's default, in the programs' order. */
-export function overrideChips(access: ProgramAccess[], capabilities?: Record<string, boolean> | null): OverrideChip[] {
-  const chips: OverrideChip[] = access
+export function overrideChips(access: ProgramAccess[]): OverrideChip[] {
+  return access
     .filter(a => a.override !== null)
     .map(a => ({ key: a.module, text: `${a.override === 'on' ? '+' : '–'} ${a.label}`, tone: a.override as 'on' | 'off' }));
-  if (capabilities?.billing === true) chips.push({ key: 'billing', text: `+ ${PLAN_BILLING_TITLE}`, tone: 'on' });
-  return chips;
 }
 
 /** What losing a program means for the person — the sentence Manage shows before Save (J10-023). */
