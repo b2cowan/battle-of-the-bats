@@ -12,13 +12,16 @@ export default function PublicPostList({ posts }: { posts: Announcement[] }) {
   if (posts.length === 0) return null;
   return (
     <ul className={styles.posts}>
-      {posts.map(p => (
-        <li key={p.id} className={styles.post}>
-          <small>{p.pinned ? `Pinned · ${formatStoredDate(p.date, { withYear: false })}` : formatStoredDate(p.date, { withYear: false })}</small>
-          <b>{p.title}</b>
-          {p.body && <p>{p.body}</p>}
-        </li>
-      ))}
+      {posts.map(p => {
+        const date = formatStoredDate(p.date, { withYear: false });
+        return (
+          <li key={p.id} className={styles.post}>
+            <small>{p.pinned ? `Pinned · ${date}` : date}</small>
+            <b>{p.title}</b>
+            {p.body && <p>{p.body}</p>}
+          </li>
+        );
+      })}
     </ul>
   );
 }

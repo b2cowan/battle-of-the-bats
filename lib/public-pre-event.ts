@@ -81,14 +81,15 @@ export interface RegisterCardInput {
  */
 export function registerCardView(i: RegisterCardInput): RegisterCardView | null {
   const open = i.registerOn && !i.isPreview && i.registration.cta !== null;
+  const waitlist = open && i.registration.cta === 'waitlist';
   const view: RegisterCardView = {
     starts: i.startDate ? `Starts ${formatShortWeekdayDate(i.startDate)}` : null,
     countdownTarget: i.startDate ? i.firstPitchISO : null,
     spots: open ? i.spotsLine : i.registerOn ? i.registration.label : null,
-    button: open ? { href: i.registerHref, label: i.registration.cta === 'waitlist' ? 'Join the waitlist' : 'Register a team' } : null,
-    waitlistNote: open && i.registration.cta === 'waitlist' ? i.registration.detail : null,
+    button: open ? { href: i.registerHref, label: waitlist ? 'Join the waitlist' : 'Register a team' } : null,
+    waitlistNote: waitlist ? i.registration.detail : null,
     portalNote: open
-      ? `${i.registration.cta === 'waitlist' ? 'Joining the waitlist' : 'Registering'} also sets up your free Coaches Portal: schedule, status and organizer updates in one place. Just following along? You don't need an account.`
+      ? `${waitlist ? 'Joining the waitlist' : 'Registering'} also sets up your free Coaches Portal: schedule, status and organizer updates in one place. Just following along? You don't need an account.`
       : null,
   };
   return view.starts || view.button ? view : null;

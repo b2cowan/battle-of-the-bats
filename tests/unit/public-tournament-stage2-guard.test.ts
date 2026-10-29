@@ -138,7 +138,7 @@ describe('before and after the event, and the host card (Part 3)', () => {
   });
   it("the host card: only after the club's access question answered, through the door the band and footer use, and plain text in the preview", () => {
     const b = branch();
-    assert.match(b, /await loadHostClubOpenNow\(org, orgSlug, \{ ownHost: await onClubOwnAddress\(\) \}\)\.catch\(\(\) => null\)/);
+    assert.match(b, /await loadHostClubOpenNow\(org, href\)\.catch\(\(\) => null\)/);
     assert.match(b, /openNow === null \? null : hostCardView\(/);
     assert.match(b, /publicFrameHost\(org\.name, tournament\.name, await resolveOrgHomeHref\(org\)/);
     const view = readCode('lib/public-host-card.ts');

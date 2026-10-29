@@ -28,10 +28,11 @@ import CountUp from '@/components/public/CountUp';
 import Countdown from '@/components/public/Countdown';
 import FollowTournamentStrip from '@/components/public/FollowTournamentStrip';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
-import { orgLinks, onClubOwnAddress } from '@/lib/org-links';
+import { orgLinks } from '@/lib/org-links';
 import { isPublicFrameOn, publicTournamentContactEmail } from '@/lib/public-frame-server';
 import { TOURNAMENT_STATUS_WORD } from '@/lib/club-site-home';
 import { tournamentMoment } from '@/lib/tournament-moment';
+import { gameSideNames } from '@/lib/public-game-row';
 import { preEventFacts, registerCardView, teamSpotsLine, totalSpots } from '@/lib/public-pre-event';
 import { championCards, hostCardView } from '@/lib/public-host-card';
 import { loadHostClubOpenNow } from '@/lib/club-home-data';
@@ -153,7 +154,7 @@ export default async function TournamentHomeContent({
     // The host card (Ask 4 / Ask B): the club's own Open now list, asked only when the club's public site is open and its
     // plan has one; the door is the layout's own answer (lib/public-frame.ts publicFrameHost), so the card, the band and the
     // footer cannot disagree. A failed read costs the card, never the page.
-    const openNow = await loadHostClubOpenNow(org, orgSlug, { ownHost: await onClubOwnAddress() }).catch(() => null);
+    const openNow = await loadHostClubOpenNow(org, href).catch(() => null);
     const host = openNow === null ? null : hostCardView({
       host: publicFrameHost(org.name, tournament.name, await resolveOrgHomeHref(org).catch(() => null)),
       openNow, logoUrl: org.logoUrl ?? null, isPreview, clubHref: href(),
@@ -382,20 +383,8 @@ export default async function TournamentHomeContent({
         .slice(0, 2)
     : [];
 
-  // Fan-friendly placeholder: "Winner SF2" (bracket shorthand) reads as jargon
-  // in a matchup line — "Winner of SF2" reads as English (A9, incl. the
-  // partially-resolved case where only one feeder has decided).
-  function friendlyPlaceholder(placeholder: string | null | undefined): string {
-    if (!placeholder) return 'TBD';
-    return placeholder.replace(/^(Winner|Loser)\s+(?!of\b)/i, '$1 of ');
-  }
-
-  function liveRowNames(game: Game): { away: string; home: string } {
-    return {
-      away: game.awayTeamId ? getTeamName(game.awayTeamId) : friendlyPlaceholder(game.awayPlaceholder),
-      home: game.homeTeamId ? getTeamName(game.homeTeamId) : friendlyPlaceholder(game.homePlaceholder),
-    };
-  }
+  // Both sides' names, "Winner of SF2" for a bracket placeholder (A9): the shared words of lib/public-game-row.ts.
+  const liveRowNames = (game: Game) => gameSideNames(game, getTeamName);
 
   /** Fan-facing context label: round name for playoff games, division otherwise. */
   function roundOrDivisionLabel(game: Game): string {

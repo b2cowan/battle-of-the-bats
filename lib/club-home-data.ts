@@ -10,12 +10,11 @@
 import { getTournamentsByOrg, getLeagueSeasons, getDivisions, getTeams } from '@/lib/db';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isFollowableOrg } from '@/lib/directory';
-import { clubTeamsAddress } from '@/lib/public-club-access';
+import { clubTeamsAddress, isPublicClubSiteOpen } from '@/lib/public-club-access';
 import { clubHomeTournaments, tournamentHomeStatus } from '@/lib/club-site-home';
 import { liveLeagueSeasons } from '@/lib/house-league-season';
 import { withEarlyBird } from '@/lib/league-early-bird';
 import { clubOpenNowRows, type ClubOpenNowRow } from '@/lib/club-open-now';
-import { isPublicClubSiteOpen } from '@/lib/public-club-access';
 import { isSectionShown } from '@/lib/club-site-sections';
 import { siteSectionCarries } from '@/lib/public-site-editor-facts';
 import { clubAboutPageShows } from '@/lib/club-about';
@@ -134,9 +133,8 @@ export async function loadClubHome(org: Organization, orgSlug: string, base?: { 
  * tryouts read, only on the Overview. A deadline turns over at midnight and a tryout opens by date, so a cache would
  * need the club's day in its key to stay true. A failed read costs the card its list, never the page.
  */
-export async function loadHostClubOpenNow(org: Organization, orgSlug: string, base?: { ownHost: boolean }): Promise<ClubOpenNowRow[] | null> {
+export async function loadHostClubOpenNow(org: Organization, href: (path: string) => string): Promise<ClubOpenNowRow[] | null> {
   if (!isPublicClubSiteOpen(org) || !hasModuleEntitlement(org, 'module_public_site')) return null;
-  const href = (path: string) => orgHref({ slug: orgSlug, ownHost: !!base?.ownHost }, path);
   const today = tournamentToday();
   const [leagueSeasons, tryouts] = await Promise.all([
     hasModuleEntitlement(org, 'module_house_league') ? getLeagueSeasons(org.id).catch(() => []) : Promise.resolve([]),

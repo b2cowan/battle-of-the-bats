@@ -75,8 +75,8 @@ export async function countArchives(orgId: string): Promise<number> {
  * Does the club have a tournament of this kind, asked as a yes/no count (fails quiet and closed). A draft never counts;
  * an archived one counts only through its sealed record (countArchives).
  *   · listed — active or completed: every one is either current or finished on the Tournaments page;
- *   · current — running or coming: active, its last day (the end date, else the start date) today or later, or no dates
- *     yet. ⚠ The same rule as `clubTournamentParts`' current run (lib/club-site-home.ts), spelled as a filter: change
+ *   · current — running or coming: active, no champion crowned yet (a crowned event reads Finished), its last day (the end
+ *     date, else the start date) today or later, or no dates yet. ⚠ The same rule as `clubTournamentParts`' current run (lib/club-site-home.ts), spelled as a filter: change
  *     one, change both.
  */
 async function anyTournament(orgId: string, kind: 'listed' | 'current', today: string): Promise<boolean> {
@@ -87,6 +87,7 @@ async function anyTournament(orgId: string, kind: 'listed' | 'current', today: s
   const { count, error } = kind === 'listed'
     ? await query.in('status', ['active', 'completed'])
     : await query.eq('status', 'active')
+        .is('champions_crowned_at', null)
         .or(`end_date.gte.${today},and(end_date.is.null,start_date.gte.${today}),and(end_date.is.null,start_date.is.null)`);
   if (error) {
     console.error(`[org-sections] ${kind} tournament check failed`, error);

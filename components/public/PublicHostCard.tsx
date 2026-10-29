@@ -40,7 +40,7 @@ export default function PublicHostCard({ view, colours }: { view: HostCardView; 
           <h2 className={styles.openHead}>Open now</h2>
           <ul className={styles.openList}>
             {view.open.map(o => {
-              const body = <><span>{o.title}{o.sub && <small>{o.sub}</small>}</span></>;
+              const body = <span>{o.title}{o.sub && <small>{o.sub}</small>}</span>;
               return (
                 <li key={o.key}>
                   {o.href

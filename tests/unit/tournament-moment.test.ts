@@ -50,6 +50,12 @@ describe('the moment, and today\'s finished rule exactly', () => {
   it('round robin played out ON its last day: after that day, not the next', () => {
     assert.equal(tournamentMoment(at('2026-10-25', { games: [played(), played({ status: 'forfeit' })] })).finished, true);
   });
+  it('no start date: games on or before today make it game day (live games are never behind a Register card); none, before', () => {
+    const noStart = { status: 'active', startDate: null, endDate: null };
+    assert.equal(tournamentMoment(at('2026-10-24', { tournament: noStart, games: [game({ date: '2026-10-24' })] })).moment, 'gameDay');
+    assert.equal(tournamentMoment(at('2026-10-24', { tournament: noStart, games: [game({ date: '2026-10-30' })] })).moment, 'before');
+    assert.equal(tournamentMoment(at('2026-10-24', { tournament: noStart })).moment, 'before');
+  });
   it('round robin played out before its last day: still game day', () => {
     const s = tournamentMoment(at('2026-10-24', { games: [played()] }));
     assert.equal(s.finished, false);

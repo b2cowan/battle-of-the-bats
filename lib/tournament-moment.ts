@@ -64,8 +64,9 @@ export function tournamentMoment(input: TournamentMomentInput): TournamentMoment
     (!scheduleWithheld && ((playoffsComplete && noUnplayedGames) || roundRobinComplete));
 
   // Not finished and started (inside its dates, or past them with games still unscored) is game day: what a family
-  // needs then is the games, never a Register card. No start date yet is before.
-  const started = !!startDate && today >= startDate;
+  // needs then is the games, never a Register card. No start date: the first game on or before today starts it (live
+  // games are never hidden behind a Register card); with none, it is before.
+  const started = startDate ? today >= startDate : games.some(g => g.date <= today);
   const moment: TournamentMoment = finished ? 'after' : started ? 'gameDay' : 'before';
 
   return {

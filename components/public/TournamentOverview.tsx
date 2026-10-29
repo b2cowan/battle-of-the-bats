@@ -113,9 +113,10 @@ export default function TournamentOverview({
   const latestViews = latest.map(g => gameRowView(g, gameSideNames(g, teamName), context(g), today));
   const posts = showNewsPage && moment !== 'after' ? announcements : [];
 
-  // The parts, each null when it has nothing to say.
-  const registerEl = moment === 'before' && register ? <PublicRegisterCard view={register} /> : null;
-  const factsEl = moment === 'before' && facts.length > 0 ? <PublicFactsList rows={facts} /> : null;
+  // The parts, each null when it has nothing to say. The page hands over register / facts / champions / afterDoors only
+  // in their own moment, so the moment is not asked again here.
+  const registerEl = register ? <PublicRegisterCard view={register} /> : null;
+  const factsEl = facts.length > 0 ? <PublicFactsList rows={facts} /> : null;
 
   const liveEl = liveViews.length > 0 ? (
     <section className={styles.section} aria-labelledby="overview-live">
@@ -152,8 +153,8 @@ export default function TournamentOverview({
     </section>
   ) : null;
 
-  const championsEl = moment === 'after' && champions.length > 0 ? <PublicChampions cards={champions} /> : null;
-  const afterDoorsEl = moment === 'after' && afterDoors.length > 0 ? (
+  const championsEl = champions.length > 0 ? <PublicChampions cards={champions} /> : null;
+  const afterDoorsEl = afterDoors.length > 0 ? (
     <div className={styles.doorList}>
       {afterDoors.map(d => <PublicDoorRow key={d.href} href={d.href} label={d.label} sub={d.sub} />)}
     </div>

@@ -14,8 +14,8 @@
 import { isGameLive, gameStartMs, DEFAULT_GAME_DURATION_MINUTES } from './game-status';
 import type { Game } from './types';
 
-export const UP_NEXT_ROWS = 4;
-export const LATEST_RESULT_ROWS = 3;
+const UP_NEXT_ROWS = 4;
+const LATEST_RESULT_ROWS = 3;
 
 const byStart = (a: Game, b: Game) => (a.date || '').localeCompare(b.date || '') || (a.time || '').localeCompare(b.time || '');
 
