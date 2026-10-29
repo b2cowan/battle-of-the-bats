@@ -10,7 +10,7 @@ import { orderByKeepPriority } from './billing-downgrade-order';
 import { SLOT_STATUSES, withinFreeSlots } from './tournament-slot';
 import type { Organization, OrgPlan } from './types';
 import { ownPlanOf } from './entitlement-grants';
-import { getBillingHref } from './billing-urls';
+import { getBillingHref, billingUrlOrgFromRow } from './billing-urls';
 import {
   BILLING_RETENTION_DAYS, COACHES_PORTAL_RETENTION_DAYS,
   organizationShutdownAreas, shortOrganizationShutdownAreas, PREMIUM_COACH_SHUTDOWN_AREAS,
@@ -71,7 +71,7 @@ export type RestoreRetainedTournamentsResult = {
   restoredTournamentIds: string[];
 };
 
-type RetentionOrg = { name: string; slug: string; plan_id: string };
+type RetentionOrg = { name: string; slug: string; plan_id: string; account_kind: string | null; subscription_status: string | null };
 type RetainedRecordProcessRow = {
   id: string;
   org_id: string;
@@ -445,12 +445,15 @@ function daysUntil(iso: string) {
 
 async function sendRetentionEmail(
   orgId: string,
-  { name: orgName, slug: orgSlug, plan_id: planId }: RetentionOrg,
+  org: RetentionOrg,
   records: RetainedRecordProcessRow[],
   isPendingPurge: boolean,
 ) {
   const ownerEmail = await getOrgOwnerEmail(orgId);
   if (!ownerEmail) return false;
+
+  const orgName = org.name;
+  const billingHref = getBillingHref(billingUrlOrgFromRow(org));
 
   const first = records[0];
   await sendTransactionalEmail({
@@ -459,7 +462,7 @@ async function sendRetentionEmail(
     orgId,
     vars: {
       orgName,
-      retentionUrl: `${SITE_URL}${getBillingHref(orgSlug, planId)}`,
+      retentionUrl: `${SITE_URL}${billingHref}`,
       daysUntilExpiry: daysUntil(first.retention_until),
     },
     defaultSubject: isPendingPurge
@@ -472,7 +475,7 @@ async function sendRetentionEmail(
         recordType: r.record_type,
         retentionUntil: retentionDateLabel(r.retention_until),
       })),
-      retentionUrl: `${SITE_URL}${getBillingHref(orgSlug, planId)}`,
+      retentionUrl: `${SITE_URL}${billingHref}`,
       daysUntilExpiry: daysUntil(first.retention_until),
       isPendingPurge,
     }),
@@ -499,7 +502,7 @@ export async function processBillingRetentionExpiry(actorEmail: string) {
 
   const { data: expiringRaw, error: expiringError } = await supabaseAdmin
     .from('billing_retained_records')
-    .select('id, org_id, record_type, display_name, retained_state, retention_until, warning_sent_at, purge_notice_sent_at, metadata, organizations(name, slug, plan_id)')
+    .select('id, org_id, record_type, display_name, retained_state, retention_until, warning_sent_at, purge_notice_sent_at, metadata, organizations(name, slug, plan_id, account_kind, subscription_status)')
     .eq('retained_state', 'retained_inactive')
     .is('warning_sent_at', null)
     .gt('retention_until', now.toISOString())
@@ -534,7 +537,7 @@ export async function processBillingRetentionExpiry(actorEmail: string) {
 
   const { data: expiredRaw, error: expiredError } = await supabaseAdmin
     .from('billing_retained_records')
-    .select('id, org_id, record_type, display_name, retained_state, retention_until, warning_sent_at, purge_notice_sent_at, organizations(name, slug, plan_id)')
+    .select('id, org_id, record_type, display_name, retained_state, retention_until, warning_sent_at, purge_notice_sent_at, organizations(name, slug, plan_id, account_kind, subscription_status)')
     .eq('retained_state', 'retained_inactive')
     .lte('retention_until', now.toISOString());
   if (expiredError) throw expiredError;

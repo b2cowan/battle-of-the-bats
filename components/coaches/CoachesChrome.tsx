@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 import CoachTopStrip from './CoachTopStrip';
 import CoachesSidebar from './CoachesSidebar';
 import CoachesBottomNav from './CoachesBottomNav';
@@ -34,12 +35,23 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 export default function CoachesChrome({
   orgSlug,
   children,
+  billingOnlyHref,
 }: {
   orgSlug: string;
   children: React.ReactNode;
+  /** A zero-team owner may render only this workspace page, even while Next retains this layout. */
+  billingOnlyHref?: string | null;
 }) {
   const pathname = usePathname() ?? '';
+  const needsWallRequest = !!billingOnlyHref && pathname !== billingOnlyHref;
+  useEffect(() => {
+    if (needsWallRequest) window.location.replace(`${pathname}${window.location.search}${window.location.hash}`);
+  }, [needsWallRequest, pathname]);
   const isHelp = pathname.includes('/coaches/help');
+
+  // Layouts persist on client navigation. Do not mount another page beneath a zero-team billing
+  // exception; ask the server for that destination, where the original walls still run first.
+  if (needsWallRequest) return null;
 
   if (isHelp) {
     // No chrome at all — not even a "back to your portal" bar. BOTH doors into the

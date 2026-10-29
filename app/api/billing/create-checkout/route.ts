@@ -128,8 +128,9 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-  const fallbackReturnTo = getBillingHref(auth.org.slug, ownPlanOf(auth.org));
-  const safeReturnTo = returnTo?.startsWith(`/${auth.org.slug}/admin/`)
+  const fallbackReturnTo = getBillingHref({ ...auth.org, planId: ownPlanOf(auth.org) }, { purpose: 'return' });
+  const coachBillingReturn = isTeamWorkspaceOrg(auth.org) && returnTo === getBillingHref(auth.org, { host: 'coach', purpose: 'return' });
+  const safeReturnTo = returnTo && (returnTo.startsWith(`/${auth.org.slug}/admin/`) || coachBillingReturn)
     ? returnTo
     : fallbackReturnTo;
   const isOnboardingPlanSelection = safeReturnTo.includes('/admin/onboarding');

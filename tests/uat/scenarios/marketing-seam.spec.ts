@@ -121,6 +121,27 @@ test.describe('R4 — the plan cards point at real actions for an operator', () 
   });
 });
 
+test.describe('Plan & billing — the standalone owner marketing seam', () => {
+  test.use({ storageState: process.env.UAT_COACH_BILLING_OWNER_SESSION
+    ?? path.join(process.cwd(), 'tests/uat/.auth/org-owner.json') });
+
+  test('an active standalone owner gets coach billing links from the actual role summary', async ({ page }) => {
+    const slug = process.env.UAT_COACH_BILLING_ORG_SLUG;
+    test.skip(!slug, 'Owner walk needs UAT_COACH_BILLING_ORG_SLUG and a session whose primary workspace is that standalone portal; no fixture is provisioned here.');
+    const response = page.waitForResponse(r => new URL(r.url()).pathname === '/api/me/role-summary' && r.ok());
+    await page.goto('/pricing', { waitUntil: 'networkidle' });
+    const summary = await (await response).json();
+    expect(summary.billingHref).toBe(`/${slug}/coaches/billing`);
+    const doors = page.locator(`#org-plans a[href="/${slug}/coaches/billing"]`);
+    await expect(doors.first()).toBeVisible();
+    expect(await page.locator(SIGNUP_LINKS).count()).toBe(0);
+    expect(await page.locator('#org-plans a[href*="/admin/"]').count()).toBe(0);
+    await doors.first().click();
+    await expect(page.getByRole('heading', { name: 'Plan & billing', exact: true })).toBeVisible();
+    await expect(page.locator('#billing-change')).toBeVisible();
+  });
+});
+
 test.describe('R11 — acquisition chrome leaves an operator\'s everyday bar (audit D6 family)', () => {
   // Owner-directed 2026-08-01, logged in BUSINESS_DECISIONS ("Acquisition chrome is for
   // PROSPECTS"): a permanent sales link in the chrome of someone who already operates here reads

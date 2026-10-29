@@ -703,6 +703,13 @@ export const SCREENS = [
     ready: 'h1',
   },
   {
+    id: 'coach-billing',
+    session: 'coach',
+    path: (c) => `/${c.orgSlug}/coaches/billing`,
+    ready: 'h1',
+    note: 'Existing club-coach session measures the locked billing host. The standalone owner body needs its own owner walk; this fixture must not claim to measure it.',
+  },
+  {
     id: 'coach-help',
     session: 'coach',
     path: (c) => `/${c.orgSlug}/coaches/help`,

@@ -17,6 +17,6 @@ export default function BillingKit() {
     ? W.page.eyebrow : undefined;
   return <div className={ck.page}>
     <AdminPageHeader eyebrow={eyebrow} title={W.page.title} />
-    <BillingBody billingBase={getBillingHref(slug, currentOrg?.planId)} teamsHref={`/${slug}/admin/rep-teams`} />
+    <BillingBody billingBase={getBillingHref({ slug, planId: currentOrg?.planId }, { host: 'admin' })} teamsHref={`/${slug}/admin/rep-teams`} />
   </div>;
 }

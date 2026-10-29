@@ -6,13 +6,15 @@ import {
   LayoutGrid, Archive, Calendar, MessageSquare, Trophy,
   Users, UserCog, Mail, DollarSign, FileText, BarChart3,
   MoreHorizontal, X, Settings, ClipboardList, NotebookPen, ListOrdered, TrendingUp, Shield, Bell,
-  User, Home, ChevronRight,
+  User, Home, ChevronRight, CreditCard,
 } from 'lucide-react';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import MoreSheetTiles from './MoreSheetTiles';
 import MoreSheetFoot from './MoreSheetFoot';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { useOrg } from '@/lib/org-context';
+import { coachBillingLink } from '@/lib/coach-billing-access';
+import { PLAN_BILLING_TITLE } from '@/lib/plan-billing-title';
 import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coaches-context';
 import { isCoachNavItemVisible, withClosedSeasonNav, resolveNavTeamId, SEASON_END_LABEL } from '@/lib/coach-nav-visibility';
 import { useChatUnread } from '@/lib/use-chat-unread';
@@ -140,7 +142,7 @@ const badgeText = (n: number): string => (n > 9 ? '9+' : String(n));
 
 export default function CoachesBottomNav() {
   const pathname = usePathname();
-  const { currentOrg, userRole } = useOrg();
+  const { currentOrg, userRole, userCapabilities } = useOrg();
   const { assignments, closedAssignments } = useCoaches();
   const orgSlug  = currentOrg?.slug ?? '';
   const base     = `/${orgSlug}/coaches`;
@@ -151,6 +153,7 @@ export default function CoachesBottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const inSandbox = useIsSandbox();
+  const billingHref = coachBillingLink(currentOrg, userRole, userCapabilities, inSandbox);
   const moreRef = useRef<HTMLDivElement>(null);
   const chatUnread = useChatUnread();
   // Chunk B (P1 #4): until now the notification bell existed ONLY in the desktop sidebar, which is
@@ -209,7 +212,8 @@ export default function CoachesBottomNav() {
   // is what made a coach reach for a Back arrow. The ruling was to light More rather than add one:
   // every arrow in the portal goes UP to a page it names, and this page has none above it.
   const isOnNotifications = pathname === `${base}/notifications`;
-  const isOnTeamMore = isOnNotifications || (teamBase
+  const isOnBilling = pathname === `${base}/billing`;
+  const isOnTeamMore = isOnNotifications || isOnBilling || (teamBase
     ? MORE_ONLY_KEYS.some(key => pathname.startsWith(`${teamBase}${key}`))
     : false);
 
@@ -437,6 +441,12 @@ export default function CoachesBottomNav() {
                     <span>Home</span>
                   </Link>
                 </>
+              )}
+              {billingHref && (
+                <Link href={billingHref} className={`${styles.dropItem} ${isOnBilling ? styles.dropActive : ''}`} role="menuitem" id="coaches-mob-billing" onClick={() => setMoreOpen(false)}>
+                  <CreditCard size={17} aria-hidden />
+                  <span>{PLAN_BILLING_TITLE}</span>
+                </Link>
               )}
               {isOrgAdmin && (
                 <Link

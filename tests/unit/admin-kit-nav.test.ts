@@ -108,7 +108,7 @@ describe('billing in the rail foot and More → You', () => {
         const link = kitBillingLink({ orgSlug: 'demo-club', planId, role, capabilities });
         const allowed = role === 'owner';
         if (!allowed) { assert.equal(link, null); return; }
-        assert.equal(link?.href, getBillingHref('demo-club', planId));
+        assert.equal(link?.href, getBillingHref({ slug: 'demo-club', planId }, { host: 'admin' }));
         assert.equal(link?.label, 'Plan & billing'); assert.equal(link?.icon, CreditCard);
         assert.ok(routeExists(link!.href), 'the billing destination is a real route');
         assert.ok(isKitLinkActive(link!.href, link!));

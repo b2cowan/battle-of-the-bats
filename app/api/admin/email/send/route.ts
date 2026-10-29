@@ -26,6 +26,7 @@ import {
 import { resolvePlatformTemplate, renderTemplateEmail } from '@/lib/platform-email-templates';
 import type { EmailVars } from '@/lib/email-markup';
 import { withObservability } from '@/lib/observability';
+import { getBillingHref, billingUrlOrgFromRow } from '@/lib/billing-urls';
 
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
@@ -248,13 +249,28 @@ async function getCoachRecipients(): Promise<
 // preserves the per-org enrichment the hand-built emails used (weeks active,
 // tournament/game counts) so the rendered content matches what shipped before —
 // only now the words around these values are edited from the console.
+async function readBillingOrg(orgId: string) {
+  const { data: org, error } = await supabaseAdmin.from('organizations')
+    .select('slug, plan_id, account_kind, subscription_status, name').eq('id', orgId).single();
+  if (error) throw error;
+  if (!org?.slug) throw new Error('Email recipient workspace was not found');
+  return org;
+}
+
 async function buildVars(
   emailKey: string,
   r: { orgId: string; orgName: string; ownerName: string | null },
+  orgRows: Map<string, Awaited<ReturnType<typeof readBillingOrg>>>,
 ): Promise<EmailVars> {
   const firstName = r.ownerName ?? 'there';
-  const setupUrl = `${SITE_URL}/${r.orgId}/admin/tournaments`;
-  const billingUrl = `${SITE_URL}/${r.orgId}/admin/org/billing`;
+  // One read per workspace per send — the sample check and the loop reach the same recipient twice.
+  let org = orgRows.get(r.orgId);
+  if (!org) {
+    org = await readBillingOrg(r.orgId);
+    orgRows.set(r.orgId, org);
+  }
+  const setupUrl = `${SITE_URL}/${org.slug}/admin/tournaments`;
+  const billingUrl = `${SITE_URL}${getBillingHref(billingUrlOrgFromRow(org))}`;
 
   switch (emailKey) {
     case 'founding_welcome':
@@ -388,7 +404,8 @@ export const POST = withObservability(async (request: NextRequest) => {
   // the opposite of the truth about someone's billing. Prove the contract on the first recipient
   // and refuse the WHOLE batch, rather than discovering it one sent email too late.
   const declared = MARKETING_EMAIL_DEFAULTS[emailKey]?.variables ?? [];
-  const sampleVars = await buildVars(emailKey, recipients[0]);
+  const orgRows = new Map<string, Awaited<ReturnType<typeof readBillingOrg>>>();
+  const sampleVars = await buildVars(emailKey, recipients[0], orgRows);
   const missing = declared.filter(v => !(v in sampleVars));
   if (missing.length > 0) {
     return NextResponse.json(
@@ -417,7 +434,7 @@ export const POST = withObservability(async (request: NextRequest) => {
     // Fill the campaign's tokens with this org's values, then render subject + branded
     // HTML through the shared resolver — the SAME render used by the preview. The
     // unsubscribe footer is injected downstream by sendMarketingEmail (opt-out path).
-    const vars = await buildVars(emailKey, recipient);
+    const vars = await buildVars(emailKey, recipient, orgRows);
     const { subject, html } = renderTemplateEmail(template, vars);
 
     const result = await sendMarketingEmail({

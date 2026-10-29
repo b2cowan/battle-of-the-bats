@@ -103,7 +103,7 @@ export const POST = withObservability(async (req: Request) => {
         html: tournamentPlusUpsellHtml({
           orgName: ctx.org.name,
           firstName: ctx.user.user_metadata?.first_name as string | undefined,
-          upgradeUrl: `${SITE_URL}${getBillingHref(ctx.org.slug, 'tournament')}`,
+          upgradeUrl: `${SITE_URL}${getBillingHref({ ...ctx.org, planId: 'tournament' })}`,
         }),
         scheduledAt,
       });

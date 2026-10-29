@@ -9,11 +9,12 @@ import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
 import { isClubPlan, isTournamentOnlyWorkspace, planCarriesModule, type EntitlementOrg } from './module-entitlements';
 import { WORKSPACE_KIND_LABEL } from './workspace-labels';
 import { getBillingHref } from './billing-urls';
+import { hasBillingAccess } from './roles';
 import { officialHome, volunteerHome, volunteerJobOf } from './volunteer-jobs';
 import { volunteerDuties } from './volunteer-words';
 import { getCoachTeamCards } from './house-league-coach';
 import { coachTeamPath as leagueCoachTeamPath } from './house-league-coach-invites';
-import type { OrgAccountKind, OrgPlan } from './types';
+import type { OrgAccountKind, OrgPlan, OrgRole } from './types';
 
 export type OrgRelation = {
   id?: string;
@@ -714,20 +715,16 @@ export function getPrimaryOrgPlanContext(
    *  is also what makes "same org" true by construction rather than by two lookups agreeing. */
   primaryOrgHref: string | null = getPrimaryOrgDestination(contexts),
 ): { planId: string | null; billingHref: string | null } {
-  if (!primaryOrgHref) return { planId: null, billingHref: null };
-  // `kind === 'organization'` already excludes the only kind filterWorkspaceContexts drops ('fan'),
-  // so this is one pass over the contexts, not a filter followed by a find.
-  const org = contexts.find(c => c.kind === 'organization' && c.destination === primaryOrgHref);
+  // Preserve the primary organization's precedence for a multi-workspace account. A standalone
+  // owner has no organization context/Admin door; pricing still knows their own paid workspace.
+  const org = primaryOrgHref
+    ? contexts.find(c => c.kind === 'organization' && c.destination === primaryOrgHref)
+    : contexts.find(c => c.kind === 'coaches_premium' && c.isTeamWorkspace && hasBillingAccess(c.role as OrgRole, null));
   if (!org?.orgSlug) return { planId: null, billingHref: null };
   const planId = typeof org.planId === 'string' ? org.planId : null;
   return {
     planId,
-    // Via the canonical resolver, NOT a hand-written path: Tournament and Tournament Plus have no
-    // org-admin concept and are redirected out of /admin/org/*, so their billing lives under the
-    // tournament settings instead. Writing the org path here would have sent the free tier — the
-    // largest group — to a door they cannot open, which is the exact defect class this repair pass
-    // is closing.
-    billingHref: getBillingHref(org.orgSlug, planId),
+    billingHref: getBillingHref({ slug: org.orgSlug, planId, accountKind: org.isTeamWorkspace ? 'team_workspace' : undefined, name: org.title }),
   };
 }
 

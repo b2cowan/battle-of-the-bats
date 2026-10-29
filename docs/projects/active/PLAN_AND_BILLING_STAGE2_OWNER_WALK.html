@@ -1,0 +1,346 @@
+<title>Plan and billing Stage 2 walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one reading column. Four walks, each with its purpose and pass line, then its parts (one sign-in at a time) with an optional facts box, steps, a verdict and notes. */
+:root{
+  --bg:#F3F1EC; --panel:#FFFFFF; --ink:#1F1B16; --soft:#4E473D; --dim:#6F675B; --line:#DDD8CE;
+  --accent:#1F3A5F; --ok:#2C6A2A; --ok-bg:#E6F0E2; --warn:#8A4B12; --warn-bg:#F7EBDD; --bad:#9A2E17; --bad-bg:#F6E3DE;
+  --info-bg:#E8EDF4;
+  --title:'Barlow Condensed','Arial Narrow',sans-serif; --body:'Inter',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; --info-bg:#222A36; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; --info-bg:#222A36; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 64px}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font:700 32px/1.05 var(--title);margin:0;text-wrap:balance}
+h2{font:700 24px/1.1 var(--title);margin:0;text-wrap:balance}
+h3{font:700 19px/1.15 var(--title);margin:0;text-wrap:balance}
+p{margin:0}
+.lede{display:flex;flex-direction:column;gap:8px;color:var(--soft)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px 16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.signin dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+.signin dt{font-weight:600;color:var(--soft)}
+.signin dd{margin:0;min-width:0;overflow-wrap:anywhere}
+code{font:500 13px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px;overflow-wrap:anywhere}
+.progress{display:flex;align-items:center;gap:12px;font-weight:600}
+.bar{flex:1;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.walk-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.chip{font-size:13px;font-weight:600;padding:3px 10px;border-radius:12px;background:var(--bg);border:1px solid var(--line);color:var(--soft)}
+.intro{display:grid;gap:10px}
+.intro b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:2px}
+.part{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px}
+.part-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.count{font-size:13px;color:var(--dim)}
+.who{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.where{font-size:14px;color:var(--soft)}
+.warnbox{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:10px 12px;font-size:14px}
+.facts{background:var(--info-bg);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;font-size:14px}
+.facts div b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:2px}
+ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+li label{display:flex;gap:10px;align-items:flex-start;padding:6px 4px;border-radius:6px;cursor:pointer;min-height:44px}
+li label:hover{background:var(--bg)}
+li.group{font-size:13px;font-weight:600;color:var(--dim);padding:4px 4px 0}
+input[type=checkbox]{width:20px;height:20px;margin:2px 0 0;flex:none;accent-color:var(--accent)}
+li.done span{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--line)}
+.verdict{display:flex;gap:8px;flex-wrap:wrap}
+.verdict button{font:600 14px/1 var(--body);min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.verdict button[aria-pressed=true][data-v=pass]{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=issue]{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=call]{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+textarea{width:100%;box-sizing:border-box;min-height:64px;font:14px/1.5 var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:600 15px/1 var(--body);min-height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--panel);cursor:pointer}
+.btn.sec{background:var(--panel);color:var(--ink);border-color:var(--line)}
+#summary{min-height:180px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace}
+.note{font-size:13px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="wrap">
+  <header class="lede">
+    <h1>Plan and billing · Stage 2 walk</h1>
+    <p>Written 2026-10-29. Stage 2 put Plan &amp; billing inside the Coaches Portal for the person who owns a standalone portal, and gave that owner a way back from the three walls: subscription cancelled, free time ended, and no team yet. This walk is what the plan still lists as owed, including the real Stripe test paths.</p>
+    <p class="note">Use the dev server and Stripe test mode only. Do not cancel, move or buy anything on production. Plan names, buttons and what is present or absent are the pass conditions. Dates marked "as of 10-29" drift and are illustration. Walk 4 changes a workspace's billing state and says how to put it back, so it goes last.</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl>
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (the dev server). These accounts are dev-only; keep this page private.</dd>
+      <dt>Standalone owner</dt><dd><code>uat-coach@uat-test-org.local</code> · <code>UATPassword2026!</code>. Owns the Premium portal <code>/uat-standalone</code> (UAT Standalone Team). The same account also coaches the club team UAT Test Team in <code>/uat-test-org</code>, which is the "club-owned coach" case in Walk 2.</dd>
+      <dt>Coach on free time</dt><dd><code>uat-free-coach@uat-free-coach.local</code> · <code>UATPassword2026!</code> (<code>/uat-free-team-coaches-portal</code>). Staff free time on this portal ended or ends tonight, as of 10-29, end of day Eastern.</dd>
+      <dt>Platform admin</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code> at <code>/platform-admin/login</code></dd>
+      <dt>The demo</dt><dd>No login. Open <code>/see-it-live/coaches</code> and stay inside the demo for that part: leaving its path ends the session.</dd>
+      <dt>Stripe test card</dt><dd><code>4242 4242 4242 4242</code>, any future date, any three digits, any postal code.</dd>
+      <dt>Windows</dt><dd>Use a normal window for the coach and a private window for the platform admin, so you do not sign out and in all walk. For the phone steps, use the browser's phone view at about 390 wide.</dd>
+      <dt>Fixtures you may need to make</dt><dd>There is no dev workspace with an assistant coach on a standalone portal, and none with a standalone owner who has no team. Steps that need one say so and offer "Skipped it". A skipped step is recorded as not walked; the automated tests render those states, but nobody has looked at them in a browser.</dd>
+    </dl>
+  </section>
+
+  <div class="progress" aria-live="polite"><span id="prog-text">0 of 0</span><span class="bar" aria-hidden="true"><i id="prog-bar"></i></span></div>
+
+  <div id="walks" class="wrap" style="gap:20px"></div>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Send it back</h2>
+    <p class="where">Build the summary and paste it into the chat. A part's verdict is your opinion; the fraction beside it is what was ticked. Where a step offers "Did it" or "Skipped it", the ticked option is what you did.</p>
+    <div class="actions">
+      <button class="btn" id="build" type="button">Build summary</button>
+      <button class="btn sec" id="copy" type="button">Copy</button>
+      <button class="btn sec" id="reset" type="button">Clear my ticks</button>
+    </div>
+    <label for="summary" class="note">Summary</label>
+    <textarea id="summary" readonly></textarea>
+  </section>
+</div>
+
+<script>
+/* A step starting "G:" is a small heading that groups the steps below it; "R:" marks one option of a ruling or an observation (one box per option, so the tick says what happened and prints as "your answer"). A part may carry a facts list of [heading, text] pairs shown above its steps. */
+const WALKS = [
+  { id: 'w1', title: `Walk 1 · The owner opens Plan & billing`,
+    purpose: `Before Stage 2 a standalone coach had no billing screen in their own portal; the only way to it was an admin address typed by hand. Now the owner has a Plan & billing row in the portal and the page opens inside the portal's own frame. You are checking that the row is where it should be on a computer and a phone, that the page opens without a team picked, and that the help link works.`,
+    passes: `The owner finds Plan & billing in the foot of the computer rail and in the phone More menu, the page opens at /uat-standalone/coaches/billing inside Coaches Portal chrome, More stays lit on the phone, and the page's "?" opens a guide that answers where to manage the plan.`,
+    notIn: `Who does not see the row (Walk 2), the lapsed walls (Walk 4), real Stripe (Walk 3), and removing the Admin door from the standalone owner's rail, which is Stage 3. The Admin row is still there today.`,
+    parts: [
+    { id: 'a', title: `A · On a computer`, who: `Standalone owner`, where: `Sign in as uat-coach@uat-test-org.local. Open /uat-standalone/coaches in a normal-width window.`, steps: [
+      `The foot of the left rail reads, top to bottom: Help, Plan & billing, Admin, Collapse sidebar. Plan & billing has a card icon.`,
+      `Press Plan & billing. The address is /uat-standalone/coaches/billing. The header says Plan & billing with a card icon and a "?" beside it.`,
+      `The page sits in the portal's frame (the portal's rail stays on the left; this is not the admin look). The Plan & billing row in the rail is highlighted.`,
+      `The page opens on Your plan, then What's in use, then What's included. For this Premium portal there is no Change plan table; a "Part of a club?" card stands in its place. Reduce or cancel and "Payment method & invoices" appear only when there is something to cancel or a Stripe customer to open, so a comped portal may show neither: say which you saw in the notes. Press nothing yet.`,
+      `Press the "?" in the header. A guide drawer opens. Close it.`,
+      `Open the drawer again and use its link to the full guide. The guide opens on the question "Where do I see my Premium plan, change it, or update my card?" and its answer names the foot of the left rail and the phone More menu.`,
+    ]},
+    { id: 'b', title: `B · On a phone`, who: `Standalone owner`, where: `Same account, phone view at about 390 wide, on /uat-standalone/coaches.`, steps: [
+      `Open More. The menu has a Plan & billing row in the group with Account and Home, above the existing foot.`,
+      `Press it. The page opens and the More tab at the bottom stays lit while you are on it.`,
+      `The body fits the screen with no sideways scroll, and every button is easy to tap (about the size of a finger).`,
+      `Press "Payment method & invoices" and then back out of any window it opens. Nothing is cut off.`,
+    ]},
+    { id: 'c', title: `C · It does not depend on a team`, who: `Standalone owner`, where: `Same account, computer width. Start on a team's page, for example /uat-standalone/coaches and then open UAT Standalone Team.`, steps: [
+      `From inside a team, press Plan & billing in the rail foot. The page opens with no team picker and no team masthead. Its usage figures describe the whole workspace, not one team.`,
+      `Press the browser Back button. You return to the team page you were on.`,
+      `R: Did it: I closed the team's season in this workspace (or have a workspace whose seasons are all closed) and looked at the rail.`,
+      `R: Skipped it: I did not close a season (this step is optional because it changes a team's season).`,
+      `If you did it: the team part of the rail shows only Season's End, while Plan & billing is still in the foot and still opens. Put it back: reopen the season from the Season's End page.`,
+    ]},
+  ]},
+
+  { id: 'w2', title: `Walk 2 · Who sees it, and who does not`,
+    purpose: `Plan & billing is the owner's alone. An assistant coach, a coach whose team belongs to a club, and the demo should not be offered the row at all, and a person who types the address anyway must meet a locked card, not money facts. You are checking that nobody else is shown a way in.`,
+    passes: `The row is present for the standalone owner only. Everyone else has no row on a computer or a phone. A typed billing address shows "Billing access required" and no figures or buttons.`,
+    notIn: `The wall screens (Walk 4) and the Admin door, which stays where it is until Stage 3.`,
+    parts: [
+    { id: 'a', title: `A · A coach whose team belongs to a club`, who: `Same account as the owner, in the club`, where: `Signed in as uat-coach@uat-test-org.local, open /uat-test-org/coaches. This is the club team UAT Test Team, not the standalone portal.`, steps: [
+      `On a computer the rail foot has Help and no Plan & billing row. (If you also see Admin, that is because this account administers the club and is expected.)`,
+      `On a phone, open More. There is no Plan & billing row.`,
+      `Type /uat-test-org/coaches/billing into the address bar. The page says "Billing access required" and "Only {the club}'s owner can see and change the plan and how it's paid." It shows no plan, no usage and no buttons.`,
+    ]},
+    { id: 'b', title: `B · An assistant coach on the standalone portal`, who: `A helper on UAT Standalone Team`, where: `Needs an assistant coach who already belongs to /uat-standalone. None is provisioned in dev. If you have one, sign in as them. If not, choose "Skipped it".`, steps: [
+      `R: Did it: signed in as an assistant coach on /uat-standalone.`,
+      `R: Skipped it: no such account.`,
+      `Neither the rail nor the phone More menu has a Plan & billing row.`,
+      `Type /uat-standalone/coaches/billing. The page says "Billing access required" and shows no plan facts or controls.`,
+    ]},
+    { id: 'c', title: `C · The demo`, who: `Demo (no login)`, where: `Open /see-it-live/coaches and stay in the demo (riverdale-ridge).`, steps: [
+      `On a computer there is no Plan & billing row in the rail foot.`,
+      `On a phone, open More. There is no Plan & billing row.`,
+    ]},
+  ]},
+
+  { id: 'w3', title: `Walk 3 · Real Stripe test paths`,
+    purpose: `The automated tests captured the addresses Stripe is told to come back to. This walk checks that the real pages behave: that the payment portal and checkout return the owner to the portal's billing page, not to the old admin page.`,
+    passes: `Stripe's portal and checkout open on Stripe's own pages, and every return lands on /uat-standalone/coaches/billing inside the portal frame, with a success note only after a success.`,
+    notIn: `A declined card, emails, a real plan move (Premium has no move in this stage), and the payment-failed bell row (it needs a real failed payment; the tests cover its link).`,
+    parts: [
+    { id: 'a', title: `A · The payment portal`, who: `Standalone owner`, where: `Sign in as uat-coach@uat-test-org.local and open /uat-standalone/coaches/billing. Mock billing must be off: platform admin, Dev tools, Mock billing should read "Use .env default" (off on this machine). If Stripe says it cannot find the customer, write that in the notes.`, steps: [
+      `Press "Payment method & invoices". A Stripe page opens. It does not show a "Dev mock" banner.`,
+      `Record what the portal offers a customer:`,
+      `R: No cancel-plan button and no change-plan button.`,
+      `R: A cancel-plan button is shown.`,
+      `R: A change-plan or switch-plan button is shown.`,
+      `Use the portal's return link. You land on /uat-standalone/coaches/billing, in the portal frame, signed in.`,
+    ]},
+    { id: 'b', title: `B · Add a card and come back`, who: `Standalone owner`, where: `Needs the page to offer an Add card or Save card step (it appears for a portal on a trial, free time or the Founding Season). If this portal has no such step, choose "Skipped it".`, steps: [
+      `R: Did it.`,
+      `R: Skipped it: no card step on this portal.`,
+      `Press the card step. Stripe's page opens. Back out without saving. You return to the billing page and the address has no card_saved note; no success message is shown.`,
+      `Do it again and save with the test card. You return to the billing page, a short success note appears and fades, and the card shows on file.`,
+    ]},
+    { id: 'c', title: `C · Upgrade checkout (writes)`, who: `Standalone owner`, where: `Needs a portal whose billing page offers an Upgrade or a payment step. Uses a Stripe test payment, so the Stripe listener must be running: stripe listen --forward-to localhost:3000/api/billing/webhook. If no portal in dev offers one, choose "Skipped it".`, steps: [
+      `R: Did it.`,
+      `R: Skipped it: nothing to upgrade to on any dev portal.`,
+      `Press the Upgrade. A Monthly or Yearly payment step opens first. Pick one and continue to checkout. Stripe's page opens.`,
+      `Press back on Stripe's page. You return to the billing page, in the portal frame, with the plan unchanged and no success note.`,
+      `Repeat and pay with the test card. You return to the billing page with a success note, and within a few seconds the plan updates.`,
+      `Put it back if you paid: in the platform admin, restore the portal's plan from its record (Plan tab), or note it and say so in the notes. Stripe keeps a harmless test subscription.`,
+    ]},
+  ]},
+
+  { id: 'w4', title: `Walk 4 · The way back from a lapsed portal (changes state, last)`,
+    purpose: `When a standalone portal is cancelled, its free time ends, or it has no team yet, the person who owns it lands on a wall. Stage 2 gives the owner (and only the owner) a button to fix it right there. You are checking that the buttons are present for the owner, absent for a helper, and lead to the right place. Part A changes a workspace's billing state; read its put-back first.`,
+    passes: `The owner sees Reactivate Premium on the cancelled wall, Keep Premium on the free-time-ended wall, and a lime Plan & billing button on the "Coaches Portal not ready" wall. Each goes to the right page. A helper sees none of these.`,
+    notIn: `Actually paying to reactivate (back out of checkout), the emails the system sends on cancellation, and undoing a team rollover.`,
+    parts: [
+    { id: 'a', title: `A · Cancelled (reversible)`, who: `Platform admin, then standalone owner`, where: `Private window: sign in at /platform-admin/login. Platform admin, Bulk operations, Billing status override. Pick UAT Standalone Team (/uat-standalone), choose Canceled, choose a "free through" day a few days ahead, Apply. Put it back at the end of this part.`, steps: [
+      `Standalone owner: reload /uat-standalone/coaches. A subscription-ended wall replaces the portal. It has a lime "Reactivate Premium" button above "Go to Home". Nothing of the working portal shows behind it.`,
+      `Type /uat-standalone/coaches/billing into the address bar. You get the same wall, not the billing page.`,
+      `Press Reactivate Premium. The address is /coaches/start with reactivateOrgSlug=uat-standalone and a teamName. The page offers to reactivate this same workspace. Go back without paying.`,
+      `Put it back: in the platform admin, open UAT Standalone Team's record, Access tab, and end the override. The owner's portal opens normally again.`,
+    ]},
+    { id: 'b', title: `B · Free time ended`, who: `Coach on free time`, where: `Sign in as uat-free-coach@uat-free-coach.local and open /uat-free-team-coaches-portal/coaches. Staff free time on this workspace ends tonight as of 10-29 (end of day Eastern). Before it ends you will see the ordinary portal and a free-time notice instead of the wall.`, steps: [
+      `R: The free time had ended: I see the free-time-ended wall.`,
+      `R: It had not ended yet: I saw the portal. I did not walk this part.`,
+      `On the wall, the lime button reads "Keep Premium" and the existing exit is the free team home.`,
+      `Press Keep Premium. The address is /coaches/start with reactivateOrgSlug and keep=1. Go back without paying.`,
+    ]},
+    { id: 'c', title: `C · A helper on a lapsed wall`, who: `An assistant coach on the lapsed portal`, where: `Needs an assistant coach on the portal from Part A (while it is cancelled). None is provisioned in dev. If you have one, sign in as them; otherwise choose "Skipped it".`, steps: [
+      `R: Did it.`,
+      `R: Skipped it: no such account.`,
+      `The wall shows its explanation and Go to Home, with no Reactivate Premium or Keep Premium button.`,
+    ]},
+    { id: 'd', title: `D · No team yet`, who: `A standalone owner with no team`, where: `Needs a standalone workspace whose owner has no live and no closed team. None is provisioned in dev. If you have one, sign in as its owner; otherwise choose "Skipped it".`, steps: [
+      `R: Did it.`,
+      `R: Skipped it: no such workspace.`,
+      `Open /{slug}/coaches. The wall is headed "Coaches Portal not ready" and has a lime Plan & billing button above Go to Home.`,
+      `Press it. The billing page opens in the portal frame. Reload it directly: it still opens.`,
+      `From the billing page, press Notifications (or any other portal link). The page reloads and shows the "Coaches Portal not ready" wall again, with no notifications screen in between.`,
+      `Press the browser Back button to billing. It opens again.`,
+      `Open /{slug}/coaches/notifications by typing it. You meet the wall, not the screen.`,
+    ]},
+  ]},
+];
+
+const KEY = 'plan-billing-stage2-owner-walk-v1';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { state = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+const pid = (w, p) => `${w.id}-${p.id}`;
+const isGroup = s => s.startsWith('G:');
+const label = s => s.replace(/^[GR]:\s*/, '');
+
+const host = document.getElementById('walks');
+for (const w of WALKS) {
+  const walk = document.createElement('section');
+  walk.className = 'card';
+  walk.setAttribute('aria-labelledby', w.id + '-h');
+  walk.innerHTML = `<div class="walk-head"><h2 id="${w.id}-h"></h2><span class="chip" id="${w.id}-chip"></span></div>
+    <div class="intro"><div><b>What this walk is for</b><p class="pf"></p></div><div><b>It passes when</b><p class="pp"></p></div><div><b>Not in this walk</b><p class="pn"></p></div></div>`;
+  walk.querySelector('h2').textContent = w.title;
+  walk.querySelector('.pf').textContent = w.purpose;
+  walk.querySelector('.pp').textContent = w.passes;
+  walk.querySelector('.pn').textContent = w.notIn;
+  for (const part of w.parts) {
+    const id = pid(w, part);
+    const sec = document.createElement('div');
+    sec.className = 'part';
+    sec.innerHTML = `<div class="part-head"><h3 id="${id}-h"></h3><span class="count" id="${id}-count"></span></div><span class="who"></span><p class="where"></p><div class="facts" hidden></div><ol></ol>
+      <div class="verdict" role="group" aria-label="Verdict for this part">
+        <button type="button" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-v="call" aria-pressed="false">Needs a call</button>
+      </div>
+      <label class="note" for="${id}-notes">Notes</label>
+      <textarea id="${id}-notes"></textarea>`;
+    sec.querySelector('h3').textContent = part.title;
+    sec.querySelector('.who').textContent = 'As: ' + part.who;
+    sec.querySelector('.where').textContent = part.where;
+    if (part.facts) {
+      const fb = sec.querySelector('.facts');
+      fb.hidden = false;
+      for (const [h, t] of part.facts) {
+        const d = document.createElement('div');
+        const b = document.createElement('b'); b.textContent = h;
+        const p = document.createElement('p'); p.textContent = t;
+        d.appendChild(b); d.appendChild(p); fb.appendChild(d);
+      }
+    }
+    const ol = sec.querySelector('ol');
+    part.steps.forEach((text, i) => {
+      const li = document.createElement('li');
+      if (isGroup(text)) { li.className = 'group'; li.textContent = label(text); ol.appendChild(li); return; }
+      const sid = `${id}-s${i}`;
+      li.innerHTML = `<label><input type="checkbox" id="${sid}"><span></span></label>`;
+      li.querySelector('span').textContent = label(text);
+      const box = li.querySelector('input');
+      box.checked = !!state[sid];
+      li.classList.toggle('done', box.checked);
+      box.addEventListener('change', () => { state[sid] = box.checked; li.classList.toggle('done', box.checked); save(); tally(); });
+      ol.appendChild(li);
+    });
+    const vKey = id + '-verdict';
+    sec.querySelectorAll('.verdict button').forEach(b => {
+      b.setAttribute('aria-pressed', String(state[vKey] === b.dataset.v));
+      b.addEventListener('click', () => {
+        state[vKey] = state[vKey] === b.dataset.v ? '' : b.dataset.v;
+        sec.querySelectorAll('.verdict button').forEach(x => x.setAttribute('aria-pressed', String(state[vKey] === x.dataset.v)));
+        save();
+      });
+    });
+    const notes = sec.querySelector('textarea');
+    notes.value = state[id + '-notes'] || '';
+    notes.addEventListener('input', () => { state[id + '-notes'] = notes.value; save(); });
+    walk.appendChild(sec);
+  }
+  host.appendChild(walk);
+}
+
+const boxesOf = (w, part) => part.steps.map((s, i) => ({ s, i })).filter(x => !isGroup(x.s)).map(x => ({ text: label(x.s), key: `${pid(w, part)}-s${x.i}`, ruling: x.s.startsWith('R:'), group: groupOf(part, x.i) }));
+function groupOf(part, idx) { for (let j = idx; j >= 0; j--) if (isGroup(part.steps[j])) return label(part.steps[j]); return ''; }
+function tally() {
+  let all = 0, done = 0;
+  for (const w of WALKS) {
+    let wAll = 0, wDone = 0;
+    for (const part of w.parts) {
+      const boxes = boxesOf(w, part);
+      const d = boxes.filter(b => state[b.key]).length;
+      wAll += boxes.length; wDone += d;
+      document.getElementById(pid(w, part) + '-count').textContent = `${d} of ${boxes.length}`;
+    }
+    all += wAll; done += wDone;
+    document.getElementById(w.id + '-chip').textContent = wDone === 0 ? 'Not started' : wDone === wAll ? `All ticked · ${wDone} of ${wAll}` : `In progress · ${wDone} of ${wAll}`;
+  }
+  document.getElementById('prog-text').textContent = `${done} of ${all} checked`;
+  document.getElementById('prog-bar').style.width = all ? `${Math.round(done / all * 100)}%` : '0';
+}
+tally();
+
+const VERDICT = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL', '': 'not marked' };
+document.getElementById('build').addEventListener('click', () => {
+  const lines = ['Plan and billing · Stage 2 owner walk: results'];
+  for (const w of WALKS) {
+    lines.push('', w.title);
+    for (const part of w.parts) {
+      const boxes = boxesOf(w, part);
+      const done = boxes.filter(b => state[b.key]).length;
+      lines.push('', `${part.title}: ${VERDICT[state[pid(w, part) + '-verdict'] || '']} (${done}/${boxes.length})`);
+      boxes.forEach(b => {
+        const g = b.group ? `[${b.group}] ` : '';
+        if (state[b.key] && b.ruling) lines.push(`  ☑ (your answer) ${g}${b.text}`);
+        else if (!state[b.key] && !b.ruling) lines.push(`  ☐ ${g}${b.text}`);
+      });
+      const n = (state[pid(w, part) + '-notes'] || '').trim();
+      if (n) lines.push(`  Notes: ${n}`);
+    }
+  }
+  document.getElementById('summary').value = lines.join('\n');
+});
+document.getElementById('copy').addEventListener('click', async () => {
+  const box = document.getElementById('summary');
+  if (!box.value) document.getElementById('build').click();
+  try { await navigator.clipboard.writeText(box.value); } catch { box.focus(); box.select(); }
+});
+document.getElementById('reset').addEventListener('click', () => {
+  state = {}; save();
+  document.querySelectorAll('input[type=checkbox]').forEach(b => { b.checked = false; b.closest('li').classList.remove('done'); });
+  document.querySelectorAll('.verdict button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  document.querySelectorAll('textarea').forEach(t => { if (t.id !== 'summary') t.value = ''; });
+  tally();
+});
+</script>

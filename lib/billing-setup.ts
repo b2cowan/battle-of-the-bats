@@ -104,11 +104,11 @@ export async function ensureStripeCustomer(
  * slug, and both reach the same billing page.
  */
 export async function createCardSetupSession(
-  org: { id: string; slug: string; planId: string; stripeCustomerId?: string | null },
+  org: { id: string; slug: string; planId: string; accountKind?: string | null; stripeCustomerId?: string | null },
   email: string | undefined,
 ): Promise<string> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-  const billingPath = getBillingHref(org.slug, org.planId);
+  const billingPath = getBillingHref(org, { purpose: 'return' });
   const customerId = await ensureStripeCustomer(org, email);
   const session = await stripe.checkout.sessions.create({
     mode: 'setup',

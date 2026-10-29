@@ -6,6 +6,9 @@ import { possessive } from '@/lib/utils';
 import { freeTimeEndedWallWords } from '@/lib/portal-free-time';
 import { coachTeamPath, COACHES_HOME_PATH } from '@/lib/coaches-portal-routes';
 
+/** Supplied only after the server has checked the workspace owner. */
+type OwnerDoor = { href: string; label: string };
+
 /**
  * The goodbye a cancelled organization sees on a surface it can no longer use.
  *
@@ -23,11 +26,13 @@ export default function SubscriptionEndedWall({
   orgName,
   contactEmail,
   surface,
+  ownerDoor,
 }: {
   orgName: string;
   contactEmail?: string | null;
   /** Shapes only the one sentence about what stopped — never the verdict. */
   surface: 'coaches' | 'scorekeeper' | 'check-in';
+  ownerDoor?: OwnerDoor;
 }) {
   const what =
     surface === 'coaches' ? 'The coaching tools for this club are closed for now.'
@@ -49,6 +54,7 @@ export default function SubscriptionEndedWall({
         )}
       </p>
       <div className={styles.doors}>
+        {ownerDoor && <Link href={ownerDoor.href} className="btn btn-lime">{ownerDoor.label}</Link>}
         <Link href="/discover" className={styles.door}>Go to Home</Link>
       </div>
     </div>
@@ -60,13 +66,14 @@ export default function SubscriptionEndedWall({
  * copy 8). The coach did not cancel anything and nothing lapsed, so it never says "subscription ended": it says when
  * the free time ran through and sends them to their free team, which reads as it did on the upgrade day.
  */
-export function FreeTimeEndedWall({ lastDay, basicTeamId }: { lastDay: string; basicTeamId: string | null }) {
+export function FreeTimeEndedWall({ lastDay, basicTeamId, ownerDoor }: { lastDay: string; basicTeamId: string | null; ownerDoor?: OwnerDoor }) {
   const words = freeTimeEndedWallWords(lastDay);
   return (
     <div className={styles.wall}>
       <h2>{words.title}</h2>
       <p>{words.text}</p>
       <div className={styles.doors}>
+        {ownerDoor && <Link href={ownerDoor.href} className="btn btn-lime">{ownerDoor.label}</Link>}
         <Link href={basicTeamId ? coachTeamPath(basicTeamId) : COACHES_HOME_PATH} className={styles.door}>{words.door}</Link>
       </div>
     </div>

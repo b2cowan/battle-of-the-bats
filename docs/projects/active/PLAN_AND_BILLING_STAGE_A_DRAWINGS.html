@@ -1,0 +1,879 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Plan &amp; billing drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750;800&family=IBM+Plex+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: a review document. Outer page is theme-aware; every drawn screen keeps the product's warm look, like a screenshot. */
+:root{
+  --bg:#ECE8DF; --fg:#241E15; --fg2:#4A4235; --dim:#6B6358; --card:#FBF9F4; --line:rgba(70,55,30,.16); --line2:rgba(70,55,30,.28);
+  --accent:#57651E; --accent-soft:rgba(87,101,30,.12); --pin:#C2410C; --pin-ink:#fff; --warn:#835006; --good:#34662A; --bad:#B03A22;
+  --font:Inter,system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#16140F; --fg:#F1EBDD; --fg2:#CFC6B3; --dim:#A59C89; --card:#201D16; --line:rgba(241,235,221,.14); --line2:rgba(241,235,221,.26);
+  --accent:#BCD26B; --accent-soft:rgba(188,210,107,.14); --pin:#FB923C; --pin-ink:#1a1308; --warn:#E3A33C; --good:#8DBF6A; --bad:#EE8A72; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140F; --fg:#F1EBDD; --fg2:#CFC6B3; --dim:#A59C89; --card:#201D16; --line:rgba(241,235,221,.14); --line2:rgba(241,235,221,.26);
+  --accent:#BCD26B; --accent-soft:rgba(188,210,107,.14); --pin:#FB923C; --pin-ink:#1a1308; --warn:#E3A33C; --good:#8DBF6A; --bad:#EE8A72; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:14px/1.55 var(--font);padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:20px 80px}
+*{box-sizing:border-box}
+.wrap{max-width:1360px;margin:0 auto}
+h1.doc{font:750 26px/1.15 var(--font);margin:0 0 .3rem;text-wrap:balance}
+.lede{max-width:78ch;color:var(--fg2);margin:.2rem 0 .8rem}
+.legend{display:flex;flex-wrap:wrap;gap:.5rem 1.2rem;font-size:12px;color:var(--dim);margin:0 0 1rem}
+.legend b{color:var(--fg2)}
+.tabs{display:flex;gap:.25rem;flex-wrap:wrap;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding:.5rem 0;border-bottom:1px solid var(--line);margin-bottom:1.2rem}
+.tabs button{font:600 13px var(--font);color:var(--fg2);background:transparent;border:1px solid transparent;border-radius:999px;padding:.4rem .8rem;cursor:pointer}
+.tabs button:hover{background:var(--accent-soft)}
+.tabs button[aria-selected="true"]{background:var(--fg);color:var(--bg)}
+.tabs button:focus-visible,.seg button:focus-visible,.pin:focus-visible,.pw:focus-visible{outline:2px solid var(--pin);outline-offset:2px}
+.panel h2{font:700 20px/1.2 var(--font);margin:0 0 .3rem}
+.panel h3{font:700 15px/1.3 var(--font);margin:1.6rem 0 .3rem}
+.panel>p.intro{max-width:80ch;color:var(--fg2);margin:.2rem 0 1rem}
+.seg{display:inline-flex;flex-wrap:wrap;max-width:100%;background:var(--card);border:1px solid var(--line2);border-radius:8px;padding:3px;gap:2px;margin:.2rem .6rem .8rem 0}
+.seg button{font:600 12px var(--font);border:0;background:transparent;color:var(--fg2);padding:.35rem .75rem;border-radius:6px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:#fff;color:#241E15;box-shadow:0 1px 2px rgba(0,0,0,.18)}
+.segrow{display:flex;flex-wrap:wrap;align-items:center}
+.segrow .lab{font-size:12px;color:var(--dim);margin-right:.5rem}
+figure.fr{margin:0 0 2.2rem;max-width:100%}
+.frh{display:flex;flex-wrap:wrap;gap:.3rem .8rem;align-items:baseline;margin-bottom:.45rem}
+.frh b{font:700 14px var(--font)} .frh span{font:500 11px var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+.stage{overflow-x:auto;max-width:100%;padding:2px 2px 6px}
+.stage.row{display:flex;gap:1.4rem;align-items:flex-start;flex-wrap:wrap;padding-bottom:14px}
+.pinbox{margin:.5rem 0 0;padding:.55rem .8rem;border:1px dashed var(--line2);border-radius:8px;font-size:13px;color:var(--fg2);background:var(--card);max-width:96ch}
+.pinbox b{color:var(--pin)}
+figure .fcap{max-width:96ch;color:var(--fg2);margin:.6rem 0 0}
+figure .fcap ul{margin:.3rem 0 0;padding-left:1.1rem} figure .fcap li{margin:.15rem 0}
+.pin{all:unset;box-sizing:border-box;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--pin);color:var(--pin-ink);font:700 11px var(--font);cursor:pointer;margin:0 3px;vertical-align:middle;flex:none;box-shadow:0 0 0 2px #fff}
+.pin.on{outline:2px solid #241E15;outline-offset:1px}
+.pw{border-bottom:1.5px dotted var(--pin);cursor:pointer}
+.pw.on{background:rgba(194,65,12,.18)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tblw{overflow-x:auto;max-width:100%;margin:.4rem 0 1rem;border-radius:8px}
+.tbl th,.tbl td{padding:.5rem .65rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.tbl th{font:650 12px var(--font);color:var(--dim);white-space:nowrap;background:var(--bg)}
+.tbl td:first-child{font-weight:650;white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tag{display:inline-block;font:700 10px var(--mono);letter-spacing:.05em;padding:.12rem .45rem;border-radius:999px;border:1px solid var(--line2);color:var(--fg2);white-space:nowrap}
+.tag.g{color:var(--good);border-color:var(--good)} .tag.w{color:var(--warn);border-color:var(--warn)} .tag.b{color:var(--bad);border-color:var(--bad)} .tag.n{color:var(--pin);border-color:var(--pin)}
+.ask{border:1px solid var(--line2);background:var(--card);border-radius:10px;padding:1rem 1.1rem;margin:0 0 1rem;max-width:100ch}
+.ask h3{margin:0 0 .3rem;font-size:15px}
+.ask .why{color:var(--fg2);margin:.2rem 0 .6rem}
+.opts{display:grid;gap:.5rem}
+button.opt{all:unset;box-sizing:border-box;display:block;width:100%;text-align:left;border:1px solid var(--line);border-radius:8px;padding:.55rem .75rem;background:var(--bg);cursor:pointer;color:var(--fg)}
+button.opt:hover{border-color:var(--accent)}
+button.opt:focus-visible{outline:2px solid var(--pin);outline-offset:2px}
+button.opt[aria-pressed="true"]{border-color:var(--pin);box-shadow:inset 0 0 0 1px var(--pin);background:var(--card)}
+.opt .you{display:none;font:700 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--pin);margin-left:.4rem}
+.opt[aria-pressed="true"] .you{display:inline}
+.answers{border:1px solid var(--line2);background:var(--card);border-radius:10px;padding:.8rem 1rem;margin:0 0 1rem;max-width:100ch}
+.answers .ah{display:flex;flex-wrap:wrap;gap:.5rem .8rem;align-items:center}
+.answers .ah b{margin-right:auto}
+.abtn{font:600 12px var(--font);border:1px solid var(--line2);background:transparent;color:var(--fg);border-radius:6px;padding:.35rem .7rem;cursor:pointer}
+.abtn:hover{border-color:var(--accent)} .abtn:focus-visible{outline:2px solid var(--pin);outline-offset:2px}
+.answers textarea{width:100%;margin-top:.6rem;min-height:120px;font:12px/1.5 var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:.5rem}
+.ruled{border-left:3px solid var(--accent);padding:.5rem .8rem;margin:0 0 1rem;background:var(--card);max-width:100ch;color:var(--fg2)}
+.opt.rec{border-color:var(--accent);background:var(--accent-soft)}
+.opt b{font-size:13px}
+.opt .t{font:700 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-left:.4rem}
+.note{border-left:3px solid var(--pin);padding:.4rem .8rem;margin:.8rem 0;background:var(--card);max-width:96ch;color:var(--fg2)}
+.note b{color:var(--fg)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:1.2rem}
+.mini{display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-start}
+
+/* ============ the product, drawn (always warm) ============ */
+.scr{--paper:#F8F4ED;--card:#fff;--ink:#241E15;--ink2:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.20);--olive:#57651E;--osoft:rgba(87,101,30,.10);--live:#B03A22;--amber:#835006;--win:#34662A;--lime:#D9F99D;--fill:rgba(70,55,30,.08);
+  font:14px/1.5 Inter,system-ui,sans-serif;color:var(--ink);background:var(--paper);text-align:left}
+.scr *{box-sizing:border-box}
+.scr svg.i{stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.scr .gridbg{background-image:linear-gradient(rgba(87,101,30,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(87,101,30,.07) 1px,transparent 1px);background-size:40px 40px}
+.desk{width:1280px;border:1px solid var(--line2);border-radius:10px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.14)}
+.strip{height:48px;display:flex;align-items:center;gap:.9rem;padding:0 1rem 0 1.25rem;background:#fff;border-bottom:1px solid var(--line)}
+.strip .wm{font:800 15px Inter;letter-spacing:-.01em;color:var(--olive)} .strip .div{width:1px;height:14px;background:var(--line2)}
+.strip .lab{font:700 10px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.strip .sp{flex:1} .strip .door{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--ink2)}
+.deskbody{display:flex;min-height:560px}
+.rail{width:240px;flex:none;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;padding:.4rem 0 0}
+.rail.c{width:220px}
+.rh{font:700 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);padding:.75rem 1.25rem .35rem;display:flex;justify-content:space-between;align-items:center}
+.ri{display:flex;align-items:center;gap:.5rem;padding:.5rem 1.25rem;color:var(--dim);font-size:14px;white-space:nowrap}
+.ri.sub{padding-left:calc(1.25rem + 14px + .5rem);font-size:12px}
+.ri.on{background:rgba(87,101,30,.10);color:var(--olive);font-weight:600}
+.ri.newrow{background:rgba(194,65,12,.08)}
+.rfoot{margin-top:auto;border-top:1px solid var(--line);padding:.4rem 0}
+.rfoot .ri{font-size:12px}
+.rspacer{flex:1;min-height:24px}
+.sw{margin:.5rem 1rem .3rem;border:1px solid var(--line2);border-radius:6px;padding:.4rem .6rem;display:flex;justify-content:space-between;font-size:13px;font-weight:600;background:#fff}
+.dim{color:var(--dim)} .fadeout{opacity:.45}
+.main{flex:1;min-width:0;padding:2rem}
+.page{max-width:960px;margin-inline:auto}
+.ph .eyb{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.ph h1,.ch h1{font:700 20px/1.1 Inter;margin:.3rem 0 1.15rem;color:var(--ink)}
+.ch{display:flex;align-items:center;gap:.7rem;margin:0 0 1.15rem}
+.ch h1{margin:0;flex:1}
+.tile{width:36px;height:36px;border-radius:12px;background:rgba(87,101,30,.12);border:1px solid rgba(87,101,30,.3);color:var(--olive);display:grid;place-items:center;flex:none}
+.helpq{width:30px;height:30px;border-radius:50%;border:1px solid var(--line2);display:grid;place-items:center;font:700 13px Inter;color:var(--ink2);background:#fff}
+.card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:1.1rem 1.25rem}
+.plancard{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:1.5rem;margin-bottom:1.75rem}
+.eye{display:flex;justify-content:space-between;align-items:center;gap:.5rem;font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink2);margin-bottom:.55rem}
+.chip{font:700 10px/1 'IBM Plex Mono',monospace;letter-spacing:.05em;padding:.14rem .5rem;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);background:var(--osoft);text-transform:none;white-space:nowrap}
+.chip.good{color:var(--olive);background:rgba(52,102,42,.07);border-color:rgba(52,102,42,.25)}
+.chip.warn{color:var(--amber);background:rgba(131,80,6,.08);border-color:rgba(131,80,6,.3)}
+.chip.bad{color:#9A2E17;background:rgba(176,58,34,.08);border-color:rgba(176,58,34,.3)}
+.pname{font:750 20px/1.15 Inter;margin:.1rem 0 .3rem}
+.price{font-size:14px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.sub{font-size:12px;color:var(--dim);line-height:1.45;margin-top:.2rem}
+.sub.strong{font-weight:700;color:var(--ink2)}
+.sub.warnt{color:var(--amber)}
+.lnk{color:var(--olive);font-weight:650;text-decoration:underline}
+.acts{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.7rem}
+.btn{font:650 14px/1.25 Inter;border-radius:6px;padding:.45rem .9rem;min-height:34px;border:1px solid transparent;display:inline-flex;align-items:center;gap:.4rem;white-space:nowrap}
+.btn.lime{background:var(--lime);color:var(--ink)}
+.btn.out{background:#fff;color:var(--ink2);border-color:var(--line2)}
+.btn.red{color:var(--live)}
+.btn.dng{background:rgba(176,58,34,.15);color:var(--live);border-color:rgba(176,58,34,.3)}
+.btn.sm{font-size:13px;padding:.3rem .65rem;min-height:30px}
+.useblk{display:flex;flex-direction:column;gap:.1rem;margin-bottom:.7rem}
+.cap{font:800 24px/1.1 Inter;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.cap small{font:600 12px Inter;color:var(--dim);letter-spacing:0;margin-left:.35rem}
+.bar{height:10px;border-radius:5px;background:var(--line);overflow:hidden;margin:.2rem 0 .1rem}
+.bar i{display:block;height:100%;border-radius:5px;background:var(--olive)} .bar i.near{background:var(--amber)} .bar i.full{background:var(--live)}
+.sec{margin:0 0 1.75rem}
+.sec>h2{font:700 16px/1.25 Inter;margin:0 0 .6rem;color:var(--ink)}
+.lede2{font-size:12px;color:var(--dim);max-width:64ch;margin:.4rem 0 0}
+.copy{font-size:14px;color:var(--ink2);max-width:64ch;margin:0 0 .75rem}
+.tf{border:1px solid var(--line);border-radius:8px;background:#fff;overflow:auto}
+.tf table{border-collapse:collapse;width:100%}
+.tf th{font:650 12px Inter;color:var(--dim);text-align:left;padding:.6rem .9rem;border-bottom:1px solid var(--line2);white-space:nowrap}
+.tf td{padding:.65rem .9rem;border-bottom:1px solid var(--line);color:var(--ink2);vertical-align:middle}
+.tf tr:last-child td{border-bottom:0}
+.tf td.n{text-align:right;font-variant-numeric:tabular-nums} .tf th.n{text-align:right}
+.tf td.a{text-align:right;white-space:nowrap}
+.tf .ct{font-weight:650;color:var(--ink)}
+.tf tr.cur td{background:rgba(87,101,30,.04)}
+.inc{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:.45rem 1.5rem}
+.inc li{display:flex;gap:.45rem;font-size:14px;color:var(--ink2);line-height:1.45}
+.inc li svg{margin-top:.2rem;color:var(--olive)}
+.band{display:flex;gap:1rem;padding:1rem 1.25rem;background:var(--osoft);border:1px solid var(--olive);border-radius:2px;margin-bottom:1rem}
+.band.amber{background:rgba(131,80,6,.09);border-color:rgba(131,80,6,.45)}
+.band.plain{background:#fff;border-color:var(--line2)}
+.band .bi{width:36px;height:36px;border-radius:2px;display:grid;place-items:center;flex:none;background:rgba(87,101,30,.14);color:var(--olive)}
+.band.amber .bi{background:rgba(131,80,6,.14);color:var(--amber)} .band.plain .bi{background:var(--fill);color:var(--ink2)}
+.band .be{font:700 11px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--olive)}
+.band.amber .be{color:var(--amber)} .band.plain .be{color:var(--ink2)}
+.band .bt{font:700 14.4px/1.3 Inter;margin:.15rem 0}
+.band .bx{font-size:13px;line-height:1.55;color:var(--ink2)}
+.notice{display:flex;gap:.5rem;margin:0 0 .9rem;padding:.65rem .85rem;border-radius:8px;border:1px solid var(--line2);background:var(--osoft);font-size:12px;line-height:1.45;color:var(--ink2)}
+.notice.warn{border-color:rgba(131,80,6,.35);background:rgba(131,80,6,.08)} .notice.warn svg{color:var(--amber)}
+.notice.bad{border-color:rgba(176,58,34,.35);background:rgba(176,58,34,.07)} .notice.bad svg{color:var(--live)}
+.notice.good svg{color:var(--olive)}
+.notice svg{margin-top:.1rem}
+.keep{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1.75rem;flex-wrap:wrap}
+.keep .kt{font:700 16px Inter} .keep .kx{font-size:14px;color:var(--ink2);max-width:52ch}
+.lock{margin-top:1.5rem;padding:1.5rem 1.25rem;border:1px dashed var(--line2);border-radius:8px;background:#fff}
+.lock b{display:block;font:700 16px Inter;margin-bottom:.3rem} .lock span{font-size:12px;color:var(--dim)}
+.restores{list-style:none;margin:.2rem 0 .3rem;padding:0;display:flex;flex-direction:column;gap:.35rem;font-size:14px;color:var(--ink2)}
+.restores li{display:flex;gap:.45rem} .restores svg{color:var(--olive);margin-top:.2rem}
+.sel{border:1px solid var(--line2);border-radius:6px;padding:.4rem .7rem;background:#fff;font-size:14px;min-height:34px;display:inline-flex;align-items:center}
+.feerow{display:flex;justify-content:space-between;gap:1rem;padding:.65rem .9rem;border-bottom:1px solid var(--line);font-size:14px}
+.feerow:last-child{border:0} .feerow small{display:block;font-size:12px;color:var(--dim)}
+/* diff mode */
+.diffmode .sm{opacity:.32}
+.diffmode .reg{outline:2px solid var(--olive);outline-offset:2px;background:rgba(188,210,107,.35);border-radius:3px}
+/* phone */
+.phone{width:390px;height:800px;border:1px solid var(--line2);border-radius:28px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--paper);box-shadow:0 8px 28px rgba(0,0,0,.14);flex:none}
+.phone .pscroll{flex:1;overflow:auto;padding:14px 16px 20px;background-image:linear-gradient(rgba(87,101,30,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(87,101,30,.05) 1px,transparent 1px);background-size:28px 28px}
+.phone .plancard,.phone .two2{grid-template-columns:1fr;gap:1.1rem}
+.phone .plancard .capside{border-top:1px solid var(--line);padding-top:1rem}
+.phone .inc{grid-template-columns:1fr}
+.phone .band{padding:.85rem .9rem}
+.phone .btn{min-height:44px}
+.phone .acts .btn{flex:1 1 auto;justify-content:center}
+.pbar{min-height:72px;display:flex;justify-content:space-around;align-items:center;border-top:1px solid var(--line);background:rgba(248,244,237,.96);padding:.4rem 0;flex:none}
+.tab{display:flex;flex-direction:column;align-items:center;gap:.2rem;flex:1;font:700 10px Inter;color:var(--dim)}
+.tab .iw{width:46px;height:30px;border-radius:999px;display:grid;place-items:center}
+.tab.on{color:var(--olive)} .tab.on .iw{background:var(--osoft)}
+.scrim{position:absolute;inset:0 0 72px 0;background:rgba(36,30,21,.28)}
+.sheet{position:absolute;left:0;right:0;bottom:72px;background:#fff;border-radius:18px 18px 0 0;padding:6px 14px 10px;box-shadow:0 -8px 32px rgba(70,55,30,.24);max-height:calc(100% - 100px);overflow:auto}
+.sheet .grab{width:38px;height:4px;border-radius:2px;background:rgba(70,55,30,.4);margin:4px auto 8px}
+.sheet .sr{display:flex;align-items:center;gap:.75rem;padding:.7rem .5rem;min-height:44px;font:600 16px Inter;color:var(--ink2)}
+.sheet .sr{position:relative;white-space:nowrap}
+.sheet .sr .pin{position:absolute;right:0;top:3px;margin:0}
+.sheet .sr.on{background:var(--osoft);color:var(--olive);border-radius:8px}
+.sheet .sr.newrow{background:rgba(194,65,12,.08);border-radius:8px}
+.sheet .sl{font:700 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);padding:.45rem .5rem .1rem}
+.sheet .dv{height:1px;background:var(--line);margin:.2rem 0}
+.sheet .g2{display:grid;grid-template-columns:1fr 1fr;column-gap:10px}
+.sheet .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:4px 0 8px}
+.sheet .tl{min-height:64px;border:1px solid var(--line);border-radius:12px;background:rgba(248,244,237,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font:700 12px Inter;color:var(--ink2)}
+.sheet .tl svg{color:var(--olive)}
+.pcards{display:flex;flex-direction:column;gap:.5rem}
+.pcard{border:1px solid var(--line);border-radius:8px;background:#fff;padding:.7rem .8rem;display:flex;flex-direction:column;gap:.35rem}
+.pcard .r1{display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+.pcard .r2{font-size:12px;color:var(--dim)}
+/* dialogs */
+.dstage{position:relative;background:rgba(36,30,21,.34);padding:1.25rem;display:grid;place-items:center;border-radius:10px;min-height:200px}
+.dlg{background:#fff;border:1px solid rgba(87,101,30,.3);border-radius:12px;width:520px;max-width:100%;color:var(--ink2)}
+.dlg.q{width:416px} .dlg.w{width:640px}
+.dh{display:flex;gap:.6rem;padding:1.1rem 1.5rem .4rem;align-items:flex-start}
+.dh b{font:700 16px/1.25 Inter;color:var(--ink);flex:1}
+.dx{width:2rem;height:2rem;display:grid;place-items:center;color:var(--dim)}
+.db{padding:.6rem 1.5rem 1rem;font-size:14px;line-height:1.5}
+.db p{margin:0 0 .75rem}
+.df{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;padding:.85rem 1.5rem;border-top:1px solid var(--line)}
+.df .fs{margin-right:auto;font-size:12px;color:var(--dim);line-height:1.4}
+.df .fe{margin-left:auto;display:flex;gap:.5rem;flex-wrap:wrap}
+.figs{display:grid;gap:.4rem;margin:.6rem 0}
+.figs div{display:flex;justify-content:space-between;gap:1rem;padding:.55rem .7rem;border:1px solid var(--line);border-radius:8px;font-size:12px;color:var(--ink2)} .figs b{font-size:14px;color:var(--ink)}
+.fld label{display:block;font:650 12px Inter;color:var(--ink2);margin-bottom:.3rem}
+.fld .ta{border:1px solid var(--line2);border-radius:6px;height:64px;background:#fff}
+.fld .h{font-size:12px;color:var(--dim);margin-top:.25rem}
+.phone .dstage{border-radius:0;flex:1;align-content:center}
+.fullwin{display:flex;flex-direction:column;flex:1;background:#fff}
+.fullwin .dh{padding:.9rem 1rem .4rem;align-items:center}
+.fullwin .db{padding:.6rem 1rem 1rem;flex:1;overflow:auto}
+.fullwin .df{padding:.85rem 1rem}
+.fullwin .df .btn{min-height:44px}
+.wallc{max-width:560px;margin:2.5rem auto;text-align:center;padding:2rem 1.5rem;background:#fff;border:1px solid var(--line);border-radius:12px}
+.wallc h3{font:700 18px Inter;margin:0 0 .5rem;color:var(--ink)} .wallc p{margin:0 0 1rem;color:var(--ink2);font-size:14px}
+.wallc .btn{margin:.2rem}
+</style>
+<div class="wrap">
+  <h1 class="doc">Plan &amp; billing drawings</h1>
+  <p class="lede">Stage A of the one Plan &amp; billing experience. One body, drawn once, wearing two chromes (the admin screen and the Coaches Portal), for every plan and every state. Nothing here is built. Names, dates and amounts are made up for the drawing.</p>
+  <p class="legend"><span><b>Rust pins</b> and <span class="pw" style="cursor:default">dotted words</span> open a note under the drawing when you click them.</span><span><b>Dotted word</b> = a word I would change; today’s wording is in the note. Stage 1 settles the words.</span><span><b>Rust tint on a nav row</b> = the row that is new or has moved.</span><span><b>True size:</b> desktop is drawn at 1280px wide (scroll sideways if your window is narrower); phone at 390px.</span><span><b>“Today” screens</b> are rebuilt from the code, not captured; the only screenshots on file predate the October type change.</span></p>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Drawings"></nav>
+  <main id="panels"></main>
+</div>
+<script>
+"use strict";
+/* ---------- icons (lucide-style) ---------- */
+const ICONS={
+ 'credit-card':'<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>',
+ 'help':'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+ 'shield':'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+ 'users':'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+ 'trophy':'<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+ 'calendar':'<path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+ 'grid':'<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+ 'notebook':'<path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/><path d="M2 6h4M2 10h4M2 14h4M2 18h4"/><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/>',
+ 'more':'<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+ 'bell':'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+ 'user':'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+ 'home':'<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+ 'check':'<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+ 'alert':'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+ 'gift':'<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/>',
+ 'flag':'<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/>',
+ 'settings':'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+ 'x':'<path d="M18 6 6 18M6 6l12 12"/>',
+ 'chev':'<path d="m9 18 6-6-6-6"/>',
+ 'chevd':'<path d="m6 9 6 6 6-6"/>',
+ 'archive':'<rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/>',
+ 'dollar':'<line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+ 'globe':'<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+ 'lock':'<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+ 'back':'<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+ 'msg':'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+ 'mail':'<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+ 'file':'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8M16 13H8M16 17H8"/>',
+ 'out':'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+ 'building':'<rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/>',
+ 'collapse':'<path d="m11 17-5-5 5-5M18 17l-5-5 5-5"/>',
+ 'trend':'<path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
+ 'list':'<path d="M3 5h.01M3 12h.01M3 19h.01M8 5h13M8 12h13M8 19h13"/>',
+ 'bars':'<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9M13 17V5M8 17v-3"/>',
+ 'clip':'<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
+ 'idcard':'<rect width="18" height="14" x="3" y="5" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M14 10h4M14 14h4M6 17c.5-1.5 1.7-2 3-2s2.5.5 3 2"/>',
+ 'download':'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+ 'send':'<path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>'
+};
+const ic=(n,s=14)=>'<svg class="i" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" aria-hidden="true">'+(ICONS[n]||'')+'</svg>';
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+const P=n=>'<button class="pin" data-n="'+n+'" aria-label="Note '+n+'">'+n+'</button>';
+const PW=(t,today)=>'<span class="pw" tabindex="0" role="button" data-today="'+esc(today)+'">'+t+'</span>';
+const joinAnd=a=>a.length<2?a.join(''):a.length===2?a[0]+' and '+a[1]:a.slice(0,-1).join(', ')+', and '+a[a.length-1];
+const lc=s=>s.charAt(0).toLowerCase()+s.slice(1);
+
+/* ---------- the plan registry (the drawings read every plan fact from here) ---------- */
+const INC_CLUB=['Rep teams: tryouts, rosters, player documents, season history','A Premium Coaches Portal for every team, with no per-team fee','Accounting: ledgers, the club budget, allocations to teams','Families: every household across your programs','Your club’s public site','House league and tournaments','Unlimited board and staff members'];
+const BASE3=['Public tournament pages and registration links','Tournament setup, scheduling, communications, and score updates','Member and staff access to tournament workflows'];
+const PLANS={
+ team:{key:'team',label:'Premium Coaches Portal',short:'Premium',host:'coach',org:'Riverdale Ridge 11U',paid:true,price:'$29 CAD / month',cyc:'monthly',mo:'$29',yr:'$290',renew:'November 14, 2026',trialEnd:null,backTo:'the free Coaches Portal',
+  meters:[{n:0,lim:1,unit:'tournament at a time',hideOnFree:true},{n:1,lim:3,unit:'staff seats'}],
+  inc:['Full roster management — positions, jersey numbers, and contact info','Game schedule, attendance tracking, and lineup builder with PDF export','Team budget, player dues, expense tracking, and payment reminders','Documents, season setup checklist, and a season-end record','Tournaments included — register your team, track entries, and pull results into your season record','Tournament history included — every event your team has been part of, preserved','Host one tournament at a time — an invite-only round robin or exhibition weekend, with PDF schedules and results'],
+  cancel:{name:'Premium',btn:'Cancel Premium…',list:['Premium roster, schedule, attendance, lineup, documents, dues, and budget tools','coach-managed payment reminders and premium team documents','the Premium tournament slot'],stays:'Your team’s Basic tournament records stay available.',ret:365,title:'Cancel Premium?'},
+  restores:['Premium team tools reopen','Your Premium team data comes back','Retention reminders stop'],
+  table:null,founding:true},
+ tournament:{key:'tournament',label:'Tournament',host:'admin',org:'Riverdale Tournaments',paid:false,price:'Free',cyc:'monthly',mo:'Free',yr:'Free',backTo:'the free Tournament plan',eyebrow:null,
+  meters:[{n:1,lim:1,unit:'tournament at a time'},{n:2,lim:3,unit:'staff seats'}],
+  inc:['You add every team — each coach claims it from an email invitation','Manual tournament scheduling','Basic standings and score entry','A public event site with live scores families can follow','Venue management','Default FieldLogicHQ public styling','Public news posts and basic team email','3 staff / admin seats · 1 tournament at a time'],
+  cancel:null,restores:null,table:['tournament','tournament_plus'],founding:true},
+ tournament_plus:{key:'tournament_plus',label:'Tournament Plus',host:'admin',org:'Riverdale Tournaments',paid:true,price:'$390 CAD / year',cyc:'yearly',mo:'$39',yr:'$390',renew:'March 2, 2027',trialEnd:'November 11, 2026',backTo:'the free Tournament plan',eyebrow:null,
+  meters:[{n:2,lim:null,unit:'tournaments'},{n:4,lim:null,unit:'staff seats'}],
+  inc:['Everything in Tournament','Public registration — the review queue, waitlist, questions, file uploads, and exports','Fees and payment tracking, and check-in','Unlimited tournament slots','Round-robin and playoff generators','Full branding control','Tournament cloning, announcements, and post-event archives','Unlimited staff seats and volunteers'],
+  cancel:{name:'Riverdale Tournaments',btn:'Cancel and suspend Riverdale Tournaments…',list:BASE3.map(lc),stays:'',ret:90,title:'Cancel and suspend Riverdale Tournaments?'},
+  restores:['Your public tournament pages go back online','Archived tournaments return','Retention reminders stop'],
+  table:['tournament','tournament_plus','club','club_large'],founding:true,down:true},
+ league:{key:'league',label:'League Plus',host:'admin',org:'Riverdale Minor Ball',paid:true,price:'$89 CAD / month',cyc:'monthly',mo:'$89',yr:'$890',renew:'November 20, 2026',trialEnd:'November 27, 2026',backTo:'the free Tournament plan',eyebrow:'Organization',
+  meters:[{n:2,lim:null,unit:'tournaments'},{n:5,lim:null,unit:'staff seats'}],
+  inc:['Everything in Tournament Plus','Public organization page (branded)','House league — registration, divisions, seasons, standings','Advanced member roles and permissions','Unlimited staff / admin seats'],
+  cancel:{name:'Riverdale Minor Ball',btn:'Cancel and suspend Riverdale Minor Ball…',list:BASE3.map(lc).concat(['public organization site','house league seasons, registration, schedules, and standings','the Families area — household records, the family worklist, and duplicate review']),stays:'',ret:90,title:'Cancel and suspend Riverdale Minor Ball?'},
+  restores:['Your public site goes back online','Archived tournaments return','Retention reminders stop'],
+  table:null,founding:true,notOnSale:true},
+ club:{key:'club',label:'Club',host:'admin',org:'Riverdale Minor Ball Association',paid:true,price:'$219 CAD / month',cyc:'monthly',mo:'$219',yr:'$2,190',renew:'November 3, 2026',trialEnd:'January 26, 2027',backTo:'the free Tournament plan',eyebrow:'Organization',
+  meters:[{n:9,lim:15,unit:'teams'}],useSub:'Club holds up to 15 teams. Archived teams don’t count. Growing past 15? Club · Association holds 30.',
+  inc:INC_CLUB,
+  cancel:{name:'Riverdale Minor Ball Association',btn:'Cancel and suspend Riverdale Minor Ball Association…',list:['Rep teams and every team’s coach portal (9 teams)','Accounting','Families','the public site','house league','tournaments'],stays:'',ret:90,title:'Cancel and suspend Riverdale Minor Ball Association?'},
+  restores:['Your public site goes back online','Every team’s coach portal reopens','Archived tournaments return','Retention reminders stop'],
+  table:['club','club_large'],founding:false,notOnSale:true},
+ club_large:{key:'club_large',label:'Club · Association',host:'admin',org:'Riverdale Minor Ball Association',paid:true,price:'$379 CAD / month',cyc:'monthly',mo:'$379',yr:'$3,790',renew:'November 3, 2026',trialEnd:'January 26, 2027',backTo:'the free Tournament plan',eyebrow:'Organization',
+  meters:[{n:22,lim:30,unit:'teams'}],useSub:'Club · Association holds up to 30 teams. Archived teams don’t count. More than 30? Contact us for a custom plan.',
+  inc:INC_CLUB,
+  cancel:{name:'Riverdale Minor Ball Association',btn:'Cancel and suspend Riverdale Minor Ball Association…',list:['Rep teams and every team’s coach portal (22 teams)','Accounting','Families','the public site','house league','tournaments'],stays:'',ret:90,title:'Cancel and suspend Riverdale Minor Ball Association?'},
+  restores:['Your public site goes back online','Every team’s coach portal reopens','Archived tournaments return','Retention reminders stop'],
+  table:['club','club_large'],founding:false,notOnSale:true}
+};
+const ROW={tournament:{label:'Tournament',cap:'1 tournament at a time',mo:'Free',yr:'Free'},tournament_plus:{label:'Tournament Plus',cap:'Unlimited tournaments',mo:'$39',yr:'$390'},club:{label:'Club',cap:'Up to 15 teams',mo:'$219',yr:'$2,190'},club_large:{label:'Club · Association',cap:'15 to 30 teams',mo:'$379',yr:'$3,790'}};
+const FT={through:{running:'March 31, 2027',last14:'November 6, 2026',ended:'October 20, 2026'}};
+
+/* ---------- small product pieces ---------- */
+const chipFor=s=>({active:['good','Active'],trialing:['good','Trial'],past_due:['warn','Past due'],canceled:['bad','Cancelled']}[s]||['good','Active']);
+const chipH=s=>{const c=chipFor(s);return '<span class="chip '+c[0]+'">'+c[1]+'</span>'};
+const payBtn=()=>'<span class="btn out sm-btn sm">'+ic('credit-card',15)+'Payment method &amp; invoices</span>';
+function header(c,p,pn){
+  if((c.host||p.host)==='coach'&&c.host!=='admin') return '<div class="ch"><span class="tile">'+ic('credit-card',18)+'</span><h1>'+PW('Plan &amp; billing','Coaches Portal billing')+pn('title')+'</h1><span class="helpq">?</span></div>';
+  const eb=c.eyebrow!==undefined?c.eyebrow:p.eyebrow;
+  return '<div class="ph sm">'+(eb?'<div class="eyb">'+eb+pn('eyebrow')+'</div>':'<div class="eyb" style="height:11px">'+pn('eyebrow')+'</div>')+'<h1>Plan &amp; billing</h1></div>';
+}
+function meters(p,onFree){
+  return p.meters.filter(m=>!(onFree&&m.hideOnFree)).map(m=>{
+    const fin=m.lim!=null, pct=fin?Math.min(100,Math.round(m.n/m.lim*100)):0;
+    const cls=fin&&m.n>=m.lim?'full':(fin&&m.n>=Math.ceil(m.lim*.85)?'near':'');
+    return '<div class="useblk reg"><div class="cap">'+m.n+'<small>'+(fin?'of '+m.lim+' '+m.unit:m.unit+' · unlimited')+'</small></div>'+(fin?'<div class="bar" role="img" aria-label="'+m.n+' of '+m.lim+' '+m.unit+'"><i class="'+cls+'" style="width:'+Math.max(pct,2)+'%"></i></div>':'')+'</div>';
+  }).join('');
+}
+function bandH(c,p,st,pn){
+  const ft=st.free;
+  if(ft==='running') return '<div class="band"><span class="bi">'+ic('gift',18)+'</span><div><div class="be">Free time</div><div class="bt">Premium Coaches Portal is free through '+FT.through.running+'.</div><div class="bx">FieldLogicHQ gave you Premium for a while. On April 1 you go back to the free Coaches Portal automatically. Nothing is charged, and nothing you made is deleted. Everything you made on Premium is saved, and it comes back if you choose Premium again.</div></div>'+pn('band')+'</div>';
+  if(ft==='last14') return '<div class="band amber"><span class="bi">'+ic('flag',18)+'</span><div><div class="be">Free time · 9 days left</div><div class="bt">Your free time runs through '+FT.through.last14+'.</div><div class="bx">On November 7 you go back to the free Coaches Portal automatically, and everything you made on Premium is saved. To keep Premium, choose it below.</div></div>'+pn('band')+'</div>';
+  if(ft==='ended') return '<div class="band plain"><span class="bi">'+ic('check',18)+'</span><div><div class="be">Free time ended</div><div class="bt">Your Premium free time ran through '+FT.through.ended+'.</div><div class="bx">You’re back on the free Coaches Portal, with your team as it was when your free time started. Everything you made on Premium is saved, and it comes back if you choose Premium again.</div></div>'+pn('band')+'</div>';
+  if(ft==='club'){ return '<div class="band"><span class="bi">'+ic('gift',18)+'</span><div><div class="be">Free time</div><div class="bt">Club is free through March 31, 2027.</div><div class="bx">FieldLogicHQ gave your organization Club for a while. On April 1 it goes back to the free Tournament plan automatically. Nothing is charged for this, and nothing you made is deleted.</div></div>'+pn('band')+'</div>'; }
+  if(st.founding) return '<div class="band"><span class="bi">'+ic('gift',18)+'</span><div><div class="be">Founding Season</div><div class="bt">'+p.label+' is free through September 30, 2027.</div><div class="bx">You’re running '+p.label+' free through September 30, 2027 as a founding '+(p.key==='team'?'coach':'organization')+' — normally '+p.mo+'/month. No credit card. In September 2027 you’ll choose a plan for 2028.</div></div>'+pn('band')+'</div>';
+  return '';
+}
+function planCard(c,p,st,pn){
+  const status=st.status||'active', ft=st.free, onFree=ft==='running'||ft==='last14'||ft==='club', fd=!!st.founding&&!ft;
+  const free=!p.paid;
+  const chip=ft==='ended'?'<span class="chip">Free time ended</span>':chipH(status);
+  let price='';
+  if(onFree) price='<div class="price reg">Free through '+(ft==='club'?'March 31, 2027':FT.through[ft])+'</div><div class="sub strong">from FieldLogicHQ · then '+p.backTo+', automatically</div>';
+  else if(ft==='ended') price='';
+  else if(fd) price='<div class="price reg">Free through September 30, 2027</div><div class="sub">normally '+p.mo+'/month · in September 2027 you’ll choose a plan for 2028</div>';
+  else if(free) price='<div class="price reg">Free forever</div>';
+  else price='<div class="price"><span class="reg">'+p.price+'</span> · billed '+(p.cyc==='yearly'?PW('yearly','billed annually'):'monthly')+'</div>';
+  let ren='';
+  if(!onFree&&!fd&&!free&&!ft) ren='<div class="sub sm">'+(status==='trialing'?'Trial ends '+p.trialEnd:'Renews '+p.renew)+'</div>';
+  const sched=st.scheduled?'<div class="sub warnt">Moves to Club on November 3, 2026. <span class="lnk">Keep Club · Association</span></div>':'';
+  const acts=(p.paid&&!onFree&&!fd&&!ft)?'<div class="acts">'+payBtn()+pn('pay')+'</div>':'';
+  const right='<div class="capside"><div class="eye sm"><span>'+PW('What’s in use','Teams on your plan (Club) / Tournament slots in use and Staff seats (every other plan)')+'</span>'+pn('use')+'</div>'+meters(p,onFree)+(p.useSub&&!onFree?'<div class="sub sm">'+p.useSub+'</div>':'')+(ft==='club'?'<div class="sub sm">Teams you add while Club is free are kept after it ends.</div>':'')+'</div>';
+  return '<div class="card plancard"><div><div class="eye"><span class="sm">Your plan</span>'+chip+pn('plan')+'</div><div class="pname reg">'+p.label+'</div>'+price+ren+sched+acts+'</div>'+right+'</div>';
+}
+function keepCard(c,p,st,pn){
+  const ft=st.free; if(p.key!=='team'||!(ft==='running'||ft==='last14'||ft==='ended')) return '';
+  return '<div class="card keep"><div><div class="kt">Keep Premium</div><div class="kx">Next you choose how to pay. Your team and everything you made stay as they are.</div></div><span class="btn lime">Keep Premium</span>'+pn('keep')+'</div>';
+}
+function feesH(c,p,st,pn){
+  if(!st.fees) return '';
+  return '<div class="sec"><h2>Stripe fees</h2><div class="tf"><div class="feerow"><div>Card dispute fee · receipt R-1 · Oct 3<small>On your next FieldLogicHQ invoice</small></div><div>$15.00</div></div><div class="feerow"><div>Extra fee for a card issued outside your country · Oct 9<small>On your November 1 invoice</small></div><div>$1.20 <span class="lnk">Pay the invoice</span></div></div></div><p class="lede2">Stripe charges these fees on your online payments, and FieldLogicHQ passes them on to every club.'+(!p.paid?' Your plan doesn’t change.':'')+'</p>'+pn('fees')+'</div>';
+}
+function incH(c,p,st,pn){
+  return '<div class="sec"><h2 class="sm">'+PW('What '+p.label+' includes','What Club includes (the same words on both Club sizes)')+pn('inc')+'</h2><ul class="inc reg">'+p.inc.map(t=>'<li>'+ic('check',14)+'<span>'+t+'</span></li>').join('')+'</ul></div>';
+}
+function moveAct(from,to,st,c){
+  if(from===to) return '<span class="chip good">Your plan</span>';
+  if(st.scheduled&&from==='club_large'&&to==='club') return '<span class="chip">From Nov 3</span>';
+  const open=c.clubOpen;
+  if(to==='tournament') return '<span class="btn out sm">Downgrade to Tournament</span>';
+  if(to==='tournament_plus') return '<span class="btn lime sm">Upgrade to Tournament Plus</span>';
+  if(to==='club'||to==='club_large'){
+    if(from==='tournament_plus'&&!open) return '<span class="btn out sm">Contact us to move</span>';
+    if(from==='club_large'&&to==='club') return '<span class="btn out sm">Move to Club</span>';
+    if(from==='club'&&to==='club_large'&&!c.clubOpenOff) return '<span class="btn out sm">Move to Club · Association</span>';
+    return '<span class="btn out sm">Move to '+ROW[to].label+'</span>';
+  }
+  return '';
+}
+function chgH(c,p,st,pn){
+  if(p.key==='team') return '<div class="sec"><h2 class="sm">'+PW('Change plan','Part of a club? (a card between the usage and the cancel section)')+pn('chg')+'</h2><div class="tf"><div class="feerow" style="align-items:center"><div><span class="ct" style="font-weight:650;color:var(--ink)">Part of a club?</span><small>If your club runs on FieldLogicHQ, it can bring your team in. Everything the team built comes with it, and you won’t be charged for your own Coaches Portal again.</small></div><span class="btn '+((st.free==='running'||st.free==='last14')?'out':'lime')+' sm">Join a club</span></div></div></div>';
+  if(!p.table||st.free==='club') return '';
+  if(c.phone){
+    return '<div class="sec"><h2 class="sm">Change plan'+pn('chg')+'</h2><div class="pcards">'+p.table.map(k=>{const r=ROW[k];return '<div class="pcard reg'+(k===p.key?' cur':'')+'"><div class="r1"><b>'+r.label+'</b>'+moveAct(p.key,k,st,c)+'</div><div class="r2">'+r.cap+' · '+r.mo+(r.mo==='Free'?'':' / month')+' · '+r.yr+(r.yr==='Free'?'':' / year')+'</div></div>';}).join('')+'</div></div>';
+  }
+  const rows=p.table.map(k=>{const r=ROW[k];const newDoor=(p.key==='tournament_plus'&&(k==='club'||k==='club_large'));
+    return '<tr class="'+(k===p.key?'cur':'')+'"><td class="ct reg">'+r.label+(newDoor&&k==='club'?pn('newdoor'):'')+'</td><td>'+r.cap+'</td><td class="n">'+r.mo+'</td><td class="n">'+r.yr+'</td><td class="a">'+moveAct(p.key,k,st,c)+'</td></tr>';}).join('');
+  const lede=(p.key==='club'||p.key==='club_large')?'<p class="lede2">More than 30 teams? <span class="lnk">Contact us</span> for a custom plan.</p>':'';
+  return '<div class="sec"><h2 class="sm">'+PW('Change plan','Club’s two sizes (Club page) · Reduce or cancel plan / Get more from your tournaments (older page)')+pn('chg')+'</h2><div class="tf"><table><thead><tr><th>Plan</th><th>Holds</th><th class="n">Monthly</th><th class="n">Yearly</th><th><span style="position:absolute;left:-9999px">Your choice</span></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+lede+'</div>';
+}
+function cancelH(c,p,st,pn){
+  if(!p.cancel||st.free==='running'||st.free==='last14'||st.free==='club'||st.founding) return '';
+  const k=p.cancel;
+  const copy=p.key==='team'
+    ? 'Cancelling suspends '+k.name+': '+joinAnd(k.list)+' go offline. '+k.stays+' Everything is kept for '+k.ret+' days and comes back if you reactivate.'
+    : 'Cancelling suspends '+k.name+': '+joinAnd(k.list)+' go offline. Everything is kept for '+k.ret+' days and comes back if you reactivate.';
+  const dn=p.down?'<span class="btn out">Downgrade to Tournament</span>':'';
+  return '<div class="sec"><h2 class="sm">Reduce or cancel'+pn('cancel')+'</h2><p class="copy reg">'+copy+'</p><div class="acts" style="margin-top:0">'+dn+'<span class="btn out red">'+PW(k.btn,p.key==='team'?'Cancel Premium':'Cancel and suspend account')+'</span></div></div>';
+}
+function lockH(c,p,pn){
+  const own=p.key==='team'?'the workspace owner':'the owner';
+  return '<div class="lock"><b>Plan &amp; billing is the owner’s</b><span>Only '+(p.org.endsWith('s')?p.org+'’':p.org+'’s')+' owner can see and change the plan and how it’s paid.</span></div>'+pn('lock');
+}
+function cancelledH(c,p,st,pn){
+  const sale=!(p.notOnSale);
+  const bal=p.key==='team'?'<div class="card" style="margin-top:1rem"><div class="eye"><span>Basic records are still available</span></div><div class="copy" style="margin:0 0 .6rem">Tournament registrations linked to your Basic coach team profile remain in Coaches Portal while Premium tools are inactive.</div><div class="acts" style="margin-top:0"><span class="btn out sm">Open tournament records</span></div></div>':'';
+  return (st.notice?'<div class="notice good">'+ic('check',15)+'<span>'+st.notice+'</span></div>':'')+
+   '<div class="card" style="--g:1"><div class="eye"><span>'+p.org+' is cancelled</span><span class="chip bad">Cancelled Oct 3</span>'+pn('cancelled')+'</div><div class="pname" style="font-size:16px;font-weight:700">Reactivate '+p.label+' and everything comes back</div><ul class="restores">'+p.restores.map(t=>'<li>'+ic('check',14)+'<span>'+t+'</span></li>').join('')+'</ul><div class="sub">Kept until '+(p.key==='team'?'October 3, 2027':'January 1, 2027')+'.</div><div class="acts">'+(sale?'<span class="sel">Monthly · '+p.mo+' ▾</span><span class="btn lime">Reactivate '+p.label+'</span>':'<span class="btn lime">Contact us to reactivate</span>')+'</div></div>'+bal+(st.fees?feesH(c,p,st,pn):'');
+}
+function body(c){
+  const p=PLANS[c.plan], st=c.st||{}, pn=k=>(c.pn&&c.pn[k])?P(c.pn[k]):'';
+  const h=header(c,p,pn);
+  if(c.owner===false) return h+lockH(c,p,pn);
+  if((st.status||'active')==='canceled') return h+cancelledH(c,p,st,pn);
+  let parts=[];
+  if(st.notice) parts.push('<div class="notice good sm">'+ic('check',15)+'<span>'+st.notice+'</span>'+pn('notice')+'</div>');
+  if(st.status==='past_due') parts.push('<div class="notice warn sm">'+ic('alert',15)+'<span>Your last payment didn’t go through. Everything stays open during the grace period — update your card in <span class="lnk">Payment method &amp; invoices</span> to keep it that way.</span>'+pn('past')+'</div>');
+  parts.push(planCard(c,p,st,pn),bandH(c,p,st,pn),keepCard(c,p,st,pn),feesH(c,p,st,pn));
+  if(c.order==='club') parts.push(chgH(c,p,st,pn),incH(c,p,st,pn)); else parts.push(incH(c,p,st,pn),chgH(c,p,st,pn));
+  parts.push(cancelH(c,p,st,pn));
+  return h+parts.join('');
+}
+/* ---------- chromes ---------- */
+function strip(label){return '<div class="strip"><span class="wm">FieldLogicHQ</span><span class="div"></span><span class="lab">'+label+'</span><span class="sp"></span><span class="door">'+ic('bell',16)+'</span><span class="door">'+ic('user',16)+'</span></div>';}
+const ri=(icon,t,o)=>'<div class="ri'+(o&&o.on?' on':'')+(o&&o.nw?' newrow':'')+(o&&o.sub?' sub':'')+'">'+(o&&o.sub?'':ic(icon,14))+'<span>'+t+'</span>'+(o&&o.pin?o.pin:'')+'</div>';
+const rh=(t,open)=>'<div class="rh"><span>'+t+'</span>'+ic(open?'chevd':'chev',12)+'</div>';
+function coachRail(o){
+  o=o||{};
+  let sw='';
+  if(o.team==='one') sw='<div class="sw"><span>Riverdale Ridge 11U</span></div>';
+  if(o.team==='many') sw='<div class="sw"><span>Riverdale Ridge 11U</span><span>▾</span></div>';
+  if(o.team==='none') sw='<div class="sw dim"><span>Choose a team…</span><span>▾</span></div>';
+  if(o.team==='closed') sw='<div class="sw"><span>Riverdale Ridge 11U</span><span class="dim" style="font-weight:500">closed</span></div>';
+  let nav='';
+  if(o.team==='closed') nav=ri('archive','Season’s End');
+  else if(o.team==='none') nav='<div class="sub" style="padding:.6rem 1.25rem;color:var(--dim);font-size:12px">No team yet. Plan &amp; billing is still here.</div>';
+  else nav=ri('grid','Overview')+rh('Season',true)+ri('calendar','Schedule')+ri('notebook','Practice plans')+ri('list','Lineups')+ri('trophy','Tournaments')+rh('Progress',true)+ri('trend','Skills &amp; goals')+ri('bars','Insights')+rh('Money',true)+ri('dollar','Money')+rh('Communication',true)+ri('msg','Chat')+ri('mail','Email families')+rh('Team',false);
+  let foot=ri('help','Help');
+  const f=o.foot||'standalone';
+  if(f==='today'||f==='clubowner') foot+=ri('shield','Admin');
+  if(f==='standalone') foot+=ri('credit-card','Plan &amp; billing',{on:o.active==='billing',nw:true,pin:o.pin});
+  foot+=ri('collapse','Collapse sidebar');
+  return '<div class="rail c">'+sw+nav+'<div class="rspacer"></div><div class="rfoot">'+foot+'</div></div>';
+}
+function deskCoach(inner,o){o=o||{};return '<div class="scr desk">'+strip('Coaches Portal')+'<div class="deskbody">'+coachRail(o)+'<div class="main gridbg"><div class="page">'+inner+'</div></div></div></div>';}
+function adminRail(o){
+  o=o||{};
+  let nav='';
+  if(o.kind==='tournament'){
+    nav=rh('Operations',false)+rh('Setup',false)+rh('Admin',true)+ri('settings','Settings &amp; access',{on:o.active==='settings'})+ri('trophy','Tournaments');
+  } else {
+    nav=ri('grid','Overview')+ri('calendar','Calendar')+rh('Programs',true)+ri('users','Rep teams')+ri('trophy','Tournaments')+ri('dollar','Accounting')+rh('Organization',true)+ri('idcard','Members')+(o.today?ri('credit-card','Plan &amp; billing',{on:true,pin:o.pin}):'')+ri('settings','Settings');
+  }
+  const bill=(o.today||o.owner===false)?'':ri('credit-card','Plan &amp; billing',{on:o.active==='billing',nw:true,pin:o.pin});
+  const foot=ri('help','Help')+bill+ri('users','Coaches Portal')+(o.kind==='tournament'?'':ri('globe','Public site'))+ri('collapse','Collapse sidebar');
+  return '<div class="rail">'+nav+'<div class="rspacer"></div><div class="rfoot">'+foot+'</div></div>';
+}
+function deskAdmin(inner,o){o=o||{};return '<div class="scr desk">'+strip('Admin Area')+'<div class="deskbody">'+adminRail(o)+'<div class="main gridbg"><div class="page">'+inner+'</div></div></div></div>';}
+const tab=(icon,t,on)=>'<div class="tab'+(on?' on':'')+'"><span class="iw">'+ic(icon,22)+'</span>'+t+'</div>';
+function bar(kind,moreOpen){
+  const t=kind==='coach'?[['grid','Overview'],['calendar','Schedule'],['notebook','Practices'],['users','Roster']]:kind==='tournament'?[['grid','Overview'],['calendar','Games'],['users','Teams'],['trophy','Results']]:[['grid','Overview'],['calendar','Calendar'],['users','Rep teams'],['dollar','Accounting']];
+  return '<div class="pbar">'+t.map(x=>tab(x[0],x[1],false)).join('')+tab(moreOpen?'x':'more','More',moreOpen)+'</div>';
+}
+function phoneShell(inner,o){o=o||{};return '<div class="scr phone"><div class="pscroll">'+inner+'</div>'+(o.sheet?'<div class="scrim"></div><div class="sheet">'+o.sheet+'</div>':'')+bar(o.bar||'coach',!!o.sheet)+'</div>';}
+const sr=(icon,t,o)=>'<div class="sr'+(o&&o.on?' on':'')+(o&&o.nw?' newrow':'')+'">'+ic(icon,17)+'<span>'+t+'</span>'+(o&&o.pin?o.pin:'')+'</div>';
+function coachSheet(o){
+  o=o||{};
+  const you=sr('user','Account')+sr('home','Home')+(o.foot==='standalone'?sr('credit-card','Plan &amp; billing',{nw:true,pin:o.pin}):'')+((o.foot==='today'||o.foot==='clubowner')?sr('shield','Admin'):'');
+  const groups=o.closed?'':'<div class="tiles"><div class="tl">'+ic('list',20)+'Lineups</div><div class="tl">'+ic('trend',20)+'Skills &amp; goals</div><div class="tl">'+ic('dollar',20)+'Money</div></div><div class="sl">Season · Progress · Money · Communication · Team</div><div class="sr dim" style="font-size:13px;font-weight:500">… the team groups (scroll)</div><div class="dv"></div>';
+  return '<div class="grab"></div>'+sr('bell','Notifications')+groups+'<div class="sl">You</div><div class="g2">'+you+'</div><div class="dv"></div><div class="g2">'+sr('help','Help')+sr('send','Send feedback')+sr('out','Sign out')+'</div>';
+}
+/* dialogs */
+const dlg=o=>'<div class="dlg '+(o.cls||'')+'"><div class="dh"><b>'+o.title+'</b><span class="dx">'+ic('x',16)+'</span></div><div class="db">'+o.body+'</div><div class="df">'+(o.fs?'<span class="fs">'+o.fs+'</span>':'')+'<span class="fe">'+o.btns+'</span></div></div>';
+const dstage=d=>'<div class="scr dstage">'+d+'</div>';
+const fullwin=o=>'<div class="fullwin"><div class="dh"><span class="dx">'+ic('back',20)+'</span><b>'+o.title+'</b></div><div class="db">'+o.body+'</div><div class="df">'+(o.fs?'<span class="fs">'+o.fs+'</span>':'')+'<span class="fe">'+o.btns+'</span></div></div>';
+
+/* ---------- figure frame + interaction ---------- */
+function frame(o){
+  const notes=(o.notes||[]).map(String);
+  return '<figure class="fr" data-notes="'+esc(JSON.stringify(notes))+'"><figcaption class="frh"><b>'+o.title+'</b>'+(o.tag?'<span>'+o.tag+'</span>':'')+'</figcaption><div class="stage '+(o.cls||'')+(o.diff?' diffmode':'')+'">'+o.html+'</div><div class="pinbox" aria-live="polite">Click a rust pin or a dotted word on the drawing for the note.</div>'+(o.cap?'<div class="fcap">'+o.cap+'</div>':'')+'</figure>';
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest&&e.target.closest('.pin,.pw'); if(!t) return;
+  const fr=t.closest('.fr'); if(!fr) return;
+  const box=fr.querySelector('.pinbox');
+  fr.querySelectorAll('.on').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');
+  if(t.classList.contains('pin')){
+    let notes=[]; try{notes=JSON.parse(fr.dataset.notes||'[]')}catch(_){}
+    box.innerHTML='<b>'+t.dataset.n+'.</b> '+(notes[Number(t.dataset.n)-1]||'');
+  } else {
+    box.innerHTML='<b>Proposed word.</b> “'+t.textContent+'” — today this reads: <i>'+esc(t.dataset.today||'')+'</i>. Stage 1 Part 0 settles the words with you.';
+  }
+});
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('pw')){e.preventDefault();e.target.click();}});
+
+/* ---------- tab plumbing ---------- */
+const ST={t1v:'new',t1o:'brief',t2p:'team',t2d:'off',t3s:'active',t3m:'desk',t4c:'no',t6f:'standalone',t6s:'live',t6t:'proposed',t6w:'ended',t6o:'owner',t7t:'one',t5p:'tournament_plus'};
+const seg=(g,opts,lab)=>'<div class="segrow">'+(lab?'<span class="lab">'+lab+'</span>':'')+'<div class="seg" data-g="'+g+'">'+opts.map(o=>'<button type="button" data-v="'+o[0]+'" aria-pressed="'+(ST[g]===o[0])+'">'+o[1]+'</button>').join('')+'</div></div>';
+const mkPn=(a)=>{const o={};a.forEach((k,i)=>{if(k)o[k]=i+1});return o;};
+const dm=(label,html)=>'<div class="note"><b>'+label+'</b> '+html+'</div>';
+
+/* ---------- Today’s older page, rebuilt from the code ---------- */
+function legacyBody(plan,pn){
+  const p=PLANS[plan], isT=plan==='team';
+  const tag=isT?'Built for rep team coaches who also run local tournaments — roster, schedule, dues, and documents for your team, plus one hosted tournament at a time.':'Events teams register for: public registration, payment tracking, check-in, volunteers, automation, branding, and reporting.';
+  const meta=isT?'You’re on Premium Coaches Portal. Your team tools are active, and you can host one tournament at a time.':'You’re on Tournament Plus. Your tournament operations tools are active.';
+  const cancelCard=isT
+    ? '<div class="card" style="margin-bottom:1rem"><div class="eye"><span>Cancel Premium access</span></div><p class="copy">Cancellation turns off Premium tools and keeps Basic tournament records available. Premium team data is retained for the restore window.</p><span class="btn out red">Cancel Premium</span></div>'
+    : '<div class="card" style="margin-bottom:1rem"><div class="eye"><span>Reduce or cancel plan</span></div><p class="copy">Downgrades and cancellations run through a short review first so tournament data and retention choices are clear.</p><div class="acts" style="margin-top:0"><span class="btn out">Downgrade to Tournament</span><span class="btn out red">Cancel and suspend account</span></div></div>';
+  return '<div class="ph"><div class="eyb">Organization'+(pn.eyebrow||'')+'</div><h1>'+(isT?'Coaches Portal billing':'Plan &amp; billing')+(pn.title||'')+'</h1></div>'+
+   '<div class="card" style="margin-bottom:1rem"><div class="eye"><span>'+p.label+' Plan</span><span class="chip good">Active</span>'+(pn.plan||'')+'</div><div class="price">'+p.price+'</div><div class="sub">Billed '+(p.cyc==='yearly'?'annually':'monthly')+'</div><div class="sub">Renews '+p.renew+'</div><p class="copy" style="margin:.6rem 0 .3rem">'+tag+'</p><p class="sub">'+meta+'</p></div>'+
+   (isT?'<div class="card" style="margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;gap:1rem"><div><b>Part of a club?</b><div class="sub">If your club runs on FieldLogicHQ, it can bring your team in. Everything the team built comes with it, and you won’t be charged for your own Coaches Portal again.</div></div><span class="btn lime">Join a club</span></div>':'')+
+   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem"><div class="card"><div class="eye"><span>Tournament slots in use</span></div><div class="cap">'+(isT?'0 / 1':'2 / Unlimited')+'</div>'+(isT?'<div class="bar"><i style="width:2%"></i></div>':'')+'</div><div class="card"><div class="eye"><span>Staff seats</span></div><div class="cap">'+(isT?'1 / 3':'4 / Unlimited')+'</div>'+(isT?'<div class="bar"><i style="width:33%"></i></div>':'')+'</div>'+(pn.use||'')+'</div>'+
+   '<div class="card" style="margin-bottom:1rem"><div class="eye"><span>Billing tools</span></div><p class="copy">Open the secure billing portal for payment methods, invoices, and billing details.</p>'+payBtn()+'</div>'+cancelCard;
+}
+function adminRailToday(){
+  return '<div class="rail">'+rh('Operations',false)+rh('Setup',false)+rh('Admin',true)+ri('settings','Settings &amp; access')+ri('trophy','Tournaments')+'<div class="rh"><span>Account</span></div>'+ri('idcard','Members')+ri('credit-card','Plan &amp; billing',{on:true})+ri('settings','Settings')+'<div class="rspacer"></div><div class="rfoot">'+ri('help','Help')+ri('users','Coaches Portal')+ri('collapse','Collapse sidebar')+'</div></div>';
+}
+const deskToday=inner=>'<div class="scr desk">'+strip('Admin Area')+'<div class="deskbody">'+adminRailToday()+'<div class="main gridbg"><div class="page">'+inner+'</div></div></div></div>';
+
+/* ---------- TAB 1 · the body ---------- */
+function r1(){
+  const view=ST.t1v, order=ST.t1o;
+  let h='<h2>The body, once</h2><p class="intro">Premium Coaches Portal, active and monthly. This is the Club page’s layout, extended to every plan. The same body is drawn in the admin screen and in the Coaches Portal, on a desktop and on a 390px phone. Switch to “Today” to see what a Premium coach gets now.</p>';
+  h+=seg('t1v',[['new','Proposed'],['old','Today']],'View')+(view==='new'?seg('t1o',[['brief','Included, then Change plan (as briefed)'],['club','Change plan, then Included (as the Club page is today)']],'Section order'):'');
+  if(view==='new'){
+    const pnA=mkPn(['title','plan','pay','use','inc','chg','cancel']);
+    const notesA=['The page wears the portal’s own header: icon tile, title and the “?” help. The title reads “Plan & billing” on every plan; the coach page used to say “Coaches Portal billing”.','Your plan: name, price, renewal and status chip in one card. Only the values change from plan to plan; the layout does not.','One payment door for every plan. It opens the secure payment page where cards and invoices live. This page never lists invoices.','What’s in use: the plan’s own meters. A Premium coach sees tournaments and staff seats; a club sees teams. The same figure-and-bar shape on every plan.','What’s included: one list per plan, written once. Today the Club page, the older page and the plan articles keep three lists that disagree with each other.','Change plan. A Premium coach has no plan to move to (joining a club moves the whole team, it is not a plan change), so this slot holds the existing “Part of a club?” door. An empty table would be worse.','Reduce or cancel: one sentence for every plan. Only what goes offline and the days kept change. Premium says “Cancel Premium…” because Basic tournament records stay open.','The new row in the rail foot, beside Help. Shown only to the owner of a standalone Coaches Portal.'];
+    h+=frame({title:'A · Coaches Portal look · desktop',tag:'Premium · active',cls:'',html:deskCoach(body({plan:'team',host:'coach',order,pn:pnA}),{team:'one',foot:'standalone',active:'billing',pin:P(8)}),notes:notesA,
+      cap:'<ul><li>The rail row is new. The page itself needs no team in its address, so it opens with one team, many teams, or only a closed season.</li><li>Nothing on this page asks the coach to know about “organizations”. The Organization label never appears here.</li></ul>'});
+    const pnB=mkPn(['title','plan','pay','use','inc','chg','cancel']);
+    h+=frame({title:'B · Admin look · desktop',tag:'same body, other chrome',html:deskAdmin(body({plan:'team',host:'admin',eyebrow:'Organization',order,pn:pnB}),{kind:'club',pin:P(8)}),
+      notes:['Same header content, drawn in the admin page header: an “Organization” trail above the title. Only plans that have an organization show it (Club, League Plus).','Identical card, identical order.','Identical button.','Identical meters.','Identical list.','Identical slot.','Identical wording.','Plan & billing in the admin rail foot, beside Help: the same spot as in the portal. On Club it moves down from the Organization group.'],
+      cap:'This frame proves the point of the ruling: <b>same look, navigation and experience, different chrome</b>. Premium itself leaves the admin screen in Stage 3; it is drawn here only so the two chromes can be compared line for line.'});
+    const pPhone=mkPn(['title','plan','pay','use','inc','chg','cancel']);
+    h+='<figure class="fr" data-notes="[]"><figcaption class="frh"><b>C · Phone · 390px</b><span>portal look · admin look</span></figcaption><div class="stage row">'+
+       phoneShell(body({plan:'team',host:'coach',phone:true,order}),{bar:'coach'})+phoneShell(body({plan:'team',host:'admin',eyebrow:'Organization',phone:true,order}),{bar:'club'})+
+       '</div><div class="pinbox">Scroll inside either phone. The plan card stacks (usage drops under the plan, with a hairline), the included list becomes one column, and buttons grow to the 44px touch height.</div><div class="cap">Left: Coaches Portal (bottom bar: Overview, Schedule, Practices, Roster, More). Right: admin (Overview, Calendar, Rep teams, Accounting, More).</div></figure>';
+    if(order==='brief') h+=dm('Where I disagree with the brief.','The brief lists the sections as Included, then Change plan. The Club page you approved puts Change plan first, then Included. I drew the brief’s order above and kept a switch for Club’s order. I recommend Club’s order (ask 6): the page then reads “what I pay, what I’m using, what else I could be on, what I get”.');
+  } else {
+    const pnL={eyebrow:P(1),title:P(2),plan:P(3),use:P(4)};
+    h+=frame({title:'Before 1 · A standalone coach’s billing page today',tag:'rebuilt from the code · admin screen',html:deskToday(legacyBody('team',pnL)),
+      notes:['The “Organization” trail shows even though a Premium coach has no organization.','Called “Coaches Portal billing” here and “Plan & billing” everywhere else. No icon, no help.','A plain card with a long tagline and the price as text; no status line, no usage.','Two separate cards for slots and seats, each with a different figure style (“0 / 1”) from the Club page’s “9 of 15 teams”.'],
+      cap:'<ul><li>To get here a coach clicks <b>Admin</b> in the portal, lands on a tournament screen, then finds <b>Account › Plan &amp; billing</b> in a rail that is about tournaments. Two hops, two vocabularies.</li><li>The rail rows above “Account” are indicative; only the position of Plan &amp; billing is claimed.</li></ul>'});
+    h+=frame({title:'Before 2 · Where the Admin door lands a coach who has not finished setup',tag:'rebuilt from the code',html:deskToday('<div class="ph"><div class="eyb"></div><h1 style="font-size:24px">Welcome to FieldLogicHQ</h1></div><p class="copy">Let’s get Riverdale Ridge 11U set up in a few quick steps.</p><div class="card"><div class="eye"><span>Premium Coaches Portal plan selected</span></div><p class="copy">Start here, then follow the setup steps that match how your organization runs.</p><span class="btn out">View plans</span></div>'),
+      notes:[],cap:'This is the “confusing screen” in the plan: a standalone coach who clicks Admin can land on organization setup. After Stage 3 the Admin door is gone for standalone coaches, so this bounce can no longer happen.'});
+    h+=frame({title:'Before 3 · The Club page today (the benchmark, unchanged)',tag:'the layout everything else is moving to',html:deskAdmin(body({plan:'club',host:'admin',order:'club'}),{kind:'club',today:true}),notes:[],cap:'Nothing about the Club page changes except two small word choices marked as dotted words, and the “What’s in use” heading, which is “Teams on your plan” here.'});
+  }
+  return h;
+}
+
+/* ---------- TAB 2 · every plan ---------- */
+function planBadge(k){return PLANS[k].label}
+function r2(){
+  const k=ST.t2p, p=PLANS[k], diff=ST.t2d==='on';
+  let h='<h2>Same body, every plan</h2><p class="intro">Six plans, one screen. Pick a plan; switch on “Show only what differs” and everything that is identical across plans fades, leaving the highlighted parts that come from the plan’s entry. A new plan is one entry in this table, not a new screen.</p>';
+  h+=seg('t2p',Object.keys(PLANS).map(x=>[x,PLANS[x].label]),'Plan')+seg('t2d',[['off','Everything'],['on','Show only what differs']],'View');
+  const host=p.host==='coach'?'coach':'admin';
+  const pn=mkPn(['title','plan','use','inc','chg','cancel','eyebrow']);
+  const notes=['Identical on every plan: icon-less admin header or portal header with the same title.','Your plan: shape identical; name, price and renewal come from the plan’s entry.','What’s in use: Premium and Tournament show tournaments and staff seats; Tournament Plus and League Plus show the same two with “unlimited”; both Club sizes show teams of the cap.','What’s included: the list comes from the plan’s entry.','Change plan rows come from the plan’s entry. Premium holds the “Part of a club?” door; League Plus has none (it is not on sale); Club shows its two sizes; Tournament and Tournament Plus show each other, plus Club on Plus.','Reduce or cancel: same sentence; the list and the days kept come from the plan’s entry. The free Tournament plan has nothing to cancel, so the section is absent.','The “Organization” trail shows only where there is an organization (Club, League Plus). Tournament plans show none; today the label shows on plans with no organization.'];
+  const inner=body({plan:k,host,order:'club',clubOpen:false,pn});
+  const html=host==='coach'?deskCoach(inner,{team:'one',foot:'standalone',active:'billing'}):deskAdmin(inner,{kind:(k==='tournament'||k==='tournament_plus')?'tournament':'club',newRow:true,active:'billing',pin:''});
+  h+=frame({title:p.label+' · desktop',tag:host==='coach'?'Coaches Portal chrome':'Admin chrome',html,diff,notes,cap:diffNote(k)});
+  h+='<h3>The registry: everything a plan contributes</h3><p class="intro" style="margin-bottom:.4rem">Prices and names are copied from the plan configuration; capacity wording is the plan’s own. This is the whole difference between plans.</p>';
+  h+='<div class="tblw"><table class="tbl"><thead><tr><th>Plan</th><th>Monthly / yearly</th><th>What’s in use</th><th>Change-plan rows</th><th>Founding comp</th><th>Cancel takes offline</th><th>Days kept</th></tr></thead><tbody>'+
+   Object.keys(PLANS).map(x=>{const q=PLANS[x];return '<tr><td>'+q.label+'</td><td>'+q.mo+' / '+q.yr+'</td><td>'+q.meters.map(m=>m.lim!=null?m.n+' of '+m.lim+' '+m.unit:m.unit+' (unlimited)').join('; ')+'</td><td>'+(x==='team'?'“Part of a club?” door':(q.table?q.table.map(t=>ROW[t].label).join(', '):'None'))+'</td><td>'+(q.founding?'Shown when a comp exists':'<span class="tag b">Never on Club</span>')+'</td><td>'+(q.cancel?q.cancel.list.length+' areas':'Nothing to cancel')+'</td><td>'+(q.cancel?q.cancel.ret:'—')+'</td></tr>';}).join('')+'</tbody></table></div>';
+  h+='<div class="note"><b>Prices come from the plan configuration.</b> Premium $29 / $290, Tournament Plus $39 / $390, League Plus $89 / $890, Club $219 / $2,190, Club · Association $379 / $3,790; Tournament is free. They match the plan facts document today. The configuration still marks Premium as “early access” while the live gate has had it open since July; the drawings read “on sale” from the live gate.</div>';
+  return h;
+}
+function diffNote(k){
+  const m={team:'Premium: no plan to move to, so Change plan holds the “Part of a club?” door. Founding comp holders see a band instead of a payment button.',tournament:'Tournament (free): no payment method, no cancel and no renewal line, because there is nothing to pay. “Upgrade to Tournament Plus” is the one lime button. The Club rows are not offered from free (checkout supports it, no screen opens it).',tournament_plus:'Tournament Plus: the only plan with a Downgrade. The Club rows are a new door: the server already supports Plus → Club, but no screen opens it. Club is not on sale yet, so they read “Contact us to move” (ask 7).',league:'League Plus: parked and never sold. No Change plan section (nothing to move to). Today a cancelled League Plus has no way back at all; the drawing gives it “Contact us to reactivate” like Club.',club:'Club: unchanged. Only the Organization trail, the section title wording and the two dotted words differ from today.',club_large:'Club · Association: the same page with 22 of 30 teams. “What Club includes” becomes “What Club · Association includes”.'};
+  return m[k];
+}
+
+/* ---------- TAB 3 · states ---------- */
+const STATES=[
+ {id:'active',label:'Active',plan:'team',st:{},pn:['plan','pay'],notes:['Status chip “Active” is olive on a faint green wash.','Payment method &amp; invoices is present because this plan pays by card.'],cap:'The reference state.'},
+ {id:'trial',label:'Trial',plan:'club',st:{status:'trialing'},pn:['plan'],notes:['“Trial” chip and “Trial ends …” replace “Renews …”. Premium never has a trial (it is charged from day one); trials exist on Tournament Plus (14 days), League Plus (30) and Club (90, with a card collected at checkout).'],cap:'Drawn on Club because Premium has no trial.'},
+ {id:'past',label:'Past due',plan:'team',st:{status:'past_due'},pn:['past','plan'],notes:['A warning line above the plan card. It links to the payment page. Everything stays open during the grace period.','Amber chip. The word on the chip comes from the one shared status list.'],cap:'Today the older page words this differently (“Your last payment failed…”) and shows it to non-owners too; one sentence now.'},
+ {id:'free-run',label:'Free time · running',plan:'team',st:{free:'running'},pn:['band','keep','plan'],notes:['Olive band: who gave it, when it ends, what happens next. It is a band, not a chip.','Keep Premium is the one lime button while free time runs. Choosing it goes to checkout with no trial on top.','Price becomes “Free through …”. Payment method, Change plan’s lime button and Reduce or cancel are <b>absent</b>, not greyed. The tournament meter is also gone: hosting is not part of free time.'],cap:'Staff-given free time removes things that cannot apply. Absent beats disabled.'},
+ {id:'free-14',label:'Free time · last 14 days',plan:'team',st:{free:'last14'},pn:['band','keep'],notes:['Amber band with a day count. “To keep Premium, choose it below.” works here because Keep Premium is right below.','Same card as when free time runs.'],cap:'On Club the same amber band says “To keep Club, choose it below” but the Club page shows nothing to choose from. That is a small bug in today’s page; the fix is to give the band a Keep button or reword it.'},
+ {id:'free-end',label:'Free time · ended',plan:'team',st:{free:'ended'},pn:['band','keep'],notes:['Plain band, shown for 30 days after free time ends.','Keep Premium stays, so a coach who just lost it has a door back.'],cap:'The plan card shows the free state: no price, no renewal.'},
+ {id:'founding',label:'Founding Season comp',plan:'team',st:{founding:true},pn:['band','plan'],notes:['Founding band: free through September 30, 2027, then a plan choice for 2028. The offer is closed; only existing comps see this.','No card on file is needed, so there is no payment button and no cancel.'],cap:'<b>Never on Club</b> (ruling D6): the Club page has no Founding wording. Today there is one leak: a Club given staff free time can show “still free … as a founding organization” in its band.'},
+ {id:'sched',label:'Scheduled downgrade',plan:'club_large',st:{scheduled:true},pn:['plan','chg'],notes:['“Moves to Club on November 3, 2026.” with a link to keep the bigger size.','The target row carries a “From Nov 3” chip instead of a button. Only Club · Association → Club is ever scheduled; other downgrades are immediate.'],cap:'Today only the Club page has words for a scheduled move; the older page has none.'},
+ {id:'cancelled',label:'Cancelled',plan:'team',st:{status:'canceled'},pn:['cancelled'],notes:['Cancelled view: what comes back, how long it is kept, and the Reactivate button. Premium also keeps its “Basic records are still available” card.'],cap:'Reactivate uses the plan the account paid for.'},
+ {id:'notsale',label:'Plan not on sale',plan:'club',st:{status:'canceled'},pn:['cancelled'],notes:['When the plan is not open for sign-up, Reactivate becomes “Contact us to reactivate”. The same rule turns “Move to …” into “Contact us to move”.'],cap:'Club, Club · Association and League Plus are not on sale today.'},
+ {id:'success',label:'Stripe return · success',plan:'team',st:{notice:'Your plan is active. Everything it includes is open now.'},pn:['notice'],notes:['A fading line (8 seconds), the way the Club page does it. The older page shows a modal that has to be closed; one pattern now (ask 11). Errors stay on screen until read.'],cap:'Also: “Your payment method is on file.” after saving a card.'},
+ {id:'fees',label:'Stripe fees',plan:'club',st:{fees:true},pn:['fees'],notes:['Shown only when the account has at least one fee. Each row says when it will be billed; open invoices have a pay link. Nothing about fees changes.'],cap:'Fees appear in every state, including cancelled and free time.'},
+ {id:'nonowner',label:'Not the owner',plan:'team',owner:false,st:{},pn:['lock'],notes:['One locked card for every plan. Today the older page shows the whole page with some buttons hidden, and “Upgrade” and “Reactivate” stay clickable until the server refuses them.'],cap:'The same card whether the account is active, cancelled or on free time.'}
+];
+function r3(){
+  const s=STATES.find(x=>x.id===ST.t3s)||STATES[0], p=PLANS[s.plan];
+  let h='<h2>States</h2><p class="intro">Each state is drawn on the plan where it is most natural, then the matrix at the bottom shows which plans can be in which state. Free time <b>removes</b> the payment method, the move buttons and cancel: absent, not greyed.</p>';
+  h+='<div class="segrow"><span class="lab">State</span><div class="seg" data-g="t3s" style="flex-wrap:wrap">'+STATES.map(x=>'<button type="button" data-v="'+x.id+'" aria-pressed="'+(ST.t3s===x.id)+'">'+x.label+'</button>').join('')+'</div></div>'+seg('t3m',[['desk','Desktop'],['phone','Phone']],'Shown as');
+  const pn=mkPn(s.pn); const c={plan:s.plan,host:p.host==='coach'?'coach':'admin',st:s.st,owner:s.owner,order:'club',pn,phone:ST.t3m==='phone',clubOpen:false};
+  const inner=body(c);
+  let html;
+  if(ST.t3m==='phone') html='<div class="stage row" style="padding:0">'+phoneShell(inner,{bar:p.host==='coach'?'coach':'club'})+'</div>';
+  else html=p.host==='coach'?deskCoach(inner,{team:'one',foot:'standalone',active:'billing'}):deskAdmin(inner,{kind:'club'});
+  h+=frame({title:s.label,tag:'drawn on '+p.label,html,notes:s.notes,cap:s.cap});
+  h+='<h3>Which plan can be in which state</h3><div class="tblw"><table class="tbl"><thead><tr><th>State</th><th>Premium</th><th>Tournament</th><th>Tournament Plus</th><th>League Plus</th><th>Club</th><th>Club · Association</th></tr></thead><tbody>'+
+  [['Active','Yes','Yes (free)','Yes','Yes','Yes','Yes'],
+   ['Trial','No trial','No','14 days','30 days','90 days, card at checkout','90 days, card at checkout'],
+   ['Past due','Yes','—','Yes','Yes','Yes','Yes'],
+   ['Free time (running, last 14 days, ended)','Yes: Keep Premium','Shows the plan it was given (Plus or Club)','Yes','Cannot be given','Yes','Yes'],
+   ['Founding comp','Yes','Yes (can pick Plus at $0 once)','Yes','Yes','<span class="tag b">Never</span>','<span class="tag b">Never</span>'],
+   ['Scheduled downgrade','—','—','—','—','—','Yes (to Club, at renewal)'],
+   ['Cancelled','Yes, reactivate','Nothing to cancel','Yes, reactivate','Not on sale: Contact us','Not on sale: Contact us','Not on sale: Contact us'],
+   ['Plan not on sale (Contact us)','Live: no','Live: no','Live: no','Yes (parked)','Yes (coming soon)','Yes (coming soon)'],
+   ['Stripe return notice','Yes','Yes (upgrade)','Yes','n/a','Yes','Yes'],
+   ['Stripe fees','If any','If any','If any','If any','If any','If any'],
+   ['Not the owner','Locked card','Locked card','Locked card','Locked card','Locked card','Locked card']
+  ].map(r=>'<tr>'+r.map((x,i)=>'<td'+(i?' style="font-weight:500;white-space:normal"':'')+'>'+x+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+  return h;
+}
+
+/* ---------- TAB 4 · change plan ---------- */
+function moveWindows(){
+  const up=dlg({cls:'q',title:'Move to Club · Association?',body:'<p>Riverdale Minor Ball Association moves to Club · Association today and can hold up to 30 teams.</p><div class="figs"><div><span>Today, for the rest of this billing period</span><b>$142.50</b></div><div><span>From November 3, 2026</span><b>$379.00 CAD / month</b></div></div><p style="font-size:12px;color:var(--dim)">Same subscription and card, with no second checkout. The prorated amount comes from Stripe before you confirm.</p>',btns:'<span class="btn out">Cancel</span><span class="btn lime">Move to Club · Association</span>'});
+  const down=dlg({cls:'q',title:'Move to Club?',body:'<p>Riverdale Minor Ball Association moves to Club on November 3, 2026, and can hold up to 15 teams from then.</p><p style="font-size:12px;color:var(--dim)">You keep Club · Association until then, with no credit for the rest of this period. From then it’s $219.00 CAD / month.</p>',btns:'<span class="btn out">Cancel</span><span class="btn lime">Move to Club</span>'});
+  const plus=dlg({cls:'q',title:'Move to Club?',body:'<p>Riverdale Tournaments moves to Club today and can hold up to 15 teams.</p><div class="figs"><div><span>Today, for the rest of this billing period</span><b>$96.20</b></div><div><span>From March 2, 2027</span><b>$2,190.00 CAD / year</b></div></div><p style="font-size:12px;color:var(--dim)">Same subscription and card, with no second checkout. The prorated amount comes from Stripe before you confirm.</p>',btns:'<span class="btn out">Cancel</span><span class="btn lime">Move to Club</span>'});
+  const r1_=dlg({cls:'q',title:'Move to Club?',body:'<p>Club holds 15 teams and Riverdale Minor Ball Association has 22 active. Archive 7 teams first, then come back.</p>',btns:'<span class="btn out">Close</span><span class="btn lime">Go to Rep teams</span>'});
+  const r2_=dlg({cls:'q',title:'Move to Club?',body:'<p>Riverdale Tournaments isn’t paying by card yet, so there’s no subscription to change. This starts Club ($2,190 CAD / year) at checkout, where you add a card.</p>',btns:'<span class="btn out">Cancel</span><span class="btn lime">Continue to checkout</span>'});
+  const r3_=dlg({cls:'q',title:'Move to Club · Association?',body:'<p>Club · Association isn’t open for purchase yet. Contact us and we’ll move Riverdale Minor Ball Association for you.</p>',btns:'<span class="btn out">Close</span><span class="btn lime">Contact us</span>'});
+  const dg=dlg({cls:'',title:'Downgrade to Tournament?',body:'<p>One tournament at a time: a draft or an active event holds the slot, and a finished one stays online. In use now: 2.</p><div class="notice warn">'+ic('alert',15)+'<span>Tournament Plus features become inactive on the free plan: custom tournament branding, custom registration controls, exports, payment reminders, waitlist promotion, cloning, targeted announcements, and post-event summaries.</span></div><p><b>Choose 1 tournament to keep active.</b> The rest move to archive retention for 90 days.</p><div class="figs"><div><span>Spring Classic 2026 · Active</span><b>Keep</b></div><div><span>Fall Showcase 2026 · Draft</span><b>Archive</b></div></div><div class="fld"><label>Why are you downgrading?</label><div class="ta"></div><div class="h">For your records and ours. You can leave it empty.</div></div>',fs:'Online payments stop today.',btns:'<span class="btn out">Keep Tournament Plus</span><span class="btn lime">Confirm downgrade</span>'});
+  return {up,down,plus,r1_,r2_,r3_,dg};
+}
+function r4(){
+  const open=ST.t4c==='yes';
+  let h='<h2>Change plan</h2><p class="intro">One table of the moves that exist today, drawn as one section. It changes how the moves look, not how they work. Premium → Club is deliberately left out (a pricing call for strategy). The windows after the table are the shipped plan-move window and the shipped downgrade review, now as windows.</p>';
+  h+=seg('t4c',[['no','Club not on sale (today)'],['yes','Club on sale']],'Plus owner’s table shows');
+  const pnT=mkPn(['chg','newdoor']);
+  h+=frame({title:'Tournament Plus owner · the section',tag:'admin chrome · desktop',html:deskAdmin(body({plan:'tournament_plus',host:'admin',order:'club',clubOpen:open,pn:pnT}),{kind:'tournament',newRow:true,active:'billing'}),
+   notes:['One table, the same columns as the Club page’s two-sizes table, with a “Holds” column in place of “Teams”. The current plan carries a “Your plan” chip; a move is a button; a not-on-sale plan reads “Contact us to move”.','<b>New door.</b> The server already lets a Tournament Plus owner move to Club or Club · Association on the same subscription, but no screen opens it today; the Club card on this page only opens an information panel. Drawing these rows adds a door. I would add it (ask 7), but it is your call, not a layout choice.'],
+   cap:'The free Tournament plan sees the same table with Tournament Plus as the only target, and its button is lime (the one conversion action on that page).'});
+  const w=moveWindows();
+  h+='<h3>Phone treatment</h3><p class="intro" style="margin-bottom:.6rem">A four-column table does not fit 390px. Three ways to fold it (ask 5). I recommend A.</p>';
+  const cardsInner=body({plan:'tournament_plus',host:'admin',phone:true,order:'club',clubOpen:open});
+  h+='<figure class="fr" data-notes="[]"><figcaption class="frh"><b>Option A · rows become cards</b><span>recommended</span></figcaption><div class="stage row">'+
+   phoneShell(cardsInner,{bar:'tournament'})+
+   '<div class="scr phone"><div class="pscroll"><div class="sec"><h2>Option B · keep the table, scroll sideways</h2><div class="tf"><table style="min-width:520px"><thead><tr><th>Plan</th><th>Holds</th><th class="n">Monthly</th><th class="n">Yearly</th><th></th></tr></thead><tbody><tr><td class="ct">Tournament</td><td>1 at a time</td><td class="n">Free</td><td class="n">Free</td><td class="a"><span class="btn out sm">Downgrade</span></td></tr><tr class="cur"><td class="ct">Tournament Plus</td><td>Unlimited</td><td class="n">$39</td><td class="n">$390</td><td class="a"><span class="chip good">Your plan</span></td></tr></tbody></table></div><p class="lede2">The action column is off screen. A hidden button is a hidden door.</p></div><div class="sec"><h2>Option C · plain rows with a symbol</h2><div class="tf"><div class="feerow" style="align-items:center"><div><b style="color:var(--ink)">Tournament</b><small>Free</small></div><span class="dx" style="border:0">'+ic('chev',18)+'</span></div><div class="feerow" style="align-items:center"><div><b style="color:var(--ink)">Tournament Plus</b><small>$39 / month · your plan</small></div><span class="chip good">Your plan</span></div></div><p class="lede2">Compact, but the price and the verb are hidden behind a tap.</p></div></div>'+bar('tournament',false)+'</div>'+
+   '</div><div class="pinbox">A keeps every fact and every verb on screen with a 44px button; B loses the action; C loses the price and the verb.</div></figure>';
+  h+='<h3>The moves, one table</h3><div class="tblw"><table class="tbl"><thead><tr><th>Move</th><th>Door today</th><th>Door in the drawings</th><th>When it takes effect</th><th>Refused when</th></tr></thead><tbody>'+
+   [['Tournament → Tournament Plus','Upgrade card on the page','Row in Change plan, lime “Upgrade to Tournament Plus”','At checkout; 14-day trial unless the account has paid before','Plan not open for sign-up; already has a live subscription'],
+    ['Tournament Plus → Tournament','“Downgrade to Tournament” inside the cancel card','Row in Change plan, then the downgrade window','At once. No credit. Extra tournaments move to archive for 90 days','Over the cap: you must choose which tournaments stay'],
+    ['Tournament Plus → Club or Club · Association','<span class="tag n">None</span> works on the server, no screen','<span class="tag n">New door</span> rows; “Contact us to move” while Club is not on sale','At once, prorated, same subscription','Club not on sale; no card on file yet'],
+    ['Club → Club · Association','Button in “Club’s two sizes”','Same row, same window','At once, prorated, same subscription','Not on sale; no card on file yet'],
+    ['Club · Association → Club','Button in “Club’s two sizes”','Same row, same window','At renewal, no credit; no second trial','More than 15 active teams: archive first'],
+    ['Premium → anything','“Part of a club?” nudge (a team transfer)','Same door, in the Change plan slot','When the club says yes; Premium stops billing, no refund','—'],
+    ['League Plus → anything','None','None (parked)','—','—'],
+    ['Club or Association → lower plans','<span class="tag w">API only</span>','Not drawn','—','The server accepts it at once with no team-cap check; only the missing screen stops it. Reported, not changed.']
+   ].map(r=>'<tr>'+r.map((x,i)=>'<td'+(i?' style="font-weight:500;white-space:normal"':'')+'>'+x+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+  h+='<h3>The plan-move window</h3>';
+  h+=frame({title:'Preview, up and down',tag:'question windows · 416px',cls:'row',html:dstage(w.up)+dstage(w.down)+dstage(w.plus),notes:[],cap:'<ul><li><b>Up</b> (Club → Association, or Plus → Club): at once, with Stripe’s own prorated figure shown before you confirm. One subscription, one card.</li><li><b>Down</b> (Association → Club): at renewal, no credit, and the window says so before you confirm.</li><li>The third window is the same window for the new Plus → Club door.</li></ul>'});
+  h+=frame({title:'Refusals',tag:'archive teams first · no card yet · not on sale',cls:'row',html:dstage(w.r1_)+dstage(w.r2_)+dstage(w.r3_),notes:[],cap:'Each refusal names the fix and offers the next step as the lime button. Nothing is greyed out and nothing says “error”.'});
+  h+=frame({title:'Downgrade review · Tournament Plus → Tournament',tag:'a window now; today an inline card',cls:'row',html:dstage(w.dg),notes:[],cap:'Today this review is an inline card on the page and the Club move is a window. Making both windows is a presentation change only; the same questions are asked and the same things happen. The sentence on the left of the foot is the shipped rule (sentence left, buttons right).'});
+  return h;
+}
+
+/* ---------- TAB 5 · cancel ---------- */
+function cancelWin(k,phone){
+  const p=PLANS[k], c=p.cancel, org=k!=='team';
+  const list=joinAnd(c.list);
+  const notice='<div class="notice bad">'+ic('alert',15)+'<span>'+(org?c.name+' is suspended the moment you confirm: '+list+' go offline, and families opening your pages will see that they aren’t available.':PW('Premium turns off the moment you confirm','Premium Coaches Portal is inactive')+': '+list+' go offline. '+c.stays)+'</span></div>';
+  const keep='<p>Everything is kept for '+c.ret+' days. '+(k==='tournament_plus'||k==='league'||org?'2 tournaments move into the archive until then. ':'')+'Reactivating brings it all back.</p>';
+  const pay=org?'<div class="notice"><span><b>Online payments stop now.</b> Nobody can pay you online; pay pages still open close. 12 families and 3 teams still owe today. Your Stripe account stays yours: money in it keeps paying out to your bank.</span></div>':'';
+  const reason='<div class="fld"><label>Why are you cancelling?</label><div class="ta"></div><div class="h">For your records and ours. You can leave it empty.</div></div>';
+  const btns='<span class="btn out">Keep '+(k==='team'?'Premium':p.label)+'</span><span class="btn dng">Cancel and suspend</span>';
+  if(phone) return fullwin({title:c.title,body:notice+keep+pay+reason,btns});
+  return dlg({title:c.title,body:notice+keep+pay+reason,btns});
+}
+function r5(){
+  const k=ST.t5p;
+  let h='<h2>Cancel and cancelled</h2><p class="intro">One cancel window for every plan that can be cancelled, one cancelled view with its reactivate card, and one locked card for anyone who is not the owner. Pick a plan to see what changes inside the window.</p>';
+  h+=seg('t5p',[['team','Premium'],['tournament_plus','Tournament Plus'],['league','League Plus'],['club','Club']],'Cancel window for');
+  h+=frame({title:'The cancel window · '+PLANS[k].label,tag:'desktop · form window 520px',cls:'',html:'<div style="width:640px">'+dstage(cancelWin(k,false))+'</div>',
+    notes:[],cap:'<ul><li><b>Same bones for every plan:</b> title with the account’s name, a red line saying what goes offline, a line saying how long everything is kept, the payments line (only where online payments exist), an optional reason, and two buttons. The primary names what it does: “Cancel and suspend”.</li><li>Today the Club window and the older page’s inline review say these things in different words; the coach version says <b>365 days</b> on the review but <b>90 days</b> in the result message.'+(k==='team'?' I drew 365, which is the owner ruling of September 24; one number must win (ask 9).':'')+'</li><li>The list in the red line is each plan’s own. Two of today’s lists still promise “invoices and reconciliation” for accounting, which the product does not do. I left the exact wording to Stage 1 and flagged it (ask 9).</li></ul>'});
+  h+=frame({title:'On a phone',tag:'a form window covers the screen',cls:'row',html:phoneShell('',{bar:'club'}).replace('<div class="pscroll"></div>','<div class="fullwin-host" style="flex:1;display:flex">'+cancelWin(k,true)+'</div>').replace('<div class="pbar">','<div class="pbar" style="display:none">'),notes:[],cap:'On a phone the window takes the whole screen with a back arrow in place of the ×, and its foot buttons are 44px tall.'});
+  const pnC=mkPn(['cancelled']);
+  h+=frame({title:'Cancelled view · reactivate',tag:'Premium and Club (not on sale)',cls:'row',html:phoneShell(body({plan:'team',host:'coach',phone:true,st:{status:'canceled'},pn:pnC}),{bar:'coach'})+phoneShell(body({plan:'club',host:'admin',eyebrow:'Organization',phone:true,st:{status:'canceled'},pn:pnC}),{bar:'club'}),
+    notes:['The card says who is cancelled, since when, what comes back and until when. The button is “Reactivate {plan}” with a Monthly / Yearly choice; when the plan is not open for sign-up it becomes “Contact us to reactivate”. The checklist wording for Premium and Tournament Plus is mine (proposed): today only Club has one.'],
+    cap:'<ul><li>Left: a cancelled Premium coach, with the “Basic records are still available” card kept.</li><li>Right: a cancelled Club. Club is not on sale, so Reactivate is “Contact us”. A cancelled League Plus has no way back at all today; this gives it the same door.</li></ul>'});
+  h+=frame({title:'Locked card · not the owner',tag:'one card, every plan',cls:'row',html:phoneShell(body({plan:'team',host:'coach',phone:true,owner:false,pn:mkPn(['lock'])}),{bar:'coach'})+phoneShell(body({plan:'club',host:'admin',eyebrow:'Organization',phone:true,owner:false}),{bar:'club'}),
+    notes:['Says it is the owner’s; names the organization; shows nothing else. No plan name, price or status leaks to a non-owner.'],cap:'The card is dashed today. A written rule says a plan lock is never dashed, but that rule was about locks inside forms; I kept the shipped card and list this under “where rules and drawings disagree”.'});
+  return h;
+}
+
+/* ---------- TAB 6 · doors ---------- */
+function ph(){return '<div class="ch"><span class="tile">'+ic('grid',18)+'</span><h1>Overview</h1><span class="helpq">?</span></div><div class="card" style="min-height:120px;opacity:.55"><div class="eye"><span>Your page, as it is</span></div></div>';}
+function r6(){
+  const f=ST.t6f, s=ST.t6s, t=ST.t6t;
+  let h='<h2>The doors</h2><p class="intro">How a person reaches Plan &amp; billing from where they already are. <b>One spot on every plan, as you ruled:</b> the rail foot beside Help on a desktop, the More sheet’s You group on a phone. Then the screens that stop a person at the door (walls).</p>';
+  h+='<h3>A · The Coaches Portal</h3>';
+  h+=seg('t6t',[['today','Today'],['proposed','Proposed']],'View')+seg('t6f',[['standalone','Standalone owner'],['clubowner','Club owner who coaches'],['clubcoach','Club coach, not owner']],'Who')+seg('t6s',[['live','Live season'],['closed','Closed season'],['none','No team yet']],'Season');
+  const foot=t==='today'?(f==='clubcoach'?'clubcoach':'today'):f;
+  const o={team:s==='live'?'many':s,foot,active:'none',pin:P(1)};
+  let deskH;
+  if(s==='none') deskH='<div class="scr desk">'+strip('Coaches Portal')+'<div class="deskbody" style="min-height:300px"><div class="main gridbg" style="display:grid;place-items:center"><div class="wallc"><h3>Coaches Portal not ready</h3><p>Your coach assignment or Premium entitlement is not active for Riverdale Ridge 11U.</p><span class="btn out">Go to Home</span><span class="btn out">Sign out</span>'+(t==='proposed'&&f==='standalone'?'<div style="margin-top:.6rem"><span class="btn lime">Plan &amp; billing</span>'+P(2)+'</div>':'')+'</div></div></div></div>';
+  else deskH=deskCoach(ph(),o);
+  const dn=['Plan &amp; billing sits in the rail foot beside Help, in the foot’s 12px row style with a 14px card icon. It is shown to the owner of a standalone workspace only. A club owner who coaches keeps “Admin” (their plan lives there); a club coach sees neither.','With no team there is no rail at all (a wall replaces the whole portal), so the owner needs a door on the wall itself.'];
+  h+=frame({title:'Desktop · '+({standalone:'standalone owner',clubowner:'club owner who coaches',clubcoach:'club coach'}[f])+' · '+({live:'live season',closed:'closed season',none:'no team yet'}[s]),tag:t==='today'?'today':'proposed',html:deskH,notes:dn,
+   cap:t==='today'?'Today a standalone owner sees Help, Admin, Collapse. Admin is also what a club owner or admin sees; it is a general owner/admin door, not a standalone feature.':'<ul><li>The closed season collapses the <b>team</b> navigation to one entry (Season’s End). The rail foot is untouched, so Plan &amp; billing is still there. Plan &amp; billing has no team in its address, so the closed-season rule does not catch it.</li><li>The Admin door leaves standalone coaches in Stage 3. Club owners and admins keep it.</li></ul>'});
+  const sheetFoot=foot;
+  const sheetPin=P(1);
+  h+=frame({title:'Phone · More sheet',tag:'scrolled to the You group',cls:'row',html:phoneShell(ph(),{bar:'coach',sheet:coachSheet({foot:sheetFoot,pin:sheetPin,closed:s==='closed'})})+(s==='live'?phoneShell(ph(),{bar:'coach',sheet:coachSheet({foot:'today',pin:'',closed:false})}):''),
+   notes:['Plan &amp; billing joins the You group (Account, Home, Plan &amp; billing / Admin) as a 16px row with a 17px card icon, in the same two-column grid.'],
+   cap:'<ul><li>Left: proposed. '+(s==='live'?'Right: today, for comparison.':'')+'</li><li>In a closed season the sheet drops its team tiles and groups but keeps Notifications, You and the foot, so the row is reachable.</li></ul>'});
+  h+='<div class="note"><b>The rule that decides who sees the row.</b> Today the Admin door shows for any workspace owner or admin. “Standalone and owner” is a different test (a workspace with no club above it, and the person who owns it). Stage 2 has to build that test; I have not found one that exists today.</div>';
+  /* B · admin */
+  h+='<h3>B · The tournament admin</h3>';
+  const hub='<div class="ph"><div class="eyb"></div><h1>Settings &amp; access</h1></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">'+
+    ['Staff &amp; access|Unchanged|','Notification preferences|Unchanged|','Web address|Unchanged|'].map(x=>{const a=x.split('|');return '<div class="card"><b>'+a[0]+'</b><div class="sub">'+a[1]+'</div><div class="sub strong">'+a[2]+'</div></div>';}).join('')+
+    '<div class="card"><b>Plan &amp; billing</b>'+P(2)+'<div class="sub">Review the Tournament plan, upgrade to Tournament Plus, and confirm tournament-slot usage.</div><div class="sub strong">Open billing</div></div></div>';
+  h+=frame({title:'Tournament owner · rail foot and Settings & access',tag:'proposed: foot row, the card stays',html:deskAdmin(hub,{kind:'tournament',newRow:true,active:'settings',pin:P(1)}),
+   notes:['Plan &amp; billing in the rail foot, beside Help: owner only, with the card icon. The same spot as the Coaches Portal and Club. Today a Tournament or Tournament Plus owner has no Plan &amp; billing row at all.','The hub card stays (ask 2): the Club and League hubs keep their rows beside the rail row too. A hub indexes everything; the rail is for one-click access.'],
+   cap:'The Operations and Setup groups are drawn folded, as the rail folds them. Rows inside them are not part of this change.'});
+  const tsheet='<div class="grab"></div>'+sr('bell','Notifications')+'<div class="sr dim" style="font-size:13px;font-weight:500">Riverdale Spring Classic ▾</div><div class="sl">Operations · Setup</div><div class="sr dim" style="font-size:13px;font-weight:500">… (scroll)</div><div class="sl">Admin</div><div class="g2">'+sr('settings','Settings &amp; access')+sr('trophy','Tournaments')+'</div><div class="dv"></div><div class="sl">You</div><div class="g2">'+sr('user','Account')+sr('home','Home')+sr('users','Coaches Portal')+sr('credit-card','Plan &amp; billing',{nw:true,pin:P(1)})+'</div>';
+  h+=frame({title:'Tournament owner · phone More sheet',tag:'proposed',cls:'row',html:phoneShell('<div class="ph"><div class="eyb"></div><h1>Settings &amp; access</h1></div>',{bar:'tournament',sheet:tsheet}),notes:['In the You group of the More sheet, with Account, Home and Coaches Portal: the same spot as the Coaches Portal’s sheet.'],cap:'The tournament bar’s tabs follow the event’s phase; the four shown are indicative.'});
+  /* C · walls */
+  h+='<h3>C · Club and League: the row moves down</h3>';
+  const railBox=(r,lab)=>'<div><div style="font:600 12px var(--font);color:var(--dim);margin-bottom:.3rem">'+lab+'</div><div class="scr" style="width:240px;border:1px solid var(--line2);border-radius:8px;overflow:hidden;display:flex;min-height:560px">'+r+'</div></div>';
+  const csheet='<div class="grab"></div>'+sr('bell','Notifications')+'<div class="sr dim" style="font-size:13px;font-weight:500">… programs and organization pages (scroll)</div><div class="dv"></div><div class="sl">You</div><div class="g2">'+sr('user','Account')+sr('home','Home')+sr('users','Coaches Portal')+sr('credit-card','Plan &amp; billing',{nw:true,pin:P(2)})+'</div>';
+  h+=frame({title:'Club and League · rail and More sheet',tag:'Plan & billing leaves the Organization group',cls:'row',
+    html:railBox(adminRail({kind:'club',today:true}),'Today')+railBox(adminRail({kind:'club',active:'billing',pin:P(1)}),'Proposed')+phoneShell('<div class="ph"><div class="eyb">Organization</div><h1>Overview</h1></div>',{bar:'club',sheet:csheet}),
+    notes:['Plan &amp; billing leaves the Organization group (Members and Settings stay) and moves to the foot beside Help, owner only. The Organization group no longer carries any billing.','On a phone it sits in the You group of the More sheet, as on every plan.'],
+    cap:'This is the one change to a rail you have already walked. Every plan now has the same desktop spot (rail foot, beside Help) and the same phone spot (More sheet, You group). The rows above the foot are indicative; only the position of Plan &amp; billing is claimed.'});
+  h+='<h3>D · The walls</h3><p class="intro" style="margin-bottom:.4rem">Three screens stop a person before they reach the portal. Today none of them offers the owner a way to billing. The owner’s door is a button; a non-owner sees none.</p>';
+  h+=seg('t6w',[['ended','Subscription ended'],['free','Free time ended'],['notready','Portal not ready']],'Wall')+seg('t6o',[['owner','Owner'],['non','Not the owner']],'Viewer');
+  const w=ST.t6w, ow=ST.t6o==='owner';
+  let wall='';
+  if(w==='ended') wall='<h3>Riverdale Ridge 11U’s subscription has ended</h3><p>The coaching tools for this club are closed for now. Nothing has been deleted — everything comes back if the subscription is renewed.</p><p style="font-size:12px;color:var(--dim)">An organization admin can restore access from their billing page.</p><span class="btn out">Go to Home</span>'+(ow?'<span class="btn lime">Reactivate</span>'+P(1):'');
+  if(w==='free') wall='<h3>Your free time has ended</h3><p>Your Premium free time ran through October 20, 2026. Your team is back on the free Coaches Portal, and everything you made on Premium is saved. It comes back if you choose Premium again.</p><span class="btn out">Go to your team</span>'+(ow?'<span class="btn lime">Keep Premium</span>'+P(2):'');
+  if(w==='notready') wall='<h3>Coaches Portal not ready</h3><p>Your coach assignment or Premium entitlement is not active for Riverdale Ridge 11U.</p><span class="btn out">Go to Home</span><span class="btn out">Sign out</span>'+(ow?'<span class="btn out">Plan &amp; billing</span>'+P(3):'');
+  h+=frame({title:'Wall · '+({ended:'subscription ended',free:'free time ended',notready:'portal not ready'}[w])+' · '+(ow?'owner':'not the owner'),tag:'proposed',html:'<div class="scr desk">'+strip('Coaches Portal')+'<div class="deskbody" style="min-height:300px"><div class="main gridbg" style="display:grid;place-items:center"><div class="wallc">'+wall+'</div></div></div></div>',
+   notes:['<b>Reactivate</b> opens Plan &amp; billing’s cancelled view for the owner. A non-owner sees today’s text only. <b>Catch:</b> this wall cannot tell an owner from anyone else today (the portal does not pass the person’s role to it), so Stage 2 has to supply the role before the button can exist.','<b>Keep Premium</b> goes straight to the same checkout the Keep Premium card uses. Today this wall offers only “Go to your team”.','<b>Plan &amp; billing</b> is the quiet door on the zero-team wall. Today this wall has Home and Sign out only, so an owner with no team could not reach billing or reactivate.'],
+   cap:'The club-plan wall (“The Coaches Portal isn’t part of … plan right now”) already gives the owner a button and a non-owner “Ask your club’s owner”. It stays as it is.'});
+  return h;
+}
+
+/* ---------- TAB 7 · the coach page itself ---------- */
+function r7(){
+  const t=ST.t7t;
+  let h='<h2>The page in the Coaches Portal</h2><p class="intro">Plan &amp; billing belongs to the workspace, not to a team, so it has no team in its address. The rail around it changes with how many teams the coach has; the page does not.</p>';
+  h+=seg('t7t',[['one','One team'],['many','Several teams'],['none','No team yet'],['closed','Only a closed season']],'Coach has');
+  const inner=body({plan:'team',host:'coach',order:'club',pn:mkPn(['title'])});
+  let html;
+  if(t==='none') html='<div class="scr desk">'+strip('Coaches Portal')+'<div class="deskbody"><div class="main gridbg"><div class="page"><div style="margin-bottom:1rem"><span class="lnk">← Back</span></div>'+inner+'</div></div></div></div>';
+  else html=deskCoach(inner,{team:t,foot:'standalone',active:'billing'});
+  h+=frame({title:({one:'One team',many:'Several teams',none:'No team yet',closed:'Only a closed season'})[t],tag:'desktop',html,
+   notes:['Header: a 36px card-icon tile, the title, and the “?” help button at the right, exactly like the portal’s Notifications page. The “?” opens the plan help article.'],
+   cap:{one:'The team switcher shows the one team. The page is the same.',many:'The switcher lists every team. Switching team never changes this page: it belongs to the workspace.',none:'With no team the portal shows a wall and no rail at all. For Plan &amp; billing to be reachable here the page must live outside that wall (and the wall gets the owner’s door, tab 6). Drawn with a plain Back link in place of a rail.',closed:'The team navigation shrinks to Season’s End. The rail foot, and so Plan &amp; billing, is untouched, and the page needs no team, so the closed-season rule never sees it.'}[t]});
+  h+='<figure class="fr" data-notes="[]"><figcaption class="frh"><b>Phone</b><span>top of the page · More open</span></figcaption><div class="stage row">'+phoneShell(inner.split('<div class="card plancard">')[0]+'<div class="card plancard"><div><div class="eye"><span>Your plan</span><span class="chip good">Active</span></div><div class="pname">Premium Coaches Portal</div><div class="price">$29 CAD / month · billed monthly</div></div></div>',{bar:'coach'})+phoneShell(ph(),{bar:'coach',sheet:coachSheet({foot:'standalone',pin:'',closed:t==='closed'})})+'</div><div class="pinbox">On a phone the header is the same tile, title and help. The bottom bar keeps its four tabs and lights More while the page is open, the way Notifications does.</div></figure>';
+  h+=dm('Heads-up for Stage 2.','The zero-team wall is drawn by the portal’s outer layer, before any page loads. Plan &amp; billing cannot sit “under” that wall; it has to be reachable around it. I flag it here because it decides whether “no team yet” works at all.');
+  return h;
+}
+
+/* ---------- TAB 8 · covered by ---------- */
+function r8(){
+  let h='<h2>Coaches on a club-owned team</h2><p class="intro">A coach on a team the club pays for has no billing to manage, but may wonder who is paying. Nothing in the portal says so today. Three places for a quiet, read-only line. I recommend A.</p>';
+  const lineA='<div class="card" style="display:flex;gap:.7rem;align-items:center;margin-bottom:1rem"><span class="tile">'+ic('building',16)+'</span><div><div class="eye" style="margin:0 0 .15rem"><span>Plan</span></div><div style="font-weight:650">Covered by Riverdale Minor Ball Association</div><div class="sub">Your club pays for this team’s Coaches Portal. There is nothing to manage here.</div></div>'+P(1)+'</div>';
+  const settings='<div class="ch"><span class="tile">'+ic('settings',18)+'</span><h1>Settings</h1><span class="helpq">?</span></div>'+lineA+'<div class="card" style="min-height:160px;opacity:.55"><div class="eye"><span>Team name, season, schedule visibility…</span></div></div>';
+  h+=frame({title:'A · Team settings, first card',tag:'recommended',html:deskCoach(settings,{team:'one',foot:'clubcoach'}),notes:['A quiet card at the top of Team settings. It reads, it does not link, and it appears only on a club-paid team. Settings is where a coach already looks for facts about the team, and head coaches reach it from the rail.'],cap:'Cost: only people who can open Team settings see it. An assistant without that access does not.'});
+  const sheetB='<div class="grab"></div>'+sr('bell','Notifications')+'<div class="sl">You</div><div class="g2">'+sr('user','Account')+sr('home','Home')+'</div><div class="dv"></div><div class="sl" style="text-transform:none;letter-spacing:0;font-size:12px;font-weight:500;padding:.3rem .5rem">Covered by Riverdale Minor Ball Association'+P(1)+'</div><div class="g2">'+sr('help','Help')+sr('out','Sign out')+'</div>';
+  h+=frame({title:'B · The More sheet and the rail foot, as a quiet line',tag:'every coach sees it',cls:'row',html:phoneShell(ph(),{bar:'coach',sheet:sheetB})+'<div class="scr" style="width:240px;border:1px solid var(--line2);border-radius:8px;overflow:hidden"><div class="rail c" style="width:240px;min-height:230px"><div class="rspacer"></div><div class="rfoot">'+ri('help','Help')+'<div class="ri" style="font-size:11px;white-space:normal;line-height:1.35;align-items:flex-start">'+ic('building',14)+'<span>Covered by Riverdale Minor Ball Association</span>'+P(1)+'</div>'+ri('collapse','Collapse sidebar')+'</div></div></div>',
+   notes:['A line of text in the rail foot (desktop) and under the You group (phone). Visible to every coach on every page, which is more than most need, and it competes with the foot’s working rows.'],cap:'Cost: permanent chrome for a fact most coaches check once.'});
+  const pageC='<div class="ch"><span class="tile">'+ic('credit-card',18)+'</span><h1>Plan &amp; billing</h1><span class="helpq">?</span></div><div class="lock" style="margin-top:0"><b>Covered by Riverdale Minor Ball Association</b><span>Your club pays for this Coaches Portal. Only the club’s owner can see and change the plan and how it’s paid.</span></div>';
+  h+=frame({title:'C · A read-only Plan & billing page for club coaches',tag:'same door for everyone',html:deskCoach(pageC,{team:'one',foot:'clubcoach',active:'billing'}),notes:[],cap:'The most consistent with “one experience”, but it puts a Plan &amp; billing row in every club coach’s navigation, against the owner-only rule, and the row would lead to a page with nothing to do.'});
+  h+='<h3>The free Basic team’s upgrade footer</h3>';
+  const shelf=(after)=>'<div class="scr" style="width:560px;max-width:100%;padding:1rem"><div class="card"><div class="eye"><span>Premium Coaches Portal</span></div><p class="copy" style="margin:0 0 .4rem">For this team: game lineups, attendance, dues automation, documents &amp; a season budget. Your free tools stay free. '+(after?'Premium is <span class="reg">$29 CAD / month</span> per team.':'Premium is $29/month per team.')+'</p><span class="lnk">'+(after?PW('See what Premium includes','Upgrade to Premium →')+' →':'Upgrade to Premium →')+'</span></div></div>';
+  h+=frame({title:'Before and after',tag:'free Basic team',cls:'row',html:shelf(false)+shelf(true),notes:[],cap:'The price now reads from the same plan entry as the billing page (so it is “$29 CAD / month”, the billing page’s form, not “$29/month”). The link goes to the plan’s details instead of straight to checkout. That second change is a proposal: it adds a step, but it lets a Basic coach read what Premium includes before choosing, and it uses the same list as the billing page.'});
+  return h;
+}
+
+/* ---------- TAB 9 · asks ---------- */
+const ASKS=[
+ {t:'Where does “Covered by {Club}” live?',why:'A coach on a club-paid team has no billing to manage but may wonder who pays.',o:[['A','Team settings, first card (recommended)','Reads, does not link. Only people who can open Team settings see it, which is where a coach already looks for facts about the team.',1],['B','Rail foot and More sheet, as a line','Seen by everyone on every page; adds permanent clutter.',0],['C','A read-only Plan &amp; billing page for club coaches','Most consistent, but adds a nav row to every club coach for a page with nothing to do.',0]]},
+ {t:'Does the Tournament “Settings &amp; access” card stay next to the new rail row?',why:'Two doors to one page. The Club and League hubs already keep their hub row beside the rail row.',o:[['A','Keep both (recommended)','Same as Club and League. The hub lists everything; the rail is one click.',1],['B','Remove the card','One door per destination, but Tournament would differ from Club and League.',0]]},
+ {t:'What does the Coaches Portal page call itself?',why:'It reads “Coaches Portal billing” today; everywhere else it is “Plan &amp; billing”.',o:[['A','“Plan &amp; billing” (recommended)','Matches the rail row and what you called “the same place”.',1],['B','“Coaches Portal billing”','Keeps today’s wording; the name then differs from every other plan.',0]]},
+ {t:'Where does a standalone coach reach their hosted tournaments and tournament helpers once Admin is gone?',why:'Open question A. I checked the code and it is worse than the plan says: “Tournaments you run” sits inside the <b>team’s</b> Tournaments page, and a team whose season is closed is sent to Season’s End. A coach with only a closed season (and a live hosted tournament) would have no way to the tournament pages at all.',o:[['A','A workspace-level “Tournaments you run” link next to Plan &amp; billing, plus the quiet “Tournament helpers” link (recommended)','Works with a closed season and with no team. Slightly more than the plan proposed.',1],['B','Only the quiet link inside the team’s Tournaments section (the plan’s recommendation)','Smaller, but breaks for a coach with only a closed season.',0],['C','Keep the Admin door for coaches who host a tournament','Nothing new to build; keeps the confusing screen for exactly those coaches.',0]]},
+ {t:'How does the change-plan table fold on a phone?',why:'Four columns and a button do not fit 390px.',o:[['A','Rows become cards (recommended)','Every fact and verb stays visible; 44px buttons. Drawn in tab 4.',1],['B','Scroll the table sideways','The action column falls off screen.',0],['C','Plain rows with a symbol','Hides the price and the verb behind a tap.',0]]},
+ {t:'Section order: “Included” before “Change plan”, or the Club page’s order?',why:'The brief lists Included, then Change plan. The Club page you approved shows Change plan first. The plan calls the Club page the benchmark, so the two instructions disagree.',o:[['A','Club’s order: Change plan, then Included (recommended)','You approved it on the Club page; reads “what I pay, what I use, what else I could be on, what I get”.',1],['B','As briefed: Included, then Change plan','Reverses a layout you already walked on Club.',0]]},
+ {t:'Add the Plus → Club door now?',why:'The server already moves a Tournament Plus owner to Club on the same subscription, but no screen opens it today. Drawing the table adds a door, which is a product change, not a layout change. Club is not on sale yet, so it would read “Contact us to move” for now.',o:[['A','Draw it, build it when Club opens (recommended)','The table is ready for it; the buttons read “Contact us to move” until then.',1],['B','Leave Plus → Club out for now','Smaller Stage 1; the table has two rows on Plus.',0]]},
+ {t:'What holds the Premium coach’s Change plan slot?',why:'Premium has no plan to move to, and an empty table is worse than none.',o:[['A','The existing “Part of a club?” door (recommended)','It is the only way a Premium coach “changes” anything, and it is already there.',1],['B','Hide the section on Premium','Absent beats empty; but the club door loses its natural home.',0]]},
+ {t:'One number for “days kept” and one list for “what goes offline”.',why:'A cancelled Premium coach is told 365 days on the review and 90 in the result message. Some lists still promise “invoices and reconciliation” for accounting, which the product does not do.',o:[['A','Use the plan entry as the only source: 365 for Premium, 90 for organizations; accounting words as the Club page says them (recommended)','Fixes both in one place.',1],['B','Leave the lists as they are','Keeps a promise the product does not keep.',0]]},
+ {t:'The Premium cancel button: “Cancel Premium…” or “Cancel and suspend …”?',why:'Cancelling an organization suspends everything; cancelling Premium keeps Basic tournament records.',o:[['A','“Cancel Premium…” (recommended)','Accurate; the window says what stays open.',1],['B','“Cancel and suspend Riverdale Ridge 11U…”','One verb everywhere; it overstates what happens to a Basic team.',0]]},
+ {t:'Success and errors after paying: a fading line or a modal?',why:'The Club page shows a fading line and keeps errors on screen. The older page uses a modal that must be closed, and after closing a success on a tournament plan it jumps to the tournaments list.',o:[['A','The Club page’s fading line, everywhere (recommended)','Matches the benchmark; no jump.',1],['B','Keep the modal on non-Club plans','Today’s behaviour; two patterns.',0]]},
+ {t:'The “Managing more than tournaments?” shelf on Tournament and Tournament Plus.',why:'It is not one of the seven sections but it is on today’s older page.',o:[['A','Keep it as a quiet last section on tournament plans only (recommended)','It is discovery, not billing; leaving the page loses nothing.',1],['B','Fold it into the Change plan table','Mixes “change my plan” with “add another workspace”.',0],['C','Drop it','Fewer sections; fewer routes to Club.',0]]},
+ {t:'Which test decides the rail row?',why:'The Admin door today shows for any workspace owner or admin. “Owner of a standalone Coaches Portal” is a different rule and I found no existing test for it.',o:[['A','Add that test in Stage 2 and use it for the row and for removing Admin (recommended)','Needed anyway to retire Admin for standalone coaches only.',1],['B','Reuse “owner or admin”','Shows the row to club owners who coach, who already have Plan &amp; billing in Admin.',0]]}
+];
+const ANS=(()=>{try{return JSON.parse(localStorage.getItem('pb-answers')||'{}')}catch(_){return {}}})();
+const saveAns=()=>{try{localStorage.setItem('pb-answers',JSON.stringify(ANS))}catch(_){}};
+const plain=s=>String(s).replace(/<[^>]+>/g,'').replace(/&amp;/g,'&');
+function ansText(){
+  const lines=ASKS.map((a,i)=>{const k=ANS[i];const o=a.o.find(x=>x[0]===k);return (i+1)+'. '+plain(a.t)+' → '+(o?k+' ('+plain(o[1]).replace(' (recommended)','')+')':'no answer yet');});
+  return 'Plan & billing, Stage A: my answers\n'+lines.join('\n');
+}
+function r9(){
+  const n=Object.keys(ANS).length;
+  let h='<h2>Asks</h2><p class="intro">Each has a recommendation first. Nothing here is built. Click an option to choose it (click again to undo). Your choices stay in this browser; “Copy answers” gives you text to paste back.</p>';
+  h+='<div class="ruled"><b>Ruled by you, 2026-10-28:</b> Plan &amp; billing sits in the rail foot, beside Help, on every plan. On a phone I put it in the More sheet’s You group on every plan; that second part is my reading of “the same place”. Tab 6 is redrawn that way, so the earlier question about where the tournament row goes is closed.</div>';
+  h+='<div class="answers"><div class="ah"><b>Your answers · '+n+' of '+ASKS.length+'</b><button type="button" class="abtn" data-act="rec">Use all recommendations</button><button type="button" class="abtn" data-act="clear">Clear</button><button type="button" class="abtn" data-act="copy">Copy answers</button></div><details><summary style="cursor:pointer;margin-top:.5rem;font-size:12px;color:var(--dim)">Show my answers as text</summary><textarea id="anstext" readonly aria-label="My answers">'+esc(ansText())+'</textarea></details></div>';
+  h+=ASKS.map((a,i)=>'<div class="ask"><h3>'+(i+1)+'. '+a.t+'</h3><p class="why">'+a.why+'</p><div class="opts">'+a.o.map(o=>'<button type="button" class="opt'+(o[3]?' rec':'')+'" data-ask="'+i+'" data-o="'+o[0]+'" aria-pressed="'+(ANS[i]===o[0])+'"><b>'+o[0]+' · '+o[1].replace(' (recommended)','')+'</b>'+(o[3]?'<span class="t">recommended</span>':'')+'<span class="you">your answer</span><div style="color:var(--fg2);font-size:13px">'+o[2]+'</div></button>').join('')+'</div></div>').join('');
+  h+='<h3>Where I disagree with the plan or the brief</h3><div class="note"><b>1. “Moves that exist today” includes Plus → Club.</b> The server has it; no screen does. <b>2. Section order</b> contradicts the Club page. <b>3. “The Admin door is owner-only and standalone-only”</b> is true only because of how the shadow organization is made; the door itself is an owner/admin door. <b>4. “Closed-season nav collapses to a single entry” on the phone sheet</b> is true only for the team tools; Notifications, You and the foot stay. <b>5. “Non-owner sees the page with disabled buttons”</b> is mostly false: most controls are hidden and Upgrade / Reactivate stay clickable until the server refuses. <b>6. Open question A</b> is bigger than the plan says (hosted tournaments are team-scoped).</div>';
+  h+='<h3>Where the written design rules and the drawings disagree</h3><div class="tblw"><table class="tbl"><thead><tr><th>Written rule</th><th>What ships / what I drew</th><th>My call</th></tr></thead><tbody>'+
+   [['Coach surface addendum bans the outlined button; lime and ghost tiers only','The outlined button is the white secondary button in both portals and the Club billing page uses it','The addendum is out of date (June). I followed the shipped button.'],
+    ['Table standard §3.2: column headings condensed, capitals, secondary ink','The kit table the billing page uses: Inter 12px, sentence case, tertiary ink','Followed the shipped kit table. The standard needs a fix.'],
+    ['A plan lock is never dashed (2026-09-30)','The non-owner locked card is a dashed box','That rule was about locks inside forms. I kept the shipped card; flagging in case you want it changed.'],
+    ['Cards are 8px, buttons 6px, dialogs 12px','The free-time band still has a 2px corner from its older recipe','Drew it as shipped. A candidate for a later tidy, not for this project.'],
+    ['Nav standard has no icon entries for Help, Admin, Account or Billing','Plan &amp; billing uses the card icon the admin rail and the Payment button already use','Used the card icon; the standard should list it.'],
+    ['Card eyebrow is secondary ink; page eyebrow is tertiary','Both are the same 11px mono style','Followed the shipped values.']
+   ].map(r=>'<tr>'+r.map((x,i)=>'<td'+(i?' style="font-weight:500;white-space:normal"':'')+'>'+x+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+  h+='<h3>Found along the way (not asks)</h3><div class="note"><ul style="margin:.2rem 0 0;padding-left:1.1rem"><li>A Premium shelf card on tournament plans would read “0-day trial · Payment details collected in Stripe”; Premium has no trial.</li><li>The last-14-days free-time text on Club says “choose it below” but nothing on that page lets you choose.</li><li>A Club given staff free time can show Founding wording in its band, against the no-Founding-on-Club ruling.</li><li>The plan panel prints “$2190” without the comma; Club says “Yearly”, the older page “Annual”.</li><li>The server accepts any downgrade from Club or Association at once, skipping the team-cap check and the at-renewal rule. Only the missing screen stops it. Reported, not changed.</li><li>A free Tournament account holding a Founding comp reads “free through September 30, 2027 … normally Free/month” beside “Free forever”.</li><li>The plan facts document still names a function that no longer exists, and the plan configuration marks Premium as early access while the live gate has it open.</li></ul></div>';
+  return h;
+}
+
+/* ---------- boot ---------- */
+const TABS=[['body','1 · The body',r1],['plans','2 · Every plan',r2],['states','3 · States',r3],['moves','4 · Change plan',r4],['cancel','5 · Cancel',r5],['doors','6 · Doors',r6],['page','7 · The page',r7],['covered','8 · Covered by',r8],['asks','9 · Asks',r9]];
+const tabsEl=document.getElementById('tabs'), panelsEl=document.getElementById('panels');
+let cur=null;
+function show(id){
+  const t=TABS.find(x=>x[0]===id)||TABS[0]; cur=t[0];
+  tabsEl.innerHTML=TABS.map(x=>'<button type="button" role="tab" data-t="'+x[0]+'" aria-selected="'+(x[0]===cur)+'">'+x[1]+'</button>').join('');
+  panelsEl.innerHTML='<section class="panel" role="tabpanel" data-tab="'+cur+'">'+t[2]()+'</section>';
+  try{ if(location.hash.slice(1)!==cur) history.replaceState(null,'','#'+cur); }catch(_){}
+}
+tabsEl.addEventListener('click',e=>{const b=e.target.closest('button[data-t]'); if(b){show(b.dataset.t); window.scrollTo(0,0);}});
+panelsEl.addEventListener('click',e=>{
+  const rerender=()=>{const y=window.scrollY; show(cur); window.scrollTo(0,y);};
+  const o=e.target.closest('.opt[data-ask]');
+  if(o){const i=o.dataset.ask,k=o.dataset.o; if(ANS[i]===k) delete ANS[i]; else ANS[i]=k; saveAns(); rerender(); return;}
+  const a=e.target.closest('[data-act]');
+  if(a){
+    const act=a.dataset.act;
+    if(act==='rec'){ASKS.forEach((x,i)=>{const r=x.o.find(z=>z[3]); if(r) ANS[i]=r[0];}); saveAns(); rerender(); return;}
+    if(act==='clear'){for(const k in ANS) delete ANS[k]; saveAns(); rerender(); return;}
+    if(act==='copy'){
+      const ta=document.getElementById('anstext'); const txt=ansText();
+      const fallback=()=>{const d=ta&&ta.closest('details'); if(d) d.open=true; if(ta){ta.focus();ta.select();} a.textContent='Press Ctrl+C to copy';};
+      try{ navigator.clipboard.writeText(txt).then(()=>{a.textContent='Copied';},fallback); }catch(_){ fallback(); }
+      return;
+    }
+  }
+  const b=e.target.closest('.seg button'); if(!b) return;
+  const g=b.parentElement.dataset.g; ST[g]=b.dataset.v;
+  const y=window.scrollY; show(cur); window.scrollTo(0,y);
+});
+window.addEventListener('hashchange',()=>{const id=location.hash.slice(1); if(id&&id!==cur&&TABS.some(x=>x[0]===id)) show(id);});
+show(location.hash.slice(1)||'body');
+</script>
+
+</body></html>

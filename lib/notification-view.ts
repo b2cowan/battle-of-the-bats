@@ -10,6 +10,7 @@
 import type { AppNotification } from './types';
 import { formatTime } from './utils';
 import { CHAT_PAUSED } from './chat-pause';
+import { PLAN_BILLING_TITLE } from './plan-billing-title';
 
 // ── Per-event icons ────────────────────────────────────────────────────────────
 // Every NotificationEventType has a distinct icon; 🔔 is only a safety fallback.
@@ -421,6 +422,7 @@ export function notificationDestination(
   if (!link) return null;
   const [beforeHash] = link.split('#');
   const [path, queryString = ''] = beforeHash.split('?');
+  if (/^\/[^/]+\/coaches\/billing\/?$/.test(path)) return `Open ${PLAN_BILLING_TITLE}`;
   const team = /\/coaches\/teams\/[^/]+(?:\/([^/]+))?(\/[^/]+)?/.exec(path);
   if (team) {
     const segment = team[1] ?? '';

@@ -60,7 +60,7 @@ is inferred from a build instruction. Implementation and verification results ar
 | Usage loading | Loading… | Usage omitted or context count before read | Loading… inside the count only; never imply zero before a successful read. |
 
 Section order is the ruled order: **Your plan → What's in use → applicable free-time/Founding band → Stripe fees →
-Change plan → What's included → Reduce or cancel**. The quiet tournament cross-sell ends the page. Zero fees means no
+Change plan → What's included → (tournament plans: the quiet cross-sell) → Reduce or cancel**. Reduce or cancel ends the page on every plan (owner 2026-10-29). Zero fees means no
 fees section; non-owner means the locked card only. Inapplicable controls are absent.
 
 ## 2. Price, renewal, trial, payment door and scheduled moves
@@ -200,7 +200,7 @@ Dates and years below are the existing `FOUNDING_SEASON_*` constants, never fres
 | Club-link heading | — | Part of a club? | Part of a club? (the coach's Change plan slot, ruling 8). |
 | Club-link body | — | If your club runs on FieldLogicHQ, it can bring your team in. Everything the team built comes with it, and you won’t be charged for your own Coaches Portal again. | Keep; move team data through the existing link flow. |
 | Club-link action | — | Join a club | Join a club |
-| Last-section heading | — | Managing more than tournaments? | Keep, tournament profiles only, as a quiet final section. |
+| Last-section heading | — | Managing more than tournaments? | Keep, tournament profiles only, as a quiet section above Reduce or cancel (owner 2026-10-29: cancel is last). |
 | Last-section intro, team shelf present | — | If you also manage a team, a league program, or a full club outside your tournament, these are the next FieldLogicHQ workspaces to watch. | Keep if shown by the approved drawing. |
 | Last-section intro, no team shelf | — | For organizations running more than tournament weekends, these plans bring year-round programs, teams, and finances into the same operating system. | Keep if shown by the approved drawing. |
 | Shelf audience labels | — | For rep teams / For league programs / For full clubs | Keep only if present in the approved quiet section; no new headings invented. |

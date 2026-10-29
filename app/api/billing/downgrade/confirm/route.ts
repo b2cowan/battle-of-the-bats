@@ -235,7 +235,7 @@ export const POST = withObservability(async (req: Request) => {
     const retentionDate = new Date(retentionUntil).toLocaleDateString('en-CA', {
       year: 'numeric', month: 'long', day: 'numeric',
     });
-    const billingUrl = `${SITE_URL}${getBillingHref(ctx.org.slug, ownPlanOf(ctx.org))}`;
+    const billingUrl = `${SITE_URL}${getBillingHref({ ...ctx.org, planId: ownPlanOf(ctx.org) })}`;
     await sendTransactionalEmail({
       key: 'plan_downgraded',
       to: actorEmail,

@@ -64,6 +64,7 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/operator-plan-change.ts': ['writer', 'the one operator plan-change rule'],
   'lib/plan-move.ts': ['writer', 'plan move side effects (clears team_limit)'],
   'lib/billing-retention.ts': ['writer', 'cancellation retention writes status'],
+  'lib/billing-urls.ts': ['other', "billingUrlOrgFromRow maps a row's plan_id / subscription_status onto the resolver's shape; the resolver only picks a destination, never gates"],
   'lib/club-record-changes.ts': ['writer', "the console's section writer (compare-and-set on the stored sections)"],
   'app/api/platform-admin/bulk-operations/route.ts': ['writer', 'bulk plan, status and section changes (stored)'],
   'app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts': ['writer', 'console cancel'],
@@ -197,7 +198,7 @@ with its class and a reason:\n  ${unlisted.join('\n  ')}`);
       if (f === 'app/api/billing/choose-next-season/route.ts') {
         // A return must follow the layout's effective tier boundary. This one resolver call
         // chooses only the destination; eligibility, target and price still read the OWN plan.
-        const destination = 'getBillingHref(auth.org.slug, auth.org.planId)';
+        const destination = "getBillingHref(auth.org, { purpose: 'return' })";
         assert.equal(code.split(destination).length - 1, 1, 'exactly one plan-aware return resolver');
         code = code.replace(destination, 'billingDestination');
       }

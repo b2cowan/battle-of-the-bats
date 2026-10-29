@@ -104,3 +104,45 @@ test.describe('R2 — the coach wall renders inside the portal frame', () => {
     }
   });
 });
+
+// Stage 2 supplies the owner's billing door without moving the cancelled or plan walls.
+// These read-only cases use an owner-prepared standalone fixture; they never create, revoke,
+// cancel or grant anything in the shared database. The ordinary UAT sessions have no standalone
+// owner fixture, so a missing fixture is an explicit skipped owner walk, not a passing assertion.
+test.describe('Plan & billing — standalone owner wall doors', () => {
+  test.use({ storageState: process.env.UAT_COACH_BILLING_OWNER_SESSION
+    ?? path.join(process.cwd(), 'tests/uat/.auth/org-owner.json') });
+
+  test('a zero-team owner can follow the wall door into billing at desktop and phone widths', async ({ page }) => {
+    const slug = process.env.UAT_COACH_BILLING_ZERO_TEAM_ORG_SLUG;
+    test.skip(!slug, 'Owner walk needs UAT_COACH_BILLING_ZERO_TEAM_ORG_SLUG and its owner session; no fixture is mutated by this test.');
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(`/${slug}/coaches`, { waitUntil: 'networkidle' });
+      await expect(page.getByRole('heading', { name: 'Coaches Portal not ready' })).toBeVisible();
+      const door = page.locator('main').getByRole('link', { name: 'Plan & billing', exact: true });
+      await expect(door).toHaveAttribute('href', `/${slug}/coaches/billing`);
+      await door.click();
+      await expect(page).toHaveURL(url => url.pathname === `/${slug}/coaches/billing`);
+      await expect(page.getByRole('heading', { name: 'Plan & billing', exact: true })).toBeVisible();
+      await expect(page.locator('#billing-change')).toBeVisible();
+      await expect(page.getByText('Billing access required', { exact: true })).toHaveCount(0);
+      await expect(page.getByRole('heading', { name: 'Coaches Portal not ready' })).toHaveCount(0);
+    }
+  });
+
+  test('a cancelled standalone owner gets the existing Reactivate path, including from the billing address', async ({ page }) => {
+    const slug = process.env.UAT_COACH_BILLING_CANCELLED_ORG_SLUG;
+    test.skip(!slug, 'Owner walk needs UAT_COACH_BILLING_CANCELLED_ORG_SLUG and its owner session; no fixture is cancelled by this test.');
+    for (const suffix of ['', '/billing']) {
+      await page.goto(`/${slug}/coaches${suffix}`, { waitUntil: 'networkidle' });
+      const door = page.locator('main').getByRole('link', { name: 'Reactivate Premium', exact: true });
+      await expect(door).toBeVisible();
+      const destination = new URL((await door.getAttribute('href'))!, page.url());
+      expect(destination.pathname).toBe('/coaches/start');
+      expect(destination.searchParams.get('reactivateOrgSlug')).toBe(slug);
+      expect(destination.searchParams.get('teamName')).toBeTruthy();
+      await expect(page.getByRole('heading', { name: 'Plan & billing', exact: true })).toHaveCount(0);
+    }
+  });
+});

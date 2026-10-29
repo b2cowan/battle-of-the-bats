@@ -1,6 +1,6 @@
 # PM brief — Plan & billing, one experience for every plan
 
-**Stage 1 Parts 1–3 implemented 2026-10-28 · validation and owner gates in plan §9 · plan: `PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md`**
+**Stage 2 host and doors implemented 2026-10-29 · validation and owner gates in plan §9 · plan: `PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md`**
 
 ## What changes for a customer
 
@@ -169,3 +169,21 @@ of the plan they already have. Staff free time continues to remove purchases, pa
 Stripe portal, card-save and next-season returns now resolve to the correct existing billing home. The old screen
 and its stylesheet are retired. Success criteria, exact validation results, remaining owner/Stripe checks and the
 Claude cleanup/review/docs steps live in the Part 3 hand-off in plan section 9. Stage 1 awaits those gates.
+
+## Stage 2 result — 2026-10-29
+
+The standalone workspace owner opens Plan & billing inside the Coaches Portal, from the desktop foot or phone More → You.
+It is one workspace page, including with several teams, closed seasons, or no team assignment yet. Helpers and club-owned
+coaches see no billing row; a helper with portal access who types the address gets the shared locked card. The demo has no row.
+**Owner-only billing supersedes the historical delegation account above** (owner ruling 2026-10-29).
+
+An owner whose subscription or free time ended gets the existing Reactivate/Keep Premium journey on their wall. Only the
+owner's exact billing address can pass the zero-team wall; cancelled and plan walls retain their order. New messages and
+payment returns choose the appropriate portal, and the payment-failed button names Plan & billing. A standalone owner's
+pricing-page buttons also find this host without inventing an Admin door.
+
+Success criteria are the correct role-specific doors, a billing page that works without a team or tournament context,
+and payment callbacks that return to the same portal. Automated checks, baseline failures, and browser limits are recorded
+in plan §9; the [owner walk](PLAN_AND_BILLING_STAGE2_OWNER_WALK.md), Claude cleanup/review, and help sync remain owed.
+The Admin door remains for Stage 3. The coach development payment-portal mock returns directly to billing; real Stripe
+card/invoice behavior is part of the owner walk. Help currently reuses the shipped Premium first-login article.

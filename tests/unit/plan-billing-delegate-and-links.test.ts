@@ -166,14 +166,14 @@ describe('demo sandboxes carry no billing row', () => {
 
 describe('every billing link resolves the tier', () => {
   const sites: [string, RegExp][] = [
-    ['app/api/billing/webhook/route.ts', /getBillingHref\(currentOrg\.slug, currentOrg\.plan_id\)/],
-    ['app/api/billing/webhook/route.ts', /getBillingHref\(org\.slug, org\.plan_id\)/],
+    ['app/api/billing/webhook/route.ts', /getBillingHref\(billingUrlOrgFromRow\(currentOrg, 'past_due'\)\)/],
+    ['app/api/billing/webhook/route.ts', /getBillingHref\(billingUrlOrgFromRow\(org\)\)/],
     // The plan the club holds (plan-reader-door-guard): a billing action never reads the door's planId.
-    ['app/api/billing/downgrade/confirm/route.ts', /getBillingHref\(ctx\.org\.slug, ownPlanOf\(ctx\.org\)\)/],
-    ['app/api/billing/cancel/confirm/route.ts', /getBillingHref\(ctx\.org\.slug, ownPlanOf\(ctx\.org\)\)/],
-    ['lib/billing-retention.ts', /getBillingHref\(orgSlug, planId\)/],
-    ['lib/online-payment-owner-notices.ts', /getBillingHref\(org\.slug, org\.planId\)/],
-    ['app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts', /getBillingHref\(orgRow\.slug, orgRow\.plan_id\)/],
+    ['app/api/billing/downgrade/confirm/route.ts', /getBillingHref\(\{ \.\.\.ctx\.org, planId: ownPlanOf\(ctx\.org\) \}\)/],
+    ['app/api/billing/cancel/confirm/route.ts', /getBillingHref\(\{ \.\.\.ctx\.org, planId: ownPlanOf\(ctx\.org\), subscriptionStatus: 'canceled' \}\)/],
+    ['lib/billing-retention.ts', /getBillingHref\(billingUrlOrgFromRow\(org\)\)/],
+    ['lib/online-payment-owner-notices.ts', /getBillingHref\(org\)/],
+    ['app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts', /getBillingHref\(billingUrlOrgFromRow\(orgRow, 'canceled'\)\)/],
   ];
   for (const [file, pattern] of sites) it(`${file} builds its billing link with getBillingHref`, () => assert.match(readCode(file), pattern));
   it('no server file hard-codes an organization billing address any more (the one known leftover is named)', () => {
@@ -183,13 +183,13 @@ describe('every billing link resolves the tier', () => {
   });
   it('the retention cron reads the plan of every org it emails', () => {
     const source = readCode('lib/billing-retention.ts');
-    assert.equal(source.split('organizations(name, slug, plan_id)').length - 1, 2);
+    assert.equal(source.split('organizations(name, slug, plan_id, account_kind, subscription_status)').length - 1, 2);
     assert.doesNotMatch(source, /organizations\(name, slug\)/);
   });
-  it('tournament tiers land on the subscription page, everyone else on the organization page', () => {
+  it('tournament tiers land on the subscription page, standalone coaches on their portal, other organizations on billing', () => {
     for (const planId of plans) {
-      const expected = planId === 'tournament' || planId === 'tournament_plus' ? '/falcons/admin/tournaments/settings/subscription' : '/falcons/admin/org/billing';
-      assert.equal(getBillingHref('falcons', planId), expected, planId);
+      const expected = planId === 'team' ? '/falcons/coaches/billing' : planId === 'tournament' || planId === 'tournament_plus' ? '/falcons/admin/tournaments/settings/subscription' : '/falcons/admin/org/billing';
+      assert.equal(getBillingHref({ slug: 'falcons', planId }), expected, planId);
     }
   });
 });

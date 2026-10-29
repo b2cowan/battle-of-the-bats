@@ -48,7 +48,7 @@ export default function CoachPlanWall({
         icon={icon}
         headline={headline}
         description={description}
-        primaryAction={{ href: getBillingHref(orgSlug, planId), label: 'See plans' }}
+        primaryAction={{ href: getBillingHref({ slug: orgSlug, planId }, { host: 'admin' }), label: 'See plans' }}
       />
     );
   }

@@ -25,7 +25,7 @@ describe('one admin billing host for every plan', () => {
       const Page = (load(path) as { default: ComponentType }).default;
       const html = renderToStaticMarkup(createElement(Page));
       assert.match(html, /<h1>Plan &amp; billing<\/h1>/);
-      assert.ok(html.includes(`data-billing="${getBillingHref('falcons', planId)}"`));
+      assert.ok(html.includes(`data-billing="${getBillingHref({ slug: 'falcons', planId }, { host: 'admin' })}"`));
       assert.match(html, /data-teams="\/falcons\/admin\/rep-teams"/);
       assert.equal(html.includes('<p>Organization</p>'), !isTournamentTier(planId) && planId !== 'team');
     }
@@ -39,7 +39,7 @@ describe('one admin billing host for every plan', () => {
       const Body = (load('components/billing/BillingBody.tsx') as { default: (props: { billingBase: string; teamsHref: string }) => ReturnType<typeof createElement> }).default;
       // Calling only the entry component executes no owner effects. A denied result is the locked card,
       // while an allowed result mounts the owner/action component with the explicit workspace identity.
-      const element = Body({ billingBase: getBillingHref('falcons', planId), teamsHref: '/falcons/admin/rep-teams' });
+      const element = Body({ billingBase: getBillingHref({ slug: 'falcons', planId }, { host: 'admin' }), teamsHref: '/falcons/admin/rep-teams' });
       if (hasCapability(role, { billing }, 'billing')) {
         assert.equal((element.props as { org: { id: string } }).org.id, 'org-b');
       } else {
@@ -76,10 +76,10 @@ describe('Stripe and mock returns keep every plan inside its billing tier bounda
     });
     const portal = (load('app/api/billing/portal/route.ts') as { POST: JsonPost }).POST;
     const card = (load('app/api/billing/setup-payment-method/route.ts') as { POST: JsonPost }).POST;
-    const base = getBillingHref(org.slug, planId);
+    const base = getBillingHref(org, { purpose: 'return' });
     const portalResponse = await portal(post({ orgSlug: org.slug, returnTo: '//untrusted.test' }));
     assert.equal(portalResponse.status, 200);
-    assert.equal((await portalResponse.json()).url, mock ? `${origin}${base}/mock-portal` : 'https://stripe.test/portal');
+    assert.equal((await portalResponse.json()).url, mock ? `${origin}${base}${planId === 'team' ? '' : '/mock-portal'}` : 'https://stripe.test/portal');
     if (!mock) assert.equal(portalCalls[0].return_url, `${origin}${base}`);
     const cardResponse = await card(post({ orgSlug: org.slug }));
     assert.equal((await cardResponse.json()).url, mock ? `${origin}${base}?card_saved=1` : 'https://stripe.test/setup');
@@ -99,13 +99,13 @@ describe('Stripe and mock returns keep every plan inside its billing tier bounda
     const { createCardSetupSession } = load('lib/billing-setup.ts') as { createCardSetupSession: (org: unknown, email: string) => Promise<string> };
     await createCardSetupSession({ id: 'org-b', slug: 'falcons', planId, stripeCustomerId: 'cus_b', accountKind: 'organization' }, 'billing@example.test');
     assert.equal(calls[0].mode, 'setup');
-    assert.equal(calls[0].success_url, `${origin}${getBillingHref('falcons', planId)}?card_saved=1`);
-    assert.equal(calls[0].cancel_url, `${origin}${getBillingHref('falcons', planId)}`);
+    assert.equal(calls[0].success_url, `${origin}${getBillingHref({ slug: 'falcons', planId }, { purpose: 'return' })}?card_saved=1`);
+    assert.equal(calls[0].cancel_url, `${origin}${getBillingHref({ slug: 'falcons', planId }, { purpose: 'return' })}`);
   });
 
   it('the mock portal returns according to the refreshed plan, and scopes its apply request', () => {
     const mock = readCode('app/[orgSlug]/admin/org/billing/mock-portal/MockPortalClient.tsx');
-    assert.match(mock, /router\.push\(getBillingHref\(currentOrg\.slug, currentOrg\.planId\)\)/);
+    assert.match(mock, /router\.push\(getBillingHref\(currentOrg, \{ purpose: 'return' \}\)\)/);
     assert.match(mock, /JSON\.stringify\(\{ orgSlug: currentOrg\?\.slug, plan, status \}\)/);
     assert.match(readCode('app/[orgSlug]/admin/tournaments/settings/subscription/mock-portal/page.tsx'), /export \{ default \} from/);
   });
@@ -119,7 +119,7 @@ describe('Stripe and mock returns keep every plan inside its billing tier bounda
     } };
     const load = billingTestLoader({
       '@/lib/observability': { withObservability: (fn: unknown) => fn },
-      '@/lib/api-auth': { getAuthContext: async () => ({ org: { id: 'org-b', slug: 'falcons', planId: effectivePlan, ownPlanId: planId }, user: { email: 'billing@example.test' } }), requireCapability: async () => null },
+      '@/lib/api-auth': { getAuthContext: async () => ({ org: { id: 'org-b', slug: 'falcons', planId: effectivePlan, ownPlanId: planId, accountKind: planId === 'team' ? 'team_workspace' : 'organization' }, user: { email: 'billing@example.test' } }), requireCapability: async () => null },
       '@/lib/founding-season': { foundingCompAppliesToPlan: () => true },
       '@/lib/entitlement-grants': { ownPlanOf: (org: { ownPlanId: string }) => org.ownPlanId },
       '@/lib/supabase-admin': { supabaseAdmin: db },
@@ -133,7 +133,7 @@ describe('Stripe and mock returns keep every plan inside its billing tier bounda
     const handler = (load('app/api/billing/choose-next-season/route.ts') as { POST: JsonPost }).POST;
     const response = await handler(post({ orgSlug: 'falcons', planKey: planId, billingCycle: 'annual' }));
     assert.equal(response.status, 200);
-    const base = `${origin}${getBillingHref('falcons', effectivePlan)}`;
+    const base = `${origin}${getBillingHref({ slug: 'falcons', planId: effectivePlan, accountKind: planId === 'team' ? 'team_workspace' : 'organization' }, { purpose: 'return' })}`;
     if (mock) assert.equal((await response.json()).url, `${base}?next_season=1`);
     else { assert.equal(checkout[0].success_url, `${base}?next_season=1`); assert.equal(checkout[0].cancel_url, base); }
   });

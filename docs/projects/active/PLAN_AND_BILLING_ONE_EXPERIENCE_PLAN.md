@@ -861,7 +861,7 @@ invoices stay in the existing secure portal. No whole-product sweep ran.
 
 **Owed:** Claude `/simplify` on this delta, `/review`, `/docs`, and the owner walk written by a Claude session.
 The owner also controls the earlier generated-baseline reductions. Stage 2 adds the workspace-level coach host and
-must honour delegated billing; Stage 3 retires that audience's admin billing view and places the undrawn workspace
+is owner-only like the rest of Plan & billing (delegation was reversed 2026-10-29); Stage 3 retires that audience's admin billing view and places the undrawn workspace
 links. Do not call Stage 1 complete before those Stage 1 review/walk gates are satisfied.
 
 **Final validation record (2026-10-29):**
@@ -958,3 +958,183 @@ still check `role !== 'owner'`. The page now never offers a delegate a door the 
 3. Delegates get no payment-failed alerts (the webhook notifies owners only); a members manager can remove a grantee;
    a delegate's email becomes the Stripe customer email on first checkout; two rail rows highlight at once on the
    tournament tiers.
+
+### Stage 2 implementation and hand-off — 2026-10-29
+
+**Current ruling:** Plan & billing is the owner's alone. The historical delegation notes above are superseded by
+plan §2 and the Stage 2 prompt's Revision 2026-10-29. Stage 1's owner walk passed per that revision.
+
+**1. What customers see, by role.** A standalone owner opens the shared billing body at
+`/{slug}/coaches/billing` inside Coaches Portal chrome. The desktop foot and phone More → You offer its row,
+including between seasons. The phone's More tab stays active there. The row is absent for helpers, club-owned
+coaches/owners, and the demo sandbox. A non-owner with portal access who types the address sees the body's locked
+card; existing zero-team/plan/cancelled walls still precede children where applicable. The zero-team owner gets a lime
+billing door. Cancelled and ended-free-time standalone owners get Reactivate Premium / Keep Premium on their own walls;
+helpers get no recovery action. The wall's `initialUserRole={null}` contract remains.
+
+New billing messages derive the host from workspace identity: active/trialing/past-due standalone → coach billing;
+cancelled standalone (including ended free time) → `teamWorkspaceReactivatePath`; ordinary organizations → their admin
+tier host. Payment returns explicitly select the billing page and retain their flags. All positional resolver callers
+moved; no compatibility export remains. Pricing also recognizes a standalone owner's context when there is no primary
+organization, preserving `billingHref.split('/')[1]`. The marketing-email UUID billing URL and adjacent setup URL now
+use the actual org slug.
+
+**2. Files changed.** This is this session's inventory, not the whole shared working-tree diff. The existing overlay/provider
+change in the coach layout and other sessions' changes to the layout, guards, TODO and plan were preserved. No commit was made.
+
+**Coach host, nav and walls:**
+
+- `app/[orgSlug]/coaches/billing/page.tsx`
+- `app/[orgSlug]/coaches/layout.tsx`
+- `components/coaches/CoachesSidebar.tsx`
+- `components/coaches/CoachesBottomNav.tsx`
+- `components/coaches/CoachesChrome.tsx`
+- `components/billing/SubscriptionEndedWall.tsx`
+- `lib/coach-billing-access.ts`
+
+**Admin hosts and doors:**
+
+- `components/billing/SubscriptionEndedWall.tsx`
+- `app/[orgSlug]/admin/AdminChrome.tsx`
+- `app/[orgSlug]/admin/org/page.tsx`
+- `app/[orgSlug]/admin/org/settings/pdf/page.tsx`
+- `app/[orgSlug]/admin/org/billing/mock-portal/MockPortalClient.tsx`
+- `components/admin/CancellationGuard.tsx`
+- `components/admin/kit/club/BillingKit.tsx`
+- `components/admin/kit/club/MembersKit.tsx`
+- `components/billing/UpgradeGate.tsx`
+- `components/billing/PlanPanelDrawer.tsx`
+- `components/coaches/CoachPlanWall.tsx`
+
+**Server returns and messages:**
+
+- `app/api/admin/email/send/route.ts`
+- `app/api/admin/org/onboarding-plan/route.ts`
+- `app/api/billing/portal/route.ts`
+- `app/api/billing/setup-payment-method/route.ts`
+- `app/api/billing/choose-next-season/route.ts`
+- `app/api/billing/create-checkout/route.ts`
+- `app/api/billing/cancel/confirm/route.ts`
+- `app/api/billing/downgrade/confirm/route.ts`
+- `app/api/billing/webhook/route.ts`
+- `app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts`
+
+**Shared resolver, vocabulary and context:**
+
+- `lib/admin-kit-nav.ts`
+- `lib/billing-retention.ts`
+- `lib/billing-setup.ts`
+- `lib/billing-urls.ts`
+- `lib/notification-view.ts`
+- `lib/online-payment-owner-notices.ts`
+- `lib/plan-billing-words.ts`
+- `lib/plan-upgrade.ts`
+- `lib/team-workspace-kind.ts`
+- `lib/tournament-guidance.ts`
+- `lib/user-contexts.ts`
+
+**Tests and screen/fixture enumeration:**
+
+- `tests/unit/plan-billing-coach-host.test.ts`
+- `tests/unit/nav-standard-guard.test.ts`
+- `tests/unit/coach-page-actions-guard.test.ts`
+- `tests/unit/plan-billing-source-guard.test.ts`
+- `tests/unit/club-stage1-server-guard.test.ts`
+- `scripts/layout-screens.mjs`
+- `tests/uat/scenarios/coach-wall-doors.spec.ts`
+- `tests/uat/scenarios/marketing-seam.spec.ts`
+- `lib/billing-urls.test.ts`
+- `scripts/seed-uat-coach-notifications.mjs`
+- `tests/unit/admin-kit-nav.test.ts`
+- `tests/unit/notification-reader.test.ts`
+- `tests/unit/plan-billing-actions.test.ts`
+- `tests/unit/plan-billing-admin-host.test.ts`
+- `tests/unit/plan-billing-delegate-and-links.test.ts`
+- `tests/unit/plan-panel-host.test.ts`
+- `tests/unit/plan-reader-door-guard.test.ts`
+- `tests/unit/plan-billing-host-links.test.ts`
+
+**Tracking and owner walk:**
+
+- `TODO.md`
+- `docs/projects/active/PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md`
+- `docs/projects/active/PLAN_AND_BILLING_ONE_EXPERIENCE_PM_BRIEF.md`
+- `docs/projects/active/PLAN_AND_BILLING_STAGE2_OWNER_WALK.md`
+
+**3. Checks and baseline.**
+
+- Before edits: `verify:changed` ran **12,166 tests, all passing**, then failed focused lint with **4 errors / 30 warnings**.
+  The prompt's estimate of committed unit failures did not apply to this shared tree. The first npm typecheck invocation
+  returned 1 without TypeScript diagnostics; repeating direct `tsc --noEmit --pretty false` with
+  `NODE_OPTIONS=--max-old-space-size=8192` returned **0 before code edits**.
+- After implementation: `verify:changed` was run during integration; the final run completed **12,234 tests,
+  all passing**, then stopped on the **same four lint errors** (36 findings: 4 errors / 32 warnings).
+  Exact error output signatures:
+  ```text
+  app/dev/crash-test/page.tsx:9:15   error  Cannot call impure function during render
+  app/dev/crash-test/page.tsx:11:5   error  Cannot reassign variables declared outside of the component/hook
+  app/dev/crash-test/page.tsx:12:5   error  Cannot reassign variables declared outside of the component/hook
+  tests/unit/club-schedule-league-plan.test.ts:212:40  error  React Hook "use" is called in function "gamesUse"
+  ```
+- Final `npm run typecheck`, with the required 8 GB heap: **exit 0**. An intermediate missing-fields error in this
+  session's new test fixture was fixed; the final fixture supplies the real Organization contract.
+- Direct focused ESLint across **56 owned code/test files**: **exit 0**, two existing effect warnings in unchanged
+  effect bodies (`org/settings/pdf/page.tsx:73`, `MembersKit.tsx:129`). Those files enter the changed-file scan through
+  this stage's link edits; no new lint failure was added.
+- Focused host/layout/nav tests plus the wall-order guard: **85/85**; resolver/action/host/link/reader tests: **420/420**; enumeration guards:
+  **48/48** (overlapping focused groups, not additional totals). The full suite above includes them.
+- Spelling, date correctness, admin org-context, seed syntax, TODO size and `git diff --check`: **pass**.
+- Later pipeline gates could not run through `verify:changed` because lint stops the command. Running token and
+  org-slug checks separately exposed unrelated findings; none is in this session's modified paths:
+  ```text
+  Restyled admin areas: a NEW colour literal in an area already on the kit.
+  app/[orgSlug]/admin/tournaments/schedule/page.tsx: rgba(255,255,255,0.03) ×1
+  org-slug caller guard: 2 call(s) to an org-scoped route without the org:
+  app/[orgSlug]/admin/public-site/OwnAddressPanel.tsx:65  /api/admin/public-site/own-address
+  app/[orgSlug]/admin/public-site/useOwnAddress.ts:25  /api/admin/public-site/own-address${query}
+  ```
+  The schedule file was dirty at entry; both address-control files are unchanged from HEAD. No check was weakened,
+  no file hidden, and no unrelated repair attempted. The remaining pipeline checks were skipped: admin-old-look and
+  admin/public type, CSS purity, contrast/text contrast, snapshot/schema/manual-production-migration/index/dictionary,
+  observability, marketing screenshots, demos, CSS selectors, export catalogue, root files, and club arithmetic.
+- Playwright discovery (`--list`) parsed the two updated scenarios; **no browser or real Stripe session was run**.
+  Owner-prepared standalone fixtures are optional, with explicit skip reasons when missing. The layout registry includes
+  the existing club coach's locked billing host. It has no standalone-owner fixture, so it does not measure the owner's
+  body. An unlisted route does **not** fail the current layout runner: unmatched `--changed` exits 0. No full sweep ran.
+- Local raw logs: `.probe/plan-billing-stage2/` (`baseline-verify.log`, `baseline-tsc.log`, `final-verify.log`,
+  `final-typecheck.log`, `final-focused-lint.log`, and the named focused check logs).
+
+**4. State and return-flow checklist.**
+
+| State/flow | Walked automatically | Remaining owner validation |
+|---|---|---|
+| Empty card/fee data, loading, failed reads, errors | Shared-body and action regression tests; non-owner loads no billing reads | Actual Stripe invoice/card empty states and browser appearance |
+| Success, card saved, next-season return | Exact flags/host captured; body's consumption and fading-notice logic exercised | Real webhook timing, notice appearance, browser Back |
+| Past due, trial, running/last-14-days/ended free time, Founding comp, cancelled | Shared state tests plus new owner/helper ended/cancelled layout renders | Real fixtures in the coach host |
+| Zero teams, several live/closed teams | Actual page/body rendered through server layout without tournament providers; exact-path and negative cases tested | Live workspace with a hosted tournament and phone/desktop navigation |
+| Owner/helper/stale grants/club-owned/demo | Shared predicate matrix; actual rail/open-sheet renders and locked-body renders | Browser role switch and demo walkthrough |
+| Portal | Captured Stripe `return_url`; no-customer card setup and mock returns tested | Stripe test-mode card/invoice management |
+| Card save | Real setup function's captured success `?card_saved=1` and cancel addresses | Real Stripe setup |
+| Next season | Mock/Stripe route parameters keep `?next_season=1` and host | Actual selection and webhook |
+| Checkout / Upgrade | Real shared payment-step handlers exercised from `/falcons/coaches/billing`; exact same-org allowlist, success/cancel captured | Real checkout and its cancel journey |
+| Move | Existing move confirmation and checkout request tests retained; host-supplied return covered | Applicable plan fixture; Premium gains no new move |
+| 390px | Row order, icons, More-active logic and UAT discovery | Geometry/tap targets/windows; browser testing is the owner's |
+
+**5. Owed / server.** Claude: **`/simplify` first, then `/review`, and `/docs`**. Owner:
+[Stage 2 owner walk](PLAN_AND_BILLING_STAGE2_OWNER_WALK.md), including real Stripe test mode and 390px.
+The required dev-server restart was performed after the new page/shared-module edits, through network-enabled
+`npm run dev`. Ready was observed; `/platform-admin/login?next=%2Fplatform-admin` returned **HTTP 200** and
+`.dev-server-stage2.log` contained no EACCES or fetch failure. The server remains running. Stage 2's implementation
+and automated evidence are recorded; owner/review gates remain open, so the project's TODO checkbox stays open.
+
+**6. Choices where drawings were silent.** Selected Part 4(a): the exact owner billing address passes only the zero-team
+wall, using proxy's overwritten `x-pathname`; cancelled → plan → zero-team → shell order stays intact. The wall door is
+a native anchor so it requests the server layout again (Next layouts persist on client navigation). A zero-team billing
+shell also carries its one allowed address into `CoachesChrome`; leaving it requests the server again before another
+child mounts, preserving the wall on client navigation as well as direct requests. This late flow-review correction
+required a second dev-server restart. Accepted membership
+status is checked before offering owner recovery, while lapsed providers keep a null role. The coach dev portal mock returns
+directly to billing, rather than inventing a second allowed zero-team route; real Stripe retains its portal return.
+The header's help reuses the shipped Premium first-login article until help sync. Tournament lock links retain their
+admin drawer on ordinary clicks and admin billing on modified clicks; Admin-door removal/old-link redirects stay Stage 3.
+The known static Premium availability/live-gate distinction and stale historical memory facts were reported, not rewritten.

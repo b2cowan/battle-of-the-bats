@@ -21,7 +21,7 @@ export function CancellationGuard() {
   const router = useRouter();
 
   const isCanceled = currentOrg?.subscriptionStatus === 'canceled';
-  const billingPath = currentOrg ? getBillingHref(currentOrg.slug, currentOrg.planId) : null;
+  const billingPath = currentOrg ? getBillingHref(currentOrg) : null;
 
   useEffect(() => {
     if (!isCanceled || !billingPath) return;

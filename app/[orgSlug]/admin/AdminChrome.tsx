@@ -67,7 +67,7 @@ export default function AdminChrome({
   // and usePathname() provides the current path on both server and client, so both agree on this
   // output — no hydration mismatch, no content flash, no loop.
   const isCanceled = currentOrg?.subscriptionStatus === 'canceled';
-  const billingPath = currentOrg ? getBillingHref(currentOrg.slug, currentOrg.planId) : null;
+  const billingPath = currentOrg ? getBillingHref(currentOrg) : null;
   if (isCanceled && billingPath && !pathname.startsWith(billingPath)) {
     return <CancellationGuard />;
   }

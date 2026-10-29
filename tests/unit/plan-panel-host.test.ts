@@ -29,7 +29,7 @@ describe('what counts as an upgrade link', () => {
   });
   it('both of Plan & billing’s homes, as getBillingHref spells them, with a plan named, are one', () => {
     for (const planId of ['tournament', 'tournament_plus', 'league', 'club']) {
-      assert.equal(planPanelFromHref(`${getBillingHref('acme', planId)}?plan=tournament_plus`), 'tournament_plus', planId);
+      assert.equal(planPanelFromHref(`${getBillingHref({ slug: 'acme', planId }, { host: 'admin' })}?plan=tournament_plus`), 'tournament_plus', planId);
     }
   });
   it('the lock lines’ own address is one', () => {
@@ -37,6 +37,9 @@ describe('what counts as an upgrade link', () => {
     const built = /return `\/\$\{orgSlug\}(\/admin\/tournaments\/settings\/subscription\?plan=tournament_plus)`;/.exec(lock);
     assert.ok(built, 'tournamentPlusPanelHref is the panel address');
     assert.equal(planPanelFromHref(`/demo${built[1]}`), 'tournament_plus');
+  });
+  it('the coach billing page owns its details panel rather than opening the admin drawer', () => {
+    assert.equal(planPanelFromHref(`${getBillingHref({ slug: 'ravens', planId: 'team' })}?plan=tournament_plus`), null);
   });
 });
 

@@ -2,10 +2,13 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Users, UserCog, Calendar, ClipboardList, NotebookPen, Mail, DollarSign, FileText, BarChart3, LayoutGrid, Archive, HelpCircle, Settings, MessageSquare, Trophy, ListOrdered, TrendingUp, Shield, ChevronRight } from 'lucide-react';
+import { Users, UserCog, Calendar, ClipboardList, NotebookPen, Mail, DollarSign, FileText, BarChart3, LayoutGrid, Archive, HelpCircle, Settings, MessageSquare, Trophy, ListOrdered, TrendingUp, Shield, ChevronRight, CreditCard } from 'lucide-react';
 import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coaches-context';
 import { isCoachNavItemVisible, withClosedSeasonNav, resolveNavTeamId, SEASON_END_LABEL, coachNavDefaultOpenGroups, isCoachNavGroupOpen } from '@/lib/coach-nav-visibility';
 import { useOrg } from '@/lib/org-context';
+import { coachBillingLink } from '@/lib/coach-billing-access';
+import { PLAN_BILLING_TITLE } from '@/lib/plan-billing-title';
+import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import ReleaseDot from '@/components/whats-new/ReleaseDot';
@@ -174,7 +177,9 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const { assignments, closedAssignments } = useCoaches();
-  const { userRole } = useOrg();
+  const { currentOrg, userRole, userCapabilities } = useOrg();
+  const inSandbox = useIsSandbox();
+  const billingHref = coachBillingLink(currentOrg, userRole, userCapabilities, inSandbox);
   // The "Admin" door — only for a coach who also administers this org (seeded from the layout's
   // membership role; a coach-only user has no admin role, so no door). Review P3-4.
   const isOrgAdmin = userRole === 'owner' || userRole === 'admin';
@@ -445,6 +450,12 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
           <span className={strip.rowLabel}>Help</span>
           <ReleaseDot className={strip.cornerDot} />
         </Link>
+        {billingHref && (
+          <Link href={billingHref} id="coaches-billing" className={`${styles.sidebarItem} ${styles.sidebarFootItem}${pathname === billingHref ? ` ${styles.sidebarItemActive}` : ''}`}>
+            <CreditCard size={14} />
+            <span className={strip.rowLabel}>{PLAN_BILLING_TITLE}</span>
+          </Link>
+        )}
         {isOrgAdmin && (
           <Link href={`/${orgSlug}/admin`} className={`${styles.sidebarItem} ${styles.sidebarFootItem}`}>
             <Shield size={14} />

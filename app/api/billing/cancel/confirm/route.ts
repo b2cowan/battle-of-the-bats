@@ -375,7 +375,7 @@ export const POST = withObservability(async (req: Request) => {
     const retentionDate = new Date(retentionUntil).toLocaleDateString('en-CA', {
       year: 'numeric', month: 'long', day: 'numeric',
     });
-    const resubscribeUrl = `${SITE_URL}${getBillingHref(ctx.org.slug, ownPlanOf(ctx.org))}`;
+    const resubscribeUrl = `${SITE_URL}${getBillingHref({ ...ctx.org, planId: ownPlanOf(ctx.org), subscriptionStatus: 'canceled' })}`;
     await sendTransactionalEmail({
       key: 'cancellation_confirmation',
       to: actorEmail,

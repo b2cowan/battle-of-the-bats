@@ -55,7 +55,7 @@ export default function MockPortalPage() {
 
   function handleReturn() {
     if (!currentOrg) return;
-    router.push(getBillingHref(currentOrg.slug, currentOrg.planId));
+    router.push(getBillingHref(currentOrg, { purpose: 'return' }));
   }
 
   if (!currentOrg) return null;

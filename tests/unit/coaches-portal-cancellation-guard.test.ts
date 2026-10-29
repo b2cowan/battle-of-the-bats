@@ -73,7 +73,8 @@ test('a Stripe-side end retains the workspace before emailing, and never double-
 
 test('a Coaches Portal is kept 365 days and warned 30 days out; the cancel screen reads the same number', () => {
   const src = read('lib/billing-retention.ts');
-  assert.match(src, /COACHES_PORTAL_RETENTION_DAYS = 365;/);
+  assert.match(read('lib/billing-cancellation-policy.ts'), /COACHES_PORTAL_RETENTION_DAYS = 365;/);
+  assert.match(src, /from '\.\/billing-cancellation-policy'/, 'preflight reads the shared retention policy');
   assert.match(src, /COACHES_PORTAL_RETENTION_WARNING_DAYS = 30;/);
   const preflight = src.slice(src.indexOf('export async function buildCancellationPreflight'));
   const workspaceBranch = preflight.slice(0, preflight.indexOf('shutsDown'));

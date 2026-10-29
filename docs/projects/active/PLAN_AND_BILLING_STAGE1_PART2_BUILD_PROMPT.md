@@ -112,7 +112,7 @@ capability. Name any added read route and explain why the existing routes could 
 Use the **latest plan §9 owner table** as authority. In particular:
 
 - Order: Your plan → What's in use → applicable free-time/Founding band → Stripe fees → Change plan → What's included
-  → Reduce or cancel. Keep the quiet last discovery section on tournament plans only.
+  → (tournament plans only: the quiet discovery section) → Reduce or cancel, which ends the page on every plan (owner 2026-10-29).
 - Premium billing uses the seven drawn items, omitting hosting during staff free time. Its eight-item published
   article stays unchanged. Basic records remain available when Premium is cancelled.
 - “What's included”, “Free”, and “Holds” are settled. Meter captions are pluralised connected figures, including

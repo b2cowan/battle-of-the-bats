@@ -11,6 +11,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { tournamentToday } from '@/lib/timezone';
 import LoadingState from '@/components/shared/LoadingState';
 import { repKit } from '@/components/admin/kit/club/RepKit';
+import { getBillingHref } from '@/lib/billing-urls';
 
 // ── Placeholder data for the preview PDF ─────────────────────────────────────
 const PREVIEW_HEADERS = ['Team', 'Division', 'Coach', 'Status', 'Payment'];
@@ -197,7 +198,7 @@ export default function PdfSettingsPage() {
           variant="info"
           title="Limited customization on free plan"
           body="You can configure header text, footer, and privacy settings. FieldLogicHQ branding is always shown on the free Tournament plan. Upgrade to Tournament Plus to use your own logo and suppress FieldLogicHQ branding."
-          cta={{ label: 'View upgrade options', href: `/${currentOrg?.slug}/admin/org/billing` }}
+          cta={{ label: 'View upgrade options', href: getBillingHref({ slug: currentOrg?.slug ?? '', planId: currentOrg?.planId, accountKind: currentOrg?.accountKind }) }}
         />
       )}
 

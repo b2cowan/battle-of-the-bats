@@ -175,6 +175,10 @@ async function ownerHarness(options: { plan?: OrgPlan; search?: string; refresh?
   if (options.founding) env.answer('/api/admin/org/founding-season-status?orgSlug=falcons-club', options.founding);
   const runner = hookRunner();
   const org = organization(options.plan);
+  if (options.returnTo?.endsWith('/coaches/billing')) {
+    org.slug = options.returnTo.split('/')[1];
+    org.accountKind = 'team_workspace';
+  }
   const refresh = options.refresh ?? (async () => {});
   const loader = billingTestLoader({
     react: runner.hooks,
@@ -204,8 +208,8 @@ async function ownerHarness(options: { plan?: OrgPlan; search?: string; refresh?
 }
 
 describe('real owner billing action request contracts', () => {
-  it('Upgrade asks how to pay first, and the payment step sends the chosen cycle', async () => {
-    const h = await ownerHarness({ plan: 'tournament' });
+  for (const returnTo of [billingBase, '/falcons/coaches/billing']) it(`Upgrade asks how to pay first, and the payment step sends the chosen cycle from ${returnTo}`, async () => {
+    const h = await ownerHarness({ plan: 'tournament', returnTo });
     try {
       // No cycle dropdown above the table, which already shows both prices.
       assert.ok(!elements(h.renderedView()).some(element => element.type === 'select'));
@@ -219,7 +223,7 @@ describe('real owner billing action request contracts', () => {
       // Choosing a cycle does not relabel the currently subscribed plan or its price.
       assert.equal(h.view().snapshot.org.subscriptionPeriod, 'monthly');
       (step.props.onContinue as (cycle: string) => void)('annual'); await h.settle();
-      assertRequest(h.requests[0], '/api/billing/create-checkout', 'POST', { planKey: 'tournament_plus', billingCycle: 'annual', returnTo: billingBase, orgSlug: h.org.slug });
+      assertRequest(h.requests[0], '/api/billing/create-checkout', 'POST', { planKey: 'tournament_plus', billingCycle: 'annual', returnTo, orgSlug: h.org.slug });
       assert.deepEqual(h.assigned, ['https://stripe.test/upgrade']);
       assert.ok(!elements(h.tree()).some(element => typeof element.props.onContinue === 'function'), 'the payment step closes once checkout is requested');
     } finally { h.dispose(); }
@@ -234,7 +238,7 @@ describe('real owner billing action request contracts', () => {
       assertRequest(h.requests[0], '/api/billing/create-checkout', 'POST', { planKey: 'tournament_plus', billingCycle: 'annual', returnTo: billingBase, orgSlug: h.org.slug });
     } finally { h.dispose(); }
   });
-  for (const returnTo of [billingBase, '/coaches/workspace/plan']) it(`checkout and reactivation preserve all fields for ${returnTo}`, async () => {
+  for (const returnTo of [billingBase, '/falcons/coaches/billing']) it(`checkout and reactivation preserve all fields for ${returnTo}`, async () => {
     const h = await ownerHarness({ returnTo });
     try {
       h.answer('/api/billing/create-checkout', { url: 'https://stripe.test/checkout' });

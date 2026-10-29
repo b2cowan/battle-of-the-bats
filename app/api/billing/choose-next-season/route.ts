@@ -95,7 +95,7 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-  const billingPath = getBillingHref(auth.org.slug, auth.org.planId);
+  const billingPath = getBillingHref(auth.org, { purpose: 'return' });
   const successUrl = `${appUrl}${billingPath}?next_season=1`;
   const cancelUrl = `${appUrl}${billingPath}`;
 

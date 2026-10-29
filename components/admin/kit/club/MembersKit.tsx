@@ -160,7 +160,7 @@ export default function MembersKit() {
   const planCfg = PLAN_CONFIG[currentOrg.planId];
   const tournamentTier = isTournamentTier(currentOrg.planId);
   const noun = isClubPlan(currentOrg.planId) ? 'club' : currentOrg.planId === 'league' ? 'league' : 'organization';
-  const billingHref = getBillingHref(currentOrg.slug, currentOrg.planId);
+  const billingHref = getBillingHref(currentOrg);
   const auditHref = tournamentTier
     ? `/${slug}/admin/tournaments/settings/members/audit`
     : `/${slug}/admin/org/members/audit`;

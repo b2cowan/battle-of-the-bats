@@ -34,6 +34,7 @@ function authoredFacts(code: string): string[] {
 }
 
 const screenFiles = () => filesUnder('components/billing', '.tsx').concat([
+  'app/[orgSlug]/coaches/billing/page.tsx',
   'app/[orgSlug]/admin/org/billing/page.tsx',
   'components/admin/kit/club/BillingKit.tsx',
   'components/admin/kit/club/PlanMoveDialog.tsx',

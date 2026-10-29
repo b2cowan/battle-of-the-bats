@@ -125,10 +125,10 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
     ], ADMIN_SHEET);
   });
 
-  it('the Premium coach sheet: Notifications, the tiles, the groups, You (Account, Home, Admin), then the foot', () => {
+  it('the Premium coach sheet: Notifications, the tiles, the groups, You (Account, Home, Plan & billing, Admin), then the foot', () => {
     order(readCode(COACH_SHEET), [
       'id="coaches-mob-notifications"', '<MoreSheetTiles', '>You</div>',
-      'id="coaches-mob-account"', 'id="coaches-mob-home"', 'id="coaches-mob-back-to-admin"', '<MoreSheetFoot',
+      'id="coaches-mob-account"', 'id="coaches-mob-home"', 'id="coaches-mob-billing"', 'id="coaches-mob-back-to-admin"', '<MoreSheetFoot',
     ], COACH_SHEET);
   });
 

@@ -20,7 +20,7 @@ import { withObservability, captureAndJson } from '@/lib/observability';
 import { closePagesIfPaymentsEnded, endingSection } from '@/lib/online-payment-endings';
 import { runningPortalFreeTime } from '@/lib/portal-free-time-server';
 import { staffCancelRefusal } from '@/lib/portal-free-time';
-import { getBillingHref } from '@/lib/billing-urls';
+import { getBillingHref, billingUrlOrgFromRow } from '@/lib/billing-urls';
 
 type OrgRow = {
   id: string;
@@ -309,7 +309,7 @@ export const POST = withObservability(async (req: NextRequest,
     } else if (ownerEmail) {
       const planLabel = PLAN_CONFIG[orgRow.plan_id as OrgPlan]?.label ?? orgRow.plan_id;
       const retentionDate = retentionDateLabel(retentionUntil);
-      const resubscribeUrl = `${SITE_URL}${getBillingHref(orgRow.slug, orgRow.plan_id)}`;
+      const resubscribeUrl = `${SITE_URL}${getBillingHref(billingUrlOrgFromRow(orgRow, 'canceled'))}`;
       await sendTransactionalEmail({
         key: 'cancellation_confirmation',
         to: ownerEmail,

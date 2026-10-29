@@ -47,7 +47,7 @@ export default function UpgradeGate({ feature, label, description, children }: U
 
   const requiredPlan = FEATURE_MIN_PLAN[feature];
   const planLabel = PLAN_CONFIG[requiredPlan]?.label ?? requiredPlan;
-  const billingHref = getBillingHref(currentOrg.slug, currentOrg.planId);
+  const billingHref = getBillingHref(currentOrg);
 
   return (
     <div className={styles.gate}>

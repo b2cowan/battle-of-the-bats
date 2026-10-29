@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { moveDirection, hasLiveSubscription } from '../../lib/plan-move.ts';
+import { hasLiveSubscription } from '../../lib/plan-move.ts';
+import { moveDirection } from '../../lib/plan-move-options.ts';
 import { foundingCompAppliesToPlan } from '../../lib/founding-season.ts';
 import { PLAN_CONFIG } from '../../lib/plan-config.ts';
 import type { OrgPlan } from '../../lib/types.ts';
@@ -126,12 +127,23 @@ describe('B05 — the coaches portal checks the club\'s plan', () => {
     const layout = read('app/[orgSlug]/coaches/layout.tsx');
     const billing = layout.indexOf('isOrgBillingSuspended(authCtx.org)');
     const plan = layout.indexOf('if (!orgPlanCarriesCoachesPortal(authCtx.org))');
-    const notAssigned = layout.indexOf('if (assignments.length === 0 && closedAssignments.length === 0)');
+    const notAssigned = layout.indexOf('if (noTeams && !ownerBillingPage)');
     const shell = layout.indexOf('<CoachesChrome');
     assert.ok(plan > 0, 'the coaches layout no longer asks the plan (B05)');
-    assert.ok(billing < plan, 'a cancelled club must meet the billing wall first (the right remedy)');
-    assert.ok(plan < notAssigned && plan < shell, 'the plan wall must come before any portal screen mounts');
+    assert.ok(billing > 0 && billing < plan, 'a cancelled club must meet the billing wall first (the right remedy)');
+    assert.ok(plan < notAssigned && notAssigned < shell, 'billing → plan → not assigned → working shell is the required wall order');
     assert.match(layout, /<CoachPlanWall/);
+  });
+
+  it('only the standalone owner billing address passes the zero-team wall; earlier walls still return first', () => {
+    const layout = read('app/[orgSlug]/coaches/layout.tsx');
+    const planWall = layout.indexOf('if (!orgPlanCarriesCoachesPortal(authCtx.org))');
+    const exception = layout.indexOf("const ownerBillingPage = noTeams && !!ownerBillingHref && (await headers()).get('x-pathname') === ownerBillingHref;");
+    assert.ok(exception > planWall, 'billing-path exception must never bypass the cancelled or club plan walls');
+    assert.match(layout, /const ownerDoorHref = \(role: OrgRole \| null\) => coachBillingLink\(authCtx\.org, role, null, !!getDemoOrgBySlug\(orgSlug\)\);/);
+    assert.match(layout, /const ownerBillingHref = ownerDoorHref\(initialUserRole\);/);
+    assert.match(layout, /ownerBillingHref && \([\s\S]*?<a href=\{ownerBillingHref\} className="btn btn-lime">\{W\.page\.title\}<\/a>/,
+      'the wall door must request the server layout again, so it can render the billing destination');
   });
 });
 

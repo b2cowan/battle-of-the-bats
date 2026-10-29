@@ -152,6 +152,11 @@ type Site = {
 const SITES: Site[] = [
   // ── Outside the team layout: the page draws its own "?" ──────────────────────────────────────
   {
+    file: 'app/[orgSlug]/coaches/billing/page.tsx', occurrence: 0,
+    screen: 'Plan & billing (the workspace, independent of its teams)',
+    variant: 'standard', helpHost: 'own', actions: null,
+  },
+  {
     // Staff access review pass 1 (2026-09-10): a coach the link API refuses (anyone but the head
     // coach) meets the shared "not turned on for you" block under this page's own header instead
     // of a load error. Same shape on the seven team pages below — each is the page's own title

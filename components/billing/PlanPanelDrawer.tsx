@@ -47,7 +47,7 @@ export default function PlanPanelDrawer({ plan, onClose }: { plan: PanelPlanKey;
         planKey: key,
         billingCycle: 'monthly',
         orgSlug: currentOrg.slug,
-        returnTo: getBillingHref(currentOrg.slug, currentOrg.planId),
+        returnTo: getBillingHref(currentOrg, { host: 'admin' }),
       });
     } catch (err: unknown) {
       setLoading(false);

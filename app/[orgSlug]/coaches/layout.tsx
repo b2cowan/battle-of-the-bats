@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import Link from 'next/link';
 import {
   getCoachPortalAuth,
@@ -7,15 +8,16 @@ import {
   getCoachPortalClosedAssignments,
   getCoachPortalPublicHref,
 } from '@/lib/coach-portal-request';
-import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getAuthenticatedUser } from '@/lib/api-auth';
+import { getAcceptedMember, getAuthenticatedUser } from '@/lib/api-auth';
 import type { OrgRole } from '@/lib/types';
 import { OrgProvider } from '@/lib/org-context';
 import { CoachesProvider } from '@/lib/coaches-context';
 import { getCoachOnboardingPrefs } from '@/lib/user-preferences';
 import { CoachesOverlayProvider } from '@/lib/coaches-overlay';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
-import { COACHES_HOME_PATH } from '@/lib/coaches-portal-routes';
+import { COACHES_HOME_PATH, teamWorkspaceReactivatePath } from '@/lib/coaches-portal-routes';
+import { coachBillingLink } from '@/lib/coach-billing-access';
+import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import { getDemoOrgBySlug } from '@/lib/demo-org';
 import { SEE_IT_LIVE_COACHES_PATH } from '@/lib/sandbox-door';
 // The main shell (sidebar + bottom nav + strip) now lives in CoachesChrome, which owns the
@@ -113,11 +115,19 @@ export default async function CoachesLayout({
     redirect(`/${authCtx.org.slug}/coaches`);
   }
 
+  // Accepted membership only (the shared read, so a pending invitee has no role). The wall below reads it
+  // solely to offer its owner the recovery door; it still seeds no role and mounts none of the working portal.
+  const readRole = async () =>
+    ((await getAcceptedMember(authCtx.org.id, authCtx.user.id))?.role as OrgRole | undefined) ?? null;
+  const ownerDoorHref = (role: OrgRole | null) => coachBillingLink(authCtx.org, role, null, !!getDemoOrgBySlug(orgSlug));
+
   // Billing rail (owner ruling 2026-08-06) — the portal's human half. Every coach API route is
   // already closed for a cancelled org; this stops the shell from rendering into a wall of failed
   // fetches and says why instead. Placed BEFORE the assignment/season lookups so a cancelled club
-  // costs no queries, and inside the portal frame so it reads as this product, not an error page.
+  // costs no assignment/season queries (only the one membership read, for a workspace owner's door), and
+  // inside the portal frame so it reads as this product, not an error page.
   if (isOrgBillingSuspended(authCtx.org)) {
+    const ownerBillingHref = isTeamWorkspaceOrg(authCtx.org) ? ownerDoorHref(await readRole()) : null;
     // A portal whose free time from FieldLogicHQ ended reads its own wall (Stage 4b): the coach cancelled nothing.
     const freeTimeEnded = authCtx.org.accountKind === 'team_workspace' ? await endedPortalFreeTime(authCtx.org.id) : null;
     return (
@@ -131,12 +141,14 @@ export default async function CoachesLayout({
             <CoachTopStrip wall />
             <main className={styles.coachesMain}>
               {freeTimeEnded ? (
-                <FreeTimeEndedWall lastDay={freeTimeEnded.lastDay} basicTeamId={freeTimeEnded.basicTeamId} />
+                <FreeTimeEndedWall lastDay={freeTimeEnded.lastDay} basicTeamId={freeTimeEnded.basicTeamId}
+                  ownerDoor={ownerBillingHref ? { href: `${teamWorkspaceReactivatePath(authCtx.org)}&keep=1`, label: W.change.keepPremium } : undefined} />
               ) : (
                 <SubscriptionEndedWall
                   orgName={authCtx.org.name}
                   contactEmail={authCtx.org.contactEmail}
                   surface="coaches"
+                  ownerDoor={ownerBillingHref ? { href: teamWorkspaceReactivatePath(authCtx.org), label: W.reactivate.premiumAction } : undefined}
                 />
               )}
             </main>
@@ -145,18 +157,6 @@ export default async function CoachesLayout({
       </OrgProvider>
     );
   }
-
-  // The viewer's org-membership role (null when they're a coach but NOT org staff) — seeded into
-  // OrgProvider so the portal can show a "Back to admin" door only to admin-coaches (P3-4). Read
-  // separately from the auth gate on purpose: a coach-only user has no membership row and must
-  // still reach the portal (getAuthContextWithRole would null them out and redirect to login).
-  const { data: membership } = await supabaseAdmin
-    .from('organization_members')
-    .select('role')
-    .eq('organization_id', authCtx.org.id)
-    .eq('user_id', authCtx.user.id)
-    .maybeSingle();
-  const initialUserRole = (membership?.role as OrgRole | undefined) ?? null;
 
   // Season's End access model (Batch 3, P0 #1): a coach whose season(s) were closed is NOT
   // "not assigned" — they keep the portal shell with read-only access to what they built.
@@ -172,12 +172,14 @@ export default async function CoachesLayout({
   // below. Same resolver + same "is this org page real?" predicate as the event chrome; a team
   // workspace resolves to null and the masthead simply shows no flip. The wrapper carries the
   // `.catch(() => null)` that keeps a DB blip off the portal's critical path (/review 2026-08-02).
-  const [assignments, closedAll, onboardingPrefs, publicHref] = await Promise.all([
+  const [assignments, closedAll, onboardingPrefs, publicHref, initialUserRole] = await Promise.all([
     getCoachPortalAssignments(authCtx.org.id, authCtx.user.id, isTeamWorkspace),
     getCoachPortalClosedAssignments(authCtx.org.id, authCtx.user.id, isTeamWorkspace),
     getCoachOnboardingPrefs(authCtx.user.id),
     isTeamWorkspace ? Promise.resolve(null) : getCoachPortalPublicHref(authCtx.org),
+    readRole(),
   ]);
+  const ownerBillingHref = ownerDoorHref(initialUserRole);
   // Same shaping as the assignments API: one entry per team, only teams with no active year.
   const activeTeamIds = new Set(assignments.map(a => a.teamId));
   const seenClosedTeams = new Set<string>();
@@ -230,7 +232,11 @@ export default async function CoachesLayout({
     );
   }
 
-  if (assignments.length === 0 && closedAssignments.length === 0) {
+  // The zero-team wall's billing door must render a destination. This single owner-only path
+  // passes that wall, AFTER both billing and plan walls. proxy.ts overwrites x-pathname.
+  const noTeams = assignments.length === 0 && closedAssignments.length === 0;
+  const ownerBillingPage = noTeams && !!ownerBillingHref && (await headers()).get('x-pathname') === ownerBillingHref;
+  if (noTeams && !ownerBillingPage) {
     const { name: orgName, contactEmail } = authCtx.org;
     // The wall's second door, by persona.
     //
@@ -276,6 +282,10 @@ export default async function CoachesLayout({
                   )}
                 </p>
                 <div className={styles.notAssignedDoors}>
+                  {ownerBillingHref && (
+                    // A full request is deliberate: a shared server layout persists across client navigation.
+                    <a href={ownerBillingHref} className="btn btn-lime">{W.page.title}</a>
+                  )}
                   <Link href="/discover" className={styles.notAssignedDoor}>Go to Home</Link>
                   {orgHomeHref && (
                     <Link href={orgHomeHref} className={styles.notAssignedDoor}>

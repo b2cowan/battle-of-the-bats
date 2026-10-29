@@ -17,6 +17,12 @@ import { CHAT_PAUSED } from '../../lib/chat-pause.ts';
 const OPEN_CHAT = CHAT_PAUSED ? null : 'Open Chat';
 
 describe('the reader names where its button goes', () => {
+  it('names the workspace billing page in both portals, including payment return flags', () => {
+    for (const portal of ['coach', 'admin'] as const) {
+      assert.equal(notificationDestination('/o/coaches/billing', portal), 'Open Plan & billing');
+      assert.equal(notificationDestination('/o/coaches/billing?card_saved=1#top', portal), 'Open Plan & billing');
+    }
+  });
   it('names a team page in the nav’s own words', () => {
     assert.equal(notificationDestination('/uat-test-org/coaches/teams/3127/history', 'coach'), 'Open Insights');
     assert.equal(notificationDestination('/uat-test-org/coaches/teams/3127/schedule', 'coach'), 'Open Schedule');

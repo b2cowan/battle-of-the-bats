@@ -37,7 +37,7 @@ import type Stripe from 'stripe';
 import { withObservability } from '@/lib/observability';
 import { isTheRecordsSubscription, recordFollowsSubscription, subscriptionIsPaying } from '@/lib/stripe-billing-state';
 import { closePagesIfPaymentsEnded } from '@/lib/online-payment-endings';
-import { getBillingHref } from '@/lib/billing-urls';
+import { getBillingHref, billingUrlOrgFromRow } from '@/lib/billing-urls';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -839,7 +839,7 @@ export const POST = withObservability(async (req: Request) => {
       const failedInvoice = event.data.object as Stripe.Invoice;
       const { data: currentOrg } = await supabaseAdmin
         .from('organizations')
-        .select('id, slug, plan_id, subscription_status, stripe_subscription_id')
+        .select('id, name, slug, plan_id, account_kind, subscription_status, stripe_subscription_id')
         .eq('stripe_customer_id', customerId)
         .maybeSingle();
       if (currentOrg && !isTheRecordsSubscription(currentOrg.stripe_subscription_id, invoiceSubscriptionId(failedInvoice))) break;
@@ -872,7 +872,7 @@ export const POST = withObservability(async (req: Request) => {
             eventType: 'payment_failed',
             title: 'Subscription payment failed',
             body: 'Your subscription payment could not be processed. Please update your billing information.',
-            link: getBillingHref(currentOrg.slug, currentOrg.plan_id),
+            link: getBillingHref(billingUrlOrgFromRow(currentOrg, 'past_due')),
             userIds: owners,
           }).catch(console.error);
         }
@@ -884,7 +884,7 @@ export const POST = withObservability(async (req: Request) => {
       const sub = event.data.object as Stripe.Subscription;
       const { data: org } = await supabaseAdmin
         .from('organizations')
-        .select('id, name, slug, plan_id, stripe_subscription_id')
+        .select('id, name, slug, plan_id, account_kind, subscription_status, stripe_subscription_id')
         .eq('stripe_customer_id', customerId)
         .maybeSingle();
       if (!org || !isTheRecordsSubscription(org.stripe_subscription_id, sub.id)) break;
@@ -896,7 +896,7 @@ export const POST = withObservability(async (req: Request) => {
       const trialEndDate = sub.trial_end
         ? new Date(sub.trial_end * 1000).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
         : 'soon';
-      const billingUrl = `${SITE_URL}${getBillingHref(org.slug, org.plan_id)}`;
+      const billingUrl = `${SITE_URL}${getBillingHref(billingUrlOrgFromRow(org))}`;
 
       await sendTransactionalEmail({
         key: 'trial_ending',

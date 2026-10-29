@@ -6,6 +6,8 @@ import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import LoadingState from '@/components/shared/LoadingState';
+import { getBillingHref } from '@/lib/billing-urls';
+import { PLAN_BILLING_TITLE } from '@/lib/plan-billing-title';
 
 export default function OrgAdminHub() {
   const { currentOrg, userRole, loading } = useOrg();
@@ -62,10 +64,10 @@ export default function OrgAdminHub() {
     ] : []),
     ...(userRole === 'owner' ? [
       {
-        label: 'Subscription',
+        label: PLAN_BILLING_TITLE,
         desc: 'Manage your plan, subscription, and payment method',
         icon: CreditCard,
-        href: `${base}/billing`,
+        href: getBillingHref({ slug: currentOrg?.slug ?? '', planId: currentOrg?.planId, accountKind: currentOrg?.accountKind }),
       },
       {
         label: 'Settings',

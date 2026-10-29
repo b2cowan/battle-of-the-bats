@@ -3,6 +3,7 @@ import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
 import { createCardSetupSession } from '@/lib/billing-setup';
 import { withObservability } from '@/lib/observability';
 import { getBillingHref } from '@/lib/billing-urls';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
 
 export const POST = withObservability(async (req: Request) => {
   // Scope to the org whose billing page invoked this — never the caller's home org
@@ -19,8 +20,11 @@ export const POST = withObservability(async (req: Request) => {
 
   // ── Dev mock: redirect to local mock portal ───────────────────────────────
   if (isBillingMockEnabled()) {
+    const billingHref = getBillingHref(auth.org, { purpose: 'return' });
     return new Response(
-      JSON.stringify({ url: `${appUrl}${getBillingHref(auth.org.slug, auth.org.planId)}/mock-portal` }),
+      // A zero-team owner can render only the billing page through the wall. The coach mock
+      // returns there directly; real card and invoice management is exercised in Stripe test mode.
+      JSON.stringify({ url: `${appUrl}${billingHref}${isTeamWorkspaceOrg(auth.org) ? '' : '/mock-portal'}` }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   }
@@ -48,7 +52,7 @@ export const POST = withObservability(async (req: Request) => {
   const { stripe } = await import('@/lib/stripe');
   const session = await stripe.billingPortal.sessions.create({
     customer: auth.org.stripeCustomerId,
-    return_url: `${appUrl}${getBillingHref(auth.org.slug, auth.org.planId)}`,
+    return_url: `${appUrl}${getBillingHref(auth.org, { purpose: 'return' })}`,
   });
 
   return new Response(JSON.stringify({ url: session.url }), {
