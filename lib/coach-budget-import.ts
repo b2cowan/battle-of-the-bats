@@ -80,13 +80,14 @@ export interface DraftPayableRow {
 /**
  * A one-tap correction offered beside a warning — "Use “Entry Fees”".
  *
- * Exactly one of `lineName` / `categoryName` is set: the fix is either "you meant this word" or
- * "this word lives under that heading". `label` is the name the button says, so the UI never has
- * to work out which field the suggestion is about.
+ * Exactly one of `lineName` / `categoryName` / `payeeName` is set: the fix is either "you meant this
+ * word", "this word lives under that heading" or "you meant this payee". `label` is the name the
+ * button says, so the UI never has to work out which field the suggestion is about.
  */
 export interface RowSuggestion {
   lineName?: string;
   categoryName?: string;
+  payeeName?: string;
   label: string;
 }
 
@@ -709,7 +710,11 @@ export function normalizeWord(value: string): string {
     .toLowerCase()
     .replace(/['‘’ʼ´`]/g, '')
     .replace(/&/g, ' and ')
-    .replace(/[^a-z0-9]+/g, ' ')
+    /* ⚠ ANY LETTER OR DIGIT, IN ANY SCRIPT — not just a–z. The ASCII-only version stripped "é" out of
+       "Café Ltd" (so it equalled "Caf Ltd") and reduced a name with no ASCII at all to nothing, which
+       made it unmatchable: it could never be recognised twice, and a bills import made it a new payee
+       every time. (/review, 2026-10-29) */
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -794,13 +799,104 @@ export function snapBudgetRowsToLibrary(rows: DraftBudgetRow[], categories: Know
   });
 }
 
-/** The same courtesy for a bills sheet, which carries a category but no cost name. */
-export function snapPayableRowsToLibrary(rows: DraftPayableRow[], categories: KnownCategory[]): DraftPayableRow[] {
+// ── payees ───────────────────────────────────────────────────────────────────
+
+/**
+ * A payee this team may name — its own, or one its club shares.
+ *
+ * Structurally typed for the same reason `KnownCategory` is: this module stays free of `lib/types`
+ * and the server-only payee reader, so it can be pulled into a client bundle unchanged.
+ */
+export interface KnownPayee {
+  id: string;
+  name: string;
+  /** 'team' = this team's own payee; 'club' = one the club shares (read-only for a team). */
+  scope: 'team' | 'club';
+}
+
+/**
+ * The one place the payees list answer (`GET …/payees?all=1`) becomes an import vocabulary — the
+ * sheet and the commit route both read it through here, so they cannot disagree about who is in it.
+ * An INACTIVE own payee is left out: the picker never offers it, so neither does an import.
+ */
+export function toKnownPayees(list: {
+  payees: Array<{ id: string; name: string; isActive: boolean }>;
+  shared: Array<{ id: string; name: string }>;
+}): KnownPayee[] {
+  return [
+    ...list.payees.filter(p => p.isActive).map(p => ({ id: p.id, name: p.name, scope: 'team' as const })),
+    ...list.shared.map(p => ({ id: p.id, name: p.name, scope: 'club' as const })),
+  ];
+}
+
+/**
+ * The payee a typed name IS, or null when it is none we hold.
+ *
+ * ⚠ SAME FORGIVENESS AS A COST NAME — case, spacing and punctuation never make a new payee
+ * (`normalizeWord`). Before this, a payee typed into a bills sheet was stored as loose text and
+ * linked to nothing, so even a perfectly spelled "Ontario Baseball" never counted toward that
+ * payee's totals on the Payees page.
+ *
+ * ⚠ TWO HITS IS THE ONE CASE WORTH A RULE. A team may hold a payee its club also shares under the
+ * same name (a team merges its own into the club's, it is not forbidden to start with both). The
+ * exact spelling wins first, then the team's OWN — the one it created, and the one it can edit.
+ * Anything still ambiguous returns null rather than a coin toss, exactly as `soleMatch` does.
+ */
+export function matchPayee(typed: string, payees: KnownPayee[]): KnownPayee | null {
+  const wanted = normalizeWord(typed);
+  if (!wanted) return null;
+  const same = payees.filter(p => normalizeWord(p.name) === wanted);
+  if (same.length <= 1) return same[0] ?? null;
+  const exact = same.filter(p => key(p.name) === key(typed));
+  const pool = exact.length > 0 ? exact : same;
+  if (pool.length === 1) return pool[0];
+  const own = pool.filter(p => p.scope === 'team');
+  return own.length === 1 ? own[0] : null;
+}
+
+/**
+ * The same courtesy for a bills sheet: its category, and — when the payees are known — its payee,
+ * rewritten to the library's own spelling wherever the difference is only punctuation, spacing or
+ * case. Shown in the preview's own cells, never applied behind the coach's back.
+ */
+export function snapPayableRowsToLibrary(
+  rows: DraftPayableRow[],
+  categories: KnownCategory[],
+  payees: KnownPayee[] | null = null,
+): DraftPayableRow[] {
   const categoryNames = categories.map(c => c.name);
   return rows.map(row => {
     const categoryName = soleMatch(row.categoryName, categoryNames) ?? row.categoryName;
-    return categoryName === row.categoryName ? row : { ...row, categoryName };
+    /* ⚠ A PAYEE CELL WITH NO LETTER OR DIGIT IN IT IS A BLANK ONE. "-", "—" and "n/a"-style fillers are
+       how coaches mark an empty cell, and the import would otherwise have made a payee literally
+       called "-". Said here, in the draft the coach is about to read, so the preview and the write
+       agree (the commit route snaps through this same function). Independent of the payee list. */
+    const typedPayee = normalizeWord(row.payee) ? row.payee : '';
+    const payee = payees ? (matchPayee(typedPayee, payees)?.name ?? typedPayee) : typedPayee;
+    return categoryName === row.categoryName && payee === row.payee ? row : { ...row, categoryName, payee };
   });
+}
+
+/**
+ * What to say about a payee the team does not hold — and, where we can see it, who they probably
+ * meant. NEVER BLOCKING, for the same reason a new cost name is not: a coach must be able to pay
+ * someone we have never heard of, and the importer adds them to the payees list so the bill is not
+ * left floating. What was missing was being told.
+ */
+function newPayeeVerdict(
+  payee: string,
+  payees: KnownPayee[],
+): { warning: string; suggestion?: RowSuggestion } | null {
+  const typed = normalizeWord(payee);
+  if (!typed || matchPayee(payee, payees)) return null;
+  const near = payees.filter(p => isNearMatch(typed, normalizeWord(p.name)));
+  if (near.length === 1) {
+    return {
+      warning: `New payee — did you mean “${near[0].name}”?`,
+      suggestion: { payeeName: near[0].name, label: near[0].name },
+    };
+  }
+  return { warning: `New payee — adds “${payee}” to your payees.` };
 }
 
 /**
@@ -964,6 +1060,8 @@ export function reviewPayableRows(
   rows: DraftPayableRow[],
   categories: KnownCategory[],
   existingDescriptions: string[],
+  /** null = the team's payees could not be read; say nothing about a payee rather than guess. */
+  payees: KnownPayee[] | null = null,
 ): ReviewedPayableRow[] {
   const categoryByName = new Map(categories.map(c => [key(c.name), c]));
   const existing = new Set(existingDescriptions.map(key));
@@ -1003,12 +1101,15 @@ export function reviewPayableRows(
       };
     }
 
+    const payeeVerdict = payees ? newPayeeVerdict(row.payee, payees) : null;
+    const duplicate = existing.has(key(row.description))
+      ? 'A payable with this description already exists — this adds a second one.'
+      : '';
     return {
       ...base,
       outcome: 'add' as const,
-      warning: existing.has(key(row.description))
-        ? 'A payable with this description already exists — this adds a second one.'
-        : undefined,
+      warning: [payeeVerdict?.warning, duplicate].filter(Boolean).join(' ') || undefined,
+      suggestion: payeeVerdict?.suggestion,
     };
   });
 }
@@ -1041,16 +1142,25 @@ export const PAYABLES_TEMPLATE_HEADERS = [
 /**
  * Example ROWS for a template — category and line names drawn from the coach's own taxonomy, with
  * every amount cell left blank. Structure, never numbers: the same rule the budget starter follows.
+ *
+ * ⚠ PLACED BY HEADING, NEVER BY POSITION (2026-10-29). This used to write "category, line, blanks"
+ * for every shape, which is only true while Category is the first column. The bills template opens
+ * with Payee and Description, so its example rows arrived with the CATEGORY under Payee and the
+ * cost name under Description — and an upload of the untouched file would have read "Tournaments"
+ * as someone the team owes money. A bill's cost name goes in Description (its own words), and
+ * Payee stays blank: we cannot know who the coach pays, and a made-up name is a made-up fact.
  */
 export function templateExampleRows(
   categories: KnownCategory[],
-  columnCount: number,
+  headers: readonly string[],
   limit = 6,
 ): string[][] {
+  const cell = (heading: string, category: string, name: string): string =>
+    heading === 'Category' ? category : heading === 'Line' || heading === 'Description' ? name : '';
   const rows: string[][] = [];
   for (const category of categories) {
     for (const item of category.items) {
-      rows.push([category.name, item.name, ...Array(Math.max(0, columnCount - 2)).fill('')]);
+      rows.push(headers.map(h => cell(h, category.name, item.name)));
       if (rows.length >= limit) return rows;
     }
   }
@@ -1116,6 +1226,13 @@ export const TEMPLATE_LINE_PROMPT = {
     + 'have yet is still fine: type it, and we add it when you import.',
 } as const;
 
+export const TEMPLATE_PAYEE_PROMPT = {
+  title: 'Pick a payee, or type a new one',
+  body:
+    'These are the payees your team already has. A name that isn’t on the list is fine — we add it '
+    + 'to your payees when you import.',
+} as const;
+
 const SOURCE_LABELS: Record<BudgetWordSource, string> = {
   standard: 'Standard',
   club: 'Your club',
@@ -1169,6 +1286,32 @@ export function referenceSheetRows(categories: KnownCategory[]): string[][] {
     }
   }
   return rows;
+}
+
+/**
+ * The bills template's own list of who the team can pay — the Payees tab.
+ *
+ * ⚠ NAMED `Payees`, AND `parseXLSX` SKIPS IT BY NAME (lib/import/xlsx.ts). Its heading is `Payee`,
+ * which is an exact `ALIASES.payee` match: were a coach to delete the Data tab, this sheet would be
+ * parsed as a bills sheet of payees with no description. Same trap, same cure as the Lists sheet.
+ */
+export const TEMPLATE_PAYEES_SHEET = 'Payees';
+export const PAYEES_SHEET_HEADERS = ['Payee', 'Where it comes from'] as const;
+
+export const PAYEES_SHEET_NOTE =
+  'Copy a name from here into the Payee column so a bill lands on the payee you already have. '
+  + 'A name that isn’t here is fine — type it, and we add it to your payees when you import.';
+
+const PAYEE_SOURCE_LABELS: Record<KnownPayee['scope'], string> = {
+  team: SOURCE_LABELS.team,
+  club: SOURCE_LABELS.club,
+};
+
+/** Every payee this team may name, A to Z, each saying whose it is. */
+export function payeeReferenceRows(payees: KnownPayee[]): string[][] {
+  return [...payees]
+    .sort((a, b) => a.name.localeCompare(b.name, 'en-CA'))
+    .map(p => [p.name, PAYEE_SOURCE_LABELS[p.scope]]);
 }
 
 /**
@@ -1346,7 +1489,7 @@ export function unknownCategoryFlagFormula(
  * its OWN cell fill rather than sitting beside a swatch, which is the layout that would have put
  * text in column B.
  */
-export function templateGuideLines(shape: BudgetImportShape): XlsxGuideLine[] {
+export function templateGuideLines(shape: BudgetImportShape, hasPayees = false): XlsxGuideLine[] {
   const bullet = (text: string): XlsxGuideLine => ({ text, as: 'bullet' });
 
   /* ⚠ THREE SHAPES, THREE ANSWERS — NOT "payables and everything else" (/review, 2026-09-06). This
@@ -1377,7 +1520,13 @@ export function templateGuideLines(shape: BudgetImportShape): XlsxGuideLine[] {
       unit: 'one bill per row',
       hasCostNames: false,
       columns: [
-        bullet('Payee and Description — who you owe, and what for. Both are your own words.'),
+        /* ⚠ THE PAYEES TAB IS ONLY NAMED WHEN IT IS IN THE FILE. A team with no payees yet gets no
+           such tab, and a guide pointing at one is the same kind of lie as a guide describing a
+           column that is not there. */
+        bullet(hasPayees
+          ? 'Payee — who you owe. Pick or copy a name from the Payees tab so the bill lands on the payee you already have.'
+          : 'Payee — who you owe.'),
+        bullet('Description — what the bill is for, in your own words.'),
         bullet('Category — pick from the dropdown.'),
         bullet('Due Date — use YYYY-MM-DD. An ambiguous date is left blank rather than guessed.'),
         bullet('Deposit and Balance — fill these in only when the bill is paid in two parts.'),
@@ -1401,7 +1550,10 @@ export function templateGuideLines(shape: BudgetImportShape): XlsxGuideLine[] {
     { text: 'Your own words', as: 'heading' },
     ...(plan.hasCostNames
       ? [bullet('A cost name we don’t have is fine — type it, and we add it to your team’s list when you import.')]
-      : [bullet('Payee and Description are free text — write them however your team says them.')]),
+      : [
+        bullet('A payee we don’t have is fine — type it, and we add it to your payees when you import.'),
+        bullet('Description is free text — write it however your team says it.'),
+      ]),
     bullet('A category cannot be created this way. If the one you want isn’t in the dropdown, add it on your Budget page first, then download the template again.'),
     {},
     { text: 'What the colours mean', as: 'heading' },
@@ -1433,6 +1585,7 @@ export function templateGuideLines(shape: BudgetImportShape): XlsxGuideLine[] {
        them. This said "came from us, your club, or this team", which leaves a coach to work out
        for themselves that "us" is the column reading "Standard". */
     bullet('Every category and cost name your team can use, and whether each is marked Standard, Your club, or This team.'),
+    ...(hasPayees ? [bullet('Payees tab — everyone your team can pay, and whether each is marked Your club or This team.')] : []),
   ];
 }
 
@@ -1452,8 +1605,12 @@ export function budgetTemplateWorkbook(
   headers: string[],
   categories: KnownCategory[],
   shape: BudgetImportShape = 'month-grid',
+  payees: KnownPayee[] = [],
 ): { rows: string[][]; options: XlsxOptions } {
-  const rows = templateExampleRows(categories, headers.length);
+  const rows = templateExampleRows(categories, headers);
+  // Only the bills sheet has a Payee column, and only a team that holds payees has a list to offer.
+  const payeeColumn = shape === 'payables' ? headers.indexOf('Payee') : -1;
+  const hasPayees = payeeColumn >= 0 && payees.length > 0;
   const choices = templateChoiceLists(categories);
 
   const columnChoices: (XlsxColumnChoice | undefined)[] = headers.map(() => undefined);
@@ -1478,6 +1635,12 @@ export function budgetTemplateWorkbook(
       )
       : `${TEMPLATE_LISTS_SHEET}!$B$2:$B$${choices.items.length + 1}`;
     columnChoicePrompts[lineColumn] = { ...TEMPLATE_LINE_PROMPT };
+  }
+  if (hasPayees) {
+    /* A dropdown that OFFERS and never refuses — the writer keeps `showErrorMessage` off — because a
+       payee we have never heard of is added at import, exactly as a new cost name is. */
+    columnChoices[payeeColumn] = `${TEMPLATE_PAYEES_SHEET}!$A$2:$A$${payees.length + 1}`;
+    columnChoicePrompts[payeeColumn] = { ...TEMPLATE_PAYEE_PROMPT };
   }
 
   /* Four columns, two jobs. A and B are the plain lists (categories, and every cost name once).
@@ -1519,7 +1682,7 @@ export function budgetTemplateWorkbook(
       columnChoices,
       columnChoicePrompts,
       columnFlags,
-      guideSheet: { name: TEMPLATE_GUIDE_SHEET, lines: templateGuideLines(shape) },
+      guideSheet: { name: TEMPLATE_GUIDE_SHEET, lines: templateGuideLines(shape, hasPayees) },
       // Every row a coach could fill in, not just the examples we ship.
       choiceRowCount: MAX_IMPORT_ROWS,
       extraSheets: [
@@ -1529,6 +1692,12 @@ export function budgetTemplateWorkbook(
           rows: referenceSheetRows(categories),
           note: REFERENCE_SHEET_NOTE,
         },
+        ...(hasPayees ? [{
+          name: TEMPLATE_PAYEES_SHEET,
+          headers: [...PAYEES_SHEET_HEADERS],
+          rows: payeeReferenceRows(payees),
+          note: PAYEES_SHEET_NOTE,
+        }] : []),
         {
           name: TEMPLATE_LISTS_SHEET,
           /* ⚠⚠ NOT ONE OF THESE MAY BE A COLUMN NAME THE READER RECOGNISES (/review, 2026-09-06).

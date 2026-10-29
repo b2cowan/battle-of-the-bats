@@ -8,7 +8,8 @@ import {
   LIST_TEMPLATE_HEADERS, PAYABLES_TEMPLATE_HEADERS,
   normalizeWord, snapBudgetRowsToLibrary, snapPayableRowsToLibrary,
   referenceSheetRows, templateChoiceLists, toKnownCategories, lineChoiceFormula,
-  type KnownCategory, type ExistingBudgetLine, type DraftBudgetRow,
+  matchPayee, toKnownPayees, payeeReferenceRows,
+  type KnownCategory, type KnownPayee, type ExistingBudgetLine, type DraftBudgetRow, type DraftPayableRow,
 } from '../../lib/coach-budget-import.ts';
 import type { ParsedImportFile } from '../../lib/import/types.ts';
 
@@ -519,24 +520,168 @@ describe('reviewPayableRows', () => {
   });
 });
 
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   THE PAYEE IS A RECORD (owner ruling 2026-10-29): an imported bill links to a payee the team
+   already has, or creates one — it is never loose text beside the bill.
+   ══════════════════════════════════════════════════════════════════════════════════════════ */
+
+describe('payees on a bills sheet', () => {
+  const PAYEES: KnownPayee[] = [
+    { id: 'p1', name: 'Ontario Baseball Association', scope: 'club' },
+    { id: 'p2', name: 'City Parks & Rec', scope: 'team' },
+  ];
+  const bill = (over: Partial<DraftPayableRow> = {}): DraftPayableRow => ({
+    rowNumber: 1, payee: '', description: 'Diamond permits', categoryName: '',
+    amount: '600', depositAmount: '600', depositDueDate: '2026-04-01',
+    balanceAmount: '', balanceDueDate: '', ...over,
+  });
+
+  it('matches a payee through case, spacing and punctuation — never a new one', () => {
+    assert.equal(matchPayee('city parks and rec', PAYEES)?.id, 'p2');
+    assert.equal(matchPayee('  City  Parks & Rec. ', PAYEES)?.id, 'p2');
+    assert.equal(matchPayee('Somebody Else', PAYEES), null);
+    assert.equal(matchPayee('', PAYEES), null);
+  });
+
+  it('a club-shared payee and a team payee of one name: the same spelling first, then the team’s own', () => {
+    const both: KnownPayee[] = [
+      { id: 'club', name: 'Ice Rink', scope: 'club' },
+      { id: 'team', name: 'Ice-Rink', scope: 'team' },
+    ];
+    // Both reduce to "ice rink", but only the club's is spelled the way it was typed (case aside).
+    assert.equal(matchPayee('ice rink', both)?.id, 'club');
+    assert.equal(matchPayee('Ice-Rink', both)?.id, 'team');
+    // Same spelling on both sides: the one the team can edit.
+    const twins: KnownPayee[] = [
+      { id: 'club', name: 'Rink', scope: 'club' },
+      { id: 'team', name: 'Rink', scope: 'team' },
+    ];
+    assert.equal(matchPayee('rink', twins)?.id, 'team');
+    // Two of the team's own that differ only in punctuation: a coin toss, so no match at all.
+    const ambiguous: KnownPayee[] = [
+      { id: 'a', name: 'Entry-Fees Co', scope: 'team' },
+      { id: 'b', name: 'Entry Fees Co', scope: 'team' },
+    ];
+    assert.equal(matchPayee('entry fees co!', ambiguous), null);
+  });
+
+  it('snaps the payee to the library’s own spelling, and only when payees are known', () => {
+    const [snapped] = snapPayableRowsToLibrary([bill({ payee: 'city parks and rec' })], cats(), PAYEES);
+    assert.equal(snapped.payee, 'City Parks & Rec');
+    const [untouched] = snapPayableRowsToLibrary([bill({ payee: 'city parks and rec' })], cats());
+    assert.equal(untouched.payee, 'city parks and rec');
+  });
+
+  it('a filler like "-" or "n/a" is a blank payee, never a payee called "-"', () => {
+    for (const filler of ['-', '—', '??', ' . ']) {
+      assert.equal(snapPayableRowsToLibrary([bill({ payee: filler })], cats(), PAYEES)[0].payee, '', filler);
+      assert.equal(snapPayableRowsToLibrary([bill({ payee: filler })], cats())[0].payee, '', filler);
+    }
+    // And a real name is left exactly as typed when it matches nothing.
+    assert.equal(snapPayableRowsToLibrary([bill({ payee: 'Pro Shop Ltd' })], cats(), PAYEES)[0].payee, 'Pro Shop Ltd');
+  });
+
+  it('accents and other scripts keep their meaning — they are not stripped to nothing', () => {
+    assert.notEqual(normalizeWord('Café Ltd'), normalizeWord('Caf Ltd'));
+    assert.equal(normalizeWord('Café Ltd'), 'café ltd');
+    assert.equal(normalizeWord('东京 Arena'), '东京 arena');
+    const kanji: KnownPayee[] = [{ id: 'k', name: '东京 Arena', scope: 'team' }];
+    assert.equal(matchPayee('东京  arena', kanji)?.id, 'k');
+    assert.equal(matchPayee('Caf Ltd', [{ id: 'c', name: 'Café Ltd', scope: 'team' }]), null);
+  });
+
+  it('a known payee says nothing; a new one is told and never blocked', () => {
+    const [known] = reviewPayableRows([bill({ payee: 'City Parks & Rec' })], cats(), [], PAYEES);
+    assert.equal(known.outcome, 'add');
+    assert.equal(known.warning, undefined);
+
+    const [fresh] = reviewPayableRows([bill({ payee: 'Pro Shop Ltd' })], cats(), [], PAYEES);
+    assert.equal(fresh.outcome, 'add');
+    assert.match(fresh.warning!, /New payee — adds “Pro Shop Ltd” to your payees/);
+    assert.equal(fresh.suggestion, undefined);
+  });
+
+  it('offers the payee the coach probably meant, as a one-tap fix', () => {
+    const [near] = reviewPayableRows([bill({ payee: 'Ontario Baseball Assoc' })], cats(), [], PAYEES);
+    assert.equal(near.outcome, 'add');
+    assert.match(near.warning!, /did you mean “Ontario Baseball Association”/);
+    assert.equal(near.suggestion?.payeeName, 'Ontario Baseball Association');
+  });
+
+  it('says nothing about a payee it cannot check, and nothing for a blank one', () => {
+    assert.equal(reviewPayableRows([bill({ payee: 'Pro Shop Ltd' })], cats(), [], null)[0].warning, undefined);
+    assert.equal(reviewPayableRows([bill({ payee: '' })], cats(), [], PAYEES)[0].warning, undefined);
+  });
+
+  it('keeps the duplicate-description warning beside the payee one', () => {
+    const [r] = reviewPayableRows([bill({ payee: 'Pro Shop Ltd' })], cats(), ['Diamond permits'], PAYEES);
+    assert.match(r.warning!, /New payee/);
+    assert.match(r.warning!, /already exists/);
+  });
+
+  it('toKnownPayees leaves an inactive own payee out and marks whose each one is', () => {
+    const known = toKnownPayees({
+      payees: [{ id: 'a', name: 'Active', isActive: true }, { id: 'b', name: 'Gone', isActive: false }],
+      shared: [{ id: 'c', name: 'Club One' }],
+    });
+    assert.deepEqual(known, [
+      { id: 'a', name: 'Active', scope: 'team' },
+      { id: 'c', name: 'Club One', scope: 'club' },
+    ]);
+  });
+
+  it('the Payees tab lists A to Z and says whose each is', () => {
+    assert.deepEqual(payeeReferenceRows(PAYEES), [
+      ['City Parks & Rec', 'This team'],
+      ['Ontario Baseball Association', 'Your club'],
+    ]);
+  });
+
+  function cats(): KnownCategory[] {
+    return [...CATEGORIES, { id: 'c3', name: 'Facilities', items: [], incomeItems: [] }];
+  }
+});
+
 describe('templates (D-G1: structure, never amounts)', () => {
   it('every template row leaves every amount cell EMPTY', () => {
     const headers = monthGridTemplateHeaders(['2026-09', '2026-10']);
     assert.deepEqual(headers, ['Category', 'Line', "Sep '26", "Oct '26", 'Notes']);
 
-    for (const cols of [headers.length, LIST_TEMPLATE_HEADERS.length, PAYABLES_TEMPLATE_HEADERS.length]) {
-      for (const row of templateExampleRows(CATEGORIES, cols)) {
-        // Column 0 is the category and column 1 the line name — both are structure. EVERY other
-        // cell must be blank: a dollar figure in a downloadable file is one the product proposed.
-        assert.deepEqual(row.slice(2), Array(cols - 2).fill(''));
-        assert.ok(row[0] && row[1]);
+    for (const sheetHeaders of [headers, [...LIST_TEMPLATE_HEADERS], [...PAYABLES_TEMPLATE_HEADERS]]) {
+      for (const row of templateExampleRows(CATEGORIES, sheetHeaders)) {
+        // Only the category and the cost name are structure. EVERY other cell must be blank: a
+        // dollar figure in a downloadable file is one the product proposed.
+        sheetHeaders.forEach((h, at) => {
+          if (!['Category', 'Line', 'Description'].includes(h)) assert.equal(row[at], '', `${h} must ship blank`);
+        });
       }
     }
   });
 
   it('example rows come from the coach’s own taxonomy and stay short', () => {
-    const rows = templateExampleRows(CATEGORIES, 4);
+    const rows = templateExampleRows(CATEGORIES, [...LIST_TEMPLATE_HEADERS]);
     assert.deepEqual(rows.map(r => r[1]), ['Entry Fees', 'Uniforms', 'Umpire Fees']);
+  });
+
+  /* ⚠ THE DEFECT THIS GUARDS (2026-10-29): the bills template shipped its example rows with the
+     CATEGORY under Payee and the cost name under Description, because every shape was filled
+     "category, line, blanks" by position. An upload of the untouched file read "Tournaments" as
+     someone the team owes money. Every example cell must sit under the heading that names it. */
+  it('every template shape puts each example under the heading that names it', () => {
+    const bills = [...PAYABLES_TEMPLATE_HEADERS];
+    for (const row of templateExampleRows(CATEGORIES, bills)) {
+      assert.equal(row[bills.indexOf('Payee')], '', 'we cannot know who the coach pays');
+      assert.ok(CATEGORIES.some(c => c.name === row[bills.indexOf('Category')]), 'Category holds a category');
+      assert.ok(
+        CATEGORIES.some(c => c.items.some(i => i.name === row[bills.indexOf('Description')])),
+        'Description holds a cost name',
+      );
+    }
+    const list = [...LIST_TEMPLATE_HEADERS];
+    for (const row of templateExampleRows(CATEGORIES, list)) {
+      assert.ok(CATEGORIES.some(c => c.name === row[list.indexOf('Category')]));
+      assert.ok(CATEGORIES.some(c => c.items.some(i => i.name === row[list.indexOf('Line')])));
+    }
   });
 
   it('offers a year from this month when the team has no dated money yet', () => {

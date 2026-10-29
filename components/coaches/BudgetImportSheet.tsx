@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Download, FileSpreadsheet, TriangleAlert, Upload } from 'lucide-react';
 import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { generateCSV, downloadCSVBlob, downloadXLSX } from '@/lib/export';
@@ -8,12 +8,12 @@ import type { ParsedImportFile } from '@/lib/import/types';
 import {
   rowsFromMonthGrid, rowsFromList, rowsFromPayables,
   reviewBudgetRows, reviewPayableRows, committable,
-  snapBudgetRowsToLibrary, snapPayableRowsToLibrary, wordsFor,
+  snapBudgetRowsToLibrary, snapPayableRowsToLibrary, wordsFor, toKnownPayees,
   monthGridTemplateHeaders, templateExampleRows, templateMonths,
   budgetTemplateWorkbook, TEMPLATE_DATA_SHEET,
   LIST_TEMPLATE_HEADERS, PAYABLES_TEMPLATE_HEADERS, MAX_IMPORT_ROWS,
   type BudgetImportShape, type DraftBudgetRow, type DraftPayableRow,
-  type ReviewedBudgetRow, type ReviewedPayableRow, type KnownCategory, type ExistingBudgetLine,
+  type ReviewedBudgetRow, type ReviewedPayableRow, type KnownCategory, type KnownPayee, type ExistingBudgetLine,
   type RowSuggestion,
 } from '@/lib/coach-budget-import';
 import { splitWindow } from '@/lib/coach-budget-period-modes';
@@ -104,6 +104,34 @@ export default function BudgetImportSheet({
 
   const months = useMemo(() => templateMonths(gridMonths, todayMonth), [gridMonths, todayMonth]);
 
+  /* ⚠ THE TEAM'S PAYEES, READ HERE RATHER THAN HANDED DOWN BY THE THREE SCREENS THAT MOUNT THIS
+     WINDOW — one reader instead of three mounts that must each remember it. Only the bills shape
+     needs them. `null` means "not known" (still loading, or the read failed) and is NOT the same as
+     "this team has none": review says nothing about a payee it cannot check, and the template is
+     built without a Payees tab. The server reads the list itself on import either way. */
+  const [payees, setPayees] = useState<KnownPayee[] | null>(null);
+  const payeesRequest = useRef<Promise<KnownPayee[] | null> | null>(null);
+  const loadPayees = useCallback((): Promise<KnownPayee[] | null> => {
+    if (!payeesRequest.current) {
+      payeesRequest.current = fetch(`/api/coaches/${orgSlug}/teams/${teamId}/payees?all=1`)
+        .then(res => (res.ok ? res.json() : Promise.reject(new Error('payees'))))
+        .then(data => {
+          const known = toKnownPayees({ payees: data.payees ?? [], shared: data.shared ?? [] });
+          setPayees(known);
+          return known;
+        })
+        .catch(() => {
+          // A failed read is not cached: the next ask (a template click, the next shape) tries again.
+          payeesRequest.current = null;
+          return null;
+        });
+    }
+    return payeesRequest.current;
+  }, [orgSlug, teamId]);
+  useEffect(() => {
+    if (shape === 'payables') void loadPayees();
+  }, [shape, loadPayees]);
+
   // Re-reviewed on every edit against the plan this sheet already holds, so fixing a category in
   // the preview clears its verdict immediately. The commit route reviews again, independently.
   const budgetRows: ReviewedBudgetRow[] = useMemo(
@@ -111,8 +139,8 @@ export default function BudgetImportSheet({
     [budgetDraft, categories, existingLines],
   );
   const payableRows: ReviewedPayableRow[] = useMemo(
-    () => (payableDraft ? reviewPayableRows(payableDraft, categories, existingPayableDescriptions) : []),
-    [payableDraft, categories, existingPayableDescriptions],
+    () => (payableDraft ? reviewPayableRows(payableDraft, categories, existingPayableDescriptions, payees) : []),
+    [payableDraft, categories, existingPayableDescriptions, payees],
   );
 
   const isPayables = shape === 'payables';
@@ -134,6 +162,9 @@ export default function BudgetImportSheet({
   async function downloadTemplate(format: 'xlsx' | 'csv') {
     const headers = templateHeaders();
     const name = `budget-${shape}-template`;
+    // Waits for the payees (usually already in) so the bills template's Payees tab is not missed by a
+    // fast click; a failed read gives the template without one rather than no template.
+    const knownPayees = shape === 'payables' ? (await loadPayees()) ?? [] : [];
 
     /* ⚠ THE CSV KEEPS THE HEADINGS AND THE EXAMPLES, AND THAT IS THE WHOLE OF IT. A CSV file
        cannot carry a second tab, a dropdown or a cell message — there is nowhere to put the
@@ -141,14 +172,14 @@ export default function BudgetImportSheet({
        instead, which is the half that works whatever the sheet came from. */
     if (format === 'csv') {
       // Category and line NAMES from the coach's own taxonomy; every amount cell blank (D-G1).
-      downloadCSVBlob(`${name}.csv`, generateCSV(headers, templateExampleRows(categories, headers.length)));
+      downloadCSVBlob(`${name}.csv`, generateCSV(headers, templateExampleRows(categories, headers)));
       return;
     }
 
     /* The Excel file carries the team's whole vocabulary: a readable Reference tab, a hidden Lists
        tab the dropdowns point at, and the sentence each dropdown says when a coach lands on it.
        None of it ever holds an amount (D-G1) — it says what a team can budget FOR, never how much. */
-    const { rows, options } = budgetTemplateWorkbook(headers, categories, shape);
+    const { rows, options } = budgetTemplateWorkbook(headers, categories, shape, knownPayees);
     await downloadXLSX(`${name}.xlsx`, headers, rows, TEMPLATE_DATA_SHEET, options);
   }
 
@@ -176,7 +207,7 @@ export default function BudgetImportSheet({
     if (shape === 'payables') {
       const rows = rowsFromPayables(parsed);
       if (rows.length === 0) { setError('No rows we could read. Check the header row, or start from the template.'); return; }
-      setPayableDraft(snapPayableRowsToLibrary(rows, categories));
+      setPayableDraft(snapPayableRowsToLibrary(rows, categories, payees));
     } else {
       const rows = shape === 'list'
         ? rowsFromList(parsed)
@@ -198,7 +229,7 @@ export default function BudgetImportSheet({
       if (!res.ok) throw new Error(data.error ?? 'That file could not be read.');
       // Snapped HERE rather than in the preview route, so an uploaded file and a pasted block go
       // through the identical correction against the identical library — one place, one behaviour.
-      if (shape === 'payables') setPayableDraft(snapPayableRowsToLibrary((data.rows ?? []) as DraftPayableRow[], categories));
+      if (shape === 'payables') setPayableDraft(snapPayableRowsToLibrary((data.rows ?? []) as DraftPayableRow[], categories, payees));
       else setBudgetDraft(snapBudgetRowsToLibrary((data.rows ?? []) as DraftBudgetRow[], categories));
       setStep('review');
     } catch (e: unknown) {
@@ -236,12 +267,14 @@ export default function BudgetImportSheet({
       const updated = (data.updated ?? []) as unknown[];
       const failed = (data.failed ?? []) as { name: string }[];
       const skipped = (data.skipped ?? []) as { name: string; reason: string }[];
+      const payeesCreated = (data.payeesCreated ?? []) as string[];
 
       const parts = [
         created.length ? `${created.length} added` : '',
         updated.length ? `${updated.length} updated` : '',
       ].filter(Boolean).join(', ');
       const trailing = [
+        payeesCreated.length ? `${payeesCreated.length} new payee${payeesCreated.length === 1 ? '' : 's'} added (${payeesCreated.join(', ')})` : '',
         failed.length ? `${failed.length} couldn’t be saved (${failed.map(f => f.name).join(', ')})` : '',
         skipped.length ? `${skipped.length} skipped` : '',
       ].filter(Boolean).join(' · ');
@@ -344,8 +377,8 @@ export default function BudgetImportSheet({
             </span>
           </div>
           <p className={styles.templateNote}>
-            The Excel template lists every category and cost name your team can use on its own
-            tab, and the Category{shape === 'payables' ? '' : ' and Line'} columns are dropdowns,
+            The Excel template lists every category {shape === 'payables' ? 'and payee' : 'and cost name'} your team can use on its own
+            tab, and the {shape === 'payables' ? 'Payee and Category' : 'Category and Line'} columns are dropdowns,
             so nothing has to be typed from memory. The CSV has the headings only. Amounts are
             left blank either way — we never put a figure in your budget.
           </p>
@@ -419,18 +452,35 @@ export default function BudgetImportSheet({
             </datalist>
           )))}
 
+          {isPayables && (
+            <datalist id="budget-import-payees">
+              {(payees ?? []).map(p => <option key={p.id} value={p.name} />)}
+            </datalist>
+          )}
+
           <div className={styles.reviewWrap}>
             {isPayables ? (
               <table className={styles.reviewTable}>
                 <thead>
                   <tr>
-                    <th>#</th><th>What</th><th>Category</th><th className={styles.numCol}>Amount</th><th>What will happen</th>
+                    <th>#</th><th>Payee</th><th>What</th><th>Category</th><th className={styles.numCol}>Amount</th><th>What will happen</th>
                   </tr>
                 </thead>
                 <tbody>
                   {payableRows.map((row, i) => (
                     <tr key={row.rowNumber} className={row.outcome === 'blocked' ? styles.rowBlocked : ''}>
                       <td className={styles.rowNum}>{row.rowNumber}</td>
+                      <td>
+                        {/* Type-ahead over the payees this team already has — still free text,
+                            because a payee we have never heard of is added on import. */}
+                        <input
+                          className={styles.cellInput}
+                          value={row.payee}
+                          list="budget-import-payees"
+                          aria-label={`Payee, row ${row.rowNumber}`}
+                          onChange={e => updatePayableRow(i, { payee: e.target.value })}
+                        />
+                      </td>
                       <td>
                         <input
                           className={styles.cellInput}
@@ -455,7 +505,9 @@ export default function BudgetImportSheet({
                         </select>
                       </td>
                       <td className={styles.numCol}>{row.total > 0 ? fmt(row.total) : '—'}</td>
-                      <td><Verdict row={row} /></td>
+                      <td>
+                        <Verdict row={row} onApply={s => updatePayableRow(i, { ...(s.payeeName ? { payee: s.payeeName } : {}) })} />
+                      </td>
                     </tr>
                   ))}
                 </tbody>

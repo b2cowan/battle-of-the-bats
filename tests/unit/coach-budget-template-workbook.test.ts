@@ -421,7 +421,7 @@ describe('the budget template workbook', () => {
 
     assert.deepEqual(parsed.headers.slice(0, 2), ['Category', 'Line']);
     // The example rows we ship, and nothing from Reference or Lists.
-    assert.equal(parsed.rows.length, templateExampleRows(CATEGORIES, 5).length);
+    assert.equal(parsed.rows.length, templateExampleRows(CATEGORIES, parsed.headers).length);
     const names = parsed.rows.map(r => r.values[parsed.headers[1]]);
     assert.deepEqual(names, ['Entry Fees', 'Charter Bus', 'Umpire Fees']);
     // "Umpire Fees" is the giveaway: were Lists being read, its sorted column would appear too.
@@ -434,6 +434,66 @@ describe('the budget template workbook', () => {
     const parsed = await parseXLSX(bytes, MAX_IMPORT_ROWS);
     assert.deepEqual(parsed.headers, ['Category', 'Line', 'Amount']);
     assert.equal(parsed.rows.length, 1);
+  });
+});
+
+describe('the bills template’s Payees tab', () => {
+  const BILLS: string[] = [...PAYABLES_TEMPLATE_HEADERS];
+  const PAYEES = [
+    { id: 'p2', name: 'City Parks & Rec', scope: 'team' as const },
+    { id: 'p1', name: 'Ontario Baseball Association', scope: 'club' as const },
+  ];
+  function buildBills(payees = PAYEES) {
+    const { rows, options } = budgetTemplateWorkbook(BILLS, CATEGORIES, 'payables', payees);
+    return buildXLSXWorkbook(BILLS, rows, TEMPLATE_DATA_SHEET, options);
+  }
+
+  it('carries every payee the team can use, A to Z, saying whose each is', async () => {
+    const { book } = await reload(buildBills());
+    assert.ok(book.worksheets.map(w => w.name).includes('Payees'));
+    const sheet = book.getWorksheet('Payees')!;
+    assert.deepEqual([sheet.getRow(1).getCell(1).value, sheet.getRow(1).getCell(2).value], ['Payee', 'Where it comes from']);
+    assert.deepEqual(
+      [2, 3].map(r => [sheet.getRow(r).getCell(1).value, sheet.getRow(r).getCell(2).value]),
+      [['City Parks & Rec', 'This team'], ['Ontario Baseball Association', 'Your club']],
+    );
+  });
+
+  it('puts a dropdown on the Payee column that offers the list and never refuses a new name', async () => {
+    const { book } = await reload(buildBills());
+    const validation = book.getWorksheet('Data')!.getRow(2).getCell(BILLS.indexOf('Payee') + 1).dataValidation!;
+    assert.equal(validation.formulae[0], 'Payees!$A$2:$A$3');
+    assert.ok(!validation.showErrorMessage, 'a payee we have never heard of is added at import, so it must stay typeable');
+  });
+
+  it('example rows sit under their own headings, with the Payee left blank', async () => {
+    const { book } = await reload(buildBills());
+    const data = book.getWorksheet('Data')!;
+    const at = (name: string) => BILLS.indexOf(name) + 1;
+    assert.equal(data.getRow(2).getCell(at('Payee')).value ?? '', '');
+    assert.equal(data.getRow(2).getCell(at('Category')).value, 'Tournaments');
+    assert.equal(data.getRow(2).getCell(at('Description')).value, 'Entry Fees');
+  });
+
+  it('ROUND TRIP — our own importer reads the Data sheet and never the Payees tab', async () => {
+    const { bytes } = await reload(buildBills());
+    const parsed = await parseXLSX(bytes, MAX_IMPORT_ROWS);
+    assert.deepEqual(parsed.headers, BILLS);
+    assert.equal(parsed.rows.length, templateExampleRows(CATEGORIES, BILLS).length);
+    assert.ok(parsed.rows.every(r => !(r.values['Payee'] ?? '').trim()));
+  });
+
+  it('a team with no payees yet gets no Payees tab, and a guide that does not point at one', async () => {
+    const { book } = await reload(buildBills([]));
+    assert.ok(!book.worksheets.map(w => w.name).includes('Payees'));
+    const said = templateGuideLines('payables', false).map(l => l.text ?? '').join('\n');
+    assert.ok(!/Payees tab/.test(said));
+    assert.ok(/Payees tab/.test(templateGuideLines('payables', true).map(l => l.text ?? '').join('\n')));
+  });
+
+  it('only the bills sheet ever gets one', async () => {
+    const { options } = budgetTemplateWorkbook(HEADERS, CATEGORIES, 'month-grid', PAYEES);
+    assert.ok(!options.extraSheets!.some(s => s.name === 'Payees'));
   });
 });
 

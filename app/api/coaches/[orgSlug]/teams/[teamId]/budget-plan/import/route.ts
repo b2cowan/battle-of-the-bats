@@ -3,8 +3,9 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import {
   getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear, createRepTeamExpense,
-  getOrgMemberDisplayName, recordRepTeamImport,
+  getOrgMemberDisplayName, recordRepTeamImport, createOrgPayee,
 } from '@/lib/db';
+import { listTeamPayees } from '@/lib/team-payees';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
@@ -22,9 +23,9 @@ import {
 } from '@/lib/coach-budget-items';
 import {
   reviewBudgetRows, reviewPayableRows, moneyValue, toKnownCategories, wordsFor,
-  snapBudgetRowsToLibrary, snapPayableRowsToLibrary,
+  snapBudgetRowsToLibrary, snapPayableRowsToLibrary, matchPayee, toKnownPayees,
   MAX_IMPORT_ROWS,
-  type DraftBudgetRow, type DraftPayableRow, type KnownCategory, type ExistingBudgetLine,
+  type DraftBudgetRow, type DraftPayableRow, type KnownCategory, type KnownPayee, type ExistingBudgetLine,
 } from '@/lib/coach-budget-import';
 
 /**
@@ -213,6 +214,8 @@ export const POST = withObservability(async (req: Request,
   const updated: Array<{ rowNumber: number; name: string }> = [];
   const failed: Array<{ rowNumber: number; name: string; error: string }> = [];
   const skipped: Array<{ rowNumber: number; name: string; reason: string }> = [];
+  /** Payees this run added to the team's list — said back to the coach, never done silently. */
+  const payeesCreated: string[] = [];
 
   if (shape === 'payables') {
     // ââ payables âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
@@ -221,10 +224,20 @@ export const POST = withObservability(async (req: Request,
       .select('description')
       .eq('program_year_id', programYear.id);
 
+    /* ⚠ THE PAYEE IS A RECORD, NOT A LABEL. It used to be stored as loose text beside the bill and
+       linked to nothing, so a payee typed on a sheet never counted toward that payee's totals on the
+       Payees page — the column was decoration. Now a name matches a payee this team may use (its own,
+       or one its club shares) and the bill is written WITH that payee, or the name creates a new
+       team payee, exactly as a new cost name creates a team item. The list is read here, never taken
+       from the client: a payee id in a request body is a guess, and `listTeamPayees` is the one rule
+       for who a team may name. */
+    const knownPayees: KnownPayee[] = toKnownPayees(await listTeamPayees(ctx!.org, team.id));
+
     const reviewed = reviewPayableRows(
-      snapPayableRowsToLibrary(incoming.map(toPayableDraft), categories),
+      snapPayableRowsToLibrary(incoming.map(toPayableDraft), categories, knownPayees),
       categories,
       (existingRows ?? []).map((e: { description: string }) => e.description),
+      knownPayees,
     );
 
     for (const row of reviewed) {
@@ -251,6 +264,28 @@ export const POST = withObservability(async (req: Request,
           })
         : [{ amount: row.total, dueDate: row.depositDueDate || tournamentToday() }];
       try {
+        let payee = row.payee ? matchPayee(row.payee, knownPayees) : null;
+        // Said back to the coach only once the bill it was made for has landed — a payee made for a
+        // row that then failed is still on their list, but is not reported as part of this import.
+        let madePayee: string | null = null;
+        if (row.payee && !payee) {
+          try {
+            const made = await createOrgPayee({ orgId: ctx!.org.id, teamId: team.id, name: row.payee, createdBy: ctx!.user.id });
+            payee = { id: made.id, name: made.name, scope: 'team' };
+            madePayee = made.name;
+          } catch (e: unknown) {
+            if ((e as { code?: string })?.code !== '23505') throw e;
+            /* ⚠ THE NAME EXISTS ALREADY — an inactive payee of this team (the picker never offers
+               one), or one made in another tab since this run read the list. Take it rather than
+               refuse the bill; same recovery the new-cost-name path makes. */
+            const fresh = await listTeamPayees(ctx!.org, team.id);
+            const found = fresh.payees.find(p => p.name.trim().toLowerCase() === row.payee.trim().toLowerCase());
+            if (!found) throw e;
+            payee = { id: found.id, name: found.name, scope: 'team' };
+          }
+          // Two rows on one sheet naming the same new payee land on ONE payee, not a race.
+          knownPayees.push(payee);
+        }
         // The SAME writer the Add Payable form uses â so an imported payable carries its payee
         // and its author in the columns that hold them, rather than a second shape of the row.
         await createRepTeamExpense({
@@ -262,10 +297,12 @@ export const POST = withObservability(async (req: Request,
           description: row.description,
           category: row.categoryName || null,
           installments,
-          payeePayer: row.payee || null,
+          // Linked OR free text, never both — the two are exclusive by convention (the data dictionary).
+          payeeId: payee?.id ?? null,
           createdBy: ctx!.user.id,
         });
         created.push({ rowNumber: row.rowNumber, name: row.description });
+        if (madePayee) payeesCreated.push(madePayee);
       } catch (e: unknown) {
         failed.push({
           rowNumber: row.rowNumber,
@@ -664,5 +701,5 @@ export const POST = withObservability(async (req: Request,
     createdByName,
   });
 
-  return NextResponse.json({ created, updated, failed, skipped });
+  return NextResponse.json({ created, updated, failed, skipped, payeesCreated });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-plan/import' });

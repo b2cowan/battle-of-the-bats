@@ -42,7 +42,7 @@ export async function parseXLSX(buffer: ArrayBuffer, maxRows: number): Promise<P
 
   const worksheet =
     workbook.getWorksheet('Data') ??
-    workbook.worksheets.find(sheet => !['instructions', 'reference'].includes(sheet.name.trim().toLowerCase())) ??
+    workbook.worksheets.find(sheet => !['instructions', 'reference', 'payees'].includes(sheet.name.trim().toLowerCase())) ??
     workbook.worksheets[0];
 
   if (!worksheet) throw new Error('The workbook has no worksheets.');
