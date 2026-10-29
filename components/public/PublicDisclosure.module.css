@@ -1,0 +1,18 @@
+.disclosure { min-width: 0; }
+.toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; min-height: 52px; padding: 8px 14px; text-align: left;
+  border: 1px solid var(--club-line); border-radius: 8px; cursor: pointer;
+  background: var(--club-card); color: var(--club-text); font: 600 1rem/1.3 var(--club-text-face);
+}
+.toggle small { display: block; color: var(--club-dim); font-size: 0.875rem; font-weight: 400; }
+.toggle[aria-expanded='true'] svg { transform: rotate(180deg); }
+.toggle:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 2px; }
+.content { display: none; margin-top: 8px; }
+.content[data-open='true'] { display: block; }
+.desktopTitle { display: none; }
+@media (min-width: 1024px) {
+  .disclosure[data-desktop-open] .toggle { display: none; }
+  .disclosure[data-desktop-open] .content { display: block; }
+  .disclosure[data-desktop-open] .desktopTitle { display: block; color: var(--club-text); font: 600 1rem/1.3 var(--club-text-face); }
+}

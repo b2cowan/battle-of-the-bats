@@ -9,13 +9,14 @@ import {
   getTeams,
   getTournamentRegistrationFields,
 } from '@/lib/db';
-import { publicTournamentContactEmail } from '@/lib/public-frame-server';
+import { isPublicFrameOn, publicTournamentContactEmail } from '@/lib/public-frame-server';
 import { getTournamentPreviewContext } from '@/lib/tournament-preview';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { isPublicPageEnabled, type PublicPageKey } from '@/lib/public-pages';
 import { toPublicTeam, type PublicTournamentPageData } from '@/lib/public-tournament-data';
 import { getPublicStandingsByDivision, onlyPublishedGames } from '@/lib/public-games';
 import ScheduleContent from '@/components/public/ScheduleContent';
+import PublicSchedule from '@/components/public/PublicSchedule';
 import StandingsContent from '@/components/public/StandingsContent';
 import TeamsContent from '@/components/public/TeamsContent';
 import NewsContent from '@/components/public/NewsContent';
@@ -70,6 +71,8 @@ export default async function TournamentPreviewSectionPage({
       registrationFields: [],
       standingsByDivision: {},
     };
+    const frameOn = await isPublicFrameOn();
+    if (frameOn) return <PublicSchedule orgSlug={orgSlug} tournamentSlug={tournamentSlug} isPreview initialData={initialData} />;
     return (
       <ScheduleContent
         orgSlug={orgSlug}

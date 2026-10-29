@@ -69,6 +69,8 @@ export interface GameRowView {
   cancelled: boolean;
   /** "Pool A" — a pool-play row in a division with several pools; the caller resolves it, null elsewhere. */
   poolTag: string | null;
+  /** Schedule rows keep the time and place even after the game; the chip follows the field. */
+  status?: PublicGameState;
 }
 
 /** What the Schedule needs and the Overview did not (Stage 3). All optional: with none the row reads as it did. */
@@ -79,6 +81,7 @@ export interface GameRowExtra {
   /** A playoff game's round ("Semifinal"): it replaces "Today" / the date under the time. */
   round?: string | null;
   poolTag?: string | null;
+  schedule?: boolean;
 }
 
 const isFinal = (g: Pick<Game, 'status'>) => g.status === 'completed' || g.status === 'forfeit';
@@ -105,18 +108,21 @@ export function gameRowView(
     const sides: [GameRowSide, GameRowSide] = home.result === 'win' ? [home, away] : [away, home];
     return {
       id: game.id, face: 'final', head: state === 'unofficial' ? 'Unofficial' : 'Final',
-      when: game.date ? formatStoredDate(game.date, { withYear: false }) : null, sides, sub: null, cancelled: false, poolTag,
+      when: extra.schedule ? round : game.date ? formatStoredDate(game.date, { withYear: false }) : null,
+      sides, sub: extra.schedule ? context || null : null, cancelled: false, poolTag,
+      ...(extra.schedule ? { head: game.time ? formatTime(game.time) : 'TBD', status: state } : {}),
     };
   }
   return {
     id: game.id,
     face: 'scheduled',
     head: game.time ? formatTime(game.time) : 'TBD',
-    when: round || (!game.date ? null : game.date === today ? 'Today' : formatShortWeekdayDate(game.date)),
+    when: round || (extra.schedule ? null : !game.date ? null : game.date === today ? 'Today' : formatShortWeekdayDate(game.date)),
     sides: [{ name: names.away, score: null, result: null }, { name: names.home, score: null, result: null }],
     sub: context || null,
     cancelled: state === 'cancelled',
     poolTag,
+    ...(extra.schedule ? { status: state } : {}),
   };
 }
 

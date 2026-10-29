@@ -1,8 +1,24 @@
 # PM brief — Public tournament pages: easy to read in a parking lot, and a door to the club
 
-**Status:** drawn 2026-10-27 (round 1, then round 2: every public page as a whole phone screen, before and after,
-on the hub's "Every page" tab; asks 14–17), nothing ruled or built. Priority: after Club Tier Stage 4; not a gate on
-anything. Plan: `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md`. Mockups: the review hub (Claude Artifact).
+**Status:** drawings ruled 2026-10-27; Stages 1 and 2 built and owner-walked (plan §9). Stage 3 Part 2 implements the
+phone Schedule behind the preview switch, 2026-10-29; owner visual check follows. Priority: the next public-page stage.
+Plan: `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md`. Mockups: the review hub (Claude Artifact).
+
+## Stage 3 Part 2 — the phone Schedule (2026-10-29)
+
+Families choose a division and stage in two rows, land on today's games and open earlier confirmed results when needed.
+Live games show their scores and Directions in their time slot. Search still finds teams and public coach names. The
+Playoffs list keeps placement standings above its games and ends with a bracket door to Standings until Stage 4 moves it.
+Cancelled games have no Directions; unconfirmed scores read Unofficial. A held-back division reveals no games.
+
+My games and the followed team's calendar are installed-app controls only. Following is done on a team's own page;
+the old follow strip, scorebug, year picker, alerts, My Team rail, repeated heading and List/Bracket switch do not appear
+in this Schedule. The admin preview has plain rows with no game or maps links. The preview switch preserves the current
+customer-facing Schedule until Stage 8.
+
+Success: a family can find when and where without passing the old control stack; hidden games stay hidden, deep links
+open the right game, and live updates preserve each game's place. The owner checks the fixtures at 360 and 390 px;
+Part 3 adds the game page and the full desktop arrangement.
 
 ## What changes for a family
 - **The phone home answers "where is my next game" on the first screen.** On game day it opens with your team (if you

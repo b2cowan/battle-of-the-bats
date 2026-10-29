@@ -1,13 +1,14 @@
 'use client';
 import { useParams } from 'next/navigation';
 import ScheduleContent from '@/components/public/ScheduleContent';
+import PublicSchedule from '@/components/public/PublicSchedule';
 
 /**
- * `frameOn` is the preview switch, decided by the server page. Stage 3 Part 2 renders the new body here when it is on; until
- * that body exists both answers read today's Schedule, and with it off that stays so until Stage 8.
+ * `frameOn` is decided by the server. The new Schedule is preview-only until Stage 8.
  */
-export default function SchedulePage(_props: { frameOn: boolean }) {
+export default function SchedulePage({ frameOn }: { frameOn: boolean }) {
   const { orgSlug, tournamentSlug } = useParams();
+  if (frameOn) return <PublicSchedule orgSlug={orgSlug as string} tournamentSlug={tournamentSlug as string} />;
   return (
     <ScheduleContent
       orgSlug={orgSlug as string}

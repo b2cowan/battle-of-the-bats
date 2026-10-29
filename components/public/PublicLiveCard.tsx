@@ -2,6 +2,8 @@ import Link from 'next/link';
 import type { LiveCardView } from '@/lib/public-game-row';
 import DirectionsLink from './DirectionsLink';
 import styles from './PublicParts.module.css';
+import scheduleStyles from './PublicSchedule.module.css';
+import RollingNumber from './RollingNumber';
 
 /**
  * One game in play (Public tournament pages Stage 2; hub "The end state", Live now): both teams with the score — the
@@ -10,7 +12,7 @@ import styles from './PublicParts.module.css';
  * alone on a phone). Free of Overview assumptions: the Schedule's live game uses it in Stage 3. `href` (optional) makes
  * the teams a door to the game's page.
  */
-export default function PublicLiveCard({ view, href }: { view: LiveCardView; href?: string }) {
+export default function PublicLiveCard({ view, href, topLine, foot }: { view: LiveCardView; href?: string; topLine?: string; foot?: string }) {
   const [away, home] = view.sides;
   const label = view.noScore
     ? `${away.name} vs ${home.name}, ${view.noScore.toLowerCase()}`
@@ -22,16 +24,17 @@ export default function PublicLiveCard({ view, href }: { view: LiveCardView; hre
           <span>{s.name}</span>
           {view.noScore
             ? i === 0 && <span className={styles.noScore}>{view.noScore}</span>
-            : <span className={styles.score}>{s.score}</span>}
+            : <span className={styles.score}>{topLine ? <RollingNumber value={s.score} /> : s.score}</span>}
         </span>
       ))}
     </>
   );
   return (
-    <article className={styles.live} aria-label={label}>
+    <article className={`${styles.live} ${topLine ? scheduleStyles.liveCard : ''}`} aria-label={label}>
+      {topLine && <div className={scheduleStyles.liveTop}><span>{topLine}</span><span className={scheduleStyles.liveChip}>Live now</span></div>}
       {href ? <Link className={styles.gameLink} href={href}>{sides}</Link> : <div>{sides}</div>}
       <div className={styles.liveMeta}>
-        <span>{view.context}</span>
+        <span className={foot ? scheduleStyles.stakes : undefined}>{topLine ? foot ?? '' : view.context}</span>
         {view.directionsHref && view.field && <DirectionsLink href={view.directionsHref} name={`Directions to ${view.field}`} />}
       </div>
     </article>

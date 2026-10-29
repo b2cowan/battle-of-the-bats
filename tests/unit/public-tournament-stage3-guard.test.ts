@@ -29,4 +29,43 @@ describe('the switch reaches the Schedule', () => {
     const old = readCode('components/public/ScheduleContent.tsx');
     assert.doesNotMatch(old, /isPublicFrameOn|PUBLIC_FRAME|data-public-frame/);
   });
+
+  it('only the preview switch renders the new Schedule, including the admin twin', () => {
+    assert.match(readCode(SCHEDULE_CLIENT), /if \(frameOn\) return <PublicSchedule/);
+    const preview = readCode('app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx');
+    assert.match(preview, /const frameOn = await isPublicFrameOn\(\)/);
+    assert.match(preview, /if \(frameOn\) return <PublicSchedule[^;]+isPreview initialData=\{initialData\}/);
+    assert.match(preview, /<ScheduleContent/);
+  });
+
+  it('the new parts and model are used only by the guarded Schedule or explicit shared-part variants', () => {
+    const schedule = readCode('components/public/PublicSchedule.tsx');
+    for (const file of ['PublicDisclosure', 'PublicSchedule.module.css']) assert.ok(schedule.includes(file));
+    assert.match(schedule, /from '@\/lib\/public-schedule'/);
+    assert.match(readCode('components/public/PublicGameRow.tsx'), /if \(schedule\)/);
+    assert.match(readCode('components/public/PublicLiveCard.tsx'), /topLine &&/);
+    assert.match(readCode('components/public/PublicDisclosure.tsx'), /aria-expanded=\{expanded\}/);
+    assert.match(readCode('components/public/PublicDisclosure.module.css'), /min-width: 1024px/);
+    assert.match(readCode('components/public/PublicSchedule.module.css'), /\.schedule/);
+  });
+
+  it('preview rows have no destinations or maps, and cannot poll public data over initialData', () => {
+    const schedule = readCode('components/public/PublicSchedule.tsx');
+    assert.match(schedule, /isPreview \? undefined : orgHref/);
+    assert.match(schedule, /isPreview \? null : directionsHref/);
+    assert.match(schedule, /enabled: !isPreview && isTournamentInProgress/);
+    assert.match(schedule, /if \(initialData\) return/);
+  });
+
+  it('My games and calendar use the existing display-mode class, never a script-based visibility check', () => {
+    const schedule = readCode('components/public/PublicSchedule.tsx');
+    assert.equal((schedule.match(/className=\{parts.appOnly\}/g) ?? []).length, 2);
+    assert.doesNotMatch(schedule, /matchMedia|navigator\.standalone/);
+  });
+
+  it('a development mount replay cannot erase a deep link after its URL was cleaned', () => {
+    const schedule = readCode('components/public/PublicSchedule.tsx');
+    assert.match(schedule, /pendingHighlight = useRef<string \| null \| undefined>\(undefined\)/);
+    assert.match(schedule, /if \(pendingHighlight.current === undefined\) \{/);
+  });
 });

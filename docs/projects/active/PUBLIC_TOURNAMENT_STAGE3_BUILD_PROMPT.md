@@ -348,6 +348,58 @@ You are building **Stage 3 Part 2: the phone Schedule**, behind the preview swit
 7. End Part 2 with a one-line note that it is a good place to `/clear`, and where Part 3 starts. Part 3's amendments are the
    rulings above (game-page cancelled/unofficial faces, notes, stakes foot, no-location case, the admin preview's branch).
 
+## Part 2 implementation and handoff (2026-10-29)
+
+The phone Schedule is implemented in `components/public/PublicSchedule.tsx`, reached only through the server's preview
+switch, including the admin preview's `isPreview` / `initialData` branch. `ScheduleContent.tsx` is byte-for-byte unchanged.
+The new body reuses the shared game row, live card, section heading, door and Directions components. Adjacent rows share
+one card; live cards break that card at their time slot. `PublicDisclosure` supplies the real tap-open button, closed by
+default on a phone, open on the desk; a highlighted folded result is revealed. Placement-format Final standings stay
+above the playoff games. The bracket door's destination and description live together in `SCHEDULE_BRACKET_DOOR`.
+
+The selection model (`lib/public-schedule.ts`) tests All divisions, remembered and followed division picks, deep-link
+priority, stage selection, smart day landing, public coach-name search, many-day dates, pool attribution, withheld games,
+the final fold and authoritative live replacement. The existing live hook supplies the 30-second cadence and hidden-tab
+pause. My games and calendar use Stage 2's `appOnly` class; no follow is removed from device storage. Pinned notices keep
+visit-only dismissal. Preview rows have no game or maps destinations and do not poll over their supplied data.
+
+**Verification, 2026-10-29:** full typecheck passed; focused lint passed; 85 focused tests passed after the final
+deep-link regression fix. The full suite passed 12,150 tests before that final fix; the combined `verify:changed` then
+stopped on three unrelated lint errors in `app/dev/crash-test/page.tsx`. Separately, CSS purity, spelling, public
+lettering, palette contrast and text contrast passed. The token gate reported an unrelated new colour literal in
+`app/[orgSlug]/admin/tournaments/schedule/page.tsx`; Stage 3's new styles introduce no colour literals. Neither unrelated
+file was edited. The single-screen `check:layout --changed --only=pubt-schedule-pale` gate passed at 361 and 390 px,
+preview on, with zero findings. No baseline was changed.
+
+**Measured on Lakeshore, preview on:** first visible game **367 px** from the top at **360 and 390 px**, no horizontal
+overflow (the hub drawing is about 394 px). The existing `.probe/stage1walk/walk.mjs live` fixture command was run and
+read back; Bears at Halton Hawks is the live semifinal. A completed-game deep link was exercised at both widths: correct
+division and stage, Earlier today expanded, target visible, `highlightGameId` removed while another query parameter and
+the hash survived. This caught and fixed a React Strict Mode mount replay erasing the captured id after URL cleanup.
+The dev server was restarted after adding the files; its stale cache was cleared while stopped. The required
+platform-admin login returned HTTP 200; the fresh log had no Supabase EACCES failures. Server remains at localhost:3000.
+
+**Owner fixture check still owed (360 / 390; this is not the Stage 3 QA walk):**
+- On Lakeshore's Schedule, check the two rows, no browser My games/calendar controls, day chips and the live card in its
+  time slot. Open a normal row and return; search a team and a public coach name, clear it, and change divisions.
+- Open Earlier today, then close it. Use a completed game's `?highlightGameId=` link: the correct division, stage and day
+  should open, including the fold. A remembered division should survive a reload.
+- Check a played-out day, a many-day rail, the Playoffs list and its Standings door. Placement standings, where the
+  fixture has them, stay above the games; pool tags and pool playoff headings keep their meaning.
+- For a pinned notice, dismiss it and revisit: it returns for the new visit. A held-back division says its schedule is
+  coming soon and reveals no dates or search results. With all divisions held back, controls disappear and the allowed
+  Teams/Register doors remain; the admin preview has none of those destinations.
+- Check Cancelled (soft time/names, red chip after the field, no Directions) and Unofficial (amber chip, scores retained).
+  The status table and hidden-game cases are unit-tested; use the fixture admin to prepare any additional visual states.
+- Optional installed app: with a followed team, toggle My games and export that team's calendar. Browser follows stay
+  stored but expose neither control. The admin preview has plain rows and no Directions or game links.
+- With the preview off, compare today's Schedule; its original component has no changes. Switch back on before continuing.
+
+Owner authorized the Part 2 commit and Part 3 continuation on 2026-10-29; the visual checklist above remains a separate
+check, with no owner pass inferred from that authorization. **Good place to `/clear`: Part 3 starts with a
+game's page and the desktop layouts**, using Part 1's amended cancelled/unofficial/notes/stakes/no-location rulings. The
+admin Schedule preview branch landed in Part 2; Part 3 checks it rather than building a game-page preview.
+
 ## Not in Stage 3 (say so if a step drifts toward one)
 The bracket's move, Standings pinning (D5) and the tie-breaker rows (Stage 4). Teams and a team's page, where following a
 team lives (Stage 5). Tabs following what there is, the tab order, Rules as tap-open sections (Stage 6). The pay page

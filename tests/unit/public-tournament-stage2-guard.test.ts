@@ -15,14 +15,17 @@ const PARTS = ['PublicGameRow', 'PublicLiveCard', 'PublicSectionHead', 'PublicDo
   'PublicRegisterCard', 'PublicFactsList', 'PublicHostCard', 'PublicChampions'];
 /** The files that may draw the shared parts: each renders only with the switch on (Part 2: the frame-on body, and the
  *  old Overview's one frame branch that hands over to it — held below). */
-const FRAME_ONLY_USERS = ['components/public/TournamentOverview.tsx', HOME];
+const FRAME_ONLY_USERS = ['components/public/TournamentOverview.tsx', 'components/public/PublicSchedule.tsx', HOME];
 
 describe('the shared parts render only inside the new frame', () => {
-  it('no page or component outside the frame-on Overview imports them', () => {
+  it('no page or component outside the guarded frame bodies imports them', () => {
     const users = [...filesUnder('app', '.tsx'), ...filesUnder('components', '.tsx')]
       .filter(f => !PARTS.some(p => f.endsWith(`/${p}.tsx`)))
       .filter(f => PARTS.some(p => new RegExp(`from ['"][^'"]*/${p}['"]`).test(readSource(f))));
     assert.deepEqual(users.filter(f => !FRAME_ONLY_USERS.includes(f)), [], 'a shared part reached a page outside the switch');
+    // Stage 3 reuses the parts; its body is allowed only through the same server-decided switch.
+    assert.match(readCode('app/[orgSlug]/[tournamentSlug]/schedule/SchedulePageClient.tsx'), /if \(frameOn\) return <PublicSchedule/);
+    assert.match(readCode('app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx'), /if \(frameOn\) return <PublicSchedule/);
   });
   it('their styles read only the frame\'s own light token set (they have no meaning outside it)', () => {
     const css = readSource('components/public/PublicParts.module.css');
