@@ -140,7 +140,7 @@ describe('Stripe and mock returns keep every plan inside its billing tier bounda
 });
 
 describe('billing and settings can never be handed out (owner, 2026-10-29)', () => {
-  async function patch(role: OrgRole, capabilities: Record<string, boolean> | null, grant: Record<string, boolean> | null) {
+  async function patch(role: OrgRole, capabilities: Record<string, boolean> | null, grant: Record<string, boolean> | null, stored: Record<string, boolean> | null = null) {
     const writes: unknown[] = [], audits: unknown[] = [];
     const db = {
       auth: { admin: { getUserById: async () => ({ data: { user: null } }) } },
@@ -148,7 +148,7 @@ describe('billing and settings can never be handed out (owner, 2026-10-29)', () 
         assert.equal(table, 'organization_members');
         const query = {
           select() { return query; }, eq() { return query; },
-          single: async () => ({ data: { id: 'member-b', role: 'treasurer', user_id: 'member-user', capabilities: null, status: 'active' } }),
+          single: async () => ({ data: { id: 'member-b', role: 'treasurer', user_id: 'member-user', capabilities: stored, status: 'active' } }),
           update(value: unknown) { writes.push(value); return query; },
           then(resolve: (value: unknown) => unknown) { return Promise.resolve({ error: null }).then(resolve); },
         };
@@ -172,6 +172,20 @@ describe('billing and settings can never be handed out (owner, 2026-10-29)', () 
     assert.equal(billing.response.status, 400); assert.deepEqual(billing.writes, []); assert.deepEqual(billing.audits, []);
     const settings = await patch('owner', null, { org_settings: true });
     assert.equal(settings.response.status, 400); assert.deepEqual(settings.writes, []);
+  });
+  it('a mixed body is refused whole, with no partial write', async () => {
+    const mixed = await patch('owner', null, { module_accounting: true, billing: true });
+    assert.equal(mixed.response.status, 400); assert.deepEqual(mixed.writes, []); assert.deepEqual(mixed.audits, []);
+  });
+  it('a stale stored grant never blocks the editor and is dropped on save, never stored again', async () => {
+    const saved = await patch('owner', null, { billing: true, module_accounting: true }, { billing: true });
+    assert.equal(saved.response.status, 200); assert.deepEqual(saved.writes, [{ capabilities: { module_accounting: true } }]);
+    const fresh = await patch('owner', null, { billing: true, module_accounting: true }, { module_accounting: true });
+    assert.equal(fresh.response.status, 400); assert.deepEqual(fresh.writes, []);
+  });
+  it('a body of owner-only revokes changes nothing instead of clearing every override', async () => {
+    const revoke = await patch('owner', null, { billing: false }, { module_accounting: true });
+    assert.equal(revoke.response.status, 200); assert.deepEqual(revoke.writes, []); assert.deepEqual(revoke.audits, []);
   });
   it('the owner can still clear a member’s overrides, and an admin cannot change access at all', async () => {
     const cleared = await patch('owner', null, null);

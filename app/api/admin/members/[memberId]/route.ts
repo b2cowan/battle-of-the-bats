@@ -374,10 +374,13 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
   }
 
   // J10-022: plan & billing and organization settings stay with the owner. A body that tries to
-  // GRANT one is refused outright rather than half-applied.
+  // GRANT one is refused outright rather than half-applied. A key the member already holds from the
+  // 2026-10-28 delegation window is not a grant: the editor sends the stored map back whole, and the
+  // sanitizer below drops the stray key instead of storing it.
   if (hasCapabilitiesUpdate && body.capabilities && typeof body.capabilities === 'object') {
+    const stored = (target.capabilities as Record<string, boolean> | null) ?? {};
     const granted = Object.entries(body.capabilities as Record<string, unknown>)
-      .filter(([key, val]) => isOwnerOnlyCapability(key) && val === true);
+      .filter(([key, val]) => isOwnerOnlyCapability(key) && val === true && stored[key] !== true);
     if (granted.length > 0) {
       return NextResponse.json(
         { error: 'Plan & billing and organization settings stay with the owner; they can’t be handed out.', code: 'owner_only_power' },
@@ -411,8 +414,13 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
           sanitized[key] = val;
         }
       }
+      // A body of nothing but owner-only revokes ({ billing: false }) stores nothing and changes nothing;
+      // it must not read as "clear every override".
+      const entries = Object.entries(body.capabilities as Record<string, unknown>);
+      const onlyOwnerOnlyRevokes = entries.length > 0
+        && entries.every(([key, val]) => isOwnerOnlyCapability(key) && val === false);
       // Empty object → null (no overrides stored)
-      update.capabilities = Object.keys(sanitized).length > 0 ? sanitized : null;
+      if (!onlyOwnerOnlyRevokes) update.capabilities = Object.keys(sanitized).length > 0 ? sanitized : null;
     }
   } else if (roleChanging && target.role === 'official') {
     // A volunteer's two job keys were their JOB, not a decision about the role they move to (a gate
