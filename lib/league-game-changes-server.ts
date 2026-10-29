@@ -72,10 +72,10 @@ export const isShownHeld = (g: HeldGame) => !!g.news || g.played;
 
 /**
  * Every held game of a season (or one division), reduced to what it will tell families (`heldGames`) against the game as it
- * is now. ⚠ A failed read THROWS.
+ * is now. `heldRows` is the held rows when the caller has read them already. ⚠ A failed read THROWS.
  */
-export async function heldGamesOf(seasonId: string, divisionId?: string): Promise<HeldGameOf[]> {
-  const held = await heldChangesOf(seasonId, divisionId);
+export async function heldGamesOf(seasonId: string, divisionId?: string, heldRows?: readonly HeldChange[]): Promise<HeldGameOf[]> {
+  const held = heldRows ?? await heldChangesOf(seasonId, divisionId);
   if (!held.length) return [];
   // (A mapped type: league-game-changes-guard reads any object key named for the trigger's date as a write of it.)
   type Nullable = 'scheduled_at' | 'ends_at' | 'location' | 'org_venue_id' | 'org_venue_facility_id' | 'moved_from';

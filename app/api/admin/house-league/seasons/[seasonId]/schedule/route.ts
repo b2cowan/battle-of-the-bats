@@ -72,9 +72,10 @@ export const GET = withObservability(async (req: Request,
   // "See the permit" to them alone), so a reader is sent neither. The game time is decoration on the read: a failed read of
   // it leaves the schedule loading, as a failed permit read does.
   const runs = !houseLeagueRefusal(ctx, 'run', season);
+  const heldRowsRead = heldChangesOf(seasonId);
   const [{ data, error }, gameSlots, held, heldRows] = await Promise.all([
-    q, runs ? seasonGameSlots(ctx!.org.id, seasonId).catch(() => []) : Promise.resolve([]), heldGamesOf(seasonId),
-    runs ? Promise.resolve([]) : heldChangesOf(seasonId),
+    q, runs ? seasonGameSlots(ctx!.org.id, seasonId).catch(() => []) : Promise.resolve([]),
+    heldRowsRead.then(rows => heldGamesOf(seasonId, undefined, rows)), heldRowsRead,
   ]);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   // ⚖ Whoever runs the season reads the games as they are, each held change marked (`changes`); a reader (the registrar)

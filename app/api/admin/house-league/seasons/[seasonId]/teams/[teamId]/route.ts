@@ -79,8 +79,9 @@ export const DELETE = withObservability(async (_req: Request,
 
   // ⚖ A team's games go with it (the foreign key cascades). On a published schedule those are games families were told
   // about, and a published game is cancelled, never removed (9d2·9, 9d-2b): the team stays.
-  const { data: team } = await supabaseAdmin.from('league_teams')
+  const { data: team, error: teamError } = await supabaseAdmin.from('league_teams')
     .select('name, league_divisions(schedule_published_at)').eq('id', teamId).single();
+  if (teamError) throw new Error(`Couldn't read the team's division: ${teamError.message}`);
   const div = Array.isArray(team?.league_divisions) ? team?.league_divisions[0] : team?.league_divisions;
   if ((div as { schedule_published_at?: string | null } | null)?.schedule_published_at) {
     const { count: games } = await supabaseAdmin.from('league_games').select('id', { count: 'exact', head: true })

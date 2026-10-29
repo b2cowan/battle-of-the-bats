@@ -1,3 +1,4 @@
+import { normalizeGuardianEmail } from './guardian-email';
 import type { LeagueGameStatus } from './types';
 
 /**
@@ -46,8 +47,6 @@ export interface NetChange {
   /** As families last heard it; null for a game added since. */
   before: GameSnapshot | null;
   now: GameSnapshot;
-  whenChanged: boolean;
-  placeChanged: boolean;
   /** The club moved the division's time (9d2·13): the tray's "The club moved …" line. */
   byClub: boolean;
   changeIds: string[];
@@ -65,8 +64,7 @@ export interface HeldGame {
 /** Whether a game is on, as a family hears it: played and scheduled are both on (a score is not news). */
 export const publicState = (s: LeagueGameStatus) => (s === 'cancelled' ? 'cancelled' : s === 'postponed' ? 'postponed' : 'on');
 
-const sameMs = (a: string | null, b: string | null) => (a == null || b == null ? a === b : Date.parse(a) === Date.parse(b));
-export const whenDiffers = (a: GameSnapshot, b: GameSnapshot) => !sameMs(a.scheduledAt, b.scheduledAt) || !sameMs(a.endsAt, b.endsAt);
+export const sameMs = (a: string | null, b: string | null) => (a == null || b == null ? a === b : Date.parse(a) === Date.parse(b));
 export const placeDiffers = (a: GameSnapshot, b: GameSnapshot) =>
   (a.location ?? null) !== (b.location ?? null) || (a.venueId ?? null) !== (b.venueId ?? null) || (a.facilityId ?? null) !== (b.facilityId ?? null);
 
@@ -82,19 +80,19 @@ export function netChangeOf(rows: readonly HeldChange[], now: GameSnapshot): Net
   };
   if (!before) {
     // Added since the last send: news only if it is on (a game added and then called off was never news).
-    return publicState(now.status) === 'on' ? { ...base, kind: 'added', whenChanged: true, placeChanged: true } : null;
+    return publicState(now.status) === 'on' ? { ...base, kind: 'added' } : null;
   }
   // What a family reads of when is the day and the start clock, so an end-time-only edit is not news (nothing to tell them).
   const whenChanged = !sameMs(before.scheduledAt, now.scheduledAt), placeChanged = placeDiffers(before, now);
   const was = publicState(before.status), is = publicState(now.status);
   if (was !== is) {
     const kind: ChangeKind = is === 'cancelled' ? 'cancelled' : is === 'postponed' ? 'postponed' : was === 'postponed' && whenChanged ? 'given_date' : 'back_on';
-    return { ...base, kind, whenChanged, placeChanged };
+    return { ...base, kind };
   }
   // Still off (cancelled or postponed): where it would have been is nobody's news.
   if (is !== 'on') return null;
-  if (whenChanged) return { ...base, kind: 'moved', whenChanged, placeChanged };
-  if (placeChanged) return { ...base, kind: 'place', whenChanged, placeChanged };
+  if (whenChanged) return { ...base, kind: 'moved' };
+  if (placeChanged) return { ...base, kind: 'place' };
   return null;
 }
 
@@ -134,11 +132,11 @@ export function lastSentView(now: GameSnapshot, rows: readonly HeldChange[]): Ga
 }
 
 /** The households a send reaches: each family once, one part per child whose team is in the changed games (f2, f3). */
-export interface FamilyChild { registrationId: string; email: string; childName: string; teamId: string }
+interface FamilyChild { registrationId: string; email: string; childName: string; teamId: string }
 export function familiesFor<C extends FamilyChild>(children: readonly C[], teamIds: ReadonlySet<string>) {
   const out = new Map<string, C[]>();
   for (const c of children) {
-    const email = c.email.trim().toLowerCase();
+    const email = normalizeGuardianEmail(c.email);
     if (!email || !teamIds.has(c.teamId)) continue;
     (out.get(email) ?? out.set(email, []).get(email)!).push(c);
   }

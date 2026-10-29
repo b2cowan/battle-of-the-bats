@@ -5,6 +5,7 @@ import {
 } from './house-league-access';
 import { clubPublicContact } from './club-email-context';
 import { orgDayKey, zonedWallClockToUtc } from './timezone';
+import { publicState } from './league-game-changes';
 import { asLastSent, heldChangesOf, type GameFaceFields } from './league-game-changes-server';
 import { getOrgPlaceNames } from './db';
 import { resultWords } from './league-season-calendar';
@@ -107,7 +108,7 @@ interface TeamRow {
   name: string;
   season_id: string;
   division_id: string | null;
-  league_divisions: { name: string } | { name: string }[] | null;
+  league_divisions: { name: string; schedule_published_at: string | null } | { name: string; schedule_published_at: string | null }[] | null;
   league_seasons: {
     name: string; slug: string; status: string; finished_at: string | null; org_id: string;
     organizations: { slug: string; name: string } | { slug: string; name: string }[] | null;
@@ -117,7 +118,7 @@ interface TeamRow {
 const one = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
 
 const TEAM_SELECT =
-  'id, name, season_id, division_id, league_divisions(name), league_seasons(name, slug, status, finished_at, org_id, organizations(slug, name))';
+  'id, name, season_id, division_id, league_divisions(name, schedule_published_at), league_seasons(name, slug, status, finished_at, org_id, organizations(slug, name))';
 
 function toCard(t: TeamRow): CoachTeamCard | null {
   const season = t.league_seasons;
@@ -190,7 +191,7 @@ export async function readCoachTeamPage(
     getCoachTeamCards(userId, now),
     clubPublicContact(card.orgId),
     view === 'open' ? readTeamPractices(card.orgId, teamId, now) : Promise.resolve([] as CoachPractice[]),
-    view === 'open' && team.division_id
+    view === 'open' && team.division_id && one(team.league_divisions)?.schedule_published_at
       ? readTeamGames(card.orgId, team.season_id, team.division_id, teamId, now)
       : Promise.resolve({ published: false, games: [] as CoachGame[] }),
   ]);
@@ -207,17 +208,12 @@ export async function readCoachTeamPage(
 }
 
 /**
- * The team's games as families know them (9d2·7, g3): nothing until the division's schedule is published; then the
- * team's games from the start of today in the club's zone — and every game waiting for a new date, whatever its old
- * day — each as last SENT (a held change shows only once the league admin sends it; a game added since isn't shown).
+ * The team's games as families know them (9d2·7, g3), read once the division's schedule is published (the caller checks
+ * the mark on the team's own division read): the team's games from the start of today in the club's zone — and every
+ * game waiting for a new date, whatever its old day — each as last SENT (a held change shows only once the league admin sends it; a game added since isn't shown).
  * ⚠ A failed read THROWS: "No games from today on" must never stand in for a read that failed.
  */
 async function readTeamGames(orgId: string, seasonId: string, divisionId: string, teamId: string, now: Date): Promise<{ published: boolean; games: CoachGame[] }> {
-  const { data: division, error } = await supabaseAdmin.from('league_divisions')
-    .select('schedule_published_at').eq('id', divisionId).eq('season_id', seasonId).maybeSingle();
-  if (error) throw new Error(`Couldn't read the team's division: ${error.message}`);
-  if (!division?.schedule_published_at) return { published: false, games: [] };
-
   const [gameRes, teamRes, places] = await Promise.all([
     supabaseAdmin.from('league_games')
       .select('id, home_team_id, away_team_id, scheduled_at, ends_at, location, org_venue_id, org_venue_facility_id, status, moved_from, home_score, away_score')
@@ -253,7 +249,7 @@ async function readTeamGames(orgId: string, seasonId: string, divisionId: string
       .filter(g => g.status === 'postponed' || !g.scheduledAt || Date.parse(g.scheduledAt) >= from)
       .map(g => ({
         id: g.id, startsAt: g.scheduledAt, title: `${name(g.homeTeamId)} vs ${name(g.awayTeamId)}`, place: placeOf(g),
-        state: g.status === 'cancelled' ? 'cancelled' : g.status === 'postponed' ? 'postponed' : 'on',
+        state: publicState(g.status),
         movedFrom: g.movedFrom, result: resultWords(g),
       })),
   };

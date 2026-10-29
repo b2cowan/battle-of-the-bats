@@ -188,13 +188,15 @@ export const PRACTICES_CHANGED_NOTICE = {
 
 // ── The league admins' notice (9d2·13; [marketing]) ───────────────────────────────────────────────
 
-/** A season's counts for the league admins' notice: practices (11b Part 5) and games (9d-2b Part 5). */
-/** `gamesWaiting`: the published games among them, which wait in Changes to send (a draft's move tells nobody). */
+/**
+ * A season's counts for the league admins' notice: practices (11b Part 5) and games (9d-2b Part 5). `gamesWaiting` is
+ * the published games among them, which wait in Changes to send (a draft's move tells nobody).
+ */
 export interface LeagueNoticeCounts { moved: number; cancelled: number; gamesMoved: number; gamesNeedDate: number; gamesRemoved: number; gamesWaiting: number }
 export const NO_LEAGUE_COUNTS: LeagueNoticeCounts = { moved: 0, cancelled: 0, gamesMoved: 0, gamesNeedDate: 0, gamesRemoved: 0, gamesWaiting: 0 };
 
 export const LEAGUE_ADMIN_NOTICE = {
-  title: (scheduleName: string, c: LeagueNoticeCounts = NO_LEAGUE_COUNTS) => {
+  title: (scheduleName: string, c: LeagueNoticeCounts) => {
     const practices = c.moved + c.cancelled > 0, games = c.gamesMoved + c.gamesNeedDate + c.gamesRemoved > 0;
     return `${scheduleName} changed house league’s ${games && practices ? 'practices and game time' : games ? 'game time' : 'practices'}`;
   },

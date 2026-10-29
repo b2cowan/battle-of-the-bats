@@ -8,6 +8,7 @@ import { withObservability } from '@/lib/observability';
 import { zonedWallClockToUtc } from '@/lib/timezone';
 import { clashReportForLeagueRows, emptyReport } from '@/lib/venue-clash-lookup';
 import { invalidGamePatch } from '@/lib/league-game-patch';
+import { sameMs } from '@/lib/league-game-changes';
 import { houseLeagueAccess } from '@/lib/house-league-access';
 import { placeGame } from '@/lib/league-game-place';
 import { heldChangesOf, heldGamesOf, isShownHeld } from '@/lib/league-game-changes-server';
@@ -141,16 +142,25 @@ export const PATCH = withObservability(async (req: Request,
   // Also skip when nothing about WHERE or WHEN changed: entering a final score on a game
   // that already clashes must never 409 — the booking is being recorded, not moved.
   const effectiveStatus = (patch.status ?? game.status) as string;
+  const holdsSlot = effectiveStatus !== 'cancelled' && effectiveStatus !== 'postponed';
+  // The game as it will be once saved (stored row + patch): the booking check, the placement and the cross-program report read this.
+  const eff = {
+    scheduledAt: (patch.scheduledAt !== undefined ? patch.scheduledAt : game.scheduled_at) as string | null,
+    endsAt: (patch.endsAt !== undefined ? patch.endsAt : game.ends_at) as string | null,
+    orgVenueId: patch.orgVenueId !== undefined ? patch.orgVenueId : game.org_venue_id,
+    orgVenueFacilityId: patch.orgVenueFacilityId !== undefined ? patch.orgVenueFacilityId : game.org_venue_facility_id,
+    location: (patch.location !== undefined ? patch.location : game.location) as string | null,
+  };
   const placementChanged =
     patch.scheduledAt !== undefined || patch.endsAt !== undefined
     || patch.orgVenueId !== undefined || patch.location !== undefined;
   const slotRevived =
     (game.status === 'cancelled' || game.status === 'postponed')
-    && effectiveStatus !== 'cancelled' && effectiveStatus !== 'postponed';
+    && holdsSlot;
   let warnings: string[] = [];
   // Where or when changed (or the slot came back), and the game holds a slot: both checks run, the league's own
   // refusal before the write and the cross-program report after it.
-  const recheck = (placementChanged || slotRevived) && effectiveStatus !== 'cancelled' && effectiveStatus !== 'postponed';
+  const recheck = (placementChanged || slotRevived) && holdsSlot;
   if (recheck) {
     const { data: teamRows } = await supabaseAdmin
       .from('league_teams')
@@ -162,11 +172,8 @@ export const PATCH = withObservability(async (req: Request,
       excludeGameIds: [gameId],
       proposed: [{
         id: gameId, kind: 'game',
-        startsAt: (patch.scheduledAt !== undefined ? patch.scheduledAt : game.scheduled_at) as string | null,
-        endsAt:   (patch.endsAt !== undefined ? patch.endsAt : game.ends_at) as string | null,
-        orgVenueId:         patch.orgVenueId !== undefined ? patch.orgVenueId : game.org_venue_id,
-        orgVenueFacilityId: patch.orgVenueFacilityId !== undefined ? patch.orgVenueFacilityId : game.org_venue_facility_id,
-        location:           (patch.location !== undefined ? patch.location : game.location) as string | null,
+        startsAt: eff.scheduledAt, endsAt: eff.endsAt,
+        orgVenueId: eff.orgVenueId, orgVenueFacilityId: eff.orgVenueFacilityId, location: eff.location,
         label: `${names.get(homeTeamId) ?? 'Home'} vs ${names.get(awayTeamId) ?? 'Away'}`,
       }],
     });
@@ -182,17 +189,14 @@ export const PATCH = withObservability(async (req: Request,
   // ⚖ WHERE IT MAY GO (9d2b·B, `placeGame`): a game whose start or place moves, and that is on, lands on its division's
   // game time and links to it — or, for a league admin on the club's schedule, is refused. A game left where it was
   // (a score, a note, an end time, put back on) keeps its link, even one outside every use: it says nothing.
-  const effStart = (patch.scheduledAt !== undefined ? patch.scheduledAt : game.scheduled_at) as string | null;
-  const effVenue = patch.orgVenueId !== undefined ? patch.orgVenueId : game.org_venue_id;
-  const effFacility = patch.orgVenueFacilityId !== undefined ? patch.orgVenueFacilityId : game.org_venue_facility_id;
   // A game coming back on (from postponed or cancelled) is placed again: moving it while it was off checked nothing.
-  const moved = slotRevived || !(effStart == null ? game.scheduled_at == null : sameInstant(effStart, game.scheduled_at))
-    || (effVenue ?? null) !== (game.org_venue_id ?? null) || (effFacility ?? null) !== (game.org_venue_facility_id ?? null)
+  const moved = slotRevived || !sameMs(eff.scheduledAt, game.scheduled_at)
+    || (eff.orgVenueId ?? null) !== (game.org_venue_id ?? null) || (eff.orgVenueFacilityId ?? null) !== (game.org_venue_facility_id ?? null)
     || (patch.location !== undefined && (patch.location ?? null) !== (game.location ?? null));
-  if (moved && effectiveStatus !== 'cancelled' && effectiveStatus !== 'postponed') {
+  if (moved && holdsSlot) {
     const placed = await placeGame({
       orgId: ctx!.org.id, seasonId, divisionId: game.division_id, divisionName: division.name,
-      scheduledAt: effStart, orgVenueId: effVenue, orgVenueFacilityId: effFacility,
+      scheduledAt: eff.scheduledAt, orgVenueId: eff.orgVenueId, orgVenueFacilityId: eff.orgVenueFacilityId,
       placeAnywhere: houseLeagueAccess(ctx!, ctx!.org, season).placeAnywhere,
     });
     if ('refusal' in placed) return NextResponse.json({ error: placed.refusal, code: 'outside_time' }, { status: 409 });
@@ -231,11 +235,8 @@ export const PATCH = withObservability(async (req: Request,
   const crossProgram = recheck
     ? await clashReportForLeagueRows(ctx!.org.id, season, 'game', [{
         id: gameId,
-        scheduledAt: (patch.scheduledAt !== undefined ? patch.scheduledAt : game.scheduled_at) as string | null,
-        endsAt: (patch.endsAt !== undefined ? patch.endsAt : game.ends_at) as string | null,
-        status: effectiveStatus,
-        orgVenueId: patch.orgVenueId !== undefined ? patch.orgVenueId : game.org_venue_id,
-        orgVenueFacilityId: patch.orgVenueFacilityId !== undefined ? patch.orgVenueFacilityId : game.org_venue_facility_id,
+        scheduledAt: eff.scheduledAt, endsAt: eff.endsAt, status: effectiveStatus,
+        orgVenueId: eff.orgVenueId, orgVenueFacilityId: eff.orgVenueFacilityId,
       }])
     : emptyReport();
   return NextResponse.json({ ok: true, warnings, crossProgram, sent, ...(sendFailed ? { sendFailed: CW.sendNowFailed } : {}) });

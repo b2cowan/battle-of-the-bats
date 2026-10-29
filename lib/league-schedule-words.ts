@@ -1,4 +1,4 @@
-import { joinWithAnd, pluralize, possessive } from './utils';
+import { endSentence, joinWithAnd, pluralize, possessive } from './utils';
 import { CLUB_EMAIL_CAP } from './families-words';
 
 /**
@@ -39,7 +39,7 @@ export const SCHEDULE_PUBLISH_WORDS = {
   done: (day: string, n: number) => `Published ${day} · ${families(n)} emailed.`,
   /** A clock time ends in its own period ("8:14 p.m."), so the sentence does not add a second one. */
   already: (by: string | null, division: string, at: string | null) =>
-    `${by ?? 'Someone'} published ${possessive(division)} schedule${at ? ` at ${at}` : ''}${at?.endsWith('.') ? '' : '.'} Nothing more was sent.`,
+    `${endSentence(`${by ?? 'Someone'} published ${possessive(division)} schedule${at ? ` at ${at}` : ''}`)} Nothing more was sent.`,
   changed: (division: string) => `${division} changed while this window was open. Close it and look again.`,
   noGames: (division: string) => `${division} has no games to publish yet.`,
   finished: 'This season is finished. Reopen it to change it.',
@@ -57,7 +57,6 @@ export const CHANGES_TO_SEND_WORDS = {
   rowFromTo: (game: string, day: string, from: string, to: string) => `${game} · ${day}: ${from} → ${to}`,
   /** A new day: "Orioles vs Twins · Thu, Jun 24: now Thu, Jul 1, 6:00 p.m." */
   rowNow: (game: string, day: string, now: string) => `${game} · ${day}: now ${now}`,
-  rowState: (game: string, day: string, state: string) => `${game} · ${day}: ${state}`,
   state: { cancelled: 'cancelled', postponed: 'postponed', added: 'added', back_on: 'back on' } as Record<string, string>,
   /** "Blue Jays and Red Sox families · 22 families" */
   who: (home: string, away: string, n: number) => `${home} and ${away} families · ${families(n)}`,
@@ -65,8 +64,7 @@ export const CHANGES_TO_SEND_WORDS = {
   /** "The Kims have Ava on the Twins and Henry on the Rays. They get one email with both changes." */
   oneHousehold: (family: string, parts: readonly { child: string; team: string }[]) => {
     const list = parts.map(p => `${p.child} on the ${p.team}`);
-    const joined = list.length > 1 ? `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}` : list[0];
-    return `The ${family} have ${joined}. They get one email with ${parts.length === 2 ? 'both' : 'all their'} changes.`;
+    return `The ${family} have ${joinWithAnd(list)}. They get one email with ${parts.length === 2 ? 'both' : 'all their'} changes.`;
   },
   seeTheirEmail: 'See their email',
   /** A build word: the sample didn't read. */
@@ -87,7 +85,7 @@ export const CHANGES_TO_SEND_WORDS = {
   played: 'This game has already been played, so it isn’t emailed.',
   empty: 'Nothing is waiting to send.',
   already: (by: string | null, at: string | null) =>
-    `${by ?? 'Someone'} sent these${at ? ` at ${at}` : ''}${at?.endsWith('.') ? '' : '.'} Nothing more was sent.`,
+    `${endSentence(`${by ?? 'Someone'} sent these${at ? ` at ${at}` : ''}`)} Nothing more was sent.`,
   netNothing: 'Nothing was waiting, so nothing was sent.',
   /** Under the waiting count (f1). */
   listNote: 'Until you send, the public schedule and the coaches’ pages still show the old games.',
@@ -168,7 +166,6 @@ export const SCHEDULE_EMAIL_WORDS = {
  *  sentence that closes on it does not add another (`endSentence`). */
 export const whenAndPlace = (day: string, clock: string, place: string) =>
   `${[day, clock].filter(Boolean).join(', ')}${place ? ` · ${place}` : ''}`;
-export const endSentence = (s: string) => (s.endsWith('.') ? s : `${s}.`);
 
 /** f4: the season's Email families history — the two Automatic rows (the "Teams published: {division}" pattern). */
 export const SCHEDULE_NOTICE_WORDS = {

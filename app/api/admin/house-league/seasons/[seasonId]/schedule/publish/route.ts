@@ -6,8 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { divisionInSeason } from '@/lib/league-season-scope';
 import { memberDisplayName } from '@/lib/member-names';
 import { SCHEDULE_PUBLISH_WORDS as W } from '@/lib/league-schedule-words';
-import { formatTime } from '@/lib/utils';
-import { utcToZonedInputs } from '@/lib/timezone';
+import { orgClock } from '@/lib/club-board-view';
 import { withObservability } from '@/lib/observability';
 import { publishSample, sendScheduleNotice } from '@/lib/league-schedule-mail';
 
@@ -87,7 +86,7 @@ export const POST = withObservability(async (req: Request,
     case 'finished': return NextResponse.json({ error: W.finished, finished: true }, { status: 423 });
     case 'already': {
       const by = result.published_by ? await memberDisplayName(ctx!.org.id, result.published_by) : null;
-      const at = result.published_at ? formatTime(utcToZonedInputs(result.published_at).time) : null;
+      const at = result.published_at ? orgClock(result.published_at) : null;
       return NextResponse.json({ error: W.already(by, division, at), code: 'already' }, { status: 409 });
     }
     case 'changed': return NextResponse.json({ error: W.changed(division), code: 'changed' }, { status: 409 });

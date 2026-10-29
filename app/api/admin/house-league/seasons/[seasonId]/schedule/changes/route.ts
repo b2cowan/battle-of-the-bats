@@ -9,8 +9,7 @@ import { childrenOnTeams, heldGamesOf, isShownHeld } from '@/lib/league-game-cha
 import { changesSample, sendChangesAndTell } from '@/lib/league-schedule-mail';
 import { familiesFor, teamsHearing } from '@/lib/league-game-changes';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { formatTime } from '@/lib/utils';
-import { utcToZonedInputs } from '@/lib/timezone';
+import { orgClock } from '@/lib/club-board-view';
 import { withObservability } from '@/lib/observability';
 
 // The families' emails go inside the request, a hundred to a provider request (the season emails' rule).
@@ -119,7 +118,7 @@ export const POST = withObservability(async (req: Request,
     }
     case 'already': {
       const by = r.by ? await memberDisplayName(g.ctx.org.id, r.by) : null;
-      const at = r.at ? formatTime(utcToZonedInputs(r.at).time) : null;
+      const at = r.at ? orgClock(r.at) : null;
       return NextResponse.json({ error: W.already(by, at), code: 'already' }, { status: 409 });
     }
   }
