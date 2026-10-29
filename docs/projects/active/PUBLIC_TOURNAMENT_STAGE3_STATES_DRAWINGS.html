@@ -1,0 +1,555 @@
+<title>Stage 3 States Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+
+/* Layout: a review document on a cool ground; product frames are fixed-size light specimens inside it. */
+:root{
+  --doc-bg:#E9ECEE; --doc-panel:#FFFFFF; --doc-ink:#1C2126; --doc-soft:#4A535C; --doc-dim:#6B747D; --doc-line:#D3D8DD;
+  --doc-accent:#2F5D50; --doc-accent-ink:#FFFFFF; --doc-flag:#8A5300; --doc-flag-bg:#FFF3DC; --doc-bad:#A23A22; --doc-bad-bg:#FBE9E4;
+  --doc-good:#2C6A2A; --doc-good-bg:#E6F0E2;
+  --f-title:"Barlow Condensed","Arial Narrow",Arial,sans-serif; --f-text:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --doc-bg:#14181B; --doc-panel:#1D2226; --doc-ink:#E8ECEF; --doc-soft:#B9C1C8; --doc-dim:#8E979F; --doc-line:#323A40;
+  --doc-accent:#7FC2AE; --doc-accent-ink:#0E1A16; --doc-flag:#F2B35C; --doc-flag-bg:#3A2C14; --doc-bad:#F08D76; --doc-bad-bg:#3A1F18;
+  --doc-good:#8FD08A; --doc-good-bg:#1D3320; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --doc-bg:#14181B; --doc-panel:#1D2226; --doc-ink:#E8ECEF; --doc-soft:#B9C1C8; --doc-dim:#8E979F; --doc-line:#323A40;
+  --doc-accent:#7FC2AE; --doc-accent-ink:#0E1A16; --doc-flag:#F2B35C; --doc-flag-bg:#3A2C14; --doc-bad:#F08D76; --doc-bad-bg:#3A1F18;
+  --doc-good:#8FD08A; --doc-good-bg:#1D3320; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--doc-bg);color:var(--doc-ink);font:15px/1.6 var(--f-text);margin:0}
+.wrap{max-width:1360px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{padding-block:20px 0}
+header.top h1{font:700 30px/1.1 var(--f-title);margin:0;text-wrap:balance}
+header.top p{margin:4px 0 0;color:var(--doc-dim);font-size:13px}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--doc-bg);border-bottom:1px solid var(--doc-line);margin-top:14px}
+nav.tabs .wrap{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+nav.tabs a{flex:none;padding:12px 12px 10px;color:var(--doc-soft);text-decoration:none;font-weight:600;font-size:14px;border-bottom:3px solid transparent;white-space:nowrap}
+nav.tabs a[aria-current="page"]{color:var(--doc-ink);border-bottom-color:var(--doc-accent)}
+nav.tabs a:focus-visible{outline:2px solid var(--doc-accent);outline-offset:-2px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--doc-bg)}
+main section{padding-block:24px 64px}
+h2{font:700 26px/1.15 var(--f-title);margin:0 0 8px;text-wrap:balance}
+h3{font:700 20px/1.2 var(--f-title);margin:28px 0 6px}
+.lede{max-width:72ch;color:var(--doc-soft);margin:0 0 16px}
+.panel{background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:10px;padding:18px 20px;margin:0 0 16px}
+.panel p{max-width:78ch;margin:0 0 10px}.panel p:last-child{margin-bottom:0}
+.panel.key{border-left:4px solid var(--doc-accent)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+table.t{border-collapse:collapse;width:100%;font-size:14px;background:var(--doc-panel)}
+.tw{overflow-x:auto;border:1px solid var(--doc-line);border-radius:10px;margin:0 0 16px}
+table.t th,table.t td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--doc-line)}
+table.t th{font-size:12px;font-weight:700;color:var(--doc-dim);letter-spacing:.04em;text-transform:uppercase;background:var(--doc-panel)}
+table.t tr:last-child td{border-bottom:0}
+.tag{display:inline-block;font:700 11px/1 var(--f-text);letter-spacing:.05em;padding:4px 7px;border-radius:4px;vertical-align:middle;text-transform:uppercase}
+.tag.new{background:var(--doc-good-bg);color:var(--doc-good)}.tag.re{background:var(--doc-flag-bg);color:var(--doc-flag)}.tag.un{background:var(--doc-line);color:var(--doc-soft)}
+.tag.bad{background:var(--doc-bad-bg);color:var(--doc-bad)}
+.flag{font:600 13px/1.3 var(--f-text);display:inline-flex;align-items:center;gap:6px;border:1px solid var(--doc-flag);color:var(--doc-flag);background:var(--doc-flag-bg);border-radius:999px;padding:5px 11px;cursor:pointer;margin:0 6px 6px 0;min-height:32px}
+.flag.bad{border-color:var(--doc-bad);color:var(--doc-bad);background:var(--doc-bad-bg)}
+.flag[aria-expanded="true"]{box-shadow:0 0 0 2px var(--doc-flag) inset}
+.flagnote{margin:4px 0 12px;padding:10px 12px;border-left:3px solid var(--doc-flag);background:var(--doc-panel);max-width:70ch;font-size:14px}
+.stage-row{display:flex;flex-wrap:wrap;gap:24px;overflow-x:auto;padding-bottom:12px;align-items:flex-start}
+.spec{flex:none}
+.cap{font:600 12px/1.3 var(--f-text);color:var(--doc-dim);letter-spacing:.03em;text-transform:uppercase;margin:0 0 6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.measure{font:600 13px/1.4 var(--f-text);color:var(--doc-ink);margin:8px 0 0;max-width:390px}
+.note{max-width:390px;font-size:13.5px;color:var(--doc-soft);margin:8px 0 0}
+.station{display:grid;grid-template-columns:390px minmax(0,1fr);gap:28px;align-items:start;margin:0 0 40px}
+@media (max-width:880px){.station{grid-template-columns:minmax(0,1fr)}}
+.station .read{min-width:0}
+.station .read h3{margin-top:0}
+.phonebox{width:390px;height:740px;overflow-y:auto;overflow-x:hidden;border:1px solid var(--doc-line);border-radius:22px;background:#000;position:relative}
+.phonebox img{display:block;width:390px;max-width:none;height:auto}
+.phonebox.narrow{width:360px}
+.deskbox{width:1280px;height:760px;overflow:auto;border:1px solid var(--doc-line);border-radius:10px}
+.scrollx{overflow-x:auto;padding-bottom:10px}
+ul.tight{margin:6px 0 10px;padding-left:20px}ul.tight li{margin:2px 0}
+.ask{background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:10px;padding:16px 18px;margin:0 0 14px}
+.ask h3{margin:0 0 4px}
+.ask .why{color:var(--doc-soft);margin:0 0 10px;max-width:80ch;font-size:14px}
+.ask label{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:8px;cursor:pointer;max-width:90ch}
+.ask label:hover{background:var(--doc-bg)}
+.ask input[type=radio]{margin-top:4px;accent-color:var(--doc-accent);width:18px;height:18px;flex:none}
+.ask textarea{width:100%;max-width:90ch;min-height:56px;margin-top:8px;font:14px/1.5 var(--f-text);padding:8px 10px;border:1px solid var(--doc-line);border-radius:8px;background:var(--doc-bg);color:var(--doc-ink)}
+.btn{font:600 14px/1 var(--f-text);background:var(--doc-accent);color:var(--doc-accent-ink);border:0;border-radius:8px;padding:12px 16px;cursor:pointer;min-height:44px}
+.btn:focus-visible,.flag:focus-visible{outline:2px solid var(--doc-ink);outline-offset:2px}
+pre.paste{white-space:pre-wrap;background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:10px;padding:14px;font:13px/1.5 ui-monospace,Consolas,monospace;max-width:100ch}
+.rec{font-weight:700;color:var(--doc-good)}
+.kpis{display:flex;gap:0;flex-wrap:wrap;border:1px solid var(--doc-line);border-radius:10px;overflow:hidden;background:var(--doc-panel);margin:0 0 16px}
+.kpis div{flex:1 1 180px;padding:12px 16px;border-right:1px solid var(--doc-line)}
+.kpis div:last-child{border-right:0}
+.kpis b{display:block;font:700 28px/1.1 var(--f-title);font-variant-numeric:tabular-nums}
+.kpis span{font-size:13px;color:var(--doc-soft)}
+
+/* ===== Product specimens: the club frame's tokens, fixed (they do not follow the reader's theme) ===== */
+.tf{--g:#F6F5F2;--card:#FFFFFF;--ink:#1F1B16;--soft:#4E473D;--dim:#6F675B;--line:#E4E0D8;--line2:#D6D0C4;--field:#948B7D;--ok:#2C6A2A;--okbg:#E6F0E2;
+  --live:#B03A22;--livebg:#F6E3DD;--warn:#835006;
+  --fill:#1E3A8A;--on:#FFFFFF;--cink:#1E3A8A;--edge:#1E3A8A;--acc:#1E3A8A;--tile:#FFFFFF;--tileink:#1E3A8A;
+  background:var(--g);color:var(--ink);font:400 16px/1.5 var(--f-text);width:390px;position:relative;color-scheme:light}
+.tf.n360{width:360px}
+.tf *{box-sizing:border-box}
+.tf .band{background:var(--fill);color:var(--on);height:72px;display:flex;align-items:center;gap:12px;padding:0 6px 0 16px}
+.tf .band.ruled{border-bottom:3px solid var(--acc);height:75px}
+.tf .logo{width:44px;height:44px;border-radius:10px;flex:none;display:grid;place-items:center;font:700 16px/1 var(--f-title);letter-spacing:.02em;background:var(--tile);color:var(--tileink)}
+.tf .bname{min-width:0;flex:1}
+.tf .bname b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font:700 20px/1.1 var(--f-title)}
+.tf .bname span{display:flex;align-items:center;gap:8px;font:500 12px/1.3 var(--f-text);white-space:nowrap;margin-top:3px}
+.tf .bname span .chip{flex:none}
+.tf .bicons{display:flex;flex:none}
+.tf .ico{width:44px;height:44px;display:grid;place-items:center;color:inherit;background:none;border:0;padding:0}
+.tf .ico svg{width:22px;height:22px}
+.tf .chip{display:inline-flex;align-items:center;gap:5px;font:600 12px/1 var(--f-text);padding:6px 10px;border-radius:20px;white-space:nowrap}
+.tf .band .chip{background:var(--on);color:var(--fill)}
+.tf .chip.live{background:var(--okbg);color:var(--ok)}
+.tf .chip.live::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.tf .band .chip.live{background:var(--on);color:var(--fill)}
+.tf .chip.ok{background:var(--okbg);color:var(--ok)}
+.tf .chip.soft{background:var(--g);color:var(--soft);border:1px solid var(--line2)}
+.tf .tabs{position:sticky;top:0;z-index:3;background:#fff;border-top:3px solid var(--acc);border-bottom:1px solid var(--line);display:flex;gap:4px;padding:0 8px;overflow-x:auto;scrollbar-width:none;height:48px}
+.tf .tabs span{flex:none;display:flex;align-items:center;padding:3px 8px 0;font:600 14px/1 var(--f-text);color:var(--soft);border-bottom:3px solid transparent;white-space:nowrap}
+.tf .tabs span.on{color:var(--ink);border-bottom-color:var(--cink)}
+.tf .body{padding:16px;display:flex;flex-direction:column;gap:24px}
+.tf .sec{display:flex;flex-direction:column;gap:10px}
+.tf .sh{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.tf .sh h4{font:700 16px/1.25 var(--f-text);margin:0;display:flex;align-items:center;gap:8px}
+.tf .sh a,.tf a.more{font:600 14px/1 var(--f-text);color:var(--cink);text-decoration:none;white-space:nowrap;min-height:44px;display:inline-flex;align-items:center}
+.tf .card{background:var(--card);border:1px solid var(--line);border-radius:8px}
+.tf .pad{padding:14px 16px}
+.tf .team{display:flex;justify-content:space-between;align-items:center;gap:10px;font:600 16px/1.3 var(--f-text)}
+.tf .team .n{min-width:0}
+.tf .team.lose{color:var(--soft);font-weight:500}
+.tf .score{font:700 24px/1 var(--f-title);font-variant-numeric:tabular-nums;min-width:28px;text-align:right}
+.tf .meta{font:400 14px/1.4 var(--f-text);color:var(--dim);display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:8px;padding-top:4px;border-top:1px solid var(--line)}
+.tf .meta a{color:var(--cink);font-weight:600;text-decoration:none;min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;margin:0 -10px -10px 0}
+.tf .meta a svg{width:20px;height:20px}
+.tf .meta a .w{display:none}
+.tf.desk .meta a{margin:0 0 -10px}
+.tf.desk .meta a .w{display:inline}
+.tf .noscore{font:500 14px/1.2 var(--f-text);color:var(--dim)}
+.tf .rows .r{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);min-height:60px}
+.tf .rows .r:last-child{border-bottom:0}
+.tf .rows .tm{font:600 14px/1.25 var(--f-text);font-variant-numeric:tabular-nums}
+.tf .rows .tm small{display:block;font-weight:400;color:var(--dim);font-size:12px}
+.tf .rows .nm{font:500 16px/1.3 var(--f-text);min-width:0}
+.tf .rows .nm div{overflow-wrap:anywhere}
+.tf .rows .nm div+div{margin-top:4px}
+.tf .rows .nm .sub{font:400 14px/1.4 var(--f-text);color:var(--dim);margin-top:4px}
+.tf .rows .nm .w{font-weight:700}
+.tf .rows .nm .l{color:var(--soft)}
+.tf .rows .rt{font:400 12px/1.4 var(--f-text);color:var(--dim);text-align:right}
+.tf .rows .sc{font:700 20px/1.2 var(--f-title);font-variant-numeric:tabular-nums;text-align:right}
+.tf .myteam{display:flex;align-items:center;gap:12px;padding:10px 14px}
+.tf .myteam p{margin:0;font:500 14px/1.35 var(--f-text);color:var(--soft);flex:1}
+.tf .star{width:44px;height:44px;display:grid;place-items:center;color:var(--cink);flex:none}
+.tf .host{display:flex;flex-direction:column;gap:12px}
+.tf .hosthd{display:flex;gap:12px;align-items:center}
+.tf .hosthd .logo{background:var(--hfill,#1E3A8A);color:var(--hon,#fff)}
+.tf .hosthd small{display:block;font:500 12px/1.2 var(--f-text);color:var(--dim)}
+.tf .hosthd b{font:700 20px/1.1 var(--f-title)}
+.tf .openhd{font:700 16px/1.25 var(--f-text);margin:0}
+.tf .open{display:flex;flex-direction:column;border:1px solid var(--line);border-left:3px solid var(--hedge,var(--edge));border-radius:0 8px 8px 0;background:#fff}
+.tf .open a{display:flex;justify-content:space-between;gap:10px;align-items:center;min-height:60px;padding:8px 16px;border-bottom:1px solid var(--line);font:600 16px/1.3 var(--f-text);color:var(--ink);text-decoration:none}
+.tf .open a:last-child{border-bottom:0}
+.tf .open a small{display:block;font:400 14px/1.3 var(--f-text);color:var(--dim)}
+.tf .open a::after{content:"›";font-size:20px;color:var(--dim)}
+.tf .cta{display:flex;align-items:center;justify-content:center;min-height:44px;padding:0 20px;border-radius:8px;background:var(--hfill,var(--fill));color:var(--hon,var(--on));font:600 16px/1 var(--f-text);text-decoration:none;border:1.5px solid var(--hedge,var(--edge));width:100%}
+.tf .cta.event{background:var(--fill);color:var(--on);border-color:var(--edge)}
+.tf .sponsframe{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px}
+.tf .spons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tf .spons div{min-height:64px;display:grid;place-items:center;background:#fff;border:1px solid var(--line);border-radius:8px;font:700 14px/1.2 var(--f-text);color:var(--soft);text-align:center;padding:6px}
+.tf footer{background:var(--fill);color:var(--on);border-top:3px solid var(--acc);padding:20px 16px 12px;display:flex;flex-direction:column;gap:8px}
+.tf footer b{font:700 20px/1.1 var(--f-title)}
+.tf footer .lnk{display:flex;flex-wrap:wrap;gap:0 18px;font:600 14px/1 var(--f-text)}
+.tf footer .lnk span,.tf footer .host2,.tf footer .credit span{min-height:44px;display:inline-flex;align-items:center;text-decoration:underline;text-underline-offset:3px}
+.tf footer .mail small{display:block;font:500 12px/1.3 var(--f-text)}
+.tf footer .mail div{display:flex;align-items:center;gap:4px}
+.tf footer .mail u{font:600 16px/1.2 var(--f-text);min-height:44px;display:inline-flex;align-items:center;text-underline-offset:3px;overflow-wrap:anywhere}
+.tf footer .copy{width:44px;height:44px;display:grid;place-items:center;flex:none}
+.tf footer .copy svg{width:18px;height:18px;opacity:.8}
+.tf footer .host2{font:600 14px/1.3 var(--f-text)}
+.tf footer .credit{border-top:1px solid currentColor;padding-top:4px;font:500 12px/1 var(--f-text)}
+.tf .gbar{position:sticky;bottom:0;z-index:3;height:64px;background:#fff;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(3,1fr);font:600 12px/1 var(--f-text);color:var(--soft)}
+.tf .gbar span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.tf .gbar svg{width:22px;height:22px}
+.tf .gbar span.on{color:var(--ink)}
+.tf .reg{display:flex;flex-direction:column;gap:12px}
+.tf .count{font:700 32px/1 var(--f-title);font-variant-numeric:tabular-nums}
+.tf dl{margin:0}
+.tf dl div{display:flex;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);font-size:16px;min-height:48px;align-items:center}
+.tf dl div:last-child{border-bottom:0}
+.tf dt{color:var(--soft)}.tf dd{margin:0;font-weight:600;text-align:right}
+.tf dd a{color:var(--cink);text-decoration:none}
+.tf .muted{color:var(--dim);font-size:14px;margin:0}
+.tf .slim{height:55px;border-bottom:3px solid var(--acc)}
+.tf .slim .bname b{font-size:18px;-webkit-line-clamp:1}
+/* Admin specimens: the admin area's warm ground, white cards, olive controls (drawn from the captured screens) */
+.adm{--ag:#F5F1E8;--ac:#FFFFFF;--ai:#1F1B16;--as:#5E574C;--ad:#7A7266;--al:#E4DED2;--als:#D6D0C4;--ol:#57651E;--olbg:#EEF0E2;--lime:#D9F99D;
+  background:var(--ag);color:var(--ai);font:400 14px/1.5 var(--f-text);width:760px;padding:20px;display:flex;flex-direction:column;gap:10px;color-scheme:light;border-radius:10px}
+.adm *{box-sizing:border-box}
+/* Editor row (BuilderRow): radius 8, min 60, 12/16, 16px title, 12px summary, 18px chevron rotating */
+.adm .arow{background:var(--ac);border:1px solid var(--al);border-radius:8px}
+.adm .arow.open{border-color:var(--als)}
+.adm .arow .hd{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:60px;padding:12px 16px}
+.adm .arow .hd b{font:700 16px/1.3 var(--f-text);display:block}
+.adm .arow .hd small{font:400 12px/1.4 var(--f-text);color:var(--ad)}
+.adm .chev{width:18px;height:18px;color:var(--as);flex:none}
+.adm .open .chev{transform:rotate(180deg)}
+.adm .abody{padding:0 16px 16px}
+/* Choice list (SendRows radio group): one framed list, hairlines, 18px radio, 14px title, 12px sub */
+.adm .list{border:1px solid var(--al);border-radius:8px;overflow:hidden;margin-top:8px}
+.adm .lrow{display:flex;gap:10px;align-items:flex-start;padding:.55rem .75rem;min-height:44px;border-bottom:1px solid var(--al)}
+.adm .lrow:last-child{border-bottom:0}
+.adm .radio{width:18px;height:18px;border-radius:50%;border:1.5px solid #948B7D;flex:none;margin-top:2px;position:relative;background:#fff}
+.adm .lrow.on .radio{background:var(--ol);border-color:var(--ol)}
+.adm .lrow.on .radio::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--lime)}
+.adm .lrow b{display:block;font:600 14px/1.35 var(--f-text)}
+.adm .lrow small{display:block;font:400 12px/1.4 var(--f-text);color:var(--ad)}
+.adm .hint{font:400 12px/1.45 var(--f-text);color:var(--ad);margin:8px 0 0}
+.adm .hint a{color:var(--ol);font-weight:600}
+/* Branding card (CollapsibleCard): radius 8, min 48, title left, 12px meta right */
+.adm .cc{background:var(--ac);border:1px solid var(--al);border-radius:8px}
+.adm .cc .hd{display:flex;align-items:center;gap:12px;min-height:48px;padding:10px 16px}
+.adm .cc .hd b{font:700 16px/1.3 var(--f-text);flex:1}
+.adm .cc .hd small{font:400 12px/1.3 var(--f-text);color:var(--ad)}
+/* Colours (LookPanel): "From your logo"-style pill, two-tone 32px swatches, double ring when chosen */
+.adm .sw{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.adm .dual{width:32px;height:32px;border-radius:50%;display:block;flex:none}
+.adm .sw .dual.on{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--ol)}
+.adm .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--als);border-radius:999px;padding:4px 12px 4px 4px;font:650 12px/1 var(--f-text);min-height:36px;background:#fff;color:var(--ai)}
+.adm .pill.on{border-color:var(--ol);background:var(--olbg);color:var(--ol)}
+.adm .pill .dual{width:28px;height:28px}
+.adm .prev{margin-top:12px;border:1px solid var(--al);border-radius:8px;overflow:hidden}
+/* Policy lock: a plain line, no card, no tint */
+.adm .lock{display:flex;gap:8px;align-items:center;min-height:44px;font:400 12px/1.4 var(--f-text);color:var(--ad)}
+.adm .lock svg{width:13px;height:13px;flex:none}
+.adm .golink{min-height:44px;display:flex;align-items:center;font:600 14px/1 var(--f-text);color:var(--ol);text-decoration:underline;text-underline-offset:3px}
+/* Question dialog (KitDialog kind="question") */
+.adm .dlg{background:#fff;border-radius:12px;box-shadow:0 12px 32px rgba(31,27,22,.18);border:1px solid var(--al);width:420px}
+.adm .dlg h5{margin:0;padding:16px 20px 6px;font:700 18px/1.3 var(--f-text)}
+.adm .dlg p{margin:0;padding:0 20px 16px;font:400 14px/1.5 var(--f-text);color:var(--as)}
+.adm .dlg .ft{display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--al)}
+.adm .btn-o{min-height:44px;padding:0 16px;border:1px solid var(--als);border-radius:8px;background:#fff;font:600 14px/1 var(--f-text);display:inline-flex;align-items:center}
+.adm .btn-l{min-height:44px;padding:0 16px;border:0;border-radius:8px;background:var(--lime);color:#1F1B16;font:600 14px/1 var(--f-text);display:inline-flex;align-items:center}
+/* Desk specimen */
+.tf.desk{width:1280px}
+.tf.desk .band{height:91px;padding:0 32px;gap:16px;border-bottom:3px solid var(--acc)}
+.tf.desk .band .bname b{font-size:24px}
+.tf.desk .deskgrid{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:640px}
+.tf.desk .rail{background:#fff;border-right:1px solid var(--line);padding:16px 10px;display:flex;flex-direction:column;gap:2px}
+.tf.desk .rail span{min-height:44px;display:flex;align-items:center;padding:0 14px;border-radius:6px;font:600 16px/1 var(--f-text);color:var(--soft)}
+.tf.desk .rail span.on{color:var(--ink);background:var(--g);box-shadow:inset 3px 0 0 var(--cink)}
+.tf.desk .dbody{padding:28px 32px;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:28px;align-content:start}
+.tf.desk .col{display:flex;flex-direction:column;gap:24px}
+.tf.desk .hostlink{margin-left:auto;font:600 14px/1.2 var(--f-text);display:flex;align-items:center;gap:10px;white-space:nowrap}
+.tf.desk .hostlink .logo{width:36px;height:36px;font-size:13px}
+/* ===== Every page (round 2): parts the Overview did not need ===== */
+.jump{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+.jump button{font:600 14px/1 var(--f-text);min-height:44px;padding:0 14px;border-radius:8px;border:1px solid var(--doc-line);background:var(--doc-panel);color:var(--doc-ink);cursor:pointer}
+.jump button:focus-visible{outline:2px solid var(--doc-accent);outline-offset:2px}
+.pg{border-top:1px solid var(--doc-line);padding-top:8px;margin-top:32px;scroll-margin-top:64px}
+.pg>h3{font-size:24px;margin-top:12px}
+.pg .job{color:var(--doc-soft);margin:0 0 12px;max-width:80ch}
+.pg .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px 28px;max-width:1000px;margin-top:8px}
+.pg .cols h4{font:700 16px/1.3 var(--f-text);margin:8px 0 4px}
+/* the ticker on light: one quiet white strip under the tabs, game-day only (unchanged behaviour) */
+.tf .tick{display:flex;align-items:center;gap:10px;height:44px;background:#fff;border-bottom:1px solid var(--line);padding:0 0 0 12px;font:500 14px/1 var(--f-text);white-space:nowrap;overflow:hidden}
+.tf .tick .chip{flex:none}
+.tf .tick .tt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--soft)}
+.tf .tick .tt b{color:var(--ink);font-weight:600}
+.tf .tick .x{width:44px;height:44px;display:grid;place-items:center;color:var(--dim);flex:none}
+/* a form dropdown (the shipped select, on the club frame) */
+.tf .sel{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:0 12px 0 14px;background:#fff;border:1px solid var(--field);border-radius:8px;font:500 16px/1.2 var(--f-text);color:var(--ink);min-width:0}
+.tf .sel::after{content:"";width:8px;height:8px;border-right:2px solid var(--soft);border-bottom:2px solid var(--soft);transform:translateY(-3px) rotate(45deg);flex:none}
+.tf .search{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;background:#fff;border:1px solid var(--field);border-radius:8px;font:400 16px/1.2 var(--f-text);color:var(--dim)}
+.tf .search svg{width:18px;height:18px;flex:none}
+.tf .ctl{display:flex;flex-direction:column;gap:8px}
+.tf .ctl .line{display:flex;gap:8px;align-items:center}
+.tf .ctl .line>.sel,.tf .ctl .line>.search{flex:1}
+.tf .sym{width:44px;height:44px;display:grid;place-items:center;color:var(--cink);flex:none;position:relative;background:none;border:0;padding:0}
+.tf .sym svg{width:22px;height:22px}
+.tf .sym .badge{position:absolute;top:5px;right:3px;min-width:18px;height:18px;border-radius:9px;background:var(--cink);color:#fff;font:700 12px/18px var(--f-text);text-align:center;padding:0 4px}
+.tf .toggle{display:inline-flex;align-items:center;gap:8px;min-height:44px;font:600 14px/1 var(--f-text);color:var(--ink);white-space:nowrap}
+.tf .toggle i{width:36px;height:22px;border-radius:11px;background:var(--field);position:relative;flex:none}
+.tf .toggle i::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(31,27,22,.25)}
+.tf .toggle.on i{background:var(--cink)}.tf .toggle.on i::after{left:17px}
+/* Sign in in the band: the club bar's shipped Sign in (ClubBar): the plain word, 14px 600, on the fill, 44px */
+.tf .signin{min-height:44px;display:inline-flex;align-items:center;padding:0 10px;border-radius:8px;font:600 14px/1 var(--f-text);color:var(--on);white-space:nowrap;flex:none}
+/* the stage switch: today's sliding-chip track (mobileStageControl) on the light frame: one white track, the chosen half filled */
+.tf .seg{display:flex;background:#fff;border:1px solid var(--field);border-radius:8px;padding:3px}
+.tf .seg span{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:6px;font:600 14px/1 var(--f-text);color:var(--soft);white-space:nowrap;padding:0 10px}
+.tf .seg span.on{background:var(--fill);color:var(--on)}
+/* "My games": today's quick-action pill, on the light frame */
+.tf .pill2{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--field);background:#fff;font:600 14px/1 var(--f-text);color:var(--ink);white-space:nowrap;flex:none}
+.tf .pill2 svg{width:18px;height:18px;color:var(--cink)}
+/* the day chips: today's strip (All + one chip per game date, a dot on today), on the light frame */
+.tf .days{display:flex;gap:6px}
+.tf .days span{flex:1;min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#fff;border:1px solid var(--line);border-radius:8px;font:600 14px/1.1 var(--f-text);color:var(--ink);position:relative}
+.tf .days span small{font:400 12px/1.1 var(--f-text);color:var(--dim)}
+.tf .days span.on{background:var(--fill);color:var(--on);border-color:var(--fill)}
+.tf .days span.on small{color:var(--on)}
+.tf .days span.today::after{content:"";position:absolute;top:5px;right:6px;width:6px;height:6px;border-radius:50%;background:currentColor}
+.tf .sheet .row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;border-bottom:1px solid var(--line);font:500 16px/1.3 var(--f-text)}
+.tf .sheet .row:last-of-type{border-bottom:0}
+.tf .sheet .row .sym{margin-right:-10px}
+.tf .slot{font:600 12px/1.2 var(--f-text);color:var(--dim);padding:12px 14px 6px;border-bottom:1px solid var(--line);background:var(--g)}
+/* a schedule row with the Directions symbol on the right */
+.tf .rows .r.dir{grid-template-columns:84px minmax(0,1fr) 44px}
+.tf .rows .r .go{width:44px;height:44px;display:grid;place-items:center;color:var(--cink);margin-right:-8px}
+.tf .rows .r .go svg{width:20px;height:20px}
+.tf .rows .r.mine{box-shadow:inset 3px 0 0 var(--cink)}
+.tf .rows .r .fin{font:600 12px/1.2 var(--f-text);color:var(--dim)}
+.tf .livecard{border:1px solid var(--line);border-left:3px solid var(--ok);border-radius:0 8px 8px 0;background:#fff;padding:12px 14px}
+.tf .livecard .top{display:flex;justify-content:space-between;align-items:center;font:600 12px/1.2 var(--f-text);color:var(--dim);margin-bottom:8px}
+/* the bottom sheet */
+.tf .scrim{position:absolute;inset:0;background:rgba(31,27,22,.45);z-index:5}
+.tf .sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;background:#fff;border-radius:16px 16px 0 0;padding:8px 16px 16px;display:flex;flex-direction:column;gap:4px}
+.tf .sheet .grab{width:36px;height:4px;border-radius:2px;background:var(--line2);margin:0 auto 6px}
+.tf .sheet .shd{display:flex;align-items:center;justify-content:space-between;min-height:44px}
+.tf .sheet .shd b{font:700 20px/1.2 var(--f-text)}
+.tf .sheet .shd span{font:600 14px/1 var(--f-text);color:var(--cink);min-height:44px;min-width:44px;justify-content:flex-end;display:inline-flex;align-items:center}
+.tf .sheet label{font:600 14px/1.2 var(--f-text);color:var(--soft);margin-top:10px}
+/* standings table: Team pinned left, PTS pinned right, the middle scrolls */
+.tf .tbl{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
+.tf .tbl table{border-collapse:separate;border-spacing:0;font:400 14px/1.3 var(--f-text);font-variant-numeric:tabular-nums;min-width:100%}
+.tf .tbl th,.tf .tbl td{padding:0 10px;height:52px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;background:#fff}
+.tf .tbl tr:last-child td{border-bottom:0}
+.tf .tbl th{height:40px;font:600 12px/1 var(--f-text);color:var(--dim)}
+.tf .tbl .tn{position:sticky;left:0;z-index:1;text-align:left;white-space:normal;min-width:150px;max-width:150px;font:600 14px/1.25 var(--f-text);border-right:1px solid var(--line)}
+.tf .tbl th.tn{font:600 12px/1 var(--f-text)}
+.tf .tbl .pt{position:sticky;right:0;z-index:1;border-left:1px solid var(--line);font-weight:700;min-width:52px}
+.tf .tbl tr.mine td{background:var(--g)}
+.tf .tbl tr.mine .tn{box-shadow:inset 3px 0 0 var(--cink)}
+/* a tap-open row (closed and open) */
+.tf .disc{background:#fff;border:1px solid var(--line);border-radius:8px}
+.tf .disc .dh{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;padding:8px 14px;font:600 16px/1.3 var(--f-text)}
+.tf .disc .dh small{display:block;font:400 14px/1.35 var(--f-text);color:var(--dim)}
+.tf .disc .dh::after{content:"";width:8px;height:8px;border-right:2px solid var(--soft);border-bottom:2px solid var(--soft);transform:rotate(45deg);flex:none;margin-top:-4px}
+.tf .disc.isopen .dh::after{transform:rotate(225deg);margin-top:4px}
+.tf .disc .db{padding:0 14px 14px;font:400 16px/1.5 var(--f-text);color:var(--ink)}
+.tf .disc .db p{margin:0 0 8px}
+.tf .disc+.disc{margin-top:-1px}
+.tf .discs .disc{border-radius:0}.tf .discs .disc:first-child{border-radius:8px 8px 0 0}.tf .discs .disc:last-child{border-radius:0 0 8px 8px}
+.tf .door{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:center;min-height:56px;padding:8px 14px;background:#fff;border:1px solid var(--line);border-radius:8px;font:600 16px/1.3 var(--f-text);color:var(--ink);text-decoration:none}
+.tf .door small{display:block;grid-column:1;font:400 14px/1.3 var(--f-text);color:var(--dim)}
+.tf .door::after{content:"›";font-size:22px;color:var(--dim);grid-column:2;grid-row:1/3}
+/* the bracket, drawn plainly */
+.tf .brk{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;align-items:center}
+.tf .brk .rd{font:600 12px/1.2 var(--f-text);color:var(--dim)}
+.tf .bm{background:#fff;border:1px solid var(--line);border-radius:8px;font:500 14px/1.25 var(--f-text);position:relative}
+.tf .bm div{display:flex;justify-content:space-between;gap:6px;padding:7px 10px}
+.tf .bm div+div{border-top:1px solid var(--line)}
+.tf .bm .w{font-weight:700}
+.tf .bm .l{color:var(--soft)}
+.tf .bm .s{font:700 16px/1 var(--f-title);font-variant-numeric:tabular-nums}
+.tf .bm.final{border-left:3px solid var(--ok)}
+.tf .brk .c1{grid-column:1}.tf .brk .c2{grid-column:2;grid-row:2/4}
+.tf .brk .c1::after{content:"";position:absolute;right:-19px;top:50%;width:18px;border-top:1px solid var(--line2)}
+/* teams list and team header */
+.tf .trow{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:8px;align-items:center;padding:8px 6px 8px 14px;border-bottom:1px solid var(--line);min-height:64px}
+.tf .trow:last-child{border-bottom:0}
+.tf .trow b{display:block;font:600 16px/1.3 var(--f-text);overflow-wrap:anywhere}
+.tf .trow small{display:block;font:400 14px/1.35 var(--f-text);color:var(--dim);margin-top:2px}
+.tf .trow small .lv{color:var(--ok);font-weight:600}
+.tf .grp{font:700 16px/1.25 var(--f-text);margin:0;display:flex;justify-content:space-between;align-items:baseline}
+.tf .grp small{font:400 14px/1 var(--f-text);color:var(--dim)}
+.tf .thd{display:flex;gap:12px;align-items:center}
+.tf .thd .logo{width:48px;height:48px;background:var(--fill);color:var(--on)}
+.tf .thd .nm{flex:1;min-width:0}
+.tf .thd .nm b{display:block;font:700 24px/1.1 var(--f-title);overflow-wrap:anywhere}
+.tf .thd .nm small{font:400 14px/1.3 var(--f-text);color:var(--dim)}
+.tf .acts{display:flex;margin-right:-10px}
+/* news, register, champions, game detail */
+.tf .post{padding:14px 16px;border-bottom:1px solid var(--line)}
+.tf .post:last-child{border-bottom:0}
+.tf .post small{font:500 12px/1.3 var(--f-text);color:var(--dim)}
+.tf .post b{display:block;font:700 16px/1.3 var(--f-text);margin:2px 0 4px}
+.tf .post p{margin:0;font:400 14px/1.45 var(--f-text);color:var(--soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tf .h1{font:700 32px/1.05 var(--f-title);margin:0}
+.tf .ghost{border:1px dashed var(--line2);border-radius:8px;text-align:center;color:var(--dim);padding:40px 16px;font:500 14px/1.45 var(--f-text);background:transparent}
+.tf .champ{display:flex;flex-direction:column;gap:6px}
+.tf .champ .dv{font:600 12px/1.2 var(--f-text);color:var(--dim)}
+.tf .champ b{font:700 24px/1.1 var(--f-title);display:flex;align-items:center;gap:8px}
+.tf .champ b svg{width:22px;height:22px;color:var(--cink);flex:none}
+.tf .champ p{margin:0;font:400 14px/1.45 var(--f-text);color:var(--soft)}
+.tf .when{display:flex;flex-direction:column;gap:4px}
+.tf .when .big{font:700 32px/1.05 var(--f-title);font-variant-numeric:tabular-nums}
+.tf .when .wh{font:600 16px/1.35 var(--f-text)}
+.tf .when .ad{font:400 14px/1.4 var(--f-text);color:var(--dim)}
+.tf .pbtn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border-radius:8px;background:var(--fill);color:var(--on);border:1.5px solid var(--edge);font:600 16px/1 var(--f-text);text-decoration:none}
+.tf .pbtn svg{width:20px;height:20px}
+.tf .vs{display:flex;flex-direction:column;gap:8px}
+.tf .tag2{display:inline-flex;align-items:center;font:600 12px/1 var(--f-text);padding:6px 10px;border-radius:20px;background:var(--g);color:var(--soft);border:1px solid var(--line2)}
+.tf .rule{font:400 14px/1.45 var(--f-text);color:var(--soft);margin:0}
+/* desk schedule */
+.tf.desk .dbody.one{grid-template-columns:minmax(0,1fr)}
+.tf.desk .dctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tf.desk .dctl .sel{width:200px}.tf.desk .dctl .search{width:auto;flex:1 1 180px}
+.tf.desk .rows .r.dir{grid-template-columns:96px minmax(0,1fr) 220px 130px}
+.tf.desk .rows .r .go{width:auto;margin:0;gap:6px;display:inline-flex;align-items:center;justify-content:flex-end;font:600 14px/1 var(--f-text);min-height:44px}
+
+
+.tf .chip{font-variant-numeric:tabular-nums}
+.tf .chip.warn{background:#FFF3DC;color:#8A5300}
+.tf .chip.bad{background:#FBE9E4;color:#A23A22}
+.tf .uo{color:#8A5300;font-weight:600}
+.tf .ann{background:#fff;border:1px solid var(--line);border-left:3px solid #B7791F;border-radius:0 8px 8px 0;padding:6px 6px 12px 14px}
+.tf .ann .at{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tf .ann .at b{font:700 16px/1.3 var(--f-text);color:var(--ink)}
+.tf .ann p{margin:0 8px 0 0;font:400 14px/1.45 var(--f-text);color:var(--soft)}
+.tf .hb{padding:20px 16px;display:flex;flex-direction:column;gap:8px}
+.tf .hb [data-i]{width:32px;height:32px;display:block;color:var(--dim)}
+.tf .hb [data-i] svg{width:100%;height:100%}
+.tf .hb b{font:700 20px/1.25 var(--f-text)}
+.tf .hb p{margin:0;font:400 16px/1.5 var(--f-text);color:var(--soft)}
+.tf dl .nt{display:block;padding:12px 16px}
+.tf dl .nt dt{margin-bottom:4px}
+.tf dl .nt dd{font:400 16px/1.5 var(--f-text);text-align:left}
+.tf .rows .r.cx .nm div{color:var(--soft)}
+.tf .rows .r.cx .tm{color:var(--soft)}
+.tf .gtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font:600 12px/1.2 var(--f-text);color:var(--dim)}
+.tf .scard .team a{color:inherit;text-decoration:none}
+.tf .scard+.scard{margin-top:12px}
+.note2{background:var(--doc-panel);border:1px solid var(--doc-line);border-left:4px solid var(--doc-accent);border-radius:8px;padding:12px 16px;margin:0 0 12px;max-width:78ch}
+.asks{display:grid;gap:12px;max-width:980px;list-style:none;padding:0;margin:0}
+.asks li{background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:10px;padding:14px 18px}
+.asks li h3{margin:0 0 4px;font:700 18px/1.25 var(--f-text)}
+.asks li p{margin:0 0 6px;max-width:80ch;color:var(--doc-soft);font-size:14px}
+.asks li .recline{margin:0;font-size:14px;color:var(--doc-ink)}
+
+</style>
+<header class="top"><div class="wrap">
+  <h1>Public tournament pages · Stage 3 · the states the drawings skipped</h1>
+  <p>Drawn 2026-10-29 · Part 1 · one page to rule on: this one replaces last night's "Schedule States Drawing" (same states, two corrections taken from it) · phone browser view, true size (390 px)</p>
+</div></header>
+<nav class="tabs" aria-label="Sections"><div class="wrap"><a href="#n1">1 · Notices & held-back</a><a href="#n2">2 · Cancelled & Unofficial</a><a href="#n3">3 · A game's page</a><a href="#n4">4 · Asks</a></div></nav>
+<main><div class="wrap">
+<section id="n1" data-tab>
+<h2>Notices and held-back schedules</h2>
+<p class="lede">Today's Schedule keeps a pinned notice above the controls on game day, and two "coming soon" states. The Stage 3 drawings did not show them. Each is drawn here in the new frame. Nothing else on the Schedule changes from the approved drawing.</p>
+<div class="stage-row">
+<div class="spec"><p class="cap">A pinned notice, game day <span class="tag un">Kept</span></p><div class="phonebox" style="background:#F6F5F2;height:640px"><div class="tf" data-roles="#1E3A8A" data-ev="sc" ><div data-band></div><div class="tabs" data-tabs="Schedule"></div><div class="body" style="gap:16px"><div class="ann"><div class="at"><b>Rain delay</b><span class="sym" data-i="x" aria-label="Dismiss this notice"></span></div><p>Games after 1:00 p.m. start 45 minutes later. Diamond 3 is closed until further notice.</p></div><div class="ctl"><div class="line"><div class="sel">All divisions</div></div><div class="line"><div data-seg="Pool play|Playoffs|0" style="flex:1"></div><span class="sym" data-i="search" aria-label="Search teams"></span></div></div><div class="days"><span>All</span><span>Mon<small>Oct 26</small></span><span class="on today">Today<small>Oct 27</small></span></div><div class="card rows"><div class="slot">Up next</div><div class="r dir"><div class="tm">1:45 p.m.</div><div class="nm"><div>Maple Ridge Mustangs</div><div>Silver Creek Storm</div><div class="sub">U13 · Diamond 4</div></div><span class="go" data-i="dir" aria-label="Directions"></span></div><div class="r dir"><div class="tm">2:15 p.m.</div><div class="nm"><div>Silver Creek Sharks</div><div>Riverdale Rapids</div><div class="sub">U11 · Diamond 1</div></div><span class="go" data-i="dir" aria-label="Directions"></span></div></div></div></div></div><p class="measure">The Overview's note-card shape (white, with an amber left edge as the house notices have), above the controls. The × is a 44 px symbol and hides it for this visit only, as today. It shows on game day only, as today. The word "Rain delay" is the organizer's own title.</p></div>
+<div class="spec"><p class="cap">One division not published <span class="tag re">Restyled</span></p><div class="phonebox" style="background:#F6F5F2;height:640px"><div class="tf" data-roles="#1E3A8A" data-ev="sc" ><div data-band></div><div class="tabs" data-tabs="Schedule"></div><div class="body" style="gap:16px"><div class="ctl"><div class="line"><div class="sel">U13</div></div><div class="line"><div data-seg="Pool play|Playoffs|0" style="flex:1"></div><span class="sym" data-i="search" aria-label="Search teams"></span></div></div><div class="days"><span>All</span><span>Mon<small>Oct 26</small></span><span class="on today">Today<small>Oct 27</small></span></div><div class="card hb"><span data-i="cal"></span><b>Division schedule coming soon</b><p>This division has not been published yet. Other divisions may already be available.</p></div></div></div></div><p class="measure">Same words as today. The controls stay, so a family can pick another division. In All divisions a held-back division simply has no games (the server gate).</p></div>
+<div class="spec"><p class="cap">No division published <span class="tag re">Restyled</span></p><div class="phonebox" style="background:#F6F5F2;height:640px"><div class="tf" data-roles="#1E3A8A" data-ev="sc" ><div data-band></div><div class="tabs" data-tabs="Schedule"></div><div class="body" style="gap:16px"><div class="card hb"><span data-i="cal"></span><b>Schedule coming soon</b><p>The tournament schedule has not been published yet. Check back before game day.</p></div><a class="door" href="#">Teams</a><a class="door" href="#">Register<small>Sign-ups are open</small></a></div><footer data-foot></footer></div></div><p class="measure">No controls, since nothing is listed. Today's doors stay as door rows: Teams, and Register only while sign-ups are open (Register is not a tab, so the tab row cannot stand in for it). Today's "Tournament Home" button goes: the Overview tab is the way home. In the admin preview the doors are left out. (From last night's drawing.)</p></div>
+</div></section>
+<section id="n2" data-tab hidden>
+<h2>Cancelled and Unofficial</h2>
+<p class="lede">Today a cancelled game wears a red badge and an unfinalized score wears an amber one. Both keep those colours in the new frame, as quiet chips instead of badges. Unofficial appears only where the organizer asked to confirm scores before they count.</p>
+<div class="stage-row">
+<div class="spec"><p class="cap">On the Schedule <span class="tag re">Restyled</span></p><div class="phonebox" style="background:#F6F5F2;height:900px"><div class="tf" data-roles="#1E3A8A" data-ev="sc" ><div data-band></div><div class="tabs" data-tabs="Schedule"></div><div class="body" style="gap:16px"><div class="ctl"><div class="line"><div class="sel">All divisions</div></div><div class="line"><div data-seg="Pool play|Playoffs|0" style="flex:1"></div><span class="sym" data-i="search" aria-label="Search teams"></span></div></div><div class="days"><span>All</span><span>Mon<small>Oct 26</small></span><span class="on today">Today<small>Oct 27</small></span></div><div class="card rows"><div class="slot">Up next</div><div class="r dir"><div class="tm">3:00 p.m.</div><div class="nm"><div>Silver Creek Storm</div><div>Riverdale Royals</div><div class="sub">U13 · Diamond 4</div></div><span class="go" data-i="dir" aria-label="Directions"></span></div><div class="r cx" style="grid-template-columns:84px minmax(0,1fr)"><div class="tm">4:00 p.m.</div><div class="nm"><div>Cedar Hollow Cyclones</div><div>Maple Ridge Marauders</div><div class="sub">U11 · Diamond 2 <i class="chip bad" style="font-style:normal;margin-left:6px">Cancelled</i></div></div></div><div class="r dir"><div class="tm">5:00 p.m.</div><div class="nm"><div>Cedar Hollow Comets</div><div>Maple Ridge Mustangs</div><div class="sub">U13 · Diamond 3</div></div><span class="go" data-i="dir" aria-label="Directions"></span></div></div><div class="card rows"><div class="r" style="grid-template-columns:84px minmax(0,1fr) auto"><div class="tm">12:00 p.m.<small>Semifinal</small></div><div class="nm"><div class="w">Cedar Hollow Cyclones</div><div class="l">Maple Ridge Marauders</div><div class="sub">Diamond 2 · Final</div></div><div class="sc">10<br><span style="color:var(--soft)">8</span></div></div><div class="r" style="grid-template-columns:84px minmax(0,1fr) auto"><div class="tm">2:00 p.m.<small>Semifinal</small></div><div class="nm"><div class="w">Riverdale Rapids</div><div class="l">Silver Creek Sharks</div><div class="sub">Diamond 1 <i class="chip warn" style="font-style:normal;margin-left:6px">Unofficial</i></div></div><div class="sc">14<br><span style="color:var(--soft)">6</span></div></div></div></div></div></div><p class="measure">A cancelled game keeps its time and teams, drawn soft, and says "Cancelled" after its field, with no Directions symbol (nobody needs directions). An unofficial score reads like a final one, with an amber "Unofficial" chip after the field, so the winner is still easy to find. A status is said once, by a chip.</p></div>
+<div class="spec"><p class="cap">A game's page, cancelled <span class="tag new">New</span></p><div class="phonebox" style="background:#F6F5F2;height:700px"><div class="tf" data-roles="#1E3A8A" data-ev="sc" ><div data-band></div><div class="tabs" data-tabs="Schedule"></div><div class="body" style="gap:16px"><a class="more" href="#" style="margin:-12px 0 -12px -2px"><i data-i="prev" style="width:20px;height:20px;display:inline-grid"></i>Schedule</a><div class="card pad when"><div class="big" style="display:flex;align-items:center;gap:10px;color:var(--soft)">4:00 p.m. <i class="chip bad" style="font-style:normal">Cancelled</i></div><div class="wh">Tue, Oct 27 · Diamond 2</div><div class="ad">Riverdale Community Park, 1 Riverdale Park Road, Riverdale ON</div></div><div class="card pad scard"><div class="gtop"><span>Pool play · U11</span></div><div class="team" style=""><a class="n" href="#">Cedar Hollow Cyclones</a></div><div class="team lose" style="margin-top:6px"><a class="n" href="#">Maple Ridge Marauders</a></div><div class="meta"><span>This game will not be played.</span></div></div><div class="card"><dl><div><dt>Division</dt><dd>U11</dd></div><div><dt>Round</dt><dd>Pool play</dd></div><div><dt>Game length</dt><dd>75 min</dd></div></dl></div></div></div></div><p class="measure">No Directions button on a cancelled game (the address stays, it is still information). The chip sits beside the time, the first thing a family reads, and the time goes soft. No scores, no share symbol. The foot says what happened in one plain sentence.</p></div>
+<div class="spec"><p class="cap">A game's page, unofficial <span class="tag new">New</span></p><div class="phonebox" style="background:#F6F5F2;height:560px"><div class="tf" data-roles="#1E3A8A" data-ev="sc" ><div data-band></div><div class="tabs" data-tabs="Schedule"></div><div class="body" style="gap:16px"><a class="more" href="#" style="margin:-12px 0 -12px -2px"><i data-i="prev" style="width:20px;height:20px;display:inline-grid"></i>Schedule</a><div class="card pad scard"><div class="gtop"><span>Semifinal · U13</span><i class="chip warn" style="font-style:normal">Unofficial</i></div><div class="team" style=""><a class="n" href="#">Riverdale Rapids</a><span class="score">14</span></div><div class="team lose" style="margin-top:6px"><a class="n" href="#">Silver Creek Sharks</a><span class="score">6</span></div><div class="meta"><span>Not yet confirmed by the organizer</span><span class="sym" data-i="share" aria-label="Share this score" style="margin:0 -10px -10px 0"></span></div></div><div class="card"><dl><div><dt>Division</dt><dd>U13</dd></div><div><dt>Round</dt><dd>Semifinal</dd></div><div><dt>Game length</dt><dd>75 min</dd></div></dl></div></div></div></div><p class="measure">Amber chip in the score card's top line, scores shown, the share symbol kept (its share label already says "unofficial"). The foot sentence tells a family the score may still change.</p></div>
+</div></section>
+<section id="n3" data-tab hidden>
+<h2>Notes, what's at stake, and no map</h2>
+<p class="lede">Three more things a game's page can say that the approved drawing leaves out. The first two are words the page prints today; the third is a state where Directions cannot exist.</p>
+<div class="stage-row">
+<div class="spec"><p class="cap">The facts card with Notes <span class="tag new">New</span></p><div class="phonebox" style="background:#F6F5F2;height:470px"><div class="tf" data-roles="#1E3A8A" data-ev="sc" ><div data-band></div><div class="tabs" data-tabs="Schedule"></div><div class="body" style="gap:16px"><a class="more" href="#" style="margin:-12px 0 -12px -2px"><i data-i="prev" style="width:20px;height:20px;display:inline-grid"></i>Schedule</a><div class="card"><dl><div><dt>Division</dt><dd>U11</dd></div><div><dt>Round</dt><dd>Championship</dd></div><div><dt>Game length</dt><dd>75 min</dd></div><div class="nt"><dt>Notes</dt><dd>Bring your own water. Parking is on the east side; the north lot is closed for the weekend.</dd></div></dl></div></div></div></div><p class="measure">Notes is the last row of the facts card, with its words under the label so a long note wraps. Absent when the organizer wrote none. (Whether game notes are public at all is an old open call from Stage 0; the page prints them today and keeps doing so.)</p></div>
+<div class="spec"><p class="cap">The stakes line <span class="tag re">Restyled</span></p><div class="phonebox" style="background:#F6F5F2;height:720px"><div class="tf" data-roles="#1E3A8A" data-ev="sc" ><div data-band></div><div class="tabs" data-tabs="Schedule"></div><div class="body" style="gap:12px"><a class="more" href="#" style="margin:-12px 0 -12px -2px"><i data-i="prev" style="width:20px;height:20px;display:inline-grid"></i>Schedule</a><div class="card pad scard"><div class="gtop"><span>Quarterfinal · U13</span><i class="chip soft" style="font-style:normal">Starts in 2 hours</i></div><div class="team" style=""><a class="n" href="#">Maple Ridge Mustangs</a></div><div class="team lose" style="margin-top:6px"><a class="n" href="#">Silver Creek Storm</a></div><div class="meta"><span>Winner advances to the Semifinal</span></div></div><div class="card pad scard"><div class="gtop"><span>3rd place · U13</span><i class="chip soft" style="font-style:normal">Starts in 1 day</i></div><div class="team" style=""><a class="n" href="#">Riverdale Royals</a></div><div class="team lose" style="margin-top:6px"><a class="n" href="#">Cedar Hollow Comets</a></div><div class="meta"><span>Battling for 3rd place</span></div></div><div class="card pad scard"><div class="gtop"><span>Consolation · U11</span><i class="chip soft" style="font-style:normal">Starts in 1 day</i></div><div class="team" style=""><a class="n" href="#">Maple Ridge Marauders</a></div><div class="team lose" style="margin-top:6px"><a class="n" href="#">Silver Creek Sharks</a></div><div class="meta"><span>Consolation final</span></div></div></div></div></div><p class="measure">Today these sit in a strip above the teams. Now they are the score card's foot, where the championship's "The winner takes the title" is drawn. Same three sentences as the page prints today, one card each here.</p></div>
+<div class="spec"><p class="cap">When and where, with and without a location <span class="tag new">New</span></p><div class="phonebox" style="background:#F6F5F2;height:560px"><div class="tf" data-roles="#1E3A8A" data-ev="sc" ><div data-band></div><div class="tabs" data-tabs="Schedule"></div><div class="body" style="gap:16px"><a class="more" href="#" style="margin:-12px 0 -12px -2px"><i data-i="prev" style="width:20px;height:20px;display:inline-grid"></i>Schedule</a><div class="card pad when"><div class="big">4:00 p.m.</div><div class="wh">Tue, Oct 27 · Diamond 2</div><div class="ad">Riverdale Park</div><a class="pbtn" href="#" style="margin-top:10px"><i data-i="dir"></i>Directions</a></div><div class="card pad when"><div class="big">4:00 p.m.</div><div class="wh">Tue, Oct 27</div><div class="ad">Location TBD</div></div></div></div></div><p class="measure">Top: a venue name alone is enough, since the page opens maps on the address, else the name, so Directions stays. Bottom: no location set at all, so it says "Location TBD" and there is no button. Directions is only ever absent in that one case, never dead. (Corrected from my first drawing, which showed an address with no map link; the code cannot produce that.)</p></div>
+</div></section>
+<section id="n4" data-tab hidden>
+<h2>What I need from you</h2>
+<p class="lede">Part 1 closes when you say yes to these drawings. Every call below is a recommendation; reply "yes" to take them all, or name the ones to change. Part 2 (the phone Schedule) builds to this page and the approved Schedule drawing.</p>
+<ol class="asks">
+<li><h3>1 · The pinned notice</h3><p>An amber note card above the controls on game day, dismissible for this visit, the organizer's own title and words.</p><p class="recline"><b class="rec">Recommended:</b> as drawn.</p></li>
+<li><h3>2 · Where the chip goes on a row (the two drawings differ)</h3><p>Last night's drawing put Unofficial in the time column and let Cancelled replace the field name. This page puts both chips after the field name, so the field stays and both statuses sit in the same place.</p><p class="recline"><b class="rec">Recommended:</b> after the field name, as drawn here. A cancelled game's field is still useful to a family who planned the day around it, and one position for both chips is easier to scan.</p></li>
+<li><h3>3 · A cancelled game's page (the two drawings differ)</h3><p>Last night's drawing replaced the address with "This game will not be played." This page keeps the address, puts the chip beside the soft time, and says the sentence in the score card's foot. Either way: no Directions button, no scores, no share symbol.</p><p class="recline"><b class="rec">Recommended:</b> keep the address, as drawn here. The sentence is new wording either way.</p></li>
+<li><h3>3b · Unofficial on a game's page</h3><p>An amber chip, the scores, the share symbol, and a foot sentence. Mine reads "The organizer has not confirmed this score yet."; last night's reads "Not yet confirmed by the organizer".</p><p class="recline"><b class="rec">Recommended:</b> last night's shorter one, "Not yet confirmed by the organizer". Say if you prefer mine.</p></li>
+<li><h3>4 · Notes</h3><p>The last row of the facts card, absent when empty.</p><p class="recline"><b class="rec">Recommended:</b> as drawn.</p></li>
+<li><h3>5 · The stakes line</h3><p>The score card's foot: "Winner advances to the Semifinal", "Battling for 3rd place", "Consolation final", "The winner takes the title".</p><p class="recline"><b class="rec">Recommended:</b> as drawn.</p></li>
+<li><h3>6 · No location</h3><p>"Location TBD" and no Directions button, only when no location is set at all. A venue name alone keeps Directions.</p><p class="recline"><b class="rec">Recommended:</b> as drawn.</p></li>
+<li><h3>7 · Held-back schedules</h3><p>Same words as today in the new look. A whole held-back schedule shows no controls but keeps today's doors: Teams, and Register while sign-ups are open. A single held-back division keeps the controls.</p><p class="recline"><b class="rec">Recommended:</b> as drawn.</p></li>
+<li><h3>8 · The "Updated 11:52 a.m." line on the live card</h3><p>No such time reaches the public pages today. The database does record when a score was last entered, but I could not confirm that it moves on every in-progress score change, and a line that claims freshness must be true. Adding it also means sending a new field to the public pages.</p><p class="recline"><b class="rec">Recommended:</b> drop the line. The live card ends with the Directions symbol and, in the Playoffs half, "The winner takes the title".</p></li>
+</ol>
+<div class="panel key" style="margin-top:16px;max-width:980px"><p><b>Already settled this session:</b> My games and the calendar symbol only inside the installed app; All divisions first (a remembered pick wins); the bracket door built now and pointing at Standings (it reads "On the Standings tab" until the bracket moves in Stage 4); "Semifinal 1 winner" wording on the new pages.</p><p><b>Told, not asked:</b> the desk game page has no drawing; at Part 3 I will derive it from the phone's cards in the Overview's two columns and show it for your yes. The hub still has two stale mentions of an "options sheet"; the plan is the authority and none is built.</p></div></section>
+</div></main>
+<script>
+(function(){
+  // ---- club colour roles, as lib/club-colour-roles.ts works them out ----
+  var GROUND='#F6F5F2', NEAR='#1F1B16', WHITE='#FFFFFF';
+  function lum(h){var c=[1,3,5].map(function(i){var v=parseInt(h.slice(i,i+2),16)/255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4)});return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2]}
+  function cr(a,b){var x=lum(a),y=lum(b);return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05)}
+  function scale(h,f){function ch(i){return Math.round(parseInt(h.slice(i,i+2),16)*f).toString(16).padStart(2,'0')}return ('#'+ch(1)+ch(3)+ch(5)).toUpperCase()}
+  function darkenUntil(h,against,r){for(var s=0;s<=100;s++){var c=scale(h,1-s/100);if(cr(c,against)>=r)return c}return '#000000'}
+  function roles(p){
+    if(p==='free')return {fill:NEAR,onFill:WHITE,ink:NEAR,edge:NEAR,accent:NEAR,tile:WHITE,tileInk:NEAR,darkened:false,free:true};
+    p=p.toUpperCase();var fill=p,on=cr(WHITE,fill)>=cr(NEAR,fill)?WHITE:NEAR,dk=cr(on,fill)<4.5;
+    if(dk){fill=darkenUntil(p,WHITE,4.5);on=WHITE}
+    var ink=darkenUntil(fill,GROUND,4.5),edge=cr(fill,GROUND)>=3?fill:ink,accent=edge,tile=on,tileInk=cr(fill,tile)>=cr(on,tile)?fill:on;
+    if(cr(tileInk,tile)<3){tile=on;tileInk=fill}
+    return {fill:fill,onFill:on,ink:ink,edge:edge,accent:accent,tile:tile,tileInk:tileInk,darkened:dk};
+  }
+  function apply(el,r){var s=el.style;s.setProperty('--fill',r.fill);s.setProperty('--on',r.onFill);s.setProperty('--cink',r.ink);s.setProperty('--edge',r.edge);s.setProperty('--acc',r.accent);s.setProperty('--tile',r.tile);s.setProperty('--tileink',r.tileInk);s.setProperty('--hfill',r.fill);s.setProperty('--hon',r.onFill);s.setProperty('--hedge',r.edge)}
+  var star='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></svg>';
+  var share='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>';
+  function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  document.querySelectorAll('.tf[data-roles]').forEach(function(el){
+    var r=roles(el.getAttribute('data-roles'));apply(el,r);
+    if(el.hasAttribute('data-label')){
+      var name=el.getAttribute('data-name')||'Riverdale Summer Classic', init=el.getAttribute('data-init'), host=el.getAttribute('data-host');
+      if(init===null)init='RM';
+      var logo=init?'<div class="logo">'+esc(init)+'</div>':'';
+      var hostLine=host==='none'?(r.free?'Run by Northfield Sports Events':'Run by Metro Sports Events'):'Hosted by '+(name.indexOf('Lakeshore')===0?'Lakeshore Lightning Softball':name.indexOf('Greater')===0?'Hamilton-Wentworth Girls Fastpitch':'Riverdale Minor Ball Association')+' ›';
+      var credit=r.free?'Free event · Powered by FieldLogicHQ':'Built on FieldLogicHQ';
+      el.innerHTML='<div class="band">'+logo+'<div class="bname"><b>'+esc(name)+'</b><span>Oct 25–27 <i class="chip live" style="font-style:normal">Live now</i></span></div><div class="bicons"><button class="ico" aria-label="Share">'+share+'</button>'+(el.closest('#look')?'':'<span class="signin">Sign in</span>')+'</div></div>'+
+        '<div class="tabs" style="position:static"><span class="on">Overview</span><span>Schedule</span><span>Standings</span><span>Teams</span><span>Playoffs</span></div>'+
+        '<div class="body" style="gap:14px"><div class="sh"><h4>Live now</h4><a href="#">Full schedule</a></div>'+
+        '<div class="card pad"><div class="team"><span class="n">Cedar Hollow Cyclones</span><span class="score">3</span></div><div class="team lose" style="margin-top:6px"><span class="n">Riverdale Rapids</span><span class="score">2</span></div><div class="meta"><span>Championship · Field 2</span><a href="#" aria-label="Directions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 11 22 2l-9 19-2-8z"/></svg><span class="w">Directions</span></a></div></div>'+
+        '<a class="cta event" href="#">Follow a team</a></div>'+
+        '<footer><b>'+esc(name)+'</b><div class="lnk"><span>Rules</span><span>News</span></div>'+(host==='none'?'<div class="host2" style="text-decoration:none">':'<div class="host2">')+hostLine+'</div><div class="credit"><span>'+credit+'</span></div></footer>';
+      var out=document.querySelector('[data-rolesout="'+el.getAttribute('data-label')+'"]');
+      if(out&&!r.free)out.innerHTML='Chosen '+esc(el.getAttribute('data-roles').toUpperCase())+(r.darkened?' (darkened to carry text)':'')+' → band '+r.fill+', text on band '+(r.onFill===WHITE?'white':'near-black')+' ('+cr(r.onFill,r.fill).toFixed(1)+' : 1), links/selected tab '+r.ink+' ('+cr(r.ink,GROUND).toFixed(1)+' : 1 on the ground).';
+    }
+  });
+
+  // ---- Every page (round 2): the frame's parts, filled from one place ----
+  var SV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">';
+  var ICON={
+    dir:SV+'<path d="M3 11 22 2l-9 19-2-8z"/></svg>',
+    star:star,
+    starf:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></svg>',
+    share:share,
+    bell:SV+'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
+    cal:SV+'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/></svg>',
+    search:SV+'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+    filter:SV+'<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>',
+    prev:SV+'<path d="m15 18-6-6 6-6"/></svg>',
+    next:SV+'<path d="m9 18 6-6-6-6"/></svg>',
+    trophy:SV+'<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg>',
+    x:SV+'<path d="M6 6l12 12M18 6 6 18"/></svg>',
+    copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>'
+  };
+  var EV={
+    sc:{name:'Riverdale Summer Classic',init:'RM',dates:'Oct 25–27',where:'Riverdale Community Park',chip:'Live now',live:true,tabs:['Overview','Schedule','Standings','Teams','Playoffs','News','Rules'],foot:['Rules','News'],host:'Hosted by Riverdale Minor Ball Association ›',mail:'tournaments@riverdaleminor.ca'},
+    inv:{name:'Riverdale Invitational',init:'RM',dates:'Nov 17–18',chip:'Registration open',tabs:['Overview','Teams','News','Rules','Register'],foot:['Rules','News','Register'],host:'Hosted by Riverdale Minor Ball Association ›',mail:'tournaments@riverdaleminor.ca'},
+    nf:{name:'Northfield Fall Ball',init:'',dates:'Sep 19–20',chip:'This weekend',tabs:['Overview','Schedule','Standings','Teams','Rules'],foot:['Rules'],host:'Run by Northfield Sports Events',plain:true,mail:'info@northfieldsports.ca',credit:'Free event · Powered by FieldLogicHQ'},
+    lk:{name:'Lakeshore Lightning Fall Classic',init:'LL',dates:'Oct 3–5',chip:'Finished',tabs:['Overview','Champions','Standings','Playoffs','Schedule','Teams','Rules'],foot:['Champions','Rules'],host:'Hosted by Lakeshore Lightning Softball ›',mail:'tournament@lakeshorelightning.ca'}
+  };
+  function chipOf(e){return '<i class="chip'+(e.live?' live':'')+'" style="font-style:normal">'+esc(e.chip)+'</i>'}
+  function swap(ph,html){var t=document.createElement('div');t.innerHTML=html;var n=t.firstChild;ph.parentNode.replaceChild(n,ph);return n}
+  document.querySelectorAll('.tf[data-ev]').forEach(function(f){
+    var e=EV[f.getAttribute('data-ev')];if(!e)return;
+    var logo=e.init?'<div class="logo">'+esc(e.init)+'</div>':'';
+    f.querySelectorAll('[data-band]').forEach(function(ph){
+      if(ph.getAttribute('data-band')==='desk')swap(ph,'<div class="band">'+logo+'<div class="bname"><b>'+esc(e.name)+'</b><span>'+esc(e.dates)+(e.where?' · '+esc(e.where):'')+' '+chipOf(e)+'</span></div><div class="hostlink">'+esc(e.host)+'</div><span class="signin" style="margin-left:8px">Sign in</span></div>');
+      else swap(ph,'<div class="band">'+logo+'<div class="bname"><b>'+esc(e.name)+'</b><span>'+esc(e.dates)+' '+chipOf(e)+'</span></div><div class="bicons"><button class="ico" aria-label="Share">'+share+'</button><span class="signin">Sign in</span></div></div>')});
+    f.querySelectorAll('[data-tabs]').forEach(function(t){var on=t.getAttribute('data-tabs');t.innerHTML=e.tabs.map(function(x){return '<span'+(x===on?' class="on"':'')+'>'+esc(x)+'</span>'}).join('')});
+    f.querySelectorAll('[data-rail]').forEach(function(t){var on=t.getAttribute('data-rail');t.innerHTML=e.tabs.map(function(x){return '<span'+(x===on?' class="on"':'')+'>'+esc(x)+'</span>'}).join('')});
+    f.querySelectorAll('[data-tick]').forEach(function(ph){swap(ph,'<div class="tick"><i class="chip live" style="font-style:normal">Live now</i><span class="tt"><b>Cedar Hollow Cyclones 3</b> · Riverdale Rapids 2 · <b>Silver Creek Storm</b> vs Maple Ridge Mustangs</span><span class="x" aria-label="Hide the scores">'+ICON.x.replace('<svg ','<svg width="18" height="18" ')+'</span></div>')});
+    f.querySelectorAll('footer[data-foot]').forEach(function(ft){
+      ft.innerHTML='<b>'+esc(e.name)+'</b><div class="mail"><small>Questions? Email the tournament</small><div><u>'+esc(e.mail)+'</u><span class="copy" aria-label="Copy the address">'+ICON.copy+'</span></div></div>'+
+        '<div class="lnk">'+e.foot.map(function(x){return '<span>'+esc(x)+'</span>'}).join('')+'</div>'+
+        '<div class="host2"'+(e.plain?' style="text-decoration:none"':'')+'>'+esc(e.host)+'</div><div class="credit"><span>'+esc(e.credit||'Built on FieldLogicHQ')+'</span></div>'});
+  });
+  document.querySelectorAll('[data-seg]').forEach(function(s){var p=s.getAttribute('data-seg').split('|'),k=+p.pop();s.className='seg';s.setAttribute('role','group');
+    s.innerHTML=p.map(function(x,i){return '<span'+(i===k?' class="on"':'')+'>'+esc(x)+'</span>'}).join('')});
+  document.querySelectorAll('[data-i]').forEach(function(el){var s=ICON[el.getAttribute('data-i')];if(!s)return;el.innerHTML=s;if(el.tagName==='I')el.style.display='inline-flex'});
+})();
+(function(){
+  var secs=[].slice.call(document.querySelectorAll('[data-tab]')), links=[].slice.call(document.querySelectorAll('nav.tabs a'));
+  function show(){var id=(location.hash||'#n1').slice(1);if(!document.getElementById(id)||!document.getElementById(id).hasAttribute('data-tab'))id='n1';
+    secs.forEach(function(s){s.hidden=s.id!==id});links.forEach(function(a){if(a.getAttribute('href')==='#'+id)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')})}
+  window.addEventListener('hashchange',function(){show();window.scrollTo(0,0)});show();
+})();
+</script>

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { friendlyPlaceholder, gameRowView, gameSideNames, liveCardView } from '../../lib/public-game-row.ts';
+import { fanPlaceholder, friendlyPlaceholder, gameRowView, gameSideNames, liveCardView } from '../../lib/public-game-row.ts';
 import type { Game } from '../../lib/types.ts';
 
 /**
@@ -58,6 +58,37 @@ describe('the game row, finished face', () => {
   });
 });
 
+describe('the game row, the Schedule\'s extras (Stage 3)', () => {
+  const done = { status: 'submitted' as const, date: '2026-10-27', awayScore: 6, homeScore: 14 };
+  it('an unofficial score is a finished face that says Unofficial, with its scores', () => {
+    const v = gameRowView(game(done), names, '', TODAY, { state: 'unofficial' });
+    assert.equal(v.face, 'final');
+    assert.equal(v.head, 'Unofficial');
+    assert.deepEqual(v.sides.map(s => s.score), [14, 6]);
+  });
+  it('a submitted score the organizer does not hold for review is a Final', () => {
+    assert.equal(gameRowView(game(done), names, '', TODAY, { state: 'final' }).head, 'Final');
+  });
+  it('a cancelled game keeps the scheduled face and says so; nothing else does', () => {
+    const v = gameRowView(game({ status: 'cancelled' }), names, 'U13 · Diamond 4', TODAY, { state: 'cancelled' });
+    assert.equal(v.face, 'scheduled');
+    assert.equal(v.cancelled, true);
+    assert.equal(v.head, '5:00 p.m.');
+    assert.equal(gameRowView(game(), names, '', TODAY, { state: 'upcoming' }).cancelled, false);
+    assert.equal(gameRowView(game(), names, '', TODAY).cancelled, false);
+  });
+  it('a playoff game\'s round replaces the day under its time; the pool tag rides along', () => {
+    const v = gameRowView(game(), names, 'Diamond 2', TODAY, { state: 'upcoming', round: 'Semifinal', poolTag: 'Pool A' });
+    assert.equal(v.head, '5:00 p.m.');
+    assert.equal(v.when, 'Semifinal');
+    assert.equal(v.poolTag, 'Pool A');
+    assert.equal(gameRowView(game(), names, '', TODAY).poolTag, null);
+  });
+  it('a finished game without both scores stays a scheduled face, whatever its state', () => {
+    assert.equal(gameRowView(game({ status: 'completed' }), names, '', TODAY, { state: 'final' }).face, 'scheduled');
+  });
+});
+
 describe('the Live now card', () => {
   it('both scores, the team behind drawn soft, division · field, Directions to the field', () => {
     const v = liveCardView(game({ status: 'scheduled', awayScore: 2, homeScore: 5 }), names, 'U13', 'Diamond 4', 'https://maps/x');
@@ -90,6 +121,17 @@ describe('names', () => {
     assert.deepEqual(
       gameSideNames(game({ awayTeamId: undefined, awayPlaceholder: 'Loser QF1' }), id => `Team ${id}`),
       { away: 'Loser of QF1', home: 'Team h' },
+    );
+  });
+  it('the new pages say a slot as the bracket does: the game leads (owner 2026-10-28, ruling 2026-07-17)', () => {
+    assert.equal(fanPlaceholder('Winner SF2'), 'Semifinal 2 winner');
+    assert.equal(fanPlaceholder('Winner of SF2'), 'Semifinal 2 winner');
+    assert.equal(fanPlaceholder('Loser QF1'), 'Quarterfinal 1 loser');
+    assert.equal(fanPlaceholder('Pool A #1'), 'Pool A #1', 'an organizer\'s own text passes through');
+    assert.equal(fanPlaceholder(null), 'TBD');
+    assert.deepEqual(
+      gameSideNames(game({ awayTeamId: undefined, awayPlaceholder: 'Winner SF1' }), id => `Team ${id}`, fanPlaceholder),
+      { away: 'Semifinal 1 winner', home: 'Team h' },
     );
   });
 });

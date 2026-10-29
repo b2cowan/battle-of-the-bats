@@ -14,7 +14,8 @@
  */
 import { formatTime } from './utils';
 import { formatShortWeekdayDate, formatStoredDate } from './timezone';
-import { hasNoScoreYet, NO_SCORE_YET } from './game-status';
+import { hasNoScoreYet, NO_SCORE_YET, type PublicGameState } from './game-status';
+import { fanSlotLabel } from './playoff-bracket';
 import type { Game } from './types';
 
 type RowGame = Pick<Game, 'id' | 'date' | 'time' | 'status' | 'homeScore' | 'awayScore' | 'homeTeamId' | 'awayTeamId'>
@@ -26,11 +27,23 @@ export function friendlyPlaceholder(placeholder: string | null | undefined): str
   return placeholder.replace(/^(Winner|Loser)\s+(?!of\b)/i, '$1 of ');
 }
 
-/** Both sides' names: the team's, else the bracket's placeholder said as English. */
-export function gameSideNames(game: RowGame, teamName: (id: string) => string): { away: string; home: string } {
+/** The new pages' words for a bracket slot (Stage 3, owner 2026-10-28): the bracket's own — "Semifinal 1 winner" — so the
+ *  game leads and a cut-off name can't hide the number (the 2026-07-17 ruling, `fanSlotLabel`). The old Overview keeps
+ *  `friendlyPlaceholder`'s "Winner of SF2" until Stage 8. */
+export function fanPlaceholder(placeholder: string | null | undefined): string {
+  if (!placeholder) return 'TBD';
+  return fanSlotLabel(placeholder.replace(/^(Winner|Loser)\s+of\s+/i, '$1 '));
+}
+
+/** Both sides' names: the team's, else the bracket's placeholder said as English (`slot` picks the words). */
+export function gameSideNames(
+  game: RowGame,
+  teamName: (id: string) => string,
+  slot: (placeholder: string | null | undefined) => string = friendlyPlaceholder,
+): { away: string; home: string } {
   return {
-    away: game.awayTeamId ? teamName(game.awayTeamId) : friendlyPlaceholder(game.awayPlaceholder),
-    home: game.homeTeamId ? teamName(game.homeTeamId) : friendlyPlaceholder(game.homePlaceholder),
+    away: game.awayTeamId ? teamName(game.awayTeamId) : slot(game.awayPlaceholder),
+    home: game.homeTeamId ? teamName(game.homeTeamId) : slot(game.homePlaceholder),
   };
 }
 
@@ -52,6 +65,20 @@ export interface GameRowView {
   sides: [GameRowSide, GameRowSide];
   /** "U13 · Diamond 4" — the scheduled face only (a result says who won, not where). */
   sub: string | null;
+  /** A cancelled game keeps the scheduled face (its time, its teams) and says so; nothing else sets this. */
+  cancelled: boolean;
+  /** "Pool A" — a pool-play row in a division with several pools; the caller resolves it, null elsewhere. */
+  poolTag: string | null;
+}
+
+/** What the Schedule needs and the Overview did not (Stage 3). All optional: with none the row reads as it did. */
+export interface GameRowExtra {
+  /** The game's one public state (`publicGameState`, lib/game-status.ts). Without it the row goes by `status` alone:
+   *  completed and forfeit are final, a submitted score is not. */
+  state?: PublicGameState;
+  /** A playoff game's round ("Semifinal"): it replaces "Today" / the date under the time. */
+  round?: string | null;
+  poolTag?: string | null;
 }
 
 const isFinal = (g: Pick<Game, 'status'>) => g.status === 'completed' || g.status === 'forfeit';
@@ -62,8 +89,11 @@ export function gameRowView(
   names: { away: string; home: string },
   context: string,
   today: string,
+  extra: GameRowExtra = {},
 ): GameRowView {
-  if (isFinal(game) && game.homeScore != null && game.awayScore != null) {
+  const { state, round = null, poolTag = null } = extra;
+  const finished = state ? state === 'final' || state === 'unofficial' : isFinal(game);
+  if (finished && game.homeScore != null && game.awayScore != null) {
     const away: GameRowSide = { name: names.away, score: game.awayScore, result: null };
     const home: GameRowSide = { name: names.home, score: game.homeScore, result: null };
     if (away.score !== home.score) {
@@ -73,15 +103,20 @@ export function gameRowView(
     }
     // The winner reads first (the drawing's Latest results); a tie keeps visitor, home.
     const sides: [GameRowSide, GameRowSide] = home.result === 'win' ? [home, away] : [away, home];
-    return { id: game.id, face: 'final', head: 'Final', when: game.date ? formatStoredDate(game.date, { withYear: false }) : null, sides, sub: null };
+    return {
+      id: game.id, face: 'final', head: state === 'unofficial' ? 'Unofficial' : 'Final',
+      when: game.date ? formatStoredDate(game.date, { withYear: false }) : null, sides, sub: null, cancelled: false, poolTag,
+    };
   }
   return {
     id: game.id,
     face: 'scheduled',
     head: game.time ? formatTime(game.time) : 'TBD',
-    when: !game.date ? null : game.date === today ? 'Today' : formatShortWeekdayDate(game.date),
+    when: round || (!game.date ? null : game.date === today ? 'Today' : formatShortWeekdayDate(game.date)),
     sides: [{ name: names.away, score: null, result: null }, { name: names.home, score: null, result: null }],
     sub: context || null,
+    cancelled: state === 'cancelled',
+    poolTag,
   };
 }
 

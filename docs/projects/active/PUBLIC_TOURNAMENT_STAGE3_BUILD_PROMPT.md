@@ -270,6 +270,84 @@ same fetch and live hook, **leaving `ScheduleContent` untouched**. Reuse `Public
 4. **Then tell the owner Stage 3 is done and a good place to `/clear`.** Next is Stage 4 (Standings + Playoffs, where the
    bracket lands and the door is re-pointed), or Stage 1a (who owns the look). Name both and let him choose.
 
+## Part 1 outcome and rulings (2026-10-29), which AMEND Parts 2 and 3 above
+
+Part 1's owner questions and the states drawing are **done and ruled**. The drawing page is
+`docs/projects/active/PUBLIC_TOURNAMENT_STAGE3_STATES_DRAWINGS.html` (published https://claude.ai/artifact/Uva6kyqJLZFzVTwP2GKQwE);
+last night's duplicate (`KBXYy3…`) is superseded. Where this section and Parts 1–3 differ, **this section wins**.
+
+**Owner rulings (2026-10-29, "agree with your recommendations"):**
+- **My games pill and the calendar symbol: installed app ONLY**, never in a browser, even for a family who followed earlier
+  (this overrides Part 1 step 0's recommendation). Hide them with the same display-mode rule Stage 2 used for "Follow this
+  tournament" (`.appOnly` in `PublicParts.module.css`, `@media (display-mode: standalone)`), decided as the page first draws,
+  never by script after it. In a browser the row-1 pill and the row-2 calendar symbol are absent; the division dropdown
+  and the Pool play / Playoffs track keep their full width.
+- **"All divisions" is the first choice and the default** on a first visit; a remembered pick still wins. Rows carry the
+  division in the sub-line; the Pool play / Playoffs track appears when any division has both.
+- **The bracket door is built now and points at Standings**, where the bracket is today. Its sub-line reads **"On the
+  Standings tab"** (not the drawn "On the Playoffs tab", which would be untrue). Keep the target and the words in ONE place
+  so Stage 4 re-points both in one edit.
+- **Slot words: "Semifinal 1 winner"** (the 2026-07-17 fan wording) on every new page. Already built: `fanPlaceholder` in
+  `lib/public-game-row.ts`, taken by `TournamentOverview`. The old Overview keeps "Winner of SF2" until Stage 8.
+- **The "Updated 11:52 a.m." line is dropped.** No score time reaches the public pages, and `games.score_submitted_at`
+  is not proven to move on every in-progress score change. Do not add a payload field for it. A live card ends with its
+  Directions symbol (Playoffs half: "The winner takes the title").
+- **The states drawing, as recommended:** a pinned notice is a white card with a 3 px amber left edge, a 44 px × dismisses
+  it for the visit, game day only. **Cancelled** and **Unofficial** are chips placed **after the field name** in the row's
+  sub-line (a cancelled row has no Directions symbol; its names and time are soft; the time is never struck through).
+  On a game's page a cancelled game shows the red chip **beside the soft time**, **keeps the address**, has no Directions
+  button, no scores, no share symbol, and its score card's foot says **"This game will not be played."** An unofficial game's page
+  shows the amber chip in the score card's top line, the scores, the share symbol, and the foot **"Not yet confirmed by the
+  organizer"**. Notes are the last row of the facts card, absent when empty. The stakes line is the score card's foot:
+  "Winner advances to the Semifinal", "Battling for 3rd place", "Consolation final", "The winner takes the title" (today's words come from `getPlayoffStakes` in the game page, which prints "Championship — winner takes the title"; the new foot says "The winner takes the title", gold for the championship only; move the helper somewhere shared rather than copying it). **"Location TBD" and no Directions button only when
+  NO location is set at all**; a venue name alone keeps Directions (the page opens maps on the address, else the name).
+  **A whole held-back schedule** shows the card ("Schedule coming soon") with no controls but **keeps today's doors as
+  door rows: Teams, and Register only while sign-ups are open** (none in the admin preview); "Tournament Home" goes. **One
+  held-back division** keeps the controls and shows "Division schedule coming soon".
+- **A forfeit reads Final** on the new pages (today's Schedule drew no word for it). This is the one deliberate difference
+  from today's badge table; `tests/unit/public-schedule-status.test.ts` already pins it.
+- **The admin preview's switch branch lands with the new body in Part 2**, not before: there is nothing to switch to
+  until `PublicSchedule` exists. It passes `isPreview` and `initialData` as `ScheduleContent` does today; rows are plain
+  divs, no Directions, no game page, no ticker.
+
+**What Part 1 left in the working copy (uncommitted until the owner says commit):** the switch plumbing (`schedule/page.tsx`
+asks `isPublicFrameOn()`; `SchedulePageClient` takes `frameOn` and does not use it yet) with its guard test
+(`tests/unit/public-tournament-stage3-guard.test.ts`); `lib/public-game-row.ts` extended (status face from
+`publicGameState`, `cancelled`, `poolTag`, `round`, `fanPlaceholder`, a `slot` parameter on `gameSideNames`) with its tests;
+`tests/unit/public-schedule-status.test.ts`; `'schedule'` out of `TICKER_PAGES` with its test; the states drawing. Run
+`node --import ./tests/ts-resolver.mjs --test tests/unit/public-game-row.test.ts tests/unit/public-ticker-pages.test.ts tests/unit/public-schedule-status.test.ts tests/unit/public-tournament-stage3-guard.test.ts`
+(86 pass on 2026-10-29). ⚠ `components/public/TodaysResultsLine.tsx` and `.module.css` also show as modified: that is
+**another session's** Stage 1 follow-up (the line scrolls away), not Stage 3's. Never stage it.
+
+### Kick-off for Part 2 (for a fresh Codex or Claude session)
+
+You are building **Stage 3 Part 2: the phone Schedule**, behind the preview switch, to the drawings and the rulings above.
+1. Read, in this order and nothing else unless a step names it: this prompt (all of it), plan §5 "Every page" bullets and
+   §10a of `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md`, `AGENTS.md`, `AGENCY_RULES.md`. (`CLAUDE.md` is Claude Code's file; the
+   rules in it that matter here are restated below.)
+2. Slice the hub frames; **never read the 185 KB hub whole**: frames `#f-sched` (about lines 705–770, with its Playoffs-chosen
+   and 1,280 px desk frames) and the "What changed" list under them in `docs/projects/active/PUBLIC_TOURNAMENT_SITE_REVIEW_HUB.html`.
+   The states are in the states drawing file above.
+3. Present the **product-owner UX summary** in the conversation before writing code (AGENCY_RULES; plain language, what a
+   family sees and does differently, no file paths). Then build **Part 2 steps 1–7** above with the amendments in this
+   section. Reuse Stage 2's parts (`PublicGameRow(s)`, `PublicLiveCard`, `PublicSectionHead`, `PublicDoorRow`,
+   `DirectionsLink`, `directionsHref`) and `lib/public-game-row.ts`; build the tap-open "Earlier today" row as a real button
+   (`aria-expanded`, 44 px, closed by default). Keep `ScheduleContent.tsx` **byte-for-byte**.
+4. Every new part renders only when the switch is on; extend the Stage 3 guard test with a line for each new file.
+   **Kept features (step 7) each need a test or a fixture step**: the pinned notice, the `?highlightGameId=` deep link, the
+   followed-team auto-jump, the playoff-day stage auto-switch, pool tags, the one-stage rule, the held-back and empty/search
+   states, the score-flip and 30 s live merge, the per-division remembered pick. A held-back division's games must appear in
+   no chip, fold, search result or deep link (D1).
+5. Verify: `npm run verify:changed`, `npm run typecheck` once (`NODE_OPTIONS=--max-old-space-size=8192` if the heap runs
+   out), `check:layout --changed` on the Schedule screens **with the switch on**. Start the dev server only with `npm run dev`
+   (new files mean a restart before the owner checks). Measure and report the first game row's distance from the top at
+   360 and 390 px on the fixtures (the drawing says about 394 px). The owner does the browser checks.
+6. **Do not commit** until the owner says so. Work on `dev`; stage **explicit paths only**; other sessions share this working
+   copy, so run `git show --stat HEAD` after any commit and confirm only your files landed. Do not touch `.claude/` settings,
+   hooks, or database checks.
+7. End Part 2 with a one-line note that it is a good place to `/clear`, and where Part 3 starts. Part 3's amendments are the
+   rulings above (game-page cancelled/unofficial faces, notes, stakes foot, no-location case, the admin preview's branch).
+
 ## Not in Stage 3 (say so if a step drifts toward one)
 The bracket's move, Standings pinning (D5) and the tie-breaker rows (Stage 4). Teams and a team's page, where following a
 team lives (Stage 5). Tabs following what there is, the tab order, Rules as tap-open sections (Stage 6). The pay page
