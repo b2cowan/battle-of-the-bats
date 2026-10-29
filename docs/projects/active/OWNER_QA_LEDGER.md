@@ -27095,3 +27095,16 @@ republished; tick positions unchanged).
 
 **Not in this walk:** the installed app's own Overview (the "Follow this tournament" line shows only there); a club's "Open now at …" list with real sign-ups (no dev club has one; unit tests pin its words); tab order, tabs that appear and disappear, Rules as tap-open sections (Stage 6); the bracket's move (Stage 4); the Schedule and a game's page (Stage 3).
 <!-- /§423 -->
+
+## §424 · Plan & billing · Stage 1 Part 3 fix pass — **a board member given billing access runs the money but never sees cancel or downgrade (those stay the owner's), the demo has no Plan & billing row, every billing link in an email or alert lands a Tournament or Tournament Plus customer on their subscription page, and the dashboard's upgrade link opens a panel that can upgrade**
+<!-- §424 -->
+**Built and committed 2026-10-29:** `db919e6ba` (the fix pass plus the /simplify edits, one set). Plan: [PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md](PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md) §9, "Part 3 fix pass"; PM brief [PLAN_AND_BILLING_ONE_EXPERIENCE_PM_BRIEF.md](PLAN_AND_BILLING_ONE_EXPERIENCE_PM_BRIEF.md). Owner ruling 2026-10-29: cancel and downgrade are the owner's alone; the four routes were not changed.
+
+**The walk (checkable):** https://claude.ai/artifact/VoaNDagnM51zkXyxXe29f3 (source [PLAN_AND_BILLING_STAGE1_FIXPASS_WALK.html](PLAN_AND_BILLING_STAGE1_FIXPASS_WALK.html)). Two walks. Walk 1, a board member with billing access runs the money but cannot end the plan (UAT Club Org, then UAT Test Org): A the owner gives UAT Org Admin Plan & billing and reads the new hint (4); B what the board member sees, with no cancel section, no Downgrade, no banner and the server refusing the cancel read (10, two optional); C put it back (4); D the same on a Tournament Plus host (6, a ruling on whether the owner sees a Downgrade row). Walk 2, two doors that were wrong: E the upgrade link on Free Test Org (9, a ruling on what Upgrade does); F the demo has no billing row (2).
+
+**Checks at commit:** typecheck clean; the full unit suite passed 12,084/12,084 (63 are new: `plan-billing-delegate-and-links.test.ts`); focused lint and spelling clean. `verify:changed` still stops at ESLint on other sessions' files (`app/dev/crash-test/page.tsx`, 3 errors) before its later checks. No browser, Stripe or layout check was run.
+
+**Not in the walk:** a cancelled organization seen by a billing delegate (reactivate card with no date or kept-until line; rendered tests only, no UAT club is cancelled), the emails and notices that carry billing links (source-pinned, never sent), and Club ↔ Club · Association moves (both plans are held back on dev, so the row reads Contact us).
+
+**Owner calls open with it:** a delegate is offered the one lower move that exists, Club · Association to Club, scheduled at renewal; whether Stripe's payment portal shows a Cancel button is a Stripe Dashboard setting this repo cannot read, so a delegate may be able to cancel there. Reported, not changed (Lows): delegates get no payment-failed alerts; a members manager can remove a grantee; a delegate's email becomes the Stripe customer email on first checkout; two rail rows highlight at once on the tournament tiers. Found, not fixed: the admin email route puts an org id where the slug goes in its billing link.
+<!-- /§424 -->
