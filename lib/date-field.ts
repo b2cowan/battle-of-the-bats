@@ -141,6 +141,19 @@ export function parseTypedTime(text: string): string | null {
   return minutesToTime(h * 60 + mi);
 }
 
+/**
+ * The end time a booking has after its START moves from `oldStart` to `newStart` — the calendar-app rule (owner
+ * 2026-10-28): the end moves by the same amount, so the length is kept. An empty end stays empty (nothing is
+ * invented), an unreadable start leaves the end alone, and a shift past the day's edges stops at it (`23:59` / `00:00`)
+ * rather than rolling into another day, which a time-only field cannot say.
+ */
+export function endFollowingStart(oldStart: string, newStart: string, end: string): string {
+  const e = normaliseTime(end), a = normaliseTime(oldStart), b = normaliseTime(newStart);
+  if (!e || !a || !b) return end;
+  const shifted = timeToMinutes(e) + timeToMinutes(b) - timeToMinutes(a);
+  return minutesToTime(Math.max(0, Math.min(24 * 60 - 1, shifted)));
+}
+
 /** The time list's rows: every `stepMinutes` across the day, inside `min`/`max` when given. */
 export function timeSteps(stepMinutes: number, min?: string | null, max?: string | null): string[] {
   const step = Math.max(1, Math.min(240, Math.round(stepMinutes)));

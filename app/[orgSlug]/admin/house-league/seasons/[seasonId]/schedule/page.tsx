@@ -71,6 +71,7 @@ import LoadingState from '@/components/shared/LoadingState';
 import DateInput from '@/components/shared/DateInput';
 import TimeInput from '@/components/shared/TimeInput';
 
+import { endFollowingStart } from '@/lib/date-field';
 // ── Export definition ─────────────────────────────────────────────────────────
 
 const SCHEDULE_EXPORT_COLS: ExportColumnDef[] = [
@@ -503,7 +504,8 @@ function PracticeModal({
           )}
           <div className={styles.field}>
             <label className={styles.label}>Start time</label>
-            <TimeInput className={styles.input} value={form.startTime} onChange={v => set('startTime', v)} />
+            <TimeInput className={styles.input} value={form.startTime}
+              onChange={v => setForm(f => ({ ...f, startTime: v, endTime: endFollowingStart(f.startTime, v, f.endTime) }))} />
           </div>
           <div className={styles.field}>
             <label className={styles.label}>End time</label>

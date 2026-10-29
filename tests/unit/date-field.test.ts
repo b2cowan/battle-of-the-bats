@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  addDays, addMonths, dateParts, formatFieldDate, inRange, isoDate, longDateLabel, monthGrid, normaliseTime,
+  addDays, addMonths, dateParts, endFollowingStart, formatFieldDate, inRange, isoDate, longDateLabel, monthGrid, normaliseTime,
   parseTypedDate, parseTypedTime, stepMinutesFrom, timeSteps, weekdayIndex,
 } from '../../lib/date-field.ts';
 
@@ -118,5 +118,28 @@ describe('time field', () => {
     assert.equal(stepMinutesFrom(300), 5);
     assert.equal(stepMinutesFrom(undefined), 15);
     assert.equal(stepMinutesFrom(1), 15);
+  });
+});
+
+describe('date field — the end follows the start', () => {
+  it('moves the end by the same amount, in either direction', () => {
+    assert.equal(endFollowingStart('08:00', '09:00', '09:30'), '10:30');
+    assert.equal(endFollowingStart('09:30', '10:30', '11:00'), '12:00');
+    assert.equal(endFollowingStart('09:00', '08:15', '10:30'), '09:45');
+  });
+
+  it('leaves an empty or unreadable end or start alone', () => {
+    assert.equal(endFollowingStart('08:00', '09:00', ''), '');
+    assert.equal(endFollowingStart('', '09:00', '09:30'), '09:30');
+    assert.equal(endFollowingStart('08:00', '', '09:30'), '09:30');
+  });
+
+  it('reads a stored HH:MM:SS and writes HH:MM', () => {
+    assert.equal(endFollowingStart('08:00:00', '09:00', '09:30:00'), '10:30');
+  });
+
+  it('stops at the day\'s edges rather than rolling into another day', () => {
+    assert.equal(endFollowingStart('20:00', '23:00', '22:00'), '23:59');
+    assert.equal(endFollowingStart('12:00', '01:00', '11:00'), '00:00');
   });
 });

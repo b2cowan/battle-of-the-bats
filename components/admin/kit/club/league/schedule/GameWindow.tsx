@@ -8,6 +8,7 @@ import { NoticePill, RecordAction, RecordDelete, repKit } from '../../RepKit';
 import WhereField, { WhereLine } from '@/components/venue/WhereField';
 import DateInput from '@/components/shared/DateInput';
 import TimeInput from '@/components/shared/TimeInput';
+import { endFollowingStart } from '@/lib/date-field';
 import { formatInOrgZone, utcToZonedInputs } from '@/lib/timezone';
 import { formatTime, formatTimeRange } from '@/lib/utils';
 import { fieldNounFor } from '@/lib/sports';
@@ -335,7 +336,7 @@ export default function GameWindow({ game, booking, divisionId, divisionName, pu
           </label>
           <label className={ck.field}>
             <span className={ck.label}>{W.time}</span>
-            <TimeInput className={ck.input} value={draft.time} onChange={v => set('time', v)} />
+            <TimeInput className={ck.input} value={draft.time} onChange={v => { setDraft(d => ({ ...d, time: v, endTime: endFollowingStart(d.time, v, d.endTime) })); setError(null); }} />
           </label>
           <label className={ck.field}>
             <span className={ck.label}>{W.endTime}</span>

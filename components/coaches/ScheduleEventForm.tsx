@@ -2,6 +2,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import DateInput from '@/components/shared/DateInput';
 import TimeInput from '@/components/shared/TimeInput';
+import { endFollowingStart } from '@/lib/date-field';
 import { AlertTriangle, Clock, Undo2, X } from 'lucide-react';
 import { EVENT_COLORS } from '@/components/coaches/eventTypeMark';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
@@ -403,13 +404,17 @@ export default function ScheduleEventForm({
   // Start time / End time are the same three fields, so they write through here too; a coach who
   // ticks Repeat weekly, edits, and unticks it must see and save the same time (/review 2026-09-21
   // — the branch used to write the pieces directly and the one-off save read the stale datetime).
-  // One-off only: changing the start keeps the end 2 hours later, unless the coach has set a custom
-  // end (the rule the old Starts picker carried). A series never auto-fills its end.
+  // Changing the start moves a set end by the same amount (the calendar-app rule, owner 2026-10-28), a series
+  // included. With no end yet, a one-off fills one 2 hours later (the old Starts picker's rule); a series never does.
   function setWhen(patch: Partial<Pick<EventForm, 'startDate' | 'startTime' | 'endTime'>>) {
     setForm(f => {
       const next = composeWhen({ ...f, ...patch });
       // Arrival as a lead time (D1): a PRESET arrival moves with the start; a specific time stays.
       if ('startTime' in patch) next.arrivalTime = arrivalAfterStartChange(f.startTime, next.startTime, f.arrivalTime);
+      // A start that moves carries a set end with it (the calendar-app rule): the length is kept.
+      if ('startTime' in patch && f.endTime) {
+        return composeWhen({ ...next, endTime: endFollowingStart(f.startTime, next.startTime, f.endTime) });
+      }
       const series = needsRecurrence(f.eventType) && f.isRecurring;
       if (!series && !('endTime' in patch) && next.startsAt) {
         const prevAutoEnd = f.startsAt ? addHoursLocal(f.startsAt, 2) : '';
