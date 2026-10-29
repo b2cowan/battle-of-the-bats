@@ -27,7 +27,7 @@ import path from 'node:path';
 import { describe, it } from 'node:test';
 import { readCode, readSource, functionBody, callbackBody, cssRule } from './_source-code.ts';
 import { ADMIN_PAGE } from '../../lib/notification-view.ts';
-import { accountingTabs, kitOrgLinks, kitPrograms } from '../../lib/admin-kit-nav.ts';
+import { accountingTabs, kitBillingLink, kitPrograms } from '../../lib/admin-kit-nav.ts';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { BRING_IN_PAGE_TITLE } from '../../lib/team-move-words.ts';
 import { REGS_WORDS } from '../../lib/house-league-money-words.ts';
@@ -186,8 +186,7 @@ describe('D4 · the admin button words are the admin\'s own page names', () => {
   });
 
   it('Organization and Rep Teams are named as the rail names them', () => {
-    const billing = kitOrgLinks({ base: BASE, role: 'owner', isCanceled: false, canSeeMembers: true, hasVenueLibrary: true })
-      .find(l => l.key === 'org/billing');
+    const billing = kitBillingLink({ orgSlug: 'demo-club', planId: 'club', role: 'owner', capabilities: null });
     assert.equal(ADMIN_PAGE.billing, billing?.label);
     const rep = kitPrograms({ base: BASE, canUse: () => true }).find(p => p.key === 'rep-teams');
     assert.equal(ADMIN_PAGE.repTeams, rep?.label);

@@ -34,7 +34,7 @@ const REPO_ROOT = join(import.meta.dirname, '..', '..');
  *     a 500. These grant no data: the API rail stays closed underneath them.
  */
 const ALLOWED_SUSPENDED_ORG_FILES: Record<string, string> = {
-  'app/api/billing/usage/route.ts': 'read-only owner billing usage needed to assess retained capacity and a comeback plan; no program access or PII',
+  'app/api/billing/usage/route.ts': 'read-only billing capability usage needed to assess retained capacity and a comeback plan; suspended billing access retained by owner ruling 2026-10-28; no program access or PII',
   // ── The comeback path. Without these a cancelled org can never pay us again. ──────────────
   'app/api/billing/cancel/confirm/route.ts': 'billing — comeback path',
   'app/api/billing/cancel/preflight/route.ts': 'billing — comeback path',

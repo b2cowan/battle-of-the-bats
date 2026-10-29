@@ -138,6 +138,10 @@ export function describeAccessChange(
   const now = whatTheyCanOpen(after, org);
   const gained = now.filter(r => r.canOpen && !was.get(r.module)).map(r => r.label);
   const lost = now.filter(r => !r.canOpen && was.get(r.module)).map(r => r.label);
+  const hadBilling = hasCapability(before.role, before.capabilities, 'billing');
+  const hasBilling = hasCapability(after.role, after.capabilities, 'billing');
+  if (hasBilling && !hadBilling) gained.push('Plan & billing');
+  if (hadBilling && !hasBilling) lost.push('Plan & billing');
   if (gained.length) lines.push(`You can now open ${listOf(gained)}.`);
   if (lost.length) lines.push(`You can no longer open ${listOf(lost)}.`);
   return lines;
@@ -149,11 +153,11 @@ function listOf(items: string[]): string {
 }
 
 /**
- * Owner-only powers (J10-022). Plan & billing and organization settings stay with the owner: they
+ * Owner-only powers. Organization settings stay with the owner; billing can be granted (owner, 2026-10-28). These
  * are never offered as a grant, and the member PATCH refuses a body that tries to grant one.
  * (The owner short-circuit in `hasCapability` is what gives the owner these; no role default does.)
  */
-export const OWNER_ONLY_CAPABILITIES: readonly Capability[] = ['billing', 'org_settings'];
+export const OWNER_ONLY_CAPABILITIES: readonly Capability[] = ['org_settings'];
 
 export function isOwnerOnlyCapability(cap: string): boolean {
   return (OWNER_ONLY_CAPABILITIES as readonly string[]).includes(cap);

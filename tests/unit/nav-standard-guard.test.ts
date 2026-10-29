@@ -121,7 +121,7 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
   it('the admin sheet: Notifications, the groups, You (Account, Home, Coaches Portal), then the foot', () => {
     order(readCode(ADMIN_SHEET), [
       'id="admin-mob-notifications"', "group('Programs'", "group('Organization'", '>You</div>',
-      'id="admin-mob-account"', 'id="admin-mob-home"', 'id="admin-mob-coaches-portal"', '<MoreSheetFoot',
+      'id="admin-mob-account"', 'id="admin-mob-home"', 'id="admin-mob-coaches-portal"', 'id="admin-mob-billing"', '<MoreSheetFoot',
     ], ADMIN_SHEET);
   });
 
@@ -145,6 +145,13 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
   it('the admin sidebar’s foot: Help, the Coaches Portal, Public site; no Sign out or Send feedback (the account menu has them)', () => {
     const rail = readCode(ADMIN_RAIL);
     const foot = rail.slice(rail.indexOf('<div className={styles.foot}>'), rail.indexOf('<CollapseSidebarRow'));
+    order(foot, ['billingLink.href', 'helpHref', 'coachDoor.href', 'Public site'], ADMIN_RAIL);
+    assert.match(foot, /billingLink && <Link/);
+    assert.match(foot, /styles\.footItem/);
+    assert.match(foot, /<billingLink\.icon size=\{14\}/);
+    assert.match(readCode(ADMIN_SHEET), /billingLink && <Link[\s\S]*?<billingLink\.icon size=\{17\}/);
+    const hook = readCode('components/admin/kit/useAdminKitNav.ts');
+    assert.match(hook, /const billingLink = kitBillingLink\(\{ orgSlug, planId: currentOrg\?\.planId, role: userRole, capabilities: userCapabilities \}\)/);
     assert.ok(foot.indexOf('helpHref') < foot.indexOf('coachDoor.href') && foot.indexOf('coachDoor.href') < foot.indexOf('Public site'));
     assert.doesNotMatch(rail, /Sign out|<FeedbackLauncher|signOut/);
     assert.match(foot, /!siteInNav/, 'the foot’s Public site only where no program row is it');

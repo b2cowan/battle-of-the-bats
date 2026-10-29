@@ -111,7 +111,6 @@ describe('one at a time — every limit check reads the one rule', () => {
     // (The admin rail left this list 2026-10-19: its + and "New tournament" are gone, so it checks no limit.)
     'components/admin/tournament/RecordFromList.tsx',
     'app/[orgSlug]/admin/tournaments/dashboard/page.tsx',
-    'app/[orgSlug]/admin/org/billing/page.tsx',
     'app/api/coaches/[orgSlug]/teams/[teamId]/hosted-tournaments/route.ts',
     'app/platform-admin/orgs/[id]/page.tsx',
   ];

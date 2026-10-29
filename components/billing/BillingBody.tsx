@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle2, CreditCard } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { ownPlanOf } from '@/lib/free-time';
+import { hasCapability } from '@/lib/roles';
 import { PLAN_BILLING_PROFILES, type PlanBillingProfile, type BillingPlanChange } from '@/lib/plan-billing-profile';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
@@ -75,7 +76,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   notice, justChose = false, cardWindowOpen = false, foundingActive = false, fees,
 }: BillingBodyViewProps) {
   const org = s.org;
-  if (!s.isOwner) return <LockedCard orgName={org.name} />;
+  if (!s.canManageBilling) return <LockedCard orgName={org.name} />;
 
   const sale = (key: string) => s.gating.status === 'ready' && s.gating.data[key as OrgPlan] === false;
   const ft = s.freeTime.status === 'ready' ? s.freeTime.data : null;
@@ -101,7 +102,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   const preflight = s.cancellation.status === 'ready' ? s.cancellation.data : null;
   const scheduled = s.move.status === 'ready' ? s.move.data.scheduledMove : null;
   const price = freeCard?.price ?? (comp ? W.founding.price : profile.config.monthlyPrice === 0 ? W.plan.free
-    : W.plan.price(a.cycle === 'annual' ? profile.config.annualPrice : profile.config.monthlyPrice, a.cycle));
+    : W.plan.price(org.subscriptionPeriod === 'annual' ? profile.config.annualPrice : profile.config.monthlyPrice, org.subscriptionPeriod ?? 'monthly'));
   const disabled = a.busy !== null;
   const premium = ownProfile.cancellationKind === 'premium';
   const keepPremium = portal ? <CoachCard className={styles.keepPremiumCard}>
@@ -283,6 +284,13 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     {keepPremium}
     {(ownBilling && ownProfile.changes.length > 0 || profile.joinClub) && <Section id="billing-change" title={W.page.sections.change}>
       {ownBilling && ownProfile.changes.length > 0 && <>
+        {controlsReady && ownProfile.changes.some(change => change.mechanism === 'checkout' && sale(change.target)) && <div className={styles.planActions}>
+          <label className={styles.cycleField}><span className={styles.srOnly}>{W.plan.billing}</span>
+            <select className={styles.select} value={a.cycle} disabled={disabled} onChange={e => a.setCycle(e.target.value as BillingCycle)}>
+              <option value="monthly">{W.plan.monthly}</option><option value="annual">{W.plan.annual}</option>
+            </select>
+          </label>
+        </div>}
         <div className={styles.tableFrame}><table className={styles.table}>
           <thead><tr><th scope="col">{W.change.headings.plan}</th><th scope="col">{W.change.headings.holds}</th><th scope="col" className={styles.num}>{W.change.headings.monthly}</th><th scope="col" className={styles.num}>{W.change.headings.annual}</th><th scope="col"><span className={styles.srOnly}>{W.change.headings.choice}</span></th></tr></thead>
           <tbody>{changeKeys.map(key => {
@@ -346,10 +354,10 @@ function useBillingRead<T>(url: string | null, revision: string): BillingRead<T>
 }
 
 export default function BillingBody({ billingBase, teamsHref }: { billingBase: string; teamsHref: string }) {
-  const { currentOrg, userRole, loading, refresh } = useOrg();
+  const { currentOrg, userRole, userCapabilities, loading, refresh } = useOrg();
   if (loading || !currentOrg || !userRole) return <LoadingState label={W.page.loading} />;
-  // No billing reads mount for a non-owner, including free-time and cancelled states.
-  if (userRole !== 'owner') return <LockedCard orgName={currentOrg.name} />;
+  // No billing reads mount without billing access, including free-time and cancelled states.
+  if (!hasCapability(userRole, userCapabilities, 'billing')) return <LockedCard orgName={currentOrg.name} />;
   return <BillingOwnerBody key={currentOrg.id} org={currentOrg} refresh={refresh} billingBase={billingBase} teamsHref={teamsHref} />;
 }
 
@@ -506,7 +514,7 @@ function BillingOwnerBody({ org, refresh, billingBase, teamsHref }: { org: Organ
     });
   }
   return <>
-    <BillingBodyView snapshot={{ org, isOwner: true, usage, freeTime, founding, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} justChose={justChose} cardWindowOpen={isFoundingSeasonCardWindowOpen()} foundingActive={isFoundingSeasonActive()} fees={<StripeFeesList key={org.id} slug={org.slug} />} />
+    <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, founding, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} justChose={justChose} cardWindowOpen={isFoundingSeasonCardWindowOpen()} foundingActive={isFoundingSeasonActive()} fees={<StripeFeesList key={org.id} slug={org.slug} />} />
     {moveTo && <PlanMoveDialog key={`${org.id}:${moveTo}`} org={{ ...org, planId: ownProfile.key }} toPlan={moveTo} returnTo={billingBase} teamsHref={teamsHref} onClose={() => setMoveTo(null)} onMoved={text => { if (live.current) { setMoveTo(null); setNotice({ tone: 'good', text }); reloadAfterAction(); } }} />}
     {details && <PlanArticlePanel planKey={published} profile={details} readOnly billingCycle={cycle} onClose={() => setDetail(null)} onUpgrade={() => {}} upgradeLoading={null} isComingSoon={gating.status === 'ready' && gating.data[details.key] !== false} canUpgrade={false} foundingOfferHeld={false} />}
     {review && <KitDialog kind="form" title={review.kind === 'cancel' ? premium ? W.cancel.premiumTitle : W.cancel.orgTitle(org.name) : target ? W.downgrade.title(target.config.label) : W.page.sections.change} onClose={closeReview} busy={busy !== null} dirty={reason.trim().length > 0 || Boolean(downgrade?.requiresTournamentChoice && keepIds.length)}

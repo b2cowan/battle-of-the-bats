@@ -7,13 +7,13 @@ import type { BillingUsage } from '../../lib/plan-billing-data.ts';
 import { readCode } from './_source-code.ts';
 
 describe('owner billing usage read', () => {
-  function route(role: string | null, fail = false) {
+  function route(role: string | null, fail = false, capabilities: Record<string, boolean> | null = null) {
     const authCalls: unknown[] = [], reads: unknown[] = [];
     const load = billingTestLoader({
       '@/lib/api-auth': {
         getAuthContextWithRole: async (input: { orgSlug?: string; requireOrgSlug: boolean; allowSuspendedOrg: boolean }) => {
           authCalls.push(input);
-          return role && input.orgSlug === 'org-b' ? { role, org: { id: 'b', slug: 'org-b', subscriptionStatus: 'canceled' } } : null;
+          return role && input.orgSlug === 'org-b' ? { role, capabilities, org: { id: 'b', slug: 'org-b', subscriptionStatus: 'canceled' } } : null;
         }, forbidden: () => new Response(null, { status: 403 }), unauthorized: () => new Response(null, { status: 401 }),
       },
       '@/lib/billing-usage': { readBillingUsage: async (org: unknown) => { reads.push(org); if (fail) throw new Error('DB unavailable'); return { teams: { count: 7, limit: 21 } }; } },
@@ -41,6 +41,13 @@ describe('owner billing usage read', () => {
   it('a failed count returns unavailable, never zero', async () => {
     const response = await route('owner', true).GET(new Request('http://local/api/billing/usage?orgSlug=org-b'));
     assert.equal(response.status, 503); assert.deepEqual(await response.json(), { error: 'Billing usage could not be read. Try again.' });
+  });
+  it('an explicit billing grant permits suspended comeback reads; revoking it closes them', async () => {
+    for (const billing of [true, false]) {
+      const r = route('treasurer', false, { billing });
+      assert.equal((await r.GET(new Request('http://local/api/billing/usage?orgSlug=org-b'))).status, billing ? 200 : 403);
+      assert.equal(r.reads.length, billing ? 1 : 0);
+    }
   });
 });
 
@@ -88,10 +95,10 @@ describe('billing counts follow enforcement and effective limits', () => {
 });
 
 describe('billing free time never confuses an old ended grant or a read failure with cancellation', () => {
-  function freeTimeRoute(failure: boolean, role = 'owner') {
+  function freeTimeRoute(failure: boolean, role = 'owner', capabilities: Record<string, boolean> | null = null) {
     const load = billingTestLoader({
       'next/server': { NextResponse: Response },
-      '@/lib/api-auth': { getAuthContextWithRole: async () => ({ role, org: { id: 'b', accountKind: 'team_workspace' } }), unauthorized: () => new Response(null, { status: 401 }), forbidden: () => new Response(null, { status: 403 }) },
+      '@/lib/api-auth': { getAuthContextWithRole: async () => ({ role, capabilities, org: { id: 'b', accountKind: 'team_workspace' } }), unauthorized: () => new Response(null, { status: 401 }), forbidden: () => new Response(null, { status: 403 }) },
       '@/lib/observability': { withObservability: (handler: unknown) => handler },
       '@/lib/supabase-admin': {},
       '@/lib/entitlement-grants': {},
@@ -111,7 +118,8 @@ describe('billing free time never confuses an old ended grant or a read failure 
     assert.equal((await get(new Request('http://local/api/admin/org/free-time?orgSlug=org-b&billing=1'))).status, 503);
     assert.equal((await get(new Request('http://local/api/admin/org/free-time?orgSlug=org-b'))).status, 200);
   });
-  it('the extended billing read is owner-only', async () => {
+  it('the extended billing read requires billing access', async () => {
     assert.equal((await freeTimeRoute(false, 'coach')(new Request('http://local/api/admin/org/free-time?orgSlug=org-b&billing=1'))).status, 403);
+    assert.equal((await freeTimeRoute(false, 'treasurer', { billing: true })(new Request('http://local/api/admin/org/free-time?orgSlug=org-b&billing=1'))).status, 200);
   });
 });

@@ -24,8 +24,8 @@ const period = (value: BillingCycle) => value === 'annual' ? 'year' : 'month';
 export const PLAN_BILLING_WORDS = {
   page: {
     title: 'Plan & billing', eyebrow: 'Organization', loading: 'Loading plan & billing…',
-    lockedTitle: 'Plan & billing is the owner’s',
-    lockedBody: (org: string) => `Only ${possessive(org)} owner can see and change the plan and how it’s paid.`,
+    lockedTitle: 'Billing access required',
+    lockedBody: (org: string) => `Only ${possessive(org)} owner and members they’ve granted billing access can see and change the plan and how it’s paid.`,
     sections: { plan: 'Your plan', usage: "What's in use", change: 'Change plan', included: "What's included", cancel: 'Reduce or cancel' },
   },
   plan: {

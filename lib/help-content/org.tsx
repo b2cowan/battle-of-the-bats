@@ -49,7 +49,7 @@ const orgHelp: HelpPageContent = {
       heading: 'Roles explained — who can do what',
       summary: 'What each role can open, at a glance, then Owner, Admin, Treasurer, Staff, League admin, League registrar, Coach, and Volunteer one by one.',
       keywords: ['roles', 'permissions', 'owner', 'admin', 'staff', 'treasurer', 'league admin', 'registrar', 'team manager', 'coach', 'volunteer', 'scorekeeper', 'gate', 'helping with', 'what each role can open', 'role guide', 'plan & billing', 'billing', 'audit log', 'families', 'who can finalize scores', 'change a final score'],
-      searchText: 'roles permissions who can do what owner admin staff treasurer league admin league registrar rep club no registrar team manager forms documents coach scorekeeper capabilities grant revoke org settings plan and billing subscription owner only what each role can open role guide table rep teams accounting public site house league tournaments families members audit log locked owner only rows volunteer helping with scoring the gate both field scores check-in',
+      searchText: 'roles permissions who can do what owner admin staff treasurer league admin league registrar rep club no registrar team manager forms documents coach scorekeeper capabilities grant revoke org settings plan and billing subscription explicit billing grant owner controls delegation what each role can open role guide table rep teams accounting public site house league tournaments families members audit log locked owner only rows volunteer helping with scoring the gate both field scores check-in',
       content: (
         <p>Every member of your organization holds one of these roles, and the role decides what they can open. Owners can grant or remove individual programs for any member from <strong>Members → Manage</strong>.</p>
       ),
@@ -80,11 +80,11 @@ const orgHelp: HelpPageContent = {
                   <tr><th scope="row">House league · Tournaments</th><td>✓</td><td>✓</td><td>—</td><td>game day</td><td>the house league</td><td>registrations, fees &amp; Email families</td><td>scores &amp; gate</td><td>—</td></tr>
                   <tr><th scope="row">Families</th><td>✓</td><td>if you turn it on</td><td>if you turn it on</td><td>—</td><td>if you turn it on</td><td>if you turn it on</td><td>—</td><td>—</td></tr>
                   <tr><th scope="row">Members</th><td>✓</td><td>✓</td><td>view</td><td>—</td><td>view</td><td>—</td><td>—</td><td>—</td></tr>
-                  <tr><th scope="row">Plan &amp; billing · Settings · Audit log</th><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                  <tr><th scope="row">Plan &amp; billing (default access) · Settings · Audit log</th><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
                 </tbody>
               </table>
               <p><strong>✓</strong> is full access; a shorter answer is the exact slice that role gets — &ldquo;view&rdquo; opens a program read-only, and &ldquo;if you turn it on&rdquo; means the owner has to grant it by hand (Families is never on by default for anyone but the owner, and it can&rsquo;t be given to a member limited to some Rep teams groups: a family&rsquo;s record spans every team its children play on). A row only appears on your own organization once your plan includes that program.</p>
-              <p><strong>Admin</strong> opens every program the plan carries — the moment it&rsquo;s included, with no separate setup step. It never opens <strong>Families</strong> on its own, and <strong>Plan &amp; billing</strong>, <strong>Settings</strong> and the <strong>audit log</strong> stay owner-only. The menu lists only what you can open, so an admin won&rsquo;t find them there; the club&rsquo;s home page shows <strong>Plan &amp; billing</strong> and <strong>Settings</strong> under <strong>Organization</strong> marked <strong>Owner only</strong>, so it&rsquo;s clear they exist and whose they are. An admin can still change the club&rsquo;s logo, colours, type and banner in <strong>Public site</strong>; only the owner turns the site on or off.</p>
+              <p><strong>Admin</strong> opens every program the plan carries — the moment it&rsquo;s included, with no separate setup step. It opens <strong>Families</strong> and <strong>Plan &amp; billing</strong> only when the owner grants that access. In Members, the owner can turn on <strong>Plan &amp; billing</strong> for a board member; that includes changing the plan, payment method and invoices, and cancelling the subscription. Settings and the audit log stay owner-only. The menu lists only what you can open. An admin can still change the club&rsquo;s logo, colours, type and banner in <strong>Public site</strong>; only the owner turns the site on or off.</p>
             </>
           ),
         },
@@ -94,8 +94,8 @@ const orgHelp: HelpPageContent = {
           content: (
             <>
               <ul>
-                <li><strong>Owner</strong> — Full access, plus the two things nobody else can hold: <strong>Plan &amp; billing</strong> and <strong>Settings</strong>. Assigned at org creation; ownership can&rsquo;t be transferred through the admin panel.</li>
-                <li><strong>Admin</strong> — Runs operations: every program the plan carries, members, and the public site&rsquo;s look (logo, colours, type and banner, in <strong>Public site</strong>). Cannot turn the public site on or off, and cannot open <strong>Settings</strong>, <strong>Plan &amp; billing</strong>, or the <strong>audit log</strong> — those stay owner-only — and doesn&rsquo;t see <strong>Families</strong> unless the owner turns it on for them.</li>
+                <li><strong>Owner</strong> — Full access. Only the owner can grant billing access or change Settings. Assigned at org creation; ownership can&rsquo;t be transferred through the admin panel.</li>
+                <li><strong>Admin</strong> — Runs operations: every program the plan carries, members, and the public site&rsquo;s look (logo, colours, type and banner, in <strong>Public site</strong>). Cannot turn the public site on or off, or open Settings or the audit log. Families and Plan &amp; billing need the owner&rsquo;s explicit grant.</li>
                 <li><strong>Treasurer</strong> — Runs the books: ledgers, the budget, what the club bills its teams, and the teams’ payment requests. Can see the team names money is allocated to, without a Rep teams door of their own.</li>
                 <li><strong>Staff</strong> — Day-of operator. Updates game times and venue assignments, submits scores, and posts announcements. Cannot finalize scores or change a result that&rsquo;s already final, create tournaments, manage registrations, or send communications.</li>
                 <li><strong>League admin</strong> — Runs the house league: seasons, registrations, fees, teams, schedules, and Email families. Can view the member list.</li>
@@ -148,7 +148,7 @@ const orgHelp: HelpPageContent = {
           <p><strong>Coaches aren&rsquo;t invited from here.</strong> A team&rsquo;s head coach adds and removes their own coaching staff on that team&rsquo;s own staff page — coaching rows never appear in this dropdown.</p>
           <p><strong>Someone already active at another club or organization can accept your invite too</strong> — the same person can hold roles at more than one, and accepting yours doesn&rsquo;t remove them from anywhere else. The one exception is a volunteer, who keeps a single home organization.</p>
           <p><strong>Invited members don&rsquo;t get a password</strong> — the email has a setup link they must click to finish creating their account; clicking &ldquo;log in&rdquo; first shows an incorrect-email-or-password error, so ask them to check spam and use the resend option on their pending row if it&rsquo;s missing. If they sign up on their own instead, FieldLogicHQ recognizes their email and offers to email them the invitation link, so they land in your organization rather than starting a new one.</p>
-          <p><strong>Access rule of thumb:</strong> owners hold Plan &amp; billing and Settings, admins run every program the plan carries, staff and volunteers handle day-of work, and each accepted invite names who sent it and opens straight to where that role&rsquo;s work starts — a treasurer in Accounting, a league role in the house league, a volunteer on their job (Field scores or Check-in), everyone else at the admin overview.</p>
+          <p><strong>Access rule of thumb:</strong> owners hold Settings and can grant Plan &amp; billing, admins run every program the plan carries, staff and volunteers handle day-of work, and each accepted invite names who sent it and opens straight to where that role&rsquo;s work starts — a treasurer in Accounting, a league role in the house league, a volunteer on their job (Field scores or Check-in), everyone else at the admin overview.</p>
         </>
       ),
       faqs: [
@@ -230,7 +230,7 @@ const orgHelp: HelpPageContent = {
         <>
           <p>Modules appear in the admin navigation automatically once your plan includes them — there is no separate activation step.</p>
           <ol>
-            <li>Go to <strong>Organization &gt; Plan &amp; billing</strong> (the owner&rsquo;s page).</li>
+            <li>Open <strong>Plan &amp; billing</strong> beside Help at the foot of the sidebar, or in <strong>More &gt; You</strong> on a phone. You need ownership or a billing grant.</li>
             <li>Review your current plan and its included modules.</li>
             <li>Look in the left navigation — included modules show up there for members with matching access.</li>
             <li>If a module is missing, it is not part of your current plan. Review upgrade options, or contact support if you believe it should already be included.</li>
@@ -266,14 +266,14 @@ const orgHelp: HelpPageContent = {
     {
       id: 'club-plan-and-billing',
       heading: 'Club plan & billing',
-      summary: 'Teams on your plan, Club’s two sizes, moving between them, adding a team at the cap, and what cancelling takes offline.',
+      summary: 'Your plan, what’s in use, changing plan, what’s included, and reducing or cancelling your subscription.',
       keywords: ['club plan', 'club billing', 'plan and billing', 'teams on your plan', 'club association', 'move to club association', 'team cap', 'add team at the cap', 'cancel club', 'reactivate club', 'capacity', 'free time', 'free through', 'free time ended'],
-      searchText: 'free through free time from fieldlogichq a plan given for a while goes back automatically free time ended last 14 days amber contact us to keep the plan nothing is charged club plan and billing teams on your plan capacity readout club two sizes club association move up prorated today move down at renewal no credit keep current band add team at the cap archive a team contact us custom plan what club includes families rep teams accounting public site house league tournaments unlimited board and staff cancel and suspend goes offline ninety days retention reactivate within retention plan limits retained remainder public site online coach portals reopen archived tournaments return',
+      searchText: 'free through free time from fieldlogichq a plan given for a while goes back automatically free time ended last 14 days amber contact us to keep the plan nothing is charged club plan and billing rail foot beside help more you billing grant owner delegation your plan whats in use change plan whats included reduce or cancel capacity readout club two sizes club association move up prorated today move down at renewal no credit keep current band add team at the cap archive a team contact us custom plan what club includes families rep teams accounting public site house league tournaments unlimited board and staff cancel and suspend goes offline ninety days retention reactivate within retention plan limits retained remainder public site online coach portals reopen archived tournaments return',
       links: [
         { label: 'Plan & billing', href: '../org/billing' },
       ],
       content: (
-        <p>Plan &amp; billing for a Club shows how many teams you&rsquo;re using, both Club sizes with their prices, and what happens if you move up, move down, or cancel. If FieldLogicHQ has given your organization free time, it shows that too.</p>
+        <p>Every plan uses the same Plan &amp; billing page: Your plan, What&rsquo;s in use, any free-time or Founding Season band, Stripe fees when any exist, Change plan, What&rsquo;s included, and Reduce or cancel. Open it beside Help at the foot of the sidebar, or in More &gt; You on a phone. Owners and members granted billing access can use it; other members see a locked card.</p>
       ),
       subtopics: [
         {
@@ -289,18 +289,18 @@ const orgHelp: HelpPageContent = {
         },
         {
           id: 'club-plan-and-billing-t-teams',
-          title: 'Teams on your plan',
+          title: 'What’s in use',
           content: (
             <p>The plan card shows how many active teams you&rsquo;re using against your size&rsquo;s limit — archived teams don&rsquo;t count. The bar turns amber as you approach the limit, and once you&rsquo;re at it, the card names the size to move to.</p>
           ),
         },
         {
           id: 'club-plan-and-billing-t-sizes',
-          title: 'Club’s two sizes, and moving between them',
+          title: 'Change plan',
           content: (
             <>
               <p>Club and Club · Association differ only in how many teams they hold and what they cost — every feature is identical between them. Each size lists both a monthly and a yearly price, and the size you&rsquo;re on is marked &ldquo;Your plan.&rdquo;</p>
-              <p><strong>Moving up</strong> to Club · Association happens today, on your existing subscription — never a second checkout. Before you confirm, Stripe shows the exact amount due for the rest of this billing period and what you&rsquo;ll pay from your next renewal.</p>
+              <p><strong>Moving up</strong> to Club · Association changes your existing paid subscription. Before you confirm, Stripe shows the exact amount due for the rest of this billing period and what you&rsquo;ll pay from your next renewal. If there is no live paid subscription to change, the window offers checkout instead. A plan that is not open for sign-up says <strong>Contact us to move</strong>.</p>
               <p><strong>Moving down</strong> to Club takes effect at your next renewal, with no credit for the current period, and is refused while you&rsquo;re running more teams than Club holds — archive a team first, or stay where you are. A move waiting for renewal can be undone with &ldquo;Keep&rdquo; your current size, any time before then.</p>
               <p>More teams than the larger size holds? Contact us for a custom plan.</p>
             </>
@@ -318,7 +318,7 @@ const orgHelp: HelpPageContent = {
           title: 'Cancelling, and reactivating',
           content: (
             <>
-              <p>Cancelling suspends the club: Rep teams and every team&rsquo;s coach portal, Accounting, Families, the public site, house league and tournaments all go offline at once, and families who open your pages see that they aren&rsquo;t available. Everything is kept for <strong>90 days</strong>, and cancelling always asks you to confirm — and say why — before it happens.</p>
+              <p>Under <strong>Reduce or cancel</strong>, the page names what goes offline and how long your records are kept. Cancelling suspends the club: Rep teams and every team&rsquo;s coach portal, Accounting, Families, the public site, house league and tournaments go offline. The confirmation window reads the impact first, with a reason field before <strong>Cancel and suspend</strong>. A reason is optional.</p>
               <p>Reactivate within the retention window to restore the public site, coach portals and retained tournaments within your plan&rsquo;s limits. Records beyond those limits remain in retention until their deadline. Data past that deadline may no longer be available. If Club isn&rsquo;t yet open for self-serve purchase, the reactivate button reads &ldquo;Contact us to reactivate&rdquo; instead.</p>
             </>
           ),
@@ -340,16 +340,16 @@ const orgHelp: HelpPageContent = {
         'past due', 'payment failed', 'card declined', 'card expired', 'failed payment',
         '90 days', 'retention', 'coaches portal not working', 'scorekeeper stopped',
       ],
-      searchText: 'if your subscription ends cancel cancelled canceled subscription ended stop paying lost access locked out cannot log in nothing works did we lose our data is our data deleted nothing is deleted data kept 90 days retention resubscribe reactivate renew restore access plan and billing billing page past due payment failed card declined card expired failed payment keeps working grace retry coaches portal stops scorekeeper stops check-in stops family portal stops public tournament pages go offline tryout registration closes dues reminder emails stop free coaches portal unaffected personal teams basic coach keeps their own work everything comes back intact club plan and billing',
+      searchText: 'if your subscription ends cancel cancelled canceled subscription ended stop paying lost access locked out cannot log in nothing works did we lose our data is our data deleted nothing is deleted data kept 90 days retention resubscribe reactivate renew restore access plan and billing billing page past due payment failed card declined card expired failed payment keeps working grace retry coaches portal stops scorekeeper stops check-in stops family portal stops public tournament pages go offline tryout registration closes dues reminder emails stop free coaches portal unaffected personal teams basic coach keeps their own work retained records restored within plan limits beyond limits kept until deadline billing grant locked card rail foot more you club plan and billing',
       links: [
         { label: 'Plan & billing', href: '../org/billing' },
       ],
       content: (
         <>
-          <p><strong>Nothing is deleted.</strong> That is the part worth knowing first. If your subscription ends, your seasons, rosters, schedules, records and history are all kept, and they come back exactly as you left them when you subscribe again.</p>
+          <p><strong>Cancellation starts a retention window.</strong> Plan &amp; billing names how long your records are kept. Reactivate within that window to restore the tools and retained records your plan allows. Records beyond its limits stay in retention until their deadline; data past that deadline may no longer be available.</p>
           <p><strong>What stops.</strong> Access ends straight away, across everything: the Coaches Portal, tournament setup, scheduling and score entry, the scorekeeper and check-in apps, your public tournament pages, and the family-facing team pages and calendar feeds. Coaches and volunteers see a short note saying the subscription has ended and that nothing has been deleted — not an error, and not a page that half works.</p>
           <p>Two related things stop as well, so nobody is left wondering: <strong>tryout registration closes</strong> (a form that is no longer being watched should not keep collecting families&rsquo; details), and <strong>automated dues reminder emails stop going out</strong>.</p>
-          <p><strong>Your Plan &amp; billing page keeps working — on purpose.</strong> It is the one place that stays open, because that is how you come back. An admin who opens the admin area lands there.</p>
+          <p><strong>Your Plan &amp; billing page keeps working.</strong> An admin who opens the admin area lands there. Owners and members granted billing access can reactivate; everyone else sees the billing-access locked card. It remains reachable beside Help in the sidebar and in More &gt; You on a phone for billing users.</p>
           <p><strong>A missed payment is not the same as cancelling.</strong> If a card fails, your account is marked past due and <em>everything keeps working</em> while the payment is retried and you are told about it. Access only stops if the subscription is actually cancelled at the end of that.</p>
           <p><strong>A free Coaches Portal is not affected.</strong> Teams a coach set up on their own free portal belong to that person rather than to your organization, so there is no subscription involved and their own work stays exactly as it was.</p>
           <p>Running a Club? <strong>Club plan &amp; billing</strong> covers your two sizes, moving between them, and exactly what reactivating restores.</p>
@@ -359,26 +359,26 @@ const orgHelp: HelpPageContent = {
         {
           id: 'faq-subscription-ended-data',
           question: 'We cancelled — did we lose our data?',
-          answerText: 'No. Nothing is deleted when a subscription ends. Your seasons, rosters, schedules, records and history are all kept, and they come back exactly as you left them when you subscribe again. Your account records are retained for 90 days after cancellation. Subscribe again within that window and everything is restored intact — there is nothing to re-enter and nothing to import.',
+          answerText: 'No records are deleted at cancellation. They are kept during the retention window shown on Plan & billing. Your account records are retained for 90 days after cancellation. Reactivate within that window to restore retained records within your plan limits — there is nothing to re-enter and nothing to import.',
           keywords: ['did we lose our data', 'data deleted', 'is our data gone', 'lose everything', 'get data back', '90 days', 'retention', 'restore', 'cancelled data'],
           popular: true,
           answer: (
             <>
               <p><strong>No.</strong> Nothing is deleted when a subscription ends. Your seasons, rosters, schedules, records and history are all kept.</p>
-              <p>Your account records are retained for <strong>90 days</strong> after cancellation. Subscribe again within that window and everything is restored exactly as you left it — there is nothing to re-enter and nothing to import.</p>
+              <p>Your account records are retained for <strong>90 days</strong> after cancellation. Reactivate within that window to restore retained records within your plan limits — there is nothing to re-enter and nothing to import.</p>
             </>
           ),
         },
         {
           id: 'faq-subscription-ended-access',
           question: 'Our coaches say the portal stopped working — why?',
-          answerText: 'If your organization\'s subscription was cancelled, access stops immediately for everyone: the Coaches Portal, tournament tools, the scorekeeper and check-in apps, the family team pages, and your public tournament pages. Coaches and volunteers see a short note saying the subscription has ended and that nothing has been deleted. Check your Plan & billing page — an admin who opens the admin area is taken straight there. Subscribing again restores access for everyone at once. If instead a payment simply failed, the account is marked past due and everything keeps working while the payment is retried, so a portal that has genuinely stopped means a cancellation, not a declined card.',
+          answerText: 'If your organization\'s subscription was cancelled, access stops immediately for everyone: the Coaches Portal, tournament tools, the scorekeeper and check-in apps, the family team pages, and your public tournament pages. Coaches and volunteers see a short note saying the subscription has ended and that nothing has been deleted. Check your Plan & billing page — an admin who opens the admin area is taken straight there. The owner or a member granted billing access can reactivate within retention, subject to the plan limits. If instead a payment simply failed, the account is marked past due and everything keeps working while the payment is retried, so a portal that has genuinely stopped means a cancellation, not a declined card.',
           keywords: ['portal stopped working', 'coaches locked out', 'coaches cannot log in', 'scorekeeper stopped', 'check-in stopped', 'no access', 'nothing works', 'subscription has ended message', 'why did access stop'],
           popular: true,
           answer: (
             <>
               <p>If your organization&apos;s subscription was cancelled, <strong>access stops immediately for everyone</strong> — the Coaches Portal, tournament tools, the scorekeeper and check-in apps, the family team pages, and your public tournament pages. They see a short note saying the subscription has ended and that nothing has been deleted.</p>
-              <p>Open <strong>Plan &amp; billing</strong> — an admin who opens the admin area is taken straight there. Subscribing again restores access for everyone at once.</p>
+              <p>Open <strong>Plan &amp; billing</strong> — an admin who opens the admin area is taken straight there. The owner or a member granted billing access can reactivate within retention, subject to the plan limits.</p>
               <p>If a payment simply <em>failed</em>, that is different: the account is marked past due and everything keeps working while the payment is retried. So a portal that has genuinely stopped means a cancellation, not a declined card.</p>
             </>
           ),
@@ -386,12 +386,12 @@ const orgHelp: HelpPageContent = {
         {
           id: 'faq-subscription-restore',
           question: 'How do we get everything back?',
-          answerText: 'Subscribe again from Plan & billing. That page keeps working even while access is stopped, precisely so you can come back. Everything is restored as you left it, and access returns for every coach, volunteer and family at once. Your records are kept for 90 days after cancellation.',
+          answerText: 'Subscribe again from Plan & billing. That page keeps working even while access is stopped, precisely so you can come back. Reactivate within the retention window to restore the tools and records your plan allows. Records beyond its limits stay in retention until their deadline. Your records are kept for 90 days after cancellation.',
           keywords: ['get everything back', 'restore access', 'resubscribe', 're-subscribe', 'reactivate', 'renew', 'start again', 'come back', 'subscribe again'],
           answer: (
             <>
               <p>Subscribe again from <strong>Plan &amp; billing</strong>. That page keeps working even while access is stopped, precisely so you can come back.</p>
-              <p>Everything is restored as you left it, and access returns for every coach, volunteer and family at once. Your records are kept for <strong>90 days</strong> after cancellation.</p>
+              <p>Reactivate within the retention window to restore the tools and records your plan allows. Records beyond its limits stay in retention until their deadline. Your records are kept for <strong>90 days</strong> after cancellation.</p>
             </>
           ),
         },
@@ -1220,7 +1220,7 @@ const orgHelp: HelpPageContent = {
       heading: 'Stripe fees on your online payments',
       summary: 'The Stripe fees your online payments can cause, how FieldLogicHQ passes them on to every club on every plan, and the Stripe fees list on Plan & billing.',
       keywords: ['stripe fees', 'stripe fee', 'dispute fee', 'card dispute fee', 'answering fee', 'returned bank debit fee', 'returned bank debit', 'card issued outside your country', 'foreign card', 'extra fee', 'fee invoice', 'invoice of its own', 'pay the invoice', 'complimentary plan', 'free plan', 'plan and billing', 'credited to your account', 'returned', 'answering fee returned', 'refunded to your card', 'cancelled club', 'other stripe fees'],
-      searchText: 'stripe fees on your online payments other stripe fees billed to the club passed on to every club on every plan your plan doesnt change complimentary free plan comped not exempt returned bank debit fee card dispute fee answering fee comes back if you win credited to your account taken from the clubs stripe balance extra fee for a card issued outside your country card from another country foreign card international card family never charged more refunded payment fee stays next fieldlogichq invoice invoice of its own sent on the 1st due in 30 days email from fieldlogichq pay the invoice stripes secure page reminder plan and billing stripe fees list on your next invoice on your dec 1 invoice invoice due paid couldnt be billed yet not billed test mode owner only returned taken off the invoice that charged it refunded to the card that paid it no email from stripe nothing billed when stripe charged nothing cancelled club still billed still sees the list',
+      searchText: 'stripe fees on your online payments other stripe fees billed to the club passed on to every club on every plan your plan doesnt change complimentary free plan comped not exempt returned bank debit fee card dispute fee answering fee comes back if you win credited to your account taken from the clubs stripe balance extra fee for a card issued outside your country card from another country foreign card international card family never charged more refunded payment fee stays next fieldlogichq invoice invoice of its own sent on the 1st due in 30 days email from fieldlogichq pay the invoice stripes secure page reminder plan and billing stripe fees list below plan band cancelled reactivation billing grant on your next invoice on your dec 1 invoice invoice due paid couldnt be billed yet not billed test mode billing access granted by owner returned taken off the invoice that charged it refunded to the card that paid it no email from stripe nothing billed when stripe charged nothing cancelled club still billed still sees the list',
       links: [
         { label: 'Plan & billing', href: '../org/billing' },
       ],
@@ -1251,7 +1251,7 @@ const orgHelp: HelpPageContent = {
           title: 'The Stripe fees list on Plan & billing',
           content: (
             <>
-              <p>Once your organization has a Stripe fee, the owner&rsquo;s <strong>Plan &amp; billing</strong> page shows <strong>Stripe fees</strong>: each fee, its amount, and where it stands. It stays there after the subscription is cancelled, since a cancelled club is still billed its Stripe fees and still gets the invoice by email.</p>
+              <p>Once your organization has a Stripe fee, <strong>Stripe fees</strong> appears below the plan and any free-time or Founding Season band on <strong>Plan &amp; billing</strong>: each fee, its amount, and where it stands. Owners and members granted billing access can read it. On a cancelled account it stays below reactivation, since a cancelled club is still billed its Stripe fees and still gets the invoice by email.</p>
               <HelpDefs>
                 <HelpDef term="On your next FieldLogicHQ invoice">It rides on your subscription&rsquo;s next invoice.</HelpDef>
                 <HelpDef term="On your Dec 1 invoice">It waits for the next invoice of its own.</HelpDef>
@@ -1329,7 +1329,7 @@ const orgHelp: HelpPageContent = {
           title: 'Cancel and suspend',
           content: (
             <>
-              <p>When payouts are connected, the cancel window adds <strong>Online payments stop now</strong>: nobody can pay you online and open pay pages close. It counts the families and teams who still owe, the pay pages open right now, and the bank debits still clearing, which finish and reach your bank.</p>
+              <p>Open the cancel window from <strong>Reduce or cancel</strong> on Plan &amp; billing. When payouts are connected, it adds <strong>Online payments stop now</strong>: nobody can pay you online and open pay pages close. It counts the families and teams who still owe, the pay pages open right now, and the bank debits still clearing, which finish and reach your bank.</p>
               <p>Your Stripe account stays yours, and money in it keeps paying out to your bank. While you are suspended, refunds and any open disputes are handled in Stripe.</p>
             </>
           ),

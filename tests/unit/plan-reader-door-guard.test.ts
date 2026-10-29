@@ -192,7 +192,17 @@ with its class and a reason:\n  ${unlisted.join('\n  ')}`);
       'app/api/admin/org/founding-season-status/route.ts',
       'app/api/admin/org/request-deletion/route.ts',
     ];
-    const offenders = ACTIONS.filter(f => /\b(?:auth|ctx)\.org\.planId\b|(?<![.\w])org\.planId\b/.test(stripComments(read(f))));
+    const offenders = ACTIONS.filter(f => {
+      let code = stripComments(read(f));
+      if (f === 'app/api/billing/choose-next-season/route.ts') {
+        // A return must follow the layout's effective tier boundary. This one resolver call
+        // chooses only the destination; eligibility, target and price still read the OWN plan.
+        const destination = 'getBillingHref(auth.org.slug, auth.org.planId)';
+        assert.equal(code.split(destination).length - 1, 1, 'exactly one plan-aware return resolver');
+        code = code.replace(destination, 'billingDestination');
+      }
+      return /\b(?:auth|ctx)\.org\.planId\b|(?<![.\w])org\.planId\b/.test(code);
+    });
     assert.deepEqual(offenders, [], `Billing actions must read ownPlanOf(org), not org.planId:\n  ${offenders.join('\n  ')}`);
   });
 

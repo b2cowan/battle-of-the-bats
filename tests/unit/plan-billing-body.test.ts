@@ -21,7 +21,7 @@ function fixture(key: keyof typeof PLAN_CONFIG): BillingBodyViewProps {
   const impact = planCancellationImpact(profile, ['module_public_site'], 9);
   const snapshot: BillingSnapshot = {
     org: { id: 'org-a', slug: 'club-a', name: 'Falcons', planId: key, ownPlanId: key, enabledAddons: ['module_public_site'], subscriptionStatus: 'active', subscriptionPeriod: 'monthly', currentPeriodEnd: '2027-03-01', teamLimit: 15, tournamentLimit: 1 } as BillingSnapshot['org'],
-    isOwner: true, usage: ready({ teams: { count: 9, limit: 15 }, tournament_slots: { count: 1, limit: 1 }, staff_seats: { count: 2, limit: profile.config.seatLimit }, officials: 4 }),
+    canManageBilling: true, usage: ready({ teams: { count: 9, limit: 15 }, tournament_slots: { count: 1, limit: 1 }, staff_seats: { count: 2, limit: profile.config.seatLimit }, officials: 4 }),
     freeTime: ready({ freeTime: null, portal: null, foundingThrough: null, overLimitAfter: false }),
     founding: ready({ isFoundingSeason: false, compUntil: null }),
     gating: ready({ tournament: false, tournament_plus: false, team: false, league: true, club: true, club_large: true }),
@@ -47,7 +47,7 @@ describe('the real shared billing body renders every profile', () => {
       if (key === 'tournament_plus') { assert.match(rendered, /2 staff seats · unlimited/); assert.match(rendered, /Contact us to move/); }
     });
     for (const state of ['active', 'canceled', 'past_due', 'trialing'] as const) it(`${key}/${state}: non-owner gets no billing facts or actions`, () => {
-      const props = fixture(key); props.snapshot.isOwner = false; props.snapshot.org.subscriptionStatus = state;
+      const props = fixture(key); props.snapshot.canManageBilling = false; props.snapshot.org.subscriptionStatus = state;
       const rendered = html(props);
       assert.match(rendered, /Only Falcons’ owner/);
       assert.doesNotMatch(rendered, /Stripe fees fixture|billing-manage-btn|billing-reactivate-btn|<button|<a |9 of 15|CAD/);
@@ -64,6 +64,17 @@ describe('the real shared billing body renders every profile', () => {
 });
 
 describe('billing state distinctions in the rendered body', () => {
+  it('staff free time hides upgrade purchases even when the underlying own plan is free', () => {
+    const props = fixture('tournament');
+    props.snapshot.freeTime = ready({ freeTime: { state: 'running', plan: 'club', ownPlan: 'tournament', lastDay: '2027-03-31', daysLeft: 40 }, portal: null, foundingThrough: null, overLimitAfter: false });
+    const rendered = html(props);
+    assert.doesNotMatch(rendered, /Upgrade to|billing-manage-btn|billing-cancel-btn|<select|Move to/);
+  });
+  it('choosing an upgrade cycle does not change the current paid plan’s displayed price', () => {
+    const props = fixture('tournament_plus'); props.actions.cycle = 'annual';
+    assert.ok(html(props).includes(W.plan.price(props.profile.config.monthlyPrice, 'monthly')));
+    assert.ok(!html(props).includes(`${props.profile.config.annualPrice} CAD / year`));
+  });
   for (const key of ['club', 'team', 'tournament_plus', 'tournament'] as const) {
     for (const status of ['active', 'canceled'] as const) it(`${key}/${status}: failed free-time reads offer retry and help without asserting billing facts`, () => {
       const props = fixture(key);

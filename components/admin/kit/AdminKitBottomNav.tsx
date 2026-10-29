@@ -55,7 +55,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const nav = useAdminKitNav();
   const {
     base, programs, alsoOnPlan, brief, orgLinks, tournamentOnly, onTournaments, isCanceled, coachDoor, tournamentGroups,
-    calendarLink, schedulesLink, helpHref, siteInNav, isSandbox,
+    calendarLink, schedulesLink, billingLink, helpHref, siteInNav, isSandbox,
   } = nav;
   const { currentOrg } = useOrg();
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
@@ -318,7 +318,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
 
               {/* You: Account and Home lead out of the demo sandbox (it ends the demo on arrival), so the sandbox hides
                   them, as the top strip hides the account menu. The group shows only with a row to show. */}
-              {(!isSandbox || coachDoor.show) && (
+              {(!isSandbox || coachDoor.show || billingLink) && (
                 <>
                   <div className={styles.dropDivider} />
                   <div className={styles.dropSectionLabel}>You</div>
@@ -338,6 +338,9 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                         <Users2 size={17} aria-hidden /><span>Coaches Portal</span>
                       </Link>
                     )}
+                    {billingLink && <Link className={styles.dropItem} href={billingLink.href} role="menuitem" id="admin-mob-billing" onClick={close} aria-current={isKitLinkActive(pathname, billingLink) ? 'page' : undefined}>
+                      {billingLink.icon && <billingLink.icon size={17} aria-hidden />}<span>{billingLink.label}</span>
+                    </Link>}
                   </div>
                 </>
               )}

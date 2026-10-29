@@ -373,14 +373,14 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     }
   }
 
-  // J10-022: plan & billing and organization settings stay with the owner. A body that tries to
-  // GRANT one is refused outright rather than half-applied.
+  // Settings stay with the owner. Billing may be granted by the owner (2026-10-28);
+  // a body that grants a remaining owner-only power is refused rather than half-applied.
   if (hasCapabilitiesUpdate && body.capabilities && typeof body.capabilities === 'object') {
     const granted = Object.entries(body.capabilities as Record<string, unknown>)
       .filter(([key, val]) => isOwnerOnlyCapability(key) && val === true);
     if (granted.length > 0) {
       return NextResponse.json(
-        { error: 'Plan & billing and organization settings stay with the owner; they can’t be handed out.', code: 'owner_only_power' },
+        { error: 'Organization settings stay with the owner; they can’t be handed out.', code: 'owner_only_power' },
         { status: 400 },
       );
     }

@@ -14,7 +14,7 @@ import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { isTournamentTier } from '@/lib/billing-urls';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
-import { kitPrograms, kitOrgLinks, activeKitSection, clubProgramOrder, kitCalendarLink, kitSchedulesLink } from '@/lib/admin-kit-nav';
+import { kitPrograms, kitOrgLinks, kitBillingLink, activeKitSection, clubProgramOrder, kitCalendarLink, kitSchedulesLink } from '@/lib/admin-kit-nav';
 import { kitTournamentGroups } from './kit-tournament-groups';
 import { useClubBrief } from './club/ClubBriefProvider';
 
@@ -61,6 +61,7 @@ export function useAdminKitNav() {
   const schedulesLink = kitSchedulesLink({
     base, canUse, isCanceled, role: userRole, planId: currentOrg?.planId,
   });
+  const billingLink = kitBillingLink({ orgSlug, planId: currentOrg?.planId, role: userRole, capabilities: userCapabilities });
   // The person's own Coaches Portal door — the rail's foot and the More sheet's "You" both show it.
   const coachDoor = coachDoorFor(useCurrentOrgCoachAccess(currentOrg?.slug, !isCanceled), currentOrg?.slug);
   // The tournament's groups as this person sees them, every row's address resolved ONCE: an event page, or a door outside
@@ -99,6 +100,7 @@ export function useAdminKitNav() {
     brief: club.brief,
     tournamentOnly,
     orgLinks,
+    billingLink,
     calendarLink,
     schedulesLink,
     coachDoor,

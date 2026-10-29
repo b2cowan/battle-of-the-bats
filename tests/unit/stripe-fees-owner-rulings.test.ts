@@ -24,17 +24,18 @@ describe('ruling 2: a cancelled club is still billed, and sees its Stripe fees l
   it('the list’s read is off the billing rail, and stays the owner’s', () => {
     const route = readCode('app/api/billing/stripe-fees/route.ts');
     assert.match(route, /getAuthContextWithRole\(\{ orgSlug, requireOrgSlug: true, allowSuspendedOrg: true \}\)/);
-    assert.match(route, /if \(ctx\.role !== 'owner'\) return forbidden\(\);/);
+    assert.match(route, /if \(!hasCapability\(ctx\.role, ctx\.capabilities, 'billing'\)\) return forbidden\(\);/);
   });
 
-  it('both Plan & billing pages show it on their cancelled view, not only the live one', () => {
+  it('every plan shares the fees list below the cancelled recovery card', () => {
     const kit = readCode('components/billing/BillingBody.tsx');
     const cancelled = kit.slice(kit.indexOf('if (cancelled && controlsReady)'), kit.indexOf('const changeKeys'));
     assert.ok(cancelled.indexOf('{fees}') > cancelled.indexOf('billing-reactivate-btn'), 'shared body: fees remain below the reactivation card');
     assert.match(kit, /fees=\{<StripeFeesList key=\{org\.id\} slug=\{org\.slug\} \/>\}/);
     const page = readCode('app/[orgSlug]/admin/org/billing/page.tsx');
-    const canceledView = /if \(status === 'canceled'\) \{[\s\S]*?\n  \}\n/.exec(page)?.[0] ?? '';
-    assert.match(canceledView, /canManageBilling && <StripeFeesList slug=\{currentOrg\.slug\} \/>/, 'every other plan');
+    assert.match(page, /return <BillingKit \/>/);
+    assert.match(readCode('components/admin/kit/club/BillingKit.tsx'), /<BillingBody billingBase=/);
+    assert.doesNotMatch(page, /isClubPlan|BillingPagePlans/);
   });
 
   it('the monthly invoice never asks whether the club is cancelled (no reprieve)', () => {

@@ -106,8 +106,8 @@ describe('published article preservation — owner baseline 2026-10-28', () => {
       assert.equal(createHash('sha256').update(JSON.stringify(features), 'utf8').digest('hex'), baseline[key][1], key);
     }
   });
-  it('both current billing implementations read their lists from the registry', () => {
-    assert.match(readCode('app/[orgSlug]/admin/org/billing/page.tsx'), /PLAN_BILLING_PROFILES\[currentPlanKey\]\.included\.billing/);
+  it('every admin plan delegates to the shared body and its registry-owned lists', () => {
+    assert.match(readCode('app/[orgSlug]/admin/org/billing/page.tsx'), /return <BillingKit \/>/);
     assert.match(readCode('components/billing/BillingBody.tsx'), /profile\.included\.billing\.filter/);
     assert.match(readCode('components/admin/kit/club/BillingKit.tsx'), /<BillingBody billingBase=/);
     for (const f of ['app/[orgSlug]/admin/org/billing/page.tsx', 'components/billing/BillingBody.tsx']) {

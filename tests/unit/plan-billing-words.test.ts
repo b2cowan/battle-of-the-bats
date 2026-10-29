@@ -9,8 +9,8 @@ import { subscriptionStatusLabel } from '../../lib/platform-labels.ts';
 
 describe('shared billing vocabulary', () => {
   it('uses the one possessive and the existing status/free-time/fee copy builders', () => {
-    assert.equal(W.page.lockedBody('Riverdale Reds'), 'Only Riverdale Reds’ owner can see and change the plan and how it’s paid.');
-    assert.equal(W.page.lockedBody('Riverdale'), 'Only Riverdale’s owner can see and change the plan and how it’s paid.');
+    assert.equal(W.page.lockedBody('Riverdale Reds'), 'Only Riverdale Reds’ owner and members they’ve granted billing access can see and change the plan and how it’s paid.');
+    assert.equal(W.page.lockedBody('Riverdale'), 'Only Riverdale’s owner and members they’ve granted billing access can see and change the plan and how it’s paid.');
     assert.strictEqual(W.plan.status, subscriptionStatusLabel);
     assert.strictEqual(W.freeTime, freeTimeCopy);
     assert.strictEqual(W.portalFreeTime, portalFreeTimeCopy);

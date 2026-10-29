@@ -86,8 +86,9 @@ describe('Members — J10-012, J10-021, J10-018, J10-022', () => {
     assert.match(manage, /viewerIsOwner && !targetIsOwner && member\.status === 'active'/, 'Suspend… is the owner\'s');
   });
 
-  it('owner-only powers are never offered (J10-022)', () => {
-    assert.doesNotMatch(manage, /'billing'|'org_settings'/, 'Plan & billing and settings must not appear as a grant');
+  it('billing is grantable by the owner, while settings remain owner-only (2026-10-28)', () => {
+    assert.match(manage, /canChangeAccess && <label[\s\S]*?setCap\('billing', on\)/);
+    assert.doesNotMatch(manage, /setCap\('org_settings'/);
   });
 });
 
@@ -132,7 +133,8 @@ describe('the hub — a door only where it opens', () => {
   });
 
   it('owner-only areas show as locked rows for everyone else, never as links', () => {
-    assert.match(hub, /\['Plan & billing', 'Settings'\]\.map\(label => \(\s*<div key=\{label\}/);
+    assert.match(hub, /\(canManageBilling \? \['Settings'\] : \['Plan & billing', 'Settings'\]\)\.map\(label => \(\s*<div key=\{label\}/);
+    assert.match(hub, /canManageBilling && <Link href=\{`\$\{base\}\/org\/billing`\}/);
     assert.match(hub, /Owner only/);
   });
 

@@ -36,6 +36,10 @@ import type { Capability } from '@/lib/roles';
 import type { OrgPlan } from '@/lib/types';
 import type { TournamentPhase } from './tournament-phase';
 import { canOpenClubSchedules } from './club-schedule-gate';
+import { getBillingHref } from './billing-urls';
+import { hasCapability } from './roles';
+import type { OrgRole } from './types';
+import { PLAN_BILLING_WORDS as W } from './plan-billing-words';
 
 export type AdminProgramKey =
   | 'rep-teams'
@@ -245,6 +249,16 @@ export function kitSchedulesLink({ base, canUse, isCanceled, role, planId }: {
 /** The Organization group's icon (the rail row and the More section share it). */
 export const ORGANIZATION_ICON: LucideIcon = Building2;
 
+/** Plan & billing lives beside Help on every admin plan, including a suspended account's comeback path. */
+export function kitBillingLink({ orgSlug, planId, role, capabilities }: {
+  orgSlug: string; planId: OrgPlan | null | undefined; role: OrgRole | null | undefined;
+  capabilities: Record<string, boolean> | null;
+}): KitLink | null {
+  return role && hasCapability(role, capabilities, 'billing')
+    ? { key: 'org/billing', label: W.page.title, href: getBillingHref(orgSlug, planId), icon: CreditCard }
+    : null;
+}
+
 /**
  * The Organization group — the old console rail's org mode + the org hub's PDF settings tile, each
  * with the gate it had there. ⚠ "Plan & billing", not "Subscription": the rail said one thing and the
@@ -271,7 +285,6 @@ export function kitOrgLinks({
     // H08 (Club Tier Stage 1): the audit log gets its rail row now that its page works (A04, fixed
     // Stage 0; redrawn Stage 1 specimen 11). Owner-only, as the page and its route are.
     !isCanceled && role === 'owner' && { key: 'org/audit', label: 'Audit log', href: `${o}/members/audit`, icon: ScrollText },
-    role === 'owner' && { key: 'org/billing', label: 'Plan & billing', href: `${o}/billing`, icon: CreditCard },
     !isCanceled && role === 'owner' && { key: 'org/settings', label: 'Settings', href: `${o}/settings`, exact: true, icon: Settings },
     !isCanceled && hasVenueLibrary && { key: 'org/venues', label: 'Venue library', href: `${o}/venues`, icon: MapPin },
     !isCanceled && ownerOrAdmin && { key: 'org/pdf', label: 'PDF settings', href: `${o}/settings/pdf`, icon: FileText },

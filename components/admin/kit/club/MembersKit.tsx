@@ -217,7 +217,7 @@ export default function MembersKit() {
   const canOpenCell = (m: KitMember) => (
     <span className={styles.opens}>
       <span>{accessSummary(m.role, m.access, m.capabilities)}</span>
-      {overrideChips(m.access).map(c => (
+      {overrideChips(m.access, m.capabilities).map(c => (
         <span key={c.key} className={`${ck.chip} ${c.tone === 'on' ? ck.chipGood : ck.chipWarn}`}>{c.text}</span>
       ))}
     </span>
@@ -279,7 +279,7 @@ export default function MembersKit() {
           const isSelf = m.userId === user?.id;
           const line = m.status === 'invited'
             ? `${roleLabel(m.role)} · invited ${dayLabel(m.invitedAt)}`
-            : `${roleLabel(m.role)} · ${accessShort(m.role, m.access, m.capabilities)}${overrideChips(m.access).map(c => ` ${c.text}`).join('')}`;
+            : `${roleLabel(m.role)} · ${accessShort(m.role, m.access, m.capabilities)}${overrideChips(m.access, m.capabilities).map(c => ` ${c.text}`).join('')}`;
           const body = (
             <>
               <span className={ck.rowMain}>

@@ -11,6 +11,7 @@
  */
 import { useEffect, useState } from 'react';
 import { useOrg } from '@/lib/org-context';
+import { hasCapability } from '@/lib/roles';
 import { useTournament } from '@/lib/tournament-context';
 import { usePlanGating } from '@/lib/use-plan-gating';
 import { isEffectivelyGated } from '@/lib/plan-config';
@@ -23,7 +24,7 @@ import PlanArticlePanel from './PlanArticlePanel';
 type Outcome = { title: string; message: string; type: 'success' | 'danger' };
 
 export default function PlanPanelDrawer({ plan, onClose }: { plan: PanelPlanKey; onClose: () => void }) {
-  const { currentOrg, userRole, refresh: refreshOrg } = useOrg();
+  const { currentOrg, userRole, userCapabilities, refresh: refreshOrg } = useOrg();
   const { refresh: refreshTournaments } = useTournament();
   const gating = usePlanGating();
   const [loading, setLoading] = useState(false);
@@ -79,7 +80,7 @@ export default function PlanPanelDrawer({ plan, onClose }: { plan: PanelPlanKey;
         isComingSoon={gating ? gating[plan] : isEffectivelyGated(plan)}
         // Only the owner may change the plan (the server's 'billing' capability): anyone else reads what the plan
         // includes, with no Upgrade that would only be refused.
-        canUpgrade={userRole === 'owner' && (upgradePlansFor(currentOrg ? ownPlanOf(currentOrg) : undefined) as PanelPlanKey[]).includes(plan)}
+        canUpgrade={!!userRole && hasCapability(userRole, userCapabilities, 'billing') && (upgradePlansFor(currentOrg ? ownPlanOf(currentOrg) : undefined) as PanelPlanKey[]).includes(plan)}
       />
       {outcome && <FeedbackModal isOpen onClose={onClose} title={outcome.title} message={outcome.message} type={outcome.type} />}
     </>

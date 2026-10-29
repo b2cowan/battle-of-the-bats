@@ -1,3 +1,4 @@
 'use client';
 export { default } from '@/components/shared/PageNotice';
-export * from '@/components/shared/PageNotice';
+export { useNotice, refusalNotice } from '@/components/shared/PageNotice';
+export type { Notice } from '@/components/shared/PageNotice';

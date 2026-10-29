@@ -135,6 +135,7 @@ export default function ClubHubKit() {
   const closedPlansLine = gating ? closedProgramPlansSentence(gating) : null;
   const slug = currentOrg?.slug ?? '';
   const isOwner = userRole === 'owner';
+  const canManageBilling = !!userRole && hasCapability(userRole, userCapabilities, 'billing');
   const club = isClubPlan(currentOrg?.planId);
   const noun = orgNoun(currentOrg?.planId);
 
@@ -369,7 +370,10 @@ export default function ClubHubKit() {
                 </span>
               </Link>
             )}
-            {['Plan & billing', 'Settings'].map(label => (
+            {canManageBilling && <Link href={`${base}/org/billing`} className={ck.row}>
+              <span className={ck.rowMain}><span className={ck.rowTitle}>Plan &amp; billing</span></span>
+            </Link>}
+            {(canManageBilling ? ['Settings'] : ['Plan & billing', 'Settings']).map(label => (
               <div key={label} className={`${ck.row} ${ck.rowLocked}`} aria-label={`${label}, owner only`}>
                 <span className={ck.rowMain}><span className={`${ck.rowTitle} ${ck.muted}`}>{label}</span></span>
                 <span className={ck.rowEnd}><span className={ck.chip}><Lock size={11} aria-hidden /> Owner only</span></span>

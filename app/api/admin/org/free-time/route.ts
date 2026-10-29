@@ -8,6 +8,7 @@ import { formatLongDay, isGrantRunning, lastDayOfInstant } from '@/lib/free-time
 import { SLOT_STATUSES } from '@/lib/tournament-slot';
 import { withObservability } from '@/lib/observability';
 import { customerPortalFreeTime, endedPortalFreeTime } from '@/lib/portal-free-time-server';
+import { hasCapability } from '@/lib/roles';
 
 /**
  * The customer's free time, for their Plan & billing page (Support console Stage 4, owner ruling Q8): running, ending (the
@@ -22,7 +23,7 @@ export const GET = withObservability(async (req: Request) => {
   // Billing must distinguish an unavailable read from no grant, and an old ended grant from cancellation.
   // Other consumers keep their existing 30-day informational band window.
   const billingView = new URL(req.url).searchParams.get('billing') === '1';
-  if (billingView && ctx.role !== 'owner') return forbidden();
+  if (billingView && !hasCapability(ctx.role, ctx.capabilities, 'billing')) return forbidden();
 
   // A Coaches Portal staff gave free time (Stage 4b, Part 5): its state and last free day only (T24), never a whole-plan
   // grant (a portal holds none). A failed read says nothing rather than failing the page.

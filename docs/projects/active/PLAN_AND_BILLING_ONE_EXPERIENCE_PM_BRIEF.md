@@ -1,6 +1,6 @@
 # PM brief — Plan & billing, one experience for every plan
 
-**Parts 1–2 implemented 2026-10-28 · verification findings in plan §9 · plan: `PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md`**
+**Stage 1 Parts 1–3 implemented 2026-10-28 · validation and owner gates in plan §9 · plan: `PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md`**
 
 ## What changes for a customer
 
@@ -150,3 +150,22 @@ no stranded cancelled owner, exact money-request fields, and stable refresh/retu
 and failed-read state table live in the plan's Part 2 review-fix hand-off. These fixes reach the existing Club host;
 other admin plans still cut over in Part 3 and the dedicated coach host remains Stage 2. The owner browser/Stripe walk,
 `/simplify` on the delta, `/review` of the fixes and `/docs` remain owed. Stage 1 is not declared complete.
+
+
+## Part 3 result — 2026-10-28
+
+Every admin plan now opens the same Plan & billing body. Tournament and Tournament Plus keep their existing
+subscription address; League Plus, both Club sizes and the standalone coach workspace keep organization billing.
+The sidebar door sits beside Help, and the phone door is in More > You. The tournament settings card stays.
+Standalone coaches keep the admin chrome until Stage 2 adds their own host.
+
+The owner ruled billing delegable in this build: only the owner can grant it in Members, and a granted board member
+can read billing and perform the same plan/payment/cancellation actions. No role receives billing automatically.
+Members without that access see a locked card, without loading billing data. Suspended billing users retain the
+usage read so they can assess a recovery plan. Member chips and access-change emails name the grant.
+
+Owners and delegates can select Monthly or Yearly before an upgrade. That selection does not rewrite the price
+of the plan they already have. Staff free time continues to remove purchases, payment, move and cancel controls.
+Stripe portal, card-save and next-season returns now resolve to the correct existing billing home. The old screen
+and its stylesheet are retired. Success criteria, exact validation results, remaining owner/Stripe checks and the
+Claude cleanup/review/docs steps live in the Part 3 hand-off in plan section 9. Stage 1 awaits those gates.

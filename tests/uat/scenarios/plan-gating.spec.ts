@@ -194,11 +194,11 @@ test.describe('Plan gating / org billing access', () => {
     await expect(ownerPage.locator('#billing-manage-btn')).toBeEnabled({ timeout: 20_000 });
   });
 
-  test('org-admin sees billing as read-only on a club org', async ({ adminPage }) => {
+  test('org-admin without a billing grant sees only the locked card on a club org', async ({ adminPage }) => {
     await adminPage.goto(`/${CLUB_ORG_SLUG}/admin/org/billing`);
     await expect(adminPage).not.toHaveURL(/\/auth\/login/);
-    // Admin can view billing but cannot manage it (owner-only) → manage control disabled.
-    await expect(adminPage.locator('#billing-manage-btn')).toBeDisabled({ timeout: 20_000 });
+    await expect(adminPage.getByRole('heading', { name: 'Billing access required' })).toBeVisible({ timeout: 20_000 });
+    await expect(adminPage.locator('#billing-manage-btn, #billing-cancel-btn, #billing-reactivate-btn, #billing-change')).toHaveCount(0);
   });
 
   test('org-admin can access registrations', async ({ adminPage, orgSlug }) => {

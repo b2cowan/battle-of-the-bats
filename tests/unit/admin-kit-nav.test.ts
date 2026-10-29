@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import {
-  kitPrograms, kitOrgLinks, isKitLinkActive, activeKitSection,
+  kitPrograms, kitOrgLinks, kitBillingLink, isKitLinkActive, activeKitSection,
   clubProgramOrder, INTERIM_PROGRAM_ORDER, PROGRAM_CAPABILITY, accountingTabs, accountingTabFor, tournamentBarKeys,
   familiesTabs, familiesTabFor,
 } from '../../lib/admin-kit-nav.ts';
@@ -11,6 +11,10 @@ import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { kitTournamentGroups } from '../../components/admin/kit/kit-tournament-groups.ts';
 import { readCode } from './_source-code.ts';
 import { CHAT_PAUSED } from '../../lib/chat-pause.ts';
+import { PLAN_CONFIG } from '../../lib/plan-config.ts';
+import { getBillingHref } from '../../lib/billing-urls.ts';
+import { CreditCard } from 'lucide-react';
+import type { OrgPlan, OrgRole } from '../../lib/types.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -70,10 +74,10 @@ describe("the admin kit nav — today's gates", () => {
     const labels = (role: string, isCanceled = false) => kitOrgLinks({
       base: BASE, role, isCanceled, canSeeMembers: true, hasVenueLibrary: true,
     }).map(l => l.label);
-    assert.deepEqual(labels('owner'), ['Members', 'Audit log', 'Plan & billing', 'Settings', 'Venue library', 'PDF settings']);
+    assert.deepEqual(labels('owner'), ['Members', 'Audit log', 'Settings', 'Venue library', 'PDF settings']);
     assert.deepEqual(labels('admin'), ['Members', 'Venue library', 'PDF settings']);
     assert.deepEqual(labels('treasurer'), ['Members', 'Venue library']);
-    assert.deepEqual(labels('owner', true), ['Plan & billing'], 'a cancelled club keeps only the way to pay again');
+    assert.deepEqual(labels('owner', true), [], 'billing is in the foot, never Organization');
   });
 
   it('bringing in a coach’s team lives under Rep Teams, beside the teams it adds to (Club Tier Stage 2)', () => {
@@ -87,13 +91,35 @@ describe("the admin kit nav — today's gates", () => {
     // The locked "Owner only" rows (Club Stage 1 specimens 2–3, J10-016) left the rail and the phone's
     // More sheet: three of an admin's five Organization rows were permanently dead. The hub's
     // Organization section still says whose they are (club-stage1-screens-guard).
-    const owner = ['Audit log', 'Plan & billing', 'Settings'];
+    const owner = ['Audit log', 'Settings'];
     const adminDoors = kitOrgLinks({ base: BASE, role: 'admin', isCanceled: false, canSeeMembers: true, hasVenueLibrary: true }).map(l => l.label);
     for (const label of owner) assert.ok(!adminDoors.includes(label), `${label} is the owner's — not listed for an admin`);
     const ownerDoors = kitOrgLinks({ base: BASE, role: 'owner', isCanceled: false, canSeeMembers: true, hasVenueLibrary: true }).map(l => l.label);
     for (const label of owner) assert.ok(ownerDoors.includes(label), `the owner keeps ${label} as a door`);
     const nav = readCode('lib/admin-kit-nav.ts');
     assert.doesNotMatch(nav, /export function kitOrgLockedRows|export type KitLockedRow/, 'the locked-row list must not come back');
+  });
+});
+
+describe('billing in the rail foot and More → You', () => {
+  for (const planId of Object.keys(PLAN_CONFIG) as OrgPlan[]) {
+    for (const role of ['owner', 'admin', 'staff', 'treasurer', 'coach', 'official', 'league_admin', 'league_registrar'] as OrgRole[]) {
+      for (const capabilities of [null, { billing: true }, { billing: false }]) it(`${planId}/${role}/${JSON.stringify(capabilities)}: the billing capability decides the door`, () => {
+        const link = kitBillingLink({ orgSlug: 'demo-club', planId, role, capabilities });
+        const allowed = role === 'owner' || capabilities?.billing === true;
+        if (!allowed) { assert.equal(link, null); return; }
+        assert.equal(link?.href, getBillingHref('demo-club', planId));
+        assert.equal(link?.label, 'Plan & billing'); assert.equal(link?.icon, CreditCard);
+        assert.ok(routeExists(link!.href), 'the billing destination is a real route');
+        assert.ok(isKitLinkActive(link!.href, link!));
+        assert.ok(routeExists(`${link!.href}/mock-portal`), 'the mock portal shares the same tier boundary');
+      });
+    }
+  }
+  it('unauthenticated nav has no billing row; suspension does not remove the billing comeback door', () => {
+    assert.equal(kitBillingLink({ orgSlug: 'demo-club', planId: 'club', role: null, capabilities: { billing: true } }), null);
+    assert.ok(kitBillingLink({ orgSlug: 'demo-club', planId: 'club', role: 'owner', capabilities: null }));
+    assert.doesNotMatch(readCode('lib/admin-kit-nav.ts').split('export function kitBillingLink')[1].split('export function kitOrgLinks')[0], /isCanceled/);
   });
 });
 

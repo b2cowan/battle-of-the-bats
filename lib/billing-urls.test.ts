@@ -26,7 +26,7 @@ test('Tournament tiers manage billing inside their tournament settings', () => {
 });
 
 test('every other tier manages billing at the org level', () => {
-  for (const planId of ['league', 'club', 'team']) {
+  for (const planId of ['league', 'club', 'club_large', 'team']) {
     assert.equal(getBillingHref('ravens', planId), '/ravens/admin/org/billing');
     assert.equal(isTournamentTier(planId), false);
   }

@@ -56,6 +56,7 @@ export default function TournamentSettingsAccessPage() {
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
   const subscriptionHref = `${base}/settings/subscription`;
   const isOwner = userRole === 'owner';
+  const canManageBilling = !!userRole && hasCapability(userRole, userCapabilities, 'billing');
   const isLeagueOrClub = !!currentOrg && ['league', 'club', 'club_large'].includes(currentOrg.planId);
   const canManageMembers = userRole
     ? userRole === 'owner' || hasCapability(userRole, userCapabilities, 'module_members')
@@ -78,8 +79,8 @@ export default function TournamentSettingsAccessPage() {
       icon: CreditCard,
       title: 'Plan & billing',
       description: 'Review the Tournament plan, upgrade to Tournament Plus, and confirm tournament-slot usage.',
-      meta: isOwner ? 'Open billing' : 'Owner only',
-      enabled: isOwner,
+      meta: canManageBilling ? 'Open billing' : 'Billing access required',
+      enabled: canManageBilling,
     }] : []),
     {
       href: `${base}/settings/notifications`,

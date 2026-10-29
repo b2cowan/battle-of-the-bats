@@ -2,6 +2,7 @@ import { getAuthContext, requireCapability, unauthorized } from '@/lib/api-auth'
 import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
 import { createCardSetupSession } from '@/lib/billing-setup';
 import { withObservability } from '@/lib/observability';
+import { getBillingHref } from '@/lib/billing-urls';
 
 export const POST = withObservability(async (req: Request) => {
   // Scope to the org whose billing page invoked this — never the caller's home org
@@ -19,7 +20,7 @@ export const POST = withObservability(async (req: Request) => {
   // ── Dev mock: redirect to local mock portal ───────────────────────────────
   if (isBillingMockEnabled()) {
     return new Response(
-      JSON.stringify({ url: `${appUrl}/${auth.org.slug}/admin/org/billing/mock-portal` }),
+      JSON.stringify({ url: `${appUrl}${getBillingHref(auth.org.slug, auth.org.planId)}/mock-portal` }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   }
@@ -47,7 +48,7 @@ export const POST = withObservability(async (req: Request) => {
   const { stripe } = await import('@/lib/stripe');
   const session = await stripe.billingPortal.sessions.create({
     customer: auth.org.stripeCustomerId,
-    return_url: `${appUrl}/${auth.org.slug}/admin/org/billing`,
+    return_url: `${appUrl}${getBillingHref(auth.org.slug, auth.org.planId)}`,
   });
 
   return new Response(JSON.stringify({ url: session.url }), {

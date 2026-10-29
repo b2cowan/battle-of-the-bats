@@ -137,10 +137,16 @@ describe('describeAccessChange — the J10-020 email says exactly what changed',
 });
 
 describe('owner-only powers', () => {
-  it('are billing and org_settings, and nothing else', () => {
-    assert.deepEqual([...OWNER_ONLY_CAPABILITIES].sort(), ['billing', 'org_settings']);
+  it('granting and revoking billing names that access in the existing change email', () => {
+    const before = { role: 'treasurer' as const, capabilities: null };
+    const after = { role: 'treasurer' as const, capabilities: { billing: true } };
+    assert.deepEqual(describeAccessChange(before, after, orgs('club')[0]), ['You can now open Plan & billing.']);
+    assert.deepEqual(describeAccessChange(after, before, orgs('club')[0]), ['You can no longer open Plan & billing.']);
+  });
+  it('are org_settings; billing is explicitly delegable (owner, 2026-10-28)', () => {
+    assert.deepEqual([...OWNER_ONLY_CAPABILITIES].sort(), ['org_settings']);
     for (const cap of ALL_CAPABILITY_KEYS) {
-      assert.equal(isOwnerOnlyCapability(cap), cap === 'billing' || cap === 'org_settings', cap);
+      assert.equal(isOwnerOnlyCapability(cap), cap === 'org_settings', cap);
     }
   });
 });

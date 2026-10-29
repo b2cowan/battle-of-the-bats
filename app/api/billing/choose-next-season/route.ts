@@ -20,6 +20,7 @@ import {
 import { withObservability } from '@/lib/observability';
 import type { OrgPlan } from '@/lib/types';
 import { ownPlanOf } from '@/lib/entitlement-grants';
+import { getBillingHref } from '@/lib/billing-urls';
 
 /**
  * POST /api/billing/choose-next-season
@@ -94,7 +95,7 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-  const billingPath = `/${auth.org.slug}/admin/org/billing`;
+  const billingPath = getBillingHref(auth.org.slug, auth.org.planId);
   const successUrl = `${appUrl}${billingPath}?next_season=1`;
   const cancelUrl = `${appUrl}${billingPath}`;
 

@@ -66,6 +66,15 @@ test.describe('R4 — the plan cards point at real actions for an operator', () 
       .locator('#org-plans a[href*="/admin/org/billing"], #org-plans a[href*="/admin/tournaments/settings/subscription"]')
       .count();
     expect(hrefs, 'plan CTAs pointing at a billing screen').toBeGreaterThan(0);
+    // Both existing URL forms now host the shared page. Every card keeps the viewer's
+    // billing destination, where the plan change is made.
+    const links = await page.locator('#org-plans a[href*="/admin/org/billing"], #org-plans a[href*="/admin/tournaments/settings/subscription"]').evaluateAll(nodes => nodes.map(node => (node as HTMLAnchorElement).href));
+    for (const href of links) {
+      const url = new URL(href);
+      expect(url.pathname).toMatch(/\/admin\/(org\/billing|tournaments\/settings\/subscription)$/);
+      expect(url.origin).toBe(new URL(page.url()).origin);
+    }
+    expect(new Set(links).size).toBe(1);
   });
 
   test('the sign-up CTA is withheld while the operator answer is in flight', async ({ page }) => {

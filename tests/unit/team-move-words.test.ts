@@ -91,8 +91,8 @@ describe('the team move never mentions money coming back', () => {
   });
 
   it('the coach’s billing nudge, Settings door and team banner say the same thing', () => {
-    const billing = readSource('app/[orgSlug]/admin/org/billing/page.tsx');
-    const nudge = billing.slice(billing.indexOf('Part of a club?'), billing.indexOf('Join a club', billing.indexOf('Part of a club?')));
+    const billing = readSource('lib/plan-billing-words.ts');
+    const nudge = billing.slice(billing.indexOf('clubBody:'), billing.indexOf('keepPremium:', billing.indexOf('clubBody:')));
     assert.ok(nudge.length > 0, 'the billing nudge moved — re-point this guard');
     assert.doesNotMatch(nudge, NO_MONEY_BACK);
     assert.match(nudge, /won’t be charged for your own Coaches Portal again/);

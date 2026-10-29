@@ -1,6 +1,6 @@
 # Plan & billing — one experience for every plan
 
-**Status:** Stage 1 Parts 1–2 implemented 2026-10-28; checks and full-gate findings in §9; Part 3 remains · PM brief:
+**Status:** Stage 1 Parts 1–3 implemented 2026-10-28; Part 3 validation and owner-walk gates recorded in §9 · PM brief:
 `PLAN_AND_BILLING_ONE_EXPERIENCE_PM_BRIEF.md`
 
 ## 1. Why
@@ -31,6 +31,11 @@ free time, success, cancelled).
 3. **The Club redesign is extended to every plan.** This knowingly reverses the 2026-09-27 "restyle it
    here" ruling for the non-Club plans (that ruling was scoped to a restyle; this replaces it).
 4. **Built so a new or changed plan is a data edit, not a screen edit.**
+5. **Billing can be delegated through the `billing` capability** (owner, Part 3 build, 2026-10-28).
+   No role acquires it by default. Only the owner grants/revokes it in Members; a member without billing access sees
+   the locked card. Billing-capable members get the page, navigation and reads as well as the existing money actions.
+   **Keep suspended billing access** to the count-only usage route for recovery. These rulings supersede the earlier
+   owner-only billing wording in the stage prompts; later stages must carry the same capability gate.
 
 ## 3. Findings that shape the plan (argued from the code)
 
@@ -153,7 +158,7 @@ handed to Codex. Stages 1–5 are written to run on Codex, one chat per stage, e
 | Stage | Prompt | Gate before it starts |
 |---|---|---|
 | A | (Claude `/design`) | owner says go; mockup per §5 Stage A |
-| 1 | `PLAN_AND_BILLING_STAGE1_BUILD_PROMPT.md` | Parts 1–2 implemented 2026-10-28; verification findings below; Part 3 remains |
+| 1 | `PLAN_AND_BILLING_STAGE1_BUILD_PROMPT.md` | Parts 1–3 implemented 2026-10-28; validation and remaining owner gates below |
 | 2 | `PLAN_AND_BILLING_STAGE2_BUILD_PROMPT.md` | Stage 1 verified |
 | 3 | `PLAN_AND_BILLING_STAGE3_BUILD_PROMPT.md` | Stage 2 walked · owner's answer to §6 A written in the prompt |
 | 4 | `PLAN_AND_BILLING_STAGE4_BUILD_PROMPT.md` | Stages 1–3 verified · Stage A drawings for the "Covered by" line ruled |
@@ -728,3 +733,181 @@ suspended access and owner-only versus delegable billing remain owner calls. Par
 Stage 2 coach host, upgrade-cycle choice and mixed-state upgrade-door questions remain in their assigned stages.
 No usage route/guard entry, re-export shim, gate/check script, hook, config, baseline, owner HTML, pricing, entitlement,
 migration or production operation changed in this pass. No commit or push.
+
+### Part 3 hand-off — 2026-10-28 build, validation continued 2026-10-29
+
+Executed `PLAN_AND_BILLING_STAGE1_PART3_BUILD_PROMPT.md` on `dev`, against Parts 1–2 and the fix pass in
+`bc0e52c60` (entry gate met). **Parts 1–3 are implemented; Stage 1 still awaits the owner walk and the Claude gates
+below.** The owner authorized the Part 3 commit on 2026-10-29. Other sessions' working-tree changes were preserved.
+
+**Owner decisions in this session (supersede the earlier owner-only wording):**
+
+- **Delegate billing through the `billing` capability.** No role gains it by default. Only the owner can grant/revoke
+  it in the existing Members → Manage window. A billing delegate can read the page and use its existing money actions;
+  the page, upgrade drawer, rail/More row, usage, free-time billing mode and Stripe-fee reads use that same capability.
+  Settings remain owner-only. The member list displays the grant and the existing access-change email names it.
+  Existing member PATCH authorization still refuses a non-owner's capability changes, including another billing grant.
+- **Keep suspended billing access** to the count-only usage route. Its explicit `orgSlug`, no-store response,
+  membership/capability check, no-PII projection and no-program-access boundary remain. Cancellation does not strand
+  an owner or granted billing member. Later stage prompts must follow these two decisions.
+
+**Customer outcome by plan and role:**
+
+| Plan | Existing admin billing home | Result for owners / billing delegates | Result without billing access |
+|---|---|---|---|
+| Tournament | tournament settings subscription | Shared body; no Organization eyebrow; upgrade-cycle choice | Locked card; no billing reads or actions |
+| Tournament Plus | tournament settings subscription | Shared body; no Organization eyebrow; existing supported change mechanisms | Same locked card |
+| Premium Coaches Portal workspace | organization billing, until Stage 2 | Shared body; no Organization eyebrow; Keep Premium / Founding / cancelled distinctions retained | Same locked card |
+| League Plus | organization billing | Shared body, Organization header | Same locked card |
+| Club | organization billing | Same shared body, Organization header | Same locked card |
+| Club · Association | organization billing | Same shared body, Organization header | Same locked card |
+
+Every billing user gets the desktop row in the rail foot immediately beside Help and the phone row in More → You.
+Club/League Organization groups no longer contain billing. Tournament Settings & access retains its card. The
+existing subscription page remains an alias of the same host. No Coaches Portal host or portal nav row was added.
+
+**Files added:**
+
+- `app/[orgSlug]/admin/tournaments/settings/subscription/mock-portal/page.tsx`: reuses the existing mock portal on
+  the tournament-safe path; its old org-only path was behind the tier boundary.
+- `tests/unit/plan-billing-admin-host.test.ts`: actual host rendering on both entry routes for all six profiles,
+  actual body authorization before reads, Stripe/mock return request capture, card-session exits, Founding
+  next-season return destinations and owner-only delegation/revocation with the real member PATCH handler.
+
+**Files changed, grouped:**
+
+- Admin host/navigation: `app/[orgSlug]/admin/org/billing/page.tsx`, its `mock-portal/MockPortalClient.tsx`,
+  `app/[orgSlug]/admin/tournaments/settings/page.tsx`, `components/admin/kit/{AdminKitRail,AdminKitBottomNav,useAdminKitNav}.tsx`
+  (`useAdminKitNav` is `.ts`), `components/admin/kit/club/{BillingKit,ClubHubKit}.tsx`, `lib/admin-kit-nav.ts`.
+- Shared body/words/access: `components/billing/{BillingBody,PlanPanelDrawer}.tsx`, `Billing.module.css`,
+  `lib/{plan-billing-data,plan-billing-words,member-access,roles}.ts`,
+  `components/admin/kit/club/{ManageMemberDialog,MembersKit}.tsx`, `member-summary.ts`, and
+  `app/api/admin/members/[memberId]/route.ts`. No role default or module entitlement changed.
+- Existing return services/read routes: `lib/billing-setup.ts`, `app/api/billing/{portal,setup-payment-method,
+  choose-next-season,mock-apply,usage,stripe-fees}/route.ts`, `app/api/admin/org/free-time/route.ts`.
+  The mock apply request now names its org and checks the billing capability instead of falling back to a home org.
+- Compatibility imports: `components/admin/kit/club/{KitDialog,PageNotice,PaymentsEndingSection,StripeFeesList}.tsx`.
+  Retained because other shipped screens still import them; all exports are named, including types. The existing
+  named-only `components/admin/FreeTimeBand.tsx` shim still serves the Basic team page and portal band, so it stays.
+- Help: only affected navigation/section/cancel/return/fee instructions and their search text in
+  `lib/help-content/org.tsx`, plus the role/delegation statements made false by the owner's new access ruling.
+  The full help rewrite remains Stage 5.
+- Regression guards: `tests/unit/{admin-kit-nav,nav-standard-guard,notification-open-in-place-guard,
+  stripe-fees-owner-rulings,team-move-words,tournament-one-at-a-time,support-console-stage4b-coach-guard,
+  plan-panel-host,plan-billing-source-guard,plan-billing-profile,plan-billing-body,plan-billing-actions,
+  plan-billing-usage,plan-billing-words,member-access,member-summary,club-stage1-screens-guard,
+  org-billing-access-guard,plan-reader-door-guard}.test.ts`, `lib/billing-urls.test.ts`, and
+  `tests/uat/scenarios/{plan-gating,marketing-seam}.spec.ts`. The gated-availability and notification-reader
+  regressions already target live/shared sources and pass without edits. The literal hash/legacy exception is
+  removed with the old implementation; no replacement hash grandfathers copy.
+- Tracking: this plan, its PM brief, `PLAN_AND_BILLING_CODEX_RULES.md` (new owner access ruling) and the single TODO line.
+
+**Files deleted:** `app/[orgSlug]/admin/org/billing/billing.module.css`; `BillingPagePlans` was removed from the
+retained thin `page.tsx`. The words/profile registry remains the only plan-fact/included-list source. The extra-plan
+render test remains in force. No check script, hook, config, generated baseline, owner drawing, migration, price,
+entitlement or production operation changed.
+
+**Part 3d choices and reasons:**
+
+1. **Monthly / Yearly:** reused the cancelled view's existing native select, labels and styles immediately above
+   the Change plan table, shown only for an available checkout upgrade. It sets the existing checkout-cycle state;
+   the current plan's displayed price reads its actual subscription period, so changing a prospective purchase does
+   not misrepresent today's subscription. A real-handler test changes the select, presses Upgrade and asserts the
+   exact annual checkout request, including for a delegated billing user. No control was added for a prorated move,
+   which keeps its live subscription cycle.
+2. **Staff free time with a free own plan:** preserved the ruled absence of payment/move/cancel/purchase controls,
+   including the underlying free plan's Upgrade. The rules and drawing hide those controls during a grant; the old
+   page's upgrade exception would widen that ruling. A rendered regression pins this mixed state. Free-time contact
+   and the coach's distinct Keep Premium invitation stay available as already built.
+3. **Founding / browser cache:** the committed fix pass already routes Change plan or card through the payment portal
+   and resets busy/leaving/`justChose` on persisted `pageshow`; those real-handler regressions remain passing. No
+   duplicate lifecycle code was added.
+4. **Undrawn doors:** no Tournaments you run / Tournament helpers or new plan-details placement was invented. Existing
+   `?plan=` validation and details support remain; the placement drawing stays owed before Stage 3.
+
+**Returns and guard preservation:** portal and mock portal, real/mock card-save, and real/mock next-season returns
+use the existing `getBillingHref(slug, planId)`. Return URLs follow the effective tier used by the layout; purchase
+eligibility, selected plan and price still use the own plan. The billing-action guard permits exactly the single
+destination resolver expression in choose-next-season and continues rejecting effective-plan reads everywhere else
+in its action logic. Tests exercise a different own/effective plan to pin that distinction. No resolver rewrite or
+Coaches Portal return target was introduced. Existing checkout/reactivation/move fallback still receive the host's
+billing base; move and downgrade remain separate server mechanisms.
+
+**State / flow checklist — what was actually checked:**
+
+| Area | Automated/source evidence | Owner/live check still owed |
+|---|---|---|
+| Six plans × owner / non-owner | Actual host/body render tests, shared body fixtures; denied users mount no reads | Sign in and open each real workspace |
+| Explicit billing delegation | Real member PATCH grant/revoke; non-owner grant refusal; no settings grant; usage/free-time read checks; real upgrade action | Grant, sign in as delegate, revoke, confirm all doors close |
+| Rail foot / More → You | Shared nav-data capability matrix, order/icon/position guards; focused layout at 361 and 1440 | Open More, folded sidebar and keyboard/focus interactions on each plan |
+| Free time | Running / ending / ended org and Premium render tests; mixed own-free upgrade exclusion | Actual timed grant transitions |
+| Founding | Card/no-card/choice renders; real portal action, bfcache reset and delayed-choice handler tests | Real saved card, real Back/forward cache and webhook timing |
+| Cancelled / past due / trial | All-profile locked-card fixtures; cancelled recovery, failed reads, retention, trial-end and past-due renders | Live cancellation/reactivation and declined-payment journey |
+| Portal / card / next-season returns | Executed route/service handlers with captured Stripe parameters and mock responses | Real Stripe redirects and persisted card/choice |
+| Checkout / plan move / downgrade | Existing real-handler request tests with exact fields and host return; source guard retains own-plan action rule | Real payment, preview/proration and scheduled move |
+| Empty / loading / errors | No-card, absent-fees, unavailable reads, retry stability and API/action-error regressions | Visual and interactive error recovery |
+
+The focused layout check is automation, not a claimed owner/browser/Stripe walk. No in-app invoice list was added;
+invoices stay in the existing secure portal. No whole-product sweep ran.
+
+**Owed:** Claude `/simplify` on this delta, `/review`, `/docs`, and the owner walk written by a Claude session.
+The owner also controls the earlier generated-baseline reductions. Stage 2 adds the workspace-level coach host and
+must honour delegated billing; Stage 3 retires that audience's admin billing view and places the undrawn workspace
+links. Do not call Stage 1 complete before those Stage 1 review/walk gates are satisfied.
+
+**Final validation record (2026-10-29):**
+
+- **Start-of-part gate:** `npm run verify:changed` ran **11,775/11,775 passing unit tests**, then exited **1**
+  at shared-tree ESLint: **3 errors / 9 warnings**. The errors were `app/dev/crash-test/page.tsx` **9:15**
+  (`react-hooks/purity`, `Date.now()` during render), **11:5** and **12:5** (`react-hooks/globals`, module-level
+  mutations). Its later chained checks did not run. Log: `%TEMP%/plan-billing-part3-start-verify.log`.
+- **Focused:** task-file ESLint **exit 0**, **0 errors / 4 existing warnings**. The warned expressions are unchanged:
+  member PATCH **475:60** (`no-explicit-any`), Stripe-fee projection **31:75** (`_hidden` unused),
+  ManageMemberDialog **157:5** and MembersKit **129:10** (`set-state-in-effect`). The focused regression suite passed
+  **656/656**, then the return/own-plan guard run passed **97/97**. The final full suite below includes the subsequent
+  mixed own/effective-plan cases. Logs: `%TEMP%/plan-billing-part3-{lint,focused,returns}.log`.
+- **Type-aware:** final `npm run typecheck` **exit 0**, using a process-local
+  `NODE_OPTIONS=--max-old-space-size=6144`; no package/config change. The first attempt exhausted Node's default
+  heap (**exit 134**) before diagnostics. After stopping the verified dev-server tree to release its memory, the
+  bounded retry and final check passed. Final log: `%TEMP%/plan-billing-part3-final-typecheck.log`.
+- **Full unit suite:** final `npm test` **12,021/12,021 passed**, **exit 0**. The earlier full run caught the
+  own-plan source guard interpreting the destination resolver as a purchase decision; its exact one-expression
+  routing allowance and executed mixed-plan coverage are described above. No purchase-rule assertion was removed.
+  Log: `%TEMP%/plan-billing-part3-unit.log`.
+- **Final full gate:** `npm run verify:changed` **exit 1** after **12,021/12,021 unit tests passed**, then
+  **3 ESLint errors / 13 warnings**. The same three crash-test errors above are the only errors. Four extra warnings
+  are the pre-existing expressions in task-touched files listed above, which the changed-file gate now includes.
+  Later chained gates **did not run**: this is not a green full gate or a database/release certification.
+  Log: `%TEMP%/plan-billing-part3-verify.log`.
+- **Separate unchanged local checks:** token coverage/ratchets, spelling consistency and CSS Module purity **exit 0**.
+  TODO size **57 KB, exit 0**. No shared check script was edited.
+- **Separate CSS selector check, exit 1:** same four unrelated orphan references:
+  `app/platform-admin/early-access/[leadId]/LeadRecord.tsx:31`,
+  `app/platform-admin/feedback/[id]/FeedbackRecord.tsx:24`,
+  `app/platform-admin/feedback/[id]/ReplyWindow.tsx:25` (each `record.module`), and
+  `app/platform-admin/orgs/[id]/MoneyTab.tsx:180` (`money.compare`). Same ten unrelated dead classes:
+  `addressFact/addressText` in admin public-site CSS; `formInput/formTextarea` in tournament schedule CSS;
+  `statItem` in coaches CSS; `eventList/eventStrong/eventSummary` in platform observability CSS;
+  `sourceList/sourceListTitle` in platform overview CSS. Log: `%TEMP%/plan-billing-part3-css-selectors.log`.
+- **Separate admin lettering check, exit 1:** `components/admin/kit/club/PayoutsCard.module.css:27` (face),
+  `components/shared/SystemScreen.module.css:83` (tracking),
+  `app/platform-admin/early-access/[leadId]/lead.module.css:24` (face), and the earlier extraction's baseline reductions
+  for deleted Club `Billing.module.css` (heavy 1 → none) and `KitDialog.module.css` (face/caps 1 → none).
+  The latter are task-associated owner-controlled baseline follow-ups, not unrelated debt.
+  Log: `%TEMP%/plan-billing-part3-admin-type.log`.
+- **Separate old-look check, exit 1:** unrelated
+  `app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css`, `kitScope` **100 → 102** above baseline.
+  Log: `%TEMP%/plan-billing-part3-old-look.log`. This stylesheet was not edited by Part 3.
+- **Required focused layout:** `npm run check:layout -- --changed
+  --only=admin-org-billing,admin-t-settings-subscription-panel --workers=1` **exit 0**, both screens at **361 / 1440**,
+  **no new findings**. The first run identified the phone table header's clipped row overflow; the local CSS fix
+  keeps that header clipped without overflowing its box. Six baseline findings no longer reproduce; no baseline was
+  rewritten or pruned. This is a two-screen check, not a whole-product sweep or a 390px owner walk.
+  Log: `%TEMP%/plan-billing-part3-layout.log`.
+
+**Dev-server hand-off:** inspected process commands/ancestry and stopped only the verified workspace supervisor's
+tree. Restarted with network-enabled **`npm run dev`**, reached **Ready**, then the required
+`http://localhost:3000/platform-admin/login?next=%2Fplatform-admin` returned **HTTP 200**. Startup/request logs contain
+**no EACCES**. The server is left running. No `.next` deletion. Logs:
+`%TEMP%/plan-billing-part3-dev.out.log` and `plan-billing-part3-dev.err.log`. Real browser/payment verification remains
+with the owner as listed in the checklist.

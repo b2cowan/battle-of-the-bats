@@ -2,6 +2,7 @@ import { getAuthContext, requireCapability, unauthorized } from '@/lib/api-auth'
 import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
 import { createCardSetupSession } from '@/lib/billing-setup';
 import { withObservability } from '@/lib/observability';
+import { getBillingHref } from '@/lib/billing-urls';
 
 /**
  * Founding Season "Add payment method" — saves a card on file WITHOUT starting a
@@ -31,7 +32,7 @@ export const POST = withObservability(async (req: Request) => {
   if (isBillingMockEnabled() || (!isStripeConfigured() && process.env.NODE_ENV !== 'production')) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
     return new Response(
-      JSON.stringify({ url: `${appUrl}/${auth.org.slug}/admin/org/billing?card_saved=1` }),
+      JSON.stringify({ url: `${appUrl}${getBillingHref(auth.org.slug, auth.org.planId)}?card_saved=1` }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   }

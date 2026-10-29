@@ -10,7 +10,7 @@
  *     (owner, 2026-10-19 — it was Role default / Turn on / Turn off beside an "As a …" column, which
  *     did not fit a phone), and a consequence sentence the moment a change would open or close a
  *     program (J10-023). The fourteen tournament verbs fold under "Tournaments ›".
- *   · Plan & billing and organization settings are NOT offered (J10-022) — they stay with the owner.
+ *   · The owner can grant Plan & billing (2026-10-28); organization settings stay with the owner.
  *   · Suspend asks first, in a question on top of the form (J10-018), and says what is kept.
  *
  * Only an OWNER changes access overrides or suspends (the member route's rule); a board member who
@@ -491,7 +491,11 @@ export default function ManageMemberDialog({
                 })}
               </tbody>
             </table>
-            <p className={ck.hint}>Plan &amp; billing and organization settings stay with the owner; they can’t be handed out here.</p>
+            {canChangeAccess && <label className={styles.foldRow}>
+              <span>Plan &amp; billing<br /><span className={ck.hint}>Can change the plan, payment method and invoices, or cancel the subscription.</span></span>
+              <OnOffSelect className={`${ck.select} ${styles.foldSelect}`} on={capOn('billing')} onChange={on => setCap('billing', on)} label="Plan & billing" />
+            </label>}
+            <p className={ck.hint}>Only the owner can grant billing access. Organization settings stay with the owner.</p>
           </div>
         )}
 

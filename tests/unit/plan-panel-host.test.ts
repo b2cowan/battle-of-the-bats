@@ -66,17 +66,17 @@ describe('the host', () => {
 });
 
 describe('the Upgrade is Plan & billing’s', () => {
-  it('one request and one rule for who is offered it, read by both places', () => {
+  it('the drawer shares the upgrade request; billing dispatches the registry’s supported mechanisms', () => {
     const drawer = read('components', 'billing', 'PlanPanelDrawer.tsx');
-    const billing = read('app', '[orgSlug]', 'admin', 'org', 'billing', 'page.tsx');
-    for (const src of [drawer, billing]) {
-      assert.match(src, /requestPlanUpgrade\(/);
-      assert.match(src, /upgradePlansFor\(/);
-    }
+    assert.match(drawer, /requestPlanUpgrade\(/);
+    assert.match(drawer, /upgradePlansFor\(/);
+    const billing = read('components', 'billing', 'BillingBody.tsx');
+    assert.match(billing, /ownProfile\.changes\.some/);
+    assert.match(billing, /post\('\/api\/billing\/create-checkout', \{ planKey: target, billingCycle: cycle, returnTo: billingBase \}\)/);
   });
-  it('only the owner is offered the Upgrade, on both panels — anyone else reads, with no button the server would refuse', () => {
-    assert.match(read('components', 'billing', 'PlanPanelDrawer.tsx'), /canUpgrade=\{userRole === 'owner' && /);
-    assert.match(read('app', '[orgSlug]', 'admin', 'org', 'billing', 'page.tsx'), /canUpgrade=\{canManageBilling && /);
+  it('only billing users are offered Upgrade; the shared body locks before mounting reads', () => {
+    assert.match(read('components', 'billing', 'PlanPanelDrawer.tsx'), /canUpgrade=\{!!userRole && hasCapability\(userRole, userCapabilities, 'billing'\) && /);
+    assert.match(read('components', 'billing', 'BillingBody.tsx'), /if \(!hasCapability\(userRole, userCapabilities, 'billing'\)\) return <LockedCard/);
   });
   it('an applied plan says "Plan updated" before the re-read, and a checkout keeps Upgrade busy as the page leaves', () => {
     const drawer = read('components', 'billing', 'PlanPanelDrawer.tsx');

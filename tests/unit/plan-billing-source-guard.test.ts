@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
 import { describe, it } from 'node:test';
 import ts from 'typescript';
 import { PLAN_CONFIG } from '../../lib/plan-config.ts';
@@ -34,17 +33,8 @@ function authoredFacts(code: string): string[] {
   return found.sort();
 }
 
-// Part 1 preserves shipped screens. Each exception freezes the existing literal population;
-// it cannot cover another file or another literal. Remove each exception as Parts 2–3 migrate it.
-const RETIRING = 'Existing shipped billing surface; Part 1 preserves its copy, Parts 2-3 retire these literals.';
-const LEGACY: Record<string, { reason: string; hash: string }> = {
-  'app/[orgSlug]/admin/org/billing/page.tsx': {
-    reason: RETIRING,
-    hash: '69b346b3fd4c87fc8ecde94b49ee177f3b9a25b63ea8fb6e511ebf7b2302f17b',
-  },
-};
-
-const screenFiles = () => filesUnder('components/billing', '.tsx').concat(Object.keys(LEGACY), [
+const screenFiles = () => filesUnder('components/billing', '.tsx').concat([
+  'app/[orgSlug]/admin/org/billing/page.tsx',
   'components/admin/kit/club/BillingKit.tsx',
   'components/admin/kit/club/PlanMoveDialog.tsx',
   'app/[orgSlug]/admin/tournaments/settings/subscription/page.tsx',
@@ -62,19 +52,10 @@ describe('billing screens take plan facts and included items from their data sou
     assert.ok(authoredFacts('const quote = "Club"; // billing-copy-ok:').length, 'an annotation without a reason is not an exception');
   });
 
-  it('guards the billing surfaces and freezes only the reasoned retiring-screen exceptions', () => {
-    const activeExceptions = new Set<string>();
+  it('guards every billing surface without a legacy literal exception', () => {
     for (const file of screenFiles()) {
       const found = authoredFacts(readSource(file));
-      const legacy = LEGACY[file];
-      if (!legacy) assert.deepEqual(found, [], `${file}: take plan names/prices/included items from the registry/words module`);
-      else {
-        activeExceptions.add(file);
-        assert.ok(legacy.reason.trim(), `${file}: exception needs a reason`);
-        assert.ok(found.length, `${file}: remove the retired exception`);
-        assert.equal(createHash('sha256').update(JSON.stringify(found)).digest('hex'), legacy.hash, `${file}: the frozen legacy literals changed; migrate the source, never grow the exception`);
-      }
+      assert.deepEqual(found, [], `${file}: take plan names/prices/included items from the registry/words module`);
     }
-    assert.deepEqual([...activeExceptions].sort(), Object.keys(LEGACY).sort(), 'no stale or unscanned exceptions');
   });
 });

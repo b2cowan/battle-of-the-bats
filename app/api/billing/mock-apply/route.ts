@@ -1,4 +1,4 @@
-import { getAuthContext, unauthorized } from '@/lib/api-auth';
+import { getAuthContext, requireCapability, unauthorized } from '@/lib/api-auth';
 import { isBillingMockEnabled } from '@/lib/billing-mock';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { isPastDueTransition, isRecoveryTransition, writeGrowthEvent, writePlatformEvent } from '@/lib/platform-events';
@@ -16,10 +16,14 @@ export const POST = withObservability(async (req: Request) => {
     });
   }
 
-  const auth = await getAuthContext({ allowSuspendedOrg: true });
+  const body = await req.json();
+  const orgSlug = typeof body.orgSlug === 'string' ? body.orgSlug : undefined;
+  const auth = await getAuthContext({ orgSlug, requireOrgSlug: true, allowSuspendedOrg: true });
   if (!auth) return unauthorized();
+  const denied = await requireCapability(auth, 'billing');
+  if (denied) return denied;
 
-  const { plan, status }: { plan: OrgPlan; status: SubscriptionStatus } = await req.json();
+  const { plan, status }: { plan: OrgPlan; status: SubscriptionStatus } = body;
   const cfg = PLAN_CONFIG[plan];
   if (!cfg) {
     return new Response(JSON.stringify({ error: 'Invalid plan' }), {

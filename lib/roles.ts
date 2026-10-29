@@ -57,7 +57,7 @@ export const ROLE_DEFAULTS: Record<OrgRole, Set<Capability>> = {
     // admin still cannot open it. Before D8 an admin held none of them, so the hub read a club's
     // vice-president as a tournament-only user and bounced them out (A01, J4-040, J10-027).
     // ⚠ NOT `module_families` (explicit grant only, CLUB_FAMILIES_BOOK_PLAN §1.2) and NEVER
-    // `billing` / `org_settings` (owner-only powers). tests/unit/role-defaults-guard.test.ts pins all three.
+    // `billing` / `org_settings` (neither is a default; the owner can grant billing). tests/unit/role-defaults-guard.test.ts pins all three.
     'module_rep_teams', 'module_accounting', 'module_public_site', 'module_house_league',
   ]),
   staff: new Set<Capability>([

@@ -118,7 +118,7 @@ export default function AdminKitRail() {
   const nav = useAdminKitNav();
   const {
     base, orgSlug, programs, alsoOnPlan, brief, orgLinks, section, tournamentOnly, isCanceled,
-    onTournaments, coachDoor, calendarLink, schedulesLink, helpHref, siteInNav,
+    onTournaments, coachDoor, calendarLink, schedulesLink, billingLink, helpHref, siteInNav,
   } = nav;
   const repTeamId = pathname.match(/\/rep-teams\/teams\/([^/]+)/)?.[1] ?? null;
   const seasonId = pathname.match(/\/house-league\/seasons\/([^/]+)/)?.[1] ?? null;
@@ -319,6 +319,9 @@ export default function AdminKitRail() {
             rule the coaches portal already kept (the account menu is hidden in the demo sandbox, where a shared demo user
             must never be signed out, so the sandbox loses nothing it should have). */}
         <div className={styles.foot}>
+          {billingLink && <Link href={billingLink.href} className={`${styles.item} ${styles.footItem}${isKitLinkActive(pathname, billingLink) ? ` ${styles.itemActive}` : ''}`} aria-current={isKitLinkActive(pathname, billingLink) ? 'page' : undefined}>
+            {billingLink.icon && <billingLink.icon size={14} aria-hidden />} <span className={strip.rowLabel}>{billingLink.label}</span>
+          </Link>}
           <Link href={helpHref} className={`${styles.item} ${styles.footItem}`} target="_blank" rel="noopener noreferrer">
             <HelpCircle size={14} aria-hidden /> <span className={strip.rowLabel}>Help</span> <ReleaseDot className={strip.cornerDot} />
           </Link>

@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { FlaskConical, CheckCircle } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { PLAN_CONFIG } from '@/lib/plan-config';
+import { getBillingHref } from '@/lib/billing-urls';
+import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import FeedbackModal from '@/components/FeedbackModal';
 import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
 import styles from './mock-portal.module.css';
@@ -36,7 +38,7 @@ export default function MockPortalPage() {
       const res = await fetch('/api/billing/mock-apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan, status }),
+        body: JSON.stringify({ orgSlug: currentOrg?.slug, plan, status }),
       });
       if (!res.ok) {
         const d = await res.json() as { error?: string };
@@ -53,7 +55,7 @@ export default function MockPortalPage() {
 
   function handleReturn() {
     if (!currentOrg) return;
-    router.push(`/${currentOrg.slug}/admin/org/billing`);
+    router.push(getBillingHref(currentOrg.slug, currentOrg.planId));
   }
 
   if (!currentOrg) return null;
@@ -113,7 +115,7 @@ export default function MockPortalPage() {
 
         <div className={styles.actions}>
           <button className="btn btn-ghost" onClick={handleReturn}>
-            Back to Subscription
+            Back to {W.page.title}
           </button>
           <button
             className="btn btn-primary"

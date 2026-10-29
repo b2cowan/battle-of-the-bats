@@ -2,6 +2,7 @@ import { stripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { CardDetails } from '@/lib/billing-format';
 import type Stripe from 'stripe';
+import { getBillingHref } from './billing-urls';
 
 /**
  * Org-level Stripe provisioning shared by the billing endpoints
@@ -103,11 +104,11 @@ export async function ensureStripeCustomer(
  * slug, and both reach the same billing page.
  */
 export async function createCardSetupSession(
-  org: { id: string; slug: string; stripeCustomerId?: string | null },
+  org: { id: string; slug: string; planId: string; stripeCustomerId?: string | null },
   email: string | undefined,
 ): Promise<string> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-  const billingPath = `/${org.slug}/admin/org/billing`;
+  const billingPath = getBillingHref(org.slug, org.planId);
   const customerId = await ensureStripeCustomer(org, email);
   const session = await stripe.checkout.sessions.create({
     mode: 'setup',

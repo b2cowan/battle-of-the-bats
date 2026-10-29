@@ -113,10 +113,10 @@ describe('Part 5 · the customer route says the state and the day, never the rea
 });
 
 describe('Part 5 · Plan & billing on free time (drawing D)', () => {
-  const page = readCode('app/[orgSlug]/admin/org/billing/page.tsx');
+  const page = readCode('components/billing/BillingBody.tsx');
   it('the shared body keeps the same owner, hosting, payment and ended-grant boundaries', () => {
     const body = readCode('components/billing/BillingBody.tsx');
-    assert.match(body, /if \(userRole !== 'owner'\) return/);
+    assert.match(body, /if \(!hasCapability\(userRole, userCapabilities, 'billing'\)\) return/);
     assert.match(body, /const endedPortal = portal\?\.state === 'ended'/);
     assert.match(body, /&& !portal && !staffFree/);
     assert.match(body, /paid && !staffFree && !endedPortal && !founding/);
@@ -126,25 +126,25 @@ describe('Part 5 · Plan & billing on free time (drawing D)', () => {
     assert.match(readCode('components/billing/Billing.module.css'), /\.keepPremiumButton \{ width: 100%; \}/);
   });
   it('the price, the Stripe door, Cancel and the tournament slots are not rendered while it runs (Q10, Q11-7)', () => {
-    assert.match(page, /\{hasPaidPlan && !isFoundingSeason && !onPortalFreeTime && \([\s\S]{0,200}<h2 className=\{styles\.sectionTitle\}>Billing tools/);
-    assert.match(page, /\{hasPaidPlan && canManageBilling && !isFoundingSeason && !onPortalFreeTime && \([\s\S]{0,80}retentionCard/);
-    assert.match(page, /\{!onPortalFreeTime && <div className=\{styles\.usageCard\}>[\s\S]{0,200}Tournament slots in use/);
-    assert.match(page, /\{freeCard\s*\? freeCard\.price/);
+    assert.match(page, /controlsReady && paid && !staffFree && !endedPortal && !founding/);
+    assert.match(page, /controlsReady && paid && ownBilling && !founding/);
+    assert.match(page, /profile\.usageMeters\.filter\(m => !portal \|\| m !== 'tournament_slots'\)/);
+    assert.match(page, /const price = freeCard\?\.price/);
   });
   it('Keep Premium is the one lime, 44px; Join a club is outlined on free time (D-2, D-5)', () => {
-    assert.match(page, /btn btn-lime btn-data \$\{styles\.keepPremiumButton\}/);
-    assert.match(page, /btn \$\{onPortalFreeTime \? 'btn-outline' : 'btn-lime'\} btn-data/);
-    assert.match(readCode('app/[orgSlug]/admin/org/billing/billing.module.css'), /\.keepPremiumButton \{\s*min-height: 44px;/);
+    assert.match(page, /btn btn-lime \$\{styles\.keepPremiumButton\}/);
+    assert.match(page, /btn \$\{portal \? 'btn-outline' : 'btn-lime'\}/);
+    assert.match(readCode('components/billing/Billing.module.css'), /\.body :global\(\.btn\)[^}]+min-height: var\(--tap-min, 44px\)/);
   });
   it('after the end the page never says cancelled, retention or Reactivate: the ended band and Keep Premium', () => {
-    const ended = page.slice(page.indexOf("if (status === 'canceled' && portalFreeTime)"), page.indexOf("  if (status === 'canceled') {"));
-    assert.ok(ended.length > 0 && page.indexOf("if (status === 'canceled' && portalFreeTime)") < page.indexOf("  if (status === 'canceled') {"));
+    const ended = page.slice(page.indexOf('if (endedPortal && controlsReady)'), page.indexOf('if (cancelled && controlsReady)'));
+    assert.ok(ended.length > 0 && page.indexOf('if (endedPortal && controlsReady)') < page.indexOf('if (cancelled && controlsReady)'));
     assert.doesNotMatch(ended, /retention|Reactivate|has been cancelled|subscriptionStatusLabel/);
-    assert.match(ended, /keepPremiumCard/);
+    assert.match(ended, /\{keepPremium\}/);
   });
   it('Keep Premium is the owner\'s, and says "Keep Premium" on the start page too', () => {
-    assert.match(page, /const keepPremiumCard = portalFreeTime && canManageBilling \?/);
-    assert.match(page, /teamWorkspaceReactivatePath\(currentOrg\)\}&keep=1/);
+    assert.ok(page.indexOf('if (!s.canManageBilling) return') < page.indexOf('const keepPremium = portal ?'));
+    assert.match(page, /teamWorkspaceReactivatePath\(org\)\}&keep=1/);
     const start = readCode('app/team/TeamSignupClient.tsx');
     assert.match(start, /isKeepPremium\s*\? 'Keep Premium'/);
     assert.match(start, /isKeepPremium\s*\? KEEP_PREMIUM_LINE/);
