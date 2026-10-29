@@ -137,7 +137,17 @@
   Help rewritten. Walks **§420** (editing + Changes to send), **§421** (the coach's Schedule + the club's time), **§422** (the
   Rules door) written and published, with §418, owed.
   - **Not done:** the HTTP lifecycle probe (`.probe/9d2b-p7/routes.mjs` written, UNRUN — needs a dev login the probe may use);
-    `/simplify` over Parts 1–3, 5, 6; `check:layout --changed`; the dev server restart (new files, migs 410–413).
+    `check:layout --changed`; the dev server restart (new files, migs 410–413).
+  - **Part 7 `/simplify` over Parts 1–3, 5, 6 — DONE, COMMITTED `45d80b257` 2026-10-28** (four lenses; Part 4 was simplified in `c5db241f1`).
+    Fixed: one "game + its patch" merge in the game route; the held rows read once on the schedule GET (`heldGamesOf` takes rows
+    already read); the coach page reads its division's published mark from the team read it already makes; shared helpers for the
+    clock (`orgClock`), the sentence end (`endSentence`), the list join (`joinWithAnd`), the guardian email and the public game
+    state (`publicState`); dead code out (`whenDiffers`, two unread `NetChange` fields, `rowState`, a dead default). ⚠ One behaviour
+    change: a failed division read now REFUSES a team delete (it used to read as a draft and cascade published games).
+    Left, on purpose: the three window files and `league-season-calendar.ts` (another session's uncommitted edits); a shared route
+    preamble, one "families' view of games" reader, a shared window fetch helper and one "is this division published" module (each
+    touches many files — their own pass); `leagueHalf`'s unfiltered games read (the plan may count games that stay); `sameInstant`
+    (takes untyped input; a guard test pins it).
   - **[marketing] words to settle:** "Date set: …" / "Date to come: …" (`SCHEDULE_EMAIL_WORDS.dated/undated`); a club Send of only
     games reads "Who is told · 0 people" / "Send to 0 people"; the Part 5 tagged words.
 - **▶ NEXT: the owner walks §418, §420, §421, §422; then `/marketing`'s one pass on the tagged words; then 9d-3 / 9e.** The dev
