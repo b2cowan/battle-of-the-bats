@@ -2,6 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { notify } from './notify';
 import { sendEmail, escapeHtml } from './email';
+import { getBillingHref } from './billing-urls';
 import { warmEmailButton, warmEmailDocument, warmEmailParagraph } from './email-envelope-warm';
 import { getOrganizationBySlugForServer } from './server-organizations';
 import { payoutsPath } from './online-payment-account';
@@ -170,7 +171,7 @@ export async function sendEndingWarnings(now: Date = new Date()): Promise<{ warn
       const html = warmEmailDocument([
         warmEmailParagraph(escapeHtml(lead)),
         warmEmailParagraph(escapeHtml(LEAVING_WORDS.ending.emailBody(owe))),
-        warmEmailButton(LEAVING_WORDS.ending.emailButton, `${appUrl()}/${org.slug}/admin/org/billing`),
+        warmEmailButton(LEAVING_WORDS.ending.emailButton, `${appUrl()}${getBillingHref(org.slug, org.planId)}`),
       ].join('\n'));
       for (const to of people.emails) {
         await sendEmail(to, subject, html, { kind: 'payments_ending_warning', orgId: org.id, idempotencyKey: `payments-ending:${org.id}:${ending.at}:${to}` });

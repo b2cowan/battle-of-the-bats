@@ -151,7 +151,7 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
     assert.match(foot, /<billingLink\.icon size=\{14\}/);
     assert.match(readCode(ADMIN_SHEET), /billingLink && <Link[\s\S]*?<billingLink\.icon size=\{17\}/);
     const hook = readCode('components/admin/kit/useAdminKitNav.ts');
-    assert.match(hook, /const billingLink = kitBillingLink\(\{ orgSlug, planId: currentOrg\?\.planId, role: userRole, capabilities: userCapabilities \}\)/);
+    assert.match(hook, /const billingLink = kitBillingLink\(\{ orgSlug, planId: currentOrg\?\.planId, role: userRole, capabilities: userCapabilities, isSandbox \}\)/);
     assert.ok(foot.indexOf('helpHref') < foot.indexOf('coachDoor.href') && foot.indexOf('coachDoor.href') < foot.indexOf('Public site'));
     assert.doesNotMatch(rail, /Sign out|<FeedbackLauncher|signOut/);
     assert.match(foot, /!siteInNav/, 'the foot’s Public site only where no program row is it');

@@ -75,7 +75,7 @@ describe('the Upgrade is Plan & billing’s', () => {
     assert.match(billing, /post\('\/api\/billing\/create-checkout', \{ planKey: target, billingCycle: cycle, returnTo: billingBase \}\)/);
   });
   it('only billing users are offered Upgrade; the shared body locks before mounting reads', () => {
-    assert.match(read('components', 'billing', 'PlanPanelDrawer.tsx'), /canUpgrade=\{!!userRole && hasCapability\(userRole, userCapabilities, 'billing'\) && /);
+    assert.match(read('components', 'billing', 'PlanPanelDrawer.tsx'), /canUpgrade=\{hasBillingAccess\(userRole, userCapabilities\) && /);
     assert.match(read('components', 'billing', 'BillingBody.tsx'), /if \(!hasCapability\(userRole, userCapabilities, 'billing'\)\) return <LockedCard/);
   });
   it('an applied plan says "Plan updated" before the re-read, and a checkout keeps Upgrade busy as the page leaves', () => {
@@ -96,7 +96,7 @@ describe('the panel stands on the window floor', () => {
   it('the shared body validates its requested drawer key and supplies honest unpublished target facts', () => {
     const body = read('components', 'billing', 'BillingBody.tsx');
     assert.match(body, /Object\.hasOwn\(PLAN_BILLING_PROFILES, requestedPlan\)/);
-    assert.match(body, /planKey=\{published\} profile=\{details\}/);
+    assert.match(body, /planKey=\{detailPlan\} profile=\{detailProfile\}/);
     const panel = read('components', 'billing', 'PlanArticlePanel.tsx');
     assert.match(panel, /profile\?\.config \?\? PLAN_CONFIG/);
     assert.match(panel, /profile\?\.included\.article/);

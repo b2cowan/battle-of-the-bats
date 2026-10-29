@@ -318,7 +318,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
 
               {/* You: Account and Home lead out of the demo sandbox (it ends the demo on arrival), so the sandbox hides
                   them, as the top strip hides the account menu. The group shows only with a row to show. */}
-              {(!isSandbox || coachDoor.show || billingLink) && (
+              {(!isSandbox || coachDoor.show) && (
                 <>
                   <div className={styles.dropDivider} />
                   <div className={styles.dropSectionLabel}>You</div>

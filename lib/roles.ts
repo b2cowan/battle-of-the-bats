@@ -131,3 +131,8 @@ export function hasCapability(
   if (override !== undefined) return override;
   return ROLE_DEFAULTS[role].has(cap);
 }
+
+/** Can this person open Plan & billing? The owner and anyone granted the `billing` capability; no role at all is a no. */
+export function hasBillingAccess(role: OrgRole | null | undefined, capabilities: Record<string, boolean> | null): boolean {
+  return !!role && hasCapability(role, capabilities, 'billing');
+}

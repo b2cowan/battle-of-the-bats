@@ -32,7 +32,9 @@ export type BillingFounding = {
 };
 export type BillingMove = { live: boolean; scheduledMove: { toPlan: OrgPlan; effectiveAt: string | null } | null };
 export type BillingSnapshot = {
-  org: Organization; canManageBilling: boolean; usage: BillingRead<BillingUsage>; freeTime: BillingRead<BillingFreeTime>;
+  org: Organization; canManageBilling: boolean;
+  /** Cancel and downgrade belong to the owner alone; a member granted `billing` has neither door. */
+  canCancel: boolean; usage: BillingRead<BillingUsage>; freeTime: BillingRead<BillingFreeTime>;
   founding: BillingRead<BillingFounding>; gating: BillingRead<Partial<Record<OrgPlan, boolean>>>;
   cancellation: BillingRead<BillingCancellation>; move: BillingRead<BillingMove>;
 };

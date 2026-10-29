@@ -25,6 +25,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ChevronRight, Mail, PauseCircle, RotateCcw } from 'lucide-react';
 import { whatTheyCanOpen, describeAccessChange, familiesBarredFor, roleLabel, type ProgramAccess } from '@/lib/member-access';
 import { ROLE_DEFAULTS, type Capability } from '@/lib/roles';
+import { PLAN_BILLING_WORDS } from '@/lib/plan-billing-words';
 import type { Organization, OrgRole } from '@/lib/types';
 import { formatInOrgZone } from '@/lib/timezone';
 import KitDialog from './KitDialog';
@@ -492,7 +493,7 @@ export default function ManageMemberDialog({
               </tbody>
             </table>
             {canChangeAccess && <label className={styles.foldRow}>
-              <span>Plan &amp; billing<br /><span className={ck.hint}>Can change the plan, payment method and invoices, or cancel the subscription.</span></span>
+              <span>Plan &amp; billing<br /><span className={ck.hint}>{PLAN_BILLING_WORDS.access.grantHint}</span></span>
               <OnOffSelect className={`${ck.select} ${styles.foldSelect}`} on={capOn('billing')} onChange={on => setCap('billing', on)} label="Plan & billing" />
             </label>}
             <p className={ck.hint}>Only the owner can grant billing access. Organization settings stay with the owner.</p>

@@ -18,6 +18,7 @@ import type { OrgPlan } from '@/lib/types';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 import { ownPlanOf } from '@/lib/entitlement-grants';
 import { closePagesIfPaymentsEnded } from '@/lib/online-payment-endings';
+import { getBillingHref } from '@/lib/billing-urls';
 
 type ConfirmBody = {
   targetPlan?: unknown;
@@ -234,7 +235,7 @@ export const POST = withObservability(async (req: Request) => {
     const retentionDate = new Date(retentionUntil).toLocaleDateString('en-CA', {
       year: 'numeric', month: 'long', day: 'numeric',
     });
-    const billingUrl = `${SITE_URL}/${ctx.org.slug}/admin/org/billing`;
+    const billingUrl = `${SITE_URL}${getBillingHref(ctx.org.slug, ownPlanOf(ctx.org))}`;
     await sendTransactionalEmail({
       key: 'plan_downgraded',
       to: actorEmail,

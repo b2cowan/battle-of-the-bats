@@ -1,0 +1,278 @@
+<title>Plan and billing fix pass walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one reading column. Two walks, each with its purpose and pass line, then its parts (one sign-in at a time) with steps, a verdict and notes. */
+:root{
+  --bg:#F3F1EC; --panel:#FFFFFF; --ink:#1F1B16; --soft:#4E473D; --dim:#6F675B; --line:#DDD8CE;
+  --accent:#1F3A5F; --ok:#2C6A2A; --ok-bg:#E6F0E2; --warn:#8A4B12; --warn-bg:#F7EBDD; --bad:#9A2E17; --bad-bg:#F6E3DE;
+  --title:'Barlow Condensed','Arial Narrow',sans-serif; --body:'Inter',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 64px}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font:700 32px/1.05 var(--title);margin:0;text-wrap:balance}
+h2{font:700 24px/1.1 var(--title);margin:0;text-wrap:balance}
+h3{font:700 19px/1.15 var(--title);margin:0;text-wrap:balance}
+p{margin:0}
+.lede{display:flex;flex-direction:column;gap:8px;color:var(--soft)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px 16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.signin dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+.signin dt{font-weight:600;color:var(--soft)}
+.signin dd{margin:0;min-width:0;overflow-wrap:anywhere}
+code{font:500 13px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px;overflow-wrap:anywhere}
+.progress{display:flex;align-items:center;gap:12px;font-weight:600}
+.bar{flex:1;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.walk-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.chip{font-size:13px;font-weight:600;padding:3px 10px;border-radius:12px;background:var(--bg);border:1px solid var(--line);color:var(--soft)}
+.intro{display:grid;gap:10px}
+.intro b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:2px}
+.part{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px}
+.part-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.count{font-size:13px;color:var(--dim)}
+.who{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.where{font-size:14px;color:var(--soft)}
+.warnbox{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:10px 12px;font-size:14px}
+ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+li label{display:flex;gap:10px;align-items:flex-start;padding:6px 4px;border-radius:6px;cursor:pointer;min-height:44px}
+li label:hover{background:var(--bg)}
+li.group{font-size:13px;font-weight:600;color:var(--dim);padding:4px 4px 0}
+input[type=checkbox]{width:20px;height:20px;margin:2px 0 0;flex:none;accent-color:var(--accent)}
+li.done span{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--line)}
+.verdict{display:flex;gap:8px;flex-wrap:wrap}
+.verdict button{font:600 14px/1 var(--body);min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.verdict button[aria-pressed=true][data-v=pass]{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=issue]{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=call]{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+textarea{width:100%;box-sizing:border-box;min-height:64px;font:14px/1.5 var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:600 15px/1 var(--body);min-height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--panel);cursor:pointer}
+.btn.sec{background:var(--panel);color:var(--ink);border-color:var(--line)}
+#summary{min-height:180px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace}
+.note{font-size:13px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="wrap">
+  <header class="lede">
+    <h1>Plan and billing · the fix pass</h1>
+    <p>Owner QA Ledger entry to be numbered when this is recorded. Written 2026-10-29 against the uncommitted working tree. Stage 1 Part 3 fix pass: <b>cancelling the plan and moving to a smaller plan are the owner's alone</b>, a board member who has been given billing access never sees those two doors, the demo has no billing row, and the upgrade link opens a panel that can upgrade.</p>
+    <p class="note">Nothing on this page pins a figure that moves with the date. Plan names, buttons and wording are the pass conditions.</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl>
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (the dev server). Restart it first: files were added and shared modules changed. Keep these accounts private; they are dev-only.</dd>
+      <dt>Club owner</dt><dd><code>uat-owner@uat-test-org.local</code> · <code>UATPassword2026!</code> (owner of UAT Club Org and UAT Test Org)</dd>
+      <dt>Board member</dt><dd><code>uat-admin@uat-test-org.local</code> · same password (an admin in both; holds no billing access until the owner gives it in Walk 1)</dd>
+      <dt>Tournament host</dt><dd><code>free-owner@dev.local</code> · <code>devpass123</code> (owner of Free Test Org, a free Tournament plan; Walk 2 only)</dd>
+      <dt>The clubs</dt><dd>UAT Club Org on a Club plan: <code>/uat-club-org</code>. UAT Test Org on Tournament Plus: <code>/uat-test-org</code>. Free Test Org: <code>/free-test-org</code>.</dd>
+      <dt>Two people at once</dt><dd>Use one normal window for the owner and a private window for the board member, so you don't sign out and in all walk.</dd>
+    </dl>
+  </section>
+
+  <div class="progress" aria-live="polite"><span id="prog-text">0 of 0</span><span class="bar" aria-hidden="true"><i id="prog-bar"></i></span></div>
+
+  <div id="walks" class="wrap" style="gap:20px"></div>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Send it back</h2>
+    <p class="where">Build the summary and paste it into the chat. A part's verdict is your opinion; the fraction beside it is what was ticked.</p>
+    <div class="actions">
+      <button class="btn" id="build" type="button">Build summary</button>
+      <button class="btn sec" id="copy" type="button">Copy</button>
+      <button class="btn sec" id="reset" type="button">Clear my ticks</button>
+    </div>
+    <label for="summary" class="note">Summary</label>
+    <textarea id="summary" readonly></textarea>
+  </section>
+</div>
+
+<script>
+/* A step starting with "G:" is a small heading that groups the steps below it; "R:" marks one option of a ruling (one box per option, so the tick says what happened). */
+const WALKS = [
+  { id: 'w1', title: 'Walk 1 · A board member with billing access runs the money but cannot end the plan',
+    purpose: 'The owner can give a board member Plan & billing. You are checking that what that person can open is everything except the two doors that end or shrink the plan: cancelling, and moving down to a smaller plan. The page must simply not show them, and must not complain about it.',
+    passes: 'The owner sees Reduce or cancel and the cancel button. The board member, given billing access, sees the rest of the page and none of that, with no error banner and no Try again. Putting access back closes the page for them.',
+    notIn: 'A cancelled organization (no UAT club is cancelled, and cancelling one is destructive), the emails that carry billing links, and moving between Club and Club · Association (both plans are held back on dev right now, so the row says Contact us). Those are covered by automated tests only.',
+    parts: [
+    { id: 'a', title: 'A · Give the board member billing access (owner)', who: 'Owner', where: 'Normal window. Sign in as the owner, open /uat-club-org/admin/org/members.', steps: [
+      'Open the row for UAT Org Admin (Manage). In the window, under the program access table, there is a Plan & billing line with an On/Off choice, set to Off.',
+      'Its hint reads exactly: "Can change the plan, payment method and invoices. Cancelling or reducing the plan stays with the owner." The old wording about cancelling the subscription is gone.',
+      'Set Plan & billing to On and Save. The message says the changes are saved (and that we emailed them what changed).',
+      'Open Plan & billing (beside Help at the foot of the sidebar). The page has Your plan, What\'s in use, What\'s included, and a Reduce or cancel section with a button reading "Cancel and suspend UAT Club Org…". Do not press it.',
+    ]},
+    { id: 'b', title: 'B · What the board member sees', who: 'Board member', where: 'Private window. Sign in as the board member, open /uat-club-org/admin.', steps: [
+      'G: The door',
+      'Beside Help at the foot of the sidebar there is now a Plan & billing row. On a phone (or the browser\'s phone view), More → You has it too.',
+      'It opens the page, headed Plan & billing, with Your plan and What\'s in use filled in.',
+      'G: What is not there',
+      'There is no "Reduce or cancel" section anywhere on the page, and no "Cancel and suspend" button.',
+      'No row or button says Downgrade.',
+      'No red or amber banner about the cancellation, and no "Try again" button.',
+      'G: What still works',
+      'The "Payment method & invoices" button is there. Press it: it opens the payment portal (a mock page on dev, or Stripe\'s). Come back with the browser Back button; the page looks the same.',
+      'The Change plan table (if it lists any plan) offers no downgrade. A plan held back on dev reads "Contact us to move".',
+      'G: The server agrees',
+      'In the address bar open /api/billing/cancel/preflight?orgSlug=uat-club-org. It answers with a refusal, not with the cancellation details.',
+      'R: Optional, did it: with DevTools → Network open, reload Plan & billing. No request with "preflight" in its name appears.',
+      'R: Optional, skipped it.',
+    ]},
+    { id: 'c', title: 'C · Put it back (owner)', who: 'Owner, then board member', where: 'Owner: Members → Manage UAT Org Admin. Then the private window.', steps: [
+      'Turn Plan & billing off and Save.',
+      'Board member, reload any admin page: the Plan & billing row is gone from the sidebar foot.',
+      'Board member, open /uat-club-org/admin/org/billing directly: the card reads "Billing access required" with no buttons.',
+      'Owner, open Plan & billing again: the Reduce or cancel section and its button are still there. Nothing changed for the owner.',
+    ]},
+    { id: 'd', title: 'D · The same on a Tournament Plus host', who: 'Owner, then board member', where: 'UAT Test Org. Owner: /uat-test-org/admin/tournaments/settings/members, give UAT Org Admin Plan & billing. Billing lives at /uat-test-org/admin/tournaments/settings/subscription.', steps: [
+      'Owner: grant Plan & billing to UAT Org Admin here, Save, then open the subscription page. Note whether you see a "Downgrade to Tournament" row in Change plan.',
+      'R: The owner saw a Downgrade to Tournament row.',
+      'R: The owner did not (a Founding Season plan hides it). Then tick this, and skip the next two steps.',
+      'Board member, open the same subscription page: the Change plan table has no Downgrade to Tournament row, and no Reduce or cancel section.',
+      'Board member: the rest is there (the plan card, What\'s in use, What\'s included), with no banner and no Try again.',
+      'Owner: turn the switch off again and Save. Put back.',
+    ]},
+  ]},
+  { id: 'w2', title: 'Walk 2 · Two doors that were wrong: the upgrade link and the demo',
+    purpose: 'The dashboard\'s upgrade link opens a plan panel. It used to open one with no Upgrade button. And the public tournament demo must not show a billing row at all.',
+    passes: 'A free Tournament host who follows the upgrade link can press Upgrade to Tournament Plus. A mistyped plan opens nothing. The demo has no Plan & billing anywhere.',
+    notIn: 'Completing a payment. Stop at the checkout page and go back. The same panel for a board member with billing access is covered by automated tests.',
+    parts: [
+    { id: 'e', title: 'E · The upgrade link', who: 'Tournament host', where: 'Sign in as free-owner@dev.local. Open /free-test-org/admin/tournaments/settings/subscription?plan=tournament_plus.', steps: [
+      'The page opens with a panel over it describing Tournament Plus, with a button at the foot reading "Upgrade to Tournament Plus" beside "Not right now".',
+      'Behind the panel, the Change plan table has the same Upgrade to Tournament Plus button (the Monthly or Yearly choice sits above it).',
+      'Press "Not right now", choose Yearly in the select above the table, then press "See what Tournament Plus includes". The panel opens again, now showing the yearly price, and still has its Upgrade button. (The choice resets when the page reloads; that is expected.)',
+      'Press Upgrade to Tournament Plus in the panel. Do not pay. What happened?',
+      'R: It went to a checkout page (stop there and go back).',
+      'R: It said the plan is now Tournament Plus. Tell me, because that changed Free Test Org.',
+      'R: Something else, say what in the notes.',
+      'Open ?plan=nothing at the end of the same address: no panel opens, and the page is normal.',
+      'Open ?plan=club: a panel opens for Club with no Upgrade button (Club is not a purchase from this plan).',
+    ]},
+    { id: 'f', title: 'F · The demo has no billing row', who: 'No sign-in', where: 'Sign out, then open /see-it-live. It signs you into the public tournament demo (Riverdale Minor Ball). Stay inside it for the whole part; leaving it ends the demo session.', steps: [
+      'At the foot of the sidebar, beside Help, there is no Plan & billing row.',
+      'On a phone (or the browser\'s phone view), open More. No row reads Plan & billing. (Account and Home are not listed in the demo either; a Coaches Portal row may be.)',
+    ]},
+  ]},
+];
+
+const KEY = 'plan-billing-fixpass-walk-v1';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { state = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+const pid = (w, p) => `${w.id}-${p.id}`;
+const isGroup = s => s.startsWith('G:');
+const label = s => s.replace(/^[GR]:\s*/, '');
+
+const host = document.getElementById('walks');
+for (const w of WALKS) {
+  const walk = document.createElement('section');
+  walk.className = 'card';
+  walk.setAttribute('aria-labelledby', w.id + '-h');
+  walk.innerHTML = `<div class="walk-head"><h2 id="${w.id}-h"></h2><span class="chip" id="${w.id}-chip"></span></div>
+    <div class="intro"><div><b>What this walk is for</b><p class="pf"></p></div><div><b>It passes when</b><p class="pp"></p></div><div><b>Not in this walk</b><p class="pn"></p></div></div>`;
+  walk.querySelector('h2').textContent = w.title;
+  walk.querySelector('.pf').textContent = w.purpose;
+  walk.querySelector('.pp').textContent = w.passes;
+  walk.querySelector('.pn').textContent = w.notIn;
+  for (const part of w.parts) {
+    const id = pid(w, part);
+    const sec = document.createElement('div');
+    sec.className = 'part';
+    sec.innerHTML = `<div class="part-head"><h3 id="${id}-h"></h3><span class="count" id="${id}-count"></span></div><span class="who"></span><p class="where"></p><ol></ol>
+      <div class="verdict" role="group" aria-label="Verdict for this part">
+        <button type="button" data-v="pass" aria-pressed="false">Pass</button>
+        <button type="button" data-v="issue" aria-pressed="false">Issue</button>
+        <button type="button" data-v="call" aria-pressed="false">Needs a call</button>
+      </div>
+      <label class="note" for="${id}-notes">Notes</label>
+      <textarea id="${id}-notes"></textarea>`;
+    sec.querySelector('h3').textContent = part.title;
+    sec.querySelector('.who').textContent = 'As: ' + part.who;
+    sec.querySelector('.where').textContent = part.where;
+    const ol = sec.querySelector('ol');
+    part.steps.forEach((text, i) => {
+      const li = document.createElement('li');
+      if (isGroup(text)) { li.className = 'group'; li.textContent = label(text); ol.appendChild(li); return; }
+      const sid = `${id}-s${i}`;
+      li.innerHTML = `<label><input type="checkbox" id="${sid}"><span></span></label>`;
+      li.querySelector('span').textContent = label(text);
+      const box = li.querySelector('input');
+      box.checked = !!state[sid];
+      li.classList.toggle('done', box.checked);
+      box.addEventListener('change', () => { state[sid] = box.checked; li.classList.toggle('done', box.checked); save(); tally(); });
+      ol.appendChild(li);
+    });
+    const vKey = id + '-verdict';
+    sec.querySelectorAll('.verdict button').forEach(b => {
+      b.setAttribute('aria-pressed', String(state[vKey] === b.dataset.v));
+      b.addEventListener('click', () => {
+        state[vKey] = state[vKey] === b.dataset.v ? '' : b.dataset.v;
+        sec.querySelectorAll('.verdict button').forEach(x => x.setAttribute('aria-pressed', String(state[vKey] === x.dataset.v)));
+        save();
+      });
+    });
+    const notes = sec.querySelector('textarea');
+    notes.value = state[id + '-notes'] || '';
+    notes.addEventListener('input', () => { state[id + '-notes'] = notes.value; save(); });
+    walk.appendChild(sec);
+  }
+  host.appendChild(walk);
+}
+
+const boxesOf = (w, part) => part.steps.map((s, i) => ({ s, i })).filter(x => !isGroup(x.s)).map(x => ({ text: label(x.s), key: `${pid(w, part)}-s${x.i}`, ruling: x.s.startsWith('R:') }));
+function tally() {
+  let all = 0, done = 0;
+  for (const w of WALKS) {
+    let wAll = 0, wDone = 0;
+    for (const part of w.parts) {
+      const boxes = boxesOf(w, part);
+      const d = boxes.filter(b => state[b.key]).length;
+      wAll += boxes.length; wDone += d;
+      document.getElementById(pid(w, part) + '-count').textContent = `${d} of ${boxes.length}`;
+    }
+    all += wAll; done += wDone;
+    document.getElementById(w.id + '-chip').textContent = wDone === 0 ? 'Not started' : wDone === wAll ? `All ticked · ${wDone} of ${wAll}` : `In progress · ${wDone} of ${wAll}`;
+  }
+  document.getElementById('prog-text').textContent = `${done} of ${all} checked`;
+  document.getElementById('prog-bar').style.width = all ? `${Math.round(done / all * 100)}%` : '0';
+}
+tally();
+
+const VERDICT = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL', '': 'not marked' };
+document.getElementById('build').addEventListener('click', () => {
+  const lines = ['Plan and billing · Stage 1 fix pass: walk results'];
+  for (const w of WALKS) {
+    lines.push('', w.title);
+    for (const part of w.parts) {
+      const boxes = boxesOf(w, part);
+      const done = boxes.filter(b => state[b.key]).length;
+      lines.push('', `${part.title}: ${VERDICT[state[pid(w, part) + '-verdict'] || '']} (${done}/${boxes.length})`);
+      boxes.forEach(b => { if (state[b.key] && b.ruling) lines.push(`  ☑ (your answer) ${b.text}`); else if (!state[b.key] && !b.ruling) lines.push(`  ☐ ${b.text}`); });
+      const n = (state[pid(w, part) + '-notes'] || '').trim();
+      if (n) lines.push(`  Notes: ${n}`);
+    }
+  }
+  document.getElementById('summary').value = lines.join('\n');
+});
+document.getElementById('copy').addEventListener('click', async () => {
+  const box = document.getElementById('summary');
+  if (!box.value) document.getElementById('build').click();
+  try { await navigator.clipboard.writeText(box.value); } catch { box.focus(); box.select(); }
+});
+document.getElementById('reset').addEventListener('click', () => {
+  state = {}; save();
+  document.querySelectorAll('input[type=checkbox]').forEach(b => { b.checked = false; b.closest('li').classList.remove('done'); });
+  document.querySelectorAll('.verdict button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  document.querySelectorAll('textarea').forEach(t => { if (t.id !== 'summary') t.value = ''; });
+  tally();
+});
+</script>

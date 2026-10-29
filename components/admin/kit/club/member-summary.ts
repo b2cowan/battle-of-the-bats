@@ -18,6 +18,7 @@ import { ROLE_DEFAULTS, type Capability } from '../../../../lib/roles';
 import type { ProgramAccess } from '../../../../lib/member-access';
 import type { OrgRole } from '../../../../lib/types';
 import { volunteerJobOf } from '../../../../lib/volunteer-jobs';
+import { PLAN_BILLING_TITLE } from '../../../../lib/plan-billing-title';
 import { VOLUNTEER_ACCESS } from '../../../../lib/volunteer-words';
 import { possessive } from '../../../../lib/utils';
 
@@ -66,7 +67,7 @@ export function overrideChips(access: ProgramAccess[], capabilities?: Record<str
   const chips: OverrideChip[] = access
     .filter(a => a.override !== null)
     .map(a => ({ key: a.module, text: `${a.override === 'on' ? '+' : '–'} ${a.label}`, tone: a.override as 'on' | 'off' }));
-  if (capabilities?.billing === true) chips.push({ key: 'billing', text: '+ Plan & billing', tone: 'on' });
+  if (capabilities?.billing === true) chips.push({ key: 'billing', text: `+ ${PLAN_BILLING_TITLE}`, tone: 'on' });
   return chips;
 }
 

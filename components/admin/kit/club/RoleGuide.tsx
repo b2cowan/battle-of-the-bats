@@ -41,7 +41,7 @@ export default function RoleGuide({
     { key: 'league-tournaments', label: carries('module_house_league') ? 'House league · Tournaments' : 'Tournaments' },
     ...(carries('module_families') ? [{ key: 'families' as const, label: 'Families (household records)' }] : []),
     { key: 'members', label: 'Members' },
-    { key: 'owner-only', label: 'Plan & billing · Settings · Audit log' },
+    { key: 'owner-only', label: 'Plan & billing (default access) · Settings · Audit log' },
   ];
 
   const leagueRolesOffered = assignable.includes('league_admin');

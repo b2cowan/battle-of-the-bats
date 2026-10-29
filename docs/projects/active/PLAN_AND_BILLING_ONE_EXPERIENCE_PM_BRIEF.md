@@ -160,7 +160,7 @@ The sidebar door sits beside Help, and the phone door is in More > You. The tour
 Standalone coaches keep the admin chrome until Stage 2 adds their own host.
 
 The owner ruled billing delegable in this build: only the owner can grant it in Members, and a granted board member
-can read billing and perform the same plan/payment/cancellation actions. No role receives billing automatically.
+can read billing and manage the plan, payment method and invoices, and upgrade. **Cancelling the subscription or moving to a smaller plan stays with the owner** (ruling 2026-10-29): a delegate sees neither option. On a cancelled organization a delegate can still reactivate. No role receives billing automatically.
 Members without that access see a locked card, without loading billing data. Suspended billing users retain the
 usage read so they can assess a recovery plan. Member chips and access-change emails name the grant.
 

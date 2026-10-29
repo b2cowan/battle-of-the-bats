@@ -27,7 +27,7 @@ import {
   RefreshCw, type LucideIcon,
 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import { hasCapability } from '@/lib/roles';
+import { hasCapability, hasBillingAccess } from '@/lib/roles';
 import { hasModuleEntitlement, isClubPlan } from '@/lib/module-entitlements';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { usePlanGating } from '@/lib/use-plan-gating';
@@ -135,7 +135,7 @@ export default function ClubHubKit() {
   const closedPlansLine = gating ? closedProgramPlansSentence(gating) : null;
   const slug = currentOrg?.slug ?? '';
   const isOwner = userRole === 'owner';
-  const canManageBilling = !!userRole && hasCapability(userRole, userCapabilities, 'billing');
+  const canManageBilling = hasBillingAccess(userRole, userCapabilities);
   const club = isClubPlan(currentOrg?.planId);
   const noun = orgNoun(currentOrg?.planId);
 

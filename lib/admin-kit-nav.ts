@@ -37,9 +37,9 @@ import type { OrgPlan } from '@/lib/types';
 import type { TournamentPhase } from './tournament-phase';
 import { canOpenClubSchedules } from './club-schedule-gate';
 import { getBillingHref } from './billing-urls';
-import { hasCapability } from './roles';
+import { hasBillingAccess } from './roles';
 import type { OrgRole } from './types';
-import { PLAN_BILLING_WORDS as W } from './plan-billing-words';
+import { PLAN_BILLING_TITLE } from './plan-billing-title';
 
 export type AdminProgramKey =
   | 'rep-teams'
@@ -249,13 +249,14 @@ export function kitSchedulesLink({ base, canUse, isCanceled, role, planId }: {
 /** The Organization group's icon (the rail row and the More section share it). */
 export const ORGANIZATION_ICON: LucideIcon = Building2;
 
-/** Plan & billing lives beside Help on every admin plan, including a suspended account's comeback path. */
-export function kitBillingLink({ orgSlug, planId, role, capabilities }: {
+/** Plan & billing lives beside Help on every admin plan, including a suspended account's comeback path. The demo
+ *  sandboxes hide every billing entry point (lib/sandbox-curation.ts): a comped demo org's billing answers nothing. */
+export function kitBillingLink({ orgSlug, planId, role, capabilities, isSandbox = false }: {
   orgSlug: string; planId: OrgPlan | null | undefined; role: OrgRole | null | undefined;
-  capabilities: Record<string, boolean> | null;
+  capabilities: Record<string, boolean> | null; isSandbox?: boolean;
 }): KitLink | null {
-  return role && hasCapability(role, capabilities, 'billing')
-    ? { key: 'org/billing', label: W.page.title, href: getBillingHref(orgSlug, planId), icon: CreditCard }
+  return !isSandbox && hasBillingAccess(role, capabilities)
+    ? { key: 'org/billing', label: PLAN_BILLING_TITLE, href: getBillingHref(orgSlug, planId), icon: CreditCard }
     : null;
 }
 

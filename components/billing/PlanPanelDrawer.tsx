@@ -11,7 +11,7 @@
  */
 import { useEffect, useState } from 'react';
 import { useOrg } from '@/lib/org-context';
-import { hasCapability } from '@/lib/roles';
+import { hasBillingAccess } from '@/lib/roles';
 import { useTournament } from '@/lib/tournament-context';
 import { usePlanGating } from '@/lib/use-plan-gating';
 import { isEffectivelyGated } from '@/lib/plan-config';
@@ -78,9 +78,9 @@ export default function PlanPanelDrawer({ plan, onClose }: { plan: PanelPlanKey;
         onUpgrade={key => { void upgrade(key); }}
         upgradeLoading={loading ? plan : null}
         isComingSoon={gating ? gating[plan] : isEffectivelyGated(plan)}
-        // Only the owner may change the plan (the server's 'billing' capability): anyone else reads what the plan
+        // Only the owner and members granted billing may change the plan (the server's 'billing' capability): anyone else reads what the plan
         // includes, with no Upgrade that would only be refused.
-        canUpgrade={!!userRole && hasCapability(userRole, userCapabilities, 'billing') && (upgradePlansFor(currentOrg ? ownPlanOf(currentOrg) : undefined) as PanelPlanKey[]).includes(plan)}
+        canUpgrade={hasBillingAccess(userRole, userCapabilities) && (upgradePlansFor(currentOrg ? ownPlanOf(currentOrg) : undefined) as PanelPlanKey[]).includes(plan)}
       />
       {outcome && <FeedbackModal isOpen onClose={onClose} title={outcome.title} message={outcome.message} type={outcome.type} />}
     </>

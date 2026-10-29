@@ -21,7 +21,7 @@ describe('the club’s own invoice stamps its fees billed (found building ruling
 });
 
 describe('ruling 2: a cancelled club is still billed, and sees its Stripe fees list', () => {
-  it('the list’s read is off the billing rail, and stays the owner’s', () => {
+  it('the list’s read is off the billing rail, and stays behind the billing capability', () => {
     const route = readCode('app/api/billing/stripe-fees/route.ts');
     assert.match(route, /getAuthContextWithRole\(\{ orgSlug, requireOrgSlug: true, allowSuspendedOrg: true \}\)/);
     assert.match(route, /if \(!hasCapability\(ctx\.role, ctx\.capabilities, 'billing'\)\) return forbidden\(\);/);

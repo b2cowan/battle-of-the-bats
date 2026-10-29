@@ -34,7 +34,8 @@ free time, success, cancelled).
 5. **Billing can be delegated through the `billing` capability** (owner, Part 3 build, 2026-10-28).
    No role acquires it by default. Only the owner grants/revokes it in Members; a member without billing access sees
    the locked card. Billing-capable members get the page, navigation and reads as well as the existing money actions.
-   **Keep suspended billing access** to the count-only usage route for recovery. These rulings supersede the earlier
+   **Cancel and downgrade stay the owner's alone** (owner ruling 2026-10-29): the four routes check `role === 'owner'`
+   and the page shows a delegate neither door. **Keep suspended billing access** to the count-only usage route for recovery. These rulings supersede the earlier
    owner-only billing wording in the stage prompts; later stages must carry the same capability gate.
 
 ## 3. Findings that shape the plan (argued from the code)
@@ -743,7 +744,9 @@ below.** The owner authorized the Part 3 commit on 2026-10-29. Other sessions' w
 **Owner decisions in this session (supersede the earlier owner-only wording):**
 
 - **Delegate billing through the `billing` capability.** No role gains it by default. Only the owner can grant/revoke
-  it in the existing Members → Manage window. A billing delegate can read the page and use its existing money actions;
+  it in the existing Members → Manage window. A billing delegate can read the page and use its existing money actions
+  (card, invoices, portal, upgrade, next-season choice, reactivate, usage, fees) **except cancel and downgrade, which
+  are the owner's alone (ruling 2026-10-29; see "Part 3 fix pass" below)**;
   the page, upgrade drawer, rail/More row, usage, free-time billing mode and Stripe-fee reads use that same capability.
   Settings remain owner-only. The member list displays the grant and the existing access-change email names it.
   Existing member PATCH authorization still refuses a non-owner's capability changes, including another billing grant.
@@ -911,3 +914,41 @@ tree. Restarted with network-enabled **`npm run dev`**, reached **Ready**, then 
 **no EACCES**. The server is left running. No `.next` deletion. Logs:
 `%TEMP%/plan-billing-part3-dev.out.log` and `plan-billing-part3-dev.err.log`. Real browser/payment verification remains
 with the owner as listed in the checklist.
+
+### Part 3 fix pass — 2026-10-29 (after `/simplify` + `/review`; nothing committed yet)
+
+Owner ruling 2026-10-29: **cancel and downgrade are the owner's alone.** A member granted `billing` keeps every other
+billing action. The four routes (`cancel/{preflight,confirm}`, `downgrade/{preflight,confirm}`) were NOT changed: they
+still check `role !== 'owner'`. The page now never offers a delegate a door the server refuses.
+
+- **Delegate on an active org:** no cancel-record read, no "Reduce or cancel" section, no Downgrade row (the Tournament
+  Plus → Tournament row is not listed at all), and no banner or Try again button caused by that read.
+- **Delegate on a cancelled org:** the reactivate card works (checkout is capability-gated). Chosen: the chip reads the
+  plain status ("Cancelled") with no date, and the "Kept until" line is left out, because both come from the
+  owner-only record. No error, no empty chip.
+- **Demo sandboxes:** the billing row is gone from the rail foot and the More sheet (`kitBillingLink` takes the sandbox
+  flag; `lib/sandbox-curation.ts` already said billing entry points are hidden there).
+- **Tournament / Tournament Plus customers:** every emailed or notified billing link now goes through `getBillingHref`
+  (payment-failed notice, trial-ending, cancel and downgrade confirmations, retention warnings, the payments-ending
+  warning, the platform-admin cancel email), so they reach the subscription page instead of being bounced to the
+  dashboard. The two confirm routes read `ownPlanOf(org)` (plan-reader-door-guard bans the door's planId in billing
+  actions); the rest read the stored plan. The retention cron's org select now includes `plan_id`.
+  **Found, not fixed:** `app/api/admin/email/send/route.ts:257` puts the org's UUID where its slug goes (pre-existing).
+- **`?plan=` deep link:** the details panel now lives in the shared body view and offers Upgrade exactly where the
+  Change plan table does (a checkout change, on sale, ordinary billing view — not staff free time, not cancelled), in
+  the chosen cycle, through the same checkout path. Billing delegates may upgrade.
+- **Small:** the Change plan cell renders nothing until its reads are in (no "Contact us to move" flash); the reactivate
+  cycle choice disables while a request runs; Try again shows "Trying again…" and disables while the context refresh
+  runs (the sub-reads that follow are not covered).
+
+**Reported, not changed (owner decides):**
+1. *Lower-band move for a delegate.* The shared body offers a delegate the one lower move that exists — **Club ·
+   Association → Club**, mechanism `move`, direction `down` — and the capability-gated `move` route can schedule it (it
+   takes effect at renewal; the delegate can also keep the current plan). It is a reduction by another door.
+2. *Stripe portal.* A delegate can open the Stripe payment portal (capability-gated). The code creates the portal
+   session with no configuration, so whether the portal shows a Cancel subscription button is a Stripe Dashboard
+   setting that cannot be read from this repo. If it is on, a delegate can cancel there; the `customer.subscription.deleted`
+   webhook then runs the normal cancellation path.
+3. Delegates get no payment-failed alerts (the webhook notifies owners only); a members manager can remove a grantee;
+   a delegate's email becomes the Stripe customer email on first checkout; two rail rows highlight at once on the
+   tournament tiers.

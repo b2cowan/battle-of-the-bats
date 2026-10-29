@@ -16,6 +16,7 @@ import { formatCardOnFile } from './billing-format';
 import { freeTimeCopy } from './free-time-copy';
 import { portalFreeTimeCopy, KEEP_PREMIUM_LINE, PORTAL_FREE_TIME_HOSTING_LINE } from './portal-free-time';
 import { STRIPE_FEE_WORDS } from './online-payment-words';
+import { PLAN_BILLING_TITLE } from './plan-billing-title';
 
 const day = (iso: string) => formatStoredDate(iso, { longMonth: true });
 const cycle = (value: BillingCycle) => value === 'annual' ? 'yearly' : 'monthly';
@@ -23,7 +24,7 @@ const period = (value: BillingCycle) => value === 'annual' ? 'year' : 'month';
 
 export const PLAN_BILLING_WORDS = {
   page: {
-    title: 'Plan & billing', eyebrow: 'Organization', loading: 'Loading plan & billing…',
+    title: PLAN_BILLING_TITLE, eyebrow: 'Organization', loading: 'Loading plan & billing…',
     lockedTitle: 'Billing access required',
     lockedBody: (org: string) => `Only ${possessive(org)} owner and members they’ve granted billing access can see and change the plan and how it’s paid.`,
     sections: { plan: 'Your plan', usage: "What's in use", change: 'Change plan', included: "What's included", cancel: 'Reduce or cancel' },
@@ -153,8 +154,12 @@ export const PLAN_BILLING_WORDS = {
     cancelled: (org: string, days: number) => `${org} is cancelled. Your data is kept for ${days} days.`,
     premiumCancelled: (days: number) => `Premium is cancelled. Basic tournament records stay available. Premium team data is kept for ${days} days.`,
   },
+  access: {
+    // What the Members → Manage switch gives. Cancelling or reducing the plan is the owner's alone (the four routes check the role).
+    grantHint: 'Can change the plan, payment method and invoices. Cancelling or reducing the plan stays with the owner.',
+  },
   errors: {
-    retry: 'Try again', refresh: 'We couldn’t refresh your organization. Try again.',
+    retry: 'Try again', retrying: 'Trying again…', refresh: 'We couldn’t refresh your organization. Try again.',
     nextSeasonRead: 'We couldn’t confirm your next-season choice yet. Try again.',
     portal: 'The payment portal didn’t open. Try again.', card: 'Card setup didn’t open. Try again.',
     checkout: 'Checkout didn’t open. Try again.', keep: 'Keeping your current plan didn’t go through. Try again.',

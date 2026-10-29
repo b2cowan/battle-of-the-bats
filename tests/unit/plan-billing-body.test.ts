@@ -21,7 +21,7 @@ function fixture(key: keyof typeof PLAN_CONFIG): BillingBodyViewProps {
   const impact = planCancellationImpact(profile, ['module_public_site'], 9);
   const snapshot: BillingSnapshot = {
     org: { id: 'org-a', slug: 'club-a', name: 'Falcons', planId: key, ownPlanId: key, enabledAddons: ['module_public_site'], subscriptionStatus: 'active', subscriptionPeriod: 'monthly', currentPeriodEnd: '2027-03-01', teamLimit: 15, tournamentLimit: 1 } as BillingSnapshot['org'],
-    canManageBilling: true, usage: ready({ teams: { count: 9, limit: 15 }, tournament_slots: { count: 1, limit: 1 }, staff_seats: { count: 2, limit: profile.config.seatLimit }, officials: 4 }),
+    canManageBilling: true, canCancel: true, usage: ready({ teams: { count: 9, limit: 15 }, tournament_slots: { count: 1, limit: 1 }, staff_seats: { count: 2, limit: profile.config.seatLimit }, officials: 4 }),
     freeTime: ready({ freeTime: null, portal: null, foundingThrough: null, overLimitAfter: false }),
     founding: ready({ isFoundingSeason: false, compUntil: null }),
     gating: ready({ tournament: false, tournament_plus: false, team: false, league: true, club: true, club_large: true }),

@@ -280,7 +280,8 @@ describe('real owner billing action request contracts', () => {
       h.view().actions.choose('tournament_plus', 'annual'); await h.settle();
       assertRequest(h.requests[0], '/api/billing/choose-next-season', 'POST', { planKey: 'tournament_plus', billingCycle: 'annual', returnTo: billingBase, orgSlug: h.org.slug });
       assert.equal(h.view().justChose, true);
-      h.restorePage(); h.render(); assert.equal(h.view().justChose, false); assert.equal(h.view().actions.busy, null);
+      h.restorePage(); h.render(); assert.equal(h.view().justChose, false);
+      await h.settle(); h.render(); assert.equal(h.view().actions.busy, null, "the restore's re-read has finished");
     } finally { h.dispose(); }
   });
 

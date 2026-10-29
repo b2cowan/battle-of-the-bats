@@ -84,7 +84,7 @@ const orgHelp: HelpPageContent = {
                 </tbody>
               </table>
               <p><strong>✓</strong> is full access; a shorter answer is the exact slice that role gets — &ldquo;view&rdquo; opens a program read-only, and &ldquo;if you turn it on&rdquo; means the owner has to grant it by hand (Families is never on by default for anyone but the owner, and it can&rsquo;t be given to a member limited to some Rep teams groups: a family&rsquo;s record spans every team its children play on). A row only appears on your own organization once your plan includes that program.</p>
-              <p><strong>Admin</strong> opens every program the plan carries — the moment it&rsquo;s included, with no separate setup step. It opens <strong>Families</strong> and <strong>Plan &amp; billing</strong> only when the owner grants that access. In Members, the owner can turn on <strong>Plan &amp; billing</strong> for a board member; that includes changing the plan, payment method and invoices, and cancelling the subscription. Settings and the audit log stay owner-only. The menu lists only what you can open. An admin can still change the club&rsquo;s logo, colours, type and banner in <strong>Public site</strong>; only the owner turns the site on or off.</p>
+              <p><strong>Admin</strong> opens every program the plan carries — the moment it&rsquo;s included, with no separate setup step. It opens <strong>Families</strong> and <strong>Plan &amp; billing</strong> only when the owner grants that access. In Members, the owner can turn on <strong>Plan &amp; billing</strong> for a board member; that includes changing the plan, payment method and invoices, but not cancelling or reducing the plan, which stays with the owner. Settings and the audit log stay owner-only. The menu lists only what you can open. An admin can still change the club&rsquo;s logo, colours, type and banner in <strong>Public site</strong>; only the owner turns the site on or off.</p>
             </>
           ),
         },
@@ -94,7 +94,7 @@ const orgHelp: HelpPageContent = {
           content: (
             <>
               <ul>
-                <li><strong>Owner</strong> — Full access. Only the owner can grant billing access or change Settings. Assigned at org creation; ownership can&rsquo;t be transferred through the admin panel.</li>
+                <li><strong>Owner</strong> — Full access. Only the owner can grant billing access, change Settings, or cancel or reduce the plan. Assigned at org creation; ownership can&rsquo;t be transferred through the admin panel.</li>
                 <li><strong>Admin</strong> — Runs operations: every program the plan carries, members, and the public site&rsquo;s look (logo, colours, type and banner, in <strong>Public site</strong>). Cannot turn the public site on or off, or open Settings or the audit log. Families and Plan &amp; billing need the owner&rsquo;s explicit grant.</li>
                 <li><strong>Treasurer</strong> — Runs the books: ledgers, the budget, what the club bills its teams, and the teams’ payment requests. Can see the team names money is allocated to, without a Rep teams door of their own.</li>
                 <li><strong>Staff</strong> — Day-of operator. Updates game times and venue assignments, submits scores, and posts announcements. Cannot finalize scores or change a result that&rsquo;s already final, create tournaments, manage registrations, or send communications.</li>
@@ -273,7 +273,7 @@ const orgHelp: HelpPageContent = {
         { label: 'Plan & billing', href: '../org/billing' },
       ],
       content: (
-        <p>Every plan uses the same Plan &amp; billing page: Your plan, What&rsquo;s in use, any free-time or Founding Season band, Stripe fees when any exist, Change plan, What&rsquo;s included, and Reduce or cancel. Open it beside Help at the foot of the sidebar, or in More &gt; You on a phone. Owners and members granted billing access can use it; other members see a locked card.</p>
+        <p>Every plan uses the same Plan &amp; billing page: Your plan, What&rsquo;s in use, any free-time or Founding Season band, Stripe fees when any exist, Change plan, What&rsquo;s included, and Reduce or cancel. Open it beside Help at the foot of the sidebar, or in More &gt; You on a phone. Owners and members granted billing access can use it; other members see a locked card. Reduce or cancel, and moving down to a smaller plan, are the owner&rsquo;s alone.</p>
       ),
       subtopics: [
         {

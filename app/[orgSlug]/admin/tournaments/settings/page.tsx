@@ -12,7 +12,7 @@ import { ArrowRight, Bell, CreditCard, Globe, Landmark, Lock, Users2, type Lucid
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { hasCapability } from '@/lib/roles';
+import { hasCapability, hasBillingAccess } from '@/lib/roles';
 import { isTournamentTier } from '@/lib/billing-urls';
 import { WEB_ADDRESS_WORDS as WA } from '@/lib/web-address-words';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -56,7 +56,7 @@ export default function TournamentSettingsAccessPage() {
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
   const subscriptionHref = `${base}/settings/subscription`;
   const isOwner = userRole === 'owner';
-  const canManageBilling = !!userRole && hasCapability(userRole, userCapabilities, 'billing');
+  const canManageBilling = hasBillingAccess(userRole, userCapabilities);
   const isLeagueOrClub = !!currentOrg && ['league', 'club', 'club_large'].includes(currentOrg.planId);
   const canManageMembers = userRole
     ? userRole === 'owner' || hasCapability(userRole, userCapabilities, 'module_members')

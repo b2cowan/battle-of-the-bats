@@ -61,7 +61,7 @@ export function useAdminKitNav() {
   const schedulesLink = kitSchedulesLink({
     base, canUse, isCanceled, role: userRole, planId: currentOrg?.planId,
   });
-  const billingLink = kitBillingLink({ orgSlug, planId: currentOrg?.planId, role: userRole, capabilities: userCapabilities });
+  const billingLink = kitBillingLink({ orgSlug, planId: currentOrg?.planId, role: userRole, capabilities: userCapabilities, isSandbox });
   // The person's own Coaches Portal door — the rail's foot and the More sheet's "You" both show it.
   const coachDoor = coachDoorFor(useCurrentOrgCoachAccess(currentOrg?.slug, !isCanceled), currentOrg?.slug);
   // The tournament's groups as this person sees them, every row's address resolved ONCE: an event page, or a door outside

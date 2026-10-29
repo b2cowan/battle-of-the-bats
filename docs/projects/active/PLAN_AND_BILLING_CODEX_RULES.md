@@ -62,7 +62,7 @@ The Club page is the benchmark layout. A new or changed plan must be **a data ed
 
 - **Billing access** is enforced by the server capability (`billing`), not by hiding a button. **Owner ruling in the
   Part 3 build, 2026-10-28:** the owner may delegate billing through that capability; no role gains it by default.
-  Only the owner grants/revokes it. Suspended billing users retain the count-only usage read for recovery. Every billing route
+  Only the owner grants/revokes it. **Cancel and downgrade (the four routes under `cancel/` and `downgrade/`) stay owner-only (ruling 2026-10-29) — never widen them, and never show a delegate their doors.** Suspended billing users retain the count-only usage read for recovery. Every billing route
   already checks it; any new route you add must too, and must pass `orgSlug` (the repo's `check:org-slug-callers` /
   `check:admin-org-context` fail otherwise).
 - **Cancelled / suspended orgs must still reach billing and reactivate.** Files that use `allowSuspendedOrg: true` are

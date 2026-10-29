@@ -53,6 +53,8 @@ export type BillingBodyViewProps = {
   snapshot: BillingSnapshot; profile: PlanBillingProfile<string>; ownProfile: PlanBillingProfile<string>;
   profiles?: Registry; actions: Action; notice?: Notice | null; justChose?: boolean;
   cardWindowOpen?: boolean; foundingActive?: boolean; fees?: ReactNode;
+  /** The plan whose details panel is open (`?plan=` or a Details link), and how it closes. */
+  detail?: string | null; onCloseDetail?: () => void;
 };
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
@@ -73,7 +75,7 @@ function LockedCard({ orgName }: { orgName: string }) {
 
 /** The actual billing presentation, also rendered by the isolated profile fixtures. No portal chrome or providers. */
 export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = PLAN_BILLING_PROFILES, actions: a,
-  notice, justChose = false, cardWindowOpen = false, foundingActive = false, fees,
+  notice, justChose = false, cardWindowOpen = false, foundingActive = false, fees, detail = null, onCloseDetail = () => {},
 }: BillingBodyViewProps) {
   const org = s.org;
   if (!s.canManageBilling) return <LockedCard orgName={org.name} />;
@@ -99,7 +101,10 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   const founding = profile.showFoundingSeason && !staffFree && Boolean(fd?.isFoundingSeason);
   const comp = founding && foundingActive;
   const paid = ownProfile.config.monthlyPrice > 0;
-  const preflight = s.cancellation.status === 'ready' ? s.cancellation.data : null;
+  // Cancel and downgrade are the owner's alone (server: role === 'owner'). A billing delegate never reads the
+  // cancellation record, so none of its failures, dates or doors may reach them.
+  const preflight = s.canCancel && s.cancellation.status === 'ready' ? s.cancellation.data : null;
+  const changes = ownProfile.changes.filter(change => s.canCancel || change.mechanism !== 'downgrade');
   const scheduled = s.move.status === 'ready' ? s.move.data.scheduledMove : null;
   const price = freeCard?.price ?? (comp ? W.founding.price : profile.config.monthlyPrice === 0 ? W.plan.free
     : W.plan.price(org.subscriptionPeriod === 'annual' ? profile.config.annualPrice : profile.config.monthlyPrice, org.subscriptionPeriod ?? 'monthly'));
@@ -114,10 +119,19 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     <a href={`/${org.slug}/coaches/link-org`} className={`btn ${portal ? 'btn-outline' : 'btn-lime'}`}>{W.change.joinClub}</a>
   </CoachCard> : null;
 
-  const retry = <button type="button" className="btn btn-outline" onClick={a.retry} disabled={disabled}>{W.errors.retry}</button>;
+  const retry = <button type="button" className="btn btn-outline" onClick={a.retry} disabled={disabled}>{a.busy === 'retry' ? W.errors.retrying : W.errors.retry}</button>;
+  // The panel offers Upgrade exactly where the Change plan table does: a checkout change, on sale, in the ordinary
+  // billing view (not staff free time, not cancelled). Billing delegates may upgrade; non-billing users never get here.
+  const detailProfile = detail && Object.hasOwn(profiles, detail) ? profiles[detail] : null;
+  const detailChange = detailProfile ? changes.find(change => change.target === detailProfile.key && change.mechanism === 'checkout') : undefined;
+  const detailPlan = detailProfile && detailProfile.key in PLAN_ARTICLE_CONTENT ? detailProfile.key as PanelPlanKey : null;
+  const panel = detailProfile ? <PlanArticlePanel planKey={detailPlan} profile={detailProfile} readOnly={!detailChange} billingCycle={a.cycle} onClose={onCloseDetail}
+    onUpgrade={() => { onCloseDetail(); if (detailChange) a.change(detailChange); }} upgradeLoading={a.busy === 'checkout' ? detailPlan : null}
+    isComingSoon={s.gating.status === 'ready' && s.gating.data[detailProfile.key as OrgPlan] !== false}
+    canUpgrade={Boolean(detailChange) && controlsReady && ownBilling && !cancelled && sale(detailProfile.key)} foundingOfferHeld={false} /> : null;
   // A failed grant read cannot distinguish an actual cancellation from staff free time.
   // Offer help without asserting cancellation, renewal, a price, or a retention clock.
-  if (s.freeTime.status === 'error') return <div className={styles.body}>
+  if (s.freeTime.status === 'error') return <><div className={styles.body}>
     {notice && <PageNotice notice={notice} />}
     <CoachCard className={styles.planCard}>
       <CoachEyebrow chip={<CoachChip tone="warn">{W.plan.unavailable}</CoachChip>}>{W.page.sections.plan}</CoachEyebrow>
@@ -126,11 +140,11 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
       <div className={styles.planActions}>{retry}<a href={CONTACT_HREF} className="btn btn-outline">{W.change.contact}</a></div>
     </CoachCard>
     {fees}
-  </div>;
+  </div>{panel}</>;
 
-  const readRecovery = [s.usage, s.founding, s.gating, s.cancellation, s.move].some(read => read.status === 'error') ? retry : null;
+  const readRecovery = [s.usage, s.founding, s.gating, ...(s.canCancel ? [s.cancellation] : []), s.move].some(read => read.status === 'error') ? retry : null;
 
-  if (endedPortal && controlsReady) return <div className={styles.body}>
+  if (endedPortal && controlsReady) return <><div className={styles.body}>
     {notice && <PageNotice notice={notice} />}
     <CoachCard className={styles.planCard}>
       <CoachEyebrow>{portalCopy!.band.eyebrow}</CoachEyebrow>
@@ -140,12 +154,12 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     <FreeTimeBand band={portalCopy!.band} />
     {readRecovery}
     {keepPremium}{joinClub}{fees}
-  </div>;
+  </div>{panel}</>;
 
   if (cancelled && controlsReady) {
     const until = preflight?.cancelled?.keptUntil ?? null;
     const modules = new Set<string>([...ownProfile.config.moduleEntitlements, ...org.enabledAddons]);
-    return <div className={styles.body}>
+    return <><div className={styles.body}>
       {notice && <PageNotice notice={notice} />}
       <CoachCard className={styles.reactivate}>
         <CoachEyebrow chip={<CoachChip tone="danger">{W.reactivate.chip(preflight?.cancelled?.at ?? null)}</CoachChip>}>
@@ -164,12 +178,12 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
           ]).map(line => <li key={line}><CheckCircle2 size={14} aria-hidden />{line}</li>)}
         </ul>
         {!premium && <p className={styles.hint}>{W.reactivate.remainder}</p>}
-        <ReadFailure read={s.cancellation} section="the cancellation record" />
+        {s.canCancel && <ReadFailure read={s.cancellation} section="the cancellation record" />}
         <div className={styles.reactivateRow}>
           {premium ? <a id="billing-reactivate-btn" className="btn btn-lime" href={teamWorkspaceReactivatePath(org)}>{W.reactivate.premiumAction}</a>
             : paid && s.gating.status === 'ready' && sale(ownProfile.key) ? <>
               <label className={styles.cycleField}><span className={styles.srOnly}>{W.plan.billing}</span>
-                <select className={styles.select} value={a.cycle} onChange={e => a.setCycle(e.target.value as BillingCycle)}>
+                <select className={styles.select} value={a.cycle} disabled={disabled} onChange={e => a.setCycle(e.target.value as BillingCycle)}>
                   <option value="monthly">{W.plan.monthly} · {formatPriceAmount(ownProfile.config.monthlyPrice)}</option>
                   <option value="annual">{W.plan.annual} · {formatPriceAmount(ownProfile.config.annualPrice)}</option>
                 </select></label>
@@ -185,18 +199,18 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
       </CoachCard>}
       {readRecovery}
       {fees}
-    </div>;
+    </div>{panel}</>;
   }
 
   const usage = s.usage.status === 'ready' ? s.usage.data : null;
-  const changeKeys = Object.keys(profiles).filter(key => key === ownProfile.key || ownProfile.changes.some(change => change.target === key));
+  const changeKeys = Object.keys(profiles).filter(key => key === ownProfile.key || changes.some(change => change.target === key));
   const choice = founding ? fd?.nextSeason ?? null : null;
   const card = fd ? W.founding.formatCard(fd.card ?? null) : null;
   const nextPlans = nextSeasonPlanOptions(ownProfile.key as OrgPlan);
   const chosen = choice ? profiles[choice.planKey] : null;
   const chosenCycle = choice?.billingCycle === 'annual' ? 'annual' : 'monthly';
   const endingContact = !portal && ft?.freeTime?.state === 'ending' && sale(ft.freeTime.plan);
-  return <div className={styles.body}>
+  return <><div className={styles.body}>
     {notice && <PageNotice notice={notice} />}
     {readRecovery}
     {org.subscriptionStatus === 'past_due' && <PageNotice notice={{ tone: 'bad', text: W.plan.pastDue }} />}
@@ -282,9 +296,9 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     <ReadFailure read={s.founding} section="Founding Season status" />
     {fees}
     {keepPremium}
-    {(ownBilling && ownProfile.changes.length > 0 || profile.joinClub) && <Section id="billing-change" title={W.page.sections.change}>
-      {ownBilling && ownProfile.changes.length > 0 && <>
-        {controlsReady && ownProfile.changes.some(change => change.mechanism === 'checkout' && sale(change.target)) && <div className={styles.planActions}>
+    {(ownBilling && changes.length > 0 || profile.joinClub) && <Section id="billing-change" title={W.page.sections.change}>
+      {ownBilling && changes.length > 0 && <>
+        {controlsReady && changes.some(change => change.mechanism === 'checkout' && sale(change.target)) && <div className={styles.planActions}>
           <label className={styles.cycleField}><span className={styles.srOnly}>{W.plan.billing}</span>
             <select className={styles.select} value={a.cycle} disabled={disabled} onChange={e => a.setCycle(e.target.value as BillingCycle)}>
               <option value="monthly">{W.plan.monthly}</option><option value="annual">{W.plan.annual}</option>
@@ -295,7 +309,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
           <thead><tr><th scope="col">{W.change.headings.plan}</th><th scope="col">{W.change.headings.holds}</th><th scope="col" className={styles.num}>{W.change.headings.monthly}</th><th scope="col" className={styles.num}>{W.change.headings.annual}</th><th scope="col"><span className={styles.srOnly}>{W.change.headings.choice}</span></th></tr></thead>
           <tbody>{changeKeys.map(key => {
             const target = profiles[key];
-            const change = ownProfile.changes.find(c => c.target === key);
+            const change = changes.find(c => c.target === key);
             return <tr key={key}>
               <td data-label={W.change.headings.plan}><strong>{target.config.label}</strong>{key !== ownProfile.key && <button type="button" className={`${styles.link} ${styles.details}`} onClick={() => a.details(key)}>{W.change.details(target.config.label)}</button>}</td>
               <td data-label={W.change.headings.holds}>{target.usageMeters.includes('teams') ? W.change.upTo(target.config.teamLimit) : W.change.tournamentLimit(target.config.tournamentLimit)}</td>
@@ -305,7 +319,8 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
                 : scheduled?.toPlan === key ? <CoachChip tone="warn">{W.plan.scheduledFrom(scheduled.effectiveAt)}</CoachChip>
                   // A Founding Season comp has no subscription to reduce; the old page hid the downgrade with Cancel.
                   : founding && change?.mechanism === 'downgrade' ? null
-                  : controlsReady && change && (change.mechanism === 'downgrade' || sale(key)) ? <button type="button" className="btn btn-outline" onClick={() => a.change(change)} disabled={disabled}>{change.mechanism === 'downgrade' ? W.change.downgrade(target.config.label) : change.mechanism === 'checkout' ? W.change.upgrade(target.config.label) : W.change.move(target.config.label)}</button>
+                  : !controlsReady ? null
+                  : change && (change.mechanism === 'downgrade' || sale(key)) ? <button type="button" className="btn btn-outline" onClick={() => a.change(change)} disabled={disabled}>{change.mechanism === 'downgrade' ? W.change.downgrade(target.config.label) : change.mechanism === 'checkout' ? W.change.upgrade(target.config.label) : W.change.move(target.config.label)}</button>
                     : s.gating.status !== 'loading' && <a className={`btn btn-outline ${styles.moveDoor}`} href={CONTACT_HREF}>{W.change.contactMove}</a>}</td>
             </tr>;
           })}</tbody>
@@ -319,7 +334,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     <Section id="billing-includes" title={W.page.sections.included}>
       <ul className={styles.includes}>{profile.included.billing.filter((_, index) => !portal || !profile.freeTimeOmittedBillingItems?.includes(index)).map(line => <li key={line}><CheckCircle2 size={14} aria-hidden />{line}</li>)}</ul>
     </Section>
-    {controlsReady && paid && ownBilling && !founding && <Section id="billing-cancel" title={W.page.sections.cancel}>
+    {controlsReady && paid && ownBilling && !founding && s.canCancel && <Section id="billing-cancel" title={W.page.sections.cancel}>
       {preflight ? <>
         <p className={styles.cancelCopy}>{premium ? W.cancel.premiumBody(preflight.retentionDays) : W.cancel.orgBody(org.name, preflight.shortShutsDown, preflight.retentionDays)}</p>
         <button type="button" className={`btn btn-outline ${styles.dangerText}`} id="billing-cancel-btn" onClick={a.cancel} disabled={disabled}>{premium ? W.cancel.premiumDoor : W.cancel.orgDoor(org.name)}</button>
@@ -333,7 +348,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
         {profiles[key].cancellationKind === 'premium' && s.gating.status !== 'loading' && (sale(key) ? <a href={COACHES_START_PATH} className="btn btn-outline">{W.shelf.startCoach}</a> : <a href={CONTACT_HREF} className={styles.link}>{W.change.contact}</a>)}
       </div>)}</div>
     </Section>}
-  </div>;
+  </div>{panel}</>;
 }
 
 /** Same-URL revisions retain their last result while refetching; previous-org reads never paint. */
@@ -358,10 +373,11 @@ export default function BillingBody({ billingBase, teamsHref }: { billingBase: s
   if (loading || !currentOrg || !userRole) return <LoadingState label={W.page.loading} />;
   // No billing reads mount without billing access, including free-time and cancelled states.
   if (!hasCapability(userRole, userCapabilities, 'billing')) return <LockedCard orgName={currentOrg.name} />;
-  return <BillingOwnerBody key={currentOrg.id} org={currentOrg} refresh={refresh} billingBase={billingBase} teamsHref={teamsHref} />;
+  // Cancel and downgrade stay with the owner alone, even when billing is delegated.
+  return <BillingOwnerBody key={currentOrg.id} org={currentOrg} refresh={refresh} billingBase={billingBase} teamsHref={teamsHref} canCancel={userRole === 'owner'} />;
 }
 
-function BillingOwnerBody({ org, refresh, billingBase, teamsHref }: { org: Organization; refresh: () => Promise<void>; billingBase: string; teamsHref: string }) {
+function BillingOwnerBody({ org, refresh, billingBase, teamsHref, canCancel }: { org: Organization; refresh: () => Promise<void>; billingBase: string; teamsHref: string; canCancel: boolean }) {
   const router = useRouter();
   const params = useSearchParams();
   const profile = PLAN_BILLING_PROFILES[org.planId];
@@ -388,8 +404,9 @@ function BillingOwnerBody({ org, refresh, billingBase, teamsHref }: { org: Organ
   const freeTime = useBillingRead<BillingFreeTime>(`/api/admin/org/free-time?${scope}&billing=1`, version);
   const founding = useBillingRead<BillingFounding>(profile.showFoundingSeason ? `/api/admin/org/founding-season-status?${scope}` : null, version);
   const gating = useBillingRead<Partial<Record<OrgPlan, boolean>>>('/api/plan-gating', version);
-  const cancellation = useBillingRead<BillingCancellation>(`/api/billing/cancel/preflight?${scope}`, version);
+  const cancellation = useBillingRead<BillingCancellation>(canCancel ? `/api/billing/cancel/preflight?${scope}` : null, version);
   const move = useBillingRead<BillingMove>(ownProfile.changes.some(c => c.mechanism === 'move') && org.subscriptionStatus !== 'canceled' ? `/api/billing/move?${scope}` : null, version);
+  const [retrying, setRetrying] = useState(false);
   const reload = useCallback(async () => {
     try { await refresh(); }
     finally { if (live.current) setRevision(n => n + 1); }
@@ -397,7 +414,9 @@ function BillingOwnerBody({ org, refresh, billingBase, teamsHref }: { org: Organ
   // The money operation has succeeded. A context-refresh failure must not recast it as a failed payment.
   const reloadAfterAction = () => { void reload().catch(() => {}); };
   const retryReads = useCallback(() => {
-    void reload().catch(() => { if (live.current) setNotice({ tone: 'bad', text: W.errors.refresh }); });
+    setRetrying(true);
+    void reload().catch(() => { if (live.current) setNotice({ tone: 'bad', text: W.errors.refresh }); })
+      .finally(() => { if (live.current) setRetrying(false); });
   }, [reload, setNotice]);
 
   useEffect(() => {
@@ -477,7 +496,7 @@ function BillingOwnerBody({ org, refresh, billingBase, teamsHref }: { org: Organ
     });
   }
   const actions: Action = {
-    busy, cycle, setCycle, retry: retryReads,
+    busy: busy ?? (retrying ? 'retry' : null), cycle, setCycle, retry: retryReads,
     portal: () => void run('portal', async () => { const result = await post('/api/billing/portal', { returnTo: billingBase }); if (result.url) leave(result.url); else if (live.current) throw new Error(W.errors.portal); }),
     card: () => void run('card', async () => { const result = await post('/api/billing/setup-payment-method', { returnTo: billingBase }); if (result.url) leave(result.url); else if (live.current) throw new Error(W.errors.card); }),
     reactivate: () => void checkout(ownProfile.key),
@@ -498,8 +517,6 @@ function BillingOwnerBody({ org, refresh, billingBase, teamsHref }: { org: Organ
   const target = downgrade ? PLAN_BILLING_PROFILES[downgrade.targetPlan] : null;
   const premium = ownProfile.cancellationKind === 'premium';
   const closeReview = () => setReview(null);
-  const details = detail ? PLAN_BILLING_PROFILES[detail as OrgPlan] : null;
-  const published = detail && detail in PLAN_ARTICLE_CONTENT ? detail as PanelPlanKey : null;
   async function confirmReview() {
     if (!cancel && !downgrade) return;
     await run('confirm', async () => {
@@ -514,9 +531,8 @@ function BillingOwnerBody({ org, refresh, billingBase, teamsHref }: { org: Organ
     });
   }
   return <>
-    <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, founding, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} justChose={justChose} cardWindowOpen={isFoundingSeasonCardWindowOpen()} foundingActive={isFoundingSeasonActive()} fees={<StripeFeesList key={org.id} slug={org.slug} />} />
+    <BillingBodyView snapshot={{ org, canManageBilling: true, canCancel, usage, freeTime, founding, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} justChose={justChose} detail={detail} onCloseDetail={() => setDetail(null)} cardWindowOpen={isFoundingSeasonCardWindowOpen()} foundingActive={isFoundingSeasonActive()} fees={<StripeFeesList key={org.id} slug={org.slug} />} />
     {moveTo && <PlanMoveDialog key={`${org.id}:${moveTo}`} org={{ ...org, planId: ownProfile.key }} toPlan={moveTo} returnTo={billingBase} teamsHref={teamsHref} onClose={() => setMoveTo(null)} onMoved={text => { if (live.current) { setMoveTo(null); setNotice({ tone: 'good', text }); reloadAfterAction(); } }} />}
-    {details && <PlanArticlePanel planKey={published} profile={details} readOnly billingCycle={cycle} onClose={() => setDetail(null)} onUpgrade={() => {}} upgradeLoading={null} isComingSoon={gating.status === 'ready' && gating.data[details.key] !== false} canUpgrade={false} foundingOfferHeld={false} />}
     {review && <KitDialog kind="form" title={review.kind === 'cancel' ? premium ? W.cancel.premiumTitle : W.cancel.orgTitle(org.name) : target ? W.downgrade.title(target.config.label) : W.page.sections.change} onClose={closeReview} busy={busy !== null} dirty={reason.trim().length > 0 || Boolean(downgrade?.requiresTournamentChoice && keepIds.length)}
       footerStart={cancel || downgrade ? W.cancel.footer((cancel ?? downgrade)!.retentionDays) : undefined}
       footer={<><DialogCancel>{premium && cancel ? W.change.keepPremium : W.plan.keep(ownProfile.config.label)}</DialogCancel>
