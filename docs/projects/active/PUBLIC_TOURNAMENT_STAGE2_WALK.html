@@ -1,0 +1,287 @@
+<title>Overview Moments Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one column checklist, a sign-in card on top, seven parts, paste-back at the foot. Same build as §406 and §407;
+   an optional step carries two boxes (Did it · Skipped it) so a tick says which. */
+:root {
+  --bg: #f6f7f4; --surface: #ffffff; --ink: #1d2420; --muted: #5a6560; --line: #d9ded8;
+  --accent: #2f6b4f; --accent-soft: #e3efe8; --warn: #8a5a00; --warn-soft: #fbf0d9; --bad: #9b2c2c; --bad-soft: #f8e2e2;
+  --display: "Fraunces", Georgia, serif; --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151a17; --surface: #1e2521; --ink: #e6ebe7; --muted: #9aa69f; --line: #34403a;
+  --accent: #7cc3a0; --accent-soft: #233a2f; --warn: #e8b45a; --warn-soft: #3a2f1a; --bad: #f08a8a; --bad-soft: #3d2222; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #151a17; --surface: #1e2521; --ink: #e6ebe7; --muted: #9aa69f; --line: #34403a;
+  --accent: #7cc3a0; --accent-soft: #233a2f; --warn: #e8b45a; --warn-soft: #3a2f1a; --bad: #f08a8a; --bad-soft: #3d2222; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body); }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
+h1 { font: 600 1.9rem/1.15 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 600 1.25rem/1.25 var(--display); margin: 0; text-wrap: balance; }
+.eyebrow { font: 600 .75rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+p { margin: 0; max-width: 65ch; }
+.intro { display: grid; gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; }
+.card dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.card dt { color: var(--muted); }
+.card dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .card dl { grid-template-columns: 1fr; } .card dd { padding-bottom: 6px; } }
+code, .mono { font-family: var(--mono); font-size: .86em; overflow-wrap: anywhere; }
+.facts { display: grid; gap: 8px; }
+.facts h3 { font: 600 .95rem/1.3 var(--body); margin: 0; }
+.facts ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.progress { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.bar { flex: 1 1 200px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+.part { display: grid; gap: 12px; }
+.part header { display: grid; gap: 4px; }
+.part header p { color: var(--muted); }
+.who { display: inline-block; font: 600 .8rem/1 var(--body); padding: 5px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); justify-self: start; }
+.step { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.step input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .txt { display: grid; gap: 4px; min-width: 0; }
+.step .do { font-weight: 600; }
+.step .see::before { content: "You should see: "; color: var(--muted); font-weight: 600; }
+.step .rb { color: var(--warn); font-weight: 600; }
+.step.stop { border-color: var(--warn); background: var(--warn-soft); }
+.step.done { opacity: .72; }
+.opts { display: flex; gap: 18px; flex-wrap: wrap; padding-top: 4px; }
+.opts label { display: inline-flex; gap: 8px; align-items: center; font-weight: 600; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; }
+.verdict button { font: 600 .9rem/1 var(--body); padding: 9px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button[aria-pressed="true"][data-v="pass"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.verdict button[aria-pressed="true"][data-v="issue"] { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.verdict button[aria-pressed="true"][data-v="call"] { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 70px; font: inherit; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { font: 600 .95rem/1 var(--body); padding: 11px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); }
+#summary { font-family: var(--mono); font-size: .85rem; min-height: 160px; }
+a { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+</style>
+
+<div class="wrap">
+  <div class="intro">
+    <span class="eyebrow">Owner QA · §423 · Public tournament pages Stage 2</span>
+    <h1>The Overview answers the moment you are in</h1>
+    <p><strong>What this walk is for.</strong> Stage 2 rebuilt the Overview, behind the preview switch. On <strong>game day</strong> it is a short page: Live now, Up next, Latest results, News, then the host card. <strong>Before the event</strong> it is one Register card and a short list of facts. <strong>After the event</strong> the champions come first. The club's own card appears only when the organizer has a public club page. Families and the public demo see none of this until Stage 8 turns the preview on for everyone.</p>
+    <p><strong>It passes when</strong> the preview on gives each moment its page, the numbers on the Register card match the data, a held-back division never appears anywhere, the band and the club's pages say the same word the day a champion is crowned, and with the preview off every page is exactly today's site.</p>
+  </div>
+
+  <div class="card">
+    <h2>Sign in as</h2>
+    <dl>
+      <dt>Everything</dt><dd>Nobody. A <strong>private window</strong>, signed out, so you see what a family sees. (Two optional steps in Part G use your own account <span class="mono">b2cowan@outlook.com</span>.)</dd>
+      <dt>Where</dt><dd><span class="mono">http://localhost:3000</span>, dev server running. For your phone on the same Wi-Fi: <span class="mono">http://192.168.2.200:3000</span> plus the same path.</dd>
+      <dt>Phone width</dt><dd>Your phone, or Chrome's device toolbar (Ctrl+Shift+M) at 390, then 360. Desk: 1280.</dd>
+      <dt>The switch</dt><dd>On dev the preview is on unless you turn it off. Each step links its own On or Off address. The choice sticks to that browser window.</dd>
+      <dt>Fixtures</dt><dd>The seven made-up and demo organizers below. Dates are set around the day they were seeded (2026-10-28). <strong>If you walk on a later day, re-seed first:</strong> <span class="mono">node --env-file=.env.local scripts/seed-public-frame-fixtures.mjs</span>, or ask me.</dd>
+      <dt>The scripts</dt><dd>Parts B and F use Stage 1's game script, <span class="mono">.probe/stage1walk/walk.mjs live | new | undo</span>. Parts C, F and G use Stage 2's, <span class="mono">.probe/stage2walk/walk.mjs withhold | unwithhold | crown | uncrown | closesite | opensite | show</span> (dev only). Run them in a terminal at the project folder, or ask me in the chat and I run them and read the result back.</dd>
+    </dl>
+  </div>
+
+  <div class="card facts">
+    <h3>The organizers in this walk</h3>
+    <ul>
+      <li><strong>Lakeshore Lightning Fall Classic</strong>: a club's tournament, game day (second day). Nothing in play until you start a game.</li>
+      <li><strong>Cedar Valley Winter Warm-up</strong>: a club's tournament three weeks away, registration open, 10 of 16 spots taken.</li>
+      <li><strong>Hamilton-Wentworth Spring Invitational</strong>: a club's tournament with the long name, starts this Friday.</li>
+      <li><strong>Pinecrest Harvest Cup</strong>: a tournament-only organizer; its last day is today, the final is played and the champion is crowned.</li>
+      <li><strong>Northfield Fall Ball</strong> (free, finished, no champion), <strong>Metro Spring Showcase</strong> (tournament-only, game day) and the <strong>Riverdale demo</strong> (on dev, both divisions held back).</li>
+    </ul>
+    <h3>What the Overview never shows now</h3>
+    <ul>
+      <li>An “Event Snapshot”, a “Tournament Day” heading, a row of Explore buttons, or the old Follow-a-team bar.</li>
+      <li>A follow button or an alerts control in an ordinary browser tab: following lives in the installed app only.</li>
+      <li>An empty card. A part with nothing in it is simply not there.</li>
+    </ul>
+  </div>
+
+  <div class="card facts">
+    <h3>Not in this walk</h3>
+    <ul>
+      <li>The installed app's own Overview (the “Follow this tournament” line shows only there). It needs a secure address, which the dev server over Wi-Fi is not.</li>
+      <li>A club's “Open now at …” list with real sign-ups: no dev club has one open. Its words are pinned by unit tests. Part G has an optional step if you have one.</li>
+      <li>Tab order, tabs that appear and disappear, and Rules as tap-open sections: Stage 6. The bracket's move and Standings pinning: Stage 4.</li>
+      <li>The Schedule's controls and a game's page redraw: Stage 3.</li>
+      <li>The club home and Tournaments tab now say “Finished” for a crowned event even with the preview off (the club's pages are live today). That is the one change a family can see before Stage 8; Part F shows it.</li>
+    </ul>
+  </div>
+
+  <div class="progress"><strong id="count">0 of 0 checked</strong><div class="bar" aria-hidden="true"><span id="fill"></span></div><button class="btn ghost" id="reset" type="button">Clear my ticks</button></div>
+
+  <div id="parts"></div>
+
+  <div class="card">
+    <h2>Send me the results</h2>
+    <p>Build the summary, then paste it back into the chat. Put what you saw on the read-back steps (marked “Tell me”) in that part's notes.</p>
+    <div class="actions"><button class="btn" id="build" type="button">Build summary</button><button class="btn ghost" id="copy" type="button">Copy</button></div>
+    <textarea id="summary" readonly aria-label="Walk summary"></textarea>
+  </div>
+</div>
+
+<script>
+var HOST = "http://192.168.2.200:3000";
+var LK = "/stage1-lakeshore-lightning/fall-classic";
+var LKH = "/stage1-lakeshore-lightning";
+var MT = "/stage1-metro-sports/spring-showcase";
+var NF = "/stage1-northfield/fall-ball";
+var HW = "/stage1-hamilton-wentworth/spring-invitational";
+var RV = "/riverdale-minor-ball/summer-classic";
+var CV = "/stage2-cedar-valley/winter-warmup";
+var PC = "/stage2-pinecrest/harvest-cup";
+function a(path, label) { return '<a href="' + HOST + path + '" target="_blank" rel="noopener">' + label + '</a>'; }
+function on(path, label) { return '<a href="' + HOST + '/api/public-frame?frame=on&to=' + encodeURIComponent(path) + '" target="_blank" rel="noopener">' + label + '</a>'; }
+function off(path, label) { return '<a href="' + HOST + '/api/public-frame?frame=off&to=' + encodeURIComponent(path) + '" target="_blank" rel="noopener">' + label + '</a>'; }
+function cmd1(mode) { return '<span class="mono">node --env-file=.env.local .probe/stage1walk/walk.mjs ' + mode + '</span>'; }
+function cmd(mode) { return '<span class="mono">node --env-file=.env.local .probe/stage2walk/walk.mjs ' + mode + '</span>'; }
+function tell(s) { return ' <span class="rb">Tell me: ' + s + '</span>'; }
+
+var PARTS = [
+  { id: "A", title: "Part A · Game day on a phone", who: "Private window, signed out · phone width (390, then 360)", note: "Lakeshore is on its second day. Nothing is in play and there are no posts, so Live now and News are absent: that is the rule, not a gap. The fixture's two finished U13 games are dated tomorrow (copied test data); that is not a fail.", steps: [
+    { stop: true, do: "Stop check. Run " + cmd1("undo") + " (or ask me), then open " + on(LK, "Lakeshore Lightning Fall Classic with the preview on") + ".", see: "Under the band and tab row, in this order: a “Playoff picture” door (“The bracket is set: see who plays who”), then “Up next” with a “Full schedule” link, then “Latest results” with an “All results” link, then a card for the host, then the footer. If you see “Tournament Day”, an “Event Snapshot”, a row of Explore buttons or the old Follow-a-team bar, stop and tell me." },
+    { do: "Read “Up next”.", see: "Two games, each with the time (9:00 a.m., 2:15 p.m.) over the day (Thu, Oct 29), both teams, and a small line under them: “Semifinal · lions park — diamond #2”. The championship reads “Winner of SF2” against “Winner of SF1” (English, not “Winner SF2”)." + tell("how far down the page the first Up next row starts, roughly, in pixels or thumb-lengths. The drawing put it near 600 px; today's page puts it near 1,950.") },
+    { do: "Read “Latest results”.", see: "Three finished games, each with “Final” over its date, the winner first and bold with the scores on the right (for example Lions U13 5, Bears U13 4). Three rows, not four." },
+    { do: "Tap one Up next row, go back, then tap one result row.", see: "Each opens that game's own page." },
+    { do: "Tap “Full schedule”, go back, “All results”, go back, “Playoff picture”.", see: "The first two open the Schedule. The last opens the Playoffs page." },
+    { do: "Scroll to the host card and tap “Visit the club”.", see: "The card shows “LL”, “Hosted by Lakeshore Lightning Softball” and “Lakeshore Lightning Softball runs teams and programs all year” (this dev club has nothing open for sign-up). The button opens the club's own home." },
+    { do: "Look for anything to follow or any bell on the Overview.", see: "In an ordinary browser tab there is no follow button, no alerts control and no star on the page: following lives in the installed app only (you ruled this). Sign in sits in the band." }
+  ]},
+  { id: "B", title: "Part B · A game in play, and its result arriving", who: "Private window, signed out · Lakeshore", steps: [
+    { stop: true, do: "Stop check. Run " + cmd1("undo") + " then " + cmd1("live") + " (or ask me). Reload " + a(LK, "Lakeshore") + ".", see: "A “Live now” heading with a 1 beside it comes first, above Up next: one card for Bears U11 against Halton Hawks U11 Jr (Johnstone), “No score yet” (never 0–0), the round or division, the field and a Directions link. The same game is no longer in Up next." },
+    { do: "Tap the card's body (not Directions), go back, then tap Directions.", see: "The body opens the game's page. Directions opens a map for the field." },
+    { do: "Run " + cmd1("new") + " (or ask me) and reload.", see: "The Live now section is gone. The game is the top row of Latest results: Final, Bears U11 5, Halton Hawks U11 Jr (Johnstone) 3, the winner bold." + tell("the top row exactly as it reads.") },
+    { do: "Run " + cmd1("undo") + " (or ask me) and reload.", see: "Back to Part A's page: no Live now, both semifinals in Up next." + tell("that you ran it; I read both games back.") }
+  ]},
+  { id: "C", title: "Part C · A schedule that is held back", who: "Private window, signed out", note: "A held-back division is one the organizer has not published. Its games must appear nowhere: not in Up next, not in Latest results, not in the Playoff door, not in the champions.", steps: [
+    { stop: true, do: "Stop check. Open " + on(RV, "the Riverdale demo with the preview on") + ".", see: "(On dev the demo still has both divisions unpublished; production re-seeds it, so this is a dev-only view.) Below the tab row there is one quiet line: “The schedule is not posted yet. Games and results show here once the organizer posts it.” No Up next, no Latest results, no Playoff picture door. If games are listed, stop and tell me." },
+    { do: "Run " + cmd("withhold") + " (or ask me): it holds back Lakeshore's U11 schedule. Reload " + a(LK, "Lakeshore") + ".", see: "Only U13 appears. No Playoff picture door (the bracket is U11's). Latest results lists three U13 games (Lions, Eagles and Hawks against Bears U13). No Bears U11, Halton Hawks U11, Milton Bats or Lions U11 game anywhere." + tell("every team name you can see on the page.") },
+    { do: "Run " + cmd("unwithhold") + " (or ask me) and reload.", see: "U11 is back: the Playoff picture door, the two semifinals in Up next." }
+  ]},
+  { id: "D", title: "Part D · Before the event", who: "Private window, signed out · phone width", note: "Cedar Valley opens in three weeks; Hamilton-Wentworth starts Friday.", steps: [
+    { stop: true, do: "Stop check. Open " + on(CV, "Cedar Valley Winter Warm-up with the preview on") + ".", see: "The band says “Registration open”. Below the tab row, in this order: one Register card, then the facts, then the host card. No Up next, no Latest results. The card reads “Starts Wed, Nov 18” with a countdown under it, then “10 of 16 team spots taken · U11 and U13”, a “Register a team” button, and one line: “Registering also sets up your free Coaches Portal … Just following along? You don't need an account.”" },
+    { do: "Read the facts under the card.", see: "Four rows, each a door: Divisions U11 · U13; Where lions park ›; Schedule “Full schedule” ›; Rules “Format and rules” ›. (Schedule reads “Posted before the event” when the organizer has not published it.)" + tell("the countdown's words exactly.") },
+    { do: "Check the numbers against the data: open " + a(CV + "/teams", "Cedar Valley's Teams page") + " and count the accepted teams.", see: "The page lists 10 accepted teams, matching “10 of 16”. The 16 is the two divisions' spots added together (8 and 8)." + tell("the count you got, or any difference.") },
+    { do: "Tap each fact row in turn (Where, Schedule, Rules), going back each time.", see: "Where opens a map. Schedule opens the Schedule. Rules opens the Rules." },
+    { do: "Tap “Register a team”.", see: "The Register page opens." },
+    { do: "Open " + on(HW, "Hamilton-Wentworth") + " at 360 wide.", see: "Band “This weekend”. The same card: “Starts Fri, Oct 30”, the spots line, the button. The long name sits in the band without breaking the card. The host card says Hamilton-Wentworth runs teams and programs all year." },
+    { do: "Scroll the Cedar Valley page to the foot.", see: "The host card, then the footer in the club's purple. “Hosted by Cedar Valley Minor Ball” in the footer." }
+  ]},
+  { id: "E", title: "Part E · After the event", who: "Private window, signed out · phone width", steps: [
+    { stop: true, do: "Stop check. Open " + on(PC, "Pinecrest Harvest Cup with the preview on") + ". Today is its last day.", see: "The band says “Finished”, not “Live now”. The first thing under the tab row is “Champions”: U11, Halton Hawks U11 Jr (Johnstone), “Beat Lions U11 7–5 in the championship”. Under it a “Final standings” door. No Up next, no Register card." },
+    { do: "Look below the champions.", see: "No host card: Pinecrest is a tournament-only organizer with no club page. The footer says “Run by Pinecrest Fastball Events” as plain text, no link." },
+    { do: "Tap “Final standings”.", see: "The Standings page opens." },
+    { do: "Open " + on(NF, "Northfield Fall Ball") + " (a finished event with no champion crowned).", see: "No champions block. Two doors instead: “Final standings” and “Game results”, so the page does not end on nothing. The footer says “Run by Northfield Sports Events”. (The free plan's banner is known.)" }
+  ]},
+  { id: "F", title: "Part F · The day a champion is crowned, and the club's own word", who: "Private window, signed out · Lakeshore (a club's tournament)", note: "You ruled that the band stops saying “Live now” once a champion is crowned, and that the club's pages follow. This part crowns Lakeshore and puts it back.", steps: [
+    { stop: true, do: "Stop check. Run " + cmd1("undo") + " (or ask me). Open " + a(LK, "Lakeshore") + " and " + a(LKH, "the club home") + " and " + a(LKH + "/tournaments", "the club's Tournaments tab") + ".", see: "All three say “Live now”: the band, the club home's Fall Classic row, and the Tournaments tab's “Current and upcoming” list." },
+    { do: "Run " + cmd("crown") + " (or ask me): it plays Lakeshore out and crowns its champion. Reload " + a(LK, "the tournament") + ".", see: "The band says “Finished”. The page is now the after-the-event page: Champions first (U11, Halton Hawks U11 Jr (Johnstone)), the Final standings door, then the host card." + tell("the band's word and the first block.") },
+    { do: "Reload " + a(LKH, "the club home") + ".", see: "The Fall Classic row says “Finished” too." },
+    { do: "Reload " + a(LKH + "/tournaments", "the club's Tournaments tab") + ".", see: "The tab opens (never a not-found page). The Fall Classic has moved out of “Current and upcoming” to the finished list, marked Finished." + tell("which list it is in.") },
+    { do: "Run " + cmd("uncrown") + " (or ask me) and reload all three.", see: "“Put back.” in the terminal. The band, the club home and the Tournaments tab are all back to “Live now”, and the Overview is game day again." + tell("that you ran it and what the band says.") }
+  ]},
+  { id: "G", title: "Part G · The host card under each kind of organizer", who: "Private window, signed out", steps: [
+    { do: "A club's tournament: look at the host card on " + a(LK, "Lakeshore") + ", " + a(CV, "Cedar Valley") + " and " + a(HW, "Hamilton-Wentworth") + ".", see: "Each shows the club's mark and name, “… runs teams and programs all year” (nothing is open on dev), and a “Visit the club” button that opens the club's home." },
+    { do: "A tournament-only organizer: look at the foot of " + a(MT, "Metro") + ", " + a(PC, "Pinecrest") + " and " + a(NF, "Northfield") + ".", see: "No host card. The footer says “Run by …” as plain text." },
+    { do: "A club whose public site is switched off. Run " + cmd("closesite") + " (or ask me) and reload " + a(LK, "Lakeshore") + ".", see: "The tournament page still loads. The host card is gone and the footer now reads “Run by Lakeshore Lightning Softball” as plain text." + tell("what the footer says and whether the card is gone.") },
+    { do: "Run " + cmd("opensite") + " (or ask me) and reload.", see: "The host card is back." + tell("that you ran it; I read the club site back as on.") },
+    { opt: true, do: "A club with something open for sign-up. No dev club has an open league sign-up or tryout, so the “Open now at …” list cannot be walked here; its words are pinned by unit tests. If you have a club with one, open its tournament.", see: "“Open now at {club}” and up to three rows, each a link to that sign-up, above the “Visit the club” button." },
+    { opt: true, do: "The organizer's own preview. Signed in as b2cowan@outlook.com, open Live Demo — Game Day's admin preview (Public site → “See your public site”).", see: "The same page as a family sees, but: no follow line, no Register button, no “Visit the club” button (the host shows as plain text)." }
+  ]},
+  { id: "H", title: "Part H · The desk, and the in-between", who: "Private window, signed out · 1280 wide, then 960, then a phone", steps: [
+    { do: "At 1280 wide open " + on(LK, "Lakeshore") + ".", see: "Two columns under the tab row. On the left: Playoff picture, Up next. On the right: Latest results and the host card. The band carries “Hosted by Lakeshore Lightning Softball” on its right." },
+    { do: "At 1280 open " + on(CV, "Cedar Valley") + ".", see: "The Register card and the facts on the left; the host card on the right." },
+    { do: "At 1280 open " + on(PC, "Pinecrest") + ".", see: "Champions and the Final standings door on the left; nothing on the right (no host card)." },
+    { do: "At 960 wide (between the phone and the desk) open Lakeshore again.", see: "One centred column in the phone's order, the white tab row as on a phone, no sideways scroll and nothing cut off." },
+    { do: "On a phone, check Lakeshore, Cedar Valley and Pinecrest for sideways scrolling.", see: "None. Every tap row is easy to hit with a thumb." }
+  ]},
+  { id: "I", title: "Part I · The results line", who: "Private window, signed out · Lakeshore", steps: [
+    { do: "With the preview on, open " + a(LK, "the Overview") + " and look under the tab row.", see: "No scrolling-results line on the Overview: Live now, Up next and Latest results carry it." },
+    { do: "Open " + a(LK + "/schedule", "Schedule") + ", then Standings, Teams, Playoffs, News and Rules, then tap a game.", see: "The quiet results line is still there on every one of those pages and on a game's page (it leaves them in Stage 3)." },
+    { do: "Turn the preview off with " + off(LK, "Lakeshore, preview off") + ".", see: "The old strip is back across the top of the Overview, as it was." }
+  ]},
+  { id: "J", title: "Part J · With the preview off, nothing changed", who: "Private window, signed out", steps: [
+    { do: "Still off, look at the Overview: " + off(LK, "Lakeshore") + ".", see: "Today's page: the old event header, the old Tournament Day section with its Event Snapshot, the Explore buttons, the old scrolling strip. No colour band, no white tab row." },
+    { do: "Open " + off(CV, "Cedar Valley") + " and " + off(PC, "Pinecrest") + " with the preview off.", see: "Cedar Valley has the old pre-event hero and panel (two Register blocks). Pinecrest has the old champion banner. Neither shows a host card or a facts list." },
+    { do: "Open " + a("/demos", "the demos page") + " and go into the tournament demo.", see: "Riverdale as it looks on the live site today. (Leaving the demo's pages ends its session.)" }
+  ]},
+  { id: "K", title: "Part K · Putting things back", who: "Terminal, or ask me", steps: [
+    { do: "Run " + cmd("uncrown") + ", " + cmd("unwithhold") + " and " + cmd("opensite") + ", then " + cmd("show") + " (or ask me to).", see: "“Put back.” (or no crown to undo), both divisions “schedule published”, “club site is_public: true”." + tell("the show output.") },
+    { do: "Close the private window. If you want every fixture date moved to today, re-seed with node --env-file=.env.local scripts/seed-public-frame-fixtures.mjs.", see: "Nothing to see: this is housekeeping." + tell("that you did it.") }
+  ]}
+];
+
+
+var KEY = "qa-423-stage2-overview-walk-v1";
+var state = { ticks: {}, verdict: {}, notes: {} };
+try { var saved = JSON.parse(localStorage.getItem(KEY) || "null"); if (saved) state = saved; } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+var root = document.getElementById("parts");
+var total = 0;
+PARTS.forEach(function (p) {
+  var sec = document.createElement("section"); sec.className = "part";
+  var html = '<header><h2>' + p.title + '</h2><span class="who">' + p.who + '</span>' + (p.note ? '<p>' + p.note + '</p>' : '') + '</header>';
+  p.steps.forEach(function (s, i) {
+    var id = p.id + (i + 1); total++;
+    if (s.opt) {
+      html += '<div class="step" id="row-' + id + '"><span></span><span class="txt"><span class="do">' + id + ' · Optional. ' + s.do + '</span><span class="see">' + s.see + '</span>' +
+        '<span class="opts"><label><input type="checkbox" id="cb-' + id + '" data-id="' + id + '"> Did it</label><label><input type="checkbox" id="cb-' + id + 's" data-id="' + id + 's"> Skipped it</label></span></span></div>';
+    } else {
+      html += '<label class="step' + (s.stop ? ' stop' : '') + '" id="row-' + id + '"><input type="checkbox" id="cb-' + id + '" data-id="' + id + '"><span class="txt"><span class="do">' + id + ' · ' + s.do + '</span><span class="see">' + s.see + '</span></span></label>';
+    }
+  });
+  html += '<div class="verdict" role="group" aria-label="' + p.title + ' verdict">' +
+    '<button type="button" data-p="' + p.id + '" data-v="pass" aria-pressed="false">Pass</button>' +
+    '<button type="button" data-p="' + p.id + '" data-v="issue" aria-pressed="false">Issue</button>' +
+    '<button type="button" data-p="' + p.id + '" data-v="call" aria-pressed="false">Needs a call</button></div>' +
+    '<textarea id="notes-' + p.id + '" data-p="' + p.id + '" placeholder="Notes for ' + p.title + ' (what you saw, anything odd)"></textarea>';
+  sec.innerHTML = html; root.appendChild(sec);
+});
+
+function stepDone(id) { return !!(state.ticks[id] || state.ticks[id + "s"]); }
+function render() {
+  var n = 0;
+  document.querySelectorAll("input[type=checkbox][data-id]").forEach(function (cb) { cb.checked = !!state.ticks[cb.dataset.id]; });
+  PARTS.forEach(function (p) { p.steps.forEach(function (s, i) {
+    var id = p.id + (i + 1), d = stepDone(id); if (d) n++;
+    document.getElementById("row-" + id).classList.toggle("done", d);
+  }); });
+  document.querySelectorAll(".verdict button").forEach(function (b) { b.setAttribute("aria-pressed", String(state.verdict[b.dataset.p] === b.dataset.v)); });
+  document.querySelectorAll("textarea[data-p]").forEach(function (t) { t.value = state.notes[t.dataset.p] || ""; });
+  document.getElementById("count").textContent = n + " of " + total + " checked";
+  document.getElementById("fill").style.width = (total ? (100 * n / total) : 0) + "%";
+}
+root.addEventListener("change", function (e) {
+  var id = e.target.dataset && e.target.dataset.id; if (!id) return;
+  state.ticks[id] = e.target.checked;
+  if (e.target.checked) { var other = /s$/.test(id) ? id.slice(0, -1) : id + "s"; if (document.getElementById("cb-" + other)) state.ticks[other] = false; }
+  save(); render();
+});
+root.addEventListener("click", function (e) { var b = e.target.closest(".verdict button"); if (!b) return; state.verdict[b.dataset.p] = state.verdict[b.dataset.p] === b.dataset.v ? null : b.dataset.v; save(); render(); });
+root.addEventListener("input", function (e) { if (e.target.dataset.p && e.target.tagName === "TEXTAREA") { state.notes[e.target.dataset.p] = e.target.value; save(); } });
+document.getElementById("reset").addEventListener("click", function () { state = { ticks: {}, verdict: {}, notes: {} }; save(); render(); });
+var WORD = { pass: "PASS", issue: "ISSUE", call: "NEEDS A CALL" };
+document.getElementById("build").addEventListener("click", function () {
+  var lines = ["§423 · Stage 2 · The Overview answers the moment you are in"], all = 0;
+  PARTS.forEach(function (p) {
+    var ids = p.steps.map(function (s, i) { return p.id + (i + 1); });
+    var done = ids.filter(stepDone).length; all += done;
+    var missing = ids.filter(function (id) { return !stepDone(id); });
+    var skipped = ids.filter(function (id) { return state.ticks[id + "s"]; });
+    lines.push(p.title + " [" + (WORD[state.verdict[p.id]] || "no verdict") + "] " + done + "/" + ids.length +
+      (missing.length ? " · unticked: " + missing.join(", ") : "") + (skipped.length ? " · skipped: " + skipped.join(", ") : ""));
+    if (state.notes[p.id]) lines.push("  Notes: " + state.notes[p.id].replace(/\n+/g, " / "));
+  });
+  lines.splice(1, 0, "Checked " + all + " of " + total);
+  document.getElementById("summary").value = lines.join("\n");
+});
+document.getElementById("copy").addEventListener("click", function () {
+  var t = document.getElementById("summary");
+  if (!t.value) document.getElementById("build").click();
+  try { navigator.clipboard.writeText(t.value).catch(function () { t.select(); }); } catch (e) { t.select(); }
+});
+render();
+</script>
