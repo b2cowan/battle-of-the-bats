@@ -15,6 +15,11 @@ import { requestHost } from './request-host';
  *   <Link href={href('/teams')}>Teams</Link>      // the club's home is href() or href('/')
  */
 export async function orgLinks(orgSlug: string): Promise<(path?: string) => string> {
-  const ownHost = !isOwnHost(await requestHost());
+  const ownHost = await onClubOwnAddress();
   return (path = '') => orgHref({ slug: orgSlug, ownHost }, path);
+}
+
+/** The visitor is on a club's own web address (not ours): the `{ ownHost }` the club-link loaders take. */
+export async function onClubOwnAddress(): Promise<boolean> {
+  return !isOwnHost(await requestHost());
 }

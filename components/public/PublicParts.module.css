@@ -166,6 +166,8 @@ a.row:hover .teams { text-decoration: underline; }
   text-decoration: none;
 }
 .door:hover { border-color: var(--club-line-2); }
+/* The label (and its sub-line) is one cell centred on the chevron's two rows, so a door with no sub-line does not sit high. */
+.door > span:first-child { grid-row: 1 / 3; align-self: center; }
 .door:focus-visible, .row:focus-visible, .headLink:focus-visible, .gameLink:focus-visible {
   outline: 2px solid var(--club-edge);
   outline-offset: 2px;
@@ -203,9 +205,28 @@ a.row:hover .teams { text-decoration: underline; }
   flex-direction: column;
   gap: 10px;
 }
-/* The desk's columns and edges are Part 3's; until then the phone's column, held to a readable width. */
+/* A phone is one column in reading order: the main column, then the side column. From 1,024 px (the desk, where the white
+   rail carries the tabs) they stand side by side, as the hub's desk frame draws them (padding 28 / 32, columns 1.35 : 1,
+   gaps 28 and 24). Between 901 and 1,023 px Stage 1 keeps the phone's white tab row, so the page stays one column. */
+.cols {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.colMain, .colSide {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
 @media (min-width: 1024px) {
-  .overview { padding: 24px 32px; max-width: 760px; }
+  .overview { padding: 28px 32px; }
+  .cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+  }
 }
 
 /* ── Inside the installed app only (owner 2026-10-28: following lives in the app) — the band's `browserOnly` turned
@@ -323,3 +344,219 @@ a.row:hover .teams { text-decoration: underline; }
   font: 400 0.875rem/1.45 var(--club-text-face);
   color: var(--club-soft);
 }
+
+/* ── The Register card (before the event; hub "Before the event, phone browser" `.reg`): the start, the countdown, the
+   spots and the button in one card ────────────────────────────────────────────────────────────────────────────────── */
+.regCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--club-card);
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+  color: var(--club-text);
+}
+.regStarts {
+  font: 500 0.875rem/1.35 var(--club-text-face);
+  color: var(--club-dim);
+}
+.regCount {
+  /* A line tall before the browser fills it in (the countdown is browser-only, components/public/Countdown.tsx). */
+  min-height: 2rem;
+  font: 700 2rem/1 var(--club-title-face);
+  font-variant-numeric: tabular-nums;
+}
+.regSpots {
+  margin: 0;
+  font: 500 0.875rem/1.4 var(--club-text-face);
+  color: var(--club-soft);
+}
+.regNote {
+  margin: 0;
+  font: 400 0.875rem/1.45 var(--club-text-face);
+  color: var(--club-dim);
+}
+.cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 20px;
+  background: var(--club-fill);
+  border: 1.5px solid var(--club-edge);
+  border-radius: 8px;
+  color: var(--club-on-fill);
+  font: 600 1rem/1 var(--club-text-face);
+  text-decoration: none;
+}
+.cta:focus-visible, .hostBtn:focus-visible, .openLink:focus-visible, .factLink:focus-visible {
+  outline: 2px solid var(--club-edge);
+  outline-offset: 2px;
+}
+
+/* ── The facts list (`dl` in a card): a label, its answer, a door where there is one ────────────────────────────────── */
+.facts {
+  margin: 0;
+  background: var(--club-card);
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+}
+.fact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 4px 16px;
+  border-bottom: 1px solid var(--club-line);
+  font: 400 1rem/1.3 var(--club-text-face);
+  color: var(--club-text);
+}
+.fact:last-child { border-bottom: 0; }
+.fact dt { flex: none; color: var(--club-soft); }
+.fact dd {
+  margin: 0;
+  min-width: 0;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.factLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--club-ink);
+  text-decoration: none;
+}
+.factLink:hover { text-decoration: underline; }
+.factSoft { font-weight: 500; color: var(--club-soft); }
+.factMore {
+  display: block;
+  font: 400 0.875rem/1.3 var(--club-text-face);
+  color: var(--club-dim);
+}
+
+/* ── The host card (plan §6, Ask B; hub `.host`): the club as advertising. The club's own colour, not the event's —
+   `--club-host-*` are written on the card from the organizer's colours; without them it wears the event's. ─────────── */
+.host {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--club-card);
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+  color: var(--club-text);
+}
+.hostHead { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.hostHead > div { min-width: 0; }
+.hostHead small {
+  display: block;
+  font: 500 0.75rem/1.2 var(--club-text-face);
+  color: var(--club-dim);
+}
+.hostName {
+  display: block;
+  font: 700 1.25rem/1.1 var(--club-title-face);
+  overflow-wrap: anywhere;
+}
+.hostTile, .hostLogo {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+}
+.hostTile {
+  display: grid;
+  place-items: center;
+  background: var(--club-host-fill, var(--club-fill));
+  color: var(--club-host-on, var(--club-on-fill));
+  font: 700 1rem/1 var(--club-title-face);
+  letter-spacing: 0.02em;
+}
+.hostLogo { object-fit: contain; }
+.openHead {
+  margin: 0;
+  font: 700 1rem/1.25 var(--club-text-face);
+}
+.openList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--club-card);
+  border: 1px solid var(--club-line);
+  border-left: 3px solid var(--club-host-edge, var(--club-edge));
+  border-radius: 0 8px 8px 0;
+}
+.openList > li { border-bottom: 1px solid var(--club-line); }
+.openList > li:last-child { border-bottom: 0; }
+.openItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 60px;
+  padding: 8px 16px;
+  font: 600 1rem/1.3 var(--club-text-face);
+  color: var(--club-text);
+  text-decoration: none;
+}
+.openItem small {
+  display: block;
+  font: 400 0.875rem/1.3 var(--club-text-face);
+  color: var(--club-dim);
+}
+.openLink::after { content: '›'; font-size: 1.25rem; color: var(--club-dim); }
+.hostLine {
+  margin: 0;
+  font: 400 0.875rem/1.45 var(--club-text-face);
+  color: var(--club-soft);
+}
+.hostBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 20px;
+  background: var(--club-host-fill, var(--club-fill));
+  border: 1.5px solid var(--club-host-edge, var(--club-edge));
+  border-radius: 8px;
+  color: var(--club-host-on, var(--club-on-fill));
+  font: 600 1rem/1 var(--club-text-face);
+  text-decoration: none;
+}
+
+/* ── The champions (after the event; hub "Champions" `.champ`): the division, the team, the score ───────────────────── */
+.champList { display: flex; flex-direction: column; gap: 12px; }
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  background: var(--club-card);
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+  color: var(--club-text);
+}
+.champKicker {
+  font: 600 0.75rem/1.2 var(--club-text-face);
+  color: var(--club-dim);
+}
+.champName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font: 700 1.5rem/1.1 var(--club-title-face);
+  overflow-wrap: anywhere;
+}
+.champName svg { flex: none; color: var(--club-ink); }
+.champBeat {
+  margin: 0;
+  font: 400 0.875rem/1.45 var(--club-text-face);
+  color: var(--club-soft);
+}
+.doorList { display: flex; flex-direction: column; gap: 8px; }

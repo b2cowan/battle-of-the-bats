@@ -28,10 +28,17 @@ import CountUp from '@/components/public/CountUp';
 import Countdown from '@/components/public/Countdown';
 import FollowTournamentStrip from '@/components/public/FollowTournamentStrip';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
-import { orgLinks } from '@/lib/org-links';
+import { orgLinks, onClubOwnAddress } from '@/lib/org-links';
 import { isPublicFrameOn, publicTournamentContactEmail } from '@/lib/public-frame-server';
 import { TOURNAMENT_STATUS_WORD } from '@/lib/club-site-home';
 import { tournamentMoment } from '@/lib/tournament-moment';
+import { preEventFacts, registerCardView, teamSpotsLine, totalSpots } from '@/lib/public-pre-event';
+import { championCards, hostCardView } from '@/lib/public-host-card';
+import { loadHostClubOpenNow } from '@/lib/club-home-data';
+import { publicFrameHost } from '@/lib/public-frame';
+import { resolveOrgHomeHref } from '@/lib/module-entitlements';
+import { clubColourRoles } from '@/lib/club-colour-roles';
+import { directionsHref } from '@/lib/family-schedule-format';
 import TournamentOverview from '@/components/public/TournamentOverview';
 import styles from '@/app/[orgSlug]/Home.module.css';
 
@@ -95,38 +102,92 @@ export default async function TournamentHomeContent({
   const showTeamsPage = isPublicPageEnabled(tournament, 'teams');
   const showRulesPage = isPublicPageEnabled(tournament, 'rules');
 
-  // Public tournament pages Stage 2: under the frame, game day is the new body (TournamentOverview), fed by what is
-  // loaded above. Everything below is today's Overview, untouched, which Stage 8 deletes; before and after the event keep
-  // it until Part 3 draws them.
+  // Public tournament pages Stage 2: under the frame, all three moments — before the event, game day, after it — are
+  // the new body (TournamentOverview), fed by what is loaded above and worded by lib/public-pre-event.ts and
+  // lib/public-host-card.ts. Everything below is today's Overview, untouched, which Stage 8 deletes.
   if (frameOn) {
     const moment = tournamentMoment({
       tournament, today: now, games: allGames, divisions, scheduleWithheld,
       registrationOpen: registerOn && !!registration.cta,
     });
-    if (moment.moment === 'gameDay') {
-      const frameScheduleHref = `${isPreview ? previewBase : publicBase}/schedule`;
-      return (
-        <TournamentOverview
-          orgSlug={orgSlug}
-          tournamentSlug={tournamentSlug}
-          tournament={tournament}
-          isPreview={isPreview}
-          today={now}
-          games={allGames}
-          teamName={id => teams.find(t => t.id === id)?.name ?? 'TBD'}
-          divisions={divisions}
-          venues={venues}
-          announcements={announcements}
-          scheduleWithheld={scheduleWithheld}
-          showSchedulePage={showSchedulePage}
-          showNewsPage={showNewsPage}
-          playoffPictureHref={moment.bracketSet && showStandingsPage && !isPreview ? `${publicBase}/playoffs` : null}
-          scheduleHref={frameScheduleHref}
-          newsHref={`${isPreview ? previewBase : publicBase}/news`}
-          gameHref={id => (isPreview ? frameScheduleHref : `${frameScheduleHref}/${id}`)}
-        />
-      );
-    }
+    const frameBase = isPreview ? previewBase : publicBase;
+    const frameScheduleHref = `${frameBase}/schedule`;
+    const frameDivisions = [...divisions].sort((a, b) => a.order - b.order);
+    const frameDivisionNames = frameDivisions.map(d => d.name);
+
+    // Before the event: the Register card (today's two inline blocks, one) and the facts list.
+    const startDay = tournament.startDate ?? null;
+    const firstGame = sortedGames.find(g => g.status === 'scheduled' && (!startDay || g.date >= startDay));
+    const register = moment.moment === 'before'
+      ? registerCardView({
+          startDate: startDay,
+          firstPitchISO: heroFirstPitchISO(firstGame?.time ? firstGame.date : startDay, firstGame?.time),
+          spotsLine: teamSpotsLine({
+            inviteOnly, showTeamsPage, accepted: teams.length,
+            capacity: totalSpots(divisions, inviteOnly), divisionNames: frameDivisionNames,
+          }),
+          registration, registerOn, registerHref: `${frameBase}/register`, isPreview,
+        })
+      : null;
+    const facts = moment.moment === 'before'
+      ? preEventFacts({
+          divisionNames: frameDivisionNames,
+          venue: venues[0] ? { name: venues[0].name, href: directionsHref(venues[0].address ?? null), others: venues.length - 1 } : null,
+          showSchedulePage, hasVisibleGames: allGames.length > 0, scheduleHref: frameScheduleHref,
+          showRulesPage, rulesHref: `${frameBase}/rules`,
+        })
+      : [];
+
+    // After the event: the champions of the games families can see, then the doors.
+    const champions = moment.moment === 'after'
+      ? championCards(deriveTierChampions(allGames, teams, frameDivisions), divisions.length > 1)
+      : [];
+    const afterDoors = moment.moment === 'after'
+      ? [
+          ...(showStandingsPage ? [{ href: `${frameBase}/standings`, label: 'Final standings' }] : []),
+          // No champion to lead with (a round robin): the results are the way in, rather than a page that ends.
+          ...(champions.length === 0 && showSchedulePage ? [{ href: frameScheduleHref, label: 'Game results' }] : []),
+        ]
+      : [];
+
+    // The host card (Ask 4 / Ask B): the club's own Open now list, asked only when the club's public site is open and its
+    // plan has one; the door is the layout's own answer (lib/public-frame.ts publicFrameHost), so the card, the band and the
+    // footer cannot disagree. A failed read costs the card, never the page.
+    const openNow = await loadHostClubOpenNow(org, orgSlug, { ownHost: await onClubOwnAddress() }).catch(() => null);
+    const host = openNow === null ? null : hostCardView({
+      host: publicFrameHost(org.name, tournament.name, await resolveOrgHomeHref(org).catch(() => null)),
+      openNow, logoUrl: org.logoUrl ?? null, isPreview, clubHref: href(),
+    });
+    const clubRoles = clubColourRoles(org.themePreset, org.themePrimary, org.themeAccent);
+
+    return (
+      <TournamentOverview
+        orgSlug={orgSlug}
+        tournamentSlug={tournamentSlug}
+        tournament={tournament}
+        isPreview={isPreview}
+        moment={moment.moment}
+        today={now}
+        games={allGames}
+        teamName={id => teams.find(t => t.id === id)?.name ?? 'TBD'}
+        divisions={divisions}
+        venues={venues}
+        announcements={announcements}
+        scheduleWithheld={scheduleWithheld}
+        showSchedulePage={showSchedulePage}
+        showNewsPage={showNewsPage}
+        playoffPictureHref={moment.bracketSet && showStandingsPage && !isPreview ? `${publicBase}/playoffs` : null}
+        scheduleHref={frameScheduleHref}
+        newsHref={`${frameBase}/news`}
+        gameHref={id => (isPreview ? frameScheduleHref : `${frameScheduleHref}/${id}`)}
+        register={register}
+        facts={facts}
+        champions={champions}
+        afterDoors={afterDoors}
+        host={host}
+        hostColours={{ fill: clubRoles.fill, onFill: clubRoles.onFill, edge: clubRoles.edge }}
+      />
+    );
   }
 
   // Honor the tournament's "show contact email publicly" privacy toggle and resolve

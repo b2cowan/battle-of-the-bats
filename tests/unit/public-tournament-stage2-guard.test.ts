@@ -11,7 +11,8 @@ import { filesUnder, readCode, readSource } from './_source-code.ts';
  */
 
 const HOME = 'components/public/TournamentHomeContent.tsx';
-const PARTS = ['PublicGameRow', 'PublicLiveCard', 'PublicSectionHead', 'PublicDoorRow', 'PublicPostList', 'FollowTournamentLine', 'TournamentOverview'];
+const PARTS = ['PublicGameRow', 'PublicLiveCard', 'PublicSectionHead', 'PublicDoorRow', 'PublicPostList', 'FollowTournamentLine', 'TournamentOverview',
+  'PublicRegisterCard', 'PublicFactsList', 'PublicHostCard', 'PublicChampions'];
 /** The files that may draw the shared parts: each renders only with the switch on (Part 2: the frame-on body, and the
  *  old Overview's one frame branch that hands over to it — held below). */
 const FRAME_ONLY_USERS = ['components/public/TournamentOverview.tsx', HOME];
@@ -72,11 +73,12 @@ describe('the host card\'s Open now list (Ask 4 / Ask B)', () => {
 });
 
 describe('game day (Part 2): the new body is the frame\'s alone, and the old one is untouched', () => {
-  it('the old Overview hands over only inside its frame branch, and only on game day', () => {
+  it('the old Overview hands over only inside its frame branch, for every moment (Part 3: before and after too)', () => {
     const home = readCode(HOME);
     const branch = home.slice(home.indexOf('if (frameOn) {'), home.indexOf('// Honor the tournament'));
-    assert.match(branch, /if \(moment\.moment === 'gameDay'\) \{/);
     assert.match(branch, /<TournamentOverview/);
+    assert.match(branch, /moment={moment.moment}/);
+    assert.doesNotMatch(branch, /if (moment.moment === 'gameDay')/, 'a moment must not fall back to the old body');
     assert.equal(home.split('<TournamentOverview').length, 2, 'one hand-over, inside the branch');
   });
   it('Up next, Latest results and Live now come from the games families can see (a held-back division never, D1)', () => {
@@ -112,5 +114,54 @@ describe('the ticker leaves the Overview (Ask 17)', () => {
     assert.match(line, /return pageCarriesTicker\(pathname, [^)]*\) \? <ResultsLine \/> : null;/);
     const layout = readCode('app/[orgSlug]/[tournamentSlug]/layout.tsx');
     assert.match(layout, /\{!frameOn && <ScoreTicker \/>\}/);
+  });
+});
+
+
+describe('before and after the event, and the host card (Part 3)', () => {
+  const branch = () => {
+    const home = readCode(HOME);
+    return home.slice(home.indexOf('if (frameOn) {'), home.indexOf('// Honor the tournament'));
+  };
+  it('the champions come from the games families can see, and a round robin still has a way in', () => {
+    assert.match(branch(), /deriveTierChampions\(allGames, teams, frameDivisions\)/);
+    assert.match(branch(), /champions\.length === 0 && showSchedulePage/);
+  });
+  it("the spots count follows the team list's visibility, the capacity never does", () => {
+    assert.match(branch(), /teamSpotsLine\(\{\s*inviteOnly, showTeamsPage, accepted: teams\.length,/);
+    const lib = readCode('lib/public-pre-event.ts');
+    assert.match(lib, /if \(showTeamsPage && capacity\)/);
+    assert.match(lib, /else if \(!showTeamsPage && capacity\)/);
+  });
+  it("the Register button is never drawn in the organizer's admin preview", () => {
+    assert.match(readCode('lib/public-pre-event.ts'), /const open = i\.registerOn && !i\.isPreview && i\.registration\.cta !== null;/);
+  });
+  it("the host card: only after the club's access question answered, through the door the band and footer use, and plain text in the preview", () => {
+    const b = branch();
+    assert.match(b, /await loadHostClubOpenNow\(org, orgSlug, \{ ownHost: await onClubOwnAddress\(\) \}\)\.catch\(\(\) => null\)/);
+    assert.match(b, /openNow === null \? null : hostCardView\(/);
+    assert.match(b, /publicFrameHost\(org\.name, tournament\.name, await resolveOrgHomeHref\(org\)/);
+    const view = readCode('lib/public-host-card.ts');
+    assert.match(view, /if \(i\.host\?\.kind !== 'hosted' \|\| i\.openNow === null\) return null;/);
+    assert.match(view, /href: i\.isPreview \? null : i\.clubHref/);
+  });
+  it("the host card wears the club's colours as custom properties only (no colour is written in the component)", () => {
+    const card = readCode('components/public/PublicHostCard.tsx');
+    assert.doesNotMatch(card, /#[0-9a-fA-F]{3,8}\b/);
+    for (const v of ['--club-host-fill', '--club-host-on', '--club-host-edge']) assert.match(card, new RegExp(v));
+  });
+  it('the buttons and links are 44 px or more, and the countdown is a tabular figure', () => {
+    const css = readSource('components/public/PublicParts.module.css');
+    for (const sel of ['cta', 'hostBtn']) assert.match(css, new RegExp(`\\.${sel} \\{[^}]*min-height: 44px`), sel);
+    assert.match(css, /\.factLink \{[^}]*min-height: 44px/);
+    assert.match(css, /\.openItem \{[^}]*min-height: 60px/);
+    assert.match(css, /\.regCount \{[^}]*font-variant-numeric: tabular-nums/);
+  });
+  it('a desk stands the two columns side by side from 1,024 px, and a phone stacks them main-then-side', () => {
+    const css = readSource('components/public/PublicParts.module.css');
+    assert.match(css, /@media \(min-width: 1024px\) \{\s*\.overview \{ padding: 28px 32px; \}\s*\.cols \{\s*display: grid;\s*grid-template-columns: minmax\(0, 1\.35fr\) minmax\(0, 1fr\);/);
+    const overview = readCode('components/public/TournamentOverview.tsx');
+    assert.match(overview, /const main = moment === 'before' \? \[registerEl, factsEl\] : gameDay \? \[liveEl, playoffDoorEl, upNextEl, withheldEl\] : \[championsEl, afterDoorsEl\];/);
+    assert.match(overview, /const side = moment === 'before' \? \[hostEl, newsEl\] : gameDay \? \[latestEl, newsEl, hostEl\] : \[hostEl\];/);
   });
 });
