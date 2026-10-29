@@ -23,10 +23,10 @@ import { cssRule, filesUnder, openingTags, parseProps, readCode, splitPhoneCss, 
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-const KIT = 'components/admin/kit/club/KitDialog.tsx';
+const KIT = 'components/shared/KitDialog.tsx';
 const kitSource = readSource(KIT);
 const kit = stripComments(kitSource);
-const kitCss = readCode('components/admin/kit/club/KitDialog.module.css');
+const kitCss = readCode('components/shared/KitDialog.module.css');
 const shell = readCode('components/coaches/QuestionShell.tsx');
 const coachesCss = readCode('app/[orgSlug]/coaches/coaches.module.css');
 const zOf = (selector: string): number => {

@@ -56,6 +56,10 @@ describe('closed-plan availability words', () => {
     const surfaces = [
       'app/[orgSlug]/admin/org/billing/page.tsx',
       'components/billing/PlanArticlePanel.tsx',
+      'components/billing/BillingBody.tsx',
+      'components/billing/PlanMoveDialog.tsx',
+      'lib/plan-billing-profile.ts',
+      'lib/plan-billing-words.ts',
       'components/PricingSection.tsx',
       'app/pricing/page.tsx',
       'app/page.tsx',

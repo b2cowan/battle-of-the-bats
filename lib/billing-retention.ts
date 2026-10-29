@@ -9,18 +9,21 @@ import { tournamentToday } from './timezone';
 import { orderByKeepPriority } from './billing-downgrade-order';
 import { SLOT_STATUSES, withinFreeSlots } from './tournament-slot';
 import type { Organization, OrgPlan } from './types';
-import type { Capability } from './roles';
 import { ownPlanOf } from './entitlement-grants';
+import {
+  BILLING_RETENTION_DAYS, COACHES_PORTAL_RETENTION_DAYS,
+  organizationShutdownAreas, shortOrganizationShutdownAreas, PREMIUM_COACH_SHUTDOWN_AREAS,
+} from './billing-cancellation-policy';
+import { billingActiveTeamCount } from './billing-usage';
 
-export const BILLING_RETENTION_DAYS = 90;
 export const BILLING_RETENTION_WARNING_DAYS = 14;
 
 /** A cancelled standalone Coaches Portal is kept for a full season cycle, not the org 90 days
- *  (owner ruling 2026-09-24, BUSINESS_DECISIONS.md). Coaches cancel when the season ends and come
+ *  (owner ruling 2026-09-24, BUSINESS_DECISIONS.md; `COACHES_PORTAL_RETENTION_DAYS` in
+ *  billing-cancellation-policy). Coaches cancel when the season ends and come
  *  back for next year's tryouts 6–8 months later — a 90-day window flags the team for purge in the
  *  off-season, before they ever return. The warning leads by 30 days because an off-season coach
  *  reads email less often. */
-export const COACHES_PORTAL_RETENTION_DAYS = 365;
 export const COACHES_PORTAL_RETENTION_WARNING_DAYS = 30;
 
 /** The retentionReason every Coaches Portal cancellation record carries, whichever door ended it.
@@ -57,6 +60,8 @@ export type CancellationPreflight = {
   tournaments: BillingTournamentSummary[];
   retentionDays: number;
   shutsDown: string[];
+  shortShutsDown: string[];
+  activeTeams: number | null;
 };
 
 export type RestoreRetainedTournamentsResult = {
@@ -97,16 +102,6 @@ type RetainedTournamentRestoreRow = {
     retentionReason?: unknown;
   } | null;
 };
-
-const PREMIUM_MODULE_SHUTDOWN_COPY: Partial<Record<Capability, string>> = {
-  module_public_site: 'Public organization site',
-  module_house_league: 'House league seasons, registration, schedules, and standings',
-  module_rep_teams: 'Rep teams tryouts, rosters, coach portal, and player documents',
-  module_accounting: 'Accounting ledgers, invoices, budgets, and reconciliation',
-  module_families: 'The Families area — household records, the family worklist, and duplicate review',
-};
-
-const PREMIUM_MODULES = Object.keys(PREMIUM_MODULE_SHUTDOWN_COPY) as Capability[];
 
 export function normalizePlan(value: unknown): OrgPlan | null {
   return typeof value === 'string' && PLAN_ORDER.includes(value as OrgPlan)
@@ -309,42 +304,31 @@ export async function archiveOverCapTournamentsForPlanChange(opts: {
 }
 
 export async function buildCancellationPreflight(org: Organization): Promise<CancellationPreflight> {
-  const tournaments = await getNonArchivedTournaments(org.id);
-  if (isTeamWorkspaceOrg(org)) {
+  const teamWorkspace = isTeamWorkspaceOrg(org);
+  const [tournaments, activeTeams] = await Promise.all([
+    getNonArchivedTournaments(org.id),
+    teamWorkspace ? null : billingActiveTeamCount(org.id),
+  ]);
+  if (teamWorkspace || activeTeams === null) {
     return {
       currentPlan: ownPlanOf(org),
       activeTournamentCount: tournaments.length,
       tournaments,
       retentionDays: COACHES_PORTAL_RETENTION_DAYS,
-      shutsDown: [
-        'Premium roster, schedule, attendance, lineup, documents, dues, and budget tools',
-        'Coach-managed payment reminders and premium team documents',
-        'The Premium local tournament slot',
-      ],
+      shutsDown: [...PREMIUM_COACH_SHUTDOWN_AREAS],
+      shortShutsDown: [...PREMIUM_COACH_SHUTDOWN_AREAS],
+      activeTeams: null,
     };
   }
-
-  const planEntitlements = PLAN_CONFIG[ownPlanOf(org)]?.moduleEntitlements ?? [];
-  const enabledModules = new Set<Capability>([
-    ...planEntitlements,
-    ...org.enabledAddons.filter((cap): cap is Capability => PREMIUM_MODULES.includes(cap as Capability)),
-  ]);
-  const premiumShutdownItems = PREMIUM_MODULES
-    .filter(cap => enabledModules.has(cap))
-    .map(cap => PREMIUM_MODULE_SHUTDOWN_COPY[cap])
-    .filter((item): item is string => Boolean(item));
 
   return {
     currentPlan: ownPlanOf(org),
     activeTournamentCount: tournaments.length,
     tournaments,
     retentionDays: BILLING_RETENTION_DAYS,
-    shutsDown: [
-      'Public tournament pages and registration links',
-      'Tournament setup, scheduling, communications, and score updates',
-      'Member and staff access to tournament workflows',
-      ...premiumShutdownItems,
-    ],
+    shutsDown: organizationShutdownAreas(PLAN_CONFIG[ownPlanOf(org)], org.enabledAddons),
+    shortShutsDown: shortOrganizationShutdownAreas(PLAN_CONFIG[ownPlanOf(org)], org.enabledAddons, activeTeams),
+    activeTeams,
   };
 }
 

@@ -55,7 +55,7 @@ const BAR = (() => {
 /** Every window layer the admin draws or borrows, keyed for the file list below. `selector` reads a CSS rule; `inline`
  *  reads a `zIndex` written in the component. */
 const LAYERS: Record<string, { file: string; selector?: string; inline?: true }> = {
-  kitForm: { file: 'components/admin/kit/club/KitDialog.module.css', selector: '.overlay' },
+  kitForm: { file: 'components/shared/KitDialog.module.css', selector: '.overlay' },
   houseLeague: { file: 'app/[orgSlug]/admin/house-league/house-league.module.css', selector: '.modalOverlay' },
   globalModal: { file: 'app/globals.css', selector: '.modal-overlay' },
   bottomSheet: { file: 'components/admin/BottomSheet.module.css', selector: '.backdrop' },
@@ -85,7 +85,7 @@ const WINDOWS: Record<string, { layers: string[] } | { notAForm: string }> = {
   'app/[orgSlug]/admin/tournaments/schedule/components/ResolveLocationsModal.tsx': { layers: ['globalModal'] },
   'components/admin/BottomSheet.tsx': { layers: ['bottomSheet'] },
   'components/admin/LeagueCapUpgrade.tsx': { layers: ['leagueCap'] },
-  'components/admin/kit/club/KitDialog.tsx': { layers: ['kitForm'] },
+  'components/shared/KitDialog.tsx': { layers: ['kitForm'] },
   'components/admin/kit/club/money/AllocationWindow.tsx': { notAForm: 'reads its KitDialog (`closest(\'[role="dialog"]\')`); draws none' },
   // (MoneyKit.tsx left 2026-10-19: FormError is KitDialog's own refusal line now, `DialogReason`, One Window 2b.)
   'components/admin/kit/club/league/teams/TeamsBoard.tsx': { notAForm: 'a row mark\'s READ-ONLY window (a family\'s children, a sign-up note, an amount owing): a popover at a desk, a SheetFrame menu on a phone; it takes no input' },
@@ -127,7 +127,7 @@ describe('admin windows open over the phone bar (Admin bar behind forms, 2026-10
   });
 
   it('every admin file that draws its own window is named, with its layer or why it is not a form', () => {
-    const found = [...walk(path.join(ROOT, 'app/[orgSlug]/admin')), ...walk(path.join(ROOT, 'components/admin'))]
+    const found = [...walk(path.join(ROOT, 'app/[orgSlug]/admin')), ...walk(path.join(ROOT, 'components/admin')), 'components/shared/KitDialog.tsx']
       .filter(f => SIGNAL.test(readCode(f)));
     const unnamed = found.filter(f => !(f in WINDOWS));
     assert.deepEqual(unnamed, [], `a new admin window: name it in WINDOWS with the layer that clears the bar (a FORM) or why it is not a form (a MENU)`);

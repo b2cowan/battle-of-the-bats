@@ -162,7 +162,7 @@ describe('3. New allocation, in the line\'s window (Ask 6)', () => {
 });
 
 describe('3b. why a button was refused sits beside it, in every club money window (Ask 11)', () => {
-  const dialog = readCode('components/admin/kit/club/KitDialog.tsx');
+  const dialog = readCode('components/shared/KitDialog.tsx');
   const moneyKit = readCode(`${KIT}/MoneyKit.tsx`);
   it('the window has a reason slot in its foot, quiet after a change and speaking again on a press', () => {
     assert.match(dialog, /<div ref=\{setReasonSlot\} className=/);
@@ -173,7 +173,7 @@ describe('3b. why a button was refused sits beside it, in every club money windo
   it('FormError writes into the slot unless it belongs to one field (inPlace)', () => {
     // Since One Window 2b (2026-10-19) FormError is the window's one refusal line, `DialogReason`, in the money kit's type.
     assert.match(moneyKit, /<DialogReason className=\{repKit\.formError\} inPlace=\{inPlace\}/);
-    assert.match(readCode('components/admin/kit/club/KitDialog.tsx'), /if \(!inPlace && reason\?\.slot\) return createPortal\(/);
+    assert.match(readCode('components/shared/KitDialog.tsx'), /if \(!inPlace && reason\?\.slot\) return createPortal\(/);
   });
   it('the reasons that belong to ONE field stay under it', () => {
     assert.match(readCode(PARTS), /<FormError inPlace>\{monthError\}<\/FormError>/);

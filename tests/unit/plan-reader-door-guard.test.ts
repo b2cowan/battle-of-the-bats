@@ -108,6 +108,7 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/team-org-billing.ts': ['portal', 'team_workspaces billing'],
   'lib/team-workspace-provisioning.ts': ['portal', 'portal provisioning'],
   'lib/team-checkout.ts': ['portal', 'portal checkout and reactivation'],
+  'lib/portal-keep-premium.ts': ['portal', 'Keep Premium (Support console 4b): the checkout writes a free-time portal coach-paid'],
   // ── identity ──
   'lib/coach-membership.ts': ['identity', "plan_id 'team' = the portal stub"],
   'lib/org-membership-policy.ts': ['identity', "plan_id 'team' = the portal stub"],

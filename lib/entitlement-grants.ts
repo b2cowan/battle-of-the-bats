@@ -169,14 +169,16 @@ export async function effectiveOrgFactsForId(orgId: string): Promise<EffectiveFa
  * The customer's billing-page free time (running, ending, or ended within 30 days), or null. Reads ended grants too,
  * so it is its own query. Never returns the reason, the giver or the grant (T15).
  */
-export async function getCustomerFreeTime(row: DoorRow): Promise<CustomerFreeTime | null> {
+export async function getCustomerFreeTime(row: DoorRow, options: { strict?: boolean } = {}): Promise<CustomerFreeTime | null> {
   if (!grantsEnabled()) return null;
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('org_overrides')
     .select('type, value, target, starts_at, expires_at, revoked_at')
     .eq('org_id', row.id)
     .eq('type', 'plan_tier')
     .order('created_at', { ascending: false })
     .limit(20);
+  // Billing asks for strict: a failed read must say "unavailable", never "no free time".
+  if (error && options.strict) throw error;
   return customerFreeTime(ownFactsOf(row), (data ?? []) as GrantRow[]);
 }

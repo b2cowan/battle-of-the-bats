@@ -4,7 +4,7 @@ import { writePlatformAuditLog } from './platform-audit';
 import { isPlatformAdminEmail } from './platform-auth';
 import { isDemoOrganizerEmail } from './demo-org';
 import { grantsEnabled } from './entitlement-grants';
-import { endInstantForLastDay, isGrantRunning, lastDayOfInstant } from './free-time';
+import { endInstantForLastDay, isGrantRunning, lastDayOfInstant, todayEastern } from './free-time';
 import { endFreeTimeNow, staleSentence, type Actor } from './free-time-writes';
 import { isFoundingSeasonCompExpiry } from './plan-config';
 import { keysOf, portalsInForce } from './portal-in-force-server';
@@ -98,7 +98,7 @@ async function readCoachPortals(coachUserId: string): Promise<CoachPortalFacts[]
   if (rows.length === 0) return [];
   const orgIds = rows.map(r => r.workspace_org_id);
   // Names and grants read on their own: an embed of `organizations` is ambiguous here (two FKs, PGRST201).
-  const [inForce, { data: orgs, error: orgError }, { data: grants, error: grantError }] = await Promise.all([
+  const [inForce, { data: orgs, error: orgError }, { data: grants, error: grantError }, { data: clocks, error: clockError }] = await Promise.all([
     portalsInForce(keysOf(rows)),
     supabaseAdmin.from('organizations').select('id, name').in('id', orgIds),
     supabaseAdmin
@@ -107,14 +107,24 @@ async function readCoachPortals(coachUserId: string): Promise<CoachPortalFacts[]
       .in('org_id', orgIds)
       .in('type', [PORTAL_FREE_TIME_GRANT_TYPE, 'comp_period'])
       .order('created_at', { ascending: false }),
+    // A READ of the clock a cancellation started, never a way to start or move one (T15): a restored one is no longer applied.
+    supabaseAdmin
+      .from('billing_retention_intents')
+      .select('org_id, applied_at, retention_until')
+      .in('org_id', orgIds)
+      .eq('intent_type', 'cancellation')
+      .eq('status', 'applied')
+      .order('applied_at', { ascending: false }),
   ]);
   if (orgError) throw orgError;
   if (grantError) throw grantError;
+  if (clockError) throw clockError;
   const nameOf = new Map((orgs ?? []).map(o => [o.id as string, o.name as string]));
   return rows.map(r => {
     const mine = ((grants ?? []) as GrantRow[]).filter(g => g.org_id === r.workspace_org_id);
     const status = mine.filter(g => g.type === PORTAL_FREE_TIME_GRANT_TYPE);
     const running = status.find(g => g.expires_at && isGrantRunning(g));
+    const clock = (clocks ?? []).find(c => c.org_id === r.workspace_org_id && c.retention_until);
     const founding = mine.find(g => g.type === 'comp_period' && g.expires_at && isFoundingSeasonCompExpiry(g.expires_at) && isGrantRunning(g));
     return {
       workspaceId: r.id,
@@ -127,6 +137,9 @@ async function readCoachPortals(coachUserId: string): Promise<CoachPortalFacts[]
       foundingLastDay: founding?.expires_at ? lastDayOfInstant(founding.expires_at) : null,
       runningGrant: running ? { overrideId: running.id, lastDay: lastDayOfInstant(running.expires_at!), expiresAt: running.expires_at! } : null,
       endedLastDay: status[0] ? endedLastDay(status[0]) : null,
+      retention: clock
+        ? { cancelledDay: clock.applied_at ? todayEastern(new Date(clock.applied_at as string)) : null, deleteDay: todayEastern(new Date(clock.retention_until as string)) }
+        : null,
     };
   });
 }

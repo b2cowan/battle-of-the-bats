@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
+import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getCustomerFreeTime } from '@/lib/entitlement-grants';
 import { getEffectiveTournamentLimit, isFoundingSeasonCompExpiry } from '@/lib/plan-config';
@@ -7,7 +7,7 @@ import { foundingCompAppliesToPlan } from '@/lib/founding-season';
 import { formatLongDay, isGrantRunning, lastDayOfInstant } from '@/lib/free-time';
 import { SLOT_STATUSES } from '@/lib/tournament-slot';
 import { withObservability } from '@/lib/observability';
-import { customerPortalFreeTime } from '@/lib/portal-free-time-server';
+import { customerPortalFreeTime, endedPortalFreeTime } from '@/lib/portal-free-time-server';
 
 /**
  * The customer's free time, for their Plan & billing page (Support console Stage 4, owner ruling Q8): running, ending (the
@@ -19,12 +19,25 @@ export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true, allowSuspendedOrg: true });
   if (!ctx) return unauthorized();
+  // Billing must distinguish an unavailable read from no grant, and an old ended grant from cancellation.
+  // Other consumers keep their existing 30-day informational band window.
+  const billingView = new URL(req.url).searchParams.get('billing') === '1';
+  if (billingView && ctx.role !== 'owner') return forbidden();
 
   // A Coaches Portal staff gave free time (Stage 4b, Part 5): its state and last free day only (T24), never a whole-plan
   // grant (a portal holds none). A failed read says nothing rather than failing the page.
   if (ctx.org.accountKind === 'team_workspace') {
-    const portal = await customerPortalFreeTime(ctx.org.id).catch(() => null);
-    return NextResponse.json({ freeTime: null, overLimitAfter: false, foundingThrough: null, portal });
+    try {
+      let portal = await customerPortalFreeTime(ctx.org.id);
+      if (!portal && billingView) {
+        const ended = await endedPortalFreeTime(ctx.org.id);
+        if (ended) portal = { state: 'ended', lastDay: ended.lastDay };
+      }
+      return NextResponse.json({ freeTime: null, overLimitAfter: false, foundingThrough: null, portal });
+    } catch {
+      return billingView ? NextResponse.json({ error: 'Free time could not be read. Try again.' }, { status: 503 })
+        : NextResponse.json({ freeTime: null, overLimitAfter: false, foundingThrough: null, portal: null });
+    }
   }
 
   const { data: row, error } = await supabaseAdmin
@@ -32,20 +45,26 @@ export const GET = withObservability(async (req: Request) => {
     .select('id, plan_id, subscription_status, enabled_addons, tournament_limit, team_limit')
     .eq('id', ctx.org.id)
     .maybeSingle();
-  if (error || !row) return NextResponse.json({ freeTime: null });
+  if (error || !row) return NextResponse.json({ freeTime: null }, { status: billingView ? 503 : 200 });
 
-  const freeTime = await getCustomerFreeTime(row);
+  let freeTime: Awaited<ReturnType<typeof getCustomerFreeTime>>;
+  try {
+    freeTime = await getCustomerFreeTime(row, { strict: billingView });
+  } catch {
+    return NextResponse.json({ error: 'Free time could not be read. Try again.' }, { status: 503 });
+  }
   let overLimitAfter = false;
   // Founding Season still running after a shorter grant: its last free day, so the page can say the club stays free.
   let foundingThrough: string | null = null;
   if (freeTime && freeTime.state !== 'ended') {
     const ownLimit = getEffectiveTournamentLimit(freeTime.ownPlan, row.tournament_limit);
     if (ownLimit < 9999) {
-      const { count } = await supabaseAdmin
+      const { count, error: countError } = await supabaseAdmin
         .from('tournaments')
         .select('id', { count: 'exact', head: true })
         .eq('org_id', row.id)
         .in('status', [...SLOT_STATUSES]);
+      if (billingView && (countError || count === null)) return NextResponse.json({ error: 'Free time could not be read. Try again.' }, { status: 503 });
       overLimitAfter = (count ?? 0) > ownLimit;
     }
   }

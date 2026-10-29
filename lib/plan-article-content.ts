@@ -1,3 +1,5 @@
+import { PLAN_BILLING_PROFILES } from './plan-billing-profile';
+
 export type PlanArticlePainItem = {
   title: string;
   body: string;
@@ -20,7 +22,7 @@ export type PlanArticleContent = {
   stepsHeadline: string;
   steps: PlanArticleStep[];
   featuresLabel: string;
-  features: string[];
+  features: readonly string[];
 };
 
 export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' | 'team', PlanArticleContent> = {
@@ -89,24 +91,7 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
       },
     ],
     featuresLabel: 'Included',
-    features: [
-      'Full roster management — positions, jersey numbers, and contact info',
-      'Game schedule, attendance tracking, and lineup builder with PDF export',
-      'Team budget, player dues, expense tracking, and payment reminders',
-      // ⚠ "year-over-year history" removed 2026-08-20 — it promised the exact thing the product
-      // deliberately REFUSES to do. Owner ruling 2026-07-09: youth seasons aren't comparable
-      // across years, so there are no season-over-season deltas and no season dial, on purpose.
-      'Documents, season setup checklist, and a season-end record',
-      // ⚠ "run round robins…" removed 2026-08-20 — a coach ENTERS tournaments here, never hosts
-      // one. There is no create-a-tournament action anywhere in the coach navigation. That
-      // wording was copy-pasted from the Tournament product's cross-sell card on this same page.
-      'Tournaments included — register your team, track entries, and pull results into your season record',
-      'Tournament history included — every event your team has been part of, preserved',
-      // R9 (the free tournament tier, 2026-10-12): the Premium portal says it includes one hosted tournament. It follows
-      // the free plan (invite-only) plus PDFs — entering tournaments (above) and hosting one are different things.
-      'Host one tournament at a time — an invite-only round robin or exhibition weekend, with PDF schedules and results',
-      'Link to your parent organization at any time, without transferring ownership',
-    ],
+    features: PLAN_BILLING_PROFILES.team.included.article,
   },
 
 
@@ -180,26 +165,7 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
     // ⚠ This list is ALSO the in-product panel every Tournament Plus padlock opens, read by a free organizer looking at
     // what they are missing. Since the invite-only build (2026-10-16) the free plan has no registration, payments,
     // check-in or volunteers, so those lead (R9); "Advanced payment tracking" implied a basic kind on free and went.
-    features: [
-      'Public registration — teams register on your site, and you approve, waitlist, or decline',
-      'Fees and payment tracking — you record what each team has paid',
-      'Check-in and unlimited volunteers on game day',
-      'Unlimited active tournaments',
-      'Round-robin and playoff generators',
-      'Custom registration fields, file uploads, and waitlist promotion',
-      'Registration exports — Excel, CSV, and PDF',
-      'Post-tournament reporting',
-      // ⚠ "no FieldLogicHQ badge" corrected 2026-08-20 — paid pages still carry a permanent,
-      // non-dismissible "Built on FieldLogicHQ" footer credit. What paying actually removes is
-      // the free tier's dismissible pill AND its acquisition banner. Still a real difference;
-      // just not the absence of all branding, which is what a customer would expect.
-      'Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit',
-      'Permanent sealed archives and tournament cloning',
-      // ⚠ "Unlimited officials" moved OUT of the paid list 2026-08-20 — officials have never
-      // counted against a seat cap on ANY plan, so it was never something upgrading granted.
-      // It belongs on the free tier's list, where it is a genuine surprise.
-      'Unlimited staff seats',
-    ],
+    features: PLAN_BILLING_PROFILES.tournament_plus.included.article,
   },
 
   league: {
@@ -273,22 +239,7 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
       },
     ],
     featuresLabel: 'Included',
-    features: [
-      'Player registration per season — with waitlist management',
-      'Season and division setup',
-      'Draft tools and team building',
-      'Auto-generated round-robin schedules, editable game by game',
-      'Live standings — update automatically as scores are entered',
-      'Season-wide parent messaging — one screen, every registered family',
-      'Public organization page',
-      'League-scoped communications',
-      // ⚠ "program coordinator" removed 2026-08-20 — no such role exists. The only occurrence of
-      // the word anywhere in this codebase was this marketing string.
-      'Advanced member roles — league admin, registrar',
-      'Registration and standings exports (Excel, CSV)',
-      'Unlimited tournaments included',
-      'Unlimited staff seats · Unlimited officials',
-    ],
+    features: PLAN_BILLING_PROFILES.league.included.article,
   },
 
   club: {
@@ -345,20 +296,6 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
       },
     ],
     featuresLabel: 'Included',
-    features: [
-      'Everything in League (tournaments, house league, public org page)',
-      'Unlimited staff / admin seats',
-      'Accounting module — org ledger and expense tracking',
-      'Club costs split across teams, with reminders and payment tracking',
-      'Rep teams module — tryout registration and roster management',
-      'Player documents and season history',
-      'Team financial management',
-      // Added 2026-08-20 — a real, Club-ONLY capability that the page had never mentioned.
-      // Deliberately absent from every other plan (a single-team customer has no siblings to
-      // share with), which makes it one of the few things only this tier can offer.
-      'Club Shared Book — your teams share opponent scouting notes across the club',
-      'Premium Coaches Portal for your whole coaching staff — every team included, no per-team fee',
-      'Up to 15 teams — or up to 30 on Club · Association',
-    ],
+    features: PLAN_BILLING_PROFILES.club.included.article,
   },
 };

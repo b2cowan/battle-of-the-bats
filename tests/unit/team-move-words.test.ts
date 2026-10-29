@@ -96,6 +96,9 @@ describe('the team move never mentions money coming back', () => {
     assert.ok(nudge.length > 0, 'the billing nudge moved — re-point this guard');
     assert.doesNotMatch(nudge, NO_MONEY_BACK);
     assert.match(nudge, /won’t be charged for your own Coaches Portal again/);
+    const shared = readCode('components/billing/BillingBody.tsx');
+    assert.match(shared, /W\.change\.clubBody/);
+    assert.match(readSource('lib/plan-billing-words.ts'), /won’t be charged for your own Coaches Portal again/);
     assert.doesNotMatch(billing, /Basic visibility link/);
     assert.doesNotMatch(readSource('app/[orgSlug]/coaches/teams/[teamId]/settings/page.tsx'), /Connect your team for recognition/);
     assert.match(readSource('app/[orgSlug]/coaches/teams/[teamId]/page.tsx'), /wants to bring your team into the club/);

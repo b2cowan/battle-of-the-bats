@@ -16,6 +16,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readCode } from './_source-code.ts';
 import {
+  cancelledPortalLine,
   decidePortalGive,
   portalChangeRefusal,
   portalGiveBlockOf,
@@ -35,7 +36,7 @@ const team = (over: Partial<FreeTeamFacts> = {}): FreeTeamFacts => ({
 
 const portal = (over: Partial<CoachPortalFacts> = {}): CoachPortalFacts => ({
   workspaceId: 'ws-1', orgId: 'org-1', name: 'UAT Free Team Coaches Portal', billingMode: 'team_direct', movedIntoClub: false,
-  inForce: true, freeTimeGivenAt: null, foundingLastDay: null, runningGrant: null, endedLastDay: null, ...over,
+  inForce: true, freeTimeGivenAt: null, foundingLastDay: null, runningGrant: null, endedLastDay: null, retention: null, ...over,
 });
 
 const facts = (over: Partial<PortalGiveFacts> = {}): PortalGiveFacts => ({
@@ -50,7 +51,7 @@ const refused = (r: ReturnType<typeof give>) => (r.ok ? null : r.error);
 
 /** A free-time portal staff gave on Sep 1, 2026, whose free time has ended. */
 const endedFreeTimePortal = portal({
-  billingMode: 'platform_override', inForce: false, freeTimeGivenAt: '2026-09-01T15:00:00Z', endedLastDay: '2026-09-30',
+  billingMode: 'platform_override', inForce: false, freeTimeGivenAt: '2026-09-01T15:00:00Z', endedLastDay: '2026-09-30', retention: null,
 });
 
 describe('Part 3 · the give refuses, each with one sentence and nothing written (guard 3)', () => {
@@ -99,6 +100,23 @@ describe('Part 3 · the give refuses, each with one sentence and nothing written
     assert.match(refused(give(facts({ portals: [portal({ billingMode: 'club_included' })] }))) ?? '', /the club pays for it/);
     assert.match(refused(give(facts({ portals: [portal({ movedIntoClub: true, inForce: false })] }))) ?? '', /the club pays for it/);
     assert.match(refused(give(facts({ portals: [portal({ inForce: false })] }))) ?? '', /was cancelled/);
+  });
+
+  it('a cancelled portal names its retention dates, and turns red inside 30 days of the delete day', () => {
+    const line = (retention: CoachPortalFacts['retention']) => cancelledPortalLine(retention, NOW);
+    assert.deepEqual(line({ cancelledDay: '2026-08-04', deleteDay: '2027-08-04' }), {
+      line: "Their Premium portal was cancelled Aug 4, 2026. Its kept data is deleted Aug 4, 2027. Reopening it is not free time.", tone: 'quiet',
+    });
+    assert.equal(line({ cancelledDay: null, deleteDay: '2027-08-04' }).line, "Their Premium portal was cancelled. Its kept data is deleted Aug 4, 2027. Reopening it is not free time.");
+    assert.deepEqual(line({ cancelledDay: '2025-11-26', deleteDay: '2026-11-26' }), {
+      line: "Their Premium portal's kept data is deleted Nov 26, 2026, 30 days from now. Reopening it is not free time.", tone: 'red',
+    });
+    assert.equal(line({ cancelledDay: '2025-11-27', deleteDay: '2026-11-27' }).tone, 'quiet');
+    assert.deepEqual(line({ cancelledDay: '2025-10-01', deleteDay: '2026-10-01' }), {
+      line: "Their Premium portal's kept data was due to be deleted Oct 1, 2026, and may already be gone. Reopening it is not free time.", tone: 'red',
+    });
+    assert.equal(line(null).tone, 'quiet');
+    assert.match(refused(give(facts({ portals: [portal({ inForce: false, retention: { cancelledDay: '2026-08-04', deleteDay: '2027-08-04' } })] }))) ?? '', /deleted Aug 4, 2027/);
   });
 
   it('a coach whose free time is running: change its end on the portal instead', () => {

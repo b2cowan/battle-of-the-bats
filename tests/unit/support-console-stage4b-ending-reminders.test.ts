@@ -115,7 +115,7 @@ describe('the wiring', () => {
   it('the Overview band mounts only on a Coaches Portal, and its button is outlined (the page keeps its one lime)', () => {
     const page = readCode('app/[orgSlug]/coaches/teams/[teamId]/page.tsx');
     assert.match(page, /currentOrg\?\.accountKind === 'team_workspace' && !isClosedTeam && \(\s*<PortalFreeTimeEndingBand/);
-    const band = readCode('components/admin/FreeTimeBand.tsx');
+    const band = readCode('components/billing/FreeTimeBand.tsx');
     assert.match(band, /btn btn-outline btn-sm/);
     assert.doesNotMatch(band, /btn-lime/);
     const mount = readCode('components/coaches/PortalFreeTimeEndingBand.tsx');

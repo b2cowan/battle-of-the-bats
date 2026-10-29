@@ -14,6 +14,7 @@ import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import { PLAN_CONFIG, showsFoundingZero, gatedPlanSentence, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
 import { useFoundingOfferOnPlanChoice } from '@/lib/use-founding-season-lock';
 import type { PanelPlanKey as PlanKey } from '@/lib/plan-upgrade';
+import type { PlanBillingProfile } from '@/lib/plan-billing-profile';
 import styles from './PlanArticlePanel.module.css';
 
 interface Props {
@@ -27,6 +28,10 @@ interface Props {
   /** The checkout's own "$0 for this organization's choice" answer, when the host already read it (Plan & billing).
    *  Left out, the panel asks for itself once it opens (the plan drawer a lock line opens). */
   foundingOfferHeld?: boolean;
+  /** Unpublished billing targets use their own facts and article variant without adding a public article key. */
+  profile?: PlanBillingProfile<string>;
+  /** Billing's details door is informational; other shipped callers retain their existing workspace/upgrade door. */
+  readOnly?: boolean;
 }
 
 export default function PlanArticlePanel({
@@ -38,24 +43,27 @@ export default function PlanArticlePanel({
   isComingSoon,
   canUpgrade = true,
   foundingOfferHeld,
+  profile,
+  readOnly = false,
 }: Props) {
+  const open = Boolean(planKey || profile);
   useEffect(() => {
-    if (!planKey) return;
+    if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = prev; };
-  }, [planKey]);
+  }, [open]);
 
   const panelRef = useRef<HTMLElement>(null);
-  useDialogFloor(Boolean(planKey), panelRef, { onClose, busy: planKey !== null && upgradeLoading === planKey });
+  useDialogFloor(open, panelRef, { onClose, busy: planKey !== null && upgradeLoading === planKey });
   const askedHere = useFoundingOfferOnPlanChoice(foundingOfferHeld === undefined && planKey !== null);
 
-  if (!planKey) return null;
+  if (!planKey && !profile) return null;
 
-  const article = PLAN_ARTICLE_CONTENT[planKey];
-  const config  = PLAN_CONFIG[planKey];
+  const article = planKey ? PLAN_ARTICLE_CONTENT[planKey] : null;
+  const config = profile?.config ?? PLAN_CONFIG[planKey!];
   // The price shown is the price charged: the window for a newcomer, the checkout's answer for a comp holder.
-  const promoActive = showsFoundingZero(planKey, foundingOfferHeld ?? askedHere);
+  const promoActive = (!profile || profile.showFoundingSeason) && planKey !== null && showsFoundingZero(planKey, foundingOfferHeld ?? askedHere);
   const price   =
     promoActive
       ? `Free through ${FOUNDING_SEASON_END_LABEL}`
@@ -76,8 +84,8 @@ export default function PlanArticlePanel({
         {/* Header */}
         <div className={styles.panelHeader}>
           <div className={styles.panelHeaderLeft}>
-            <p className={styles.panelEyebrow}>{article.eyebrow}</p>
-            <p className={styles.panelHeadline}>{article.panelHeadline}</p>
+            <p className={styles.panelEyebrow}>{article?.eyebrow ?? config.label}</p>
+            <p className={styles.panelHeadline}>{article?.panelHeadline ?? config.label}</p>
           </div>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
             <X size={18} />
@@ -102,7 +110,7 @@ export default function PlanArticlePanel({
         <div className={styles.panelBody}>
 
           {/* Pain section */}
-          <section className={styles.section}>
+          {article && <section className={styles.section}>
             <p className={styles.sectionEyebrow}>The old way</p>
             <h2 className={styles.sectionHeadline}>{article.painHeadline}</h2>
             <div className={styles.painGrid}>
@@ -113,10 +121,10 @@ export default function PlanArticlePanel({
                 </div>
               ))}
             </div>
-          </section>
+          </section>}
 
           {/* Steps / modules */}
-          <section className={styles.section}>
+          {article && <section className={styles.section}>
             <p className={styles.sectionEyebrow}>How it works</p>
             <h2 className={styles.sectionHeadline}>{article.stepsHeadline}</h2>
             <div className={styles.stepsGrid}>
@@ -129,14 +137,14 @@ export default function PlanArticlePanel({
                 </div>
               ))}
             </div>
-          </section>
+          </section>}
 
           {/* Feature list */}
           <section className={styles.section}>
             <p className={styles.sectionEyebrow}>What&apos;s included</p>
-            <h2 className={styles.sectionHeadline}>{article.featuresLabel}</h2>
+            <h2 className={styles.sectionHeadline}>{article?.featuresLabel ?? config.label}</h2>
             <ul className={styles.featureList}>
-              {article.features.map(f => (
+              {(profile?.included.article ?? article!.features).map(f => (
                 <li key={f}>
                   <CheckCircle size={13} className={styles.featureIcon} />
                   <span>{f}</span>
@@ -149,16 +157,16 @@ export default function PlanArticlePanel({
 
         {/* Footer CTA */}
         <div className={styles.panelFooter}>
-          {isComingSoon ? (
+          {isComingSoon && planKey ? (
             <p className={styles.comingSoonNote}>
               {gatedPlanSentence(planKey)}
             </p>
-          ) : planKey === 'team' ? (
+          ) : planKey === 'team' && !readOnly ? (
             // Its own workspace, not a change to this org's plan — the coach sign-up is the door.
             <Link className={`btn btn-lime btn-data ${styles.upgradeBtn}`} href={COACHES_START_PATH}>
               Start your Coaches Portal
             </Link>
-          ) : canUpgrade ? (
+          ) : canUpgrade && planKey && !readOnly ? (
             <button
               className={`btn btn-lime btn-data ${styles.upgradeBtn}`}
               onClick={() => onUpgrade(planKey)}

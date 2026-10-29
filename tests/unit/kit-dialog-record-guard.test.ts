@@ -18,8 +18,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = join(import.meta.dirname, '..', '..');
-const kit = readFileSync(join(ROOT, 'components/admin/kit/club/KitDialog.tsx'), 'utf8');
-const css = readFileSync(join(ROOT, 'components/admin/kit/club/KitDialog.module.css'), 'utf8');
+const kit = readFileSync(join(ROOT, 'components/shared/KitDialog.tsx'), 'utf8');
+const css = readFileSync(join(ROOT, 'components/shared/KitDialog.module.css'), 'utf8');
 const rep = readFileSync(join(ROOT, 'components/admin/kit/club/RepKit.tsx'), 'utf8');
 
 describe('the record window names its neighbours', () => {

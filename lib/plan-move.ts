@@ -9,6 +9,7 @@ import { MOVE_METADATA_KEY } from './plan-growth';
 import type { OrgPlan } from './types';
 import { ownPlanOf } from './entitlement-grants';
 import { PAYING_STATUSES } from './stripe-billing-state';
+import { moveDirection, type MoveDirection } from './plan-move-options';
 
 /**
  * MOVING A PAYING ORGANIZATION BETWEEN PLANS — ONE SUBSCRIPTION, NEVER A SECOND CHECKOUT
@@ -32,19 +33,6 @@ import { PAYING_STATUSES } from './stripe-billing-state';
  * the routes' questions (owner-only `billing`; the one gating source) — asked before any of this.
  * No `server-only` import: the Stripe sandbox verification script drives these functions directly.
  */
-
-export type MoveDirection = 'up' | 'down';
-
-/** The moves Ask 4 covers. Anything else (a downgrade to a tournament tier, League) is not a move. */
-const MOVES: Partial<Record<OrgPlan, Partial<Record<OrgPlan, MoveDirection>>>> = {
-  tournament_plus: { club: 'up', club_large: 'up' },
-  club: { club_large: 'up' },
-  club_large: { club: 'down' },
-};
-
-export function moveDirection(from: OrgPlan, to: OrgPlan): MoveDirection | null {
-  return MOVES[from]?.[to] ?? null;
-}
 
 export type MoveOrg = {
   id: string;

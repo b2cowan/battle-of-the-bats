@@ -25,7 +25,7 @@ import { readCode } from './_source-code.ts';
  */
 
 describe('the club windows stand on the dialog floor', () => {
-  const dialog = readCode('components/admin/kit/club/KitDialog.tsx');
+  const dialog = readCode('components/shared/KitDialog.tsx');
 
   it('KitDialog calls the floor, and hand-rolls no key listener of its own', () => {
     assert.match(dialog, /import \{ useDialogFloor \} from '@\/components\/coaches\/useDialogFloor';/);

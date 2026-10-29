@@ -77,7 +77,7 @@ export function freeTimeCopy(input: FreeTimeCopyInput): FreeTimeCopy {
   const left = ft.daysLeft;
   const eyebrow = left === 0 ? 'Free time · last day' : `Free time · ${left} day${left === 1 ? '' : 's'} left`;
   const keep = input.givenOnSale
-    ? `To keep ${given}, choose it below.`
+    ? `To keep ${given}, contact us.`
     : `${given} isn't open for sign-up yet, so there is nothing to choose on this page.`;
   const over = input.overLimitAfter
     ? ` Your tournaments are kept; you can start a new one once you're back within ${own === 'tournament' ? 'the free plan' : label(own)}.`
@@ -91,7 +91,7 @@ export function freeTimeCopy(input: FreeTimeCopyInput): FreeTimeCopy {
       text: `On ${dayAfterWords(ft.lastDay)} you go back to ${backTo} automatically${founding}. ${keep}${over}`,
     },
     billingCard: input.givenOnSale
-      ? `Your free time runs through ${through}. To keep ${given}, choose it below. Otherwise there is nothing to do.`
+      ? `Your free time runs through ${through}. To keep ${given}, contact us. Otherwise there is nothing to do.`
       : `Your free time runs through ${through}. There is nothing to do: on ${dayAfterWords(ft.lastDay)} you go back to ${backTo}.`,
   };
 }

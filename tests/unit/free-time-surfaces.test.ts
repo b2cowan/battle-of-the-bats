@@ -62,7 +62,9 @@ describe('the customer is told the plan and the day, never the reason or the giv
     const ending = freeTimeCopy({ freeTime: { state: 'ending', plan: 'tournament_plus', ownPlan: 'tournament', lastDay: '2027-03-31', daysLeft: 9 }, foundingThrough: null, givenOnSale: true, overLimitAfter: true });
     assert.equal(ending.band.tone, 'amber');
     assert.equal(ending.band.eyebrow, 'Free time · 9 days left');
-    assert.match(ending.band.text, /To keep Tournament Plus, choose it below\. Your tournaments are kept; you can start a new one once you're back within the free plan\.$/);
+    assert.match(ending.band.text, /To keep Tournament Plus, contact us\. Your tournaments are kept; you can start a new one once you're back within the free plan\.$/);
+
+    assert.equal(ending.billingCard, 'Your free time runs through March 31, 2027. To keep Tournament Plus, contact us. Otherwise there is nothing to do.');
 
     const club = freeTimeCopy({ freeTime: { state: 'ending', plan: 'club', ownPlan: 'tournament_plus', lastDay: '2027-03-31', daysLeft: 0 }, foundingThrough: 'September 30, 2027', givenOnSale: false, overLimitAfter: false });
     assert.equal(club.band.eyebrow, 'Free time · last day');

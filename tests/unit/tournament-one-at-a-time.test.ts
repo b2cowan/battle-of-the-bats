@@ -106,6 +106,7 @@ describe('one at a time — every limit check reads the one rule', () => {
     'app/api/admin/tournaments/route.ts',
     'lib/billing-retention.ts',
     'lib/billing-reactivation.ts',
+    'lib/billing-usage.ts',
     'app/[orgSlug]/admin/org/tournaments/page.tsx',
     // (The admin rail left this list 2026-10-19: its + and "New tournament" are gone, so it checks no limit.)
     'components/admin/tournament/RecordFromList.tsx',

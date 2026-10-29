@@ -543,7 +543,7 @@ describe('practice plans on a phone · stage 4 (N1–N4) — the head of the pag
     // skipped by its own mark: a margin on a fixed overlay stopped a dialog 16px short of the glass, 2026-09-25), and
     // the page's own "Unsaved changes" leave confirm (the shared FeedbackModal's global `.modal-overlay`, /review 2d).
     assert.match(css, /\.coachesMain:has\(\.ppSheetPair\) \.page > :not\(\.ppSheetCol\):not\(\.modalOverlay\):not\(\.savePill\):not\(\[data-kit-overlay\]\):not\(:global\(\.modal-overlay\)\),\s*\.coachesMain:has\(\.ppSheetPair\) \.ppSheetCol > :not\(\.ppSheetPair\):not\(\.modalOverlay\):not\(\[data-kit-overlay\]\):not\(:global\(\.modal-overlay\)\) \{ margin-inline: 1rem; \}/);
-    assert.match(readCode('components/admin/kit/club/KitDialog.tsx'), /data-kit-overlay=""/, 'the window\'s fixed layer carries the mark');
+    assert.match(readCode('components/shared/KitDialog.tsx'), /data-kit-overlay=""/, 'the window\'s fixed layer carries the mark');
   });
 
   it('N3 — About renders under the timeline on a phone, before the focus rail; in JS order', () => {

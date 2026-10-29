@@ -93,9 +93,18 @@ describe('the Upgrade is Plan & billing’s', () => {
 });
 
 describe('the panel stands on the window floor', () => {
+  it('the shared body validates its requested drawer key and supplies honest unpublished target facts', () => {
+    const body = read('components', 'billing', 'BillingBody.tsx');
+    assert.match(body, /Object\.hasOwn\(PLAN_BILLING_PROFILES, requestedPlan\)/);
+    assert.match(body, /planKey=\{published\} profile=\{details\}/);
+    const panel = read('components', 'billing', 'PlanArticlePanel.tsx');
+    assert.match(panel, /profile\?\.config \?\? PLAN_CONFIG/);
+    assert.match(panel, /profile\?\.included\.article/);
+  });
   it('Escape and Back close it alone over a window; no Escape of its own', () => {
     const panel = read('components', 'billing', 'PlanArticlePanel.tsx');
-    assert.match(panel, /useDialogFloor\(Boolean\(planKey\), panelRef/);
+    assert.match(panel, /useDialogFloor\(open, panelRef/);
+    assert.match(panel, /const open = Boolean\(planKey \|\| profile\)/);
     assert.doesNotMatch(panel, /addEventListener\('keydown'/);
     // The floor seats focus on the panel; a panel that cannot take focus left it on the lock, and Escape went to the
     // window underneath (the composer, with the draft).

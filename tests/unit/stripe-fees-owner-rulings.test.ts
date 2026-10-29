@@ -28,9 +28,10 @@ describe('ruling 2: a cancelled club is still billed, and sees its Stripe fees l
   });
 
   it('both Plan & billing pages show it on their cancelled view, not only the live one', () => {
-    const kit = readCode('components/admin/kit/club/BillingKit.tsx');
-    const cancelled = /if \(cancelled\) \{[\s\S]*?\n  \}\n/.exec(kit)?.[0] ?? '';
-    assert.match(cancelled, /<StripeFeesList slug=\{slug\} \/>/, 'Club plans: under the reactivate card');
+    const kit = readCode('components/billing/BillingBody.tsx');
+    const cancelled = kit.slice(kit.indexOf('if (cancelled && controlsReady)'), kit.indexOf('const changeKeys'));
+    assert.ok(cancelled.indexOf('{fees}') > cancelled.indexOf('billing-reactivate-btn'), 'shared body: fees remain below the reactivation card');
+    assert.match(kit, /fees=\{<StripeFeesList key=\{org\.id\} slug=\{org\.slug\} \/>\}/);
     const page = readCode('app/[orgSlug]/admin/org/billing/page.tsx');
     const canceledView = /if \(status === 'canceled'\) \{[\s\S]*?\n  \}\n/.exec(page)?.[0] ?? '';
     assert.match(canceledView, /canManageBilling && <StripeFeesList slug=\{currentOrg\.slug\} \/>/, 'every other plan');
@@ -161,7 +162,7 @@ describe('ruling 7: a returned answering fee goes back against the invoice that 
   it('the Plan & billing list reads it as returned on its day, never "next 1st"', () => {
     assert.match(src, /else if \(f\.billed_on === 'credit_note'\) state = 'returned';/);
     assert.match(src, /invoiceDay: state === 'returned' \? f\.billed_at/);
-    assert.match(readCode('components/admin/kit/club/StripeFeesList.tsx'), /case 'returned': return W\.billedReturned\(short\(f\.invoiceDay\)\);/);
+    assert.match(readCode('components/billing/StripeFeesList.tsx'), /case 'returned': return W\.billedReturned\(short\(f\.invoiceDay\)\);/);
   });
 });
 

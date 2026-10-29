@@ -114,6 +114,17 @@ describe('Part 5 · the customer route says the state and the day, never the rea
 
 describe('Part 5 · Plan & billing on free time (drawing D)', () => {
   const page = readCode('app/[orgSlug]/admin/org/billing/page.tsx');
+  it('the shared body keeps the same owner, hosting, payment and ended-grant boundaries', () => {
+    const body = readCode('components/billing/BillingBody.tsx');
+    assert.match(body, /if \(userRole !== 'owner'\) return/);
+    assert.match(body, /const endedPortal = portal\?\.state === 'ended'/);
+    assert.match(body, /&& !portal && !staffFree/);
+    assert.match(body, /paid && !staffFree && !endedPortal && !founding/);
+    assert.match(body, /profile\.freeTimeOmittedBillingItems\?\.includes\(index\)/);
+    assert.match(body, /portal \? 'btn-outline' : 'btn-lime'/);
+    assert.match(body, /teamWorkspaceReactivatePath\(org\)\}&keep=1/);
+    assert.match(readCode('components/billing/Billing.module.css'), /\.keepPremiumButton \{ width: 100%; \}/);
+  });
   it('the price, the Stripe door, Cancel and the tournament slots are not rendered while it runs (Q10, Q11-7)', () => {
     assert.match(page, /\{hasPaidPlan && !isFoundingSeason && !onPortalFreeTime && \([\s\S]{0,200}<h2 className=\{styles\.sectionTitle\}>Billing tools/);
     assert.match(page, /\{hasPaidPlan && canManageBilling && !isFoundingSeason && !onPortalFreeTime && \([\s\S]{0,80}retentionCard/);

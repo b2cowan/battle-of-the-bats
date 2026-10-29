@@ -4,6 +4,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { isClubPlan } from '@/lib/module-entitlements';
+import { PLAN_BILLING_PROFILES } from '@/lib/plan-billing-profile';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, Archive, ShieldOff, Link2, Star, ArrowRight, Users, CalendarRange, Building2 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
@@ -96,59 +97,6 @@ const PLAN_TAGLINE: Record<OrgPlan, string> = {
 // card drops the hosting clause and says so in one line where it was (D-4).
 const TEAM_TAGLINE_FREE_TIME = 'Built for rep team coaches who also run local tournaments — roster, schedule, dues, and documents for your team.';
 const TEAM_META_FREE_TIME = `You're on Premium Coaches Portal. Your team tools are active. ${PORTAL_FREE_TIME_HOSTING_LINE}`;
-
-const PLAN_FEATURES: Record<OrgPlan, string[]> = {
-  tournament: [
-    'You add every team — each coach claims it from an email invitation',
-    'Manual tournament scheduling',
-    'Basic standings and score entry',
-    'A public event site with live scores families can follow',
-    'Venue management',
-    'Default FieldLogicHQ public styling',
-    'Public news posts and basic team email',
-    '3 staff / admin seats · 1 tournament at a time',
-  ],
-  team: [
-    'One rep team Coaches Portal',
-    'Premium tools for roster, schedule, dues, and documents',
-    'Team budget and payment reminder tools',
-    'One hosted tournament at a time — invite-only, with PDF exports',
-    // Coaching staff never count as seats (2026-08-10, 2026-09-13); the free plan's 3-seat cap
-    // covers only the included tournament's admin side. "3 staff / coach seats" said otherwise.
-    'Unlimited coaching staff · 3 staff / admin seats on your tournament',
-  ],
-  tournament_plus: [
-    'Everything in Tournament',
-    'Public registration — the review queue, waitlist, questions, file uploads, and exports',
-    'Fees and payment tracking, and check-in',
-    'Unlimited tournament slots',
-    'Round-robin and playoff generators',
-    'Full branding control',
-    'Tournament cloning, announcements, and post-event archives',
-    'Unlimited staff seats and volunteers',
-  ],
-  league: [
-    'Everything in Tournament Plus',
-    'Public organization page (branded)',
-    'House league — registration, divisions, seasons, standings',
-    'Advanced member roles and permissions',
-    'Unlimited staff / admin seats',
-  ],
-  club: [
-    'Everything in League Plus',
-    'Accounting — ledger, invoicing, payment reconciliation',
-    'Rep teams — tryouts, rosters, player documents',
-    'Whole coaching staff included — Premium portals for up to 15 teams',
-    'Unlimited staff / admin seats',
-  ],
-  club_large: [
-    'Everything in Club',
-    'Sized for a larger association — up to 30 teams',
-    'Whole coaching staff included — no per-team fees',
-    'Accounting, Rep teams, and Premium Coaches Portals',
-    'Unlimited staff / admin seats',
-  ],
-};
 
 const PLAN_META_COPY: Record<OrgPlan, string> = {
   tournament:      "You're on the free Tournament plan: an invite-only event. Upgrade when teams should register for your event, or when you need payment tracking, check-in, volunteers, branding, or repeat-event tools.",
@@ -547,7 +495,7 @@ function BillingPagePlans() {
   const freeTime = freeTimeState?.freeTime ?? null;
   const freeCopy = freeTime ? freeTimeCopy({
     freeTime,
-    foundingThrough: freeTimeState?.foundingThrough ?? null,
+    foundingThrough: PLAN_BILLING_PROFILES[currentOrg.planId].showFoundingSeason ? freeTimeState?.foundingThrough ?? null : null,
     givenOnSale: !isGated(freeTime.plan),
     overLimitAfter: freeTimeState?.overLimitAfter ?? false,
   }) : null;
@@ -775,7 +723,7 @@ function BillingPagePlans() {
             </div>
 
             <ul className={styles.featureList}>
-              {PLAN_FEATURES[currentPlanKey].map(f => (
+              {PLAN_BILLING_PROFILES[currentPlanKey].included.billing.map(f => (
                 <li key={f}>
                   <CheckCircle size={13} />
                   {f}
@@ -884,7 +832,7 @@ function BillingPagePlans() {
         <span className={`badge ${STATUS_BADGE[status]}`}>{subscriptionStatusLabel(status)}</span>
       </div>
 
-      {freeBand && <FreeTimeBand band={freeBand} />}
+      {freeBand && <FreeTimeBand band={freeBand} action={!portalFreeTime && freeTime?.state === 'ending' && !isGated(freeTime.plan) ? { label: 'Contact us', href: 'mailto:fieldlogichq@gmail.com' } : undefined} />}
 
       {/* 12d-1 Part 4: the Stripe fees the club's online payments caused, on every plan; absent until there is one. */}
       {!isTeamWorkspaceBilling && canManageBilling && <StripeFeesList slug={currentOrg.slug} />}
@@ -1348,7 +1296,7 @@ function BillingPagePlans() {
         <div className={styles.billingTools}>
           <div>
             <h2 className={styles.sectionTitle}>Billing</h2>
-            <p className={styles.manageHint}>{freeCopy.billingCard}</p>
+            <p className={styles.manageHint}>{freeCopy.billingCard}{freeTime?.state === 'ending' && !isGated(freeTime.plan) && <> <a href="mailto:fieldlogichq@gmail.com">Contact us</a></>}</p>
           </div>
         </div>
       )}

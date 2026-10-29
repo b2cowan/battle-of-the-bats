@@ -61,7 +61,7 @@ describe('the install banner sits under every sheet and over the page chrome it 
       ['the portal sheet frame’s dim', 'components/coaches/SheetFrame.module.css', '.dim'],
       ['the bottom bar and its More sheet', 'components/coaches/CoachesBottomNav.module.css', '.bottomNav'],
       ['the RSVP dialog on a computer', 'components/coaches/CoachRsvpSheet.module.css', '.floor.floor'],
-      ['the admin kit\'s windows', 'components/admin/kit/club/KitDialog.module.css', '.overlayQuestion'],
+      ['the admin kit\'s windows', 'components/shared/KitDialog.module.css', '.overlayQuestion'],
       // Stage 6 (2026-10-07): the gate's team sheet — the admin's bottom sheet, the organizer's Check-in's too.
       ['the admin bottom sheet (the check-in board’s team sheet)', 'components/admin/BottomSheet.module.css', '.backdrop'],
       // …and the scorekeeper's score sheet above 900 (the frame is its sheet below; this is its card).

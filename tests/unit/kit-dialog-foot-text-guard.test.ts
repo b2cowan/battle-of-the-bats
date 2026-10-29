@@ -103,12 +103,12 @@ function sentenceIn(footer: string): string | null {
 
 describe('a sentence in a window\'s foot sits at its left (owner, 2026-10-12)', () => {
   it('the window draws `footerStart` at the far left and `footer` as one right-hand group', () => {
-    const win = readCode('components/admin/kit/club/KitDialog.tsx');
+    const win = readCode('components/shared/KitDialog.tsx');
     assert.match(win,
       // One Window Stage 2: `footStart` / `footEnd` are the caller's `footerStart` / `footer`, or the ask while it asks.
       /\{footStart && <div className=\{styles\.footStart\}>\{footStart\}<\/div>\}\s*<div ref=\{setReasonSlot\}[^>]*\/>\s*\{footEnd != null && <div className=\{styles\.footEnd\}>\{footEnd\}<\/div>\}/,
       'the foot reads left to right: the note (or a door), the refusal\'s reason, then the buttons');
-    const css = stripComments(readSource('components/admin/kit/club/KitDialog.module.css'));
+    const css = stripComments(readSource('components/shared/KitDialog.module.css'));
     assert.match(cssRule(css, '.footStart'), /margin-right:\s*auto/);
     assert.match(cssRule(css, '.footEnd'), /margin-left:\s*auto/);
   });

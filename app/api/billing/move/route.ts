@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
-import { applyMove, cancelScheduledMove, getScheduledMove, hasLiveSubscription, moveDirection } from '@/lib/plan-move';
+import { applyMove, cancelScheduledMove, getScheduledMove, hasLiveSubscription } from '@/lib/plan-move';
+import { moveDirection } from '@/lib/plan-move-options';
 import { authorizeMove, parseTargetPlan, refuseIfGated, refusalResponse } from '@/lib/plan-move-route';
 import { writeOrgBillingAudit } from '@/lib/billing-retention';
 import { PLAN_CONFIG } from '@/lib/plan-config';

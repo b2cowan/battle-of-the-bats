@@ -73,7 +73,7 @@ describe('an admin record’s Delete', () => {
   it('a lone door ending an editing body carries the save pill on its line above a touch width — no empty reserve under it (owner 2026-10-12)', () => {
     assert.match(KIT, /className=\{styles\.recordDelete\} [^>]*data-record-door=""/);
     assert.match(KIT, /className=\{styles\.recordAction\} [^>]*data-record-door=""/);
-    const dialog = readCode('components/admin/kit/club/KitDialog.module.css');
+    const dialog = readCode('components/shared/KitDialog.module.css');
     assert.match(dialog, /\.bodyWrap\[data-has-status\] > \.body \{ padding-bottom: 3\.75rem; \}/, 'the reserve stays the rule');
     assert.match(dialog, /@media \(min-width: 769px\) \{\s*\.bodyWrap\[data-has-status\] > \.body:has\(> :last-child > \[data-record-door\]:only-child\) \{ padding-bottom: 1rem; \}/,
       'only ONE door alone in the last block, and only above a touch width');
@@ -83,7 +83,7 @@ describe('an admin record’s Delete', () => {
   });
 
   it('a row of doors that can show no held reason opts in by marking itself — the game window read first (owner 2026-10-19)', () => {
-    const dialog = readCode('components/admin/kit/club/KitDialog.module.css');
+    const dialog = readCode('components/shared/KitDialog.module.css');
     assert.match(dialog, /@media \(min-width: 769px\) \{\s*\.bodyWrap\[data-has-status\] > \.body:has\(> :last-child > \[data-record-doors\]:only-child\) \{ padding-bottom: 1rem; \}\s*\.bodyWrap\[data-has-status\]:has\(> \.body > :last-child > \[data-record-doors\]:only-child\) > \.status \{ max-width: 50%; \}\s*\}/,
       'desk only, and the pill keeps to the right half');
     const windowCode = readCode('app/[orgSlug]/admin/tournaments/schedule/components/GameWindow.tsx');

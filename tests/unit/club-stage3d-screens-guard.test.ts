@@ -50,8 +50,8 @@ function zOf(css: string, selector: string): number {
 }
 
 describe('1. the window kit: a named back, and one raised form layer', () => {
-  const dialog = readCode(`${KIT}/KitDialog.tsx`);
-  const css = readCode(`${KIT}/KitDialog.module.css`);
+  const dialog = readCode('components/shared/KitDialog.tsx');
+  const css = readCode('components/shared/KitDialog.module.css');
 
   it('the named back goes UP a level — the desk line, the phone ← and the phone\'s Back gesture — never closes', () => {
     assert.match(dialog, /<button type="button" className=\{styles\.namedBack\} onClick=\{goUp\}/);
@@ -177,7 +177,7 @@ describe('3. an allocation is ONE window, opened from every door (Asks 3–5)', 
     assert.match(tab, /if \(askedId && !own\) setWin\(/);
     assert.match(tab, /const arriving = askedId !== null && askedId !== ownAsk;/);
     assert.match(tab, /useEffect\(\(\) => \{\s*if \(!arriving\) return;/);
-    const dialog = readCode(`${KIT}/KitDialog.tsx`);
+    const dialog = readCode('components/shared/KitDialog.tsx');
     // (One Window 2d: the floor's `opener` follows it in the same call.)
     assert.match(dialog, /address: address \?\? null, opener \}\);/, 'the kit hands the place to the floor\'s Back step');
     const win = readCode(ALLOC_WINDOW);
