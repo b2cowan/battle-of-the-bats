@@ -1,5 +1,7 @@
-import { businessCents, csvCell, currentExpenses, hasConfirmedDates, hasKnownTaxAmount, isExpenseDate, matchesReviewFilter, type ExpenseRevision, type ReviewFilter } from './bookkeeping-expenses';
+import { businessCents, csvCell, currentExpenses, hasKnownTaxAmount, isExpenseDate, type ExpenseRevision, type ReviewFilter } from './bookkeeping-expenses';
 import { currentOwnerMovements, type OwnerMovementRevision } from './bookkeeping-owner-movements';
+import { matchesExpenseFilters, type ExpenseFilters, type ExpenseStatus } from './bookkeeping-filters';
+export type { ExpenseFilters } from './bookkeeping-filters';
 
 export type NamedReportPeriod = 'month' | 'year' | 'last_month' | 'last_quarter' | 'last_year';
 
@@ -26,8 +28,6 @@ export function reportPeriodRange(period: NamedReportPeriod, today: string): { f
     label: `Last quarter · ${MONTHS[first - 1]} to ${MONTHS[first + 1]} ${y}` };
 }
 
-export type ExpenseFilters = { from: string | null; to: string | null; category: string; supplier?: string; paymentSource?: string; dateStatus?: 'all' | 'confirmed'; query: string; review: ReviewFilter };
-
 export function parseExpenseFilters(params: URLSearchParams): ExpenseFilters | null {
   const from = params.get('from');
   const to = params.get('to');
@@ -37,25 +37,20 @@ export function parseExpenseFilters(params: URLSearchParams): ExpenseFilters | n
   const dateStatus = params.get('dateStatus') ?? 'all';
   const query = (params.get('q') ?? '').trim().toLowerCase();
   const review = params.get('review') ?? 'all';
+  const status = params.get('status') ?? 'all';
+  const attention = params.get('attention');
   if ((from && !isExpenseDate(from)) || (to && !isExpenseDate(to)) ||
     (from && to && from > to) || category.length > 80 || supplier.length > 160 || query.length > 160 ||
     !['', 'business_bank', 'business_card', 'personal', 'other'].includes(paymentSource) ||
     !['all', 'confirmed'].includes(dateStatus) ||
-    !['all', 'missing_receipt', 'missing_conversion', 'personal', 'foreign'].includes(review)) return null;
-  return { from, to, category, supplier, paymentSource, dateStatus: dateStatus as ExpenseFilters['dateStatus'], query, review: review as ReviewFilter };
+    !['all', 'attention', 'missing_receipt', 'missing_conversion', 'personal', 'foreign'].includes(review) ||
+    !['active', 'voided', 'all'].includes(status) || (attention !== null && !['0', '1'].includes(attention))) return null;
+  return { from, to, category, supplier, paymentSource, dateStatus: dateStatus as ExpenseFilters['dateStatus'], query,
+    review: attention === '1' ? 'attention' : review as ReviewFilter, status: status as ExpenseStatus };
 }
 
 export function selectExpenseRevisions(revisions: ExpenseRevision[], filters: ExpenseFilters): ExpenseRevision[] {
-  const ids = new Set(currentExpenses(revisions).filter(row =>
-    (!row.incurred_date || ((!filters.from || row.incurred_date >= filters.from) &&
-      (!filters.to || row.incurred_date <= filters.to))) &&
-    (filters.dateStatus !== 'confirmed' || hasConfirmedDates(row)) &&
-    (!filters.category || row.category === filters.category) &&
-    (!filters.supplier || row.supplier === filters.supplier) &&
-    (!filters.paymentSource || row.payment_source === filters.paymentSource) &&
-    (!filters.query || `${row.supplier} ${row.business_purpose} ${row.category}`.toLowerCase().includes(filters.query)) &&
-    matchesReviewFilter(row, filters.review)
-  ).map(row => row.expense_id));
+  const ids = new Set(currentExpenses(revisions).filter(row => matchesExpenseFilters(row, filters)).map(row => row.expense_id));
   return revisions.filter(row => ids.has(row.expense_id))
     .sort((a, b) => a.expense_id.localeCompare(b.expense_id) || a.revision - b.revision);
 }
@@ -93,7 +88,8 @@ export function expenseCsv(selected: ExpenseRevision[], filters: ExpenseFilters 
 /** Owner transfers are dated by transfer date; narrowed expense exports include linked reimbursements only. */
 export function selectOwnerMovementRevisions(revisions: OwnerMovementRevision[], filters: ExpenseFilters, selectedExpenses: ExpenseRevision[]): OwnerMovementRevision[] {
   const selectedExpenseIds = new Set(selectedExpenses.map(row => row.expense_id));
-  const narrowedExpenses = Boolean(filters.category || filters.supplier || filters.paymentSource || filters.query || filters.review !== 'all');
+  const narrowedExpenses = Boolean(filters.category || filters.supplier || filters.paymentSource || filters.query || filters.review !== 'all' ||
+    (filters.status && filters.status !== 'all'));
   const ids = new Set(currentOwnerMovements(revisions).filter(row =>
     (!filters.from || row.movement_date >= filters.from) && (!filters.to || row.movement_date <= filters.to) &&
     (!narrowedExpenses || (row.movement_kind === 'expense_reimbursement' && row.linked_expense_id && selectedExpenseIds.has(row.linked_expense_id)))

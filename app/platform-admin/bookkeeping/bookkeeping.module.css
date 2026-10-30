@@ -91,6 +91,49 @@
 .moreButton { flex-wrap: wrap; justify-content: space-between; column-gap: .75rem; border-top: 1px solid var(--home-line); }
 .moreButton span, .rate { color: var(--text-secondary); font-size: var(--type-support); font-weight: 400; }
 .quietButton { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: .65rem .85rem; border: 1px solid var(--home-line-strong); border-radius: 8px; background: var(--home-card); color: var(--text-primary); font: 650 var(--type-body) var(--font-sans, system-ui, sans-serif); cursor: pointer; }
+.expenseRegister { min-width: 0; border: 1px solid var(--home-line); border-radius: 10px; background: var(--card-bg); }
+.expenseToolbar { gap: .5rem; }
+.expenseToolbar select { max-width: 14rem; }
+.expenseToolbar .periodPill { width: 10rem; border-radius: 999px; color: var(--home-olive); border-color: var(--home-olive); background: var(--home-olive-soft); font-weight: 650; }
+.expenseToolbar .filterPill { border-radius: 0; max-width: 12rem; }
+.expenseToolbar .quietButton { min-height: var(--admin-control-h); border-radius: 0; padding: .45rem .75rem; }
+.expenseToolbarEnd { min-width: 0; }
+.expenseToolbarEnd input { width: 16rem; }
+.attentionPill { display: inline-flex; align-items: center; gap: .4rem; min-height: var(--admin-control-h); padding: .4rem .65rem; border: 1px solid color-mix(in srgb, var(--warning) 40%, transparent); background: transparent; color: var(--warning); font: inherit; cursor: pointer; }
+.attentionPill[aria-pressed="true"] { background: color-mix(in srgb, var(--warning) 12%, transparent); }
+.attentionCount { font-variant-numeric: tabular-nums; font-weight: 700; }
+.registerDates { display: flex; flex-wrap: wrap; gap: .75rem; padding: .75rem 1rem; border-bottom: 1px solid var(--home-line); }
+.registerDates label { display: grid; gap: .3rem; font-size: var(--type-support); color: var(--text-secondary); }
+.registerNote { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; margin: 0; padding: .5rem 1rem; color: var(--text-secondary); font-size: var(--type-support); border-bottom: 1px solid var(--home-line); }
+.expenseTableWrap { overflow-x: auto; }
+.expensesTable { table-layout: fixed; min-width: 900px; }
+.expensesTable th:nth-child(1) { width: 8%; }
+.expensesTable th:nth-child(2) { width: 17%; }
+.expensesTable th:nth-child(3) { width: 24%; }
+.expensesTable th:nth-child(4) { width: 18%; }
+.expensesTable th:nth-child(5) { width: 13%; }
+.expensesTable th:nth-child(6) { width: 7%; }
+.expensesTable th:nth-child(7) { width: 10%; }
+.expensesTable th:nth-child(8) { width: 3%; }
+.expensesTable th, .expensesTable td { padding: var(--table-pad-register) .6rem; font-size: var(--type-support); line-height: 1.4; }
+.expensesTable tbody tr { height: 31px; /* table-exception: K-01 */ }
+.expensesTable td { white-space: nowrap; }
+.expenseName { color: var(--text-primary); font-weight: 400; text-decoration: underline; text-decoration-color: var(--home-line-strong); text-underline-offset: 3px; }
+.expenseName:hover { color: var(--home-olive); text-decoration-color: var(--home-olive); }
+.supplierCell { max-width: 13rem; overflow: hidden; text-overflow: ellipsis; }
+.registerPurpose { max-width: 18rem; overflow: hidden; text-overflow: ellipsis; }
+.purposeLine { display: flex; align-items: baseline; gap: .3rem; }
+.purposeText { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.registerCategory { max-width: 14rem; overflow: hidden; text-overflow: ellipsis; }
+.registerDate, .registerSource { color: var(--text-secondary); }
+.expensesTable .registerDate { white-space: normal; }
+.voidedExpense td, .voidedExpense a { color: var(--text-secondary); }
+.voidedAmount { text-decoration: line-through; }
+.reasonChips { display: flex; flex-wrap: wrap; gap: .2rem; padding-top: .2rem; }
+.expenseExportMenu { position: fixed; z-index: 600; min-width: 14rem; padding: .3rem; background: var(--card-bg); border: 1px solid var(--home-line-strong); border-radius: 8px; box-shadow: var(--home-shadow); }
+.expenseExportMenu button { display: block; width: 100%; min-height: 44px; border: 0; border-radius: 4px; padding: .55rem .7rem; background: transparent; color: var(--text-primary); text-align: left; font: inherit; cursor: pointer; }
+.expenseExportMenu button:hover, .expenseExportMenu button:focus-visible { background: var(--home-olive-soft); outline: none; }
+.attentionPill:focus-visible, .expenseName:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 .sectionNav a:focus-visible, .listDoor:focus-visible, .primaryAction:focus-visible, .quietButton:focus-visible, .textButton:focus-visible, .dangerButton:focus-visible, .moreButton:focus-visible, .reportDoor:focus-visible { outline: 3px solid var(--home-olive); outline-offset: 2px; }
 @media (max-width: 700px) {
   .phoneAdd { display: inline-flex; width: 44px; height: 44px; padding: 0; font-size: var(--type-title); }
@@ -99,4 +142,21 @@
   .sectionNav a { min-height: 44px; padding-inline: .6rem; }
   .overviewGrid, .reportGrid, .metrics, .pair { grid-template-columns: 1fr; }
   .panel { padding: 1rem; }
+}
+@media (max-width: 640px) {
+  .expenseRegister { border: 0; background: transparent; }
+  .expenseToolbar { padding: .5rem 0; }
+  .expenseToolbarEnd { width: 100%; margin-left: 0; flex-wrap: nowrap; }
+  .expenseToolbarEnd input { flex: 1; min-width: 0; width: auto; }
+  .expenseTableWrap { overflow: visible; }
+  .expensesTable { min-width: 0; table-layout: auto; }
+  .expensesTable tbody tr { height: auto; display: flex; flex-direction: column; }
+  .expensesTable td { font-size: var(--type-body); white-space: normal; overflow-wrap: anywhere; }
+  .expensesTable .supplierCell { order: -1; max-width: none; display: flex; flex-wrap: wrap; gap: .5rem; }
+  .registerPurpose, .registerCategory { max-width: none; }
+  .purposeLine { flex-wrap: wrap; }
+  .purposeText { white-space: normal; overflow: visible; }
+  .expensesTable .registerPurpose { display: block; text-align: left; }
+  .expensesTable .registerPurpose::before { display: block; margin-bottom: .25rem; }
+  .registerNote { padding-inline: 0; }
 }

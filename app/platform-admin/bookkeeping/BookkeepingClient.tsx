@@ -8,12 +8,14 @@ import KitDialog from '@/components/shared/KitDialog';
 import { BOOKKEEPING_VIEWS, bookkeepingAddress, bookkeepingPlace } from '@/lib/bookkeeping-navigation';
 import { consoleDate, consoleWhen } from '@/lib/console-dates';
 import kit from '../console.module.css';
-import { businessCents, CONVERSION_SOURCES, hasConfirmedDates, hasKnownTaxAmount, isConversionSource, matchesReviewFilter, summarizeExpenses, type ExpenseRevision, type ReviewFilter } from '@/lib/bookkeeping-expenses';
+import { attentionReasons, businessCents, CONVERSION_SOURCES, hasConfirmedDates, hasKnownTaxAmount, isConversionSource, summarizeExpenses, type ExpenseRevision, type ReviewFilter } from '@/lib/bookkeeping-expenses';
 import { reportPeriodRange, type NamedReportPeriod } from '@/lib/bookkeeping-export';
 import type { OwnerMovementRevision } from '@/lib/bookkeeping-owner-movements';
 import { downloadCSVBlob } from '@/lib/export';
 import OwnerLedger from './OwnerLedger';
 import ExpenseFormWindow from './ExpenseFormWindow';
+import ExpensesRegister from './ExpensesRegister';
+import { expenseFilterParams, matchesExpenseFilters, type ExpenseFilters } from '@/lib/bookkeeping-filters';
 import DateInput from '@/components/shared/DateInput';
 import styles from './bookkeeping.module.css';
 
@@ -33,14 +35,6 @@ const today = () => {
 };
 const money = (cents: number) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(cents / 100);
 const amount = (cents: number) => (cents / 100).toFixed(2);
-const attentionReasons = (row: ExpenseRevision) => [
-  !hasConfirmedDates(row) ? 'Dates to review' : '',
-  !row.receipt_path ? 'Receipt missing' : '',
-  !hasKnownTaxAmount(row) ? 'Purchase tax amount unknown' : '',
-  hasKnownTaxAmount(row) && row.tax_status === 'pending' ? 'Tax review pending' : '',
-  row.original_currency === 'USD' && !isConversionSource(row.conversion_source) ? 'USD source not picked' : '',
-].filter(Boolean);
-
 function ExpenseRecordWindow({ expense, address, homeAddress, onClose, children }: {
   expense: ExpenseRevision; address: string; homeAddress: string; onClose: () => void; children: ReactNode;
 }) {
@@ -65,7 +59,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   const searchParams = useSearchParams();
   const params = useMemo(() => new URLSearchParams(searchParams.toString()), [searchParams]);
   const place = bookkeepingPlace(params);
-  const view: BookkeepingView = place.attention ? 'attention' : place.view;
+  const view: BookkeepingView = place.view;
   const [expenses, setExpenses] = useState<ExpenseRevision[]>(initialExpenses);
   const [revisions, setRevisions] = useState<ExpenseRevision[]>(initialRevisions);
   const [dateSchemaReady, setDateSchemaReady] = useState(initialDateSchemaReady);
@@ -110,12 +104,8 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   }, []);
 
   const categories = useMemo(() => [...new Set([...STARTER_CATEGORIES, ...expenses.map(row => row.category)])].sort(), [expenses]);
-  const visible = useMemo(() => expenses.filter(row =>
-    (!row.incurred_date || ((!from || row.incurred_date >= from) && (!to || row.incurred_date <= to))) &&
-    (!category || row.category === category) &&
-    (!query || `${row.supplier} ${row.business_purpose} ${row.category}`.toLowerCase().includes(query.toLowerCase())) &&
-    matchesReviewFilter(row, review)
-  ), [expenses, from, to, category, query, review]);
+  const visible = useMemo(() => expenses.filter(row => matchesExpenseFilters(row,
+    { from: from || null, to: to || null, category, query, review })), [expenses, from, to, category, query, review]);
   const datedVisible = useMemo(() => visible.filter(hasConfirmedDates), [visible]);
   const legacyVisible = useMemo(() => visible.filter(row => !hasConfirmedDates(row) && !row.void_reason), [visible]);
   const summary = useMemo(() => summarizeExpenses(datedVisible), [datedVisible]);
@@ -159,11 +149,11 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     void load();
   }
 
-  async function exportExpenses(kind: 'csv' | 'package') {
+  async function exportExpenses(kind: 'csv' | 'package', filters?: ExpenseFilters) {
     setExporting(kind); setError('');
     try {
-      const params = new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}), ...(category ? { category } : {}), ...(query ? { q: query } : {}), ...(review !== 'all' ? { review } : {}) });
-      if (view === 'reports' && reportDrilldown.kind !== 'all') {
+      const params = expenseFilterParams(filters ?? { from: from || null, to: to || null, category, query, review });
+      if (!filters && view === 'reports' && reportDrilldown.kind !== 'all') {
         params.set('dateStatus', 'confirmed');
         if (reportDrilldown.kind === 'category') params.set('category', reportDrilldown.key ?? '');
         if (reportDrilldown.kind === 'supplier') params.set('supplier', reportDrilldown.key ?? '');
@@ -232,14 +222,6 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
           </button>)}{!expenses.length && <p className={styles.empty}>Your first expense will appear here.</p>}</div>
       </div>
     </section>}
-    {view === 'attention' && <section className={styles.panel} aria-labelledby="attention-title">
-      <div className={styles.viewHeading}><div><p className={styles.eyebrow}>Follow up</p><h2 id="attention-title">Needs attention</h2>
-        <p>Open a purchase to add evidence or confirm a detail. These items remain here until corrected.</p></div></div>
-      {attention.length ? <div className={styles.rows}>{attention.map(row => <button key={row.expense_id} type="button" className={styles.listDoor} onClick={() => openRecord(row)}>
-        <span><strong>{row.supplier}</strong><small>{attentionReasons(row).join(' · ')}</small></span><b>{money(businessCents(row))} ›</b>
-      </button>)}</div> : <p className={styles.empty}>Nothing needs attention.</p>}
-    </section>}
-
     {view === 'reports' && <section className={styles.panel} aria-labelledby="report-title">
           <div className={styles.viewHeading}><div><p className={styles.eyebrow}>Recorded expenses</p><h2 id="report-title">Expense report</h2>
             <p>{reportPeriodLabel} · Period totals use confirmed incurred dates. Older dates to review appear separately.</p></div>
@@ -281,27 +263,15 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
           <p className={styles.hint}>Paid personally: {money(summary.personallyPaidCents)} across active expenses. A later reimbursement or owner movement is a separate record and must not be entered as another expense here.</p>
           <section className={styles.reviewList} aria-labelledby="evidence-review-title">
             <div className={styles.subHeading}><h3 id="evidence-review-title">Needs attention</h3><button type="button" className={styles.textButton} onClick={() => setView('attention')}>Open worklist · {attention.length}</button></div>
-            <p className={styles.hint}>Missing receipts, unknown dates or tax amounts, pending tax review, and USD conversion evidence appear in one worklist. Each item opens its expense record.</p>
+            <p className={styles.hint}>Missing receipts, unknown dates or tax amounts, and unpicked USD sources appear in one worklist. Each item opens its expense record.</p>
           </section>
           <section className={styles.reviewList} aria-labelledby="usd-review-title">
             <h3 id="usd-review-title">USD invoices</h3>
             {visible.filter(row => !row.void_reason && row.original_currency === 'USD').length ? visible.filter(row => !row.void_reason && row.original_currency === 'USD').map(row => <p key={row.expense_id}><strong>{row.supplier}</strong> · USD {amount(row.original_cents)} → CAD {amount(row.cad_cents)} · {row.conversion_note || 'USD source not picked'}</p>) : <p>No active USD invoices in this view.</p>}
           </section>
         </section>}
-    {view === 'expenses' && <section className={styles.panel} aria-labelledby="register-title">
-      <div className={styles.viewHeading}><div><p className={styles.eyebrow}>Your records</p><h2 id="register-title">Expenses</h2><p>Find a purchase, receipt or correction.</p></div></div>
-      <div className={styles.filters}><label>Find<input className={kit.field} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Supplier or purpose" /></label>
-        <label>From · incurred date<DateInput value={from} onChange={v => { setFrom(v); setReportPeriod('custom'); }} /></label>
-        <label>To · incurred date<DateInput value={to} onChange={v => { setTo(v); setReportPeriod('custom'); }} /></label>
-        <label>Category<select className={kit.select} value={category} onChange={event => setCategory(event.target.value)}><option value="">All categories</option>{categories.map(value => <option key={value}>{value}</option>)}</select></label>
-        <label>Show<select className={kit.select} value={review} onChange={event => setReview(event.target.value as ReviewFilter)}><option value="all">All expenses</option><option value="missing_receipt">Missing receipt</option><option value="missing_conversion">USD source not picked</option><option value="personal">Paid personally</option><option value="foreign">USD invoices</option></select></label></div>
-      {loading ? <p>Loading expenses…</p> : !visible.length ? <p className={styles.empty}>No expenses match this view.</p> :
-        <div className={styles.rows}>{visible.map(row => <button key={row.expense_id} type="button" className={styles.listDoor} onClick={() => openRecord(row)}>
-          <span><strong>{row.supplier}</strong><small>{row.incurred_date ? consoleDate(row.incurred_date) : `${consoleDate(row.expense_date)} · date unconfirmed`} · {row.category} · {SOURCES[row.payment_source]}</small>
-            <small>{row.receipt_path ? 'Receipt attached' : 'Receipt missing'}{row.void_reason ? ' · Voided' : ''}</small></span>
-          <b>{row.void_reason ? 'Voided' : money(businessCents(row))} ›</b>
-        </button>)}</div>}
-    </section>}
+    {view === 'expenses' && <ExpensesRegister expenses={expenses} loading={loading} exporting={Boolean(exporting)}
+      onOpenExpense={openRecord} onExport={exportExpenses} />}
 
     {formOpen && !addressedExpenseMissing && <ExpenseFormWindow key={`${editing?.expense_id ?? 'new'}-${voidMode}`}
       expense={editing} expenses={expenses} categories={categories} asVoid={voidMode}

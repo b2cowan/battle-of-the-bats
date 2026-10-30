@@ -80,11 +80,23 @@ export function lastConversionSource(rows: ExpenseRevision[], paymentSource: str
   return last?.conversion_source ?? '';
 }
 
-export type ReviewFilter = 'all' | 'missing_receipt' | 'missing_conversion' | 'personal' | 'foreign';
+/** The four ruled follow-ups; a void keeps its evidence but never asks for follow-up. */
+export function attentionReasons(row: ExpenseRevision): string[] {
+  if (row.void_reason) return [];
+  return [
+    !row.receipt_path ? 'Receipt missing' : '',
+    !hasKnownTaxAmount(row) ? 'Tax amount unknown' : '',
+    row.original_currency === 'USD' && !isConversionSource(row.conversion_source) ? 'USD source not picked' : '',
+    !hasConfirmedDates(row) ? 'Dates to review' : '',
+  ].filter(Boolean);
+}
+
+export type ReviewFilter = 'all' | 'attention' | 'missing_receipt' | 'missing_conversion' | 'personal' | 'foreign';
 
 export function matchesReviewFilter(row: ExpenseRevision, filter: ReviewFilter): boolean {
   if (row.void_reason) return filter === 'all';
   switch (filter) {
+    case 'attention': return attentionReasons(row).length > 0;
     case 'missing_receipt': return !row.receipt_path;
     case 'missing_conversion': return row.original_currency === 'USD' && !isConversionSource(row.conversion_source);
     case 'personal': return row.payment_source === 'personal';
