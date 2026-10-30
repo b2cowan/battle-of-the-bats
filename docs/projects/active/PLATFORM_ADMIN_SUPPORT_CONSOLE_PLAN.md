@@ -908,6 +908,10 @@ The build prompt's §6 run against the code (five read-only censuses, the cited 
       portal so its refusal is never seen; Stage 4's amber line cannot render on a portal record (`freeTime` passed null);
       12 kinds of absent-door line, not nine. Owner call 1 restated: Premium has NO trial (code + Facts + dev overrides),
       so the real question is whether the first charge waits until the day after the last free day (recommended B).
+    - **Walk A §414 WALKED ✅ 2026-10-30:** 44 of 44, all nine sections PASS, all 10 calls accepted as built (owner
+      paste-back). Accepted gaps: the after-the-end billing page not drawn, no free-time band on the Premium home, the
+      "Coaches Portal billing" title vs "Plan & billing" words, sign-in after the end lands on the free team. Walks B and
+      C still owed.
     - **Resume:** walks A/B/C (`/design` first, checkable Artifacts, matching ledger §s), records (PM brief, TODO,
       `PROGRAM_BILLING_AND_ENTITLEMENTS.md`, design_decisions for the builder's calls), `/docs`, `/simplify` → `/review`,
       `/billing` drift check, `/strategy`, the index `stages/s4b`, a dev-server restart (new file), then the commit.

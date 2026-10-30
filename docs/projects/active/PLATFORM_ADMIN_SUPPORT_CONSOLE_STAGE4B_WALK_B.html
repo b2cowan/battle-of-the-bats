@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Free Time Walk B</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* One purpose: every place free time on a Coaches Portal is refused or fenced, as the owner meets it.
+   Checkable walk with a paste-back; the console walks' look, so it reads the same as Stages 1 to 7. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8; --red: #8a2a1c; --red-soft: #f6e2dd;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1a16; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1a16; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); }
+.wrap { max-width: 860px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 90px; display: grid; gap: 22px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 19px; line-height: 1.3; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+code { font: 500 13px var(--font-data); background: var(--olive-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.card.signin { border-left: 3px solid var(--olive); }
+.card.rule { border-left: 3px solid var(--amber); background: var(--amber-soft); }
+.card ol, .card ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.card h3 { font-size: 14px; margin: 0; }
+.roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; }
+.role { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; min-width: 0; }
+.role b { font-size: 14px; }
+.role span { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.sec { scroll-margin-top: 70px; }
+.sec-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.sec-head .n { font: 600 12px/1 var(--font-data); color: var(--olive); }
+.sec-head .route { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.as { font: 600 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); }
+.intro { color: var(--soft); font-size: 14px; }
+.step { display: grid; gap: 2px; padding-block: 4px; border-top: 1px solid var(--line); }
+.step:first-of-type { border-top: 0 }
+.who { font: 600 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); margin: 6px 0 0 28px; }
+label.chk { display: flex; gap: 10px; align-items: flex-start; min-height: 32px; cursor: pointer; font-size: 14.5px; }
+label.chk input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--olive); flex: none; }
+label.chk .do { display: block; }
+label.chk .see { display: block; color: var(--soft); font-size: 14px; margin-top: 2px; }
+label.chk.held { margin-left: 28px; min-height: 26px; font-size: 13px; color: var(--dim); }
+label.chk.held input { width: 15px; height: 15px; margin-top: 3px; }
+.tag { font: 600 10.5px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); background: var(--amber-soft); border-radius: 4px; padding: 2px 5px; margin-left: 6px; white-space: nowrap; }
+.tag.stop { color: var(--red); background: var(--red-soft); }
+.cmd { margin: 4px 0 2px 28px; display: grid; gap: 4px; min-width: 0; }
+.cmd pre { margin: 0; font: 500 12px/1.5 var(--font-data); background: var(--ground); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.cmd button { justify-self: start; font: 600 12px/1 var(--font-body); min-height: 30px; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+textarea { width: 100%; min-height: 52px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); resize: vertical; }
+.verdict { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.verdict .vl { font: 600 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin-right: 4px; }
+.vb { font: 600 13px/1 var(--font-body); min-height: 36px; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+.vb[aria-pressed="true"][data-v="pass"] { background: var(--olive-soft); border-color: var(--olive); color: var(--olive); }
+.vb[aria-pressed="true"][data-v="issue"] { background: var(--red-soft); border-color: var(--red); color: var(--red); }
+.vb[aria-pressed="true"][data-v="call"] { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); border-bottom: 1px solid var(--line); padding-block: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.bar a { font: 600 12px/1 var(--font-body); padding: 8px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.progress { margin-left: auto; font: 600 12px var(--font-data); color: var(--dim); align-self: center; }
+.btn-doc { font: 600 14px/1 var(--font-body); min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive); color: var(--card); cursor: pointer; justify-self: start; }
+.paste textarea { min-height: 260px; font: 13px/1.5 var(--font-data); }
+.hint { font-size: 13px; color: var(--dim); }
+.last { border-left: 3px solid var(--red); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Support console · stage 4b · walk B of 3 · owner walk · 2026-10-28 · ledger §415</p>
+  <h1>Free Time Walk B</h1>
+  <p>One question: <b>everywhere free time on a Coaches Portal is refused or fenced, does the product say no, say why in one line, and change nothing?</b> You look at who gets the Give door and who does not, the one line that stands where the door would be, the Give and Change windows when you ask for too much, a stale window, where Put it back is allowed, every cancel and bulk change that has to leave a free-time portal alone, and the coach’s own save routes while Premium is on. The last section ends the free time, because that is the only way to meet the “second time needs a Super admin” rule. Tick what holds and write what does not. Your ticks stay in this browser; the paste-back at the foot gathers them for the chat.</p>
+</header>
+
+<div class="card">
+  <h2>What this walk is for</h2>
+  <p>Walk A gives free time and shows it; walk C pays for it. This one is the fence around it. A refusal that only exists on the server (the coach’s Cancel, the free team’s save routes, a club’s End it now) cannot be clicked, so those steps use the browser console, and they are optional: each has a “Did it” box and a “Skipped it” box. The dev database has no example for five of the door’s absent lines. Those steps say so and how the line would be met; you read them and tick “Read it”.</p>
+  <h3>It passes when</h3>
+  <ul>
+    <li>Super admin, Billing and Support get the Give door; Product, Growth and Read only get the tab and no door and no line.</li>
+    <li>Each absent-door line below reads as written for a real dev coach, and none of them has a button beside it.</li>
+    <li>Asking for a day that is not after today, or past the cap, shows the server’s red sentence in the window and gives nothing.</li>
+    <li>A window opened before someone else changed the end says so, and changes nothing. Put it back sits on one row only.</li>
+    <li>No cancel, club End it now or bulk change touches a portal on free time. The free team’s saves are refused while Premium runs.</li>
+  </ul>
+  <h3>Not in this walk</h3>
+  <p>Giving free time, what the coach sees, the bands and the Free time list (walk A). Paying and Keep Premium (walk C). The sixth give inside seven days needs five earlier gives by one person; dev cannot show it.</p>
+</div>
+
+<div class="card signin">
+  <h2>Sign in as (about 75 minutes; keep this page private, it holds passwords)</h2>
+  <p>The console is at <code>http://localhost:3000/platform-admin/login</code>. The coach signs in at <code>http://localhost:3000/coaches</code>. One private window per role keeps two roles side by side. All dev-only accounts; the console accounts below all exist on dev.</p>
+  <div class="roles">
+    <div class="role"><b>Super admin</b><span>uat-platform@fieldlogichq.ca<br>UATPassword2026!</span></div>
+    <div class="role"><b>Billing</b><span>billing@dev.local<br>devpass123</span></div>
+    <div class="role"><b>Support</b><span>support@dev.local<br>devpass123</span></div>
+    <div class="role"><b>Product</b><span>product@dev.local<br>devpass123</span></div>
+    <div class="role"><b>Growth</b><span>growth@dev.local<br>devpass123</span></div>
+    <div class="role"><b>Read only</b><span>readonly@dev.local<br>devpass123</span></div>
+    <div class="role"><b>The coach, Frankie Okafor</b><span>uat-free-coach@uat-free-coach.local<br>UATPassword2026!</span></div>
+  </div>
+  <ol>
+    <li><b>Restart the dev server first</b> (<code>npm run dev</code>, wait for Ready): this stage added new files, and Parts 5 and 6 are not committed, so the walk runs on the working tree.</li>
+    <li><b>Walk A’s Sitting 1 first.</b> Frankie’s Premium Coaches Portal must be on free time. Section 1 step 1 checks it and tells you to stop if it is not.</li>
+    <li><b>Walk A Sitting 2 and walk C before section 9.</b> Section 9 ends Frankie’s free time. It is last for that reason. If you want to keep the free time for later, leave section 9 unticked and press Needs a call with “deferred”.</li>
+    <li><b>Jordan Mitchell</b> (j2-coach@dev.local, free team Riverside Royals U13, no portal) is the spare coach for the Give window. Every step with Jordan ends on Cancel or a refusal; nothing is given.</li>
+    <li><b>Use a desktop-width window (768px or wider)</b> for the date checks. Narrower, the device’s own date control stands in and you cannot type a day.</li>
+    <li><b>This walk writes on dev:</b> one change of Frankie’s end and its Put it back, a few bulk batches that apply nothing (they are still recorded), their audit rows, and, in section 9 only, the end of the free time. No coach is emailed.</li>
+    <li><b>Console steps:</b> open the browser’s developer console (F12), paste the grey line on the page the step names, press Enter. It prints the status number and the server’s words. These never write unless the step says so.</li>
+  </ol>
+</div>
+
+<div class="bar" id="bar"><span class="progress" id="prog"></span></div>
+<div id="sections"></div>
+
+<section class="sec" id="rule">
+  <div class="card rule">
+    <h2>Calls the build made that you may want to overrule</h2>
+    <p>Tick the ones you accept; write on the ones you want changed. Calls 7 to 10 were found while writing this walk: questions for you, not fixes.</p>
+    <div id="calls"></div>
+  </div>
+</section>
+
+<section class="sec" id="paste">
+  <div class="card paste">
+    <h2>Paste-back</h2>
+    <p class="hint">A verdict is your opinion and the count is the evidence; the paste-back prints both, and lists what you held or skipped.</p>
+    <button class="btn-doc" type="button" id="make">Build summary</button>
+    <textarea id="out" aria-label="Your answers" readonly></textarea>
+  </div>
+</section>
+</div>
+
+<script>
+(function () {
+  // A step: d = do, s = you should see, w = who (shown above the step when the account changes), c = a console line.
+  // t: "held" = also a "could not be shown on dev" box; "opt" = an optional console step (Did it / Skipped it);
+  //    "only" = nothing to do on dev, read it (one box); "stop" = a stop check.
+  var FRANKIE = "http://localhost:3000/platform-admin/customer-users/bd12238b-dbe0-4f9e-a559-b85adcb4a5ed";
+  var JORDAN = "http://localhost:3000/platform-admin/customer-users/0451ff86-8496-4901-ab31-cd31b4c24cba";
+  var PEOPLE = "http://localhost:3000/platform-admin/customer-users/";
+  var S = [
+    ["start", "Before you start", "Frankie’s record, then their portal’s", "Support", [
+      { w: "Support", t: "stop",
+        d: "Open Frankie Okafor’s record {{" + FRANKIE + "}} and press its Coaches Portal tab.",
+        s: "Under “Premium Coaches Portals” one row, with “Free time through” and a day in the Now column, and above it the line “Their Premium Coaches Portal is free through” the same day written out in full. If it says “No Premium Coaches Portal.”, walk A’s Sitting 1 is not done: stop here and do it first." },
+      { d: "Open that portal row. Press its Access tab. Write down three things for later: its web name (shown under the title beside “Owner” and “Created”), the number at the end of its address, and the last free day.",
+        s: "A chip “Active” in the title. In Access, a “Free time” section with one row “Premium Coaches Portal · given by staff”, “Free through” the last free day and how many days are left, and two buttons, “Change the end date” and “End it now”." }
+    ]],
+    ["roles", "Who has the door and who does not", "a free coach’s Coaches Portal tab", "each role", [
+      { w: "Support",
+        d: "Open Jordan Mitchell’s record {{" + JORDAN + "}} and press the Coaches Portal tab. Then press “Give free time”.",
+        s: "Under “Free team”, one row “Riverside Royals U13 …” and an outlined button “Give free time” at the head of the list; under “Premium Coaches Portals”, “No Premium Coaches Portal.” and no line. The window “Give free time to Jordan Mitchell” has Team, “Free through” and Why. Under the date: “The last free day; it ends that midnight, Eastern. You can give up to 90 days, through …” a day 90 days after today. Press Cancel. Never press Give free time on this record." },
+      { w: "Billing", d: "Sign in as Billing and do the same on Jordan’s record.",
+        s: "The same button, the same window, the same “up to 90 days”. Cancel." },
+      { w: "Super admin", d: "Sign in as Super admin and do the same.",
+        s: "The same button and window, but the date reads “You can give up to 6 months, through …” a day six calendar months after today. Cancel." },
+      { w: "Product", d: "Sign in as Product. Open Jordan’s record and press the Coaches Portal tab.",
+        s: "The tab, the free team row and “No Premium Coaches Portal.” are all there. There is no “Give free time” button and no line of any colour where it would be." },
+      { w: "Growth", d: "Sign in as Growth and do the same.", s: "The same as Product: the tab and the team, no door, no line." },
+      { w: "Read only", d: "Sign in as Read only and do the same.", s: "The same: the tab and the team, no door, no line." },
+      { w: "Product", d: "Still as Product (or Read only), open Frankie’s portal record (the row you opened in section 1) and its Access tab.",
+        s: "The Free time row is there, and it has no “Change the end date”, no “End it now” and no “Give free time”. On its Story tab, no “Put it back” button on any row." },
+      { w: "Product", t: "opt",
+        d: "Console: on any console page as Product (Growth or Read only give the same), paste this. It asks the server to give Jordan free time with nonsense for the team.",
+        s: "[403, {error: \"Insufficient platform role\"}]. The server refuses before it reads anything, whatever the page showed.",
+        c: "await fetch('/api/platform-admin/people/0451ff86-8496-4901-ab31-cd31b4c24cba/portal-free-time',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({team_id:'none',last_day:'2030-01-01',reason:'walk'})}).then(async r => [r.status, await r.json()])" }
+    ]],
+    ["lines", "The lines where the door would be", "a coach’s Coaches Portal tab; a portal’s Access", "Support, Billing, Super admin", [
+      { w: "Support", d: "Open the public demo coach {{" + PEOPLE + "db42469b-8737-4ed1-b9ca-f7c2bf987241}} (demo-coach@example.com) and its Coaches Portal tab.",
+        s: "Under “Free team”, a line: “This is a public demo coach, so it can't be given free time: everyone who opens the demo would see it.” No Give free time button." },
+      { d: "Open coach@dev.local {{" + PEOPLE + "28608447-5d61-4bbf-8b66-a0dd862163ed}}, tab Coaches Portal.",
+        s: "Under “Premium Coaches Portals”, the line “Their Premium portal is already free through Sep 30, 2027 under Founding Season. Its end stays as it is.” The row “Dev Standalone Team” reads “Founding Season, free through Sep 30, 2027”. No button." },
+      { d: "Open uat-coach@uat-test-org.local {{" + PEOPLE + "cfec9aba-911d-4a34-989a-872c5cb0c797}}, tab Coaches Portal.",
+        s: "Under “Premium Coaches Portals”, the line “Their Premium Coaches Portal is already free from FieldLogicHQ. Its end stays as it is.” Two rows (“UAT Standalone Team Coaches Portal” and “UAT Standalone Team (No Metrics) Coaches Portal”), both “Free from FieldLogicHQ”. No button." },
+      { d: "Open b2cowan@outlook.com {{" + PEOPLE + "ec071389-636f-4477-a585-8f8f397f79a8}}, tab Coaches Portal.",
+        s: "Under “Premium Coaches Portals”, the line “Their Premium portal was cancelled &lt;date&gt;. Its kept data is deleted &lt;date, a year later&gt;. Reopening it is not free time.” (red, and worded “is deleted … N days from now”, inside the last 30 days). The row “toronto blue jays5 Coaches Portal” reads “Cancelled”. No button." },
+      { d: "Open uat-owner@uat-test-org.local {{" + PEOPLE + "4bdd0ba2-5b74-43ac-812c-c68acb70a8a2}}, tab Coaches Portal. This is a club owner with no free team.",
+        s: "Under “Free team”, the plain sentence “No free team. Free time needs a team to bring across: ask the coach to add theirs first.” in the list’s place, not in red or amber. No button." },
+      { d: "Reopen Frankie’s record, tab Coaches Portal. Then open their portal’s Access tab (as in section 1).",
+        s: "On their record: under “Premium Coaches Portals”, the line “Their Premium Coaches Portal is free through” the last free day in full, then “Change its end from the portal's record.” No Give button. On the portal’s Access tab, above the Free time row: “… already has Premium free through” the day “. Give it more time from that entry instead.” and no Give button." },
+      { d: "Type {{" + PEOPLE + "287f2997-a921-412e-afce-ccd476dfbd44}} in the address bar. This is growth@dev.local, a staff account.",
+        s: "A not-found page. The console shows a staff account to a Super admin only, so Support never reaches the staff line below." },
+      { w: "Billing", d: "Sign in as Billing. Open the Founding portal’s own record {{http://localhost:3000/platform-admin/orgs/d3796ad7-83fb-4172-a12f-568075785714}} (Dev Standalone Team) and its Access tab.",
+        s: "The Free time section lists its Founding Season row, and there is no “Give free time”, no “Change the end date” and no “End it now”, and no line. The reason it has no door lives on the coach’s tab (step 2 above)." },
+      { w: "Super admin", d: "Sign in as Super admin. Open your own record {{" + PEOPLE + "3caa1abc-19d7-4834-ba1d-6ac1b7b3a626}} (uat-platform@fieldlogichq.ca), tab Coaches Portal.",
+        s: "Under “Free team”, a red line: “This is your own account, or a platform staff account, so it can't be given free time. Another staff member can give it to a coach.” No button." },
+      { d: "Open Growth’s record {{" + PEOPLE + "287f2997-a921-412e-afce-ccd476dfbd44}}, tab Coaches Portal.",
+        s: "The same red line. (It is another staff member’s account, not yours, and the line is the same.)" },
+      { t: "only", d: "Free time switched off on this server. Dev has the switch on (ENTITLEMENT_GRANTS_ENABLED=true), so you cannot see this one without turning it off.",
+        s: "The line would be red, “Free time is switched off on this server, so anything given here would do nothing. An engineer can switch it on.”, and the server would answer 409 with the same words. Do not switch it off to look: it would stop Frankie’s free time applying." },
+      { t: "only", d: "You belong to the coach’s team. Dev has no staff account in any team or portal, so none shows it.",
+        s: "The red line would be “You belong to this coach's team, so you can't give it free time. Another staff member can.” The server checks the free team, every portal’s club, rep-team staff and house-league coaching." },
+      { t: "only", d: "A club pays for the coach’s team. Dev has no portal moved into a club or billed by one.",
+        s: "Under “Premium Coaches Portals”: “This coach's team is in a club, and the club pays for it. Give the club free time instead.”" },
+      { t: "only", d: "A portal that pays through Stripe. No dev portal pays today (the three Stripe-billed ones are cancelled). Walk C’s Keep Premium makes one: open Frankie’s record again after it.",
+        s: "Under “Premium Coaches Portals”: “Their Premium Coaches Portal pays through Stripe. There is nothing to give: they would keep paying while using free time.”" },
+      { t: "only", d: "The sixth give by one person inside seven days. It needs five earlier gives by the same account, and dev has none (no give has ever been made).",
+        s: "The line would be “You have given free time to 5 Coaches Portals in the last 7 days. A Super admin can give this one.” and a Super admin would not see it." }
+    ]],
+    ["window", "Asking for too much in the Give window", "Give free time on Jordan Mitchell’s record", "Support, then Super admin", [
+      { w: "Support", d: "Open Jordan’s Give window again. Click the “Free through” box, type today’s date (like Oct 28, 2026) and press Tab. Write “Walk B” under Why. Press “Give free time”.",
+        s: "A red line in the window: “The last free day must be after today.” The window stays open. Press Cancel: Jordan’s tab still reads “No Premium Coaches Portal.”" },
+      { d: "Open the window again. Type a day a year from today, a reason, and press “Give free time”.",
+        s: "A red line: “You can give up to 90 days, through” the day 90 days after today, “. Longer needs a Super admin.” Nothing is given. Cancel." },
+      { w: "Super admin", d: "As Super admin, open Jordan’s Give window. Type a day a year and a half from today, a reason, and press “Give free time”.",
+        s: "A red line: “You can give up to 6 months, through” the day six months after today, and a full stop, with no “Longer needs a Super admin.” Nothing is given. Cancel." },
+      { w: "Support", t: "opt",
+        d: "Console: as Support, on any console page, paste this. Five requests, none of which can give anything (the team is nonsense).",
+        s: "In order: “400 Say why you're giving it.”, “400 Choose the last free day.”, “400 The last free day must be after today.”, “400 Choose the last free day.” (a full date-and-time is never read), and “400 You can give up to 90 days, through …  Longer needs a Super admin.”",
+        c: "for (const [d, why] of [['2026-12-25',''],['','walk'],['2020-01-01','walk'],['2026-12-25T00:00:00Z','walk'],['2030-01-01','walk']]) console.log(JSON.stringify(d), await fetch('/api/platform-admin/people/0451ff86-8496-4901-ab31-cd31b4c24cba/portal-free-time',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({team_id:'none',last_day:d,reason:why})}).then(async r => r.status + ' ' + (await r.json()).error))" },
+      { t: "opt",
+        d: "Console: as Support, paste this. It asks for free time for the demo coach and for Frankie, who already has it.",
+        s: "Two lines, both 403: the demo coach’s sentence from section 3, and “Their Premium Coaches Portal is free through” Frankie’s last day in full “. Change its end from the portal's record.” The server says what the tab said.",
+        c: "for (const id of ['db42469b-8737-4ed1-b9ca-f7c2bf987241','bd12238b-dbe0-4f9e-a559-b85adcb4a5ed']) console.log(await fetch('/api/platform-admin/people/'+id+'/portal-free-time',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({team_id:'none',last_day:'2030-01-01',reason:'walk'})}).then(async r => r.status + ' ' + (await r.json()).error))" }
+    ]],
+    ["change", "Changing the end, a stale window, and where Put it back sits", "Frankie’s portal › Access, Story", "Support, then Super admin", [
+      { w: "Support", d: "Open Frankie’s portal record, Access, and press “Change the end date”.",
+        s: "The window “Change the end of … free time”, the current last day in the box, and under it “Measured from the day free time was first given: you can go through” a day exactly 90 days after the day the portal Story’s “Free time given” row is dated. “Change the end date” is greyed while the day is unchanged." },
+      { d: "Type a day a year from today, a reason, and press “Change the end date”.",
+        s: "A red line: “You can give up to 90 days from when free time was first given (” the first day “), through” the day 90 days after it “. Longer needs a Super admin.” The Access row still shows the old last day." },
+      { d: "Type today’s date, a reason, and press the button.",
+        s: "A red line: “The last free day must be after today.” Press Cancel; nothing changed." },
+      { w: "Super admin", d: "As Super admin, open the same window and type a day a year from today, a reason, and press the button.",
+        s: "The hint reads “you can go through” a day six calendar months after the first give. The red line: “You can give up to 6 months from when free time was first given (” the first day “), through” that day, with no “Longer needs a Super admin.” Cancel. (The limit counts from the first give, not from today. A give made today makes the two the same day, so you cannot tell them apart until days pass.)" },
+      { w: "Support", d: "Open Frankie’s portal Access in TWO browser tabs. In both press “Change the end date”. Leave the second tab’s window open.",
+        s: "Two windows showing the same last day." },
+      { d: "In the first tab, pick a day one earlier than the current one, write “Walk B first change”, and press “Change the end date”.",
+        s: "The window closes and the Access row shows the new day." },
+      { d: "In the second tab (its window still open), pick a day two earlier than the original, write “Walk B second change”, and press the button.",
+        s: "The window turns into a notice with the same title: “support@dev.local changed this free time while you had it open. It now runs through” the first tab’s day “. Look again before you change it.” The foot says “Nothing was changed.” and the button reads “Look again”. Press it: the window closes, and the Access row still shows the first tab’s day." },
+      { d: "Open the Story tab (newest first).",
+        s: "Exactly ONE “Put it back” button among the rows, on “Free time changed: Premium Coaches Portal now free through” the first tab’s day, with “Was through” the original under it. The “Free time given” row has none. “Coaches Portal created from the free team UAT Free Team” and “Free team brought across: …” have none. One change entry, not two." },
+      { d: "Press that Put it back. Write “Walk B put back” and press “Put it back”.",
+        s: "The window is “Put back the end of … free time”, with a sentence that the free time runs through the original day again instead of the changed one. Afterwards the Access row shows the original day. In the Story the change row says “Put back at” a time instead of a button, and a new row “Put back: Free time changed: …” now holds the one Put it back. Do not press that one, and do not press Put it back on a “Free time given” row: on “given” it opens End it now and ends the free time (section 9 is the place for that)." }
+    ]],
+    ["cancels", "Cancels and ends that must leave a free-time portal alone", "Plan & billing, Access, the console", "Frankie, Billing, Super admin", [
+      { w: "Frankie, the coach", d: "Sign in as the coach at {{http://localhost:3000/coaches}}. You land in the Premium portal (the address shows its web name). Open Plan &amp; billing at {{http://localhost:3000/WEB-NAME/admin/org/billing}} with the web name you wrote down.",
+        s: "The “Billing” card reads “No billing action needed: your free time runs through” the last free day in full. There is no “Cancel Premium access” card, no “Cancel Premium” button, and no Payment method &amp; invoices. (Keep Premium sits there; walk C uses it.)" },
+      { t: "opt", w: "Frankie, the coach",
+        d: "Console: on that Plan &amp; billing page (the address must start with the web name), paste this. It is the cancel the page no longer shows.",
+        s: "[409, {error: \"There's nothing to cancel. Your Premium Coaches Portal is free through\" the last day in full \", then goes back to the free Coaches Portal by itself.\"}]. Reload: the portal is still on free time.",
+        c: "await fetch('/api/billing/cancel/confirm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orgSlug:location.pathname.split('/')[1],reason:'walk'})}).then(async r => [r.status, await r.json()])" },
+      { w: "Billing", d: "Sign in as Billing. Open Frankie’s portal record, Access, and scroll to the foot.",
+        s: "Own web address is the last section. There is no red “Cancel the subscription” door and no “Delete the club” door. (The staff cancel hides itself here because the portal is stored as cancelled; see call 8.)" },
+      { t: "opt", d: "Console: on Frankie’s portal record page as Billing, paste this. It asks the server to start a cancel (the read half only).",
+        s: "[409, {error: \"… has free time through\" a day like Dec 26, 2026 \". End it now from its Access list instead of cancelling.\"}], starting with the portal’s name.",
+        c: "await fetch('/api/platform-admin/orgs/'+location.pathname.split('/').pop()+'/cancel-subscription').then(async r => [r.status, await r.json()])" },
+      { t: "opt", d: "Console: same page, same account. This is Stage 4’s club End it now, pointed at a portal (the grant number is made up, the portal check comes first).",
+        s: "[409, {error: \"End a Coaches Portal's free time from its own Access list.\"}]. The Access row still shows the free time.",
+        c: "await fetch('/api/platform-admin/orgs/'+location.pathname.split('/').pop()+'/overrides/00000000-0000-0000-0000-000000000000',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:'walk'})}).then(async r => [r.status, await r.json()])" },
+      { w: "Super admin", d: "Sign in as Super admin. Open Frankie’s portal record, Access, scroll to the foot. Press the red “Delete the club”, read the window, and press “Keep it”. Do NOT delete.",
+        s: "A red “Delete the club” door is there, and the window reads “… and everything in it … are removed. This cannot be taken back.” with the web name to type; the delete button stays greyed until you type it. The plan says no door deletes a portal on free time. This one does. Press “Needs a call” on this section if that is not meant (call 9)." }
+    ]],
+    ["bulk", "Bulk changes skip a Coaches Portal and say so", "Bulk changes", "Billing, then Product", [
+      { w: "Billing", d: "Open {{http://localhost:3000/platform-admin/bulk-operations}}. Search for Frankie’s portal by the name its record shows, and tick ONLY that row (no club). Action “Billing status override”, Free through any day after today, Reason “Walk B skip”. Press “Review bulk operation”, then “Confirm bulk operation”.",
+        s: "A green notice: “0 succeeded / 0 failed / 1 skipped. Skipped 1 Coaches Portal: its plan and free time can only be changed on its own record.” The “Latest operation” card lists the portal with “Skipped: a Coaches Portal's plan and free time can only be changed on its own record.” Nothing warned you before you confirmed." },
+      { d: "Open Frankie’s portal record, Access and Story.",
+        s: "Still “Free through” the same day. The Story has no new row from the bulk change." },
+      { d: "Back on Bulk changes, tick Frankie’s portal AND “Dev Standalone Team” (still no club). Action “Plan change”, any target plan, Reason “Walk B skip 2”. Review, then Confirm.",
+        s: "“0 succeeded / 0 failed / 2 skipped. Skipped 2 Coaches Portals: their plan and free time can only be changed on each portal's own record.” Both rows read Skipped. Neither portal’s plan changed (check Frankie’s record title chip and plan)." },
+      { d: "Scroll to “Recent bulk operations”.",
+        s: "Your two batches are listed. A batch where everything was skipped shows the chip “Failed” and targets “0 / 1” and “0 / 2”, though nothing went wrong. Put a verdict on call 7." },
+      { w: "Product", t: "opt", d: "Sign in as Product. On Bulk changes tick “Dev Standalone Team” only, choose “Extra feature access”, any feature, Reason “Walk B skip 3”, Review, Confirm.",
+        s: "“0 succeeded / 0 failed / 1 skipped. Skipped 1 Coaches Portal: …”. The extra-feature action skips a portal too, though the plan only named status override and plan change." }
+    ]],
+    ["freeteam", "The free team’s saves while Premium runs", "the free team’s page, the console", "Frankie, the coach", [
+      { w: "Frankie, the coach", d: "As the coach, open the free team’s own page {{http://localhost:3000/coaches/team/d9d23b10-4f8f-4b58-a928-6f1c48422894}}.",
+        s: "You are sent on to the Premium portal (the address becomes your web name followed by /coaches). The page never shows you the free team to edit. The free team’s save routes have no screen of their own, so the next step is the only way to reach them." },
+      { t: "opt", d: "Console: on the Premium portal page as the coach, paste this. It tries to delete an event that does not exist from the free team, so it cannot remove anything.",
+        s: "[409, {error: \"UAT Free Team is on Premium right now, so make changes in your Premium Coaches Portal.\"}]. If it says [404, {error: \"Event not found.\"}], the guard did not refuse: mark this section Issue.",
+        c: "await fetch('/api/coaches/teams/d9d23b10-4f8f-4b58-a928-6f1c48422894/events/00000000-0000-0000-0000-000000000000',{method:'DELETE'}).then(async r => [r.status, await r.json()])" }
+    ]],
+    ["end", "End it now, and a second time", "Frankie’s portal › Access, their record", "Support, Super admin", [
+      { t: "stop", d: "STOP CHECK. This section ENDS Frankie’s free time (walk A’s). Tick only if walk A’s Sitting 2 and walk C are finished with it. If not, leave this whole section and press Needs a call with “deferred”.",
+        s: "Nothing to see. This box is the guard." },
+      { w: "Support", d: "Open Frankie’s portal record, Access, and press “End it now”. Look at the window before typing anything.",
+        s: "The window “End … free time now” says the Premium free time ends now instead of on the last day, that they go back to the free Coaches Portal at once, and “Nothing is deleted”. The foot says “Writes a new entry in the Story.” The “End it now” button is faded and does not respond until you type under Why." },
+      { d: "Press “Keep it”. Look at the Access row and the Story.",
+        s: "The window closes. The free time row is still there, and the Story has no new row." },
+      { d: "Press “End it now” again, write “Walk B end”, and press “End it now”.",
+        s: "The window closes. Access reads “No free time running.” The title chip reads “Free time ended”. The newest Story row is “Free time ended early: Premium Coaches Portal”, “Back to the free Coaches Portal. Everything made on Premium is kept”, by support@dev.local with your reason. No row in the Story has a Put it back any more." },
+      { d: "Open Frankie’s record {{" + FRANKIE + "}}, tab Coaches Portal.",
+        s: "Under “Free team”: “This coach had Premium free from” the day it was first given “to” the day it ended (both are today if you gave it today) “. A second time needs a Super admin.” No “Give free time” button for Support. The portal row’s Now column reads “Free time ran through” the day “· back on the free Coaches Portal”." },
+      { w: "Super admin", d: "Sign in as Super admin and open the same record.",
+        s: "The line is gone and “Give free time” is there. Press it: “Give free time to Frankie Okafor” has no Team box; the sentence says they get the Premium Coaches Portal again, on the same portal. Under the date, “Measured from the day free time was first given: you can go through” a day six months after the first give. Press Cancel. Do not give." },
+      { t: "opt", w: "Support", d: "Console: as Support, on any console page, paste this. It asks for a second give for Frankie with a day far ahead.",
+        s: "[403]-style line: “403 This coach had Premium free from … A second time needs a Super admin.” Run the same line as Super admin: “400 You can give up to 6 months from when free time was first given (” the first day “), through …”. The later give is capped from the FIRST give. It writes nothing either way.",
+        c: "console.log(await fetch('/api/platform-admin/people/bd12238b-dbe0-4f9e-a559-b85adcb4a5ed/portal-free-time',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({team_id:'none',last_day:'2030-01-01',reason:'walk'})}).then(async r => r.status + ' ' + (await r.json()).error))" },
+      { t: "opt", w: "Frankie, the coach", d: "Console: as the coach, on any page after signing in, paste section 8’s line again (the one deleting an event that does not exist).",
+        s: "[404, {error: \"Event not found.\"}]. The refusal went with the free time: the free team is theirs to change again.",
+        c: "await fetch('/api/coaches/teams/d9d23b10-4f8f-4b58-a928-6f1c48422894/events/00000000-0000-0000-0000-000000000000',{method:'DELETE'}).then(async r => [r.status, await r.json()])" }
+    ]]
+  ];
+  var CALLS = [
+    ["A role without the power sees no door and no line at all", "Product, Growth and Read only read the whole Coaches Portal tab with nothing where the door would be. The drawing’s line 7 (“Read only: this role sees the tab and has no door”) is not shown on screen. Accept, or ask for a quiet note."],
+    ["One other portal blocks the door for the whole coach", "A coach with any portal other than their staff-given one (paying, Founding, comped, club-billed, cancelled) gets no door even if they also have a free team, and the tab gives the reason under Premium Coaches Portals. Accept, or ask for the door to be offered for their free team."],
+    ["Lines not as drawn", "A comped (not Founding) portal has its own line (not drawn). The cancelled and club lines drop the date and the club’s name; the “had free time” line drops “change the end of the first”, and reads “from Oct 28, 2026 to Oct 28, 2026” when given and ended the same day. Accept, or ask for words."],
+    ["While free time runs, the portal’s Give door is a line, not a button", "“… already has Premium free through … Give it more time from that entry instead.” The door that only refuses is absent. Accept."],
+    ["A later give is capped from the first give, so it can run out", "Measured from the first give, a second give more than 6 months after the first is impossible for anyone, Super admin included. Built as ruled; the plan asks you to confirm that is meant."],
+    ["The sixth give inside seven days needs a Super admin (not walkable)", "Your gate ruling (a). Dev has no gives, so the line could not be shown. It is proven by the unit tests only. Accept as untested here."],
+    ["A bulk batch of only portals is recorded as “Failed 0 / n”, and the picker offers portals", "All three bulk actions skip a portal, which is more than the two the plan named. The list shows no warning before you confirm; the summary line says it after. The batch row reads Failed. Accept, or ask for a warning on the portal rows and a Skipped chip."],
+    ["Found while writing: the staff “Cancel the subscription” door never shows on a free-time portal", "The portal is stored as cancelled, so the door is hidden for that reason, and the server’s refusal (“… has free time through … End it now …”) is never met on screen. Safe either way. Accept, or ask that the hiding be on purpose."],
+    ["Found while writing: a Super admin can still delete a portal on free time", "The plan’s threat T17 says no door deletes a portal. The older “Delete the club” door is still offered to a Super admin on Frankie’s portal and the server has no free-time check. Decide: leave, or refuse it like the cancel."],
+    ["Found while writing: three refusals can only be met through the console", "The coach’s Cancel, the free team’s save routes, and a club’s End it now on a portal have no screen that reaches them. They are guards for a stale tab or a hand-made request. Accept that these are checked by an optional console step."]
+  ];
+  var KEY = 'pas4b-walk-b-refusals';
+
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function esc(s) { return String(s).replace(/&amp;/g, '&').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\{\{([^}]+)\}\}/g, '<code>$1</code>'); }
+  var VERDICTS = [["pass", "Passes"], ["issue", "Issue"], ["call", "Needs a call"]];
+  var host = document.getElementById('sections'), bar = document.getElementById('bar'), total = 0;
+  S.forEach(function (s, i) {
+    var id = s[0]; total += s[4].length;
+    var a = document.createElement('a'); a.href = '#' + id; a.textContent = (i + 1) + ' ' + s[1].split(':')[0].split(',')[0].split(' and ')[0]; bar.insertBefore(a, document.getElementById('prog'));
+    var sec = document.createElement('section'); sec.className = 'sec'; sec.id = id;
+    var h = '<div class="card' + (id === 'end' ? ' last' : '') + '"><div class="sec-head"><span class="n">' + (i + 1) + '</span><h2>' + esc(s[1]) + '</h2><span class="route">' + esc(s[2]) + '</span></div><span class="as">As ' + esc(s[3]) + '</span>';
+    if (id === 'end') h += '<p class="intro"><b>This section ends walk A’s free time.</b> Do it only after walk A Sitting 2 and walk C. It goes last for that reason.</p>';
+    s[4].forEach(function (t, k) {
+      var tag = t.t === 'opt' ? ' <span class="tag">console · optional</span>' : t.t === 'only' ? ' <span class="tag">no dev example</span>' : t.t === 'stop' ? ' <span class="tag stop">stop check</span>' : '';
+      h += '<div class="step">';
+      if (t.w) h += '<div class="who">Now as ' + esc(t.w) + '</div>';
+      var body = '<span><span class="do">' + (k + 1) + '. ' + esc(t.d) + tag + '</span><span class="see">' + (t.t === 'only' ? 'What it would be: ' : 'You should see: ') + esc(t.s) + '</span></span>';
+      if (t.t === 'only') {
+        h += '<label class="chk"><input type="checkbox" id="h-' + id + '-' + k + '" data-k="' + id + '.' + k + '.h"> ' + body + '</label>';
+        h += '<span class="hint" style="margin-left:28px">Tick when you have read it. It counts as held, not as seen.</span>';
+      } else {
+        h += '<label class="chk"><input type="checkbox" id="c-' + id + '-' + k + '" data-k="' + id + '.' + k + '"> ' + body + '</label>';
+        if (t.c) h += '<div class="cmd"><pre>' + esc(t.c).replace(/\{\{|\}\}/g, '') + '</pre><button type="button" data-copy="' + id + '.' + k + '">Copy the line</button></div>';
+        if (t.t === 'opt') h += '<label class="chk held"><input type="checkbox" id="h-' + id + '-' + k + '" data-k="' + id + '.' + k + '.h"> <span>Skipped it (no console)</span></label>';
+      }
+      h += '</div>';
+    });
+    h += '<div class="verdict" role="group" aria-label="Verdict for ' + esc(s[1]) + '"><span class="vl">Verdict</span>';
+    VERDICTS.forEach(function (v) { h += '<button type="button" class="vb" data-part="' + id + '" data-v="' + v[0] + '" aria-pressed="false">' + v[1] + '</button>'; });
+    h += '</div>';
+    h += '<textarea id="n-' + id + '" aria-label="Notes on ' + esc(s[1]) + '" data-n="' + id + '" placeholder="Notes: anything that did not hold"></textarea></div>';
+    sec.innerHTML = h; host.appendChild(sec);
+  });
+  var calls = document.getElementById('calls');
+  CALLS.forEach(function (c, k) { calls.insertAdjacentHTML('beforeend', '<label class="chk"><input type="checkbox" id="c-call-' + k + '" data-k="call.' + k + '"> <span>' + (k + 1) + '. <b>' + esc(c[0]) + '.</b> ' + esc(c[1]) + '</span></label>'); });
+  calls.insertAdjacentHTML('beforeend', '<textarea id="n-calls" aria-label="Notes on the calls" data-n="calls" placeholder="Which of these do you want changed?"></textarea>');
+  function stepDone(id, k) { return !!(state[id + '.' + k] || state[id + '.' + k + '.h']); }
+  function progress() {
+    var done = 0;
+    S.forEach(function (s) { s[4].forEach(function (t, k) { if (stepDone(s[0], k)) done++; }); });
+    document.getElementById('prog').textContent = done + ' of ' + total + ' done';
+  }
+  function paintVerdicts() {
+    document.querySelectorAll('.vb').forEach(function (b) {
+      b.setAttribute('aria-pressed', state['v.' + b.getAttribute('data-part')] === b.getAttribute('data-v') ? 'true' : 'false');
+    });
+  }
+  document.querySelectorAll('input[type=checkbox]').forEach(function (c) {
+    c.checked = !!state[c.getAttribute('data-k')];
+    c.addEventListener('change', function () { state[c.getAttribute('data-k')] = c.checked; save(); progress(); });
+  });
+  document.querySelectorAll('.vb').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var p = b.getAttribute('data-part'), v = b.getAttribute('data-v');
+      state['v.' + p] = state['v.' + p] === v ? '' : v; save(); paintVerdicts();
+    });
+  });
+  document.querySelectorAll('textarea[data-n]').forEach(function (t) {
+    t.value = state['n.' + t.getAttribute('data-n')] || '';
+    t.addEventListener('input', function () { state['n.' + t.getAttribute('data-n')] = t.value; save(); });
+  });
+  document.querySelectorAll('button[data-copy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var pre = b.parentNode.querySelector('pre');
+      var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy the line'; }, 1600); };
+      var pick = function () { var r = document.createRange(); r.selectNodeContents(pre); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); };
+      try { navigator.clipboard.writeText(pre.textContent).then(done, pick); } catch (e) { pick(); }
+    });
+  });
+  paintVerdicts();
+  progress();
+  document.getElementById('make').addEventListener('click', function () {
+    var lines = ['Support console stage 4b, walk B, the refusals and guard rails (§415): my results'];
+    var all = 0, allTotal = 0;
+    S.forEach(function (s, i) {
+      var miss = [], held = [], skip = [], ok = 0;
+      s[4].forEach(function (t, k) {
+        if (t.t === 'only') { if (state[s[0] + '.' + k + '.h']) held.push(k + 1); else miss.push(k + 1); }
+        else if (state[s[0] + '.' + k]) ok++;
+        else if (state[s[0] + '.' + k + '.h']) skip.push(k + 1);
+        else miss.push(k + 1);
+      });
+      all += ok; allTotal += s[4].length;
+      var vd = state['v.' + s[0]] || 'no verdict';
+      var vtext = vd === 'pass' ? 'PASS' : vd === 'issue' ? 'ISSUE' : vd === 'call' ? 'NEEDS A CALL' : 'NO VERDICT';
+      var n = (state['n.' + s[0]] || '').trim();
+      lines.push('', (i + 1) + ' ' + s[1] + ': [' + vtext + '] ' + ok + '/' + s[4].length + ' ticked' + (held.length ? ', read, no dev example: ' + held.join(', ') : '') + (skip.length ? ', skipped (console): ' + skip.join(', ') : '') + (miss.length ? ' (not ticked: ' + miss.join(', ') + ')' : ''));
+      if (n) lines.push('  Notes: ' + n);
+    });
+    lines.splice(1, 0, 'Checked ' + all + ' of ' + allTotal);
+    lines.push('', 'Calls the build made');
+    CALLS.forEach(function (c, k) { lines.push('  ' + (k + 1) + '. ' + (state['call.' + k] ? '[accepted] ' : '[not ticked] ') + c[0] + '.'); });
+    var cn = (state['n.calls'] || '').trim(); if (cn) lines.push('  Notes: ' + cn);
+    var out = document.getElementById('out'); out.value = lines.join('\n');
+    var done = function () { document.getElementById('make').textContent = 'Copied'; setTimeout(function () { document.getElementById('make').textContent = 'Build summary'; }, 1600); };
+    try { navigator.clipboard.writeText(out.value).then(done, function () { out.select(); }); } catch (e) { out.select(); }
+  });
+})();
+</script>
+</body>
+</html>
