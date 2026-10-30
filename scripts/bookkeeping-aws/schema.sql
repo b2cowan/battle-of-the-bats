@@ -23,6 +23,8 @@ CREATE TABLE bookkeeping.expense_revisions (
   business_use_percent smallint NOT NULL CHECK (business_use_percent BETWEEN 1 AND 100),
   payment_source text NOT NULL CHECK (payment_source IN ('business_bank', 'business_card', 'personal', 'other')),
   conversion_note text CHECK (conversion_note IS NULL OR length(conversion_note) <= 500),
+  conversion_source text,
+  conversion_rate numeric(30, 18),
   notes text CHECK (notes IS NULL OR length(notes) <= 2000),
   change_reason text CHECK (change_reason IS NULL OR length(btrim(change_reason)) BETWEEN 1 AND 500),
   receipt_path text,

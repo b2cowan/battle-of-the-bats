@@ -1,5 +1,20 @@
 export type TaxStatus = 'pending' | 'none' | 'reviewed';
 export type PaymentSource = 'business_bank' | 'business_card' | 'personal' | 'other';
+export const CONVERSION_SOURCES = {
+  card_statement: 'Card statement', bank_statement: 'Bank statement',
+  bank_of_canada: 'Bank of Canada rate', invoice_cad: 'Invoice shows CAD',
+} as const;
+export type ConversionSource = keyof typeof CONVERSION_SOURCES;
+export const CONVERSION_SOURCE_HINT = 'Choose where the CAD figure came from.';
+export function isConversionSource(value: unknown): value is ConversionSource {
+  return typeof value === 'string' && Object.hasOwn(CONVERSION_SOURCES, value);
+}
+
+/** Both amounts have already been rounded to receipt cents. The server derives the stored rate. */
+export function expenseConversionRate(originalCents: number, cadCents: number): number | null {
+  if (!Number.isSafeInteger(originalCents) || !Number.isSafeInteger(cadCents) || originalCents <= 0 || cadCents <= 0) return null;
+  return Number((cadCents / originalCents).toPrecision(15));
+}
 export type ExpenseRevision = {
   expense_id: string;
   revision: number;
@@ -19,6 +34,8 @@ export type ExpenseRevision = {
   business_use_percent: number;
   payment_source: PaymentSource;
   conversion_note: string | null;
+  conversion_source?: ConversionSource | null;
+  conversion_rate?: number | null;
   notes: string | null;
   change_reason: string | null;
   receipt_path: string | null;
@@ -56,13 +73,11 @@ export function businessCents(row: ExpenseRevision): number {
   return Math.floor((row.cad_cents * row.business_use_percent + 50) / 100);
 }
 
-export function hasValidConversionEvidence(note: string | null): boolean {
-  if (!note) return false;
-  const dateMatch = note.match(/\b(\d{4}-\d{2}-\d{2})\b/);
-  if (!dateMatch || !isExpenseDate(dateMatch[1])) return false;
-  const generic = new Set(['rate', 'rates', 'exchange', 'conversion', 'converted', 'source', 'date', 'usd', 'cad', 'fx', 'invoice']);
-  const sourceWords = note.replace(dateMatch[1], '').match(/[A-Za-z0-9]{3,}/g) ?? [];
-  return sourceWords.some(word => !generic.has(word.toLowerCase()));
+export function lastConversionSource(rows: ExpenseRevision[], paymentSource: string): ConversionSource | '' {
+  const last = rows.filter(row => !row.void_reason && row.original_currency === 'USD' &&
+    row.payment_source === paymentSource && isConversionSource(row.conversion_source))
+    .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.revision - a.revision)[0];
+  return last?.conversion_source ?? '';
 }
 
 export type ReviewFilter = 'all' | 'missing_receipt' | 'missing_conversion' | 'personal' | 'foreign';
@@ -71,7 +86,7 @@ export function matchesReviewFilter(row: ExpenseRevision, filter: ReviewFilter):
   if (row.void_reason) return filter === 'all';
   switch (filter) {
     case 'missing_receipt': return !row.receipt_path;
-    case 'missing_conversion': return row.original_currency === 'USD' && !hasValidConversionEvidence(row.conversion_note);
+    case 'missing_conversion': return row.original_currency === 'USD' && !isConversionSource(row.conversion_source);
     case 'personal': return row.payment_source === 'personal';
     case 'foreign': return row.original_currency === 'USD';
     default: return true;
@@ -103,7 +118,7 @@ export function summarizeExpenses(rows: ExpenseRevision[]) {
     unknownTaxCount: active.filter(row => !hasKnownTaxAmount(row)).length,
     taxByStatus: [...taxByStatus], byPaymentSource: [...byPaymentSource].sort(([a], [b]) => a.localeCompare(b)),
     missingReceiptCount: active.filter(row => !row.receipt_path).length,
-    missingConversionCount: active.filter(row => row.original_currency === 'USD' && !hasValidConversionEvidence(row.conversion_note)).length,
+    missingConversionCount: active.filter(row => row.original_currency === 'USD' && !isConversionSource(row.conversion_source)).length,
     personallyPaidCents: byPaymentSource.get('personal') ?? 0,
   };
 }
@@ -131,7 +146,6 @@ export const MAX_RECEIPT_BYTES = 10 * 1024 * 1024 - 64 * 1024;
 export const RECEIPT_MESSAGE = 'Receipt must be a PDF, JPEG or PNG under 10 MB.';
 export const RECEIPT_NAME_MESSAGE = 'Rename the receipt file to 180 characters or fewer.';
 export const RECEIPT_EMPTY_MESSAGE = 'This receipt file is empty. Choose the file again.';
-export const CONVERSION_NOTE_HINT = "Say where the rate came from and its date, like 'Card statement 2026-10-16'.";
 export const FUTURE_DATE_NOTE = 'This date is in the future. Check it before saving.';
 
 /** The refusal for an amount field: null is unreadable, 0 is too small. */
@@ -149,7 +163,7 @@ export type ExpenseFieldInput = {
   supplier: string | null; category: string | null; businessPurpose: string | null;
   originalCurrency: string | null; originalCents: number | null; cadCents: number | null; taxCents: number | null;
   taxAmountKnown: string | null; taxStatus: string | null; businessUse: number; paymentSource: string | null;
-  conversionNote: string | null; hasConversionNote: boolean; notes: string | null; hasNotes: boolean;
+  conversionNote: string | null; hasConversionNote: boolean; conversionSource?: string | null; notes: string | null; hasNotes: boolean;
   isCorrection: boolean; changeReason: string | null; isVoid: boolean; voidReason: string | null;
 };
 
@@ -171,7 +185,8 @@ export function validateExpenseFields(input: ExpenseFieldInput): FieldRefusal | 
   if (converted) return { field: cad ? 'originalAmount' : 'cadAmount', error: converted };
   if (cad && input.originalCents !== input.cadCents) return { field: 'originalAmount', error: 'A CAD purchase has one amount.' };
   if (input.hasConversionNote && input.conversionNote === null) return { field: 'conversionNote', error: 'Keep the conversion note to 500 characters.' };
-  if (!cad && !hasValidConversionEvidence(input.conversionNote)) return { field: 'conversionNote', error: CONVERSION_NOTE_HINT };
+  if (!cad && !input.isVoid && !isConversionSource(input.conversionSource)) return { field: 'conversionSource', error: CONVERSION_SOURCE_HINT };
+  if (!cad && input.conversionSource && !isConversionSource(input.conversionSource)) return { field: 'conversionSource', error: CONVERSION_SOURCE_HINT };
   if (!PAYMENT_SOURCES.includes(input.paymentSource as PaymentSource)) return { field: 'paymentSource', error: 'Choose how you paid.' };
   if (!['true', 'false'].includes(input.taxAmountKnown ?? '')) return { error: 'Reload the page and try again.' };
   if (input.taxCents === null) return { field: 'taxCadAmount', error: 'Use numbers like 1200.00.' };

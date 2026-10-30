@@ -3,14 +3,13 @@
 .tabRow { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--home-line); }
 .sectionNav { flex: 1; min-width: 0; border-bottom: 0; }
 .sectionNav a { text-decoration: none; }
-.primaryAction, .export, .actions button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: .65rem 1rem; border: 1px solid var(--home-lime); border-radius: 8px; background: var(--home-lime); color: var(--home-lime-ink); font: 700 var(--type-body) var(--font-sans, system-ui, sans-serif); cursor: pointer; text-decoration: none; white-space: nowrap; }
-.primaryAction:hover, .export:hover, .actions button:hover { background: rgba(var(--home-lime-rgb), .82); }
-.primaryAction:disabled, .export:disabled, .actions button:disabled { opacity: .55; cursor: not-allowed; }
+.primaryAction, .export { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: .65rem 1rem; border: 1px solid var(--home-lime); border-radius: 8px; background: var(--home-lime); color: var(--home-lime-ink); font: 700 var(--type-body) var(--font-sans, system-ui, sans-serif); cursor: pointer; text-decoration: none; white-space: nowrap; }
+.primaryAction:hover, .export:hover { background: rgba(var(--home-lime-rgb), .82); }
+.primaryAction:disabled, .export:disabled { opacity: .55; cursor: not-allowed; }
 .desktopAdd { margin-bottom: .4rem; }
 .phoneAdd { display: none; }
-.exportActions, .actions, .recordActions, .confirmActions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.exportActions, .recordActions { display: flex; flex-wrap: wrap; gap: .6rem; }
 .exportActions { justify-content: flex-end; }
-.actions .secondary { color: var(--text-primary); background: transparent; border-color: var(--home-line-strong); }
 .eyebrow { text-transform: uppercase; letter-spacing: .08em; color: var(--home-olive); font: 700 var(--type-label) var(--font-data); margin: 0 0 .35rem; /* type-ok: eyebrow */ }
 .panel { min-width: 0; background: var(--card-bg); border: 1px solid var(--home-line); border-radius: 12px; padding: 1.3rem; box-shadow: var(--home-shadow); }
 .panel h2 { font-size: var(--type-title); margin: 0 0 .8rem; }
@@ -43,10 +42,6 @@
 .listDoor strong { font-size: var(--type-body); }
 .listDoor small { margin-top: .2rem; color: var(--text-secondary); font-size: var(--type-support); }
 .listDoor b { flex: 0 0 auto; font-size: var(--type-body); font-variant-numeric: tabular-nums; }
-.entryPanel { max-width: 840px; }
-.dateBox { display: grid; gap: .75rem; padding: 1rem; background: var(--home-olive-soft); border: 1px solid var(--home-line); border-radius: 10px; }
-.dateBox label { max-width: 320px; }
-.dateBox .hint { margin: 0; }
 .inlineCheck { display: flex!important; align-items: center; gap: .55rem!important; min-height: 44px; max-width: none!important; cursor: pointer; }
 .inlineCheck input { width: 20px; min-width: 20px; height: 20px; min-height: 20px; accent-color: var(--home-olive); }
 .dateWarning { border: 1px solid var(--warning); border-radius: 8px; background: rgba(var(--warning-rgb), .1); color: var(--text-primary); padding: .8rem 1rem; font-size: var(--type-body); }
@@ -81,12 +76,22 @@
 .error, .notice { padding: .75rem; margin: 0 0 1rem; font-size: var(--type-body); border-radius: 8px; }
 .error { background: rgba(var(--danger-rgb), .1); color: var(--danger-text); border: 1px solid var(--danger); }
 .notice { background: var(--home-olive-soft); color: var(--text-primary); border: 1px solid var(--home-line-strong); }
-.confirmBox { padding: 1rem; border: 1px solid var(--danger); border-radius: 9px; background: rgba(var(--danger-rgb), .06); color: var(--text-primary); }
-.confirmBox p { margin: 0 0 .8rem; font-size: var(--type-body); line-height: 1.5; }
 .rows { display: grid; gap: .55rem; }
 .fieldStack { display: grid; gap: .3rem; min-width: 0; }
 .fieldStack .hint { margin: 0; }
-.sectionNav a:focus-visible, .listDoor:focus-visible, .primaryAction:focus-visible, .textButton:focus-visible, .dangerButton:focus-visible, .moreButton:focus-visible, .reportDoor:focus-visible { outline: 3px solid var(--home-olive); outline-offset: 2px; }
+.expenseForm { gap: .7rem; }
+.form .purposeField { min-height: 44px; max-height: 9rem; resize: none; }
+.moneyField { display: flex; min-width: 0; min-height: 44px; background: var(--home-card); border: 1px solid var(--home-line-strong); border-radius: 8px; overflow: hidden; }
+.moneyField select { width: 5.5rem; min-width: 5.5rem; border: 0; border-right: 1px solid var(--home-line); border-radius: 0; background: transparent; color: var(--text-secondary); padding: .4rem; font: inherit; cursor: pointer; }
+.moneyField input { border: 0; border-radius: 0; flex: 1; }
+.moneyField:focus-within { border-color: var(--home-olive); }
+.form .receiptDrop { display: flex; position: relative; min-height: 44px; align-items: center; justify-content: center; padding: .5rem; border: 1px dashed var(--home-line-strong); border-radius: 8px; cursor: pointer; color: var(--text-secondary); font-weight: 400; overflow-wrap: anywhere; }
+.receiptDrop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.receiptDrop:focus-within { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.moreButton { flex-wrap: wrap; justify-content: space-between; column-gap: .75rem; border-top: 1px solid var(--home-line); }
+.moreButton span, .rate { color: var(--text-secondary); font-size: var(--type-support); font-weight: 400; }
+.quietButton { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: .65rem .85rem; border: 1px solid var(--home-line-strong); border-radius: 8px; background: var(--home-card); color: var(--text-primary); font: 650 var(--type-body) var(--font-sans, system-ui, sans-serif); cursor: pointer; }
+.sectionNav a:focus-visible, .listDoor:focus-visible, .primaryAction:focus-visible, .quietButton:focus-visible, .textButton:focus-visible, .dangerButton:focus-visible, .moreButton:focus-visible, .reportDoor:focus-visible { outline: 3px solid var(--home-olive); outline-offset: 2px; }
 @media (max-width: 700px) {
   .phoneAdd { display: inline-flex; width: 44px; height: 44px; padding: 0; font-size: var(--type-title); }
   .desktopAdd { display: none; }

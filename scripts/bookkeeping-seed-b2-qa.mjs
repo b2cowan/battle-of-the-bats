@@ -27,6 +27,7 @@ const expenses = [
     original_currency: 'USD', original_cents: 1000, cad_cents: 1400, tax_cad_cents: 0,
     tax_status: 'none', business_use_percent: 50, payment_source: 'personal',
     conversion_note: 'Bank of Canada rate 2026-10-22',
+    conversion_source: 'bank_of_canada', conversion_rate: 1.4,
     receipt_path: 'b2026102-3000-4000-8000-000000000003/qa-seed-v1', receipt_name: '2026-10-23-b2-qa-usd-invoice.pdf',
     receiptLabel: 'B2 synthetic QA receipt - USD invoice',
   },
@@ -99,12 +100,12 @@ try {
           await tx`INSERT INTO bookkeeping.expense_revisions (
             expense_id, revision, expense_date, supplier, category, business_purpose,
             original_currency, original_cents, cad_cents, tax_cad_cents, tax_status,
-            business_use_percent, payment_source, conversion_note, notes, change_reason,
+            business_use_percent, payment_source, conversion_note, conversion_source, conversion_rate, notes, change_reason,
             receipt_path, receipt_name, void_reason, created_by
           ) VALUES (
             ${row.id}::uuid, 1, ${row.expense_date}::date, ${row.supplier}, ${row.category}, ${row.business_purpose},
             ${row.original_currency}, ${row.original_cents}, ${row.cad_cents}, ${row.tax_cad_cents}, ${row.tax_status},
-            ${row.business_use_percent}, ${row.payment_source}, ${row.conversion_note}, ${`Synthetic B2 QA seed; ${PREFIX}`},
+            ${row.business_use_percent}, ${row.payment_source}, ${row.conversion_note}, ${row.conversion_source ?? null}, ${row.conversion_rate ?? null}, ${`Synthetic B2 QA seed; ${PREFIX}`},
             NULL, ${row.receipt_path}, ${row.receipt_name}, NULL, ${CREATED_BY}::uuid
           )`;
         }

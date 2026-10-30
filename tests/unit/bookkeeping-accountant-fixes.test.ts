@@ -9,7 +9,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { CONVERSION_NOTE_HINT, isRecordId, parseCents, RECEIPT_MESSAGE, validateExpenseFields, type ExpenseFieldInput } from '../../lib/bookkeeping-expenses.ts';
+import { CONVERSION_SOURCE_HINT, isRecordId, parseCents, RECEIPT_MESSAGE, validateExpenseFields, type ExpenseFieldInput } from '../../lib/bookkeeping-expenses.ts';
 import { validateOwnerMovementInput } from '../../lib/bookkeeping-owner-movements.ts';
 import { parseExpenseFilters, reportPeriodRange } from '../../lib/bookkeeping-export.ts';
 
@@ -67,8 +67,8 @@ describe('C2 · a refusal names its field', () => {
     assert.deepEqual(validateExpenseFields({ ...ok, originalCents: 0, cadCents: 0 }), { field: 'originalAmount', error: 'Enter an amount above $0.00.' });
     assert.deepEqual(validateExpenseFields({ ...ok, originalCents: null }), { field: 'originalAmount', error: 'Use numbers like 1200.00.' });
     assert.deepEqual(validateExpenseFields({ ...ok, taxAmountKnown: 'true', taxCents: 12001 }), { field: 'taxCadAmount', error: "Purchase tax can't be more than the amount." });
-    assert.deepEqual(validateExpenseFields({ ...ok, originalCurrency: 'USD', cadCents: 16500, conversionNote: 'rate', hasConversionNote: true }), { field: 'conversionNote', error: CONVERSION_NOTE_HINT });
-    assert.equal(validateExpenseFields({ ...ok, originalCurrency: 'USD', cadCents: 16500, conversionNote: 'Card statement 2026-10-16', hasConversionNote: true }), null);
+    assert.deepEqual(validateExpenseFields({ ...ok, originalCurrency: 'USD', cadCents: 16500, conversionNote: 'Card statement 2026-10-16', hasConversionNote: true }), { field: 'conversionSource', error: CONVERSION_SOURCE_HINT });
+    assert.equal(validateExpenseFields({ ...ok, originalCurrency: 'USD', cadCents: 16500, conversionSource: 'card_statement', conversionNote: '', hasConversionNote: true }), null);
     assert.equal(validateExpenseFields({ ...ok, cadCents: 0 })?.field, 'originalAmount', 'a CAD purchase has one amount field');
   });
 
@@ -93,7 +93,7 @@ describe('C2 · a refusal names its field', () => {
     const route = read('app/api/platform-admin/bookkeeping/expenses/route.ts');
     assert.doesNotMatch(route, /'Invalid form'/);
     assert.match(route, /content-length[\s\S]{0,120}MAX_RECEIPT_BYTES/);
-    assert.match(read('app/platform-admin/bookkeeping/BookkeepingClient.tsx'), /receipt\.size > MAX_RECEIPT_BYTES/);
+    assert.match(read('app/platform-admin/bookkeeping/ExpenseFormWindow.tsx'), /receipt\.size > MAX_RECEIPT_BYTES/);
   });
 });
 

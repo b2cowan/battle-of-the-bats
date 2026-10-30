@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { businessCents, csvCell, currentExpenses, hasValidConversionEvidence, isExpenseDate, matchesReviewFilter, parseCents, redactExpenseRevision, summarizeExpenses, type ExpenseRevision } from '../../lib/bookkeeping-expenses.ts';
+import { businessCents, csvCell, currentExpenses, expenseConversionRate, isConversionSource, isExpenseDate, lastConversionSource, matchesReviewFilter, parseCents, redactExpenseRevision, summarizeExpenses, type ExpenseRevision } from '../../lib/bookkeeping-expenses.ts';
 
 const base: ExpenseRevision = {
   expense_id: '11111111-1111-4111-8111-111111111111', revision: 1,
@@ -36,21 +36,38 @@ describe('proprietor expense revisions', () => {
     assert.equal(summary.personallyPaidCents, 57);
     assert.deepEqual(summary.byPaymentSource, [['business_card', 57], ['personal', 57]]);
   });
-  it('isolates active missing receipts and requires a valid USD source and date', () => {
+  it('isolates active missing receipts and requires an explicit USD source without guessing from legacy notes', () => {
     const noReceipt = { ...base, expense_id: '22222222-2222-4222-8222-222222222222', receipt_path: null, receipt_name: null };
-    const usd = { ...noReceipt, expense_id: '33333333-3333-4333-8333-333333333333', original_currency: 'USD' as const, conversion_note: 'Bank of Canada rate 2026-10-22' };
-    const badUsd = { ...usd, conversion_note: 'Bank of Canada 2026-02-30' };
+    const usd = { ...noReceipt, expense_id: '33333333-3333-4333-8333-333333333333', original_currency: 'USD' as const, conversion_source: 'bank_of_canada' as const, conversion_note: null };
+    const badUsd = { ...usd, conversion_source: null, conversion_note: 'Bank of Canada rate 2026-10-22' };
     const voided = { ...badUsd, expense_id: '33333333-3333-4333-8333-333333333333', void_reason: 'Duplicate' };
     assert.equal(matchesReviewFilter(noReceipt, 'missing_receipt'), true);
     assert.equal(matchesReviewFilter(usd, 'missing_conversion'), false);
     assert.equal(matchesReviewFilter(badUsd, 'missing_conversion'), true);
     assert.equal(matchesReviewFilter(voided, 'missing_conversion'), false);
-    assert.equal(hasValidConversionEvidence('Bank of Canada rate 2026-10-22'), true);
-    assert.equal(hasValidConversionEvidence('exchange rate 2026-10-22'), false);
-    assert.equal(hasValidConversionEvidence('2026-10-22'), false);
-    assert.equal(hasValidConversionEvidence('Bank of Canada 2026-02-30'), false);
+    assert.equal(isConversionSource('card_statement'), true);
+    for (const invalid of [null, '', 'Card statement', 'anything', 'constructor', '__proto__']) assert.equal(isConversionSource(invalid), false);
     assert.equal(summarizeExpenses([noReceipt, badUsd, voided]).missingReceiptCount, 2);
     assert.equal(summarizeExpenses([noReceipt, badUsd, voided]).missingConversionCount, 1);
+  });
+  it('derives a positive rate from receipt cents, including the supported amount extremes', () => {
+    assert.equal(expenseConversionRate(4559, 6412), 1.40644878262777);
+    assert.equal(expenseConversionRate(1000, 1400), 1.4);
+    assert.ok(expenseConversionRate(99_999_999_999, 1)! > 0);
+    assert.equal(expenseConversionRate(1, 99_999_999_999), 99_999_999_999);
+    for (const invalid of [0, -1, 1.5, NaN, Infinity]) {
+      assert.equal(expenseConversionRate(invalid, 100), null);
+      assert.equal(expenseConversionRate(100, invalid), null);
+    }
+  });
+  it('remembers the most recently saved USD source for the chosen payment source only', () => {
+    const old = { ...base, original_currency: 'USD' as const, conversion_source: 'bank_statement' as const };
+    const latest = { ...old, created_at: '2026-10-30T10:00:00Z', conversion_source: 'card_statement' as const };
+    const other = { ...latest, created_at: '2026-10-30T11:00:00Z', payment_source: 'other' as const, conversion_source: 'invoice_cad' as const };
+    assert.equal(lastConversionSource([other, old, latest], 'personal'), 'card_statement');
+    assert.equal(lastConversionSource([other, old, latest], 'other'), 'invoice_cad');
+    assert.equal(lastConversionSource([other, old, { ...latest, void_reason: 'Duplicate' }], 'personal'), 'bank_statement');
+    assert.equal(lastConversionSource([{ ...old, conversion_source: null }], 'personal'), '');
   });
   it('keeps the storage path out of browser data and protects CSV formulas', () => {
     assert.equal(redactExpenseRevision(base).receipt_path, '[private]');

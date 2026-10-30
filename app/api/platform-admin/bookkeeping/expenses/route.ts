@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireBookkeepingApi } from '@/lib/bookkeeping-access';
-import { currentExpenses, hasConfirmedDates, isExpenseDate, isRecordId, MAX_RECEIPT_BYTES, parseCents, RECEIPT_EMPTY_MESSAGE, RECEIPT_MESSAGE, RECEIPT_NAME_MESSAGE, redactExpenseRevision, validateExpenseFields, type ExpenseRevision, type PaymentSource, type TaxStatus } from '@/lib/bookkeeping-expenses';
+import { CONVERSION_SOURCES, currentExpenses, expenseConversionRate, hasConfirmedDates, isConversionSource, isExpenseDate, isRecordId, MAX_RECEIPT_BYTES, parseCents, RECEIPT_EMPTY_MESSAGE, RECEIPT_MESSAGE, RECEIPT_NAME_MESSAGE, redactExpenseRevision, validateExpenseFields, type ExpenseRevision, type PaymentSource, type TaxStatus } from '@/lib/bookkeeping-expenses';
 import { currentOwnerMovements } from '@/lib/bookkeeping-owner-movements';
-import { deleteReceipt, hasExpenseDateColumns, hasExpenseTaxColumn, hasOwnerMovementTable, insertExpenseRevision, latestExpenseRevision, listExpenseRevisions, listOwnerMovementRevisions, putReceipt } from '@/lib/bookkeeping-store';
+import { deleteReceipt, hasExpenseConversionColumns, hasExpenseDateColumns, hasExpenseTaxColumn, hasOwnerMovementTable, insertExpenseRevision, latestExpenseRevision, listExpenseRevisions, listOwnerMovementRevisions, putReceipt } from '@/lib/bookkeeping-store';
 import { withObservability } from '@/lib/observability';
 
 function textField(form: FormData, key: string, max: number): string | null {
@@ -34,7 +34,7 @@ export const GET = withObservability(async () => {
     const rows = await listExpenseRevisions();
     if (rows.length > 1000) return NextResponse.json({ error: 'Expense register needs pagination before more records can be shown' }, { status: 503 });
     const revisions = rows.map(redactExpenseRevision);
-    return NextResponse.json({ expenses: currentExpenses(revisions), revisions, dateSchemaReady: await hasExpenseDateColumns(), taxSchemaReady: await hasExpenseTaxColumn() }, { headers: { 'Cache-Control': 'no-store' } });
+    return NextResponse.json({ expenses: currentExpenses(revisions), revisions, dateSchemaReady: await hasExpenseDateColumns(), taxSchemaReady: await hasExpenseTaxColumn(), conversionSchemaReady: await hasExpenseConversionColumns() }, { headers: { 'Cache-Control': 'no-store' } });
   } catch {
     return NextResponse.json({ error: 'Unable to load expenses' }, { status: 500 });
   }
@@ -83,6 +83,7 @@ export const POST = withObservability(async (req: NextRequest) => {
   const businessUse = Number(textField(form, 'businessUsePercent', 3));
   const paymentSource = textField(form, 'paymentSource', 20);
   const conversionNote = textField(form, 'conversionNote', 500);
+  const conversionSource = textField(form, 'conversionSource', 40);
   const notes = textField(form, 'notes', 2000);
   const changeReason = textField(form, 'changeReason', 500);
   const voidReason = textField(form, 'voidReason', 500);
@@ -90,13 +91,13 @@ export const POST = withObservability(async (req: NextRequest) => {
   const voidingLegacy = Boolean(previous && !hasConfirmedDates(previous) && form.has('voidReason'));
   const refusal = validateExpenseFields({
     incurredDate, paidDate, voidingLegacy, supplier, category, businessPurpose, originalCurrency, originalCents, cadCents, taxCents,
-    taxAmountKnown, taxStatus, businessUse, paymentSource, conversionNote, hasConversionNote: form.has('conversionNote'),
+    taxAmountKnown, taxStatus, businessUse, paymentSource, conversionNote, conversionSource, hasConversionNote: form.has('conversionNote'),
     notes, hasNotes: form.has('notes'), isCorrection: Boolean(previous), changeReason, isVoid: form.has('voidReason'), voidReason,
   });
   if (refusal) return NextResponse.json(refusal, { status: 400 });
   if (previous?.void_reason) return NextResponse.json({ error: 'A voided expense cannot be changed' }, { status: 409 });
   try {
-    if (!await hasExpenseDateColumns() || !await hasExpenseTaxColumn()) return NextResponse.json({ error: 'Expense storage is being updated; try again after the upgrade' }, { status: 503 });
+    if (!await hasExpenseDateColumns() || !await hasExpenseTaxColumn() || !await hasExpenseConversionColumns()) return NextResponse.json({ error: 'Expense storage is being updated; try again after the upgrade' }, { status: 503 });
   } catch {
     return NextResponse.json({ error: 'Unable to check expense date storage' }, { status: 503 });
   }
@@ -139,7 +140,12 @@ export const POST = withObservability(async (req: NextRequest) => {
     original_cents: originalCents!, cad_cents: cadCents!, tax_cad_cents: taxCents!,
     tax_amount_known: taxAmountKnown === 'true',
     tax_status: taxStatus as TaxStatus, business_use_percent: businessUse, payment_source: paymentSource as PaymentSource,
-    conversion_note: conversionNote || null, notes: notes || null, change_reason: changeReason || null,
+    conversion_source: originalCurrency === 'USD' && isConversionSource(conversionSource) ? conversionSource : null,
+    conversion_rate: originalCurrency === 'USD' ? expenseConversionRate(originalCents!, cadCents!) : null,
+    conversion_note: originalCurrency === 'USD'
+      ? conversionNote || (isConversionSource(conversionSource) ? CONVERSION_SOURCES[conversionSource] : previous?.conversion_note ?? null)
+      : null,
+    notes: notes || null, change_reason: changeReason || null,
     receipt_path: receiptPath, receipt_name: receiptName, void_reason: voidReason || null,
     created_by: gate.auth!.user.id,
   };

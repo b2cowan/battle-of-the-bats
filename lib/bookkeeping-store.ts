@@ -45,6 +45,7 @@ function revision(row: Record<string, unknown>): ExpenseRevision {
     cad_cents: Number(row.cad_cents),
     tax_cad_cents: Number(row.tax_cad_cents),
     tax_amount_known: row.tax_amount_known == null ? null : Boolean(row.tax_amount_known),
+    conversion_rate: row.conversion_rate == null ? null : Number(row.conversion_rate),
     business_use_percent: Number(row.business_use_percent),
     expense_date: date(row.expense_date)!,
     incurred_date: date(row.incurred_date),
@@ -70,6 +71,13 @@ export async function hasExpenseTaxColumn(): Promise<boolean> {
     WHERE table_schema = 'bookkeeping' AND table_name = 'expense_revisions'
       AND column_name = 'tax_amount_known'`;
   return rows.length === 1;
+}
+
+export async function hasExpenseConversionColumns(): Promise<boolean> {
+  const rows = await db()`SELECT column_name FROM information_schema.columns
+    WHERE table_schema = 'bookkeeping' AND table_name = 'expense_revisions'
+      AND column_name IN ('conversion_source', 'conversion_rate')`;
+  return rows.length === 2;
 }
 
 export async function hasOwnerMovementTable(): Promise<boolean> {
@@ -131,14 +139,14 @@ export async function insertExpenseRevision(row: NewExpenseRevision): Promise<Ex
   const rows = await db()`INSERT INTO bookkeeping.expense_revisions (
     expense_id, revision, expense_date, incurred_date, paid_date, supplier, category, business_purpose,
     original_currency, original_cents, cad_cents, tax_cad_cents, tax_amount_known, tax_status,
-    business_use_percent, payment_source, conversion_note, notes, change_reason,
+    business_use_percent, payment_source, conversion_note, conversion_source, conversion_rate, notes, change_reason,
     receipt_path, receipt_name, void_reason, created_by
   ) VALUES (
     ${row.expense_id}::uuid, ${row.revision}, ${row.expense_date}::date,
     ${row.incurred_date ?? null}::date, ${row.paid_date ?? null}::date, ${row.supplier},
     ${row.category}, ${row.business_purpose}, ${row.original_currency}, ${row.original_cents},
     ${row.cad_cents}, ${row.tax_cad_cents}, ${row.tax_amount_known ?? null}, ${row.tax_status}, ${row.business_use_percent},
-    ${row.payment_source}, ${row.conversion_note}, ${row.notes}, ${row.change_reason},
+    ${row.payment_source}, ${row.conversion_note}, ${row.conversion_source ?? null}, ${row.conversion_rate ?? null}, ${row.notes}, ${row.change_reason},
     ${row.receipt_path}, ${row.receipt_name}, ${row.void_reason}, ${row.created_by}::uuid
   ) RETURNING *`;
   return revision(rows[0]);

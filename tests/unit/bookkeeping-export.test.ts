@@ -15,6 +15,14 @@ const base: ExpenseRevision = {
 };
 
 describe('bookkeeping accountant export', () => {
+  it('exports source and derived rate while leaving legacy conversion columns blank', () => {
+    const usd = { ...base, original_currency: 'USD' as const, conversion_source: 'card_statement' as const, conversion_rate: 1.40644878262777 };
+    const current = expenseCsv([usd]);
+    assert.match(current, /"conversion_note","conversion_source","conversion_rate"/);
+    assert.match(current, /"card_statement","1\.40644878262777"/);
+    const legacy = expenseCsv([base]).split('\r\n')[1];
+    assert.doesNotMatch(legacy, /undefined|NaN/);
+  });
   it('filters by the latest revision but keeps every earlier revision and its receipt link', () => {
     const correction = { ...base, revision: 2, expense_date: '2026-06-01', supplier: 'Corrected', change_reason: 'Date and name' };
     const selected = selectExpenseRevisions([correction, base], { from: '2026-06-01', to: null, category: '', query: '', review: 'all' });

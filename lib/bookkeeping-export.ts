@@ -64,7 +64,7 @@ const COLUMNS = [
   'expense_id', 'revision', 'date', 'incurred_date', 'paid_date', 'date_status', 'selected_period', 'supplier', 'category', 'business_purpose',
   'original_currency', 'original_amount', 'cad_amount', 'cad_business_amount',
   'recorded_tax_cad', 'tax_amount_status', 'tax_status', 'business_use_percent', 'payment_source',
-  'conversion_note', 'notes', 'status', 'change_reason', 'void_reason', 'receipt_name', 'receipt_download',
+  'conversion_note', 'conversion_source', 'conversion_rate', 'notes', 'status', 'change_reason', 'void_reason', 'receipt_name', 'receipt_download',
   'revision_created_at', 'revision_created_by',
 ];
 const dollars = (cents: number) => (cents / 100).toFixed(2);
@@ -83,7 +83,7 @@ export function expenseCsv(selected: ExpenseRevision[], filters: ExpenseFilters 
       row.business_purpose, row.original_currency, dollars(row.original_cents),
       dollars(row.cad_cents), dollars(businessCents(row)), hasKnownTaxAmount(row) ? dollars(row.tax_cad_cents) : '',
       hasKnownTaxAmount(row) ? 'known' : 'unknown', row.tax_status, row.business_use_percent, row.payment_source,
-      row.conversion_note, row.notes, row === latest ? (row.void_reason ? 'void' : 'current') : 'superseded',
+      row.conversion_note, row.conversion_source ?? '', row.conversion_rate ?? '', row.notes, row === latest ? (row.void_reason ? 'void' : 'current') : 'superseded',
       row.change_reason, row.void_reason, row.receipt_name, receiptUrl, row.created_at, row.created_by,
     ].map(csvCell).join(','));
   }

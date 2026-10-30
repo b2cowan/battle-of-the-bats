@@ -3,7 +3,7 @@ import { getPlatformAdminContext } from '@/lib/platform-auth';
 import { canAccessBookkeeping } from '@/lib/bookkeeping-access';
 import { currentExpenses, redactExpenseRevision } from '@/lib/bookkeeping-expenses';
 import { currentOwnerMovements } from '@/lib/bookkeeping-owner-movements';
-import { hasExpenseDateColumns, hasExpenseTaxColumn, hasOwnerMovementTable, listExpenseRevisions, listOwnerMovementRevisions } from '@/lib/bookkeeping-store';
+import { hasExpenseConversionColumns, hasExpenseDateColumns, hasExpenseTaxColumn, hasOwnerMovementTable, listExpenseRevisions, listOwnerMovementRevisions } from '@/lib/bookkeeping-store';
 import BookkeepingClient from './BookkeepingClient';
 
 export const metadata = { title: 'Bookkeeping — FieldLogicHQ' };
@@ -19,5 +19,6 @@ export default async function BookkeepingPage() {
   if (ownerRevisions.length > 1000) throw new Error('Owner movement register requires pagination before more records can be shown');
   return <BookkeepingClient initialExpenses={currentExpenses(revisions)} initialRevisions={revisions}
     initialDateSchemaReady={await hasExpenseDateColumns()} initialTaxSchemaReady={await hasExpenseTaxColumn()}
+    initialConversionSchemaReady={await hasExpenseConversionColumns()}
     initialOwnerMovements={currentOwnerMovements(ownerRevisions)} initialOwnerRevisions={ownerRevisions} initialOwnerSchemaReady={ownerSchemaReady} />;
 }
