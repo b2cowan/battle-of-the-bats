@@ -17,7 +17,7 @@ describe('one admin billing host for every plan', () => {
   for (const planId of plans) it(`${planId}: both entry pages use the shared body or the standalone coach redirect`, async () => {
     const load = billingTestLoader({
       '@/lib/coach-portal-request': { getCoachPortalAuth: async () => ({ org: { slug: 'falcons', planId, accountKind: 'organization' } }) },
-      'next/navigation': { permanentRedirect: (href: string) => { throw new Error(`308:${href}`); } },
+      'next/navigation': { redirect: (href: string) => { throw new Error(`307:${href}`); } },
       '@/lib/org-context': { useOrg: () => ({ currentOrg: { slug: 'falcons', planId } }) },
       '@/lib/usePageTitle': { usePageTitle() {} },
       '@/components/admin/AdminPageHeader': { __esModule: true, default: ({ eyebrow, title }: { eyebrow?: string; title: string }) => createElement('header', null, eyebrow && createElement('p', null, eyebrow), createElement('h1', null, title)) },
@@ -30,7 +30,7 @@ describe('one admin billing host for every plan', () => {
       }) => Promise<ReactElement> }).default;
       const props = { params: Promise.resolve({ orgSlug: 'falcons' }), searchParams: Promise.resolve({}) };
       if (planId === 'team') {
-        await assert.rejects(Page(props), { message: '308:/falcons/coaches/billing' });
+        await assert.rejects(Page(props), { message: '307:/falcons/coaches/billing' });
         continue;
       }
       const html = renderToStaticMarkup(await Page(props));

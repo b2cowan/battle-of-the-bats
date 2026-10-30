@@ -4,6 +4,28 @@
 project is complete AND the Stripe end-to-end walks 1 to 9 are done**. Nothing below is designed or ruled except what the
 "Owner asks" section says. Everything under "Claude's notes" is a suggestion for that session, not a decision.
 
+## Owner rulings (2026-10-30, later the same day) — these update the status above
+
+1. **DESIGN starts after Support console Stage 4b is finished; BUILDING waits for the Stripe end-to-end walks 1 to 9.**
+   (This loosens the gate in the status line for design only; building keeps it.)
+2. **This program is combined with Support console Stage 10, Plans & pricing** (`PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md`,
+   "Stage 10 findings"). They share one foundation: prices as data with effective dates, a local record of Stripe facts,
+   Stripe write access for the console, and Stripe test clocks. The owner's 2026-10-27 ruling stands: **no full plan
+   builder**; adding a plan stays a code change guarded by a build-enforced checklist.
+3. **The opening design session is a full review of the staff experience of managing plans and pricing**: many real use
+   cases walked end to end, ending in simple, easy-to-understand paths for the Super admin and other staff roles to do
+   their jobs.
+4. **No second approver, for this first go.** The owner is the only admin. Anyone who can change anything does not need
+   another person's approval; instead **every change is logged: who did what, when, and why** (an audit history). This
+   replaces the "second admin's approval" in Claude's notes below.
+
+**Not ruled (suggestions from the planning chat, for the design session to settle):** the program as two tracks (customer
+invoices; staff plans-and-pricing) with the UX review covering the staff track only; a preview, a waiting period and a
+one-click stop before a price change applies (offered in place of a second approver); which staff role may do which job
+(there is no "marketing" role today: the roles are Super admin, Billing, Support, Product, Growth, Read only); build order
+(read-only customer billing and invoices, then trial and credit tools, then renames, then dated price changes last); and the
+price-source decision (prices as data versus code plus the facts document), which needs `/strategy`.
+
 ## Owner asks (2026-10-30, recorded as asked)
 
 **A. Our own invoices.**
@@ -58,7 +80,7 @@ tool needs a price book with effective dates that the app, the pricing page and 
 the product thinks about price, and the pricing-facts rule ("one source of truth") means it must be designed once.
 
 **The dangerous button is the bulk price change.** It touches every customer's money. It needs: a preview ("this changes N
-subscriptions by $X a month"), a second admin's approval, an audit trail, a way to stop it before the date, and a rule for who
+subscriptions by $X a month"), ~~a second admin's approval~~ (ruled out for the first go, see Owner rulings), an audit trail (who, what, when, why), a way to stop it before the date, and a rule for who
 keeps the old price. It also needs customer notice before the date, sent by our own email system; check what notice
 Canadian consumer rules require before choosing the lead time. Build the read-only and low-risk tools first and this one last.
 
@@ -90,7 +112,8 @@ them in the plan from the start; they would also help the Stripe walks.
 
 ## Dependencies
 
-- Plan & billing Stages 3 to 5 complete.
-- Stripe end-to-end walks 1 to 9 done (they prove the webhooks this program will rely on).
+- **For BUILDING:** Plan & billing Stages 3 to 5 complete, and Stripe end-to-end walks 1 to 9 done (they prove the webhooks
+  this program will rely on). **For DESIGN:** only Support console Stage 4b finished (owner, 2026-10-30).
+- Combined with Support console Stage 10 (Plans & pricing); keep the two records pointing at each other.
 - Owner design sessions for every screen (house rule), including the platform-admin workflows.
 - A PM brief exists beside this file; update both together.

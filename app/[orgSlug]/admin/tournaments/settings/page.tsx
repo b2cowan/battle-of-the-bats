@@ -1,19 +1,19 @@
 'use client';
 /**
- * SETTINGS & ACCESS — the tournament's settings hub: its door cards (Staff & access · Plan & billing · Notification
- * preferences · Web address). The fourth door came with the Stage 5 addendum (A75, owner 2026-10-12): the workspace's
+ * SETTINGS & ACCESS — the tournament's settings hub: its door cards (Staff & access · Notification preferences · Web
+ * address · Payouts). Plan & billing left it 2026-10-30 (owner): the sidebar's own row opens the same page. The fourth door came with the Stage 5 addendum (A75, owner 2026-10-12): the workspace's
  * web address left one event's settings for here, on Tournament and Tournament Plus, where the owner opens it in a
  * window and anyone else sees it dimmed with "Owner only" (as Plan & billing). League and Club keep the address in
  * the organization's Settings, so the door is absent there.
  */
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Bell, CreditCard, Globe, Landmark, Lock, Users2, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Bell, Globe, Landmark, Lock, Users2, type LucideIcon } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { hasCapability, hasBillingAccess } from '@/lib/roles';
-import { getBillingHref, isTournamentTier } from '@/lib/billing-urls';
+import { hasCapability } from '@/lib/roles';
+import { isTournamentTier } from '@/lib/billing-urls';
 import { WEB_ADDRESS_WORDS as WA } from '@/lib/web-address-words';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import HelpButton from '@/components/help/HelpButton';
@@ -54,9 +54,7 @@ export default function TournamentSettingsAccessPage() {
     return () => { stale = true; };
   }, [tournamentTier, currentOrg?.slug]);
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
-  const subscriptionHref = getBillingHref(currentOrg ?? { slug: 'admin', planId: 'tournament' });
   const isOwner = userRole === 'owner';
-  const canManageBilling = hasBillingAccess(userRole, userCapabilities);
   const isLeagueOrClub = !!currentOrg && ['league', 'club', 'club_large'].includes(currentOrg.planId);
   const canManageMembers = userRole
     ? userRole === 'owner' || hasCapability(userRole, userCapabilities, 'module_members')
@@ -73,15 +71,6 @@ export default function TournamentSettingsAccessPage() {
       meta: canManageMembers ? 'Manage access' : 'Owner/admin only',
       enabled: canManageMembers,
     },
-    // Plan & Subscription — Tournament/Tournament Plus only
-    ...(!isLeagueOrClub ? [{
-      href: subscriptionHref,
-      icon: CreditCard,
-      title: 'Plan & billing',
-      description: 'Review the Tournament plan, upgrade to Tournament Plus, and confirm tournament-slot usage.',
-      meta: canManageBilling ? 'Open billing' : 'Billing access required',
-      enabled: canManageBilling,
-    }] : []),
     {
       href: `${base}/settings/notifications`,
       icon: Bell,

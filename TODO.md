@@ -10,7 +10,7 @@ This file is the **index** of open work for the FieldLogicHQ platform. AI models
 
 ---
 
-- [ ] 💳 Plan & billing — one experience for every plan (Stage 2 committed `8ec937555` and walked 2026-10-29; Stage 3 implemented 2026-10-30, with automated evidence and remaining review/owner-walk gates in docs/projects/active/PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md)
+- [ ] 💳 Plan & billing — one experience for every plan (Stage 2 committed `8ec937555` and walked 2026-10-29; Stage 3 committed `32093672f`; Stage 4 owner choices ruled and implemented 2026-10-30, reviewed and owner-walked 15/15 §429 2026-10-30, commit owed; detail in docs/projects/active/PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md)
   - [ ] 💳 Premium → Club upgrade path — owner ruled 2026-10-30: a clear, smooth, minimal-step path with the subscription and payments changing with it; needs a drawing session first, ships when Club opens (see docs/projects/active/PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md §6 B)
 - [ ] 🧾 Our own branded invoices from Stripe facts — PLANNING SESSION OWED, at the end of the Plan & billing project and after Stripe walks 1–9 (see docs/projects/active/STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md)
 - [ ] 🧾 Run Stripe from our own platform admin (rename plans, dated price changes with customer emails, trials, credits, invoice data) — PLANNING SESSION OWED, same timing, combined with the invoices line above (see docs/projects/active/STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md)
@@ -370,7 +370,7 @@ This file is the **index** of open work for the FieldLogicHQ platform. AI models
 - [ ] Bracket Builder — free vs paid UX improvements — Roadmap to polish the two tier experiences: Phase-1 P0s = "Edit Bracket"…
 - [ ] Tie-breakers — Coin Toss option + max run-diff-per-game cap — 5th tie-breaker "Coin Toss" (flags the tie; organizer records the…
 - [ ] Stripe — live-card smoke test — (all that remains of Phase G) — ⚠ Phase G cutover is DONE, verified 2026-07-28: live account +…
-- [ ] Stripe end-to-end walks on the dev site (Walks 0–9, real Stripe test mode + webhooks + email) — written 2026-10-28, Walk 0 setup check passed 2026-10-29 (club-payment webhook destinations still unproven until Walk 8/9), Walks 1–4 and 6–9 not walked; owed first: Founding card-window setting on dev, Club plans opened for Walk 2, the walk-tournament seed for Walk 9 (see OWNER_QA_LEDGER §419)
+- [ ] Stripe end-to-end walks on the dev site (Walks 0–9, real Stripe test mode + webhooks + email) — written 2026-10-28, Walk 0 setup check passed 2026-10-29 (club-payment webhook destinations still unproven until Walk 8/9), Walk 1 coach Premium passed 2026-10-30, Walk 2 club plan changes passed 2026-10-30 (A3 portal-return re-walk and the downgrade-review "when / no credit" wording owed), Walks 3, 4 and 6–9 not walked; owed first: Founding card-window setting on dev, Club plans opened for Walk 2, the walk-tournament seed for Walk 9 (see OWNER_QA_LEDGER §419)
 - [ ] Contact visibility toggles (per audience) — Event Settings → Notifications & Contact now has independent "Communication with…
 ---
 
@@ -417,6 +417,7 @@ This file is the **index** of open work for the FieldLogicHQ platform. AI models
 - [ ] Custom domain investigation — Research feasibility and effort of allowing orgs to point a custom domain (e.g. miltonbats.com) to…
 - [ ] Practice sheet structure — BUILT on dev 2026-08-24 in the PDF Working-sheets pass (QA §91)
 - [ ] Coach Money Excel formatting — real Excel grouping (collapsible line rows), bold section/category/total bands, and…
+- [ ] Retire the old tournament-only menu + the duplicate `/admin/org/tournaments` address — owner 2026-10-30, tech debt; census first (see docs/projects/active/RETIRE_OLD_TOURNAMENT_ONLY_NAV_PLAN.md)
 - [ ] Public Site Offering Evaluation — After the first external org enables `module_public_site`, review the offering across three…
 
 ---

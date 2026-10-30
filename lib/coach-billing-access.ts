@@ -38,5 +38,5 @@ export function coachHostedTournamentsLink(
   return !inSandbox && org && isTeamWorkspaceOrg(org)
     && hasModuleEntitlement(org, 'module_tournaments')
     && !!role && hasCapability(role, capabilities, TOURNAMENT_GRANT_KEY)
-    ? `/${org.slug}/admin/org/tournaments` : null;
+    ? `/${org.slug}/admin/tournaments/manage` : null;
 }

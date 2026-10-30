@@ -193,6 +193,7 @@ export const PLAN_BILLING_WORDS = {
   },
   downgrade: {
     title: (label: string) => `Downgrade to ${label}?`, close: 'Close', applying: 'Applying…',
+    when: 'This takes effect today and ends your subscription. Nothing is credited for the rest of the current period.',
     capacity: (limit: number) => limit >= NO_LIMIT ? 'Unlimited tournaments.' : limit === 1
       ? 'One tournament at a time: a draft or an active event holds the slot, and a finished one stays online.'
       : `${limit} tournaments at a time: drafts and active events hold the slots, and finished ones stay online.`,

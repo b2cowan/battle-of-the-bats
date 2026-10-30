@@ -23,7 +23,7 @@ describe('the workspace tournament door needs the plan and the tournament grant,
     for (const grant of [true, false, undefined]) it(`${role}/grant=${grant}`, () => {
       const caps = grant === undefined ? null : { create_tournaments: grant };
       const allowed = role === 'owner' || (grant === undefined ? role === 'admin' : grant && !!role);
-      assert.equal(coachHostedTournamentsLink(workspace, role, caps, false), allowed ? '/falcons/admin/org/tournaments' : null);
+      assert.equal(coachHostedTournamentsLink(workspace, role, caps, false), allowed ? '/falcons/admin/tournaments/manage' : null);
       assert.equal(coachHostedTournamentsLink(workspace, role, caps, true), null, 'the sandbox hides Tournaments you run by name');
       assert.equal(coachHostedTournamentsLink({ ...workspace, subscriptionStatus: 'canceled' }, role, caps, false), null);
       assert.equal(coachHostedTournamentsLink({ ...workspace, planId: 'club', accountKind: 'organization' }, role, caps, false), null);
@@ -32,8 +32,8 @@ describe('the workspace tournament door needs the plan and the tournament grant,
   it('requires a known workspace and an entitled plan, including legacy and effective-plan identities', () => {
     assert.equal(coachHostedTournamentsLink(null, 'owner', null, false), null);
     assert.equal(coachHostedTournamentsLink({ ...workspace, planId: 'unknown' as Organization['planId'] }, 'owner', null, false), null);
-    assert.equal(coachHostedTournamentsLink({ ...workspace, accountKind: 'organization' }, 'owner', null, false), '/falcons/admin/org/tournaments');
-    assert.equal(coachHostedTournamentsLink({ ...workspace, planId: 'club' }, 'owner', null, false), '/falcons/admin/org/tournaments');
+    assert.equal(coachHostedTournamentsLink({ ...workspace, accountKind: 'organization' }, 'owner', null, false), '/falcons/admin/tournaments/manage');
+    assert.equal(coachHostedTournamentsLink({ ...workspace, planId: 'club' }, 'owner', null, false), '/falcons/admin/tournaments/manage');
   });
 });
 
@@ -138,7 +138,7 @@ describe('server wall order and exact owner billing exception', () => {
   it('zero teams: the owner has a full-request door and only the exact billing page renders', async () => {
     const wall = await layoutFixture();
     assert.match(wall.html, /Coaches Portal not ready/);
-    assert.match(wall.html, /href="\/falcons\/admin\/org\/tournaments" class="notAssignedDoor">Tournaments you run/);
+    assert.match(wall.html, /href="\/falcons\/admin\/tournaments\/manage" class="notAssignedDoor">Tournaments you run/);
     assert.match(wall.html, /href="\/falcons\/coaches\/billing"[^>]*>Plan &amp; billing/);
     assert.doesNotMatch(wall.html, /billing-child/);
     assert.equal(wall.membershipReads, 1, 'the wall reads the accepted membership once, through the shared helper');
@@ -256,7 +256,7 @@ describe('workspace billing stays outside the team nav and season gates', () => 
         assert.equal(html.includes('>Admin</span>'), scenario === 'club-owner', 'all standalone roles lose Admin');
         assert.doesNotMatch(html, /Tournament helpers/);
         if (tournamentsAllowed) {
-          assert.match(html, /href="\/falcons\/admin\/org\/tournaments"/);
+          assert.match(html, /href="\/falcons\/admin\/tournaments\/manage"/);
           const door = html.match(new RegExp(`<a[^>]*id="${tournamentId}"[^>]*>[\\s\\S]*?<\\/a>`))?.[0] ?? '';
           assert.match(door, /Tournaments you run/);
           assert.doesNotMatch(door, /sidebarItemActive|dropActive|aria-current/);

@@ -55,6 +55,26 @@ HANDOFF → /strategy: re-check on starting the planning session whether the "pr
 
 ---
 
+### 2026-10-30 — Plans & pricing and "Stripe from our own admin" become ONE program: design after Support console Stage 4b, building after the Stripe walks; no second approver, every change logged
+**Status:** **Decided** (owner, 2026-10-30, in chat) for the four points below. The shape in "Proposed" is mine and **not ruled**. Plan: `STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md` (+ its PM brief); the old Support console Stage 10 (Plans & pricing) is folded into it.
+**Decision:**
+1. **One program,** combining Stage 10 (change what we sell without a developer and without surprising a customer) with the Stripe-from-our-admin effort (own invoices, Stripe run from the platform admin).
+2. **Design starts after Support console Stage 4b is finished; building waits for the Stripe end-to-end walks 1 to 9** (and Plan & billing Stages 3 to 5).
+3. **No second approver for this first go.** The owner is the only admin. Whoever may change anything changes it on their own, and **every change is logged: who did what, when and why.**
+4. **The opening design session is a full review of how staff manage plans and pricing**: many real jobs walked end to end, ending in simple paths per role. The 2026-10-27 ruling stands: **no full plan builder**; adding a plan stays a code change with a build-enforced checklist.
+**Proposed (not ruled):** two tracks (customer invoices; staff plans-and-pricing) with the review covering staff only; a preview, a waiting period and a one-click stop before a price change applies; which role may do which job (no "marketing" role exists today); build order read-only billing and invoices, then trial and credit tools, then renames, then dated price changes last.
+**Open (needs `/strategy` once drawn):** whether prices become data with effective dates (reverses code + the facts document as the source), the policy for existing customers (keep the old price or not, how much notice), and what a customer's notice must say.
+**Rationale:** both efforts need the same foundation (prices as dated data, our own record of Stripe facts, Stripe write access, test clocks), and no customer pays today, so deciding the existing-customer policy now is cheapest. A second approver is unreachable for a one-person team; the audit history is the control.
+**Affects:** roadmap order after Stage 4b. **No price, plan name, capacity band or gate changes;** `PLAN_PRICING_FACTS.md` untouched.
+**Handoff:**
+```
+HANDOFF → /plan: nothing new; both plan files and the Stage 10 row already carry the combination.
+HANDOFF → /billing, /marketing: none until the design session draws something.
+```
+**Supersedes:** nothing. Replaces the "second admin's approval" in the Stripe plan's notes and Stage 10's "place in the order is not ruled".
+
+---
+
 ### 2026-10-30 — Coaches Portal free time, walked: the gives stay capped from the first give, a Super admin may still delete a portal on free time, and paying early ends the free days left (accepted as built)
 **Status:** **Decided** (owner, 2026-10-30, accepting every call of walks B §415 and C §416 as built; the §415 boxes were first left blank by accident, then accepted in chat after the three real questions were put to him by name). Not released. Plan: `PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md` (Stage 4b).
 **Decision:**

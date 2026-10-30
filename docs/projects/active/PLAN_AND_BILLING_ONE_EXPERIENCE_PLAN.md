@@ -116,8 +116,8 @@ zero-team walls (so a lapsed owner can always reactivate); the coach's help "?" 
 *Visible result: a standalone coach opens Plan & billing without leaving the portal.*
 
 **Stage 3 — Retire the coach's admin view.** Team workspaces: `/admin` redirects to the portal (precedent:
-the accounting / families / rep-teams layouts); the old billing and subscription URLs redirect permanently to
-the coach page (old emails and bell rows keep working); the **Admin** door leaves the portal's rail and sheet
+the accounting / families / rep-teams layouts); the old billing and subscription URLs redirect temporarily (307, owner
+Stage 3 walk 3 — a browser must not remember the hop) to the coach page (old emails and bell rows keep working); the **Admin** door leaves the portal's rail and sheet
 for standalone coaches (club owners/admins keep it); the tournament-onboarding bounce can no longer happen.
 Hosted-tournament pages and the staff-helper page stay reachable per Open question A (answered: see §9 "Stage 3 doors rulings"; the build prompt's Revision block is binding).
 
@@ -170,6 +170,60 @@ Pricing or packaging changes; merging the two plan-change server mechanisms; an 
 
 ## 9. Build prompts and progress
 
+### Stage 4 implementation — 2026-10-30
+
+Verified Stage 3 prerequisite commit `32093672f`. The first Team-settings card names the paying club through
+shared coach components and billing words. The existing authenticated team GET resolves native/linked club
+payment, then checks the viewer's active membership in the PAYING club. The owner accepted all four proposals
+in this session: hide for paying-club owners/admins; CAD monthly form on every price upsell; keep today's
+checkout/explainer destinations; registry Explore variant preserving all seven descriptions/order. All four
+upsell files now read plan labels from config; shared words supply price/unit/founding copy. Support's `note` stays.
+
+The [Stage 4 handoff and owner walk](PLAN_AND_BILLING_STAGE4_OWNER_WALK.md) records the exact role/price/link/list
+calls, verified billing-mode evidence and ambiguous data cases, low-risk Money terminology collision (no Money
+edits), generator blockers, changed-file groups, state checklist and next integration steps. Current Settings
+access includes every active coach; the older prompt's assistant example does not narrow that access.
+
+Focused tests actively cover all four upsell sources, rendered config-change propagation, founding/gated
+destinations, payer modes/roles and the actual settings GET's access boundary. No guard exemptions or deferred
+tests. The initial raw payer read was caught by the plan-reader guard and replaced with the existing organization
+reader; the guard passes without modification. Complete verification and dev-server handoff results follow below.
+
+Baseline generators attempted: CSS regeneration would admit unrelated regressions, so its output was restored;
+admin-type init refuses three unrelated increases. No generated baseline, shared check script or layout baseline
+was hand-edited. Stage 4 remains open for generator cleanup, Claude reviews and the owner walk.
+
+**Final automated results.** All **83 focused tests** pass, including the source/plan-reader guards, actual
+settings API access cases, payer-role matrix, rendered upsells with a changed config price/name, and article/
+Explore preservation. Full `npm run verify:changed` passes **12,509 unit tests**, then exits 2 at the known
+ESLint configuration error: `A configuration object specifies rule "react-hooks/set-state-in-effect", but could
+not find plugin "react-hooks".` Its later gates did not run. Explicit focused lint exits 0 with three existing
+Settings-page warnings (manual memoization and internal location navigation); full TypeScript exits 0. Spelling,
+CSS Module purity (412 stylesheets), and `git diff --check` pass. The first full run caught the new raw payer read
+and two transient failures in concurrently edited Support-console tests; after the payer-reader correction,
+the final complete unit run is green. No shared gate/config was changed to obtain these results.
+
+**Server and owed work.** Restarted the verified project dev supervisor with network access through `npm run dev`
+after all new/shared-file edits. Ready observed; `/platform-admin/login?next=%2Fplatform-admin` returned **HTTP 200**;
+the new server's stdout/stderr logs contain no Supabase `EACCES` or `fetch failed`. The server remains running.
+Logs are in `.probe/plan-billing-stage4/` (focused, lint, typecheck, verify-final, dev and dev-error).
+Browser/390px/Stripe verification remains owner-owned; exact states are in the Stage 4 walk. Owed Claude steps:
+`/simplify`, `/review`, `/docs` (“Who pays for my team”). Baseline cleanup remains as documented above;
+no commit or push was made in this session. The existing Settings access and nearest shipped coach card parts
+were reused where the drawing was silent; the four product choices were ruled by the owner before integration.
+
+**Claude steps, 2026-10-30 (after the build above).** `/simplify` applied (the coverage lookup reuses the shared paying-status
+list; an unused words entry removed; 71 focused tests green). `/review` high-risk tier: no Critical/High/Medium; kept — Low: a failed
+payer/role read 500s the whole settings GET for a cosmetic card (owner call: degrade to no card instead? a test pins today's throw);
+Low: Explore's price is now the longer "$29 CAD / month" in the large price type (walk it at 390px); Advisory: Explore's list is not
+validated at registry start-up. `check:layout` NOT run (UAT free-coach fixture is linked to a paid workspace; the repair re-seeds and
+signs everyone out). `/docs`: new coach FAQ "Who pays for my team?" (`faq-premium-who-pays`, Premium section) plus a pointer in the
+plan-billing FAQ note; no coach article quoted the old price form. **Baseline cleanup NOT done — blocked by other work, not Stage 4:**
+`check:admin-type` refuses on three committed rises (PayoutsCard `.termsText` data face; SystemScreen eyebrow tracking 0.12em with no
+`type-ok`; early-access `lead.module.css` `.when` data face), its two drops (Billing, KitDialog) can only be locked by `--init` after
+those clear; `check:css-selectors` is red on 4 orphan references (platform-admin record/money modules) and 10 dead classes in other
+projects' files. Neither generator was run; nothing was hand-edited. Owed: the owner walk (artifact), commit.
+
 ### Stage 3 implementation record — 2026-10-30
 
 **Customer outcome.** Standalone workspaces lose Admin in both coach menus, for every role.
@@ -182,7 +236,7 @@ team hosted-tournaments section stays unchanged. Club owners who coach keep Admi
 **Routing.** The server hub and new onboarding layout use one request-cached-assignment resolver.
 Owners and live/closed coaches arrive at the portal; tournament-capable members without a team
 arrive at the tournaments list. Sign-in contexts and accepted invitations use that same decision.
-Both old billing aliases permanently redirect standalone workspaces to coach billing, preserving
+Both old billing aliases temporarily (307) redirect standalone workspaces to coach billing, preserving
 payment-return and plan-panel query flags. Existing suspension exceptions, API auth and
 CancellationGuard remain. The org parent now respects standalone account identity before applying
 the Tournament-tier bounce, including an effective Tournament plan on a team workspace.

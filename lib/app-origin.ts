@@ -55,12 +55,33 @@ export function resolveTrustedAppOrigin(req: Request): string {
  */
 export function resolveSameHostOrigin(req: Request): string {
   try {
+    // The dev server reports its own request URL as localhost whatever address the visitor used, so a phone
+    // at http://<LAN IP>:3000 is read from its Host header instead (dev only; see isDevLanOrigin).
+    const hostHeader = req.headers.get('host');
+    if (hostHeader && isDevLanOrigin(`http://${hostHeader}`)) return `http://${hostHeader}`;
     const self = new URL(req.url).origin;
     if (isTrustedAppOrigin(self)) return self;
   } catch {
     /* unparseable request URL — fall through to the canonical answer */
   }
   return resolveTrustedAppOrigin(req);
+}
+
+/**
+ * Phone testing against `npm run dev` (owner, 2026-10-28): a page opened at http://<this PC's LAN IP>:3000
+ * must stay on that address through a same-request redirect, or the cookie it just set is orphaned and the
+ * redirect lands on the canonical localhost address, which the phone cannot reach. Development only, private
+ * IPv4 ranges only, and ONLY the same-request resolver uses it — never `isTrustedAppOrigin`, which also gates
+ * emailed one-time links and cross-origin posts.
+ */
+function isDevLanOrigin(origin: string): boolean {
+  if (process.env.NODE_ENV === 'production') return false;
+  try {
+    const host = new URL(origin).hostname;
+    return /^(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})$/.test(host);
+  } catch {
+    return false;
+  }
 }
 
 /**

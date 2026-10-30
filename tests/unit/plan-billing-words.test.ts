@@ -88,6 +88,7 @@ describe('shared billing vocabulary', () => {
     assert.equal(W.downgrade.capacity(9999), 'Unlimited tournaments.');
     assert.equal(W.downgrade.title('Target'), 'Downgrade to Target?');
     assert.equal(W.downgrade.reason, 'Why are you downgrading?');
+    assert.match(W.downgrade.when, /today.*Nothing is credited/);
     assert.match(W.downgrade.lost('Target', 'Current', ['branding', 'exports']), /branding and exports.*Saved branding is kept/);
     assert.match(W.downgrade.choose(1, 90), /Choose 1 tournament.*90 days/);
     assert.equal(W.errors.read('staff seats'), 'We couldn’t load staff seats. Try again.');

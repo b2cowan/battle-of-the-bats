@@ -14,7 +14,7 @@ const workspace: Organization = {
   isPublic: false, isDiscoverable: false, clubBookSharingEnabled: false, createdAt: '2026-10-01',
 };
 const portal = '/falcons/coaches';
-const tournaments = '/falcons/admin/org/tournaments';
+const tournaments = '/falcons/admin/tournaments/manage';
 const userId = 'member-stage3';
 
 class Redirect extends Error {
@@ -156,7 +156,7 @@ describe('retired standalone hub and setup entry paths', () => {
   }
 });
 
-describe('old billing and email addresses permanently retain payment return flags', () => {
+describe('old billing and email addresses temporarily retain payment return flags', () => {
   for (const path of ['app/[orgSlug]/admin/org/billing/page.tsx', 'app/[orgSlug]/admin/tournaments/settings/subscription/page.tsx']) {
     for (const planId of ['team', 'tournament', 'tournament_plus'] as const) for (const status of ['active', 'canceled'] as const) it(`${path}: standalone ${planId}/${status}`, async () => {
       const { load, authCalls, assignmentReads } = fixture({ name: status, role: 'owner', expected: portal, org: { ...workspace, planId, subscriptionStatus: status } });
@@ -164,7 +164,7 @@ describe('old billing and email addresses permanently retain payment return flag
       const searchParams = { success: '1', card_saved: '1', next_season: 'kept', plan: 'team', tag: ['one', 'two'], ignored: undefined };
       let destination = '';
       await assert.rejects(page({ params: Promise.resolve({ orgSlug: 'falcons' }), searchParams: Promise.resolve(searchParams) }), error => {
-        if (!(error instanceof Redirect) || error.status !== 308) return false;
+        if (!(error instanceof Redirect) || error.status !== 307) return false;
         destination = error.href;
         return true;
       });
@@ -189,7 +189,7 @@ describe('old billing and email addresses permanently retain payment return flag
 
 describe('the organization parent lets standalone routes reach their destinations', () => {
   for (const planId of ['team', 'tournament', 'tournament_plus'] as const) {
-    for (const status of ['active', 'canceled'] as const) it(`standalone ${planId}/${status}: parent retains children and billing reaches its permanent coach target`, async () => {
+    for (const status of ['active', 'canceled'] as const) it(`standalone ${planId}/${status}: parent retains children and billing reaches its temporary coach target`, async () => {
       const { load, authCalls } = fixture({ name: planId, role: 'owner', expected: portal, org: { ...workspace, planId, subscriptionStatus: status } });
       const parent = (load('app/[orgSlug]/admin/org/layout.tsx') as { default: Entry }).default;
       const tree = await parent({ params: Promise.resolve({ orgSlug: 'falcons' }), children: 'standalone child' });
@@ -198,7 +198,7 @@ describe('the organization parent lets standalone routes reach their destination
       assert.deepEqual(authCalls, [{ orgSlug: 'falcons', allowSuspendedOrg: true }]);
       const page = (load('app/[orgSlug]/admin/org/billing/page.tsx') as { default: BillingEntry }).default;
       await assert.rejects(page({ params: Promise.resolve({ orgSlug: 'falcons' }), searchParams: Promise.resolve({ card_saved: '1' }) }),
-        error => error instanceof Redirect && error.status === 308 && error.href === '/falcons/coaches/billing?card_saved=1');
+        error => error instanceof Redirect && error.status === 307 && error.href === '/falcons/coaches/billing?card_saved=1');
     });
     it(`standalone ${planId}: a board admin without a team can open the hosted list parent`, async () => {
       const { load } = fixture({ name: planId, role: 'admin', expected: tournaments, org: { ...workspace, planId } });

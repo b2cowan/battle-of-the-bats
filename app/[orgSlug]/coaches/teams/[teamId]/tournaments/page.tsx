@@ -133,7 +133,7 @@ export default function PremiumTeamTournamentsPage({
   // this never waits forever.
   const awaitingMergeDecision = data !== null && sorted.length === 0 && hosted === null;
 
-  const hostSetupHref = `/${orgSlug}/admin/org/tournaments?create=1&source=coach_portal_tournaments`;
+  const hostSetupHref = `/${orgSlug}/admin/tournaments/manage?create=1&source=coach_portal_tournaments`;
   const trackHostCta = (eventType: 'tournament_plus_acquisition_cta_viewed' | 'tournament_plus_acquisition_cta_clicked') =>
     trackTournamentAcquisition({
       eventType,

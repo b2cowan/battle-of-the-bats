@@ -4,6 +4,14 @@
 
 ## What changes for a customer
 
+**Stage 4 implementation, 2026-10-30:** the read-only “Covered by {Club}” card explains who pays in Team settings
+without offering billing controls. The paying club's owner/admin sees no card. The owner accepted all four
+proposals in this session: that role treatment, billing's CAD price form, today's checkout/explainer destinations,
+and Explore's unchanged feature descriptions in the shared registry. Those choices are implemented and unit-tested.
+Priority is clear payment responsibility without widening billing access. Success means the correct payer name
+only on covered teams, the approved owner/admin treatment, and shared plan facts on all approved upsell surfaces.
+Decisions, tests and owner checks: [Stage 4 handoff](PLAN_AND_BILLING_STAGE4_OWNER_WALK.md).
+
 - **Plan & billing looks and reads the same on every plan.** Premium Coaches Portal, Tournament,
   Tournament Plus, League Plus and Club all show the same sections in the same order: your plan, what
   you're using, changing plan, what's included, reducing or cancelling (the Club order, Stage A ruling 6). Only the middle (what you're using,

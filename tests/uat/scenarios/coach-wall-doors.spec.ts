@@ -121,10 +121,10 @@ test.describe('Plan & billing — standalone owner wall doors', () => {
       await page.goto(`/${slug}/coaches`, { waitUntil: 'networkidle' });
       await expect(page.getByRole('heading', { name: 'Coaches Portal not ready' })).toBeVisible();
       const tournaments = page.locator('main').getByRole('link', { name: 'Tournaments you run', exact: true });
-      await expect(tournaments).toHaveAttribute('href', `/${slug}/admin/org/tournaments`);
+      await expect(tournaments).toHaveAttribute('href', `/${slug}/admin/tournaments/manage`);
       await expect(tournaments).not.toHaveClass(/btn-lime/);
       await tournaments.click();
-      await expect(page).toHaveURL(url => url.pathname === `/${slug}/admin/org/tournaments`);
+      await expect(page).toHaveURL(url => url.pathname === `/${slug}/admin/tournaments/manage`);
       if (width === 390) await page.getByRole('button', { name: 'More', exact: true }).click();
       const portal = page.getByRole('link', { name: 'Coaches Portal', exact: true }).filter({ visible: true });
       await expect(portal).toHaveAttribute('href', `/${slug}/coaches`);

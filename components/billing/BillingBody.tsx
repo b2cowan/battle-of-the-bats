@@ -556,6 +556,7 @@ function BillingOwnerBody({ org, refresh, billingBase, teamsHref }: { org: Organ
         <PaymentsEndingSection section={cancel.onlinePayments} ending={{ kind: 'cancel' }} />
       </>}
       {downgrade && target && <>
+        <p>{W.downgrade.when}</p>
         <p>{W.downgrade.capacity(downgrade.targetTournamentLimit)}</p><p>{W.downgrade.inUse(downgrade.activeTournamentCount)}</p>
         <p>{W.downgrade.lost(target.config.label, ownProfile.config.label, ownProfile.downgradeLosses ?? [])}</p>
         <p>{downgrade.requiresTournamentChoice ? W.downgrade.choose(downgrade.allowedKeepCount, downgrade.retentionDays) : W.downgrade.fits}</p>

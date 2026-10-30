@@ -3,6 +3,11 @@
 **Status:** not started. Planning is owed after Plan & billing is complete and Stripe walks 1 to 9 are done. Owner direction,
 2026-10-30.
 
+**Update 2026-10-30 (owner):** design starts after Support console Stage 4b; building waits for the Stripe walks. The
+program is combined with Support console Stage 10 (Plans & pricing), and opens with a full review of how staff manage plans
+and pricing, walking many real jobs to a simple path per role. For this first go there is **no second approver**: the owner
+is the only admin, and every change is instead logged (who, what, when, why).
+
 ## What it is
 Two linked pieces. First, customers get an invoice list inside the product, with invoices we generate and brand ourselves from
 the real payment facts. Second, the platform admin learns to run routine Stripe work for us (change a plan's name, schedule a
@@ -21,7 +26,7 @@ date range. No change to how they pay; card entry stays on Stripe's secure scree
 ## What the team would see
 A platform-admin area for billing: a customer's plan, status, next charge, last payments and failed payments on one page, with
 the common actions on that page. Later, a guarded tool for dated price changes: it shows who is affected and the dollar effect
-first, needs a second admin's approval, emails customers ahead of time, and applies on the chosen day.
+first, is logged with who and why (no second approver for now), emails customers ahead of time, and applies on the chosen day.
 
 ## Priority and risk
 Start the planning session at the end of the billing project. The invoice list is the natural first deliverable. The bulk

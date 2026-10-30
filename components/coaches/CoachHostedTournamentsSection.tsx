@@ -43,7 +43,7 @@ export default function CoachHostedTournamentsSection({
 }) {
   if (!state?.canRun) return null;
 
-  const setupHref = `/${orgSlug}/admin/org/tournaments?create=1&source=coach_portal_tournaments`;
+  const setupHref = `/${orgSlug}/admin/tournaments/manage?create=1&source=coach_portal_tournaments`;
   const track = (eventType: 'tournament_plus_acquisition_cta_viewed' | 'tournament_plus_acquisition_cta_clicked') =>
     trackTournamentAcquisition({
       eventType,

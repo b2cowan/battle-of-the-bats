@@ -42,7 +42,7 @@ interface NavResult {
 function navFixture(org: Organization, role: OrgRole, access: OrgCoachAccess = none) {
   const assignmentReads: Array<{ slug: string; enabled: boolean }> = [];
   const load = billingTestLoader({
-    'next/navigation': { usePathname: () => '/falcons/admin/org/tournaments' },
+    'next/navigation': { usePathname: () => '/falcons/admin/tournaments/manage' },
     '@/lib/org-context': { useOrg: () => ({
       currentOrg: org, userRole: role, userCapabilities: null,
       canOpen: (capability: string) => ['module_tournaments', 'module_members'].includes(capability),
