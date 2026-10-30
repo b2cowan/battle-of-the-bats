@@ -583,6 +583,10 @@ export default function CommitmentView({
               className={styles.commitTitleInput}
               value={name}
               onChange={e => touch(setName)(e.target.value)}
+              /* The title row shrink-wraps, so an input left to its default width clipped a name
+                 at about twenty characters with the header empty beside it. `size` makes the field
+                 as long as the name; the row's flex-shrink still narrows it when the header runs out. */
+              size={Math.max(name.length + 1, 14)}
               aria-label="Bill name"
               placeholder="Name this bill"
               maxLength={200}

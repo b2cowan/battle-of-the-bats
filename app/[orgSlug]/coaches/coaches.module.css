@@ -14978,10 +14978,12 @@ div.gdRow { cursor: default; }
    the header the first time that scale moves. */
 .commitTitleField {
   display: inline-flex; align-items: center; gap: 0.4rem;
-  flex: 1 1 auto; min-width: 0; max-width: 34rem;
+  flex: 1 1 auto; min-width: 0; max-width: 100%;
 }
+/* `width: auto` + the input's `size` (set in CommitmentView) sizes the field to the name; a fixed
+   `width: 100%` resolved against the shrink-to-fit title row and stopped at ~20 characters. */
 .commitTitleInput {
-  font: inherit; color: inherit; flex: 1 1 auto; min-width: 0; width: 100%;
+  font: inherit; color: inherit; flex: 1 1 auto; min-width: 0; width: auto;
   background: transparent; border: 0; border-bottom: 1px dashed var(--border-2);
   padding: 0 0 2px; margin: 0; border-radius: 0;
 }
