@@ -91,6 +91,13 @@ describe('Plan & billing profiles', () => {
 });
 
 describe('published article preservation — owner baseline 2026-10-28', () => {
+  it('preserves Explore’s seven descriptions and order in its own registry variant', () => {
+    assert.deepEqual(PLAN_BILLING_PROFILES.team.included.explore, [
+      'Game lineups', 'Attendance tracking', 'Assistant coaches with their own sign-in',
+      'Team documents', 'Dues schedules & automatic reminders', 'A season budget',
+      'Carry your roster into next season',
+    ]);
+  });
   const baseline = {
     team: [8, '1b4299dfd7c357ddda00976eda1b1fc1eaa0585cad1e9f2e887aab754c386133'],
     tournament_plus: [11, 'c5c3224090d8b2b2a794cbffe1ce06d5e67e0c28c6a45419d65be6d392b794d1'],

@@ -7,6 +7,7 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import TeamTagShelf from '@/components/coaches/TeamTagShelf';
 import CoachCollapseSection from '@/components/coaches/CoachCollapseSection';
 import TeamDocumentsLookCard from '@/components/coaches/TeamDocumentsLookCard';
+import TeamPlanCoverageCard from '@/components/coaches/TeamPlanCoverageCard';
 import DuesReminderPreviewModal from '@/components/coaches/DuesReminderPreviewModal';
 import DuesMoneySettingRows from '@/components/coaches/DuesMoneySettingRows';
 import { canViewMoney, canWriteMoney, canConfigureTeam, type CoachCapabilities } from '@/lib/coach-capabilities';
@@ -24,6 +25,7 @@ import CoachPublicPageDoor, { VISIBILITY_LABEL } from '@/components/coaches/Coac
 import type { CoachNamesPolicy } from '@/lib/coach-names-policy';
 
 interface SettingsData {
+  planCoverage: { clubName: string } | null;
   team: { id: string; name: string; division: string | null; sport: string };
   season: { id: string; name: string; year: number; status: string; lineupSettings: LineupSettings | null };
   nextYearDefault: number;
@@ -546,6 +548,7 @@ export default function TeamSettingsPage({
       />
 
       <div className={styles.settingsStack}>
+        <TeamPlanCoverageCard clubName={data.planCoverage?.clubName ?? null} />
 
         {/* ── Team ─────────────────────────────────────────────────────────── */}
         {showTeamGroups && (

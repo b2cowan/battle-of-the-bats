@@ -6,7 +6,7 @@ import { PLAN_BILLING_PROFILES } from '../../lib/plan-billing-profile.ts';
 import { readSource, filesUnder } from './_source-code.ts';
 
 const labels = Object.values(PLAN_CONFIG).map(p => p.label).sort((a, b) => b.length - a.length);
-const items = new Set(Object.values(PLAN_BILLING_PROFILES).flatMap(p => [...p.included.billing, ...p.included.article]));
+const items = new Set(Object.values(PLAN_BILLING_PROFILES).flatMap(p => Object.values(p.included).flat()));
 
 /** Inspect actual literals/JSX, never comments, identifiers, or internal plan keys. */
 function authoredFacts(code: string): string[] {
@@ -38,12 +38,22 @@ const screenFiles = () => filesUnder('components/billing', '.tsx').concat([
   'app/[orgSlug]/admin/org/billing/page.tsx',
   'components/admin/kit/club/BillingKit.tsx',
   'components/admin/kit/club/PlanMoveDialog.tsx',
+  'components/coaches/TeamPlanCoverageCard.tsx',
   'app/[orgSlug]/admin/tournaments/settings/subscription/page.tsx',
 ]);
+
+const coachUpsellFiles = [
+  'components/coaches/ScopeShelf.tsx',
+  'components/coaches/CoachExploreCatalog.tsx',
+  'components/coaches/ScopeCeilingInterest.tsx',
+  'components/coaches/CoachStartInterest.tsx',
+];
 
 describe('billing screens take plan facts and included items from their data source', () => {
   it('rejects a hand-typed plan name, price and included item in new billing source', () => {
     assert.ok(authoredFacts('<p>Tournament Plus</p>').length);
+    assert.ok(authoredFacts('<h1>Premium Coaches Portal</h1>').length);
+    assert.ok(authoredFacts('<section aria-label="Upgrade to the Premium Coaches Portal" />').length);
     assert.ok(authoredFacts('<p>$39 CAD / month</p>').length);
     assert.ok(authoredFacts('<p>Venue management</p>').length);
     assert.ok(authoredFacts('const price = `$39 / month`;').length);
@@ -58,5 +68,10 @@ describe('billing screens take plan facts and included items from their data sou
       const found = authoredFacts(readSource(file));
       assert.deepEqual(found, [], `${file}: take plan names/prices/included items from the registry/words module`);
     }
+  });
+
+  it('guards all four coach upsell surfaces', () => {
+    const violations = coachUpsellFiles.flatMap(file => authoredFacts(readSource(file)).map(fact => ({ file, fact })));
+    assert.deepEqual(violations, [], 'Take plan names/prices/included items from the registry/words module');
   });
 });

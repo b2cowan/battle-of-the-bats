@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Check, Send } from 'lucide-react';
 import type { BasicCoachInterestOption } from '@/lib/basic-coach-interest';
-import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
+import { isFoundingSeasonPromoActive, PLAN_CONFIG } from '@/lib/plan-config';
+import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import styles from './ScopeCeilingInterest.module.css';
 
 type Props = {
@@ -81,13 +82,11 @@ export default function ScopeCeilingInterest({ basicTeamId, checkoutOpen = false
           {/* B3.1: this panel's ONLY call site is the post-event afterglow, so it argues from
               the moment the coach is in — the weekend is over and everything about it is about
               to stop being visible. The generic "full toolkit" framing lives on Explore. */}
-          <p className={styles.eyebrow}>Premium Coaches Portal</p>
+          <p className={styles.eyebrow}>{PLAN_CONFIG.team.label}</p>
           <h3>Keep the season, not just the weekend</h3>
           {/* Price stated before the tap on every pitch surface (conversion sweep C3). */}
           <p>Season history across every event, playing time, attendance and team awards — plus
-            lineups, dues automation, documents and a season budget. {promoActive
-            ? `Free through ${FOUNDING_SEASON_END_LABEL} — normally $29/month per team. No credit card required.`
-            : '$29/month per team, cancel anytime.'}</p>
+            lineups, dues automation, documents and a season budget. {W.coachUpsell.ceiling(promoActive)}</p>
         </div>
         <Link
           href={`/coaches/start?source=coach_scope_ceiling&basicTeamId=${encodeURIComponent(basicTeamId)}`}

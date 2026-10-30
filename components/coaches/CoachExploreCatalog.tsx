@@ -7,7 +7,9 @@ import { Check, ArrowUpRight, Loader2 } from 'lucide-react';
 import type { ActivatableFeature } from '@/lib/basic-coach-teams';
 import { activateCoachTeamFeature } from '@/lib/coach-feature-activation';
 import { COACH_TEAM_TOOLS, coachTeamToolPath } from '@/lib/coach-team-tools';
-import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
+import { isFoundingSeasonPromoActive, PLAN_CONFIG } from '@/lib/plan-config';
+import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
+import { PLAN_BILLING_PROFILES } from '@/lib/plan-billing-profile';
 import styles from './CoachExploreCatalog.module.css';
 
 /** Explore's own catalog blurb per tool — this page's voice. The tool's NAME, icon and path come
@@ -19,22 +21,8 @@ const DESCRIPTIONS: Record<ActivatableFeature, string> = {
   announcements: 'Send a note to your whole team at once.',
 };
 
-// What the paid Premium Coaches Portal adds, in the team's own words. Matches the verified
-// in-product upsell vocabulary (ScopeShelf / ScopeCeilingInterest) + the approved copy canon —
-// do not add features here without updating docs/agents/brand/PRICING_PAGE_COPY.md.
-const PREMIUM_FEATURES = [
-  'Game lineups',
-  'Attendance tracking',
-  // B3.4 (◆M1): a free team is ONE person's sign-in — the free model has no assistant-coach
-  // concept at all, and this list is the only place in the portal a coach could learn that
-  // Premium does. (Relocated here from the plan's Chat placement: the coach's chat is now the
-  // app-wide Chat tab, shared with fans and with paying coaches, where an upsell must not go.)
-  'Assistant coaches with their own sign-in',
-  'Team documents',
-  'Dues schedules & automatic reminders',
-  'A season budget',
-  'Carry your roster into next season',
-];
+// The registry preserves Explore's approved descriptions, including assistant-coach sign-ins.
+const PREMIUM_FEATURES = PLAN_BILLING_PROFILES.team.included.explore ?? [];
 
 /**
  * The "Explore" catalog — the permanent rediscovery home for the team-scoped Coaches Portal.
@@ -142,9 +130,9 @@ export default function CoachExploreCatalog({
       {error && <p className={styles.error} role="alert">{error}</p>}
 
       {/* PRIMARY upsell — upgrade THIS team to the paid Premium Coaches Portal. */}
-      <section className={styles.premiumBlock} aria-label="Upgrade to the Premium Coaches Portal">
+      <section className={styles.premiumBlock} aria-label={`Upgrade to the ${PLAN_CONFIG.team.label}`}>
         <div className={styles.premiumHead}>
-          <span className={styles.premiumEyebrow}>Premium Coaches Portal</span>
+          <span className={styles.premiumEyebrow}>{PLAN_CONFIG.team.label}</span>
           <h2 className={styles.premiumHeading}>Ready for the full toolkit?</h2>
         </div>
         <p className={styles.premiumBody}>
@@ -164,11 +152,11 @@ export default function CoachExploreCatalog({
             <span className={styles.premiumReassure}>Everything above stays free.</span>
             {promoActive ? (
               <span className={styles.premiumPrice}>
-                Free through {FOUNDING_SEASON_END_LABEL}<span className={styles.premiumPriceUnit}> · normally $29/month per team</span>
+                {W.founding.price}<span className={styles.premiumPriceUnit}> · {W.coachUpsell.normally()}</span>
               </span>
             ) : (
               <span className={styles.premiumPrice}>
-                $29<span className={styles.premiumPriceUnit}>/month per team</span>
+                {W.plan.price(PLAN_CONFIG.team.monthlyPrice, 'monthly')}<span className={styles.premiumPriceUnit}> {W.coachUpsell.perTeam}</span>
               </span>
             )}
           </div>

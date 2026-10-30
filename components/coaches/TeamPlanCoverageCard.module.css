@@ -1,0 +1,22 @@
+.content {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.copy {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.title {
+  margin: 0;
+  font-size: var(--type-body);
+  font-weight: 650;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+.body {
+  margin: 0.2rem 0 0;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-tertiary);
+}

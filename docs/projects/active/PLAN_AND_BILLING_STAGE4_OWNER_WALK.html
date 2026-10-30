@@ -1,0 +1,299 @@
+<title>Plan and Billing Stage 4 Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one narrow reading column; a sticky progress bar; walk cards that open one at a time. */
+:root {
+  --bg: #f5f7f8; --panel: #ffffff; --ink: #14212b; --muted: #526270; --line: #d5dde3;
+  --accent: #0b6e8a; --accent-ink: #ffffff; --accent-soft: #dff0f5;
+  --pass: #17794a; --pass-soft: #def3e7; --issue: #b3261e; --issue-soft: #fbe3e0;
+  --call: #8a5a00; --call-soft: #fbefd0; --code-bg: #eaf0f3;
+  --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f171d; --panel: #17222a; --ink: #e6edf1; --muted: #9db0bd; --line: #2b3a45;
+  --accent: #5cc0dc; --accent-ink: #06222c; --accent-soft: #163543;
+  --pass: #5fd391; --pass-soft: #16342a; --issue: #ff8f86; --issue-soft: #3d1d1a;
+  --call: #f0c25a; --call-soft: #3a2f12; --code-bg: #1d2b34; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0f171d; --panel: #17222a; --ink: #e6edf1; --muted: #9db0bd; --line: #2b3a45;
+  --accent: #5cc0dc; --accent-ink: #06222c; --accent-soft: #163543;
+  --pass: #5fd391; --pass-soft: #16342a; --issue: #ff8f86; --issue-soft: #3d1d1a;
+  --call: #f0c25a; --call-soft: #3a2f12; --code-bg: #1d2b34; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5;
+  padding-block: 0 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 760px; margin: 0 auto; }
+h1 { font-size: 26px; line-height: 1.2; margin: 28px 0 6px; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0 0 8px; text-wrap: balance; }
+p { margin: 0 0 10px; }
+code, .path { font-family: var(--mono); font-size: 13px; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.muted { color: var(--muted); }
+.asof { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+.card.signin { border-color: var(--accent); }
+.kicker { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; font-weight: 600; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; vertical-align: top; padding: 6px 8px; border-top: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; border-top: 0; }
+.tablewrap { overflow-x: auto; }
+.progress { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding: 10px 0 8px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+.progress .row { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; margin-bottom: 6px; flex-wrap: wrap; }
+.walkhead { width: 100%; text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+  display: flex; gap: 12px; align-items: center; justify-content: space-between; cursor: pointer; font: inherit; color: inherit; margin-bottom: 0; }
+.walkhead:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.walkhead .t { min-width: 0; }
+.walkhead .t b { display: block; font-size: 16px; }
+.walkhead .t span { color: var(--muted); font-size: 13px; }
+.chip { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--code-bg); color: var(--muted); white-space: nowrap; }
+.chip.pass { background: var(--pass-soft); color: var(--pass); }
+.chip.issue { background: var(--issue-soft); color: var(--issue); }
+.chip.call { background: var(--call-soft); color: var(--call); }
+.chip.prog { background: var(--accent-soft); color: var(--accent); }
+.walk { margin-bottom: 14px; }
+.walkbody { background: var(--panel); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 10px 10px; padding: 16px; }
+.walk.open .walkhead { border-radius: 10px 10px 0 0; }
+.walk:not(.open) .walkbody { display: none; }
+.intro dt { font-weight: 600; font-size: 13px; color: var(--muted); margin-top: 8px; }
+.intro dd { margin: 2px 0 0; }
+.who { margin: 18px 0 6px; font-size: 13px; font-weight: 600; color: var(--accent); }
+.who .path { color: var(--ink); }
+.step { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 4px 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.step input[type=checkbox] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .n { color: var(--muted); font-size: 12px; font-family: var(--mono); }
+.step .do { font-weight: 500; }
+.step .see { color: var(--muted); margin-top: 3px; }
+.step .see b { color: var(--ink); font-weight: 600; }
+.opts { grid-column: 2; display: grid; gap: 6px; margin-top: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.opts input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--accent); }
+.step.multi { grid-template-columns: 26px minmax(0, 1fr); }
+.step.multi .mark { width: 20px; height: 20px; margin-top: 2px; border-radius: 4px; border: 2px solid var(--line); }
+.step.multi.done .mark { background: var(--accent); border-color: var(--accent); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 8px; }
+.verdicts button, .actions button { font: inherit; font-weight: 600; padding: 9px 14px; min-height: 44px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+.verdicts button[aria-pressed=true].pass { background: var(--pass-soft); border-color: var(--pass); color: var(--pass); }
+.verdicts button[aria-pressed=true].issue { background: var(--issue-soft); border-color: var(--issue); color: var(--issue); }
+.verdicts button[aria-pressed=true].call { background: var(--call-soft); border-color: var(--call); color: var(--call); }
+.actions button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+textarea { width: 100%; min-height: 76px; font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); resize: vertical; }
+.note { font-size: 13px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 10px; margin: 10px 0; }
+.warn { border-left-color: var(--call); background: var(--call-soft); color: var(--ink); padding: 8px 10px; border-radius: 0 6px 6px 0; }
+.out { margin-top: 10px; }
+.out textarea { font-family: var(--mono); font-size: 12px; min-height: 140px; }
+.copied { font-size: 13px; color: var(--pass); margin-left: 8px; }
+@media (max-width: 480px) { h1 { font-size: 22px; } .card, .walkbody { padding: 12px; } }
+@media (prefers-reduced-motion: reduce) { .bar > i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <h1>Plan and Billing Stage 4 Walk</h1>
+  <p class="asof">As of 2026-10-30. Stage 4 does two things. A coach on a club-paid team now sees a quiet, read-only <b>Plan · Covered by {club}</b> card at the top of Team settings, and every coach upsell (Explore, the shelves, the interest form) reads its plan name and price from one place, so the price now reads <b>$29 CAD / month per team</b>. This is the uncommitted build after /simplify, /review and /docs. Every account, address and expected line below was checked against the dev database and the running dev server on 2026-10-30.</p>
+
+  <div class="card signin">
+    <p class="kicker">Sign in as</p>
+    <p><b>Where:</b> <code>http://localhost:3000</code> (the dev server, restarted clean on 2026-10-30). <b>Passwords:</b> dev-only, keep this page private. Every UAT account below uses <code>UATPassword2026!</code> (read from <code>.env.local</code> today; if a sign-in fails, <code>.env.local</code> is the source of truth). Type each address in the browser’s address bar, because these accounts belong to several workspaces.</p>
+    <div class="tablewrap"><table>
+      <tr><th>Who</th><th>Account</th><th>Where they work</th></tr>
+      <tr><td>Club-paid head coach</td><td><code>uat-coach@uat-test-org.local</code></td><td><span class="path">/uat-rep-club/coaches/teams/0c656d0b-3f8d-494c-8b12-f1b0b9d670fe/settings</span> (team “UAT Test Team”, paid by UAT Rep Club)</td></tr>
+      <tr><td>Club-paid assistant</td><td><code>uat-asst-nomoney@uat-test-org.local</code></td><td>same address as above</td></tr>
+      <tr><td>Another club’s head coach</td><td><code>uat-club-coach-15aaa@uat-rep-club.local</code></td><td><span class="path">/uat-rep-club/coaches/teams/638ac88f-e941-41e7-ad3e-50869b7cb379/settings</span> (team “15U AAA”)</td></tr>
+      <tr><td>Club owner (optional step only)</td><td><code>uat-club-owner@uat-rep-club.local</code></td><td><span class="path">/uat-rep-club/admin/org/settings</span></td></tr>
+      <tr><td>Standalone owner, free time from the platform</td><td><code>uat-coach@uat-test-org.local</code> (same sign-in)</td><td><span class="path">/uat-standalone/coaches/teams/b2df96c6-1de9-4f1d-aa62-26dd9d4ba4e1/settings</span></td></tr>
+      <tr><td>Cancelled portal owner</td><td><code>uat-free-coach@uat-free-coach.local</code></td><td><span class="path">/uat-free-team-coaches-portal/coaches/teams/0b5b7743-9566-4928-95f1-a372ff0981b4/settings</span></td></tr>
+      <tr><td>Free (Basic) coach, for Explore</td><td><code>fchp-coach-a@dev.local</code> with password <code>devpass123</code> (the free-coach header world; not a UAT account)</td><td><span class="path">/coaches/team/7c36ab70-84f7-4431-968a-4112b15a2eb0/explore</span> (team “FCHP Otters”)</td></tr>
+    </table></div>
+    <p class="note">Why not the UAT free coach for Explore: that account’s team is now linked to a cancelled paid workspace, so it lands on the cancelled wall, not on Explore. Repairing it (<code>node scripts/seed-free-coach-fixture.mjs</code>) would sign every UAT account out, so this walk does not use it.</p>
+  </div>
+
+  <div class="card">
+    <p class="kicker">Before you start</p>
+    <p class="note warn">The dev server was stopped, its cache cleared and restarted clean on 2026-10-30 because it had begun answering 500 on every page; Stage 4 also added new files. If a page shows an error shell or a blank page, tell me before marking an Issue. Walks 1 to 3 write nothing, except the optional rename in Walk 1, which has a put-back.</p>
+    <p>Check phone steps at 390px wide (browser dev tools, device mode). If a step does not match what you see, mark the part <b>Issue</b> and write what you saw; the screen may have moved since this was written.</p>
+    <p><b>Cannot be walked on dev, and why</b> (the automated tests cover each; say so if you want fixtures made):</p>
+    <ul>
+      <li><b>A workspace whose team is paid by a club through a link</b> (the “linked” case). No dev workspace is billed that way: all eleven are paid directly or on platform free time, none club-billed.</li>
+      <li><b>The paying club’s own owner or admin who also coaches</b> (card hidden for them, your ruling). No account is both: the club owner and club admin are not coaches on any team, and the team page refuses them.</li>
+      <li><b>A club that is cancelled, past due or in trial, with a covered team.</b> UAT Rep Club is active. The only cancelled wall on dev is a direct-paid portal.</li>
+      <li><b>The “interest form” and “learn more” destinations.</b> On dev the coach plan is live, so every upsell goes to checkout, not to the explainer. Flipping that is a platform-admin plan-gating setting, not done for this walk.</li>
+      <li><b>The shelves and the tournament-record ceiling note</b> (Premium is $29 CAD / month per team). They only show on a free team that has players, fees or a finished tournament. No reachable free account has any. The rendered tests check their wording.</li>
+      <li><b>A failed payer or role read.</b> Cannot be forced; today it fails the whole Team settings page. That is the call being put to you in chat, not a walk step.</li>
+      <li><b>An owner-direct paid portal</b> (the other “no card” case). Your own address <code>b2cowan+test@gmail.com</code> owns one (“milton mavericks”, paid directly) but no password is on file, so it is not in a walk.</li>
+    </ul>
+  </div>
+
+  <div class="progress" id="progress">
+    <div class="row"><span id="ptext">Checked 0 of 0</span><span id="pwalks"></span></div>
+    <div class="bar"><i id="pbar"></i></div>
+  </div>
+
+  <div id="walks"></div>
+
+  <div class="card">
+    <p class="kicker">All walks</p>
+    <div class="actions"><button class="primary" id="all-build" type="button">Build summary of all walks</button><span class="copied" id="all-copied" hidden>Copied</span></div>
+    <div class="out"><textarea id="all-out" readonly placeholder="Press the button, then paste the result back into the chat."></textarea></div>
+  </div>
+</div>
+
+<script>
+var KEY = 'plan-billing-stage4-walk-v1';
+var WALKS = [
+  { id: 'w1', title: 'Walk 1 · The Plan card on a club-paid team', blurb: 'A club’s coaches see who pays, with nothing to manage.',
+    forWhat: 'Confirm that a coach whose team is paid by the club sees one quiet, read-only card at the very top of Team settings that names the club, that assistants see it too, that it carries no price, link or button, and that it holds up on a phone.',
+    passes: 'Every step is ticked. The card says Plan, “Covered by UAT Rep Club” and the one sentence, is the first thing under the page heading, has no button, link or price, and never overflows at 390px.',
+    not: 'The paying club’s owner or admin who also coaches, and a linked club-paid workspace (no accounts on dev, see Before you start). Where the card is absent (Walk 2).',
+    steps: [
+      { who: 'Head coach · uat-coach@uat-test-org.local', where: 'Computer, full width', do: 'Open /uat-rep-club/coaches/teams/0c656d0b-3f8d-494c-8b12-f1b0b9d670fe/settings. Look at what is directly under the “Team settings” heading.', see: 'A card with a building icon, the small word <b>Plan</b>, the line <b>Covered by UAT Rep Club</b>, and under it <b>Your club pays for this team’s Coaches Portal. There is nothing to manage here.</b> It is the <b>first</b> thing on the page, above the Team group.' },
+      { do: 'Look for anything to press or read in the card, then look in the left menu for Plan & billing.', see: 'The card has <b>no price, no link and no button</b>; clicking it does nothing. This coach has <b>no Plan & billing row</b> in the menu (billing is the owner’s only).' },
+      { who: 'Assistant · uat-asst-nomoney@uat-test-org.local', do: 'Sign in fresh and open the same address.', see: 'Team settings opens (assistants keep today’s access) and shows the <b>same card</b>, “Covered by UAT Rep Club”.' },
+      { who: 'Another team · uat-club-coach-15aaa@uat-rep-club.local', do: 'Open /uat-rep-club/coaches/teams/638ac88f-e941-41e7-ad3e-50869b7cb379/settings.', see: 'Team settings for <b>15U AAA</b> with the same card, “Covered by UAT Rep Club”: the card follows the club, not the team.' },
+      { where: 'Phone, 390px wide', do: 'Same sign-in. Reload that page at 390px and scroll to the top. Then turn the phone sideways or widen to 768px and back.', see: 'The card sits at the top at full width; the sentence wraps to two or three lines, nothing is cut off, and the page does <b>not</b> scroll sideways at any width.' },
+      { do: 'Switch the portal’s look from the account menu if it offers a choice (warm, dark), and look at the card again.', see: 'The card is readable in each look: text and icon keep their contrast and the card keeps its border. Write down which looks you tried.' },
+      { who: 'Optional · club owner · uat-club-owner@uat-rep-club.local', do: 'Long club name. Open /uat-rep-club/admin/org/settings, change only the <b>name</b> (not the web address) to “The Greater Lakeshore Association of Competitive Youth Baseball and Softball Clubs”, save. Then, as the coach, reload the team settings page at 390px. <b>Then put the name back to UAT Rep Club.</b>', kind: 'options', options: ['Did it, the long name wrapped without overflow, and I put the name back', 'Did it, and it overflowed or was cut off (say what in the notes)', 'Skipped it'], see: 'Tick one, so the record shows what happened. Do not leave the club renamed.' }
+    ] },
+  { id: 'w2', title: 'Walk 2 · Where there is no card', blurb: 'Free time from the platform, a coach who may not be there, a cancelled portal.',
+    forWhat: 'Confirm the card never claims a club pays when no club does: a portal on platform free time shows none, a coach who is not on the team gets today’s refusal and no card, and a cancelled portal shows its wall instead of Team settings.',
+    passes: 'Every step is ticked. No “Covered by” line appears on any screen in this walk, and nothing a refused or cancelled coach sees looks different from before.',
+    not: 'A directly paid portal and a club-paid linked workspace (no password or no such workspace on dev). Reactivating anything: do not press Reactivate.',
+    steps: [
+      { who: 'Standalone owner · uat-coach@uat-test-org.local', where: 'Computer', do: 'Open /uat-standalone/coaches/teams/b2df96c6-1de9-4f1d-aa62-26dd9d4ba4e1/settings (UAT Standalone Team, on free time from the platform).', see: 'Team settings opens normally. There is <b>no Plan card</b> and no “Covered by” anywhere; the first thing under the heading is the Team group.' },
+      { who: 'Not on this team · uat-club-coach-15aaa@uat-rep-club.local', do: 'Open /uat-rep-club/coaches/teams/0c656d0b-3f8d-494c-8b12-f1b0b9d670fe/settings (this coach belongs to 15U AAA, not UAT Test Team).', see: 'You do <b>not</b> see UAT Test Team’s settings or any Plan card. Write down exactly what the screen says (the page’s own wording for a team it cannot load is “Settings could not be loaded”).' },
+      { who: 'Cancelled owner · uat-free-coach@uat-free-coach.local', do: 'Open /uat-free-team-coaches-portal/coaches/teams/0b5b7743-9566-4928-95f1-a372ff0981b4/settings. Do not press Reactivate.', see: 'The existing cancelled-portal screen with its way back, the same one Stage 3 walk 4 showed. <b>No Team settings page, no Plan card.</b>' }
+    ] },
+  { id: 'w3', title: 'Walk 3 · The Premium price on Explore', blurb: 'The new price format, and a button that is not crowded at 390px.',
+    forWhat: 'Confirm Explore’s Premium block still lists the same seven things in the same order, now shows the price as “$29 CAD / month per team”, and that the larger price type does not crowd the button on a phone.',
+    passes: 'Every step is ticked. The seven items and their order are unchanged, the price reads $29 CAD / month per team, there is no “Free through…” wording, and at 390px the price and button either share a row without touching or wrap onto two rows with the button fully readable and 44px tall.',
+    not: 'The shelves on other free pages and the tournament-record note (no free team with content, see Before you start), and the explainer destination (dev has checkout open). The paid checkout itself: do not complete a purchase.',
+    steps: [
+      { who: 'Free coach · fchp-coach-a@dev.local (password devpass123)', where: 'Computer, full width', do: 'Open /coaches/team/7c36ab70-84f7-4431-968a-4112b15a2eb0/explore and scroll to the “Ready for the full toolkit?” block.', see: 'The small label above it reads <b>Premium Coaches Portal</b>. The list has seven items in this order: <b>Game lineups · Attendance tracking · Assistant coaches with their own sign-in · Team documents · Dues schedules & automatic reminders · A season budget · Carry your roster into next season.</b>' },
+      { do: 'Read the foot of that block: the sentence on the left, the price, the button.', see: 'The sentence “Everything above stays free.” The price in large type reads <b>$29 CAD / month</b>, followed in small grey type by <b>per team</b>. There is <b>no</b> “Free through…” wording (the Founding offer closed on 2026-10-26). The button reads <b>Upgrade to Premium →</b>.' },
+      { where: 'Phone, 390px wide', do: 'Reload at 390px and scroll to the same block.', see: 'The price and the button <b>do not touch or overlap</b>: either they sit on one row with space between, or the button drops to its own row. “$29 CAD / month per team” is not cut off, the page does not scroll sideways, and the button is easy to tap (at least 44px tall).' },
+      { do: 'Check at 360px if you can, then back to 390px.', see: 'Same: wraps, nothing clipped or overlapping.' },
+      { do: 'Press Upgrade to Premium. Do not go on to pay: go back.', see: 'You arrive at the Premium sign-up on <code>/coaches/start</code> (the address carries your team), as before this change. Back returns you to Explore.' }
+    ] }
+];
+var state = {};
+function load() { try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+function ws(w) { if (!state[w.id]) state[w.id] = { ticks: {}, verdict: '', notes: '', open: false }; return state[w.id]; }
+function stepDone(w, i) {
+  var s = w.steps[i], t = ws(w).ticks;
+  if (s.kind === 'options') return s.options.some(function (_, k) { return t[i + ':' + k]; });
+  return !!t[i];
+}
+function counts(w) { var d = 0; w.steps.forEach(function (_, i) { if (stepDone(w, i)) d++; }); return { done: d, total: w.steps.length }; }
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
+function statusChip(w) {
+  var c = counts(w), v = ws(w).verdict;
+  if (v === 'pass') return c.done < c.total ? ['call', 'Passed · only ' + c.done + ' of ' + c.total + ' ticked'] : ['pass', 'Passed'];
+  if (v === 'issue') return ['issue', 'Issue'];
+  if (v === 'call') return ['call', 'Needs a call'];
+  if (c.done) return ['prog', 'In progress ' + c.done + ' of ' + c.total];
+  return ['', 'Not started'];
+}
+
+function render() {
+  var host = document.getElementById('walks'), html = '';
+  WALKS.forEach(function (w, wi) {
+    var st = ws(w), chip = statusChip(w);
+    html += '<section class="walk' + (st.open ? ' open' : '') + '" data-w="' + w.id + '">';
+    html += '<button class="walkhead" type="button" aria-expanded="' + (st.open ? 'true' : 'false') + '" data-toggle="' + w.id + '"><span class="t"><b>' + esc(w.title) + '</b><span>' + esc(w.blurb) + '</span></span><span class="chip ' + chip[0] + '">' + esc(chip[1]) + '</span></button>';
+    html += '<div class="walkbody">';
+    html += '<dl class="intro"><dt>What this walk is for</dt><dd>' + w.forWhat + '</dd><dt>It passes when</dt><dd>' + w.passes + '</dd><dt>Not in this walk</dt><dd>' + w.not + '</dd></dl>';
+    var lastWho = null;
+    w.steps.forEach(function (s, i) {
+      if (s.who && s.who !== lastWho) { html += '<div class="who">' + esc(s.who) + (s.where ? ' <span class="muted">· ' + esc(s.where) + '</span>' : '') + '</div>'; lastWho = s.who; }
+      else if (s.where) { html += '<div class="who"><span class="muted">' + esc(s.where) + '</span></div>'; }
+      if (s.kind === 'options') {
+        var done = stepDone(w, i);
+        html += '<div class="step multi' + (done ? ' done' : '') + '"><span class="mark" aria-hidden="true"></span><div><div class="n">' + (i + 1) + '</div><div class="do">' + s.do + '</div><div class="see">' + s.see + '</div>';
+        html += '<div class="opts">';
+        s.options.forEach(function (o, k) {
+          var id = w.id + '-' + i + '-' + k;
+          html += '<label for="' + id + '"><input type="checkbox" id="' + id + '" data-w="' + w.id + '" data-tick="' + i + ':' + k + '"' + (st.ticks[i + ':' + k] ? ' checked' : '') + '> <span>' + esc(o) + '</span></label>';
+        });
+        html += '</div></div></div>';
+      } else {
+        var cid = w.id + '-' + i;
+        html += '<div class="step"><input type="checkbox" id="' + cid + '" data-w="' + w.id + '" data-tick="' + i + '"' + (st.ticks[i] ? ' checked' : '') + '><label for="' + cid + '"><div class="n">' + (i + 1) + '</div><div class="do">' + s.do + '</div><div class="see">' + s.see + '</div></label></div>';
+      }
+    });
+    html += '<div class="verdicts" role="group" aria-label="Verdict for this walk">';
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      html += '<button type="button" class="' + v[0] + '" data-verdict="' + v[0] + '" data-w="' + w.id + '" aria-pressed="' + (st.verdict === v[0] ? 'true' : 'false') + '">' + v[1] + '</button>';
+    });
+    html += '</div>';
+    html += '<label for="notes-' + w.id + '" class="muted" style="font-size:13px">Notes for this walk</label><textarea id="notes-' + w.id + '" data-notes="' + w.id + '" placeholder="What you saw, anything off, your answer to a call.">' + esc(st.notes || '') + '</textarea>';
+    html += '<div class="actions" style="margin-top:10px"><button type="button" class="primary" data-build="' + w.id + '">Build summary of this walk</button><span class="copied" id="copied-' + w.id + '" hidden>Copied</span></div>';
+    html += '<div class="out"><textarea id="out-' + w.id + '" readonly placeholder="Press the button, then paste the result back into the chat."></textarea></div>';
+    html += '</div></section>';
+  });
+  host.innerHTML = html;
+  progress();
+}
+
+function progress() {
+  var done = 0, total = 0, passed = 0;
+  WALKS.forEach(function (w) { var c = counts(w); done += c.done; total += c.total; if (ws(w).verdict === 'pass') passed++; });
+  document.getElementById('ptext').textContent = 'Checked ' + done + ' of ' + total;
+  document.getElementById('pwalks').textContent = passed + ' of ' + WALKS.length + ' walks passed';
+  document.getElementById('pbar').style.width = (total ? Math.round(done * 100 / total) : 0) + '%';
+}
+
+function summary(w) {
+  var st = ws(w), c = counts(w), lines = [];
+  lines.push(w.title.replace(/ · /, ' - ') + ' [' + (st.verdict ? st.verdict.toUpperCase() : 'NO VERDICT') + '] ' + c.done + '/' + c.total);
+  w.steps.forEach(function (s, i) {
+    if (s.kind === 'options') {
+      var picked = s.options.filter(function (_, k) { return st.ticks[i + ':' + k]; });
+      lines.push('  ' + (i + 1) + '. [' + (picked.length ? picked.join(' + ') : 'NO ANSWER') + '] ' + s.do.replace(/<[^>]+>/g, '').slice(0, 70));
+    } else if (!st.ticks[i]) {
+      lines.push('  ' + (i + 1) + '. NOT TICKED: ' + s.do.replace(/<[^>]+>/g, '').slice(0, 70));
+    }
+  });
+  if (st.notes && st.notes.trim()) lines.push('  Notes: ' + st.notes.trim());
+  return lines.join('\n');
+}
+function copyOut(outId, copiedId, text) {
+  var ta = document.getElementById(outId); ta.value = text;
+  var done = function () { var c = document.getElementById(copiedId); if (c) { c.hidden = false; setTimeout(function () { c.hidden = true; }, 1800); } };
+  try { navigator.clipboard.writeText(text).then(done, function () { ta.focus(); ta.select(); }); } catch (e) { ta.focus(); ta.select(); }
+}
+
+document.addEventListener('change', function (e) {
+  var t = e.target;
+  if (t.dataset && t.dataset.tick !== undefined) {
+    var w = WALKS.filter(function (x) { return x.id === t.dataset.w; })[0], st = ws(w);
+    if (t.checked) st.ticks[t.dataset.tick] = true; else delete st.ticks[t.dataset.tick];
+    save(); var keep = window.scrollY; render(); window.scrollTo(0, keep);
+  }
+});
+document.addEventListener('input', function (e) {
+  var t = e.target;
+  if (t.dataset && t.dataset.notes) { var w = WALKS.filter(function (x) { return x.id === t.dataset.notes; })[0]; ws(w).notes = t.value; save(); }
+});
+document.addEventListener('click', function (e) {
+  var b = e.target.closest ? e.target.closest('button') : null; if (!b) return;
+  if (b.dataset.toggle) {
+    WALKS.forEach(function (w) { ws(w).open = (w.id === b.dataset.toggle) ? !ws(w).open : false; });
+    save(); render();
+    var el = document.querySelector('[data-w="' + b.dataset.toggle + '"].walk'); if (el && ws(WALKS.filter(function (x) { return x.id === b.dataset.toggle; })[0]).open) el.scrollIntoView({ block: 'start' });
+  } else if (b.dataset.verdict) {
+    var w = WALKS.filter(function (x) { return x.id === b.dataset.w; })[0], st = ws(w);
+    st.verdict = st.verdict === b.dataset.verdict ? '' : b.dataset.verdict; save(); var keep = window.scrollY; render(); window.scrollTo(0, keep);
+  } else if (b.dataset.build) {
+    var w2 = WALKS.filter(function (x) { return x.id === b.dataset.build; })[0];
+    copyOut('out-' + w2.id, 'copied-' + w2.id, summary(w2));
+  } else if (b.id === 'all-build') {
+    var done = 0, total = 0; WALKS.forEach(function (w) { var c = counts(w); done += c.done; total += c.total; });
+    copyOut('all-out', 'all-copied', 'Plan and Billing Stage 4 walk, checked ' + done + ' of ' + total + '\n\n' + WALKS.map(summary).join('\n\n'));
+  }
+});
+load(); render();
+</script>

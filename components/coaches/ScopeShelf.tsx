@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
-import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
+import { isFoundingSeasonPromoActive, PLAN_CONFIG } from '@/lib/plan-config';
+import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import styles from './ScopeShelf.module.css';
 
 /**
@@ -88,7 +89,7 @@ export default async function ScopeShelf({
   return (
     <footer className={styles.footer}>
       {lead && <p className={styles.footerLead}>{lead}</p>}
-      <p className={styles.footerEyebrow}>Premium Coaches Portal</p>
+      <p className={styles.footerEyebrow}>{PLAN_CONFIG.team.label}</p>
       <p className={styles.footerBody}>
         {section === 'overview' ? (
           <>For this team: game lineups, attendance, dues automation, documents &amp; a season budget.</>
@@ -104,9 +105,7 @@ export default async function ScopeShelf({
           <>On {SECTION_LABEL[section]}: {COPY[section].value} — {COPY[section].teaser}.</>
         )}
         {/* Price stated before the tap on every pitch surface (conversion sweep C3). */}
-        {' '}Your free tools stay free. {promoActive
-          ? `Premium is free through ${FOUNDING_SEASON_END_LABEL} — normally $29/month per team.`
-          : 'Premium is $29/month per team.'}
+        {' '}Your free tools stay free. {W.coachUpsell.shelf(promoActive)}
       </p>
       {note && <p className={styles.footerBody}>{note}</p>}
       <Link href={href} className={styles.footerLink}>{linkLabel}</Link>

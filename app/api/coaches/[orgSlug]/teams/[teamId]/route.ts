@@ -21,6 +21,7 @@ import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
 import { denyUnless, canViewMoney, canManageSchedule } from '@/lib/coach-capabilities';
 import { DEFAULT_COACH_NAMES_POLICY, seatNameListing } from '@/lib/coach-names-policy';
 import { resolveClubBookAccessFor } from '@/lib/coach-club-book';
+import { getCoachTeamPlanCoverage } from '@/lib/team-plan-coverage';
 import {
   SCHEDULE_VISIBILITIES, isFamilyLayerEnabled, setScheduleVisibility, type ScheduleVisibility,
 } from '@/lib/family-access';
@@ -113,6 +114,11 @@ export const GET = withObservability(async (_req: Request,
     },
     nextYearDefault: programYear.year + 1,
     scope,
+    // Information only: a failed payer/role read means no card (no claim that a club pays), never a failed page.
+    planCoverage: await getCoachTeamPlanCoverage(ctx.org, teamId, ctx.user.id).catch((err) => {
+      console.error('[coaches team GET] plan coverage unavailable:', err);
+      return null;
+    }),
     /**
      * Club Shared Book — the head coach's switch. `showSwitch` is false unless BOTH the Club
      * plan includes the feature and the club admin has turned sharing on for the org: a coach

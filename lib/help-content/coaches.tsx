@@ -1487,7 +1487,25 @@ const coachesHelp: HelpPageContent = {
                 <li><strong>Reduce or cancel</strong> is at the bottom.</li>
                 <li>It&rsquo;s there whenever you own the portal, including between seasons. If your team isn&rsquo;t set up yet, the <strong>Coaches Portal not ready</strong> screen has a <strong>Plan &amp; billing</strong> button instead.</li>
               </ul>
-              <HelpNote variant="info" title="Only the owner sees it">Assistant coaches and other helpers don&rsquo;t get the row, and coaches whose team belongs to a club don&rsquo;t either &mdash; a club team is billed by the club. Someone who opens the address anyway is told that only the owner can see and change the plan.</HelpNote>
+              <HelpNote variant="info" title="Only the owner sees it">Assistant coaches and other helpers don&rsquo;t get the row, and coaches whose team belongs to a club don&rsquo;t either &mdash; a club team is billed by the club. Someone who opens the address anyway is told that only the owner can see and change the plan. To see who does pay for a club team, open Team settings.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'faq-premium-who-pays',
+          question: 'Who pays for my team?',
+          answerText: 'Open Team settings. If a club pays for your team\'s Coaches Portal, the first card at the top says Plan, Covered by and the club\'s name. There is nothing to manage there: no price, no button, no card to enter. The billing belongs to the club, and its owner looks after it. Every coach on the team sees the card, assistant coaches included. It is not shown when your own team pays for itself, when you are on the free Coaches Portal, or when we have given your team free time. The club\'s own owners and admins do not see it either, because they are the club. If you own a team that pays for itself, Plan & billing shows your plan and your card. If the card names a club you do not recognize, or you think the wrong club is paying, ask your club administrator.',
+          keywords: ['who pays', 'who pays for my team', 'covered by', 'covered by club', 'club pays', 'my club pays', 'plan card', 'team settings plan', 'club team billing', 'am i being billed', 'do i pay', 'free because of my club', 'no billing for me', 'assistant coach billing', 'club paid team'],
+          answer: (
+            <>
+              <p>Open <strong>Team settings</strong>. If a club pays for your team&rsquo;s Coaches Portal, the first card at the top reads <strong>Plan</strong> and <strong>Covered by</strong> the club&rsquo;s name.</p>
+              <ul>
+                <li>There is nothing to manage on that card: no price, no button, no card to enter. The billing belongs to the club, and its owner looks after it.</li>
+                <li>Every coach on the team sees it, assistant coaches included.</li>
+                <li>You won&rsquo;t see it if your own team pays for itself, if you&rsquo;re on the free Coaches Portal, or if we&rsquo;ve given your team free time. The club&rsquo;s own owners and admins don&rsquo;t see it either, because they are the club.</li>
+                <li>If you own a team that pays for itself, <strong>Plan &amp; billing</strong> shows your plan and your card.</li>
+              </ul>
+              <HelpNote variant="info" title="Not sure the right club is paying?">If the card names a club you don&rsquo;t recognize, ask your club administrator. Coaches can&rsquo;t change who pays from here.</HelpNote>
             </>
           ),
         },

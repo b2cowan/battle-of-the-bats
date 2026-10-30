@@ -19,7 +19,7 @@ export type BillingPlanChange<Key extends string = OrgPlan> = {
   mechanism: 'checkout' | 'move' | 'downgrade';
 };
 export type PlanBillingDefinition<Key extends string = OrgPlan> = {
-  included: { billing: readonly string[]; article: readonly string[] };
+  included: { billing: readonly string[]; article: readonly string[]; explore?: readonly string[] };
   usageMeters: readonly BillingUsageMeter[];
   changes: readonly BillingPlanChange<Key>[];
   downgradeLosses?: readonly string[];
@@ -77,6 +77,17 @@ const TEAM_CORE = [
 
 // Published article variant: preserve its text/order (dated hashes in the copy document).
 const TEAM_ARTICLE = [...TEAM_CORE, 'Link to your parent organization at any time, without transferring ownership'];
+
+// Explore's existing descriptions, unchanged in wording/order (owner ruling 2026-10-30).
+const TEAM_EXPLORE = [
+  'Game lineups',
+  'Attendance tracking',
+  'Assistant coaches with their own sign-in',
+  'Team documents',
+  'Dues schedules & automatic reminders',
+  'A season budget',
+  'Carry your roster into next season',
+];
 
 // Published article variant: preserve its text/order (dated hashes in the copy document).
 const TOURNAMENT_PLUS_ARTICLE = [
@@ -191,7 +202,7 @@ export const PLAN_BILLING_DEFINITIONS: Record<OrgPlan, PlanBillingDefinition> = 
     discoveryPlans: ['team', 'league', 'club'],
   },
   team: {
-    included: { billing: TEAM_CORE, article: TEAM_ARTICLE },
+    included: { billing: TEAM_CORE, article: TEAM_ARTICLE, explore: TEAM_EXPLORE },
     usageMeters: ['tournament_slots', 'staff_seats'],
     changes: checkoutAndMoves('team'),
     showFoundingSeason: true,

@@ -7,7 +7,7 @@ import {
   formatPriceAmount, formatAnnualSavings, gatedPlanTag, gatedPlanNote,
   FOUNDING_SEASON_END_LABEL as END, FOUNDING_SEASON_FIRST_CHARGE_LABEL as FIRST,
   FOUNDING_SEASON_DECISION_MONTH_LABEL as DECISION, FOUNDING_SEASON_NEXT_YEAR_LABEL as NEXT,
-  type BillingCycle,
+  PLAN_CONFIG, type BillingCycle,
 } from './plan-config';
 import { possessive, pluralize, joinWithAnd } from './utils';
 import { formatStoredDate } from './timezone';
@@ -21,8 +21,26 @@ import { PLAN_BILLING_TITLE } from './plan-billing-title';
 const day = (iso: string) => formatStoredDate(iso, { longMonth: true });
 const cycle = (value: BillingCycle) => value === 'annual' ? 'yearly' : 'monthly';
 const period = (value: BillingCycle) => value === 'annual' ? 'year' : 'month';
+const price = (amount: number, billing: BillingCycle) => amount === 0 ? formatPriceAmount(amount) : `${formatPriceAmount(amount)} CAD / ${period(billing)}`;
+const perTeam = 'per team';
+const coachMonthlyPrice = () => `${price(PLAN_CONFIG.team.monthlyPrice, 'monthly')} ${perTeam}`;
 
 export const PLAN_BILLING_WORDS = {
+  coverage: {
+    eyebrow: 'Plan',
+    title: (club: string) => `Covered by ${club}`,
+    body: 'Your club pays for this team’s Coaches Portal. There is nothing to manage here.',
+  },
+  coachUpsell: {
+    perTeam,
+    normally: () => `normally ${coachMonthlyPrice()}`,
+    shelf: (founding: boolean) => founding
+      ? `Premium is free through ${END} — normally ${coachMonthlyPrice()}.`
+      : `Premium is ${coachMonthlyPrice()}.`,
+    ceiling: (founding: boolean) => founding
+      ? `Free through ${END} — normally ${coachMonthlyPrice()}. No credit card required.`
+      : `${coachMonthlyPrice()}, cancel anytime.`,
+  },
   page: {
     title: PLAN_BILLING_TITLE, eyebrow: 'Organization', loading: 'Loading plan & billing…',
     lockedTitle: 'Billing access required',
@@ -31,7 +49,7 @@ export const PLAN_BILLING_WORDS = {
   },
   plan: {
     free: 'Free', monthly: 'Monthly', annual: 'Yearly', billing: 'Billing', unavailable: 'Billing status unavailable',
-    price: (amount: number, billing: BillingCycle) => amount === 0 ? formatPriceAmount(amount) : `${formatPriceAmount(amount)} CAD / ${period(billing)}`,
+    price,
     fromPrice: (amount: number) => amount === 0 ? formatPriceAmount(amount) : `From ${formatPriceAmount(amount)} CAD / month`,
     billed: (billing: BillingCycle) => `billed ${cycle(billing)}`,
     renews: (iso: string) => `Renews ${day(iso)}`,
