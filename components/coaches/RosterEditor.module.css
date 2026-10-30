@@ -280,6 +280,7 @@
 /* ── Form actions ── */
 .formActions {
   display: flex;
+  justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 0.1rem;
 }
@@ -290,8 +291,9 @@
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  flex: 1;
-  height: 42px;
+  flex: 0 0 auto;
+  height: 36px;
+  padding: 0 1.1rem;
   font-size: var(--type-body);
   font-weight: 700;
   border-radius: var(--radius-sm);
@@ -347,6 +349,12 @@
   .cancelBtn,
   .saveBtn {
     height: var(--tap-min, 44px);
+  }
+
+  /* On a phone the pair shares the row edge to edge. */
+  .cancelBtn,
+  .saveBtn {
+    flex: 1;
   }
 }
 

@@ -7,7 +7,7 @@ import { ChevronRight, Trash2, Plus, X, Check, ShieldCheck, Users } from 'lucide
 import type { BasicCoachTeamPlayer } from '@/lib/basic-coach-roster';
 import { ReorderList, ReorderRow } from '@/components/admin/tournament/ReorderList';
 import CoachEmptyState from './CoachEmptyState';
-import FeedbackModal from '@/components/FeedbackModal';
+import KitDialog from '@/components/shared/KitDialog';
 import editorRow from './EditorRow.module.css';
 import styles from './RosterEditor.module.css';
 import PhoneInput from '@/components/shared/PhoneInput';
@@ -200,18 +200,34 @@ export default function RosterEditor({ basicTeamId, initialPlayers }: Props) {
         </button>
       ) : null}
 
-      <FeedbackModal
-        isOpen={confirmPlayer !== null}
-        onClose={() => setConfirmPlayer(null)}
-        onConfirm={() => { if (confirmPlayer) removePlayer(confirmPlayer.id); }}
-        title="Remove this player?"
-        message={confirmPlayer
-          ? `${confirmPlayer.name} will be removed from your roster. This can't be undone.`
-          : ''}
-        confirmText="Remove player"
-        cancelText="Cancel"
-        type="danger"
-      />
+      {confirmPlayer && (
+        <KitDialog
+          kind="question"
+          title="Remove this player?"
+          onClose={() => setConfirmPlayer(null)}
+          openOn="panel"
+          footer={(
+            <>
+              <button type="button" className="btn btn-outline" onClick={() => setConfirmPlayer(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => {
+                  const id = confirmPlayer.id;
+                  setConfirmPlayer(null);
+                  void removePlayer(id);
+                }}
+              >
+                Remove player
+              </button>
+            </>
+          )}
+        >
+          <p>{`${confirmPlayer.name} will be removed from your roster. This can't be undone.`}</p>
+        </KitDialog>
+      )}
     </div>
   );
 }

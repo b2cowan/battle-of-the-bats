@@ -1,7 +1,6 @@
 'use client';
 import { createContext, useCallback, useContext, useRef, useState } from 'react';
-import FeedbackModal from '@/components/FeedbackModal';
-import { useBackStep } from './useBackStep';
+import KitDialog from '@/components/shared/KitDialog';
 
 interface ConfirmOptions {
   title?: string;
@@ -33,7 +32,7 @@ export default function ConfirmProvider({ children }: { children: React.ReactNod
     [],
   );
 
-  // First call wins: FeedbackModal fires onConfirm THEN onClose, so guard the resolver.
+  // First call wins: guard the resolver so settling once clears the open question cleanly.
   const settle = useCallback((value: boolean) => {
     const resolve = resolverRef.current;
     resolverRef.current = null;
@@ -41,24 +40,33 @@ export default function ConfirmProvider({ children }: { children: React.ReactNod
     resolve?.(value);
   }, []);
 
-  // A question is a level of its own: Back answers it with its SAFE answer — "Keep editing",
-  // "Cancel" — and leaves the coach where the question was asked (`useBackStep`; a step over the
-  // floor that asked, so Back never closes the form under an open "Discard?").
-  useBackStep(opts !== null, () => settle(false));
-
   return (
     <ConfirmContext.Provider value={confirm}>
       {children}
-      <FeedbackModal
-        isOpen={opts !== null}
-        onClose={() => settle(false)}
-        onConfirm={() => settle(true)}
-        title={opts?.title ?? 'Please confirm'}
-        message={opts?.message ?? ''}
-        confirmText={opts?.confirmText ?? 'Confirm'}
-        cancelText={opts?.cancelText ?? 'Cancel'}
-        type={opts?.tone ?? 'warning'}
-      />
+      {opts && (
+        <KitDialog
+          kind="question"
+          title={opts.title ?? 'Please confirm'}
+          onClose={() => settle(false)}
+          openOn="panel"
+          footer={(
+            <>
+              <button type="button" className="btn btn-outline" onClick={() => settle(false)}>
+                {opts.cancelText ?? 'Cancel'}
+              </button>
+              <button
+                type="button"
+                className={opts.tone === 'danger' ? 'btn btn-danger' : 'btn btn-lime'}
+                onClick={() => settle(true)}
+              >
+                {opts.confirmText ?? 'Confirm'}
+              </button>
+            </>
+          )}
+        >
+          <p>{opts.message}</p>
+        </KitDialog>
+      )}
     </ConfirmContext.Provider>
   );
 }

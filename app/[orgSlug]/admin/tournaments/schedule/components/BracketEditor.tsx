@@ -7,7 +7,7 @@ import { hasRoundRobin as resolveHasRoundRobin } from '@/lib/tournament-phase';
 import { buildBracketScheduleMetrics } from '@/lib/bracket-schedule-metrics';
 import { formatVenueLocation } from '@/lib/venue-label';
 import NumberStepper from '@/components/admin/NumberStepper';
-import FeedbackModal from '@/components/FeedbackModal';
+import KitDialog from '@/components/shared/KitDialog';
 import BracketBuilder from './BracketBuilder';
 import BracketHealthPanel from './BracketHealthPanel';
 import { gameLengthMinutes } from '@/lib/booking-length';
@@ -417,7 +417,7 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
       isOpen: true,
       title: 'Discard changes?',
       message: 'Your unsaved bracket edits will be lost.',
-      type: 'warning',
+      type: 'danger',
       confirmText: 'Discard',
       onConfirm: () => onDone(false),
     });
@@ -602,7 +602,46 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
         )}
       </div>
 
-      <FeedbackModal {...feedback} onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))} />
+      {feedback.isOpen && (
+        <KitDialog
+          kind="question"
+          title={feedback.title}
+          onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
+          openOn="panel"
+          footer={feedback.onConfirm ? (
+            <>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={feedback.type === 'danger' ? 'btn btn-danger' : 'btn btn-lime'}
+                onClick={() => {
+                  const fn = feedback.onConfirm;
+                  setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }));
+                  fn?.();
+                }}
+              >
+                {feedback.confirmText ?? 'Confirm'}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
+            >
+              Close
+            </button>
+          )}
+        >
+          <p>{feedback.message}</p>
+        </KitDialog>
+      )}
     </div>
   );
 }

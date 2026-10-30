@@ -32,7 +32,7 @@ import ExportMenu from '@/components/admin/ExportMenu';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { Game, Team, Division, Venue } from '@/lib/types';
-import FeedbackModal from '@/components/FeedbackModal';
+import KitDialog from '@/components/shared/KitDialog';
 import HelpCallout from '@/components/help/HelpCallout';
 import { formatScoreSubmittedAt, scoreSubmissionSourceLabel } from '@/lib/tournament-score-audit';
 import { TournamentAdminHeader } from '@/components/admin/tournament/TournamentAdminUI';
@@ -626,10 +626,46 @@ export default function AdminResultsPage() {
         />
       )}
 
-      <FeedbackModal
-        {...feedback}
-        onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
-      />
+      {feedback.isOpen && (
+        <KitDialog
+          kind="question"
+          title={feedback.title}
+          onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
+          openOn="panel"
+          footer={feedback.onConfirm ? (
+            <>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={feedback.type === 'danger' ? 'btn btn-danger' : 'btn btn-lime'}
+                onClick={() => {
+                  const fn = feedback.onConfirm;
+                  setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }));
+                  fn?.();
+                }}
+              >
+                Confirm
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
+            >
+              Close
+            </button>
+          )}
+        >
+          <p>{feedback.message}</p>
+        </KitDialog>
+      )}
     </div>
   );
 }

@@ -13,7 +13,7 @@ import {
   addHoursToWallInput, basicEventWhen, basicScheduleSortKey, instantToWallInput, nextHourWallInput, wallInputToInstant,
 } from '@/lib/basic-coach-schedule-view';
 import CoachEmptyState from './CoachEmptyState';
-import FeedbackModal from '@/components/FeedbackModal';
+import KitDialog from '@/components/shared/KitDialog';
 import editorRow from './EditorRow.module.css';
 import styles from './ScheduleEditor.module.css';
 
@@ -274,18 +274,34 @@ export default function ScheduleEditor({ basicTeamId, initialEvents, tournamentG
         </button>
       ) : null}
 
-      <FeedbackModal
-        isOpen={confirmEvent !== null}
-        onClose={() => setConfirmEvent(null)}
-        onConfirm={() => { if (confirmEvent) removeEvent(confirmEvent.id); }}
-        title="Remove this event?"
-        message={confirmEvent
-          ? `"${confirmEvent.title}" will be removed from your schedule. This can't be undone.`
-          : ''}
-        confirmText="Remove event"
-        cancelText="Cancel"
-        type="danger"
-      />
+      {confirmEvent && (
+        <KitDialog
+          kind="question"
+          title="Remove this event?"
+          onClose={() => setConfirmEvent(null)}
+          openOn="panel"
+          footer={(
+            <>
+              <button type="button" className="btn btn-outline" onClick={() => setConfirmEvent(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => {
+                  const id = confirmEvent.id;
+                  setConfirmEvent(null);
+                  void removeEvent(id);
+                }}
+              >
+                Remove event
+              </button>
+            </>
+          )}
+        >
+          <p>{`"${confirmEvent.title}" will be removed from your schedule. This can't be undone.`}</p>
+        </KitDialog>
+      )}
     </div>
   );
 }

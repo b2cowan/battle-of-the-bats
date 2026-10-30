@@ -622,6 +622,55 @@ fade on their own.
 - `window.confirm` ×3 (rep-teams assistant coaches; shared library ×2) → question.
 - Delete `FeedbackModal.tsx` + `.module.css`.
 
+#### Stage 3 — as built (Step 1 · 2026-10-29 · Coaches, Tournament Admin, Browser Alerts & Help Center)
+Walk: [`docs/projects/active/ONE_WINDOW_STAGE3_WALK.html`](ONE_WINDOW_STAGE3_WALK.html). Guard: `tests/unit/one-window-stage3-guard.test.ts`.
+
+**✅ Passed 2026-10-29** — the owner ticked 16 of 16 steps across Parts A–E with verdict Pass (no blocking notes).
+
+- **`ConfirmProvider` + `CoachesLayout` (`components/coaches/ConfirmProvider.tsx`, `app/[orgSlug]/coaches/layout.tsx`)** —
+  `ConfirmProvider` now renders `KitDialog` `kind="question"` (`openOn="panel"`) instead of `FeedbackModal`, keeping all
+  ~43 coach `useConfirm()` calls' wording intact (`opts.tone === 'danger'` wears `.btn-danger`; others wear `.btn-lime`).
+  Moved `<ConfirmProvider>` inside `<CoachesOverlayProvider>` in `app/[orgSlug]/coaches/layout.tsx` so `KitDialog`'s
+  `useOverlayOpenIfAvailable(true)` sees `inCoachPortal = true` (setting `data-coach-window` for coach button/type tokens
+  and sharing the portal's single scroll-lock and phone-bar hide counter rather than acquiring a second `body.style.overflow`
+  lock). Removed the duplicate `useBackStep` call from `ConfirmProvider.tsx` because `KitDialog` → `useDialogFloor`
+  already registers `useBackStep(true, requestClose)`.
+- **Coaches Portal direct `FeedbackModal` mounts retired (6 files: 3 Rep + 3 Free)** —
+  - `app/[orgSlug]/coaches/teams/[teamId]/roster/page.tsx`: per Q13 ("outcomes are not windows; news → the page notice;
+    an error stays until read"), adding a player (`"X added to roster."`), finishing a Save & Add Another batch, or
+    completing `RosterBulkAddSheet` now displays `<PageNotice>` above the roster list (auto-fading after 8 s with no
+    modal to dismiss), while write/load errors open `KitDialog` `kind="question"` (`title="Error"`, `Close`).
+  - `app/[orgSlug]/coaches/teams/[teamId]/roster/[playerId]/page.tsx`: error-only `FeedbackModal` replaced with
+    `KitDialog` `kind="question"` (`title="Error"`, `Close`).
+  - `app/[orgSlug]/coaches/teams/[teamId]/tryouts/page.tsx`: `fail(m)` error `FeedbackModal` replaced with `KitDialog`
+    `kind="question"` (`title="Something went wrong"`, `Close`).
+  - `components/coaches/FeeEditor.tsx`, `components/coaches/RosterEditor.tsx`, `components/coaches/ScheduleEditor.tsx`:
+    the Free Coaches Portal's three remove confirms (`Remove this fee?`, `Remove this player?`, `Remove this event?`)
+    now render `KitDialog` `kind="question"` (`openOn="panel"`, `.btn-danger`).
+- **Tournament Admin `FeedbackModal` mounts retired (3 files)** —
+  - `app/[orgSlug]/admin/tournaments/schedule/page.tsx`: replaced `FeedbackModal` with `KitDialog` `kind="question"`
+    (`openOn="panel"`), supporting both 2-button confirms (`Cancel` + `.btn-danger` / `.btn-lime`) and 1-button
+    refusals/errors (`Close`), plus the optional `feedback.items` list for multi-division unpublish and game-delete
+    consequences.
+  - `app/[orgSlug]/admin/tournaments/results/page.tsx`: replaced `FeedbackModal` with `KitDialog` `kind="question"`
+    (`openOn="panel"`) for `Revert score?` (2-button confirm) and finalize failures (1-button `Close`).
+  - `app/[orgSlug]/admin/tournaments/schedule/components/BracketEditor.tsx`: replaced `FeedbackModal` with `KitDialog`
+    `kind="question"` (`openOn="panel"`). Changed `cancel()`'s `'Discard changes?'` from `type: 'warning'` to
+    `type: 'danger'` so `Discard` wears `.btn-danger` per Q11.
+- **Browser `window.confirm` retired repo-wide (2 files, 3 calls)** —
+  - `app/[orgSlug]/admin/rep-teams/assistant-coaches/page.tsx`: removing an active assistant now opens `KitDialog`
+    `kind="question"` (`Remove ${name}?` / `They lose access to ${teamName} immediately.` / `Cancel` · `Remove`
+    `.btn-danger`).
+  - `app/[orgSlug]/admin/rep-teams/shared-library/page.tsx`: deleting a shared tag (`Delete` `.btn-danger`) and merging
+    a shared tag (`Merge` `.btn-lime`) in `TagSection` now open `KitDialog` `kind="question"`.
+- **Help Center (`/docs` item from Stage 2d)** —
+  - `lib/help-content/coaches.tsx`: updated `faq-money-discard-prompt` to note that alongside the player panel on Player
+    dues, an unsaved credit split on a sponsor also asks in the small question window with `Keep editing`.
+- **Remaining in Stage 3 (Wave 2 Step 4, held aside while Claude/Codex finish Club/Stripe/Bookkeeping)** — the last 4
+  `FeedbackModal` mounts (`components/billing/PlanPanelDrawer.tsx`, `app/[orgSlug]/admin/rep-teams/rename-slugs/page.tsx`,
+  `app/[orgSlug]/admin/org/settings/pdf/page.tsx`, `app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx`)
+  and deleting `components/FeedbackModal.tsx` + `components/FeedbackModal.module.css`.
+
 ### Stage 4 · Strays join
 - House league's 17 windows → KitDialog (forms and questions), losing the banded head and foot, the grey Cancel and the
   stray-tap close.

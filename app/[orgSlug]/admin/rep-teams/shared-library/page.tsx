@@ -5,6 +5,7 @@ import { useOrg } from '@/lib/org-context';
 import AwardIconPicker from '@/components/coaches/AwardIconPicker';
 import type { RepTeamTag, RepTeamAwardType, RepTeamDrill } from '@/lib/types';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import KitDialog from '@/components/shared/KitDialog';
 import styles from '../rep-teams.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
@@ -34,6 +35,8 @@ function TagSection({
   const [mergingId, setMergingId] = useState<string | null>(null);
   const [mergeTargetId, setMergeTargetId] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [deletingTag, setDeletingTag] = useState<RepTeamTag | null>(null);
+  const [mergingPair, setMergingPair] = useState<{ loser: RepTeamTag; winner: RepTeamTag } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError('');
@@ -85,7 +88,6 @@ function TagSection({
   }
 
   async function removeTag(tag: RepTeamTag) {
-    if (!window.confirm(`Delete shared tag "${tag.name}"? Anything tagged with it loses that tag. Use Merge instead to keep the history under another tag.`)) return;
     setBusyId(tag.id); setError('');
     try {
       const res = await fetch(`/api/admin/rep-teams/shared-tags/${tag.id}${orgQuery}`, { method: 'DELETE' });
@@ -95,10 +97,13 @@ function TagSection({
     finally { setBusyId(null); }
   }
 
-  async function confirmMerge(loser: RepTeamTag) {
+  function requestMerge(loser: RepTeamTag) {
     const winner = tags.find(t => t.id === mergeTargetId);
     if (!winner) return;
-    if (!window.confirm(`Merge "${loser.name}" into "${winner.name}"? Everything tagged "${loser.name}" will be re-tagged "${winner.name}", and "${loser.name}" will be removed.`)) return;
+    setMergingPair({ loser, winner });
+  }
+
+  async function executeMerge(loser: RepTeamTag, winner: RepTeamTag) {
     setBusyId(loser.id); setError('');
     try {
       const res = await fetch(`/api/admin/rep-teams/shared-tags/merge${orgQuery}`, {
@@ -136,7 +141,7 @@ function TagSection({
                     <option value="">Merge “{tag.name}” into…</option>
                     {sorted.filter(t => t.id !== tag.id).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                   </select>
-                  <button className={styles.btnSecondary} disabled={busyId === tag.id || !mergeTargetId} onClick={() => confirmMerge(tag)}>Merge</button>
+                  <button className={styles.btnSecondary} disabled={busyId === tag.id || !mergeTargetId} onClick={() => requestMerge(tag)}>Merge</button>
                   <button className={styles.btnGhost} onClick={() => setMergingId(null)}><X size={14} /></button>
                 </>
               ) : (
@@ -148,7 +153,7 @@ function TagSection({
                       {sorted.length > 1 && (
                         <button className={styles.btnGhost} title="Merge into another tag" disabled={!!busyId} onClick={() => { setMergingId(tag.id); setMergeTargetId(''); setRenamingId(null); }}><GitMerge size={14} /></button>
                       )}
-                      <button className={styles.btnGhost} title="Delete" disabled={!!busyId} onClick={() => removeTag(tag)}><Trash2 size={14} /></button>
+                      <button className={styles.btnGhost} title="Delete" disabled={!!busyId} onClick={() => setDeletingTag(tag)}><Trash2 size={14} /></button>
                     </>
                   )}
                 </>
@@ -166,6 +171,64 @@ function TagSection({
         </>
       )}
       {error && <p className={styles.errorText} style={{ marginTop: '0.5rem' }}>{error}</p>}
+
+      {deletingTag && (
+        <KitDialog
+          kind="question"
+          title={`Delete shared tag “${deletingTag.name}”?`}
+          onClose={() => setDeletingTag(null)}
+          openOn="panel"
+          footer={(
+            <>
+              <button type="button" className="btn btn-outline" onClick={() => setDeletingTag(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => {
+                  const target = deletingTag;
+                  setDeletingTag(null);
+                  void removeTag(target);
+                }}
+              >
+                Delete
+              </button>
+            </>
+          )}
+        >
+          <p>Anything tagged with it loses that tag. Use Merge instead to keep the history under another tag.</p>
+        </KitDialog>
+      )}
+
+      {mergingPair && (
+        <KitDialog
+          kind="question"
+          title={`Merge “${mergingPair.loser.name}” into “${mergingPair.winner.name}”?`}
+          onClose={() => setMergingPair(null)}
+          openOn="panel"
+          footer={(
+            <>
+              <button type="button" className="btn btn-outline" onClick={() => setMergingPair(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-lime"
+                onClick={() => {
+                  const { loser, winner } = mergingPair;
+                  setMergingPair(null);
+                  void executeMerge(loser, winner);
+                }}
+              >
+                Merge
+              </button>
+            </>
+          )}
+        >
+          <p>Everything tagged “{mergingPair.loser.name}” will be re-tagged “{mergingPair.winner.name}”, and “{mergingPair.loser.name}” will be removed.</p>
+        </KitDialog>
+      )}
     </div>
   );
 }

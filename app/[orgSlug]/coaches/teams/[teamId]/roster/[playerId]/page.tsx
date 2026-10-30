@@ -12,7 +12,7 @@ import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachPageSection from '@/components/coaches/CoachPageSection';
 import HubTabBar from '@/components/shared/HubTabBar';
-import FeedbackModal from '@/components/FeedbackModal';
+import KitDialog from '@/components/shared/KitDialog';
 import PlayerDocumentsSection from '@/components/coaches/PlayerDocumentsSection';
 import PlayerGuardiansCard from '@/components/coaches/PlayerGuardiansCard';
 import PlayerDevelopmentSection from '@/components/coaches/PlayerDevelopmentSection';
@@ -266,12 +266,10 @@ export default function PlayerDetailPage({
   const [fetching, setFetching] = useState(true);
   const [togglingStatus, setTogglingStatus] = useState(false);
 
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackType, setFeedbackType] = useState<'success' | 'danger'>('success');
   const [feedbackMsg, setFeedbackMsg] = useState('');
 
-  function showFeedback(type: 'success' | 'danger', msg: string) {
-    setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
+  function showFeedback(_type: 'success' | 'danger', msg: string) {
+    setFeedbackMsg(msg);
   }
 
   /* ⚠ THE RECORD AUTOSAVES (owner ruling 2026-09-24, mid-§228 walk: "why don't we auto save on
@@ -1310,13 +1308,17 @@ export default function PlayerDetailPage({
         />
       )}
 
-      <FeedbackModal
-        isOpen={feedbackOpen}
-        onClose={() => setFeedbackOpen(false)}
-        title={feedbackType === 'success' ? 'Done' : 'Error'}
-        message={feedbackMsg}
-        type={feedbackType}
-      />
+      {feedbackMsg && (
+        <KitDialog
+          kind="question"
+          title="Error"
+          onClose={() => setFeedbackMsg('')}
+          openOn="panel"
+          footer={<button type="button" className="btn btn-outline" onClick={() => setFeedbackMsg('')}>Close</button>}
+        >
+          <p>{feedbackMsg}</p>
+        </KitDialog>
+      )}
     </div>
   );
 }

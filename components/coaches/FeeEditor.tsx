@@ -5,7 +5,7 @@ import { Check, CheckCircle2, ChevronRight, CircleDollarSign, Plus, RotateCcw, T
 import type { BasicCoachTeamFee } from '@/lib/basic-coach-fees';
 import type { BasicCoachTeamPlayer } from '@/lib/basic-coach-roster';
 import CoachEmptyState from './CoachEmptyState';
-import FeedbackModal from '@/components/FeedbackModal';
+import KitDialog from '@/components/shared/KitDialog';
 import editorRow from './EditorRow.module.css';
 import styles from './FeeEditor.module.css';
 
@@ -395,18 +395,34 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
         </>
       )}
 
-      <FeedbackModal
-        isOpen={confirmFee !== null}
-        onClose={() => setConfirmFee(null)}
-        onConfirm={() => { if (confirmFee) removeFee(confirmFee.id); }}
-        title="Remove this fee?"
-        message={confirmFee
-          ? `"${confirmFee.label}" (${formatMoney(confirmFee.amount)}) will be removed from your ledger. This can't be undone.`
-          : ''}
-        confirmText="Remove fee"
-        cancelText="Cancel"
-        type="danger"
-      />
+      {confirmFee && (
+        <KitDialog
+          kind="question"
+          title="Remove this fee?"
+          onClose={() => setConfirmFee(null)}
+          openOn="panel"
+          footer={(
+            <>
+              <button type="button" className="btn btn-outline" onClick={() => setConfirmFee(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => {
+                  const id = confirmFee.id;
+                  setConfirmFee(null);
+                  void removeFee(id);
+                }}
+              >
+                Remove fee
+              </button>
+            </>
+          )}
+        >
+          <p>{`"${confirmFee.label}" (${formatMoney(confirmFee.amount)}) will be removed from your ledger. This can't be undone.`}</p>
+        </KitDialog>
+      )}
     </div>
   );
 }

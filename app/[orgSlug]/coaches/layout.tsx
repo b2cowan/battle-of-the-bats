@@ -340,18 +340,18 @@ export default async function CoachesLayout({
         <div style={{ display: 'contents' }} {...coachWarmAttr}>
           <CoachThemeColor />
           <HelpDrawerProvider warm>
-            <ConfirmProvider>
-              {/* Shared "any modal/sheet open" signal (Coach Portal Batch 1, D3): wraps BOTH the
-                  sidebar and the bottom nav so useOverlayOpen()/useAnyOverlayOpen() reach every
-                  team page and the nav that needs to hide under them. */}
-              <CoachesOverlayProvider>
+            {/* Shared "any modal/sheet open" signal (Coach Portal Batch 1, D3): wraps ConfirmProvider,
+                the sidebar and the bottom nav so useOverlayOpenIfAvailable()/useAnyOverlayOpen() reach
+                every team page, the question window, and the nav that needs to hide under them. */}
+            <CoachesOverlayProvider>
+              <ConfirmProvider>
                 {/* The shell, and the ONE place that decides whether a route wears it. The
                     help guide is a focused reading surface (no sidebar, no strip, no bottom
                     nav, pinned dark) — the same line the admin side has drawn since Stage C.
                     See components/coaches/CoachesChrome.tsx. */}
-                <CoachesChrome orgSlug={orgSlug}>{children}</CoachesChrome>
-              </CoachesOverlayProvider>
-            </ConfirmProvider>
+                <CoachesChrome orgSlug={orgSlug} billingOnlyHref={ownerBillingPage ? ownerBillingHref : null}>{children}</CoachesChrome>
+              </ConfirmProvider>
+            </CoachesOverlayProvider>
             <InstallAppPrompt
               appName="FieldLogicHQ"
               subtitle="Your teams, schedules and scores — one tap away."

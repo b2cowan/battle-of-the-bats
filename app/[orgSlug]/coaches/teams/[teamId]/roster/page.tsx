@@ -15,7 +15,8 @@ import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOrg } from '@/lib/org-context';
 import QuestionShell, { QuestionReason } from '@/components/coaches/QuestionShell';
-import FeedbackModal from '@/components/FeedbackModal';
+import KitDialog from '@/components/shared/KitDialog';
+import PageNotice, { useNotice } from '@/components/shared/PageNotice';
 import PositionSelect from '@/components/coaches/PositionSelect';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import DepthChartBoard from '@/components/coaches/DepthChartBoard';
@@ -135,15 +136,15 @@ export default function RosterPage({
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackType, setFeedbackType] = useState<'success' | 'danger'>('success');
-  const [feedbackMsg, setFeedbackMsg] = useState('');
+  const [rosterNotice, setRosterNotice] = useNotice();
+  const [errorMsg, setErrorMsg] = useState('');
 
   // PDF settings — fetched once on mount; used in handleExportPDF
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
 
   function showFeedback(type: 'success' | 'danger', msg: string) {
-    setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
+    if (type === 'success') setRosterNotice({ tone: 'good', text: msg });
+    else setErrorMsg(msg);
   }
 
   /**
@@ -756,6 +757,8 @@ export default function RosterPage({
         help={rosterHelpRequest}
       />
 
+      {rosterNotice && <PageNotice notice={rosterNotice} />}
+
       {/* List ⇄ Depth chart — two views of the same roster (positions/pitching/A-squad live
           here) — plus the counts that used to be the header subtitle (page-header ruling
           2026-08-11: a live fact leads the body it counts, not the chrome above it). */}
@@ -1114,13 +1117,17 @@ export default function RosterPage({
         />
       )}
 
-      <FeedbackModal
-        isOpen={feedbackOpen}
-        onClose={() => setFeedbackOpen(false)}
-        title={feedbackType === 'success' ? 'Done' : 'Error'}
-        message={feedbackMsg}
-        type={feedbackType}
-      />
+      {errorMsg && (
+        <KitDialog
+          kind="question"
+          title="Error"
+          onClose={() => setErrorMsg('')}
+          openOn="panel"
+          footer={<button type="button" className="btn btn-outline" onClick={() => setErrorMsg('')}>Close</button>}
+        >
+          <p>{errorMsg}</p>
+        </KitDialog>
+      )}
     </div>
   );
 }

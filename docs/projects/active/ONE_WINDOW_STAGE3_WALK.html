@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>One Window · Stage 3 (Step 1) walk — One Question</title>
+<style>
+  :root {
+    --bg: #f6f3ec;
+    --card: #fdfbf7;
+    --ink: #171b16;
+    --soft: #4e554b;
+    --faint: #6f766b;
+    --line: rgba(23,27,22,0.12);
+    --line-strong: rgba(23,27,22,0.22);
+    --olive: #3e6b2c;
+    --olive-soft: rgba(62,107,44,0.1);
+    --warn: #8a5a14;
+    --warn-soft: rgba(138,90,20,0.1);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 28px 18px 80px;
+  }
+  main { max-width: 780px; margin: 0 auto; }
+  h1 { font-size: 24px; line-height: 1.2; margin: 0 0 6px; letter-spacing: -0.015em; }
+  h2 { font-size: 16px; line-height: 1.3; margin: 0 0 4px; }
+  .lede { color: var(--soft); margin: 0 0 18px; }
+  .meta { color: var(--faint); font-size: 13px; margin: 0 0 22px; }
+  .box {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin: 0 0 16px;
+  }
+  .setup { background: var(--olive-soft); border-color: rgba(62,107,44,0.28); }
+  .setup strong, .rule strong { font-weight: 650; }
+  .rule { background: var(--warn-soft); border-color: rgba(138,90,20,0.28); font-size: 14px; }
+  .signin {
+    background: var(--card);
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 0 0 16px;
+  }
+  .signin .eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 8px;
+  }
+  .cred {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    align-items: center;
+    padding: 8px 0;
+    border-top: 1px solid var(--line);
+    font-size: 14px;
+  }
+  .cred .who {
+    min-width: 250px;
+    font-weight: 650;
+  }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    background: rgba(23,27,22,0.07);
+    padding: 2px 7px;
+    border-radius: 5px;
+    user-select: all;
+    overflow-wrap: anywhere;
+  }
+  .part-who {
+    font-size: 13px;
+    color: var(--soft);
+    margin: 2px 0 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .part {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin: 0 0 14px;
+  }
+  .step {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 10px;
+    align-items: start;
+    padding: 9px 0;
+    border-top: 1px solid var(--line);
+    cursor: pointer;
+  }
+  .step:first-of-type { border-top: 0; padding-top: 6px; }
+  .step input { width: 17px; height: 17px; margin: 3px 0 0; accent-color: var(--olive); cursor: pointer; }
+  .step input:checked + span { color: var(--faint); text-decoration: line-through; }
+  .verdict {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    padding-top: 10px; margin-top: 6px; border-top: 1px solid var(--line);
+    font-size: 13px; color: var(--soft);
+  }
+  .verdict button {
+    font: inherit; font-size: 13px; font-weight: 600;
+    padding: 6px 12px; border-radius: 6px;
+    border: 1px solid var(--line-strong); background: #fff; color: var(--ink);
+    cursor: pointer; min-height: 34px;
+  }
+  .verdict button[aria-pressed="true"] {
+    background: var(--olive); border-color: var(--olive); color: #fff;
+  }
+  textarea {
+    width: 100%; margin-top: 8px; padding: 8px 10px;
+    font: 14px/1.45 inherit; color: var(--ink); background: #fff;
+    border: 1px solid var(--line-strong); border-radius: 6px; resize: vertical;
+  }
+  .summary { position: sticky; bottom: 10px; background: var(--card); border: 1px solid var(--line-strong); border-radius: 10px; padding: 12px 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+  .summary-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+  .btn {
+    font: inherit; font-size: 14px; font-weight: 650;
+    padding: 8px 14px; border-radius: 7px; border: 1px solid var(--olive);
+    background: var(--olive); color: #fff; cursor: pointer; min-height: 36px;
+  }
+  .btn.secondary { background: #fff; color: var(--ink); border-color: var(--line-strong); }
+  #out { margin-top: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>One Window · Stage 3 (Step 1) walk — One Question</h1>
+  <p class="lede">Every “are you sure” question across Coaches, Tournament Admin, and Rep Teams settings now uses the one question window (416 px on a computer, 350 px card on a phone), browser grey alert boxes are gone, and adding a player on the Roster uses a non-blocking page notice instead of a “Done” modal.</p>
+  <p class="meta">Plan: <code>docs/projects/active/ONE_WINDOW_PLAN.md</code> (Q11–Q13 · Stage 3 Step 1). Your ticks and notes save in this browser as you go.</p>
+
+  <div class="signin" aria-label="Sign in as">
+    <div class="eyebrow">Sign in as · dev site · localhost:3000/auth/login (all three accounts share the same password)</div>
+    <div class="cred">
+      <span class="who">1. Coach, head coach of UAT Test Team (Parts A, B &amp; E)</span>
+      <code>uat-coach@uat-test-org.local</code>
+      <code>UATPassword2026!</code>
+      <code>localhost:3000/uat-rep-club/coaches/teams/0c656d0b-3f8d-494c-8b12-f1b0b9d670fe</code>
+    </div>
+    <div class="cred">
+      <span class="who">2. Tournament Admin, Plus test club owner (Part C)</span>
+      <code>uat-owner@uat-test-org.local</code>
+      <code>UATPassword2026!</code>
+      <code>localhost:3000/uat-plus-org/admin/tournaments</code>
+    </div>
+    <div class="cred">
+      <span class="who">3. Club Admin, UAT Rep Club owner (Part D)</span>
+      <code>uat-club-owner@uat-rep-club.local</code>
+      <code>UATPassword2026!</code>
+      <code>localhost:3000/uat-rep-club/admin/rep-teams/shared-library</code>
+    </div>
+    <p class="meta" style="margin:8px 0 0">Tip: click any pill above to select the full email, password, or starting URL for copy-pasting.</p>
+  </div>
+
+  <div class="box setup">
+    <strong>Before you start</strong><br>
+    1. Open the dev server in Warm (your normal theme) and sign in with the account listed for each part above.<br>
+    2. Keep DevTools closed until Part E (phone check at 390 × 844).<br>
+    3. Every question window you open in this walk should have: <strong>no icon badge above the title</strong>, <strong>no × button in the top-right corner</strong>, <strong>no focus ring on either button when it opens</strong>, and <strong>Escape / clicking outside answers “no” (Cancel / Close)</strong>.
+  </div>
+
+  <div class="box rule">
+    <strong>What to look for on every question window (Q11 &amp; Q13)</strong><br>
+    • <strong>One shape everywhere:</strong> 416 px wide on a computer, 350 px centred card on a phone; title + short paragraph + right-aligned buttons (Cancel on the left, the action on the right).<br>
+    • <strong>Destructive actions wear the red-tinted button:</strong> Discard, Delete, Remove, Clear Bracket are red-tinted (never solid red, never lime).<br>
+    • <strong>Outcomes are not windows:</strong> Adding a player on the Roster shows a green page notice above the list that fades after 8 seconds — no “Done / OK” modal to dismiss.
+  </div>
+
+  <div id="parts"></div>
+
+  <div class="summary">
+    <div class="summary-row">
+      <span id="count">0 of 0 steps ticked</span>
+      <div>
+        <button type="button" class="btn secondary" id="build">Build paste-back summary</button>
+        <button type="button" class="btn" id="copy" hidden>Copy summary</button>
+        <span id="copied" class="meta" style="margin-left:8px"></span>
+      </div>
+    </div>
+    <textarea id="out" rows="10" readonly hidden aria-label="Summary to paste back"></textarea>
+  </div>
+</main>
+<script>
+(function(){
+  var PARTS = [
+    {id:'A',title:'Coaches Portal · Questions (ConfirmProvider)',who:'Coach (uat-coach@uat-test-org.local · UATPassword2026!) → localhost:3000/uat-rep-club/coaches/teams/0c656d0b-3f8d-494c-8b12-f1b0b9d670fe',steps:[
+      'Open a team in the Coaches Portal → Roster → open a player (e.g. Avery Test) → Details tab. Scroll to the bottom to the “Take Avery off the roster” section and click the red-bordered “Take off the roster” button. The one question window opens (“Take Avery off the roster?” with “They stop appearing in lineups, attendance, dues and team emails…”, Cancel text “Keep on the roster”, and the red-tinted danger button “Take off the roster”; 416 px, no icon badge above the title, no × button, neither button has a focus ring on open). Press Escape or click outside: it closes without changing the player.',
+      'Open Staff → invite or edit an assistant coach → toggle one of the Sensitive access switches (e.g. Team money or Contacts & birthdates). The confirmation opens in the one question window with the exact same wording as before. Click Cancel (or press Escape): the switch stays off.',
+      'In the same Staff sheet, change the Role dropdown (so the sheet has unsaved work) and press × or Escape. The “Discard changes?” question opens over the sheet with “Keep editing” and the red-tinted “Discard” button. Press “Keep editing”: you stay in the Staff sheet with your change intact. Close and Discard.',
+      'Open Money → Player dues → click a player row to open the right-hand player panel → click Edit on a payment (or change the schedule) → press × on the player panel. The “Discard changes?” question opens in the one question window over the panel. Press “Keep editing”, then cancel your edit and close the panel.',
+      'Open Money → Fundraising → open a Sponsor room → change the credit split → press × to close the room. The “Discard this change to the credit split?” question opens in the one question window over the room with “Keep editing” and the red-tinted “Discard”. Press Escape: you remain in the room.'
+    ]},
+    {id:'B',title:'Coaches Portal · Roster Notice vs. Error Window (Q13)',who:'Coach (uat-coach@uat-test-org.local · UATPassword2026!) → localhost:3000/uat-rep-club/coaches/teams/0c656d0b-3f8d-494c-8b12-f1b0b9d670fe/roster',steps:[
+      'Open Roster → click “+ Add Player”. Enter a test first and last name (e.g. “TestWalk Player”) and click “Add to Roster”. The window closes and a green page notice (“TestWalk Player added to roster.”) appears above the roster list — NO blocking “Done / OK” modal pops up. After ~8 seconds the notice fades away on its own.',
+      'Open Help (“?” in the top right of a Money screen, or localhost:3000/uat-rep-club/coaches/help) and check the FAQ “Why is it asking me to discard — and can I get my work back?”. Verify it notes that forms ask in their own foot with “Keep writing” and “Discard”, while the Player dues panel and a sponsor’s unsaved credit split ask in a small question window with “Keep editing”.'
+    ]},
+    {id:'C',title:'Tournament Admin · Schedule, Results & Bracket Editor',who:'Tournament Admin / Plus test club owner (uat-owner@uat-test-org.local · UATPassword2026!) → localhost:3000/uat-plus-org/admin/tournaments',steps:[
+      'Open a Tournament in Admin → Schedule. If a division is published, click “Published” → choose a division to unpublish (or click a scheduled game’s delete icon). The confirmation opens in the one question window (416 px, no icon badge, no ×). If deleting a game, verify the “Delete” button is the red-tinted danger button. Press Cancel or Escape.',
+      'On Schedule → switch to the Bracket view (or open Tools → Playoffs → Edit bracket). In the Bracket Editor, change a seed or time so the bracket has unsaved edits, then click “Cancel” in the top bar. “Discard changes?” opens in the one question window, and “Discard” wears the red-tinted danger button (it used to wear warning/lime). Press Cancel to stay, then Discard to exit.',
+      'If the bracket has existing playoff games, open Edit bracket → click “Clear Bracket” in the top bar. Verify “Clear Bracket?” opens in the one question window with the red-tinted “Clear Bracket” button. Press Cancel.',
+      'Open Tournament Admin → Results → All games. On a finalized game row, open the row and click “Revert to scheduled” (if available). Verify “Revert score?” opens in the one question window. Press Cancel or Escape.'
+    ]},
+    {id:'D',title:'Club / Rep Teams Admin · Browser Alerts Replaced (No window.confirm)',who:'Club Admin / UAT Rep Club owner (uat-club-owner@uat-rep-club.local · UATPassword2026!) → localhost:3000/uat-rep-club/admin/rep-teams/shared-library',steps:[
+      'Open Admin → Rep Teams → Shared Library (localhost:3000/uat-rep-club/admin/rep-teams/shared-library). Add a temporary shared game tag (e.g. “qa-temp-tag”).',
+      'Click the Merge icon next to “qa-temp-tag”, pick another tag from the dropdown, and click “Merge”. Instead of the browser’s native grey confirm alert, the one question window opens (“Merge “qa-temp-tag” into “…”?”) with Cancel and a lime Merge button. Press Cancel (or Escape) and close the merge row.',
+      'Click the Trash (Delete) icon next to “qa-temp-tag”. Instead of the browser’s native grey confirm alert, the one question window opens (“Delete shared tag “qa-temp-tag”?”) with Cancel and a red-tinted Delete button. Click Delete to remove the temporary tag.',
+      'Open Admin → Rep Teams → Assistant Coaches (localhost:3000/uat-rep-club/admin/rep-teams/assistant-coaches). If an active assistant is listed, click “Remove” on their row: verify the one question window opens (“Remove …?” / “They lose access to … immediately.”) with Cancel and a red-tinted Remove button instead of a browser alert. Press Cancel.'
+    ]},
+    {id:'E',title:'Phone (390 × 844) & Dark Mode Check',who:'Coach (uat-coach@uat-test-org.local) or Club Admin (uat-club-owner@uat-rep-club.local)',steps:[
+      'Open DevTools → toggle Device Toolbar to 390 × 844 (iPhone). Trigger any question window (e.g. Shared Library tag delete, or Coaches Roster player status toggle). Verify the question window stays a centred ~350 px card (never a full-screen sheet), its foot buttons are 44 px tall for fingertip tap targets, and pressing the browser/phone Back button answers “no” (closes the question without leaving the page).',
+      'Switch your account theme to Dark and open one question window in Coaches and one in Admin. Verify both read cleanly on the dark surface and the red-tinted danger button stands out clearly.'
+    ]}
+  ];
+  var KEY='ow3-step1-walk', st={};
+  try{st=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){st={};}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}}
+  var esc=function(v){return String(v).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+  function count(){var c=0,t=0;PARTS.forEach(function(p){p.steps.forEach(function(_,i){t++;if(st[p.id+'-'+i])c++;});});document.getElementById('count').textContent=c+' of '+t+' steps ticked';}
+  document.getElementById('parts').innerHTML=PARTS.map(function(p){
+    return '<section class="part"><h2>Part '+p.id+' · '+esc(p.title)+'</h2><div class="part-who"><strong>Sign in as:</strong> '+esc(p.who)+'</div>'+p.steps.map(function(s,i){var k=p.id+'-'+i;return '<label class="step"><input type="checkbox" id="s-'+k+'" data-k="'+k+'"'+(st[k]?' checked':'')+'><span>'+esc(s)+'</span></label>';}).join('')+
+      '<div class="verdict">Verdict: '+['Pass','Issue','Needs a call'].map(function(v){return '<button type="button" data-p="'+p.id+'" data-v="'+v+'" aria-pressed="'+(st['v-'+p.id]===v)+'">'+v+'</button>';}).join('')+'</div>'+
+      '<label class="meta" for="n-'+p.id+'">Notes</label><textarea id="n-'+p.id+'" data-n="'+p.id+'" rows="2" placeholder="Anything worth recording">'+esc(st['n-'+p.id]||'')+'</textarea></section>';
+  }).join('');
+  count();
+  document.getElementById('parts').addEventListener('change',function(e){var k=e.target.dataset&&e.target.dataset.k;if(k){st[k]=e.target.checked;save();count();}});
+  document.getElementById('parts').addEventListener('input',function(e){var n=e.target.dataset&&e.target.dataset.n;if(n){st['n-'+n]=e.target.value;save();}});
+  document.getElementById('parts').addEventListener('click',function(e){var b=e.target.closest('button[data-p]');if(!b)return;st['v-'+b.dataset.p]=b.dataset.v;save();
+    document.querySelectorAll('button[data-p="'+b.dataset.p+'"]').forEach(function(x){x.setAttribute('aria-pressed',String(x===b));});});
+  document.getElementById('build').addEventListener('click',function(){
+    var lines=['One Window · Stage 3 (Step 1) walk',''];
+    PARTS.forEach(function(p){lines.push('Part '+p.id+' · '+p.title+': '+(st['v-'+p.id]||'no verdict'));
+      p.steps.forEach(function(s,i){lines.push('  ['+(st[p.id+'-'+i]?'x':' ')+'] '+s);});
+      if(st['n-'+p.id])lines.push('  Notes: '+st['n-'+p.id]);lines.push('');});
+    var o=document.getElementById('out');o.value=lines.join('\n');o.hidden=false;document.getElementById('copy').hidden=false;o.select();
+  });
+  document.getElementById('copy').addEventListener('click',function(){var o=document.getElementById('out');
+    var ok=function(){document.getElementById('copied').textContent='Copied';};
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(o.value).then(ok,function(){o.select();document.getElementById('copied').textContent='Select all and copy';});}else{o.select();}});
+})();
+</script>
+</body>
+</html>
+

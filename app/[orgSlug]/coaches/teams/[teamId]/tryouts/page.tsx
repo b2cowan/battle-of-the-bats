@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ClipboardList } from 'lucide-react';
 import { useTryoutAccess } from '@/components/coaches/useTryoutAccess';
-import FeedbackModal from '@/components/FeedbackModal';
+import KitDialog from '@/components/shared/KitDialog';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import TryoutSetupChecklist from '@/components/rep-teams/TryoutSetupChecklist';
@@ -92,12 +92,11 @@ export default function CoachTryoutsPage({
   // Bumped when names are revealed from the Decide tab — remounts the decision board so it
   // refetches with names instead of bibs.
   const [revealBump, setRevealBump] = useState(0);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState('');
   // Memoized: this handler flows into every card's data-loading effect chain, and the focus-driven
   // overview refresh re-renders this page — an unstable identity here re-armed those loaders on
   // every window focus (the visible refetch flash).
-  const fail = useCallback((m: string) => { setFeedbackMsg(m); setFeedbackOpen(true); }, []);
+  const fail = useCallback((m: string) => { setFeedbackMsg(m); }, []);
 
   // Best-effort orientation: fetch on load + on tab focus + on face flips (a check-in recorded on
   // the Check-in face must reach the hint and the guide without a window blur).
@@ -325,13 +324,17 @@ export default function CoachTryoutsPage({
         />
       </div>
 
-      <FeedbackModal
-        isOpen={feedbackOpen}
-        onClose={() => setFeedbackOpen(false)}
-        type="danger"
-        title="Something went wrong"
-        message={feedbackMsg}
-      />
+      {feedbackMsg && (
+        <KitDialog
+          kind="question"
+          title="Something went wrong"
+          onClose={() => setFeedbackMsg('')}
+          openOn="panel"
+          footer={<button type="button" className="btn btn-outline" onClick={() => setFeedbackMsg('')}>Close</button>}
+        >
+          <p>{feedbackMsg}</p>
+        </KitDialog>
+      )}
     </div>
   );
 }

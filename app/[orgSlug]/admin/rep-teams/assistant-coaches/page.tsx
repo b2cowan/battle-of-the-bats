@@ -4,6 +4,7 @@ import { Trash2, Check, X, ShieldCheck } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { STAFF_KIND_COPY, staffKindWord, type CoachCapabilities, type StaffKind } from '@/lib/coach-capabilities';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import KitDialog from '@/components/shared/KitDialog';
 import styles from '../rep-teams.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
@@ -87,6 +88,7 @@ export default function AdminAssistantCoachesPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [savingSetting, setSavingSetting] = useState(false);
   const [error, setError] = useState('');
+  const [removingAssistant, setRemovingAssistant] = useState<Assistant | null>(null);
 
   const load = useCallback(async () => {
     if (!orgSlug) return;
@@ -247,13 +249,42 @@ export default function AdminAssistantCoachesPage() {
             {canWrite && (
               <button className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.3rem 0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
                 disabled={busyId === a.coachId}
-                onClick={() => { if (window.confirm(`Remove ${a.displayName || a.email || 'this assistant'} from ${a.teamName}? They lose access immediately.`)) act({ action: 'remove', coachId: a.coachId }, a.coachId); }}>
+                onClick={() => setRemovingAssistant(a)}>
                 <Trash2 size={13} /> Remove
               </button>
             )}
           </div>
         ))}
       </section>
+
+      {removingAssistant && (
+        <KitDialog
+          kind="question"
+          title={`Remove ${removingAssistant.displayName || removingAssistant.email || 'this assistant'}?`}
+          onClose={() => setRemovingAssistant(null)}
+          openOn="panel"
+          footer={(
+            <>
+              <button type="button" className="btn btn-outline" onClick={() => setRemovingAssistant(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => {
+                  const target = removingAssistant;
+                  setRemovingAssistant(null);
+                  void act({ action: 'remove', coachId: target.coachId }, target.coachId);
+                }}
+              >
+                Remove
+              </button>
+            </>
+          )}
+        >
+          <p>They lose access to {removingAssistant.teamName} immediately.</p>
+        </KitDialog>
+      )}
     </div>
   );
 }

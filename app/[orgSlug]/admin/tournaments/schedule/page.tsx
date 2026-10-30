@@ -29,7 +29,6 @@ import { buildLocationResolvePlan, type LocationResolvePlan } from '@/lib/tourna
 import { buildEventScheduleHealth } from '@/lib/schedule-metrics';
 import s from '../../admin-common.module.css';
 import styles from './schedule-admin.module.css';
-import FeedbackModal from '@/components/FeedbackModal';
 import { emitScorePublished, sendScoreAction } from '../results/score-actions';
 import type { EditorActions } from '../results/ResultsList';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
@@ -1853,10 +1852,62 @@ export default function AdminSchedulePage() {
         </KitDialog>
       )}
 
-      <FeedbackModal
-        {...feedback}
-        onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
-      />
+      {feedback.isOpen && (
+        <KitDialog
+          kind="question"
+          title={feedback.title}
+          onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
+          openOn="panel"
+          footer={feedback.onConfirm ? (
+            <>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={feedback.type === 'danger' ? 'btn btn-danger' : 'btn btn-lime'}
+                onClick={() => {
+                  const fn = feedback.onConfirm;
+                  setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }));
+                  fn?.();
+                }}
+              >
+                {feedback.confirmText ?? 'Confirm'}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
+            >
+              Close
+            </button>
+          )}
+        >
+          <p>{feedback.message}</p>
+          {feedback.items && feedback.items.length > 0 && (
+            <ul style={{
+              margin: '0.65rem 0 0', padding: '0.5rem 0.65rem', listStyle: 'none',
+              maxHeight: '11rem', overflowY: 'auto',
+              background: 'var(--surface-subtle, rgba(255,255,255,0.03))',
+              border: '1px solid var(--border-color)',
+              borderRadius: 6, display: 'flex', flexDirection: 'column', gap: '0.35rem',
+            }}>
+              {feedback.items.map((it, i) => (
+                <li key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.6rem', fontSize: 'var(--type-support)', lineHeight: 1.35 }}>
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{it.label}</span>
+                  {it.note && <span style={{ color: 'var(--text-secondary)', flexShrink: 0 }}>{it.note}</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </KitDialog>
+      )}
     </div>
   );
 }
