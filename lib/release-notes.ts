@@ -44,6 +44,52 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-10-30',
+    title: "Game schedules for house league, Plan & billing inside the Coaches Portal, and reminders before free Premium time ends",
+    highlights: [
+      {
+        category: 'new',
+        text: "House league divisions can now generate their games into the club's game time. List, Week and Month views show games and practices together, and Schedule health is scored by your league's own rules, which you can adjust.",
+      },
+      {
+        category: 'new',
+        text: "A division's schedule stays a draft until the league admin presses Publish schedule, and then each family gets one email. After that, edits wait in Changes to send so families and coaches are told once, and an urgent cancel can go out at once.",
+      },
+      {
+        category: 'improved',
+        text: "Once a schedule is published, Delete becomes Cancel, and a league admin can move games only within the club's game time. A coach's team page now lists the team's schedule.",
+      },
+      {
+        category: 'improved',
+        text: 'When you change a start time, a set end time moves by the same amount. This applies to the house league game window, the practice form and the coach schedule event form.',
+      },
+      {
+        category: 'new',
+        text: "Plan & billing now opens inside the Coaches Portal for a standalone coach, from the left rail and the phone More sheet. Upgrade asks how you want to pay first, and Plan & billing belongs to the portal's owner alone.",
+      },
+      {
+        category: 'new',
+        text: "A team a club pays for shows a read-only \"Covered by\" card with the club's name in Team settings. A coach of a one-team workspace no longer sees an Admin view.",
+      },
+      {
+        category: 'new',
+        text: 'A coach given free Premium Coaches Portal time can see when it ends, and is emailed 14 and 3 days before. They can keep Premium on the same portal.',
+      },
+      {
+        category: 'improved',
+        text: 'Bills you owe now shows what each bill asks today, not its whole balance. Importing bills handles many payments on one bill using a Bill # column, and the template has an Example tab.',
+      },
+      {
+        category: 'improved',
+        text: "A tournament's public Schedule has a Pool dropdown beside Division, so you can narrow pool play to one pool.",
+      },
+      {
+        category: 'improved',
+        text: 'A coach of two or more teams no longer sees a "My teams" dropdown in the club site header. Their teams are listed in the account menu.',
+      },
+    ],
+  },
+  {
     date: '2026-10-27',
     title: "House league gets its own seasons, teams, drafts and practice time, a club's own website, and a new look across FieldLogicHQ",
     highlights: [

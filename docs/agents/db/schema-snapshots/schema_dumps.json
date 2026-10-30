@@ -50026,6 +50026,33 @@
         "column_default": null
       },
       {
+        "table_name": "league_divisions",
+        "pos": 14,
+        "column_name": "schedule_published_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_divisions",
+        "pos": 15,
+        "column_name": "schedule_published_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_divisions",
+        "pos": 16,
+        "column_name": "games_per_team",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_email_log",
         "pos": 1,
         "column_name": "id",
@@ -50114,6 +50141,114 @@
         "udt_name": "int4",
         "is_nullable": "NO",
         "column_default": "0"
+      },
+      {
+        "table_name": "league_game_changes",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "league_game_changes",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_changes",
+        "pos": 3,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_changes",
+        "pos": 4,
+        "column_name": "division_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_changes",
+        "pos": 5,
+        "column_name": "game_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_changes",
+        "pos": 6,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_changes",
+        "pos": 7,
+        "column_name": "before",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_changes",
+        "pos": 8,
+        "column_name": "after",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_changes",
+        "pos": 9,
+        "column_name": "source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'league'::text"
+      },
+      {
+        "table_name": "league_game_changes",
+        "pos": 10,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "clock_timestamp()"
+      },
+      {
+        "table_name": "league_game_changes",
+        "pos": 11,
+        "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_changes",
+        "pos": 12,
+        "column_name": "notice_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "league_games",
@@ -50263,6 +50398,24 @@
         "table_name": "league_games",
         "pos": 17,
         "column_name": "ends_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_games",
+        "pos": 18,
+        "column_name": "slot_use_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_games",
+        "pos": 19,
+        "column_name": "moved_from",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "YES",
@@ -51196,6 +51349,96 @@
         "column_default": null
       },
       {
+        "table_name": "league_schedule_emails",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "league_schedule_emails",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_schedule_emails",
+        "pos": 3,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_schedule_emails",
+        "pos": 4,
+        "column_name": "division_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_schedule_emails",
+        "pos": 5,
+        "column_name": "notice_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_schedule_emails",
+        "pos": 6,
+        "column_name": "guardian_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_schedule_emails",
+        "pos": 7,
+        "column_name": "registration_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_schedule_emails",
+        "pos": 8,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'pending'::text"
+      },
+      {
+        "table_name": "league_schedule_emails",
+        "pos": 9,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "league_schedule_emails",
+        "pos": 10,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "league_season_fee_words",
         "pos": 1,
         "column_name": "season_id",
@@ -51563,6 +51806,24 @@
         "udt_name": "timestamptz",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "league_seasons",
+        "pos": 27,
+        "column_name": "twice_in_a_day_allowed",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "league_seasons",
+        "pos": 28,
+        "column_name": "home_away_tolerance",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "1"
       },
       {
         "table_name": "league_slot_uses",
@@ -68647,6 +68908,33 @@
         "column_default": null
       },
       {
+        "table_name": "team_workspaces",
+        "pos": 21,
+        "column_name": "free_time_reminded_14_for",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "team_workspaces",
+        "pos": 22,
+        "column_name": "free_time_reminded_3_for",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "team_workspaces",
+        "pos": 23,
+        "column_name": "free_time_given_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "teams",
         "pos": 1,
         "column_name": "id",
@@ -71471,6 +71759,13 @@
       },
       {
         "table_name": "league_divisions",
+        "column_name": "schedule_published_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_divisions_schedule_published_by_fkey"
+      },
+      {
+        "table_name": "league_divisions",
         "column_name": "season_id",
         "foreign_table": "league_seasons",
         "foreign_column": "id",
@@ -71496,6 +71791,41 @@
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "league_email_log_sent_by_fkey"
+      },
+      {
+        "table_name": "league_game_changes",
+        "column_name": "division_id",
+        "foreign_table": "league_divisions",
+        "foreign_column": "id",
+        "constraint_name": "league_game_changes_division_id_fkey"
+      },
+      {
+        "table_name": "league_game_changes",
+        "column_name": "game_id",
+        "foreign_table": "league_games",
+        "foreign_column": "id",
+        "constraint_name": "league_game_changes_game_id_fkey"
+      },
+      {
+        "table_name": "league_game_changes",
+        "column_name": "notice_id",
+        "foreign_table": "league_season_notices",
+        "foreign_column": "id",
+        "constraint_name": "league_game_changes_notice_id_fkey"
+      },
+      {
+        "table_name": "league_game_changes",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_game_changes_org_id_fkey"
+      },
+      {
+        "table_name": "league_game_changes",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_game_changes_season_id_fkey"
       },
       {
         "table_name": "league_games",
@@ -71545,6 +71875,13 @@
         "foreign_table": "league_seasons",
         "foreign_column": "id",
         "constraint_name": "league_games_season_id_fkey"
+      },
+      {
+        "table_name": "league_games",
+        "column_name": "slot_use_id",
+        "foreign_table": "league_slot_uses",
+        "foreign_column": "slot_id",
+        "constraint_name": "league_games_slot_use_id_fkey"
       },
       {
         "table_name": "league_notification_log",
@@ -71769,6 +72106,34 @@
         "foreign_table": "league_teams",
         "foreign_column": "id",
         "constraint_name": "league_registrations_team_id_fkey"
+      },
+      {
+        "table_name": "league_schedule_emails",
+        "column_name": "division_id",
+        "foreign_table": "league_divisions",
+        "foreign_column": "id",
+        "constraint_name": "league_schedule_emails_division_id_fkey"
+      },
+      {
+        "table_name": "league_schedule_emails",
+        "column_name": "notice_id",
+        "foreign_table": "league_season_notices",
+        "foreign_column": "id",
+        "constraint_name": "league_schedule_emails_notice_id_fkey"
+      },
+      {
+        "table_name": "league_schedule_emails",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_schedule_emails_org_id_fkey"
+      },
+      {
+        "table_name": "league_schedule_emails",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_schedule_emails_season_id_fkey"
       },
       {
         "table_name": "league_season_fee_words",
@@ -77177,6 +77542,36 @@
         "indexdef": "CREATE INDEX league_email_log_season_id_idx ON public.league_email_log USING btree (season_id)"
       },
       {
+        "tablename": "league_game_changes",
+        "indexname": "league_game_changes_game_idx",
+        "indexdef": "CREATE INDEX league_game_changes_game_idx ON public.league_game_changes USING btree (game_id, created_at)"
+      },
+      {
+        "tablename": "league_game_changes",
+        "indexname": "league_game_changes_held_idx",
+        "indexdef": "CREATE INDEX league_game_changes_held_idx ON public.league_game_changes USING btree (division_id, created_at) WHERE (sent_at IS NULL)"
+      },
+      {
+        "tablename": "league_game_changes",
+        "indexname": "league_game_changes_notice_idx",
+        "indexdef": "CREATE INDEX league_game_changes_notice_idx ON public.league_game_changes USING btree (notice_id) WHERE (notice_id IS NOT NULL)"
+      },
+      {
+        "tablename": "league_game_changes",
+        "indexname": "league_game_changes_org_idx",
+        "indexdef": "CREATE INDEX league_game_changes_org_idx ON public.league_game_changes USING btree (org_id)"
+      },
+      {
+        "tablename": "league_game_changes",
+        "indexname": "league_game_changes_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_game_changes_pkey ON public.league_game_changes USING btree (id)"
+      },
+      {
+        "tablename": "league_game_changes",
+        "indexname": "league_game_changes_season_idx",
+        "indexdef": "CREATE INDEX league_game_changes_season_idx ON public.league_game_changes USING btree (season_id) WHERE (sent_at IS NULL)"
+      },
+      {
         "tablename": "league_games",
         "indexname": "idx_league_games_org_venue",
         "indexdef": "CREATE INDEX idx_league_games_org_venue ON public.league_games USING btree (org_venue_id)"
@@ -77220,6 +77615,11 @@
         "tablename": "league_games",
         "indexname": "league_games_season_idx",
         "indexdef": "CREATE INDEX league_games_season_idx ON public.league_games USING btree (season_id)"
+      },
+      {
+        "tablename": "league_games",
+        "indexname": "league_games_slot_use_idx",
+        "indexdef": "CREATE INDEX league_games_slot_use_idx ON public.league_games USING btree (slot_use_id) WHERE (slot_use_id IS NOT NULL)"
       },
       {
         "tablename": "league_notification_log",
@@ -77405,6 +77805,26 @@
         "tablename": "league_registrations",
         "indexname": "league_registrations_team_id_idx",
         "indexdef": "CREATE INDEX league_registrations_team_id_idx ON public.league_registrations USING btree (team_id)"
+      },
+      {
+        "tablename": "league_schedule_emails",
+        "indexname": "league_schedule_emails_notice_idx",
+        "indexdef": "CREATE INDEX league_schedule_emails_notice_idx ON public.league_schedule_emails USING btree (notice_id, status)"
+      },
+      {
+        "tablename": "league_schedule_emails",
+        "indexname": "league_schedule_emails_org_idx",
+        "indexdef": "CREATE INDEX league_schedule_emails_org_idx ON public.league_schedule_emails USING btree (org_id)"
+      },
+      {
+        "tablename": "league_schedule_emails",
+        "indexname": "league_schedule_emails_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_schedule_emails_pkey ON public.league_schedule_emails USING btree (id)"
+      },
+      {
+        "tablename": "league_schedule_emails",
+        "indexname": "league_schedule_emails_season_idx",
+        "indexdef": "CREATE INDEX league_schedule_emails_season_idx ON public.league_schedule_emails USING btree (season_id)"
       },
       {
         "tablename": "league_season_fee_words",
@@ -81053,6 +81473,16 @@
       },
       {
         "tablename": "team_workspaces",
+        "indexname": "team_workspaces_one_free_time_portal_per_coach",
+        "indexdef": "CREATE UNIQUE INDEX team_workspaces_one_free_time_portal_per_coach ON public.team_workspaces USING btree (primary_owner_user_id) WHERE ((free_time_given_at IS NOT NULL) AND (primary_owner_user_id IS NOT NULL))"
+      },
+      {
+        "tablename": "team_workspaces",
+        "indexname": "team_workspaces_one_free_time_portal_per_free_team",
+        "indexdef": "CREATE UNIQUE INDEX team_workspaces_one_free_time_portal_per_free_team ON public.team_workspaces USING btree (basic_coach_team_id) WHERE ((free_time_given_at IS NOT NULL) AND (basic_coach_team_id IS NOT NULL))"
+      },
+      {
+        "tablename": "team_workspaces",
         "indexname": "team_workspaces_pkey",
         "indexdef": "CREATE UNIQUE INDEX team_workspaces_pkey ON public.team_workspaces USING btree (id)"
       },
@@ -82488,6 +82918,12 @@
       {
         "kind": "CHECK",
         "table_name": "league_divisions",
+        "detail": "league_divisions_games_per_team_check",
+        "check_clause": "((games_per_team IS NULL) OR ((games_per_team >= 1) AND (games_per_team <= 99)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_divisions",
         "detail": "league_divisions_price_check",
         "check_clause": "(((price IS NULL) OR (price >= (0)::numeric)) AND ((early_price IS NULL) OR (early_price >= (0)::numeric)) AND ((note IS NULL) OR (char_length(note) <= 120)))"
       },
@@ -82500,6 +82936,30 @@
       {
         "kind": "RLS",
         "table_name": "league_email_log",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_game_changes",
+        "detail": "league_game_changes_check",
+        "check_clause": "((kind = 'added'::text) = (before IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_game_changes",
+        "detail": "league_game_changes_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['added'::text, 'moved'::text, 'place'::text, 'cancelled'::text, 'postponed'::text, 'given_date'::text, 'back_on'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_game_changes",
+        "detail": "league_game_changes_source_check",
+        "check_clause": "(source = ANY (ARRAY['league'::text, 'club'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_game_changes",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -82654,6 +83114,30 @@
         "check_clause": null
       },
       {
+        "kind": "CHECK",
+        "table_name": "league_schedule_emails",
+        "detail": "league_schedule_emails_guardian_email_check",
+        "check_clause": "((guardian_email = lower(btrim(guardian_email))) AND (guardian_email <> ''::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_schedule_emails",
+        "detail": "league_schedule_emails_registration_ids_check",
+        "check_clause": "(cardinality(registration_ids) > 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_schedule_emails",
+        "detail": "league_schedule_emails_status_check",
+        "check_clause": "(status = ANY (ARRAY['pending'::text, 'sending'::text, 'sent'::text, 'failed'::text, 'skipped'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_schedule_emails",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "RLS",
         "table_name": "league_season_fee_words",
         "detail": "ENABLED",
@@ -82675,7 +83159,7 @@
         "kind": "CHECK",
         "table_name": "league_season_notices",
         "detail": "league_season_notices_kind_check",
-        "check_clause": "(kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text]))"
+        "check_clause": "(kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text]))"
       },
       {
         "kind": "CHECK",
@@ -82688,6 +83172,12 @@
         "table_name": "league_season_notices",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_seasons",
+        "detail": "league_seasons_home_away_tolerance_check",
+        "check_clause": "((home_away_tolerance >= 0) AND (home_away_tolerance <= 9))"
       },
       {
         "kind": "CHECK",
