@@ -24,7 +24,15 @@
 
 .headActions { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 
+/* The owner line left, the actions right, one row; on a phone the line takes its own row and the actions sit under it. */
+.infoRow { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem 1rem; margin-top: -0.6rem; min-width: 0; }
+.infoRow .headActions { margin-left: auto; }
+@media (max-width: 768px) {
+  .infoRow button, .infoRow a { min-height: var(--tap-min, 44px); }
+}
+
 .caption { font-size: var(--type-support); color: var(--text-tertiary); margin: -0.6rem 0 0; overflow-wrap: anywhere; }
+.infoRow .caption { margin: 0; flex: 1 1 18rem; min-width: 0; }
 
 /* ── The Story ── */
 .story { width: 100%; }
@@ -65,7 +73,7 @@
 .listRow { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; padding: 0.6rem 0; border-top: 1px solid var(--home-line); }
 .listRow:first-child { border-top: 0; }
 .listMain { flex: 1; min-width: 12rem; font-size: var(--type-body); color: var(--text-primary); }
-.listSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+.listSub { display: block; margin-top: 0.5rem; font-size: var(--type-support); line-height: 1.4; color: var(--text-tertiary); }
 
 /* ── Rare doors: they end the tab's body, never a pinned foot row ── */
 .rareDoors { display: flex; gap: 1.25rem; flex-wrap: wrap; padding-top: 0.25rem; }

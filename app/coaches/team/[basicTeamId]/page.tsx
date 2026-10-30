@@ -18,6 +18,9 @@ import {
   coachTeamPath,
 } from '@/lib/coaches-portal-routes';
 import { getActivePremiumPortalSlug } from '@/lib/coach-team-page';
+import { savedFreeTimePortalOfTeam } from '@/lib/portal-free-time-server';
+import { PREMIUM_WORK_SAVED_LINE, portalFreeTimeCopy } from '@/lib/portal-free-time';
+import FreeTimeBand from '@/components/admin/FreeTimeBand';
 import HelpButton from '@/components/help/HelpButton';
 import TeamHQ from '@/components/coaches/TeamHQ';
 import { pickFeaturedRegistration, resolveRowFanView } from '@/lib/coach-alert-registration';
@@ -102,7 +105,7 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
         ? getNextRegistrationGameForTeam(teamHistory)
         : null,
   );
-  const [history, players, events, fees, announcements, announcementRecipientSummary, registrationGame] = await Promise.all([
+  const [history, players, events, fees, announcements, announcementRecipientSummary, registrationGame, savedPortal] = await Promise.all([
     historyPromise,
     getBasicCoachTeamPlayers(basicTeamId),
     eventsPromise,
@@ -110,7 +113,13 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
     getBasicCoachTeamAnnouncements(basicTeamId),
     getBasicCoachTeamAnnouncementRecipientSummary(basicTeamId),
     registrationGamePromise,
+    // Support console Stage 4b: a Premium portal staff gave this team, kept whole after its free time (Q1). A failed
+    // read only drops the band and the line.
+    savedFreeTimePortalOfTeam(basicTeamId).catch(() => null),
   ]);
+  // The day after free time, for 30 days (Q7; D-3, new ground): one band says the coach is back and their Premium work
+  // is saved. The last free day only, never why or by whom (T24).
+  const freeTimeEndedBand = savedPortal?.freeTime?.state === 'ended' ? portalFreeTimeCopy(savedPortal.freeTime).band : null;
 
   const nextEvent = findNextEvent(events);
   const unpaidFees = fees.filter(fee => fee.status === 'unpaid');
@@ -183,6 +192,8 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
           </span>
         </div>
       </div>
+
+      {freeTimeEndedBand && <FreeTimeBand band={freeTimeEndedBand} />}
 
       {/* A3 QA (owner call 2026-07-27): tournaments LEAD the page — they're why a
           first-tournament coach is here. (The A2 chat doorway is retired — the global
@@ -296,7 +307,7 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
           team-level catch-all. Never rendered on the tournament variant (game day
           stays pitch-free — locked decision). */}
       {(players.length > 0 || events.length > 0 || fees.length > 0 || announcements.length > 0) && (
-        <ScopeShelf basicTeamId={basicTeamId} section="overview" />
+        <ScopeShelf basicTeamId={basicTeamId} section="overview" note={savedPortal ? PREMIUM_WORK_SAVED_LINE : undefined} />
       )}
     </div>
   );

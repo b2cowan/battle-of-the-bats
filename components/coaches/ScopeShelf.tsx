@@ -57,9 +57,15 @@ export default async function ScopeShelf({
   basicTeamId,
   section,
   lead,
+  note,
 }: {
   basicTeamId: string;
   section: Section;
+  /**
+   * Support console Stage 4b: one added line under the pitch while this team's Premium work from free time is saved
+   * ("…comes back with Premium"). The caller decides; the shelf never reads the portal itself.
+   */
+  note?: string;
   /**
    * B3.5 (◆O1): an optional statement of fact about THIS coach's own workload, rendered above
    * the eyebrow. Only for a page that can measure real toil (the fees page counts players who
@@ -102,6 +108,7 @@ export default async function ScopeShelf({
           ? `Premium is free through ${FOUNDING_SEASON_END_LABEL} — normally $29/month per team.`
           : 'Premium is $29/month per team.'}
       </p>
+      {note && <p className={styles.footerBody}>{note}</p>}
       <Link href={href} className={styles.footerLink}>{linkLabel}</Link>
     </footer>
   );

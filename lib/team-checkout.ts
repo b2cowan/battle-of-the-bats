@@ -16,6 +16,7 @@ import {
 import type { SubscriptionStatus } from './types';
 import type { TeamEntitlementStatus, TeamWorkspaceSource } from './team-workspace-entitlements';
 import { getActiveOwnedTeamWorkspace } from './team-workspace-owned';
+import { convertFreeTimePortal, findKeepPremiumPortal } from './portal-keep-premium';
 import { clearStartDoor } from './start-door-server';
 
 export type TeamCheckoutRequest = {
@@ -542,6 +543,38 @@ export async function provisionTeamWorkspaceFromCheckoutMetadata(params: {
   const parsed = parseTeamCheckoutMetadata(params.metadata);
   if (!parsed) return { provisioned: false, reason: 'not_team_checkout' };
   if (!params.stripeSubscriptionId) return { provisioned: false, reason: 'missing_subscription_id' };
+
+  // Keep Premium (Support console Stage 4b, Part 6): the coach's staff-given portal takes this purchase itself, BEFORE
+  // the one-live-portal guard below (which counts that portal while its free time runs) and before the claim of the free
+  // team (which that portal already holds, so a fresh provision would make a blank second portal).
+  const keepPortal = await findKeepPremiumPortal({
+    ownerUserId: parsed.ownerUserId,
+    reactivateOrgSlug: parsed.reactivateOrgSlug,
+    basicCoachTeamId: parsed.basicCoachTeamId,
+    teamWorkspaceClaimId: parsed.teamWorkspaceClaimId,
+    stripeSubscriptionId: params.stripeSubscriptionId,
+  });
+  if (keepPortal) {
+    const subscriptionStatus = params.subscriptionStatus ?? 'active';
+    const kept = await convertFreeTimePortal({
+      portal: keepPortal,
+      ownerUserId: parsed.ownerUserId,
+      ownerEmail: parsed.ownerEmail,
+      stripeCustomerId: params.stripeCustomerId,
+      stripeSubscriptionId: params.stripeSubscriptionId,
+      stripeSubscriptionItemId: params.stripeSubscriptionItemId ?? null,
+      subscriptionStatus,
+      orgStatus: mapStripeStatusToOrgStatus(subscriptionStatus),
+      entitlementStatus: mapStripeStatusToTeamEntitlementStatus(subscriptionStatus),
+      billingCycle: params.billingCycle ?? parsed.billingCycle,
+      currentPeriodEnd: params.currentPeriodEnd ?? null,
+      eventSource: params.eventSource,
+      sourceEventId: params.sourceEventId ?? null,
+    });
+    return kept.converted || kept.reason === 'already_converted'
+      ? { provisioned: false, reason: 'reactivated', workspaceOrgId: kept.workspaceOrgId, teamWorkspaceId: kept.teamWorkspaceId, repTeamId: kept.repTeamId }
+      : { provisioned: false, reason: 'already_exists', workspaceOrgId: kept.workspaceOrgId };
+  }
 
   // One Coaches Portal per owner — gate REACTIVATION too, not just fresh provision. A coach who
   // already has another LIVE portal must not reactivate a second one into a parallel live portal.

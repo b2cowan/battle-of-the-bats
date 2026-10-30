@@ -123,8 +123,11 @@ or gate value moved.**) Before that, 2026-10-16 (**the invite-only event BUILT**
   offer**: never advertised, never on a pricing surface, never revenue. Every billing action reads the plan the club pays
   for. A Coaches Portal can be given Premium free time the same way (Support console Stage 4b, **built on dev, not
   released**; `BUSINESS_DECISIONS.md` 2026-10-28): the coach is told before it ends (a band on the Overview and emails at
-  14 and 3 days) and can Keep Premium on the same portal, with no trial on top. Customers read only "Free through {day}". No
-  price, name, band, SKU or gate value moved.
+  14 and 3 days) and can Keep Premium on the same portal, with no trial on top; buying early ends any free days still left
+  (they do not carry over; owner accepted 2026-10-30, walk §416). Portal caps: Support and Billing 90 days, Super admin
+  6 months, all measured from the first give. Customers read only "Free through {day}". No price, name, band, SKU or gate
+  value moved. Drift check run 2026-10-30 (S4b walks done): `lib/plan-config.ts` and `lib/plan-features.ts` untouched by
+  4b; the Keep Premium checkout skips the plan's trial; no pricing or `/for-*` surface mentions free time.
 - **Club Shared Book = Club only** (Decided 2026-08-04, `BUSINESS_DECISIONS.md`; **BUILT on dev 2026-08-05**). A club's teams can opt in to read each other's opponent scouting books — book line, observations, and each team's own record against a shared opponent, labelled by team and writer, read-only across team lines. Gated by the feature key **`club_shared_book` → `club`** (so Club and Club · Association; League Plus and below get nothing). **Explicitly excluded from the standalone Premium Coaches Portal (`team`)**: the feature's value is a club with several teams, and the ruling is **absent, not upsold** — a single-team customer sees no switch, no layer and no locked tease anywhere in the app. **No new SKU, no price change, no per-team fee, no capacity implication.** Two opt-ins guard it: the club admin enables it for the org, then each head coach opts their own team in, and a team reads the club's books only while sharing its own.
 
 ## Email / communications split (ratified 2026-06-22; table corrected to the product 2026-10-16)

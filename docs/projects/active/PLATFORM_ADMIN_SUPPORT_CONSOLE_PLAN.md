@@ -912,6 +912,20 @@ The build prompt's §6 run against the code (five read-only censuses, the cited 
       paste-back). Accepted gaps: the after-the-end billing page not drawn, no free-time band on the Premium home, the
       "Coaches Portal billing" title vs "Plan & billing" words, sign-in after the end lands on the free team. Walks B and
       C still owed.
+    - **Walk B §415 WALKED 2026-10-30:** 55 of 60 ticked, all nine sections PASS (section 3 steps 11–15 are read-only,
+      no dev example, left unticked). **All 10 calls left unticked with no note = UNDECIDED** (ask again, never assume):
+      1 no line for a role without the power · 2 one other portal blocks the door · 3 lines not as drawn · 4 Give door
+      is a line while it runs · 5 cap measured from the first give (plan asks to confirm) · 6 sixth give in 7 days
+      (unit-tested only) · 7 portal-only bulk batch recorded "Failed 0 / n" · 8 staff Cancel door never shows on a
+      free-time portal · 9 a Super admin can still delete a portal on free time (threat T17 says no door deletes;
+      `orgs/[id]/delete` checks only a live Stripe subscription) · 10 three refusals met only through the console.
+      Section 9 ended Frankie's free time.
+      **Update 2026-10-30:** the blank ticks were accidental; the owner accepted ALL 10 as built (call 9, Super admin
+      deleting a free-time portal, is left as is).
+    - **Walk C §416 WALKED ✅ 2026-10-30:** 48 of 53 ticked, all nine sections PASS (Stripe test mode, listener
+      running); 4 steps Held (1·3, 3·8, 6·8, 7·3), 1 unticked (9·5); all 9 calls accepted as built, no notes. Call 1
+      stands: paying during free time gives up the free days left. **All three S4b walks are done.** Still owed:
+      `/simplify` → `/review`, `/docs`, `/billing` drift check, `/strategy`, index `stages/s4b`, commit of the 4b work.
     - **Resume:** walks A/B/C (`/design` first, checkable Artifacts, matching ledger §s), records (PM brief, TODO,
       `PROGRAM_BILLING_AND_ENTITLEMENTS.md`, design_decisions for the builder's calls), `/docs`, `/simplify` → `/review`,
       `/billing` drift check, `/strategy`, the index `stages/s4b`, a dev-server restart (new file), then the commit.

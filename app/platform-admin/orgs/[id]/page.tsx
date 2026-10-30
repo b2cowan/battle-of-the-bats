@@ -101,7 +101,7 @@ export default async function ClubRecordPage({ params, searchParams }: {
   const [orgRes, { memberRows, people }, tournamentsRes, teamCountRes, overridesRes, ownAddress, teamMoves, story, , doorFacts] = await Promise.all([
     supabaseAdmin
       .from('organizations')
-      .select('id, name, slug, plan_id, tournament_limit, team_limit, subscription_status, current_period_end, stripe_customer_id, stripe_subscription_id, created_at, enabled_addons, account_kind')
+      .select('id, name, slug, plan_id, tournament_limit, team_limit, subscription_status, subscription_period, current_period_end, stripe_customer_id, stripe_subscription_id, created_at, enabled_addons, account_kind')
       .eq('id', id)
       .maybeSingle(),
     supabaseAdmin.from('organization_members').select('user_id, role, status, accepted_at').eq('organization_id', id).limit(2000)
@@ -172,6 +172,7 @@ export default async function ClubRecordPage({ params, searchParams }: {
       statusLabel: subscriptionStatusLabel(status),
       createdAt: org.created_at,
       currentPeriodEnd: org.current_period_end,
+      billingCycle: org.subscription_period === 'annual' || org.subscription_period === 'monthly' ? org.subscription_period : null,
       stripeCustomerId: org.stripe_customer_id,
       stripeSubscriptionId: org.stripe_subscription_id,
       paysThroughStripe: stripeStillBills({ stripeSubscriptionId: org.stripe_subscription_id, subscriptionStatus: org.subscription_status }),

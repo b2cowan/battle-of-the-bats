@@ -126,7 +126,8 @@ describe('the Founding Season offer at a creation', () => {
     assert.match(readCode('app/api/org/create/route.ts'), /if \(foundingSeasonOfferFor\(user, 'organization'\)\) \{/);
     assert.match(readCode('app/api/league/create/route.ts'), /if \(foundingSeasonOfferFor\(user, 'league'\)\) \{/);
     // edge (b): Coach Premium on the same rule (Part 3)
-    assert.match(readCode('app/api/billing/create-team-checkout/route.ts'), /if \(foundingSeasonOfferFor\(user, 'premium'\) \|\| await reactivationHoldsFoundingComp\(checkoutRequest\.reactivateOrgSlug\)\) \{/);
+    // (Keep Premium, Support console 4b, is a purchase for a staff-given portal and never takes the comp path.)
+    assert.match(readCode('app/api/billing/create-team-checkout/route.ts'), /if \(!keepPortal && \(foundingSeasonOfferFor\(user, 'premium'\) \|\| await reactivationHoldsFoundingComp\(checkoutRequest\.reactivateOrgSlug\)\)\) \{/);
     // the early close (2026-10-26): a comp portal coming back after a cancel keeps its comp — a comp workspace with a live
     // comp row only, and never after the comp ends (the paid path cannot restore a comp workspace)
     const back = lib.slice(lib.indexOf('export async function reactivationHoldsFoundingComp('));

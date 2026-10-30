@@ -39,6 +39,8 @@ interface OrgRow {
   isFoundingSeason: boolean;
   /** A Coaches Portal staff gave free time (Stage 4b): never a cancelled customer. */
   isFreeTimePortal: boolean;
+  /** Its free time is running now; false once it has ended (the mark stays until Keep Premium). */
+  freeTimeRunning: boolean;
   isFreeFloor: boolean;
   missingOwner: boolean;
   ownerInactive: boolean;
@@ -140,7 +142,9 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
       name:               o.name,
       slug:               o.slug,
       planLabel:          PLAN_LABELS[o.planId] ?? o.planId,
-      subscriptionStatus: o.subscriptionStatus,
+      subscriptionStatus: o.isFreeTimePortal && o.subscriptionStatus === 'canceled'
+        ? (o.freeTimeRunning ? 'Free time' : 'Free time ended')
+        : o.subscriptionStatus,
       isFoundingSeason:   o.isFoundingSeason ? 'Yes' : 'No',
       isFreeFloor:        o.isFreeFloor ? 'Yes' : 'No',
       createdAt:          fmtDate(o.createdAt),
@@ -348,9 +352,21 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
                     <td data-label="Slug"><span className={kit.code}>{org.slug}</span></td>
                     <td data-label="Plan" className={kit.nowrap}>{PLAN_LABELS[org.planId] ?? org.planId}</td>
                     <td data-label="Status">
-                      <span className={`${kit.chip} ${subscriptionStatusChip(org.subscriptionStatus)}`}>
-                        {subscriptionStatusLabel(org.subscriptionStatus)}
-                      </span>
+                      {org.isFreeTimePortal && org.subscriptionStatus === 'canceled' ? (
+                        org.freeTimeRunning ? (
+                          <span className={`${kit.chip} ${kit.chipOk}`} title="Given free time by staff. No subscription to cancel.">
+                            Free time
+                          </span>
+                        ) : (
+                          <span className={`${kit.chip} ${kit.chipQuiet}`} title="Staff gave this portal free time and it has ended. Back on the free Coaches Portal, no subscription.">
+                            Free time ended
+                          </span>
+                        )
+                      ) : (
+                        <span className={`${kit.chip} ${subscriptionStatusChip(org.subscriptionStatus)}`}>
+                          {subscriptionStatusLabel(org.subscriptionStatus)}
+                        </span>
+                      )}
                     </td>
                     <td data-label="Cohort">
                       {org.isFreeFloor && (

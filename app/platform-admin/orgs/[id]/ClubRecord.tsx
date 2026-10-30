@@ -62,7 +62,7 @@ const OLD_TABS: Record<string, Tab> = { billing: 'money', entitlements: 'access'
 export type ClubRecordProps = {
   org: {
     id: string; name: string; slug: string; planId: string; planLabel: string; status: string; statusLabel: string;
-    createdAt: string; currentPeriodEnd: string | null; stripeCustomerId: string | null; stripeSubscriptionId: string | null;
+    createdAt: string; currentPeriodEnd: string | null; billingCycle: 'monthly' | 'annual' | null; stripeCustomerId: string | null; stripeSubscriptionId: string | null;
     /** A subscription not yet cancelled in Stripe: the plan and tournament limit change there, never here (owner Q9). */
     paysThroughStripe: boolean;
     tournamentLimit: number; teamLimit: number | null; storedTeamLimit: number | null; isClubBand: boolean;
@@ -365,7 +365,7 @@ export default function ClubRecord(props: ClubRecordProps) {
       <span className={kit.bandLabel}>{org.status === 'canceled' ? 'Ended' : org.status === 'trialing' ? 'Trial ends' : 'Renews'}</span>
       {org.currentPeriodEnd
         ? <><span className={`${kit.bandValue} ${kit.bandValueSm}`}>{consoleDate(org.currentPeriodEnd)}</span>
-          <span className={kit.bandNote}>{org.stripeSubscriptionId ? 'from Stripe' : 'no Stripe subscription'}</span></>
+          <span className={kit.bandNote}>{org.stripeSubscriptionId ? `${org.billingCycle ? `billed ${org.billingCycle === 'annual' ? 'annually' : 'monthly'}, ` : ''}from Stripe` : 'no Stripe subscription'}</span></>
         : <><span className={`${kit.bandValueText} ${styles.quietValue}`}>Not set</span>
           <span className={kit.bandNote}>no Stripe subscription</span></>}
     </div>
@@ -409,7 +409,16 @@ export default function ClubRecord(props: ClubRecordProps) {
             </>
           )}
         </>}
-        actions={(canEdit || can.emailOwner || can.support) ? (
+      />
+      {/* The owner line and the actions share ONE row (the actions used to ride the title's line and wrap onto a row of
+          their own when a free-time sentence filled it, stacking three bands). */}
+      <div className={styles.infoRow}>
+        <p className={styles.caption}>
+          {editing
+            ? 'Editing. Nothing changes until you press the check mark and confirm. The ✕ puts everything back.'
+            : <>Owner {props.ownerEmail ?? 'none'} · <code className={kit.code}>{org.slug}</code> · Created {consoleDate(org.createdAt)}</>}
+        </p>
+        {(canEdit || can.emailOwner || can.support) && (
           <span className={styles.headActions}>
             {canEdit && (
               <button
@@ -433,13 +442,8 @@ export default function ClubRecord(props: ClubRecordProps) {
             )}
             {can.support && <button type="button" className="btn btn-secondary" onClick={() => setWin({ kind: 'note' })}>Add a note</button>}
           </span>
-        ) : undefined}
-      />
-      <p className={styles.caption}>
-        {editing
-          ? 'Editing. Nothing changes until you press the check mark and confirm. The ✕ puts everything back.'
-          : <>Owner {props.ownerEmail ?? 'none'} · <code className={kit.code}>{org.slug}</code> · Created {consoleDate(org.createdAt)}</>}
-      </p>
+        )}
+      </div>
 
       {notice && <div className={kit.notice} role="status">{notice}</div>}
 
@@ -806,7 +810,7 @@ function AccessTab(props: ClubRecordProps & {
             })}
           </div>
           {running.some(o => o.type !== 'comp_period') && (
-            <p className={kit.caption}>End it now here and Put it back on the Story open the same window. Ended free time stays in the Story, not here.</p>
+            <p className={kit.caption}>“End it now” here and “Put it back” in the Story both open the same window. Ended free time stays in the Story, not here.</p>
           )}
         </div>
       </section>
@@ -946,7 +950,7 @@ function PortalFreeTimeSection({ pft, overrides, can, onPortal }: {
                 <span className={styles.listSub}>
                   {freeThroughShort(running.lastDay)}
                   {left != null && <> · <span className={left < 14 ? styles.soon : undefined}>{leftWords(left)}</span></>}
- · {grant?.reason ?? 'No reason kept'} · by {grant?.createdBy ?? 'staff'}
+{' · '}{grant?.reason ?? 'No reason kept'} · by {grant?.createdBy ?? 'staff'}
                 </span>
               </span>
               {can.portalFreeTime && pft.changeBounds && (
@@ -958,7 +962,7 @@ function PortalFreeTimeSection({ pft, overrides, can, onPortal }: {
             </div>
           </div>
         )}
-        {running && <p className={kit.caption}>End it now here and Put it back on the Story open the same window. Ended free time stays in the Story, not here.</p>}
+        {running && <p className={kit.caption}>“End it now” here and “Put it back” in the Story both open the same window. Ended free time stays in the Story, not here.</p>}
       </div>
     </section>
   );

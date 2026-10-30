@@ -156,7 +156,7 @@ button.bandCell:focus-visible { outline: 2px solid var(--home-olive); outline-of
 .check input { accent-color: var(--home-olive); }
 
 /* ── A labelled form field; a required one carries the star in its label (never "optional" on the rest) ── */
-.fieldGroup { display: grid; gap: 0.35rem; min-width: 0; }
+.fieldGroup { display: grid; gap: 0.35rem; min-width: 0; align-content: start; }
 .label { font-size: var(--type-support); font-weight: 650; color: var(--text-secondary); }
 .req { margin-left: 0.15rem; color: inherit; }
 .hint { font-size: var(--type-support); color: var(--text-tertiary); }
