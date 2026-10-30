@@ -1,0 +1,789 @@
+<title>Bookkeeping Accountant Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: one reading column of working papers, with wide tables that scroll in place. Tick marks are audit tick marks. */
+:root {
+  --paper: #f5f7f6;
+  --sheet: #ffffff;
+  --ink: #18242a;
+  --muted: #56656c;
+  --rule: #d6dedc;
+  --accent: #23614f;
+  --accent-soft: #e2efe9;
+  --ok: #23614f;
+  --ok-bg: #e2efe9;
+  --warn: #8a5a08;
+  --warn-bg: #fbf0d9;
+  --bad: #a3321f;
+  --bad-bg: #f8e3de;
+  --info: #2f4f7a;
+  --info-bg: #e3eaf5;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #111819; --sheet: #172123; --ink: #e3ebe8; --muted: #9eb0ab; --rule: #2c3a3c;
+    --accent: #7cc7aa; --accent-soft: #1d3a31; --ok: #7cc7aa; --ok-bg: #1d3a31;
+    --warn: #e7b65c; --warn-bg: #3a2d12; --bad: #f08f7c; --bad-bg: #42201a; --info: #9cb8e4; --info-bg: #1d2a40;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #111819; --sheet: #172123; --ink: #e3ebe8; --muted: #9eb0ab; --rule: #2c3a3c;
+  --accent: #7cc7aa; --accent-soft: #1d3a31; --ok: #7cc7aa; --ok-bg: #1d3a31;
+  --warn: #e7b65c; --warn-bg: #3a2d12; --bad: #f08f7c; --bad-bg: #42201a; --info: #9cb8e4; --info-bg: #1d2a40;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.6; padding-inline: 16px; padding-block: 0 64px; }
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 28px; }
+header.top { padding-block: 40px 8px; display: grid; gap: 10px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(32px, 5vw, 46px); font-weight: 700; }
+h2 { font-size: 26px; font-weight: 700; }
+h3 { font-size: 19px; font-weight: 600; }
+p { margin: 0; max-width: 70ch; }
+.sub { color: var(--muted); max-width: 70ch; }
+a { color: var(--accent); }
+section.sheet { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 24px clamp(16px, 3vw, 32px); display: grid; gap: 16px; min-width: 0; }
+.ref { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: 0.06em; }
+.headrow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; }
+.verdict { border-left: 4px solid var(--warn); padding-left: 18px; display: grid; gap: 12px; }
+.verdict .call { font-family: var(--display); font-size: 24px; font-weight: 700; }
+.chip { display: inline-block; font-family: var(--mono); font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 3px; white-space: nowrap; }
+.chip.ok { color: var(--ok); background: var(--ok-bg); }
+.chip.warn { color: var(--warn); background: var(--warn-bg); }
+.chip.bad { color: var(--bad); background: var(--bad-bg); }
+.chip.info { color: var(--info); background: var(--info-bg); }
+ul.tick, ul.cross, ul.plain { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; max-width: 76ch; }
+ul.tick li, ul.cross li { padding-left: 26px; position: relative; }
+ul.tick li::before { content: "✓"; position: absolute; left: 0; color: var(--ok); font-weight: 600; }
+ul.cross li::before { content: "✗"; position: absolute; left: 0; color: var(--bad); font-weight: 600; }
+ul.plain li { padding-left: 16px; position: relative; }
+ul.plain li::before { content: "–"; position: absolute; left: 0; color: var(--muted); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+.two > div { min-width: 0; display: grid; gap: 8px; align-content: start; }
+.label { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.tablewrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 4px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; line-height: 1.45; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--rule); }
+th { font-family: var(--mono); font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); background: var(--paper); }
+tr:last-child td { border-bottom: none; }
+td.num, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td .chip { margin-top: 1px; }
+figure { margin: 0; display: grid; gap: 6px; }
+figure img { width: 100%; border: 1px solid var(--rule); border-radius: 4px; display: block; }
+figcaption { font-size: 13.5px; color: var(--muted); }
+.shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.callout { background: var(--bad-bg); color: var(--ink); border-radius: 4px; padding: 12px 16px; display: grid; gap: 6px; }
+.callout.warn { background: var(--warn-bg); }
+.callout.info { background: var(--info-bg); }
+.callout strong { font-family: var(--display); font-size: 17px; }
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px 16px; font-family: var(--mono); font-size: 13px; }
+nav.toc a { text-decoration: none; }
+nav.toc a:hover, nav.toc a:focus-visible { text-decoration: underline; }
+ol.order { margin: 0; padding-left: 24px; display: grid; gap: 10px; max-width: 78ch; }
+ol.order li::marker { font-family: var(--mono); color: var(--accent); }
+.group-h { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; padding-top: 6px; }
+code, .k { font-family: var(--mono); font-size: 0.92em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 520px) { th, td { padding: 8px 9px; } h2 { font-size: 23px; } }
+
+/* Tabs and the answer form */
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--rule); }
+.tabs button { font-family: var(--display); font-size: 17px; font-weight: 600; color: var(--muted); background: none; border: 0; border-bottom: 3px solid transparent; padding: 10px 14px 9px; cursor: pointer; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tabs button .count { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--accent); margin-left: 6px; }
+.panel { display: grid; gap: 28px; }
+.panel[hidden] { display: none; }
+.qcard { border: 1px solid var(--rule); border-radius: 4px; padding: 16px 18px; display: grid; gap: 12px; min-width: 0; }
+.qcard.done { border-left: 4px solid var(--ok); }
+.qcard.asking { border-left: 4px solid var(--warn); }
+.qhead { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; align-items: baseline; }
+.qhead h3 { font-size: 18px; max-width: 64ch; }
+.why { font-size: 14px; color: var(--muted); max-width: 72ch; }
+.opts { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.opts .lead { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-right: 4px; }
+.opt { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--rule); border-radius: 4px; padding: 6px 10px; font-size: 14.5px; cursor: pointer; background: var(--sheet); }
+.opt:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.opt input { accent-color: var(--accent); margin: 0; }
+.field { display: grid; gap: 5px; min-width: 0; }
+.field label, .field .flabel { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+textarea, input[type="text"], input[type="date"], select { font: inherit; font-size: 15px; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 8px 10px; width: 100%; min-width: 0; }
+textarea { min-height: 76px; resize: vertical; line-height: 1.5; }
+textarea:focus, input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.btnrow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.btn { font-family: var(--display); font-size: 16px; font-weight: 600; border-radius: 4px; padding: 9px 16px; cursor: pointer; border: 1px solid var(--accent); background: var(--accent); color: var(--sheet); }
+.btn.ghost { background: transparent; color: var(--accent); }
+.status { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.progress { display: flex; flex-wrap: wrap; gap: 8px 18px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.progress strong { color: var(--ink); font-weight: 500; }
+pre.note { white-space: pre-wrap; font-family: var(--body); font-size: 14.5px; line-height: 1.55; background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 14px 16px; margin: 0; max-width: 78ch; overflow-x: auto; }
+#qa-out { min-height: 180px; font-family: var(--mono); font-size: 13px; }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">Private finance · accountant's review · walked 25 October 2026 on the development site</p>
+  <h1>Bookkeeping, as the accountant who has to close from it</h1>
+  <p class="sub">A stand-in review for FieldLogicHQ's own books. I walked every journey on the real screens as the platform's test admin (desktop first, then a phone), read the plans, and checked the claims that mattered against what the product actually does.</p>
+</header>
+
+<div class="tabs" role="tablist" aria-label="Pages">
+  <button type="button" role="tab" id="tab-review" aria-controls="panel-review" aria-selected="true">The review</button>
+  <button type="button" role="tab" id="tab-questions" aria-controls="panel-questions" aria-selected="false">Accountant questions<span class="count" id="tab-count"></span></button>
+</div>
+
+<div class="panel" id="panel-review" role="tabpanel" aria-labelledby="tab-review">
+  <nav class="toc" aria-label="Sections">
+    <a href="#verdict">Verdict</a><a href="#journeys">Journeys</a><a href="#questions">Six questions</a><a href="#reports">Reports</a><a href="#outstanding">Outstanding items</a><a href="#gaps">Gap list</a><a href="#order">Order &amp; push-back</a><a href="#ask">Ask the accountant</a><a href="#entries">Test entries</a><a href="#unverified">Not verified</a>
+  </nav>
+
+<section class="sheet" id="verdict">
+  <div class="verdict">
+    <p class="eyebrow">Verdict</p>
+    <p class="call">Usable with fixes for recording expenses. Not yet usable as the company's books.</p>
+    <p>On the things an auditor cares about, the expense side is stronger than most small-business tools. Every correction keeps the earlier version and its receipt. A void keeps the record. The database itself refuses to delete or overwrite anything. The accountant package ships every receipt with a fingerprint. Recording a purchase is quick, and I could always find what I'd entered by supplier or date. But <strong>I could not record a single owner contribution, draw or reimbursement</strong>: every save is refused, whatever you type. For a sole proprietor with no business bank account, that ledger is how every expense gets paid for. Beyond that, there is no GST/HST figure anyone could file from, no way to close a period, and no income. The only working store is the development one that test sessions (including this one) write into. Fix the owner ledger, decide where the real books live, and start capturing GST/HST properly before the May-to-October backfill. Do those, and I would close October from it.</p>
+  </div>
+  <div class="two">
+    <div><span class="label">Stop-the-line</span>
+      <ul class="cross">
+        <li>Owner transfers cannot be saved at all (contribution, draw, reimbursement).</li>
+        <li>"Permanently delete" is on every record but can never succeed, and it contradicts the audit trail.</li>
+        <li>No production home for the real books yet; the dev store is the only live one.</li>
+      </ul></div>
+    <div><span class="label">Genuinely good</span>
+      <ul class="tick">
+        <li>Corrections and voids keep full history, receipts included.</li>
+        <li>Receipt files are checked for real type; a fake PDF is refused.</li>
+        <li>Double-clicking Save creates one entry, not two.</li>
+        <li>The package states plainly what it does not contain.</li>
+      </ul></div>
+  </div>
+</section>
+
+<section class="sheet" id="journeys">
+  <h2>The journeys, walked</h2>
+  <p class="sub">J1–J8 follow the order of the brief. Seven test purchases were created, each starting "ACCT-REVIEW", and every one is voided. The full list is <a href="#entries">at the end</a>.</p>
+
+  <div class="headrow"><span class="ref">J1</span><h3>Record a purchase</h3><span class="chip warn">Works · tax is weak</span></div>
+  <p>All four kinds saved first time: a $113.00 subscription with $13.00 HST and a PDF receipt; a US$25.00 invoice entered as C$34.75 with its conversion source; a domain renewal with no receipt; and a toner purchase on a personal card, paid two days after it was bought. The saved record reads cleanly, showing the amount, both dates, how it was paid, the receipt, the tax and a version list.</p>
+  <div class="two">
+    <div><span class="label">Worked</span><ul class="tick">
+      <li>One amount for CAD. Picking USD reveals the CAD amount and the conversion source, and nothing else.</li>
+      <li>"Payment date is different" is a tidy way to keep incurred and paid dates apart.</li>
+      <li>"You can save now and add the receipt later": the missing receipt goes straight onto the attention list.</li>
+      <li>The phone's own date picker on mobile; the form fits a 390-pixel screen with no sideways scroll.</li>
+    </ul></div>
+    <div><span class="label">Didn't, or made me think</span><ul class="cross">
+      <li>Tax sits behind "More details" and defaults to "unknown". The fast path leaves tax blank on every entry.</li>
+      <li>There is one tax box. You can't tell GST/HST (claimable) from PST or QST (not claimable), and there's nowhere for the supplier's GST/HST number.</li>
+      <li>The USD conversion note must contain a date written 2026-10-16 and a "specific" word. You find that out from a generic error.</li>
+      <li>The category list still offers the old test labels "B2 QA" and "QA verification", and "+ Add a category" turns any typo into a permanent category.</li>
+      <li>"Business bank" and "Business card" are offered, though the revenue plan records that no business bank account exists.</li>
+    </ul></div>
+  </div>
+  <figure><img src="img/add-expense.png" alt="The Add an expense form with More details open: dates, supplier, category, purpose, currency and amount, how paid, receipt, then a tax checkbox, business use and notes." loading="lazy"><figcaption>Add an expense with "More details" open. Tax is the last thing on the form, behind a checkbox, and only one amount is allowed.</figcaption></figure>
+
+  <div class="headrow"><span class="ref">J2</span><h3>Find a receipt later from a vendor name or a rough date</h3><span class="chip warn">Works · no amount search</span></div>
+  <ul class="tick">
+    <li>"datastack" (lower case) and "toner" (a word from the purpose) each found the right purchase. So did a 13–17 October date range.</li>
+    <li>The receipt opens straight from the record. Each version keeps its own receipt link.</li>
+    <li>"Needs attention" listed the missing receipt. Attaching it through "Correct expense" kept both versions.</li>
+  </ul>
+  <ul class="cross">
+    <li>Searching "34.75" or "113" finds nothing. A card-statement line is an amount and a date, so that is the question I ask most.</li>
+    <li>The date filter always includes the older entries whose dates are "to review", whatever range you pick.</li>
+    <li>Attaching a late receipt is a full correction with a typed reason. That's fine for the audit trail, but heavy for the commonest follow-up there is.</li>
+  </ul>
+
+  <div class="headrow"><span class="ref">J3</span><h3>Correct a mistake, then void</h3><span class="chip ok">Works · history kept</span></div>
+  <p>One correction changed the amount (113.00 → 124.30), date, category and tax (13.00 → 14.30), with a reason. The record then showed versions 1 and 2, each with its receipt. Voiding needed a reason (a blank one was blocked) and left a version 3 marked "Voided" that stays in the list. The totals dropped it at once, and no further correction is offered. My test script swapped the two dates on the personal-card purchase; fixing that through the screen made a good second test.</p>
+  <ul class="cross">
+    <li>The version list shows only amount, date and reason. That the category went from Software to Professional services, and the tax from 13.00 to 14.30, is visible in the export but not on screen.</li>
+    <li>After a void, the one button left is <strong>Permanently delete</strong>. I confirmed read-only that the bookkeeping database grants the app no right to delete or overwrite. The button can therefore never succeed; at best it shows "Unable to delete expense". I did not press it.</li>
+  </ul>
+
+  <div class="headrow"><span class="ref">J4</span><h3>Owner contribution, draw, reimbursement</h3><span class="chip bad">Broken</span></div>
+  <div class="callout"><strong>No owner transfer can be saved.</strong><p>I tried a $500.00 contribution, a $200.00 draw and a $56.49 reimbursement linked to the personal-card purchase. All three were refused with "Check the date, amount and required movement details". I captured what the screen sent each time: a valid date, amount and type. The server's check on the transfer's internal reference rejects every reference the screen creates; I reproduced that check on its own. So nothing in this journey (record, correct, void, over-reimbursement guard) can be walked. It also explains why the recovery proof still "needs a real owner-transfer row".</p></div>
+  <ul class="cross">
+    <li>The error appears at the top of the page, not beside Save, and nothing scrolls to it. You press Save and appear to get no response. The expense form behaves the same way.</li>
+    <li>The Ledger is a list of expenses and transfers. It shows no balance, so nothing answers "how much does the business owe me?"</li>
+  </ul>
+  <ul class="tick"><li>The reimbursement picker offers only purchases paid personally, which is the right design.</li></ul>
+  <div class="shots">
+    <figure><img src="img/transfer-save.png" alt="The owner transfer form after pressing Save transfer: the form and activity list are visible, no error message is in view." loading="lazy"><figcaption>Right after "Save transfer". The refusal sits above the form, out of view.</figcaption></figure>
+    <figure><img src="img/overview.png" alt="Bookkeeping overview: Recorded spend all confirmed dates $0.00, Needs a receipt 1, Dates to review 4, attention list and recent expenses." loading="lazy"><figcaption>The overview before I started: $0.00 "recorded spend" beside $33 of older test entries whose dates are unconfirmed.</figcaption></figure>
+  </div>
+
+  <div class="headrow"><span class="ref">J5</span><h3>Period questions</h3><span class="chip warn">Half answered</span></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Question</th><th>Answer on screen</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>Spend this month, by category</td><td>Reports → This month to date → By category, with drill-down. It totalled C$113.83, exactly the three live test purchases with the voided one left out.</td><td><span class="chip ok">Yes</span></td></tr>
+      <tr><td>Spend last month or last quarter</td><td>Only through "Custom dates". There are no "Last month", "Last quarter" or "Calendar year" choices, and a month-end close is always about the month that just ended.</td><td><span class="chip warn">Workaround</span></td></tr>
+      <tr><td>GST/HST paid, and how much is claimable</td><td>"Purchase tax recorded" groups amounts by review state (unknown, pending, reviewed, none). There is no split by tax type and no claimable figure. The screen says it is not a tax-credit calculation.</td><td><span class="chip bad">No</span></td></tr>
+      <tr><td>What the owner is owed or owes</td><td>"Paid personally: $56.49" by payment source. With transfers broken, there is no balance.</td><td><span class="chip bad">No</span></td></tr>
+      <tr><td>What is missing a receipt</td><td>The overview count, the Needs attention list and the "Missing receipt" filter all agree.</td><td><span class="chip ok">Yes, trusted</span></td></tr>
+    </tbody></table></div>
+  <p>The overview's headline figure, "Recorded spend · all confirmed dates", is all-time and quietly included my purchase dated March 2027. At month-end it answers nothing.</p>
+
+  <div class="headrow"><span class="ref">J6</span><h3>The accountant package, read as the filing accountant</h3><span class="chip warn">Complete, not self-explaining</span></div>
+  <p>It takes four clicks: Reports, period, then Accountant package. The download held an expense file, an owner-transfer file (empty), a receipt index with a fingerprint per file, all eight receipt files, and a scope note. The note says honestly that bank statements, Stripe income, fees, refunds, payouts and reconciliation are not included. The package refuses to build if a receipt is missing, which is right.</p>
+  <ul class="cross">
+    <li>The expense file holds every version of every purchase (14 rows for 7 purchases). The accountant has to know to keep only "current" rows, and nothing says so on the first line.</li>
+    <li>Receipt files are named with random ID strings rather than "2026-10-15 Datastack 34.75", so every lookup goes through the index.</li>
+    <li>It contains columns an outsider can't use: a receipt link into our admin site, and "created by" as an internal ID rather than a name.</li>
+    <li>There is no summary page (totals by category, tax by type, personally paid, open items), which is exactly what I'd read first.</li>
+  </ul>
+
+  <div class="headrow"><span class="ref">J7</span><h3>Month-end close</h3><span class="chip bad">Stops after the export</span></div>
+  <p>As far as the module allows: clear the attention list, set the period to custom dates, check the report, then download the package. Then it stops. Nowhere on screen does the word close, lock or reconcile appear. There is no "closed through" date, no opening or closing balance and no income. Any purchase in a month I've filed can be corrected next week, and the next package will quietly differ from the one the accountant used. The history shows the change, but nothing flags it.</p>
+
+  <div class="headrow"><span class="ref">J8</span><h3>The bad-day pass</h3><span class="chip warn">Mixed</span></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>What I did</th><th>What I saw</th><th>Tells me what to fix?</th></tr></thead>
+    <tbody>
+      <tr><td>Saved with every field blank</td><td>The browser's own bubble on the first empty field: "Please fill out this field."</td><td><span class="chip ok">Yes</span></td></tr>
+      <tr><td>Amount "abc", "12,50", "$1,200.00", "-5"</td><td>"Please match the requested format."</td><td><span class="chip warn">No; which format?</span></td></tr>
+      <tr><td>Amount 0</td><td>"Check the expense amounts and required fields", off-screen at the top</td><td><span class="chip bad">No</span></td></tr>
+      <tr><td>$200 tax on a $50 purchase</td><td>Same generic message</td><td><span class="chip bad">No</span></td></tr>
+      <tr><td>USD with conversion note "converted"</td><td>Same generic message</td><td><span class="chip bad">No</span></td></tr>
+      <tr><td>Date "31/31/2026"</td><td>"Enter a date like Oct 25, 2026."</td><td><span class="chip ok">Yes</span></td></tr>
+      <tr><td>Receipt: .txt, text renamed .pdf, .xlsx</td><td>"Receipt must be a valid PDF, JPEG or PNG"</td><td><span class="chip ok">Yes</span></td></tr>
+      <tr><td>Receipt over 10 MB</td><td>"Invalid form"</td><td><span class="chip bad">No</span></td></tr>
+      <tr><td>Purchase dated 1 March 2027</td><td>Saved silently and counted in "recorded spend"</td><td><span class="chip warn">Should warn</span></td></tr>
+      <tr><td>Double-clicked Save</td><td>One entry</td><td><span class="chip ok">Protected</span></td></tr>
+      <tr><td>Entered the identical purchase again (phone)</td><td>Saved, no "looks like a duplicate"</td><td><span class="chip warn">Should warn</span></td></tr>
+      <tr><td>Cancel on a half-filled form</td><td>Discarded quietly; I didn't see the "Close without saving?" question the plan describes</td><td><span class="chip info">Check in your walk</span></td></tr>
+    </tbody></table></div>
+
+  <div class="headrow"><span class="ref">PH</span><h3>On a phone</h3><span class="chip ok">Fits</span></div>
+  <p>Overview, Add expense, the record, Reports and Ledger all fit 390 pixels with no sideways scroll. Adding a purchase works with the phone's date picker. The six tabs wrap onto three rows, which pushes the figures below the fold. In the console header, "FieldLogicHQ" runs into "SUPPORT CONSOLE"; that's console-wide, not Bookkeeping's.</p>
+  <div class="shots">
+    <figure><img src="img/phone-overview.png" alt="Bookkeeping overview at phone width: header text overlapping, tabs on three rows, recorded spend $133.83, needs a receipt 3." loading="lazy"><figcaption>Phone overview. The tabs take three rows, and the header text overlaps itself.</figcaption></figure>
+    <figure><img src="img/expenses.png" alt="Expenses list with Find, date range, category and Show filters; QA rows and ACCT-REVIEW rows, one voided." loading="lazy"><figcaption>The Expenses list mid-review. A voided record stays visible and labelled, which is right.</figcaption></figure>
+  </div>
+</section>
+
+<section class="sheet" id="questions">
+  <h2>The six questions</h2>
+
+  <h3>1. Is the flow what I expected?</h3>
+  <p>Mostly yes for expenses. Several things match how I work: a record reads first and you correct the whole thing with a reason; a void is a separate, reasoned act; the receipt sits next to the entry; one attention list for loose ends; and an export that states its own scope. Four places made me stop and think:</p>
+  <ul class="plain">
+    <li>Tax is treated as an optional detail rather than the second most important number on a receipt.</li>
+    <li>"Tax review status" (Pending review, No tax recorded, Reviewed): who reviews, and against what?</li>
+    <li>"Ledger" means something specific to an accountant: accounts with balances. This one is an activity list.</li>
+    <li>"Sources" is a developer preview labelled "B3 · fixture import preview" with a "synthetic preview file". The owner should never see that.</li>
+  </ul>
+
+  <h3>2. Is it enough for my daily needs?</h3>
+  <div class="two">
+    <div><span class="label">I could</span><ul class="tick"><li>Record any purchase, CAD or USD, with or without a receipt</li><li>Attach a receipt later and find it by name or date</li><li>Correct and void with a full trail</li><li>See what is missing</li><li>Export a period with its receipts</li></ul></div>
+    <div><span class="label">I couldn't</span><ul class="cross"><li>Record any owner movement</li><li>Get a GST/HST figure</li><li>Find a purchase by amount</li><li>See on screen what a correction changed</li><li>Close a month, or reconcile to a statement</li><li>See any income</li></ul></div>
+  </div>
+
+  <h3>3. Is it easy? Clicks and fields</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Journey</th><th>Clicks</th><th>Typed values</th><th>Fields shown</th></tr></thead>
+    <tbody>
+      <tr><td>CAD purchase, tax unknown, with receipt</td><td class="num">≈ 11</td><td class="num">4</td><td class="num">8</td></tr>
+      <tr><td>CAD purchase with tax entered</td><td class="num">≈ 16</td><td class="num">5</td><td class="num">12</td></tr>
+      <tr><td>USD purchase (adds CAD amount and conversion note)</td><td class="num">≈ 13</td><td class="num">6</td><td class="num">10</td></tr>
+      <tr><td>Attach a late receipt</td><td class="num">≈ 8</td><td class="num">1 (reason)</td><td class="num">—</td></tr>
+      <tr><td>Correct one fact</td><td class="num">≈ 5</td><td class="num">2</td><td class="num">—</td></tr>
+      <tr><td>Void</td><td class="num">4</td><td class="num">1 (reason)</td><td class="num">—</td></tr>
+      <tr><td>Find a receipt by supplier</td><td class="num">3</td><td class="num">1</td><td class="num">—</td></tr>
+      <tr><td>Month's accountant package</td><td class="num">4</td><td class="num">0</td><td class="num">—</td></tr>
+    </tbody></table></div>
+  <p><strong>What I'd get wrong on a tired Friday afternoon:</strong> skip "More details" and leave a month of tax as unknown. Paste "1,200.00" from a statement and get a message that doesn't say why. Type a conversion note without a date in the right shape. Re-key a subscription I already entered. Press Save on a transfer and decide it worked because nothing happened. Pick a stale "QA verification" category. And sooner or later, press "Permanently delete".</p>
+
+  <h3>4. Are the outstanding items the right direction?</h3>
+  <p>Mostly the right items, in the wrong order. The full verdicts are <a href="#outstanding">in their own table</a>. The short version: fix the owner ledger and bring the accountant in <em>before</em> the walks and before Stripe. And don't let the first close wait for Stripe.</p>
+
+  <h3>5. Is the reporting adequate?</h3>
+  <p>For expenses by category and missing receipts, yes. For tax, owner movements and income, no. Details are in <a href="#reports">the report table</a>.</p>
+
+  <h3>6. What else do I want?</h3>
+  <p>The wish list is <a href="#gaps">sorted into three groups</a>. Most of it is small. The two big items are a usable GST/HST picture and the Stripe income side, and only the first is urgent.</p>
+</section>
+
+<section class="sheet" id="reports">
+  <h2>Reports I'd need, and whether I'd trust them</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Report</th><th>When</th><th>Exists?</th><th>Trust?</th><th>What I'd still rebuild in a spreadsheet</th></tr></thead>
+    <tbody>
+      <tr><td>Expenses by category</td><td>Month, quarter, year</td><td><span class="chip ok">Yes</span></td><td><span class="chip ok">Yes</span></td><td>Category → tax-form line mapping (the starter categories aren't the T2125 lines). Amounts net of claimable tax once registered. Capital items pulled out.</td></tr>
+      <tr><td>Tax paid and claimable</td><td>Each GST/HST return</td><td><span class="chip bad">No</span></td><td>—</td><td>All of it: GST/HST vs PST/QST, claimable vs not, from the registration date on, by return period.</td></tr>
+      <tr><td>Owner movements and balance</td><td>Month, year</td><td><span class="chip bad">No</span></td><td>—</td><td>The owner's capital roll-forward: opening balance, plus personally paid purchases and contributions, minus reimbursements and draws, giving the closing balance.</td></tr>
+      <tr><td>Missing receipts</td><td>Weekly, month-end</td><td><span class="chip ok">Yes</span></td><td><span class="chip ok">Yes</span></td><td>Nothing.</td></tr>
+      <tr><td>A period's activity</td><td>Month-end</td><td><span class="chip warn">Partly</span></td><td><span class="chip warn">With care</span></td><td>Filter the export to current rows. Add last-month and last-quarter periods. Flag anything changed after the period was exported.</td></tr>
+      <tr><td>USD purchases and conversion evidence</td><td>Year-end</td><td><span class="chip ok">Yes</span></td><td><span class="chip ok">Yes</span></td><td>Nothing for expenses.</td></tr>
+      <tr><td>Income, fees, refunds, payouts</td><td>Month, year, each return</td><td><span class="chip bad">No</span></td><td>—</td><td>Everything, from Stripe's own reports, until Stage 3 lands.</td></tr>
+      <tr><td>Year-end summary for the filing accountant</td><td>Year-end</td><td><span class="chip bad">No</span></td><td>—</td><td>Totals page, capital-cost schedule, business-use-of-home, and the GST/HST reconciliation.</td></tr>
+    </tbody></table></div>
+</section>
+
+<section class="sheet" id="outstanding">
+  <h2>The outstanding items, judged</h2>
+  <p class="sub">The list as of 25 October 2026. Verdicts: keep, reorder, shrink, cut, or "not what I'd do next".</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Item</th><th>Verdict</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Owner walks: five journeys, Stage 1 entry, Stage 2 reports</td><td><span class="chip warn">Keep · reorder</span></td><td>Worth doing, and cheap. But walk after the transfer fix and the delete decision, and walk the Stage 3 ledger in the same sitting. Today that walk fails at its first step.</td></tr>
+      <tr><td>Field-specific error messages</td><td><span class="chip warn">Keep · shrink</span></td><td>Five messages matter: zero amount, tax above the amount, the conversion-note rule, the oversized receipt ("Invalid form"), and the amount format. Plus one placement fix: show the error where Save is.</td></tr>
+      <tr><td>Shared window and focus rules</td><td><span class="chip info">Later</span></td><td>Polish, except the off-screen error, which belongs to the item above.</td></tr>
+      <tr><td>Printable accountant summary</td><td><span class="chip ok">Yes, redefined</span></td><td>Not a printout of the screen. Make it the first page of the package: totals by category, tax by type, owner balance, open items, and the changes made since the last export.</td></tr>
+      <tr><td>Stage 3 · Stripe income source contract</td><td><span class="chip info">Keep · not next</span></td><td>Nothing is charged yet and the company is not GST/HST-registered yet. It gates the first live charge, not the first close.</td></tr>
+      <tr><td>Stage 3 · Accountant review of owner-movement classification</td><td><span class="chip ok">Move to the front</span></td><td>With no business bank account, owner money is how every purchase is funded. Classify it before the backfill, not after.</td></tr>
+      <tr><td>Stage 3 · Source-linked ledger and import</td><td><span class="chip info">Keep</span></td><td>Correctly sits behind the contract.</td></tr>
+      <tr><td>Stage 3 · Bank reconciliation</td><td><span class="chip warn">Split it</span></td><td>A light tick-off against the card or account that actually pays the subscriptions is needed now. Stripe payout reconciliation waits for live charges. Both depend on deciding which account is the business's.</td></tr>
+      <tr><td>Stage 3 · Group case walk</td><td><span class="chip info">Keep</span></td><td>Goes with the contract.</td></tr>
+      <tr><td>Stage 4 · Backup custody and schedule</td><td><span class="chip ok">Keep · now</span></td><td>Cheap and can run in parallel. But first decide where the real books live: backing up a development store that test sessions write into protects the wrong thing.</td></tr>
+      <tr><td>Stage 4 · Production or retained-copy recovery proof</td><td><span class="chip warn">Keep · split</span></td><td>The retained-copy proof can run now. The production proof needs a production store first.</td></tr>
+      <tr><td>Stage 4 · Accountant's review</td><td><span class="chip ok">Move to the front</span></td><td>The answers (registration date, Quick Method or not, capital threshold, file format) decide what the tax fields and the package should be. Asking after the build means building twice.</td></tr>
+      <tr><td>Stage 4 · First real close</td><td><span class="chip bad">Not what I'd do as written</span></td><td>As planned it waits for Stripe import and reconciliation, which could tie it to Club payments going live. Do an expense-and-owner-only close of October now; the first close with income comes later.</td></tr>
+      <tr><td>Support Console S9 review, waiting for "plan complete"</td><td><span class="chip warn">Replace the trigger</span></td><td>See below.</td></tr>
+    </tbody></table></div>
+  <div class="callout info"><strong>A sensible S9 trigger</strong><p>Two concrete events in place of "plan complete": <strong>S9a</strong> after the first real expense-and-owner close has been handed to the outside accountant, and <strong>S9b</strong> after the first full month with live Stripe income has been closed. Both can be checked. Neither can sit indefinitely behind Club payments, and the first can happen this autumn.</p></div>
+</section>
+
+<section class="sheet" id="gaps">
+  <h2>Prioritized gap list</h2>
+  <p class="sub">"Fits plan" means it is already an item somewhere in the plan. "New" means it isn't.</p>
+
+  <div class="group-h"><h3>Before the first real close</h3><span class="chip bad">must-have</span></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>What I'd want to see</th><th>Why an accountant needs it</th><th>Plan</th></tr></thead>
+    <tbody>
+      <tr><td>Owner transfers save, correct and void</td><td>It's the only record of how personally paid purchases are funded and repaid.</td><td><span class="chip info">Fits · Stage 3 draft</span></td></tr>
+      <tr><td>A decision on where the real books live, with test entries kept out</td><td>Today the only working store is the development one. This review's seven voided entries now sit there for good, and they'd ride along in an all-dates export.</td><td><span class="chip warn">New</span> (the AWS notes list production setup as still to do)</td></tr>
+      <tr><td>Remove "Permanently delete" from records, or limit it to an entry never exported, within the same day</td><td>A void is the accounting answer. The database already refuses deletes, so the button is a broken promise either way.</td><td><span class="chip warn">New · conflicts with the 23 Oct ruling</span></td></tr>
+      <tr><td>GST/HST captured properly: tax split by type, the supplier's GST/HST number, and a "foreign supplier charged tax" flag; plus a period total of tax paid by type</td><td>The May-to-October backfill is about to happen. If the registration is backdated, those claims depend on these facts, and re-keying six months later is the expensive path.</td><td><span class="chip warn">New</span> (the plan keeps tax as a note only)</td></tr>
+      <tr><td>Last month / last quarter / calendar year periods</td><td>Every close is about a period that has just ended.</td><td><span class="chip warn">New · small</span></td></tr>
+      <tr><td>A "closed through" date: a correction dated inside a closed period is refused, or saved as a flagged post-close adjustment</td><td>Without it, the books I filed can change silently.</td><td><span class="chip warn">New</span> (the close worksheet has sign-off but no lock)</td></tr>
+      <tr><td>Package: summary first page, a current-only sheet beside the full history, readable receipt file names, no internal links or IDs</td><td>So the filing accountant can read it without a phone call.</td><td><span class="chip info">Fits · printable summary item</span></td></tr>
+      <tr><td>Owner balance figure: "the business owes you $X"</td><td>The single most-asked question in a sole proprietorship.</td><td><span class="chip info">Fits · Stage 3</span></td></tr>
+      <tr><td>Statement tick-off for the paying card or account</td><td>Proves every charge on the statement is in the books, and nothing is in twice.</td><td><span class="chip info">Fits, reshaped · bank reconciliation</span></td></tr>
+      <tr><td>"Copy as new", a duplicate warning, and search by amount</td><td>The backfill is mostly the same subscriptions every month, and statement lines are amounts.</td><td><span class="chip warn">New · small</span></td></tr>
+      <tr><td>Errors next to the field, visible at Save</td><td>Today the bad-day messages are vague or off-screen.</td><td><span class="chip info">Fits · error-message item</span></td></tr>
+    </tbody></table></div>
+
+  <div class="group-h"><h3>Before live Stripe charges</h3><span class="chip warn">must-have</span></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>What I'd want to see</th><th>Why an accountant needs it</th><th>Plan</th></tr></thead>
+    <tbody>
+      <tr><td>Revenue's accepted source contract and an import that can safely run twice</td><td>Income must arrive once, each line traceable to Stripe.</td><td><span class="chip info">Fits · Stage 3</span></td></tr>
+      <tr><td>GST/HST registration in force, with tax collected recorded by province</td><td>Charging without the right tax creates a liability that can't be fixed after the fact.</td><td><span class="chip info">Fits · revenue plan</span></td></tr>
+      <tr><td>An income report and a GST/HST return worksheet (collected minus claimable)</td><td>That's the return itself.</td><td><span class="chip warn">New</span></td></tr>
+      <tr><td>Payout reconciliation to the account that receives payouts, with organizer money kept out of income</td><td>A payout is a transfer, not income, and club money isn't ours.</td><td><span class="chip info">Fits · Stage 3</span> (needs the account decision)</td></tr>
+      <tr><td>Stripe fees as expenses with their own tax, plus refunds and disputes</td><td>These net against revenue and carry their own tax treatment.</td><td><span class="chip info">Fits · Stage 3</span></td></tr>
+      <tr><td>How annual plans paid upfront are treated at year-end</td><td>Possibly deferred revenue. It's the accountant's call.</td><td><span class="chip warn">New · ask first</span></td></tr>
+    </tbody></table></div>
+
+  <div class="group-h"><h3>Later</h3><span class="chip info">nice to have</span></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Item</th><th>View</th></tr></thead>
+    <tbody>
+      <tr><td>Recurring subscriptions that post themselves</td><td>"Copy as new" covers most of it. Build the automatic version only if re-keying still hurts after the backfill.</td></tr>
+      <tr><td>Capital purchases and depreciation (capital cost allowance)</td><td>Needed before the 2026 year-end filing if a laptop or similar was bought. A "capital item" flag is enough to start.</td></tr>
+      <tr><td>Business-use-of-home and mileage</td><td>The filing accountant usually does these once a year; a business-use % already exists for mixed bills.</td></tr>
+      <tr><td>Prepaid expenses</td><td>Immaterial at this size unless the accountant asks.</td></tr>
+      <tr><td>Accounts payable and receivable</td><td><strong>Cut.</strong> Suppliers charge a card and customers pay upfront through Stripe.</td></tr>
+      <tr><td>Search across everything (transfers, notes)</td><td>Later; supplier, purpose and amount cover the daily need.</td></tr>
+      <tr><td>Excel or accounting-software export</td><td>Ask the accountant which. CSV is fine until then.</td></tr>
+      <tr><td>Show what changed in each correction on screen, with names instead of IDs</td><td>The data is already in the export; this is a display job.</td></tr>
+      <tr><td>Hide the Sources preview until it's real</td><td>Small; it reads as unfinished.</td></tr>
+    </tbody></table></div>
+</section>
+
+<section class="sheet" id="order">
+  <h2>Recommended order, and where I'd push back</h2>
+  <ol class="order">
+    <li><strong>This week, all small:</strong> fix transfer saving and show errors where Save is; take "Permanently delete" off records; hide the Sources preview; add last-month and last-quarter periods.</li>
+    <li><strong>Bring in the outside accountant</strong> (owner-movement review plus the accountant's review), with the questions below, before building any tax fields.</li>
+    <li><strong>Decide the business account and where the real books live.</strong> Set up the production store. Start backups with a copy kept somewhere separate, and prove a restore from that copy.</li>
+    <li><strong>Build what the accountant's answers call for:</strong> GST/HST capture, the package summary page, the owner balance, copy-as-new, the duplicate warning, and search by amount.</li>
+    <li><strong>One owner walk</strong> covering the five journeys, Stage 1, Stage 2 and the owner ledger, in one sitting.</li>
+    <li><strong>Backfill May–October, then the first real close</strong> (October, expenses and owner money only) with a "closed through" date. Then the production recovery proof, then S9a.</li>
+    <li><strong>Stripe:</strong> the contract, import, reconciliation and case walk, plus the GST/HST return worksheet, all before the first live charge. Then S9b.</li>
+    <li>The later list.</li>
+  </ol>
+  <h3>Push-back on the owner's own plan</h3>
+  <ul class="plain">
+    <li><strong>The 23 October ruling to keep Permanent Delete.</strong> The database was built append-only on purpose, and that is the right call; the button can't work against it. Keep Void, and drop Delete or fence it hard.</li>
+    <li><strong>The first close waiting for Stripe.</strong> There is no income yet. Making the first close depend on Stripe import and reconciliation ties your books to Club payments going live.</li>
+    <li><strong>Tax as a note only.</strong> That's reasonable while you're unregistered, but you're about to key six months of receipts. Capture the split now and calculate claims later.</li>
+    <li><strong>"Bank reconciliation"</strong> assumes a business bank account that, by the revenue plan's own record, doesn't exist yet. Decide the account first.</li>
+    <li><strong>The plan calls the Stage 3 transfer draft "built for the group walkthrough".</strong> It can't save a transfer. The plan says more than the code delivers, so the walk should be the check, not the status line.</li>
+    <li><strong>Walks before fixes.</strong> Walking the expense journeys now is fine, but don't schedule the ledger walk until a transfer can be saved.</li>
+  </ul>
+</section>
+
+<section class="sheet" id="ask">
+  <h2>Questions for the real outside accountant</h2>
+  <ol class="order">
+    <li>GST/HST: will you ask for the backdated 1 May 2026 effective date, and if granted, are tax credits on purchases from then claimable? Annual or quarterly filing? Regular method or the Quick Method? The Quick Method changes what we need to capture.</li>
+    <li>US software suppliers: which of ours charge GST/HST because they're registered under the simplified regime? Should we give them our GST/HST number once we're registered? How do you want tax handled when such a supplier charges it?</li>
+    <li>Which province are we filing in? Do you need PST or QST tracked separately from GST/HST?</li>
+    <li>For USD purchases, is the CAD amount on the card statement acceptable evidence, or do you want a Bank of Canada rate?</li>
+    <li>With no business bank account, what arrangement do you recommend? Should personal-card purchases be recorded as owner contributions or as amounts to be reimbursed?</li>
+    <li>Cash or accrual for the T2125? How should annual plans paid upfront by clubs be treated at year-end?</li>
+    <li>Above what amount should a purchase be treated as capital rather than expensed? Do you want a capital cost schedule from us?</li>
+    <li>What file do you want: CSV, Excel, or an import format for your own software? What belongs on the summary page?</li>
+    <li>Records: how long do we keep them? Are digital-only receipts fine? Is storage in a US region plus a readable copy in Canada acceptable? (The plan already lists the location as open.)</li>
+    <li>How often should we close (monthly or quarterly)? Once you've used a period, how do you want later corrections handled?</li>
+    <li>Stripe: is our income the application fee only, and how is GST/HST charged on that fee? Do Stripe's own fees carry tax we can claim?</li>
+    <li>Home office, phone and internet: do you want us to record a business-use share during the year, or will you do it at year-end?</li>
+  </ol>
+</section>
+
+<section class="sheet" id="entries">
+  <h2>ACCT-REVIEW entries created</h2>
+  <p class="sub">All in the development books. All voided, none deleted. They stay for good as voided rows, along with four small test receipt files. No owner transfers were created, because every save was refused.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Supplier</th><th>Date</th><th class="num">Amount</th><th>What it tested</th><th>Versions</th><th>Now</th></tr></thead>
+    <tbody>
+      <tr><td>ACCT-REVIEW Northwind Cloud (HST subscription)</td><td class="num">2026-10-21</td><td class="num">$124.30</td><td>HST purchase with PDF; then amount, date, category and tax corrected</td><td class="num">3</td><td><span class="chip info">Voided</span></td></tr>
+      <tr><td>ACCT-REVIEW Datastack Inc (USD)</td><td class="num">2026-10-15</td><td class="num">US$25.00 → $34.75</td><td>US-dollar purchase with conversion source</td><td class="num">2</td><td><span class="chip info">Voided</span></td></tr>
+      <tr><td>ACCT-REVIEW Domain registrar (no receipt yet)</td><td class="num">2026-10-03</td><td class="num">$22.59</td><td>No receipt, then receipt attached later</td><td class="num">3</td><td><span class="chip info">Voided</span></td></tr>
+      <tr><td>ACCT-REVIEW Staples (personal card)</td><td class="num">2026-10-10</td><td class="num">$56.49</td><td>Paid personally, paid two days later; dates corrected</td><td class="num">3</td><td><span class="chip info">Voided</span></td></tr>
+      <tr><td>ACCT-REVIEW BADDAY future-dated</td><td class="num">2027-03-01</td><td class="num">$10.00</td><td>A future date saves without warning</td><td class="num">2</td><td><span class="chip info">Voided</span></td></tr>
+      <tr><td>ACCT-REVIEW BADDAY double-click</td><td class="num">2026-10-22</td><td class="num">$10.00</td><td>A double-click made one entry</td><td class="num">2</td><td><span class="chip info">Voided</span></td></tr>
+      <tr><td>ACCT-REVIEW BADDAY double-click (second copy)</td><td class="num">2026-10-22</td><td class="num">$10.00</td><td>A deliberate duplicate from a phone saves with no warning</td><td class="num">2</td><td><span class="chip info">Voided</span></td></tr>
+    </tbody></table></div>
+  <p class="sub">Housekeeping. To let the test admin open Bookkeeping, I added its address to the Bookkeeping owner list in the local settings file, as you agreed, and restarted the dev server once. I removed the line afterwards, and the file is byte-for-byte as it was. The running server reloaded it and the test admin no longer has access. Another session restarted the server at 7:59 p.m. during the walk; nothing was lost. Nothing in the repository was changed, and nothing was committed.</p>
+</section>
+
+<section class="sheet" id="unverified">
+  <h2>What I could not verify</h2>
+  <ul class="plain">
+    <li><strong>Production.</strong> It has no bookkeeping store wired up, so everything here is the development site and store. A production deploy may behave differently, especially access and storage.</li>
+    <li><strong>Real Stripe data.</strong> Only the fixture preview exists. Nothing about income, fees, refunds or payouts was exercised.</li>
+    <li><strong>A real filing.</strong> Whether the package satisfies the actual outside accountant is a guess until they read one. I'm standing in for them.</li>
+    <li><strong>The owner ledger beyond the save.</strong> Correcting, voiding, the reimbursement limit and the owner balance are all untested, because nothing could be saved.</li>
+    <li><strong>Permanent delete.</strong> I checked the database rights read-only and did not press the button. The exact message you'd see is inferred from the code.</li>
+    <li><strong>Backup and restore.</strong> Not run. I relied on the plan's record of the 24 October development rehearsal.</li>
+    <li><strong>The "Close without saving?" question.</strong> My script's Cancel discarded without showing it. That may be my script, so check it in your walk.</li>
+    <li><strong>Devices.</strong> One desktop browser engine and a phone-sized emulation, not a real phone or a screen reader.</li>
+    <li><strong>Tax rules.</strong> The points about the simplified regime, the Quick Method and records location are an accountant's working knowledge. They're phrased as questions for that reason.</li>
+    <li><strong>A moving target.</strong> The Bookkeeping work under review is largely uncommitted and shared with other sessions, so what I walked may change.</li>
+  </ul>
+</section>
+</div>
+
+<div class="panel" id="panel-questions" role="tabpanel" aria-labelledby="tab-questions" hidden>
+  <section class="sheet">
+    <p class="eyebrow">For your outside accountant · answer here, then paste back into the chat</p>
+    <h2>Accountant questions</h2>
+    <p>These twelve questions decide how the tax side, the package and the first close get built. Answer what you already know. For the rest, send the note at the foot of this tab to your accountant, then come back and type in what they said. For each question, mark whose answer it is. Your answers stay in this browser until you copy them; press <strong>Copy answers</strong> and paste the result into the chat.</p>
+    <div class="progress" id="qa-progress" aria-live="polite"></div>
+  </section>
+
+  <section class="sheet" id="qa-fill">
+    <h2>First, the facts for the note</h2>
+    <p class="sub">These fill in the note to your accountant and tell me where things stand.</p>
+    <div class="grid2">
+      <div class="field"><label for="f-acct">Your accountant's name</label><input type="text" id="f-acct" data-k="f.acct" autocomplete="off"></div>
+      <div class="field"><label for="f-you">Your name, for the sign-off</label><input type="text" id="f-you" data-k="f.you" autocomplete="off"></div>
+      <div class="field"><label for="f-prov">Province or territory you file in</label>
+        <select id="f-prov" data-k="f.prov">
+          <option value="">Choose one</option>
+          <option>Alberta</option><option>British Columbia</option><option>Manitoba</option><option>New Brunswick</option><option>Newfoundland and Labrador</option><option>Northwest Territories</option><option>Nova Scotia</option><option>Nunavut</option><option>Ontario</option><option>Prince Edward Island</option><option>Quebec</option><option>Saskatchewan</option><option>Yukon</option>
+        </select></div>
+    </div>
+    <div class="opts" role="radiogroup" aria-label="GST/HST registration">
+      <span class="lead">GST/HST registration</span>
+      <label class="opt"><input type="radio" name="f-gst" id="f-gst-none" data-k="f.gst" value="Not applied yet"> Not applied yet</label>
+      <label class="opt"><input type="radio" name="f-gst" id="f-gst-applied" data-k="f.gst" value="Applied, waiting to hear"> Applied, waiting to hear</label>
+      <label class="opt"><input type="radio" name="f-gst" id="f-gst-reg" data-k="f.gst" value="Registered"> Registered</label>
+    </div>
+    <div class="grid2">
+      <div class="field"><label for="f-gstdate">Applied on, or effective date if registered</label><input type="date" id="f-gstdate" data-k="f.gstdate"></div>
+      <div class="field"><label for="f-gstnote">Anything else about the registration</label><input type="text" id="f-gstnote" data-k="f.gstnote" autocomplete="off"></div>
+    </div>
+    <div class="opts" role="radiogroup" aria-label="Sample export">
+      <span class="lead">Send the sample export (test data)?</span>
+      <label class="opt"><input type="radio" name="f-sample" id="f-sample-dl" data-k="f.sample" value="Yes, copy it to my Downloads folder"> Yes, to my Downloads folder</label>
+      <label class="opt"><input type="radio" name="f-sample" id="f-sample-else" data-k="f.sample" value="Yes, somewhere else"> Yes, somewhere else</label>
+      <label class="opt"><input type="radio" name="f-sample" id="f-sample-no" data-k="f.sample" value="No, don't send it"> No</label>
+    </div>
+    <div class="field"><label for="f-samplewhere">If somewhere else, where?</label><input type="text" id="f-samplewhere" data-k="f.samplewhere" autocomplete="off"></div>
+  </section>
+
+  <section class="sheet" id="qa-facts">
+    <h2>Is this still right?</h2>
+    <p class="sub">The note tells your accountant these four things. Confirm each, or say what has changed.</p>
+    <div id="facts-list" class="panel" style="gap:14px"></div>
+  </section>
+
+  <section class="sheet" id="qa-questions">
+    <h2>The twelve questions</h2>
+    <p class="sub">Each says what it changes in Bookkeeping. Quick choices are optional; the answer box is where the detail goes.</p>
+    <div id="q-list" class="panel" style="gap:16px"></div>
+  </section>
+
+  <section class="sheet" id="qa-copy">
+    <h2>Copy your answers</h2>
+    <p class="sub">Builds a plain-text summary of everything on this tab, including what is still open. Paste it into the chat.</p>
+    <div class="btnrow">
+      <button type="button" class="btn" id="qa-copy-btn">Copy answers</button>
+      <span class="status" id="qa-copy-status" aria-live="polite"></span>
+    </div>
+    <label class="field"><span class="flabel">Your answers, as they will paste</span><textarea id="qa-out" readonly></textarea></label>
+  </section>
+
+  <section class="sheet" id="qa-note">
+    <h2>The note to your accountant</h2>
+    <p class="sub">It fills in from the facts above. Copy it into an email.</p>
+    <div class="btnrow">
+      <button type="button" class="btn ghost" id="note-copy-btn">Copy the note</button>
+      <span class="status" id="note-copy-status" aria-live="polite"></span>
+    </div>
+    <pre class="note" id="note-text"></pre>
+  </section>
+</div>
+
+</div>
+
+<script>
+(function () {
+  var KEY = "bk-acct-questions-v1";
+  var TABKEY = "bk-acct-review-tab";
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var FACTS = [
+    { id: "f1", text: "First business expenses were in May 2026, mostly software subscriptions, many billed in US dollars." },
+    { id: "f2", text: "There is no business bank account yet; purchases have gone on personal cards." },
+    { id: "f3", text: "There is no revenue yet. Club subscriptions will be charged through Stripe, and later the business takes a fee on payments clubs collect (Stripe Connect)." },
+    { id: "f4", text: "There is no other self-employed income." }
+  ];
+
+  var Q = [
+    { id: "q1", title: "If the 1 May 2026 backdating is granted, can I claim GST/HST on purchases from that date? Annual or quarterly filing? Regular method or the Quick Method?",
+      why: "Decides whether every purchase needs its GST/HST recorded separately, and what the return worksheet adds up.",
+      groups: [ { k: "claim", lead: "Claim from 1 May", opts: ["Yes", "No", "Not known yet"] },
+                { k: "freq", lead: "Filing", opts: ["Annual", "Quarterly", "Monthly", "Not known yet"] },
+                { k: "method", lead: "Method", opts: ["Regular", "Quick Method", "Not known yet"] } ] },
+    { id: "q2", title: "Some US software suppliers charge GST/HST under the simplified regime. Should I give them my number once registered, and how should tax they already charged be handled?",
+      why: "Decides whether a US invoice's tax can go in the claimable column.", groups: [] },
+    { id: "q3", title: "Do you need provincial sales tax (PST or QST) tracked separately from GST/HST?",
+      why: "Decides whether the single tax box splits in two.",
+      groups: [ { k: "pst", lead: "Provincial tax", opts: ["Track it separately", "Not needed", "Not known yet"] } ] },
+    { id: "q4", title: "For US-dollar purchases, is the CAD amount on my card statement acceptable, or do you want a Bank of Canada rate?",
+      why: "Decides what the conversion note must say on every USD purchase.",
+      groups: [ { k: "fx", lead: "Conversion", opts: ["Card statement CAD amount", "Bank of Canada rate", "Not known yet"] } ] },
+    { id: "q5", title: "With no business account, what do you recommend I open? Should personal-card purchases be recorded as money I've put in, or as amounts the business owes me back?",
+      why: "Decides how the owner ledger treats every personal-card purchase.",
+      groups: [ { k: "personal", lead: "Personal-card purchases", opts: ["Money I put in", "Owed back to me", "Not known yet"] } ] },
+    { id: "q6", title: "Cash or accrual for the T2125? How should annual plans that clubs pay upfront be treated at year-end?",
+      why: "Decides which date counts for income and whether year-end needs an adjustment.",
+      groups: [ { k: "basis", lead: "Basis", opts: ["Cash", "Accrual", "Not known yet"] } ] },
+    { id: "q7", title: "Above what amount is a purchase capital rather than an expense? Do you want a capital cost schedule from me?",
+      why: "Decides when a purchase gets a capital flag, and whether Bookkeeping produces the schedule.",
+      groups: [ { k: "cca", lead: "Schedule", opts: ["Yes, send one", "No, I'll do it", "Not known yet"] } ] },
+    { id: "q8", title: "What file format suits you, and what should be on a one-page summary?",
+      why: "Decides the package's format and its first page.",
+      groups: [ { k: "format", lead: "Format", opts: ["CSV", "Excel", "Import for their software (say which)", "Not known yet"] } ] },
+    { id: "q9", title: "My records are stored in a US cloud region. Is that acceptable with a readable copy in Canada? Are digital-only receipts fine, and for how long do I keep them?",
+      why: "Decides where the real books are set up, before the first close.",
+      groups: [ { k: "where", lead: "Storage", opts: ["US region plus a Canadian copy is fine", "Must be stored in Canada", "Not known yet"] } ] },
+    { id: "q10", title: "Monthly or quarterly closes? Once you've used a period, how should I handle a later correction?",
+      why: "Decides the \"closed through\" date and what a late correction does.",
+      groups: [ { k: "close", lead: "Close", opts: ["Monthly", "Quarterly", "Not known yet"] } ] },
+    { id: "q11", title: "For Stripe, is the business's income just the fee it keeps? How is GST/HST charged on that fee, and can I claim the tax on Stripe's own fees?",
+      why: "Decides how the Stripe import books income, fees, tax and payouts.", groups: [] },
+    { id: "q12", title: "Home office, phone and internet: record a business-use share during the year, or will you handle it at year-end?",
+      why: "Decides whether purchases need a business-use share entered now.",
+      groups: [ { k: "home", lead: "Business use", opts: ["Record it during the year", "Accountant does it at year-end", "Not known yet"] } ] }
+  ];
+  var BY = ["My answer", "The accountant's answer", "Still asking"];
+
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
+  var fl = document.getElementById("facts-list");
+  fl.innerHTML = FACTS.map(function (f) {
+    return '<div class="qcard" id="card-' + f.id + '"><p>' + esc(f.text) + '</p>' +
+      '<div class="opts" role="radiogroup" aria-label="' + esc(f.text) + '">' +
+      ["Correct", "Not quite"].map(function (o, i) {
+        return '<label class="opt"><input type="radio" name="' + f.id + '" id="' + f.id + '-' + i + '" data-k="facts.' + f.id + '.v" value="' + o + '"> ' + o + '</label>';
+      }).join("") + '</div>' +
+      '<div class="field"><label for="' + f.id + '-note">If not quite, what is true now?</label><input type="text" id="' + f.id + '-note" data-k="facts.' + f.id + '.note" autocomplete="off"></div></div>';
+  }).join("");
+
+  var ql = document.getElementById("q-list");
+  ql.innerHTML = Q.map(function (q, n) {
+    var groups = q.groups.map(function (g) {
+      return '<div class="opts" role="radiogroup" aria-label="' + esc(g.lead) + '"><span class="lead">' + esc(g.lead) + '</span>' +
+        g.opts.map(function (o, i) {
+          return '<label class="opt"><input type="radio" name="' + q.id + '-' + g.k + '" id="' + q.id + '-' + g.k + '-' + i + '" data-k="q.' + q.id + '.' + g.k + '" value="' + esc(o) + '"> ' + esc(o) + '</label>';
+        }).join("") + '</div>';
+    }).join("");
+    var by = '<div class="opts" role="radiogroup" aria-label="Whose answer"><span class="lead">Whose answer</span>' +
+      BY.map(function (o, i) {
+        return '<label class="opt"><input type="radio" name="' + q.id + '-by" id="' + q.id + '-by-' + i + '" data-k="q.' + q.id + '.by" value="' + esc(o) + '"> ' + esc(o) + '</label>';
+      }).join("") + '</div>';
+    return '<div class="qcard" id="card-' + q.id + '"><div class="qhead"><h3>' + (n + 1) + '. ' + esc(q.title) + '</h3><span class="chip" id="chip-' + q.id + '"></span></div>' +
+      '<p class="why">' + esc(q.why) + '</p>' + groups +
+      '<div class="field"><label for="' + q.id + '-text">Answer</label><textarea id="' + q.id + '-text" data-k="q.' + q.id + '.text"></textarea></div>' + by + '</div>';
+  }).join("");
+
+  function getPath(p) { var parts = p.split("."), o = state; for (var i = 0; i < parts.length; i++) { if (o == null) return ""; o = o[parts[i]]; } return o == null ? "" : o; }
+  function setPath(p, v) { var parts = p.split("."), o = state; for (var i = 0; i < parts.length - 1; i++) { if (typeof o[parts[i]] !== "object" || o[parts[i]] === null) o[parts[i]] = {}; o = o[parts[i]]; } o[parts[parts.length - 1]] = v; }
+
+  var inputs = document.querySelectorAll("#panel-questions [data-k]");
+  inputs.forEach(function (el) {
+    var v = getPath(el.getAttribute("data-k"));
+    if (el.type === "radio") el.checked = (v === el.value); else if (v) el.value = v;
+  });
+
+  function qStatus(q) {
+    var a = state.q && state.q[q.id] ? state.q[q.id] : {};
+    var hasText = !!(a.text && a.text.trim());
+    var hasChoice = q.groups.some(function (g) { return a[g.k] && a[g.k] !== "Not known yet"; });
+    if (a.by === "Still asking") return "asking";
+    if (hasText || hasChoice) return "done";
+    return "open";
+  }
+
+  function render() {
+    var done = 0, asking = 0;
+    Q.forEach(function (q) {
+      var s = qStatus(q), chip = document.getElementById("chip-" + q.id), card = document.getElementById("card-" + q.id);
+      card.classList.toggle("done", s === "done"); card.classList.toggle("asking", s === "asking");
+      chip.className = "chip " + (s === "done" ? "ok" : s === "asking" ? "warn" : "info");
+      chip.textContent = s === "done" ? "Answered" : s === "asking" ? "Still asking" : "Open";
+      if (s === "done") done++; if (s === "asking") asking++;
+    });
+    var factsDone = FACTS.filter(function (f) { return getPath("facts." + f.id + ".v"); }).length;
+    document.getElementById("qa-progress").innerHTML = "<span><strong>" + done + " of " + Q.length + "</strong> questions answered</span><span><strong>" + asking + "</strong> still asking</span><span><strong>" + factsDone + " of " + FACTS.length + "</strong> facts confirmed</span>";
+    document.getElementById("tab-count").textContent = done + "/" + Q.length;
+    document.getElementById("note-text").textContent = buildNote();
+    document.getElementById("qa-out").value = buildAnswers();
+  }
+
+  function gstLine() {
+    var g = getPath("f.gst"), d = getPath("f.gstdate");
+    if (g === "Registered") return "registered" + (d ? ", effective " + d : "");
+    if (g === "Applied, waiting to hear") return "applied" + (d ? " on " + d : "") + ", waiting to hear";
+    if (g === "Not applied yet") return "not yet registered";
+    return "[not yet registered / applied on ___]";
+  }
+
+  function buildNote() {
+    var acct = getPath("f.acct") || "[name]", you = getPath("f.you") || "[your name]", prov = getPath("f.prov") || "[province]";
+    var lines = [
+      "Subject: FieldLogicHQ bookkeeping: a few questions before our first close", "",
+      "Hi " + acct + ",", "",
+      "I'm setting up the books for FieldLogicHQ (sole proprietorship, software). I'd like your answers before I build the tax side, so it's done once and done your way.", "",
+      "Where things stand",
+      "- First business expenses: May 2026. They're mostly software subscriptions, many billed in US dollars.",
+      "- GST/HST: " + gstLine() + ". I'm asking for a 1 May 2026 effective date.",
+      "- No business bank account yet. Purchases have gone on personal cards.",
+      "- No revenue yet. Club subscriptions will be charged through Stripe, and later the business will take a fee on payments clubs collect through it (Stripe Connect).",
+      "- Every purchase is recorded with its receipt. Corrections keep the earlier version and nothing is ever deleted. Each period exports as a spreadsheet plus all the receipts.", "",
+      "Questions"
+    ];
+    Q.forEach(function (q, n) {
+      var t = q.id === "q3" ? "I'm in " + prov + ". Do you need provincial sales tax tracked separately from GST/HST?" : q.title;
+      lines.push((n + 1) + ". " + t);
+    });
+    lines.push("", "I can send a sample export (test data only) so you can tell me what's missing.", "", "Thanks,", you);
+    return lines.join("\n");
+  }
+
+  function buildAnswers() {
+    var now = new Date();
+    var stamp = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
+    var done = Q.filter(function (q) { return qStatus(q) === "done"; }).length;
+    var asking = Q.filter(function (q) { return qStatus(q) === "asking"; }).length;
+    var out = ["BOOKKEEPING · ACCOUNTANT QUESTIONS · answers copied " + stamp,
+      "Answered " + done + " of " + Q.length + " · still asking " + asking + " · open " + (Q.length - done - asking), "",
+      "FACTS FOR THE NOTE",
+      "- Accountant: " + (getPath("f.acct") || "(blank)"),
+      "- Province or territory: " + (getPath("f.prov") || "(blank)"),
+      "- GST/HST registration: " + (getPath("f.gst") || "(blank)") + (getPath("f.gstdate") ? " · date " + getPath("f.gstdate") : "") + (getPath("f.gstnote") ? " · " + getPath("f.gstnote") : ""),
+      "- Sample export: " + (getPath("f.sample") || "(blank)") + (getPath("f.samplewhere") ? " · " + getPath("f.samplewhere") : ""), "",
+      "IS THIS STILL RIGHT?"];
+    FACTS.forEach(function (f, i) {
+      var v = getPath("facts." + f.id + ".v") || "(not confirmed)", note = getPath("facts." + f.id + ".note");
+      out.push("F" + (i + 1) + " " + f.text + " → " + v + (note ? " · " + note : ""));
+    });
+    out.push("", "QUESTIONS");
+    Q.forEach(function (q, n) {
+      var a = state.q && state.q[q.id] ? state.q[q.id] : {};
+      var s = qStatus(q);
+      out.push("Q" + (n + 1) + " [" + (s === "done" ? "ANSWERED" : s === "asking" ? "STILL ASKING" : "OPEN") + "] " + q.title);
+      var ch = q.groups.filter(function (g) { return a[g.k]; }).map(function (g) { return g.lead + ": " + a[g.k]; });
+      if (ch.length) out.push("   Choices: " + ch.join(" · "));
+      if (a.text && a.text.trim()) out.push("   Answer: " + a.text.trim().replace(/\n+/g, " / "));
+      if (a.by) out.push("   Whose answer: " + a.by);
+      out.push("");
+    });
+    return out.join("\n");
+  }
+
+  document.getElementById("panel-questions").addEventListener("input", onChange);
+  document.getElementById("panel-questions").addEventListener("change", onChange);
+  function onChange(e) {
+    var k = e.target.getAttribute && e.target.getAttribute("data-k");
+    if (!k) return;
+    if (e.target.type === "radio") { if (!e.target.checked) return; }
+    setPath(k, e.target.value); save(); render();
+  }
+
+  function copy(text, btnStatus, area) {
+    var status = document.getElementById(btnStatus);
+    function fallback() {
+      if (area) { area.focus(); area.select(); }
+      status.textContent = "Select the text and copy it with Ctrl+C.";
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function () { status.textContent = "Copied. Paste it into the chat."; }, fallback);
+    } catch (e) { fallback(); }
+  }
+  document.getElementById("qa-copy-btn").addEventListener("click", function () {
+    var t = buildAnswers(); var area = document.getElementById("qa-out"); area.value = t; copy(t, "qa-copy-status", area);
+  });
+  document.getElementById("note-copy-btn").addEventListener("click", function () {
+    var t = buildNote();
+    try {
+      navigator.clipboard.writeText(t).then(function () { document.getElementById("note-copy-status").textContent = "Copied. Paste it into an email."; },
+        function () { selectNote(); });
+    } catch (e) { selectNote(); }
+    function selectNote() {
+      var r = document.createRange(); r.selectNodeContents(document.getElementById("note-text"));
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      document.getElementById("note-copy-status").textContent = "Selected. Copy it with Ctrl+C.";
+    }
+  });
+
+  var tabs = [document.getElementById("tab-review"), document.getElementById("tab-questions")];
+  function show(which) {
+    tabs.forEach(function (t) {
+      var on = t.id === "tab-" + which;
+      t.setAttribute("aria-selected", on ? "true" : "false");
+      document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+    });
+    try { localStorage.setItem(TABKEY, which); } catch (e) {}
+  }
+  tabs.forEach(function (t) { t.addEventListener("click", function () { show(t.id.replace("tab-", "")); }); });
+  document.querySelectorAll("nav.toc a").forEach(function (a) { a.addEventListener("click", function () { show("review"); }); });
+
+  var start = "review";
+  if (location.hash === "#questions") start = "questions";
+  else { try { start = localStorage.getItem(TABKEY) || "review"; } catch (e) {} }
+  if (start !== "questions") start = "review";
+  show(start);
+  render();
+})();
+</script>
