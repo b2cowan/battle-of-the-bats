@@ -1,0 +1,232 @@
+<title>Walk 6 Webhook Hardening</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+
+.stop { border-left: 4px solid var(--warn); }
+.step.opt { flex-direction: column; gap: 4px; }
+.step .optrow { display: flex; gap: 10px; align-items: flex-start; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Stripe end-to-end · Walk 6</span>
+    <h1>The same Stripe event twice, and out of order, changes nothing twice</h1>
+    <p class="sub">Written 2026-10-28. Stripe sometimes delivers the same event again, and does not promise to deliver events in order. This walk makes Stripe do exactly that on purpose and checks that nothing doubles: no second email, no second record, no second receipt number.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    
+<p>This walk <strong>resends events that earlier walks already produced</strong>. In Stripe’s dashboard, every delivered event has a <strong>Resend</strong> button; pressing it sends the very same event to our site again, exactly as Stripe does on its own when it retries. Nothing is bought or paid in this walk. What you are testing is that the site recognises “I have already done this” and stays still.</p>
+<p>The site protects itself in two different ways, and the walk looks at both:</p>
+<ul>
+  <li><strong>Team payments and club account changes</strong> (the two “Dev: club…” destinations) keep a list of every event they have handled. A repeated event is answered “already done” and skipped outright (Parts C and E).</li>
+  <li><strong>Plan purchases and subscriptions</strong> (the Billing destination) keep no such list. Each step is written so that doing it twice is harmless: the second run finds the portal or club already exists, and it sends no second welcome email (Part B).</li>
+  <li><strong>Out of order</strong> (Part D) is the open question. The Billing side writes what the event says. This walk shows what an <em>older</em> subscription event does when it arrives after a newer one, so you can rule on whether that is acceptable.</li>
+</ul>
+<p>What “no change” looks like here is always a <strong>relationship</strong>, not a figure: the same count of emails in Resend before and after, the same receipt number on the desk, the pay page and the email, the same lines in the club’s Story.</p>
+    <div><strong>It passes when</strong></div>
+    
+<ul>
+  <li>Resending the plan-purchase event twice leaves the Resend dashboard with the same number of welcome emails, the platform-admin Story with the same number of “Bought” lines, and the coach’s portal unchanged.</li>
+  <li>Resending a team’s deposit payment event leaves the receipt email count at one, the desk with the same payment rows and the same receipt number, and the team’s balance unchanged.</li>
+  <li>Part D is answered: you have ticked what the club’s billing screen did when the older event arrived, and what you want the product to do about it. That part is an observation, not a pass/fail.</li>
+  <li>Every delivery line in the three Stripe destinations during the walk’s window reads 200.</li>
+</ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private: it holds dev passwords.</p>
+    <dl class="facts"><dt>Where</dt><dd>The dev site <strong>https://dev.fieldlogichq.ca</strong>, plus two other tabs: the <strong>Stripe dashboard</strong> (the sandbox “FieldLogicHQ sandbox”) and the <strong>Resend dashboard</strong> › Emails (every message the site sends is listed there, with subject and recipient).</dd><dt>Webhooks</dt><dd>Stripe dashboard › <strong>Workbench › Webhooks</strong>. Three destinations: <strong>Billing</strong> (plan purchases and subscriptions), <strong>Dev: club payments</strong> (team deposits) and <strong>Dev: club account events</strong> (payouts account changes). Each has an <strong>Event deliveries</strong> tab. Click an event there and a <strong>Resend</strong> button appears. Stripe’s own documentation says Resend works for <strong>15 days after the event</strong>, so every event you use must be less than 15 days old.</dd><dt>If there is no Resend button</dt><dd>Stripe’s command-line tool does the same job: in a terminal, <code>C:\tools\stripe\stripe.exe events resend evt_… --webhook-endpoint=we_…</code> (the <code>evt_</code> id is on the event’s page, the endpoint id is on the destination’s page; the command line works for 30 days). It must be logged in to the sandbox first. If it is not, stop and tell me.</dd><dt>What a resend does</dt><dd>Stripe sends the same event again and adds a <strong>new delivery line</strong> under the event, with the status code our site answered. A healthy answer is <strong>200</strong>. Resending leaves nothing behind in the product, only extra delivery lines in Stripe’s history, so there is nothing to put back (except in Part D, which says so).</dd><dt>Emails</dt><dd>The coach from Walk 1 and the team’s payer from Walk 9 each used a plus-address inbox. You need access to both inboxes' messages in the Resend dashboard (search the Emails list by recipient). Real mail sometimes takes up to 2 minutes; always wait and refresh before you count.</dd><dt>Figures that may drift</dt><dd>Plan names on the pricing page, and the “New subscriptions” count on Business numbers if someone else buys something during the walk. Counts that must match are always compared with <em>your own before-figure</em>, never with a number written here.</dd></dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <dl class="facts"><dt>Platform admin (Super admin)</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code> at <code>/platform-admin/login</code>. If sign-in is refused, stop and tell me.</dd><dt>UAT Rep Club owner (the desk)</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code></dd><dt>The coach from Walk 1</dt><dd>The plus-address you used in Walk 1 (<code>yourname+coach1@…</code>) and the password you chose then.</dd><dt>The club owner from Walk 2</dt><dd>The Tournament Plus club bought in Walk 2: its owner’s plus-address and the password you chose then. Only Part D needs it.</dd></dl>
+  </section>
+
+  <section class="card stop">
+    <h2>Stop check</h2>
+    <p><strong>This walk needs three things from earlier walks. Part A shows each one and tells you to stop if it is missing.</strong> A Premium purchase from Walk 1 (less than 15 days old), a team’s deposit paid by card through Walk 9 (or 8) on <em>Stripe Walk Invitational</em> (less than 15 days old), and, for the optional Part D, a Tournament Plus club from Walk 2 that still has its real subscription. If you did the earlier walks more than 15 days ago, Stripe will not let you resend those events: redo the purchase or the payment first, then come back.</p>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    
+<ul>
+  <li><strong>A repeated delivery with a wrong signature.</strong> The site refuses it (it answers 400), but there is no screen on the site or in Stripe that shows that, and a Resend always carries a valid signature. Proving it needs a hand-made request from a terminal, which is not an owner step. Nothing in the repository tests it either; it is listed as a gap, not as covered.</li>
+  <li><strong>Two <em>different</em> events for the same payment.</strong> The deeper once-only rules (the receipt can only be claimed once; a payment can only land once) are for the case where Stripe sends a second, different event naming the same payment. A card payment only ever produces one such event, so Resend cannot trigger that rule; a bank debit can, and bank debits are covered by their own walk.</li>
+  <li><strong>An older event changing the <em>plan</em> (not just the billing cycle).</strong> It follows the same code as Part D, but a plan move needs a higher plan, and those are not open for self-serve on dev. Part D shows the cycle jumping back; the plan case is the same mechanism.</li>
+  <li><strong>A refund, a dispute or a returned bank debit replayed.</strong> Covered by the refund, dispute and bank-debit walks, which do their own resends.</li>
+  <li><strong>Events older than 15 days.</strong> Stripe will not resend them from the dashboard.</li>
+</ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  var DATA = {"key":"stripe-e2e-walk-6-v1","title":"Stripe end-to-end walk 6: The same Stripe event twice, and out of order, changes nothing twice","parts":[{"id":"A","title":"Find the events you will resend (stop here if any is missing)","steps":[{"who":"You · computer · Stripe dashboard (sandbox) · Workbench › Webhooks","do":"Open the destination named “Billing”, then its Event deliveries tab. Look for the event of type checkout.session.completed that your Walk 1 Premium purchase produced. Click it and read its details: the buyer’s email must be the plus-address you used in Walk 1. Copy the event’s id (it starts with evt_) into your notes as EVENT-PURCHASE.","see":"You find exactly one such event for that email, marked Delivered with status 200, created less than 15 days ago.","options":["Found it: delivered, 200, less than 15 days old","Not found, or older than 15 days: STOP. Redo Walk 1 and come back"]},{"who":"You · computer · Stripe dashboard › Workbench › Webhooks › “Dev: club payments”","do":"Open the destination named “Dev: club payments” and its Event deliveries tab. Find the checkout.session.completed event for the team deposit you paid by card in Walk 9 (or 8): match it by the time you paid and the amount the pay page showed. Copy its event id into your notes as EVENT-DEPOSIT.","see":"You find exactly one event at that time and amount, marked Delivered with status 200, less than 15 days old.","options":["Found it: delivered, 200, less than 15 days old","Not found, or older than 15 days: STOP. Redo the team payment and come back"]},{"who":"You · computer · the Resend dashboard › Emails","do":"Keep this tab open for the whole walk. You will search it by recipient several times.","see":"The Emails list loads and shows recent messages from the site (sender FieldLogicHQ, noreply address).","options":["Open, and I can search by recipient","Cannot open it: STOP and tell me"]},{"who":"You · computer · Stripe dashboard › Workbench › Webhooks","do":"Before you resend anything, write down the current time. Everything in the three destinations after that time belongs to this walk (Part F uses it).","see":"You have a start time written down."}]},{"id":"B","title":"A plan purchase, resent twice: no second email, no second portal","steps":[{"who":"You · computer · the Resend dashboard › Emails","do":"Search for the Walk 1 coach’s plus-address as recipient. Count the messages whose subject begins “Welcome to your Premium Coaches Portal —”. Write the count down as WELCOME-BEFORE.","see":"Exactly one welcome message (the original from Walk 1). If there are two or more already, that is a finding from before this walk: say so in the notes.","options":["Exactly one welcome email","More than one already: say what in the notes"]},{"who":"Platform admin · computer · https://dev.fieldlogichq.ca/platform-admin/orgs","do":"Open Clubs & portals and find the coach’s Premium portal from Walk 1 (search by the team name or the coach’s email). Open its record on the Story tab. Count the lines that begin “Bought”. Write it down as BOUGHT-BEFORE. Then open the Access tab and write down the Plan shown.","see":"One “Bought” line, and the plan shown on Access is the Premium coach plan. Both are written down."},{"who":"Platform admin · computer · https://dev.fieldlogichq.ca/platform-admin/business-numbers","do":"Open Business numbers. In the Billing events section (Lifecycle history), write down the “New subscriptions” figure in the 7d column as NEWSUBS-BEFORE.","see":"A number is written down. This figure counts every purchase on the site in the last 7 days, so it only means something if nobody buys anything while you walk."},{"who":"The coach from Walk 1 · computer · sign in with the Walk 1 plus-address","do":"Open the coach’s portal Plan & billing page. Its address is the portal’s address (shown on the platform-admin record from the previous steps) followed by /admin/org/billing. Write down the plan name, the “Billed monthly / annually” line and the “Renews …” date.","see":"The page opens, the plan is Premium, and you have the billing line and the renewal date written down as COACH-BILLING-BEFORE. If the page will not open for the coach, use the platform-admin Access tab only and say so in the notes."},{"who":"You · computer · Stripe dashboard › Workbench › Webhooks › Billing › Event deliveries","do":"Open EVENT-PURCHASE. Press Resend. Wait for the page to show a new delivery line under the event.","see":"A new delivery line appears with status 200 (the event id is the same one). It leaves nothing behind except that line.","options":["New delivery line, 200","New delivery line, but not 200: say the code in the notes","No Resend button: used the command line instead","No way to resend at all: STOP and tell me"]},{"who":"You · computer · same Stripe screen","do":"Press Resend on the same event a second time.","see":"A second new delivery line, status 200.","options":["Second new delivery line, 200","Second line, but not 200: say the code in the notes"]},{"who":"You · computer · Stripe dashboard › Workbench › Webhooks › Billing › Event deliveries","do":"Optional extra. In the same list, find the customer.subscription.created event for the same buyer’s email (open it to check) and press Resend on it once. If you cannot find it in two minutes, skip this.","see":"A new delivery line with status 200 under that event.","options":["Did it","Skipped it"]},{"who":"You · computer · the Resend dashboard › Emails","do":"Wait two minutes, refresh, and search again for the coach’s plus-address. Count the messages that begin “Welcome to your Premium Coaches Portal —”.","see":"The count is the same as WELCOME-BEFORE. No new welcome email, and no other new message from the site to that address because of the resends.","options":["Same count as before","One more welcome email arrived","Some other new email arrived: say its subject in the notes"]},{"who":"Platform admin · computer · the coach’s portal record › Story","do":"Reload the Story. Count the lines that begin “Bought”.","see":"The same count as BOUGHT-BEFORE: still one. The Access tab still shows the same plan.","options":["Same: one “Bought” line, same plan","A second “Bought” line appeared","Plan changed: say to what in the notes"]},{"who":"Platform admin · computer · https://dev.fieldlogichq.ca/platform-admin/orgs (Clubs & portals)","do":"Search the list for the team name from Walk 1.","see":"Exactly one portal carries that team’s name. There is no second copy created by the resends.","options":["One portal only","Two portals with the same team: say what in the notes"]},{"who":"Platform admin · computer · https://dev.fieldlogichq.ca/platform-admin/business-numbers","do":"Reload Business numbers and read “New subscriptions” in the 7d column again.","see":"The same figure as NEWSUBS-BEFORE (if nobody else bought anything meanwhile). A resend never counts as a new subscription.","options":["Same as before","It went up by one or more","Someone else bought meanwhile, so I cannot say"]},{"who":"The coach from Walk 1 · computer","do":"Reload the Plan & billing page.","see":"The plan, the “Billed …” line and the “Renews …” date all match COACH-BILLING-BEFORE.","options":["All three match","One of them changed: say which in the notes"]}]},{"id":"C","title":"A team’s deposit payment, resent: the receipt goes out once","steps":[{"who":"UAT Rep Club owner · computer · https://dev.fieldlogichq.ca/uat-rep-club/admin/tournaments/registrations","do":"In UAT Rep Club’s admin, open Registrations for the tournament Stripe Walk Invitational and open the record of the team that paid the deposit by card (Walk 9). Find its payments list. Write down: how many online payment rows there are (each reads “Online, card · receipt …”), the receipt number N on the deposit row, and the Paid and Balance figures for the team. Call these DESK-BEFORE.","see":"One online card row for the deposit, with a receipt number, and a Paid figure and a Balance figure written down. (If the team paid more than once, count every online row.)"},{"who":"The payer · computer · your inbox (the plus-address used for the team in Walk 9)","do":"Open the receipt email for that payment. Note its receipt number and that it is the only one of its kind. Open the button in the email to reach the team’s pay page, and read the Receipts section there.","see":"The email’s subject reads “[Test] Receipt N from UAT Rep Club”, with the same N as the desk row. The pay page lists the same “receipt N” under Receipts.","options":["Same receipt number on email, pay page and desk row","The numbers differ: say what in the notes"]},{"who":"You · computer · the Resend dashboard › Emails","do":"Search for the payer’s plus-address. Count the messages whose subject begins “[Test] Receipt”. Write the count as RECEIPT-BEFORE.","see":"Exactly one receipt message per payment you made (one for a single deposit)."},{"who":"You · computer · Stripe dashboard › Workbench › Webhooks › “Dev: club payments” › Event deliveries","do":"Open EVENT-DEPOSIT and press Resend. Wait for the new delivery line.","see":"A new delivery line with status 200.","options":["New delivery line, 200","New delivery line, not 200: say the code in the notes","No way to resend: STOP and tell me"]},{"who":"You · computer · same Stripe screen","do":"Open the new delivery line and read what our site answered, if the screen shows the response body.","see":"On this destination a repeated event is answered with a short message that says it was a duplicate. Tick what you see.","options":["The answer says duplicate: true","Only the status 200 is shown, no body","Some other answer: write it in the notes"]},{"who":"You · computer · same Stripe screen","do":"Press Resend on the same event a second time.","see":"Another new delivery line, status 200.","options":["Second new delivery line, 200","Second line, not 200: say the code in the notes"]},{"who":"You · computer · the Resend dashboard › Emails","do":"Wait two minutes, refresh, search again for the payer’s plus-address and count the messages that begin “[Test] Receipt”.","see":"The same count as RECEIPT-BEFORE. No second receipt email.","options":["Same count: no second receipt","A second receipt email arrived","Another kind of email arrived: say its subject in the notes"]},{"who":"UAT Rep Club owner · computer · the same team record on Registrations","do":"Reload the Registrations screen and open the same team’s payments list again.","see":"The same number of online rows as DESK-BEFORE, the same receipt number N, and the same Paid and Balance figures. Nothing was added or doubled.","options":["All the same","An extra payment row appeared","Paid or Balance changed: say the numbers in the notes"]},{"who":"The payer · computer · the pay page from the email button","do":"Reload the team’s pay page.","see":"The Receipts section still lists the same single receipt N, and the balance line is unchanged.","options":["Unchanged","Something changed: say what in the notes"]}]},{"id":"D","title":"An older subscription event arrives after a newer one (observation: optional, changes a Stripe subscription)","steps":[{"who":"You · computer · read this first","do":"This part does one thing the first three do not: it changes the billing cycle of a real sandbox subscription in Stripe (monthly to annual, or the other way), then resends the OLDER event. It uses the Tournament Plus club from Walk 2, and it puts the cycle back at the end. Do not run it on any club another walk still needs mid-way.","see":"You decide.","options":["I will run Part D now","Skipping Part D: not tested in this walk"]},{"who":"The club owner from Walk 2 · computer · https://dev.fieldlogichq.ca/ then the club’s Plan & billing page","do":"Sign in as Walk 2’s club owner and open the club’s Plan & billing page (in the club’s admin, under Settings, Subscription). Write down the plan name and the line that reads “Billed monthly” or “Billed annually” as CYCLE-BEFORE. Do not compare the “Renews” date in this part: a change of cycle moves it.","see":"The plan is Tournament Plus and a “Billed …” line is shown. If it reads free forever or shows no “Billed” line, the club has no real subscription: STOP.","options":["Billed line shown (real subscription)","No real subscription here: STOP, skip Part D"]},{"who":"You · computer · Stripe dashboard › Workbench › Webhooks › Billing › Event deliveries","do":"Find the newest customer.subscription.created or customer.subscription.updated event for this club’s customer (open it and check the customer’s email). Copy its id as EVENT-OLD.","see":"One event, Delivered, 200, less than 15 days old. It describes the subscription in its current (old) state."},{"who":"You · computer · Stripe dashboard › Customers","do":"Open this club’s customer, open its subscription, and from the subscription’s Actions menu choose Update subscription. Swap the price to the same plan’s other billing cycle (monthly becomes annual, or annual becomes monthly) and confirm. A small prorated charge on the saved test card is expected.","see":"Stripe shows the subscription on the other cycle. A new customer.subscription.updated delivery appears on the Billing destination with status 200: copy its id as EVENT-NEW.","options":["Did it: new event delivered, 200","Could not find the Update subscription action: skip the rest of Part D and tell me"]},{"who":"The club owner from Walk 2 · computer · Plan & billing page","do":"Reload the page after a minute.","see":"The “Billed …” line now shows the other cycle (it follows the newer event).","options":["It shows the new cycle","Still the old cycle after 3 minutes: say so in the notes"]},{"who":"You · computer · Stripe dashboard › Billing › Event deliveries","do":"Open EVENT-OLD and press Resend. Wait for the new delivery line.","see":"A new delivery line with status 200. The subscription in Stripe is still on the NEW cycle.","options":["New delivery line, 200","Not 200: say the code in the notes"]},{"who":"The club owner from Walk 2 · computer · Plan & billing page","do":"Reload the page.","see":"Tick what the page now reads. The code writes whatever an event says without checking that it is the newest, so it is expected to jump back to the old cycle while Stripe still holds the new one.","options":["Jumped back to the OLD cycle while Stripe holds the new one (the club is out of step with Stripe)","Stayed on the NEW cycle (the older event was ignored)","Something else: say what in the notes"]},{"who":"You · decision","do":"What should the product do when an older event arrives after a newer one?","see":"Your tick is the answer. Why it matters: a missed-payment or cancellation event replayed late could put a paying club in the wrong state until the next real event.","options":["It must never overwrite a newer state: ask for a guard","Acceptable: only a manual Resend does this; Stripe delivers in close to order","Not sure: needs a discussion"]},{"who":"You · computer · Stripe dashboard › Billing › Event deliveries","do":"Put it back, part one: open EVENT-NEW and press Resend.","see":"A new delivery line, 200. The club’s Plan & billing page, reloaded, shows the new cycle again, matching Stripe.","options":["Matches Stripe again","Still wrong: say what in the notes"]},{"who":"You · computer · Stripe dashboard › Customers","do":"Put it back, part two: update the subscription back to its original cycle (the one you wrote down as CYCLE-BEFORE).","see":"After a minute the club’s Plan & billing page reads the same “Billed …” line as CYCLE-BEFORE, and it agrees with the subscription in Stripe.","options":["Back to the original cycle, matching Stripe","Does not match: say what in the notes"]}]},{"id":"E","title":"A club account change, resent (optional)","steps":[{"who":"You · computer · Stripe dashboard › Workbench › Webhooks › “Dev: club account events” › Event deliveries","do":"If this destination has a delivered event less than 15 days old, open the newest one and press Resend. If it has none, skip this part.","see":"A new delivery line, status 200.","options":["Resent: 200","Resent: not 200, say the code in the notes","No recent event to resend: skipped"]},{"who":"UAT Rep Club owner · computer · https://dev.fieldlogichq.ca/uat-rep-club/admin/org/settings#payouts","do":"Open Settings, Payouts, and look at the state line and the Needs attention list (the bell).","see":"It reads the same as before the resend (“Taking payments”). No new “Stripe needs something” item has appeared.","options":["Same as before","Changed or a new item appeared: say what in the notes","Skipped, nothing to resend"]}]},{"id":"F","title":"Closing check: every delivery in the walk’s window is 200","steps":[{"who":"You · computer · Stripe dashboard › Workbench › Webhooks › Billing › Event deliveries","do":"Look at every delivery line from the start time you wrote down in Part A until now.","see":"All of them read 200 (Delivered). No Failed or Pending lines.","options":["All 200","A non-200 line: say its event type and code in the notes"]},{"who":"You · computer · Stripe dashboard › Webhooks › “Dev: club payments” › Event deliveries","do":"Look at every delivery line from your start time until now.","see":"All of them read 200.","options":["All 200","A non-200 line: say its event type and code in the notes"]},{"who":"You · computer · Stripe dashboard › Webhooks › “Dev: club account events” › Event deliveries","do":"Look at every delivery line from your start time until now.","see":"All of them read 200, or there are none if you skipped Part E.","options":["All 200 (or none)","A non-200 line: say its event type and code in the notes"]}]}]};
+  var KEY = DATA.key, PARTS = DATA.parts;
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+  function box(id, partId, label) {
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+    boxes.push({ part: partId, id: id, cb: cb, label: label });
+    return cb;
+  }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(txt('strong', null, p.id + ' \u00b7 ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(txt('span', 'who', id + ' \u00b7 ' + s.who));
+      t.appendChild(txt('span', null, s['do']));
+      t.appendChild(txt('span', 'see', 'You should see: ' + s.see));
+      if (s.options && s.options.length) {
+        var wrap = el('div', 'step opt'); wrap.appendChild(t);
+        s.options.forEach(function (o, k) {
+          var row = el('label', 'optrow'); var cb = box(id + '-' + (k + 1), p.id, id + ' = ' + o);
+          row.appendChild(cb); row.appendChild(txt('span', null, o)); wrap.appendChild(row);
+        });
+        body.appendChild(wrap);
+      } else {
+        var row2 = el('label', 'step'); var cb2 = box(id, p.id, id);
+        row2.appendChild(cb2); row2.appendChild(t); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' \u00b7 ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [DATA.title + ' (written 2026-10-28)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length + ' (a step with options counts one box per option)');
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join('; ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

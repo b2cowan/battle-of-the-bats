@@ -63,7 +63,8 @@ p.finishedNote { margin: 0 0 0.75rem; }
 .read dt { color: var(--text-tertiary); }
 .read dd { margin: 0; color: var(--text-primary); font-weight: 550; overflow-wrap: anywhere; }
 .read dd.quiet { color: var(--text-tertiary); font-weight: 500; }
-.readAfter { margin-top: 0.75rem; }
+/* `p.readAfter`: the hint paragraph also wears ClubKit's `.hint` (margin: 0), which would otherwise win on stylesheet order. */
+.readAfter, p.readAfter { margin-top: 1rem; }
 /* An email as sent (the Emails tab's record, Stage 7c): the club's words as typed, their line breaks kept. */
 .emailBody { margin: 0 0 0.75rem; padding: 0.75rem 0.9rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--surface-2); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text-primary); }
 .ladder { display: block; font-size: var(--type-support); color: var(--text-secondary); }
@@ -164,11 +165,13 @@ p.finishedNote { margin: 0 0 0.75rem; }
 
 /* The Emails table: a date, a sender and a figure read on one line (drawing 5's td.nw). A long sender ends in an ellipsis. */
 .nw { white-space: nowrap; }
+/* The Stopped chip and the figure after it (Reached): a chip's own edge needs air; a bare space left it touching. */
+.chipGap { margin-right: 0.6rem; }
 .nwClip { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 0; }
 
 /* ── An email log's extras (Club Tier Stage 9d-1): the Automatic tag opens what it means; the old season log sits apart
       under its divider ("Earlier emails · counted per child") ── */
-.tagButton { padding: 0; border: 0; background: none; font: inherit; cursor: pointer; vertical-align: baseline; }
+.tagButton { margin-left: 0.4rem; padding: 0; border: 0; background: none; font: inherit; cursor: pointer; vertical-align: baseline; }
 .tagButton:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 999px; }
 .divider { margin: 1rem 0 0.4rem; font-size: var(--type-support); font-weight: 650; color: var(--text-tertiary); }
 .dividerRow td { padding-top: 0.9rem; font-size: var(--type-support); font-weight: 650; color: var(--text-tertiary); }

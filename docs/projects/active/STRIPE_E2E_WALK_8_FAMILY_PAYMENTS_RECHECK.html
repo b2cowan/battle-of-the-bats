@@ -1,0 +1,211 @@
+<title>Walk 8 Family Payments</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+
+.stop { border-left: 4px solid var(--warn); }
+.step.opt { flex-direction: column; gap: 4px; }
+.step .optrow { display: flex; gap: 10px; align-items: flex-start; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Stripe end-to-end · Walk 8</span>
+    <h1>Families and teams pay online — a short re-check on the dev site</h1>
+    <p class="sub">Written 2026-10-28. One purpose: prove, on the real dev site with real webhooks and real email, that a house-league family and a tournament team can pay by card, get the right emails, and be refunded. Everything here already passed on your own computer in October; the email steps were held because that computer cannot send mail.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Online payments (Club Tier Stage 12) were walked in full on your own computer (house league: walks §380 and §389; the refund and part-refund screens: §389; tournament teams: §376; bank debit §390; paid twice and disputes §395 and §396). Every step that needed an <strong>email</strong> was ticked “Held”, and nothing has yet been run against the dev site’s real Stripe webhooks. This walk is the short regression plus those held emails, run once on <strong>https://dev.fieldlogichq.ca</strong>.</p><p>You will use two children in house league and one visiting team in the tournament. Between them they send about ten emails: two sign-up emails, three receipts, two pay links, and the refund emails. You check each one arrives, says what the screen says, and carries the <strong>same receipt number</strong> as the page and the desk.</p>
+    <div><strong>It passes when</strong></div>
+    <p>A payment is never shown as “Paid” before the site has recorded it. A declined card records nothing. Each receipt email arrives in the club’s name with the same receipt number as the pay page and the desk row. Each refund email says where the money went. The Stripe dashboard and the “Dev: club payments” deliveries list agree with what the desk shows, and every delivery is a <code>200</code>.</p>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private: it holds dev passwords.</p>
+    <dl class="facts"><dt>Where</dt><dd>Everything is on <strong>https://dev.fieldlogichq.ca</strong> (the dev site), not on your own computer. The Stripe dashboard is in <strong>test mode</strong> (“FieldLogicHQ sandbox”). No real money moves anywhere.</dd><dt>Your inbox</dt><dd>A real inbox that accepts plus-addresses: <code>yourname+fam1@gmail.com</code> arrives in <code>yourname@gmail.com</code>. This walk uses three: <code>+fam1</code> (the first child), <code>+fam2</code> (the second child) and <code>+team1</code> (the visiting team). The <code>.local</code> addresses on the sign-in card cannot receive mail, so never use them as the family’s or the team’s email.</dd><dt>If an email does not show in about 2 minutes</dt><dd>Open <strong>Resend</strong> › Emails. Every message the site sends is listed there with its subject, who it went to, and whether it was delivered or bounced. Look in your spam folder as well. Part G uses that list as the final check.</dd><dt>Test cards</dt><dd>Approved: <code>4242 4242 4242 4242</code>. Declined: <code>4000 0000 0000 0002</code>. Any future expiry date, any three digits, any postal code. Stripe’s page asks for an email and a name on the card; any will do.</dd><dt>Webhooks</dt><dd>In the Stripe dashboard (test mode) › Workbench › Webhooks you will look at the destination named <strong>Dev: club payments</strong> and its <strong>Event deliveries</strong> tab in part G. You do not run anything on your own computer.</dd><dt>Phone-sized window</dt><dd>The family steps are meant to be seen on a phone. Use your phone, or make the browser window narrow (a private window about 400 pixels wide). Use a private window for each family or team so they are not signed in as the owner.</dd><dt>What this walk leaves behind</dt><dd>Two house-league children (<em>Dana Recheckone</em> and <em>Dana Rechecktwo</em>), both ended by the refunds in part F, so nothing of theirs stays enrolled. One visiting team, <em>Recheck Team</em>, in 15U of UAT Rep Club Invitational 2026, owing again after its refund (the same kind of leftover as <em>Walk Twice Team</em> from earlier walks). Nothing needs putting back for the next run: use new names (<em>Dana Recheckthree</em>, <em>Recheck Team 2</em>), or tell Claude to clear them.</dd></dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <dl class="facts"><dt>Club owner (parts A, E, F)</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> (dev only)</dd><dt>Registrar (parts B to F, the desk)</dt><dd><code>uat-club-registrar@uat-rep-club.local</code> · <code>UATPassword2026!</code> (dev only)</dd><dt>Club</dt><dd>UAT Rep Club, address <code>/uat-rep-club</code>, Club plan, Stripe test mode. If it looks wrong or empty, say so and stop; do not rebuild it yourself (a rebuild resets every password above).</dd><dt>The families and the team</dt><dd>No login. A private window and your plus-addressed inbox, as in “Before you start”.</dd><dt>Sign-in page</dt><dd>Open any address below under <code>https://dev.fieldlogichq.ca/uat-rep-club/admin</code>; the site asks you to sign in first if you are not signed in. Sign out between the owner and the registrar, or use a private window for each.</dd></dl>
+  </section>
+
+  <section class="card stop">
+    <h2>Stop check</h2>
+    <p><strong>Stop here if part A does not pass.</strong> Every later part needs UAT Rep Club to be “Taking payments”. If part A shows anything else (“Setting up”, “Needs attention” or “Disconnected”), stop and tell Claude: reconnecting the club’s test Stripe account is a separate job, not a step of this walk.</p><p>Also stop and tell Claude if, in part B, the confirmation shows a child as <strong>Waitlisted</strong> instead of <strong>Accepted</strong> (the division is full), or if a link in any email opens an address that does not start with <code>https://dev.fieldlogichq.ca</code>.</p>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    <p><strong>Walked and passed on your own computer, not repeated here:</strong> pay by <strong>bank debit</strong> and its clearing and returned states (walk §390); a team or family <strong>paid twice</strong> and the open-pay-page note (§395); <strong>card disputes</strong> and Stripe fees on the club’s invoice (§396); a refund made <strong>in Stripe’s own dashboard</strong> and answering “whose was it?” and “what now?” (§389); a part refund of a tournament deposit and its entry lowering (§389); siblings in one checkout, a payment that could not be recorded, correcting a price after a card payment, the books and League Plus (§380); the Payouts set-up flow, Stripe’s sign-up and Disconnect (§376).</p><p><strong>Held emails this walk does not cover:</strong> the house-league <em>approval</em> and <em>waitlist promotion</em> emails (they need the season switched to review-first and a full division, which would change shared settings), the “not taking payments” version of the approval email, the tournament <em>team accepted</em> email with Pay now, the team balance reminder, the family’s “still enrolled” refund and pay-link email, and the refund-that-comes-back emails. Each needs its own set-up; ask Claude for a second email pass if you want them on dev.</p><p><strong>Cannot be produced on dev:</strong> a real card (everything is Stripe test mode), money arriving in a bank account, and a refund that takes days to appear on a statement.</p>
+  </section>
+</main>
+
+<script>
+(function () {
+  var DATA = {"key":"stripe-e2e-walk-8-v1","title":"Stripe end-to-end walk 8: Families and teams pay online — a short re-check on the dev site","parts":[{"id":"A","title":"The Payouts card reads Taking payments","steps":[{"who":"Club owner, computer · uat-club-owner@uat-rep-club.local","do":"Open https://dev.fieldlogichq.ca/uat-rep-club/admin/org/settings (UAT Rep Club › Settings) and scroll to the Payouts card.","see":"A pill reading “Taking payments” and a “Test mode” chip. The title reads “Families and teams can pay online”, with the line “No real money moves while payouts are in test mode.” and a button “Open Stripe”."},{"who":"Club owner, computer · uat-club-owner@uat-rep-club.local","do":"Press “Open Stripe”, look at the page that opens, then close that tab.","see":"Stripe’s own dashboard for UAT Rep Club opens, marked as a test, without an error page."}]},{"id":"B","title":"A family signs up and pays by card — house league, child one","steps":[{"who":"A family, phone-sized window, no login · your inbox (plus-address +fam1)","do":"Open https://dev.fieldlogichq.ca/uat-rep-club/league/2026-fall-house-league/register. Sign up ONE child: first name Dana, last name Recheckone, a date of birth in 2014 or 2015. Guardian first name Gwen, last name Recheck, Email = your +fam1 address. Press “Sign up”. (If the form asks which division, choose U9 Rookie.)","see":"A confirmation with “Your reference: … (one for this sign-up)”, Dana with the tag “Accepted”, and a card headed “To pay now” with a line for Dana and a button “Pay $… by card”. Under the button, “Includes a $… processing fee.” (the club has the family paying the fee). Underneath, the club’s “How to pay” text “E-transfer to treasurer@uat-rep-club.local” as the other way to pay. Write the reference in the notes."},{"who":"A family, phone-sized window, no login · your inbox (plus-address +fam1)","do":"Open your inbox and find the sign-up email from UAT Rep Club.","see":"It arrives in the club’s name, says Dana Recheckone’s registration for 2026 Fall House League is accepted, shows the reference you wrote down, and has a Pay now button (the club takes card payments). If it is not there in 2 minutes, look in Resend › Emails and say what the list shows."},{"who":"A family, phone-sized window, no login · your inbox (plus-address +fam1)","do":"Back on the confirmation, press “Pay $… by card”.","see":"The button reads “Opening the secure payment page…”. Then Stripe’s page opens in the club’s name, marked as a test, with a processing fee line and your +fam1 address already filled in. The total on Stripe’s page is the same as the amount on the button."},{"who":"A family, phone-sized window, no login · your inbox (plus-address +fam1)","do":"Pay with card 4242 4242 4242 4242, any future expiry, any three digits, any postal code. Then watch the page you land on.","see":"You land on the family’s status page, which reads “Confirming your payment” for a moment (with “Don’t pay again.”), and then changes by itself to “Paid, thank you”, “$… to UAT Rep Club”, and a line with the card, the time and “receipt N”. It never says “Paid” before “Confirming”. Write N in the notes."},{"who":"A family, phone-sized window, no login · your inbox (plus-address +fam1)","do":"Open your inbox and find the receipt email.","see":"Subject “[Test] Receipt N from UAT Rep Club”, with the SAME N as the status page. It shows Dana’s line, the processing fee, the total paid, and a “View your receipt” button. The small print says “Test mode: no money moved.”"},{"who":"A family, phone-sized window, no login · your inbox (plus-address +fam1)","do":"Press “View your receipt” in the email.","see":"The status page opens straight away on the dev site. It does not ask you for an email address or the reference, and shows the same receipt with the same N."},{"who":"Registrar, computer · uat-club-registrar@uat-rep-club.local","do":"Open https://dev.fieldlogichq.ca/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/registrations (UAT Rep Club › House league › 2026 Fall House League › Registrations), tab “Active”, and type Recheckone in “Search players or parents”.","see":"Dana Recheckone’s Fee cell reads “$… received” and its second line ends “Online, card · receipt N” — the SAME N as the page and the email. The row does not offer “Undo” for this payment, because a card payment is a real payment."}]},{"id":"C","title":"A declined card records nothing — house league, child two","steps":[{"who":"A family, phone-sized window, no login · your inbox (plus-address +fam2)","do":"Open https://dev.fieldlogichq.ca/uat-rep-club/league/2026-fall-house-league/register again. Sign up ONE child: Dana Rechecktwo, a date of birth in 2014 or 2015, guardian Gwen Recheck, Email = your +fam2 address. Press “Sign up”, then press “Pay $… by card”.","see":"Accepted, the “To pay now” card, then Stripe’s page for the second child. Do not pay yet."},{"who":"A family, phone-sized window, no login · your inbox (plus-address +fam2)","do":"On Stripe’s page pay with the DECLINED card 4000 0000 0000 0002, any future expiry, any three digits, any postal code.","see":"Stripe’s own page says the card was declined and lets you try again. You stay on Stripe’s page."},{"who":"A family, phone-sized window, no login · your inbox (plus-address +fam2)","do":"Press the back arrow at the top left of Stripe’s page (the one beside the club’s name). If you cannot find it, use your browser’s back button.","see":"You return to the family’s status page. It reads “Payment not finished” with “You left the secure payment page before paying. Nothing was charged.”, and the owing block with “Pay $… by card” is back. It does NOT say “Paid”."},{"who":"Registrar, computer · uat-club-registrar@uat-rep-club.local","do":"On the Registrations screen (tab “Active”, search Rechecktwo), look at Dana Rechecktwo’s Fee cell and open the record.","see":"Owing, not received (“$… owing”), with no “Online, card · receipt” line and no payment row in the record. The declined card left no trace."},{"who":"A family, phone-sized window, no login · your inbox (plus-address +fam2)","do":"Look in your +fam2 inbox for anything about the declined card, and look at Resend › Emails for a message to that address other than the sign-up email.","see":"Pick the one that happened.","options":["Only the sign-up email is there; nothing about the decline (as the code does today)","An email about the declined card arrived","Something else — say what in the notes"]}]},{"id":"D","title":"The desk emails the pay link; the family pays from it","steps":[{"who":"Registrar, computer · uat-club-registrar@uat-rep-club.local","do":"On Registrations (UAT Rep Club › House league › 2026 Fall House League, tab “Active”, search Rechecktwo), open the row’s ⋯ (“More for Dana Rechecktwo”) and choose “Email the pay link”.","see":"The hint under the item reads “Opens their status page to pay by card”. A toast reads “Pay link sent to” your +fam2 address. The row’s trace now reads “Pay link sent” with today’s date."},{"who":"A family, phone-sized window, no login · your inbox (plus-address +fam2)","do":"Open your +fam2 inbox and find the pay-link email from UAT Rep Club (subject begins “Pay for” and ends “in 2026 Fall House League”).","see":"It says the club sent you a link to pay, shows “Amount due”, and has a Pay now button. The Pay now link, when you hover or long-press it, starts with https://dev.fieldlogichq.ca."},{"who":"A family, phone-sized window, no login · your inbox (plus-address +fam2)","do":"Press Pay now. On the status page that opens press “Pay $… by card” and pay with card 4242 4242 4242 4242.","see":"The status page opens at once, unlocked, without asking for an email or the reference. After paying: “Confirming your payment”, then “Paid, thank you” with “receipt M”. Write M in the notes. M is a different number from N."},{"who":"A family, phone-sized window, no login · your inbox (plus-address +fam2)","do":"Open your +fam2 inbox and find the receipt email.","see":"Subject “[Test] Receipt M from UAT Rep Club”, the same M as the status page, with “View your receipt”."},{"who":"Registrar, computer · uat-club-registrar@uat-rep-club.local","do":"Reload Registrations and search Rechecktwo.","see":"Dana Rechecktwo’s Fee cell now reads “$… received” with “Online, card · receipt M” on the second line — the same M. The “Pay link sent” trace is gone from the row."}]},{"id":"E","title":"A tournament team: pay link, pay, receipt","steps":[{"who":"Club owner, computer · uat-club-owner@uat-rep-club.local","do":"STOP CHECK. Open https://dev.fieldlogichq.ca/uat-rep-club/admin/tournaments/registrations with “UAT Rep Club Invitational 2026” chosen in the tournament switcher. Look at the page header and the Teams list.","see":"The tournament is open (its status is not Completed or Archived) and the Teams list loads. If it shows Completed or Archived, STOP here and tell Claude: a team cannot pay online in a finished tournament, and part E and the tournament refund in part F move to Walk 9’s fixture."},{"who":"Club owner, computer · uat-club-owner@uat-rep-club.local","do":"Press “Add team” (top of the list) and choose “Add team manually”. Team name Recheck Team, Coach Rae Recheck, Email = your +team1 address, Division 15U, Payment status “Unpaid”. If a box “Notify team that they have been registered in this tournament” shows, leave it unticked. Press “Save team”.","see":"Recheck Team is in the Teams list as accepted. Open its record: the Payment section shows the deposit and the balance as still due, nothing paid."},{"who":"Club owner, computer · uat-club-owner@uat-rep-club.local","do":"In Recheck Team’s record, Payment section, open the ⋯ beside what is still due (“More for what is due”) and choose “Email the pay link”.","see":"A toast “Pay link sent to” your +team1 address. The record reads “Pay link sent” with today’s date."},{"who":"A team’s contact, computer, no login · your inbox (plus-address +team1)","do":"Open your +team1 inbox, find the email “Pay for Recheck Team in UAT Rep Club Invitational 2026”, and press Pay now.","see":"The email says the club sent a link to pay for Recheck Team, shows “Amount due”, and Pay now opens, on https://dev.fieldlogichq.ca, the team’s pay page in the tournament’s colours: the team and division, the heading “To pay now”, a choice “Pay the deposit” (chosen) and “Pay in full”, “Email for the receipt” holding your +team1 address, “Test payment: no money moves.” and a button “Pay $… by card” with “Includes a $… processing fee.” under it."},{"who":"A team’s contact, computer, no login · your inbox (plus-address +team1)","do":"Leave the deposit chosen, press the card button and pay on Stripe’s page with 4242 4242 4242 4242.","see":"Stripe’s total is the same as the button. You land back on the pay page: “Confirming your payment”, then “Paid, thank you”, “$… to UAT Rep Club”, a line ending “receipt T”, and the tag “Test payment · no money moved”. Write T in the notes."},{"who":"A team’s contact, computer, no login · your inbox (plus-address +team1)","do":"Open your +team1 inbox and find the receipt email.","see":"Subject “[Test] Receipt T from UAT Rep Club”, the same T as the pay page, in the club’s name, with “Test mode: no money moved.” in the small print."},{"who":"Club owner, computer · uat-club-owner@uat-rep-club.local","do":"Reload Recheck Team’s record on UAT Rep Club › Tournaments › Registrations.","see":"A payment row “Deposit · Online, card · receipt T” — the same T — marked “Test, no money moved”. The team has paid the deposit amount only (the processing fee is never the club’s money), and the balance is still due."}]},{"id":"F","title":"Refund emails — each one says where the money went","steps":[{"who":"Club owner, computer · uat-club-owner@uat-rep-club.local","do":"On Recheck Team’s record, open the ⋯ on the “Deposit · Online, card” row (“More for this payment”) and choose “Refund to the card”. Choose “All of it to the card”. Leave anything else as it comes, type Walk recheck in “Note to the team” if it shows, and press “Refund and email”.","see":"The window is titled for Recheck Team’s deposit. After pressing, a toast “Refunded $… to the card. We emailed” your +team1 address (or “The refund is on its way to the card.”). The row reads “Refunded to card,” with today’s date and the team has paid $0.00 again."},{"who":"A team’s contact, computer, no login · your inbox (plus-address +team1)","do":"Open your +team1 inbox and find the refund email.","see":"Subject “[Test] Refund from UAT Rep Club”. It says Recheck Team’s payment for UAT Rep Club Invitational 2026 was refunded, gives the amount, the card and the date, says “It takes 5 to 10 business days to appear.”, and carries your note if you typed one."},{"who":"Registrar, computer · uat-club-registrar@uat-rep-club.local","do":"On Registrations for 2026 Fall House League (tab “Active”, search Recheckone), open the ⋯ on Dana Recheckone’s row (“More for Dana Recheckone”) and choose “Decline”. In the window choose “Refund to the card” (it names the card), leave the processing-fee box as it comes, and press “Decline, refund and email”.","see":"Before you choose, the foot reads “Choose what happens to the $…” and there is no Decline button. After you choose, the fee box is ticked, with “On because the club is ending it…”. After pressing, a toast says the child was declined, the family was emailed, and the amount was refunded to the card."},{"who":"Registrar, computer · uat-club-registrar@uat-rep-club.local","do":"Open the “Ended” tab, search Recheckone, and open Dana Recheckone’s record at its Fee section.","see":"The Fee cell’s first line reads “$… refunded” and the second line gives today’s date and the amount “to the card” (it may end “· pending” for a moment). The record has a “To the card” block with a pill “Refunded” (or “Pending”) and a Stripe reference beginning re_. The amount in the block equals the amount on the row’s second line."},{"who":"A family, phone-sized window, no login · your inbox (plus-address +fam1)","do":"Open your +fam1 inbox and find the email about Dana Recheckone’s registration.","see":"An email from UAT Rep Club headed “Registration update” that says the registration was not accepted and “We refunded your payment.”, then a block with “Refunded”, “To”, “On”, “Refund reference” and “Your receipt” (the receipt shown there includes the same N), then “This includes the $… processing fee.” and “It takes 5 to 10 business days to appear.”"},{"who":"Registrar, computer · uat-club-registrar@uat-rep-club.local","do":"On Registrations (tab “Active”, search Rechecktwo), open the ⋯ on Dana Rechecktwo’s row and choose “Withdraw”. Choose “Refund part of it”. Type 50 as the amount to refund and Walk recheck: goodwill as the Reason. Press “Withdraw, refund and email”.","see":"Before pressing, the window says the club keeps the rest (“The club keeps $…”). The fee box is not offered for a part refund and the processing fee is not part of it. After pressing, a toast confirms the withdrawal and that $50.00 was refunded to the card."},{"who":"A family, phone-sized window, no login · your inbox (plus-address +fam2)","do":"Open your +fam2 inbox and find the email about Dana Rechecktwo’s registration.","see":"A “Registration update” email that says the registration was withdrawn and “We refunded $50.00 of your payment.”, then the club’s reason “Walk recheck: goodwill”, then the refund block, then a line that the club is keeping the rest you paid, with its reason."},{"who":"Registrar, computer · uat-club-registrar@uat-rep-club.local","do":"Open the Money page of the season (UAT Rep Club › House league › 2026 Fall House League › Money), tab “Refunds”.","see":"Both children’s refunds are listed with how, “To the card”. Dana Recheckone’s sits in the book at the fee, not at the card total including the processing fee; Dana Rechecktwo’s at $50.00."},{"who":"Club owner, computer · uat-club-owner@uat-rep-club.local","do":"Open the Stripe dashboard (test mode) › Connect › Connected accounts › UAT Rep Club › Payments. If the dashboard offers no way into a connected account’s payments, skip to the next step and say so in the notes.","see":"The three payments (Dana Recheckone, Dana Rechecktwo, Recheck Team) are listed as succeeded, and each shows its refund: Dana Recheckone and Recheck Team in full, Dana Rechecktwo $50.00 partly refunded. Their amounts agree with the desk.","options":["Checked in the Stripe dashboard and it agrees","Could not get into the connected account’s payments","It disagrees — say what in the notes"]}]},{"id":"G","title":"Closing check — the webhooks and the email log","steps":[{"who":"Club owner, computer · uat-club-owner@uat-rep-club.local","do":"In the Stripe dashboard (test mode) open Workbench › Webhooks › the destination “Dev: club payments” › Event deliveries. Look at the deliveries since you began this walk.","see":"Three “checkout.session.completed” deliveries (one for each payment you made) and at least three refund deliveries (“refund.created”, and possibly “refund.updated”), all with the status 200. The declined card in part C produced no “checkout.session.completed” delivery. There is no failed (non-200) delivery in the window."},{"who":"Club owner, computer · uat-club-owner@uat-rep-club.local","do":"Open Resend › Emails and list everything since you began this walk.","see":"Each of these is listed as delivered, none bounced: the sign-up email (+fam1, and +fam2); “[Test] Receipt N from UAT Rep Club”; “[Test] Receipt M from UAT Rep Club”; the house-league pay link (“Pay for … in 2026 Fall House League”); “Pay for Recheck Team in UAT Rep Club Invitational 2026”; “[Test] Receipt T from UAT Rep Club”; “[Test] Refund from UAT Rep Club” (the team); and the two “Registration update” emails to +fam1 and +fam2.","options":["Every email above is listed and delivered","One or more are missing — say which in the notes","One or more bounced — say which in the notes"]},{"who":"Club owner, computer · uat-club-owner@uat-rep-club.local","do":"Open https://dev.fieldlogichq.ca/uat-rep-club/admin/org/settings once more and read the Payouts card.","see":"Still “Taking payments”. Nothing in this walk disconnected or changed it."}]}]};
+  var KEY = DATA.key, PARTS = DATA.parts;
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+  function box(id, partId, label) {
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+    boxes.push({ part: partId, id: id, cb: cb, label: label });
+    return cb;
+  }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(txt('strong', null, p.id + ' \u00b7 ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(txt('span', 'who', id + ' \u00b7 ' + s.who));
+      t.appendChild(txt('span', null, s['do']));
+      t.appendChild(txt('span', 'see', 'You should see: ' + s.see));
+      if (s.options && s.options.length) {
+        var wrap = el('div', 'step opt'); wrap.appendChild(t);
+        s.options.forEach(function (o, k) {
+          var row = el('label', 'optrow'); var cb = box(id + '-' + (k + 1), p.id, id + ' = ' + o);
+          row.appendChild(cb); row.appendChild(txt('span', null, o)); wrap.appendChild(row);
+        });
+        body.appendChild(wrap);
+      } else {
+        var row2 = el('label', 'step'); var cb2 = box(id, p.id, id);
+        row2.appendChild(cb2); row2.appendChild(t); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' \u00b7 ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [DATA.title + ' (written 2026-10-28)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length + ' (a step with options counts one box per option)');
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join('; ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

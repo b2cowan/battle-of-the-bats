@@ -1,0 +1,237 @@
+<title>Walk 7 Platform Ends Club</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+
+.stop { border-left: 4px solid var(--warn); }
+.step.opt { flex-direction: column; gap: 4px; }
+.step .optrow { display: flex; gap: 10px; align-items: flex-start; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Stripe end-to-end · Walk 7</span>
+    <h1>Platform admin cancels a subscription and deletes a Stripe-backed club</h1>
+    <p class="sub">Written 2026-10-28. DESTRUCTIVE: this walk permanently deletes a club and its Stripe customer, so it first makes a throwaway club of its own and touches nothing else. It checks that staff can end a paying club safely, in the right order, and that only the right staff roles can.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    
+<p><strong>This walk deletes things for good.</strong> Part A builds a brand-new club called “Walk 7 Throwaway” and buys a real (sandbox) Tournament Plus subscription for it. Every later part ends that one club. Do not point any step at UAT Rep Club or any other club another walk uses; the steps never ask you to.</p>
+<p>What you are proving:</p>
+<ul>
+  <li><strong>Who can do what.</strong> Support sees neither of the two red buttons. Billing sees <em>Cancel the subscription</em> but not <em>Delete the club</em>. Only the Super admin can delete.</li>
+  <li><strong>The order.</strong> A club whose subscription is still running cannot be deleted; the window tells staff to cancel first. After the cancel, the delete goes through.</li>
+  <li><strong>Both halves reach Stripe.</strong> Cancelling ends the real subscription in Stripe; deleting with the box ticked removes the Stripe customer.</li>
+  <li><strong>What the club's owner experiences</strong> after the cancel (a cancelled-state billing page, an optional email) and after the delete (the club is gone).</li>
+  <li><strong>The trail.</strong> Each step is written in the club's Story and in the Audit log with the staff member's login and the reason they typed.</li>
+</ul>
+<p>Refunding a charge is <strong>not</strong> in this walk; it was walked already (the support-console Stage 3 walks) and is not repeated.</p>
+    <div><strong>It passes when</strong></div>
+    
+<ul>
+  <li>Support sees no red buttons on the club's Access tab; Billing sees only <em>Cancel the subscription</em>; Super admin sees both.</li>
+  <li>With the subscription still running, the delete window refuses and says to cancel first.</li>
+  <li>The cancel asks for a reason, ends the subscription in Stripe straight away, writes a “Subscription cancelled” line in the Story, and the owner then sees a cancelled billing page and cannot use the rest of the admin.</li>
+  <li>The delete asks for a reason and the club's web name typed out, removes the club from the console, removes the Stripe customer, emails the owner (when ticked) and leaves an Audit log entry.</li>
+  <li>Every delivery on the Stripe Billing destination during the walk reads 200.</li>
+</ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private: it holds dev passwords.</p>
+    <dl class="facts"><dt>Where</dt><dd>The dev site <strong>https://dev.fieldlogichq.ca</strong>, the platform console at <code>/platform-admin/login</code> (“Staff access”), the <strong>Stripe dashboard</strong> (the sandbox “FieldLogicHQ sandbox”, Workbench › Webhooks › Billing for deliveries) and the <strong>Resend dashboard</strong> › Emails.</dd><dt>Windows</dt><dd>You need two sign-ins that never meet. The <strong>club owner</strong> stays in your browser's normal window for the whole walk. <strong>Every staff login</strong> (Support, Super admin, Billing) uses a <strong>private / incognito window</strong>, one at a time: close the private window completely before you open the next one. Do not sign in as staff in the owner's window; that signs the owner out.</dd><dt>Your inbox</dt><dd>A real inbox with a plus-address for the throwaway club's owner, for example <code>yourname+walk7owner@gmail.com</code>. New sign-ups on the dev site must verify their email before they can sign in.</dd><dt>Test card</dt><dd><code>4242 4242 4242 4242</code>, any future expiry, any 3 digits, any postal code.</dd><dt>Staff logins</dt><dd>Only the Super admin login is in the main test-account list. The Support and Billing logins below come from the dev staff seed (<code>scripts/seed-platform-staff.mjs</code>) and last signed in on 2026-10-27, so they work today. If either is refused, stop and tell me; do not make one up.</dd><dt>Figures that may drift</dt><dd>The plan's price on the pricing page, and the retention date (“its data is kept until …”). Neither is pinned in this walk.</dd></dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <dl class="facts"><dt>Throwaway club owner</dt><dd>The plus-address you make in Part A and a password you choose. It is yours alone; it exists only for this walk.</dd><dt>Super admin</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code> at <code>/platform-admin/login</code>. This login is on the dev staff list as Super admin and its email is confirmed. If it is refused, stop and tell me.</dd><dt>Billing</dt><dd><code>billing@dev.local</code> · <code>devpass123</code> at <code>/platform-admin/login</code> (DEV ONLY)</dd><dt>Support</dt><dd><code>support@dev.local</code> · <code>devpass123</code> at <code>/platform-admin/login</code> (DEV ONLY)</dd></dl>
+  </section>
+
+  <section class="card stop">
+    <h2>Stop check</h2>
+    <p><strong>Read before you start.</strong> This walk deletes one club for good and removes its Stripe customer. It only ever deletes the club you create in Part A. If you ever find yourself on a club called anything else (especially UAT Rep Club, whose connected payouts account other walks need), <strong>stop</strong>. Only the one subscription and customer made in Part A are cancelled or removed in Stripe.</p>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    
+<ul>
+  <li><strong>Refunding a charge.</strong> Not here: the support-console Stage 3 walks already cover the live Stripe read on the Money tab and the refund of a double charge. Cancelling in this walk does not refund anything.</li>
+  <li><strong>A cancel that Stripe refuses.</strong> The site cancels the club's record first and then asks Stripe; if Stripe fails, the staff member sees “Cancelled here. Stripe needs it cancelled by hand: …”. That cannot be produced on dev without breaking the Stripe connection. Note the consequence found in the code: the delete is only blocked by the club's <em>stored</em> status, so after a failed Stripe cancel the delete would go through while Stripe kept billing the customer (unless the “Also delete the Stripe customer” box is ticked).</li>
+  <li><strong>Deleting without ticking “Also delete the Stripe customer”.</strong> The customer and its invoices would stay in Stripe. This walk ticks it so you can see the customer go.</li>
+  <li><strong>Money in flight blocking a delete.</strong> A club with an open card dispute, a bank debit still clearing or an unpaid Stripe-fee invoice is refused. That needs a club with connected payouts, and the only one on dev is UAT Rep Club, which this walk must not touch.</li>
+  <li><strong>The other three staff roles.</strong> Product, Growth and Read only also hold neither power, by the same table that hides the buttons from Support; they are not signed in here.</li>
+  <li><strong>Cancelling or deleting a Premium Coaches Portal.</strong> A different path (its own retention email and rules).</li>
+  <li><strong>Reactivation.</strong> Buying the plan again after a cancel is walked on its own.</li>
+</ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  var DATA = {"key":"stripe-e2e-walk-7-v1","title":"Stripe end-to-end walk 7: Platform admin cancels a subscription and deletes a Stripe-backed club","parts":[{"id":"A","title":"Make the throwaway club and buy a real subscription for it","steps":[{"who":"You · computer · normal window","do":"Read the box at the top of this page. Write down the plus-address you will use for the throwaway owner. From here on, the throwaway club is the only thing this walk ends.","see":"You have an inbox ready that can receive mail, and you know the club will be deleted at the end."},{"who":"Throwaway owner · computer · normal window with nobody signed in · your inbox (plus-address, e.g. +walk7owner)","do":"Open https://dev.fieldlogichq.ca/start/tournament. Create an account with the throwaway plus-address and a password. (If the page redirects you into another account, you are still signed in there: sign out first, or use a different browser profile for the owner.)","see":"The site accepts the account and tells you to check your email to confirm it."},{"who":"Throwaway owner · computer · your inbox","do":"Open the confirmation email (if nothing is there after about 2 minutes, look for the message in the Resend dashboard › Emails) and click its link.","see":"You land back on the site, signed in, at a step that asks you to name your organization."},{"who":"Throwaway owner · computer · normal window","do":"Name the organization “Walk 7 Throwaway” and create it. Look at the browser's address bar: the part right after dev.fieldlogichq.ca/ is the club's web name. Write it down as WEBNAME (you will type it to confirm the delete).","see":"The next step offers you a plan choice, and you have WEBNAME written down."},{"who":"Throwaway owner · computer · normal window","do":"Choose Tournament Plus (monthly) and continue to pay. If the plan step offers the plan for free (the Founding Season offer), stop and say so in the notes: that club would not have a real Stripe subscription.","see":"You are taken to Stripe's hosted checkout page for Tournament Plus.","options":["On Stripe's checkout page","The plan was offered free, no checkout: STOP and tell me"]},{"who":"Throwaway owner · computer · Stripe's checkout page","do":"Pay with 4242 4242 4242 4242, any future expiry, any 3 digits, any postal code.","see":"Stripe accepts the payment and brings you back to the site."},{"who":"Throwaway owner · computer · https://dev.fieldlogichq.ca/ then WEBNAME then /admin/tournaments/settings/subscription","do":"Open the club's Plan & billing page at that address (Settings › Subscription). Reload once after a minute if it still shows the free plan.","see":"It shows Tournament Plus, the line “Billed monthly”, and a “Renews …” date.","options":["Tournament Plus, Billed monthly, Renews date shown","Still the free plan after 3 minutes: say so in the notes"]},{"who":"You · computer · Stripe dashboard (sandbox) › Customers","do":"Search for the throwaway plus-address. Open the customer and look at its subscription.","see":"One customer with one subscription whose status reads Active. This is the real subscription the rest of the walk ends.","options":["One customer, one Active subscription","Not found or not Active: say what in the notes"]}]},{"id":"B","title":"Support sees no red buttons","steps":[{"who":"Support · computer · private window · https://dev.fieldlogichq.ca/platform-admin/login","do":"Open a private window and sign in as support@dev.local (password in the card above). Go to https://dev.fieldlogichq.ca/platform-admin/orgs (Clubs & portals), find “Walk 7 Throwaway” and open its record. Open the Access tab and scroll to the bottom of it.","see":"The Access tab opens, its Plan and limits section shows Tournament Plus, and there is no red “Cancel the subscription” button and no red “Delete the club” button.","options":["No red buttons (as designed)","“Cancel the subscription” is shown to Support","“Delete the club” is shown to Support","Support cannot open the club's record at all: say what you see"]},{"who":"Support · computer · private window","do":"Close the private window completely (this ends the Support session).","see":"The private window is gone."}]},{"id":"C","title":"Super admin: a running subscription blocks the delete","steps":[{"who":"Super admin · computer · a new private window · https://dev.fieldlogichq.ca/platform-admin/login","do":"Sign in as uat-platform@fieldlogichq.ca. Open Clubs & portals (/platform-admin/orgs), find “Walk 7 Throwaway” and open its record. Look at the Story tab first.","see":"The Story has a line beginning “Bought” for the Tournament Plus purchase.","options":["A “Bought …” line is there","No “Bought” line: say what the Story shows"]},{"who":"Super admin · computer · private window · the club's record › Access tab","do":"Open the Access tab and scroll to the bottom.","see":"Both red buttons are there: “Cancel the subscription” and “Delete the club”."},{"who":"Super admin · computer · private window","do":"Press “Delete the club”. Read the window. Try to type the club's web name into the box and try to press the red “Delete the club” button.","see":"The window is titled “Delete Walk 7 Throwaway”. It says the club still has a running subscription and to cancel the subscription first, then delete the club. The typing box and the red button cannot be used.","options":["It refuses and says to cancel first; box and button are greyed","It lets me type and press the button: STOP, say so in the notes","Something else: say what the window says"]},{"who":"Super admin · computer · private window","do":"Press “Keep it” to close the window. Then close the private window completely.","see":"Nothing was deleted: the window closed and the club is still in the list. The Super admin session is ended."}]},{"id":"D","title":"Billing cancels the subscription","steps":[{"who":"Billing · computer · a new private window · https://dev.fieldlogichq.ca/platform-admin/login","do":"Sign in as billing@dev.local. Open Clubs & portals, then the record of “Walk 7 Throwaway”, then its Access tab, and scroll to the bottom.","see":"There is a red “Cancel the subscription” button and no “Delete the club” button.","options":["Cancel shown, Delete not shown (as designed)","Both shown to Billing","Neither shown to Billing"]},{"who":"Billing · computer · private window","do":"Press “Cancel the subscription”. Read the window before typing anything.","see":"The window is titled “Cancel the subscription for Walk 7 Throwaway”. It says Stripe stops charging the club, that this cannot be put back and the owner would have to buy again. It has a Why box (“Why are you cancelling?”) and an unticked box “Email the owner that it is cancelled (this reaches an inbox and cannot be taken back)”. The red “Cancel the subscription” button cannot be pressed yet. A line says it reaches Stripe.","options":["All of that is there, button greyed","Button is already pressable with no reason typed","Something differs: say what in the notes"]},{"who":"Billing · computer · private window","do":"Product decision. Read the sentence again: it says Stripe stops charging, but not that the subscription ends right now, with no refund of the rest of the month. Tick the answer.","see":"Your tick is the ruling. (The code cancels the subscription in Stripe immediately; it does not wait for the end of the period and does not refund the unused time.)","options":["Fine as it is","The window should say “ends today, no refund”","It should end at the end of the paid period instead"]},{"who":"Billing · computer · private window","do":"Type “Walk 7 test cancel” as the reason. Tick the box to email the owner. Press the red “Cancel the subscription” button. Leaves behind: a cancelled subscription in Stripe, a retention record, one email to the owner. There is no put-back for this step; the club is deleted later in this walk anyway.","see":"The window closes. The Access tab no longer offers “Cancel the subscription”. No notice appears saying “Cancelled here. Stripe needs it cancelled by hand” (that notice only appears when Stripe refused).","options":["Window closed, no “by hand” notice, Cancel button gone","A notice “Cancelled here. Stripe needs it cancelled by hand …” appeared: copy its text into the notes","An error appeared: copy it into the notes"]},{"who":"Billing · computer · private window · the club's record › Story tab","do":"Open the Story tab.","see":"A new line titled “Subscription cancelled”, with the sentence “Its data is kept until …” and a date, your reason “Walk 7 test cancel”, and the Billing login as the person who did it.","options":["Line, date, reason and Billing login all shown","Line shown but something missing: say what in the notes","No line"]},{"who":"Billing · computer · private window","do":"Close the private window completely.","see":"The Billing session is ended."}]},{"id":"E","title":"What Stripe and the club's owner see after the cancel","steps":[{"who":"You · computer · Stripe dashboard (sandbox) › Customers","do":"Open the throwaway customer again and look at its subscription.","see":"The subscription reads Canceled, not “cancels at period end”, and no further charge is scheduled.","options":["Canceled immediately","Still Active or set to cancel later: say what in the notes"]},{"who":"You · computer · Stripe dashboard › Workbench › Webhooks › Billing › Event deliveries","do":"Find the newest customer.subscription.deleted event for this customer.","see":"It is marked Delivered with status 200. (Stripe tells the site the subscription is gone; the site must accept that quietly because it already recorded the cancel.)","options":["Delivered, 200","Failed or not 200: say the code in the notes","No such event after 3 minutes"]},{"who":"Throwaway owner · computer · normal window · https://dev.fieldlogichq.ca/ then WEBNAME then /admin","do":"Reload the club's admin (the owner is still signed in). Then try to open another page of the club's admin, for example https://dev.fieldlogichq.ca/ then WEBNAME then /admin/tournaments.","see":"Wherever you go you end up on the Plan & billing page. It shows a “Cancelled” badge and the sentence “Your subscription has been cancelled. Public pages and modules are suspended while retained data remains restorable during the retention window.” There is a “Reactivate your account” card.","options":["Sent to Plan & billing with the cancelled message and Reactivate card","I can still open other admin pages","Something else: say what you see"]},{"who":"Throwaway owner · computer · your inbox","do":"Look for the email about the cancellation (wait up to 2 minutes; check the Resend dashboard › Emails for the owner's address if it does not arrive).","see":"One email arrives whose subject is about the club's subscription being cancelled (normally “Your Walk 7 Throwaway subscription has been cancelled”). It names the date the data is kept until and points back to Plan & billing.","options":["One cancellation email arrived","Two or more arrived","Nothing arrived"]},{"who":"You · computer · the Resend dashboard › Emails","do":"Search for the owner's plus-address and count the cancellation emails once Stripe's deletion event has been delivered.","see":"Still exactly one: the second signal from Stripe did not send a second email.","options":["Exactly one","More than one"]}]},{"id":"F","title":"Super admin deletes the club and its Stripe customer","steps":[{"who":"Super admin · computer · a new private window · https://dev.fieldlogichq.ca/platform-admin/login","do":"Sign in as uat-platform@fieldlogichq.ca. Open Clubs & portals, find “Walk 7 Throwaway”, open its record and its Access tab, and scroll to the bottom.","see":"Only the red “Delete the club” button is left; “Cancel the subscription” is gone.","options":["Only Delete is offered","Cancel is still offered"]},{"who":"Super admin · computer · private window","do":"Press “Delete the club” and read the window.","see":"The window is titled “Delete Walk 7 Throwaway”. This time it does NOT tell you to cancel first; it says the club and everything in it (with the counts of its members and tournaments) is removed and cannot be taken back. It asks you to type the web name, has a Why box, an unticked box “Email the owner that the account is closed (…)” and an unticked box “Also delete the Stripe customer (only when the customer asked to be forgotten)”. A footer says invoice history stays in Stripe. The red “Delete the club” button cannot be pressed yet.","options":["All of that, button greyed","It still refuses because of a running subscription","Something differs: say what in the notes"]},{"who":"Super admin · computer · private window","do":"Type a wrong web name (for example WEBNAME with an extra letter) and a reason, and look at the red button.","see":"The red button stays greyed until the typed name matches the web name exactly.","options":["Greyed with a wrong name","Pressable with a wrong name: STOP, say so in the notes"]},{"who":"Super admin · computer · private window","do":"Replace it with the exact WEBNAME, type “Walk 7 test delete” as the reason, tick “Email the owner that the account is closed” and tick “Also delete the Stripe customer”. Press the red “Delete the club”. Leaves behind: nothing of the club; an Audit log entry; an email to the owner; the Stripe customer removed. This cannot be put back. That is the point of the throwaway.","see":"The window closes and you are taken back to the Clubs & portals list. “Walk 7 Throwaway” is no longer in it (search for it to be sure).","options":["Back on the list, club gone","An error appeared: copy it into the notes","Club still listed"]}]},{"id":"G","title":"Everything that should be gone, is","steps":[{"who":"Super admin · computer · private window · https://dev.fieldlogichq.ca/platform-admin/audit","do":"Open the Audit log and look at the newest entries.","see":"A newest entry whose Action is “Delete organization”, whose Superuser is uat-platform@fieldlogichq.ca and whose Reason is “Walk 7 test delete”. Its Org column is blank, because the club no longer exists.","options":["Entry present with that actor and reason","Entry present but the reason or actor is wrong or missing","No entry"]},{"who":"Super admin · computer · private window · same Audit log","do":"Look just below it for the earlier cancel.","see":"An entry “Cancel subscription” from billing@dev.local with the reason “Walk 7 test cancel”. It is still there after the club was deleted, with its Org column now blank.","options":["Cancel entry still there, Org blank","The cancel entry is gone from the log","Something else: say what in the notes"]},{"who":"You · computer · Stripe dashboard (sandbox) › Customers","do":"Search for the throwaway plus-address again.","see":"The customer is gone (a search finds nothing, or the page shows it as deleted). Invoices already issued stay in Stripe's records.","options":["Customer gone","Customer still there","Shown as deleted"]},{"who":"You · computer · the Resend dashboard › Emails","do":"Search for the owner's plus-address.","see":"A second message to that address, “Your Walk 7 Throwaway account has been closed”, was sent when the club was deleted.","options":["The “account has been closed” email was sent","It was not sent"]},{"who":"Throwaway owner · computer · normal window · https://dev.fieldlogichq.ca/ then WEBNAME then /admin","do":"Reload the old admin address.","see":"The club does not open. Tick what you see.","options":["A not-found page","Sent to the sign-in page","Sent to a start or home page with no club","The club still opens (a bug)","Something else: say what in the notes"]},{"who":"Throwaway owner · computer · normal window","do":"Product note: deleting the club removes the club and its members, but not the owner's login. Sign out, sign in again with the throwaway plus-address and password, and note where you land. There is no club to land in.","see":"Tick what happens. “The owner can no longer sign in to the club” is true; “the owner can no longer sign in at all” is not what the code does.","options":["I can sign in and land somewhere with no club (a start or home page)","I can sign in and land on an error","I cannot sign in at all","I land inside the deleted club (a bug)"]},{"who":"Throwaway owner · computer · the public address https://dev.fieldlogichq.ca/ then WEBNAME","do":"Open the club's public address.","see":"It no longer shows the club.","options":["Not found","The club's page still shows (a bug)","Something else: say what in the notes"]},{"who":"You · computer · Stripe dashboard › Workbench › Webhooks › Billing › Event deliveries","do":"Closing check: look at every delivery line since you pressed the cancel in Part D.","see":"All of them read 200 (Delivered). Nothing Failed or Pending, including any event Stripe sent when the customer was removed.","options":["All 200","A non-200 line: say its event type and code in the notes"]}]}]};
+  var KEY = DATA.key, PARTS = DATA.parts;
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+  function box(id, partId, label) {
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+    boxes.push({ part: partId, id: id, cb: cb, label: label });
+    return cb;
+  }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(txt('strong', null, p.id + ' \u00b7 ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(txt('span', 'who', id + ' \u00b7 ' + s.who));
+      t.appendChild(txt('span', null, s['do']));
+      t.appendChild(txt('span', 'see', 'You should see: ' + s.see));
+      if (s.options && s.options.length) {
+        var wrap = el('div', 'step opt'); wrap.appendChild(t);
+        s.options.forEach(function (o, k) {
+          var row = el('label', 'optrow'); var cb = box(id + '-' + (k + 1), p.id, id + ' = ' + o);
+          row.appendChild(cb); row.appendChild(txt('span', null, o)); wrap.appendChild(row);
+        });
+        body.appendChild(wrap);
+      } else {
+        var row2 = el('label', 'step'); var cb2 = box(id, p.id, id);
+        row2.appendChild(cb2); row2.appendChild(t); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' \u00b7 ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [DATA.title + ' (written 2026-10-28)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length + ' (a step with options counts one box per option)');
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join('; ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

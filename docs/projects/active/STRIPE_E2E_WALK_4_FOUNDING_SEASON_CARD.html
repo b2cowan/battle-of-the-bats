@@ -1,0 +1,211 @@
+<title>Walk 4 Founding Card</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+
+.stop { border-left: 4px solid var(--warn); }
+.step.opt { flex-direction: column; gap: 4px; }
+.step .optrow { display: flex; gap: 10px; align-items: flex-start; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Stripe end-to-end · Walk 4</span>
+    <h1>Card on file and choosing next season (Founding Season clubs)</h1>
+    <p class="sub">Written 2026-10-28. One purpose: with real Stripe, prove a Founding Season club can save a card without being charged, choose its plan for next season without being charged until the date the screen shows, change its mind, and remove a card. Both screens were walked before (§150 and §155) but only with a pretend checkout.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>A Founding Season club (a club whose first season is free) is asked, in the summer, to put a card on file and to choose its plan for the next season. The promise printed on the screen is that <strong>nothing is charged before the date the screen shows</strong>. The two earlier walks (§150 and §155, September 2026) ran on your own computer with the billing <em>mock</em> switched on, so Stripe was never called, no webhook ever fired, and the card on file was proven only from a seeded row.</p><p>This walk uses the real Stripe checkout and the real webhooks on the dev site. It checks four things in Stripe itself: the saved card is attached and nothing was charged; the plan choice becomes a subscription that <strong>starts later</strong> (a trial that ends on the first-charge date) with nothing paid; changing the choice leaves exactly <strong>one</strong> live subscription; and removing a card is picked up by the webhook.</p><p>It also asks you to rule on three things the code does that you may not expect: where the owner lands when Stripe sends them back, what happens if they start to change their choice and then walk away, and what a card that will fail later looks like when it is saved.</p>
+    <div><strong>It passes when</strong></div>
+    <p>A card can be saved with no plan and no charge, and a declined card saves nothing. The choice creates one subscription in Stripe that is <em>Trialing</em> until the first-charge date with no payment taken today, the screen names the plan, cycle, amount, card and date, and the club’s plan does <strong>not</strong> change. At every moment the Stripe customer has at most one live subscription for the choice. The Billing webhook shows a <code>200</code> for every event this walk causes. Everything the code sends or does not send (return page, emails) is ticked as you saw it.</p>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private: it holds dev passwords.</p>
+    <dl class="facts"><dt>Where</dt><dd>Everything is on <strong>https://dev.fieldlogichq.ca</strong> (the dev site), in a normal browser window. The Stripe dashboard is in <strong>test mode</strong> (“FieldLogicHQ sandbox”) in a second tab, and <strong>Resend</strong> › Emails in a third. No real money moves.</dd><dt>The one thing that must be true first: the card window</dt><dd><p>The card, the “Choose your 2028 plan” card and the “Add payment method” button only appear in the <strong>summer card window</strong>. By the code’s own calendar that window opens on June 1, 2027, so <strong>today the dev site hides all of it</strong> unless the site was built with the date moved earlier. The earlier walks did that on your own computer with the setting <code>NEXT_PUBLIC_FOUNDING_SEASON_CARD_WINDOW_OPEN=2026-01-01T05:00:00.000Z</code>.</p><p>For this walk the <strong>dev site</strong> needs that same setting in its Amplify environment (it is read when the site is built, so the dev branch must be rebuilt after it is set). Whether it is set is not something the walk can see from outside: step A1 checks it and stops you if it is not. The setting only moves a display date; the server and the page read the same one.</p></dd><dt>Which club</dt><dd><strong>UAT Plus Org</strong> (<code>uat-plus-org</code>), a Tournament Plus club on the Founding Season free year. It has no Stripe customer, no card and no choice yet, so you start clean. Its Plan &amp; billing page is <code>https://dev.fieldlogichq.ca/uat-plus-org/admin/tournaments/settings/subscription</code> (for a Tournament Plus club that is the address, not <code>/admin/org/billing</code>). The sign-in below also owns UAT Test Org and UAT Club Org: always check the page names <strong>UAT Plus Org</strong>.</dd><dt>The rule being tested</dt><dd>The first charge is the day the free season ends, which the screen prints as one date (“the date the screen shows”). In the code today that date is the start of the day after the Founding Season ends, <strong>October 1, 2027</strong>, derived from one setting — <strong>not</strong> January 1 as older notes said. This walk never types a date: it checks that Stripe’s trial end and the first invoice fall on the date the screen shows (a dashboard set to a time zone west of Toronto may show the evening before, which is fine).</dd><dt>Finding the right Stripe customer</dt><dd>UAT Test Org’s Stripe customer has the same email as this sign-in, so searching by email shows two. Use the <strong>newest</strong> one, whose Metadata contains an <code>orgId</code>. It is created at step B1 and re-used for the rest of the walk.</dd><dt>Test cards</dt><dd>Approved: <code>4242 4242 4242 4242</code>. Declined: <code>4000 0000 0000 0002</code>. 3-D Secure (asks for a test authentication): <code>4000 0025 0000 3155</code>. Saves fine but fails when someone charges it later: <code>4000 0000 0000 0341</code>. Any future expiry date, any three digits, any postal code. Stripe’s page also asks for an email and a name: any will do.</dd><dt>Webhooks</dt><dd>Stripe dashboard (test mode) › Workbench › Webhooks › the destination named <strong>Billing</strong> › <strong>Event deliveries</strong>. After each step that touches Stripe, the named event types should appear within about a minute, each with a <code>200</code> next to it.</dd><dt>Emails</dt><dd>Nothing in the card or choice flow sends an email in the code today, and the sign-in’s address cannot receive mail anyway. Part F checks <strong>Resend</strong> › Emails (it lists every send attempt) so you can rule on it. The summer reminder emails are scheduled campaigns and are not triggered by anything here.</dd><dt>What this walk leaves behind</dt><dd>A Stripe customer for UAT Plus Org with cards and a live plan-choice subscription, and the club’s saved card and choice. Part G puts the club back to “no card, no choice”; the Stripe customer itself stays and is re-used next time. Written 2026-10-28: prices come from the plan list and may change, so this walk never states one.</dd></dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <dl class="facts"><dt>UAT Plus Org owner</dt><dd><code>uat-owner@uat-test-org.local</code> · <code>UATPassword2026!</code></dd><dt>Platform admin (only for the optional step F2)</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code> at <code>https://dev.fieldlogichq.ca/platform-admin/login</code>. Whether this address is allowed on the dev site is unverified: if sign-in is refused, tick “Skipped” on F2 and tell me.</dd></dl>
+  </section>
+
+  <section class="card stop">
+    <h2>Stop check</h2>
+    <p><strong>Run the parts in order A to G.</strong> Part A is a STOP check: if the summer card window is not open on the dev site, nothing else can be walked and you should stop there.</p>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    <p><strong>Already walked, not repeated:</strong> the Founding Season desk, the banner copy, the chooser layout, annual-first, “If you choose nothing”, and the coach’s version of the same screens (§150, §154/§155, September 2026), all on your own computer with the billing pretend switch on. This walk adds only the parts that need real Stripe.</p><p><strong>Cannot be produced on dev:</strong></p><ul><li><strong>The first charge itself.</strong> Nothing here moves Stripe’s clock to the first-charge date, so “the plan really changes and the card is charged on that day” (and a card like 0341 failing) is not proved; only that the subscription is set to start then and nothing is taken before.</li><li><strong>The card window opening on its own date.</strong> The walk forces it open with a build setting; it does not prove the June date.</li><li><strong>The “no card yet” and plan-choice reminder emails</strong> (scheduled campaigns for June and September 2027) and the “trial ending” reminder.</li><li><strong>A coach’s Premium Coaches Portal doing the same thing.</strong> It is the same code with a different product and price; its return address is not redirected away, so the “Card saved” and “Your next season is set” dialogs probably do show for a coach. Dev Standalone Team (<code>coach@dev.local</code>) is the club to use if you want to compare; it is a separate short walk.</li><li><strong>A Founding Season club on the free Tournament plan</strong> (nothing to renew, so no chooser) and a club created after the offer closed (no Founding Season at all).</li><li><strong>The old legacy-dated comp row</strong> on Dev Tournament+ Org (it carries a seeded card, not a real one).</li></ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  var DATA = {"key":"stripe-e2e-walk-4-v1","title":"Stripe end-to-end walk 4: Card on file and choosing next season (Founding Season clubs)","parts":[{"id":"A","title":"Stop check: is the card window open on the dev site?","steps":[{"who":"Owner of UAT Plus Org, computer · https://dev.fieldlogichq.ca/uat-plus-org/admin/tournaments/settings/subscription","do":"Sign in as the UAT Plus Org owner and open the address. Make sure the page is for UAT Plus Org. Read the Founding Season banner and the “Billing” block lower on the page.","see":"Window OPEN: the banner reads “Your Founding Season ends” followed by a date; there is a card titled “Choose your 2028 plan” with two radio options; and the “Billing” block says “No payment method on file yet. Nothing is charged before” the date, with a button “Add payment method”. Window CLOSED: the banner reads “Tournament Plus is free through” the date, there is no “Choose your 2028 plan” card, and “Billing” says “No billing action needed — your Founding Season runs free through” the date and that we will remind you during the summer. If it is closed, STOP: the dev site’s build needs the card-window setting described in Before you start.","options":["Window open — chooser and “Add payment method” are showing, go on","Window closed — “No billing action needed” — STOP, tell me"]},{"who":"Owner of UAT Plus Org, computer","do":"Still on that page, read the plan card at the top and the status chip.","see":"The plan card reads Tournament Plus with a line “Free through” the end date, and says it is normally a monthly price. The chip reads “Active”. There is no “Trial” and no amount due. This is the starting state that must NOT change by the end of part C."}]},{"id":"B","title":"Save a card with no charge (and what a declined and a 3-D Secure card do)","steps":[{"who":"Owner of UAT Plus Org, computer · https://dev.fieldlogichq.ca/uat-plus-org/admin/tournaments/settings/subscription","do":"In the “Billing” block click “Add payment method”.","see":"The button changes to “Redirecting…” and Stripe’s hosted page opens. It only collects a card: it names no plan, no trial and no amount to pay today. (If it shows a plan and a price, tell me: that would be the wrong kind of checkout.) This creates the Stripe customer for the club."},{"who":"Owner of UAT Plus Org, computer · Stripe’s page","do":"Enter the DECLINED card 4000 0000 0000 0002 (any expiry, any three digits, any postal code) and submit.","see":"Stripe refuses the card on its own page with a decline message and you stay there. Nothing is sent back to the site."},{"who":"Owner of UAT Plus Org, computer · Stripe’s page","do":"Replace it with the 3-D Secure card 4000 0025 0000 3155 and submit. When Stripe’s test authentication window opens, choose the button that completes it.","see":"The card is saved and Stripe sends you back to the site."},{"who":"Owner of UAT Plus Org, computer","do":"Look at where you landed.","see":"Rule where the owner lands. The code sends Stripe’s return to the address ending /admin/org/billing, and tournament-plan clubs are redirected away from that address to the Tournaments page, losing the “card saved” message. So the code predicts the Tournaments page with no “Card saved” dialog. Tick what happened.","options":["Back on Plan & billing with a dialog titled “Card saved”","On the Tournaments page, no dialog","On a sign-in page","Something else — say what in the notes"]},{"who":"Owner of UAT Plus Org, computer · https://dev.fieldlogichq.ca/uat-plus-org/admin/tournaments/settings/subscription","do":"If you did not land on Plan & billing, open it yourself. Read the “Billing” block and the chooser card.","see":"The “Billing” block now says “Visa ••3155 is on file. Nothing is charged before” the date, and the button has changed from “Add payment method” to “Update payment method”. The “Choose your 2028 plan” card is still there (saving a card is not choosing). The plan card still reads Tournament Plus, free through the end date, chip “Active”."},{"who":"You, in the Stripe dashboard (test mode), computer","do":"Customers › the newest customer for uat-owner@uat-test-org.local (its Metadata has an orgId). Read its Payment methods, Subscriptions, Invoices and Payments.","see":"One saved card ending 3155 and it is the customer’s default payment method (the site sets that when the card is saved). NO subscription, NO invoice, NO payment. The declined card is not listed. Nothing was charged. Stop and tell me if there is any payment or any subscription.","options":["One card (3155), default, nothing charged, no subscription","The declined card is also listed","A subscription, invoice or payment exists — nothing should","No customer found"]},{"who":"You, in the Stripe dashboard (test mode) › Workbench › Webhooks","do":"Billing destination › Event deliveries. Look at the newest.","see":"A checkout.session.completed and a payment_method.attached delivery, both with a 200.","options":["Both delivered with a 200","One or both missing","Delivered but not a 200"]},{"who":"Owner of UAT Plus Org, computer · https://dev.fieldlogichq.ca/uat-plus-org/admin/tournaments/settings/subscription","do":"Click “Update payment method”, and on Stripe’s page save the approved card 4242 4242 4242 4242.","see":"You return as before. Open Plan & billing: the “Billing” block now says “Visa ••4242 is on file.” (it follows the newest card). In Stripe the customer now has TWO cards (3155 and 4242); saving a new card does not remove the old one. Tick what Stripe shows.","options":["Page says ••4242, Stripe shows both cards","Page still says ••3155","Stripe shows only one card"]}]},{"id":"C","title":"Choose your 2028 plan: a subscription that starts later","steps":[{"who":"Owner of UAT Plus Org, computer, SECOND browser tab · https://dev.fieldlogichq.ca/uat-plus-org/admin/tournaments/settings/subscription","do":"Open a SECOND tab on the same Plan & billing address and leave it open without touching it (part D uses it).","see":"The second tab shows the “Choose your 2028 plan” card. Switch back to the first tab for the next step."},{"who":"Owner of UAT Plus Org, computer · https://dev.fieldlogichq.ca/uat-plus-org/admin/tournaments/settings/subscription","do":"In the first tab read the “Choose your 2028 plan” card without choosing.","see":"Two radio options for Tournament Plus: “annual” (selected, with a line about what annual saves) and “monthly”, each with its price from the plan list. A line beside the button reads “First charge” the date “· nothing before then”. The button reads “Choose Tournament Plus · annual”. Under it: “Prefer to decide later?” and a link “Save a card without choosing”. A card below titled “If you choose nothing” says the club moves to the free Tournament plan on the first-charge date."},{"who":"Owner of UAT Plus Org, computer · https://dev.fieldlogichq.ca/uat-plus-org/admin/tournaments/settings/subscription","do":"Leave annual selected and click “Choose Tournament Plus · annual”. On Stripe’s page, before paying, read what it says about today and about the date. Pay with the card that FAILS LATER: 4000 0000 0000 0341 (any expiry, any three digits, any postal code).","see":"The button changes to “Redirecting…” and Stripe’s checkout opens. It should show that NOTHING is due today and name the date the first payment is taken (the date the screen showed). The card is accepted and you are sent back to the site."},{"who":"Owner of UAT Plus Org, computer","do":"Look at where you landed.","see":"The code sends this return to the same /admin/org/billing address as part B, so it predicts the Tournaments page and no “Your next season is set” dialog. Tick what happened.","options":["Back on Plan & billing with a dialog titled “Your next season is set”","On the Tournaments page, no dialog","Something else — say what in the notes"]},{"who":"Owner of UAT Plus Org, computer · https://dev.fieldlogichq.ca/uat-plus-org/admin/tournaments/settings/subscription","do":"Open Plan & billing (reload once if you still see the chooser: the record arrives from Stripe a moment after you return). Read the card that replaced the chooser.","see":"A card with the eyebrow “Your 2028 season is set”, the headline “Tournament Plus, billed annually from” the date, and a sentence: the annual price from the plan list “will be charged to Visa ••0341 on” the date, “your first charge, and nothing before it. Your Founding Season runs free until then.” The “Choose your 2028 plan” card and the “If you choose nothing” card are both gone. Under it: “You can change this until” the end date, with a button “Change plan or card”. The “Billing” block now says “Visa ••0341 is on file.”"},{"who":"Owner of UAT Plus Org, computer · https://dev.fieldlogichq.ca/uat-plus-org/admin/tournaments/settings/subscription","do":"Look at the plan card at the top.","see":"Unchanged from step A2: Tournament Plus, “Free through” the end date, chip “Active” — not “Trial”, no amount due. Choosing does not move the plan and does not end the free season."},{"who":"You, in the Stripe dashboard (test mode), computer","do":"Customers › the same customer › Subscriptions. Open the subscription. Also read Invoices and Payments.","see":"Exactly ONE subscription: status Trialing, Tournament Plus on the annual price, trial ending on the date the screen shows, and an upcoming invoice dated that same day for the annual price. At most a $0.00 invoice exists from the start; there is NO paid invoice and NO payment. The subscription’s Metadata includes the plan, the cycle (annual) and the club’s orgId.","options":["One Trialing annual subscription ending on the date the screen shows, nothing paid","The trial or first invoice is on a different date than the screen","Money was charged today","More than one subscription"]},{"who":"You, in the Stripe dashboard (test mode) › Workbench › Webhooks","do":"Billing destination › Event deliveries.","see":"Deliveries of checkout.session.completed, customer.subscription.created, and customer.subscription.updated (plus payment_method.attached for the new card), each with a 200.","options":["All delivered with a 200","Something missing — say what in the notes","A delivery that is NOT a 200"]},{"who":"Owner of UAT Plus Org, computer","do":"Rule the silent card. You saved a card that Stripe says will fail when it is charged, and the site accepted it. Nothing on the screens you read warned about it.","see":"The code does not check whether a saved card can actually be charged later; the first sign would be a failed payment on the first-charge date. Rule whether that is acceptable.","options":["Nothing warned me (as the code does today)","Something warned me — say what in the notes"]}]},{"id":"D","title":"Changing your mind from an old tab: the earlier choice is replaced, and one live subscription remains","steps":[{"who":"Owner of UAT Plus Org, computer, SECOND browser tab · https://dev.fieldlogichq.ca/uat-plus-org/admin/tournaments/settings/subscription","do":"Go to the SECOND tab you left open in C1 (do not reload it). It still shows the chooser. Select “monthly” and click “Choose Tournament Plus · monthly”. When Stripe’s page opens, do NOT pay: click the back arrow at the top of Stripe’s page.","see":"Stripe’s page opens for the monthly choice with nothing due today. Going back sends you to the site. (This is the only way to reach the chooser again once a choice exists: the page hides it after you choose.) Leaves behind: the first choice is already cancelled (next steps)."},{"who":"Owner of UAT Plus Org, computer","do":"Look at where you landed, then open Plan & billing (reload it).","see":"Rule what the page says now. The code cancels the earlier choice in Stripe the moment a new one is started, before the new one is paid. So the code predicts that the earlier choice is gone and the chooser is back. Tick what you see.","options":["The chooser is back; the earlier annual choice is gone","Still “Your 2028 season is set” with the annual choice","Something else — say what in the notes"]},{"who":"You, in the Stripe dashboard (test mode), computer","do":"Customers › the same customer › Subscriptions.","see":"The first (annual) subscription is Canceled, and there is NO live subscription at all. It was cancelled when you clicked choose in the second tab, not when you paid. That means a customer who starts to change their mind and walks away has no plan choice left. Rule what you see.","options":["The annual subscription is Canceled and none is live","The annual subscription is still Trialing (and a second one exists)","The annual subscription is still Trialing and no second one exists"]},{"who":"You, in the Stripe dashboard (test mode) › Workbench › Webhooks","do":"Billing destination › Event deliveries. Find customer.subscription.deleted for that cancelled subscription. Then check the club is still fine: open the Tournaments page and Plan & billing.","see":"A customer.subscription.deleted delivery with a 200. The club is NOT suspended: Tournaments opens, the plan card still reads Tournament Plus with the chip “Active”. (Withdrawing a choice must never cancel the club; if the club now reads “Cancelled”, that is a defect.)","options":["deleted delivered with a 200, club still Active","deleted delivered but the club is now Cancelled/suspended","No deleted delivery, or not a 200"]},{"who":"Owner of UAT Plus Org, computer · https://dev.fieldlogichq.ca/uat-plus-org/admin/tournaments/settings/subscription","do":"Choose again, properly. In the first tab, with the chooser showing, select “monthly”, click “Choose Tournament Plus · monthly”, and pay on Stripe’s page with the approved card 4242 4242 4242 4242. Then open Plan & billing.","see":"The confirmation card now reads “Tournament Plus, billed monthly from” the date, with the monthly price from the plan list “will be charged to Visa ••4242 on” the date. The “Billing” block says “Visa ••4242 is on file.”"},{"who":"You, in the Stripe dashboard (test mode), computer","do":"Customers › the same customer › Subscriptions.","see":"Exactly ONE live subscription: Trialing, Tournament Plus on the monthly price, trial ending on the date the screen shows. The annual one is listed as Canceled. Nothing paid.","options":["One live monthly subscription, annual one cancelled, nothing paid","Two live subscriptions","Money was charged today"]}]},{"id":"E","title":"The Stripe portal: “Change plan or card” and removing a card","steps":[{"who":"Owner of UAT Plus Org, computer · https://dev.fieldlogichq.ca/uat-plus-org/admin/tournaments/settings/subscription","do":"On the confirmation card click “Change plan or card”. Without changing anything, look at what Stripe’s portal lets the customer do. Tick everything you can see.","see":"The button changes to “Redirecting…” and Stripe’s hosted billing portal opens for this customer, showing the Tournament Plus monthly subscription and the saved cards. These are the doors that skip our own screens.","options":["It lets me add or update a payment method","It lets me remove a saved card","It lets me change the plan or billing period","It lets me cancel the subscription","It offers none of the last three"]},{"who":"Owner of UAT Plus Org, computer · Stripe’s portal","do":"If the portal lets you remove a card, remove the OLDEST saved one (the one ending 3155 — not the one the subscription uses). If it does not let you remove any card, tick that box instead and go on.","see":"Back on Plan & billing the “Billing” block must STILL say “Visa ••4242 is on file.” — removing a spare card must not make the club look like it has no card. In the Billing destination there is a payment_method.detached delivery with a 200.","options":["Removed a card, page still shows ••4242, detached delivered with a 200","The portal would not let me remove any card","Removed a card and the page now says no card though another is on file (defect)","Detached delivery missing or not a 200"]},{"who":"Owner of UAT Plus Org, computer · Stripe’s portal","do":"Only if the portal offers it: change the billing period of the plan choice from monthly to annual, then return to Plan & billing.","see":"Rule what the page says. The page reads the plan and period from a note the site writes on the subscription when you choose, and a portal change does not rewrite that note, so the code predicts the page may still say “billed monthly” even though Stripe now charges the annual price.","options":["Page says annual (it follows the change)","Page still says monthly while Stripe says annual","The portal did not offer a change — skipped"]}]},{"id":"F","title":"What was sent and what the desk shows","steps":[{"who":"You, in Resend › Emails, computer","do":"Look at everything sent since you started this walk (any recipient).","see":"The card save and the plan choice send no email in the code, so nothing should be listed from these steps. Rule it.","options":["Nothing was sent (as the code does today)","An email was sent — say its subject in the notes","I could not tell"]},{"who":"Platform admin, computer · https://dev.fieldlogichq.ca/platform-admin/free-time?view=founding","do":"OPTIONAL. Sign in as the platform admin and open that address. Find the row for UAT Plus Org.","see":"Its “Card on file” cell reads Visa ••4242 and its “2028 choice” cell names Tournament Plus (monthly) with the day you chose. The tiles “No card yet” and “No 2028 choice yet” do not count this club. Tick one box.","options":["Did it — the row matches the screen and Stripe","Did it — the row is wrong, say how in the notes","Skipped it"]}]},{"id":"G","title":"Put everything back","steps":[{"who":"You, in the Stripe dashboard (test mode), computer","do":"PUT BACK 1. Customers › the same customer › the live subscription › Cancel subscription (cancel immediately). Then in the Billing destination find customer.subscription.deleted, and reload Plan & billing.","see":"A deleted delivery with a 200. The “Choose your 2028 plan” card is back, the confirmation card is gone, and the club is untouched: Tournament Plus, “Active”.","options":["Chooser is back, club untouched","The chooser did not come back","The club now reads Cancelled/suspended (defect)"]},{"who":"You, in the Stripe dashboard (test mode), computer","do":"PUT BACK 2. On the same customer delete each saved card (open the card, then Delete), in this order: first the cards that are NOT ending 4242 (3155 and 0341), and the cards ending 4242 LAST. The site only forgets a card when the card being removed is the one it has recorded, and it records the newest (••4242). After the last card, in the Billing destination find payment_method.detached and reload Plan & billing.","see":"Detached deliveries with a 200. Once no card is left the “Billing” block is back to “No payment method on file yet. Nothing is charged before” the date and the button reads “Add payment method” again. (Only after the LAST card goes does the site forget the card; while one remains it keeps showing it.)","options":["Back to “No payment method on file yet”","Still shows a card though Stripe has none (defect)","Detached delivery missing or not a 200"]},{"who":"You, in the Stripe dashboard (test mode), computer","do":"The Stripe customer itself stays; the next run re-uses it. Nothing else to put back: the club, its plan and its Founding Season year were never changed by this walk.","see":"Tick the box to confirm you finished.","options":["Done — UAT Plus Org is back to no card and no choice","Left it as it was — I will clean up later"]}]}]};
+  var KEY = DATA.key, PARTS = DATA.parts;
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+  function box(id, partId, label) {
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+    boxes.push({ part: partId, id: id, cb: cb, label: label });
+    return cb;
+  }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(txt('strong', null, p.id + ' \u00b7 ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(txt('span', 'who', id + ' \u00b7 ' + s.who));
+      t.appendChild(txt('span', null, s['do']));
+      t.appendChild(txt('span', 'see', 'You should see: ' + s.see));
+      if (s.options && s.options.length) {
+        var wrap = el('div', 'step opt'); wrap.appendChild(t);
+        s.options.forEach(function (o, k) {
+          var row = el('label', 'optrow'); var cb = box(id + '-' + (k + 1), p.id, id + ' = ' + o);
+          row.appendChild(cb); row.appendChild(txt('span', null, o)); wrap.appendChild(row);
+        });
+        body.appendChild(wrap);
+      } else {
+        var row2 = el('label', 'step'); var cb2 = box(id, p.id, id);
+        row2.appendChild(cb2); row2.appendChild(t); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' \u00b7 ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [DATA.title + ' (written 2026-10-28)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length + ' (a step with options counts one box per option)');
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join('; ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

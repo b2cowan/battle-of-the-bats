@@ -171,7 +171,7 @@ export async function sendEndingWarnings(now: Date = new Date()): Promise<{ warn
       const html = warmEmailDocument([
         warmEmailParagraph(escapeHtml(lead)),
         warmEmailParagraph(escapeHtml(LEAVING_WORDS.ending.emailBody(owe))),
-        warmEmailButton(LEAVING_WORDS.ending.emailButton, `${appUrl()}${getBillingHref(org.slug, org.planId)}`),
+        warmEmailButton(LEAVING_WORDS.ending.emailButton, `${appUrl()}${getBillingHref(org)}`),
       ].join('\n'));
       for (const to of people.emails) {
         await sendEmail(to, subject, html, { kind: 'payments_ending_warning', orgId: org.id, idempotencyKey: `payments-ending:${org.id}:${ending.at}:${to}` });

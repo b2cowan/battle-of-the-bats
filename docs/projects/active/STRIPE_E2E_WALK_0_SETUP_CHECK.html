@@ -1,0 +1,244 @@
+<title>Walk 0 Setup Check</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+
+.stop { border-left: 4px solid var(--warn); }
+.step.opt { flex-direction: column; gap: 4px; }
+.step .optrow { display: flex; gap: 10px; align-items: flex-start; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Stripe end-to-end · Walk 0</span>
+    <h1>Setup check — is the dev site really wired?</h1>
+    <p class="sub">Written 2026-10-28. One purpose: prove the dev site, Stripe's sandbox and the email service are really connected to each other before any Stripe walk spends your time. Nothing is paid and nothing that matters is changed.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    
+<p>Every Stripe walk after this one assumes five things are true: the site talks to the <strong>sandbox</strong> Stripe account you are looking at, Stripe's three webhook destinations reach the site, a real email leaves the site and arrives, the "buy" button opens Stripe's <strong>real</strong> hosted page (not the fake shortcut), and UAT Rep Club can take payments on a tournament that exists. This walk shows each one on screen, so a walk that fails later fails for a reason in the product, not in a setting.</p>
+<p>It ends with one table: tick the walks that are unblocked, and paste that back.</p>
+    <div><strong>It passes when</strong></div>
+    
+<ul>
+<li>The Plans table shows Stripe test price ids set for every paid plan, and you know which plans are Live and which are still Early access.</li>
+<li>A real email from the site arrives in your inbox from <code>FieldLogicHQ &lt;noreply@fieldlogichq.ca&gt;</code> and shows as Delivered in Resend.</li>
+<li>The coach "Continue to checkout" button opens Stripe's own page in test mode, and the customer the site just created is in <em>your</em> Stripe sandbox.</li>
+<li>All three Stripe webhook destinations show a 200 (or, for the account-events destination, a response that proves it reached the site).</li>
+<li>UAT Rep Club's Payouts card reads <strong>Taking payments</strong> with the Test mode chip, and the walk-only tournament's public page is open for registration with a full Walk 15U.</li>
+</ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private: it holds dev passwords.</p>
+    <dl class="facts"><dt>Where</dt><dd><p>The dev site, <code>https://dev.fieldlogichq.ca</code>, plus three other tabs you keep open: the <strong>Stripe dashboard in test mode</strong> (the account named <em>FieldLogicHQ sandbox</em>), the <strong>Resend dashboard</strong> (Emails), and <strong>your inbox</strong>. Part B needs a private (incognito) window so you are signed out of everything.</p></dd><dt>Before you begin</dt><dd><p>Part D needs the walk-only tournament <em>Stripe Walk Invitational</em> to exist. It is created by a seed script that whoever prepared this walk runs once (<code>scripts/seed-stripe-walk-tournament.mjs</code> with your inbox address). Part D opens by showing you whether it is there.</p></dd><dt>Webhooks (Stripe dashboard › Workbench › Webhooks)</dt><dd><ul>
+<li><strong>Billing</strong> — <code>https://dev.fieldlogichq.ca/api/billing/webhook</code> (plans, subscriptions, invoices)</li>
+<li><strong>Dev: club payments</strong> — <code>https://dev.fieldlogichq.ca/api/payments/connect-webhook</code> (a club's checkouts, refunds, disputes)</li>
+<li><strong>Dev: club account events</strong> — <code>https://dev.fieldlogichq.ca/api/payments/connect-account-events</code> (a club's Stripe account itself)</li>
+</ul>
+<p>Each destination has an <strong>Event deliveries</strong> tab. What its numbers mean for this site: <strong>200</strong> = arrived and understood; <strong>400</strong> = the signing secret saved on the site is not this destination's; <strong>503</strong> = the site has no signing secret saved at all; <strong>404</strong> = wrong address, or the dev site has not been built with that page; <strong>500</strong> = the site got it and failed while handling it.</p></dd><dt>Test cards (for the walks after this one)</dt><dd><ul>
+<li>Approved: <code>4242 4242 4242 4242</code></li>
+<li>Declined: <code>4000 0000 0000 0002</code></li>
+<li>3-D Secure (asks you to confirm): <code>4000 0025 0000 3155</code></li>
+<li>Attaches fine but <strong>fails when charged later</strong>: <code>4000 0000 0000 0341</code></li>
+</ul>
+<p>Any future expiry date, any 3-digit security code, any postal code. This walk never asks for a card.</p></dd><dt>Email log</dt><dd><p>Every message the site sends appears in the <strong>Resend dashboard › Emails</strong> (recipient, subject, Delivered or Bounced). When an email does not reach your inbox in about 2 minutes, look there first. Your inbox address for this walk is your real one with <code>+setupcheck</code> added before the @ (for example <code>yourname+setupcheck@gmail.com</code>); it lands in your normal inbox.</p></dd><dt>If a check fails, what it points at</dt><dd><ul>
+<li><strong>Part A</strong> (plans and prices): Test below 2/2 means a Stripe test price id is missing — set it in Platform admin › Plans &amp; pricing (a price change goes through a change request). A plan reading Early access is a setting in the same screen. A readiness line named after a setting (webhook secret, application address) is an Amplify variable on the <code>dev</code> branch.</li>
+<li><strong>Part B</strong> (email and the Stripe page): no email, or the wrong sender — <code>RESEND_API_KEY</code> and <code>RESEND_FROM</code> on the dev branch (the sender must be <code>FieldLogicHQ &lt;noreply@fieldlogichq.ca&gt;</code>; if <code>RESEND_FROM</code> is empty the site sends from Resend's test address) and the domain's status in Resend. No Stripe page, or no customer in your sandbox — <code>STRIPE_SECRET_KEY</code> (must be the sandbox's <code>sk_test_</code> key) and <code>NEXT_PUBLIC_APP_URL</code> (must be exactly <code>https://dev.fieldlogichq.ca</code>, no slash at the end). "Create team" instead of "Continue to checkout" means the free-offer date was overridden on the dev branch.</li>
+<li><strong>Part C</strong> (webhooks): a 400 or 503 is the destination's signing secret: <code>STRIPE_WEBHOOK_SECRET</code> (Billing), <code>STRIPE_CONNECT_WEBHOOK_SECRET</code> (club payments), <code>STRIPE_CONNECT_ACCOUNT_WEBHOOK_SECRET</code> (club account events). Amplify copies them in at build time, so a changed variable needs a fresh dev build before it counts.</li>
+<li><strong>Part D</strong> (Payouts and the tournament): no Payouts card, or Taking payments missing — <code>ONLINE_PAYMENTS_ENABLED</code> must be exactly <code>true</code> on the dev branch (with a sandbox key), and UAT Rep Club must still be connected (the club fixture script rebuilds it). Page not found for the tournament — the seed script has not been run.</li>
+</ul></dd></dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <dl class="facts"><dt>Platform admin</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code> — sign in at <code>/platform-admin/login</code>. It is on the dev site's staff list as a super admin. If sign-in is refused, stop and tell me.</dd><dt>UAT Rep Club owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> — sign in at <code>/auth/login</code>. If the site asks which workspace, pick UAT Rep Club.</dd><dt>A throw-away new coach</dt><dd>Made in Part B with <em>your</em> inbox plus <code>+setupcheck</code>, and a password you choose now. It is not a standing account.</dd></dl>
+  </section>
+
+  <section class="card stop">
+    <h2>Stop check</h2>
+    <p><strong>No account is signed in for Part B and the first half of Part D.</strong> Use a private window for those, and a normal window for the platform admin (Part A) and the club owner (end of Part D). Switching accounts in one window leaves the old session behind and ruins a check.</p>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    
+<ul>
+<li><strong>A payment.</strong> This walk never enters a card. Whether Stripe's confirmation reaches the site is proven by the walks that pay.</li>
+<li><strong>A real change to the account-events destination.</strong> That destination only fires when a club's Stripe account changes (connecting, a new requirement). The walk reads its history or sends a test event; it cannot honestly cause a real one without reconnecting UAT Rep Club.</li>
+<li><strong>The pay link's secret.</strong> A team's pay link is signed with a separate secret (<code>PAY_LINK_SECRET</code>); the site silently leaves the Pay button out when it is missing. It shows up only in the walks that email a pay link.</li>
+<li><strong>Bank debit, live mode and the mail service's delivery callback.</strong> Dev has no live Stripe key, and the delivery callback (which turns a Resend row into a Delivered stamp inside the site) is not checked here.</li>
+<li><strong>Anything about plan prices.</strong> This walk checks that price ids exist, not their amounts; the walks that buy compare Stripe's page to the site's price line.</li>
+<li><strong>Cleaning up the sandbox.</strong> The throw-away coach, the Stripe customer and the unpaid checkout stay until you delete them.</li>
+</ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  var DATA = {"key":"stripe-e2e-walk-0-v1","title":"Stripe end-to-end walk 0: Setup check — is the dev site really wired?","parts":[{"id":"A","title":"The platform side: Stripe prices, plan availability and the Stripe mode","steps":[{"who":"Platform admin · computer, normal window","do":"Open https://dev.fieldlogichq.ca/platform-admin/login and sign in with the platform admin on the card.","see":"The support console opens. If sign-in is refused, stop and tell me; Part A needs it and the other parts do not."},{"who":"Platform admin · computer","do":"Open https://dev.fieldlogichq.ca/platform-admin/plans-pricing (the Plans tab is the first one). In the table, look at the Pricing column of the rows Coaches Portal, Tournament Plus, League Plus, Club, and Club · Association. Each cell has two lines; read the second one, which starts with \"Test\".","see":"Each of the five rows reads \"Test 2/2\": two Stripe test price ids set out of two slots. The first line (\"Live 0/2\") is expected on dev and means nothing for this walk.","options":["All five rows read Test 2/2","At least one row reads less than 2/2 — name the row in the notes"]},{"who":"Platform admin · computer","do":"Same table, Status column. A plan that reads \"Early access\" does not offer a purchase on the site (the buy page shows an interest form or \"Not open yet\"), so a walk that buys it cannot reach Stripe.","see":"As set on dev today (this can change): Coaches Portal and Tournament Plus read Live; League Plus, Club and Club · Association read Early access. Tick what you see; tick the last box if anything differs.","options":["Coaches Portal reads Live","Tournament Plus reads Live","League Plus reads Early access","Club reads Early access","Club · Association reads Early access","Something differs from the lines above — say which plan and what it reads"]},{"who":"Platform admin · computer","do":"If the left menu has \"Dev tools\", open it (https://dev.fieldlogichq.ca/platform-admin/dev-tools) and find the panel \"Coaches Portal Checkout Readiness\". If there is no Dev tools entry, skip this step.","see":"This panel is the only screen that names the Stripe mode the site is using. Good looks like the chips \"Stripe smoke ready\" and \"Env: sandbox\". A warning that mock billing is off is expected and fine. A failing line names the setting that is wrong.","options":["Did it: the panel shows \"Stripe smoke ready\" and \"Env: sandbox\"","Did it: it shows \"Stripe smoke blocked\", or an Env other than sandbox — copy the failing lines into the notes","Skipped it: no Dev tools entry in the menu"]}]},{"id":"B","title":"One throw-away coach: the real email, then the real Stripe page","steps":[{"who":"Nobody signed in · computer, PRIVATE window","do":"Open https://dev.fieldlogichq.ca/coaches/start. Read the heading and the one sentence under it.","see":"The heading is \"Coach a team\". The sentence under it starts \"Premium Coaches Portal.\" and names a monthly and a yearly price. It must not say \"Free through\" (that would mean the free-offer window is still open and the buy button would skip Stripe). It must also be an account form, not a form asking to be told when it opens.","options":["Heading \"Coach a team\", sentence names a monthly and a yearly price","The sentence says \"Free through …\" — stop here and tell me","I see an \"interest\" form instead of an account form — stop here and tell me"]},{"who":"The throw-away coach · same private window · your inbox +setupcheck","do":"Fill the form: first name \"Setup\", last name \"Check\", email = your inbox with +setupcheck added (for example yourname+setupcheck@gmail.com), a password of 8 or more characters that you do not use anywhere else. Press \"Create account\".","see":"The form is replaced by a block that says your account is almost ready and shows \"Sent to\" followed by your plus-address. If instead you jump straight to naming a team with no such block, email verification is off on this site: stop and tell me. If a red message says \"Email verification is not configured.\", the mail key is missing on the dev site: stop and tell me."},{"who":"Your real inbox · any device","do":"Wait up to 2 minutes for an email to your +setupcheck address. Open it and read the sender line and the subject.","see":"The email has a heading \"Confirm your email\" and a button \"Confirm my email\". The subject normally reads \"Confirm your FieldLogicHQ email\" (it differs only if a platform admin customised that template). The sender must be FieldLogicHQ \u003cnoreply@fieldlogichq.ca>.","options":["Arrived, sender is FieldLogicHQ \u003cnoreply@fieldlogichq.ca>","Arrived, but the sender address is something else (for example onboarding@resend.dev) — write exactly what it shows in the notes","Arrived, but in spam or junk","Nothing arrived after 2 minutes — go on to the next step"]},{"who":"Resend dashboard · computer","do":"Open the Resend dashboard › Emails. Find the row for your +setupcheck address, sent in the last few minutes. Read its status.","see":"A row is there and says Delivered. If the inbox step got nothing but this row says Delivered, the problem is on your receiving side (spam, a filter). If there is no row at all, the site never handed the message to Resend.","options":["A row is there and its status is Delivered","A row is there but the status is Bounced, Failed or Suppressed — copy the word into the notes","There is no row for this address"]},{"who":"The throw-away coach · your inbox, then the private window","do":"In the email press \"Confirm my email\". On the page that opens (headed \"Confirm your email\") press \"Confirm my email\" again.","see":"You land on the site, signed in, on the team step: the words \"Your email is confirmed.\" and a \"Team name\" box. (If the email never arrived, say so in the notes and stop Part B here.)"},{"who":"The throw-away coach · same window","do":"Type the team name \"Setup Check FC\". Leave the sport and the billing choice as they are. Read the button at the bottom of the form, but do not press it yet.","see":"The button reads \"Continue to checkout\". \"Create team\" would mean the free offer is still open on this site.","options":["The button reads \"Continue to checkout\"","The button reads \"Create team\" — stop here and tell me","Something else — say what it reads"]},{"who":"The throw-away coach · same window","do":"Press \"Continue to checkout\". The button briefly says \"Starting checkout…\". Do not enter any card.","see":"The browser leaves our site for Stripe's own page (the address starts with checkout.stripe.com), which carries a test or sandbox marker. Possible red messages on our page instead: \"Monthly checkout is not configured for Team yet.\", \"Annual checkout is not configured for Team yet.\", or \"Stripe checkout is not configured.\".","options":["Stripe's own page opened and it carries a test or sandbox marker","Stripe's page opened and shows NO test or sandbox marker — stop, do not enter a card","Our page showed a red message instead — copy its words into the notes","The site went straight to a welcome or success page without showing Stripe"]},{"who":"Stripe dashboard · computer, test mode, account \"FieldLogicHQ sandbox\"","do":"Open Customers. Look at the newest customer.","see":"A customer whose email is your +setupcheck address, created a minute or two ago. The site creates it with its own Stripe key at the moment it starts checkout, so finding it in the sandbox you are looking at proves the key belongs to this sandbox. No such customer, while other recent customers are there, means the site's key belongs to a different Stripe account.","options":["The customer with my +setupcheck address is there","Not there, but other recent customers are","I cannot tell — the dashboard is not showing the FieldLogicHQ sandbox in test mode"]},{"who":"The throw-away coach · computer","do":"Put back: close the Stripe tab without entering a card. This step leaves behind a throw-away coach account, an unpaid Stripe checkout that expires by itself, and one test customer in the sandbox. Nothing needs deleting; if you want the sandbox tidy, delete that test customer in Stripe.","see":"Nothing was charged. The Stripe tab is closed."}]},{"id":"C","title":"The three Stripe webhook destinations answer","steps":[{"who":"Stripe dashboard · computer, test mode, account \"FieldLogicHQ sandbox\"","do":"Open Workbench › Webhooks › the destination \"Billing\" › Event deliveries. If the destination offers \"Send test event\", send one (any event type from its list; customer.subscription.trial_will_end is the gentlest). Otherwise read the newest delivery.","see":"A delivery from today with 200. The site checks Stripe's signature first, then does nothing for a customer it does not know and still answers 200. 400 = signing secret on the site is not this destination's; 404 = wrong address or the dev build lacks the page; 500 = reached the site, failed in handling.","options":["A delivery from today shows 200 (a test event I sent, or a real one)","The newest delivery shows 400","The newest delivery shows 404, 500 or another code — write it in the notes","No deliveries and no way to send a test event — I will leave this to Walk 1"]},{"who":"Stripe dashboard · computer","do":"Same place: the destination \"Dev: club payments\" › Event deliveries. If \"Send test event\" is offered, send checkout.session.completed. Otherwise read the newest delivery.","see":"A delivery from today with 200. A test event names no real payment, so the site records nothing and answers 200. 400 = wrong signing secret; 503 = the site has no signing secret saved for this destination; 404 = wrong address or dev build.","options":["A delivery from today shows 200","The newest delivery shows 400 or 503","The newest delivery shows 404, 500 or another code — write it in the notes","No deliveries and no way to send a test event — I will leave this to the first club payment walk"]},{"who":"Stripe dashboard · computer","do":"Same place: the destination \"Dev: club account events\" › Event deliveries. This one only hears when a club's Stripe account changes, so it may have no recent deliveries. If a delivery exists, open it and read the response text. If \"Send test event\" is offered, a test event names a made-up Stripe account, so a 500 whose response says \"Processing failed\" is fine: it proves the address and signing secret reached the site's handler.","see":"Either 200, or 500 with the response \"Processing failed\" from a test event. A 400 (response \"Bad signature\") or 503 (response \"Not configured\") or 404 is a real problem.","options":["The newest delivery shows 200","A test event shows 500 and the response says \"Processing failed\" (the handler was reached)","The newest delivery shows 400, 503 or 404","No deliveries and no way to send a test event — I will leave this unproven"]}]},{"id":"D","title":"UAT Rep Club can take payments, and the walk-only tournament is open","steps":[{"who":"Nobody signed in · computer, PRIVATE window","do":"Open https://dev.fieldlogichq.ca/uat-rep-club/stripe-walk-invitational. If the page says it cannot be found, stop Part D and tell whoever prepared the walk: the seed script has not been run.","see":"The public page of \"Stripe Walk Invitational\" loads and its registration status reads \"Registration is open\".","options":["The page loads and reads \"Registration is open\"","The page loads but registration reads something else — say what","The page cannot be found — stop Part D"]},{"who":"Nobody signed in · same private window","do":"Open https://dev.fieldlogichq.ca/uat-rep-club/stripe-walk-invitational/register. Open the Division dropdown (it starts on \"Select a division\"), then choose Walk 13U, then choose Walk 15U. Do not fill in or submit anything. (A leftover registration from an earlier walk run shows as fewer spots left; it is cleared by the reset command, not here.)","see":"The Division dropdown shows Walk 13U with a spots-left count and Walk 15U reading \"(WAITLIST)\". Choosing a division shows a box headed \"Payment handled by organizer\" with a Total fee of $300 and a Deposit of $100. Those are whole-event figures set by the seed.","options":["Walk 13U is listed with a spots-left count","Walk 15U is listed and reads (WAITLIST)","The fee box shows a Total fee of $300 and a Deposit of $100","Something differs from the lines above — say what in the notes"]},{"who":"UAT Rep Club owner · computer, NORMAL window","do":"Sign in at https://dev.fieldlogichq.ca/auth/login with the club owner on the card (pick UAT Rep Club if asked). Open https://dev.fieldlogichq.ca/uat-rep-club/admin/org/settings and scroll to the card labelled \"Payouts\" (it sits below \"Your public site\" and above \"Delete organization\").","see":"The Payouts card shows the pill \"Taking payments\", a \"Test mode\" chip, the heading \"Families and teams can pay online\", and the line \"No real money moves while payouts are in test mode.\". A notice about payments terms may also show; it does not matter here.","options":["The card shows Taking payments and the Test mode chip","The card shows another state (Not set up, Setting up, Needs attention or Disconnected) — say which","There is no Payouts card on the page"]},{"who":"UAT Rep Club owner · same window","do":"On the Payouts card press \"Open Stripe\" (it briefly says \"Opening Stripe…\"). Look at what opens, then close it; nothing is changed.","see":"Stripe opens a page for the club's test account. The site just used its own Stripe key to reach the club's account, which only works if that key and the club's account belong to the same Stripe platform.","options":["Stripe opened a page for the club's account","A red message appeared on the card instead — copy its words into the notes","Something else happened — say what"]}]},{"id":"E","title":"Which walks can I run now?","steps":[{"who":"You · after Parts A to D","do":"Tick every walk you believe is unblocked. A rule of thumb: a walk that BUYS a plan needs the plan to read Live in A, the email and Stripe page in B, and the Billing webhook in C. A walk that takes a payment on UAT Rep Club's tournament needs the club-payments webhook in C and the Payouts card in D. Walk 9 also needs the tournament checks in D. If a check above failed or was left unproven, do not tick the walks that rest on it. Four things sit outside these checks, so tick the walk only when you have done them: Walk 2 Part B needs the Club plans opened up (it walks you through asking for that as the platform admin); Walk 4 needs one extra dev-site setting, NEXT_PUBLIC_FOUNDING_SEASON_CARD_WINDOW_OPEN, plus a redeploy (Walk 4's first step stops you if it is missing); Walk 6 replays events from earlier walks, so run it after Walk 1 and Walk 9 (or 8), within 15 days; Walk 9 needs the setup script run once (the command is in its Before-you-start).","see":"One box per walk. The paste-back says which walks are unblocked; anything unticked waits for the setting named under \"If a check fails\".","options":["Walk 1 is ready","Walk 2 is ready","Walk 3 is ready","Walk 4 is ready","Walk 6 is ready","Walk 7 is ready","Walk 8 is ready","Walk 9 is ready"]}]}]};
+  var KEY = DATA.key, PARTS = DATA.parts;
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+  function box(id, partId, label) {
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+    boxes.push({ part: partId, id: id, cb: cb, label: label });
+    return cb;
+  }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(txt('strong', null, p.id + ' \u00b7 ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(txt('span', 'who', id + ' \u00b7 ' + s.who));
+      t.appendChild(txt('span', null, s['do']));
+      t.appendChild(txt('span', 'see', 'You should see: ' + s.see));
+      if (s.options && s.options.length) {
+        var wrap = el('div', 'step opt'); wrap.appendChild(t);
+        s.options.forEach(function (o, k) {
+          var row = el('label', 'optrow'); var cb = box(id + '-' + (k + 1), p.id, id + ' = ' + o);
+          row.appendChild(cb); row.appendChild(txt('span', null, o)); wrap.appendChild(row);
+        });
+        body.appendChild(wrap);
+      } else {
+        var row2 = el('label', 'step'); var cb2 = box(id, p.id, id);
+        row2.appendChild(cb2); row2.appendChild(t); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' \u00b7 ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [DATA.title + ' (written 2026-10-28)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length + ' (a step with options counts one box per option)');
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join('; ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

@@ -1,0 +1,777 @@
+<title>Part Refunds and Bank Debit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) holding true-size specimens of the club admin kit (Warm, Inter).
+   Same shape as the Stage 12 drawings: tabs per frame, before beside after, asks + paste-back at the end.
+   Every fee figure is computed on load from the card line of the facilitated-payments rate (350 bps + 150 cents,
+   lib/plan-config.ts ONLINE_PAYMENT_RATES, matching PLAN_PRICING_FACTS.md), half-up to the cent. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.doc{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 90px}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:24px;margin:36px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:18px;margin:24px 0 6px}
+.doc p,.doc li{max-width:82ch}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16.5px;max-width:82ch}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 12px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+.tabs .sp{flex:1}
+.thm{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.thm button{border-radius:0;min-height:36px;font-size:13px}
+.thm button[aria-pressed="true"]{background:var(--surface);color:var(--ink)}
+section.pane[hidden]{display:none}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);margin:14px 0}
+.card h3{margin-top:0}
+.card ul,.card ol{margin:6px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--fix);border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.push{border-left-color:var(--ask)}
+.verdict h3{margin:0 0 6px}
+.verdict ul,.verdict ol{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.cap{font-size:13.5px;line-height:1.5;color:var(--muted);max-width:86ch;margin:8px 0}
+.fl{font:700 11px/1 var(--f-mono);letter-spacing:.03em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid var(--flag);color:var(--flag);background:var(--flag-soft);min-height:24px;vertical-align:1px;white-space:nowrap}
+.fl.fix{border-color:var(--fix);color:var(--fix);background:var(--fix-soft)}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:22px;vertical-align:1px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)} .mk.pv{color:var(--ask)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:720px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{color:var(--ink);padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+.y{color:var(--fix);font-weight:700} .x{color:var(--flag);font-weight:700}
+.sp-cap{font:600 12px/1.35 var(--f-mono);letter-spacing:.04em;color:var(--muted);margin:14px 0 6px}
+.spec{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin:10px 0}
+.spec>.col{min-width:0;display:flex;flex-direction:column;gap:6px;max-width:100%}
+.dt-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:6px 0}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;box-sizing:border-box;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:52px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:260px;font:12.5px/1.5 var(--f-mono)}
+/* note dialog */
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:10px 8px 10px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:17px;flex:1}
+dialog.note .xb{font-size:22px;line-height:1;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px}
+dialog.note .nb p{margin:0}
+
+/* ===== the product kit, for specimens (Warm default; .dk = Dark) ===== */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.22);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#B03A22;--red-soft:rgba(176,58,34,.10);--amber:#835006;--amber-soft:#FBEFD9;--green:#34662A;--green-soft:#E6F0E2;--blue:#1D4A8A;--blue-soft:#E3ECF8;--grid:rgba(70,55,30,.06);--dimbg:rgba(36,30,21,.28);--hl:rgba(75,46,131,.09);
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative;text-align:left}
+.ak.dk{--paper:#0A0A0A;--card:#141A22;--ink:#F1F5F9;--soft:rgba(255,255,255,.72);--dim:rgba(255,255,255,.55);--line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.18);
+  --olive:#D9F99D;--olive-soft:rgba(217,249,157,.12);--red:#F08A74;--red-soft:rgba(240,138,116,.14);--amber:#F2B55A;--amber-soft:rgba(242,181,90,.14);--green:#9BD58C;--green-soft:rgba(155,213,140,.13);--blue:#9CC2F5;--blue-soft:rgba(156,194,245,.13);--grid:rgba(255,255,255,.03);--dimbg:rgba(0,0,0,.6);--hl:rgba(187,166,238,.10)}
+.ak *{box-sizing:border-box}
+.dt-wrap{overflow-x:auto;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);max-width:100%;margin:6px 0}
+.dt{width:1440px}
+.dt-wrap.fit .dt{zoom:var(--z,1)}
+.ph{width:390px;max-width:100%;flex:none;border-radius:18px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow)}
+.ak .tb{display:flex;align-items:center;gap:10px;height:48px;padding:0 20px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .tb .lg{width:18px;height:18px;background:var(--olive);border-radius:4px}
+.ak .tb .ar{font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--dim);border-left:1px solid var(--line2);padding-left:12px;margin-left:4px}
+.ak .tb .sp{flex:1}
+.ak .tb .ic{width:30px;height:30px;border-radius:50%;border:1px solid var(--line2);display:grid;place-items:center;font:700 11px/1 'Inter';color:var(--soft)}
+.ak .shell{display:flex;min-height:640px}
+.ak .sb{width:240px;flex:none;background:var(--card);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .it{font:500 14px/1 'Inter';color:var(--soft);padding:10px;border-radius:7px;display:flex;align-items:center;gap:8px;min-height:38px}
+.ak .sb .it.sub{padding-left:26px;font-size:13.5px}
+.ak .sb .it.on{background:var(--olive-soft);color:var(--ink);font-weight:650}
+.ak .sb .it i{width:14px;height:14px;border-radius:4px;background:currentColor;opacity:.28;flex:none}
+.ak .sb .grp{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:14px 10px 6px}
+.ak .mn{flex:1;min-width:0;padding:22px 0 50px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px}
+.ak .pg{width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.ak .ey{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.ak .ph1{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.ak .ph1 h1{font:700 28px/1.1 'Barlow Condensed',sans-serif;margin:2px 0 0;letter-spacing:.005em}
+.ak .ph1 .sp{flex:1}
+.ak .btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line2);background:var(--card);font:600 14px/1 'Inter';color:var(--ink);white-space:nowrap}
+.ak .btn.pri{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.ak .btn.ic{width:40px;padding:0;justify-content:center}
+.ak .btn.sm{min-height:36px;font-size:13.5px}
+.ak .utabs{display:flex;gap:18px;border-bottom:1px solid var(--line)}
+.ak .utabs span{min-height:44px;display:inline-flex;align-items:center;gap:6px;font:600 14px/1 'Inter';color:var(--soft);border-bottom:2px solid transparent}
+.ak .utabs span.on{color:var(--ink);border-bottom-color:var(--olive)}
+.ak .utabs .c{font:700 11px/1 'Inter';background:var(--line);border-radius:999px;padding:3px 7px}
+.ak .utabs .c.am{background:var(--amber-soft);color:var(--amber)}
+.ak .tbar{display:flex;gap:8px;align-items:center}
+.ak .tbar .sp{flex:1}
+.ak .fld{display:inline-flex;align-items:center;min-height:40px;padding:0 12px;border:1px solid var(--line2);border-radius:8px;background:var(--card);font:500 14px/1.3 'Inter';color:var(--ink);gap:8px}
+.ak .fld.srch{min-width:240px;color:var(--dim)}
+.ak .chev{width:8px;height:8px;border:solid var(--dim);border-width:0 2px 2px 0;transform:rotate(45deg);margin-top:-4px;flex:none}
+.ak .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak table.kt{width:100%;border-collapse:collapse;font-size:14px;color:var(--ink)}
+.ak table.kt th{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);text-align:left;padding:10px 16px;border-bottom:1px solid var(--line);position:relative}
+.ak table.kt td{padding:12px 16px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;vertical-align:top;color:var(--ink)}
+.ak table.kt tr:last-child td{border-bottom:0}
+.ak table.kt td.r{text-align:right;white-space:nowrap}
+.ak table.kt tr.hl td{background:var(--hl)}
+.ak .nm{font:650 14.5px/1.3 'Inter';color:var(--olive)}
+.ak .s2{display:block;font-size:12.5px;color:var(--dim);margin-top:2px;line-height:1.4}
+.ak .pill{display:inline-flex;align-items:center;gap:6px;font:600 12.5px/1 'Inter';border-radius:999px;padding:5px 10px;white-space:nowrap}
+.ak .pill.ok{color:var(--green);background:var(--green-soft)}
+.ak .pill.am{color:var(--amber);background:var(--amber-soft)}
+.ak .pill.bad{color:var(--amber);background:var(--amber-soft);border:0;cursor:pointer;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;font-family:'Inter',sans-serif}
+.ak .pill.bad.ro{cursor:default;text-decoration:none}
+.ak .cpy{width:44px;height:44px;display:inline-grid;place-items:center;font-size:18px;color:var(--soft);flex:none}
+.ak .pmoney{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .pmoney>div{padding:10px 10px;border-left:1px solid var(--line);min-width:0}
+.ak .pmoney>div:first-child{border-left:0}
+.ak .pmoney .k{font:600 10px/1.3 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.ak .pmoney .v{font:700 16px/1.2 'Inter';font-variant-numeric:tabular-nums;margin-top:3px}
+.ak .pmoney .h{font-size:11.5px;color:var(--soft);line-height:1.35;margin-top:2px}
+.ak .na .bb .btn{min-height:44px}
+.ak .pill.q{color:var(--soft);border:1px solid var(--line2)}
+.ak .fee b{font-weight:650}
+.ak .fee .s2{white-space:nowrap}
+.ak .lnk{color:var(--olive);font-weight:650;text-decoration:none}
+.ak .tip{display:inline-flex;align-items:center;justify-content:center;min-height:24px;font:600 12.5px/1.3 'Inter';color:var(--soft);border-bottom:1px dotted var(--dim);margin-top:2px}
+.ak .foot{font-size:13px;color:var(--dim)}
+.ak .band{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .band>div{padding:12px 16px;border-left:1px solid var(--line);min-width:0}
+.ak .band>div:first-child{border-left:0}
+.ak .band .k{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.ak .band .v{font:700 22px/1.2 'Inter';font-variant-numeric:tabular-nums;margin-top:4px}
+.ak .band .v.am{color:var(--amber)}
+.ak .band .h{font-size:12px;color:var(--soft)}
+.ak .out{color:var(--red);font-weight:650}
+.ak .rare{font-size:13.5px;color:var(--soft);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line);background:var(--card)}
+.ak .rare .lnk{text-decoration:underline}
+/* phone */
+.ak .pbar{height:52px;display:flex;align-items:center;gap:6px;padding:0 6px 0 4px;background:var(--card);border-bottom:1px solid var(--line);font:700 16px/1 'Inter'}
+.ak .pbar .sp{flex:1}
+.ak .pbk{width:44px;height:44px;display:grid;place-items:center;font-size:20px;color:var(--soft)}
+.ak .ptitle{padding:12px 16px 4px;background:var(--card)}
+.ak .ptitle b{font:700 22px/1.1 'Barlow Condensed',sans-serif;display:block}
+.ak .ptabs{display:flex;gap:6px;overflow-x:auto;padding:8px 16px 10px;border-bottom:1px solid var(--line);scrollbar-width:none;background:var(--card)}
+.ak .ptabs>span{flex:none;font:600 14px/1 'Inter';color:var(--soft);padding:0 14px;min-height:44px;display:inline-flex;align-items:center;gap:6px;border-radius:999px;border:1px solid var(--line2)}
+.ak .ptabs>span.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ak .ptabs .c{font:700 11px/1 'Inter';border-radius:999px;padding:3px 6px;background:var(--line)}
+.ak .ptabs .c.am{background:var(--amber-soft);color:var(--amber)}
+.ak .plist{display:flex;flex-direction:column;gap:8px;padding:12px 12px 20px}
+.ak .prow{background:var(--card);border:1px solid var(--line);border-radius:10px;display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:4px;padding:10px 4px 10px 12px;min-height:64px}
+.ak .prow.hl{background:linear-gradient(var(--hl),var(--hl)),var(--card)}
+.ak .prow b{font:650 15px/1.3 'Inter';color:var(--olive);display:block}
+.ak .prow .d{font-size:13px;color:var(--soft);margin-top:2px;line-height:1.4}
+.ak .prow .d2{font-size:12.5px;color:var(--dim);margin-top:2px;line-height:1.4}
+.ak .prow .dots{width:44px;height:44px;display:grid;place-items:center;font:700 18px/1 'Inter';color:var(--soft);align-self:start}
+.ak .prow .pill{margin-top:6px;min-height:28px}
+.ak .bnav{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--card);height:62px}
+.ak .bnav span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 11px/1 'Inter';color:var(--soft)}
+.ak .bnav span i{width:20px;height:20px;border-radius:5px;border:1.5px solid currentColor;display:block}
+.ak .bnav span.on{color:var(--olive)}
+/* windows */
+.ak.win{padding:36px 28px;background:var(--dimbg)}
+.ak .dlg{background:var(--card);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);width:640px;max-width:100%;margin:0 auto;display:flex;flex-direction:column}
+.ak .dlg.sm{width:480px}
+.ak .dlg .dh{display:flex;align-items:flex-start;padding:16px 8px 8px 20px;gap:8px}
+.ak .dlg .dh .t{flex:1;min-width:0}
+.ak .dlg .dh h4{font:700 19px/1.25 'Inter';margin:2px 0 0}
+.ak .dlg .dh .xx{font-size:22px;color:var(--dim);width:44px;height:44px;display:grid;place-items:center;flex:none}
+.ak .dlg .db{padding:4px 20px 18px;display:flex;flex-direction:column;gap:14px;color:var(--soft);font-size:14px}
+.ak .dlg .df{display:flex;align-items:center;gap:10px;padding:12px 20px;border-top:1px solid var(--line);flex-wrap:wrap}
+.ak .dlg .df .s{flex:1;font-size:13px;color:var(--dim);min-width:160px}
+.ak .dlg .steps{display:flex;align-items:center;gap:10px;padding:10px 20px;border-top:1px solid var(--line);font-size:13px;color:var(--dim)}
+.ak .dlg .steps .sp{flex:1;text-align:center}
+.ak .sec h5{font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:0 0 8px}
+.ak .facts{display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px 18px;font-size:14px;align-items:baseline}
+.ak .facts>span:nth-child(odd){color:var(--dim)}
+.ak .facts>span:nth-child(even){color:var(--ink)}
+.ak .rf{border:1px solid var(--line2);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;background:var(--card)}
+.ak .rf.hl{background:linear-gradient(var(--hl),var(--hl)),var(--card)}
+.ak .rf .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ak .rf .top b{font:650 15px/1.3 'Inter';color:var(--ink);flex:1;min-width:0}
+.ak .ref{display:inline-flex;align-items:center;gap:6px;font:500 13px/1 'IBM Plex Mono',monospace;color:var(--ink)}
+.ak .copy{display:inline-flex;align-items:center;justify-content:center;min-height:32px;min-width:44px;padding:0 10px;border:1px solid var(--line2);border-radius:7px;font:600 12.5px/1 'Inter';color:var(--ink);background:var(--card)}
+.ak .hist{display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:var(--ink)}
+.ak .hist>div{display:grid;grid-template-columns:70px minmax(0,1fr);gap:10px}
+.ak .hist>div>span:first-child{color:var(--dim)}
+.ak .hist .nw{background:var(--hl);border-radius:6px;padding:2px 6px;margin:-2px -6px}
+.ak .todo{display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.ak .todo b{color:var(--ink);font-weight:600}
+.ak .fsw{display:flex;flex-direction:column;background:var(--card);min-height:760px}
+.ak .fsw .fh{display:flex;align-items:center;gap:4px;min-height:56px;padding:0 4px;border-bottom:1px solid var(--line)}
+.ak .fsw .fh .t{flex:1;min-width:0}
+.ak .fsw .fh b{font:700 17px/1.2 'Inter';display:block}
+.ak .fsw .fb{padding:14px 16px 20px;display:flex;flex-direction:column;gap:14px;color:var(--soft);font-size:14px}
+.ak .fsw .facts{grid-template-columns:118px minmax(0,1fr);gap:8px 12px}
+.ak .na{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:12px;padding:14px 16px;border-top:1px solid var(--line);border-left:3px solid var(--amber);background:var(--card);align-items:start}
+.ak .na:first-child{border-top:0}
+.ak .na .ico{width:36px;height:36px;border-radius:9px;background:var(--amber-soft);color:var(--amber);display:grid;place-items:center;font:700 15px/1 'Inter'}
+.ak .na b{font:650 14.5px/1.35 'Inter';color:var(--ink);display:block}
+.ak .na .d{font-size:13.5px;color:var(--soft);margin-top:3px;line-height:1.45}
+.ak .na .bb{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.ak .na .tm{font-size:12px;color:var(--dim);white-space:nowrap}
+.ak .gone{padding:22px 16px;text-align:center;color:var(--dim);font-size:14px;background:var(--card)}
+.ak .rad{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-top:1px solid var(--line);min-height:44px}
+.ak .rad:first-child{border-top:0}
+.ak .rad .dot{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line2);flex:none;margin-top:2px;position:relative}
+.ak .rad.on .dot{border-color:var(--olive)}
+.ak .rad.on .dot::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--olive)}
+.ak .rad b{display:block;font:600 14px/1.35 'Inter';color:var(--ink)}
+.ak .rad .s3{display:block;font-size:12.5px;color:var(--dim)}
+.ak .radios{border:1px solid var(--line);border-radius:8px}
+/* email */
+.mail{background:#FFFFFF;color:#241E15;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:560px;max-width:100%;font:15px/1.55 'Inter',system-ui,sans-serif}
+.mail .mh{padding:12px 16px;border-bottom:1px solid #E6E0D4;background:#F8F4ED;font-size:13.5px;color:#4A4235;display:flex;flex-direction:column;gap:2px}
+.mail .mh b{color:#241E15}
+.mail .mb{padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.mail .mb p{margin:0}
+.mail .blk{border:1px solid #E6E0D4;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:#FCFAF6}
+.mail .ln{display:flex;justify-content:space-between;gap:12px;font-variant-numeric:tabular-nums;font-size:14px}
+.mail .ln span:first-child{color:#615A54}
+.mail .mono{font:500 13px/1.3 'IBM Plex Mono',monospace}
+.mail .old{background:#F7E2DC;color:#5e1d0e;border-radius:6px;padding:8px 10px;font-size:14px}
+.mail .tst{font:700 10.5px/1 'IBM Plex Mono',monospace;color:#1D4A8A;background:#E3ECF8;border-radius:4px;padding:3px 5px}
+.states{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:14px;margin:10px 0}
+.states>div{min-width:0}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+@media (max-width:600px){.doc h1{font-size:25px}.tabs{position:static}}
+</style>
+<style>
+/* This round's additions.
+   The family's pay page is a club's public face: fixed light, wearing the club's (or tournament's) theme colour, which a
+   frame sets as --pay-accent. Shapes follow the built pay block: a left-aligned button with its icon, the fee as a note line
+   under it (full width at 640 and below), states as a heading + sentence, the receipt as an outlined card. */
+.pub{--pay-ink:#1B1B1B;--pay-soft:#3F3F3F;--pay-dim:#666;--pay-line:rgba(0,0,0,.14);--pay-accent:#1F3A8A;--pay-info:#1D4A8A;
+  background:#F5F4F0;color:var(--pay-ink);font:15px/1.5 'Inter',system-ui,sans-serif}
+.pub.trn{--pay-accent:#4A1A6E}
+.pub .nv{background:var(--pay-accent);color:#fff;display:flex;align-items:center;gap:10px;padding:0 16px;height:56px;font:700 19px/1 'Barlow Condensed',sans-serif}
+.pub .in{padding:16px;display:flex;flex-direction:column;gap:14px}
+.pub .blk2{background:#fff;border:1px solid var(--pay-line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.pub .pk{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--pay-dim)}
+.pub .pline{display:flex;justify-content:space-between;gap:10px;font-size:14px;font-variant-numeric:tabular-nums}
+.pub .pline.t{font-weight:700;font-size:15px;border-top:1px solid var(--pay-line);padding-top:8px}
+.pub .prow2{display:flex;flex-direction:column;gap:4px}
+.pub .pbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;border-radius:8px;background:var(--pay-accent);color:#fff;font:650 15.5px/1.2 'Inter';padding:0 14px;box-sizing:border-box;border:1.5px solid var(--pay-accent)}
+.pub .pbtn.alt{background:#fff;color:var(--pay-accent)}
+.pub .pbtn svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pub .pbtn .lbl{white-space:normal;text-align:center}
+.pub .note{font-size:13px;color:var(--pay-dim);line-height:1.45;margin:0}
+.pub .state h2{margin:0 0 4px;font:700 18px/1.3 'Inter';color:var(--pay-ink)}
+.pub .state h2.info{color:var(--pay-info)}
+.pub .state p{margin:0;color:var(--pay-soft);font-size:14.5px}
+.pub .receipt{padding:14px;border:1px solid var(--pay-line);border-radius:8px;display:flex;flex-direction:column;gap:6px;background:#fff}
+.pub .receipt h2{margin:0;font:700 18px/1.3 'Inter'}
+.pub .rd{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;font-size:14px;min-height:44px}
+.pub .rd+.rd{border-top:1px solid var(--pay-line)}
+.pub .o{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--pay-accent);flex:none;margin-top:2px;position:relative}
+.pub .o.on::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--pay-accent)}
+.pub .rds{border:1px solid var(--pay-line);border-radius:10px;background:#fff}
+.pub .save{border-left:3px solid var(--pay-accent);padding:4px 10px;font-size:13.5px;color:var(--pay-soft);margin:0}
+/* the kit: the info (sent, awaiting the other side) chip, as RepChip tone="info" — --info-light ink on an --info-rgb fill */
+.ak{--info-ink:#1D4A8A;--info-fill:rgba(29,74,138,.08)}
+.ak.dk{--info-ink:#9CC2F5;--info-fill:rgba(156,194,245,.12)}
+.ak .chip{display:inline-flex;align-items:center;font:600 12px/1 'Inter';border-radius:999px;padding:5px 9px;white-space:nowrap}
+.ak .chip.ok{color:var(--green);background:var(--green-soft)}
+.ak .chip.am{color:var(--amber);background:var(--amber-soft)}
+.ak .chip.info{color:var(--info-ink);background:var(--info-fill)}
+.ak .tg{font:500 12.5px/1.4 'Inter';color:var(--soft);display:block;margin-top:3px}
+.ak .amt{font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ak .prw{display:grid;grid-template-columns:70px minmax(0,1fr) auto 44px;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.ak .prw:first-child{border-top:0}
+.ak .prw.hl{background:var(--hl)}
+.ak .prw .dots{width:44px;height:44px;display:grid;place-items:center;border-radius:8px;color:var(--soft);font-weight:700}
+.ak .prw .lab{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ak .amtf{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ak .chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--ink)}
+.ak .chk .bx{width:20px;height:20px;border:1.5px solid var(--line2);border-radius:5px;flex:none;margin-top:1px;display:grid;place-items:center;font:700 12px/1 'Inter';color:var(--card)}
+.ak .chk .bx.on{background:var(--olive);border-color:var(--olive)}
+.ak .sumln{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.ak .sumln b{flex:1;font:650 15px/1.3 'Inter'}
+.ak .sumln b .rest{font-weight:500;color:var(--soft)}
+.ak .bandnote{font-size:12.5px;color:var(--soft);padding:8px 16px}
+.ak .pmoney{display:grid;grid-template-columns:1fr 1fr;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .pmoney>div{padding:10px 12px;border-top:1px solid var(--line);min-width:0}
+.ak .pmoney>div:nth-child(odd){border-right:1px solid var(--line)}
+.ak .pmoney>div:nth-child(-n+2){border-top:0}
+.ak .pmoney .k{font:600 10.5px/1.3 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.ak .pmoney .v{font:700 17px/1.2 'Inter';font-variant-numeric:tabular-nums;margin-top:3px}
+.ak .pmoney .h{font-size:11.5px;color:var(--soft);margin-top:2px}
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></symbol>
+  <symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M9.5 21V10M14.5 21V10M19 21V10M2 10l10-6 10 6z"/></symbol>
+</defs></svg>
+
+<div class="doc">
+<p class="eyebrow">FieldLogicHQ · Club Tier · Stage 12c · drawing gate items 2 and 3 · drawing round · 2026-10-26</p>
+<h1>A team's part refund, and bank debit re-checked</h1>
+<p class="lede">The last two drawings before the 12c build prompt (plan §0j). First, a tournament can refund part of a team's card payment, which today it can only refund in full. Second, the Stage 12 bank-debit drawings from October 24 are checked against what was built since, and redrawn where they no longer fit. Nothing here is built.</p>
+
+<div class="verdict"><h3>Ruled 2026-10-26: all ten asks, every one as recommended</h3><ul>
+  <li>A team's part refund: no processing fee on a part refund, a reason required, and it lowers that team's entry (1–4). A part refund made in Stripe records itself the same way.</li>
+  <li>Bank debit: "Clearing" everywhere, nothing to pay or mark while it clears, the ending decides up front, four family emails, both buttons when the club pays the fee, both savings named (5–10).</li>
+</ul><p class="cap" style="margin:8px 0 0">Owner notes: Copy is the symbol alone in a smaller window; a pay button reads on one row. Words next, through /marketing. Plan §0j holds the rulings.</p></div>
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" data-pane="start" aria-selected="true">Start</button>
+  <button role="tab" data-pane="tr" aria-selected="false">1 · Team part refund</button>
+  <button role="tab" data-pane="pay" aria-selected="false">2 · Family pays by bank</button>
+  <button role="tab" data-pane="desk" aria-selected="false">3 · The desk while it clears</button>
+  <button role="tab" data-pane="tb" aria-selected="false">4 · A team pays by bank</button>
+  <button role="tab" data-pane="po" aria-selected="false">5 · Payouts</button>
+  <button role="tab" data-pane="flow" aria-selected="false">Journeys &amp; reviews</button>
+  <button role="tab" data-pane="asks" aria-selected="false">Asks &amp; paste-back</button>
+  <span class="sp"></span>
+  <span class="thm" role="group" aria-label="Drawing theme"><button type="button" data-thm="warm" aria-pressed="true">Warm</button><button type="button" data-thm="dark" aria-pressed="false">Dark</button></span>
+</nav>
+<div class="dt-tools"><button type="button" class="btn-d" data-fit>Show at true size</button><span class="zl">Desk drawings are scaled to fit your screen.</span></div>
+
+<!-- ===================================================================== START -->
+<section class="pane" data-pane="start">
+<h2 style="margin-top:12px">What the code says today</h2>
+<div class="tw"><table class="t"><thead><tr><th>Area</th><th>Today</th><th>So the drawing</th></tr></thead><tbody>
+<tr><td>A team's card refund</td><td><b>Full only, enforced by the database</b> ("A team’s card payment is refunded in full"). A deposit and a balance are two payment rows, each refunded whole. A refunded row is struck through and stops counting toward what the team paid, so the team owes it again. The refund window has no amount field</td><td>A part refund per payment row, up to what's left on it</td></tr>
+<tr><td>What a team owes</td><td><b>The tournament's entry fee less what the team paid. There is no per-team fee</b>: every team in the tournament owes the same</td><td>So a part refund either makes the team owe it again, or needs something new: an adjustment to this team's entry (ask 3)</td></tr>
+<tr><td>House league's part refund</td><td>Built in 12b: an amount up to what's left, a reason required, the processing fee only on a full refund</td><td>The team side reuses the same rules and words (asks 1, 2)</td></tr>
+<tr><td>A part refund made in Stripe on a team payment</td><td>Raises "isn't in the team's record" for a person</td><td>A team payment is always one team, so it can always be pinned (ask 4)</td></tr>
+<tr><td>"View the payment"</td><td>Receipt, card, entry fee, processing fee, total, payer. No refunds</td><td>Gets the same refund lines as the house-league record</td></tr>
+<tr><td><b>Bank debit</b></td><td><b>Nothing is built.</b> Checkout is set to card only. The rate exists in the code, as the Facts doc has it, and the pay block was built to take a second button in one place. Nothing handles a debit that is still clearing or one that's returned</td><td>The October drawings' shape fits. What changed around them is below</td></tr>
+</tbody></table></div>
+
+<div class="verdict push"><h3>What changed since the October bank-debit drawings, and where I disagree</h3><ol>
+  <li><b>"Processing" now means two things on the same page.</b> 12b built "Payment processing" as a cost line in the season's book. A11 ruled "Processing" as the Money band's word for a debit still clearing. I recommend <b>"Clearing"</b> for the debit (ask 5). It changes a ruled word, so it's your call.</li>
+  <li><b>The old drawings never said what stops a second payment.</b> The pay page decides "owing" from the season's book, and a clearing debit isn't in the book yet, so as built the family would see Pay again the next day (ask 6).</li>
+  <li><b>A child declined while a debit clears becomes the common case.</b> A card payment lands in seconds; a debit takes days. I recommend the ending answers the money question up front (ask 7).</li>
+  <li><b>A debit can come back after it clears,</b> not only while clearing (a bank can reverse a debit the account holder disputes). The October drawings only had "returned while clearing". Drawn in frame 3.</li>
+  <li><b>Who is told changed.</b> The October drawings sent a returned debit's notice to "the convenor". Under §0f it goes to the flow's desk: the house-league desk, or whoever runs tournaments.</li>
+  <li><b>Not settled here; for the build to check in Stripe's current docs, then <code>/billing</code>:</b> whether some banks make the family verify their account (which changes "up to 5 business days" and adds a "needs your action" state), how long a refund to a bank account takes, how long after clearing a debit can be reversed, and what a returned debit costs the club.</li>
+</ol></div>
+
+<div class="card"><h3>How to read this</h3><ul>
+  <li>Before is drawn from the code on dev; after is the end state at true size. Tags: <button class="mk new" data-note="NEW marks something the product does not have today.">NEW</button> <button class="mk res" data-note="RESTYLED marks something that exists today and is redrawn.">RESTYLED</button> <button class="mk unc" data-note="UNCHANGED marks something kept as it is.">UNCHANGED</button> <button class="mk pv" data-note="Every word on this page is provisional; final words go through /marketing after the owner rules.">PROVISIONAL</button>.</li>
+  <li><b>Every fee is computed</b> on load from the two rates as the code holds them (card and bank debit, matching the Facts doc's facilitated-payments line), on the base, half up to the cent. No rate is typed on this page.</li>
+  <li>Fixture: Northfield Minor Ball. Its tournament, the Northfield Fall Classic, has a <span data-c="base:40000"></span> entry with a <span data-c="base:10000"></span> deposit; the team is the Riverside Rockets 12U. Its house league, the 2026 Fall House League, charges <span data-c="base:15000"></span>. The family pays the processing fee (A14's default) unless a frame says so. Dates run past today so every state can be shown.</li>
+  <li>Already ruled and not reopened: the treasurer doesn't refund (§0f); the family pays the fee by default (A14); bank debit holds the spot while it clears and has its own Money figure only while there is some (A4, A11); a house-league part refund never includes the processing fee (§0e); the refund-visibility rulings and their words (§0g).</li>
+  <li><code>/ux</code> and <code>/design</code> ran on this page before the hand-off; what they changed is on the Journeys &amp; reviews tab.</li>
+</ul></div>
+</section>
+
+<!-- ===================================================================== 1 TEAM PART REFUND -->
+<section class="pane" data-pane="tr" hidden>
+<h2 style="margin-top:12px">1 · A tournament team's part refund</h2>
+<p class="cap">Who: whoever runs tournaments (the treasurer doesn't refund, §0f). Where: the team's record › Payments. The Riverside Rockets paid the <span data-c="base:10000"></span> deposit by card (<span data-c="tot:10000"></span> with the fee). The organizer cancels one game and gives back $40.00.</p>
+
+<p class="sp-cap">BEFORE · the team's record, Payments, and today's refund window</p>
+<div class="dt-wrap fit"><div class="dt ak" data-k style="padding:28px 0 40px"><div class="pg" style="width:1100px;flex-direction:row;align-items:flex-start;gap:24px">
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:14px">
+  <div class="ph1"><div><div class="ey">Northfield Fall Classic · 12U</div><h1>Riverside Rockets 12U</h1></div></div>
+  <div class="panel">
+    <div class="sumln"><b>Owes $300.00 <span class="rest">· paid $100.00 of $400.00</span></b><span class="btn sm">Mark paid · $300.00</span></div>
+    <div style="padding:10px 16px 0" class="ey">Received</div>
+    <div class="prw"><span>Sep 18</span><span class="lab">Deposit · Online, card · receipt 1061<span class="chip ok">In ledger</span></span><span class="amt">$100.00</span><span class="dots">⋯</span></div>
+    <div style="padding:10px 16px 0;border-top:1px solid var(--line)" class="ey">Still due</div>
+    <div class="prw"><span>Nov 15</span><span class="lab">Balance</span><span class="amt">$300.00</span><span class="dots">⋯</span></div>
+  </div></div>
+  <div class="ak win" data-k style="padding:24px;border-radius:10px;flex:none"><div class="dlg sm">
+    <div class="dh"><div class="t"><h4>Refund Riverside Rockets 12U’s payment?</h4></div><span class="xx">×</span></div>
+    <div class="db"><p style="margin:0">Riverside Rockets 12U paid <span data-c="tot:10000"></span> online on Sep 18: the $100.00 entry fee and a <span data-c="fee:10000"></span> processing fee.</p>
+      <div><b style="color:var(--ink)">Refund to the card, Visa •••• 4242</b><span class="s2">Arrives in 5 to 10 business days</span></div>
+      <div class="radios"><div class="rad on"><span class="dot"></span><span><b>The organizer is ending it</b></span></div><div class="rad"><span class="dot"></span><span><b>The team asked to leave</b></span></div></div>
+      <div class="chk"><span class="bx on">✓</span><span>Include the <span data-c="fee:10000"></span> processing fee · <span data-c="tot:10000"></span> back</span></div>
+    </div>
+    <div class="df"><span class="s"></span><span class="btn">Cancel</span><span class="btn pri">Refund and email</span></div>
+  </div></div>
+</div></div></div>
+<p class="cap">All or nothing. After it, the deposit row is struck through and the team owes $400.00 again.</p>
+
+<h3>After · the refund window takes an amount (asks 1, 2)</h3>
+<div class="chips row"><button class="mk res" data-note="The window gains the house-league end window's two choices: all of it, or part of it with an amount and a reason. Nothing is picked when it opens, and the button appears once a choice is made (as 12b).">RESTYLED · the window</button><button class="mk pv" data-note="Words reuse 12b's part-refund words with the team for the child.">PROVISIONAL</button></div>
+<div class="states">
+  <div><p class="sp-cap" style="margin-top:0">As it opens: nothing picked</p>
+  <div class="ak win" data-k style="padding:20px;border-radius:10px"><div class="dlg sm">
+    <div class="dh"><div class="t"><h4>Refund Riverside Rockets 12U’s deposit?</h4></div><span class="xx">×</span></div>
+    <div class="db"><p style="margin:0">Paid <span data-c="tot:10000"></span> on Sep 18 (receipt 1061): the $100.00 deposit and a <span data-c="fee:10000"></span> processing fee.</p>
+      <div class="radios"><div class="rad"><span class="dot"></span><span><b>All of it to the card, Visa •••• 4242</b><span class="s3">Arrives in 5 to 10 business days</span></span></div><div class="rad"><span class="dot"></span><span><b>Part of it</b><span class="s3">Up to $100.00</span></span></div></div>
+    </div>
+    <div class="df"><span class="s">Choose how much to refund.</span><span class="btn">Cancel</span></div>
+  </div></div></div>
+  <div><p class="sp-cap" style="margin-top:0">All of it: today's choices, unchanged</p>
+  <div class="ak win" data-k style="padding:20px;border-radius:10px"><div class="dlg sm">
+    <div class="dh"><div class="t"><h4>Refund Riverside Rockets 12U’s deposit?</h4></div><span class="xx">×</span></div>
+    <div class="db"><div class="radios"><div class="rad on"><span class="dot"></span><span><b>All of it to the card, Visa •••• 4242</b><span class="s3">Arrives in 5 to 10 business days</span></span></div><div class="rad"><span class="dot"></span><span><b>Part of it</b></span></div></div>
+      <div class="radios"><div class="rad on"><span class="dot"></span><span><b>The organizer is ending it</b></span></div><div class="rad"><span class="dot"></span><span><b>The team asked to leave</b></span></div></div>
+      <div class="chk"><span class="bx on">✓</span><span>Include the <span data-c="fee:10000"></span> processing fee · <span data-c="tot:10000"></span> back</span></div></div>
+    <div class="df"><span class="s">The team’s contact is emailed.</span><span class="btn">Cancel</span><span class="btn pri">Refund and email</span></div>
+  </div></div></div>
+  <div><p class="sp-cap" style="margin-top:0">Part of it</p>
+  <div class="ak win" data-k style="padding:20px;border-radius:10px"><div class="dlg sm">
+    <div class="dh"><div class="t"><h4>Refund Riverside Rockets 12U’s deposit?</h4></div><span class="xx">×</span></div>
+    <div class="db"><div class="radios"><div class="rad"><span class="dot"></span><span><b>All of it to the card, Visa •••• 4242</b></span></div><div class="rad on"><span class="dot"></span><span><b>Part of it</b><span class="s3">Up to $100.00. The processing fee isn’t part of a part refund.</span></span></div></div>
+      <div class="facts" style="grid-template-columns:120px minmax(0,1fr);align-items:center"><span>Amount *</span><span class="amtf"><span class="fld">$40.00</span><span class="s2" style="margin:0">$60.00 stays paid</span></span><span>Reason *</span><span class="fld" style="display:flex">One game cancelled for weather</span><span>Note to the team</span><span class="fld" style="display:flex;color:var(--dim)">Goes in the refund email</span></div>
+      <p style="margin:0;font-size:13px;color:var(--amber)">Refused in place, in words: "A part refund is more than zero and no more than $100.00." · "Say why you’re refunding part of it."</p></div>
+    <div class="df"><span class="s">The team’s contact is emailed.</span><span class="btn">Cancel</span><span class="btn pri">Refund $40.00 and email</span></div>
+  </div></div></div>
+</div>
+<ul class="cap" style="padding-left:18px;display:flex;flex-direction:column;gap:6px">
+  <li><b>A second part refund on the same row</b> is allowed while something is left: "$40.00 already refunded on Oct 27. Up to $60.00." The amount field is capped there.</li>
+  <li><b>Part refunds that add up to the whole payment</b> never give the processing fee back (ask 1). Only "All of it" can.</li>
+  <li><b>A refund bigger than one payment</b> ($150.00 against a $100.00 deposit) says "Up to $100.00 on this payment. Refund the rest from the balance’s ⋯."</li>
+  <li><b>A row paid by bank debit</b> refunds to the bank account: "Refund to the bank account ending 6612". How long that takes is a Stripe fact for the build.</li>
+</ul>
+
+<h3>After · the record after a part refund (ask 3)</h3>
+<p class="cap"><b>The rule that has to be chosen.</b> A team owes the tournament's entry fee less what it paid, and there is no per-team fee today. So a $40.00 refund either leaves the team owing $40.00, or it lowers what this one team owes. A cancelled game means the second. That needs one new thing: an adjustment to this team's entry, shown on the record with its reason. I recommend it (ask 3, A). Without it, every part refund reads as a debt.</p>
+<div class="spec">
+  <div class="col" style="flex:1 1 520px"><p class="sp-cap" style="margin-top:0">A · the entry is lowered for this team (recommended) <button class="mk new" data-note="New: a per-team entry adjustment, made by the part refund itself and named on the record with its reason. The team then owes the lower entry less what it paid, so the refund isn’t owed back: a deposit-only team’s balance stays as it was.">NEW</button></p>
+  <div class="ak panel" data-k>
+    <div class="sumln"><b>Owes $300.00 <span class="rest">· paid $60.00 of $360.00</span></b><span class="btn sm">Mark paid · $300.00</span></div>
+    <div style="padding:8px 16px;font-size:13px;color:var(--soft);border-bottom:1px solid var(--line)">Entry $360.00 for this team, lowered $40.00 on Oct 27 · One game cancelled for weather</div>
+    <div style="padding:10px 16px 0" class="ey">Received</div>
+    <div class="prw hl"><span>Sep 18</span><span class="lab">Deposit · Online, card · receipt 1061<span class="chip ok">In ledger</span><span class="tg" style="flex-basis:100%">$40.00 refunded to card, Oct 27</span></span><span class="amt">$100.00</span><span class="dots">⋯</span></div>
+    <div style="padding:10px 16px 0;border-top:1px solid var(--line)" class="ey">Still due</div>
+    <div class="prw"><span>Nov 15</span><span class="lab">Balance</span><span class="amt">$300.00</span><span class="dots">⋯</span></div>
+  </div>
+  <p class="cap">The balance is still $300.00: the team doesn’t owe back the $40.00 it was given. Without the adjustment (B) it would owe $340.00. A team that had paid in full reads "Paid in full · $360.00". The adjustment is the refund's own; nobody types a new fee.</p></div>
+  <div class="col" style="flex:1 1 380px"><p class="sp-cap" style="margin-top:0">B · the team owes it again</p>
+  <div class="ak panel" data-k>
+    <div class="sumln"><b>Owes $340.00 <span class="rest">· paid $60.00 of $400.00</span></b></div>
+    <div class="prw"><span>Sep 18</span><span class="lab">Deposit · Online, card · receipt 1061<span class="tg" style="flex-basis:100%">$40.00 refunded to card, Oct 27</span></span><span class="amt">$100.00</span><span class="dots">⋯</span></div>
+  </div>
+  <p class="cap">No new idea, and it matches today's full refund. But the organizer who gave $40.00 back for a cancelled game now sees the team owing $40.00 more, and the reminder emails say so.</p></div>
+</div>
+<div class="tw"><table class="t"><thead><tr><th>Row state</th><th>The row's tag</th><th>The summary (under A)</th></tr></thead><tbody>
+<tr><td>Part refunded</td><td>"$40.00 refunded to card, Oct 27"; the reason is in View the payment</td><td>As drawn</td></tr>
+<tr><td>Part refund pending</td><td>"Refunding $40.00 to card…" (info chip)</td><td>Already lowered once Stripe accepts it</td></tr>
+<tr><td>Part refund came back</td><td>Amber chip "Refund didn’t reach the card"; ⋯ › "Record the refund sent another way" (the ruled name)</td><td>"Owes $300.00 · $40.00 refund didn’t reach the card", until it's recorded as sent another way</td></tr>
+<tr><td>Refunded in full, at once or in parts</td><td>Struck through, "Refunded to card, Oct 27", as today</td><td>A full refund doesn't lower the entry: the team usually leaves. Today's words</td></tr>
+<tr><td>Made in Stripe</td><td>The same tag with "· made in Stripe"</td><td>As drawn (ask 4)</td></tr>
+</tbody></table></div>
+
+<div class="spec">
+  <div class="col"><p class="sp-cap" style="margin-top:0">"View the payment" · 480 <button class="mk res" data-note="Gains the refund lines the house-league record has: each refund's amount, card, date, status, reason, who, and Stripe's reference with Copy.">RESTYLED</button></p>
+  <div class="ak win" data-k style="padding:24px;border-radius:10px"><div class="dlg sm">
+    <div class="dh"><div class="t"><h4>Payment 1061</h4></div><span class="xx">×</span></div>
+    <div class="db"><div class="facts"><span>Paid</span><span>Sep 18 at 7:42 p.m.</span><span>Card</span><span>Visa •••• 4242</span><span>Deposit</span><span>$100.00</span><span>Processing fee, paid by the team</span><span><span data-c="fee:10000"></span></span><span>Total</span><span><span data-c="tot:10000"></span></span><span>From</span><span>coach@riversiderockets.example</span></div>
+      <div class="rf hl"><div class="top"><b>To the card</b><span class="pill ok">Refunded</span></div>
+        <div class="facts"><span>Amount</span><span>$40.00 to Visa •••• 4242<span class="s2">Part of the deposit; the processing fee isn’t part of it</span></span><span>Reason</span><span>One game cancelled for weather</span><span>Refunded by</span><span>Pat Lee, Oct 27 at 10:15 a.m.</span><span>Stripe reference</span><span class="ref">re_3QyF8h2kL0 <button class="cpy" style="background:none;border:0;cursor:pointer" aria-label="Copy reference" data-note="In a smaller window the reference’s Copy is the symbol alone (owner, 2026-10-26), 44×44, labelled Copy reference for screen readers.">⧉</button></span><span>Team emailed</span><span>Oct 27</span></div></div>
+    </div>
+    <div class="df"><span class="s"></span><span class="btn">Close</span></div>
+  </div></div></div>
+  <div class="col" style="flex:1 1 300px;max-width:520px"><p class="sp-cap" style="margin-top:0">The team's refund email (part) <button class="mk res" data-note="Today's tournament refund email with a part refund's lead and the reason, dated with the refund's own date rather than the day it was sent.">RESTYLED</button></p>
+  <div class="mail"><div class="mh"><span><b>Northfield Minor Ball</b> · reply-to tournaments@northfieldball.example</span><span><b>Refund from Northfield Minor Ball</b></span></div>
+    <div class="mb"><p>$40.00 of Riverside Rockets 12U’s deposit for the Northfield Fall Classic was refunded.</p><p>Northfield Minor Ball’s reason: One game cancelled for weather</p>
+    <div class="blk"><div class="ln"><span>Refunded</span><span>$40.00</span></div><div class="ln"><span>To</span><span>Visa •••• 4242</span></div><div class="ln"><span>On</span><span>Oct 27, 2026</span></div><div class="ln"><span>Refund reference</span><span class="mono">re_3QyF8h2kL0</span></div><div class="ln"><span>Your receipt</span><span>1061 (paid Sep 18)</span></div></div>
+    <p>The <span data-c="fee:10000"></span> processing fee isn’t part of this refund. It takes 5 to 10 business days to appear.</p><p>Your balance is still $300.00, due Nov 15.</p><p>Questions: tournaments@northfieldball.example.</p></div></div>
+  <p class="cap">The same block as the house-league refund email (ruled 10-26). Under ask 3 A the email says the balance is unchanged. The tournament help article's "full refunds only" line changes with it.</p></div>
+</div>
+<p class="cap"><b>Phone (390):</b> the team record's rows stack as today; the tag wraps to its own line under the label; ⋯ is 44px. The refund window is a full screen with ×, its foot sentence left and the button right.</p>
+</section>
+
+<!-- ===================================================================== 2 FAMILY PAYS BY BANK -->
+<section class="pane" data-pane="pay" hidden>
+<h2 style="margin-top:12px">2 · A family pays by bank debit (the family's phone, 390)</h2>
+<p class="cap">Henry Kim's status page, accepted at <span data-c="base:15000"></span>. The pay block is the shared one built in 12b: a left-aligned button with its icon, the fee as a note under it, full width on a phone, in the club's theme colour. The bank button is the same shape, outlined, with a bank icon.</p>
+<div class="spec">
+  <div class="col"><p class="sp-cap" style="margin-top:0">BEFORE · owing (built 12b) <button class="mk unc" data-note="Today's pay block, drawn from the code: one card button carrying its own total, the fee as a note line under it.">UNCHANGED</button></p>
+  <div class="ph pub"><div class="nv">Northfield Minor Ball</div><div class="in">
+    <div class="blk2"><span class="pk">Henry’s registration fee</span><div class="pline"><span>Registration fee</span><span>$150.00</span></div>
+    <div class="prow2"><span class="pbtn"><svg><use href="#i-card"/></svg><span class="lbl">Pay <span data-c="tot:15000"></span> by card</span></span><p class="note">Includes a <span data-c="fee:15000"></span> processing fee.</p></div>
+    <p class="note">Or pay another way: e-transfer to fees@northfieldball.example</p></div>
+  </div></div></div>
+  <div class="col"><p class="sp-cap" style="margin-top:0">AFTER · owing, two ways <button class="mk new" data-note="The bank button in the same shape, outlined, with its own total, its own fee (the bank rate is lower) and how long it takes. Pressing either dims both: 'Opening the secure payment page…'.">NEW · bank button</button></p>
+  <div class="ph pub"><div class="nv">Northfield Minor Ball</div><div class="in">
+    <div class="blk2"><span class="pk">Henry’s registration fee</span><div class="pline"><span>Registration fee</span><span>$150.00</span></div>
+    <div class="prow2"><span class="pbtn"><svg><use href="#i-card"/></svg><span class="lbl">Pay <span data-c="tot:15000"></span> by card</span></span><p class="note">Includes a <span data-c="fee:15000"></span> processing fee.</p></div>
+    <div class="prow2"><span class="pbtn alt"><svg><use href="#i-bank"/></svg><span class="lbl">Pay <span data-c="btot:15000"></span> by bank debit</span></span><p class="note">Includes a <span data-c="bfee:15000"></span> processing fee. Takes up to 5 business days.</p></div>
+    <p class="note">Or pay another way: e-transfer to fees@northfieldball.example</p></div>
+  </div></div></div>
+  <div class="col"><p class="sp-cap" style="margin-top:0">AFTER · the club pays the fee (A14) <button class="mk new" data-note="Same two buttons at the same amount. The bank one still says how long it takes, so the choice is how, not how much (ask 9).">NEW</button></p>
+  <div class="ph pub"><div class="nv">Northfield Minor Ball</div><div class="in">
+    <div class="blk2"><span class="pk">Henry’s registration fee</span><div class="pline t"><span>To pay</span><span>$150.00</span></div>
+    <div class="prow2"><span class="pbtn"><svg><use href="#i-card"/></svg><span class="lbl">Pay $150.00 by card</span></span></div>
+    <div class="prow2"><span class="pbtn alt"><svg><use href="#i-bank"/></svg><span class="lbl">Pay $150.00 by bank debit</span></span><p class="note">Takes up to 5 business days.</p></div></div>
+  </div></div></div>
+</div>
+<p class="cap">The debit agreement the family accepts is on Stripe's own page, as card details are. It isn't drawn because we can't build it. If the family closes Stripe's page without finishing, nothing changes: Henry still owes, as today. Coming back before Stripe has told us, the family sees today's "Confirming your payment".</p>
+
+<h3>While it clears, when it clears, if it's returned</h3>
+<div class="spec">
+  <div class="col"><p class="sp-cap" style="margin-top:0">Clearing (asks 5, 6) <button class="mk new" data-note="A state like today's 'Confirming your payment': a heading and a sentence. The pay buttons are gone for Henry while it clears, so the family can't pay twice.">NEW</button></p>
+  <div class="ph pub"><div class="nv">Northfield Minor Ball</div><div class="in">
+    <div class="state"><h2 class="info">Bank debit clearing</h2><p><span data-c="btot:15000"></span> from the account ending 6612, started Oct 26. Banks take up to 5 business days. We’ll email you when it clears. Henry’s spot is held.</p></div>
+    <p class="note">Wrong account, or a question? Contact Northfield Minor Ball at fees@northfieldball.example.</p>
+  </div></div></div>
+  <div class="col"><p class="sp-cap" style="margin-top:0">Cleared: the receipt <button class="mk res" data-note="Today's receipt card with a bank line where the card line is. The receipt number is given when it clears (ask 8).">RESTYLED</button></p>
+  <div class="ph pub"><div class="nv">Northfield Minor Ball</div><div class="in">
+    <div class="receipt"><h2>Paid</h2><p style="margin:0;font-weight:600">To Northfield Minor Ball</p><p class="note">Bank debit, account ending 6612 · started Oct 26, cleared Oct 30 · receipt 1088</p>
+    <div class="pline"><span>Registration fee</span><span>$150.00</span></div><div class="pline"><span>Processing fee</span><span><span data-c="bfee:15000"></span></span></div><div class="pline t"><span>Total</span><span><span data-c="btot:15000"></span></span></div></div>
+  </div></div></div>
+  <div class="col"><p class="sp-cap" style="margin-top:0">Returned while clearing <button class="mk res" data-note="The October drawing's returned state, as a state heading plus the two buttons in the owing state's grammar. The bank's reason is shown when Stripe gives one.">RESTYLED</button></p>
+  <div class="ph pub"><div class="nv">Northfield Minor Ball</div><div class="in">
+    <div class="state"><h2>The bank debit didn’t go through</h2><p>Your bank returned it on Oct 29: the account is closed. Nothing was taken. Henry’s spot is still held.</p></div>
+    <div class="blk2"><div class="prow2"><span class="pbtn"><svg><use href="#i-card"/></svg><span class="lbl">Pay <span data-c="tot:15000"></span> by card</span></span><p class="note">Includes a <span data-c="fee:15000"></span> processing fee.</p></div>
+    <div class="prow2"><span class="pbtn alt"><svg><use href="#i-bank"/></svg><span class="lbl">Pay <span data-c="btot:15000"></span> by bank debit</span></span><p class="note">Includes a <span data-c="bfee:15000"></span> processing fee. Takes up to 5 business days.</p></div></div>
+  </div></div></div>
+</div>
+<p class="cap"><b>Brothers and sisters</b> pay in one checkout (12b), so one debit covers them all. Every child on it is clearing together, and it clears or comes back for all of them together. Each child's spot is held. <b>How long a spot stays held after a return</b> is the club's call today: the desk withdraws if the family never pays.</p>
+
+<h3>The family's emails for a bank debit (ask 8)</h3>
+<div class="tw"><table class="t"><thead><tr><th>When</th><th>Email</th><th>Says</th></tr></thead><tbody>
+<tr><td>The debit starts</td><td class="y">"Your bank debit to Northfield Minor Ball has started"</td><td>The amount, the account ending, "up to 5 business days", the spot is held, the club's contact. Not a receipt</td></tr>
+<tr><td>It clears</td><td class="y">The receipt (today's receipt email)</td><td>A bank line instead of the card, "cleared Oct 30", the receipt number</td></tr>
+<tr><td>Returned while clearing</td><td class="y">"Your bank debit didn’t go through"</td><td>The bank's reason, nothing was taken, the spot is held, a button to the status page</td></tr>
+<tr><td>Returned after it cleared</td><td class="y">"A payment to Northfield Minor Ball was returned"</td><td>Receipt 1088 was reversed by the bank on Nov 20; Henry owes $150.00 again; a button to pay</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ===================================================================== 3 DESK -->
+<section class="pane" data-pane="desk" hidden>
+<h2 style="margin-top:12px">3 · The house-league desk while a debit clears</h2>
+<p class="cap">Who: the house-league desk (owner, club admin, league admin, registrar), the people who already refund in this flow (§0f); the treasurer reads Money and the rows, and never gets a refund door. The October drawing called this state "processing"; it's drawn here as "clearing" (ask 5).</p>
+
+<div class="spec">
+  <div class="col"><p class="sp-cap" style="margin-top:0">The Fee cell <button class="mk new" data-note="An info chip (sent, awaiting the other side), as RepChip tone='info' already means elsewhere in the kit. The figure is the fee, as ruled for refunds (fee first); the bank amount is on the second line. Mark received and Email the pay link are absent for the row while it clears.">NEW</button></p>
+  <div class="ak panel" data-k style="width:400px;padding:12px 16px"><div class="fee"><span class="chip info">$150.00 clearing</span><span class="s2">Bank debit · <span data-c="btot:15000"></span> started Oct 26</span></div></div>
+  <div class="ak panel" data-k style="width:400px;padding:12px 16px;margin-top:8px"><div class="fee"><span class="chip info">$150.00 clearing</span><span class="s2">Part of one <span data-c="btot:30000"></span> bank debit with Lily · started Oct 26</span></div></div>
+  <div class="ak panel" data-k style="width:400px;padding:12px 16px;margin-top:8px"><div class="fee"><span class="pill am">$150.00 owing · 12 days</span><span class="s2">Bank debit returned Oct 29 · account closed</span></div></div>
+  <p class="cap">While it clears, Mark received and Email the pay link aren't offered for the row (absent, not dimmed), and "Email families who owe" skips Henry. If the family also pays another way meanwhile, the desk records it after the debit clears or returns, and anything paid twice is refunded (12d's "paid twice").</p></div>
+  <div class="col" style="flex:1 1 520px"><p class="sp-cap" style="margin-top:0">Decline while clearing (ask 7, A): as it opens <button class="mk new" data-note="The money question can't be 'refunded or kept': the debit isn't in the book yet. It asks what to do when it clears. Nothing is picked when it opens, and the button appears once a choice is made (as 12b).">NEW</button></p>
+  <div class="ak win" data-k style="padding:24px;border-radius:10px"><div class="dlg sm">
+    <div class="dh"><div class="t"><h4>Decline Henry Kim?</h4></div><span class="xx">×</span></div>
+    <div class="db"><p style="margin:0">A bank debit of <span data-c="btot:15000"></span> is still clearing. It isn’t in the season’s book yet. When it clears:</p>
+      <div class="radios"><div class="rad"><span class="dot"></span><span><b>Send it back to the bank account</b><span class="s3">With the <span data-c="bfee:15000"></span> processing fee, because the club is declining (A2). It goes back by itself when it clears, in your name.</span></span></div><div class="rad"><span class="dot"></span><span><b>Keep it</b><span class="s3">Say why. It goes in the book as kept by the club.</span></span></div></div>
+    </div>
+    <div class="df"><span class="s">Choose what happens to the money.</span><span class="btn">Cancel</span></div>
+  </div></div>
+  <ul class="cap" style="padding-left:18px;display:flex;flex-direction:column;gap:5px">
+    <li><b>Keep it</b> opens today's "Say why" field under the choice, required, as the ending window does for a kept fee.</li>
+    <li><b>Siblings:</b> declining Henry sends back Henry's share only; Lily's stays. The window says "Henry’s $150.00 share of a <span data-c="btot:30000"></span> debit with Lily".</li>
+    <li><b>If the send-back fails</b> when it's sent, it raises today's "refund didn't reach the card" item, worded for a bank account, to the desk. "Refunded by" is the person who declined.</li>
+    <li><b>If the debit is returned instead,</b> nothing happens: nothing was taken. The family was told at the decline that the money would go back if it cleared.</li>
+  </ul></div>
+</div>
+
+<h3>A debit returned after it cleared</h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 480px"><p class="cap" style="margin-top:0">A bank can reverse a debit after it has cleared and the receipt has gone out. The money was in the book as received, so it comes out of the book as a returned line (never by deleting the receipt). The Fee cell goes back to owing in amber, with "Returned by the bank Nov 20 · receipt 1088" on the second line. The family is emailed (frame 2), and the desk gets one item.</p></div>
+  <div class="col" style="flex:1 1 480px"><div class="ak panel" data-k><div class="na"><span class="ico">!</span><div><b>Henry Kim’s bank payment was returned after it cleared</b><div class="d">The bank reversed receipt 1088 (<span data-c="btot:15000"></span>) on Nov 20. It’s out of the season’s book, and Henry owes $150.00 again. We emailed the family a way to pay.</div><div class="bb"><span class="btn sm">Open Henry’s record</span><span class="btn sm">Done</span></div></div><span class="tm">Nov 20</span></div></div></div>
+</div>
+
+<h3>The Money band with a figure for debits still clearing (A11, ask 5)</h3>
+<p class="sp-cap">AFTER · Money, 1440 (page only)</p>
+<div class="dt-wrap fit"><div class="dt ak" data-k style="padding:24px 0 40px"><div class="pg">
+  <div class="ph1"><div><div class="ey">2026 Fall House League</div><h1>Money</h1></div></div>
+  <div><div class="band"><div><div class="k">Owed</div><div class="v">$12,600.00</div><div class="h">84 players</div></div><div><div class="k">Received</div><div class="v">$11,250.00</div><div class="h">75 players · after $515.00 refunded</div></div><div><div class="k">Clearing</div><div class="v">$600.00</div><div class="h">4 players · bank debits</div></div><div><div class="k">Still owing</div><div class="v am">$750.00</div><div class="h">5 players</div></div></div>
+  <div class="bandnote">$9,300.00 of what’s received came by card and $450.00 by bank debit. Clearing shows only while a bank debit is on its way, and counts fees only, before processing fees.</div></div>
+  <div class="utabs"><span class="on">Every line <span class="c">161</span></span><span>Still owing <span class="c">5</span></span><span>Refunds <span class="c">5</span></span></div>
+  <div class="panel"><table class="kt"><thead><tr><th>Date</th><th>Player</th><th>What</th><th>How</th><th style="text-align:right">Amount</th></tr></thead><tbody>
+    <tr><td>Oct 26</td><td>Theo Grant</td><td>Payment processing · fee given back</td><td>To the card</td><td class="r out">$6.75</td></tr>
+    <tr><td>Oct 25</td><td>Lily Grant</td><td>Fee received</td><td>Online, bank debit · receipt 1084</td><td class="r">$150.00</td></tr>
+  </tbody></table></div>
+</div></div></div>
+<p class="cap">The Clearing figure is plain, as every total on the band is; the caption carries the meaning. The card and bank split moves out of the Received caption into the band's note, so the tile caption stays short. The figures add up: 11,250 + 600 + 750 = 12,600. The book row above shows why the word matters: "Payment processing" is already a cost line here.</p>
+<div class="spec">
+  <div class="col"><p class="sp-cap" style="margin-top:0">Phone (390): the band two by two, and a clearing row</p>
+  <div class="ph ak" data-k><div class="pbar"><span class="pbk">☰</span>Money<span class="sp"></span></div>
+    <div style="padding:12px;background:var(--paper)"><div class="pmoney"><div><div class="k">Owed</div><div class="v">$12,600</div><div class="h">84 players</div></div><div><div class="k">Received</div><div class="v">$11,250</div><div class="h">75 players</div></div><div><div class="k">Clearing</div><div class="v">$600</div><div class="h">4 · bank debits</div></div><div><div class="k">Still owing</div><div class="v" style="color:var(--amber)">$750</div><div class="h">5 players</div></div></div></div>
+    <div class="plist" style="padding-top:0"><div class="prow hl"><div><b>Henry Kim</b><div class="d">U10 Division A</div><div style="margin-top:6px"><span class="chip info">$150.00 clearing</span></div><div class="d2">Bank debit · started Oct 26</div></div><span class="dots">⋯</span></div></div>
+  </div></div>
+  <div class="col" style="flex:1 1 380px;max-width:560px"><p class="sp-cap" style="margin-top:0">Needs attention: returned while clearing (to the desk)</p>
+  <div class="ak panel" data-k><div class="na"><span class="ico">!</span><div><b>A bank debit for Henry and Lily Grant was returned</b><div class="d"><span data-c="btot:30000"></span> from the account ending 6612 didn’t go through (Oct 29: the account is closed). Nothing was taken, and both spots are still held. We emailed the family a way to pay.</div><div class="bb"><span class="btn sm">Open the registrations</span><span class="btn sm">Done</span></div></div><span class="tm">Oct 29</span></div></div>
+  <p class="cap">One item per debit, naming every child on it. It clears itself when the family pays. For a team it goes to whoever runs tournaments.</p></div>
+</div>
+</section>
+
+<!-- ===================================================================== 4 TEAM BANK -->
+<section class="pane" data-pane="tb" hidden>
+<h2 style="margin-top:12px">4 · A tournament team pays by bank debit</h2>
+<div class="spec">
+  <div class="col"><p class="sp-cap" style="margin-top:0">The team's pay page · 390 (ask 10)</p>
+  <div class="ph pub trn"><div class="nv">Northfield Fall Classic</div><div class="in">
+    <div class="rds"><div class="rd"><span class="o on"></span><span><b>Deposit · $100.00</b><br><span class="note">The $300.00 balance is due by Nov 15</span></span></div><div class="rd"><span class="o"></span><span><b>Pay in full · $400.00</b></span></div></div>
+    <p class="save">Paying in full saves <span data-c="save:card"></span> by card, or <span data-c="save:bank"></span> by bank debit.</p>
+    <div class="prow2"><span class="pbtn"><svg><use href="#i-card"/></svg><span class="lbl">Pay <span data-c="tot:10000"></span> by card</span></span><p class="note">Includes a <span data-c="fee:10000"></span> processing fee.</p></div>
+    <div class="prow2"><span class="pbtn alt"><svg><use href="#i-bank"/></svg><span class="lbl">Pay <span data-c="btot:10000"></span> by bank debit</span></span><p class="note">Includes a <span data-c="bfee:10000"></span> processing fee. Takes up to 5 business days.</p></div>
+  </div></div></div>
+  <div class="col" style="flex:1 1 420px"><p class="sp-cap" style="margin-top:0">The team's record while the deposit clears <button class="mk new" data-note="A clearing row: an info chip, no In ledger chip yet, and no refund in ⋯ until it clears.">NEW</button></p>
+  <div class="ak panel" data-k style="max-width:640px">
+    <div class="sumln"><b>Owes $400.00 <span class="rest">· $100.00 clearing</span></b></div>
+    <div class="prw hl"><span>Oct 26</span><span class="lab">Deposit · Online, bank debit<span class="chip info">Clearing</span><span class="tg" style="flex-basis:100%">Started Oct 26 · up to 5 business days</span></span><span class="amt">$100.00</span><span class="dots">⋯</span></div>
+  </div>
+  <ul class="cap" style="padding-left:18px;display:flex;flex-direction:column;gap:5px">
+    <li>"Owes" stays the plain fact it is today; it isn't amber while the only thing owing is on its way.</li>
+    <li>While the deposit clears, the team's pay page shows "Bank debit clearing" and no Pay buttons (ask 6), so the team can't also pay in full. Mark paid is not offered for it.</li>
+    <li>The team's contact gets the same emails as a family (frame 2). A returned debit raises the item to whoever runs tournaments.</li>
+    <li>A balance due date that passes while the balance clears isn't "past due": the summary reads "$300.00 clearing" until it clears or returns.</li>
+    <li>Declining or withdrawing the team while a debit clears asks the same question as house league (ask 7). The tournament Money view gets no new figure: it's a list of payments, and the clearing row says it.</li>
+  </ul></div>
+</div>
+</section>
+
+<!-- ===================================================================== 5 PAYOUTS -->
+<section class="pane" data-pane="po" hidden>
+<h2 style="margin-top:12px">5 · Payouts and "Before you set up payouts": the second rate</h2>
+<p class="cap">Today these print only the card rate, from the code's one rate label. The bank rate already exists in the same place. Each line below is printed from it, never typed.</p>
+<div class="tw"><table class="t"><thead><tr><th>Where</th><th>Today</th><th>After</th></tr></thead><tbody>
+<tr><td>Payouts card</td><td>"Processing fee: <span data-r="card"></span> per card payment."</td><td>"Processing fee: <span data-r="card"></span> per card payment, <span data-r="bank"></span> per bank debit."</td></tr>
+<tr><td>Before you set up payouts · the cost</td><td>The card rate, with a <span data-c="base:15000"></span> example</td><td>Both, with the same example: <span data-c="fee:15000"></span> by card, <span data-c="bfee:15000"></span> by bank debit</td></tr>
+<tr><td>Who pays it (A14), beside the setting</td><td>The card rate</td><td>Both rates</td></tr>
+<tr><td>Payouts not set up</td><td>The card rate</td><td>Both rates</td></tr>
+<tr><td>Disconnect payouts?</td><td>No clearing count exists</td><td>"2 bank debits are still clearing. They’ll finish, and their money still reaches you."</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ===================================================================== JOURNEYS -->
+<section class="pane" data-pane="flow" hidden>
+<h2 style="margin-top:12px">Journeys</h2>
+<div class="card"><h3>The organizer gives back part of a deposit</h3><p>Team record › the deposit's ⋯ › Refund to the card › Part of it › $40.00 and a reason › Refund $40.00 and email. Under ask 3 A, the team’s entry is $360.00 and its balance stays $300.00, with the reason on the record. The team's contact gets the refund email with the new balance. Under 30 seconds. What goes wrong: more than what's left (refused in words), no reason (refused), the card sends it back (amber chip, then "Record the refund sent another way").</p></div>
+<div class="card"><h3>A family pays by bank debit</h3><p>Status page › Pay by bank debit › Stripe's page (the debit agreement) › back to "Bank debit clearing" with the spot held › an email that it started › days later, the receipt. What goes wrong: the bank returns it (an email with the reason and both buttons again; one item to the desk that clears itself); the child is declined first (the end window decides now what happens when it clears); the family tries to pay again (no Pay button while it clears); the debit is reversed weeks later (out of the book, owing again, an email and an item).</p></div>
+<div class="card"><h3>The registrar works the season while debits clear</h3><p>The Fee cell's blue "clearing" chip, no Mark received for that child, and the band's Clearing figure. Nothing asks for a person unless a debit is returned.</p></div>
+
+<h2>What the reviews changed</h2>
+<div class="tw"><table class="t"><thead><tr><th>Review</th><th>Finding</th><th>What I did</th></tr></thead><tbody>
+<tr><td>/ux</td><td>"The team doesn't owe the refund" was only defined for a team paid in full; a deposit-only team's balance was undefined. It exposed my claim that a team's record "already has" a fee change: it doesn't. Every team owes the tournament's one entry fee</td><td>Ask 3 rewritten: A lowers this team's entry (a new per-team adjustment, said plainly) or B the team owes it again. Both drawn with the deposit-only team</td></tr>
+<tr><td>/ux</td><td>A debit can be reversed after it cleared</td><td>Drawn: the book line, the Fee cell, the item, the family's email; push-back 4</td></tr>
+<tr><td>/ux</td><td>Decline while clearing had no failure path, no sibling rule, no Keep field</td><td>All three stated under the window</td></tr>
+<tr><td>/ux</td><td>The clearing page was a dead end; the abandoned and confirming states were missing; a return had no reason</td><td>Contact line added; the existing "Confirming" and owing states named; the bank's reason shown</td></tr>
+<tr><td>/ux</td><td>The Fee cell's bank total didn't match the band's per-player fees</td><td>The cell leads with the fee, as ruled for refunds; the band's note says Clearing counts fees only</td></tr>
+<tr><td>/ux</td><td>Siblings, Mark received, the pay link, the team's own states, a failed part refund's summary, the window's other states, bank-account refunds, phone desk views, roles</td><td>Each stated or drawn in its frame</td></tr>
+<tr><td>/design</td><td>The "before" pay block wasn't the one 12b built (centred, fee inside the button)</td><td>Redrawn from the code: left icon, the fee as a note under it, the club's theme colour; the bank button is the same shape, outlined</td></tr>
+<tr><td>/design</td><td>Clearing, cleared and returned were invented tinted boxes</td><td>Drawn as the built pay block's own pieces: a state heading and sentence, and the outlined receipt card</td></tr>
+<tr><td>/design</td><td>The band's Clearing figure was blue, a total wearing a verdict colour; Received's caption was far too long</td><td>The figure is plain; the card and bank split moved to the band's note</td></tr>
+<tr><td>/design</td><td>The decline window had a money choice picked when it opened</td><td>Nothing picked; the button appears once a choice is made, as 12b</td></tr>
+<tr><td>/design</td><td>The clearing line was bare blue text, and blue isn't a kit token</td><td>An info chip, as the kit already uses for "sent, waiting on the other side"; named as the info tokens</td></tr>
+<tr><td>/design</td><td>Phone ⋯ under 44px; "All of it" not drawn</td><td>44px; drawn</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ===================================================================== ASKS -->
+<section class="pane" data-pane="asks" hidden>
+<h2 style="margin-top:12px">Asks</h2>
+<p class="cap">One box per option. Tick one, or write your own under it. Copy the paste-back at the end into the chat.</p>
+<div id="asks"></div>
+<div class="paste"><b>Paste-back</b><textarea id="pb" readonly aria-label="Paste-back summary"></textarea><div class="row"><button class="btn-d pri" id="cp">Copy the paste-back</button><span class="muted" id="cpm"></span></div></div>
+</section>
+
+<dialog class="note" id="nd"><div class="nh"><h3 id="ndt"></h3><button class="xb" aria-label="Close" id="ndx">×</button></div><div class="nb"><p id="ndb"></p></div></dialog>
+</div>
+
+<script>
+(function(){
+/* the two rates as lib/plan-config.ts holds them (card 350 bps + 150 cents, bank debit 250 bps + 100 cents), half-up, on the base */
+var R={card:[350,150],bank:[250,100]};
+function fee(b,r){var x=R[r||'card'];return Math.floor((b*x[0]+5000)/10000)+x[1]}
+function m(c){return '$'+(c/100).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function lab(r){var x=R[r];return (x[0]/100)+'% + $'+(x[1]/100).toFixed(2)}
+document.querySelectorAll('[data-c]').forEach(function(el){
+  var p=el.getAttribute('data-c').split(':'), k=p[0], v=p[1], b=+v;
+  if(k==='save'){var r=v==='bank'?'bank':'card';el.textContent=m(fee(10000,r)+fee(30000,r)-fee(40000,r));return}
+  el.textContent=k==='fee'?m(fee(b)):k==='tot'?m(b+fee(b)):k==='bfee'?m(fee(b,'bank')):k==='btot'?m(b+fee(b,'bank')):m(b);
+});
+document.querySelectorAll('[data-r]').forEach(function(el){el.textContent=lab(el.getAttribute('data-r'))});
+
+var tabs=[].slice.call(document.querySelectorAll('.tabs [role=tab]')), panes=[].slice.call(document.querySelectorAll('section.pane'));
+function show(id){
+  if(!panes.some(function(p){return p.dataset.pane===id})) id='start';
+  tabs.forEach(function(t){t.setAttribute('aria-selected',String(t.dataset.pane===id))});
+  panes.forEach(function(p){p.hidden=p.dataset.pane!==id});
+  try{history.replaceState(null,'','#'+id)}catch(e){}
+  fit();
+}
+tabs.forEach(function(t){t.addEventListener('click',function(){show(t.dataset.pane);window.scrollTo(0,0)})});
+var trueSize=false, fb=document.querySelector('[data-fit]'), zl=document.querySelector('.zl');
+function fit(){document.querySelectorAll('.dt-wrap').forEach(function(w){if(trueSize){w.classList.remove('fit');return}w.classList.add('fit');w.style.setProperty('--z',Math.min(1,w.clientWidth/1440).toFixed(4))})}
+fb.addEventListener('click',function(){trueSize=!trueSize;fb.textContent=trueSize?'Scale to fit':'Show at true size';zl.textContent=trueSize?'True size: 1440 wide; scroll sideways inside each drawing.':'Desk drawings are scaled to fit your screen.';fit()});
+window.addEventListener('resize',fit);
+document.querySelectorAll('[data-thm]').forEach(function(b){b.addEventListener('click',function(){var dk=b.dataset.thm==='dark';document.querySelectorAll('[data-thm]').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});document.querySelectorAll('[data-k]').forEach(function(k){k.classList.toggle('dk',dk)})})});
+var dlg=document.getElementById('nd');
+function open(t,b){document.getElementById('ndt').textContent=t;document.getElementById('ndb').textContent=b;try{dlg.showModal()}catch(e){dlg.setAttribute('open','')}}
+document.getElementById('ndx').addEventListener('click',function(){dlg.close?dlg.close():dlg.removeAttribute('open')});
+dlg.addEventListener('click',function(e){if(e.target===dlg)dlg.close()});
+document.addEventListener('click',function(e){var n=e.target.closest('[data-note]');if(n)open(n.textContent.trim(),n.getAttribute('data-note'))});
+
+var ASKS=[
+ {id:1,t:"A team's part refund and the processing fee",d:"Frame 1. House league's rule (§0e): a part refund returns only the amount typed; the fee goes back only on a full refund. Part refunds that add up to the whole payment never give the fee back.",o:[
+  ["A","The same rule for teams: a part refund never includes the processing fee; the fee box shows only with All of it",1],
+  ["B","A team's part refund may include a share of the fee"]]},
+ {id:2,t:"A reason on a team's part refund",d:"Frame 1. House league requires one, and it goes in the email.",o:[
+  ["A","Required, and it goes in the team's refund email",1],
+  ["B","Optional"]]},
+ {id:3,t:"What a team owes after a part refund",d:"Frame 1. Every team owes the tournament's one entry fee today; there is no per-team fee.",o:[
+  ["A","The part refund lowers this team's entry by the same amount, shown on the record with its reason (new: a per-team adjustment). So the refund isn't owed back: a deposit-only team's balance stays as it was (corrected 10-26 from 'drops', an arithmetic slip); a full refund still makes the team owe, as today",1],
+  ["B","The team owes the refunded amount again, as after today's full refund (nothing new)"]]},
+ {id:4,t:"A part refund made in Stripe on a team payment",d:"Today it raises an item for a person. A team payment is always one team.",o:[
+  ["A","It records itself, like the house-league rule you ruled today (ask 5 of the refund round); its reason reads 'made in Stripe' and, under ask 3 A, it lowers the entry the same way",1],
+  ["B","It stays an item for a person"]]},
+ {id:5,t:"The word for a bank debit still clearing",d:"Frames 2-4. A11 ruled 'Processing'; since then 12b built 'Payment processing' as a cost line on the same Money page.",o:[
+  ["A","'Clearing' everywhere (the Money figure, the row, the family's page); 'Processing' stays the cost line's word only",1],
+  ["B","Keep 'Processing' as ruled"]]},
+ {id:6,t:"While a debit clears",d:"Frames 2-4. The pay page reads 'owing' from the book, and a clearing debit isn't in it yet.",o:[
+  ["A","No Pay buttons for that child or team, no Mark received, no pay link, no 'email families who owe'; the family sees 'clearing' and the club's contact",1],
+  ["B","Allow paying by card anyway, and refund the debit when it clears"]]},
+ {id:7,t:"Declined or withdrawn while a debit clears",d:"Frame 3. A debit takes days, so this becomes common.",o:[
+  ["A","The ending happens now and decides up front what happens when it clears: send it back (by itself, with the fee when the club ends it, per A2) or keep it with a reason. Nothing is picked when the window opens",1],
+  ["B","The ending waits until the debit clears or is returned"],
+  ["C","The ending happens now; when it clears it raises today's 'couldn't go on this registration' item for a person"]]},
+ {id:8,t:"The family's emails for a bank debit",d:"Frame 2.",o:[
+  ["A","One when it starts (not a receipt), the receipt when it clears (the receipt number is given then), one if it's returned while clearing, and one if it's reversed after it cleared",1],
+  ["B","No 'it started' email: the receipt when it clears, and the two return emails"]]},
+ {id:9,t:"When the club pays the fee (A14), both buttons show the same amount",d:"Frame 2.",o:[
+  ["A","Keep both buttons; the bank one says it takes up to 5 business days",1],
+  ["B","One Pay button; the family picks card or bank on Stripe's page"]]},
+ {id:10,t:"A tournament's 'paying in full saves'",d:"Frame 4. The saving is one flat part of the fee, which differs by way of paying.",o:[
+  ["A","Name both: 'saves $1.50 by card, or $1.00 by bank debit' (computed)",1],
+  ["B","The card figure only"]]}
+];
+var host=document.getElementById('asks');
+ASKS.forEach(function(a){
+  var h='<div class="ask"><h3><span class="no">Ask '+a.id+'</span>'+a.t+'</h3><p class="cap" style="margin:2px 0">'+a.d+'</p><div class="opts">';
+  a.o.forEach(function(o){var id='a'+a.id+o[0];h+='<label class="'+(o[2]?'rec':'')+'" for="'+id+'"><input type="checkbox" id="'+id+'" data-a="'+a.id+'" data-o="'+o[0]+'"><span><b>'+o[0]+'</b> · '+o[1]+'</span></label>'});
+  h+='</div><textarea id="n'+a.id+'" placeholder="Your own answer, or a note"></textarea></div>';
+  host.insertAdjacentHTML('beforeend',h);
+});
+host.addEventListener('change',function(e){var c=e.target;if(c.dataset.a&&c.checked){host.querySelectorAll('[data-a="'+c.dataset.a+'"]').forEach(function(x){if(x!==c)x.checked=false})}pb()});
+host.addEventListener('input',pb);
+function pb(){
+  var out=['Stage 12c · a team part refund + bank debit re-check · owner answers (drawings 2026-10-26)'];
+  ASKS.forEach(function(a){
+    var c=host.querySelector('[data-a="'+a.id+'"]:checked'), n=document.getElementById('n'+a.id).value.trim();
+    var opt=c?a.o.filter(function(o){return o[0]===c.dataset.o})[0]:null;
+    out.push('Ask '+a.id+' ('+a.t+'): '+(opt?opt[0]+(opt[2]?' (recommended)':'')+' · '+opt[1]:'not answered')+(n?'\n   Note: '+n:''));
+  });
+  document.getElementById('pb').value=out.join('\n');
+}
+pb();
+document.getElementById('cp').addEventListener('click',function(){var t=document.getElementById('pb'),msg=document.getElementById('cpm');var done=function(){msg.textContent='Copied.'},fall=function(){t.focus();t.select();msg.textContent='Selected. Press Ctrl+C (or long-press Copy).'};try{navigator.clipboard.writeText(t.value).then(done,fall)}catch(e){fall()}});
+show((location.hash||'').slice(1)||'start');
+})();
+</script>

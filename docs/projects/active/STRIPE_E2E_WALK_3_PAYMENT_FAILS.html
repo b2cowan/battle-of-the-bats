@@ -1,0 +1,230 @@
+<title>Walk 3 Payment Fails</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+
+.stop { border-left: 4px solid var(--warn); }
+.step.opt { flex-direction: column; gap: 4px; }
+.step .optrow { display: flex; gap: 10px; align-items: flex-start; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Stripe end-to-end · Walk 3</span>
+    <h1>A payment fails and the club recovers</h1>
+    <p class="sub">Written 2026-10-28. One purpose: a paying club’s card fails when Stripe charges it, the owner is told and keeps working, the platform admin can see it, and fixing the card brings everything back. You build a throwaway club on a card that attaches but fails when charged, then make Stripe charge it.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    
+<p>When a subscription payment fails, Stripe tells our site (the <strong>invoice.payment_failed</strong> and <strong>customer.subscription.updated</strong> events). The site marks the club <strong>Past due</strong>, tells the club’s owners (a bell item and an email), keeps everything open during a grace period, and shows the platform admin a missed payment. When a payment later succeeds, the club goes back to <strong>Active</strong>, the notice clears and the platform admin sees “Payment recovered”.</p>
+<p><strong>How the walk makes a renewal fail without waiting a month.</strong> The test card <code>4000 0000 0000 0341</code> is accepted when it is saved but refused when it is charged. The club is bought with a <strong>14-day trial</strong> (Tournament Plus), so nothing is charged at checkout. In Stripe’s dashboard you then <strong>end the trial now</strong>, which makes Stripe raise the first real invoice immediately and try the card, exactly what Stripe does on the trial’s last day. The failure is real Stripe behaviour reaching our real webhook; nothing is faked in our database.</p>
+<p><strong>Why Tournament Plus on a brand-new club.</strong> On dev the League Plus and Club plans are not open to buy (the plan switch says early access, so the checkout refuses them), and the UAT clubs on those plans have no Stripe subscription at all. Tournament Plus is the plan that can be bought through Stripe’s real checkout with a trial. UAT Test Org also holds a Tournament Plus trial, but its owner address cannot receive email, and ending its trial would change a shared fixture. A fresh club you create here is safer and lets you read the email.</p>
+<p><strong>Test clocks are not used.</strong> Stripe test clocks only work on customers created attached to a clock, and the site’s checkout does not do that, so they cannot move a customer the product made.</p>
+    <div><strong>It passes when</strong></div>
+    
+<ul>
+  <li>After you end the trial, Stripe’s Billing destination shows <strong>invoice.payment_failed</strong> and <strong>customer.subscription.updated</strong> delivered with a 200, and the club’s plan screen says <strong>Past due</strong> with a note telling the owner to update the payment method.</li>
+  <li>The owner gets a bell item “Subscription payment failed” and one email with that subject; everything in the club still opens (grace period).</li>
+  <li>The platform admin’s Clubs & portals list counts the club as Past due, and its Story reads “A payment was missed”.</li>
+  <li>After the card is replaced and the invoice paid, Stripe’s <strong>invoice.payment_succeeded</strong> reaches the site with a 200, the club reads <strong>Active</strong>, the bell item stops asking for attention (“Billing is back in good standing.”), and the Story reads “Payment recovered”.</li>
+  <li>The throwaway club is back on the free Tournament plan with its Stripe subscription cancelled.</li>
+</ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private: it holds dev passwords.</p>
+    <dl class="facts"><dt>Where</dt><dd>The dev site <strong>https://dev.fieldlogichq.ca</strong>, plus two other tabs: the <strong>Stripe dashboard</strong> (sandbox “FieldLogicHQ sandbox”, test mode) and <strong>Resend › Emails</strong>. If a message does not reach your inbox in about two minutes, look in Resend.</dd><dt>Two windows</dt><dd>Use a normal window for the club owner and a <strong>private window</strong> for the platform admin, so the two stay signed in the whole walk.</dd><dt>Your inbox</dt><dd>A plus-address of a real inbox you can read: <code>yourname+owner1@gmail.com</code>. The club’s owner emails (confirmation, payment failed, plan updated) all go to it.</dd><dt>The club</dt><dd>A new organization you create in Part A, named <strong>Dunning Walk Org</strong>, on <strong>Tournament Plus</strong> with a 14-day trial. It is the plan’s price on the pricing page that Stripe will try to charge (it may change; no step depends on a number).</dd><dt>Webhooks</dt><dd>Stripe dashboard › <strong>Workbench › Webhooks › the Billing destination › Event deliveries</strong>. A delivery that reached our site shows <strong>200</strong>. Newest first, event name on each row.</dd><dt>Test cards</dt><dd>Fails when charged <code>4000 0000 0000 0341</code> (used at checkout). Approved <code>4242 4242 4242 4242</code> (used to recover). Any future expiry, any 3 digits, any postal code, any name. Stripe’s own pages are Stripe’s, so their buttons are described, not promised.</dd><dt>Stripe’s dashboard</dt><dd>Several steps ask you to click in Stripe’s dashboard. Where this walk is not certain a button exists with the name given, the step says so and gives you a fallback. If a fallback also fails, stop and tell me; do not improvise in Stripe.</dd></dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <dl class="facts"><dt>Club owner</dt><dd>A new account you create in Part A: <code>yourname+owner1@gmail.com</code> · a password you choose (the dev password <code>UATPassword2026!</code> is fine; this is dev only)</dd><dt>Platform admin</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code> at <strong>https://dev.fieldlogichq.ca/platform-admin/login</strong>. This account is a Super admin on the dev database, which is the role that can read Stripe’s side. If sign-in is refused, stop at Part D and tell me.</dd><dt>Stripe and Resend</dt><dd>Your own logins to the Stripe dashboard (sandbox, test mode) and to Resend.</dd></dl>
+  </section>
+
+  <section class="card stop">
+    <h2>Stop check</h2>
+    <p><strong>This walk writes real sandbox objects:</strong> a verified account, an organization, a Stripe customer and a subscription, emails. Part G puts the club back on the free plan and cancels the Stripe subscription, and says what is left. You cannot run it twice with the same club or address; for another run use <code>+owner2</code>. Nothing here touches production.</p>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    
+<p><strong>Things this walk cannot or does not produce on dev:</strong></p>
+<ul>
+  <li><strong>Stripe giving up after its retries.</strong> Stripe’s automatic retries run over days and cannot be sped up without a test clock, which the site’s checkout does not use. The ending itself is the product’s Stripe-initiated cancellation path (customer.subscription.deleted: the club is suspended, its tournaments archived and kept for a restore window). It can be produced by cancelling the subscription in Stripe’s dashboard, but that suspends the club and is a different purpose, so it is not here.</li>
+  <li><strong>The Club-plan billing screen while past due.</strong> The Club screen has its own past-due notice, but Club and League Plus cannot be bought through Stripe on dev, and the UAT clubs on those plans have no Stripe subscription. It cannot be reached with a real failure.</li>
+  <li><strong>A Premium Coaches Portal going past due.</strong> A coach’s portal is charged at checkout (no trial), so the card that fails later cannot be used to buy it. It would need a card swapped in after purchase and a billing-cycle reset in Stripe’s dashboard. Not tried here.</li>
+  <li><strong>Stripe’s own dunning emails.</strong> Whether Stripe’s sandbox sends them is Stripe’s setting, not ours; C5 and E8 let you record it if one arrives.</li>
+  <li><strong>A phone.</strong> Computer only.</li>
+</ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  var DATA = {"key":"stripe-e2e-walk-3-v1","title":"Stripe end-to-end walk 3: A payment fails and the club recovers","parts":[{"id":"A","title":"Build a paying club on a card that will fail later","steps":[{"who":"Signed out, computer, normal window · https://dev.fieldlogichq.ca/start/tournament","do":"Open the Run a tournament sign-up while signed out. Create the owner: First name, Last name, Email yourname+owner1@gmail.com, a password, then “Create account”.","see":"The heading is “Run a tournament” with a three-step line “Account · Organization · Plan”. After the button, the card turns into a waiting block: “Your account is almost ready. Open the link we sent to confirm your email. It brings you straight to naming your organization.” with “Sent to” your address."},{"who":"Your inbox (yourname+owner1)","do":"Open the confirmation email, press “Confirm my email”, then press the “Confirm my email” button on the page that opens (in the same normal window).","see":"Subject “Confirm your FieldLogicHQ email”. You land on step 2 of the Run a tournament sign-up, which says “Your email is confirmed.” and asks for an “Organization name”, with a button “Create organization”. (If you see a sign-in form instead, sign in as the owner.)"},{"who":"Club owner, computer, normal window","do":"Type the Organization name “Dunning Walk Org” and press “Create organization”. Write down the address that appears (the part after dev.fieldlogichq.ca/, the club’s slug, probably dunning-walk-org). You need it in Part C.","see":"The organization is made and the plan step opens, headed “How do you want to start?”, with a three-step line on “Plan”."},{"who":"Club owner, the plan step","do":"STOP CHECK. Read the Tournament Plus card before pressing anything. Stop here if it offers the plan for nothing.","see":"The Tournament Plus card shows a monthly price and a “Billing” choice between monthly and yearly, and there is NO “Founding Season” tag and no “$0 through …” line. If it shows the Founding Season $0 offer, no Stripe checkout will happen and this walk cannot run. Stop and tell me."},{"who":"Club owner, the plan step","do":"Leave Billing on monthly and press “Start with Tournament Plus”.","see":"The button says “Starting…”, then you leave our site for Stripe’s hosted checkout page. It offers a trial (a free period of 14 days, then the monthly price), and asks for a card. The email is yourname+owner1."},{"who":"Club owner, on Stripe’s checkout page","do":"Enter the card that fails later: 4000 0000 0000 0341, any future expiry, any 3 digits, any postal code and name, and press Stripe’s start-trial / subscribe button.","see":"Stripe accepts the card (it only saves it; nothing is charged during a trial) and sends you back to the dev site, to the club’s setup page (the address ends /admin/onboarding with success=1)."},{"who":"You, Stripe dashboard › Workbench › Webhooks › Billing destination › Event deliveries","do":"Prove the purchase reached the site. Find the newest “customer.subscription.created” row.","see":"A row for customer.subscription.created with a 200 delivery status, timed to the purchase you just made."},{"who":"Club owner, computer · https://dev.fieldlogichq.ca/{club slug}/admin/tournaments/settings/subscription","do":"Open the club’s Plan & billing by typing the address: https://dev.fieldlogichq.ca/ then the club’s slug, then /admin/tournaments/settings/subscription. If you are taken back to a setup screen instead, finish or skip the setup and try the address again.","see":"The plan card reads “Tournament Plus Plan” with a status badge “Trial”, a line “Billed monthly” and a line “Trial ends” followed by a date about two weeks from today. A block headed “Billing tools” has a button “Payment method & invoices”. There is no past-due note yet.","options":["Opened as described, badge “Trial”","The badge said something else — say what in the notes","I could not reach the billing screen — say what happened in the notes"]},{"who":"You, Stripe dashboard › Customers","do":"Search for yourname+owner1@gmail.com and open the customer.","see":"ONE customer with that email and one subscription whose status is Trialing, with the card ending 0341 as its payment method. Nothing has been charged."}]},{"id":"B","title":"Make Stripe charge the card now","steps":[{"who":"You, Stripe dashboard (test mode) › Customers › the Dunning Walk Org owner › the subscription","do":"Open the subscription (status Trialing) from the customer page. UNVERIFIED click path: use the Actions menu at the top right of the subscription and choose the item that ends the trial now (it may be called “End trial”). If the Actions menu has no such item, choose “Update subscription” and, in its Trial section, end the trial now / set the trial to end today, then save. Fallback if neither exists: stop and tell me; the developer can end the trial from the command line.","see":"Stripe saves the change. Within a few seconds the subscription’s status leaves Trialing: it goes Past due (or briefly Active, then Past due) because the first invoice was raised and the card was refused.","options":["Used the Actions menu’s end-the-trial item","Used Update subscription to end the trial","Could not find a way to end the trial — stop and tell me"]},{"who":"You, Stripe dashboard › the same subscription","do":"Read the subscription page and its latest invoice.","see":"The subscription status is Past due, not Active, not Incomplete. The latest invoice is not paid and shows a failed payment attempt on the card ending 0341 (a card-declined style reason).","options":["Status Past due and the invoice shows a failed attempt","Status was Incomplete or Unpaid instead — say which in the notes","The invoice was paid (the card did not fail) — say what in the notes"]},{"who":"You, Stripe dashboard › Workbench › Webhooks › Billing destination › Event deliveries","do":"Prove the failure reached the site. Find the newest “invoice.payment_failed” and “customer.subscription.updated” rows.","see":"Both rows are there, timed to the moment you ended the trial, both delivered with a 200. (There may also be payment-intent or charge events in Stripe’s own log that this destination does not receive; only these two matter.)"}]},{"id":"C","title":"What the club owner sees (grace period)","steps":[{"who":"Club owner, normal window · https://dev.fieldlogichq.ca/{club slug}/admin/tournaments/settings/subscription","do":"Reload the billing screen from Part A.","see":"The status badge now reads “Past due”. A note says: “Your last payment failed. Your access remains active during the grace period — please update your payment method via Payment method & invoices below to avoid service interruption.” The plan card still reads Tournament Plus."},{"who":"Club owner, normal window","do":"Open the bell (top right of the admin) and read the newest item.","see":"An item “Subscription payment failed” with the text “Your subscription payment could not be processed. Please update your billing information.”, listed under Needs attention, with a button “Open Plan & billing”."},{"who":"Club owner, normal window","do":"RULING: press that item’s “Open Plan & billing” button. The notice points at the address /{club slug}/admin/org/billing, but a Tournament Plus club has no organization admin area and is sent from /admin/org/ pages to the tournaments screen. Tick where you landed.","see":"The code redirects a Tournament or Tournament Plus owner away from /admin/org/billing, so the button is expected to land on the Tournaments screen, not on Plan & billing.","options":["It opened Plan & billing","It landed on the Tournaments screen instead (as the code does today)","Something else — say what in the notes"]},{"who":"Your inbox (yourname+owner1) and Resend › Emails","do":"Find the failed-payment email.","see":"ONE email, subject “Subscription payment failed”, a heading with the same words, the sentence “Your subscription payment could not be processed. Please update your billing information.” and a button “View”. Owners and admins of a club get this email by default."},{"who":"Your inbox and Resend › Emails","do":"RULING: list every email that reached the owner since the failure. The code sends the failed-payment email above and nothing else on a failure; it sends no “your trial has ended” email once the trial ends. Tick what you found.","see":"Only “Subscription payment failed”.","options":["Only “Subscription payment failed” (as the code does today)","A second email also arrived — say its subject in the notes","A message from Stripe also arrived — say its sender in the notes","Something else — say what in the notes"]},{"who":"Club owner, normal window · https://dev.fieldlogichq.ca/{club slug}/admin/tournaments","do":"Prove the grace period: open the club’s Tournaments screen and click around two or three of its pages.","see":"Everything opens as normal. No “suspended” or “cancelled” screen, no redirect to billing. A failed payment does not lock the club; only Stripe giving up after its retries cancels it."}]},{"id":"D","title":"What the platform admin sees while it is past due","steps":[{"who":"Platform admin, PRIVATE window · https://dev.fieldlogichq.ca/platform-admin/login","do":"Sign in as uat-platform@fieldlogichq.ca and open Clubs & portals (https://dev.fieldlogichq.ca/platform-admin/orgs). If sign-in is refused, stop and tell me.","see":"The list opens. A tile “Past due” shows a number of 1 or more, and a callout “Needs attention.” says accounts with billing or access risk are ready for review, with a button “Past due (N)”."},{"who":"Platform admin, private window · Clubs & portals","do":"Press “Past due (N)”.","see":"The directory narrows to past-due accounts and Dunning Walk Org is one of them, with a Past due status chip."},{"who":"Platform admin, private window · open Dunning Walk Org, Story tab","do":"Open the club and read the Story tab.","see":"An entry “A payment was missed” (by Stripe), dated just now. The purchase itself is also on the Story as “Bought Tournament Plus”."},{"who":"Platform admin, private window · Dunning Walk Org, Money tab","do":"Open the Money tab.","see":"A “Test mode” chip and a line saying when Stripe was read. The subscription is shown twice, “Our record” and “Stripe”, both reading Past due, with no “Differs” chip. The charges list has one row for the refused charge, where “Stripe says” begins “Failed ·” followed by a reason.","options":["Both columns read Past due and the charge row says “Failed ·”","A “Differs” chip appeared — say which row in the notes","The tab said my role could not read Stripe — say so in the notes","Something else — say what in the notes"]}]},{"id":"E","title":"The owner fixes the card and the club recovers","steps":[{"who":"Club owner, normal window · https://dev.fieldlogichq.ca/{club slug}/admin/tournaments/settings/subscription","do":"Press “Payment method & invoices”.","see":"The button says “Redirecting…” and Stripe’s customer portal opens for this club. It shows the subscription and the saved card ending 0341, and it should show the unpaid invoice.","options":["The portal opened and showed the card and the unpaid invoice","The portal opened but something was missing — say what in the notes","An error appeared instead of the portal (for example “Billing portal is not configured”) — say what in the notes"]},{"who":"Club owner, in Stripe’s billing portal","do":"UNVERIFIED wording. Add a new payment method with the approved card 4242 4242 4242 4242 (any expiry, 3 digits, postal code) and make it the default one, using the portal’s update-payment-method option.","see":"The portal now shows the card ending 4242 as the default payment method."},{"who":"You, Stripe dashboard › Workbench › Webhooks › Billing destination › Event deliveries","do":"Find the newest “payment_method.attached” row.","see":"A row with a 200, timed to the moment you added the card."},{"who":"Club owner, Stripe’s billing portal, or you in the Stripe dashboard","do":"Get the unpaid invoice paid. UNVERIFIED path, three ways in this order. (1) In the portal’s invoice list, use a pay or pay-now option on the unpaid invoice. (2) If the portal has none, in the Stripe dashboard open the subscription’s latest unpaid invoice and use its Actions menu to charge the customer / retry the payment. (3) Otherwise wait: Stripe retries on its own schedule, which is days, not minutes; stop and tell me. Tick the way that worked.","see":"The invoice shows Paid and the subscription status becomes Active.","options":["The portal’s own pay option on the invoice worked","The portal had none; the Stripe dashboard retry/charge worked","Neither worked — stop and tell me"]},{"who":"You, Stripe dashboard › Workbench › Webhooks › Billing destination › Event deliveries","do":"Prove the recovery reached the site: find the newest “invoice.payment_succeeded” and “customer.subscription.updated” rows.","see":"Both there, both 200, timed to the payment."},{"who":"Club owner, normal window · https://dev.fieldlogichq.ca/{club slug}/admin/tournaments/settings/subscription","do":"Reload the billing screen.","see":"The badge reads “Active”. The “Your last payment failed…” note is gone. The plan still reads Tournament Plus and a “Renews” line shows a date about a month away."},{"who":"Club owner, normal window","do":"Open the bell and find the “Subscription payment failed” item again.","see":"It is no longer listed under Needs attention. It reads as settled with the words “Billing is back in good standing.”"},{"who":"Your inbox and Resend › Emails","do":"RULING: look for any message telling the owner the payment went through. The code sends no email when a past-due club recovers (the “Welcome back” email is only for a club coming back from a cancellation). Tick what you found.","see":"Nothing arrived.","options":["Nothing arrived (as the code does today)","An email arrived — say its subject in the notes","A receipt from Stripe arrived — say its sender in the notes"]}]},{"id":"F","title":"The platform admin sees the recovery","steps":[{"who":"Platform admin, private window · Clubs & portals › Dunning Walk Org › Story","do":"Reload the club’s Story tab.","see":"A new entry “Payment recovered”. “A payment was missed” stays on the Story beside it; the two together tell the whole episode."},{"who":"Platform admin, private window · Clubs & portals","do":"Press “Past due (N)” again if it is still offered, or choose the Past due filter.","see":"Dunning Walk Org is no longer in the past-due list. (Another club may still be, so judge by this club, not by the total.)"},{"who":"Platform admin, private window · Dunning Walk Org, Money tab","do":"Open the Money tab and press “Read again”.","see":"Our record and Stripe both read Active. The charges list keeps the failed charge and shows the later paid one. The paid charge may carry a quiet note beginning “Not a duplicate: Stripe tried again after the” failure date, “and it paid”.","options":["Both read Active and the paid charge carries the “Not a duplicate” note","Both read Active but there is no “Not a duplicate” note","The two columns disagree (a “Differs” chip) — say which row in the notes"]}]},{"id":"G","title":"Put the club back","steps":[{"who":"Club owner, normal window · https://dev.fieldlogichq.ca/{club slug}/admin/tournaments/settings/subscription","do":"Scroll to “Reduce or cancel plan”, press “Downgrade to Tournament”, read the review (it says the club’s tournament use fits the free plan), and press “Confirm downgrade”.","see":"A window titled “Plan updated” confirms the change. The plan card now reads “Tournament Plan” with a badge “Active”."},{"who":"You, Stripe dashboard › Customers › the Dunning Walk Org owner","do":"Open the customer’s subscription and the webhook log.","see":"The subscription is Cancelled (the downgrade to the free plan cancels it in Stripe). The newest “customer.subscription.deleted” delivery to the Billing destination is a 200, and the club does not become suspended; it simply has no paid plan."},{"who":"Your inbox and Resend › Emails","do":"Find the plan-change email.","see":"ONE email, subject “Your Dunning Walk Org plan has been updated”."},{"who":"You","do":"Read what this walk leaves behind and tick when you have. A verified owner account (yourname+owner1) that can still sign in; one organization, Dunning Walk Org, on the free Tournament plan and fully usable; one Stripe sandbox customer with a cancelled subscription, two cards saved (0341 and 4242), one paid invoice and one that failed first; the emails in Resend; and a platform-admin Story with a missed and a recovered payment. There is no screen to delete the club or the account; for the next run use +owner2 and a different club name.","see":"Nothing is left charging. The club is not past due, trialing or cancelled."}]}]};
+  var KEY = DATA.key, PARTS = DATA.parts;
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+  function box(id, partId, label) {
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+    boxes.push({ part: partId, id: id, cb: cb, label: label });
+    return cb;
+  }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(txt('strong', null, p.id + ' \u00b7 ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(txt('span', 'who', id + ' \u00b7 ' + s.who));
+      t.appendChild(txt('span', null, s['do']));
+      t.appendChild(txt('span', 'see', 'You should see: ' + s.see));
+      if (s.options && s.options.length) {
+        var wrap = el('div', 'step opt'); wrap.appendChild(t);
+        s.options.forEach(function (o, k) {
+          var row = el('label', 'optrow'); var cb = box(id + '-' + (k + 1), p.id, id + ' = ' + o);
+          row.appendChild(cb); row.appendChild(txt('span', null, o)); wrap.appendChild(row);
+        });
+        body.appendChild(wrap);
+      } else {
+        var row2 = el('label', 'step'); var cb2 = box(id, p.id, id);
+        row2.appendChild(cb2); row2.appendChild(t); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' \u00b7 ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [DATA.title + ' (written 2026-10-28)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length + ' (a step with options counts one box per option)');
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join('; ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

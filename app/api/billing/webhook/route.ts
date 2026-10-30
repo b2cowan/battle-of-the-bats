@@ -52,6 +52,16 @@ function stripeId<T extends { id: string }>(value: string | T | null | undefined
   return typeof value === 'string' ? value : value?.id ?? null;
 }
 
+/**
+ * When a paid invoice's subscription period ends: the latest end among its lines. ⚠ NEVER `invoice.period_end` — that is
+ * the invoice's own window, and on a subscription's first (or any renewal) invoice it is the moment the invoice was made,
+ * so it stored today's date as the "renewal" of a brand-new annual plan (2026-10-30).
+ */
+function invoicePeriodEnd(invoice: Stripe.Invoice): string | null {
+  const ends = (invoice.lines?.data ?? []).map(l => l.period?.end ?? 0);
+  return toIso(ends.length ? Math.max(...ends) : null);
+}
+
 function subscriptionIdFromSession(session: Stripe.Checkout.Session): string | null {
   return stripeId(session.subscription);
 }
@@ -780,7 +790,7 @@ export const POST = withObservability(async (req: Request) => {
 
     case 'invoice.payment_succeeded': {
       const invoice = event.data.object as Stripe.Invoice;
-      const currentPeriodEnd = toIso(invoice.period_end);
+      const currentPeriodEnd = invoicePeriodEnd(invoice);
       const { data: currentOrg } = await supabaseAdmin
         .from('organizations')
         .select('id, plan_id, subscription_status, stripe_subscription_id')

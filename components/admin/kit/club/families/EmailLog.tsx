@@ -34,7 +34,7 @@ export const reachedText = (r: EmailLogRow) => {
 };
 /** The Reached cell: a send that stopped partway wears the amber chip (a status is said once, by a chip), its figures after. */
 const reachedCell = (r: EmailLogRow) => (r.counts && r.state === 'stopped'
-  ? <><RepChip tone="warn">{W.stoppedChip}</RepChip> {W.reached(r.counts.reached, r.counts.families)}</>
+  ? <><span className={fam.chipGap}><RepChip tone="warn">{W.stoppedChip}</RepChip></span>{W.reached(r.counts.reached, r.counts.families)}</>
   : reachedText(r));
 export const subjectText = (r: EmailLogRow) => r.subject ?? W.oneFamilySubject;
 
@@ -115,11 +115,12 @@ export function EmailLogList({ rows, earlier = [], isPhone, label, onOpen }: {
       <table className={repKit.table}>
         <thead>
           <tr>
-            <th scope="col" style={{ width: '15%' }}>{W.colSent}</th>
-            <th scope="col">{W.colSubject}</th>
-            <th scope="col" style={{ width: '22%' }}>{W.colTo}</th>
-            <th scope="col" style={{ width: '15%' }}>{W.colBy}</th>
-            <th scope="col" className={repKit.num} style={{ width: '18%' }}>{W.colReached}</th>
+            {/* Subject takes the slack: Sent and Reached (nowrap) hug their figures, so a subject and its Automatic tag stay on one line. */}
+            <th scope="col" style={{ width: '1%' }}>{W.colSent}</th>
+            <th scope="col" style={{ width: '38%' }}>{W.colSubject}</th>
+            <th scope="col" style={{ width: '30%' }}>{W.colTo}</th>
+            <th scope="col" style={{ width: '12%' }}>{W.colBy}</th>
+            <th scope="col" className={repKit.num} style={{ width: '1%' }}>{W.colReached}</th>
             <th scope="col" className={repKit.go}><span className={repKit.srOnly}>Open</span></th>
           </tr>
         </thead>

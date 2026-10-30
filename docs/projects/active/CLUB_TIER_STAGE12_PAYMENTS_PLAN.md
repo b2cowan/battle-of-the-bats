@@ -400,6 +400,18 @@
   test account was funded so Stripe's daily automatic payout has money — a payout read on the tab and exported waits for
   that payout; the downgrade/Disconnect with a page open and the terms bump are walk steps (a terms bump is a constant
   change, never published by the builder).
+  **Amplify end-to-end pass: payouts (owner 2026-10-27, after closing walks §404 and §405).** The one final end-to-end
+  pass on Amplify dev must include payouts that really show up on Accounting › Payouts, because localhost walks could not
+  prove them (Stripe's test payouts run daily with a 7-day delay, so none existed at walk time). **Lead time:** make the
+  payments at least 8 days before the pass — one by the `4000 0000 0000 0077` card (available at once, so it goes in the
+  next daily payout) and the rest by ordinary card; check the tab shows a payout before the pass starts. **What the pass
+  must see on the tab:** a payout row (Sent · Arrives · Status · Amount) reading "Paid · N payments"; opening it lists
+  every line named (a family's card payment, a bank-debit payment, a refund to the card, a Stripe fee) and closes on "Paid
+  to the bank account ending … on …"; Find by the amount as the bank prints it and by a family name; Export in the house
+  format; a payout still being matched says so; a manual payout shows its total alone with the "automatic ones only" note.
+  Returned bank debit, dispute and dispute-won lines are asserted only if the test account can produce them (a probe
+  showed their line types exist in the sandbox). The treasurer reads it; a club that never connected has no tab. The
+  steps held from §404 and §405 (payout steps, F1–F2 terms emails, B3, G ending emails) run in the same pass.
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 

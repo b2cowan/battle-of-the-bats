@@ -1,0 +1,80 @@
+<title>Walk 5 Keep Premium</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column, a pointer page with a single door to the walk that already exists. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --warn: #8a5a00;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --warn: #e0b254; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --warn: #e0b254; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.go { align-self: flex-start; display: inline-block; background: var(--accent); color: var(--accent-fg); border-radius: 6px; padding: 8px 14px; text-decoration: none; font-weight: 600; }
+.go:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.stop { border-left: 4px solid var(--warn); }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+@media (max-width: 480px) { .facts { grid-template-columns: 1fr; gap: 2px; } .facts dd { margin-bottom: 8px; } }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Stripe end-to-end · Walk 5</span>
+    <h1>Keep Premium after free time</h1>
+    <p class="sub">This walk was written before the Stripe set and is not repeated here. This page holds its place in the run order and takes you to it. Nothing on this page is checked off.</p>
+  </header>
+
+  <section class="card">
+    <h2>Open the walk</h2>
+    <p>A coach on free time who buys Premium keeps the same portal and everything they made. The walk covers paying before the free time ends, paying after it ends, and cancelling then subscribing again later. It finishes by checking that the support console shows one Premium portal for that coach.</p>
+    <a class="go" href="https://claude.ai/artifact/G6iXm9QvjKSKN88eNms2xb" target="_blank" rel="noopener">Open Keep Premium and the money paths</a>
+    <dl class="facts">
+      <dt>Size</dt><dd>53 steps in 9 sections, with 9 calls for you to rule on</dd>
+      <dt>Ledger</dt><dd>§416, support console Stage 4b, walk C of 3</dd>
+      <dt>Run it</dt><dd>After Walk 4 and before Walk 6</dd>
+    </dl>
+  </section>
+
+  <section class="card stop">
+    <h2>Before you start it</h2>
+    <p>The dev checkout is a real Stripe test page (test card 4242 4242 4242 4242), not the mock. The Stripe command-line listener has to be running while you pay, or the page after paying stays on “setting up”.</p>
+    <p>The walk uses the coaches Jordan Mitchell and bob bob. Their sign-in details are on the walk itself.</p>
+  </section>
+
+  <section class="card">
+    <h2>How it fits the set</h2>
+    <ul>
+      <li>Walk 6 replays events from Walks 1 and 9 or 8. It does not need this walk to have been run.</li>
+      <li>Your pass or fail for this walk is recorded in the ledger under §416, the same as before, not under the Stripe set.</li>
+    </ul>
+  </section>
+</main>

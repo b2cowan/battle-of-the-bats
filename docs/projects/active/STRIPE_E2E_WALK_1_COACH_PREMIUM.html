@@ -1,0 +1,235 @@
+<title>Walk 1 Coach Premium</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+
+.stop { border-left: 4px solid var(--warn); }
+.step.opt { flex-direction: column; gap: 4px; }
+.step .optrow { display: flex; gap: 10px; align-items: flex-start; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Stripe end-to-end · Walk 1</span>
+    <h1>A coach buys Premium</h1>
+    <p class="sub">Written 2026-10-28. One purpose: a brand-new coach pays on Stripe’s real checkout page and the team becomes Premium, and every way that purchase can go wrong (declined card, failed 3-D Secure, walking away) leaves nothing granted and nothing duplicated. You create two new coaches and cancel both at the end.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    
+<p>This walk follows a coach from “I want Premium” to “the team shows Premium”. The coach starts at the Coaches Portal sign-up (<strong>/coaches/start</strong>), confirms their email, names a team, pays on <strong>Stripe’s own hosted page</strong> (not a fake shortcut: the fake checkout is switched off on dev), and comes back to a page that says Premium is on. Stripe then tells our site by webhook, and the site makes the portal and sends the welcome email.</p>
+<p>It uses <strong>two new coaches</strong> so every kind of ending can be tried on a coach who has no portal yet:</p>
+<ul>
+  <li><strong>Coach 1</strong> pays with the plain approved card (Part A), then you look at what a Premium coach sees afterwards, including what happens when they try to buy a <em>second</em> portal (Part B).</li>
+  <li><strong>Coach 2</strong> is the one who has trouble: a declined card (Part C), walking away from Stripe’s page (Part D), a 3-D Secure card that fails and then passes (Part E). After each failure the walk checks that <strong>nothing was granted and no team was made</strong>.</li>
+  <li>Part F cancels both test subscriptions, one through the product’s own Cancel and one in Stripe’s dashboard, so the sandbox is left clean.</li>
+</ul>
+<p>Where the product does not do something a customer might expect (an email about a declined card, a receipt), the step is a <strong>ruling</strong>: it says what the code does today and you tick what actually happened.</p>
+    <div><strong>It passes when</strong></div>
+    
+<ul>
+  <li>Coach 1 and coach 2 each land on a page that says Premium is on for their team, the team’s Overview carries a <strong>Premium</strong> chip, and each gets exactly <strong>one</strong> welcome email.</li>
+  <li>The Billing destination in Stripe shows <strong>checkout.session.completed</strong> and <strong>customer.subscription.created</strong> delivered with a 200 for each purchase.</li>
+  <li>After the declined card, the failed 3-D Secure and the walk-away, coach 2 has no portal, no welcome email, and no subscription in Stripe, until the one purchase you complete on purpose.</li>
+  <li>A coach who already has a Premium portal cannot reach a second Stripe checkout; they are told so on the form.</li>
+  <li>Both subscriptions end up cancelled in Stripe, and each coach gets one cancellation email.</li>
+</ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private: it holds dev passwords.</p>
+    <dl class="facts"><dt>Where</dt><dd>The dev site <strong>https://dev.fieldlogichq.ca</strong>. Keep two other tabs open: the <strong>Stripe dashboard</strong> (sandbox “FieldLogicHQ sandbox”, test mode) and the <strong>Resend dashboard › Emails</strong>. If a message does not reach your inbox within about two minutes, look for it in Resend (subject, recipient, delivered or bounced).</dd><dt>Two inboxes</dt><dd>Use <strong>plus-addresses</strong> of a real inbox you can read: <code>yourname+coach1@gmail.com</code> for coach 1 and <code>yourname+coach2@gmail.com</code> for coach 2. Both land in your one inbox. Pick any password of 8 or more characters for each (the dev password <code>UATPassword2026!</code> is fine; this is dev only). Use a private window for coach 2 so the two never share a sign-in.</dd><dt>Team names</dt><dd>Coach 1’s team: <strong>Walk Premium Bears</strong>. Coach 2’s team: <strong>Walk Premium Hawks</strong>. The names show up in the welcome and cancellation emails, which is how you tell the two apart.</dd><dt>Webhooks</dt><dd>Stripe dashboard › <strong>Workbench › Webhooks › the Billing destination › Event deliveries</strong>. A delivery that reached our site shows <strong>200</strong>. Newest first; the event name is on each row. Several events arrive for one purchase (a payment-method event, an invoice event); the two this walk names are the ones that make the portal.</dd><dt>Test cards</dt><dd>Approved <code>4242 4242 4242 4242</code> · declined <code>4000 0000 0000 0002</code> · 3-D Secure <code>4000 0025 0000 3155</code>. Any future expiry, any 3 digits, any postal code, any name. Stripe’s page is Stripe’s, so its wording and button names are described here, not promised.</dd><dt>Price</dt><dd>Premium has <strong>no free trial</strong> and no Founding Season freebie any more, so the first charge happens at checkout. The price is whatever the pricing page shows today (it may change); this walk never relies on a number.</dd><dt>How a coach reaches billing</dt><dd>There is <strong>no menu item</strong> in the Coaches Portal that opens the coach’s billing screen today. You get there by typing the address (Part B shows how). That is a known gap, written up as a ruling in Part B.</dd></dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <dl class="facts"><dt>Coach 1</dt><dd>A new account you create in Part A: <code>yourname+coach1@gmail.com</code> · a password you choose</dd><dt>Coach 2</dt><dd>A new account you create in Part C, in a <strong>private window</strong>: <code>yourname+coach2@gmail.com</code> · a password you choose</dd><dt>Stripe and Resend</dt><dd>Your own logins to the Stripe dashboard (sandbox, test mode) and to Resend.</dd><dt>Platform admin (optional)</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code> at <strong>https://dev.fieldlogichq.ca/platform-admin/login</strong>. Used only for one optional check in Part F. If sign-in is refused, tick “Skipped it” and carry on; it does not block anything.</dd></dl>
+  </section>
+
+  <section class="card stop">
+    <h2>Stop check</h2>
+    <p><strong>This walk spends real (sandbox) Stripe objects.</strong> Each coach leaves a verified account, a cancelled Coaches Portal kept in retention, and one or more Stripe sandbox customers. Part F says exactly what is left. Do not run it on production keys: the cards below only work in the sandbox.</p>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    
+<p><strong>Things this walk cannot or does not produce on dev:</strong></p>
+<ul>
+  <li><strong>The Founding Season free path.</strong> The offer closed on 2026-10-26, so every new coach pays. The free “no card” path, and the Basic-to-Premium upgrade that carries a free team across, are other walks.</li>
+  <li><strong>A coach buying through a tournament claim link, or reactivating a cancelled portal.</strong> Both use the same checkout with different starting points; they are not tried here.</li>
+  <li><strong>A renewal, a failed renewal, or recovery.</strong> That is Walk 3 (a payment fails and the club recovers). A card that attaches and fails later cannot be used for a coach purchase: Premium has no trial, so it is charged at checkout and that card would simply be declined there.</li>
+  <li><strong>A yearly purchase.</strong> Only monthly is bought; the yearly toggle shares all the same code.</li>
+  <li><strong>Stripe’s own emails.</strong> Stripe’s sandbox does not normally email receipts, so a Stripe receipt is not expected; step A10 lets you record it if one comes.</li>
+  <li><strong>A phone.</strong> Everything here is on a computer; Stripe’s page and our sign-up card are responsive but not checked on a phone.</li>
+</ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  var DATA = {"key":"stripe-e2e-walk-1-v1","title":"Stripe end-to-end walk 1: A coach buys Premium","parts":[{"id":"A","title":"Coach 1 buys Premium with the approved card","steps":[{"who":"Signed out, computer, normal window · https://dev.fieldlogichq.ca/coaches/start","do":"STOP CHECK. Open the Coaches Portal sign-up while signed out and read the top of the card. Stop here if it offers the plan free or without a card.","see":"The heading is “Coach a team”, with a two-step line “Account · Team”. The one line under it starts “Premium Coaches Portal.” and then gives a monthly price and a yearly price. The button reads “Create account”. If instead the line says the portal is free “through” a date, or the page says “No credit card.”, the Founding Season offer is switched on for dev and the checkout will be skipped. Stop and tell me."},{"who":"Signed out, computer · same page","do":"Create coach 1. Fill First name, Last name, Email (yourname+coach1@gmail.com) and a password, then press “Create account”.","see":"The card changes to a waiting block: “Your account is almost ready. Open the link we sent to confirm your email. It brings you straight to naming your team.” and “Sent to” your address, with a “Send the link again” button. You are NOT signed in yet (verification is on for dev)."},{"who":"Your inbox (coach 1’s plus-address)","do":"Find the confirmation email and read it before you press anything.","see":"Subject “Confirm your FieldLogicHQ email”. A heading “Confirm your email”, a button “Confirm my email” and a line saying the link works for 1 hour. It arrives within about two minutes (otherwise look in Resend › Emails for that recipient)."},{"who":"Same computer and window, coach 1","do":"Press “Confirm my email” in the email. A page titled “Confirm your email” opens; press its “Confirm my email” button too.","see":"You land back on the Coaches Portal sign-up, now on step 2 (“Account · Team”, with Team on). It says “Your email is confirmed.” and shows Team name, Sport and Billing choices and a button “Continue to checkout”. If it shows the sign-in form instead, sign in with coach 1’s email and password and you reach the same step."},{"who":"Coach 1, computer","do":"Type the Team name “Walk Premium Bears”. Leave Sport as it is and leave Billing on monthly. Press “Continue to checkout”.","see":"The button briefly says “Starting checkout…”, then your browser leaves our site for Stripe’s hosted checkout page (the address starts with checkout.stripe.com and the page says it is a test/sandbox). Your coach 1 email is prefilled. The Premium plan and its monthly price are shown. There is no free-trial wording: the amount due today is the first month."},{"who":"Coach 1, on Stripe’s checkout page","do":"Pay with the approved card 4242 4242 4242 4242, any future expiry, any 3 digits, any name and postal code, and press Stripe’s pay/subscribe button.","see":"Stripe thinks for a moment and sends you back to the dev site, to a page whose browser tab is titled “Premium Coaches Portal — FieldLogicHQ”."},{"who":"Coach 1, the page Stripe sent you back to","do":"Watch the page for up to a minute. It may first say “Setting up your portal” with “Payment received. This takes a few seconds.” That is the site waiting for Stripe’s webhook. Tick the one that happened.","see":"The page turns by itself into a card titled “Premium is on for Walk Premium Bears” with an “Open your team” button.","options":["It showed “Premium is on for Walk Premium Bears” within about a minute","It stopped at “Still setting up your portal” and I had to press “Check again” (note how long it took)","Something else — say what in the notes"]},{"who":"Coach 1, computer","do":"Press “Open your team”. Write down the portal address from the browser bar: the part right after dev.fieldlogichq.ca/ (it ends with the team slug, e.g. walk-premium-bears-coaches-portal). You need it in Part B.","see":"The team’s Overview opens. Next to the Overview title there is a small “Premium” chip."},{"who":"Your inbox (coach 1’s plus-address) and Resend › Emails","do":"Find the welcome email. Then count: how many welcome emails for Walk Premium Bears are in your inbox and in Resend?","see":"Exactly ONE email, subject “Welcome to your Premium Coaches Portal — Walk Premium Bears”. Heading “Welcome to the Premium Coaches Portal”, a list of what is included, a button “Open your Coaches Portal”, and a closing line that you can manage or cancel your subscription anytime from your portal billing settings. Two webhook events fire for a purchase and either could make the portal, so “one, not two” is the point of this step."},{"who":"Your inbox (coach 1) and Resend › Emails","do":"RULING: look at every email that reached coach 1 since you pressed Create account. The code sends only the confirmation email and the welcome email for a Premium purchase, and no receipt of its own. Tick what you found.","see":"Only the two emails (confirmation and welcome), as the code does today.","options":["Only the confirmation and the welcome (as the code does today)","A receipt or payment confirmation from FieldLogicHQ also arrived — say its subject in the notes","A receipt from Stripe also arrived — say its sender in the notes","Something else — say what in the notes"]},{"who":"You, Stripe dashboard (test mode) › Workbench › Webhooks › Billing destination › Event deliveries","do":"Prove the webhook arrived. Find the newest “checkout.session.completed” and “customer.subscription.created” rows.","see":"Both are there, newest at the top, with a 200 delivery status, and their time matches the purchase you just made. (Other events for the same purchase may sit beside them; they should be 200 too.)"},{"who":"You, Stripe dashboard › Customers","do":"Search for coach 1’s address (yourname+coach1@gmail.com) and open the customer.","see":"ONE customer with that email, holding one subscription whose status is Active, with the Premium monthly price, and the card on it ends 4242."}]},{"id":"B","title":"What a Premium coach sees afterwards (coach 1)","steps":[{"who":"Coach 1, computer · https://dev.fieldlogichq.ca/{portal address from step A8}/admin/org/billing","do":"Open the coach’s billing screen by typing the address: https://dev.fieldlogichq.ca/ then the portal address you wrote down, then /admin/org/billing. (The Admin door at the foot of the left menu, then Plan & billing under Organization, is another way in on a computer, if you prefer.)","see":"A page titled “Coaches Portal billing”. The plan card is headed “Premium Coaches Portal Plan” with a status badge “Active”, a line “Billed monthly” and a line “Renews” followed by a date about a month away. No trial wording and no Founding Season banner.","options":["Opened as described","I was sent to a different screen — say where in the notes","An error or a blank page — say what in the notes"]},{"who":"Coach 1, same page","do":"Scroll to the “Billing tools” block and read its button.","see":"A block headed “Billing tools” with the hint “Open the secure billing portal for payment methods, invoices, and billing details.” and a button reading “Payment method & invoices”. There is no button called “Manage subscription”; the older setup checklist uses that name and is out of date."},{"who":"Coach 1, same page","do":"Press “Payment method & invoices”. Look at what Stripe’s billing portal shows, then use its own link to come back to our site.","see":"The button says “Redirecting…” and Stripe’s customer portal opens for coach 1. It should show the Premium subscription, the card ending 4242 and one paid invoice. Its return link brings you back to “Coaches Portal billing”.","options":["The portal opened and showed the subscription, the card ending 4242 and a paid invoice","The portal opened but something was missing — say what in the notes","An error appeared instead of the portal — say what in the notes"]},{"who":"Coach 1, computer · https://dev.fieldlogichq.ca/coaches/start","do":"RULING: the “second purchase” door. Still signed in as coach 1 (who now owns a Premium portal), open the Coaches Portal sign-up address above. Tick what the page shows.","see":"The code does not turn a Premium owner away on this page; it shows the team form (Team name, Sport, Billing and “Continue to checkout”). The refusal comes when you press the button (next step).","options":["The team form with “Continue to checkout” (as the code does today)","I was sent somewhere else (say where in the notes)","Something else — say what in the notes"]},{"who":"Coach 1, same form","do":"Type the Team name “Walk Second Try”, leave the rest, and press “Continue to checkout”. If Stripe’s checkout page opens, close that tab WITHOUT paying and tick the second option.","see":"The form shows a red message and stays on our site: “Your account already has a Coaches Portal. Each account can have one — use a different email to start another.” No Stripe page opens.","options":["That message appeared and no Stripe page opened (as the code does today)","Stripe’s checkout page opened (a second purchase was possible) — I closed it without paying","A different message — say what in the notes","Nothing happened"]},{"who":"You, Stripe dashboard › Customers","do":"Search coach 1’s address again.","see":"Still ONE customer and ONE subscription. The refused second purchase created nothing in Stripe, because the site checks for an existing portal before it talks to Stripe."}]},{"id":"C","title":"A declined card (coach 2)","steps":[{"who":"Coach 2, a NEW private window · https://dev.fieldlogichq.ca/coaches/start","do":"Create coach 2 exactly as you did coach 1: First name, Last name, Email yourname+coach2@gmail.com, a password, “Create account”. Then open the “Confirm your FieldLogicHQ email” email that arrives in your inbox, press “Confirm my email” and press the button on the page that opens, in THIS private window.","see":"You are back on step 2, saying “Your email is confirmed.”, with the Team name field empty. (If it shows the sign-in form instead, sign in as coach 2.)"},{"who":"Coach 2, private window","do":"Type the Team name “Walk Premium Hawks” and press “Continue to checkout”. On Stripe’s page enter the DECLINED card 4000 0000 0000 0002 (any expiry, any 3 digits, any postal code) and press Stripe’s pay button.","see":"Stripe stays on its own checkout page and shows its own message that the card was declined. You are NOT sent back to the dev site and no success page appears."},{"who":"Coach 2, on the same Stripe page","do":"Prove you can try again without starting over: change the card number to the declined card again (or any other test card number) and press pay once more.","see":"The page is still usable and gives the decline message again. It did not close, crash or send you away. (This is Stripe’s page, so the exact wording is Stripe’s.)"},{"who":"You, Stripe dashboard › Customers","do":"Search coach 2’s address (yourname+coach2@gmail.com) and open what you find.","see":"The checkout made a customer for coach 2 as soon as you pressed “Continue to checkout”, so a customer exists. It has NO subscription, or only an ended or incomplete one; nothing Active. (The site makes a fresh Stripe customer each time Continue to checkout is pressed, so more customers will appear as you go. That is expected and harmless.)"},{"who":"Your inbox (coach 2’s plus-address) and Resend › Emails","do":"RULING: wait a minute, then look at everything that reached coach 2 after the confirmation email. The code sends nothing when a first purchase is declined, because Stripe’s own page says it. Tick what you found.","see":"Nothing new after the confirmation email.","options":["Nothing arrived (as the code does today)","An email about the declined card arrived — say its subject in the notes","A “Welcome to your Premium Coaches Portal” email arrived (a portal was wrongly granted)"]}]},{"id":"D","title":"Walking away from Stripe’s page (coach 2)","steps":[{"who":"Coach 2, private window, still on Stripe’s declined page","do":"Press the back arrow at the top left of Stripe’s checkout page (the link that returns to the merchant). Do not enter anything else.","see":"You are returned to the dev site’s Coaches Portal sign-up, on step 2, with “billing=monthly” in the address. The Team name field is empty again (nothing typed is kept), and the Billing choice is still monthly. No error. You are still signed in as coach 2."},{"who":"Coach 2, private window","do":"Start a second checkout and leave at once: type “Walk Premium Hawks” again, press “Continue to checkout”, and on Stripe’s page press the back arrow without typing a card.","see":"Same landing: the sign-up form, signed in, nothing bought, no error."},{"who":"You, Stripe dashboard › Customers","do":"RULING: search coach 2’s address. Count the customers with that email, and check whether any has an Active subscription.","see":"Each time “Continue to checkout” is pressed, the site makes a new Stripe customer for coach 2 before it opens Stripe’s page. You pressed it twice so far (the declined session, then this walk-away), so expect two. None has an Active subscription.","options":["Two or more customers for coach 2, none with an Active subscription (as the code does today)","Exactly one customer, no subscription","A customer with an Active subscription (coach 2 was wrongly charged)","Something else — say what in the notes"]},{"who":"Coach 2, private window · https://dev.fieldlogichq.ca/coaches/start","do":"RULING: nothing was granted. Look at the page you were returned to after the second walk-away. Coach 2 should still be offered the team form and “Continue to checkout”, not a portal.","see":"The team form (Team name empty, “Continue to checkout”). No “Premium is on” page and no portal has been made.","options":["The team form; nothing was granted","I was taken into a Premium portal for Walk Premium Hawks (a portal was wrongly made)","Something else — say what in the notes"]}]},{"id":"E","title":"A 3-D Secure card: fail it, then pass it (coach 2)","steps":[{"who":"Coach 2, private window · https://dev.fieldlogichq.ca/coaches/start","do":"Type “Walk Premium Hawks” and press “Continue to checkout”. On Stripe’s page enter the 3-D Secure test card 4000 0025 0000 3155 (any expiry, 3 digits, postal code) and press pay.","see":"Stripe opens its test authentication window over the page, with a button to complete and a button to fail the authentication (test mode only)."},{"who":"Coach 2, Stripe’s authentication window","do":"Press the button that FAILS the authentication.","see":"The window closes and Stripe’s own page tells you the authentication could not be completed and asks for another way to pay. You are NOT sent back to the dev site and there is no success page."},{"who":"You, Stripe dashboard › Customers, and your inbox (coach 2)","do":"Check nothing was granted: coach 2’s newest customer in Stripe has no Active subscription, and no “Welcome to your Premium Coaches Portal” email has arrived for Walk Premium Hawks.","see":"No Active subscription for coach 2 and no welcome email."},{"who":"Coach 2, the same Stripe page","do":"Try again on the same page: enter the 3-D Secure card again if Stripe asks for it, press pay, and this time press the button that COMPLETES the authentication.","see":"Stripe sends you to the dev site, to the page tab-titled “Premium Coaches Portal — FieldLogicHQ”.","options":["It showed “Premium is on for Walk Premium Hawks” within about a minute","It stopped at “Still setting up your portal” and I had to press “Check again”","Something else — say what in the notes"]},{"who":"Coach 2, private window","do":"Press “Open your team” and write down coach 2’s portal address (the part after dev.fieldlogichq.ca/). Then look at the team’s Overview.","see":"The Overview of Walk Premium Hawks, with the small “Premium” chip next to the title."},{"who":"Your inbox (coach 2) and Resend › Emails","do":"Count the welcome emails for Walk Premium Hawks.","see":"Exactly ONE, subject “Welcome to your Premium Coaches Portal — Walk Premium Hawks”. The failed attempt and the earlier decline sent nothing; only the purchase that went through did."},{"who":"You, Stripe dashboard › Workbench › Webhooks › Billing destination › Event deliveries","do":"Find the newest “checkout.session.completed” and “customer.subscription.created” rows for this purchase.","see":"Both delivered with a 200, a few seconds after the authentication was completed."}]},{"id":"F","title":"Check for duplicates, then put everything back","steps":[{"who":"Platform admin, in a window where no coach is signed in · https://dev.fieldlogichq.ca/platform-admin/login (OPTIONAL)","do":"OPTIONAL. Sign in as the platform admin and open Clubs & portals. Search for “Walk Premium”. If sign-in is refused, tick Skipped it.","see":"Exactly TWO portals: Walk Premium Bears and Walk Premium Hawks. There is no second Hawks (the declined card, the failed authentication and the walk-aways made no teams) and no “Walk Second Try”.","options":["Did it","Skipped it"]},{"who":"Coach 2, private window · https://dev.fieldlogichq.ca/{coach 2 portal address}/admin/org/billing","do":"Cancel coach 2 through the product. Open the coach 2 billing screen, scroll to “Cancel Premium access”, press “Cancel Premium”, read the review (“Cancel Premium Coaches Portal”), type nothing in the optional reason box, and press “Confirm cancellation”.","see":"A confirmation window appears. Its title reads “Account suspended” and its text begins “Premium Coaches Portal is inactive.” (A coach’s portal is not an account being suspended, so the title is the wrong word for a coach; note it if it strikes you.) The billing screen then reads as cancelled: “Your Premium Coaches Portal subscription has been cancelled.” with a “Reactivate Premium” button.","options":["Cancelled; the window said “Account suspended” (as the code does today)","Cancelled; the window said something else — say what in the notes","The cancel failed — say the message in the notes"]},{"who":"Your inbox (coach 2) and Stripe dashboard","do":"Look for coach 2’s cancellation email, and in Stripe open coach 2’s customer with the subscription.","see":"ONE email, subject “Your Walk Premium Hawks Coaches Portal has been cancelled”, heading “Coaches Portal cancelled”, a button “Resubscribe”. In Stripe that subscription is Cancelled. Stripe then tells the site the subscription is deleted; the site must not send a second cancellation email."},{"who":"You, Stripe dashboard › Customers › coach 1 (Walk Premium Bears)","do":"Cancel coach 1 the other way, from Stripe’s side: open coach 1’s subscription, use its Actions menu to cancel the subscription immediately (the menu item is named something like “Cancel subscription”; choose the option to cancel now, not at period end).","see":"Stripe shows the subscription as Cancelled."},{"who":"You, Stripe dashboard › Workbench › Webhooks › Billing destination › Event deliveries, and your inbox (coach 1)","do":"Find the newest “customer.subscription.deleted” delivery, then look for coach 1’s cancellation email.","see":"The delivery is a 200. ONE email arrives for coach 1: subject “Your Walk Premium Bears Coaches Portal has been cancelled”. A cancel made in Stripe’s dashboard still produces the site’s cancellation email, because the webhook starts the retention itself.","options":["The delivery was 200 and the one email arrived","The delivery was 200 but no email arrived","The delivery was not 200 — say its status in the notes"]},{"who":"Coach 1, computer · https://dev.fieldlogichq.ca/{coach 1 portal address}/admin/org/billing","do":"Sign in as coach 1 if needed and reload the billing screen.","see":"It reads as cancelled, like coach 2’s: “Your Premium Coaches Portal subscription has been cancelled.” with “Reactivate Premium”."},{"who":"You","do":"Read what this walk leaves behind and tick when you have. Two verified coach accounts (yourname+coach1 and +coach2) that can still sign in; two cancelled Premium portals (Walk Premium Bears, Walk Premium Hawks) held for the restore window, not deleted; the Stripe sandbox customers created along the way (one for coach 1, several for coach 2 from the declined, abandoned and authenticated attempts), with two cancelled subscriptions; and the emails in Resend. There is no screen to delete a coach account or a Stripe customer, and none is needed for the next run: use +coach3 and +coach4.","see":"Nothing else is left running. Neither coach will be charged again."}]}]};
+  var KEY = DATA.key, PARTS = DATA.parts;
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+  function box(id, partId, label) {
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+    boxes.push({ part: partId, id: id, cb: cb, label: label });
+    return cb;
+  }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(txt('strong', null, p.id + ' \u00b7 ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(txt('span', 'who', id + ' \u00b7 ' + s.who));
+      t.appendChild(txt('span', null, s['do']));
+      t.appendChild(txt('span', 'see', 'You should see: ' + s.see));
+      if (s.options && s.options.length) {
+        var wrap = el('div', 'step opt'); wrap.appendChild(t);
+        s.options.forEach(function (o, k) {
+          var row = el('label', 'optrow'); var cb = box(id + '-' + (k + 1), p.id, id + ' = ' + o);
+          row.appendChild(cb); row.appendChild(txt('span', null, o)); wrap.appendChild(row);
+        });
+        body.appendChild(wrap);
+      } else {
+        var row2 = el('label', 'step'); var cb2 = box(id, p.id, id);
+        row2.appendChild(cb2); row2.appendChild(t); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' \u00b7 ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [DATA.title + ' (written 2026-10-28)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length + ' (a step with options counts one box per option)');
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join('; ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
