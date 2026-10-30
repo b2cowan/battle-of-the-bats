@@ -227,6 +227,9 @@ This file is the **index** of open work for the FieldLogicHQ platform. AI models
 - [ ] UAT Agent — Browser-based acceptance test suite + `/uat` slash command; Playwright scenarios for auth, plan-gating…
 ## 🚀 Active Tasks (Priority Order)
 
+- [ ] 📐 Release layout sweep OWED for the 2026-10-30 promote (on prod, master job 285, `3ca835a53`; sweep skipped on the owner's word for token cost, due about 2026-11-01): needs the free UAT coach's team unlinked from its staff-given Premium portal on dev (after support-console walks B §415 and C §416), fresh test sign-ins (`auth-setup` against dev.fieldlogichq.ca signs other sessions out), then `check:layout` warm and `--theme=dark` on staging (see the 2026-10-30 entry in the release-history record)
+- [ ] 🎬 Demo check the morning after the 2026-10-30 promote: `npm run check:demos:prod`
+
 - [ ] 🔎 House-league Registrations Filter: Team + Flags groups and a count on every option (owner ruled 2026-10-26, asks 1–6 as recommended; committed 1546977e9 2026-10-26, browser check owed — drawing docs/projects/active/HOUSE_LEAGUE_REGISTRATIONS_FILTER_DRAWINGS.html)
 - [ ] 🧮 Draft board follow-ups (owner asks 2026-10-26, after walk §387 passed 29/29): Sort arrow with Family = siblings first, Rating column at chip width with no heading, wider Filter menu, 14px "Show steps" — committed 584490003 2026-10-26, reviewed; a look at the tournament schedule's Filter and a short walk owed (see docs/projects/active/HOUSE_LEAGUE_DRAFT_BOARD_AT_SCALE_PLAN.md)
 - [ ] Themed date picker — our calendar and time list on a desk, the device picker on touch (owner ruled 2026-10-25, all four asks as…
