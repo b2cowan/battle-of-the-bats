@@ -190,14 +190,14 @@ async function insertExpense(sql, table, row) {
   await sql`INSERT INTO ${sql('bookkeeping')}.${sql(table)} (
     expense_id, revision, expense_date, incurred_date, paid_date, supplier, category, business_purpose,
     original_currency, original_cents, cad_cents, tax_cad_cents, tax_amount_known, tax_status,
-    business_use_percent, payment_source, conversion_note, notes, change_reason,
+    business_use_percent, payment_source, conversion_note, conversion_source, conversion_rate, notes, change_reason,
     receipt_path, receipt_name, void_reason, created_at, created_by
   ) VALUES (
     ${row.expense_id}::uuid, ${row.revision}, ${row.expense_date}::date,
     ${row.incurred_date ?? null}::date, ${row.paid_date ?? null}::date, ${row.supplier},
     ${row.category}, ${row.business_purpose}, ${row.original_currency}, ${row.original_cents},
     ${row.cad_cents}, ${row.tax_cad_cents}, ${row.tax_amount_known ?? null}, ${row.tax_status}, ${row.business_use_percent},
-    ${row.payment_source}, ${row.conversion_note}, ${row.notes}, ${row.change_reason},
+    ${row.payment_source}, ${row.conversion_note}, ${row.conversion_source ?? null}, ${row.conversion_rate ?? null}, ${row.notes}, ${row.change_reason},
     ${row.receipt_path}, ${row.receipt_name}, ${row.void_reason}, ${row.created_at}::timestamptz,
     ${row.created_by}::uuid
   )`;
