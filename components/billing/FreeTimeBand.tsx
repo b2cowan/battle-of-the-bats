@@ -20,6 +20,8 @@ export type CustomerFreeTimeState = {
   foundingThrough: string | null;
   /** A Coaches Portal's free time from staff (Stage 4b): its state and last free day only. */
   portal: PortalCustomerFreeTime | null;
+  /** This viewer is the portal's own owner, the one person Keep Premium can attach a purchase for. */
+  canKeepPremium: boolean;
 } | null;
 
 /** The customer's free time for this club, or null (none, or not read yet). */
@@ -37,6 +39,7 @@ export function useCustomerFreeTime(orgSlug: string | null | undefined): Custome
             overLimitAfter: data.overLimitAfter === true,
             foundingThrough: typeof data.foundingThrough === 'string' ? data.foundingThrough : null,
             portal: (data.portal ?? null) as PortalCustomerFreeTime | null,
+            canKeepPremium: data.canKeepPremium === true,
           });
         }
       })

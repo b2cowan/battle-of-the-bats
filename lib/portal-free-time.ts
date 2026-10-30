@@ -212,11 +212,15 @@ export function portalFreeTimeCopy(ft: PortalCustomerFreeTime): PortalFreeTimeCo
  * not find out afterwards). The Plan & billing band's words with its "choose it below" sentence left out: here the
  * button is the door. Null unless the free time is in its last 14 days. Never a price, never "lose".
  */
-export function portalEndingOverviewBand(ft: PortalCustomerFreeTime | null): PortalFreeTimeCopy['band'] | null {
+export function portalEndingOverviewBand(ft: PortalCustomerFreeTime | null, canKeep: boolean = true): PortalFreeTimeCopy['band'] | null {
   if (ft?.state !== 'ending') return null;
   const band = portalFreeTimeCopy(ft).band;
-  return { ...band, text: goBackLine(dayAfterWords(ft.lastDay)) };
+  const text = goBackLine(dayAfterWords(ft.lastDay));
+  return { ...band, text: canKeep ? text : `${text} ${ASK_OWNER_KEEP_LINE}` };
 }
+
+/** Where the Keep Premium button would be, for a coach who is not the portal's owner: only the owner can buy it. */
+export const ASK_OWNER_KEEP_LINE = "Ask the portal's owner to keep Premium.";
 
 /**
  * Which of the two reminders (14 and 3 days before the end; owner 2026-10-28, reversing Q7's "no email") a portal is due, from the days it has left and what it has already been told: the 3-day one inside

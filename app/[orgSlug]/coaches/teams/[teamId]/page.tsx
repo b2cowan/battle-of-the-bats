@@ -1980,7 +1980,7 @@ export default function TeamOverviewPage({
       {/* The last 14 days of free time staff gave (owner 2026-10-28): a coach must not find out afterwards. Only a
           Coaches Portal can hold staff-given free time, so no other Overview makes the read. */}
       {currentOrg?.accountKind === 'team_workspace' && !isClosedTeam && (
-        <PortalFreeTimeEndingBand orgSlug={orgSlug} orgName={currentOrg.name} canKeep={isHeadCoachHere} />
+        <PortalFreeTimeEndingBand orgSlug={orgSlug} orgName={currentOrg.name} />
       )}
 
       {/* A club's request to bring this team in — only when a club actually asked */}

@@ -34,7 +34,19 @@ export const GET = withObservability(async (req: Request) => {
         const ended = await endedPortalFreeTime(ctx.org.id);
         if (ended) portal = { state: 'ended', lastDay: ended.lastDay };
       }
-      return NextResponse.json({ freeTime: null, overLimitAfter: false, foundingThrough: null, portal });
+      // Keep Premium attaches only to the portal's own owner (the checkout finds the portal by its owner): the Overview
+      // band offers the button to that person alone and tells everyone else to ask them.
+      let canKeepPremium = false;
+      if (portal) {
+        const { data: ws, error: ownerError } = await supabaseAdmin
+          .from('team_workspaces')
+          .select('primary_owner_user_id')
+          .eq('workspace_org_id', ctx.org.id)
+          .maybeSingle<{ primary_owner_user_id: string | null }>();
+        if (ownerError) throw ownerError;
+        canKeepPremium = !!ws?.primary_owner_user_id && ws.primary_owner_user_id === ctx.user.id;
+      }
+      return NextResponse.json({ freeTime: null, overLimitAfter: false, foundingThrough: null, portal, canKeepPremium });
     } catch {
       return billingView ? NextResponse.json({ error: 'Free time could not be read. Try again.' }, { status: 503 })
         : NextResponse.json({ freeTime: null, overLimitAfter: false, foundingThrough: null, portal: null });

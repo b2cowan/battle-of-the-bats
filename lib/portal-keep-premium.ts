@@ -2,6 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { writePlatformAuditLog } from './platform-audit';
 import { writePlatformEvent, type PlatformEventInput } from './platform-events';
+import { captureError } from './observability/capture';
 import { PORTAL_FREE_TIME_GRANT_TYPE } from './portal-free-time';
 import type { SubscriptionStatus } from './types';
 import type { TeamEntitlementStatus } from './team-workspace-entitlements';
@@ -148,7 +149,18 @@ export async function convertFreeTimePortal(params: {
       .maybeSingle<{ stripe_subscription_id: string | null }>();
     if (error) throw error;
     // Another subscription converted it first: this one attaches to nothing (the caller says so, never a second portal).
-    if (ws?.stripe_subscription_id !== params.stripeSubscriptionId) return { converted: false, reason: 'taken', workspaceOrgId: portal.orgId };
+    if (ws?.stripe_subscription_id !== params.stripeSubscriptionId) {
+      // ...and it is still a live subscription billing the coach. Nothing else will ever notice, so staff are told on the
+      // Errors screen (and Today's "New errors") with the one thing to do: cancel it and refund it in Stripe (owner, 4b).
+      await captureError(
+        new Error(`Keep Premium: the coach paid twice. Subscription ${params.stripeSubscriptionId} attached to nothing and is still billing them; the portal is on ${ws?.stripe_subscription_id ?? 'another subscription'}. Cancel ${params.stripeSubscriptionId} in Stripe and refund its payment.`),
+        {
+          route: 'portal-keep-premium', severity: 'error', title: 'Keep Premium: a second subscription is billing a coach',
+          org: { id: portal.orgId, slug: portal.orgSlug }, user: { id: params.ownerUserId, email: params.ownerEmail },
+        },
+      );
+      return { converted: false, reason: 'taken', workspaceOrgId: portal.orgId };
+    }
   }
 
   // In this order, each step repeatable, so a delivery that stopped is finished by the next one: the stored ended state
