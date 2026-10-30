@@ -1,6 +1,8 @@
 # Owner bookkeeping: easier daily work — PM brief
 
-**Status (2026-10-27):** The owner re-evaluated the whole tool and ruled a new six-stage plan ([hub](https://claude.ai/artifact/6zJfxoAFpi9uZKqYDUfnNx); plan §3 and §12). Next: build Stage 1. The section below replaces the earlier order.
+**Status (2026-10-30):** The owner re-evaluated the whole tool and ruled a new six-stage plan ([hub](https://claude.ai/artifact/6zJfxoAFpi9uZKqYDUfnNx); plan §3 and §12). Stage 1 Part 1 foundations are implemented and checked: 63 focused tests and 35 browser assertions at desktop and phone widths (plan §13). Parts 2–6 follow the separately approved commit boundaries in the build prompt. The section below replaces the earlier order.
+
+**Part 1 experience:** Bookkeeping gets the console's shorter heading, four linked tabs, an Add button on their right (a + in the phone heading), readable console lettering and familiar dates. A purchase opens in the standard record window and has a shareable address. Access stays private to the allowlisted owner. This is the foundation for the short form and dense table in the next parts; those are not claimed complete. Success for this part is that reload and Back preserve the view or record at both phone and desktop widths.
 
 ## The re-evaluation (owner, 2026-10-27)
 

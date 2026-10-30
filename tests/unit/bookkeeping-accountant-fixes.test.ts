@@ -109,10 +109,10 @@ describe('C3 · Permanently delete is gone (R1)', () => {
 });
 
 describe('C4 · Sources has no tab', () => {
-  it('the tab row lists five sections and not Sources', () => {
-    const tabs = read('app/platform-admin/bookkeeping/BookkeepingClient.tsx').match(/\{\((\[[^\]]+\]) as const\)\.map\(section =>/);
-    assert.ok(tabs, 'tab row found');
-    assert.doesNotMatch(tabs![1], /'sources'/);
+  it('the tab row lists the four ruled sections and not Sources', () => {
+    const navigation = read('lib/bookkeeping-navigation.ts');
+    assert.match(navigation, /BOOKKEEPING_VIEWS = \['overview', 'expenses', 'ledger', 'reports'\]/);
+    assert.match(read('app/platform-admin/bookkeeping/BookkeepingClient.tsx'), /BOOKKEEPING_VIEWS\.map\(section =>/);
   });
 });
 

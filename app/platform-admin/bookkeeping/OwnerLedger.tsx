@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { businessCents, type ExpenseRevision, type FieldRefusal } from '@/lib/bookkeeping-expenses';
 import { ownerLedgerRows, type OwnerMovementKind, type OwnerMovementRevision } from '@/lib/bookkeeping-owner-movements';
 import styles from './bookkeeping.module.css';
+import { consoleDate, consoleDay, consoleWhen } from '@/lib/console-dates';
+import kit from '../console.module.css';
 import DateInput from '@/components/shared/DateInput';
 
 const labels: Record<OwnerMovementKind, string> = {
@@ -140,24 +142,24 @@ export default function OwnerLedger({ expenses, initialMovements, initialRevisio
     }}>
       <h3>{editing ? 'Correct owner transfer' : 'Add owner transfer'}</h3>
       <p className={styles.hint}>Record a transfer that actually happened. If you paid for a purchase personally, record the purchase under Expenses first.</p>
-      <label>What happened?<select value={kind} {...fieldFor('movementKind')} onChange={event => setKind(event.target.value as OwnerMovementKind)}>
+      <label>What happened?<select className={kit.select} value={kind} {...fieldFor('movementKind')} onChange={event => setKind(event.target.value as OwnerMovementKind)}>
         {Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </select></label>
-      {kind === 'expense_reimbursement' && <label>Which personal expense did you repay?<select name="linkedExpenseId" defaultValue={editing?.linked_expense_id ?? ''} required {...fieldFor('linkedExpenseId')}>
-        <option value="">Choose an expense</option>{personalExpenses.map(row => <option key={row.expense_id} value={row.expense_id}>{row.supplier} · {row.incurred_date ?? row.expense_date} · {money(businessCents(row))}</option>)}
+      {kind === 'expense_reimbursement' && <label>Which personal expense did you repay?<select className={kit.select} name="linkedExpenseId" defaultValue={editing?.linked_expense_id ?? ''} required {...fieldFor('linkedExpenseId')}>
+        <option value="">Choose an expense</option>{personalExpenses.map(row => <option key={row.expense_id} value={row.expense_id}>{row.supplier} · {consoleDate(row.incurred_date ?? row.expense_date)} · {money(businessCents(row))}</option>)}
       </select></label>}
       <label>Transfer date<DateInput name="movementDate" defaultValue={editing?.movement_date ?? today()} required {...fieldFor('movementDate')} /></label>
-      <label>Amount in CAD<input name="amount" inputMode="decimal" defaultValue={editing ? (editing.amount_cents / 100).toFixed(2) : ''} required {...fieldFor('amount')} /></label>
-      <label>Bank reference or transfer ID <span className={styles.hint}>(optional)</span><input name="sourceReference" maxLength={160} defaultValue={editing?.source_reference ?? ''} {...fieldFor('sourceReference')} /></label>
-      <label>Note <span className={styles.hint}>(optional)</span><textarea name="note" maxLength={1000} defaultValue={editing?.note ?? ''} {...fieldFor('note')} /></label>
-      {editing && <label>Why are you correcting this transfer?<textarea name="changeReason" maxLength={500} required {...fieldFor('changeReason')} /></label>}
+      <label>Amount in CAD<input className={kit.field} name="amount" inputMode="decimal" defaultValue={editing ? (editing.amount_cents / 100).toFixed(2) : ''} required {...fieldFor('amount')} /></label>
+      <label>Bank reference or transfer ID <span className={styles.hint}>(optional)</span><input className={kit.field} name="sourceReference" maxLength={160} defaultValue={editing?.source_reference ?? ''} {...fieldFor('sourceReference')} /></label>
+      <label>Note <span className={styles.hint}>(optional)</span><textarea className={kit.textarea} name="note" maxLength={1000} defaultValue={editing?.note ?? ''} {...fieldFor('note')} /></label>
+      {editing && <label>Why are you correcting this transfer?<textarea className={kit.textarea} name="changeReason" maxLength={500} required {...fieldFor('changeReason')} /></label>}
       {formError && <p id="bk-move-error" role="alert" className={`${styles.error} ${styles.formError}`}>{formError.error}</p>}
       <div className={styles.recordActions}><button type="submit" className={styles.primaryAction} disabled={saving}>{saving ? 'Saving…' : editing ? 'Save correction' : 'Save transfer'}</button>
         <button type="button" className={styles.textButton} disabled={saving} onClick={() => setShowForm(false)}>Cancel</button></div>
     </form>}
 
     {selected && <div className={styles.recordCard}><h3>{labels[selected.movement_kind]}</h3>
-      <p>{selected.movement_date} · {money(selected.amount_cents)}{selected.void_reason ? ` · Voided: ${selected.void_reason}` : ''}</p>
+      <p>{consoleDate(selected.movement_date)} · {money(selected.amount_cents)}{selected.void_reason ? ` · Voided: ${selected.void_reason}` : ''}</p>
       {selected.source_reference && <p>Bank reference: {selected.source_reference}</p>}
       {selected.note && <p>{selected.note}</p>}
       {selected.linked_expense_id && <p>Linked expense: <button type="button" className={styles.textButton} onClick={() => {
@@ -167,18 +169,18 @@ export default function OwnerLedger({ expenses, initialMovements, initialRevisio
       {!selected.void_reason && <div className={styles.recordActions}>
         <button type="button" className={styles.textButton} onClick={() => openForm(selected)}>Correct transfer</button>
         <form onSubmit={event => { event.preventDefault(); const reason = new FormData(event.currentTarget).get('reason'); void voidMovement(selected, String(reason ?? '')); }} className={styles.form}>
-          <label>Reason for voiding<input name="reason" maxLength={500} required /></label><button type="submit" className={styles.dangerButton} disabled={saving}>Void transfer</button>
+          <label>Reason for voiding<input className={kit.field} name="reason" maxLength={500} required /></label><button type="submit" className={styles.dangerButton} disabled={saving}>Void transfer</button>
           {voidError && <p role="alert" className={`${styles.error} ${styles.formError}`}>{voidError}</p>}
         </form>
       </div>}
       <h4>Changes</h4><ol className={styles.history}>{revisions.filter(row => row.movement_id === selected.movement_id).sort((a, b) => b.revision - a.revision).map(row =>
-        <li key={row.revision}>Rev. {row.revision} · {new Date(row.created_at).toLocaleString('en-CA')} · {money(row.amount_cents)}{row.change_reason ? ` · ${row.change_reason}` : ' · First entry'}{row.void_reason ? ' · Voided' : ''}</li>)}</ol>
+        <li key={row.revision}>Rev. {row.revision} · {consoleWhen(row.created_at)} · {money(row.amount_cents)}{row.change_reason ? ` · ${row.change_reason}` : ' · First entry'}{row.void_reason ? ' · Voided' : ''}</li>)}</ol>
     </div>}
 
     {!rows.length ? <p className={styles.empty}>No recorded activity yet.</p> : <div className={styles.rows}>{rows.map(row =>
       <button key={row.key} type="button" className={styles.listDoor} onClick={() => {
         if (row.expense_id && row.type === 'expense') { const expense = expenses.find(item => item.expense_id === row.expense_id); if (expense) onOpenExpense(expense); }
         else { setSelectedId(row.movement_id); setVoidError(''); }
-      }}><span><strong>{row.title}</strong><small>{row.date ?? 'Date needs review'} · {row.type === 'expense' ? 'Expense' : labels[row.type]} · {row.cash_direction === 'personal' ? 'Paid personally' : row.cash_direction === 'in' ? 'Money in' : row.cash_direction === 'out' ? 'Money out' : 'Payment needs review'}{row.needs_review ? ' · Needs review' : ''}</small></span><b>{money(row.amount_cents)} ›</b></button>)}</div>}
+      }}><span><strong>{row.title}</strong><small>{row.date ? consoleDay(row.date) : 'Date needs review'} · {row.type === 'expense' ? 'Expense' : labels[row.type]} · {row.cash_direction === 'personal' ? 'Paid personally' : row.cash_direction === 'in' ? 'Money in' : row.cash_direction === 'out' ? 'Money out' : 'Payment needs review'}{row.needs_review ? ' · Needs review' : ''}</small></span><b>{money(row.amount_cents)} ›</b></button>)}</div>}
   </section>;
 }

@@ -1,9 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import KitDialog from '@/components/shared/KitDialog';
+import { BOOKKEEPING_VIEWS, bookkeepingAddress, bookkeepingPlace } from '@/lib/bookkeeping-navigation';
+import { consoleDate, consoleWhen } from '@/lib/console-dates';
+import kit from '../console.module.css';
 import { businessCents, CONVERSION_NOTE_HINT, FUTURE_DATE_NOTE, hasConfirmedDates, hasKnownTaxAmount, hasValidConversionEvidence, matchesReviewFilter, MAX_RECEIPT_BYTES, RECEIPT_MESSAGE, summarizeExpenses, type ExpenseRevision, type FieldRefusal, type ReviewFilter } from '@/lib/bookkeeping-expenses';
 import { reportPeriodRange, type NamedReportPeriod } from '@/lib/bookkeeping-export';
-import { previewBookkeepingSourceCsv, type BookkeepingSourcePreview } from '@/lib/bookkeeping-source-import';
 import type { OwnerMovementRevision } from '@/lib/bookkeeping-owner-movements';
 import { downloadCSVBlob } from '@/lib/export';
 import OwnerLedger from './OwnerLedger';
@@ -17,8 +23,7 @@ const STARTER_CATEGORIES = [
   'Software & online services', 'Advertising & marketing', 'Equipment & supplies',
   'Professional services', 'Travel & meals', 'Bank charges', 'Other',
 ];
-// 'sources' keeps the Stage 3 fixture preview; its tab is out of the row until Revenue's source contract is accepted.
-type BookkeepingView = 'overview' | 'expenses' | 'attention' | 'add' | 'record' | 'reports' | 'ledger' | 'sources';
+type BookkeepingView = typeof BOOKKEEPING_VIEWS[number] | 'attention' | 'add' | 'record';
 type ReportPeriod = 'all' | NamedReportPeriod | 'custom';
 /** Fields inside More details: a refusal on one opens the section before focus moves there. */
 const ADVANCED_FIELDS = ['taxCadAmount', 'taxStatus', 'businessUsePercent', 'notes'];
@@ -36,26 +41,37 @@ const attentionReasons = (row: ExpenseRevision) => [
   hasKnownTaxAmount(row) && row.tax_status === 'pending' ? 'Tax review pending' : '',
   row.original_currency === 'USD' && !hasValidConversionEvidence(row.conversion_note) ? 'USD conversion evidence needed' : '',
 ].filter(Boolean);
-const sourceMoney = (cents: number, currency: string) => {
-  const sign = cents < 0 ? '−' : '';
-  try {
-    if (!/^[A-Z]{3}$/.test(currency)) throw new RangeError('Invalid currency code');
-    return sign + new Intl.NumberFormat('en-CA', { style: 'currency', currency }).format(Math.abs(cents) / 100);
-  } catch {
-    return `${sign}${currency || 'Unknown currency'} ${(Math.abs(cents) / 100).toFixed(2)}`;
-  }
-};
+
+function ExpenseRecordWindow({ expense, address, homeAddress, onClose, children }: {
+  expense: ExpenseRevision; address: string; homeAddress: string; onClose: () => void; children: ReactNode;
+}) {
+  // A pasted/reloaded record, or a return from Correct, opens over its list, never over itself.
+  // Normalize before the child's Back-step effect. KitDialog then owns the record's address.
+  useLayoutEffect(() => {
+    if (window.location.pathname + window.location.search === address) {
+      window.history.replaceState(window.history.state, '', homeAddress);
+    }
+  }, [address, homeAddress]);
+  return <KitDialog kind="form" size="medium" record
+    eyebrow={<>Expense · {consoleDate(expense.incurred_date ?? expense.expense_date)}</>}
+    title={expense.supplier} identity={<>{expense.category} · {expense.business_purpose}</>}
+    address={address} onClose={onClose}>{children}</KitDialog>;
+}
 
 export default function BookkeepingClient({ initialExpenses, initialRevisions, initialDateSchemaReady, initialTaxSchemaReady, initialOwnerMovements, initialOwnerRevisions, initialOwnerSchemaReady }: {
   initialExpenses: ExpenseRevision[]; initialRevisions: ExpenseRevision[]; initialDateSchemaReady: boolean; initialTaxSchemaReady: boolean;
   initialOwnerMovements: OwnerMovementRevision[]; initialOwnerRevisions: OwnerMovementRevision[]; initialOwnerSchemaReady: boolean;
 }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const params = useMemo(() => new URLSearchParams(searchParams.toString()), [searchParams]);
+  const place = bookkeepingPlace(params);
+  const view: BookkeepingView = place.form ? 'add' : place.attention ? 'attention' : place.view;
   const [expenses, setExpenses] = useState<ExpenseRevision[]>(initialExpenses);
   const [revisions, setRevisions] = useState<ExpenseRevision[]>(initialRevisions);
   const [dateSchemaReady, setDateSchemaReady] = useState(initialDateSchemaReady);
   const [taxSchemaReady, setTaxSchemaReady] = useState(initialTaxSchemaReady);
-  const [view, setView] = useState<BookkeepingView>('overview');
-  const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null);
+  const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(place.record);
   const [editing, setEditing] = useState<ExpenseRevision | null>(null);
   const [voidMode, setVoidMode] = useState(false);
   const [formVersion, setFormVersion] = useState(0);
@@ -81,10 +97,16 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   const [review, setReview] = useState<ReviewFilter>('all');
   const [reportPeriod, setReportPeriod] = useState<ReportPeriod>('all');
   const [reportDrilldown, setReportDrilldown] = useState<ReportDrilldown>({ kind: 'all' });
-  const [sourcePreview, setSourcePreview] = useState<BookkeepingSourcePreview | null>(null);
-  const [sourceFileName, setSourceFileName] = useState('');
-  const [sourcePreviewError, setSourcePreviewError] = useState('');
+  const [initializedForm, setInitializedForm] = useState<string | null>(null);
   const invalidPeriod = Boolean(from && to && from > to);
+
+  function setView(next: BookkeepingView) {
+    const record = next === 'record' ? selectedExpenseId : null;
+    router.push(bookkeepingAddress(params, {
+      view: next === 'attention' ? 'expenses' : next === 'record' || next === 'add' ? place.view : next,
+      attention: next === 'attention', record, form: next === 'add' ? 'add' : null,
+    }), { scroll: false });
+  }
 
   // A refusal at Save moves focus to the field it names (after More details has opened, if the field lives there).
   useEffect(() => {
@@ -126,10 +148,11 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     (reportDrilldown.kind === 'personal' && row.payment_source === 'personal')
   )), [datedVisible, reportDrilldown]);
   const selectedExpense = expenses.find(row => row.expense_id === selectedExpenseId) ?? null;
+  const addressedExpenseMissing = Boolean(place.record && !expenses.some(row => row.expense_id === place.record));
   const attention = expenses.filter(row => !row.void_reason &&
     attentionReasons(row).length > 0);
   const reportPeriodLabel = reportPeriod === 'all' ? 'All confirmed dates'
-    : reportPeriod === 'custom' ? `${from || 'Any start'} to ${to || 'Any end'}`
+    : reportPeriod === 'custom' ? `${from ? consoleDate(from) : 'Any start'} to ${to ? consoleDate(to) : 'Any end'}`
     : reportPeriodRange(reportPeriod, today()).label;
   const drilldownLabel = reportDrilldown.kind === 'category' ? reportDrilldown.key
     : reportDrilldown.kind === 'supplier' ? reportDrilldown.key
@@ -142,8 +165,8 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     else if (value !== 'custom') { const range = reportPeriodRange(value, today()); setFrom(range.from); setTo(range.to); }
   }
 
-  function openRecord(row: ExpenseRevision) { setSelectedExpenseId(row.expense_id); setView('record'); }
-  function openForm(row: ExpenseRevision | null = null, asVoid = false) {
+  function openRecord(row: ExpenseRevision) { setSelectedExpenseId(row.expense_id); }
+  function initializeForm(row: ExpenseRevision | null, asVoid: boolean) {
     setEditing(row); setVoidMode(asVoid); setFormDirty(false); setPendingLeave(null); setFormError(null); setFormVersion(version => version + 1);
     const incurred = row?.incurred_date ?? '';
     const paid = row?.paid_date ?? incurred;
@@ -154,7 +177,17 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     setCustomCategory(Boolean(row && !categories.includes(row.category)));
     setShowAdvanced(Boolean(row && (row.business_use_percent !== 100 || row.tax_cad_cents !== 0 || !hasKnownTaxAmount(row) || row.notes)));
     setTaxAmountKnown(row ? hasKnownTaxAmount(row) : false);
-    setView('add');
+  }
+  // Reset only when the addressed form changes, before rendering its uncontrolled fields.
+  const formKey = place.form ? `${place.form}:${place.record ?? ''}` : null;
+  if (formKey !== initializedForm) {
+    setInitializedForm(formKey);
+    const row = place.form === 'add' ? null : expenses.find(item => item.expense_id === place.record);
+    if (place.form && row !== undefined) initializeForm(row, place.form === 'void');
+  }
+  function openForm(row: ExpenseRevision | null = null, asVoid = false) {
+    if (view === 'add' && formDirty) { setPendingLeave('add'); return; }
+    router.push(bookkeepingAddress(params, { record: row?.expense_id ?? null, form: row ? asVoid ? 'void' : 'correct' : 'add' }), { scroll: false });
   }
   function leaveForm(next: BookkeepingView) {
     if (saving) return;
@@ -168,24 +201,6 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   function refuse(refusal: FieldRefusal) {
     if (refusal.field && ADVANCED_FIELDS.includes(refusal.field)) setShowAdvanced(true);
     setFormError(refusal);
-  }
-
-  async function previewSourceCsv(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.currentTarget.files?.[0];
-    setSourcePreview(null);
-    setSourceFileName('');
-    setSourcePreviewError('');
-    if (!file) return;
-    if (!file.name.toLowerCase().endsWith('.csv') || file.size > 10 * 1024 * 1024) {
-      setSourcePreviewError('Choose a CSV file smaller than 10 MB.');
-      return;
-    }
-    try {
-      setSourceFileName(file.name);
-      setSourcePreview(previewBookkeepingSourceCsv(await file.text()));
-    } catch {
-      setSourcePreviewError('This file could not be previewed. Check that it is a readable CSV.');
-    }
   }
 
   async function save(event: FormEvent<HTMLFormElement>) {
@@ -222,7 +237,8 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     setNotice(voidMode ? 'Expense voided; its history is retained.' : editing ? 'Correction saved with history.' : 'Expense saved.');
     setSelectedExpenseId(saved.expense_id);
     setEditing(null); setVoidMode(false);
-    setFormDirty(false); setView('record');
+    setFormDirty(false);
+    router.replace(bookkeepingAddress(params, { record: saved.expense_id, form: null }), { scroll: false });
     await load();
   }
 
@@ -257,69 +273,31 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     finally { setExporting(null); }
   }
   return <div className={styles.page}>
-    <header className={styles.header}>
-      <div><p className={styles.eyebrow}>Private finance</p><h1>Bookkeeping</h1>
-        <p>Record a purchase, keep its receipt, and see what needs attention.</p></div>
-      <button type="button" className={styles.primaryAction} onClick={() => openForm()} disabled={!dateSchemaReady || !taxSchemaReady}>+ Add expense</button>
-    </header>
-
-    <nav className={styles.sectionNav} aria-label="Bookkeeping sections">
-      {(['overview', 'expenses', 'attention', 'reports', 'ledger'] as const).map(section =>
-        <button key={section} type="button" aria-current={view === section ? 'page' : undefined}
-          onClick={() => view === 'add' ? leaveForm(section) : setView(section)}>{section === 'attention' ? 'Needs attention' : section[0].toUpperCase() + section.slice(1)}</button>)}
-    </nav>
+    <AdminPageHeader eyebrow="Private finance" title="Bookkeeping" inlineActions actions={
+      <button type="button" className={`${styles.primaryAction} ${styles.phoneAdd}`} aria-label="Add expense" onClick={() => openForm()} disabled={!dateSchemaReady || !taxSchemaReady}>+</button>
+    } />
+    <div className={styles.tabRow}>
+      <nav className={`${kit.tabs} ${styles.sectionNav}`} aria-label="Bookkeeping sections">
+        {BOOKKEEPING_VIEWS.map(section => <Link key={section}
+          href={bookkeepingAddress(params, { view: section, record: null, form: null, attention: false })}
+          className={`${kit.tab} ${place.view === section ? kit.tabOn : ''}`}
+          aria-current={place.view === section ? 'page' : undefined}
+          onClick={event => { if (view === 'add' && formDirty) { event.preventDefault(); leaveForm(section); } }}>
+          {section[0].toUpperCase() + section.slice(1)}
+          {section === 'expenses' && attention.length > 0 && <span className={kit.tabCount}>{attention.length}</span>}
+        </Link>)}
+      </nav>
+      <button type="button" className={`${styles.primaryAction} ${styles.desktopAdd}`} onClick={() => openForm()} disabled={!dateSchemaReady || !taxSchemaReady}>+ Add expense</button>
+    </div>
 
     {error && <p role="alert" className={styles.error}>{error}</p>}
     {notice && <p role="status" className={styles.notice}>{notice}</p>}
+    {addressedExpenseMissing && <p role="alert" className={styles.error}>This expense is unavailable. Open an expense from the list.</p>}
     {(!dateSchemaReady || !taxSchemaReady) && <p role="status" className={styles.notice}>Expense entry is paused while bookkeeping storage is updated. Existing records and exports remain available.</p>}
 
     {view === 'ledger' && <OwnerLedger expenses={expenses} initialMovements={initialOwnerMovements} initialRevisions={initialOwnerRevisions}
       schemaReady={initialOwnerSchemaReady} onOpenExpense={openRecord} />}
 
-    {view === 'sources' && <section className={`${styles.panel} ${styles.importPanel}`} aria-labelledby="source-import-title">
-      <div className={styles.importHeading}>
-        <div><p className={styles.eyebrow}>B3 · fixture import preview</p><h2 id="source-import-title">Review source CSV</h2>
-          <p className={styles.hint}>Choose a CSV to check its movement identities and totals. The file stays in this browser and is not uploaded.</p></div>
-        <span className={styles.previewBadge}>Preview only · no records posted</span>
-      </div>
-      <div className={styles.importControls}>
-        <label className={styles.fileLabel}>Stripe movement CSV<input type="file" accept=".csv,text/csv" onChange={event => void previewSourceCsv(event)} /></label>
-        <a href="/bookkeeping-b3-import-fixtures.csv" download>Download synthetic preview file</a>
-      </div>
-      {sourcePreviewError && <p role="alert" className={styles.error}>{sourcePreviewError}</p>}
-      {sourcePreview && <>
-        <p className={styles.hint}>File: <strong>{sourceFileName}</strong>. This proposed contract has not been accepted by Revenue; no import action is available.</p>
-        {!!sourcePreview.file_issues.length && <div className={styles.importIssues} role="alert"><strong>File needs attention</strong><ul>{sourcePreview.file_issues.map((issue, index) => <li key={index}>{issue}</li>)}</ul></div>}
-        <div className={styles.importTableWrap}><table className={styles.scopeTable}>
-          <caption>Source accounts in this file</caption>
-          <thead><tr><th>Provider</th><th>Environment</th><th>Platform account</th><th>Connected account</th></tr></thead>
-          <tbody>{sourcePreview.source_scopes.map((scope, index) => <tr key={`${scope.platform_account_id}-${scope.connected_account_id}-${index}`}>
-            <td>{scope.provider || '—'}</td><td>{scope.environment || '—'}</td><td>{scope.platform_account_id || '—'}</td><td>{scope.connected_account_id || 'Platform balance'}</td>
-          </tr>)}</tbody>
-        </table></div>
-        <div className={styles.importMetrics}>
-          <div><span>Rows found</span><strong>{sourcePreview.counts.rows}</strong></div>
-          <div><span>Ready to review</span><strong>{sourcePreview.counts.ready}</strong></div>
-          <div><span>Needs attention</span><strong>{sourcePreview.counts.blocked}</strong></div>
-          <div><span>Repeated identity</span><strong>{sourcePreview.counts.duplicates}</strong></div>
-        </div>
-        <p className={styles.hint}>Repeated identities are checked within this file only. Previous imports cannot be checked until import history is added.</p>
-        {Object.entries(sourcePreview.totals_by_currency).length > 0 && <div className={styles.importTotals}>
-          {Object.entries(sourcePreview.totals_by_currency).map(([currency, totals]) => <p key={currency}><strong>{currency} net movement for ready rows:</strong> {sourceMoney(totals.net_cents, currency)} <span>({totals.rows} rows; flagged rows excluded)</span></p>)}
-        </div>}
-        <div className={styles.importTableWrap}><table className={styles.importTable}>
-          <thead><tr><th>Movement</th><th>Date</th><th>Type</th><th>Currency</th><th>Net</th><th>Review</th></tr></thead>
-          <tbody>{sourcePreview.rows.map(row => <tr key={`${row.line}-${row.identity_key ?? 'invalid'}`}>
-            <td>{row.movement?.movement_id || 'Unknown'}</td><td>{row.movement?.occurred_at_utc || '—'}</td>
-            <td>{row.movement?.movement_type || '—'}</td><td>{row.movement?.currency || '—'}</td>
-            <td>{row.movement ? sourceMoney(row.movement.net_cents, row.movement.currency) : '—'}</td>
-            <td><strong className={row.status === 'ready' ? styles.importReady : row.status === 'duplicate' ? styles.importDuplicate : styles.importBlocked}>{row.status === 'ready' ? 'Ready' : row.status === 'duplicate' ? 'Repeated identity' : 'Needs attention'}</strong>{row.issues.length > 0 && <ul>{row.issues.map((issue, index) => <li key={index}>{issue}</li>)}</ul>}</td>
-          </tr>)}</tbody>
-        </table></div>
-        {!sourcePreview.rows.length && !sourcePreview.file_issues.length && <p className={styles.empty}>This CSV has a header but no movement rows.</p>}
-        <p className={styles.importCallout}><strong>Source handoff pending:</strong> Revenue must confirm source identifiers, seller and tax attribution, fee/refund links, payout mapping, and export columns before real movements can be imported.</p>
-      </>}
-    </section>}
     {view === 'overview' && <section className={styles.overview} aria-labelledby="overview-title">
       <div className={styles.viewHeading}><div><p className={styles.eyebrow}>Daily workspace</p><h2 id="overview-title">How things stand</h2><p>Recorded expenses and the few things still to finish.</p></div></div>
       <div className={styles.metrics}>
@@ -334,7 +312,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
           </button>) : <p className={styles.empty}>Nothing needs attention.</p>}</div>
         <div className={styles.panel}><h3>Recent expenses</h3>{expenses.slice(0, 5).map(row =>
           <button key={row.expense_id} type="button" className={styles.listDoor} onClick={() => openRecord(row)}>
-            <span><strong>{row.supplier}</strong><small>{row.incurred_date ?? `${row.expense_date} · date unconfirmed`} · {row.category}</small></span><b>{money(businessCents(row))}</b>
+            <span><strong>{row.supplier}</strong><small>{row.incurred_date ? consoleDate(row.incurred_date) : `${consoleDate(row.expense_date)} · date unconfirmed`} · {row.category}</small></span><b>{money(businessCents(row))}</b>
           </button>)}{!expenses.length && <p className={styles.empty}>Your first expense will appear here.</p>}</div>
       </div>
     </section>}
@@ -346,10 +324,10 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
       </button>)}</div> : <p className={styles.empty}>Nothing needs attention.</p>}
     </section>}
 
-    {view === 'add' && <section className={`${styles.panel} ${styles.entryPanel}`} aria-labelledby="expense-form-title">
+    {view === 'add' && !addressedExpenseMissing && <section className={`${styles.panel} ${styles.entryPanel}`} aria-labelledby="expense-form-title">
       <div className={styles.viewHeading}><div><p className={styles.eyebrow}>Expenses</p><h2 id="expense-form-title">{voidMode ? `Void ${editing?.supplier}` : editing ? `Correct ${editing.supplier}` : 'Add an expense'}</h2>
         <p>Record the purchase once. Keep its receipt with it.</p></div><button type="button" className={styles.textButton} onClick={() => leaveForm(editing ? 'record' : 'expenses')}>Back to {editing ? 'record' : 'expenses'}</button></div>
-      {editing && !hasConfirmedDates(editing) && <p className={styles.dateWarning}>This older entry has a recorded date of {editing.expense_date}, but its meaning is unconfirmed. Use its receipt or other evidence to confirm both dates when correcting it.</p>}
+      {editing && !hasConfirmedDates(editing) && <p className={styles.dateWarning}>This older entry has a recorded date of {consoleDate(editing.expense_date)}, but its meaning is unconfirmed. Use its receipt or other evidence to confirm both dates when correcting it.</p>}
       <form key={`${editing?.expense_id ?? 'new'}-${formVersion}`} onSubmit={save} onChange={event => {
         setFormDirty(true);
         // Editing the refused field retires its refusal; the next Save checks again.
@@ -358,36 +336,36 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
         <div className={styles.dateBox}>
           <label>Expense date (incurred)<DateInput name="incurredDate" required={!voidMode} value={incurredDate} {...fieldFor('incurredDate')} onChange={value => { setFormDirty(true); setIncurredDate(value); if (!differentPaymentDate) setPaidDate(value); }} /></label>
           {incurredDate > today() && <p className={styles.hint}>{FUTURE_DATE_NOTE}</p>}
-          <label className={styles.inlineCheck}><input type="checkbox" checked={differentPaymentDate} onChange={event => { setDifferentPaymentDate(event.target.checked); if (!event.target.checked) setPaidDate(incurredDate); }} /> Payment date is different from expense date</label>
+          <label className={styles.inlineCheck}><input className={kit.field} type="checkbox" checked={differentPaymentDate} onChange={event => { setDifferentPaymentDate(event.target.checked); if (!event.target.checked) setPaidDate(incurredDate); }} /> Payment date is different from expense date</label>
           {differentPaymentDate && <label>Payment date<DateInput name="paidDate" required={!voidMode} value={paidDate} {...fieldFor('paidDate')} onChange={v => { setFormDirty(true); setPaidDate(v); }} /></label>}
           {differentPaymentDate && paidDate > today() && <p className={styles.hint}>{FUTURE_DATE_NOTE}</p>}
         </div>
-        <div className={styles.pair}><label>Supplier<input name="supplier" required maxLength={160} defaultValue={editing?.supplier ?? ''} {...fieldFor('supplier')} /></label>
-          <label>Category<select name={customCategory ? undefined : 'category'} required={!customCategory} defaultValue={editing?.category ?? ''} {...fieldFor(customCategory ? 'categoryChoice' : 'category')} onChange={event => setCustomCategory(event.target.value === '__custom__')}>
+        <div className={styles.pair}><label>Supplier<input className={kit.field} name="supplier" required maxLength={160} defaultValue={editing?.supplier ?? ''} {...fieldFor('supplier')} /></label>
+          <label>Category<select className={kit.select} name={customCategory ? undefined : 'category'} required={!customCategory} defaultValue={editing?.category ?? ''} {...fieldFor(customCategory ? 'categoryChoice' : 'category')} onChange={event => setCustomCategory(event.target.value === '__custom__')}>
             <option value="">Choose a category</option>{categories.map(value => <option key={value} value={value}>{value}</option>)}<option value="__custom__">+ Add a category</option></select></label></div>
-        {customCategory && <label>New category<input name="category" required maxLength={80} placeholder="Name this category" {...fieldFor('category')} /></label>}
-        <label>What was it for?<textarea name="businessPurpose" required maxLength={500} rows={2} defaultValue={editing?.business_purpose ?? ''} {...fieldFor('businessPurpose')} /></label>
-        <div className={styles.pair}><label>Currency<select name="originalCurrency" value={currency} {...fieldFor('originalCurrency')} onChange={event => setCurrency(event.target.value as 'CAD' | 'USD')}><option>CAD</option><option>USD</option></select></label>
-          <label>{currency === 'CAD' ? 'Amount · CAD' : 'Invoice amount · USD'}<input name="originalAmount" inputMode="decimal" required defaultValue={editing ? amount(editing.original_cents) : ''} {...fieldFor('originalAmount')} /></label></div>
-        {currency === 'USD' && <div className={styles.pair}><label>CAD amount<input name="cadAmount" inputMode="decimal" required defaultValue={editing ? amount(editing.cad_cents) : ''} {...fieldFor('cadAmount')} /></label>
-          <div className={styles.fieldStack}><label>Conversion source and date<textarea name="conversionNote" required maxLength={500} rows={2} placeholder="Card statement 2026-10-16" defaultValue={editing?.conversion_note ?? ''} {...fieldFor('conversionNote')} aria-describedby={formError?.field === 'conversionNote' ? 'bk-form-error bk-conversion-hint' : 'bk-conversion-hint'} />
+        {customCategory && <label>New category<input className={kit.field} name="category" required maxLength={80} placeholder="Name this category" {...fieldFor('category')} /></label>}
+        <label>What was it for?<textarea className={kit.textarea} name="businessPurpose" required maxLength={500} rows={2} defaultValue={editing?.business_purpose ?? ''} {...fieldFor('businessPurpose')} /></label>
+        <div className={styles.pair}><label>Currency<select className={kit.select} name="originalCurrency" value={currency} {...fieldFor('originalCurrency')} onChange={event => setCurrency(event.target.value as 'CAD' | 'USD')}><option>CAD</option><option>USD</option></select></label>
+          <label>{currency === 'CAD' ? 'Amount · CAD' : 'Invoice amount · USD'}<input className={kit.field} name="originalAmount" inputMode="decimal" required defaultValue={editing ? amount(editing.original_cents) : ''} {...fieldFor('originalAmount')} /></label></div>
+        {currency === 'USD' && <div className={styles.pair}><label>CAD amount<input className={kit.field} name="cadAmount" inputMode="decimal" required defaultValue={editing ? amount(editing.cad_cents) : ''} {...fieldFor('cadAmount')} /></label>
+          <div className={styles.fieldStack}><label>Conversion source and date<textarea className={kit.textarea} name="conversionNote" required maxLength={500} rows={2} placeholder="Card statement 2026-10-16" defaultValue={editing?.conversion_note ?? ''} {...fieldFor('conversionNote')} aria-describedby={formError?.field === 'conversionNote' ? 'bk-form-error bk-conversion-hint' : 'bk-conversion-hint'} />
 </label>
             <p id="bk-conversion-hint" className={styles.hint}>{CONVERSION_NOTE_HINT}</p></div></div>}
-        <label>How did you pay?<select name="paymentSource" required defaultValue={editing?.payment_source ?? ''} {...fieldFor('paymentSource')}><option value="">Choose one</option>{Object.entries(SOURCES).map(([key, value]) => <option key={key} value={key}>{value}</option>)}</select></label>
-        <label>Receipt · PDF, JPEG or PNG · up to 10 MB<input name="receipt" type="file" accept="application/pdf,image/jpeg,image/png" {...fieldFor('receipt')} /></label>
+        <label>How did you pay?<select className={kit.select} name="paymentSource" required defaultValue={editing?.payment_source ?? ''} {...fieldFor('paymentSource')}><option value="">Choose one</option>{Object.entries(SOURCES).map(([key, value]) => <option key={key} value={key}>{value}</option>)}</select></label>
+        <label>Receipt · PDF, JPEG or PNG · up to 10 MB<input className={kit.field} name="receipt" type="file" accept="application/pdf,image/jpeg,image/png" {...fieldFor('receipt')} /></label>
         <p className={styles.hint}>{editing?.receipt_path ? 'The current receipt stays attached unless you choose a replacement. Earlier files remain in history.' : 'You can save now and add the receipt later.'}</p>
         <button type="button" className={styles.moreButton} aria-expanded={showAdvanced} onClick={() => setShowAdvanced(!showAdvanced)}>{showAdvanced ? 'Hide more details' : 'More details'}</button>
         {showAdvanced && <div className={styles.advanced}>
-          <label className={styles.inlineCheck}><input type="checkbox" checked={taxAmountKnown} onChange={event => setTaxAmountKnown(event.target.checked)} /> I know the purchase tax amount</label>
+          <label className={styles.inlineCheck}><input className={kit.field} type="checkbox" checked={taxAmountKnown} onChange={event => setTaxAmountKnown(event.target.checked)} /> I know the purchase tax amount</label>
           {taxAmountKnown ? <div className={styles.pair}>
-            <label>Purchase tax amount · CAD<input name="taxCadAmount" inputMode="decimal" required defaultValue={editing ? amount(editing.tax_cad_cents) : '0.00'} {...fieldFor('taxCadAmount')} /></label>
-            <label>Tax review status<select name="taxStatus" defaultValue={editing?.tax_status ?? 'pending'} {...fieldFor('taxStatus')}><option value="pending">Pending review</option><option value="none">No tax recorded</option><option value="reviewed">Reviewed</option></select></label></div>
+            <label>Purchase tax amount · CAD<input className={kit.field} name="taxCadAmount" inputMode="decimal" required defaultValue={editing ? amount(editing.tax_cad_cents) : '0.00'} {...fieldFor('taxCadAmount')} /></label>
+            <label>Tax review status<select className={kit.select} name="taxStatus" defaultValue={editing?.tax_status ?? 'pending'} {...fieldFor('taxStatus')}><option value="pending">Pending review</option><option value="none">No tax recorded</option><option value="reviewed">Reviewed</option></select></label></div>
             : <p className={styles.hint}>Tax amount unknown. A blank amount will not be treated as confirmed $0.</p>}
-          <label>Business use %<input name="businessUsePercent" type="number" min="1" max="100" required defaultValue={editing?.business_use_percent ?? 100} {...fieldFor('businessUsePercent')} /></label>
-          <label>Notes<textarea name="notes" maxLength={2000} rows={2} defaultValue={editing?.notes ?? ''} {...fieldFor('notes')} /></label>
+          <label>Business use %<input className={kit.field} name="businessUsePercent" type="number" min="1" max="100" required defaultValue={editing?.business_use_percent ?? 100} {...fieldFor('businessUsePercent')} /></label>
+          <label>Notes<textarea className={kit.textarea} name="notes" maxLength={2000} rows={2} defaultValue={editing?.notes ?? ''} {...fieldFor('notes')} /></label>
           <p className={styles.hint}>Purchase tax is a recorded detail. This form does not claim a tax credit.</p></div>}
-        {editing && !voidMode && <label>Reason for correction<input name="changeReason" required maxLength={500} placeholder="What changed and why?" {...fieldFor('changeReason')} /></label>}
-        {voidMode && <label>Reason to void<input name="voidReason" required maxLength={500} placeholder="Why should this expense leave the report?" {...fieldFor('voidReason')} /></label>}
+        {editing && !voidMode && <label>Reason for correction<input className={kit.field} name="changeReason" required maxLength={500} placeholder="What changed and why?" {...fieldFor('changeReason')} /></label>}
+        {voidMode && <label>Reason to void<input className={kit.field} name="voidReason" required maxLength={500} placeholder="Why should this expense leave the report?" {...fieldFor('voidReason')} /></label>}
         {formError && <p id="bk-form-error" role="alert" className={`${styles.error} ${styles.formError}`}>{formError.error}</p>}
         <div className={styles.actions}><button type="submit" disabled={saving || !dateSchemaReady || !taxSchemaReady}>{saving ? 'Saving…' : voidMode ? 'Confirm void' : editing ? 'Save correction' : 'Save expense'}</button>
           <button type="button" className={styles.secondary} onClick={() => leaveForm(editing ? 'record' : 'expenses')}>Cancel</button></div>
@@ -405,12 +383,12 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
             <div className={styles.exportActions}><button type="button" className={styles.export} onClick={() => exportExpenses('csv')} disabled={!!exporting || invalidPeriod}>{exporting === 'csv' ? 'Preparing CSV…' : 'Export CSV'}</button>
               <button type="button" className={styles.export} onClick={() => exportExpenses('package')} disabled={!!exporting || invalidPeriod}>{exporting === 'package' ? 'Preparing package…' : 'Accountant package'}</button></div></div>
           <div className={styles.filters}>
-            <label>Period<select value={reportPeriod} onChange={event => chooseReportPeriod(event.target.value as ReportPeriod)}><option value="all">All confirmed dates</option><option value="month">This month to date</option><option value="year">This year to date</option><option value="last_month">Last month</option><option value="last_quarter">Last quarter</option><option value="last_year">Last calendar year</option><option value="custom">Custom dates</option></select></label>
+            <label>Period<select className={kit.select} value={reportPeriod} onChange={event => chooseReportPeriod(event.target.value as ReportPeriod)}><option value="all">All confirmed dates</option><option value="month">This month to date</option><option value="year">This year to date</option><option value="last_month">Last month</option><option value="last_quarter">Last quarter</option><option value="last_year">Last calendar year</option><option value="custom">Custom dates</option></select></label>
             <label>From · incurred date<DateInput value={from} onChange={v => { setFrom(v); setReportPeriod('custom'); }} /></label>
             <label>To · incurred date<DateInput value={to} onChange={v => { setTo(v); setReportPeriod('custom'); }} /></label>
-            <label>Category<select value={category} onChange={event => setCategory(event.target.value)}><option value="">All categories</option>{categories.map(value => <option key={value}>{value}</option>)}</select></label>
-            <label>Find<input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Supplier or purpose" /></label>
-          <label>Review view<select value={review} onChange={event => setReview(event.target.value as ReviewFilter)}><option value="all">All expenses</option><option value="missing_receipt">Missing receipt</option><option value="missing_conversion">USD conversion evidence needed</option><option value="personal">Paid personally</option><option value="foreign">USD invoices</option></select></label>
+            <label>Category<select className={kit.select} value={category} onChange={event => setCategory(event.target.value)}><option value="">All categories</option>{categories.map(value => <option key={value}>{value}</option>)}</select></label>
+            <label>Find<input className={kit.field} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Supplier or purpose" /></label>
+          <label>Review view<select className={kit.select} value={review} onChange={event => setReview(event.target.value as ReviewFilter)}><option value="all">All expenses</option><option value="missing_receipt">Missing receipt</option><option value="missing_conversion">USD conversion evidence needed</option><option value="personal">Paid personally</option><option value="foreign">USD invoices</option></select></label>
           </div>
           {invalidPeriod && <p role="alert" className={styles.dateWarning}>Choose a From date on or before the To date before exporting this report.</p>}
           <div className={styles.metrics}>
@@ -422,7 +400,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
           <p className={styles.hint}>Expense CSV and the accountant package use the same expense filters. The package also includes owner transfers dated in the selected period; a narrowed expense view includes only linked reimbursements. Unconfirmed older expense dates stay labelled for review.</p>
           {legacyVisible.length > 0 && <section className={styles.reviewList} aria-labelledby="legacy-dates-title"><h3 id="legacy-dates-title">Dates to review · {money(legacyVisible.reduce((total, row) => total + businessCents(row), 0))}</h3>
             <p className={styles.hint}>These expenses have a recorded date whose meaning was not established. They are excluded from the incurred-date total until confirmed.</p>
-            {legacyVisible.map(row => <button type="button" className={styles.listDoor} key={row.expense_id} onClick={() => openRecord(row)}><span><strong>{row.supplier}</strong><small>Recorded date {row.expense_date} · meaning unconfirmed</small></span><b>{money(businessCents(row))}</b></button>)}</section>}
+            {legacyVisible.map(row => <button type="button" className={styles.listDoor} key={row.expense_id} onClick={() => openRecord(row)}><span><strong>{row.supplier}</strong><small>Recorded date {consoleDate(row.expense_date)} · meaning unconfirmed</small></span><b>{money(businessCents(row))}</b></button>)}</section>}
           <div className={styles.reportGrid}>
             <div><h3>By category</h3>{summary.byCategory.length ? summary.byCategory.map(([name, cents]) => <button key={name} type="button" className={styles.reportDoor} onClick={() => setReportDrilldown({ kind: 'category', key: name })}><span>{name}</span><strong>{money(cents)} ›</strong></button>) : <p>No confirmed expenses in this period.</p>}</div>
             <div><h3>By supplier</h3>{summary.bySupplier.length ? summary.bySupplier.map(([name, cents]) => <button key={name} type="button" className={styles.reportDoor} onClick={() => setReportDrilldown({ kind: 'supplier', key: name })}><span>{name}</span><strong>{money(cents)} ›</strong></button>) : <p>No confirmed expenses in this period.</p>}</div>
@@ -434,7 +412,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
           <section className={styles.reviewList} aria-labelledby="report-lines-title"><div className={styles.subHeading}><h3 id="report-lines-title">{drilldownLabel} · {money(reportRows.reduce((total, row) => total + businessCents(row), 0))}</h3>
             {reportDrilldown.kind !== 'all' && <button type="button" className={styles.textButton} onClick={() => setReportDrilldown({ kind: 'all' })}>Show all entries</button>}</div>
             <p className={styles.hint}>{reportRows.length} contributing expense(s) · {reportPeriodLabel}. Open a row to see its receipt and revisions.</p>
-            {reportRows.map(row => <button key={row.expense_id} type="button" className={styles.listDoor} onClick={() => openRecord(row)}><span><strong>{row.supplier}</strong><small>{row.incurred_date} · {row.category} · {SOURCES[row.payment_source]}</small></span><b>{money(businessCents(row))} ›</b></button>)}
+            {reportRows.map(row => <button key={row.expense_id} type="button" className={styles.listDoor} onClick={() => openRecord(row)}><span><strong>{row.supplier}</strong><small>{consoleDate(row.incurred_date)} · {row.category} · {SOURCES[row.payment_source]}</small></span><b>{money(businessCents(row))} ›</b></button>)}
             {!reportRows.length && <p className={styles.empty}>No expenses contribute to this figure.</p>}
           </section>
           <p className={styles.hint}>Paid personally: {money(summary.personallyPaidCents)} across active expenses. A later reimbursement or owner movement is a separate record and must not be entered as another expense here.</p>
@@ -449,29 +427,29 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
         </section>}
     {view === 'expenses' && <section className={styles.panel} aria-labelledby="register-title">
       <div className={styles.viewHeading}><div><p className={styles.eyebrow}>Your records</p><h2 id="register-title">Expenses</h2><p>Find a purchase, receipt or correction.</p></div></div>
-      <div className={styles.filters}><label>Find<input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Supplier or purpose" /></label>
+      <div className={styles.filters}><label>Find<input className={kit.field} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Supplier or purpose" /></label>
         <label>From · incurred date<DateInput value={from} onChange={v => { setFrom(v); setReportPeriod('custom'); }} /></label>
         <label>To · incurred date<DateInput value={to} onChange={v => { setTo(v); setReportPeriod('custom'); }} /></label>
-        <label>Category<select value={category} onChange={event => setCategory(event.target.value)}><option value="">All categories</option>{categories.map(value => <option key={value}>{value}</option>)}</select></label>
-        <label>Show<select value={review} onChange={event => setReview(event.target.value as ReviewFilter)}><option value="all">All expenses</option><option value="missing_receipt">Missing receipt</option><option value="missing_conversion">USD conversion needed</option><option value="personal">Paid personally</option><option value="foreign">USD invoices</option></select></label></div>
+        <label>Category<select className={kit.select} value={category} onChange={event => setCategory(event.target.value)}><option value="">All categories</option>{categories.map(value => <option key={value}>{value}</option>)}</select></label>
+        <label>Show<select className={kit.select} value={review} onChange={event => setReview(event.target.value as ReviewFilter)}><option value="all">All expenses</option><option value="missing_receipt">Missing receipt</option><option value="missing_conversion">USD conversion needed</option><option value="personal">Paid personally</option><option value="foreign">USD invoices</option></select></label></div>
       {loading ? <p>Loading expenses…</p> : !visible.length ? <p className={styles.empty}>No expenses match this view.</p> :
         <div className={styles.rows}>{visible.map(row => <button key={row.expense_id} type="button" className={styles.listDoor} onClick={() => openRecord(row)}>
-          <span><strong>{row.supplier}</strong><small>{row.incurred_date ?? `${row.expense_date} · date unconfirmed`} · {row.category} · {SOURCES[row.payment_source]}</small>
+          <span><strong>{row.supplier}</strong><small>{row.incurred_date ? consoleDate(row.incurred_date) : `${consoleDate(row.expense_date)} · date unconfirmed`} · {row.category} · {SOURCES[row.payment_source]}</small>
             <small>{row.receipt_path ? 'Receipt attached' : 'Receipt missing'}{row.void_reason ? ' · Voided' : ''}</small></span>
           <b>{row.void_reason ? 'Voided' : money(businessCents(row))} ›</b>
         </button>)}</div>}
     </section>}
 
-    {view === 'record' && selectedExpense && <section className={styles.panel} aria-labelledby="expense-record-title">
-      <div className={styles.viewHeading}><div><p className={styles.eyebrow}>Expenses / Record</p><h2 id="expense-record-title">{selectedExpense.supplier}</h2>
-        <p>{selectedExpense.category} · {selectedExpense.business_purpose}</p></div>
-        <button type="button" className={styles.textButton} onClick={() => setView('expenses')}>Back to expenses</button></div>
+    {view !== 'add' && selectedExpense && <ExpenseRecordWindow key={selectedExpense.expense_id} expense={selectedExpense}
+      address={bookkeepingAddress(params, { record: selectedExpense.expense_id, form: null })}
+      homeAddress={bookkeepingAddress(params, { record: null, form: null })}
+      onClose={() => setSelectedExpenseId(null)}>
       {selectedExpense.void_reason && <p className={styles.dateWarning}>Voided: {selectedExpense.void_reason}. This record is excluded from active spend.</p>}
-      {!hasConfirmedDates(selectedExpense) && <p className={styles.dateWarning}>Recorded date {selectedExpense.expense_date} · meaning unconfirmed. Check the source document before confirming incurred and payment dates.</p>}
+      {!hasConfirmedDates(selectedExpense) && <p className={styles.dateWarning}>Recorded date {consoleDate(selectedExpense.expense_date)} · meaning unconfirmed. Check the source document before confirming incurred and payment dates.</p>}
       <div className={styles.recordGrid}><div className={styles.recordCard}><h3>Expense details</h3><dl>
         <div><dt>Business amount</dt><dd>{money(businessCents(selectedExpense))}</dd></div>
-        <div><dt>Expense date</dt><dd>{selectedExpense.incurred_date ?? 'Needs review'}</dd></div>
-        <div><dt>Payment date</dt><dd>{selectedExpense.paid_date ?? 'Needs review'}</dd></div>
+        <div><dt>Expense date</dt><dd>{selectedExpense.incurred_date ? consoleDate(selectedExpense.incurred_date) : 'Needs review'}</dd></div>
+        <div><dt>Payment date</dt><dd>{selectedExpense.paid_date ? consoleDate(selectedExpense.paid_date) : 'Needs review'}</dd></div>
         <div><dt>Paid from</dt><dd>{SOURCES[selectedExpense.payment_source]}</dd></div>
         <div><dt>Receipt</dt><dd>{selectedExpense.receipt_path ? 'Attached' : 'Missing'}</dd></div>
         <div><dt>Purchase tax amount</dt><dd>{hasKnownTaxAmount(selectedExpense) ? money(selectedExpense.tax_cad_cents) : 'Unknown'}</dd></div>
@@ -485,8 +463,8 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
         <button type="button" className={styles.primaryAction} onClick={() => openForm(selectedExpense)}>Correct expense</button>
         <button type="button" className={styles.textButton} onClick={() => openForm(selectedExpense, true)}>Void expense</button></div>}
       <section className={styles.historySection} aria-labelledby="history-title"><h3 id="history-title">Changes</h3><ol className={styles.history}>{revisions.filter(item => item.expense_id === selectedExpense.expense_id).sort((a, b) => b.revision - a.revision).map(item =>
-        <li key={item.revision}>Rev. {item.revision} · {new Date(item.created_at).toLocaleString('en-CA')} · {money(item.cad_cents)} · {item.incurred_date ?? `${item.expense_date} (date unconfirmed)`} {item.change_reason ? `· ${item.change_reason}` : '· First entry'} {item.void_reason ? `· Voided: ${item.void_reason}` : ''} {item.receipt_path && <a href={`/api/platform-admin/bookkeeping/receipt/${item.expense_id}/${item.revision}`}>Receipt</a>}</li>
+        <li key={item.revision}>Rev. {item.revision} · {consoleWhen(item.created_at)} · {money(item.cad_cents)} · {item.incurred_date ? consoleDate(item.incurred_date) : `${consoleDate(item.expense_date)} (date unconfirmed)`} {item.change_reason ? `· ${item.change_reason}` : '· First entry'} {item.void_reason ? `· Voided: ${item.void_reason}` : ''} {item.receipt_path && <a href={`/api/platform-admin/bookkeeping/receipt/${item.expense_id}/${item.revision}`}>Receipt</a>}</li>
       )}</ol></section>
-    </section>}
+    </ExpenseRecordWindow>}
   </div>;
 }
