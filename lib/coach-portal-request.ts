@@ -1,8 +1,13 @@
 import 'server-only';
 import { cache } from 'react';
-import { getAuthContext } from './api-auth';
+import { redirect } from 'next/navigation';
+import { getAuthContext, getAcceptedMember } from './api-auth';
 import { getCoachingAssignmentsForUser, getClosedCoachingAssignmentsForUser } from './db';
 import { resolveOrgHomeHref } from './module-entitlements';
+import { coachHostedTournamentsLink, type CoachTournamentOrg } from './coach-billing-access';
+import { isTeamWorkspaceOrg } from './team-workspace-kind';
+import { getDemoOrgBySlug } from './demo-org';
+import type { OrgRole } from './types';
 
 /**
  * Request-scoped reads shared by the TWO server layouts of the premium portal.
@@ -42,6 +47,38 @@ export const getCoachPortalClosedAssignments = cache(
   (orgId: string, userId: string, isTeamWorkspace: boolean) =>
     getClosedCoachingAssignmentsForUser(orgId, userId, { isTeamWorkspace }),
 );
+
+/** The retired admin hub, onboarding and sign-in share this standalone landing. */
+export async function getStandaloneAdminHref(
+  org: CoachTournamentOrg & { id: string },
+  userId: string,
+  role: OrgRole | null,
+  capabilities: Record<string, boolean> | null,
+  inSandbox = !!getDemoOrgBySlug(org.slug),
+): Promise<string> {
+  const portal = `/${org.slug}/coaches`;
+  const tournaments = coachHostedTournamentsLink(org, role, capabilities, inSandbox);
+  // Owners and suspended workspaces reach the portal's wall without assignment reads.
+  if (role === 'owner' || !tournaments) return portal;
+  try {
+    const [live, closed] = await Promise.all([
+      getCoachPortalAssignments(org.id, userId, true),
+      getCoachPortalClosedAssignments(org.id, userId, true),
+    ]);
+    return live.length || closed.length ? portal : tournaments;
+  } catch {
+    // Sign-in must not fail on a blip in these reads: the portal's own wall answers a member with no team.
+    return portal;
+  }
+}
+
+/** Sends a standalone workspace off the retired admin pages that call this; any other organization falls through. */
+export async function redirectStandaloneWorkspace(orgSlug: string): Promise<void> {
+  const auth = await getCoachPortalAuth(orgSlug);
+  if (!auth || !isTeamWorkspaceOrg(auth.org)) return;
+  const member = await getAcceptedMember(auth.org.id, auth.user.id);
+  redirect(await getStandaloneAdminHref(auth.org, auth.user.id, (member?.role as OrgRole) ?? null, member?.capabilities ?? null));
+}
 
 /**
  * The org's public home page, or null when this org has no real public page. Read ONLY by the

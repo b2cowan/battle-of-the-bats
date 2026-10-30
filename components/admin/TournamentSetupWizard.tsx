@@ -47,7 +47,7 @@ import { publicHref, useClubPublicOrigin } from '@/lib/use-club-public-origin';
 import { hasOrgVenueLibrary, hasPlanFeature } from '@/lib/plan-features';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import { INVITE_BOARD_WORDS, LOCK_WORDS } from '@/lib/invite-only-words';
-import PlanLockLine, { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
+import PlanLockLine, { useTournamentPlusHref } from '@/components/admin/tournament/PlanLockLine';
 import { tournamentToday, formatEventDateRange, endDateFollowingStart } from '@/lib/timezone';
 import { TOURNAMENT_FORMAT_OPTIONS } from '@/lib/tournament-phase';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
@@ -261,6 +261,7 @@ export default function TournamentSetupWizard({
   onClose,
   onCreated,
 }: TournamentSetupWizardProps) {
+  const planHref = useTournamentPlusHref();
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
   const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
   // The "Public link" hint: the club's own web address in front of the tournament's part while one is handed out (Club Tier 4e).
@@ -729,7 +730,7 @@ export default function TournamentSetupWizard({
         {!canClone ? (
           <div className={styles.reuseIntro}>
             {inviteOnly && <Callout role="note" flush>{INVITE_BOARD_WORDS.howTeamsJoin}</Callout>}
-            <PlanLockLine href={tournamentPlusPanelHref(previewOrg?.slug ?? 'admin')}>{LOCK_WORDS.reuseSetup}</PlanLockLine>
+            <PlanLockLine href={planHref}>{LOCK_WORDS.reuseSetup}</PlanLockLine>
           </div>
         ) : (
         <div className={styles.reuseIntro}>

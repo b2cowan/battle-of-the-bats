@@ -125,7 +125,7 @@ export default function HelpDrawer({
       daysUntil: daysUntilStart(startDate),
     });
     if (!stage) return [];
-    return getStageShortcuts(stage, { orgSlug: currentOrg.slug, planId: currentOrg.planId, hasPlayoffs: hasPlayoffs(currentTournament) });
+    return getStageShortcuts(stage, { orgSlug: currentOrg.slug, planId: currentOrg.planId, accountKind: currentOrg.accountKind, hasPlayoffs: hasPlayoffs(currentTournament) });
   }, [request, currentOrg, currentTournament]);
 
   if (!open || typeof document === 'undefined' || !request) return null;

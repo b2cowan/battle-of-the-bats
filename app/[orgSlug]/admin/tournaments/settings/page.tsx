@@ -13,7 +13,7 @@ import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasCapability, hasBillingAccess } from '@/lib/roles';
-import { isTournamentTier } from '@/lib/billing-urls';
+import { getBillingHref, isTournamentTier } from '@/lib/billing-urls';
 import { WEB_ADDRESS_WORDS as WA } from '@/lib/web-address-words';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import HelpButton from '@/components/help/HelpButton';
@@ -54,7 +54,7 @@ export default function TournamentSettingsAccessPage() {
     return () => { stale = true; };
   }, [tournamentTier, currentOrg?.slug]);
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
-  const subscriptionHref = `${base}/settings/subscription`;
+  const subscriptionHref = getBillingHref(currentOrg ?? { slug: 'admin', planId: 'tournament' });
   const isOwner = userRole === 'owner';
   const canManageBilling = hasBillingAccess(userRole, userCapabilities);
   const isLeagueOrClub = !!currentOrg && ['league', 'club', 'club_large'].includes(currentOrg.planId);

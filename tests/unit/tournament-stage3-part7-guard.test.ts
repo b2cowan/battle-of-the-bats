@@ -128,7 +128,8 @@ describe('S8 — one Publish window that says what publishing does', () => {
     assert.match(route, /return Response\.json\(\{ success: true, notified: 0, notifyFailed: true \}\);/);
   });
   it('the Tournament plan\'s email is one plain lock line', () => {
-    assert.match(publish, /<PlanLockLine href=\{tournamentPlusPanelHref\(orgSlug\)\} plan=\{W\.lockedPlan\}>\{PW\.emailLocked\}<\/PlanLockLine>/);
+    assert.match(publish, /const planHref = useTournamentPlusHref\(\)/);
+    assert.match(publish, /<PlanLockLine href=\{planHref\} plan=\{W\.lockedPlan\}>\{PW\.emailLocked\}<\/PlanLockLine>/);
   });
   it('the day says who can\'t see its games yet, with Publish…', () => {
     const page = readCode(PAGE);

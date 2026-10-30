@@ -26,7 +26,7 @@ import { GAME_DAY_REMINDER_SENTENCE, PUBLISH_WORDS as PW, SCHEDULE_DAY_WORDS as 
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { Callout } from '@/components/admin/kit/club/RepKit';
 import { CheckChoice, RecordSection } from '@/components/admin/tournament/ScreenParts';
-import PlanLockLine, { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
+import PlanLockLine, { useTournamentPlusHref } from '@/components/admin/tournament/PlanLockLine';
 import ps from './PublishSchedule.module.css';
 
 export default function PublishScheduleModal({
@@ -57,6 +57,7 @@ export default function PublishScheduleModal({
   /** Published: the divisions, and how many teams were emailed. */
   onPublished: (divisionIds: string[], emailed: number) => void;
 }) {
+  const planHref = useTournamentPlusHref();
   const publishable = divisions.filter(g => !g.scheduleVisibility || g.scheduleVisibility === 'unpublished');
   const [selectedIds, setSelectedIds] = useState<string[]>(() => publishable.map(d => d.id));
   const [notify, setNotify] = useState(false);
@@ -137,7 +138,7 @@ export default function PublishScheduleModal({
             caption={(targets.length > 0 && willRemind && (GAME_DAY_REMINDER_SENTENCE)) || undefined}
           />
         ) : (
-          <PlanLockLine href={tournamentPlusPanelHref(orgSlug)} plan={W.lockedPlan}>{PW.emailLocked}</PlanLockLine>
+          <PlanLockLine href={planHref} plan={W.lockedPlan}>{PW.emailLocked}</PlanLockLine>
         )}
       </RecordSection>
 

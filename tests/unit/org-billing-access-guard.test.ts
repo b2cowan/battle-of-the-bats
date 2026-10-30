@@ -99,6 +99,24 @@ const SOURCE_FILES: { rel: string; src: string }[] = SCAN_ROOTS
   .map(file => ({ rel: repoRelative(file), src: readFileSync(file, 'utf8') }));
 
 describe('billing rail — a cancelled subscription stops working', () => {
+  it('retired standalone admin entries reuse the suspended-safe page resolver', () => {
+    // The hub and setup entries share one helper; it, not they, holds the suspended-safe resolver.
+    for (const rel of ['app/[orgSlug]/admin/page.tsx', 'app/[orgSlug]/admin/onboarding/layout.tsx']) {
+      const src = readFileSync(join(REPO_ROOT, rel), 'utf8');
+      assert.match(src, /redirectStandaloneWorkspace\(/, rel);
+      assert.doesNotMatch(src, /\bgetAuthContext(WithRole|WithScope)?\s*\(/, rel);
+    }
+    const helper = readFileSync(join(REPO_ROOT, 'lib/coach-portal-request.ts'), 'utf8').split('export async function redirectStandaloneWorkspace')[1];
+    assert.match(helper, /getCoachPortalAuth\(orgSlug\)/);
+    assert.doesNotMatch(helper, /\bgetAuthContext(WithRole|WithScope)?\s*\(/);
+    const billing = readFileSync(join(REPO_ROOT, 'app/[orgSlug]/admin/org/billing/page.tsx'), 'utf8');
+    assert.match(billing, /getCoachPortalAuth\(orgSlug\)/);
+    assert.doesNotMatch(billing, /\bgetAuthContext(WithRole|WithScope)?\s*\(/);
+    for (const rel of ['app/[orgSlug]/admin/layout.tsx', 'app/[orgSlug]/admin/org/layout.tsx']) {
+      assert.match(readFileSync(join(REPO_ROOT, rel), 'utf8'), /allowSuspendedOrg: true/, rel);
+    }
+    assert.match(readFileSync(join(REPO_ROOT, 'app/[orgSlug]/admin/tournaments/settings/subscription/page.tsx'), 'utf8'), /export \{ default \} from '\.\.\/\.\.\/\.\.\/org\/billing\/page'/);
+  });
   it('suspends exactly on canceled, and never on past_due', () => {
     assert.equal(isOrgBillingSuspended({ subscriptionStatus: 'canceled' }), true);
 

@@ -82,7 +82,7 @@ export default function AdminTournamentsPage({
   // The slot line and New tournament wait for the first read: before it, "used" is 0 and a full plan would
   // flash "0 of 1 in use" and a New tournament that then turns into the lock line (/review 2026-10-06).
   const ready = !lists.loading && !(lists.error && lists.events.length === 0);
-  const planHref = tournamentPlusPanelHref(orgSlug);
+  const planHref = tournamentPlusPanelHref(currentOrg ?? orgSlug);
 
   // The ?create=1 address (the onboarding's League path, the coach portal's hosted section) opens New tournament —
   // but only once the slot is read, and never at the limit (Stage 5, F83): there the slot line above says why, naming

@@ -27,11 +27,21 @@ import { RepChip } from '@/components/admin/kit/club/RepKit';
 import { CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import { useFoundingSeasonLock } from '@/lib/use-founding-season-lock';
 import { LOCK_WORDS } from '@/lib/invite-only-words';
+import { getBillingHref, type BillingUrlOrg } from '@/lib/billing-urls';
+import { useOrg } from '@/lib/org-context';
 import styles from './PlanLockLine.module.css';
 
 /** Plan & billing with the Tournament Plus panel asked for — the door every Tournament Plus lock line opens. */
-export function tournamentPlusPanelHref(orgSlug: string): string {
-  return `/${orgSlug}/admin/tournaments/settings/subscription?plan=tournament_plus`;
+export function tournamentPlusPanelHref(org: BillingUrlOrg | string): string {
+  const workspace = typeof org === 'string' ? { slug: org, planId: 'tournament' } : org;
+  const base = getBillingHref(workspace);
+  return `${base}${base.includes('?') ? '&' : '?'}plan=tournament_plus`;
+}
+
+/** Locks keep the current workspace's billing host, including a standalone coach's tournament. */
+export function useTournamentPlusHref(): string {
+  const { currentOrg } = useOrg();
+  return tournamentPlusPanelHref(currentOrg ?? 'admin');
 }
 
 /** The plan every tournament lock names. */

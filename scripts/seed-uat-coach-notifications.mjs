@@ -20,6 +20,8 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'fs';
+import '../tests/ts-resolver.mjs';
+const { getBillingHref } = await import('../lib/billing-urls.ts');
 const env = readFileSync('.env.local', 'utf8');
 const get = k => (env.match(new RegExp('^' + k + '=(.*)$', 'm')) || [])[1]?.trim().replace(/^["']|["']$/g, '');
 const url = get('NEXT_PUBLIC_SUPABASE_URL');
@@ -42,7 +44,7 @@ if (/\.supabase\.co/.test(url) && url.includes('qcttcboqysynwcdyghil')) {
 const sb = createClient(url, key, { auth: { persistSession: false } });
 // The coach fixture's org (Club Tier Stage 1, B05: it lives in the club fixture once UAT_COACH_ORG_SLUG is set).
 const coachOrgSlug = get('UAT_COACH_ORG_SLUG') || 'uat-test-org';
-const { data: org } = await sb.from('organizations').select('id,slug').eq('slug', coachOrgSlug).single();
+const { data: org } = await sb.from('organizations').select('id,slug,name,plan_id,account_kind,subscription_status').eq('slug', coachOrgSlug).single();
 const { data: users } = await sb.auth.admin.listUsers({ page:1, perPage:1000 });
 const coach = users.users.find(u => u.email === 'uat-coach@uat-test-org.local');
 const { data: existing } = await sb.from('notifications').select('link').eq('user_id', coach.id).eq('org_id', org.id).like('link','%/coaches/teams/%').limit(1);
@@ -57,7 +59,7 @@ const add = (event_type, title, body, link, ageMs, read) => rows.push({ user_id:
 // Needs attention — every act event a coach can actually receive (all org-wide admin decisions)
 add('assistant_coach_approval_requested', 'Assistant coach invite awaiting approval', 'Dana Whitfield invited m.okafor@example.com to U13 Hawks.', `/${slug}/admin/rep-teams`, 2*H, false);
 add('team_no_show', 'Team marked no-show', 'Riverside Rockets did not check in for game 14.', `/${slug}/admin/tournaments/check-in`, 26*H, false);
-add('payment_failed', 'Payment failed', 'The club’s subscription payment could not be processed.', `/${slug}/admin/org/billing`, 3*D, false);
+add('payment_failed', 'Payment failed', 'The club’s subscription payment could not be processed.', getBillingHref({ slug, planId: org.plan_id, accountKind: org.account_kind, subscriptionStatus: org.subscription_status, name: org.name }), 3*D, false);
 // Today
 add('family_game_update', 'Game moved: U13 Hawks vs Northside Thunder', 'Was 2:00 p.m. at Diamond 2 — now 3:15 p.m. at Diamond 4.', `/family/teams/${teamId}`, 1*H, false);
 add('tournament_announcement', 'Rain delay — all 4:00 p.m. games pushed 45 minutes', 'Fields are being dragged. Check the schedule before you leave.', `/${slug}/spring-classic`, 3*H, false);

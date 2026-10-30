@@ -128,7 +128,7 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
   it('the Premium coach sheet: Notifications, the tiles, the groups, You (Account, Home, Plan & billing, Admin), then the foot', () => {
     order(readCode(COACH_SHEET), [
       'id="coaches-mob-notifications"', '<MoreSheetTiles', '>You</div>',
-      'id="coaches-mob-account"', 'id="coaches-mob-home"', 'id="coaches-mob-billing"', 'id="coaches-mob-back-to-admin"', '<MoreSheetFoot',
+      'id="coaches-mob-account"', 'id="coaches-mob-home"', 'id="coaches-mob-billing"', 'id="coaches-mob-tournaments"', 'id="coaches-mob-back-to-admin"', '<MoreSheetFoot',
     ], COACH_SHEET);
   });
 
@@ -151,7 +151,7 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
     assert.match(foot, /<billingLink\.icon size=\{14\}/);
     assert.match(readCode(ADMIN_SHEET), /billingLink && <Link[\s\S]*?<billingLink\.icon size=\{17\}/);
     const hook = readCode('components/admin/kit/useAdminKitNav.ts');
-    assert.match(hook, /const billingLink = kitBillingLink\(\{ orgSlug, planId: currentOrg\?\.planId, role: userRole, capabilities: userCapabilities, isSandbox \}\)/);
+    assert.match(hook, /const billingLink = kitBillingLink\(\{ orgSlug, planId: currentOrg\?\.planId, accountKind: currentOrg\?\.accountKind, role: userRole, capabilities: userCapabilities, isSandbox \}\)/);
     assert.ok(foot.indexOf('helpHref') < foot.indexOf('coachDoor.href') && foot.indexOf('coachDoor.href') < foot.indexOf('Public site'));
     assert.doesNotMatch(rail, /Sign out|<FeedbackLauncher|signOut/);
     assert.match(foot, /!siteInNav/, 'the foot’s Public site only where no program row is it');

@@ -21,6 +21,7 @@ export type GuidanceStage = 'draft' | 'pre' | 'live' | 'ready' | 'post' | 'done'
 
 export interface GuidanceContext {
   orgSlug: string;
+  accountKind?: string | null;
   tournamentSlug?: string | null;
   planId: OrgPlan;
   daysUntil: number | null;
@@ -124,7 +125,7 @@ export function getGuidance(stage: GuidanceStage, ctx: GuidanceContext): Guidanc
   const hasSummary = hasPlanFeature(ctx.planId, 'post_tournament_summary');
   const canClone = hasPlanFeature(ctx.planId, 'tournament_cloning');
   const hasFanAlerts = hasPlanFeature(ctx.planId, 'fan_score_alerts');
-  const billingHref = getBillingHref(ctx.orgSlug, ctx.planId);
+  const billingHref = getBillingHref({ slug: ctx.orgSlug, planId: ctx.planId, accountKind: ctx.accountKind });
 
   switch (stage) {
     case 'draft': {
@@ -263,18 +264,18 @@ export function getGuidance(stage: GuidanceStage, ctx: GuidanceContext): Guidanc
 
 /**
  * The lifecycle-filtered "I want to…" outcome shortcuts (4–5 per stage).
- * Takes only org slug + plan (not the full GuidanceContext) so the in-context
+ * Takes workspace billing identity (not the full GuidanceContext) so the in-context
  * HelpDrawer can surface the same list on every tournament page.
  */
 export function getStageShortcuts(
   stage: GuidanceStage,
-  opts: { orgSlug: string; planId: OrgPlan; hasPlayoffs?: boolean },
+  opts: { orgSlug: string; planId: OrgPlan; accountKind?: string | null; hasPlayoffs?: boolean },
 ): TaskShortcut[] {
   const { orgSlug, planId } = opts;
   // An Exhibition has no bracket: its two bracket shortcuts point at what that organizer will
   // actually do instead. Absent = true (a caller without the tournament keeps today's list).
   const endsInBracket = opts.hasPlayoffs !== false;
-  const billingHref = getBillingHref(orgSlug, planId);
+  const billingHref = getBillingHref({ slug: orgSlug, planId, accountKind: opts.accountKind });
   const canImport = hasPlanFeature(planId, 'bulk_data_imports');
   const canClone = hasPlanFeature(planId, 'tournament_cloning');
 

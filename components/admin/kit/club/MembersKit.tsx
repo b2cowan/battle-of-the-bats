@@ -26,8 +26,9 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { hasCapability, countsAsSeat } from '@/lib/roles';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { hasModuleEntitlement, planCarriesModule, isClubPlan } from '@/lib/module-entitlements';
-import { roleLabel } from '@/lib/member-access';
+import { roleLabel, membersLabel } from '@/lib/member-access';
 import { getBillingHref, isTournamentTier } from '@/lib/billing-urls';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
 import { formatStoredDate, orgDayKey, tournamentToday } from '@/lib/timezone';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -64,7 +65,8 @@ function dayLabel(iso: string | null): string {
 
 export default function MembersKit() {
   const { currentOrg, userRole, userCapabilities, user, loading, canOpen } = useOrg();
-  usePageTitle('Members');
+  const pageTitle = membersLabel(isTeamWorkspaceOrg(currentOrg));
+  usePageTitle(pageTitle);
   const slug = currentOrg?.slug ?? '';
   const orgQuery = slug ? `?orgSlug=${encodeURIComponent(slug)}` : '';
   const { shape } = useClubBrief();
@@ -143,14 +145,14 @@ export default function MembersKit() {
     }
   }, [currentOrg, canSee, canManage, orgQuery, loadMembers, loadRoles]);
 
-  if (loading || !currentOrg || !userRole) return <LoadingState label="Loading members…" />;
+  if (loading || !currentOrg || !userRole) return <LoadingState label={`Loading ${pageTitle.toLowerCase()}…`} />;
 
   if (!canSee) {
     return (
       <div className={ck.page}>
-        <AdminPageHeader eyebrow="Organization" title="Members" />
+        <AdminPageHeader eyebrow="Organization" title={pageTitle} />
         <div className={styles.empty}>
-          <h2 className={styles.emptyTitle}>Members isn’t turned on for you</h2>
+          <h2 className={styles.emptyTitle}>{pageTitle} isn’t turned on for you</h2>
           <p className={styles.emptyBody}>Ask the organization’s owner if you need to see who is on the board.</p>
         </div>
       </div>
@@ -305,7 +307,7 @@ export default function MembersKit() {
     <div className={ck.pageWide}>
       <AdminPageHeader
         eyebrow={tournamentTier ? 'Tournament settings' : 'Organization'}
-        title="Members"
+        title={pageTitle}
         actions={
           <>
             {isOwner && (
@@ -354,7 +356,7 @@ export default function MembersKit() {
           </div>
         </div>
       ) : listState === 'loading' ? (
-        <LoadingState label="Loading members…" />
+        <LoadingState label={`Loading ${pageTitle.toLowerCase()}…`} />
       ) : (
         <>
           <section className={ck.section} aria-labelledby="members-board">

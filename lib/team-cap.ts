@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PLAN_CONFIG } from './plan-config';
-import { moveDirection } from './plan-move';
+import { moveDirection } from './plan-move-options';
 import type { OrgPlan } from './types';
 
 /**

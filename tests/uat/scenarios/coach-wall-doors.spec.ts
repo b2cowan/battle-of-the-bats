@@ -120,6 +120,16 @@ test.describe('Plan & billing — standalone owner wall doors', () => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(`/${slug}/coaches`, { waitUntil: 'networkidle' });
       await expect(page.getByRole('heading', { name: 'Coaches Portal not ready' })).toBeVisible();
+      const tournaments = page.locator('main').getByRole('link', { name: 'Tournaments you run', exact: true });
+      await expect(tournaments).toHaveAttribute('href', `/${slug}/admin/org/tournaments`);
+      await expect(tournaments).not.toHaveClass(/btn-lime/);
+      await tournaments.click();
+      await expect(page).toHaveURL(url => url.pathname === `/${slug}/admin/org/tournaments`);
+      if (width === 390) await page.getByRole('button', { name: 'More', exact: true }).click();
+      const portal = page.getByRole('link', { name: 'Coaches Portal', exact: true }).filter({ visible: true });
+      await expect(portal).toHaveAttribute('href', `/${slug}/coaches`);
+      await portal.click();
+      await expect(page.getByRole('heading', { name: 'Coaches Portal not ready' })).toBeVisible();
       const door = page.locator('main').getByRole('link', { name: 'Plan & billing', exact: true });
       await expect(door).toHaveAttribute('href', `/${slug}/coaches/billing`);
       await door.click();

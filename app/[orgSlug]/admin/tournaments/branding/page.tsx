@@ -430,7 +430,7 @@ export default function TournamentBrandingPage() {
       {!advanced ? (
         // A plan without advanced branding: ONE lock line under Pages (screen 6, "one line instead of six cards") — it
         // replaces the Unlock box and six Locked cards, the boxed-lock shape the 2026-09-30 ruling retired (F09, F18).
-        <PlanLockLine href={tournamentPlusPanelHref(currentOrg?.slug ?? 'admin')}>{LOCK_WORDS.branding}</PlanLockLine>
+        <PlanLockLine href={tournamentPlusPanelHref(currentOrg ?? 'admin')}>{LOCK_WORDS.branding}</PlanLockLine>
       ) : (
         <>
           {/* ── Logo ── */}

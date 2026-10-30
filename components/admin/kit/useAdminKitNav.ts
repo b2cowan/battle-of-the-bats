@@ -9,6 +9,8 @@ import { usePathname } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { hasCapability } from '@/lib/roles';
+import { isStandaloneCoachOwner } from '@/lib/coach-billing-access';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
 import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { isTournamentTier } from '@/lib/billing-urls';
@@ -47,13 +49,16 @@ export function useAdminKitNav() {
     && (userRole === 'owner' || hasCapability(userRole!, userCapabilities, 'module_members'))
     && canUse('module_members');
   // ⚠ A Tournament-plan organization has NO /admin/org at all (its layout redirects every page of
-  // it), so it gets no Organization rows — today's rail hides that section for it too.
-  const orgLinks = isTournamentTier(currentOrg?.planId) ? [] : kitOrgLinks({
+  // it), so it gets no Organization rows — today's rail hides that section for it too. A one-team
+  // workspace on a tournament plan is the exception: it keeps /admin/org (staff and access).
+  const isTeamWorkspace = isTeamWorkspaceOrg(currentOrg);
+  const orgLinks = isTournamentTier(currentOrg?.planId) && !isTeamWorkspace ? [] : kitOrgLinks({
     base,
     role: userRole,
     isCanceled,
     canSeeMembers,
     hasVenueLibrary: hasOrgVenueLibrary(currentOrg?.planId),
+    isTeamWorkspace,
   });
   // The club calendar (Club Tier 6b): under Overview in the rail, the More sheet's first row — one gate for both.
   const calendarLink = kitCalendarLink({ base, canUse, isCanceled, tournamentTier: isTournamentTier(currentOrg?.planId) });
@@ -61,9 +66,10 @@ export function useAdminKitNav() {
   const schedulesLink = kitSchedulesLink({
     base, canUse, isCanceled, role: userRole, planId: currentOrg?.planId,
   });
-  const billingLink = kitBillingLink({ orgSlug, planId: currentOrg?.planId, role: userRole, capabilities: userCapabilities, isSandbox });
+  const billingLink = kitBillingLink({ orgSlug, planId: currentOrg?.planId, accountKind: currentOrg?.accountKind, role: userRole, capabilities: userCapabilities, isSandbox });
   // The person's own Coaches Portal door — the rail's foot and the More sheet's "You" both show it.
-  const coachDoor = coachDoorFor(useCurrentOrgCoachAccess(currentOrg?.slug, !isCanceled), currentOrg?.slug);
+  const coachDoor = coachDoorFor(useCurrentOrgCoachAccess(currentOrg?.slug, !isCanceled), currentOrg?.slug,
+    isStandaloneCoachOwner(currentOrg, userRole, userCapabilities));
   // The tournament's groups as this person sees them, every row's address resolved ONCE: an event page, or a door outside
   // the event (Accounting, the club's book read for this event — the lone row's gate and address, kept).
   const tournamentGroups = kitTournamentGroups({

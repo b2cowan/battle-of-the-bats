@@ -37,8 +37,8 @@ const everything = () => true;
 
 /** Does `href` (under BASE) resolve to an admin page file? Dynamic segments are not needed here. */
 function routeExists(href: string): boolean {
-  const rel = href.replace(BASE, '').replace(/[?#].*$/, '');
-  return existsSync(path.join('app/[orgSlug]/admin', rel, 'page.tsx'));
+  const rel = href.replace('/demo-club/', '').replace(/[?#].*$/, '');
+  return existsSync(path.join('app/[orgSlug]', rel, 'page.tsx'));
 }
 
 describe('the admin kit nav — no dead door', () => {
@@ -75,6 +75,9 @@ describe("the admin kit nav — today's gates", () => {
       base: BASE, role, isCanceled, canSeeMembers: true, hasVenueLibrary: true,
     }).map(l => l.label);
     assert.deepEqual(labels('owner'), ['Members', 'Audit log', 'Settings', 'Venue library', 'PDF settings']);
+    const teamLinks = kitOrgLinks({ base: BASE, role: 'owner', isCanceled: false, canSeeMembers: true, hasVenueLibrary: false, isTeamWorkspace: true });
+    assert.equal(teamLinks.find(link => link.key === 'org/members')?.label, 'Staff & access');
+    assert.equal(teamLinks.find(link => link.key === 'org/members')?.href, `${BASE}/org/members`);
     assert.deepEqual(labels('admin'), ['Members', 'Venue library', 'PDF settings']);
     assert.deepEqual(labels('treasurer'), ['Members', 'Venue library']);
     assert.deepEqual(labels('owner', true), [], 'billing is in the foot, never Organization');
@@ -108,15 +111,20 @@ describe('billing in the rail foot and More → You', () => {
         const link = kitBillingLink({ orgSlug: 'demo-club', planId, role, capabilities });
         const allowed = role === 'owner';
         if (!allowed) { assert.equal(link, null); return; }
-        assert.equal(link?.href, getBillingHref({ slug: 'demo-club', planId }, { host: 'admin' }));
+        assert.equal(link?.href, getBillingHref({ slug: 'demo-club', planId }));
         assert.equal(link?.label, 'Plan & billing'); assert.equal(link?.icon, CreditCard);
         assert.ok(routeExists(link!.href), 'the billing destination is a real route');
         assert.ok(isKitLinkActive(link!.href, link!));
-        assert.ok(routeExists(`${link!.href}/mock-portal`), 'the mock portal shares the same tier boundary');
+        if (planId === 'team') {
+          // The coach mock returns directly to its billing host instead of an admin mock page.
+          assert.match(readCode('app/api/billing/portal/route.ts'), /isTeamWorkspaceOrg\(auth\.org\)[\s\S]*getBillingHref\(auth\.org, \{ purpose: 'return' \}\)/);
+        } else assert.ok(routeExists(`${link!.href}/mock-portal`), 'the mock portal shares the same tier boundary');
       });
     }
   }
   it('unauthenticated nav has no billing row; suspension does not remove the billing comeback door', () => {
+    assert.equal(kitBillingLink({ orgSlug: 'falcons', planId: 'club', accountKind: 'team_workspace', role: 'owner', capabilities: null })?.href,
+      '/falcons/coaches/billing');
     assert.equal(kitBillingLink({ orgSlug: 'demo-club', planId: 'club', role: null, capabilities: { billing: true } }), null);
     assert.ok(kitBillingLink({ orgSlug: 'demo-club', planId: 'club', role: 'owner', capabilities: null }));
     assert.doesNotMatch(readCode('lib/admin-kit-nav.ts').split('export function kitBillingLink')[1].split('export function kitOrgLinks')[0], /isCanceled/);

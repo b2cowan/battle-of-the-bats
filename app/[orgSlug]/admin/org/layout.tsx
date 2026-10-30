@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { isTournamentTier } from '@/lib/billing-urls';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
 
 /**
  * Org-admin tier boundary.
@@ -11,6 +12,7 @@ import { isTournamentTier } from '@/lib/billing-urls';
  * This server-side guard is the only boundary (proxy.ts's earlier copy read the stored plan and went in Support
  * console Stage 4): `authCtx.org.planId` is the door's answer, so a club on free Club time is let in and is bounced
  * again the moment it ends. The admin rail (`AdminKitRail`) hides the section in the nav.
+ * A one-team workspace on a tournament plan is let in: its staff and access page and billing alias live here.
  */
 export default async function OrgAdminLayout({
   params,
@@ -29,7 +31,7 @@ export default async function OrgAdminLayout({
     redirect(`/auth/login?next=/${orgSlug}/admin/org`);
   }
 
-  if (isTournamentTier(authCtx.org.planId)) {
+  if (isTournamentTier(authCtx.org.planId) && !isTeamWorkspaceOrg(authCtx.org)) {
     redirect(`/${orgSlug}/admin/tournaments`);
   }
 

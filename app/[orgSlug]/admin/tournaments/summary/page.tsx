@@ -77,7 +77,7 @@ export default function TournamentSummaryPage() {
   const tournamentId = currentTournament?.id;
   const hasSummary = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'post_tournament_summary'));
   const canClone = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'tournament_cloning'));
-  const planHref = tournamentPlusPanelHref(currentOrg?.slug ?? 'admin');
+  const planHref = tournamentPlusPanelHref(currentOrg ?? 'admin');
   // On a plan without Summary the finished board's lock line is its one door, never a page reached from the nav (R5):
   // this address goes to the dashboard (B2).
   const absent = useAbsentArea('summaryPage');

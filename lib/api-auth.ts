@@ -67,6 +67,8 @@ type AuthOrgRow = {
   subscription_status: Organization['subscriptionStatus'] | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
+  /** The trial's last day, or the next renewal; the select is `*`. */
+  current_period_end?: string | null;
   is_public: boolean | null;
   created_at: string;
   require_score_finalization: boolean | null;
@@ -197,6 +199,8 @@ export async function getAuthContext(options: AuthContextOptions = {}): Promise<
     subscriptionStatus: orgRow.subscription_status ?? 'active',
     stripeCustomerId: orgRow.stripe_customer_id ?? undefined,
     stripeSubscriptionId: orgRow.stripe_subscription_id ?? undefined,
+    // Plan & billing prints "Trial ends …" / "Renews …" from this; it was never copied here, so the line never showed.
+    currentPeriodEnd: orgRow.current_period_end ?? null,
     isPublic: orgRow.is_public ?? true,
     createdAt: orgRow.created_at,
     requireScoreFinalization: orgRow.require_score_finalization ?? false,
@@ -258,7 +262,7 @@ export interface AuthContextWithRole extends AuthContext {
  * their coaching assignment gives them.) A new role-aware gate reads through this, so it cannot
  * forget the filter.
  */
-async function getAcceptedMember(orgId: string, userId: string) {
+export async function getAcceptedMember(orgId: string, userId: string) {
   const { data } = await supabaseAdmin
     .from('organization_members')
     .select('id, role, capabilities')

@@ -24,7 +24,7 @@ export async function destinationAfterAccept(userId: string, orgSlug: string | n
   try {
     // The door's plan, so a club on free time lands where its plan today sends it.
     const [member] = await withEffectiveOrgs([data as unknown as MemberRow]);
-    return await getDestinationForMembership(member);
+    return await getDestinationForMembership(member, userId);
   } catch (error) {
     console.error('[invite-acceptance] destination resolve failed:', error);
     return `/${orgSlug}/admin`;

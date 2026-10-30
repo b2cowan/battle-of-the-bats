@@ -13,7 +13,8 @@ import MoreSheetTiles from './MoreSheetTiles';
 import MoreSheetFoot from './MoreSheetFoot';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { useOrg } from '@/lib/org-context';
-import { coachBillingLink } from '@/lib/coach-billing-access';
+import { coachBillingLink, coachHostedTournamentsLink } from '@/lib/coach-billing-access';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
 import { PLAN_BILLING_TITLE } from '@/lib/plan-billing-title';
 import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coaches-context';
 import { isCoachNavItemVisible, withClosedSeasonNav, resolveNavTeamId, SEASON_END_LABEL } from '@/lib/coach-nav-visibility';
@@ -148,12 +149,14 @@ export default function CoachesBottomNav() {
   const base     = `/${orgSlug}/coaches`;
   // The "Admin" door — only for a coach who also administers this org (seeded from the layout's
   // membership role; a coach-only user has no admin role, so no door). Review P3-4.
-  const isOrgAdmin = userRole === 'owner' || userRole === 'admin';
+  const isOrgAdmin = (userRole === 'owner' || userRole === 'admin') && !isTeamWorkspaceOrg(currentOrg);
 
   const [moreOpen, setMoreOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const inSandbox = useIsSandbox();
   const billingHref = coachBillingLink(currentOrg, userRole, userCapabilities, inSandbox);
+  const tournamentsHref = coachHostedTournamentsLink(currentOrg, userRole, userCapabilities, inSandbox);
+  const hasYouRows = !inSandbox || isOrgAdmin;
   const moreRef = useRef<HTMLDivElement>(null);
   const chatUnread = useChatUnread();
   // Chunk B (P1 #4): until now the notification bell existed ONLY in the desktop sidebar, which is
@@ -419,7 +422,7 @@ export default function CoachesBottomNav() {
                 pins to the sidebar. A closed season's sheet keeps these too — they are no live instrument. */}
             {/* Account and Home lead out of the demo sandbox (arriving ends the demo), so the sandbox hides them, as the
                 top strip hides the account menu; the group shows only with a row to show. */}
-            {(!inSandbox || isOrgAdmin) && (
+            {hasYouRows && (
             <>
             <div className={styles.dropSectionLabel}>You</div>
             <div className={styles.dropGrid} data-cols="2">
@@ -446,6 +449,12 @@ export default function CoachesBottomNav() {
                 <Link href={billingHref} className={`${styles.dropItem} ${isOnBilling ? styles.dropActive : ''}`} role="menuitem" id="coaches-mob-billing" onClick={() => setMoreOpen(false)}>
                   <CreditCard size={17} aria-hidden />
                   <span>{PLAN_BILLING_TITLE}</span>
+                </Link>
+              )}
+              {tournamentsHref && (
+                <Link href={tournamentsHref} className={styles.dropItem} role="menuitem" id="coaches-mob-tournaments" onClick={() => setMoreOpen(false)}>
+                  <Trophy size={17} aria-hidden />
+                  <span>Tournaments you run</span>
                 </Link>
               )}
               {isOrgAdmin && (

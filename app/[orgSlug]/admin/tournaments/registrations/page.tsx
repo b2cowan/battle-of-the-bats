@@ -74,7 +74,7 @@ import BottomSheet from '@/components/admin/BottomSheet';
 import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import DivisionPicker from '@/components/admin/tournament/DivisionPicker';
 import ImportSheet from '@/components/admin/tournament/ImportSheet';
-import { PlanLockedTool, PlanLockMenuFoot, tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
+import { PlanLockedTool, PlanLockMenuFoot, useTournamentPlusHref } from '@/components/admin/tournament/PlanLockLine';
 import { IMPORT_WORDS } from '@/lib/tournament-import-words';
 import { hasCapability } from '@/lib/roles';
 import HealthButton from '@/components/admin/tournament/HealthButton';
@@ -179,6 +179,7 @@ type Ask = {
 export default function UnifiedTeamsPage() {
   const { currentTournament, isLocked, loading: tournamentLoading } = useTournament();
   const { currentOrg, userRole, userCapabilities, canOpen } = useOrg();
+  const planHref = useTournamentPlusHref();
   const searchParams = useSearchParams();
   usePageTitle('Teams');
   // Import teams from a spreadsheet (Stage 5, E10): Data tools retired; the import lives where the teams are.
@@ -963,8 +964,8 @@ export default function UnifiedTeamsPage() {
    *  report open (R1 keeps PDFs) and Excel and CSV ONE locked row. Paid plans export everything, as today. */
   const exportLock = !currentOrg || hasPlanFeature(currentOrg.planId, 'registration_export') ? undefined
     : hasPlanFeature(currentOrg.planId, 'pdf_exports')
-      ? { href: tournamentPlusPanelHref(currentOrg.slug), rows: 'spreadsheets' as const, label: LOCK_WORDS.excelAndCsv }
-      : { href: tournamentPlusPanelHref(currentOrg.slug), rows: 'all' as const, label: LOCK_WORDS.exportTeamList };
+      ? { href: planHref, rows: 'spreadsheets' as const, label: LOCK_WORDS.excelAndCsv }
+      : { href: planHref, rows: 'all' as const, label: LOCK_WORDS.exportTeamList };
 
   function guardExport(format: 'spreadsheet' | 'pdf' = 'spreadsheet'): boolean {
     if (!currentTournament || !currentOrg) return false;
@@ -1212,8 +1213,6 @@ export default function UnifiedTeamsPage() {
   const commandCenterAvailable = paymentToolsOnPlan;
   // The payment tools need the plan AND an event that tracks payments ("Not tracked here" has none to offer).
   const paymentToolsAvailable = paymentToolsOnPlan && tracksPayments;
-  const subscriptionHref = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`;
-  const planHref = `${subscriptionHref}?plan=tournament_plus`;
 
   // PDF settings — fetched once on mount; used in handleExportPDF
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
@@ -2014,7 +2013,7 @@ export default function UnifiedTeamsPage() {
                   {canImportTeams && (importOnPlan
                     ? <CoachToolbarMenuItem icon={<Upload size={16} aria-hidden />} label={IMPORT_WORDS.door('teams')} hint={IMPORT_WORDS.doorHint}
                         onSelect={() => setImportOpen(true)} />
-                    : <PlanLockedTool name={IMPORT_WORDS.door('teams')} href={currentOrg ? tournamentPlusPanelHref(currentOrg.slug) : '#'} />)}
+                    : <PlanLockedTool name={IMPORT_WORDS.door('teams')} href={currentOrg ? planHref : '#'} />)}
                 </>
               )}
               {(canSwap || showRandomize) && (

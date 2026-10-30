@@ -17,10 +17,10 @@ const NONE: OrgCoachAccess = { hasRepAccess: false, hasBasicCoachTeam: false };
  * points (rep coach → this org's portal; Basic-only coach → the global launchpad). Single source
  * of truth so the desktop sidebar + mobile nav can't drift on the rule.
  */
-export function coachDoorFor(access: OrgCoachAccess, orgSlug: string | null | undefined) {
+export function coachDoorFor(access: OrgCoachAccess, orgSlug: string | null | undefined, standaloneOwner = false) {
   return {
-    show: access.hasRepAccess || access.hasBasicCoachTeam,
-    href: access.hasRepAccess && orgSlug ? `/${orgSlug}/coaches` : COACHES_HOME_PATH,
+    show: standaloneOwner || access.hasRepAccess || access.hasBasicCoachTeam,
+    href: (standaloneOwner || access.hasRepAccess) && orgSlug ? `/${orgSlug}/coaches` : COACHES_HOME_PATH,
   };
 }
 

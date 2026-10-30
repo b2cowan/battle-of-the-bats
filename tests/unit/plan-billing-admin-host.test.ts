@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { createElement, type ComponentType } from 'react';
+import { createElement, type ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { billingTestLoader } from './_billing-test-loader.ts';
 import { PLAN_CONFIG } from '../../lib/plan-config.ts';
@@ -14,20 +14,30 @@ const plans = Object.keys(PLAN_CONFIG) as OrgPlan[];
 const roles: OrgRole[] = ['owner', 'admin', 'treasurer', 'staff', 'coach'];
 
 describe('one admin billing host for every plan', () => {
-  for (const planId of plans) it(`${planId}: both entry pages use the shared body and a reachable return base`, () => {
+  for (const planId of plans) it(`${planId}: both entry pages use the shared body or the standalone coach redirect`, async () => {
     const load = billingTestLoader({
+      '@/lib/coach-portal-request': { getCoachPortalAuth: async () => ({ org: { slug: 'falcons', planId, accountKind: 'organization' } }) },
+      'next/navigation': { permanentRedirect: (href: string) => { throw new Error(`308:${href}`); } },
       '@/lib/org-context': { useOrg: () => ({ currentOrg: { slug: 'falcons', planId } }) },
       '@/lib/usePageTitle': { usePageTitle() {} },
       '@/components/admin/AdminPageHeader': { __esModule: true, default: ({ eyebrow, title }: { eyebrow?: string; title: string }) => createElement('header', null, eyebrow && createElement('p', null, eyebrow), createElement('h1', null, title)) },
       '@/components/billing/BillingBody': { __esModule: true, default: ({ billingBase, teamsHref }: { billingBase: string; teamsHref: string }) => createElement('div', { 'data-billing': billingBase, 'data-teams': teamsHref }) },
     });
     for (const path of ['app/[orgSlug]/admin/org/billing/page.tsx', 'app/[orgSlug]/admin/tournaments/settings/subscription/page.tsx']) {
-      const Page = (load(path) as { default: ComponentType }).default;
-      const html = renderToStaticMarkup(createElement(Page));
+      const Page = (load(path) as { default: (props: {
+        params: Promise<{ orgSlug: string }>;
+        searchParams: Promise<Record<string, string>>;
+      }) => Promise<ReactElement> }).default;
+      const props = { params: Promise.resolve({ orgSlug: 'falcons' }), searchParams: Promise.resolve({}) };
+      if (planId === 'team') {
+        await assert.rejects(Page(props), { message: '308:/falcons/coaches/billing' });
+        continue;
+      }
+      const html = renderToStaticMarkup(await Page(props));
       assert.match(html, /<h1>Plan &amp; billing<\/h1>/);
       assert.ok(html.includes(`data-billing="${getBillingHref({ slug: 'falcons', planId }, { host: 'admin' })}"`));
       assert.match(html, /data-teams="\/falcons\/admin\/rep-teams"/);
-      assert.equal(html.includes('<p>Organization</p>'), !isTournamentTier(planId) && planId !== 'team');
+      assert.equal(html.includes('<p>Organization</p>'), !isTournamentTier(planId));
     }
   });
 

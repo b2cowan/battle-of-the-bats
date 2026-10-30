@@ -4,7 +4,7 @@ import { createElement, isValidElement, type ComponentType, type ReactElement, t
 import * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { billingTestLoader } from './_billing-test-loader.ts';
-import { coachBillingLink, isStandaloneCoachOwner } from '../../lib/coach-billing-access.ts';
+import { coachBillingLink, coachHostedTournamentsLink, isStandaloneCoachOwner } from '../../lib/coach-billing-access.ts';
 import { isTeamWorkspaceOrg } from '../../lib/team-workspace-kind.ts';
 import type { Organization, OrgRole } from '../../lib/types.ts';
 import { readCode } from './_source-code.ts';
@@ -17,6 +17,25 @@ const workspace: Organization = {
 };
 const pass = ({ children }: { children?: ReactNode }) => createElement('div', null, children);
 const nothing = () => null;
+
+describe('the workspace tournament door needs the plan and the tournament grant, never a team', () => {
+  for (const role of ['owner', 'admin', 'coach', 'staff', null] as const) {
+    for (const grant of [true, false, undefined]) it(`${role}/grant=${grant}`, () => {
+      const caps = grant === undefined ? null : { create_tournaments: grant };
+      const allowed = role === 'owner' || (grant === undefined ? role === 'admin' : grant && !!role);
+      assert.equal(coachHostedTournamentsLink(workspace, role, caps, false), allowed ? '/falcons/admin/org/tournaments' : null);
+      assert.equal(coachHostedTournamentsLink(workspace, role, caps, true), null, 'the sandbox hides Tournaments you run by name');
+      assert.equal(coachHostedTournamentsLink({ ...workspace, subscriptionStatus: 'canceled' }, role, caps, false), null);
+      assert.equal(coachHostedTournamentsLink({ ...workspace, planId: 'club', accountKind: 'organization' }, role, caps, false), null);
+    });
+  }
+  it('requires a known workspace and an entitled plan, including legacy and effective-plan identities', () => {
+    assert.equal(coachHostedTournamentsLink(null, 'owner', null, false), null);
+    assert.equal(coachHostedTournamentsLink({ ...workspace, planId: 'unknown' as Organization['planId'] }, 'owner', null, false), null);
+    assert.equal(coachHostedTournamentsLink({ ...workspace, accountKind: 'organization' }, 'owner', null, false), '/falcons/admin/org/tournaments');
+    assert.equal(coachHostedTournamentsLink({ ...workspace, planId: 'club' }, 'owner', null, false), '/falcons/admin/org/tournaments');
+  });
+});
 
 describe('the standalone owner predicate and sandbox billing door', () => {
   for (const role of ['owner', 'admin', 'staff', 'coach', null] as const) {
@@ -119,6 +138,7 @@ describe('server wall order and exact owner billing exception', () => {
   it('zero teams: the owner has a full-request door and only the exact billing page renders', async () => {
     const wall = await layoutFixture();
     assert.match(wall.html, /Coaches Portal not ready/);
+    assert.match(wall.html, /href="\/falcons\/admin\/org\/tournaments" class="notAssignedDoor">Tournaments you run/);
     assert.match(wall.html, /href="\/falcons\/coaches\/billing"[^>]*>Plan &amp; billing/);
     assert.doesNotMatch(wall.html, /billing-child/);
     assert.equal(wall.membershipReads, 1, 'the wall reads the accepted membership once, through the shared helper');
@@ -133,12 +153,13 @@ describe('server wall order and exact owner billing exception', () => {
   for (const role of ['admin', 'staff', 'coach', null] as const) it(`${role}: no zero-team door or bypass`, async () => {
     const result = await layoutFixture({ role, pathname: '/falcons/coaches/billing' });
     assert.match(result.html, /Coaches Portal not ready/);
-    assert.doesNotMatch(result.html, /billing-child|>Plan &amp; billing/);
+    assert.doesNotMatch(result.html, /billing-child|>Plan &amp; billing|>Tournaments you run/);
   });
   for (const freeTimeEnded of [false, true]) for (const role of ['owner', 'admin', null] as const) {
     it(`cancelled/${freeTimeEnded ? 'free-time-ended' : 'subscription-ended'}/${role}: owner recovery only, no working shell`, async () => {
       const result = await layoutFixture({ org: { ...workspace, subscriptionStatus: 'canceled' }, role, pathname: '/falcons/coaches/billing', freeTimeEnded });
       assert.doesNotMatch(result.html, /billing-child/);
+      assert.doesNotMatch(result.html, /Tournaments you run/);
       assert.equal(result.assignmentReads, 0);
       const provider = allElements(result.tree).find(element => element.type === pass && 'initialUserRole' in element.props);
       assert.equal(provider?.props.initialUserRole, null, 'the wall never seeds an operational role');
@@ -149,6 +170,7 @@ describe('server wall order and exact owner billing exception', () => {
   it('the plan wall precedes even the owner billing exception', async () => {
     const result = await layoutFixture({ pathname: '/falcons/coaches/billing', carriesPortal: false });
     assert.match(result.html, /Plan wall/);
+    assert.doesNotMatch(result.html, /Tournaments you run/);
     assert.doesNotMatch(result.html, /billing-child/);
   });
   for (const closed of [false, true]) it(`several ${closed ? 'closed' : 'live'} teams: workspace billing bypasses no season gate`, async () => {
@@ -188,16 +210,18 @@ describe('workspace billing stays outside the team nav and season gates', () => 
       else Reflect.deleteProperty(globalThis, 'window');
     }
   });
-  for (const scenario of ['owner', 'helper', 'club-owner', 'sandbox', 'closed-owner', 'zero-team-owner'] as const) {
+  for (const scenario of ['owner', 'helper', 'granted-coach', 'board-admin', 'club-owner', 'sandbox', 'cancelled-owner', 'closed-owner', 'zero-team-owner'] as const) {
     it(`${scenario}: the real rail and open More sheet render the correct billing door`, () => {
-      const org = scenario === 'club-owner' ? { ...workspace, planId: 'club', accountKind: 'organization' } : workspace;
-      const role = scenario === 'helper' ? 'admin' : 'owner';
+      const org = scenario === 'club-owner' ? { ...workspace, planId: 'club', accountKind: 'organization' }
+        : scenario === 'cancelled-owner' ? { ...workspace, subscriptionStatus: 'canceled' } : workspace;
+      const role = scenario === 'helper' || scenario === 'granted-coach' ? 'coach' : scenario === 'board-admin' ? 'admin' : 'owner';
       const closed = scenario === 'closed-owner';
       const noTeam = scenario === 'zero-team-owner';
       const assignment = { teamId: 'team-a', teamName: 'Falcons', programYearName: '2026 Season', capabilities: { isHeadCoach: true } };
       const assignments = closed || noTeam ? [] : [assignment];
       const closedAssignments = closed ? [assignment] : [];
-      const allowed = !['helper', 'club-owner', 'sandbox'].includes(scenario);
+      const allowed = !['helper', 'granted-coach', 'board-admin', 'club-owner', 'sandbox'].includes(scenario);
+      const tournamentsAllowed = !['helper', 'club-owner', 'sandbox', 'cancelled-owner'].includes(scenario);
       for (const mobile of [false, true]) {
         let stateCalls = 0;
         const load = billingTestLoader({
@@ -206,7 +230,7 @@ describe('workspace billing stays outside the team nav and season gates', () => 
             return React.useState<T>(stateCalls === 1 ? true as T : initial);
           } } : React,
           'next/navigation': { usePathname: () => '/falcons/coaches/billing', useRouter: () => ({ push() {} }) },
-          '@/lib/org-context': { useOrg: () => ({ currentOrg: org, userRole: role, userCapabilities: { billing: true } }) },
+          '@/lib/org-context': { useOrg: () => ({ currentOrg: org, userRole: role, userCapabilities: { billing: true, ...(scenario === 'granted-coach' ? { create_tournaments: true } : {}) } }) },
           '@/lib/coaches-context': {
             useCoaches: () => ({ assignments, closedAssignments }),
             resolveLiveSeason: () => assignments[0] ?? null,
@@ -227,6 +251,18 @@ describe('workspace billing stays outside the team nav and season gates', () => 
         const Nav = (load(path) as { default: ComponentType<{ orgSlug: string }> }).default;
         const html = renderToStaticMarkup(createElement(Nav, { orgSlug: 'falcons' }));
         assert.equal(html.includes(mobile ? 'id="coaches-mob-billing"' : 'id="coaches-billing"'), allowed, path);
+        const tournamentId = mobile ? 'coaches-mob-tournaments' : 'coaches-tournaments';
+        assert.equal(html.includes(`id="${tournamentId}"`), tournamentsAllowed, `${path}/${scenario}`);
+        assert.equal(html.includes('>Admin</span>'), scenario === 'club-owner', 'all standalone roles lose Admin');
+        assert.doesNotMatch(html, /Tournament helpers/);
+        if (tournamentsAllowed) {
+          assert.match(html, /href="\/falcons\/admin\/org\/tournaments"/);
+          const door = html.match(new RegExp(`<a[^>]*id="${tournamentId}"[^>]*>[\\s\\S]*?<\\/a>`))?.[0] ?? '';
+          assert.match(door, /Tournaments you run/);
+          assert.doesNotMatch(door, /sidebarItemActive|dropActive|aria-current/);
+          assert.match(door, new RegExp(`width="${mobile ? 17 : 14}"`));
+          if (allowed) assert.ok(html.indexOf(mobile ? 'id="coaches-mob-billing"' : 'id="coaches-billing"') < html.indexOf(`id="${tournamentId}"`));
+        }
         if (allowed) assert.match(html, /href="\/falcons\/coaches\/billing"/);
         if (closed) {
           assert.match(html, /Season&#x27;s End/);
@@ -240,7 +276,9 @@ describe('workspace billing stays outside the team nav and season gates', () => 
     const phone = readCode('components/coaches/CoachesBottomNav.tsx');
     for (const source of [rail, phone]) assert.match(source, /coachBillingLink\(currentOrg, userRole, userCapabilities, inSandbox\)/);
     assert.ok(rail.indexOf('id="coaches-billing"') > rail.indexOf('>Help</span>'));
-    const ids = ['id="coaches-mob-account"', 'id="coaches-mob-home"', 'id="coaches-mob-billing"', 'id="coaches-mob-back-to-admin"', '<MoreSheetFoot'];
+    assert.ok(rail.indexOf('id="coaches-tournaments"') > rail.indexOf('id="coaches-billing"'));
+    assert.ok(rail.indexOf('<CollapseSidebarRow') > rail.indexOf('id="coaches-tournaments"'));
+    const ids = ['id="coaches-mob-account"', 'id="coaches-mob-home"', 'id="coaches-mob-billing"', 'id="coaches-mob-tournaments"', 'id="coaches-mob-back-to-admin"', '<MoreSheetFoot'];
     for (let index = 1; index < ids.length; index++) assert.ok(phone.indexOf(ids[index - 1]) < phone.indexOf(ids[index]));
     assert.match(phone, /const isOnBilling = pathname === `\$\{base\}\/billing`/);
     assert.match(phone, /const isOnTeamMore = isOnNotifications \|\| isOnBilling/);

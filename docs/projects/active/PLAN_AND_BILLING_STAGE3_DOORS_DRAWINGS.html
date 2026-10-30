@@ -1,0 +1,487 @@
+<title>Portal workspace links</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750;800&family=IBM+Plex+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: a review document in the same frame as the Stage A drawings. Sticky tabs, one global Everything / Only-what-differs switch,
+   every drawn screen in the product's warm look at true size (computer 1280px, phone 390px). Rust = new or moved or leaving. */
+:root{
+  --bg:#ECE8DF; --fg:#241E15; --fg2:#4A4235; --dim:#6B6358; --card:#FBF9F4; --line:rgba(70,55,30,.16); --line2:rgba(70,55,30,.28);
+  --accent:#57651E; --accent-soft:rgba(87,101,30,.12); --pin:#C2410C; --pin-ink:#fff; --warn:#835006; --good:#34662A; --bad:#B03A22;
+  --font:Inter,system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#16140F; --fg:#F1EBDD; --fg2:#CFC6B3; --dim:#A59C89; --card:#201D16; --line:rgba(241,235,221,.14); --line2:rgba(241,235,221,.26);
+  --accent:#BCD26B; --accent-soft:rgba(188,210,107,.14); --pin:#FB923C; --pin-ink:#1a1308; --warn:#E3A33C; --good:#8DBF6A; --bad:#EE8A72; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140F; --fg:#F1EBDD; --fg2:#CFC6B3; --dim:#A59C89; --card:#201D16; --line:rgba(241,235,221,.14); --line2:rgba(241,235,221,.26);
+  --accent:#BCD26B; --accent-soft:rgba(188,210,107,.14); --pin:#FB923C; --pin-ink:#1a1308; --warn:#E3A33C; --good:#8DBF6A; --bad:#EE8A72; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:14px/1.55 var(--font);margin:0;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:20px 80px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.wrap{max-width:1360px;margin:0 auto}
+h1.doc{font:750 26px/1.15 var(--font);margin:0 0 .3rem;text-wrap:balance}
+.lede{max-width:80ch;color:var(--fg2);margin:.2rem 0 .8rem}
+.legend{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;font-size:12px;color:var(--dim);margin:0 0 .9rem}
+.legend b{color:var(--fg2)}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding:.5rem 0;border-bottom:1px solid var(--line);margin-bottom:1.2rem;display:flex;flex-wrap:wrap;gap:.4rem 1rem;align-items:center;justify-content:space-between}
+.tabs{display:flex;gap:.25rem;flex-wrap:wrap}
+.tabs button{font:600 13px var(--font);color:var(--fg2);background:transparent;border:1px solid transparent;border-radius:999px;padding:.4rem .8rem;cursor:pointer}
+.tabs button:hover{background:var(--accent-soft)}
+.tabs button[aria-selected="true"]{background:var(--fg);color:var(--bg)}
+.mode{display:inline-flex;background:var(--card);border:1px solid var(--line2);border-radius:8px;padding:3px;gap:2px}
+.mode button,.seg button{font:600 12px var(--font);border:0;background:transparent;color:var(--fg2);padding:.35rem .75rem;border-radius:6px;cursor:pointer}
+.mode button[aria-pressed="true"],.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+button:focus-visible,.pin:focus-visible,.pw:focus-visible{outline:2px solid var(--pin);outline-offset:2px}
+.seg{display:inline-flex;flex-wrap:wrap;max-width:100%;background:var(--card);border:1px solid var(--line2);border-radius:8px;padding:3px;gap:2px;margin:.2rem 0 1rem}
+.panel h2{font:700 20px/1.2 var(--font);margin:0 0 .3rem}
+.panel h3{font:700 15px/1.3 var(--font);margin:1.6rem 0 .3rem}
+.intro{max-width:80ch;color:var(--fg2);margin:.2rem 0 1rem}
+figure.fr{margin:0 0 2rem;max-width:100%}
+.frh{display:flex;flex-wrap:wrap;gap:.3rem .8rem;align-items:baseline;margin-bottom:.45rem}
+.frh b{font:700 14px var(--font)} .frh span{font:500 11px var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+.stage{overflow-x:auto;max-width:100%;padding:2px 2px 8px}
+.stage.row{display:flex;gap:1.4rem;align-items:flex-start;flex-wrap:wrap}
+.pinbox{margin:.5rem 0 0;padding:.55rem .8rem;border:1px dashed var(--line2);border-radius:8px;font-size:13px;color:var(--fg2);background:var(--card);max-width:96ch}
+.fcap{max-width:96ch;color:var(--fg2);margin:.6rem 0 0}
+.pin{all:unset;box-sizing:border-box;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--pin);color:var(--pin-ink);font:700 11px var(--font);cursor:pointer;margin:0 3px;vertical-align:middle;flex:none;box-shadow:0 0 0 2px #fff}
+.pin.on{outline:2px solid var(--fg);outline-offset:1px}
+.note{border-left:3px solid var(--pin);padding:.4rem .8rem;margin:.8rem 0;background:var(--card);max-width:96ch;color:var(--fg2)}
+.note b{color:var(--fg)}
+.ruled{border-left:3px solid var(--accent);padding:.5rem .8rem;margin:0 0 1rem;background:var(--card);max-width:100ch;color:var(--fg2)}
+.ruled b{color:var(--fg)}
+.tblw{overflow-x:auto;max-width:100%;margin:.4rem 0 1rem;border-radius:8px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tbl th,.tbl td{padding:.5rem .65rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.tbl th{font:650 12px var(--font);color:var(--dim);white-space:nowrap;background:var(--bg)}
+.tbl td:first-child{font-weight:650}
+.tbl tr:last-child td{border-bottom:0}
+.tag{display:inline-block;font:700 10px var(--mono);letter-spacing:.05em;padding:.12rem .45rem;border-radius:999px;border:1px solid var(--line2);color:var(--fg2);white-space:nowrap}
+.tag.g{color:var(--good);border-color:var(--good)} .tag.w{color:var(--warn);border-color:var(--warn)} .tag.n{color:var(--pin);border-color:var(--pin)} .tag.b{color:var(--bad);border-color:var(--bad)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,430px),1fr));gap:1.2rem}
+.ask{border:1px solid var(--line2);background:var(--card);border-radius:10px;padding:1rem 1.1rem;margin:0 0 1rem;max-width:100ch}
+.ask h3{margin:0 0 .3rem;font-size:15px}
+.ask .why{color:var(--fg2);margin:.2rem 0 .6rem}
+.opts{display:grid;gap:.5rem}
+button.opt{all:unset;box-sizing:border-box;display:block;width:100%;text-align:left;border:1px solid var(--line);border-radius:8px;padding:.55rem .75rem;background:var(--bg);cursor:pointer;color:var(--fg)}
+button.opt:hover{border-color:var(--accent)}
+button.opt:focus-visible{outline:2px solid var(--pin);outline-offset:2px}
+button.opt[aria-pressed="true"]{border-color:var(--pin);box-shadow:inset 0 0 0 1px var(--pin);background:var(--card)}
+.opt.rec{border-color:var(--accent);background:var(--accent-soft)}
+.opt .t{font:700 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-left:.4rem}
+.opt .you{display:none;font:700 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--pin);margin-left:.4rem}
+.opt[aria-pressed="true"] .you{display:inline}
+.opt .od{color:var(--fg2);font-size:13px}
+.answers{border:1px solid var(--line2);background:var(--card);border-radius:10px;padding:.8rem 1rem;margin:0 0 1rem;max-width:100ch}
+.ah{display:flex;flex-wrap:wrap;gap:.5rem .8rem;align-items:center}
+.ah b{margin-right:auto}
+.abtn{font:600 12px var(--font);border:1px solid var(--line2);background:transparent;color:var(--fg);border-radius:6px;padding:.35rem .7rem;cursor:pointer}
+.abtn:hover{border-color:var(--accent)}
+.answers textarea{width:100%;margin-top:.6rem;min-height:120px;font:12px/1.5 var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:.5rem}
+.push{counter-reset:p;display:grid;gap:.6rem;max-width:100ch;margin:0 0 1rem;padding:0;list-style:none}
+.push li{counter-increment:p;border:1px solid var(--line2);background:var(--card);border-radius:10px;padding:.7rem .9rem .7rem 2.6rem;position:relative;color:var(--fg2)}
+.push li::before{content:counter(p);position:absolute;left:.8rem;top:.7rem;width:1.25rem;height:1.25rem;border-radius:50%;background:var(--pin);color:var(--pin-ink);font:700 11px var(--font);display:grid;place-items:center}
+.push li b{color:var(--fg)}
+
+/* ============ the product, drawn (always warm) ============ */
+.scr{--paper:#F8F4ED;--card:#fff;--ink:#241E15;--ink2:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.20);--olive:#57651E;--osoft:rgba(87,101,30,.10);--live:#B03A22;--amber:#835006;--lime:#D9F99D;--fill:rgba(70,55,30,.08);
+  font:14px/1.5 Inter,system-ui,sans-serif;color:var(--ink);background:var(--paper);text-align:left}
+.scr *{box-sizing:border-box}
+.scr svg.i{stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.gridbg{background-image:linear-gradient(rgba(87,101,30,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(87,101,30,.07) 1px,transparent 1px);background-size:40px 40px}
+.desk{width:1280px;flex:none;border:1px solid var(--line2);border-radius:10px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.14)}
+.strip{height:48px;display:flex;align-items:center;gap:.9rem;padding:0 1rem 0 1.25rem;background:#fff;border-bottom:1px solid var(--line)}
+.strip .wm{font:800 15px Inter;letter-spacing:-.01em;color:var(--olive)} .strip .dv{width:1px;height:14px;background:var(--line2)}
+.strip .lab{font:700 10px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.strip .sp{flex:1} .strip .door{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--ink2)}
+.deskbody{display:flex;min-height:470px}
+.rail{width:240px;flex:none;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;padding:.4rem 0 0}
+.rail.c{width:220px}
+.scr.crop{width:240px;border:1px solid var(--line2);border-radius:8px;overflow:hidden;flex:none}
+.scr.crop.cw{width:220px}
+.scr.crop .rail{border-right:0;min-height:300px}
+.rh{font:700 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);padding:.75rem 1.25rem .35rem;display:flex;justify-content:space-between;align-items:center}
+.ri{display:flex;align-items:center;gap:.5rem;padding:.5rem 1.25rem;color:var(--dim);font-size:14px;white-space:nowrap}
+.ri.on{background:rgba(87,101,30,.10);color:var(--olive);font-weight:600}
+.ri.newrow,.sr.newrow{background:rgba(194,65,12,.09)}
+.ri.gone,.sr.gone{opacity:.62;background:rgba(176,58,34,.07)}
+.ri.gone>span:first-of-type,.sr.gone>span:first-of-type{text-decoration:line-through}
+.rtag{font:700 9px 'IBM Plex Mono',monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--live);border:1px solid rgba(176,58,34,.35);border-radius:999px;padding:.05rem .4rem;margin-left:auto}
+.newrow .rtag{color:#C2410C;border-color:rgba(194,65,12,.45)}
+.rfoot{margin-top:auto;border-top:1px solid var(--line);padding:.4rem 0}
+.rfoot .ri{font-size:12px}
+.rspacer{flex:1;min-height:20px}
+.main{flex:1;min-width:0;padding:2rem}
+.page{max-width:960px;margin-inline:auto}
+.ch{display:flex;align-items:center;gap:.7rem;margin:0 0 1.15rem}
+.ch h1{font:700 20px/1.1 Inter;margin:0;flex:1;color:var(--ink)}
+.tile{width:36px;height:36px;border-radius:12px;background:rgba(87,101,30,.12);border:1px solid rgba(87,101,30,.3);color:var(--olive);display:grid;place-items:center;flex:none}
+.helpq{width:30px;height:30px;border-radius:50%;border:1px solid var(--line2);display:grid;place-items:center;font:700 13px Inter;color:var(--ink2);background:#fff}
+.kick{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink2);margin:0 0 .55rem}
+.card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:1rem 1.15rem}
+.hcard{display:flex;justify-content:space-between;align-items:center;gap:1rem}
+.hcard b{font:650 15px Inter;color:var(--ink)} .hcard .sub{font-size:12px;color:var(--dim)}
+.chip{font:700 10px/1 'IBM Plex Mono',monospace;letter-spacing:.05em;padding:.14rem .5rem;border-radius:999px;border:1px solid rgba(52,102,42,.25);color:#34662A;background:rgba(52,102,42,.07);white-space:nowrap}
+.lnk{color:var(--olive);font-weight:650}
+.faded{opacity:.5}
+.btn{font:650 14px/1.25 Inter;border-radius:6px;padding:.45rem .9rem;min-height:34px;border:1px solid transparent;display:inline-flex;align-items:center;gap:.4rem;white-space:nowrap}
+.btn.lime{background:var(--lime);color:var(--ink)} .btn.out{background:#fff;color:var(--ink2);border-color:var(--line2)}
+.wallc{max-width:520px;margin:1.6rem auto;text-align:center;padding:1.6rem 1.4rem;background:#fff;border:1px solid var(--line);border-radius:12px}
+.wallc h3{font:700 18px Inter;margin:0 0 .4rem;color:var(--ink)} .wallc p{margin:0 0 .8rem;color:var(--ink2);font-size:14px}
+.wallc .doors{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;align-items:center}
+.wallc .door2{font:600 14px Inter;color:var(--ink2);border:1px solid var(--line2);border-radius:6px;padding:.4rem .8rem;background:#fff}
+.wallc .door2.newrow{background:rgba(194,65,12,.09);border-color:rgba(194,65,12,.45)}
+.walls{width:100%;background:var(--paper)}
+/* phone */
+.phone{width:390px;height:800px;border:1px solid var(--line2);border-radius:28px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--paper);box-shadow:0 8px 28px rgba(0,0,0,.14);flex:none}
+.phone .pscroll{flex:1;overflow:hidden;padding:14px 16px 20px;background-image:linear-gradient(rgba(87,101,30,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(87,101,30,.05) 1px,transparent 1px);background-size:28px 28px}
+.pbar{min-height:72px;display:flex;justify-content:space-around;align-items:center;border-top:1px solid var(--line);background:rgba(248,244,237,.96);padding:.4rem 0;flex:none}
+.tab{display:flex;flex-direction:column;align-items:center;gap:.2rem;flex:1;font:700 10px Inter;color:var(--dim)}
+.tab .iw{width:46px;height:30px;border-radius:999px;display:grid;place-items:center}
+.tab.on{color:var(--olive)} .tab.on .iw{background:var(--osoft)}
+.scrim{position:absolute;inset:0 0 72px 0;background:rgba(36,30,21,.28)}
+.sheet{position:absolute;left:0;right:0;bottom:72px;background:#fff;border-radius:18px 18px 0 0;padding:6px 14px 10px;box-shadow:0 -8px 32px rgba(70,55,30,.24);max-height:calc(100% - 100px);overflow:hidden}
+.sheet .grab{width:38px;height:4px;border-radius:2px;background:rgba(70,55,30,.4);margin:4px auto 8px}
+.sr{display:flex;align-items:center;gap:.75rem;padding:.7rem .5rem;min-height:44px;font:600 16px/1.25 Inter;color:var(--ink2);position:relative;border-radius:8px}
+.sr>span:first-of-type{min-width:0}
+.sr .chv{margin-left:auto;opacity:.55}
+.gapbox{margin:.3rem .5rem;padding:.55rem .6rem;border:1px dashed var(--line2);border-radius:8px;font:500 12px Inter;color:var(--dim);text-align:center}
+.sr .rtag{font-size:8.5px}
+.sl{font:700 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);padding:.45rem .5rem .1rem}
+.sdv{height:1px;background:var(--line);margin:.2rem 0}
+.g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:10px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:4px 0 8px}
+.tl{min-height:64px;border:1px solid var(--line);border-radius:12px;background:rgba(248,244,237,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font:700 12px Inter;color:var(--ink2)}
+.tl svg{color:var(--olive)}
+.scr.sc{width:390px;flex:none;border:1px solid var(--line2);border-radius:14px;background:#fff;padding:6px 14px 10px;box-shadow:0 4px 18px rgba(70,55,30,.16)}
+.sc .grab{width:38px;height:4px;border-radius:2px;background:rgba(70,55,30,.4);margin:4px auto 8px}
+/* only-what-differs */
+.dm .ri:not(.newrow):not(.gone),.dm .rh,.dm .sr:not(.newrow):not(.gone),.dm .tl,.dm .sl,.dm .main,.dm .tab,.dm .strip,.dm .grab{opacity:.28}
+.dm .ri.on,.dm .wallc>h3,.dm .wallc>p,.dm .wallc .btn,.dm .door2:not(.newrow){opacity:.28}
+.same{border:1px dashed var(--line2);border-radius:8px;padding:.7rem .9rem;color:var(--dim);max-width:96ch;background:var(--card)}
+@media (max-width:520px){.tabs button{padding:.35rem .6rem}}
+</style>
+<div class="wrap">
+  <h1 class="doc">Portal workspace links</h1>
+  <p class="lede">Where “Tournaments you run” sits for a standalone coach once the Admin door is gone, on a computer and on a phone, every state around it, and how the owner reaches tournament staff. Nothing here is built. Team, tournament and amounts in the drawn screens are made up. Rows and wording come from the shipped portal.</p>
+  <p class="legend"><span><b>Rust tint</b> = a row that is new.</span><span><b>Red, struck through</b> = a row that leaves.</span><span><b>Rust pins</b> open a note under the drawing when clicked.</span><span><b>True size:</b> computer 1280px wide (scroll sideways if your window is narrower), phone 390px.</span><span><b>Only what differs</b> fades everything that does not change.</span></p>
+  <div class="bar">
+    <nav class="tabs" id="tabs" role="tablist" aria-label="Drawings"></nav>
+    <div class="mode" role="group" aria-label="What to show"><button type="button" data-m="all" aria-pressed="true">Everything</button><button type="button" data-m="diff" aria-pressed="false">Show only what differs</button></div>
+  </div>
+  <main id="panels"></main>
+</div>
+<script>
+"use strict";
+const ICONS={
+ 'credit-card':'<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>',
+ 'help':'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+ 'shield':'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+ 'users':'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+ 'trophy':'<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+ 'calendar':'<path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+ 'grid':'<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+ 'notebook':'<path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/><path d="M2 6h4M2 10h4M2 14h4M2 18h4"/><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/>',
+ 'more':'<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+ 'bell':'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+ 'user':'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+ 'home':'<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+ 'x':'<path d="M18 6 6 18M6 6l12 12"/>',
+ 'chev':'<path d="m9 18 6-6-6-6"/>', 'chevd':'<path d="m6 9 6 6 6-6"/>',
+ 'archive':'<rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/>',
+ 'dollar':'<line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+ 'list':'<path d="M3 5h.01M3 12h.01M3 19h.01M8 5h13M8 12h13M8 19h13"/>',
+ 'trend':'<path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
+ 'mail':'<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+ 'out':'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+ 'send':'<path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>',
+ 'collapse':'<path d="m11 17-5-5 5-5M18 17l-5-5 5-5"/>',
+ 'idcard':'<rect width="18" height="14" x="3" y="5" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M14 10h4M14 14h4M6 17c.5-1.5 1.7-2 3-2s2.5.5 3 2"/>',
+ 'settings':'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+ 'flag':'<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/>',
+ 'scroll':'<path d="M15 12h-5"/><path d="M15 8h-5"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/>'
+};
+const ic=(n,s=14)=>'<svg class="i" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" aria-hidden="true">'+(ICONS[n]||'')+'</svg>';
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const P=n=>'<button type="button" class="pin" data-n="'+n+'" aria-label="Note '+n+'">'+n+'</button>';
+let DIFF=false;
+
+/* ---------- drawn pieces ---------- */
+const ri=(icon,t,o)=>{o=o||{};return '<div class="ri'+(o.on?' on':'')+(o.nw?' newrow':'')+(o.gone?' gone':'')+'">'+ic(icon,14)+'<span>'+t+'</span>'+(o.tag?'<span class="rtag">'+o.tag+'</span>':'')+(o.pin?P(o.pin):'')+'</div>';};
+const rh=(t,open)=>'<div class="rh"><span>'+t+'</span>'+ic(open?'chevd':'chev',12)+'</div>';
+function strip(label){return '<div class="strip"><span class="wm">FieldLogicHQ</span><span class="dv"></span><span class="lab">'+label+'</span><span class="sp"></span><span class="door">'+ic('bell',16)+'</span><span class="door">'+ic('user',16)+'</span></div>';}
+/* the team part of the Coaches Portal rail */
+function teamNav(mode){
+  if(mode==='closed') return ri('archive','Season’s End',{on:true});
+  if(mode==='none') return '';
+  return ri('grid','Overview')+rh('Season',true)+ri('calendar','Schedule')+ri('notebook','Practice plans')+ri('list','Lineups')+ri('trophy','Tournaments',{on:mode==='tourn'})+rh('Progress',false)+rh('Money',false)+rh('Communication',false)+rh('Team',false);
+}
+/* foot rows: [icon,label,opts] */
+const footHtml=rows=>rows.map(r=>ri(r[0],r[1],r[2])).join('')+ri('collapse','Collapse sidebar');
+const HELP=['help','Help'];
+function coachRail(nav,foot,cls){return '<div class="rail c'+(cls?' '+cls:'')+'">'+teamNav(nav)+'<div class="rspacer"></div><div class="rfoot">'+footHtml(foot)+'</div></div>';}
+function railCrop(nav,foot){return '<div class="scr crop cw">'+coachRail(nav,foot)+'</div>';}
+/* the page behind: the team Tournaments page, where "Tournaments you run" already lives in a live season */
+function tournPage(){
+  return '<div class="ch"><span class="tile">'+ic('trophy',18)+'</span><h1>Tournaments</h1><span class="helpq">?</span></div>'
+   +'<div class="kick">Tournaments you run</div>'
+   +'<div class="card hcard"><div><b>Riverdale Ridge Spring Classic</b><div class="sub">Jun 12 to Jun 14 · 6 teams registered</div></div><div style="display:flex;gap:.8rem;align-items:center"><span class="chip">Active</span><span class="lnk">Manage →</span></div></div>';
+}
+function closedPage(){
+  return '<div class="ch"><span class="tile">'+ic('archive',18)+'</span><h1>2026 Season</h1><span class="helpq">?</span></div>'
+   +'<div class="card faded" style="margin-bottom:.7rem;height:92px"></div><div class="card faded" style="height:44px;margin-bottom:.4rem"></div><div class="card faded" style="height:44px;margin-bottom:.4rem"></div><div class="card faded" style="height:44px"></div>';
+}
+function desk(label,railHtml,inner){return '<div class="scr desk">'+strip(label)+'<div class="deskbody">'+railHtml+'<div class="main gridbg"><div class="page">'+inner+'</div></div></div></div>';}
+
+/* phone */
+const tab=(icon,t,on)=>'<div class="tab'+(on?' on':'')+'"><span class="iw">'+ic(icon,22)+'</span>'+t+'</div>';
+function bar(kind,moreOpen){
+  const t=kind==='closed'?[['archive','Season’s End']]:kind==='coach'?[['grid','Overview'],['calendar','Schedule'],['notebook','Practices'],['users','Roster']]:[['grid','Overview'],['calendar','Games'],['users','Teams'],['trophy','Results']];
+  return '<div class="pbar">'+t.map(x=>tab(x[0],x[1],false)).join('')+tab(moreOpen?'x':'more','More',moreOpen)+'</div>';
+}
+function phoneShell(inner,o){return '<div class="scr phone"><div class="pscroll">'+inner+'</div>'+(o.sheet?'<div class="scrim"></div><div class="sheet">'+o.sheet+'</div>':'')+bar(o.bar,!!o.sheet)+'</div>';}
+const sr=(icon,t,o)=>{o=o||{};return '<div class="sr'+(o.nw?' newrow':'')+(o.gone?' gone':'')+'">'+ic(icon,17)+'<span>'+t+'</span>'+(o.tag?'<span class="rtag">'+o.tag+'</span>':'')+(o.pin?P(o.pin):'')+(o.chev?'<span class="chv">'+ic('chev',14)+'</span>':'')+'</div>';};
+const NOTIF=sr('bell','Notifications',{chev:true});
+const GAPBOX='<div class="gapbox">The team’s groups go here (not drawn)</div>';
+/* the portal's More sheet: you = rows of the You group */
+function coachSheetBody(you,live){
+  const groups=live?'<div class="tiles"><div class="tl">'+ic('list',20)+'Lineups</div><div class="tl">'+ic('trend',20)+'Skills &amp; goals</div><div class="tl">'+ic('dollar',20)+'Money</div></div>'+GAPBOX+'<div class="sdv"></div>':'';
+  const yg=you.length?'<div class="sl">You</div><div class="g2">'+you.map(r=>sr(r[0],r[1],r[2])).join('')+'</div><div class="sdv"></div>':'';
+  return '<div class="grab"></div>'+NOTIF+groups+yg+'<div class="g2">'+sr('help','Help')+sr('send','Send feedback')+sr('out','Sign out')+'</div>';
+}
+function sheetCrop(you,live,sandbox){
+  let b=coachSheetBody(you,live);
+  if(sandbox) b='<div class="grab"></div>'+NOTIF+(live?GAPBOX+'<div class="sdv"></div>':'')+'<div class="g2">'+sr('help','Help')+'</div>';
+  return '<div class="scr sc">'+b+'</div>';
+}
+/* wording of the rows (rail foot and You group) */
+const BILL=['credit-card','Plan &amp; billing'];
+const ROW_T=n=>['trophy','Tournaments you run',{nw:true,pin:n}];
+const ROW_ADMIN_GONE=['shield','Admin',{gone:true,tag:'leaves'}];
+const YOU_BASE=[['user','Account'],['home','Home']];
+
+/* ---------- figure frame + notes ---------- */
+function frame(o){
+  if(DIFF&&o.same) return '<figure class="fr"><figcaption class="frh"><b>'+o.title+'</b></figcaption><div class="same">Nothing differs from today here.</div></figure>';
+  return '<figure class="fr" data-notes="'+esc(JSON.stringify((o.notes||[]).map(String)))+'"><figcaption class="frh"><b>'+o.title+'</b>'+(o.tag?'<span>'+o.tag+'</span>':'')+'</figcaption><div class="stage '+(o.cls||'')+(DIFF?' dm':'')+'">'+o.html+'</div>'+(o.notes&&o.notes.length?'<div class="pinbox" aria-live="polite">Click a rust pin on the drawing for its note.</div>':'')+(o.cap?'<div class="fcap">'+o.cap+'</div>':'')+'</figure>';
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest&&e.target.closest('.pin'); if(!t) return;
+  const fr=t.closest('.fr'); if(!fr) return;
+  fr.querySelectorAll('.pin.on').forEach(x=>x.classList.remove('on')); t.classList.add('on');
+  let notes=[]; try{notes=JSON.parse(fr.dataset.notes||'[]')}catch(_){}
+  const box=fr.querySelector('.pinbox'); if(box) box.innerHTML='<b>'+t.dataset.n+'.</b> '+(notes[Number(t.dataset.n)-1]||'');
+});
+const callout=(l,h)=>'<div class="note"><b>'+l+'</b> '+h+'</div>';
+
+/* ---------- TAB 1 · computer ---------- */
+function t1(){
+  let h='<h2>On a computer</h2><p class="intro">The standalone owner of a one-team Premium Coaches Portal, in a live season, with a tournament running. Today the foot of the rail has Help, Plan &amp; billing, Admin and Collapse. Stage 3 takes Admin away. One new link takes its place. Helpers are not a portal link: the owner manages them in the tournament pages (tab 4).</p>';
+  h+='<div class="ruled"><b>Why this does not break “a closed season is one page”.</b> That rule is about season tools: the schedule, lineups, money and the rest, which would show write controls a closed season refuses. This link is not a season tool. It sits in the rail’s foot, which already stays when a season closes (Help and Plan &amp; billing do), and it opens the workspace’s tournament pages, which have no season, take no year and show nothing from a closed one. It adds no finished-season screen and no branch. A hosted tournament belongs to the workspace, the way the plan does.</div>';
+  const today=desk('Coaches Portal',coachRail('tourn',[HELP,BILL,['shield','Admin',{gone:true,tag:'leaves',pin:1}]]),tournPage());
+  const after=desk('Coaches Portal',coachRail('tourn',[HELP,BILL,ROW_T(1)]),tournPage());
+  h+=frame({title:'Today',tag:'standalone owner · live season · hosts a tournament',html:today,notes:['Stage 3 removes the Admin door for a one-team workspace. Today it is the only way to the hosted-tournament pages once a season is closed, which is why the new row is needed.']});
+  h+=frame({title:'Proposed',tag:'same coach, same screen',html:after,notes:['Opens the list of tournaments you host, inside the tournament pages. From there you start a new one or open one to manage registrations, the schedule and scores. The section on the team’s Tournaments page stays as it is: it is the way in while a season is live, and this row is the way in that still works when it is closed.'],cap:'Order, top to bottom: Help, Plan &amp; billing (ruled 2026-10-28), the new row, then Collapse sidebar last, as the nav standard keeps it. The row is a foot row: 12px, 14px icon, same spacing as its neighbours. Nothing else in the rail moves, and the foot stays at four rows, as it is today. The rail is drawn at its shipped 220px.'});
+  const alt=(label,icon)=>'<div style="width:260px"><div style="font:600 12px Inter;margin-bottom:.4rem">'+label+'</div><div class="scr crop cw"><div class="rail c" style="min-height:0"><div class="ri" style="font-size:14px">'+ic('trophy',14)+'<span>Tournaments</span></div><div class="rspacer" style="min-height:12px"></div><div class="rfoot">'+ri('help','Help')+ri('credit-card','Plan &amp; billing')+ri(icon,'Tournaments you run',{nw:true})+ri('collapse','Collapse sidebar')+'</div></div></div></div>';
+  h+=frame({title:'The icon on the new row',tag:'ask 8',cls:'row',html:alt('A · Trophy (recommended)','trophy')+alt('B · A different icon (a flag stands in for it here)','flag'),cap:'The nav standard says the trophy is Tournaments’ icon everywhere, so a door to tournaments wears it. The cost is two trophies in one rail, one for the tournaments your team plays in and one for those you host. The words carry that difference, not the icon.'});
+  h+='<h3>Where each link goes</h3><div class="tblw"><table class="tbl"><thead><tr><th>Link</th><th>Opens</th><th>Where you are afterwards</th><th>Season closed?</th></tr></thead><tbody>'
+   +'<tr><td>Tournaments (the team’s menu, Season group)</td><td>The tournaments your team is entered in: Coming up and Finished. At the bottom, a small “Tournaments you run” section.</td><td>The Coaches Portal</td><td>Not available: it is a season tool.</td></tr>'
+   +'<tr><td>Tournaments you run (new, rail foot)</td><td>The list of tournaments you host, with a New tournament button.</td><td>The tournament pages</td><td>Available.</td></tr>'
+   +'<tr><td>Staff &amp; access (not a portal link)</td><td>Who helps run your tournaments. In the tournament pages: the Members row in the menu on a computer, and the Staff &amp; access card in Settings &amp; access.</td><td>The tournament pages</td><td>Available, one click after the row above.</td></tr>'
+   +'</tbody></table></div>';
+  return h;
+}
+
+/* ---------- TAB 2 · phone ---------- */
+function t2(){
+  let h='<h2>On a phone</h2><p class="intro">The More sheet’s You group is where Plan &amp; billing and Admin sit today. The new row takes Admin’s place, in the same shipped row (16px text, 17px icon). The sheet has no “quiet” row style, so on a phone the row is an ordinary one and quiet only means last in the group, where Admin was.</p>';
+  const page=tournPage();
+  const todaySheet=coachSheetBody(YOU_BASE.concat([BILL,['shield','Admin',{gone:true,tag:'leaves',pin:2}]]),true);
+  const afterSheet=coachSheetBody(YOU_BASE.concat([BILL,['trophy','Tournaments you run',{nw:true,pin:1}]]),true);
+  h+=frame({title:'Today and proposed, side by side',tag:'standalone owner · live season · More open',cls:'row',html:phoneShell(page,{bar:'coach',sheet:todaySheet})+phoneShell(page,{bar:'coach',sheet:afterSheet}),
+   notes:['Same wording and icon as the computer rail. Opens the list of tournaments you host.','Leaves with Stage 3, as on the computer.'],
+   cap:'Each half-width column holds about 130px of label, so “Tournaments you run” wraps onto two lines, as long names already do in this sheet: the column gives, never the word. That row is taller than 44px. The group stays at four rows, so it still pairs evenly, with the new row beside Plan &amp; billing.'});
+  return h;
+}
+
+/* ---------- TAB 3 · states ---------- */
+const STATES=[
+ {k:'host',t:'Live season, hosts one'},{k:'never',t:'Live season, never hosted'},{k:'closed',t:'Only a closed season'},{k:'none',t:'No team yet'},
+ {k:'helper',t:'A helper'},{k:'club',t:'Club owner who coaches'},{k:'demo',t:'Demo sandbox'},{k:'ended',t:'Cancelled or free time ended'}
+];
+let ST={s:'host'};
+function wall(title,body,doors){return '<div class="scr walls"><div class="strip"><span class="wm">FieldLogicHQ</span><span class="sp"></span><span class="door">'+ic('user',16)+'</span></div><div class="wallc"><h3>'+title+'</h3>'+(body?'<p>'+body+'</p>':'')+'<div class="doors">'+doors+'</div></div></div>';}
+function stateView(k){
+  const newFoot=[HELP,BILL,ROW_T(1)], newYou=YOU_BASE.concat([BILL,['trophy','Tournaments you run',{nw:true,pin:1}]]);
+  const both=(nav,foot,you,live,notes,cap,title,tag,same,sandbox)=>frame({title:title,tag:tag,cls:'row',same:same,html:railCrop(nav,foot)+sheetCrop(you,live,sandbox),notes:notes,cap:cap});
+  if(k==='host') return both('tourn',newFoot,newYou,true,['Opens the list of tournaments you host. This coach already has one running, and the section on the team’s Tournaments page still shows it too.'],'Same as the first two tabs. This is the state the rest are measured against.','Live season, hosts a tournament now','computer rail foot · phone More');
+  if(k==='never') return both('live',newFoot,newYou,true,['Same row, same wording. See ask 4 for the alternatives.'],'The row looks identical to the coach who has never hosted. It opens the same list, which has a “New tournament” button. A coach on a live season also still meets the “Run your own tournament” card on the team’s Tournaments page. Two other wordings are drawn below.','Live season, has never hosted one','computer rail foot · phone More')
+   +frame({title:'The wording options for a coach who has never hosted',tag:'ask 4',cls:'row',html:
+     ['A · “Tournaments you run”, always (recommended)','B · “Run a tournament” until the first one exists','C · Nothing until they host; the card on the Tournaments page stays the door'].map((l,i)=>'<div style="width:260px"><div style="font:600 12px Inter;margin-bottom:.4rem;color:var(--fg)">'+l+'</div><div class="scr crop cw"><div class="rail c" style="min-height:0"><div class="rfoot" style="border-top:0">'+ri('help','Help')+ri('credit-card','Plan &amp; billing')+(i===0?ri('trophy','Tournaments you run',{nw:true}):i===1?ri('trophy','Run a tournament',{nw:true}):'')+ri('collapse','Collapse sidebar')+'</div></div></div></div>').join('')});
+  if(k==='closed') return both('closed',newFoot,newYou,false,['This is the case that decides everything. The rail has collapsed to Season’s End and the team’s Tournaments page is out of reach. This row is the only way to a tournament the coach is still running.'],'The rail collapses to Season’s End alone and the sheet drops its team groups. The foot and the You group stay, as they do for Plan &amp; billing today. The new row rides in them; no season screen changes.','Only a closed season','computer rail foot · phone More');
+  if(k==='none') return frame({title:'No team yet · the “Coaches Portal not ready” screen',tag:'no rail, no sheet',cls:'row',notes:['Today this screen offers an owner “Plan &amp; billing” and nothing else. Once Admin goes, a coach with a tournament in progress and no team has no way to it. I propose one plain door here, for the owner only.'],
+    html:wall('Coaches Portal not ready','Your coach assignment or Premium entitlement is not active for Riverdale Ridge.<br><span style="font-size:12px;color:var(--dim)">Questions? Contact FieldLogicHQ support.</span>','<span class="btn lime">Plan &amp; billing</span><span class="door2 newrow">Tournaments you run'+P(1)+'</span><span class="door2">Go to Home</span><span class="door2">Back to Coaches Portal home</span><span class="door2">Sign out</span>'),
+    cap:'This screen has no rail and no sheet, so the link cannot live there as a row. It already carries doors, and the owner’s Plan &amp; billing door is one of them. “Tournaments you run” would be a second, plainer door beside it, for the owner only (ask 10).'});
+  if(k==='helper') return '<div class="note"><b>Helpers have their own tab.</b> There are two kinds, they see different things today, and one of them lands on a dead-end screen once Part 1 sends the admin address to the portal. See tab 4.</div>';
+  if(k==='club') return both('live',[HELP,['shield','Admin']],YOU_BASE.concat([['shield','Admin']]),true,[],'A club owner or admin who also coaches keeps the Admin door and has no Plan &amp; billing row in the portal (their billing lives in the Admin area). No new link: the club’s Admin area is their way to everything. Unchanged.','Club owner or admin who also coaches','unchanged',true);
+  if(k==='demo') return both('live',[HELP],[],true,[],'The demo’s coach is a plain coach on a fictional club, not an owner. The sandbox already hides Plan &amp; billing, Account, Home, Send feedback and Sign out. The new link would not appear anyway, because the demo coach cannot run tournaments. I would still hide it in the sandbox by name (ask 11), so a future demo owner is never sent into the real Admin area. Unchanged today.','Demo sandbox (the fictional Riverdale club)','unchanged',true,true);
+  if(k==='ended') return frame({title:'Cancelled · and free time ended',tag:'the only doors are Reactivate or Keep Premium',cls:'row',same:true,html:wall('Riverdale Ridge’s subscription has ended','','<span class="btn lime">Reactivate Premium</span><span class="door2">Go to Home</span>')+wall('Your free time has ended','','<span class="btn lime">Keep Premium</span><span class="door2">Go to your team</span>'),cap:'Both walls show no rail and no sheet, and offer the owner one recovery door. Hosting a tournament needs a live plan, so a link to it would lead nowhere. Nothing new is added.'});
+}
+function t3(){
+  let h='<h2>Every state</h2><p class="intro">Pick a state. Each shows the computer rail’s foot beside the phone’s More sheet.</p>';
+  h+='<div class="seg" role="group" aria-label="State">'+STATES.map(s=>'<button type="button" data-st="'+s.k+'" aria-pressed="'+(ST.s===s.k)+'">'+s.t+'</button>').join('')+'</div>';
+  h+=stateView(ST.s);
+  h+='<h3>Combinations that do not exist</h3><div class="tblw"><table class="tbl"><thead><tr><th>Combination</th><th>Why not</th></tr></thead><tbody>'
+   +[['Sandbox + owner','The demo coach is a plain coach on a club-plan workspace, not an owner. Plan &amp; billing and the new link have nobody to show to.'],
+     ['Cancelled or free time ended + a rail','Those states draw a wall with no rail and no sheet.'],
+     ['Club owner who coaches + the new link','By design. They keep Admin, and their tournaments are in the club’s Admin area.'],
+     ['Helper + Plan &amp; billing','Plan &amp; billing is the owner’s alone (ruled 2026-10-29).'],
+     ['Standalone owner + the Admin door, after Stage 3','Stage 3 removes it; that is what the new link replaces.']].map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>').join('')+'</tbody></table></div>';
+  return h;
+}
+
+/* ---------- TAB 4 · tournament staff ---------- */
+function t4(){
+  let h='<h2>Tournament staff</h2><p class="intro">Your suggestion, drawn. The coach pages manage the coaching staff. The tournament pages manage the people who help run a tournament. The head coach owns both, so there is no portal link for helpers: the owner reaches them from inside the tournament pages, which already have the doors.</p>';
+  h+=frame({title:'On a computer · two doors that already exist',tag:'tournament pages · standalone owner',html:desk('Admin Area',adminRail([BILL,HELP,['users','Coaches Portal']],1),hostedPage()),
+    notes:['The Members row, in the Account group of the menu. It opens the page where you invite people and see who has access.'],
+    cap:'The second door is inside a tournament: Settings &amp; access has a “Staff &amp; access” card, drawn below. The row and the card lead to the same job, under two names (ask 7).'});
+  const card='<div class="scr" style="width:440px;border:1px solid var(--line2);border-radius:8px;padding:1rem;flex:none"><div class="card hcard" style="gap:.8rem"><span class="tile">'+ic('users',18)+'</span><div style="flex:1"><b>Staff &amp; access</b><div class="sub">Invite admins, staff, and volunteers, then assign people to the tournaments they manage.</div></div><span class="lnk">Manage access</span></div></div>';
+  const sheet='<div class="grab"></div>'+NOTIF+GAPBOX+'<div class="sl">Admin</div><div class="g2">'+sr('settings','Settings &amp; access',{pin:1})+sr('trophy','Tournaments')+'</div><div class="sdv"></div><div class="sl">You</div><div class="g2">'+sr('user','Account')+sr('home','Home')+sr('users','Coaches Portal')+sr('credit-card','Plan &amp; billing')+'</div>';
+  h+=frame({title:'On a phone · More, then Settings & access',tag:'tournament pages · standalone owner',cls:'row',html:phoneShell(hostedPage(),{bar:'tourn',sheet:sheet})+'<div><div style="font:600 12px Inter;margin-bottom:.4rem">Then, inside Settings &amp; access</div>'+card+'</div>',
+    notes:['On a phone the tournament menu lists an Admin group with Settings &amp; access in it. The Members row of the computer menu is not in the phone menu in a one-team workspace, so this is the phone’s door.'],
+    cap:'Nothing here is new. The owner reaches helpers in two taps from any tournament page, and in the same place on a phone and a computer.'});
+  h+='<h3>Who the helpers are, and what happens to them</h3><div class="tblw"><table class="tbl"><thead><tr><th>Kind of helper</th><th>Today</th><th>After Stage 3 as written</th></tr></thead><tbody>'
+   +'<tr><td>A coach with the “Run tournaments” grant</td><td>No Admin door. Reaches the tournament pages only through the team’s Tournaments page, and only while a season is live. Cannot open the staff page or invite.</td><td>Unchanged, and in a closed season the same dead end the owner has. The new link fixes it for them too.</td></tr>'
+   +'<tr><td>A board admin, invited on the staff page in the tournament pages (uses one of the 3 staff seats)</td><td>With a team assignment: sees the Admin door and the whole hosted area. Without one: works in the Admin area, and the portal itself answers “Coaches Portal not ready”.</td><td>The admin address forwards to the portal. With no team, that is the “not ready” screen: a dead end, with no route to the tournaments they were invited to help with.</td></tr>'
+   +'</tbody></table></div>';
+  h+='<h3>Who sees “Tournaments you run”</h3>';
+  const crop=rows=>railCrop('live',rows);
+  h+=frame({title:'Whoever can run tournaments (recommended)',tag:'ask 5 · permission-based',cls:'row',html:
+    '<div><div style="font:600 12px Inter;margin-bottom:.4rem">Owner</div>'+crop([HELP,BILL,ROW_T()])+'</div><div><div style="font:600 12px Inter;margin-bottom:.4rem">Coach with “Run tournaments”</div>'+crop([HELP,ROW_T()])+'</div><div><div style="font:600 12px Inter;margin-bottom:.4rem">Coach with no tournament grant</div>'+crop([HELP])+'</div>',
+    cap:'The row shows to whoever the portal already lets run tournaments: the same test that decides whether the section on the Tournaments page appears. A link then only appears where it opens something the person can use. The alternatives are in ask 5.'});
+  h+=callout('Two things this needs that are not in this drawing.','<b>1.</b> The Admin door has to leave for the whole one-team workspace, not only for its owner. The shipped “standalone owner” test is owner-only (it is the billing test), so building the removal on it would leave a board admin an Admin door that now forwards back to the portal (ask 13). <b>2.</b> A board admin with no team needs somewhere to land that is not the “not ready” screen: the tournaments list is the obvious place, and the Members row is in its menu. That is Part 1’s redirect, not a link, so it is ask 12.');
+  return h;
+}
+
+/* ---------- TAB 5 · the way back ---------- */
+function adminRail(foot,pinMembers){
+  return '<div class="rail" style="padding-top:.6rem">'+ri('trophy','Tournaments',{on:true})+'<div class="rh"><span>Account</span></div>'+ri('idcard','Members',{pin:pinMembers})+ri('scroll','Audit log')+ri('settings','Settings')+'<div class="rspacer"></div><div class="rfoot">'+footHtml(foot)+'</div></div>';
+}
+function hostedPage(){
+  return '<div class="ch"><span class="tile">'+ic('trophy',18)+'</span><h1>Tournaments</h1><span class="btn lime">New tournament</span></div><div class="kick">Active</div><div class="card hcard"><div><b>Riverdale Ridge Spring Classic</b><div class="sub">Jun 12 to Jun 14 · 6 teams registered</div></div><span class="chip">Active</span></div>';
+}
+function t5(){
+  let h='<h2>The way back</h2><p class="intro">Once a coach opens a hosted-tournament page they are in the Admin area’s shell, not the portal. This is the control that returns them.</p>';
+  h+=frame({title:'Today · hosted-tournament page, owner who has a team',tag:'computer',html:desk('Admin Area',adminRail([BILL,HELP,['users','Coaches Portal',{pin:1}]]),hostedPage()),notes:['The “Coaches Portal” row in the rail foot is the way back. It is named by where it goes, as the nav standard asks. It appears only when the person has a coaching assignment in this workspace, live or closed, or a free team elsewhere. The wordmark in the top strip goes Home, not to the portal. There is no “Back” control on the page itself.']});
+  h+=frame({title:'Today · the same on a phone',tag:'More sheet, You group',cls:'row',html:phoneShell(hostedPage(),{bar:'tourn',sheet:'<div class="grab"></div>'+NOTIF+'<div class="sl">Current tournament</div><div class="sr" style="font-size:14px;font-weight:500;color:var(--dim)">Riverdale Ridge Spring Classic</div><div class="sdv"></div><div class="sl">You</div><div class="g2">'+sr('user','Account')+sr('home','Home')+sr('users','Coaches Portal',{pin:1})+sr('credit-card','Plan &amp; billing')+'</div><div class="sdv"></div><div class="g2">'+sr('help','Help')+sr('send','Send feedback')+sr('out','Sign out')+'</div>'}),notes:['On a phone the way back is the “Coaches Portal” row in the You group, between Home and Plan &amp; billing. The phone’s More sheet in a one-team workspace has no Members, Settings or Audit log rows; Members opens only from a link.']});
+  h+='<h3>Where it fails</h3>';
+  h+=frame({title:'Owner who has no team yet',tag:'the row is missing',cls:'row',html:'<div><div style="font:600 12px Inter;margin-bottom:.4rem">Today</div><div class="scr crop">'+adminRail([BILL,HELP])+'</div></div><div><div style="font:600 12px Inter;margin-bottom:.4rem">Proposed</div><div class="scr crop">'+adminRail([BILL,HELP,['users','Coaches Portal',{nw:true,pin:1}]])+'</div></div>',notes:['An owner with no team has no coaching assignment, so the row is hidden and the hosted pages are a one-way street. Plan &amp; billing is the only exit, and it opens inside the portal. I propose the row shows for the owner of a one-team workspace whatever their team count. The same name, the same place, no new wording. It lands on the portal, which for a coach with no team is the “not ready” screen with its Plan &amp; billing door and, if you rule ask 10, the tournaments door.'],cap:'For everyone else the row keeps today’s rule. A board admin with no team has no portal to go back to, which is the problem in tab 4, not here.'});
+  h+=callout('What I would not change.','The name “Coaches Portal” stays: a door is named by where it goes, and the nav standard bans “Back to…” labels. The row does not need to remember the page the coach came from. From a hosted page the portal’s home is one clear answer, and for a coach whose only season is closed it opens that season’s page.');
+  return h;
+}
+
+/* ---------- TAB 6 · asks ---------- */
+const ASKS=[
+ {t:'What does the new link say?',why:'You found “Tournaments” and “Tournaments you run” hard to tell apart, and I think that is fair. “Tournaments you run” is also the heading of the section on the team’s Tournaments page, and the wording you ruled. The page it opens is headed “Tournaments”.',o:[
+   ['A','“Tournaments you run” (recommended)','Your ruled wording, and the same as the section it replaces for a closed season. Tab 1 spells out the difference for anyone who asks.',1],
+   ['B','“Host a tournament”','Reads as a different thing from “Tournaments” at a glance, but sounds like a one-off to a coach who already hosts.',0]]},
+ {t:'Order in the rail foot',why:'You ruled that Plan &amp; billing sits beside Help. The nav standard puts Collapse sidebar last.',o:[
+   ['A','Help, Plan &amp; billing, Tournaments you run, Collapse (recommended)','Plan &amp; billing keeps its ruled place. The new row is the quietest, so it comes after.',1],
+   ['B','Help, Tournaments you run, Plan &amp; billing, Collapse','Plan &amp; billing is no longer beside Help.',0]]},
+ {t:'Order on a phone',why:'The You group is a two-column grid. It has four rows after this change, so it pairs evenly either way.',o:[
+   ['A','You: Account, Home, Plan &amp; billing, Tournaments you run (recommended)','Same order as the rail, and Admin’s slot is reused.',1],
+   ['B','You: Account, Home, Tournaments you run, Plan &amp; billing','Puts the new row beside Home and Plan &amp; billing alone at the end.',0]]},
+ {t:'What the link says to a coach who has never hosted',why:'A coach who has never hosted a tournament still pays for the right to host one at a time.',o:[
+   ['A','“Tournaments you run” for everyone (recommended)','One wording, one thing to maintain. It opens a list with a “New tournament” button.',1],
+   ['B','“Run a tournament” until their first tournament exists','Better invitation, but the label changes with a fact the rail does not currently know.',0],
+   ['C','No row until they host; the card on the Tournaments page stays the door','Quietest, but a coach with only a closed season can no longer start one.',0]]},
+ {t:'Who sees “Tournaments you run”',why:'Tab 4. The Admin door shows to owners and admins today. The new link opens pages some helpers cannot use.',o:[
+   ['A','Whoever can run tournaments (recommended)','The owner, and any coach given the “Run tournaments” grant. No dead-end links.',1],
+   ['B','The owner only','Cleanest to build, and it strands a coach the owner gave the grant to.',0],
+   ['C','Everyone keeps a narrow Admin door','Keeps the word Admin alive in a portal that was meant to stop using it.',0]]},
+ {t:'Helpers are managed in the tournament pages, with no portal link',why:'Your suggestion. The coach pages keep the coaching staff. The tournament pages already have two doors to tournament staff: the Members row in the computer menu, and the Staff &amp; access card in Settings &amp; access, which a phone reaches through More. It reverses the “Tournament helpers” link you ruled on 2026-10-28.',o:[
+   ['A','Yes, no helpers link in the portal (recommended)','The foot stays at four rows, the phone group pairs evenly, and there is nothing in the portal to confuse with the Staff page.',1],
+   ['B','Restore the “Tournament helpers” link','One click fewer to invite someone, at the cost of a second portal row and a label that does not match the page it opens.',0]]},
+ {t:'One name for the staff page inside the tournament pages',why:'The Settings &amp; access card is called “Staff &amp; access”. The menu row and the page it opens are called “Members”. That is the same job under two names.',o:[
+   ['A','“Staff &amp; access” on the row and the page heading, in a one-team workspace (recommended)','Matches the card and your own words, and needs no new wording.',1],
+   ['B','“Tournament staff”','Reads as the pair to the coach page’s Staff, but is a third name.',0],
+   ['C','Leave “Members”','Nothing to change, and the mismatch with the card stays.',0]]},
+ {t:'The icon on “Tournaments you run”',why:'Tab 1. The portal’s Tournaments row already wears a trophy, in the same rail. The nav standard calls the trophy Tournaments’ icon everywhere. I first leaned to a different icon, and that line settles it for me.',o:[
+   ['A','Trophy (recommended)','Follows the nav standard. The words, not the icon, separate playing in from hosting.',1],
+   ['B','A different icon, added to the nav standard’s icon list','One idea per icon, at the cost of an exception to “everywhere”. The drawing uses a flag only as a stand-in.',0]]},
+ {t:'The way back from a tournament page',why:'Tab 5. Today it is the “Coaches Portal” row in the menu foot and the phone’s You group, hidden when the person has no team.',o:[
+   ['A','Keep the name and place; show it to the owner of a one-team workspace even with no team (recommended)','Closes the one-way street. Nothing new to learn.',1],
+   ['B','Leave it as it is','A no-team owner has no way back except Plan &amp; billing.',0],
+   ['C','Add a “Back” control on the page','Contradicts the nav standard, which names doors by where they go.',0]]},
+ {t:'The “Coaches Portal not ready” screen',why:'It has no rail. Once Admin goes, a no-team owner with a tournament running has no way to it from here.',o:[
+   ['A','Add “Tournaments you run” as a plain door beside Plan &amp; billing, owner only (recommended)','The screen stays small.',1],
+   ['B','Add nothing','The owner can reach it by going through Plan &amp; billing first.',0]]},
+ {t:'The demo sandbox',why:'The sandbox hides Plan &amp; billing already. The demo coach cannot run tournaments, so the link would not show anyway.',o:[
+   ['A','Hide the link in the sandbox by name (recommended)','A future demo owner is never sent from the demo into the real Admin area. One more line, not a behaviour change today.',1],
+   ['B','Rely on permissions alone','Works today, and fails quietly the day a demo account gets more rights.',0]]},
+ {t:'Where a board admin with no team lands (Part 1)',why:'Tab 4. Part 1 forwards the admin address to the portal. For a board admin with no team the portal is the “not ready” screen.',o:[
+   ['A','Send them to the tournaments list instead (recommended)','They were invited to help with tournaments. It is the one page they can use, and the staff page is in its menu.',1],
+   ['B','Send everyone to the portal','Simplest redirect, and a dead end for these helpers.',0]]},
+ {t:'Who loses the Admin door',why:'The shipped “standalone owner” test is the billing test: owner only. Built on it, a board admin in the same workspace would keep an Admin door that forwards back to the portal.',o:[
+   ['A','It leaves every role in a one-team workspace (recommended)','The door goes for everyone it would dead-end for. Club owners and admins are unaffected.',1],
+   ['B','It leaves the owner only','Leaves a loop for board admins.',0]]}
+];
+const ANS=(()=>{try{return JSON.parse(localStorage.getItem('pw-links-answers-2')||'{}')}catch(_){return {}}})();
+const saveAns=()=>{try{localStorage.setItem('pw-links-answers-2',JSON.stringify(ANS))}catch(_){}};
+const plain=s=>String(s).replace(/<[^>]+>/g,'').replace(/&amp;/g,'&');
+function ansText(){
+  return 'Portal workspace links: my answers\n'+ASKS.map((a,i)=>{const k=ANS[i];const o=a.o.find(x=>x[0]===k);return (i+1)+'. '+plain(a.t)+' → '+(o?k+' ('+plain(o[1]).replace(' (recommended)','')+')':'no answer yet');}).join('\n');
+}
+function t6(){
+  const n=Object.keys(ANS).length;
+  let h='<h2>Asks for the owner</h2><p class="intro">Each has my recommendation first. Click an option to choose it (click again to undo). Your choices stay in this browser. “Copy answers” gives you text to paste back.</p>';
+  h+='<div class="ruled"><b>Ruled 2026-10-28:</b> a standalone coach reaches hosted tournaments through a workspace-level “Tournaments you run” link next to Plan &amp; billing. <b>Revised in this review:</b> the second half of that ruling, a quiet “Tournament helpers” link, is dropped at your suggestion, because the tournament pages already manage tournament staff (ask 6). I agree with the placement. The closed-season gate sends a coach to the season page before any team screen mounts, so the section on the Tournaments page cannot serve a coach whose only season is closed. The rail’s foot, which stays, can.</div>';
+  h+='<h3>Where I would push back</h3><ol class="push">'
+   +'<li><b>“Standalone” in the Stage 3 prompt is the wrong test to build on.</b> The shipped standalone-owner test is owner-only, because it is the billing test. A board admin in the same workspace would keep an Admin door that now forwards to the portal. Ask 13.</li>'
+   +'<li><b>Part 1 leaves one kind of helper on a dead end.</b> A board admin with no team lands on “Coaches Portal not ready” once the admin address forwards to the portal. The link cannot help them, because that screen has no rail. Ask 12.</li>'
+   +'<li><b>The staff page has two names in the tournament pages.</b> The card says “Staff &amp; access”; the menu row and the page say “Members”. Ask 7.</li>'
+   +'<li><b>The way back disappears for an owner with no team.</b> It is hidden unless the person has a coaching assignment. Ask 9.</li>'
+   +'</ol>';
+  h+=callout('Found along the way, not an ask.','The “not ready” screen offers a door called “Back to Coaches Portal home”, and the nav standard says a door is named by where it goes, never “Back to…”. It ships today and is drawn here as it is.');
+  h+='<div class="answers"><div class="ah"><b>Your answers · '+n+' of '+ASKS.length+'</b><button type="button" class="abtn" data-act="rec">Use all recommendations</button><button type="button" class="abtn" data-act="clear">Clear</button><button type="button" class="abtn" data-act="copy">Copy answers</button></div><details><summary style="cursor:pointer;margin-top:.5rem;font-size:12px;color:var(--dim)">Show my answers as text</summary><textarea id="anstext" readonly aria-label="My answers">'+esc(ansText())+'</textarea></details></div>';
+  h+=ASKS.map((a,i)=>'<div class="ask"><h3>'+(i+1)+'. '+a.t+'</h3><p class="why">'+a.why+'</p><div class="opts">'+a.o.map(o=>'<button type="button" class="opt'+(o[3]?' rec':'')+'" data-ask="'+i+'" data-o="'+o[0]+'" aria-pressed="'+(ANS[i]===o[0])+'"><b>'+o[0]+' · '+o[1].replace(' (recommended)','')+'</b>'+(o[3]?'<span class="t">recommended</span>':'')+'<span class="you">your answer</span><div class="od">'+o[2]+'</div></button>').join('')+'</div></div>').join('');
+  return h;
+}
+
+/* ---------- boot ---------- */
+const TABS=[['computer','1 · Computer',t1],['phone','2 · Phone',t2],['states','3 · Every state',t3],['staff','4 · Tournament staff',t4],['back','5 · The way back',t5],['asks','6 · Asks for the owner',t6]];
+const tabsEl=document.getElementById('tabs'), panelsEl=document.getElementById('panels');
+let cur=null;
+function show(id){
+  const t=TABS.find(x=>x[0]===id)||TABS[0]; cur=t[0];
+  tabsEl.innerHTML=TABS.map(x=>'<button type="button" role="tab" data-t="'+x[0]+'" aria-selected="'+(x[0]===cur)+'">'+x[1]+'</button>').join('');
+  panelsEl.innerHTML='<section class="panel" role="tabpanel">'+t[2]()+'</section>';
+  try{ if(location.hash.slice(1)!==cur) history.replaceState(null,'','#'+cur); }catch(_){}
+}
+const rerender=()=>{const y=window.scrollY; show(cur); window.scrollTo(0,y);};
+tabsEl.addEventListener('click',e=>{const b=e.target.closest('button[data-t]'); if(b){show(b.dataset.t); window.scrollTo(0,0);}});
+document.querySelector('.mode').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-m]'); if(!b) return;
+  DIFF=b.dataset.m==='diff';
+  document.querySelectorAll('.mode button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  rerender();
+});
+panelsEl.addEventListener('click',e=>{
+  const s=e.target.closest('button[data-st]'); if(s){ST.s=s.dataset.st; rerender(); return;}
+  const o=e.target.closest('.opt[data-ask]');
+  if(o){const i=o.dataset.ask,k=o.dataset.o; if(ANS[i]===k) delete ANS[i]; else ANS[i]=k; saveAns(); rerender(); return;}
+  const a=e.target.closest('[data-act]');
+  if(a){
+    const act=a.dataset.act;
+    if(act==='rec'){ASKS.forEach((x,i)=>{const r=x.o.find(z=>z[3]); if(r) ANS[i]=r[0];}); saveAns(); rerender(); return;}
+    if(act==='clear'){for(const k in ANS) delete ANS[k]; saveAns(); rerender(); return;}
+    if(act==='copy'){
+      const ta=document.getElementById('anstext'); const txt=ansText();
+      const fallback=()=>{const d=ta&&ta.closest('details'); if(d) d.open=true; if(ta){ta.focus();ta.select();} a.textContent='Press Ctrl+C to copy';};
+      try{ navigator.clipboard.writeText(txt).then(()=>{a.textContent='Copied';},fallback); }catch(_){ fallback(); }
+    }
+  }
+});
+window.addEventListener('hashchange',()=>{const id=location.hash.slice(1); if(id&&id!==cur&&TABS.some(x=>x[0]===id)) show(id);});
+show(location.hash.slice(1)||'computer');
+</script>

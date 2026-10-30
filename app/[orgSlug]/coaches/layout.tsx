@@ -16,7 +16,7 @@ import { getCoachOnboardingPrefs } from '@/lib/user-preferences';
 import { CoachesOverlayProvider } from '@/lib/coaches-overlay';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { COACHES_HOME_PATH, teamWorkspaceReactivatePath } from '@/lib/coaches-portal-routes';
-import { coachBillingLink } from '@/lib/coach-billing-access';
+import { coachBillingLink, coachHostedTournamentsLink } from '@/lib/coach-billing-access';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import { getDemoOrgBySlug } from '@/lib/demo-org';
 import { SEE_IT_LIVE_COACHES_PATH } from '@/lib/sandbox-door';
@@ -117,8 +117,16 @@ export default async function CoachesLayout({
 
   // Accepted membership only (the shared read, so a pending invitee has no role). The wall below reads it
   // solely to offer its owner the recovery door; it still seeds no role and mounts none of the working portal.
-  const readRole = async () =>
-    ((await getAcceptedMember(authCtx.org.id, authCtx.user.id))?.role as OrgRole | undefined) ?? null;
+  const readMember = async () => {
+    const member = await getAcceptedMember(authCtx.org.id, authCtx.user.id);
+    return {
+      role: (member?.role as OrgRole | undefined) ?? null,
+      // Seeded into the client OrgProvider: with an initial org it never fetches them, and the rail's
+      // Tournaments you run door reads the per-member grant from here.
+      capabilities: (member?.capabilities as Record<string, boolean> | null | undefined) ?? null,
+    };
+  };
+  const readRole = async () => (await readMember()).role;
   const ownerDoorHref = (role: OrgRole | null) => coachBillingLink(authCtx.org, role, null, !!getDemoOrgBySlug(orgSlug));
 
   // Billing rail (owner ruling 2026-08-06) — the portal's human half. Every coach API route is
@@ -172,14 +180,18 @@ export default async function CoachesLayout({
   // below. Same resolver + same "is this org page real?" predicate as the event chrome; a team
   // workspace resolves to null and the masthead simply shows no flip. The wrapper carries the
   // `.catch(() => null)` that keeps a DB blip off the portal's critical path (/review 2026-08-02).
-  const [assignments, closedAll, onboardingPrefs, publicHref, initialUserRole] = await Promise.all([
+  const [assignments, closedAll, onboardingPrefs, publicHref, member] = await Promise.all([
     getCoachPortalAssignments(authCtx.org.id, authCtx.user.id, isTeamWorkspace),
     getCoachPortalClosedAssignments(authCtx.org.id, authCtx.user.id, isTeamWorkspace),
     getCoachOnboardingPrefs(authCtx.user.id),
     isTeamWorkspace ? Promise.resolve(null) : getCoachPortalPublicHref(authCtx.org),
-    readRole(),
+    readMember(),
   ]);
+  const initialUserRole = member.role;
+  const initialUserCapabilities = member.capabilities;
   const ownerBillingHref = ownerDoorHref(initialUserRole);
+  const ownerTournamentsHref = initialUserRole === 'owner'
+    ? coachHostedTournamentsLink(authCtx.org, initialUserRole, null, !!getDemoOrgBySlug(orgSlug)) : null;
   // Same shaping as the assignments API: one entry per team, only teams with no active year.
   const activeTeamIds = new Set(assignments.map(a => a.teamId));
   const seenClosedTeams = new Set<string>();
@@ -200,7 +212,7 @@ export default async function CoachesLayout({
     const viewerIsOwner = initialUserRole === 'owner';
     const ownerName = viewerIsOwner ? null : await orgOwnerDisplayName(authCtx.org.id);
     return (
-      <OrgProvider initialOrg={authCtx.org} initialUserRole={initialUserRole}>
+      <OrgProvider initialOrg={authCtx.org} initialUserRole={initialUserRole} initialUserCapabilities={initialUserCapabilities}>
         <div style={{ display: 'contents' }} {...coachWarmAttr}>
           <CoachThemeColor />
           <div className={styles.coachesShell}>
@@ -257,7 +269,7 @@ export default async function CoachesLayout({
       // keeps the operator strip above and a real triad of doors below: where am I, who am I,
       // and a way out. The warm marker + theme wrapper match the portal shell exactly, so the
       // wall reads as this product rather than as an error page.
-      <OrgProvider initialOrg={authCtx.org} initialUserRole={initialUserRole}>
+      <OrgProvider initialOrg={authCtx.org} initialUserRole={initialUserRole} initialUserCapabilities={initialUserCapabilities}>
         <div style={{ display: 'contents' }} {...coachWarmAttr}>
           <CoachThemeColor />
           <div className={styles.coachesShell}>
@@ -286,6 +298,9 @@ export default async function CoachesLayout({
                     // A full request is deliberate: a shared server layout persists across client navigation.
                     <a href={ownerBillingHref} className="btn btn-lime">{W.page.title}</a>
                   )}
+                  {ownerTournamentsHref && (
+                    <Link href={ownerTournamentsHref} className={styles.notAssignedDoor}>Tournaments you run</Link>
+                  )}
                   <Link href="/discover" className={styles.notAssignedDoor}>Go to Home</Link>
                   {orgHomeHref && (
                     <Link href={orgHomeHref} className={styles.notAssignedDoor}>
@@ -307,7 +322,7 @@ export default async function CoachesLayout({
     // layout). Without this, OrgProvider fetches /api/org-context with no slug and a multi-org
     // user resolves to their DEFAULT org, not this team workspace — which mislabeled the sidebar
     // and scoped the notification bell to the wrong org (found 2026-07-13).
-    <OrgProvider initialOrg={authCtx.org} initialUserRole={initialUserRole}>
+    <OrgProvider initialOrg={authCtx.org} initialUserRole={initialUserRole} initialUserCapabilities={initialUserCapabilities}>
       <CoachesProvider
         orgSlug={orgSlug}
         initialAssignments={assignments}

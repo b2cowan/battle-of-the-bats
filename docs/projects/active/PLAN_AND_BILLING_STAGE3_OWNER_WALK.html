@@ -1,0 +1,309 @@
+<title>Plan and Billing Stage 3 Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one narrow reading column; a sticky progress bar; walk cards that open one at a time. */
+:root {
+  --bg: #f5f7f8; --panel: #ffffff; --ink: #14212b; --muted: #526270; --line: #d5dde3;
+  --accent: #0b6e8a; --accent-ink: #ffffff; --accent-soft: #dff0f5;
+  --pass: #17794a; --pass-soft: #def3e7; --issue: #b3261e; --issue-soft: #fbe3e0;
+  --call: #8a5a00; --call-soft: #fbefd0; --code-bg: #eaf0f3;
+  --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f171d; --panel: #17222a; --ink: #e6edf1; --muted: #9db0bd; --line: #2b3a45;
+  --accent: #5cc0dc; --accent-ink: #06222c; --accent-soft: #163543;
+  --pass: #5fd391; --pass-soft: #16342a; --issue: #ff8f86; --issue-soft: #3d1d1a;
+  --call: #f0c25a; --call-soft: #3a2f12; --code-bg: #1d2b34; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0f171d; --panel: #17222a; --ink: #e6edf1; --muted: #9db0bd; --line: #2b3a45;
+  --accent: #5cc0dc; --accent-ink: #06222c; --accent-soft: #163543;
+  --pass: #5fd391; --pass-soft: #16342a; --issue: #ff8f86; --issue-soft: #3d1d1a;
+  --call: #f0c25a; --call-soft: #3a2f12; --code-bg: #1d2b34; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5;
+  padding-block: 0 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 760px; margin: 0 auto; }
+h1 { font-size: 26px; line-height: 1.2; margin: 28px 0 6px; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0 0 8px; text-wrap: balance; }
+p { margin: 0 0 10px; }
+code, .path { font-family: var(--mono); font-size: 13px; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.muted { color: var(--muted); }
+.asof { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+.card.signin { border-color: var(--accent); }
+.kicker { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; font-weight: 600; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; vertical-align: top; padding: 6px 8px; border-top: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; border-top: 0; }
+.tablewrap { overflow-x: auto; }
+.progress { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding: 10px 0 8px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+.progress .row { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; margin-bottom: 6px; flex-wrap: wrap; }
+.walkhead { width: 100%; text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+  display: flex; gap: 12px; align-items: center; justify-content: space-between; cursor: pointer; font: inherit; color: inherit; margin-bottom: 0; }
+.walkhead:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.walkhead .t { min-width: 0; }
+.walkhead .t b { display: block; font-size: 16px; }
+.walkhead .t span { color: var(--muted); font-size: 13px; }
+.chip { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--code-bg); color: var(--muted); white-space: nowrap; }
+.chip.pass { background: var(--pass-soft); color: var(--pass); }
+.chip.issue { background: var(--issue-soft); color: var(--issue); }
+.chip.call { background: var(--call-soft); color: var(--call); }
+.chip.prog { background: var(--accent-soft); color: var(--accent); }
+.walk { margin-bottom: 14px; }
+.walkbody { background: var(--panel); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 10px 10px; padding: 16px; }
+.walk.open .walkhead { border-radius: 10px 10px 0 0; }
+.walk:not(.open) .walkbody { display: none; }
+.intro dt { font-weight: 600; font-size: 13px; color: var(--muted); margin-top: 8px; }
+.intro dd { margin: 2px 0 0; }
+.who { margin: 18px 0 6px; font-size: 13px; font-weight: 600; color: var(--accent); }
+.who .path { color: var(--ink); }
+.step { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 4px 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.step input[type=checkbox] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .n { color: var(--muted); font-size: 12px; font-family: var(--mono); }
+.step .do { font-weight: 500; }
+.step .see { color: var(--muted); margin-top: 3px; }
+.step .see b { color: var(--ink); font-weight: 600; }
+.opts { grid-column: 2; display: grid; gap: 6px; margin-top: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.opts input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--accent); }
+.step.multi { grid-template-columns: 26px minmax(0, 1fr); }
+.step.multi .mark { width: 20px; height: 20px; margin-top: 2px; border-radius: 4px; border: 2px solid var(--line); }
+.step.multi.done .mark { background: var(--accent); border-color: var(--accent); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 8px; }
+.verdicts button, .actions button { font: inherit; font-weight: 600; padding: 9px 14px; min-height: 44px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+.verdicts button[aria-pressed=true].pass { background: var(--pass-soft); border-color: var(--pass); color: var(--pass); }
+.verdicts button[aria-pressed=true].issue { background: var(--issue-soft); border-color: var(--issue); color: var(--issue); }
+.verdicts button[aria-pressed=true].call { background: var(--call-soft); border-color: var(--call); color: var(--call); }
+.actions button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+textarea { width: 100%; min-height: 76px; font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); resize: vertical; }
+.note { font-size: 13px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 10px; margin: 10px 0; }
+.warn { border-left-color: var(--call); background: var(--call-soft); color: var(--ink); padding: 8px 10px; border-radius: 0 6px 6px 0; }
+.out { margin-top: 10px; }
+.out textarea { font-family: var(--mono); font-size: 12px; min-height: 140px; }
+.copied { font-size: 13px; color: var(--pass); margin-left: 8px; }
+@media (max-width: 480px) { h1 { font-size: 22px; } .card, .walkbody { padding: 12px; } }
+@media (prefers-reduced-motion: reduce) { .bar > i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <h1>Plan and Billing Stage 3 Walk</h1>
+  <p class="asof">As of 2026-10-30. Stage 3 retires the coach's admin view: the Admin door leaves a standalone Coaches Portal, old admin and billing addresses forward to the portal, and a new "Tournaments you run" door takes its place. This is the uncommitted build after the review fixes.</p>
+
+  <div class="card signin">
+    <p class="kicker">Sign in as</p>
+    <p><b>Where:</b> <code>http://localhost:3000</code> (the dev server). <b>Passwords:</b> the matching <code>UAT_*_PASSWORD</code> value in <code>.env.local</code>. They are dev-only accounts, so keep this page private.</p>
+    <div class="tablewrap"><table>
+      <tr><th>Who</th><th>Account</th><th>Where they work</th></tr>
+      <tr><td>Owner (head coach)</td><td><code>uat-coach@uat-test-org.local</code></td><td><span class="path">/uat-standalone/coaches</span> (a standalone Premium portal, team "UAT Standalone Team")</td></tr>
+      <tr><td>Assistant to be granted</td><td><code>uat-helper@uat-test-org.local</code></td><td>same portal, assistant coach</td></tr>
+      <tr><td>Assistant never granted</td><td><code>uat-asst-nomoney@uat-test-org.local</code></td><td>same portal, assistant coach</td></tr>
+      <tr><td>Cancelled portal owner</td><td><code>UAT_FREE_COACH_EMAIL</code> in <code>.env.local</code></td><td><span class="path">/uat-free-team-coaches-portal/coaches</span></td></tr>
+      <tr><td>Club owner</td><td><code>uat-club-owner@uat-rep-club.local</code></td><td><span class="path">/uat-rep-club/admin</span></td></tr>
+    </table></div>
+    <p class="note">The owner belongs to several workspaces, so after signing in use the addresses above directly instead of the workspace picker. Type each address in the browser's address bar.</p>
+  </div>
+
+  <div class="card">
+    <p class="kicker">Before you start</p>
+    <p class="note warn">New files were added, so restart the dev server (<code>npm run dev</code>, wait for "Ready") before walking. Walks 1 to 3 change nothing except one switch in Walk 2, which has a put-back. Walk 4 goes last and changes nothing: do not press Reactivate.</p>
+    <p>Check phone steps at 390px wide (browser dev tools, device mode). If a step does not match what you see, mark the part <b>Issue</b> and write what you saw; the screen may have moved since this was written.</p>
+    <p class="muted">Not in any walk, because no prepared account exists: a board admin with no team, an owner with no team, a club owner who also coaches, and a workspace whose free time ended. The automated tests cover those landings. Say so if you want fixtures made.</p>
+  </div>
+
+  <div class="progress" id="progress">
+    <div class="row"><span id="ptext">Checked 0 of 0</span><span id="pwalks"></span></div>
+    <div class="bar"><i id="pbar"></i></div>
+  </div>
+
+  <div id="walks"></div>
+
+  <div class="card">
+    <p class="kicker">All walks</p>
+    <div class="actions"><button class="primary" id="all-build" type="button">Build summary of all walks</button><span class="copied" id="all-copied" hidden>Copied</span></div>
+    <div class="out"><textarea id="all-out" readonly placeholder="Press the button, then paste the result back into the chat."></textarea></div>
+  </div>
+</div>
+
+<script>
+var KEY = 'plan-billing-stage3-walk-v1';
+var WALKS = [
+  { id: 'w1', title: 'Walk 1 · The new door and the missing Admin', blurb: 'The owner of a standalone portal, on a computer then a phone.',
+    forWhat: 'Confirm the owner finds "Tournaments you run" in the right places, no longer sees Admin, and that the people page is called "Staff & access" everywhere in a one-team workspace.',
+    passes: 'Every step is ticked. The door is in the computer menu foot and the phone More sheet, leads to the tournaments list, and the name Staff & access is the same on every screen listed.',
+    not: 'Who else gets the door (Walk 2), old addresses (Walk 3), cancelled and club workspaces (Walk 4).',
+    steps: [
+      { who: 'Owner · uat-coach@uat-test-org.local', where: 'Computer, full width', do: 'Open /uat-standalone/coaches. Look at the foot of the left menu.', see: 'In this order: <b>Help, Plan & billing, Tournaments you run</b> (trophy icon), <b>Collapse sidebar</b>. There is no Admin row anywhere in the menu. Tournaments you run looks quiet like Help, not highlighted like a page you are on.' },
+      { do: 'Click Tournaments you run.', see: 'The workspace tournaments list opens with <b>New tournament</b> available, even if you have never hosted one.' },
+      { do: 'In that tournaments area, look at the left menu for the people page, and for the way back.', see: 'The people row says <b>Staff & access</b>, not Members. A <b>Coaches Portal</b> row is near the foot.' },
+      { do: 'Click Staff & access.', see: 'The page heading says <b>Staff & access</b> and the browser tab starts with "Staff & access". The seat line ("N of 3 staff seats used") and invitations are unchanged.' },
+      { do: 'Open /uat-standalone/admin/org, then /uat-standalone/admin/org/members/audit.', see: 'On the first, the tile reads <b>Staff & access</b>. On the Audit log, the back link at the top reads <b>Staff & access</b>.' },
+      { do: 'Click Coaches Portal in the left menu.', see: 'You are back in the portal at /uat-standalone/coaches.' },
+      { who: 'Owner, same account', where: 'Phone, 390px wide', do: 'On /uat-standalone/coaches open More, then look at the You group.', see: 'In this order: <b>Account, Home, Plan & billing, Tournaments you run</b>. No Admin. The label wraps without being cut off.' },
+      { do: 'Tap Tournaments you run, then open the menu and go More, Settings & access, Staff & access.', see: 'The tournaments list opens. There is <b>no separate Members row</b> in the phone menu; the people page is reached only as Staff & access.' }
+    ] },
+  { id: 'w2', title: 'Walk 2 · Who gets the door', blurb: 'An assistant without the switch, then with it, then without it again.',
+    forWhat: 'Confirm that only people holding the "Run tournaments" switch see the door, that it appears on the first load (a review found it missing for exactly these people), and that granting and removing it behaves.',
+    passes: 'Every step is ticked, including the put-back. The granted assistant sees the door at once; nobody except the owner sees Plan & billing; nobody sees Admin.',
+    not: 'A board admin with no team and an owner with no team (no accounts exist for them).',
+    steps: [
+      { who: 'Not granted · uat-asst-nomoney@uat-test-org.local', where: 'Computer, then phone More', do: 'Open /uat-standalone/coaches. Check the foot of the left menu, then the phone More sheet.', see: '<b>No</b> Tournaments you run, <b>no</b> Plan & billing, <b>no</b> Admin.' },
+      { do: 'Type /uat-standalone/admin in the address bar.', see: 'You land on /uat-standalone/coaches (they have a team). You do not see a tournaments list or any "Welcome to FieldLogicHQ" page.' },
+      { who: 'Owner · uat-coach@uat-test-org.local', do: 'In the portal open the team\'s Staff page, open uat-helper\'s sheet and switch <b>Run tournaments</b> on. Close and reopen the sheet.', see: 'The switch is still on.' },
+      { who: 'Granted · uat-helper@uat-test-org.local', where: 'Computer, then phone More', do: 'Sign in fresh and open /uat-standalone/coaches. Do not click anywhere first. Look at the foot of the left menu, then the phone More sheet.', see: '<b>Tournaments you run is there on first load</b>: menu foot is Help, Tournaments you run, Collapse sidebar; phone You group is Account, Home, Tournaments you run. Still no Plan & billing and no Admin.' },
+      { do: 'Click Tournaments you run.', see: 'The workspace tournaments list opens.' },
+      { do: 'Type /uat-standalone/admin in the address bar.', see: 'You land on /uat-standalone/coaches, not the tournaments list, because this person has a team.' },
+      { who: 'Owner · uat-coach@uat-test-org.local', do: 'Put back: switch Run tournaments off for uat-helper.', kind: 'options', options: ['Did it', 'Skipped it, the switch is still on'], see: 'Tick which one, so the record shows the real state.' },
+      { who: 'uat-helper@uat-test-org.local', do: 'Reload /uat-standalone/coaches. Skip this if you skipped the put-back.', see: 'The Tournaments you run door is <b>gone</b>.' }
+    ] },
+  { id: 'w3', title: 'Walk 3 · Old addresses, sign-in and two calls', blurb: 'Bookmarks and emails still work; you make two decisions.',
+    forWhat: 'Confirm an old admin or billing address forwards to the right place with no loop, that signing in never lands on an admin welcome page, and take two calls from the review.',
+    passes: 'Every step is ticked and each call has an answer.',
+    not: 'Real payments, card saving and Stripe returns. Those are separate Stripe walks.',
+    steps: [
+      { who: 'Owner · uat-coach@uat-test-org.local', do: 'Type /uat-standalone/admin, then /uat-standalone/admin/onboarding?continueSetup=1.', see: 'Both arrive at the portal. You never see "Welcome to FieldLogicHQ" or "Optional: set up a tournament".' },
+      { do: 'Type /uat-standalone/admin/org/billing?card_saved=1.', see: 'You arrive at Plan & billing in the portal (/uat-standalone/coaches/billing) and the address bar still ends with <code>?card_saved=1</code>.' },
+      { do: 'Type /uat-standalone/admin/tournaments/settings/subscription.', see: 'You arrive at the same Plan & billing page.' },
+      { do: 'After each of the three, press the browser Back button, then do a hard refresh.', see: 'No loop and no flash of an old screen.' },
+      { do: 'Sign out and sign in again as the owner. Pick UAT Standalone if a workspace picker shows.', see: 'You land inside a Coaches Portal, never on an admin welcome page.' },
+      { who: 'Call 1 · answer as the owner', do: 'The old billing address forwards permanently, so browsers remember it. If a workspace could ever move from this kind to a Club, that browser would keep bouncing to the coach page.', kind: 'options', options: ['Keep it permanent', 'Make it temporary', 'Something else, see the notes'], see: 'Which do you want?' },
+      { who: 'Not granted · uat-asst-nomoney@uat-test-org.local', do: 'Type /uat-standalone/admin/org/members. Look at what the page shows a plain assistant.', see: 'Write down what is on screen in the notes. The data is protected, but the page itself now opens for any member of this kind of workspace; before this build it forwarded them away.' },
+      { who: 'Call 2 · answer as the owner', do: 'Is what that assistant saw acceptable?', kind: 'options', options: ['Acceptable as it is', 'Send plain assistants back to the portal instead', 'Needs a closer look'], see: 'Which do you want?' }
+    ] },
+  { id: 'w4', title: 'Walk 4 · Cancelled portal, the club side and the demo', blurb: 'Last, and nothing is changed. Do not press Reactivate.',
+    forWhat: 'Confirm the cancelled wall still works and gains no new door, and that a club keeps its own admin and its own wording.',
+    passes: 'Every step is ticked. The cancelled owner reaches the existing recovery page; the club owner keeps Admin and "Members"; no standalone-only door appears on a club or the demo.',
+    not: 'Reactivating, paying, a club owner who also coaches, a workspace whose free time ended.',
+    steps: [
+      { who: 'Cancelled owner · UAT_FREE_COACH_EMAIL', do: 'Open /uat-free-team-coaches-portal/coaches.', see: 'The existing cancelled screen with its Reactivate way back. There is <b>no</b> Tournaments you run door on it.' },
+      { do: 'Type /uat-free-team-coaches-portal/admin/org/billing.', see: 'You arrive at the existing reactivate page, with no bouncing between pages. Do not press Reactivate.' },
+      { who: 'Club coach · uat-coach@uat-test-org.local', do: 'Open /uat-rep-club/coaches (if you cannot, note what you see).', see: 'No Tournaments you run, no Plan & billing, no Admin row. A club coach is not a standalone owner.' },
+      { who: 'Club owner · uat-club-owner@uat-rep-club.local', do: 'Open /uat-rep-club/admin.', see: 'The club admin loads with no redirect. The people row still says <b>Members</b>, not Staff & access, and Plan & billing is still in the menu.' },
+      { who: 'Demo, no sign-in', do: 'Open /see-it-live/coaches and stay inside the demo for this one step.', see: 'The menu foot has <b>no</b> Tournaments you run. Leaving the demo path ends its session, so do this step in one pass.' }
+    ] }
+];
+
+var state = {};
+function load() { try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+function ws(w) { if (!state[w.id]) state[w.id] = { ticks: {}, verdict: '', notes: '', open: false }; return state[w.id]; }
+function stepDone(w, i) {
+  var s = w.steps[i], t = ws(w).ticks;
+  if (s.kind === 'options') return s.options.some(function (_, k) { return t[i + ':' + k]; });
+  return !!t[i];
+}
+function counts(w) { var d = 0; w.steps.forEach(function (_, i) { if (stepDone(w, i)) d++; }); return { done: d, total: w.steps.length }; }
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
+function statusChip(w) {
+  var c = counts(w), v = ws(w).verdict;
+  if (v === 'pass') return c.done < c.total ? ['call', 'Passed · only ' + c.done + ' of ' + c.total + ' ticked'] : ['pass', 'Passed'];
+  if (v === 'issue') return ['issue', 'Issue'];
+  if (v === 'call') return ['call', 'Needs a call'];
+  if (c.done) return ['prog', 'In progress ' + c.done + ' of ' + c.total];
+  return ['', 'Not started'];
+}
+
+function render() {
+  var host = document.getElementById('walks'), html = '';
+  WALKS.forEach(function (w, wi) {
+    var st = ws(w), chip = statusChip(w);
+    html += '<section class="walk' + (st.open ? ' open' : '') + '" data-w="' + w.id + '">';
+    html += '<button class="walkhead" type="button" aria-expanded="' + (st.open ? 'true' : 'false') + '" data-toggle="' + w.id + '"><span class="t"><b>' + esc(w.title) + '</b><span>' + esc(w.blurb) + '</span></span><span class="chip ' + chip[0] + '">' + esc(chip[1]) + '</span></button>';
+    html += '<div class="walkbody">';
+    html += '<dl class="intro"><dt>What this walk is for</dt><dd>' + w.forWhat + '</dd><dt>It passes when</dt><dd>' + w.passes + '</dd><dt>Not in this walk</dt><dd>' + w.not + '</dd></dl>';
+    var lastWho = null;
+    w.steps.forEach(function (s, i) {
+      if (s.who && s.who !== lastWho) { html += '<div class="who">' + esc(s.who) + (s.where ? ' <span class="muted">· ' + esc(s.where) + '</span>' : '') + '</div>'; lastWho = s.who; }
+      else if (s.where) { html += '<div class="who"><span class="muted">' + esc(s.where) + '</span></div>'; }
+      if (s.kind === 'options') {
+        var done = stepDone(w, i);
+        html += '<div class="step multi' + (done ? ' done' : '') + '"><span class="mark" aria-hidden="true"></span><div><div class="n">' + (i + 1) + '</div><div class="do">' + s.do + '</div><div class="see">' + s.see + '</div>';
+        html += '<div class="opts">';
+        s.options.forEach(function (o, k) {
+          var id = w.id + '-' + i + '-' + k;
+          html += '<label for="' + id + '"><input type="checkbox" id="' + id + '" data-w="' + w.id + '" data-tick="' + i + ':' + k + '"' + (st.ticks[i + ':' + k] ? ' checked' : '') + '> <span>' + esc(o) + '</span></label>';
+        });
+        html += '</div></div></div>';
+      } else {
+        var cid = w.id + '-' + i;
+        html += '<div class="step"><input type="checkbox" id="' + cid + '" data-w="' + w.id + '" data-tick="' + i + '"' + (st.ticks[i] ? ' checked' : '') + '><label for="' + cid + '"><div class="n">' + (i + 1) + '</div><div class="do">' + s.do + '</div><div class="see">' + s.see + '</div></label></div>';
+      }
+    });
+    html += '<div class="verdicts" role="group" aria-label="Verdict for this walk">';
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      html += '<button type="button" class="' + v[0] + '" data-verdict="' + v[0] + '" data-w="' + w.id + '" aria-pressed="' + (st.verdict === v[0] ? 'true' : 'false') + '">' + v[1] + '</button>';
+    });
+    html += '</div>';
+    html += '<label for="notes-' + w.id + '" class="muted" style="font-size:13px">Notes for this walk</label><textarea id="notes-' + w.id + '" data-notes="' + w.id + '" placeholder="What you saw, anything off, your answer to a call.">' + esc(st.notes || '') + '</textarea>';
+    html += '<div class="actions" style="margin-top:10px"><button type="button" class="primary" data-build="' + w.id + '">Build summary of this walk</button><span class="copied" id="copied-' + w.id + '" hidden>Copied</span></div>';
+    html += '<div class="out"><textarea id="out-' + w.id + '" readonly placeholder="Press the button, then paste the result back into the chat."></textarea></div>';
+    html += '</div></section>';
+  });
+  host.innerHTML = html;
+  progress();
+}
+
+function progress() {
+  var done = 0, total = 0, passed = 0;
+  WALKS.forEach(function (w) { var c = counts(w); done += c.done; total += c.total; if (ws(w).verdict === 'pass') passed++; });
+  document.getElementById('ptext').textContent = 'Checked ' + done + ' of ' + total;
+  document.getElementById('pwalks').textContent = passed + ' of ' + WALKS.length + ' walks passed';
+  document.getElementById('pbar').style.width = (total ? Math.round(done * 100 / total) : 0) + '%';
+}
+
+function summary(w) {
+  var st = ws(w), c = counts(w), lines = [];
+  lines.push(w.title.replace(/ · /, ' - ') + ' [' + (st.verdict ? st.verdict.toUpperCase() : 'NO VERDICT') + '] ' + c.done + '/' + c.total);
+  w.steps.forEach(function (s, i) {
+    if (s.kind === 'options') {
+      var picked = s.options.filter(function (_, k) { return st.ticks[i + ':' + k]; });
+      lines.push('  ' + (i + 1) + '. [' + (picked.length ? picked.join(' + ') : 'NO ANSWER') + '] ' + s.do.replace(/<[^>]+>/g, '').slice(0, 70));
+    } else if (!st.ticks[i]) {
+      lines.push('  ' + (i + 1) + '. NOT TICKED: ' + s.do.replace(/<[^>]+>/g, '').slice(0, 70));
+    }
+  });
+  if (st.notes && st.notes.trim()) lines.push('  Notes: ' + st.notes.trim());
+  return lines.join('\n');
+}
+function copyOut(outId, copiedId, text) {
+  var ta = document.getElementById(outId); ta.value = text;
+  var done = function () { var c = document.getElementById(copiedId); if (c) { c.hidden = false; setTimeout(function () { c.hidden = true; }, 1800); } };
+  try { navigator.clipboard.writeText(text).then(done, function () { ta.focus(); ta.select(); }); } catch (e) { ta.focus(); ta.select(); }
+}
+
+document.addEventListener('change', function (e) {
+  var t = e.target;
+  if (t.dataset && t.dataset.tick !== undefined) {
+    var w = WALKS.filter(function (x) { return x.id === t.dataset.w; })[0], st = ws(w);
+    if (t.checked) st.ticks[t.dataset.tick] = true; else delete st.ticks[t.dataset.tick];
+    save(); var keep = window.scrollY; render(); window.scrollTo(0, keep);
+  }
+});
+document.addEventListener('input', function (e) {
+  var t = e.target;
+  if (t.dataset && t.dataset.notes) { var w = WALKS.filter(function (x) { return x.id === t.dataset.notes; })[0]; ws(w).notes = t.value; save(); }
+});
+document.addEventListener('click', function (e) {
+  var b = e.target.closest ? e.target.closest('button') : null; if (!b) return;
+  if (b.dataset.toggle) {
+    WALKS.forEach(function (w) { ws(w).open = (w.id === b.dataset.toggle) ? !ws(w).open : false; });
+    save(); render();
+    var el = document.querySelector('[data-w="' + b.dataset.toggle + '"].walk'); if (el && ws(WALKS.filter(function (x) { return x.id === b.dataset.toggle; })[0]).open) el.scrollIntoView({ block: 'start' });
+  } else if (b.dataset.verdict) {
+    var w = WALKS.filter(function (x) { return x.id === b.dataset.w; })[0], st = ws(w);
+    st.verdict = st.verdict === b.dataset.verdict ? '' : b.dataset.verdict; save(); var keep = window.scrollY; render(); window.scrollTo(0, keep);
+  } else if (b.dataset.build) {
+    var w2 = WALKS.filter(function (x) { return x.id === b.dataset.build; })[0];
+    copyOut('out-' + w2.id, 'copied-' + w2.id, summary(w2));
+  } else if (b.id === 'all-build') {
+    var done = 0, total = 0; WALKS.forEach(function (w) { var c = counts(w); done += c.done; total += c.total; });
+    copyOut('all-out', 'all-copied', 'Plan and Billing Stage 3 walk, checked ' + done + ' of ' + total + '\n\n' + WALKS.map(summary).join('\n\n'));
+  }
+});
+load(); render();
+</script>

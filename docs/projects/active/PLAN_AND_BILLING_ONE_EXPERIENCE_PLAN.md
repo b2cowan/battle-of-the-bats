@@ -119,7 +119,7 @@ zero-team walls (so a lapsed owner can always reactivate); the coach's help "?" 
 the accounting / families / rep-teams layouts); the old billing and subscription URLs redirect permanently to
 the coach page (old emails and bell rows keep working); the **Admin** door leaves the portal's rail and sheet
 for standalone coaches (club owners/admins keep it); the tournament-onboarding bounce can no longer happen.
-Hosted-tournament pages and the staff-helper page stay reachable per Open question A.
+Hosted-tournament pages and the staff-helper page stay reachable per Open question A (answered: see §9 "Stage 3 doors rulings"; the build prompt's Revision block is binding).
 
 **Stage 4 — The rest of the family.** "Covered by {Club}" read-only line for coaches on club-owned teams (who
 pays, no controls); free Basic teams' upsell footer uses the same plan words; the Money tab's "club bill"
@@ -132,14 +132,25 @@ UAT specs updated; layout baselines refreshed on staging, not the dev server.
 
 ## 6. Open questions for the owner
 
-- **A. Where does a standalone coach reach the staff-helper page and the hosted-tournament pages once the
-  Admin door is gone?** Recommended: the portal's Tournaments section already links to the tournaments; add one
+- **A. ~~Where does a standalone coach reach the staff-helper page and the hosted-tournament pages once the
+  Admin door is gone?~~ ANSWERED (§9, Stage 3 doors rulings, 2026-10-30): a workspace-level "Tournaments you run" link in the
+  rail foot / phone You group; helpers are managed inside the tournament pages, no portal link.** Original text, kept as the record: Recommended: the portal's Tournaments section already links to the tournaments; add one
   quiet "Tournament helpers" link there (to the members page, kept in the hosted-tournament shell). Alternative:
   build a portal page — larger, not needed for this project.
-- **B. Does the unified "Change plan" table list Premium Coaches Portal → Club?** That is pricing/packaging —
+- **B. ~~Does the unified "Change plan" table list Premium Coaches Portal → Club?~~ ANSWERED (owner, 2026-10-30): yes.**
+  There should be a **clear path for a Premium coach to upgrade to Club, with their subscription and payments changing
+  accordingly, smooth and with minimal steps.** Not yet ruled, for the drawing session: (1) whether "upgrade to Club" means the
+  coach's one-team portal **becomes** a club they run, or means **joining an existing club** (the existing "Part of a club?"
+  door already does the second); the owner's words read as the first; (2) what happens to the team's data, the old
+  subscription and the first charge; (3) the price step from the Premium plan to Club (a pricing question for `/strategy`
+  and `/billing`, not decided here). The real move ships when Club opens for sale, as ruling 7 already says for Plus → Club.
+  Sequenced after Stage 4 and before Stage 5's help rewrite, so the docs describe it once. Original text kept as the record:
   routes to `/strategy` and `/billing`, not decided here. Stage 1 shows only moves that exist today.
-- **C. In-app invoice list.** No plan has one; invoices live only in the secure payment portal. Out of scope
-  unless the owner asks.
+- **C. ~~In-app invoice list.~~ ANSWERED (owner, 2026-10-30): yes, as our own branded invoices built from Stripe facts, and
+  it is a planning session of its own, not part of this build.** Owner asks and the planning notes live in
+  `STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md`. Planning starts at the end of this billing project, after Stripe walks 1 to 9. Until
+  then no plan has an invoice list and invoices stay in the secure payment portal. Original text kept as the record:
+  No plan has one; invoices live only in the secure payment portal. Out of scope unless the owner asks.
 
 ## 7. Risks
 
@@ -158,6 +169,88 @@ Pricing or packaging changes; merging the two plan-change server mechanisms; an 
 `/account` gaining a plan section (a plan belongs to a workspace, not a person — ruled out on purpose).
 
 ## 9. Build prompts and progress
+
+### Stage 3 implementation record — 2026-10-30
+
+**Customer outcome.** Standalone workspaces lose Admin in both coach menus, for every role.
+The shared pure `coachHostedTournamentsLink` gate supplies Tournaments you run to the rail foot,
+More → You, and the zero-team owner's plain wall door. It requires a standalone workspace,
+an entitled tournament module and the member's tournament capability; it hides in the demo and
+on cancellation. Closed seasons and multiple teams need no new season branch. The existing live
+team hosted-tournaments section stays unchanged. Club owners who coach keep Admin and their billing host.
+
+**Routing.** The server hub and new onboarding layout use one request-cached-assignment resolver.
+Owners and live/closed coaches arrive at the portal; tournament-capable members without a team
+arrive at the tournaments list. Sign-in contexts and accepted invitations use that same decision.
+Both old billing aliases permanently redirect standalone workspaces to coach billing, preserving
+payment-return and plan-panel query flags. Existing suspension exceptions, API auth and
+CancellationGuard remain. The org parent now respects standalone account identity before applying
+the Tournament-tier bounce, including an effective Tournament plan on a team workspace.
+
+**Navigation and help.** Standalone Staff & access replaces Members in the admin organization row,
+page heading and document title; seat behavior stays. Coaches Portal remains the way-back row and
+now includes an owner without a team. Tournament lock links, settings, dashboard and guidance use
+the billing resolver with the full workspace identity. Coach/tournament help describes these doors.
+There is no helpers portal door or extra phone Members row.
+
+**Files, grouped.** Routing: admin hub, onboarding layout, organization layout, billing page,
+`coach-portal-request`, `user-contexts`, `invite-acceptance`. Access/navigation: `coach-billing-access`,
+`use-current-org-coach-access`, both coach menus, `admin-kit-nav`, `useAdminKitNav`, `MembersKit`,
+and the zero-team coach layout. Billing links: tournament list/dashboard/registrations/settings/
+summary/schedule/communication/branding/results, publish modal, setup wizard, record window,
+PlanLockLine, HelpDrawer and tournament guidance. Tests: coach host, admin kit, navigation standard,
+billing suspension, plan-panel and publish pins; new Stage 3 routing and admin-door tests; wall UAT.
+Help: coach and tournament articles. Tracking: this plan, its PM brief, TODO and the
+[owner walk](PLAN_AND_BILLING_STAGE3_OWNER_WALK.md). Pre-existing edits in shared files were retained.
+
+**Baseline recorded before implementation.** `verify:changed`: 12,270 unit tests passed; then
+ESLint 9.39.4 stopped with `A configuration object specifies rule "react-hooks/set-state-in-effect",
+but could not find plugin "react-hooks".` The pipeline's later gates did not run. TypeScript passed
+with `NODE_OPTIONS=--max-old-space-size=8192`. No check configuration or unrelated failure was changed.
+
+**Verification and remaining gates.** Final results are recorded below after the run. Automated
+tests execute real entry points, the organization parent, sign-in/invitation destinations, the
+shared gate matrix, real coach menus, wall order and Members headings. Browser geometry at 390px,
+real Stripe journeys, old email/bell clicks, browser Back and login/refresh loops remain the owner's
+walk. Existing billing state/action tests provide regression coverage for empty/loading/error,
+trial/past-due/free-time/Founding/cancelled states and payment-return consumption; this stage changes
+their destinations, not their money operations. Owed: `/simplify` for shared additions, then
+`/review` for redirects/auth, `/docs` review of the updated help, and the owner walk. The project
+remains open through these gates. No commit, push, schema change or production operation requested.
+
+**Choices and cleanup.** Reused the shipped foot/sheet rows and plain wall door exactly as drawn.
+Preserved all scalar/repeated query parameters at old billing aliases so historical Stripe returns
+remain useful. Guarded onboarding's server parent because old links can still name it. No hub or
+onboarding team-only UI was proven removable: the remaining plan/config and optional tournament
+setup branches are shared with other plans, so they remain. The implemented parent-tier exception
+follows the same standalone identity as the approved gate, without changing plan entitlements.
+
+**Final check record, 2026-10-30.**
+
+- Full `verify:changed`: **12,421 tests passed, zero failed** (2,499 suites), then exit 2 at the
+  same baseline ESLint missing-`react-hooks` configuration error. No new unit failure remains.
+  Subsequent test-only harness/type-assertion corrections passed their affected **121-test** group.
+- Scoped ESLint on all **43 task TS/TSX files**: **zero errors, 41 warnings** in existing code.
+  This includes the already-modified tournament schedule/results files; unrelated code was retained.
+- Full `npm run typecheck`, with `NODE_OPTIONS=--max-old-space-size=8192`: **passed, exit 0**.
+- Spelling, admin/coach org-context (436 routes), TODO size (59 KB) and `git diff --check`: **passed**.
+- Supplementary org-slug caller check: **two existing findings** at
+  `app/[orgSlug]/admin/public-site/OwnAddressPanel.tsx:65` and
+  `app/[orgSlug]/admin/public-site/useOwnAddress.ts:25`, both calling the own-address route without
+  the query org slug. Both callers, their API route and the check script match HEAD (`git diff
+  --quiet HEAD -- <these four paths>` exited 0). This task did not edit them or suppress the check.
+- The post-lint portion of `verify:changed` did not execute because the baseline lint configuration
+  stops the pipeline. The focused checks above were run separately; this is not a full green pipeline.
+- The required dev restart completed through network-enabled **`npm run dev`**. Ready observed;
+  `http://localhost:3000/platform-admin/login?next=%2Fplatform-admin` returned **HTTP 200**;
+  `.dev-server-stage3.log` contains no EACCES. The server remains running for the owner.
+- The drawing was reviewed from its HTML source. Browser/visual tests and the UAT browser scenario
+  were not run; owner testing remains required. No whole-product layout sweep or production operation.
+
+The state/flow split above remains: executable role, assignment, suspension, alias/query-return and
+navigation checks are complete; actual 390px geometry, email/bell clicks, login/refresh/Back lifecycle,
+Stripe invoices/cards/checkout/next-season/plan-move journeys and Claude `/simplify` → `/review` → `/docs`
+remain the completion gates. The project checkbox stays open. Files are left for owner review; no commit or push.
 
 **Who builds what.** Stage A (the drawings) is a Claude `/design` session: it publishes a checkable Artifact and cannot be
 handed to Codex. Stages 1–5 are written to run on Codex, one chat per stage, each starting from the shared rules file.
@@ -222,8 +315,25 @@ confirmation). What the drawings found against the original plan:
 12. "Managing more than tournaments?" stays as **a quiet section on tournament plans only**. **Amended by the owner 2026-10-29:** it sits ABOVE Reduce or cancel, so Reduce or cancel is the last section on every plan (it was "last"; the cancel door now ends the page, matching Club and League).
 13. Stage 2 adds a **test for "owner of a standalone Coaches Portal"** and uses it for the row and for removing the Admin door.
 Earlier the same day the owner ruled **Plan & billing sits in the rail foot, beside Help, on every plan** (above).
-**Follow-through:** the small drawing for portal workspace links and the plan-details link is owed before Stage 3.
+**Follow-through:** ~~the small drawing for portal workspace links is owed before Stage 3~~ — drawn 2026-10-29 and ruled 2026-10-30 (next block). The plan-details link is not part of that drawing.
 The later P-b/P-c rulings below settle Plus rows now/real move when Club opens, and phone More → You on every plan.
+
+**Stage 3 doors rulings (owner, 2026-10-30, binding; each is the recommendation in the Asks tab of `PLAN_AND_BILLING_STAGE3_DOORS_DRAWINGS.html`).** Ruling 4 above is **revised by 6**: its second half (a quiet "Tournament helpers" link) is dropped.
+1. The new portal link reads **"Tournaments you run"** (the section heading it replaces for a closed season).
+2. Rail foot order: **Help, Plan & billing, Tournaments you run, Collapse sidebar.** The foot stays at four rows.
+3. Phone More → You: **Account, Home, Plan & billing, Tournaments you run** (Admin's slot, four rows, pairs evenly).
+4. A coach who has never hosted sees the **same wording**; it opens the workspace's tournaments list (which has "New tournament").
+5. The row shows to **whoever can run tournaments** (the plan carries tournaments and the person holds the run-tournaments right: the owner, or a coach given the "Run tournaments" grant) in a **standalone (one-team) workspace** only. Never on a wall, never in the sandbox.
+6. **No "Tournament helpers" link in the portal.** Coach Staff page = coaching staff; the tournament pages manage tournament staff (Members row on a computer, Settings & access → "Staff & access" card on a phone). The head coach owns both. This reverses ruling 4's second half.
+7. In a one-team workspace the tournament pages call that page **"Staff & access"** on both the menu row and the page heading (the Settings & access card already says it). Other plans keep "Members".
+8. The new row wears the **trophy** (the nav standard: the trophy is Tournaments' icon everywhere).
+9. The way back from tournament pages stays **"Coaches Portal"** (same name, same place), and shows to the **owner of a one-team workspace even with no team**; its rule is otherwise unchanged.
+10. The **"Coaches Portal not ready"** screen gains a plain owner-only door **"Tournaments you run"** beside Plan & billing. No helpers door.
+11. The demo sandbox hides the new row **by name**.
+12. Part 1: a board admin with **no team** is not forwarded to the "not ready" screen; they land on the **tournaments list**.
+13. The Admin door leaves **every role in a one-team workspace** (`isTeamWorkspaceOrg`), not only the owner. The owner-only "standalone owner" test is the billing test and must **not** be the Admin-removal test. Club owners/admins who coach keep Admin.
+
+Found, not changed: the "not ready" screen's door "Back to Coaches Portal home" breaks the nav standard's N6 (no "Back to…"); it ships today.
 
 **Progress — 2026-10-28, Stage 1 Part 0:**
 

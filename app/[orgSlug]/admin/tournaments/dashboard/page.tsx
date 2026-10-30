@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { useTournament } from '@/lib/tournament-context';
 import { useVisiblePoll } from '@/lib/hooks/useVisiblePoll';
 import { useOrg } from '@/lib/org-context';
+import { getBillingHref } from '@/lib/billing-urls';
 import { hasCapability } from '@/lib/roles';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature } from '@/lib/plan-features';
@@ -314,7 +315,7 @@ export default function AdminDashboard() {
   // Check-in is absent on an invite-only event (R5): the game-day board's "teams arrived" goes with it.
   const checkInShown = eventAreas(currentOrg?.planId).checkIn;
   const base =`/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
-  const subscriptionHref = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`;
+  const subscriptionHref = getBillingHref(currentOrg ?? { slug: 'admin', planId: 'tournament' });
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const canCreate = hasCapability(userRole ?? 'official', userCapabilities, 'create_tournaments');
@@ -536,6 +537,7 @@ export default function AdminDashboard() {
       orgSlug: currentOrg.slug,
       tournamentSlug: currentTournament.slug,
       planId: currentOrg.planId,
+      accountKind: currentOrg.accountKind,
       daysUntil,
       checklist: { hasDates: true, hasDivisions: true, ready: true },
       hasPlayoffs: tournamentHasPlayoffs,

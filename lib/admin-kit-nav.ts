@@ -38,6 +38,7 @@ import type { TournamentPhase } from './tournament-phase';
 import { canOpenClubSchedules } from './club-schedule-gate';
 import { getBillingHref } from './billing-urls';
 import { hasBillingAccess } from './roles';
+import { membersLabel } from './member-access';
 import type { OrgRole } from './types';
 import { PLAN_BILLING_TITLE } from './plan-billing-title';
 
@@ -251,12 +252,13 @@ export const ORGANIZATION_ICON: LucideIcon = Building2;
 
 /** Plan & billing lives beside Help on every admin plan, including a suspended account's comeback path. The demo
  *  sandboxes hide every billing entry point (lib/sandbox-curation.ts): a comped demo org's billing answers nothing. */
-export function kitBillingLink({ orgSlug, planId, role, capabilities, isSandbox = false }: {
+export function kitBillingLink({ orgSlug, planId, accountKind, role, capabilities, isSandbox = false }: {
   orgSlug: string; planId: OrgPlan | null | undefined; role: OrgRole | null | undefined;
+  accountKind?: string | null;
   capabilities: Record<string, boolean> | null; isSandbox?: boolean;
 }): KitLink | null {
   return !isSandbox && hasBillingAccess(role, capabilities)
-    ? { key: 'org/billing', label: PLAN_BILLING_TITLE, href: getBillingHref(orgSlug, planId), icon: CreditCard }
+    ? { key: 'org/billing', label: PLAN_BILLING_TITLE, href: getBillingHref({ slug: orgSlug, planId, accountKind }), icon: CreditCard }
     : null;
 }
 
@@ -271,18 +273,20 @@ export function kitOrgLinks({
   isCanceled,
   canSeeMembers,
   hasVenueLibrary,
+  isTeamWorkspace = false,
 }: {
   base: string;
   role: string | null | undefined;
   isCanceled: boolean;
   canSeeMembers: boolean;
   hasVenueLibrary: boolean;
+  isTeamWorkspace?: boolean;
 }): KitLink[] {
   const o = `${base}/org`;
   const ownerOrAdmin = role === 'owner' || role === 'admin';
   const links: (KitLink | false)[] = [
     // A member card (N5, 2026-10-17): `Users2` is the Coaches Portal door's, and both sit on the phone's More sheet.
-    !isCanceled && canSeeMembers && { key: 'org/members', label: 'Members', href: `${o}/members`, icon: IdCard },
+    !isCanceled && canSeeMembers && { key: 'org/members', label: membersLabel(isTeamWorkspace), href: `${o}/members`, icon: IdCard },
     // H08 (Club Tier Stage 1): the audit log gets its rail row now that its page works (A04, fixed
     // Stage 0; redrawn Stage 1 specimen 11). Owner-only, as the page and its route are.
     !isCanceled && role === 'owner' && { key: 'org/audit', label: 'Audit log', href: `${o}/members/audit`, icon: ScrollText },

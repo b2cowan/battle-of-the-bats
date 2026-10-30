@@ -6,7 +6,8 @@ import { Users, UserCog, Calendar, ClipboardList, NotebookPen, Mail, DollarSign,
 import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coaches-context';
 import { isCoachNavItemVisible, withClosedSeasonNav, resolveNavTeamId, SEASON_END_LABEL, coachNavDefaultOpenGroups, isCoachNavGroupOpen } from '@/lib/coach-nav-visibility';
 import { useOrg } from '@/lib/org-context';
-import { coachBillingLink } from '@/lib/coach-billing-access';
+import { coachBillingLink, coachHostedTournamentsLink } from '@/lib/coach-billing-access';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
 import { PLAN_BILLING_TITLE } from '@/lib/plan-billing-title';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { useChatUnread } from '@/lib/use-chat-unread';
@@ -180,9 +181,10 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   const { currentOrg, userRole, userCapabilities } = useOrg();
   const inSandbox = useIsSandbox();
   const billingHref = coachBillingLink(currentOrg, userRole, userCapabilities, inSandbox);
+  const tournamentsHref = coachHostedTournamentsLink(currentOrg, userRole, userCapabilities, inSandbox);
   // The "Admin" door — only for a coach who also administers this org (seeded from the layout's
   // membership role; a coach-only user has no admin role, so no door). Review P3-4.
-  const isOrgAdmin = userRole === 'owner' || userRole === 'admin';
+  const isOrgAdmin = (userRole === 'owner' || userRole === 'admin') && !isTeamWorkspaceOrg(currentOrg);
   const chatUnread = useChatUnread();
 
   const teamMatch = pathname.match(/\/coaches\/teams\/([^/]+)/);
@@ -454,6 +456,12 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
           <Link href={billingHref} id="coaches-billing" className={`${styles.sidebarItem} ${styles.sidebarFootItem}${pathname === billingHref ? ` ${styles.sidebarItemActive}` : ''}`}>
             <CreditCard size={14} />
             <span className={strip.rowLabel}>{PLAN_BILLING_TITLE}</span>
+          </Link>
+        )}
+        {tournamentsHref && (
+          <Link href={tournamentsHref} id="coaches-tournaments" className={`${styles.sidebarItem} ${styles.sidebarFootItem}`}>
+            <Trophy size={14} />
+            <span className={strip.rowLabel}>Tournaments you run</span>
           </Link>
         )}
         {isOrgAdmin && (

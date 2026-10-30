@@ -205,6 +205,11 @@ export const ROLE_EMAIL_LABEL: Record<OrgRole, string> = {
   coach: 'coach',
 };
 
+/** What the people page is called: a one-team workspace has staff and access, not a board. */
+export function membersLabel(isTeamWorkspace: boolean): string {
+  return isTeamWorkspace ? 'Staff & access' : 'Members';
+}
+
 export function roleLabel(role: string): string {
   return ROLE_LABEL[role as OrgRole] ?? role;
 }

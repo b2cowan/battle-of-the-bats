@@ -22,7 +22,7 @@ describe('the gate in front of the club pages reads the door (guard 3)', () => {
   });
 
   it('the org-admin layout decides from the door\'s plan; proxy.ts no longer decides at all', () => {
-    assert.match(read('app/[orgSlug]/admin/org/layout.tsx'), /if \(isTournamentTier\(authCtx\.org\.planId\)\)/);
+    assert.match(read('app/[orgSlug]/admin/org/layout.tsx'), /if \(isTournamentTier\(authCtx\.org\.planId\) && !isTeamWorkspaceOrg\(authCtx\.org\)\)/);
     assert.match(read('lib/api-auth.ts'), /const effectiveOrg = await applyEntitlementGrants\(org,/);
   });
 });

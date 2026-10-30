@@ -1267,7 +1267,7 @@ export default function AdminSchedulePage() {
   }, [games, moveAsk]);
 
   // ── Tools: its tools by name, then its two acts (A34 as amended; A44: a plan lock in words, never a bare padlock) ──
-  const tPlusHref = orgSlug ? tournamentPlusPanelHref(orgSlug) : '#';
+  const tPlusHref = currentOrg ? tournamentPlusPanelHref(currentOrg) : '#';
   const lockedTool = (name: string) => <PlanLockedTool name={name} href={tPlusHref} plan={W.lockedPlan} />;
   const unpublishedDivisions = divisions.filter(d => (d.scheduleVisibility ?? 'unpublished') === 'unpublished');
   const publishedDivisions = divisions.filter(d => d.scheduleVisibility && d.scheduleVisibility !== 'unpublished');

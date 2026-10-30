@@ -18,6 +18,8 @@ import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { getMembersHref, isTournamentTier } from '@/lib/billing-urls';
+import { membersLabel } from '@/lib/member-access';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
 import { formatTime } from '@/lib/utils';
 import { formatStoredDate, orgDayKey, tournamentToday, utcToZonedInputs } from '@/lib/timezone';
 import {
@@ -89,11 +91,12 @@ export default function AuditLogKit() {
 
   const eyebrow = isTournamentTier(currentOrg.planId) ? 'Tournament settings' : 'Organization';
   const membersHref = getMembersHref(slug, currentOrg.planId);
+  const membersName = membersLabel(isTeamWorkspaceOrg(currentOrg));
 
   if (userRole !== 'owner') {
     return (
       <div className={ck.page}>
-        <AdminPageHeader eyebrow={eyebrow} title="Audit log" backTo={{ href: membersHref, label: 'Members' }} />
+        <AdminPageHeader eyebrow={eyebrow} title="Audit log" backTo={{ href: membersHref, label: membersName }} />
         <div className={styles.empty}>
           <h2 className={styles.emptyTitle}>The audit log is the owner’s</h2>
           <p className={styles.emptyBody}>Only the organization’s owner can read who changed what about the board.</p>
@@ -130,7 +133,7 @@ export default function AuditLogKit() {
       <AdminPageHeader
         eyebrow={eyebrow}
         title="Audit log"
-        backTo={{ href: membersHref, label: 'Members' }}
+        backTo={{ href: membersHref, label: membersName }}
         actions={
           <ExportMenu
             formats={['xlsx', 'csv']}

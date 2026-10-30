@@ -10,6 +10,7 @@ import { isClubPlan, isTournamentOnlyWorkspace, planCarriesModule, type Entitlem
 import { WORKSPACE_KIND_LABEL } from './workspace-labels';
 import { getBillingHref } from './billing-urls';
 import { hasBillingAccess } from './roles';
+import { getStandaloneAdminHref, getCoachPortalAssignments } from './coach-portal-request';
 import { officialHome, volunteerHome, volunteerJobOf } from './volunteer-jobs';
 import { volunteerDuties } from './volunteer-words';
 import { getCoachTeamCards } from './house-league-coach';
@@ -416,7 +417,7 @@ function buildClaimableContext(claimableCount: number): UserAccessContext | null
 }
 
 /** Compute the post-login destination for a single active org membership. */
-export async function getDestinationForMembership(member: MemberRow): Promise<string> {
+export async function getDestinationForMembership(member: MemberRow, userId: string): Promise<string> {
   const org = normalizeOrg(member);
   const slug = org?.slug;
 
@@ -432,7 +433,12 @@ export async function getDestinationForMembership(member: MemberRow): Promise<st
   if (volunteer) return volunteer;
 
   if (isTeamWorkspaceOrg({ accountKind, planId: planId ?? 'tournament' })) {
-    return `/${slug}/coaches`;
+    return getStandaloneAdminHref({
+      id: orgId, slug, accountKind, planId: planId ?? 'tournament',
+      subscriptionStatus: org?.subscription_status as EntitlementOrg['subscriptionStatus'],
+      enabledAddons: org?.enabled_addons ?? [],
+      freeFloor: org?.free_floor as EntitlementOrg['freeFloor'],
+    }, userId, role as OrgRole, member.capabilities ?? null);
   }
 
   // Free League Starter floor: a house-league operator who happens to sit on a tournament plan
@@ -603,7 +609,9 @@ export async function getUserAccessContexts(user: {
       const org = normalizeOrg(member);
       const orgId = org?.id ?? member.organization_id;
       if (!orgId) return [member.id, [] as CoachingAssignment[]] as const;
-      const assignments = await getCoachingAssignmentsForUser(orgId, user.id);
+      const assignments = isTeamWorkspaceOrg({ accountKind: org?.account_kind, planId: org?.plan_id })
+        ? await getCoachPortalAssignments(orgId, user.id, true)
+        : await getCoachingAssignmentsForUser(orgId, user.id);
       return [member.id, assignments] as const;
     })
   );
@@ -615,8 +623,8 @@ export async function getUserAccessContexts(user: {
     const membershipContext = buildMembershipContext(member);
     if (!membershipContext) continue;
 
-    if (membershipContext.kind === 'organization') {
-      membershipContext.destination = await getDestinationForMembership(member);
+    if (membershipContext.kind === 'organization' || membershipContext.isTeamWorkspace) {
+      membershipContext.destination = await getDestinationForMembership(member, user.id);
     }
     contexts.push(membershipContext);
 

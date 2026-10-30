@@ -510,7 +510,7 @@ export default function AdminResultsPage() {
               planId={currentOrg?.planId}
               disabled={listed.length === 0}
               // PDFs on a plan without them: the Tools-menu lock, no sentence under it (specimen 8, the free tournament tier).
-              planLock={currentOrg && !hasPlanFeature(currentOrg.planId, 'pdf_exports') ? { href: tournamentPlusPanelHref(currentOrg.slug), rows: 'pdf' } : undefined}
+              planLock={currentOrg && !hasPlanFeature(currentOrg.planId, 'pdf_exports') ? { href: tournamentPlusPanelHref(currentOrg), rows: 'pdf' } : undefined}
             />
             {currentOrg?.slug && (
               <button

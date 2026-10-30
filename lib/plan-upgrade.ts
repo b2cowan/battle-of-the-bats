@@ -55,7 +55,7 @@ export async function requestPlanUpgrade(input: {
   planKey: UpgradePlanKey;
   billingCycle: 'monthly' | 'annual';
   orgSlug: string;
-  /** Where checkout comes back to; the server keeps it only inside this organization's admin. */
+  /** Where checkout comes back to; the server accepts this organization's admin or exact standalone billing page. */
   returnTo: string;
 }): Promise<PlanUpgradeResult> {
   const res = await fetch('/api/billing/create-checkout', {

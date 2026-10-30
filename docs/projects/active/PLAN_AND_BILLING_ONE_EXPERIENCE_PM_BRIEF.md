@@ -187,3 +187,43 @@ and payment callbacks that return to the same portal. Automated checks, baseline
 in plan §9; the [owner walk](PLAN_AND_BILLING_STAGE2_OWNER_WALK.md), Claude cleanup/review, and help sync remain owed.
 The Admin door remains for Stage 3. The coach development payment-portal mock returns directly to billing; real Stripe
 card/invoice behavior is part of the owner walk. Help currently reuses the shipped Premium first-login article.
+
+## Stage 3 doors — drawn and ruled 2026-10-30
+
+A standalone coach loses the Admin button. In its place, one new link, **"Tournaments you run"**, sits beside Plan & billing
+at the foot of the computer menu and in the phone's More → You group. It opens the list of tournaments the coach hosts, and it
+keeps working when the team's season is closed, when there are several teams, and on the "not ready" screen for an owner with no
+team. Before this, the only way in lived on the team's Tournaments page, which a closed season hides.
+
+Helpers are not a portal link. The coach Staff page keeps the coaching staff; the people who help run a tournament are managed
+inside the tournament pages, which already have the door (renamed "Staff & access" in a one-team workspace so the menu row and the
+card agree). The head coach owns both. This replaces the 2026-10-28 idea of a quiet "Tournament helpers" link.
+
+Who sees it: whoever can run tournaments (the owner, or a coach given the "Run tournaments" grant) in a one-team workspace. Not
+the demo, not a club owner who coaches (they keep Admin), not a cancelled workspace. A board admin with no team lands on the
+tournaments list instead of a dead-end screen. The way back from tournament pages stays "Coaches Portal" and now shows for an
+owner with no team too. Success: no coach reaches the admin hub by accident, no hosted tournament is stranded by a closed season,
+and no helper meets a dead end. Rulings and build steps: plan §9 and the Stage 3 build prompt.
+
+## Stage 3 implementation — 2026-10-30
+
+The approved doors are implemented. Standalone owners and tournament-capable coaches have one
+workspace link that keeps hosting reachable between seasons. Every standalone role loses Admin;
+a board admin without a team lands at the tournament list on sign-in and invite acceptance.
+The tournament menu and staff page agree on Staff & access. Owners with no team keep a way
+into tournaments and back to their portal wall. Clubs keep their existing Admin and billing doors.
+
+Old hub/setup links now route by the person's team access. Both old billing addresses forward
+permanently to coach billing with their payment-return flags intact. Hosted-tournament billing
+links choose that same destination. Coaching staff and tournament staff remain separate tasks,
+explained in the updated help, with no new helpers door in the portal.
+
+Success is covered by executable routing and rendered navigation/heading tests. Baseline and final
+check results live in plan §9. The [Stage 3 owner walk](PLAN_AND_BILLING_STAGE3_OWNER_WALK.md),
+redirect/auth review, shared-code cleanup review and help review remain the completion gates.
+Priority remains preventing accidental admin landings while preserving every hosting/recovery door.
+
+Automated result: all 12,421 unit tests pass; TypeScript and scoped lint pass. The full verification
+pipeline still stops at the recorded ESLint configuration failure. An additional org-slug check
+reports two unchanged public-site callers, documented separately in the plan. The dev server was
+restarted with network access; its login health check returned HTTP 200 with no EACCES in the log.

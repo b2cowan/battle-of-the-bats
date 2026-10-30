@@ -2,6 +2,8 @@
 import Link from 'next/link';
 import { Users2, RefreshCw, MapPin, CreditCard, Settings, FileText, UserCheck } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { membersLabel } from '@/lib/member-access';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
 import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -28,7 +30,7 @@ export default function OrgAdminHub() {
 
   const tiles = [
     {
-      label: 'Members',
+      label: membersLabel(isTeamWorkspaceOrg(currentOrg)),
       desc: 'Manage org members, roles, and invitations',
       icon: Users2,
       href: `${base}/members`,

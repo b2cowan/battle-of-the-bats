@@ -3,6 +3,8 @@
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
+import { membersLabel } from '@/lib/member-access';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
 import { useTournament } from '@/lib/tournament-context';
 
 const ROUTE_LABELS: Array<[RegExp, string]> = [
@@ -56,7 +58,10 @@ export default function AdminTitleManager() {
   const { currentTournament } = useTournament();
 
   useEffect(() => {
-    const label = previewLabel(pathname, currentTournament?.status) ?? routeLabel(pathname);
+    const routed = routeLabel(pathname);
+    // The people page is "Staff & access" in a one-team workspace; the tab says what the page title says.
+    const label = previewLabel(pathname, currentTournament?.status)
+      ?? (routed === 'Members' ? membersLabel(isTeamWorkspaceOrg(currentOrg)) : routed);
     const parts = [
       label,
       currentTournament?.name,
@@ -65,7 +70,7 @@ export default function AdminTitleManager() {
     ].filter(Boolean);
 
     document.title = parts.join(' - ');
-  }, [pathname, currentOrg?.name, currentTournament?.name, currentTournament?.status]);
+  }, [pathname, currentOrg, currentTournament?.name, currentTournament?.status]);
 
   return null;
 }

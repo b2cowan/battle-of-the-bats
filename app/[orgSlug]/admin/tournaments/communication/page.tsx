@@ -58,7 +58,7 @@ export default function AdminCommunicationPage() {
   const orgSlug  = currentOrg?.slug;
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '?';
   const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
-  const planHref = tournamentPlusPanelHref(orgSlug ?? 'admin');
+  const planHref = tournamentPlusPanelHref(currentOrg ?? 'admin');
 
   // ── Data ──
   const [communications, setCommunications] = useState<Communication[]>([]);
