@@ -8,6 +8,147 @@
 
 ---
 
+### 2026-10-30 — A Premium coach gets a clear, minimal-step path to upgrade to Club, with the subscription and payments changing accordingly (direction; the shape is open)
+**Status:** **Decided — the direction** (owner, 2026-10-30, answering open question B of `PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md`: *"there should be a clear path for a premium coach to upgrade to club and their subscription/payments change accordingly. it should be smooth and with minimal steps"*). **Nothing designed or built.** Everything under "Open" is not decided.
+**Decision:**
+1. A coach on a standalone Premium Coaches Portal can **upgrade to Club through a clear path in the product**, not by contacting us.
+2. **The subscription and payments change with it**: the coach is not left to cancel one plan and buy another by hand.
+3. The path is **smooth, with as few steps as possible**.
+4. It sits in the Plan & billing project: drawn first in an owner design session, sequenced after Stage 4 and before the Stage 5 help rewrite, so the help describes it once. The real move ships when Club opens for sale (the same posture the owner ruled for Plus → Club).
+**Rationale:** the owner's call that a growing coach should not hit a dead end on the plan page. Today a Premium coach's Change plan slot holds only "Part of a club?" (join an existing club), and the Plus → Club move has no screen.
+**Open (not decided):**
+- **Which move this is.** The owner's words read as the coach's one-team portal **becoming a club they run**. The 2026-09-28 coach bridge (a coach's team joins an **existing** club) is a different move and **stands unchanged, not superseded**. Confirm which is meant, or both, in the drawing session.
+- **What happens to the team's data, the old subscription and the first charge**, and whether the 2026-09-28 rule (the coach's own subscription stops at once, no refund, no proration, every word says only "won't be charged again") extends to this move or this move earns different billing words.
+- **How a move between two different subscription kinds works.** The 2026-09-25 paid→paid rules (up happens now on the one subscription with a proration preview; no second trial) were written for moves within a club's plans.
+- **The price step between Premium and Club** (see `PLAN_PRICING_FACTS.md`). It is a large step for a one-team coach. Whether to leave it, soften it or add a step between is a pricing decision for `/strategy` and is **not taken here**.
+**Affects:** the Plan & billing Change plan slot for a Premium coach, the Club upgrade server path, help and pricing copy once built. **No price, plan name, capacity band, SKU or gate moves; `lib/plan-config.ts` and `PLAN_PRICING_FACTS.md` untouched** (drift check: nothing to reconcile).
+**Handoff:**
+```
+HANDOFF → /plan: DONE 2026-10-30 — recorded as the answer to §6 B and sequenced in PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md; a build plan + PM brief follows the drawing session.
+HANDOFF → /design: an owner mockup session for the path, led by the "becomes a club vs joins a club" question and the first-charge moment.
+HANDOFF → /billing: nothing until the shape is ruled. When it is: the cross-subscription move, proration and the interaction with the 2026-09-25 move rules.
+HANDOFF → /marketing: nothing now. Do not advertise an upgrade path before it exists; copy follows the build.
+HANDOFF → /strategy (this agent): take the Premium → Club price-step question as its own decision when the owner wants it.
+```
+**Supersedes:** nothing. Extends the 2026-09-28 coach bridge and the 2026-09-25 paid→paid moves; neither is changed.
+
+---
+
+### 2026-10-30 — Our own branded invoices, and Stripe run from our own platform admin: direction decided, planning owed after the Plan & billing project and Stripe walks 1–9
+**Status:** **Decided — direction only, with a planning session owed** (owner, 2026-10-30). **Nothing designed or built.** No design detail below is ruled.
+**Decision (the owner's direction, as said):**
+1. **Invoices:** an in-app invoice list of **our own custom invoices with our own branding**. From Stripe we take only the **facts** we need (status, amounts, dates, real payments, renewal dates and whatever else an invoice needs). They might be generated on the fly, for a payment, a month or a date range. This **replaces** the earlier "no in-app invoice list, out of scope" posture of the Plan & billing plan.
+2. **Stripe from our own admin:** build in the **platform admin** the routine Stripe work as workflows that make sense to us, so the team stops navigating Stripe's dashboards by hand. The owner's examples: rename a plan, change a price with an effective date and an automatic customer email and apply it on that date, update trial periods, and pull invoice data. The first step is to understand what in Stripe we use or plan to use.
+3. **The two are planned together** (the owner said they could combine).
+4. **Timing:** the planning session starts **at the end of the Plan & billing project and after Stripe end-to-end walks 1–9 are done.**
+**Rationale:** Stripe's dashboards hold far more than the team uses and are hard to navigate; customers should read our brand and wording. Recorded in `STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md`, where the owner's asks and Claude's suggestions are kept apart.
+**Open (not decided; the planning session's first questions):** what the document is called and what it must show, including whether subscriptions carry GST/HST and our registration number; who sees invoices; on-demand shape and history; which Stripe actions come first; whether prices become data with effective dates; the grandfathering rule; customer-notice lead time (check Canadian consumer rules); overlap with the Stripe price-configuration validation and the Billing and Accounting Coherence items.
+**Affects:** the platform admin, Plan & billing (an Invoices place), the billing webhook (a local record of billing facts), and, if prices become data, how `PLAN_PRICING_FACTS.md` and `lib/plan-config.ts` stay the single source. **No price, plan, band or gate moves today.**
+**Handoff:**
+```
+HANDOFF → /plan: DONE 2026-10-30 — STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md + PM brief written as a stub; planning session owed per the timing above.
+HANDOFF → /billing: nothing now. At planning: webhook coverage, test clocks, the price book.
+HANDOFF → /marketing: none. No customer copy until built.
+HANDOFF → /strategy: re-check on starting the planning session whether the "prices become data" change touches the one-source-of-truth pricing rule, and run the Facts-doc drift check then.
+```
+**Supersedes:** the Plan & billing plan's open question C posture ("no in-app invoice list; out of scope unless the owner asks"). No business-decisions entry superseded.
+
+---
+
+### 2026-10-30 — Coaches Portal free time, walked: the gives stay capped from the first give, a Super admin may still delete a portal on free time, and paying early ends the free days left (accepted as built)
+**Status:** **Decided** (owner, 2026-10-30, accepting every call of walks B §415 and C §416 as built; the §415 boxes were first left blank by accident, then accepted in chat after the three real questions were put to him by name). Not released. Plan: `PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md` (Stage 4b).
+**Decision:**
+1. **The cap is measured from the first give, for everyone.** Support and Billing up to 90 days, Super admin up to 6 months, counted from the day free time was first given to that portal. A later give more than 6 months after the first is therefore impossible, Super admin included.
+2. **A Super admin can still delete a portal while it is on free time.** Left as built; no refusal added. (Resolves the first item of the 10-28 entry's "Open" list. The plan's threat T17, "no door deletes a portal", is not enforced on that door.)
+3. **Paying during free time ends the free days still left; the first charge is not held back.** Keep Premium buys on the same portal with no trial and no carry-over of unused free days (confirms the 10-28 entry's point 4).
+4. **A portal-only bulk batch is recorded as "Failed 0 / n"** (all three bulk actions skip portals and say so after, not before). Accepted wording.
+**Rationale:** the owner accepted these as built after walking them end to end; none moves a price, plan, band or gate. Free time is not an offer, so these are operator-side rules, not packaging.
+**Affects:** staff's Give window and Put it back, the Super admin's delete door, the coach's Keep Premium checkout. **No price, plan name, capacity band or gate changes:** `PLAN_PRICING_FACTS.md` carries the caps and the no-carry-over line and its drift check was run today.
+**Still open (not asked, not decided):** who sees the Overview Keep Premium button (head coach versus the portal's owner), and whether Keep Premium should outlive the 30 days after the end.
+**Handoff:**
+```
+HANDOFF → /billing: done today, no gate or config change.
+HANDOFF → /marketing: none; free time is never advertised. One nit for a copy pass: the last-day band title reads "Your free time ends today." where the agreed words are "runs through", never "ends on".
+```
+**Supersedes:** nothing. Resolves the first "Open" item of 2026-10-28.
+
+---
+
+### 2026-10-29 — The end state is an app where everyone signs in; public means tournaments and team public pages only; no stop-gap no-login family doors (direction logged; the rest is Proposed or open)
+**Status:** **Decided — the owner's direction only** (said in the House League 9d-3 session, 2026-10-29, after the drawings were published). Everything past that direction is split below into **Proposed** (my recommendations, awaiting the owner) and **Open** (not decided at all). Nothing in the Proposed or Open lists is binding.
+**Decision (the owner's direction, as said):**
+1. The end state of the product is a **mobile app**. Parents, coaches, admins and treasurers all have **email-and-password sign-ins**.
+2. **Public means tournaments and team public pages only.** Whether a team page carries only games stays the standing games-only ruling and is not reopened here.
+3. A house-league parent signs in with their email and is **linked to their child**, as in TeamSnap or TeamLinkt. The **team schedule (practices included), chat and so on live there**, so parents and coaches have a private place to communicate.
+4. **No stop-gap of secret calendar links** or other no-login family doors. The owner does not want a path that would be reversed. The product is not live and has no customers, so there is no rush.
+**What this changes today:** the House League 9d-3 family calendar link is **withdrawn** (asks 9d3·2 and 9d3·8, shown as withdrawn on the published drawings; no frame was redrawn as a replacement). The first practice notice, the hand-out-again rule and the coach's own Subscribe stand. The notice goes to the guardian email on the registration, which is the key the app would link a parent to a child by, so nothing in its recipient logic needs reversing. This fits the 2026-09-12 ruling that removed the team family link; it does not touch the family layer's counsel switch.
+**Proposed (my recommendations; awaiting the owner, none ruled):**
+- **P1.** A rule that **no new family-facing feature works without a sign-in**, except public tournaments and team public pages. Audit planned stages for any no-login family door. (A census of existing ones is parked in `SIGNED_IN_FAMILY_CENSUS_PROMPT.md`.)
+- **P2.** **Stage 14, "one player across seasons", becomes a prerequisite of the app.** A parent-to-child link has to hang on a durable child record, not on a per-season registration row.
+- **P3.** **Parent accounts are people, not organization members.** Keep them clear of the one-home-organization rules.
+- **P4.** **Counsel is on the critical path.** The guardian tier (a parent connected to one specific child) is built and switched off pending the PIPEDA and CASL review; the app cannot open before that review.
+- **P5.** **The installed web app first, store packaging later.** This is what the 2026-07-28 and 2026-07-11 entries already say; see the flag below.
+- **P6.** **A named end-state stage in the Club readiness plan, decisions first,** so the open questions below are answered before anything is built.
+**Open — not decided at all:**
+- **Native app or installed web app.** ⚠ **Flag against a standing Decided entry:** 2026-07-28 *killed* the native companion app and made the installed web app "the mobile strategy, full stop", to be revisited only by a new decision entry. "A mobile app" in the owner's direction is therefore read here as **consistent with the installed web app and not as a reversal**. If the owner means a native build, that needs its own entry that supersedes 2026-07-28 (and 2026-07-11's store-wrap triggers govern any store presence). Not decided; do not treat this entry as that decision.
+- **What a parent sees** in the app, and what the app **shares with the public site**.
+- **Which plan the app belongs to.** Not decided here. Plan names, prices, capacity bands and gates live only in `docs/agents/strategy/PLAN_PRICING_FACTS.md`; nothing in this entry restates or changes one.
+**Rationale (owner):** a no-login link is a second identity system. Once it sits in a parent's calendar it has to be kept alive or killed, and nobody can show a family its link again without a sign-in. The product is pre-customer, so the right order is to decide the end state first and build toward it, not to ship doors that would be reversed.
+**Affects:** roadmap sequencing for every house-league and rep family-facing feature (no new no-login family door is proposed); Stage 14 and the Club readiness plan ordering (if P2 and P6 are accepted); the 9d-3 scope (family link withdrawn). **No price, plan name, capacity band or gate changes.** `PLAN_PRICING_FACTS.md` is untouched.
+**Handoff:**
+HANDOFF → `/plan` — **only if the owner asks:** add a named end-state stage and a decisions-first stage to `CLUB_TIER_PRODUCTION_READINESS_PLAN.md`, and place Stage 14 before the app. **That plan was not edited in this session.**
+HANDOFF → `/marketing` — none now. No customer copy promises an app or a family sign-in; **do not introduce any** (consistent with the 2026-07-28 handoff).
+HANDOFF → `/billing` — none. Which plan the app belongs to is an open question, not a gate to implement.
+**Relates to:** 2026-07-28 Native mobile app KILLED (not superseded by this entry; see the flag); 2026-07-11 Unified app RATIFIED and Store-wrap triggers; 2026-09-12 the team family link and the follower tier removed; the guardian tier's counsel hold (2026-08-01 and 2026-09-12).
+**Supersedes:** nothing.
+
+---
+
+### 2026-10-29 — Plan & billing is the OWNER's alone: it cannot be delegated to a member; this reverses the 2026-10-28 "billing can be delegated" ruling
+**Status:** **Decided** (owner, 2026-10-29). **Committed on dev `8d579da29`; not released.** Delegation was never on
+production (last promote 2026-10-27, `269969f58`), so no member loses access. Plan:
+`PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md`, ruling 5.
+**Decision:**
+1. **Only the organization's owner can see or change Plan & billing**: checkout, plan moves, payment method and invoices,
+   cancel, reactivation. No role holds it by default and **no one can grant it**: there is no "Plan & billing" switch in
+   Members → Manage, and a grant is refused. A member who is not the owner sees the locked card.
+2. **Stripe's customer portal keeps cancel and plan change OFF in both modes** (test and live), so the one door the
+   in-app rule cannot reach is closed too.
+3. This also folds in the narrower same-day ruling that cancel and downgrade stay the owner's alone: it is now true of the
+   whole page, not two buttons.
+**Rationale (owner):** it is used infrequently, it is the owner's responsibility, it simplifies the app, and it lowers
+risk around real money. Every door a delegate could reach touches a charge or a subscription.
+**Affects:** Members → Manage and the access-change email · the Plan & billing screens on every plan · the Stripe
+setup guide · in-app help about who can manage billing. **No price, plan name, capacity band or gate changes:**
+`PLAN_PRICING_FACTS.md` is untouched (it never carried the delegation rule; a drift check on 2026-10-29 found no claim
+in it that a delegate, treasurer or billing manager handles billing).
+**Not ruled here (flagged, not recorded as decided):** the build also makes `org_settings` override-proof for every
+non-owner, which goes one step past "billing". The owner's words named Plan & billing only; confirm that wider reach is
+wanted (it is the review's question 2), or narrow it.
+**Handoff:**
+```
+HANDOFF → /docs (drift found 2026-10-29, help still reads as if a non-owner could act): the owner role table's row label
+  "Plan & billing (default access)" (implies non-default access exists); the cancelled-subscription and reactivation
+  articles that say "an admin who opens the admin area lands there" with no owner caveat in the searchable text; the
+  coach FAQ "club's subscription has ended" that sends the coach to "your club administrator" (the owner is the one who
+  can fix it).
+HANDOFF → /marketing: no customer or marketing copy claims a treasurer, admin or billing manager handles billing. The
+  locked card's title "Billing access required" (and the same words on the tournament settings card) implies access can
+  be granted; suggest "Owner only", matching the Web address card. Wording is /marketing's; the swap is /billing's.
+HANDOFF → /billing: nothing to flip, the capability is gone, not gated. The Stripe setup guide's test checklist still
+  tells a tester to cancel inside Stripe's portal, which that same guide now says is OFF. The owner confirms the portal
+  setting in both modes.
+HANDOFF → /plan: later sections of the Plan & billing plan still carry the old delegation text unmarked ("billing
+  delegates may upgrade"); add a "superseded 2026-10-29" marker beside them. The older standalone-team-workspace memory
+  note says org owners/admins complete a team add-on checkout; check the route before treating it as a conflict.
+HANDOFF → /plan: done (plan ruling 5 carries the reversal and the superseded text as record).
+```
+**Supersedes:** the 2026-10-28 ruling "billing can be delegated through the `billing` capability" (plan ruling 5; a plan
+record, never a log entry here), and the earlier same-day 2026-10-29 "cancel and downgrade stay the owner's alone"
+narrowing, which this widens.
+
+---
+
 ### 2026-10-28 — Free time that staff gave a Coaches Portal is told to the coach BEFORE it ends (the band and two emails); this reverses "no email"; Keep Premium buys on the same portal, with no trial on top
 **Status:** **Decided** (owner, 2026-10-28, "go with b": the Overview band AND the email reminders). **Built on dev, uncommitted
 when logged; walks owed; not released.** Plan: `PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md` (Stage 4b, Parts 5 + 6 and the

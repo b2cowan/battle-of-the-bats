@@ -983,3 +983,5 @@ All items below were already checked complete but had never been moved here (the
 
 - [x] 🧮 House-league draft board at real size (120 players / 10 teams): pool beside the teams, one-line rows, search/filter/sort, families, notes, steps drawer, and families together in the draft (owner ruled A1–A12 2026-10-26; committed 4aad77562 + a12fd32e2 2026-10-26; owner walk §387 passed 29/29 2026-10-26 — see docs/projects/active/HOUSE_LEAGUE_DRAFT_BOARD_AT_SCALE_PLAN.md)
 
+
+- [x] 📅 House League 9d-3 — drawings brought into line with the signed-in-app end state (family calendar link withdrawn: asks 9d3·2 and 9d3·8; 9d3·3 re-asked; drawings republished to the same link 2026-10-29) and the direction logged through /strategy in BUSINESS_DECISIONS.md (Decided = owner direction only; Proposed and Open listed). Uncommitted — see docs/projects/active/HOUSE_LEAGUE_STAGE9D3_END_STATE_PROMPT.md

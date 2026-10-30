@@ -7,11 +7,31 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-29 — Compact public Schedule; location and maps live on the game page
+
+**Decision:** owner approved `PUBLIC_TOURNAMENT_COMPACT_GAME_ROWS_DRAWINGS.html` and asked to build it. On the phone
+Schedule, time is top left, division/pool underneath, and Final / Live now / Unofficial / Cancelled is top right. Each
+full-width team line owns its score on the first baseline, including wrapped names; keep full names and 16 px body type.
+Regular and live games share the recipe. Remove location and map actions from the all-games list at every width;
+desktop keeps its one-line arrangement. The game page keeps its prominent location and Directions. No change to the
+Overview's rows/live cards, switch-off Schedule, or admin preview's lack of links.
+**Rationale:** the former time gutter and separate map line wasted space; a score stack independent of the names lost
+alignment when names wrapped. Families can open a game to find its field and Directions. The accepted prototype is
+107–108 px per ordinary game at 360/390, with no truncation; app validation is in the Stage 3 build prompt.
+**Applies to:** the public tournament preview Schedule until Stage 8. Supersedes the earlier Schedule-only field/
+Directions and after-field status placement in Stage 3's original drawings; game-page location rules still apply.
+
 ### 2026-10-28 — FOLLOWING LIVES IN THE INSTALLED APP; THE TOURNAMENT OVERVIEW CARRIES "FOLLOW THIS TOURNAMENT" ALONE (owner, at Public tournament pages Stage 2 Part 2, on the two-option drawing https://claude.ai/artifact/MrhxuF7RtD7nLUCK8iCEFE, which it supersedes)
 
 **Decision (as ruled):** *"following should only be on the app version, not web or mobile web … we can remove following a team from the front page and just put the follow this tournament there with nothing in the header, follow a team can be on the specific team pages only. We don't need too many stars scattered around our app."* No follow control on a public tournament page opened in a browser (phone or desk). Inside the installed app the Overview's first line is "Follow this tournament" (its star the line's 44 px end); no follow-a-team line on the Overview, and nothing in the band. A team is followed on its own page, inside the app.
 **Rationale:** the band was already crowded at 360 px (a star there cost the name 44 px on every page) and the drawn options put two stars on the Overview; the owner wants few stars, and following becomes a reason to install (plan §10a). Neither drawn option was taken.
 **Applies to:** the public tournament pages behind the preview switch. Built on the Overview (`705c63cdf`). Supersedes, for these pages, the 2026-07-20 F1 placement (a strip under the header on the Home tab, in a browser) and its mobile-only refinement; the Teams list, the Schedule's team picker and *My games*, a game's star, the team page and the My-team bar follow in Stages 3 and 5 (plan §10a). Delivers the band-crowding ruling's held Q2 (Share once).
+
+### 2026-10-28 — PUBLIC TOURNAMENT BAND CROWDING: FOUR OF FIVE BUILT, SHARE HELD FOR STAGE 2 (owner, "I agree with your recommendations, go ahead"; drawings https://claude.ai/artifact/25jTFUWbbb12aMZ1Dc1mJx)
+
+**Decision (as ruled):** all five recommended answers. **Built:** Q1 the state word is plain text at the end of the dates line ("Oct 27–29 · ● Live now"), no pill (the four words unchanged; the dot is still, no pulse); Q3 the game-day score line scrolls away, only the tab row pins; Q4 the score line sits on the page ground between two hairlines; Q5 a soft fade on the tab row's right edge while more tabs are off screen. **Held:** Q2 (Share once: the band icon stays on every page, the Overview's first row becomes Follow alone) is built with Stage 2, which reorders that row.
+**Rationale:** the filled pill was the heaviest shape in the band and made it about 8 px taller; the line pinned under the tabs cost 45 px on every page it shows on; white tabs over a white line read as one 93 px block; a clipped tab row gave no sign it scrolls. Q2: a control on every page should not move between pages.
+**Applies to:** the public tournament pages on a phone (the state look and the score line rules also hold at a desk; not drawn there). Touches, without reversing, the 2026-10-27 state words (Ask 8) and the 2026-10-28 score-line ruling (its look is unchanged; only where it pins and what it sits on). No earlier ruling was found that says the line must pin.
 
 ### 2026-10-27 — SUPPORT CONSOLE STAGE 4b (FREE TIME ON THE COACHES PORTAL), TWELVE ASKS RULED, EVERY RECOMMENDED BOX TICKED (owner, paste-back from the drawings https://claude.ai/artifact/4qzTiG3rUBTmihqPSUAzrW)
 
