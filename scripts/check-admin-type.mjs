@@ -66,9 +66,6 @@ const DIRS = [
   'app/platform-admin',
   'components/platform-admin',
 ];
-// Held out until its own plan finishes: Bookkeeping's screen belongs to `BOOKKEEPING_OWNER_EXPERIENCE_PLAN.md`'s session and still
-// carries the old console lettering; it joins the gate (and drops from here) when that plan closes.
-const HELD_OUT = ['app/platform-admin/bookkeeping/'];
 const FILES = [
   'components/FeedbackModal.module.css',
   'components/FeedbackModal.tsx',
@@ -136,7 +133,6 @@ function listFiles() {
     for (const rel of readdirSync(join(ROOT, d), { recursive: true })) {
       const f = `${d}/${String(rel).split(sep).join('/')}`;
       if (!/\.(tsx?|css)$/.test(f) || f.includes('/node_modules/') || /\.test\.tsx?$/.test(f)) continue;
-      if (HELD_OUT.some((h) => f.startsWith(h))) continue;
       if (statSync(join(ROOT, f)).isFile()) out.push(f);
     }
   }

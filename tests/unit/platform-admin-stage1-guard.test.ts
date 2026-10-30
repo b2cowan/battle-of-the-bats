@@ -33,10 +33,8 @@ function walk(dir: string, out: string[] = []): string[] {
 }
 const rel = (p: string) => path.relative(ROOT, p).split(path.sep).join('/');
 const CONSOLE_DIRS = ['app/platform-admin', 'components/platform-admin'];
-// Bookkeeping's screen belongs to its own plan's session and is held out of the lettering gate until that plan closes
-// (`HELD_OUT` in scripts/check-admin-type.mjs); the same hold applies here.
-const consoleFiles = CONSOLE_DIRS.flatMap(d => walk(path.join(ROOT, d)))
-  .filter(f => !rel(f).startsWith('app/platform-admin/bookkeeping/'));
+// Bookkeeping joins the console lettering checks (Bookkeeping Stage 1, 2026-10-30).
+const consoleFiles = CONSOLE_DIRS.flatMap(d => walk(path.join(ROOT, d)));
 
 describe('the support console wears the house look (Stage 1)', () => {
   it('nothing under the console pins the dark theme, and every non-login page renders inside the one shell', () => {
