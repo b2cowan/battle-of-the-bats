@@ -1,5 +1,7 @@
 # Bookkeeping, Stage 1: easy to use (build prompt)
 
+> **Execution checkpoint — owner hold, 2026-10-30:** Parts 1–2 are committed and checked: foundations `cbdd5ccde`, lettering guard `bf8ba972c`, restore mapping `86fd8c5e2`, shared form/USD evidence `974fc7208`. Migration 005 was applied to development, preserving the existing 28 revisions / 15 expenses before S1 browser fixtures. The owner asked to finish committing and log progress, then **hold before Part 3 until he is ready**. On his resume, start at Part 3 after reading [plan §13's resume checklist](BOOKKEEPING_OWNER_EXPERIENCE_PLAN.md#resume-after-the-owners-hold-2026-10-30). Parts 3–6 remain ordered work; retain the completed form/window/address behaviour and test evidence recorded there.
+
 > **Written 2026-10-30.** Paste into a new Codex chat on `dev`. **Re-verify every lead before building on it**: they were read in the
 > code on 2026-10-30, and code moves. Read first, in this order: `BOOKKEEPING_OWNER_EXPERIENCE_PLAN.md` (§3 Stage 1 row, §11, §12),
 > then the hub `BOOKKEEPING_HOLISTIC_REEVAL_HUB.html` (open it in a browser; the drawn Overview, Expenses, Add, Record and Void
