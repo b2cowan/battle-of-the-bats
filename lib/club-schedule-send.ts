@@ -990,7 +990,7 @@ async function tellHouseLeague(sctx: SchedulerCtx, scheduleName: string, half: L
           title: LEAGUE_ADMIN_NOTICE.title(scheduleName, counts),
           body: LEAGUE_ADMIN_NOTICE.body({
             divisions: [...new Set([...mine, ...myGames].map(t => t.divisionName).filter(Boolean))],
-            gameLines: myGames.map(g => `${g.divisionName}: ${g.line}`), ...counts,
+            gameLines: myGames.map(g => `${g.divisionName} · ${g.line}`), ...counts,
           }),
           link: `/${org.slug}/admin/house-league/seasons/${seasonId}/schedule${query.toString() ? `?${query}` : ''}`, metadata: { seasonId, sendId },
         });

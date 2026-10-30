@@ -575,6 +575,7 @@ export default function SchedulePage() {
           {lens === 'team' || lens === 'group' ? phoneByTeam() : phoneDayView}
         </>
       ) : (
+        <div className={lens === 'grid' ? sch.gridRunway : undefined}>
         <section className={sch.scheduleWorkspace} aria-labelledby="read-schedule-title">
           <div className={sch.scheduleWorkspaceHead}>
             <div><h2 id="read-schedule-title">Read the schedule</h2><p>{canOverview ? 'Start with the repeating pattern; open Grid for a date or an edit.' : 'Choose a view to inspect this schedule.'}</p></div>
@@ -629,6 +630,7 @@ export default function SchedulePage() {
               onBill={v.canMoney && (v.bill || !final) ? () => setWin({ kind: 'bill' }) : undefined} />
           ) : null}
         </section>
+        </div>
       )}
 
       {pending && (

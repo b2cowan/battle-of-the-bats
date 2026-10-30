@@ -16,7 +16,7 @@
  *   SendLogWindow— Tools › Send log: every send, kept (one log shape for every club send — Ask 9).
  *   TeamSlotsWindow — By team's row opens that team's slots as a list.
  */
-import { useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeftRight, Eraser, Lock, LockOpen } from 'lucide-react';
 import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
@@ -70,15 +70,27 @@ export function WhichWeeks({ view, move, sharing, nameOf, placeOf, onPick, onCan
   const to = `${DAY_NAMES[move.to.weekday]}, ${formatTime(move.to.startClock)} · ${placeOf(move.to)}`;
   const head = swapWith ? W.swapWeeks(nameOf(move.teamId), from, nameOf(swapWith)) : W.whichWeeks(nameOf(move.teamId), from, to);
   const span = (days: string[]) => (days.length > 1 ? W.weeksSpan(formatWeekRange(days[0], days[days.length - 1], false), days.length) : days[0] ? dayHead(days[0]) : '');
-  const left = Math.min(move.at.left, (typeof window !== 'undefined' ? window.innerWidth : 1200) - 320);
-  const top = Math.min(move.at.top + 4, (typeof window !== 'undefined' ? window.innerHeight : 800) - 200);
+  // The menu hangs at the drop, then slides up/left by however much it overflows the window — measured, because the
+  // head wraps and the height is not a constant.
+  const [fit, setFit] = useState<{ left: number; top: number } | null>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const { offsetWidth: w, offsetHeight: h } = el;
+    setFit({
+      left: Math.max(8, Math.min(move.at.left, window.innerWidth - w - 8)),
+      top: Math.max(8, Math.min(move.at.top + 4, window.innerHeight - h - 8)),
+    });
+  }, [move]);
+  const left = fit?.left ?? move.at.left;
+  const top = fit?.top ?? move.at.top + 4;
   const item = (scope: WeeksScope, label: string, days: string[]) => (
     <button type="button" role="menuitem" className={sch.menuItem} disabled={!days.length} onClick={() => onPick(scope)}>
       {label}<small>{span(days) || W.skippedWhy.no_slot}</small>
     </button>
   );
   return (
-    <div ref={ref} className={sch.weeksMenu} role="menu" aria-label={head} style={{ left: Math.max(8, left), top: Math.max(8, top) }}
+    <div ref={ref} className={sch.weeksMenu} role="menu" aria-label={head} style={{ left, top }}
       onKeyDown={e => { if (e.key === 'Escape') onCancel(); }}>
       <div className={sch.menuHead}>{head}</div>
       {item('this', W.thisWeek, reach.this.days)}

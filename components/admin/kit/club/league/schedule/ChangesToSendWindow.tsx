@@ -58,9 +58,12 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
   /** A place as the row says it ("Diamond 2"). */
   placeOf: (s: GameSnapshot) => string;
   /** The send landed: the page reads the season again and says how far it went. */
-  onSent: (said: string) => void;
-  /** An Undo landed, or the tray moved on under it (a refused press): the page reads again; the tray reads again too. */
-  onUndone: () => void;
+  /** `partial`: some emails didn't go — the caller keeps that on screen until read, never a fading pill. */
+  onSent: (said: string, partial: boolean) => void;
+  /** An Undo landed, or the tray moved on under it (a refused press): the page reads again; the tray reads again too.
+   *  `said` is passed only when that Undo emptied the tray and the window closed itself — the page then carries the
+   *  "Undone." sentence, since the window's own status goes with it. */
+  onUndone: (said?: string) => void;
   onClose: () => void;
 }) {
   const [tray, setTray] = useState<Tray | null>(null);
@@ -110,7 +113,7 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
     setBusy(false); setSending(false);
     const n = data.families ?? 0, failed = data.failed ?? 0;
     // "Reached 64 of 66 families · 2 didn't send." — the season's Email families history offers the rest again.
-    onSent(!data.news || data.silent ? W.netNothing : failed > 0 ? reachedLine(data.reached ?? 0, n, failed) : W.sent(n));
+    onSent(!data.news || data.silent ? W.netNothing : failed > 0 ? reachedLine(data.reached ?? 0, n, failed) : W.sent(n), failed > 0);
   }
 
   async function undo(gameId: string) {
@@ -123,10 +126,14 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
       setBusy(false);
       return;
     }
-    setSaid(W.undone(titleOf(gameId)));
-    onUndone();
+    const undone = W.undone(titleOf(gameId));
     // Busy until the tray is read again, so Send and Undo are never live against rows already undone.
-    await read();
+    const got = await fetchTray();
+    // The last Undo leaves nothing to send: close rather than show an empty window.
+    if ('tray' in got && got.tray.games.length === 0) { onUndone(undone); onClose(); return; }
+    setSaid(undone);
+    onUndone();
+    show(got);
     setBusy(false);
   }
 

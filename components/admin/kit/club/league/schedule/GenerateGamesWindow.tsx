@@ -219,8 +219,10 @@ export default function GenerateGamesWindow({
             </div>
           ))}
         </div>
-        <p className={ck.hint}>{W.slotsInAll(dates, slots)}</p>
-        <button type="button" className={s.lineDoor} onClick={() => onOpenTime(division.id, through)}>{W.changeIt}</button>
+        <p className={`${ck.hint} ${ck.tableNote}`}>{W.slotsInAll(dates, slots)}</p>
+        <div className={s.more}>
+          <button type="button" className={s.lineDoor} onClick={() => onOpenTime(division.id, through)}>{W.changeIt}</button>
+        </div>
       </>;
       footerStart = <span>{lengths.size === 1 ? W.eachGame([...lengths][0]) : W.eachGameMixed}</span>;
       footer = <>{cancel}<button type="button" className="btn btn-lime" onClick={() => toMatchups()}>{W.next}</button></>;
@@ -243,7 +245,7 @@ export default function GenerateGamesWindow({
             </label>
           ))}
         </fieldset>
-        <p className={ck.hint}>
+        <p className={`${ck.hint} ${ck.tableNote}`}>
           {W.notOffered}
           <button type="button" className={s.lineDoor} onClick={() => onOpenTime(division.id, through)}>{W.divideFirst}</button>.
         </p>

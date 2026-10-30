@@ -60,12 +60,12 @@ export function leagueRowLine(r: LeagueRow, placeOf: (f: PracticeFace) => League
 
 /**
  * h4's games row, after "{division} games · " (House League 9d-2b Part 5, 9d2·13): time that moved reads as a practice's
- * row does ("Sun, Nov 15: Field 2 → Field 4", settled); time that went is [marketing]: "Thu, Jun 3, 6:00 p.m. · Diamond 1:
- * taken back".
+ * row does ("Sun, Nov 15: Field 2 → Field 4", settled); time that went is settled 2026-10-29,
+ * `HOUSE_LEAGUE_STAGE9D2B_COPY.md`: "Thu, Jun 3, 6:00 p.m. · Diamond 1: time taken back".
  */
 export function leagueGamesLine(was: PracticeFace, now: PracticeFace | null, placeOf: (f: PracticeFace) => LeaguePlace): string {
   if (now) return leagueRowLine({ teamId: '', kind: 'moved', days: [was.day], throughEnd: true, was, now }, placeOf);
-  return `${formatShortWeekdayDate(was.day)}, ${formatTime(was.startClock)} · ${short(placeOf(was))}: taken back`;
+  return `${formatShortWeekdayDate(was.day)}, ${formatTime(was.startClock)} · ${short(placeOf(was))}: time taken back`;
 }
 
 const moves = (n: number) => (n === 1 ? 'moves' : 'move');
@@ -202,7 +202,7 @@ export const LEAGUE_ADMIN_NOTICE = {
     const practices = c.moved + c.cancelled > 0, games = c.gamesMoved + c.gamesNeedDate + c.gamesRemoved > 0;
     return `${scheduleName} changed house league’s ${games && practices ? 'practices and game time' : games ? 'game time' : 'practices'}`;
   },
-  /** `gameLines` names which games and when ("U12: Sun, Nov 8: Field 2 → Field 4"), a few and then "and 3 more". */
+  /** `gameLines` names which games and when ("U12 · Sun, Nov 8: Field 2 → Field 4"), a few and then "and 3 more". */
   body: (p: { divisions: string[]; gameLines?: string[] } & LeagueNoticeCounts) => {
     const what = [
       p.moved ? `${pluralize(p.moved, 'practice')} moved` : '', p.cancelled ? `${pluralize(p.cancelled, 'practice')} cancelled` : '',
@@ -213,11 +213,12 @@ export const LEAGUE_ADMIN_NOTICE = {
     const told = `${joinWithAnd(what)}.`;
     const lead = p.divisions.length ? `${joinWithAnd(p.divisions)}: ${told}` : told.charAt(0).toUpperCase() + told.slice(1);
     // 9d2·13: families hear about a published game once, from the league admin's send.
-    const summary = p.gamesWaiting > 0 ? `${lead} ${pluralize(p.gamesWaiting, 'game')} ${p.gamesWaiting === 1 ? 'waits' : 'wait'} in Changes to send.` : lead;
+    const summary = p.gamesWaiting > 0 ? `${lead} ${pluralize(p.gamesWaiting, 'game')} ${p.gamesWaiting === 1 ? 'waits' : 'wait'} in Changes to send. Families hear once you send them.` : lead;
     const lines = p.gameLines ?? [];
     if (!lines.length) return summary;
     const shown = lines.slice(0, LEAGUE_NOTICE_LINES);
     if (lines.length > shown.length) shown.push(`and ${lines.length - shown.length} more`);
-    return [summary, ...shown].join('\n');
+    // A blank line sets the summary apart from the games it summarizes (the reader keeps line breaks, `pre-line`).
+    return `${summary}\n\n${shown.join('\n')}`;
   },
 } as const;

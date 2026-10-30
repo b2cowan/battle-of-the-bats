@@ -313,7 +313,6 @@ export function todayLineAt(week: SeasonWeek<{ day: string }>, today: string): n
 export const SEASON_PUBLIC_WORDS = {
   /** "Was Sat, Jun 12" — a postponed game's old day; its clock follows. */
   was: (day: string) => `Was ${day}`,
-  postponed: 'Postponed · new date to come',
   /** A game that has never had a date (the admin can save one without): nothing to say it "was". */
   dateToCome: 'Date to come',
   noGames: 'No games scheduled yet.',
@@ -330,9 +329,9 @@ export const SEASON_SCHEDULE_WORDS = {
   emptyWeek: 'Nothing is scheduled this week.',
   emptyMonth: (month: string) => `Nothing is scheduled in ${month}.`,
   nothingMatches: 'Nothing here matches the filters.',
-  addTitle: 'Add to the schedule',
-  addGame: 'A game',
-  addPractice: 'A practice',
+  /** The coaches schedule's Add: the same button word and drawer title; its items are the event types' own words. */
+  addButton: 'Add Event',
+  addTitle: 'Add event',
   /** Edge k: a division with practices and no games. */
   noGamesYet: (division: string) => `${division} has no games yet`,
   noGamesHint: 'Generate the whole season, or add games one at a time.',

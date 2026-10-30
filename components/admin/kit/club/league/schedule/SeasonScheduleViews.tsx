@@ -77,7 +77,7 @@ function Trail({ b }: { b: SeasonBooking }) {
 }
 
 /** One booking as a List row. `lead` is the caller's (a day and a time; a time alone inside a night). */
-function BookingRow({ b, lead, onOpen }: { b: SeasonBooking; lead: string; onOpen: Open }) {
+function BookingRow({ b, lead, wide, onOpen }: { b: SeasonBooking; lead: string; wide?: boolean; onOpen: Open }) {
   const where = whereWords(b);
   return (
     <ClubRow
@@ -87,6 +87,7 @@ function BookingRow({ b, lead, onOpen }: { b: SeasonBooking; lead: string; onOpe
       muted={!!b.state}
       mark={<span className={cal.swatch} style={edge(b)} />}
       lead={<span className={cal.timeCell}>{lead}</span>}
+      leadWide={wide}
       title={<span className={b.state ? cal.struck : undefined}>{b.who}</span>}
       caption={where || b.clash ? <>{where}<ClashLine b={b} size={13} /></> : undefined}
       trail={<Trail b={b} />}
@@ -95,17 +96,20 @@ function BookingRow({ b, lead, onOpen }: { b: SeasonBooking; lead: string; onOpe
   );
 }
 
-export function SeasonListView({ bookings, today, sport, teamName, onOpen }: {
+export function SeasonListView({ bookings, today, sport, teamName, revealDay, onOpen }: {
   bookings: readonly SeasonBooking[];
   today: string;
   sport: string | null;
   teamName: ReadonlyMap<string, string>;
+  /** A day a door is taking the admin to: its week opens even when it sits among the folded earlier weeks. */
+  revealDay?: string | null;
   onOpen: Open;
 }) {
-  const [showEarlier, setShowEarlier] = useState(false);
+  const [showEarlierPick, setShowEarlier] = useState(false);
   const [openNights, setOpenNights] = useState<ReadonlySet<string>>(() => new Set());
   const items = foldNights(bookings).map(row => ({ day: row.kind === 'one' ? row.booking.day : row.day, row }));
   const { earlier, ahead } = seasonWeeks(items, today);
+  const showEarlier = showEarlierPick || (!!revealDay && earlier.some(w => w.monday === mondayOfDay(revealDay)));
   const weeks = showEarlier ? [...earlier, ...ahead] : ahead;
   const thisMonday = ahead[0] && todayLineAt(ahead[0], today) != null ? ahead[0].monday : null;
   // This week empty: the now line sits between the weeks behind today and the next one (C7), or ends a finished season.
@@ -123,7 +127,7 @@ export function SeasonListView({ bookings, today, sport, teamName, onOpen }: {
   const rowOf = (row: SeasonListRow) => {
     if (row.kind === 'one') {
       const b = row.booking;
-      return <BookingRow key={b.key} b={b} lead={`${dayWords(b.day)} · ${timeWords(b)}`} onOpen={onOpen} />;
+      return <BookingRow key={b.key} b={b} lead={`${dayWords(b.day)} · ${timeWords(b)}`} wide onOpen={onOpen} />;
     }
     const open = openNights.has(row.key);
     const names = row.practices.map(p => teamName.get(p.teamId ?? '') ?? p.ownerName);
@@ -135,6 +139,7 @@ export function SeasonListView({ bookings, today, sport, teamName, onOpen }: {
           aria-expanded={open}
           mark={<span className={cal.swatch} style={edge(row.practices[0])} />}
           lead={<span className={cal.timeCell}>{`${dayWords(row.day)} · ${nightTime(row)}`}</span>}
+          leadWide
           title={W.nightTitle(row.practices.length)}
           caption={<>{names.join(', ')}<span className={sv.nightPlace}>{nightPlaceWords(row, sport)}</span></>}
           trail={open ? <ChevronDown size={16} aria-hidden /> : <ChevronRight size={16} aria-hidden />}
@@ -247,7 +252,7 @@ export function NeedsDateFold({ bookings, onOpen }: { bookings: readonly SeasonB
       </summary>
       <ClubRowList label={W.needsDate}>
         {bookings.map(b => (
-          <BookingRow key={b.key} b={b} onOpen={onOpen}
+          <BookingRow key={b.key} b={b} onOpen={onOpen} wide
             lead={b.startMs ? SEASON_PUBLIC_WORDS.was(`${dayWords(b.day)} · ${timeWords(b)}`) : SEASON_PUBLIC_WORDS.dateToCome} />
         ))}
       </ClubRowList>

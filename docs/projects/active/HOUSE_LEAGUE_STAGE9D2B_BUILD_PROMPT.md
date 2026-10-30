@@ -108,7 +108,7 @@
     "Reached 19 of 21 families · 2 didn't send." + the others-waiting sentence (build word `sentNowPartly`).
   - Known, not mine: `check:schema-parity` lists 409/410 as dev-only until prod applies them (a gate baseline — not
     re-baselined); the committed tree's 2 type errors are support-console 4b's (`portal-free-time-give.ts`).
-- **Part 4 `/simplify` `c5db241f1` + `/review` (high) `8228c9f23` 2026-10-28; walk §418 written (https://claude.ai/artifact/RJt2Q9V6BQmdHkwAHi9tez, 30 steps, owed).**
+- **Part 4 `/simplify` `c5db241f1` + `/review` (high) `8228c9f23` 2026-10-28; walk §418 (https://claude.ai/artifact/RJt2Q9V6BQmdHkwAHi9tez, 30 steps) WALKED 2026-10-28, passed 30 of 30.**
   - **Simplify:** the two send windows' "See the email" state is one hook + view in `SendParts` (`useEmailSample`, `SampleMail`); the sample's families group through `familiesFor`; the two `changeLine`s are `emailChangeLine` and `trayChangeLine`. ⚖ **Left as two copies, on purpose:** the placement and schedule senders' claim / outcome / recount (two tables, two status sets, different `failed_count` meaning, `sent_at` on one only — a shared helper would take a table name, a status list and a count rule and save ~12 lines); `placeReader` (the public page's `placeOf` is inline in a file another session is editing); `publishedLinesByTeam` reads the whole season (the by-division read swallows a failed read, which here would tell families nothing — the season read is now PAGED instead); `copyCoaches` per team (a coach of two teams gets one copy per team by design).
   - **Review fixed** (five lenses, tier high; the gate: `typecheck` ✓, 11,496 unit tests ✓, spelling / dictionary / snapshot ✓; `verify:changed`'s ESLint step crashed on another session's config, my files linted clean; migration drift = 409/410 dev-only as known): **High** — a send that died partway read "done, reached 0" forever (the notice is born `failed_count = 0`, only the end of a send raised it): counted before the first email now. **Medium** — a call that claims nothing no longer rewrites counts (a stale write could land after the winner's); a fresh `sending` row reads the notice as "Sending" on the history (not "Stopped"); each batch's rows are recorded as it returns (`sendFamilyServiceBatch` gained `onBatch`), so a request killed mid-send keeps what went; the transport answering "skipped" is a failure in production (dev keeps the quiet skip); a change that nets to nothing in words no longer reads "Sent to N families" (`silent`); the coach-copy exclusion is the parents reached WITH that team's lines (was every claimed address); `getSeasonGamesEveryStatus` is paged; the data dictionary's `failed_count` meaning; `family-email.ts`'s header list names the practice-change and the two schedule emails. **Low** — the rows read is paged; a division deleted since closes its rows; an unsendable address is skipped, not failed forever; "Cancelled: A vs B, ." dangling comma; Publish / Send say "we couldn't confirm" on no answer / a bare 5xx; the email door hides while Publish / Send is working; "Send to the N it missed" that took no one says so; the f5 `others` read can't turn a sent email into "it didn't send"; `role="alert"`, a named "See them" link, no duplicate list keys; the unused `noticeMissed` removed.
   - **Left, recorded (Low/Advisory):** a late original send can still write onto a taken-over `sending` row (the guard is the status, not a token); `byCreated` compares timestamps as strings (a refuter found the order holds for PostgREST's output); a "Schedule published" resend weeks later lists games since played; the coach copy never happens if the first send dies before it; two copies for a coach of two changed teams; "0 families emailed" for an empty division; a null preview reads as a load failure; `maxDuration = 120` unconfirmed against the host. Neither mig 409 nor 410 changed (still dev-only).
@@ -128,6 +128,22 @@
     sub-lines, the league admins' bell, `undoClub`, `changesHintLeagueGames`, `changesStatement`'s divisions clause.
   - Known, not mine: `verify:changed`'s ESLint step still crashes on the shared config (react-hooks plugin); the other red
     gates (admin type, index coverage, org-slug callers, css selectors, root files, schema parity 409/410) are other files.
+- **Part 6 — COMMITTED `49b395ae5` 2026-10-28** (plan §9 has the entry). **Mig 412** (dev only, MANUAL_PROD_STEPS pending):
+  `league_seasons.twice_in_a_day_allowed` / `home_away_tolerance`, `league_divisions.games_per_team` (null = the schedule's own
+  plan), `league_season_rules_save` (all three in one transaction; `finished` / `division` / `invalid`). ⚖ **Built call, said
+  out loud before building: games per team is per DIVISION**, not per season (9d2b·C said "on the season" — a round robin gives
+  8 teams 7 games and 5 teams 4); the other two are the season's. ⚖ Short teams no cancelled game explains now read ONE line
+  per division and count ("Cardinals, Orioles and Twins have 2 of 4 games."). The window owns the draft and re-scores live
+  (`rescore`); unsaved rules ask on close; doors that leave the window wait while dirty (the tournament's rule); door only with
+  `onSaveRules` (= `canManage`). The tournament's door and editor frame are shared components now (`HealthRulesDoor`,
+  `HealthRulesEditor` in `ScheduleHealthPanel.tsx`), tournament behaviour unchanged. Generate's check scores by the rules and
+  drops "plays twice" where allowed. Route `PUT schedule/rules`. Oracle `.probe/9d2b-p6/oracle.mts`: Dev House League 2026 stays
+  **65** on its stored rules (tolerance 2 → 70; Division A at 3 → 60; twice allowed → 65). Proof:
+  `scripts/house-league-9d2b-part6-check.sql` T1–T6 passed on dev; 11,561 unit tests; typecheck clean.
+  - **Not probed at runtime:** the route through the dev server (restart needed). The season-scope guard can't see division
+    ids arriving as object keys — the function scopes them (T3); say so at /review rather than widening the guard.
+  - **[build] words for /marketing:** `gamesPerTeamOf` ("Games per team · {Division}"), `gamesPerTeamEmpty`, `rulesLive`,
+    `rulesFinished`, `rulesFailed`. Ask at the walk: the rule fields are the tournament's 32px on a phone (under the 44px tap).
 - **Part 7 — COMMITTED `cf963f3e6` (review fixes + mig 413) and `5783c7f98` (help + PM brief) 2026-10-28** (plan §9 has the full
   entry). Gate green (tests, typecheck, spelling, dictionary, snapshot). `/review` high, four lenses over Parts 1, 2, 3, 5, 6:
   no Critical; nine things fixed (Undo restores the division-time link and reads under the lock — **mig 413**, dev only,
@@ -135,9 +151,8 @@
   read no longer reads as a draft; a team from another division refused; a refused press re-reads; end-time-only and first-date
   emails; games read before held rows; mig 409's backfill runs once). Proof `scripts/house-league-9d2b-part7-check.sql` T1–T5.
   Help rewritten. Walks **§420** (editing + Changes to send), **§421** (the coach's Schedule + the club's time), **§422** (the
-  Rules door) written and published, with §418, owed.
-  - **Not done:** the HTTP lifecycle probe (`.probe/9d2b-p7/routes.mjs` written, UNRUN — needs a dev login the probe may use);
-    `check:layout --changed`; the dev server restart (new files, migs 410–413).
+  Rules door) written and published (§418 walked 30/30, §420 28/28, §421 26/26 and §422 17/18 on 2026-10-28; §422's F1 is a setup step, not ticked).
+  - **Close-out checks run 2026-10-30:** the HTTP lifecycle probe and scoped layout check are recorded below, with their findings.
   - **Part 7 `/simplify` over Parts 1–3, 5, 6 — DONE, COMMITTED `45d80b257` 2026-10-28** (four lenses; Part 4 was simplified in `c5db241f1`).
     Fixed: one "game + its patch" merge in the game route; the held rows read once on the schedule GET (`heldGamesOf` takes rows
     already read); the coach page reads its division's published mark from the team read it already makes; shared helpers for the
@@ -150,8 +165,47 @@
     (takes untyped input; a guard test pins it).
   - **[marketing] words to settle:** "Date set: …" / "Date to come: …" (`SCHEDULE_EMAIL_WORDS.dated/undated`); a club Send of only
     games reads "Who is told · 0 people" / "Send to 0 people"; the Part 5 tagged words.
-- **▶ NEXT: the owner walks §418, §420, §421, §422; then `/marketing`'s one pass on the tagged words; then 9d-3 / 9e.** The dev
-  server needs a restart before any browser check.
+- **Close-out built 2026-10-30** (`HOUSE_LEAGUE_STAGE9D2B_CLOSEOUT_CODEX_PROMPT.md`; all 13 accepted rows in
+  `HOUSE_LEAGUE_STAGE9D2B_COPY.md`). Games-only Send has its own heading, button, confirmation and hint, decided once from
+  the preview and ticked teams before sending. Other sends keep their existing audience labels and failure wording.
+  The statement includes every audience, including the league admins when teams and games share a send; game rows say
+  "time taken back"; the bell names the families' next send and separates division/game with a middle dot; date emails and
+  the club-change Undo refusal use the settled words. Derived edit: `changesHintLeague` shares the new last sentence.
+  - **Lifecycle:** first run 84 passed / 5 failed; after the small Undo fix, **85 passed / 4 failed**. A malformed game ID
+    formerly reached the UUID RPC and returned 500; it now uses `isUuid()` and returns the existing 404 "Game not found".
+    A test of the real handler with mocked auth/database reproduced the error before the fix and passes after it.
+    The remaining findings are reported, not patched: the public schedule intentionally keeps the old time in its "Was"
+    line (the probe asserts that time is absent anywhere in the HTML); unsigned GET/POST/DELETE return the existing proxy's
+    307 login redirect, where the probe expects 401/403. Wrong-org checks skipped because the outsider's password sign-in
+    failed. Both runs restored the season rules and verified zero fixture rows left in all seven tables and zero probe
+    divisions. Raw output: `.probe/9d2b-p7/closeout-routes.log` and `closeout-routes-after.log`.
+  - **Layout:** `check:layout -- --changed --only=admin-schedule-send,admin-notifications` passed both screens at 361/1440,
+    no new findings. The initial attempt refused a stale owner session; the existing auth setup refreshed only that session
+    (1 passed). Explicit `--only` prevents the shared admin files and other sessions' diff from selecting a whole-product
+    dev sweep. No baseline refresh/prune. No dedicated bell-tray entry exists; that view remains in the owner's browser walk.
+  - **Verification:** `verify:changed` ran 12,369 tests: 12,363 passed, six unrelated failures in
+    `plan-billing-admin-host.test.ts` ("A component suspended while responding to synchronous input"). The chained lint and
+    later gates were not reached. Focused words/email tests passed 62/62; close-out plus Undo regression passed 14/14.
+    `typecheck` exited 134 after about 320 seconds: "FATAL ERROR: Ineffective mark-compacts near heap limit Allocation
+    failed - JavaScript heap out of memory" (about 4 GB heap); it produced no type diagnostics, so type safety remains
+    unverified. A larger-heap retry was not started: available memory was about 6.2 GB, insufficient headroom for the
+    proposed 6 GB heap. The actual TS config excludes the temporary artifact directories; its 3,499 root files explain
+    neither the OOM nor its cause. Focused lint across all ten task TS/TSX files reported just the pre-existing fixture
+    helper `use()` called from `gamesUse()` (`club-schedule-league-plan.test.ts:212`, react-hooks/rules-of-hooks); that
+    helper is unchanged. `check:spelling` and task-scoped `git diff --check` passed. Raw logs are in `.probe/9d2b-p7/closeout-*`.
+    The dev server was restarted once at hand-off with `npm run dev` and network access; Ready, platform-admin login HTTP
+    200, and no `EACCES` in the fresh server log were verified. The server remains running for the owner's check.
+  - **Self-review:** one games-only predicate, reused by the four surfaces, with no response-based people-count inference;
+    one shared game hint; no games-only "0 people" branch; new possessives use `possessive()`; "Needs a new date" retains its
+    spelling. No new shared abstraction. The pre-existing blank-line notice/test edits are preserved.
+  - **Owed:** `/review`; `/docs` for `org.tsx`'s `club-schedules-t-send-league` and adjacent team-only send descriptions,
+    and `house-league.tsx`'s `house-league-time-t-families` (practice-only bell description; cross-check
+    `recipe-generate-house-league-schedule-t-changes`). No quoted old table string was found in the requested helper, demo
+    or `docs/agents` census, so those files were not rewritten. `/simplify` is not owed: only existing helpers were reused.
+    The owner still checks the games-only Send window and bell tray in the browser.
+- **▶ NEXT (2026-10-30): close-out implementation and requested checks have run, with the findings above;
+  resolve or accept the verification findings and finish the owner/Claude follow-ups before treating the stage as verified.** This close-out does
+  not start 9d-3 or 9e, change the open owner calls, or apply anything to production.
 - Part 3's list, as it was handed over (all done in `b508c95e9`):
   (1) `gameWindowDoors(status, published)`: Delete only before, Cancel only after; DELETE route refuses a published
   division's game. (2) PATCH stale-window refusal: the body carries `seen: {status, updatedAt}`; update with

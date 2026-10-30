@@ -81,6 +81,18 @@
 > a week may give house league two, and house league's people can only work inside what they were given. One question is
 > left, and the owner answered it the same day: the club gives time to house league as a whole, and dividing it among
 > divisions and teams is the convenor's job. That step is drawn, and the club-time half is built first.
+>
+> **9d-3 drawn 2026-10-29, asks open.** Drawings: https://claude.ai/artifact/Uazj5c2RKqVPAs1Gwpm9pM. Today a family is never
+> told when their child's team practises, unless a practice later changes, and a house-league coach has no calendar at all
+> (a rep coach has had one for a while). Recommended: when the convenor hands practices out, the last step of the same window
+> offers one button, "Send to 99 families", one email per household with the team's practice dates; nothing goes until that
+> press. The email lists dates because teams take turns at the early and late times week by week. A coach gets the same
+> Subscribe a rep coach has, on the team page's Schedule line, plus a quiet line saying whether the families have been told.
+> A family gets no calendar link: the product's end state is an app everyone signs in to, with a parent linked to their child,
+> so a link with no account behind it was withdrawn on 2026-10-29. Until the app exists, the email lists every practice date
+> for the season. Also found: handing practices out a second time quietly rewrites practices families may already know, with
+> nobody told, so the same step reopens as a change. Recommended as one build, the notice first, then the coach's Subscribe.
+> Six asks are open and two are withdrawn.
 
 ## What this is
 
@@ -127,8 +139,11 @@ gets sign-ups and money ready for online payment, which is the stage after this 
    together with 11b, house league's share of the club's time (the club's one schedule gives house league its hours),
    which is built first. Success: a convenor builds and publishes a whole season in one sitting, and no family finds a game moved
    without having been told.
-7. **9e · Game day.** Standings that follow the sport's scoring rules, and scores entered by coaches.
-8. **9f · Season end.** Finishing a season, looking back at past seasons, and starting next season from this one.
+7. **9d-3 · Telling families their practice times, and calendars.** The first practice email to a team's families, sent by the
+   convenor when practices are handed out, and a calendar link a coach can put on a phone. Success: no family learns their
+   practice time only when it changes. A family's own calendar is the signed-in app, not a link.
+8. **9e · Game day.** Standings that follow the sport's scoring rules, and scores entered by coaches.
+9. **9f · Season end.** Finishing a season, looking back at past seasons, and starting next season from this one.
 
 ## Who it affects
 

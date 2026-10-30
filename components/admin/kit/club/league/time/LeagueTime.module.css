@@ -89,6 +89,9 @@
 }
 .line b { font-weight: 600; color: var(--text-primary); }
 .lineIcon { flex: none; margin-top: 0.2rem; color: var(--text-tertiary); }
+/* A second sentence under a .line (compose with ck.hint): pulled up to its line, indented to the line's text (icon 15px
+   + the 0.5rem gap), and given the line's own gap below so it never touches the toolbar. */
+p.lineNote { margin: -0.6rem 0 0.9rem calc(15px + 0.5rem); }
 .lineDoor {
   border: 0; background: none; padding: 0; font: inherit; color: var(--text-primary); font-weight: 600;
   text-decoration: underline; text-underline-offset: 2px; cursor: pointer; white-space: nowrap;

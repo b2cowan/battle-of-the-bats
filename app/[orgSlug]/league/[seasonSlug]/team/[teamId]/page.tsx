@@ -79,6 +79,20 @@ export default async function CoachTeamPage({ params }: { params: Promise<{ orgS
         <p className={styles.notice}>{team.seasonName} has finished. This page stays until {formatStoredDate(page.openUntil, { withYear: false })}.</p>
       )}
 
+      <section className={styles.section} aria-labelledby="coach-schedule">
+        <h2 id="coach-schedule" className={styles.sectionTitle}>Schedule</h2>
+        {/* g3 (9d2·7): the team's published games and its practices, from today on — a live season only. */}
+        {view === 'open' && (
+          <CoachSchedule practices={page.practices} games={page.games} gamesPublished={page.gamesPublished} divisionName={team.divisionName} />
+        )}
+        <p className={`${kit.sub} ${styles.seeAll}`}><Link href={scheduleHref} className={styles.link}>{SCHEDULE_PUBLIC_WORDS.coachSeeSeason}</Link></p>
+      </section>
+
+      <section className={styles.section} aria-labelledby="coach-scores">
+        <h2 id="coach-scores" className={styles.sectionTitle}>Scores</h2>
+        <p className={kit.sub}>The club enters scores for now.</p>
+      </section>
+
       <section className={styles.section} aria-labelledby="coach-players">
         <div className={styles.sectionHead}>
           <h2 id="coach-players" className={styles.sectionTitle}>Players <span className={styles.count}>{page.players.length}</span></h2>
@@ -111,20 +125,6 @@ export default async function CoachTeamPage({ params }: { params: Promise<{ orgS
             </ul>
           </div>
         )}
-      </section>
-
-      <section className={styles.section} aria-labelledby="coach-schedule">
-        <h2 id="coach-schedule" className={styles.sectionTitle}>Schedule</h2>
-        {/* g3 (9d2·7): the team's published games and its practices, from today on — a live season only. */}
-        {view === 'open' && (
-          <CoachSchedule practices={page.practices} games={page.games} gamesPublished={page.gamesPublished} divisionName={team.divisionName} />
-        )}
-        <p className={kit.sub}><Link href={scheduleHref} className={styles.link}>{SCHEDULE_PUBLIC_WORDS.coachSeeSeason}</Link></p>
-      </section>
-
-      <section className={styles.section} aria-labelledby="coach-scores">
-        <h2 id="coach-scores" className={styles.sectionTitle}>Scores</h2>
-        <p className={kit.sub}>The club enters scores for now.</p>
       </section>
 
       <p className={styles.foot}>

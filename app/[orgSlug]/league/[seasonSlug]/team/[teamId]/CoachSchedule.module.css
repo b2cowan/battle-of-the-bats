@@ -7,3 +7,6 @@
   color: var(--club-text);
 }
 .list { margin: 0 0 0.75rem; padding: 0; list-style: none; }
+/* The "nothing yet" lines under the list: one breath between them, none when there are none. */
+.notes { display: grid; gap: 0.5rem; }
+.notes:empty { display: none; }

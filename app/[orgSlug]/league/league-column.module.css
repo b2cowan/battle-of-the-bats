@@ -99,9 +99,9 @@
 .earlier > summary::-webkit-details-marker { display: none; }
 .earlier > summary:hover { text-decoration: underline; }
 .earlier > summary:focus-visible { outline: 2px solid var(--club-ink); outline-offset: 2px; }
-/* Opened, the door has done its work: the weeks take its place. */
+/* Opened, the door has done its work: the weeks take its place. The weeks carry their own gap (a wrapper `.weeks`):
+   a <details> puts its children inside an inner box, so flex/gap on the details itself never reached them. */
 .earlier[open] > summary { display: none; }
-.earlier[open] { display: flex; flex-direction: column; gap: 1.5rem; }
 
 .game {
   display: flex;
@@ -134,7 +134,6 @@
   color: var(--club-text);
   overflow-wrap: anywhere;
 }
-.matchName > span { margin-left: 8px; vertical-align: 1px; }
 .place {
   display: block;
   font: 400 0.875rem/1.4 var(--club-text-face);
@@ -147,8 +146,7 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
-.postponed { color: var(--club-warn); }
-/* The chip inside the name is an atomic inline, so the strike never runs through "Cancelled". */
+/* The state chip sits in its own column, so the strike never runs through "Cancelled". */
 .struck .matchName,
 .struck .when { text-decoration: line-through; color: var(--club-dim); }
 .struck .when > span { color: var(--club-dim); }

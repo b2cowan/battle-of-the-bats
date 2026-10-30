@@ -87,7 +87,7 @@ function whenWords(game: LeagueGame): string | null {
   return `${formatInOrgZone(game.scheduledAt, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} · ${formatTimeRange(start.time, game.endsAt ? utcToZonedInputs(game.endsAt).time : null)}`;
 }
 
-export default function GameWindow({ game, booking, divisionId, divisionName, published, teams, venues, sport, api, orgQuery, checkPath, orgSlug, canRun, onSeePermit, onChanged, onCreated, onDeleted, onClose }: {
+export default function GameWindow({ game, booking, divisionId, divisionName, published, teams, venues, sport, api, orgQuery, checkPath, orgSlug, canRun, opensToRedate, onSeePermit, onChanged, onCreated, onDeleted, onClose }: {
   /** The game, or null for Add › A game. */
   game: LeagueGame | null;
   /** The game as the views draw it: its place's words and "Time from" (`gameSlotOf`). */
@@ -108,6 +108,8 @@ export default function GameWindow({ game, booking, divisionId, divisionName, pu
   orgSlug: string;
   /** Runs the season (owner, admin, league admin on a live season). */
   canRun: boolean;
+  /** Schedule health's "Give it a new date" lands on the new-date form itself, not on the record to click through. */
+  opensToRedate?: boolean;
   /** "See the permit": the page opens the permit's window over this one. */
   onSeePermit: (permitId: string) => void;
   /** A write landed: the page reads the season again (awaited, so the window reads what was saved). */
@@ -117,7 +119,7 @@ export default function GameWindow({ game, booking, divisionId, divisionName, pu
   onDeleted: () => void;
   onClose: () => void;
 }) {
-  const [mode, setMode] = useState<Mode>(game ? 'read' : 'edit');
+  const [mode, setMode] = useState<Mode>(!game ? 'edit' : opensToRedate && canRun && gameWindowDoors(game.status, published).giveDate ? 'redate' : 'read');
   const [draft, setDraft] = useState<Draft>(() => draftOf(game, teams, venues));
   const [seed, setSeed] = useState<Draft>(draft);
   const [saving, setSaving] = useState(false);
@@ -343,6 +345,9 @@ export default function GameWindow({ game, booking, divisionId, divisionName, pu
             <TimeInput className={ck.input} value={draft.endTime} onChange={v => set('endTime', v)} />
           </label>
         </div>
+        {/* The Where block zeroes its own bottom margin (its lines sit 7px under the controls), so it takes the same step
+            every other field here does — otherwise the permit line touches Notes. */}
+        <div className={ck.field}>
         <WhereField
           idPrefix="hl-game"
           sport={sport}
@@ -359,6 +364,7 @@ export default function GameWindow({ game, booking, divisionId, divisionName, pu
             </p>
           ) : null}
         />
+        </div>
         {scored && (
           <div className={g.pair}>
             <label className={ck.field}>

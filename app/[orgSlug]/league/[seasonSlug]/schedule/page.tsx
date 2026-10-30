@@ -133,7 +133,9 @@ export default async function PublicSchedulePage({
               {earlier.length > 0 && (
                 <details className={column.earlier}>
                   <summary>{SEASON_SCHEDULE_WORDS.earlierWeeks(earlier.length)}</summary>
-                  {earlier.map(w => <Week key={w.monday} week={w} today={today} />)}
+                  <div className={column.weeks}>
+                    {earlier.map(w => <Week key={w.monday} week={w} today={today} />)}
+                  </div>
                 </details>
               )}
               {ahead.map(w => <Week key={w.monday} week={w} today={today} />)}
@@ -187,15 +189,14 @@ function GameRow({ booking: b }: { booking: SeasonBooking }) {
         <span className={column.when}>{SEASON_PUBLIC_WORDS.dateToCome}</span>
       )}
       <div className={column.match}>
-        <span className={column.matchName}>
-          {b.who}
-          {cancelled && <span className={`${kit.chip} ${kit.chipNeutral}`}>{STATE_WORDS.cancelled}</span>}
-        </span>
+        <span className={column.matchName}>{b.who}</span>
         {place && <span className={column.place}>{place}</span>}
         {movedFrom && <span className={column.place}>{P.movedWas(dayWords(orgDayKey(movedFrom)), clockOf(Date.parse(movedFrom)))}</span>}
       </div>
       {postponed ? (
-        <span className={`${column.state} ${column.postponed}`}>{SEASON_PUBLIC_WORDS.postponed}</span>
+        <span className={column.state}><span className={`${kit.chip} ${kit.chipWarn}`}>{STATE_WORDS.postponed}</span></span>
+      ) : cancelled ? (
+        <span className={column.state}><span className={`${kit.chip} ${kit.chipNeutral}`}>{STATE_WORDS.cancelled}</span></span>
       ) : b.result ? (
         <span className={column.state}>{b.result}</span>
       ) : movedFrom ? (

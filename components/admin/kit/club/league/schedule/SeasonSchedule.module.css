@@ -27,7 +27,9 @@
 /* Schedule health's window (step 6, d2–d4): the phone's "{n} more. Show all", and the rules said at the foot (no door
    until 9d-2b can save them). The rest of the window is the tournament's. */
 .healthMore { margin: 0.25rem 0 0; font-size: var(--type-support); color: var(--text-secondary); }
-.healthRules { flex-direction: column; align-items: flex-start; }
+/* `div.` on purpose: the tournament's foot row (shared class) says align-items: center, and a bare class ties with it, so
+   whichever sheet loads last wins — the rules block drifted to the middle of the window. */
+div.healthRules { flex-direction: column; align-items: flex-start; justify-content: flex-start; text-align: left; }
 .healthRuleList { display: grid; gap: 0.2rem; margin: 0; }
 .healthRuleList > div { display: flex; flex-wrap: wrap; gap: 0 0.5rem; }
 .healthRuleList dt { color: var(--text-secondary); }

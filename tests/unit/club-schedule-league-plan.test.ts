@@ -281,7 +281,7 @@ describe('the games words (9d-2b Part 5; h4 settled, the rest /marketing\'s)', (
   const now: PracticeFace = { ...was, facilityId: F3 };
   it('time that moved reads as the settled row; time that went says so', () => {
     assert.equal(leagueGamesLine(was, now, placeOf), 'Sun, Nov 15: Field 1 → Field 3');
-    assert.equal(leagueGamesLine(was, null, placeOf), 'Sun, Nov 15, 11:00 a.m. · Field 1: taken back');
+    assert.equal(leagueGamesLine(was, null, placeOf), 'Sun, Nov 15, 11:00 a.m. · Field 1: time taken back');
   });
   it('who tells families: the settled "2 games move. A league admin sends them …"; a draft tells nobody', () => {
     assert.equal(leagueGamesSub({ division: 'U9 Rookie', published: true, moved: 2, needsDate: 0, removed: 0 }),
@@ -295,17 +295,22 @@ describe('the games words (9d-2b Part 5; h4 settled, the rest /marketing\'s)', (
     const c = { ...NO_LEAGUE_COUNTS, gamesMoved: 2, gamesNeedDate: 1, gamesWaiting: 3 };
     assert.equal(LEAGUE_ADMIN_NOTICE.title('Summer field time', c), 'Summer field time changed house league’s game time');
     assert.equal(LEAGUE_ADMIN_NOTICE.body({ divisions: ['U12'], ...c }),
-      'U12: 2 games moved and 1 game needs a new date. 3 games wait in Changes to send.');
+      'U12: 2 games moved and 1 game needs a new date. 3 games wait in Changes to send. Families hear once you send them.');
     assert.equal(LEAGUE_ADMIN_NOTICE.title('Summer field time', { ...NO_LEAGUE_COUNTS, moved: 1 }), 'Summer field time changed house league’s practices');
+  });
+  it('a draft-only move has no instruction to send families', () => {
+    assert.equal(LEAGUE_ADMIN_NOTICE.body({ divisions: ['U12'], ...NO_LEAGUE_COUNTS, gamesMoved: 1 }),
+      'U12: 1 game moved.');
   });
   it('the notice says which games moved and when, a few lines and then "and N more"', () => {
     const c = { ...NO_LEAGUE_COUNTS, gamesMoved: 1 };
     assert.equal(LEAGUE_ADMIN_NOTICE.body({ divisions: ['U11'], gameLines: ['U11: Sun, Nov 8: Field 2 → Field 4'], ...c }),
-      'U11: 1 game moved.\nU11: Sun, Nov 8: Field 2 → Field 4');
+      'U11: 1 game moved.\n\nU11: Sun, Nov 8: Field 2 → Field 4');
     const many = Array.from({ length: 9 }, (_, i) => `U11: line ${i + 1}`);
     const lines = LEAGUE_ADMIN_NOTICE.body({ divisions: ['U11'], gameLines: many, ...c }).split('\n');
-    assert.equal(lines.length, 8);
-    assert.equal(lines[7], 'and 3 more');
+    assert.equal(lines.length, 9);
+    assert.equal(lines[1], '');
+    assert.equal(lines[8], 'and 3 more');
   });
 });
 

@@ -80,9 +80,13 @@
 .sep { height: 1px; margin: 4px 0; background: var(--home-line, var(--border-2)); }
 
 /* ── The line under the row ── one shape, four inks (amber saves anyway · red can't save · quiet isn't checked). */
+/* `.where .line`, two classes: the admin window's `.body p` rule (KitDialog) sets every paragraph's margin and wins over one. */
+.where .line {
+  margin: 10px 0 0;
+}
+/* The flex row and its gap live on `.line` alone: the same line also reads outside `.where` (the game window's read view). */
 .line {
   display: flex; gap: 7px; align-items: flex-start;
-  margin: 7px 0 0;
   font-size: var(--type-support, 0.8125rem); line-height: 1.45;
 }
 .line b { font-weight: 650; }

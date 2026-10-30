@@ -387,9 +387,14 @@
 }
 .dropTipBad { background: var(--danger-light); color: var(--card-bg); }
 
+/* Scroll room under the grid (computer only): the "Read the schedule" card can be raised until it sits right under the
+   header, so a drop on the bottom rows has space around it and a drag can auto-scroll that far. */
+.gridRunway { min-height: calc(100vh - var(--admin-header-h, 0px) - var(--admin-topstrip-h, 48px)); }
+@media (max-width: 768px) { .gridRunway { min-height: 0; } }
+
 /* The which-weeks question, a menu hung at the drop (Ask 13). */
 .weeksMenu {
-  position: fixed; z-index: 40; width: 19rem; padding: 0.35rem;
+  position: fixed; z-index: 40; width: 19rem; max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); overflow-y: auto; padding: 0.35rem;
   border: 1px solid var(--home-line-strong); border-radius: 8px; background: var(--card-bg);
   box-shadow: 0 10px 28px rgba(var(--shadow-rgb, 0, 0, 0), 0.18);
 }

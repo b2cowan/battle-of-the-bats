@@ -19,7 +19,8 @@ import {
 import { pluralize } from '@/lib/utils';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { monthWords } from '@/lib/calendar-recipe';
-import { EVENT_COLORS } from '@/lib/coach-schedule-vocab';
+import { EVENT_COLORS, EVENT_LABELS } from '@/lib/coach-schedule-vocab';
+import { EVENT_ICONS } from '@/components/coaches/eventTypeMark';
 import { rangeFor, stepCursor, type CalendarView } from '@/lib/club-calendar-view';
 import { GAME_WINDOW_WORDS, SEASON_SCHEDULE_WORDS as W, seasonCalendar, seasonClashes, seasonOpeningDay, type SeasonBooking, type SeasonGameSlot } from '@/lib/league-season-calendar';
 import ExportMenu from '@/components/admin/ExportMenu';
@@ -62,7 +63,7 @@ import PracticeTimeWindow from '@/components/admin/kit/club/league/time/Practice
 import PracticeWindow from '@/components/admin/kit/club/league/practices/PracticeWindow';
 import { PRACTICE_TIME_WORDS, PRACTICE_WINDOW_WORDS } from '@/lib/league-practice-time';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { LoadFailed, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
+import { LoadFailed, NoticePill, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
 import { useKitButtons, useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
@@ -70,8 +71,8 @@ import type { ClubVenueOption, LeagueDivision, LeagueTeam, LeagueGame, LeagueGam
 import LoadingState from '@/components/shared/LoadingState';
 import DateInput from '@/components/shared/DateInput';
 import TimeInput from '@/components/shared/TimeInput';
-
 import { endFollowingStart } from '@/lib/date-field';
+
 // ── Export definition ─────────────────────────────────────────────────────────
 
 const SCHEDULE_EXPORT_COLS: ExportColumnDef[] = [
@@ -680,6 +681,8 @@ export default function SchedulePage() {
   const [show, setShow] = useState<Set<string>>(() => new Set());
   /** Month's day, opened in List (Week on a phone) — scrolled to once that view is drawn. */
   const jumpTo = useRef<string | null>(null);
+  /** The day the last health door took the admin to: the List opens that week even if it was folded away. */
+  const [revealDay, setRevealDay] = useState<string | null>(null);
 
   /** The free League plan's generator (when and where asked once, 9d2a·B). */
   const [showGenerate, setShowGenerate] = useState(false);
@@ -689,7 +692,7 @@ export default function SchedulePage() {
   const [backToGenerate, setBackToGenerate] = useState<{ divisionId: string; through: Through } | null>(null);
   // A game's window (step 4, b4): the game it reads, by id — after a write the page reads again and the window reads the
   // fresh row — or Add › A game.
-  const [gameWindow, setGameWindow] = useState<{ id: string } | 'create' | null>(null);
+  const [gameWindow, setGameWindow] = useState<{ id: string; redate?: boolean } | 'create' | null>(null);
 
   const [showPracticeModal, setShowPracticeModal] = useState(false);
   const [activePractice, setActivePractice] = useState<LeaguePractice | null>(null);
@@ -699,6 +702,8 @@ export default function SchedulePage() {
   const [editingPractice, setEditingPractice] = useState<{ practice: LeaguePractice; scope: 'one' | 'rest'; reach: { id: string; date: string }[] } | null>(null);
 
   const [feedback, setFeedback] = useState<FeedbackState>({ isOpen: false, title: '', message: '', type: 'success' });
+  /** A thing that just happened ("Published Oct 28 · 7 families emailed."): the portal's fading pill, never a window. */
+  const [notice, setNotice] = useState<string | null>(null);
 
   // Who may (the one house-league gate, Stage 9a, Q16/Q17): the people who run the league, on a live season; everyone
   // else who opens house league reads. A control a person can't use is absent.
@@ -855,11 +860,6 @@ export default function SchedulePage() {
     el?.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }, [shownView, cursor, jumpTick]);
 
-  // ── Schedule health (step 6, d1–d4) ── the whole season's, worked out from the read the page already holds (games and
-  // practices, every division: the clash pool is the season's), so it follows every write with no read of its own. Scored
-  // by the season's rules (9d-2b Part 6), and by the window's draft while the rules are being adjusted (`rescoreHealth`).
-  const healthRules = useMemo(() => leagueHealthRulesOf(season, divisions), [season, divisions]);
-  const rescoreHealth = useCallback((rules: LeagueHealthRules) => buildLeagueScheduleHealth({
   // A notice's Open (`?division=&day=`): once the season has read, the page opens on that day in List (Week on a phone),
   // as Schedule health's "Show them" does; the address is cleaned so a reload doesn't jump again.
   const arrived = useRef(false);
@@ -882,6 +882,11 @@ export default function SchedulePage() {
     setJumpTick(n => n + 1);
   }, [scheduleRead, selectedDivId, phone]);
 
+  // ── Schedule health (step 6, d1–d4) ── the whole season's, worked out from the read the page already holds (games and
+  // practices, every division: the clash pool is the season's), so it follows every write with no read of its own. Scored
+  // by the season's rules (9d-2b Part 6), and by the window's draft while the rules are being adjusted (`rescoreHealth`).
+  const healthRules = useMemo(() => leagueHealthRulesOf(season, divisions), [season, divisions]);
+  const rescoreHealth = useCallback((rules: LeagueHealthRules) => buildLeagueScheduleHealth({
     games: games.map(leagueHealthGameOf),
     practices: practices.map(leagueHealthPracticeOf),
     teams: teams.map(t => ({ id: t.id, name: t.name, divisionId: t.divisionId })),
@@ -929,6 +934,7 @@ export default function SchedulePage() {
     if (target.divisionId) setSelectedDivId(target.divisionId);
     setShow(new Set());
     jumpTo.current = target.day;
+    setRevealDay(target.day);
     setCursorPick(target.day);
     setView(phone ? 'week' : 'list');
     setJumpTick(n => n + 1);
@@ -1247,12 +1253,16 @@ export default function SchedulePage() {
       holds={{ title: `${divName ? `${divName} · ` : ''}${pluralize(divGames.length, 'game')}` }}
       onExportXLSX={handleExportXLSX} onExportCSV={handleExportCSV} onExportICS={handleExportICS} />
   );
-  // Add (b1): "Add to the schedule" — a game, or a practice (which asks its team). The league's runners on a live season.
+  // Add (b1): a game, or a practice (which asks its team). The league's runners on a live season. Drawn as the coaches
+  // schedule's Add Event — its words, its icons, its bare lime "+" in the title row on a phone (one instance, never two).
+  const GameIcon = EVENT_ICONS.league_game;
+  const PracticeIcon = EVENT_ICONS.practice;
   const addMenu = canManage && divTeams.length > 0 ? (
-    <CoachToolbarMenu label="Add" icon={<Plus size={15} aria-hidden />} variant="primary" drawerOnPhone drawerTitle={W.addTitle}>
-      <CoachToolbarMenuHeading>{W.addTitle}</CoachToolbarMenuHeading>
-      {divTeams.length >= 2 && <CoachToolbarMenuItem label={W.addGame} onSelect={openCreate} />}
-      <CoachToolbarMenuItem label={W.addPractice} onSelect={() => setShowPracticeModal(true)} />
+    <CoachToolbarMenu label={W.addButton} icon={<Plus size={15} aria-hidden />} variant="primary" collapseOnPhone bareOnPhone drawerOnPhone drawerTitle={W.addTitle}>
+      {divTeams.length >= 2 && (
+        <CoachToolbarMenuItem icon={<GameIcon size={15} style={{ color: EVENT_COLORS.league_game }} />} label={EVENT_LABELS.league_game} onSelect={openCreate} />
+      )}
+      <CoachToolbarMenuItem icon={<PracticeIcon size={15} style={{ color: EVENT_COLORS.practice }} />} label={EVENT_LABELS.practice} onSelect={() => setShowPracticeModal(true)} />
     </CoachToolbarMenu>
   ) : null;
   // Tools ⋯ (Stage 11b Part 3; ruled 9d-2, card 7): House league's time, Practice time, Generate games — and the free plan's
@@ -1303,7 +1313,7 @@ export default function SchedulePage() {
   } else if (shownView === 'list') {
     body = shown.length === 0
       ? <p className={styles.hint}>{W.nothingMatches}</p>
-      : <SeasonListView bookings={shown} today={today} sport={season?.sport ?? null} teamName={teamName} onOpen={openBooking} />;
+      : <SeasonListView bookings={shown} today={today} sport={season?.sport ?? null} teamName={teamName} revealDay={revealDay} onOpen={openBooking} />;
   } else if (shownView === 'week') {
     const week = shown.filter(inRange);
     body = (
@@ -1366,6 +1376,7 @@ export default function SchedulePage() {
               {CHANGES_TO_SEND_WORDS.button}<span className={cts.count} aria-hidden>{divHeld > 9 ? '9+' : divHeld}</span>
             </button>
           )}
+          {phone && addMenu}
         </>}
       />
 
@@ -1381,7 +1392,7 @@ export default function SchedulePage() {
       {/* ⚖ ONE LINE (C4): the division leads (the scope), then the switch and — wider than 900 px — the dates; Show right of
           the gap; Export, Add and Tools at the end. */}
       <CoachListToolbar
-        actions={<>{exportMenu}{addMenu}{toolsMenu}</>}
+        actions={<>{exportMenu}{!phone && addMenu}{toolsMenu}</>}
         filters={(
           <FilterGroup>
             <MultiSelectDropdown restQuiet label={W.show} options={showOptions} selected={show} onChange={setShow} allLabel={W.showAll} />
@@ -1444,7 +1455,8 @@ export default function SchedulePage() {
           onSeePermit={setPermitOpen}
           onSaved={(said, permit) => {
             setGenerate(null);
-            setFeedback({ isOpen: true, title: said, message: permit ? `${permit.title}. ${permit.sentence}` : '', type: permit ? 'info' : 'success' });
+            if (permit) setFeedback({ isOpen: true, title: said, message: `${permit.title}. ${permit.sentence}`, type: 'info' });
+            else setNotice(said);
             void reload();
           }}
           onClose={() => setGenerate(null)}
@@ -1460,7 +1472,8 @@ export default function SchedulePage() {
           orgQuery={orgQuery}
           onDone={r => {
             setPublishOpen(false);
-            setFeedback({ isOpen: true, title: r.said, message: '', type: 'success' });
+            if (r.partial) setFeedback({ isOpen: true, title: r.said, message: '', type: 'info' });
+            else setNotice(r.said);
             void reload();
           }}
           onClose={() => setPublishOpen(false)}
@@ -1480,12 +1493,14 @@ export default function SchedulePage() {
           }}
           teamName={id => teamName.get(id) ?? ''}
           placeOf={placeWords}
-          onSent={said => {
+          onSent={(said, partial) => {
             setChangesOpen(false);
-            setFeedback({ isOpen: true, title: said, message: '', type: 'success' });
+            if (partial) setFeedback({ isOpen: true, title: said, message: '', type: 'info' });
+            else setNotice(said);
             void reload();
           }}
-          onUndone={() => {
+          onUndone={said => {
+            if (said) setNotice(said);
             void reload();
           }}
           onClose={() => setChangesOpen(false)}
@@ -1510,6 +1525,7 @@ export default function SchedulePage() {
           checkPath={checkPath}
           orgSlug={orgSlug}
           canRun={canManage}
+          opensToRedate={gameWindow !== 'create' && !!gameWindow.redate}
           onSeePermit={setPermitOpen}
           onChanged={reload}
           onCreated={warning => {
@@ -1590,7 +1606,7 @@ export default function SchedulePage() {
             setHealthOpen(false);
             const g = games.find(x => x.id === id);
             if (g) setSelectedDivId(g.divisionId);
-            setGameWindow({ id });
+            setGameWindow({ id, redate: true });
           }}
           onClose={() => setHealthOpen(false)}
         />
@@ -1633,6 +1649,7 @@ export default function SchedulePage() {
         cancelText={feedback.cancelText}
         onClose={() => setFeedback(f => ({ ...f, isOpen: false }))}
       />
+      {notice && <NoticePill key={notice} message={notice} onDone={() => setNotice(null)} />}
     </div>
     {/* Second in both returns, so the loading swap keeps it mounted. */}
     {timeWindow}

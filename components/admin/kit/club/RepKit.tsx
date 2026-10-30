@@ -114,6 +114,8 @@ type RowBase = {
   /** The lead is a clock alone ("10:45 a.m." — one day's games: the schedule's Day, the generator's drafts), so its
    *  column narrows to a time's width instead of the date-and-time width the other lists keep (owner, 2026-10-12). */
   leadTime?: boolean;
+  /** The lead is a day and a time RANGE ("Tue, Oct 27 · 6:00–7:00 p.m."), wider than the date-and-time column's one clock. */
+  leadWide?: boolean;
   /** On a phone, the lead and caption read ABOVE the title (Results' "when" line over its two teams). */
   captionFirst?: boolean;
   trail?: ReactNode;
@@ -147,14 +149,14 @@ export type ClubRowProps =
   | (RowBase & { as?: 'static' });
 
 export function ClubRow(props: ClubRowProps) {
-  const { title, caption, mark, markWide, lead, leadTime, captionFirst, trail, chevron, actions, beside, muted, grip, itemRef, itemStyle } = props;
+  const { title, caption, mark, markWide, lead, leadTime, leadWide, captionFirst, trail, chevron, actions, beside, muted, grip, itemRef, itemStyle } = props;
   const opens = props.as === 'link' || props.as === 'button';
   const cls = `${styles.row}${opens ? ` ${styles.rowDoor}` : ''}`;
   const chevronEl = <span className={styles.rowChevron}><ChevronRight size={16} aria-hidden /></span>;
   const inner = (
     <>
       {mark != null && <span className={`${styles.rowMark}${markWide ? ` ${styles.rowMarkWide}` : ''}`} aria-hidden>{mark}</span>}
-      {lead != null && <span className={`${styles.rowLead}${leadTime ? ` ${styles.rowLeadTime}` : ''}`}>{lead}</span>}
+      {lead != null && <span className={`${styles.rowLead}${leadTime ? ` ${styles.rowLeadTime}` : ''}${leadWide ? ` ${styles.rowLeadWide}` : ''}`}>{lead}</span>}
       <span className={styles.rowMain}>
         <span className={styles.rowTitle}>{title}</span>
         {caption != null && <span className={styles.rowCaption}>{caption}</span>}

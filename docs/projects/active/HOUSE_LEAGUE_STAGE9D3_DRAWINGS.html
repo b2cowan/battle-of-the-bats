@@ -1,0 +1,1442 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>House League 9d-3 Drawings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700;800&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) that holds captures of today's product and true-size
+   specimens of the club admin kit. Chrome and specimens deliberately do not share a ground.
+   Source of truth: docs/projects/active/HOUSE_LEAGUE_STAGE9_HUB.html ({{IMG:…}} placeholders);
+   the build (.probe/hl/build.mjs) inlines the captures. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+.doc{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:16px 90px}
+@media (max-width:600px){.doc{padding-inline:16px}}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:24px;margin:44px 0 8px;letter-spacing:-.01em;scroll-margin-top:70px}
+.doc h3{font-size:18px;margin:24px 0 6px}
+.doc p,.doc li{max-width:82ch}
+.muted{color:var(--muted)} .mo{font-family:var(--f-mono)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16.5px;max-width:82ch}
+/* top tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+.tabs .sp{flex:1}
+.thm{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.thm button{border-radius:0;min-height:36px;font-size:13px}
+.thm button[aria-pressed="true"]{background:var(--surface);color:var(--ink)}
+section.pane[hidden]{display:none}
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);margin:14px 0}
+.card h3{margin-top:0}
+.card ul,.card ol{margin:6px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--fix);border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.push{border-left-color:var(--ask)}
+.verdict h3{margin:0 0 6px}
+.verdict ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+/* station */
+.st{border-top:2px solid var(--line);padding-top:8px;margin-top:40px}
+.st>h2{margin-top:6px}
+.st .who{font-size:13.5px;color:var(--muted);margin:0 0 10px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:20px;align-items:start;margin:10px 0}
+@media (max-width:1000px){.cols{grid-template-columns:minmax(0,1fr)}}
+.cols>*{min-width:0}
+.shot{border-radius:10px;outline:1px solid var(--line);box-shadow:var(--shadow);background:var(--surface);overflow:hidden;position:relative}
+.shot .sc{max-height:520px;overflow:auto}
+.shot.open .sc{max-height:none}
+.shot img{display:block;width:100%;height:auto;max-width:none}
+.shot.desk img{min-width:0}
+.shot .bar{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 10px;border-top:1px solid var(--line);font:600 12px/1.3 var(--f-mono);color:var(--muted);background:var(--surface-2)}
+.shot .bar button{font:600 12px/1 var(--f-doc);min-height:30px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);cursor:pointer}
+.ph-shot{width:390px;max-width:100%}
+.meas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:8px;margin:10px 0}
+.meas div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.meas b{display:block;font:700 18px/1.2 var(--f-mono);font-variant-numeric:tabular-nums}
+.meas span{font-size:12.5px;color:var(--muted)}
+.meas .bad b{color:var(--flag)} .meas .ok b{color:var(--fix)}
+.read{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+@media (max-width:900px){.read{grid-template-columns:minmax(0,1fr)}}
+.read>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.read h4{margin:0 0 6px;font:700 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.read .w h4{color:var(--fix)} .read .g h4{color:var(--flag)} .read .c h4{color:var(--t-res)}
+.read ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+/* flags + tags */
+.fl{font:700 11px/1 var(--f-mono);letter-spacing:.03em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid var(--flag);color:var(--flag);background:var(--flag-soft);min-height:24px;vertical-align:1px;white-space:nowrap}
+.fl.fix{border-color:var(--fix);color:var(--fix);background:var(--fix-soft)}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:22px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)}
+.mk.s{color:var(--ask)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;box-sizing:border-box;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted);max-width:90ch;margin:4px 0}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:52px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{color:var(--ink);padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.y{color:var(--fix);font-weight:700} .x{color:var(--flag);font-weight:700}
+/* paste */
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:260px;font:12.5px/1.5 var(--f-mono)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+/* dialog */
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:17px;flex:1}
+dialog.note .x{font-size:22px;line-height:1;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px;display:flex;flex-direction:column;gap:10px}
+dialog.note .nb h4{margin:0;font:700 11px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+dialog.note .nb p{margin:0}
+
+/* ===== the product kit, for specimens (Warm default; .dk = Dark) ===== */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.22);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#B03A22;--amber:#835006;--amber-soft:#FBEFD9;--green:#34662A;--green-soft:#E6F0E2;--blue:#1D4A8A;--blue-soft:#E3ECF8;--grid:rgba(70,55,30,.06);--dimbg:rgba(36,30,21,.28);
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative;text-align:left}
+.ak.dk{--paper:#0A0A0A;--card:#141A22;--ink:#F1F5F9;--soft:rgba(255,255,255,.72);--dim:rgba(255,255,255,.55);--line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.18);
+  --olive:#D9F99D;--olive-soft:rgba(217,249,157,.12);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#F08A74;--amber:#F2B55A;--amber-soft:rgba(242,181,90,.14);--green:#9BD58C;--green-soft:rgba(155,213,140,.13);--blue:#9CC2F5;--blue-soft:rgba(156,194,245,.13);--grid:rgba(255,255,255,.03);--dimbg:rgba(0,0,0,.6)}
+.ak *{box-sizing:border-box}
+.dt-wrap{overflow-x:auto;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);max-width:100%;margin:8px 0}
+.dt{width:1440px}
+.ph{width:390px;max-width:100%;flex:none;border-radius:18px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow)}
+.ak .tb{display:flex;align-items:center;gap:10px;height:48px;padding:0 20px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .tb .lg{width:18px;height:18px;background:var(--olive);border-radius:4px}
+.ak .tb .ar{font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--dim);border-left:1px solid var(--line2);padding-left:12px;margin-left:4px}
+.ak .tb .sp{flex:1}
+.ak .tb .ic{width:30px;height:30px;border-radius:50%;border:1px solid var(--line2)}
+.ak .shell{display:flex;min-height:760px}
+.ak .sb{width:240px;flex:none;background:var(--card);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .it{font:500 14px/1 'Inter';color:var(--soft);padding:10px;border-radius:7px;display:flex;align-items:center;gap:8px;min-height:38px}
+.ak .sb .it.sub{padding-left:26px;font-size:13.5px}
+.ak .sb .it.on{background:var(--olive-soft);color:var(--ink);font-weight:650}
+.ak .sb .grp{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:14px 10px 6px}
+.ak .sb .sw{margin:4px 10px 6px 26px;border:1px solid var(--line2);border-radius:7px;padding:8px 10px;font:600 13px/1.2 'Inter';display:flex;justify-content:space-between;align-items:center;background:var(--paper)}
+.ak .chev{width:8px;height:8px;border:solid var(--dim);border-width:0 2px 2px 0;transform:rotate(45deg);margin-top:-4px;flex:none}
+.ak .mn{flex:1;min-width:0;padding:22px 0 60px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px}
+.ak .pg{width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.ak .ey{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.ak .ph1{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.ak .ph1 h1{font:700 28px/1.1 'Barlow Condensed',sans-serif;margin:2px 0 0;letter-spacing:.005em}
+.ak .ph1 .sp{flex:1}
+.ak .sub{color:var(--soft);font-size:14px;margin:4px 0 0}
+.ak .btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line2);background:var(--card);font:600 14px/1 'Inter';color:var(--ink);white-space:nowrap}
+.ak .btn.pri{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.ak .btn.dng{color:var(--red)}
+.ak .btn.ic{width:44px;padding:0;justify-content:center}
+.ak .pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 'Inter';border-radius:999px;padding:5px 10px;border:1px solid var(--line2);color:var(--soft);white-space:nowrap}
+.ak .pill.live{color:var(--green);background:var(--green-soft);border-color:transparent}
+.ak .pill.reg{color:var(--blue);background:var(--blue-soft);border-color:transparent}
+.ak .pill.wait{color:var(--amber);background:var(--amber-soft);border-color:transparent}
+.ak .pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.ak .panel{background:var(--card);border:1px solid var(--line);border-radius:10px}
+.ak .panel>.hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.ak .panel>.hd h2{font:700 16px/1.2 'Inter';margin:0;flex:1}
+.ak .rows .r{display:flex;align-items:center;gap:14px;padding:12px 16px;min-height:64px;border-top:1px solid var(--line)}
+.ak .rows .r:first-child{border-top:0}
+.ak .rows .r .m{flex:1;min-width:0}
+.ak .rows .r b{font:650 15px/1.3 'Inter';display:block}
+.ak .rows .r .d{font-size:13px;color:var(--soft);margin-top:2px}
+.ak .rows .r .u{font:500 12px/1.3 'IBM Plex Mono',monospace;color:var(--dim);margin-top:3px}
+.ak .band{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .band>div{padding:12px 16px;border-left:1px solid var(--line);min-width:0}
+.ak .band>div:first-child{border-left:0}
+.ak .band .k{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.ak .band .v{font:700 22px/1.2 'Inter';font-variant-numeric:tabular-nums;margin-top:4px}
+.ak .band .v.am{color:var(--amber)}
+.ak .band .h{font-size:12px;color:var(--soft)}
+.ak table.kt{width:100%;border-collapse:collapse;font-size:14px;color:var(--ink)}
+.ak table.kt td{color:var(--ink)}
+.ak table.kt th{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);text-align:left;padding:10px 16px;border-bottom:1px solid var(--line)}
+.ak table.kt td{padding:12px 16px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.ak table.kt tr:last-child td{border-bottom:0}
+.ak .meter{height:6px;border-radius:3px;background:var(--line);overflow:hidden;width:110px;display:inline-block;vertical-align:middle;margin-right:8px}
+.ak .meter i{display:block;height:100%;background:var(--olive)}
+.ak .rare{font-size:13.5px;color:var(--soft);display:flex;gap:10px;align-items:center;padding:6px 2px}
+.ak .rare a{color:var(--soft);text-decoration:underline;font-weight:600}
+.ak .fold{display:flex;align-items:center;gap:10px;padding:14px 16px;min-height:56px}
+.ak .fold b{flex:1;font:650 15px/1.2 'Inter'}
+.ak .amb{display:inline-flex;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--amber-soft);color:var(--amber);font:700 12px/22px 'Inter';justify-content:center}
+.ak .lnk{color:var(--olive);font-weight:650;text-decoration:none}
+/* phone frame */
+.ak .pbar{height:52px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .pbar .sp{flex:1}
+.ak .pin{padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.ak .ptabs{display:flex;gap:6px;overflow-x:auto;padding:0 16px 10px;border-bottom:1px solid var(--line);scrollbar-width:none;background:var(--card)}
+.ak .pswitch{display:flex;align-items:center;gap:8px;padding:12px 16px 10px;background:var(--card)}
+.ak .pswitch .t{flex:1;min-width:0}
+.ak .pswitch .t b{font:700 22px/1.1 'Barlow Condensed',sans-serif;display:block}
+.ak .bnav{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--card);height:62px}
+.ak .bnav span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 11px/1 'Inter';color:var(--soft)}
+.ak .bnav span i{width:20px;height:20px;border-radius:5px;border:1.5px solid currentColor;display:block}
+.ak .bnav span.on{color:var(--olive)}
+/* window */
+.ak.win{padding:40px 28px;background:var(--dimbg)}
+.ak .dlg{background:var(--card);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);max-width:480px;margin:0 auto;display:flex;flex-direction:column}
+.ak .dlg .dh{display:flex;align-items:center;padding:16px 18px 6px}
+.ak .dlg .dh h4{font:700 17px/1.3 'Inter';margin:0;flex:1}
+.ak .dlg .dh .xx{font-size:22px;color:var(--dim);width:44px;text-align:center}
+.ak .dlg .db{padding:4px 18px 16px;display:flex;flex-direction:column;gap:10px;color:var(--soft);font-size:14px}
+.ak .dlg .db ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.ak .dlg .df{display:flex;align-items:center;gap:10px;padding:12px 18px;border-top:1px solid var(--line)}
+.ak .dlg .df .s{flex:1;font-size:13px;color:var(--dim)}
+/* public face (club site), fixed light like the product */
+.pub{background:#F5F4F0;color:#1B1B1B;font:15px/1.5 'Inter',system-ui,sans-serif}
+.pub .nv{background:#1F3A8A;color:#fff;display:flex;align-items:center;gap:22px;padding:0 24px;height:64px;font:700 20px/1 'Barlow Condensed',sans-serif}
+.pub .nv span{font:600 15px/1 'Inter'} .pub .nv .on{border-bottom:2px solid #fff;padding-bottom:6px}
+.pub .in{max-width:1000px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:14px}
+.pub h3{font:700 17px/1.2 'Inter';margin:6px 0 0}
+.pub .rw{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:14px 16px;display:flex;align-items:center;gap:12px;min-height:64px}
+.pub .rw .m{flex:1;min-width:0} .pub .rw b{display:block;font:650 16px/1.3 'Inter'} .pub .rw .d{font-size:13.5px;color:#555}
+.pub .tag{font:600 12px/1 'Inter';padding:5px 9px;border-radius:999px;background:#E3ECF8;color:#1D4A8A}
+.pub .tag.g{background:#E6F0E2;color:#34662A}
+.pub .lk{font:600 14px/1 'Inter';color:#1F3A8A}
+/* design-review additions (2026-10-24) */
+.dt-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:6px 0}
+.dt-wrap.fit .dt{zoom:var(--z,1)}
+.ak .ptabs>span{flex:none;font:600 14px/1 'Inter';color:var(--soft);padding:0 14px;min-height:44px;display:inline-flex;align-items:center;border-radius:999px;border:1px solid var(--line2)}
+.ak .ptabs>span.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ak .ptabs .on .amb{background:var(--amber);color:var(--paper)}
+.ak.ph-in .btn,.ak.ph-in .btn.ic{min-height:44px}
+.ak.ph-in .btn.ic{border-color:transparent;background:none}
+.ak .utabs{display:flex;gap:18px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.ak .utabs span{flex:none;min-height:44px;display:inline-flex;align-items:center;gap:6px;font:600 14px/1 'Inter';color:var(--soft);border-bottom:2px solid transparent}
+.ak .utabs span.on{color:var(--ink);border-bottom-color:var(--olive)}
+.ak .utabs .c{font:700 11px/1 'Inter';background:var(--olive-soft);border-radius:999px;padding:3px 7px}
+.ak .ico{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ak .band .mk,.ak th .mk,.ak .sb .it .mk{position:absolute;top:3px;right:3px}
+.ak .band>div,.ak th,.ak .sb .it{position:relative}
+.ak .sb .blk{margin-left:18px;border-left:2px solid var(--line2);padding-left:4px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .blk .it.sub{padding-left:14px}
+.ak .sb .it i{width:16px;height:16px;border:1.5px solid currentColor;border-radius:4px;opacity:.6;flex:none}
+.ak .sb .it .mk{top:8px}
+.ak .fsw{display:flex;flex-direction:column;min-height:700px;background:var(--card)}
+.ak .fsw .fh{display:flex;align-items:center;gap:6px;height:56px;padding:0 6px;border-bottom:1px solid var(--line);font:700 16px/1.2 'Inter'}
+.ak .fsw .fb{padding:16px;display:flex;flex-direction:column;gap:10px;color:var(--soft);font-size:15px;flex:1}
+.ak .fsw .fb ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.ak .fsw .ff{border-top:1px solid var(--line);padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.ak .fsw .ff .s{font-size:13px;color:var(--dim)}
+.ak .fsw .ff .bb{display:flex;gap:10px;justify-content:flex-end}
+.pub .rw .lk{min-height:44px;display:inline-flex;align-items:center}
+.pub .hdr{display:flex;align-items:center;gap:12px;font:700 20px/1 'Barlow Condensed',sans-serif}
+.pub .mono{width:40px;height:40px;border-radius:8px;background:#fff;color:#1F3A8A;display:grid;place-items:center;font:700 14px/1 'Inter'}
+.pub .si{margin-left:auto;font:600 15px/1 'Inter'}
+.pub .cols2{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px}
+.pub .chev{width:9px;height:9px;border:solid #555;border-width:0 2px 2px 0;transform:rotate(-45deg);flex:none}
+.pub .rw2{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.pub .rw2 .top{display:flex;align-items:center;gap:10px;min-height:44px}
+.pub .rw2 .top b{flex:1;font:650 16px/1.3 'Inter'}
+.pub .rw2 .ln{display:flex;gap:18px}
+table.t.stick td:first-child,table.t.stick th:first-child{position:sticky;left:0;background:var(--surface);z-index:1}
+table.t td.no{color:var(--muted)}
+.spec{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin:10px 0}
+.spec>.col{min-width:0;display:flex;flex-direction:column;gap:8px;max-width:100%}
+.sp-cap{font:600 12px/1.35 var(--f-mono);letter-spacing:.04em;color:var(--muted);margin:0}
+.ann{position:absolute;z-index:3}
+</style>
+<style>
+/* 9c round additions, carried (2026-10-25) */
+.ak .fld{display:inline-flex;align-items:center;min-height:40px;padding:0 10px;border:1px solid var(--line2);border-radius:8px;background:var(--card);font:500 14px/1.3 'Inter';color:var(--ink);min-width:72px}
+.ak .fld.wide{flex:1;min-width:0;display:flex}
+.ak .fld.empty{color:var(--dim)}
+.ak .hint{font-size:12.5px;color:var(--dim);margin:0;line-height:1.45}
+.ak .dim,.ak .d2{color:var(--dim);font-size:12.5px}
+.ak .facts2{padding:14px 16px;display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px 20px;font-size:14px;align-items:baseline}
+.ak .facts2>span:nth-child(odd){color:var(--dim)}
+.ak .bulk{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:var(--ink);color:var(--paper)}
+.ak .bulk .btn{background:transparent;color:var(--paper);border-color:rgba(255,255,255,.35)}
+.ak.dk .bulk{background:var(--olive-soft);color:var(--ink)}
+.ak.dk .bulk .btn{color:var(--ink);border-color:var(--line2)}
+.ak .bulk .sp{flex:1}
+.ak .note{background:var(--amber-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:13.5px;line-height:1.45}
+.ak .note.blue{background:var(--blue-soft)}
+.ak .note.green{background:var(--green-soft)}
+.ak .lnk{color:var(--olive);font-weight:650;text-decoration:none}
+.ak .panel,.ak .dlg .db{overflow-x:auto}
+.ak .dlg,.ak .panel{min-width:0;max-width:100%}
+.ak.win{max-width:100%}
+.ak .dlg .df{flex-wrap:wrap}
+.ak .ph1 h1{font:700 26px/1.15 'Inter',system-ui,sans-serif;letter-spacing:0}
+.ak .pswitch .t b{font:700 18px/1.2 'Inter',system-ui,sans-serif}
+.mail{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;max-width:560px}
+.mail .mh{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface-2);font-size:14px;display:flex;flex-direction:column;gap:2px}
+.mail .mb{padding:14px 16px;font-size:14px;line-height:1.55;display:flex;flex-direction:column;gap:10px}
+.mail .mb p{margin:0}
+.mail .club{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#1F3A8A;color:#fff;font:700 15px/1 'Inter',sans-serif}
+.mail .club .mono{width:30px;height:30px;border-radius:6px;background:#fff;color:#1F3A8A;display:grid;place-items:center;font:700 12px/1 'Inter',sans-serif}
+.mail .foot{padding:10px 16px 14px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.mail .foot u{color:var(--muted)}
+.mail .newv{background:var(--fix-soft);border-radius:4px;padding:0 4px;margin-left:-4px}
+.cap{font-size:13.5px;color:var(--muted);max-width:92ch;margin:6px 0 0}
+table.t.gate td:not(:first-child),table.t.gate th:not(:first-child){text-align:center}
+table.t.gate td.co,table.t.gate th.co{background:var(--fix-soft)}
+.edges{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px;margin:12px 0}
+.edges>.card{margin:0;min-width:0}
+.edges .card h3{font-size:16px}
+.rec-line{font-size:14px;margin:8px 0 0}
+.rec-line b{color:var(--fix)}
+/* 9d-1 round (2026-10-26): the composer */
+.ak .mn{position:relative}
+.ak .shell:has(.ov){min-height:1020px}
+.ak .ov{position:absolute;inset:0;background:rgba(24,22,14,.42);display:flex;justify-content:center;align-items:flex-start;padding-top:36px;z-index:2}
+.ak .ov .dlg{width:640px;max-width:calc(100% - 32px);margin:0}
+.ak .dlg .ey,.ak .fsw .ey{font:700 11px/1.2 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);display:block}
+.ak .dlg .dh{align-items:flex-start;padding:18px 18px 8px 24px}
+.ak .dlg .dh .tt{flex:1;display:flex;flex-direction:column;gap:4px}
+.ak .dlg .dh .tt h4{flex:none}
+.ak .dlg .db{padding:6px 24px 18px;gap:12px}
+.ak .dlg .df{padding:14px 24px}
+.ak .stmt{border-left:3px solid var(--olive);background:var(--card);border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0 8px 8px 0;padding:10px 14px;font:600 13.5px/1.45 'Inter';color:var(--ink)}
+.ak .lbl{font:700 11px/1.2 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin:2px 0 -4px}
+.ak .flbl{font:600 13px/1.2 'Inter';color:var(--ink);margin:2px 0 -6px}
+.ak .who{border:1px solid var(--line2);border-radius:10px;background:var(--card);overflow:hidden}
+.ak .who .o{display:flex;gap:12px;align-items:flex-start;padding:11px 14px;border-top:1px solid var(--line);min-height:44px;box-sizing:border-box}
+.ak .who .o:first-child{border-top:0}
+.ak .who .o .rd{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line2);flex:none;margin-top:1px;box-sizing:border-box}
+.ak .who .o.on .rd{border:5px solid var(--olive)}
+.ak .who .o .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ak .who .o b{font:500 14.5px/1.3 'Inter';color:var(--ink)}
+.ak .who .o .d{font-size:12.5px;color:var(--soft)}
+.ak .who .o .n{font:600 13px/1.3 'Inter';color:var(--soft);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ak .who .sub{padding:4px 14px 12px 44px;display:flex;flex-wrap:wrap;gap:6px}
+.ak .chipk{display:inline-flex;align-items:center;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--line2);font:600 13px/1 'Inter';color:var(--soft);background:var(--card)}
+.ak .chipk.on{background:var(--olive-soft);border-color:var(--olive);color:var(--ink)}
+.ak .chipk.no{border-style:dashed;color:var(--dim)}
+.ak.ph-in .chipk{min-height:44px}
+.ak .tx{width:100%;min-height:40px;border:1px solid var(--line2);border-radius:8px;background:var(--paper);padding:9px 12px;font:500 14px/1.4 'Inter';color:var(--ink);box-sizing:border-box}
+.ak .tx.ta{min-height:120px;white-space:pre-line}
+.ak .tx.ph{color:var(--dim)}
+.ak .lime{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.ak .fixedto{display:flex;gap:12px;align-items:center;border:1px solid var(--line2);border-radius:10px;padding:12px 14px;background:var(--card)}
+.ak .fixedto .m{flex:1;min-width:0}
+.ak .fixedto b{font:600 14.5px/1.3 'Inter';display:block}
+.ak .fixedto .d{font-size:12.5px;color:var(--soft)}
+.ak .allow{display:inline-flex;align-items:center;gap:6px;font:600 12.5px/1.2 'Inter';color:var(--soft)}
+.ak .allow .pips{display:inline-flex;gap:3px}
+.ak .allow .pips i{width:8px;height:8px;border-radius:50%;background:var(--olive);display:block}
+.ak .allow .pips i.u{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line2)}
+.ak .held{background:var(--amber-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font:500 13.5px/1.45 'Inter';flex:1;min-width:220px}
+.ak .tagA{display:inline-flex;align-items:center;font:700 10.5px/1 'Inter';letter-spacing:.02em;border-radius:999px;padding:4px 8px;background:var(--blue-soft);color:var(--blue);white-space:nowrap}
+.ak .tagO{display:inline-flex;align-items:center;font:700 10.5px/1 'Inter';border-radius:999px;padding:4px 8px;background:var(--paper);border:1px solid var(--line2);color:var(--dim);white-space:nowrap}
+.ak .warnc{display:inline-flex;align-items:center;font:700 10.5px/1 'Inter';border-radius:999px;padding:4px 8px;background:var(--amber-soft);color:var(--amber);white-space:nowrap}
+.ak table.kt td .sm{display:block;font-size:12.5px;color:var(--dim);margin-top:2px}
+.ak table.kt tr.div td{background:var(--paper);font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);padding:8px 16px}
+.ak table.kt tr.old td{color:var(--soft)}
+.ak .lrow{display:flex;gap:10px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);min-height:56px}
+.ak .lrow:first-child{border-top:0}
+.ak .lrow .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ak .lrow b{font:600 14.5px/1.3 'Inter'}
+.ak .lrow .d{font-size:12.5px;color:var(--soft)}
+.ak .lrow .r{font:600 13px/1.3 'Inter';color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums;text-align:right}
+.ak .empt{padding:28px 20px;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center;color:var(--soft);font-size:14px}
+.ak .empt b{font:650 16px/1.3 'Inter';color:var(--ink)}
+.ak .fsw .fb .lbl{margin-top:4px}
+.ak .fsw .ff .s{line-height:1.45}
+.ak .fsw .ff .bb .btn{min-height:44px}
+.optgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin:12px 0}
+.optgrid .card{margin:0}
+.optgrid .card.rec{outline:2px solid var(--fix)}
+.optgrid .card h3{font-size:16px;margin-top:0}
+.optgrid .card ul{padding-left:18px;margin:6px 0 0;display:flex;flex-direction:column;gap:5px;font-size:14px}
+.bn{font-size:14px}
+.bn li{margin:4px 0}
+</style>
+<style>
+/* /design pass 2026-10-26 */
+.ak .dlg .lnk,.ak .fsw .lnk{text-decoration:underline;text-underline-offset:3px}
+.ak table.kt td:first-child,.ak table.kt td:last-child{white-space:nowrap}
+@media (max-width:640px){
+  .ak .dlg .df{flex-wrap:wrap}
+  .ak .dlg .df .s,.ak .dlg .df .held,.ak .dlg .df .note{flex:1 0 100%;min-width:0}
+  .ak .dlg .df{justify-content:flex-end}
+  .ak .chipk{min-height:44px}
+}
+</style>
+
+<style>
+/* 9d-2 round (2026-10-26): the schedule */
+.ak .seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;background:var(--card)}
+.ak .seg span{min-height:38px;display:inline-flex;align-items:center;padding:0 12px;font:600 13.5px/1 'Inter';color:var(--soft);border-left:1px solid var(--line2)}
+.ak .seg span:first-child{border-left:0}
+.ak .seg span.on{background:var(--olive-soft);color:var(--ink)}
+.ak .scope{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 12px 0 14px;border-radius:999px;background:var(--olive);color:var(--paper);font:650 14px/1 'Inter';white-space:nowrap}
+.ak.dk .scope{color:#141A22}
+.ak .scope .chev{border-color:currentColor}
+.ak .tbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ak .tbar .sp{flex:1}
+.ak .hb{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 12px;border-radius:8px;border:1px solid var(--line2);background:var(--card);font:600 14px/1 'Inter';color:var(--ink);white-space:nowrap}
+.ak .hb .sc{font:700 15px/1 'Inter';font-variant-numeric:tabular-nums}
+.ak .hb .sc.am{color:var(--amber)} .ak .hb .sc.gd{color:var(--green)}
+.ak .stl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13.5px;color:var(--soft)}
+.ak table.kt tr.wk td{background:var(--paper);font:650 13px/1.3 'Inter';color:var(--ink);padding:9px 16px}
+.ak table.kt tr.wk td .d2{font-weight:500;margin-left:8px}
+.ak table.kt tr.now td{padding:0;border-bottom:0}
+.ak .nowl{display:flex;align-items:center;gap:8px;font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--olive);padding:6px 16px}
+.ak .nowl::after{content:"";flex:1;height:2px;background:var(--olive);border-radius:2px}
+.ak table.kt td.tm{width:170px;color:var(--soft);white-space:nowrap}
+.ak table.kt td.tm b{color:var(--ink);font-weight:600;display:block}
+.ak table.kt td.gm b{font-weight:600}
+.ak table.kt td.st{text-align:right;white-space:nowrap}
+.ak .w-final{font:600 13px/1 'Inter';color:var(--ink)}
+.ak .w-final .s{font-variant-numeric:tabular-nums;margin-left:6px}
+.ak .w-st{font:650 12.5px/1 'Inter';white-space:nowrap}
+.ak .w-st.cx{color:var(--red)} .ak .w-st.pp{color:var(--amber)} .ak .w-st.mv{color:var(--blue)} .ak .w-st.dr{color:var(--dim)}
+.ak tr.cxr td.gm b,.ak tr.cxr td.tm b{text-decoration:line-through;text-decoration-thickness:1.5px;color:var(--soft)}
+.ak .src{display:inline-flex;align-items:center;gap:6px;font:600 12px/1.2 'Inter';color:var(--olive);background:var(--olive-soft);border-radius:999px;padding:4px 9px;white-space:nowrap}
+.ak .day{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:4px}
+.ak .day b{flex:1;text-align:center;font:650 15px/1.2 'Inter'}
+.ak .prow{display:flex;gap:12px;padding:12px 14px;border-top:1px solid var(--line);min-height:64px;align-items:flex-start}
+.ak .prow:first-child{border-top:0}
+.ak .prow .t{width:74px;flex:none;font:600 14px/1.3 'Inter';font-variant-numeric:tabular-nums}
+.ak .prow .t .d2{display:block;font-weight:500}
+.ak .prow .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ak .prow .m b{font:600 15px/1.3 'Inter'}
+.ak .prow .m .d{font-size:13px;color:var(--soft)}
+.ak .prow.cxr .m b{text-decoration:line-through;color:var(--soft)}
+.ak .sec{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.ak .sec h5{margin:0;font:650 15px/1.3 'Inter';color:var(--ink);display:flex;align-items:center;gap:8px}
+.ak .sec h5 .d2{font-weight:500}
+.ak .ckl{display:flex;flex-direction:column;gap:2px}
+.ak .ckl .o{display:flex;gap:10px;align-items:center;min-height:40px;font-size:14px;color:var(--ink)}
+.ak .ckl .o .bx{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--line2);flex:none;display:grid;place-items:center}
+.ak .ckl .o.on .bx{background:var(--olive);border-color:var(--olive)}
+.ak .ckl .o.on .bx::after{content:"";width:8px;height:4px;border:solid var(--paper);border-width:0 0 2px 2px;transform:rotate(-45deg) translate(1px,-1px)}
+.ak.dk .ckl .o.on .bx::after{border-color:#141A22}
+.ak .ckl .o .n{margin-left:auto;color:var(--soft);font-size:13px}
+.ak .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ak.ph-in .grid2{grid-template-columns:minmax(0,1fr)}
+.ak .fcol{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ak .res{border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--ink)}
+.ak .res b{font:650 14.5px/1.35 'Inter'}
+.ak .res ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.ak .res.ok{background:var(--green-soft)} .ak .res.warn{background:var(--amber-soft)} .ak .res.block{background:rgba(176,58,34,.10)}
+.ak.dk .res.block{background:rgba(240,138,116,.13)}
+.ak .res .lnk,.ak .iss .lnk,.ak .quiet .lnk{text-decoration:underline;text-underline-offset:3px}
+.ak .quiet{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--soft);line-height:1.45}
+.ak .quiet .ico{width:15px;height:15px;margin-top:2px}
+.ak .tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+.ak .tiles>div{padding:12px 14px;border-left:1px solid var(--line);min-width:0}
+.ak .tiles>div:first-child{border-left:0}
+.ak .tiles .k{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.ak .tiles .v{font:700 20px/1.2 'Inter';font-variant-numeric:tabular-nums;margin-top:4px}
+.ak .tiles .h{font-size:12px;color:var(--soft)}
+.ak .tiles .v.am{color:var(--amber)}
+.ak.ph-in .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ak.ph-in .tiles>div:nth-child(3){border-left:0}
+.ak.ph-in .tiles>div:nth-child(n+3){border-top:1px solid var(--line)}
+.ak .score{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.ak .score .n{font:700 34px/1 'Inter';font-variant-numeric:tabular-nums}
+.ak .score .n.am{color:var(--amber)} .ak .score .n.gd{color:var(--green)}
+.ak .score .of{font:600 14px/1 'Inter';color:var(--dim)}
+.ak .score .cap{font-size:14px;color:var(--soft)}
+.ak .iss{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);font-size:14px;color:var(--ink)}
+.ak .iss:first-child{border-top:0}
+.ak .iss .dt2{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none;background:var(--amber)}
+.ak .iss .dt2.r{background:var(--red)}
+.ak .iss .m{flex:1;min-width:0}
+.ak .chg{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.ak .chg:first-child{border-top:0}
+.ak .chg .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;font-size:14px;color:var(--ink)}
+.ak .chg .m b{font-weight:600}
+.ak .chg .m .d{font-size:12.5px;color:var(--soft)}
+.ak .chg s{color:var(--dim)}
+.pub .tz{font-size:13.5px;color:#555;margin:0}
+.pub .wkh{font:650 14px/1.3 'Inter';color:#1B1B1B;margin:10px 0 0}
+.pub .gr{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;display:flex;flex-direction:column}
+.pub .gr .g{display:flex;gap:14px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.08);align-items:center;min-height:60px}
+.pub .gr .g:first-child{border-top:0}
+.pub .gr .g .t{width:118px;flex:none;font:600 14px/1.35 'Inter';font-variant-numeric:tabular-nums}
+.pub .gr .g .t span{display:block;font-weight:500;color:#555;font-size:13px}
+.pub .gr .g .m{flex:1;min-width:0}
+.pub .gr .g .m b{display:block;font:650 15.5px/1.3 'Inter'}
+.pub .gr .g .m .d{font-size:13.5px;color:#555}
+.pub .gr .g .r{font:650 13.5px/1.2 'Inter';white-space:nowrap;text-align:right}
+.pub .gr .g.cx .m b,.pub .gr .g.cx .t{text-decoration:line-through;color:#777}
+.pub .gr .g .r.cx{color:#9C2F1A} .pub .gr .g .r.pp{color:#8A5300}
+.pub .dtabs{display:flex;gap:6px;flex-wrap:wrap}
+.pub .dtabs span{min-height:40px;display:inline-flex;align-items:center;padding:0 14px;border-radius:999px;border:1px solid rgba(0,0,0,.18);font:600 14px/1 'Inter'}
+.pub .dtabs span.on{background:#1F3A8A;color:#fff;border-color:#1F3A8A}
+.pub .emp{background:#fff;border:1px dashed rgba(0,0,0,.2);border-radius:8px;padding:22px 18px;text-align:center;color:#444}
+.pub .emp b{display:block;font:650 16px/1.3 'Inter';color:#1B1B1B;margin-bottom:4px}
+.pub.ph .gr .g{flex-wrap:wrap;gap:4px 12px}
+.pub.ph .gr .g .t{width:auto}
+.pub.ph .in{padding:16px}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px;margin:10px 0}
+.cmp>div{min-width:0}
+/* round 2: the month grid */
+.ak .mgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.ak .mgrid .mh{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);padding:8px 10px;border-bottom:1px solid var(--line)}
+.ak .mgrid .mc{min-height:104px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.ak .mgrid .mc:nth-child(7n){border-right:0}
+.ak .mgrid .mc i{font:600 12.5px/1.2 'Inter';font-style:normal;color:var(--soft)}
+.ak .mgrid .mc.out{background:var(--paper)} .ak .mgrid .mc.out i{color:var(--dim)}
+.ak .mgrid .mc.today{background:var(--olive-soft)} .ak .mgrid .mc.today i{color:var(--olive);font-weight:700}
+.ak .mgrid .ch{font:600 11.5px/1.25 'Inter';border-radius:5px;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ak .mgrid .ch.g{background:var(--olive-soft);color:var(--ink)}
+.ak .mgrid .ch.p{background:var(--blue-soft);color:var(--ink)}
+.ak .mgrid .ch.cx{text-decoration:line-through;color:var(--soft)}
+.ak .mgrid .ch.pp{background:var(--amber-soft)}
+.ak .mgrid .more{font:600 11.5px/1.2 'Inter';color:var(--olive)}
+.ak .lrow .r{font:600 13px/1.3 'Inter';color:var(--soft);white-space:nowrap}
+/* /design pass 2026-10-26 */
+.ak .seg{gap:2px;padding:3px;border:1px solid var(--line2);border-radius:999px;background:var(--card);overflow:visible}
+.ak .seg span{border:0;border-left:0;border-radius:999px;min-height:34px;padding:0 12px;background:none;color:var(--soft)}
+.ak .seg span.on{background:var(--olive-soft);color:var(--olive)}
+.ak.ph-in .seg span{min-height:44px}
+.ak .qp{display:inline-flex;align-items:center;font:600 11.5px/1 'Inter';border-radius:999px;padding:4px 8px;background:var(--line);color:var(--soft);margin-left:8px;vertical-align:1px;text-decoration:none;white-space:nowrap}
+.ak .prow .m b .qp,.ak .prow.cxr .m .qp{margin-left:6px}
+.pub .qp{display:inline-flex;font:600 12px/1 'Inter';border-radius:999px;padding:4px 8px;background:#ECEAE4;color:#555;margin-left:8px;vertical-align:1px}
+.pub .tl{display:flex;align-items:center;gap:8px;font:650 12.5px/1 'Inter';color:#1F3A8A;padding:8px 16px;border-top:1px solid rgba(0,0,0,.08)}
+.pub .tl::after{content:"";flex:1;height:2px;background:#1F3A8A;border-radius:2px}
+</style>
+<style>
+/* 9d-3 round (2026-10-29): the first practice notice, and calendars for house league */
+.doc{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.calapp{background:#fff;color:#1B1B1B;border:1px solid rgba(0,0,0,.14);border-radius:12px;overflow:hidden;font:14px/1.4 'Inter',system-ui,sans-serif;max-width:390px;width:100%}
+.calapp .h{padding:10px 14px;font:700 15px/1.2 'Inter',sans-serif;border-bottom:1px solid rgba(0,0,0,.1);display:flex;justify-content:space-between;gap:8px}
+.calapp .h span{font-weight:500;color:#666;font-size:13px}
+.calapp .e{display:flex;gap:10px;padding:9px 14px;border-top:1px solid rgba(0,0,0,.07)}
+.calapp .e:first-of-type{border-top:0}
+.calapp .e i{width:4px;border-radius:2px;background:#2E7D5B;flex:none}
+.calapp .e.g i{background:#1F3A8A}
+.calapp .e.cx i{background:#bbb}
+.calapp .e b{display:block;font-weight:650}
+.calapp .e span{display:block;font-size:12.5px;color:#666}
+.calapp .e.cx b{color:#777}
+.calapp .d{padding:6px 14px;background:#F2F1EC;font:700 11.5px/1.3 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#555}
+.ak .shd{display:flex;align-items:center;gap:10px;min-height:44px}
+.ak .shd .lbl{margin:0;flex:1}
+.ak .qline{font-size:13px;color:var(--soft);display:flex;gap:8px;align-items:flex-start;line-height:1.45;margin:0}
+.ak .qline .ico{width:15px;height:15px;margin-top:2px;color:var(--dim)}
+.ak .linkbox{border:1px solid var(--line2);border-radius:8px;padding:9px 12px;font:500 12.5px/1.45 'IBM Plex Mono',monospace;word-break:break-all;background:var(--paper);color:var(--ink)}
+.ak .apps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ak .apps .btn{justify-content:center}
+.ak .hair{border-top:1px solid var(--line);margin:2px 0}
+.ak .twocol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ak .tcount{font:700 11px/1 'Inter';border-radius:999px;padding:3px 8px;background:var(--amber-soft);color:var(--amber)}
+.mail .btnm{display:inline-block;background:#1F3A8A;color:#fff;border-radius:8px;padding:11px 16px;font:600 14px/1 'Inter',sans-serif;align-self:flex-start}
+.mail .att{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px;align-self:flex-start;background:var(--surface-2)}
+.mail .prov{font:700 10.5px/1 var(--f-mono);letter-spacing:.05em;color:var(--ask);background:var(--ask-soft);border-radius:4px;padding:3px 6px;align-self:flex-start}
+.mail .wasl{color:var(--muted)}
+.flow{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;margin:10px 0}
+.flow>div{flex:1 1 260px;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.flow>div.sec{border-top:4px solid var(--fix)}
+.flow>div.thr{border-top:4px solid var(--t-res)}
+.flow h4{margin:0 0 6px;font:700 12px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase}
+.flow ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:14px}
+table.t.cmpx td:first-child{white-space:nowrap;font-weight:600}
+table.t td .y,table.t td .x{white-space:nowrap}
+.cf{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;border:1.5px solid var(--ask);color:var(--ask);background:var(--ask-soft);white-space:nowrap;display:inline-block}
+.recbox{outline:2px solid var(--fix);outline-offset:-1px}
+.stepn{font:700 11px/1 var(--f-mono);color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.words td:first-child{white-space:nowrap;font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+.words td:nth-child(2){font-size:14px}
+.ak .linkrow{display:flex;gap:8px;align-items:stretch}
+.ak .linkrow .linkbox{flex:1;min-width:0}
+.ak .linkrow .btn.ic{min-height:44px;width:44px}
+.ak.ph-in .lnk,.ak .fsw .lnk{display:inline-flex;align-items:center;min-height:44px}
+.mk.cf{font:700 10.5px/1 var(--f-mono)}
+.askw{background:var(--surface-2);border:1px solid var(--line);border-left:5px solid var(--t-unc);border-radius:0 12px 12px 0;padding:4px 18px 12px;margin:16px 0;color:var(--muted)}
+.askw summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:10px;font-weight:600;color:var(--ink);list-style:none}
+.askw summary::-webkit-details-marker{display:none}
+.askw summary::before{content:"+";font:700 14px/1 var(--f-mono);color:var(--muted);width:14px}
+.askw[open] summary::before{content:"−"}
+.askw p{margin:6px 0;max-width:90ch}
+.askw ul{margin:6px 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.askw .no{font:700 13px/1 var(--f-mono);color:var(--muted)}
+.mk.wd{color:var(--t-unc)}
+</style>
+
+
+<div class="doc">
+<p class="eyebrow">FieldLogicHQ · Club Tier · Stage 9 · house league · round 6 · 9d-3 · 2026-10-29 · amended 2026-10-29 for the end state</p>
+<h1>9d-3 drawn: telling families their practice times, and a calendar for house league</h1>
+<p class="lede">Today a house-league family is never told when their child’s team practises, unless a practice later <em>changes</em>. A house-league coach has no calendar at all, although a rep coach has had one since 6d. This round draws the first practice email and the coach’s Subscribe. A family calendar link was drawn too and is <b>withdrawn</b> (see the amendment below). Four push-backs come first, and then seven things the code showed that the prompt did not say.</p>
+
+<div class="verdict push"><h3>Amended 2026-10-29: the end state is a signed-in app</h3>
+<ul>
+  <li>The owner’s direction: a mobile app where parents, coaches, admins and treasurers all sign in, a parent is linked to their child, and no stop-gap links are built on the way. A no-login family link would be exactly that, so <b>the family calendar link is withdrawn</b>.</li>
+  <li><b>Withdrawn:</b> asks 9d3·2 and 9d3·8 (kept as grey cards, no checkboxes, numbers unchanged), the A family’s calendar tab, the family half of the Subscribe and Reset windows, the calendar buttons in the first email, and the family-link parts of the gate, build notes, edges and words.</li>
+  <li><b>Kept as drawn:</b> the first practice email and its edge states, the hand-out-again rule, the coach’s “told on…” line and copy email, who is told, the coach’s own Subscribe, the history row. One detail changed inside them: with no calendar to hold the rest, the email now lists every date.</li>
+  <li>Not decided: native app or installed web app, what a parent sees in it, and which plan it belongs to. Nothing here rules on those.</li>
+</ul></div>
+
+<div class="verdict"><h3>The answer, before the detail</h3>
+<ul>
+  <li><b>Yes, send a first practice email, and the convenor sends it.</b> It is the last step of the Practice time window: after the hand-out lands, one button, “Send to 99 families”, one email per household. Nothing goes until that press (ask 1). A second hand-out can never move a practice families already know about without the same step (ask 6).</li>
+  <li><b>The coach gets the same Subscribe a rep coach has</b>, on the Schedule heading’s line of the team page. Games as families last heard them, and practices, from today on, for the live season only (ask 5).</li>
+  <li><b>The family calendar link is withdrawn.</b> The end state is a signed-in app, so the family half is the app and not a link. What survives is the first email, which lists every date because nothing else holds them yet.</li>
+  <li><b>One build, the notice first</b> (ask 3). The notice fixes the silent re-hand-out that exists today. The coach’s Subscribe is small and can slide behind it without loss.</li>
+  <li><b>Everyone with a usable email is told, including a family who unsubscribed from club news</b>, and it never counts toward a cap (ask 4). The ruling that says so is 9c·4, not the ones the prompt names.</li>
+</ul></div>
+
+<div class="verdict push"><h3>What the code showed that the prompt did not say <span class="muted" style="font-weight:400;font-size:14px">(every flag opens the lines I read)</span></h3>
+<ul>
+  <li><b>The opt-out rule is 9c·4.</b> The prompt cites 9c·10 and 9c·12 for it. Those are “the coach’s invite goes at Publish” and “moving a child asks first, then emails”. The rule that a family who unsubscribed still gets a notice about their own child is 9c·4, and the sender’s own header says so <button class="fl" data-f="D01">D01</button>.</li>
+  <li><b>Background since the end-state direction.</b> The guardian switch connects a parent to one child and does not touch calendars <button class="fl" data-f="D02">D02</button>, and a connected-family calendar for rep teams already exists <button class="fl" data-f="D03">D03</button>. Both argued for a family link. With the family half withdrawn they no longer drive a frame.</li>
+  <li><b>A hand-out is silent, and a second one is destructive.</b> The Practice time window says “Families aren’t emailed”, and running it again deletes the team’s upcoming practices and writes new ones. A family told “Wednesdays at 6:00” can have that moved with nobody told <button class="fl" data-f="D04">D04</button>. This is the conflict I name against 9d2·2 (“a practice change emails the team’s families”).</li>
+  <li><b>An email cannot say “Wednesdays at 6:00”.</b> Teams take turns at the early and late times week by week, so the first practice email lists every date. Until the app exists it is the only place a family reads them <button class="fl" data-f="D05">D05</button>.</li>
+  <li><b>Background: “games only, via the public page” is not free.</b> House league has no public team page, and the public season schedule has no Subscribe <button class="fl" data-f="D06">D06</button>. It mattered while a family door was being chosen. It does not now.</li>
+  <li><b>Today a coach cannot tell whether families know.</b> The team page has no calendar tool and no line saying whether the practices were sent <button class="fl" data-f="D07">D07</button>.</li>
+</ul></div>
+
+<div class="card">
+  <h3>How to read this</h3>
+  <ul>
+    <li>Each tab draws one piece, desk and phone, with the empty, working and edge state beside it. Tags: <button class="mk new" data-note="NEW marks something the product does not have today.">NEW</button> <button class="mk res" data-note="RESTYLED marks something that exists today and is redrawn.">RESTYLED</button> <button class="mk unc" data-note="UNCHANGED marks something kept as it is.">UNCHANGED</button>. Red flags open a finding about today’s code. Every tag and flag opens an explanation when clicked.</li>
+    <li><b>Today’s screens are redrawn from the code, not captured.</b> I read the page and its styles; I did not run a browser. Where a frame says TODAY it shows exactly the sections and words the code renders.</li>
+    <li>Settled and drawn as ruled, not reopened: 9d2·2, 9d2·13, 9d2·16, 11b’s coach email, the public team page is games only, 6d’s rulings (a coach’s link is personal and checked on every read, the feed words F1–F10, live season only, a stopped link answers an empty calendar, a four-hour refresh hint), 9c·4, Q12c, 9d1·4, and “a closed season is one page”. The asks are only what this round raises.</li>
+    <li><b>All words are provisional.</b> Final words go through /marketing after you rule, before any code. The family link that carried the counsel tag is withdrawn, and survives only as a struck record in push-back 2.</li>
+    <li>Desk drawings fit your screen; “Show at true size” shows them at 1440. Open this page on a phone to judge the phone drawings.</li>
+  </ul>
+  <p class="muted" style="margin:10px 0 0;font-size:13.5px">The example is <b>Draft Test 2027</b>, the U12 Division of 10 teams, 120 children from 101 families, drawn as if it were Thursday, June 17, 2027, at the club <b>Dev League Org</b>. The Kim family (Sarah, with Ava on the Twins and Henry on the Rays) is the household with children on two teams. <b>Every name, count, time and email below is an example and is marked so.</b></p>
+</div>
+<p class="muted" style="font-size:13.5px">Earlier rounds: <a href="https://claude.ai/artifact/TdXm5jmTEJ9qPvR3T5H9qU">9d-2 drawings</a> · <a href="https://claude.ai/artifact/Xy8ENL1KbUZVbWpDthD9EB">9d-1 drawings</a> · <a href="https://claude.ai/artifact/C56VdDqASJ4x53EoFWZjyk">9c drawings</a>.</p>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" data-pane="why" aria-selected="true">Push-backs</button>
+  <button role="tab" data-pane="today" aria-selected="false">Today</button>
+  <button role="tab" data-pane="coach" aria-selected="false">The coach’s Subscribe</button>
+  <button role="tab" data-pane="notice" aria-selected="false">The first notice</button>
+  <button role="tab" data-pane="family" aria-selected="false">A family’s calendar · withdrawn</button>
+  <button role="tab" data-pane="edges" aria-selected="false">Edges</button>
+  <button role="tab" data-pane="gate" aria-selected="false">Gate &amp; build notes</button>
+  <button role="tab" data-pane="asks" aria-selected="false">Asks &amp; paste-back</button>
+  <span class="sp"></span>
+  <span class="thm" role="group" aria-label="Drawing theme"><button type="button" data-thm="warm" aria-pressed="true">Warm</button><button type="button" data-thm="dark" aria-pressed="false">Dark</button></span>
+</nav>
+<div class="dt-tools"><button type="button" class="btn-d" data-fit>Show at true size</button><span class="zl">Scaled to fit; use the button for true size.</span></div>
+
+<!-- ======================= PUSH-BACKS ======================= -->
+<section class="pane" id="why" data-pane="why">
+<h2 style="margin-top:16px">Push-backs</h2>
+
+<div class="st" style="margin-top:12px"><h2>What the end state changes</h2>
+<p class="who">The owner’s direction, 2026-10-29: a mobile app where everyone signs in; public means tournaments and team public pages only; a parent is linked to their child; no stop-gap links; no rush.</p>
+<div class="read">
+  <div class="w"><h4>What survives</h4><ul>
+    <li>The first notice. It stays the way a family hears a time, and may later carry the invitation into the app.</li>
+    <li>The rule that a hand-out never moves a told team silently.</li>
+    <li>The coach’s feed: the first instance of the final design, a personal link tied to a sign-in.</li></ul></div>
+  <div class="g"><h4 style="color:var(--t-unc)">What is withdrawn</h4><ul>
+    <li>The family calendar link, its no-login page, its Reset, and the calendar buttons in the emails (asks 9d3·2 and 9d3·8).</li>
+    <li>Nothing else is redrawn as a replacement. The family half is the app.</li></ul></div>
+  <div class="c"><h4>One thing to keep in mind</h4><ul>
+    <li>The notice goes to the guardian email on the registration. That is the same key the app will link a parent to a child by, so nothing in the notice’s recipient logic needs reversing.</li></ul></div>
+</div>
+</div>
+
+<div class="st"><h2>1 · Does a family need a first practice email once a calendar exists?</h2>
+<p class="who">Yes. The email is the only thing that reaches a household with no account, and under the end state it is the family’s first word before the app exists. 6d said it first: “a feed is never how an urgent change reaches anyone.”</p>
+<div class="tw"><table class="t">
+<thead><tr><th>Option</th><th>What the convenor does</th><th>What a parent gets</th><th>A practice changes before the notice</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td>(a) No first notice</td><td>Nothing. The coach tells the team.</td><td>Whatever the coach sends, if anything. The change email stands alone and says so: “a family may never have been told the practice time.”</td><td>Nothing to say; the family never learns the old time either.</td><td><span class="x">Leaves the gap where it is.</span> Every family depends on one volunteer’s habit.</td></tr>
+<tr class="recbox"><td>(b) At hand-out, held until ✓ <button class="mk s" data-note="My recommendation for this option. The reasons are in the table row and in the ask that carries it.">RECOMMENDED</button></td><td>Presses “Send to 99 families” as the last step of Practice time. It is their ✓.</td><td>One email per household with the team’s practice dates, read at the moment of the press.</td><td>Cannot happen: the email lists what is on the table when it goes. A practice cancelled before then is left out, never announced.</td><td><span class="y">The convenor already stands in this window.</span> Same shape as Publish teams and Publish schedule. Needs the re-hand-out rule (ask 6).</td></tr>
+<tr><td>(c) A set number of days before the first practice</td><td>Nothing; a timer sends.</td><td>One email, late, right.</td><td>Right by construction.</td><td><span class="x">Needs a timer and an automatic send with no ✓,</span> which no family notice has today; a team whose first practice is a week away is told three days before. Rejected.</td></tr>
+<tr><td>(d) The coach sends it</td><td>Nothing.</td><td>A coach’s own email, from their own address.</td><td>The coach decides.</td><td><span class="x">40 volunteers, 40 versions,</span> no count of who was reached, no history row. The coach is copied instead (ask 7).</td></tr>
+<tr><td>(e) Ride the “Schedule published” email</td><td>Nothing extra.</td><td>Practices appended to the games email.</td><td>Mixed.</td><td><span class="x">Different clocks.</span> Games publish by division; practices are handed out by team, usually on another day. Rejected.</td></tr>
+</tbody></table></div>
+<div class="read">
+  <div class="w"><h4>“First” is</h4><ul><li><b>Per team, per household.</b> The first time a team’s practices are handed out, that team’s families are told. A household with two teams handed out the same day gets one email with two parts.</li></ul></div>
+  <div class="c"><h4>Who is left out</h4><ul><li>A household with no usable email (counted in the window, with a link to them). Nobody else: the unsubscribed are told (ask 4).</li></ul></div>
+  <div class="g"><h4>What it costs</h4><ul><li>A record of which teams were told, so “first” is knowable and a “not told yet” count can show. One column or one small table (build note).</li></ul></div>
+</div>
+</div>
+
+<div class="st"><h2>2 · A family’s calendar and the games-only public page pull against each other <button class="mk unc wd" data-note="WITHDRAWN 2026-10-29: the family half is the signed-in app, not a link. This table is kept as a record of the reasoning.">WITHDRAWN</button></h2>
+<p class="who"><b>Verdict: withdrawn 2026-10-29. The family half is the signed-in app, not a link.</b> Kept below as a record, with the recommendation struck. A public Subscribe could only ever carry games, and house league has no public team page to put it on <button class="fl" data-f="D06">D06</button>; a private link had no sign-in behind it.</p>
+<div class="tw"><table class="t cmpx">
+<thead><tr><th>Option</th><th>Carries</th><th>New storage</th><th>Follows a child who moves</th><th>If a family loses it</th><th>Counsel</th></tr></thead>
+<tbody>
+<tr><td>(a) Public, games only</td><td>Games as last sent. No practices.</td><td>None, but a new public route per team.</td><td>Yes (pick the new team).</td><td>Nothing to lose; it is a page.</td><td>None.</td></tr>
+<tr><td>(b1) One private link per team <button class="mk unc wd" data-note="Was recommended; withdrawn 2026-10-29 with the rest of the family link.">WITHDRAWN</button></td><td>Games as last sent, and practices once the team has been told.</td><td>One counter on the team (for Reset). The link is rebuilt from it, as the coach’s is.</td><td><b>No.</b> The move email (9c·12) carries the new team’s link. The old one keeps showing the old team until dropped.</td><td>The coach copies it again from their window.</td><td><button class="mk s cf" data-note="Counsel: the same kind of content the rep family feed already carries (team-level, no child, no household). You confirm, or send it to counsel.">YOU CONFIRM</button> Same content class as the rep family feed. Names no child, no household.</td></tr>
+<tr><td>(b2) One private link per household</td><td>Everything for the household’s teams in one calendar.</td><td>A counter per season, and an anchor row per household.</td><td><b>Yes</b>, on its own.</td><td><span class="x">Nobody can show it again.</span> A family has no sign-in. The convenor would need a “Send this household its link” door.</td><td><button class="mk s cf" data-note="Counsel: a private feed tied to a household and its teams. Drawn and marked, not ruled here, and not recommended.">WAITS FOR COUNSEL</button> A private feed tied to a household and its teams.</td></tr>
+<tr><td>(c) A .ics file in the email</td><td>The practices at send time.</td><td>None.</td><td>No.</td><td>Re-attach.</td><td>None.</td></tr>
+<tr><td>(d) Coaches only for now</td><td>Nothing for a family.</td><td>None.</td><td>—</td><td>—</td><td>None.</td></tr>
+</tbody></table></div>
+<ul>
+  <li><b>(b1) beats (b2) on the thing that decides it: who can show a family their link again.</b> 6d’s coach link works because a signed-in coach can reopen the window. A family cannot sign in. A team link has a signed-in owner (the coach); a household link has none. (b2)’s real advantage, following a moved child, costs one line in an email that is already sent when a child moves.</li>
+  <li><b>(c) is the exact problem 6d existed to end.</b> A file goes stale at the first change, and the practices rotate weekly, so it would be stale by the second week.</li>
+  <li><b>(d) is the right call only if you want counsel first,</b> and then it loses a lot: a parent still cannot put practices on a phone, and the email has to list dates. The split (ask 3) lets you choose this for one build and add the family link in the next at the cost of one line in the email.</li>
+</ul>
+</div>
+
+<div class="st"><h2>3 · One build, or two?</h2>
+<p class="who">One build, the notice first. With the family link gone there are two pieces of work and neither needs the other.</p>
+<div class="flow">
+  <div class="thr"><h4>The first notice (M)</h4><ul><li>The last step of Practice time, the household list, “left out”, the send.</li><li>The family email, the coach’s copy, and the coach page’s “families told” line (it reads the record the send writes).</li><li>The Automatic history row and the “not told yet” count.</li><li>The re-hand-out rule: a second hand-out reuses the built change email.</li></ul></div>
+  <div class="sec"><h4>The coach’s Subscribe (S)</h4><ul><li>A house-league team’s feed, with one mapper from games and practices into the shared feed words (F1–F10).</li><li>The coach’s personal link, its Subscribe window and its Reset.</li><li>One migration: the coach row’s link counter and last-read date.</li></ul></div>
+</div>
+<ul>
+  <li><b>Why the notice first.</b> It fixes something wrong today: a second hand-out silently moves practices families already know (D04). The Subscribe adds a tool and moves nothing that exists, so it can slide behind without loss.</li>
+  <li><b>What a split costs.</b> Nothing is built twice either way. The two share no code. A split costs a second walk and a second set of records; one build costs a larger walk. I recommend one build, in this order.</li>
+  <li><b>What changed from the earlier answer.</b> It said “calendars first, so the email is written once”. That reason was the family link, and the link is gone.</li>
+</ul>
+</div>
+
+<div class="st"><h2>4 · Who is told, and can they say no?</h2>
+<p class="who">Everyone with a usable email, and no. The precedent is <b>9c·4</b> (“a family who unsubscribed from club news still gets it”), which was ruled for the placement notice and extended to the moved-team, practice-change and both schedule emails. <button class="fl" data-f="D01">D01</button></p>
+<ul>
+  <li><b>It is the same kind of message.</b> It says where the family’s own child needs to be. That is the dues-reminder ground the sender’s header names: “news about the family’s own child, so an unsubscribe from club news does not mute it.” It is not marketing-adjacent: there is no offer, no ask, no link to buy.</li>
+  <li><b>What a family can control:</b> nothing in the email, because it carries no unsubscribe link (same as the other service notices). The footer says why it arrived: “Sent by Dev League Org because your family is registered in Draft Test 2027.”</li>
+  <li><b>Never counts toward a cap</b> (Q12c), and appears as an <b>Automatic</b> row in the season’s history (9d1·4).</li>
+  <li><b>Not decided here:</b> whether a service notice to a registered family needs anything under CASL beyond what 9c·4 already relied on. That is counsel’s question, not mine, and it applies equally to the placement email already built.</li>
+</ul>
+</div>
+</section>
+
+
+<!-- ======================= TODAY ======================= -->
+<section class="pane" id="today" data-pane="today" hidden>
+<h2 style="margin-top:16px">Today: what a house-league coach and family have</h2>
+<div class="verdict push"><h3>The answer in one line</h3><p>A house-league coach has no calendar tool of any kind, and no way to see whether families know their practice times. A house-league family has no calendar and, until a practice <em>changes</em>, no email about practices at all. A rep coach and a rep family have all of this already.</p></div>
+
+<div class="st"><h2>a1 · The house-league coach’s team page <button class="mk unc" data-note="UNCHANGED: drawn from the page’s code. Sections in order: Your teams (only with more than one team), eyebrow, team name, coaches line, Schedule, Scores, Players, foot. There is no toolbar, no Export, no Tools, no Subscribe.">TODAY</button></h2>
+<p class="who">A team’s coach, signed in. Redrawn from the code, not captured. <button class="fl" data-f="D07">D07</button></p>
+<div class="spec">
+  <div class="col" style="flex:1 1 520px"><p class="sp-cap">TODAY · desk, a centred column (the page has no sidebar)</p>
+  <div class="ak" style="max-width:760px;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);padding:24px 28px;display:flex;flex-direction:column;gap:14px">
+    <span class="ey">U12 Division · Draft Test 2027</span>
+    <div><h1 style="font:700 28px/1.1 'Inter',sans-serif;margin:0">Twins</h1><p class="sub">Coached by Alex Moreau</p></div>
+    <div class="shd"><span class="lbl">Schedule</span></div>
+    <div class="panel">
+      <div class="prow"><div class="t">Today<span class="d2">Jun 17</span></div><div class="m"><b>Twins vs Royals · 6:00 p.m.</b><span class="d">Maple Grove Park · Diamond 2</span></div></div>
+      <div class="prow"><div class="t">Wed<span class="d2">Jun 23</span></div><div class="m"><b>Practice · 6:00 – 7:00 p.m.</b><span class="d">Maple Grove Park · Diamond 2 · From Spring house-league time</span></div></div>
+      <div class="prow"><div class="t">Thu<span class="d2">Jun 24</span></div><div class="m"><b>Orioles vs Twins · 7:30 p.m.</b><span class="d">Maple Grove Park · Diamond 1</span></div></div>
+    </div>
+    <span class="lnk">See the season’s schedule</span>
+    <span class="lbl">Scores</span><p class="sub" style="margin:0">The club enters scores for now.</p>
+    <div class="shd"><span class="lbl">Players <span class="amb">12</span></span><span class="btn">Copy emails</span></div>
+    <div class="panel"><div class="lrow"><div class="m"><b>Ava Kim</b><span class="d">Sarah Kim · sarah.kim@example.com</span></div></div><div class="lrow"><div class="m"><b>Noah Singh</b><span class="d">Priya Singh · priya.singh@example.com</span></div></div></div>
+    <p class="hint">Fees, ratings and other teams aren’t shown here.</p>
+  </div></div>
+  <div class="col"><p class="sp-cap">TODAY · phone, 390</p>
+  <div class="ph"><div class="ak ph-in" style="min-height:700px;display:flex;flex-direction:column">
+    <div class="pbar"><span>Twins</span><span class="sp"></span><span class="pill">U12 Division</span></div>
+    <div class="pin">
+      <div class="shd"><span class="lbl">Schedule</span></div>
+      <div class="panel">
+        <div class="prow"><div class="t">Today<span class="d2">Jun 17</span></div><div class="m"><b>Twins vs Royals · 6:00 p.m.</b><span class="d">Maple Grove Park · Diamond 2</span></div></div>
+        <div class="prow"><div class="t">Wed<span class="d2">Jun 23</span></div><div class="m"><b>Practice · 6:00 – 7:00 p.m.</b><span class="d">Maple Grove Park · Diamond 2</span></div></div>
+      </div>
+      <span class="lnk">See the season’s schedule</span>
+      <span class="lbl">Scores</span><p class="sub" style="margin:0">The club enters scores for now.</p>
+      <div class="shd"><span class="lbl">Players <span class="amb">12</span></span><span class="btn">Copy emails</span></div>
+    </div>
+  </div></div></div>
+</div>
+<div class="read">
+  <div class="w"><h4>What it does</h4><ul><li>Lists the team’s published games as families last heard them, and its practices, from today on.</li><li>Practices show “From {schedule}” when they came from the club’s time. A cancelled practice is marked.</li></ul></div>
+  <div class="g"><h4>What it lacks</h4><ul><li>Any way to put the schedule on a phone.</li><li>Any word on whether families were told the practice times. A coach finds out when a parent asks.</li></ul></div>
+  <div class="c"><h4>Not touched here</h4><ul><li>Everything else on the page. This round adds one control to the Schedule heading’s line and one quiet line under it.</li></ul></div>
+</div>
+</div>
+
+<div class="st"><h2>a2 · What a rep coach has, for comparison <button class="mk unc" data-note="UNCHANGED: the rep coach’s Export with Subscribe behind it. Drawn from components/coaches/CoachExportButton and the calendar words file.">TODAY</button></h2>
+<p class="who">Rep team coaches with the Schedule capability. Subscribe is behind the one Export at a desk and behind a calendar mark on a phone, never on the toolbar line (6d, ruled 2026-10-11).</p>
+<div class="cmp">
+  <div><p class="sp-cap">DESK · the rep coach’s Export window</p>
+  <div class="ak win"><div class="dlg" style="max-width:520px">
+    <div class="dh"><div class="tt"><h4>Export</h4></div><span class="xx">×</span></div>
+    <div class="db"><div class="lrow" style="padding:8px 0"><div class="m"><b>Excel (.xlsx)</b><span class="d">The schedule as a spreadsheet</span></div></div><div class="lrow" style="padding:8px 0"><div class="m"><b>Calendar file (.ics)</b><span class="d">A copy of today’s schedule, which goes stale</span></div></div>
+      <div class="hair"></div><div class="lrow" style="padding:8px 0;border-top:0"><div class="m"><b>Subscribe in your calendar app</b><span class="d">Kept up to date</span></div><span class="lnk">Open</span></div></div>
+  </div></div></div>
+  <div><p class="sp-cap">PHONE · the calendar mark opens a drawer</p>
+  <div class="ph"><div class="ak ph-in" style="min-height:380px;display:flex;flex-direction:column;justify-content:flex-end"><div class="fsw" style="min-height:0"><div class="fh"><span style="flex:1;padding-left:12px">Calendar</span></div><div class="fb"><div class="lrow"><div class="m"><b>Subscribe on this phone</b></div></div><div class="lrow"><div class="m"><b>Download a copy (.ics)</b></div></div></div></div></div></div></div>
+</div>
+<div class="read">
+  <div class="w"><h4>The rep window carries</h4><ul><li>Apple, Google, Outlook and Copy the link (the phone’s own app first).</li><li>“Yours alone; anyone with it can read this schedule. It stops if you leave the team.”</li><li>“Read by your calendar today”, “Last read … on Mon, Oct 12”, Reset the link.</li></ul></div>
+  <div class="c"><h4>The public rep team page</h4><ul><li>Has its own “Subscribe to this schedule”: games and outside tournaments only, one address per team, no secret, no Reset. Served only when the team’s schedule is set to a public link.</li></ul></div>
+  <div class="g"><h4>House league’s equivalents</h4><ul><li>None. Every calendar feed reads the rep team tables. A grep of the house-league code for .ics, webcal or Subscribe finds nothing.</li></ul></div>
+</div>
+</div>
+
+<div class="st"><h2>a3 · The practice email as built, and a family’s inbox <button class="mk unc" data-note="UNCHANGED: the practice-change email from 11b, drawn from lib/club-schedule-league-words.ts. Subject, greeting, per-child opening, Now and Was lines, close, zone sentence. No link, by ruling.">TODAY</button></h2>
+<p class="who">The Kim family: Ava on the Twins, Henry on the Rays. Subjects are examples of the words the product uses.</p>
+<div class="spec">
+  <div class="col" style="flex:1 1 380px"><p class="sp-cap">A FAMILY’S INBOX · before any practice notice exists</p>
+  <div class="ak" style="border-radius:10px;outline:1px solid var(--line);overflow:hidden;max-width:560px">
+    <div class="lrow"><div class="m"><b>Teams are set in Draft Test 2027</b><span class="d">Dev League Org · Tue, May 20 · placement email</span></div></div>
+    <div class="lrow"><div class="m"><b>Draft Test 2027: your games are up</b><span class="d">Dev League Org · Tue, May 25 · schedule published</span></div></div>
+    <div class="lrow" style="background:var(--amber-soft)"><div class="m"><b>No email about practices</b><span class="d">Practices are on the coach’s page. Families are not emailed.</span></div></div>
+    <div class="lrow"><div class="m"><b>Practices changed for Twins and Rays</b><span class="d">Dev League Org · after the club sends a change · the only practice email a family ever gets today</span></div></div>
+  </div></div>
+  <div class="col" style="flex:1 1 380px"><p class="sp-cap">THE CHANGE EMAIL AS BUILT</p>
+  <div class="mail">
+    <div class="mh"><b>Practices changed for Twins and Rays</b><span class="muted">From Dev League Org · to sarah.kim@example.com</span></div>
+    <div class="club"><span class="mono">DL</span>Dev League Org</div>
+    <div class="mb"><p>Hi Sarah,</p>
+      <p>Dev League Org changed Ava’s practices with Twins, from Wed, Jun 23:</p>
+      <p>Now: Wednesdays, 7:00 – 8:00 p.m. · Maple Grove Park · Diamond 1<br><span class="wasl">Was: Wednesdays, 6:00 – 7:00 p.m. · Diamond 2</span></p>
+      <p>Dev League Org changed Henry’s practices with Rays, from Mon, Jun 21:</p>
+      <p>Cancelled: Mon, Jun 28, 7:00 – 8:00 p.m. · Maple Grove Park · Diamond 1</p>
+      <p>Questions? Ask the Twins or Rays coach.</p></div>
+    <div class="foot"><span>Sent by Dev League Org because your family is registered in Draft Test 2027.</span><span>Times in Eastern time.</span></div>
+  </div></div>
+</div>
+<p class="cap">The change email says “Now” and “Was” and has no link, because the family may never have been told the practice time. That is why the first notice has to exist. A practice the convenor hands out, or hands out again, sends none of this. <button class="fl" data-f="D04">D04</button></p>
+</div>
+</section>
+
+<!-- ======================= THE COACH'S SUBSCRIBE ======================= -->
+<section class="pane" id="coach" data-pane="coach" hidden>
+<h2 style="margin-top:16px">The coach’s Subscribe</h2>
+<div class="verdict"><h3>The answer</h3><p>The control sits on the <b>Schedule heading’s line</b>, because this page has no Export and no toolbar (the standard puts Subscribe there when a page has no Export, and never on a toolbar line). It opens the rep coach’s Subscribe window, with house league’s words. The page gains one quiet line saying whether families have been told. Nothing else on the page moves.</p></div>
+
+<div class="st"><h2>b1 · The page, after <button class="mk new" data-note="NEW (ask 5, ask 7): a Subscribe control on the Schedule heading’s line and a quiet line under the list. Everything else on the page is unchanged.">NEW</button></h2>
+<p class="who">A team’s coach. Desk shows a text button with the calendar mark; the phone shows the mark alone, 44 px tall, no border or fill (a phone’s secondary action is its symbol alone).</p>
+<div class="spec">
+  <div class="col" style="flex:1 1 520px"><p class="sp-cap">AFTER · desk · working</p>
+  <div class="ak" style="max-width:760px;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);padding:24px 28px;display:flex;flex-direction:column;gap:14px">
+    <span class="ey">U12 Division · Draft Test 2027</span>
+    <div><h1 style="font:700 28px/1.1 'Inter',sans-serif;margin:0">Twins</h1><p class="sub">Coached by Alex Moreau</p></div>
+    <div class="shd"><span class="lbl">Schedule</span><span class="btn"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Subscribe</span><button class="mk new" data-note="NEW: the coach’s Subscribe. Opens the window drawn in b3.">NEW</button></div>
+    <div class="panel">
+      <div class="prow"><div class="t">Today<span class="d2">Jun 17</span></div><div class="m"><b>Twins vs Royals · 6:00 p.m.</b><span class="d">Maple Grove Park · Diamond 2</span></div></div>
+      <div class="prow"><div class="t">Wed<span class="d2">Jun 23</span></div><div class="m"><b>Practice · 6:00 – 7:00 p.m.</b><span class="d">Maple Grove Park · Diamond 2 · From Spring house-league time</span></div></div>
+      <div class="prow"><div class="t">Thu<span class="d2">Jun 24</span></div><div class="m"><b>Orioles vs Twins · 7:30 p.m.</b><span class="d">Maple Grove Park · Diamond 1</span></div></div>
+    </div>
+    <p class="qline"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span>Families were told these practice times on Wed, Jun 16. <button class="mk new" data-note="NEW (ask 7): a quiet line, visible to the coach only, that says whether the team’s families have been sent their practice times. It reads “Families haven’t been told these practice times yet.” until the convenor’s send, and says nothing when the team has no practices.">NEW</button></span></p>
+    <span class="lnk">See the season’s schedule</span>
+  </div></div>
+  <div class="col"><p class="sp-cap">AFTER · phone, 390 · the mark alone</p>
+  <div class="ph"><div class="ak ph-in" style="min-height:560px;display:flex;flex-direction:column">
+    <div class="pbar"><span>Twins</span><span class="sp"></span><span class="pill">U12 Division</span></div>
+    <div class="pin">
+      <div class="shd"><span class="lbl">Schedule</span><span class="btn ic" aria-label="Subscribe in your calendar app"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span></div>
+      <div class="panel">
+        <div class="prow"><div class="t">Today<span class="d2">Jun 17</span></div><div class="m"><b>Twins vs Royals · 6:00 p.m.</b><span class="d">Maple Grove Park · Diamond 2</span></div></div>
+        <div class="prow"><div class="t">Wed<span class="d2">Jun 23</span></div><div class="m"><b>Practice · 6:00 – 7:00 p.m.</b><span class="d">Maple Grove Park · Diamond 2</span></div></div>
+      </div>
+      <p class="qline"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span>Families were told these practice times on Wed, Jun 16.</span></p>
+      <span class="lnk">See the season’s schedule</span>
+    </div>
+  </div></div></div>
+</div>
+<p class="cap">Why not the Players section’s “Copy emails” line, or a Tools menu: this page has neither toolbar nor Tools, and a Subscribe belongs next to the thing it subscribes to. The quiet line shows to the coach only because the page is a coach’s page. A coach who is also a registrar sees the same page.</p>
+</div>
+
+<div class="st"><h2>b2 · The three states the line has<button class="mk new" data-note="NEW. Not told yet is quiet text, not an alert: the coach can do nothing about it, only the convenor can.">NEW</button></h2>
+<div class="spec">
+  <div class="col"><p class="sp-cap">NOT TOLD YET · after a hand-out the convenor has not yet sent</p>
+  <div class="ak" style="padding:14px;border-radius:10px;outline:1px solid var(--line);max-width:430px;display:flex;flex-direction:column;gap:10px">
+    <div class="panel"><div class="prow"><div class="t">Wed<span class="d2">Jun 23</span></div><div class="m"><b>Practice · 6:00 – 7:00 p.m.</b><span class="d">Maple Grove Park · Diamond 2</span></div></div></div>
+    <p class="qline"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span>Families haven’t been told these practice times yet. The league admin sends them.</span></p></div></div>
+  <div class="col"><p class="sp-cap">CHANGED, NOT SENT · a second hand-out the convenor has not yet sent</p>
+  <div class="ak" style="padding:14px;border-radius:10px;outline:1px solid var(--line);max-width:430px;display:flex;flex-direction:column;gap:10px">
+    <div class="panel"><div class="prow"><div class="t">Wed<span class="d2">Jun 23</span></div><div class="m"><b>Practice · 7:00 – 8:00 p.m.</b><span class="d">Maple Grove Park · Diamond 1</span></div></div></div>
+    <p class="qline"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span>Families were told different times on Wed, Jun 16. The league admin sends the changes.</span></p></div></div>
+  <div class="col"><p class="sp-cap">NO PRACTICES YET · the line is absent, as is “Practice” in the list</p>
+  <div class="ak" style="padding:14px;border-radius:10px;outline:1px solid var(--line);max-width:430px;display:flex;flex-direction:column;gap:10px">
+    <div class="shd"><span class="lbl">Schedule</span><span class="btn"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Subscribe</span></div>
+    <p class="sub" style="margin:0">No practices yet. U12 Division’s schedule isn’t published yet.</p></div></div>
+</div>
+<p class="cap">Subscribe stays when the team has nothing yet, as the rep coach’s does: a coach can subscribe before the season fills.</p>
+</div>
+
+<div class="st"><h2>b3 · The Subscribe window <button class="mk res" data-note="RESTYLED: the rep coach’s window, with the words for house league. Nothing in it is new. Final words come from /marketing.">RESTYLED</button></h2>
+<p class="who">520 wide on a desk; a tall menu-layer sheet on a phone. The same window for every Subscribe in the product.</p>
+<div class="cmp">
+  <div><p class="sp-cap">AFTER · desk · working</p>
+  <div class="ak win"><div class="dlg" style="max-width:520px">
+    <div class="dh"><div class="tt"><span class="ey">Twins · U12 Division</span><h4>Subscribe in your calendar app</h4></div><span class="xx">×</span></div>
+    <div class="db">
+      <p style="margin:0">Twins’ schedule in your own calendar, kept up to date.</p>
+      <div class="apps"><span class="btn">Apple Calendar</span><span class="btn">Google Calendar</span><span class="btn">Outlook</span><span class="btn">Copy the link</span></div>
+      <span class="lbl">What’s in it</span><p class="hint" style="font-size:13.5px">This season’s games and practices. Cancelled events stay, marked. A game appears once its division’s schedule is published, and a change appears once it is sent.</p>
+      <p class="hint" style="font-size:13.5px">When the season closes, its events leave your calendar. Your calendar app checks on its own schedule: usually within a few hours; Google Calendar can take up to a day.</p>
+      <span class="lbl">Your link</span><div class="linkbox">webcal://devleague.example/api/calendar/league-coach/Zk3q…9p.2.Vb7…Qm.ics</div>
+      <p class="hint">Yours alone; anyone with it can read this schedule. It stops if you leave the team.</p>
+      <p class="hint">Read by your calendar today.</p>
+      <div class="rare"><a>Reset the link</a></div>
+    </div>
+    <div class="df"><span class="s">&nbsp;</span><span class="btn pri">Done</span></div>
+  </div></div></div>
+  <div><p class="sp-cap">AFTER · phone, 390 · “Subscribe on this phone”</p>
+  <div class="ph"><div class="ak ph-in"><div class="fsw" style="min-height:760px">
+    <div class="fh"><span class="btn ic" aria-label="Close"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span><span style="flex:1">Subscribe on this phone</span></div>
+    <div class="fb">
+      <p style="margin:0">Twins’ schedule in your own calendar, kept up to date.</p>
+      <div class="apps"><span class="btn pri">Apple Calendar</span><span class="btn">Google Calendar</span><span class="btn">Outlook</span><span class="btn">Copy the link</span></div>
+      <p class="hint">This season’s games and practices. Cancelled events stay, marked. When the season closes, its events leave your calendar.</p>
+      <p class="hint">Yours alone; anyone with it can read this schedule. It stops if you leave the team. Read by your calendar today.</p>
+      <div class="rare" style="flex-wrap:wrap"><a>Reset the link</a></div>
+    </div>
+    <div class="ff"><div class="bb"><span class="btn pri">Done</span></div></div>
+  </div></div></div></div>
+</div>
+<p class="cap">Words are the rep window’s (“Yours alone…”, “Read by your calendar today”) with two changes: no tryout days, tournaments or notes in “What’s in it”, because house league has none, and one sentence on when a game appears. The foot’s sentence sits at the left, the button at the right. The link text is an example.</p>
+</div>
+
+<div class="st"><h2>b4 · What the feed carries, in a calendar app <button class="mk new" data-note="NEW: the house-league coach’s feed. Titles follow the feed recipe F1–F10 exactly: the team leads, vs and @ by side, Cancelled · first, a practice is Team · Practice. Times are instants, so the phone shows them in its own zone.">NEW</button></h2>
+<div class="spec">
+  <div class="col"><p class="sp-cap">THE COACH’S CALENDAR · Twins · Dev League Org</p>
+  <div class="calapp">
+    <div class="h">Twins · Dev League Org <span>live season</span></div>
+    <div class="d">Thu, Jun 17</div>
+    <div class="e g"><i></i><div><b>Twins vs Royals</b><span>6:00 – 8:00 p.m. · Maple Grove Park · Diamond 2</span></div></div>
+    <div class="d">Wed, Jun 23</div>
+    <div class="e"><i></i><div><b>Twins · Practice</b><span>6:00 – 7:00 p.m. · Maple Grove Park · Diamond 2</span></div></div>
+    <div class="d">Thu, Jun 24</div>
+    <div class="e g"><i></i><div><b>Twins @ Orioles</b><span>7:30 – 9:30 p.m. · Maple Grove Park · Diamond 1</span></div></div>
+    <div class="d">Wed, Jun 30</div>
+    <div class="e cx"><i></i><div><b>Cancelled · Twins · Practice</b><span>7:00 – 8:00 p.m. · shown as free time</span></div></div>
+  </div></div>
+  <div class="col" style="flex:1 1 360px">
+    <div class="read" style="grid-template-columns:minmax(0,1fr)">
+      <div class="w"><h4>Carries</h4><ul>
+        <li><b>Games a league admin has published, as families last heard them.</b> A change waiting under Changes to send is invisible until it is sent. This is the coach page’s own rule, so the page and the phone never disagree.</li>
+        <li><b>Every practice from the team, cancelled ones kept and marked,</b> the same as the coach page.</li>
+        <li><b>The live season only.</b> A closed season’s link answers an empty calendar under the team’s name, so the events leave rather than freeze (6d F9, F10).</li>
+        <li>A game with no end time is two hours; a practice with no end is an hour and a half (F4). A practice from the club’s time has an end.</li></ul></div>
+      <div class="g"><h4>Leaves out</h4><ul>
+        <li>Scores (the club enters them), notes, uniform, arrival times (house league has none), the roster, anything about a child.</li>
+        <li>Other teams’ games. A division’s whole schedule stays on the public schedule page.</li></ul></div>
+    </div>
+  </div>
+</div>
+<p class="cap">Where a team is “home” the title reads “Twins vs Royals”; “away” reads “Twins @ Orioles”. A house-league game stores a home and an away team, so the side is known, which the rep tables had to learn separately. The build maps both tables into the same entries the rep feed uses, so the recipe is not rewritten.</p>
+</div>
+
+<div class="st"><h2>b5 · Reset <button class="mk res" data-note="RESTYLED: the rep coach’s Reset confirm, with house league’s words. It touches the coach’s own link only.">RESTYLED</button></h2>
+<div class="cmp">
+  <div><p class="sp-cap">YOUR LINK</p>
+  <div class="ak win"><div class="dlg" style="max-width:480px">
+    <div class="dh"><div class="tt"><h4>Reset your calendar link?</h4></div><span class="xx">×</span></div>
+    <div class="db"><p style="margin:0">Your calendar stops updating, and the events leave it the next time it checks. You get a new link to subscribe with.</p></div>
+    <div class="df"><span class="s">&nbsp;</span><span class="btn">Keep it</span><span class="btn dng">Reset the link</span></div>
+  </div></div></div>
+</div>
+<p class="cap">The rep coach’s Reset, in house league’s words. It touches the coach’s own link only. Nothing a family holds depends on it.</p>
+</div>
+</section>
+
+
+<!-- ======================= THE FIRST NOTICE ======================= -->
+<section class="pane" id="notice" data-pane="notice" hidden>
+<h2 style="margin-top:16px">The first practice notice</h2>
+<div class="verdict"><h3>The answer</h3>
+<ul>
+  <li><b>It is the last step of Practice time.</b> You hand practices out; the window then says how many families have not been told and offers one button. Nothing is sent until you press it, which is the ✓ the house rules require for anything that tells families.</li>
+  <li><b>“First” means “the first time this team’s practices are handed out”.</b> A second hand-out for a team already told goes through the same step as a <b>change</b>, using the email 11b built, so a told family can never have a time moved under them.</li>
+  <li><b>It lists dates, not “Wednesdays at 6:00”,</b> because teams take turns at the early and late times week by week. <button class="fl" data-f="D05">D05</button></li>
+</ul></div>
+
+<div class="st"><h2>c1 · Hand out, then tell <button class="mk res" data-note="RESTYLED: the Practice time window. Step one is the 11b window with its foot changed from “Families aren’t told.” to a sentence that points at step two. Step two is NEW.">RESTYLED</button></h2>
+<p class="who">Owner, admin, league admin (the people who can hand practices out). From Tools › Practice time, or the time line under the title.</p>
+<div class="cmp">
+  <div><p class="sp-cap">STEP 1 · desk · the 11b window, foot changed</p>
+  <div class="ak win"><div class="dlg" style="max-width:640px">
+    <div class="dh"><div class="tt"><span class="ey">Draft Test 2027 · U12 Division</span><h4>Practice time</h4></div><span class="xx">×</span></div>
+    <div class="db">
+      <div class="sec"><h5>U12’s practice time <span class="d2">· from house league’s time</span></h5>
+        <div class="lrow"><div class="m"><b>Wednesdays · 6:00 – 9:00 p.m.</b><span class="d">Maple Grove Park · Diamonds 1 and 2</span></div><span class="r">6 hours a week</span></div></div>
+      <div class="sec"><h5>Hand it to the teams</h5>
+        <div class="grid2"><div class="fcol"><span class="flbl">Each practice</span><span class="fld">60 minutes</span></div><div class="fcol"><span class="flbl">Teams at once</span><span class="fld">1 a diamond</span></div></div>
+        <div class="res ok"><b>Every team gets one practice a week.</b><span>Who gets 6:00 and who gets 8:00 takes turns week by week.</span></div></div>
+    </div>
+    <div class="df"><span class="s">Next you choose whether to tell the families. <button class="mk res" data-note="The old foot read “Practices land on the schedule and each coach’s page. Families aren’t told.” Provisional new words; /marketing settles them.">RESTYLED</button></span><span class="btn">Cancel</span><span class="btn pri">Hand out 10 practices a week</span></div>
+  </div></div></div>
+  <div><p class="sp-cap">STEP 2 · desk · working: nobody told yet</p>
+  <div class="ak win"><div class="dlg" style="max-width:640px">
+    <div class="dh"><div class="tt"><span class="ey">Draft Test 2027 · U12 Division</span><h4>Tell the families their practice times <button class="mk new" data-note="NEW. The first practice email. One email per household, held until you press Send.">NEW</button></h4></div><span class="xx">×</span></div>
+    <div class="db">
+      <div class="stmt">10 practices a week handed out. 101 families haven’t been told.</div>
+      <div class="tiles" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div><div class="k">Teams</div><div class="v">10</div><div class="h">all handed out</div></div><div><div class="k">Families</div><div class="v">101</div><div class="h">3 have a child on two teams</div></div><div><div class="k">Will be sent</div><div class="v">99</div><div class="h">one email each</div></div></div>
+      <div class="note">2 families have no usable email, so they can’t be sent this. <span class="lnk">See them</span></div>
+      <div class="lrow" style="border:1px solid var(--line);border-radius:8px"><div class="m"><b>What each family gets</b><span class="d">Their team’s practice dates and places. No fees, no ratings.</span></div><span class="lnk">See an example</span></div>
+    </div>
+    <div class="df"><span class="s">Each family gets one email, now. It doesn’t count toward your sends.</span><span class="btn">Not yet</span><span class="btn pri">Send to 99 families</span></div>
+  </div></div></div>
+</div>
+<div class="cmp">
+  <div><p class="sp-cap">STEP 2 · phone, 390</p>
+  <div class="ph"><div class="ak ph-in"><div class="fsw" style="min-height:700px">
+    <div class="fh"><span class="btn ic" aria-label="Close"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span><span style="flex:1">Tell the families</span></div>
+    <div class="fb">
+      <div class="stmt">10 practices a week handed out. 101 families haven’t been told.</div>
+      <div class="tiles"><div><div class="k">Teams</div><div class="v">10</div></div><div><div class="k">Families</div><div class="v">101</div></div><div><div class="k">Will be sent</div><div class="v">99</div></div><div><div class="k">No email</div><div class="v am">2</div></div></div>
+      <div class="note">2 families have no usable email. <span class="lnk">See them</span></div>
+      <span class="lnk">See an example email</span>
+    </div>
+    <div class="ff"><span class="s">One email each, now. It doesn’t count toward your sends.</span><div class="bb"><span class="btn pri">Send to 99</span></div></div>
+  </div></div></div></div>
+  <div><p class="sp-cap">STEP 2 · sending, and the honest result</p>
+  <div class="ak win"><div class="dlg" style="max-width:480px">
+    <div class="dh"><div class="tt"><h4>Sending to 99 families…</h4></div></div>
+    <div class="db"><p style="margin:0">Keep this window open. You can’t send twice.</p></div>
+    <div class="df"><span class="s">&nbsp;</span><span class="btn" style="opacity:.5">Sending…</span></div>
+  </div></div>
+  <div class="ak win" style="margin-top:12px"><div class="dlg" style="max-width:480px">
+    <div class="dh"><div class="tt"><h4>Reached 97 of 99 families</h4></div><span class="xx">×</span></div>
+    <div class="db"><p style="margin:0">2 didn’t send. <span class="lnk">See them</span></p><p class="hint">The season’s history has a row for this send.</p></div>
+    <div class="df"><span class="s">&nbsp;</span><span class="btn pri">Done</span></div>
+  </div></div></div>
+</div>
+<p class="cap">“Not yet” closes the window with the practices handed out and nobody told. It is a real choice (the convenor may want to check the list first), so it leaves a reminder (c3). On a phone “Not yet” is the × at the top, so the foot holds only the one action. The count in “Will be sent” is households, not children: three families with a child on two teams are counted once, as in 9d-1’s sends.</p>
+</div>
+
+<div class="st"><h2>c1b · The edges of the Tell step <button class="mk new" data-note="NEW. Added after the /ux pass: every way the Send step can end other than the happy path. Each is a state of the same window, not a new screen.">NEW</button></h2>
+<p class="who">Same window, same foot rules: the sentence at the left, the buttons at the right. Each frame is an example.</p>
+<div class="cmp">
+  <div><p class="sp-cap">“SEE THEM” · the 2 left out, and any that fail</p>
+  <div class="ak win"><div class="dlg" style="max-width:520px">
+    <div class="dh"><div class="tt"><span class="ey">Draft Test 2027 · U12 Division</span><h4>2 families can’t be sent this</h4></div><span class="xx">×</span></div>
+    <div class="db">
+      <div class="lrow" style="border:1px solid var(--line);border-radius:8px"><div class="m"><b>Marcus Webb</b><span class="d">Twins · no email on file</span></div><span class="lnk">Add an email</span></div>
+      <div class="lrow" style="border:1px solid var(--line);border-radius:8px"><div class="m"><b>Dana Ortiz</b><span class="d">Rays · the address was refused (dana.ortiz@example.com)</span></div><span class="lnk">Fix the email</span></div>
+      <p class="hint">After you fix an email, Send again reaches only the families who weren’t reached.</p>
+    </div>
+    <div class="df"><span class="s">Not counted as told until an email goes.</span><span class="btn">Done</span><span class="btn pri">Send again to 2</span></div>
+  </div></div></div>
+  <div><p class="sp-cap">THE SEND FAILED · nothing went</p>
+  <div class="ak win"><div class="dlg" style="max-width:480px">
+    <div class="dh"><div class="tt"><h4>Couldn’t send</h4></div><span class="xx">×</span></div>
+    <div class="db"><p style="margin:0">Nothing was sent, and no family was marked as told. Check your connection and try again.</p></div>
+    <div class="df"><span class="s">You haven’t lost anything.</span><span class="btn">Close</span><span class="btn pri">Try again</span></div>
+  </div></div></div>
+</div>
+<div class="cmp">
+  <div><p class="sp-cap">THE LIST CHANGED while the window was open (a registration moved, or another league admin acted)</p>
+  <div class="ak win"><div class="dlg" style="max-width:480px">
+    <div class="dh"><div class="tt"><h4>This changed while you were looking</h4></div><span class="xx">×</span></div>
+    <div class="db"><p style="margin:0">3 more families can now be told, so nothing was sent. Review the new list and send again.</p></div>
+    <div class="df"><span class="s">Nobody was emailed.</span><span class="btn pri">Review again</span></div>
+  </div></div></div>
+  <div><p class="sp-cap">EVERYONE IS TOLD · a second league admin opens the step</p>
+  <div class="ak win"><div class="dlg" style="max-width:480px">
+    <div class="dh"><div class="tt"><span class="ey">Draft Test 2027 · U12 Division</span><h4>Everyone has been told</h4></div><span class="xx">×</span></div>
+    <div class="db"><p style="margin:0">Jordan Lee sent the practice times to 99 families on Thu, Jun 17 at 2:14 p.m.</p><p class="hint">The reminder on the schedule goes away. If you hand practices out again, this step reopens for the teams that change.</p></div>
+    <div class="df"><span class="s">&nbsp;</span><span class="btn pri">Done</span></div>
+  </div></div></div>
+</div>
+<div class="cmp">
+  <div><p class="sp-cap">SOME TEAMS HAVE NO PRACTICES YET · they are listed and skipped, not hidden</p>
+  <div class="ak win"><div class="dlg" style="max-width:520px">
+    <div class="dh"><div class="tt"><span class="ey">Draft Test 2027 · U12 Division</span><h4>Tell the families their practice times</h4></div><span class="xx">×</span></div>
+    <div class="db">
+      <div class="stmt">8 of 10 teams have practices. 78 families haven’t been told.</div>
+      <div class="note">Cubs and Tigers have no practices handed out, so their 23 families aren’t included. Hand them out, then tell those families. <span class="lnk">Hand out for them</span></div>
+    </div>
+    <div class="df"><span class="s">Each family gets one email, now.</span><span class="btn">Not yet</span><span class="btn pri">Send to 77 families</span></div>
+  </div></div></div>
+  <div><div class="card" style="margin:0"><h3>Why these five</h3><ul>
+    <li><b>“See them” is where a convenor acts</b> on a missing or refused email. Without it the 2 are a number with no way forward.</li>
+    <li><b>A failed send says nothing was sent</b>, so a convenor never wonders whether to press again.</li>
+    <li><b>A stale list is refused and reviewed,</b> the way the club’s Send the changes already refuses a send whose preview no longer matches. No family is emailed twice.</li>
+    <li><b>The second league admin</b> sees who sent it and when, and is not offered a Send.</li>
+    <li>The skipped teams are named, with the door that fixes them.</li></ul></div></div>
+</div>
+</div>
+
+<div class="st"><h2>c2 · Handing out again after a team was told <button class="mk new" data-note="NEW (ask 6). Today a second hand-out deletes a team’s upcoming practices and writes new ones with nobody told. Here the same step reopens as a change, using the 11b email.">NEW</button></h2>
+<p class="who">The conflict with 9d2·2 <button class="fl" data-f="D04">D04</button>. Hand-out is the convenor’s act and Send the changes is the club’s; a re-hand-out reaches families through neither.</p>
+<div class="cmp">
+  <div><p class="sp-cap">BEFORE HAND-OUT · a team has been told already</p>
+  <div class="ak win"><div class="dlg" style="max-width:520px">
+    <div class="dh"><div class="tt"><span class="ey">Draft Test 2027 · U12 Division</span><h4>Hand out 10 practices a week again?</h4></div><span class="xx">×</span></div>
+    <div class="db"><p style="margin:0">8 teams’ families were told their practice times on Wed, Jun 16. Handing out again replaces their upcoming practices.</p><ul><li>7 teams’ practices change. 1 team’s don’t.</li><li>You’ll choose whether to tell those families next.</li></ul></div>
+    <div class="df"><span class="s">Nobody is emailed until you press Send.</span><span class="btn">Keep what’s there</span><span class="btn pri">Hand out again</span></div>
+  </div></div></div>
+  <div><p class="sp-cap">STEP 2 · the same window, now saying “changed”</p>
+  <div class="ak win"><div class="dlg" style="max-width:520px">
+    <div class="dh"><div class="tt"><span class="ey">Draft Test 2027 · U12 Division</span><h4>Tell the families about the changes</h4></div><span class="xx">×</span></div>
+    <div class="db">
+      <div class="stmt">7 teams’ practices changed. 69 told families will hear. 2 teams haven’t been told at all, so their 22 families get the first email.</div>
+      <div class="chg"><div class="m"><b>Twins</b><span>Now: Wednesdays, 7:00 – 8:00 p.m. · Diamond 1</span><span class="d">Was: Wednesdays, 6:00 – 7:00 p.m. · Diamond 2</span></div></div>
+      <div class="chg"><div class="m"><b>Rays</b><span>Cancelled: Mon, Jun 28 · Diamond 1</span></div></div>
+    </div>
+    <div class="df"><span class="s">The words are the change email 11b built. Nothing new to learn.</span><span class="btn">Not yet</span><span class="btn pri">Send to 91 families</span></div>
+  </div></div></div>
+</div>
+<p class="cap">One household can be both: Sarah’s Twins were told and her Rays were not. She gets one email with a “changed” part for Ava and a “first” part for Henry (an edge, on the Edges tab). If the convenor walks away at “Not yet”, the new times are already on the team’s page and, in the coach’s calendar (b4). The window and the reminder in c3 are what closes that gap; there is no timer.</p>
+</div>
+
+<div class="st"><h2>c3 · The reminder that families aren’t told <button class="mk new" data-note="NEW: an amber count beside the practice time on the house-league schedule, the house’s waiting-count idiom. It opens straight to step 2.">NEW</button></h2>
+<div class="spec">
+  <div class="col" style="flex:1 1 520px"><p class="sp-cap">DESK · the time line under the title of the house-league schedule</p>
+  <div class="ak" style="border-radius:10px;outline:1px solid var(--line);padding:16px;max-width:720px;display:flex;flex-direction:column;gap:10px">
+    <span class="ey">Draft Test 2027</span>
+    <div class="ph1"><h1>U12 Division</h1></div>
+    <div class="stl"><span class="src">Games: Tuesdays and Thursdays · 6:00 – 9:00 p.m.</span><span class="src">Practices: Wednesdays · 6:00 – 9:00 p.m.</span><span class="amb">10</span><span>teams’ families not told</span><span class="lnk">Tell them</span></div>
+  </div></div>
+  <div class="col"><p class="sp-cap">PHONE · the same line, wrapping</p>
+  <div class="ph"><div class="ak ph-in" style="min-height:230px"><div class="pin"><div class="stl"><span class="src">Practices: Wednesdays · 6:00 – 9:00 p.m.</span><span class="amb">10</span><span>teams’ families not told</span><span class="lnk">Tell them</span></div></div></div></div></div>
+</div>
+<p class="cap">Visible to the owner, admin and league admin. It shows when any team has practices handed out and no first notice sent, and goes away when the last team is told. The registrar and treasurer do not see it (they cannot send).</p>
+</div>
+
+<div class="st"><h2>c4 · The family’s email <button class="mk new" data-note="NEW. Words provisional. One email per household; one part per child whose team was handed out that day. It lists every date and carries no calendar button.">NEW</button></h2>
+<p class="who">The Kim household, children on two teams. Desk and phone are the same email.</p>
+<div class="spec">
+  <div class="col" style="flex:1 1 440px"><p class="sp-cap">THE FIRST EMAIL · example</p>
+  <div class="mail">
+    <div class="mh"><b>Practices for Twins and Rays</b><span class="muted">From Dev League Org · to sarah.kim@example.com</span></div>
+    <div class="club"><span class="mono">DL</span>Dev League Org</div>
+    <div class="mb"><button class="mk s prov" data-note="Every word in this frame is provisional. Final words go through /marketing after you rule, before any code.">WORDS PROVISIONAL</button>
+      <p>Hi Sarah,</p>
+      <p>Here are the practice times for Draft Test 2027. Each team’s practices take turns at the early and late times, so the dates are listed.</p>
+      <p><b>Ava · Twins</b> · Maple Grove Park<br>Wed, Jun 23 · 6:00 – 7:00 p.m. · Diamond 2<br>Wed, Jun 30 · 7:00 – 8:00 p.m. · Diamond 1<br>Wed, Jul 7 · 6:00 – 7:00 p.m. · Diamond 2<br>Wed, Jul 14 · 7:00 – 8:00 p.m. · Diamond 1<br>Wed, Jul 21 · 6:00 – 7:00 p.m. · Diamond 2<br>Wed, Jul 28 · 7:00 – 8:00 p.m. · Diamond 1<br>Wed, Aug 4 · 6:00 – 7:00 p.m. · Diamond 2<br>Wed, Aug 11 · 7:00 – 8:00 p.m. · Diamond 1<br>Wed, Aug 18 · 6:00 – 7:00 p.m. · Diamond 2<br>Wed, Aug 25 · 7:00 – 8:00 p.m. · Diamond 1</p>
+      <p><b>Henry · Rays</b> · Maple Grove Park<br>Mon, Jun 21 · 7:00 – 8:00 p.m. · Diamond 1<br>Mon, Jun 28 · 6:00 – 7:00 p.m. · Diamond 2<br>Mon, Jul 5 · 7:00 – 8:00 p.m. · Diamond 1<br>Mon, Jul 12 · 6:00 – 7:00 p.m. · Diamond 2<br>Mon, Jul 19 · 7:00 – 8:00 p.m. · Diamond 1<br>Mon, Jul 26 · 6:00 – 7:00 p.m. · Diamond 2<br>Mon, Aug 2 · 7:00 – 8:00 p.m. · Diamond 1<br>Mon, Aug 9 · 6:00 – 7:00 p.m. · Diamond 2<br>Mon, Aug 16 · 7:00 – 8:00 p.m. · Diamond 1<br>Mon, Aug 23 · 6:00 – 7:00 p.m. · Diamond 2</p>
+      <p>Questions? Ask the Twins or Rays coach.</p></div>
+    <div class="foot"><span>Sent by Dev League Org because your family is registered in Draft Test 2027.</span><span>Times in Eastern time.</span></div>
+  </div></div>
+  <div class="col" style="flex:1 1 330px"><div class="card" style="margin:0"><h3>Why it reads this way</h3><ul>
+    <li><b>Every date, not “and 7 more”.</b> The email is the only place a family reads their team’s dates until the app exists, so it lists the whole season: ten lines a child here. The first drawing gave a few and a count and left the rest to a calendar link. <b>Changed on 2026-10-29. Look at the length.</b></li>
+    <li><b>Two teams, two parts.</b> Sarah gets one email with a part for Ava and a part for Henry.</li>
+    <li><b>No games here.</b> The games came in the “Schedule published” email.</li>
+    <li><b>A practice cancelled before this send is left out,</b> never announced and then cancelled. The email reads what is on the table at the press.</li>
+    <li>Same sender as the other service notices: no unsubscribe link, a footer that says why it arrived.</li>
+    <li><b>No calendar button.</b> The email says the times and asks for nothing. Later it may carry the invitation into the app.</li>
+    <li>“Questions? Ask the Twins or Rays coach.” is 11b’s close, kept. It gives no name or address, as the built change email does not. Noted, not changed.</li></ul></div></div>
+</div>
+</div>
+
+<div class="st"><h2>c5 · The coach’s copy <button class="mk new" data-note="NEW (ask 7): one short email to each team’s coaches on the first send, as the game schedule’s first send already copies coaches.">NEW</button></h2>
+<div class="mail">
+  <div class="mh"><b>Twins: your families have their practice times</b><span class="muted">From Dev League Org · to alex.moreau@example.com</span></div>
+  <div class="club"><span class="mono">DL</span>Dev League Org</div>
+  <div class="mb"><button class="mk s prov" data-note="Every word in this frame is provisional. Final words go through /marketing after you rule, before any code.">WORDS PROVISIONAL</button><p>Hi Alex,</p><p>Dev League Org sent the Twins’ 10 practice times to 12 families today. They have the dates.</p><p><u>Open the Twins’ team page →</u></p></div>
+  <div class="foot"><span>You’re getting this because you coach the Twins in Draft Test 2027.</span></div>
+</div>
+<p class="cap">Once per team, on the first send. A change is already covered by 11b’s coach email (“Your families get this change too”).</p>
+</div>
+
+<div class="st"><h2>c6 · The season’s history <button class="mk unc" data-note="UNCHANGED shape (9d1·4). One new kind of Automatic row: practice times sent. A family send writes a row per season, tagged Automatic, never counted.">UNCHANGED</button></h2>
+<div class="ak" style="padding:0;border-radius:10px;outline:1px solid var(--line);overflow:hidden">
+  <table class="kt"><thead><tr><th>Sent</th><th>What</th><th>To</th><th></th></tr></thead><tbody>
+    <tr><td class="tm"><b>Thu, Jun 17</b>2:14 p.m.</td><td class="gm"><b>Practice times sent <button class="mk new" data-note="NEW kind of Automatic row.">NEW</button></b><span class="sm">U12 Division · by Jordan Lee</span></td><td>99 families · reached 97</td><td class="st"><span class="tagA">Automatic</span></td></tr>
+    <tr><td class="tm"><b>Thu, Jun 3</b>8:02 p.m.</td><td class="gm"><b>Practices changed</b><span class="sm">U12 Division · by the club</span></td><td>31 families · reached 31</td><td class="st"><span class="tagA">Automatic</span></td></tr>
+    <tr><td class="tm"><b>Tue, May 25</b>8:02 p.m.</td><td class="gm"><b>Schedule published</b><span class="sm">U12 Division · by Jordan Lee</span></td><td>101 families · reached 101</td><td class="st"><span class="tagA">Automatic</span></td></tr>
+  </tbody></table>
+</div>
+<p class="cap">Example rows. The season’s 3 typed sends a day are untouched (Q12c). The row’s own body, opened, reads like the other Automatic rows: “FieldLogicHQ sent this when…” (words from /marketing).</p>
+</div>
+</section>
+
+<!-- ======================= A FAMILY'S CALENDAR (withdrawn 2026-10-29) ======================= -->
+<section class="pane" id="family" data-pane="family" hidden>
+<h2 style="margin-top:16px">A family’s calendar</h2>
+<div class="verdict push"><h3>Withdrawn 2026-10-29: the family half is the signed-in app, not a link</h3>
+<p>A family will get its team’s schedule inside the app, where it signs in and is linked to its child. Until then the first practice email lists every date and asks a family to do nothing. No frame on this page is live.</p></div>
+<details class="askw"><summary>Kept for the record: what was drawn, and why it came out</summary>
+<p><b>What was drawn.</b> One private link per team, in the practice email and in the coach’s Subscribe window; a small no-login “Add to calendar” page offering Apple, Google, Outlook and Copy the link; a page for a stopped link; a Reset for the coach. Four other doors were drawn and not recommended: public games only, one link per household, a .ics attachment, and coaches only.</p>
+<p><b>Why it came out.</b> Under the end state it is a stop-gap: a second way to identify a family with no account behind it, which has to be kept alive or killed once it sits in a parent’s calendar. It also had a flaw drawn in: a family cannot sign in, so nobody could show them their link again except the coach.</p>
+<p><b>What survives.</b></p>
+<ul>
+  <li>A connected-family feed already exists for rep teams (finding D03). The signed-in app’s calendar starts from a working reader and, with the coach’s Subscribe, a house-league mapper.</li>
+  <li>Signing in is what lets a family find a link again, which is the thing the link could not do.</li>
+  <li>The reasoning in push-back 2 stays as the record.</li>
+</ul></details>
+</section>
+
+
+<!-- ======================= EDGES ======================= -->
+<section class="pane" id="edges" data-pane="edges" hidden>
+<h2 style="margin-top:16px">Edges</h2>
+<p class="lede">Each edge says what the person sees. Where a frame already draws it, the card points there.</p>
+<div class="edges">
+  <div class="card"><h3>A household with two children on two teams</h3><ul>
+    <li><b>Handed out the same day:</b> one email with a part for each child, subject “Practices for Twins and Rays” (c4). Counted once in “Will be sent”.</li>
+    <li><b>Handed out on different days:</b> two emails, each about one team. The second is not “a second first notice”; it is the first for the other team.</li>
+    <li><b>One team told, one not (after a re-hand-out):</b> one email, a “changed” part for the told team and a “first” part for the other.</li>
+    <li>Two parents with different emails on separate registrations are two households and each gets an email. That is how the built sender already groups.</li></ul></div>
+  <div class="card"><h3>A practice that changed before the first notice</h3><ul>
+    <li>The email reads what is on the table when you press Send, so the family never sees the old time.</li>
+    <li>A practice cancelled before that is left out, never announced.</li>
+    <li>A practice that changes <em>after</em> the notice goes through the club’s Send the changes (built), or a re-hand-out (c2, ask 6).</li></ul></div>
+  <div class="card"><h3>A team with no practices handed out yet</h3><ul>
+    <li>“Tell the families” lists it as <b>not handed out</b>, with the reason, and skips it. The count says so.</li>
+    <li>The coach’s page: no “Practice” row, no told-line; Subscribe is there (b2).</li>
+    </ul></div>
+  <div class="card"><h3>A family with no email, or an unusable one</h3><ul>
+    <li>Counted in the window (“2 families have no usable email”) with <span class="lnk">See them</span>. Not sent.</li>
+    <li>They are not told by this email, so the window lists them with <b>See them</b>, where the convenor can fix the address. Nothing else in this round reaches them. The coach’s copy (c5) counts families sent to, not families reached, so the coach cannot see who was missed. Recorded, Low.</li>
+    <li>If a send fails for an address, the result says “Reached 97 of 99 · 2 didn’t send”, as every other send does.</li></ul></div>
+  <div class="card"><h3>A family who unsubscribed from club news</h3><ul>
+    <li>Still told: it is about their own child (9c·4). No unsubscribe link in the email, a footer that says why it arrived.</li>
+    <li>It never counts toward the season’s 3 typed sends a day (Q12c).</li></ul></div>
+  <div class="card"><h3>A finished season</h3><ul>
+    <li><b>Nothing to draw.</b> A closed season is one page. The coach’s team page for a finished season already reads as one sentence, without a calendar control.</li>
+    <li>Every link answers an empty calendar under the team’s name, so the events leave the phone.</li>
+    <li>There is no first notice for a closed season: Practice time is a live-season tool.</li></ul></div>
+  <div class="card"><h3>A coach removed from the team</h3><ul>
+    <li>Their personal link goes empty (6d), and stays dead if they are added back.</li>
+    </ul></div>
+  <div class="card"><h3>A child moved to another team after the notice</h3><ul>
+    <li>9c·12 already asks first and emails the family the new team. That email is unchanged.</li>
+    <li><b>Open question, not drawn (the /ux pass rated it Medium).</b> The first email is now the family’s only copy of the dates. A household moved onto a team that was already told is never sent that team’s dates, and the family still holds the old team’s. Either the 9c·12 move email lists the new team’s dates, or a moved household counts as untold for its new team. Your call; nothing here rules it.</li></ul></div>
+  <div class="card"><h3>A coach of two teams</h3><ul>
+    <li>Two Your teams chips, two pages, two personal links. A coach subscribes to each.</li></ul></div>
+  <div class="card"><h3>The convenor walks away at “Not yet”</h3><ul>
+    <li>Practices are on the schedule and the coach’s page; families are not told; the amber count stays (c3).</li>
+    <li>For a changed team the new times show on the coach’s page at once and families are not told until the convenor sends. That gap is why there is no “Not yet” timer and why the reminder exists.</li></ul></div>
+  <div class="card"><h3>Pressing Send twice, two league admins, or the connection dropping</h3><ul>
+    <li>The button reads Sending… and can’t be pressed twice.</li>
+    <li>A whole-request failure says nothing was sent. A partial one says “Reached 97 of 99” and “See them” leads to the families who weren’t reached, with a way to fix each and Send again to only them (c1b).</li>
+    <li>If the list changed while the window was open, nothing is sent and the window says so. A second league admin who opens the step after a send sees who sent it and when (c1b).</li></ul></div>
+  <div class="card"><h3>Several divisions</h3><ul>
+    <li>The “not told” count sits on each division’s time line (c3). A season-wide total is left to the build, which should put it where the season’s other waiting counts already sit. Low.</li></ul></div>
+  <div class="card"><h3>Rotation: the same team, a different time each week</h3><ul>
+    <li>The email lists dates (five, then “and 7 more”). It does not say “Wednesdays at 6:00”.</li>
+    <li>The coach’s calendar carries every date, and the family’s email lists them all.</li></ul></div>
+</div>
+</section>
+
+<!-- ======================= GATE & BUILD NOTES ======================= -->
+<section class="pane" id="gate" data-pane="gate" hidden>
+<h2 style="margin-top:16px">Who may do what, and what a build needs</h2>
+
+<div class="st"><h2>f · The gate</h2>
+<p class="who">Plan gating is not restated here. See <code>docs/agents/strategy/PLAN_PRICING_FACTS.md</code>. A coach is not a role; it is a seat on a team. A registrar or club admin who also coaches has the coach column through that seat and keeps their role.</p>
+<div class="tw"><table class="t gate">
+<thead><tr><th>Action</th><th>Owner</th><th>Admin</th><th class="co">League admin</th><th>Registrar</th><th>Treasurer</th><th>Coach on the team</th><th>Family</th></tr></thead>
+<tbody>
+<tr><td>Hand practices out (built)</td><td class="y">✓</td><td class="y">✓</td><td class="co y">✓</td><td class="x">—</td><td class="x">—</td><td class="x">—</td><td class="x">—</td></tr>
+<tr><td>Send the first notice, or the change (c1, c2)</td><td class="y">✓</td><td class="y">✓</td><td class="co y">✓</td><td class="x">—</td><td class="x">—</td><td class="x">—</td><td class="x">—</td></tr>
+<tr><td>See “families not told” (c3)</td><td class="y">✓</td><td class="y">✓</td><td class="co y">✓</td><td class="x">—</td><td class="x">—</td><td class="x">—</td><td class="x">—</td></tr>
+<tr><td>See “Families were told on…” (b1)</td><td class="x">—</td><td class="x">—</td><td class="co x">—</td><td class="x">—</td><td class="x">—</td><td class="y">✓</td><td class="x">—</td></tr>
+<tr><td>Subscribe: own link, Reset (b3)</td><td class="x">—</td><td class="x">—</td><td class="co x">—</td><td class="x">—</td><td class="x">—</td><td class="y">✓</td><td class="x">—</td></tr>
+<tr><td>Get the first email</td><td class="x">—</td><td class="x">—</td><td class="co x">—</td><td class="x">—</td><td class="x">—</td><td class="y">✓ copy</td><td class="y">✓ any household with a usable email, unsubscribed or not</td></tr>
+</tbody></table></div>
+<ul>
+  <li><b>An owner or admin who does not coach has no coach page,</b> so no Subscribe. That is the 9d-2b page rule, kept: the page is 404 for a non-coach. A club-wide calendar for admins is 6d’s deferred Ask 4 and is not this stage.</li>
+  <li><b><code>module_families</code> is not involved</b> anywhere here, and is added to no role’s defaults. Families stays a grant and is never needed for a season (9d1·2).</li>
+  <li><b>The one /strategy question, not decided here:</b> 6d packaged the rep coach’s feed with the Premium Coaches Portal and both Club bands (6d Ask 11). House league’s coach page is not the coaches portal. Whether its Subscribe carries any plan gate is a packaging call. I have drawn none and written none.</li>
+</ul>
+</div>
+
+<div class="st"><h2>Build notes, not asks</h2>
+<div class="card"><ul class="bn">
+  <li><b>Migrations (dictionary and both snapshots in the same unit of work).</b> (1) <code>league_team_coaches</code>: a link generation (int, default 0) and a last-read date, with the same trigger that bumps the generation when a seat is removed (mirrors 323 on <code>rep_team_staff_memberships</code>). (2) <code>league_teams</code>: when the team’s families were first told (timestamp, null). The family-link generation drawn here earlier is withdrawn. The coach’s token is rebuilt on every read from the row id, the generation and an HMAC under the existing calendar secret. Nothing secret is stored.</li>
+  <li><b>The feed.</b> One mapper from <code>league_games</code> and <code>league_practices</code> into the shared feed entries; titles, cancelled marks, durations and the empty-calendar answer come from <code>lib/export/team-feed-words.ts</code> and <code>lib/calendar-feed-response.ts</code> unchanged. Home and away come from the game’s two team columns. <b>Games are read as the coach page reads them, “as last sent”</b>, so a held change is never in a feed.</li>
+  <li><b>Live season only.</b> A closed or missing season answers an empty calendar named for the team. A bad shape or signature is the counted 404. The last read is recorded at most once a day.</li>
+  <li><b>The send.</b> Through <code>sendFamilyServiceBatch</code> (no suppression list, no unsubscribe link, never counted), with a new kind for the first notice, built on the household grouping that <code>club-schedule-league-mail.ts</code> already has. A new Automatic row kind in <code>league_season_notices</code>, written once per season per send.</li>
+  <li><b>The hand-out rule (ask 6).</b> Migration 393’s hand-out deletes and rewrites future practices on the slots. The server path must read which teams were already told <em>before</em> the rewrite, and the window must open step 2 as a change for exactly those. The change email’s words are reused unchanged.</li>
+  <li><b>The cost</b> of the coach’s feed is small: one subscription a coach, so about 40 for a club of 40 teams, at 6d’s 8-reads-a-day rate. <b>Estimated from the code, not measured.</b></li>
+  <li><b>A Codex session can build this from this page alone</b> given the file list below and the asks as ruled. Re-open each file before relying on a line here.</li>
+</ul></div>
+
+<h3>Where the code lives <span class="muted" style="font-weight:400;font-size:14px">(read 2026-10-29)</span></h3>
+<div class="tw"><table class="t words">
+<thead><tr><th>Piece</th><th>Where</th></tr></thead>
+<tbody>
+<tr><td>The coach’s page</td><td><code>app/[orgSlug]/league/[seasonSlug]/team/[teamId]/page.tsx</code> (Schedule section lines 82–89), <code>CoachSchedule.tsx</code>, <code>lib/house-league-coach.ts</code> (<code>readCoachTeamPage</code>, <code>asLastSent</code>, <code>readTeamPractices</code>)</td></tr>
+<tr><td>6d’s coach link and feed</td><td><code>lib/coach-calendar-link.ts</code>, <code>lib/coach-calendar-feed.ts</code>, <code>app/api/calendar/coach/[token]/route.ts</code>, <code>app/api/coaches/[orgSlug]/teams/[teamId]/calendar-link/route.ts</code>, mig 323</td></tr>
+<tr><td>Shared words and response</td><td><code>lib/export/team-feed-words.ts</code>, <code>lib/export/ics.ts</code>, <code>lib/calendar-feed-response.ts</code>, <code>lib/calendar-subscribe-words.ts</code>, <code>lib/calendar-subscribe.ts</code></td></tr>
+<tr><td>The Subscribe window</td><td><code>components/coaches/CalendarSubscribeWindow.tsx</code>, <code>CoachCalendarSubscribe.tsx</code>, <code>CoachExportButton.tsx</code>, <code>components/public/TeamSubscribeButton.tsx</code></td></tr>
+<tr><td>Practice time</td><td><code>lib/league-practice-time.ts</code> (words, line 316 the foot), <code>lib/league-practice-time-server.ts</code>, <code>app/api/admin/house-league/seasons/[seasonId]/practice-time/route.ts</code>, SQL <code>league_practices_hand_out</code> in migs 392 and 393 (the delete and insert near lines 402–410)</td></tr>
+<tr><td>Family email machinery</td><td><code>lib/family-email.ts</code> (<code>sendFamilyServiceBatch</code>, the header at lines 46–51), <code>lib/club-schedule-league-mail.ts</code> (households, the Automatic row), <code>lib/club-schedule-league-words.ts</code> (the change email), <code>lib/email.ts</code> (<code>leaguePracticesChangedHtml</code>)</td></tr>
+<tr><td>Who may</td><td><code>lib/house-league-access.ts</code> (<code>houseLeagueRefusal(ctx,'run')</code>, <code>LEAGUE_RUNNER_ROLES</code>)</td></tr>
+</tbody></table></div>
+</div>
+
+<div class="st"><h2>Words for /marketing <span class="muted" style="font-weight:400;font-size:14px">(all provisional)</span></h2>
+<div class="tw"><table class="t words">
+<thead><tr><th>Where</th><th>Provisional words</th></tr></thead>
+<tbody>
+<tr><td>Practice time foot, step 1</td><td>Next you choose whether to tell the families.</td></tr>
+<tr><td>Step 2 title / statement</td><td>Tell the families their practice times · 10 practices a week handed out. 101 families haven’t been told.</td></tr>
+<tr><td>Step 2 buttons / foot</td><td>Not yet · Send to 99 families · Each family gets one email, now. It doesn’t count toward your sends.</td></tr>
+<tr><td>Left-out line</td><td>2 families have no usable email, so they can’t be sent this. See them</td></tr>
+<tr><td>Re-hand-out confirm</td><td>Hand out 10 practices a week again? · 8 teams’ families were told their practice times on Wed, Jun 16. Handing out again replaces their upcoming practices. · Nobody is emailed until you press Send.</td></tr>
+<tr><td>The reminder</td><td>10 teams’ families not told · Tell them</td></tr>
+<tr><td>Email subject</td><td>Practices for Twins · Practices for Twins and Rays</td></tr>
+<tr><td>Email body</td><td>Here are the practice times for Draft Test 2027. Each team’s practices take turns at the early and late times, so the dates are listed. · Questions? Ask the Twins or Rays coach.</td></tr>
+<tr><td>Coach’s copy</td><td>Twins: your families have their practice times · Dev League Org sent the Twins’ 10 practice times to 12 families today. They have the dates.</td></tr>
+<tr><td>Coach page line</td><td>Families were told these practice times on Wed, Jun 16. · Families haven’t been told these practice times yet. The league admin sends them.</td></tr>
+<tr><td>Couldn’t send / changed / told</td><td>Couldn’t send · Nothing was sent, and no family was marked as told. Check your connection and try again. · This changed while you were looking · 3 more families can now be told, so nothing was sent. Review the new list and send again. · Everyone has been told · Jordan Lee sent the practice times to 99 families on Thu, Jun 17 at 2:14 p.m.</td></tr>
+<tr><td>“See them”</td><td>2 families can’t be sent this · Twins · no email on file · Add an email · the address was refused · Fix the email · Send again to 2</td></tr>
+<tr><td>Coach page line, third state</td><td>Families were told different times on Wed, Jun 16. The league admin sends the changes.</td></tr>
+<tr><td>History row</td><td>Practice times sent (Automatic)</td></tr>
+</tbody></table></div>
+</div>
+</section>
+
+<!-- ======================= ASKS ======================= -->
+<section class="pane" id="asks" data-pane="asks" hidden>
+<h2 style="margin-top:16px">Asks &amp; paste-back</h2>
+<div class="verdict"><h3>Nothing in 9d-3 is ruled yet</h3><p>Six asks are open, and two (9d3·2 and 9d3·8) are withdrawn and carry no checkboxes. Each open ask has my recommendation marked in green; tick what you decide. 9d3·3 is re-asked, because the family link it was built around is gone. Nothing here reopens 9d2·2, 9d2·13, 9d2·16, the games-only public team page, 6d’s rulings, 9c·4, or Q12c. 9d3·6 names the one place a built path and 9d2·2’s intent disagree.</p></div>
+
+<div class="ask" data-ask="A1"><h3><span class="no">9d3·1</span>Whether and when a first practice notice goes</h3>
+<p class="rides">Push-back 1, frames c1–c6. Rides on it: the Practice time window, a record of which teams were told, a new Automatic history row, the family email.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A1" value="B at hand-out, held until the convenor presses Send"><span>B: sent from the last step of Practice time, one email per household, held until the convenor presses Send; “first” is per team</span></label>
+<label><input type="checkbox" name="A1" value="A no first notice"><span>A: no first notice; the coach tells the team</span></label>
+<label><input type="checkbox" name="A1" value="C timed, N days before the first practice"><span>C: a timer sends it N days before a team’s first practice</span></label>
+<label><input type="checkbox" name="A1" value="D the coach sends it"><span>D: the coach sends it from their own address</span></label>
+</div><textarea aria-label="Notes for 9d3·1" placeholder="Notes"></textarea></div>
+
+<details class="askw"><summary><span class="no">9d3·2</span> What a family’s calendar carries, and by what door <button class="mk unc wd" data-note="WITHDRAWN 2026-10-29: the family half is the signed-in app. No checkboxes; it is not in the paste-back. The number stays so other records that cite it do not move.">WITHDRAWN</button></summary>
+<p><b>Withdrawn 2026-10-29.</b> The end state is a signed-in app where a parent is linked to their child. A family calendar link is a stop-gap with no account behind it, and the owner does not want a path that would be reversed.</p>
+<p>The reasoning is kept on the A family’s calendar tab and in push-back 2. Nothing replaces it.</p></details>
+
+<div class="ask" data-ask="A3"><h3><span class="no">9d3·3</span>One build or two <span class="muted" style="font-weight:400;font-size:14px">(re-asked 2026-10-29)</span></h3>
+<p class="rides">Push-back 3. With the family link gone, 9d-3 is the first notice with the hand-out-again rule (medium) and the coach’s Subscribe (small). Nothing is built twice either way. A split costs a second walk and a second set of records.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A3" value="one build, the notice first, then the coach's Subscribe"><span>One build, the notice first (it fixes the silent re-hand-out), then the coach’s Subscribe, which can slide without loss</span></label>
+<label><input type="checkbox" name="A3" value="one build, the coach's Subscribe first"><span>One build, the coach’s Subscribe first</span></label>
+<label><input type="checkbox" name="A3" value="two builds, the notice then the Subscribe"><span>Two builds: the notice, then the Subscribe on its own</span></label>
+</div><textarea aria-label="Notes for 9d3·3" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="A4"><h3><span class="no">9d3·4</span>Who is told, and the opt-out rule</h3>
+<p class="rides">Push-back 4, edges. Precedent: 9c·4 (ruled for placement; extended to the moved-team, practice-change and schedule emails). Rides on it: the sender, the footer, the cap.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A4" value="everyone with a usable email, including unsubscribed; never counts; Automatic row"><span>Everyone with a usable email, including a family who unsubscribed from club news; service mode; never counts; an Automatic row</span></label>
+<label><input type="checkbox" name="A4" value="respect the unsubscribe"><span>Respect the unsubscribe list for this notice (it would then be a different kind of message from the other four)</span></label>
+</div><textarea aria-label="Notes for 9d3·4" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="A5"><h3><span class="no">9d3·5</span>The coach’s Subscribe: placement and what it carries</h3>
+<p class="rides">Frames b1–b5. Rides on it: the window, the feed contents, the link home.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A5" value="on the Schedule heading's line; the rep window with house league's words; games as last sent and practices; live season; no download"><span>On the Schedule heading’s line (text button on a desk, the mark alone on a phone); the rep window with house league’s words; games as last sent and practices; live season only; no download</span></label>
+<label><input type="checkbox" name="A5" value="also a Download a copy (.ics) row"><span>Also a “Download a copy (.ics)” row, as the rep phone drawer has</span></label>
+</div><textarea aria-label="Notes for 9d3·5" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="A6"><h3><span class="no">9d3·6</span>A second hand-out for a team that was already told</h3>
+<p class="rides">Frame c2, finding D04. Today a hand-out is silent and a second one deletes and rewrites upcoming practices. This is where a built path and 9d2·2’s intent disagree. Rides on it: the server path and the window.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A6" value="reopen the Tell step as a change, using the 11b email"><span>The same Tell step reopens as a change for exactly the told teams, using the 11b change email; a hand-out is never silent for a told team</span></label>
+<label><input type="checkbox" name="A6" value="leave hand-out silent"><span>Leave a hand-out silent; only the club’s Send the changes tells families of a change</span></label>
+<label><input type="checkbox" name="A6" value="refuse to hand out again once told"><span>Refuse to hand out again once a team is told; changes go through the club’s schedule only</span></label>
+</div><textarea aria-label="Notes for 9d3·6" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="A7"><h3><span class="no">9d3·7</span>What the coach sees of the notice</h3>
+<p class="rides">Frames b2, c5. Precedent: the game schedule’s first send already copies each changed team’s coaches once.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A7" value="a quiet line on the page and one copy email on the first send"><span>A quiet line on the page (told on…, or not told yet) and one short copy email on the first send</span></label>
+<label><input type="checkbox" name="A7" value="the quiet line only"><span>The quiet line only</span></label>
+<label><input type="checkbox" name="A7" value="neither"><span>Neither</span></label>
+</div><textarea aria-label="Notes for 9d3·7" placeholder="Notes"></textarea></div>
+
+<details class="askw"><summary><span class="no">9d3·8</span> The practice-change email gets the calendar button too <button class="mk unc wd" data-note="WITHDRAWN 2026-10-29: there is no family calendar link to put in an email. No checkboxes; it is not in the paste-back. The number stays so other records that cite it do not move.">WITHDRAWN</button></summary>
+<p><b>Withdrawn 2026-10-29.</b> It asked whether the built practice-change email should carry the family calendar button, so that a Reset could reach families. With no family link there is nothing to add and nothing to reset.</p>
+<p>The built change email stays as 11b ruled it.</p></details>
+
+<div class="tw"><table class="t" id="askIndex"><thead><tr><th>Ask</th><th>Where</th><th>Your answer so far</th></tr></thead><tbody></tbody></table></div>
+<div class="paste">
+  <div class="row"><button type="button" class="btn-d pri" id="build">Build the summary</button><button type="button" class="btn-d" id="copy">Copy</button><span id="copied" class="muted"></span></div>
+  <textarea id="out" readonly aria-label="Paste this back"></textarea>
+</div>
+
+<div class="card" id="reviews"><h3>What the /ux and /design reviews changed before you saw this</h3><p><b>/ux</b>, on the four journeys (a convenor tells families, a coach subscribes, a parent learns a time and later a change, a parent with two teams). Fixed before you saw it:</p>
+<ul>
+  <li><b>“See them” had no screen.</b> It is now a window (c1b): who is left out and why, a way to fix each one, and Send again to only the families who weren’t reached.</li>
+  <li><b>Send only had a happy path.</b> Added: a failed send that says nothing went, a list that changed while the window was open (nothing is sent, review again), and a second league admin who finds everyone already told.</li>
+  <li><b>Teams with no practices yet</b> are listed and skipped in the window, with the door that fixes them.</li>
+  <li><b>The coach’s line had two states and needed three:</b> after a second hand-out, families were told <em>different</em> times.</li>
+  <li><b>A promise I made was false.</b> The Reset window said “the next practice email carries the new link”, but the built change email has no link. Reset now shows the new link at once and says the coach sends it on; whether the change email also carries the button is new ask 9d3·8.</li>
+  <li>Left, recorded: a season-wide total of untold divisions (Low), and the close “Ask the Twins coach” that names no one, which is 11b’s wording kept.</li>
+</ul>
+<p><b>/design</b>, against the recorded decisions (486 on record). Fixed before you saw it:</p>
+<ul>
+  <li><b>A phone’s secondary action is its symbol alone:</b> the phone Tell step lost its worded “Not yet” (the × at the top is that), and “Copy the family link” is now the copy symbol beside the link on both the phone and the desk window.</li>
+  <li><b>A waiting count is the amber pill:</b> the reminder is now a number in the pill with plain words after it, not a sentence in a pill.</li>
+  <li><b>Every highlight is clickable:</b> the Recommended, Counsel and Words-provisional chips now open an explanation.</li>
+  <li><b>Phone links are 44 px tall</b> (“See them”, “Tell them”).</li>
+  <li>Checked and fine: window feeds put the sentence left and the buttons right; Subscribe is on the Schedule heading’s line and never a toolbar; absent beats disabled (the registrar sees no count); every time reads “6:00 p.m.”; “Cancelled” has one spelling; the specimens take their colours from the kit’s tokens and the public page and calendar app stay fixed light on purpose.</li>
+  <li>Not changed: “Teams at once · 1 a diamond” is the ruled 11b frame’s wording. The product’s own surface word is sport-neutral, so the build should use it.</li>
+</ul>
+<p><b>Round amended 2026-10-29 (the end state: a signed-in app).</b> Several fixes above concern frames that are now withdrawn: the Reset windows for the families, the email buttons, and ask 9d3·8. They stay as history. <b>/ux</b> and <b>/design</b> ran on the changed frames only. Changed because of them:</p>
+<ul>
+  <li><b>A child who moves onto an already-told team gets no dates.</b> With the calendar link gone the first email is the family’s only copy of the dates. This is now an open question in Edges (rated Medium), not a recorded Low. Nothing rules it.</li>
+  <li><b>The coach cannot see which families were missed.</b> The edge says so plainly instead of pointing at a hand-off no frame draws. Recorded, Low.</li>
+  <li><b>The email lists every date.</b> Ten lines a child here. Left as drawn so you can judge the length.</li>
+  <li><b>“What is withdrawn” is grey, not red.</b> A decision is not a defect.</li>
+</ul></div>
+</section>
+</div>
+
+<dialog class="note" id="dlg" aria-labelledby="dlgT"><div class="nh"><h3 id="dlgT">Note</h3><button type="button" class="x" aria-label="Close" id="dlgX">×</button></div><div class="nb" id="dlgB"></div></dialog>
+
+<script>
+(function(){
+var FINDINGS = {
+ D01:{t:'The opt-out ruling is 9c·4', today:'The drawing prompt names 9c·10 and 9c·12 as the rulings that let a notice reach a family who unsubscribed. In the plan, 9c·10 is “the coach’s invite goes at Publish” and 9c·12 is “moving a child after publishing asks first, then emails the family the new team”. The opt-out ruling is 9c·4 (plan lines 141–142): placement notices go through the batched sender, one email per household, never counted toward a cap, and “a family who unsubscribed from club news still gets it”. The sender’s own header (lib/family-email.ts, lines 46–51) extends that to the moved-team email, the practice-change email and both schedule emails.', fix:'Cite 9c·4. Nothing else changes: the first practice notice is the same kind of message (it says where the family’s own child needs to be), so it takes the same lane.', st:'9d-3b'},
+D02:{t:'The guardian switch has nothing to do with calendars', today:'GUARDIAN_TIER_ENABLED (lib/family-guardian.ts, line 41) gates the tier that connects a parent to one specific child: guardian links, consent records, a child’s recap. It ships switched off, held for the PIPEDA and CASL review. The family calendar feed does not read it and works with the switch off. What 6d parked behind counsel was the rep family view’s door (a Subscribe button that makes a new link on every press and silently stops the old one), not the idea of a family calendar.', fix:'Background since 2026-10-29. This argued that a family link was not blocked by the guardian switch. The family link is withdrawn, so the finding no longer drives a frame. It stays true.', st:'Background'},
+D03:{t:'A connected-family calendar already exists for rep teams', today:'app/api/family/calendar/[token]/route.ts serves one feed per verified family link. It re-checks visibility on every read, answers an empty named calendar when the team stops serving families, carries team-level events only (no player names, no roster, no coach’s notes) and uses the shared feed words. A family link is a rep concept (family_links.rep_team_id). House league has no family links and its families have no sign-in.', fix:'Background since 2026-10-29. The family calendar link is withdrawn. What survives is the fact: a working family reader and the shared feed words already exist, so the signed-in app’s calendar starts from something shipped.', st:'Background'},
+ D04:{t:'A hand-out is silent, and a second one rewrites practices', today:'The Practice time window’s foot reads “Families aren’t emailed.” (lib/league-practice-time.ts, line 316). Migration 393’s hand-out deletes the team’s practices on those slots that are still to come (scheduled_at after now) and inserts new ones (about lines 402–410). Nothing in that path emails anyone. 9d2·2 ruled that a practice change emails the team’s families, and built that for the club’s Send the changes only. A convenor who hands out again after families were told moves their practices with nobody told.', fix:'A hand-out for a team already told reopens the Tell step as a change, using the 11b change email, so no told family has a time moved silently (ask 6).', st:'9d-3b'},
+D05:{t:'Practices rotate, so an email cannot say “Wednesdays at 6:00”', today:'The planner (lib/league-practice-time.ts header) takes teams round the week’s seats one step a week, so each team takes turns at the early and late times. A team’s practice time differs from week to week.', fix:'The first email lists every date, because nothing else holds them until the app exists. The coach’s calendar carries every date too. (Changed 2026-10-29: the first drawing listed a few dates and a count, and left the rest to the family calendar link.)', st:'9d-3 (the notice)'},
+D06:{t:'“Games only, via the public page” is a new door, not a free one', today:'House league has no public team page. The coach’s team page is signed in and returns 404 to anyone else. The public season schedule page has no Subscribe. The rep public Subscribe lives on the rep team page and is served only when that team’s schedule is set to a public link.', fix:'Background since 2026-10-29. It mattered while a family door was being chosen. The family link is withdrawn, so no public door is proposed.', st:'Background'},
+D07:{t:'A house-league coach cannot tell whether families know', today:'The team page (app/[orgSlug]/league/[seasonSlug]/team/[teamId]/page.tsx, lines 82–89) has a Schedule section with games as last sent and practices from today on. No Export, no Tools, no Subscribe, and no state saying whether the team’s families were told the practice times. league_practices has only scheduled and cancelled, and nothing records a notice per team.', fix:'One control on the Schedule heading’s line, and one quiet line under the list (asks 5 and 7).', st:'9d-3 (Subscribe and the notice)'}
+};
+function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+var dlg=$('#dlg'), dT=$('#dlgT'), dB=$('#dlgB');
+function esc(t){return String(t).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+function open(title, parts){ dT.textContent=title; dB.innerHTML=parts.map(function(p){return '<div><h4>'+esc(p[0])+'</h4><p>'+esc(p[1])+'</p></div>'}).join(''); if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open',''); }
+$('#dlgX').addEventListener('click',function(){dlg.close()});
+dlg.addEventListener('click',function(e){ if(e.target===dlg) dlg.close(); });
+document.addEventListener('click',function(e){
+  var f=e.target.closest('.fl'); if(f){ e.preventDefault(); e.stopPropagation(); var k=f.getAttribute('data-f'), F=FINDINGS[k]; if(!F) return;
+    var parts=[['What the code does today',F.today]]; var h=f.getAttribute('data-here'); if(h) parts.push(['Where you are looking',h]); parts.push(['What the proposal does',F.fix]); parts.push(['Stage',F.st]);
+    open(k+' · '+F.t, parts); return; }
+  var m=e.target.closest('.mk'); if(m){ if(m.style.pointerEvents==='none') return; e.preventDefault(); e.stopPropagation(); var kind=m.classList.contains('new')?'NEW':m.classList.contains('res')?'RESTYLED':m.classList.contains('unc')?'UNCHANGED':m.classList.contains('wd')?'Withdrawn':m.classList.contains('cf')?'Counsel':m.classList.contains('prov')?'Provisional words':'Recommended';
+    open(m.textContent.trim(), [[kind, m.getAttribute('data-note')||'']]); return; }
+}, true);
+var tabs=$$('.tabs [role=tab]');
+function show(p, scrollTo){ tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p}); if(p==='asks') buildIndex(); try{localStorage.setItem('hl9d3-tab',p)}catch(e){}
+  if(scrollTo){ var el=document.getElementById(scrollTo); if(el) el.scrollIntoView({block:'start'}); } else window.scrollTo(0, $('.tabs').offsetTop - 4); }
+tabs.forEach(function(t){ t.addEventListener('click',function(){ show(t.getAttribute('data-pane')) }) });
+function thm(v){ $$('.ak').forEach(function(a){ a.classList.toggle('dk', v==='dark') }); $$('[data-thm]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-thm')===v)) }); try{localStorage.setItem('hl9-thm',v)}catch(e){} }
+$$('[data-thm]').forEach(function(b){ b.addEventListener('click',function(){ thm(b.getAttribute('data-thm')) }) });
+var KEY='hl9d3-asks';
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}') }catch(e){ return {} } }
+function save(){ var st={}; $$('.ask').forEach(function(a){ var id=a.getAttribute('data-ask'); st[id]={c:$$('input[type=checkbox]',a).filter(function(i){return i.checked}).map(function(i){return i.value}), n:($('textarea',a)||{}).value||''} }); try{ localStorage.setItem(KEY, JSON.stringify(st)) }catch(e){} }
+(function restore(){ var st=load(); $$('.ask').forEach(function(a){ var id=a.getAttribute('data-ask'), v=st[id]; if(!v) return; $$('input[type=checkbox]',a).forEach(function(i){ i.checked = v.c.indexOf(i.value)>=0 }); var ta=$('textarea',a); if(ta) ta.value=v.n||''; }) })();
+document.addEventListener('change',function(e){ if(e.target.closest('.ask')) save() });
+document.addEventListener('input',function(e){ if(e.target.closest('.ask')) save() });
+function askTitle(a){ var h=$('h3',a); var no=$('.no',h); return {no:no?no.textContent.trim():a.getAttribute('data-ask'), t:h.textContent.replace(no?no.textContent:'','').trim()} }
+function chosen(a){ return $$('input:checked',a).map(function(i){return i.closest('label').textContent.replace('Recommended','').trim()}) }
+function buildIndex(){ var tb=$('#askIndex tbody'); tb.innerHTML=''; $$('.ask').forEach(function(a){ var T=askTitle(a), pane=a.closest('section.pane').getAttribute('data-pane'); var ch=chosen(a); var tr=document.createElement('tr');
+  if(!a.id) a.id='ask-'+a.getAttribute('data-ask');
+  tr.innerHTML='<td><b>'+esc(T.no)+'</b> '+esc(T.t)+'</td><td><a href="#'+a.id+'" data-go="'+pane+'">'+(($('.tabs [data-pane='+pane+']')||{}).textContent||pane)+'</a></td><td>'+(ch.length?esc(ch.join(' + ')):'<span class="muted">not answered</span>')+'</td>'; tb.appendChild(tr); });
+  $$('[data-go]',tb).forEach(function(l){ l.addEventListener('click',function(e){ e.preventDefault(); show(l.getAttribute('data-go'), l.getAttribute('href').slice(1)) }) }); }
+$('#build').addEventListener('click',function(){ var L=['House league · Stage 9 · 9d-3 · rulings ('+new Date().toISOString().slice(0,10)+')','']; $$('.ask').forEach(function(a){ var T=askTitle(a); var ch=chosen(a); var n=(($('textarea',a)||{}).value||'').trim(); L.push(T.no+' '+T.t); L.push('  → '+(ch.length?ch.join(' + '):'(no answer)')); if(n) L.push('  note: '+n.replace(/\n+/g,' / ')); }); L.push('9d3·2 and 9d3·8: withdrawn 2026-10-29, no answer needed'); $('#out').value=L.join('\n'); buildIndex(); });
+$('#copy').addEventListener('click',function(){ var t=$('#out'); if(!t.value) $('#build').click(); var done=function(){ $('#copied').textContent='Copied' }; try{ navigator.clipboard.writeText(t.value).then(done, function(){ t.select(); $('#copied').textContent='Selected; press Ctrl+C' }) }catch(e){ t.select(); $('#copied').textContent='Selected; press Ctrl+C' } });
+var trueSize=false;
+function fitAll(){ $$('.dt-wrap').forEach(function(w){ var avail=w.parentElement.clientWidth||w.clientWidth; var z=trueSize?1:Math.min(1,avail/1440); w.style.setProperty('--z',z); w.classList.toggle('fit',!trueSize); }) }
+$$('[data-fit]').forEach(function(b){ b.addEventListener('click',function(){ trueSize=!trueSize; fitAll(); $$('[data-fit]').forEach(function(x){ x.textContent=trueSize?'Fit to width':'Show at true size' }); $$('.zl').forEach(function(z){ z.textContent=trueSize?'True size. Scroll sideways.':'Scaled to fit; use the button for true size.' }) }) });
+window.addEventListener('resize',fitAll);
+var p0='why', t0='warm'; try{ p0=localStorage.getItem('hl9d3-tab')||'why'; t0=localStorage.getItem('hl9-thm')||'warm' }catch(e){}
+var h=(location.hash||'').slice(1); if(tabs.map(function(t){return t.getAttribute('data-pane')}).indexOf(h)>=0) p0=h;
+thm(t0); tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p0))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p0}); if(p0==='asks') buildIndex();
+fitAll();
+})();
+</script>

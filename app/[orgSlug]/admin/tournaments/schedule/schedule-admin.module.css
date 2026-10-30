@@ -246,8 +246,17 @@
   gap: 0.5rem;
 }
 
+/* A house-league season's per-division fields sit together on their own row, on the same three columns as the fields above. */
+.healthRulesGroup {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
 @media (max-width: 640px) {
-  .healthRulesGrid {
+  .healthRulesGrid,
+  .healthRulesGroup {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -339,7 +348,7 @@
 }
 
 .healthRulesSave:disabled {
-  opacity: 0.45;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -1602,6 +1611,16 @@
   letter-spacing: normal;
   text-transform: none;
   font-weight: 650;
+  /* The same size as the "Adjust the rules" door beside the rules (a 44px tap on a phone). */
+  min-height: var(--admin-control-h);
+  padding: 0 0.85rem;
+  border-radius: 8px;
+  font-size: var(--type-body);
+}
+@media (max-width: 768px) {
+  :global([data-admin-kit]) .healthRulesReset,
+  :global([data-admin-kit]) .healthRulesDiscard,
+  :global([data-admin-kit]) .healthRulesSave { min-height: var(--tap-min, 44px); }
 }
 :global([data-admin-kit]) .healthRulesReset,
 :global([data-admin-kit]) .healthRulesDiscard {

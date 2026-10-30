@@ -84,6 +84,7 @@
   when a read fails (the words are [marketing] drafts); (7a) the game PATCH validates status and score with a 400. Kept: (1) the
   tie rule, (6) "permit ended" in the gap between permits. Carried to 9d-2b: (3) the pencil's Home/Away ignored on save, (7b) a
   stale window postponing a finished game. Backlog: (4) first-fit "crowded". No walk step quotes a changed line.
+- **2026-10-28: `/docs` DONE, committed (this fork's commit on `dev`, subject "docs(house-league 9d-2a): the help rewrite").** House league's "How to generate games and run the schedule" is now seven sub-topics and the scores recipe follows the pencil; 9d2a·H and k4 are said in so many words (org + coaches permit help too); "Add Event"/"Give it a new date opens the form" and the owner-call fixes (unread-check warning, no-games health issue) are described from the UNCOMMITTED working tree — re-read the help if those move.
 - **Facts found that the steps below must respect:** the club's cross-program clash rule never compares two house-league
   bookings (`comparable`: same owner) — house league's own clashes are `lib/league-schedule-conflict.ts`; a postponed game
   keeps its `scheduled_at`; `league_games.status` is scheduled|completed|cancelled|postponed only; `houseLeagueSlotRows`

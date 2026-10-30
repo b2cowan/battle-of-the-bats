@@ -113,7 +113,6 @@ export default function LeagueHealthWindow({
   const t = shown.tiles;
   const plans = health.plans;
   const samePlan = plans.every(p => p.games === plans[0]?.games);
-  const scheduleOf = new Map(shown.plans.map(p => [p.divisionId, p.schedule]));
   const ruleWord = (n: number) => H.homeAwayRuleValue(n);
   return (
     <HealthWindowFrame eyebrow={eyebrow} score={scored ? shown.score : null} tone={shown.tone} caption={caption}
@@ -215,23 +214,24 @@ export default function LeagueHealthWindow({
               {HOME_AWAY_TOLERANCES.map(n => <option key={n} value={n}>{ruleWord(n)}</option>)}
             </select>
           </label>
-          {divisionIds.map(id => (
-            <label key={id} className={ts.healthRule}>
-              <span>{divisionIds.length === 1 ? H.gamesPerTeam : H.gamesPerTeamOf(divisionName(id))}</span>
-              <input
-                type="number" inputMode="numeric" min={1} max={GAMES_PER_TEAM_MAX}
-                placeholder={scheduleOf.get(id) ? String(scheduleOf.get(id)) : undefined}
-                value={draft.gamesPerTeam[id] ?? ''}
-                onChange={e => setDraft(d => {
-                  const n = parseInt(e.target.value, 10);
-                  const next = { ...d.gamesPerTeam };
-                  if (Number.isNaN(n)) delete next[id];
-                  else next[id] = Math.max(1, Math.min(GAMES_PER_TEAM_MAX, n));
-                  return { ...d, gamesPerTeam: next };
-                })}
-              />
-            </label>
-          ))}
+          <div className={ts.healthRulesGroup}>
+            {divisionIds.map(id => (
+              <label key={id} className={ts.healthRule}>
+                <span>{divisionIds.length === 1 ? H.gamesPerTeam : H.gamesPerTeamOf(divisionName(id))}</span>
+                <input
+                  type="number" inputMode="numeric" min={1} max={GAMES_PER_TEAM_MAX}
+                  value={draft.gamesPerTeam[id] ?? ''}
+                  onChange={e => setDraft(d => {
+                    const n = parseInt(e.target.value, 10);
+                    const next = { ...d.gamesPerTeam };
+                    if (Number.isNaN(n)) delete next[id];
+                    else next[id] = Math.max(1, Math.min(GAMES_PER_TEAM_MAX, n));
+                    return { ...d, gamesPerTeam: next };
+                  })}
+                />
+              </label>
+            ))}
+          </div>
         </HealthRulesEditor>
       )}
     </HealthWindowFrame>

@@ -108,6 +108,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
   const league = shown?.league?.teams ?? [];
   const leagueGames = shown?.league?.games ?? [];
   const leagueTicked = league.filter(t => !unticked.has(t.teamId));
+  const gamesOnly = kind === 'changes' && ticked.length === 0 && leagueTicked.length === 0 && leagueGames.length > 0;
   // A family with children on two ticked teams gets one email: households are counted once (opaque keys from the server).
   const people = ticked.reduce((n, t) => n + t.recipients.length, 0) + leagueTicked.reduce((n, t) => n + t.coaches.length, 0)
     + new Set(leagueTicked.flatMap(t => t.households)).size;
@@ -136,7 +137,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
         ...(kind === 'changes' ? { leagueTeamIds: leagueTicked.map(t => t.teamId), leagueSeen: shown.league?.seen ?? '' } : {}),
       }));
       if (!r.ok) { if (isStale(r.data)) onStale?.(); setError(refusalText(r.data, R.notSaved)); void load(); setBusy(false); return; }
-      const text = [W.sentNotice(r.data.people, r.data.teams, r.data.failed), r.data.checks.clashes ? W.sentClash(r.data.checks.clashes) : ''].filter(Boolean).join(' ');
+      const text = [gamesOnly ? W.sentNoticeGamesOnly : W.sentNotice(r.data.people, r.data.teams, r.data.failed), r.data.checks.clashes ? W.sentClash(r.data.checks.clashes) : ''].filter(Boolean).join(' ');
       onSent(text);
     } catch {
       setError(R.notSaved);
@@ -151,9 +152,9 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
   const mail = lv.level === 'email' && sample?.sample ? sample : null;
   const lime = !shown ? W.sendTo(0)
     : kind === 'review' ? W.sendToCoaches(people)
-    : kind === 'changes' ? W.sendToPeople(people)
+    : kind === 'changes' ? gamesOnly ? W.sendToLeagueAdmins : W.sendToPeople(people)
     : start === 'final' ? W.finalizeGo(people) : W.sendTo(people);
-  const head = kind === 'review' ? W.whoReviews(ticked.length, people) : kind === 'changes' ? W.whoChanges(people)
+  const head = kind === 'review' ? W.whoReviews(ticked.length, people) : kind === 'changes' ? gamesOnly ? W.whoChangesGamesOnly : W.whoChanges(people)
     : W.whoTold(people);
   const teamLine = (t: PreviewTeam, i: number) => {
     if (kind === 'changes') {
@@ -262,8 +263,10 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
             </label>
           )}
           <p className={ck.hint}>
-            {kind === 'review' ? W.reviewHint : kind === 'changes' ? W.changesHint : W.emailHint}{' '}
-            {league.length > 0 ? <>{W.changesHintLeague}{' '}</> : leagueGames.length > 0 && <>{W.changesHintLeagueGames}{' '}</>}
+            {gamesOnly ? <>{W.changesHintLeagueGames}{' '}</> : <>
+              {kind === 'review' ? W.reviewHint : kind === 'changes' ? W.changesHint : W.emailHint}{' '}
+              {league.length > 0 ? <>{W.changesHintLeague}{' '}</> : leagueGames.length > 0 && <>{W.changesHintLeagueGames}{' '}</>}
+            </>}
             {shown.lastSent ? W.lastSent(formatStoredDate(shown.lastSent.at), shown.lastSent.by) : W.notSentYet}
           </p>
           {sample?.sample && <SendDoor onOpen={() => lv.open('email')}>{W.seeEmail(sampleName ?? sample.teamName)}</SendDoor>}

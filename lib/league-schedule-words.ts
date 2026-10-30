@@ -98,7 +98,7 @@ export const CHANGES_TO_SEND_WORDS = {
   gameChanged: 'This game changed while its window was open. Close it and look again.',
   undoPlayed: 'This game has already been played, so its result stays.',
   /** [marketing] 9d-2b Part 5: a change the club made can't be undone onto time it gave away (mig 411's 'club'). */
-  undoClub: 'The club moved this game’s time, so it can’t go back. Give it a new date instead.',
+  undoClub: 'The club changed this game’s time, so Undo can’t put it back. Give it a new date instead.',
   /** Build words for a refusal the window never offers (9d2·9): reached only by a stale window or a hand-made call. */
   deletePublished: 'This schedule is published, so its games are cancelled, not deleted.',
   /** f5's change was saved, and its send was refused or failed: it waits with the rest. */
@@ -157,8 +157,8 @@ export const SCHEDULE_EMAIL_WORDS = {
   added: (game: string, when: string) => endSentence(`Added: ${game}${when ? `, ${when}` : ''}`),
   backOn: (game: string, when: string) => endSentence(`Back on: ${game}${when ? `, ${when}` : ''}`),
   /** [marketing] words to settle: a game that had no date has one, and the reverse (9d-2b Part 7 review). */
-  dated: (game: string, when: string) => endSentence(`Date set: ${game}${when ? `, ${when}` : ''}`),
-  undated: (game: string) => `Date to come: ${game}. The club will tell you the new one.`,
+  dated: (game: string, when: string) => endSentence(`New date: ${game}${when ? `, ${when}` : ''}`),
+  undated: (game: string) => `Date to come: ${game}. The club will tell you the new date.`,
   seeSchedule: 'See the full schedule →',
 } as const;
 

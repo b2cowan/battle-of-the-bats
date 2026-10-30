@@ -5,6 +5,7 @@ import { getLeagueSeasonById } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { CHANGES_TO_SEND_WORDS as W } from '@/lib/league-schedule-words';
 import { withObservability } from '@/lib/observability';
+import { isUuid } from '@/lib/utils';
 
 /**
  * UNDO A HELD CHANGE (House League 9d-2b Part 3, frame f2's Undo; mig 409's `league_game_undo`). The game goes back to
@@ -18,6 +19,7 @@ export const POST = withObservability(async (req: Request,
   const err = houseLeagueRefusal(ctx, 'run');
   if (err) return err;
   const { seasonId, gameId } = await params;
+  if (!isUuid(gameId)) return NextResponse.json({ error: 'Game not found' }, { status: 404 });
   const season = await getLeagueSeasonById(seasonId, ctx!.org.id);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
   const refused = houseLeagueRefusal(ctx, 'run', season);

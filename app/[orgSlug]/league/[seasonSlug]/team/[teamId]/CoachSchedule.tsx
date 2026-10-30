@@ -42,10 +42,12 @@ export default function CoachSchedule({ practices, games, gamesPublished, divisi
           <ul className={`${kit.list} ${s.list}`}>{waiting.map(g => <GameRow key={g.id} game={g} today={today} />)}</ul>
         </>
       )}
-      {!gamesPublished
-        ? <p className={kit.sub}>{P.coachUnpublished(divisionName)}</p>
-        : games.length === 0 && <p className={kit.sub}>{P.coachNoneAhead}</p>}
-      {practices.length === 0 && <p className={kit.sub}>{W.none}</p>}
+      <div className={s.notes}>
+        {!gamesPublished
+          ? <p className={kit.sub}>{P.coachUnpublished(divisionName)}</p>
+          : games.length === 0 && <p className={kit.sub}>{P.coachNoneAhead}</p>}
+        {practices.length === 0 && <p className={kit.sub}>{W.none}</p>}
+      </div>
     </>
   );
 }

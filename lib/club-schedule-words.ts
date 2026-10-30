@@ -57,10 +57,12 @@ export const SCHEDULE_WORDS = {
       leagueTeams ? `${possessive(pluralize(leagueTeams, 'house-league team'))} practices` : '',
       leagueDivisions ? `${possessive(pluralize(leagueDivisions, 'house-league division'))} games` : '',
     ].filter(Boolean);
+    const admins = leagueDivisions ? `the ${possessive(leagueDivisions === 1 ? 'division' : 'divisions')} league admins` : '';
     const told = leagueTeams
-      ? `Their coaches are told, and so ${leagueTeams === 1 ? 'are the house-league team’s' : 'are the house-league teams’'} families`
-      : changedTeams || !leagueDivisions ? 'Only those teams’ coaches are told'
-      : 'Their league admins are told';
+      ? `Their coaches are told, and so are the ${possessive(leagueTeams === 1 ? 'house-league team' : 'house-league teams')} families${admins ? ` and ${admins}` : ''}`
+      : changedTeams || !leagueDivisions
+        ? admins ? `Those ${possessive('teams')} coaches are told, and so are ${admins}` : 'Only those teams’ coaches are told'
+        : 'Their league admins are told, and families hear from them';
     return `The changes reach ${joinWithAnd(reach)}. ${told}${handedBack.length ? `; ${joinWithAnd(handedBack)} handed ${handedBack.length === 1 ? 'its slot' : 'their slots'} back ${handedBack.length === 1 ? 'itself' : 'themselves'}` : ''}. Nothing else on the schedule moves.`;
   },
 } as const;
@@ -407,6 +409,8 @@ export function sendLogLine(p: { kind: 'review' | 'final' | 'changes'; teams: nu
 /** [marketing] "25 Sundays" on a one-weekday schedule — its DAYS, since a team can hold two slots a Sunday — else "36 slots". */
 export const slotCountWords = (slots: number, days: number, oneWeekday: number | null) =>
   (oneWeekday ? weekdayCount(days, oneWeekday) : pluralize(slots, 'slot'));
+
+const GAME_CHANGES_HINT = 'Families hear about game changes when a league admin sends them.';
 
 /**
  * [marketing] Every word the scheduler's screens draw — the list, New schedule, the schedule's page, its windows. Drafts,
@@ -842,6 +846,7 @@ export const SCHEDULE_SCREEN_WORDS = {
   whoTold: (people: number) => `Who is told · ${pluralize(people, 'coach', 'coaches')}`,
   whoReviews: (teams: number, people: number) => `Who reviews · ${pluralize(teams, 'team')}, ${pluralize(people, 'coach', 'coaches')}`,
   whoChanges: (people: number) => `Who is told · ${pluralize(people, 'person', 'people')}`,
+  whoChangesGamesOnly: 'Who is told · league admins',
   staffNote: 'Head coach and staff with schedule access',
   teamSlots: (slots: number, days: number, oneWeekday: number | null) => slotCountWords(slots, days, oneWeekday),
   nobodyHead: (n: number) => `Nobody to send to · ${pluralize(n, 'team')}`,
@@ -849,15 +854,16 @@ export const SCHEDULE_SCREEN_WORDS = {
   reviewHint: 'Each team’s coaches get one email with their slots and their bill; a reply comes to you.',
   changesHint: 'Each team’s coaches get one email listing what changed for that team; a reply comes to you.',
   // Stage 11b Part 5 (h4, settled): the sentence changesHint gains when house league is in the send.
-  changesHintLeague: 'A house-league team’s families get one email too. House league’s game changes go out from the season.',
+  changesHintLeague: `A house-league team’s families get one email too. ${GAME_CHANGES_HINT}`,
   /** 9d-2b Part 5: only a division's games in the send — its second sentence alone (no house-league family hears here). */
-  changesHintLeagueGames: 'House league’s game changes go out from the season.',
+  changesHintLeagueGames: GAME_CHANGES_HINT,
   lastSent: (day: string, by: string | null) => `Last sent ${day}${by ? ` by ${by}` : ''}.`,
   notSentYet: 'Not sent yet.',
   seeEmail: (who: string) => `See ${possessive(who)} email`,
   sendTo: (n: number) => `Send to ${n}`,
   sendToCoaches: (n: number) => `Send to ${pluralize(n, 'coach', 'coaches')}`,
   sendToPeople: (n: number) => `Send to ${pluralize(n, 'person', 'people')}`,
+  sendToLeagueAdmins: 'Send to league admins',
   finalizeGo: (n: number) => `Finalize and send to ${n}`,
   sending: 'Sending…',
   billCorrections: 'Bill the corrections',
@@ -871,6 +877,7 @@ export const SCHEDULE_SCREEN_WORDS = {
   tryAgain: 'Try again',
   sentNotice: (people: number, teams: number, failed: number) =>
     `Sent to ${pluralize(people, 'person', 'people')} on ${pluralize(teams, 'team')}.${failed ? ` ${failed} couldn’t be delivered.` : ''}`,
+  sentNoticeGamesOnly: 'Sent. The league admins are told.',
   sentClash: (n: number) => `${pluralize(n, 'practice')} clash${n === 1 ? 'es' : ''} with another booking: the club calendar flags ${n === 1 ? 'it' : 'them'}.`,
   // Replies, Changed since sent
   inReviewHead: (replied: number, teams: number) => `In review · ${replied} of ${pluralize(teams, 'team')} replied`,

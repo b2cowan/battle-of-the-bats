@@ -33,9 +33,13 @@
 .switcherLabel {
   font: 600 0.875rem var(--club-text-face);
   color: var(--club-soft);
+  margin-right: 0.25rem;
 }
-.switcher a {
+/* The current team is a chip, the others are links — one size, so only the fill says which is which. */
+.switcher a,
+.switcher [aria-current] {
   min-height: 44px;
+  padding-inline: 0.9rem;
   text-decoration: none;
 }
 
@@ -128,6 +132,15 @@
 .link {
   color: var(--club-ink);
   font-weight: 600;
+}
+/* "See the season's schedule" sits apart from the lines above it, and is a 44px tap on a phone. */
+.seeAll {
+  margin-top: 0.75rem;
+}
+.seeAll .link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 
 .foot {

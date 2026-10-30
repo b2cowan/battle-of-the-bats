@@ -86,7 +86,7 @@ id (uuid), venue_id (uuid) → diamonds.id NOT NULL, tournament_id (uuid) → to
 ## Module: League
 
 ### league_divisions
-id (uuid), season_id (uuid) → league_seasons.id NOT NULL, name NOT NULL, capacity (integer), sort_order (integer), created_at, born_from_year, born_to_year, price (numeric), early_price (numeric), note, teams_published_at, teams_published_by (uuid), schedule_published_at, schedule_published_by (uuid)
+id (uuid), season_id (uuid) → league_seasons.id NOT NULL, name NOT NULL, capacity (integer), sort_order (integer), created_at, born_from_year, born_to_year, price (numeric), early_price (numeric), note, teams_published_at, teams_published_by (uuid), schedule_published_at, schedule_published_by (uuid), games_per_team
 - Indexes: league_divisions_season_id_idx
 
 ### league_email_log
@@ -142,7 +142,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → lea
 - Indexes: league_season_notices_division_idx, league_season_notices_org_idx, league_season_notices_season_idx, league_season_notices_send_idx
 
 ### league_seasons
-id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, status, description, registration_fee (numeric), auto_generate_fees (boolean), auto_approve_under_capacity (boolean), auto_promote_waitlist (boolean), registration_open_at, registration_close_at, season_start_date, season_end_date, waiver_text, created_at, updated_at, draft_state (jsonb), early_bird_until, how_to_pay, ask_email_consent (boolean), registration_closed_at, owing_amber_days, finished_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, status, description, registration_fee (numeric), auto_generate_fees (boolean), auto_approve_under_capacity (boolean), auto_promote_waitlist (boolean), registration_open_at, registration_close_at, season_start_date, season_end_date, waiver_text, created_at, updated_at, draft_state (jsonb), early_bird_until, how_to_pay, ask_email_consent (boolean), registration_closed_at, owing_amber_days, finished_at, twice_in_a_day_allowed (boolean), home_away_tolerance
 - Indexes: league_seasons_org_id_slug_key
 
 ### league_slot_uses

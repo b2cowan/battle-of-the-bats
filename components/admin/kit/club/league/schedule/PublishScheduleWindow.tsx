@@ -18,7 +18,7 @@ import { formatStoredDate } from '@/lib/timezone';
 import { SampleMail, SendDoor, useEmailSample, useSendLevel } from '../../SendParts';
 
 /** `said`: "Published May 25 · 101 families emailed." — or how many it reached when some didn't send. */
-export interface SchedulePublished { publishedAt: string; families: number; said: string }
+export interface SchedulePublished { publishedAt: string; families: number; said: string; partial: boolean }
 
 interface Facts { games: number; teams: number; families: number }
 
@@ -72,7 +72,7 @@ export default function PublishScheduleWindow({ division, api, orgQuery, onDone,
     const day = formatStoredDate(data.publishedAt, { withYear: false });
     const failed = data.failed ?? 0;
     onDone({
-      publishedAt: data.publishedAt, families: data.families,
+      publishedAt: data.publishedAt, families: data.families, partial: failed > 0,
       // The families it missed are offered again on the season's Email families history.
       said: failed > 0 ? `${W.publishedOn(day)} · ${reachedLine(data.reached ?? 0, data.families, failed)}` : W.done(day, data.families),
     });
