@@ -92,6 +92,8 @@ export type ClubRecordProps = {
   can: { support: boolean; billing: boolean; sections: boolean; delete: boolean; emailOwner: boolean; portalFreeTime: boolean };
   /** A Coaches Portal's free time (Stage 4b): its own chip, band, Access row and windows. Null for a club. */
   portalFreeTime: PortalRecordFreeTime | null;
+  /** The portal's free-time read failed: the record says so and offers no cancel, delete or plan door on a guess. */
+  portalReadFailed: boolean;
   /** Club Tier 12d-2: the Online payments tab's read (the roles that read Stripe's records; null = no tab — never
    *  connected, or a role without it; 'failed' = the tab shows, its read offers Read again). */
   onlinePayments: ClubOnlinePayments | 'failed' | null;
@@ -174,7 +176,9 @@ export default function ClubRecord(props: ClubRecordProps) {
   const startEditing = () => { setForm(initial); setNotice(null); setEditing(true); };
 
   /** The plan and tournament limit change here only when Stripe does not bill the club (owner Q9). */
-  const canMovePlan = can.billing && !org.paysThroughStripe;
+  // Never on a Coaches Portal staff gave free time: its plan is the portal's own, and a plan move would write "active"
+  // onto a portal that is stored cancelled (the server refuses it too).
+  const canMovePlan = can.billing && !org.paysThroughStripe && !props.portalFreeTime?.freeTime && !props.portalReadFailed;
   const plan = props.planOptions.find(p => p.id === form.planId);
   const targetIsClubBand = form.planId === 'club' || form.planId === 'club_large';
   const changes = {
@@ -395,7 +399,9 @@ export default function ClubRecord(props: ClubRecordProps) {
         titleChips={<>
           <span className={kit.chip}>{org.planLabel}</span>
           {/* A free-time portal is STORED cancelled for its whole life (held open by its grant): the chip says what is true. */}
-          {portalFt
+          {props.portalReadFailed
+            ? <span className={`${kit.chip} ${kit.chipQuiet}`} title="The portal's free time could not be read. Reload to try again.">Status unread</span>
+            : portalFt
             ? <span className={`${kit.chip} ${subscriptionStatusChip(portalRunning ? 'active' : 'canceled')}`}>{portalRunning ? 'Active' : 'Free time ended'}</span>
             : <span className={`${kit.chip} ${subscriptionStatusChip(org.status)}`}>{org.statusLabel}</span>}
           {(portalRunning || firstEnding) && (
@@ -445,6 +451,11 @@ export default function ClubRecord(props: ClubRecordProps) {
         )}
       </div>
 
+      {props.portalReadFailed && (
+        <div className={kit.notice} role="status">
+          This portal&rsquo;s free time could not be read, so its status and the Cancel and Delete doors are held back. Reload to try again.
+        </div>
+      )}
       {notice && <div className={kit.notice} role="status">{notice}</div>}
 
       {editing ? (
@@ -829,7 +840,7 @@ function AccessTab(props: ClubRecordProps & {
         </div>
       </section>
 
-      {(canCancel || can.delete) && (
+      {!props.portalReadFailed && (canCancel || can.delete) && (
         <div className={styles.rareDoors}>
           {canCancel && <button type="button" className={styles.redDoor} onClick={props.onCancel}>Cancel the subscription</button>}
           {can.delete && <button type="button" className={styles.redDoor} onClick={props.onDelete}>Delete the club</button>}

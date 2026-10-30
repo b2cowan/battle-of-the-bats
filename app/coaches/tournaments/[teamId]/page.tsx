@@ -7,6 +7,7 @@ import {
 } from '@/lib/basic-coach-teams';
 import { findRepTeamAccessForRegistration, tournamentEntryTabTitle } from '@/lib/coach-registration-access';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
+import { portalsInForce } from '@/lib/portal-in-force-server';
 import type { Organization } from '@/lib/types';
 import { COACHES_HELP_PATH, COACHES_TEAM_PATH, COACHES_TOURNAMENTS_PATH, portalTournamentRecordPath } from '@/lib/coaches-portal-routes';
 import CoachTournamentRecord from '@/components/coaches/CoachTournamentRecord';
@@ -66,7 +67,12 @@ export default async function CoachTournamentRecordDetailPage({ params, searchPa
         .eq('id', access.orgId)
         .maybeSingle<{ slug: string | null; account_kind: string | null; plan_id: string | null }>();
       if (org?.slug && isTeamWorkspaceOrg({ accountKind: org.account_kind as Organization['accountKind'], planId: org.plan_id as Organization['planId'] })) {
-        portalHref = portalTournamentRecordPath(org.slug, access.repTeamId, teamId);
+        // Only while the portal is in force (the one question): after a portal's free time ends the free team is the
+        // coach's again, and its record opens here instead of bouncing them to a "free time has ended" wall (Stage 4b review).
+        const { data: ws } = await supabaseAdmin
+          .from('team_workspaces').select('id').eq('workspace_org_id', access.orgId).maybeSingle<{ id: string }>();
+        const live = ws ? await portalsInForce([{ workspaceId: ws.id, orgId: access.orgId, repTeamId: access.repTeamId }]) : null;
+        if (ws && live?.has(ws.id)) portalHref = portalTournamentRecordPath(org.slug, access.repTeamId, teamId);
       }
     }
   } catch (err) {

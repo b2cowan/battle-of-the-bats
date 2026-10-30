@@ -87,7 +87,12 @@ export async function findKeepPremiumPortal(input: {
 export type KeepPremiumResult =
   | { converted: true; workspaceOrgId: string; teamWorkspaceId: string; repTeamId: string }
   | { converted: false; reason: 'already_converted'; workspaceOrgId: string; teamWorkspaceId: string; repTeamId: string }
-  | { converted: false; reason: 'taken'; workspaceOrgId: string };
+  | { converted: false; reason: 'taken'; workspaceOrgId: string }
+  /** Stripe has not taken the first payment yet (or never will): nothing was changed, and the free time keeps running. */
+  | { converted: false; reason: 'not_settled'; workspaceOrgId: string };
+
+/** A subscription whose first payment is not through. Converting on it would revoke free days for a purchase that may never complete. */
+const NOT_SETTLED = new Set(['incomplete', 'incomplete_expired']);
 
 /** Turn the coach's staff-given portal into their own paid portal (see the file note). */
 export async function convertFreeTimePortal(params: {
@@ -112,6 +117,11 @@ export async function convertFreeTimePortal(params: {
   const same = { workspaceOrgId: portal.orgId, teamWorkspaceId: portal.workspaceId, repTeamId: portal.repTeamId };
   // Who did it, on the Story and the audit log: the coach (a checkout can carry no address; the coach is still who).
   const actor = params.ownerEmail ?? 'The coach';
+
+  // Review (4b): nothing moves until the payment is through. A later delivery of the same subscription ('active' or
+  // 'trialing') finds the portal still unconverted and converts it then; the free days are never burned on a purchase
+  // that does not complete.
+  if (NOT_SETTLED.has(params.subscriptionStatus)) return { converted: false, reason: 'not_settled', workspaceOrgId: portal.orgId };
 
   // The claim: only the first delivery moves the billing mode.
   const { data: claimed, error: claimError } = await supabaseAdmin
@@ -194,17 +204,26 @@ export async function convertFreeTimePortal(params: {
     .eq('team_workspace_id', portal.workspaceId);
   if (entError) throw entError;
 
-  if (!fresh) return { converted: false, reason: 'already_converted', ...same };
-
-  await writePlatformAuditLog(actor, portal.orgId, 'keep_premium', 'billing_mode', 'platform_override', {
-    billing_mode: 'team_direct', stripe_subscription_id: params.stripeSubscriptionId, ended_running_grants: (grants ?? []).length,
-  }, { reason: 'The coach chose Premium.' });
+  // The purchase's record is written by whichever delivery FINISHES the job (review, 4b): a delivery that stopped after
+  // the claim is repaired by the next one, and that one must not leave a paid portal with no Story entry and no start
+  // event. Both writes are repeatable: the audit row is looked for first, and the start event dedupes on the subscription.
+  const { count: audited, error: auditReadError } = await supabaseAdmin
+    .from('platform_audit_log')
+    .select('id', { count: 'exact', head: true })
+    .eq('org_id', portal.orgId)
+    .eq('action', 'keep_premium');
+  if (auditReadError) throw auditReadError;
+  if (!audited) {
+    await writePlatformAuditLog(actor, portal.orgId, 'keep_premium', 'billing_mode', 'platform_override', {
+      billing_mode: 'team_direct', stripe_subscription_id: params.stripeSubscriptionId, ended_running_grants: (grants ?? []).length,
+    }, { reason: 'The coach chose Premium.' });
+  }
   // A real new subscription (the staff-given portal was never one: T35).
   if (params.subscriptionStatus === 'active' || params.subscriptionStatus === 'trialing') {
     await writePlatformEvent({
       eventType: 'subscription_started',
       source: params.eventSource,
-      sourceEventId: params.sourceEventId ? `${params.sourceEventId}:subscription_started` : null,
+      sourceEventId: `keep-premium:${params.stripeSubscriptionId}:subscription_started`,
       orgId: portal.orgId,
       actorUserId: params.ownerUserId,
       actorEmail: params.ownerEmail,
@@ -214,5 +233,5 @@ export async function convertFreeTimePortal(params: {
     });
   }
 
-  return { converted: true, ...same };
+  return fresh ? { converted: true, ...same } : { converted: false, reason: 'already_converted', ...same };
 }

@@ -45,16 +45,24 @@ export type CoachTeamWriteGuardResult = CoachTeamGuardResult | { ok: false; stat
 export async function requireBasicCoachTeamWriter(basicCoachTeamId: string): Promise<CoachTeamWriteGuardResult> {
   const guard = await requireBasicCoachTeamOwner(basicCoachTeamId);
   if (!guard.ok) return guard;
+  const refusal = await premiumInForceRefusalFor(basicCoachTeamId);
+  return refusal ? { ok: false, status: 409, error: refusal } : guard;
+}
+
+/**
+ * The refusal sentence while this free team's Premium portal is in force, else null. For the writes keyed on a tournament
+ * REGISTRATION (the event roster, the entry's head coach), which reach the same free team by its link and not by its id:
+ * a stale tab there could still change the free team under its live Premium copy (Stage 4b review).
+ */
+export async function premiumInForceRefusalFor(basicCoachTeamId: string): Promise<string | null> {
   const { data: team, error } = await supabaseAdmin
     .from('basic_coach_teams')
     .select('name, team_workspace_id')
     .eq('id', basicCoachTeamId)
     .maybeSingle<{ name: string | null; team_workspace_id: string | null }>();
   if (error) throw error;
-  if (team?.team_workspace_id && (await getActivePremiumPortal(team.team_workspace_id))) {
-    return { ok: false, status: 409, error: premiumInForceRefusal(team.name) };
-  }
-  return guard;
+  if (team?.team_workspace_id && (await getActivePremiumPortal(team.team_workspace_id))) return premiumInForceRefusal(team.name);
+  return null;
 }
 
 /** The free team's save, refused while Premium is on. */

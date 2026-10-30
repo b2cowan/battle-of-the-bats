@@ -78,6 +78,11 @@ export function coachCancelRefusal(lastDay: string): string {
   return `There's nothing to cancel. Your Premium Coaches Portal is free through ${formatLongDay(lastDay)}, then goes back to the free Coaches Portal by itself.`;
 }
 
+/** The coach's cancel, refused once free time has ended too: no subscription was ever on this portal (Stage 4b review). */
+export function coachCancelEndedRefusal(lastDay: string): string {
+  return `There's nothing to cancel. Your free time on the Premium Coaches Portal ran through ${formatLongDay(lastDay)}, and no subscription is on it. Your work is saved, and Keep Premium brings it back whenever you like.`;
+}
+
 /** The console's cancel, refused while free time runs: End it now is the way (Q11-4). */
 export function staffCancelRefusal(portalName: string, lastDay: string): string {
   return `${portalName} has free time through ${formatShortDay(lastDay)}. End it now from its Access list instead of cancelling.`;

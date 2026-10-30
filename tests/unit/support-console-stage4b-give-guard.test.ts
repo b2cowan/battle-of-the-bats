@@ -181,11 +181,13 @@ describe("Part 3 · a giver's sixth give inside seven days needs a Super admin (
     assert.equal(refused(give(facts({ givesInWindow: 5 }), { role: 'super_admin' })), null);
   });
 
-  it('the count is of this giver, this action, the last seven days', () => {
+  it('the count is of this giver, this kind of grant, the last seven days: the grants, never the best-effort audit row', () => {
     const code = readCode('lib/portal-free-time-give.ts');
     const fn = code.slice(code.indexOf('async function givesInWindow'), code.indexOf('export type CoachIdentity'));
-    assert.match(fn, /\.eq\('actor_email', actorEmail\)/);
-    assert.match(fn, /\.eq\('action', 'give_portal_free_time'\)/);
+    assert.match(fn, /\.from\('org_overrides'\)/);
+    assert.match(fn, /\.eq\('created_by', actorEmail\)/);
+    assert.match(fn, /\.eq\('type', PORTAL_FREE_TIME_GRANT_TYPE\)/);
+    assert.doesNotMatch(fn, /platform_audit_log/);
     assert.match(fn, /PORTAL_GIVES_WINDOW_DAYS \* 24 \* 60 \* 60 \* 1000/);
   });
 });
@@ -295,9 +297,14 @@ describe('Part 3 · two gives at once, and a later give (T21, T26, T32)', () => 
   });
 
   it('a later give updates the one entitlement row, only if it has ended, and takes back its grant if it lost', () => {
-    const fn = give.slice(give.indexOf('async function giveAgain'), give.indexOf('export async function readFreeTimePortal'));
+    const fn = give.slice(give.indexOf('async function giveAgain'), give.indexOf('async function finishHalfMadePortal'));
     assert.match(fn, /\.from\('team_entitlements'\)\s*\.update\(/);
+    // Never a second entitlement row (T21): the only insert is the repair of a portal that has NONE at all, behind a zero
+    // count, and the active-source unique index (mig 065) refuses a racing second one.
     assert.doesNotMatch(fn, /\.from\('team_entitlements'\)\s*\.insert/);
+    const repair = give.slice(give.indexOf('async function finishHalfMadePortal'), give.indexOf('export async function readFreeTimePortal'));
+    assert.match(repair, /count \?\? 0\) > 0\) return false/);
+    assert.match(repair, /\.from\('team_entitlements'\)\.insert\(/);
     assert.match(fn, /\.lte\('ends_at', now\)/);
     assert.match(fn, /\.from\('org_overrides'\)\.delete\(\)\.eq\('id', grant\.id\)/);
     assert.doesNotMatch(fn, /provisionStandaloneTeamWorkspace|migrateBasicTeamIntoWorkspace/, 'nothing is copied again');

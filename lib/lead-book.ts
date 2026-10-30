@@ -328,11 +328,15 @@ export async function readOffers(leads: { id: string; email: string; step: Early
     const demo = new Set<string>();
     for (const id of orgIds) if (await isDemoOrgId(id)) demo.add(id);
 
+    // A Coaches Portal staff gave free time is the lead's own portal, stored cancelled: never offered as a club they signed up.
+    let givenPortals: Set<string>;
+    try { givenPortals = await freeTimePortalOrgIds(); } catch { return { kind: 'not_read' }; }
+
     const byAddress = new Map<string, OfferedClub[]>();
     for (const a of eligible) {
       for (const m of memberRows.filter(r => r.user_id === a.user_id)) {
         const org = Array.isArray(m.organizations) ? m.organizations[0] : m.organizations;
-        if (!org || demo.has(m.organization_id) || staffOwned.has(m.organization_id)) continue;
+        if (!org || demo.has(m.organization_id) || staffOwned.has(m.organization_id) || givenPortals.has(m.organization_id)) continue;
         const key = normalAddress(a.email);
         const list = byAddress.get(key) ?? [];
         if (!list.some(c => c.orgId === m.organization_id)) {

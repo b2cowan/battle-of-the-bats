@@ -20,7 +20,7 @@ import styles from '../../record.module.css';
 const counted = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /** Where the line sits on the person's tab: under the Premium portals it is about, or under the free team. */
-export const PREMIUM_SECTION_BLOCKS = new Set<PortalGiveBlock['kind']>(['running', 'paying', 'founding', 'comped', 'cancelled', 'club']);
+export const PREMIUM_SECTION_BLOCKS = new Set<PortalGiveBlock['kind']>(['running', 'had_free_time', 'paying', 'founding', 'comped', 'cancelled', 'club']);
 
 /** The one line where the door would be (drawing A, lines 1–9): red for the switch and your own, amber otherwise. */
 export function PortalBlockLine({ block }: { block: PortalGiveBlock }) {
@@ -90,7 +90,7 @@ export function PortalGiveWindow({ coachId, coachName, give, onGiven, onClose }:
   if (stale) return <StaleWindow title={title} sentence={stale} onDone={onClose} onClose={onClose} />;
 
   const after = lastDay ? dayAfterWords(lastDay) : '';
-  const tail = <> Nothing is charged, nothing is deleted, and {first} is not emailed. Their Plan &amp; billing page says “Free through {through}”.
+  const tail = <> Nothing is charged, nothing is deleted. {first} is emailed 14 days and 3 days before it runs out. Their Plan &amp; billing page says “Free through {through}”.
     Hosting a tournament is not part of free time.</>;
   const sentence = !through ? 'Choose the last free day.'
     : give.mode === 'again' && give.againPortal
@@ -157,7 +157,7 @@ export function PortalChangeEndWindow({ orgId, orgName, coachName, row, bounds, 
       title={title}
       sentence={lastDay && lastDay !== row.lastDay
         ? <>{possessive(orgName)} <strong>Premium</strong> free time now runs <strong>through {formatLongDay(lastDay)}</strong> instead
-          of {monthDayOf(row.lastDay)}. Then back to the free Coaches Portal by itself. {firstNameOf(coachName)} is not emailed.</>
+          of {monthDayOf(row.lastDay)}. Then back to the free Coaches Portal by itself. {firstNameOf(coachName)} is emailed 14 days and 3 days before the new last day.</>
         : 'Choose the new last free day.'}
       sentenceAfter
       footNote={`A new Story entry; Put it back restores ${monthDayOf(row.lastDay)}.`}

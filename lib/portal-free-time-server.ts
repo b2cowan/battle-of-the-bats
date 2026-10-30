@@ -40,9 +40,9 @@ export async function endedPortalFreeTime(orgId: string): Promise<EndedPortalFre
   const [{ data: ws, error: wsError }, { data: grants, error }] = await Promise.all([
     supabaseAdmin
       .from('team_workspaces')
-      .select('billing_mode, basic_coach_team_id')
+      .select('billing_mode, basic_coach_team_id, free_time_given_at')
       .eq('workspace_org_id', orgId)
-      .maybeSingle<{ billing_mode: string | null; basic_coach_team_id: string | null }>(),
+      .maybeSingle<{ billing_mode: string | null; basic_coach_team_id: string | null; free_time_given_at: string | null }>(),
     supabaseAdmin
       .from('org_overrides')
       .select('starts_at, expires_at, revoked_at')
@@ -53,7 +53,9 @@ export async function endedPortalFreeTime(orgId: string): Promise<EndedPortalFre
   ]);
   if (wsError) throw wsError;
   if (error) throw error;
-  if (ws?.billing_mode !== 'platform_override' || !grants?.[0]) return null;
+  // The give's mark is required, as `latestFreeTimeGrant` requires it: a comped or cancelled portal with an old grant on
+  // it is not "free time that ended", and must not be told "Your free time has ended" (Stage 4b review).
+  if (ws?.billing_mode !== 'platform_override' || !ws.free_time_given_at || !grants?.[0]) return null;
   const lastDay = endedLastDay(grants[0]);
   return lastDay ? { lastDay, basicTeamId: ws.basic_coach_team_id } : null;
 }
@@ -130,9 +132,42 @@ export async function freeTimePortalOrgIds(): Promise<Set<string>> {
 }
 
 /**
+ * What a handful of organizations read as when each may be a portal staff gave free time (Global Find's rows, the lead
+ * book's offered clubs): the label for a portal that is, and nothing for any other organization. Throws on a read
+ * error, so a caller says "unread" instead of showing the stored cancelled state (Stage 4b review).
+ */
+export async function freeTimePortalLabelsAmong(orgIds: string[]): Promise<Map<string, 'Free time' | 'Free time ended'>> {
+  const out = new Map<string, 'Free time' | 'Free time ended'>();
+  if (orgIds.length === 0) return out;
+  const [{ data: ws, error: wsError }, { data: grants, error: grantError }] = await Promise.all([
+    supabaseAdmin
+      .from('team_workspaces')
+      .select('workspace_org_id')
+      .in('workspace_org_id', orgIds)
+      .not('free_time_given_at', 'is', null)
+      .eq('billing_mode', 'platform_override'),
+    supabaseAdmin
+      .from('org_overrides')
+      .select('org_id, starts_at, expires_at, revoked_at')
+      .in('org_id', orgIds)
+      .eq('type', PORTAL_FREE_TIME_GRANT_TYPE)
+      .is('revoked_at', null)
+      .not('expires_at', 'is', null),
+  ]);
+  if (wsError) throw wsError;
+  if (grantError) throw grantError;
+  const running = new Set((grants ?? []).filter(g => isGrantRunning(g)).map(g => g.org_id as string));
+  for (const w of ws ?? []) {
+    const id = w.workspace_org_id as string;
+    out.set(id, running.has(id) ? 'Free time' : 'Free time ended');
+  }
+  return out;
+}
+
+/**
  * Of the portals `freeTimePortalOrgIds` names, the ones whose free time is running right now. The give's mark stays on
- * after the free time ends (it is cleared only by Keep Premium), so the Clubs list reads this to tell "Free time" from
- * "Free time ended".
+ * after the free time ends (Keep Premium leaves it too; the billing mode is what moves), so the Clubs list reads this to
+ * tell "Free time" from "Free time ended".
  */
 export async function runningFreeTimePortalOrgIds(): Promise<Set<string>> {
   const { data, error } = await supabaseAdmin

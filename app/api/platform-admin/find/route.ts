@@ -5,6 +5,7 @@ import { withObservability } from '@/lib/observability';
 import { captureError } from '@/lib/observability/capture';
 import { FixedWindowRateLimiter } from '@/lib/rate-limit';
 import { findClubs, findPeople, personAuthStatus } from '@/lib/platform-people-lookup';
+import { freeTimePortalLabelsAmong } from '@/lib/portal-free-time-server';
 import { planLabel, subscriptionStatusLabel } from '@/lib/platform-labels';
 import { roleEmailLabel } from '@/lib/member-access';
 import { isDemoOrgSlug } from '@/lib/demo-org';
@@ -55,6 +56,15 @@ function json(body: unknown, status = 200) {
 const readers: FindReaders = {
   async clubs(words) {
     const found = await findClubs(words);
+    // A portal staff gave free time is stored cancelled for its whole life: its label says what is true, as the Clubs list
+    // does. A failed read says "Status unread" for a stored-cancelled row, never "Cancelled".
+    let portalLabels = new Map<string, string>();
+    let portalUnread = false;
+    try {
+      portalLabels = await freeTimePortalLabelsAmong(found.rows.filter(c => c.subscriptionStatus === 'canceled').map(c => c.id));
+    } catch {
+      portalUnread = true;
+    }
     return {
       total: found.total,
       rows: found.rows.map(c => ({
@@ -62,7 +72,8 @@ const readers: FindReaders = {
         name: c.name,
         slug: c.slug,
         planLabel: planLabel(c.planId ?? 'tournament'),
-        statusLabel: subscriptionStatusLabel(c.subscriptionStatus ?? 'active'),
+        statusLabel: portalLabels.get(c.id)
+          ?? (portalUnread && c.subscriptionStatus === 'canceled' ? 'Status unread' : subscriptionStatusLabel(c.subscriptionStatus ?? 'active')),
         ownerEmail: c.ownerEmail,
       })),
     };

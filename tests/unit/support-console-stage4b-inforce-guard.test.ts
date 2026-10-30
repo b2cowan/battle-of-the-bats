@@ -186,8 +186,18 @@ describe('5 · a free-time portal is not a customer, so it is never churn (T35, 
   it('Business numbers, the lead book and the Clubs list leave it out', () => {
     assert.match(readCode('lib/platform-metrics.ts'), /!freeTimePortals\.has\(org\.id\)/);
     assert.match(readCode('lib/lead-book.ts'), /!freeTimePortals\.has\(r\.id\)/);
-    assert.match(readCode('app/platform-admin/orgs/page.tsx'), /isFreeTimePortal: +freeTimePortals\.has\(id\)/);
-    assert.match(readCode('app/platform-admin/orgs/OrgsClient.tsx'), /statusFilter === 'canceled' && !isCancelledCustomer\(o\)/);
+    const orgsPage = readCode('app/platform-admin/orgs/page.tsx');
+    assert.match(orgsPage, /isFreeTimePortal: +freeTimePortals\?\.has\(id\) \?\? false/);
+    // A failed free-time read is SAID on the row, never read as "no portal is on free time" (it would list every
+    // free-time portal as a cancelled customer).
+    assert.match(orgsPage, /freeTimePortalOrgIds\(\)\.catch\(\(\) => null\)/);
+    assert.match(orgsPage, /freeTimeUnread:/);
+    const orgsClient = readCode('app/platform-admin/orgs/OrgsClient.tsx');
+    assert.match(orgsClient, /statusFilter === 'canceled' && !isCancelledCustomer\(o\)/);
+    assert.match(orgsClient, /!org\.isFreeTimePortal && !org\.freeTimeUnread/);
+    // Find and the lead book's offered clubs read it too.
+    assert.match(readCode('app/api/platform-admin/find/route.ts'), /freeTimePortalLabelsAmong/);
+    assert.match(readCode('lib/lead-book.ts'), /givenPortals\.has\(m\.organization_id\)/);
   });
 
   it("the mark is the give's own (free_time_given_at, mig 406), never the workspace's source (Founding and comped portals are platform_admin too)", () => {

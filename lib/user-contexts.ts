@@ -569,6 +569,23 @@ export async function getLapsedWorkspacesForUser(userId: string): Promise<Lapsed
   // keep the two in step if a workspace-eligibility rule changes.
   const members = await getActiveMembershipRows(userId);
   const out: LapsedWorkspace[] = [];
+  // A Coaches Portal staff gave free time is stored cancelled for its whole life, and when the free days run out it reads
+  // lapsed here. It is not a subscription that lapsed: the coach's portal screen says "Your free time has ended" with one
+  // Keep Premium door, and a "Subscription lapsed · Reactivate" card on Home would contradict it (Stage 4b review).
+  const candidateOrgIds = members
+    .map(m => normalizeOrg(m)?.id ?? m.organization_id)
+    .filter((id): id is string => !!id);
+  const { data: givenRows, error: givenError } = candidateOrgIds.length
+    ? await supabaseAdmin
+      .from('team_workspaces')
+      .select('workspace_org_id')
+      .in('workspace_org_id', candidateOrgIds)
+      .not('free_time_given_at', 'is', null)
+      .eq('billing_mode', 'platform_override')
+    : { data: [], error: null };
+  // The front door never fails on this read: without it the card simply shows as it did before.
+  if (givenError) console.error('[user-contexts] could not tell which portals staff gave free time:', givenError.message);
+  const staffGivenOrgIds = new Set((givenRows ?? []).map(r => r.workspace_org_id as string));
   for (const member of members) {
     const org = normalizeOrg(member);
     const slug = org?.slug;
@@ -576,6 +593,7 @@ export async function getLapsedWorkspacesForUser(userId: string): Promise<Lapsed
     if (!slug || !orgId) continue;
     // Still active → not lapsed (org-admin/official contexts also never vanish on lapse).
     if (isActiveSubscriptionStatus(org?.subscription_status)) continue;
+    if (staffGivenOrgIds.has(orgId)) continue;
     const planId = org?.plan_id ?? 'tournament';
     const accountKind = org?.account_kind ?? 'organization';
     // Only the contexts that actually disappear on lapse need the reactivate card.

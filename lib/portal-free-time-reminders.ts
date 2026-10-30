@@ -39,9 +39,10 @@ const givenPortals = () => fetchAll<WorkspaceRow>((from, to) => supabaseAdmin
   .order('workspace_org_id')
   .range(from, to));
 
-export async function sendPortalFreeTimeReminders(now: Date = new Date()): Promise<{ sent: number; skipped: number }> {
+export async function sendPortalFreeTimeReminders(now: Date = new Date()): Promise<{ sent: number; skipped: number; failed: number }> {
   let sent = 0;
   let skipped = 0;
+  let failed = 0;
   for (const ws of await givenPortals()) {
     try {
       const ft = await customerPortalFreeTime(ws.workspace_org_id, now);
@@ -72,24 +73,35 @@ export async function sendPortalFreeTimeReminders(now: Date = new Date()): Promi
         warmEmailParagraph(escapeHtml(words.body)),
         warmEmailButton(words.button, `${appUrl()}${teamWorkspaceReactivatePath({ slug: org.slug as string, name: org.name as string | null })}&keep=1`),
       ].join('\n'));
-      // sendEmail throws when the request never got an answer: that is "nothing went out" too, and the stamp is given back.
+      // A send that never got an answer may still have gone (the mail service's 5xx, a 429, a dropped connection, a timeout):
+      // sending again could mail the coach twice, and the mail service's once-only key lasts only a day. So the stamp is
+      // given back ONLY when the email definitely did not go; an unknown outcome keeps it and is logged for a person.
       const result = await sendEmail(to, words.subject, html, {
         kind: 'portal_free_time_ending', orgId: ws.workspace_org_id,
         idempotencyKey: `portal-free-time-ending:${ws.workspace_org_id}:${ft.lastDay}:${wave}`,
+        timeoutMs: 15_000,
       }).catch((e: unknown) => {
         console.error('[portal-free-time-reminders] the mail service did not answer:', ws.workspace_org_id, e instanceof Error ? e.message : String(e));
         return null;
       });
       if (result?.status === 'sent') { sent += 1; continue; }
+      const definitelyUnsent = result?.status === 'skipped' || (result?.status === 'provider_error' && result.refused === true);
+      if (!definitelyUnsent) {
+        console.error('[portal-free-time-reminders] the reminder may or may not have gone; not sent again:', ws.workspace_org_id, ft.lastDay, wave, result?.status ?? 'threw');
+        skipped += 1;
+        continue;
+      }
       // Nothing went out: give the stamp back so the next run tries again.
-      await supabaseAdmin.from('team_workspaces')
+      const { error: releaseError } = await supabaseAdmin.from('team_workspaces')
         .update(Object.fromEntries(columns.map(c => [c, ws[c]])))
         .eq('workspace_org_id', ws.workspace_org_id)
         .eq(stampColumn, ft.lastDay); // only our own stamp: never undo a run that stamped after us
+      if (releaseError) console.error('[portal-free-time-reminders] the stamp could not be given back; the reminder is lost:', ws.workspace_org_id, ft.lastDay, wave, releaseError.message);
       skipped += 1;
     } catch (e) {
+      failed += 1;
       console.error('[portal-free-time-reminders] the reminder was not sent:', ws.workspace_org_id, e instanceof Error ? e.message : String(e));
     }
   }
-  return { sent, skipped };
+  return { sent, skipped, failed };
 }

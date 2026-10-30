@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireCoachRegistrationAccess } from '@/lib/coach-team-guard';
+import { premiumInForceRefusalFor, requireCoachRegistrationAccess } from '@/lib/coach-team-guard';
 import { resolveEventHeadCoachAccess } from '@/lib/coach-registration-access';
 import { canEditEventHeadCoach, EVENT_ROSTER_REFUSED } from '@/lib/coach-event-head-coach';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -150,6 +150,10 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     const { teamId } = await params;
     const guard = await requireCoachRegistrationAccess(teamId);
     if (!guard.ok) return authError(guard.status);
+    if (guard.via === 'membership' && guard.basicCoachTeamId) {
+      const premium = await premiumInForceRefusalFor(guard.basicCoachTeamId);
+      if (premium) return json({ error: premium }, 409);
+    }
     // Opening the entry is not submitting for the team (walk §361 c2): the head coach's rule, before any write.
     if (!canEditEventHeadCoach(await resolveEventHeadCoachAccess(guard.user.id, teamId))) {
       return json({ error: EVENT_ROSTER_REFUSED }, 403);

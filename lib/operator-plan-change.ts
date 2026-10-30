@@ -88,8 +88,12 @@ async function subscriptionEndedInStripe(subscriptionId: string): Promise<boolea
 /** A staff plan change the rule refuses before writing anything; `message` is the sentence the person reads. */
 export class PlanRefusedError extends Error {
   readonly code = 'paying_through_stripe' as const;
-  constructor() { super(PAYING_CLUB_PLAN_REFUSAL); }
+  constructor(message: string = PAYING_CLUB_PLAN_REFUSAL) { super(message); }
 }
+
+/** Why a plan move on a Coaches Portal staff gave free time is refused (Stage 4b review): its plan is the portal's own. */
+export const PORTAL_FREE_TIME_PLAN_REFUSAL =
+  'This Coaches Portal is on free time that staff gave. Its plan is changed from the Coaches Portal tab on the coach’s person record, not here.';
 
 export async function applyOperatorPlanChange(input: OperatorPlanChangeInput): Promise<OperatorPlanChangeResult> {
   const { orgId, planId, reason, actor } = input;
@@ -109,6 +113,18 @@ export async function applyOperatorPlanChange(input: OperatorPlanChangeInput): P
   const currentEffectiveLimit = current
     ? getEffectiveTournamentLimit(current.plan_id as OrgPlan, current.tournament_limit)
     : null;
+
+  // A Coaches Portal staff gave free time is stored cancelled and held open by its grant: a plan move here would write
+  // "active" onto it and it would outlive its last free day. The bulk actions skip a portal for the same reason.
+  const { data: givenPortal, error: givenPortalError } = await supabaseAdmin
+    .from('team_workspaces')
+    .select('id')
+    .eq('workspace_org_id', orgId)
+    .not('free_time_given_at', 'is', null)
+    .eq('billing_mode', 'platform_override')
+    .maybeSingle<{ id: string }>();
+  if (givenPortalError) throw new PlanUpdateError(givenPortalError.message);
+  if (givenPortal) throw new PlanRefusedError(PORTAL_FREE_TIME_PLAN_REFUSAL);
 
   // Q9: while Stripe bills the club, its plan and tournament limit change in Stripe, never here. Our record says so first;
   // when it does, Stripe is asked, because a missed webhook leaves a subscription Stripe already ended reading as live

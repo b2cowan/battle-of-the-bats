@@ -27,7 +27,7 @@ export async function getActivePremiumPortal(
   teamWorkspaceId: string | null,
 ): Promise<{ slug: string; repTeamId: string } | null> {
   if (!teamWorkspaceId) return null;
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('team_workspaces')
     .select('workspace_org_id, rep_team_id, organizations!workspace_org_id(slug)')
     .eq('id', teamWorkspaceId)
@@ -36,6 +36,9 @@ export async function getActivePremiumPortal(
       rep_team_id: string;
       organizations: { slug: string | null } | { slug: string | null }[] | null;
     }>();
+  // A failed read is an error, never "no live Premium": the write guard reads this, and "no portal" would let a stale tab
+  // change the free team under a live Premium copy (Stage 4b review).
+  if (error) throw error;
   if (!data) return null;
   const inForce = await portalsInForce([{ workspaceId: teamWorkspaceId, orgId: data.workspace_org_id, repTeamId: data.rep_team_id }]);
   if (!inForce.has(teamWorkspaceId)) return null;

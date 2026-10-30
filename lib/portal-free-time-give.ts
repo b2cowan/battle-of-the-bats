@@ -144,14 +144,18 @@ async function readCoachPortals(coachUserId: string): Promise<CoachPortalFacts[]
   });
 }
 
-/** This giver's portal gives in the last seven days (T2). */
+/**
+ * This giver's portal gives in the last seven days (T2). Counted from the grants themselves, which a give writes before
+ * it succeeds and a refused one deletes: the audit row is written after the give commits and a failed write only logs,
+ * so counting it would let a give with a failed audit write go uncounted (review, 4b).
+ */
 async function givesInWindow(actorEmail: string): Promise<number> {
   const since = new Date(Date.now() - PORTAL_GIVES_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
   const { count, error } = await supabaseAdmin
-    .from('platform_audit_log')
+    .from('org_overrides')
     .select('id', { count: 'exact', head: true })
-    .eq('actor_email', actorEmail)
-    .eq('action', 'give_portal_free_time')
+    .eq('type', PORTAL_FREE_TIME_GRANT_TYPE)
+    .eq('created_by', actorEmail)
     .gte('created_at', since);
   if (error) throw error;
   return count ?? 0;
@@ -288,7 +292,19 @@ async function giveAgain(
     .lte('ends_at', now)
     .select('id');
   if (entError || !opened || opened.length !== 1) {
-    await supabaseAdmin.from('org_overrides').delete().eq('id', grant.id);
+    // No entitlement row AT ALL is a portal an earlier give left half-made (the entitlement is the give's last write):
+    // this give finishes it instead of failing for good. A row that merely has not ended is the lost race below.
+    if (!entError && (opened ?? []).length === 0) {
+      const finished = await finishHalfMadePortal(portal, String(row.expires_at));
+      if (finished) {
+        await writePlatformAuditLog(ctx.actor.email, portal.orgId, 'give_portal_free_time', 'type', null, {
+          mode: 'again', override_id: grant.id, last_day: ctx.lastDay, coach_user_id: ctx.coach.id, finished_half_made: true,
+        }, { reason: ctx.reason });
+        return { ok: true, orgId: portal.orgId, mode: 'again' };
+      }
+    }
+    const { error: undoError } = await supabaseAdmin.from('org_overrides').delete().eq('id', grant.id);
+    if (undoError) console.error('[portal-free-time-give] a refused give left its grant behind; remove it by hand:', grant.id, undoError.message);
     return entError
       ? { ok: false, status: 500, error: 'Nothing was given. The server could not save it. Your answers are kept; try again.' }
       : { ok: false, status: 409, error: 'Someone gave this coach free time while you had it open. Look again before you give.' };
@@ -298,6 +314,28 @@ async function giveAgain(
     mode: 'again', override_id: grant.id, last_day: ctx.lastDay, coach_user_id: ctx.coach.id,
   }, { reason: ctx.reason });
   return { ok: true, orgId: portal.orgId, mode: 'again' };
+}
+
+/**
+ * Insert the entitlement a half-made portal never got, when it has none at all. True when this call made it. Born the way
+ * the first give makes it (`platform_override`, active, bounded by the new end), so nothing is in force past the last day.
+ */
+async function finishHalfMadePortal(portal: CoachPortalFacts, endsAt: string): Promise<boolean> {
+  const { data: ws, error } = await supabaseAdmin
+    .from('team_workspaces').select('rep_team_id').eq('id', portal.workspaceId).maybeSingle<{ rep_team_id: string }>();
+  if (error || !ws) return false;
+  const { count, error: countError } = await supabaseAdmin
+    .from('team_entitlements').select('id', { count: 'exact', head: true }).eq('team_workspace_id', portal.workspaceId);
+  if (countError || (count ?? 0) > 0) return false;
+  const { error: insertError } = await supabaseAdmin.from('team_entitlements').insert({
+    team_workspace_id: portal.workspaceId,
+    org_id: portal.orgId,
+    rep_team_id: ws.rep_team_id,
+    source: 'platform_override',
+    status: 'active',
+    ends_at: endsAt,
+  });
+  return !insertError;
 }
 
 /** The portal on this organization if staff gave it free time and nobody pays for it yet, else null. */

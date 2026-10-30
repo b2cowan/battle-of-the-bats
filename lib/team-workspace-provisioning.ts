@@ -261,14 +261,19 @@ async function createActiveProgramYear(fields: {
 }
 
 async function rollbackWorkspaceOrg(orgId: string): Promise<void> {
-  const { error } = await supabaseAdmin
-    .from('organizations')
-    .delete()
-    .eq('id', orgId);
-
-  if (error) {
-    console.error('[team-workspace-provisioning] rollback failed:', error);
+  // Tried three times (review, 4b): a rollback that fails once leaves an organization, a grant and a workspace behind
+  // with nothing to tell anyone, and for a staff give that portal then blocks the coach's next give.
+  let lastError: unknown = null;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const { error } = await supabaseAdmin
+      .from('organizations')
+      .delete()
+      .eq('id', orgId);
+    if (!error) return;
+    lastError = error;
+    await new Promise(resolve => setTimeout(resolve, 200 * attempt));
   }
+  console.error('[team-workspace-provisioning] ROLLBACK FAILED after 3 tries; organization', orgId, 'is left behind and needs removing by hand:', lastError);
 }
 
 export async function provisionStandaloneTeamWorkspace(

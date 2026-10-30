@@ -123,8 +123,10 @@ export default async function ClubRecordPage({ params, searchParams }: {
   // A Coaches Portal's free time (Stage 4b) is its own kind: its chip, band, Access row and windows, never a club's.
   const isPortal = org.account_kind === 'team_workspace';
   const canGivePortal = hasPlatformPower(auth.role, 'portal_free_time');
+  // A failed read is SAID, never read as "not a free-time portal": that would show a running portal as a cancelled club.
+  let portalReadFailed = false;
   const portalFreeTime = isPortal
-    ? await readPortalRecordFreeTime(id, org.name, { id: auth.user.id, email: auth.user.email ?? '', role: auth.role }, canGivePortal).catch(() => null)
+    ? await readPortalRecordFreeTime(id, org.name, { id: auth.user.id, email: auth.user.email ?? '', role: auth.role }, canGivePortal).catch(() => { portalReadFailed = true; return null; })
     : null;
   // Club Tier 12d-2: the Online payments tab's read — ours only (no Stripe call), for the roles that read Stripe's records,
   // started beside the record's other reads (/review).
@@ -201,6 +203,7 @@ export default async function ClubRecordPage({ params, searchParams }: {
     story: { entries: story.slice(0, STORY_PAGE), total: story.length },
     planOptions: Object.entries(PLAN_CONFIG).map(([key, c]) => ({ id: key, label: c.label, tournamentLimit: c.tournamentLimit, teamLimit: c.teamLimit })),
     portalFreeTime,
+    portalReadFailed,
     freeTime: isPortal || !doorFacts ? null : {
       block: doorFacts.block,
       planBlock: doorFacts.planBlock,

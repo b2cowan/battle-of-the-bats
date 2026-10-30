@@ -36,7 +36,7 @@ async function readEveryOrganization(): Promise<{ data: Array<Record<string, unk
   try {
     const data = await fetchAll<Record<string, unknown>>((from, to) => supabaseAdmin
       .from('organizations')
-      .select('id, name, slug, plan_id, subscription_status, current_period_end, created_at, enabled_addons, internal_notes, free_floor')
+      .select('id, name, slug, plan_id, subscription_status, current_period_end, created_at, enabled_addons, internal_notes, free_floor, account_kind')
       .order('created_at', { ascending: false })
       .order('id')
       .range(from, to));
@@ -57,8 +57,10 @@ async function getOrgs() {
     readEveryOrganization(),
     getFoundingSeasonOrgIds(),
     // Stage 4b (T35): a portal staff gave free time is stored cancelled; it is not a cancelled customer.
-    freeTimePortalOrgIds().catch(() => new Set<string>()),
-    runningFreeTimePortalOrgIds().catch(() => new Set<string>()),
+    // A failed read is SAID on the row ("Free time unread"), never read as "no portal is on free time": that would list
+    // every free-time portal as a cancelled customer and count it in the Cancelled warning.
+    freeTimePortalOrgIds().catch(() => null),
+    runningFreeTimePortalOrgIds().catch(() => null),
     supabaseAdmin
       .from('organization_members')
       .select('organization_id, user_id, status')
@@ -174,8 +176,11 @@ async function getOrgs() {
         ? `${noteCount} internal note${noteCount === 1 ? '' : 's'}`
         : ((r.internal_notes as string | null) ?? null),
       isFoundingSeason:   foundingSeasonOrgIds.has(id),
-      isFreeTimePortal:   freeTimePortals.has(id),
-      freeTimeRunning:    runningFreeTimePortals.has(id),
+      isFreeTimePortal:   freeTimePortals?.has(id) ?? false,
+      freeTimeRunning:    runningFreeTimePortals?.has(id) ?? false,
+      // A stored-cancelled portal whose free-time read failed: neither a customer nor a known free-time portal.
+      freeTimeUnread:     (freeTimePortals === null || runningFreeTimePortals === null)
+        && r.account_kind === 'team_workspace' && status === 'canceled',
       isFreeFloor:        (r.free_floor as string | null) === 'league_starter',
       missingOwner:       !ownerOrgIds.has(id),
       ownerInactive:      ownerIds.length > 0 && (!mostRecentOwnerSignIn || mostRecentOwnerSignIn < inactiveOwnerCutoff),

@@ -32,7 +32,12 @@ export const POST = withObservability(async (req: Request) => {
       steps.push({ step, ok: false, error: e instanceof Error ? e.message : 'failed' });
     }
   };
-  await run('free_time_reminders', () => sendPortalFreeTimeReminders(now));
+  await run('free_time_reminders', async () => {
+    const result = await sendPortalFreeTimeReminders(now);
+    // A portal that could not be processed is a failed step, not a green 200: the job's health reading must see it.
+    if (result.failed > 0) throw new Error(`${result.failed} portal(s) could not be processed (${result.sent} sent, ${result.skipped} held); see the log`);
+    return result;
+  });
 
   await writePlatformAuditLog(actor, null, 'portal_free_time_sweep', 'result', null, steps);
   const ok = steps.every(s => s.ok);

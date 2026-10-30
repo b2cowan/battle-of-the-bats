@@ -41,6 +41,8 @@ interface OrgRow {
   isFreeTimePortal: boolean;
   /** Its free time is running now; false once it has ended (the mark stays until Keep Premium). */
   freeTimeRunning: boolean;
+  /** A stored-cancelled Coaches Portal whose free-time read failed: it is not counted as a cancelled customer. */
+  freeTimeUnread: boolean;
   isFreeFloor: boolean;
   missingOwner: boolean;
   ownerInactive: boolean;
@@ -106,10 +108,15 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
 
   // A portal staff gave free time is stored cancelled for its whole life (Stage 4b, T35): it is not a cancelled
   // customer, so neither the count, the callout nor the Cancelled filter counts it. It stays in the list and in search.
-  const isCancelledCustomer = (org: OrgRow) => org.subscriptionStatus === 'canceled' && !org.isFreeTimePortal;
+  const isCancelledCustomer = (org: OrgRow) => org.subscriptionStatus === 'canceled' && !org.isFreeTimePortal && !org.freeTimeUnread;
+  // A portal whose free time is running reads "Active" on its own record, so the Active filter and count include it.
+  const statusOf = (org: OrgRow) => org.isFreeTimePortal && org.freeTimeRunning && org.subscriptionStatus === 'canceled'
+    ? 'active'
+    : org.subscriptionStatus;
   const statusCounts = orgs.reduce<Record<string, number>>((acc, org) => {
-    if (org.subscriptionStatus === 'canceled' && !isCancelledCustomer(org)) return acc;
-    acc[org.subscriptionStatus] = (acc[org.subscriptionStatus] ?? 0) + 1;
+    if (org.subscriptionStatus === 'canceled' && !isCancelledCustomer(org) && !(org.isFreeTimePortal && org.freeTimeRunning)) return acc;
+    const s = statusOf(org);
+    acc[s] = (acc[s] ?? 0) + 1;
     return acc;
   }, {});
   const pastDueCount = statusCounts.past_due ?? 0;
@@ -126,7 +133,7 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
       if (!o.name.toLowerCase().includes(q) && !o.slug.toLowerCase().includes(q) && !(o.ownAddress ?? '').includes(q)) return false;
     }
     if (planFilter         && o.planId             !== planFilter)   return false;
-    if (statusFilter       && o.subscriptionStatus !== statusFilter) return false;
+    if (statusFilter       && statusOf(o) !== statusFilter) return false;
     if (statusFilter === 'canceled' && !isCancelledCustomer(o)) return false;
     if (foundingSeasonOnly && !o.isFoundingSeason)                   return false;
     if (freeFloorOnly      && !o.isFreeFloor)                        return false;
@@ -352,7 +359,11 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
                     <td data-label="Slug"><span className={kit.code}>{org.slug}</span></td>
                     <td data-label="Plan" className={kit.nowrap}>{PLAN_LABELS[org.planId] ?? org.planId}</td>
                     <td data-label="Status">
-                      {org.isFreeTimePortal && org.subscriptionStatus === 'canceled' ? (
+                      {org.freeTimeUnread ? (
+                        <span className={`${kit.chip} ${kit.chipQuiet}`} title="Free time could not be read just now, so this portal's status is not shown. Reload to try again.">
+                          Free time unread
+                        </span>
+                      ) : org.isFreeTimePortal && org.subscriptionStatus === 'canceled' ? (
                         org.freeTimeRunning ? (
                           <span className={`${kit.chip} ${kit.chipOk}`} title="Given free time by staff. No subscription to cancel.">
                             Free time

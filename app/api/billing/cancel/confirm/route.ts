@@ -19,8 +19,8 @@ import { captureError, captureAndJson, withObservability } from '@/lib/observabi
 import { ownPlanOf } from '@/lib/entitlement-grants';
 import { closePagesIfPaymentsEnded } from '@/lib/online-payment-endings';
 import { getBillingHref } from '@/lib/billing-urls';
-import { runningPortalFreeTime } from '@/lib/portal-free-time-server';
-import { coachCancelRefusal } from '@/lib/portal-free-time';
+import { endedPortalFreeTime, runningPortalFreeTime } from '@/lib/portal-free-time-server';
+import { coachCancelEndedRefusal, coachCancelRefusal } from '@/lib/portal-free-time';
 
 export const POST = withObservability(async (req: Request) => {
   // Scope to the org the caller is acting on (multi-org owners), NOT their home org — fail closed
@@ -36,6 +36,10 @@ export const POST = withObservability(async (req: Request) => {
   if (isTeamWorkspaceOrg(ctx.org)) {
     const freeTime = await runningPortalFreeTime(ctx.org.id);
     if (freeTime) return Response.json({ error: coachCancelRefusal(freeTime.lastDay) }, { status: 409 });
+    // Once it has ended there is still no subscription: a cancel would start a retention clock and send "cancelled" for a
+    // portal nobody was ever billed for, and a later give by a Super admin would find that clock still running.
+    const ended = await endedPortalFreeTime(ctx.org.id);
+    if (ended) return Response.json({ error: coachCancelEndedRefusal(ended.lastDay) }, { status: 409 });
   }
 
   const reason = typeof body.reason === 'string' && body.reason.trim()
