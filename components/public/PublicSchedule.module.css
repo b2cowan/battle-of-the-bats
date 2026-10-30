@@ -3,7 +3,7 @@
 .controls { display: flex; flex-direction: column; gap: 10px; }
 .search { display: none; }
 .search[data-open='true'] { display: block; }
-.desktopLabel, .desktopLiveWhen, .desktopLiveContext, .inlineScore { display: none; }
+.desktopLabel, .desktopRound { display: none; }
 .controlRow { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .division { flex: 1; min-width: 0; }
 .pool { flex: 0.8; min-width: 0; }
@@ -13,7 +13,8 @@
 .track button[aria-pressed='true'], .myGames[aria-pressed='true'], .days button[aria-pressed='true'] { background: var(--club-fill); color: var(--club-on-fill); }
 .symbol { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: var(--club-ink); cursor: pointer; }
 .myGames { display: flex; gap: 6px; align-items: center; white-space: nowrap; min-height: 44px; padding: 8px 12px; border: 1px solid var(--club-field); border-radius: 24px; background: var(--club-card); color: var(--club-text); font: 600 0.875rem/1.2 var(--club-text-face); cursor: pointer; }
-.days { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 4px; }
+.days { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 4px; scrollbar-width: none; }
+.days::-webkit-scrollbar { display: none; }
 .days button { position: relative; flex: 1; min-width: 44px; min-height: 48px; padding: 6px; border: 1px solid var(--club-field); border-radius: 8px; background: var(--club-card); color: var(--club-soft); font: 600 0.875rem/1.2 var(--club-text-face); cursor: pointer; }
 .days[data-rail] button { flex: 0 0 64px; }
 .days small { display: block; margin-top: 2px; font-size: 0.75rem; font-weight: 400; white-space: nowrap; }
@@ -26,28 +27,29 @@
 .gameBlock[data-highlighted] { outline: 3px solid var(--club-edge); outline-offset: 2px; }
 .gameBlock[data-flipped] { animation: scoreFlip 1.6s ease-out; }
 @keyframes scoreFlip { 0%, 35% { box-shadow: 0 0 0 2px var(--club-edge); } 100% { box-shadow: 0 0 0 0 var(--club-ground); } }
-.gameRow { display: flex; align-items: center; gap: 2px; min-height: 60px; padding: 10px 8px 10px 14px; }
-.matchLink { display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; align-items: center; column-gap: 8px; flex: 1; min-width: 0; min-height: 44px; color: var(--club-text); text-decoration: none; }
-a.matchLink:hover .matchup { text-decoration: underline; }
-.when { font: 600 0.875rem/1.25 var(--club-text-face); font-variant-numeric: tabular-nums; }
-.when small { display: block; margin-top: 3px; color: var(--club-dim); font-size: 0.75rem; font-weight: 400; }
-.matchup { display: block; min-width: 0; font: 500 1rem/1.3 var(--club-text-face); overflow-wrap: anywhere; }
-.matchup > span { display: block; }
-.matchup > span + span { margin-top: 4px; }
-.matchNames > span { display: block; }
-.matchNames > span + span { margin-top: 4px; }
-.matchup .rowSub { color: var(--club-dim); font: 400 0.875rem/1.4 var(--club-text-face); }
-.scores { font: 700 1.25rem/1.3 var(--club-title-face); font-variant-numeric: tabular-nums; text-align: right; }
-.scores > span { display: block; }
-.scores > span + span { margin-top: 4px; }
-.gameRow[data-cancelled] .when, .gameRow[data-cancelled] .matchup { color: var(--club-dim); }
-.unofficial, .cancelledChip, .liveChip { display: inline-block; padding: 3px 6px; border-radius: 4px; font: 600 0.75rem/1.2 var(--club-text-face); }
-.unofficial { color: var(--club-warn); background: var(--club-ground); }
-.cancelledChip { color: var(--danger); background: var(--club-card); }
-.liveChip { flex: none; color: var(--club-ok); background: var(--club-ok-bg); }
-.liveCard { border-left: 3px solid var(--club-ok); }
-.liveTop { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; color: var(--club-dim); font: 500 0.875rem/1.3 var(--club-text-face); font-variant-numeric: tabular-nums; }
-.stakes { color: var(--club-warn); font-weight: 600; }
+/* Accepted compact Schedule (owner 2026-10-29): the header owns time/context/state; every team owns its score. */
+.gameRow { min-width: 0; min-height: 60px; }
+.matchLink { display: block; min-width: 0; min-height: 44px; padding: 8px 12px; color: var(--club-text); text-decoration: none; }
+a.matchLink:hover .gameName { text-decoration: underline; }
+.gameHead { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px; min-height: 36px; }
+.gameMeta { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.gameTime { font: 600 0.875rem/1.25 var(--club-text-face); font-variant-numeric: tabular-nums; }
+.gameContext { color: var(--club-dim); font: 400 0.875rem/1.25 var(--club-text-face); overflow-wrap: anywhere; }
+.gameStatus { padding: 4px 8px; border: 1px solid var(--club-line); border-radius: 20px; background: var(--club-ground); color: var(--club-soft); white-space: nowrap; font: 600 0.75rem/1.2 var(--club-text-face); }
+.gameStatus[data-state='live'] { color: var(--club-ok); background: var(--club-ok-bg); border-color: var(--club-ok-bg); }
+.gameStatus[data-state='unofficial'] { color: var(--club-warn); }
+.gameStatus[data-state='cancelled'] { color: var(--danger); }
+.gameTeams { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; min-width: 0; }
+.gameSide { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: first baseline; min-width: 0; }
+.gameName { min-width: 0; overflow-wrap: anywhere; font: 500 1rem/1.35 var(--club-text-face); }
+.gameScore { min-width: 28px; text-align: right; font: 700 1.25rem/1.08 var(--club-title-face); font-variant-numeric: tabular-nums; }
+.gameSide[data-result='win'] .gameName { font-weight: 700; }
+.gameSide[data-result='lose'] { color: var(--club-soft); }
+.matchLink[data-state='cancelled'] .gameName, .matchLink[data-state='cancelled'] .gameTime { color: var(--club-dim); }
+.gameNoScore { display: block; margin-top: 6px; color: var(--club-dim); font: 400 0.875rem/1.4 var(--club-text-face); }
+.liveCard { border: 1px solid var(--club-line); border-left: 3px solid var(--club-ok); border-radius: 8px; background: var(--club-card); color: var(--club-text); }
+.liveCard .matchLink { padding-left: 10px; }
+.stakes { display: block; margin-top: 6px; color: var(--club-warn); font: 600 0.875rem/1.4 var(--club-text-face); }
 .notice { display: flex; align-items: flex-start; gap: 8px; padding: 10px 8px 10px 14px; border: 1px solid var(--club-line); border-left: 3px solid var(--club-warn); border-radius: 8px; background: var(--club-card); font-size: 0.875rem; }
 .notice > div { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .notice p { margin: 4px 0 0; }
@@ -73,26 +75,18 @@ a.matchLink:hover .matchup { text-decoration: underline; }
   .calendarButton { width: auto; gap: 6px; padding: 0 8px; font: 600 0.875rem/1.3 var(--club-text-face); }
   .desktopLabel { display: inline; }
   .days { max-width: 560px; }
-  .matchLink { grid-template-columns: 84px minmax(0, 1fr); }
-  .matchup { display: grid; grid-template-columns: minmax(0, 1fr) minmax(100px, 180px); align-items: center; column-gap: 16px; }
-  .matchNames > span { display: inline; }
-  .matchNames > span + span { margin-top: 0; }
-  .matchNames > span + span::before { content: ' vs '; color: var(--club-dim); font-weight: 400; }
-  .gameRow[data-face='final'] .matchNames > span + span::before { content: ' · '; }
-  .matchup .rowSub { margin-top: 0; text-align: right; }
-  .inlineScore { display: inline; font-variant-numeric: tabular-nums; }
-  .scores { display: none; }
-  .liveCard { display: grid; grid-template-columns: 84px minmax(0, 1fr) minmax(100px, 180px) auto; align-items: center; gap: 8px; padding: 10px 14px; }
-  .liveTop { display: none; }
-  .desktopLiveWhen { display: block; font: 600 0.875rem/1.3 var(--club-text-face); font-variant-numeric: tabular-nums; }
-  .liveTeams { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; }
-  .liveSide { display: inline-flex; align-items: center; gap: 4px; font-size: 1rem; }
-  .liveSide + .liveSide { margin-top: 0; }
-  .liveSide > span:last-child { font-size: 1rem; }
-  .desktopLiveContext { display: block; text-align: right; color: var(--club-dim); font: 400 0.875rem/1.4 var(--club-text-face); }
-  .liveFooter { display: contents; }
-  .liveFooter > span:empty { display: none; }
-  .liveFooter > .stakes { grid-row: 2; grid-column: 2 / 4; font-size: 0.875rem; }
-  .liveFooter > a { grid-column: 4; grid-row: 1; }
+  .matchLink { display: grid; grid-template-columns: 84px minmax(0, 1fr) minmax(100px, 180px) auto; align-items: center; gap: 8px 16px; min-height: 60px; padding: 10px 14px; }
+  .gameHead, .gameMeta { display: contents; }
+  .gameTime { grid-column: 1; grid-row: 1; }
+  .desktopRound { display: block; margin-top: 3px; color: var(--club-dim); font-size: 0.75rem; font-weight: 400; }
+  .phoneRound { display: none; }
+  .gameContext { grid-column: 3; grid-row: 1; text-align: right; }
+  .gameStatus { grid-column: 4; grid-row: 1; align-self: center; }
+  .gameTeams { grid-column: 2; grid-row: 1; flex-direction: row; flex-wrap: wrap; gap: 4px 12px; margin-top: 0; }
+  .gameSide { display: inline-flex; align-items: baseline; gap: 4px; }
+  .gameSide + .gameSide::before { content: ' vs '; color: var(--club-dim); font-weight: 400; }
+  .gameTeams:has(.gameScore) .gameSide + .gameSide::before { content: ' · '; }
+  .gameScore { min-width: 0; font-size: 1rem; }
+  .gameNoScore, .stakes { grid-column: 2 / -1; margin-top: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .gameBlock[data-flipped] { animation: none; } }

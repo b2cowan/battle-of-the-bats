@@ -86,6 +86,23 @@ export default function TournamentTopTabs({ basePath, hiddenPages, fixed, hasBra
     scroller.scrollTo({ left: Math.max(0, target), behavior: 'auto' });
   }, [pathname, visibleTabsKey]);
 
+  // The frame's row fades at its right edge while more tabs are off screen (`data-more`, read by TournamentFrame.module.css).
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (skin !== 'frame' || !scroller) return;
+    const update = () => {
+      if (scroller.scrollWidth - scroller.clientWidth - scroller.scrollLeft > 1) scroller.dataset.more = '';
+      else delete scroller.dataset.more;
+    };
+    update();
+    scroller.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    return () => {
+      scroller.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
+  }, [skin, pathname, visibleTabsKey]);
+
   // Live: derive homeHref from route params. Preview: an explicit basePath keeps links in-preview.
   const homeHref = basePath ?? (orgSlug && tournamentSlug ? `/${orgSlug}/${tournamentSlug}` : null);
   if (!homeHref) return null;

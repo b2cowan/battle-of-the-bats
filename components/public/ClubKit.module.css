@@ -94,6 +94,12 @@
   background: var(--club-ground);
   border-color: var(--club-line-2);
 }
+/* Waiting on someone (a postponed game): the club notice's amber, tinted. */
+.chipWarn {
+  color: var(--club-warn);
+  background: rgba(138, 83, 0, 0.08); /* token-exempt: --club-warn at 8%, as the admin chip tints its tone */
+  border-color: rgba(138, 83, 0, 0.3); /* token-exempt: --club-warn at 30% */
+}
 .chipRow {
   display: flex;
   align-items: center;

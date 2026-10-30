@@ -3,14 +3,14 @@
    44 px white line with a hairline, the state word, then the two teams and the score. It renders only under the frame, so
    it reads the club's token block (ClubFrame.module.css `.tokens`) and the organizer's colour roles directly. */
 .line {
-  position: sticky;
-  /* In the page's flow under the band, pinned under the frame's tab row (--frame-pin-h, 0 at a desk). */
-  top: calc(var(--desktop-strip-h, 0px) + var(--sandbox-chrome-h, 0px) + var(--frame-pin-h, 0px));
-  z-index: 89; /* under the pinned tab row (90) */
-  /* 44 px of tap height for the game and the ×, plus the hairline (45 px in all: --ticker-h in the component). */
+  /* In the page's flow under the band and the tab row, and it scrolls away with the page: only the tab row pins (owner
+     ruling, band crowding — the line pinned under the tabs cost 45 px of every page it showed on). */
+  /* 44 px of tap height for the game and the ×, between two hairlines. */
   display: flex;
   align-items: stretch;
-  background: var(--club-card);
+  /* The page's ground, not the white of the tab row above it: navigation is white, today's games are part of the page. */
+  background: var(--club-ground);
+  border-top: 1px solid var(--club-line);
   border-bottom: 1px solid var(--club-line);
 }
 
@@ -27,7 +27,7 @@
   font-variant-numeric: tabular-nums;
   text-decoration: none;
   white-space: nowrap;
-  transition: opacity 0.4s ease; /* FADE_MS in the component */
+  transition: opacity 0.8s ease; /* FADE_MS in the component */
 }
 .out { opacity: 0; }
 
@@ -88,6 +88,9 @@
   color: var(--club-text);
   font: var(--club-title-weight) 16px/1 var(--club-title-face);
   font-variant-numeric: tabular-nums;
+  /* The tall condensed headline face sits its numerals a hair low against the 13 px body text when both are centred. */
+  position: relative;
+  top: -1px;
 }
 .vs { flex: none; color: var(--club-dim); }
 
@@ -99,7 +102,7 @@
   place-items: center;
   border: 0;
   border-left: 1px solid var(--club-line);
-  background: var(--club-card);
+  background: transparent;
   color: var(--club-soft);
   cursor: pointer;
 }

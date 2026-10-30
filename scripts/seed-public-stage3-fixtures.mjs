@@ -1,7 +1,8 @@
 /** Stage 3 layout fixtures, DEV only. Reversible changes to the existing marked Lakeshore fixture, never the demo.
  * node --env-file=.env.local scripts/seed-public-stage3-fixtures.mjs prepare | show | undo
  * After prepare: score | final | unofficial | cancelled | no-score | soon (the same semifinal; every write reads back).
- * prepare: seven pool-play dates + one scored live playoff game. show is the read-back; undo restores the saved rows.
+ * prepare: seven pool-play dates + one scored live playoff game; the final moves to three hours after it (a final never
+ * starts before the semifinals that feed it). show is the read-back; undo restores the saved rows.
  */
 import { createClient } from '@supabase/supabase-js';
 import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync } from 'node:fs';
@@ -27,6 +28,24 @@ const localDate = instant => new Intl.DateTimeFormat('en-CA', { timeZone: 'Ameri
 const today = localDate(new Date());
 const addDays = n => { const d = new Date(`${today}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return localDate(d); };
 const savedGame = g => Object.fromEntries(columns.split(',').map(k => [k, g[k]]));
+const stamp = instant => new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Toronto', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(instant);
+// The final waits on the semifinals, so it moves with them: three hours after the semifinal this run puts at `instant`.
+const finalGame = games.find(g => g.is_playoff && g.bracket_code === 'FIN');
+function saveFinal() {
+  const saved = JSON.parse(readFileSync(backup, 'utf8'));
+  if (!finalGame || saved.games.some(g => g.id === finalGame.id)) return;
+  saved.games.push(savedGame(finalGame));
+  writeFileSync(backup, JSON.stringify(saved, null, 2));
+}
+async function moveFinalAfterSemifinals(instant) {
+  if (!finalGame) return;
+  const later = new Date(instant.getTime() + 3 * 60 * 60_000);
+  await write(db.from('games').update({ game_date: localDate(later), game_time: stamp(later) }).eq('id', finalGame.id).eq('tournament_id', tournament.id));
+  const playoffs = (await read(db.from('games').select('game_date,game_time,bracket_code').eq('tournament_id', tournament.id).eq('is_playoff', true)));
+  const at = g => `${g.game_date} ${g.game_time?.slice(0, 5)}`;
+  const final = playoffs.find(g => g.bracket_code === 'FIN');
+  for (const sf of playoffs.filter(g => /^SF/.test(g.bracket_code ?? ''))) assert.ok(at(sf) < at(final), `${sf.bracket_code} (${at(sf)}) must start before the final (${at(final)})`);
+}
 
 if (mode === 'prepare') {
   if (pool.length !== 7 || !live) throw new Error('Seed the public-frame fixtures first: seven pool games and a named semifinal are required.');
@@ -41,9 +60,11 @@ if (mode === 'prepare') {
   for (let i = 0; i < pool.length; i++) {
     await write(db.from('games').update({ game_date: addDays(i - 3) }).eq('id', pool[i].id).eq('tournament_id', tournament.id));
   }
+  saveFinal();
   const started = new Date(Date.now() - 10 * 60_000);
-  const time = new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Toronto', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(started);
+  const time = stamp(started);
   await write(db.from('games').update({ game_date: localDate(started), game_time: time, status: 'scheduled', home_score: 3, away_score: 2 }).eq('id', live.id).eq('tournament_id', tournament.id));
+  await moveFinalAfterSemifinals(started);
   games = await read(db.from('games').select(`${columns},is_playoff`).eq('tournament_id', tournament.id));
   for (let i = 0; i < pool.length; i++) assert.equal(games.find(g => g.id === pool[i].id)?.game_date, addDays(i - 3));
   assert.equal(games.find(g => g.id === live.id)?.home_score, 3);
@@ -55,12 +76,14 @@ if (mode === 'prepare') {
   const instant = new Date(Date.now() + offset * 60_000);
   const fields = {
     game_date: localDate(instant),
-    game_time: new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Toronto', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(instant),
+    game_time: stamp(instant),
     status: mode === 'final' ? 'completed' : mode === 'unofficial' ? 'submitted' : mode === 'cancelled' ? 'cancelled' : 'scheduled',
     home_score: mode === 'no-score' || mode === 'soon' ? null : 4,
     away_score: mode === 'no-score' || mode === 'soon' ? null : 2,
   };
+  saveFinal();
   await write(db.from('games').update(fields).eq('id', saved.liveGameId).eq('tournament_id', tournament.id));
+  await moveFinalAfterSemifinals(instant);
   const result = await read(db.from('games').select(columns).eq('id', saved.liveGameId).single());
   for (const [key, value] of Object.entries(fields)) assert.equal(key === 'game_time' ? result[key]?.slice(0, 5) : result[key], value);
   games = await read(db.from('games').select(`${columns},is_playoff`).eq('tournament_id', tournament.id));

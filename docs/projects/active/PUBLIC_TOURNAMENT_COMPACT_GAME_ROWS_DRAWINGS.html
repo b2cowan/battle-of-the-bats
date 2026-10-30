@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compact tournament games — proposal</title>
+<style>
+  :root { color-scheme: light; --club-ground:#F6F5F2; --club-card:#fff; --club-text:#1F1B16; --club-soft:#4E473D; --club-dim:#6F675B; --club-line:#E4E0D8; --club-field:#948B7D; --club-fill:#F2C94C; --club-on-fill:#1F1B16; --club-ink:#76600B; --club-edge:#76600B; --club-ok:#2C6A2A; --club-ok-bg:#E6F0E2; --club-warn:#8A5300; --danger:#B03A22; --club-text-face:Inter,Arial,sans-serif; --club-title-face:'Barlow Condensed','Arial Narrow',Arial,sans-serif; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#edf0f3; color:var(--club-text); font:16px/1.5 var(--club-text-face); }
+  main { max-width:1120px; margin:auto; padding:32px 24px 48px; }
+  .eyebrow { margin:0 0 8px; color:var(--club-dim); font-size:12px; letter-spacing:.08em; font-weight:700; text-transform:uppercase; }
+  h1 { margin:0 0 12px; font-size:clamp(26px,4vw,38px); letter-spacing:-.035em; line-height:1.1; }
+  .intro { max-width:760px; margin:0 0 24px; color:var(--club-soft); }
+  .tools { display:flex; gap:16px; flex-wrap:wrap; align-items:center; margin-bottom:22px; }
+  .tools label { display:flex; align-items:center; gap:8px; font-size:14px; }
+  select { min-height:44px; padding:8px 12px; border:1px solid var(--club-field); border-radius:8px; background:white; font:inherit; }
+  .layout { display:grid; grid-template-columns:max-content minmax(0,1fr); gap:36px; align-items:start; }
+  .phone { width:390px; height:740px; border:1px solid var(--club-field); border-radius:12px; background:var(--club-ground); overflow:auto; position:relative; box-shadow:0 14px 40px #19202c12; scrollbar-width:thin; }
+  .tabs { display:flex; align-items:center; gap:22px; min-height:48px; padding:0 16px; background:white; border-bottom:1px solid var(--club-line); overflow:hidden; white-space:nowrap; position:sticky; top:0; z-index:2; font:600 16px/1 var(--club-text-face); }
+  .tabs span { display:flex; align-items:center; min-height:48px; }
+  .tabs .chosen { border-bottom:3px solid var(--club-ink); }
+  .days { display:flex; gap:6px; padding:16px 16px 12px; overflow:hidden; }
+  .day { flex:0 0 62px; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:48px; border:1px solid var(--club-field); border-radius:8px; font:600 14px/1.2 var(--club-text-face); background:white; }
+  .day small { font-size:12px; font-weight:400; margin-top:3px; }
+  .day.chosen { background:var(--club-fill); color:var(--club-on-fill); }
+  .games { padding:4px 16px 20px; }
+  .group { border:1px solid var(--club-line); border-radius:8px; background:var(--club-card); }
+  .game { position:relative; min-width:0; }
+  .game + .game { border-top:1px solid var(--club-line); }
+  .gameLink { display:block; padding:8px 12px; color:var(--club-text); text-decoration:none; }
+  .gameLink:focus-visible { outline:2px solid var(--club-edge); outline-offset:-2px; border-radius:6px; }
+  .head { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:8px; min-height:36px; }
+  .metadata { display:flex; flex-direction:column; gap:1px; }
+  .time { font:600 14px/1.25 var(--club-text-face); font-variant-numeric:tabular-nums; }
+  .context { color:var(--club-dim); font:400 14px/1.25 var(--club-text-face); overflow-wrap:anywhere; }
+  .teams { display:flex; flex-direction:column; gap:4px; margin-top:4px; }
+  /* One team + its score occupy ONE grid row. A wrapped name can never shift the other team's score. */
+  .teamLine { display:grid; grid-template-columns:minmax(0,1fr) 28px; column-gap:8px; align-items:first baseline; }
+  .teamLine.unscored { grid-template-columns:minmax(0,1fr); }
+  .name { min-width:0; overflow-wrap:anywhere; font:500 16px/1.35 var(--club-text-face); }
+  .score { text-align:right; font:700 20px/1.08 var(--club-title-face); font-variant-numeric:tabular-nums; }
+  .winner .name { font-weight:700; }
+  .loser { color:var(--club-soft); }
+  .game.live { box-shadow:inset 3px 0 var(--club-ok); }
+  .status { padding:4px 8px; border:1px solid var(--club-line); border-radius:20px; color:var(--club-soft); background:var(--club-ground); white-space:nowrap; font:600 12px/1.2 var(--club-text-face); }
+  .status.liveWord { color:var(--club-ok); background:var(--club-ok-bg); border-color:var(--club-ok-bg); }
+  .status.unofficial { color:var(--club-warn); }
+  .status.cancelled { color:var(--danger); }
+  .game.cancelled .name, .game.cancelled .time { color:var(--club-dim); }
+  .noScore { margin:6px 0 0; color:var(--club-dim); font-size:14px; }
+  .phoneNote { max-width:390px; margin:12px 0 0; font-size:13px; color:var(--club-soft); }
+  aside { padding-top:2px; max-width:520px; }
+  aside h2 { font-size:21px; line-height:1.25; letter-spacing:-.02em; margin:0 0 12px; }
+  .point { padding:16px 0; border-top:1px solid #d4dae0; }
+  .point b { display:block; margin-bottom:4px; font-size:16px; }
+  .point p { margin:0; color:var(--club-soft); font-size:14px; }
+  .size { margin:16px 0; padding:16px; border:1px solid #cbd3d9; border-radius:8px; background:#ffffffb3; }
+  .size strong { display:block; font-size:26px; line-height:1.2; }
+  .size p { margin:4px 0 0; color:var(--club-soft); font-size:14px; }
+  .note { color:var(--club-soft); font-size:13px; }
+  dialog { border:1px solid var(--club-field); border-radius:12px; max-width:min(440px,calc(100vw - 32px)); background:var(--club-card); color:var(--club-text); padding:20px; }
+  dialog::backdrop { background:#1f1b1655; }
+  dialog h2 { margin:0 0 12px; font-size:20px; }
+  dialog p { white-space:pre-line; }
+  dialog button { min-height:44px; padding:8px 16px; border:1px solid var(--club-field); border-radius:8px; background:var(--club-ground); color:var(--club-text); font:600 14px var(--club-text-face); cursor:pointer; }
+  @media(max-width:860px) { .layout { grid-template-columns:1fr; gap:24px; } main { padding:24px 12px; } .preview { overflow:auto; padding-bottom:8px; } aside { max-width:600px; } }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">Public tournament Schedule · proposed refinement · 2026-10-29</p>
+  <h1>Give the teams the width.</h1>
+  <p class="intro">Time above division and pool, with the game’s state at the top right. Every score belongs to its own team line. Open the game for its location and Directions. Full team names and 16 px type stay.</p>
+  <div class="tools">
+    <label>Phone width <select id="width"><option value="390">390 px</option><option value="360">360 px</option></select></label>
+    <label>Examples <select id="examples"><option value="results">The screenshot’s results</option><option value="states">Live, upcoming and other states</option><option value="long">Long names — alignment test</option></select></label>
+  </div>
+  <div class="layout">
+    <div class="preview">
+      <div class="phone" id="phone" aria-label="Proposed Schedule at the same scrolled position as the screenshot">
+        <div class="tabs"><span>Overview</span><span>News</span><span class="chosen">Schedule</span><span>Standings</span><span>Playoffs</span></div>
+        <div class="days"><div class="day">Mon<small>Oct 26</small></div><div class="day">Tue<small>Oct 27</small></div><div class="day chosen">Wed<small>Oct 28</small></div><div class="day">Today<small>Oct 29</small></div><div class="day">Fri<small>Oct 30</small></div></div>
+        <div class="games"><div class="group" id="games"></div></div>
+      </div>
+      <p class="phoneNote">True-size scrolled view, matching the position in your screenshot. The tournament band and controls are above this position. Tap a matchup to see its location and full names.</p>
+    </div>
+    <aside>
+      <h2>One compact game. Two reliable score lines.</h2>
+      <div class="point"><b>Time above division and pool.</b><p>The current 84 px gutter moves into a compact header. Division and pool sit underneath the time; the names get the full width below.</p></div>
+      <div class="point"><b>The score moves with its team.</b><p>Each name and score share one row. When a name needs two lines, its score stays on that name’s first baseline; the next pair starts underneath.</p></div>
+      <div class="point"><b>Location is on the game page.</b><p>The list has no field, address or map button. Opening the game shows where it is and provides Directions. The entire row remains a generous tap target.</p></div>
+      <div class="point"><b>One corner for the game’s state.</b><p>Final, Live now, Unofficial and Cancelled share the top-right position. These are labels, so they do not need the map button’s 44 px control height. Full team names remain below.</p></div>
+      <div class="size"><strong id="height">Compact game rows</strong><p id="measure">Long names can grow naturally without separating teams from their scores.</p></div>
+      <p class="note">This is a drawing, not an app change. It keeps the existing colours, state words and access rules. No smaller body text, hidden coach suffixes, clipped names or new density toggle. Font fallback may differ from the app.</p>
+    </aside>
+  </div>
+</main>
+<dialog id="detail"><h2 id="detailTitle">Game details</h2><p id="detailText"></p><button type="button" id="close">Close</button></dialog>
+<script>
+const examples = {
+  results: [
+    { time:'9:00 a.m.', division:'U11', field:'diamond #2', state:'Final', pool:'Pool A', names:['Halton Hawks U11 Jr (Johnstone)','Milton Bats U11 Purple (Jackson)'], scores:[6,3] },
+    { time:'12:30 p.m.', division:'U11', field:'diamond #1', state:'Final', names:['Lions U11','Milton Bats U11 Purple (Jackson)'], scores:[5,4] },
+    { time:'1:00 p.m.', division:'U13', field:'Location TBD', state:'Final', names:['Hawks U13','Bears U13'], scores:[6,3] },
+    { time:'2:00 p.m.', division:'U11', field:'diamond #2', state:'Final', pool:'Pool A', names:['Halton Hawks U11 Jr (Johnstone)','Lions U11'], scores:[8,5] },
+    { time:'3:30 p.m.', division:'U13', field:'diamond #3', state:'Final', names:['Bears U13','Hawks U13'], scores:[7,4] },
+    { time:'5:00 p.m.', division:'U11', field:'diamond #1', state:'Final', names:['Lions U11','Milton Bats U11 Purple (Jackson)'], scores:[4,2] }
+  ],
+  states: [
+    { time:'11:30 a.m.', division:'U11', field:'diamond #2', state:'Live now', names:['Halton Hawks U11 Jr (Johnstone)','Milton Bats U11 Purple (Jackson)'], scores:[3,2] },
+    { time:'11:30 a.m.', division:'U13', field:'diamond #3', state:'Live now', names:['Hawks U13','Bears U13'] },
+    { time:'12:30 p.m.', division:'U11', field:'diamond #1', names:['Lions U11','Milton Bats U11 Purple (Jackson)'] },
+    { time:'9:00 a.m.', division:'U11', field:'diamond #2', state:'Unofficial', pool:'Pool A', names:['Halton Hawks U11 Jr (Johnstone)','Lions U11'], scores:[6,3] },
+    { time:'1:00 p.m.', division:'U13', field:'diamond #3', state:'Cancelled', names:['Hawks U13','Bears U13'] }
+  ],
+  long: [
+    { time:'9:00 a.m.', division:'U11', field:'diamond #2', state:'Final', pool:'Pool A', names:['Halton Hawks U11 Jr (Johnstone)','Milton Bats U11 Purple (Jackson)'], scores:[16,13] },
+    { time:'12:00 p.m.', division:'U13', field:'diamond #3', state:'Unofficial', names:['Hamilton-Wentworth Girls Fastpitch U13 Navy (McAllister)','Milton Bats U13 Purple (Jackson)'], scores:[12,9] },
+    { time:'1:30 p.m.', division:'U13', field:'diamond #1', state:'Final', names:['Bears U13','Hamilton-Wentworth Girls Fastpitch U13 Navy (McAllister)'], scores:[11,10] }
+  ]
+};
+const escapeHtml = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dialog = document.getElementById('detail');
+function show(title, text) { document.getElementById('detailTitle').textContent=title; document.getElementById('detailText').textContent=text; dialog.showModal(); }
+function render() {
+  const games = examples[document.getElementById('examples').value];
+  document.getElementById('games').innerHTML = games.map((g, index) => {
+    const scored = g.state!=='Cancelled' && Array.isArray(g.scores);
+    const live = g.state==='Live now';
+    const stateClass = live ? 'liveWord' : g.state==='Unofficial' ? 'unofficial' : g.state==='Cancelled' ? 'cancelled' : '';
+    const context = [escapeHtml(g.division), g.pool ? escapeHtml(g.pool) : ''].filter(Boolean).join(' · ');
+    const sides = g.names.map((name, i) => {
+      const ahead = scored && g.scores[i]>g.scores[1-i];
+      const behind = scored && g.scores[i]<g.scores[1-i];
+      return `<div class="teamLine ${scored ? '' : 'unscored'} ${ahead ? 'winner' : behind ? 'loser' : ''}"><span class="name">${escapeHtml(name)}</span>${scored ? `<span class="score">${g.scores[i]}</span>` : ''}</div>`;
+    }).join('');
+    return `<article class="game ${live ? 'live' : ''} ${g.state==='Cancelled' ? 'cancelled' : ''}"><a class="gameLink" href="#game-${index}" data-game="${index}"><div class="head"><div class="metadata"><div class="time">${escapeHtml(g.time)}</div><div class="context">${context}</div></div>${g.state ? `<span class="status ${stateClass}">${escapeHtml(g.state)}</span>` : ''}</div><div class="teams">${sides}</div>${live && !scored ? '<p class="noScore">No score yet</p>' : ''}</a></article>`;
+  }).join('');
+  document.querySelectorAll('[data-game]').forEach(link => link.addEventListener('click', event => { event.preventDefault(); const g=games[Number(link.dataset.game)]; show('Game details',g.time+'\n'+g.field+'\n'+[g.division,g.pool,g.state].filter(Boolean).join(' · ')+'\n\n'+g.names.map((n,i)=>`${n}${g.scores && g.state!=='Cancelled' ? ' — '+g.scores[i] : ''}`).join('\n\n')); }));
+  requestAnimationFrame(() => {
+    const rows=[...document.querySelectorAll('.game')];
+    const heights=rows.map(row=>Math.round(row.getBoundingClientRect().height));
+    document.getElementById('height').textContent=`${Math.min(...heights)}–${Math.max(...heights)} px in this sketch`;
+    const box=document.getElementById('phone').getBoundingClientRect();
+    const visible=rows.filter(row=>row.getBoundingClientRect().bottom<=box.bottom).length;
+    document.getElementById('measure').textContent=`${visible} complete sample games fit at this scroll position. Wraps add height only to the team that needs it. These are prototype measurements, not app measurements.`;
+  });
+}
+document.getElementById('width').addEventListener('change',event=>{ document.getElementById('phone').style.width=event.target.value+'px'; render(); });
+document.getElementById('examples').addEventListener('change',()=>{ document.getElementById('phone').scrollTop=0; render(); });
+document.getElementById('close').addEventListener('click',()=>dialog.close());
+render();
+</script>
+</body>
+</html>

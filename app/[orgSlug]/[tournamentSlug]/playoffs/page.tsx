@@ -10,7 +10,7 @@ import {
   getDivisions,
   getVenues,
 } from '@/lib/db';
-import { toPublicTeam } from '@/lib/public-tournament-data';
+import { getPublicTournamentPageData, toPublicTeam } from '@/lib/public-tournament-data';
 import { getPublicStandingsByDivision, onlyPublishedGames } from '@/lib/public-games';
 import { resolveGameVenueLabel } from '@/lib/venue-label';
 import { buildPlayoffPicture, type PlayoffStatCallout } from '@/lib/playoff-picture';
@@ -23,6 +23,8 @@ import styles from '@/components/public/PlayoffPicture.module.css';
 // Canonical soft LIVE chip — same classes the schedule + game-detail pages use.
 import liveStyles from '@/app/[orgSlug]/schedule/schedule.module.css';
 import { orgLinks } from '@/lib/org-links';
+import { isPublicFrameOn } from '@/lib/public-frame-server';
+import PublicPlayoffs from '@/components/public/PublicPlayoffs';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +49,12 @@ export default async function PlayoffsPage({
 }) {
   const { orgSlug, tournamentSlug } = await params;
   await forwardToOwnAddress(orgSlug, `/${tournamentSlug}/playoffs`);
+  const frameOn = await isPublicFrameOn();
+  if (frameOn) {
+    const initialData = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'playoffs');
+    if (!initialData?.tournament) notFound();
+    return <PublicPlayoffs orgSlug={orgSlug} tournamentSlug={tournamentSlug} initialData={initialData} initialNow={new Date().toISOString()} />;
+  }
   const org = await getOrganizationBySlug(orgSlug);
   if (!org || org.subscriptionStatus === 'canceled') notFound();
   const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
@@ -128,7 +136,7 @@ export default async function PlayoffsPage({
     .map(d => (d.seeds[0] ? `${d.divisionName}: ${d.seeds[0].teamName} #1 seed` : d.divisionName))
     .join(' · ');
 
-  return (
+  const legacyBody = (
     <div className="page-content">
       {/* Hero — desktop/tablet only. On the mobile LIVE shell the unified event header
           (G3) already owns identity, so this poster would replay Home's headline one tap
@@ -313,4 +321,5 @@ export default async function PlayoffsPage({
       </div>
     </div>
   );
+  return legacyBody;
 }

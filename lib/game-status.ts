@@ -105,6 +105,16 @@ export function publicGameStatus(
   return 'upcoming';
 }
 
+/** `publicGameStatus` with the game's own length (or the platform's one booking length) — the call every frame-on
+ *  surface makes, so none of them repeats the fallback. */
+export function publicGameState(
+  game: LiveGameInput & { durationMinutes?: number | null },
+  requireFinalization: boolean,
+  now: Date = new Date(),
+): PublicGameState {
+  return publicGameStatus(game, game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES, requireFinalization, now);
+}
+
 /** Fan-language label for a public game state — no organizer workflow vocabulary
  *  ("pending", "awaiting finals", "score review") ever reaches a fan (J6-007). */
 export function publicGameStatusLabel(state: PublicGameState): string {

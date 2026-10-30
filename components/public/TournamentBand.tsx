@@ -7,7 +7,8 @@
  *
  * Built from the club bar's own parts (ClubBar, OrgSectionTabs, ClubFrame.module.css), so a club and its tournament read
  * as one product: a 72 px band in the organizer's colour, the logo at 44 px (or initials — none on a plan without
- * tournament branding), the event's name in the title face over at most two lines, one line of dates and the state chip;
+ * tournament branding), the event's name in the title face over at most two lines, one line of dates and the state word
+ * (plain text after the dates, no pill);
  * at the right Share, the visitor's own door ("Sign in", or Account), and the operator door (the Flip amendment, on the
  * bar's neutral tokens). Under it the white tab row with the accent rule, which pins on a phone while the band scrolls
  * away (the club bar's sticky rule, keyed to `.tabsSlot`).
@@ -92,6 +93,7 @@ export default function TournamentBand({
           {(dates || status) && (
             <span className={styles.meta}>
               {dates && <span className={styles.dates}>{dates}</span>}
+              {dates && status && <span className={styles.sep} aria-hidden="true">·</span>}
               {status && (
                 <span className={styles.chip} data-live={status.live ? '' : undefined}>{status.word}</span>
               )}

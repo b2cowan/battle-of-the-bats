@@ -1,5 +1,6 @@
 import { forwardToOwnAddress } from '@/lib/club-forward';
 import StandingsPageClient from './StandingsPageClient';
+import { isPublicFrameOn } from '@/lib/public-frame-server';
 
 /**
  * The tournament's standings. The page itself is a client component (./StandingsPageClient); this server page exists so a club
@@ -8,5 +9,6 @@ import StandingsPageClient from './StandingsPageClient';
 export default async function StandingsPage({ params }: { params: Promise<{ orgSlug: string; tournamentSlug: string }> }) {
   const { orgSlug, tournamentSlug } = await params;
   await forwardToOwnAddress(orgSlug, `/${tournamentSlug}/standings`);
-  return <StandingsPageClient />;
+  const frameOn = await isPublicFrameOn();
+  return <StandingsPageClient frameOn={frameOn} />;
 }

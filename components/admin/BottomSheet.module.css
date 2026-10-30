@@ -34,6 +34,31 @@
   animation: bottomSheetUp 0.22s var(--ease-spring);
 }
 
+/* Under the public tournament pages' light frame (the sheet is attached inside the frame — BottomSheet.tsx): the frame's
+   rules for a floating panel — no shadow, the club's strong hairline — and its buttons, which the frame styles only inside
+   the page shell (TournamentFrame.module.css), not inside a sheet. */
+:global([data-public-frame='light']) .sheet {
+  box-shadow: none;
+  border-color: var(--club-line-2);
+}
+:global([data-public-frame='light']) .sheet :global(.btn-lime) {
+  background: var(--club-fill);
+  border-color: var(--club-fill);
+  color: var(--club-on-fill);
+}
+:global([data-public-frame='light']) .sheet :global(.btn-lime):hover:where(:not(:disabled)) {
+  background: var(--club-fill);
+  opacity: 0.88;
+}
+:global([data-public-frame='light']) .sheet :global(.btn-ghost) {
+  background: var(--club-card);
+  border-color: var(--club-line-2);
+  color: var(--club-text);
+}
+:global([data-public-frame='light']) .sheet :global(.btn-ghost):hover:where(:not(:disabled)) {
+  background: var(--club-ground);
+}
+
 @keyframes bottomSheetUp {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }

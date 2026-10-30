@@ -7,6 +7,34 @@
 > **Everything here is built behind the preview switch**: with it off, customers and the public demo see today's Schedule
 > and game page, unchanged. Stage 8 turns it on for everyone, once.
 
+## Compact Schedule amendment — owner approved 2026-10-29
+
+After reviewing the built list and `PUBLIC_TOURNAMENT_COMPACT_GAME_ROWS_DRAWINGS.html`, the owner approved the revised
+mockup and asked to build it. **This amends the Schedule row, location and status-position instructions below.**
+The preview Schedule now puts time top left, division/pool (and the playoff round) underneath, and Final / Live now /
+Unofficial / Cancelled top right. Each full-width team line owns its score on the first baseline, including wrapped
+names. Keep full names and 16 px type. Location and map actions leave the entire Schedule list at every width; opening
+a game supplies both. The desktop keeps its one-line arrangement. Regular and live games use the same `ScheduleMatchup`
+presenter in `PublicGameRow.tsx`; live retains the green edge, scoreless live games say No score yet once, and the title
+game retains its stakes foot. The Overview, game-page Directions, admin-preview lack of links and switch-off body
+retain their existing behaviour. The updated §426 walk reflects this recipe; recheck its changed row steps rather
+than treating old ticks as a pass on the new layout.
+
+**Validation (2026-10-29):** focused lint, full typecheck and 98 focused unit/render/guard tests pass. The render tests
+use the real TSX, pin long names and two-digit scores to the same parent row, preserve all four status words and No
+score yet, and confirm that the Overview still has its own Directions while preview rows have no destinations.
+Public token, CSS purity, spelling, public lettering, palette and text contrast checks pass. The existing Schedule
+layout gate passed the regular/live/many-day/playoff screens at 361, 390 and 1280 px: 12 pairs, zero findings, no baseline
+change. A focused geometry check at 360/390 temporarily lengthened a team name in the browser only: it wrapped onto two
+lines, its score stayed on the first line, and the row was 131 px; neither width had horizontal overflow or any Schedule
+map link. The ordinary 107–108 px figure above remains the prototype measurement, not a claimed app measurement.
+The real 30-second refresh hooks were exercised with accelerated browser timers: a score edit updated the compact
+Schedule, an unchanged poll skipped the game-page refresh, Final moved into Earlier today once without duplicate ids,
+and a finished-game deep link opened its fold. The guarded Lakeshore fixture was read back after writes and left
+prepared/live. The dev server was restarted for shared/new files; the required platform-admin login returned HTTP 200
+and the fresh log showed no Supabase EACCES errors. This is type-aware/focused validation; the owner visual walk remains
+separate. The original ScheduleContent and the game page's location/Directions implementation have no changes here.
+
 ## What Stage 3 is (one paragraph, so every part shares it)
 
 The Schedule stops being a stack of five controls above a long list and becomes what the drawing shows: **two control
@@ -484,9 +512,10 @@ division-wide `.ics` would be new). Emails and link previews.
 **Committed `5f2e3a81a` 2026-10-29** (25 files: Part 3 + the Part 4 fixes; the working copy also holds other sessions'
 hunks — `TodaysResultsLine.*`, `TournamentBand.tsx`, `TournamentFrame.module.css`, `TournamentTopTabs.tsx`, `ClubFrame`/
 `ClubKit`/`MyTeamCard` CSS, the ticker-fade edit in `public-tournament-stage1-frame-guard.test.ts`, the One Window files,
-the band-crowding mockup — never stage those). **Order of work left:** (1) the QA walk, next free § in
-`OWNER_QA_LEDGER.md` (§425 was the last seen; grep again). (2) records: the ledger entry; the plan §9 row and TODO line
-already carry `5f2e3a81a` and say the walk is next — add the walk's § and, once the owner has walked it, the result.
+the band-crowding mockup — never stage those). **Walk written 2026-10-29 as §426**
+(https://claude.ai/artifact/AsXYKM4Zn7SaquC4UtEo3F, source `PUBLIC_TOURNAMENT_STAGE3_WALK.html`, 75 steps in 13 parts); the
+ledger entry, the plan §9 row and the TODO line carry it. **Walked ✅ 74/75 on 2026-10-29 and recorded in all three** (no
+defect; A11, L1, L2 optional skipped; E1 stop check unticked). The fixture is left prepared (the semifinal in play, 3–2).
 
 **`/simplify` applied:** one `requireFinalization` prop on the refresher (unset = today's score/status-only signature; the
 guard test pins both branches); one `gameDirections` helper shared by the Schedule and the game page; one face-signature

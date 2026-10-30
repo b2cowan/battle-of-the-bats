@@ -12,16 +12,15 @@ import { gameStartMs, publicGameState } from '@/lib/game-status';
 import { computePlacementStandings } from '@/lib/playoff-standings';
 import { hasPlayoffs, hasRoundRobin } from '@/lib/tournament-phase';
 import { isPublicPageEnabled } from '@/lib/public-pages';
+import { hasPublicPlayoffBracket } from '@/lib/public-playoffs';
 import { getRegistrationState } from '@/lib/registration-state';
-import { resolveGameFieldLabel } from '@/lib/venue-label';
 import { fanPlaceholder, gameRowView, gameSideNames, liveCardView } from '@/lib/public-game-row';
-import { gameDirections, getPlayoffStakes, publicGameRound } from '@/lib/public-game-detail';
-import { changedScheduleGameIds, divisionPools, groupPoolPlayoffs, scheduleGames, scheduleInitialSelection, scheduleLandingDay, SCHEDULE_BRACKET_DOOR, splitEarlierToday, visibleScheduleGames, type ScheduleStage } from '@/lib/public-schedule';
+import { getPlayoffStakes, publicGameRound } from '@/lib/public-game-detail';
+import { changedScheduleGameIds, divisionPools, groupPoolPlayoffs, scheduleGames, scheduleInitialSelection, scheduleLandingDay, SCHEDULE_BRACKET_DOOR, visibleScheduleGames, type ScheduleStage } from '@/lib/public-schedule';
 import { downloadTeamScheduleICS } from '@/lib/team-calendar';
 import { useOrgHref } from '@/lib/use-public-pathname';
 import { formatTime } from '@/lib/utils';
 import PublicDoorRow from './PublicDoorRow';
-import PublicDisclosure from './PublicDisclosure';
 import { PublicGameRow } from './PublicGameRow';
 import PublicLiveCard from './PublicLiveCard';
 import PublicSectionHead from './PublicSectionHead';
@@ -156,7 +155,7 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
 
   if (failed) return <div className={styles.schedule}><div className={styles.state} role="alert">The schedule could not be loaded. Please refresh to try again.</div></div>;
   if (!data || !clock) return <div className={styles.schedule} role="status">Loading schedule…</div>;
-  const { tournament, divisions, teams, venues } = data;
+  const { tournament, divisions, teams } = data;
   if (!tournament || !data.pageEnabled) return <div className={styles.schedule}><div className={styles.state}>The schedule is not available.</div></div>;
   // The data layer already lays the tournament's own rule over the organization's.
   const requireFinalization = data.organization.requireScoreFinalization ?? true;
@@ -168,22 +167,17 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
   const names = (g: Game) => gameSideNames(g, id => teams.find(t => t.id === id)?.name ?? 'TBD', fanPlaceholder);
   const divisionName = (g: Game) => divisions.find(d => d.id === g.divisionId)?.name ?? '';
   const round = (g: Game) => g.isPlayoff ? publicGameRound(g) : null;
-  // Same live venue resolver as the Overview; compact rows show the facility, maps use its parent address/name.
-  const field = (g: Game) => resolveGameFieldLabel(g, venues) || 'Location TBD';
-  const mapHref = (g: Game) => isPreview ? null : gameDirections(g, venues);
   const row = (g: Game) => {
     const state = publicGameState(g, requireFinalization, clock);
-    const context = [divisionName(g), field(g)].filter(Boolean).join(' · ');
     if (state === 'live') {
       const when = g.time ? formatTime(g.time) : 'TBD';
-      const lead = round(g) || divisionName(g);
       const stakes = getPlayoffStakes(g, games, true);
-      return <PublicLiveCard view={liveCardView(g, names(g), lead, field(g), mapHref(g))} href={gameHref(g.id)}
-        time={when} topLine={[when, lead, field(g)].join(' · ')} foot={stakes?.gold ? stakes.text : undefined} />;
+      return <PublicLiveCard view={liveCardView(g, names(g), divisionName(g), null, null)} href={gameHref(g.id)}
+        schedule={{ time: when, division: divisionName(g), pool: selection.poolTags.get(g.id), round: round(g) }} foot={stakes?.gold ? stakes.text : undefined} />;
     }
-    return <ul className={parts.rows}><PublicGameRow view={gameRowView(g, names(g), context, today,
+    return <ul className={parts.rows}><PublicGameRow view={gameRowView(g, names(g), divisionName(g), today,
       { state, round: round(g), poolTag: selection.poolTags.get(g.id), schedule: true })}
-      schedule href={gameHref(g.id)} directions={mapHref(g)} field={field(g)} /></ul>;
+      schedule href={gameHref(g.id)} /></ul>;
   };
   const gameBlock = (g: Game) => <div key={g.id} id={`public-game-${g.id}`} data-game-id={g.id} data-highlighted={highlight === g.id || undefined}
     data-flipped={flipped.has(g.id) || undefined} className={styles.gameBlock}>{row(g)}</div>;
@@ -263,15 +257,13 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
         })}
         {dateKeys.map(date => {
           const dated = dayGames.filter(g => (g.date || '') === date);
-          const { earlier, remaining } = date === today ? splitEarlierToday(dated, today, requireFinalization, clock) : { earlier: [], remaining: dated };
           return <section key={date} className={styles.dateGroup}>
             {(effectiveDay === 'all' || !date) && <PublicSectionHead title={date ? date === today ? 'Today' : formatShortWeekdayDate(date) : 'Date to be confirmed'} />}
-            {earlier.length > 0 && <PublicDisclosure title="Earlier today" sub={`${earlier.length} ${earlier.length === 1 ? 'game' : 'games'}, all final`} desktopOpen reveal={earlier.some(g => g.id === highlight)}>{renderGames(earlier, false)}</PublicDisclosure>}
-            {renderGames(remaining, true, date === today)}
+            {renderGames(dated, true, date === today)}
           </section>;
         })}
         {dayGames.length === 0 && <div className={styles.state}><h2>{query.trim() || myGames ? 'No matching games' : 'No games scheduled'}</h2><p>{query.trim() || myGames ? 'Try another team or clear the search.' : 'Games will appear here once the organizer posts them.'}</p></div>}
-        {effectiveStage === 'playoff' && !isPreview && isPublicPageEnabled(tournament, 'standings') && <PublicDoorRow href={orgHref(`${basePath}/${SCHEDULE_BRACKET_DOOR.path}`)} label={SCHEDULE_BRACKET_DOOR.label} sub={SCHEDULE_BRACKET_DOOR.sub} />}
+        {effectiveStage === 'playoff' && !isPreview && hasPublicPlayoffBracket(tournament, divisions, games) && <PublicDoorRow href={orgHref(`${basePath}/${SCHEDULE_BRACKET_DOOR.path}`)} label={SCHEDULE_BRACKET_DOOR.label} sub={SCHEDULE_BRACKET_DOOR.sub} />}
       </>}
     </>}
   </div>;

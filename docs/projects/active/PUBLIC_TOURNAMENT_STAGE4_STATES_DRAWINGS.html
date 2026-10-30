@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stage 4 · Standings and Playoffs states</title>
+<style>
+:root{font:15px/1.5 Inter,system-ui,sans-serif;color:#1c2126;background:#e9ecee;--ink:#1f1b16;--soft:#4e473d;--line:#d6d0c4;--edge:#948b7d;--brand:#1e3a8a;--ok:#2c6a2a;--gold:#835006}
+*{box-sizing:border-box}body{margin:0}header,main{max-width:1280px;margin:auto;padding:24px}h1{margin:0;font-size:28px}p{max-width:82ch}
+button,select,summary{font:inherit;min-height:44px}button,select{padding:8px 12px;border:1px solid var(--edge);border-radius:6px;background:white;color:var(--ink)}button{cursor:pointer}
+button:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.controls label{display:grid;gap:4px}
+#gallery{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+.spec{margin:0}.spec figcaption{font-weight:600;margin-bottom:8px;max-width:390px}.note,.measure{max-width:390px;font-size:14px;margin:8px 0 0}.measure{color:#4e473d;font-variant-numeric:tabular-nums}
+/* the whole screen is drawn, not just the first 780 px; the dashed line marks where a phone's first screen ends */
+.phone{position:relative;width:390px;overflow:hidden;background:#f6f5f2;border:1px solid var(--edge);border-radius:16px;color:var(--ink);font-size:16px}
+.fold{position:absolute;left:0;right:0;border-top:2px dashed #b45309;z-index:5;pointer-events:none}
+.fold span{position:absolute;right:8px;top:2px;background:#b45309;color:#fff;font-size:12px;line-height:1;padding:3px 6px;border-radius:3px}
+.band{height:84px;background:var(--brand);color:white;display:flex;align-items:center;gap:12px;padding:12px 16px}
+.logo{display:grid;place-items:center;width:44px;height:44px;background:white;color:var(--brand);border-radius:8px;font-weight:700}
+.band strong{display:block;font-size:20px;line-height:1.1}.band small{font-size:12px}
+.tabs{height:48px;display:flex;gap:18px;align-items:stretch;background:white;padding:0 16px;overflow:hidden;white-space:nowrap;border-bottom:1px solid var(--line)}
+.tabs span{display:flex;align-items:center;font-size:14px}.tabs .on{border-bottom:3px solid var(--brand);font-weight:700}
+.ticker{height:44px;padding:10px 16px;font-size:12px;background:white;border-bottom:1px solid var(--line)}
+.content{padding:16px;display:grid;gap:16px}.content>*{min-width:0}
+.selrow{display:flex;gap:8px;align-items:center}.selrow select{flex:1;min-width:0;width:100%;font-size:16px}
+.content>select{width:100%;font-size:16px}
+.iconbtn{display:inline-grid;place-items:center;flex:none;width:44px;height:44px;border:0;background:none;padding:0;color:var(--soft);border-radius:6px}
+.iconbtn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.quiet{font-size:14px;color:var(--soft);margin:0}
+h2{font-size:16px;margin:0 0 8px}
+.card,.door{border:1px solid var(--line);background:white;border-radius:8px;padding:14px}
+.state{text-align:center;padding:28px 16px}.state h2{font-size:22px}.state p{color:var(--soft);font-size:14px;margin:0 auto}
+/* a door: a real link, 56 px, the chevron on the right */
+.door{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:center;min-height:56px;padding:8px 14px;color:var(--ink);text-decoration:none;font-weight:600;line-height:1.3}
+.door small{display:block;grid-column:1;font-size:14px;font-weight:400;color:var(--soft)}
+.door:after{content:"›";font-size:22px;color:var(--soft);grid-column:2;grid-row:1/3}
+/* the tap-open row */
+.disclosure{border:1px solid var(--line);background:white;border-radius:8px}
+summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 14px;cursor:pointer;list-style:none;font-weight:600;line-height:1.3}
+summary::-webkit-details-marker{display:none}
+summary small{display:block;font-size:14px;color:var(--soft);font-weight:400}
+summary:after{content:"";width:8px;height:8px;border-right:2px solid var(--soft);border-bottom:2px solid var(--soft);transform:rotate(45deg);flex:none;margin-top:-4px}
+details[open]>summary:after{transform:rotate(225deg);margin-top:4px}
+.explain{padding:0 14px 14px;font-size:14px}.explain p{margin:0 0 8px}.explain ol{margin:0 0 8px;padding-left:20px}
+/* the table: Team pinned left, PTS pinned right, the middle scrolls. Same recipe as the hub's drawing. */
+.tablewrap{overflow-x:auto;background:white;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:separate;border-spacing:0;min-width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:0 10px;height:52px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;background:white}
+th{height:40px;font-size:12px;color:var(--soft);font-weight:600}
+tbody tr:last-child td{border-bottom:0}
+th:first-child,td:first-child{position:sticky;left:0;z-index:1;text-align:left;white-space:normal;width:150px;min-width:150px;max-width:150px;font-weight:600;line-height:1.25;border-right:1px solid var(--line)}
+th:last-child,td:last-child{position:sticky;right:0;z-index:1;min-width:52px;font-weight:700;border-left:1px solid var(--line)}
+tbody tr.top td{background:#f2f5fb}
+tbody tr.appmark td:first-child{box-shadow:inset 3px 0 0 var(--brand)}
+.mark{color:var(--gold)}
+/* brackets */
+.bracket{overflow:auto;padding:12px;background:white;border:1px solid var(--line);border-radius:8px}
+.tools{display:flex;gap:6px;margin-bottom:12px}.tools button{min-width:44px;padding:4px 10px;font-size:14px}
+.rounds{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:20px;min-width:0}
+.rounds.big{grid-auto-columns:158px;min-width:538px}
+.rd{display:flex;flex-direction:column;gap:8px}
+.rd>small{display:block;font-size:12px;color:var(--soft);font-weight:600}
+.nodes{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:12px}
+.node{position:relative;background:white;border:1px solid var(--line);border-radius:8px;font-size:14px;line-height:1.25}
+.node div{display:flex;justify-content:space-between;gap:6px;padding:7px 10px}.node div+div{border-top:1px solid var(--line)}
+.node .w{font-weight:700}.node .l{color:var(--soft)}.node .s{font-weight:700;font-variant-numeric:tabular-nums}
+.node .st{font-size:12px;color:var(--soft);justify-content:flex-start}
+.node.final,.node.live{border-left:3px solid var(--ok)}
+.node:not(.last):after{content:"";position:absolute;right:-21px;top:50%;width:20px;border-top:1px solid var(--edge)}
+footer{font-size:12px;color:var(--soft);text-align:center;padding:24px 16px}
+.crown{color:var(--gold);font-size:22px;font-weight:700}
+/* a game card */
+.gcard{border:1px solid var(--line);border-radius:8px;background:white;padding:12px 14px}
+.gcard.live{border-left:3px solid var(--ok);border-radius:0 8px 8px 0}
+.gcard .top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--soft);margin-bottom:8px}
+.chip{font-size:12px;color:var(--ok);font-weight:600;white-space:nowrap}
+.gcard .team{display:flex;align-items:baseline;justify-content:space-between;gap:14px;font-weight:600;margin-top:6px}
+.gcard .team.lose{color:var(--soft);font-weight:400}
+.score{font-size:22px;font-variant-numeric:tabular-nums}
+.gcard .foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;font-size:12px;color:var(--soft)}
+.gold{color:var(--gold)}
+.read{border-left:4px solid #2f5d50;background:white;padding:16px;max-width:90ch}
+.review{background:white;border:1px solid var(--line);border-radius:8px;max-width:90ch}.review summary{min-height:44px}.review .explain{font-size:14px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Standings + Playoffs · states the hub skipped</h1>
+  <p>Part 1 drawing for approval before Part 2. These whole-screen phone specimens extend the approved hub; they are a prototype, with illustrative teams and scores. Page colour, band, tabs and results line follow the existing frame. Product screens are built in Parts 2 and 3. The whole screen is drawn; the dashed line marks where a phone's first screen ends.</p>
+  <div class="controls">
+    <label>Phone width <select id="width"><option value="390">390 px</option><option value="360">360 px</option></select></label>
+    <label>View <select id="view"><option value="all">All states</option><option value="standings">Standings</option><option value="playoffs">Playoffs</option></select></label>
+  </div>
+  <p class="read">One remembered division at a time. Team and PTS stay pinned while the middle scrolls. Followed-team marks appear inside the installed app only. Share stays a quiet icon beside the division on Playoffs. The bracket remains on Standings through Part 2; Part 3 moves it and both doors together. The admin preview gets Standings only, with no door, follow mark or working links.</p>
+  <details class="review"><summary>What the design review changed from the first version<small>Open for the list; nothing here changes a ruling</small></summary><div class="explain">
+    <ul>
+      <li><b>Table pins now work as ruled.</b> The Team column had grown to 214 px and hid RD behind PTS at 390. It is now 150 px (the hub's number), numbers right-aligned, so Team, REC and RD show first and RF and RA are one swipe away. At 360, RD peeks out as the cue to swipe.</li>
+      <li><b>The 8-team state no longer blows the page sideways.</b> The bracket was pushing the whole phone 548 px wide; the bracket now scrolls inside its own box, and the page stays 390.</li>
+      <li><b>Two pools are two different pools.</b> Both pools showed the same four teams with the same records. Pool B now has its own teams; the counts line (8 final, 4 left) matches the tables.</li>
+      <li><b>Numbers add up.</b> Runs for and against balance across each table, the best-offence and stingiest-defence panels name the teams the table shows, and the bracket's seeds match the seed list (1 v 4, 2 v 3; 1 v 8, 4 v 5, 3 v 6, 2 v 7). Before, a team outside the top 4 played in the semifinals.</li>
+      <li><b>No-playoffs state has no Playoffs tab.</b> It showed one.</li>
+      <li><b>Directions is a symbol, not a button</b> (the hub's drawing and the phone-secondary-action ruling). Zoom buttons reach 44 px wide. The "Live now" chip moved to the card's top-right as in the hub, and the trailing score dims.</li>
+      <li><b>The bracket shows what it is for:</b> scores, winners in bold, the live game edged green, cancelled and waiting-on-a-result games said in words. Zoom and Full screen appear only on the 8-team bracket; at four teams every name reads without them.</li>
+      <li><b>"Up next" states are possible ones.</b> A championship with both sides unknown while semifinals were still ahead could not happen (the next game would be a semifinal). The TBD state is now a championship waiting on one semifinal result; the bracket-only and 8-team states lead with their real first game.</li>
+      <li><b>Door and tap-open rows match the hub:</b> a real link with a chevron, 14 px sub-line, 56 px tall; the sub-line was 12 px.</li>
+      <li><b>Share is drawn</b> (it was promised in the note but absent). Reading-order numbers are now measured under each Standings and Playoffs specimen instead of asserted.</li>
+    </ul>
+    <p><b>Still open for the owner:</b> the illustrative table has four teams and "Top 4 advance", so no team sits below a cut line. The hub drew it the same way; the cut line is drawn only inside "How seeding works". Say if you want a fifth row to show it on Standings.</p>
+  </div></details>
+</header>
+<main><div id="gallery"></div>
+<p>Reading order targets from the approved hub: first standings row about 310 px from the top; the next playoff game about 270 px. These are drawing targets; the implementation is measured later. Desktop uses the Overview’s two-column arrangement from 1,024 px, with the table full width. At 901–1,023 px the phone arrangement remains.</p>
+<p>The two preview states temporarily differ in spelling: this drawing and the new pages use “offence” and “defence”; the old Playoffs page keeps its existing words until Stage 8. Nothing in this drawing changes standings, tie-breakers or bracket generation.</p>
+</main>
+<script>
+const NAMES = ['Riverdale Rapids','Cedar Hollow Cyclones','Maple Ridge Marauders','Silver Creek Sharks','Northfield Knights','Pinecrest Panthers','Lakeshore Lightning','Metro Meteors'];
+const [RIV,CED,MAP,SIL,NOR,PIN,LAK,MET] = NAMES;
+const ico = {
+ dir:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11A6.5 6.5 0 0 1 18.5 10c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>',
+ share:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>'
+};
+const dirBtn = '<button class="iconbtn" type="button" aria-label="Directions">'+ico.dir+'</button>';
+const shareBtn = '<button class="iconbtn" type="button" aria-label="Share this page">'+ico.share+'</button>';
+const disclosure = (label, sub, body = '') => `<details class="disclosure"><summary><span>${label}<small>${sub}</small></span></summary><div class="explain">${body}</div></details>`;
+const ranking = () => disclosure('How the table is ranked', 'What each column means, and the tie-breakers', '<p>REC Record (W-L-T) · RD Run Differential · RF Runs For · RA Runs Against · PTS Points</p><p><b>Tie-breaker order</b><br>Head-to-Head &gt; Run Diff &gt; Runs For &gt; Runs Against</p><p>RD shows the true run differential, with the playoff-seeding value in brackets — capped at ±7 per game. Seeding uses the capped figure, so a bigger RD doesn’t always mean a higher seed.</p><p>Unofficial scores are included here for visibility. Standings may change once the organizer confirms them.</p>');
+const seeding = (n = 4) => {
+ const seeds = [[RIV,6],[CED,4],[MAP,2],[SIL,0],[NOR,0],[PIN,0],[LAK,0],[MET,0]].slice(0,n);
+ return disclosure('How seeding works', `Single elimination, top ${n} advance`, `<p>Single elimination, top ${n} advancing. ${RIV} enter as the #1 seed.</p><p><b>Top seed</b> · ${RIV}<br><b>Best offence</b> · ${CED}<br><b>Stingiest defence</b> · ${RIV}<br><b>Best differential</b> · ${RIV}</p><ol>${seeds.map(([t,p])=>`<li>${t} · ${p} PTS</li>`).join('')}</ol><p>Playoff cut line after seed ${n}.</p>`);
+};
+/* Two complete sets of results, each balanced: runs for = runs against across the table. */
+const SETS = {
+ full:[[RIV,'3-0-0','+12 (+10)','18','6','6'],[CED,'2-1-0','+3','21','18','4'],[MAP,'1-2-0','−3','12','15','2'],[SIL,'0-3-0','−12 (−10)','6','18','0']],
+ poolA:[[RIV,'2-0-0','+8','14','6','4'],[CED,'1-1-0','+1','9','8','2'],[MAP,'1-1-0','−1','8','9','2'],[SIL,'0-2-0','−8','4','12','0']],
+ poolB:[[NOR,'2-0-0','+7','12','5','4'],[PIN,'1-1-0','0','9','9','2'],[LAK,'1-1-0','−1','7','8','2'],[MET,'0-2-0','−6','5','11','0']],
+ part:[[RIV,'2-0-0','+8','14','6','4'],[CED,'1-1-0','+1','9','8','2'],[MAP,'1-1-0','−1','8','9','2'],[SIL,'0-2-0','−8','4','12','0']]
+};
+const table = (rows, pool = '', mark = false) => `${pool ? `<h2>Standings · ${pool}</h2>` : ''}<div class="tablewrap"><table><thead><tr><th>Team</th><th>REC</th><th>RD</th><th>RF</th><th>RA</th><th>PTS</th></tr></thead><tbody>${rows.map((r,i)=>`<tr class="${i ? '' : 'top'} ${mark && !i ? 'appmark' : ''}" ${!pool && !i ? 'data-m="first row"' : ''}>${r.map((v,j)=>`<td>${!i && !j ? '<span class="mark">♛</span> ' : ''}${v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+const door = sub => `<a class="door" href="#">The playoff bracket${sub ? `<small>${sub}</small>` : ''}</a>`;
+const empty = (title, text) => `<div class="card state"><h2>${title}</h2><p>${text}</p></div>`;
+
+/* One bracket drawing, driven by a named state so every specimen's bracket agrees with its next-game card. */
+const half = (a,as,b,bs,extra='') => `<div class="node ${extra}"><div class="${as>bs?'w':'l'}"><span>${a}</span><span class="s">${as}</span></div><div class="${bs>as?'w':'l'}"><span>${b}</span><span class="s">${bs}</span></div></div>`;
+const names = (a,b,extra='',status='') => `<div class="node ${extra}"><div><span>${a}</span></div><div><span>${b}</span></div>${status ? `<div class="st">${status}</div>` : ''}</div>`;
+const finalScored = (a,as,b,bs,extra) => half(a,as,b,bs,`final ${extra||''}`);
+const bracket = (state = 'seeded') => {
+ if (state === 'big') {
+  const q = [[RIV,MET],[SIL,NOR],[MAP,PIN],[CED,LAK]];
+  const col = (t, items) => `<div class="rd"><small>${t}</small><div class="nodes">${items.join('')}</div></div>`;
+  return `<section><h2>Bracket</h2><div class="bracket"><div class="tools"><button data-zoom="-1" aria-label="Zoom out">−</button><button data-zoom="1" aria-label="Zoom in">+</button><button data-full>Full screen</button></div><div class="rounds big">${col('Quarterfinals',q.map(([a,b])=>names(a,b)))}${col('Semifinals',[names('Quarterfinal 1 winner','Quarterfinal 2 winner'),names('Quarterfinal 3 winner','Quarterfinal 4 winner')])}${col('Championship',[names('Semifinal 1 winner','Semifinal 2 winner','last')])}</div></div></section>`;
+ }
+ const s1 = {seeded:names(RIV,SIL), pending:finalScored(RIV,14,SIL,6)}[state === 'seeded' ? 'seeded' : 'pending'];
+ let s2, ch;
+ if (state === 'seeded') { s2 = names(CED,MAP); ch = names('Semifinal 1 winner','Semifinal 2 winner','last'); }
+ else if (state === 'waiting') { s2 = names(CED,MAP,'', 'Played · waiting on a confirmed result'); ch = names(RIV,'Semifinal 2 winner','last'); }
+ else {
+  s2 = finalScored(CED,10,MAP,8);
+  ch = {semisDone:names(CED,RIV,'last'), live:names(CED,RIV,'live last'), liveNoScore:names(CED,RIV,'live last'), cancelled:names(CED,RIV,'last','Cancelled'), final:finalScored(CED,4,RIV,2,'last')}[state];
+  if (state === 'live') ch = half(CED,3,RIV,2,'live last');
+ }
+ return `<section><h2>Bracket</h2><div class="bracket"><div class="rounds"><div class="rd"><small>Semifinals</small><div class="nodes">${s1}${s2}</div></div><div class="rd"><small>Championship</small><div class="nodes">${ch}</div></div></div></div></section>`;
+};
+
+/* The next-game block: one game, in one of its states. */
+const next = o => {
+ const {live=false, noScore=false, title='Championship', when='Sat, Oct 31 · 4:00 p.m. · Diamond 2', a=CED, b=RIV, gold=title==='Championship'} = o;
+ return `<section><h2>${live ? 'Live now' : 'Up next'}</h2><div class="gcard ${live ? 'live' : ''}" data-m="next game"><div class="top"><span>${title} · ${live ? when.split(" · ").slice(1).join(" · ") : when}</span>${live ? '<span class="chip">Live now</span>' : ''}</div><div class="team"><span>${a}</span>${live && !noScore ? '<span class="score">3</span>' : ''}</div><div class="team ${live && !noScore ? 'lose' : ''}"><span>${b}</span>${live && !noScore ? '<span class="score">2</span>' : ''}</div><div class="foot"><span>${noScore ? 'No score yet' : (gold ? '<span class="gold">The winner takes the title</span>' : '')}</span>${dirBtn}</div></div></section>`;
+};
+const champion = `<section><h2>Champion</h2><div class="card"><div class="crown">♛ ${CED}</div><p class="quiet">Championship · Final · 4–2</p></div></section>`;
+const divrow = (label='U11') => `<div class="selrow"><select aria-label="Division"><option>${label}</option></select>${shareBtn}</div>`;
+
+const states = [
+ {tab:'Standings', title:'Two pools · mid-pool play', body:`<p class="quiet">Top 4 advance · 8 games final · 4 left to play</p>${table(SETS.poolA,'Pool A')}${table(SETS.poolB,'Pool B')}${ranking()}${door('Top 4 advance · starts Sat')}`,note:'Each pool keeps its own table. One counts line for the division. Both ends stay pinned; swipe the middle. The final door appears once Part 3 moves the bracket.'},
+ {tab:'Standings', title:'No playoffs · no advancement count or door', noPlayoffs:true, body:`<p class="quiet">6 games final</p>${table(SETS.full)}${ranking()}`,note:'An exhibition has no playoff promise: no “Top 4 advance”, no door, and no Playoffs tab in the row above.'},
+ {tab:'Standings', title:'No standings yet',body:empty('No standings yet','This division has teams, but standings will start once scoreable games are posted.'),note:'No zero-count pills, invented table or empty bracket.'},
+ {tab:'Standings', title:'Championship live · door',body:`<p class="quiet">Top 4 advance · 6 games final</p>${table(SETS.full)}${ranking()}${door('Top 4 advance · the championship is live now')}`,note:'The table keeps first place. The door describes the selected division’s live championship.'},
+ {tab:'Standings', title:'Bracket not set · plain door',body:`<p class="quiet">4 games final · 2 left to play</p>${table(SETS.part)}${ranking()}${door('')}`,note:'The door has no invented start day. It appears only if the Playoffs tab exists, for example from a saved plan.'},
+ {tab:'Standings', title:'Installed app · followed row',body:`<p class="quiet">Top 4 advance · 6 games final</p>${table(SETS.full,'',true)}${ranking()}${door('Top 4 advance · starts Sat')}`,note:'The left colour mark is installed-app only. A browser leaves the stored follow intact and shows no mark.'},
+ {tab:'Playoffs', title:'Nothing set',noPlayoffs:true,body:empty('The bracket isn’t set yet','The organizer will publish the playoff bracket when it is ready.'),note:'Direct visit before a plan or published playoff game exists. No empty next-game card or seeding disclosure.'},
+ {tab:'Playoffs', title:'Unavailable for this format',noPlayoffs:true,body:empty('Playoff Picture unavailable','The organizer has hidden results and standings for this tournament.'),note:'A direct visit to an exhibition or hidden bracket does not reveal seeds. No Playoffs tab or door elsewhere.'},
+ {tab:'Playoffs', title:'Held-back division omitted (D1)',division:'U13',body:`${next({})}${bracket('semisDone')}${seeding()}`,note:'U11 is held back. Only published U13 is offered. No U11 team, seed, bracket, count or next game reaches the public payload.'},
+ {tab:'Playoffs', title:'Live now · no score yet',body:`${next({live:true,noScore:true})}${bracket('liveNoScore')}${seeding()}`,note:'No invented 0–0 or dash, in the card or in the bracket. Polling will replace the shared score and bracket data in Part 3.'},
+ {tab:'Playoffs', title:'Live now · score moving',body:`${next({live:true})}${bracket('live')}${seeding()}`,note:'The card and the bracket agree: Cedar Hollow 3, Riverdale 2, the live game edged green.'},
+ {tab:'Playoffs', title:'Up next · one side waiting on a result',body:`${next({a:RIV,b:'Semifinal 2 winner'})}${bracket('waiting')}${seeding()}`,note:'Semifinal 2 was played but its result is not confirmed, so the championship keeps one side in fan words. Time, field and Directions stay visible. A future game stays eligible with TBD sides.'},
+ {tab:'Playoffs',title:'Finished · champion first',body:`${champion}${bracket('final')}${seeding()}`,note:'Champion replaces the next-game block after all playoff games are terminal. A last result alone does not invent a champion. Unofficial or unresolved games cannot crown one.'},
+ {tab:'Playoffs',title:'Eight-team bracket · first phone viewport',body:`${next({title:'Quarterfinal 1',when:'Fri, Oct 30 · 5:00 p.m. · Diamond 1',a:RIV,b:MET,gold:false})}${bracket('big')}${seeding(8)}`,note:'The existing bracket’s zoom and full-screen controls stay, and appear only on a bigger bracket. The phone first sees the next game, then the first rounds; the bracket scrolls sideways inside its own box, the page does not.'},
+ {tab:'Playoffs',title:'Bracket-only event',bracketOnly:true,body:`${next({title:'Semifinal 1',when:'Sat, Oct 31 · 1:00 p.m. · Diamond 2',a:RIV,b:SIL,gold:false})}${bracket('seeded')}${seeding()}`,note:'There is no Standings tab. Playoffs remains reachable, and the Schedule’s bracket door must use bracket visibility rather than Standings visibility.'},
+ {tab:'Playoffs',title:'Nothing left · no decided final',body:`${empty('No upcoming playoff games','The bracket below has the latest results. A champion has not been decided.')}${bracket('cancelled')}${seeding()}`,note:'No stale Up next, no invented crown. For example, the last game was cancelled, or a past game is waiting for a confirmed result.'},
+];
+const noteFor = s => s.note;
+function render(){
+ const width=document.querySelector('#width').value, view=document.querySelector('#view').value;
+ document.querySelector('#gallery').innerHTML=states.filter(s=>view==='all'||s.tab.toLowerCase()===view).map(s=>`<figure class="spec"><figcaption>${s.tab} · ${s.title}</figcaption><div class="phone" style="width:${width}px"><div class="band"><div class="logo">SC</div><div><strong>Summer Classic</strong><small>Oct 30 – Nov 1 · Lakeshore</small></div></div><div class="tabs">${['Overview','Schedule',...(!s.bracketOnly?['Standings']:[]),...(!s.noPlayoffs?['Playoffs']:[])].map(t=>`<span class="${t===s.tab?'on':''}">${t}</span>`).join('')}</div><div class="ticker">Today’s results · Riverdale Rapids 4, Sharks 2</div><div class="content">${s.tab==='Playoffs'?divrow(s.division):`<select aria-label="Division"><option>${s.division||'U11'}</option></select>`}${s.body}</div><footer>Hosted by Lakeshore Lightning<br>Powered by FieldLogicHQ</footer></div><p class="note">${noteFor(s)}</p><p class="measure"></p></figure>`).join('');
+ measure();
+}
+/* Measure each specimen instead of asserting: the first-screen line, and the reading-order targets. */
+function measure(){
+ document.querySelectorAll('figure.spec').forEach(f=>{
+  const ph=f.querySelector('.phone'), top=ph.getBoundingClientRect().top, out=f.querySelector('.measure'), bits=[];
+  const el=ph.querySelector('[data-m]');
+  if(el){const y=Math.round(el.getBoundingClientRect().top-top), want=el.dataset.m==='first row'?310:270; bits.push(`${el.dataset.m==='first row'?'First table row':'Next game'} ≈ ${y} px down (target ≈ ${want})`);}
+  const h=Math.round(ph.getBoundingClientRect().height);
+  if(h>780){const fold=document.createElement('div');fold.className='fold';fold.style.top='780px';fold.innerHTML='<span>first screen ends · 780 px</span>';ph.appendChild(fold);}
+  bits.push(`whole screen ${h} px tall`);
+  out.textContent=bits.join(' · ');
+ });
+}
+document.querySelector('#width').addEventListener('change',render);document.querySelector('#view').addEventListener('change',render);
+document.addEventListener('click',e=>{const zoom=e.target.closest('[data-zoom]'), full=e.target.closest('[data-full]');if(zoom){const rounds=zoom.closest('.bracket').querySelector('.rounds');const scale=Math.min(1.5,Math.max(.6,Number(rounds.dataset.scale||1)+Number(zoom.dataset.zoom)*.1));rounds.dataset.scale=scale;rounds.style.zoom=scale;}if(full)full.closest('.bracket').requestFullscreen?.();});render();
+</script>
+</body>
+</html>

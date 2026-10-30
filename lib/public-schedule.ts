@@ -6,8 +6,8 @@ import { inferGamePoolSides } from './playoff-bracket';
 import { hasPlayoffs, hasRoundRobin } from './tournament-phase';
 
 export type ScheduleStage = 'pool' | 'playoff';
-// Stage 4 changes the destination and its description together here.
-export const SCHEDULE_BRACKET_DOOR = { path: 'standings', label: 'The bracket', sub: 'On the Standings tab' };
+// Frame-only Schedule: Stage 4 moves the bracket and both doors together. The legacy Schedule keeps its own links.
+export const SCHEDULE_BRACKET_DOOR = { path: 'playoffs', label: 'The bracket', sub: 'On the Playoffs tab' };
 
 /**
  * One day's playoff games, with each division's pool kept together: games sort by time first, so two pools playing the
@@ -91,15 +91,6 @@ export function scheduleGames({ games, teams, divisions, division, stage, pool =
   });
   const dates = [...new Set(sorted.map(g => g.date).filter(Boolean))].sort();
   return { games: filtered, dates, poolTags };
-}
-
-/** Only confirmed final games on today fold; unofficial, cancelled and live games never do. */
-export function splitEarlierToday(games: Game[], today: string, requireFinalization: boolean, now: Date) {
-  const earlier: Game[] = [], remaining: Game[] = [];
-  for (const g of games) {
-    (g.date === today && publicGameState(g, requireFinalization, now) === 'final' ? earlier : remaining).push(g);
-  }
-  return { earlier, remaining };
 }
 
 /** Authoritative replacement, including removals. Changed ids alone animate; inserts never flash as score edits. */

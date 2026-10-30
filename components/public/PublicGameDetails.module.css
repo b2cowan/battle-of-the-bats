@@ -7,10 +7,12 @@
 .timeLine { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .timeLine h1 { margin: 0; color: var(--club-text); font: 700 2rem/1.1 var(--club-title-face); font-variant-numeric: tabular-nums; }
 .timeLine .softTime { color: var(--club-dim); }
-.timeLine .cancelled { color: var(--danger); background: var(--club-ground); }
+/* Cancelled rides the card's top right, where the Schedule list puts a game's status (directions are absent on a cancelled game, so the corner is free). */
+.timeLine .cancelled { margin-left: auto; color: var(--danger); background: var(--club-ground); }
 .where { margin: 8px 0 0; font: 600 1rem/1.3 var(--club-text-face); }
 .address { margin: 6px 0 0; color: var(--club-dim); font: 400 0.875rem/1.4 var(--club-text-face); overflow-wrap: anywhere; }
-.whenWhere > a { margin-top: 10px; }
+/* Directions rides the time's row at the card's top right (a desk: the small labelled button; a phone: its symbol alone). */
+.timeLine .directionsSlot { margin-left: auto; display: flex; }
 .scoreTop { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; color: var(--club-dim); font: 600 0.75rem/1.3 var(--club-text-face); }
 .side { display: flex; align-items: center; justify-content: space-between; gap: 12px; font: 600 1rem/1.3 var(--club-text-face); }
 .side + .side { margin-top: 6px; }

@@ -1,0 +1,320 @@
+<title>Schedule and Game Page Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one column checklist, a sign-in card on top, thirteen parts, paste-back at the foot. Same build as §406, §407 and §423;
+   an optional step carries two boxes (Did it · Skipped it) so a tick says which. */
+:root {
+  --bg: #f6f7f4; --surface: #ffffff; --ink: #1d2420; --muted: #5a6560; --line: #d9ded8;
+  --accent: #2f6b4f; --accent-soft: #e3efe8; --warn: #8a5a00; --warn-soft: #fbf0d9; --bad: #9b2c2c; --bad-soft: #f8e2e2;
+  --display: "Fraunces", Georgia, serif; --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151a17; --surface: #1e2521; --ink: #e6ebe7; --muted: #9aa69f; --line: #34403a;
+  --accent: #7cc3a0; --accent-soft: #233a2f; --warn: #e8b45a; --warn-soft: #3a2f1a; --bad: #f08a8a; --bad-soft: #3d2222; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #151a17; --surface: #1e2521; --ink: #e6ebe7; --muted: #9aa69f; --line: #34403a;
+  --accent: #7cc3a0; --accent-soft: #233a2f; --warn: #e8b45a; --warn-soft: #3a2f1a; --bad: #f08a8a; --bad-soft: #3d2222; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body); }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
+h1 { font: 600 1.9rem/1.15 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 600 1.25rem/1.25 var(--display); margin: 0; text-wrap: balance; }
+.eyebrow { font: 600 .75rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+p { margin: 0; max-width: 65ch; }
+.intro { display: grid; gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; }
+.card dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.card dt { color: var(--muted); }
+.card dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .card dl { grid-template-columns: 1fr; } .card dd { padding-bottom: 6px; } }
+code, .mono { font-family: var(--mono); font-size: .86em; overflow-wrap: anywhere; }
+.facts { display: grid; gap: 8px; }
+.facts h3 { font: 600 .95rem/1.3 var(--body); margin: 0; }
+.facts ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.progress { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.bar { flex: 1 1 200px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+.part { display: grid; gap: 12px; }
+.part header { display: grid; gap: 4px; }
+.part header p { color: var(--muted); }
+.who { display: inline-block; font: 600 .8rem/1 var(--body); padding: 5px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); justify-self: start; }
+.step { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.step input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .txt { display: grid; gap: 4px; min-width: 0; }
+.step .do { font-weight: 600; }
+.step .see::before { content: "You should see: "; color: var(--muted); font-weight: 600; }
+.step .rb { color: var(--warn); font-weight: 600; }
+.step.stop { border-color: var(--warn); background: var(--warn-soft); }
+.step.done { opacity: .72; }
+.opts { display: flex; gap: 18px; flex-wrap: wrap; padding-top: 4px; }
+.opts label { display: inline-flex; gap: 8px; align-items: center; font-weight: 600; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; }
+.verdict button { font: 600 .9rem/1 var(--body); padding: 9px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button[aria-pressed="true"][data-v="pass"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.verdict button[aria-pressed="true"][data-v="issue"] { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.verdict button[aria-pressed="true"][data-v="call"] { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 70px; font: inherit; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { font: 600 .95rem/1 var(--body); padding: 11px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); }
+#summary { font-family: var(--mono); font-size: .85rem; min-height: 160px; }
+a { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+</style>
+
+<div class="wrap">
+  <div class="intro">
+    <span class="eyebrow">Owner QA · §426 · Public tournament pages Stage 3</span>
+    <h1>The Schedule and a game's page answer where and when</h1>
+    <p><strong>What this walk is for.</strong> Stage 3 rebuilt the Schedule and a game's page, behind the preview switch. The Schedule is two rows of controls, a strip of day chips, and games in time order: the live game is a green card in its time slot, "Up next" appears only on game day above a game that has not started, and games already final today fold into one tap-open row, <strong>Earlier today</strong>. A game's page now opens with <strong>when and where</strong>: the time, the field, the address and a worded Directions button come first, then the score, then the facts. The results line is gone from both pages. Families and the public demo see none of this until Stage 8 turns the preview on for everyone.</p>
+    <p><strong>Compact Schedule update, owner approved 2026-10-29.</strong> Time is top left, division/pool below it, and the state at the top right. Every team owns its score, including wrapped names. Location and maps are on the game's page, not on the Schedule list. Recheck the changed row expectations in Parts B, D, F and H even if you ticked the previous layout; no existing ticks have been cleared for you.</p>
+    <p><strong>It passes when</strong> with the preview on, both pages answer where and when at a glance on a phone and on a desk, every game state reads correctly on the Schedule <em>and</em> on its own page (live, upcoming, final, unofficial, cancelled, no score), a held-back division appears nowhere, a link to a finished game opens Earlier today and <strong>keeps it open</strong>, and with the preview off every page is exactly today's site.</p>
+  </div>
+
+  <div class="card">
+    <h2>Sign in as</h2>
+    <dl>
+      <dt>Everything</dt><dd>Nobody. A <strong>private window</strong>, signed out, so you see what a family sees. (Part J uses your own account <span class="mono">b2cowan@outlook.com</span>.)</dd>
+      <dt>Where</dt><dd><span class="mono">http://localhost:3000</span>, dev server running. For your phone on the same Wi-Fi: <span class="mono">http://192.168.2.200:3000</span> plus the same path.</dd>
+      <dt>Phone width</dt><dd>Your phone, or Chrome's device toolbar (Ctrl+Shift+M) at 390, then 360. Desk: 1280. The in-between: 960.</dd>
+      <dt>The switch</dt><dd>On dev the preview is on unless you turn it off. Each step links its own On or Off address. The choice sticks to that browser window, so a link that has no switch in it uses whatever the window was last set to.</dd>
+      <dt>Fixtures</dt><dd>One game does all the work: Lakeshore's <strong>live semifinal</strong>. Stage 3's own script moves it through live, no score, starting in 3 minutes, Final, Unofficial and Cancelled, and reads every change back: <span class="mono">node --env-file=.env.local scripts/seed-public-stage3-fixtures.mjs prepare | score | no-score | soon | final | unofficial | cancelled | show | undo</span>. Run them in a terminal at the project folder, or ask me in the chat and I run them and read the result back. The seven game dates are set around the day the fixture was prepared (2026-10-29): <strong>if you walk on a later day, run <span class="mono">prepare</span> first</strong> (Part A does).</dd>
+      <dt>Why not Stage 1's script</dt><dd>The kick-off named it for the live game. Stage 3's <span class="mono">no-score</span> does the same job on the same game, and two scripts that each keep their own "put it back" record can restore stale data over each other. This walk uses Stage 3's script for every game change, and Stage 2's only for holding a division back (Part G).</dd>
+      <dt>The ids</dt><dd>The live semifinal is <span class="mono">e3104eee-fead-41b1-a950-44a2c2314d5b</span>. The championship is <span class="mono">2c025f99-5c23-4b9e-a90d-bcaa74341f54</span> (its teams are not decided yet). The links below already carry them.</dd>
+    </dl>
+  </div>
+
+  <div class="card facts">
+    <h3>What these pages never show now (preview on)</h3>
+    <ul>
+      <li>The scrolling results line on the Schedule or on a game's page. It stays on Standings, Playoffs, Teams, a team's page, News and Rules (Part I).</li>
+      <li>On the Schedule: the "Tournament Schedule" header, the List / Bracket switch, the follow-a-team strip, the sticky day heading with its "3/8" count, the options sheet, the year picker, an Alerts pill.</li>
+      <li>On a game's page: the "Game Details" heading, the Away / Home labels, a ☆ beside each team, and "Final" as a round name (it reads "Championship").</li>
+      <li>"My games" and the calendar symbol in an ordinary browser tab. They belong to the installed app (you ruled this).</li>
+    </ul>
+  </div>
+
+  <div class="card facts">
+    <h3>Not in this walk</h3>
+    <ul>
+      <li>The installed app's My games, the calendar file and the followed-team auto-jump (Part L is optional; they need a secure address and a followed team).</li>
+      <li>A pinned announcement (a white card with a 3 px amber edge and a × that hides it for the visit). No dev fixture has one pinned; Part L has an optional step if you pin one. A forfeit reading "Final", the status table and "Location TBD" with no Directions button are pinned by unit tests.</li>
+      <li>A demo <em>game</em>: the Riverdale demo on dev has no published games, so only its "Schedule coming soon" page can be walked (Part G). The demo seed was not touched, by rule.</li>
+      <li>The bracket's move to the Playoffs tab and the tie-breaker rows (Stage 4). The door at the foot of the Playoffs half points at <strong>Standings</strong> until then.</li>
+      <li>Teams, a team's page and where following lives (Stage 5); the pay page (Stage 7).</li>
+    </ul>
+  </div>
+
+  <div class="card facts">
+    <h3>Known and accepted, so they are not fails</h3>
+    <ul>
+      <li>The page's clock moves on its 30-second check, so a kickoff or a game going Final can show up to 30 seconds late. Where a step says "wait up to 30 seconds", that is why.</li>
+      <li>Two checks landing out of order can show an older score for up to 30 seconds.</li>
+      <li>The Overview preview's section heads are taller than Stage 2 was walked at (Part 3 changed the shared parts). Not this walk.</li>
+    </ul>
+  </div>
+
+  <div class="progress"><strong id="count">0 of 0 checked</strong><div class="bar" aria-hidden="true"><span id="fill"></span></div><button class="btn ghost" id="reset" type="button">Clear my ticks</button></div>
+
+  <div id="parts"></div>
+
+  <div class="card">
+    <h2>Send me the results</h2>
+    <p>Build the summary, then paste it back into the chat. Put what you saw on the read-back steps (marked “Tell me”) in that part's notes. I compare the fixture changes and the server log with what you ticked before I record a pass.</p>
+    <div class="actions"><button class="btn" id="build" type="button">Build summary</button><button class="btn ghost" id="copy" type="button">Copy</button></div>
+    <textarea id="summary" readonly aria-label="Walk summary"></textarea>
+  </div>
+</div>
+
+<script>
+var HOST = "http://192.168.2.200:3000";
+var LK = "/stage1-lakeshore-lightning/fall-classic";
+var RV = "/riverdale-minor-ball/summer-classic";
+var SEMI = "e3104eee-fead-41b1-a950-44a2c2314d5b";
+var CHAMP = "2c025f99-5c23-4b9e-a90d-bcaa74341f54";
+var PREVIEW = "/dev-test-org/admin/tournaments/preview/live-demo";
+function a(path, label) { return '<a href="' + HOST + path + '" target="_blank" rel="noopener">' + label + '</a>'; }
+function on(path, label) { return '<a href="' + HOST + '/api/public-frame?frame=on&to=' + encodeURIComponent(path) + '" target="_blank" rel="noopener">' + label + '</a>'; }
+function off(path, label) { return '<a href="' + HOST + '/api/public-frame?frame=off&to=' + encodeURIComponent(path) + '" target="_blank" rel="noopener">' + label + '</a>'; }
+function fx(mode) { return '<span class="mono">node --env-file=.env.local scripts/seed-public-stage3-fixtures.mjs ' + mode + '</span>'; }
+function w2(mode) { return '<span class="mono">node --env-file=.env.local .probe/stage2walk/walk.mjs ' + mode + '</span>'; }
+function tell(s) { return ' <span class="rb">Tell me: ' + s + '</span>'; }
+var SCHED = LK + "/schedule";
+var GAME = LK + "/schedule/" + SEMI;
+
+var PARTS = [
+  { id: "A", title: "Part A · The controls and the day chips, on a phone", who: "Private window, signed out · phone width (390, then 360)", note: "Lakeshore's Fall Classic, with a game in play. The Schedule opens on today and shows one day at a time.", steps: [
+    { stop: true, do: "Stop check. Run " + fx("prepare") + " (or ask me), then " + fx("show") + ". Open " + on(SCHED, "Lakeshore's Schedule with the preview on") + ".", see: "The read-back lists seven pool dates (the middle one is today) and three playoff games, one of them today with scores 3 and 2 and status “scheduled” (it started about ten minutes ago). On the page: no scrolling results line under the tab row; no “Tournament Schedule” header, no List / Bracket switch, no follow strip. If any of those appear, stop and tell me." + tell("the three playoff lines from the read-back, as printed.") },
+    { do: "Look at the two rows of controls.", see: "Row 1: one full-width dropdown reading “All divisions”. Row 2: a white “Pool play | Playoffs” track with the chosen half filled in the organizer's colour, then a magnifying-glass symbol alone (no border, no word). In an ordinary browser tab there is no “My games” pill and no calendar symbol." },
+    { do: "Look at the day chips under the controls.", see: "“All”, then one chip per game date (seven here, so the strip scrolls sideways). Today's chip says “Today” over its date, carries a small dot, and is the chosen one; the strip has scrolled so it sits in view. The page landed on today, not on All." + tell("which chip is chosen when the page lands.") },
+    { do: "Swipe the chip strip, tap another day, then tap “All”, then tap “Today”.", see: "One day shows at a time. “All” shows every day, each under a date heading (“Today”, then the others). Tapping Today returns to today alone, and the strip keeps the chosen chip in view." },
+    { do: "Open the dropdown and pick a division, then reload the page.", see: "The page shows only that division, and after the reload the same division is still chosen (it remembers your pick). Set it back to “All divisions” and reload once more." },
+    { do: "Tap the magnifying glass. Type a team name (for example “Bears”). Then clear it and type a coach's name from the Teams page.", see: "The field opens in place, with a hint reading “Search team or coach…”. Only matching games stay; the day chips are hidden while you search. A coach's name finds that coach's team." },
+    { do: "Search for “zzzz”.", see: "A short message, “No matching games” and “Try another team or clear the search.”, and no games. Close the search with the same symbol: the chips and the games come back." },
+    { do: "Clear the search. Measure how far down the first game row starts (device toolbar ruler, or count thumb-lengths).", see: "About 367 px from the top at 360 and 390 (the drawing said about 394; the build measured 367)." + tell("your number, and whether the first game is visible without scrolling.") },
+    { do: "Tap any game row, then go back.", see: "The row opens that game's own page; back returns to the Schedule on the same day." },
+    { do: "Look for sideways scrolling at 360 on the Schedule.", see: "None. Every tap target is easy to hit with a thumb." },
+    { opt: true, do: "A followed team never shows My games in a browser. With the preview off, follow a team on the old Schedule (its follow strip): " + off(SCHED, "old Schedule") + ". Then turn the preview on again: " + on(SCHED, "preview on") + ". Unfollow in Part K.", see: "Still no “My games” pill and no calendar symbol anywhere, even though a team is followed. (A window that never followed anyone cannot show this, which is why the step exists.)" }
+  ]},
+  { id: "B", title: "Part B · The live card, Up next, and a result arriving", who: "Private window, signed out · phone width · keep the Schedule open between steps", note: "These steps move the live semifinal. After each change the script prints the game back; compare it with what you see. The page checks for new scores every 30 seconds, so wait before reloading where a step says so.", steps: [
+    { stop: true, do: "Stop check. Run " + fx("no-score") + " (or ask me). Open " + on(SCHED, "the Schedule") + " on Today, then tap Playoffs.", see: "The read-back says status “scheduled”, no scores. The semifinal is a compact green-edged card in its time slot: time top left, division/pool and round below, “Live now” top right, the two teams on their own lines and “No score yet” once (never 0–0). No location or Directions on the list. The visitor is listed first, the home team second." + tell("the playoff line printed for the live game.") },
+    { do: "Leave the page open. Run " + fx("prepare") + " (or ask me) so the game reads 3–2, reload once, then run " + fx("score") + " and do not reload. Wait up to 30 seconds.", see: "The score on the card changes in place from 3 to 4 for the home team, without a reload and without a second copy of the game appearing. The read-back says home 4, away 2." + tell("the read-back line, and how long the card took to change.") },
+    { do: "Run " + fx("soon") + " (or ask me): the semifinal starts in 3 minutes and has no score. Reload, with Today and Playoffs chosen.", see: "The live card is gone (the game is not live yet). A small “Up next” heading appears <strong>once</strong>, directly above the first game today that has not started, which is this one. Its compact row shows time above division/pool and round, then both full team names, with no invented scores, location or maps action. Nothing earlier today (a game whose time has passed) carries an “Up next” heading above it." + tell("what sits above the Up next heading and what sits right below it.") },
+    { do: "Tap the “All” chip, then a day that is not today.", see: "Under “All”, the Today section carries Up next as above and the other days have a date heading only. On a different day's chip there is no “Up next” heading anywhere." },
+    { do: "Run " + fx("final") + " (or ask me): the semifinal is over, 4–2, ten minutes ago. Back on Today, wait up to 30 seconds without reloading, or reload.", see: "A single row, “Earlier today” with “1 game, all final” (or the count of games final today) under it and a chevron, sits at the top of today, closed. The game is no longer a live or upcoming card, and it is not listed twice." + tell("the read-back line and the fold's exact count line.") },
+    { do: "Tap “Earlier today”.", see: "It opens (the chevron turns). Inside, in time order, the finished games: time top left, division/pool underneath, “Final” top right, and each full team name paired with its own score on the first line even when the name wraps. The winner is first and bold. No location or map action. The number of rows inside equals the count under the title. Tap it again to close." },
+    { do: "Tap a finished row in the fold.", see: "It opens that game's own page, and back returns to the Schedule." }
+  ]},
+  { id: "C", title: "Part C · The link to a finished game keeps Earlier today open", who: "Private window, signed out · phone width", note: "The review caught a real bug here: Earlier today opened correctly from a link, then closed itself about 2.6 seconds later. This part exists to watch for exactly that. The fixture must be in the Final state from Part B.", steps: [
+    { stop: true, do: "Stop check. Run " + fx("show") + " (or ask me).", see: "The semifinal reads status “completed”, 4 and 2. If it does not, run " + fx("final") + " first." + tell("the semifinal's status and scores.") },
+    { do: "Make sure the preview is on, then open this link in a <strong>new tab</strong>: " + a(SCHED + "?highlightGameId=" + SEMI, "the link to the finished semifinal") + ". Do not touch the page.", see: "The Schedule opens on the right division, on the Playoffs half, on today. “Earlier today” is open and the semifinal is in view and briefly lit." },
+    { do: "Still without touching it, count slowly to ten.", see: "<strong>Earlier today is still open after ten seconds, and the game is still visible.</strong> If it closes by itself at any point, mark this part Issue and tell me roughly how many seconds it took." + tell("whether it stayed open for the full ten seconds.") },
+    { do: "Look at the address bar.", see: "The link's tail “?highlightGameId=…” is gone and the page shows the plain Schedule address." },
+    { do: "Tap the “Earlier today” row.", see: "It closes, and it stays closed (wait five seconds). Tap it again: it opens and stays open." },
+    { do: "Reload the page (the plain address, no link).", see: "Earlier today is closed again by default on a phone." },
+    { do: "Open the same link at 360 wide.", see: "The same: right division and half, today, Earlier today open and staying open." }
+  ]},
+  { id: "D", title: "Part D · The Playoffs half and its door", who: "Private window, signed out · phone width · fixture stays Final", steps: [
+    { do: "On " + on(SCHED, "the Schedule") + ", tap Playoffs, then look under the Pool play / Playoffs track.", see: "There are <strong>no day chips</strong> on this half: every playoff game here falls on today, and the strip is hidden when a half has only one date (ruled). Tap Pool play and back to see the chips come and go: they are there on Pool play (seven dates) and gone on Playoffs. The rows are the playoff games: time top left; division/pool and round underneath (for example “U11 · Semifinal”); status top right; then both teams on their own lines, each paired with its own score. The winner is bold and the loser soft. Location and Directions are found by opening the game." },
+    { do: "Look at the championship (2:15 p.m. here).", see: "Its teams read as fan words, “Semifinal 1 winner” and “Semifinal 2 winner”, not “Winner of SF2”. The round reads “Championship”, never “Final”." },
+    { do: "If the division has pools, look at the pool playoff headings.", see: "Each pool's heading (for example “Pool A Playoffs”) appears <strong>once</strong>, with that pool's games grouped under it, not repeated for every time slot (no A, B, A, B). If this division has no pools, say so; there is nothing to see." + tell("whether pool headings exist, and their order.") },
+    { do: "Scroll to the foot of the Playoffs half.", see: "A tall door row, “The bracket”, with “On the Standings tab” under it. (Not “On the Playoffs tab”: the bracket still lives on Standings until Stage 4.)" },
+    { do: "Tap the door.", see: "The Standings page opens, where the bracket is. Go back." },
+    { do: "Tap Pool play.", see: "The same Schedule with the pool games only. Each row shows its pool as a small tag. The door is not here." }
+  ]},
+  { id: "E", title: "Part E · A game's page, on a phone", who: "Private window, signed out · phone width (390, then 360)", note: "Open the live semifinal's page. Each fixture change below is read back; reload after it unless a step says to wait.", steps: [
+    { stop: true, do: "Stop check. Run " + fx("prepare") + " (or ask me) and open " + on(GAME, "the live semifinal's page") + ".", see: "The read-back says 3–2, status “scheduled”. From the top: a plain “‹ Schedule” back link; a large time (for example “11:57 a.m.”); the date and field (“Thu, Oct 29 · …”); the address; a full-width, worded <strong>Directions</strong> button. No “Game Details” heading, no results line." + tell("the time, date and field exactly as shown.") },
+    { do: "Measure how far down the Directions button starts.", see: "About 289 px at 360 and 390, about 48 px tall (today's page puts it near 730, so you scroll to find it)." + tell("your number.") },
+    { do: "Tap Directions.", see: "A map for the field opens." },
+    { do: "Look at the score card under the button.", see: "Top line: “Semifinal · U11” (round, then division) with a green “Live now” chip. Then the visitor first and the home team second, each a link, with the scores 3 and 2 at the right. No “Away”, “Home” or ☆ labels. At the foot, a line about what is at stake for this round, and a small share symbol." + tell("the foot line, in the exact words.") },
+    { do: "Tap one team name, then go back. Tap the share symbol.", see: "The team name opens that team's page. The share symbol opens a share menu." },
+    { do: "Scroll to the facts under the cards.", see: "Rows: Division, Round, Game length (“… min”). A “Notes” row only if this game has notes, and then it is the last row. This fixture game has none, so there is no Notes row." + tell("the Round row.") },
+    { do: "Run " + fx("no-score") + " (or ask me) and reload.", see: "The score card says “No score yet”, no 0–0, the chip still says “Live now”, and there is no share symbol (nothing to share)." },
+    { do: "Run " + fx("score") + " (or ask me). Do not reload. Wait up to 30 seconds.", see: "The home score becomes 4 by itself; the page does not jump or reload visibly. The read-back says home 4, away 2." + tell("the read-back line.") },
+    { do: "Run " + fx("soon") + " (or ask me) and reload.", see: "The chip is gone, no scores, and a line reading “Starts in …” counts down toward the start (about 3 minutes). No share symbol." + tell("the countdown line at the moment you read it.") },
+    { do: "Open the championship's page: " + a(LK + "/schedule/" + CHAMP, "the championship") + ".", see: "Round “Championship” (never “Final”). Both teams read as “Semifinal 1 winner” and “Semifinal 2 winner” with no link. “Starts in …” if it is later today. Its foot may say the winner takes the title, in gold." + tell("the round and the two team lines.") }
+  ]},
+  { id: "F", title: "Part F · Cancelled and Unofficial, on the Schedule and on the game's own page", who: "Private window, signed out · phone width", note: "A family must read the same result on both pages. The fixture keeps the scores 4 and 2 on the Cancelled game on purpose: a cancelled game must show no scores at all.", steps: [
+    { stop: true, do: "Stop check. Run " + fx("cancelled") + " (or ask me). Open " + on(SCHED, "the Schedule") + " on Today, Playoffs.", see: "The read-back says status “cancelled”. The row keeps its time and full team names but they are soft; the time is not struck through; a small red “Cancelled” chip sits at the top right. Division/pool and round are under the time. No scores, location or Directions on the list; it is not a live card and not in Earlier today." + tell("the read-back line and the row's exact context line.") },
+    { do: "Tap the cancelled row to open its page.", see: "The time at the top is soft, with a red “Cancelled” chip beside it. The address is still there. There is no Directions button, no scores and no share symbol. The score card's foot says “This game will not be played.”" },
+    { do: "Run " + fx("unofficial") + " (or ask me): a score that was entered about four hours ago but not confirmed by the organizer. Reload the Schedule.", see: "The read-back says status “submitted”. The row reads “Unofficial” (amber), not “Final”, with the scores 4 and 2 shown. It is <strong>not</strong> inside Earlier today (only confirmed finals fold) and it is not a live card." + tell("the read-back line and the word the row shows in place of Final.") },
+    { do: "Tap that row to open its page.", see: "An amber “Unofficial” chip in the score card's top line, the scores shown, the share symbol present, and the foot reading “Not yet confirmed by the organizer”." },
+    { do: "Compare with today's pages. Open " + off(SCHED, "the same Schedule with the preview off") + " and find the same game.", see: "The old page also does not call it a plain Final (it shows its own Unofficial / awaiting-confirmation word). The two pages mean the same thing even if drawn differently." + tell("the word the old page uses for it.") },
+    { do: "Run " + fx("final") + " (or ask me) and turn the preview back on: " + on(SCHED, "preview on") + ".", see: "The read-back says “completed” 4–2. On the Schedule the game is back inside Earlier today with a plain “Final”. On its own page the chip says “Final”." },
+    { do: "Run " + fx("prepare") + " (or ask me).", see: "Back to a game in play (3–2). The fixture is ready for the next parts." + tell("that you ran it; I read the game back.") }
+  ]},
+  { id: "G", title: "Part G · A division held back, and a schedule held back", who: "Private window, signed out", note: "A held-back division is one the organizer has not published. It must appear nowhere: not in the list, the chips, the fold, a search or a link.", steps: [
+    { stop: true, do: "Stop check. Run " + w2("withhold") + " (or ask me): it holds back Lakeshore's U11 schedule. Open " + on(SCHED, "the Schedule") + ".", see: "The dropdown still reads “All divisions”. Only U13 games are listed. The U11 semifinals and the championship (the games you have been watching) are nowhere on the page, on either half, and no day chip exists only because of a U11 game." + tell("every team name you can see on the page.") },
+    { do: "Search for a U11 team (for example “Bears”).", see: "“No matching games.” None of the held-back division's teams turn up." },
+    { do: "Open the dropdown and pick U11.", see: "A short message, “Division schedule coming soon” and “The organizer has not posted this division's schedule yet.” The day chips disappear. The controls stay." },
+    { do: "Open the held-back game's own page: " + a(GAME, "the live semifinal's page") + ".", see: "A not-found page. No time, no teams, no score." },
+    { do: "Open the link to that same game on the Schedule: " + a(SCHED + "?highlightGameId=" + SEMI, "the Schedule with the semifinal link") + ".", see: "The Schedule opens normally. The held-back game is not revealed anywhere, and no Earlier today row is opened for it." },
+    { do: "Run " + w2("unwithhold") + " (or ask me) and reload.", see: "U11 is back: the dropdown's U11 shows its games again. The game's own page opens." + tell("that you ran it; I read the schedule visibility back.") },
+    { do: "A whole schedule held back: open " + on(RV, "the Riverdale demo's Overview") + ", then its Schedule tab.", see: "(Dev only: the demo's divisions are unpublished here.) The Schedule shows a card, “Schedule coming soon” and “The organizer has not posted the schedule yet.”, with no controls, no day chips and no games. Under it one door row, “Teams”, and a “Register” row only while sign-ups are open. No “Tournament Home”." + tell("which door rows you see under the card.") }
+  ]},
+  { id: "H", title: "Part H · The desk and the in-between", who: "Private window, signed out · 1280 wide, then 960", note: "Reload after resizing. The semifinal must be a game in play at the start: Part F ended there; if you left it in another state, run prepare first.", steps: [
+    { stop: true, do: "Stop check. At 1280 wide open " + on(SCHED, "the Schedule") + ", Today, Playoffs.", see: "Controls are <strong>one</strong> row: the division dropdown (reading “All divisions”), the Pool play / Playoffs track, a “Search teams” field, all visible with nothing hidden behind a symbol. (My games and the worded “Calendar” belong to the installed app and are absent here.) The side rail stays." },
+    { do: "Look at the rows at 1280.", see: "Each game keeps a desktop line: time, then the teams with their own scores, then division/pool context and the status at the right. The round remains under the time. Live now is marked green. There is no location or Directions on the Schedule; opening a game supplies both." },
+    { do: "Run " + fx("final") + " (or ask me), reload at 1280, and look at today.", see: "Earlier today is already <strong>open</strong>, with its games listed under the title; no tap needed." },
+    { do: "Open " + on(GAME, "the semifinal's page") + " at 1280.", see: "Two columns under the back link: when and where (time, field, address, Directions) and the score card on the left, the facts on the right. Directions starts about 260 px down." + tell("your number, if you measure it.") },
+    { do: "At 960 wide (between the phone and the desk) open the Schedule and then the game's page.", see: "The Schedule keeps the phone's two rows of controls and the white tab row; the game's page stacks the facts under the cards in one column, Directions about 289 px down. No sideways scroll and nothing cut off." },
+    { do: "Run " + fx("prepare") + " (or ask me) to put the game back in play.", see: "Done." + tell("that you ran it.") }
+  ]},
+  { id: "I", title: "Part I · The results line: gone from these two, still on the others", who: "Private window, signed out · phone width", note: "The line is the still strip under the tab row that shows today's games one at a time. If you ever tapped its × on this device today, it stays hidden until tomorrow: use a fresh private window for this part.", steps: [
+    { stop: true, do: "Stop check. With the game in play, open " + on(SCHED, "the Schedule") + " and then " + a(GAME, "the live semifinal's page") + ".", see: "No results line on either one. (If the line is missing on every page of this tournament, you hid it earlier: open a fresh private window and repeat.)" },
+    { do: "Open " + a(LK + "/standings", "Standings") + ", then Playoffs, Teams, a team's own page (tap any team), News and Rules.", see: "The line is on every one of those six pages, one still strip that cycles through today's games and rests on the newest." },
+    { do: "Tap the line.", see: "It opens the game it was showing." }
+  ]},
+  { id: "J", title: "Part J · The organizer's own preview", who: "Signed in as b2cowan@outlook.com · desk width", note: "This is the page an organizer sees in their admin preview. It is the same body with no destinations: nothing here may act.", steps: [
+    { do: "Sign in as b2cowan@outlook.com and open " + a(PREVIEW + "/schedule", "Live Demo — Game Day's Schedule preview") + ".", see: "The same Schedule body as a family sees, with its controls and day chips. If it says “Schedule coming soon”, tell me: it means the preview's divisions are not published, which is the data and not the page." + tell("what the page shows.") },
+    { do: "Click a game row and look for Directions.", see: "Nothing happens when you click a row: it is plain text, not a link. No Directions symbol or button on any row. No results line. No My games." },
+    { do: "Look for a game's own page from the preview.", see: "There is none to open (the preview has no game pages)." }
+  ]},
+  { id: "K", title: "Part K · With the preview off, nothing changed", who: "Private window, signed out", steps: [
+    { do: "Open " + off(SCHED, "Lakeshore's Schedule with the preview off") + ".", see: "Today's Schedule: the “Tournament Schedule” header, the List / Bracket switch, the sticky day heading with its count, the old results line at the top. No two-row control layout, no day chips, no Earlier today row." },
+    { do: "Open " + off(GAME, "the semifinal's page with the preview off") + ".", see: "Today's game page: a “Game Details” heading (on a phone the old page's live chrome may hide it, as it does today), Away and Home labels with a ☆ beside each team, the old results line. Directions is far down the page (about 730 px)." },
+    { do: "Open " + off(RV, "the Riverdale demo") + ", then its Schedule tab.", see: "Riverdale as it looks on the live site today." },
+    { do: "If you followed a team in step A11, unfollow it now on the old Schedule's follow strip. Then turn the preview back on: " + on(SCHED, "preview on") + ".", see: "The new Schedule again. (Skip this if you skipped A11.)" }
+  ]},
+  { id: "L", title: "Part L · The installed app (optional)", who: "Installed app on your phone · needs a secure address", steps: [
+    { opt: true, do: "In the installed app, follow a team. Open the Schedule.", see: "A “My games” pill appears beside the division dropdown and a calendar symbol sits next to the search symbol. Tapping My games shows that team's games; the calendar symbol downloads that team's schedule." },
+    { opt: true, do: "If the organizer has pinned a post for game day, open the Schedule.", see: "A white card with a 3 px amber left edge at the top, with a × that hides it for this visit; it returns on your next visit." }
+  ]},
+  { id: "M", title: "Part M · Putting things back", who: "Terminal, or ask me", steps: [
+    { do: "Run " + w2("unwithhold") + " then " + fx("prepare") + " then " + fx("show") + " (or ask me to).", see: "U11 published. The semifinal is a game in play again (3–2, “scheduled”), the seven game dates around today. (To return the fixture to its original state instead, run " + fx("undo") + "; I leave it prepared so the next session starts in play.)" + tell("the show output.") },
+    { do: "Close the private window.", see: "Nothing to see: this is housekeeping." }
+  ]}
+];
+
+
+var KEY = "qa-426-stage3-schedule-game-walk-v1";
+var state = { ticks: {}, verdict: {}, notes: {} };
+try { var saved = JSON.parse(localStorage.getItem(KEY) || "null"); if (saved) state = saved; } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+var root = document.getElementById("parts");
+var total = 0;
+PARTS.forEach(function (p) {
+  var sec = document.createElement("section"); sec.className = "part";
+  var html = '<header><h2>' + p.title + '</h2><span class="who">' + p.who + '</span>' + (p.note ? '<p>' + p.note + '</p>' : '') + '</header>';
+  p.steps.forEach(function (s, i) {
+    var id = p.id + (i + 1); total++;
+    if (s.opt) {
+      html += '<div class="step" id="row-' + id + '"><span></span><span class="txt"><span class="do">' + id + ' · Optional. ' + s.do + '</span><span class="see">' + s.see + '</span>' +
+        '<span class="opts"><label><input type="checkbox" id="cb-' + id + '" data-id="' + id + '"> Did it</label><label><input type="checkbox" id="cb-' + id + 's" data-id="' + id + 's"> Skipped it</label></span></span></div>';
+    } else {
+      html += '<label class="step' + (s.stop ? ' stop' : '') + '" id="row-' + id + '"><input type="checkbox" id="cb-' + id + '" data-id="' + id + '"><span class="txt"><span class="do">' + id + ' · ' + s.do + '</span><span class="see">' + s.see + '</span></span></label>';
+    }
+  });
+  html += '<div class="verdict" role="group" aria-label="' + p.title + ' verdict">' +
+    '<button type="button" data-p="' + p.id + '" data-v="pass" aria-pressed="false">Pass</button>' +
+    '<button type="button" data-p="' + p.id + '" data-v="issue" aria-pressed="false">Issue</button>' +
+    '<button type="button" data-p="' + p.id + '" data-v="call" aria-pressed="false">Needs a call</button></div>' +
+    '<textarea id="notes-' + p.id + '" data-p="' + p.id + '" placeholder="Notes for ' + p.title + ' (what you saw, anything odd)"></textarea>';
+  sec.innerHTML = html; root.appendChild(sec);
+});
+
+function stepDone(id) { return !!(state.ticks[id] || state.ticks[id + "s"]); }
+function render() {
+  var n = 0;
+  document.querySelectorAll("input[type=checkbox][data-id]").forEach(function (cb) { cb.checked = !!state.ticks[cb.dataset.id]; });
+  PARTS.forEach(function (p) { p.steps.forEach(function (s, i) {
+    var id = p.id + (i + 1), d = stepDone(id); if (d) n++;
+    document.getElementById("row-" + id).classList.toggle("done", d);
+  }); });
+  document.querySelectorAll(".verdict button").forEach(function (b) { b.setAttribute("aria-pressed", String(state.verdict[b.dataset.p] === b.dataset.v)); });
+  document.querySelectorAll("textarea[data-p]").forEach(function (t) { t.value = state.notes[t.dataset.p] || ""; });
+  document.getElementById("count").textContent = n + " of " + total + " checked";
+  document.getElementById("fill").style.width = (total ? (100 * n / total) : 0) + "%";
+}
+root.addEventListener("change", function (e) {
+  var id = e.target.dataset && e.target.dataset.id; if (!id) return;
+  state.ticks[id] = e.target.checked;
+  if (e.target.checked) { var other = /s$/.test(id) ? id.slice(0, -1) : id + "s"; if (document.getElementById("cb-" + other)) state.ticks[other] = false; }
+  save(); render();
+});
+root.addEventListener("click", function (e) { var b = e.target.closest(".verdict button"); if (!b) return; state.verdict[b.dataset.p] = state.verdict[b.dataset.p] === b.dataset.v ? null : b.dataset.v; save(); render(); });
+root.addEventListener("input", function (e) { if (e.target.dataset.p && e.target.tagName === "TEXTAREA") { state.notes[e.target.dataset.p] = e.target.value; save(); } });
+document.getElementById("reset").addEventListener("click", function () { state = { ticks: {}, verdict: {}, notes: {} }; save(); render(); });
+var WORD = { pass: "PASS", issue: "ISSUE", call: "NEEDS A CALL" };
+document.getElementById("build").addEventListener("click", function () {
+  var lines = ["§426 · Stage 3 · The Schedule and a game's page answer where and when"], all = 0;
+  PARTS.forEach(function (p) {
+    var ids = p.steps.map(function (s, i) { return p.id + (i + 1); });
+    var done = ids.filter(stepDone).length; all += done;
+    var missing = ids.filter(function (id) { return !stepDone(id); });
+    var skipped = ids.filter(function (id) { return state.ticks[id + "s"]; });
+    lines.push(p.title + " [" + (WORD[state.verdict[p.id]] || "no verdict") + "] " + done + "/" + ids.length +
+      (missing.length ? " · unticked: " + missing.join(", ") : "") + (skipped.length ? " · skipped: " + skipped.join(", ") : ""));
+    if (state.notes[p.id]) lines.push("  Notes: " + state.notes[p.id].replace(/\n+/g, " / "));
+  });
+  lines.splice(1, 0, "Checked " + all + " of " + total);
+  document.getElementById("summary").value = lines.join("\n");
+});
+document.getElementById("copy").addEventListener("click", function () {
+  var t = document.getElementById("summary");
+  if (!t.value) document.getElementById("build").click();
+  try { navigator.clipboard.writeText(t.value).catch(function () { t.select(); }); } catch (e) { t.select(); }
+});
+render();
+</script>

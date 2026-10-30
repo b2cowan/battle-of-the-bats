@@ -74,6 +74,11 @@ export default function BottomSheet({
 
   if (!open || typeof document === 'undefined') return null;
 
+  // Under the public tournament pages' light frame the club's tokens live on the frame's own element, so a sheet
+  // attached to <body> would fall back to the platform's dark ground. Attach inside the frame instead (nothing there
+  // is transformed, so the fixed backdrop still covers the screen); everywhere else it stays on <body>.
+  const portalTarget = document.querySelector<HTMLElement>('[data-public-frame="light"]') ?? document.body;
+
   // Admin Design Continuity slice 4c — this sheet `createPortal`s to `document.body`, a SIBLING of the
   // admin shell, so no `[data-admin-kit]` rule could reach it (nor the caller's content inside it: the
   // schedule timeline's reschedule sheet, the check-in board's detail). `PortalKitRoot` carries the
@@ -110,6 +115,6 @@ export default function BottomSheet({
       </div>
     </div>
     </PortalKitRoot>,
-    document.body,
+    portalTarget,
   );
 }

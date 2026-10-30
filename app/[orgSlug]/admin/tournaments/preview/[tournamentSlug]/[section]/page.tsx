@@ -18,6 +18,8 @@ import { getPublicStandingsByDivision, onlyPublishedGames } from '@/lib/public-g
 import ScheduleContent from '@/components/public/ScheduleContent';
 import PublicSchedule from '@/components/public/PublicSchedule';
 import StandingsContent from '@/components/public/StandingsContent';
+import PublicStandings from '@/components/public/PublicStandings';
+import { publishedCompetitionData } from '@/lib/public-standings';
 import TeamsContent from '@/components/public/TeamsContent';
 import NewsContent from '@/components/public/NewsContent';
 import RulesContent from '@/components/public/RulesContent';
@@ -106,6 +108,8 @@ export default async function TournamentPreviewSectionPage({
       registrationFields: [],
       standingsByDivision,
     };
+    const frameOn = await isPublicFrameOn();
+    if (frameOn) return <PublicStandings orgSlug={orgSlug} tournamentSlug={tournamentSlug} isPreview initialData={publishedCompetitionData(initialData)} />;
     return (
       <StandingsContent
         orgSlug={orgSlug}

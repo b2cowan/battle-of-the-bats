@@ -40,7 +40,9 @@
   font-family: var(--font-data);
   font-size: 0.72rem;
   font-weight: 900;
-  color: var(--on-primary);
+  /* The square is always a dark team hue (hsl 38%), so its initials are white — not the event's "text on its colour",
+     which under the light frame is dark ink (a pale organizer's band) and printed dark on dark. */
+  color: var(--on-team-color);
   letter-spacing: 0.05em;
 }
 
@@ -234,7 +236,7 @@
   font-family: var(--font-data);
   font-size: 0.66rem;
   font-weight: 900;
-  color: var(--on-primary);
+  color: var(--on-team-color);
   letter-spacing: 0.04em;
 }
 

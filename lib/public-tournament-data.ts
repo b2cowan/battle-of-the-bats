@@ -14,11 +14,12 @@ import {
 } from './db';
 import { hasPlanFeature } from './plan-features';
 import { getPublicStandingsByDivision, onlyPublishedGames } from './public-games';
-import { isPublicPageEnabled, withInviteOnlyPages, type PublicPageKey } from './public-pages';
+import { isPublicPageEnabled, isPublicBracketVisible, withInviteOnlyPages, type PublicPageKey } from './public-pages';
 import { runsInviteOnlyEvents } from './invite-only-event';
+import { publishedCompetitionData } from './public-standings';
 import type { Announcement, Division, Venue, Game, Organization, Resource, RuleSection, Team, PublicTeam, Tournament, TournamentRegistrationField } from './types';
 
-export type PublicTournamentSection = Extract<PublicPageKey, 'schedule' | 'standings' | 'teams' | 'rules' | 'register'> | 'context' | 'scores';
+export type PublicTournamentSection = Extract<PublicPageKey, 'schedule' | 'standings' | 'teams' | 'rules' | 'register'> | 'context' | 'scores' | 'standings-preview' | 'playoffs';
 
 /**
  * Strip a {@link Team} down to its public-safe fields ({@link PublicTeam}). The single
@@ -123,8 +124,8 @@ export async function getPublicTournamentPageData(
   // 'scores' is the cross-tournament consumer feed (My Games) — gate it on the SCHEDULE
   // page's visibility, exactly like the 'schedule' section, so a hidden schedule never
   // leaks games here either.
-  const sectionKey = section === 'context' ? null : section === 'scores' ? 'schedule' : section;
-  const pageEnabled = !sectionKey || isPublicPageEnabled(tournament, sectionKey);
+  const sectionKey = section === 'context' || section === 'playoffs' ? null : section === 'scores' ? 'schedule' : section === 'standings-preview' ? 'standings' : section;
+  const pageEnabled = section === 'playoffs' ? isPublicBracketVisible(tournament) : !sectionKey || isPublicPageEnabled(tournament, sectionKey);
 
   // Resolve the contact email shown on public pages, honoring the per-tournament
   // `contact_show_on_public` toggle (migration 120). Override BOTH the tournament and org
@@ -194,14 +195,14 @@ export async function getPublicTournamentPageData(
     };
   }
 
-  if (section === 'standings') {
+  if (section === 'standings' || section === 'standings-preview' || section === 'playoffs') {
     const [divisions, games, teams, venues] = await Promise.all([
       getDivisions(tournament.id, { admin: true }),
       getGames(tournament.id, { admin: true }),
       getTeams(tournament.id, { admin: true }),
       getVenues(tournament.id, { admin: true, includeFacilities: true }),
     ]);
-    return {
+    const data: PublicTournamentPageData = {
       ...base,
       divisions,
       games: onlyPublishedGames(games, divisions),
@@ -209,6 +210,7 @@ export async function getPublicTournamentPageData(
       venues,
       standingsByDivision: await getPublicStandingsByDivision(tournament, divisions, { games, teams }),
     };
+    return section === 'standings-preview' || section === 'playoffs' ? publishedCompetitionData(data) : data;
   }
 
   if (section === 'rules') {

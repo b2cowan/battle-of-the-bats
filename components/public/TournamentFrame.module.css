@@ -9,8 +9,8 @@
 /* ── The geometry: the band is in the page's flow and scrolls away; on a phone only the tab row (48 px) pins ─────── */
 .frame {
   --frame-pin-h: 48px;
-  /* The platform's event header is gone, so nothing publishes its height: every sticky top rides the pinned row (and
-     the ticker under it on game day), and no page pads itself for a fixed header that is not there. */
+  /* The platform's event header is gone, so nothing publishes its height: every sticky top rides the pinned row (the
+     game-day line under it scrolls away, so it adds nothing), and no page pads itself for a fixed header that is not there. */
   --nav-event-h: 0px;
   --nav-visual-h: var(--frame-pin-h);
   --chrome-top-h: calc(var(--frame-pin-h) + var(--ticker-h, 0px) + var(--desktop-strip-h, 0px) + var(--sandbox-chrome-h, 0px) + var(--offer-bar-h, 0px));
@@ -76,6 +76,19 @@
   .frame .tabs > a:focus-visible { outline-color: var(--club-ink); }
 }
 
+/* More tabs than the row shows: a soft fade on its right edge while some are off screen (TournamentTopTabs sets
+   `data-more`, and clears it at the end of the row). Sticky inside the scrolling row, so it stays at the screen edge. */
+.frame .tabs[data-more]::after {
+  content: '';
+  position: sticky;
+  right: 0;
+  flex: none;
+  width: 36px;
+  margin-left: -36px;
+  background: linear-gradient(90deg, transparent, var(--club-card) 88%);
+  pointer-events: none;
+}
+
 /* ── The desk (Part 2; hub "The end state", "Desktop, game day · 1280px") ───────────────────────────────────────────
    The band runs the full width; under it the white side rail (TournamentSideRail.module.css, keyed to the marker) and
    the page; the footer runs the full width at the foot. The rail is 248 px, the platform's one rail width (the coaches
@@ -111,6 +124,20 @@
 /* The main column is only a grid slot at a desk; on a phone it is nothing, so the page flows as it did in Part 1. */
 @media (max-width: 1023px) {
   .main { display: contents; }
+
+  /* A short page still puts the footer at the foot of the screen, as it does at a desk (above): without this the footer
+     floats up under a short page (a finished event's Overview is a card and a link) and the cream ground shows beneath
+     it, which on a real phone reads as a hole. The bar's room comes off the height (0 in a browser, where there is no
+     bar; the bar's own height inside the installed app), so the page never scrolls just to reach its own foot. */
+  .frame .deskShell {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100dvh - var(--bottom-nav-height, 0px));
+  }
+  .frame .deskShell > :global([data-public-frame-footer]) { margin-top: auto; }
+  /* <body> asks for 100vh, which on a phone is the screen with the browser's bars tucked away: taller than what is
+     visible, so a short page scrolled into empty ground. The shell above carries the height now. */
+  :global(body):has(.frame) { min-height: 0; }
 }
 
 /* The page behind the frame is the ground too — past the top or bottom on a phone's bounce, under a short page. */
@@ -146,18 +173,19 @@
   text-overflow: ellipsis;
 }
 
-/* The state chip: the band's two colours swapped (the drawing's `.band .chip`), so it reads on any organizer colour
-   with no tint of its own. Live now carries a dot in the same colour. */
+/* The state word, plain text at the end of the dates line (owner ruling, band crowding: a filled pill was the heaviest
+   shape in the band and made it about 8 px taller). It wears the band's own text colour, so it reads wherever the title
+   does. Live now carries a dot in the same colour — still, no pulse, as the score line's rule. */
+.sep {
+  flex: none;
+  opacity: 0.7;
+}
 .chip {
   flex: none;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 6px 10px;
-  border-radius: 20px;
-  background: var(--club-on-fill);
-  color: var(--club-fill);
-  font: 600 12px/1 var(--club-text-face);
+  font-weight: 600;
 }
 .chip[data-live]::before {
   content: '';

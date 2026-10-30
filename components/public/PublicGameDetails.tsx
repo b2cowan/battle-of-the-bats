@@ -33,10 +33,10 @@ export default function PublicGameDetails({ game, data, orgSlug, tournamentSlug,
         <section className={styles.whenWhere} aria-label="When and where">
           <div className={styles.timeLine}><h1 className={view.cancelled ? styles.softTime : undefined}>{view.time}</h1>
             {view.cancelled && <span className={`${kit.chip} ${styles.cancelled}`}>Cancelled</span>}
+            {view.directions && <span className={styles.directionsSlot}><DirectionsLink href={view.directions} name={`Directions to ${view.field}`} /></span>}
           </div>
           <p className={styles.where}>{view.date} · {view.field}</p>
           {view.address && <p className={styles.address}>{view.address}</p>}
-          {view.directions && <DirectionsLink primary href={view.directions} name={`Directions to ${view.field}`} />}
         </section>
         <section className={styles.scoreCard} aria-label="Game score">
           <div className={styles.scoreTop}><span>{view.round} · {view.division}</span>

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { changedScheduleGameIds, divisionPools, groupPoolPlayoffs, scheduleGames, scheduleInitialSelection, scheduleLandingDay, splitEarlierToday, visibleScheduleGames } from '../../lib/public-schedule.ts';
+import { changedScheduleGameIds, divisionPools, groupPoolPlayoffs, scheduleGames, scheduleInitialSelection, scheduleLandingDay, visibleScheduleGames } from '../../lib/public-schedule.ts';
 import { gameRowView } from '../../lib/public-game-row.ts';
 import type { Division, Game, PublicTeam, Tournament } from '../../lib/types.ts';
 
@@ -41,7 +41,6 @@ describe('the preview Schedule: landing and access', () => {
     assert.deepEqual(select(all, { query: 'Dana' }).games.map(g => g.id), ['public']);
     assert.deepEqual(select(all).dates, [today]);
     assert.equal(pick({ games: all, highlightId: 'hidden' }).highlight, null);
-    assert.deepEqual(splitEarlierToday(select(all).games, today, true, now).earlier, []);
   });
   it('playoff day opens Playoffs once; the format pins one-stage events', () => {
     assert.equal(pick({ games: [game('p', { isPlayoff: true })] }).stage, 'playoff');
@@ -86,23 +85,11 @@ describe('the preview Schedule: game lists and live updates', () => {
     assert.equal(result.poolTags.get('same'), 'Pool A');
     assert.equal(result.poolTags.get('cross'), null);
   });
-  it('only today’s confirmed finals fold, in chronological order', () => {
-    const list = [game('yesterday', { date: '2026-10-28', status: 'completed' }),
-      game('final', { status: 'completed', time: '09:00' }), game('unofficial', { status: 'submitted', time: '08:00' }),
-      game('live', { time: '11:30' }), game('cancelled', { status: 'cancelled' })];
-    const result = splitEarlierToday(select(list).games, today, true, now);
-    assert.deepEqual(result.earlier.map(g => g.id), ['final']);
-    assert.deepEqual(result.remaining.map(g => g.id), ['yesterday', 'unofficial', 'live', 'cancelled']);
-    assert.deepEqual(splitEarlierToday(select(list).games, today, false, now).earlier.map(g => g.id), ['unofficial', 'final']);
-  });
-  it('a live-to-final refresh moves once to the fold; changed ids animate, new ids do not', () => {
+  it('a live-to-final refresh: changed ids animate, new ids do not', () => {
     const live = game('live', { time: '11:30', homeScore: 2, awayScore: 1 });
     const next = [{ ...live, status: 'completed' as const, homeScore: 3 }, game('new')];
     assert.deepEqual(changedScheduleGameIds([live, game('removed')], next), ['live']);
     assert.deepEqual(changedScheduleGameIds(next, next), []);
-    const result = splitEarlierToday(select(next).games, today, true, now);
-    assert.deepEqual(result.earlier.map(g => g.id), ['live']);
-    assert.deepEqual(result.remaining.map(g => g.id), ['new']);
   });
   it('finished Schedule rows keep time, round, field and the unofficial state', () => {
     const view = gameRowView(game('score', { time: '09:00', status: 'submitted', homeScore: 3, awayScore: 2 }),

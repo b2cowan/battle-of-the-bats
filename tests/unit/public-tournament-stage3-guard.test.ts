@@ -41,19 +41,17 @@ describe('the switch reaches the Schedule', () => {
 
   it('the new parts and model are used only by the guarded Schedule or explicit shared-part variants', () => {
     const schedule = readCode('components/public/PublicSchedule.tsx');
-    for (const file of ['PublicDisclosure', 'PublicSchedule.module.css']) assert.ok(schedule.includes(file));
+    assert.ok(schedule.includes('PublicSchedule.module.css'));
     assert.match(schedule, /from '@\/lib\/public-schedule'/);
     assert.match(readCode('components/public/PublicGameRow.tsx'), /if \(schedule\)/);
-    assert.match(readCode('components/public/PublicLiveCard.tsx'), /topLine &&/);
-    assert.match(readCode('components/public/PublicDisclosure.tsx'), /aria-expanded=\{expanded\}/);
-    assert.match(readCode('components/public/PublicDisclosure.module.css'), /min-width: 1024px/);
+    assert.match(readCode('components/public/PublicLiveCard.tsx'), /if \(schedule\) return/);
     assert.match(readCode('components/public/PublicSchedule.module.css'), /\.schedule/);
   });
 
   it('preview rows have no destinations or maps, and cannot poll public data over initialData', () => {
     const schedule = readCode('components/public/PublicSchedule.tsx');
     assert.match(schedule, /isPreview \? undefined : orgHref/);
-    assert.match(schedule, /isPreview \? null : gameDirections/);
+    assert.doesNotMatch(schedule, /gameDirections|DirectionsLink|resolveGameFieldLabel/);
     assert.match(schedule, /enabled: !isPreview && isTournamentInProgress/);
     assert.match(schedule, /if \(initialData\) return/);
   });
@@ -81,7 +79,9 @@ describe('the game page and desktop (Part 3) stay behind the switch', () => {
     const body = readCode('components/public/PublicGameDetails.tsx');
     assert.match(body, /publicGameDetailView\(game/);
     assert.match(body, /PublicGameDetails.module.css/);
-    assert.match(body, /<DirectionsLink primary/);
+    // Directions is the small control beside the address (symbol alone on a phone), never a full-width primary button (owner 2026-10-29).
+    assert.match(body, /<DirectionsLink href/);
+    assert.doesNotMatch(body, /<DirectionsLink primary/);
     assert.match(body, /<PublicFactsList/);
     assert.doesNotMatch(body, /TeamFollowStar|from '@\/lib\/follow'/);
     assert.match(body, /view.hasScore && <ShareScoreButton iconOnly/);
@@ -97,12 +97,10 @@ describe('the game page and desktop (Part 3) stay behind the switch', () => {
     assert.match(og, /await isPublicFrameOn\(\) \? publicGameDetailView/);
     assert.match(og, /view\?\.round \?\?/);
   });
-  it('a deep link into Earlier today latches the fold open, and Up next belongs to game day only', () => {
-    const disclosure = readCode('components/public/PublicDisclosure.tsx');
-    assert.match(disclosure, /if \(reveal !== wasReveal\) \{[\s\S]*?if \(reveal\) setOpen\(true\);/);
-    assert.match(disclosure, /onClick=\{\(\) => setOpen\(!open\)\}/);
+  it('Up next belongs to game day only, and no day folds its finished games away', () => {
     const schedule = readCode('components/public/PublicSchedule.tsx');
-    assert.match(schedule, /renderGames\(remaining, true, date === today\)/);
+    assert.match(schedule, /renderGames\(dated, true, date === today\)/);
+    assert.doesNotMatch(schedule, /Earlier today|PublicDisclosure/);
     assert.match(schedule, /upNextToday && !upNextShown && state === 'upcoming' && \(gameStartMs\(g\) \?\? 0\) > clock\.getTime\(\)/);
     assert.match(schedule, /groupPoolPlayoffs\(input, selection\.poolTags\)/);
   });
@@ -120,6 +118,6 @@ describe('the game page and desktop (Part 3) stay behind the switch', () => {
       assert.match(readSource(css), /@media \(min-width: 1024px\)/);
     }
     assert.match(readCode('components/public/ShareScoreButton.tsx'), /iconOnly = false/);
-    assert.match(readCode('components/public/DirectionsLink.tsx'), /primary = false/);
+    assert.doesNotMatch(readCode('components/public/DirectionsLink.tsx'), /primary/);
   });
 });

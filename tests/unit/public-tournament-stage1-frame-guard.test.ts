@@ -116,10 +116,10 @@ describe('with the switch off, nothing a customer sees changes', () => {
 describe('the new frame\'s ticker, as ruled 2026-10-28 (F\'s behaviour in D\'s look)', () => {
   const line = readCode('components/public/TodaysResultsLine.tsx');
   const css = readCode('components/public/TodaysResultsLine.module.css');
-  it('one game at a time: a 5 s hold and a 0.4 s fade, one pass, then rest on the newest', () => {
+  it('one game at a time: a 5 s hold and a 0.8 s fade, one pass, then rest on the newest', () => {
     assert.match(line, /const HOLD_MS = 5000;/);
-    assert.match(line, /const FADE_MS = 400;/);
-    assert.match(css, /transition: opacity 0\.4s ease;/);
+    assert.match(line, /const FADE_MS = 800;/);
+    assert.match(css, /transition: opacity 0\.8s ease;/);
     assert.match(line, /else \{ setMode\('rest'\); if \(list\[0\]\) goTo\(list\[0\]\.id\); \}/);
   });
   it('three state words only: Live, Final, or the start time', () => {

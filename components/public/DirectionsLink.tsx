@@ -8,12 +8,12 @@ import styles from './DirectionsLink.module.css';
  * phone-secondary-actions-guard). `name` says where ("Directions to Lakeshore Dome"), so a list of days does not read
  * "Directions" over and over; it keeps the visible word inside it, so a voice-control user can still say "Directions".
  */
-export default function DirectionsLink({ href, name, primary = false }: { href: string; name: string; primary?: boolean }) {
+export default function DirectionsLink({ href, name }: { href: string; name: string }) {
   return (
-    <a className={primary ? `${kit.btn} ${kit.btnPrimary} ${styles.primaryDirections}` : `${kit.btn} ${kit.btnSecondary} ${kit.btnSm} ${styles.directions}`} href={href}
+    <a className={`${kit.btn} ${kit.btnSecondary} ${kit.btnSm} ${styles.directions}`} href={href}
       target="_blank" rel="noopener noreferrer" aria-label={name}>
-      <Navigation size={primary ? 20 : 18} aria-hidden />
-      <span className={primary ? undefined : styles.directionsLabel}>Directions</span>
+      <Navigation size={18} aria-hidden />
+      <span className={styles.directionsLabel}>Directions</span>
     </a>
   );
 }

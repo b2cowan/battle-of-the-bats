@@ -1888,7 +1888,9 @@ export const SCREENS = [
     route: 'app/[orgSlug]/[tournamentSlug]/schedule',
     interact: async (page) => {
       await page.getByRole('button', { name: 'Playoffs', exact: true }).click();
-      await page.getByRole('link', { name: /The bracket/ }).waitFor({ state: 'visible' });
+      const door = page.getByRole('link', { name: /The bracket/ });
+      await door.waitFor({ state: 'visible' });
+      if (!(await door.getAttribute('href'))?.endsWith('/playoffs')) throw new Error('Schedule bracket door missed Playoffs.');
     } },
   { id: 'pubt-game-live', session: 'anon', path: () => '/stage1-lakeshore-lightning/fall-classic/schedule', ready: '[data-public-schedule-ready]',
     route: 'app/[orgSlug]/[tournamentSlug]/schedule/[gameId]',
@@ -1901,6 +1903,57 @@ export const SCREENS = [
     } },
   { id: 'pubt-standings-own',     session: 'anon', path: () => '/stage1-metro-sports/spring-showcase/standings',    ready: '[data-public-frame-band]',
     route: 'app/[orgSlug]/[tournamentSlug]/standings' },
+  // Stage 4: dedicated, reversible clones; prepare with seed-public-stage4-fixtures.mjs. Missing states fail closed.
+  { id: 'pubt-standings-mid-pool', session: 'anon', path: () => '/stage1-metro-sports/stage4-mid-pool/standings',
+    ready: '[data-public-standings="table"]', route: 'app/[orgSlug]/[tournamentSlug]/standings',
+    interact: async page => {
+      await page.getByText(/left to play/, { exact: false }).first().waitFor({ state: 'visible' });
+      await page.getByRole('button', { name: /How the table is ranked/ }).click();
+    } },
+  { id: 'pubt-standings-playoffs', session: 'anon', path: () => '/stage1-metro-sports/stage4-live/standings',
+    ready: '[data-public-standings="table"]', route: 'app/[orgSlug]/[tournamentSlug]/standings',
+    interact: async page => { await page.getByRole('link', { name: /The playoff bracket.*championship is live now/ }).waitFor({ state: 'visible' }); } },
+  { id: 'pubt-standings-finished', session: 'anon', path: () => '/stage2-pinecrest/harvest-cup/standings',
+    ready: '[data-public-standings="table"]', route: 'app/[orgSlug]/[tournamentSlug]/standings',
+    interact: async page => {
+      const counts = await page.locator('[data-standings-counts]').innerText();
+      if (!counts.includes('games final') || counts.includes('left to play')) throw new Error('Finished standings fixture is not final.');
+    } },
+  { id: 'pubt-playoffs-live', session: 'anon', path: () => '/stage1-metro-sports/stage4-live/playoffs',
+    ready: '[data-public-playoffs="live"] [data-public-playoff-game]', route: 'app/[orgSlug]/[tournamentSlug]/playoffs',
+    interact: async page => { await page.getByRole('button', { name: /How seeding works/ }).click(); } },
+  { id: 'pubt-playoffs-seeded', session: 'anon', path: () => '/stage1-metro-sports/stage4-seeded/playoffs',
+    ready: '[data-public-playoffs="upcoming"] [data-bracket-game]', route: 'app/[orgSlug]/[tournamentSlug]/playoffs',
+    interact: async page => {
+      if (await page.locator('[data-bracket-game][data-state="final"]').count()) throw new Error('Seeded bracket already has a result.');
+    } },
+  { id: 'pubt-playoffs-eight', session: 'anon', path: () => '/stage1-metro-sports/stage4-eight/playoffs',
+    ready: '[data-public-playoffs="upcoming"] [data-large]', route: 'app/[orgSlug]/[tournamentSlug]/playoffs',
+    interact: async page => {
+      await page.getByRole('button', { name: 'Full screen', exact: true }).click();
+      await page.getByRole('dialog', { name: 'Playoff bracket', exact: true }).waitFor({ state: 'visible' });
+      await page.keyboard.press('Escape');
+      await page.getByRole('dialog', { name: 'Playoff bracket', exact: true }).waitFor({ state: 'detached' });
+      await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+        await page.getByRole('button', { name: 'Fit bracket', exact: true }).click();
+        const fit = await page.locator('[data-large]').evaluate(board => {
+          const viewport = board.parentElement.getBoundingClientRect();
+          const bounds = board.getBoundingClientRect();
+          const team = board.querySelector('[data-bracket-game] > span:nth-child(2)');
+          return { right: bounds.right, edge: viewport.right,
+            textSize: parseFloat(getComputedStyle(team).fontSize) * parseFloat(getComputedStyle(board).zoom) };
+        });
+        if (fit.right > fit.edge + 1 || fit.textSize < 13.9) throw new Error(`Fit bracket must fit the viewport and keep team names readable: ${JSON.stringify(fit)}`);
+      await page.getByRole('button', { name: 'Reset bracket zoom', exact: true }).click();
+      await page.getByRole('button', { name: /How seeding works/ }).click();
+    } },
+  { id: 'pubt-schedule-bracket-only', session: 'anon', path: () => '/stage1-metro-sports/stage4-eight/schedule',
+    ready: '[data-public-schedule-ready]', route: 'app/[orgSlug]/[tournamentSlug]/schedule',
+    interact: async page => {
+      const door = page.getByRole('link', { name: /The bracket/ });
+      await door.waitFor({ state: 'visible' });
+      if (!(await door.getAttribute('href'))?.endsWith('/playoffs')) throw new Error('Bracket-only Schedule door missed Playoffs.');
+    } },
   { id: 'pubt-teams-free',        session: 'anon', path: () => '/stage1-northfield/fall-ball/teams',                ready: '[data-public-frame-band]',
     route: 'app/[orgSlug]/[tournamentSlug]/teams' },
   { id: 'pubt-overview-long',     session: 'anon', path: () => '/stage1-hamilton-wentworth/spring-invitational',    ready: '[data-public-frame-band]',

@@ -11,6 +11,8 @@ const VALID_SECTIONS = new Set<PublicTournamentSection>([
   'context',
   'schedule',
   'standings',
+  'standings-preview',
+  'playoffs',
   'teams',
   'rules',
   'register',

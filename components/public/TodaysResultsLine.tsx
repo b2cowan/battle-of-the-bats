@@ -4,7 +4,7 @@
  * Today's games, one at a time — the new frame's ticker (Public tournament pages Stage 1, behind the preview switch,
  * lib/public-frame.ts). Owner ruling 2026-10-28 (build prompt Part 4 step 2): option F's behaviour in option D's look.
  *
- * One still 44 px line under the tab row. Each game fades in, holds, and fades out; the state word is one of three —
+ * One still 44 px line under the tab row that scrolls away with the page (only the tab row pins). Each game fades in, holds, and fades out; the state word is one of three —
  * Live, Final, or the start time of a game later today. On opening it goes through the day once, then rests on the
  * newest result; a result that lands while the page is open fades in marked New and rests there. Nothing moves the rest
  * of the time. A finger, a pointer or keyboard focus on the line holds it; tapping opens the game shown. The × is the
@@ -27,7 +27,7 @@ import { pageCarriesTicker } from '@/lib/public-ticker-pages';
 import styles from './TodaysResultsLine.module.css';
 
 const HOLD_MS = 5000;
-const FADE_MS = 400; // the CSS transition on .game
+const FADE_MS = 800; // the CSS transition on .game
 const RESULTS_KEPT = 8; // a busy day keeps the latest results; the rest are on the Schedule
 const NEXT_KEPT = 3;
 
@@ -199,20 +199,13 @@ function ResultsLine() {
     return () => clearTimeout(t);
   }, [show, mode, held, out, currentId]);
 
-  // Reserve the line's height for chrome that rides under the pinned rows, as today's ticker does.
+  // The line scrolls away, so it reserves no height for chrome that rides under the pinned rows (today's ticker does, as
+  // it pins): only the attribute says scores are showing.
   useEffect(() => {
     const el = document.documentElement;
-    if (show) {
-      el.style.setProperty('--ticker-h', '45px'); // 44 px line + its hairline
-      el.dataset.ticker = 'scores';
-    } else {
-      el.style.removeProperty('--ticker-h');
-      delete el.dataset.ticker;
-    }
-    return () => {
-      el.style.removeProperty('--ticker-h');
-      delete el.dataset.ticker;
-    };
+    if (show) el.dataset.ticker = 'scores';
+    else delete el.dataset.ticker;
+    return () => { delete el.dataset.ticker; };
   }, [show]);
 
   if (!show) return null;

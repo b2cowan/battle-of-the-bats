@@ -15,7 +15,8 @@ const PARTS = ['PublicGameRow', 'PublicLiveCard', 'PublicSectionHead', 'PublicDo
   'PublicRegisterCard', 'PublicFactsList', 'PublicHostCard', 'PublicChampions'];
 /** The files that may draw the shared parts: each renders only with the switch on (Part 2: the frame-on body, and the
  *  old Overview's one frame branch that hands over to it — held below). */
-const FRAME_ONLY_USERS = ['components/public/TournamentOverview.tsx', 'components/public/PublicSchedule.tsx', 'components/public/PublicGameDetails.tsx', HOME];
+const FRAME_ONLY_USERS = ['components/public/TournamentOverview.tsx', 'components/public/PublicSchedule.tsx', 'components/public/PublicGameDetails.tsx',
+  'components/public/PublicStandings.tsx', 'components/public/PublicPlayoffs.tsx', HOME];
 
 describe('the shared parts render only inside the new frame', () => {
   it('no page or component outside the guarded frame bodies imports them', () => {
