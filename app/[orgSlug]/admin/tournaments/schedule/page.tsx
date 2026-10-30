@@ -1894,7 +1894,7 @@ export default function AdminSchedulePage() {
             <ul style={{
               margin: '0.65rem 0 0', padding: '0.5rem 0.65rem', listStyle: 'none',
               maxHeight: '11rem', overflowY: 'auto',
-              background: 'var(--surface-subtle, rgba(255,255,255,0.03))',
+              background: 'var(--bg-inset)',
               border: '1px solid var(--border-color)',
               borderRadius: 6, display: 'flex', flexDirection: 'column', gap: '0.35rem',
             }}>
