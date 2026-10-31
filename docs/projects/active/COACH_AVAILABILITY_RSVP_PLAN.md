@@ -1,6 +1,9 @@
 # Availability & RSVP — Implementation Plan
 
-**Status:** Proposed (not started)
+**Status:** Proposed (not started) — **⚠ the RSVP-by-emailed-link door below is RULED OUT (owner 2026-10-31,
+`BUSINESS_DECISIONS.md` "A family gets an account when their child is PLACED ON A TEAM…" point 4): a parent replies In /
+Out / Maybe inside the signed-in app. Rewrite this plan to the app channel before anything is built from it**
+(`SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md`).
 **Date:** 2026-08-03
 **Tier:** Premium coaches portal only — rides the family layer, which is per-team entitlement-gated
 (`isFamilyLayerEnabled` → `team_entitlements`), re-checked every request

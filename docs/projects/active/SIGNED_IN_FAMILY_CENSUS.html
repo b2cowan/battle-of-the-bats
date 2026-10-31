@@ -1,0 +1,366 @@
+<title>Signed-in Family Census</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one sticky tab strip; each tab is one short screen. Doors list = rows with a verdict chip; chips in the legend filter it. */
+:root{
+  --bg:#f6f7f4; --surface:#ffffff; --ink:#1d2622; --muted:#5b665f; --line:#dde2dc;
+  --accent:#2f6b4f; --accent-soft:#e3efe7;
+  --keep:#2f6b4f; --keep-bg:#e3efe7;
+  --harden:#8a5a00; --harden-bg:#fbefd6;
+  --app:#24508f; --app-bg:#e2eaf7;
+  --retire:#9b2c2c; --retire-bg:#f7e1e0;
+  --gone:#5b665f; --gone-bg:#eceee9;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-label:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141a17; --surface:#1b231f; --ink:#e6ebe7; --muted:#9aa69f; --line:#2c3732;
+  --accent:#7cc39d; --accent-soft:#1f3329;
+  --keep:#7cc39d; --keep-bg:#1f3329;
+  --harden:#e7b65a; --harden-bg:#3a2e14;
+  --app:#8fb4ec; --app-bg:#1c2a40;
+  --retire:#ee9a95; --retire-bg:#3d2020;
+  --gone:#9aa69f; --gone-bg:#252d29;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141a17; --surface:#1b231f; --ink:#e6ebe7; --muted:#9aa69f; --line:#2c3732;
+  --accent:#7cc39d; --accent-soft:#1f3329;
+  --keep:#7cc39d; --keep-bg:#1f3329;
+  --harden:#e7b65a; --harden-bg:#3a2e14;
+  --app:#8fb4ec; --app-bg:#1c2a40;
+  --retire:#ee9a95; --retire-bg:#3d2020;
+  --gone:#9aa69f; --gone-bg:#252d29;
+  color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-body)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .wrap{padding-block:18px 10px}
+.eyebrow{font:600 12px/1 var(--f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:24px;line-height:1.25;margin:6px 0 4px;text-wrap:balance}
+.sub{color:var(--muted);margin:0;max-width:70ch}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+nav.tabs .wrap{display:flex;gap:4px;overflow-x:auto;padding-block:0}
+nav.tabs button{font:600 14px/1 var(--f-label);letter-spacing:.02em;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:14px 12px 11px;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+nav.tabs button:focus-visible,.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main .wrap{padding-block:22px 48px}
+section[role="tabpanel"]{display:grid;gap:18px}
+h2{font-size:19px;margin:0;text-wrap:balance}
+h3{font:600 13px/1.2 var(--f-label);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0}
+p{margin:0;max-width:72ch}
+.lead{font-size:16.5px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px 18px;display:grid;gap:10px;min-width:0}
+.callout{border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;padding:14px 16px;display:grid;gap:8px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+ul,ol{margin:0;padding-left:20px;display:grid;gap:6px}
+li{max-width:72ch}
+.chip{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--f-label);letter-spacing:.03em;padding:5px 9px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.v-keep{color:var(--keep);background:var(--keep-bg)}
+.v-harden{color:var(--harden);background:var(--harden-bg)}
+.v-app{color:var(--app);background:var(--app-bg)}
+.v-retire{color:var(--retire);background:var(--retire-bg)}
+.v-gone{color:var(--gone);background:var(--gone-bg)}
+.legend{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.legend button.chip{cursor:pointer}
+.legend button.chip[aria-pressed="true"]{border-color:currentColor}
+.legend .hint{color:var(--muted);font-size:13px}
+.doors{display:grid;gap:8px}
+.door{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 14px;align-items:start}
+.door .name{font-weight:600}
+.door .what{color:var(--muted);font-size:14px;grid-column:1/2}
+.door .why{font-size:14px;grid-column:1/-1;border-top:1px dashed var(--line);padding-top:6px;margin-top:4px}
+.door .chip{grid-column:2;grid-row:1}
+.door .q{font:500 12px/1 var(--f-mono);color:var(--muted)}
+.group-title{margin-top:8px}
+.steps{display:grid;gap:14px}
+.step{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:start}
+.step .n{font:500 13px/1 var(--f-mono);background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:6px 8px;min-width:2.2em;text-align:center}
+.step .body{display:grid;gap:6px;min-width:0}
+.dep{font-size:13px;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+.tbl{overflow-x:auto}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px/1.2 var(--f-label);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.ans{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 12px}
+.ans dt{font:500 13px/1.5 var(--f-mono);color:var(--accent)}
+.ans dd{margin:0}
+.ans dd em{color:var(--muted);font-style:normal}
+.qs{display:grid;gap:12px}
+.qbox{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:grid;gap:6px}
+.qbox .rec{font-size:14px;color:var(--muted)}
+.qbox .rec b{color:var(--ink)}
+@media (max-width:560px){h1{font-size:21px}.door{grid-template-columns:minmax(0,1fr)}.door .chip{grid-column:1;grid-row:auto;justify-self:start}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="top"><div class="wrap">
+  <div class="eyebrow">Census · run 31 October 2026 · read-only</div>
+  <h1>Every place a family acts or is seen without signing in</h1>
+  <p class="sub">What the code and the plans actually hold, checked line by line, with your answers of 31 October applied and a proposal for each door.</p>
+</div></header>
+
+<nav class="tabs" aria-label="Sections"><div class="wrap" role="tablist">
+  <button role="tab" id="t-summary" aria-controls="p-summary" aria-selected="true">What changed</button>
+  <button role="tab" id="t-doors" aria-controls="p-doors" aria-selected="false">The doors</button>
+  <button role="tab" id="t-plan" aria-controls="p-plan" aria-selected="false">Proposed work</button>
+  <button role="tab" id="t-child" aria-controls="p-child" aria-selected="false">Children &amp; Stage 14</button>
+  <button role="tab" id="t-open" aria-controls="p-open" aria-selected="false">Still open</button>
+</div></nav>
+
+<main><div class="wrap">
+
+<!-- ============ WHAT CHANGED ============ -->
+<section role="tabpanel" id="p-summary" aria-labelledby="t-summary">
+  <div class="callout">
+    <h2>Your answers turned the biggest problem into a door to keep</h2>
+    <p class="lead">Before your answers, the house-league family's status and pay page looked like a stop-gap to retire, and it holds most of what Stage 9 and Stage 12 built for families. You've now said a family gets an account <b>only once they are confirmed on a team</b>, and that paying from an emailed link should stay. That makes this page the <b>permanent door for the time between sign-up and the team</b>, which can be months. It stays. What it needs is hardening, not rework.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>Your answers</h3>
+      <dl class="ans">
+        <dt>Q1</dt><dd>Signing up never creates an account. The account comes when the child is confirmed on a team, and it's used for the schedule and team chat.</dd>
+        <dt>Q2</dt><dd>Keep paying from an emailed link, if possible. <em>It is. See "Proposed work".</em></dd>
+        <dt>Q3</dt><dd>A calendar feed made inside the signed-in app is fine. What you ruled out is sending calendar links by email.</dd>
+        <dt>Q4</dt><dd>Tryout volunteer scorers don't need to sign in.</dd>
+        <dt>Q5</dt><dd>The tournament team pay link stays.</dd>
+        <dt>Q6</dt><dd>You asked for a recommendation. <em>Delete it. See below.</em></dd>
+      </dl>
+    </div>
+    <div class="card">
+      <h3>What that leaves</h3>
+      <ul>
+        <li><b>Nothing built has to be torn out.</b> Every door is now either kept, kept with fixes, or already behind a sign-in.</li>
+        <li><b>One plan has to change before anyone builds it.</b> "Reply In / Out / Maybe from an email" is an emailed link to an unsigned page. Only families confirmed on a team have events, so under your Q1 answer they'll have accounts, and the reply belongs in the app.</li>
+        <li><b>The pay link gets four fixes before online payments are switched on.</b> Switching on is the moment real families start receiving links that never expire.</li>
+        <li><b>Two safety gaps, found along the way.</b> Neither has anything to do with the end state.</li>
+        <li><b>Stage 14 is still a prerequisite of the app</b>, and your Q1 answer pins down exactly what it must carry. See "Children &amp; Stage 14".</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Q6 · The tournament team claim link: my recommendation is delete</h3>
+    <p>It's a link that opens a "claim this team's Coaches Portal" card with no sign-in, then lets a signed-in coach start a paid workspace. <b>Nothing in the product sends it today.</b> The only thing that makes one is a developer test tool. It's a coach door, not a family one. Coaches reach the portal through the normal join page, which already asks them to sign in. Keeping it means a second, unused way in that can drift out of step with billing. One build prompt mentions it as a "Coach Premium claim". If the Plan &amp; billing program means to revive it, that program decides. Otherwise remove it as a small cleanup.</p>
+  </div>
+</section>
+
+<!-- ============ DOORS ============ -->
+<section role="tabpanel" id="p-doors" aria-labelledby="t-doors" hidden>
+  <div class="legend" role="group" aria-label="Filter by verdict">
+    <button class="chip v-keep" data-f="keep" aria-pressed="false">Keep as is</button>
+    <button class="chip v-harden" data-f="harden" aria-pressed="false">Keep, with fixes</button>
+    <button class="chip v-app" data-f="app" aria-pressed="false">Inside the signed-in app</button>
+    <button class="chip v-retire" data-f="retire" aria-pressed="false">Remove / don't build</button>
+    <button class="chip v-gone" data-f="gone" aria-pressed="false">Already gone</button>
+    <span class="hint">Tap a verdict to show only those doors.</span>
+  </div>
+
+  <h3 class="group-title">Families today</h3>
+  <div class="doors">
+    <div class="door" data-v="keep"><div class="name">House-league sign-up form</div><span class="chip v-keep">Keep as is</span>
+      <div class="what">A parent signs up to eight children, ticks the waiver and email consent, and gets a reference number. No account.</div>
+      <div class="why">Q1: signing up never makes an account. Stays a public form.</div></div>
+    <div class="door" data-v="keep"><div class="name">Tryout sign-up form</div><span class="chip v-keep">Keep as is</span>
+      <div class="what">A parent registers one child for a rep tryout and gets a receipt email with no link. No account.</div>
+      <div class="why">Q1. Same as above.</div></div>
+    <div class="door" data-v="harden"><div class="name">House-league pay link: "your sign-up", already unlocked</div><span class="chip v-harden">Keep, with fixes</span>
+      <div class="what">Opens a page with every child on the sign-up, their status, what's owed, receipts, Pay, and "Ask to withdraw". The link never expires and can't be reset for one family.</div>
+      <div class="why">Q1 + Q2: this is the family's door until the team is confirmed. Fixes: show less, stop at season end, let the club reset one family's link, and don't send it when nothing is owed.</div></div>
+    <div class="door" data-v="harden"><div class="name">"Check your registration": email + reference number</div><span class="chip v-harden">Keep, with fixes</span>
+      <div class="what">Typing the email plus an eight-character reference opens the same page. Those eight characters are the only secret.</div>
+      <div class="why">Proposed: replace with "Email me my link". The family types their email and the link goes to that inbox, so nothing typed on screen unlocks children's details. The reference stays as a number to quote to the club.</div></div>
+    <div class="door" data-v="keep"><div class="name">Ask to withdraw a child</div><span class="chip v-keep">Keep as is</span>
+      <div class="what">From the page above. Leaves a note and puts an item in the club's Needs attention. The club decides.</div>
+      <div class="why">It's a request, not an action, and before a team is confirmed the family has nowhere else to ask.</div></div>
+    <div class="door" data-v="harden"><div class="name">Unsubscribe link in family emails</div><span class="chip v-harden">Keep, with fixes</span>
+      <div class="what">One click stops the club's family mail to that address.</div>
+      <div class="why">Must work without a sign-in (Canadian anti-spam law). Fix the safety gap: if a production setting is missing, anyone could forge an opt-out for any address.</div></div>
+    <div class="door" data-v="app"><div class="name">Guardian invite: a parent connects to their child</div><span class="chip v-app">Inside the signed-in app</span>
+      <div class="what">Built for rep teams and switched off pending counsel. Opening the invite requires signing in.</div>
+      <div class="why">Q1: this becomes the "you're on the team, set up your account" moment, extended to house league. It needs Stage 14 first: today the connection breaks at the next season.</div></div>
+    <div class="door" data-v="app"><div class="name">Family calendar feed (rep)</div><span class="chip v-app">Inside the signed-in app</span>
+      <div class="what">A feed of the team's events for the parent's own calendar app, made only from the signed-in family view and never emailed.</div>
+      <div class="why">Q3: exactly the allowed shape. One small fix: every press makes a new feed and silently breaks the old one.</div></div>
+  </div>
+
+  <h3 class="group-title">Not a family, but a parent may hold it</h3>
+  <div class="doors">
+    <div class="door" data-v="keep"><div class="name">Tryout scoring link for volunteers</div><span class="chip v-keep">Keep as is</span>
+      <div class="what">A 48-hour link that shows the tryout's children (names, or bib numbers when blind) and records scores. The coach can cancel it.</div>
+      <div class="why">Q4.</div></div>
+    <div class="door" data-v="keep"><div class="name">Tournament team pay link</div><span class="chip v-keep">Keep as is</span>
+      <div class="what">The team contact pays the entry fee and sees receipts. No children's details.</div>
+      <div class="why">Q5. Worth giving it the same reset-and-expire fixes later, for consistency. Low urgency.</div></div>
+    <div class="door" data-v="harden"><div class="name">Tournament team registration form</div><span class="chip v-harden">Keep, with fixes</span>
+      <div class="what">A coach registers a team. No children's details.</div>
+      <div class="why">Tournaments stay public. Fix: it's the one public form with no limit on repeated submissions.</div></div>
+    <div class="door" data-v="retire"><div class="name">Tournament team claim link</div><span class="chip v-retire">Remove / don't build</span>
+      <div class="what">Nothing in the product sends it.</div>
+      <div class="why">Q6, my recommendation (see "What changed").</div></div>
+  </div>
+
+  <h3 class="group-title">Planned or drawn</h3>
+  <div class="doors">
+    <div class="door" data-v="retire"><div class="name">Reply In / Out / Maybe from an email (Availability &amp; RSVP plan)</div><span class="chip v-retire">Remove / don't build</span>
+      <div class="what">Proposed in August, not started. An emailed link per event and child, answered without signing in.</div>
+      <div class="why">Q1 + Q3: only confirmed families have events, and they'll have accounts. Rewrite the plan so the reply lives in the app; the email just says "reply in the app".</div></div>
+    <div class="door" data-v="app"><div class="name">"Invite last season's families" with a pre-filled form (house league 9f)</div><span class="chip v-app">Inside the signed-in app</span>
+      <div class="what">Planned, waiting on Stage 14.</div>
+      <div class="why">A returning parent who already has an account signs in and gets the form filled in. Everyone else uses the public form. No emailed pre-filled link.</div></div>
+    <div class="door" data-v="keep"><div class="name">Unsubscribe for a free coach's families</div><span class="chip v-keep">Keep as is</span>
+      <div class="what">An open gap: a free team has no club to record the opt-out against.</div>
+      <div class="why">When it's built, it must work without a sign-in, as above. Its shape is still the open call in the Families Book plan.</div></div>
+  </div>
+
+  <h3 class="group-title">Already removed: listed so they aren't rebuilt</h3>
+  <div class="doors">
+    <div class="door" data-v="gone"><div class="name">Tryout offer Accept / Decline link</div><span class="chip v-gone">Already gone</span><div class="what">Removed 26 August.</div></div>
+    <div class="door" data-v="gone"><div class="name">Team "follow us" family link</div><span class="chip v-gone">Already gone</span><div class="what">Removed 12 September.</div></div>
+    <div class="door" data-v="gone"><div class="name">Shared single-game page</div><span class="chip v-gone">Already gone</span><div class="what">Removed 20 September with "Share game link".</div></div>
+    <div class="door" data-v="gone"><div class="name">House league 9d-3 family calendar links (team, household, and the email button)</div><span class="chip v-gone">Already gone</span><div class="what">Withdrawn 29 October. Your Q3 answer confirms it: no calendar links by email.</div></div>
+  </div>
+
+  <h3 class="group-title">Public by ruling, unchanged</h3>
+  <p>Public tournament pages, public team pages (games only, no players, no practices), the team's games-only calendar, and tryout information pages.</p>
+</section>
+
+<!-- ============ PROPOSED WORK ============ -->
+<section role="tabpanel" id="p-plan" aria-labelledby="t-plan" hidden>
+  <p class="lead">Ordered by what each piece depends on, not by date. Groups 1 and 2 are small and stand alone. Group 3 has to land before online payments are switched on, because that's when real families start getting links that never expire.</p>
+
+  <div class="steps">
+    <div class="step"><span class="n">1</span><div class="body">
+      <h2>Close two safety gaps</h2>
+      <ul>
+        <li><b>Unsubscribe can be forged if a setting is missing.</b> Make the live site refuse to send or honour an unsubscribe link without its secret, instead of quietly using a built-in fallback. Also confirm the setting exists on production.</li>
+        <li><b>Tournament registration has no submission limit.</b> Give it the same limit the family forms already have.</li>
+      </ul>
+      <p class="dep">Depends on nothing. Small.</p>
+    </div></div>
+
+    <div class="step"><span class="n">2</span><div class="body">
+      <h2>Tidy what nothing uses, and fix one plan</h2>
+      <ul>
+        <li>Delete the unused tournament team claim link (Q6), unless Plan &amp; billing claims it.</li>
+        <li>Rewrite the Availability &amp; RSVP plan so the reply happens in the signed-in app, with no per-event emailed link. Nothing is built, so this is a plan change only.</li>
+        <li>Fix the family calendar feed so pressing the button again shows the same feed and doesn't break the old one. Add a deliberate "reset".</li>
+      </ul>
+      <p class="dep">Depends on nothing. Small.</p>
+    </div></div>
+
+    <div class="step"><span class="n">3</span><div class="body">
+      <h2>Harden the house-league pay link (your Q2)</h2>
+      <ul>
+        <li><b>Show only what paying needs:</b> each child's first name, their status, what's owed, and receipts. Drop the surnames and the guardian's email from the page. A forwarded email then reveals the least.</li>
+        <li><b>Stop working at the end of the season.</b> Old links in old inboxes don't stay open for years.</li>
+        <li><b>Let the club reset one family's link</b> ("Send a new link"), which cancels the old one. Today the only way to cancel one link is to cancel every family's and every tournament team's at once.</li>
+        <li><b>Don't put it in emails where nothing is owed.</b> Placement emails carry it today even when the family has paid.</li>
+        <li><b>Replace "email + reference number" with "Email me my link".</b> The family types their email and we send the link to that inbox. The reference stays printed in emails, but as a number to quote to the club, not a key.</li>
+      </ul>
+      <p class="dep">Depends on nothing technically. It must land before online payments are switched on. The same reset-and-expire pattern can later go on the tournament team pay link.</p>
+    </div></div>
+
+    <div class="step"><span class="n">4</span><div class="body">
+      <h2>The account arrives when the team is confirmed (your Q1)</h2>
+      <ul>
+        <li>When a child is confirmed on a team, the guardian's email gets <b>"Set up your account to see the schedule and team chat"</b>. Opening it requires creating an account or signing in, which is the same safe shape as today's guardian invite.</li>
+        <li>A parent who already has an account (a returning family, or a sibling on another team) is connected without a new invite. Where the match isn't certain, a club person confirms it, the same way the Families book already handles duplicate parents.</li>
+        <li>The schedule, practices, chat, the calendar feed (Q3) and the In / Out / Maybe reply all live behind that account.</li>
+      </ul>
+      <p class="dep">Depends on <b>Stage 14</b> (so next season's confirmation reconnects to the same child) and <b>counsel</b> (the guardian connection is switched off pending the privacy and anti-spam review).</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- ============ CHILDREN & STAGE 14 ============ -->
+<section role="tabpanel" id="p-child" aria-labelledby="t-child" hidden>
+  <div class="card">
+    <h3>Doors that hold a child's information: for counsel</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Door</th><th>Child information</th></tr></thead>
+      <tbody>
+        <tr><td>House-league sign-up</td><td>Name, <b>date of birth</b> (required when divisions go by age), jersey and position wishes, a free-text note of up to 500 characters</td></tr>
+        <tr><td>Tryout sign-up</td><td>Name, <b>date of birth (required)</b>, a free-text note of up to 500 characters</td></tr>
+        <tr><td>Pay link / "Check your registration"</td><td>Every child on the sign-up: name, division, status, waitlist place, money. <em>Proposed: first name, status and money only.</em></td></tr>
+        <tr><td>Ask to withdraw</td><td>A note about the child, up to 300 characters</td></tr>
+        <tr><td>Tryout scoring link</td><td>The tryout's children's names (unless blind) and their scores</td></tr>
+        <tr><td>Guardian invite (switched off)</td><td>Connects an adult account to a named child and records consent</td></tr>
+      </tbody>
+    </table></div>
+    <p><b>Worth counsel's eye:</b> both public forms have a free-text note. That's where a parent will type an allergy or a medical condition, and neither form was designed to hold health information. Options for counsel: a line under the box ("don't include medical details; the club will ask separately"), or a proper medical section with its own consent.</p>
+  </div>
+
+  <div class="card">
+    <h3>What the Stage 14 child record has to carry</h3>
+    <p>Today <b>there's no child record</b>. A child exists only as a row per season: a house-league sign-up, a tryout sign-up, a rep roster entry, each with the name and birth date typed again. Your Q1 answer makes the moment that matters exact: <b>when a child is confirmed on a team, the parent's account is connected to that child</b>. For that connection to survive into next season, the child record has to carry:</p>
+    <ol>
+      <li><b>The parent-to-child connection itself.</b> Today it's tied to one season's roster entry, so next season's roster disconnects a verified parent.</li>
+      <li><b>Every season's sign-up and tryout row</b>, so a returning child's confirmation lands on the same child and the parent sees both years.</li>
+      <li><b>Consents and waivers.</b> Stage 14 already plans to move documents and waivers onto the child, with a "needs re-signing this season" state. The sign-up consent belongs on the same list; today it's tied to one sign-up row.</li>
+      <li><b>The parent as a person, not a club member</b>, so one parent with children at two clubs isn't caught by the one-home-club rules.</li>
+    </ol>
+  </div>
+
+  <div class="callout">
+    <h3>One tension to settle before Stage 14 is drawn</h3>
+    <p>The Families book ruled that a household is <b>confirmed by a person, never guessed</b>, and called "what identifies a child?" the wrong question. A child record that lasts across seasons is a lasting child identity. Stage 14 needs to say how a returning child gets matched to their record: proposed by name and birth date, then confirmed by a club person (the way returning players are already checked), never matched automatically.</p>
+  </div>
+</section>
+
+<!-- ============ STILL OPEN ============ -->
+<section role="tabpanel" id="p-open" aria-labelledby="t-open" hidden>
+  <p class="lead">Your answers settled the six questions. They raise two smaller ones, each with a recommendation.</p>
+  <div class="qs">
+    <div class="qbox">
+      <h2>A · In house league, which moment is "confirmed on the team"?</h2>
+      <p>A child is first <b>accepted</b> into the season (often with the fee due), and later <b>placed on a team</b>, sometimes months apart.</p>
+      <p class="rec"><b>Recommendation: placed on a team.</b> That's when there's a schedule and a chat to see. Until then the pay link covers what a family needs.</p>
+    </div>
+    <div class="qbox">
+      <h2>B · Can a returning parent sign up while signed in?</h2>
+      <p>Under Q1, signing up never <i>creates</i> an account. But a parent from last season already has one.</p>
+      <p class="rec"><b>Recommendation: yes, optionally.</b> A signed-in parent gets the form filled in from last season. The public form keeps working for everyone else. Either way, no account is created at sign-up.</p>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Where this is recorded</h3>
+    <p>The full door-by-door census, with the code and plan line behind every row, is in the project report <b>Signed-in family census</b> (docs/projects/active). Your 31 October answers are added there. Once you're happy with the proposals, the Q1–Q3 direction belongs in the Business Decisions log.</p>
+  </div>
+</section>
+
+</div></main>
+
+<script>
+(function(){
+  var tabs=[].slice.call(document.querySelectorAll('[role="tab"]'));
+  function show(id){
+    tabs.forEach(function(t){
+      var on=t.id===id;
+      t.setAttribute('aria-selected',on?'true':'false');
+      document.getElementById(t.getAttribute('aria-controls')).hidden=!on;
+    });
+    try{localStorage.setItem('census-tab',id)}catch(e){}
+  }
+  tabs.forEach(function(t){t.addEventListener('click',function(){show(t.id);window.scrollTo(0,0)})});
+  try{var saved=localStorage.getItem('census-tab');if(saved&&document.getElementById(saved))show(saved)}catch(e){}
+
+  var chips=[].slice.call(document.querySelectorAll('.legend button.chip'));
+  var doors=[].slice.call(document.querySelectorAll('.door'));
+  var active=null;
+  chips.forEach(function(c){c.addEventListener('click',function(){
+    active=(active===c.dataset.f)?null:c.dataset.f;
+    chips.forEach(function(x){x.setAttribute('aria-pressed',x.dataset.f===active?'true':'false')});
+    doors.forEach(function(d){d.hidden=!!active&&d.dataset.v!==active});
+    [].slice.call(document.querySelectorAll('#p-doors .doors')).forEach(function(g){
+      var any=[].slice.call(g.children).some(function(d){return !d.hidden});
+      g.hidden=!any; var h=g.previousElementSibling; if(h&&h.classList.contains('group-title'))h.hidden=!any;
+    });
+  })});
+})();
+</script>

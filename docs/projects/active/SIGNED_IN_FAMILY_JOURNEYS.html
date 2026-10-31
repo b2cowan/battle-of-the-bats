@@ -1,0 +1,514 @@
+<title>Sign-up Journeys</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: sticky numbered tabs (one decision each) → View row when a tab compares → journey grid: moment | after this project | end state.
+   A step identical in both spans both columns, so "Show only what differs" can hide it. */
+:root{
+  --bg:#f5f6f2; --surface:#ffffff; --ink:#1d2622; --muted:#5d6861; --line:#dce1da; --line-strong:#b9c2ba; --track:#eef0eb;
+  --accent:#2f6b4f; --accent-soft:#e3efe7;
+  --none:#5d6861; --none-bg:#eceee9;
+  --link:#8a5a00; --link-bg:#fbefd6;
+  --create:#2f6b4f; --create-bg:#dcefe3;
+  --signed:#24508f; --signed-bg:#e2eaf7;
+  --new:#7a3e8f; --new-bg:#f1e4f6;
+  --flash:#fff3c4;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-label:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141a17; --surface:#1b231f; --ink:#e6ebe7; --muted:#9aa69f; --line:#2c3732; --line-strong:#47544d; --track:#232c27;
+  --accent:#7cc39d; --accent-soft:#1f3329;
+  --none:#a3aea7; --none-bg:#262e2a;
+  --link:#e7b65a; --link-bg:#3a2e14;
+  --create:#7cc39d; --create-bg:#1f3329;
+  --signed:#8fb4ec; --signed-bg:#1c2a40;
+  --new:#d3a3e6; --new-bg:#33233b;
+  --flash:#45401f;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141a17; --surface:#1b231f; --ink:#e6ebe7; --muted:#9aa69f; --line:#2c3732; --line-strong:#47544d; --track:#232c27;
+  --accent:#7cc39d; --accent-soft:#1f3329;
+  --none:#a3aea7; --none-bg:#262e2a;
+  --link:#e7b65a; --link-bg:#3a2e14;
+  --create:#7cc39d; --create-bg:#1f3329;
+  --signed:#8fb4ec; --signed-bg:#1c2a40;
+  --new:#d3a3e6; --new-bg:#33233b;
+  --flash:#45401f;
+  color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-body)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .wrap{padding-block:18px 10px}
+.eyebrow{font:600 12px/1 var(--f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:24px;line-height:1.25;margin:6px 0 4px;text-wrap:balance}
+.sub{color:var(--muted);margin:0;max-width:78ch}
+.sticky{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.tabs{display:flex;gap:2px;overflow-x:auto}
+.tabs button{font:600 14px/1 var(--f-label);letter-spacing:.02em;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:14px 11px 11px;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+button:focus-visible,.badge:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.viewrow{display:flex;align-items:center;gap:10px;padding-block:8px;border-top:1px solid var(--line);flex-wrap:wrap}
+.viewrow[hidden]{display:none!important}
+.viewrow .lbl{font:600 12px/1 var(--f-label);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+/* Copied from the shipped ViewSwitch: one white rounded track on the strong line, the chosen view in soft olive. */
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line-strong);border-radius:999px;padding:3px;gap:2px}
+.seg button{font:600 13px/1 var(--f-body);border:0;background:none;color:var(--muted);min-height:34px;padding:0 13px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.seg button:hover{background:var(--accent-soft);color:var(--ink)}
+.seg button[aria-pressed="true"],.seg button[aria-pressed="true"]:hover{background:var(--accent-soft);color:var(--accent)}
+@media (max-width:768px){.seg button{min-height:44px}}
+.viewrow .note{font-size:13px;color:var(--muted)}
+main .wrap{padding-block:22px 56px}
+section[role="tabpanel"]{display:grid;gap:18px}
+h2{font-size:19px;line-height:1.3;margin:0;text-wrap:balance}
+h3{font:600 13px/1.2 var(--f-label);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0}
+p{margin:0;max-width:74ch}
+.lead{font-size:16.5px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px 18px;display:grid;gap:10px;min-width:0}
+.callout{border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;padding:14px 16px;display:grid;gap:8px}
+ul,ol{margin:0;padding-left:20px;display:grid;gap:6px}
+li{max-width:74ch}
+
+/* badges: each one opens the matching row on "How it stays safe" */
+.badge{display:inline-flex;align-items:center;font:600 12px/1 var(--f-label);letter-spacing:.03em;padding:5px 8px;border-radius:999px;border:0;cursor:pointer;white-space:nowrap}
+.badge:hover{filter:brightness(.96)}
+.b-none{color:var(--none);background:var(--none-bg)}
+.b-link{color:var(--link);background:var(--link-bg)}
+.b-create{color:var(--create);background:var(--create-bg)}
+.b-signed{color:var(--signed);background:var(--signed-bg)}
+.tag{display:inline-block;font:600 11px/1 var(--f-label);letter-spacing:.06em;text-transform:uppercase;padding:4px 6px;border-radius:4px}
+.t-new{color:var(--new);background:var(--new-bg)}
+.t-fix{color:var(--link);background:var(--link-bg)}
+.t-same{color:var(--none);background:var(--none-bg)}
+.tag[role="button"]{cursor:pointer;border:0}
+.tag[aria-expanded="true"]{outline:1px solid currentColor}
+.why{font-size:13px;color:var(--muted);border-left:3px solid var(--line-strong);padding-left:8px}
+.srow .badge{cursor:default}
+.srow .badge:hover{filter:none}
+.legend .key{font:600 12px/1 var(--f-label);letter-spacing:.06em;text-transform:uppercase}
+
+/* rule table */
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px/1.2 var(--f-label);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+td b{font-weight:600}
+
+/* journeys */
+.legend{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+.journey{display:grid;gap:8px}
+.jhead,.row{display:grid;grid-template-columns:170px minmax(0,1fr) minmax(0,1fr);gap:8px}
+.jhead div{font:600 12px/1.2 var(--f-label);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 4px}
+.jhead .h-end{color:var(--accent)}
+.moment{font-weight:600;padding:12px 4px;display:flex;gap:8px;align-items:flex-start}
+.moment .n{font:500 12px/1 var(--f-mono);color:var(--accent);background:var(--accent-soft);border-radius:5px;padding:5px 6px;min-width:2em;text-align:center;flex:none}
+.cell{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:8px;min-width:0;align-content:start}
+.cell.both{grid-column:2/4}
+.cell.empty{background:transparent;border-style:dashed;color:var(--muted);font-size:14px}
+.cell.end{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.cell .see{font:500 14px/1.45 var(--f-body)}
+.cell .see q{font-weight:600}
+.cell .q-mono{font:500 12px/1.3 var(--f-mono);color:var(--muted)}
+.cell .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.cell .col-label{display:none;font:600 11px/1 var(--f-label);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.journey.diff-only .row[data-same="true"]{display:none}
+.phase{font:600 12px/1 var(--f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:14px 4px 2px;border-bottom:1px solid var(--line)}
+.journey.diff-only .phase.all-same{display:none}
+
+/* safety rows */
+.safe{display:grid;gap:8px}
+.srow{display:grid;grid-template-columns:200px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;transition:background .6s}
+.srow.flash{background:var(--flash)}
+.srow .k{display:grid;gap:6px;align-content:start}
+.srow .k b{font-weight:600}
+.srow .c h3{margin-bottom:4px}
+.srow .c p{font-size:14px}
+
+/* asks */
+.asks{display:grid;gap:12px}
+.ask{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:grid;gap:6px}
+.ask .rec{font-size:14px;color:var(--muted)}
+.ask .rec b{color:var(--ink)}
+
+@media (max-width:760px){
+  .jhead{display:none}
+  .row{grid-template-columns:minmax(0,1fr)}
+  .cell.both{grid-column:auto}
+  .moment{padding:10px 2px 0}
+  .cell .col-label{display:block}
+  .cell.both::before{content:"Same before and after the app";font:600 11px/1 var(--f-label);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .srow{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:560px){h1{font-size:21px}}
+@media (prefers-reduced-motion:reduce){.srow{transition:none}}
+</style>
+
+<header class="top"><div class="wrap">
+  <div class="eyebrow">Signed-in family census · journeys · 31 October 2026</div>
+  <h1>How signing up works, and when people get an account</h1>
+  <p class="sub">Each journey is drawn twice: once <b>after the census fixes</b> (today's product plus the agreed hardening, no app), and once in the <b>end state</b>, where parents sign in to see their team's schedule and chat. Every badge opens what protects that step.</p>
+</div></header>
+
+<div class="sticky">
+  <div class="wrap">
+    <div class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" id="t1" aria-controls="p1" aria-selected="true">1 · Who gets an account, when</button>
+      <button role="tab" id="t2" aria-controls="p2" aria-selected="false">2 · House-league parent</button>
+      <button role="tab" id="t3" aria-controls="p3" aria-selected="false">3 · Tournament coach</button>
+      <button role="tab" id="t4" aria-controls="p4" aria-selected="false">4 · Other families</button>
+      <button role="tab" id="t5" aria-controls="p5" aria-selected="false">5 · How it stays safe</button>
+      <button role="tab" id="t6" aria-controls="p6" aria-selected="false">6 · Asks</button>
+    </div>
+    <div class="viewrow" id="viewrow" hidden>
+      <span class="lbl">View</span>
+      <div class="seg" role="group" aria-label="View">
+        <button id="v-all" aria-pressed="true">Everything</button>
+        <button id="v-diff" aria-pressed="false">Show only what differs</button>
+      </div>
+      <span class="note">Hides the steps that are the same before and after the app.</span>
+    </div>
+  </div>
+</div>
+
+<main><div class="wrap">
+
+<!-- ================= 1 · THE RULE ================= -->
+<section role="tabpanel" id="p1" aria-labelledby="t1">
+  <div class="callout">
+    <h2>One rule: you get an account when there's something in it for you</h2>
+    <p class="lead">A coach's account <b>is</b> their team: it holds the roster, the schedule and every tournament they enter, so it starts the moment they register, which is how it already works. A parent's account would be empty until their child has a team, so it starts when the child is <b>placed on a team</b>. Before that, a family needs only their emails and one link, <b>"Your sign-up"</b>. Fans never need one.</p>
+  </div>
+
+  <div class="card">
+    <div class="tbl"><table>
+      <thead><tr><th>Who</th><th>Gets an account when</th><th>Before that, they use</th><th>Never needs one to</th></tr></thead>
+      <tbody>
+        <tr><td><b>House-league parent</b></td><td>Their child is <b>placed on a team</b> (the club publishes the division's teams) <span class="tag t-new">end state</span></td><td>The sign-up emails and the <b>"Your sign-up"</b> link</td><td>Pay, or unsubscribe</td></tr>
+        <tr><td><b>Rep tryout parent</b></td><td>Their child is <b>added to the team's roster</b> <span class="tag t-new">end state</span></td><td>The tryout receipt email; the coach contacts them directly</td><td>Unsubscribe</td></tr>
+        <tr><td><b>Tournament coach / manager</b></td><td>They <b>register a team</b> (free Coaches Portal) <span class="tag t-same">already today</span></td><td>Nothing; the account comes first</td><td>Pay (the team pay link)</td></tr>
+        <tr><td><b>House-league volunteer coach</b></td><td>The club <b>invites them as coach</b> <span class="tag t-same">already today</span></td><td>The coach invite email</td><td>Nothing</td></tr>
+        <tr><td><b>Tournament parent or fan</b></td><td><b>Never needed.</b> Optional, so follows and alerts carry across their devices</td><td>The public tournament pages</td><td>See the schedule, scores and standings</td></tr>
+        <tr><td><b>Tryout volunteer scorer</b></td><td><b>Never</b> (your answer to Q4)</td><td>A 48-hour scoring link the coach can cancel</td><td>Score a tryout</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h3>What makes it easy to understand</h3>
+    <ul>
+      <li><b>A family has one link, with one name.</b> Today the same page is reached by "Check your registration", "Pay now" and "View your receipt". It becomes one button in every email, <b>"Your sign-up"</b>, which always opens the same page.</li>
+      <li><b>The reference number becomes a number to quote, not a key.</b> Lost the email? "Email me my link" sends it to the inbox again. Nothing typed on screen unlocks a child's details.</li>
+      <li><b>One invitation, at the moment it means something.</b> The "your child's team" email is the account invitation, so there's never a separate "please create an account" email.</li>
+      <li><b>One page, two ways in.</b> Once a parent has an account, the app shows the same "Your sign-up" page. A grandparent paying from the emailed link and a parent in the app see the same thing.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= 2 · HOUSE-LEAGUE PARENT ================= -->
+<section role="tabpanel" id="p2" aria-labelledby="t2" hidden>
+  <div class="legend">
+    <span class="key">Key</span>
+    <span class="badge b-none" data-sec="s-form" tabindex="0" role="button">No account</span>
+    <span class="badge b-link" data-sec="s-link" tabindex="0" role="button">"Your sign-up" link</span>
+    <span class="badge b-create" data-sec="s-invite" tabindex="0" role="button">Creates account</span>
+    <span class="badge b-signed" data-sec="s-app" tabindex="0" role="button">Signed in</span>
+    <span class="tag t-fix">Census fix</span><span class="tag t-new">New in the app</span>
+  </div>
+
+  <div class="journey" id="j-hl">
+    <div class="jhead"><div>Moment</div><div>After the census fixes (no app)</div><div class="h-end">End state (parents have the app)</div></div>
+
+    <div class="phase">Signing up</div>
+    <div class="row" data-same="true">
+      <div class="moment"><span class="n">1</span>Finds the sign-up</div>
+      <div class="cell both"><p class="see">On the club's site: <q>Spring 2027 house league · Sign up</q>. No sign-in, no password.</p><div class="meta"><span class="badge b-none" data-sec="s-form" tabindex="0" role="button">No account</span></div></div>
+    </div>
+    <div class="row" data-same="false">
+      <div class="moment"><span class="n">2</span>Fills in the form</div>
+      <div class="cell"><span class="col-label">After the census fixes</span><p class="see">Up to eight children (name, date of birth, wishes, a note), the parent's name, email and phone, the waiver, and the optional "email me about next season" tick.</p><div class="meta"><span class="badge b-none" data-sec="s-form" tabindex="0" role="button">No account</span></div></div>
+      <div class="cell end"><span class="col-label">End state</span><p class="see">The same form. <b>A returning parent who is signed in</b> finds it filled in from last season: children, contact details, the same child picked rather than retyped. Everyone else fills it in as today.</p><div class="meta"><span class="badge b-none" data-sec="s-form" tabindex="0" role="button">No account needed</span><span class="tag t-new">Pre-fill when signed in</span></div></div>
+    </div>
+    <div class="row" data-same="true">
+      <div class="moment"><span class="n">3</span>"You're signed up"</div>
+      <div class="cell both"><p class="see">The screen lists each child and their outcome (accepted, received, waitlisted). The email repeats it, gives the reference number to quote to the club, and has one button: <q>Your sign-up</q>.</p><div class="meta"><span class="badge b-link" data-sec="s-link" tabindex="0" role="button">"Your sign-up" link</span><span class="tag t-fix">One button name</span></div></div>
+    </div>
+
+    <div class="phase">Before a team</div>
+    <div class="row" data-same="false">
+      <div class="moment"><span class="n">4</span>Accepted, fee due</div>
+      <div class="cell"><span class="col-label">After the census fixes</span><p class="see"><q>Maya is accepted</q> email with the amount and <q>Your sign-up</q>. The page shows each child's <b>first name</b>, status and what's owed, and a Pay button (card or bank debit). The receipt arrives by email.</p><div class="meta"><span class="badge b-link" data-sec="s-link" tabindex="0" role="button">"Your sign-up" link</span><span class="tag t-fix">First names only</span></div></div>
+      <div class="cell end"><span class="col-label">End state</span><p class="see">The same email and the same page. A parent who already has an account from an earlier season also sees it in the app under <q>Sign-ups</q> and can pay there.</p><div class="meta"><span class="badge b-link" data-sec="s-link" tabindex="0" role="button">"Your sign-up" link</span><span class="badge b-signed" data-sec="s-app" tabindex="0" role="button">or signed in</span></div></div>
+    </div>
+    <div class="row" data-same="true">
+      <div class="moment"><span class="n">5</span>Lost the email</div>
+      <div class="cell both"><p class="see">On the club's season page: <q>Find your sign-up</q> → type your email → <q>We've emailed your link to that address.</q> The link only ever arrives in the inbox; the screen never shows a child's details.</p><div class="meta"><span class="badge b-link" data-sec="s-resend" tabindex="0" role="button">Email me my link</span><span class="tag t-fix">Replaces email + reference</span></div></div>
+    </div>
+    <div class="row" data-same="true">
+      <div class="moment"><span class="n">6</span>Needs to withdraw</div>
+      <div class="cell both"><p class="see"><q>Ask to withdraw a child</q> on the sign-up page leaves a note for the club, which decides and emails back.</p><div class="meta"><span class="badge b-link" data-sec="s-link" tabindex="0" role="button">"Your sign-up" link</span></div></div>
+    </div>
+
+    <div class="phase">The team</div>
+    <div class="row" data-same="false">
+      <div class="moment"><span class="n">7</span>Teams are published</div>
+      <div class="cell"><span class="col-label">After the census fixes</span><p class="see"><q>Maya's team: Blue Jays</q> email with the team, the coaches' names and a link to the league's public game schedule. It carries <q>Your sign-up</q> only if money is still owed.</p><div class="meta"><span class="badge b-none" data-sec="s-form" tabindex="0" role="button">No account</span><span class="tag t-fix">No link when nothing is owed</span></div></div>
+      <div class="cell end"><span class="col-label">End state</span><p class="see">The same email, with one main button: <q>Set up your account to see Blue Jays' schedule and team chat</q>. The invite works once, for 14 days, for this email address. A parent who already has an account just sees the new team appear.</p><div class="meta"><span class="badge b-create" data-sec="s-invite" tabindex="0" role="button">Account invitation</span><span class="tag t-new">The account moment</span></div></div>
+    </div>
+    <div class="row" data-same="false">
+      <div class="moment"><span class="n">8</span>Creates the account</div>
+      <div class="cell empty"><span class="col-label">After the census fixes</span>Nothing to create. The family's world is their inbox plus the public schedule.</div>
+      <div class="cell end"><span class="col-label">End state</span><p class="see">Email (already filled in) and a password, then confirm. Lands on <q>Blue Jays · U9</q> with Maya on it. Signing up with a different email puts the request in the club's queue to approve.</p><div class="meta"><span class="badge b-create" data-sec="s-invite" tabindex="0" role="button">Creates account</span></div></div>
+    </div>
+
+    <div class="phase">The season</div>
+    <div class="row" data-same="false">
+      <div class="moment"><span class="n">9</span>Schedule and practices</div>
+      <div class="cell"><span class="col-label">After the census fixes</span><p class="see">Games are on the league's public schedule (games only). Practices arrive <b>by email</b>: the first practice notice lists every date, and changes are emailed. No calendar link is ever sent.</p><div class="meta"><span class="badge b-none" data-sec="s-form" tabindex="0" role="button">No account</span></div></div>
+      <div class="cell end"><span class="col-label">End state</span><p class="see">The team's own schedule in the app: games <b>and</b> practices, with places. <q>Add to my calendar</q> is made inside the app and can be reset. Replies of In / Out / Maybe happen there too.</p><div class="meta"><span class="badge b-signed" data-sec="s-app" tabindex="0" role="button">Signed in</span><span class="tag t-new">Practices private to the team</span></div></div>
+    </div>
+    <div class="row" data-same="false">
+      <div class="moment"><span class="n">10</span>Talking to the team</div>
+      <div class="cell empty"><span class="col-label">After the census fixes</span>No team chat. The coaches' names are in the email; the club's contact is on its site.</div>
+      <div class="cell end"><span class="col-label">End state</span><p class="see">Team chat with the coaches and the other families, in the app.</p><div class="meta"><span class="badge b-signed" data-sec="s-app" tabindex="0" role="button">Signed in</span><span class="tag t-new">New</span></div></div>
+    </div>
+    <div class="row" data-same="false">
+      <div class="moment"><span class="n">11</span>Something changes</div>
+      <div class="cell"><span class="col-label">After the census fixes</span><p class="see">A <q>Saturday's game moved</q> or <q>Practices changed</q> email with the new details written in it.</p><div class="meta"><span class="badge b-none" data-sec="s-form" tabindex="0" role="button">No account</span></div></div>
+      <div class="cell end"><span class="col-label">End state</span><p class="see">The same email, plus a notice in the app. The email's button opens the team in the app.</p><div class="meta"><span class="badge b-signed" data-sec="s-app" tabindex="0" role="button">Signed in</span></div></div>
+    </div>
+
+    <div class="phase">After the season</div>
+    <div class="row" data-same="false">
+      <div class="moment"><span class="n">12</span>Season ends</div>
+      <div class="cell"><span class="col-label">After the census fixes</span><p class="see">The <q>Your sign-up</q> link stops working. Next season, the family fills in the form again from scratch.</p><div class="meta"><span class="badge b-link" data-sec="s-link" tabindex="0" role="button">Link ends</span><span class="tag t-fix">Ends at season end</span></div></div>
+      <div class="cell end"><span class="col-label">End state</span><p class="see">The account stays. Last season's team moves to history. When the club opens next season, the app offers <q>Sign Maya up for Fall 2027</q> with the form filled in, and the child stays the same child.</p><div class="meta"><span class="badge b-signed" data-sec="s-app" tabindex="0" role="button">Signed in</span><span class="tag t-new">Needs Stage 14</span></div></div>
+    </div>
+    <div class="row" data-same="true">
+      <div class="moment"><span class="n">13</span>Unsubscribe</div>
+      <div class="cell both"><p class="see">The footer link in any club email works without signing in, by law. Team notices (placement, schedule changes) still arrive.</p><div class="meta"><span class="badge b-none" data-sec="s-unsub" tabindex="0" role="button">No account</span><span class="tag t-fix">Safety fix</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 3 · TOURNAMENT COACH ================= -->
+<section role="tabpanel" id="p3" aria-labelledby="t3" hidden>
+  <div class="callout">
+    <p><b>Tournaments already follow the end-state rule.</b> A coach creates or signs in to a free Coaches Portal account as part of registering. The census changes nothing here. The <span class="tag t-new">Tidy-up</span> items are things the trace found confusing; they're proposals (Ask 3), and none of them needs the app.</p>
+  </div>
+  <div class="legend">
+    <span class="key">Key</span>
+    <span class="badge b-none" data-sec="s-public" tabindex="0" role="button">No account</span>
+    <span class="badge b-link" data-sec="s-teampay" tabindex="0" role="button">Team pay link</span>
+    <span class="badge b-create" data-sec="s-coach" tabindex="0" role="button">Creates account</span>
+    <span class="badge b-signed" data-sec="s-coach" tabindex="0" role="button">Signed in</span>
+  </div>
+
+  <div class="journey" id="j-t">
+    <div class="jhead"><div>Moment</div><div>After the census fixes</div><div class="h-end">End state</div></div>
+
+    <div class="phase">Registering</div>
+    <div class="row" data-same="true">
+      <div class="moment"><span class="n">1</span>Opens Register</div>
+      <div class="cell both"><p class="see">The first box asks only for an <b>email</b>. A note tells parents and fans they need no account and links the schedule and standings.</p><div class="meta"><span class="badge b-none" data-sec="s-public" tabindex="0" role="button">No account yet</span></div></div>
+    </div>
+    <div class="row" data-same="true">
+      <div class="moment"><span class="n">2a</span>Has an account</div>
+      <div class="cell both"><p class="see"><q>This email has a FieldLogicHQ account. Sign in to register one of your teams.</q> Password, then <q>Which team?</q> with their portal teams as cards. No name boxes.</p><div class="meta"><span class="badge b-signed" data-sec="s-coach" tabindex="0" role="button">Signs in</span></div></div>
+    </div>
+    <div class="row" data-same="false">
+      <div class="moment"><span class="n">2b</span>New coach</div>
+      <div class="cell"><span class="col-label">After the census fixes</span><p class="see"><q>Welcome. Registering also sets up your free Coaches Portal.</q> Team name, their name, division, <q>Create a Password</q>, the organizer's questions, then review.</p><div class="meta"><span class="badge b-create" data-sec="s-coach" tabindex="0" role="button">Creates account</span></div></div>
+      <div class="cell end"><span class="col-label">End state</span><p class="see">The same form. The finish screen says what's really next: <q>Confirm your email to open your portal</q>, not a second "Create Coaches Portal Account" button for a password they've just set.</p><div class="meta"><span class="badge b-create" data-sec="s-coach" tabindex="0" role="button">Creates account</span><span class="tag t-new">Tidy-up</span></div></div>
+    </div>
+    <div class="row" data-same="false">
+      <div class="moment"><span class="n">3</span>The emails that follow</div>
+      <div class="cell"><span class="col-label">After the census fixes</span><p class="see">A new coach gets <b>two</b> emails at once: <q>Registration Received</q> (which says the portal "is ready") and a separate <q>Confirm your email</q>.</p><div class="meta"><span class="badge b-none" data-sec="s-public" tabindex="0" role="button">Pending</span></div></div>
+      <div class="cell end"><span class="col-label">End state</span><p class="see"><b>One</b> email: <q>We've got your registration</q>, with the confirm button inside it. Its portal link no longer carries the coach's email address in the web address.</p><div class="meta"><span class="badge b-create" data-sec="s-coach" tabindex="0" role="button">Confirms account</span><span class="tag t-new">Tidy-up</span></div></div>
+    </div>
+
+    <div class="phase">Accepted</div>
+    <div class="row" data-same="false">
+      <div class="moment"><span class="n">4</span>Accepted, fee due</div>
+      <div class="cell"><span class="col-label">After the census fixes</span><p class="see"><q>Your team has been accepted</q> with the amount, the organizer's how-to-pay, <q>Pay now</q> (the team pay link, when online payments are on) and <q>View your registration</q>. The pay link never expires.</p><div class="meta"><span class="badge b-link" data-sec="s-teampay" tabindex="0" role="button">Team pay link</span></div></div>
+      <div class="cell end"><span class="col-label">End state</span><p class="see">The same email. The pay link <b>ends when the tournament ends</b> and the organizer can send a new one, the same as the families' link. The coach can also pay from the portal.</p><div class="meta"><span class="badge b-link" data-sec="s-teampay" tabindex="0" role="button">Team pay link</span><span class="badge b-signed" data-sec="s-coach" tabindex="0" role="button">or signed in</span></div></div>
+    </div>
+    <div class="row" data-same="true">
+      <div class="moment"><span class="n">5</span>Roster (if asked)</div>
+      <div class="cell both"><p class="see">Inside the portal: the coach picks players from their team's roster; date of birth and jersey only if the organizer asks, with a parent/guardian consent tick. This is the only place a tournament collects children's details.</p><div class="meta"><span class="badge b-signed" data-sec="s-coach" tabindex="0" role="button">Signed in</span></div></div>
+    </div>
+
+    <div class="phase all-same">Game days</div>
+    <div class="row" data-same="true">
+      <div class="moment"><span class="n">6</span>Schedule out</div>
+      <div class="cell both"><p class="see"><q>Schedule Published</q> email that opens the public schedule; the coach's games are also in the portal.</p><div class="meta"><span class="badge b-none" data-sec="s-public" tabindex="0" role="button">Public page</span></div></div>
+    </div>
+    <div class="row" data-same="true">
+      <div class="moment"><span class="n">7</span>Night before</div>
+      <div class="cell both"><p class="see">Game-day reminder: when, who and where, plus <q>Open your team in the Coaches Portal</q>.</p><div class="meta"><span class="badge b-signed" data-sec="s-coach" tabindex="0" role="button">Signed in</span></div></div>
+    </div>
+    <div class="row" data-same="true">
+      <div class="moment"><span class="n">8</span>Wrap-up</div>
+      <div class="cell both"><p class="see"><q>That's a wrap</q>: final results on the public pages, and <q>Keep this team going</q> in the free portal.</p><div class="meta"><span class="badge b-none" data-sec="s-public" tabindex="0" role="button">Public page</span></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>A third way in, for completeness</h3>
+    <p>On an invite-only tournament there's no form: the host adds each team, and the coach gets an invitation email that lands on the same "join your team" page. It follows the same rule (the account comes with the team) and needs no change.</p>
+  </div>
+</section>
+
+<!-- ================= 4 · OTHER FAMILIES ================= -->
+<section role="tabpanel" id="p4" aria-labelledby="t4" hidden>
+  <div class="card">
+    <h2>Tournament parents and fans: never an account</h2>
+    <ol>
+      <li>Open the tournament's public site from a link the coach shares: schedule, scores, standings, teams.</li>
+      <li><q>Follow</q> a team. It's saved on that phone; nothing to sign up for.</li>
+      <li>Optional: a free account so follows and score alerts carry across their devices. Offered, never required.</li>
+    </ol>
+    <div class="meta" style="display:flex;gap:6px;flex-wrap:wrap"><span class="badge b-none" data-sec="s-public" tabindex="0" role="button">No account</span><span class="tag t-same">Same before and after</span></div>
+  </div>
+
+  <div class="card">
+    <h2>Rep tryout parent: the same rule as house league</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Moment</th><th>After the census fixes</th><th>End state</th></tr></thead>
+      <tbody>
+        <tr><td>Signs up for tryouts</td><td colspan="2">Public form: one child, date of birth, a note, consents. A receipt email with no link. <span class="badge b-none" data-sec="s-form" tabindex="0" role="button">No account</span></td></tr>
+        <tr><td>Tryouts and the decision</td><td colspan="2">In person; the coach tells families directly (the emailed offer was removed in August).</td></tr>
+        <tr><td>Added to the roster</td><td>The coach's own contact with the family. Nothing from the product.</td><td><q>Set up your account to see the team's schedule and chat</q>: the same invitation as house league, sent when the coach adds the child to the roster. <span class="badge b-create" data-sec="s-invite" tabindex="0" role="button">Account invitation</span></td></tr>
+        <tr><td>The season</td><td>Whatever the coach sends; the team's public page shows games only.</td><td>The team's schedule, practices and chat in the app. <span class="badge b-signed" data-sec="s-app" tabindex="0" role="button">Signed in</span></td></tr>
+      </tbody>
+    </table></div>
+    <p>This invitation is already built for rep teams and switched off pending counsel. The end state turns it on and uses it for house league too.</p>
+  </div>
+</section>
+
+<!-- ================= 5 · HOW IT STAYS SAFE ================= -->
+<section role="tabpanel" id="p5" aria-labelledby="t5" hidden>
+  <p class="lead">Every way in, in plain words: what you need to get in, what it shows, and how it ends.</p>
+  <div class="safe">
+    <div class="srow" id="s-form"><div class="k"><b>Public sign-up forms</b><span class="badge b-none">No account</span></div>
+      <div class="c"><h3>To get in</h3><p>Nothing. There's a limit on repeated submissions, and on how many emails one address can be sent.</p></div>
+      <div class="c"><h3>It shows</h3><p>Only what you just typed. It never shows anything already on file.</p></div>
+      <div class="c"><h3>It ends</h3><p>When the club closes sign-ups.</p></div></div>
+    <div class="srow" id="s-link"><div class="k"><b>"Your sign-up" link</b><span class="badge b-link">Link</span></div>
+      <div class="c"><h3>To get in</h3><p>The link, which only ever goes to the family's own inbox.</p></div>
+      <div class="c"><h3>It shows</h3><p>Children's <b>first names</b>, status, what's owed, receipts; Pay and Ask to withdraw. No surnames, no birth dates, no email address.</p></div>
+      <div class="c"><h3>It ends</h3><p>At the end of the season. The club can send a new link, which cancels the old one: for a forwarded email, or a separated family.</p></div></div>
+    <div class="srow" id="s-resend"><div class="k"><b>Email me my link</b><span class="badge b-link">Link</span></div>
+      <div class="c"><h3>To get in</h3><p>Access to the inbox. Typing an email only <i>sends</i> to it.</p></div>
+      <div class="c"><h3>It shows</h3><p>The same message whether or not the email is on file, so it can't be used to check who's signed up.</p></div>
+      <div class="c"><h3>It ends</h3><p>Limited per address and per hour.</p></div></div>
+    <div class="srow" id="s-invite"><div class="k"><b>Account invitation</b><span class="badge b-create">Creates account</span></div>
+      <div class="c"><h3>To get in</h3><p>The invitation, used once, within 14 days, by signing up or in <b>as that email</b>. Any other address goes to the club to approve.</p></div>
+      <div class="c"><h3>It shows</h3><p>Nothing until the account exists. Then only that family's own children's teams.</p></div>
+      <div class="c"><h3>It ends</h3><p>Used, expired, or cancelled by the club. Needs counsel's sign-off before it's switched on.</p></div></div>
+    <div class="srow" id="s-app"><div class="k"><b>The app (signed in)</b><span class="badge b-signed">Signed in</span></div>
+      <div class="c"><h3>To get in</h3><p>Email and password.</p></div>
+      <div class="c"><h3>It shows</h3><p>Their own children's teams: schedule including practices, chat, sign-ups. Never another family's child.</p></div>
+      <div class="c"><h3>It ends</h3><p>The club or coach removes the connection; the calendar feed made inside can be reset by the parent.</p></div></div>
+    <div class="srow" id="s-unsub"><div class="k"><b>Unsubscribe</b><span class="badge b-none">No account</span></div>
+      <div class="c"><h3>To get in</h3><p>The footer link. Must work without signing in, by law.</p></div>
+      <div class="c"><h3>It shows</h3><p>Nothing. It only stops club news to that address.</p></div>
+      <div class="c"><h3>The fix</h3><p>The live site refuses to make or accept these links without their secret, so no one can forge one.</p></div></div>
+    <div class="srow" id="s-coach"><div class="k"><b>Coaches Portal</b><span class="badge b-signed">Signed in</span></div>
+      <div class="c"><h3>To get in</h3><p>Email and password, made at registration and confirmed by email.</p></div>
+      <div class="c"><h3>It shows</h3><p>The coach's own teams and registrations. Children's birth dates only when an organizer asks, with a guardian's consent tick.</p></div>
+      <div class="c"><h3>It ends</h3><p>As any account.</p></div></div>
+    <div class="srow" id="s-teampay"><div class="k"><b>Team pay link</b><span class="badge b-link">Link</span></div>
+      <div class="c"><h3>To get in</h3><p>The link in the team contact's email.</p></div>
+      <div class="c"><h3>It shows</h3><p>What the team owes and its receipts. No players.</p></div>
+      <div class="c"><h3>It ends</h3><p>Today: never. End state: when the tournament ends, or when the organizer sends a new one.</p></div></div>
+    <div class="srow" id="s-public"><div class="k"><b>Public tournament and team pages</b><span class="badge b-none">No account</span></div>
+      <div class="c"><h3>To get in</h3><p>Nothing.</p></div>
+      <div class="c"><h3>It shows</h3><p>Games, scores, standings, team names. Never a roster, never a practice.</p></div>
+      <div class="c"><h3>It ends</h3><p>Stays public by ruling.</p></div></div>
+  </div>
+</section>
+
+<!-- ================= 6 · ASKS ================= -->
+<section role="tabpanel" id="p6" aria-labelledby="t6" hidden>
+  <p class="lead">Already agreed on 31 October: the account comes at <b>team placement</b>; a signed-in returning parent gets a <b>pre-filled form</b>; the unused tournament claim link is <b>deleted</b>. These four are new, each with a recommendation.</p>
+  <div class="asks">
+    <div class="ask"><h2>1 · Coaches keep getting their account when they register</h2>
+      <p>It's the opposite moment from parents, on purpose. A coach's account holds the team and is reused for every tournament; a parent's would be empty until there's a team.</p>
+      <p class="rec"><b>Recommendation: yes, keep it.</b> Nothing to build.</p></div>
+    <div class="ask"><h2>2 · Ask for a second parent's email on the house-league form</h2>
+      <p>Today the form takes one guardian. Without a second email, only one parent gets the team invitation, and the other has to be invited by them afterwards.</p>
+      <p class="rec"><b>Recommendation: yes, optional.</b> Both parents get the invitation at placement. Counsel should see it with the rest of the guardian work.</p></div>
+    <div class="ask"><h2>3 · Tidy up tournament registration now, without waiting for the app</h2>
+      <p>One email instead of two for a new coach; a finish screen that says "confirm your email" instead of offering to create an account they've just made; and portal links that don't carry the coach's email address.</p>
+      <p class="rec"><b>Recommendation: yes, as its own small piece.</b> It's independent of the census and of the app.</p></div>
+    <div class="ask"><h2>4 · Show "Your sign-up" inside the app for a signed-in parent</h2>
+      <p>The same page the emailed link opens, listed under the parent's children, so paying and checking status work either way.</p>
+      <p class="rec"><b>Recommendation: yes.</b> One page with two ways in, rather than two pages that can drift apart.</p></div>
+  </div>
+</section>
+
+</div></main>
+
+<script>
+(function(){
+  var tabs=[].slice.call(document.querySelectorAll('[role="tab"]'));
+  var viewrow=document.getElementById('viewrow');
+  var compares={t2:true,t3:true};
+  function show(id){
+    tabs.forEach(function(t){
+      var on=t.id===id;
+      t.setAttribute('aria-selected',on?'true':'false');
+      document.getElementById(t.getAttribute('aria-controls')).hidden=!on;
+    });
+    viewrow.hidden=!compares[id];
+    try{localStorage.setItem('journeys-tab',id)}catch(e){}
+  }
+  tabs.forEach(function(t){t.addEventListener('click',function(){show(t.id);window.scrollTo(0,0)})});
+  try{var s=localStorage.getItem('journeys-tab');if(s&&document.getElementById(s))show(s)}catch(e){}
+
+  var vAll=document.getElementById('v-all'),vDiff=document.getElementById('v-diff');
+  function setView(diff){
+    vAll.setAttribute('aria-pressed',diff?'false':'true');
+    vDiff.setAttribute('aria-pressed',diff?'true':'false');
+    [].slice.call(document.querySelectorAll('.journey')).forEach(function(j){j.classList.toggle('diff-only',diff)});
+  }
+  vAll.addEventListener('click',function(){setView(false)});
+  vDiff.addEventListener('click',function(){setView(true)});
+
+  function openSec(id){
+    show('t5');
+    var el=document.getElementById(id); if(!el)return;
+    el.scrollIntoView({block:'center'});
+    el.classList.add('flash'); setTimeout(function(){el.classList.remove('flash')},1400);
+  }
+  // Every tag opens a one-line explanation under its step (every highlight is clickable).
+  var WHY={
+    'tag t-fix':'A census fix, agreed on 31 October. It needs no app and lands before online payments are switched on.',
+    'tag t-new':'Needs the app: the account at team placement, Stage 14 (one child across seasons) and counsel’s sign-off.',
+    'tag t-same':'Unchanged: works this way today and in the end state.'
+  };
+  var TIDY='A proposal (Ask 3): a small tournament registration tidy-up, independent of the census and of the app.';
+  [].slice.call(document.querySelectorAll('.tag')).forEach(function(t){
+    var text=t.textContent.trim()==='Tidy-up'?TIDY:WHY[t.className];
+    if(!text)return;
+    t.setAttribute('role','button'); t.setAttribute('tabindex','0'); t.setAttribute('aria-expanded','false');
+    function toggle(){
+      var host=t.closest('.cell,.card,.legend,td')||t.parentNode;
+      var open=host.querySelector(':scope > .why');
+      if(open){open.remove();t.setAttribute('aria-expanded','false');return}
+      var p=document.createElement('p'); p.className='why'; p.textContent=t.textContent.trim()+': '+text;
+      host.appendChild(p); t.setAttribute('aria-expanded','true');
+    }
+    t.addEventListener('click',toggle);
+    t.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}});
+  });
+
+  [].slice.call(document.querySelectorAll('.badge[data-sec]')).forEach(function(b){
+    b.addEventListener('click',function(){openSec(b.dataset.sec)});
+    b.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openSec(b.dataset.sec)}});
+  });
+})();
+</script>

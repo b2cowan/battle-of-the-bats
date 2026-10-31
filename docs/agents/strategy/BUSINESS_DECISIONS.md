@@ -8,6 +8,60 @@
 
 ---
 
+### 2026-10-31 — A family gets an account when their child is PLACED ON A TEAM, not at sign-up; the emailed "Your sign-up" pay link stays as the permanent pre-team door; no other links are sent to families (Decided)
+**Status:** **Decided** (owner, 2026-10-31, answering the signed-in family census, `docs/projects/active/SIGNED_IN_FAMILY_CENSUS.md` §0, and then the journeys page `docs/projects/active/SIGNED_IN_FAMILY_JOURNEYS.html`, https://claude.ai/artifact/QmPoKvcyF3Bg1xpjCWw54C). Owner words: *"they only need the account once they are confirmed on the team, and that account is used for accessing things like schedule and team chat. registering alone shouldn't create the account"*; on paying from an emailed link, *"that would be ideal if we could keep this functionality"*; on calendar feeds, *"inside the signed in app is good, i meant we don't need to send links"*. Every recommendation was accepted in two steps: *"i agree with your recommendations"*, then *"i agree with all of your recommendations, proceed"*. **Planned, nothing built.**
+**Decision:**
+1. **No account at sign-up.** A house-league or tryout sign-up never creates an account and never asks for a password.
+2. **An account at team placement.** House league's "confirmed" means **placed on a team**, not accepted. The placement email *is* the account invitation, so there is one invitation and never a separate "create an account" email. The account is what holds the schedule (practices included), team chat, In / Out / Maybe replies and an in-app calendar feed.
+3. **The emailed "Your sign-up" page stays permanently.** This is status, pay and withdraw from the emailed link, and it is the family's door before a team exists, and the grandparent's door after. It is hardened, not retired:
+   - first names only;
+   - the link ends when the season ends;
+   - the club can reset one family's link;
+   - no pay link when nothing is owed;
+   - "Email me my link" replaces the email-and-reference lookup, so the reference becomes only a number to quote to the club;
+   - the unsubscribe secret gets a fix so it cannot fall back to a fixed value.
+
+   **One page, two ways in:** the same page also appears inside the app.
+4. **No other links are sent to families.** The pay link and unsubscribe stay. RSVP by email is out; parents reply in the app. A calendar feed made **inside** the signed-in app is allowed; what is ruled out is *sending* one.
+5. **Doors that stay without a sign-in:**
+   - the tryout volunteer scorer's 48-hour link;
+   - a tournament team's pay link, because the payer is a coach or manager and tournaments stay public;
+   - tournament parents and fans, who never need an account (offered only so follows and alerts carry across devices).
+6. **Tournament coaches keep getting their account at registration.** This is already built, and it is deliberately a different moment from parents, because the account holds the coach's team across every tournament.
+7. **An optional second guardian email** on the house-league form, so both parents receive the team invitation.
+8. **Tidy up tournament registration now, as its own small piece:**
+   - one email instead of two;
+   - an honest finish screen;
+   - no email address carried in portal links;
+   - a throttle on the form.
+9. **Delete the dormant tournament-team claim link.** Nothing sends it, and it is a coach door, not a family door.
+10. **A signed-in returning parent gets next season's form filled in.** This waits on Stage 14 (one player across seasons).
+
+**Rationale:**
+- **The rule:** an account arrives when there is something in it for the family, which is a team with a schedule and a chat. Before that, an account is a password to forget.
+- **Why the pay link survives the 10-29 direction:** that direction's real target was links that would have to be kept alive or killed (a calendar link sitting in a phone). A pay link has a natural end (paid, or season over), and it is the one door a payer without an account needs.
+- **Why now:** pre-customer, so the hardening and the tournament tidy-up cost nothing to migrate.
+
+**Known cost, not hidden:** a family whose child is never placed (waitlisted or declined) never gets an account, and only ever has the emailed page. That is accepted, because they have nothing to sign in to.
+**Affects:**
+- the house-league and tryout sign-up forms, the house-league status / pay / withdraw page, the placement email, the unsubscribe link;
+- the tournament registration form, its emails and its finish screen;
+- the dormant claim link;
+- the Club readiness end-state stage and Stage 14.
+
+**No price, plan name, capacity band, SKU or gate moved; `lib/plan-config.ts` and `PLAN_PRICING_FACTS.md` untouched.** Which plan the family app belongs to remains **open** (10-29).
+**Handoff:**
+```
+HANDOFF → /plan: write SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md + PM brief, stages sequenced by dependency — (1) harden the "Your sign-up" door + unsubscribe secret; (2) tournament registration tidy-up + throttle + delete the claim link; (3) second guardian email; (4) the invitation at team placement + "Your sign-up" inside the app (needs the guardian tier, which needs counsel); (5) pre-filled next season (needs Stage 14).
+HANDOFF → COUNSEL (still the gate, unchanged from 10-29 P4): the guardian tier (a parent connected to one child) stays switched off until the PIPEDA / CASL review; stages 4–5 cannot open before it.
+HANDOFF → /marketing (with each stage, not before): the "Your sign-up" name in every family email, the placement-email invitation, the tournament registration emails and finish screen.
+HANDOFF → /docs (with each stage): family-facing and registrar help articles, keywords/searchText.
+HANDOFF → /billing: nothing — no gate moves.
+```
+**Supersedes:** nothing. **Amends** 2026-10-29 "The end state is an app where everyone signs in": its point 4 ("no no-login family doors") is narrowed to **no new SENT links beyond pay and unsubscribe**. Its P1 is refined to the same effect. Its **P2** (Stage 14 is a prerequisite) is now reinforced by point 10, and its **P4** (counsel gates the app) is unchanged. **P3, P5, P6 and the Open list stay as they were**: not ruled here.
+
+---
+
 ### 2026-10-30 — A Premium coach gets a clear, minimal-step path to upgrade to Club, with the subscription and payments changing accordingly (direction; the shape is open)
 **Status:** **Decided — the direction** (owner, 2026-10-30, answering open question B of `PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md`: *"there should be a clear path for a premium coach to upgrade to club and their subscription/payments change accordingly. it should be smooth and with minimal steps"*). **Nothing designed or built.** Everything under "Open" is not decided.
 **Decision:**
@@ -95,7 +149,7 @@ HANDOFF → /marketing: none; free time is never advertised. One nit for a copy 
 ---
 
 ### 2026-10-29 — The end state is an app where everyone signs in; public means tournaments and team public pages only; no stop-gap no-login family doors (direction logged; the rest is Proposed or open)
-**Status:** **Decided — the owner's direction only** (said in the House League 9d-3 session, 2026-10-29, after the drawings were published). Everything past that direction is split below into **Proposed** (my recommendations, awaiting the owner) and **Open** (not decided at all). Nothing in the Proposed or Open lists is binding.
+**Status:** **Decided — the owner's direction only** (said in the House League 9d-3 session, 2026-10-29, after the drawings were published). **Amended by 2026-10-31 "A family gets an account when their child is PLACED ON A TEAM…"** (point 4 narrowed: the emailed pay link and unsubscribe stay; no other links are sent). Everything past that direction is split below into **Proposed** (my recommendations, awaiting the owner) and **Open** (not decided at all). Nothing in the Proposed or Open lists is binding. Everything past that direction is split below into **Proposed** (my recommendations, awaiting the owner) and **Open** (not decided at all). Nothing in the Proposed or Open lists is binding.
 **Decision (the owner's direction, as said):**
 1. The end state of the product is a **mobile app**. Parents, coaches, admins and treasurers all have **email-and-password sign-ins**.
 2. **Public means tournaments and team public pages only.** Whether a team page carries only games stays the standing games-only ruling and is not reopened here.
