@@ -6,9 +6,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import KitDialog from '@/components/shared/KitDialog';
 import { BOOKKEEPING_VIEWS, bookkeepingAddress, bookkeepingPlace } from '@/lib/bookkeeping-navigation';
-import { consoleDate, consoleWhen } from '@/lib/console-dates';
+import { consoleDate, consoleDay, consoleWhen } from '@/lib/console-dates';
 import kit from '../console.module.css';
-import { attentionReasons, businessCents, CONVERSION_SOURCES, hasConfirmedDates, hasKnownTaxAmount, isConversionSource, summarizeExpenses, type ExpenseRevision, type ReviewFilter } from '@/lib/bookkeeping-expenses';
+import { attentionReasons, businessCents, CONVERSION_SOURCES, currentExpenses, hasConfirmedDates, hasKnownTaxAmount, isConversionSource, summarizeExpenses, type ExpenseRevision, type ReviewFilter } from '@/lib/bookkeeping-expenses';
 import { reportPeriodRange, type NamedReportPeriod } from '@/lib/bookkeeping-export';
 import type { OwnerMovementRevision } from '@/lib/bookkeeping-owner-movements';
 import { downloadCSVBlob } from '@/lib/export';
@@ -16,6 +16,8 @@ import OwnerLedger from './OwnerLedger';
 import ExpenseFormWindow from './ExpenseFormWindow';
 import ExpensesRegister from './ExpensesRegister';
 import { expenseFilterParams, matchesExpenseFilters, type ExpenseFilters } from '@/lib/bookkeeping-filters';
+import { expensePeriodRange } from '@/lib/bookkeeping-register';
+import { tournamentToday } from '@/lib/timezone';
 import DateInput from '@/components/shared/DateInput';
 import styles from './bookkeeping.module.css';
 
@@ -49,6 +51,55 @@ function ExpenseRecordWindow({ expense, address, homeAddress, onClose, children 
     eyebrow={<>Expense · {consoleDate(expense.incurred_date ?? expense.expense_date)}</>}
     title={expense.supplier} identity={<>{expense.category} · {expense.business_purpose}</>}
     address={address} onClose={onClose}>{children}</KitDialog>;
+}
+
+function BookkeepingOverview({ expenses, params, onOpenExpense }: {
+  expenses: ExpenseRevision[]; params: URLSearchParams; onOpenExpense: (row: ExpenseRevision) => void;
+}) {
+  const active = currentExpenses(expenses).filter(row => !row.void_reason);
+  const attention = active.filter(row => attentionReasons(row).length > 0);
+  const recent = active.slice(0, 5);
+  const month = expensePeriodRange('month', tournamentToday());
+  const spend = summarizeExpenses(active.filter(row => hasConfirmedDates(row) && row.incurred_date! >= month.from! && row.incurred_date! <= month.to!)).recordedSpendCents;
+  const list = new URLSearchParams({ period: 'all', status: 'active' });
+  const attentionAddress = bookkeepingAddress(list, { view: 'expenses', attention: true });
+  const expensesAddress = bookkeepingAddress(list, { view: 'expenses' });
+  function supplier(row: ExpenseRevision) {
+    return <Link className={styles.overviewSupplier} title={row.supplier}
+      href={bookkeepingAddress(params, { view: 'overview', record: row.expense_id, form: null })}
+      onClick={event => { event.stopPropagation(); if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && event.button === 0) { event.preventDefault(); onOpenExpense(row); } }}>{row.supplier}</Link>;
+  }
+  return <section className={styles.overview} aria-label="Bookkeeping overview">
+    <Link className={styles.spendingTile} href={bookkeepingAddress(params, { view: 'reports', record: null, form: null, attention: false })}>
+      <span>Spent in {month.label.split(' ')[0]}</span><strong>{money(spend)}</strong>
+      <small>Recorded business-use spending · Reports ›</small>
+    </Link>
+    <div className={styles.overviewGrid}>
+      <section className={styles.overviewCard} aria-labelledby="overview-attention-title">
+        <div className={styles.overviewCardHead}><h2 id="overview-attention-title">Needs attention <span className={`${kit.chip} ${kit.chipWarn}`}>{attention.length}</span></h2><Link href={attentionAddress}>See all ›</Link></div>
+        <div className="table-cards"><table className={`${styles.overviewTable} ${styles.attentionTable}`}>
+          <thead><tr><th>Supplier</th><th>Why</th><th className={kit.num}>Amount</th><th aria-label="Open expense" /></tr></thead>
+          <tbody>{attention.length ? attention.slice(0, 5).map(row => <tr key={row.expense_id} className={kit.clickableRow} onClick={() => onOpenExpense(row)}>
+            <td className="table-cards-title">{supplier(row)}</td>
+            <td data-label="Why"><div className={styles.overviewReasons}>{attentionReasons(row).map(reason => <span key={reason} className={`${kit.chip} ${kit.chipWarn}`}>{reason}</span>)}</div></td>
+            <td data-label="Amount" className={kit.num}>{money(businessCents(row))}</td><td className={kit.rowDoor} aria-hidden>›</td>
+          </tr>) : <tr><td colSpan={4} className={kit.empty}>Nothing needs attention.</td></tr>}</tbody>
+        </table></div>
+      </section>
+      <section className={styles.overviewCard} aria-labelledby="overview-recent-title">
+        <div className={styles.overviewCardHead}><h2 id="overview-recent-title">Recent</h2><Link href={expensesAddress}>Expenses ›</Link></div>
+        <div className="table-cards"><table className={`${styles.overviewTable} ${styles.recentTable}`}>
+          <thead><tr><th>Date</th><th>Supplier</th><th>Paid from</th><th className={kit.num}>Amount</th><th aria-label="Open expense" /></tr></thead>
+          <tbody>{recent.length ? recent.map(row => <tr key={row.expense_id} className={kit.clickableRow} onClick={() => onOpenExpense(row)}>
+            <td data-label="Date">{row.incurred_date ? consoleDay(row.incurred_date) : 'Dates to review'}</td>
+            <td className={`table-cards-title ${styles.overviewRecentSupplier}`}>{supplier(row)}</td>
+            <td data-label="Paid from">{SOURCES[row.payment_source]}</td>
+            <td data-label="Amount" className={kit.num}>{money(businessCents(row))}</td><td className={kit.rowDoor} aria-hidden>›</td>
+          </tr>) : <tr><td colSpan={5} className={kit.empty}>Your first expense will appear here.</td></tr>}</tbody>
+        </table></div>
+      </section>
+    </div>
+  </section>;
 }
 
 export default function BookkeepingClient({ initialExpenses, initialRevisions, initialDateSchemaReady, initialTaxSchemaReady, initialConversionSchemaReady, initialOwnerMovements, initialOwnerRevisions, initialOwnerSchemaReady }: {
@@ -204,24 +255,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     {view === 'ledger' && <OwnerLedger expenses={expenses} initialMovements={initialOwnerMovements} initialRevisions={initialOwnerRevisions}
       schemaReady={initialOwnerSchemaReady} onOpenExpense={openRecord} />}
 
-    {view === 'overview' && <section className={styles.overview} aria-labelledby="overview-title">
-      <div className={styles.viewHeading}><div><p className={styles.eyebrow}>Daily workspace</p><h2 id="overview-title">How things stand</h2><p>Recorded expenses and the few things still to finish.</p></div></div>
-      <div className={styles.metrics}>
-        <div><span>Recorded spend · all confirmed dates</span><strong>{money(summarizeExpenses(expenses.filter(hasConfirmedDates)).recordedSpendCents)}</strong></div>
-        <div><span>Needs a receipt</span><strong>{expenses.filter(row => !row.void_reason && !row.receipt_path).length}</strong></div>
-        <div><span>Dates to review</span><strong>{expenses.filter(row => !row.void_reason && !hasConfirmedDates(row)).length}</strong></div>
-      </div>
-      <div className={styles.overviewGrid}>
-        <div className={styles.panel}><div className={styles.subHeading}><h3>Needs your attention</h3>{attention.length > 5 && <button type="button" className={styles.textButton} onClick={() => setView('attention')}>See all {attention.length}</button>}</div>{attention.length ? attention.slice(0, 5).map(row =>
-          <button key={row.expense_id} type="button" className={styles.listDoor} onClick={() => openRecord(row)}>
-            <span><strong>{row.supplier}</strong><small>{attentionReasons(row).join(' · ')}</small></span><b>{money(businessCents(row))}</b>
-          </button>) : <p className={styles.empty}>Nothing needs attention.</p>}</div>
-        <div className={styles.panel}><h3>Recent expenses</h3>{expenses.slice(0, 5).map(row =>
-          <button key={row.expense_id} type="button" className={styles.listDoor} onClick={() => openRecord(row)}>
-            <span><strong>{row.supplier}</strong><small>{row.incurred_date ? consoleDate(row.incurred_date) : `${consoleDate(row.expense_date)} · date unconfirmed`} · {row.category}</small></span><b>{money(businessCents(row))}</b>
-          </button>)}{!expenses.length && <p className={styles.empty}>Your first expense will appear here.</p>}</div>
-      </div>
-    </section>}
+    {view === 'overview' && <BookkeepingOverview expenses={expenses} params={params} onOpenExpense={openRecord} />}
     {view === 'reports' && <section className={styles.panel} aria-labelledby="report-title">
           <div className={styles.viewHeading}><div><p className={styles.eyebrow}>Recorded expenses</p><h2 id="report-title">Expense report</h2>
             <p>{reportPeriodLabel} · Period totals use confirmed incurred dates. Older dates to review appear separately.</p></div>
