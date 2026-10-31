@@ -40,6 +40,8 @@ export type ExpenseRevision = {
   change_reason: string | null;
   receipt_path: string | null;
   receipt_name: string | null;
+  /** Derived from the first revision using this immutable receipt object; never stored as a column. */
+  receipt_attached_at?: string | null;
   void_reason: string | null;
   created_at: string;
   created_by: string;
@@ -67,6 +69,12 @@ export function hasKnownTaxAmount(row: ExpenseRevision): boolean {
 /** The server keeps storage paths; the browser only needs to know whether a file exists. */
 export function redactExpenseRevision(row: ExpenseRevision): ExpenseRevision {
   return { ...row, receipt_path: row.receipt_path ? '[private]' : null };
+}
+
+export function redactExpenseRevisions(rows: ExpenseRevision[]): ExpenseRevision[] {
+  const attached = new Map<string, string>();
+  for (const row of rows) if (row.receipt_path && (!attached.has(row.receipt_path) || row.created_at < attached.get(row.receipt_path)!)) attached.set(row.receipt_path, row.created_at);
+  return rows.map(row => ({ ...redactExpenseRevision(row), receipt_attached_at: row.receipt_path ? attached.get(row.receipt_path) ?? null : null }));
 }
 
 export function businessCents(row: ExpenseRevision): number {

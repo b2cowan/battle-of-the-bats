@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getPlatformAdminContext } from '@/lib/platform-auth';
 import { canAccessBookkeeping } from '@/lib/bookkeeping-access';
-import { currentExpenses, redactExpenseRevision } from '@/lib/bookkeeping-expenses';
+import { currentExpenses, redactExpenseRevisions } from '@/lib/bookkeeping-expenses';
 import { currentOwnerMovements } from '@/lib/bookkeeping-owner-movements';
 import { hasExpenseConversionColumns, hasExpenseDateColumns, hasExpenseTaxColumn, hasOwnerMovementTable, listExpenseRevisions, listOwnerMovementRevisions } from '@/lib/bookkeeping-store';
 import BookkeepingClient from './BookkeepingClient';
@@ -13,7 +13,7 @@ export default async function BookkeepingPage() {
   if (!auth || !canAccessBookkeeping(auth)) redirect('/platform-admin');
   const rows = await listExpenseRevisions();
   if (rows.length > 1000) throw new Error('Bookkeeping register requires pagination before more records can be shown');
-  const revisions = rows.map(redactExpenseRevision);
+  const revisions = redactExpenseRevisions(rows);
   const ownerSchemaReady = await hasOwnerMovementTable();
   const ownerRevisions = ownerSchemaReady ? await listOwnerMovementRevisions() : [];
   if (ownerRevisions.length > 1000) throw new Error('Owner movement register requires pagination before more records can be shown');

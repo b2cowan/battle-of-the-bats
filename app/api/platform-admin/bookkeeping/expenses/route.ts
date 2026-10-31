@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireBookkeepingApi } from '@/lib/bookkeeping-access';
-import { CONVERSION_SOURCES, currentExpenses, expenseConversionRate, hasConfirmedDates, isConversionSource, isExpenseDate, isRecordId, MAX_RECEIPT_BYTES, parseCents, RECEIPT_EMPTY_MESSAGE, RECEIPT_MESSAGE, RECEIPT_NAME_MESSAGE, redactExpenseRevision, validateExpenseFields, type ExpenseRevision, type PaymentSource, type TaxStatus } from '@/lib/bookkeeping-expenses';
+import { CONVERSION_SOURCES, currentExpenses, expenseConversionRate, hasConfirmedDates, isConversionSource, isExpenseDate, isRecordId, MAX_RECEIPT_BYTES, parseCents, RECEIPT_EMPTY_MESSAGE, RECEIPT_MESSAGE, RECEIPT_NAME_MESSAGE, redactExpenseRevision, redactExpenseRevisions, validateExpenseFields, type ExpenseRevision, type PaymentSource, type TaxStatus } from '@/lib/bookkeeping-expenses';
 import { currentOwnerMovements } from '@/lib/bookkeeping-owner-movements';
 import { deleteReceipt, hasExpenseConversionColumns, hasExpenseDateColumns, hasExpenseTaxColumn, hasOwnerMovementTable, insertExpenseRevision, latestExpenseRevision, listExpenseRevisions, listOwnerMovementRevisions, putReceipt } from '@/lib/bookkeeping-store';
 import { withObservability } from '@/lib/observability';
+import { expenseVoidMatches } from '@/lib/bookkeeping-void';
 
 function textField(form: FormData, key: string, max: number): string | null {
   const raw = form.get(key);
@@ -33,7 +34,7 @@ export const GET = withObservability(async () => {
   try {
     const rows = await listExpenseRevisions();
     if (rows.length > 1000) return NextResponse.json({ error: 'Expense register needs pagination before more records can be shown' }, { status: 503 });
-    const revisions = rows.map(redactExpenseRevision);
+    const revisions = redactExpenseRevisions(rows);
     return NextResponse.json({ expenses: currentExpenses(revisions), revisions, dateSchemaReady: await hasExpenseDateColumns(), taxSchemaReady: await hasExpenseTaxColumn(), conversionSchemaReady: await hasExpenseConversionColumns() }, { headers: { 'Cache-Control': 'no-store' } });
   } catch {
     return NextResponse.json({ error: 'Unable to load expenses' }, { status: 500 });
@@ -67,6 +68,25 @@ export const POST = withObservability(async (req: NextRequest) => {
     catch { return NextResponse.json({ error: 'Unable to load expense' }, { status: 500 }); }
     if (!previous) return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
     if (previous.revision !== expectedRevision) return NextResponse.json({ error: 'Expense changed; reload before saving' }, { status: 409 });
+  }
+
+  // A void is its own operation. Compare BEFORE ordinary form validation: old unknown values
+  // must survive, and no replacement receipt may be uploaded as part of a void.
+  if (form.has('voidReason')) {
+    if (!previous) return NextResponse.json({ error: 'Save an expense before voiding it' }, { status: 400 });
+    if (previous.void_reason) return NextResponse.json({ error: 'A voided expense cannot be changed' }, { status: 409 });
+    if (!expenseVoidMatches(previous, form)) return NextResponse.json({ error: 'A void must keep the saved expense values unchanged. Reload the record and try again.' }, { status: 409 });
+    const reason = textField(form, 'voidReason', 500);
+    if (!reason) return NextResponse.json({ field: 'voidReason', error: 'Say why this expense should leave the report.' }, { status: 400 });
+    try {
+      if (await activeReimbursementCents(previous.expense_id)) return NextResponse.json({ error: 'Void or correct the linked reimbursement before changing this personal expense' }, { status: 409 });
+      const inserted = await insertExpenseRevision({ ...previous, revision: previous.revision + 1,
+        change_reason: reason, void_reason: reason, created_by: gate.auth!.user.id });
+      return NextResponse.json({ expense: redactExpenseRevision(inserted) }, { status: 201 });
+    } catch (error) {
+      const conflict = error && typeof error === 'object' && 'code' in error && error.code === '23505';
+      return NextResponse.json({ error: conflict ? 'Expense changed; reload before saving' : 'Unable to void expense' }, { status: conflict ? 409 : 503 });
+    }
   }
 
   const incurredDate = textField(form, 'incurredDate', 10);

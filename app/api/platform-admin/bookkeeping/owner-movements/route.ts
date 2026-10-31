@@ -4,6 +4,7 @@ import { businessCents, currentExpenses } from '@/lib/bookkeeping-expenses';
 import { currentOwnerMovements, validateOwnerMovementInput } from '@/lib/bookkeeping-owner-movements';
 import { hasOwnerMovementTable, insertOwnerMovementRevision, latestOwnerMovementRevision, listExpenseRevisions, listOwnerMovementRevisions } from '@/lib/bookkeeping-store';
 import { withObservability } from '@/lib/observability';
+import { ownerVoidMatches } from '@/lib/bookkeeping-void';
 
 export const GET = withObservability(async () => {
   const gate = await requireBookkeepingApi();
@@ -50,6 +51,9 @@ export const POST = withObservability(async (req: NextRequest) => {
     if (!previous && voidReason) return NextResponse.json({ error: 'Save a transfer before voiding it' }, { status: 400 });
     if (previous?.void_reason) return NextResponse.json({ error: 'A voided movement cannot be changed' }, { status: 409 });
     if (previous && previous.revision !== expectedRevision) return NextResponse.json({ error: 'Movement changed; reload before saving' }, { status: 409 });
+    if (previous && voidReason && !ownerVoidMatches(previous, checked.value, input)) {
+      return NextResponse.json({ error: 'A void must keep the saved transfer values unchanged. Reload the record and try again.' }, { status: 409 });
+    }
     if (previous && !changeReason) return NextResponse.json({ field: 'changeReason', error: 'Say why this transfer changed.' }, { status: 400 });
     if (movementKind === 'expense_reimbursement' && !voidReason) {
       const expenses = currentExpenses(await listExpenseRevisions());
@@ -70,7 +74,8 @@ export const POST = withObservability(async (req: NextRequest) => {
       movement_id: movementId, revision: previous ? previous.revision + 1 : 1,
       movement_date: movementDate, movement_kind: movementKind,
       amount_cents: amountCents, linked_expense_id: linkedExpenseId,
-      source_reference: sourceReference, note, change_reason: changeReason,
+      source_reference: voidReason && previous ? previous.source_reference : sourceReference,
+      note: voidReason && previous ? previous.note : note, change_reason: changeReason,
       void_reason: voidReason, created_by: gate.auth!.user.id,
     });
     return NextResponse.json({ movement: row }, { status: 201 });

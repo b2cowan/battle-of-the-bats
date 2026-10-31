@@ -1,14 +1,13 @@
 'use client';
 
-import { useCallback, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import KitDialog from '@/components/shared/KitDialog';
 import { BOOKKEEPING_VIEWS, bookkeepingAddress, bookkeepingPlace } from '@/lib/bookkeeping-navigation';
-import { consoleDate, consoleDay, consoleWhen } from '@/lib/console-dates';
+import { consoleDate, consoleDay } from '@/lib/console-dates';
 import kit from '../console.module.css';
-import { attentionReasons, businessCents, CONVERSION_SOURCES, currentExpenses, hasConfirmedDates, hasKnownTaxAmount, isConversionSource, summarizeExpenses, type ExpenseRevision, type ReviewFilter } from '@/lib/bookkeeping-expenses';
+import { attentionReasons, businessCents, currentExpenses, hasConfirmedDates, summarizeExpenses, type ExpenseRevision, type ReviewFilter } from '@/lib/bookkeeping-expenses';
 import { reportPeriodRange, type NamedReportPeriod } from '@/lib/bookkeeping-export';
 import type { OwnerMovementRevision } from '@/lib/bookkeeping-owner-movements';
 import { downloadCSVBlob } from '@/lib/export';
@@ -16,7 +15,7 @@ import OwnerLedger from './OwnerLedger';
 import ExpenseFormWindow from './ExpenseFormWindow';
 import ExpensesRegister from './ExpensesRegister';
 import { expenseFilterParams, matchesExpenseFilters, type ExpenseFilters } from '@/lib/bookkeeping-filters';
-import { expensePeriodRange } from '@/lib/bookkeeping-register';
+import { expensePeriodRange, expenseRegisterSelection } from '@/lib/bookkeeping-register';
 import { tournamentToday } from '@/lib/timezone';
 import DateInput from '@/components/shared/DateInput';
 import styles from './bookkeeping.module.css';
@@ -37,24 +36,8 @@ const today = () => {
 };
 const money = (cents: number) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(cents / 100);
 const amount = (cents: number) => (cents / 100).toFixed(2);
-function ExpenseRecordWindow({ expense, address, homeAddress, onClose, children }: {
-  expense: ExpenseRevision; address: string; homeAddress: string; onClose: () => void; children: ReactNode;
-}) {
-  // A pasted/reloaded record, or a return from Correct, opens over its list, never over itself.
-  // Normalize before the child's Back-step effect. KitDialog then owns the record's address.
-  useLayoutEffect(() => {
-    if (window.location.pathname + window.location.search === address) {
-      window.history.replaceState(window.history.state, '', homeAddress);
-    }
-  }, [address, homeAddress]);
-  return <KitDialog kind="form" size="medium" record
-    eyebrow={<>Expense · {consoleDate(expense.incurred_date ?? expense.expense_date)}</>}
-    title={expense.supplier} identity={<>{expense.category} · {expense.business_purpose}</>}
-    address={address} onClose={onClose}>{children}</KitDialog>;
-}
-
 function BookkeepingOverview({ expenses, params, onOpenExpense }: {
-  expenses: ExpenseRevision[]; params: URLSearchParams; onOpenExpense: (row: ExpenseRevision) => void;
+  expenses: ExpenseRevision[]; params: URLSearchParams; onOpenExpense: (row: ExpenseRevision, list?: ExpenseRevision[]) => void;
 }) {
   const active = currentExpenses(expenses).filter(row => !row.void_reason);
   const attention = active.filter(row => attentionReasons(row).length > 0);
@@ -64,10 +47,10 @@ function BookkeepingOverview({ expenses, params, onOpenExpense }: {
   const list = new URLSearchParams({ period: 'all', status: 'active' });
   const attentionAddress = bookkeepingAddress(list, { view: 'expenses', attention: true });
   const expensesAddress = bookkeepingAddress(list, { view: 'expenses' });
-  function supplier(row: ExpenseRevision) {
+  function supplier(row: ExpenseRevision, list: ExpenseRevision[]) {
     return <Link className={styles.overviewSupplier} title={row.supplier}
       href={bookkeepingAddress(params, { view: 'overview', record: row.expense_id, form: null })}
-      onClick={event => { event.stopPropagation(); if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && event.button === 0) { event.preventDefault(); onOpenExpense(row); } }}>{row.supplier}</Link>;
+      onClick={event => { event.stopPropagation(); if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && event.button === 0) { event.preventDefault(); onOpenExpense(row, list); } }}>{row.supplier}</Link>;
   }
   return <section className={styles.overview} aria-label="Bookkeeping overview">
     <Link className={styles.spendingTile} href={bookkeepingAddress(params, { view: 'reports', record: null, form: null, attention: false })}>
@@ -79,8 +62,8 @@ function BookkeepingOverview({ expenses, params, onOpenExpense }: {
         <div className={styles.overviewCardHead}><h2 id="overview-attention-title">Needs attention <span className={`${kit.chip} ${kit.chipWarn}`}>{attention.length}</span></h2><Link href={attentionAddress}>See all ›</Link></div>
         <div className="table-cards"><table className={`${styles.overviewTable} ${styles.attentionTable}`}>
           <thead><tr><th>Supplier</th><th>Why</th><th className={kit.num}>Amount</th><th aria-label="Open expense" /></tr></thead>
-          <tbody>{attention.length ? attention.slice(0, 5).map(row => <tr key={row.expense_id} className={kit.clickableRow} onClick={() => onOpenExpense(row)}>
-            <td className="table-cards-title">{supplier(row)}</td>
+          <tbody>{attention.length ? attention.slice(0, 5).map(row => <tr key={row.expense_id} className={kit.clickableRow} onClick={() => onOpenExpense(row, attention.slice(0, 5))}>
+            <td className="table-cards-title">{supplier(row, attention.slice(0, 5))}</td>
             <td data-label="Why"><div className={styles.overviewReasons}>{attentionReasons(row).map(reason => <span key={reason} className={`${kit.chip} ${kit.chipWarn}`}>{reason}</span>)}</div></td>
             <td data-label="Amount" className={kit.num}>{money(businessCents(row))}</td><td className={kit.rowDoor} aria-hidden>›</td>
           </tr>) : <tr><td colSpan={4} className={kit.empty}>Nothing needs attention.</td></tr>}</tbody>
@@ -90,9 +73,9 @@ function BookkeepingOverview({ expenses, params, onOpenExpense }: {
         <div className={styles.overviewCardHead}><h2 id="overview-recent-title">Recent</h2><Link href={expensesAddress}>Expenses ›</Link></div>
         <div className="table-cards"><table className={`${styles.overviewTable} ${styles.recentTable}`}>
           <thead><tr><th>Date</th><th>Supplier</th><th>Paid from</th><th className={kit.num}>Amount</th><th aria-label="Open expense" /></tr></thead>
-          <tbody>{recent.length ? recent.map(row => <tr key={row.expense_id} className={kit.clickableRow} onClick={() => onOpenExpense(row)}>
+          <tbody>{recent.length ? recent.map(row => <tr key={row.expense_id} className={kit.clickableRow} onClick={() => onOpenExpense(row, recent)}>
             <td data-label="Date">{row.incurred_date ? consoleDay(row.incurred_date) : 'Dates to review'}</td>
-            <td className={`table-cards-title ${styles.overviewRecentSupplier}`}>{supplier(row)}</td>
+            <td className={`table-cards-title ${styles.overviewRecentSupplier}`}>{supplier(row, recent)}</td>
             <td data-label="Paid from">{SOURCES[row.payment_source]}</td>
             <td data-label="Amount" className={kit.num}>{money(businessCents(row))}</td><td className={kit.rowDoor} aria-hidden>›</td>
           </tr>) : <tr><td colSpan={5} className={kit.empty}>Your first expense will appear here.</td></tr>}</tbody>
@@ -120,6 +103,8 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   const [formOpen, setFormOpen] = useState(Boolean(place.form));
   const [editing, setEditing] = useState<ExpenseRevision | null>(() => place.form && place.form !== 'add' ? initialExpenses.find(row => row.expense_id === place.record) ?? null : null);
   const [voidMode, setVoidMode] = useState(place.form === 'void');
+  const [copyFrom, setCopyFrom] = useState<ExpenseRevision | null>(null);
+  const [recordIds, setRecordIds] = useState<string[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState<'csv' | 'package' | null>(null);
   const [error, setError] = useState('');
@@ -135,7 +120,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
 
   function setView(next: BookkeepingView) {
     router.push(bookkeepingAddress(params, { view: next === 'attention' ? 'expenses' : next,
-      attention: next === 'attention', record: null, form: null }), { scroll: false });
+      attention: next === 'attention', record: null, form: null, movement: null, transfer: null }), { scroll: false });
   }
 
   const load = useCallback(async () => {
@@ -167,8 +152,6 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     (reportDrilldown.kind === 'personal' && row.payment_source === 'personal')
   )), [datedVisible, reportDrilldown]);
   const selectedExpense = expenses.find(row => row.expense_id === selectedExpenseId) ?? null;
-  const selectedConversionSource = selectedExpense && isConversionSource(selectedExpense.conversion_source)
-    ? CONVERSION_SOURCES[selectedExpense.conversion_source] : null;
   const addressedExpenseMissing = Boolean(place.record && !expenses.some(row => row.expense_id === place.record));
   const attention = expenses.filter(row => !row.void_reason &&
     attentionReasons(row).length > 0);
@@ -186,14 +169,27 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     else if (value !== 'custom') { const range = reportPeriodRange(value, today()); setFrom(range.from); setTo(range.to); }
   }
 
-  function openRecord(row: ExpenseRevision) { setSelectedExpenseId(row.expense_id); }
-  function openForm(row: ExpenseRevision | null = null, asVoid = false) {
+  const registerFilter = expenseRegisterSelection(params, tournamentToday()).filters;
+  const defaultRecordRows = view === 'expenses' && registerFilter ? currentExpenses(expenses).filter(row => matchesExpenseFilters(row, registerFilter))
+    : view === 'reports' ? reportRows : currentExpenses(expenses).filter(row => !row.void_reason);
+  const windowExpense = formOpen ? editing : selectedExpense;
+  const recordRows = recordIds ? recordIds.flatMap(id => expenses.find(row => row.expense_id === id) ?? []) : [...defaultRecordRows];
+  if (windowExpense && !recordRows.some(row => row.expense_id === windowExpense.expense_id)) recordRows.push(windowExpense);
+  const recordIndex = recordRows.findIndex(row => row.expense_id === windowExpense?.expense_id);
+  const recordSteps = windowExpense ? { position: `${recordIndex + 1} of ${recordRows.length}`, noun: 'expense',
+    prev: recordIndex > 0 ? { name: recordRows[recordIndex - 1].supplier, onStep: () => stepTo(recordRows[recordIndex - 1].expense_id) } : null,
+    next: recordIndex < recordRows.length - 1 ? { name: recordRows[recordIndex + 1].supplier, onStep: () => stepTo(recordRows[recordIndex + 1].expense_id) } : null } : undefined;
+  function stepTo(id: string) { setFormOpen(false); setEditing(null); setVoidMode(false); setSelectedExpenseId(id); }
+  function openRecord(row: ExpenseRevision, list?: ExpenseRevision[]) { setRecordIds((list ?? defaultRecordRows).map(item => item.expense_id)); setSelectedExpenseId(row.expense_id); }
+  function openForm(row: ExpenseRevision | null = null, asVoid = false, copy: ExpenseRevision | null = null) {
+    setCopyFrom(copy); if (!row) setRecordIds(null);
     setEditing(row); setVoidMode(asVoid);
     if (!row) setSelectedExpenseId(null);
     setFormOpen(true);
   }
   function expenseSaved(saved: ExpenseRevision) {
-    setNotice(voidMode ? 'Expense voided; its history is retained.' : editing ? 'Correction saved with history.' : 'Expense saved.');
+    setCopyFrom(null);
+    setNotice(saved.void_reason ? 'Expense voided; its history is retained.' : saved.revision > 1 ? 'Correction saved with history.' : 'Expense saved.');
     setExpenses(current => [saved, ...current.filter(row => row.expense_id !== saved.expense_id)]);
     setRevisions(current => [...current, saved]);
     setSelectedExpenseId(saved.expense_id); setFormOpen(false); setEditing(null); setVoidMode(false);
@@ -237,7 +233,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     <div className={styles.tabRow}>
       <nav className={`${kit.tabs} ${styles.sectionNav}`} aria-label="Bookkeeping sections">
         {BOOKKEEPING_VIEWS.map(section => <Link key={section}
-          href={bookkeepingAddress(params, { view: section, record: null, form: null, attention: false })}
+          href={bookkeepingAddress(params, { view: section, record: null, form: null, attention: false, movement: null, transfer: null })}
           className={`${kit.tab} ${place.view === section ? kit.tabOn : ''}`}
           aria-current={place.view === section ? 'page' : undefined}>
           {section[0].toUpperCase() + section.slice(1)}
@@ -307,37 +303,13 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     {view === 'expenses' && <ExpensesRegister expenses={expenses} loading={loading} exporting={Boolean(exporting)}
       onOpenExpense={openRecord} onExport={exportExpenses} />}
 
-    {formOpen && !addressedExpenseMissing && <ExpenseFormWindow key={`${editing?.expense_id ?? 'new'}-${voidMode}`}
-      expense={editing} expenses={expenses} categories={categories} asVoid={voidMode}
-      address={bookkeepingAddress(params, { record: editing?.expense_id ?? null, form: editing ? voidMode ? 'void' : 'correct' : 'add' })}
-      homeAddress={bookkeepingAddress(params, { record: null, form: null })}
+    {(formOpen || selectedExpense) && !addressedExpenseMissing && <ExpenseFormWindow key={windowExpense?.expense_id ?? `new-${copyFrom?.expense_id ?? 'blank'}`}
+      expense={windowExpense} expenses={expenses} categories={categories} revisions={revisions} copyFrom={copyFrom}
+      startEditing={Boolean(formOpen && editing && !voidMode)} asVoid={voidMode} steps={recordSteps}
+      address={bookkeepingAddress(params, { record: windowExpense?.expense_id ?? null, form: windowExpense ? formOpen ? voidMode ? 'void' : 'correct' : null : 'add', movement: null, transfer: null })}
+      homeAddress={bookkeepingAddress(params, { record: null, form: null, movement: null, transfer: null })}
       disabled={!dateSchemaReady || !taxSchemaReady || !conversionSchemaReady}
-      onClose={() => setFormOpen(false)} onSaved={expenseSaved} />}
-    {!formOpen && selectedExpense && <ExpenseRecordWindow key={selectedExpense.expense_id} expense={selectedExpense}
-      address={bookkeepingAddress(params, { record: selectedExpense.expense_id, form: null })}
-      homeAddress={bookkeepingAddress(params, { record: null, form: null })}
-      onClose={() => setSelectedExpenseId(null)}>
-      {selectedExpense.void_reason && <p className={styles.dateWarning}>Voided: {selectedExpense.void_reason}. This record is excluded from active spend.</p>}
-      {!hasConfirmedDates(selectedExpense) && <p className={styles.dateWarning}>Recorded date {consoleDate(selectedExpense.expense_date)} · meaning unconfirmed. Check the source document before confirming incurred and payment dates.</p>}
-      <div className={styles.recordGrid}><div className={styles.recordCard}><h3>Expense details</h3><dl>
-        <div><dt>Business amount</dt><dd>{money(businessCents(selectedExpense))}</dd></div>
-        <div><dt>Expense date</dt><dd>{selectedExpense.incurred_date ? consoleDate(selectedExpense.incurred_date) : 'Needs review'}</dd></div>
-        <div><dt>Payment date</dt><dd>{selectedExpense.paid_date ? consoleDate(selectedExpense.paid_date) : 'Needs review'}</dd></div>
-        <div><dt>Paid from</dt><dd>{SOURCES[selectedExpense.payment_source]}</dd></div>
-        <div><dt>Receipt</dt><dd>{selectedExpense.receipt_path ? 'Attached' : 'Missing'}</dd></div>
-        <div><dt>Purchase tax amount</dt><dd>{hasKnownTaxAmount(selectedExpense) ? money(selectedExpense.tax_cad_cents) : 'Unknown'}</dd></div>
-        <div><dt>Tax review</dt><dd>{selectedExpense.tax_status === 'pending' ? 'Pending review' : selectedExpense.tax_status === 'none' ? 'No tax recorded' : 'Reviewed'}</dd></div>
-      </dl></div><div className={styles.recordCard}><h3>Original receipt</h3>
-        {selectedExpense.receipt_path ? <p><a href={`/api/platform-admin/bookkeeping/receipt/${selectedExpense.expense_id}/${selectedExpense.revision}`}>{selectedExpense.receipt_name ?? 'Download receipt'}</a></p> : <p>No receipt attached yet.</p>}
-        {selectedExpense.original_currency === 'USD' && <p>USD {amount(selectedExpense.original_cents)} → CAD {amount(selectedExpense.cad_cents)} · {selectedConversionSource ?? 'USD source not picked'}{selectedExpense.conversion_rate != null ? ` · Rate ${selectedExpense.conversion_rate >= 0.00005 ? selectedExpense.conversion_rate.toFixed(4) : selectedExpense.conversion_rate.toPrecision(4)}` : ''}{selectedExpense.conversion_note && selectedExpense.conversion_note !== selectedConversionSource ? ` · ${selectedExpense.conversion_note}` : ''}</p>}
-        {selectedExpense.notes && <p>{selectedExpense.notes}</p>}</div></div>
-      {/* Correct and Void only: a void is the only way a record leaves the totals (owner ruling R1, 2026-10-25). */}
-      {!selectedExpense.void_reason && <div className={styles.recordActions}>
-        <button type="button" className={styles.primaryAction} onClick={() => openForm(selectedExpense)}>Correct expense</button>
-        <button type="button" className={styles.textButton} onClick={() => openForm(selectedExpense, true)}>Void expense</button></div>}
-      <section className={styles.historySection} aria-labelledby="history-title"><h3 id="history-title">Changes</h3><ol className={styles.history}>{revisions.filter(item => item.expense_id === selectedExpense.expense_id).sort((a, b) => b.revision - a.revision).map(item =>
-        <li key={item.revision}>Rev. {item.revision} · {consoleWhen(item.created_at)} · {money(item.cad_cents)} · {item.incurred_date ? consoleDate(item.incurred_date) : `${consoleDate(item.expense_date)} (date unconfirmed)`} {item.change_reason ? `· ${item.change_reason}` : '· First entry'} {item.void_reason ? `· Voided: ${item.void_reason}` : ''} {item.receipt_path && <a href={`/api/platform-admin/bookkeeping/receipt/${item.expense_id}/${item.revision}`}>Receipt</a>}</li>
-      )}</ol></section>
-    </ExpenseRecordWindow>}
+      onCopy={row => openForm(null, false, row)}
+      onClose={() => { setFormOpen(false); setSelectedExpenseId(null); setEditing(null); setVoidMode(false); setCopyFrom(null); }} onSaved={expenseSaved} />}
   </div>;
 }

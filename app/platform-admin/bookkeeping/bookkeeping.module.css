@@ -25,7 +25,6 @@
 .form input, .form select, .form textarea, .filters input, .filters select { width: 100%; min-width: 0; min-height: 44px; border-radius: 8px; }
 .form input[type="file"] { padding: .6rem; }
 .form [aria-invalid="true"] { border-color: var(--danger); }
-.formError { margin: 0; }
 .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; }
 .filters { grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); margin-bottom: 1rem; }
 .overview { display: grid; gap: 1rem; }
@@ -72,7 +71,8 @@
 .dateWarning { border: 1px solid var(--warning); border-radius: 8px; background: rgba(var(--warning-rgb), .1); color: var(--text-primary); padding: .8rem 1rem; font-size: var(--type-body); }
 .textButton, .moreButton { display: inline-flex; align-items: center; min-height: 44px; padding: .5rem .2rem; border: 0; background: transparent; color: var(--home-olive); font: 650 var(--type-body) var(--font-sans, system-ui, sans-serif); text-align: left; cursor: pointer; }
 .advanced { display: grid; gap: 1rem; padding: 1rem; border: 1px solid var(--home-line); border-radius: 8px; }
-.recordGrid { display: grid; gap: 1rem; }
+.receiptRecord { margin-block: 1rem; overflow-wrap: anywhere; font-size: var(--type-body); }
+.receiptRecord a { color: var(--home-olive); }
 .recordCard { min-width: 0; }
 .recordCard a { color: var(--home-olive); overflow-wrap: anywhere; }
 .recordCard dl { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
@@ -80,8 +80,6 @@
 .recordCard dt { color: var(--text-secondary); font-size: var(--type-support); }
 .recordCard dd { margin: .2rem 0 0; font-size: var(--type-body); font-weight: 700; overflow-wrap: anywhere; }
 .recordActions { margin: 1rem 0; }
-.dangerButton { min-height: 44px; padding: .65rem .8rem; border: 1px solid var(--danger); border-radius: 8px; background: var(--home-card); color: var(--danger-text); font: 700 var(--type-body) var(--font-sans, system-ui, sans-serif); cursor: pointer; }
-.dangerButton:hover { background: rgba(var(--danger-rgb), .1); }
 .historySection { border-top: 1px solid var(--home-line); padding-top: 1rem; }
 .historySection h3 { margin: 0; }
 .history { margin: .7rem 0 0; padding: .65rem 0 0 1rem; color: var(--text-secondary); font-size: var(--type-support); line-height: 1.7; }
@@ -159,7 +157,7 @@
 .expenseExportMenu button { display: block; width: 100%; min-height: 44px; border: 0; border-radius: 4px; padding: .55rem .7rem; background: transparent; color: var(--text-primary); text-align: left; font: inherit; cursor: pointer; }
 .expenseExportMenu button:hover, .expenseExportMenu button:focus-visible { background: var(--home-olive-soft); outline: none; }
 .attentionPill:focus-visible, .expenseName:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
-.sectionNav a:focus-visible, .listDoor:focus-visible, .primaryAction:focus-visible, .quietButton:focus-visible, .textButton:focus-visible, .dangerButton:focus-visible, .moreButton:focus-visible, .reportDoor:focus-visible { outline: 3px solid var(--home-olive); outline-offset: 2px; }
+.sectionNav a:focus-visible, .listDoor:focus-visible, .primaryAction:focus-visible, .quietButton:focus-visible, .textButton:focus-visible, .moreButton:focus-visible, .reportDoor:focus-visible { outline: 3px solid var(--home-olive); outline-offset: 2px; }
 @media (max-width: 700px) {
   .phoneAdd { display: inline-flex; width: 44px; height: 44px; padding: 0; font-size: var(--type-title); }
   .desktopAdd { display: none; }

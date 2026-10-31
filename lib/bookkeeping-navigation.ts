@@ -4,6 +4,15 @@ export const BOOKKEEPING_VIEWS = ['overview', 'expenses', 'ledger', 'reports'] a
 export type BookkeepingSection = typeof BOOKKEEPING_VIEWS[number];
 export type BookkeepingForm = 'add' | 'correct' | 'void';
 
+export function bookkeepingTransferPlace(params: URLSearchParams) {
+  const id = params.get('movement');
+  const movement = isRecordId(id) ? id!.toLowerCase() : null;
+  const requested = params.get('transfer');
+  const form: BookkeepingForm | null = requested === 'add' ? 'add'
+    : movement && (requested === 'correct' || requested === 'void') ? requested : null;
+  return { movement, form };
+}
+
 /** Read only supported places; an address cannot expose the hidden Sources preview. */
 export function bookkeepingPlace(params: URLSearchParams) {
   const requested = params.get('view');
@@ -19,6 +28,7 @@ export function bookkeepingPlace(params: URLSearchParams) {
 /** Preserve the list's filters when opening a record or changing its window level. */
 export function bookkeepingAddress(params: URLSearchParams, changes: {
   view?: BookkeepingSection; record?: string | null; form?: BookkeepingForm | null; attention?: boolean;
+  movement?: string | null; transfer?: BookkeepingForm | null;
 }) {
   const next = new URLSearchParams(params);
   for (const [key, value] of Object.entries(changes)) {

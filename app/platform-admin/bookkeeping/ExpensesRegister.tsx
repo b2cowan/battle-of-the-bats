@@ -51,7 +51,7 @@ function ExpenseExportMenu({ disabled, onExport }: { disabled: boolean; onExport
 
 export default function ExpensesRegister({ expenses, loading, exporting, onOpenExpense, onExport }: {
   expenses: ExpenseRevision[]; loading: boolean; exporting: boolean;
-  onOpenExpense: (row: ExpenseRevision) => void;
+  onOpenExpense: (row: ExpenseRevision, list?: ExpenseRevision[]) => void;
   onExport: (kind: 'csv' | 'package', filters: ExpenseFilters) => void;
 }) {
   const searchParams = useSearchParams();
@@ -122,11 +122,11 @@ export default function ExpensesRegister({ expenses, loading, exporting, onOpenE
       <table className={styles.expensesTable} aria-busy={loading}>
         <thead><tr><th>Date</th><th>Supplier</th><th>What for</th><th>Category</th><th>Paid from</th><th>Receipt</th><th className={kit.num}>Amount</th><th aria-label="Open expense" /></tr></thead>
         <tbody>{!visible.length && <tr><td colSpan={8} className={kit.empty}>{loading ? 'Loading expenses…' : 'No expenses match this view.'}</td></tr>}
-          {visible.map(row => <tr key={row.expense_id} className={`${kit.clickableRow} ${row.void_reason ? styles.voidedExpense : ''}`} onClick={() => onOpenExpense(row)}>
+          {visible.map(row => <tr key={row.expense_id} className={`${kit.clickableRow} ${row.void_reason ? styles.voidedExpense : ''}`} onClick={() => onOpenExpense(row, visible)}>
             <td data-label="Date" className={styles.registerDate}>{row.incurred_date ? consoleDay(row.incurred_date) : 'Dates to review'}</td>
             <td className={`table-cards-title ${styles.supplierCell}`}>
               <Link className={styles.expenseName} href={bookkeepingAddress(params, { view: 'expenses', record: row.expense_id, form: null })}
-                onClick={event => { event.stopPropagation(); if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && event.button === 0) { event.preventDefault(); onOpenExpense(row); } }} title={row.supplier}>{row.supplier}</Link>
+                onClick={event => { event.stopPropagation(); if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && event.button === 0) { event.preventDefault(); onOpenExpense(row, visible); } }} title={row.supplier}>{row.supplier}</Link>
               {row.void_reason && <span className={`${kit.chip} ${kit.chipQuiet}`}>Voided</span>}
             </td>
             <td data-label="What for" className={styles.registerPurpose}>
