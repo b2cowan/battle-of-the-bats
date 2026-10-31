@@ -610,3 +610,8 @@ The private walk publication's source commit is not a Stage 6 product commit.
 Stage 6's build/review is ready for the owner walk. This is a good place to `/clear`; the next build is **Stage 7
 (the pay page)** or **Stage 1a (who owns the look)**, at the owner's choice. Stage 8 retains the release switch,
 legacy-body retirement, help and demo work.
+
+**Product commit receipt · 2026-10-31:** all Stage 6 parts committed together on `dev` as `295ebce8a`
+(`295ebce8aab03005dde8124b4c41f299454d7e35`), on the owner's explicit instruction. The 37-path commit uses HEAD-plus-owned-lines blobs
+for shared records and excludes concurrent work. Pre-commit token/date/lockfile checks passed. The owner walk §435
+remains open; no owner visual pass is inferred. The private checklist's source commit remains separate.

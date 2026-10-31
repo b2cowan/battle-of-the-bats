@@ -3,6 +3,7 @@
 **Status:** Stages 0–5 implemented; Stage 5 owner walk §432 passed 2026-10-31. Stage 6 implementation and manual
 review completed 2026-10-31; the private 66-step owner walk §435 is published and awaits the owner's result.
 Priority: Stage 6 owner acceptance, then Stage 7 (pay page) or Stage 1a (look ownership), at the owner's choice.
+**Stage 6 implementation:** committed `295ebce8a` on dev 2026-10-31 (all parts combined). Owner walk §435 remains open.
 Plan: `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md`. Mockups: the review hub (Claude Artifact).
 
 ## Stage 6 Part 4 — consistent navigation and a checkable owner walk (2026-10-31)

@@ -1,6 +1,6 @@
 # FieldLogicHQ Memory Index
 
-- [Public tournament Stage 6](../docs/projects/active/PUBLIC_TOURNAMENT_STAGE6_BUILD_PROMPT.md) — implementation and manual review completed 2026-10-31; shared first-paint tab facts, current-publication crown gate and empty-withheld-division fix verified; 315 tests pass. [Owner walk §435](https://fieldlogichq-stage6-owner-walk.b2cowan.chatgpt.site) published privately (66 steps/16 parts); owner result pending. Owner approved one combined Stage 6 product commit 2026-10-31. Next build: Stage 7 (pay page) or Stage 1a (look ownership), owner's choice.
+- [Public tournament Stage 6](../docs/projects/active/PUBLIC_TOURNAMENT_STAGE6_BUILD_PROMPT.md) — implementation and manual review completed 2026-10-31; shared first-paint tab facts, current-publication crown gate and empty-withheld-division fix verified; 315 tests pass. [Owner walk §435](https://fieldlogichq-stage6-owner-walk.b2cowan.chatgpt.site) published privately (66 steps/16 parts); owner result pending. Implementation committed `295ebce8a` on dev 2026-10-31 (all parts combined). Next build: Stage 7 (pay page) or Stage 1a (look ownership), owner's choice.
 
 - [Compact public Schedule](design_decisions.md) — owner approved 2026-10-29: time above division/pool, status top right, each team paired with its score; location/maps belong on the game page. Preview Schedule only; desktop retains one-line rows.
 
