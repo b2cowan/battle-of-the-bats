@@ -324,6 +324,30 @@ a.footHost:focus-visible {
   outline-offset: 2px;
 }
 
+/* Stage 6 measurements exposed undersized free-event promotion controls outside the frame, and a badge hidden by
+   a wrapped banner. Geometry only, gated by the preview marker: switch-off promotions keep their existing rendering. */
+:global(html):has(.frame) :global([data-growth-banner]) a,
+:global(html):has(.frame) :global([aria-label='Tournament platform attribution']) a {
+  display: inline-flex; align-items: center; min-height: 44px;
+}
+:global(html):has(.frame) :global([data-growth-banner]) button {
+  width: 44px; height: 44px;
+}
+:global(html):has(.frame):has(:global([data-growth-banner])) :global([aria-label='Tournament platform attribution']) {
+  bottom: calc(1rem + var(--public-growth-banner-h, 160px) + 8px);
+}
+:global(html):has(.frame):has(:global([aria-label='Tournament platform attribution'])) :global([data-public-frame-footer]) > div {
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+}
+:global(html):has(.frame):has(:global([data-growth-banner])):has(:global([aria-label='Tournament platform attribution'])) :global([data-public-frame-footer]) > div {
+  padding-bottom: calc(var(--public-growth-banner-h, 160px) + 96px + env(safe-area-inset-bottom, 0px));
+}
+@media (max-width: 900px) {
+  :global(html):has(.frame):has(:global([data-growth-banner])) :global([aria-label='Tournament platform attribution']) {
+    bottom: calc(var(--bottom-nav-height, 3.5rem) + env(safe-area-inset-bottom, 0px) + var(--public-growth-banner-h, 160px) + 8px);
+  }
+}
+
 /* ── The readable baseline (Part 3): today's pages, unchanged in layout, read on the light ground ──────────────────────
    The shell inside the frame also carries today's Light-mode marker, and globals.css re-declares a few names ON that
    element (light primary, the status and label strengths, the inset ground, the card highlight). It sits inside the

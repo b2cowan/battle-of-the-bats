@@ -12,13 +12,16 @@ import {
 import { toPublicTeam } from '@/lib/public-tournament-data';
 import { getPublicStandingsByDivision, onlyPublishedGames } from '@/lib/public-games';
 import { deriveTierChampions, isTournamentPlayoffsComplete, tierBadgeLabel } from '@/lib/champions';
+import { championCards } from '@/lib/public-host-card';
 import type { DivisionStandingRow } from '@/lib/tie-breakers';
-import { isPublicPageEnabled } from '@/lib/public-pages';
+import { isPublicPageEnabled, isPublicBracketVisible } from '@/lib/public-pages';
 import { formatPoolName } from '@/lib/utils';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
+import PublicChampionsPage from '@/components/public/PublicChampionsPage';
 import SharePageButton from '@/components/public/SharePageButton';
 import styles from '@/components/public/ChampionsRecap.module.css';
 import { orgLinks } from '@/lib/org-links';
+import { isPublicFrameOn } from '@/lib/public-frame-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,11 +39,14 @@ export default async function ChampionsPage({
 
   const orgHref = await orgLinks(orgSlug);
   const publicBase = orgHref(`/${tournamentSlug}`);
+  // Public tournament pages Stage 6: the server decides the preview switch, same as schedule/page.tsx.
+  const frameOn = await isPublicFrameOn();
 
   // The Champions recap shows final results + closing standings, so it inherits the
   // Standings page's visibility — an organizer who hid Standings must not have the final
   // results leaked through this URL (same rule as the Playoff Picture).
   if (!isPublicPageEnabled(tournament, 'standings')) {
+    if (frameOn) return <PublicChampionsPage standingsHidden cards={[]} homeHref={publicBase} tournamentName={tournament.name} />;
     return (
       <div className="page-content">
         <div className="section">
@@ -80,7 +86,10 @@ export default async function ChampionsPage({
   // And never while a division's schedule is still held back (D1): its final is not one families can see.
   const playoffsComplete = allGames.length === rawGames.length && isTournamentPlayoffsComplete(allGames, sortedDivisions);
 
-  if (!playoffsComplete || tierChampions.length === 0) {
+  const frameResultsWithheld = frameOn && divisions.some(division => division.scheduleVisibility !== 'published');
+  if (!playoffsComplete || tierChampions.length === 0 || frameResultsWithheld) {
+    if (frameOn) return <PublicChampionsPage standingsHidden={false} cards={[]} homeHref={publicBase}
+      tournamentName={tournament.name} showPlayoffs={isPublicBracketVisible(tournament)} />;
     return (
       <div className="page-content">
         <div className="section">
@@ -99,6 +108,11 @@ export default async function ChampionsPage({
         </div>
       </div>
     );
+  }
+
+  if (frameOn) {
+    return <PublicChampionsPage standingsHidden={false} cards={championCards(tierChampions, sortedDivisions.length > 1)}
+      homeHref={publicBase} tournamentName={tournament.name} showPlayoffs={isPublicBracketVisible(tournament)} />;
   }
 
   // Final standings per division.

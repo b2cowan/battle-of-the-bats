@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { filesUnder, readCode, readSource } from './_source-code.ts';
+import { visibleTournamentTabs } from '../../lib/tournament-page-tabs.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -12,12 +13,14 @@ import { filesUnder, readCode, readSource } from './_source-code.ts';
 
 const HOME = 'components/public/TournamentHomeContent.tsx';
 const PARTS = ['PublicGameRow', 'PublicLiveCard', 'PublicSectionHead', 'PublicDoorRow', 'PublicPostList', 'FollowTournamentLine', 'TournamentOverview',
-  'PublicRegisterCard', 'PublicFactsList', 'PublicHostCard', 'PublicChampions'];
+  'PublicRegisterCard', 'PublicFactsList', 'PublicHostCard', 'PublicChampions', 'PublicRules'];
 /** The files that may draw the shared parts: each renders only with the switch on (Part 2: the frame-on body, and the
  *  old Overview's one frame branch that hands over to it — held below). */
 const FRAME_ONLY_USERS = ['components/public/TournamentOverview.tsx', 'components/public/PublicSchedule.tsx', 'components/public/PublicGameDetails.tsx',
   'components/public/PublicStandings.tsx', 'components/public/PublicPlayoffs.tsx',
-  'components/public/PublicTeams.tsx', 'components/public/PublicTeamPage.tsx', HOME];
+  'components/public/PublicTeams.tsx', 'components/public/PublicTeamPage.tsx',
+  'components/public/PublicChampionsPage.tsx', 'app/[orgSlug]/[tournamentSlug]/rules/page.tsx',
+  'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx', HOME];
 
 describe('the shared parts render only inside the new frame', () => {
   it('no page or component outside the guarded frame bodies imports them', () => {
@@ -169,5 +172,44 @@ describe('before and after the event, and the host card (Part 3)', () => {
     const overview = readCode('components/public/TournamentOverview.tsx');
     assert.match(overview, /const main = moment === 'before' \? \[registerEl, factsEl\] : gameDay \? \[liveEl, playoffDoorEl, upNextEl, withheldEl\] : \[championsEl, afterDoorsEl\];/);
     assert.match(overview, /const side = moment === 'before' \? \[hostEl, newsEl\] : gameDay \? \[latestEl, newsEl, hostEl\] : \[hostEl\];/);
+  });
+});
+
+describe('Stage 6 (Ask 14, "tabs follow what there is"): News, Rules, Register, Champions', () => {
+  it('with no frameContent the row is exactly what it has always been (every switch-off caller)', () => {
+    const today = visibleTournamentTabs([], false);
+    assert.deepEqual(today.map(t => t.key), ['news', 'schedule', 'standings', 'teams', 'rules']);
+  });
+  it('News/Rules hide while empty, Register and Champions insert only when their fact is true', () => {
+    const empty = visibleTournamentTabs([], false, { hasNews: false, hasRules: false, registrationOpen: false, hasChampion: false });
+    assert.deepEqual(empty.map(t => t.key), ['schedule', 'standings', 'teams']);
+    const full = visibleTournamentTabs([], false, { hasNews: true, hasRules: true, registrationOpen: true, hasChampion: true });
+    assert.deepEqual(full.map(t => t.key), ['champions', 'news', 'schedule', 'standings', 'teams', 'rules', 'register']);
+  });
+  it('Champions never appears once Standings is hidden, even with a title to show (D1\'s own gate)', () => {
+    const hidden = visibleTournamentTabs(['standings'], false, { hasNews: false, hasRules: false, registrationOpen: false, hasChampion: true });
+    assert.ok(!hidden.some(t => t.key === 'champions'));
+  });
+  it('a held-back division never reaches the champion the tab/page reads (D1) — every reader filters through onlyPublishedGames first', () => {
+    for (const file of ['app/[orgSlug]/[tournamentSlug]/champions/page.tsx', 'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx']) {
+      const code = readCode(file);
+      assert.match(code, /onlyPublishedGames\(rawGames, divisions\)/, file);
+      assert.match(code, /deriveTierChampions\(allGames, teams, sortedDivisions\)/, file);
+    }
+  });
+  it('the live layout and preview use the same stamped-champion visibility helper — no result re-derivation', () => {
+    for (const file of ['app/[orgSlug]/[tournamentSlug]/layout.tsx', 'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/layout.tsx']) {
+      assert.match(readCode(file), /tournamentFrameTabContent\(/, file);
+      assert.match(readCode(file), /championsCrownedAt: tournament\.championsCrownedAt/, file);
+    }
+  });
+  it('the legacy Rules and Champions bodies are untouched — the frame branch returns before any of their JSX', () => {
+    const rules = readCode('app/[orgSlug]/[tournamentSlug]/rules/page.tsx');
+    assert.match(rules, /if \(await isPublicFrameOn\(\)\) return <PublicRules\s[\s\S]*?\/>;\s*\n\s*return \(\s*\n\s*<RulesContent/);
+    const champions = readCode('app/[orgSlug]/[tournamentSlug]/champions/page.tsx');
+    assert.match(champions, /<ChampionsRecap|styles\.hero/, 'the legacy hero JSX still renders for the switch-off reader');
+  });
+  it('Register\'s body is not touched by Stage 6 — no RegisterContent.tsx edit, no frameOn import there', () => {
+    assert.doesNotMatch(readSource('components/public/RegisterContent.tsx'), /isPublicFrameOn|frameOn/);
   });
 });

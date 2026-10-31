@@ -24,7 +24,7 @@ import { useParams } from 'next/navigation';
 import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
 import { useCopyToClipboard } from '@/lib/hooks/useCopyToClipboard';
 import { useOrgHref } from '@/lib/use-public-pathname';
-import { visibleTournamentTabs } from '@/lib/tournament-page-tabs';
+import { visibleTournamentTabs, type FrameTabContent } from '@/lib/tournament-page-tabs';
 import type { PublicPageKey } from '@/lib/public-pages';
 import type { PublicFrameHost } from '@/lib/public-frame';
 import clubStyles from './ClubFrame.module.css';
@@ -39,10 +39,13 @@ export interface TournamentFooterProps {
   showCredit: boolean;
   /** The admin preview's `/…/preview/{tournament}` base: links stay in the preview, the host line is text. */
   basePath?: string;
+  /** Public tournament pages Stage 6 (Ask 14): News/Rules/Register/Champions tab facts, passed explicitly by
+   *  both layouts (the footer only ever renders with the switch on, which is also when this is meaningful). */
+  frameContent?: FrameTabContent;
 }
 
 export default function TournamentFooter({
-  name, contactEmail, host, hiddenPages, hasBracket, showCredit, basePath,
+  name, contactEmail, host, hiddenPages, hasBracket, showCredit, basePath, frameContent,
 }: TournamentFooterProps) {
   const { copied, copy } = useCopyToClipboard();
   const params = useParams();
@@ -51,7 +54,7 @@ export default function TournamentFooter({
   const orgHref = useOrgHref(orgSlug);
   const pageHref = (key: string) => (basePath ? `${basePath}/${key}` : orgHref(`/${tournamentSlug}/${key}`));
   // The preview has no bracket route to point at (as its tab row and rail).
-  const pages = visibleTournamentTabs(hiddenPages, !basePath && hasBracket);
+  const pages = visibleTournamentTabs(hiddenPages, !basePath && hasBracket, frameContent);
 
   return (
     <footer className={clubStyles.footer} data-public-frame-footer="">

@@ -6,14 +6,15 @@ import styles from './PublicParts.module.css';
  * hub's `.door`): a label, an optional sub-line, a chevron; 56 px tall, one tap opens it. The after-event Overview's
  * "Final standings" first; later stages' pages reuse it.
  */
-export default function PublicDoorRow({ href, label, sub }: { href: string; label: string; sub?: string | null }) {
+export default function PublicDoorRow({ href, label, sub }: { href: string | null; label: string; sub?: string | null }) {
+  const content = <>
+    <span>{label}{sub && <span className={styles.doorSub}>{sub}</span>}</span>
+    <span className={styles.chevron} aria-hidden>›</span>
+  </>;
+  if (!href) return <div className={styles.door}>{content}</div>;
   return (
     <Link className={styles.door} href={href}>
-      <span>
-        {label}
-        {sub && <span className={styles.doorSub}>{sub}</span>}
-      </span>
-      <span className={styles.chevron} aria-hidden>›</span>
+      {content}
     </Link>
   );
 }

@@ -1,0 +1,45 @@
+.rules {
+  display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 16px;
+  background: var(--club-ground); color: var(--club-text); font-family: var(--club-text-face);
+  font-variant-numeric: tabular-nums;
+}
+.rules > * { min-width: 0; }
+.note { margin: 0; color: var(--club-soft); font: 400 0.875rem/1.5 var(--club-text-face); overflow-wrap: anywhere; }
+.note a { display: inline-flex; align-items: center; min-height: 44px; color: var(--club-ink); }
+.filter button, .filter a { min-height: 44px; display: inline-flex; align-items: center; }
+.filter > div { margin-bottom: 0 !important; }
+.jump { display: none; }
+.sections { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.section { min-width: 0; scroll-margin-top: calc(var(--chrome-top-h, 0px) + 16px); }
+.section button > span { min-width: 0; overflow-wrap: anywhere; }
+.section button > svg { flex: none; }
+.body { padding: 4px 14px 8px; font: 400 1rem/1.5 var(--club-text-face); overflow-wrap: anywhere; }
+.items { margin: 0; padding-left: 20px; }
+.items li { padding-left: 4px; white-space: pre-wrap; }
+.items li + li { margin-top: 12px; }
+.share { display: flex; justify-content: flex-end; margin-top: 8px; }
+.copy {
+  display: flex; align-items: center; justify-content: center; flex: none; width: 44px; height: 44px;
+  border: 0; border-radius: 6px; padding: 0; background: transparent; color: var(--club-ink); cursor: pointer;
+}
+.copy:focus-visible, .resource:focus-visible, .jump a:focus-visible, .note a:focus-visible {
+  outline: 2px solid var(--club-edge); outline-offset: 2px;
+}
+.resources { display: flex; flex-direction: column; gap: 8px; }
+.resource {
+  display: flex; align-items: center; gap: 8px; min-height: 44px;
+  color: var(--club-ink); overflow-wrap: anywhere;
+}
+.resource svg { flex: none; }
+.state > div { width: 100%; padding: 28px 16px; }
+@media (min-width: 1024px) {
+  .rules { padding: 28px 32px; }
+  .note, .sections, .jump, .filter { max-width: 860px; }
+  .jump { display: flex; flex-wrap: wrap; gap: 8px; }
+  .jump a {
+    display: flex; align-items: center; min-height: 44px; padding: 8px 12px;
+    border: 1px solid var(--club-line); border-radius: 20px; color: var(--club-ink);
+    background: var(--club-card); font: 400 0.875rem/1.3 var(--club-text-face); text-decoration: none;
+    overflow-wrap: anywhere; max-width: 100%;
+  }
+}

@@ -16,16 +16,23 @@ const isDesktop = () => window.matchMedia(DESKTOP).matches;
  * Shared tap-open row; Schedule finals stay open at the frame's desktop breakpoint. `modalOnDesktop` keeps the row a
  * dropdown on a phone but opens its content in a window on a desk, so reading it never pushes the page below it down.
  */
-export default function PublicDisclosure({ title, sub, children, desktopOpen = false, reveal = false, modalOnDesktop = false }: {
+export default function PublicDisclosure({ title, sub, children, desktopOpen = false, reveal = false, modalOnDesktop = false, open: controlledOpen, onOpenChange }: {
   title: string; sub?: string; children: ReactNode; desktopOpen?: boolean; reveal?: boolean; modalOnDesktop?: boolean;
+  /** Optional group control (Rules keeps one section open); other callers keep their own state. */
+  open?: boolean; onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(reveal);
+  const [localOpen, setLocalOpen] = useState(reveal);
+  const open = controlledOpen ?? localOpen;
+  function setOpen(next: boolean) {
+    setLocalOpen(next);
+    onOpenChange?.(next);
+  }
   // A reveal (a deep link to a game inside) opens the row and LEAVES it open: the caller's highlight lasts a couple of
   // seconds, and a row that closed again when it ended would take the game away from the family it was opened for.
   const [wasReveal, setWasReveal] = useState(reveal);
   if (reveal !== wasReveal) {
     setWasReveal(reveal);
-    if (reveal) setOpen(true);
+    if (reveal) setLocalOpen(true);
   }
   const id = useId();
   const desk = useSyncExternalStore(subscribeDesktop, isDesktop, () => false);

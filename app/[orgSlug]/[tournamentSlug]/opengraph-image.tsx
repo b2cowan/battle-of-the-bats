@@ -3,7 +3,9 @@ import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
 import { resolveTheme } from '@/lib/themes';
 import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
-import { deriveChampions, type ChampionInfo } from '@/lib/champions';
+import { deriveChampions, isTournamentPlayoffsComplete, type ChampionInfo } from '@/lib/champions';
+import { isPublicFrameOn } from '@/lib/public-frame-server';
+import { isPublicPageEnabled } from '@/lib/public-pages';
 
 export const alt = 'Tournament';
 export const size = { width: 1200, height: 630 };
@@ -64,7 +66,13 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
 
     // Champion per division = the winner of the decided TOP-tier final (tier-aware —
     // shared with the home banner / recap page / team-profile OG via lib/champions).
-    const champions: ChampionInfo[] = deriveChampions(games, teams, divisions);
+    // The preview's share card follows the Champions page's all-or-nothing reveal. These games are already D1-filtered
+    // by the public reader; the division gate also prevents a partial reveal while another schedule is held back.
+    const canShowChampions = !(await isPublicFrameOn()) || (
+      isPublicPageEnabled(t, 'standings') && divisions.every(d => d.scheduleVisibility === 'published') &&
+      isTournamentPlayoffsComplete(games, divisions)
+    );
+    const champions: ChampionInfo[] = canShowChampions ? deriveChampions(games, teams, divisions) : [];
 
     // ── Game-day / live detection (J6-008) ───────────────────────────────────
     const now = new Date();

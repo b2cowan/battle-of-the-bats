@@ -5,7 +5,7 @@ import type { Division } from '@/lib/types';
 
 interface Props {
   orgSlug: string;
-  divisions: Division[];
+  divisions: Pick<Division, 'id' | 'name'>[];
   activeName: string;
   isFiltering: boolean;
   viewAllHref: string;

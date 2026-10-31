@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAuthContext } from '@/lib/api-auth';
 import { hasSupabaseSessionCookie } from '@/lib/supabase-server';
-import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams } from '@/lib/db';
+import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams, getAnnouncements, getRules, getResources } from '@/lib/db';
+import { tournamentFrameTabContent } from '@/lib/tournament-page-tabs';
 import { hasPublicPlayoffGames } from '@/lib/public-games';
 import { hasPlayoffPlan } from '@/lib/playoff-plan';
 import { resolveOrgHomeHref } from '@/lib/module-entitlements';
@@ -214,11 +215,19 @@ export default async function TournamentLayout({
   // round-trip into two on the layout that wraps every public tournament page. The only added cost
   // is one query on the tournaments that hide their register page, which previously fetched neither.
   const bracketVisible = isPublicBracketVisible(tournament);
+  // Public tournament pages Stage 6 (Ask 14): the frame-on tab row hides News/Rules while they have nothing to
+  // show. Skipped (and never fetched) when the organizer already hid the page, or the switch is off — no tab row
+  // reads this then. Raced into the same round trip rather than a second serial await.
+  const newsHidden = navHiddenPages.includes('news');
+  const rulesHidden = navHiddenPages.includes('rules');
   // A playoff game counts only in a published division (D1): an unpublished bracket's games never surface the tab.
-  const [divisions, regTeams, playoffGamesExist] = await Promise.all([
+  const [divisions, regTeams, playoffGamesExist, frameAnnouncements, frameRules, frameResources] = await Promise.all([
     getDivisions(tournament.id, { admin: true }),
     registerHidden ? Promise.resolve(null) : getTeams(tournament.id, { admin: true }),
     bracketVisible ? hasPublicPlayoffGames(tournament.id) : Promise.resolve(false),
+    frameOn && !newsHidden ? getAnnouncements(tournament.id, { admin: true }) : Promise.resolve([]),
+    frameOn && !rulesHidden ? getRules(tournament.id, { admin: true }) : Promise.resolve([]),
+    frameOn && !rulesHidden ? getResources(tournament.id, { admin: true }) : Promise.resolve([]),
   ]);
 
   const registration = regTeams
@@ -229,6 +238,13 @@ export default async function TournamentLayout({
       )
     : null;
   const registerCta: 'register' | 'waitlist' | null = registration?.cta ?? null;
+  // Champions: `championsCrownedAt` is the one-time, D1-safe stamp lib/champions-notify.ts only claims once no
+  // division's schedule is held back and the whole tournament's playoffs are decided — exactly Ask 14's "the
+  // whole tournament is Finished, matching the Overview's own PublicChampions trigger" ruling, at no extra query.
+  const frameContent = frameOn ? tournamentFrameTabContent({
+    announcementCount: frameAnnouncements.length, ruleCount: frameRules.length, resourceCount: frameResources.length,
+    registrationCta: registerCta, championsCrownedAt: tournament.championsCrownedAt, divisions,
+  }) : undefined;
 
   /**
    * Does this tournament have a bracket a fan should be able to navigate to?
@@ -392,9 +408,11 @@ export default async function TournamentLayout({
             hiddenPages={navHiddenPages}
             hasBracket={hasPublicBracket}
             host={frameHost}
+            frameContent={frameContent}
           />
         )}
-        {frameOn && <TournamentSideRail publicFrame />}
+        {frameOn && <TournamentSideRail publicFrame hiddenPages={navHiddenPages}
+          hasBracket={hasPublicBracket} frameContent={frameContent} />}
         {frameOn ? (
           <div className={frameStyles.main}>
             <TodaysResultsLine />
@@ -420,6 +438,7 @@ export default async function TournamentLayout({
             hiddenPages={navHiddenPages}
             hasBracket={hasPublicBracket}
             showCredit={showBuiltOnCredit}
+            frameContent={frameContent}
           />
         )}
       </div>

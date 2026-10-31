@@ -1,9 +1,54 @@
 # PM brief — Public tournament pages: easy to read in a parking lot, and a door to the club
 
-**Status:** drawings ruled 2026-10-27; Stages 1 and 2 built and owner-walked (plan §9). Stage 3 Part 2 implements the
-phone Schedule behind the preview switch (committed `68acfe331`, 2026-10-29); Part 3 adds the game page and desktop
-arrangement on the same date. Owner visual checks are recorded separately. Priority: the next public-page stage.
+**Status:** Stages 0–5 implemented; Stage 5 owner walk §432 passed 2026-10-31. Stage 6 implementation and manual
+review completed 2026-10-31; the private 66-step owner walk §435 is published and awaits the owner's result.
+Priority: Stage 6 owner acceptance, then Stage 7 (pay page) or Stage 1a (look ownership), at the owner's choice.
 Plan: `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md`. Mockups: the review hub (Claude Artifact).
+
+## Stage 6 Part 4 — consistent navigation and a checkable owner walk (2026-10-31)
+
+The desktop rail now shows the same tabs as the phone row and footer from the first paint. Re-hiding a division
+after a crown removes Champions from navigation, and a held-back division with no games still prevents a partial
+Champions page. Families and organizers retain the same access rules; no membership or role was granted for testing.
+
+The [private owner walk](https://fieldlogichq-stage6-owner-walk.b2cowan.chatgpt.site) has 66 steps in 16 parts. It covers
+content states, Rules interactions, registration's date boundary, Champions and tier winners, withholding, authorized
+previews, switch-off pages and the demo. It saves progress locally and keeps missing work visible in the summary.
+The builder's 315 tests and focused checks support the implementation; they are not an owner visual verdict.
+Success: the owner can walk one purpose, report the actual result, and see every remaining limitation or inaccessible
+scenario before Stage 6 is accepted. Detailed findings: `PUBLIC_TOURNAMENT_STAGE6_REVIEW.md`; ledger: §435.
+
+## Stage 6 Part 3 — sign up while open, celebrate once finished (2026-10-31)
+
+With preview enabled, Register appears while a team can register or join a waitlist and disappears when that option
+closes. The registration page and its form keep their existing content and behaviour. Direct links still work.
+Once the whole event's playoffs are decided, Champions appears immediately after Overview. Its page uses the same
+champion cards as the finished Overview, followed by the bracket and final-standings doors and Share results.
+Division and tier winners remain distinct. A held-back division prevents a partial Champions reveal.
+
+Organizers see the same cards and state messages in preview, with plain rows in place of the acting result doors
+and no share button. The existing tournament share image follows the same finished/results visibility gates when
+preview is on. Access permissions stay the same; the customer-facing switch-off pages retain their existing rendering.
+Priority: finish Stage 6 before its owner walk. Success: Register follows the live button, all navigation surfaces
+agree, completed results fit on a phone, no held-back champion or private note reaches a page/share image, and the
+preview has no broken Playoffs destination. Verification and the owner handoff are in the Stage 6 build prompt.
+
+Part 3's measurements also corrected undersized free-event promotional controls and their overlap in preview-on
+rendering. Two existing small inline links in Register's lower help copy are recorded under the unchanged-form ruling.
+
+## Stage 6 Part 2 — find a rule quickly (2026-10-31)
+
+With the preview enabled, families see a compact list of rules sections. Tapping one opens its original text and
+closes the previous section. Phones use this list as the index; desktop keeps the jump chips and opens the text in
+the existing reading dialog. A section can be shared directly, and downloads are the final tap-open section.
+The existing division preference and View all option remain available. News keeps its existing body. News and Rules
+appear in navigation only when they contain something, while direct links continue to work in the empty state.
+
+Organizers preview the same Rules body without copy, download or email actions. Access permissions stay the same.
+The public release still follows Stage 8's switch decision. Priority: complete the current public-page stage.
+Success: one section stays open at a time; a shared link opens the intended rule; names and text fit at 360/390 px;
+desktop retains its index; hidden rules stay unavailable; preview-off Rules and News retain their existing bodies.
+Implementation checks and the pending owner phone check are recorded in `PUBLIC_TOURNAMENT_STAGE6_BUILD_PROMPT.md`.
 
 ## Compact Schedule — owner approved (2026-10-29)
 

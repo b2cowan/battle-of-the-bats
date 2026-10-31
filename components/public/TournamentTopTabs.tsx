@@ -34,7 +34,7 @@ import { useParams } from 'next/navigation';
 import { useOrgHref, usePublicPathname } from '@/lib/use-public-pathname';
 import { PanelsTopLeft } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
-import { visibleTournamentTabs } from '@/lib/tournament-page-tabs';
+import { visibleTournamentTabs, type FrameTabContent } from '@/lib/tournament-page-tabs';
 import type { PublicPageKey } from '@/lib/public-pages';
 import styles from './TournamentTopTabs.module.css';
 import frameTabs from './OrgSectionTabs.module.css';
@@ -53,9 +53,12 @@ type TournamentTopTabsProps = {
   skin?: 'frame';
   /** Placement from the band (its grid slot). */
   className?: string;
+  /** Public tournament pages Stage 6 (Ask 14): News/Rules/Register/Champions tab facts. The band passes this
+   *  through from the layout; omitted (every switch-off mount), the row is exactly what it has always been. */
+  frameContent?: FrameTabContent;
 };
 
-export default function TournamentTopTabs({ basePath, hiddenPages, fixed, hasBracket: hasBracketProp, skin, className }: TournamentTopTabsProps = {}) {
+export default function TournamentTopTabs({ basePath, hiddenPages, fixed, hasBracket: hasBracketProp, skin, className, frameContent }: TournamentTopTabsProps = {}) {
   const pathname = usePublicPathname();
   const params = useParams();
   const orgSlug = (params?.orgSlug as string) || '';
@@ -108,7 +111,7 @@ export default function TournamentTopTabs({ basePath, hiddenPages, fixed, hasBra
   if (!homeHref) return null;
 
   const overviewActive = pathname === homeHref;
-  const tabs = visibleTournamentTabs(resolvedHidden, hasBracket);
+  const tabs = visibleTournamentTabs(resolvedHidden, hasBracket, frameContent);
 
   if (skin === 'frame') {
     const frameTab = (href: string, label: string, active: boolean) => (

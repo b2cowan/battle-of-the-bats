@@ -25,11 +25,17 @@ import PublicTeams from '@/components/public/PublicTeams';
 import { publicTeamsData } from '@/lib/public-teams';
 import NewsContent from '@/components/public/NewsContent';
 import RulesContent from '@/components/public/RulesContent';
+import PublicRules from '@/components/public/PublicRules';
+import PublicChampionsPage from '@/components/public/PublicChampionsPage';
+import { deriveTierChampions, isTournamentPlayoffsComplete } from '@/lib/champions';
+import { championCards } from '@/lib/public-host-card';
 import RegisterContent from '@/components/public/RegisterContent';
 
 export const dynamic = 'force-dynamic';
 
-const VALID_SECTIONS = new Set(['news', 'schedule', 'standings', 'teams', 'rules', 'register']);
+// Public tournament pages Stage 6: 'champions' joins the set. It has no PublicPageKey of its own (its visibility
+// borrows Standings', exactly as the live page) — handled in its own block below, not the generic check after.
+const VALID_SECTIONS = new Set(['news', 'schedule', 'standings', 'teams', 'rules', 'register', 'champions']);
 
 export default async function TournamentPreviewSectionPage({
   params,
@@ -41,7 +47,7 @@ export default async function TournamentPreviewSectionPage({
 
   const { org, tournament } = await getTournamentPreviewContext(orgSlug, tournamentSlug);
   const readOptions = { admin: true };
-  if (!isPublicPageEnabled(tournament, section as PublicPageKey)) notFound();
+  if (section !== 'champions' && !isPublicPageEnabled(tournament, section as PublicPageKey)) notFound();
 
   // Resolve the contact the same way the live public pages do (member → tournament
   // email → org fallback, honoring visibility) so the preview shows what the public sees.
@@ -193,6 +199,9 @@ export default async function TournamentPreviewSectionPage({
       getResources(tournament.id, readOptions),
       getDivisions(tournament.id, readOptions),
     ]);
+    if (await isPublicFrameOn()) return <PublicRules
+      orgSlug={orgSlug} tournamentSlug={tournamentSlug} pageEnabled
+      rules={rules} resources={resources} divisions={divisions} prefName={null} contactEmail={contactEmail} isPreview />;
     return (
       <RulesContent
         orgSlug={orgSlug}
@@ -207,6 +216,30 @@ export default async function TournamentPreviewSectionPage({
         resourcesLayout={tournament.settings?.resourcesLayout ?? 'list'}
       />
     );
+  }
+
+  // ── Champions (new in Stage 6 — no legacy preview existed for this page) ───
+  if (section === 'champions') {
+    if (!(await isPublicFrameOn())) notFound();
+    if (!isPublicPageEnabled(tournament, 'standings')) {
+      return <PublicChampionsPage standingsHidden cards={[]} homeHref={`/${orgSlug}/admin/tournaments/preview/${tournamentSlug}`}
+        tournamentName={tournament.name} isPreview />;
+    }
+    const [rawGames, allTeams, divisions] = await Promise.all([
+      getGames(tournament.id, readOptions),
+      getTeams(tournament.id, readOptions),
+      getDivisions(tournament.id, readOptions),
+    ]);
+    // Only published divisions' games — no champion is crowned from an unpublished schedule (D1), same as live.
+    const allGames = onlyPublishedGames(rawGames, divisions);
+    const teams = allTeams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true));
+    const sortedDivisions = [...divisions].sort((a, b) => a.order - b.order);
+    const tierChampions = deriveTierChampions(allGames, teams, sortedDivisions);
+    const playoffsComplete = allGames.length === rawGames.length && isTournamentPlayoffsComplete(allGames, sortedDivisions);
+    const cards = playoffsComplete && divisions.every(division => division.scheduleVisibility === 'published')
+      ? championCards(tierChampions, sortedDivisions.length > 1) : [];
+    return <PublicChampionsPage standingsHidden={false} cards={cards} homeHref={`/${orgSlug}/admin/tournaments/preview/${tournamentSlug}`}
+      tournamentName={tournament.name} showPlayoffs isPreview />;
   }
 
   // ── Register (preview — the real form, with submission disabled) ───────────

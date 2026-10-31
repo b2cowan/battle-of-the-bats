@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ClipboardList, Trophy, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePublicPathname } from '@/lib/use-public-pathname';
 import { readFollowedTeam } from '@/lib/follow';
 import {
@@ -38,6 +38,7 @@ function TournamentAcquisitionBanner({
   tournamentName,
 }: TournamentAcquisitionBannerProps) {
   const pathname = usePublicPathname();
+  const bannerRef = useRef<HTMLElement>(null);
   const [dismissed, setDismissed] = useState(true);
   const [variant, setVariant] = useState<BannerVariant | null>(null);
   const dismissKey = `flhq-acq-dismiss-public_tournament_banner-${orgSlug}-${tournamentSlug}`;
@@ -95,12 +96,26 @@ function TournamentAcquisitionBanner({
     });
   }, [dismissed, hiddenForFlow, variant, activeHref, orgSlug, tournamentSlug]);
 
+  // Preview-only geometry: long tournament names can make this taller than the badge's old fixed offset.
+  // Publish the actual height so the framed page can keep both promotions and its footer clear.
+  useEffect(() => {
+    const banner = bannerRef.current;
+    if (!banner || !document.querySelector('[data-public-frame]')) return;
+    const root = document.documentElement;
+    const publish = () => root.style.setProperty('--public-growth-banner-h', `${banner.getBoundingClientRect().height}px`);
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(banner);
+    return () => { observer.disconnect(); root.style.removeProperty('--public-growth-banner-h'); };
+  }, [dismissed, hiddenForFlow, variant]);
+
   if (dismissed || hiddenForFlow || !variant) return null;
 
   const isCoach = variant === 'coach';
 
   return (
     <aside
+      ref={bannerRef}
       className={isCoach ? styles.banner : `${styles.banner} ${styles.bannerOrganizer}`}
       aria-label={isCoach ? 'Set up your team on FieldLogicHQ' : 'Run your own event on FieldLogicHQ'}
       // The public tournament frame's footer makes room under itself while this floats over the page's foot

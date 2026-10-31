@@ -255,7 +255,7 @@ describe('Part 2: the desk, the footer and the admin preview', () => {
     assert.match(layout, /\{!frameOn && showBuiltOnCredit && <BuiltOnCredit \/>\}/, 'the paid credit where it always was, when off');
     assert.match(layout, /const showBuiltOnCredit = !isFreeTournamentPlan && !isDemoOrgSlug\(orgSlug\);/, 'the credit rules do not change');
     assert.match(layout, /\{!frameOn && <TournamentSideRail \/>\}/);
-    assert.match(layout, /\{frameOn && <TournamentSideRail publicFrame \/>\}/);
+    assert.match(layout, /\{frameOn && <TournamentSideRail publicFrame\s+hiddenPages=\{navHiddenPages\}\s+hasBracket=\{hasPublicBracket\} frameContent=\{frameContent\} \/>\}/);
     assert.match(layout, /className=\{frameOn \? `\$\{railStyles\.shell\} \$\{frameStyles\.deskShell\}` : railStyles\.shell\}/);
     assert.match(layout, /const frameContactPromise = frameOn\s*\? publicTournamentContactEmail\(tournament\.id, org\.contactEmail \?\? null\)/,
       'the footer\'s address is the one Rules and News show, and is never looked up when off');

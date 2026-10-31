@@ -1,11 +1,12 @@
 import { forwardToOwnAddress } from '@/lib/club-forward';
 import { cookies } from 'next/headers';
 import { getOrganizationBySlug, getPublicTournamentBySlug, getRules, getResources, getDivisions } from '@/lib/db';
-import { publicTournamentContactEmail } from '@/lib/public-frame-server';
+import { publicTournamentContactEmail, isPublicFrameOn } from '@/lib/public-frame-server';
 import { notFound } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import type { Division, Resource, RuleSection } from '@/lib/types';
 import RulesContent from '@/components/public/RulesContent';
+import PublicRules from '@/components/public/PublicRules';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +43,12 @@ export default async function RulesPage({
       getDivisions(tournament.id, { admin: true }),
     ]);
   }
+
+  // Public tournament pages Stage 6: the server decides the preview switch, same as schedule/page.tsx. The legacy
+  // body below is untouched either way (pinned by the Stage 2 guard's FRAME_ONLY_USERS).
+  if (await isPublicFrameOn()) return <PublicRules
+    orgSlug={orgSlug} tournamentSlug={tournamentSlug} pageEnabled={pageEnabled}
+    rules={rules} resources={resources} divisions={divisions} prefName={prefName} view={view} contactEmail={contactEmail} />;
 
   return (
     <RulesContent

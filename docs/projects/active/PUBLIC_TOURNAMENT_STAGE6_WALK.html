@@ -1,0 +1,307 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Stage 6 · Public tournament owner walk §435</title><style>
+/* One column checklist: intro and pass line, a sign-in card, then the parts, paste-back at the foot. Same build as §428 and §426;
+   an optional step carries two boxes (Did it · Skipped it) and a ruling step one box per option, so a tick says which.
+   Every part has a verdict the summary refuses to hide: a part with no verdict heads the summary as INCOMPLETE. */
+:root {
+  --bg: #f6f7f4; --surface: #ffffff; --ink: #1d2420; --muted: #5a6560; --line: #d9ded8;
+  --accent: #2f6b4f; --accent-soft: #e3efe8; --warn: #8a5a00; --warn-soft: #fbf0d9; --bad: #9b2c2c; --bad-soft: #f8e2e2;
+  --display: "Fraunces", Georgia, serif; --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151a17; --surface: #1e2521; --ink: #e6ebe7; --muted: #9aa69f; --line: #34403a;
+  --accent: #7cc3a0; --accent-soft: #233a2f; --warn: #e8b45a; --warn-soft: #3a2f1a; --bad: #f08a8a; --bad-soft: #3d2222; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #151a17; --surface: #1e2521; --ink: #e6ebe7; --muted: #9aa69f; --line: #34403a;
+  --accent: #7cc3a0; --accent-soft: #233a2f; --warn: #e8b45a; --warn-soft: #3a2f1a; --bad: #f08a8a; --bad-soft: #3d2222; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body); margin: 0; }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
+h1 { font: 600 1.9rem/1.15 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 600 1.25rem/1.25 var(--display); margin: 0; text-wrap: balance; }
+.eyebrow { font: 600 .75rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+p { margin: 0; max-width: 65ch; }
+.intro { display: grid; gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; }
+.card dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.card dt { color: var(--muted); }
+.card dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .card dl { grid-template-columns: 1fr; } .card dd { padding-bottom: 6px; } }
+code, .mono { font-family: var(--mono); font-size: .86em; overflow-wrap: anywhere; }
+.facts { display: grid; gap: 8px; }
+.facts h3 { font: 600 .95rem/1.3 var(--body); margin: 0; }
+.facts ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.progress { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.bar { flex: 1 1 200px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+.part { display: grid; gap: 12px; }
+.part header { display: grid; gap: 4px; }
+.part header p { color: var(--muted); }
+.who { display: inline-block; font: 600 .8rem/1 var(--body); padding: 5px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); justify-self: start; }
+.step { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.step input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .txt { display: grid; gap: 4px; min-width: 0; }
+.step .do { font-weight: 600; }
+.step .see::before { content: "You should see: "; color: var(--muted); font-weight: 600; }
+.step .rb { color: var(--warn); font-weight: 600; }
+.step.stop { border-color: var(--warn); background: var(--warn-soft); }
+.step.done { opacity: .72; }
+.opts { display: flex; gap: 18px; flex-wrap: wrap; padding-top: 4px; }
+.opts label { display: inline-flex; gap: 8px; align-items: center; font-weight: 600; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; }
+.verdict button { font: 600 .9rem/1 var(--body); padding: 9px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button[aria-pressed="true"][data-v="pass"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.verdict button[aria-pressed="true"][data-v="issue"] { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.verdict button[aria-pressed="true"][data-v="call"] { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 70px; font: inherit; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { font: 600 .95rem/1 var(--body); padding: 11px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); }
+#summary { font-family: var(--mono); font-size: .85rem; min-height: 160px; }
+a { color: var(--accent); }
+input.host { box-sizing: border-box; width: 100%; min-height: 44px; font: inherit; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+
+.btn,.verdict button { min-height:44px; } .step { overflow-wrap:anywhere; }
+</style></head><body><main class="wrap">
+<div class="intro"><span class="eyebrow">Owner QA · §435 · Public tournament Stage 6</span>
+<h1>Tabs show what is available. Rules open one section. Champions wait for the whole event.</h1>
+<p><strong>Purpose.</strong> With preview on, News and Rules appear only while they have content, Register only while registration or waitlisting is open, and Champions second after Overview once the whole event is finished. A held-back division’s champion appears nowhere. Preview off keeps the current four pages and tab row.</p>
+<p><strong>It passes when</strong> navigation agrees on phone and desktop, Rules sections and their links work, Register stays unchanged, Champions uses the shared cards with safe organizer previews and sharing, and the old pages and demo remain intact. <strong>Owner walk prepared; no owner pass is claimed.</strong></p></div>
+<section class="card"><h2>Where and who</h2><dl>
+<dt>Public checks</dt><dd>A private window, signed out. Use 390 and 360 px, then 1280 px; Part K also checks 901/1023.</dd>
+<dt>Organizer preview</dt><dd>Part L uses your own organizer account in a separate window, and a tournament you are authorized to administer. No credentials are included here.</dd>
+<dt>Target server</dt><dd><input class="host" id="host" type="url" value="http://192.168.2.200:3000" aria-label="Target server origin">Use the running development server’s current LAN address on a phone on the same Wi-Fi, or http://localhost:3000 on the computer. The field changes links only; this checklist cannot reach or change your database.</dd>
+<dt>Preview path</dt><dd><input class="host" id="preview" value="/stage1-metro-sports/admin/tournaments/preview/stage6-several" aria-label="Authorized organizer preview path">For Part L, replace this with /your-org/admin/tournaments/preview/your-event when needed. It does not grant access.</dd>
+<dt>Fixture commands</dt><dd>Run from the project folder, or ask me in chat. Every mode is limited to reserved, marked development clones and reads writes back. <strong>Reload public pages after a command.</strong> This stage has no promise of live tab updates on a page left open.</dd>
+<dt>Saved progress</dt><dd>Ticks, notes and verdicts stay in this browser’s local storage. They do not sync between devices. Copy the summary into the chat for the owner result.</dd>
+</dl></section>
+<section class="card facts"><h3>Known limits and scope</h3><ul>
+<li>The two existing 15 px schedule/standings links in Register’s lower help copy are retained by the unchanged-form ruling. Existing closed-Register desktop buttons also keep their size; the touch floor applies at phone/tablet widths.</li>
+<li>Resources in the QA fixtures are labelled samples pointing to example.com, not real PDFs. No fake “updated” date has been added to Rules.</li>
+<li>A share app may cache its preview image. New unpublished-result checks must use a fresh image/link or record that limit.</li>
+<li>Admin preview requires a real accepted membership and appropriate tournament scope. If no accessible event has the required populated state, leave that step incomplete and report it. Automated route tests cover those cases; they are not a browser verdict.</li>
+<li>No registration submission, payment, production data, demo rewrite or Stage 8 rollout belongs to this walk.</li>
+</ul></section>
+<div class="progress"><strong id="count">0 of 0 checked</strong><div class="bar" aria-hidden="true"><span id="fill"></span></div><button class="btn ghost" id="reset" type="button">Clear my ticks</button></div>
+<div id="parts"></div><section class="card"><h2>Send the result</h2><p>Set Pass, Issue or Needs a call on each part. Add what you actually saw and any inaccessible/untested state in the notes. Build the summary and paste it into chat. A pass button alone is not evidence.</p><div class="actions"><button class="btn" id="build" type="button">Build summary</button><button class="btn ghost" id="copy" type="button">Copy</button></div><textarea id="summary" readonly aria-label="Walk summary"></textarea></section></main><script>
+var HOST = "http://192.168.2.200:3000";
+var M = "/stage1-metro-sports/";
+var RULES = "/stage1-lakeshore-lightning/fall-classic/rules";
+var DEMO = "/riverdale-minor-ball/summer-classic";
+function page(kind, section) { return M + "stage6-" + kind + "/" + section; }
+function a(path,label) { return '<a data-route="'+path+'" href="'+HOST+path+'" target="_blank" rel="noopener">'+label+'</a>'; }
+function sw(frame,path,label) { return a('/api/public-frame?frame='+frame+'&to='+encodeURIComponent(path),label); }
+function on(path,label) { return sw('on',path,label); }
+function off(path,label) { return sw('off',path,label); }
+function fx(mode) { return '<code>node --env-file=.env.local scripts/seed-public-stage6-fixtures.mjs '+mode+'</code>'; }
+function tell(text) { return ' <span class="rb">Tell me: '+text+'</span>'; }
+function preview(section,label) { return '<a data-preview="'+section+'" target="_blank" rel="noopener">'+label+'</a>'; }
+
+var PARTS = [
+{id:'A',title:'Part A · Start with known fixtures',who:'Terminal or ask me, then a private window · 390 px',steps:[
+ {stop:true,do:'Run '+fx('show')+'. Do not run prepare over an existing set.',see:'Eight reserved Stage 6 clones. one/several: crown true and published; none/partial: crown false; held: one unpublished division. Open/waitlist dates must still be in the future. Stop if any fixture is missing or the dates have passed.'+tell('the read-back, including the date and held line.')},
+ {do:'Run '+fx('content-on')+', '+fx('publish-one')+' and '+fx('registration-open')+'.',see:'register-open has one public post, one rule and one resource; register-closed has a resource but no rules. The one-champion division is published. No source event or demo changes.'},
+ {do:'Open '+on(page('register-open','news'),'the populated News page')+' in a private window, signed out.',see:'The preview is on. There is one tournament band, one phone tab row and no extra platform tournament menu. News, Rules and Register are tabs.'},
+ {do:'Set the device toolbar to 390 px, then 360 px. Scroll the tabs horizontally if needed.',see:'The whole page stays within the viewport. The tab row itself may scroll horizontally; every label is complete and can be reached.'}
+]},
+{id:'B',title:'Part B · News follows its posts',who:'Private window · 360/390 px',steps:[
+ {do:'Read '+on(page('register-open','news'),'the QA post')+'.',see:'“[Stage 6 QA] Welcome to the sample event” in the existing News layout. Its text is readable. The existing division/pinned behaviour is retained; this stage did not redesign posts.'},
+ {do:'Run '+fx('news-off')+', then reload that News page.',see:'News disappears from the tabs and footer; Rules and Register remain. The direct News URL still loads its normal empty state, not a missing page.'},
+ {do:'Open '+on(page('one','champions'),'the one-champion event')+' and look at its footer.',see:'There is no News or Rules entry because both pages are empty. Champions is immediately after Overview.'},
+ {do:'Run '+fx('news-on')+' and reload '+on(page('register-open','news'),'the QA News page')+'.',see:'The post and its tab return. Rules and Register remain in their existing positions.'}
+]},
+{id:'C',title:'Part C · Rules on a phone',who:'Private window · 390 px, then 360 px',steps:[
+ {do:'Open '+on(RULES,'the eight-section Rules fixture')+'. If it has no [Stage 6 QA] sections, ask me to prepare the Rules samples.',see:'A short rules-change note, then closed section names, with Downloads & Resources last. No phone jump-chip row and no per-section icon stack.'},
+ {do:'Open “[Stage 6 QA] Game length”.',see:'The original sample rule text opens below that row. Text wraps without sideways page scrolling. The section has a copy-link button.'},
+ {do:'Open Weather and delays, then tap it again.',see:'Game length closes when Weather opens; tapping Weather again closes it. At most one section is open.'},
+ {do:'Open Downloads & Resources.',see:'Two labelled QA sample resources, in the final section. Any rule section closes. Sample URLs go to example.com; these are not real tournament PDFs.'},
+ {do:'Repeat opening a long section and a resource at 360 px.',see:'No clipped names or sideways page scroll. The row, copy control and resource controls are comfortably tappable.'}
+]},
+{id:'D',title:'Part D · A rule can be sent directly',who:'Private window · phone, then 1280 px',steps:[
+ {do:'Open a rule, copy its link, and paste that link into a fresh tab.',see:'That same section opens automatically and is brought into view. Another section is not left open. If clipboard access is refused on a phone LAN address, repeat from localhost on the computer.'},
+ {do:'Change the URL fragment to another existing rule section, or use another copied rule link in that tab.',see:'The intended section opens and the previous section closes.'},
+ {do:'At 1280 px open '+on(RULES,'the Rules fixture')+'. Click a jump chip.',see:'The desktop jump chips remain. The existing reading dialog opens the selected rule; it does not push the section list down.'},
+ {do:'Close with Close, reopen a section, then press Escape.',see:'Both ways close the dialog. Focus remains usable. Opening another chip shows its own text.'}
+]},
+{id:'E',title:'Part E · Empty and resource-only Rules',who:'Private window · phone',steps:[
+ {do:'Open '+on(page('none','rules'),'an empty Rules direct link')+'.',see:'Rules coming soon, with no Rules tab. The direct link works; no 404 and no empty disclosure list.'},
+ {do:'Open '+on(page('register-closed','rules'),'the resource-only Rules page')+'.',see:'Rules is a tab even though there is no rule text, because Downloads & Resources has something to show.'},
+ {do:'Run '+fx('rules-off')+' and reload '+on(page('register-open','rules'),'the content-toggle Rules page')+'.',see:'Rules disappears from the row/footer and the direct page has its normal empty state. News and Register remain.'},
+ {do:'Run '+fx('rules-on')+' and reload the same page.',see:'Rules returns with its Conduct section and sample resource. No News or Register tab changes.'}
+]},
+{id:'F',title:'Part F · Register only while it offers a live action',who:'Private window · phone and 1280 px',steps:[
+ {do:'Open '+on(page('register-open','register'),'open Register')+'. Do not submit a team.',see:'Register is the last tab. The registration card/form are the existing ones, with their existing steps and notices.'},
+ {do:'Open '+on(page('register-waitlist','register'),'the full event with a waitlist')+'.',see:'Register remains a tab because joining the waitlist is a live option. The existing waitlist notice/form remains.'},
+ {do:'Open '+on(page('register-closed','register'),'the closed-division Register direct link')+'.',see:'The existing closed state; Register is absent from navigation. The old URL still works.'},
+ {do:'Run '+fx('registration-close')+' and reload the open-Register fixture.',see:'The read-back start date is now in the past, so Register disappears at the registration-window boundary. The existing closed state remains reachable directly.'},
+ {do:'Run '+fx('registration-open')+' and reload that fixture.',see:'Its original future dates are restored and Register returns. No form has been submitted.'},
+ {do:'At 1280 px compare the side rail and footer on open, waitlist and closed Register.',see:'They make the same Register decision as the phone tabs. Record visual problems in the retained form separately; its two small inline schedule/standings help links are a known unchanged limitation.'}
+]},
+{id:'G',title:'Part G · One champion, then the result doors',who:'Private window · phone',steps:[
+ {do:'Open '+on(page('one','champions'),'one champion')+'.',see:'Champions is second, immediately after Overview. The champion card leads the body; there is no old oversized recap hero or repeated per-division standings table.'},
+ {do:'Read the long team name and final result at 360 and 390 px.',see:'The full name remains readable; the result says who it beat and 7–4. The card uses the same recipe as the finished Overview.'},
+ {do:'Open The playoff bracket, return, then open Final standings.',see:'Each door opens the matching public results page in this tournament. Return with Back.'},
+ {do:'Use Share results and open the resulting link.',see:'The Champions address is shared/copied. The existing tournament share card is used. It identifies the decided winner; no private notes, email or payment status appears.'}
+]},
+{id:'H',title:'Part H · Several winners keep their divisions and tiers',who:'Private window · phone, then 1280 px',steps:[
+ {do:'Open '+on(page('several','champions'),'the three-card Champions fixture')+'.',see:'U11 Gold, U11 Silver, then U13, in division/tier order. Gold and Silver are distinguishable; the lower-tier winner is not presented as the overall top-tier winner.'},
+ {do:'Read the long names and scores at both phone widths.',see:'No clipped names, sideways page scroll or detached score text.'},
+ {do:'At 1280 px inspect the cards, result doors and share control.',see:'The available desktop width is used calmly and all content remains readable.'+tell('whether you approve the desktop arrangement as built, or the specific change needed.')}
+]},
+{id:'I',title:'Part I · No early or held-back champion',who:'Private window · phone',steps:[
+ {do:'Open '+on(page('none','champions'),'before any final is decided')+'.',see:'No champions crowned yet. No Champions tab and no champion card; the old direct link still works.'},
+ {do:'Open '+on(page('partial','champions'),'one final decided, another pending')+'.',see:'No Champions tab or partial list. The whole event must finish before the page reveals its champions.'},
+ {do:'Open '+on(page('held','champions'),'the held-back fixture')+'.',see:'No champion cards or Champions tab, including no visible division’s partial recap. No held-back winner name, division result or private note.'},
+ {do:'Share/open the held-back event’s link and compare its tournament share image with the decided event.',see:'The held-back image contains no champion names. If your share app caches an older card, record that and use a fresh preview image request; do not call a cached card a new pass.'}
+]},
+{id:'J',title:'Part J · Re-hiding after a crown takes effect',who:'Terminal or ask me, then a private window',steps:[
+ {do:'Run '+fx('withhold-one')+'.',see:'The one-champion clone still has crown=true, but its schedule is unpublished. The command reads that back.'},
+ {do:'Reload '+on(page('one','champions'),'the formerly visible Champions page')+'; check the phone row and footer, then desktop rail.',see:'Champions disappears everywhere and the direct page has no champion card. The saved crown stamp never overrides current withholding.'},
+ {do:'Run '+fx('publish-one')+' and reload the same page.',see:'Published again, the one card and Champions tab return. The crown stamp was preserved.'}
+]},
+{id:'K',title:'Part K · Every navigation surface makes the same decision',who:'Private window · 1280 px, then phone',steps:[
+ {do:'Open '+on(page('several','champions'),'several champions')+' on a desktop and reload it.',see:'The side rail is already correct on the first paint: Champions second, no empty News/Rules. It does not gain or lose tabs after JavaScript catches up.'},
+ {do:'Compare '+on(page('register-open','news'),'the populated/open event')+' with '+on(page('none','rules'),'the empty/closed event')+'.',see:'Phone row, desktop rail and footer agree on News, Rules, Register and Champions. Existing tabs retain their order. There is no second tournament Navbar visible under the preview.'},
+ {do:'Run '+fx('news-off')+' and reload the content-toggle event at phone and desktop widths.',see:'Every surface omits News and keeps Rules/Register. The old Navbar stays absent. Restore with '+fx('news-on')+'.'},
+ {do:'Run '+fx('rules-off')+' and repeat the same comparison.',see:'Every surface omits Rules and keeps News/Register. Restore with '+fx('rules-on')+'.'},
+ {do:'At 901 and 1023 px inspect the populated event’s tabs and body.',see:'The in-between layout keeps reachable tabs and no sideways page overflow.'},
+ {do:'On News and Rules, look for the existing game-results line under the tabs when there are games to show.',see:'Stage 6 has not removed that line. These static QA clones can have no ticker content; use a game-day event you can inspect to judge its content.'}
+]},
+{id:'L',title:'Part L · Organizer previews show the same content safely',who:'Your organizer account, separate signed-in window',note:'The default preview points at the Metro fixture. It requires membership in that organization. If it is not yours, set the preview path box above to a published event you can administer. Never grant yourself access or tick a populated-card step against an empty event. Record inaccessible or unavailable scenarios as an issue, not a pass.',steps:[
+ {stop:true,do:'Set the preview path box to an event you can administer and open '+preview('champions','Champions preview')+'.',see:'Your authorized event in the preview frame. If it cannot be opened, leave this part incomplete and say which event/account scope was unavailable.'},
+ {do:'For a fully decided published event, inspect its Champions preview.',see:'The same shared champion cards, with plain result-door rows and no Share results, star or acting game link. No Playoffs preview 404 can be opened from those rows.'},
+ {do:'Use an authorized event without decided champions, or one with Standings hidden, and open its Champions preview.',see:'The appropriate existing no-champions/unavailable state. No private results, champion name or acting state links.'},
+ {do:'Set the preview path to an authorized event with rules, then open '+preview('rules','Rules preview')+'.',see:'The same tap-open Rules body. Rows and desktop chips work, but copy, download and email actions are absent. No follow star.'},
+ {do:'Set the path to an authorized registration-open event, then open '+preview('register','Register preview')+'.',see:'The existing preview form with submission disabled. Stage 6 has not redesigned it or enabled a real registration.'},
+ {do:'Choose a tournament where the organizer has hidden Rules and test its live Rules address.',see:'Rules unavailable, with no leaked rules or resources. Empty content alone hides only the tab; it does not make the live page a 404.'}
+]},
+{id:'M',title:'Part M · Preview off preserves today’s pages',who:'Private window · phone',steps:[
+ {do:'Open '+off(page('register-open','news'),'News with preview off')+'.',see:'The existing News body and legacy navigation. News and Rules are present in the old tab row; Register and Champions are absent.'},
+ {do:'Open '+off(RULES,'Rules with preview off')+'.',see:'The old fully expanded rules cards, icons and existing jump-link behaviour. No new tap-open body.'},
+ {do:'Open '+off(page('register-open','register'),'Register with preview off')+'.',see:'The same registration card and form. It is still reached by direct link/CTA and never becomes a legacy tab.'},
+ {do:'Open '+off(page('several','champions'),'Champions with preview off')+'.',see:'The legacy hero/recap and its existing standings/results links. No Stage 6 card-body replacement in this branch.'},
+ {do:'Use Back and a direct empty News/Rules or closed Register URL with preview off.',see:'The existing page behaviour remains. Nothing from Stage 6 forces a missing-page response merely because its tab would be hidden in preview.'}
+]},
+{id:'N',title:'Part N · The public demo stays on its current experience',who:'Private window · phone',steps:[
+ {do:'Open '+off(DEMO+'/news','demo News with preview off')+' and '+off(DEMO+'/rules','demo Rules with preview off')+'.',see:'The current demo pages and legacy tabs, including their existing empty states if there is no content. The demo is not silently opted into Stage 6.'},
+ {do:'Open '+off(DEMO+'/register','demo Register')+' and '+off(DEMO+'/champions','demo Champions')+'.',see:'The current demo bodies/states. Follow ordinary page links without leaving the demo unexpectedly. This is a manual compatibility check, not a rewrite of the demo tour.'}
+]},
+{id:'O',title:'Part O · Free-event promotions remain tappable',who:'Private window · 360/390 px',steps:[
+ {do:'Open '+on('/stage1-northfield/fall-ball/champions','the free event')+'. If you dismissed its setup banner before, use a fresh private window.',see:'The existing free-event attribution and setup banner. Their links and Dismiss have 44 px targets; the badge is not covered by the banner, even when the event name wraps.'},
+ {do:'Dismiss the setup banner, then scroll to the footer.',see:'The attribution badge drops to its normal position, stays tappable and does not cover footer links. The page does not keep phantom banner space.'},
+ {do:'Compare '+off('/stage1-northfield/fall-ball/champions','the same free page with preview off')+'.',see:'Its existing promotional rendering remains; Stage 6’s geometry repair is preview-only. Do not record those retained legacy sizes as a new preview failure.'}
+]},
+{id:'P',title:'Part P · Restore and report',who:'Terminal or ask me, then a private window',steps:[
+ {do:'Run '+fx('content-on')+', '+fx('publish-one')+', '+fx('registration-open')+' and '+fx('show')+'.',see:'The eight reserved fixtures are ready for the next check: one/several published and crowned; held still unpublished in its second division; register-open future-dated with its QA post/rule/resource. No teams were registered.'+tell('the final relevant read-back lines.')},
+ {do:'Open '+on(page('several','champions'),'the final preview link')+'.',see:'The preview is back on in this private window. Any desktop or role-access issue is in the appropriate notes, with no skipped or blocked interaction claimed as tested.'},
+ {do:'Give every part a verdict, build the summary and paste it into the chat.',see:'The summary lists all checked, unchecked and skipped steps, your notes and every verdict. An incomplete part is labelled. The builder has not pre-ticked or pre-approved any result.'}
+]}
+];
+var KEY = "qa-435-stage6-pages-v1";
+var state = { ticks: {}, verdict: {}, notes: {} };
+try { var saved = JSON.parse(localStorage.getItem(KEY) || "null"); if (saved) state = saved; } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+var root = document.getElementById("parts");
+var total = 0;
+PARTS.forEach(function (p) {
+  var sec = document.createElement("section"); sec.className = "part";
+  var html = '<header><h2>' + p.title + '</h2><span class="who">' + p.who + '</span>' + (p.note ? '<p>' + p.note + '</p>' : '') + '</header>';
+  p.steps.forEach(function (s, i) {
+    var id = p.id + (i + 1); total++;
+    if (s.opt) {
+      html += '<div class="step" id="row-' + id + '"><span></span><span class="txt"><span class="do">' + id + ' · Optional. ' + s.do + '</span><span class="see">' + s.see + '</span>' +
+        '<span class="opts"><label><input type="checkbox" id="cb-' + id + '" data-id="' + id + '"> Did it</label><label><input type="checkbox" id="cb-' + id + 's" data-id="' + id + 's"> Skipped it</label></span></span></div>';
+    } else if (s.choices) {
+      html += '<div class="step" id="row-' + id + '"><span></span><span class="txt"><span class="do">' + id + ' · ' + s.do + '</span><span class="see">' + s.see + '</span><span class="opts">' +
+        s.choices.map(function (c, j) { return '<label><input type="checkbox" id="cb-' + id + 'c' + j + '" data-id="' + id + 'c' + j + '"> ' + c + '</label>'; }).join('') + '</span></span></div>';
+    } else {
+      html += '<label class="step' + (s.stop ? ' stop' : '') + '" id="row-' + id + '"><input type="checkbox" id="cb-' + id + '" data-id="' + id + '"><span class="txt"><span class="do">' + id + ' · ' + s.do + '</span><span class="see">' + s.see + '</span></span></label>';
+    }
+  });
+  html += '<div class="verdict" role="group" aria-label="' + p.title + ' verdict">' +
+    '<button type="button" data-p="' + p.id + '" data-v="pass" aria-pressed="false">Pass</button>' +
+    '<button type="button" data-p="' + p.id + '" data-v="issue" aria-pressed="false">Issue</button>' +
+    '<button type="button" data-p="' + p.id + '" data-v="call" aria-pressed="false">Needs a call</button></div>' +
+    '<textarea id="notes-' + p.id + '" data-p="' + p.id + '" placeholder="Notes for ' + p.title + ' (what you saw, anything odd)"></textarea>';
+  sec.innerHTML = html; root.appendChild(sec);
+});
+
+function chosen(id, s) { var out = []; (s.choices || []).forEach(function (c, j) { if (state.ticks[id + "c" + j]) out.push(c); }); return out; }
+function stepDone(id, s) { return !!(state.ticks[id] || state.ticks[id + "s"] || (s && s.choices && chosen(id, s).length)); }
+function render() {
+  var n = 0;
+  document.querySelectorAll("input[type=checkbox][data-id]").forEach(function (cb) { cb.checked = !!state.ticks[cb.dataset.id]; });
+  PARTS.forEach(function (p) { p.steps.forEach(function (s, i) {
+    var id = p.id + (i + 1), d = stepDone(id, s); if (d) n++;
+    document.getElementById("row-" + id).classList.toggle("done", d);
+  }); });
+  document.querySelectorAll(".verdict button").forEach(function (b) { b.setAttribute("aria-pressed", String(state.verdict[b.dataset.p] === b.dataset.v)); });
+  document.querySelectorAll("textarea[data-p]").forEach(function (t) { t.value = state.notes[t.dataset.p] || ""; });
+  document.getElementById("count").textContent = n + " of " + total + " checked";
+  document.getElementById("fill").style.width = (total ? (100 * n / total) : 0) + "%";
+}
+root.addEventListener("change", function (e) {
+  var id = e.target.dataset && e.target.dataset.id; if (!id) return;
+  state.ticks[id] = e.target.checked;
+  if (e.target.checked) {
+    var m = /^(.*)c(\d)$/.exec(id);
+    if (m) { for (var j = 0; j < 4; j++) if (String(j) !== m[2]) state.ticks[m[1] + "c" + j] = false; }
+    else { var other = /s$/.test(id) ? id.slice(0, -1) : id + "s"; if (document.getElementById("cb-" + other)) state.ticks[other] = false; }
+  }
+  save(); render();
+});
+root.addEventListener("click", function (e) { var b = e.target.closest(".verdict button"); if (!b) return; state.verdict[b.dataset.p] = state.verdict[b.dataset.p] === b.dataset.v ? null : b.dataset.v; save(); render(); });
+root.addEventListener("input", function (e) { if (e.target.dataset.p && e.target.tagName === "TEXTAREA") { state.notes[e.target.dataset.p] = e.target.value; save(); } });
+document.getElementById("reset").addEventListener("click", function () { state = { ticks: {}, verdict: {}, notes: {} }; save(); render(); document.getElementById("summary").value = ""; });
+var WORD = { pass: "PASS", issue: "ISSUE", call: "NEEDS A CALL" };
+function buildSummary() {
+  var lines = ["§435 · Stage 6 · Tabs follow content; Rules and Champions"], all = 0, noVerdict = [];
+  PARTS.forEach(function (p) {
+    var ids = p.steps.map(function (s, i) { return p.id + (i + 1); });
+    var done = ids.filter(function (id, i) { return stepDone(id, p.steps[i]); }).length; all += done;
+    var missing = ids.filter(function (id, i) { return !stepDone(id, p.steps[i]); });
+    var skipped = ids.filter(function (id) { return state.ticks[id + "s"]; });
+    if (!state.verdict[p.id]) noVerdict.push(p.id);
+    lines.push(p.title + " [" + (WORD[state.verdict[p.id]] || "NO VERDICT SET") + "] " + done + "/" + ids.length +
+      (missing.length ? " · unticked: " + missing.join(", ") : "") + (skipped.length ? " · skipped: " + skipped.join(", ") : ""));
+    p.steps.forEach(function (s, i) { if (s.choices) { var c = chosen(p.id + (i + 1), s); if (c.length) lines.push("  " + p.id + (i + 1) + " ruled: " + c.join(" / ")); } });
+    if (state.notes[p.id]) lines.push("  Notes: " + state.notes[p.id].replace(/\n+/g, " / "));
+  });
+  lines.splice(1, 0, "Checked " + all + " of " + total);
+  if (all < total) lines.splice(1, 0, "INCOMPLETE: unperformed steps remain; do not record an owner pass.");
+  if (noVerdict.length) lines.splice(1, 0, "INCOMPLETE: no verdict set on part(s) " + noVerdict.join(", ") + ". Set Pass, Issue or Needs a call on each, then build again.");
+  document.getElementById("summary").value = lines.join("\n");
+}
+document.getElementById("build").addEventListener("click", buildSummary);
+document.getElementById("copy").addEventListener("click", function () {
+  var t = document.getElementById("summary");
+  buildSummary();
+  try { navigator.clipboard.writeText(t.value).catch(function () { t.select(); }); } catch (e) { t.select(); }
+});
+render();
+
+var hostInput = document.getElementById("host");
+try { var h = localStorage.getItem("qa-435-host-v1"); if (h) hostInput.value = h; } catch (e) {}
+function updateHost() {
+  try {
+    var parsed = new URL(hostInput.value);
+    if (!/^https?:$/.test(parsed.protocol)) throw Error("Use http or https");
+    HOST = parsed.origin;
+    document.querySelectorAll("a[data-route]").forEach(function (link) { link.href = HOST + link.dataset.route; });
+    hostInput.setCustomValidity("");
+    try { localStorage.setItem("qa-435-host-v1", HOST); } catch (e) {}
+  } catch (e) { hostInput.setCustomValidity("Enter the server origin, starting with http:// or https://"); hostInput.reportValidity(); }
+}
+hostInput.addEventListener("change", updateHost); updateHost();
+
+
+var previewInput=document.getElementById('preview');
+function updatePreview(){
+ try { var path=previewInput.value.trim(); if(!/^\/[a-z0-9-]+\/admin\/tournaments\/preview\/[a-z0-9-]+$/.test(path))throw Error();
+  document.querySelectorAll('a[data-preview]').forEach(function(link){link.href=HOST+'/api/public-frame?frame=on&to='+encodeURIComponent(path+'/'+link.dataset.preview);});
+  previewInput.setCustomValidity('');
+ }catch(e){previewInput.setCustomValidity('Enter /your-org/admin/tournaments/preview/your-event');previewInput.reportValidity();}
+}
+previewInput.addEventListener('change',updatePreview);hostInput.addEventListener('change',updatePreview);updatePreview();
+</script></body></html>

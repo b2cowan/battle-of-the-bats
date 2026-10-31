@@ -1,0 +1,19 @@
+.page {
+  padding: 16px; min-width: 0; background: var(--club-ground); color: var(--club-text);
+  font-family: var(--club-text-face); font-variant-numeric: tabular-nums;
+}
+.content { display: flex; flex-direction: column; gap: 12px; min-width: 0; max-width: 860px; }
+.content > * { min-width: 0; }
+.content p { overflow-wrap: anywhere; }
+.doors { display: flex; flex-direction: column; gap: 8px; }
+.share {
+  display: inline-flex; align-items: center; justify-content: center; align-self: flex-start; gap: 8px;
+  min-height: 44px; padding: 8px 14px; border: 1px solid var(--club-line); border-radius: 8px;
+  background: var(--club-card); color: var(--club-ink); font: 600 1rem/1.3 var(--club-text-face); cursor: pointer;
+}
+.share:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 2px; }
+.state > div { width: 100%; padding: 28px 16px; }
+.state a { min-height: 44px; }
+@media (min-width: 1024px) {
+  .page { padding: 28px 32px; }
+}

@@ -27,7 +27,7 @@ import { useOrgHref, usePublicPathname } from '@/lib/use-public-pathname';
 import { PanelsTopLeft } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
 import type { PublicPageKey } from '@/lib/public-pages';
-import { visibleTournamentTabs } from '@/lib/tournament-page-tabs';
+import { visibleTournamentTabs, type FrameTabContent } from '@/lib/tournament-page-tabs';
 import DesktopMyTeamRailCard from '@/components/public/DesktopMyTeamRailCard';
 import PublicAppOnly from '@/components/public/PublicAppOnly';
 import styles from './TournamentSideRail.module.css';
@@ -41,6 +41,9 @@ type TournamentSideRailProps = {
   colorMode?: 'dark' | 'light' | null;
   hiddenPages?: PublicPageKey[];
   publicFrame?: boolean;
+  hasBracket?: boolean;
+  /** Both frame layouts pass their facts explicitly so the server's first paint agrees with the band/footer. */
+  frameContent?: FrameTabContent;
 };
 
 export default function TournamentSideRail({
@@ -50,6 +53,8 @@ export default function TournamentSideRail({
   colorMode,
   hiddenPages,
   publicFrame = false,
+  hasBracket,
+  frameContent,
 }: TournamentSideRailProps = {}) {
   const pathname = usePublicPathname();
   const params = useParams();
@@ -70,11 +75,8 @@ export default function TournamentSideRail({
   const resolvedHeading = heading !== undefined ? heading : (ctx.tournamentName || ctx.orgName);
   const resolvedColorMode = colorMode ?? ctx.tournamentColorMode ?? 'dark';
   const resolvedHidden = hiddenPages ?? ctx.tournamentHiddenPages;
-  // The admin preview passes its own hidden-page list but has no bracket signal to pass, so it
-  // falls back to the context — which the preview never populates, leaving the preview without a
-  // Playoffs tab. That is correct: the preview's own rail links inside `/preview/…`, where there
-  // is no bracket route to point at.
-  const items = visibleTournamentTabs(resolvedHidden, !basePath && ctx.tournamentHasBracket);
+  // Legacy mounts keep the context fallback. Preview has no Playoffs route; live frame facts arrive from the server.
+  const items = visibleTournamentTabs(resolvedHidden, !basePath && (hasBracket ?? ctx.tournamentHasBracket), frameContent);
 
   return (
     <aside

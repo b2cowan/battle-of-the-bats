@@ -35,6 +35,7 @@ import { useOrgHref, usePublicPathname, useSignInHref } from '@/lib/use-public-p
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
 import { isDemoOrgSlug } from '@/lib/demo-org';
 import type { PublicPageKey } from '@/lib/public-pages';
+import type { FrameTabContent } from '@/lib/tournament-page-tabs';
 import type { PublicFrameHost } from '@/lib/public-frame';
 import AccountMenu from '@/components/shared/AccountMenu';
 import SharePageButton from './SharePageButton';
@@ -60,10 +61,12 @@ export interface TournamentBandProps {
   host?: PublicFrameHost | null;
   /** The admin preview's `/…/preview/{tournament}` base: links stay in the preview, and the visitor's doors are absent. */
   basePath?: string;
+  /** Public tournament pages Stage 6 (Ask 14): News/Rules/Register/Champions tab facts, forwarded to the tab row. */
+  frameContent?: FrameTabContent;
 }
 
 export default function TournamentBand({
-  orgSlug, tournamentSlug, name, logoUrl, initials, dates, status, hiddenPages, hasBracket, host, basePath,
+  orgSlug, tournamentSlug, name, logoUrl, initials, dates, status, hiddenPages, hasBracket, host, basePath, frameContent,
 }: TournamentBandProps) {
   const pathname = usePublicPathname() ?? '';
   const preview = !!basePath;
@@ -132,6 +135,7 @@ export default function TournamentBand({
         hiddenPages={hiddenPages}
         hasBracket={hasBracket}
         basePath={basePath}
+        frameContent={frameContent}
         className={`${clubStyles.tabsSlot} ${styles.tabs}`}
       />
     </header>
