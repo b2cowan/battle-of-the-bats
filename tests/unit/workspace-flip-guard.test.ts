@@ -342,13 +342,13 @@ describe('3 · every entry that can put a workspace on Club meets the one hook',
   it('the hook lives inside applyPlanChangeSideEffects and runs on every call', () => {
     const move = readCode('lib/plan-move.ts');
     const fn = move.slice(move.indexOf('export async function applyPlanChangeSideEffects'), move.indexOf('export type MoveResult'));
-    assert.match(fn, /await flipWorkspaceIntoClub\(\{ orgId: p\.orgId, plan: p\.toPlan, actor: p\.actor \}\)/);
+    assert.match(fn, /await flipWorkspaceIntoClub\(\{ orgId: p\.orgId, plan: p\.toPlan, actor: p\.actor, clubName: p\.clubName \}\)/);
     assert.match(fn, /return \{ clearedTeamLimit, revokedComps, workspaceFlip \}/);
     assert.doesNotMatch(fn.slice(0, fn.indexOf('flipWorkspaceIntoClub')), /fromPlan === 'team'/, 'a retried event arrives with the plan already written: never gate on the old plan');
   });
 
   it('the move apply, the webhook, the operator route and the mock checkout all call it', () => {
-    assert.match(readCode('lib/plan-move.ts'), /await applyPlanChangeSideEffects\(\{ orgId: org\.id, fromPlan: ownPlanOf\(org\), toPlan, actor: opts\.actor \}\)/);
+    assert.match(readCode('lib/plan-move.ts'), /await applyPlanChangeSideEffects\(\{ orgId: org\.id, fromPlan: ownPlanOf\(org\), toPlan, actor: opts\.actor, clubName \}\)/);
     assert.match(readCode('app/api/billing/webhook/route.ts'), /await applyPlanChangeSideEffects\(\{/);
     assert.match(readCode('lib/operator-plan-change.ts'), /sideEffects = await applyPlanChangeSideEffects\(\{/);
     const checkout = readCode('app/api/billing/create-checkout/route.ts');
@@ -396,6 +396,8 @@ const SPECIAL: Record<string, [Klass, string]> = {
   'app/api/platform-admin/find/route.ts': ['tombstone-aware', 'finds a workspace by Stripe id, which the flip NULLs; the club is found through its own organization'],
   'lib/platform-story.ts': ['live-row', 'reads free_time_given_at and the migration summary for the Story: history, not behaviour'],
   'lib/operator-plan-change.ts': ['tombstone-aware', 'refuses a plan change only while billing_mode is platform_override; a tombstone is club_included'],
+  'lib/workspace-upgrade.ts': ['portal-only', 'Stage 4b Part 2: decides whether a Club checkout is a Coaches Portal becoming the club (the portal test is the one function); a club buying a band is not asked for a name'],
+  'lib/workspace-upgrade-status.ts': ['live-row', 'Stage 4b Part 2: the "has it become the club yet" read; it reads the organization and its workspace row fresh, on both sides of the flip'],
   'app/api/dev/seed/status/route.ts': ['dev', 'seed tooling'],
   'app/api/dev/seed/users/route.ts': ['dev', 'seed tooling'],
   'lib/free-time-writes.ts': ['live-row', 'portal free-time writes guarded by billing_mode platform_override, which the tombstone is not'],

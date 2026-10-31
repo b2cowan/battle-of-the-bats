@@ -75,6 +75,8 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/free-time-list.ts': ['other', "'subscription_status' here is a grant KIND (org_overrides.type), not the org's column"],
   'lib/portal-free-time.ts': ['other', "Stage 4b: 'subscription_status' names the grant KIND that holds a free-time portal open (org_overrides.type), not the org's column"],
   'app/platform-admin/orgs/[id]/FreeTimeWindows.tsx': ['other', "'subscription_status' here is a grant KIND (the Give window's choice), not the org's column"],
+  'lib/workspace-upgrade.ts': ['stored', "Stage 4b: mirrors the flip's own gate (mig 414), which compares the club's STORED plan and subscription, never the door's — free days must not read as a settled Club subscription"],
+  'lib/workspace-upgrade-status.ts': ['stored', "Stage 4b: reads the organization's stored plan and subscription for the same reason as the flip RPC it reports on"],
   'lib/free-time-story.ts': ['stored', "the Story names the plan the club goes back to (its own); 'subscription_status' is a grant kind"],
   'app/api/admin/org/free-time/route.ts': ['through', "the customer's free time: the rows go to the door's rules; the own tournament limit for the over-limit warning"],
   'app/api/platform-admin/product-catalog/change-requests/route.ts': ['writer', 'plan catalogue changes'],

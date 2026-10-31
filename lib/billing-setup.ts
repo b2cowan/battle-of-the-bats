@@ -373,7 +373,9 @@ export async function recordNextSeasonChoice(params: {
             ...(params.stripeSubscriptionId ? { stripe_subscription_id: params.stripeSubscriptionId } : {}),
             updated_at: new Date().toISOString(),
           })
-          .eq('id', params.teamWorkspaceId),
+          .eq('id', params.teamWorkspaceId)
+          // A tombstone (the workspace became a club, or moved into one) keeps its Stripe ids NULL: the portal's branch keys on them.
+          .neq('workspace_state', 'org_owned'),
       ),
     );
   }

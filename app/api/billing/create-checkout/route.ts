@@ -20,6 +20,8 @@ import { buildUnsubscribeUrl } from '@/lib/unsubscribe-token';
 import type { OrgPlan } from '@/lib/types';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { ownPlanOf } from '@/lib/entitlement-grants';
+import { inPlaceMetadata, inPlaceReturnPath, inPlaceUpgradeOf } from '@/lib/workspace-upgrade';
+import { workspaceCannotBecomeClub } from '@/lib/workspace-upgrade-status';
 
 /** Welcome email fires this many days after a user selects Tournament Plus at onboarding. */
 const PLUS_WELCOME_DELAY_DAYS = 1;
@@ -68,6 +70,8 @@ export const POST = withObservability(async (req: Request) => {
     returnTo?: unknown;
     orgSlug?: unknown;
     billingCycle?: unknown;
+    /** Required when a Coaches Portal buys Club (Stage 4b): the name of the club it becomes. Ignored otherwise. */
+    clubName?: unknown;
   };
   const orgSlug = typeof body.orgSlug === 'string' ? body.orgSlug : undefined;
   const auth = await getAuthContext(orgSlug ? { orgSlug, allowSuspendedOrg: true } : { allowSuspendedOrg: true });
@@ -127,12 +131,38 @@ export const POST = withObservability(async (req: Request) => {
     });
   }
 
+  // Stage 4b: a standalone Coaches Portal (free days, or no subscription) buying a Club band becomes the club IN PLACE, on this same
+  // organization — no second one. It must say what the club is called (the flip writes it), so the server refuses without a name
+  // rather than quietly keeping "{team} Coaches Portal". A paying Premium coach never gets here: the 409 above sends them to the move.
+  const inPlace = inPlaceUpgradeOf(auth.org, planKey, body.clubName);
+  if (inPlace.kind === 'refused') {
+    return new Response(JSON.stringify({ error: inPlace.error, code: inPlace.code }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+  const inPlaceClubName = inPlace.kind === 'in_place' ? inPlace.clubName : null;
+  // The flip refuses some portals by name AFTER the charge (more than one team, or one that moved into another club): say so before.
+  if (inPlaceClubName) {
+    const blocked = await workspaceCannotBecomeClub(auth.org.id);
+    if (blocked) {
+      return new Response(JSON.stringify({ error: blocked, code: 'cannot_become_club' }), {
+        status: 409,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
   const fallbackReturnTo = getBillingHref({ ...auth.org, planId: ownPlanOf(auth.org) }, { purpose: 'return' });
   const coachBillingReturn = isTeamWorkspaceOrg(auth.org) && returnTo === getBillingHref(auth.org, { host: 'coach', purpose: 'return' });
   const safeReturnTo = returnTo && (returnTo.startsWith(`/${auth.org.slug}/admin/`) || coachBillingReturn)
     ? returnTo
     : fallbackReturnTo;
+  // Paying for the club lands on the CLUB's Plan & billing address (it exists on both sides of the flip — see
+  // lib/workspace-upgrade.ts), carrying the in-place marker. LEAVING the payment page returns to where the coach was: nothing
+  // changed, so their free days are exactly as they were.
+  const successReturnTo = inPlaceClubName ? inPlaceReturnPath(auth.org.slug) : safeReturnTo;
   const isOnboardingPlanSelection = safeReturnTo.includes('/admin/onboarding');
   const shouldApplyDirectly = isBillingMockEnabled() || (!isStripeConfigured() && process.env.NODE_ENV !== 'production');
 
@@ -153,7 +183,7 @@ export const POST = withObservability(async (req: Request) => {
 
     // The database half of any plan change, so the mock path meets the same hook the webhook does — including Stage 4b's
     // "a Coaches Portal on Club becomes the club" (the mock subscription above is trialing, which counts as settled).
-    await applyPlanChangeSideEffects({ orgId: auth.org.id, fromPlan: ownPlanOf(auth.org), toPlan: planKey, actor: auth.user.email ?? 'mock-checkout' });
+    await applyPlanChangeSideEffects({ orgId: auth.org.id, fromPlan: ownPlanOf(auth.org), toPlan: planKey, actor: auth.user.email ?? 'mock-checkout', clubName: inPlaceClubName });
 
     const restoreResult = await restoreRetainedDowngradeTournaments(auth.org.id, plan.tournamentLimit);
     // A07: coming back from a cancellation restores the site, the tournaments and the retention
@@ -217,7 +247,7 @@ export const POST = withObservability(async (req: Request) => {
 
     return new Response(
       JSON.stringify({
-        url: appendSuccess(`${appUrl}${safeReturnTo}`),
+        url: appendSuccess(`${appUrl}${successReturnTo}`),
         applied: true,
         planKey,
         billingCycle,
@@ -350,16 +380,20 @@ export const POST = withObservability(async (req: Request) => {
 
   await resetStartupTasksForEditableOnboarding(auth.org.id, isOnboardingPlanSelection);
 
+  // The same object on the session AND the subscription: the webhook reads the subscription's, and a retry has no request behind it.
+  const checkoutMetadata = { orgId: auth.org.id, planKey, billingCycle };
+  const metadata = inPlaceClubName ? inPlaceMetadata(checkoutMetadata, inPlaceClubName) : checkoutMetadata;
+
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: customerId,
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
       ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
-      metadata: { orgId: auth.org.id, planKey, billingCycle },
+      metadata,
     },
-    metadata: { orgId: auth.org.id, planKey, billingCycle },
-    success_url: appendSuccess(`${appUrl}${safeReturnTo}`),
+    metadata,
+    success_url: appendSuccess(`${appUrl}${successReturnTo}`),
     cancel_url: `${appUrl}${safeReturnTo}`,
   });
 

@@ -183,8 +183,10 @@ describe('D6 / A08 — no Founding Season offer for Club', () => {
 });
 
 describe('1b — the move between plans (Ask 4, D7) and the second-subscription guard (A06)', () => {
-  it('moves: up from Tournament Plus and Club, down only Association → Club; nothing else is a move', () => {
+  it('moves: up from Premium (Stage 4b), Tournament Plus and Club, down only Association → Club; nothing else is a move', () => {
     const moves: [OrgPlan, OrgPlan, string | null][] = [
+      ['team', 'club', 'up'], ['team', 'club_large', 'up'], ['team', 'tournament_plus', null], ['team', 'team', null],
+      ['club', 'team', null], ['club_large', 'team', null],
       ['tournament_plus', 'club', 'up'], ['tournament_plus', 'club_large', 'up'],
       ['club', 'club_large', 'up'], ['club_large', 'club', 'down'],
       ['club', 'tournament_plus', null], ['club', 'league', null], ['tournament', 'club', null],

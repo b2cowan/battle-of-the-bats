@@ -22,6 +22,7 @@ import { NEXT_SEASON_CHOICE_KIND, classifyNextSeasonSubscription } from '@/lib/n
 import { PLAN_RANK } from '@/lib/plan-features';
 import { applyPlanChangeSideEffects } from '@/lib/plan-move';
 import { isInAppUpMove } from '@/lib/plan-growth';
+import { clubNameFromMetadata } from '@/lib/workspace-upgrade';
 import { restoreAfterReactivation } from '@/lib/billing-reactivation';
 import { trialEndingHtml, welcomeBackHtml, teamWorkspaceCancelledHtml, SITE_URL } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
@@ -456,6 +457,9 @@ export const POST = withObservability(async (req: Request) => {
             fromPlan: currentOrg?.plan_id ?? null,
             toPlan: planKey,
             actor: 'stripe-webhook',
+            // Stage 4b: the name a coach typed for the club their portal is becoming. It rides on the subscription (set at
+            // checkout or by the move), so a retried event with no request behind it reads the same name.
+            clubName: clubNameFromMetadata(sub.metadata),
           });
           // A07: coming back from a cancellation restores what it took — the site, the retained
           // tournaments and records (so the retention emails stop), and the cancellation intent.

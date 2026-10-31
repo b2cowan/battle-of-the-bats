@@ -4,6 +4,8 @@ import type { OrgPlan } from './types';
 export type MoveDirection = 'up' | 'down';
 
 const MOVES: Partial<Record<OrgPlan, Partial<Record<OrgPlan, MoveDirection>>>> = {
+  // Plan & billing Stage 4b: a paying Premium coach moves onto Club on the subscription they have, and their portal becomes the club.
+  team: { club: 'up', club_large: 'up' },
   tournament_plus: { club: 'up', club_large: 'up' },
   club: { club_large: 'up' },
   club_large: { club: 'down' },

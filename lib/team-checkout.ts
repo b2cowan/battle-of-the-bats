@@ -18,6 +18,7 @@ import type { TeamEntitlementStatus, TeamWorkspaceSource } from './team-workspac
 import { getActiveOwnedTeamWorkspace } from './team-workspace-owned';
 import { convertFreeTimePortal, findKeepPremiumPortal } from './portal-keep-premium';
 import { clearStartDoor } from './start-door-server';
+import { restoreCoachesPortalRetainedRecords } from './portal-retained-restore';
 
 export type TeamCheckoutRequest = {
   teamName: string;
@@ -81,17 +82,6 @@ type ReactivationWorkspace = {
   rep_team_id: string;
   billing_mode: string | null;
   subscription_status: string | null;
-};
-
-type RetainedRecordRow = {
-  id: string;
-  record_type: string;
-  record_id: string | null;
-  metadata: {
-    previousStatus?: unknown;
-    retentionReason?: unknown;
-    teamWorkspaceId?: unknown;
-  } | null;
 };
 
 const TEAM_CHECKOUT_KIND = 'standalone_team';
@@ -260,6 +250,9 @@ export async function syncTeamWorkspaceSubscription(params: {
     .from('team_workspaces')
     .select('id, workspace_org_id, rep_team_id, billing_mode')
     .eq('stripe_subscription_id', params.stripeSubscriptionId)
+    // A workspace that became a club (Stage 4b) or moved into one is a tombstone: its subscription is the club's now, and
+    // must never run the Coaches Portal retention or email, whatever id a stray write left on the row.
+    .neq('workspace_state', 'org_owned')
     .maybeSingle();
 
   if (error) throw error;
@@ -299,12 +292,6 @@ export async function syncTeamWorkspaceSubscription(params: {
     .eq('team_workspace_id', workspace.id);
 
   return true;
-}
-
-function restoredTournamentStatus(value: unknown): 'draft' | 'active' | 'completed' {
-  return value === 'draft' || value === 'active' || value === 'completed'
-    ? value
-    : 'completed';
 }
 
 async function findReactivationWorkspace(
@@ -368,46 +355,6 @@ async function findReactivationWorkspace(
   if (workspace.subscription_status !== 'canceled' && org.subscription_status !== 'canceled') return null;
 
   return workspace;
-}
-
-async function restoreCoachesPortalRetainedRecords(orgId: string, workspaceId: string) {
-  const { data, error } = await supabaseAdmin
-    .from('billing_retained_records')
-    .select('id, record_type, record_id, metadata')
-    .eq('org_id', orgId)
-    .in('retained_state', ['retained_inactive', 'pending_purge'])
-    .eq('metadata->>retentionReason', 'coaches_portal_cancellation');
-
-  if (error) throw error;
-
-  const retained = ((data ?? []) as RetainedRecordRow[]).filter(row => (
-    row.record_type === 'tournament' ||
-    row.metadata?.teamWorkspaceId === workspaceId
-  ));
-  if (retained.length === 0) return { restoredCount: 0, restoredTournamentIds: [] as string[] };
-
-  const restoredTournamentIds: string[] = [];
-  for (const record of retained.filter(row => row.record_type === 'tournament' && row.record_id)) {
-    if (!record.record_id) continue;
-    const { error: tournamentError } = await supabaseAdmin
-      .from('tournaments')
-      .update({
-        status: restoredTournamentStatus(record.metadata?.previousStatus),
-        is_active: restoredTournamentStatus(record.metadata?.previousStatus) === 'active',
-      })
-      .eq('org_id', orgId)
-      .eq('id', record.record_id);
-
-    if (!tournamentError) restoredTournamentIds.push(record.record_id);
-  }
-
-  const { error: recordError } = await supabaseAdmin
-    .from('billing_retained_records')
-    .update({ retained_state: 'restored' })
-    .in('id', retained.map(row => row.id));
-
-  if (recordError) throw recordError;
-  return { restoredCount: retained.length, restoredTournamentIds };
 }
 
 async function reactivateTeamWorkspaceFromParsedMetadata(params: {

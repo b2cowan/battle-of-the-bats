@@ -76,7 +76,11 @@ describe('Plan & billing profiles', () => {
         if (c.mechanism === 'checkout') assert.ok(upgradePlansFor(p.key).includes(c.target as 'tournament_plus'));
       }
     }
-    assert.deepEqual(PLAN_BILLING_PROFILES.team.changes, [], 'joining a club is not a new plan move');
+    // Stage 4b Part 2: the SERVER moves Premium onto Club (moveDirection says up), but the Premium page draws no Club row and fetches
+    // no move until Part 3 builds the window. Part 3 swaps the profile back to `checkoutAndMoves('team')` and extends the list above.
+    assert.equal(moveDirection('team', 'club'), 'up');
+    assert.equal(moveDirection('team', 'club_large'), 'up');
+    assert.deepEqual(PLAN_BILLING_PROFILES.team.changes, [], 'the Premium page shows no Change plan table before Part 3');
   });
 
   it('keeps the Premium seven, the downgrade losses, the Club team meters and the Founding Season display flag', () => {

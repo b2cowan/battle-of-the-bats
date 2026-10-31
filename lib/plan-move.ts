@@ -11,6 +11,10 @@ import { ownPlanOf } from './entitlement-grants';
 import { PAYING_STATUSES } from './stripe-billing-state';
 import { moveDirection, type MoveDirection } from './plan-move-options';
 import { flipWorkspaceIntoClub, type WorkspaceFlipResult } from './workspace-flip';
+import { trustedPreviewLines, type MovePreviewLine } from './plan-move-preview-lines';
+import { inPlaceMetadata, parseClubName } from './workspace-upgrade';
+import { workspaceCannotBecomeClub } from './workspace-upgrade-status';
+import { restoreCoachesPortalRetainedRecords } from './portal-retained-restore';
 
 /**
  * MOVING A PAYING ORGANIZATION BETWEEN PLANS — ONE SUBSCRIPTION, NEVER A SECOND CHECKOUT
@@ -20,6 +24,9 @@ import { flipWorkspaceIntoClub, type WorkspaceFlipResult } from './workspace-fli
  *     subscription, prorated — the difference for the rest of the period is charged today. The
  *     figure comes from Stripe's own preview, never from our arithmetic, and the move is made with
  *     the preview's `proration_date` so the charge equals what the owner was shown.
+ *   · UP from Premium (Coaches Portal → Club or Club · Association; Stage 4b): the same move, and the coach's portal then
+ *     becomes the club in place (`applyPlanChangeSideEffects` → the workspace flip). Needs the club name; refused while the
+ *     payment is failing. A coach with NO subscription (free days) is not moved — they buy Club at checkout on the same workspace.
  *   · DOWN (Club · Association → Club): at the next renewal, with no credit, through a Stripe
  *     subscription schedule (two phases: the current price to the period's end, then the smaller
  *     price; released afterwards). REFUSED while the club has more active teams than the smaller
@@ -49,6 +56,12 @@ export type MoveRefusal =
   | { code: 'no_live_subscription'; error: string }
   | { code: 'price_missing'; error: string }
   | { code: 'band_too_small'; error: string; activeTeams: number; teamLimit: number }
+  /** A Premium coach whose last payment failed: not moved onto Club until the payment method is fixed (Stage 4b). */
+  | { code: 'payment_failing'; error: string }
+  /** The portal holds more than one team, or has already moved into another club: the flip would refuse AFTER the charge, so it is refused before (Stage 4b). */
+  | { code: 'cannot_become_club'; error: string }
+  /** A Coaches Portal becoming the club needs the name the coach typed (Stage 4b); `error` is a sentence the screen can show. */
+  | { code: 'club_name_invalid'; error: string }
   | { code: 'stripe_error'; error: string };
 
 export type MovePreview =
@@ -65,6 +78,12 @@ export type MovePreview =
       nextAmount: number;
       /** When the current period ends (the date the new price first renews), ISO. */
       renewsAt: string | null;
+      /**
+       * Stripe's own breakdown of `amountDueToday` — the new plan for the rest of the period, the credit for unused time on the old
+       * one — when every line can be trusted (lib/plan-move-preview-lines.ts); `null` means show the total alone. charges − credits
+       * = amountDueToday, always.
+       */
+      lines: MovePreviewLine[] | null;
     }
   | {
       direction: 'down';
@@ -137,6 +156,22 @@ async function validateMove(org: MoveOrg, toPlan: OrgPlan): Promise<
   const live = await loadLiveSubscription(org);
   if ('code' in live) return { ok: false, refusal: live };
 
+  // Stage 4b: a Premium coach moves onto Club only on a subscription that is paying. A failing payment is allowed to be MOVED by
+  // the paying set (`past_due` counts as live), but the flip refuses anything not settled — so the swap would charge Club's price
+  // and leave the portal as it was. Refuse it up front, in plain words, before any price is shown or any charge is made.
+  if (ownPlanOf(org) === 'team' && (org.subscriptionStatus === 'past_due' || live.sub.status === 'past_due')) {
+    return {
+      ok: false,
+      refusal: { code: 'payment_failing', error: 'Your last payment didn’t go through. Update your payment method first, then move to Club.' },
+    };
+  }
+
+  // The flip refuses a portal that holds more than one team or has moved into another club — by name, AFTER the charge. Ask first.
+  if (direction === 'up' && ownPlanOf(org) === 'team') {
+    const blocked = await workspaceCannotBecomeClub(org.id);
+    if (blocked) return { ok: false, refusal: { code: 'cannot_become_club', error: blocked } };
+  }
+
   if (direction === 'down') {
     const teamLimit = PLAN_CONFIG[toPlan].teamLimit;
     const activeTeams = await activeTeamCount(org.id);
@@ -179,8 +214,8 @@ export async function previewMove(org: MoveOrg, toPlan: OrgPlan): Promise<MovePr
   if (!checked.ok) return checked.refusal;
   const { direction, live, priceId } = checked;
   try {
-    const next = await unitAmount(priceId);
     if (direction === 'down') {
+      const next = await unitAmount(priceId);
       return {
         direction, toPlan, billingCycle: live.billingCycle,
         effectiveAt: isoFromUnix(live.item.current_period_end),
@@ -188,15 +223,19 @@ export async function previewMove(org: MoveOrg, toPlan: OrgPlan): Promise<MovePr
       };
     }
     const prorationDate = Math.floor(Date.now() / 1000);
-    const invoice = await getStripe().invoices.createPreview({
-      customer: typeof live.sub.customer === 'string' ? live.sub.customer : live.sub.customer.id,
-      subscription: live.sub.id,
-      subscription_details: {
-        items: [{ id: live.item.id, price: priceId }],
-        proration_behavior: 'always_invoice',
-        proration_date: prorationDate,
-      },
-    });
+    // The price lookup and the invoice preview don't depend on each other.
+    const [next, invoice] = await Promise.all([
+      unitAmount(priceId),
+      getStripe().invoices.createPreview({
+        customer: typeof live.sub.customer === 'string' ? live.sub.customer : live.sub.customer.id,
+        subscription: live.sub.id,
+        subscription_details: {
+          items: [{ id: live.item.id, price: priceId }],
+          proration_behavior: 'always_invoice',
+          proration_date: prorationDate,
+        },
+      }),
+    ]);
     return {
       direction, toPlan, billingCycle: live.billingCycle,
       amountDueToday: invoice.amount_due,
@@ -204,6 +243,7 @@ export async function previewMove(org: MoveOrg, toPlan: OrgPlan): Promise<MovePr
       prorationDate,
       nextAmount: next.amount,
       renewsAt: isoFromUnix(live.item.current_period_end),
+      lines: trustedPreviewLines(invoice, { fromPriceId: live.item.price.id, toPriceId: priceId, fromPlan: ownPlanOf(org), toPlan }),
     };
   } catch (error) {
     console.error('[plan-move] preview failed:', error);
@@ -228,6 +268,8 @@ export async function applyPlanChangeSideEffects(p: {
   toPlan: OrgPlan | string;
   actor: string;
   keepTeamLimit?: boolean;
+  /** The club name the coach typed, for a Coaches Portal becoming the club (Stage 4b Part 2). Absent keeps the organization's name. */
+  clubName?: string | null;
 }): Promise<{ clearedTeamLimit: boolean; revokedComps: number; workspaceFlip: WorkspaceFlipResult }> {
   let clearedTeamLimit = false;
   if (p.fromPlan && p.fromPlan !== p.toPlan && !p.keepTeamLimit) {
@@ -259,25 +301,43 @@ export async function applyPlanChangeSideEffects(p: {
   // Asked on EVERY call, not only when `fromPlan` was the portal's: a retried event arrives with the plan already written, and
   // the flip is what finishes the job. An ordinary club answers "not a workspace" without a write. Last, so a database failure
   // here (which throws, and the webhook lets Stripe retry) never leaves the steps above undone.
-  const workspaceFlip = await flipWorkspaceIntoClub({ orgId: p.orgId, plan: p.toPlan, actor: p.actor });
+  const workspaceFlip = await flipWorkspaceIntoClub({ orgId: p.orgId, plan: p.toPlan, actor: p.actor, clubName: p.clubName });
+  // A portal that CANCELLED Premium and now buys Club filed its tournaments and account as retained records; the club must get them
+  // back, or the retention sweep warns and then purges a paying customer's data. Asked on a retried event too ('already_flipped'):
+  // the restore only touches rows still retained, so a repeat is a no-op, and a failure here throws so Stripe retries.
+  if (workspaceFlip.status === 'flipped' || workspaceFlip.status === 'already_flipped') {
+    await restoreCoachesPortalRetainedRecords(p.orgId, workspaceFlip.workspaceId);
+  }
   return { clearedTeamLimit, revokedComps, workspaceFlip };
 }
 
 export type MoveResult =
-  | { direction: 'up'; toPlan: OrgPlan; movedAt: string }
+  /** `finishing`: Stripe has moved the subscription (the money is taken) but a database step has not completed — the next billing event finishes it. */
+  | { direction: 'up'; toPlan: OrgPlan; movedAt: string; finishing?: true }
   | { direction: 'down'; toPlan: OrgPlan; scheduled: ScheduledMove };
 
-/** Makes the move. For an UP move pass the preview's `prorationDate` so the charge matches it. */
+/**
+ * Makes the move. For an UP move pass the preview's `prorationDate` so the charge equals it.
+ * A Premium coach's portal moving onto Club (Stage 4b) also passes `clubName`: it is REQUIRED there (refused before Stripe is
+ * touched), put on the subscription's metadata so a webhook retry can read it back, and handed to the flip.
+ */
 export async function applyMove(
   org: MoveOrg,
   toPlan: OrgPlan,
-  opts: { prorationDate?: number; actor: string },
+  opts: { prorationDate?: number; actor: string; clubName?: string | null },
 ): Promise<MoveResult | MoveRefusal> {
+  let clubName: string | null = null;
+  if (ownPlanOf(org) === 'team' && moveDirection('team', toPlan)) {
+    const named = parseClubName(opts.clubName);
+    if (!named.ok) return { code: 'club_name_invalid', error: named.error };
+    clubName = named.name;
+  }
   const checked = await validateMove(org, toPlan);
   if (!checked.ok) return checked.refusal;
   const { direction, live, priceId } = checked;
   const stripe = getStripe();
-  const metadata = { orgId: org.id, planKey: toPlan, billingCycle: live.billingCycle, [MOVE_METADATA_KEY]: direction };
+  const baseMetadata = { orgId: org.id, planKey: toPlan, billingCycle: live.billingCycle, [MOVE_METADATA_KEY]: direction };
+  const metadata = clubName ? inPlaceMetadata(baseMetadata, clubName) : baseMetadata;
 
   try {
     if (direction === 'up') {
@@ -297,6 +357,9 @@ export async function applyMove(
         items: [{ id: live.item.id, price: priceId }],
         proration_behavior: 'always_invoice',
         proration_date: prorationDate,
+        // A declined proration charge must leave the subscription exactly as it was. Stripe's default ('allow_incomplete') swaps the
+        // price anyway and marks it past due — and a Premium portal would then become the club, for good, on an unpaid subscription.
+        payment_behavior: 'error_if_incomplete',
         metadata,
       });
 
@@ -315,15 +378,24 @@ export async function applyMove(
         metadata: { stripeSubscriptionId: live.sub.id, billingCycle: live.billingCycle, actor: opts.actor },
       });
 
-      // The webhook will write the same plan from the new price; writing it here too means the
-      // owner's next screen already shows the new band.
-      const { error } = await supabaseAdmin
-        .from('organizations')
-        .update({ plan_id: toPlan, tournament_limit: PLAN_CONFIG[toPlan].tournamentLimit })
-        .eq('id', org.id);
-      if (error) throw error;
-      await applyPlanChangeSideEffects({ orgId: org.id, fromPlan: ownPlanOf(org), toPlan, actor: opts.actor });
-      return { direction, toPlan, movedAt: new Date().toISOString() };
+      // From here the money has moved, so a database step that throws must not read as "Nothing was changed": the coach would try
+      // again, and every try writes another growth event. The move is made; the webhook (it reads the club name from the
+      // subscription's metadata, set above) finishes what is left, and `finishing` tells the screen so.
+      try {
+        // The webhook will write the same plan from the new price; writing it here too means the
+        // owner's next screen already shows the new band.
+        const { error } = await supabaseAdmin
+          .from('organizations')
+          .update({ plan_id: toPlan, tournament_limit: PLAN_CONFIG[toPlan].tournamentLimit })
+          .eq('id', org.id);
+        if (error) throw error;
+        const { workspaceFlip } = await applyPlanChangeSideEffects({ orgId: org.id, fromPlan: ownPlanOf(org), toPlan, actor: opts.actor, clubName });
+        // A refused flip (the payment not settled yet, or a rare conflict staff are told about) is finished by the next billing event.
+        return { direction, toPlan, movedAt: new Date().toISOString(), ...(workspaceFlip.status === 'refused' ? { finishing: true as const } : {}) };
+      } catch (afterStripe) {
+        console.error('[plan-move] the subscription moved but a database step did not finish; the billing event will:', afterStripe);
+        return { direction, toPlan, movedAt: new Date().toISOString(), finishing: true };
+      }
     }
 
     // DOWN — at renewal. One schedule per subscription: reuse the one that exists (ours), or build it.

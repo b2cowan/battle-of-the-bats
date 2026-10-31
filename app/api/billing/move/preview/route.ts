@@ -13,9 +13,13 @@ import { authorizeMove, parseTargetPlan, refuseIfGated, refusalResponse } from '
  *   down → { direction:'down', effectiveAt, nextAmount, … } — takes effect at the next renewal,
  *          no credit.
  *
+ *          `lines` (Stage 4b) is Stripe's own breakdown — [{ kind:'charge'|'credit', plan, amount }] — or null when any line
+ *          cannot be trusted; charges minus credits = amountDueToday. Null: show the total alone.
+ *
  * Refusals (4xx, `{ code, error, … }`): `not_a_move`, `no_live_subscription` (use checkout),
- * `band_too_small` (+ activeTeams, teamLimit — archive first), `price_missing`, `plan_not_on_sale`
- * (403 while gated), `stripe_error` (502).
+ * `band_too_small` (+ activeTeams, teamLimit — archive first), `payment_failing` (a Premium coach whose last payment failed),
+ * `cannot_become_club` (a Premium portal that holds more than one team, or has already moved into another club),
+ * `price_missing`, `plan_not_on_sale` (403 while gated), `stripe_error` (502).
  */
 export const POST = withObservability(async (req: Request) => {
   const body = await req.json().catch(() => ({})) as { orgSlug?: unknown; planKey?: unknown };

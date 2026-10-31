@@ -40,6 +40,7 @@ const ALLOWED_SUSPENDED_ORG_FILES: Record<string, string> = {
   'app/api/billing/cancel/preflight/route.ts': 'billing — comeback path',
   'app/api/billing/choose-next-season/route.ts': 'billing — the summer plan choice IS a comeback path (it commits the customer to paying us for next season); the route separately refuses any account that is not on a live Founding Season comp',
   'app/api/billing/create-checkout/route.ts': 'billing — THE resubscribe call',
+  'app/api/billing/club-upgrade-status/route.ts': 'billing — the read behind "Setting up your club" (Stage 4b): a lapsed Premium coach who just bought Club is still suspended until the flip clears it, and is exactly who asks; owner-only, two yes/no facts, no program data',
   'app/api/billing/downgrade/confirm/route.ts': 'billing — comeback path',
   'app/api/billing/downgrade/preflight/route.ts': 'billing — comeback path',
   'app/api/billing/mock-apply/route.ts': 'billing — dev/mock checkout parity',

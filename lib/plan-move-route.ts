@@ -54,7 +54,7 @@ export async function refuseIfGated(toPlan: OrgPlan): Promise<Response | null> {
 /** A refusal's HTTP status: the org's own state is a conflict; a provider hiccup is a 502. */
 export function refusalResponse(refusal: MoveRefusal): Response {
   const status = refusal.code === 'stripe_error' ? 502
-    : refusal.code === 'not_a_move' || refusal.code === 'price_missing' ? 400
+    : refusal.code === 'not_a_move' || refusal.code === 'price_missing' || refusal.code === 'club_name_invalid' ? 400
     : 409;
   return Response.json(refusal, { status });
 }
