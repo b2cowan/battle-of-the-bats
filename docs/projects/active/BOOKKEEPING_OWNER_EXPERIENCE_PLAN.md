@@ -1,6 +1,6 @@
 # Owner bookkeeping: easier daily work
 
-**Part 5 built and checked, 2026-10-30:** the owner asked to proceed after Part 4 committed as `d9f0e25ae`. Expense and transfer record/pencil/reason/Void windows, Copy as new, duplicate warning and list stepping are built and browser-checked. This part's own commit approval precedes Part 6's review and owner walk. UX defaults and evidence are recorded below.
+**Part 6 review and owner walk prepared, 2026-10-31:** Parts 1–5 are committed and checked, latest `b9712ccd5`. The [final review](BOOKKEEPING_STAGE1_REVIEW.md) and [63-step owner walk](BOOKKEEPING_STAGE1_OWNER_WALK.html) are ready; QA ledger §431 waits for the owner's paste-back. One existing concurrent-repayment finding is recorded before real-books use. Part 6's separate commit approval follows. Evidence and resume boundaries are in §13.
 
 **Part 4 built and checked, 2026-10-30:** the owner asked to proceed with the compact Overview. Parts 1–3 are committed and checked: foundations `cbdd5ccde`, lettering guard `bf8ba972c`, restore mapping `86fd8c5e2`, form/USD evidence `974fc7208`, register and shared selection `22e072420`. Part 4 ships the month's spending tile and the Needs attention/Recent tables; its choices and verification live in §13. Parts 5–6 follow after Part 4's own checks and owner-approved commit.
 
@@ -221,7 +221,8 @@ Revenue's accepted Stripe source contract is still missing. The group needs actu
 - [x] Part 4 commit approved by the owner, 2026-10-30; implementation and progress record form this change. Resume at Part 5 on the owner's instruction.
 - [x] Part 5 implementation and browser checks, 2026-10-30: held pencil corrections, reason/void questions, immutable void refusal tests first, Copy as new, duplicate warning and transfer windows (evidence below).
 - [x] Part 5 commit approved by the owner, 2026-10-30; implementation, tests and progress record form this change. Resume at Part 6 on the owner's instruction.
-- [ ] Part 6: money/API review, final browser proof, one numbered owner walk after checking the ledger's latest section, and server restart.
+- [x] Part 6: final scoped money/API review, focused/browser proof, final dev-server restart and one numbered owner walk prepared 2026-10-31 (QA §431; evidence below).
+- [ ] Part 6's own commit approval, followed by recording the owner's §431 result. Stage 1's new owner walk remains pending; no automated test closes it.
 
 ### Part 2 — shared form and USD evidence (implemented and checked, 2026-10-30)
 
@@ -316,4 +317,26 @@ Copy as new retains supplier/category/purpose/payment source, amounts, tax field
 - Full typecheck passed on the final source with a temporary 6144 MB heap after the default-heap rerun exhausted Node's heap during concurrent global checks. The focused final void-contract typecheck also passes; no compiler/config/guard change was needed. Evidence: part5-typecheck-final.log and part5-final-contract-typecheck.log. The failed default-heap attempt remains in part5-typecheck.log.
 - Restarted npm run dev with network access after the new/shared files, and again after the last shared helper change. The final restart's legacy/voided-record and transfer proofs pass, login returns HTTP 200, and its logs show no Supabase EACCES/fetch failures. The server stays running for owner testing.
 
-**Resume boundary:** the owner approved the Part 5 commit on 2026-10-30. Resume at Part 6 on the owner's instruction: perform the money/API review and write one numbered owner walk, checking the QA ledger's current last section before numbering. The walk must cover the five journeys in §383 plus the new doors. Part 6 remains outside this implementation.
+**Commit:** Part 5 committed `b9712ccd5` on the owner's approval, 2026-10-30, with exactly the approved 21 files.
+
+### Part 6 — review and one owner walk (2026-10-31)
+
+The owner authorized Part 6. No new workflow or role change is proposed: the same allowlisted owner gets one walk through the completed Stage 1 experience, with checkboxes, notes and a paste-back result. Automated proof does not close the owner's walk.
+
+Task list:
+
+- [x] Reviewed the Stage 1 changes through `b9712ccd5` and their direct callers using correctness, authorization, data/contract, concurrency/state and regression lenses. Focused deterministic checks ran first; unrelated shared-tree work was preserved and gate limits are recorded in the review.
+- [x] Rechecked the desktop and phone paths against the running development app, with no stored fixture writes.
+- [x] Wrote one walk covering §383's five journeys, report/export trace and Ledger, plus the new navigation, held correction, immutable Void, Copy, duplicate, filter and address doors. Verified labels against source, arithmetic, links, persistence and paste-back.
+- [x] Read the QA ledger's current last section §430 immediately before appending §431. Updated this plan, PM brief, build checkpoint and only Bookkeeping's TODO line. The reviewable Part 6 patch is ready for its own commit approval.
+- [ ] Record the owner's later walk result separately. Stage 2 still requires the personal-account redraw before implementation.
+
+**Review and checks:** [final review](BOOKKEEPING_STAGE1_REVIEW.md) records the 35 technical paths (33 Bookkeeping paths plus the two guard paths) and direct-contract scope, five manual review lenses, 87 passing tests, focused lint and full typecheck. Current browser proof passes **144 assertions** at 1440×900 and 390×844: 35 navigation, 58 register/CSV/package, 33 Overview, 18 response-only transfer-window checks. The initial navigation attempt stopped on ERR_ABORTED; the settled-transition rerun passes and its separate results are the counted evidence. No Part 6 stored fixtures were created. Part 5's actual money writes/immutable void evidence remains recorded above rather than manufacturing more QA history.
+
+**Owner walk:** [BOOKKEEPING_STAGE1_OWNER_WALK.html](BOOKKEEPING_STAGE1_OWNER_WALK.html), QA ledger **§431**, thirteen parts / **63 steps**, one purpose and one paste-back. Four unique S1-WALK expenses total $133.08 before Void, $88.08 after voiding COPY and $0 after cleanup. Three synthetic transfers are kept separate from spend and voided before linked expense cleanup. The walk uses All dates at a month boundary, explicit per-part verdicts, retained notes/ticks/prefix, current-copy output with manual fallback, and a two-press reset. **16 checklist-function assertions pass**, including both widths and no application requests. These assertions do not claim the owner performed the 63 steps. Local screenshots and JSON/logs are under `.probe/bk-stage1/part6-*`.
+
+**Existing review finding, real-books prerequisite:** the repayment limit reads before a separate append. Two distinct $15 requests can both pass against a $20 personal expense and record $30; the actual handler with mocked-storage barrier reproduced both 201 responses with zero external writes. The check/insert separation exists in baseline `7c4e0081f`. Cross-route expense change/Void versus a new reimbursement has the same source-level risk. Before Stage 5 live use, enforce a common per-expense database conflict boundary across both APIs and test competing operations. No API/database/automation fix is bundled into this documentation/walk part; a sequential owner pass does not close the concurrency finding.
+
+**Limits and handoff:** token/date/spelling/observability/dictionary/CSS-purity checks pass. Global lettering/CSS-selector/export-catalog findings remain outside Bookkeeping; snapshot freshness additionally reports the separate Supabase migration 414 beyond watermark 413. Baselines are unchanged. Full verify:changed remains deferred under shared-tree/resource guidance; layout does not cover Bookkeeping. Empty Overview browser states remain unproven after Part 4's unsuccessful fixture; source review is recorded. Help names only the unchanged owner-only menu entry, so no help edit is needed. Completed the prompt's final restart with network-enabled npm run dev, stopping only its verified launcher/child tree. Ready and login HTTP 200 are verified; navigation/transfer proofs pass again at both widths and restarted logs contain no Supabase EACCES/fetch failures. The server remains running for the owner walk.
+
+**Resume:** obtain the separate Part 6 commit approval; then await the owner's §431 paste-back and record its verdicts, unticked steps and notes honestly. Fix confirmed walk defects within their own authorized scope or record explicit owner acceptance. Stage 1's implementation and review/walk preparation are ready; its new owner acceptance is pending. On the owner's later Stage 2 instruction, begin with the personal-account redraw, preserving the six-stage ladder and the concurrent-repayment prerequisite above. No later stage is authorized by Part 6.
