@@ -10,6 +10,7 @@ import type { OrgPlan } from './types';
 import { ownPlanOf } from './entitlement-grants';
 import { PAYING_STATUSES } from './stripe-billing-state';
 import { moveDirection, type MoveDirection } from './plan-move-options';
+import { flipWorkspaceIntoClub, type WorkspaceFlipResult } from './workspace-flip';
 
 /**
  * MOVING A PAYING ORGANIZATION BETWEEN PLANS — ONE SUBSCRIPTION, NEVER A SECOND CHECKOUT
@@ -217,7 +218,8 @@ export async function previewMove(org: MoveOrg, toPlan: OrgPlan): Promise<MovePr
  *   · a CUSTOM team limit is cleared on a band change (it was set for the old band and would read as
  *     the new band's cap — the Club Repackaging fast-follow) — unless the same change sets the new
  *     band's cap (`keepTeamLimit`, an operator's custom deal), and
- *   · ⚖ D6: a move onto a Club band revokes the Founding Season comp.
+ *   · ⚖ D6: a move onto a Club band revokes the Founding Season comp, and
+ *   · Stage 4b: a move onto a Club band turns a standalone Coaches Portal into the club, in place (`flipWorkspaceIntoClub`).
  * Idempotent: a second call with the same plans changes nothing. Call it AFTER the plan is written.
  */
 export async function applyPlanChangeSideEffects(p: {
@@ -226,7 +228,7 @@ export async function applyPlanChangeSideEffects(p: {
   toPlan: OrgPlan | string;
   actor: string;
   keepTeamLimit?: boolean;
-}): Promise<{ clearedTeamLimit: boolean; revokedComps: number }> {
+}): Promise<{ clearedTeamLimit: boolean; revokedComps: number; workspaceFlip: WorkspaceFlipResult }> {
   let clearedTeamLimit = false;
   if (p.fromPlan && p.fromPlan !== p.toPlan && !p.keepTeamLimit) {
     const { data, error } = await supabaseAdmin
@@ -253,7 +255,12 @@ export async function applyPlanChangeSideEffects(p: {
       console.error('[plan-move] couldn’t close the open pay pages:', e instanceof Error ? e.message : String(e));
     }
   }
-  return { clearedTeamLimit, revokedComps };
+  // Plan & billing Stage 4b: a standalone Coaches Portal that is now on Club becomes the club, in place (lib/workspace-flip.ts).
+  // Asked on EVERY call, not only when `fromPlan` was the portal's: a retried event arrives with the plan already written, and
+  // the flip is what finishes the job. An ordinary club answers "not a workspace" without a write. Last, so a database failure
+  // here (which throws, and the webhook lets Stripe retry) never leaves the steps above undone.
+  const workspaceFlip = await flipWorkspaceIntoClub({ orgId: p.orgId, plan: p.toPlan, actor: p.actor });
+  return { clearedTeamLimit, revokedComps, workspaceFlip };
 }
 
 export type MoveResult =

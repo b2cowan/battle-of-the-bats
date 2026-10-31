@@ -4,7 +4,7 @@ import { getBillingHref } from '@/lib/billing-urls';
 import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
 import { normalizeBillingCycle, PLAN_CONFIG, FOUNDING_SEASON_END, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
 import { ensureFoundingSeasonCompPeriod, foundingSeasonOfferOnPlanChoice } from '@/lib/founding-season';
-import { hadSubscriptionBefore, hasLiveSubscription } from '@/lib/plan-move';
+import { applyPlanChangeSideEffects, hadSubscriptionBefore, hasLiveSubscription } from '@/lib/plan-move';
 import { moveDirection } from '@/lib/plan-move-options';
 import { restoreAfterReactivation } from '@/lib/billing-reactivation';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
@@ -150,6 +150,10 @@ export const POST = withObservability(async (req: Request) => {
     if (orgError) {
       return captureAndJson(orgError, { error: orgError.message }, 500);
     }
+
+    // The database half of any plan change, so the mock path meets the same hook the webhook does — including Stage 4b's
+    // "a Coaches Portal on Club becomes the club" (the mock subscription above is trialing, which counts as settled).
+    await applyPlanChangeSideEffects({ orgId: auth.org.id, fromPlan: ownPlanOf(auth.org), toPlan: planKey, actor: auth.user.email ?? 'mock-checkout' });
 
     const restoreResult = await restoreRetainedDowngradeTournaments(auth.org.id, plan.tournamentLimit);
     // A07: coming back from a cancellation restores the site, the tournaments and the retention
