@@ -40,9 +40,9 @@ function StaffTable({ clubs, emptyText }: { clubs: StaffFreeTimeClub[]; emptyTex
                 <Link href={`/platform-admin/orgs/${c.orgId}?tab=access`} className={kit.nameLink}>{c.name}</Link>
               </td>
               <td data-label="Free on" className={kit.nowrap}>{c.freeOn}</td>
-              <td data-label="Free through" className={kit.nowrap}>{formatShortDay(c.lastDay)}</td>
+              <td data-label="Free through" className={kit.nowrap}>{c.lastDay ? formatShortDay(c.lastDay) : 'No end date'}</td>
               <td data-label="Left" className={`${kit.num} ${kit.nowrap}`}>
-                <span className={c.endingSoon ? recordStyles.soon : undefined}>{leftWords(c.daysLeft)}</span>
+                {c.daysLeft == null ? '—' : <span className={c.endingSoon ? recordStyles.soon : undefined}>{leftWords(c.daysLeft)}</span>}
               </td>
               <td data-label="Given by">{c.givenBy}</td>
               <td className={kit.rowDoor}>

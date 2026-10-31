@@ -63,6 +63,7 @@ export function GiveWindow({ org, freeTime, rows, onChangeEnd, onDone, onClose }
   const [plan, setPlan] = useState(freeTime.plansAbove[0]?.id ?? '');
   const [addons, setAddons] = useState<string[]>([]);
   const [lastDay, setLastDay] = useState('');
+  const [indefinite, setIndefinite] = useState(false);
   const offered = CLUB_SECTIONS.filter(s => !org.planSections.includes(s.key));
   const planName = freeTime.plansAbove.find(p => p.id === plan)?.label ?? '';
   const founding = rows.find(o => o.running && o.founding && o.lastDay) ?? null;
@@ -71,7 +72,18 @@ export function GiveWindow({ org, freeTime, rows, onChangeEnd, onDone, onClose }
   const through = lastDay ? formatLongDay(lastDay) : null;
 
   let sentence: ReactNode = 'Choose what to give and its last free day.';
-  if (kind && through) {
+  if (kind && indefinite) {
+    // No end date: nothing returns by itself, so the sentence says who ends it.
+    const endsBy = <>It has <strong>no end date</strong>: it stays until staff end it from this record. Nothing is charged, nothing is deleted, and the owner is not emailed.</>;
+    if (kind === 'plan_tier') {
+      sentence = <>{org.name} gets {b(`${planName}, with no end date`)}. {endsBy} Their Plan &amp; billing page shows {planName} with no “Free through” date.</>;
+    } else if (kind === 'module_addon') {
+      const names = addons.map(sectionLabel).join(', ');
+      sentence = names ? <>{org.name} gets {b(`${names}, with no end date`)}. {endsBy}</> : 'Choose the sections to give.';
+    } else {
+      sentence = <>{org.name} reads as {b('active, with no end date')} while unpaid. {endsBy}</>;
+    }
+  } else if (kind && through) {
     if (kind === 'plan_tier') {
       const stillFounding = founding && founding.lastDay! > lastDay
         ? <>, still free through {formatLongDay(founding.lastDay!)} under Founding Season</> : null;
@@ -89,7 +101,7 @@ export function GiveWindow({ org, freeTime, rows, onChangeEnd, onDone, onClose }
         Nothing is charged or deleted, and the owner is not emailed.</>;
     }
   }
-  const ready = !!kind && !!lastDay && (kind !== 'plan_tier' || !!plan) && (kind !== 'module_addon' || addons.length > 0);
+  const ready = !!kind && (indefinite || !!lastDay) && (kind !== 'plan_tier' || !!plan) && (kind !== 'module_addon' || addons.length > 0);
 
   return (
     <RecordWindow
@@ -105,7 +117,8 @@ export function GiveWindow({ org, freeTime, rows, onChangeEnd, onDone, onClose }
       confirmBlocked={!ready}
       onConfirm={async reason => {
         const { ok, data } = await sendJson(`/api/platform-admin/orgs/${org.id}/overrides`, 'POST', {
-          kind, plan: kind === 'plan_tier' ? plan : undefined, addons: kind === 'module_addon' ? addons : undefined, last_day: lastDay, reason,
+          kind, plan: kind === 'plan_tier' ? plan : undefined, addons: kind === 'module_addon' ? addons : undefined,
+          last_day: indefinite ? undefined : lastDay, indefinite: indefinite || undefined, reason,
         });
         if (!ok) return errorOf(data, 'Nothing was given. The server could not save it. Your answers are kept; try again.');
         onDone();
@@ -159,23 +172,35 @@ export function GiveWindow({ org, freeTime, rows, onChangeEnd, onDone, onClose }
               <span className={kit.hint}>{freeTime.plansAbove.map(p => p.label).join(' or ')}</span>
             </label>
           )}
-          <FreeThroughField value={lastDay} onChange={setLastDay} freeTime={freeTime} />
+          <FreeThroughField value={lastDay} onChange={setLastDay} indefinite={indefinite} onIndefinite={setIndefinite} freeTime={freeTime} />
         </div>
       )}
     </RecordWindow>
   );
 }
 
-/** The shared date field: days before tomorrow and past the giver's limit greyed out in its calendar. */
-function FreeThroughField({ value, onChange, freeTime }: { value: string; onChange: (v: string) => void; freeTime: FreeTimeBounds }) {
-  const over = !!value && value > freeTime.latest;
+/**
+ * The shared date field: days before tomorrow and past the giver's limit greyed out in its calendar. A super admin has no
+ * limit and also sees "No end date", which clears the date and gives it until someone ends it.
+ */
+function FreeThroughField({ value, onChange, indefinite, onIndefinite, freeTime }: {
+  value: string; onChange: (v: string) => void; indefinite: boolean; onIndefinite: (v: boolean) => void; freeTime: FreeTimeBounds;
+}) {
+  const over = !indefinite && !!value && freeTime.latest != null && value > freeTime.latest;
   return (
     <div className={kit.fieldGroup}>
-      <span className={kit.label}>Free through<span className={kit.req} aria-hidden>*</span></span>
-      <DateInput className={kit.field} value={value} onChange={onChange} min={freeTime.earliest} max={freeTime.latest} aria-label="Free through" required />
-      {over
-        ? <span className={kit.fieldError}>You can give up to {freeTime.capMonths} months, through {formatLongDay(freeTime.latest)}.{freeTime.superAdmin ? '' : ' Longer needs a super admin.'}</span>
+      <span className={kit.label}>Free through{!indefinite && <span className={kit.req} aria-hidden>*</span>}</span>
+      <DateInput className={kit.field} value={indefinite ? '' : value} onChange={onChange} min={freeTime.earliest}
+        max={freeTime.latest ?? undefined} disabled={indefinite} aria-label="Free through" required={!indefinite} />
+      {over && freeTime.latest
+        ? <span className={kit.fieldError}>You can give up to {freeTime.capMonths} months, through {formatLongDay(freeTime.latest)}. Longer needs a super admin.</span>
         : <span className={kit.hint}>The last free day; it ends that midnight, Eastern</span>}
+      {freeTime.superAdmin && (
+        <label className={kit.check}>
+          <input type="checkbox" checked={indefinite} onChange={e => onIndefinite(e.target.checked)} />
+          No end date: it stays until someone ends it
+        </label>
+      )}
     </div>
   );
 }
@@ -184,9 +209,14 @@ export function ChangeEndWindow({ org, row, freeTime, onDone, onClose }: {
   org: ClubRecordProps['org']; row: FreeTimeRow; freeTime: FreeTimeBounds; onDone: () => void; onClose: () => void;
 }) {
   const [lastDay, setLastDay] = useState(row.lastDay ?? '');
+  const wasIndefinite = !row.expiresAt;
+  // Only a super admin sees the "No end date" choice, so anyone else opens an open-ended grant on a date to pick.
+  const [indefinite, setIndefinite] = useState(wasIndefinite && freeTime.superAdmin);
   const [stale, setStale] = useState<string | null>(null);
   const subject = freeTimeSubject(row, org.planLabel);
   const was = row.lastDay ?? '';
+  const wasWords = wasIndefinite ? 'having no end date' : monthDayOf(was);
+  const unchanged = indefinite ? wasIndefinite : !lastDay || lastDay === was;
   const afterwards = row.type === 'plan_tier' ? <>Then back to {org.planLabel} by itself.</>
     : row.type === 'module_addon' ? <>Then it turns off by itself.</> : <>Then back to its own billing status by itself.</>;
 
@@ -206,17 +236,20 @@ export function ChangeEndWindow({ org, row, freeTime, onDone, onClose }: {
   return (
     <RecordWindow
       title={`Change the end of ${possessive(org.name)} free time`}
-      sentence={lastDay && lastDay !== was
-        ? <>{possessive(org.name)} <strong>{subject}</strong> free time now runs <strong>through {formatLongDay(lastDay)}</strong> instead
-          of {monthDayOf(was)}. {afterwards} The owner is not emailed.</>
-        : 'Choose the new last free day.'}
+      sentence={unchanged
+        ? 'Choose the new last free day.'
+        : indefinite
+          ? <>{possessive(org.name)} <strong>{subject}</strong> free time now has <strong>no end date</strong>. It stays until staff end it
+            from this record. The owner is not emailed.</>
+          : <>{possessive(org.name)} <strong>{subject}</strong> free time now runs <strong>through {formatLongDay(lastDay)}</strong> instead
+            of {wasIndefinite ? 'having no end date' : monthDayOf(was)}. {afterwards} The owner is not emailed.</>}
       sentenceAfter
-      footNote={`A new Story entry; Put it back restores ${monthDayOf(was)}.`}
+      footNote={wasIndefinite ? 'A new Story entry. Putting it back to no end date is not offered.' : `A new Story entry; Put it back restores ${wasWords}.`}
       confirmLabel="Change the end date"
-      confirmBlocked={!lastDay || lastDay === was}
+      confirmBlocked={unchanged}
       onConfirm={async reason => {
         const { ok, data } = await sendJson(`/api/platform-admin/orgs/${org.id}/overrides/${row.id}`, 'PATCH', {
-          expected_expires_at: row.expiresAt, last_day: lastDay, reason,
+          expected_expires_at: row.expiresAt, last_day: indefinite ? undefined : lastDay, indefinite: indefinite || undefined, reason,
         });
         if (!ok) {
           const error = errorOf(data, 'Nothing was changed. The server could not save it.');
@@ -228,7 +261,7 @@ export function ChangeEndWindow({ org, row, freeTime, onDone, onClose }: {
       }}
       onClose={onClose}
     >
-      <FreeThroughField value={lastDay} onChange={setLastDay} freeTime={freeTime} />
+      <FreeThroughField value={lastDay} onChange={setLastDay} indefinite={indefinite} onIndefinite={setIndefinite} freeTime={freeTime} />
     </RecordWindow>
   );
 }
@@ -237,7 +270,7 @@ export function EndNowWindow({ org, row, onDone, onClose }: {
   org: ClubRecordProps['org']; row: FreeTimeRow; onDone: () => void; onClose: () => void;
 }) {
   const subject = freeTimeSubject(row, org.planLabel);
-  const insteadOf = row.lastDay ? <> instead of on {formatLongDay(row.lastDay)}</> : null;
+  const insteadOf = row.lastDay ? <> instead of on {formatLongDay(row.lastDay)}</> : <> (it had no end date)</>;
   const then = row.type === 'plan_tier'
     ? <>It goes back to {org.planLabel} at once; anyone using the tools that come only with {subject} is moved out on their next click.</>
     : row.type === 'module_addon' ? <>{row.addons.length === 1 ? 'It turns' : 'They turn'} off at once.</>

@@ -36,7 +36,8 @@ describe('Today\'s "Free time ending" counts the clubs the list shows (guard 8)'
     assert.match(waiting, /getStaffFreeTime\(\)\.then\(freeTimeEndingCount\)/);
     assert.match(waiting, /href: '\/platform-admin\/free-time\?view=staff&ending=14'/);
     assert.match(list, /return clubs\.filter\(c => c\.endingSoon\)\.length;/);
-    assert.match(list, /endingSoon: isEndingSoon\(lastDay, now\)/);
+    // A club whose grants have no end date never "ends soon" (and is still listed).
+    assert.match(list, /endingSoon: lastDay \? isEndingSoon\(lastDay, now\) : false/);
     assert.ok(!/overrides_ending/.test(waiting), '"Overrides ending" is gone');
   });
 

@@ -36,7 +36,7 @@ export default async function FreeTimePage({ searchParams }: { searchParams: Pro
 
   // A Founding account that also has staff free time running says so on its Founding row.
   const staffFreeTime: Record<string, string> = {};
-  for (const c of staff) staffFreeTime[c.orgId] = `${c.freeOn.replace(', the whole plan', '')} free through ${formatShortDay(c.lastDay)}`;
+  for (const c of staff) staffFreeTime[c.orgId] = `${c.freeOn.replace(', the whole plan', '')} ${c.lastDay ? `free through ${formatShortDay(c.lastDay)}` : 'free, no end date'}`;
 
   return (
     <FreeTimeClient

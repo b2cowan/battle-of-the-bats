@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { applyOperatorPlanChange, PlanRefusedError } from '@/lib/operator-plan-change';
-import { endInstantForLastDay, formatLongDay, lastDayRefusal } from '@/lib/free-time';
+import { canGiveIndefinitely, endInstantForLastDay, formatLongDay, INDEFINITE_REFUSAL, lastDayRefusal } from '@/lib/free-time';
 import { clubsStaffBelongsTo } from '@/lib/staff-own-club';
 import { subscriptionStatusLabel } from '@/lib/platform-labels';
 import { isClubPlan } from '@/lib/module-entitlements';
@@ -136,9 +136,12 @@ export const POST = withObservability(async (req: Request) => {
   if (actionType === 'subscription_status_override' && !VALID_STATUSES.has(targetStatus)) {
     return NextResponse.json({ error: 'Choose a valid billing status' }, { status: 400 });
   }
-  const dayRefusal = actionType === 'subscription_status_override' ? lastDayRefusal(lastDay, auth.role) : null;
+  // "No end date" is a super admin's alone (owner ruling 2026-10-30); `last_day` is then ignored.
+  const indefinite = actionType === 'subscription_status_override' && body.indefinite === true;
+  if (indefinite && !canGiveIndefinitely(auth.role)) return NextResponse.json({ error: INDEFINITE_REFUSAL }, { status: 403 });
+  const dayRefusal = actionType === 'subscription_status_override' && !indefinite ? lastDayRefusal(lastDay, auth.role) : null;
   if (dayRefusal) return NextResponse.json({ error: dayRefusal }, { status: 400 });
-  const expiresAt = actionType === 'subscription_status_override' ? endInstantForLastDay(lastDay) : null;
+  const expiresAt = actionType === 'subscription_status_override' && !indefinite ? endInstantForLastDay(lastDay) : null;
   if (actionType === 'plan_change' && !isOrgPlan(targetPlan)) {
     return NextResponse.json({ error: 'Choose a valid target plan' }, { status: 400 });
   }
@@ -167,7 +170,7 @@ export const POST = withObservability(async (req: Request) => {
     target_module: actionType === 'module_addon_enablement' ? targetModule : null,
     module_operation: actionType === 'module_addon_enablement' ? moduleOperation : null,
     expires_at: expiresAt,
-    last_day: actionType === 'subscription_status_override' ? lastDay : null,
+    last_day: actionType === 'subscription_status_override' && !indefinite ? lastDay : null,
   };
 
   const { data: operation, error: operationError } = await supabaseAdmin
@@ -233,10 +236,12 @@ export const POST = withObservability(async (req: Request) => {
           type: 'subscription_status',
           value: targetStatus,
           expires_at: expiresAt,
-          last_day: lastDay,
+          last_day: indefinite ? null : lastDay,
         }, { reason });
         results.push({ orgId: org.id, name: org.name, slug: org.slug, ok: true,
-          message: `Billing status reads ${subscriptionStatusLabel(targetStatus)} through ${formatLongDay(lastDay)}` });
+          message: indefinite
+            ? `Billing status reads ${subscriptionStatusLabel(targetStatus)} with no end date`
+            : `Billing status reads ${subscriptionStatusLabel(targetStatus)} through ${formatLongDay(lastDay)}` });
       }
 
       if (actionType === 'plan_change') {

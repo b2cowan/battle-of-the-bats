@@ -97,9 +97,10 @@ describe('changing the end is a compare-and-set (T11)', () => {
   const src = readFileSync('lib/free-time-writes.ts', 'utf8');
   const fn = src.slice(src.indexOf('export async function changeFreeTimeEnd'), src.indexOf('async function staleSentence'));
   it('refuses a stale end before writing, and the write itself carries the end it read', () => {
-    const stale = fn.indexOf('!== new Date(input.expectedExpiresAt).getTime()');
+    const stale = fn.indexOf('!sameEnd(row.expires_at, input.expectedExpiresAt');
     const write = fn.indexOf('.update({ expires_at: expiresAt })');
     assert.ok(stale > 0 && write > 0 && stale < write, 'the stale check comes before the write');
-    assert.ok(/\.update\(\{ expires_at: expiresAt \}\)[\s\S]{0,200}\.eq\('expires_at', row\.expires_at\)/.test(fn), 'the update is conditioned on the end it read');
+    assert.ok(/\.update\(\{ expires_at: expiresAt \}\)[\s\S]{0,400}\.eq\('expires_at', row\.expires_at\)/.test(fn), 'the update is conditioned on the end it read');
+    assert.ok(/\.is\('expires_at', null\)/.test(fn), 'a grant with no end date is conditioned on still having none');
   });
 });

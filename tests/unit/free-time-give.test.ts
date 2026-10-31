@@ -84,9 +84,48 @@ describe('giving free time: every refusal', () => {
     assert.equal(refusal(decideGive({ ...PLAN, lastDay: '2026-10-25' }, CLUB, OPEN, NOW)), 'The last free day must be after today.');
     assert.match(refusal(decideGive({ ...PLAN, lastDay: '2027-04-26' }, CLUB, OPEN, NOW))!, /up to 6 months, through April 25, 2027\. Longer needs a super admin\./);
     assert.ok(decideGive({ ...PLAN, lastDay: '2027-04-26', role: 'super_admin' }, CLUB, OPEN, NOW).ok);
-    assert.match(refusal(decideGive({ ...PLAN, lastDay: '2027-10-26', role: 'super_admin' }, CLUB, OPEN, NOW))!, /up to 12 months/);
+    // A super admin has no month limit (owner 2026-10-30): well past the old 12 months is fine.
+    assert.ok(decideGive({ ...PLAN, lastDay: '2030-10-26', role: 'super_admin' }, CLUB, OPEN, NOW).ok);
     // Sections and a billing status follow the same caps (Q2).
     assert.match(refusal(decideGive({ ...PLAN, kind: 'module_addon', addons: ['module_accounting'], lastDay: '2027-05-01' }, CLUB, OPEN, NOW))!, /up to 6 months/);
+  });
+
+  it('no end date is a super admin\'s alone, in every kind', () => {
+    const open = { ...PLAN, lastDay: undefined, indefinite: true };
+    assert.equal(refusal(decideGive({ ...open, role: 'billing' }, CLUB, OPEN, NOW)), 'Only a super admin can give free time with no end date.');
+    assert.equal(refusal(decideGive({ ...open, kind: 'module_addon', addons: ['module_accounting'], role: 'billing' }, CLUB, OPEN, NOW)), 'Only a super admin can give free time with no end date.');
+    assert.equal(refusal(decideGive({ ...open, kind: 'subscription_status', role: 'billing' }, CLUB, OPEN, NOW)), 'Only a super admin can give free time with no end date.');
+    // A role that cannot give at all hears that first.
+    assert.equal(refusal(decideGive({ ...open, role: 'support' }, CLUB, OPEN, NOW)), "Your role can't give free time.");
+    // Only the literal true counts: a string does not smuggle one through.
+    assert.equal(refusal(decideGive({ ...PLAN, lastDay: undefined, indefinite: 'true', role: 'super_admin' }, CLUB, OPEN, NOW)), 'Choose the last free day.');
+  });
+
+  it('a super admin gives with no end date: a null end and no last day', () => {
+    const r = decideGive({ ...PLAN, lastDay: undefined, indefinite: true, role: 'super_admin' }, CLUB, OPEN, NOW);
+    assert.ok(r.ok);
+    assert.equal(r.row.expires_at, null);
+    assert.equal(r.lastDay, null);
+    assert.deepEqual(r.row.target, { plan: 'club' });
+    const s = decideGive({ kind: 'subscription_status', indefinite: true, lastDay: '2027-01-01', reason: 'Keep open', role: 'super_admin' } as GiveRequest, CLUB, OPEN, NOW);
+    assert.ok(s.ok);
+    assert.equal(s.row.expires_at, null, 'a last day alongside "no end date" is ignored');
+    assert.equal(s.lastDay, null);
+  });
+
+  it('no end date still needs a reason and every other rule', () => {
+    const open = { ...PLAN, lastDay: undefined, indefinite: true, role: 'super_admin' };
+    assert.equal(refusal(decideGive({ ...open, reason: '' }, CLUB, OPEN, NOW)), "Say why you're giving it.");
+    assert.match(refusal(decideGive(open, { ...CLUB, planId: 'club_large' }, OPEN, NOW))!, /top plan/);
+    assert.match(refusal(decideGive(open, CLUB, { ...OPEN, staffIsMember: true }, NOW))!, /You belong to/);
+  });
+
+  it('a second plan grant with no end date reads without a date', () => {
+    const granted = { ...CLUB, runningPlanGrant: { id: 'g1', plan: 'club' as const, lastDay: null } };
+    assert.equal(
+      refusal(decideGive({ ...PLAN, plan: 'club_large' }, granted, OPEN, NOW)),
+      'UAT Test Org already has Club free with no end date. Change that entry instead of giving a second grant.',
+    );
   });
 
   it('no reason (T14)', () => {
@@ -138,5 +177,21 @@ describe('the routes', () => {
   it('insert only after the pure decision says yes', () => {
     const fn = writes.slice(writes.indexOf('export async function giveFreeTime'));
     assert.ok(fn.indexOf('if (!decision.ok) return decision;') < fn.indexOf(".from('org_overrides')"));
+  });
+});
+
+describe('changing an end to "no end date" is a super admin\'s alone, on the server', () => {
+  const writes = readFileSync('lib/free-time-writes.ts', 'utf8');
+  it('changeFreeTimeEnd checks the role before it checks the day or touches the row', () => {
+    const change = writes.slice(writes.indexOf('export async function changeFreeTimeEnd'), writes.indexOf('export async function endFreeTimeNow'));
+    const role = change.indexOf('indefinite && !canGiveIndefinitely(input.actor.role)');
+    assert.ok(role > 0, 'the role check is there');
+    assert.ok(role < change.indexOf('lastDayRefusal('), 'before the day check');
+    assert.ok(role < change.indexOf(".from('org_overrides')"), 'before any read or write of the row');
+  });
+  it('the PATCH route passes the choice through and keeps its power', () => {
+    const one = readFileSync('app/api/platform-admin/orgs/[id]/overrides/[oid]/route.ts', 'utf8');
+    assert.match(one, /indefinite: body\.indefinite/);
+    assert.match(one, /requirePlatformPower\('club_billing'\)/);
   });
 });

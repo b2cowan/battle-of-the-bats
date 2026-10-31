@@ -79,7 +79,7 @@ by owner decision. Deferred slices remain:
 
 ### 1.5 Plan / Tier Trial — BUILT as Support console Stage 4 "Free time" (2026-10-25 on dev, walk ledger §379)
 Operator-granted, timed, auto-reverting **whole-plan** free time: Tournament Plus, Club or Club · Association (never
-League plans), Billing up to 6 months, Super admin up to 12, refused on a paying club, a portal, a demo or a club the staff
+League plans), Billing up to 6 months, Super admin no limit (and alone may give "No end date"), refused on a paying club, a portal, a demo or a club the staff
 member belongs to. The `plan_tier` slice is no longer deferred: ONE effective-plan door (`lib/entitlement-grants.ts`,
 rules `lib/free-time.ts`) folds it into the plan and limits every access decision reads, build-guarded by
 `plan-reader-door-guard`; **every billing action reads the club's own plan** (`ownPlanOf`). The fee book's SQL reads it

@@ -1,6 +1,6 @@
 import { getPlatformAdminContext, hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { earliestLastDay, latestLastDay } from '@/lib/free-time';
+import { canGiveIndefinitely, earliestLastDay, latestLastDay } from '@/lib/free-time';
 import BulkOperationsClient from './BulkOperationsClient';
 
 export const metadata = { title: 'Bulk changes — Support console' };
@@ -77,8 +77,10 @@ export default async function BulkOperationsPage() {
       canManageProduct={auth ? hasPlatformPower(auth.role, 'bulk_sections') : false}
       freeThrough={{
         earliest: earliestLastDay(),
-        latest: (auth && latestLastDay(auth.role)) || earliestLastDay(),
+        // A billing role is capped; a super admin has no limit (null).
+        latest: auth ? latestLastDay(auth.role) : earliestLastDay(),
         role: auth?.role ?? 'read_only',
+        canIndefinite: !!auth && canGiveIndefinitely(auth.role),
       }}
     />
   );

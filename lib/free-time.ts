@@ -1,5 +1,6 @@
 import { PLAN_CONFIG, getEffectiveTournamentLimit, getEffectiveTeamLimit } from './plan-config';
 import { PLAN_RANK } from './plan-features';
+import { isTeamWorkspaceOrg } from './team-workspace-kind';
 import {
   addCalendarDays,
   addCalendarMonths,
@@ -48,12 +49,28 @@ export function grantablePlansAbove(ownPlan: OrgPlan): OrgPlan[] {
 export const FREE_TIME_KINDS = ['plan_tier', 'module_addon', 'subscription_status'] as const;
 export type FreeTimeKind = (typeof FREE_TIME_KINDS)[number];
 
-/** Who may give free time and for how long, in calendar months from today (owner ruling Q2). */
-export const FREE_TIME_CAP_MONTHS: Record<'super_admin' | 'billing', number> = { super_admin: 12, billing: 6 };
+/**
+ * Who may give free time and for how long. Billing gives up to this many calendar months from today (owner ruling Q2); a
+ * super admin has no limit and alone may give it with no end date (owner ruling 2026-10-30).
+ */
+export const FREE_TIME_CAP_MONTHS = { billing: 6 } as const;
 
-export function capMonthsFor(role: string): number | null {
-  return role === 'super_admin' || role === 'billing' ? FREE_TIME_CAP_MONTHS[role] : null;
+/** The furthest last free day anyone can name: past this the calendar math is meaningless. Use "no end date" for longer. */
+export const FREE_TIME_LAST_POSSIBLE_DAY = '2099-12-31';
+
+export function canGiveFreeTime(role: string): boolean {
+  return role === 'super_admin' || role === 'billing';
 }
+
+/** Months this role may give, or null when it has no month limit (a super admin) or cannot give at all. */
+export function capMonthsFor(role: string): number | null {
+  return role === 'billing' ? FREE_TIME_CAP_MONTHS.billing : null;
+}
+
+/** Only a super admin may give free time with no end date. */
+export const canGiveIndefinitely = (role: string) => role === 'super_admin';
+
+export const INDEFINITE_REFUSAL = 'Only a super admin can give free time with no end date.';
 
 /** Today's date in Eastern time, `YYYY-MM-DD`. */
 export function todayEastern(now: Date = new Date()): string {
@@ -65,7 +82,10 @@ export function earliestLastDay(now: Date = new Date()): string {
   return addCalendarDays(todayEastern(now), 1);
 }
 
-/** The latest last free day this role may give: today plus its cap, in calendar months. */
+/**
+ * The latest last free day this role may give: today plus its cap, in calendar months. Null when the role has no month
+ * limit (a super admin, bounded only by FREE_TIME_LAST_POSSIBLE_DAY) or cannot give; ask `canGiveFreeTime` to tell them apart.
+ */
 export function latestLastDay(role: string, now: Date = new Date()): string | null {
   const months = capMonthsFor(role);
   return months == null ? null : addCalendarMonths(todayEastern(now), months);
@@ -105,14 +125,14 @@ export function lastDayRefusal(lastDay: unknown, role: string, now: Date = new D
   if (typeof lastDay !== 'string' || !isCalendarDate(lastDay)) {
     return 'Choose the last free day.';
   }
-  const latest = latestLastDay(role, now);
-  if (latest == null) return "Your role can't give free time.";
+  if (!canGiveFreeTime(role)) return "Your role can't give free time.";
   if (lastDay < earliestLastDay(now)) return 'The last free day must be after today.';
-  if (lastDay > latest) {
-    const months = capMonthsFor(role);
-    return role === 'super_admin'
-      ? `You can give up to ${months} months, through ${formatLongDay(latest)}.`
-      : `You can give up to ${months} months, through ${formatLongDay(latest)}. Longer needs a super admin.`;
+  const latest = latestLastDay(role, now);
+  if (latest != null && lastDay > latest) {
+    return `You can give up to ${capMonthsFor(role)} months, through ${formatLongDay(latest)}. Longer needs a super admin.`;
+  }
+  if (lastDay > FREE_TIME_LAST_POSSIBLE_DAY) {
+    return `The last free day can be no later than ${formatLongDay(FREE_TIME_LAST_POSSIBLE_DAY)}. For longer, give it with no end date.`;
   }
   return null;
 }
@@ -342,7 +362,8 @@ export type ClubFacts = {
   accountKind: string | null;
   /** A live Stripe subscription (not a dev mock). */
   payingThroughStripe: boolean;
-  runningPlanGrant: { id: string; plan: OrgPlan; lastDay: string } | null;
+  /** `lastDay` is null for a grant with no end date. */
+  runningPlanGrant: { id: string; plan: OrgPlan; lastDay: string | null } | null;
 };
 
 /** What the server read about the giver and the server. */
@@ -360,7 +381,7 @@ export function freeTimeBlockOf(club: Pick<ClubFacts, 'name' | 'planId' | 'accou
   if (ctx.staffIsMember) {
     return { tone: 'red', kind: 'own_club', lead: `You belong to ${club.name}`, rest: ", so you can't give it free time. Another staff member can." };
   }
-  if (club.accountKind === 'team_workspace' || club.planId === 'team') {
+  if (isTeamWorkspaceOrg(club)) {
     // Stage 4b retired "can't be given free time yet": a portal's free time is its own kind, given from the coach.
     return { tone: 'amber', kind: 'portal', lead: "A Coaches Portal's free time is given from its coach's record.", rest: ' Open the owner on People, then the Coaches Portal tab. Its Founding Season stays as it is.' };
   }
@@ -374,7 +395,7 @@ export function freeTimeBlockOf(club: Pick<ClubFacts, 'name' | 'planId' | 'accou
 const nameOf = (plan: string) => PLAN_CONFIG[plan as OrgPlan]?.label ?? plan;
 
 export type PlanBlock =
-  | { kind: 'granted'; sentence: string; overrideId: string; plan: OrgPlan; lastDay: string }
+  | { kind: 'granted'; sentence: string; overrideId: string; plan: OrgPlan; lastDay: string | null }
   | { kind: 'paying'; sentence: string }
   | { kind: 'top'; sentence: string };
 
@@ -384,7 +405,9 @@ export function planGrantBlockOf(club: ClubFacts): PlanBlock | null {
     const g = club.runningPlanGrant;
     return {
       kind: 'granted', overrideId: g.id, plan: g.plan, lastDay: g.lastDay,
-      sentence: `${club.name} already has ${nameOf(g.plan)} free through ${formatLongDay(g.lastDay)}. Give it more time from that entry instead of a second grant.`,
+      sentence: g.lastDay
+        ? `${club.name} already has ${nameOf(g.plan)} free through ${formatLongDay(g.lastDay)}. Give it more time from that entry instead of a second grant.`
+        : `${club.name} already has ${nameOf(g.plan)} free with no end date. Change that entry instead of giving a second grant.`,
     };
   }
   if (club.payingThroughStripe) {
@@ -399,12 +422,14 @@ export function planGrantBlockOf(club: ClubFacts): PlanBlock | null {
   return null;
 }
 
-export type GiveRequest = { kind: unknown; plan?: unknown; addons?: unknown; lastDay: unknown; reason: unknown; role: string };
+/** `indefinite: true` gives it with no end date (a super admin only); `lastDay` is then ignored. */
+export type GiveRequest = { kind: unknown; plan?: unknown; addons?: unknown; lastDay: unknown; indefinite?: unknown; reason: unknown; role: string };
 
 export type GiveDecision = {
   ok: true;
-  row: { type: FreeTimeKind; value: string | null; target: Record<string, unknown> | null; expires_at: string };
-  lastDay: string;
+  row: { type: FreeTimeKind; value: string | null; target: Record<string, unknown> | null; expires_at: string | null };
+  /** Null when given with no end date. */
+  lastDay: string | null;
   reason: string;
 };
 
@@ -416,17 +441,19 @@ export function decideGive(req: GiveRequest, club: ClubFacts, ctx: GiveContext, 
   const refuse = (status: number, error: string): Refusal => ({ ok: false, status, error });
   if (req.kind === 'comp_period') return refuse(400, 'Comp period is no longer given from the console. It never gave a club anything.');
   if (typeof req.kind !== 'string' || !(FREE_TIME_KINDS as readonly string[]).includes(req.kind)) return refuse(400, 'Choose what to give.');
-  if (capMonthsFor(req.role) == null) return refuse(403, "Your role can't give free time.");
+  if (!canGiveFreeTime(req.role)) return refuse(403, "Your role can't give free time.");
 
   const block = freeTimeBlockOf(club, ctx);
   if (block) return refuse(block.kind === 'switch' ? 409 : 403, `${block.lead}${block.rest}`);
 
   const reason = typeof req.reason === 'string' ? req.reason.trim() : '';
   if (!reason) return refuse(400, "Say why you're giving it.");
-  const dayRefusal = lastDayRefusal(req.lastDay, req.role, now);
+  const indefinite = req.indefinite === true;
+  if (indefinite && !canGiveIndefinitely(req.role)) return refuse(403, INDEFINITE_REFUSAL);
+  const dayRefusal = indefinite ? null : lastDayRefusal(req.lastDay, req.role, now);
   if (dayRefusal) return refuse(400, dayRefusal);
-  const lastDay = req.lastDay as string;
-  const expires_at = endInstantForLastDay(lastDay)!;
+  const lastDay = indefinite ? null : (req.lastDay as string);
+  const expires_at = lastDay ? endInstantForLastDay(lastDay)! : null;
 
   if (req.kind === 'plan_tier') {
     if (req.plan === 'league') return refuse(400, "League plans can't be given as free time.");

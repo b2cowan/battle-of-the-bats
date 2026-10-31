@@ -605,7 +605,7 @@ const platformAdminHelp: HelpPageContent = {
             <HelpDef term="Billing status">The club reads as active while unpaid, to keep it open. ⚠ <strong>This genuinely changes what the customer can reach</strong> &mdash; it is not a display flag.</HelpDef>
           </HelpDefs>
           <HelpDefs>
-            <HelpDef term="How long you can give">A Super admin can give up to 12 months from today; Billing up to 6. The calendar greys out later days, and longer needs a Super admin.</HelpDef>
+            <HelpDef term="How long you can give">Billing can give up to 6 months from today; the calendar greys out later days, and longer needs a Super admin. A Super admin has no limit, and alone can tick <strong>No end date</strong> to give it until someone ends it. Free time with no end date shows as &ldquo;No end date&rdquo; on the club&rsquo;s record and the Free time list, and is never counted in &ldquo;ending soon&rdquo;.</HelpDef>
             <HelpDef term="Change the end date">On a running row of the Free time block. Pick a new last free day. If someone else changed it while your window was open, you are told who and to what, and nothing is changed.</HelpDef>
             <HelpDef term="End it now">On the same row. The club goes back to its own plan at once, with a reason. Put it back on the Story opens the same window.</HelpDef>
           </HelpDefs>
@@ -1212,7 +1212,7 @@ const platformAdminHelp: HelpPageContent = {
       heading: 'How to run guarded bulk changes',
       summary: 'Apply billing or product exceptions to multiple accounts with preview, reason, confirmation, and audit logging.',
       keywords: ['bulk changes', 'bulk operations', 'bulk', 'comp period', 'plan change', 'extra feature', 'module addon', 'subscription status', 'select filtered', 'review bulk operation', 'confirm bulk operation', 'billing status override', 'free through', 'skipped', 'succeeded', 'failed', 'you belong to this club', 'pays through stripe'],
-      searchText: 'guarded bulk changes billing status override free through last day billing up to 6 months super admin 12 months skipped you belong to this club succeeded failed skipped results plan change skips a club stripe still bills this club pays through stripe so its plan changes there',
+      searchText: 'guarded bulk changes billing status override free through last day billing up to 6 months super admin no limit no end date indefinitely skipped you belong to this club succeeded failed skipped results plan change skips a club stripe still bills this club pays through stripe so its plan changes there',
       links: [
         { label: 'Bulk changes', href: '/platform-admin/bulk-operations' },
         { label: 'Audit log', href: '/platform-admin/audit' },
@@ -1223,7 +1223,7 @@ const platformAdminHelp: HelpPageContent = {
           <ol>
             <li>Go to <strong>Bulk changes</strong> and filter by account name, slug, plan, or subscription status.</li>
             <li>Select individual accounts or use <strong>Select filtered</strong> after reviewing the filtered list.</li>
-            <li>Choose the action &mdash; Billing status override, Comp period grant, Plan change, or Extra feature &mdash; and set the target value. A billing status override needs <strong>Free through</strong>, the last day (Billing up to 6 months, Super admin up to 12). Comp periods require an expiration date. Extra features need you to choose turn on or remove.</li>
+            <li>Choose the action &mdash; Billing status override, Comp period grant, Plan change, or Extra feature &mdash; and set the target value. A billing status override needs <strong>Free through</strong>, the last day (Billing up to 6 months; a Super admin has no limit and can tick No end date). Comp periods require an expiration date. Extra features need you to choose turn on or remove.</li>
             <li>Enter a clear reason. This reason appears in the batch record and audit log.</li>
             <li>Review the preview panel, click <strong>Review bulk operation</strong>, then click <strong>Confirm bulk operation</strong>.</li>
             <li>Review the result list and recent bulk operation table for failures or skipped accounts.</li>

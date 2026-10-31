@@ -94,12 +94,14 @@ export function freeTimeStoryEntries(input: {
       : `Billing status: ${subscriptionStatusLabel(o.value ?? 'active')}`;
     const back = isPortal ? PORTAL_BACK : isPlan ? `Back to ${ownPlan}` : undefined;
     const changes = changesByGrant.get(o.id) ?? [];
-    const originalEnd = (typeof changes[0]?.old_value === 'string' ? changes[0].old_value : null) ?? o.expires_at;
+    // The end it was GIVEN with: the first change's "was", or (never changed) the current end. Null: given with no end date.
+    const originalEnd = changes[0] ? (typeof changes[0].old_value === 'string' ? changes[0].old_value : null) : o.expires_at;
 
     const given: StoryEntry = {
       key: `override:${o.id}`, at: o.created_at, kind: 'staff',
-      title: originalEnd ? `Free time given: ${subject} through ${short(originalEnd)}` : `Free time given: ${subject}`,
-      sub: isPortal ? 'Then back to the free Coaches Portal by itself' : isPlan ? `Then back to ${ownPlan} by itself` : undefined,
+      title: originalEnd ? `Free time given: ${subject} through ${short(originalEnd)}` : `Free time given: ${subject}, no end date`,
+      sub: !originalEnd ? 'Stays until staff end it'
+        : isPortal ? 'Then back to the free Coaches Portal by itself' : isPlan ? `Then back to ${ownPlan} by itself` : undefined,
       who: o.created_by ?? 'Staff', why: o.reason ?? null, whyNotRecorded: !o.reason,
     };
     const newestChange = changes.at(-1) ?? null;
@@ -115,16 +117,19 @@ export function freeTimeStoryEntries(input: {
     entries.push(given);
 
     for (const c of changes) {
-      const to = str(obj(c.new_value)?.expires_at);
+      const changed = obj(c.new_value);
+      if (!changed || !('expires_at' in changed)) continue;
+      // A null end on either side is "no end date" (the grant was given, or moved to, an open end).
+      const to = str(changed.expires_at);
       const from = typeof c.old_value === 'string' ? c.old_value : null;
-      if (!to || !from) continue;
       const entry: StoryEntry = {
         key: `audit:${c.id}`, at: c.created_at, kind: 'staff',
-        title: `${putBackOf(c.new_value) ? 'Put back: ' : ''}Free time changed: ${subject} now free through ${short(to)}`,
-        sub: `Was through ${short(from)}`, who: c.actor_email ?? 'Staff', ...whyFields(c, true),
+        title: `${putBackOf(c.new_value) ? 'Put back: ' : ''}Free time changed: ${subject} now ${to ? `free through ${short(to)}` : 'free with no end date'}`,
+        sub: from ? `Was through ${short(from)}` : 'Was no end date', who: c.actor_email ?? 'Staff', ...whyFields(c, true),
       };
       // The newest change of a running grant restores the day before it (or ends it now, when that day has passed).
-      if (c === newestChange && running && o.expires_at) {
+      // Moving to or from "no end date" offers no Put it back: it would have to restore an open end.
+      if (c === newestChange && running && o.expires_at && from) {
         const earlier = lastDayOfInstant(from);
         const passed = earlier < earliestLastDay(now);
         const title = passed ? `End ${possessive(org.name)} free time now` : `Put back the end of ${possessive(org.name)} free time`;

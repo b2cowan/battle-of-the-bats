@@ -10,6 +10,7 @@ import {
   foldGrants,
   grantablePlansAbove,
   lastDayOfInstant,
+  canGiveIndefinitely,
   lastDayRefusal,
   latestLastDay,
   type GrantRow,
@@ -135,16 +136,26 @@ describe('the giver\'s cap', () => {
     assert.equal(lastDayRefusal('2026-10-26', 'billing', NOW), null);
   });
 
-  it('Billing gives up to 6 months, Super admin up to 12, in calendar months from today', () => {
+  it('Billing gives up to 6 months, in calendar months from today', () => {
     assert.equal(latestLastDay('billing', NOW), '2027-04-25');
-    assert.equal(latestLastDay('super_admin', NOW), '2027-10-25');
     assert.equal(lastDayRefusal('2027-04-25', 'billing', NOW), null);
     assert.equal(
       lastDayRefusal('2027-04-26', 'billing', NOW),
       'You can give up to 6 months, through April 25, 2027. Longer needs a super admin.',
     );
-    assert.equal(lastDayRefusal('2027-10-25', 'super_admin', NOW), null);
-    assert.equal(lastDayRefusal('2027-10-26', 'super_admin', NOW), 'You can give up to 12 months, through October 25, 2027.');
+  });
+
+  it('a super admin has no month limit: any future day, up to the last possible one (owner 2026-10-30)', () => {
+    assert.equal(latestLastDay('super_admin', NOW), null, 'no cap');
+    assert.equal(lastDayRefusal('2027-10-26', 'super_admin', NOW), null, 'past the old 12 months');
+    assert.equal(lastDayRefusal('2035-06-30', 'super_admin', NOW), null);
+    assert.equal(lastDayRefusal('2099-12-31', 'super_admin', NOW), null);
+    assert.match(lastDayRefusal('2100-01-01', 'super_admin', NOW)!, /no later than December 31, 2099\. For longer, give it with no end date\./);
+  });
+
+  it('only a super admin can give with no end date', () => {
+    assert.equal(canGiveIndefinitely('super_admin'), true);
+    for (const role of ['billing', 'support', 'product', 'growth', 'read_only']) assert.equal(canGiveIndefinitely(role), false, role);
   });
 
   it('a role that cannot give has no cap and is refused', () => {

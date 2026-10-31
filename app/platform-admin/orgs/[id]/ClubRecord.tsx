@@ -105,8 +105,10 @@ export type ClubRecordProps = {
     planBlock: PlanBlock | null;
     plansAbove: Array<{ id: string; label: string }>;
     earliest: string;
-    latest: string;
+    /** Null: no limit (a super admin). */
+    latest: string | null;
     capMonths: number;
+    /** A super admin: no limit, and may give free time with no end date. */
     superAdmin: boolean;
   } | null;
 };
@@ -337,7 +339,8 @@ export default function ClubRecord(props: ClubRecordProps) {
   );
   // Free time: the staff grants running, and Founding Season. The title's chip names the staff grant that ends first.
   const runningFree = props.overrides.filter(o => o.running && (o.type !== 'comp_period' || o.founding));
-  const staffFree = runningFree.filter(o => o.type !== 'comp_period' && o.lastDay).sort((a, b) => a.lastDay!.localeCompare(b.lastDay!));
+  // A grant with no end date (lastDay null) sorts after every dated one, so the title's chip names a real end first.
+  const staffFree = runningFree.filter(o => o.type !== 'comp_period').sort((a, b) => (a.lastDay ?? '9999').localeCompare(b.lastDay ?? '9999'));
   const foundingRow = runningFree.find(o => o.founding) ?? null;
   const firstEnding = staffFree[0] ?? null;
   const freeTimeCell = (
@@ -346,7 +349,9 @@ export default function ClubRecord(props: ClubRecordProps) {
       <span className={kit.bandValue}>{runningFree.length}</span>
       <span className={kit.bandNote}>
         {portalRunning ? `ends ${formatShortDay(portalRunning.lastDay)} · ${leftWords(daysLeft(portalRunning.lastDay))}`
-          : firstEnding ? `${freeTimeSubject(firstEnding, org.planLabel)} ends first, ${formatShortDay(firstEnding.lastDay!)}`
+          : firstEnding ? (firstEnding.lastDay
+            ? `${freeTimeSubject(firstEnding, org.planLabel)} ends first, ${formatShortDay(firstEnding.lastDay)}`
+            : `${freeTimeSubject(firstEnding, org.planLabel)}, no end date`)
           : foundingRow ? 'Founding Season' : 'none running'}
       </span>
     </div>
@@ -410,7 +415,9 @@ export default function ClubRecord(props: ClubRecordProps) {
                 title="Open the Free time list">Free time</button>
               <span className={styles.ftBeside}>
                 {portalRunning ? `Premium free through ${formatShortDay(portalRunning.lastDay)}`
-                  : `${freeTimeSubject(firstEnding!, org.planLabel)} free through ${formatShortDay(firstEnding!.lastDay!)}`}
+                  : firstEnding!.lastDay
+                    ? `${freeTimeSubject(firstEnding!, org.planLabel)} free through ${formatShortDay(firstEnding!.lastDay)}`
+                    : `${freeTimeSubject(firstEnding!, org.planLabel)} free, no end date`}
               </span>
             </>
           )}

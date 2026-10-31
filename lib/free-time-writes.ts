@@ -7,8 +7,10 @@ import { grantsEnabled } from './entitlement-grants';
 import { endClubOverride } from './club-record-changes';
 import { staffBelongsToClub, type StaffIdentity } from './staff-own-club';
 import {
+  canGiveIndefinitely,
   decideGive,
   endInstantForLastDay,
+  INDEFINITE_REFUSAL,
   formatLongDay,
   freeTimeBlockOf,
   isGrantRunning,
@@ -46,7 +48,7 @@ type ClubRow = {
 };
 
 /** The club's running plan grant, if any (there is only ever one: a second is refused). */
-export async function runningPlanGrant(orgId: string): Promise<{ id: string; plan: OrgPlan; lastDay: string; expiresAt: string } | null> {
+export async function runningPlanGrant(orgId: string): Promise<{ id: string; plan: OrgPlan; lastDay: string | null; expiresAt: string | null } | null> {
   const { data, error } = await supabaseAdmin
     .from('org_overrides')
     .select('id, target, starts_at, expires_at, revoked_at')
@@ -55,9 +57,13 @@ export async function runningPlanGrant(orgId: string): Promise<{ id: string; pla
     .is('revoked_at', null)
     .order('created_at', { ascending: false });
   if (error) throw error;
-  const row = (data ?? []).find(r => isGrantRunning(r) && r.expires_at);
+  // A grant with no end date runs too (expires_at null).
+  const row = (data ?? []).find(r => isGrantRunning(r));
   if (!row) return null;
-  return { id: row.id, plan: (row.target as { plan: OrgPlan }).plan, lastDay: lastDayOfInstant(row.expires_at!), expiresAt: row.expires_at! };
+  return {
+    id: row.id, plan: (row.target as { plan: OrgPlan }).plan,
+    lastDay: row.expires_at ? lastDayOfInstant(row.expires_at) : null, expiresAt: row.expires_at,
+  };
 }
 
 /** Read what the decisions need about a club (its OWN plan, its Stripe standing, its running plan grant). */
@@ -104,7 +110,7 @@ export async function freeTimeDoorFacts(orgId: string, staff: StaffIdentity): Pr
   return { block: freeTimeBlockOf(club, ctx), planBlock: planGrantBlockOf(club), ownPlan: club.planId };
 }
 
-export type GiveInput = { orgId: string; kind: unknown; plan?: unknown; addons?: unknown; lastDay: unknown; reason: unknown; actor: Actor };
+export type GiveInput = { orgId: string; kind: unknown; plan?: unknown; addons?: unknown; lastDay: unknown; indefinite?: unknown; reason: unknown; actor: Actor };
 
 /** Give free time. Writes only when `decideGive` says yes. */
 export async function giveFreeTime(input: GiveInput): Promise<Refusal | { ok: true; override: { id: string } }> {
@@ -112,7 +118,7 @@ export async function giveFreeTime(input: GiveInput): Promise<Refusal | { ok: tr
   if (!club) return { ok: false, status: 404, error: 'Club not found.' };
   const ctx = await readGiveContext(club.id, input.actor);
   const decision = decideGive(
-    { kind: input.kind, plan: input.plan, addons: input.addons, lastDay: input.lastDay, reason: input.reason, role: input.actor.role },
+    { kind: input.kind, plan: input.plan, addons: input.addons, lastDay: input.lastDay, indefinite: input.indefinite, reason: input.reason, role: input.actor.role },
     club,
     ctx,
   );
@@ -145,9 +151,11 @@ export async function giveFreeTime(input: GiveInput): Promise<Refusal | { ok: tr
 export type ChangeInput = {
   orgId: string;
   overrideId: string;
-  /** The end the window was opened with (compare-and-set, T11). */
+  /** The end the window was opened with (compare-and-set, T11). `null` means it was opened on a grant with no end date. */
   expectedExpiresAt: unknown;
   lastDay: unknown;
+  /** Move the grant to no end date (a super admin only); `lastDay` is then ignored. */
+  indefinite?: unknown;
   reason: unknown;
   actor: Actor;
   extra?: Record<string, unknown>;
@@ -166,11 +174,15 @@ export async function changeFreeTimeEnd(input: ChangeInput): Promise<Refusal | {
 
   const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
   if (!reason) return refuse(400, "Say why you're changing it.");
-  const dayRefusal = lastDayRefusal(input.lastDay, input.actor.role);
+  const indefinite = input.indefinite === true;
+  if (indefinite && !canGiveIndefinitely(input.actor.role)) return refuse(403, INDEFINITE_REFUSAL);
+  const dayRefusal = indefinite ? null : lastDayRefusal(input.lastDay, input.actor.role);
   if (dayRefusal) return refuse(400, dayRefusal);
-  const lastDay = input.lastDay as string;
-  const expiresAt = endInstantForLastDay(lastDay)!;
-  if (typeof input.expectedExpiresAt !== 'string') return refuse(400, 'Open the free time again and change it from there.');
+  const lastDay = indefinite ? null : (input.lastDay as string);
+  const expiresAt = lastDay ? endInstantForLastDay(lastDay)! : null;
+  if (input.expectedExpiresAt !== null && typeof input.expectedExpiresAt !== 'string') {
+    return refuse(400, 'Open the free time again and change it from there.');
+  }
 
   const { data: row, error: readError } = await supabaseAdmin
     .from('org_overrides')
@@ -180,22 +192,24 @@ export async function changeFreeTimeEnd(input: ChangeInput): Promise<Refusal | {
     .maybeSingle();
   if (readError) return refuse(500, 'Nothing was changed. The server could not read it.');
   if (!row || row.type === 'comp_period') return refuse(404, 'That free time was not found.');
-  if (!isGrantRunning(row) || !row.expires_at) return refuse(409, 'That free time has already ended. Nothing was changed.');
-  if (new Date(row.expires_at).getTime() !== new Date(input.expectedExpiresAt).getTime()) {
+  if (!isGrantRunning(row)) return refuse(409, 'That free time has already ended. Nothing was changed.');
+  const sameEnd = (a: string | null, b: string | null) => (a === null || b === null ? a === b : new Date(a).getTime() === new Date(b).getTime());
+  if (!sameEnd(row.expires_at, input.expectedExpiresAt as string | null)) {
     return refuse(409, await staleSentence(club.id, row.id, row.created_by, row.expires_at));
   }
-  if (new Date(row.expires_at).getTime() === new Date(expiresAt).getTime()) return refuse(400, 'That is already its last free day.');
+  if (sameEnd(row.expires_at, expiresAt)) return refuse(400, expiresAt ? 'That is already its last free day.' : 'It already has no end date.');
 
   // Compare-and-set: only the row whose end is still the one the window was opened with.
-  const { data: written, error } = await supabaseAdmin
+  let write = supabaseAdmin
     .from('org_overrides')
     .update({ expires_at: expiresAt })
     .eq('id', row.id)
     .eq('org_id', club.id)
-    .is('revoked_at', null)
-    .eq('expires_at', row.expires_at)
-    .gt('expires_at', new Date().toISOString()) // never revive a grant that ran out since it was read
-    .select('id');
+    .is('revoked_at', null);
+  write = row.expires_at
+    ? write.eq('expires_at', row.expires_at).gt('expires_at', new Date().toISOString()) // never revive a grant that ran out since it was read
+    : write.is('expires_at', null);
+  const { data: written, error } = await write.select('id');
   if (error) return refuse(500, 'Nothing was changed. The server could not save it.');
   if (!written || written.length === 0) {
     const { data: now } = await supabaseAdmin.from('org_overrides').select('expires_at, created_by').eq('id', row.id).maybeSingle();
@@ -203,7 +217,7 @@ export async function changeFreeTimeEnd(input: ChangeInput): Promise<Refusal | {
   }
 
   await writePlatformAuditLog(input.actor.email, club.id, 'change_override_end', 'expires_at', row.expires_at, {
-    override_id: row.id, expires_at: expiresAt, last_day: lastDay, was_last_day: lastDayOfInstant(row.expires_at), ...input.extra,
+    override_id: row.id, expires_at: expiresAt, last_day: lastDay, was_last_day: row.expires_at ? lastDayOfInstant(row.expires_at) : null, ...input.extra,
   }, { reason });
   return { ok: true };
 }
@@ -219,7 +233,7 @@ export async function staleSentence(orgId: string, overrideId: string, createdBy
     .limit(50);
   const last = (data ?? []).find(e => (e.new_value as { override_id?: string } | null)?.override_id === overrideId);
   const who = last?.actor_email ?? createdBy;
-  const runs = expiresAt ? ` It now runs through ${formatLongDay(lastDayOfInstant(expiresAt))}.` : '';
+  const runs = expiresAt ? ` It now runs through ${formatLongDay(lastDayOfInstant(expiresAt))}.` : ' It now has no end date.';
   return `${who} changed this free time while you had it open.${runs} Look again before you change it.`;
 }
 

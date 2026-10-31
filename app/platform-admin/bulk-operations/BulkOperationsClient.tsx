@@ -25,7 +25,8 @@ type ApplyResult = {
 };
 
 /** The days a billing status override may run through, for this role (free time's caps, owner Q7). */
-type FreeThroughBounds = { earliest: string; latest: string; role: string };
+/** `latest` is null for a super admin (no limit); `canIndefinite` shows the "no end date" choice. */
+type FreeThroughBounds = { earliest: string; latest: string | null; role: string; canIndefinite: boolean };
 
 const PLAN_LABELS: Record<string, string> = {
   tournament: 'Tournament',
@@ -86,6 +87,7 @@ export default function BulkOperationsClient({
   const [targetModule, setTargetModule] = useState(MODULE_OPTIONS[0].value);
   const [moduleOperation, setModuleOperation] = useState<ModuleOperation>('enable');
   const [lastDay, setLastDay] = useState('');
+  const [indefinite, setIndefinite] = useState(false);
   const [reason, setReason] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -117,7 +119,7 @@ export default function BulkOperationsClient({
   const moduleLabel = MODULE_OPTIONS.find(module => module.value === targetModule)?.label ?? targetModule;
 
   const previewCopy = actionType === 'subscription_status_override'
-    ? `Billing status reads ${SUBSCRIPTION_STATUS_LABELS[targetStatus] ?? targetStatus}${lastDay ? ` through ${formatLongDay(lastDay)}` : ''}. The club's real billing is unchanged.`
+    ? `Billing status reads ${SUBSCRIPTION_STATUS_LABELS[targetStatus] ?? targetStatus}${indefinite ? ' with no end date' : lastDay ? ` through ${formatLongDay(lastDay)}` : ''}. The club's real billing is unchanged.`
     : actionType === 'module_addon_enablement'
       ? `${MODULE_OPERATION_LABELS[moduleOperation]} ${moduleLabel} as an extra feature for these organizations only.`
       : `Change base plan to ${PLAN_LABELS[targetPlan] ?? targetPlan}.`;
@@ -168,7 +170,7 @@ export default function BulkOperationsClient({
       setError('Choose an extra feature.');
       return;
     }
-    if (actionType === 'subscription_status_override' && !lastDay) {
+    if (actionType === 'subscription_status_override' && !indefinite && !lastDay) {
       setError('Choose the last free day.');
       return;
     }
@@ -189,7 +191,8 @@ export default function BulkOperationsClient({
           target_plan: targetPlan,
           target_module: targetModule,
           module_operation: moduleOperation,
-          last_day: actionType === 'subscription_status_override' ? lastDay : null,
+          last_day: actionType === 'subscription_status_override' && !indefinite ? lastDay : null,
+          indefinite: actionType === 'subscription_status_override' && indefinite,
           reason,
         }),
       });
@@ -416,21 +419,30 @@ export default function BulkOperationsClient({
             )}
 
             {actionType === 'subscription_status_override' && (
-              <label className={kit.fieldGroup}>
-                <span className={kit.label}>Free through<span className={kit.req} aria-hidden="true"> *</span></span>
-                <DateInput
-                  className={`${kit.field} ${kit.wide}`}
-                  value={lastDay}
-                  onChange={v => { setLastDay(v); setConfirming(false); }}
-                  min={freeThrough.earliest}
-                  max={freeThrough.latest}
-                  aria-label="Free through"
-                  required
-                />
-                {lastDay && lastDayRefusal(lastDay, freeThrough.role)
-                  ? <span className={kit.fieldError}>{lastDayRefusal(lastDay, freeThrough.role)}</span>
-                  : <span className={kit.hint}>The last day it applies; it ends that midnight, Eastern. A club you belong to is skipped.</span>}
-              </label>
+              <div className={kit.fieldGroup}>
+                <label className={kit.fieldGroup}>
+                  <span className={kit.label}>Free through<span className={kit.req} aria-hidden="true"> *</span></span>
+                  <DateInput
+                    className={`${kit.field} ${kit.wide}`}
+                    value={indefinite ? '' : lastDay}
+                    onChange={v => { setLastDay(v); setConfirming(false); }}
+                    min={freeThrough.earliest}
+                    max={freeThrough.latest ?? undefined}
+                    disabled={indefinite}
+                    aria-label="Free through"
+                    required={!indefinite}
+                  />
+                  {!indefinite && lastDay && lastDayRefusal(lastDay, freeThrough.role)
+                    ? <span className={kit.fieldError}>{lastDayRefusal(lastDay, freeThrough.role)}</span>
+                    : <span className={kit.hint}>The last day it applies; it ends that midnight, Eastern. A club you belong to is skipped.</span>}
+                </label>
+                {freeThrough.canIndefinite && (
+                  <label className={kit.check}>
+                    <input type="checkbox" checked={indefinite} onChange={e => { setIndefinite(e.target.checked); setConfirming(false); }} />
+                    No end date: it stays until someone ends it
+                  </label>
+                )}
+              </div>
             )}
 
             <label className={kit.fieldGroup}>

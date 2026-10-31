@@ -22,9 +22,9 @@ export type StaffFreeTimeClub = {
   kind: 'club' | 'portal';
   /** What runs, in the list's words: "Club, the whole plan · Accounting"; "Premium Coaches Portal". */
   freeOn: string;
-  /** The soonest last free day among the club's grants. */
-  lastDay: string;
-  daysLeft: number;
+  /** The soonest last free day among the club's grants; null when every grant it holds has no end date. */
+  lastDay: string | null;
+  daysLeft: number | null;
   endingSoon: boolean;
   /** Who gave, and why, the grant that ends first. */
   givenBy: string;
@@ -51,7 +51,6 @@ export async function getStaffFreeTime(now: Date = new Date()): Promise<StaffFre
       .select('org_id, type, value, target, starts_at, expires_at, revoked_at, reason, created_by')
       .in('type', ['plan_tier', 'module_addon', 'subscription_status'])
       .is('revoked_at', null)
-      .not('expires_at', 'is', null)
       .limit(5000),
     listDemoOrgIdsQuietly(),
     freeTimePortalOrgIds(),
@@ -71,22 +70,24 @@ export async function getStaffFreeTime(now: Date = new Date()): Promise<StaffFre
   const clubs: StaffFreeTimeClub[] = [];
   for (const [orgId, rows] of byOrg) {
     if (!names.has(orgId)) continue;
-    const sorted = [...rows].sort((a, b) => a.expires_at!.localeCompare(b.expires_at!));
+    // A grant with no end date (expires_at null) sorts after every dated one, so a club's soonest end leads.
+    const sorted = [...rows].sort((a, b) => (a.expires_at ?? '9999').localeCompare(b.expires_at ?? '9999'));
     const first = sorted[0];
-    const lastDay = lastDayOfInstant(first.expires_at!);
+    const lastDay = first.expires_at ? lastDayOfInstant(first.expires_at) : null;
     clubs.push({
       orgId,
       name: names.get(orgId)!,
       kind: portalIds.has(orgId) ? 'portal' : 'club',
       freeOn: [...new Set(sorted.map(r => freeOnWords(r, portalIds.has(orgId))))].join(' · '),
       lastDay,
-      daysLeft: daysLeft(lastDay, now),
-      endingSoon: isEndingSoon(lastDay, now),
+      daysLeft: lastDay ? daysLeft(lastDay, now) : null,
+      endingSoon: lastDay ? isEndingSoon(lastDay, now) : false,
       givenBy: first.created_by ?? 'Staff',
       why: first.reason ?? '',
     });
   }
-  return clubs.sort((a, b) => a.lastDay.localeCompare(b.lastDay) || a.name.localeCompare(b.name));
+  // Clubs with an end come first, soonest first; the ones with no end date follow, by name.
+  return clubs.sort((a, b) => (a.lastDay ?? '9999').localeCompare(b.lastDay ?? '9999') || a.name.localeCompare(b.name));
 }
 
 /** Today's "Free time ending": the clubs the list's 14-day filter shows. */

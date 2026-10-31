@@ -11,7 +11,7 @@ import { planLabel, subscriptionStatusLabel } from '@/lib/platform-labels';
 import { holdsSlot } from '@/lib/tournament-slot';
 import { effectiveOrgFactsOf } from '@/lib/entitlement-grants';
 import { freeTimeDoorFacts } from '@/lib/free-time-writes';
-import { earliestLastDay, grantablePlansAbove, isGrantRunning, lastDayOfInstant, latestLastDay } from '@/lib/free-time';
+import { canGiveIndefinitely, capMonthsFor, earliestLastDay, grantablePlansAbove, isGrantRunning, lastDayOfInstant, latestLastDay } from '@/lib/free-time';
 import { isFoundingSeasonCompExpiry } from '@/lib/plan-config';
 import { stripeStillBills } from '@/lib/stripe-billing-state';
 import { readPortalRecordFreeTime } from '@/lib/portal-free-time-tab';
@@ -209,9 +209,10 @@ export default async function ClubRecordPage({ params, searchParams }: {
       planBlock: doorFacts.planBlock,
       plansAbove: grantablePlansAbove(plan).map(p => ({ id: p, label: planLabel(p) })),
       earliest: earliestLastDay(),
-      latest: latestLastDay(auth.role) ?? earliestLastDay(),
-      capMonths: auth.role === 'super_admin' ? 12 : 6,
-      superAdmin: auth.role === 'super_admin',
+      // Null for a super admin: no limit, and the only role that can give it with no end date.
+      latest: latestLastDay(auth.role),
+      capMonths: capMonthsFor(auth.role) ?? 0,
+      superAdmin: canGiveIndefinitely(auth.role),
     },
     can: {
       support: hasPlatformPower(auth.role, 'club_support'),
