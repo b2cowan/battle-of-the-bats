@@ -15,6 +15,7 @@ import { trustedPreviewLines, type MovePreviewLine } from './plan-move-preview-l
 import { inPlaceMetadata, parseClubName } from './workspace-upgrade';
 import { workspaceCannotBecomeClub } from './workspace-upgrade-status';
 import { restoreCoachesPortalRetainedRecords } from './portal-retained-restore';
+import { PLAN_BILLING_WORDS as W } from './plan-billing-words';
 
 /**
  * MOVING A PAYING ORGANIZATION BETWEEN PLANS — ONE SUBSCRIPTION, NEVER A SECOND CHECKOUT
@@ -58,6 +59,7 @@ export type MoveRefusal =
   | { code: 'band_too_small'; error: string; activeTeams: number; teamLimit: number }
   /** A Premium coach whose last payment failed: not moved onto Club until the payment method is fixed (Stage 4b). */
   | { code: 'payment_failing'; error: string }
+  | { code: 'subscription_ending'; error: string; endsAt: string | null }
   /** The portal holds more than one team, or has already moved into another club: the flip would refuse AFTER the charge, so it is refused before (Stage 4b). */
   | { code: 'cannot_become_club'; error: string }
   /** A Coaches Portal becoming the club needs the name the coach typed (Stage 4b); `error` is a sentence the screen can show. */
@@ -156,6 +158,15 @@ async function validateMove(org: MoveOrg, toPlan: OrgPlan): Promise<
   const live = await loadLiveSubscription(org);
   if ('code' in live) return { ok: false, refusal: live };
 
+  // Owner, Stage 4b Part 3: keep the coach's decision to leave until they explicitly keep Premium.
+  if (ownPlanOf(org) === 'team' && direction === 'up' && live.sub.cancel_at_period_end) {
+    return { ok: false, refusal: {
+      code: 'subscription_ending',
+      error: W.clubUpgrade.ending(isoFromUnix(live.item.current_period_end)),
+      endsAt: isoFromUnix(live.item.current_period_end),
+    } };
+  }
+
   // Stage 4b: a Premium coach moves onto Club only on a subscription that is paying. A failing payment is allowed to be MOVED by
   // the paying set (`past_due` counts as live), but the flip refuses anything not settled — so the swap would charge Club's price
   // and leave the portal as it was. Refuse it up front, in plain words, before any price is shown or any charge is made.
@@ -199,12 +210,12 @@ async function validateMove(org: MoveOrg, toPlan: OrgPlan): Promise<
   return { ok: true, direction, live, priceId };
 }
 
-async function unitAmount(priceId: string): Promise<{ amount: number; currency: string }> {
+export async function unitAmount(priceId: string): Promise<{ amount: number; currency: string }> {
   const price = await getStripe().prices.retrieve(priceId);
   return { amount: price.unit_amount ?? 0, currency: price.currency };
 }
 
-function isoFromUnix(seconds: number | null | undefined): string | null {
+export function isoFromUnix(seconds: number | null | undefined): string | null {
   return typeof seconds === 'number' ? new Date(seconds * 1000).toISOString() : null;
 }
 

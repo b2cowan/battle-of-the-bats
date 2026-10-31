@@ -22,9 +22,13 @@
  */
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
+import billing from '@/components/billing/Billing.module.css';
+import { IN_PLACE_RETURN_PARAM, isInPlaceReturn } from '@/lib/workspace-upgrade';
 import {
   Users, DollarSign, Contact, Globe, CalendarDays, Trophy, Building2, UserCheck, Lock, ListChecks,
-  RefreshCw, type LucideIcon,
+  RefreshCw, Pencil, UserPlus, ExternalLink, type LucideIcon,
 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability, hasBillingAccess } from '@/lib/roles';
@@ -42,6 +46,7 @@ import ck from './ClubKit.module.css';
 import styles from './ClubHub.module.css';
 import frame from '../AdminKitFrame.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import PageNotice from '@/components/shared/PageNotice';
 
 /** The org's own word for itself on its hub: a Club is a club; a League Plus org, a league. */
 function orgNoun(planId: string | undefined): string {
@@ -123,9 +128,12 @@ const PROGRAM_ICON: Record<AdminProgramKey, LucideIcon> = {
 };
 
 type Attention = { pendingTournamentCount: number; pendingLeagueCount: number; openLeagueSeasonId: string | null };
-type Checklist = { doneCount: number; totalSteps: number; allDone: boolean };
+type Checklist = { doneCount: number; totalSteps: number; allDone: boolean; steps: { key: string; done: boolean; href: string }[] };
 
 export default function ClubHubKit() {
+  const params = useSearchParams();
+  const router = useRouter();
+  const [arrivedFromUpgrade] = useState(() => isInPlaceReturn(params));
   const { currentOrg, userRole, userCapabilities, canOpen, loading } = useOrg();
   usePageTitle('Overview');
   const { base, programs, alsoOnPlan } = useAdminKitNav();
@@ -137,7 +145,14 @@ export default function ClubHubKit() {
   const isOwner = userRole === 'owner';
   const canManageBilling = hasBillingAccess(userRole, userCapabilities);
   const club = isClubPlan(currentOrg?.planId);
+  const showUpgradeSetup = arrivedFromUpgrade && isOwner && club;
   const noun = orgNoun(currentOrg?.planId);
+  useEffect(() => {
+    if (!showUpgradeSetup || !slug || !params.has(IN_PLACE_RETURN_PARAM)) return;
+    const query = new URLSearchParams(params.toString());
+    query.delete(IN_PLACE_RETURN_PARAM);
+    router.replace(`/${slug}/admin${query.size ? `?${query}` : ''}`, { scroll: false });
+  }, [showUpgradeSetup, slug, params, router]);
 
   // Today's hub's two registration counts (its attention box) — kept for the club that runs a house
   // league or hosts tournaments. Only asked where the person can open that program.
@@ -167,20 +182,24 @@ export default function ClubHubKit() {
 
   // "You also coach 13U AA" — only for someone who really coaches a team HERE (the sidebar door's
   // own check, J4-047): an owner who coaches nothing sees no line and no dead end.
-  const [coachedTeams, setCoachedTeams] = useState<string[]>([]);
+  const [assignmentRows, setAssignmentRows] = useState<{ teamId?: string; teamName?: string }[]>([]);
+  const [teamRead, setTeamRead] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [teamReadRevision, setTeamReadRevision] = useState(0);
   useEffect(() => {
     if (!slug) return;
     const controller = new AbortController();
     fetch(`/api/coaches/${slug}/assignments`, { cache: 'no-store', signal: controller.signal })
-      .then(r => (r.ok ? r.json() : null))
+      .then(r => { if (!r.ok) throw new Error('Assignments unavailable'); return r.json(); })
       .then(d => {
         if (controller.signal.aborted || !d) return;
-        const rows = [...(Array.isArray(d.assignments) ? d.assignments : []), ...(Array.isArray(d.closedAssignments) ? d.closedAssignments : [])] as { teamName?: string }[];
-        setCoachedTeams([...new Set(rows.map(r => r.teamName).filter((n): n is string => !!n))]);
+        setAssignmentRows([...(Array.isArray(d.assignments) ? d.assignments : []), ...(Array.isArray(d.closedAssignments) ? d.closedAssignments : [])]);
+        setTeamRead('ready');
       })
-      .catch(() => {});
+      .catch(() => { if (!controller.signal.aborted) setTeamRead('error'); });
     return () => controller.abort();
-  }, [slug]);
+  }, [slug, teamReadRevision]);
+  const coachedTeams = [...new Set(assignmentRows.map(r => r.teamName).filter((n): n is string => !!n))];
+  const upgradeTeams = [...new Map(assignmentRows.filter((r): r is { teamId: string; teamName: string } => !!r.teamId && !!r.teamName).map(r => [r.teamId, r])).values()];
 
   if (loading || !userRole || !currentOrg) {
     return <LoadingState label="Loading the overview…" />;
@@ -189,6 +208,14 @@ export default function ClubHubKit() {
   const canOpenRepTeams = canOpen('module_rep_teams');
   const canSeeMembers = (isOwner || hasCapability(userRole, userCapabilities, 'module_members')) && canOpen('module_members');
   const canManageMembers = hasCapability(userRole, userCapabilities, 'manage_members');
+
+  // The setup list a coach sees after becoming a club: the board and public-site steps reuse the checklist's own destinations.
+  const stepHref = (key: string, fallback: string) => checklist?.steps?.find(step => step.key === key)?.href ?? fallback;
+  const setupSteps = [
+    { title: W.clubUpgrade.addressStep, help: `${W.clubUpgrade.addressValue(slug)} · ${W.clubUpgrade.addressStepHelp}`, action: W.clubUpgrade.change, Icon: Pencil, href: `${base}/org/settings` },
+    { title: W.clubUpgrade.staffStep, help: W.clubUpgrade.staffHelp, action: W.clubUpgrade.invite, Icon: UserPlus, href: stepHref('board', `${base}/org/members`) },
+    { title: W.clubUpgrade.publicStep, help: W.clubUpgrade.publicHelp, action: W.clubUpgrade.open, Icon: ExternalLink, href: stepHref('public', `${base}/public-site`) },
+  ];
 
   // ── This morning ─────────────────────────────────────────────────────────────────────────────
   const briefCards = brief ? BRIEF_CARDS.filter(c => brief.counts[c.key] !== undefined) : [];
@@ -238,6 +265,36 @@ export default function ClubHubKit() {
       {/* "Overview", as the rail row that opens it and as the coaches portal titles its own overview — not
           the club's name, which the bar directly above already shows (owner, 2026-10-01). No eyebrow. */}
       <AdminPageHeader title="Overview" />
+      {showUpgradeSetup && <>
+        <CoachCard className={billing.setupCard}>
+          <h2 className={billing.sectionTitle}>{W.clubUpgrade.ready}</h2>
+          <p className={billing.hint}>{W.clubUpgrade.readyBody(currentOrg.name)}</p>
+          <ol className={billing.setupSteps} aria-label={W.clubUpgrade.setupLabel}>
+            <li><span aria-hidden>✓</span><div><strong>{W.clubUpgrade.nameStep}</strong><small>{currentOrg.name}</small></div></li>
+            {setupSteps.map((step, index) => <li key={step.title}>
+              <span aria-hidden>{index + 2}</span><div><strong>{step.title}</strong><small>{step.help}</small></div>
+              <Link className={`btn btn-outline ${billing.setupAction} ${billing.symbolAction}`} aria-label={step.action} href={step.href}><step.Icon size={16} aria-hidden className={billing.phoneIcon} /><span className={billing.desktopText}>{step.action}</span></Link>
+            </li>)}
+          </ol>
+        </CoachCard>
+        <CoachCard className={billing.setupCard}>
+          <h2 className={billing.sectionTitle}>{W.clubUpgrade.repTeams}</h2>
+          {teamRead === 'loading' && <LoadingState inline label={W.clubUpgrade.loadingTeam} />}
+          {teamRead === 'error' && <>
+            <PageNotice notice={{ tone: 'bad', text: W.clubUpgrade.teamReadFailed }} />
+            <button className={`btn btn-outline ${billing.setupAction}`} type="button" onClick={() => { setTeamRead('loading'); setTeamReadRevision(n => n + 1); }}>{W.clubUpgrade.checkAgain}</button>
+          </>}
+          {teamRead === 'ready' && upgradeTeams.length === 0 && <>
+            <p className={billing.hint}>{W.clubUpgrade.noTeam}</p>
+            <Link href={`${base}/rep-teams`} className={`btn btn-outline ${billing.setupAction}`}>{W.clubUpgrade.repTeams}</Link>
+          </>}
+          {teamRead === 'ready' && upgradeTeams.map(team => <div key={team.teamId}>
+            <strong>{team.teamName}</strong>
+            <p className={billing.hint}>{W.clubUpgrade.teamHelp}</p>
+            <Link className={`btn btn-lime ${billing.setupAction}`} href={`/${slug}/coaches/teams/${team.teamId}`}>{W.clubUpgrade.openTeam}</Link>
+          </div>)}
+        </CoachCard>
+      </>}
 
       {hasBriefSection && (
         <section className={ck.section} aria-labelledby="hub-brief">

@@ -65,6 +65,7 @@ describe('Plan & billing profiles', () => {
   it('describes only the existing upgrade, move and downgrade mechanisms', () => {
     const actual = Object.values(PLAN_BILLING_PROFILES).flatMap(p => p.changes.map(c => `${p.key}:${c.mechanism}:${c.target}`)).sort();
     assert.deepEqual(actual, [
+      'team:move:club',
       'tournament:checkout:tournament_plus',
       'tournament_plus:downgrade:tournament',
       'tournament_plus:move:club', 'tournament_plus:move:club_large',
@@ -76,11 +77,10 @@ describe('Plan & billing profiles', () => {
         if (c.mechanism === 'checkout') assert.ok(upgradePlansFor(p.key).includes(c.target as 'tournament_plus'));
       }
     }
-    // Stage 4b Part 2: the SERVER moves Premium onto Club (moveDirection says up), but the Premium page draws no Club row and fetches
-    // no move until Part 3 builds the window. Part 3 swaps the profile back to `checkoutAndMoves('team')` and extends the list above.
+    // Premium offers Club only; the larger band is reached afterwards.
     assert.equal(moveDirection('team', 'club'), 'up');
     assert.equal(moveDirection('team', 'club_large'), 'up');
-    assert.deepEqual(PLAN_BILLING_PROFILES.team.changes, [], 'the Premium page shows no Change plan table before Part 3');
+    assert.deepEqual(PLAN_BILLING_PROFILES.team.changes, [{ target: 'club', mechanism: 'move' }]);
   });
 
   it('keeps the Premium seven, the downgrade losses, the Club team meters and the Founding Season display flag', () => {

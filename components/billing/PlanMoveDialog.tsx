@@ -11,55 +11,55 @@
  * A club that is not paying on a live subscription (an operator's trial, a comp) has nothing to
  * change: the move route says so (`no_live_subscription`) and the window offers checkout instead.
  * One window serves the plan page and the Rep Teams team-cap refusal ("offers the move in place").
+ *
+ * PREMIUM → CLUB (Stage 4b, `inPlace`): the same window becomes the form where a Coaches Portal starts its club — a
+ * required club name, the charge as lines that add up to "Due today", and (with no live subscription) a server quote for
+ * checkout with a Monthly/Yearly choice. Several refusals are worded here rather than shown as the server's sentence.
  */
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
-import KitDialog from '@/components/shared/KitDialog';
+import { CLUB_NAME_MAX, inPlaceReturnPath, isPremiumToClub, parseClubName, type ClubCheckoutPreview } from '@/lib/workspace-upgrade';
+import KitDialog, { DialogCancel } from '@/components/shared/KitDialog';
 import PageNotice from '@/components/shared/PageNotice';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import styles from './Billing.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import FreeTimeBand from './FreeTimeBand';
 
 /** Where "Contact us" goes until a band is on sale (the Stage 8 flip) and above the largest band.
  *  The company's one inbox (owner 2026-09-26), the same address `lib/email.ts` falls back to. */
 export const CONTACT_HREF = 'mailto:fieldlogichq@gmail.com';
-
 type Preview =
-  | { direction: 'up'; amountDueToday: number; currency: string; prorationDate: number; nextAmount: number; renewsAt: string | null; billingCycle: 'monthly' | 'annual' }
+  | { direction: 'up'; amountDueToday: number; currency: string; prorationDate: number; nextAmount: number; renewsAt: string | null; billingCycle: 'monthly' | 'annual'; lines: { kind: 'charge' | 'credit'; plan: OrgPlan; amount: number }[] | null }
   | { direction: 'down'; effectiveAt: string | null; nextAmount: number; currency: string; billingCycle: 'monthly' | 'annual' };
-type Refusal = { code: string; error: string; activeTeams?: number; teamLimit?: number };
+type Refusal = { code: string; error: string; activeTeams?: number; teamLimit?: number; endsAt?: string | null; checkout?: ClubCheckoutPreview };
 
-/** Cents → "$12.34" (CAD unless Stripe says otherwise). */
+/** Cents from the server, with the currency Stripe supplied. */
 export function money(cents: number, currency = 'cad'): string {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: currency.toUpperCase() }).format(cents / 100);
 }
 
-export default function PlanMoveDialog({
-  org,
-  toPlan,
-  returnTo,
-  teamsHref,
-  onClose,
-  onMoved,
-}: {
+export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeThrough = null, onClose, onMoved }: {
   org: { slug: string; name: string; planId: OrgPlan; subscriptionPeriod?: 'monthly' | 'annual' };
-  toPlan: OrgPlan;
-  returnTo: string;
-  teamsHref: string;
-  onClose: () => void;
-  /** The move happened (or was scheduled): the sentence to show, and reload what depends on the plan. */
-  onMoved: (notice: string) => void;
+  toPlan: OrgPlan; returnTo: string; teamsHref: string; freeThrough?: string | null;
+  onClose: () => void; onMoved: (notice: string) => void;
 }) {
   const target = PLAN_CONFIG[toPlan];
+  const inPlace = isPremiumToClub(org.planId, toPlan);
   const live = useRef(true);
   const busyRef = useRef(false);
   const leaving = useRef(false);
   useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
-  const [state, setState] = useState<{ status: 'loading' } | { status: 'preview'; preview: Preview } | { status: 'refused'; refusal: Refusal }>({ status: 'loading' });
+  const [state, setState] = useState<{ status: 'loading' } | { status: 'preview'; preview: Preview } | { status: 'refused'; refusal: Refusal } | { status: 'finished' }>({ status: 'loading' });
   const [working, setWorking] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
+  const [clubName, setClubName] = useState('');
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [cycle, setCycle] = useState<'monthly' | 'annual'>(org.subscriptionPeriod ?? 'monthly');
+  const [revision, setRevision] = useState(0);
+  const nameInput = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const restore = (event: PageTransitionEvent) => {
       if (event.persisted) { leaving.current = false; busyRef.current = false; setWorking(false); }
@@ -67,166 +67,188 @@ export default function PlanMoveDialog({
     window.addEventListener('pageshow', restore);
     return () => window.removeEventListener('pageshow', restore);
   }, []);
-
   useEffect(() => {
     let stale = false;
     fetch('/api/billing/move/preview', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orgSlug: org.slug, planKey: toPlan }),
-    })
-      .then(async r => {
-        const d = await r.json().catch(() => ({}));
-        if (stale) return;
-        if (r.ok) setState({ status: 'preview', preview: d as Preview });
-        else setState({ status: 'refused', refusal: { code: d.code ?? 'error', error: d.error ?? W.errors.movePreview, activeTeams: d.activeTeams, teamLimit: d.teamLimit } });
-      })
-      .catch(() => { if (!stale) setState({ status: 'refused', refusal: { code: 'network', error: W.errors.movePreviewNetwork } }); });
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orgSlug: org.slug, planKey: toPlan, ...(inPlace ? { billingCycle: cycle } : {}) }),
+    }).then(async r => {
+      const d = await r.json().catch(() => ({}));
+      if (stale) return;
+      if (r.ok) setState({ status: 'preview', preview: d as Preview });
+      else setState({ status: 'refused', refusal: { ...d, code: d.code ?? 'error', error: d.error ?? W.clubUpgrade.previewFailed } });
+    }).catch(() => { if (!stale) setState({ status: 'refused', refusal: { code: 'network', error: W.clubUpgrade.previewFailed } }); });
     return () => { stale = true; };
-  }, [org.slug, toPlan]);
-
+  }, [org.slug, toPlan, inPlace, cycle, revision]);
+  function retry() { setState({ status: 'loading' }); setFailure(null); setRevision(n => n + 1); }
+  function checkedName(): string | null {
+    if (!inPlace) return '';
+    const parsed = parseClubName(clubName);
+    if (parsed.ok) { setNameError(null); return parsed.name; }
+    setNameError(parsed.code === 'club_name_required' ? W.clubUpgrade.nameEmpty : W.clubUpgrade.nameLong(CLUB_NAME_MAX));
+    nameInput.current?.focus();
+    return null;
+  }
+  function refusalText(refusal: Refusal): string {
+    switch (refusal.code) {
+      case 'payment_failing': return W.clubUpgrade.paymentFailing;
+      case 'cannot_become_club': return refusal.error || W.clubUpgrade.cannotBecome;
+      case 'club_name_invalid':
+      case 'club_name_required': return W.clubUpgrade.nameEmpty;
+      case 'club_name_too_long': return W.clubUpgrade.nameLong(CLUB_NAME_MAX);
+      case 'stripe_error': return refusal.error || W.clubUpgrade.paymentProvider;
+      case 'subscription_ending': return W.clubUpgrade.ending(refusal.endsAt ?? null);
+      default: return refusal.error;
+    }
+  }
   async function confirm() {
     if (state.status !== 'preview' || busyRef.current) return;
-    busyRef.current = true;
-    setWorking(true);
-    setFailure(null);
+    const name = checkedName();
+    if (name === null) return;
+    busyRef.current = true; setWorking(true); setFailure(null);
+    let accepted = false;
     try {
       const res = await fetch('/api/billing/move', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orgSlug: org.slug,
-          planKey: toPlan,
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orgSlug: org.slug, planKey: toPlan,
           ...(state.preview.direction === 'up' ? { prorationDate: state.preview.prorationDate } : {}),
+          ...(inPlace ? { clubName: name } : {}),
         }),
       });
-      const d = await res.json().catch(() => ({})) as { error?: string; scheduled?: { effectiveAt: string | null } };
-      if (!res.ok) { setFailure(d.error ?? W.errors.move); return; }
-      if (live.current) onMoved(state.preview.direction === 'up'
-        ? W.move.moved(org.name, target.label)
-        : W.move.scheduled(org.name, target.label, d.scheduled?.effectiveAt ?? null));
+      const d = await res.json().catch(() => ({}));
+      if (!live.current) return;
+      if (!res.ok) {
+        // The move already landed (a lost answer, then a second try): the workspace is the club now, so finish on the setup screen.
+        if (inPlace && d.code === 'not_a_move') { leaving.current = true; window.location.replace(inPlaceReturnPath(org.slug)); return; }
+        // A band move keeps its figures on screen and says what went wrong; the Premium window has a door for each refusal.
+        if (inPlace) setState({ status: 'refused', refusal: { ...d, code: d.code ?? 'error', error: d.error ?? W.errors.move } });
+        else setFailure(d.error ?? W.errors.move);
+        return;
+      }
+      setState({ status: 'finished' });
+      accepted = true;
+      // The page is about to leave for the setup screen: keep the window busy so it cannot be closed onto the old billing page.
+      if (inPlace) leaving.current = true;
+      onMoved(d.finishing ? W.clubUpgrade.finishing : state.preview.direction === 'up'
+        ? W.move.moved(org.name, target.label) : W.move.scheduled(org.name, target.label, d.scheduled?.effectiveAt ?? null));
     } catch {
-      setFailure(W.errors.moveNetwork);
+      if (live.current) setFailure(accepted ? W.clubUpgrade.finishing : W.errors.moveNetwork);
     } finally {
       if (live.current && !leaving.current) { busyRef.current = false; setWorking(false); }
     }
   }
-
-  async function checkout() {
+  const refusal = state.status === 'refused' ? state.refusal : null;
+  const quote = refusal?.code === 'no_live_subscription' ? refusal.checkout : undefined;
+  async function paymentPortal() {
     if (busyRef.current) return;
-    busyRef.current = true;
-    setWorking(true);
-    setFailure(null);
+    busyRef.current = true; setWorking(true); setFailure(null);
+    try {
+      const response = await fetch('/api/billing/portal', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orgSlug: org.slug, returnTo }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.url) throw new Error(W.errors.portal);
+      if (!live.current) return;
+      leaving.current = true;
+      window.location.assign(data.url);
+    } catch {
+      leaving.current = false;
+      if (live.current) setFailure(W.errors.portal);
+    } finally {
+      if (live.current && !leaving.current) { busyRef.current = false; setWorking(false); }
+    }
+  }
+  async function checkout() {
+    if (busyRef.current || (inPlace && !quote)) return;
+    const name = checkedName();
+    if (name === null) return;
+    busyRef.current = true; setWorking(true); setFailure(null);
     try {
       const res = await fetch('/api/billing/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          planKey: toPlan,
-          billingCycle: org.subscriptionPeriod ?? 'monthly',
-          orgSlug: org.slug,
-          returnTo,
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planKey: toPlan, billingCycle: quote?.billingCycle ?? org.subscriptionPeriod ?? 'monthly', orgSlug: org.slug, returnTo,
+          ...(inPlace ? { clubName: name } : {}),
         }),
       });
-      const d = await res.json().catch(() => ({})) as { url?: string; error?: string; applied?: boolean; restoredCount?: number; remainingRetainedCount?: number };
-      if (!res.ok) { setFailure(d.error ?? W.errors.checkout); return; }
+      const d = await res.json().catch(() => ({}));
       if (!live.current) return;
-      if (d.applied) { onMoved(W.notice.updated(target.label, d.restoredCount, d.remainingRetainedCount)); return; }
+      if (!res.ok) {
+        if (d.code === 'subscription_exists') { retry(); return; }
+        if (d.code === 'cannot_become_club') setState({ status: 'refused', refusal: d });
+        else setFailure(refusalText({ ...d, code: d.code ?? 'error', error: d.error ?? W.errors.checkout }));
+        return;
+      }
+      if (d.applied) { setState({ status: 'finished' }); onMoved(W.notice.updated(target.label, d.restoredCount, d.remainingRetainedCount)); return; }
       if (!d.url) { setFailure(W.errors.checkout); return; }
       leaving.current = true;
       window.location.assign(d.url);
     } catch {
       leaving.current = false;
-      setFailure(W.errors.checkoutNetwork);
+      if (live.current) setFailure(W.errors.checkoutNetwork);
     } finally {
       if (live.current && !leaving.current) { busyRef.current = false; setWorking(false); }
     }
   }
-
-  const period = (cycle: 'monthly' | 'annual') => (cycle === 'annual' ? 'year' : 'month');
-  const refusal = state.status === 'refused' ? state.refusal : null;
-
-  // ── The footer answers the state: confirm a preview, go and archive, check out, or just close ──
-  let footer = (
-    <button type="button" className="btn btn-outline" onClick={onClose} disabled={working}>{W.move.close}</button>
-  );
-  if (state.status === 'preview') {
-    footer = (
-      <>
-        <button type="button" className="btn btn-outline" onClick={onClose} disabled={working}>{W.move.cancel}</button>
-        <button type="button" className="btn btn-lime" onClick={() => void confirm()} disabled={working} data-autofocus="">
-          {working ? W.move.moving : W.change.move(target.label)}
-        </button>
-      </>
-    );
-  } else if (refusal?.code === 'band_too_small') {
-    footer = (
-      <>
-        <button type="button" className="btn btn-outline" onClick={onClose}>Close</button>
-        <Link href={teamsHref} className="btn btn-lime">{W.move.repTeams}</Link>
-      </>
-    );
-  } else if (refusal?.code === 'no_live_subscription') {
-    footer = (
-      <>
-        <button type="button" className="btn btn-outline" onClick={onClose} disabled={working}>Cancel</button>
-        <button type="button" className="btn btn-lime" onClick={() => void checkout()} disabled={working}>
-          {working ? W.plan.openingCheckout : W.move.checkout}
-        </button>
-      </>
-    );
-  } else if (refusal?.code === 'plan_not_on_sale') {
-    footer = (
-      <>
-        <button type="button" className="btn btn-outline" onClick={onClose}>Close</button>
-        <a href={CONTACT_HREF} className="btn btn-lime">{W.change.contact}</a>
-      </>
-    );
-  }
-
-  return (
-    <KitDialog kind="question" title={W.move.title(target.label)} onClose={onClose} busy={working} footer={footer}>
-      {failure && (
-        <PageNotice notice={{ tone: 'bad', text: failure }} />
-      )}
-      {state.status === 'loading' && <LoadingState inline label="Loading what the move changes…" />}
-
-      {state.status === 'preview' && state.preview.direction === 'up' && (
-        <>
-          <p>{W.move.up(org.name, target.label, target.teamLimit)}</p>
-          <dl className={styles.figures}>
-            <div>
-              <dt>{W.move.today}</dt>
-              <dd>{money(state.preview.amountDueToday, state.preview.currency)}</dd>
-            </div>
-            <div>
-              <dt>{W.move.from(state.preview.renewsAt)}</dt>
-              <dd>{money(state.preview.nextAmount, state.preview.currency)} CAD / {period(state.preview.billingCycle)}</dd>
-            </div>
-          </dl>
-          <p className={styles.hint}>{W.move.previewHelp}</p>
-        </>
-      )}
-
-      {state.status === 'preview' && state.preview.direction === 'down' && (
-        <>
-          <p>{W.move.down(org.name, target.label, target.teamLimit, state.preview.effectiveAt)}</p>
-          <p className={styles.hint}>{W.move.downHelp(PLAN_CONFIG[org.planId].label, money(state.preview.nextAmount, state.preview.currency), state.preview.billingCycle)}</p>
-        </>
-      )}
-
-      {refusal?.code === 'band_too_small' && (
-        <p>{W.move.tooSmall(target.label, refusal.teamLimit ?? target.teamLimit, org.name, refusal.activeTeams ?? 0)}</p>
-      )}
-      {refusal?.code === 'no_live_subscription' && (
-        <p>{W.move.noSubscription(org.name, target.label, org.subscriptionPeriod === 'annual' ? target.annualPrice : target.monthlyPrice, org.subscriptionPeriod ?? 'monthly')}</p>
-      )}
-      {refusal?.code === 'plan_not_on_sale' && (
-        <p>{W.move.notOnSale(target.label, org.name)}</p>
-      )}
-      {refusal && !['band_too_small', 'no_live_subscription', 'plan_not_on_sale'].includes(refusal.code) && (
-        <PageNotice notice={{ tone: 'bad', text: refusal.error }} />
-      )}
-    </KitDialog>
-  );
+  const cancel = inPlace
+    ? <DialogCancel className={`btn btn-outline ${styles.desktopCancel}`}>{W.move.cancel}</DialogCancel>
+    : <button type="button" className="btn btn-outline" onClick={onClose} disabled={working}>{W.move.cancel}</button>;
+  const preview = state.status === 'preview' ? state.preview : null;
+  const canCheckout = refusal?.code === 'no_live_subscription' && (!inPlace || !!quote);
+  const retryable = refusal && (refusal.code === 'no_live_subscription' ? inPlace && !quote : !['band_too_small', 'plan_not_on_sale', 'payment_failing', 'cannot_become_club', 'subscription_ending'].includes(refusal.code));
+  const footer = <>
+    {cancel}
+    {preview && <button type="button" className="btn btn-lime" onClick={() => void confirm()} disabled={working} data-autofocus="">{working ? inPlace ? W.clubUpgrade.starting : W.move.moving : inPlace ? W.clubUpgrade.start : W.change.move(target.label)}</button>}
+    {canCheckout && <button type="button" className="btn btn-lime" onClick={() => void checkout()} disabled={working}>{working ? W.plan.openingCheckout : W.move.checkout}</button>}
+    {refusal?.code === 'band_too_small' && <Link href={teamsHref} className="btn btn-lime">{W.move.repTeams}</Link>}
+    {refusal?.code === 'plan_not_on_sale' && <a href={CONTACT_HREF} className="btn btn-lime">{W.change.contact}</a>}
+    {refusal?.code === 'subscription_ending' && <button type="button" className="btn btn-lime" onClick={() => void paymentPortal()} disabled={working}>{W.clubUpgrade.paymentSettings}</button>}
+    {refusal?.code === 'payment_failing' && <button type="button" className="btn btn-lime" onClick={() => void paymentPortal()} disabled={working}>{W.plan.payment}</button>}
+    {refusal?.code === 'cannot_become_club' && <a href={CONTACT_HREF} className="btn btn-lime">{W.change.contact}</a>}
+    {retryable && <button type="button" className="btn btn-lime" onClick={retry}>{W.clubUpgrade.checkAgain}</button>}
+  </>;
+  const foot = !inPlace ? undefined : state.status === 'finished' ? W.clubUpgrade.finishing : quote ? W.clubUpgrade.checkoutFoot : preview?.direction === 'up' ? W.clubUpgrade.payingFoot : undefined;
+  return <KitDialog kind={inPlace ? 'form' : 'question'} title={inPlace ? W.clubUpgrade.title : W.move.title(target.label)}
+    onClose={onClose} busy={working} dirty={inPlace && clubName.trim().length > 0 && state.status !== 'finished'} openOn={inPlace ? 'panel' : 'field'}
+    footerStart={foot ? <span>{foot}</span> : undefined} footer={state.status === 'finished' ? null : footer}>
+    {failure && <PageNotice notice={{ tone: 'bad', text: failure }} />}
+    {state.status === 'loading' && <LoadingState inline label={W.move.loading} />}
+    {state.status === 'finished' && <PageNotice notice={{ tone: 'good', text: W.clubUpgrade.finishing }} />}
+    {inPlace && (preview || quote) && <>
+      {quote && <FreeTimeBand band={{ tone: 'amber', eyebrow: W.page.sections.plan, title: W.clubUpgrade.freeTitle(), text: W.clubUpgrade.freeWarning(freeThrough) }} />}
+      {quote && <p>{quote.trialDays > 0 ? W.clubUpgrade.trial(quote.trialDays) : W.clubUpgrade.noTrial}</p>}
+      <p>{W.clubUpgrade.owner}</p>
+      <div className={`${styles.field} ${styles.reviewField}`}>
+        <label className={styles.label} htmlFor="upgrade-club-name">{W.clubUpgrade.name} <span aria-hidden>*</span></label>
+        {/* HTML counts UTF-16 units; the change handler and server both cap at forty Unicode characters. */}
+        <input ref={nameInput} id="upgrade-club-name" className={styles.select} value={clubName} required maxLength={CLUB_NAME_MAX * 2}
+          placeholder={W.clubUpgrade.namePlaceholder} aria-invalid={Boolean(nameError)} aria-describedby="upgrade-name-help"
+          onChange={event => { setClubName(Array.from(event.target.value).slice(0, CLUB_NAME_MAX).join('')); setNameError(null); }} disabled={working} />
+        <p id="upgrade-name-help" className={styles.hint} role={nameError ? 'alert' : undefined}>{nameError ?? W.clubUpgrade.nameHelp}</p>
+      </div>
+      <div className={styles.upgradeAddress}><span>{W.clubUpgrade.address}</span><span>{W.clubUpgrade.addressValue(org.slug)}</span><p className={styles.hint}>{W.clubUpgrade.addressHelp}</p></div>
+      {quote && quote.trialDays > 0 && <div className={styles.cycle} role="group" aria-label={W.clubUpgrade.billing}>
+        {(['monthly', 'annual'] as const).map(value => <button key={value} type="button" aria-pressed={cycle === value} disabled={working} onClick={() => { if (value === cycle) return; setState({ status: 'loading' }); setCycle(value); }}>{value === 'monthly' ? W.clubUpgrade.monthly : W.clubUpgrade.yearly}</button>)}
+      </div>}
+    </>}
+    {preview?.direction === 'up' && <>
+      {!inPlace && <p>{W.move.up(org.name, target.label, target.teamLimit)}</p>}
+      <dl className={styles.figures}>
+        {inPlace && preview.lines?.map((line, index) => <div key={index} className={line.kind === 'credit' ? styles.credit : undefined}><dt>{line.kind === 'charge' ? W.clubUpgrade.charge(PLAN_CONFIG[line.plan].label) : W.clubUpgrade.credit(PLAN_CONFIG[line.plan].label)}</dt><dd>{line.kind === 'credit' ? '−' : ''}{W.clubUpgrade.amount(money(line.amount, preview.currency), preview.currency)}</dd></div>)}
+        <div><dt>{inPlace ? W.clubUpgrade.dueToday : W.move.today}</dt><dd>{W.clubUpgrade.amount(money(preview.amountDueToday, preview.currency), preview.currency)}</dd></div>
+        <div><dt>{W.move.from(preview.renewsAt)}</dt><dd>{W.clubUpgrade.renewal(money(preview.nextAmount, preview.currency), preview.billingCycle, preview.currency)}</dd></div>
+      </dl>
+      <p className={styles.hint}>{inPlace ? W.clubUpgrade.billingKept(preview.billingCycle) : W.move.previewHelp}</p>
+    </>}
+    {quote && <dl className={styles.figures}>
+      <div><dt>{W.clubUpgrade.dueToday}</dt><dd>{W.clubUpgrade.amount(money(quote.amountDueToday, quote.currency), quote.currency)}</dd></div>
+      <div><dt>{quote.trialDays > 0 ? W.clubUpgrade.firstCharge(quote.firstChargeAt) : W.move.from(quote.renewsAt)}</dt><dd>{W.clubUpgrade.renewal(money(quote.nextAmount, quote.currency), quote.billingCycle, quote.currency)}</dd></div>
+    </dl>}
+    {preview?.direction === 'down' && <><p>{W.move.down(org.name, target.label, target.teamLimit, preview.effectiveAt)}</p><p className={styles.hint}>{W.move.downHelp(PLAN_CONFIG[org.planId].label, money(preview.nextAmount, preview.currency), preview.billingCycle)}</p></>}
+    {refusal?.code === 'band_too_small' && <p>{W.move.tooSmall(target.label, refusal.teamLimit ?? target.teamLimit, org.name, refusal.activeTeams ?? 0)}</p>}
+    {refusal?.code === 'no_live_subscription' && !quote && !inPlace && <p>{W.move.noSubscription(org.name, target.label, org.subscriptionPeriod === 'annual' ? target.annualPrice : target.monthlyPrice, org.subscriptionPeriod ?? 'monthly')}</p>}
+    {refusal?.code === 'no_live_subscription' && !quote && inPlace && <PageNotice notice={{ tone: 'bad', text: W.clubUpgrade.previewFailed }} />}
+    {refusal?.code === 'plan_not_on_sale' && <p>{W.move.notOnSale(target.label, org.name)}</p>}
+    {refusal && !['band_too_small', 'no_live_subscription', 'plan_not_on_sale'].includes(refusal.code) && <PageNotice notice={{ tone: 'bad', text: refusalText(refusal) }} />}
+  </KitDialog>;
 }

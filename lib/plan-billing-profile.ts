@@ -204,10 +204,8 @@ export const PLAN_BILLING_DEFINITIONS: Record<OrgPlan, PlanBillingDefinition> = 
   team: {
     included: { billing: TEAM_CORE, article: TEAM_ARTICLE, explore: TEAM_EXPLORE },
     usageMeters: ['tournament_slots', 'staff_seats'],
-    // Stage 4b Part 2: the SERVER already moves a Premium coach onto Club (`moveDirection('team', 'club')`), but the Premium page draws
-    // no Club row and fetches no move until Part 3 builds the window — `checkoutAndMoves('team')` would paint a "Change plan" table
-    // (and "Contact us to move" while Club is gated) on every paying Premium coach's page in production. Part 3 swaps this back.
-    changes: [],
+    // The larger Club band remains reachable after becoming a club; the Premium door offers Club only.
+    changes: checkoutAndMoves('team').filter(change => change.target === 'club'),
     showFoundingSeason: true,
     cancellationKind: 'premium',
     joinClub: true,

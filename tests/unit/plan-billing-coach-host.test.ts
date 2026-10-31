@@ -158,13 +158,23 @@ describe('server wall order and exact owner billing exception', () => {
   for (const freeTimeEnded of [false, true]) for (const role of ['owner', 'admin', null] as const) {
     it(`cancelled/${freeTimeEnded ? 'free-time-ended' : 'subscription-ended'}/${role}: owner recovery only, no working shell`, async () => {
       const result = await layoutFixture({ org: { ...workspace, subscriptionStatus: 'canceled' }, role, pathname: '/falcons/coaches/billing', freeTimeEnded });
-      assert.doesNotMatch(result.html, /billing-child/);
+      assert.equal(result.html.includes('billing-child'), role === 'owner');
       assert.doesNotMatch(result.html, /Tournaments you run/);
       assert.equal(result.assignmentReads, 0);
       const provider = allElements(result.tree).find(element => element.type === pass && 'initialUserRole' in element.props);
-      assert.equal(provider?.props.initialUserRole, null, 'the wall never seeds an operational role');
-      assert.equal(result.html.includes('reactivateOrgSlug=falcons'), role === 'owner');
-      assert.equal(result.html.includes('&amp;keep=1'), freeTimeEnded && role === 'owner');
+      assert.equal(provider?.props.initialUserRole, role === 'owner' ? 'owner' : null, 'only exact owner billing seeds a recovery role');
+      assert.equal(result.html.includes('reactivateOrgSlug=falcons'), false);
+      assert.equal(result.html.includes('&amp;keep=1'), false);
+    });
+  }
+  for (const pathname of ['/falcons/coaches', '/falcons/coaches/billing/anything', '/other/coaches/billing']) {
+    it(`suspended owner on ${pathname}: exact billing exception opens nothing else`, async () => {
+      const result = await layoutFixture({ org: { ...workspace, subscriptionStatus: 'canceled' }, role: 'owner', pathname, freeTimeEnded: true });
+      assert.doesNotMatch(result.html, /billing-child|Tournaments you run/);
+      assert.equal(result.assignmentReads, 0);
+      const provider = allElements(result.tree).find(element => element.type === pass && 'initialUserRole' in element.props);
+      assert.equal(provider?.props.initialUserRole, null);
+      assert.match(result.html, /reactivateOrgSlug=falcons/);
     });
   }
   it('the plan wall precedes even the owner billing exception', async () => {

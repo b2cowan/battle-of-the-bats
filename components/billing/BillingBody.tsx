@@ -27,6 +27,8 @@ import PlanArticlePanel from './PlanArticlePanel';
 import StripeFeesList from './StripeFeesList';
 import PaymentsEndingSection, { moveDateLong } from './PaymentsEndingSection';
 import styles from './Billing.module.css';
+import ClubUpgradeSetup from './ClubUpgradeSetup';
+import { inPlaceReturnPath, isInPlaceReturn } from '@/lib/workspace-upgrade';
 
 type Registry = Record<string, PlanBillingProfile<string>>;
 /** Consume return flags without discarding an explicitly requested drawer or another query parameter. */
@@ -97,6 +99,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   // A staff grant is stored cancelled even while running. It has no cancellation or retention intent.
   const endedPortal = portal?.state === 'ended';
   const ownBilling = !staffFree && !endedPortal;
+  const showChanges = !endedPortal && (!staffFree || ownProfile.key === 'team');
   const cancelled = org.subscriptionStatus === 'canceled' && !portal && !staffFree;
   const controlsReady = s.freeTime.status === 'ready' && (cancelled || endedPortal || !profile.showFoundingSeason || s.founding.status === 'ready');
   const founding = profile.showFoundingSeason && !staffFree && Boolean(fd?.isFoundingSeason);
@@ -302,8 +305,8 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     <ReadFailure read={s.founding} section="Founding Season status" />
     {fees}
     {keepPremium}
-    {(ownBilling && changes.length > 0 || profile.joinClub) && <Section id="billing-change" title={W.page.sections.change}>
-      {ownBilling && changes.length > 0 && <>
+    {(showChanges && changes.length > 0 || profile.joinClub) && <Section id="billing-change" title={W.page.sections.change}>
+      {showChanges && changes.length > 0 && <>
         <div className={styles.tableFrame}><table className={styles.table}>
           <thead><tr><th scope="col">{W.change.headings.plan}</th><th scope="col">{W.change.headings.holds}</th><th scope="col" className={styles.num}>{W.change.headings.monthly}</th><th scope="col" className={styles.num}>{W.change.headings.annual}</th><th scope="col"><span className={styles.srOnly}>{W.change.headings.choice}</span></th></tr></thead>
           <tbody>{changeKeys.map(key => {
@@ -319,7 +322,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
                   // A Founding Season comp has no subscription to reduce; the old page hid the downgrade with Cancel.
                   : founding && change?.mechanism === 'downgrade' ? null
                   : !controlsReady ? null
-                  : change && (change.mechanism === 'downgrade' || sale(key)) ? <button type="button" className="btn btn-outline" onClick={() => a.change(change)} disabled={disabled}>{change.mechanism === 'downgrade' ? W.change.downgrade(target.config.label) : change.mechanism === 'checkout' ? W.change.upgrade(target.config.label) : W.change.move(target.config.label)}</button>
+                  : change && (change.mechanism === 'downgrade' || sale(key)) ? <button type="button" className="btn btn-outline" onClick={() => a.change(change)} disabled={disabled}>{ownProfile.key === 'team' ? W.clubUpgrade.start : change.mechanism === 'downgrade' ? W.change.downgrade(target.config.label) : change.mechanism === 'checkout' ? W.change.upgrade(target.config.label) : W.change.move(target.config.label)}</button>
                     : s.gating.status !== 'loading' && <a className={`btn btn-outline ${styles.moveDoor}`} href={CONTACT_HREF}>{W.change.contactMove}</a>}</td>
             </tr>;
           })}</tbody>
@@ -375,7 +378,15 @@ export default function BillingBody({ billingBase, teamsHref }: { billingBase: s
   return <BillingOwnerBody key={currentOrg.id} org={currentOrg} refresh={refresh} billingBase={billingBase} teamsHref={teamsHref} />;
 }
 
-function BillingOwnerBody({ org, refresh, billingBase, teamsHref }: { org: Organization; refresh: () => Promise<void>; billingBase: string; teamsHref: string }) {
+type BillingOwnerProps = { org: Organization; refresh: () => Promise<void>; billingBase: string; teamsHref: string };
+function BillingOwnerBody(props: BillingOwnerProps) {
+  const params = useSearchParams();
+  // Keep the marker throughout waiting, on either side of the flip. No ordinary billing reads or payment controls mount.
+  return isInPlaceReturn(params)
+    ? <ClubUpgradeSetup orgSlug={props.org.slug} /> : <BillingPlanBody {...props} />;
+}
+
+function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerProps) {
   const router = useRouter();
   const params = useSearchParams();
   const profile = PLAN_BILLING_PROFILES[org.planId];
@@ -536,7 +547,12 @@ function BillingOwnerBody({ org, refresh, billingBase, teamsHref }: { org: Organ
   }
   return <>
     <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, founding, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} justChose={justChose} detail={detail} onCloseDetail={() => setDetail(null)} cardWindowOpen={isFoundingSeasonCardWindowOpen()} foundingActive={isFoundingSeasonActive()} fees={<StripeFeesList key={org.id} slug={org.slug} />} />
-    {moveTo && <PlanMoveDialog key={`${org.id}:${moveTo}`} org={{ ...org, planId: ownProfile.key }} toPlan={moveTo} returnTo={billingBase} teamsHref={teamsHref} onClose={() => setMoveTo(null)} onMoved={text => { if (live.current) { setMoveTo(null); setNotice({ tone: 'good', text }); reloadAfterAction(); } }} />}
+    {moveTo && <PlanMoveDialog key={`${org.id}:${moveTo}`} org={{ ...org, planId: ownProfile.key }} toPlan={moveTo} returnTo={billingBase} teamsHref={teamsHref}
+      freeThrough={freeTime.status === 'ready' ? freeTime.data.portal?.lastDay ?? freeTime.data.freeTime?.lastDay ?? (founding.status === 'ready' && founding.data.isFoundingSeason ? founding.data.compUntil : null) : null}
+      onClose={() => setMoveTo(null)} onMoved={text => { if (live.current) {
+        if (ownProfile.key === 'team') { window.location.replace(inPlaceReturnPath(org.slug)); return; }
+        setMoveTo(null); setNotice({ tone: 'good', text }); reloadAfterAction();
+      } }} />}
     {payFor && <PlanCycleDialog key={`${org.id}:${payFor}`} label={PLAN_BILLING_PROFILES[payFor].config.label} monthlyPrice={PLAN_BILLING_PROFILES[payFor].config.monthlyPrice}
       annualPrice={PLAN_BILLING_PROFILES[payFor].config.annualPrice} savings={W.plan.savings(payFor)} initial={cycle} onClose={() => setPayFor(null)}
       onContinue={chosen => { setPayFor(null); setCycle(chosen); void checkout(payFor, chosen); }} />}

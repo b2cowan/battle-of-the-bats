@@ -40,6 +40,7 @@ import { getBillingHref } from '../../lib/billing-urls.ts';
 import { isInAppUpMove, MOVE_METADATA_KEY } from '../../lib/plan-growth.ts';
 import { restoreAfterReactivation } from '../../lib/billing-reactivation.ts';
 import { PLAN_CONFIG } from '../../lib/plan-config.ts';
+import { previewClubCheckout } from '../../lib/workspace-upgrade-preview.ts';
 
 // ── Recorders ───────────────────────────────────────────────────────────────────────────────────────
 
@@ -88,7 +89,7 @@ type StripeCalls = { retrieve: number; update: Array<Record<string, any>>; creat
 const stripeOriginals: Record<string, unknown> = {};
 let stripeCalls: StripeCalls = { retrieve: 0, update: [], createPreview: 0, release: 0 };
 
-function stubStripe(p: { sub: unknown; invoice?: unknown; newPrice?: { unit_amount: number; currency: string } }) {
+function stubStripe(p: { sub: unknown; invoice?: unknown; newPrice?: { unit_amount: number; currency: string }; history?: { status: string; metadata?: Record<string, string> }[]; historyFails?: boolean }) {
   process.env.STRIPE_SECRET_KEY ??= 'sk_test_unit';
   const s: any = getStripe();
   stripeCalls = { retrieve: 0, update: [], createPreview: 0, release: 0 };
@@ -96,6 +97,10 @@ function stubStripe(p: { sub: unknown; invoice?: unknown; newPrice?: { unit_amou
     stripeOriginals[k] = { ...target };
   }
   s.subscriptions.retrieve = async () => { stripeCalls.retrieve++; return p.sub; };
+  s.subscriptions.list = () => (async function* () {
+    if (p.historyFails) throw new Error('history unavailable');
+    yield* p.history ?? [];
+  })();
   s.subscriptions.update = async (_id: string, params: Record<string, any>) => { stripeCalls.update.push(params); return p.sub; };
   s.prices.retrieve = async () => p.newPrice ?? { unit_amount: 9900, currency: 'cad' };
   s.invoices.createPreview = async () => { stripeCalls.createPreview++; return p.invoice; };
@@ -150,6 +155,70 @@ const invoiceOf = (lines: any[], over: Record<string, unknown> = {}): PreviewInv
 const PRICES = { stripe_prices: { one: (f: Record<string, unknown>) => ({ price_id: `price_${f.plan_id}_${f.billing_cycle}` }) } };
 const ends = { fromPriceId: OLD_PRICE, toPriceId: NEW_PRICE, fromPlan: 'team' as const, toPlan: 'club' as const };
 const isRefusal = (r: unknown): r is MoveRefusal => !!r && typeof r === 'object' && 'code' in r;
+
+describe('Part 3 · before the owner confirms money', () => {
+  it('a Premium subscription set to end is refused before preview or charge; other move sources keep their behavior', async () => {
+    stubDatabase(PRICES);
+    stubStripe({ sub: subscription({ cancel_at_period_end: true }), invoice: invoiceOf([line(9900, NEW_PRICE)]) });
+    for (const result of [await previewMove(premiumOrg(), 'club'), await applyMove(premiumOrg(), 'club', { actor: 'test', clubName: 'Falcons' })]) {
+      assert.ok('code' in result && result.code === 'subscription_ending');
+      assert.ok('endsAt' in result && result.endsAt);
+    }
+    assert.equal(stripeCalls.createPreview, 0);
+    assert.equal(stripeCalls.update.length, 0);
+    assert.ok(!isRefusal(await previewMove(premiumOrg({ planId: 'club' }), 'club_large')));
+  });
+  for (const cycle of ['monthly', 'annual'] as const) {
+    it(`${cycle}: first purchase quotes the effective trial and server price without creating anything`, async () => {
+      stubDatabase({ ...PRICES, plan_config_overrides: { many: [{ plan_id: 'club', trial_days: 45 }] } });
+      stubStripe({ sub: subscription(), newPrice: { unit_amount: 54321, currency: 'cad' } });
+      const result = await previewClubCheckout(premiumOrg({ stripeSubscriptionId: null, stripeCustomerId: null }), 'club', cycle);
+      assert.ok(!isRefusal(result));
+      assert.equal(result.trialDays, 45);
+      assert.equal(result.amountDueToday, 0);
+      assert.equal(result.nextAmount, 54321);
+      assert.equal(result.billingCycle, cycle);
+      assert.ok(result.firstChargeAt);
+      assert.equal(stripeCalls.update.length, 0);
+      assert.equal(stripeCalls.createPreview, 0);
+      assert.equal(log.length, 0, 'the quote writes no database rows');
+    });
+  }
+  for (const status of ['active', 'trialing', 'canceled']) it(`earlier ${status}: no second trial and Stripe supplies due today, including customer credits`, async () => {
+    stubDatabase(PRICES);
+    stubStripe({ sub: subscription(), history: [{ status }], invoice: { amount_due: 12345, currency: 'cad', lines: { data: [] } } });
+    const result = await previewClubCheckout(premiumOrg({ stripeSubscriptionId: null }), 'club', 'monthly');
+    assert.ok(!isRefusal(result));
+    assert.equal(result.trialDays, 0);
+    assert.equal(result.amountDueToday, 12345);
+    assert.equal(result.firstChargeAt, null);
+    assert.equal(stripeCalls.createPreview, 1);
+    assert.equal(stripeCalls.update.length, 0);
+  });
+  it('abandoned checkouts and next-season promises do not consume a trial', async () => {
+    stubDatabase(PRICES);
+    stubStripe({ sub: subscription(), history: [{ status: 'incomplete' }, { status: 'incomplete_expired' }, { status: 'trialing', metadata: { choiceKind: 'next_season' } }] });
+    const result = await previewClubCheckout(premiumOrg({ stripeSubscriptionId: null }), 'club', 'monthly');
+    assert.ok(!isRefusal(result));
+    assert.equal(result.trialDays, PLAN_CONFIG.club.trialDays);
+  });
+  it('a zero trial override still quotes a new subscription, and expanded price lines preserve its renewal date', async () => {
+    stubDatabase({ ...PRICES, plan_config_overrides: { many: [{ plan_id: 'club', trial_days: 0 }] } });
+    stubStripe({ sub: subscription(), invoice: { amount_due: 9900, currency: 'cad', lines: { data: [{ pricing: { price_details: { price: { id: 'price_club_annual' } } }, period: { end: 1800000000 } }] } } });
+    const result = await previewClubCheckout(premiumOrg({ stripeCustomerId: null, stripeSubscriptionId: null }), 'club', 'annual');
+    assert.ok(!isRefusal(result));
+    assert.equal(result.trialDays, 0);
+    assert.equal(result.amountDueToday, 9900);
+    assert.equal(result.renewsAt, new Date(1800000000 * 1000).toISOString());
+  });
+  it('ineligible workspaces are refused before Stripe, and a history failure never promises a trial', async () => {
+    stubDatabase({ ...PRICES, team_workspaces: { one: { workspace_state: 'active' } }, rep_teams: { count: 2 } });
+    stubStripe({ sub: subscription(), historyFails: true });
+    assert.equal((await previewClubCheckout(premiumOrg(), 'club', 'monthly') as MoveRefusal).code, 'cannot_become_club');
+    stubDatabase(PRICES);
+    assert.equal((await previewClubCheckout(premiumOrg(), 'club', 'monthly') as MoveRefusal).code, 'stripe_error');
+  });
+});
 
 // ── 1 · the club name ───────────────────────────────────────────────────────────────────────────────
 
@@ -414,8 +483,9 @@ describe('3 · the preview’s lines', () => {
     assert.equal(untrusted.lines, null);
   });
 
-  it('the dialog’s hand-copied preview type is untouched here: Part 3 adds `lines` to it', () => {
-    assert.doesNotMatch(readCode('components/billing/PlanMoveDialog.tsx'), /\blines\b/);
+  it('the dialog reads the preview’s trusted lines with the total-only fallback', () => {
+    assert.match(readCode('components/billing/PlanMoveDialog.tsx'), /lines\s*:/);
+    assert.match(readCode('components/billing/PlanMoveDialog.tsx'), /preview\.lines\?\.map/);
   });
 });
 
@@ -633,8 +703,8 @@ describe('7 · the entry routes', () => {
     assert.match(readCode('app/api/billing/create-checkout/route.ts'), /if \(gatingMap\[planKey\]\) \{[\s\S]*?status: 403/);
   });
 
-  it('nothing a user can see changes: the Premium page keeps no Change plan table and fetches no move until Part 3', () => {
-    assert.match(readCode('lib/plan-billing-profile.ts'), /changes: \[\],\s*showFoundingSeason: true,\s*cancellationKind: 'premium',/);
+  it('Part 3 exposes only the Club door, leaving the larger band reachable afterwards', () => {
+    assert.match(readCode('lib/plan-billing-profile.ts'), /checkoutAndMoves\('team'\)\.filter\(change => change\.target === 'club'\)/);
   });
 
   it('every refusal a coach can read is in plain words — "payment method", never "card"', () => {

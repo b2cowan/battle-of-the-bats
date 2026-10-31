@@ -8,6 +8,21 @@ import { STRIPE_FEE_WORDS } from '../../lib/online-payment-words.ts';
 import { subscriptionStatusLabel } from '../../lib/platform-labels.ts';
 
 describe('shared billing vocabulary', () => {
+  it('club-upgrade vocabulary uses config names, server trial days, payment-method words and honest waiting states', () => {
+    assert.ok(W.clubUpgrade.freeTitle().includes(PLAN_CONFIG.team.label));
+    assert.match(W.clubUpgrade.trial(45), /45-day trial.*payment method/);
+    assert.match(W.clubUpgrade.noTrial, /no second trial/);
+    assert.match(W.clubUpgrade.credit(PLAN_CONFIG.team.label), /Credit for unused/);
+    assert.match(W.clubUpgrade.billingKept('annual'), /yearly billing stays yearly/);
+    assert.equal(W.clubUpgrade.renewal('$219.00', 'monthly', 'cad'), '$219.00 CAD / month');
+    assert.match(W.clubUpgrade.ending('2026-11-03'), /November 3, 2026.*Open payment settings/);
+    assert.match(W.clubUpgrade.freeWarning('2026-11-03'), /Free through November 3, 2026/);
+    assert.doesNotMatch(W.move.previewHelp + W.clubUpgrade.trial(90), /\bcard\b/i);
+    for (const text of [W.clubUpgrade.finishing, W.clubUpgrade.longerBody, W.clubUpgrade.unconfirmedBody]) {
+      assert.match(text, /don’t (?:start another payment|pay again)/);
+      assert.doesNotMatch(text, /try again|nothing.*changed|payment received/i);
+    }
+  });
   it('uses the one possessive and the existing status/free-time/fee copy builders', () => {
     assert.equal(W.page.lockedBody('Riverdale Reds'), 'Only Riverdale Reds’ owner can see and change the plan and how it’s paid.');
     assert.equal(W.page.lockedBody('Riverdale'), 'Only Riverdale’s owner can see and change the plan and how it’s paid.');

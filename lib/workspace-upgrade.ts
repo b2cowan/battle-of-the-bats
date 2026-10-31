@@ -28,6 +28,18 @@ export const IN_PLACE_METADATA_KEY = 'inPlaceClub';
 export const IN_PLACE_RETURN_PARAM = 'inPlace';
 export const IN_PLACE_RETURN_VALUE = 'club';
 
+/** Read-only checkout quote supplied by the server, including the customer-scoped no-second-trial decision. */
+export type ClubCheckoutPreview = {
+  toPlan: 'club' | 'club_large';
+  billingCycle: 'monthly' | 'annual';
+  trialDays: number;
+  amountDueToday: number;
+  nextAmount: number;
+  currency: string;
+  firstChargeAt: string | null;
+  renewsAt: string | null;
+};
+
 export type ClubNameCheck =
   | { ok: true; name: string }
   | { ok: false; code: 'club_name_required' | 'club_name_too_long'; error: string };
@@ -84,6 +96,21 @@ export function inPlaceMetadata(base: Record<string, string>, clubName: string):
  */
 export function inPlaceReturnPath(orgSlug: string): string {
   return `/${orgSlug}/admin/org/billing?${IN_PLACE_RETURN_PARAM}=${IN_PLACE_RETURN_VALUE}`;
+}
+
+/** Where the owner lands once the club is ready: the club's Admin Overview, still carrying the marker so it shows the setup list. */
+export function clubHomeAfterUpgradePath(orgSlug: string): string {
+  return `/${orgSlug}/admin?${IN_PLACE_RETURN_PARAM}=${IN_PLACE_RETURN_VALUE}`;
+}
+
+/** True when the address carries the in-place marker (billing screen and club home both read it). */
+export function isInPlaceReturn(params: { get(name: string): string | null }): boolean {
+  return params.get(IN_PLACE_RETURN_PARAM) === IN_PLACE_RETURN_VALUE;
+}
+
+/** A Premium coach moving onto a Club band: the one move that turns this workspace into the club. */
+export function isPremiumToClub(fromPlan: string | null | undefined, toPlan: string): boolean {
+  return fromPlan === 'team' && (toPlan === 'club' || toPlan === 'club_large');
 }
 
 /** What the "Setting up your club" screen needs to know, and nothing more. */

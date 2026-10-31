@@ -170,3 +170,95 @@ only); help articles (Stage 5); advertising the path.
 5. **Live Club prices not wired** (docs contradict). Mitigation: a check before the sale gate opens, not a build task.
 6. **Session and client caches.** The server reads the org fresh each request; the client's org context and any stored active-org state are
    not verified. Check on the first load after a flip.
+
+## 9. Part 3 decisions and build record — 2026-10-31
+
+The owner answered **“Approve all recommendations”** to the Part 3 prompt's six decisions and the corrected status mapping:
+
+1. Refuse a Premium-source upgrade while its subscription is set to end; show the date. **Refined by the owner in this session: “Use ‘Open payment settings’.”** The existing Keep Premium flow buys Premium after staff-given free time; it is not a scheduled-cancellation resume action. Offer the existing secure billing portal with that honest label; do not undo the cancellation implicitly or send a paying coach to another checkout. The portal's Stripe-side resume availability has not been verified here.
+2. The Premium profile offers **Club only**. The server's move table still permits both Club bands.
+3. Staff-given free time gets the identical Club row in Change plan (the drawing explicitly specifies this in tab 2). No second entry point.
+4. The four-step setup card appears only after this in-place upgrade. Name confirmation and address review are new display steps; reuse the checklist's board/public destinations without treating board membership as proof that coaches were invited.
+5. Confirmed readiness leaves with a **full page load** to Admin Overview, carrying the setup marker, so a fresh organization provider and menu mount. This is the **first thing the owner walk must watch**; static reasoning is not a browser verification of client caches.
+6. Payment failure, workspace ineligibility and finishing use the existing in-window notice: **not drawn, built from the nearest pattern**.
+
+Status mapping: successful not-ready reads (including `waitingOnPayment`) show Setting up, then Taking longer after 20 reads at 2.5-second intervals; a failed check shows Couldn't confirm. Check again restarts the same status check. Readiness leaves for Admin. No waiting state offers another payment.
+
+The owner also answered **“Authorize the preview extension”** and **“Allow the exact billing-page exception”** after the required stop/report:
+
+- The existing move preview's `no_live_subscription` refusal gains a read-only checkout quote for a Premium source buying a Club band. It reads the same customer history and effective trial configuration as checkout, server price/currency, and Stripe's invoice preview for a purchase without a trial (including customer balance). It creates no customer, session or subscription. Checkout remains authoritative at submission; the documented cross-customer trial-history limitation remains.
+- Inside the existing suspended coaches frame, only an accepted workspace owner on the exact trusted billing pathname may render the billing child. Other paths and non-owners keep the wall; no coaching provider, assignment reads or working portal controls mount.
+
+Validation and hand-off are recorded here after the implementation checks. Browser/UAT/live Stripe remain the owner's work. `check:layout` launches Playwright, so the prompt's explicit no-browser rule prevents running it in this part; the current layout fixtures also have no standalone Premium-owner session for the new window.
+
+### Part 3 implementation hand-off — 2026-10-31
+
+**[saw in code]** The Premium profile now offers Club only. The same table is shown during running/ending staff-given free time, with the existing Contact us to move door while the live sale gate is closed. No sale gate, plan configuration, price or migration changed. **[from the plan]** The purchase path ships dark until Club opens for sale; this session did not query the production sale gate.
+
+**[saw in code]** Owners get the empty required club-name field, server charge/credit lines when trustworthy, total-only fallback, and renewal in one band. A subscription-free coach gets a server checkout quote: trial eligibility is read from the same Stripe history as checkout, effective trial days from config, and figures/currency from Stripe. A once-paid coach sees no second-trial promise or interval selector; checkout charges the quoted purchase without a proration credit. The free-days warning applies to either subscription-free variant. Checkout rechecks eligibility at submission.
+
+**[saw in code]** Staff and other non-owners gain no billing access, including by typing the URL or the return marker. The suspended layout allows only the accepted workspace owner on the exact billing path, in its minimal wall frame; all other paths retain the wall and no assignment reads run there. Ended free-time and cancelled pages retain their existing early returns and recovery controls; no Club screen was added to those views. The new return marker mounts only the status screen, ahead of ordinary billing reads or payment controls.
+
+**[saw in code]** Readiness triggers a full document load into Admin, not a client route push. Both layouts seed `OrgProvider`; its state is initialized from that seed and auth events skip fetching it when a seed exists. A full request mounts fresh identity and the existing sidebar/bottom-menu rules then choose Admin. The landing consumes the marker only after readiness, keeps the setup card for that arrival, and uses the assignment's real team ID for Open my team. Name/address are new display steps; staff/public-site destinations reuse the existing checklist. Assignment loading, failure/retry and an empty result are visible. The existing five-step checklist retains its own meaning.
+
+**[from the plan]** Payment failing, cannot become club, and finishing are **not drawn, built from the nearest pattern** (the shipped in-window notice). The initial setup sentence avoids asserting that payment settled: the status facts alone do not establish that. Phone forms use the shipped full-screen form mode, one header back arrow and no secondary Cancel in the ordinary footer. Quiet landing/slow-state actions become symbols with accessible labels and a 44px floor.
+
+Checks run serially:
+
+- Focused billing families **before edits: 588/589 passed**; `plan-billing-usage.test.ts:112` already returned 503 instead of 200.
+- Focused billing/money/flip/server/access/footer families **after implementation: 618/619 passed**, with the same usage failure. After the final currency-formatting adjustment, the request-contract and words families passed **42/42**.
+- `npm run verify:changed`: **12,730/12,733 passed**, then stopped at its unit-test stage. Failures outside the Part 3 edits: `free-time-story.test.ts:99` (stale check before write); `plan-billing-usage.test.ts:112` (503 instead of 200); `support-console-stage3-guard.test.ts:564` (`ExpenseFormWindow.tsx` foot sentence is not a span/p). These files/behaviors were not fixed by this work. The usage failure was reproduced before edits; the build prompt already warned about free-time/support-console failures.
+- `npm run typecheck`, focused ESLint on all changed runtime TypeScript/TSX, `npm run check:spelling`, and `git diff --check` passed. Windows used `npm.cmd` because PowerShell execution policy blocks `npm.ps1`.
+- `npm run check:org-slug-callers` reports two callers outside this work: `app/[orgSlug]/admin/public-site/OwnAddressPanel.tsx:65` and `app/[orgSlug]/admin/public-site/useOwnAddress.ts:25`. No new billing caller was reported.
+- Remaining chained gates after `npm test` in `verify:changed` were not reached. Layout/browser/UAT/live Stripe were skipped as instructed; no new sweep entries claim coverage that the current fixtures cannot reach. No hooks, settings, shared check scripts or the other project's console-money files were edited.
+- Dev cache repair was needed because generated `.next/dev/types/routes.d.ts` contained duplicate/truncated declarations. The workspace server was stopped before clearing `.next`. A final stop/clear/restart ran through `npm run dev` with network access, reached Ready and returned HTTP 200 for `/platform-admin/login?next=%2Fplatform-admin`; logs were checked for Supabase EACCES failures.
+
+**[saw in code]** State/flow checklist: empty club name (field message, no money request); loading (named line); preview/network error (notice, Check again, no confirmation); payment failing (payment portal door); cannot become club (notice/contact); finishing (no second payment); success return (status-only mount); past due (server refusal); trial (existing paid trial preserved; checkout quote uses actual eligibility); running/ending free time (same Club row); ended free time and cancelled (existing early-return views); non-owner (locked before billing reads); 390px (source/CSS inspection only). Existing empty payment-method/invoice/fee behavior was not changed. This is a code/test walk, not browser verification.
+
+**[saw in code]** Stripe returns re-walked in source and unit contracts:
+
+| Path | Re-walk and evidence |
+| --- | --- |
+| Paying move | Request includes trimmed club name and preview proration date; success/finishing sends the owner through `inPlaceReturnPath`, status polling, full Admin load, then marker consumption. Request/status/landing tests cover those pieces. |
+| Checkout success | Club name and chosen cycle reach create-checkout; the existing server success path keeps `inPlace=club` on the admin billing address, and the still-portal redirect preserves the query. Before/after flip status behavior and the narrow suspension exception are tested. |
+| Checkout cancel | The client still passes its host billing return; the server retains `safeReturnTo` for cancellation, without the success marker. The money tests retain the invariant that leaving checkout does not revoke free time. |
+| Payment portal | The new failure/ending doors invoke the existing org-scoped portal route. That route computes its return using the current organization and ignores the caller's `returnTo`; no return-path logic was changed there. The new caller was inspected; no real portal was opened. |
+| Card saved / next-season choice | No request or server return path changed. Existing parser/request tests passed; `inPlace` is not consumed by `billingReturnState`. |
+
+**[from the plan]** Remaining verification: the owner must first watch fresh club identity/menu after the flip, then the complete paid/free-time/once-paid paths, 390px layout and slow returns. Real Stripe behavior (including portal renewal resumption), browser caches and the live suspension-return race remain unverified. The pre-existing dev mock-apply flip gap and customer-scoped trial-history limitation remain. Part 4 owns the UAT spec, census guard and owner walk; Stage 5 owns help/docs.
+
+Exact proposed commit scope (only this session's hunks; no commit or push performed):
+
+- `app/[orgSlug]/coaches/layout.tsx`
+- `app/api/billing/move/preview/route.ts`
+- `components/admin/kit/club/ClubHubKit.tsx`
+- `components/billing/Billing.module.css`
+- `components/billing/BillingBody.tsx`
+- `components/billing/ClubUpgradeSetup.tsx` (new)
+- `components/billing/PlanMoveDialog.tsx`
+- `lib/plan-billing-profile.ts`
+- `lib/plan-billing-words.ts`
+- `lib/plan-move.ts`
+- `lib/workspace-upgrade.ts`
+- `lib/workspace-upgrade-preview.ts` (new)
+- `tests/unit/plan-billing-actions.test.ts`
+- `tests/unit/plan-billing-body.test.ts`
+- `tests/unit/plan-billing-coach-host.test.ts`
+- `tests/unit/plan-billing-profile.test.ts`
+- `tests/unit/plan-billing-words.test.ts`
+- `tests/unit/workspace-move-money.test.ts`
+- `docs/projects/active/PLAN_AND_BILLING_STAGE4B_PLAN.md`
+- `docs/projects/active/PLAN_AND_BILLING_STAGE4B_PM_BRIEF.md`
+- `TODO.md` (the Premium → Club index line only)
+
+Owed before treating this substantive, shared-module, money-adjacent work as reviewed: **`/simplify` first, then `/review`**. Ask the owner before each commit. Stop at Part 3.
+
+### Part 3 simplify + review record — 2026-10-31
+
+**Simplify (4 lenses).** Applied: one `isPremiumToClub` / `isInPlaceReturn` / `clubHomeAfterUpgradePath` home in `lib/workspace-upgrade.ts` (the route, the dialog and the billing body no longer each spell the test); the checkout quote now runs its independent reads together and reuses the move module's price and date helpers; the hub's setup list is driven by a three-entry array and shows ONE "Rep teams" card (it was up to four, each titled alike); the hub keeps one copy of the assignment rows; the status screen's copy is looked up by state and its dead `hiddenIcon` rule is gone; the suspended wall no longer reads the ended-free-time record for the one page that never renders it; the dialog's deleted header comment is restored and extended. **Skipped, on purpose:** splitting the dialog into a band-move dialog and a Premium dialog (the right shape, too large and unwalked to do inside a cleanup); reusing the pricing page's trial sentence (it says "card"; ruling T1 says "payment method"); the Monthly/Yearly radiogroup shared with the pay-cycle dialog; moving the trial rule into checkout itself (server money path, outside this part).
+
+**Review (high-risk tier; correctness, security, contract, concurrency).** Fixed: choosing the cycle already chosen left the window on a spinner for good; a declined charge was reported as "couldn't reach the provider" and dropped the server's "nothing was changed"; a failed confirm on an ordinary band move lost its figures; the Premium-only foot sentence, panel focus rule and "form" kind reached the band move and the team-cap offer; a lost answer followed by a second try said "not a move" instead of finishing on the setup screen; the window could be closed onto the old billing page while the page was leaving; a missing checkout quote left Cancel as the only door; one failed status read ended the wait (now three in a row); the two hops that leave the page replaced nothing in history (Back bounced forward again); the hub could list one team twice. Pinned in `tests/unit/plan-move-dialog-guard.test.ts` and `plan-billing-actions.test.ts`.
+
+**OPEN, needs the owner (found by review, confirmed by reading `proxy.ts`).** The suspended-wall billing exception, and the committed zero-team wall door before it, compare the page against the `x-pathname` header. `proxy.ts` sets that header only for the paths in its matcher, and the matcher has no `/:slug/coaches/…` entry. If that holds on a running server, then (a) the recovery door never opens for a real owner (they meet the wall), and (b) the owner of that same organization could send the header themselves and open any coaches page inside the wall frame (bounded: owner of that org only, coach APIs still closed). The unit tests mock the header, so they cannot see this. **First thing the owner walk checks.** Fix options: add the coaches path to the proxy matcher, or take the page from a source the browser cannot set. Not changed here: it is a `proxy.ts` / shared-auth change that was not approved.
+
+**Not Part 3's, reported unchanged.** `plan-billing-usage.test.ts:112` (503, from before this stage), `support-console-stage3-guard` footer check, and `support-console-stage5-guard` (a deleted `components/FeedbackModal.tsx` in another session's tree). `check:layout` skipped (no browser per the build prompt). Production note: once promoted, every paying Premium owner sees the Club row reading "Contact us to move" until Club opens for sale (owner's pre-sale ruling).

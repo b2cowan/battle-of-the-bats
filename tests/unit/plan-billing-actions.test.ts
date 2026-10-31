@@ -117,8 +117,9 @@ function environment() {
   const previousFetch = globalThis.fetch;
   const previousWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
   const assigned: string[] = [];
+  const replaced: string[] = [];
   Object.defineProperty(globalThis, 'window', { configurable: true, value: {
-    location: { assign: (url: string) => assigned.push(url) },
+    location: { assign: (url: string) => assigned.push(url), replace: (url: string) => replaced.push(url) },
     addEventListener(name: string, handler: (event: { persisted: boolean }) => void) {
       const handlers = listeners.get(name) ?? new Set(); handlers.add(handler); listeners.set(name, handlers);
     },
@@ -143,7 +144,7 @@ function environment() {
     return response;
   }) as typeof fetch;
   return {
-    requests, assigned,
+    requests, assigned, replaced,
     answer(endpoint: string, data: unknown, ok = true) {
       const queue = answers.get(endpoint) ?? []; queue.push({ data, ok }); answers.set(endpoint, queue);
     },
@@ -193,7 +194,11 @@ async function ownerHarness(options: { plan?: OrgPlan; search?: string; refresh?
   const owner = bodyExports.default({ billingBase: options.returnTo ?? billingBase, teamsHref: '/falcons-club/admin/rep-teams' });
   const component = owner.type as (props: typeof owner.props) => React.ReactNode;
   let tree: React.ReactNode;
-  const render = () => { tree = runner.render(() => component(owner.props)); return tree; };
+  const render = () => { tree = runner.render(() => {
+    const shell = component(owner.props) as Element;
+    // The owner return gate mounts either the ordinary billing body or the status-only screen.
+    return typeof shell.type === 'function' ? (shell.type as (props: Record<string, unknown>) => React.ReactNode)(shell.props) : shell;
+  }); return tree; };
   const settle = async () => { for (let i = 0; i < 5; i++) { await new Promise<void>(resolve => setImmediate(resolve)); render(); } };
   render(); await settle(); env.requests.length = 0;
   const view = () => find(tree, element => Object.hasOwn(element.props, 'snapshot')).props as unknown as BillingBodyViewProps;
@@ -382,6 +387,59 @@ describe('real owner billing action request contracts', () => {
 });
 
 describe('real move dialog request contracts', () => {
+  it('Premium validates an empty name, sends its normalized name and proration date, and never retries a finishing move', async () => {
+    const env = environment(), runner = hookRunner();
+    try {
+      env.answer('/api/billing/move/preview', { direction: 'up', amountDueToday: 10000, currency: 'cad', prorationDate: 123, nextAmount: 21900, renewsAt: null, billingCycle: 'monthly', lines: null });
+      env.answer('/api/billing/move', { direction: 'up', finishing: true });
+      const Dialog = (billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (p: Record<string, unknown>) => Element }).default;
+      const moved: string[] = [];
+      const render = () => runner.render(() => Dialog({ org: organization('team'), toPlan: 'club', returnTo: '/falcons-club/coaches/billing', teamsHref: '/teams', onClose() {}, onMoved: (text: string) => moved.push(text) }));
+      render(); await new Promise<void>(resolve => setImmediate(resolve)); let dialog = render();
+      assert.equal(dialog.props.kind, 'form');
+      assertRequest(env.requests[0], '/api/billing/move/preview', 'POST', { orgSlug: 'falcons-club', planKey: 'club', billingCycle: 'monthly' });
+      click(find(dialog.props.footer, e => e.props.children === W.clubUpgrade.start));
+      assert.equal(env.requests.length, 1, 'empty name makes no money request');
+      dialog = render();
+      assert.equal(find(dialog, e => e.type === 'input').props['aria-invalid'], true);
+      change(find(dialog, e => e.type === 'input'), '  Falcons   Baseball  ');
+      dialog = render();
+      click(find(dialog.props.footer, e => e.props.children === W.clubUpgrade.start));
+      await new Promise<void>(resolve => setImmediate(resolve)); dialog = render();
+      assertRequest(env.requests[1], '/api/billing/move', 'POST', { orgSlug: 'falcons-club', planKey: 'club', prorationDate: 123, clubName: 'Falcons Baseball' });
+      assert.deepEqual(moved, [W.clubUpgrade.finishing]);
+      assert.equal(dialog.props.footer, null);
+    } finally { runner.dispose(); env.dispose(); }
+  });
+  for (const trialDays of [90, 0]) it(`Premium checkout carries clubName and the server's trial decision (${trialDays} days)`, async () => {
+    const env = environment(), runner = hookRunner();
+    try {
+      env.answer('/api/billing/move/preview', { code: 'no_live_subscription', error: 'Checkout needed', checkout: { toPlan: 'club', billingCycle: 'monthly', trialDays, amountDueToday: trialDays ? 0 : 21900, nextAmount: 21900, currency: 'cad', firstChargeAt: '2027-01-29', renewsAt: null } }, false);
+      env.answer('/api/billing/create-checkout', { url: 'https://stripe.test/club-checkout' });
+      const Dialog = (billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (p: Record<string, unknown>) => Element }).default;
+      const render = () => runner.render(() => Dialog({ org: organization('team'), toPlan: 'club', freeThrough: '2026-12-31', returnTo: '/falcons-club/coaches/billing', teamsHref: '/teams', onClose() {}, onMoved() {} }));
+      render(); await new Promise<void>(resolve => setImmediate(resolve)); let dialog = render();
+      const copy = find(dialog, e => e.type === 'p' && e.props.children === (trialDays ? W.clubUpgrade.trial(trialDays) : W.clubUpgrade.noTrial));
+      assert.ok(copy);
+      assert.equal(elements(dialog).some(e => e.props.role === 'group'), trialDays > 0);
+      change(find(dialog, e => e.type === 'input'), 'Falcons Club'); dialog = render();
+      click(find(dialog.props.footer, e => e.props.children === W.move.checkout));
+      await new Promise<void>(resolve => setImmediate(resolve));
+      assertRequest(env.requests[1], '/api/billing/create-checkout', 'POST', { orgSlug: 'falcons-club', planKey: 'club', billingCycle: 'monthly', returnTo: '/falcons-club/coaches/billing', clubName: 'Falcons Club' });
+      assert.deepEqual(env.assigned, ['https://stripe.test/club-checkout']);
+    } finally { runner.dispose(); env.dispose(); }
+  });
+  for (const code of ['payment_failing', 'cannot_become_club', 'subscription_ending', 'stripe_error']) it(`${code} keeps a notice and exposes no charge confirmation`, async () => {
+    const env = environment(), runner = hookRunner();
+    try {
+      env.answer('/api/billing/move/preview', { code, error: 'A named refusal', endsAt: '2026-12-31' }, false);
+      const Dialog = (billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (p: Record<string, unknown>) => Element }).default;
+      const render = () => runner.render(() => Dialog({ org: organization('team'), toPlan: 'club', returnTo: billingBase, teamsHref: '/teams', onClose() {}, onMoved() {} }));
+      render(); await new Promise<void>(resolve => setImmediate(resolve)); const dialog = render();
+      assert.equal(elements(dialog.props.footer).some(e => e.props.children === W.clubUpgrade.start || e.props.children === W.move.checkout), false);
+      assert.ok(find(dialog, e => Object.hasOwn(e.props, 'notice')));
+    } finally { runner.dispose(); env.dispose(); }
+  });
   it('band-too-small refusal keeps the required Rep teams destination in its footer', async () => {
     const env = environment(), runner = hookRunner();
     try {
@@ -428,6 +486,75 @@ describe('real move dialog request contracts', () => {
       await new Promise<void>(resolve => setImmediate(resolve));
       assertRequest(env.requests[1], '/api/billing/create-checkout', 'POST', { planKey: 'club_large', billingCycle: 'annual', orgSlug: org.slug, returnTo: billingBase });
       assert.deepEqual(env.assigned, ['https://stripe.test/move-checkout']);
+    } finally { runner.dispose(); env.dispose(); }
+  });
+});
+
+describe('in-place return mounts only the club status screen', () => {
+  it('polls both waiting states, times out after twenty reads, and Check again restarts the same attempt', async () => {
+    const h = await ownerHarness({ plan: 'team', search: 'inPlace=club&success=1' });
+    try {
+      const endpoint = '/api/billing/club-upgrade-status?orgSlug=falcons-club';
+      for (let i = 0; i < 20; i++) {
+        h.answer(endpoint, { becameClub: false, waitingOnPayment: i % 2 === 0 });
+        h.fireTimers(2500); await h.settle();
+      }
+      assert.equal(h.requests.length, 20);
+      assert.ok(h.requests.every(r => r.endpoint === endpoint && r.init?.cache === 'no-store'));
+      assert.ok(find(h.tree(), e => e.props.children === W.clubUpgrade.longerTitle));
+      click(find(h.tree(), e => e.type === 'button' && e.props['aria-label'] === W.clubUpgrade.checkAgain));
+      await h.settle();
+      h.answer(endpoint, { becameClub: true, waitingOnPayment: false });
+      h.fireTimers(2500); await h.settle();
+      // A hop that leaves the page replaces its history entry, so Back never lands on a screen that bounces forward again.
+      assert.deepEqual(h.replaced, ['/falcons-club/admin?inPlace=club']);
+      assert.equal(h.assigned.length, 0);
+    } finally { h.dispose(); }
+  });
+  it('a failed check shows Couldn’t confirm only after three misses in a row, and never opens payment', async () => {
+    const h = await ownerHarness({ plan: 'team', search: 'inPlace=club' });
+    try {
+      const endpoint = '/api/billing/club-upgrade-status?orgSlug=falcons-club';
+      for (let i = 0; i < 2; i++) { h.answer(endpoint, {}, false); h.fireTimers(2500); await h.settle(); }
+      assert.ok(!elements(h.tree()).some(e => e.props.children === W.clubUpgrade.unconfirmedTitle), 'two misses are a blip, not an answer');
+      h.answer(endpoint, {}, false); h.fireTimers(2500); await h.settle();
+      assert.ok(find(h.tree(), e => e.props.children === W.clubUpgrade.unconfirmedTitle));
+      assert.equal(h.requests.length, 3);
+      assert.equal(h.assigned.length + h.replaced.length, 0);
+    } finally { h.dispose(); }
+  });
+});
+
+describe('the club landing after an in-place upgrade', () => {
+  for (const sample of [
+    { role: 'owner', search: 'inPlace=club', show: true },
+    { role: 'owner', search: '', show: false },
+    { role: 'admin', search: 'inPlace=club', show: false },
+  ]) it(`${sample.role}/${sample.search || 'no marker'}: setup list and the real team belong only to this arrival`, async () => {
+    const env = environment(), runner = hookRunner();
+    try {
+      let search = sample.search;
+      const replaced: string[] = [];
+      env.answer('/api/coaches/falcons-club/assignments', { assignments: [{ teamId: 'team-preserved', teamName: 'Falcons U12' }] });
+      const load = billingTestLoader({
+        react: runner.hooks,
+        'next/navigation': { useSearchParams: () => new URLSearchParams(search), useRouter: () => ({ replace: (href: string) => { replaced.push(href); search = ''; } }) },
+        '@/lib/org-context': { useOrg: () => ({ currentOrg: organization('club'), userRole: sample.role, canOpen: () => false, loading: false }) },
+        '@/lib/usePageTitle': { usePageTitle() {} },
+        '@/lib/use-plan-gating': { usePlanGating: () => null },
+        '../useAdminKitNav': { useAdminKitNav: () => ({ base: '/falcons-club/admin', programs: [], alsoOnPlan: [] }) },
+        './ClubBriefProvider': { useClubBrief: () => ({ status: 'ready', brief: null, reload() {} }), briefProgramCount: () => 0 },
+      });
+      const Hub = (load('components/admin/kit/club/ClubHubKit.tsx') as { default: () => Element }).default;
+      const render = () => runner.render(Hub);
+      render(); await new Promise<void>(resolve => setImmediate(resolve)); const tree = render();
+      assert.equal(elements(tree).some(e => e.props.children === W.clubUpgrade.ready), sample.show);
+      const teamDoor = elements(tree).find(e => e.props.href === '/falcons-club/coaches/teams/team-preserved');
+      assert.equal(Boolean(teamDoor), sample.show);
+      if (sample.show) {
+        assert.deepEqual(replaced, ['/falcons-club/admin']);
+        for (const href of ['/falcons-club/admin/org/settings', '/falcons-club/admin/org/members', '/falcons-club/admin/public-site']) assert.ok(elements(tree).some(e => e.props.href === href));
+      } else assert.equal(replaced.length, 0);
     } finally { runner.dispose(); env.dispose(); }
   });
 });

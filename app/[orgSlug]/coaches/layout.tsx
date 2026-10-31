@@ -135,11 +135,17 @@ export default async function CoachesLayout({
   // costs no assignment/season queries (only the one membership read, for a workspace owner's door), and
   // inside the portal frame so it reads as this product, not an error page.
   if (isOrgBillingSuspended(authCtx.org)) {
-    const ownerBillingHref = isTeamWorkspaceOrg(authCtx.org) ? ownerDoorHref(await readRole()) : null;
+    const teamWorkspace = isTeamWorkspaceOrg(authCtx.org);
+    const wallRole = teamWorkspace ? await readRole() : null;
+    const ownerBillingHref = teamWorkspace ? ownerDoorHref(wallRole) : null;
+    // Owner-approved recovery exception: only this exact billing child, inside the minimal wall frame.
+    // No coaching provider, assignment reads, sidebar or working portal controls are mounted here.
+    const billingRecovery = wallRole === 'owner' && ownerBillingHref !== null
+      && (await headers()).get('x-pathname') === ownerBillingHref;
     // A portal whose free time from FieldLogicHQ ended reads its own wall (Stage 4b): the coach cancelled nothing.
-    const freeTimeEnded = authCtx.org.accountKind === 'team_workspace' ? await endedPortalFreeTime(authCtx.org.id) : null;
+    const freeTimeEnded = !billingRecovery && authCtx.org.accountKind === 'team_workspace' ? await endedPortalFreeTime(authCtx.org.id) : null;
     return (
-      <OrgProvider initialOrg={authCtx.org} initialUserRole={null}>
+      <OrgProvider initialOrg={authCtx.org} initialUserRole={billingRecovery ? 'owner' : null}>
         <div style={{ display: 'contents' }} {...coachWarmAttr}>
           <CoachThemeColor />
           <div className={styles.coachesShell}>
@@ -148,7 +154,7 @@ export default async function CoachesLayout({
                 feedback row in the account menu; identity + exits stay. */}
             <CoachTopStrip wall />
             <main className={styles.coachesMain}>
-              {freeTimeEnded ? (
+              {billingRecovery ? children : freeTimeEnded ? (
                 <FreeTimeEndedWall lastDay={freeTimeEnded.lastDay} basicTeamId={freeTimeEnded.basicTeamId}
                   ownerDoor={ownerBillingHref ? { href: `${teamWorkspaceReactivatePath(authCtx.org)}&keep=1`, label: W.change.keepPremium } : undefined} />
               ) : (

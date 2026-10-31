@@ -64,6 +64,20 @@ describe('the real shared billing body renders every profile', () => {
 });
 
 describe('billing state distinctions in the rendered body', () => {
+  for (const state of ['running', 'ending'] as const) it(`${state}: staff-given Premium free time retains the identical Club door and sale gate`, () => {
+    const props = fixture('team');
+    props.snapshot.org.subscriptionStatus = 'canceled';
+    props.snapshot.freeTime = ready({ freeTime: null, portal: { state, lastDay: '2026-12-31', daysLeft: 10 }, foundingThrough: null, overLimitAfter: false });
+    props.snapshot.gating = ready({ club: false });
+    assert.ok(html(props).includes(W.clubUpgrade.start));
+    assert.ok(html(props).includes(W.change.details(PLAN_CONFIG.club.label)));
+    assert.ok(!html(props).includes(PLAN_CONFIG.club_large.label));
+    props.snapshot.gating = ready({ club: true });
+    assert.ok(html(props).includes(W.change.contactMove));
+    assert.ok(!html(props).includes(W.clubUpgrade.start));
+    props.snapshot.canManageBilling = false;
+    assert.ok(!html(props).includes(W.clubUpgrade.start));
+  });
   it('staff free time hides upgrade purchases even when the underlying own plan is free', () => {
     const props = fixture('tournament');
     props.snapshot.freeTime = ready({ freeTime: { state: 'running', plan: 'club', ownPlan: 'tournament', lastDay: '2027-03-31', daysLeft: 40 }, portal: null, foundingThrough: null, overLimitAfter: false });
@@ -139,6 +153,7 @@ describe('billing state distinctions in the rendered body', () => {
     assert.doesNotMatch(rendered, /data-label="Holds">1 of 1/);
   });
   it('Stripe return flags consume once, preserve the drawer and use either host return base', () => {
+    assert.equal(billingReturnState('success=1&inPlace=club', '/billing', false).destination, '/billing?inPlace=club');
     for (const host of ['/club-a/admin/org/billing', '/future-host/billing']) {
       for (const flag of ['success', 'card_saved', 'next_season']) {
         const result = billingReturnState(`${flag}=1&plan=club_large&other=kept`, host, true);

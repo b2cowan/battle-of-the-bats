@@ -29,6 +29,8 @@ Plan & billing is the owner's alone. A member who types the address sees the loc
 draft or active is **not** blocked: everything stays in the same workspace. Before Club opens for sale the Club row reads
 "Contact us to move" and opens nothing.
 
+**Part 3 decisions, owner 2026-10-31:** the same Club row is available during staff-given free time. A coach who previously held a subscription gets no second trial; the server supplies that decision before the window quotes the charge. A subscription already set to end must be kept first through the secure billing portal. An owner returning while their portal is suspended can reach this billing recovery screen without opening the working portal. Once the club is confirmed ready, a full page load opens Admin with the setup list; the owner walk must check the refreshed identity and menu first. Staff and other non-owners gain no billing access. The accepted decisions and narrowly approved server/layout exceptions are recorded in the plan's §9.
+
 ## Why it matters
 
 A growing coach should never hit a dead end on the plan page, and should not have to cancel one plan and start another by hand.
