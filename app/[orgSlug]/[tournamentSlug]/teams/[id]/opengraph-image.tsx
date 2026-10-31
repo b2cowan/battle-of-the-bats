@@ -3,6 +3,7 @@ import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { resolveTheme } from '@/lib/themes';
 import { teamColor, teamInitials } from '@/lib/team-color';
+import { isPublicFrameOn } from '@/lib/public-frame-server';
 
 export const alt = 'Team';
 export const size = { width: 1200, height: 630 };
@@ -31,6 +32,8 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
 
     // The record shows where the team page shows it (2026-10-16): Standings on and the division's schedule published.
     const division = data.divisions.find(d => d.id === team.divisionId);
+    // A held-back direct link may show its minimal message, but must not advertise its identity in a share card.
+    if (await isPublicFrameOn() && division?.scheduleVisibility !== 'published') return null;
     const showRecord = isPublicPageEnabled(data.tournament, 'standings') && (division?.scheduleVisibility ?? 'unpublished') !== 'unpublished';
 
     let w = 0, l = 0, tie = 0;

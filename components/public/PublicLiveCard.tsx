@@ -25,7 +25,8 @@ export default function PublicLiveCard({ view, href, schedule, foot, playoff }: 
     const sides = <>{view.sides.map((side, i) => <span key={i} className={playoffStyles.gameSide} data-trailing={side.trailing || undefined}>
       <span>{side.name}</span>{side.score != null && <b>{side.score}</b>}
     </span>)}</>;
-    return <article className={playoffStyles.gameCard} data-live={playoff.live || undefined} data-public-playoff-game={view.id}
+    return <article className={playoffStyles.gameCard} data-live={playoff.live || undefined}
+      data-public-playoff-game={view.id}
       aria-label={playoff.live ? label : `${away.name} vs ${home.name}`}>
       <div className={playoffStyles.gameHead}><span>{playoff.meta}</span>{playoff.live && <span className={playoffStyles.liveWord}>Live now</span>}</div>
       {href ? <Link className={playoffStyles.gameLink} href={href}>{sides}</Link> : <div>{sides}</div>}

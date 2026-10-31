@@ -50,7 +50,7 @@ export default function GameDetailLiveRefresher({
     async function tick() {
       if (document.visibilityState === 'hidden') return;
       try {
-        const data = await fetchPublicTournamentData(orgSlug, tournamentSlug, 'schedule');
+        const data = await fetchPublicTournamentData(orgSlug, tournamentSlug, requireFinalization !== undefined ? 'schedule-preview' : 'schedule');
         if (!data) return;
         const game = data.games.find(g => g.id === gameId);
         let signature: string;

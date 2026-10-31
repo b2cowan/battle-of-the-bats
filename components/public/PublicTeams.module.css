@@ -1,0 +1,64 @@
+/* Stage 5's preview-only Teams list. The legacy sheets and shared frame remain unchanged. */
+.teams {
+  display: flex; flex-direction: column; gap: 16px; min-width: 0; padding: 16px;
+  background: var(--club-ground); color: var(--club-text); font-family: var(--club-text-face);
+}
+.teams > * { min-width: 0; }
+/* Phone: the division picker and a magnifier; the magnifier opens the search below, as on Schedule. */
+.filters { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 8px; }
+.search { display: none; grid-column: 1 / -1; }
+.search[data-open='true'] { display: block; }
+.searchToggle {
+  display: flex; align-items: center; justify-content: center; width: 44px; height: 44px;
+  padding: 0; border: 0; background: transparent; color: var(--club-ink); cursor: pointer;
+}
+.filters select, .filters input {
+  width: 100%; min-width: 0; min-height: 44px; padding: 8px 12px;
+  border: 1px solid var(--club-field); border-radius: 6px;
+  background: var(--club-card); color: var(--club-text); color-scheme: light;
+  font: 400 1rem/1.4 var(--club-text-face);
+}
+.filters input::placeholder { color: var(--club-soft); opacity: 1; }
+.filters select:focus-visible, .filters input:focus-visible, .searchToggle:focus-visible, .teamLink:focus-visible, .star:focus-visible, .retry:focus-visible {
+  outline: 2px solid var(--club-edge); outline-offset: 2px;
+}
+.groups { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.division { min-width: 0; }
+.heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.heading h2 { margin: 0; font: 600 1.125rem/1.3 var(--club-text-face); color: var(--club-text); }
+.heading > span { flex: none; font: 400 0.875rem/1.3 var(--club-text-face); color: var(--club-soft); }
+.pool + .pool { margin-top: 12px; }
+.poolName { margin: 0 0 6px; font: 400 0.875rem/1.3 var(--club-text-face); color: var(--club-soft); }.rows { border: 1px solid var(--club-line-2); border-radius: 8px; background: var(--club-card); }
+.row { display: flex; align-items: center; min-width: 0; min-height: 72px; }
+.row + .row { border-top: 1px solid var(--club-line); }
+.teamLink {
+  display: flex; flex-direction: column; justify-content: center; flex: 1; min-width: 0; min-height: 72px;
+  padding: 12px 14px; color: var(--club-text); text-decoration: none; line-height: 1.35;
+}
+.teamLink strong { font: 600 1rem/1.35 var(--club-text-face); overflow-wrap: anywhere; }
+.teamLink small { margin-top: 4px; font: 400 0.875rem/1.35 var(--club-text-face); color: var(--club-soft); overflow-wrap: anywhere; }
+.summary { font-variant-numeric: tabular-nums; }
+.summary .live { color: var(--club-ok); font-weight: 600; }
+.starWrap { flex: none; margin-right: 4px; }
+.star {
+  display: flex; align-items: center; justify-content: center; width: 44px; height: 44px;
+  padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--club-soft); cursor: pointer;
+}
+.star[aria-pressed='true'] { color: var(--club-warn); }
+.star[aria-pressed='true'] svg { fill: currentColor; }
+.loading { margin: 0; color: var(--club-soft); font: 400 1rem/1.5 var(--club-text-face); }
+.stateCard > div { width: 100%; align-items: center; padding: 28px 16px; border-radius: 8px; text-align: center; }
+.stateCard h2 { font: 600 1.375rem/1.3 var(--club-text-face); }
+.stateCard p { font: 400 0.875rem/1.5 var(--club-text-face); color: var(--club-soft); }
+.retry {
+  align-self: center; min-height: 44px; padding: 8px 16px; border: 1px solid var(--club-field); border-radius: 6px;
+  background: var(--club-card); color: var(--club-text); font: 400 1rem/1.4 var(--club-text-face); cursor: pointer;
+}
+@media (min-width: 1024px) {
+  .teams { padding: 28px 32px; }
+  .filters { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); max-width: 640px; }
+  .search { display: block; grid-column: auto; }
+  .searchToggle { display: none; }
+  /* One column, like Schedule: divisions read top to bottom in order, however many there are and whatever their length. */
+  .groups { max-width: 860px; gap: 28px; }
+}

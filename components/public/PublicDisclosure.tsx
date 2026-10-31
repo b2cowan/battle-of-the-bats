@@ -1,11 +1,23 @@
 'use client';
-import { useId, useState, type ReactNode } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { ChevronDown, X } from 'lucide-react';
 import styles from './PublicDisclosure.module.css';
 
-/** Shared tap-open row; Schedule finals stay open at the frame's desktop breakpoint. */
-export default function PublicDisclosure({ title, sub, children, desktopOpen = false, reveal = false }: {
-  title: string; sub?: string; children: ReactNode; desktopOpen?: boolean; reveal?: boolean;
+/** The frame's desktop breakpoint (the sidebar layout). */
+const DESKTOP = '(min-width: 1024px)';
+const subscribeDesktop = (notify: () => void) => {
+  const query = window.matchMedia(DESKTOP);
+  query.addEventListener('change', notify);
+  return () => query.removeEventListener('change', notify);
+};
+const isDesktop = () => window.matchMedia(DESKTOP).matches;
+
+/**
+ * Shared tap-open row; Schedule finals stay open at the frame's desktop breakpoint. `modalOnDesktop` keeps the row a
+ * dropdown on a phone but opens its content in a window on a desk, so reading it never pushes the page below it down.
+ */
+export default function PublicDisclosure({ title, sub, children, desktopOpen = false, reveal = false, modalOnDesktop = false }: {
+  title: string; sub?: string; children: ReactNode; desktopOpen?: boolean; reveal?: boolean; modalOnDesktop?: boolean;
 }) {
   const [open, setOpen] = useState(reveal);
   // A reveal (a deep link to a game inside) opens the row and LEAVES it open: the caller's highlight lasts a couple of
@@ -16,12 +28,31 @@ export default function PublicDisclosure({ title, sub, children, desktopOpen = f
     if (reveal) setOpen(true);
   }
   const id = useId();
-  const expanded = open;
+  const desk = useSyncExternalStore(subscribeDesktop, isDesktop, () => false);
+  const modal = modalOnDesktop && desk;
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (open && !dialog.open) dialog.showModal();
+    if (!open && dialog.open) dialog.close();
+  }, [open, modal]);
+
   return <section className={styles.disclosure} data-desktop-open={desktopOpen || undefined}>
-    <button className={styles.toggle} type="button" aria-expanded={expanded} aria-controls={id} onClick={() => setOpen(!open)}>
+    <button className={styles.toggle} type="button" data-modal={modal || undefined}
+      aria-expanded={modal ? undefined : open} aria-controls={id} aria-haspopup={modal ? 'dialog' : undefined} onClick={() => setOpen(!open)}>
       <span>{title}{sub && <small>{sub}</small>}</span><ChevronDown size={20} aria-hidden />
     </button>
     {desktopOpen && <div className={styles.desktopTitle}>{title} · all final</div>}
-    <div id={id} className={styles.content} data-open={expanded}>{children}</div>
+    {modal
+      ? <dialog ref={dialogRef} id={id} className={styles.modal} aria-labelledby={`${id}-title`}
+          onClose={() => setOpen(false)} onClick={event => { if (event.target === event.currentTarget) setOpen(false); }}>
+          <div className={styles.modalHead}>
+            <h2 id={`${id}-title`}>{title}{sub && <small>{sub}</small>}</h2>
+            <button type="button" className={styles.modalClose} aria-label="Close" onClick={() => setOpen(false)}><X size={20} aria-hidden /></button>
+          </div>
+          <div className={styles.modalBody}>{children}</div>
+        </dialog>
+      : <div id={id} className={styles.content} data-open={open}>{children}</div>}
   </section>;
 }

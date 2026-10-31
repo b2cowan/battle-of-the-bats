@@ -66,7 +66,7 @@ describe('selection and playoff-spot marks preserve the existing engine’s orde
       standingsByDivision: { d: [row('a')], hidden: [row('secret')] } };
     const shown = publishedCompetitionData(input);
     assert.deepEqual(shown.divisions, [division]);
-    assert.deepEqual(shown.games, [game()]);
+    assert.deepEqual(shown.games, [game({ awayTeamId: '' })]);
     assert.deepEqual(shown.teams.map(t => t.id), ['a']);
     assert.deepEqual(Object.keys(shown.standingsByDivision), ['d']);
     assert.equal(input.divisions.length, 2);

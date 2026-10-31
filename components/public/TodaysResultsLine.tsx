@@ -71,7 +71,7 @@ export default function TodaysResultsLine() {
 }
 
 function ResultsLine() {
-  const { tournamentSlug, today, teams, todayGames, requireFinalization, gameHref } = useTodaysTournamentGames();
+  const { tournamentSlug, today, teams, todayGames, requireFinalization, gameHref } = useTodaysTournamentGames(true);
 
   // The × — hidden for the rest of the tournament's day on this device. `undefined` until storage is read, so the line
   // never draws and then vanishes.

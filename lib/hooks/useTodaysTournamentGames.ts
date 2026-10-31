@@ -45,7 +45,7 @@ function readFeed(d: PublicTournamentPageData): TodayFeed {
   };
 }
 
-export function useTodaysTournamentGames() {
+export function useTodaysTournamentGames(publicFrame = false) {
   const params = useParams();
   const orgSlug = (params?.orgSlug as string) || '';
   const tournamentSlug = (params?.tournamentSlug as string) || '';
@@ -63,16 +63,16 @@ export function useTodaysTournamentGames() {
   useEffect(() => {
     if (!active) return;
     let cancelled = false;
-    void fetchPublicTournamentData(orgSlug, tournamentSlug, 'schedule').then(d => {
+    void fetchPublicTournamentData(orgSlug, tournamentSlug, publicFrame ? 'schedule-preview' : 'schedule').then(d => {
       if (!cancelled && d) setFeed(readFeed(d));
     }).catch(() => { /* a network blip: the live poll below fills the feed on its next turn */ });
     return () => { cancelled = true; };
-  }, [active, orgSlug, tournamentSlug]);
+  }, [active, orgSlug, tournamentSlug, publicFrame]);
 
   usePublicTournamentLive({
     orgSlug,
     tournamentSlug,
-    section: 'schedule',
+    section: publicFrame ? 'schedule-preview' : 'schedule',
     enabled: active,
     onData: d => setFeed(readFeed(d)),
   });

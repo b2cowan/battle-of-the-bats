@@ -4,8 +4,7 @@
 .controls { display: flex; align-items: center; gap: 8px; }
 .division { flex: 1; min-width: 0; }
 .division select { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--club-field); border-radius: 6px; background: var(--club-card); color: var(--club-text); color-scheme: light; font: 400 1rem/1.4 var(--club-text-face); }
-.share { display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--club-ink); cursor: pointer; }
-.share:focus-visible, .division select:focus-visible, .gameLink:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 2px; }
+.division select:focus-visible, .gameLink:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 2px; }
 .columns { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .next, .bracket { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .gameCard { min-width: 0; padding: 12px 14px; background: var(--club-card); border: 1px solid var(--club-line-2); border-radius: 8px; }
@@ -18,13 +17,15 @@
 .gameSide > span { min-width: 0; overflow-wrap: anywhere; }
 .gameSide > b { font: 700 1.5rem/1 var(--club-title-face); font-variant-numeric: tabular-nums; }
 .gameSide[data-trailing] { color: var(--club-soft); font-weight: 400; }
+.gameSide[data-team-side='own'] { font-weight: 700; }
+.gameSide[data-team-side='opponent'] { font-weight: 400; }
 .noScore { margin: 8px 0 0; color: var(--club-dim); font: 400 0.875rem/1.4 var(--club-text-face); }
 .gameFoot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; color: var(--club-soft); font: 400 0.75rem/1.4 var(--club-text-face); }
 .gameFoot > span { flex: 1; }
 .gameFoot [data-gold] { color: var(--club-warn); }
 .seedBody { padding: 14px; border: 1px solid var(--club-line-2); border-radius: 8px; background: var(--club-card); font: 400 0.875rem/1.5 var(--club-text-face); }
 .seedBody > p { margin: 0 0 12px; color: var(--club-soft); }
-.callouts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
+.callouts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-bottom: 16px; }
 .callouts article { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 10px; border: 1px solid var(--club-line); border-radius: 6px; }
 .callouts article > span { display: flex; align-items: center; gap: 6px; color: var(--club-soft); font-size: 0.75rem; }
 .callouts b { overflow-wrap: anywhere; font-weight: 600; }
@@ -42,8 +43,12 @@
 @media (min-width: 1024px) {
   .playoffs { padding: 28px 32px; }
   .division { flex: 0 1 360px; }
-  .columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); grid-template-rows: min-content 1fr; grid-template-areas: 'next bracket' 'seeding bracket'; gap: 24px 28px; align-items: start; }
+  /* One column: the game gets the full width, the seeding row sits under it (its detail opens in a window), then the bracket. */
+  .columns { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: 'next' 'seeding' 'bracket'; gap: 24px 28px; align-items: start; }
   .next { grid-area: next; }
   .bracket { grid-area: bracket; }
   .seeding { grid-area: seeding; }
+}
+@media (min-width: 1024px) {
+  .callouts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

@@ -12,6 +12,7 @@ import { competitionShellSignature, hasPublicPlayoffBracket, playoffDoorSub } fr
 import { standingsAdvancing, standingsCounts, standingsDivision, standingsRanking, standingsRankChanges } from '@/lib/public-standings';
 import { formatPoolName, splitTeamQualifier } from '@/lib/utils';
 import { useOrgHref } from '@/lib/use-public-pathname';
+import { useStandalonePWA } from '@/lib/device';
 import PublicDisclosure from './PublicDisclosure';
 import PublicSectionHead from './PublicSectionHead';
 import PublicTournamentState from './PublicTournamentState';
@@ -48,7 +49,8 @@ export default function PublicStandings({ orgSlug, tournamentSlug, isPreview = f
   const initialized = useRef(false);
   const previous = useRef(initialData);
   const changeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { followedTeamId } = useFollowedTeam(orgSlug, tournamentSlug);
+  const installed = useStandalonePWA();
+  const { followedTeamId } = useFollowedTeam(orgSlug, tournamentSlug, !isPreview && installed);
   const data = isPreview ? initialData ?? null : fetched;
   const division = standingsDivision(data?.divisions ?? [], pick);
 

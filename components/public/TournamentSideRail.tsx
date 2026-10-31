@@ -29,6 +29,7 @@ import { useOrgNav } from '@/components/OrgNavContext';
 import type { PublicPageKey } from '@/lib/public-pages';
 import { visibleTournamentTabs } from '@/lib/tournament-page-tabs';
 import DesktopMyTeamRailCard from '@/components/public/DesktopMyTeamRailCard';
+import PublicAppOnly from '@/components/public/PublicAppOnly';
 import styles from './TournamentSideRail.module.css';
 
 type TournamentSideRailProps = {
@@ -39,6 +40,7 @@ type TournamentSideRailProps = {
   heading?: string | null;
   colorMode?: 'dark' | 'light' | null;
   hiddenPages?: PublicPageKey[];
+  publicFrame?: boolean;
 };
 
 export default function TournamentSideRail({
@@ -47,6 +49,7 @@ export default function TournamentSideRail({
   heading,
   colorMode,
   hiddenPages,
+  publicFrame = false,
 }: TournamentSideRailProps = {}) {
   const pathname = usePublicPathname();
   const params = useParams();
@@ -136,7 +139,7 @@ export default function TournamentSideRail({
         })}
       </nav>
       {/* Persistent followed-team card — live public rail only, not admin preview (J6-042). */}
-      {!basePath && <DesktopMyTeamRailCard />}
+      {!basePath && (publicFrame ? <PublicAppOnly><DesktopMyTeamRailCard publicFrame /></PublicAppOnly> : <DesktopMyTeamRailCard />)}
       <div className={styles.railFooter}>Live on FieldLogicHQ</div>
       </div>
     </aside>

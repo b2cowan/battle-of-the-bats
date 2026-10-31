@@ -50,7 +50,7 @@ export default function PublicGameDetails({ game, data, orgSlug, tournamentSlug,
           </div>)}
           {view.countdown ? <p className={styles.pending}><Countdown target={view.countdown} prefix="Starts in " whenPast="Starting soon" /></p>
             : view.noScore && <p className={styles.pending}>{view.noScore}</p>}
-          {(view.foot || view.hasScore) && <div className={styles.foot}><span className={view.gold ? styles.gold : undefined}>{view.foot}</span>
+          {(view.foot || view.hasScore) && <div className={`${styles.foot} ${view.foot ? '' : styles.footShareOnly}`}><span className={view.gold ? styles.gold : undefined}>{view.foot}</span>
             {view.hasScore && <ShareScoreButton iconOnly label={view.state === 'unofficial' ? 'Share this unofficial score' : 'Share this score'}
               className={styles.share} tournamentName={tournament.name} awayName={away.name} homeName={home.name}
               awayScore={away.score!} homeScore={home.score!} live={view.live} statusLabel={view.stateLabel ?? ''}

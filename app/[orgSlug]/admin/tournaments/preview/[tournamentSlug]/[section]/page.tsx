@@ -21,6 +21,8 @@ import StandingsContent from '@/components/public/StandingsContent';
 import PublicStandings from '@/components/public/PublicStandings';
 import { publishedCompetitionData } from '@/lib/public-standings';
 import TeamsContent from '@/components/public/TeamsContent';
+import PublicTeams from '@/components/public/PublicTeams';
+import { publicTeamsData } from '@/lib/public-teams';
 import NewsContent from '@/components/public/NewsContent';
 import RulesContent from '@/components/public/RulesContent';
 import RegisterContent from '@/components/public/RegisterContent';
@@ -74,7 +76,7 @@ export default async function TournamentPreviewSectionPage({
       standingsByDivision: {},
     };
     const frameOn = await isPublicFrameOn();
-    if (frameOn) return <PublicSchedule orgSlug={orgSlug} tournamentSlug={tournamentSlug} isPreview initialData={initialData} />;
+    if (frameOn) return <PublicSchedule orgSlug={orgSlug} tournamentSlug={tournamentSlug} isPreview initialData={publicTeamsData(initialData)} />;
     return (
       <ScheduleContent
         orgSlug={orgSlug}
@@ -145,6 +147,13 @@ export default async function TournamentPreviewSectionPage({
       registrationFields: [],
       standingsByDivision: {},
     };
+    const frameOn = await isPublicFrameOn();
+    if (frameOn) {
+      const games = await getGames(tournament.id, readOptions);
+      initialData.games = onlyPublishedGames(games, divisions);
+      initialData.standingsByDivision = await getPublicStandingsByDivision(tournament, divisions, { games, teams });
+      return <PublicTeams orgSlug={orgSlug} tournamentSlug={tournamentSlug} isPreview initialData={publicTeamsData(initialData)} initialNow={new Date().toISOString()} />;
+    }
     return (
       <TeamsContent
         orgSlug={orgSlug}

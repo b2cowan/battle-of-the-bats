@@ -8,6 +8,10 @@ import { withObservability } from '@/lib/observability';
 import { toPublicTeam } from '@/lib/public-tournament-data';
 import { resolveGameVenueLabel } from '@/lib/venue-label';
 import { decidedFinalFor } from '@/lib/champions';
+import { isPublicFrameOn } from '@/lib/public-frame-server';
+import { withheldTeamProfile } from '@/lib/public-teams';
+import { teamProfilePreview } from '@/lib/public-team-profile';
+import { DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +58,12 @@ export const GET = withObservability(async (req: Request) => {
 
   const division = divisions.find(d => d.id === team.divisionId);
   if (!division) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  // Opt-in only: the old page/API contract stays unchanged with the frame off.
+  const frameOn = searchParams.get('publicFrame') === '1' && await isPublicFrameOn();
+  if (frameOn && division.scheduleVisibility !== 'published') {
+    return NextResponse.json(withheldTeamProfile(team, division.name));
+  }
 
   // The team's games show only where the public Schedule shows them (the page is on and the division is published);
   // its record only where the public Standings show (that page is on, and the games behind it are shown).
@@ -138,7 +148,7 @@ export const GET = withObservability(async (req: Request) => {
   const shownTeamIds = new Set<string>([teamId, ...teamGames.flatMap(g => [g.homeTeamId, g.awayTeamId])].filter(Boolean) as string[]);
   const teamNames = Object.fromEntries(Object.entries(teamMap).filter(([id]) => shownTeamIds.has(id)));
 
-  return NextResponse.json({
+  const profile = {
     // Public-safe team only — never expose coach email / paymentStatus / adminNotes
     // on this anonymous endpoint (J6-001). Coach NAME honors the per-tournament toggle (mig 150).
     team: toPublicTeam(team, tournament.coachNamesShowOnPublic === true),
@@ -153,5 +163,12 @@ export const GET = withObservability(async (req: Request) => {
           poolRank: null, poolRankLabel: null, inPlayoffSpot: false, isChampion: false, isRunnerUp: false },
     games: teamGames,
     teamNames,
-  });
+  };
+  return NextResponse.json(frameOn ? teamProfilePreview(profile, {
+    division, divisions, teams: teams.map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)),
+    games, rows: standingsRows, standingsShown, tournament,
+    requireFinalization: tournament.requireScoreFinalization ?? org.requireScoreFinalization ?? true, now: new Date(),
+    crownStamp: tournament.championsCrownedAt ?? null,
+    defaultDuration: tournament.settings?.game_duration_minutes ?? DEFAULT_GAME_DURATION_MINUTES,
+  }) : profile);
 }, { route: '/api/public/team-profile' });

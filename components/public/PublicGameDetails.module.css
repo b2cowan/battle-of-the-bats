@@ -29,5 +29,6 @@ a.team:hover { text-decoration: underline; }
 .facts dd { white-space: pre-wrap; }
 .back:focus-visible, .team:focus-visible, .share:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 2px; }
 @media (min-width: 1024px) {
+  .share, .footShareOnly { display: none; }
   .columns { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); align-items: start; gap: 24px; }
 }

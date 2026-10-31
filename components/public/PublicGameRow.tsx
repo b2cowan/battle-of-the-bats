@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import Link from 'next/link';
 import type { GameRowView } from '@/lib/public-game-row';
 import type { PublicGameState } from '@/lib/game-status';
@@ -22,10 +23,14 @@ export function ScheduleMatchup({ time, division, pool, round, state, sides, hre
       {status && <span className={scheduleStyles.gameStatus} data-state={state}>{status}</span>}
     </span>
     <span className={scheduleStyles.gameTeams}>
-      {sides.map((side, i) => <span key={`${i}:${side.name}`} className={scheduleStyles.gameSide} data-result={side.result ?? undefined}>
-        <span className={scheduleStyles.gameName}>{side.name}</span>
-        {side.score != null && <RollingNumber className={scheduleStyles.gameScore} value={side.score} />}
-      </span>)}
+      {sides.map((side, i) => <Fragment key={`${i}:${side.name}`}>
+        {/* Desktop only: the "vs" sits between the two sides, so it is equally close to both. */}
+        {i === 1 && <span className={scheduleStyles.gameVs} aria-hidden />}
+        <span className={scheduleStyles.gameSide} data-result={side.result ?? undefined}>
+          <span className={scheduleStyles.gameName}>{side.name}</span>
+          {side.score != null && <RollingNumber className={scheduleStyles.gameScore} value={side.score} />}
+        </span>
+      </Fragment>)}
     </span>
     {noScore && <span className={scheduleStyles.gameNoScore}>{noScore}</span>}
     {foot && <span className={scheduleStyles.stakes}>{foot}</span>}

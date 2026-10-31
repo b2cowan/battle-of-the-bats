@@ -367,10 +367,11 @@ export function restoreAllParkedFollows(): void {
  * (browser-only storage), and keeps in sync across tabs (`storage`) and across
  * components in the same tab (`fl-follow-change`).
  */
-export function useFollowedTeam(orgSlug: string, tournamentSlug: string) {
+export function useFollowedTeam(orgSlug: string, tournamentSlug: string, enabled = true) {
   const [followedTeamId, setFollowedTeamId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!enabled) return;
     const sync = () => setFollowedTeamId(readFollowedTeamId(orgSlug, tournamentSlug));
     sync();
     const onStorage = (e: StorageEvent) => {
@@ -382,7 +383,7 @@ export function useFollowedTeam(orgSlug: string, tournamentSlug: string) {
       window.removeEventListener('storage', onStorage);
       window.removeEventListener('fl-follow-change', sync);
     };
-  }, [orgSlug, tournamentSlug]);
+  }, [orgSlug, tournamentSlug, enabled]);
 
   const follow = useCallback(
     (team: Pick<Team, 'id' | 'name' | 'divisionId'>) => {
@@ -397,7 +398,7 @@ export function useFollowedTeam(orgSlug: string, tournamentSlug: string) {
     setFollowedTeamId(null);
   }, [orgSlug, tournamentSlug]);
 
-  return { followedTeamId, follow, unfollow } as const;
+  return { followedTeamId: enabled ? followedTeamId : null, follow, unfollow } as const;
 }
 
 /**

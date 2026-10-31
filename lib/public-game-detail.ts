@@ -57,7 +57,8 @@ export function publicGameDetailView(game: Game, { games, teams, divisions, venu
   const cancelled = state === 'cancelled';
   const live = state === 'live';
   const hasScore = !cancelled && (live ? !hasNoScoreYet(game) : (state === 'final' || state === 'unofficial') && game.homeScore != null && game.awayScore != null);
-  const teamNames = new Map(teams.map(t => [t.id, t.name]));
+  const published = new Set(divisions.filter(d => d.scheduleVisibility === 'published').map(d => d.id));
+  const teamNames = new Map(teams.filter(t => t.status === 'accepted' && published.has(t.divisionId)).map(t => [t.id, t.name]));
   const teamIds = { away: game.awayTeamId, home: game.homeTeamId };
   // A side whose team is not public (withheld or removed) reads as its placeholder, and is not a link.
   const knownTeam = (side: 'away' | 'home') => teamNames.has(teamIds[side]) ? teamIds[side] : null;
@@ -80,7 +81,7 @@ export function publicGameDetailView(game: Game, { games, teams, divisions, venu
     directions: cancelled ? null : gameDirections(game, venues),
     countdown: state === 'upcoming' && start != null && start > now.getTime() ? new Date(start).toISOString() : null,
     noScore: !cancelled && !hasScore ? NO_SCORE_YET : null,
-    foot: cancelled ? 'This game will not be played.' : state === 'unofficial' ? 'Not yet confirmed by the organizer' : stakes?.text ?? null,
+    foot: cancelled ? 'This game will not be played.' : state === 'unofficial' ? 'Not yet confirmed by the organizer' : state === 'final' ? null : stakes?.text ?? null,
     gold: !cancelled && state !== 'unofficial' && Boolean(stakes?.gold),
     sides: (['away', 'home'] as const).map(side => ({
       name: names[side], score: scores[side],

@@ -42,10 +42,12 @@ describe('the real Playoffs body and preview bracket', () => {
   it('puts the live game before its readable bracket and the collapsed seeding explanation', () => {
     const html = render();
     assert.match(html, /data-public-playoffs="live"/);
-    assert.ok(html.indexOf('data-public-playoff-game="fin"') < html.indexOf('data-sandbox-tour="playoff-bracket"'));
+    assert.ok(html.indexOf('data-public-live-card') > -1, 'the live game renders as the live card');
+    assert.ok(html.indexOf('data-public-live-card') < html.indexOf('data-sandbox-tour="playoff-bracket"'));
     assert.ok(html.indexOf('data-sandbox-tour="playoff-bracket"') < html.indexOf('How seeding works'));
     assert.match(html, /aria-expanded="false"/);
-    assert.match(html, /Directions to Diamond 2/);
+    // A game in play wears the Schedule's live card (time, division · round, stakes), not the playoff card's venue line.
+    assert.match(html, /data-public-live-card/);
     assert.match(html, /The winner takes the title/);
     assert.match(html, /Best offence/); assert.match(html, /Stingiest defence/); assert.match(html, /Playoff cut line/);
     assert.doesNotMatch(html, /Best offense|Stingiest defense|data-legacy-bracket|Full Bracket/);
@@ -56,8 +58,9 @@ describe('the real Playoffs body and preview bracket', () => {
     const data = fixture(); Object.assign(data.games[2], { homeScore: null, awayScore: null });
     const html = render(data);
     assert.ok((html.match(/No score yet/g) ?? []).length >= 2);
-    const card = html.slice(html.indexOf('data-public-playoff-game="fin"'), html.indexOf('</article>'));
-    assert.doesNotMatch(card, /<b>0<\/b>/);
+    const card = html.slice(html.indexOf('data-public-live-card'), html.indexOf('</article>'));
+    assert.ok(card.length > 0 && /No score yet/.test(card), 'the live card itself says No score yet');
+    assert.doesNotMatch(card, /gameScore/);
   });
   it('keeps an upcoming championship with an unresolved side in fan words', () => {
     const data = fixture(); data.games[1].status = 'submitted';

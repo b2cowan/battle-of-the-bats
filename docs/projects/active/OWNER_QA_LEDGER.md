@@ -27315,3 +27315,47 @@ The walk's Copy action always rebuilds the current results, and Reset clears the
 
 **Owner result:** pending. Do not mark this walk passed from the builder's assertions. Paste the checklist result into the chat, record verdicts/unticked IDs/notes here, and resolve findings or record explicit owner acceptance before closing Stage 1's owner walk. Next implementation stage begins with the personal-account Stage 2 redraw on the owner's instruction.
 <!-- /§431 -->
+
+## §432 · Public tournament pages · Stage 5 owner walk — **with the preview on, Teams answers which teams are in and where each stands, a team's page answers when my team plays next and how it has done; following and alerts are in the installed app only; a held-back division appears nowhere; with the preview off, nothing changed**
+<!-- §432 -->
+**Owner walk passed 2026-10-31: 60 of 60 checked; O1–O3 optional and skipped.** Walk: [PUBLIC_TOURNAMENT_STAGE5_WALK.html](PUBLIC_TOURNAMENT_STAGE5_WALK.html), published at https://claude.ai/artifact/FGMUjrybQFrD8BwqsBC2Bq. Plan: [PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md](PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md) §9; build prompt [PUBLIC_TOURNAMENT_STAGE5_BUILD_PROMPT.md](PUBLIC_TOURNAMENT_STAGE5_BUILD_PROMPT.md). Parts 1–3 were implemented 2026-10-30; `/simplify` and a five-lens `/review` ran 2026-10-31. The owner requested resolution of the eight review findings on 2026-10-31.
+
+**One purpose, one walk, one paste-back.** Sixteen parts, 60 steps: A Teams on a phone (6) · B division, search, ordering (5) · C a row's taps and no star in a browser (4) · D a team's page in every state (8) · E the symbol row in a browser (3) · F long names and a chip at 360 (2) · G it changes while the page is open (7) · H a held-back division appears nowhere (4) · I My-team bar and rail card gone in a browser (3) · J the results line stays (2) · K desk and 901/1023 with two ruling steps (4) · L the organizer's preview (3) · M the demo (1) · N preview off keeps today's pages (4) · O installed app, optional (3) · P leave the fixtures tidy (1). **Every part carries a verdict control and the summary heads itself INCOMPLETE until all sixteen are set** (§428's Part K came back ticked with no verdict). Installed-app steps are optional. The fixtures were last set on 2026-10-30, so Part A's first step re-anchors them (`refresh`); the walk leaves them prepared (Part P).
+
+**Owner rulings:** K1 Teams desk and K2 team-page desk approved as built. The separate team Share was removed on the owner's 2026-10-31 direction (also held by the Stage 5 source guard). The runner-up keeps its drawn chip without an extra "No more games" line; no additional wording ruling is inferred from the paste-back.
+
+**Initial review findings (2026-10-31; resolutions below):** (1) a game with no start time crashes the team page (the new view sorts on a time the database allows to be empty); (2) the "In playoff spot" chip compares a pool rank with a division-wide cut when pools are combined by crossover; (3) the Teams row prints record and place even when the organizer turned Standings off, while the team page hides them; (4) "No more games" can read for a team that has qualified but whose bracket slot is not yet filled; (5) a place label disagrees with the Teams grouping for a division with one pool or a deleted pool; (6) the Schedule and Standings pages (Stages 3–4) still read a device's stored follow in a browser and set the division from it; (7) a hidden opponent's id still travels in the game data and opens a name-and-division page by direct link, and the share image has no held-back gate; (8) the team page's "Up next" can lag a game's start by the 30-second check, and indefinitely while polls fail. The follow-up below addresses these findings; the approved minimal held-back direct-link identity remains intentional.
+
+**Builder evidence, not owner acceptance:** 293 focused tests plus the guard suites pass; full typecheck and focused lint clean; public tokens, lettering, CSS purity, spelling, both contrast checks and date correctness pass. `check:layout` for Stage 5 passed the team page at 361 and 1440; Teams still fails on the five shared free-plan promotion findings recorded at Part 2 (none is Stage 5's). The full `verify:changed` was not run (it stops at an unrelated red test in another session's files).
+
+**Owner result: PASS, 60 of 60 checked, pasted back 2026-10-31.** Parts A–P passed; installed-app steps O1–O3 were optional and skipped. K1 Teams desk and K2 team-page desk were explicitly approved as built. This records the owner's walk, independently of the eight review findings above. The owner requested those findings be resolved on 2026-10-31; implementation and regression evidence follow below.
+
+**Review follow-up implemented 2026-10-31: all eight findings corrected.** Resolution details are in
+`PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §13. Missing-time sorting is safe; qualification uses Standings' canonical
+cut; hidden records are absent from the preview hand-off; an unfilled playoff slot reads as pending; place labels
+follow the displayed groups; browser Schedule/Standings do not hydrate or subscribe to stored follows; nonpublic
+opponent IDs, game/score-share team doors and held-back team share images are gated; an independent local clock
+advances at kickoff and live-window end even without a successful profile poll. The minimal held-back direct-link
+identity remains per the existing owner ruling. Stored follows, explicit division preferences and fixtures are retained.
+
+**Follow-up verification (type-aware):** 680 tests / 121 suites pass across every `public-*.test.ts` file plus
+`team-reads-guard`, `game-status` and `playoff-plan`. This includes the actual rendered Teams/team-page/bracket bodies,
+share-image output, disabled follow reads/subscriptions, and the actual team-page clock effect without a replacement
+feed. Full `npm run typecheck` passes. Focused lint has zero errors and one pre-existing `_notes` unused-variable
+warning in the profile API route; the added bracket and lifecycle-test changes lint clean. Public tokens/type,
+CSS-module purity, spelling, both contrast checks, date correctness and TODO size all pass.
+Logs: `.probe/stage5/review-fixes-tournament-tests.log`, `review-boundaries-tests.log`, `review-fixes-typecheck.log`,
+`review-fixes-lint.log`, `review-fixes-final-lint.log` and the per-gate `review-*.mjs.log` files.
+
+**Server handoff:** the verified workspace dev supervisor/launcher/worker were stopped and restarted through
+`npm run dev` with network access after the shared-module changes. Ready confirmed; the required platform-admin
+login returns HTTP 200; no Supabase `EACCES` in `.probe/stage5/review-fixes-dev.log`. Read-only localhost requests
+also confirm Teams preview, the live team profile and the minimal held-back profile response return HTTP 200.
+The dev server remains running. No development fixture write was performed during the follow-up.
+
+**Owner browser follow-up:** check an untimed game; a combined-pool playoff chip and an unfilled playoff slot;
+Standings off on Teams; one/deleted-pool place labels; Schedule/Standings in a browser retaining a stored follow;
+and a held-back crossover opponent/share card. The local-clock regression is automated; a live kickoff with the
+network unavailable is an optional manual confirmation. No browser/layout sweep or full repository test run was
+performed over the shared working tree. The original walk result is not claimed as acceptance of these later edits.
+<!-- /§432 -->

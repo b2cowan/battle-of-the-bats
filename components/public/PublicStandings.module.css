@@ -13,27 +13,27 @@
 .counts { margin: 0; color: var(--club-soft); font: 400 0.875rem/1.5 var(--club-text-face); font-variant-numeric: tabular-nums; }
 .pool { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .tableFrame { overflow-x: auto; border: 1px solid var(--club-line-2); border-radius: 8px; background: var(--club-card); }
-.table { border-collapse: separate; border-spacing: 0; table-layout: fixed; width: 462px; min-width: 100%; font: 400 var(--type-body)/1.25 var(--club-text-face); font-variant-numeric: tabular-nums; }
+.table { border-collapse: separate; border-spacing: 0; table-layout: fixed; width: 376px; min-width: 100%; font: 400 var(--type-body)/1.25 var(--club-text-face); font-variant-numeric: tabular-nums; }
 .table th, .table td {
-  height: 52px; padding: 8px 10px; border-bottom: 1px solid var(--club-line); background: var(--club-card);
+  height: 52px; padding: 8px 6px; border-bottom: 1px solid var(--club-line); background: var(--club-card);
   color: var(--club-text); font: inherit; letter-spacing: normal; text-transform: none;
-  text-align: right; vertical-align: middle;
+  text-align: center; vertical-align: middle;
 }
 .table thead th { height: 40px; color: var(--club-soft); font-size: var(--type-support); font-weight: 600; }
 .table tbody tr:last-child > * { border-bottom: 0; }
 .table .teamCol {
   position: sticky; left: 0; z-index: 1; width: 150px; min-width: 150px; max-width: 150px;
-  border-right: 1px solid var(--club-line); text-align: left; white-space: normal; font-weight: 600;
+  padding-inline: 8px; border-right: 1px solid var(--club-line); text-align: left; white-space: normal; font-weight: 600;
 }
 .recordCol { width: 64px; white-space: nowrap; }
-.rdCol { width: 92px; }
-/* The two run columns take spare space on wider frames; the pinned ends retain their declared width. */
-.runsCol { width: auto; }
-.table .ptsCol {
-  position: sticky; right: 0; z-index: 1; width: 52px; min-width: 52px;
-  border-left: 1px solid var(--club-line); font-weight: 700;
-}
-/* One row ground, including BOTH pinned cells, so scrolling cannot uncover another row's numbers. */
+/* The record cell never breaks at its hyphens ("1-0-" / "0"); the column is wide enough for "10-2-1". */
+.table td.phoneOnly:nth-child(2), .table th.recordCol { width: 70px; white-space: nowrap; text-align: center; }
+.rdCol { width: 44px; }
+/* The two run columns take spare space on wider frames; the pinned team column retains its declared width. */
+.runsCol { width: 36px; }
+/* PTS scrolls with the other numbers; only the team name stays pinned. */
+.table .ptsCol { width: 40px; font-weight: 700; }
+/* One row ground, including the pinned team cell, so scrolling cannot uncover another row's numbers. */
 .table tr[data-top] > * { background: var(--club-ground); }
 .teamName { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .name { min-width: 0; overflow-wrap: anywhere; }
@@ -42,7 +42,7 @@
 .trophy, .pending { color: var(--club-warn); }
 .advancing { color: var(--club-ok); }
 .movement { flex: none; color: var(--club-soft); font-size: 0.75rem; }
-.differential { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: baseline; column-gap: 4px; }
+.differential { display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: baseline; column-gap: 4px; }
 .differential > span { white-space: nowrap; }
 .capped { color: var(--club-dim); font-size: 0.75rem; }
 .deskOnly { display: none; }
@@ -61,8 +61,11 @@
 }
 @media (min-width: 1024px) {
   .standings { padding: 24px; }
-  .division { max-width: 360px; }
+  /* Eight short columns read best close together; stretched across a wide screen the eye loses the row. */
+  .standings > * { max-width: 720px; }
+  .standings > .division { max-width: 360px; }
   .table { width: 100%; }
+  .runsCol { width: auto; }
   .table .teamCol { width: 240px; min-width: 240px; max-width: 240px; }
   .phoneOnly { display: none; }
   .table .deskOnly { display: table-cell; }

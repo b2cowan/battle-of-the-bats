@@ -1,6 +1,6 @@
 'use client';
 
-import type { Game, PublicTeam, Venue } from '@/lib/types';
+import type { Division, Game, PublicTeam, Venue } from '@/lib/types';
 import { formatPoolName } from '@/lib/utils';
 import { groupGamesByBracketId, inferGamePool } from '@/lib/playoff-bracket';
 import { LogicSyncBracket } from './LogicSyncBracket';
@@ -25,6 +25,8 @@ interface TieredBracketProps {
   /** Stage 4: readable frame-only presentation; omitted, every legacy page keeps the existing SVG. */
   publicFrame?: boolean;
   now?: Date;
+  /** Published divisions for the frame's team-link boundary; legacy SVG callers need no new data. */
+  divisions?: Division[];
 }
 
 /** Centered divider header used to title each pool / tier section. */
@@ -50,14 +52,14 @@ function SectionHeader({ name }: { name: string }) {
  * game-detail page.
  */
 export function TieredBracket({
-  games, teams, pools, tournamentId, orgSlug, tournamentSlug, venues, highlightTeamId, requireFinalization = true, publicFrame = false, now,
+  games, teams, pools, tournamentId, orgSlug, tournamentSlug, venues, highlightTeamId, requireFinalization = true, publicFrame = false, now, divisions = [],
 }: TieredBracketProps) {
   const bracketProps = { teams, tournamentId, orgSlug, tournamentSlug, venues, highlightTeamId, requireFinalization };
 
   if (publicFrame) return <div className={publicStyles.groups}>
     {publicBracketSections(games, teams, pools).map(section => <section key={section.key}>
       {section.name && <h3 className={publicStyles.groupTitle}>{section.name}</h3>}
-      <PublicBracket games={section.games} {...bracketProps} now={now!} />
+      <PublicBracket games={section.games} {...bracketProps} divisions={divisions} now={now!} />
     </section>)}
   </div>;
 

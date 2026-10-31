@@ -6,12 +6,12 @@ import { publicBracketGameLabel, publicBracketRounds } from '@/lib/public-playof
 import { publicGameDetailView } from '@/lib/public-game-detail';
 import { formatShortWeekdayDate } from '@/lib/timezone';
 import { useOrgHref } from '@/lib/use-public-pathname';
-import type { Game, PublicTeam, Venue } from '@/lib/types';
+import type { Division, Game, PublicTeam, Venue } from '@/lib/types';
 import styles from './PublicBracket.module.css';
 
 /** Frame-only presentation of the canonical bracket columns. It never seeds, advances or computes a bracket. */
-export default function PublicBracket({ games, teams, venues, orgSlug, tournamentSlug, requireFinalization, now }: {
-  games: Game[]; teams: PublicTeam[]; venues: Venue[]; orgSlug: string; tournamentSlug: string;
+export default function PublicBracket({ games, teams, divisions, venues, orgSlug, tournamentSlug, requireFinalization, now }: {
+  games: Game[]; teams: PublicTeam[]; divisions: Division[]; venues: Venue[]; orgSlug: string; tournamentSlug: string;
   requireFinalization: boolean; now: Date;
 }) {
   const orgHref = useOrgHref(orgSlug);
@@ -91,14 +91,14 @@ export default function PublicBracket({ games, teams, venues, orgSlug, tournamen
       </button>
     </div>}
     <div className={styles.scroller} ref={scroll}>
-      <div className={styles.rounds} ref={board} data-large={large || undefined} style={{ zoom, '--public-bracket-zoom': zoom } as CSSProperties}>
+      <div className={styles.rounds} ref={board} data-large={large || undefined} style={{ zoom, '--public-bracket-zoom': zoom, '--public-bracket-rounds': rounds.length } as CSSProperties}>
         <svg className={styles.connectors} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
           {connectors.map((path, index) => <path key={index} d={path} vectorEffect="non-scaling-stroke" />)}
         </svg>
         {rounds.map((round, index) => <section className={styles.round} key={`${round.rank}:${index}`} aria-label={round.title}>
           <h3>{round.title}</h3><div className={styles.games}>
             {round.games.map(game => {
-              const view = publicGameDetailView(game, { games, teams, divisions: [], venues, requireFinalization, now });
+              const view = publicGameDetailView(game, { games, teams, divisions, venues, requireFinalization, now });
               const final = view.state === 'final' || view.state === 'unofficial';
               return <Link key={game.id} href={orgHref(`/${tournamentSlug}/schedule/${game.id}`)} className={styles.match}
                 data-state={view.state} data-bracket-game={game.id}>

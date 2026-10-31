@@ -17,9 +17,10 @@ import { getPublicStandingsByDivision, onlyPublishedGames } from './public-games
 import { isPublicPageEnabled, isPublicBracketVisible, withInviteOnlyPages, type PublicPageKey } from './public-pages';
 import { runsInviteOnlyEvents } from './invite-only-event';
 import { publishedCompetitionData } from './public-standings';
+import { publicTeamsData } from './public-teams';
 import type { Announcement, Division, Venue, Game, Organization, Resource, RuleSection, Team, PublicTeam, Tournament, TournamentRegistrationField } from './types';
 
-export type PublicTournamentSection = Extract<PublicPageKey, 'schedule' | 'standings' | 'teams' | 'rules' | 'register'> | 'context' | 'scores' | 'standings-preview' | 'playoffs';
+export type PublicTournamentSection = Extract<PublicPageKey, 'schedule' | 'standings' | 'teams' | 'rules' | 'register'> | 'context' | 'scores' | 'standings-preview' | 'playoffs' | 'teams-preview' | 'schedule-preview';
 
 /**
  * Strip a {@link Team} down to its public-safe fields ({@link PublicTeam}). The single
@@ -69,6 +70,8 @@ export type PublicTournamentPageData = {
   /** True while the organizer holds some division's games back (Stage 0 · D1). Only the yes/no leaves the server —
    *  it keeps a reader from calling the event finished on the divisions it can show. Set by the game sections. */
   gamesWithheld?: boolean;
+  /** Stage 5 preview: a yes/no only, for the all-divisions-held-back Teams state. No hidden names or counts. */
+  teamsWithheld?: boolean;
   /** Whether the org's plan includes fan push score alerts (Tournament Plus+).
    *  Optional so manual payload constructors (e.g. admin preview) don't have to
    *  set it; the resolver always populates it and consumers treat undefined as false. */
@@ -124,7 +127,7 @@ export async function getPublicTournamentPageData(
   // 'scores' is the cross-tournament consumer feed (My Games) — gate it on the SCHEDULE
   // page's visibility, exactly like the 'schedule' section, so a hidden schedule never
   // leaks games here either.
-  const sectionKey = section === 'context' || section === 'playoffs' ? null : section === 'scores' ? 'schedule' : section === 'standings-preview' ? 'standings' : section;
+  const sectionKey = section === 'context' || section === 'playoffs' ? null : section === 'scores' || section === 'schedule-preview' ? 'schedule' : section === 'teams-preview' ? 'teams' : section === 'standings-preview' ? 'standings' : section;
   const pageEnabled = section === 'playoffs' ? isPublicBracketVisible(tournament) : !sectionKey || isPublicPageEnabled(tournament, sectionKey);
 
   // Resolve the contact email shown on public pages, honoring the per-tournament
@@ -169,7 +172,7 @@ export async function getPublicTournamentPageData(
     return { ...base, games: shown, gamesWithheld: shown.length !== games.length, teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)) };
   }
 
-  if (section === 'schedule') {
+  if (section === 'schedule' || section === 'schedule-preview') {
     const [games, teams, venues, divisions, announcements] = await Promise.all([
       getGames(tournament.id, { admin: true }),
       getTeams(tournament.id, { admin: true }),
@@ -177,22 +180,24 @@ export async function getPublicTournamentPageData(
       getDivisions(tournament.id, { admin: true }),
       getAnnouncements(tournament.id, { admin: true }),
     ]);
-    return { ...base, games: onlyPublishedGames(games, divisions), teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)), venues, divisions, announcements };
+    const data = { ...base, games: onlyPublishedGames(games, divisions), teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)), venues, divisions, announcements };
+    return section === 'schedule-preview' ? publicTeamsData(data) : data;
   }
 
-  if (section === 'teams') {
+  if (section === 'teams' || section === 'teams-preview') {
     const [teams, divisions, games] = await Promise.all([
       getTeams(tournament.id, { admin: true }),
       getDivisions(tournament.id, { admin: true }),
       getGames(tournament.id, { admin: true }),
     ]);
-    return {
+    const data: PublicTournamentPageData = {
       ...base,
       teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)),
       divisions,
       games: onlyPublishedGames(games, divisions),
       standingsByDivision: await getPublicStandingsByDivision(tournament, divisions, { games, teams }),
     };
+    return section === 'teams-preview' ? publicTeamsData(data) : data;
   }
 
   if (section === 'standings' || section === 'standings-preview' || section === 'playoffs') {

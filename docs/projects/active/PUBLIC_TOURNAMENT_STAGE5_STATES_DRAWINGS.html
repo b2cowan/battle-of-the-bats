@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stage 5 · Teams and a team's page · missing states</title>
+<style>
+:root{font:15px/1.5 Inter,system-ui,sans-serif;color:#1f1b16;background:#e9ecee;--ink:#1f1b16;--soft:#4e473d;--line:#d6d0c4;--edge:#948b7d;--brand:#1e3a8a;--live:#2c6a2a;--gold:#835006;--danger:#b42318}
+*{box-sizing:border-box}body{margin:0}header,main{max-width:1360px;margin:auto;padding:24px}h1{font-size:28px;margin:0}p{max-width:85ch}button,input,select{font:inherit;min-height:44px;color:inherit}button,select,input{border:1px solid var(--edge);border-radius:6px;background:white;padding:8px 12px}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--brand);outline-offset:2px}.controls{display:flex;gap:16px;flex-wrap:wrap}.controls label{display:grid;gap:4px}.rulings{padding:16px;background:white;border-left:4px solid var(--brand)}.rulings ul{margin:8px 0 0;padding-left:20px}
+#gallery{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}.spec{margin:0;width:390px}.spec figcaption{font-weight:600;margin-bottom:8px}.note,.measure{font-size:14px;color:var(--soft);margin:8px 0 0}.phone{width:100%;position:relative;overflow:hidden;background:#f6f5f2;border:1px solid var(--edge);border-radius:16px;font-size:16px}.fold{position:absolute;top:780px;left:0;right:0;border-top:2px dashed #b45309;pointer-events:none;z-index:2}.band{height:84px;background:var(--brand);color:white;display:flex;align-items:center;gap:12px;padding:12px 16px}.logo{display:grid;place-items:center;width:44px;height:44px;flex:none;background:white;color:var(--brand);border-radius:8px;font-weight:700}.band strong{display:block;font-size:20px;line-height:1.1}.band small{font-size:12px}.tabs{height:48px;display:flex;gap:18px;align-items:stretch;background:white;padding:0 16px;overflow:hidden;white-space:nowrap;border-bottom:1px solid var(--line)}.tabs span{display:flex;align-items:center;font-size:14px}.tabs .on{border-bottom:3px solid var(--brand);font-weight:700}.ticker{height:44px;padding:10px 16px;font-size:12px;background:white;border-bottom:1px solid var(--line)}
+.body{padding:16px;display:grid;gap:16px}.body>*{min-width:0}.filters{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.filters>*{min-width:0;width:100%}.filters input{font-size:16px}.grouphead{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}h2,h3{font-size:16px;line-height:1.3;margin:0}.grouphead h2{font-size:18px}.quiet{font-size:14px;color:var(--soft)}.grouphead small{font-size:14px;color:var(--soft);font-weight:400}.pool{font-size:14px;color:var(--soft);margin:12px 0 6px}.card{background:white;border:1px solid var(--line);border-radius:8px}.teamrow{display:flex;align-items:center;min-height:72px}.teamrow+.teamrow{border-top:1px solid var(--line)}.teamlink{min-height:72px;flex:1;min-width:0;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;color:inherit;text-decoration:none;line-height:1.35}.teamlink strong{font-size:16px;font-weight:600;overflow-wrap:anywhere}.teamlink small{display:block;font-size:14px;color:var(--soft);margin-top:4px;font-variant-numeric:tabular-nums}.symbol{display:inline-grid;place-items:center;flex:none;width:44px;height:44px;padding:0;border:0;background:transparent;color:var(--soft)}.symbol svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}.symbol[aria-pressed="true"]{color:var(--gold)}.symbol[aria-pressed="true"] svg{fill:currentColor}.teamrow>.symbol{margin-right:4px}.lv{color:var(--live);font-weight:600}.state{padding:28px 16px;text-align:center}.state h2{font-size:22px}.state p{font-size:14px;color:var(--soft);margin:8px auto 0}.state button{margin-top:16px}
+.back{display:flex;align-items:center;min-height:44px;margin:-8px 0;color:var(--brand);text-decoration:none;font-size:14px}.identity{display:flex;align-items:flex-start;gap:12px}.initials{display:grid;place-items:center;width:44px;height:44px;flex:none;border:1px solid var(--line);background:white;border-radius:8px;font-weight:700}.title{flex:1;min-width:0}.titleline{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}.title h2{font-size:22px;font-weight:600;overflow-wrap:anywhere}.title p{font-size:14px;color:var(--soft);margin:4px 0 0}.chip{font-size:12px;line-height:1.3;color:var(--gold);font-weight:600}.actions{display:flex;margin:4px 0 -8px -10px}.game{padding:12px 14px}.game.live{border-left:3px solid var(--live)}.gametop{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--soft);margin-bottom:8px}.side{display:flex;justify-content:space-between;align-items:baseline;gap:12px;line-height:1.35}.side.own{font-weight:700}.side+.side{margin-top:6px}.score{font-size:22px;font-variant-numeric:tabular-nums}.foot{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--soft)}.foot .symbol{margin:0 -10px -8px 0}.no-score{font-size:14px;color:var(--soft);margin:8px 0}.sectionhead{margin-bottom:8px}.nextgames{display:grid;gap:8px}.result{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:baseline;gap:8px;min-height:60px;padding:12px 14px;font-size:14px}.result+.result{border-top:1px solid var(--line)}.result small{display:block;font-size:12px;color:var(--soft)}.result b{font-variant-numeric:tabular-nums;white-space:nowrap}.record{padding:0 14px}.record dl{margin:0}.record dl>div{display:flex;justify-content:space-between;gap:16px;padding:10px 0;font-size:14px}.record dl>div+div{border-top:1px solid var(--line)}dt{color:var(--soft)}dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}.tablewrap{overflow-x:auto}table{border-collapse:separate;border-spacing:0;width:100%;font-size:14px;font-variant-numeric:tabular-nums}th,td{text-align:right;background:white;padding:10px 8px;border-bottom:1px solid var(--line)}tr:last-child td{border-bottom:0}th{font-size:12px;color:var(--soft)}th:first-child,td:first-child{text-align:left;position:sticky;left:0;width:124px;min-width:124px;background:white;white-space:normal;line-height:1.3}tr.own td{background:#ece9e1;font-weight:700}.champion{border-left:3px solid var(--gold);padding:12px 14px;color:var(--gold);font-weight:600}.loadline{font-size:16px;color:var(--soft);margin:0}.door{display:flex;align-items:center;justify-content:space-between;min-height:56px;padding:12px 14px;color:inherit;text-decoration:none;font-weight:600}.appbar{display:flex;justify-content:space-around;background:white;border-top:1px solid var(--line);padding:12px;font-size:14px}footer{font-size:12px;color:var(--soft);text-align:center;padding:24px 16px}
+.scrim{position:absolute;inset:0;background:rgba(31,27,22,.5);z-index:3}.sheet{position:absolute;left:0;right:0;top:780px;transform:translateY(-100%);background:white;border-radius:16px 16px 0 0;padding:20px 16px 24px;z-index:4;display:grid;gap:12px}.sheet h2{font-size:18px}.sheet p{font-size:14px;color:var(--soft);margin:0}.sheet .acts{display:flex;gap:8px;justify-content:flex-end}.sheet .danger{background:var(--danger);border-color:var(--danger);color:white}
+</style>
+</head>
+<body>
+<header>
+<h1>Teams + a team's page · states the hub skipped</h1>
+<p>Stage 5 Part 1 · revised 2026-10-30 after a /design review. Whole-screen drawings for owner approval before Parts 2–3. Fictional teams and scores; the existing band, tabs, results line and footer remain the frame. The dashed line marks 780 px from the phone's top, the first screen; the full page continues below it. The results line is absent only where no result exists yet (before play, nothing to show, a held-back division). Today in the story is Fri Oct 30, the tournament's first day.</p>
+<p class="rulings">All six recommendations accepted by the owner: All divisions first; held-back teams absent from Teams, direct team link limited to name + division + “The schedule isn’t published yet”; Follow, Calendar, alerts and My-team surfaces inside the installed app only; later games include weekday + date; results-only teams lead with Results and winners with Champion. No bell is drawn. Admin preview: Teams only, no stars or working links. Coach names follow the club's existing rule.</p>
+<div class="rulings"><strong>Six more calls, ruled as recommended (owner, 2026-10-30)</strong>
+<ul>
+<li><b>No pin.</b> A followed team keeps its place in the list; the filled star alone marks it (app only). The pinned specimen is removed.</li>
+<li><b>A team that is out says “No more games”</b> in one quiet line under its name; Results still leads.</li>
+<li><b>Search with no match</b> adds “Teams appear once their division’s schedule is published.” In that state only; it names no division.</li>
+<li><b>Standings on a team page are the door</b> “U11 standings ›”, as the ruled hub drawing had, not an embedded table. The figures are on the record list and one tap away.</li>
+<li><b>A failed refresh stays silent</b> as today. Not drawn, not built in Stage 5; it is a follow-up.</li>
+<li><b>The record keeps today’s pool-play figures</b>, no new label.</li>
+</ul>Also ruled as drawn: the proposed loading, not-found and couldn’t-load words; the team being read first and bold on a game card; division headings at 18 px.</div>
+<div class="controls"><label>Phone width<select id="width"><option value="360">360 px</option><option value="390">390 px</option></select></label><label>Pages<select id="page"><option value="all">All states</option><option value="teams">Teams</option><option value="team">A team's page</option></select></label></div>
+</header>
+<main><div id="gallery"></div><p>Desktop follows the Overview's two columns from 1,024 px, with one reading order. The 901–1,023 px range keeps the phone arrangement. The actual desktop implementation is presented for the owner's decision in Part 3 and the walk. Measurements below describe this drawing only; product measurements follow in Parts 2–3.</p></main>
+<script>
+'use strict';
+const icon = {
+ star:'<path d="m12 3 2.8 5.8 6.4.9-4.6 4.5 1.1 6.3-5.7-3-5.7 3 1.1-6.3-4.6-4.5 6.4-.9z"/>',
+ calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18m-6 4h4m-2-2v4"/>',
+ share:'<path d="M12 15V3M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/>',
+ directions:'<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>'
+};
+// A star keeps one name ("Follow X") and says on/off through aria-pressed alone.
+const symbol = (name,label,pressed,team) => `<button type="button" class="symbol" aria-label="${label}"${pressed === undefined ? '' : ` aria-pressed="${pressed}" data-follow="${team}"`}><svg viewBox="0 0 24 24" aria-hidden="true">${icon[name]}</svg></button>`;
+const state = (title,text,action='') => `<div class="card state"><h2>${title}</h2><p>${text}</p>${action}</div>`;
+const filters = (search='',divisions=['U11','U13']) => `<div class="filters"><select aria-label="Division"><option>All divisions</option>${divisions.map(name=>`<option>${name}</option>`).join('')}</select><input type="search" aria-label="Search teams" placeholder="Search teams" value="${search}"></div>`;
+const row = (name,line,{app=false,followed=false,qualifier='',preview=false}={}) => `<div class="teamrow"><${preview?'div':'a'} class="teamlink"${preview?'':' href="#"'}><strong>${name}</strong>${qualifier?`<small>${qualifier}</small>`:''}<small>${line}</small></${preview?'div':'a'}>${app&&!preview?symbol('star',`Follow ${name}`,followed,name):''}</div>`;
+const group = (name,rows,count) => `<section><div class="grouphead"><h2>${name}</h2><small>${count} teams</small></div><div class="card">${rows}</div></section>`;
+const U11 = {
+ rapids:['Riverdale Rapids','3-0-0 · 1st · <span class="lv">Live now</span> vs Cedar Hollow Cyclones'],
+ cyclones:['Cedar Hollow Cyclones','2-1-0 · 2nd · <span class="lv">Live now</span> vs Riverdale Rapids'],
+ maple:['Maple Ridge Marauders','1-2-0 · 3rd · no more games'],
+ sharks:['Silver Creek Sharks','0-3-0 · 4th · no more games']
+};
+const teamRows = (app=false,preview=false) => group('U11',['rapids','cyclones','maple','sharks'].map(key=>row(U11[key][0],U11[key][1],{app,preview,followed:app&&key==='rapids'})).join(''),4);
+const longRows = (app=false) => group('U13',row('Greater Riverdale Northern Lights Select Black','2-1-0 · 1st · next Sun, Nov 1 5:00 p.m. vs Cedar Hollow Comets',{app,qualifier:'Johnstone'})+row('Cedar Hollow Comets','1-2-0 · 2nd · next Sun, Nov 1 5:00 p.m. vs Greater Riverdale Northern Lights Select Black',{app}),2);
+const poolRows = () => `<section><div class="grouphead"><h2>U11</h2><small>6 teams</small></div><p class="pool">A Pool</p><div class="card">${row('Riverdale Rapids','1-0-0 · 1st of 3 in A Pool · next 4:00 p.m. vs Cedar Hollow Cyclones')}${row('Cedar Hollow Cyclones','0-0-0 · 2nd of 3 in A Pool · next 4:00 p.m. vs Riverdale Rapids')}${row('Harbour Hawks','0-1-0 · 3rd of 3 in A Pool · next 6:00 p.m. vs Cedar Hollow Cyclones')}</div><p class="pool">B Pool</p><div class="card">${row('Maple Ridge Marauders','0-0-0 · no games scheduled yet')}${row('Silver Creek Sharks','0-0-0 · no games scheduled yet')}</div><p class="pool">Awaiting assignment</p><div class="card">${row('Northfield Knights','0-0-0 · no games scheduled yet')}</div></section>`;
+
+// ---- a team's page -------------------------------------------------------------------------
+const who = {
+ rapids:{name:'Riverdale Rapids',ini:'RR',coach:'Dana Whitfield'},
+ maple:{name:'Maple Ridge Marauders',ini:'MM',coach:'Sam Okafor'}
+};
+const poolDay = [['Oct 30','Pool','Silver Creek Sharks','W 8–0'],['Oct 30','Pool','Maple Ridge Marauders','W 6–2'],['Oct 30','Pool','Cedar Hollow Cyclones','W 4–2']];
+const sets = {
+ base:{record:'3-0-0',placeLabel:'Place in U11',place:'1st of 4',pts:6,rd:'+14',head:'U11 standings',results:poolDay},
+ // The finished tournament ran Oct 27–30; the final is the newest result.
+ champion:{record:'3-0-0',placeLabel:'Place in U11',place:'1st of 4',pts:6,rd:'+14',head:'U11 standings',
+  results:[['Oct 30','Playoff · Championship','Cedar Hollow Cyclones','W 5–3'],['Oct 29','Pool','Silver Creek Sharks','W 8–0'],['Oct 28','Pool','Maple Ridge Marauders','W 6–2'],['Oct 27','Pool','Cedar Hollow Cyclones','W 4–2']]},
+ runner:{record:'3-0-0',placeLabel:'Place in U11',place:'1st of 4',pts:6,rd:'+14',head:'U11 standings',
+  results:[['Oct 30','Playoff · Championship','Cedar Hollow Cyclones','L 3–5'],['Oct 29','Pool','Silver Creek Sharks','W 8–0'],['Oct 28','Pool','Maple Ridge Marauders','W 6–2'],['Oct 27','Pool','Cedar Hollow Cyclones','W 4–2']]},
+ // A team out of it: Maple Ridge, 3rd of 4, three pool games and nothing after.
+ out:{record:'1-2-0',placeLabel:'Place in U11',place:'3rd of 4',pts:2,rd:'−4',head:'U11 standings',
+  results:[['Oct 30','Pool','Silver Creek Sharks','W 4–1'],['Oct 30','Pool','Cedar Hollow Cyclones','L 1–4'],['Oct 30','Pool','Riverdale Rapids','L 2–6']]},
+ // A pool of three: the place is within the pool, so the label and the table say so.
+ pool:{record:'1-0-0',placeLabel:'Place in A Pool',place:'1st of 3',pts:2,rd:'+6',head:'U11 standings · A Pool',pool:'A Pool',
+  results:[['Oct 30','Pool','Harbour Hawks','W 6–0']]},
+ // Early on day one: one game played, two to come.
+ many:{record:'1-0-0',placeLabel:'Place in U11',place:'1st of 4',pts:2,rd:'+8',head:'U11 standings',
+  results:[['Oct 30','Pool','Silver Creek Sharks','W 8–0']]},
+ // A top seed with a bye: the semifinal's opponent is not known yet. Six teams.
+ bye:{record:'3-0-0',placeLabel:'Place in U11',place:'1st of 6',pts:6,rd:'+14',head:'U11 standings',results:poolDay,
+  }
+};
+const identity = ({team='rapids',app=false,chip='',pool='',withheld=false}={}) => {
+ const t=who[team];
+ return `${withheld?'':'<a class="back" href="#">‹ All Teams</a>'}<div><div class="identity">${withheld?'':`<div class="initials" aria-hidden="true">${t.ini}</div>`}<div class="title"><div class="titleline"><h2>${t.name}</h2>${chip?`<span class="chip">${chip}</span>`:''}</div><p>U11${pool?` · ${pool}`:''}${withheld?'':` · coach ${t.coach}`}</p></div></div>${withheld?'':`<div class="actions">${app?symbol('star',`Follow ${t.name}`,true,t.name)+symbol('calendar','Add to calendar'):''}${symbol('share','Share this team')}</div>`}</div>`;
+};
+// The team being read is first and bold; the opponent is plain. A pending opponent is plain too.
+const game = ({live=false,noScore=false,when='',round='Playoff · Championship',time='4:00 p.m.',opp='Cedar Hollow Cyclones'}={}) => `<div class="card game${live?' live':''}" data-measure="next game"><div class="gametop"><span>${when?`${when} · `:''}${round} · ${time} · Diamond 2</span>${live?'<span class="lv">Live now</span>':''}</div><div class="side own"><span>Riverdale Rapids</span>${live&&!noScore?'<span class="score">3</span>':''}</div><div class="side"><span>${opp}</span>${live&&!noScore?'<span class="score">2</span>':''}</div>${live&&noScore?'<p class="no-score">No score yet</p>':''}<div class="foot"><span>Riverdale Community Park</span>${symbol('directions','Directions')}</div></div>`;
+const section = (title,inner) => `<section><h3 class="sectionhead">${title}</h3>${inner}</section>`;
+const result = (date,round,opponent,score) => `<div class="result"><span>${date}</span><span>vs ${opponent}<small>${round}</small></span><b>${score}</b></div>`;
+const results = set => section('Results',`<div class="card">${set.results.map(r=>result(...r)).join('')}</div>`);
+const record = set => `<div class="card record"><dl><div><dt>Record</dt><dd>${set.record}</dd></div><div><dt>${set.placeLabel}</dt><dd>${set.place}</dd></div><div><dt>Points</dt><dd>${set.pts}</dd></div><div><dt>Run difference</dt><dd>${set.rd}</dd></div></dl></div>`;
+const door = set => `<a class="card door" href="#"><span>${set.head}</span><span aria-hidden="true">›</span></a>`;
+const page = ({team='rapids',set='base',app=false,chip='',top='',champion=false}={}) => {
+ const s=sets[set];
+ return identity({team,app,chip,pool:s.pool})+(champion?'<div class="card champion">Champion · U11</div>':'')+top+results(s)+record(s)+door(s);
+};
+const bar = () => `<a class="back" href="#">‹ All Teams</a>`;
+const sheet = name => `<div class="scrim"></div><div class="sheet" role="dialog" aria-label="Unfollow ${name}?"><h2>Unfollow team?</h2><p>Stop following <b>${name}</b>? You’ll lose their pinned score, schedule, and alerts here — you can follow them again anytime.</p><div class="acts"><button type="button" data-sheet="cancel">Cancel</button><button type="button" class="danger" data-sheet="confirm">Unfollow</button></div></div>`;
+const specimens = [
+ ['teams','Teams · browser, ranked',filters()+teamRows()+longRows(),'Rank after games have been played; no stars, pinned rows or My-team bar. Search includes coach names only when public.'],
+ ['teams','Teams · installed app, both stars',filters()+teamRows(true)+longRows(true),'The filled star and empty star each have their own 44 px target, separate from the row. The star keeps one name (“Follow Riverdale Rapids”) and says on or off through its pressed state. A followed team keeps its place in the list: no pin, in the app or anywhere.'],
+ ['teams','Teams · pools and awaiting assignment',filters()+poolRows(),'A played pool ranks within the pool (“1st of 3 in A Pool”); a pool with no results sorts A to Z on the base name. An unassigned team remains inside its division.'],
+ ['teams','Teams · before play, A to Z',filters()+group('U11',row('Cedar Hollow Cyclones','0-0-0 · no games scheduled yet')+row('Riverdale Rapids','0-0-0 · no games scheduled yet'),2),'No arbitrary place before a group has played. No published games is distinct from having finished all games.'],
+ ['teams','Teams · empty',state('No teams yet','Accepted teams will appear here.'),'No search or division control when there is nothing to search. The division selector contains only divisions permitted by the server.'],
+ ['teams','Teams · unavailable',state('Teams unavailable','The organizer has hidden the public teams page for this tournament.'),'Keep the existing unavailable state.'],
+ ['teams','Teams · search has no match',filters('Wolves')+state('No teams match','Try another team name or choose All divisions. Teams appear once their division’s schedule is published.'),'Search is limited to what is shown; no held-back team or coach can match. The last sentence is generic: it says the rule exists, never which division.'],
+ ['teams','Teams · every division held back',state('The schedule isn’t published yet','Teams will appear when their division is published.'),'No hidden team names, divisions, pool headings, team counts, search or selector. The same card as the team page’s direct-link message below.'],
+ ['teams','Teams · admin preview',filters()+teamRows(false,true),'No stars, working links, follow marks or saved-preference writes. There is no team-page preview.'],
+ ['team','Team · between games',page({top:section('Up next',game())}),'Up next precedes Results and the record; the division’s standings are one door at the foot. Calendar and Follow are absent in a browser.'],
+ ['team','Team · Live now',page({top:section('Live now',game({live:true}))}),'The team being read is first and bold. The current score updates in the existing poll; a final moves this game into Results once.'],
+ ['team','Team · live without a score',page({top:section('Live now',game({live:true,noScore:true}))}),'No score yet is said once. No invented 0–0 or lone dash.'],
+ ['team','Team · results only (out of it)',page({team:'maple',set:'out',top:'<p class="quiet" style="margin:0">No more games</p>'}),'A team that is out: one quiet line under the name says “No more games” (the Teams row’s own words, no new status word). Results leads; no next-game block, no chip.'],
+ ['team','Team · champion',page({set:'champion',chip:'Division Champion',champion:true}),'Division Champion sits on the name line; Champion is the first content block. The record is the pool-play figure, as today. The final reads “Playoff · Championship” in Results, the same round label the game card uses.'],
+ ['team','Team · runner-up',page({set:'runner',chip:'Runner-up'}),'Runner-up stays with the name. The final appears first in Results.'],
+ ['team','Team · pool place',page({set:'pool',chip:'In playoff spot',top:section('Up next',game({round:'Pool'}))}),'The place is within the pool: “Place in A Pool · 1st of 3”, the same wording as the Teams row; the door reads “U11 standings · A Pool”. The existing helper says A Pool; “Pool A” is the same pool, not a new naming rule.'],
+ ['team','Team · TBD opponent',page({set:'bye',chip:'In playoff spot',top:section('Up next',game({when:'Tomorrow',round:'Playoff · Semifinal',time:'9:00 a.m.',opp:'Quarterfinal 2 winner'}))}),'A top seed with a bye in a six-team division: the opponent is a real pending opponent (“Quarterfinal 2 winner”), never a cut-off placeholder.'],
+ ['team','Team · later games',page({set:'many',chip:'In playoff spot',top:section('Up next',game({round:'Pool',time:'12:00 p.m.',opp:'Maple Ridge Marauders'}))+section('Next games',`<div class="nextgames">${game({when:'Sun, Nov 1',round:'Pool',time:'10:30 a.m.',opp:'Cedar Hollow Cyclones'})}</div>`)}),'Only the first remaining game leads. Later upcoming games appear once under Next games, each with its day: a game after tomorrow names the weekday and date (“Sun, Nov 1”); tomorrow’s says “Tomorrow”, as in the TBD specimen. The round sits under the opponent in Results so a long round name never wraps in the date column.'],
+ ['team','Team · installed app actions',page({app:true,top:section('Up next',game())}),'Follow filled, Calendar and Share in one 44 px row. Compare with the browser specimen’s Share alone. The alerts bell is app-only and is not drawn.'],
+ ['team','Team · installed app, unfollow sheet',page({app:true,top:section('Up next',game())}),'Tapping the filled star asks first, in the existing sheet and words, as today. Tap it in the drawing to see it; Unfollow clears the star.',{crop:true,extra:sheet('Riverdale Rapids')}],
+ ['team','Team · loading',bar()+'<p class="loadline">Loading team…</p>','The quiet line names the screen. Today’s page shows “Loading…” on a card with an icon.'],
+ ['team','Team · not found',bar()+state('Team not found','This team isn’t in this tournament.'),'The team is not accepted, or the link is wrong. Today a failed first load also says “Team not found.”'],
+ ['team','Team · couldn’t load',bar()+state('Couldn’t load this team','Check your connection and try again.','<button type="button">Try again</button>'),'Proposed. Today a network failure reads “Team not found”, which sends a parent to doubt the link rather than retry.'],
+ ['team','Team · no games before the event',identity()+state('No games scheduled yet','Check back when the organizer publishes the games.'),'No empty record or standings door is presented. Share remains available.'],
+ ['team','Team · direct held-back link',identity({withheld:true})+'<p class="state-line" style="margin:0">The schedule isn’t published yet</p>','Owner’s explicit exception: name, division, one sentence, at body size and ink colour because it is the page’s only message. No initials, coach, actions, record, games, standings door or follow state.']
+];
+function render(){
+ const width=Number(document.getElementById('width').value),pick=document.getElementById('page').value;
+ document.getElementById('gallery').innerHTML=specimens.filter(([kind])=>pick==='all'||pick===kind).map(([kind,title,body,note,opts={}])=>{
+  const finished=title.includes('champion')||title.includes('runner-up');
+  const dates=finished?'Oct 27 – 30':'Oct 30 – Nov 1';
+  const status=finished?'Finished':title.includes('before the event')?'Upcoming':'Live now';
+  const noTicker=title.includes('held')||title.includes('before')||title.includes('empty');
+  return `<figure class="spec" style="width:${width}px"><figcaption>${title}</figcaption><div class="phone"${opts.crop?' style="height:780px"':''}>${opts.crop?'':'<div class="fold"></div>'}<div class="band"><div class="logo">RC</div><div><strong>Riverdale Classic</strong><small>${dates} · ${status}</small></div></div><nav class="tabs" aria-label="Tournament"><span>Overview</span><span>Schedule</span><span>Standings</span><span class="on">Teams</span></nav>${noTicker?'':'<div class="ticker">Latest result · Riverdale 8–0 Silver Creek</div>'}<div class="body">${body}</div><footer>Hosted by Riverdale Minor Ball ›<br>FieldLogicHQ · Contact the organizer</footer>${title.includes('installed app')?'<div class="appbar"><span>Home</span><span>Scores</span><span>Account</span></div>':''}${opts.extra||''}</div><p class="measure"></p><p class="note">${note}</p></figure>`;
+ }).join('');
+ requestAnimationFrame(()=>document.querySelectorAll('.spec').forEach(spec=>{
+  const phone=spec.querySelector('.phone'),target=phone.querySelector('.teamrow,[data-measure]');
+  spec.querySelector('.measure').textContent=`${width} px · ${phone.style.height?'first screen':'full page'} ${Math.round(phone.getBoundingClientRect().height)} px${target?` · first ${target.classList.contains('teamrow')?'team row':'next game'} top ${Math.round(target.getBoundingClientRect().top-phone.getBoundingClientRect().top)} px`:''}`;
+ }));
+}
+document.getElementById('width').addEventListener('change',render);
+document.getElementById('page').addEventListener('change',render);
+document.getElementById('gallery').addEventListener('click',event=>{
+ const phone=event.target.closest('.phone');
+ const choice=event.target.closest('[data-sheet]');
+ if(choice&&phone){
+  if(choice.dataset.sheet==='confirm')(phone._star||phone.querySelector('[data-follow]')).setAttribute('aria-pressed','false');
+  phone.querySelectorAll('.scrim,.sheet').forEach(node=>node.remove());
+  return;
+ }
+ const follow=event.target.closest('[data-follow]');
+ if(follow){
+  // Following is one tap; unfollowing asks first, in the existing sheet.
+  if(follow.getAttribute('aria-pressed')==='true'){
+   if(!phone.querySelector('.sheet')){phone._star=follow;phone.insertAdjacentHTML('beforeend',sheet(follow.dataset.follow));}
+  }else follow.setAttribute('aria-pressed','true');
+ }
+ if(event.target.closest('a'))event.preventDefault();
+});
+render();
+</script>
+</body>
+</html>

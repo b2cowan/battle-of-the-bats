@@ -23,6 +23,8 @@ type Props = {
   className?: string;
   /** Icon-only (no visible label) — for tight spots like the mobile header. */
   compact?: boolean;
+  /** An explicit accessible action where the band also shares the whole tournament. */
+  ariaLabel?: string;
   /** Class for the label span so callers can hide it responsively (icon-only
    *  mobile) without reaching into this component's markup blindly. */
   labelClassName?: string;
@@ -34,7 +36,7 @@ type Props = {
   club?: string;
 };
 
-export default function SharePageButton({ url, title, text, label = 'Share', className, compact = false, labelClassName, club }: Props) {
+export default function SharePageButton({ url, title, text, label = 'Share', className, compact = false, labelClassName, club, ariaLabel }: Props) {
   const [state, setState] = useState<'idle' | 'busy' | 'shared' | 'copied'>('idle');
   const clubOrigin = useClubPublicOrigin(club);
 
@@ -60,7 +62,7 @@ export default function SharePageButton({ url, title, text, label = 'Share', cla
       className={className ?? styles.trigger}
       onClick={handle}
       disabled={state === 'busy'}
-      aria-label={`Share ${title}`}
+      aria-label={ariaLabel ?? `Share ${title}`}
     >
       {state === 'copied' || state === 'shared' ? <Check size={16} /> : <Share2 size={16} />}
       {!compact && <span className={labelClassName}>{txt}</span>}

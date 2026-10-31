@@ -209,3 +209,96 @@ verify Fit/full-screen/readable names at 360/390/1280 and both completely held-b
 gate still cannot start because of its unrelated import error; that limitation remains explicit in the walk.
 Fixtures are left published and live for the owner, and the dev server is running. Stage 4 implementation/review is
 complete; the owner walk and Artifact publication are the handoff before choosing Stage 5 or Stage 1a.
+
+## Stage 5 · Part 1, Teams and a team's page (2026-10-30)
+
+Families will scan teams grouped by division, with a record, place and next-game line, then open a team for its next
+game, results and record. All divisions is the first view, independent of the Schedule's remembered division.
+Inside the installed app, stars and Calendar remain available; a browser has Share, with no follow controls, alerts
+or My-team dock/cards. Coach names continue to follow the club's privacy rule. There is no team-page admin preview;
+the admin Teams preview adopts the new list without links or stars.
+
+The owner accepted all six Part 1 recommendations. A held-back division contributes no team, count, dropdown choice
+or search result to Teams. An existing direct team link keeps only the name, division and “The schedule isn't
+published yet”. Results leads when a team has finished playing; champions have a Champion line first. Games after
+tomorrow name the weekday and date as well as the time.
+
+Priority: Stage 5, following the completed Stage 4 owner walk (§428). Part 1 establishes the preview-only readers,
+shared game/place wording and regression guards. The redesigned bodies are drawn in Parts 2–3 after the owner
+approves `PUBLIC_TOURNAMENT_STAGE5_STATES_DRAWINGS.html`. During this foundation checkpoint the new bodies are empty,
+apart from the held-back-link message; switch-off bodies retain their original source and styles. Nothing is
+enabled for customers by this stage. Success means the list answers who is playing and where each stands, the team
+page answers when the team plays next and how it has done, and held-back information never reaches either new body.
+
+## Stage 5 · Part 2, the Teams list (2026-10-30)
+
+The owner approved the revised drawing and requested Part 2. With the preview on, families now see all published
+divisions together, each with its team count and any pool groups. Search covers the team name, its qualifier and
+coach names only when the club permits them. Each row gives the record, meaningful place and next game; full names
+wrap and qualifiers get their own quiet line. Empty pages have no filters. A search without a match explains the
+publication rule without identifying a held-back division or showing a count.
+
+The revised ruling removes the pin: a followed team stays in its standings or alphabetical position. Installed-app
+stars are separate 44 px targets, keep a stable accessible name and use the existing confirmation sheet to unfollow.
+A follow never moves the division filter. Browsers retain their stored follow without using it to reorder or select
+the list. The admin preview has the same readable list without links or stars. The switch-off pages retain their
+original bodies and styles. The team-page redesign and browser My-team suppression are Part 3.
+
+Priority remains Stage 5. Success means a parent can find a team and read its next game with one scan, then open it
+with one tap. The desktop proposal keeps each division together in the Overview's 1.35:1 two-column rhythm from
+1,024 px; the owner judges that arrangement in Part 3. A live refresh replaces the list, including removals: an
+unpublished selected division disappears and selection falls back to All divisions. Failed refreshes stay silent,
+as ruled; a visible refresh-failure sign is a follow-up in the plan's Stage 5 row.
+
+Focused tests, full TypeScript and lint pass. Measured at 360/390/1280: no sideways scroll or Teams control below
+44 px, names 16 px, division headings 18 px. On the current Metro fixture the first row starts at 253/253/236 px.
+Browser-only long-name/live/final/removal cases pass without changing database fixtures. Real installed-app
+interaction remains optional owner verification because the browser could not emulate standalone display mode.
+The standard layout check records five issues in the existing shared free-plan promotions (small controls and
+overlapping badge); the global selector gate also records unrelated findings. Neither check is reported as passed.
+
+## Stage 5 · Part 3, a team's page (2026-10-30)
+
+Families can now open a team to see its next game first: Live now with the score, or Up next with time, field and
+Directions. The team they are reading is first and bold. Later games follow, then newest-first Results, the record
+list and one door to that division's standings. A winner has Champion first; a results-only team says No more games.
+The runner-up keeps the drawn chip without that extra line, for the walk's remaining wording decision.
+
+The browser has Share this team, distinct from the band's tournament Share. Follow and Calendar are inside the
+installed app only; no bell is drawn. Browser My-team docks, rail cards and follow prompts no longer mount. Stored
+follows are retained. Coach names and record visibility keep the existing public rules. An existing held-back team
+link shows only name, division and the approved sentence; a wrong link and a connection/server failure have distinct
+messages, and a failed first load offers Try again. Background connection failures remain silent as ruled.
+
+The owner approved a narrow preview-only API addition after inspection found the old response lacked group size,
+venue addresses and visibility flags. These public facts now arrive with the same profile request; no standings
+table or roster is sent. Legacy callers receive their original response. The new page and its results line also
+remove held-back team names and private score-submission details before data reaches the browser.
+
+Priority remains Stage 5. Success means the next game is visible on the first phone screen, names wrap, actions reach
+44 px, and a score/final/withholding change updates the open page without duplicate rows. The two-column desktop
+proposal follows the Overview from 1,024 px, main then side in one reading order; the owner judges it in the walk.
+
+293 focused tests, full TypeScript, lint and the typography/token/contrast checks pass. Twelve fixture/width pairs
+pass focused geometry checks; on the long-name live fixture the next card starts at 444/415/346 px at 360/390/1280.
+The team page passes the standard layout check at 361 and 1440. The combined check still records the five shared
+free-plan promotion findings on Teams, and the global selector gate retains unrelated findings. Seven marked
+development clones are prepared for review; live refresh, final, withholding, retry and browser follow preservation
+passed automated assertions. Real installed-app interaction is optional owner verification. Part 4 is cleanup,
+adversarial review and the owner walk; the build prompt has the fixture links and validation details.
+
+## Stage 5 · Accepted walk and review corrections (2026-10-31)
+
+The owner returned §432 PASS, 60 of 60 checked, with the three optional installed-app checks skipped. Both desktop
+layouts are approved as built. The separate team Share remains removed; the runner-up keeps its drawn state.
+
+The requested corrections make unusual states reliable: a game without a start time stays readable, playoff spots
+agree with Standings, and a family is not told its tournament is over while a playoff slot remains unfilled.
+When the organizer hides Standings, Teams hides records and places too. Pool labels describe the groups actually
+displayed. Browsers keep their visitor experience even if the device has a stored follow; the installed app retains
+following. Held-back opponents cannot supply team links or promotional share images through the new pages, while
+the approved minimal direct-link message remains. Kickoff and the live-window end update without a successful refresh.
+
+Priority is closing Stage 5's eight review findings before Stage 6. Success is regression coverage of each boundary,
+passing type-aware verification, and preserving the owner-approved layouts. The original walk acceptance and the
+corrections' verification are recorded separately in the ledger; browser verification remains owner-owned.

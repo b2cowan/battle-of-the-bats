@@ -56,7 +56,7 @@ describe('Stage 4 Part 1: both pages have one server-decided preview branch', ()
     assert.equal(standings.size, 0);
     assert.deepEqual([...playoffs], ['components/public/PublicPlayoffs.tsx']);
     assert.doesNotMatch(readCode(PLAYOFFS_PAGE), /<TieredBracket\b/);
-    assert.match(readCode('lib/public-schedule.ts'), /SCHEDULE_BRACKET_DOOR = \{ path: 'playoffs', label: 'The bracket', sub: 'On the Playoffs tab' \}/);
+    assert.match(readCode('lib/public-schedule.ts'), /SCHEDULE_BRACKET_DOOR = \{ path: 'playoffs', label: 'The playoff bracket' \}/);
     assert.match(readCode('components/public/PublicSchedule.tsx'), /hasPublicPlayoffBracket\(tournament, divisions, games\)/);
   });
   it('admin preview adopts the Standings branch without adding a Playoffs section', () => {
@@ -88,12 +88,12 @@ describe('Stage 4 Part 2: the table-first body follows the revised drawing', () 
     assert.match(body, /showPlayoffsDoor = !isPreview && hasPublicPlayoffBracket/);
     assert.match(body, /<PublicDisclosure title="How the table is ranked"/);
   });
-  it('pins both ends, fixes Team at 150 px on a phone, and supplies an opaque ground to every row cell', () => {
+  it('pins only the Team column, fixes it at 150 px on a phone, and supplies an opaque ground to every row cell', () => {
     assert.match(cssRule(css, '.table .teamCol'), /position: sticky; left: 0/);
     assert.match(cssRule(css, '.table .teamCol'), /width: 150px; min-width: 150px; max-width: 150px/);
-    assert.match(cssRule(css, '.table'), /width: 462px;/);
-    assert.match(cssRule(css, '.table .ptsCol'), /position: sticky; right: 0/);
-    assert.match(cssRule(css, '.table .ptsCol'), /width: 52px/);
+    assert.match(cssRule(css, '.table'), /width: 376px;/);
+    assert.doesNotMatch(cssRule(css, '.table .ptsCol'), /position: sticky/);
+    assert.match(cssRule(css, '.table .ptsCol'), /width: 40px/);
     assert.match(cssRule(css, '.table th, .table td'), /background: var\(--club-card\)/);
     assert.match(cssRule(css, '.table th, .table td'), /font: inherit; letter-spacing: normal; text-transform: none/);
     assert.match(cssRule(css, '.table tr[data-top] > *'), /background: var\(--club-ground\)/);

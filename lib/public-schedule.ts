@@ -7,7 +7,8 @@ import { hasPlayoffs, hasRoundRobin } from './tournament-phase';
 
 export type ScheduleStage = 'pool' | 'playoff';
 // Frame-only Schedule: Stage 4 moves the bracket and both doors together. The legacy Schedule keeps its own links.
-export const SCHEDULE_BRACKET_DOOR = { path: 'playoffs', label: 'The bracket', sub: 'On the Playoffs tab' };
+/** Same name as the Standings door; its sub-line is the same `playoffDoorSub`, so it names no tab. */
+export const SCHEDULE_BRACKET_DOOR = { path: 'playoffs', label: 'The playoff bracket' };
 
 /**
  * One day's playoff games, with each division's pool kept together: games sort by time first, so two pools playing the

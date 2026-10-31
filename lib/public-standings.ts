@@ -41,11 +41,21 @@ export function publishedCompetitionData<T extends {
 }>(data: T): T {
   const divisions = data.divisions.filter(d => d.scheduleVisibility === 'published');
   const ids = new Set(divisions.map(d => d.id));
+  const teams = data.teams.filter(t => t.status === 'accepted' && ids.has(t.divisionId));
+  const teamIds = new Set(teams.map(t => t.id));
   return {
     ...data, divisions,
-    games: data.games.filter(g => ids.has(g.divisionId)),
-    teams: data.teams.filter(t => t.status === 'accepted' && ids.has(t.divisionId)),
+    games: data.games.filter(g => ids.has(g.divisionId)).map(g => publishedGameTeams(g, teamIds)),
+    teams,
     standingsByDivision: Object.fromEntries(divisions.map(d => [d.id, data.standingsByDivision[d.id] ?? []])),
+  };
+}
+
+/** A published crossover must not provide a door to a held-back opponent. Blank sides retain their bracket slot. */
+export function publishedGameTeams<T extends Game>(game: T, teamIds: ReadonlySet<string>): T {
+  return { ...game,
+    homeTeamId: teamIds.has(game.homeTeamId) ? game.homeTeamId : '',
+    awayTeamId: teamIds.has(game.awayTeamId) ? game.awayTeamId : '',
   };
 }
 

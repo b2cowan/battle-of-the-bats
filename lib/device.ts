@@ -1,4 +1,5 @@
 'use client';
+import { useSyncExternalStore } from 'react';
 /**
  * lib/device.ts — tiny browser device/standalone detection shared by the PWA
  * surfaces (FollowAlertsToggle, AlertsNudge). InstallAppPrompt keeps its own
@@ -40,6 +41,18 @@ export function isStandalonePWA(): boolean {
     (window.navigator as { standalone?: boolean }).standalone === true ||
     window.matchMedia?.('(display-mode: standalone)')?.matches === true
   );
+}
+
+function subscribeStandalone(change: () => void) {
+  const media = window.matchMedia?.('(display-mode: standalone)');
+  media?.addEventListener('change', change);
+  return () => media?.removeEventListener('change', change);
+}
+const browserSnapshot = () => false;
+
+/** No installed-app state in server HTML; also follows a display-mode change without a reload. */
+export function useStandalonePWA(): boolean {
+  return useSyncExternalStore(subscribeStandalone, isStandalonePWA, browserSnapshot);
 }
 
 /**

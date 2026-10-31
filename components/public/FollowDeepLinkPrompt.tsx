@@ -13,7 +13,7 @@ import { saveFollowedTeam, readFollowedTeamId, useAccountFollowedTeamIds } from 
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import styles from './FollowDeepLinkPrompt.module.css';
 
-export default function FollowDeepLinkPrompt({ orgSlug, tournamentSlug }: { orgSlug: string; tournamentSlug: string }) {
+export default function FollowDeepLinkPrompt({ orgSlug, tournamentSlug, publicFrame = false }: { orgSlug: string; tournamentSlug: string; publicFrame?: boolean }) {
   const [team, setTeam] = useState<PublicTeam | null>(null);
   // N2: the account hydration can land AFTER this prompt's mount-time check —
   // without this, a signed-in fan opening her own team's share link on a fresh
@@ -26,14 +26,14 @@ export default function FollowDeepLinkPrompt({ orgSlug, tournamentSlug }: { orgS
     // Already following this team (or invalid id) → just clean the URL, no prompt.
     if (readFollowedTeamId(orgSlug, tournamentSlug) === id) { stripParam(); return; }
     let cancelled = false;
-    void fetchPublicTournamentData(orgSlug, tournamentSlug, 'teams').then(data => {
+    void fetchPublicTournamentData(orgSlug, tournamentSlug, publicFrame ? 'teams-preview' : 'teams').then(data => {
       if (cancelled) return;
       const found = data?.teams?.find(t => t.id === id) ?? null;
       if (found) setTeam(found);
       else stripParam();
     });
     return () => { cancelled = true; };
-  }, [orgSlug, tournamentSlug]);
+  }, [orgSlug, tournamentSlug, publicFrame]);
 
   // Self-dismiss if the linked team turns out to be followed after all — the
   // device pin was seeded, or the account set hydrated with it (either can

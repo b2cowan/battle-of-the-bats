@@ -23,7 +23,6 @@ import PublicDisclosure from './PublicDisclosure';
 import PublicSectionHead from './PublicSectionHead';
 import PublicTournamentState from './PublicTournamentState';
 import PublicChampions from './PublicChampions';
-import SharePageButton from './SharePageButton';
 import styles from './PublicPlayoffs.module.css';
 
 interface Props {
@@ -81,24 +80,29 @@ export default function PublicPlayoffs({ orgSlug, tournamentSlug, initialData, i
   const qualifier = division ? qualificationCaption(division).replace(/^Top/, 'top') : '';
 
   return <div className={styles.playoffs} data-public-playoffs-ready data-public-playoffs={games.length ? selected.kind : 'empty'}>
-    <div className={styles.controls}>
-      {division && <label className={styles.division}><span className={styles.srOnly}>Division</span>
+    {division && <div className={styles.controls}>
+      <label className={styles.division}><span className={styles.srOnly}>Division</span>
         <select value={division.id} onChange={event => {
           const next = data.divisions.find(d => d.id === event.target.value);
           if (!next) return;
           setPick(next.id); setDivisionPref(orgSlug, next.name);
         }}>{data.divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}</select>
-      </label>}
-      <SharePageButton url={`${base}/playoffs`} title={`${tournament.name} — Playoffs`} text={`The playoff bracket for ${tournament.name}`} compact className={styles.share} />
-    </div>
+      </label>
+    </div>}
     {games.length ? <div className={styles.columns}>
       <section className={styles.next} aria-label={selected.kind === 'champion' ? 'Champion' : selected.kind === 'none' ? 'Playoff results' : 'Next playoff game'}>
         {card && nextGame ? <>
           <PublicSectionHead title={selected.kind === 'live' ? 'Live now' : 'Up next'} />
-          <PublicLiveCard view={card} href={`${base}/schedule/${nextGame.id}`} foot={stakes?.text}
-            playoff={{ live: selected.kind === 'live', gold: Boolean(stakes?.gold),
-              meta: [nextGame.bracketLabel, publicGameRound(nextGame), selected.kind !== 'live' ? formatShortWeekdayDate(nextGame.date) : null,
-                nextGame.time ? formatTime(nextGame.time) : 'Time TBD', resolveGameVenueLabel(nextGame, data.venues) || 'Location TBD'].filter(Boolean).join(' · ') }} />
+          {selected.kind === 'live'
+            // A game in play wears the Schedule's live card, so the same game reads the same on both tabs.
+            ? <PublicLiveCard view={card} href={`${base}/schedule/${nextGame.id}`} foot={stakes?.gold ? stakes.text : undefined}
+              schedule={{ time: nextGame.time ? formatTime(nextGame.time) : 'TBD', division: division?.name ?? '', round: publicGameRound(nextGame) }} />
+            // The foot is the venue on every game, the title game included (its round already reads "Championship").
+            : <PublicLiveCard view={card} href={`${base}/schedule/${nextGame.id}`}
+              foot={resolveGameVenueLabel(nextGame, data.venues) || 'Location TBD'}
+              playoff={{ live: false, gold: false,
+                meta: [nextGame.bracketLabel, publicGameRound(nextGame), formatShortWeekdayDate(nextGame.date),
+                  nextGame.time ? formatTime(nextGame.time) : 'Time TBD'].filter(Boolean).join(' · ') }} />}
         </> : selected.kind === 'champion' ? <>
           <PublicSectionHead title="Champion" /><PublicChampions cards={champions} />
         </> : <PublicTournamentState title="No upcoming playoff games" description="The bracket below has the latest results. A champion has not been decided." compact />}
@@ -106,9 +110,9 @@ export default function PublicPlayoffs({ orgSlug, tournamentSlug, initialData, i
       <section className={styles.bracket} data-sandbox-tour="playoff-bracket" aria-label="Playoff bracket">
         <PublicSectionHead title="Bracket" />
         <TieredBracket games={games} teams={teams} pools={division?.pools ?? []} tournamentId={tournament.id}
-          orgSlug={orgSlug} tournamentSlug={tournamentSlug} venues={data.venues} requireFinalization={requireFinalization} publicFrame now={clock} />
+          orgSlug={orgSlug} tournamentSlug={tournamentSlug} venues={data.venues} divisions={data.divisions} requireFinalization={requireFinalization} publicFrame now={clock} />
       </section>
-      {picture && <div className={styles.seeding}><PublicDisclosure title="How seeding works"
+      {picture && <div className={styles.seeding}><PublicDisclosure title="How seeding works" modalOnDesktop
         sub={`${picture.formatLabel}${qualifier ? `, ${qualifier}` : ''}`}>
         <div className={styles.seedBody}>
           {picture.narrative.map(line => <p key={line}>{qualifier.includes('per pool')

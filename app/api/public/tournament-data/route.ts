@@ -10,10 +10,12 @@ export const dynamic = 'force-dynamic';
 const VALID_SECTIONS = new Set<PublicTournamentSection>([
   'context',
   'schedule',
+  'schedule-preview',
   'standings',
   'standings-preview',
   'playoffs',
   'teams',
+  'teams-preview',
   'rules',
   'register',
 ]);

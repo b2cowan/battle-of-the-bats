@@ -6,8 +6,9 @@ import type { Division, Game, PublicTeam, Venue } from '../../lib/types.ts';
 const now = new Date('2026-10-29T15:30:00Z'); // 11:30 a.m. Toronto
 const game = (over: Partial<Game> = {}): Game => ({ id: 'g', tournamentId: 't', divisionId: 'u11', homeTeamId: 'h', awayTeamId: 'a',
   date: '2026-10-29', time: '11:00', status: 'scheduled', location: '', ...over });
-const teams = [{ id: 'a', name: 'Away team' }, { id: 'h', name: 'Home team' }] as PublicTeam[];
-const divisions = [{ id: 'u11', name: 'U11' }] as Division[];
+const teams = [{ id: 'a', name: 'Away team', divisionId: 'u11', status: 'accepted' },
+  { id: 'h', name: 'Home team', divisionId: 'u11', status: 'accepted' }] as PublicTeam[];
+const divisions = [{ id: 'u11', name: 'U11', scheduleVisibility: 'published' }] as Division[];
 const venue = { id: 'park', name: 'Community Park', address: '1 Park Road', facilities: [{ id: 'field', name: 'Diamond 2' }] } as Venue;
 const view = (g: Game, extra: Partial<Parameters<typeof publicGameDetailView>[1]> = {}) => publicGameDetailView(g, { games: [g], teams, divisions, venues: [venue], requireFinalization: true, now, ...extra });
 
@@ -56,13 +57,21 @@ describe('the preview game page: when, where and the score', () => {
     assert.equal(v.sides[0].name, 'Semifinal 1 winner'); assert.equal(v.sides[0].teamId, null);
     assert.equal(v.sides[1].teamId, 'h');
   });
+  it('a crossover cannot reveal or link to a held-back opponent from the legacy server read', () => {
+    const v = view(game(), { teams: [{ ...teams[0], divisionId: 'hidden', name: 'Secret opponent' }, teams[1]] });
+    assert.equal(v.sides[0].name, 'TBD');
+    assert.equal(v.sides[0].teamId, null);
+    assert.equal(v.sides[1].teamId, 'h');
+    assert.doesNotMatch(JSON.stringify(v), /Secret opponent/);
+  });
   it('Notes is the last fact and absent when empty; forfeit is a finished state', () => {
     const g = game({ status: 'forfeit', awayScore: 7, homeScore: 0, isPlayoff: true, bracketCode: 'FIN', notes: ' Bring water. ' });
     const v = view(g);
     assert.equal(v.stateLabel, 'Final'); assert.equal(v.round, 'Championship');
     assert.equal(v.facts.at(-1)?.text, 'Bring water.'); assert.equal(v.facts.at(-1)?.label, 'Notes');
     assert.equal(view({ ...g, notes: ' ' }).facts.length, 3);
-    assert.equal(v.foot, 'The winner takes the title'); assert.equal(v.gold, true);
+    assert.equal(v.foot, null);
+    assert.equal(view({ ...g, status: 'scheduled', awayScore: null, homeScore: null }).foot, 'The winner takes the title');
   });
   it('Final is never the round name, including custom labels and double-elimination title games', () => {
     for (const bracketCode of ['FIN', 'GF', 'IF']) assert.equal(publicGameRound(game({ isPlayoff: true, bracketCode })), 'Championship');

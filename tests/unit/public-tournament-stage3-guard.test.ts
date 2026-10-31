@@ -35,7 +35,7 @@ describe('the switch reaches the Schedule', () => {
     assert.match(readCode(SCHEDULE_CLIENT), /if \(frameOn\) return <PublicSchedule/);
     const preview = readCode('app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx');
     assert.match(preview, /const frameOn = await isPublicFrameOn\(\)/);
-    assert.match(preview, /if \(frameOn\) return <PublicSchedule[^;]+isPreview initialData=\{initialData\}/);
+    assert.match(preview, /if \(frameOn\) return <PublicSchedule[^;]+isPreview initialData=\{publicTeamsData\(initialData\)\}/);
     assert.match(preview, /<ScheduleContent/);
   });
 

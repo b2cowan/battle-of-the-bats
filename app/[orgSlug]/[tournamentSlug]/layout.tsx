@@ -27,6 +27,7 @@ import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
 import TournamentAcquisitionBanner from '@/components/marketing/TournamentAcquisitionBanner';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import MyTeamDock from '@/components/public/MyTeamDock';
+import PublicAppOnly from '@/components/public/PublicAppOnly';
 import FollowDeepLinkPrompt from '@/components/public/FollowDeepLinkPrompt';
 import AlertsNudge from '@/components/public/AlertsNudge';
 import FollowAccountNudge from '@/components/public/FollowAccountNudge';
@@ -393,7 +394,7 @@ export default async function TournamentLayout({
             host={frameHost}
           />
         )}
-        {frameOn && <TournamentSideRail />}
+        {frameOn && <TournamentSideRail publicFrame />}
         {frameOn ? (
           <div className={frameStyles.main}>
             <TodaysResultsLine />
@@ -424,14 +425,21 @@ export default async function TournamentLayout({
       </div>
       {/* Game-day "now playing" dock for the followed team (self-gates: followers
           on game day only; mobile-only). */}
-      <MyTeamDock
+      {frameOn ? <PublicAppOnly><MyTeamDock
+        publicFrame
         orgSlug={orgSlug}
         tournamentSlug={tournament.slug}
         inProgress={tournamentInProgress}
         fanAlertsEnabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
-      />
+      /></PublicAppOnly> : <MyTeamDock
+        orgSlug={orgSlug}
+        tournamentSlug={tournament.slug}
+        inProgress={tournamentInProgress}
+        fanAlertsEnabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
+      />}
       {/* Self-onboarding shared links: ?follow=teamId → one-tap "Follow [team]?" (J6-012). */}
-      <FollowDeepLinkPrompt orgSlug={orgSlug} tournamentSlug={tournament.slug} />
+      {frameOn ? <PublicAppOnly><FollowDeepLinkPrompt orgSlug={orgSlug} tournamentSlug={tournament.slug} publicFrame /></PublicAppOnly>
+        : <FollowDeepLinkPrompt orgSlug={orgSlug} tournamentSlug={tournament.slug} />}
       {/* Post-install one-time nudge → turn on score alerts (J6-048). Self-gates to
           the installed app + a followed team; suppressed once the event is finished. */}
       {!effectivelyFinished && (
@@ -459,11 +467,13 @@ export default async function TournamentLayout({
           visitors right after they follow a team. The follow already saved locally; this is
           a non-blocking upsell with a "just this device" escape (unified-app Phase 2). It
           self-gates (checks sign-in lazily, only after a follow), so no auth call per view. */}
-      <FollowAccountNudge orgSlug={orgSlug} tournamentSlug={tournament.slug} />
+      {frameOn ? <PublicAppOnly><FollowAccountNudge orgSlug={orgSlug} tournamentSlug={tournament.slug} /></PublicAppOnly>
+        : <FollowAccountNudge orgSlug={orgSlug} tournamentSlug={tournament.slug} />}
       {/* N2: hydrates the signed-in account's follows into the client follow layer
           (pin seeding + "Following" buttons). Client-only identity — never SSR'd
           into this SW-cached layout (see the account-chip note above). */}
-      <AccountFollowSync orgSlug={orgSlug} tournamentSlug={tournament.slug} />
+      {frameOn ? <PublicAppOnly><AccountFollowSync orgSlug={orgSlug} tournamentSlug={tournament.slug} /></PublicAppOnly>
+        : <AccountFollowSync orgSlug={orgSlug} tournamentSlug={tournament.slug} />}
     </>
   );
 

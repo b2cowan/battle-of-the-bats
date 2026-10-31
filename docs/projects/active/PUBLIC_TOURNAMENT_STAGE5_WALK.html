@@ -1,0 +1,306 @@
+<title>Teams and Team Page Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* One column checklist: intro and pass line, a sign-in card, then the parts, paste-back at the foot. Same build as §428 and §426;
+   an optional step carries two boxes (Did it · Skipped it) and a ruling step one box per option, so a tick says which.
+   Every part has a verdict the summary refuses to hide: a part with no verdict heads the summary as INCOMPLETE. */
+:root {
+  --bg: #f6f7f4; --surface: #ffffff; --ink: #1d2420; --muted: #5a6560; --line: #d9ded8;
+  --accent: #2f6b4f; --accent-soft: #e3efe8; --warn: #8a5a00; --warn-soft: #fbf0d9; --bad: #9b2c2c; --bad-soft: #f8e2e2;
+  --display: "Fraunces", Georgia, serif; --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151a17; --surface: #1e2521; --ink: #e6ebe7; --muted: #9aa69f; --line: #34403a;
+  --accent: #7cc3a0; --accent-soft: #233a2f; --warn: #e8b45a; --warn-soft: #3a2f1a; --bad: #f08a8a; --bad-soft: #3d2222; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #151a17; --surface: #1e2521; --ink: #e6ebe7; --muted: #9aa69f; --line: #34403a;
+  --accent: #7cc3a0; --accent-soft: #233a2f; --warn: #e8b45a; --warn-soft: #3a2f1a; --bad: #f08a8a; --bad-soft: #3d2222; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body); margin: 0; }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
+h1 { font: 600 1.9rem/1.15 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 600 1.25rem/1.25 var(--display); margin: 0; text-wrap: balance; }
+.eyebrow { font: 600 .75rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+p { margin: 0; max-width: 65ch; }
+.intro { display: grid; gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; }
+.card dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.card dt { color: var(--muted); }
+.card dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .card dl { grid-template-columns: 1fr; } .card dd { padding-bottom: 6px; } }
+code, .mono { font-family: var(--mono); font-size: .86em; overflow-wrap: anywhere; }
+.facts { display: grid; gap: 8px; }
+.facts h3 { font: 600 .95rem/1.3 var(--body); margin: 0; }
+.facts ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.progress { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.bar { flex: 1 1 200px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+.part { display: grid; gap: 12px; }
+.part header { display: grid; gap: 4px; }
+.part header p { color: var(--muted); }
+.who { display: inline-block; font: 600 .8rem/1 var(--body); padding: 5px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); justify-self: start; }
+.step { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.step input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .txt { display: grid; gap: 4px; min-width: 0; }
+.step .do { font-weight: 600; }
+.step .see::before { content: "You should see: "; color: var(--muted); font-weight: 600; }
+.step .rb { color: var(--warn); font-weight: 600; }
+.step.stop { border-color: var(--warn); background: var(--warn-soft); }
+.step.done { opacity: .72; }
+.opts { display: flex; gap: 18px; flex-wrap: wrap; padding-top: 4px; }
+.opts label { display: inline-flex; gap: 8px; align-items: center; font-weight: 600; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; }
+.verdict button { font: 600 .9rem/1 var(--body); padding: 9px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button[aria-pressed="true"][data-v="pass"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.verdict button[aria-pressed="true"][data-v="issue"] { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.verdict button[aria-pressed="true"][data-v="call"] { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 70px; font: inherit; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { font: 600 .95rem/1 var(--body); padding: 11px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); }
+#summary { font-family: var(--mono); font-size: .85rem; min-height: 160px; }
+a { color: var(--accent); }
+input.host { box-sizing: border-box; width: 100%; min-height: 44px; font: inherit; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+</style>
+<main class="wrap">
+<div class="intro"><span class="eyebrow">Owner QA · §432 · Public tournament pages Stage 5</span>
+<h1>Teams answers which teams are in and where each stands. A team's page answers when it plays next.</h1>
+<p><strong>What this walk is for.</strong> Stage 5 rebuilt the <strong>Teams</strong> list and a <strong>team's own page</strong>, behind the preview switch. Teams is a division dropdown, a search box, then each division's teams with a quiet third line: record, place, and the next game (or “Live now”). A team's page leads with the game that matters (the live game, or the next one), then later games, then results, then the record and one door to the division's standings. <strong>Following and alerts exist only in the installed app</strong>: in a browser there is no star, no Follow, no Add to calendar, no My-team bar and no rail card. A division the organizer has held back appears nowhere. With the preview off, both pages are exactly today's site.</p>
+<p><strong>It passes when</strong> with the preview on, Teams groups, orders and searches correctly and its row taps open the right page; a team's page is right in every state (live, between games, results only, champion, runner-up, pool play, no games); live changes arrive on the open page; a held-back division leaves no trace; in a browser nothing about following shows; the admin preview shows plain rows that do nothing; you approve the desk layouts; and with the preview off, nothing changed.</p></div>
+<section class="card"><h2>Sign in as</h2><dl>
+<dt>Everything except L</dt><dd>Nobody. A <strong>private window</strong>, signed out, so you see what a family sees.</dd>
+<dt>Part L</dt><dd>Your own organizer account <span class="mono">b2cowan@outlook.com</span> in a separate window. It opens Live Demo — Game Day in <span class="mono">dev-test-org</span>.</dd>
+<dt>Part O (optional)</dt><dd>The installed app on your phone, which needs a secure address. Skip it if you have none.</dd>
+<dt>Where</dt><dd><span class="mono">http://192.168.2.200:3000</span> with the dev server running (that was the computer's address on 2026-10-30), so the links open on your phone on the same Wi-Fi. On the computer itself, change the box below to <span class="mono">http://localhost:3000</span>. The box only changes the links on this page.</dd>
+<dt>Widths</dt><dd>Phone: your phone, or Chrome's device toolbar (Ctrl+Shift+M) at <strong>390</strong>, then <strong>360</strong>. Desk: <strong>1280</strong>. The in-between: <strong>901</strong> and <strong>1023</strong>.</dd>
+<dt>The switch</dt><dd>Every link says whether the preview is on or off, and the choice sticks to that browser window. Parts A to M and the first step of N use it on; Part N turns it off; its last step turns it back on.</dd>
+<dt>Fixtures</dt><dd>Seven marked clones in Metro Sports (<span class="mono">stage1-metro-sports</span>): <strong>live</strong> (a championship in play), <strong>between</strong> (a game starting in about 45 minutes), <strong>results</strong> (a team whose games are all played), <strong>champion</strong> (crowned), <strong>held</strong> (its division is held back), <strong>pool</strong> (a team in a named pool) and <strong>empty</strong> (an accepted team with no games). Two older Stage 4 events supply a bigger list (<span class="mono">stage4-live</span>) and long team names (<span class="mono">stage4-eight</span>). Only the live clone is moved by the commands below; every command reads its write back. No source tournament or demo is touched.</dd>
+<dt>Commands</dt><dd>Run them in a terminal at the project folder, or ask me in the chat and I run them and read the result back: <span class="mono">node --env-file=.env.local scripts/seed-public-stage5-fixtures.mjs show | refresh | no-score | score | between | final | withhold | publish | undo</span>. After any command, allow up to 35 seconds for an open page to catch up.</dd>
+<dt>A different day</dt><dd><strong>The clones were last set on 2026-10-30, so run <span class="mono">refresh</span> before you start</strong> (Part A's first step). Never run <span class="mono">prepare</span> over an existing set: if the set is missing, ask me to prepare a fresh one and read it back.</dd>
+<dt>Target server</dt><dd><input class="host" id="host" type="url" value="http://192.168.2.200:3000" aria-label="Target server origin"></dd>
+</dl></section>
+<section class="card facts"><h3>Known and accepted, so they are not fails</h3><ul>
+<li>The page's clock moves on its 30-second check (it pauses while the tab is hidden). After a fixture command, allow up to 35 seconds, and between checks the “Up next” label can lag a game's start by that long.</li>
+<li>On the free plan's Teams page on a phone, the “Built with FieldLogic” badge and the setup banner are the existing shared promotions: five layout findings (attribution link 19 px high, setup link 34 px, Dismiss 30 px, and the badge overlapped by the banner) were recorded at Part 2 and are <strong>not</strong> Stage 5's. Look at <span class="mono">/stage1-northfield/fall-ball/teams</span> only if you want to see them.</li>
+<li>Real installed-app behaviour (the star, the unfollow sheet, Follow and Add to calendar on a team's page) was never exercised by the build, so Part O is yours to run; it is optional.</li>
+<li>The results line under the tabs shows only while there is something to show (today's results, a live game, the next games), and its × hides it for the day on that device.</li>
+<li>The “Share” in the event band and the team page's “Share this team” are two different buttons by design; Part E checks you can tell them apart.</li>
+<li>A failed background refresh stays silent by ruling (a sign for it is a later follow-up).</li>
+</ul></section>
+<section class="card facts"><h3>Not in this walk</h3><ul>
+<li>Tabs following what exists, the tab order, News, Rules, Register and Champions (Stage 6); the payment page (Stage 7); the organizer's colour ownership (Stage 1a); retiring the old bodies and turning the switch on for everyone (Stage 8).</li>
+<li>The app's own pages (Discover, Scores, Following, Account), a roster on the public team page (none exists), an admin preview of the team page, and any change to how standings are computed or to the team API's privacy rules.</li>
+<li>The demo checker and the demo tour, which are not a gate for a commit.</li>
+</ul></section>
+<div class="progress"><strong id="count">0 of 0 checked</strong><div class="bar" aria-hidden="true"><span id="fill"></span></div><button class="btn ghost" id="reset" type="button">Clear my ticks</button></div>
+<div id="parts"></div>
+<section class="card"><h2>Send me the results</h2><p>Set a verdict on <strong>every</strong> part (Pass, Issue or Needs a call), then build the summary and paste it into the chat. The summary refuses to look finished while a part has no verdict. Put what you saw on the “Tell me” steps (and the fixture read-backs) in that part's notes. I compare the read-backs and the server log with what you ticked before I record a pass. A part's Pass button alone is not evidence, and skipped or unticked steps stay visible.</p><div class="actions"><button class="btn" id="build" type="button">Build summary</button><button class="btn ghost" id="copy" type="button">Copy</button></div><textarea id="summary" readonly aria-label="Walk summary"></textarea></section>
+</main><script>
+var HOST = "http://192.168.2.200:3000";
+var M = "/stage1-metro-sports/";
+var T = { live: "05b9fe07-2d9f-4d6b-9955-a4198f096ea0", between: "25c27e68-e784-472f-9fab-96114634781f", results: "0a8913e4-cf8e-49e5-8146-f8b41b7c9b3c",
+  champion: "0683fd3b-14d5-497b-be60-604e25a33774", held: "493679cd-bbee-4093-a0c3-6b4870b17a95", pool: "61b2071a-2090-43d9-8411-00304ef93c79", empty: "f351b737-2678-4296-bed8-0aaf2e511ffc" };
+function list(kind) { return M + "stage5-" + kind + "/teams"; }
+function page(kind) { return M + "stage5-" + kind + "/teams/" + T[kind]; }
+var BIG = M + "stage4-live/teams", LONG = M + "stage4-eight/teams";
+var DEMO = "/riverdale-minor-ball/summer-classic";
+var PREVIEW = "/dev-test-org/admin/tournaments/preview/live-demo";
+function a(path, label) { return '<a data-route="' + path + '" href="' + HOST + path + '" target="_blank" rel="noopener">' + label + '</a>'; }
+function sw(frame, path, label) { return a('/api/public-frame?frame=' + frame + '&to=' + encodeURIComponent(path), label); }
+function on(path, label) { return sw("on", path, label); }
+function off(path, label) { return sw("off", path, label); }
+function fx(mode) { return '<span class="mono">node --env-file=.env.local scripts/seed-public-stage5-fixtures.mjs ' + mode + '</span>'; }
+function tell(s) { return ' <span class="rb">Tell me: ' + s + '</span>'; }
+
+var PARTS = [
+  { id: "A", title: "Part A · Teams on a phone", who: "Private window, signed out · 390, then 360 px", note: "The bigger Stage 4 event has several divisions, one with two pools. Its games are dated around 2026-10-30, so a team's third line may say “no more games” rather than a next game; that is correct for that data.", steps: [
+    { stop: true, do: "Stop check. Run " + fx("show") + " (or ask me). If the dates are not today, run " + fx("refresh") + " and then " + fx("show") + " again. If it says the set is missing, stop and ask me to prepare a fresh one.", see: "Both say “written and read back”. The live clone's game is dated today and about ten minutes in the past with scores 5 and 3; the between clone's is dated today and in the future with no score; held is <strong>unpublished</strong>; the rest are <strong>published</strong>." + tell("the live and between lines from the read-back, as printed.") },
+    { do: "Open " + on(BIG, "the bigger event's Teams") + " at 390 px and read from the top.", see: "The event band and tab row, then a <strong>Division</strong> dropdown reading <strong>All divisions</strong> and a <strong>Search teams</strong> box side by side, then each division as an 18 px heading with “N teams” beside it. <strong>No</strong> year picker, no avatars, no coach line, no points column, no alerts control." + tell("how many divisions you see, and how far down the first team row starts.") },
+    { do: "Look at one team row.", see: "The team name in bold on the first line (full name, wrapping rather than cut off), a quiet small line under it reading like <strong>2-1-0 · 1st of 3 in A Pool · next 7:00 p.m. vs Cedar Hollow</strong>, lowercase after the dots. Times read like 7:00 p.m. A team with no games reads “no games scheduled yet”; a team that is out reads “no more games”." + tell("one full third line, as printed.") },
+    { do: "Find a division that has two pools, then one that has none.", see: "The two-pool division shows each pool's name as a smaller heading above its teams (and teams with no pool under <strong>Awaiting assignment</strong>, if any). The no-pool division has just its teams. A place such as “1st of 3 in A Pool” only shows once that group has played." },
+    { do: "Repeat steps 2 and 3 at 360 px.", see: "Same content, no sideways scroll, and every name still reads in full." },
+    { do: "Open " + on(LONG, "the long-names event's Teams") + " at 360 px.", see: "Long names wrap onto more lines; a qualifier (a small second name part such as a city or number) sits under the bold name. Nothing is cut with “…” and nothing runs past the right edge." + tell("the longest name you found and whether anything was clipped.") }
+  ]},
+  { id: "B", title: "Part B · Division, search and ordering", who: "Same page · phone width", steps: [
+    { do: "Open the Division dropdown on " + on(BIG, "the bigger event's Teams") + ".", see: "<strong>All divisions</strong> is first, then the published divisions only. Choose one: only that division's heading and teams remain." },
+    { do: "Choose a division, then reload the page.", see: "It goes back to <strong>All divisions</strong>. The Teams page does not remember a division, and it does not borrow the one you last chose on Schedule or Standings." },
+    { do: "Type part of a team's name in Search teams (try two or three letters), then clear it.", see: "Only matching teams stay; divisions or pools with no match disappear; the “N teams” counts follow the matches. Clearing brings everything back." },
+    { do: "Search for something that matches nothing (try zzzz).", see: "One card: <strong>No teams match</strong> / “Try another team name or choose All divisions. Teams appear once their division's schedule is published.” It names no division and shows no count." + tell("the card's words, as printed.") },
+    { do: "In a division where games have been played, compare the order with the third lines' places. In a division with no games yet, look at the order.", see: "Played groups run 1st, 2nd, 3rd… in standings order (a pool's teams are ranked within the pool). A group that has not played yet runs A to Z by name." }
+  ]},
+  { id: "C", title: "Part C · A row's taps, and no star in a browser", who: "Private window · phone width", steps: [
+    { do: "On " + on(BIG, "Teams") + ", look at the right end of a few rows.", see: "<strong>No star</strong> and no follow mark of any kind: in a browser, following does not exist." },
+    { do: "Tap anywhere on a team's row.", see: "That team's own page opens. The back link there (“All Teams”) returns to the list." },
+    { do: "Press and hold, or right-click, a row.", see: "It behaves like a normal link (open in a new tab works)." },
+    { do: "Open " + on(BIG + "?follow=anything", "Teams with a follow link on the end") + ".", see: "Nothing pops up and nothing is followed: the follow prompt exists only in the installed app." }
+  ]},
+  { id: "D", title: "Part D · A team's page in every state", who: "Private window · 390 px", note: "Seven prepared teams, one per state. Open each from its link.", steps: [
+    { do: "Open " + on(page("live"), "the live team's page") + ".", see: "From the top: a back link <strong>All Teams</strong>, the team's initials, name (division and pool beneath, plus a coach only if the organizer shows coach names), a row of symbols, then a <strong>Live now</strong> heading and a card for the game in progress with a <strong>Live now</strong> chip, the real team names, scores, field and Directions. <strong>The team being read is listed first and in bold; the opponent is plain.</strong>" + tell("both teams and the score, and which side is bold.") },
+    { do: "Look below that card.", see: "A <strong>Results</strong> section if any games are final (newest first), then a short record list (Record, a Place line, Points, Run difference) and one tall door row reading like <strong>U11 standings ›</strong>. The door opens that division's Standings tab. There is no embedded table and no form dots." },
+    { do: "Open " + on(page("between"), "the between-games team's page") + ".", see: "An <strong>Up next</strong> heading and a card for the game starting in about 45 minutes (time, field, a Directions action), with <strong>no score</strong> on it. If there are later games, a <strong>Next games</strong> section follows; tomorrow's says “Tomorrow”, anything later names the weekday and date (for example “Sun, Nov 1”)." + tell("the Up next time, and any Next games dates.") },
+    { do: "Open " + on(page("results"), "the results-only team's page") + ".", see: "A quiet line <strong>No more games</strong> under the name, no Up next card, then Results, then the record." },
+    { do: "Open " + on(page("champion"), "the champion's page") + ".", see: "A gold-edged card reading <strong>Champion · U11</strong> comes first after the name block, and the name line carries a <strong>Division Champion</strong> chip. Results follow. The word “Final” and the score read right for the crowning game." + tell("the chip, and the champion card's words.") },
+    { do: "From the champion's final, open the opposing team (use the champion's Results row, then its Teams row) and read its page.", see: "A <strong>Runner-up</strong> chip. By the drawing it does <strong>not</strong> carry the “No more games” line." + tell("which team you opened.") },
+    { do: "Open " + on(page("pool"), "the pool team's page") + ".", see: "The subtitle includes the pool (for example “U11 · A Pool”). The record list's place label names the pool: <strong>Place in A Pool</strong> with a value like <strong>1st of 3</strong>. The door reads “U11 standings · A Pool”." },
+    { do: "Open " + on(page("empty"), "the no-games team's page") + ".", see: "Name and symbols, then one card <strong>No games scheduled yet</strong> / “Check back when the organizer publishes the games.” No record list and no standings door." }
+  ]},
+  { id: "E", title: "Part E · The symbol row in a browser", who: "Private window · 390 px · the live team's page", steps: [
+    { do: "Look at the row of round symbols under the team's name on " + on(page("live"), "the live team's page") + ".", see: "In a browser, <strong>only Share</strong>: no star (Follow) and no calendar symbol (Add to calendar). Each visible symbol is a full-size tap target." },
+    { do: "Tap the Share symbol.", see: "A share action for <strong>this team</strong>: its accessible name is “Share this team”, and the link it offers ends with ?follow= and the team's id. In a desktop browser without a share sheet it copies the link instead." },
+    { do: "Compare it with the Share in the event band at the very top.", see: "You can tell which shares the whole tournament and which shares this team (their wording and position differ). If you cannot, say so." + tell("whether the two shares are confusable.") }
+  ]},
+  { id: "F", title: "Part F · Long names and a chip at 360", who: "Private window · 360 px", steps: [
+    { do: "Open " + on(LONG + "", "the long-names Teams list") + ", open the team with the longest name, then repeat on the champion team's page.", see: "The title wraps; the chip (Division Champion, Runner-up or In playoff spot) sits on the name's line when it fits and wraps <strong>under</strong> the name when it does not. Nothing overflows sideways and every tap target is at least 44 px." + tell("the team and whether a chip wrapped.") },
+    { do: "On the same page, look at a game card and a Results row with long opponent names.", see: "Names wrap, never cut. A Results row shows the date in a narrow left column with no year, “vs Opponent” in the middle with the round (like Playoff · Championship) under it, and a result like W 5–3 on the right; an unscored final reads “No score yet”." }
+  ]},
+  { id: "G", title: "Part G · It changes while the page is open", who: "Live team's page and Teams, one open in each window · phone width", note: "Each step moves the live clone, then reads it back. Wait up to 35 seconds without reloading, then paste each read-back into this part's notes before ticking.", steps: [
+    { stop: true, do: "Open " + on(page("live"), "the live team's page") + " in one window and " + on(list("live"), "that event's Teams") + " in another, then run " + fx("no-score") + ".", see: "The read-back: the game about ten minutes ago with <strong>no score</strong>. On the team page the card shows <strong>No score yet</strong> (not 0–0). The team's row on Teams still says <strong>Live now vs …</strong>." + tell("the read-back line and what the card shows.") },
+    { do: "Run " + fx("score") + ".", see: "Read-back: home 4, away 2. Within 35 seconds the open card shows the 4 and 2 on the right sides (the team being read first, in bold)." },
+    { do: "Run " + fx("final") + ".", see: "Read-back: the game completed and the crown stamped. Within 35 seconds the team's page turns into its final state (a Champion card or a Results row with a result, depending on who won), and the team's Teams row stops saying Live now. The page does not duplicate the result row." + tell("what the page became, and the chip.") },
+    { do: "Run " + fx("between") + ".", see: "Read-back: the game starts in about 45 minutes with no score, and the crown is cleared. The page returns to <strong>Up next</strong> with no score, and the Teams row reads “next …”." },
+    { do: "Run " + fx("withhold") + " and watch the team's page and Teams.", see: "Read-back: the live clone's division is <strong>unpublished</strong>. Within 35 seconds the team's page is replaced by the held-back page (Part H wording) and Teams no longer lists that division or its teams." },
+    { do: "Run " + fx("publish") + " then " + fx("refresh") + ".", see: "Read-back: published again, and the clone back to a live game at 5–3. The page and Teams come back." },
+    { do: "Hide the tab for over a minute (switch to another tab), run " + fx("score") + ", then return.", see: "The page catches up shortly after you return (it does not poll while hidden, and does not stack up requests)." }
+  ]},
+  { id: "H", title: "Part H · A held-back division appears nowhere", who: "Private window · phone width", steps: [
+    { do: "Open " + on(page("held"), "the held-back team's page") + " by its direct link.", see: "Exactly one sentence at body size in normal ink: <strong>The schedule isn't published yet</strong>, with the team's name and division above it. <strong>No</strong> games, scores, record, standings door, coach or next game." + tell("what is on the page, as printed.") },
+    { do: "Open " + on(list("held"), "that event's Teams") + ".", see: "The held-back division is not in the dropdown and no team of it is listed. If every division is held back the page shows <strong>The schedule isn't published yet</strong> / “Teams will appear when their division is published.” with <strong>no</strong> search box and no dropdown." + tell("which of those you saw.") },
+    { do: "On a Teams page that has a held-back division, search for the held-back team's name.", see: "<strong>No teams match</strong>: it never appears in search, and the message reveals nothing." },
+    { do: "Open " + on(page("live"), "a published team's page") + " whose games include an opponent from a held-back division, if the data has one (skip if not).", see: "The opponent shows a plain fan placeholder (for example a pending slot), never the held-back team's real name." }
+  ]},
+  { id: "I", title: "Part I · My-team bar and rail card are gone in a browser", who: "Private window · phone, then desk", steps: [
+    { do: "On " + on(page("live"), "a team's page") + " and on " + on(M + "stage5-live/schedule", "the Schedule") + ", look at the bottom of the phone screen.", see: "No My-team bar and no “following” dock. At 1280 px, the right-hand rail has no My-team card either." },
+    { do: "Open " + on(M + "stage5-live?follow=" + T.live, "the event with a follow link") + ".", see: "No prompt to follow, no bell and no nudge to sign in to follow. Reload on Teams to confirm nothing was stored." },
+    { do: "In the browser's developer tools (F12, Network), reload a team's page and filter for “schedule” or “teams”.", see: "Only the team page's own single request (a team-profile call, repeated about every 30 seconds while visible), plus the results line's feed; <strong>no</strong> hidden My-team or follow fetches." + tell("which requests you saw, or skip if you do not open developer tools.") }
+  ]},
+  { id: "J", title: "Part J · The results line stays", who: "Private window, signed out", steps: [
+    { do: "Open " + on(list("live"), "Teams") + " and " + on(page("live"), "a team's page") + ". Look below the tab row.", see: "The one-line results reel is on both pages, as before. It rotates today's results and live games, and may be empty when there is nothing to show; its × hides it for the day. It is not on the Schedule or a game's page." },
+    { do: "Tap a game in that line.", see: "That game's own page opens and its result agrees with the line." }
+  ]},
+  { id: "K", title: "Part K · Desk and the in-between widths", who: "Private window · 1280, then 1023 and 901 px", note: "Both desk layouts were derived from the approved phone drawings, not drawn, so each needs your yes.", steps: [
+    { do: "At 1280 px open " + on(BIG, "the bigger event's Teams") + ".", see: "Divisions flow in two columns (the first wider, about 1.35 to 1) with a generous gap, the first division's teams on the left; a pool's teams stay together. Text is large enough to read, with nothing stretched across the whole screen.", choices: ["Teams desk: approved as built", "Teams desk: change it (say what in the notes)"] },
+    { do: "At 1280 px open " + on(page("live"), "the live team's page") + ".", see: "The main column on the left: the live or next game, later games, then Results. The side column on the right: the record list and the standings door. Same order as the phone.", choices: ["Team page desk: approved as built", "Team page desk: change it (say what in the notes)"] },
+    { do: "Set the width to 1023, then 901 px on both pages.", see: "The phone arrangement at both widths: one column, the same order as the phone. The two-column desk layout starts at 1024." },
+    { do: "At 1280 px, tab through the Teams page with the keyboard.", see: "The focus moves search, dropdown, then each team row in order, with a visible outline." }
+  ]},
+  { id: "L", title: "Part L · The organizer's preview", who: "Your own signed-in organizer account (b2cowan@outlook.com) · separate window · desk width", note: "Live Demo — Game Day has some divisions published and some held back. The preview is the same list with nothing that acts. There is no admin preview of a team's page.", steps: [
+    { do: "Sign in and open " + a(PREVIEW + "/teams", "Live Demo's Teams preview") + ".", see: "The new list for the <strong>published</strong> divisions only. A held-back division is not offered." + tell("which divisions the dropdown offers.") },
+    { do: "Try a team's row, the star area, the dropdown and the search.", see: "Dropdown and search work. A row opens nothing (no link), and there is no star and no follow sheet. Nothing is remembered for the public site." },
+    { do: "Open " + a(PREVIEW + "/teams/anything", "the preview address with a team on the end") + ".", see: "A page-not-found: Stage 5 added no admin preview of the team page." }
+  ]},
+  { id: "M", title: "Part M · The demo", who: "Private window, signed out", steps: [
+    { do: "Open " + on(DEMO + "/teams", "the demo's Teams") + " with the preview on.", see: "On dev the demo's divisions are held back, so an honest state: <strong>The schedule isn't published yet</strong> / “Teams will appear when their division is published.” (or teams, if you have published it). No team, game or count from a held-back division shows." + tell("what it says.") }
+  ]},
+  { id: "N", title: "Part N · Preview off keeps today's pages", who: "Private window, signed out", note: "These links turn the preview OFF for this window. The last step turns it back on.", steps: [
+    { do: "Open " + off(BIG, "the bigger event's Teams with the preview off") + ".", see: "The old Teams page, exactly as before: no new division dropdown or search box, the old team cards. Nothing from Stage 5 on it." + tell("the old page's top heading.") },
+    { do: "Open " + off(page("live"), "the live team's page with the preview off") + ".", see: "The old team page: the old strip and form pips, the old standings, the old My-team card if you follow the team. Nothing from Stage 5 on it." },
+    { do: "Open " + off(page("held"), "the held-back team's page with the preview off") + ".", see: "Exactly what the old site showed for a held-back team before this work (the organizer's unpublished division behaves as it did)." },
+    { do: "Open " + on(page("live"), "the live team's page with the preview on again") + ".", see: "The new team page again. Housekeeping, not a product check." }
+  ]},
+  { id: "O", title: "Part O · Installed app (optional)", who: "Installed app on your phone · secure address required", steps: [
+    { opt: true, do: "In the installed app, open Teams. Tap a star, then tap it again.", see: "The star appears at the right of each row, one tap follows (the star fills; the row does not move or jump to the top, and the division dropdown does not change). Tapping a filled star opens the unfollow confirm sheet; Confirm unfollows." + tell("the team and what you saw.") },
+    { opt: true, do: "In the app, open a team's page. Look at the symbol row.", see: "Follow (star), Add to calendar and Share this team. Follow works as on Teams. Add to calendar downloads the team's games." },
+    { opt: true, do: "In the app, look for the My-team bar and (on a tablet or desk) the rail card for a followed team.", see: "They still show for a followed team, as before." }
+  ]},
+  { id: "P", title: "Part P · Leave the fixtures tidy", who: "Terminal or ask me, then a private window", steps: [
+    { do: "Run " + fx("publish") + ", " + fx("refresh") + " and " + fx("show") + " (or ask me).", see: "The live clone published and back to a live game at 5–3; the other clones prepared. To remove the whole set instead, ask me for <strong>undo</strong>; I read back that every clone is gone." + tell("the final live line, and whether you chose prepared or undone.") }
+  ]}
+];
+var KEY = "qa-432-stage5-teams-v1";
+var state = { ticks: {}, verdict: {}, notes: {} };
+try { var saved = JSON.parse(localStorage.getItem(KEY) || "null"); if (saved) state = saved; } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+var root = document.getElementById("parts");
+var total = 0;
+PARTS.forEach(function (p) {
+  var sec = document.createElement("section"); sec.className = "part";
+  var html = '<header><h2>' + p.title + '</h2><span class="who">' + p.who + '</span>' + (p.note ? '<p>' + p.note + '</p>' : '') + '</header>';
+  p.steps.forEach(function (s, i) {
+    var id = p.id + (i + 1); total++;
+    if (s.opt) {
+      html += '<div class="step" id="row-' + id + '"><span></span><span class="txt"><span class="do">' + id + ' · Optional. ' + s.do + '</span><span class="see">' + s.see + '</span>' +
+        '<span class="opts"><label><input type="checkbox" id="cb-' + id + '" data-id="' + id + '"> Did it</label><label><input type="checkbox" id="cb-' + id + 's" data-id="' + id + 's"> Skipped it</label></span></span></div>';
+    } else if (s.choices) {
+      html += '<div class="step" id="row-' + id + '"><span></span><span class="txt"><span class="do">' + id + ' · ' + s.do + '</span><span class="see">' + s.see + '</span><span class="opts">' +
+        s.choices.map(function (c, j) { return '<label><input type="checkbox" id="cb-' + id + 'c' + j + '" data-id="' + id + 'c' + j + '"> ' + c + '</label>'; }).join('') + '</span></span></div>';
+    } else {
+      html += '<label class="step' + (s.stop ? ' stop' : '') + '" id="row-' + id + '"><input type="checkbox" id="cb-' + id + '" data-id="' + id + '"><span class="txt"><span class="do">' + id + ' · ' + s.do + '</span><span class="see">' + s.see + '</span></span></label>';
+    }
+  });
+  html += '<div class="verdict" role="group" aria-label="' + p.title + ' verdict">' +
+    '<button type="button" data-p="' + p.id + '" data-v="pass" aria-pressed="false">Pass</button>' +
+    '<button type="button" data-p="' + p.id + '" data-v="issue" aria-pressed="false">Issue</button>' +
+    '<button type="button" data-p="' + p.id + '" data-v="call" aria-pressed="false">Needs a call</button></div>' +
+    '<textarea id="notes-' + p.id + '" data-p="' + p.id + '" placeholder="Notes for ' + p.title + ' (what you saw, anything odd)"></textarea>';
+  sec.innerHTML = html; root.appendChild(sec);
+});
+
+function chosen(id, s) { var out = []; (s.choices || []).forEach(function (c, j) { if (state.ticks[id + "c" + j]) out.push(c); }); return out; }
+function stepDone(id, s) { return !!(state.ticks[id] || state.ticks[id + "s"] || (s && s.choices && chosen(id, s).length)); }
+function render() {
+  var n = 0;
+  document.querySelectorAll("input[type=checkbox][data-id]").forEach(function (cb) { cb.checked = !!state.ticks[cb.dataset.id]; });
+  PARTS.forEach(function (p) { p.steps.forEach(function (s, i) {
+    var id = p.id + (i + 1), d = stepDone(id, s); if (d) n++;
+    document.getElementById("row-" + id).classList.toggle("done", d);
+  }); });
+  document.querySelectorAll(".verdict button").forEach(function (b) { b.setAttribute("aria-pressed", String(state.verdict[b.dataset.p] === b.dataset.v)); });
+  document.querySelectorAll("textarea[data-p]").forEach(function (t) { t.value = state.notes[t.dataset.p] || ""; });
+  document.getElementById("count").textContent = n + " of " + total + " checked";
+  document.getElementById("fill").style.width = (total ? (100 * n / total) : 0) + "%";
+}
+root.addEventListener("change", function (e) {
+  var id = e.target.dataset && e.target.dataset.id; if (!id) return;
+  state.ticks[id] = e.target.checked;
+  if (e.target.checked) {
+    var m = /^(.*)c(\d)$/.exec(id);
+    if (m) { for (var j = 0; j < 4; j++) if (String(j) !== m[2]) state.ticks[m[1] + "c" + j] = false; }
+    else { var other = /s$/.test(id) ? id.slice(0, -1) : id + "s"; if (document.getElementById("cb-" + other)) state.ticks[other] = false; }
+  }
+  save(); render();
+});
+root.addEventListener("click", function (e) { var b = e.target.closest(".verdict button"); if (!b) return; state.verdict[b.dataset.p] = state.verdict[b.dataset.p] === b.dataset.v ? null : b.dataset.v; save(); render(); });
+root.addEventListener("input", function (e) { if (e.target.dataset.p && e.target.tagName === "TEXTAREA") { state.notes[e.target.dataset.p] = e.target.value; save(); } });
+document.getElementById("reset").addEventListener("click", function () { state = { ticks: {}, verdict: {}, notes: {} }; save(); render(); document.getElementById("summary").value = ""; });
+var WORD = { pass: "PASS", issue: "ISSUE", call: "NEEDS A CALL" };
+function buildSummary() {
+  var lines = ["§432 · Stage 5 · Teams and a team's page: which teams are in, where each stands, when mine plays next"], all = 0, noVerdict = [];
+  PARTS.forEach(function (p) {
+    var ids = p.steps.map(function (s, i) { return p.id + (i + 1); });
+    var done = ids.filter(function (id, i) { return stepDone(id, p.steps[i]); }).length; all += done;
+    var missing = ids.filter(function (id, i) { return !stepDone(id, p.steps[i]); });
+    var skipped = ids.filter(function (id) { return state.ticks[id + "s"]; });
+    if (!state.verdict[p.id]) noVerdict.push(p.id);
+    lines.push(p.title + " [" + (WORD[state.verdict[p.id]] || "NO VERDICT SET") + "] " + done + "/" + ids.length +
+      (missing.length ? " · unticked: " + missing.join(", ") : "") + (skipped.length ? " · skipped: " + skipped.join(", ") : ""));
+    p.steps.forEach(function (s, i) { if (s.choices) { var c = chosen(p.id + (i + 1), s); if (c.length) lines.push("  " + p.id + (i + 1) + " ruled: " + c.join(" / ")); } });
+    if (state.notes[p.id]) lines.push("  Notes: " + state.notes[p.id].replace(/\n+/g, " / "));
+  });
+  lines.splice(1, 0, "Checked " + all + " of " + total);
+  if (noVerdict.length) lines.splice(1, 0, "INCOMPLETE: no verdict set on part(s) " + noVerdict.join(", ") + ". Set Pass, Issue or Needs a call on each, then build again.");
+  document.getElementById("summary").value = lines.join("\n");
+}
+document.getElementById("build").addEventListener("click", buildSummary);
+document.getElementById("copy").addEventListener("click", function () {
+  var t = document.getElementById("summary");
+  buildSummary();
+  try { navigator.clipboard.writeText(t.value).catch(function () { t.select(); }); } catch (e) { t.select(); }
+});
+render();
+
+var hostInput = document.getElementById("host");
+try { var h = localStorage.getItem("qa-432-host-v1"); if (h) hostInput.value = h; } catch (e) {}
+function updateHost() {
+  try {
+    var parsed = new URL(hostInput.value);
+    if (!/^https?:$/.test(parsed.protocol)) throw Error("Use http or https");
+    HOST = parsed.origin;
+    document.querySelectorAll("a[data-route]").forEach(function (link) { link.href = HOST + link.dataset.route; });
+    hostInput.setCustomValidity("");
+    try { localStorage.setItem("qa-432-host-v1", HOST); } catch (e) {}
+  } catch (e) { hostInput.setCustomValidity("Enter the server origin, starting with http:// or https://"); hostInput.reportValidity(); }
+}
+hostInput.addEventListener("change", updateHost); updateHost();
+</script>

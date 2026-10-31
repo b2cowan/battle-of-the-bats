@@ -39,6 +39,7 @@ interface Props {
   inProgress: boolean;
   /** Whether the plan includes fan push score alerts (Tournament Plus+). */
   fanAlertsEnabled?: boolean;
+  publicFrame?: boolean;
 }
 
 function formatCountdown(ms: number): string {
@@ -52,7 +53,7 @@ function formatCountdown(ms: number): string {
   return `${Math.max(mins, 1)}m`;
 }
 
-function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAlertsEnabled = false }: Props) {
+function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAlertsEnabled = false, publicFrame = false }: Props) {
   const href = useOrgHref(orgSlug);
   const { followedTeamId, unfollow } = useFollowedTeam(orgSlug, tournamentSlug);
   const [teams, setTeams] = useState<PublicTeam[]>([]);
@@ -94,7 +95,7 @@ function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAlertsEnabled = fa
   useEffect(() => {
     if (!active) return;
     let cancelled = false;
-    void fetchPublicTournamentData(orgSlug, tournamentSlug, 'schedule').then(data => {
+    void fetchPublicTournamentData(orgSlug, tournamentSlug, publicFrame ? 'schedule-preview' : 'schedule').then(data => {
       if (cancelled || !data) return;
       setTeams(data.teams ?? []);
       setGames(data.games ?? []);
@@ -103,12 +104,12 @@ function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAlertsEnabled = fa
       setLoaded(true);
     });
     return () => { cancelled = true; };
-  }, [active, orgSlug, tournamentSlug]);
+  }, [active, orgSlug, tournamentSlug, publicFrame]);
 
   usePublicTournamentLive({
     orgSlug,
     tournamentSlug,
-    section: 'schedule',
+    section: publicFrame ? 'schedule-preview' : 'schedule',
     enabled: active,
     onData: data => {
       setTeams(data.teams ?? []);
