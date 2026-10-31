@@ -25,6 +25,12 @@ Decisions, tests and owner checks: [Stage 4 handoff](PLAN_AND_BILLING_STAGE4_OWN
   admin area you've never used.
 - **A lapsed or cancelled owner can always get back in to reactivate**, from the page they land on.
 - **Coaches on a club's team see who pays** ("Covered by <Club>") without any billing controls.
+- **A Premium coach can grow into a club (ruled 2026-10-30, to be drawn next).** A coach who runs a club, started on the
+  Coaches Portal and now wants the whole product, upgrades in place: they become the club's owner and stay head coach of
+  their team, which stays exactly where it is and becomes club-owned. No copying, no starting over, no demotion. They name
+  their club, pay (a paying coach just changes price; a free-time coach starts paying), and land in an empty club ready to
+  set up. Joining someone else's club stays a separate door. Priority: comes before the help rewrite. Success: one short
+  path, no lost team data, the coach is owner and head coach afterwards. The price step is still a pricing decision.
 
 ## Why it matters
 

@@ -126,6 +126,15 @@ pays, no controls); free Basic teams' upsell footer uses the same plan words; th
 vocabulary checked for collision. (`BillingPagePlans` and its CSS are deleted in Stage 1, once nothing renders them;
 Stage 4 only sweeps what is left.)
 
+**Stage 4b — A Premium coach becomes a club, in place** (owner rulings 2026-10-30; money rules Decided in
+`BUSINESS_DECISIONS.md`; drawn first in an owner session, built when Club opens for sale). The coach's own workspace
+becomes the Club: the Club row in Change plan, a "name your club" step, a paying coach's preview, a free-time coach's
+start-paying step, and a landing in an empty club. **Its own build stage for the largest item:** the workspace is tagged as
+a coach portal for life (about 70 places read it) and its billing records stay on the Coaches Portal kind, so the upgrade
+must flip both in one step, with a test that no portal-only behaviour survives on an upgraded club. Also: Premium becomes a
+source plan in the move rules; staff-given free time ends at the upgrade (the Founding comp already does). Sequenced after
+Stage 4 and before Stage 5, so the help describes it once.
+
 **Stage 5 — Docs, demos, walks.** `/docs` rewrite of the billing help articles (club-plan-and-billing,
 subscription-ends, Stripe fees, cancel) and the coach help; `/demos` needs nothing per commit (owner ruling);
 UAT specs updated; layout baselines refreshed on staging, not the dev server.
@@ -139,11 +148,33 @@ UAT specs updated; layout baselines refreshed on staging, not the dev server.
   build a portal page — larger, not needed for this project.
 - **B. ~~Does the unified "Change plan" table list Premium Coaches Portal → Club?~~ ANSWERED (owner, 2026-10-30): yes.**
   There should be a **clear path for a Premium coach to upgrade to Club, with their subscription and payments changing
-  accordingly, smooth and with minimal steps.** Not yet ruled, for the drawing session: (1) whether "upgrade to Club" means the
-  coach's one-team portal **becomes** a club they run, or means **joining an existing club** (the existing "Part of a club?"
-  door already does the second); the owner's words read as the first; (2) what happens to the team's data, the old
-  subscription and the first charge; (3) the price step from the Premium plan to Club (a pricing question for `/strategy`
-  and `/billing`, not decided here). The real move ships when Club opens for sale, as ruling 7 already says for Plus → Club.
+  accordingly, smooth and with minimal steps.** **(1) RULED (owner, 2026-10-30): the coach's own workspace BECOMES the club, in
+  place.** The story is a coach who runs a club, started on the Coaches Portal, and now buys the whole product: they go from
+  standalone coach to club owner who is also head coach of their existing team, and that team is now club-owned. The team does
+  not move, is not copied and is not re-parented; the "Part of a club?" door stays the answer for joining SOMEONE ELSE'S club
+  and is not this path. What the code shows (checked 2026-10-30, not assumed): the workspace behind a standalone coach is a
+  flagged organization the coach already owns; no plan move starts from Premium today (only Plus → Club and Club ↔ larger Club);
+  a comped Founding coach has no paid subscription to swap. Still for the drawing session: (2) the first charge and the old
+  subscription (a paid coach: swap the price on the same subscription; a comped coach: a plain start-paying step), a "name your
+  club" step because the workspace is named after the team, and the empty club-level setup the coach lands in. **(2) and (3)
+  RULED (owner, 2026-10-30, `BUSINESS_DECISIONS.md`):** the price is Club's ordinary price (no middle rung); a paying coach
+  swaps the price on the one subscription with a preview, interval kept, no second trial; a free-time coach (Founding or
+  staff-given) buys Club with its 90-day trial and a card, and the Premium free days end at the upgrade. What remains for the
+  drawing session is the screens, not the money. Build: Stage 4b above. The real move ships when Club opens for sale, as ruling 7 already says for Plus → Club.
+  **(4) SCREENS RULED (owner, 2026-10-30, from `PLAN_AND_BILLING_STAGE4B_DECISIONS.html`, all eight as recommended; Codex's first pass
+  is `PLAN_AND_BILLING_STAGE4B_PREMIUM_TO_CLUB_DRAWINGS.html`):** (1) a paying coach gets ONE window: club name and the charge together,
+  one button; (2) the upgrade does NOT ask for a web address: the workspace address stays, is shown, and the change is offered on the
+  landing (nothing redirects an old address); (3) the club name is empty and required, never prefilled with the team name; (4) the
+  credit shows as invoice lines that add up to "Due today" when the real preview supplies them (the build must ask Stripe for the
+  line items); (5) the coach lands on the club's Admin Overview with a setup list and their team shown; (6) a draft or active hosted
+  tournament does NOT block the upgrade (everything stays in the same workspace); (7) "Part of a club?" is left as shipped; (8) a
+  free-time portal that once paid gets NO second trial: the platform's one rule holds, and that coach sees the paying window with the
+  full charge due today. Words are draft until `/marketing`; the trial sentence reads "payment method" (T1). Unverified by the
+  drawing: tax in the preview, whether Stripe's preview supplies a separate credit line, the Admin foot's "Coaches Portal" row.
+  **Build decisions RULED (owner, 2026-10-30, `PLAN_AND_BILLING_STAGE4B_PLAN.md` §5):** the upgraded club's `is_discoverable` stays false
+  until the coach opts in; the six hand-copied portal tests are replaced by the one function in Part 1; the flip hook lives inside
+  `applyPlanChangeSideEffects`; old retention rows from an earlier cancellation are left and reported; the Founding-audience email question is
+  dropped because the owner said Founding Season is being deprecated soon. Build plan, PM brief and the Part 1 prompt are written.
   Sequenced after Stage 4 and before Stage 5's help rewrite, so the docs describe it once. Original text kept as the record:
   routes to `/strategy` and `/billing`, not decided here. Stage 1 shows only moves that exist today.
 - **C. ~~In-app invoice list.~~ ANSWERED (owner, 2026-10-30): yes, as our own branded invoices built from Stripe facts, and
