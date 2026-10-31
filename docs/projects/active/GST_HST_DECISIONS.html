@@ -1,0 +1,495 @@
+<title>Sales Tax Decisions</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: a filing folder — sticky tab strip, one decision per tab, context left, options right, a tally on the last tab */
+:root{
+  --paper:#f5f7f9; --sheet:#ffffff; --ink:#16232f; --muted:#56656f; --rule:#d5dde3;
+  --accent:#1f4e79; --accent-soft:#e3edf6;
+  --rec:#1e6b46; --rec-soft:#e2f2e9; --warn:#8a5a00; --warn-soft:#fbf0d9;
+  --display:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --body:"Public Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#10171d; --sheet:#172129; --ink:#e3e9ee; --muted:#9aa9b4; --rule:#2c3a45;
+  --accent:#8db9e3; --accent-soft:#1c3247; --rec:#7fd0a5; --rec-soft:#173327; --warn:#e8bf6a; --warn-soft:#3a2d12;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#10171d; --sheet:#172129; --ink:#e3e9ee; --muted:#9aa9b4; --rule:#2c3a45;
+  --accent:#8db9e3; --accent-soft:#1c3247; --rec:#7fd0a5; --rec-soft:#173327; --warn:#e8bf6a; --warn-soft:#3a2d12;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--sheet)}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:var(--sheet);border-bottom:1px solid var(--rule)}
+header.top .wrap{padding-block:18px 10px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-family:var(--display);font-size:28px;line-height:1.2;margin:4px 0 2px;text-wrap:balance}
+.sub{color:var(--muted);margin:0;max-width:70ch}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--sheet);border-bottom:1px solid var(--rule)}
+nav.tabs .wrap{display:flex;gap:4px;overflow-x:auto;padding-block:8px;scrollbar-width:thin}
+.tab{flex:0 0 auto;font:inherit;font-size:14px;font-weight:600;color:var(--muted);background:transparent;border:1px solid transparent;border-radius:6px;padding:6px 10px;cursor:pointer;display:flex;gap:6px;align-items:center}
+.tab:hover{color:var(--ink);background:var(--paper)}
+.tab[aria-selected="true"]{color:var(--accent);background:var(--accent-soft);border-color:var(--accent-soft)}
+.tab:focus-visible,.btn:focus-visible,.opt:focus-within,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.dot{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--muted)}
+.dot.done{background:var(--rec);border-color:var(--rec)}
+main .wrap{padding-block:22px 48px}
+section.panel[hidden]{display:none}
+.grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
+.code{font-family:var(--mono);font-size:13px;color:var(--accent)}
+h2{font-family:var(--display);font-size:24px;line-height:1.25;margin:2px 0 10px;text-wrap:balance}
+h3{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 0 6px}
+p{margin:0 0 10px;max-width:68ch}
+ul.facts{margin:0 0 10px;padding-left:18px;display:grid;gap:4px}
+.ex{background:var(--sheet);border:1px solid var(--rule);border-radius:8px;padding:12px 14px;margin:8px 0 12px}
+.ex .lbl{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.tscroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.03em}
+td.n,th.n{text-align:right;white-space:nowrap}
+.note{background:var(--warn-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:14px;margin:8px 0}
+.note b{color:var(--warn)}
+.choices{display:grid;gap:10px}
+.opt{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;background:var(--sheet);border:1.5px solid var(--rule);border-radius:10px;padding:12px 14px;cursor:pointer}
+.opt:hover{border-color:var(--accent)}
+.opt input{margin-top:4px;accent-color:var(--accent);width:18px;height:18px}
+.opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.opt .t{font-weight:700}
+.opt .d{color:var(--muted);font-size:14px;margin-top:2px}
+.chip{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:2px}
+.chip.rec{background:var(--rec-soft);color:var(--rec)}
+.chip.no{background:var(--warn-soft);color:var(--warn)}
+.why{background:var(--rec-soft);border-radius:10px;padding:12px 14px;font-size:14px}
+.why b{color:var(--rec)}
+label.nl{display:block;font-weight:600;font-size:14px;margin:14px 0 6px}
+textarea{width:100%;min-height:76px;font:inherit;font-size:14px;color:var(--ink);background:var(--sheet);border:1px solid var(--rule);border-radius:8px;padding:8px 10px;resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.btn{font:inherit;font-weight:600;font-size:14px;border-radius:8px;padding:8px 14px;cursor:pointer;border:1px solid var(--rule);background:var(--sheet);color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--sheet)}
+.btn:hover{border-color:var(--accent)}
+.list{display:grid;gap:8px}
+.item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:10px 14px;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
+.item:hover{border-color:var(--accent)}
+.item .q{font-weight:600}
+.item .a{font-size:13px;color:var(--muted)}
+.status{font-size:12px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.status.open{background:var(--warn-soft);color:var(--warn)}
+.status.set{background:var(--rec-soft);color:var(--rec)}
+pre.out{white-space:pre-wrap;word-break:break-word;background:var(--sheet);border:1px solid var(--rule);border-radius:8px;padding:12px;font-family:var(--mono);font-size:12.5px;max-height:420px;overflow:auto}
+.toast{font-size:14px;color:var(--rec);font-weight:600}
+.settled{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:6px 0 18px}
+.settled div{background:var(--sheet);border:1px solid var(--rule);border-radius:8px;padding:10px 12px;font-size:14px}
+.settled b{display:block;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+@media (prefers-reduced-motion:no-preference){.opt,.item,.tab{transition:border-color .12s,background .12s}}
+</style>
+
+<header class="top"><div class="wrap">
+  <div class="eyebrow">FieldLogicHQ · GST/HST plan · Oct 31, 2026 · <span style="color:var(--rec)">Ruled Oct 31: 7 of 7 answered, recorded in the plan</span></div>
+  <h1>Sales Tax Decisions</h1>
+  <p class="sub">Seven decisions that set how FieldLogicHQ charges its own sales tax. Pick one option on each tab, add a note if you like, then copy your answers on the last tab and paste them into the chat. This is research and recommendation, not professional advice.</p>
+</div></header>
+
+<nav class="tabs" aria-label="Decisions"><div class="wrap" role="tablist" id="tablist"></div></nav>
+
+<main><div class="wrap">
+
+<!-- OVERVIEW -->
+<section class="panel" id="p-overview" data-tab="overview" data-name="Overview">
+  <h2>Where things stand</h2>
+  <div class="settled">
+    <div><b>Registered</b>Registered for GST/HST. Number received the week of Oct 24.</div>
+    <div><b>Nothing sold yet</b>No subscriptions, ever. Nothing to correct from the past.</div>
+    <div><b>Online payments</b>Switched off in production until the lawyer answers.</div>
+    <div><b>Today's product</b>Charges no tax, stores no customer address, and has no Terms of Service.</div>
+  </div>
+  <p>Being registered means every sale carries tax from the first one. The $30,000 small-supplier threshold no longer matters. These decisions shape the work that has to happen before the first paid subscription.</p>
+  <h3>The seven decisions</h3>
+  <div class="list" id="overview-list"></div>
+  <div class="row"><button class="btn" type="button" id="accept-all">Tick every recommendation</button><span class="toast" id="accept-toast" hidden>Recommendations ticked. Change any you disagree with.</span></div>
+</section>
+
+<!-- T1 -->
+<section class="panel" id="p-t1" data-tab="t1" data-name="T1 · US clubs" hidden>
+  <div class="grid"><div>
+    <span class="code">T1</span>
+    <h2>When do US clubs come in?</h2>
+    <h3>What you need to know</h3>
+    <ul class="facts">
+      <li>On Oct 23 you ruled the launch <b>Canada only</b>. US subscriptions were moved to "expansion".</li>
+      <li><b>Selling a subscription to a US club is the easy case.</b> They pay 0% Canadian tax, as long as we keep proof they're American (T7). US state sales tax only starts once sales into one state pass about US$100,000 a year.</li>
+      <li><b>US clubs taking online payments is the hard case.</b> It needs US payout accounts in US dollars, a decision on who files the US year-end payment forms (1099-K), and a professional opinion on state "marketplace" rules.</li>
+      <li>The address step at checkout is the same work for either country. Adding US states later means rebuilding that step.</li>
+      <li>US clubs would pay in Canadian dollars at first; their card converts. US-dollar prices are a separate later decision.</li>
+    </ul>
+    <div class="ex"><div class="lbl">Example · how far away US sales tax is</div>
+      <p>At about US$0.72 per Canadian dollar, US$100,000 in one state is roughly <b>30 clubs on Club · Association ($3,790/yr)</b>, or <b>350 clubs on Tournament Plus annual ($390/yr)</b>, all in the same state.</p>
+    </div>
+  </div><div>
+    <h3>Your choice</h3>
+    <div class="choices" data-q="t1">
+      <label class="opt"><input type="radio" name="t1" value="A" data-rec="1"><div><div class="t">Build for both countries now; sell US subscriptions once tax works; US payments later<span class="chip rec">Recommended</span></div><div class="d">The address and evidence step covers Canada and the US from the start. US clubs can subscribe once Stages 1–3 ship. US clubs taking payments stays its own review.</div></div></label>
+      <label class="opt"><input type="radio" name="t1" value="B"><div><div class="t">Canada only, as ruled Oct 23</div><div class="d">Canadian provinces only at checkout. US clubs can't buy a paid plan. Adding them later means reworking the address step.</div></div></label>
+      <label class="opt"><input type="radio" name="t1" value="C"><div><div class="t">Everything for US clubs now, payments included</div><div class="d">Adds US payout accounts, USD, the 1099-K decision and a US tax opinion to the launch work.</div></div></label>
+    </div>
+    <div class="why"><b>Why A:</b> it costs almost nothing extra now, and it opens a market where no US tax is owed at our size. The risky US parts stay out until they get their own review.</div>
+    <label class="nl" for="n-t1">Notes (optional)</label><textarea id="n-t1" data-note="t1"></textarea>
+    <div class="row"><button class="btn primary next" type="button">Next decision</button></div>
+  </div></div>
+</section>
+
+<!-- T2 -->
+<section class="panel" id="p-t2" data-tab="t2" data-name="T2 · Tax on the fee" hidden>
+  <div class="grid"><div>
+    <span class="code">T2</span>
+    <h2>The online-payment fee: tax on top, or inside?</h2>
+    <h3>What you need to know</h3>
+    <ul class="facts">
+      <li>On Oct 26 you decided no tax on the fee, because FieldLogicHQ was "pre-revenue and below the $30,000 threshold". <b>That reason is gone now that you're registered.</b></li>
+      <li>Whether the fee is taxable at all is still open. It could count as an exempt financial service or a taxable platform service, and CRA hasn't addressed a fee like ours. The lawyer and accountant settle it. <b>Plan as if it's taxable</b>; if it turns out exempt, nothing changes for customers.</li>
+      <li>Today's fee: card 3.5% + $1.50, bank debit 2.5% + $1.00. US clubs would pay 0% tax on it.</li>
+      <li>A club registered for GST/HST gets tax it pays back as a credit. Most small non-profit clubs aren't registered, so for them it's a real cost.</li>
+    </ul>
+    <div class="ex"><div class="lbl">Example · Ontario club, $800 registration paid by card</div>
+      <div class="tscroll"><table>
+        <tr><th></th><th class="n">Fee charged</th><th class="n">HST in it</th><th class="n">Left for FieldLogicHQ after Stripe</th></tr>
+        <tr><td>Today (no tax)</td><td class="n">$29.50</td><td class="n">$0.00</td><td class="n">about $3.14</td></tr>
+        <tr><td><b>Tax on top</b></td><td class="n">$33.34</td><td class="n">$3.84</td><td class="n">about $3.14</td></tr>
+        <tr><td>Tax inside today's rate</td><td class="n">$29.50</td><td class="n">$3.39</td><td class="n">about <b>−$0.25</b></td></tr>
+      </table></div>
+      <p style="margin-top:8px">With "family pays" on, the family's fee line would read $33.34 instead of $29.50. The $3.14 is the Oct 26 decision's figure after Stripe's costs.</p>
+    </div>
+  </div><div>
+    <h3>Your choice</h3>
+    <div class="choices" data-q="t2">
+      <label class="opt"><input type="radio" name="t2" value="A" data-rec="1"><div><div class="t">Tax on top of the fee<span class="chip rec">Recommended</span></div><div class="d">Published rates stay the same and the tax is added on top. Clubs registered for GST/HST get it back. Revisit if counsel says the fee is exempt.</div></div></label>
+      <label class="opt"><input type="radio" name="t2" value="B"><div><div class="t">Tax inside today's rates<span class="chip no">Loses money on big card payments</span></div><div class="d">Families and clubs see no change. FieldLogicHQ pays the tax out of the fee.</div></div></label>
+      <label class="opt"><input type="radio" name="t2" value="C"><div><div class="t">Raise the rates so tax fits inside</div><div class="d">One all-in price. This is a new price, so it goes through /strategy, and the published rates change.</div></div></label>
+      <label class="opt"><input type="radio" name="t2" value="D"><div><div class="t">Decide after the lawyer answers</div><div class="d">Build so either works, and rule once counsel says whether the fee is taxable. Online payments stay off until then anyway.</div></div></label>
+    </div>
+    <div class="why"><b>Why A:</b> tax inside turns large card payments into a loss. Tax on top keeps the published rates and your margin, and it's how most Canadian business services are priced.</div>
+    <label class="nl" for="n-t2">Notes (optional)</label><textarea id="n-t2" data-note="t2"></textarea>
+    <div class="row"><button class="btn primary next" type="button">Next decision</button></div>
+  </div></div>
+</section>
+
+<!-- T3 -->
+<section class="panel" id="p-t3" data-tab="t3" data-name="T3 · Who the fee is charged to" hidden>
+  <div class="grid"><div>
+    <span class="code">T3</span>
+    <h2>Who is the fee legally charged to?</h2>
+    <h3>What you need to know</h3>
+    <ul class="facts">
+      <li>Each club picks <b>"family pays"</b> (the default, where the fee appears as its own line at the family's checkout) or <b>"club pays"</b> (it comes out of the club's money).</li>
+      <li><b>Tax follows the person we charge.</b> If our fee is a charge to the club, the club's address decides the tax every time. If it's a charge to the family, each family's location decides it.</li>
+      <li>Charging families would mean finding out where every family is, and the tax would change from one payment to the next.</li>
+      <li>This choice is written into the terms. What families see on screen can stay the same.</li>
+    </ul>
+    <div class="ex"><div class="lbl">Example · the same payments, two ways</div>
+      <div class="tscroll"><table>
+        <tr><th>Payment</th><th>Fee charged to the club</th><th>Fee charged to the family</th></tr>
+        <tr><td>US family pays an Ontario tournament</td><td>13% HST (Ontario club)</td><td>Depends where the family was when they paid; we'd need to ask</td></tr>
+        <tr><td>Canadian team pays a Michigan tournament</td><td>0% (US club)</td><td>Tax by the family's province: 5% to 15%</td></tr>
+        <tr><td>BC family pays an Ontario house league</td><td>13% HST</td><td>5% GST</td></tr>
+      </table></div>
+    </div>
+  </div><div>
+    <h3>Your choice</h3>
+    <div class="choices" data-q="t3">
+      <label class="opt"><input type="radio" name="t3" value="A" data-rec="1"><div><div class="t">Always the club<span class="chip rec">Recommended</span></div><div class="d">"Family pays" means the club passes its cost on to its families as the club's own charge. Our tax depends only on the club's address. The lawyer confirms the wording.</div></div></label>
+      <label class="opt"><input type="radio" name="t3" value="B"><div><div class="t">Whoever pays it</div><div class="d">The family when "family pays" is on. Every payment needs the family's location, and US visiting teams get complicated.</div></div></label>
+      <label class="opt"><input type="radio" name="t3" value="C"><div><div class="t">No preference; let the lawyer decide</div><div class="d">The plan holds the fee tax work until counsel answers.</div></div></label>
+    </div>
+    <div class="why"><b>Why A:</b> this one sentence in the terms folds the four scenarios into two. Scenarios 3 and 4 then behave exactly like 1 and 2, and you never collect families' locations for tax.</div>
+    <label class="nl" for="n-t3">Notes (optional)</label><textarea id="n-t3" data-note="t3"></textarea>
+    <div class="row"><button class="btn primary next" type="button">Next decision</button></div>
+  </div></div>
+</section>
+
+<!-- T4 -->
+<section class="panel" id="p-t4" data-tab="t4" data-name="T4 · Prices plus tax" hidden>
+  <div class="grid"><div>
+    <span class="code">T4</span>
+    <h2>Are plan prices "plus tax" or "tax included"?</h2>
+    <h3>What you need to know</h3>
+    <ul class="facts">
+      <li>The rate depends on the club's province: 13% Ontario, 14% Nova Scotia, 15% New Brunswick, Newfoundland and PEI, 5% everywhere else (BC, Québec, Saskatchewan and Manitoba may add their own tax later). US clubs pay 0%.</li>
+      <li>Today the pricing pages say "Billed in CAD" but never mention tax, and the Stripe prices don't say either way.</li>
+      <li>Clubs registered for GST/HST get the tax back. Individual coaches buying Premium usually can't.</li>
+    </ul>
+    <div class="ex"><div class="lbl">Example · Tournament Plus, $39 a month</div>
+      <div class="tscroll"><table>
+        <tr><th>Club in</th><th class="n">Plus tax: club pays</th><th class="n">Plus tax: you keep</th><th class="n">Tax included: club pays</th><th class="n">Tax included: you keep</th></tr>
+        <tr><td>Ontario (13%)</td><td class="n">$44.07</td><td class="n">$39.00</td><td class="n">$39.00</td><td class="n">$34.51</td></tr>
+        <tr><td>Nova Scotia (14%)</td><td class="n">$44.46</td><td class="n">$39.00</td><td class="n">$39.00</td><td class="n">$34.21</td></tr>
+        <tr><td>New Brunswick (15%)</td><td class="n">$44.85</td><td class="n">$39.00</td><td class="n">$39.00</td><td class="n">$33.91</td></tr>
+        <tr><td>BC (5%)</td><td class="n">$40.95</td><td class="n">$39.00</td><td class="n">$39.00</td><td class="n">$37.14</td></tr>
+        <tr><td>United States (0%)</td><td class="n">$39.00</td><td class="n">$39.00</td><td class="n">$39.00</td><td class="n">$39.00</td></tr>
+      </table></div>
+      <p style="margin-top:8px">Coach Premium at $29: an Ontario coach would pay $32.77 with tax on top.</p>
+    </div>
+  </div><div>
+    <h3>Your choice</h3>
+    <div class="choices" data-q="t4">
+      <label class="opt"><input type="radio" name="t4" value="A" data-rec="1"><div><div class="t">"Plus applicable taxes"<span class="chip rec">Recommended</span></div><div class="d">One price everywhere, and you keep the same amount from every club. Every price on the site gains "plus applicable taxes", and checkout shows the tax before paying.</div></div></label>
+      <label class="opt"><input type="radio" name="t4" value="B"><div><div class="t">Tax included</div><div class="d">Everyone pays the sticker price. What you keep varies by province, and every tax rate change shifts your revenue.</div></div></label>
+    </div>
+    <div class="why"><b>Why A:</b> it's the Canadian business norm, the price on the site stays honest in every province, and your revenue doesn't depend on where a club is.</div>
+    <label class="nl" for="n-t4">Notes (optional)</label><textarea id="n-t4" data-note="t4"></textarea>
+    <div class="row"><button class="btn primary next" type="button">Next decision</button></div>
+  </div></div>
+</section>
+
+<!-- T5 -->
+<section class="panel" id="p-t5" data-tab="t5" data-name="T5 · Stripe Tax" hidden>
+  <div class="grid"><div>
+    <span class="code">T5</span>
+    <h2>Let Stripe work out the tax, or set the rates ourselves?</h2>
+    <h3>What you need to know</h3>
+    <ul class="facts">
+      <li><b>Stripe Tax</b> reads the buyer's address, picks the right GST, HST or provincial rate, shows it at checkout, and warns you when a province's or US state's threshold is coming. It doesn't register you anywhere; you still do that.</li>
+      <li>It costs <b>0.5% of sales</b> where you're registered. Stripe lists that price in US dollars; Canadian pricing isn't confirmed.</li>
+      <li><b>Setting rates ourselves</b> means entering each province's rate in Stripe and having our code pick the rate from the province the buyer chose. It's free, but rate changes (Nova Scotia's in 2025), provincial thresholds and PST/QST rules all become ours to track.</li>
+      <li>Neither option handles tax on the payment fee. That needs its own monthly statement either way.</li>
+    </ul>
+    <div class="ex"><div class="lbl">Example · what Stripe Tax would cost</div>
+      <div class="tscroll"><table>
+        <tr><th>Yearly subscription sales</th><th class="n">Stripe Tax at 0.5%</th></tr>
+        <tr><td>20 clubs on Tournament Plus annual ($7,800)</td><td class="n">$39 a year</td></tr>
+        <tr><td>$50,000 of subscriptions</td><td class="n">$250 a year</td></tr>
+      </table></div>
+    </div>
+  </div><div>
+    <h3>Your choice</h3>
+    <div class="choices" data-q="t5">
+      <label class="opt"><input type="radio" name="t5" value="A" data-rec="1"><div><div class="t">Stripe Tax<span class="chip rec">Recommended</span></div><div class="d">Stripe picks the rate from the address and watches the thresholds. Revisit if the 0.5% becomes material.</div></div></label>
+      <label class="opt"><input type="radio" name="t5" value="B"><div><div class="t">Set the rates ourselves</div><div class="d">No Stripe Tax fee. We maintain the rates, the threshold watching and the provincial rules.</div></div></label>
+    </div>
+    <div class="why"><b>Why A:</b> at today's volume the fee is small, and a missed rate change or threshold costs more than years of it.</div>
+    <label class="nl" for="n-t5">Notes (optional)</label><textarea id="n-t5" data-note="t5"></textarea>
+    <div class="row"><button class="btn primary next" type="button">Next decision</button></div>
+  </div></div>
+</section>
+
+<!-- T6 -->
+<section class="panel" id="p-t6" data-tab="t6" data-name="T6 · Accountant" hidden>
+  <div class="grid"><div>
+    <span class="code">T6</span>
+    <h2>How do we get the accountant's answers?</h2>
+    <h3>What you need to know</h3>
+    <ul class="facts">
+      <li>On Oct 27 you ruled that the outside accountant is not a gate for the Bookkeeping project. That still stands. <b>Charging tax to customers is different:</b> a wrong answer here is tax you owe personally, with penalties.</li>
+      <li>The questions that need a professional:
+        <ul class="facts" style="margin-top:4px">
+          <li>When to register in BC ($10,000), Québec ($30,000), Saskatchewan and Manitoba (possibly from the first sale)</li>
+          <li>Whether the payment fee is taxable</li>
+          <li>Whether the dispute, returned-debit and foreign-card charges we pass on to clubs are taxable</li>
+          <li>Approving the US proof rule (T7)</li>
+          <li>Whether CRA's yearly platform report applies to us (due Jan 31)</li>
+          <li>Your filing frequency and effective date</li>
+        </ul></li>
+      <li>Most of the question package is already drafted in the revenue plan's Canada review, with a 52-row answer sheet.</li>
+    </ul>
+  </div><div>
+    <h3>Your choice</h3>
+    <div class="choices" data-q="t6">
+      <label class="opt"><input type="radio" name="t6" value="A" data-rec="1"><div><div class="t">One focused session before the first paid subscription<span class="chip rec">Recommended</span></div><div class="d">Take the prepared package and get every answer in one sitting. It gates the first paid subscription, not the build.</div></div></label>
+      <label class="opt"><input type="radio" name="t6" value="B"><div><div class="t">Ask one question at a time, as each stage needs it</div><div class="d">Smaller asks, but more back-and-forth, and the provincial question could land after a first sale.</div></div></label>
+      <label class="opt"><input type="radio" name="t6" value="C"><div><div class="t">Rely on the research and Stripe Tax; no accountant before launch<span class="chip no">Not recommended</span></div><div class="d">The fee and provincial questions carry penalties if they're wrong.</div></div></label>
+    </div>
+    <div class="why"><b>Why A:</b> these are one-time rulings. One session settles them all before anyone is charged.</div>
+    <label class="nl" for="n-t6">Notes (optional)</label><textarea id="n-t6" data-note="t6"></textarea>
+    <div class="row"><button class="btn primary next" type="button">Next decision</button></div>
+  </div></div>
+</section>
+
+<!-- T7 -->
+<section class="panel" id="p-t7" data-tab="t7" data-name="T7 · Proving a club is American" hidden>
+  <div class="grid"><div>
+    <span class="code">T7</span>
+    <h2>What proof do we keep before charging a US club 0%?</h2>
+    <h3>What you need to know</h3>
+    <ul class="facts">
+      <li>To charge 0%, CRA expects you to be satisfied that the buyer lives outside Canada and isn't registered for GST/HST, and to <b>keep the evidence</b>. If the evidence doesn't hold up, the tax is yours to pay.</li>
+      <li>CRA's guidance accepts a buyer's own statement plus a full address, backed by one independent sign such as the card's country.</li>
+      <li>A club counts as Canadian if the people running it live in Canada, even with a US mailing address.</li>
+      <li>A US address alone, or the visitor's internet location, isn't enough.</li>
+    </ul>
+    <div class="ex"><div class="lbl">The proposed rule: all three must line up</div>
+      <p>1. A US street address (not a PO box only).<br>2. A required tick-box: <i>"Our organization is run from outside Canada and is not registered for Canadian GST/HST."</i> (A coach buying for themself ticks <i>"I live outside Canada."</i>)<br>3. A card issued outside Canada, or a payout account Stripe verified in the US.</p>
+    </div>
+    <div class="ex"><div class="lbl">Examples</div>
+      <div class="tscroll"><table>
+        <tr><th>Buyer</th><th>Result</th></tr>
+        <tr><td>Michigan club, US address, US card, ticks the box</td><td>0%</td></tr>
+        <tr><td>Michigan club, US address, ticks the box, but pays with a Canadian card (treasurer lives in Windsor)</td><td>Canadian tax until a second US sign is on file; then credited</td></tr>
+        <tr><td>Ontario club paying with a US card</td><td>13% HST (the address decides)</td></tr>
+        <tr><td>US address, but won't tick the box</td><td>Can't finish checkout until they answer</td></tr>
+        <tr><td>Coach living in Ohio buying Premium, US card</td><td>0%</td></tr>
+      </table></div>
+    </div>
+  </div><div>
+    <h3>Your choice</h3>
+    <div class="choices" data-q="t7">
+      <label class="opt"><input type="radio" name="t7" value="A" data-rec="1"><div><div class="t">All three: address + tick-box + one outside-Canada sign<span class="chip rec">Recommended</span></div><div class="d">Matches CRA's guidance. The card's country is captured automatically, so the buyer only types an address and ticks a box. The accountant approves the wording once.</div></div></label>
+      <label class="opt"><input type="radio" name="t7" value="B"><div><div class="t">Address + tick-box only</div><div class="d">Slightly less friction, but weaker evidence if CRA ever asks.</div></div></label>
+      <label class="opt"><input type="radio" name="t7" value="C"><div><div class="t">Stricter: also upload a US registration document</div><div class="d">Strongest evidence. Real friction for small volunteer-run clubs.</div></div></label>
+    </div>
+    <div class="why"><b>Why A:</b> it meets CRA's published standard with no extra effort for the buyer, since the third sign comes from the card.</div>
+    <label class="nl" for="n-t7">Notes (optional)</label><textarea id="n-t7" data-note="t7"></textarea>
+    <div class="row"><button class="btn primary next" type="button">Review and copy</button></div>
+  </div></div>
+</section>
+
+<!-- SEND -->
+<section class="panel" id="p-send" data-tab="send" data-name="Copy answers" hidden>
+  <h2>Your answers</h2>
+  <p id="send-status"></p>
+  <label class="nl" for="n-general">Anything else for this plan (optional)</label>
+  <textarea id="n-general" data-note="general"></textarea>
+  <div class="row"><button class="btn primary" type="button" id="copy">Copy answers</button><span class="toast" id="copy-toast" hidden></span></div>
+  <h3>What gets pasted</h3>
+  <pre class="out" id="out"></pre>
+</section>
+
+</div></main>
+
+<script>
+(function(){
+  var KEY = 'gst-hst-decisions-v1';
+  var QS = ['t1','t2','t3','t4','t5','t6','t7'];
+  var panels = Array.prototype.slice.call(document.querySelectorAll('section.panel'));
+  var tablist = document.getElementById('tablist');
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  function questionTitle(q){ return document.querySelector('#p-' + q + ' h2').textContent; }
+  function optionLabel(q, v){
+    var inp = document.querySelector('input[name="' + q + '"][value="' + v + '"]');
+    if (!inp) return '';
+    var t = inp.parentNode.querySelector('.t').cloneNode(true);
+    var chips = t.querySelectorAll('.chip');
+    for (var i = 0; i < chips.length; i++) chips[i].remove();
+    return t.textContent.trim();
+  }
+  function isRec(q, v){
+    var inp = document.querySelector('input[name="' + q + '"][value="' + v + '"]');
+    return !!(inp && inp.getAttribute('data-rec'));
+  }
+
+  panels.forEach(function(p){
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'tab'; b.setAttribute('role','tab');
+    b.setAttribute('data-go', p.getAttribute('data-tab'));
+    var q = p.getAttribute('data-tab');
+    if (QS.indexOf(q) !== -1) { var d = document.createElement('span'); d.className = 'dot'; d.id = 'dot-' + q; b.appendChild(d); }
+    b.appendChild(document.createTextNode(p.getAttribute('data-name')));
+    b.addEventListener('click', function(){ show(q, true); });
+    tablist.appendChild(b);
+  });
+
+  var ol = document.getElementById('overview-list');
+  QS.forEach(function(q){
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'item';
+    b.innerHTML = '<span class="code"></span><span><span class="q"></span><br><span class="a"></span></span><span class="status"></span>';
+    b.querySelector('.code').textContent = q.toUpperCase();
+    b.querySelector('.q').textContent = questionTitle(q);
+    b.id = 'ov-' + q;
+    b.addEventListener('click', function(){ show(q, true); });
+    ol.appendChild(b);
+  });
+
+  function show(name, push){
+    var found = false;
+    panels.forEach(function(p){ var on = p.getAttribute('data-tab') === name; p.hidden = !on; if (on) found = true; });
+    if (!found) { name = 'overview'; panels.forEach(function(p){ p.hidden = p.getAttribute('data-tab') !== 'overview'; }); }
+    Array.prototype.forEach.call(tablist.children, function(t){ t.setAttribute('aria-selected', t.getAttribute('data-go') === name ? 'true' : 'false'); });
+    if (push) { try { history.replaceState(null, '', '#' + name); } catch (e) { location.hash = name; } window.scrollTo(0, 0); }
+    if (name === 'send') render();
+  }
+
+  function render(){
+    var done = 0;
+    QS.forEach(function(q){
+      var v = state[q];
+      var dot = document.getElementById('dot-' + q);
+      var ov = document.getElementById('ov-' + q);
+      if (v) done++;
+      if (dot) dot.className = 'dot' + (v ? ' done' : '');
+      if (ov) {
+        var s = ov.querySelector('.status');
+        s.className = 'status ' + (v ? 'set' : 'open');
+        s.textContent = v ? ('Picked ' + v) : 'Open';
+        ov.querySelector('.a').textContent = v ? optionLabel(q, v) : 'Not answered yet';
+      }
+    });
+    var lines = ['GST/HST decisions, paste-back (' + done + ' of 7 answered)', ''];
+    QS.forEach(function(q){
+      var v = state[q];
+      var line = q.toUpperCase() + ' ' + questionTitle(q) + '\n  ' + (v ? (v + ': ' + optionLabel(q, v) + (isRec(q, v) ? ' (recommended)' : ' (NOT the recommendation)')) : 'NOT ANSWERED');
+      var n = (state['note-' + q] || '').trim();
+      if (n) line += '\n  Note: ' + n.replace(/\n+/g, ' / ');
+      lines.push(line);
+    });
+    var g = (state['note-general'] || '').trim();
+    if (g) { lines.push(''); lines.push('Other: ' + g.replace(/\n+/g, ' / ')); }
+    document.getElementById('out').textContent = lines.join('\n');
+    document.getElementById('send-status').textContent = done === 7 ? 'All seven answered. Copy and paste into the chat.' : (7 - done) + ' still open. You can still copy; open ones show as NOT ANSWERED.';
+  }
+
+  QS.forEach(function(q){
+    var radios = document.querySelectorAll('input[name="' + q + '"]');
+    Array.prototype.forEach.call(radios, function(r){
+      if (state[q] === r.value) r.checked = true;
+      r.addEventListener('change', function(){ state[q] = r.value; save(); render(); });
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('textarea[data-note]'), function(t){
+    var k = 'note-' + t.getAttribute('data-note');
+    if (state[k]) t.value = state[k];
+    t.addEventListener('input', function(){ state[k] = t.value; save(); render(); });
+  });
+
+  var order = ['overview'].concat(QS).concat(['send']);
+  Array.prototype.forEach.call(document.querySelectorAll('.next'), function(b){
+    b.addEventListener('click', function(){
+      var cur = b.closest('section.panel').getAttribute('data-tab');
+      show(order[order.indexOf(cur) + 1], true);
+    });
+  });
+
+  document.getElementById('accept-all').addEventListener('click', function(){
+    QS.forEach(function(q){
+      var r = document.querySelector('input[name="' + q + '"][data-rec]');
+      if (r) { r.checked = true; state[q] = r.value; }
+    });
+    save(); render();
+    document.getElementById('accept-toast').hidden = false;
+  });
+
+  document.getElementById('copy').addEventListener('click', function(){
+    render();
+    var text = document.getElementById('out').textContent;
+    var toast = document.getElementById('copy-toast');
+    function fallback(){
+      var range = document.createRange(); range.selectNodeContents(document.getElementById('out'));
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      toast.textContent = 'Selected. Press Ctrl+C (or Cmd+C) to copy.'; toast.hidden = false;
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function(){ toast.textContent = 'Copied. Paste it into the chat.'; toast.hidden = false; }, fallback);
+    } catch (e) { fallback(); }
+  });
+
+  window.addEventListener('hashchange', function(){ show((location.hash || '#overview').slice(1), false); });
+  render();
+  show((location.hash || '#overview').slice(1), false);
+})();
+</script>

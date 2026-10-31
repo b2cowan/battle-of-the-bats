@@ -8,6 +8,70 @@
 
 ---
 
+### 2026-10-31 — FieldLogicHQ charges its own sales tax: prices "plus applicable taxes", tax on top of the payment fee charged to the club, Stripe Tax; US customers come into scope for every product, with US clubs paying Stripe's fees themselves (Decided)
+**Status:** **Decided** (owner, 2026-10-31). Rulings T1–T7 by paste-back from the decision page
+https://claude.ai/artifact/Si21JDJNyhQLFjmaS9Wy3t (7/7); rulings U1–U5 and the US follow-up in chat the same day ("I agree
+with all of your recommendations"; U4 and U5 as below). Plan: `docs/projects/active/GST_HST_COLLECTION_PLAN.md` §3 and §4
+Stage 8a; research `docs/agents/accounting/` (index `ACCOUNTING_INDEX.md`). **Planned, nothing built.** Starting fact:
+FieldLogicHQ is **registered for GST/HST** (number received the week of 2026-10-24) and has never sold anything.
+**Decision:**
+1. **Prices are tax-exclusive — "plus applicable taxes" (T4).** Every list price in the Facts doc stays as it is; sales
+   tax is added at checkout by the buyer's location (13/14/15% HST or 5% GST by province, provincial tax where
+   FieldLogicHQ is registered, 0% for a verified US buyer).
+2. **GST/HST is charged on top of the online-payment fee, to the club (T2).** Published rates unchanged; tax added on top;
+   US clubs 0%. If counsel later rules the fee an exempt financial service, stop charging it.
+3. **The fee is always legally FieldLogicHQ's charge to the club (T3).** "Family pays" means the club passes its own cost
+   on to its families as the club's charge. The lawyer writes it into the payments terms.
+4. **Stripe Tax calculates FieldLogicHQ's tax (T5).**
+5. **The accountant is not a launch gate (T6).** The question package is prepared; FieldLogicHQ charges what the research
+   supports and settles any difference at tax time.
+6. **Proof for charging a US buyer 0% (T7):** a US address, a required declaration, and one outside-Canada sign (card
+   country or Stripe-verified payout country).
+7. **US customers are in scope for every product, coach Premium included (T1 + follow-up)**, opening together once the US
+   tax and payments work in the plan is done. Owner: *"I don't want to sell tournament or club subscriptions that can't
+   take payments to American clubs, that weakens our product offer."*
+8. **US clubs pay Stripe's fees directly (U1)**, so Stripe files the US 1099-K forms; FieldLogicHQ keeps only its own fee.
+   **A separate, margin-only US fee schedule is therefore needed — its amounts are NOT decided** (open follow-up below).
+9. **No fee added on top for US families (U2)** — the US club pays it, or builds it into its registration price.
+10. **US bank debit (ACH) is included (U3).**
+11. **All 50 states and DC open at once, no waitlist (U4)**, watched by a per-state tracker in platform admin (US sales and
+    number of payments by state, alerting well before any state threshold). US territories get their own check later.
+12. **No US lawyer before launch (U5)**; one is brought in on a tracker alert, a Stripe or regulator enquiry, or if Stripe
+    cannot file the 1099-Ks for our US clubs.
+**Open follow-ups (not decided here):** the US fee amounts (8); USD list prices (until decided, nothing in this entry
+changes the CAD catalog — revenue plan D03/D04 stay open).
+**Rationale:** registration means tax on every sale from the first, and nobody has paid yet, so location, evidence,
+invoices and terms are cheapest to get right now. Tax inside today's fee would turn an $800 card payment into a loss
+(~$3.14 margin → ~−$0.25); on top keeps the rates and the margin. Charging the fee to the club makes tax depend only on
+the club's address. For US clubs, platform-paid Stripe fees would make FieldLogicHQ the 1099-K filer (US EIN, per-form
+penalties), and a 3.5% + $1.50 card fee added on top likely breaches the 3% US surcharge cap — U1 and U2 remove both.
+Early revenue is small, so professional fees wait until sales justify them (T6, U5).
+**Affects:** Facts doc (tax-exclusive rider; the facilitated-payments line's GST/HST and US riders) · checkout and
+invoices (plan Stages 1–3) · pricing/persona copy · Club Stage 12 (Ask 8 re-ruled; US accounts) · the payments terms ·
+platform admin (state tracker, tax on the Money tab) · Bookkeeping (sales-side GST/HST) · revenue readiness plan scope.
+**Handoff:**
+```
+HANDOFF → /marketing (ship WITH plan Stage 2, when tax is actually charged — not before)
+- /pricing, /for-clubs, /for-leagues, /for-tournament-organizers, /for-coaches, PricingSection, plan panels: every price
+  gains "plus applicable taxes" beside today's "billed in CAD" wording
+- Checkout/plan-change words: show the tax by name and the total before paying
+- Payments set-up / Payouts card / receipts: say the fee carries GST/HST on top (Stage 5), and for US clubs that the
+  club pays the fee (no family line)
+- Later, at US launch: US-facing wording on the persona pages (no USD prices are decided)
+HANDOFF → /billing
+- Stripe Tax registration (Canada, normal GST/HST), tax-exclusive prices, automatic tax on every checkout path (plan Stage 2)
+- US connected accounts with the club paying Stripe's fees; no fee-on-top for US families; ACH for US clubs (plan Stage 8b)
+HANDOFF → /strategy (next session)
+- Set the margin-only US fee schedule (U1) and decide USD list prices or not (D03/D04)
+HANDOFF → /plan
+- The build lives in GST_HST_COLLECTION_PLAN.md; Club Stage 12 plan to record Ask 8 re-ruled and the US account model
+```
+**Supersedes:** points 1 and 3 of "2026-10-26 — GST/HST on the processing fee is paused…" (point 1's reason, not
+registered, no longer holds; point 3's separate US review is done inside the GST/HST plan); the US lines of the
+2026-10-23 revenue-readiness scope ("U.S. paid software subscriptions … are expansion work").
+
+---
+
 ### 2026-10-31 — A family gets an account when their child is PLACED ON A TEAM, not at sign-up; the emailed "Your sign-up" pay link stays as the permanent pre-team door; no other links are sent to families (Decided)
 **Status:** **Decided** (owner, 2026-10-31, answering the signed-in family census, `docs/projects/active/SIGNED_IN_FAMILY_CENSUS.md` §0, and then the journeys page `docs/projects/active/SIGNED_IN_FAMILY_JOURNEYS.html`, https://claude.ai/artifact/QmPoKvcyF3Bg1xpjCWw54C). Owner words: *"they only need the account once they are confirmed on the team, and that account is used for accessing things like schedule and team chat. registering alone shouldn't create the account"*; on paying from an emailed link, *"that would be ideal if we could keep this functionality"*; on calendar feeds, *"inside the signed in app is good, i meant we don't need to send links"*. Every recommendation was accepted in two steps: *"i agree with your recommendations"*, then *"i agree with all of your recommendations, proceed"*. **Planned, nothing built.**
 **Decision:**
@@ -337,7 +401,8 @@ is not billed".
 
 ### 2026-10-26 — GST/HST on the processing fee is paused; a card from outside Canada is charged more (gated); US clubs get their own review
 **Status:** **Decided; point 2 SUPERSEDED 2026-10-27** by "A card from outside the club's country: the club is billed…" above (the
-club pays Stripe's extra, never the family; its gates below no longer apply). Points 1 and 3 stand.
+club pays Stripe's extra, never the family; its gates below no longer apply). **Points 1 and 3 SUPERSEDED 2026-10-31** by
+"FieldLogicHQ charges its own sales tax…" (FieldLogicHQ is now registered: tax goes on top of the fee; the US review is done).
 **Decision:**
 1. **No GST/HST on the online-payment processing fee for now.** FieldLogicHQ is pre-revenue and well below the $30,000
    small-supplier threshold. Nothing changes on the pay button, the receipt, the Payouts card or the set-up window. The

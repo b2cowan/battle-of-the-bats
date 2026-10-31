@@ -3,6 +3,7 @@
 > **Status:** Discovery underway. Owner confirmed the current launch scope on 2026-10-23: Canada-wide subscriptions AND registration payments, CAD only, without province-by-province rollout.
 > **Review:** [project index](REVENUE_ACCOUNTING_REVIEW.html#index) · [PM brief](REVENUE_ACCOUNTING_READINESS_PM_BRIEF.md)
 > **Progress:** [stage register](REVENUE_ACCOUNTING_PROGRESS.json) · [discovery evidence](REVENUE_ACCOUNTING_DISCOVERY.md)
+> **Tax (2026-10-31):** FieldLogicHQ is registered for GST/HST and has sold nothing yet. FieldLogicHQ's own sales tax — D01, D05, D07, D08, D13, D17 and the tax part of D22 — is sequenced in [GST_HST_COLLECTION_PLAN.md](GST_HST_COLLECTION_PLAN.md), ⚠ **Owner ruled 2026-10-31 (T1): US clubs come into scope** — location plumbing for both countries now, a US club-payments review inside that plan, and US clubs sold plans only once they can take payments. This supersedes the US lines of §1 and §3 below. ⚠ §6/§7 below still call the bookkeeping project archived; it restarted as [BOOKKEEPING_OWNER_EXPERIENCE_PLAN.md](BOOKKEEPING_OWNER_EXPERIENCE_PLAN.md).
 > **Expansion reference:** [original Canada/U.S. roadmap](REVENUE_ACCOUNTING_EXPANSION_BACKLOG.md). Its broader requirements and estimates are historical, not the current launch checklist.
 
 ## 1. Current owner decisions — authoritative scope
