@@ -27458,7 +27458,7 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **Owner calls open with it:** the Schedule heading's new space (A2, C1); whether a draft season counts as live for Subscribe (review carry E); the once-only copy being spent when a team has only an invited coach (review carry A, recommend leave).
 
-**WALKED 2026-11-01, PASSED 34/34, no changes asked** — A 7/7 · B 7/7 · C 5/5 · D 4/4 · E 3/3 · F 8/8. No notes came back with the paste, so the three open owner calls (the Schedule heading's new space; a draft season counting as live for Subscribe; the once-only copy spent on an invited-only team) stand as built. Still owed for Session 2: the commit.
+**WALKED 2026-11-01, PASSED 34/34, no changes asked** — A 7/7 · B 7/7 · C 5/5 · D 4/4 · E 3/3 · F 8/8. No notes came back with the paste, so the three open owner calls (the Schedule heading's new space; a draft season counting as live for Subscribe; the once-only copy spent on an invited-only team) stand as built. Session 2 committed `e9ac3b0ac` 2026-11-01.
 <!-- /§439 -->
 
 ## §440 · Public tournament pages · Stage 7 owner walk — **a coach opens a pay link and sees one job: the slim band, the pay block unchanged, one line saying who to ask, a short footer; preview off keeps today’s page**

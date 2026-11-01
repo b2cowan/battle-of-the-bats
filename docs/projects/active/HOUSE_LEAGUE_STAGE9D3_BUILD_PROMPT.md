@@ -182,7 +182,7 @@
   families hear" no longer says the page only reads. Keywords + searchText updated on both sections. Sentences quoted from
   `COACH_TOLD_WORDS`, `coachCopyWords` and `calendar-subscribe-words.ts`. `check:spelling` + focused lint clean. No product string
   changed, nothing for `/marketing`.
-- **Session 2 walk B ✅ PASSED 34/34 2026-11-01, no changes asked (ledger §439, six parts; commit owed):**
+- **Session 2 walk B ✅ PASSED 34/34 2026-11-01, no changes asked (ledger §439, six parts; committed `e9ac3b0ac` 2026-11-01):**
   https://claude.ai/artifact/LprT36UTRktpLHzpn88wrg, source `HOUSE_LEAGUE_STAGE9D3_WALK_B.html`. Fixture `.probe/9d3-walkB/fixture.mjs`
   (modes none / `--untold` / `--changed` / `--never` / `--purples-practice` / `--remove-seat` / `--reset`; every mode run once on dev and
   reset). Dev server restarted (login 200, no `EACCES`). **Corrections to the step-4 prompt, reported:** (1) the dev terminal does NOT
