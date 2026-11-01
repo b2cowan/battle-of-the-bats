@@ -324,3 +324,38 @@ a quote (its fake Stripe customer fails the history read), which is why group C 
 
 **Not mine, reported unchanged:** the three known-red tests; `check:org-slug-callers`' two public-site callers; the dev mock-apply flip gap;
 the customer-scoped trial history. Pre-existing "card" words on the billing page (Founding and past-due copy) predate this stage.
+
+### Stage 5 inputs from the Part 4 docs check — 2026-10-31
+
+Audit of `lib/help-content/*` and the help hubs against what Stage 4b shipped (two read-only passes; the cited lines re-opened). **No sentence a
+customer can read is now false; nothing was edited.** Everything below is for the Stage 5 prompt (`PLAN_AND_BILLING_STAGE5_BUILD_PROMPT.md`, not
+edited here).
+
+⚠ **Two briefs are stale, not the help.** `PLAN_AND_BILLING_CODEX_RULES.md` §3 and this stage's review prompt both say the owner may delegate the
+`billing` capability. Commit `8d579da29` (2026-10-29, owner ruling) reversed that: `billing` and `org_settings` are inert for every role but the
+owner. The help ("Only the owner sees it") is correct; do not "fix" it to mention delegates. Stage 5 should not inherit the delegate line.
+
+**New coverage (nothing exists today):**
+1. Becoming a club in place: Start my club / the Club row in Change plan; same team, roles and web address; no data copy. Home: the coaches guide
+   (a Premium coach looks there), cross-linked from the club plan-and-billing topic and from "bring in a coach's team".
+2. What it costs: Premium swapped for Club on the same subscription with a proration preview, interval kept, no second trial; the staff-given
+   free-time variant (a payment method, the 90-day trial, free days end at the upgrade).
+3. "Setting up your club", then Admin Overview with the setup list and the team inside it; the rail swaps Plan & billing and Tournaments you run
+   for Admin.
+4. No way back from Club to Premium. The club plan-and-billing "Change plan" topic reads as if Club-sized is the whole list.
+5. "Contact us to move" on the Club row while Club is not open for sale, tied to a Premium owner.
+6. A locked or suspended Premium owner can still open Plan & billing; every other coaches page keeps the wall.
+7. In place vs "Join a club" (the bridge): one disambiguating line on each side. A coach searching "become a club" lands on the bridge article today.
+
+**Existing sentences that mislead the new case (reword in the same pass, none false):**
+- Coaches guide: the "Where do I see my Premium plan" FAQ and its `answerText`, and the sidebar and phone tours ("Plan & billing if you own the
+  portal, and Admin if you also run the club") read as if both rows show; once the club starts, Plan & billing is replaced by Admin.
+- "The club's subscription has ended — ask your club administrator" and the "ask the club admin" lines on division and starting a season: a coach
+  who started the club is that administrator. Season starting moves to Admin → Rep teams for them.
+- "Tournaments you run" menu directions: hosting moves under Admin once the club starts.
+- The Premium intro ("if your organization later joins FieldLogicHQ…") and the Parent organization setting mention only the bridge.
+- Club guide "Set up your club": a converted coach never sees the first-sign-in checklist; the list sits on Overview beside the existing team.
+- Operator mirror (platform-admin help): retention is described as 365 days for a portal and 90 for an organization; a converted account is the
+  second. Incomplete, low priority.
+
+Every fix above must also reach the searchable fields (`keywords`, `searchText`, `answerText`); no anchor needs renaming.
