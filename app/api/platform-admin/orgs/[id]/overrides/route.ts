@@ -38,7 +38,7 @@ export const POST = withObservability(async (req: NextRequest,
 
   const { id } = await params;
   const body = (await req.json().catch(() => ({}))) as {
-    kind?: unknown; plan?: unknown; addons?: unknown; last_day?: unknown; reason?: unknown;
+    kind?: unknown; plan?: unknown; addons?: unknown; last_day?: unknown; indefinite?: unknown; reason?: unknown;
   };
   const result = await giveFreeTime({
     orgId: id,
@@ -46,6 +46,7 @@ export const POST = withObservability(async (req: NextRequest,
     plan: body.plan,
     addons: body.addons,
     lastDay: body.last_day,
+    indefinite: body.indefinite,
     reason: body.reason,
     actor: { id: auth.user.id, email: auth.user.email!, role: auth.role },
   });

@@ -405,6 +405,14 @@ describe('6 · Stripe is read only for its readers, never stored, and its outage
     assert.ok(!rows.some(r => r.differs));
     assert.equal(agreeLine(rows, findPatterns(read, 'sub_1'), 'sub_1').text, 'Stripe and our record agree.');
   });
+  it('the payment-method row names whatever the default is: a card, Link, or nothing — Link is never "no card"', () => {
+    const ours = { planId: 'tournament_plus', status: 'active', currentPeriodEnd: null, subscriptionId: null, customerId: 'cus_1', freeThrough: null };
+    const base: MoneyRead = { readAt: NOW.toISOString(), testMode: true, customer: { id: 'cus_1', email: null }, card: null, charges: [], olderBefore: null, nextCharge: null, subscriptions: [] };
+    const words = (read: MoneyRead) => compareRecord(ours, read).find(r => r.key === 'card')?.stripe;
+    assert.equal(words({ ...base, otherMethod: 'Link · a@b.ca' }), 'Link · a@b.ca');
+    assert.match(words({ ...base, card: { brand: 'visa', last4: '4242', expMonth: 3, expYear: 2030 } }) ?? '', /ending 4242 · expires 03\/2030/);
+    assert.equal(words(base), 'No payment method on file');
+  });
 });
 
 // ── The five patterns (drawing B) ───────────────────────────────────────────────────────────────
@@ -519,12 +527,14 @@ describe('10 · Q7: the bulk billing status override follows free time’s rules
     assert.equal(lastDayRefusal('', 'billing', NOW), 'Choose the last free day.');
     assert.equal(lastDayRefusal('2026-10-01', 'billing', NOW), 'The last free day must be after today.');
     assert.notEqual(lastDayRefusal('2027-06-01', 'billing', NOW), null, 'Billing: 6 months');
-    assert.equal(lastDayRefusal('2027-06-01', 'super_admin', NOW), null, 'Super admin: 12 months');
-    assert.notEqual(lastDayRefusal('2027-12-01', 'super_admin', NOW), null);
+    assert.equal(lastDayRefusal('2027-06-01', 'super_admin', NOW), null, 'Super admin: no month limit');
+    assert.equal(lastDayRefusal('2027-12-01', 'super_admin', NOW), null, 'Super admin: past the old 12 months');
   });
   it('the route uses them and skips your own club; "Optional expiry" is gone', () => {
     const route = readCode('app/api/platform-admin/bulk-operations/route.ts');
     assert.match(route, /lastDayRefusal\(lastDay, auth\.role\)/);
+    // "No end date" is a super admin's alone, checked on the server before the day.
+    assert.match(route, /indefinite && !canGiveIndefinitely\(auth\.role\)/);
     assert.match(route, /endInstantForLastDay\(lastDay\)/);
     assert.doesNotMatch(route, /body\.expires_at/);
     assert.doesNotMatch(readSource('app/platform-admin/bulk-operations/BulkOperationsClient.tsx'), /Optional expiry/);

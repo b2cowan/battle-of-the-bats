@@ -407,7 +407,8 @@ describe('10 · Put it back only on plan/limit, section and running-override ent
   });
   it('free time is offered only while running, on its newest entry; a plan only on the newest plan entry still in force', () => {
     assert.match(freeTime, /markPutBack\(given, running && !newestChange && o\.expires_at \? \{\s*kind: isPortal \? 'portal_end_now' : 'override'/);
-    assert.match(freeTime, /if \(c === newestChange && running && o\.expires_at\) \{/);
+    // `from`: a change away from "no end date" has no earlier day to restore, so it offers no Put it back.
+    assert.match(freeTime, /if \(c === newestChange && running && o\.expires_at && from\) \{/);
     assert.match(story, /r\.id === newestPlanId && org\.plan_id === toPlan/);
   });
   it('nothing that reached Stripe is put back: no plan door with a Stripe subscription now or cut by the change, or a billing state the undo cannot restore', () => {

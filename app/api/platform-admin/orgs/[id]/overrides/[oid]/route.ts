@@ -15,12 +15,13 @@ export const PATCH = withObservability(async (req: NextRequest,
   if (auth.response) return auth.response;
 
   const { id, oid } = await params;
-  const body = (await req.json().catch(() => ({}))) as { expected_expires_at?: unknown; last_day?: unknown; reason?: unknown };
+  const body = (await req.json().catch(() => ({}))) as { expected_expires_at?: unknown; last_day?: unknown; indefinite?: unknown; reason?: unknown };
   const result = await changeFreeTimeEnd({
     orgId: id,
     overrideId: oid,
     expectedExpiresAt: body.expected_expires_at,
     lastDay: body.last_day,
+    indefinite: body.indefinite,
     reason: body.reason,
     actor: { id: auth.user.id, email: auth.user.email!, role: auth.role },
   });

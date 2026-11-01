@@ -240,7 +240,7 @@ export default function MoneyTab({
                             </span>
                           )}
                         </td>
-                        <td data-label="Card" className={kit.nowrap}>{c.card ? `${brandLabel(c.card.brand)} ${c.card.last4}` : '—'}</td>
+                        <td data-label="Card" className={kit.nowrap}>{c.card ? `${brandLabel(c.card.brand)} ${c.card.last4}` : (c.otherMethod ?? '—')}</td>
                         <td data-label="Stripe says" className={says.tone === 'bad' ? money.bad : says.tone === 'quiet' ? kit.muted : undefined}>{says.text}</td>
                         <td data-label="Amount" className={kit.num}>{formatCents(c.amountCents, c.currency)}</td>
                         <td className={kit.rowDoor}><button type="button" className={money.openBtn} aria-label={`Open the ${consoleWhen(c.createdAt)} charge`} onClick={e => { e.stopPropagation(); openWith(c.id, false); }}>›</button></td>

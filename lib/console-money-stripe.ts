@@ -87,8 +87,20 @@ export function toMoneyRefund(r: Stripe.Refund): MoneyRefund {
   return { id: r.id, amountCents: r.amount, createdAt: iso(r.created)!, status: r.status ?? 'pending', ourRefundId: ours || null };
 }
 
+/** "Link · name@example.com", "Bank account ending 6789": a payment method that is not a card, in the words a person says. */
+function otherMethodWords(type: string, last4?: string | null, email?: string | null): string {
+  if (type === 'link') return email ? `Link · ${email}` : 'Link';
+  if (type === 'us_bank_account') return last4 ? `Bank account ending ${last4}` : 'Bank account';
+  if (type === 'acss_debit') return last4 ? `Pre-authorized debit ending ${last4}` : 'Pre-authorized debit';
+  const words = type.replace(/_/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 export function toMoneyCharge(c: Stripe.Charge, invoice: MoneyInvoice | null): MoneyCharge {
-  const card = c.payment_method_details?.card;
+  const details = c.payment_method_details;
+  const card = details?.card;
+  const other = !card && details?.type
+    ? otherMethodWords(details.type, details.us_bank_account?.last4 ?? details.acss_debit?.last4) : null;
   return {
     id: c.id,
     createdAt: iso(c.created)!,
@@ -99,6 +111,7 @@ export function toMoneyCharge(c: Stripe.Charge, invoice: MoneyInvoice | null): M
     disputed: !!c.disputed,
     failureCode: c.failure_code ?? null,
     card: card ? { brand: card.brand ?? '', last4: card.last4 ?? '' } : null,
+    otherMethod: other,
     refunds: (c.refunds?.data ?? []).map(toMoneyRefund),
     invoice,
   };
@@ -195,20 +208,25 @@ export async function readClubMoney(stripe: Stripe, customerId: string, opts: { 
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   const cust = liveCustomer(customer);
-  // The card on file is the one Stripe charges next: the live subscription's own card first (a subscription bought
-  // through Checkout keeps its card there, not on the customer), then the customer's default.
+  // The payment method on file is the one Stripe charges next: the live subscription's own first (a subscription bought
+  // through Checkout keeps it there, not on the customer), then the customer's default. Whatever kind it is — a card,
+  // Link, a bank account — a method with no card details is named, never reported as missing.
   const liveSub = subs.data.find(sub => sub.status === 'active' || sub.status === 'trialing' || sub.status === 'past_due');
   const subPm = liveSub?.default_payment_method;
   const custPm = cust?.invoice_settings?.default_payment_method;
-  const pm = subPm && typeof subPm !== 'string' && subPm.card ? subPm : custPm;
-  const card = pm && typeof pm !== 'string' && pm.card
-    ? { brand: pm.card.brand, last4: pm.card.last4 ?? '', expMonth: pm.card.exp_month, expYear: pm.card.exp_year } : null;
+  const pm = subPm && typeof subPm !== 'string' ? subPm : custPm;
+  const live = pm && typeof pm !== 'string' ? pm : null;
+  const card = live?.card
+    ? { brand: live.card.brand, last4: live.card.last4 ?? '', expMonth: live.card.exp_month, expYear: live.card.exp_year } : null;
+  const otherMethod = live && !live.card
+    ? otherMethodWords(live.type, live.us_bank_account?.last4 ?? live.acss_debit?.last4, live.link?.email) : null;
   const oldest = moneyCharges[moneyCharges.length - 1];
   return {
     readAt: now.toISOString(), // utc-intentional: an instant, formatted on screen
     testMode: opts.testMode,
     customer: { id: customerId, email: cust?.email ?? null },
     card,
+    otherMethod,
     subscriptions,
     charges: moneyCharges,
     olderBefore: charges.more && oldest ? oldest.createdAt : (oldest ? new Date(sinceMs).toISOString() : null), // utc-intentional

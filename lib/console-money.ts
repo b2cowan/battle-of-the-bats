@@ -55,6 +55,8 @@ export type MoneyCharge = {
   disputed: boolean;
   failureCode: string | null;
   card: { brand: string; last4: string } | null;
+  /** The words for a charge paid some way other than a card ("Link", "Bank account ending 6789"); absent for a card. */
+  otherMethod?: string | null;
   refunds: MoneyRefund[];
   invoice: MoneyInvoice | null;
 };
@@ -77,6 +79,8 @@ export type MoneyRead = {
   testMode: boolean;
   customer: { id: string; email: string | null };
   card: { brand: string; last4: string; expMonth: number; expYear: number } | null;
+  /** The default payment method when it is not a card ("Link · name@example.com"); absent for a card or none. */
+  otherMethod?: string | null;
   subscriptions: MoneySubscription[];
   /** Newest first. */
   charges: MoneyCharge[];
@@ -319,9 +323,9 @@ export function compareRecord(ours: OurMoneyRecord, read: MoneyRead | null): Com
       stripe: !read ? notRead : `${read.customer.id}${read.customer.email ? ` · ${read.customer.email}` : ''}`,
       differs: false, stripeId: read?.customer.id });
   }
-  rows.push({ key: 'card', label: 'Card on file', ours: 'Not kept here',
+  rows.push({ key: 'card', label: 'Payment method', ours: 'Not kept here',
     stripe: !read ? notRead : read.card
-      ? `${cardWords(read.card)} · expires ${String(read.card.expMonth).padStart(2, '0')}/${read.card.expYear}` : 'No card on file',
+      ? `${cardWords(read.card)} · expires ${String(read.card.expMonth).padStart(2, '0')}/${read.card.expYear}` : (read.otherMethod ?? 'No payment method on file'),
     differs: false });
   return rows;
 }
