@@ -12,6 +12,7 @@ import { formatShortWeekdayDate, timesInZoneSentence, utcToZonedInputs } from '.
 import { formatTime } from './utils';
 import { memberDisplayName } from './member-names';
 import { readHouseholds, type Household } from './club-schedule-league-mail';
+import { copyCoachesOnFirstTell } from './league-practice-coach-copy';
 import {
   changeLines, dateLines, placeOfTold, practiceSummary, practiceTimesEmailWords, snapshotOf, teamChange, tellStateOf,
   type CurrentPractice, type TeamTellState, type TellPart, type ToldPractice,
@@ -404,6 +405,7 @@ export async function tellFamilies(p: { org: TellMailOrg; season: LeagueSeason; 
   if (!row) throw new Error('The practice-times send returned nothing');
   if (row.refusal) return refusedWith(row.refusal as Exclude<TellResult['refusal'], null>);
   const sent = await sendPracticeNotice({ org: p.org, season: p.season, noticeId: row.notice! });
+  await copyCoachesOnFirstTell({ org: p.org, season: p.season, noticeId: row.notice! });
   return { refusal: null, noticeId: row.notice, ...sent };
 }
 
@@ -557,7 +559,10 @@ export async function resendPracticeNotice(p: { org: TellMailOrg; season: League
     if (/\bfinished\b/.test(error.message ?? '')) return { refusal: 'finished' };
     throw error;
   }
-  return sendPracticeNotice(p);
+  const sent = await sendPracticeNotice(p);
+  // A first send that reached nobody on a team leaves it untold: the send that reaches one copies its coaches.
+  await copyCoachesOnFirstTell(p);
+  return sent;
 }
 
 // ── The reminder (frame c3) ──────────────────────────────────────────────────────────────────────────────────

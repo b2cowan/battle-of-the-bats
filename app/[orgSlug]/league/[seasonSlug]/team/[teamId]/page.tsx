@@ -9,6 +9,7 @@ import { formatStoredDate } from '@/lib/timezone';
 import { coachesLine } from '@/lib/house-league-teams-words';
 import CopyEmails from './CopyEmails';
 import CoachSchedule from './CoachSchedule';
+import CoachSubscribe from './CoachSubscribe';
 import { SCHEDULE_PUBLIC_WORDS } from '@/lib/league-schedule-words';
 import column from '../../../league-column.module.css';
 import kit from '@/components/public/ClubKit.module.css';
@@ -80,10 +81,16 @@ export default async function CoachTeamPage({ params }: { params: Promise<{ orgS
       )}
 
       <section className={styles.section} aria-labelledby="coach-schedule">
-        <h2 id="coach-schedule" className={styles.sectionTitle}>Schedule</h2>
+        <div className={styles.sectionHead}>
+          <h2 id="coach-schedule" className={styles.sectionTitle}>Schedule</h2>
+          {/* 9d3·5: the coach's own calendar link, a live season only — on the heading's line, never a toolbar. */}
+          {view === 'open' && (
+            <CoachSubscribe orgSlug={orgSlug} seasonSlug={seasonSlug} teamId={team.teamId} teamName={team.teamName} divisionName={team.divisionName} />
+          )}
+        </div>
         {/* g3 (9d2·7): the team's published games and its practices, from today on — a live season only. */}
         {view === 'open' && (
-          <CoachSchedule practices={page.practices} games={page.games} gamesPublished={page.gamesPublished} divisionName={team.divisionName} />
+          <CoachSchedule practices={page.practices} games={page.games} gamesPublished={page.gamesPublished} divisionName={team.divisionName} toldLine={page.practiceTold} />
         )}
         <p className={`${kit.sub} ${styles.seeAll}`}><Link href={scheduleHref} className={styles.link}>{SCHEDULE_PUBLIC_WORDS.coachSeeSeason}</Link></p>
       </section>

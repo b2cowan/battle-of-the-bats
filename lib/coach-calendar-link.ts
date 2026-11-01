@@ -21,8 +21,19 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 import { resolveCoachCapabilities, type AssistantCapabilityGrants } from './coach-capabilities';
 
-/** Where a coach's feed is served. One home for the path — the route lives at `app/api/calendar/coach/[token]`. */
-const COACH_FEED_PATH = '/api/calendar/coach';
+/**
+ * WHOSE LINK A TOKEN IS (House League 9d-3 Part 6, 9d3·5): a rep coach's membership, or a house-league coach's row
+ * (`league_team_coaches`, mig 420). Each signs in a domain of its own, so a token of one can never verify as the other,
+ * even were two ids ever equal. The rep domain is the default and its tokens are unchanged.
+ */
+export type CoachCalendarDomain = 'coach-calendar' | 'league-coach-calendar';
+
+/** Where each feed is served. One home for the paths — the routes live at `app/api/calendar/coach/[token]` and
+ *  `app/api/calendar/league-coach/[token]`. */
+const FEED_PATH: Record<CoachCalendarDomain, string> = {
+  'coach-calendar': '/api/calendar/coach',
+  'league-coach-calendar': '/api/calendar/league-coach',
+};
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TOKEN = /^([A-Za-z0-9_-]{22})\.([0-9a-z]{1,7})\.([A-Za-z0-9_-]{22})$/;
@@ -49,16 +60,16 @@ function b64ToUuid(s: string): string | null {
   return UUID.test(id) ? id : null;
 }
 
-function signature(membershipId: string, generation: number, secret: string): Buffer {
-  return createHmac('sha256', secret).update(`coach-calendar:${membershipId.toLowerCase()}:${generation}`).digest().subarray(0, 16);
+function signature(membershipId: string, generation: number, secret: string, domain: CoachCalendarDomain): Buffer {
+  return createHmac('sha256', secret).update(`${domain}:${membershipId.toLowerCase()}:${generation}`).digest().subarray(0, 16);
 }
 
-/** The token for a membership at a generation. */
-export function signCoachCalendarToken(membershipId: string, generation: number, secret: string): string {
+/** The token for a membership (or a house-league coach row) at a generation. */
+export function signCoachCalendarToken(membershipId: string, generation: number, secret: string, domain: CoachCalendarDomain = 'coach-calendar'): string {
   if (!UUID.test(membershipId) || !Number.isInteger(generation) || generation < 0) {
     throw new Error('A calendar link needs a membership id and a whole, non-negative generation.');
   }
-  return `${uuidToB64(membershipId)}.${generation.toString(36)}.${signature(membershipId, generation, secret).toString('base64url')}`;
+  return `${uuidToB64(membershipId)}.${generation.toString(36)}.${signature(membershipId, generation, secret, domain).toString('base64url')}`;
 }
 
 /**
@@ -69,6 +80,7 @@ export function signCoachCalendarToken(membershipId: string, generation: number,
 export function verifyCoachCalendarToken(
   raw: string,
   secret: string,
+  domain: CoachCalendarDomain = 'coach-calendar',
 ): { membershipId: string; generation: number } | null {
   const m = TOKEN.exec(raw.replace(/\.ics$/i, ''));
   if (!m) return null;
@@ -76,7 +88,7 @@ export function verifyCoachCalendarToken(
   const generation = parseInt(m[2], 36);
   if (!membershipId || !Number.isSafeInteger(generation)) return null;
   const given = Buffer.from(m[3], 'base64url');
-  const expected = signature(membershipId, generation, secret);
+  const expected = signature(membershipId, generation, secret, domain);
   if (given.length !== expected.length || !timingSafeEqual(given, expected)) return null;
   // One spelling per link: base64url's spare bits and a generation's leading zeros would otherwise let one link answer
   // under several addresses (/review 2026-10-11 — not a forgery, but no per-address purge could ever catch them all).
@@ -85,8 +97,8 @@ export function verifyCoachCalendarToken(
 }
 
 /** The coach's feed address on an origin. */
-export function coachFeedUrl(origin: string, token: string): string {
-  return `${origin.replace(/\/$/, '')}${COACH_FEED_PATH}/${token}.ics`;
+export function coachFeedUrl(origin: string, token: string, domain: CoachCalendarDomain = 'coach-calendar'): string {
+  return `${origin.replace(/\/$/, '')}${FEED_PATH[domain]}/${token}.ics`;
 }
 
 /**

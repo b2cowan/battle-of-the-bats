@@ -27447,3 +27447,17 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **Not in the walk:** "Not read" on the Money tab and the 20-subscription cap, the wrong-mode refusal, one customer per buyer, the strict change log (tests only); the portal configuration as Stripe holds it (Claude runs the Stripe audit after Walk F).
 <!-- /§438 -->
+
+## §439 · House League · Stage 9d-3 walk B — **a house-league coach sees whether families know their practice times, the team's coaches get one copy on the first send, and the coach subscribes to their own calendar link: the line under Schedule in each state, the once-only copy, Subscribe at a desk and on a phone, Reset, and who can and cannot reach it**
+<!-- §439 -->
+**Built 2026-11-01:** Session 2 (Parts 5–7) of [HOUSE_LEAGUE_STAGE9D3_BUILD_PROMPT.md](HOUSE_LEAGUE_STAGE9D3_BUILD_PROMPT.md), uncommitted, /simplify + /review + /docs run the same day. Mig 420 and the column added to 415, both dev only (prod `pending`).
+
+**The walk (checkable):** https://claude.ai/artifact/LprT36UTRktpLHzpn88wrg (source [HOUSE_LEAGUE_STAGE9D3_WALK_B.html](HOUSE_LEAGUE_STAGE9D3_WALK_B.html)). One purpose, 34 steps in six parts: A the line in each state — told, not told, told different times, never had practices, and Blues as Sam (7); B the coaches' one copy, with Send again not copying again (7); C Subscribe at a desk (5); D Reset (4); E a phone (3); F who can reach it (8). Fixture: `node --env-file=.env.local .probe/9d3-walkB/fixture.mjs [--untold | --changed | --never | --purples-practice | --remove-seat | --reset]` (no mode prints each team's state and copy marker; dev only, refuses production). Sign-ins: Morgan Reid (Reds), Sam Blake (Blues), the league admin, all `UATPassword2026!`. Dev server restarted for it, login 200, no `EACCES`.
+
+**Known before the walk:** the dev terminal cannot show who a copy email went to (dev has no email key and the coach copy is an unlogged kind; it prints only a "skipping send" line), so Part B proves the copy by the marker the fixture prints. `--untold` also sets Dev Patel's address to the refused one so "Send again" has a family; `--reset` puts it back. The division's games are not published on this fixture, so the calendar holds practices only. The copy words are not readable on dev (unit-pinned). A finished season (no Subscribe, no line) is unit-pinned, not staged.
+
+**Owner calls open with it:** the Schedule heading's new space (A2, C1); whether a draft season counts as live for Subscribe (review carry E); the once-only copy being spent when a team has only an invited coach (review carry A, recommend leave).
+
+**WALKED 2026-11-01, PASSED 34/34, no changes asked** — A 7/7 · B 7/7 · C 5/5 · D 4/4 · E 3/3 · F 8/8. No notes came back with the paste, so the three open owner calls (the Schedule heading's new space; a draft season counting as live for Subscribe; the once-only copy spent on an invited-only team) stand as built. Still owed for Session 2: the commit.
+<!-- /§439 -->
+

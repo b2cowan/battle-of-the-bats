@@ -8210,6 +8210,24 @@
         "column_default": null
       },
       {
+        "table_name": "league_registrations",
+        "pos": 41,
+        "column_name": "link_version",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "league_registrations",
+        "pos": 42,
+        "column_name": "link_replaced_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_schedule_emails",
         "pos": 1,
         "column_name": "id",
@@ -8930,6 +8948,24 @@
         "column_default": null
       },
       {
+        "table_name": "league_team_coaches",
+        "pos": 20,
+        "column_name": "calendar_link_generation",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "league_team_coaches",
+        "pos": 21,
+        "column_name": "calendar_last_read_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_team_practices_told",
         "pos": 1,
         "column_name": "team_id",
@@ -8991,6 +9027,15 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "league_team_practices_told",
+        "pos": 8,
+        "column_name": "coaches_copied_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "league_teams",
@@ -40548,6 +40593,12 @@
       {
         "kind": "CHECK",
         "table_name": "league_registrations",
+        "detail": "league_registrations_link_version_check",
+        "check_clause": "(link_version >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_registrations",
         "detail": "league_registrations_source_check",
         "check_clause": "(source = ANY (ARRAY['public_form'::text, 'admin_manual'::text]))"
       },
@@ -40670,6 +40721,12 @@
         "table_name": "league_slot_uses",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_team_coaches",
+        "detail": "league_team_coaches_calendar_generation_nonneg",
+        "check_clause": "(calendar_link_generation >= 0)"
       },
       {
         "kind": "CHECK",

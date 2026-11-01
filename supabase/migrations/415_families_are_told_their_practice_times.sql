@@ -76,6 +76,22 @@ COMMENT ON COLUMN public.league_team_practices_told.snapshot IS
   'stored), venue id, facility id, typed place (when no venue). Upcoming and not cancelled at the press. Compare only its '
   'FUTURE entries with the team''s practices now (lib/league-practice-tell.ts).';
 
+-- Session 2 (copy section D): the team's coaches get one short copy on the team's FIRST send, once per team ever. The app
+-- claims it (null → now, WHERE null) for the teams a first send told, so a second press or a "Send again" never copies
+-- them twice. A row told before this column existed counts as copied (no copy arrives days after the fact). The backfill
+-- runs ONLY in the run that adds the column: a re-run later must not mark a team told moments ago as already copied.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                  WHERE table_schema = 'public' AND table_name = 'league_team_practices_told' AND column_name = 'coaches_copied_at') THEN
+    ALTER TABLE public.league_team_practices_told ADD COLUMN coaches_copied_at timestamptz;
+    UPDATE public.league_team_practices_told SET coaches_copied_at = told_at;
+  END IF;
+END $$;
+COMMENT ON COLUMN public.league_team_practices_told.coaches_copied_at IS
+  'When the team''s coaches were sent their one copy of the first practice-times email (copy section D); null = not yet. '
+  'Claimed by the app (lib/league-practice-coach-copy.ts) before it sends, so a re-press or a resend never copies twice.';
+
 -- ─── 2 · What one send told each team ────────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS public.league_practice_tells (

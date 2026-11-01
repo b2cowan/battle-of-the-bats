@@ -41,6 +41,15 @@ export const SUBSCRIBE_WORDS = {
   /** A coach's: what their Schedule shows. `tryouts` only for a coach who runs them. */
   whatsInCoach: (tryouts: boolean) =>
     `This season’s games, practices, tournaments and team events${tryouts ? ', and the tryout days you run' : ''}, with arrival, uniform and notes. Cancelled events stay, marked.`,
+  /** A house-league coach's (House League 9d-3 Part 6, copy section F, accepted 2026-11-01): the games as last sent and
+   *  the practices. The phone's leaves the publish rule out; the season line follows on both. */
+  whatsInLeagueCoach: (division: string, phone: boolean) => (phone
+    ? 'This season’s games and practices. Cancelled events stay, marked.'
+    : `This season’s games and practices. Cancelled events stay, marked. A game appears once ${possessive(division)} schedule is published, and a change to a game appears once the league admin sends it.`),
+  /** The house-league coach's door on the Schedule heading's line: the word at a desk, the mark alone on a phone with
+   *  this as its name (copy section F). */
+  coachButton: 'Subscribe',
+  coachButtonLabel: 'Subscribe in your calendar app',
   seasonLine: 'When the season closes, its events leave your calendar.',
 
   howOftenHead: 'How often',

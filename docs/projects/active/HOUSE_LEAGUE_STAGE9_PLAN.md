@@ -1205,3 +1205,13 @@ open it, and the menu's top level is Stage 13's.
   typecheck clean. **Open:** the schema-parity gate fails until 415 reaches prod (a database gate — not changed without the
   owner); the season-wide "not told" total (beside the season's other waiting counts) is not placed, only the division's line;
   walk A, `/simplify`, `/review`, `/docs`, then Session 2 (Parts 5–7).
+- **2026-11-01 — 9d-3 Session 2 (Parts 5–7) BUILT, uncommitted** (build prompt Progress block has the detail). Session 1 is
+  committed (3dcb06705, 5ce10e699) and walked (§436, 27/27). Built: the coach's line under the Schedule heading (told / not told
+  yet / told different times / no practices yet — the Tell step's own compare); the coaches' one copy on a team's FIRST send (a
+  new column on mig 415, claimed once per team, accepted coaches only); the house-league coach's Subscribe — the rep coach's
+  window and Reset over the coach's own link, signed in a domain of its own, a whole-season feed of the games as last sent and
+  the practices, live season only (**mig 420**, not 416: 416–419 were taken; dev only). **Build calls, reported:** accepted
+  coaches only for the copy; the feed carries the whole season, not "from today"; a postponed game is left out of the feed until
+  re-dated; a seat handed to another person also kills the link (the trigger fires on `user_id` too); the coach page brings its
+  own confirm so Reset asks first. Proof: `tests/unit/house-league-9d3-coach.test.ts` 10/10; 362 related tests pass; typecheck,
+  lint, spelling and dictionary clean. **Walk B §439 PASSED 34/34 2026-11-01, no changes asked** (/simplify, /review, /docs done 11-01). **Open:** the commit; schema parity until 415 and 420 reach prod.

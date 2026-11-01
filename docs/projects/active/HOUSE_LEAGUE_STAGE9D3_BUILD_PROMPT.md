@@ -102,7 +102,95 @@
   (f) the address check lets `a@b.c,d.com` through and the PATCH takes `guardianEmail` ahead of other fields. Dev-only: 415 re-applied
   to dev (prod pending, unchanged); snapshots + dictionary refreshed.
 
-## What the owner sees after this build (present a version of this as the PM summary BEFORE any code)
+- **Session 2 (2026-11-01).** Session 1 committed 3dcb06705 + 5ce10e699; walk A is ledger §436. ⚠ **The Subscribe migration
+  is 420, not 416** (Plans & pricing took 416–418, Signed-in families 419).
+- **Part 5 ✅ built 2026-11-01 (uncommitted):** the coach's line under the Schedule heading (`coachToldLine` / `COACH_TOLD_WORDS`
+  in `lib/league-practice-tell.ts`, read by `readCoachTeamPage` through the Tell step's own `readPracticesNow` + `readTold` +
+  `tellStateOf`, live season only): told (only when the schedule lists a practice), not told, told different times (even with
+  nothing listed — every told practice was taken away), and "No practices yet. Nobody has handed any out." only when the team
+  NEVER had a practice (the schedule's own "No practices yet." stands otherwise, and is hidden when the line says it). The
+  coaches' copy: `lib/league-practice-coach-copy.ts` (own file — raw `sendEmail`), kind `house_league_practice_coach_copy`
+  (team), words `coachCopyWords` (singulars "1 {team} family" / "the date" are the build's), called after the press and after
+  "Send again". **Once per team ever** via a new column `league_team_practices_told.coaches_copied_at`, **added to mig 415**
+  (prod pending, so no new migration; re-applied to dev; existing rows backfilled to `told_at`), claimed null → now WHERE
+  `notice_id` = the send that told the team. ⚖ Build's call, reported: **accepted coaches only** (the email opens a page an
+  invited coach can't open yet; the 11b coach email also mails invited ones).
+- **Part 6 ✅ built 2026-11-01 (uncommitted):** **mig 420** `420_a_house_league_coach_subscribes_to_the_schedule.sql` applied to
+  **dev only** (MANUAL_PROD_STEPS `pending`; dictionary + snapshots done): `league_team_coaches.calendar_link_generation` /
+  `calendar_last_read_on`, trigger `league_team_coaches_calendar_on_revoke` bumping the generation on `removed_at` set **and on
+  `user_id` replaced** (build's widening: a seat handed to another account must not keep feeding the first one's calendar).
+  `lib/coach-calendar-link.ts` gained a `CoachCalendarDomain` param (default rep, byte-identical; house league signs
+  `league-coach-calendar:`) and the feed path per domain. `lib/league-coach-calendar.ts` (own link, Reset CAS, once-a-day
+  read, `readLeagueCoachFeed`); `readCoachFeedEvents` + `readCoachFeedTeam` in `lib/house-league-coach.ts` (games via the
+  shared `readGamesAsSent` — the page's `readTeamGames` now filters it from today — and every practice; **the whole season**,
+  postponed / dateless games left out). Routes `app/api/calendar/league-coach/[token]` and
+  `app/api/league/[orgSlug]/[seasonSlug]/team/[teamId]/calendar-link` (GET / POST Reset; throttled first, the public-form
+  guard). Window: `CoachCalendarSubscribe` gained optional `linkEndpoint` + `whatsIn` (not forked); `CoachSubscribe.tsx` on the
+  Schedule heading's line wraps it in `ConfirmProvider` (the league page has no portal: without it `useConfirm` answers yes and
+  Reset goes unasked). Words `whatsInLeagueCoach(division, phone)`, `coachButton`, `coachButtonLabel`.
+- **Part 7 (partial) 2026-11-01:** `tests/unit/house-league-9d3-coach.test.ts` 10/10 (a new file, so the commit can't carry
+  another session's uncommitted hunk in `league-practice-tell.test.ts`); 362 related tests + 109 email-guard tests pass;
+  typecheck, focused lint, spelling, dictionary, observability, date and token checks clean. `verify:changed` stops on other
+  sessions' failures (billing free time, Stories column, Stage 6 walk HTML, console foot, public-site org slug, platform-admin
+  CSS; its ESLint runner also errors on a missing react-hooks plugin). **Still owed:** `/simplify`, `/review`, `/docs` (the coach's
+  line, the copy email and Subscribe in `lib/help-content/house-league.tsx`), walk B + its fixture (accepted coaches Morgan Reid —
+  Reds — and Sam Blake — Blues — exist on dev; "never" needs a coached team with no practices), the commit, the auto-memory note.
+- **Session 2 `/simplify` ✅ run 2026-11-01 (uncommitted, no behaviour change):** `lib/house-league-coach.ts` — the page's team read
+  and `readCoachFeedTeam` now share ONE `readTeamRow` (same select, same error text, same card rule); `lib/league-practice-coach-copy.ts`
+  — the "families reached" count is one pass into a map instead of a re-filter per coach. Typecheck, 185 related tests (9d3-coach,
+  league-practice-tell, club-stage6d-*, coach-read-guard, family-email-guard, support-console-stage5, throttle guard), focused
+  lint and `check:spelling` clean. **Left, and why:** (1) `lib/league-coach-calendar.ts` stays a mirror of the rep's link functions —
+  the three small functions (own seat, Reset CAS, once-a-day read) differ in table, columns and stop rules, and a shared version
+  would need a table + column map that reads worse than 30 duplicated lines; the shared part (token domain, feed path) is already
+  shared in `coach-calendar-link.ts`. (2) `emailHtml` still comes from `club-schedule-send.ts` (circular with the Tell server):
+  four other family-mail files import it the same way, and a clean break edits the 11b sender — out of Session 2's scope, carried
+  with Session 1's note. (3) `coachToldLine`/`coachToldWords` and CoachSchedule's "No practices yet." hide are already one rule in one
+  place (the line decides, the schedule defers when it is `never`). (4) `CoachSubscribe` is already the thin wrapper — two optional
+  props on `CoachCalendarSubscribe`, no fork. (5) `orgSlugOf` fallback in the coaches' copy stays: `TellMailOrg.slug` is optional.
+- **Session 2 `/review` ✅ run 2026-11-01 (HIGH tier; uncommitted; 3 finders — token + feed, coaches' copy, regression + UI wiring):**
+  gate clean (typecheck, 783 related tests, focused lint, spelling, CSS purity/tokens/contrast). **Fixed (7):** (1) the link
+  route's Reset with NO `generation` sent used the current one and skipped the compare-and-set (two bare POSTs reset twice) → now a
+  409; the new route only, the rep route is untouched; (2) **mig 415's backfill re-ran on every apply** and would have marked a team
+  told moments ago as already copied → now runs only in the run that adds the column (415 changed → re-applied to dev, a no-op
+  there; no dictionary change; snapshots refreshed); (3) "changed with nothing listed" read "…haven't been sent **these** times"
+  with nothing to point at → its own sentence (`COACH_TOLD_WORDS.changedEmptied`); (4) a late first copy read "all 0 dates" →
+  its own sentence; (5) the club's skin never defined the four tokens the shared window reads (`--home-scrim/-line/-olive/
+  -olive-soft`) → the page behind went undimmed and hairlines + keyboard focus rings were lost → mapped in `ClubFrame.module.css`;
+  (6) `CoachSubscribe` imported the window statically, shipping the portal's ~965 KB stylesheet on every coach page → `dynamic`,
+  as the rep's Export button does. Tests pinned for each (`house-league-9d3-coach.test.ts` 11/11). **Cleared (verified in code):**
+  token domains cannot collide and rep tokens are byte-identical (same HMAC input); every stop rule is an empty 200 calendar, only
+  a forged token the counted 404, no plan gate, private cache; Reset CAS is one atomic UPDATE; link route gate (own live seat,
+  org + season slugs match, UUID-checked); mig 420 re-runnable, trigger on `removed_at` AND `user_id`, no double bump, grants;
+  claim atomic, awaited inline, never throws, HTML escaped, accepted coaches only, no copy on a resend of an older notice or a
+  send that reached nobody; the coach page's games unchanged by `readGamesAsSent`, the feed takes the whole season as last sent;
+  ConfirmProvider wraps the window (Reset asks). **Carried as owner calls:** (A) the copy's once-ever claim is spent even when
+  a team has no ACCEPTED coach yet (invited only) or a read fails after the claim — that coach never gets the copy (they see the
+  told line on the page); recommend leave; (B) a concurrent "Send again" can claim a team while the first send is still going, so
+  the copy's family count can be partial (no corrected copy follows); recommend leave; (C) the 11b club send clears `notice_id`
+  on told rows — if it lands between the families' send and the claim, no copy; tiny window, recommend leave; (D) **release
+  order:** the open-season coach page now READS 415's table (and the Subscribe route 420's columns) — apply 415 + 420 to prod
+  BEFORE the promote or every open-season coach page 500s (already in MANUAL_PROD_STEPS); (E) "live season" for the feed/link is
+  "not completed/archived", the same rule the coach page uses (a draft season's seat counts) — confirm that is the intent; (F) the
+  Schedule heading gained 0.75rem bottom spacing (a small change, check on walk B). Not rendered: `check:layout` skipped (no
+  dev server up; the owner's walk B covers the phone and desk look).
+- **Session 2 `/docs` ✅ run 2026-11-01 (uncommitted):** `lib/help-content/house-league.tsx` only. The coach's guide ("How coaches get
+  their team page") gained a sub-topic `coach-page-told-subscribe` — the line under Schedule in its four states (told / not told yet /
+  told different times, incl. the taken-away sentence / no practices yet; a club admin or league admin sends), the one copy email on
+  a team's first send (signed-in coaches only, once per team), and Subscribe (own link, games once published and as last sent,
+  practices, cancelled marked, live season only, how often, Reset asks, a removed coach's calendar empties); the Schedule bullet
+  links to it. The convenor's "Telling families their practice times" gained the coaches-get-one-copy bullet; "What coaches and
+  families hear" no longer says the page only reads. Keywords + searchText updated on both sections. Sentences quoted from
+  `COACH_TOLD_WORDS`, `coachCopyWords` and `calendar-subscribe-words.ts`. `check:spelling` + focused lint clean. No product string
+  changed, nothing for `/marketing`.
+- **Session 2 walk B ✅ PASSED 34/34 2026-11-01, no changes asked (ledger §439, six parts; commit owed):**
+  https://claude.ai/artifact/LprT36UTRktpLHzpn88wrg, source `HOUSE_LEAGUE_STAGE9D3_WALK_B.html`. Fixture `.probe/9d3-walkB/fixture.mjs`
+  (modes none / `--untold` / `--changed` / `--never` / `--purples-practice` / `--remove-seat` / `--reset`; every mode run once on dev and
+  reset). Dev server restarted (login 200, no `EACCES`). **Corrections to the step-4 prompt, reported:** (1) the dev terminal does NOT
+  show who a copy email would go to (no email key; the coach copy is an unlogged `team` kind), so Part B proves the copy by
+  `coaches_copied_at` and the fixture prints "the one copy email would go to"; (2) `--remove-seat` on Purples proves nothing if Purples
+  never had a practice (its link is empty either way), so an extra mode `--purples-practice` gives it one first; (3) "Sam cannot open
+  Reds' link address" is walked as Reds' team page + Reds' calendar-link address (both 404 for Sam); the feed address itself is a
+  bearer link by design, so only a made-up one is "not found"; (4) the finished-season case is unit-pinned, not staged. (present a version of this as the PM summary BEFORE any code)
 
 - **Handing out practices is still silent, but the very next step asks "Tell the families?"** One button, "Send to {n} families",
   one email per household, listing every date, nothing goes until that press. "Not yet" leaves an amber count on the schedule.

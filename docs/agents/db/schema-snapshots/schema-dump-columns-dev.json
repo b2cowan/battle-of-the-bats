@@ -8208,6 +8208,24 @@
     "ordinal_position": 40
   },
   {
+    "table_name": "league_registrations",
+    "column_name": "link_version",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 41
+  },
+  {
+    "table_name": "league_registrations",
+    "column_name": "link_replaced_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 42
+  },
+  {
     "table_name": "league_schedule_emails",
     "column_name": "id",
     "data_type": "uuid",
@@ -8928,6 +8946,24 @@
     "ordinal_position": 19
   },
   {
+    "table_name": "league_team_coaches",
+    "column_name": "calendar_link_generation",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 20
+  },
+  {
+    "table_name": "league_team_coaches",
+    "column_name": "calendar_last_read_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
+  },
+  {
     "table_name": "league_team_practices_told",
     "column_name": "team_id",
     "data_type": "uuid",
@@ -8989,6 +9025,15 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 7
+  },
+  {
+    "table_name": "league_team_practices_told",
+    "column_name": "coaches_copied_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
   },
   {
     "table_name": "league_teams",

@@ -1,5 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
+import { fetchAll } from './supabase-paging';
+import type { FeedTeamEvent } from './export/team-feed-words';
 import {
   coachPageOpenUntil, houseLeagueCoachAccess, type HouseLeagueCoachLink, type HouseLeagueCoachView,
 } from './house-league-access';
@@ -9,6 +11,8 @@ import { publicState } from './league-game-changes';
 import { asLastSent, heldChangesOf, type GameFaceFields } from './league-game-changes-server';
 import { getOrgPlaceNames } from './db';
 import { resultWords } from './league-season-calendar';
+import { readPracticesNow, readTold } from './league-practice-tell-server';
+import { coachToldLine, tellStateOf, type CoachToldLine, type TeamTellState } from './league-practice-tell';
 import type { LeagueGame } from './types';
 
 /**
@@ -67,6 +71,8 @@ export interface CoachTeamPage {
   games: CoachGame[];
   /** False while the division's schedule is a draft: "{division}'s schedule isn't published yet." */
   gamesPublished: boolean;
+  /** Whether the families know these practice times (9d-3 Part 5, frame b2): a live season only; null = no line. */
+  practiceTold: CoachToldLine | null;
 }
 
 /** A game on the coach's page (g3): from today on, or waiting for a new date (postponed, or saved with no date). */
@@ -134,6 +140,15 @@ const toLink = (r: LinkRow): HouseLeagueCoachLink => ({
   teamId: r.team_id, userId: r.user_id, acceptedAt: r.accepted_at, removedAt: r.removed_at,
 });
 
+/** One team with its division, season and club, and the card they make — the page's read and the calendar's. */
+async function readTeamRow(teamId: string): Promise<{ team: TeamRow; card: CoachTeamCard } | null> {
+  const { data, error } = await supabaseAdmin.from('league_teams').select(TEAM_SELECT).eq('id', teamId).maybeSingle();
+  if (error) throw new Error(`Couldn't read the team: ${error.message}`);
+  const team = data as unknown as TeamRow | null;
+  const card = team ? toCard(team) : null;
+  return team && card ? { team, card } : null;
+}
+
 /**
  * The teams this person coaches whose page is still there: a live season, or one that finished in the last 30 days.
  * One sign-in card per team (copy §10.1).
@@ -173,19 +188,16 @@ export async function readCoachTeamPage(
   if (error) throw new Error(`Couldn't read the coaching link: ${error.message}`);
   if (!links || links.length === 0) return null;
 
-  const { data: teamRow, error: teamError } = await supabaseAdmin.from('league_teams')
-    .select(TEAM_SELECT).eq('id', teamId).maybeSingle();
-  if (teamError) throw new Error(`Couldn't read the team: ${teamError.message}`);
-  const team = teamRow as unknown as TeamRow | null;
-  const card = team ? toCard(team) : null;
-  if (!team || !card || card.orgSlug !== orgSlug) return null;
+  const found = await readTeamRow(teamId);
+  if (!found || found.card.orgSlug !== orgSlug) return null;
+  const { team, card } = found;
 
   const season = team.league_seasons!;
   const view = houseLeagueCoachAccess(links.map(l => toLink(l as LinkRow)), userId, teamId,
     { status: season.status, finishedAt: season.finished_at }, now);
   if (view === 'none') return null;
 
-  const [coachRows, players, myTeams, contactEmail, practices, games] = await Promise.all([
+  const [coachRows, players, myTeams, contactEmail, practices, games, tell] = await Promise.all([
     view === 'gone' ? Promise.resolve([] as { name: string }[]) : readCoachNames(teamId),
     view === 'open' || view === 'finished' ? readTeamPlayers(teamId) : Promise.resolve([] as CoachPlayer[]),
     getCoachTeamCards(userId, now),
@@ -194,7 +206,13 @@ export async function readCoachTeamPage(
     view === 'open' && team.division_id && one(team.league_divisions)?.schedule_published_at
       ? readTeamGames(card.orgId, team.season_id, team.division_id, teamId, now)
       : Promise.resolve({ published: false, games: [] as CoachGame[] }),
+    view === 'open' ? readTellOf(card.orgId, teamId) : Promise.resolve(null),
   ]);
+  const practiceTold = tell && coachToldLine({
+    state: tell.state, toldAt: tell.at, listed: practices.length,
+    // Only asked when it decides the line: nothing listed, never told.
+    everHad: tell.state === 'none' && practices.length === 0 ? await everHadPractice(card.orgId, teamId) : true,
+  });
   const until = coachPageOpenUntil(season.finished_at, now);
   return {
     view, team: card, coaches: coachRows.map(c => c.name), players,
@@ -204,7 +222,23 @@ export async function readCoachTeamPage(
     practices,
     games: games.games,
     gamesPublished: games.published,
+    practiceTold,
   };
+}
+
+/** The team's told state (9d-3): its upcoming practices against what its families were told — the Tell step's rule. */
+async function readTellOf(orgId: string, teamId: string): Promise<{ state: TeamTellState; at: string | null }> {
+  const [now, told] = await Promise.all([readPracticesNow(orgId, [teamId]), readTold([teamId])]);
+  const row = told.get(teamId) ?? null;
+  return { state: tellStateOf(now.get(teamId) ?? [], row, Date.now()), at: row?.at ?? null };
+}
+
+/** Whether the team ever had a practice (cancelled and past ones count): "Nobody has handed any out" must be true. */
+async function everHadPractice(orgId: string, teamId: string): Promise<boolean> {
+  const { count, error } = await supabaseAdmin.from('league_practices')
+    .select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('team_id', teamId);
+  if (error) throw new Error(`Couldn't read the team's practices: ${error.message}`);
+  return (count ?? 0) > 0;
 }
 
 /**
@@ -214,6 +248,22 @@ export async function readCoachTeamPage(
  * ⚠ A failed read THROWS: "No games from today on" must never stand in for a read that failed.
  */
 async function readTeamGames(orgId: string, seasonId: string, divisionId: string, teamId: string, now: Date): Promise<{ published: boolean; games: CoachGame[] }> {
+  const { games, name, placeOf } = await readGamesAsSent(orgId, seasonId, divisionId, teamId);
+  const from = Date.parse(zonedWallClockToUtc(orgDayKey(now.toISOString()), '00:00') ?? now.toISOString());
+  return {
+    published: true,
+    games: games
+      .filter(g => g.status === 'postponed' || !g.scheduledAt || Date.parse(g.scheduledAt) >= from)
+      .map(g => ({
+        id: g.id, startsAt: g.scheduledAt, title: `${name(g.homeTeamId)} vs ${name(g.awayTeamId)}`, place: placeOf(g),
+        state: publicState(g.status),
+        movedFrom: g.movedFrom, result: resultWords(g),
+      })),
+  };
+}
+
+/** The team's games, every one, each as last SENT (the coach's page and the coach's calendar read this one read). */
+async function readGamesAsSent(orgId: string, seasonId: string, divisionId: string, teamId: string) {
   const [gameRes, teamRes, places] = await Promise.all([
     supabaseAdmin.from('league_games')
       .select('id, home_team_id, away_team_id, scheduled_at, ends_at, location, org_venue_id, org_venue_facility_id, status, moved_from, home_score, away_score')
@@ -242,16 +292,56 @@ async function readTeamGames(orgId: string, seasonId: string, divisionId: string
     const facility = g.orgVenueFacilityId ? places.facilities.get(g.orgVenueFacilityId) : null;
     return facility ? `${venue} · ${facility}` : venue;
   };
-  const from = Date.parse(zonedWallClockToUtc(orgDayKey(now.toISOString()), '00:00') ?? now.toISOString());
+  return { games: asLastSent(games, held), name, placeOf };
+}
+
+/**
+ * THE COACH'S CALENDAR (House League 9d-3 Part 6, 9d3·5): the team's whole season as the feed's entries — the games as
+ * last SENT once the division's schedule is published (a held change is never in a feed), and every practice, a cancelled
+ * one marked. The whole season, not "from today": a subscribed calendar that drops last week reads as lost. A postponed
+ * game, or one with no date, is left out until it has one (the recipe has no word for "postponed").
+ */
+export async function readCoachFeedEvents(p: {
+  orgId: string; seasonId: string; divisionId: string | null; schedulePublished: boolean; teamId: string;
+}): Promise<FeedTeamEvent[]> {
+  const [sent, practices] = await Promise.all([
+    p.divisionId && p.schedulePublished ? readGamesAsSent(p.orgId, p.seasonId, p.divisionId, p.teamId) : Promise.resolve(null),
+    fetchAll<{ id: string; scheduled_at: string; ends_at: string | null; location: string | null; status: string }>((a, b) =>
+      supabaseAdmin.from('league_practices').select('id, scheduled_at, ends_at, location, status')
+        .eq('org_id', p.orgId).eq('team_id', p.teamId).order('scheduled_at').order('id').range(a, b)),
+  ]);
+  const blank = { arrivalTime: null, locationAddress: null, fieldNumber: null } as const;
+  const games: FeedTeamEvent[] = (sent?.games ?? [])
+    .filter(g => g.status !== 'postponed' && g.scheduledAt)
+    .map(g => {
+      const home = g.homeTeamId === p.teamId;
+      const opponent = sent!.name(home ? g.awayTeamId : g.homeTeamId);
+      return {
+        id: g.id, name: opponent, eventType: 'league_game', opponent, homeAway: home ? 'home' : 'away',
+        startsAt: g.scheduledAt, endsAt: g.endsAt, location: sent!.placeOf(g), status: g.status === 'cancelled' ? 'cancelled' : 'scheduled', ...blank,
+      };
+    });
+  return [
+    ...games,
+    ...practices.map(r => ({
+      id: r.id, name: 'Practice', eventType: 'practice', opponent: null, homeAway: null, startsAt: r.scheduled_at, endsAt: r.ends_at,
+      location: r.location, status: r.status === 'cancelled' ? 'cancelled' : 'scheduled', ...blank,
+    })),
+  ];
+}
+
+/** A team as its coach's calendar finds it: the card, the season's state and the division's publish mark. */
+export async function readCoachFeedTeam(teamId: string): Promise<{
+  card: CoachTeamCard; seasonId: string; divisionId: string | null; schedulePublished: boolean;
+  season: { status: string; finishedAt: string | null };
+} | null> {
+  const found = await readTeamRow(teamId);
+  if (!found) return null;
+  const { team, card } = found;
   return {
-    published: true,
-    games: asLastSent(games, held)
-      .filter(g => g.status === 'postponed' || !g.scheduledAt || Date.parse(g.scheduledAt) >= from)
-      .map(g => ({
-        id: g.id, startsAt: g.scheduledAt, title: `${name(g.homeTeamId)} vs ${name(g.awayTeamId)}`, place: placeOf(g),
-        state: publicState(g.status),
-        movedFrom: g.movedFrom, result: resultWords(g),
-      })),
+    card, seasonId: team.season_id, divisionId: team.division_id,
+    schedulePublished: !!one(team.league_divisions)?.schedule_published_at,
+    season: { status: team.league_seasons!.status, finishedAt: team.league_seasons!.finished_at },
   };
 }
 

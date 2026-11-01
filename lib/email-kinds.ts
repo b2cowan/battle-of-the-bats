@@ -77,6 +77,8 @@ export const EMAIL_KINDS = {
   club_schedule_league_coach:           { klass: 'team', label: 'Club schedule, house league' },
   club_guardian_email_ask:              { klass: 'team', label: 'Guardian email request' },
   family_email_coach_copy:              { klass: 'team', label: 'Copy of a family email' },
+  // House League 9d-3 Part 5: a team's coaches get one copy the first time its families are told their practice times.
+  house_league_practice_coach_copy:     { klass: 'team', label: 'House league practice times, coach copy' },
   club_payment_handoff_coach:           { klass: 'team', label: 'Club payment hand-off' },
   // 12d-1: the club's own business to the one person who can answer it (the logged list is the owner's G1 37; unchanged).
   card_dispute_opened:                  { klass: 'team', label: 'Card dispute opened' },

@@ -21,7 +21,7 @@
  *     don't." is the planner's rows against the snapshot, never a guess from the database after the rewrite.
  * House rules: the clock through `formatTime` / `formatTimeRange`; "practice" (one spelling); `possessive()`.
  */
-import { formatShortWeekdayDate, mondayOfDay, utcToZonedInputs } from './timezone';
+import { formatShortWeekdayDate, mondayOfDay, orgDayKey, utcToZonedInputs } from './timezone';
 import { joinWithAnd, pluralize, possessive, formatTime, formatTimeRange } from './utils';
 import { weekdayOf } from './permit-time';
 import { weekdaysWords } from './permit-words';
@@ -382,3 +382,68 @@ export const PRACTICES_SENT_NOTICE = {
   body: (division: string | null, cap: number) =>
     `FieldLogicHQ sent this when a league admin told ${division ? possessive(division) : 'a division’s'} families their practice times: one email per family, about their own children’s teams. Automatic emails don’t count toward the season’s ${cap} emails.`,
 } as const;
+
+// ── The coach (copy sections D and E; Session 2, frame b2) ───────────────────────────────────────────────────
+
+/**
+ * The one quiet line under the coach's Schedule heading: whether the team's families know the practices listed there.
+ * `listed` is how many practices the coach's schedule shows (from the start of today, cancelled ones included); the state
+ * compares only UPCOMING ones. Nothing is said about practices the coach can't see, so:
+ *   · told, and nothing listed → no line (the season's last practice has passed);
+ *   · none → "No practices yet. Nobody has handed any out." only when the team never had one (`everHad` false) — the
+ *     schedule's own "No practices yet." stands otherwise;
+ *   · changed is said even with nothing listed: every practice families were told about was taken away.
+ */
+export type CoachToldLine = { kind: 'told'; at: string } | { kind: 'changed'; at: string; emptied?: true } | { kind: 'untold' } | { kind: 'never' };
+
+export function coachToldLine(p: { state: TeamTellState; toldAt: string | null; listed: number; everHad: boolean }): CoachToldLine | null {
+  switch (p.state) {
+    // `emptied`: nothing is listed, so "these times" would point at nothing — the words say the practices were taken away.
+    case 'changed': return p.toldAt ? (p.listed > 0 ? { kind: 'changed', at: p.toldAt } : { kind: 'changed', at: p.toldAt, emptied: true }) : null;
+    case 'untold': return { kind: 'untold' };
+    case 'told': return p.listed > 0 && p.toldAt ? { kind: 'told', at: p.toldAt } : null;
+    case 'none': return p.listed === 0 && !p.everHad ? { kind: 'never' } : null;
+  }
+}
+
+/** Copy section E: the coach page's lines. The day is the club's day of the send. */
+export const COACH_TOLD_WORDS = {
+  told: (atIso: string) => `Families were told these practice times on ${formatShortWeekdayDate(orgDayKey(atIso))}.`,
+  untold: 'Families haven’t been told these practice times yet. A club admin or league admin sends them.',
+  changed: (atIso: string) => `Families were told different times on ${formatShortWeekdayDate(orgDayKey(atIso))}. They haven’t been sent these times yet.`,
+  changedEmptied: (atIso: string) => `Families were told practice times on ${formatShortWeekdayDate(orgDayKey(atIso))}. Those practices have since been taken away, and families haven’t been told.`,
+  never: 'No practices yet. Nobody has handed any out.',
+} as const;
+
+export function coachToldWords(line: CoachToldLine): string {
+  switch (line.kind) {
+    case 'told': return COACH_TOLD_WORDS.told(line.at);
+    case 'changed': return line.emptied ? COACH_TOLD_WORDS.changedEmptied(line.at) : COACH_TOLD_WORDS.changed(line.at);
+    case 'untold': return COACH_TOLD_WORDS.untold;
+    case 'never': return COACH_TOLD_WORDS.never;
+  }
+}
+
+/**
+ * Copy section D: the coach's one copy, on the team's FIRST send (once per team ever — a change is the 11b coach email's).
+ * One email per coach. The counts are the send's: families reached on this team, and the dates the email listed. The
+ * singulars ("1 Twins family", "the date") are the build's, so a team of one family never reads "1 families".
+ */
+export function coachCopyWords(p: { club: string; team: string; season: string; firstName: string | null; families: number; dates: number; path: string }): EmailWords {
+  const fams = `${p.families} ${p.team} ${p.families === 1 ? 'family' : 'families'}`;
+  // 0 = every listed date has passed by the time the copy goes (a late first reach): never "all 0 dates".
+  const dates = p.dates === 1
+    ? 'The email lists the date, and the same date is on your team page.'
+    : p.dates === 0
+      ? 'The email lists their practice dates, and your team page has the schedule.'
+      : `The email lists all ${p.dates} dates, and the same dates are on your team page.`;
+  return {
+    subject: `${p.team} families were sent their practice times`,
+    greeting: p.firstName?.trim() ? `Hi ${p.firstName.trim()},` : 'Hi,',
+    paragraphs: [`${p.club} emailed ${fams} their practice times today. ${dates}`],
+    lists: [],
+    link: { label: `Open ${possessive(p.team)} team page →`, path: p.path },
+    outro: null,
+    foot: `You’re getting this because you coach ${p.team} in ${p.season}.`,
+  };
+}

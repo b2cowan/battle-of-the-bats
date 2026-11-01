@@ -62,6 +62,17 @@
 .sectionHead .sectionTitle {
   margin: 0;
 }
+/* House League 9d-3 Part 6 (9d3·5): Subscribe on the Schedule heading's line — the word at a desk; on a phone the mark
+   alone, still a 44px tap target, its name in the aria-label. */
+.sectionHead .subscribe {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+@media (max-width: 640px) {
+  .sectionHead .subscribe { width: 44px; min-height: 44px; padding: 0; gap: 0; justify-content: center; }
+  .subscribeLabel { display: none; }
+}
 .count {
   margin-left: 0.25rem;
   font-weight: 600;

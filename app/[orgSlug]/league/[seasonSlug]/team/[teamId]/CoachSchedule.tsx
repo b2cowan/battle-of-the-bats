@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { CoachGame, CoachPractice } from '@/lib/house-league-coach';
 import { COACH_PRACTICE_WORDS as W } from '@/lib/league-practice-time';
+import { coachToldWords, type CoachToldLine } from '@/lib/league-practice-tell';
 import { SCHEDULE_PUBLIC_WORDS as P } from '@/lib/league-schedule-words';
 import { SEASON_PUBLIC_WORDS, SEASON_SCHEDULE_WORDS } from '@/lib/league-season-calendar';
 import { STATE_WORDS, TODAY_WORD, dayWords } from '@/lib/calendar-recipe';
@@ -18,11 +19,13 @@ import s from './CoachSchedule.module.css';
  * under "Needs a new date", whatever its old day. Read only: the league admin changes them. Never on a family-facing page:
  * practices stay off the public schedule.
  */
-export default function CoachSchedule({ practices, games, gamesPublished, divisionName }: {
+export default function CoachSchedule({ practices, games, gamesPublished, divisionName, toldLine }: {
   practices: CoachPractice[];
   games: CoachGame[];
   gamesPublished: boolean;
   divisionName: string;
+  /** 9d-3 (frame b2): whether the families know these practice times — one quiet line under the heading. */
+  toldLine: CoachToldLine | null;
 }) {
   const today = orgDayKey(new Date().toISOString());
   const dated = games.filter(g => g.state !== 'postponed' && g.startsAt);
@@ -35,6 +38,7 @@ export default function CoachSchedule({ practices, games, gamesPublished, divisi
 
   return (
     <>
+      {toldLine && <p className={`${kit.sub} ${s.told}`}>{coachToldWords(toldLine)}</p>}
       {rows.length > 0 && <ul className={`${kit.list} ${s.list}`}>{rows.map(r => r.node)}</ul>}
       {waiting.length > 0 && (
         <>
@@ -46,7 +50,8 @@ export default function CoachSchedule({ practices, games, gamesPublished, divisi
         {!gamesPublished
           ? <p className={kit.sub}>{P.coachUnpublished(divisionName)}</p>
           : games.length === 0 && <p className={kit.sub}>{P.coachNoneAhead}</p>}
-        {practices.length === 0 && <p className={kit.sub}>{W.none}</p>}
+        {/* "No practices yet. Nobody has handed any out." above already says it. */}
+        {practices.length === 0 && toldLine?.kind !== 'never' && <p className={kit.sub}>{W.none}</p>}
       </div>
     </>
   );

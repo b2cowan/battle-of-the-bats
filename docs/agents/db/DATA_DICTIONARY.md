@@ -6911,6 +6911,9 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 <!-- dict:col:league_team_practices_told.updated_at -->
 **`notice_id`** (FK → `league_season_notices` ON DELETE SET NULL) / **`updated_at`** — the `practices_sent` notice that told them; null when the club's change send refreshed the row.
 
+<!-- dict:col:league_team_practices_told.coaches_copied_at -->
+**`coaches_copied_at`** (timestamptz, null = not yet; 9d-3 Session 2, copy section D, added to mig 415 before it reached prod) — when the team's coaches were sent their **one** copy of the first practice-times email ("{Team} families were sent their practice times"). Claimed by the app (`lib/league-practice-coach-copy.ts`: null → now WHERE null, AND `notice_id` = the send that just told the team) **before** it emails, so a second press or a "Send again" never copies them twice; a failed copy is not retried. Once per team ever: a change is already the 11b coach email's. Rows told before the column existed were backfilled to `told_at` (counted as copied).
+
 ---
 
 ## `league_practice_tells`
@@ -7035,6 +7038,9 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 **`accepted_at`** — the coach signed in with the invite ("Signed in").
 <!-- dict:col:league_team_coaches.removed_at -->
 **`removed_at`** — the convenor removed them: the page answers "You're no longer a coach of {team}" at once. Kept, not deleted, for that answer; adding the same email again is a new row.
+<!-- dict:col:league_team_coaches.calendar_link_generation -->
+<!-- dict:col:league_team_coaches.calendar_last_read_on -->
+**`calendar_link_generation`** (integer NOT NULL default 0, CHECK ≥ 0) / **`calendar_last_read_on`** (date, null = never read) — **mig 420** (House League 9d-3 Part 6, 9d3·5): the coach's own calendar Subscribe link, the rep coach's mig 323 shape. The link is **signed, never stored** (`lib/coach-calendar-link.ts`, domain `league-coach-calendar`, so a rep token never verifies as a house-league one): this row's id, the generation and an HMAC. **Reset** bumps the generation (the old link answers an empty calendar); the trigger **`league_team_coaches_calendar_on_revoke`** bumps it (and clears the last read) when the coach is **removed** (`removed_at` set) or the row's **person changes** (`user_id` replaced). `calendar_last_read_on` is the club-local day a calendar last read the link ("Read by your calendar today"), written at most once a day (`lib/league-coach-calendar-feed.ts`).
 <!-- dict:col:league_team_coaches.created_by -->
 <!-- dict:col:league_team_coaches.created_at -->
 <!-- dict:col:league_team_coaches.updated_at -->

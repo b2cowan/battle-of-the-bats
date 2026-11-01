@@ -12,10 +12,10 @@ import { SUBSCRIBE_WORDS as W, lastReadWords } from '@/lib/calendar-subscribe-wo
  * tryout days only for a coach who runs them. Reset asks first — the portal's question, the one modal here — then makes
  * a new link; the old one answers an empty calendar from then on, and the pill says "New link made".
  */
-interface LinkState { url: string; calendarName: string; lastReadOn: string | null; today: string; includesTryouts: boolean; generation: number }
+interface LinkState { url: string; calendarName: string; lastReadOn: string | null; today: string; includesTryouts?: boolean; generation: number }
 
 export default function CoachCalendarSubscribe({
-  orgSlug, teamId, teamName, phone, opener, onClose,
+  orgSlug, teamId, teamName, phone, opener, onClose, linkEndpoint, whatsIn,
 }: {
   orgSlug: string;
   teamId: string;
@@ -23,9 +23,13 @@ export default function CoachCalendarSubscribe({
   phone: boolean;
   opener: RefObject<HTMLElement | null>;
   onClose: () => void;
+  /** Another coach's own link route (House League 9d-3 Part 6: the house-league coach's team page) — same GET / Reset. */
+  linkEndpoint?: string;
+  /** That coach's What's in it sentence; the rep coach's otherwise. */
+  whatsIn?: string;
 }) {
   const confirm = useConfirm();
-  const endpoint = `/api/coaches/${orgSlug}/teams/${teamId}/calendar-link`;
+  const endpoint = linkEndpoint ?? `/api/coaches/${orgSlug}/teams/${teamId}/calendar-link`;
   const [link, setLink] = useState<LinkState | null>(null);
   const [error, setError] = useState('');
   const [resetting, setResetting] = useState(false);
@@ -88,7 +92,7 @@ export default function CoachCalendarSubscribe({
       link={link ? { https: link.url, calendarName: link.calendarName } : null}
       loadError={error || undefined}
       lines={{
-        whatsIn: W.whatsInCoach(link?.includesTryouts ?? false),
+        whatsIn: whatsIn ?? W.whatsInCoach(link?.includesTryouts ?? false),
         seasonLine: W.seasonLine,
         howOften: W.howOften,
         yourLink: W.yourLinkCoach,

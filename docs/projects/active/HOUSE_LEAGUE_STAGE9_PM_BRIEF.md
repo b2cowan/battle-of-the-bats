@@ -142,6 +142,9 @@ gets sign-ups and money ready for online payment, which is the stage after this 
 7. **9d-3 · Telling families their practice times, and calendars.** The first practice email to a team's families, sent by the
    convenor when practices are handed out, and a calendar link a coach can put on a phone. Success: no family learns their
    practice time only when it changes. A family's own calendar is the signed-in app, not a link.
+   *Status 2026-11-01:* the notice is built and walked (§436, 27/27). Session 2 is built: the coach's team page says whether
+   families know the practice times, the coaches get one copy the first time their families are told, and the coach has the
+   same calendar Subscribe a rep coach has. Next: tidy-up and review passes, then the coach's walk (walk B).
 8. **9e · Game day.** Standings that follow the sport's scoring rules, and scores entered by coaches.
 9. **9f · Season end.** Finishing a season, looking back at past seasons, and starting next season from this one.
 

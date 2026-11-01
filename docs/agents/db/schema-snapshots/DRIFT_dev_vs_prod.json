@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-01",
-  "total": 108,
+  "total": 132,
   "counts": {
-    "tables": 5,
-    "columns": 48,
-    "indexes": 22,
-    "constraints": 20,
-    "rls": 13
+    "tables": 6,
+    "columns": 62,
+    "indexes": 24,
+    "constraints": 21,
+    "rls": 19
   },
   "items": [
     {
@@ -46,6 +46,14 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:league_registrations.league_registrations_link_version_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_team_coaches.league_team_coaches_calendar_generation_nonneg",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:league_team_practices_told.league_team_practices_told_snapshot_check",
       "sig": ""
     },
@@ -55,6 +63,22 @@
     },
     {
       "key": "check:only-dev:organizations.organizations_subscription_currency_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:stripe_billing_drift_checks.stripe_billing_drift_checks_counts_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:stripe_billing_drift_checks.stripe_billing_drift_checks_differences_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:stripe_billing_drift_checks.stripe_billing_drift_checks_environment_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:stripe_billing_drift_checks.stripe_billing_drift_checks_outcome_check",
       "sig": ""
     },
     {
@@ -146,6 +170,26 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:league_registrations.link_replaced_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registrations.link_version",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.calendar_last_read_on",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.calendar_link_generation",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_practices_told.coaches_copied_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:league_team_practices_told.notice_id",
       "sig": ""
     },
@@ -179,6 +223,42 @@
     },
     {
       "key": "column:only-dev:organizations.subscription_currency",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_drift_checks.checked_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_drift_checks.differences",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_drift_checks.environment",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_drift_checks.error",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_drift_checks.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_drift_checks.outcome",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_drift_checks.owner_emailed",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_drift_checks.records_compared",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_drift_checks.subscriptions_read",
       "sig": ""
     },
     {
@@ -326,6 +406,10 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:stripe_billing_drift_checks.stripe_billing_drift_checks_pkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:stripe_billing_events.stripe_billing_events_pkey",
       "sig": ""
     },
@@ -402,6 +486,14 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:stripe_billing_drift_checks_checked_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:stripe_billing_drift_checks_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:stripe_billing_events_customer_idx",
       "sig": ""
     },
@@ -431,6 +523,10 @@
     },
     {
       "key": "table:only-dev:league_team_practices_told",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:stripe_billing_drift_checks",
       "sig": ""
     },
     {
