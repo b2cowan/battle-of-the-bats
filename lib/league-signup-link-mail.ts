@@ -5,7 +5,7 @@ import { sendTransactionalEmail } from './platform-email-templates';
 import { systemMailFace, type ClubEmailOrg } from './club-email-context';
 import { warmEmailButton, warmEmailDocument, warmEmailHeading, warmEmailParagraph, warmEmailSmall } from './email-envelope-warm';
 import { accountNoticeFootnoteHtml } from './family-mail-footer';
-import { leaguePayUrl } from './league-pay-link';
+import { leaguePayUrl, payLinkSecret } from './league-pay-link';
 import { signupStillOwes } from './league-signup-link';
 import { SIGNUP_LINK_WORDS as SW, childList } from './league-pay-words';
 import { signupLinkClockRanOut } from './house-league-access';
@@ -63,13 +63,8 @@ export async function sendSignupLinks(
   });
   if (!links.length) return;
 
-  const face = await systemMailFace(org);
-  const first = rows[0].guardian_first_name?.trim();
   const M = SW.mail;
-  const parts = [
-    warmEmailHeading(escapeHtml(M.heading)),
-    first ? warmEmailParagraph(escapeHtml(M.hi(first))) : '',
-  ];
+  const parts: string[] = [];
   if (links.length === 1) {
     parts.push(
       warmEmailParagraph(escapeHtml(M.body(links[0].children, season.name))),
@@ -88,18 +83,87 @@ export async function sendSignupLinks(
     }
     parts.push(warmEmailSmall(escapeHtml(M.notYou)));
   }
-  parts.push(accountNoticeFootnoteHtml({ clubName: org.name, reason: M.because, replyLine: face?.replyLine ?? null }));
+  await sendLinkNotice(org, {
+    key: 'league_signup_link', to: email, seasonName: season.name, heading: M.heading, subject: M.subject(season.name),
+    because: M.because, first: rows[0].guardian_first_name, parts,
+  });
+}
 
-  const html = warmEmailDocument(parts.filter(Boolean).join('\n'), face?.club ?? null);
-  // An ACCOUNT notice like the sign-up confirmation (the same transactional door and footnote): never on the unsubscribe
-  // list, it names the club and says why it came. No stored template exists for the key, so this HTML is what is sent.
-  await sendTransactionalEmail({
-    key: 'league_signup_link',
-    to: email,
-    vars: { seasonName: season.name },
-    defaultSubject: M.subject(season.name),
+/**
+ * "SEND A NEW LINK" — THE CLUB REPLACES A FAMILY'S LINK (Signed-in family accounts Stage 1 Part 6; drawing tab 4; asks 4
+ * and 6). The sign-up's link version moves on for EVERY child on it in ONE update, so the old link stops at once for the
+ * brothers and sisters too (a sibling's own placement link is the same version), and `link_replaced_at` writes each
+ * child's history line. Then one email, to the address on the registration, carries the new link. All of a sign-up's
+ * rows are made together and only this moves them, so they share one version; the next is one past the highest.
+ * Refused, writing nothing, when there is no address or no link can be signed here (never a stopped link with no new one).
+ */
+export async function replaceSignupLink(
+  org: ClubEmailOrg & { slug: string },
+  season: { id: string; name: string; slug: string },
+  registrationId: string,
+): Promise<{ sentTo: string } | { error: 'no_email' | 'no_secret' | 'not_found' | 'send_failed' }> {
+  if (!payLinkSecret()) return { error: 'no_secret' };
+  const { data: anchor, error } = await supabaseAdmin.from('league_registrations')
+    .select('id, signup_ref, guardian_email').eq('id', registrationId).eq('org_id', org.id).eq('season_id', season.id).maybeSingle();
+  if (error) throw error;
+  if (!anchor) return { error: 'not_found' };
+  const email = (anchor.guardian_email as string | null)?.trim();
+  if (!email) return { error: 'no_email' };
+
+  // The door's set (`signupRowsFromAnchor`): the same reference AND family email, or the one registration.
+  let q = supabaseAdmin.from('league_registrations').select('id, signup_ref, player_first_name, guardian_first_name, link_version')
+    .eq('org_id', org.id).eq('season_id', season.id);
+  q = anchor.signup_ref ? q.eq('signup_ref', anchor.signup_ref as string).eq('guardian_email', anchor.guardian_email as string) : q.eq('id', anchor.id as string);
+  const { data: kidsData, error: kidsError } = await q.order('registered_at', { ascending: true });
+  if (kidsError) throw kidsError;
+  const kids = (kidsData ?? []) as Row[];
+  if (!kids.length) return { error: 'not_found' };
+
+  const version = Math.max(...kids.map(k => Number(k.link_version ?? 0))) + 1;
+  const { error: upError } = await supabaseAdmin.from('league_registrations')
+    .update({ link_version: version, link_replaced_at: new Date().toISOString() }).in('id', kids.map(k => k.id));
+  if (upError) throw upError;
+
+  const url = leaguePayUrl(appUrl(), { orgSlug: org.slug, seasonSlug: season.slug, registrationId, version })!;
+  const M = SW.mail;
+  const R = SW.replacedMail;
+  // The old link is already stopped: a send that throws (a network error) is the same plain "couldn't send, try again"
+  // as a refused one, never the route's generic 500 (/review). Pressing again mints the next version.
+  const sent = await sendLinkNotice(org, {
+    key: 'league_signup_link_replaced', to: email, seasonName: season.name, heading: R.heading, subject: R.subject(season.name),
+    because: R.because, first: kids[0].guardian_first_name, parts: [
+      warmEmailParagraph(escapeHtml(R.body(org.name, childList(kids.map(k => k.player_first_name)), season.name))),
+      warmEmailButton(escapeHtml(M.button), escapeHtml(url)),
+      warmEmailSmall(escapeHtml(M.reference((anchor.signup_ref as string | null) ?? registrationReference(registrationId)))),
+    ],
+  }).catch(() => null);
+  return !sent || sent.status === 'provider_error' ? { error: 'send_failed' } : { sentTo: email };
+}
+
+/**
+ * Both emails are ACCOUNT notices like the sign-up confirmation (the same transactional door and footnote): never on the
+ * unsubscribe list, they name the club and say why they came. Heading, "Hi", the caller's own lines, the footnote. No
+ * stored template exists for either key, so this HTML is what is sent.
+ */
+async function sendLinkNotice(org: ClubEmailOrg, n: {
+  key: 'league_signup_link' | 'league_signup_link_replaced'; to: string; seasonName: string; heading: string; subject: string;
+  because: string; first: string | null; parts: string[];
+}) {
+  const face = await systemMailFace(org);
+  const first = n.first?.trim();
+  const html = warmEmailDocument([
+    warmEmailHeading(escapeHtml(n.heading)),
+    first ? warmEmailParagraph(escapeHtml(SW.mail.hi(first))) : '',
+    ...n.parts,
+    accountNoticeFootnoteHtml({ clubName: org.name, reason: n.because, replyLine: face?.replyLine ?? null }),
+  ].filter(Boolean).join('\n'), face?.club ?? null);
+  return sendTransactionalEmail({
+    key: n.key,
+    to: n.to,
+    vars: { seasonName: n.seasonName },
+    defaultSubject: n.subject,
     defaultHtml: html,
-    family: face ? { face, reason: M.because } : undefined,
+    family: face ? { face, reason: n.because } : undefined,
   });
 }
 

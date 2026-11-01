@@ -6,31 +6,46 @@
  *
  * Environment variable: UNSUBSCRIBE_SECRET (32-char hex string minimum).
  * Add to .env.local and Amplify environment variables.
+ *
+ * WITHOUT THE SECRET THERE IS NO LINK (Signed-in family accounts Stage 1, Part 7). There is no fallback secret: a fixed
+ * one in the source would let anyone mint a link that opts any club, coach or family out. Signing returns null, so no
+ * unsubscribe link is drawn rather than a forgeable one, and every token is refused ("this link doesn't work").
  */
 
 import { createHmac } from 'crypto';
 
-function getSecret(): string {
+function getSecret(): string | null {
+  // Signed with the value exactly as set (never trimmed): a link already in an inbox must keep its token (/review).
   const secret = process.env.UNSUBSCRIBE_SECRET;
-  if (!secret) {
-    // Fallback for local dev without the env var set — NOT for production.
-    // In production, Amplify will have the real secret.
-    console.warn('[unsubscribe-token] UNSUBSCRIBE_SECRET not set — using insecure fallback');
-    return 'insecure-dev-fallback-do-not-use-in-production';
+  if (!secret?.trim()) {
+    console.warn('[unsubscribe-token] UNSUBSCRIBE_SECRET is not set: no unsubscribe link is signed or accepted');
+    return null;
   }
   return secret;
+}
+
+/** The token for a message, or null when there is no secret. */
+function sign(message: string): string | null {
+  const secret = getSecret();
+  return secret ? createHmac('sha256', secret).update(message).digest('hex').slice(0, 32) : null;
+}
+
+/** Constant-time compare of a token against the one expected (null = no secret: never a match). */
+function sameToken(expected: string | null, token: string): boolean {
+  if (!expected || expected.length !== token.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < expected.length; i++) {
+    mismatch |= expected.charCodeAt(i) ^ token.charCodeAt(i);
+  }
+  return mismatch === 0;
 }
 
 /**
  * Generate a signed unsubscribe token for an org.
  * Embed in every outgoing marketing email footer.
  */
-export function generateUnsubscribeToken(orgId: string): string {
-  const secret = getSecret();
-  return createHmac('sha256', secret)
-    .update(`${orgId}:unsubscribe`)
-    .digest('hex')
-    .slice(0, 32);
+export function generateUnsubscribeToken(orgId: string): string | null {
+  return sign(`${orgId}:unsubscribe`);
 }
 
 /**
@@ -39,23 +54,17 @@ export function generateUnsubscribeToken(orgId: string): string {
  */
 export function verifyUnsubscribeToken(orgId: string, token: string): boolean {
   if (!orgId || !token) return false;
-  const expected = generateUnsubscribeToken(orgId);
-  // Constant-time compare (both are 32 hex chars)
-  if (expected.length !== token.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < expected.length; i++) {
-    mismatch |= expected.charCodeAt(i) ^ token.charCodeAt(i);
-  }
-  return mismatch === 0;
+  return sameToken(generateUnsubscribeToken(orgId), token);
 }
 
 /**
- * Build the full unsubscribe URL for a given org.
+ * Build the full unsubscribe URL for a given org (null without the secret).
  * Used by email-sender.ts to inject into the email footer.
  */
-export function buildUnsubscribeUrl(orgId: string): string {
+export function buildUnsubscribeUrl(orgId: string): string | null {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
   const token = generateUnsubscribeToken(orgId);
+  if (!token) return null;
   return `${base}/unsubscribe?org=${encodeURIComponent(orgId)}&token=${encodeURIComponent(token)}`;
 }
 
@@ -64,28 +73,19 @@ export function buildUnsubscribeUrl(orgId: string): string {
 // happens to be attributed to. A distinct HMAC message suffix keeps user tokens and org
 // tokens non-interchangeable, so a user token can never flip an org's opt-out and vice versa.
 
-export function generateUserUnsubscribeToken(userId: string): string {
-  const secret = getSecret();
-  return createHmac('sha256', secret)
-    .update(`${userId}:unsubscribe-user`)
-    .digest('hex')
-    .slice(0, 32);
+export function generateUserUnsubscribeToken(userId: string): string | null {
+  return sign(`${userId}:unsubscribe-user`);
 }
 
 export function verifyUserUnsubscribeToken(userId: string, token: string): boolean {
   if (!userId || !token) return false;
-  const expected = generateUserUnsubscribeToken(userId);
-  if (expected.length !== token.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < expected.length; i++) {
-    mismatch |= expected.charCodeAt(i) ^ token.charCodeAt(i);
-  }
-  return mismatch === 0;
+  return sameToken(generateUserUnsubscribeToken(userId), token);
 }
 
-export function buildUserUnsubscribeUrl(userId: string): string {
+export function buildUserUnsubscribeUrl(userId: string): string | null {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
   const token = generateUserUnsubscribeToken(userId);
+  if (!token) return null;
   return `${base}/unsubscribe?user=${encodeURIComponent(userId)}&token=${encodeURIComponent(token)}`;
 }
 
@@ -108,24 +108,19 @@ function guardianKey(orgId: string, email: string): string {
   return `${orgId}:${email.trim().toLowerCase()}:unsubscribe-guardian`;
 }
 
-export function generateGuardianUnsubscribeToken(orgId: string, email: string): string {
-  return createHmac('sha256', getSecret()).update(guardianKey(orgId, email)).digest('hex').slice(0, 32);
+export function generateGuardianUnsubscribeToken(orgId: string, email: string): string | null {
+  return sign(guardianKey(orgId, email));
 }
 
 export function verifyGuardianUnsubscribeToken(orgId: string, email: string, token: string): boolean {
   if (!orgId || !email || !token) return false;
-  const expected = generateGuardianUnsubscribeToken(orgId, email);
-  if (expected.length !== token.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < expected.length; i++) {
-    mismatch |= expected.charCodeAt(i) ^ token.charCodeAt(i);
-  }
-  return mismatch === 0;
+  return sameToken(generateGuardianUnsubscribeToken(orgId, email), token);
 }
 
-export function buildGuardianUnsubscribeUrl(orgId: string, email: string): string {
+export function buildGuardianUnsubscribeUrl(orgId: string, email: string): string | null {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
   const normalized = email.trim().toLowerCase();
   const token = generateGuardianUnsubscribeToken(orgId, normalized);
+  if (!token) return null;
   return `${base}/unsubscribe?org=${encodeURIComponent(orgId)}&guardian=${encodeURIComponent(normalized)}&token=${encodeURIComponent(token)}`;
 }

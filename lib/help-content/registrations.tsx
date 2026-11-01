@@ -136,7 +136,7 @@ const registrationsHelp: HelpPageContent = {
           answer: (
             <>
               <p>
-                The public registration form and the registration status lookup limit how many times
+                The public registration form and the <strong>Email me my link</strong> form limit how many times
                 they can be used from one internet connection, and how many confirmation emails one
                 address can receive, within an hour. It stops automated abuse, such as someone using
                 the form to flood a stranger&rsquo;s inbox.
@@ -155,8 +155,8 @@ const registrationsHelp: HelpPageContent = {
             </>
           ),
           answerText:
-            'The public registration form and the status lookup limit how many times they can be used from one internet connection, and how many confirmation emails one address can receive, within an hour, to stop automated abuse such as flooding a stranger\'s inbox. A family normally meets it only when many registrations go in from the same connection in a short time (a registration table running everyone through one laptop) or the same email is sent again and again. Ask them to wait a few minutes and try again. For in-person registration on one device, use Add registration, which has no such limit; a manual entry shows no waiver acceptance.',
-          keywords: ['too many attempts', 'try again later', 'form limit', 'cannot register', 'form blocked', 'rate limit', 'registration night', 'status lookup'],
+            'The public registration form and the Email me my link form limit how many times they can be used from one internet connection, and how many confirmation emails one address can receive, within an hour, to stop automated abuse such as flooding a stranger\'s inbox. A family normally meets it only when many registrations go in from the same connection in a short time (a registration table running everyone through one laptop) or the same email is sent again and again. Ask them to wait a few minutes and try again. For in-person registration on one device, use Add registration, which has no such limit; a manual entry shows no waiver acceptance.',
+          keywords: ['too many attempts', 'try again later', 'form limit', 'cannot register', 'form blocked', 'rate limit', 'registration night', 'status lookup', 'email me my link'],
         },
       ],
     },
@@ -193,7 +193,7 @@ const registrationsHelp: HelpPageContent = {
       content: (
         <>
           <p>The Registrations page opens on the <strong>To review</strong> tab. Work the list by approving, waitlisting, or declining each row — declining opens a window that asks what happened to any money, and tells you whether the waitlist will move up on its own to fill the spot.</p>
-          <p>The <strong>search box</strong> finds a player or parent email across all tabs when a family contacts you directly. When a family pays by hand, click <strong>Mark received</strong> on their row: it records the whole amount still owing, with the date and how. A family who pays by card from their status page needs nothing from you (the Fee cell reads <em>Online, card</em> with a receipt number; a bank debit reads <em>clearing</em> until it clears, then <em>Online, bank debit</em>), and <strong>Email the pay link</strong> in the row&rsquo;s menu sends a family who owes their link. If you marked one by mistake, <strong>Undo: marked received by mistake</strong> takes it back; if the money is going back to the family, decline or withdraw the registration and choose <strong>Refunded</strong>. To add a player outside the public form, use <strong>Add registration</strong>.</p>
+          <p>The <strong>search box</strong> finds a player or parent email across all tabs when a family contacts you directly. When a family pays by hand, click <strong>Mark received</strong> on their row: it records the whole amount still owing, with the date and how. A family who pays by card from their sign-up page needs nothing from you (the Fee cell reads <em>Online, card</em> with a receipt number; a bank debit reads <em>clearing</em> until it clears, then <em>Online, bank debit</em>), and <strong>Email the pay link</strong> in the row&rsquo;s menu sends a family who owes their link. If you marked one by mistake, <strong>Undo: marked received by mistake</strong> takes it back; if the money is going back to the family, decline or withdraw the registration and choose <strong>Refunded</strong>. To add a player outside the public form, use <strong>Add registration</strong>.</p>
           <p>When the season is finished (completed or archived), its registrations are locked: the row actions and <strong>Add registration</strong> are gone, and a line at the top says so. <strong>Mark received</strong>, <strong>Undo</strong>, <strong>Correct the price</strong> and <strong>Email families</strong> stay, because fees still arrive after the last game.</p>
           <p>The full day-to-day workflow, including the Fee column, ending a registration, correcting a price and moving a child to another division, is in <em>Managing registrations day to day</em> in the House league guide.</p>
         </>

@@ -16,9 +16,9 @@ import { normalizeGuardianEmailRequired } from '@/lib/guardian-email';
 import { recordLeagueMarketingConsent } from '@/lib/org-people';
 import { notify } from '@/lib/notify';
 import { signupNotice, signupSubject, type PlacedChild } from '@/lib/league-signup';
-import { buildLeaguePayView, leagueMailPay } from '@/lib/league-pay-view';
+import { buildLeaguePayView, leagueMailLink } from '@/lib/league-pay-view';
 import { getClubSiteContent } from '@/lib/club-page-meta';
-import { leaguePayToken } from '@/lib/league-pay-link';
+import { leaguePayToken, leaguePayUrl } from '@/lib/league-pay-link';
 import { SIGNUP_LINK_WORDS as SW } from '@/lib/league-pay-words';
 
 export const dynamic = 'force-dynamic';
@@ -206,11 +206,14 @@ export const POST = withObservability(async (req: Request,
 
   // 5. One email per sign-up, and one notice for the club.
   const anyAccepted = placedKids.some(r => r.status === 'active');
-  // 12b: while the club takes card payments, Pay now in the email and the pay block on the confirmation (k2) — for the
-  // whole sign-up, through its first child's link. Pay when accepted: nothing is payable until a child is accepted.
+  // The email's one "Your sign-up" button, ALWAYS on the confirmation (Stage 1 ask 3), for the whole sign-up through its
+  // first child's link; 12b's card words while the club takes card payments, and the pay block on the confirmation (k2)
+  // once a child is accepted (nothing is payable before). A sign-up made a moment ago is at link version 0 (the column's
+  // default; only the club's reset moves it), so the button is signed without reading the pay facts.
+  const signupUrl = leaguePayUrl(process.env.NEXT_PUBLIC_APP_URL ?? '', { orgSlug: org.slug, seasonSlug: season.slug, registrationId: placedKids[0].id!, version: 0 });
   const contactEmail = anyAccepted ? (await getClubSiteContent(org.id).catch(() => null))?.contactEmail ?? null : null;
   const [online, pay] = anyAccepted
-    ? await Promise.all([leagueMailPay(placedKids[0].id!), buildLeaguePayView(placedKids[0].id!, contactEmail)])
+    ? await Promise.all([leagueMailLink(placedKids[0].id!).then(l => l.online), buildLeaguePayView(placedKids[0].id!, contactEmail)])
     : [null, null];
   const children: PlacedChild[] = placedKids.map(r => ({
     firstName: r.firstName, lastName: r.lastName, divisionName: r.divisionName, status: r.status, waitlistPosition: r.waitlistPosition, fee: r.fee,
@@ -224,7 +227,7 @@ export const POST = withObservability(async (req: Request,
       defaultSubject: signupSubject(children, season.name),
       defaultHtml: leagueSignupHtml({
         guardianFirstName: guardianFirst!, seasonName: season.name, clubName: org.name, reference,
-        howToPay: anyAccepted ? season.howToPay : null, statusPath: `/${org.slug}/league/${season.slug}/status`, children, face,
+        howToPay: anyAccepted ? season.howToPay : null, signupUrl, children, face,
         online,
       }),
       family: face ? {

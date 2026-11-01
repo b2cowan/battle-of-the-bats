@@ -67,17 +67,46 @@ describe('the family’s words', () => {
     assert.match(FORM, /\{result\.pay \? \(\s*<LeaguePayBlock pay=\{result\.pay\}/);
     assert.doesNotMatch(FORM + STATUS, /12b|coming soon/i);
   });
-  it('12b: the sign-up, approval and promotion emails carry Pay now only while the club takes card payments', () => {
-    const block = EMAIL.slice(EMAIL.indexOf('function payBlock('), EMAIL.indexOf('function refBlock('));
+  it('12b: the sign-up, approval and promotion emails carry the card words only while the club takes card payments', () => {
+    const block = EMAIL.slice(EMAIL.indexOf('function payBlock('), EMAIL.indexOf('function signupButton('));
     assert.match(block, /if \(online\) \{/);
-    assert.match(block, /warmEmailButton\(M\.payButton, online\.payUrl\)/);
+    // Signed-in family Stage 1 (ask 2): the money panel draws no button of its own; the one button is signupButton.
+    assert.doesNotMatch(block, /warmEmailButton\(/);
     // Without it, today's panel: the club's words and "payable separately".
     assert.match(block, /Payable separately to \$\{escapeEmailHtml\(clubName\)\}/);
     assert.match(EMAIL, /payBlock\(toPay, input\.howToPay, input\.clubName, input\.online\)/);
     assert.equal((EMAIL.match(/input\.clubName \?\? \(input\.face\?\.club\.name \?\? 'the club'\), input\.online\)/g) ?? []).length, 2);
-    // The routes ask the one helper (null unless the club takes card payments and something is owed).
-    assert.match(ROUTE, /leagueMailPay\(placedKids\[0\]\.id!\)/);
-    assert.match(readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts'), /leagueMailPay\(next\.id\)[\s\S]*leagueMailPay\(regId\)/);
+    // The routes ask the one helper (card words only while the club takes card payments and something is owed).
+    assert.match(ROUTE, /leagueMailLink\(placedKids\[0\]\.id!\)/);
+    assert.match(readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts'), /leagueMailLink\(next\.id\)[\s\S]*leagueMailLink\(regId\)/);
+  });
+  it('Stage 1 (asks 2, 3; drawing tab 5): one "Your sign-up" button — always on the confirmation, else only while owed', () => {
+    // The reference opens nothing: no plain status page, no "you'll need this reference and your email".
+    const ref = EMAIL.slice(EMAIL.indexOf('function refBlock('), EMAIL.indexOf('export function leagueSignupHtml('));
+    assert.doesNotMatch(ref, /href|\/status|You’ll need this reference/);
+    assert.match(ref, /SIGNUP_LINK_WORDS\.mail\.reference\(/);
+    assert.match(EMAIL, /function signupButton\(url: string \| null \| undefined\): string \{\s*return url \? warmEmailButton\(SIGNUP_LINK_WORDS\.mail\.button,/);
+    assert.doesNotMatch(EMAIL, /See your registration|Check your registration any time|M\.payButton/);
+    // The confirmation always (the link, owed or not); acceptance and promotion only while owed; waitlisted never.
+    assert.match(ROUTE, /const signupUrl = leaguePayUrl\([^)]*version: 0 \}\);/);
+    assert.match(ROUTE, /howToPay: anyAccepted \? season\.howToPay : null, signupUrl, children/);
+    const regRoute = readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts');
+    assert.equal((regRoute.match(/signupUrl:\s+link\.owedUrl/g) ?? []).length, 2);
+    const waitlisted = EMAIL.slice(EMAIL.indexOf('export function leagueAdminWaitlistedHtml('), EMAIL.indexOf('export function leagueWaitlistPromotedHtml('));
+    assert.doesNotMatch(waitlisted, /signupButton|warmEmailButton/);
+    assert.match(readCode('lib/league-pay-view.ts'), /owedUrl: f\.owingCents > 0 \? url : null/);
+    // Placement and moved team: only while the sign-up owes; no plain-page fallback.
+    const placement = readCode('lib/house-league-placement-mail.ts');
+    assert.match(placement, /if \(!owing\.has\(reg\.id\)\) return null;/);
+    assert.doesNotMatch(placement, /\/status`/);
+    // Receipt: only while a balance is left. Bank debit: only while owed. The club's pay link: refused when nothing is owed.
+    const receipt = readCode('lib/online-payment-receipt.ts');
+    assert.match(receipt, /link && facts\.owingCents > 0 \? warmEmailButton\(SW\.mail\.button, link\)/);
+    assert.match(receipt, /warmEmailButton\(SW\.mail\.button, payLink\)/);
+    // (A tournament team's receipt keeps "View your receipt": out of this stage.)
+    assert.doesNotMatch(receipt.slice(receipt.indexOf('async function sendLeagueReceipt('), receipt.indexOf('async function sendReceipt(')), /E\.viewReceipt/);
+    assert.doesNotMatch(receipt, /L\.button/);
+    assert.match(readCode('lib/bank-debit-email.ts'), /payLabel: SW\.mail\.button,\s*canPayAgain: facts\.owingCents > 0,/);
   });
 });
 

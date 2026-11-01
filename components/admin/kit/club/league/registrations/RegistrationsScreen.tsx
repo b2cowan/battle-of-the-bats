@@ -47,12 +47,13 @@ import { formatLeagueMoney, isOwing, lastPayment, receivedOf, type LeagueMoneyLi
 import { orgDayKey } from '@/lib/timezone';
 import {
   bulkActions, bulkResult, endedKind, feeCell, isOpenReg, matchesPicks, matchesSearch, owesNow, phoneDetail, playerName, guardianName,
-  priceOn, REG_TABS, regDay, regTab, regFilterCounts, regFilterOffer, rowActions, seasonHasFees, tallyWhy, whyOf, isRegTab,
+  priceOn, REG_TABS, regDay, regTab, regFilterCounts, regFilterOffer, rowActions, seasonHasFees, signupChildren, tallyWhy, whyOf, isRegTab,
   NO_PICKS, NOT_PLACED,
   type BulkKey, type PriceChange, type RegFilterGroup, type RegFilterPicks, type RegRights, type RegTab, type RegsDivision, type RegsRead, type RegsSeason,
   type RowActionKey, type Why, howOf,
 } from '@/lib/house-league-registrations';
 import type { LeagueRegistration } from '@/lib/types';
+import { joinWithAnd } from '@/lib/utils';
 import { patchRegistration } from './api';
 import AddRegistrationWindow from './AddRegistrationWindow';
 import BulkBar from './BulkBar';
@@ -86,9 +87,16 @@ type Act =
   | { kind: 'email'; ids: string[] }
   | { kind: 'confirm'; verb: 'approve' | 'promote' | 'waitlist'; ids: string[] }
   | { kind: 'payLinkAnyway'; reg: LeagueRegistration }
+  | { kind: 'newLink'; reg: LeagueRegistration }
   | { kind: 'add' };
 
 interface TeamLite { id: string; name: string; divisionId: string }
+
+/** The first names on a registration's sign-up, for "Send a new link" (the menu hint and the confirm name the same children). */
+function signupKids(reg: LeagueRegistration, all: readonly LeagueRegistration[]) {
+  const kids = signupChildren(reg, all);
+  return { names: joinWithAnd(kids.map(k => k.playerFirstName)), many: kids.length > 1 };
+}
 
 /** The row action that opens the ending window, and which ending it is. */
 const END_MODE = { release: 'released', withdraw: 'withdrawn', decline: 'declined' } as const;
@@ -269,6 +277,7 @@ export default function RegistrationsScreen() {
       case 'waitlist': return { key, label: M.waitlist.label, hint: M.waitlist.hint(playerName(reg)) };
       case 'promote': return { key, label: M.promote.label, hint: M.promote.hint(playerName(reg), division ?? REGS_WORDS.noDivision) };
       case 'payLink': return { key, label: M.payLink.label, hint: reg.payLinkSentAt ? M.payLink.hintSent(regDay(reg.payLinkSentAt, today)) : M.payLink.hint };
+      case 'newLink': return { key, label: M.newLink.label, hint: M.newLink.hint(signupKids(reg, read?.registrations ?? []).names) };
       case 'refundCard': return { key, label: M.refundCard.label, hint: M.refundCard.hint(formatLeagueMoney(read?.unrecordedCard?.[reg.id]?.[0]?.amount ?? 0)) };
       case 'refundAnotherWay': return { key, label: M.refundAnotherWay.label, hint: M.refundAnotherWay.hint(formatLeagueMoney(read?.returnedRefunds?.[reg.id]?.[0]?.amount ?? 0)) };
       case 'viewPayment': {
@@ -442,6 +451,7 @@ export default function RegistrationsScreen() {
       case 'email': setAct({ kind: 'email', ids: [reg.id] }); break;
       case 'undo': { const payment = lastPayment(linesOf(reg.id)); if (payment) setAct({ kind: 'undo', id: reg.id, payment }); break; }
       case 'payLink': void payLinkOne(reg); break;
+      case 'newLink': setAct({ kind: 'newLink', reg }); break;
       case 'refundCard': { const s = read?.unrecordedCard?.[reg.id]?.[0]; if (s) setCardAct({ op: 'refundCard', reg, id: s.itemId, amount: s.amount }); break; }
       case 'refundAnotherWay': { const r = read?.returnedRefunds?.[reg.id]?.[0]; if (r) setCardAct({ op: 'refundAnotherWay', reg, id: r.refundId, amount: r.amount }); break; }
       // 12c Part 7: the record, opened at its Fee (the payment and its refunds in one place, §0j).
@@ -511,6 +521,15 @@ export default function RegistrationsScreen() {
     if (!r.ok) { setNotes(n => ({ ...n, [reg.id]: { text: r.error } })); return; }
     afterWrite(false);
     say(REGS_WORDS.payLink.sent(reg.guardianEmail));
+  }
+
+  // ── A new family link (Signed-in family accounts Stage 1, drawing tab 4): the confirm names the children it covers ──
+  async function runNewLink(reg: LeagueRegistration) {
+    const r = await patchRegistration(orgQuery, seasonId, reg.id, { newLink: true });
+    setAct(null);
+    if (!r.ok) { setNotes(n => ({ ...n, [reg.id]: { text: r.error } })); return; }
+    afterWrite(false);
+    say(REGS_WORDS.newLink.sent(reg.guardianEmail));
   }
 
   /** One email per family: a sign-up's siblings share one pay link. */
@@ -656,6 +675,7 @@ export default function RegistrationsScreen() {
 
   const raised = openId != null;
   const picked = selectedRegs.length;
+  const newLinkFor = act?.kind === 'newLink' ? signupKids(act.reg, read?.registrations ?? []) : null;
 
   return (
     <div className={`${repKit.page} ${repKit.moneyFrame} ${css.screen}`} data-selecting={picked > 0 || undefined}>
@@ -932,6 +952,15 @@ export default function RegistrationsScreen() {
           go={DISPUTE_WORDS.sendAnywayGo}
           onClose={() => setAct(null)}
           onConfirm={async () => { const reg = act.reg; setAct(null); await payLinkOne(reg, true); }}
+        />
+      )}
+      {act?.kind === 'newLink' && newLinkFor && (
+        <ConfirmWindow
+          title={REGS_WORDS.newLink.title}
+          body={REGS_WORDS.newLink.body(newLinkFor.names, newLinkFor.many, act.reg.guardianEmail)}
+          go={REGS_WORDS.newLink.go}
+          onClose={() => setAct(null)}
+          onConfirm={() => runNewLink(act.reg)}
         />
       )}
       {act?.kind === 'confirm' && (

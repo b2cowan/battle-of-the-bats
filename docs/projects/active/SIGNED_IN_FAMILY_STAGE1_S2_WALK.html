@@ -1,0 +1,247 @@
+<title>Family link walk §437</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the 9d-2b walks' frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.opts { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.opt { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--fg); cursor: pointer; }
+.opt input { margin-top: 0; }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Signed-in family accounts · Stage 1 · Session 2 · §437</span>
+    <h1>The family’s link, end to end</h1>
+    <p class="sub">Written 2026-11-01 for Stage 1, Session 2 (Parts 5–8). One purpose; sign it off on its own. Session 1’s page, “Email me my link” and the ended screens are read again here only where this session’s changes pass through them.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>A family’s one link opens <strong>“Your sign-up”</strong>, which names each child by first name and now hides most of the parent’s email. The club can stop that link and send a new one with <strong>Send a new link</strong>. That stops it for every brother and sister on the sign-up at once, and the new one opens for all of them. This walk follows one family, the Walkfams (Maya and Leo, one sign-up), through the page, the club’s new row, the old link stopping and the new one opening.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>The family page shows Maya and Leo by first name only, and the parent’s address only as <strong>p•••@example.invalid</strong>, wherever it appears.</li>
+    <li>Stripe’s checkout page names each child by first name.</li>
+    <li>The registration’s “What you can do” has <strong>Send a new link</strong>, whose hint names Maya and Leo. Its confirm, toast and history line read as drawn.</li>
+    <li>After the reset, BOTH children’s old links say “This link no longer works”, and both new links open the page.</li>
+    <li>A registrar sees the row too (it is not only for the people who handle money).</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>The emails.</strong> Dev sends no email, so the new “Your sign-up” button (and where it no longer appears: a paid family’s placement email, a fully paid receipt) cannot be read here. The unit tests pin each email against the drawing’s tab 5 table. Read them on the first production sends.</li>
+    <li><strong>The unsubscribe secret.</strong> Nothing changes on screen while the secret is set (it is, on dev). Your production step is listed in the hand-off.</li>
+    <li>Paying. Part B opens Stripe’s page only to read its lines, and leaves without paying.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Order</dt><dd>Walk this after the <code>/simplify</code> and <code>/review</code> sessions. The dev server was restarted for this build; if it has been restarted since, wait for “Ready”.</dd>
+    <dt>Setup</dt><dd>In the project folder: <code>node --env-file=.env.local .probe/signed-in-family-s2/fixture.mjs</code>. It makes the <strong>Walkfam</strong> sign-up in UAT Rep Club’s <strong>2026 Fall House League</strong>, U9 Rookie: Maya and Leo, both accepted, $150.00 each, nothing paid, parent Priya at <code>priya.walkfam@example.invalid</code>. It prints each child’s link. <strong>Copy both links somewhere before Part C</strong>: they become the “old” links.</dd>
+    <dt>New links</dt><dd><code>node --env-file=.env.local .probe/signed-in-family-s2/fixture.mjs --links</code> prints the current links and, after a reset, the first ones too.</dd>
+    <dt>Walk it again</dt><dd><code>… fixture.mjs --reset</code>, then the setup line again.</dd>
+  </dl></section>
+  <section class="card"><h2>Sign in as</h2><p>The family needs no sign-in: open their links in a private window. Dev only, keep this page private.</p><dl class="facts">
+    <dt>League admin</dt><dd><code>uat-club-league-admin@uat-rep-club.local</code> · <code>UATPassword2026!</code>: Parts C and D</dd>
+    <dt>Registrar</dt><dd><code>uat-club-registrar@uat-rep-club.local</code> · <code>UATPassword2026!</code>: Part F</dd>
+  </dl><p class="sub">Sign in at <code>http://localhost:3000/login</code>. Registrations: <code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/registrations</code></p></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>The receipt-email field (A3).</strong> Your ruling named one place the address showed, the withdraw ask’s “sent” line. The build found a second one: the pay block’s receipt-email field opened on the full address. It now opens on <strong>p•••@example.invalid</strong>; left as it is, the receipt goes to the address on file, and typing a new one works as before. Say whether a masked address in an editable field reads well, or whether the field should open empty with “Receipt goes to p•••@example.invalid” beside it.</li>
+    <li><strong>The new-link email’s words (not drawn).</strong> Subject “A new link to your sign-up · 2026 Fall House League”; heading “Your new sign-up link”; “UAT Rep Club sent you a new link to your sign-up for Maya and Leo in 2026 Fall House League. The link you had before no longer works.”; the one Your sign-up button; the reference line. You cannot read it on dev. Confirm the words, or send them to /marketing.</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+<script>
+(function () {
+  var KEY = "signed-in-family-s2-walk-v1";
+  var TITLE = "Signed-in family Stage 1 Session 2 walk §437 · The family’s link, end to end (2026-11-01)";
+  var FAM = "Family · a private window, no sign-in";
+  var LA = "League admin · uat-club-league-admin@uat-rep-club.local";
+  var REG = "Registrar · uat-club-registrar@uat-rep-club.local";
+  var PARTS = [
+ { id: "A", title: "The family’s page", steps: [
+  { who: FAM, do: "Open <strong>Maya’s link</strong> from the setup.",
+    see: "The page is titled <strong>Your sign-up</strong>, with 2026 Fall House League under it. It lists <strong>Maya</strong> and <strong>Leo</strong> by first name only; “Walkfam” appears nowhere. The reference line reads “Reference: {the reference} · quote it if you contact the club”. The foot reads “Anyone with this link can open this page. If it has been shared, ask the club to send you a new one.”" },
+  { who: FAM, do: "Open <strong>Leo’s link</strong> in another tab.",
+    see: "The same page: both children, the same reference. One link opens the whole sign-up." },
+  { who: FAM, do: "On Maya’s tab, find the pay block and its receipt-email field.",
+    see: "The field shows <strong>p•••@example.invalid</strong>, never the full address. The pay block’s lines name Maya and Leo by first name.",
+    call: "Call: the receipt-email field (see “Calls to make”)." },
+  { who: FAM, do: "Ask to withdraw <strong>Leo</strong> (the page’s withdraw request), with any note, and send it.",
+    see: "The “sent” line names the address as <strong>p•••@example.invalid</strong>, not in full." }
+ ]},
+ { id: "B", title: "Stripe’s page names the children by first name", steps: [
+  { who: FAM, do: "On Maya’s tab, press <strong>Pay by card</strong> (the pay block’s card button).",
+    see: "Stripe’s test checkout opens. Each line reads like <strong>Maya · U9 Rookie · 2026 Fall House League</strong> (and Leo’s the same way), with no last name. If the club pays the fee, there is no fee line; if the family pays it, a separate fee line." },
+  { who: FAM, do: "Leave Stripe’s page with its back arrow, without paying.",
+    see: "Back on Your sign-up, nothing paid." }
+ ]},
+ { id: "C", title: "The club’s new row", steps: [
+  { who: LA, do: "Open Registrations (link above) and open <strong>Maya Walkfam</strong>’s record. Read “What you can do”.",
+    see: "After <strong>Email the pay link</strong> (hint “Opens their sign-up page to pay by card” if it was never sent, else “Last sent {day}”) comes <strong>Send a new link</strong>, hint <strong>“Stops the link they have now, for Maya and Leo”</strong>. The club’s screens keep full names (“Maya Walkfam”)." },
+  { who: LA, do: "Press <strong>Send a new link</strong>.",
+    see: "A confirm titled <strong>Send a new link?</strong>: “The link this family has now stops working straight away, for Maya and Leo, who are on the same sign-up. The new one goes to priya.walkfam@example.invalid. If that address is wrong, change the email first.” Buttons Cancel and <strong>Send a new link</strong>." },
+  { who: LA, do: "Press <strong>Cancel</strong>. In the family’s window, reload Maya’s link.",
+    see: "The confirm closes and nothing changed: the family’s page still opens." },
+  { who: LA, do: "Press <strong>Send a new link</strong> again, then the confirm’s <strong>Send a new link</strong>.",
+    see: "The page-level toast reads <strong>“New link sent to priya.walkfam@example.invalid.”</strong> Maya’s History has a new top line, today: <strong>“New link sent; the old one stopped”</strong>, with no name of who did it." },
+  { who: LA, do: "Open <strong>Leo Walkfam</strong>’s record.",
+    see: "Leo’s History has the same line: one reset covers the whole sign-up." }
+ ]},
+ { id: "D", title: "The old links stop, the new ones open", steps: [
+  { who: FAM, do: "Reload <strong>Maya’s old link</strong> (the one from the setup).",
+    see: "<strong>This link no longer works</strong>: “The club may have sent you a newer one, so check your inbox. Or have your link sent again.”, with the parent-email field and <strong>Email me my link</strong>." },
+  { who: FAM, do: "Open <strong>Leo’s old link</strong>.",
+    see: "The same “This link no longer works” screen. The brother’s link stopped too." },
+  { who: LA, do: "In the project folder run <code>… fixture.mjs --links</code>. Open Maya’s new <strong>current link</strong> in the family’s window, then Leo’s.",
+    see: "The script shows link version 1 for both. Both new links open Your sign-up with Maya and Leo; Leo’s withdraw request from A4 is still there." },
+  { who: FAM, do: "On the “no longer works” screen (Maya’s old link), type <code>priya.walkfam@example.invalid</code> and press <strong>Email me my link</strong>.",
+    see: "“Check your inbox”, the same answer as for any address. (Dev sends nothing; the email it would send carries the NEW link.)" }
+ ]},
+ { id: "E", title: "Who sees the row", steps: [
+  { who: REG, do: "In a second private window, open Registrations and Maya Walkfam’s record.",
+    see: "<strong>Send a new link</strong> is offered to the registrar too, with the same hint." },
+  { who: REG, do: "Open the record of any child on the season whose registration has no email, if there is one. Otherwise skip and tick.",
+    see: "No Send a new link without an address to send it to." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

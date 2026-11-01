@@ -100,6 +100,8 @@
     session's notification-kind constraint.
 
   **Not changed: owner questions or accepted risk.**
+  - **✅ Both owner questions RULED 2026-11-01:** Stripe gets first names, and the email is partly hidden. Both are Session 2
+    work, written into the build prompt as **Part 5b**.
   - **Owner question: the Stripe checkout page** shows "Maya Okafor · U9 · 2026 Season" per line. This is the family's
     browser, on Stripe's page. Session 1 left checkout line names alone on purpose ("paying is out of scope"). Should Part 5+
     give Stripe first names? (The club's record keeps full names either way.)
@@ -120,7 +122,14 @@
     harmless, since the check passes. The entry is left for the baseline's own tooling.
   - **For Part 6:** nothing writes `link_version` yet. The reset must bump every row of the sign-up (same `signup_ref` +
     `guardian_email`) in ONE statement, or a sibling's per-child placement link survives.
-- [ ] **Step 3 · commit + hand over Session 2** —
+- [x] **Step 3 · commit + hand over Session 2** — 2026-11-01. **Session 1 committed `d79603110`** on `dev` (39 files,
+  parent `19f551396`). Built in a temp index on that base, pre-commit hook run by hand (tokens, dates, lockfile pass),
+  `commit-tree` + compare-and-swap `update-ref`. The 9 suites re-run first: 262/262. The three shared records carry Session 1's
+  lines only: the house-league session's `house_league_practice_coach_copy` kind, its dictionary entries
+  (`coaches_copied_at`, the coach calendar columns) and its MANUAL_PROD_STEPS 415 sentence + 420 entry stay uncommitted in
+  the working copy for that session. **Left out on purpose:** the schema snapshot files and `memory/reference_db_schema.md`
+  (they also carry the billing session's 416–418; a records commit). No committed file imports another session's uncommitted
+  module. This hash line and the build prompt's are uncommitted record edits.
 
 ## The Session 1 files (the whole scope of every step)
 

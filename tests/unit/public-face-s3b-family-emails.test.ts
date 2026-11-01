@@ -270,7 +270,8 @@ describe('S3b — the foot of the card (copy items 2, 7, 8)', () => {
   });
   it('the family envelope puts the reply line between the reason and the unsubscribe link, and drops an eyebrow that repeats the band', () => {
     const code = readCode('lib/family-email.ts');
-    assert.match(code, /\$\{footer\.sentBy\}<br>\s*\$\{reply\}<a href="\$\{unsubscribeUrl\}"/);
+    // (Signed-in family Stage 1, Part 7: no secret, no link — the order is unchanged when there is one.)
+    assert.match(code, /\$\{footer\.sentBy\}<br>\s*\$\{reply\}\$\{unsubscribeUrl \? `<a href="\$\{unsubscribeUrl\}"/);
     assert.match(code, /eyebrowRepeatsBand\(content\.teamName, content\.club\.name\)/);
     assert.match(code, /familySenderName\(content\.club\.name\)/);
   });

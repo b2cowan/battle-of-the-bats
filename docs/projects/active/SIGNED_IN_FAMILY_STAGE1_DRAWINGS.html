@@ -1,0 +1,899 @@
+<title>Your Sign-up Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky numbered tabs, one section at a time, framed specimens on a neutral ground. Family frames wear the club's public site; club frames wear the warm admin kit. */
+:root {
+  --bg: #E7E9EC;
+  --panel: #F6F7F8;
+  --fg: #1B2330;
+  --muted: #566073;
+  --line: #CBD0D8;
+  --accent: #2F4B7C;
+  --accent-ink: #FFFFFF;
+  --good: #1F6B3A;
+  --warn: #8A5A00;
+  --bad: #A8321F;
+  --pin: #A8321F;
+  --stage: #B9B6AD;
+  --scrim: rgba(10, 14, 20, 0.45);
+
+  /* Club public frame (ClubFrame tokens, real values). Same in both page themes: the frame is a specimen. */
+  --c-ground: #F6F5F2;
+  --c-card: #FFFFFF;
+  --c-ink: #1F1B16;
+  --c-soft: #4E473D;
+  --c-line: #E4E0D8;
+  --c-line2: #D6D0C4;
+  --c-field: #948B7D;
+  --c-ok: #2C6A2A;
+  --c-ok-bg: #E6F0E2;
+  --c-chip: #EEEBE5;
+  --club: #1E3A5F;
+  --club-on: #FFFFFF;
+  --club-accent: #E2B33C;
+
+  /* Warm admin kit (real values). */
+  --p-card: #FFFFFF;
+  --p-ink: #241E15;
+  --p-ink-soft: #4A4235;
+  --p-dim: #615A54;
+  --p-line: rgba(70, 55, 30, 0.12);
+  --p-olive: #57651E;
+  --p-olive-soft: #F1F3E6;
+  --p-lime: #D6F58C;
+
+  /* Warm email (WARM_EMAIL tokens). */
+  --e-ground: #F6F1EA;
+  --e-card: #FFFFFF;
+  --e-edge: #DAD3C9;
+  --e-ink: #211C15;
+  --e-soft: #665F57;
+  --e-olive: #55641C;
+  --e-lime: #D9F99D;
+  --e-panel: #F7F3EC;
+
+  --font-ui: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-club: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-club-title: "Barlow Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161D; --panel: #1B212B; --fg: #E6E9EF; --muted: #A2ABBB; --line: #333C4B;
+    --accent: #8FB0F0; --accent-ink: #0E1522; --good: #6CCB8C; --warn: #E0B050; --bad: #F08A78; --pin: #E0604A;
+    --stage: #5D5B55; --scrim: rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161D; --panel: #1B212B; --fg: #E6E9EF; --muted: #A2ABBB; --line: #333C4B;
+  --accent: #8FB0F0; --accent-ink: #0E1522; --good: #6CCB8C; --warn: #E0B050; --bad: #F08A78; --pin: #E0604A;
+  --stage: #5D5B55; --scrim: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-ui); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 1000px; margin: 0 auto; }
+
+header.top { padding: 22px 0 10px; }
+header.top h1 { margin: 0 0 4px; font-size: 22px; line-height: 1.2; text-wrap: balance; }
+header.top p { margin: 0; color: var(--muted); max-width: 74ch; }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); padding: 8px 0 0; border-bottom: 1px solid var(--line); }
+.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex: 0 0 auto; border: 1px solid transparent; border-bottom: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 600; padding: 9px 14px; border-radius: 8px 8px 0 0; cursor: pointer; white-space: nowrap; }
+.tab:hover { color: var(--fg); }
+.tab[aria-selected="true"] { background: var(--panel); color: var(--fg); border-color: var(--line); margin-bottom: -1px; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.viewrow { display: flex; align-items: center; gap: 12px; padding: 12px 0 4px; flex-wrap: wrap; }
+.viewrow .lab { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.seg { display: inline-flex; background: #FFFFFF; border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: #4A4235; padding: 6px 14px; border-radius: 8px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: #EDEBE3; color: #241E15; box-shadow: 0 0 0 1px rgba(70,55,30,0.18); }
+
+section.pane { display: none; padding: 14px 0 0; }
+section.pane.on { display: block; }
+.say { max-width: 76ch; margin: 6px 0 14px; }
+.say h2 { margin: 0 0 4px; font-size: 18px; text-wrap: balance; }
+.say p { margin: 0 0 8px; color: var(--muted); }
+.found { background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--pin); border-radius: 8px; padding: 12px 16px; margin: 0 0 16px; max-width: 80ch; }
+.found h3 { margin: 0 0 6px; font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.found ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.found li { color: var(--fg); }
+.found li span { color: var(--muted); }
+
+.cap { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 18px 0 8px; }
+.cap h3 { margin: 0; font-size: 15px; }
+.tag { font: inherit; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; padding: 2px 9px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); cursor: pointer; }
+.tag.new { color: var(--good); border-color: var(--good); }
+.tag.rest { color: var(--warn); border-color: var(--warn); }
+.tag.bad { color: var(--bad); border-color: var(--bad); }
+.tag:hover { filter: brightness(0.95); }
+
+.pin { display: inline-grid; place-items: center; vertical-align: middle; width: 22px; height: 22px; margin-left: 6px; border-radius: 50%; border: 2px solid #FFFFFF; background: var(--pin); color: #FFFFFF; font: 700 11px/1 system-ui, sans-serif; cursor: pointer; padding: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.pin:hover { transform: scale(1.12); }
+
+.scroll { overflow-x: auto; border-radius: 10px; }
+.stage { background: var(--stage); padding: 26px 30px; width: 860px; max-width: none; border-radius: 10px; }
+.stage.narrow { width: 560px; }
+.stage.phone { width: 430px; padding: 22px 20px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.pair > div { min-width: 0; }
+.pair .stage { width: auto; min-width: 400px; padding: 18px; }
+.pair .stage.phone { width: 430px; min-width: 430px; padding: 22px 20px; }
+@media (max-width: 820px) { .pair { grid-template-columns: 1fr; } }
+.measure { display: flex; gap: 6px 18px; flex-wrap: wrap; margin-top: 10px; font-size: 13px; color: var(--muted); max-width: 90ch; }
+.measure b { color: var(--fg); }
+
+.diff [data-same] { opacity: 0.16; filter: grayscale(1); transition: opacity .15s; }
+
+/* ── Club public frame (ClubFrame + ClubKit + PayBlock, round 2 after /design) ── */
+.cf { background: var(--c-ground); color: var(--c-ink); font-family: var(--font-club); font-size: 15px; line-height: 1.45; border-radius: 10px; overflow: hidden; box-shadow: 0 12px 36px rgba(20, 24, 30, 0.25); }
+.cf-bar { background: var(--club); color: var(--club-on); min-height: 72px; display: flex; align-items: center; gap: 14px; padding: 0 28px; border-bottom: 3px solid var(--club-accent); flex-wrap: wrap; }
+.cf-logo { width: 44px; height: 44px; border-radius: 10px; background: var(--club-on); color: var(--club); display: grid; place-items: center; font-family: var(--font-club-title); font-weight: 700; font-size: 18px; flex: 0 0 auto; }
+.cf-name { font-family: var(--font-club-title); font-weight: 700; font-size: 24px; line-height: 1; }
+.cf-tagline { font-size: 12px; opacity: 0.8; margin-top: 3px; }
+.cf-nav { margin-left: auto; display: flex; gap: 18px; font-size: 14px; font-weight: 600; opacity: 0.92; }
+.cf-signin { font-weight: 600; font-size: 14px; }
+.cf-main { padding: 30px 28px 40px; }
+.cf-col { max-width: 560px; display: grid; gap: 14px; }
+.cf-back { color: var(--club); font-size: 15px; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+.cf-head { margin-bottom: 18px; }
+.cf-org { color: var(--c-soft); font-size: 14px; margin-bottom: 6px; }
+.cf-h1 { font-family: var(--font-club-title); font-weight: 700; font-size: 32px; line-height: 1.1; margin: 0; letter-spacing: 0.005em; }
+.cf-sub { color: var(--c-soft); font-size: 14px; margin-top: 4px; }
+.cf-band { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-soft); }
+.cf-ref { font-size: 14px; color: var(--c-soft); }
+.cf-ref b { color: var(--c-ink); }
+.cf-card { background: var(--c-card); border: 1px solid var(--c-line); border-radius: 8px; padding: 20px 24px; display: grid; gap: 10px; }
+.cf-card h2 { margin: 0; font-size: 18px; font-weight: 700; }
+.cf-kid { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.cf-kid b { font-size: 16px; }
+.cf-chip { font-size: 12px; font-weight: 600; border-radius: 20px; padding: 6px 10px; line-height: 1; background: var(--c-ground); border: 1px solid var(--c-line2); color: var(--c-soft); white-space: nowrap; }
+.cf-chip.ok { background: var(--c-ok-bg); border-color: var(--c-ok-bg); color: var(--c-ok); }
+.cf-rows { display: grid; font-size: 14px; }
+.cf-rows > div { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; }
+.cf-rows span:first-child { color: var(--c-soft); }
+.cf-rows span:last-child { text-align: right; }
+.cf-rows .owe { font-weight: 650; }
+.cf-note { font-size: 14px; color: var(--c-soft); margin: 0; }
+.cf-field { display: grid; gap: 5px; }
+.cf-field label { font-size: 14px; font-weight: 600; color: var(--c-soft); }
+.cf-input { height: 44px; border: 1px solid var(--c-field); border-radius: 8px; background: var(--c-card); padding: 0 12px; display: flex; align-items: center; color: var(--c-ink); font-size: 15px; }
+.cf-input.ph { color: #8A8378; }
+.cf-input.ref { font-weight: 600; letter-spacing: 0.05em; }
+.cf-hint { font-size: 13px; color: var(--c-soft); }
+.cf-btn { min-height: 44px; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 18px; border: 1px solid var(--c-line2); background: var(--c-card); color: var(--c-ink); width: max-content; max-width: 100%; }
+.cf-btn.primary { background: var(--club); border-color: var(--club); color: var(--club-on); }
+.cf-btn.outline { background: transparent; border: 1.5px solid var(--club); color: var(--club); }
+.cf-btn.pay { min-height: 48px; }
+.cf-btn svg { width: 18px; height: 18px; flex: 0 0 auto; }
+.cf-btn.wide, .cf.phone .cf-btn.pay { width: 100%; }
+.cf-link { color: var(--club); text-decoration: underline; text-underline-offset: 3px; font-size: 14px; }
+.cf-quiet { font-size: 13px; color: var(--c-soft); }
+.cf-foot { background: var(--club); color: var(--club-on); border-top: 3px solid var(--club-accent); padding: 18px 28px; display: flex; gap: 12px 20px; align-items: center; flex-wrap: wrap; }
+.cf-foot .fname { font-family: var(--font-club-title); font-weight: 700; font-size: 20px; margin-right: auto; }
+.cf-foot .q { display: grid; gap: 2px; }
+.cf-foot .q small { font-size: 12px; opacity: 0.85; }
+.cf-foot .q u { font-size: 16px; text-underline-offset: 3px; }
+.cf-foot .cp { width: 44px; height: 44px; border: 1px solid rgba(255,255,255,0.45); border-radius: 8px; display: grid; place-items: center; }
+.cf-foot .cp svg { width: 18px; height: 18px; }
+.cf.phone .cf-bar { min-height: 60px; padding: 8px 16px; gap: 10px; }
+.cf.phone .cf-logo { width: 36px; height: 36px; font-size: 15px; }
+.cf.phone .cf-name { font-size: 20px; }
+.cf.phone .cf-tagline, .cf.phone .cf-nav { display: none; }
+.cf.phone .cf-signin { margin-left: auto; }
+.cf.phone .cf-main { padding: 12px 16px 28px; }
+.cf.phone .cf-card { padding: 16px; }
+.cf.phone .cf-h1 { font-size: 28px; }
+.cf.phone .cf-foot { padding: 14px 16px; }
+
+/* ── Warm admin window (KitDialog record + Registrations.module.css) ── */
+.aw { background: var(--p-card); color: var(--p-ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.4; border-radius: 14px; box-shadow: 0 12px 40px rgba(36,30,21,0.3); max-width: 640px; margin: 0 auto; }
+.aw-head { padding: 18px 24px 8px; position: relative; }
+.aw-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--p-ink-soft); }
+.aw-title { font-size: 18px; font-weight: 700; margin: 3px 0 0; }
+.aw-id { color: var(--p-dim); font-size: 13px; margin-top: 2px; }
+.aw-x { position: absolute; right: 22px; top: 18px; font-size: 20px; color: var(--p-ink-soft); }
+.aw-body { padding: 8px 24px 18px; display: grid; gap: 16px; }
+.aw-h { font-family: var(--font-club-title); font-size: 13px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--p-ink-soft); margin: 0 0 6px; }
+.aw-facts { display: grid; grid-template-columns: 150px 1fr; gap: 4px 12px; }
+.aw-facts dt { color: var(--p-dim); }
+.aw-facts dd { margin: 0; }
+.aw-do { list-style: none; margin: 0; padding: 0; border: 1px solid var(--p-line); border-radius: 8px; overflow: hidden; }
+.aw-do li { border-bottom: 1px solid var(--p-line); padding: 9px 14px; display: grid; gap: 1px; }
+.aw-do li:last-child { border-bottom: 0; }
+.aw-do b { font-weight: 650; font-size: 14px; }
+.aw-do span { font-size: 12px; color: var(--p-dim); }
+.aw-hist { display: grid; grid-template-columns: 70px 1fr; gap: 4px 12px; font-size: 13px; }
+.aw-hist dt { color: var(--p-dim); }
+.aw-hist dd { margin: 0; }
+.aw-hist .nw { color: var(--good); font-weight: 700; }
+.aw-foot { border-top: 1px solid var(--p-line); padding: 10px 24px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.aw-nb { border: 1px solid var(--p-line); border-radius: 8px; padding: 6px 12px; display: grid; gap: 0; background: var(--p-card); }
+.aw-nb small { font-size: 11px; color: var(--p-dim); }
+.aw-nb b { font-size: 13px; }
+.aw-count { flex: 1; text-align: center; color: var(--p-dim); font-size: 13px; }
+.aw-btn { border: 1px solid rgba(70, 55, 30, 0.28); border-radius: 8px; padding: 8px 14px; font-weight: 700; background: var(--p-card); font-size: 14px; }
+.aw-btn.lime { background: var(--p-lime); border-color: var(--p-lime); }
+.aw-foot .end { margin-left: auto; display: flex; gap: 8px; }
+.aw-confirm { max-width: 416px; }
+.aw-confirm p { margin: 0; color: var(--p-ink-soft); font-size: 14px; }
+.toast { display: inline-flex; gap: 8px; align-items: center; background: var(--p-card); color: var(--p-dim); border: 1px solid var(--p-line); font-family: var(--font-ui); font-size: 14px; font-weight: 600; padding: 9px 16px; border-radius: 99px; box-shadow: 0 8px 24px rgba(36,30,21,0.18); white-space: nowrap; }
+.toast svg { width: 16px; height: 16px; color: #2C6A2A; }
+
+/* ── Warm email (email-envelope-warm.ts, round 2 after /design) ── */
+.em { background: var(--e-ground); padding: 22px 16px; border-radius: 10px; font-family: Arial, Helvetica, sans-serif; color: var(--e-ink); font-size: 16px; line-height: 1.55; }
+.em-meta { font-size: 13px; color: var(--e-soft); margin: 0 auto 10px; max-width: 560px; }
+.em-meta b { color: var(--e-ink); }
+.em-card { background: var(--e-card); border: 1px solid #C9C1B2; border-radius: 12px; max-width: 560px; margin: 0 auto; overflow: hidden; }
+.em-band { background: var(--club); color: var(--club-on); border-bottom: 3px solid var(--club-accent); padding: 14px 22px; display: flex; align-items: center; gap: 12px; }
+.em-band .tile { width: 36px; height: 36px; border-radius: 8px; background: var(--club-on); color: var(--club); display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+.em-band b { font-size: 18px; }
+.em-in { padding: 22px 26px 18px; }
+.em-in h4 { margin: 0 0 16px; font-size: 22.4px; }
+.em-in p { margin: 0 0 12px; }
+.em-in ul { margin: 8px 0 16px; padding-left: 20px; }
+.em-panel { background: var(--e-ground); border: 1px solid #C9C1B2; border-left: 3px solid var(--e-soft); padding: 16px 18px; margin: 0 0 18px; }
+.em-panel.olive { border-left-color: var(--e-olive); }
+.em-panel .lab { font-size: 16px; font-weight: 700; margin: 0 0 6px; }
+.em-panel p { margin: 0 0 8px; }
+.em-panel p:last-child { margin-bottom: 0; }
+.em-btn { display: inline-block; background: var(--e-lime); border: 1px solid var(--e-olive); border-radius: 10px; padding: 13px 24px; font-weight: 700; font-size: 16px; color: var(--e-ink); margin: 4px 0 18px; }
+.em-a { color: var(--e-olive); text-decoration: underline; word-break: break-all; }
+.em-small { font-size: 14px; color: var(--e-soft); }
+.em-ref { font-family: var(--font-mono); font-weight: 700; color: var(--e-ink); }
+.em-foot { border-top: 1px solid #E4DDD1; padding: 14px 26px; font-size: 13px; color: var(--e-soft); }
+.em-plat { font-size: 12px; color: var(--e-soft); text-align: center; padding: 10px 0 0; }
+
+/* ── When it ends ── */
+.tl { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; }
+.tl-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.tl-step { border-top: 4px solid var(--good); padding-top: 8px; min-width: 0; }
+.tl-step.end { border-top-color: var(--bad); }
+.tl-step.maybe { border-top-style: dashed; border-top-color: var(--warn); }
+.tl-step b { display: block; font-size: 14px; }
+.tl-step span { font-size: 13px; color: var(--muted); }
+.tl-branch { border-left: 3px dashed var(--warn); padding: 4px 0 4px 12px; font-size: 14px; }
+.tl-branch b { color: var(--warn); }
+@media (max-width: 720px) { .tl-row { grid-template-columns: 1fr; } }
+
+/* tables on the page itself */
+.tbl { overflow-x: auto; }
+.tbl table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+.tbl th { text-align: left; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 9px 12px; border-bottom: 1px solid var(--line); }
+.tbl td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl .off { color: var(--muted); }
+.tbl .chg { color: var(--good); font-weight: 600; }
+.tbl .gone { color: var(--bad); text-decoration: line-through; }
+
+/* asks */
+.ask { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 0 0 12px; scroll-margin-top: 90px; }
+.ask.flash { box-shadow: 0 0 0 3px var(--pin); }
+.ask h3 { margin: 0 0 2px; font-size: 16px; }
+.ask > p { margin: 0 0 10px; color: var(--muted); max-width: 76ch; }
+.ask .see { font: inherit; font-size: 13px; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.opts { display: grid; gap: 8px; }
+.opt { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; cursor: pointer; background: var(--bg); }
+.opt:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.opt input { margin: 3px 0 0; }
+.opt b { display: block; }
+.opt span { color: var(--muted); font-size: 14px; }
+.rec { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: var(--good); margin-left: 6px; }
+.ask textarea { width: 100%; min-height: 54px; margin-top: 8px; font: inherit; font-size: 14px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.copy { margin-top: 6px; font: inherit; font-weight: 700; padding: 10px 18px; border-radius: 8px; border: 0; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+#answers { width: 100%; min-height: 170px; margin-top: 10px; font: 13px/1.45 var(--font-mono); background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+.note { color: var(--muted); font-size: 13px; margin-top: 8px; }
+
+/* explanation box */
+.nb-scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 50; display: grid; place-items: center; padding: 16px; }
+.nb { background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 12px; max-width: 520px; width: 100%; padding: 18px 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+.nb h3 { margin: 0 0 6px; font-size: 16px; }
+.nb p { margin: 0 0 12px; color: var(--fg); }
+.nb .row { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.nb button { font: inherit; font-weight: 700; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+.nb button.go { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } .pin:hover { transform: none; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Your sign-up · Stage 1 drawings</h1>
+    <p>Signed-in family accounts, Stage 1: the house-league family’s one emailed page before their child is on a team. It becomes the permanent pre-team door, so it gets one name, first names only, an end, a club reset, and a safe way to get the link again. Every pin opens the ask it belongs to; every tag explains itself.</p>
+  </header>
+
+  <div class="bar">
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-tab="page" aria-selected="true">1 · The page</button>
+      <button class="tab" role="tab" data-tab="lost" aria-selected="false">2 · Lost the email</button>
+      <button class="tab" role="tab" data-tab="ends" aria-selected="false">3 · When it ends</button>
+      <button class="tab" role="tab" data-tab="club" aria-selected="false">4 · Club: a new link</button>
+      <button class="tab" role="tab" data-tab="emails" aria-selected="false">5 · The emails</button>
+      <button class="tab" role="tab" data-tab="phone" aria-selected="false">6 · Phone</button>
+      <button class="tab" role="tab" data-tab="asks" aria-selected="false">7 · Asks</button>
+    </div>
+  </div>
+
+  <div class="viewrow" id="viewrow">
+    <span class="lab">View</span>
+    <div class="seg" role="group" aria-label="View">
+      <button type="button" id="vAll" aria-pressed="true">Everything</button>
+      <button type="button" id="vDiff" aria-pressed="false">Show only what differs</button>
+    </div>
+  </div>
+
+  <!-- 1 · THE PAGE -->
+  <section class="pane on" id="p-page">
+    <div class="say">
+      <h2>The page a family opens from the email</h2>
+      <p>The body already works: each child, where they stand, what is owed, and one place to pay. Stage 1 changes the name, the names and the reference line. The pay block and the withdraw button do not move.</p>
+    </div>
+
+    <div class="found">
+      <h3>What I found reading the code</h3>
+      <ol>
+        <li>One child’s link opens the whole family. <span>The page shows every child on the same sign-up, so a reset that stops only one child’s link leaves the brother’s link opening the same page. The plan says “per registration”; the drawing resets the whole sign-up (ask 6).</span></li>
+        <li>“When the season ends” has no single meaning today. <span>The season’s end date is optional and only shown for information. What the product does track is the day the club marks the season finished. Today Pay still works after that (ask 1).</span></li>
+        <li>Every email today carries two different family links. <span>The pay button opens this page; the reference line underneath links to the email-and-reference page. Stage 1 leaves one (tab 5).</span></li>
+        <li>The brief’s “never sent when nothing is owed” reaches further than the plan’s. <span>Read literally it takes the link out of the sign-up confirmation too, so a waitlisted family would have no way back to their page except asking for it (ask 3).</span></li>
+      </ol>
+    </div>
+
+    <div class="cap"><h3>Before · today</h3>
+      <button class="tag bad" data-note="Today the page is titled “Check your registration”, the email buttons say “Pay now”, “See your registration” and “View your receipt”, and every child shows with their full name. Anyone holding the link sees all of it, and the link never ends.">TODAY</button></div>
+    <div class="scroll"><div class="stage" id="pageBefore"></div></div>
+
+    <div class="cap"><h3>After · the proposal</h3>
+      <button class="tag new" data-note="The page is titled “Your sign-up”, the same words as the one button in every family email. The browser tab says it too.">NEW name</button>
+      <button class="tag rest" data-note="Children show by first name only: card titles, the pay lines, the withdraw request and the receipts. A forwarded link no longer gives a stranger the child’s full name. The club’s own screens keep full names.">RESTYLED names</button>
+      <button class="tag rest" data-note="The reference stays on the page and on every email, as a number to quote to the club. From Stage 1 it unlocks nothing: the email-and-reference door goes away (tab 2). The “Your registrations” band goes too, because the page title now says what this is.">RESTYLED reference</button>
+      <button class="tag new" data-note="One quiet sentence at the foot, so a family knows the link is theirs and that the club can replace it if it was shared. It is the only place a family learns the club can reset it.">NEW foot line</button>
+      <button class="tag" data-note="The child cards’ facts, the pay block (card and bank debit, the processing-fee note, receipts), the withdraw request and the club’s site frame are unchanged.">UNCHANGED body</button></div>
+    <div class="scroll"><div class="stage" id="pageAfter"></div></div>
+    <div class="measure"><span><b>Names</b> “Maya Okafor” → “Maya” in 4 places</span><span><b>Links on the page</b> unchanged: one pay block, one withdraw button</span><span><b>Lines added</b> 1 (the foot)</span><span><b>Lines removed</b> 1 (the band)</span></div>
+  </section>
+
+  <!-- 2 · LOST THE EMAIL -->
+  <section class="pane" id="p-lost">
+    <div class="say">
+      <h2>Lost the email: the link comes to your inbox, never to the screen</h2>
+      <p>Today the family types their email and an 8-character reference, and the page opens right there. Anyone who has seen one email can do the same. After: the family types their email and the link goes to that inbox only. The screen says the same thing whether or not that email has a sign-up, so the page cannot be used to check who is signed up.</p>
+    </div>
+
+    <div class="pair">
+      <div>
+        <div class="cap"><h3>Before · email + reference</h3><button class="tag bad" data-note="Email plus an 8-character reference opens the page on the spot. The reference is printed on every email, so a forwarded email is enough to open it. A wrong pair says “We couldn’t find a sign-up with that email and reference”, which tells a stranger the guess was wrong.">TODAY</button></div>
+        <div class="scroll"><div class="stage narrow" id="lostBefore" style="width:auto"></div></div>
+      </div>
+      <div>
+        <div class="cap"><h3>After · email only</h3><button class="tag new" data-note="One field and one button, “Email me my link”. The reference field goes. The throttle stays: “Too many attempts. Please wait a few minutes and try again.”">NEW form</button></div>
+        <div class="scroll"><div class="stage narrow" id="lostAfter" style="width:auto"></div></div>
+      </div>
+    </div>
+
+    <div class="pair" style="margin-top:6px">
+      <div>
+        <div class="cap"><h3>After · what the screen says next</h3><button class="tag new" data-note="Shown for every email, signed up or not. It names the address typed, so a typo is easy to spot, and it points to the club when nothing arrives.">NEW · same either way</button></div>
+        <div class="scroll"><div class="stage narrow" id="lostSent" style="width:auto"></div></div>
+      </div>
+      <div>
+        <div class="cap"><h3>After · the email it sends</h3><button class="tag new" data-note="Sent only when the email has a sign-up for this season. One email, one “Your sign-up” button per sign-up (most families have one). A family who signed up two children separately gets both buttons, each named by first names.">NEW email</button></div>
+        <div class="scroll"><div class="stage narrow" id="lostMail" style="width:auto; padding:0"></div></div>
+      </div>
+    </div>
+
+    <div class="cap"><h3>The season page’s line, before → after</h3><button class="tag rest" data-note="The season page today says “Already registered? Check your registration”. It becomes “Already signed up? Email me my link”, which is what that door now does.">RESTYLED words</button></div>
+    <div class="scroll"><div class="stage narrow" id="seasonLine" style="padding:16px 20px"></div></div>
+    <div class="measure"><span><b>Withdraw request</b> accepts the link only; the reference stops working for it too</span><span><b>Several sign-ups on one email</b> one email, one button each</span></div>
+  </section>
+
+  <!-- 3 · WHEN IT ENDS -->
+  <section class="pane" id="p-ends">
+    <div class="say">
+      <h2>When the link stops, and what a family sees then</h2>
+      <p>Today a link works forever. The cleanest clock the product already has is the day the club marks the season finished; a house-league coach’s team page already closes 30 days after it. The drawing uses that clock, with one exception for families who still owe money (ask 1).</p>
+    </div>
+
+    <div class="tl">
+      <div class="tl-row">
+        <div class="tl-step"><b>Sign-up</b><span>The link is made and sent with the confirmation.</span></div>
+        <div class="tl-step"><b>Accepted, placed, moved</b><span>The same link, sent again when there is something to pay.</span></div>
+        <div class="tl-step"><b>Club marks the season finished</b><span>The withdraw button already hides here.</span></div>
+        <div class="tl-step maybe"><b>30 days later</b><span>Room for late payments and checking receipts.</span></div>
+        <div class="tl-step end"><b>The link closes</b><span>The “season has finished” screen.</span></div>
+      </div>
+      <div class="tl-branch"><b>Still owing at day 30?</b> That family’s link keeps working until they are paid up or the club closes the balance, then closes the same way. Everyone else’s closes on day 30.</div>
+      <div class="tl-branch" style="border-left-color:var(--line)"><b style="color:var(--fg)">The club reopens the season?</b> Links come back with it, because nothing was cancelled, only the season’s clock moved. A link the club replaced stays dead.</div>
+    </div>
+
+    <div class="pair" style="margin-top:6px">
+      <div>
+        <div class="cap"><h3>After · the season has finished</h3><button class="tag new" data-note="Shown when the season’s link has closed. No form: asking for the link again would only send a closed link. Receipts were already emailed. The club’s contact shows as text with the frame’s own Copy button in the footer.">NEW screen</button><button class="pin" data-ask="1" aria-label="Go to ask 1">1</button></div>
+        <div class="scroll"><div class="stage narrow" id="endFinished" style="width:auto"></div></div>
+      </div>
+      <div>
+        <div class="cap"><h3>After · this link no longer works</h3><button class="tag new" data-note="For a link the club replaced, or one that was mistyped or tampered with. These look the same on purpose, so the screen never confirms that a guessed link was once real. The family can have the current link sent to their inbox right there.">NEW screen</button><button class="pin" data-ask="5" aria-label="Go to ask 5">5</button></div>
+        <div class="scroll"><div class="stage narrow" id="endReplaced" style="width:auto"></div></div>
+      </div>
+    </div>
+    <div class="cap"><h3>Before · the only screen today</h3><button class="tag bad" data-note="Today’s one message, shown only for a broken link: “This payment link doesn’t work. Ask Riverdale Minor Ball to email you a new one.” The family has to write to the club; there is no way to get it themselves.">TODAY</button></div>
+    <div class="scroll"><div class="stage narrow" id="endBefore" style="padding:16px 20px"></div></div>
+  </section>
+
+  <!-- 4 · CLUB -->
+  <section class="pane" id="p-club">
+    <div class="say">
+      <h2>The club sends a new link from the registration</h2>
+      <p>A family says the link was forwarded, or an ex-partner still has the old email. The registrar opens the child’s registration and picks <b>Send a new link</b> under “What you can do”. A short confirm names every child it covers and the address it goes to. The old link stops at once.</p>
+    </div>
+
+    <div class="pair">
+      <div>
+        <div class="cap"><h3>Before · What you can do</h3><button class="tag" data-note="Today’s list for an accepted child who owes money. “Email the pay link” sends the family the same never-ending link again; there is no way to stop the old one.">TODAY</button></div>
+        <div class="scroll"><div class="stage" id="clubBefore" style="width:auto; padding:18px"></div></div>
+      </div>
+      <div>
+        <div class="cap"><h3>After · one new row</h3><button class="tag new" data-note="“Send a new link”, after “Email the pay link”. Offered for every registration that has an email while its season’s link is live, whatever the child’s status, to anyone who can change registrations (not only those who handle money: this is about who can open the page). Its hint names the brothers and sisters it also covers.">NEW row</button><button class="tag rest" data-note="The hint under “Email the pay link” reads “Last sent Oct 28” here, as it does once a link has gone. Before the first send it reads “Opens their status page to pay by card”; that becomes “Opens their sign-up page to pay by card”, so the club’s word matches the family’s.">RESTYLED hint</button><button class="pin" data-ask="4" aria-label="Go to ask 4">4</button></div>
+        <div class="scroll"><div class="stage" id="clubAfter" style="width:auto; padding:18px"></div></div>
+      </div>
+    </div>
+
+    <div class="pair" style="margin-top:6px">
+      <div>
+        <div class="cap"><h3>After · the confirm</h3><button class="tag new" data-note="Drawn from the shipped confirm window. The title asks the question, the body says what stops, for whom, and where the new one goes, and tells the registrar to fix a wrong address first. The button repeats the row’s words.">NEW confirm</button><button class="pin" data-ask="6" aria-label="Go to ask 6">6</button></div>
+        <div class="scroll"><div class="stage" id="clubConfirm" style="width:auto; padding:18px"></div></div>
+      </div>
+      <div>
+        <div class="cap"><h3>After · the toast and the history</h3><button class="tag new" data-note="The page-level toast the record already uses, and one history line on each child’s registration on that sign-up. History lines today do not say who did something, so this one does not either. The family gets the new link in a short email with the one “Your sign-up” button.">NEW toast + history</button></div>
+        <div class="scroll"><div class="stage" id="clubAfterToast" style="width:auto; padding:18px; display:grid; gap:14px"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · EMAILS -->
+  <section class="pane" id="p-emails">
+    <div class="say">
+      <h2>One button, one name, and none when it isn’t needed</h2>
+      <p>Every house-league family email carries at most one family link: the “Your sign-up” button. The reference stays as plain text to quote to the club. Which emails carry the button when nothing is owed is ask 3; the table shows the recommended answer.</p>
+    </div>
+
+    <div class="pair">
+      <div>
+        <div class="cap"><h3>Before · sign-up confirmation</h3><button class="tag bad" data-note="Two family links in one email: “Pay now” (the page with no reference needed) and “Check your registration any time” in the reference line (the email-and-reference page).">TWO LINKS</button></div>
+        <div class="scroll"><div class="stage" id="mailBefore" style="width:auto; padding:0"></div></div>
+      </div>
+      <div>
+        <div class="cap"><h3>After · sign-up confirmation</h3><button class="tag new" data-note="One button, “Your sign-up”, under the money lines. The money is already written above it (“To pay: $185.00”), so the button says where it goes rather than repeating the amount.">NEW button</button><button class="tag rest" data-note="The reference line keeps the number and drops its link: “Quote it if you contact the club.”">RESTYLED reference</button><button class="pin" data-ask="2" aria-label="Go to ask 2">2</button></div>
+        <div class="scroll"><div class="stage" id="mailAfter" style="width:auto; padding:0"></div></div>
+      </div>
+    </div>
+
+    <div class="pair" style="margin-top:6px">
+      <div>
+        <div class="cap"><h3>Before · team placement, nothing owed</h3><button class="tag bad" data-note="Today the placement email always carries “See your registration”, even when Maya is paid in full. That is a live link sent for no reason.">SENT FOR NOTHING</button></div>
+        <div class="scroll"><div class="stage" id="placeBefore" style="width:auto; padding:0"></div></div>
+      </div>
+      <div>
+        <div class="cap"><h3>After · team placement, nothing owed</h3><button class="tag new" data-note="No button. The email already says the team, the coach and that nothing is owed. If the family wants the page, the season page’s “Email me my link” sends it.">NO BUTTON</button><button class="pin" data-ask="3" aria-label="Go to ask 3">3</button></div>
+        <div class="scroll"><div class="stage" id="placeAfter" style="width:auto; padding:0"></div></div>
+      </div>
+    </div>
+
+    <div class="cap"><h3>Every family email, before → after</h3><button class="tag" data-note="The recommended answer to ask 3. The sign-up confirmation always carries the button, because it is the family’s first copy of the link and the way back to their waitlist place or a withdraw request. Every later email carries it only when there is money to pay.">ASK 3 · RECOMMENDED</button></div>
+    <div class="tbl"><table>
+      <thead><tr><th>Email</th><th>Family links today</th><th>After, money owed</th><th>After, nothing owed</th></tr></thead>
+      <tbody>
+        <tr><td>Sign-up confirmation</td><td>Pay now (if owed) + Check your registration</td><td class="chg">Your sign-up</td><td class="chg">Your sign-up</td></tr>
+        <tr><td>Accepted by the club</td><td>Pay now (if owed) + Check your registration</td><td class="chg">Your sign-up</td><td class="off">none</td></tr>
+        <tr><td>Put on the waitlist</td><td>Check your registration</td><td class="off">(nothing is owed on a waitlist)</td><td class="off">none</td></tr>
+        <tr><td>A waitlist spot opened</td><td>Pay now (if owed) + Check your registration</td><td class="chg">Your sign-up</td><td class="off">none</td></tr>
+        <tr><td>Placed on a team</td><td>See your registration, always</td><td class="chg">Your sign-up</td><td class="off">none</td></tr>
+        <tr><td>Moved to another team</td><td>See your registration, always</td><td class="chg">Your sign-up</td><td class="off">none</td></tr>
+        <tr><td>Receipt</td><td>View your receipt</td><td class="chg">Your sign-up (a balance is left)</td><td class="off">none (the receipt is in the email)</td></tr>
+        <tr><td>The club emails the pay link</td><td>Pay now</td><td class="chg">Your sign-up</td><td class="off">not sent (as today)</td></tr>
+        <tr><td>A bank debit came back</td><td>Pay now (when it can be paid again)</td><td class="chg">Your sign-up</td><td class="off">none</td></tr>
+        <tr><td>The club sent a new link · <i>new</i></td><td class="off">does not exist</td><td class="chg">Your sign-up</td><td class="chg">Your sign-up</td></tr>
+        <tr><td>Email me my link · <i>new</i></td><td class="off">does not exist</td><td class="chg">Your sign-up</td><td class="chg">Your sign-up</td></tr>
+      </tbody>
+    </table></div>
+    <div class="measure"><span><b>Unsubscribe</b> these are service emails, so like today they carry no unsubscribe link; the club’s newsletters keep theirs, and its signing gets the server-side fix in the plan (nothing to draw)</span><span><b>Full names</b> the emails still say “Maya Okafor”; whether they follow the page is ask 7</span></div>
+  </section>
+
+  <!-- 6 · PHONE -->
+  <section class="pane" id="p-phone">
+    <div class="say">
+      <h2>Most families open this on a phone</h2>
+      <p>Same page, same order, one column. Nothing here is new beyond tabs 1 and 2; it is drawn so you can check it at true size. Open this page on your phone to judge it.</p>
+    </div>
+    <div class="pair">
+      <div><div class="cap"><h3>Your sign-up · 390px</h3><button class="tag" data-note="The phone frame at 390 pixels wide, the width of a common phone. Buttons and fields are 44 pixels tall, as shipped.">TRUE SIZE</button></div><div class="scroll"><div class="stage phone" id="phonePage"></div></div></div>
+      <div><div class="cap"><h3>Email me my link · 390px</h3><button class="tag" data-note="The lost-email door on a phone. The keyboard opens on the email field; the button is full width.">TRUE SIZE</button></div><div class="scroll"><div class="stage phone" id="phoneLost"></div></div></div>
+    </div>
+  </section>
+
+  <!-- 7 · ASKS -->
+  <section class="pane" id="p-asks">
+    <div class="say">
+      <h2>Your calls</h2>
+      <p>Seven calls. Pick an answer for each, add a note if you like, then copy and paste them back. Nothing is built until you do. Already ruled and not asked again: one name, first names only, the link ends with the season, a club reset, no pay link when nothing is owed, and “Email me my link”.</p>
+    </div>
+
+    <div class="ask" id="ask1">
+      <h3>1 · When does a family’s link stop?</h3>
+      <p>The season’s end date is optional and informational, so the clock has to be the day the club marks the season finished. <button class="see" data-goto="ends">See tab 3</button></p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="a1" value="A" checked><div><b>A · 30 days after the season is finished, but a family still owing keeps theirs until paid<span class="rec">RECOMMENDED</span></b><span>Same 30 days as the coach’s team page. The pay link’s whole job is collecting money, so it should not close while the club is still owed. It closes the day they are paid up or the club closes the balance.</span></div></label>
+        <label class="opt"><input type="radio" name="a1" value="B"><div><b>B · 30 days after the season is finished, for everyone</b><span>Simplest rule. A late payer has to be chased another way.</span></div></label>
+        <label class="opt"><input type="radio" name="a1" value="C"><div><b>C · The day the club marks the season finished</b><span>No grace period. A family checking a receipt the next week finds it closed.</span></div></label>
+      </div>
+      <textarea id="n1" aria-label="Notes on ask 1" placeholder="Notes (optional)"></textarea>
+    </div>
+
+    <div class="ask" id="ask2">
+      <h3>2 · The button’s words in an email that asks for money</h3>
+      <p>The plan rules one name. The question is whether a pay email’s button may say what to do there while still opening the same page. <button class="see" data-goto="emails">See tab 5</button></p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="a2" value="A" checked><div><b>A · “Your sign-up” on every email<span class="rec">RECOMMENDED</span></b><span>One name a family can search their inbox for all season. The amount is written just above the button, so nothing is lost.</span></div></label>
+        <label class="opt"><input type="radio" name="a2" value="B"><div><b>B · “Pay now” when money is owed, “Your sign-up” otherwise</b><span>Still one link and one page. The button reads as an action when there is money to pay, but families see two names again.</span></div></label>
+      </div>
+      <textarea id="n2" aria-label="Notes on ask 2" placeholder="Notes (optional)"></textarea>
+    </div>
+
+    <div class="ask" id="ask3">
+      <h3>3 · Which emails carry the button when nothing is owed?</h3>
+      <p>The plan names two emails (placement and moved team). The brief says “never sent when nothing is owed”, which also covers the sign-up confirmation. <button class="see" data-goto="emails">See the table on tab 5</button></p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="a3" value="A" checked><div><b>A · The sign-up confirmation always; every later email only when money is owed<span class="rec">RECOMMENDED</span></b><span>The confirmation is the family’s first copy and their way back to a waitlist place or a withdraw request. Everything after it sends a link only when there is something to pay.</span></div></label>
+        <label class="opt"><input type="radio" name="a3" value="B"><div><b>B · No email carries it when nothing is owed</b><span>Fewest links sent. A waitlisted or free family uses “Email me my link” to see their page.</span></div></label>
+        <label class="opt"><input type="radio" name="a3" value="C"><div><b>C · Only the placement and moved-team emails lose it, as the plan wrote</b><span>Accepted, waitlist and receipt emails keep the button even when nothing is owed.</span></div></label>
+      </div>
+      <textarea id="n3" aria-label="Notes on ask 3" placeholder="Notes (optional)"></textarea>
+    </div>
+
+    <div class="ask" id="ask4">
+      <h3>4 · The club’s door</h3>
+      <p>Where the reset lives, and who can use it. <button class="see" data-goto="club">See tab 4</button></p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="a4" value="A" checked><div><b>A · Its own row, “Send a new link”, for anyone who can change registrations<span class="rec">RECOMMENDED</span></b><span>Offered for any child with an email while the link is live, whatever their status. A confirm names the children and the address. It is about who can open the page, so it is not limited to the people who handle money.</span></div></label>
+        <label class="opt"><input type="radio" name="a4" value="B"><div><b>B · A tick box on “Email the pay link”: “Stop the old link”</b><span>One row fewer, but that row only shows when money is owed, so a family that owes nothing could not be reset.</span></div></label>
+        <label class="opt"><input type="radio" name="a4" value="C"><div><b>C · As A, but only for people who handle fees</b><span>Matches who can send the pay link today.</span></div></label>
+      </div>
+      <textarea id="n4" aria-label="Notes on ask 4" placeholder="Notes (optional)"></textarea>
+    </div>
+
+    <div class="ask" id="ask5">
+      <h3>5 · The two “ended” screens</h3>
+      <p>A season that finished, and a link that was replaced or is broken. <button class="see" data-goto="ends">See tab 3</button></p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="a5" value="A" checked><div><b>A · Two screens: “season has finished” with no form, and “no longer works” with “Email me my link” right there<span class="rec">RECOMMENDED</span></b><span>A replaced link and a broken one look the same, so the screen never confirms a guess was once real.</span></div></label>
+        <label class="opt"><input type="radio" name="a5" value="B"><div><b>B · One screen for both, with the form</b><span>Simpler, but a family from a finished season is offered a link that would arrive closed.</span></div></label>
+      </div>
+      <textarea id="n5" aria-label="Notes on ask 5" placeholder="Notes (optional)"></textarea>
+    </div>
+
+    <div class="ask" id="ask6">
+      <h3>6 · A reset covers the whole sign-up</h3>
+      <p>One child’s link already opens every child on the same sign-up, so stopping one child’s link alone protects nothing. <button class="see" data-goto="club">See the confirm on tab 4</button></p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="a6" value="A" checked><div><b>A · A reset stops every link on that sign-up and sends one new one<span class="rec">RECOMMENDED</span></b><span>The confirm names Maya and Leo. A child signed up separately on another sign-up keeps their own link.</span></div></label>
+        <label class="opt"><input type="radio" name="a6" value="B"><div><b>B · Each child gets their own page and their own link</b><span>Splits the family page apart: one payment per child, one email button per child. A much bigger change than Stage 1.</span></div></label>
+      </div>
+      <textarea id="n6" aria-label="Notes on ask 6" placeholder="Notes (optional)"></textarea>
+    </div>
+
+    <div class="ask" id="ask7">
+      <h3>7 · Do the emails go first-name-only too?</h3>
+      <p>The page drops last names because a forwarded link opens it for anyone. The emails still print “Maya Okafor” in the details panel. <button class="see" data-goto="emails">See tab 5</button></p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="a7" value="A" checked><div><b>A · Emails keep full names<span class="rec">RECOMMENDED</span></b><span>An email sits in the parent’s own inbox and is the club’s record of who was signed up. The risk Stage 1 closes is the link, which opens a live page with money and a withdraw button.</span></div></label>
+        <label class="opt"><input type="radio" name="a7" value="B"><div><b>B · Emails go first-name-only as well</b><span>One rule everywhere a family reads. The club’s own screens keep full names either way.</span></div></label>
+      </div>
+      <textarea id="n7" aria-label="Notes on ask 7" placeholder="Notes (optional)"></textarea>
+    </div>
+
+    <div class="found" style="border-left-color:var(--accent)">
+      <h3>What the design check changed (round 2)</h3>
+      <ol>
+        <li>The family emails now wear the shipped envelope: the club’s band at the top, the boxed details and “To pay” panels, the “Sent by … because …” line and “Sent through FieldLogicHQ”. They are service emails, so no unsubscribe link is drawn.</li>
+        <li>The placement email uses its real words (“The teams are set”), not invented ones.</li>
+        <li>The club’s page frame matches the site: square-cornered logo, gold rule, section links, the coloured footer with the club’s email and a copy button.</li>
+        <li>Child cards use the real label-left, value-right rows; a waitlisted child shows no Team row; the reference is in the site’s own type.</li>
+        <li>Both pay buttons are the real height and width; the bank debit button is the outlined one; the bank amount carries its own processing fee, as it does when the family pays the fee.</li>
+        <li>The record window has its History section, real history lines, the two-line Previous / Next foot, and no highlighted row the product would not show. The toast is the light pill with a check, and the confirm is one paragraph at the real width.</li>
+      </ol>
+    </div>
+
+    <button class="copy" id="copyBtn" type="button">Copy my answers</button>
+    <div class="note" id="copyNote" role="status"></div>
+    <textarea id="answers" readonly aria-label="Your answers"></textarea>
+  </section>
+</div>
+
+<div class="nb-scrim" id="nbScrim" hidden>
+  <div class="nb" role="dialog" aria-modal="true" aria-labelledby="nbTitle">
+    <h3 id="nbTitle">What this is</h3>
+    <p id="nbText"></p>
+    <div class="row"><button type="button" class="go" id="nbClose">Close</button></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var CLUB = 'Riverdale Minor Ball';
+  var SEASON = '2026 Fall House League';
+  var EMAIL = 'priya.okafor@example.com';
+
+  function put(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
+  function pin(n) { return '<button type="button" class="pin" data-ask="' + n + '" aria-label="Go to ask ' + n + '">' + n + '</button>'; }
+
+  function icon(kind) {
+    var p = {
+      card: '<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>',
+      bank: '<line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/>',
+      copy: '<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+      check: '<path d="M20 6 9 17l-5-5"/>'
+    }[kind];
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>';
+  }
+
+  function frame(inner, phone) {
+    return '<div class="cf' + (phone ? ' phone' : '') + '">' +
+      '<div class="cf-bar" data-same><span class="cf-logo">RM</span><div><div class="cf-name">' + CLUB + '</div><div class="cf-tagline">Ball for every kid since 1974</div></div>' +
+        '<nav class="cf-nav"><span>Home</span><span>House league</span><span>Teams</span><span>Contact</span></nav><span class="cf-signin">Sign in</span></div>' +
+      '<div class="cf-main"><div class="cf-col">' + inner + '</div></div>' +
+      '<div class="cf-foot" data-same><span class="fname">' + CLUB + '</span><span class="q"><small>Questions?</small><u>registrar@riverdaleminorball.ca</u></span><span class="cp" aria-label="Copy">' + icon('copy') + '</span></div>' +
+    '</div>';
+  }
+  function header(title, after, pinN) {
+    return '<div data-same><div class="cf-back">← Back to ' + SEASON + '</div></div>' +
+      '<div class="cf-head"><div class="cf-org" data-same>' + CLUB + '</div>' +
+      '<h1 class="cf-h1">' + title + (after && pinN ? pin(pinN) : '') + '</h1>' +
+      '<div class="cf-sub" data-same>' + SEASON + '</div></div>';
+  }
+  function rows(list) {
+    return '<div class="cf-rows" data-same>' + list.map(function (r) { return '<div><span>' + r[0] + '</span><span' + (r[2] ? ' class="owe"' : '') + '>' + r[1] + '</span></div>'; }).join('') + '</div>';
+  }
+
+  function statusPage(after, phone) {
+    var maya = after ? 'Maya' : 'Maya Okafor';
+    var leo = after ? 'Leo' : 'Leo Okafor';
+    var h = header(after ? 'Your sign-up' : 'Check your registration', after, 2);
+    if (after) {
+      h += '<div class="cf-ref">Reference: <b>069806EA</b> · quote it if you contact the club</div>';
+    } else {
+      h += '<div class="cf-band">Your registrations</div><div class="cf-ref">Reference: <b>069806EA</b></div>';
+    }
+    h += '<div class="cf-card">' +
+        '<div class="cf-kid"><b>' + maya + '</b><span class="cf-chip ok">Accepted</span></div>' +
+        rows([['Division', 'U9 Rookie'], ['Team', 'Blue Jays'], ['Coach', 'Dana Reid'], ['Fee', '$185.00', 1]]) +
+      '</div>' +
+      '<div class="cf-card">' +
+        '<div class="cf-kid"><b>' + leo + '</b><span class="cf-chip">Waitlist · 2nd</span></div>' +
+        rows([['Division', 'U11 Minor'], ['Fee', 'Nothing to pay unless a spot opens']]) +
+        '<p class="cf-note" data-same>We’ll email you if a spot opens.</p>' +
+      '</div>' +
+      '<div class="cf-card">' +
+        '<h2 data-same>To pay now</h2>' +
+        '<div>' + maya + ' · U9 Rookie · $185.00</div>' +
+        '<div data-same style="display:grid; gap:10px; justify-items:start">' +
+          '<div class="cf-field" style="width:100%"><label>Email for the receipt</label><div class="cf-input">' + EMAIL + '</div></div>' +
+          '<div class="cf-btn primary pay">' + icon('card') + 'Pay $190.85 by card</div><div class="cf-quiet">Includes a $5.85 processing fee.</div>' +
+          '<div class="cf-btn outline pay">' + icon('bank') + 'Pay $186.48 by bank debit</div><div class="cf-quiet">Includes a $1.48 processing fee. Takes up to 5 business days.</div>' +
+          '<div><span class="cf-link">Refund policy</span></div>' +
+          '<div class="cf-quiet">Or pay another way: cheque to Riverdale Minor Ball at the first practice.</div>' +
+        '</div>' +
+      '</div>' +
+      '<div data-same><span class="cf-btn">Ask to withdraw a child</span></div>';
+    if (after) {
+      h += '<div class="cf-quiet" style="border-top:1px solid var(--c-line); padding-top:12px">Anyone with this link can open this page. If it has been shared, ask the club to send you a new one.' + pin(4) + '</div>';
+    }
+    return frame(h, phone);
+  }
+  put('pageBefore', statusPage(false));
+  put('pageAfter', statusPage(true));
+  put('phonePage', statusPage(true, true));
+
+  // ── Lost the email
+  var lostB = header('Check your registration', false) +
+    '<p class="cf-note">Enter the email you signed up with and your reference.</p>' +
+    '<div class="cf-field"><label>Parent or guardian email</label><div class="cf-input ph">you@example.com</div></div>' +
+    '<div class="cf-field"><label>Reference</label><div class="cf-input ref ph">e.g. 069806EA</div><div class="cf-hint">The 8 characters on your confirmation screen and in your email.</div></div>' +
+    '<span class="cf-btn primary">Look up</span>' +
+    '<div class="cf-card" style="text-align:center"><b>We couldn’t find a sign-up with that email and reference.</b><span class="cf-quiet">Check both against your confirmation email, or <span class="cf-link">contact the club</span>.</span></div>';
+  put('lostBefore', frame(lostB));
+
+  function lostForm(phone) {
+    return header('Your sign-up', true) +
+      '<p class="cf-note">Lost the email? Enter the email you signed up with. If it has a sign-up for this season, we’ll send your link there.</p>' +
+      '<div class="cf-field"><label>Parent or guardian email</label><div class="cf-input">' + EMAIL + '</div></div>' +
+      '<span class="cf-btn primary' + (phone ? ' wide' : '') + '">Email me my link</span>';
+  }
+  put('lostAfter', frame(lostForm()));
+  put('phoneLost', frame(lostForm(true), true));
+  put('lostSent', frame(header('Your sign-up', true) +
+    '<div class="cf-card"><h2>Check your inbox</h2>' +
+    '<p style="margin:0">If <b>' + EMAIL + '</b> has a sign-up for ' + SEASON + ', the link is on its way. It can take a few minutes, so check junk mail too.</p>' +
+    '<p class="cf-note">Nothing came? You may have signed up with a different email. Ask ' + CLUB + ' and quote your reference if you have it.</p></div>' +
+    '<div><span class="cf-link">Try a different email</span></div>'));
+
+  // Service notices: the club band, the "Sent by … because …" footnote, the platform line. No unsubscribe link.
+  function mail(subject, body, because) {
+    return '<div class="em"><div class="em-meta"><b>' + CLUB + ' via FieldLogicHQ</b><br>' + subject + '</div>' +
+      '<div class="em-card"><div class="em-band" data-same><span class="tile">RM</span><b>' + CLUB + '</b></div>' +
+        '<div class="em-in">' + body + '</div>' +
+        '<div class="em-foot" data-same>Sent by <b>' + CLUB + '</b> because ' + because + '.<br>Reply to this email to reach the club.</div></div>' +
+      '<div class="em-plat" data-same>Sent through FieldLogicHQ, the software ' + CLUB + ' uses.</div></div>';
+  }
+  var REG = 'your family is signed up for ' + SEASON;
+  put('lostMail', mail('Your sign-up link · ' + SEASON,
+    '<h4>Your sign-up link</h4><p>Hi <b>Priya</b>,</p><p>You asked for the link to your sign-up for Maya and Leo in ' + SEASON + '.</p>' +
+    '<span class="em-btn">Your sign-up</span>' +
+    '<p class="em-small">Didn’t ask for this? You can ignore it. Your link has not changed.</p>' +
+    '<p class="em-small">Reference <span class="em-ref">069806EA</span>. Quote it if you contact the club.</p>', 'someone asked for this link on the club’s site'));
+
+  put('seasonLine', '<div class="cf" style="padding:14px 18px; display:grid; gap:8px">' +
+    '<div class="cf-quiet">Before</div><div>Already registered? <span class="cf-link">Check your registration</span></div>' +
+    '<div class="cf-quiet" style="margin-top:4px">After</div><div>Already signed up? <span class="cf-link">Email me my link</span></div></div>');
+
+  // ── Ended screens
+  put('endFinished', frame(header('Your sign-up', true) +
+    '<div class="cf-card"><h2>This season has finished</h2>' +
+    '<p style="margin:0">' + SEASON + ' is over, so this page is closed. The receipts we sent you by email are still yours to keep.</p>' +
+    '<p class="cf-note">Questions go to ' + CLUB + ': registrar@riverdaleminorball.ca</p></div>'));
+  put('endReplaced', frame(header('Your sign-up', true) +
+    '<div class="cf-card"><h2>This link no longer works</h2>' +
+    '<p style="margin:0">The club may have sent you a newer one, so check your inbox. Or have your link sent again.</p>' +
+    '<div class="cf-field"><label>Parent or guardian email</label><div class="cf-input ph">you@example.com</div></div>' +
+    '<span class="cf-btn primary">Email me my link</span></div>'));
+  put('endBefore', '<div class="cf" style="padding:16px 18px"><div class="cf-card"><p style="margin:0">This payment link doesn’t work. Ask ' + CLUB + ' to email you a new one.</p></div></div>');
+
+  // ── Club window
+  function history(withNew) {
+    return '<dl class="aw-hist">' +
+      (withNew ? '<dt class="nw">Nov 1</dt><dd class="nw">New link sent; the old one stopped</dd>' : '') +
+      '<dt>Oct 14</dt><dd>Accepted</dd>' +
+      '<dt>Oct 12</dt><dd>Signed up</dd>' +
+    '</dl>';
+  }
+  function record(after) {
+    var list =
+      '<li data-same><b>Mark received</b><span>Records $185.00 received, with the date and how</span></li>' +
+      '<li data-same><b>Email the pay link</b><span>Last sent Oct 28</span></li>' +
+      (after ? '<li><b>Send a new link</b><span>Stops the link they have now, for Maya and Leo</span></li>' : '') +
+      '<li data-same><b>Correct the price</b><span>Needs a reason</span></li>' +
+      '<li data-same><b>Move to another division</b><span>Checks the room, then asks about the price</span></li>';
+    return '<div class="aw">' +
+      '<div class="aw-head" data-same><div class="aw-eyebrow">' + SEASON + ' · U9 Rookie</div><div class="aw-title">Maya Okafor</div><div class="aw-id">Active</div><span class="aw-x">×</span></div>' +
+      '<div class="aw-body">' +
+        '<div data-same><div class="aw-h">Details</div><dl class="aw-facts"><dt>Guardian</dt><dd>Priya Okafor</dd><dt>Email</dt><dd>' + EMAIL + '</dd><dt>Sign-up reference</dt><dd>069806EA</dd></dl></div>' +
+        '<div data-same><div class="aw-h">Fee</div><dl class="aw-facts"><dt>Price</dt><dd>$185.00</dd><dt>Still owing</dt><dd><b>$185.00</b></dd></dl></div>' +
+        '<div data-same><div class="aw-h">History</div>' + history(false) + '</div>' +
+        '<div><div class="aw-h" data-same>What you can do</div><ul class="aw-do">' + list + '</ul></div>' +
+      '</div>' +
+      '<div class="aw-foot" data-same><span class="aw-nb"><small>Previous</small><b>Ava Lindqvist</b></span><span class="aw-count">3 of 42</span><span class="aw-nb" style="text-align:right"><small>Next</small><b>Noah Patel</b></span></div>' +
+    '</div>';
+  }
+  put('clubBefore', record(false));
+  put('clubAfter', record(true));
+  put('clubConfirm', '<div class="aw aw-confirm">' +
+    '<div class="aw-head"><div class="aw-title">Send a new link?</div></div>' +
+    '<div class="aw-body" style="gap:10px">' +
+      '<p>The link this family has now stops working straight away, for Maya and Leo, who are on the same sign-up. The new one goes to ' + EMAIL + '. If that address is wrong, change the email first.</p>' +
+    '</div>' +
+    '<div class="aw-foot"><div class="end"><span class="aw-btn">Cancel</span><span class="aw-btn lime">Send a new link</span></div></div>' +
+  '</div>');
+  put('clubAfterToast',
+    '<div style="text-align:right"><span class="toast">' + icon('check') + 'New link sent to ' + EMAIL + '.</span></div>' +
+    '<div class="aw"><div class="aw-body" style="padding-top:16px"><div><div class="aw-h">History</div>' + history(true) + '</div></div></div>');
+
+  // ── Emails
+  var signupHead = '<h4>Maya is accepted, Leo is on the waitlist</h4><p>Hi <b>Priya</b>,</p>' +
+    '<p>Maya is accepted. Leo is on the waitlist for U11 Minor, 2nd in line.</p>' +
+    '<div class="em-panel" data-same><p class="lab">Registration details</p><p><b>Maya Okafor</b> · U9 Rookie · $185.00<br><b>Leo Okafor</b> · U11 Minor · 2nd on the waitlist</p></div>' +
+    '<div class="em-panel olive" data-same><p class="lab">To pay: $185.00</p><p>Pay online by card, or pay another way below.</p><p class="em-small">The processing fee is shown before you pay.</p><p><b>Other ways to pay</b><br>Cheque to Riverdale Minor Ball at the first practice.</p></div>';
+  put('mailBefore', mail('Maya is accepted · ' + SEASON, signupHead +
+    '<span class="em-btn">Pay now</span>' +
+    '<p class="em-small">Reference: <span class="em-ref">069806EA</span><br>Check your registration any time: <span class="em-a">fieldlogichq.com/riverdale-minor-ball/league/fall-2026/status</span>. You’ll need this reference and your email.</p>', REG));
+  put('mailAfter', mail('Maya is accepted · ' + SEASON, signupHead +
+    '<span class="em-btn">Your sign-up</span>' +
+    '<p class="em-small">Reference <span class="em-ref">069806EA</span>. Quote it if you contact the club.</p>', REG));
+
+  var placeBody = '<h4>The teams are set</h4><p>Hi <b>Priya</b>,</p><p>The U9 Rookie teams for ' + SEASON + ' are set.</p>' +
+    '<ul><li><b>Maya Okafor</b>: Blue Jays, coach Dana Reid</li></ul><p>The coach will be in touch about getting started.</p>';
+  var placeContact = '<p class="em-small" data-same>Questions? Email registrar@riverdaleminorball.ca.</p>';
+  put('placeBefore', mail('The teams are set · ' + SEASON, placeBody + '<span class="em-btn">See your registration</span>' + placeContact, REG));
+  put('placeAfter', mail('The teams are set · ' + SEASON, '<div data-same>' + placeBody + '</div>' + placeContact, REG));
+
+  // ── tabs
+  var NAMES = { page: 1, lost: 1, ends: 1, club: 1, emails: 1, phone: 1, asks: 1 };
+  var VIEW_ON = { page: 1, lost: 1, club: 1, emails: 1 };
+  var tabs = document.querySelectorAll('.tab');
+  function show(name, noHash) {
+    if (!NAMES[name]) name = 'page';
+    tabs.forEach(function (t) { t.setAttribute('aria-selected', t.dataset.tab === name ? 'true' : 'false'); });
+    document.querySelectorAll('section.pane').forEach(function (p) { p.classList.toggle('on', p.id === 'p-' + name); });
+    document.getElementById('viewrow').hidden = !VIEW_ON[name];
+    if (!noHash) { try { history.replaceState(null, '', '#' + name); } catch (e) { location.hash = name; } window.scrollTo({ top: 0 }); }
+  }
+  tabs.forEach(function (t) { t.addEventListener('click', function () { show(t.dataset.tab); }); });
+  window.addEventListener('hashchange', function () { show((location.hash || '').replace('#', ''), true); });
+  show((location.hash || '').replace('#', '') || 'page', true);
+
+  var wrap = document.querySelector('.wrap');
+  function setView(diff) {
+    wrap.classList.toggle('diff', diff);
+    document.getElementById('vAll').setAttribute('aria-pressed', diff ? 'false' : 'true');
+    document.getElementById('vDiff').setAttribute('aria-pressed', diff ? 'true' : 'false');
+  }
+  document.getElementById('vAll').addEventListener('click', function () { setView(false); });
+  document.getElementById('vDiff').addEventListener('click', function () { setView(true); });
+
+  // ── explanation box, pins, "see" links
+  var scrim = document.getElementById('nbScrim');
+  var lastFocus = null;
+  function openNote(title, text) {
+    lastFocus = document.activeElement;
+    document.getElementById('nbTitle').textContent = title;
+    document.getElementById('nbText').textContent = text;
+    scrim.hidden = false;
+    document.getElementById('nbClose').focus();
+  }
+  function closeNote() { scrim.hidden = true; if (lastFocus) lastFocus.focus(); }
+  document.getElementById('nbClose').addEventListener('click', closeNote);
+  scrim.addEventListener('click', function (e) { if (e.target === scrim) closeNote(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !scrim.hidden) closeNote(); });
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target.closest('.tag[data-note]') : null;
+    if (t) { e.preventDefault(); openNote(t.textContent.trim(), t.dataset.note); return; }
+    var p = e.target.closest ? e.target.closest('.pin') : null;
+    if (p) {
+      e.preventDefault();
+      show('asks');
+      var a = document.getElementById('ask' + p.dataset.ask);
+      if (a) { a.scrollIntoView({ block: 'start' }); a.classList.add('flash'); setTimeout(function () { a.classList.remove('flash'); }, 1600); }
+      return;
+    }
+    var s = e.target.closest ? e.target.closest('.see') : null;
+    if (s) { e.preventDefault(); show(s.dataset.goto); }
+  });
+
+  // ── answers
+  var TITLES = {
+    1: 'When a link stops', 2: 'Button words in a pay email', 3: 'Emails with the button when nothing is owed',
+    4: 'The club’s door', 5: 'The two ended screens', 6: 'A reset covers the whole sign-up', 7: 'Emails go first-name-only too?'
+  };
+  function answers() {
+    var out = ['Your sign-up · Stage 1 drawings — my answers'];
+    for (var n = 1; n <= 7; n++) {
+      var c = document.querySelector('input[name="a' + n + '"]:checked');
+      var label = c ? c.closest('.opt').querySelector('b').firstChild.textContent.trim() : 'not chosen';
+      var note = (document.getElementById('n' + n).value || '').trim();
+      out.push(n + ' · ' + TITLES[n] + ': ' + label + (note ? '\n    note: ' + note : ''));
+    }
+    return out.join('\n');
+  }
+  var ta = document.getElementById('answers');
+  function refresh() { ta.value = answers(); }
+  document.querySelectorAll('.ask input, .ask textarea').forEach(function (i) { i.addEventListener('input', refresh); i.addEventListener('change', refresh); });
+  refresh();
+  document.getElementById('copyBtn').addEventListener('click', function () {
+    var note = document.getElementById('copyNote');
+    function fallback() { ta.focus(); ta.select(); note.textContent = 'Selected. Press Ctrl+C to copy.'; }
+    try { navigator.clipboard.writeText(ta.value).then(function () { note.textContent = 'Copied. Paste it back in the chat.'; }, fallback); }
+    catch (e) { fallback(); }
+  });
+})();
+</script>

@@ -153,7 +153,15 @@ export async function sendMarketingEmail(opts: SendEmailOptions): Promise<SendRe
   const unsubscribeUrl = recipientUserId
     ? buildUserUnsubscribeUrl(recipientUserId)
     : buildUnsubscribeUrl(orgId);
-  const htmlWithFooter = skipOptOutCheck ? html : injectUnsubscribeFooter(html, unsubscribeUrl);
+  // No secret, no link (lib/unsubscribe-token.ts): a marketing email that cannot carry a working unsubscribe link is not
+  // sent at all (CASL), rather than sent with a dead or forgeable one.
+  if (!skipOptOutCheck && !unsubscribeUrl) {
+    console.error(`[email-sender] UNSUBSCRIBE_SECRET is not set: ${emailKey} to ${toEmail} not sent (it would have no unsubscribe link)`);
+    await logSend({ emailKey, orgId, toEmail, toName, subject, batchId, status: 'failed', suppressionReason: 'no_unsubscribe_secret' });
+    await incrementBatchCounter(batchId, 'failed');
+    return 'failed';
+  }
+  const htmlWithFooter = skipOptOutCheck || !unsubscribeUrl ? html : injectUnsubscribeFooter(html, unsubscribeUrl);
 
   // ── 3. Insert queued send record ──────────────────────────────────────────
   const sendId = await logSend({

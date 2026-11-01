@@ -2402,6 +2402,7 @@ export function mapLeagueRegistration(row: any): LeagueRegistration {
     withdrawRequestedAt: row.withdraw_requested_at ?? null,
     withdrawRequestNote: row.withdraw_request_note ?? null,
     payLinkSentAt:       row.pay_link_sent_at ?? null,
+    linkReplacedAt:      row.link_replaced_at ?? null,
     registeredAt:        row.registered_at,
     updatedAt:           row.updated_at,
   };

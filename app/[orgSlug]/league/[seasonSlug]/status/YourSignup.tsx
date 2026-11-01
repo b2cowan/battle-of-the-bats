@@ -88,7 +88,7 @@ export default function YourSignup({
   contactEmail,
   found,
   token,
-  guardianEmail,
+  emailShown,
   returnedSession = null,
   left = false,
 }: {
@@ -99,7 +99,8 @@ export default function YourSignup({
   found: Found;
   /** The link's key: the withdraw request's possession proof. */
   token: string;
-  guardianEmail: string | null;
+  /** The family's address, masked on the server ("m•••@gmail.com"): the withdraw ask's "sent" line. */
+  emailShown: string | null;
   /** Stripe's return (`?paid=`): the pay block waits for the record. */
   returnedSession?: string | null;
   /** Left Stripe's page before paying (`?left=1`). */
@@ -137,7 +138,7 @@ export default function YourSignup({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { setAskError(data?.error ?? ASK_WORDS.errGeneric); setAskState('error'); return; }
       setAsked(askFor.child);
-      setAskSent(ASK_WORDS.sent(guardianEmail ?? '', askFor.playerFirstName));
+      setAskSent(ASK_WORDS.sent(emailShown ?? '', askFor.playerFirstName));
       setAskOpen(false);
       setAskNote('');
       setAskState('idle');

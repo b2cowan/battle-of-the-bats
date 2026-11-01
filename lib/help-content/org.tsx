@@ -474,7 +474,7 @@ const orgHelp: HelpPageContent = {
                 <HelpDef term="A failed payment">The owners. Billing is theirs.</HelpDef>
                 <HelpDef term="An assistant coach waiting for approval">Whoever holds <strong>Rep teams</strong> for that team&rsquo;s group.</HelpDef>
                 <HelpDef term="A team marked no-show">Whoever runs check-in for that tournament. It leaves once the team checks in, the no-show is undone, or the tournament ends.</HelpDef>
-                <HelpDef term="A house league withdrawal request">The owner, club admins, league admins and league registrars, when a family uses <strong>Ask to withdraw a child</strong> on their status page. It opens Registrations on that child. It leaves once the registration ends, whoever ends it, and the child keeps their place until then.</HelpDef>
+                <HelpDef term="A house league withdrawal request">The owner, club admins, league admins and league registrars, when a family uses <strong>Ask to withdraw a child</strong> on their sign-up page. It opens Registrations on that child. It leaves once the registration ends, whoever ends it, and the child keeps their place until then.</HelpDef>
               </HelpDefs>
             </>
           ),

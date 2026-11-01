@@ -356,13 +356,24 @@ export interface RegRights {
   payLinks?: boolean;
 }
 
+/**
+ * The children one family link opens (Signed-in family accounts Stage 1, ask 6): the same reference AND the same family
+ * email — the door's set (`signupRowsFromAnchor`) — or, for an older registration with no reference, that one child.
+ * "Send a new link" names them and stops the link for all of them.
+ */
+export function signupChildren(reg: LeagueRegistration, all: readonly LeagueRegistration[]): LeagueRegistration[] {
+  if (!reg.signupRef) return [reg];
+  const kids = all.filter(r => r.signupRef === reg.signupRef && r.guardianEmail === reg.guardianEmail);
+  return kids.length ? kids : [reg];
+}
+
 export type RowActionKey =
   | 'approve' | 'markReceived' | 'promote' | 'move' | 'correct' | 'release' | 'withdraw' | 'decline' | 'email' | 'undo' | 'waitlist'
-  | 'payLink' | 'refundCard' | 'refundAnotherWay' | 'viewPayment';
+  | 'payLink' | 'newLink' | 'refundCard' | 'refundAnotherWay' | 'viewPayment';
 
 /** The ⋯ menu's order (copy §1.5). */
 const MENU_ORDER: readonly RowActionKey[] = [
-  'approve', 'markReceived', 'payLink', 'viewPayment', 'move', 'correct', 'release', 'withdraw', 'decline', 'email', 'undo', 'waitlist', 'promote',
+  'approve', 'markReceived', 'payLink', 'newLink', 'viewPayment', 'move', 'correct', 'release', 'withdraw', 'decline', 'email', 'undo', 'waitlist', 'promote',
 ];
 
 /**
@@ -400,6 +411,9 @@ export function rowActions(
   }
   // 12c Part 7 (12b's b3): a payment that came online opens the record at its Fee, where it and its refunds are read.
   if (latest && (latest.method === 'online_card' || latest.method === 'online_bank')) has.add('viewPayment');
+  // Signed-in family accounts Stage 1 (ask 4, drawing tab 4): whatever the child's status, for anyone who can change
+  // registrations (`register`: off on a finished season), while the family has an email to send the new link to.
+  if (rights.register && reg.guardianEmail?.trim()) has.add('newLink');
   if (rights.email) has.add('email');
   const primary: RowActionKey | null = has.has('approve') ? 'approve'
     : has.has('markReceived') ? 'markReceived'
@@ -662,6 +676,8 @@ export function registrationHistory(
   const byEntry = new Map(refunds.filter(r => r.entryId).map(r => [r.entryId as string, r]));
   add(reg.registeredAt, reg.source === 'admin_manual' ? H.byHand : H.registered);
   if (reg.acceptedAt) add(reg.acceptedAt, H.accepted);
+  // Stage 1: one line on each child of the sign-up, no actor (history lines name no one).
+  add(reg.linkReplacedAt, H.newLink);
   for (const l of lines) {
     if (l.status === 'void') { add(l.createdAt, H.voided(money(l.amount)), l.day); continue; }
     if (l.status !== 'posted') continue;

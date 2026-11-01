@@ -52,7 +52,6 @@ export const LEAGUE_PAY_WORDS = {
     bodyRaised: (child: string, season: string, from: string, to: string, diff: string) =>
       `${possessive(child)} price for ${season} changed from ${from} to ${to}. ${diff} is left to pay.`,
     amount: (owing: string) => `Amount due: ${owing}`,
-    button: 'Pay now',
     otherWays: (how: string) => `Or pay another way: ${how}`,
     reference: (ref: string) => `Reference ${ref}`,
   },
@@ -86,9 +85,8 @@ export const LEAGUE_PAY_WORDS = {
   },
   linkEmailRefunded: (club: string, child: string, season: string, childFirst: string, owing: string) =>
     `${club} refunded ${possessive(child)} fee for ${season}, and ${childFirst} is still registered, so ${owing} is due.`,
-  // §3 · the emails' Pay now (while the club takes payments)
+  // §3 · the emails' card words (while the club takes payments). The button is `SIGNUP_LINK_WORDS.mail.button` (Stage 1 ask 2).
   mail: {
-    payButton: 'Pay now',
     payLine: 'Pay online by card, or pay another way below.',
     payLineOnly: 'Pay online by card.',
     feeShown: 'The processing fee is shown before you pay.',
@@ -138,5 +136,14 @@ export const SIGNUP_LINK_WORDS = {
     notYou: 'Didn’t ask for this? You can ignore it. Your link has not changed.',
     reference: (ref: string) => `Reference ${ref}. Quote it if you contact the club.`,
     because: 'someone asked for this link on the club’s site',
+  },
+  // Tab 4 · the club's "Send a new link": the short email with the one "Your sign-up" button (not drawn word for word;
+  // built on tab 2's email). The button and the reference line are `mail`'s.
+  replacedMail: {
+    subject: (season: string) => `A new link to your sign-up · ${season}`,
+    heading: 'Your new sign-up link',
+    body: (club: string, children: string, season: string) =>
+      `${club} sent you a new link to your sign-up for ${children} in ${season}. The link you had before no longer works.`,
+    because: 'the club sent you a new link to your sign-up',
   },
 } as const;

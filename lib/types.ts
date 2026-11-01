@@ -1060,6 +1060,9 @@ export interface LeagueRegistration {
   withdrawRequestNote: string | null;
   /** When the desk last emailed the family the pay link (Stage 12b, mig 374): "Pay link sent" on the row. */
   payLinkSentAt?: string | null;
+  /** When the club last sent a new "Your sign-up" link, stopping the old one for the whole sign-up (mig 419, Signed-in
+   *  family accounts Stage 1): the history's "New link sent; the old one stopped". */
+  linkReplacedAt?: string | null;
   registeredAt: string;
   updatedAt: string;
 }

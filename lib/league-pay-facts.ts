@@ -201,6 +201,48 @@ export async function loadCardRefunds(orgId: string, regIds: string[]): Promise<
   return out;
 }
 
+/** A child's price, what was received, and what is due: only an accepted child owes (before any bank debit clearing). */
+function childDue(r: RegRow, season: Pick<LeagueSeason, 'registrationFee'>, lines: Map<string, Parameters<typeof receivedOf>[0]>) {
+  const fee = registrationOwes({ feeAmount: r.fee_amount != null ? Number(r.fee_amount) : null }, season);
+  const receivedCents = toCents(receivedOf(lines.get(r.id) ?? []));
+  const due = r.status === 'active' ? Math.max(0, toCents(fee ?? 0) - receivedCents) : 0;
+  return { fee, receivedCents, due };
+}
+
+/**
+ * Which of these registrations anchor a sign-up that owes money NOW — `owingCents > 0` in the facts below (an accepted
+ * child with a balance and no bank debit clearing on it), answered for many sign-ups at once. The placement email asks
+ * it for every family it sends to (Signed-in family accounts Stage 1, ask 3: its "Your sign-up" button only while money
+ * is owed), so a Publish never loads the full pay facts family by family. "The sign-up" is `signupRows`'s set.
+ */
+export async function signupsOwingNow(orgId: string, seasonId: string, anchorIds: readonly string[]): Promise<Set<string>> {
+  const owing = new Set<string>();
+  if (!anchorIds.length) return owing;
+  const season = await getLeagueSeasonById(seasonId, orgId);
+  if (!season) return owing;
+  const regs = () => supabaseAdmin.from('league_registrations').select(REG_COLUMNS).eq('season_id', seasonId).eq('org_id', orgId);
+  const anchors = await fetchAllIn<RegRow>(anchorIds, (chunk, from, to) => regs().in('id', chunk).order('id').range(from, to));
+  const refs = [...new Set(anchors.map(a => a.signup_ref).filter((r): r is string => !!r))];
+  const withRef = await fetchAllIn<RegRow>(refs, (chunk, from, to) => regs().in('signup_ref', chunk).order('id').range(from, to));
+  // A reference is 8 random characters: the family's email keeps two families' sign-ups apart (as `signupRows`).
+  const members = new Map(anchors.map(a => [a.id, a.signup_ref
+    ? withRef.filter(r => r.signup_ref === a.signup_ref && r.guardian_email === a.guardian_email)
+    : [a]]));
+  const active = [...new Set([...members.values()].flat().filter(r => r.status === 'active').map(r => r.id))];
+  const [lines, clearingItems] = await Promise.all([
+    loadRegistrationMoneyLines(active),
+    // `isRegClearing`'s test, for many children at once.
+    fetchAllIn<{ registration_id: string }>(active, (chunk, from, to) =>
+      supabaseAdmin.from('online_payment_items').select('registration_id, online_payments!inner(status)')
+        .in('registration_id', chunk).eq('online_payments.status', 'clearing').order('id').range(from, to)),
+  ]);
+  const clearing = new Set(clearingItems.map(i => i.registration_id));
+  for (const [anchorId, rows] of members) {
+    if (rows.some(r => !clearing.has(r.id) && childDue(r, season, lines).due > 0)) owing.add(anchorId);
+  }
+  return owing;
+}
+
 /** 12c Part 6: is a bank debit for this child clearing now? (Mark received and the pay link refuse while it is, §3.2.) */
 export async function isRegClearing(regId: string): Promise<boolean> {
   const { count } = await supabaseAdmin.from('online_payment_items').select('id, online_payments!inner(status)', { count: 'exact', head: true })
@@ -392,9 +434,7 @@ export async function loadLeaguePayFacts(registrationId: string): Promise<League
   const divisionName = new Map(divisions.map(d => [d.id, d.name]));
 
   const children: LeaguePayChild[] = rows.map(r => {
-    const fee = registrationOwes({ feeAmount: r.fee_amount != null ? Number(r.fee_amount) : null }, season);
-    const receivedCents = toCents(receivedOf(lines.get(r.id) ?? []));
-    const due = r.status === 'active' ? Math.max(0, toCents(fee ?? 0) - receivedCents) : 0;
+    const { fee, receivedCents, due } = childDue(r, season, lines);
     // 12c: a child on a clearing debit owes nothing new until it clears or comes back.
     const clearing = debits.clearingRegs.has(r.id);
     return {

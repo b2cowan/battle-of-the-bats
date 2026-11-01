@@ -158,7 +158,7 @@ ${eyebrow}${warmEmailHeading(escapeHtml(content.title))}
 <div style="${WARM_EMAIL_STYLE.paragraph}">${escapeHtml(content.body)}</div>
 ${cta}
 ${warmEmailFootnote(`${footer.sentBy}<br>
-${reply}<a href="${unsubscribeUrl}" style="${WARM_EMAIL_STYLE.finePrintLink}">${footer.unsubscribe}</a>`)}`, content.club);
+${reply}${unsubscribeUrl ? `<a href="${unsubscribeUrl}" style="${WARM_EMAIL_STYLE.finePrintLink}">${footer.unsubscribe}</a>` : ''}`)}`, content.club);
 }
 
 /** The inbox's sender name for a family email: the club's name via FieldLogicHQ when the email wears a club, else the platform's own. */

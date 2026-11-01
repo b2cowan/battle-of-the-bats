@@ -228,7 +228,9 @@ describe('the moved child (Part 4, owner 2026-10-31: dates only once the new tea
     assert.ok(told.includes('await readTold(') && !told.includes('readPracticesNow('));
     const html = readCode('lib/email.ts');
     const moved = html.slice(html.indexOf('export function leagueTeamMovedHtml'), html.indexOf('export function leaguePracticesChangedHtml'));
-    assert.equal(moved.split('warmEmailButton(').length - 1, 1, 'one button, as before');
+    // Signed-in family accounts Stage 1: the one button is "Your sign-up" (signupButton), drawn only while money is owed.
+    assert.equal(moved.split('signupButton(').length - 1, 1, 'one button, as before');
+    assert.ok(!moved.includes('warmEmailButton('), 'and no second one');
     assert.ok(moved.includes('input.practices.zone'));
   });
 });

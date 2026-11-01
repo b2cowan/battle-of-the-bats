@@ -150,6 +150,23 @@ export function registrationReference(id: string): string {
   return id.slice(0, 8).toUpperCase();
 }
 
+const MASK = '•••';
+/**
+ * An address as a family's page shows it (Signed-in family accounts Stage 1, owner ruling 2026-11-01): the first
+ * character, "•••", then "@" and the domain ("m•••@gmail.com"); a one-character name is hidden whole ("•••@gmail.com").
+ * Masked on the SERVER, so a forwarded link never hands the full address to the browser. It is text to read, never an
+ * address to send to: the pay route refuses it as a receipt address (`isMaskedEmail`).
+ */
+export function maskEmail(email: string): string {
+  const at = email.lastIndexOf('@');
+  if (at < 0) return MASK;
+  const name = email.slice(0, at);
+  return `${name.length > 1 ? name[0] : ''}${MASK}${email.slice(at)}`;
+}
+
+/** Any "•" at all: a mask the family half-edited ("m••@gmail.com") is still not an address to send to (/review). */
+export const isMaskedEmail = (text: string): boolean => text.includes(MASK[0]);
+
 /**
  * Does a search box's text name this registration's reference? Case-free, and a quoted "#01496e50"
  * matches too. Six characters at least, so a short name or bib search never lands on a reference.

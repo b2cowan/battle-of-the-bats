@@ -85,7 +85,8 @@ describe('the pay route (Part 2)', () => {
     assert.match(ROUTE, /if \(!fee \|\| fee\.totalCents !== shownTotalCents\) return NextResponse\.json\(\{ error: W\.error\.amountChanged, changed: true \}/);
   });
   it('one line per child and the processing fee its own line only while families pay it (A14)', () => {
-    assert.match(ROUTE, /\.\.\.shares\.map\(s => \(\{ name: `\$\{s\.description\} · \$\{facts\.season\.name\}`, amountCents: s\.amountCents \}\)\)/);
+    // One line per child, named by first name on Stripe's page (Signed-in family Stage 1, Part 5b).
+    assert.match(ROUTE, /\.\.\.shares\.map\(s => \{\s*const c = childOf\.get\(s\.registrationId\);\s*return \{ name: \[c\?\.firstName, [^\]]+, facts\.season\.name\]\.filter\(Boolean\)\.join\(' · '\), amountCents: s\.amountCents \};/);
     assert.match(ROUTE, /\.\.\.\(fee\.feePayer === 'family' \? \[\{ name: W\.receiptFee, amountCents: fee\.feeCents \}\] : \[\]\)/);
     assert.match(ROUTE, /applicationFeeCents: fee\.applicationFeeCents/);
   });

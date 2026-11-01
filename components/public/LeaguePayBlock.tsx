@@ -88,7 +88,8 @@ function Owing({ pay }: { pay: LeaguePayView }) {
     if (totalCents == null) return;
     setOpening(rail);
     setError(null);
-    const r = await openCheckout(`/api/pay/league/${pay.token}`, { rail, totalCents, email });
+    // The field opens on the masked address on file; left as it is, no address is sent and the receipt goes to that one.
+    const r = await openCheckout(`/api/pay/league/${pay.token}`, { rail, totalCents, email: email === pay.payerEmail ? '' : email });
     if ('url' in r) { window.location.assign(r.url); return; }
     if ('changed' in r) { window.location.reload(); return; }
     setError(r.error);

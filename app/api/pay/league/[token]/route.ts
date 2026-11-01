@@ -13,6 +13,7 @@ import { throttlePublicForm } from '@/lib/public-form-throttle';
 import { toDollars } from '@/lib/online-payment-fee';
 import { BANK_DEBIT_WORDS as B, PAY_WORDS as W } from '@/lib/online-payment-words';
 import { LEAGUE_PAY_WORDS as LW, childList } from '@/lib/league-pay-words';
+import { isMaskedEmail } from '@/lib/utils';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -77,7 +78,9 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   // 12c: the button pressed decides the rail (each has its own fee, its own split and its own Checkout).
   const rail: 'card' | 'bank_debit' = body.rail === 'bank_debit' ? 'bank_debit' : 'card';
   const shownTotalCents = Number(body.totalCents);
-  const email = typeof body.email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email.trim()) ? body.email.trim() : null;
+  // The page shows the address on file masked (Stage 1): a masked one sent back is not an address, so the receipt goes to
+  // the one on file.
+  const email = typeof body.email === 'string' && !isMaskedEmail(body.email) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email.trim()) ? body.email.trim() : null;
 
   const facts = await loadLeaguePayFacts(regId);
   if (!facts) return NextResponse.json({ error: LW.error.linkInvalid(null) }, { status: 404 });
@@ -97,8 +100,8 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   const who = shares.map(s => s.description.split(' · ')[0]).join(', ');
   // The clearing answer goes to the family's browser, so it names the children by first name; `who` (full names) stays
   // in the club's record.
-  const firstNames = new Map(facts.children.map(c => [c.registrationId, c.firstName]));
-  const whoFirst = childList(shares.map(s => firstNames.get(s.registrationId) ?? '').filter(Boolean));
+  const childOf = new Map(facts.children.map(c => [c.registrationId, c]));
+  const whoFirst = childList(shares.map(s => childOf.get(s.registrationId)?.firstName ?? '').filter(Boolean));
   const reuse = await openSessionFor(facts.season.id, facts.signupKey, rail, fee.totalCents, whoFirst, facts.org.name);
   if (reuse) return reuse;
 
@@ -116,7 +119,12 @@ export const POST = withObservability(async (req: Request, { params }: { params:
       currency: 'cad',
       rail,
       lines: [
-        ...shares.map(s => ({ name: `${s.description} · ${facts.season.name}`, amountCents: s.amountCents })),
+        // Stripe's page is the family's browser: each line names the child by first name ("Maya · U9 · 2026 Season", owner
+        // ruling 2026-11-01). The club's record (`description`, `p_description`, the items) keeps full names.
+        ...shares.map(s => {
+          const c = childOf.get(s.registrationId);
+          return { name: [c?.firstName, c?.divisionName, facts.season.name].filter(Boolean).join(' · '), amountCents: s.amountCents };
+        }),
         ...(fee.feePayer === 'family' ? [{ name: W.receiptFee, amountCents: fee.feeCents }] : []),
       ],
       applicationFeeCents: fee.applicationFeeCents,

@@ -5,6 +5,7 @@ import { leaguePayToken, leaguePayUrl, payLinkSecret } from './league-pay-link';
 import type { LeagueMailPay } from './email';
 import { LEAGUE_PAY_WORDS as LW } from './league-pay-words';
 import { toCents } from './online-payment-fee';
+import { maskEmail } from './utils';
 
 /**
  * A house-league sign-up's pay block, as one plain object (Club Tier Stage 12b; drawn b1, k1). Built on the server from
@@ -157,7 +158,9 @@ export function viewFromFacts(f: LeaguePayFacts, token: string, receipts: League
     clubName: f.org.name,
     seasonName: f.season.name,
     testMode: f.account ? !f.account.livemode : false,
-    payerEmail: f.guardianEmail,
+    // The family's page shows the address masked (owner ruling 2026-11-01): the full one never reaches the browser. Left
+    // as it is, the receipt goes to the address on file (the pay route's fallback).
+    payerEmail: f.guardianEmail ? maskEmail(f.guardianEmail) : null,
     feePaidByPayer: f.account?.feePayer === 'family',
     refundPolicy: f.account?.refundPolicy?.trim() || null,
     howToPay: f.season.howToPay?.trim() || null,
@@ -183,15 +186,22 @@ export function viewFromFacts(f: LeaguePayFacts, token: string, receipts: League
 }
 
 /**
- * Pay now in a family email (12b copy §3: the sign-up, approval and waitlist-promotion emails): the sign-up's pay link and
- * whether the family pays the processing fee — only while the club takes card payments and something is owed, so an
- * email never carries a button that leads nowhere. Null keeps today's email, word for word (A6).
+ * The family's link in a house-league email (Signed-in family accounts Stage 1, asks 2 and 3; drawing tab 5): `url` is
+ * the "Your sign-up" link at the anchor's current version (the sign-up confirmation carries it always), `owedUrl` the same
+ * link only while something is owed (every later email), and `online` the card words (12b copy §3) only while the club
+ * takes card payments and something is owed. A link that can't be signed here, or facts that can't be read, is no button.
  */
-export async function leagueMailPay(registrationId: string): Promise<LeagueMailPay | null> {
+export interface LeagueMailLink { url: string | null; owedUrl: string | null; online: LeagueMailPay | null }
+
+export async function leagueMailLink(registrationId: string): Promise<LeagueMailLink> {
   const f = await loadLeaguePayFacts(registrationId).catch(() => null);
-  if (!f || f.refusal !== null) return null;
-  const payUrl = leaguePayUrl(process.env.NEXT_PUBLIC_APP_URL ?? '', { orgSlug: f.org.slug, seasonSlug: f.season.slug, registrationId, version: f.linkVersion });
-  return payUrl ? { payUrl, familyPaysFee: f.account?.feePayer === 'family' } : null;
+  if (!f) return { url: null, owedUrl: null, online: null };
+  const url = leaguePayUrl(process.env.NEXT_PUBLIC_APP_URL ?? '', { orgSlug: f.org.slug, seasonSlug: f.season.slug, registrationId, version: f.linkVersion });
+  return {
+    url,
+    owedUrl: f.owingCents > 0 ? url : null,
+    online: url && f.refusal === null ? { familyPaysFee: f.account?.feePayer === 'family' } : null,
+  };
 }
 
 /** The pay block for the sign-up a registration belongs to; null when the club is not taking card payments (or no

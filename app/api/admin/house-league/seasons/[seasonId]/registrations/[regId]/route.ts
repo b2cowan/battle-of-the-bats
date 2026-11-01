@@ -29,8 +29,9 @@ import { systemMailFace } from '@/lib/club-email-context';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 import { orgDayKey, tournamentToday } from '@/lib/timezone';
 import { withObservability } from '@/lib/observability';
-import { leagueMailPay } from '@/lib/league-pay-view';
+import { leagueMailLink } from '@/lib/league-pay-view';
 import { sendLeaguePayLink } from '@/lib/online-payment-receipt';
+import { replaceSignupLink } from '@/lib/league-signup-link-mail';
 import { answerStillEnrolled, leagueEndingRefundHtml, leagueRefundMail, sendLeagueRefundEmail, stampRefundEmailed, stillEnrolledRefund } from '@/lib/online-refund-email';
 import type { EmailKind } from '@/lib/email-kinds';
 import { leagueCardShares, refundLeagueToCard, resolveLeagueRefundAnotherWay } from '@/lib/online-payment-landing';
@@ -66,8 +67,8 @@ function emailPromoted(
         const { data: div } = await supabaseAdmin.from('league_divisions').select('name').eq('id', next.divisionId).single();
         if (div) divisionName = div.name;
       }
-      // 12b: Pay now by card while the club takes card payments (the promoted child is accepted, so now owes).
-      const [face, online] = await Promise.all([systemMailFace(org), leagueMailPay(next.id)]);
+      // The "Your sign-up" button only while money is owed (Stage 1 ask 3); 12b's card words while the club takes cards.
+      const [face, link] = await Promise.all([systemMailFace(org), leagueMailLink(next.id)]);
       await sendTransactionalEmail({
         key: 'league_waitlist_promoted',
         to: next.guardianEmail,
@@ -91,9 +92,9 @@ function emailPromoted(
           fee:              registrationOwes(next, season),
           howToPay:         season.howToPay,
           clubName:         org.name,
-          statusPath:       `/${org.slug}/league/${season.slug}/status`,
+          signupUrl:        link.owedUrl,
           face,
-          online,
+          online:           link.online,
         }),
         family: face ? { face, reason: `${next.playerFirstName} was signed up for ${season.name}` } : undefined,
       });
@@ -284,6 +285,22 @@ export const PATCH = withObservability(async (req: Request,
     }
     const updated = await fetchReg(regId, seasonId);
     return NextResponse.json({ registration: updated, sentTo: sent.sentTo });
+  }
+
+  // ── "Send a new link" (Signed-in family accounts Stage 1 Part 6; ask 4) ─────────────────
+  // Anyone who can change registrations (`register`: not only the money desk; this is about who can open the page). The
+  // old link stops for every child on the sign-up, one new link is emailed.
+  if (body.newLink === true) {
+    const refused = houseLeagueRefusal(ctx, 'register', season);
+    if (refused) return refused;
+    const W = REGS_WORDS.newLink;
+    const out = await replaceSignupLink(ctx!.org, season, regId);
+    if ('error' in out) {
+      const error = out.error === 'no_email' ? W.noEmail : out.error === 'no_secret' ? W.noSecret : out.error === 'not_found' ? 'Registration not found' : W.failed;
+      return NextResponse.json({ error, code: 'new_link' }, { status: out.error === 'not_found' ? 404 : 409 });
+    }
+    await writeOrgAudit(ctx!.org.id, ctx!.user.id, regId, 'league_signup_link_replaced', { seasonId });
+    return NextResponse.json({ registration: await fetchReg(regId, seasonId), sentTo: out.sentTo });
   }
 
   // ── a card payment that couldn't go on this registration (12b copy §7) ──────────
@@ -518,7 +535,6 @@ export const PATCH = withObservability(async (req: Request,
     divisionName:    '', // filled per-branch
     registrationId:  reg.id,
     reference:       reg.signupRef,
-    statusPath:      `/${ctx!.org.slug}/league/${season.slug}/status`,
   };
 
   // The club's face (The public face, warm: S3b): read at most once for this request, worn by every email below. A face that
@@ -563,8 +579,8 @@ export const PATCH = withObservability(async (req: Request,
     if (changed && newStatus === 'active') {
       void (async () => {
         try {
-          // 12b: Pay now by card while the club takes card payments.
-          const [face, online] = await Promise.all([faceOnce(), leagueMailPay(regId)]);
+          // The "Your sign-up" button only while money is owed (Stage 1 ask 3); 12b's card words while the club takes cards.
+          const [face, link] = await Promise.all([faceOnce(), leagueMailLink(regId)]);
           await sendTransactionalEmail({
             key: 'league_registration_approved',
             to: reg.guardianEmail,
@@ -579,7 +595,8 @@ export const PATCH = withObservability(async (req: Request,
             defaultSubject: `${reg.playerFirstName} is accepted — ${season.name}`,
             defaultHtml: leagueAdminApprovedHtml({
               ...emailBase, divisionName, face,
-              fee: registrationOwes(reg, season), howToPay: season.howToPay, clubName: ctx!.org.name, online,
+              fee: registrationOwes(reg, season), howToPay: season.howToPay, clubName: ctx!.org.name,
+              signupUrl: link.owedUrl, online: link.online,
             }),
             family: familyOf(face, reg.playerFirstName),
           });

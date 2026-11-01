@@ -2,6 +2,10 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { signupLinkClockRanOut } from '../../lib/house-league-access.ts';
+import { isMaskedEmail, maskEmail } from '../../lib/utils.ts';
+import { rowActions, signupChildren } from '../../lib/house-league-registrations.ts';
+import { readLeaguePayToken, signLeaguePayToken } from '../../lib/league-pay-link.ts';
+import type { LeagueRegistration } from '../../lib/types.ts';
 import { filesUnder, readCode } from './_source-code.ts';
 
 /**
@@ -55,14 +59,17 @@ describe('one door reads a family token', () => {
   });
   it('every link minted anywhere signs with the anchor’s current version', () => {
     // Every minting call in the code, not a list: a new email that signs a literal would be refused as replaced the
-    // moment the club resets the link. The one literal is the sign-up's own success screen, for a row made a moment ago.
+    // moment the club resets the link. The one literal is the sign-up's own success screen and its confirmation email, for
+    // a row made a moment ago in the same request.
     const minted = [...filesUnder('app', '.ts'), ...filesUnder('app', '.tsx'), ...filesUnder('lib', '.ts'), ...filesUnder('components', '.tsx')]
       .filter(f => f !== 'lib/league-pay-link.ts');
     let calls = 0;
     for (const f of minted) {
       for (const call of readCode(f).match(/leaguePay(?:Url|Token)\([^;]*;/g) ?? []) {
         calls += 1;
-        if (f === 'app/api/league/[orgSlug]/[seasonSlug]/register/route.ts') assert.match(call, /leaguePayToken\(placedKids\[0\]\.id!, 0\)/, call);
+        if (f === 'app/api/league/[orgSlug]/[seasonSlug]/register/route.ts') assert.match(call, /leaguePayToken\(placedKids\[0\]\.id!, 0\)|registrationId: placedKids\[0\]\.id!, version: 0 \}\)/, call);
+        // The club's reset signs the version it has just written to every child of the sign-up (Part 6).
+        else if (f === 'lib/league-signup-link-mail.ts' && /registrationId, version \}\)!;$/.test(call)) assert.ok(readCode(f).includes('link_version: version,'), call);
         else assert.match(call, /version: (?:f|facts)\.linkVersion|version: Number\((?:reg|anchor)\.link_version \?\? 0\)|leaguePayToken\(registrationId, f\.linkVersion\)/, `${f}: ${call}`);
       }
     }
@@ -109,7 +116,9 @@ describe('the reference opens nothing; "Email me my link" sends to the inbox', (
     // The door's own rule 3, never a copy of it: the same "still owes" (an open Stripe payment included).
     assert.match(MAIL, /!clockRanOut \|\| signupStillOwes\(kids\[0\]\.id, season\.id\)/);
     assert.doesNotMatch(MAIL, /owingCents|clearingCents/);
-    assert.match(MAIL, /await sendTransactionalEmail\(\{\s*key: 'league_signup_link',\s*to: email,/);
+    // To the address typed, through the account-notice frame (the transactional door, never the unsubscribe list).
+    assert.match(MAIL, /await sendLinkNotice\(org, \{\s*key: 'league_signup_link', to: email,/);
+    assert.match(MAIL, /return sendTransactionalEmail\(\{\s*key: n\.key,\s*to: n\.to,/);
   });
 });
 
@@ -138,5 +147,109 @@ describe('the family page names children by first name only', () => {
     assert.match(page, /className=\{form\.textarea\}/);
     assert.doesNotMatch(page, /outline: 'none'/);
     assert.doesNotMatch(readCode('app/api/league/[orgSlug]/[seasonSlug]/register/route.ts'), /Use your reference/);
+  });
+});
+
+describe('Part 5b (owner rulings 2026-11-01): first names on Stripe, the address masked on the family page', () => {
+  it('Stripe’s checkout lines name each child by first name; the club’s record keeps the full description', () => {
+    // From the child's own fields, never by re-parsing the club's description.
+    assert.match(PAY, /name: \[c\?\.firstName, c\?\.divisionName, facts\.season\.name\]/);
+    assert.doesNotMatch(PAY, /s\.description\.split\(' · '\)\.slice\(1\)/);
+    assert.doesNotMatch(PAY, /name: `\$\{s\.description\}/);
+    assert.match(PAY, /const description = \[who, facts\.season\.name\]\.join\(' · '\);/);
+  });
+  it('masks an address: first character, •••, the domain; a one-character name hidden whole', () => {
+    assert.equal(maskEmail('maya.parent@gmail.com'), 'm•••@gmail.com');
+    assert.equal(maskEmail('m@gmail.com'), '•••@gmail.com');
+    assert.ok(isMaskedEmail(maskEmail('priya@example.ca')));
+    assert.ok(!isMaskedEmail('priya@example.ca'));
+    // A half-edited mask is still a mask (it would reach Stripe as a receipt address otherwise).
+    assert.ok(isMaskedEmail('m••@gmail.com'));
+    assert.ok(isMaskedEmail('m•@gmail.com'));
+  });
+  it('the [token] page and the pay block hand the browser only the masked address', () => {
+    assert.match(PAGE, /emailShown=\{link\.rows\[0\]\?\.guardian_email \? maskEmail\(link\.rows\[0\]\.guardian_email\) : null\}/);
+    assert.doesNotMatch(PAGE, /guardianEmail=/);
+    assert.match(readCode('lib/league-pay-view.ts'), /payerEmail: f\.guardianEmail \? maskEmail\(f\.guardianEmail\) : null,/);
+    // Left untouched, the field sends no address; a masked one sent anyway is refused as a receipt address.
+    assert.match(readCode('components/public/LeaguePayBlock.tsx'), /email: email === pay\.payerEmail \? '' : email/);
+    assert.match(PAY, /!isMaskedEmail\(body\.email\)/);
+  });
+});
+
+describe('Part 6: the club’s "Send a new link" (drawing tab 4; asks 4 and 6)', () => {
+  const REGS = readCode('lib/house-league-registrations.ts');
+  const REG_ROUTE = readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts');
+  const SCREEN = readCode('components/admin/kit/club/league/registrations/RegistrationsScreen.tsx');
+  const kid = (over: Partial<LeagueRegistration>): LeagueRegistration => ({
+    id: 'r1', playerFirstName: 'Maya', guardianEmail: 'p@x.ca', signupRef: 'ABC12345', status: 'active', ...over,
+  } as LeagueRegistration);
+  const RIGHTS = { register: true, takeFees: false, run: false, email: false };
+  const OWING = { kind: 'owing', owing: 185 } as unknown as Parameters<typeof rowActions>[1];
+
+  it('is offered to anyone who can change registrations, whatever the child’s status, while there is an email', () => {
+    for (const status of ['pending_review', 'active', 'waitlisted', 'withdrawn', 'declined'] as const) {
+      assert.ok(rowActions(kid({ status }), OWING, [], RIGHTS).all.includes('newLink'), status);
+    }
+    assert.ok(!rowActions(kid({}), OWING, [], { ...RIGHTS, register: false, takeFees: true }).all.includes('newLink'), 'not the desk alone');
+    assert.ok(!rowActions(kid({ guardianEmail: ' ' }), OWING, [], RIGHTS).all.includes('newLink'), 'no email, no row');
+  });
+  it('covers the sign-up: the same reference AND family email (the door’s set), else the one child', () => {
+    const all = [kid({}), kid({ id: 'r2', playerFirstName: 'Leo' }), kid({ id: 'r3', playerFirstName: 'Ava', guardianEmail: 'other@x.ca' })];
+    assert.deepEqual(signupChildren(all[0], all).map(k => k.playerFirstName), ['Maya', 'Leo']);
+    assert.deepEqual(signupChildren(kid({ signupRef: null }), all).map(k => k.id), ['r1']);
+    // The menu hint and the confirm name the same children, through one helper.
+    assert.match(SCREEN, /function signupKids\(reg: LeagueRegistration, all: readonly LeagueRegistration\[\]\) \{\s*const kids = signupChildren\(reg, all\);/);
+    assert.match(SCREEN, /case 'newLink': return \{ key, label: M\.newLink\.label, hint: M\.newLink\.hint\(signupKids\(reg, read\?\.registrations \?\? \[\]\)\.names\) \};/);
+    assert.match(SCREEN, /const newLinkFor = act\?\.kind === 'newLink' \? signupKids\(act\.reg, read\?\.registrations \?\? \[\]\) : null;/);
+  });
+  it('one update moves every child of the sign-up to the next version, so a sibling’s old link stops and the new one opens', () => {
+    const reset = MAIL.slice(MAIL.indexOf('export async function replaceSignupLink('));
+    assert.match(reset, /\.update\(\{ link_version: version, link_replaced_at: new Date\(\)\.toISOString\(\) \}\)\.in\('id', kids\.map\(k => k\.id\)\)/);
+    assert.equal((reset.match(/\.update\(/g) ?? []).length, 1, 'one statement');
+    assert.match(reset, /q\.eq\('signup_ref', anchor\.signup_ref as string\)\.eq\('guardian_email', anchor\.guardian_email as string\)/);
+    // Refused BEFORE anything moves when no new link could be sent.
+    assert.ok(reset.indexOf("return { error: 'no_secret' }") < reset.indexOf('.update('));
+    assert.ok(reset.indexOf("return { error: 'no_email' }") < reset.indexOf('.update('));
+    // After the update the old link is stopped: a send that throws is the plain "couldn't send", never a 500.
+    assert.match(reset, /\}\)\.catch\(\(\) => null\);\s+return !sent \|\| sent\.status === 'provider_error' \? \{ error: 'send_failed' \}/);
+    // The token layer: version n opens only at version n.
+    const secret = 'test-secret';
+    const SIB = '6f1c2d3e-4a5b-4c6d-8e9f-0a1b2c3d4e5f';
+    assert.equal(readLeaguePayToken(signLeaguePayToken(SIB, secret, 1), secret)?.version, 1);
+    assert.equal(readLeaguePayToken(signLeaguePayToken(SIB, secret), secret)?.version, 0);
+    assert.match(DOOR, /if \(read\.version !== Number\(anchor\.link_version \?\? 0\)\) return \{ ok: false, ended: 'replaced' \};/);
+  });
+  it('the route asks `register` first (a member without it is refused), and the history line has no actor', () => {
+    const branch = REG_ROUTE.slice(REG_ROUTE.indexOf('if (body.newLink === true) {'));
+    assert.match(branch, /^if \(body\.newLink === true\) \{\s*const refused = houseLeagueRefusal\(ctx, 'register', season\);\s*if \(refused\) return refused;/);
+    assert.match(REGS, /add\(reg\.linkReplacedAt, H\.newLink\);/);
+    assert.equal((REG_ROUTE.match(/sendLeaguePayLink\(/g) ?? []).length, 3, 'the pay link’s three callers, unchanged');
+  });
+});
+
+describe('Part 7: no unsubscribe secret, no unsubscribe link', () => {
+  it('signing returns no link and every token is refused without the secret; with it, a link round-trips', async () => {
+    const T = await import('../../lib/unsubscribe-token.ts');
+    const had = process.env.UNSUBSCRIBE_SECRET;
+    try {
+      delete process.env.UNSUBSCRIBE_SECRET;
+      assert.equal(T.buildUnsubscribeUrl('org-1'), null);
+      assert.equal(T.buildUserUnsubscribeUrl('user-1'), null);
+      assert.equal(T.buildGuardianUnsubscribeUrl('org-1', 'p@x.ca'), null);
+      assert.equal(T.verifyUnsubscribeToken('org-1', '0'.repeat(32)), false);
+      process.env.UNSUBSCRIBE_SECRET = 'a-test-secret-of-some-length';
+      const token = T.generateGuardianUnsubscribeToken('org-1', 'P@x.ca')!;
+      assert.equal(T.verifyGuardianUnsubscribeToken('org-1', 'p@x.ca', token), true);
+      assert.equal(T.verifyUnsubscribeToken('org-1', token), false, 'token families never cross');
+    } finally {
+      if (had === undefined) delete process.env.UNSUBSCRIBE_SECRET; else process.env.UNSUBSCRIBE_SECRET = had;
+    }
+    assert.ok(!readCode('lib/unsubscribe-token.ts').includes('insecure-dev-fallback'));
+    // The secret signs exactly as set: trimming it would change every token already in an inbox.
+    assert.ok(!readCode('lib/unsubscribe-token.ts').includes('UNSUBSCRIBE_SECRET?.trim()'));
+    // A marketing send that could carry no link is not sent; a family email draws none.
+    assert.ok(readCode('lib/email-sender.ts').includes("suppressionReason: 'no_unsubscribe_secret'"));
+    assert.ok(readCode('lib/family-email.ts').includes('${unsubscribeUrl ? `<a href="${unsubscribeUrl}"'));
   });
 });

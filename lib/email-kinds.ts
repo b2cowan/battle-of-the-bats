@@ -108,6 +108,8 @@ export const EMAIL_KINDS = {
   league_pay_link:                      { klass: 'family', label: 'League payment link' },
   // Signed-in family accounts Stage 1: "Email me my link" (a family asked for their Your sign-up link).
   league_signup_link:                   { klass: 'family', label: 'League sign-up link' },
+  // …and the club's "Send a new link" (the old one stopped for the whole sign-up).
+  league_signup_link_replaced:          { klass: 'family', label: 'League sign-up link, replaced' },
   league_payment_refund:                { klass: 'family', label: 'League refund' },
   league_bank_debit_started:            { klass: 'family', label: 'Bank debit started' },
   league_bank_debit_returned:           { klass: 'family', label: 'Bank debit returned' },

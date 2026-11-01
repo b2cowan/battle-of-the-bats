@@ -27437,6 +27437,19 @@ performed over the shared working tree. The original walk result is not claimed 
 **WALKED 2026-10-31 (pasted 11-01), PASSED 27/27, no changes asked** — A 6/6 · B 4/4 · C 4/4 · D 4/4 · E 5/5 · F 2/2 · G 2/2. No notes came back with the paste, so the three open owner calls (C3 the door back to a family nobody could reach, E4 the "Added:" line, C4 the "Reached 10 of 10" count) stand as built and the "known before the walk" items stay open. /simplify, /review and /docs were already run 2026-10-31 (build prompt Progress block). Still owed for 9d-3 Session 1: the commit and the "See an example" multi-word first-name defect (owner call); then Session 2 (Parts 5–7, mig 416).
 <!-- /§436 -->
 
+## §437 · Signed-in family accounts · Stage 1, Session 2 walk — **the family's "Your sign-up" link end to end: first names and a masked address on the page, first names on Stripe's page, the club's Send a new link (confirm, toast, history), and both children's old links stopping while the new ones open**
+<!-- §437 -->
+**Built 2026-11-01:** Session 2 (Parts 5–8) of [SIGNED_IN_FAMILY_STAGE1_BUILD_PROMPT.md](SIGNED_IN_FAMILY_STAGE1_BUILD_PROMPT.md), uncommitted (Session 1 is `d79603110`). No new migration: the reset writes mig 419's columns (419 dev only, prod `pending`).
+
+**The walk (checkable):** https://claude.ai/artifact/3sFyR5BcRptmAZ9isBKYRk (source [SIGNED_IN_FAMILY_STAGE1_S2_WALK.html](SIGNED_IN_FAMILY_STAGE1_S2_WALK.html)). One purpose, 17 steps in five parts: A the family's page (4); B Stripe's line names (2); C the club's new row (5); D old links stop, new ones open (4); E who sees the row (2). Setup: `node --env-file=.env.local .probe/signed-in-family-s2/fixture.mjs` (the Walkfam sign-up; `--links`, `--reset`).
+
+**Not in the walk:** the emails' one "Your sign-up" button (dev sends no email; unit tests pin each email against the drawing's tab 5 table; read on the first production sends). The unsubscribe secret (no screen change while it is set).
+
+**Owner calls open with it:** the masked address in the pay block's editable receipt-email field (a second place the address reached the browser, found by the build); the new-link email's words (not drawn).
+
+**WALKED 2026-11-01, PASSED 17/17, no changes asked** — A 4/4 · B 2/2 · C 5/5 · D 4/4 · E 2/2. No notes came back with the paste, so the two open owner calls (the masked address in the pay block's receipt-email field; the new-link email's words) stand as built. Still owed for Session 2: /simplify, /review, /docs, then the commit.
+<!-- /§437 -->
+
 ## §438 · Plans & pricing · Stage 0 walk — **our billing records tell the truth about Stripe: Plan & billing prints what Stripe charges, the Money tab's next charge, a replaced price still recognised, a disputed charge reaches the owner and suspends nothing, the portal on our own settings, the daily Stripe check**
 <!-- §438 -->
 **Built 2026-11-01:** Stage 0 Parts 1–9 committed `63988b38c`, `46cb0d55a`, `ee2f55acf`; Part 11 (the daily read-only comparison, migs 421–422, dev cron job 15) committed `6d2acb568` 2026-11-01 (its own commit, on the owner's go; `/simplify` + `/review` done). Part 10 (sign in again) is not built: it waits on its `/design` session (build prompt Owner checklist O10). Plan: [PLANS_PRICING_STAGE0_BUILD_PROMPT.md](PLANS_PRICING_STAGE0_BUILD_PROMPT.md).

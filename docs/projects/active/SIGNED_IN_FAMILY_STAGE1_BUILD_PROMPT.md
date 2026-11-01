@@ -23,7 +23,8 @@
 
 - Fill this in as each Part lands: Part, date, commit (or "uncommitted"), migration number and whether it is on dev only, tests
   run, anything the Part did differently from this prompt and why.
-- **Session 1 (Parts 1–4) built 2026-11-01, not committed (owner's word owed).** Tests: `league-signup-link.test.ts` (new),
+- **Session 1 (Parts 1–4) built 2026-11-01; simplify + review done; committed `d79603110` 2026-11-01** (closeout record:
+  `SIGNED_IN_FAMILY_STAGE1_S1_CLOSEOUT_PROMPT.md`; read its Step 2 for the review's fixes and the two owner questions). Tests: `league-signup-link.test.ts` (new),
   `league-pay`, `house-league-signup-guard`, `club-frame-guard`, `club-stage4a-guard`, `house-league-ratings-guard`,
   `family-email-guard`, `support-console-stage5-*` all pass; `tsc` clean; ESLint clean on every touched file; spelling,
   tokens, type, contrast, dates, dictionary, manual-migrations checks pass. Full `npm test` has other sessions' failures
@@ -58,6 +59,43 @@
   - **Gap until Part 5 lands:** every family email's reference line still says "Check your registration any time: {plain
     page}. You'll need this reference and your email." The plain page now emails the link, so it still leads somewhere, but
     "you'll need this reference" is false. Part 5 replaces it; do not ship Session 1 to production without Part 5.
+    **Closed by Session 2 (Part 5).**
+- **Session 2 (Parts 5–8) built 2026-11-01, uncommitted; no new migration.** Tests: the Session 1 suites plus
+  `house-league-registrations`, `league-practice-tell`, `stripe-fees-owner-rulings`, `public-face-s3a/s3b`, `house-league-gate-guard`,
+  `club-stage5c-families-guard`, `marketing-campaign-registry`, `plan-billing-host-links`, `house-league-9d3-coach`,
+  `bank-debit-desk`: **905/905 pass**. `tsc` clean (8 GB heap). ESLint 0 errors on the 25 touched files. Spelling, tokens and
+  dictionary checks pass. Dev server restarted; the family page smoke-checked (200, no full address, no last name).
+  - **Part 5** — one `signupButton(url)` in `lib/email.ts` ("Your sign-up", `SIGNUP_LINK_WORDS.mail.button`); `payBlock` draws no
+    button; `refBlock(reference)` = "Reference X. Quote it if you contact the club." (no link). `LeagueMailPay` is the card words
+    only; `leagueMailPay` became **`leagueMailLink`** → `{ url, owedUrl, online }` (`owedUrl` only when `owingCents > 0`).
+    Confirmation: `url` always. Accepted / promoted: `owedUrl`. Waitlisted: none. Placement + moved: a new batch
+    **`signupsOwingNow`** (lib/league-pay-facts.ts; one read set for the whole send, `childDue` shared with the facts loader);
+    a failed owing read sends without the button; the plain-page fallback is gone. Receipt: button only while a balance is
+    left. Club pay link: "Your sign-up". Bank debit: league "Your sign-up" only while owed (tournament keeps "Pay now"). Words
+    `LEAGUE_PAY_WORDS.mail.payButton` and `.linkEmail.button` deleted. `sendLeaguePayLink` still has 3 callers.
+    **Customised templates:** dev has none (the 3 league template rows are `is_customised = false`). **Prod not checked**:
+    the session was refused production reads, so it is an owner/release check.
+  - **Part 5b** — Stripe line names are `{first} · {division} · {season}`; the payment's description, `p_description` and the
+    items keep full names (the description is the club's Stripe record, not shown on the checkout page). Masking:
+    `maskEmail` / `isMaskedEmail` in `lib/utils.ts`. **Found a second leak the ruling did not name:** the pay block's
+    `payerEmail` prefilled the receipt-email field with the full address. It is now masked on the server; LeaguePayBlock sends
+    no email when the field is untouched, and the pay route refuses a masked address (falls back to the address on file).
+    The `[token]` page's prop is renamed `emailShown`.
+  - **Part 6** — `newLink` row action (`rights.register && guardianEmail`, any status; menu after `payLink`), hint names the
+    sign-up's children via `signupChildren` (lib/house-league-registrations.ts); confirm (`ConfirmWindow`), toast
+    `REGS_WORDS.newLink.sent`. PATCH `{ newLink: true }` → `houseLeagueRefusal(ctx,'register',season)` → `replaceSignupLink`
+    (lib/league-signup-link-mail.ts): ONE update sets every row of the sign-up to max(version)+1 and stamps `link_replaced_at`;
+    refused before any write with no email / no secret; email kind **`league_signup_link_replaced`** (words
+    `SIGNUP_LINK_WORDS.replacedMail`, **not drawn word for word**: owner call); org audit `league_signup_link_replaced`.
+    History line from `linkReplacedAt` (mapped in lib/db.ts, typed in lib/types.ts). **No migration and no RPC:** all rows
+    of a sign-up share one version, so a single UPDATE with a literal is the "one statement".
+  - **Part 7** — `lib/unsubscribe-token.ts` has no fallback secret: signing returns null, verifying refuses. `email-sender`
+    refuses a marketing send with no link (`suppression_reason = 'no_unsubscribe_secret'`, a choice beyond the prompt, for
+    CASL); family emails draw no unsubscribe link; the Tournament Plus welcome passes `undefined`. Local dev has the secret.
+    **⚖ owner step** recorded in `MANUAL_PROD_STEPS.json` (419's note) and the release-history memory.
+  - **Part 8** — walk §437 https://claude.ai/artifact/3sFyR5BcRptmAZ9isBKYRk (fixture `.probe/signed-in-family-s2/`).
+    Offered, not yet run: `/simplify`, `/review`, `/docs` (help articles still name the old page and the reference lookup:
+    `lib/help-content/house-league.tsx` and the "Paying by card" article).
 
 ## What the owner sees after this build (present a version of this as the PM summary BEFORE any code)
 
@@ -258,6 +296,18 @@ guard to the rule's new home; never delete a guard's intent.
 - Emails keep full names (ask 7). The `sendLeaguePayLink` call count stays 3.
 - Report any customised template rows found (see "What the code does today").
 
+**Part 5b — two owner rulings from the Session 1 review (2026-11-01, binding; build them in this session).**
+- **Stripe's checkout page names children by first name only.** Today each line reads "Maya Okafor · U9 · 2026 Season" on
+  Stripe's page (the pay route builds the line names for `openSessionFor`). Make it "Maya · U9 · 2026 Season". The club's
+  record keeps full names (`p_description`, the receipt the club sees, exports): only the text Stripe shows the family
+  changes. This is the one exception to "no change to how a family pays" below: the words on the line, nothing else.
+- **The parent's email is partly hidden on the family page.** Only place it shows today: the withdraw ask's "sent" line
+  (`ASK_WORDS.sent`, fed by the `guardianEmail` prop the `[token]` page passes to `YourSignup`). Mask it **on the server**,
+  so the full address never reaches the browser (the prop carries the masked text, not the address): default shape first
+  character + "•••" + "@" + the domain ("m•••@gmail.com"), the whole local part hidden when it is one character. Emails to
+  that address keep it in full. Grep the family page's other props for the address before calling it done.
+- Tests: the checkout line names carry no last name; the `[token]` page passes no `@`-address in full to `YourSignup`.
+
 **Part 6 — "Send a new link" (drawing tab 4).**
 - A row after "Email the pay link", offered for every registration with an email while its season's link is live (Part 2's
   rules, so not on a finished-and-closed one), whatever the child's status, gated on `register` ("can change registrations"),
@@ -289,7 +339,8 @@ guard to the rule's new home; never delete a guard's intent.
 
 - Family accounts, the claim step, the second guardian email, anything signed-in (Stages 3–5).
 - Tournament registration tidy-up (Stage 2). The tournament team pay link, its secret, its pages.
-- Any change to how a family pays (Stripe checkout, fees, bank debit) beyond the door check in Part 2.
+- Any change to how a family pays (Stripe checkout, fees, bank debit) beyond the door check in Part 2 and Part 5b's first-name
+  line names.
 - Rewriting stored payment item descriptions; editing stored email templates.
 - A new env var for the family link (see Part 1).
 

@@ -9,6 +9,7 @@ import { openSignupLink } from '@/lib/league-signup-link';
 import { buildSignupStatus } from '@/lib/league-signup-status';
 import { buildLeaguePayView } from '@/lib/league-pay-view';
 import { SIGNUP_LINK_WORDS as SW } from '@/lib/league-pay-words';
+import { maskEmail } from '@/lib/utils';
 import YourSignup from '../YourSignup';
 import EmailMyLinkForm from '../EmailMyLinkForm';
 import column from '../../../league-column.module.css';
@@ -77,7 +78,7 @@ export default async function YourSignupPage({
             contactEmail={contactEmail}
             found={{ ...found, pay }}
             token={token}
-            guardianEmail={link.rows[0]?.guardian_email ?? null}
+            emailShown={link.rows[0]?.guardian_email ? maskEmail(link.rows[0].guardian_email) : null}
             returnedSession={paid ?? null}
             left={left === '1'}
           />

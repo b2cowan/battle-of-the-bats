@@ -8,6 +8,7 @@ import { sendFamilyServiceBatch, type FamilyServiceMessage } from './family-emai
 import { leagueTeamMovedHtml, leagueTeamsPlacedHtml, type PlacedTeamLine } from './email';
 import { systemMailFace, type ClubEmailOrg } from './club-email-context';
 import { leaguePayUrl } from './league-pay-link';
+import { signupsOwingNow } from './league-pay-facts';
 import { movedMail, placedMail } from './house-league-teams-words';
 
 /**
@@ -41,10 +42,13 @@ interface RegRow {
 
 export interface SendOutcome { sent: number; failed: number; skipped: number }
 
-/** The family's way back: their status page opened for their sign-up (the signed link), or the plain page. */
-function statusUrl(org: MailOrg, season: MailSeason, reg: RegRow): string {
-  return leaguePayUrl(SITE_URL, { orgSlug: org.slug, seasonSlug: season.slug, registrationId: reg.id, version: Number(reg.link_version ?? 0) })
-    ?? `${SITE_URL}/${encodeURIComponent(org.slug)}/league/${encodeURIComponent(season.slug)}/status`;
+/**
+ * The family's "Your sign-up" button (Signed-in family accounts Stage 1, ask 3; drawing tab 5): only while their sign-up
+ * owes money — a paid family's placement email carries no link. No secret here, no button (never the plain page).
+ */
+function signupUrl(org: MailOrg, season: MailSeason, reg: RegRow, owing: ReadonlySet<string>): string | null {
+  if (!owing.has(reg.id)) return null;
+  return leaguePayUrl(SITE_URL, { orgSlug: org.slug, seasonSlug: season.slug, registrationId: reg.id, version: Number(reg.link_version ?? 0) });
 }
 
 /** Team names and each team's coaches, for the teams these rows name. */
@@ -149,7 +153,14 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
     .concat(rows.map(r => r.from_team_id).filter((t): t is string => !!t));
   // 9d-3 Part 4: a moved child's new team's practice dates, when that team's families have been told them.
   const movedTo = rows.filter(r => r.kind === 'moved').flatMap(r => r.registration_ids.map(id => regs.get(id)?.team_id)).filter((t): t is string => !!t);
-  const [facts, face, toldLines] = await Promise.all([readTeamFacts(teamIds), systemMailFace(org), toldDateLines(org.id, movedTo)]);
+  // Each message's link is its first named child's; ask once, for all of them, whether that sign-up owes.
+  const anchors = rows.map(row => row.registration_ids.map(id => regs.get(id)).find(c => !!c && c.status === 'active' && !!c.team_id)?.id)
+    .filter((id): id is string => !!id);
+  const [facts, face, toldLines, owing] = await Promise.all([
+    readTeamFacts(teamIds), systemMailFace(org), toldDateLines(org.id, movedTo),
+    // A failed read sends the emails without the button (a missing link beats a missing placement).
+    signupsOwingNow(org.id, season.id, anchors).catch(err => { console.error('[house-league-placement-mail] owing was not read:', err instanceof Error ? err.message : String(err)); return new Set<string>(); }),
+  ]);
 
   const messages: FamilyServiceMessage[] = [];
   const messageRows: string[] = [];
@@ -160,7 +171,7 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
     if (children.length === 0) { nothingToSay.push(row.id); continue; }
     const division = divisionName.get(row.division_id) ?? '';
     const guardianFirstName = children[0].guardian_first_name?.trim() || 'there';
-    const url = statusUrl(org, season, children[0]);
+    const url = signupUrl(org, season, children[0], owing);
     // A move stays a move email when its old team has since been deleted: the family reads "their old team", never
     // "The teams are set".
     if (row.kind === 'moved') {
@@ -172,7 +183,7 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
           guardianFirstName, childName: `${child.player_first_name} ${child.player_last_name}`, seasonName: season.name,
           divisionName: division, clubName: org.name,
           fromTeam: (row.from_team_id && facts.names.get(row.from_team_id)) || 'their old team', toTeam: facts.names.get(child.team_id!) ?? '',
-          coaches: facts.coaches.get(child.team_id!) ?? [], statusUrl: url, contactEmail: face?.contact ?? null, face,
+          coaches: facts.coaches.get(child.team_id!) ?? [], signupUrl: url, contactEmail: face?.contact ?? null, face,
           practices: toldLines.has(child.team_id!) ? {
             heading: PRACTICE_TELL_WORDS.firstOpening(child.player_first_name, facts.names.get(child.team_id!) ?? ''),
             lines: toldLines.get(child.team_id!)!, zone: timesInZoneSentence(),
@@ -190,7 +201,7 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
         subject: placedMail.subject(season.name),
         html: leagueTeamsPlacedHtml({
           guardianFirstName, seasonName: season.name, divisionName: division, clubName: org.name, lines,
-          statusUrl: url, contactEmail: face?.contact ?? null, face,
+          signupUrl: url, contactEmail: face?.contact ?? null, face,
         }),
       });
     }

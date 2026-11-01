@@ -249,7 +249,9 @@ export const REGS_WORDS = {
     waitlist: { label: 'Waitlist', hint: (name: string) => `Moves ${name} to the waitlist and emails the family` },
     promote: { label: 'Promote', hint: (name: string, division: string) => `Accepts ${name} into ${division} and emails the family` },
     // 12b copy §5: owing rows only, while the club takes card payments.
-    payLink: { label: 'Email the pay link', hint: 'Opens their status page to pay by card', hintSent: (day: string) => `Last sent ${day}` },
+    payLink: { label: 'Email the pay link', hint: 'Opens their sign-up page to pay by card', hintSent: (day: string) => `Last sent ${day}` },
+    // Signed-in family accounts Stage 1 (drawing tab 4, ask 4): stops the sign-up's link for every child on it, emails a new one.
+    newLink: { label: 'Send a new link', hint: (children: string) => `Stops the link they have now, for ${children}` },
     // 12b copy §7: a card payment that couldn't go on this registration (the Needs-attention item's door).
     refundCard: { label: 'Refund the card payment', hint: (amount: string) => `${amount} paid by card couldn’t go on this registration` },
     // 12b copy §7: a card refund that came back, sent to the family another way.
@@ -274,6 +276,17 @@ export const REGS_WORDS = {
     done: (amount: string) => `Refunded ${amount} to the card.`,
   },
   // 12b copy §5: the pay link's toasts and the bulk bar.
+  // Signed-in family accounts Stage 1 (drawing tab 4, asks 4 and 6): the confirm, the toast, the route's refusal.
+  newLink: {
+    title: 'Send a new link?',
+    body: (children: string, many: boolean, email: string) =>
+      `The link this family has now stops working straight away, for ${children}${many ? ', who are on the same sign-up' : ''}. The new one goes to ${email}. If that address is wrong, change the email first.`,
+    go: 'Send a new link',
+    sent: (email: string) => `New link sent to ${email}.`,
+    noEmail: 'This family has no email address.',
+    failed: 'Couldn’t send the new link. Try again.',
+    noSecret: 'Family links aren’t set up on this server.',
+  },
   payLink: {
     sent: (email: string) => `Pay link sent to ${email}.`,
     failed: 'Couldn’t send the pay link. Try again.',
@@ -638,6 +651,7 @@ export const REG_RECORD_WORDS = {
     moved: (from: string, to: string) => `Price changed on a move ${from} → ${to}`,
     ended: { declined: 'Declined', withdrawn: 'Withdrawn', released: 'Spot released' },
     kept: (amount: string, reason: string) => `The club kept the ${amount}${reason ? ` · ${reason}` : ''}`,
+    newLink: 'New link sent; the old one stopped',
   },
   stepsNoun: 'registration',
   position: (n: number, of: number) => `${n} of ${of}`,

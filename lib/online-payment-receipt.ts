@@ -15,7 +15,7 @@ import { stampRefundEmailed } from './online-refund-email';
 import { loadLeaguePayFacts } from './league-pay-facts';
 import { transactionalFamilyFooterHtml } from './family-mail-footer';
 import { leaguePayUrl } from './league-pay-link';
-import { LEAGUE_PAY_WORDS as LW, childList } from './league-pay-words';
+import { LEAGUE_PAY_WORDS as LW, SIGNUP_LINK_WORDS as SW, childList } from './league-pay-words';
 import { REGS_WORDS } from './house-league-money-words';
 
 /**
@@ -73,7 +73,7 @@ export async function sendOnlineReceiptOnce(onlinePaymentId: string): Promise<vo
 /**
  * A house-league family's receipt (Stage 12b, copy §10; drawn k3): one line per child the payment covered
  * ("{child} · {season} · {division} · {amount}"), the fee only when the family paid it, the total, a waitlisted
- * sibling's "we'll email you a link to pay", and the status page (their pay link) as "View your receipt".
+ * sibling's "we'll email you a link to pay", and "Your sign-up" only while a balance is left (Signed-in family Stage 1).
  */
 async function sendLeagueReceipt(op: OnlineForEmail): Promise<void> {
   const { data: items } = await supabaseAdmin.from('online_payment_items')
@@ -99,7 +99,9 @@ async function sendLeagueReceipt(op: OnlineForEmail): Promise<void> {
     op.fee_payer === 'family' && Number(op.fee_amount) > 0 ? warmEmailParagraph(escapeHtml(E.receiptFee(money(Number(op.fee_amount))))) : '',
     ...totalLines(op),
     ...facts.children.filter(c => c.status === 'waitlisted').map(c => warmEmailParagraph(escapeHtml(LW.receiptWaitlisted(`${c.firstName} ${c.lastName}`)))),
-    link ? warmEmailButton(E.viewReceipt, link) : '',
+    // Signed-in family accounts Stage 1 (asks 2, 3): "Your sign-up" only while a balance is left; paid in full, the
+    // receipt is in the email and it carries no link.
+    link && facts.owingCents > 0 ? warmEmailButton(SW.mail.button, link) : '',
     warmEmailSmall(escapeHtml(E.questions(facts.org.name, face?.contact ?? null))),
     test ? warmEmailSmall(escapeHtml(E.testNote)) : '',
   ];
@@ -282,7 +284,7 @@ export async function sendLeaguePayLink(
     warmEmailParagraph(escapeHtml(refunded ? LW.linkEmailRefunded(facts.org.name, refunded.child, facts.season.name, refunded.childFirst, refunded.owing)
       : raised ? L.bodyRaised(raised.child, facts.season.name, raised.from, raised.to, raised.diff) : L.body(facts.org.name, names, facts.season.name))),
     refunded ? refunded.blockHtml : warmEmailParagraph(escapeHtml(L.amount(money(facts.owingCents / 100)))),
-    warmEmailButton(L.button, payLink),
+    warmEmailButton(SW.mail.button, payLink),
     how ? warmEmailParagraph(escapeHtml(L.otherWays(how))) : '',
     warmEmailSmall(escapeHtml(L.reference(reference))),
     // Transactional family mail (money owed): it names the club and says why it arrives after an unsubscribe.

@@ -8,7 +8,7 @@ import { loadTeamPayFacts } from './team-pay-facts';
 import { teamPayUrl } from './team-pay-link';
 import { loadLeaguePayFacts } from './league-pay-facts';
 import { leaguePayUrl } from './league-pay-link';
-import { childList } from './league-pay-words';
+import { SIGNUP_LINK_WORDS as SW, childList } from './league-pay-words';
 import { transactionalFamilyFooterHtml } from './family-mail-footer';
 import { emailFactsPanel } from './online-refund-block';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
@@ -36,7 +36,10 @@ type DebitContext = {
   op: DebitRow; org: Organization; who: string; season: string;
   /** "…spot is held." (the start) and "…spot is still held." (returned); a team's say "place". */
   held: string; stillHeld: string;
-  payLink: string | null; canPayAgain: boolean; howToPay: string | null;
+  /** The button: a team's "Pay now", drawn while the club takes payments (`canPayAgain` = no refusal); a house-league
+   *  family's one "Your sign-up" (Signed-in family accounts Stage 1, ask 2), drawn only while money is owed (ask 3:
+   *  `canPayAgain` = owing — the page opens whether or not the club takes cards). The two differ on purpose. */
+  payLink: string | null; payLabel: string; canPayAgain: boolean; howToPay: string | null;
 };
 
 async function debitContext(onlinePaymentId: string): Promise<DebitContext | null> {
@@ -52,6 +55,7 @@ async function debitContext(onlinePaymentId: string): Promise<DebitContext | nul
       op, org: facts.org as Organization, who: facts.teamName, season: facts.tournament.name,
       held: B.holdTeam(possessive(facts.teamName)), stillHeld: D.returnedHeldTeam(possessive(facts.teamName)),
       payLink: teamPayUrl(appUrl(), { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId: facts.teamId }),
+      payLabel: D.payNow,
       canPayAgain: !facts.refusal,
       howToPay: tournamentTracksPayments(facts.tournament.settings) ? String((facts.tournament.settings as { payment_instructions?: string } | null)?.payment_instructions ?? '').trim() || null : null,
     };
@@ -69,7 +73,8 @@ async function debitContext(onlinePaymentId: string): Promise<DebitContext | nul
     held: firsts.length === 1 ? B.holdChild(possessive(firsts[0])) : B.holdChildren(childList(firsts)),
     stillHeld: firsts.length === 1 ? D.returnedHeldChild(possessive(firsts[0])) : D.returnedHeldChildren(childList(firsts)),
     payLink: leaguePayUrl(appUrl(), { orgSlug: facts.org.slug, seasonSlug: facts.season.slug, registrationId: anchor, version: facts.linkVersion }),
-    canPayAgain: !facts.refusal,
+    payLabel: SW.mail.button,
+    canPayAgain: facts.owingCents > 0,
     howToPay: facts.season.howToPay?.trim() || null,
   };
 }
@@ -126,7 +131,7 @@ export async function sendDebitReturnedEmail(onlinePaymentId: string): Promise<v
       warmEmailParagraph(escapeHtml(D.returnedLead(total, c.who, formatStoredDate(c.op.returned_at), reasonFull(c.op.return_reason)))),
       warmEmailParagraph(escapeHtml(D.returnedNothing)),
       warmEmailParagraph(escapeHtml(c.stillHeld)),
-      c.payLink && c.canPayAgain ? warmEmailButton(D.payNow, c.payLink) : '',
+      c.payLink && c.canPayAgain ? warmEmailButton(c.payLabel, c.payLink) : '',
       c.howToPay ? warmEmailParagraph(escapeHtml(P.otherWays(c.howToPay))) : '',
     ], 'questions');
   } catch (err) {
@@ -148,7 +153,7 @@ export async function sendDebitReversedEmail(onlinePaymentId: string): Promise<v
       warmEmailParagraph(escapeHtml(D.reversedLead(total, c.org.name, formatStoredDate(c.op.reversed_at)))),
       why ? warmEmailParagraph(escapeHtml(D.reversedReason(why))) : '',
       warmEmailParagraph(escapeHtml(D.reversedOwes(String(c.op.receipt_no ?? ''), DW.owingAgain(money(Number(c.op.base_amount)))))),
-      c.payLink && c.canPayAgain ? warmEmailButton(D.payNow, c.payLink) : '',
+      c.payLink && c.canPayAgain ? warmEmailButton(c.payLabel, c.payLink) : '',
     ], 'questions');
   } catch (err) {
     console.error('[bank-debit-email] the debit-reversed email was not sent:', err instanceof Error ? err.message : String(err));

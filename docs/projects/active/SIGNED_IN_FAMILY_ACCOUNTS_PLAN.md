@@ -32,6 +32,11 @@ Sequenced by dependency and rework risk, not by date. Each stage that changes wh
 
 ### Stage 1 — Harden the "Your sign-up" door (house league) · no prerequisite
 
+> **Built 2026-11-01.** Session 1 (Parts 1–4) committed `d79603110` (mig 419, dev only). Session 2 (Parts 5–8) built
+> 2026-11-01, uncommitted, no new migration; walk §437 owed. What shipped, and the differences from the items below (no
+> separate family secret; a second address leak in the pay block masked; marketing sends refused without the unsubscribe
+> secret): the build prompt's ▶ Progress block, `SIGNED_IN_FAMILY_STAGE1_BUILD_PROMPT.md`.
+
 The status / pay / withdraw page (census F3, F4, F5) becomes the permanent pre-team door.
 
 1. **One name.** Every house-league family email carries one button, "Your sign-up", in place of "Check your registration",
@@ -54,6 +59,25 @@ The status / pay / withdraw page (census F3, F4, F5) becomes the permanent pre-t
    instead of falling back to a fixed string. Confirm the secret is set on production before the release that carries it.
 
 Draw first: the "Your sign-up" page with first names, "Email me my link", the expired-link screen, the club's Reset link door.
+
+**Drawn 2026-11-01** (through `/design`, round 2 applied): source `SIGNED_IN_FAMILY_STAGE1_DRAWINGS.html`, page
+https://claude.ai/artifact/P1FrRZ9cyLU1oCUpptCEim.
+
+**Ruled 2026-11-01 (owner, all seven asks A).** Where these differ from items 3–5 above, these win; build to the drawing.
+1. **When a link stops:** 30 days after the season is finished (`finished_at`; `season_end_date` is informational and
+   nullable), but a family still owing keeps theirs until paid.
+2. **Button words:** "Your sign-up" on every email, including the ones asking for money.
+3. **Which emails carry the button:** the sign-up confirmation always; every later email only when money is owed.
+4. **The club's door:** its own row, "Send a new link", for anyone who can change registrations.
+5. **Two ended screens:** "season has finished" with no form; "no longer works" with "Email me my link" right there.
+6. **A reset covers the whole sign-up:** it stops every link on that sign-up and sends one new one (the token page shows every
+   child sharing `signup_ref` + guardian email, `signupRowsForLink`, so the per-link state in item 3 hangs on the sign-up,
+   not one registration — item 4's "one family's link" means the whole sign-up).
+7. **Emails keep full names** (first names only applies to the page the link opens).
+
+**Build prompt:** `SIGNED_IN_FAMILY_STAGE1_BUILD_PROMPT.md` (two sessions). It recommends folding a per-registration version
+into the existing signed link instead of a stored token, which also makes item 3's "separate the secrets" unnecessary (a reset
+never rotates the secret).
 
 ### Stage 2 — Tournament registration tidy-up · no prerequisite
 

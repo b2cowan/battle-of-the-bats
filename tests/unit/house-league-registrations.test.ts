@@ -135,10 +135,11 @@ describe('who sees which action (copy §1.4, §1.5, §2)', () => {
     assert.equal(actions(reg({ status: 'waitlisted' }), []).primary, 'promote');
   });
   it('the menu follows the row and the rights, absent not disabled', () => {
-    assert.deepEqual(actions(reg(), []).all, ['markReceived', 'move', 'correct', 'release', 'withdraw', 'decline', 'email', 'waitlist']);
-    assert.deepEqual(actions(reg(), [line()]).all, ['move', 'correct', 'withdraw', 'decline', 'email', 'undo', 'waitlist']);
+    assert.deepEqual(actions(reg(), []).all, ['markReceived', 'newLink', 'move', 'correct', 'release', 'withdraw', 'decline', 'email', 'waitlist']);
+    assert.deepEqual(actions(reg(), [line()]).all, ['newLink', 'move', 'correct', 'withdraw', 'decline', 'email', 'undo', 'waitlist']);
     assert.ok(!actions(reg(), [], { ...RIGHTS, run: false }).all.includes('move'), 'the registrar never sees Move');
-    assert.deepEqual(actions(reg({ status: 'declined' }), []).all, ['email']);
+    // Signed-in family Stage 1: "Send a new link" whatever the child's status (the link opens an ended child's page too).
+    assert.deepEqual(actions(reg({ status: 'declined' }), []).all, ['newLink', 'email']);
     // A finished season: no status change, no Move; fees stay.
     const finished = { register: false, takeFees: true, run: false, email: true };
     assert.deepEqual(actions(reg(), [line()], finished).all, ['correct', 'email', 'undo']);
@@ -152,7 +153,7 @@ describe('who sees which action (copy §1.4, §1.5, §2)', () => {
   });
   it('12b: Email the pay link on an owing row only while the club takes card payments; a card payment has no Undo', () => {
     const cards = { ...RIGHTS, payLinks: true };
-    assert.deepEqual(actions(reg(), [], cards).all, ['markReceived', 'payLink', 'move', 'correct', 'release', 'withdraw', 'decline', 'email', 'waitlist']);
+    assert.deepEqual(actions(reg(), [], cards).all, ['markReceived', 'payLink', 'newLink', 'move', 'correct', 'release', 'withdraw', 'decline', 'email', 'waitlist']);
     assert.ok(!actions(reg(), []).all.includes('payLink'), 'not while the club isn’t taking card payments');
     assert.ok(!actions(reg(), [line()], cards).all.includes('payLink'), 'not on a paid row');
     assert.ok(!actions(reg(), [], { ...cards, takeFees: false }).all.includes('payLink'), 'the desk’s, with takeFees');
