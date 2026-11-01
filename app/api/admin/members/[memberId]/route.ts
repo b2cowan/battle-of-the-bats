@@ -5,7 +5,7 @@ import { ALL_CAPABILITY_KEYS, hasCapability, countsAsSeat, seatExemptRoles } fro
 import { checkCrossOrgJoin, crossOrgJoinRefusalForAdmin } from '@/lib/org-membership-policy';
 import { describeAccessChange, isOwnerOnlyCapability } from '@/lib/member-access';
 import { coachingStaffRowRefusal, isAssignableRole } from '@/lib/board-roles';
-import { isVolunteerJobChangeOnly, volunteerJobOf, withoutVolunteerJob } from '@/lib/volunteer-jobs';
+import { isVolunteerJobChangeOnly, volunteerHome, volunteerJobOf, withoutVolunteerJob } from '@/lib/volunteer-jobs';
 import { VOLUNTEER_REFUSAL } from '@/lib/volunteer-words';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgRole } from '@/lib/types';
@@ -578,10 +578,13 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
           const { data: { user: changedUser } } = await supabaseAdmin.auth.admin.getUserById(target.user_id);
           if (changedUser?.email) {
             const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
+            // The sign-in opens THIS club — a bare sign-in sends a member of several clubs to their default one.
+            const landing = volunteerHome(org.slug, after.role, after.capabilities)
+              ?? (after.role === 'coach' ? `/${org.slug}/coaches` : `/${org.slug}/admin`);
             await sendEmail(
               changedUser.email,
               `Your access to ${org.name} changed`,
-              memberAccessChangedHtml({ orgName: org.name, changes, signInUrl: `${appUrl}/auth/login` }),
+              memberAccessChangedHtml({ orgName: org.name, changes, signInUrl: `${appUrl}/auth/login?next=${encodeURIComponent(landing)}` }),
               { kind: 'org_member_access_changed', orgId: org.id, askedBy: ctx.user.id },
             );
           }

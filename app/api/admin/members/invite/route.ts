@@ -86,9 +86,9 @@ export const POST = withObservability(async (req: Request) => {
   const roleLabel = roleEmailLabel(role);
   // A volunteer's sign-in link opens their job — the same rule as every later sign-in.
   const volunteerLanding = volunteerHome(org.slug, role, capabilities);
-  const signInPath = volunteerLanding
-    ? `/auth/login?next=${encodeURIComponent(volunteerLanding)}`
-    : '/auth/login';
+  // Everyone else lands in THIS club too — a bare sign-in sends a member of several clubs to their default one.
+  const landing = volunteerLanding ?? (role === 'coach' ? `/${org.slug}/coaches` : `/${org.slug}/admin`);
+  const signInPath = `/auth/login?next=${encodeURIComponent(landing)}`;
   const signInUrl = `${appUrl}${signInPath}`;
 
   if (existingUser) {
