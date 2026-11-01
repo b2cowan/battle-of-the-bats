@@ -3,6 +3,17 @@
 **Plan:** [GST_HST_COLLECTION_PLAN.md](GST_HST_COLLECTION_PLAN.md) · **Status:** planned 2026-10-31, nothing built ·
 **Priority:** gates the first paid subscription
 
+## Stages and when the project is done (owner, 2026-10-31)
+Plain words: the work is nine stages. 0 is the owner's desk work (the CRA date is found; a few small tasks remain). 1 collects
+each buyer's address. 2 makes every checkout and price preview charge and show the right tax. 3 records why each charge was
+taxed and shows it to staff. 4 teaches the books the sales side of GST/HST. 5 puts tax on the online-payment fee and finishes
+together with Club Stage 12. 6 is the Terms of Service with the lawyer. 9 (new) is the closing pass: help articles, the demo
+check, the database notes and production changes, the accounting review and an owner walk. **The project is done when Stages 0–6
+and 9 are complete.** Three things are standing triggers and the project does not wait for them: provincial registrations
+(Stage 7), opening to US clubs (Stage 8b, with the US price list, the per-state tracker, no fee on top for US families and
+bank debit), and the recurring rhythm (returns, the January report, the yearly re-check). The first GST/HST return is out of
+scope — the owner handles it next year.
+
 ## What changes
 FieldLogicHQ is now registered for GST/HST, so every sale from the first one carries tax. Today the product charges
 none, knows no customer's location, has no Terms of Service, and prices never say "plus tax". After this work:

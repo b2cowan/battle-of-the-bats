@@ -11,7 +11,29 @@
 **PM brief:** [BOOKKEEPING_OWNER_EXPERIENCE_PM_BRIEF.md](BOOKKEEPING_OWNER_EXPERIENCE_PM_BRIEF.md)  
 **Browser review and progress:** [BOOKKEEPING_OWNER_EXPERIENCE_REVIEW.html](BOOKKEEPING_OWNER_EXPERIENCE_REVIEW.html) — Stage 0 screen concepts, decisions and durable task checklist.  
 **Existing screen exploration:** [B0 screen designs](../archive/BOOKKEEPING_B0_SCREEN_DESIGNS.html) — useful separation of tasks, but its entry form still exposes too many accounting fields at once.  
-**Related launch work:** [Revenue and accounting readiness](REVENUE_ACCOUNTING_READINESS_PLAN.md) owns the Stripe source contract, tax and fee decisions, and payment implementation.
+**Related launch work:** [Revenue and accounting readiness](REVENUE_ACCOUNTING_READINESS_PLAN.md) owns the tax and fee decisions (now sequenced in [GST_HST_COLLECTION_PLAN.md](GST_HST_COLLECTION_PLAN.md)) and payment implementation (now Club Stage 12). ⚠ The Stripe source contract and the accounting handoff moved here on 2026-10-31 — see the next section.
+
+## Received from Revenue readiness (2026-10-31)
+
+Owner ruling, 2026-10-31: Revenue readiness hands off the books pieces of its former Gate B and Phase 1. They arrive here with
+a home in this plan's ladder (§3). Revenue readiness's own tracker:
+[REVENUE_ACCOUNTING_READINESS_PLAN.md](REVENUE_ACCOUNTING_READINESS_PLAN.md) § "Scope after the 2026-10-31 hand-off".
+What moved here, with its decision IDs and register stages:
+- **D02 — the Stripe-to-books source model** (what bookkeeping and source-data handoff meets the owner's reporting and
+  accountant needs): accept or revise the CSV v1 movement contract (source IDs, seller and tax attribution, fee / refund
+  linkage, payout mapping) before any real money posts. Home: Stage 6 (Stripe income), with Stage 5 for where the books live.
+  Register stages 1.5 and 0.10.
+- **The Phase 1 bookkeeping externals, register stages 1.4–1.13:** reliable source records, exports and recovery without a
+  second general ledger (1.4); backfill business expenses and receipts from May 1 (1.8 — Stage 5); subscription Stripe import
+  and payout reconciliation (1.9 — Stage 6); Connect platform-fee, tax, cost and refund bookkeeping (1.10 — Stage 6); reports
+  and the accountant-ready transaction and receipt package (1.11 — Stage 3); receipt backup, controls and owner walkthrough
+  (1.12 — Stage 5); **the B3.5 gate** (1.13) — the expense and receipt workflow, reviewed imports and reconciliation,
+  report and receipt export, access and backup controls and reviewer ownership.
+- **The books half of former Gate B 3.7** (organizer and platform books, payouts reconciled on the receiving account) — Stage 6.
+- **Sales-side GST/HST** (tax collected by province, zero-rated line, return worksheet): already this plan's work as GST/HST
+  Stage 4, requested earlier; unchanged.
+- **First monthly close** (revenue Phase 5, stage 5.1) stays a standing trigger in Revenue readiness; this plan supplies the
+  close tooling.
 
 ## 1. Outcome and scope
 

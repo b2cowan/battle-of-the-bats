@@ -1,0 +1,512 @@
+<title>Premium to Club Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one narrow reading column; a sticky progress bar; walk cards that open one at a time. */
+:root {
+  --bg: #f5f7f8; --panel: #ffffff; --ink: #14212b; --muted: #526270; --line: #d5dde3;
+  --accent: #0b6e8a; --accent-ink: #ffffff; --accent-soft: #dff0f5;
+  --pass: #17794a; --pass-soft: #def3e7; --issue: #b3261e; --issue-soft: #fbe3e0;
+  --call: #8a5a00; --call-soft: #fbefd0; --code-bg: #eaf0f3;
+  --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f171d; --panel: #17222a; --ink: #e6edf1; --muted: #9db0bd; --line: #2b3a45;
+  --accent: #5cc0dc; --accent-ink: #06222c; --accent-soft: #163543;
+  --pass: #5fd391; --pass-soft: #16342a; --issue: #ff8f86; --issue-soft: #3d1d1a;
+  --call: #f0c25a; --call-soft: #3a2f12; --code-bg: #1d2b34; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0f171d; --panel: #17222a; --ink: #e6edf1; --muted: #9db0bd; --line: #2b3a45;
+  --accent: #5cc0dc; --accent-ink: #06222c; --accent-soft: #163543;
+  --pass: #5fd391; --pass-soft: #16342a; --issue: #ff8f86; --issue-soft: #3d1d1a;
+  --call: #f0c25a; --call-soft: #3a2f12; --code-bg: #1d2b34; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5;
+  padding-block: 0 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 760px; margin: 0 auto; }
+h1 { font-size: 26px; line-height: 1.2; margin: 28px 0 6px; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0 0 8px; text-wrap: balance; }
+p { margin: 0 0 10px; }
+code, .path { font-family: var(--mono); font-size: 13px; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.muted { color: var(--muted); }
+.asof { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+.card.signin { border-color: var(--accent); }
+.kicker { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; font-weight: 600; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; vertical-align: top; padding: 6px 8px; border-top: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; border-top: 0; }
+.tablewrap { overflow-x: auto; }
+.progress { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding: 10px 0 8px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+.progress .row { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; margin-bottom: 6px; flex-wrap: wrap; }
+.walkhead { width: 100%; text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+  display: flex; gap: 12px; align-items: center; justify-content: space-between; cursor: pointer; font: inherit; color: inherit; margin-bottom: 0; }
+.walkhead:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.walkhead .t { min-width: 0; }
+.walkhead .t b { display: block; font-size: 16px; }
+.walkhead .t span { color: var(--muted); font-size: 13px; }
+.chip { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--code-bg); color: var(--muted); white-space: nowrap; }
+.chip.pass { background: var(--pass-soft); color: var(--pass); }
+.chip.issue { background: var(--issue-soft); color: var(--issue); }
+.chip.call { background: var(--call-soft); color: var(--call); }
+.chip.prog { background: var(--accent-soft); color: var(--accent); }
+.walk { margin-bottom: 14px; }
+.walkbody { background: var(--panel); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 10px 10px; padding: 16px; }
+.walk.open .walkhead { border-radius: 10px 10px 0 0; }
+.walk:not(.open) .walkbody { display: none; }
+.intro dt { font-weight: 600; font-size: 13px; color: var(--muted); margin-top: 8px; }
+.intro dd { margin: 2px 0 0; }
+.who { margin: 18px 0 6px; font-size: 13px; font-weight: 600; color: var(--accent); }
+.who .path { color: var(--ink); }
+.step { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 4px 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.step input[type=checkbox] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .n { color: var(--muted); font-size: 12px; font-family: var(--mono); }
+.step .do { font-weight: 500; }
+.step .see { color: var(--muted); margin-top: 3px; }
+.step .see b { color: var(--ink); font-weight: 600; }
+.opts { grid-column: 2; display: grid; gap: 6px; margin-top: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.opts input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--accent); }
+.step.multi { grid-template-columns: 26px minmax(0, 1fr); }
+.step.multi .mark { width: 20px; height: 20px; margin-top: 2px; border-radius: 4px; border: 2px solid var(--line); }
+.step.multi.done .mark { background: var(--accent); border-color: var(--accent); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 8px; }
+.verdicts button, .actions button { font: inherit; font-weight: 600; padding: 9px 14px; min-height: 44px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+.verdicts button[aria-pressed=true].pass { background: var(--pass-soft); border-color: var(--pass); color: var(--pass); }
+.verdicts button[aria-pressed=true].issue { background: var(--issue-soft); border-color: var(--issue); color: var(--issue); }
+.verdicts button[aria-pressed=true].call { background: var(--call-soft); border-color: var(--call); color: var(--call); }
+.actions button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+textarea { width: 100%; min-height: 76px; font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); resize: vertical; }
+.note { font-size: 13px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 10px; margin: 10px 0; }
+.warn { border-left-color: var(--call); background: var(--call-soft); color: var(--ink); padding: 8px 10px; border-radius: 0 6px 6px 0; }
+.out { margin-top: 10px; }
+.out textarea { font-family: var(--mono); font-size: 12px; min-height: 140px; }
+.copied { font-size: 13px; color: var(--pass); margin-left: 8px; }
+@media (max-width: 480px) { h1 { font-size: 22px; } .card, .walkbody { padding: 12px; } }
+@media (prefers-reduced-motion: reduce) { .bar > i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <h1>Premium to Club Walk</h1>
+  <p class="asof">As of 2026-10-31, commit <code>d6adade6b</code> on <code>dev</code> (not pushed). A Premium coach can now start their own club from Plan &amp; billing: a Club row, one window that asks for the club name and shows the charge, a “Setting up your club” screen after paying, and a landing on the new club’s Overview with a short setup list and their team. <b>Club is on sale on dev, so every step below is live there; on production it ships dark.</b> Review found one open question about the way back from a lapsed portal. It is Walk 6, and it is quick.</p>
+
+  <div class="card signin">
+    <p class="kicker">Sign in as</p>
+    <p><b>Where:</b> Walks 1, 2, 3 and 6 run on <code>http://localhost:3000</code> (the dev server is up). Walks 4 and 5 need Stripe to tell us a payment happened, so they run on <code>https://dev.fieldlogichq.ca</code> <b>after you push <code>dev</code></b> (I have not pushed). On localhost the payment would land but the club would never switch over. <b>Passwords:</b> UAT accounts use <code>UATPassword2026!</code> (from <code>.env.local</code> today; if a sign-in fails, <code>.env.local</code> is the source of truth). Type each address in the address bar.</p>
+    <div class="tablewrap"><table>
+      <tr><th>Who</th><th>Account</th><th>Where they work</th></tr>
+      <tr><td><b>Coach A</b> · pays for Premium, <b>keeps</b> their portal (Walks 1, 2)</td><td>A portal bought with Stripe’s test card, like Coach 1 in Stripe walk 1 (<code>yourname+coachA@gmail.com</code>)</td><td>Their portal’s <span class="path">Plan &amp; billing</span> in the left menu</td></tr>
+      <tr><td><b>Coach B</b> · pays for Premium, <b>becomes the club for good</b> (Walk 4)</td><td>A second portal made the same way. Make it just for this walk</td><td>Their portal’s Plan &amp; billing</td></tr>
+      <tr><td><b>Coach C</b> · pays for Premium, then cancels (Walk 5, optional)</td><td>A third portal made the same way</td><td>Their portal’s Plan &amp; billing</td></tr>
+      <tr><td>Coach on free time from FieldLogicHQ</td><td><code>uat-coach@uat-test-org.local</code></td><td><span class="path">/uat-standalone/coaches/billing</span> (UAT Standalone Team)</td></tr>
+      <tr><td>Owner of a cancelled portal</td><td><code>uat-free-coach@uat-free-coach.local</code></td><td><span class="path">/uat-free-team-coaches-portal/coaches/billing</span></td></tr>
+    </table></div>
+    <p class="note">To make Coach A, B or C: <span class="path">/coaches/start</span> on the dev site, a new email, a team name, then pay on Stripe’s page with the test card <code>4242 4242 4242 4242</code> (any future date, any three digits). That is Part A of Stripe walk 1 and takes about five minutes. If Stripe walk 1’s “Walk Premium” portals still exist you can use one as Coach A.</p>
+  </div>
+
+  <div class="card">
+    <p class="kicker">Before you start</p>
+    <p class="note warn">Walks 1, 2, 3 and 6 pay nothing and change nothing; the worst they do is open a Stripe page you leave. <b>Walk 4 is permanent for Coach B:</b> that portal becomes a club and there is no way back down. Use a portal you made for it.</p>
+    <p>Check phone steps at 390px wide (browser dev tools, device mode). If a step does not match what you see, mark the part <b>Issue</b> and write what you saw; the screen may have moved since this was written.</p>
+    <p><b>Three screens nobody drew, built from the nearest shipped pattern.</b> A last payment that failed, a portal that holds more than one team (or has moved into another club), and “your upgrade is going through” after the money is taken. They show as a notice inside the window. Tell me if you want any of them redrawn.</p>
+    <p><b>Cannot be walked, and why</b> (the automated tests cover each):</p>
+    <ul>
+      <li><b>“Contact us to move”.</b> That is the Club row before Club is on sale. Dev has every plan on sale, so you will see “Start my club” instead. Production will show “Contact us to move” to every paying Premium owner until Club opens.</li>
+      <li><b>A coach whose last payment failed</b> and <b>a portal with more than one team</b>. No dev portal is in either state, and neither can be forced.</li>
+      <li><b>A coach who once paid, then was given free time</b> (the window shows the full charge due today and no second trial). No such portal exists on dev.</li>
+      <li><b>A helper or assistant typing the billing address</b> (refused, no row in their menu). No such account exists on dev.</li>
+      <li><b>“Taking longer than usual” and “We couldn’t confirm”.</b> These need the payment confirmation to be late or to fail, which cannot be forced.</li>
+      <li><b>A free-time coach returning from paying while their portal is locked.</b> That is the race behind Walk 6; the unit tests mock the browser header, so only Walk 6 can show whether it holds.</li>
+    </ul>
+  </div>
+
+  <div class="progress" id="progress">
+    <div class="row"><span id="ptext">Checked 0 of 0</span><span id="pwalks"></span></div>
+    <div class="bar"><i id="pbar"></i></div>
+  </div>
+
+  <div id="walks"></div>
+
+  <div class="card">
+    <p class="kicker">All walks</p>
+    <div class="actions"><button class="primary" id="all-build" type="button">Build summary of all walks</button><span class="copied" id="all-copied" hidden>Copied</span></div>
+    <div class="out"><textarea id="all-out" readonly placeholder="Press the button, then paste the result back into the chat."></textarea></div>
+  </div>
+</div>
+
+<script>
+var KEY = 'plan-billing-stage4b-part3-walk-v1';
+var WALKS = [
+ {
+  "id": "w1",
+  "title": "Walk 1 · The Club row",
+  "blurb": "Premium Plan & billing offers Club, for a paying coach and for a coach on free time.",
+  "forWhat": "Confirm that Plan &amp; billing for a Premium coach now has a Club row and nothing else new: Club only (no Club · Association row), the same row for a coach whose Premium is free time from FieldLogicHQ, and a page that otherwise looks as it did.",
+  "passes": "Every step is ticked. One Club row with “See what Club includes” and “Start my club”, no second Club row, the same row for the free-time coach, and a phone page with no sideways scroll.",
+  "not": "Pressing Start my club (Walks 2 to 4); “Contact us to move” (Club is on sale on dev, see Before you start); a helper typing the address (no such account).",
+  "steps": [
+   {
+    "who": "Coach A · localhost:3000",
+    "where": "Computer, full width",
+    "do": "Sign in and open <b>Plan &amp; billing</b> from the left menu. Scroll to <b>Change plan</b>.",
+    "see": "A table with <b>one Club row</b>: its name, what it holds, monthly and yearly prices, then <b>See what Club includes</b> and a <b>Start my club</b> button. <b>No “Club · Association” row</b> and no other new row. The rest of the page (Your plan, What’s in use, What’s included, Reduce or cancel) looks as it did."
+   },
+   {
+    "do": "Press <b>See what Club includes</b>, read it, then close it.",
+    "see": "The plan details open and close; nothing starts and nothing changes."
+   },
+   {
+    "who": "Free-time coach · uat-coach@uat-test-org.local",
+    "where": "Computer",
+    "do": "Sign in and open <span class=\"path\">/uat-standalone/coaches/billing</span>. Look for <b>Change plan</b>.",
+    "see": "The page says the Premium is free time from FieldLogicHQ <b>and now shows Change plan with the same Club row</b> and “Start my club”. (Before this change that table was hidden for this coach.) There is still no cancel button for a subscription that does not exist."
+   },
+   {
+    "where": "Phone, 390px wide (either coach)",
+    "do": "Reload Plan &amp; billing at 390px and scroll to Change plan.",
+    "see": "The Club row becomes a card; <b>Start my club</b> is full width and easy to tap; nothing scrolls sideways."
+   }
+  ]
+ },
+ {
+  "id": "w2",
+  "title": "Walk 2 · The window for a paying coach",
+  "blurb": "Name, charge and two ways out. Nothing is paid.",
+  "forWhat": "Confirm that the window a paying coach sees shows an empty required club name, the charge as lines that add up to “Due today”, the plain-words footer, and refuses an empty name without touching any money.",
+  "passes": "Every step is ticked. The figures are one joined band that adds up on your screen, the empty name is refused in words, Cancel leaves everything unchanged, and the phone window is full-screen with one back arrow.",
+  "not": "Pressing Start my club with a name (Walk 4). Monthly/Yearly (a paying coach keeps their interval; that choice is Walk 3).",
+  "steps": [
+   {
+    "who": "Coach A · localhost:3000",
+    "where": "Computer",
+    "do": "On Plan &amp; billing press <b>Start my club</b>.",
+    "see": "A window titled <b>Start your club</b>. “You’ll become the owner of your club. Your team stays exactly where it is, and you stay its head coach.” An <b>empty, required Club name</b> field (marked with a star, <b>not</b> prefilled), with “Shown across your club’s pages. You can change it later.” Then a <b>Web address</b> line showing the portal’s current address and “Stays as it is, so links you have already sent keep working…”."
+   },
+   {
+    "do": "Look at the figures under the name.",
+    "see": "<b>One joined band</b> (not separate floating tiles): <b>Club for the rest of this period</b>, <b>Credit for unused Premium time</b> (with a minus sign, in a different colour), <b>Due today</b>, then a line starting “From {date}” with Club’s price per month or year. Every figure ends in CAD."
+   },
+   {
+    "kind": "options",
+    "do": "Does the arithmetic add up on your screen?",
+    "see": "Club for the rest of the period <b>minus</b> the credit should equal Due today.",
+    "options": [
+     "Adds up exactly",
+     "Does not add up"
+    ]
+   },
+   {
+    "do": "Read the sentence under the figures and the text in the bottom edge of the window.",
+    "see": "“Same subscription and payment method. Your <b>monthly or yearly</b> billing stays the same as it is today. No second trial.” and, at the bottom, “Charged to the payment method you already use.” <b>No Monthly/Yearly choice</b> appears here, and the word “card” appears nowhere."
+   },
+   {
+    "do": "With the name still empty, press <b>Start my club</b>.",
+    "see": "Nothing is charged. “Enter your club’s name.” appears under the field, the field is outlined as wrong, and the cursor is in it."
+   },
+   {
+    "do": "Paste a name of 50 or more characters into the field.",
+    "see": "The field stops at <b>40 characters</b>. It does not error; it simply will not take more."
+   },
+   {
+    "kind": "options",
+    "do": "Type a short name, then press <b>Cancel</b>.",
+    "see": "Either way you are back on Plan &amp; billing, still Premium, and the Stripe sandbox shows no new invoice for this customer. Tick what happened to your typing.",
+    "options": [
+     "It asked before discarding my typing",
+     "It closed and my typing was gone"
+    ]
+   },
+   {
+    "where": "Phone, 390px wide",
+    "do": "Open the window again at 390px.",
+    "see": "The window fills the screen with <b>one ← back arrow</b> at the top and <b>no Cancel button</b>; the only button at the bottom is <b>Start my club</b>. The figures band wraps without sideways scroll, and the keyboard does not cover the name field."
+   }
+  ]
+ },
+ {
+  "id": "w3",
+  "title": "Walk 3 · The window for a coach on free time",
+  "blurb": "The warning, the trial, Monthly or Yearly, and a safe exit from Stripe.",
+  "forWhat": "Confirm that a coach on FieldLogicHQ free time is told before anything happens that the free days end when the club starts, is offered the trial and a Monthly/Yearly choice, pays $0 today, and leaves Stripe’s page with nothing changed.",
+  "passes": "Every step is ticked. The warning is plain, Monthly/Yearly changes the figures and never strands the window, Continue to checkout opens Stripe’s page for Club, and coming back leaves the free time running.",
+  "not": "Paying (do <b>not</b> complete Stripe’s page; press its back arrow). A coach who once paid, then was given free time (no such portal, see Before you start).",
+  "steps": [
+   {
+    "who": "Free-time coach · uat-coach@uat-test-org.local",
+    "where": "Computer",
+    "do": "Open <span class=\"path\">/uat-standalone/coaches/billing</span> and press <b>Start my club</b>.",
+    "see": "The same window, with an <b>amber band first</b>: “Your Premium free time ends when your club starts”, then “Free through {last day}. The days left don’t carry over. If you leave before finishing, nothing changes and your free time keeps running.” Below it a <b>trial sentence</b> with the number of days from Plan settings (“…you add a payment method at checkout, and you’re first charged when the trial ends”), the empty name field, the web address, and a <b>Billing: Monthly / Yearly</b> choice."
+   },
+   {
+    "do": "Look at the figures.",
+    "see": "<b>Due today $0.00 CAD</b> and a line “First charge, {date}” with Club’s price per month. In the bottom edge: “Next, you add a payment method on our secure payment page.”"
+   },
+   {
+    "do": "Press <b>Yearly</b>, look, then press <b>Monthly</b> again.",
+    "see": "The price line switches between the yearly and monthly figure; <b>Due today stays $0.00 CAD</b>; each switch settles within a moment."
+   },
+   {
+    "do": "Press the choice that is <b>already selected</b> several times.",
+    "see": "Nothing happens. (Review found this used to leave the window on a spinner for good.)"
+   },
+   {
+    "do": "With the name empty, press <b>Continue to checkout</b>.",
+    "see": "“Enter your club’s name.” and Stripe does not open."
+   },
+   {
+    "do": "Type a name and press <b>Continue to checkout</b>. When Stripe’s page opens, <b>do not pay</b>. Press its back arrow.",
+    "see": "Stripe’s secure page opens for <b>Club</b> on the cycle you chose, with the trial. Going back returns you to Plan &amp; billing in the portal: <b>still Premium on free time</b>, the window closed, the free days unchanged."
+   },
+   {
+    "where": "Phone, 390px wide",
+    "do": "Open the same window at 390px.",
+    "see": "Full screen, <b>one ← back arrow</b>, no Cancel button, <b>Continue to checkout</b> alone at the bottom; the amber band and the Monthly/Yearly choice fit without sideways scroll."
+   }
+  ]
+ },
+ {
+  "id": "w4",
+  "title": "Walk 4 · Pay and become the club",
+  "blurb": "The real thing, on the dev site, on a portal made for it. Permanent.",
+  "forWhat": "Confirm that confirming the window charges once, shows “Setting up your club”, lands on the new club’s Overview with the setup list and the team, and that the page, the menu and the browser’s Back button all behave as a club from then on.",
+  "passes": "Every step is ticked. One charge, one subscription, a landing on the club with a fresh identity and menu from the first load, and a team that is exactly as it was.",
+  "not": "The two slow states (cannot be forced). Anything on localhost: this walk needs the dev site, after you push <code>dev</code>.",
+  "steps": [
+   {
+    "who": "Coach B · dev.fieldlogichq.ca",
+    "where": "Computer",
+    "do": "Sign in, open Plan &amp; billing, press <b>Start my club</b>, type the name <b>Walk Club B</b>, look at the figures once, then press <b>Start my club</b>.",
+    "see": "The button changes to “Starting your club…” and cannot be pressed twice. After a few seconds the page becomes <b>Setting up your club</b>: a small spinner and “We’re setting up your club. Your team and everything in it stays as it is. Please don’t start another payment.” <b>No payment button is anywhere on this screen.</b>"
+   },
+   {
+    "kind": "options",
+    "do": "Wait for it.",
+    "see": "It should leave by itself to the club’s Admin Overview.",
+    "options": [
+     "Landed on the Overview within a minute",
+     "Showed “This is taking longer than usual” first",
+     "Showed “We couldn’t confirm your club is ready”",
+     "Stuck or blank"
+    ]
+   },
+   {
+    "kind": "options",
+    "do": "<b>The first thing to watch.</b> On the Overview look at the top bar and the left menu <b>before touching anything</b>.",
+    "see": "You are now a club: the top bar names <b>Walk Club B</b> and the left menu is the club’s <b>Admin</b> menu. <b>Plan &amp; billing and Tournaments you run have swapped for Admin</b>; you should not see the old portal menu.",
+    "options": [
+     "Right from the first load",
+     "Wrong until I reloaded the page",
+     "Still wrong after reloading"
+    ]
+   },
+   {
+    "do": "Read the top of the Overview.",
+    "see": "A card, <b>Your club is ready</b>: “You’re the owner of Walk Club B. Your team is already in it, with you as head coach. A few things to set up first:” and four steps: <b>✓ Name your club</b> (Walk Club B), <b>Check your web address</b> with Change, <b>Invite your staff</b> with Invite, <b>Set up your public site</b> with Open. Below it a <b>Rep teams</b> card with your team’s name and a lime <b>Open my team</b>."
+   },
+   {
+    "do": "Press <b>Open my team</b>, look around, then come back.",
+    "see": "The team opens in the Coaches Portal where it always was, with its roster, season and money untouched, and you are still its head coach."
+   },
+   {
+    "do": "On the Overview press the browser’s <b>Back</b> button once or twice.",
+    "see": "You step back through the pages you came from. You are <b>never thrown forward again</b> to “Setting up your club” in a loop."
+   },
+   {
+    "do": "Reload the Overview.",
+    "see": "The address no longer carries <code>?inPlace=club</code>; the big “Your club is ready” card is gone (it shows once, on arrival) and the usual <b>Setup: n of 5 · Continue setup</b> line is there instead."
+   },
+   {
+    "do": "Open <b>Plan &amp; billing</b> from the club’s Admin menu.",
+    "see": "It shows <b>Club</b> on the same monthly or yearly billing as before, with the same payment method."
+   },
+   {
+    "do": "In the Stripe sandbox, find Coach B’s customer.",
+    "see": "<b>One subscription</b>, now on Club’s price (not a second subscription), and <b>one invoice</b> for the amounts you saw in the window. No extra charge."
+   },
+   {
+    "where": "Phone, 390px wide",
+    "do": "Sign in as Coach B on a phone-width window and open the Overview.",
+    "see": "The setup steps wrap; Change, Invite and Open are <b>icon-only buttons at a comfortable tap size</b>; <b>Open my team</b> is full width; nothing scrolls sideways."
+   }
+  ]
+ },
+ {
+  "id": "w5",
+  "title": "Walk 5 · Premium set to end (optional)",
+  "blurb": "A coach who already asked to leave is not quietly kept.",
+  "forWhat": "Confirm that a paying coach whose Premium is already set to end is told so, in words, and offered “Open payment settings” first. They are not moved onto Club behind their own decision to leave.",
+  "passes": "Every step is ticked, or you stopped at step 1 because cancelling ended the portal at once.",
+  "not": "Moving onto Club (Walk 4). Whether Stripe’s own page lets the coach undo the ending: that has not been verified, so step 3 only asks what you see.",
+  "steps": [
+   {
+    "who": "Coach C · dev.fieldlogichq.ca",
+    "where": "Computer",
+    "do": "On Plan &amp; billing use <b>Reduce or cancel</b> to cancel Premium, and finish the review.",
+    "see": "Premium shows as <b>ending on a date</b> and the portal keeps working until then. <b>If cancelling ends the portal at once instead, stop and mark Needs a call</b>: that belongs to the “plans end at the renewal date” project, not this one."
+   },
+   {
+    "do": "Press <b>Start my club</b> (if the Club row is still offered).",
+    "see": "The window shows <b>no figures and no Start button</b>. A red notice: “Premium is set to end on {date}. Open payment settings to keep your current subscription first, then start your club.” The buttons are <b>Cancel</b> and <b>Open payment settings</b>."
+   },
+   {
+    "kind": "options",
+    "do": "Press <b>Open payment settings</b>, look at Stripe’s page, then leave by its back arrow.",
+    "see": "Stripe’s billing page opens for this customer; leaving returns you to Plan &amp; billing in the portal. Tick what Stripe offered.",
+    "options": [
+     "It offered to renew or keep the subscription",
+     "It offered nothing to undo the ending"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "w6",
+  "title": "Walk 6 · The way back from a lapsed portal",
+  "blurb": "The one open question from review. Quick.",
+  "forWhat": "Confirm that the owner of a locked portal who types the Plan &amp; billing address sees that one page in a bare frame instead of the “subscription ended” wall, and that every other address keeps the wall. This is the way a free-time coach returning from paying reaches “Setting up your club”.",
+  "passes": "Step 1 shows Plan &amp; billing in a bare frame, and step 2 shows the wall. If step 1 shows the wall instead, mark <b>Issue</b>: that confirms review’s open finding (the door reads a browser header that the proxy may not set for this address).",
+  "not": "Pressing Reactivate (do not). A free-time-ended coach returning from Stripe (no such account).",
+  "steps": [
+   {
+    "kind": "options",
+    "who": "Cancelled-portal owner · uat-free-coach@uat-free-coach.local",
+    "where": "Computer, localhost:3000",
+    "do": "Sign in, then type <span class=\"path\">/uat-free-team-coaches-portal/coaches/billing</span> in the address bar. <b>Do not press Reactivate.</b>",
+    "see": "By design you see <b>Plan &amp; billing for the cancelled portal in a bare frame</b>: a top strip, no left menu, no team tools. If you see the <b>“subscription ended” wall</b> instead, that is the finding.",
+    "options": [
+     "Plan & billing in a bare frame",
+     "The wall instead",
+     "Something else (write it in the notes)"
+    ]
+   },
+   {
+    "do": "Now type <span class=\"path\">/uat-free-team-coaches-portal/coaches/teams/0b5b7743-9566-4928-95f1-a372ff0981b4/settings</span>.",
+    "see": "The <b>wall</b>, as before. No team tools open. Only the billing address is ever let through."
+   }
+  ]
+ }
+];
+var state = {};
+function load() { try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+function ws(w) { if (!state[w.id]) state[w.id] = { ticks: {}, verdict: '', notes: '', open: false }; return state[w.id]; }
+function stepDone(w, i) {
+  var s = w.steps[i], t = ws(w).ticks;
+  if (s.kind === 'options') return s.options.some(function (_, k) { return t[i + ':' + k]; });
+  return !!t[i];
+}
+function counts(w) { var d = 0; w.steps.forEach(function (_, i) { if (stepDone(w, i)) d++; }); return { done: d, total: w.steps.length }; }
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
+function statusChip(w) {
+  var c = counts(w), v = ws(w).verdict;
+  if (v === 'pass') return c.done < c.total ? ['call', 'Passed · only ' + c.done + ' of ' + c.total + ' ticked'] : ['pass', 'Passed'];
+  if (v === 'issue') return ['issue', 'Issue'];
+  if (v === 'call') return ['call', 'Needs a call'];
+  if (c.done) return ['prog', 'In progress ' + c.done + ' of ' + c.total];
+  return ['', 'Not started'];
+}
+
+function render() {
+  var host = document.getElementById('walks'), html = '';
+  WALKS.forEach(function (w, wi) {
+    var st = ws(w), chip = statusChip(w);
+    html += '<section class="walk' + (st.open ? ' open' : '') + '" data-w="' + w.id + '">';
+    html += '<button class="walkhead" type="button" aria-expanded="' + (st.open ? 'true' : 'false') + '" data-toggle="' + w.id + '"><span class="t"><b>' + esc(w.title) + '</b><span>' + esc(w.blurb) + '</span></span><span class="chip ' + chip[0] + '">' + esc(chip[1]) + '</span></button>';
+    html += '<div class="walkbody">';
+    html += '<dl class="intro"><dt>What this walk is for</dt><dd>' + w.forWhat + '</dd><dt>It passes when</dt><dd>' + w.passes + '</dd><dt>Not in this walk</dt><dd>' + w.not + '</dd></dl>';
+    var lastWho = null;
+    w.steps.forEach(function (s, i) {
+      if (s.who && s.who !== lastWho) { html += '<div class="who">' + esc(s.who) + (s.where ? ' <span class="muted">· ' + esc(s.where) + '</span>' : '') + '</div>'; lastWho = s.who; }
+      else if (s.where) { html += '<div class="who"><span class="muted">' + esc(s.where) + '</span></div>'; }
+      if (s.kind === 'options') {
+        var done = stepDone(w, i);
+        html += '<div class="step multi' + (done ? ' done' : '') + '"><span class="mark" aria-hidden="true"></span><div><div class="n">' + (i + 1) + '</div><div class="do">' + s.do + '</div><div class="see">' + s.see + '</div>';
+        html += '<div class="opts">';
+        s.options.forEach(function (o, k) {
+          var id = w.id + '-' + i + '-' + k;
+          html += '<label for="' + id + '"><input type="checkbox" id="' + id + '" data-w="' + w.id + '" data-tick="' + i + ':' + k + '"' + (st.ticks[i + ':' + k] ? ' checked' : '') + '> <span>' + esc(o) + '</span></label>';
+        });
+        html += '</div></div></div>';
+      } else {
+        var cid = w.id + '-' + i;
+        html += '<div class="step"><input type="checkbox" id="' + cid + '" data-w="' + w.id + '" data-tick="' + i + '"' + (st.ticks[i] ? ' checked' : '') + '><label for="' + cid + '"><div class="n">' + (i + 1) + '</div><div class="do">' + s.do + '</div><div class="see">' + s.see + '</div></label></div>';
+      }
+    });
+    html += '<div class="verdicts" role="group" aria-label="Verdict for this walk">';
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      html += '<button type="button" class="' + v[0] + '" data-verdict="' + v[0] + '" data-w="' + w.id + '" aria-pressed="' + (st.verdict === v[0] ? 'true' : 'false') + '">' + v[1] + '</button>';
+    });
+    html += '</div>';
+    html += '<label for="notes-' + w.id + '" class="muted" style="font-size:13px">Notes for this walk</label><textarea id="notes-' + w.id + '" data-notes="' + w.id + '" placeholder="What you saw, anything off, your answer to a call.">' + esc(st.notes || '') + '</textarea>';
+    html += '<div class="actions" style="margin-top:10px"><button type="button" class="primary" data-build="' + w.id + '">Build summary of this walk</button><span class="copied" id="copied-' + w.id + '" hidden>Copied</span></div>';
+    html += '<div class="out"><textarea id="out-' + w.id + '" readonly placeholder="Press the button, then paste the result back into the chat."></textarea></div>';
+    html += '</div></section>';
+  });
+  host.innerHTML = html;
+  progress();
+}
+
+function progress() {
+  var done = 0, total = 0, passed = 0;
+  WALKS.forEach(function (w) { var c = counts(w); done += c.done; total += c.total; if (ws(w).verdict === 'pass') passed++; });
+  document.getElementById('ptext').textContent = 'Checked ' + done + ' of ' + total;
+  document.getElementById('pwalks').textContent = passed + ' of ' + WALKS.length + ' walks passed';
+  document.getElementById('pbar').style.width = (total ? Math.round(done * 100 / total) : 0) + '%';
+}
+
+function summary(w) {
+  var st = ws(w), c = counts(w), lines = [];
+  lines.push(w.title.replace(/ · /, ' - ') + ' [' + (st.verdict ? st.verdict.toUpperCase() : 'NO VERDICT') + '] ' + c.done + '/' + c.total);
+  w.steps.forEach(function (s, i) {
+    if (s.kind === 'options') {
+      var picked = s.options.filter(function (_, k) { return st.ticks[i + ':' + k]; });
+      lines.push('  ' + (i + 1) + '. [' + (picked.length ? picked.join(' + ') : 'NO ANSWER') + '] ' + s.do.replace(/<[^>]+>/g, '').slice(0, 70));
+    } else if (!st.ticks[i]) {
+      lines.push('  ' + (i + 1) + '. NOT TICKED: ' + s.do.replace(/<[^>]+>/g, '').slice(0, 70));
+    }
+  });
+  if (st.notes && st.notes.trim()) lines.push('  Notes: ' + st.notes.trim());
+  return lines.join('\n');
+}
+function copyOut(outId, copiedId, text) {
+  var ta = document.getElementById(outId); ta.value = text;
+  var done = function () { var c = document.getElementById(copiedId); if (c) { c.hidden = false; setTimeout(function () { c.hidden = true; }, 1800); } };
+  try { navigator.clipboard.writeText(text).then(done, function () { ta.focus(); ta.select(); }); } catch (e) { ta.focus(); ta.select(); }
+}
+
+document.addEventListener('change', function (e) {
+  var t = e.target;
+  if (t.dataset && t.dataset.tick !== undefined) {
+    var w = WALKS.filter(function (x) { return x.id === t.dataset.w; })[0], st = ws(w);
+    if (t.checked) st.ticks[t.dataset.tick] = true; else delete st.ticks[t.dataset.tick];
+    save(); var keep = window.scrollY; render(); window.scrollTo(0, keep);
+  }
+});
+document.addEventListener('input', function (e) {
+  var t = e.target;
+  if (t.dataset && t.dataset.notes) { var w = WALKS.filter(function (x) { return x.id === t.dataset.notes; })[0]; ws(w).notes = t.value; save(); }
+});
+document.addEventListener('click', function (e) {
+  var b = e.target.closest ? e.target.closest('button') : null; if (!b) return;
+  if (b.dataset.toggle) {
+    WALKS.forEach(function (w) { ws(w).open = (w.id === b.dataset.toggle) ? !ws(w).open : false; });
+    save(); render();
+    var el = document.querySelector('[data-w="' + b.dataset.toggle + '"].walk'); if (el && ws(WALKS.filter(function (x) { return x.id === b.dataset.toggle; })[0]).open) el.scrollIntoView({ block: 'start' });
+  } else if (b.dataset.verdict) {
+    var w = WALKS.filter(function (x) { return x.id === b.dataset.w; })[0], st = ws(w);
+    st.verdict = st.verdict === b.dataset.verdict ? '' : b.dataset.verdict; save(); var keep = window.scrollY; render(); window.scrollTo(0, keep);
+  } else if (b.dataset.build) {
+    var w2 = WALKS.filter(function (x) { return x.id === b.dataset.build; })[0];
+    copyOut('out-' + w2.id, 'copied-' + w2.id, summary(w2));
+  } else if (b.id === 'all-build') {
+    var done = 0, total = 0; WALKS.forEach(function (w) { var c = counts(w); done += c.done; total += c.total; });
+    copyOut('all-out', 'all-copied', 'Premium to Club walk (Stage 4b Part 3), checked ' + done + ' of ' + total + '\n\n' + WALKS.map(summary).join('\n\n'));
+  }
+});
+load(); render();
+</script>

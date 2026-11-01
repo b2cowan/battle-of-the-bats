@@ -71,13 +71,13 @@ input.host { box-sizing: border-box; width: 100%; min-height: 44px; font: inheri
 <dt>Everything except K and M</dt><dd>Nobody. A <strong>private window</strong>, signed out, so you see what a family sees.</dd>
 <dt>Part K</dt><dd>Your own organizer account <span class="mono">b2cowan@outlook.com</span> (the same one Stage 3's Part J used), in a separate window. It opens Live Demo — Game Day in <span class="mono">dev-test-org</span>.</dd>
 <dt>Part M (optional)</dt><dd>The installed app on your phone, which needs a secure address. Skip it if you have none.</dd>
-<dt>Where</dt><dd><span class="mono">http://localhost:3000</span> with the dev server running. For your phone on the same Wi-Fi, change the box below to <span class="mono">http://192.168.2.200:3000</span> (that was the computer's address on 2026-10-30). The box only changes the links on this page.</dd>
+<dt>Where</dt><dd><span class="mono">http://192.168.2.200:3000</span> with the dev server running (that was the computer's address on 2026-10-30), so the links open on your phone on the same Wi-Fi. On the computer itself, change the box below to <span class="mono">http://localhost:3000</span>. The box only changes the links on this page.</dd>
 <dt>Widths</dt><dd>Phone: your phone, or Chrome's device toolbar (Ctrl+Shift+M) at <strong>390</strong>, then <strong>360</strong>. Desk: <strong>1280</strong>. The in-between: <strong>901</strong> and <strong>1023</strong>.</dd>
 <dt>The switch</dt><dd>Every link here says whether the preview is on or off, and the choice sticks to that browser window. Parts A to K use it on; Part L turns it off; Part N turns it back on.</dd>
 <dt>Fixtures</dt><dd>Five marked clones in Metro Sports (<span class="mono">stage1-metro-sports</span>), prepared 2026-10-30: <strong>live</strong>, <strong>mid-pool</strong>, <strong>seeded</strong>, <strong>eight</strong> (an eight-team bracket with no Standings tab) and <strong>no-playoffs</strong>. In each, <strong>U11</strong> is the division with two pools, top 4 advancing and a bracket; <strong>U13</strong> is one pool with no playoffs. Only the live clone's championship game is moved by the commands below; every command reads its write back. No source tournament or demo is touched.</dd>
 <dt>Commands</dt><dd>Run them in a terminal at the project folder, or ask me in the chat and I run them and read the result back: <span class="mono">node --env-file=.env.local scripts/seed-public-stage4-fixtures.mjs show | publish | score | no-score | waiting | cancelled | final | withhold | withhold-all | undo</span>. The next-game commands wait up to 35 seconds to show on an open page.</dd>
 <dt>A different day</dt><dd>The games are dated around 2026-10-30 and the live clone's event ends 2026-11-02. If you walk later than that, ask me to run <span class="mono">undo</span>, confirm it removed every clone, then <span class="mono">prepare</span> and read the new set back. Never run prepare over an existing set.</dd>
-<dt>Target server</dt><dd><input class="host" id="host" type="url" value="http://localhost:3000" aria-label="Target server origin"></dd>
+<dt>Target server</dt><dd><input class="host" id="host" type="url" value="http://192.168.2.200:3000" aria-label="Target server origin"></dd>
 </dl></section>
 <section class="card facts"><h3>Known and accepted, so they are not fails</h3><ul>
 <li>The page's clock moves on its 30-second check (it pauses while the tab is hidden). After a fixture command, allow up to 35 seconds. A late older answer can briefly show an older score.</li>
@@ -96,7 +96,7 @@ input.host { box-sizing: border-box; width: 100%; min-height: 44px; font: inheri
 <div id="parts"></div>
 <section class="card"><h2>Send me the results</h2><p>Build the summary, then paste it into the chat. Put what you saw on the “Tell me” steps (and the fixture read-backs) in that part's notes. I compare the read-backs and the server log with what you ticked before I record a pass. A part's Pass button alone is not evidence, and skipped or unticked steps stay visible.</p><div class="actions"><button class="btn" id="build" type="button">Build summary</button><button class="btn ghost" id="copy" type="button">Copy</button></div><textarea id="summary" readonly aria-label="Walk summary"></textarea></section>
 </main><script>
-var HOST = "http://localhost:3000";
+var HOST = "http://192.168.2.200:3000";
 var M = "/stage1-metro-sports/";
 var MID = M + "stage4-mid-pool", LIVE = M + "stage4-live", SEEDED = M + "stage4-seeded", EIGHT = M + "stage4-eight", NOPO = M + "stage4-no-playoffs";
 var PINE = "/stage2-pinecrest/harvest-cup", DEMO = "/riverdale-minor-ball/summer-classic";
@@ -132,8 +132,8 @@ var PARTS = [
   { id: "D", title: "Part D · One home for the bracket", who: "Private window · phone width", steps: [
     { do: "On " + on(LIVE + "/standings", "live Standings") + ", choose U11 and look below the ranking row.", see: "A door row: <strong>The playoff bracket</strong>, with the sub-line <strong>Top 4 advance · the championship is live now</strong>. There is no bracket and no bracket disclosure anywhere on this page." },
     { do: "Tap that door.", see: "Playoffs opens on the same division (U11). In order: the live championship first, then <strong>Bracket</strong>, then <strong>How seeding works</strong>." + tell("the tab you landed on and the division the dropdown shows.") },
-    { do: "Open " + on(LIVE + "/schedule", "the live Schedule") + ", choose U11, tap its <strong>Playoffs</strong> half and look at the foot.", see: "A door reading <strong>The bracket</strong> with <strong>On the Playoffs tab</strong>. Tap it: it opens Playoffs, where the bracket is. (Stage 3's old “On the Standings tab” is gone.)" },
-    { do: "Open " + on(EIGHT + "/schedule", "the bracket-only Schedule") + " and tap <strong>The bracket</strong>.", see: "A working Playoffs page, although this event has no Standings tab. Nothing on it links to a Standings page that does not exist." },
+    { do: "Open " + on(LIVE + "/schedule", "the live Schedule") + ", choose U11, tap its <strong>Playoffs</strong> half and look at the foot.", see: "A door reading <strong>The playoff bracket</strong> with the same sub-line as the Standings door (<strong>Top 4 advance</strong>, plus <strong>· the championship is live now</strong> while a final is in play). Tap it: it opens Playoffs, where the bracket is. With All divisions picked and more than one division, the door has no sub-line. (Stage 3's old “On the Standings tab” is gone, and so is “On the Playoffs tab”.)" },
+    { do: "Open " + on(EIGHT + "/schedule", "the bracket-only Schedule") + " and tap <strong>The playoff bracket</strong>.", see: "A working Playoffs page, although this event has no Standings tab. Nothing on it links to a Standings page that does not exist." },
     { do: "Open " + on(SEEDED + "/playoffs", "the seeded bracket") + ".", see: "An <strong>Up next</strong> card with the earliest playoff game, and the saved bracket under it, even before any playoff result. This is the only bracket on the site; Standings has none." }
   ]},
   { id: "E", title: "Part E · The next game changes while the page is open", who: "Live Playoffs, U11 · phone width · keep the page open", note: "Each step moves the live championship, then reads it back. Wait up to 35 seconds without reloading. Paste each read-back into this part's notes before ticking.", steps: [
@@ -185,7 +185,7 @@ var PARTS = [
     { do: "Open " + off(MID + "/standings", "mid-pool Standings with the preview off") + " (pool play, no playoff games started).", see: "The old page: a “Results & Standings” header, the legend and a “Tie-breaker order” line, and <strong>Recent Scores</strong>. The bracket is a collapsed <strong>PLAYOFF BRACKET</strong> row reading “Set · tap to preview”. Tap it: the old diagram opens." + tell("the old headings, and whether the bracket opens.") },
     { do: "Open " + off(LIVE + "/standings", "live Standings with the preview off") + " (the playoffs are underway).", see: "The same old page, but the bracket is already <strong>open above the tables</strong>, not a collapsed row. Recent Scores is there." },
     { do: "Open " + off(LIVE + "/playoffs", "live Playoffs with the preview off") + ".", see: "The old Playoffs: a <strong>Playoff Picture</strong> header, “Seeding &amp; Matchups”, matchup cards (some Pending), a “See the full bracket” link and a “Playoff schedule” button. No new bracket diagram on this page." },
-    { do: "Open " + off(LIVE + "/schedule", "the live Schedule with the preview off") + ", choose U11 and the Playoffs half.", see: "The original Schedule: its own <strong>List view / Bracket view</strong> icon toggle draws the bracket in place. The new <strong>The bracket · On the Playoffs tab</strong> door is not on this page." },
+    { do: "Open " + off(LIVE + "/schedule", "the live Schedule with the preview off") + ", choose U11 and the Playoffs half.", see: "The original Schedule: its own <strong>List view / Bracket view</strong> icon toggle draws the bracket in place. The new <strong>The playoff bracket</strong> door is not on this page." },
     { do: "Open " + on(DEMO + "/standings", "the demo's Standings") + " and " + a(DEMO + "/playoffs", "Playoffs") + " with the preview on.", see: "On dev the demo's divisions are held back, so honest empty states: <strong>No standings yet</strong> on Standings, and either <strong>The bracket isn't set yet</strong> or a plain not-found on Playoffs. No team, game or count from a held-back division shows. The demo tour is not judged here (see Not in this walk)." + tell("both pages' messages.") }
   ]},
   { id: "M", title: "Part M · Installed app (optional)", who: "Installed app on your phone · secure address required", steps: [
@@ -279,7 +279,7 @@ document.getElementById("copy").addEventListener("click", function () {
 render();
 
 var hostInput = document.getElementById("host");
-try { var h = localStorage.getItem("qa-428-host"); if (h) hostInput.value = h; } catch (e) {}
+try { var h = localStorage.getItem("qa-428-host-v2"); if (h) hostInput.value = h; } catch (e) {}
 function updateHost() {
   try {
     var parsed = new URL(hostInput.value);
@@ -287,7 +287,7 @@ function updateHost() {
     HOST = parsed.origin;
     document.querySelectorAll("a[data-route]").forEach(function (link) { link.href = HOST + link.dataset.route; });
     hostInput.setCustomValidity("");
-    try { localStorage.setItem("qa-428-host", HOST); } catch (e) {}
+    try { localStorage.setItem("qa-428-host-v2", HOST); } catch (e) {}
   } catch (e) { hostInput.setCustomValidity("Enter the server origin, starting with http:// or https://"); hostInput.reportValidity(); }
 }
 hostInput.addEventListener("change", updateHost); updateHost();

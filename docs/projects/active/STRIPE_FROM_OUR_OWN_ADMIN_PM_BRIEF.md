@@ -1,7 +1,9 @@
 # Our own invoices, and Stripe run from our own platform admin: PM brief
 
 **Status:** not started. Planning is owed after Plan & billing is complete and Stripe walks 1 to 9 are done. Owner direction,
-2026-10-30.
+2026-10-30. **2026-10-31: the Stripe walks are done** (the owner closed all of them; the Founding card and webhook-replay
+walks were skipped, so the webhook checks come back as an early fix). **2026-10-31: the round-2 design asks are all ruled
+(see the plan).** Building now waits only for Plan & billing to finish.
 
 **Update 2026-10-30 (owner):** design starts after Support console Stage 4b; building waits for the Stripe walks. The
 program is combined with Support console Stage 10 (Plans & pricing), and opens with a full review of how staff manage plans
@@ -27,6 +29,15 @@ date range. No change to how they pay; card entry stays on Stripe's secure scree
 A platform-admin area for billing: a customer's plan, status, next charge, last payments and failed payments on one page, with
 the common actions on that page. Later, a guarded tool for dated price changes: it shows who is affected and the dollar effect
 first, is logged with who and why (no second approver for now), emails customers ahead of time, and applies on the chosen day.
+
+## The stages, in plain words (owner, 2026-10-31)
+The full list is in the plan ("Stage list of record"). In order: **0** fix twelve weak spots in how we talk to Stripe today (including a fresh
+sign-in before money actions that reach many customers); **1** safety guards so a new plan or a price cannot be added wrongly, and a promotion that
+actually does what it says; **2** read-only views of a customer's billing and of Stripe's health, plus reports; **3** one-customer tools (billing
+details, failed-payment help, cheque payments, credits, discounts, trial and charge-date changes, merging duplicates); **4** renaming a plan and
+retiring an old price; **5** our own branded invoices for staff, with our tax number; **6** the customer's own invoice list in Plan & billing
+(designed first); **7** the new price for new customers; **8** moving existing customers to the new price, last and most careful; **9** closeout:
+help articles, demo check, going live on production. The program is done when all ten are done.
 
 ## Priority and risk
 Start the planning session at the end of the billing project. The invoice list is the natural first deliverable. The bulk

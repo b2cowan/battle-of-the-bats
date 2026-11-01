@@ -1,8 +1,50 @@
 # Our own invoices, and Stripe run from our own platform admin
 
-**Status: NOT STARTED. A planning session is owed.** Owner directed on 2026-10-30 that planning starts **after the Plan & billing
-project is complete AND the Stripe end-to-end walks 1 to 9 are done**. Nothing below is designed or ruled except what the
-"Owner asks" section says. Everything under "Claude's notes" is a suggestion for that session, not a decision.
+**Status: PLANNED, nothing built (2026-10-31).** Stripe walks 1 to 9 closed 2026-10-31; the round-2 staff drawings' 19 asks
+were ruled 2026-10-31; Stage 0 no longer waits for Plan & billing Stage 5. The stages are numbered in "Stage list of record"
+below. Stage 6 (customers' own invoice list) still needs its own design session. (Superseded: "planning starts after the
+Plan & billing project is complete", owner 2026-10-30.) Everything under "Claude's notes" is a suggestion, not a decision.
+
+## Stage list of record (owner, 2026-10-31)
+
+Every piece of outstanding work in this combined program (this plan, Support console S10 and `STAGE10_PLANS_PRICING_THIRD_PASS_GAPS.md`)
+has a home in one of these stages. Order is by dependency and rework risk, never by date. Item numbers (§6 …) refer to the gaps document.
+
+0. **Stage 0 — the 12 fixes.** Not built; design done. (1) Billing page shows what each customer actually pays; (2) old price links stay recognised;
+   (3) "None" told apart from a failed read, plus the 20-subscription cap; (4) strict change log (who, what, when, why); (5) S5 webhook event log,
+   ordering guard, refuse the wrong mode; (6) S6 daily read-only comparison with Stripe; (7) S7 a restricted live key reads as live everywhere;
+   (8) S8 our own pinned portal settings; (9) S9 subscription disputes and refunds handled; (10) S10 one Stripe customer per buyer plus the trial-history
+   rule; (11) the sales-tax decision (met by the GST/HST plan's Stripe Tax stage); (12) G8 fresh sign-in before many-customer money actions, plus an email
+   to the owner. Exit check: re-run Stripe Walk 6 (recommended, not ruled). Waits on Plan & billing 4b Part 4; S5 lands before renewal Stage 1; S8 before renewal G13.
+1. **Stage 1 — guards and housekeeping.** Not built. New-plan checklist enforced by the build, plus the price-agreement build check (Facts doc vs plan config,
+   absorbs the H8 price guard); fix promotions so a recorded promotion is enforced at checkout (record ≠ enforce); rewrite or retire the stale
+   `docs/agents/ops/stripe-setup-guide.md`. Owner ruled "Stage 0 and the checklist first". Waits on Stage 0.
+2. **Stage 2 — read-only views.** Not built. One customer's billing record on our own copy of Stripe facts (drawings tab 9); webhook health and the Stripe
+   settings panel (tab 10, includes the failed-payment outcome setting, S11); reports (§6 item 17: renewals this month, trials ending, failed payments,
+   revenue by month, Stripe fees); replay one missed webhook event (§6 item 15). Waits on Stage 0.
+3. **Stage 3 — one-customer tools** (reason required, logged). Not built. §6 items 1-9: (1) billing email, name, address, tax number synced to Stripe;
+   (2) failed payment: retry now, "fix your card" link, next retry date; (3) mark an invoice paid by cheque or e-transfer, void, write off; (4) credit note and
+   account credit; (5) one customer's discount with an end date; (6) move the next charge date, end a trial now, align renewal to season start; (7) End at
+   renewal and its undo, staff side; (8) resend our own document; (9) merge duplicate Stripe customers. Also here: payout-failed alert for family
+   payments (§6 item 19) — **owner call owed: here or Club Stage 12.** Waits on Stage 2; item 7 on renewal Stage 1.
+4. **Stage 4 — catalogue.** Not built. Rename a plan in Stripe (§6 item 12); retire an old price for new sales while it stays recognised for current holders (item 13).
+5. **Stage 5 — our branded invoices (staff side).** Not built. One document per payment plus a date-range statement, owner-only at first, carrying our GST/HST
+   number and tax lines, Stripe's invoice reference, later refunds and credit notes; Stripe's own customer emails go off only once ours exists. Waits on tax being
+   live (GST/HST Stages 2-3) and Stage 3.
+6. **Stage 6 — customers' own invoice list on Plan & billing** (owner Ask A). Not designed. A planning/design session first (name, who sees it, on-demand vs
+   per-payment, format, whether family payments are served), then build. Waits on Stage 5.
+7. **Stage 7 — new-customer price change.** Not built. New customers switch to the new price on the notification date, and notices wait for that switch;
+   "Mark release live" read automatically. Waits on tax live, Stages 0 and 2, and the marketing wording for "plus applicable taxes".
+8. **Stage 8 — moving existing customers, last.** Not built. Notices, then the owner's button schedules the delivered moves (the daily job only sends);
+   annual reminder; type-the-amount confirmation, size-of-change warning, first-charge email, Stop with refund-the-difference; held-out reasons and missing
+   states; the program's own Stripe test-clock rehearsal; the "Approval queue becomes Changes" screen and, if S7 ask 1 = A, the S7 catalogue takeover
+   (Plans & pricing, Approval queue, Templates, Export registry). Open rulings to settle here: whether Billing may stop a move; the 30-day reminder and
+   25% warning (working defaults); Founding holders (drawn as held out). Waits on Stage 7, renewal Stage 1 (the G5 rule), and tax live.
+9. **Stage 9 — closeout.** Not built. Help articles and `/docs` for the new staff screens and notices; demo check; the migration (price-change record) applied to
+   production with the data dictionary and dev+prod snapshots refreshed; the `/accounting` review; final owner walk; confirmed on production.
+
+**Done when** Stages 0–9 are complete.
+Open questions, not stages (to `/strategy`): pay by invoice (net 30) for Club and Association; pause billing for the off-season.
 
 ## Owner rulings (2026-10-30, later the same day) — these update the status above
 
@@ -19,12 +61,52 @@ project is complete AND the Stripe end-to-end walks 1 to 9 are done**. Nothing b
    another person's approval; instead **every change is logged: who did what, when, and why** (an audit history). This
    replaces the "second admin's approval" in Claude's notes below.
 
+## Owner rulings (2026-10-31, round 2 of the Stage 10 drawings) — all 19 asks, as recommended
+
+Asks and reasons: `STAGE10_PLANS_PRICING_THIRD_PASS_GAPS.md` §8. Drawings: https://claude.ai/artifact/MiNmwvyFX75jwmJoa2rdNm
+(round 2). Business points logged in `BUSINESS_DECISIONS.md` 2026-10-31 ("How a price change reaches customers…"). Summary:
+amounts stay in code and the console only verifies them. Current customers move at their next renewal after a delivered
+notice, with no proration. New customers switch on the notification date, and the notices wait for that switch. The daily job
+only sends emails; the owner's button schedules the moves after delivery. Annual customers get a reminder before their first
+new-price bill. A wrong number is caught by showing the size of the change, a warning above a threshold, typing the amount, a
+first-charge email and a refund-the-difference path. A customer's own plan change carries the move forward or is refused, never
+dropped (designed with Plans end at renewal). Tax is in place before the first notice or invoice. Many-customer money actions
+need a fresh sign-in and send an email. Stage 0 grows to twelve fixes, and it comes first. The first dashboard jobs to move in
+are drawings tab 9 (one customer's billing) and tab 10 (watching Stripe).
+**Order:** Stage 0 (12 fixes) and the GST/HST plan's Stripe Tax stage come before the price-change workflow.
+**Gate, 2026-10-31:** Stripe walks 1 to 9 are closed (Owner QA Ledger §419 ✅). Building now waits only for Plan & billing
+Stages 3 to 5 (see Dependencies).
+**Still open:** whether Billing may stop a move (unticked; Super admin only until ruled); the 30-day reminder and the 25%
+warning are working defaults from the drawing, to confirm at build; Founding holders are drawn as held out, not ruled on
+their own.
+
 **Not ruled (suggestions from the planning chat, for the design session to settle):** the program as two tracks (customer
 invoices; staff plans-and-pricing) with the UX review covering the staff track only; a preview, a waiting period and a
 one-click stop before a price change applies (offered in place of a second approver); which staff role may do which job
 (there is no "marketing" role today: the roles are Super admin, Billing, Support, Product, Growth, Read only); build order
 (read-only customer billing and invoices, then trial and credit tools, then renames, then dated price changes last); and the
 price-source decision (prices as data versus code plus the facts document), which needs `/strategy`.
+
+## Sequence rulings (owner, 2026-10-31, all as recommended)
+
+From the cross-plan review of this program, GST/HST, Plan & billing, Plans end at renewal and Revenue readiness. Index
+(checkable): https://claude.ai/artifact/Kua6RAqMA7ChA7QBTNE63a (source `BILLING_TAX_PRICING_SEQUENCE_INDEX.html`).
+- **(1) Portal settings live in our code.** Stage 0 S8 stands: the app creates and pins its own portal configuration
+  (cancel at period end, no plan switching). Plans end at renewal's G13 check asserts on that configuration instead of the
+  Dashboard default. This overrides that plan's "no configuration is created in code; fix the Dashboard setting".
+- **(2) S5 lands first.** The billing-webhook event log, ordering guard and live/test check land before, or in the same
+  session as, Plans end at renewal Stage 1's webhook rewrite, so that stage does not build a replay workaround S5 replaces.
+- **(3) One rule for a subscription's future (G5)** is written into Plans end at renewal Stage 1 before it is built: a
+  customer or staff action that meets a scheduled price move carries it forward or refuses in plain words, never drops it.
+  The Plan & billing Premium→Club move obeys the same rule.
+**Set 2026-10-31** (the owner asked Claude to set the order): this program's Stage 0 is OFF the "Plan & billing Stage 5" gate
+(Stage 0 is back-end fixes; Stage 5 is the help rewrite, which now waits for the renewal and tax changes).
+
+**Order across the five plans (set by Claude at the owner's request 2026-10-31; the owner may reverse it on the index):** 0 owner desk → 1 finish Plan & billing
+4b Part 4 → **2 this program's Stage 0 (S5 first, then S8 — see rulings 1 and 2)** → 3 Plans end at renewal Stages 1–3 + GST/HST
+Stage 1 → 4 tax live (GST/HST Stages 2–3 + Terms) → 5 ONE help pass → 6 Club on sale (Coaches Portal and Tournament Plus already selling; "launch together" dropped 2026-10-31) → **7 the rest of this
+program (invoices, plan and price changes)**. (The numbered stages of this program are in "Stage list of record" near the top.) Step 2 needs the Plan & billing Stage 5 gate taken off Stage 0, the one change
+in this list the owner has not yet ruled.
 
 ## Owner asks (2026-10-30, recorded as asked)
 
@@ -113,7 +195,10 @@ them in the plan from the start; they would also help the Stripe walks.
 ## Dependencies
 
 - **For BUILDING:** Plan & billing Stages 3 to 5 complete, and Stripe end-to-end walks 1 to 9 done (they prove the webhooks
-  this program will rely on). **For DESIGN:** only Support console Stage 4b finished (owner, 2026-10-30).
+  this program will rely on). **The walks part is MET, 2026-10-31:** the owner closed every walk (Owner QA Ledger §419 ✅).
+  Walk 4 (Founding card) and Walk 6 (webhook hardening) were skipped, not walked. So replayed and out-of-order webhook
+  events are still unproven, and Stage 0 item S5 (event log, ordering, live/test check) carries that risk. *Claude's
+  suggestion, not ruled:* re-run Walk 6 as Stage 0's exit check. **Plan & billing Stage 5 no longer gates Stage 0 (order set 2026-10-31); it still comes before the program's later stages (step 5 before step 7).** **For DESIGN:** only Support console Stage 4b finished (owner, 2026-10-30).
 - Combined with Support console Stage 10 (Plans & pricing); keep the two records pointing at each other.
 - Owner design sessions for every screen (house rule), including the platform-admin workflows.
 - A PM brief exists beside this file; update both together.

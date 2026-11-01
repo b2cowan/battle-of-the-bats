@@ -8,6 +8,18 @@
 
 Launch a straightforward Canadian business model: existing eligible software subscriptions and tournament/house-league registration payments, charged in CAD and available throughout Canada. A club referred from Ontario to BC or Quebec should encounter the same signup and eligible purchase experience.
 
+**Updated 2026-10-31:** FieldLogicHQ is now registered for GST/HST (nothing sold yet), so every sale carries tax from the first one and prices read "plus applicable taxes". US clubs are now in scope (the US lines below are superseded; USD prices stay open), the accountant reviews at tax time and is not a launch gate, and the bookkeeping project is running again. The tax work itself is sequenced in the GST/HST plan. The "launch together" rule is dropped (ruled 2026-10-31): subscriptions do not wait for family payments, Coaches Portal and Tournament Plus stay on sale, and Club waits for family payments through its own plan.
+
+**New scope after the hand-off (owner, 2026-10-31).** Revenue readiness now keeps only its own work. Family and registration
+payments (the old Gate B) move to Club Stage 12; the books and the Stripe-to-books handoff move to the Bookkeeping plan; tax
+stays in the GST/HST plan. What stays here is three stages. **R1:** the owner's own decisions (the business bank and payout
+arrangement, who owns monthly review and filing deadlines, the operating budget and fee margin, any remaining advisor answers
+for subscriptions) and rewriting the out-of-date progress register. **R2:** proving the subscription launch (Gate A) —
+checking it works across provinces, including a referral from an Ontario club to a BC or Québec club, an owner walkthrough, and
+support readiness. **R3:** the first full month of real operations (closing the books, filing ownership, margin review) — a
+standing trigger that happens after the first sales and is not needed to finish the project. **The project is done when R1 and
+R2 are complete.** The family and fan subscription product stays deferred.
+
 The owner is pre-revenue, has no artificial release deadline, and wants the national experience ready before launch rather than restricting provinces to avoid incomplete configuration.
 
 ## Decisions confirmed

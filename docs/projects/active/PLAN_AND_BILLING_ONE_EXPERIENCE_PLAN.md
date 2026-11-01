@@ -3,6 +3,38 @@
 **Status:** Stage 1 Parts 1–3 implemented 2026-10-28; Part 3 validation and owner-walk gates recorded in §9 · PM brief:
 `PLAN_AND_BILLING_ONE_EXPERIENCE_PM_BRIEF.md`
 
+> **Sequence rulings (owner, 2026-10-31, all as recommended; index https://claude.ai/artifact/Kua6RAqMA7ChA7QBTNE63a):**
+> **(4)** how a price reads is re-decided once by `/marketing`: the ruled "$29 CAD / month per team" form plus GST/HST's ruled
+> "plus applicable taxes" — before Stage 5. **(5)** the Stage 4b Premium→Club "Due today" window has no tax line and its quote
+> has no customer address; it is rework inside GST/HST Stage 2 (fine while Club is unsold). **(6)** today's screens say a
+> downgrade "takes effect today" and the old server route `downgrade/confirm` still has an immediate paid branch (**corrected
+> 2026-10-31: paid-to-paid down-moves already wait for renewal through `lib/plan-move.ts`, and no screen reaches that old branch — see
+> `PLAN_ENDS_AT_RENEWAL_PLAN.md` §1.3**); Plans end at renewal fixes the free downgrade and closes that branch, so **Stage 5's
+> help rewrite is not written before that plan ships** (its Stage 4 words and this Stage 5 run as one pass). **Set 2026-10-31
+> (the owner asked Claude to set the order):** hold Stage 5 until GST/HST Stage 2 (tax live) too, so the help is written once.
+> **Order across the five plans (set by Claude at the owner's request 2026-10-31; the owner may reverse it on the index):** 0 owner desk → **1 finish 4b Part 4
+> (this plan)** → 2 Plans & pricing Stage 0 (needs the "Plan & billing Stage 5" gate taken off) → 3 Plans end at renewal Stages
+> 1–3 + GST/HST Stage 1 → 4 tax live (GST/HST Stages 2–3 + Terms) → **5 ONE help pass (this plan's Stage 5 + renewal Stage 4)**
+> → 6 Club on sale (Coaches Portal and Tournament Plus already selling; "launch together" dropped 2026-10-31) → 7 Plans & pricing program. Stage 5 therefore waits for steps 2–4; 4b Part 4 does not.
+
+## Stage list of record (owner, 2026-10-31)
+
+Every outstanding piece of work has a home below. **Where this list and the stage text in §5 disagree, this list wins.**
+
+- **Stage A — Drawn first:** DONE (drawn 2026-10-28, `PLAN_AND_BILLING_STAGE_A_DRAWINGS.html`).
+- **Stage 1 — One body, one registry, one words file:** DONE (`b011acf2d`, `db919e6ba`, `8d579da29`, `55676abd3`; 2026-10-28/29; fix-pass walk run).
+- **Stage 2 — The coach host and the door:** DONE (`8ec937555` 2026-10-29; walked 2026-10-29).
+- **Stage 3 — Retire the coach's admin view:** DONE (`32093672f` 2026-10-30; the redirect rulings came from its walk).
+- **Stage 4 — "Covered by {Club}" and the plan words:** DONE (`a1080dcb0` + `8a2498123`, 2026-10-30; owner-walked 15/15, §429).
+- **Stage 4b — A Premium coach becomes a club, in place:** Parts 1–3 DONE (Part 1 `6969f41fe`, Part 2 `6d67e0bb3`, Part 3 `d6adade6b`, 2026-10-30/31); **the Part 3 owner walk (§433) is OWED**. Detail in `PLAN_AND_BILLING_STAGE4B_PLAN.md`.
+  - **Part 4 — Verify and walk:** NOT STARTED (prompt `PLAN_AND_BILLING_STAGE4B_PART4_BUILD_PROMPT.md`). It now ALSO includes: (a) the owner's ruling on the sign-in header gap (the suspended-account billing door compares `x-pathname`, which `proxy.ts` sets only for matcher paths — 4B §9 "OPEN") **and the fix that ruling calls for** (probably one matcher entry plus the dev-server restart), which is **the 4b closing condition**; (b) the **real Stripe portal Renew/resume check** for a Premium coach whose plan is set to end (4B §9, decision 1: unverified; walk 5).
+- **Stage 5 — Docs, demos, walks (ONE help pass with Plans end at renewal Stage 4):** NOT STARTED, gated on 4b Part 4, Plans end at renewal shipped, the `/marketing` price-form call, and GST/HST Stage 2 (tax live). Scope as written in §5, **plus**: (a) the **T1 trial-sentence `/marketing` pass** (the shared trial sentence and public `clubTrialLine()`; see "Still owed" in §9); (b) the **owner call on the failed payer read** (degrade to "no card" instead of failing the whole team-settings GET — §9 Stage 4 review, a test pins today's throw); (c) **clearing the red `tests/unit/plan-billing-usage.test.ts:112`** (503 instead of 200 — this project's count-only usage route; it keeps the full `verify:changed` gate red); (d) the **baseline cleanup** (`check:admin-type --init`, `check:css-selectors`) — **blocked by other projects' drift** (§9 Stage 4 records), so it waits for that to clear; layout baselines are refreshed on staging, not the dev server.
+- **Stage 6 — Release and close (NEW):** NOT STARTED. The final owner walk of the billing screens, everything on production (recorded in the release record), the TODO line closed, and this plan and its PM brief moved to `docs/projects/archive/`.
+
+**Not a Plan & billing stage:** the check that the **live Stripe Club price rows exist** (4B §8 risk 5) belongs to the **Club sale gate** (the gate check before Club goes on sale), not to this plan.
+
+**Done when** Stages 4b, 5 and 6 are complete.
+
 ## 1. Why
 
 A person who starts as a Premium coach and later becomes a club owner finds their plan and billing in a
@@ -253,7 +285,7 @@ plan-billing FAQ note; no coach article quoted the old price form. **Baseline cl
 `check:admin-type` refuses on three committed rises (PayoutsCard `.termsText` data face; SystemScreen eyebrow tracking 0.12em with no
 `type-ok`; early-access `lead.module.css` `.when` data face), its two drops (Billing, KitDialog) can only be locked by `--init` after
 those clear; `check:css-selectors` is red on 4 orphan references (platform-admin record/money modules) and 10 dead classes in other
-projects' files. Neither generator was run; nothing was hand-edited. Owed: the owner walk (artifact), commit.
+projects' files. Neither generator was run; nothing was hand-edited. ~~Owed: the owner walk (artifact), commit.~~ **Closed 2026-10-30:** owner-walked 15/15 (§429) and committed `a1080dcb0` (the feature) + `8a2498123` (walk fixes and records), both 2026-10-30. The baseline cleanup stays open, now homed in Stage 5 (see "Stage list of record").
 
 ### Stage 3 implementation record — 2026-10-30
 

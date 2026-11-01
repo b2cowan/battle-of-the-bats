@@ -8,6 +8,28 @@
 > **Rates live only in `docs/agents/strategy/PLAN_PRICING_FACTS.md`; the build reads them from `lib/plan-config.ts`.**
 > No release timing: the Club release ships when every stage is complete and tested.
 
+## Received from Revenue readiness (2026-10-31)
+
+Owner ruling, 2026-10-31: Revenue readiness **hands off Gate B** (registration payments). It arrives here as work with a
+home stage — the 12a–12d ladder (§4) — and Gate B's evidence is this plan's definition of done (§8). Revenue readiness's own
+tracker: [REVENUE_ACCOUNTING_READINESS_PLAN.md](REVENUE_ACCOUNTING_READINESS_PLAN.md) § "Scope after the 2026-10-31 hand-off".
+What moved here, with its decision IDs:
+- **The whole of Gate B / revenue Phase 3** (progress-register stages 3.1–3.8): Canadian fee supply, legal posture and provider
+  capability confirmation (3.1); the account and event foundation, house-league and tournament payment integration
+  (3.2–3.4 — these ARE 12a–12c); registration tax and remittance funding (3.5, registration half); refunds, disputes,
+  restrictions and recovery (3.6 — 12d); payouts and owner verification (3.7, payout half); **Gate B evidence (3.8)**.
+- **Decisions about family or registration payments:** **D09** price anchors vs real costs and taxes; **D10** may
+  organizers absorb fees and how a quote is honoured after a setting change; **D11** fee base, fixed charge, installments,
+  discounts and refund rules; **D12** which Canadian payment methods launch; **D13** who collects and remits each
+  registration tax (NOT yet ruled; the platform-reporting question sits in the GST/HST accountant package); **D14** Connect
+  account and controller settings; **D15** registration exemptions needing evidence; **D16** who funds refunds and disputes
+  after payout; **D22** visiting non-Canadian registration payers (the US half is GST/HST Stage 8).
+- **The registration-side validation list** (revenue plan §9): pending payments, retries and out-of-order events, partial
+  and full refunds, fees, payouts and ledger reconciliation.
+- **Not moved:** tax on the online-payment fee stays in GST/HST Stage 5 (which closes with this plan, not as a trigger); the
+  books half of 3.7 goes to the Bookkeeping plan. Gate A (subscriptions) stays in Revenue readiness and is not held by this plan
+  (nor does this plan hold subscriptions — "launch together" was dropped 2026-10-31).
+
 ## 0 · State
 
 - **Drawn 2026-10-24. All 15 asks RULED 2026-10-25, every one as recommended** (§0b). 12a built on Accounts v1 and

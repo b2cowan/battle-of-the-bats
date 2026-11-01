@@ -1,0 +1,327 @@
+<title>Billing, Tax & Pricing Sequence</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!--
+  SEQUENCE INDEX for three overlapping projects (GST/HST collection · Plan & billing · Plans & pricing + Stripe from our
+  admin) plus the two that sit between them (Plans end at renewal · Revenue readiness). Written 2026-10-31.
+  House index format (docs/agents/design/PROJECT_HUB_TEMPLATE.html): the page renders from its own database; news is a
+  data write (ArtifactData), never a republish. Republish only when the LAYOUT changes.
+  Data:
+    hub/meta          { title, oneLine, question, updated }
+    steps/<key>       { order, no, title, why, standing }   standing: true = a standing trigger, left out of the count
+    items/<id>        { step, order, text, who, plan, done, doneAt, note, link }
+  Rule (owner, 2026-10-31): every item names a stage or group of stages of one of the five plans, and every stage of
+  every plan is named by exactly one item. Ticking every counted item = the five projects are complete.
+    conflicts/<id>    { order, title, detail, call, ruled, ruling, ruledAt }
+    fits/<id>         { order, text }
+    plans/<id>        { order, name, role, link }
+    log/<id>          { date, sort "YYYY-MM-DD#NN", what }
+  Owner and Editors tick items and record rulings on the page; everyone who can open it reads.
+-->
+<style>
+/* Layout: one column read top to bottom like a ledger — rulings owed, then the numbered sequence (each step a list of
+   checkable items), then how the plans fit, the plans themselves, and the dated log. */
+:root {
+  --paper: #f4f3ee; --card: #ffffff; --ink: #20271c; --muted: #5a6453; --faint: #7d8676; --line: #d8dccf;
+  --olive: #4b6322; --olive-soft: #e8eedb;
+  --done: #2f6b3a; --done-soft: #e2f0df; --warn: #8a5a12; --warn-soft: #f6eedb; --ruled: #245f79; --ruled-soft: #e2eef3;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0f120d; --card: #161b13; --ink: #edf1e7; --muted: #a2ac97; --faint: #7f8a75; --line: #2b3326;
+  --olive: #c8e78e; --olive-soft: #1f2818;
+  --done: #8fd39b; --done-soft: #15261a; --warn: #f2c26b; --warn-soft: #2a2213; --ruled: #8cc6e0; --ruled-soft: #13232b;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #0f120d; --card: #161b13; --ink: #edf1e7; --muted: #a2ac97; --faint: #7f8a75; --line: #2b3326;
+  --olive: #c8e78e; --olive-soft: #1f2818;
+  --done: #8fd39b; --done-soft: #15261a; --warn: #f2c26b; --warn-soft: #2a2213; --ruled: #8cc6e0; --ruled-soft: #13232b;
+  color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--paper); color: var(--ink); font: 15px/1.55 var(--font-body); }
+.wrap { max-width: 920px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; }
+.eyebrow { font: 700 11px/1.2 var(--font-data); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+h1 { font-size: 27px; line-height: 1.2; letter-spacing: -.4px; margin: 0 0 8px; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible, textarea:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.lede { color: var(--muted); }
+.progress { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 14px; }
+.bar { flex: 1 1 220px; height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar > span { display: block; height: 100%; width: 0; background: var(--done); transition: width .3s; }
+.progress .num { font: 600 13px/1 var(--font-data); color: var(--muted); font-variant-numeric: tabular-nums; }
+.note-line { margin-top: 10px; font-size: 13px; color: var(--warn); }
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 34px 0 12px; }
+.section-head .count { font-size: 13px; color: var(--muted); }
+.tools { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+.tools button { font: 600 13px/1 var(--font-body); min-height: 40px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+.tools button[aria-pressed="true"] { background: var(--olive-soft); border-color: var(--olive); color: var(--olive); }
+.empty { color: var(--faint); font-size: 14px; padding: 14px; border: 1px dashed var(--line); border-radius: 10px; }
+
+/* rulings owed */
+.conflicts { display: grid; gap: 8px; }
+.conf { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 8px; }
+.conf[data-ruled="true"] { border-color: var(--ruled); }
+.conf-top { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; }
+.conf-top h3 { font-size: 15px; margin: 0; flex: 1 1 240px; min-width: 0; }
+.conf .detail { font-size: 14px; color: var(--muted); }
+.conf .call { font-size: 14px; }
+.conf .call b { color: var(--olive); }
+.ruling-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ruling-row input[type=text] { flex: 1 1 260px; min-width: 0; font: 14px/1.4 var(--font-body); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); }
+.ruled-text { font-size: 14px; color: var(--ruled); }
+.chip { font: 700 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; padding: 5px 8px; border-radius: 99px; white-space: nowrap; background: var(--warn-soft); color: var(--warn); }
+.chip[data-k="ruled"], .chip[data-k="done"] { background: var(--done-soft); color: var(--done); }
+
+/* sequence */
+.steps { display: grid; gap: 10px; }
+details.step { background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+details.step > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 12px; align-items: baseline; padding: 14px 16px; }
+details.step > summary::-webkit-details-marker { display: none; }
+.step-no { font: 700 13px/1.3 var(--font-data); color: var(--olive); min-width: 2.2em; }
+.step-title { font-weight: 650; font-size: 16px; }
+.step-count { font: 600 12px/1.3 var(--font-data); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.step-why { grid-column: 2 / -1; font-size: 13.5px; color: var(--muted); }
+details.step[data-complete="true"] .step-count { color: var(--done); }
+details.step[data-standing="true"] { border-style: dashed; background: transparent; }
+details.step[data-standing="true"] .step-no { color: var(--muted); }
+.items { list-style: none; margin: 0; padding: 0 16px 14px; display: grid; gap: 2px; }
+.item { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 2px 8px; padding: 8px 0; border-top: 1px solid var(--line); }
+.item input[type=checkbox] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--done); cursor: pointer; }
+.item input[type=checkbox]:disabled { cursor: default; }
+.item label { cursor: pointer; }
+.item[data-done="true"] label { color: var(--faint); text-decoration: line-through; text-decoration-color: var(--line); }
+.tags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; font: 600 11px/1.4 var(--font-data); color: var(--muted); }
+.tags .who { color: var(--olive); }
+.tags .when { color: var(--done); }
+.tags a { font-family: var(--font-body); font-weight: 600; }
+.item .inote { grid-column: 2; font-size: 13px; color: var(--muted); }
+
+/* fits + plans */
+.fits { display: grid; gap: 6px; margin: 0; padding-left: 20px; }
+.fits li { font-size: 14px; max-width: 75ch; }
+.plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; }
+.plan { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; min-width: 0; }
+.plan h3 { font-size: 14px; margin: 0; }
+.plan p { font-size: 13.5px; color: var(--muted); }
+
+/* log */
+.log ol { list-style: none; margin: 0; padding: 0; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+.log li { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 2px 12px; padding: 10px 14px; border-top: 1px solid var(--line); font-size: 14px; }
+.log li:first-child { border-top: 0; }
+.log time { font: 600 12px/1.6 var(--font-data); color: var(--muted); font-variant-numeric: tabular-nums; }
+@media (max-width: 520px) {
+  .log li { grid-template-columns: minmax(0, 1fr); }
+  details.step > summary { grid-template-columns: auto minmax(0, 1fr); }
+  .step-count { grid-column: 2; }
+}
+@media (prefers-reduced-motion: reduce) { .bar > span { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Sequence index · our own tax · billing · pricing</p>
+    <h1 id="p-title">Billing, Tax & Pricing Sequence</h1>
+    <p class="lede" id="p-one">The order to finish GST/HST collection, Plan & billing, and Plans & pricing (with Stripe run from our admin), plus the two plans that sit between them.</p>
+    <div class="progress" aria-live="polite">
+      <div class="bar" aria-hidden="true"><span id="bar"></span></div>
+      <span class="num" id="p-count">Loading…</span>
+    </div>
+    <p class="note-line" id="p-note" hidden></p>
+  </header>
+
+  <section aria-labelledby="h-conf">
+    <div class="section-head"><h2 id="h-conf">Rulings owed: where the plans contradict each other</h2><span class="count" id="conf-count"></span></div>
+    <div class="conflicts" id="conflicts"><p class="empty">The contradictions found across the plans appear here, each with a recommended call.</p></div>
+  </section>
+
+  <section aria-labelledby="h-seq">
+    <div class="section-head">
+      <h2 id="h-seq">The sequence</h2><span class="count" id="seq-count"></span>
+      <div class="tools" role="group" aria-label="Show">
+        <button type="button" id="f-all" aria-pressed="true">Everything</button>
+        <button type="button" id="f-open" aria-pressed="false">Only what's left</button>
+      </div>
+    </div>
+    <div class="steps" id="steps"><p class="empty">The steps appear here in order, each a list you can tick off as it's done.</p></div>
+  </section>
+
+  <section aria-labelledby="h-fits">
+    <div class="section-head"><h2 id="h-fits">Where the plans already fit together</h2></div>
+    <ul class="fits" id="fits"></ul>
+  </section>
+
+  <section aria-labelledby="h-plans">
+    <div class="section-head"><h2 id="h-plans">The plans in play</h2></div>
+    <div class="plans" id="plans"></div>
+  </section>
+
+  <section class="log" aria-labelledby="h-log">
+    <div class="section-head"><h2 id="h-log">Log</h2><span class="count" id="log-count"></span></div>
+    <div id="log"><p class="empty">Each ruling, build and walk is logged here, newest first.</p></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var steps = [], items = [], conflicts = [], fits = [], plans = [], log = [];
+  var db = null, canWrite = true, filter = 'all', openKeys = {}, firstLoad = true;
+  try { filter = localStorage.getItem('seq-filter') || 'all'; } catch (e) {}
+  try { openKeys = JSON.parse(localStorage.getItem('seq-open') || '{}') || {}; } catch (e) {}
+  var $ = function (id) { return document.getElementById(id); };
+  var make = function (tag, cls, t) { var el = document.createElement(tag); if (cls) el.className = cls; if (t != null) el.textContent = String(t); return el; };
+  var safeUrl = function (u) { return typeof u === 'string' && /^https:\/\//.test(u) ? u : null; };
+  var today = function () { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  var fmt = function (iso) { if (!iso) return ''; var p = iso.split('-'); var m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+p[1] - 1]; return m ? m + ' ' + (+p[2]) : iso; };
+  function note(msg) { var n = $('p-note'); n.textContent = msg || ''; n.hidden = !msg; }
+  function saveOpen() { try { localStorage.setItem('seq-open', JSON.stringify(openKeys)); } catch (e) {} }
+
+  // Items under a standing-trigger step are tracked but never counted: the projects close without them.
+  function isStanding(stepKey) { return steps.some(function (s) { return s.key === stepKey && s.standing; }); }
+  function counted() { return items.filter(function (i) { return !isStanding(i.step); }); }
+
+  function renderProgress() {
+    var mine = counted();
+    var total = mine.length + conflicts.length;
+    var done = mine.filter(function (i) { return i.done; }).length + conflicts.filter(function (c) { return c.ruled; }).length;
+    $('bar').style.width = total ? Math.round(done / total * 100) + '%' : '0';
+    $('p-count').textContent = !total ? (db ? 'Nothing here yet' : 'Loading…')
+      : done === total ? 'All ' + total + ' done: the five projects are complete'
+      : done + ' of ' + total + ' done';
+  }
+
+  function renderConflicts() {
+    var host = $('conflicts'); host.textContent = '';
+    var open = conflicts.filter(function (c) { return !c.ruled; }).length;
+    $('conf-count').textContent = conflicts.length ? (open ? open + ' open' : 'All ruled') : '';
+    if (!conflicts.length) { host.appendChild(make('p', 'empty', 'The contradictions found across the plans appear here, each with a recommended call.')); return; }
+    conflicts.forEach(function (c, n) {
+      var box = make('article', 'conf'); box.setAttribute('data-ruled', String(!!c.ruled));
+      var top = make('div', 'conf-top');
+      top.appendChild(make('h3', null, (n + 1) + '. ' + (c.title || '')));
+      var chip = make('span', 'chip', c.ruled ? 'Ruled ' + fmt(c.ruledAt) : 'Ruling owed'); chip.setAttribute('data-k', c.ruled ? 'ruled' : 'open');
+      top.appendChild(chip); box.appendChild(top);
+      if (c.detail) box.appendChild(make('p', 'detail', c.detail));
+      if (c.call) { var p = make('p', 'call'); p.appendChild(make('b', null, 'Recommended: ')); p.appendChild(document.createTextNode(c.call)); box.appendChild(p); }
+      if (c.ruled) {
+        if (c.ruling) box.appendChild(make('p', 'ruled-text', 'Ruling: ' + c.ruling));
+        if (canWrite) { var undo = make('div', 'tools'); var ub = make('button', null, 'Reopen'); ub.type = 'button'; ub.addEventListener('click', function () { write('conflicts/' + c.key, { ruled: false, ruledAt: null }); }); undo.appendChild(ub); undo.style.marginLeft = '0'; box.appendChild(undo); }
+      } else if (canWrite) {
+        var row = make('div', 'ruling-row tools'); row.style.marginLeft = '0';
+        var inp = make('input'); inp.type = 'text'; inp.id = 'rule-' + c.key; inp.placeholder = 'Your ruling (blank = as recommended)'; inp.setAttribute('aria-label', 'Ruling for ' + (c.title || ''));
+        var b1 = make('button', null, 'Record ruling'); b1.type = 'button';
+        b1.addEventListener('click', function () { var t = inp.value.trim(); write('conflicts/' + c.key, { ruled: true, ruledAt: today(), ruling: t || 'As recommended.' }); });
+        row.appendChild(inp); row.appendChild(b1); box.appendChild(row);
+      }
+      host.appendChild(box);
+    });
+  }
+
+  function renderSteps() {
+    var host = $('steps'); host.textContent = '';
+    $('f-all').setAttribute('aria-pressed', String(filter === 'all')); $('f-open').setAttribute('aria-pressed', String(filter === 'open'));
+    var mineAll = counted();
+    var left = mineAll.filter(function (i) { return !i.done; }).length;
+    $('seq-count').textContent = mineAll.length ? left + ' of ' + mineAll.length + ' left' : '';
+    if (!steps.length) { host.appendChild(make('p', 'empty', 'The steps appear here in order, each a list you can tick off as it’s done.')); return; }
+    var shownAny = false;
+    steps.forEach(function (s) {
+      var mine = items.filter(function (i) { return i.step === s.key; }).sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
+      var doneN = mine.filter(function (i) { return i.done; }).length;
+      var complete = mine.length && doneN === mine.length;
+      var shown = filter === 'open' ? mine.filter(function (i) { return !i.done; }) : mine;
+      if (filter === 'open' && !shown.length) return;
+      shownAny = true;
+      var d = make('details', 'step'); d.setAttribute('data-complete', String(!!complete)); d.setAttribute('data-standing', String(!!s.standing));
+      d.open = openKeys[s.key] != null ? !!openKeys[s.key] : !complete;
+      d.addEventListener('toggle', function () { openKeys[s.key] = d.open; saveOpen(); });
+      var sum = make('summary');
+      sum.appendChild(make('span', 'step-no', s.no || ''));
+      sum.appendChild(make('span', 'step-title', s.title || ''));
+      sum.appendChild(make('span', 'step-count', s.standing ? 'Not counted' : complete ? 'Done' : doneN + ' / ' + mine.length));
+      if (s.why) sum.appendChild(make('span', 'step-why', s.why));
+      d.appendChild(sum);
+      var ul = make('ul', 'items');
+      shown.forEach(function (i) {
+        var li = make('li', 'item'); li.setAttribute('data-done', String(!!i.done));
+        var cb = make('input'); cb.type = 'checkbox'; cb.id = 'it-' + i.key; cb.checked = !!i.done; cb.disabled = !canWrite;
+        cb.addEventListener('change', function () { write('items/' + i.key, cb.checked ? { done: true, doneAt: today() } : { done: false, doneAt: null }, cb); });
+        var lab = make('label', null, i.text || ''); lab.htmlFor = cb.id;
+        li.appendChild(cb); li.appendChild(lab);
+        var tags = make('div', 'tags');
+        if (i.who) tags.appendChild(make('span', 'who', i.who));
+        if (i.plan) tags.appendChild(make('span', null, i.plan));
+        var u = safeUrl(i.link); if (u) { var a = make('a', null, 'Open'); a.href = u; a.target = '_blank'; a.rel = 'noopener'; tags.appendChild(a); }
+        if (i.done && i.doneAt) tags.appendChild(make('span', 'when', 'Done ' + fmt(i.doneAt)));
+        li.appendChild(tags);
+        if (i.note) li.appendChild(make('p', 'inote', i.note));
+        ul.appendChild(li);
+      });
+      d.appendChild(ul); host.appendChild(d);
+    });
+    if (!shownAny) host.appendChild(make('p', 'empty', 'Every item is done.'));
+  }
+
+  function renderFits() {
+    var host = $('fits'); host.textContent = '';
+    fits.forEach(function (f) { host.appendChild(make('li', null, f.text || '')); });
+  }
+  function renderPlans() {
+    var host = $('plans'); host.textContent = '';
+    plans.forEach(function (p) {
+      var c = make('div', 'plan'); c.appendChild(make('h3', null, p.name || ''));
+      if (p.role) c.appendChild(make('p', null, p.role));
+      var u = safeUrl(p.link); if (u) { var a = make('a', null, p.linkLabel || 'Open'); a.href = u; a.target = '_blank'; a.rel = 'noopener'; c.appendChild(a); }
+      host.appendChild(c);
+    });
+  }
+  function renderLog() {
+    var host = $('log'); host.textContent = '';
+    $('log-count').textContent = log.length ? log.length + (log.length === 1 ? ' entry' : ' entries') : '';
+    if (!log.length) { host.appendChild(make('p', 'empty', 'Each ruling, build and walk is logged here, newest first.')); return; }
+    var ol = make('ol');
+    log.forEach(function (r) { var li = make('li'); var t = make('time', null, r.date || ''); if (r.date) t.setAttribute('datetime', r.date); li.appendChild(t); li.appendChild(make('span', null, r.what || '')); ol.appendChild(li); });
+    host.appendChild(ol);
+  }
+  function renderAll() { renderProgress(); renderConflicts(); renderSteps(); renderFits(); renderPlans(); renderLog(); }
+
+  var pending = {};
+  function write(path, data, cb) {
+    if (!db || pending[path]) { if (cb) cb.checked = !cb.checked; return; }
+    pending[path] = true;
+    db.doc(path).update(data).then(function () { pending[path] = false; }, function (e) {
+      pending[path] = false; if (cb) cb.checked = !cb.checked;
+      if (e && e.code === 'invalid_argument') { canWrite = false; renderAll(); note('Only the page’s owner and editors can tick items here.'); }
+      else note('That change did not save. Try again in a moment.');
+    });
+  }
+
+  function setFilter(f) { filter = f; try { localStorage.setItem('seq-filter', f); } catch (e) {} renderSteps(); }
+  $('f-all').addEventListener('click', function () { setFilter('all'); });
+  $('f-open').addEventListener('click', function () { setFilter('open'); });
+  renderAll();
+
+  if (!window.claude || typeof window.claude.use !== 'function') { $('p-count').textContent = 'Open this page on claude.ai to read the index.'; return; }
+  window.claude.use('user').then(function (u) {
+    if (!u) return;
+    Promise.resolve(u.can ? u.can('data.write') : null).then(function (ok) { if (ok === false) { canWrite = false; renderAll(); } }, function () {});
+  });
+  window.claude.use('db').then(function (d) {
+    if (!d) { $('p-count').textContent = 'The index could not be read in this view. Sign in to claude.ai and open it again.'; return; }
+    db = d;
+    var timer = setTimeout(function () { note('The index can’t be reached yet; what you see may be out of date.'); }, 10000);
+    var fresh = function (q) { if (!q.metadata || !q.metadata.fromCache) { clearTimeout(timer); if (firstLoad) { firstLoad = false; note(''); } } };
+    var map = function (q) { return q.docs.map(function (x) { var o = Object.assign({}, x.data()); o.key = x.id; return o; }); };
+    var fail = function () { clearTimeout(timer); note('Part of the index stopped updating. Reload the page to see the latest.'); };
+    db.doc('hub/meta').onSnapshot(function (s) { if (s.exists) { var m = s.data(); if (m.oneLine) $('p-one').textContent = m.oneLine; } }, fail);
+    db.collection('steps').orderBy('order').onSnapshot(function (q) { fresh(q); steps = map(q); renderProgress(); renderSteps(); }, fail);
+    db.collection('items').onSnapshot(function (q) { fresh(q); items = map(q); renderProgress(); renderSteps(); }, fail);
+    db.collection('conflicts').orderBy('order').onSnapshot(function (q) { fresh(q); conflicts = map(q); renderProgress(); renderConflicts(); }, fail);
+    db.collection('fits').orderBy('order').onSnapshot(function (q) { fits = map(q); renderFits(); }, fail);
+    db.collection('plans').orderBy('order').onSnapshot(function (q) { plans = map(q); renderPlans(); }, fail);
+    db.collection('log').orderBy('sort', 'desc').limit(500).onSnapshot(function (q) { log = map(q); renderLog(); }, fail);
+  });
+})();
+</script>

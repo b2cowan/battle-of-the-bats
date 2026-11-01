@@ -8,6 +8,90 @@
 
 ---
 
+### 2026-10-31 — Subscriptions do not wait for family payments: the "launch together" rule is dropped; Coaches Portal and Tournament Plus stay on sale and any tax owed before tax is built comes out of the owner's own revenue (Decided)
+**Status:** **Decided** (owner, 2026-10-31, in chat: "agreed except tournament plus and coaches portal are already on sale, if anyone
+signs up before we add tax on top I will just pay it out of my revenue so it is not a blocker"). Closes sequence item
+"launch together" on https://claude.ai/artifact/Kua6RAqMA7ChA7QBTNE63a.
+**Decision:**
+1. **No subscription is held back for family payments.** The Revenue readiness rule of 2026-10-23 — "this launch requires BOTH
+   Gate A (subscriptions) and Gate B (registration payments)", read as no Canadian subscription on sale until family payments
+   work — no longer stands. Gate A and Gate B stay separate verification gates; neither holds the other's sales.
+2. **Coaches Portal and Tournament Plus are already on sale in production and stay on sale.** If someone buys before tax is
+   built, FieldLogicHQ owes the tax on that sale and the owner pays it out of their own revenue. The owner judged the amount
+   small; it blocks nothing in the billing, tax or pricing work.
+3. **A plan that depends on family payments is held by its own plan** — today that is Club (online payments and Stage 12) —
+   not by a company-wide rule.
+4. **For a plan not yet on sale, correct tax, a buyer location and the Terms remain the gate** (GST/HST Stages 1–3 and 6).
+   Item 2 is an exception for the two plans already selling, not a loosening of that gate.
+**Rationale:** the old rule predates the owner's own launch of the two coach-side plans and contradicted production. Neither
+plan involves family payments, so holding them protected nothing. Club is already gated by its own readiness plan. Any tax
+owed on a pre-tax sale is small while there is little revenue.
+**Affects:** Revenue readiness plan §7 and header; GST/HST plan §5; the sequence index (step 6 now means "Club on sale"
+rather than "first sale"). No price, plan or gate changes.
+**Handoff:**
+```
+HANDOFF → /plan
+- Revenue readiness plan: drop "launch together" (done in this session); keep Gates A and B as separate verification gates
+HANDOFF → /billing: nothing — no gate moves.
+HANDOFF → /marketing: nothing.
+```
+**Supersedes:** the "this launch requires BOTH A and B" line in "Revenue readiness — Canada-wide CAD launch" §7 (2026-10-23).
+Does not touch: the Oct 31 sales-tax entry (tax is still charged from the first sale once built; item 2 only covers the gap
+before it is built).
+
+---
+
+### 2026-10-31 — How a price change reaches customers: amounts stay in code, current customers move at their next renewal after an emailed notice, new customers switch on the notice day, and tax is in place before the first notice (Decided)
+**Status:** **Decided** (owner, 2026-10-31). Paste-back of all 19 asks from round 2 of the Stage 10 drawings
+(https://claude.ai/artifact/MiNmwvyFX75jwmJoa2rdNm, tab 11), every recommended option kept. The owner first asked for "all
+of your recommendations for now", walked the redraw, then pasted it back unchanged; that paste-back is the confirmation.
+Asks 4, 5, 7-10, 12-15 and 17-19 are product and console design, recorded in
+`docs/projects/active/STAGE10_PLANS_PRICING_THIRD_PASS_GAPS.md` §8, not here. The 10-30 drawing rulings (Ask 1 = A,
+notification and release dates set by the owner, no proration, notices send themselves) were never logged and are folded in
+below. **Planned, nothing built.** Of the 10-30 building gate, the Stripe walks are met (the owner closed all of them
+2026-10-31, Owner QA Ledger §419; Walks 4 and 6 skipped unwalked). Plan & billing Stage 5 is still owed.
+**Decision:**
+1. **Amounts stay in code (Ask 1).** `lib/plan-config.ts` and `PLAN_PRICING_FACTS.md` remain the source of every price.
+   The console checks that Stripe and the running app agree; it never sets a price. **This answers the 10-30 entry's open
+   question "should prices become data": no.**
+2. **Current customers move at their first renewal after the notice (Ask 2), with no proration.** The owner sets the
+   notification date and the release date. A bill before the release date stays at the old price; an annual renewal before
+   it keeps the old price for that year.
+3. **The notice is our own email to the customer's billing owner (Ask 3).** If delivery fails, that customer's move is
+   held until it is delivered. Nobody pays a new price without a delivered notice.
+4. **New customers switch to the new price on the notification date, and the notices go out only once checkout sells it
+   (Ask 11).** This replaces the 10-30 chat ruling that checkout switched on the release date, because between the two dates
+   current customers could be charged more than the pricing page shows. A current customer who changes plan or moves to
+   annual after the notice pays the new price for the plan they move to.
+5. **Promotions are labelled "record only" (Ask 6).** They do nothing at checkout today, and no promotion is sold as a
+   discount until a checkout path applies it.
+6. **Sales tax is in place before the first price notice or branded invoice (Ask 16).** What the tax is was decided the same
+   day (entry above: prices "plus applicable taxes", Stripe Tax). This ruling sets the **order**: Stripe Tax is live before
+   any customer gets a price notice or one of our invoices, so a notice never states a price the next bill contradicts.
+**Open:**
+- **Whether Billing may stop a price move.** Left unticked; until ruled, only the Super admin can stop one.
+- **The two numbers.** The 30-day reminder and the 25% "large increase" warning were set in the drawing, not by the owner.
+  He did not change them on the paste-back, so they are working defaults to confirm at build.
+- **Founding holders.** Drawn as held out of a move while their free time runs (to 2027-09-30); not ruled on its own.
+**Rationale:** "every failure falls toward the old price". A late step, a failed email or a stopped change leaves the
+customer at the price they last saw. Moving checkout to the notice day closes the only window in which a current customer
+could pay more than the pricing page shows. Nobody pays today, so the cheapest time to fix the policy is now.
+**Affects:** roadmap (the Stage 0 fixes, now twelve, and Stripe Tax come before any price-change workflow); the customer
+notice, reminder and correction emails; how promotions are shown in the console. **No price, plan name, capacity band or
+gate changes;** the Facts doc stays the source.
+**Handoff:**
+```
+HANDOFF → /marketing (at build): write the price-change notice, the reminder before a customer's first new-price bill, and
+  the correction email. Each states the new price "plus applicable taxes", the date it applies, and the plan it covers.
+  Drafts for the wording exist on drawings tab 4; they are not copy.
+HANDOFF → /billing (at build): none now. Later: checkout switches on the notification date; a price move is only ever
+  scheduled by the owner's button after delivery; a failed notice holds that customer's move.
+HANDOFF → /plan: STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md records the rulings and the order: Stage 0 (12 fixes) and the GST/HST
+  plan's Stripe Tax stage before the price-change workflow. Done 2026-10-31.
+```
+**Supersedes:** the 10-30 chat ruling that new customers switch on the release date (not logged). Answers the "Open" line of
+"2026-10-30 — Plans & pricing and 'Stripe from our own admin' become ONE program".
+
 ### 2026-10-31 — FieldLogicHQ charges its own sales tax: prices "plus applicable taxes", tax on top of the payment fee charged to the club, Stripe Tax; US customers come into scope for every product, with US clubs paying Stripe's fees themselves (Decided)
 **Status:** **Decided** (owner, 2026-10-31). Rulings T1–T7 by paste-back from the decision page
 https://claude.ai/artifact/Si21JDJNyhQLFjmaS9Wy3t (7/7); rulings U1–U5 and the US follow-up in chat the same day ("I agree
@@ -126,6 +210,55 @@ HANDOFF → /billing: nothing — no gate moves.
 
 ---
 
+### 2026-10-31 — A cancel or a downgrade takes effect on the RENEWAL DATE: nothing a customer paid for is taken away early, no refund, no proration credit (Decided)
+**Status:** **Decided** (owner, 2026-10-31, from Support Console Stage 2 walk item D3 — *"i think we need to end the subscription on the renewal date which i think is standard for subscription products, especially given there is no refund. they paid ahead for the time so we cancel automatically on their renewal date after they are cancelled either by us or themselves"*; every recommendation below accepted in the same conversation: *"i agree with your recommendations"*, *"downgrade to free should have the same behavior"*, *"yes include that piece of work"*). **Planned, nothing built.** The one open item is a Stripe Dashboard setting (below).
+**Decision:**
+1. **Cancel — by the owner OR by us — ends the plan on the renewal date**, not at the click. Full access until then (site, payments, tools, tournament creation, the higher plan's limits); then it ends by itself and the existing retention (tournaments kept N days **counted from the end date**), suspension, closing of the pay pages and the "cancelled" email run **then**.
+2. **Downgrade to free** — same: the plan steps down on the renewal date; the tournaments the owner chose to keep at the click are the ones kept.
+3. **Downgrade to a lower paid plan** — same: steps down on the renewal date, **no proration credit**. *(Corrected the same day after the `/billing` review: the product's screens already do exactly this — the 2026-09-25 paid→paid rule, a Stripe schedule at renewal. Only an old server route still has an immediate paid branch that no screen offers; it gets closed. The earlier wording here said the app dropped the plan at once — true only of that unreachable branch.)* **Upgrades stay immediate** with the proration preview (2026-09-25).
+4. **Keep my plan** — a pending cancel or downgrade can be undone in one click, owner and operator, until the date. The "this cannot be put back" wording of the operator Cancel window applies only once the plan has actually ended.
+5. **End now** — a secondary, **platform-admin-only** door that keeps today's immediate cancel (abuse, fraud, chargeback). Never the default, never offered to owners, reason required.
+6. **Unchanged, deliberately:** the next-season choice (a Founding Season placeholder subscription that charges nothing, replaced when the account chooses again — no paid period exists to honour); operator plan moves and free-time grants (instant by design); checkout, upgrades, reactivation. An account with **no real Stripe subscription** (comped, Founding Season, mock) has no renewal date, so its cancel still ends at once and says so.
+7. **"No refund" means no AUTOMATIC refund or credit** — it does not remove the support console's refund door (2026-10-26, Super admin and Billing, to the card only).
+**Rationale:** the customer paid ahead and there is no refund, so ending access at the click takes away time they bought — the first thing a customer or a card dispute would point at — and ending at renewal is what a subscription customer expects. It also gives a reversal window (a pending cancel is one click from undone), which an immediate cancel can never have. The paid→paid down-move was already ruled "at renewal, no credit" for Club · Association → Club (2026-09-25); this is the same fairness principle applied to every down-move and to cancelling. Pre-revenue realism: no paying customer exists to migrate, so this is cheapest to build now. **Known cost, not hidden:** an annual customer who cancels in month two stays live for ten more months (accepted — it is what they paid for; no early-termination door is planned).
+**Affects:** the owner Cancel and Downgrade windows and routes, the operator Cancel window, the billing page (an "Ends on / Moves to … on {date}" state), the Stripe webhook, three emails, billing and platform-admin help articles, the Support Console walk row D3, platform churn dating. **No price, plan name, capacity band, SKU, feature key or gate value moves; `lib/plan-config.ts` and `lib/plan-features.ts` untouched.**
+**Handoff:**
+```
+HANDOFF → /plan: DONE 2026-10-31 — PLAN_ENDS_AT_RENEWAL_PLAN.md + PM brief + Stage 1 build prompt (docs/projects/active/); three stages: (1) cancel at renewal, both doors; (2) downgrades; (3) words, emails, help, walk.
+HANDOFF → /billing: gate review RUN 2026-10-31 before Stage 1; its verified findings are folded into PLAN_ENDS_AT_RENEWAL_PLAN.md and the Stage 1 prompt — then build Stages 1–2. Entitlements keep reading the plan the club is on right now; a pending change must write nothing to plan_id / subscription_status until the date.
+HANDOFF → /marketing (Stage 3, not before the build): the cancel and downgrade windows, the "ends on" and "moves to … on" band, three emails (ends-on, ended, downgrade scheduled), help and any pricing-FAQ / terms line that says WHEN a cancel takes effect or promises a refund or credit.
+HANDOFF → /docs (Stage 3): billing and platform-admin help articles and their keywords/searchText.
+HANDOFF → OWNER: in the Stripe Dashboard (test AND live mode) set the customer portal's cancellation to "at end of billing period" — the code cannot see it; if it is immediate a customer can still cut themselves off early through the portal.
+HANDOFF → /strategy (self): DONE 2026-10-31 — Facts doc reconcile line + bullet added; drift check run.
+```
+**Supersedes:** nothing. **Extends** 2026-09-25 "Moves between PAID plans" (its down-at-renewal, no-credit rule for Club · Association → Club now covers every down-move and cancel). **Relates to:** 2026-09-28 coach bridge (**unchanged and not reopened**: the coach's own subscription still stops at once with no refund when the coach joins a club — a MOVE into a club that carries them, not a loss of access; whether the paid-ahead time deserves the same treatment there is a separate question for the owner), 2026-09-24 (a cancelled Premium portal is kept 365 days "however the subscription ended" — the clock now starts at the end date), 2026-10-26 refunds from the support console, 2026-10-29 Plan & billing is the owner's alone (cancel and downgrade stay owner-only).
+
+---
+
+### 2026-10-30 — A Premium coach's own workspace BECOMES the club, in place; the money rules for that move (Decided)
+**Status:** **Decided** (owner, 2026-10-30, in the plan-and-billing session). Point 1 in the owner's words: a coach who runs a club starts on the Coaches Portal and later buys the whole product; they go from standalone coach to club owner who is also head coach of their existing team, which is now club-owned; *"I don't think we need to change the state of the coaches one team portal"*. **Points 2–5 ratified the same day** (*"i approve the proposed money rules"*) after the `/billing` feasibility read. Nothing designed or built.
+**Decision:**
+1. **(Decided) The workspace becomes the club in place.** The coach's team does not move, is not copied and is not re-parented. The coach stays owner and head coach. This is a second door beside the 2026-09-28 coach bridge, which stands unchanged: the bridge is for joining SOMEONE ELSE'S club.
+2. **The price is Club's ordinary price.** No intermediate plan, no discount, no bridge price. Club already includes every coaching staff's Premium portal, so the ladder is Premium → Club; a middle rung would be a new SKU priced before Club has sold once.
+3. **A paying coach: the one subscription changes now.** The 2026-09-25 up-move: Stripe's proration preview before confirming (it offsets the first charge with the unused Premium time), the coach's billing interval kept, **no second trial**.
+4. **A coach on Founding free time (or staff-given Premium free time) has no subscription, so this is an ordinary Club checkout** with Club's 90-day trial and a card collected at checkout (the 2026-09-25 rules for a move from a free or unpaid plan). The Premium free days **end at the upgrade and do not carry** (the same rule as Keep Premium, 2026-10-28), and the Founding comp never reaches a Club (2026-09-25).
+5. **Words.** This is not the bridge: the bridge's "won't be charged again, never a refund" words rule governs the bridge's surfaces only. This move shows the coach what is charged today (the Stage 1b move-window pattern).
+6. **Not ruled, not to be built on the way past:** a way back down from Club to Premium; Club · Association (reached afterwards by the existing band move).
+**Rationale:** the owner's story is a club-running coach, and the product they are buying is the club product, so the step from Premium is what Club costs, not a gap to fill. Club includes every staff portal, so separate Premium portals cost more than Club from about eight teams up; below that, the extra is the club tools (families, accounting, house league, public site). Pre-revenue realism: Club's price is a target that has not been sold, so any softer rung would be a guess stacked on a guess. **The real case is the free-time coach:** until Founding Season ends (September 30, 2027) almost every Premium coach is on free time, so most upgrades are a plain start-paying step, not a swap. **Known cost, not hidden:** a paying coach gets no trial but a free-time coach does, because one is a move between paid plans and the other starts a subscription. Defensible by the 2026-09-25 rule, and worth the owner knowing.
+**Affects:** the Premium coach's Change plan slot, the Club upgrade path (server and screens), checkout and the proration preview, the Founding-comp end-of-free-days rule. **No price, plan name, capacity band, SKU or gate moved; `lib/plan-config.ts` and `PLAN_PRICING_FACTS.md` untouched** (the Facts doc gains a bullet when points 2–6 are ratified).
+**Handoff:**
+```
+HANDOFF → /billing: FEASIBILITY DONE 2026-10-30 (read from the code, nothing built). Exists: the up-move machinery (preview, interval kept, no second trial), an ordinary Club checkout with the 90-day trial and a card for a coach with no subscription, and the Founding comp ending automatically on any move onto Club. To build: Premium as a source plan in the move rules; ending STAFF-GIVEN free time at the upgrade (the comp is already revoked, staff free time is not; reuse Keep Premium's grant-ending); and the WORKSPACE FLIP below. Not checked: that Club's monthly and annual Stripe prices exist in the database (Club is not on sale, so no exposure).
+HANDOFF → /billing, THE LARGE ITEM: the workspace is permanently tagged as a coach portal (set at creation, never changed; about 70 places read it), and its workspace and entitlement billing records stay on the Coaches Portal kind. The upgrade must flip the tag and reset those records in the same step; otherwise the club still behaves as a portal, and a later Club cancellation would run the Coaches Portal cancellation treatment and email. Its own build stage, with a test that no portal-only behaviour survives on an upgraded club.
+HANDOFF → /design: the drawing session, money screens from points 3–4 (a paying coach's preview; a free-time coach's start-paying step).
+HANDOFF → /plan: DONE 2026-10-30 — the stage is added to PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md (Stage 4b); a build plan + PM brief follow the drawing session.
+HANDOFF → /marketing: nothing now; do not advertise the path before it exists.
+HANDOFF → /strategy (self): DONE 2026-10-30 — Facts doc bullet and reconcile line added; drift check run.
+```
+**Supersedes:** nothing. **Settles** Part 1 and the money questions left open by the entry below. **Relates to:** 2026-09-28 coach bridge (unchanged), 2026-09-25 paid→paid moves and trial rules, 2026-10-28 Keep Premium.
+
+---
+
 ### 2026-10-30 — A Premium coach gets a clear, minimal-step path to upgrade to Club, with the subscription and payments changing accordingly (direction; the shape is open)
 **Status:** **Decided — the direction** (owner, 2026-10-30, answering open question B of `PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md`: *"there should be a clear path for a premium coach to upgrade to club and their subscription/payments change accordingly. it should be smooth and with minimal steps"*). **Nothing designed or built.** Everything under "Open" is not decided.
 **Decision:**
@@ -134,7 +267,7 @@ HANDOFF → /billing: nothing — no gate moves.
 3. The path is **smooth, with as few steps as possible**.
 4. It sits in the Plan & billing project: drawn first in an owner design session, sequenced after Stage 4 and before the Stage 5 help rewrite, so the help describes it once. The real move ships when Club opens for sale (the same posture the owner ruled for Plus → Club).
 **Rationale:** the owner's call that a growing coach should not hit a dead end on the plan page. Today a Premium coach's Change plan slot holds only "Part of a club?" (join an existing club), and the Plus → Club move has no screen.
-**Open (not decided):**
+**Open (not decided):** *(first bullet settled and the rest proposed by the entry above, 2026-10-30)*
 - **Which move this is.** The owner's words read as the coach's one-team portal **becoming a club they run**. The 2026-09-28 coach bridge (a coach's team joins an **existing** club) is a different move and **stands unchanged, not superseded**. Confirm which is meant, or both, in the drawing session.
 - **What happens to the team's data, the old subscription and the first charge**, and whether the 2026-09-28 rule (the coach's own subscription stops at once, no refund, no proration, every word says only "won't be charged again") extends to this move or this move earns different billing words.
 - **How a move between two different subscription kinds works.** The 2026-09-25 paid→paid rules (up happens now on the one subscription with a proration preview; no second trial) were written for moves within a club's plans.
@@ -177,11 +310,11 @@ HANDOFF → /strategy: re-check on starting the planning session whether the "pr
 **Status:** **Decided** (owner, 2026-10-30, in chat) for the four points below. The shape in "Proposed" is mine and **not ruled**. Plan: `STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md` (+ its PM brief); the old Support console Stage 10 (Plans & pricing) is folded into it.
 **Decision:**
 1. **One program,** combining Stage 10 (change what we sell without a developer and without surprising a customer) with the Stripe-from-our-admin effort (own invoices, Stripe run from the platform admin).
-2. **Design starts after Support console Stage 4b is finished; building waits for the Stripe end-to-end walks 1 to 9** (and Plan & billing Stages 3 to 5).
+2. **Design starts after Support console Stage 4b is finished; building waits for the Stripe end-to-end walks 1 to 9** (and Plan & billing Stages 3 to 5). ↳ **2026-10-31: the walks part is met** (all closed by the owner, Owner QA Ledger §419 ✅; Walks 4 and 6 skipped unwalked).
 3. **No second approver for this first go.** The owner is the only admin. Whoever may change anything changes it on their own, and **every change is logged: who did what, when and why.**
 4. **The opening design session is a full review of how staff manage plans and pricing**: many real jobs walked end to end, ending in simple paths per role. The 2026-10-27 ruling stands: **no full plan builder**; adding a plan stays a code change with a build-enforced checklist.
 **Proposed (not ruled):** two tracks (customer invoices; staff plans-and-pricing) with the review covering staff only; a preview, a waiting period and a one-click stop before a price change applies; which role may do which job (no "marketing" role exists today); build order read-only billing and invoices, then trial and credit tools, then renames, then dated price changes last.
-**Open (needs `/strategy` once drawn):** whether prices become data with effective dates (reverses code + the facts document as the source), the policy for existing customers (keep the old price or not, how much notice), and what a customer's notice must say.
+**Open (needs `/strategy` once drawn):** whether prices become data with effective dates (reverses code + the facts document as the source), the policy for existing customers (keep the old price or not, how much notice), and what a customer's notice must say. ↳ **All three answered 2026-10-31** ("How a price change reaches customers…"): amounts stay in code, current customers move at their next renewal after a delivered notice, and the notice is our own email to the billing owner.
 **Rationale:** both efforts need the same foundation (prices as dated data, our own record of Stripe facts, Stripe write access, test clocks), and no customer pays today, so deciding the existing-customer policy now is cheapest. A second approver is unreachable for a one-person team; the audit history is the control.
 **Affects:** roadmap order after Stage 4b. **No price, plan name, capacity band or gate changes;** `PLAN_PRICING_FACTS.md` untouched.
 **Handoff:**

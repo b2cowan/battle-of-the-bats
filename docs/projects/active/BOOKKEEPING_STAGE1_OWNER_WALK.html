@@ -1,19 +1,19 @@
-<!doctype html>
-<html lang="en">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bookkeeping · Stage 1 owner walk</title>
+<title>Bookkeeping Stage 1 Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <style>
-:root{color-scheme:light dark;--ground:#eceee8;--card:#fff;--ink:#1f261c;--dim:#46503f;--line:#d5d9cd;--accent:#4b6322}
-@media(prefers-color-scheme:dark){:root{--ground:#11140f;--card:#181d15;--ink:#ecf0e6;--dim:#c1c9b6;--line:#46503f;--accent:#c4e08c}}
-*{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font:16px/1.55 system-ui,sans-serif}main{max-width:880px;margin:auto;padding:24px 16px 80px;display:grid;gap:20px}h1{font-size:28px;line-height:1.2}h2{font-size:21px;margin:0}p{margin:0 0 10px}a{color:var(--accent);text-underline-offset:3px}code{overflow-wrap:anywhere}header,section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0;scroll-margin-top:80px}nav{position:sticky;top:0;z-index:2;background:var(--ground);padding:10px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}nav a{padding:7px 10px;border:1px solid var(--line);border-radius:8px;text-decoration:none}#progress{margin-left:auto;color:var(--dim)}.hint{color:var(--dim);font-size:14px}.step{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);cursor:pointer}.step input{width:20px;height:20px;flex:none;margin:3px 0 0;accent-color:var(--accent)}.step b{white-space:nowrap}textarea,input[type=text],select,button{font:inherit;border:1px solid var(--line);border-radius:8px;background:var(--ground);color:var(--ink);padding:10px;max-width:100%}textarea{width:100%;min-height:85px;resize:vertical}label.notes{display:grid;gap:6px;margin-top:14px}.verdict{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}button{min-height:44px;cursor:pointer}button:hover{border-color:var(--accent)}:focus-visible{outline:3px solid var(--accent);outline-offset:3px}#answers{min-height:320px;white-space:pre-wrap}#copy-status{min-height:1.6em}#reset{margin-left:8px}.setup{display:grid;gap:10px}.setup label{display:grid;gap:5px}.stop{border-left:4px solid var(--accent)}
+:root{--ground:#eceee8;--card:#fff;--ink:#1f261c;--dim:#46503f;--line:#d5d9cd;--accent:#4b6322}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--ground:#11140f;--card:#181d15;--ink:#ecf0e6;--dim:#c1c9b6;--line:#46503f;--accent:#c4e08c;color-scheme:dark}}
+:root[data-theme="dark"]{--ground:#11140f;--card:#181d15;--ink:#ecf0e6;--dim:#c1c9b6;--line:#46503f;--accent:#c4e08c;color-scheme:dark}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--ground)}
+*{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font:16px/1.55 system-ui,sans-serif}main{max-width:880px;margin:auto;padding-block:24px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:20px}h1{font-size:28px;line-height:1.2}h2{font-size:21px;margin:0}p{margin:0 0 10px}a{color:var(--accent);text-underline-offset:3px}code{overflow-wrap:anywhere}header,section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0;scroll-margin-top:80px}nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:2;background:var(--ground);padding:10px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}nav a{padding:7px 10px;border:1px solid var(--line);border-radius:8px;text-decoration:none}#progress{margin-left:auto;color:var(--dim)}.hint{color:var(--dim);font-size:14px}.step{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);cursor:pointer}.step input{width:20px;height:20px;flex:none;margin:3px 0 0;accent-color:var(--accent)}.step b{white-space:nowrap}textarea,input[type=text],select,button{font:inherit;border:1px solid var(--line);border-radius:8px;background:var(--ground);color:var(--ink);padding:10px;max-width:100%}textarea{width:100%;min-height:85px;resize:vertical}label.notes{display:grid;gap:6px;margin-top:14px}.verdict{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}button{min-height:44px;cursor:pointer}button:hover{border-color:var(--accent)}:focus-visible{outline:3px solid var(--accent);outline-offset:3px}#answers{min-height:320px;white-space:pre-wrap}#copy-status{min-height:1.6em}#reset{margin-left:8px}.setup{display:grid;gap:10px}.setup label{display:grid;gap:5px}.stop{border-left:4px solid var(--accent)}
 </style>
 <main>
 <header>
 <p class="hint">Private finance · Stage 1 · prepared October 31, 2026 · owner result pending</p>
 <h1>Can I record a purchase once and trust its history?</h1>
-<p>One walk through entry, later evidence, correction, Void and the new doors. It repeats the five journeys from QA §383 against the new windows, then traces the same records through Expenses, Reports, exports and Ledger. Tick only what you see. Leave a failed step unticked and explain it. Each part has its own verdict; checked boxes alone never declare a pass.</p>
-<p>Use your allowlisted owner account on <a href="http://localhost:3000/platform-admin/login?next=%2Fplatform-admin%2Fbookkeeping" target="_blank" rel="noopener">the local sign-in</a>, then <a href="http://localhost:3000/platform-admin/bookkeeping" target="_blank" rel="noopener">Bookkeeping</a>. Start at 1440×900; Part L repeats the important doors at 390×844. Have a small PDF, JPEG or PNG receipt under 10 MB. Open links in another tab so this checklist stays here.</p>
+<p>One walk through entry, later evidence, correction, Void and the new doors. It repeats the five journeys from QA §383 against the new windows, then traces the same records through Expenses, Reports, exports and Ledger. Revised after a line-by-line check of every step against the screens; steps now describe what the screens actually show. Tick only what you see. Leave a failed step unticked and explain it. Each part has its own verdict; checked boxes alone never declare a pass.</p>
+<p><b>It passes when</b> a purchase you enter once can be found, corrected with a reason, voided and traced into Reports and exports, with every earlier version still readable, and nothing you do in a held or refused step changes a saved record. <b>Not in this walk:</b> real purchases, income, bank balances, tax credits, or two people saving at the same moment.</p>
+<p><b>Sign in as</b> your own owner address (the one on the Bookkeeping allowlist), at <a href="http://localhost:3000/platform-admin/login?next=%2Fplatform-admin%2Fbookkeeping" target="_blank" rel="noopener">the local sign-in</a> (the dev server is running), then <a href="http://localhost:3000/platform-admin/bookkeeping" target="_blank" rel="noopener">Bookkeeping</a>. These links only open on the computer that runs the dev server. There is no shared test password for this screen. Start at 1440×900; Part L repeats the important doors at 390×844, which means narrowing the browser window or using its device mode (a phone cannot reach localhost). Have a small PDF, JPEG or PNG receipt under 10 MB. Open links in another tab so this checklist stays here.</p>
 <p class="hint">Development books only. Nothing here deploys, imports income, claims a tax credit or checks a bank balance. These are synthetic entries, not real purchases or real transfers. Save one operation at a time and wait for its saved record. Earlier QA entries remain; compare changes or filter to your own prefix.</p>
 <div class="setup">
 <label>Unique supplier prefix for this run<input type="text" id="prefix" value="S1-WALK-20261031-A" maxlength="100"></label>
@@ -23,6 +23,7 @@
 </header>
 <nav aria-label="Walk parts" id="nav"><span id="progress" aria-live="polite"></span></nav>
 <div id="parts"></div>
+<section class="stop"><h2>Two review findings (not blockers for this walk)</h2><p>1 · On a new USD expense, choosing How did you pay? after Where the CAD figure came from resets that source to the last one used with that card, or to blank; Save is then refused until you choose it again. 2 · Reports’ Purchase tax block labels unknown-tax expenses’ $0.00 as “Known amount · review pending”. Both are product calls for you; neither changes a saved record.</p></section>
 <section class="stop"><h2>What the builder proved separately</h2><p>Changed-value expense and transfer voids are refused by the server, with no added revision; replacing a receipt during Void is refused before upload. Signed-out calls are refused. Legacy unknown dates, tax, source and rate survive Void. These have handler tests and prior live development proof; this walk does not ask you to forge requests or alter older records.</p><p class="hint">Review limit: repayment checks currently read before writing. Simultaneous reimbursements or an expense change racing a reimbursement are an existing risk to resolve before real books go live. This sequential owner walk does not prove concurrent safety. Empty Overview states were reviewed in source; the earlier attempted browser fixture did not take effect. Browser checks are builder evidence, separate from your acceptance.</p></section>
 <section id="paste"><h2>Paste your result back into the chat</h2><p>Your ticks, verdicts and notes stay in this browser when local storage is available. Copy rebuilds the result every time. Nothing is sent automatically.</p><button id="copy" type="button">Copy my result</button><button id="reset" type="button">Reset this checklist</button><p id="copy-status" role="status"></p><label class="notes">Current result<textarea id="answers" readonly></textarea></label></section>
 </main>
@@ -42,32 +43,32 @@
       'Save expense stays on screen. Save once; the read-first record shows Amount $42.00, Paid from Paid personally, today, Payment date Same day, Purchase tax Unknown and Business use 100%.',
       'The record says No receipt attached yet. Changes shows its first entry. Close the record: Expenses, All dates, Active, search your unique prefix; the CAD entry appears with Missing.',
       'Overview spending has risen by exactly $42.00 from your noted baseline, provided no other session added expenses meanwhile. Needs attention → See all, search the prefix: CAD carries Receipt missing and Tax amount unknown.',
-      'Opening CAD reads the record first, without editable fields. A pencil is available; there is no permanently open correction or Void form.'
+      'Opening CAD reads the record first, without editable fields. A pencil is available, and Copy as new and Void this expense… are buttons that open only when pressed; there is no permanently open correction or Void form.'
     ]],
     ['C', 'Journey 2 · USD with the actual CAD charge', [
       'Add prefix-USD, Software & online services, Code hosting, today. Set Currency USD: Receipt shows 12.99; Your card or bank charged (CAD) 18.08. See 1 USD = 1.3918 CAD from your two amounts.',
-      'Choose Card statement under Where the CAD figure came from, leave Note blank, choose Business card and attach the receipt. Save expense remains visible at the foot even if the fields scroll.',
+      'Choose Business card under How did you pay? first (it may fill in a source from an earlier USD purchase on that card). Then choose Card statement under Where the CAD figure came from, leave Note blank and attach the receipt. Save expense remains visible at the foot even if the fields scroll. Choosing the card after the source resets the source; that is recorded as a review finding, so do not count it against this step.',
       'Save once. The record shows USD 12.99 → CAD 18.08, Card statement and Rate 1.3918, with business Amount $18.08. A blank optional note did not block Save.',
       'The receipt link shows its filename and attachment time in house formatting. Follow it: the new-tab link downloads the original file, which you can open and read. This expense may still need its unknown tax amount, but does not say USD source not picked or Receipt missing.'
     ]],
     ['D', 'Journey 3 · add the CAD receipt later', [
       'Find prefix-CAD through Needs attention → See all, searching the prefix. Open it and press the pencil (Correct expense). Attach the receipt; leave the other values alone.',
-      'Before pressing the head checkmark, the draft has not added a Changes entry. Press the checkmark: Why are you correcting this expense? asks for a Reason. Keep editing returns to the draft without saving.',
+      'Nothing is saved while you edit. Press the head checkmark: Why are you correcting this expense? asks for a Reason. Keep editing returns to the draft without saving.',
       'Press the checkmark again, enter Receipt added later and press Save correction. The saved record has one additional revision, with that reason, and the receipt link retrieves the readable original file.',
-      'The amount remains $42.00. Its attention reasons no longer include Receipt missing; Tax amount unknown still applies. The original first entry remains in Changes.'
+      'The amount remains $42.00. In Needs attention → See all (search the prefix), CAD no longer shows Receipt missing; Tax amount unknown still applies. The original first entry remains in Changes.'
     ]],
     ['E', 'Journey 4 · paid on another day', [
       'Add prefix-DATED, Equipment & supplies, Paper paid the following day, CAD 25.00 and Paid personally. Set Expense date to yesterday, tick Paid on a different date and set Payment date to today.',
       'Open More details: tick I know the purchase tax amount, leave 0.00 and choose No tax recorded. Leave 100% business use and no receipt. Save once.',
       'The read record shows yesterday as Expense date and today as Payment date, Amount $25.00 and Purchase tax $0.00 · No tax recorded. Confirmed zero is visibly different from Unknown.',
-      'In Expenses choose All dates and search the prefix so a month boundary cannot hide yesterday. DATED has Receipt missing, with no Tax amount unknown reason. Its incurred date, not its payment date, controls the period selection.'
+      'In Expenses choose All dates and search the prefix so a month boundary cannot hide yesterday; DATED shows Missing in the Receipt column. Turn Needs attention on: DATED shows Receipt missing only, with no Tax amount unknown. Its expense date, not its payment date, controls the period selection.'
     ]],
     ['F', 'Journey 5 · hold a correction until its reason', [
       'Open prefix-CAD. Note its Changes count. Pencil, change Amount from 42.00 to 45.00. Typing alone does not save a revision.',
       'Press the head checkmark and leave the Reason question waiting. In a second tab open Bookkeeping → Expenses, find CAD and read it: $42.00 and the noted Changes count remain. Close that extra tab. Keep editing in the original question returns to the same $45.00 draft.',
       'Close the changed draft with × or the phone back arrow. Close without saving? offers Keep writing / Discard. Keep writing preserves $45.00. Close again and Discard: the whole record window closes.',
       'Reopen CAD: it still reads $42.00 with the noted Changes count. Pencil, enter 45.00 again, checkmark, Reason Corrected receipt total, Save correction.',
-      'It now reads $45.00 with exactly one further revision and that reason; the earlier $42.00 entries and their receipt links remain. The spending increase from this correction is $3.00.',
+      'It now reads $45.00 with exactly one further revision and that reason; the earlier $42.00 entries remain in Changes, and the receipt link remains on the entries that carried it. The spending increase from this correction is $3.00.',
       'Pencil again and press the checkmark without changing anything. It returns to reading, asks no reason and adds no revision. Stepping is unavailable while editing and returns while reading.'
     ]],
     ['G', 'Copy and the gentle duplicate warning', [
@@ -88,39 +89,39 @@
       'Reports: All confirmed dates, All categories, All expenses in Review view, Find your prefix. Recorded spend is $133.08 across four confirmed-date expenses, with no dates to review for this run.',
       'By category: Equipment & supplies $115.00 and Software & online services $18.08. Open each figure: its contributing expense amounts add to that figure; an entry opens its record, receipt and Changes.',
       'Open a By supplier figure and Paid personally. The supplier drill-down selects its own entry; Paid personally totals $115.00 across CAD, DATED and COPY. Show all entries restores all four.',
-      'Unknown tax and confirmed $0 stay distinct. No report claims a tax credit, a profit or a reconciled bank balance. Transfers in the next part must not increase expense spend.',
+      'Unknown tax and confirmed $0 stay distinct. In Purchase tax recorded, Amount unknown reads 3 expenses (CAD, USD, COPY) and Confirmed no tax reads $0.00 (DATED); ignore the Known amount · review pending $0.00 line, which also counts the unknown ones (recorded as a review finding). No report claims a tax credit, a profit or a reconciled bank balance. Transfers in the next part must not increase expense spend.',
       'With Show all entries and the prefix filter, Export CSV and Accountant package carry the same four selected expense IDs and every revision. A filtered package is not evidence that unrelated owner transfers are missing from the books.'
     ]],
     ['J', 'Ledger and the three transfer windows', [
-      'Ledger lists each of the four active purchases once; CAD, DATED and COPY say Paid personally. It labels this as recorded activity, with no bank balance or statement matching.',
+      'Ledger lists each of the four active purchases once (older entries from earlier walks may sit among them); CAD, DATED and COPY say Paid personally. It says this is recorded activity only, and that bank matching and a reconciled cash balance are still being prepared.',
       '+ Add owner transfer opens a short window. What happened? Money put into the business; today; Amount in CAD 20.00; Bank reference prefix-CONTRIBUTION. Save transfer once. Its read record and Changes appear.',
       'Pencil, change this contribution to 21.00; checkmark asks for a reason and keeps the correction held. Reason Corrected synthetic transfer, Save correction. Read $21.00 and both versions. An unchanged pencil/check adds no revision.',
       'Add another transfer: Money taken out for personal use, today, 5.00, reference prefix-DRAW. Save. Add a third: Pay myself back for an expense, choose prefix-CAD, today, 10.00, reference prefix-REPAY. Save.',
       'The repayment is a separate $10.00 transfer linked to CAD, not another expense. Open its linked expense door: it reads CAD. Reports filtered to the prefix still totals $133.08.',
-      'On CAD choose Void this expense…, enter Test linked reimbursement refusal and Void expense. It refuses because the active reimbursement must be handled first; CAD remains active and no Void revision is added. Keep it closes the question. Leave the repayment for cleanup.'
+      'On CAD choose Void this expense…, enter Test linked reimbursement refusal and Void expense. It refuses inside the question with “Void or correct the linked reimbursement before changing this personal expense”; CAD remains active and no Void revision is added. Keep it closes the question. Leave the repayment for cleanup.'
     ]],
     ['K', 'Void preserves the values and receipt history', [
       'Open prefix-COPY, note its $45.00, dates, payment source and Changes count. Void this expense… opens one small question with the saved supplier, amount and date, a Reason field and Keep it / Void expense; no editable money/date fields.',
       'Keep it returns without a revision. Ask again, Reason Synthetic copy finished, Void expense. It becomes read-only, with the same values and one additional Changes entry explaining Void; no pencil, Copy or further Void action appears.',
-      'Expenses → All dates, Active, prefix search now has three entries and $88.08. Voided shows COPY struck through. All shows four entries but $88.08 active spend.',
+      'Expenses → All dates, Active, prefix search now has three entries and $88.08. Voided shows COPY alone, with a Voided chip and its amount struck through (the count line has no dollar figure). All shows four entries but $88.08 active spend.',
       'Reports filtered to the prefix now has $88.08, excluding COPY. Export from Expenses with All includes its void revision and earlier history; the receipt on CAD and USD still opens.',
       'An open voided record keeps safe previous/next controls when neighbours exist. It never permits editing or wraps past the first/last record.'
     ]],
     ['L', 'Phone, filtered stepping and addresses', [
       'At 390×844, the heading has a lime + named Add expense. The Expenses rows become cards, every value stays readable and the page does not scroll sideways. Add still keeps Save expense on screen while its fields scroll; Cancel the empty form.',
-      'Expenses → All dates, Active, prefix search. Open a record; previous/next follow this filtered list, with no wrap at its ends. The supplier and record ID in the address change together. Pencil pauses stepping.',
+      'Expenses → All dates, Active, prefix search. Open a record; previous/next follow this filtered list, with no wrap at its ends. The record ID in the address changes with each step, and your prefix search, period and Active stay in it. Pencil pauses stepping.',
       'While reading CAD, copy its address and reload. The same record opens. Browser Back closes the record and restores the filtered Expenses list, keeping prefix, period and Active.',
-      'Open CAD, pencil, change the purpose without saving, then use Back. Keep writing preserves the draft; another Back → Discard closes the whole window and the saved purpose is unchanged.',
+      'Open CAD, pencil, change the purpose without saving, then use Back. Back asks Close without saving?; Keep writing preserves the draft. Press Back again (it answers Keep writing a second time), then press the Discard button: the whole window closes and the saved purpose is unchanged.',
       'On Ledger open the contribution, reload its movement address, then Back to Ledger. Pencil/check without changes adds no revision. Read a transfer on phone: its fields, reason question and foot controls fit without sideways scrolling.'
     ]],
     ['M', 'Finish the synthetic records, retaining their history', [
-      'In Ledger open the transfer identified by prefix-REPAY. Void this transfer… asks only for a reason and keeps its saved amount/date/kind/link. Reason Stage 1 owner walk cleanup, Void transfer. Save its movement address in these notes to reopen the voided record later.',
-      'Void the prefix-CONTRIBUTION and prefix-DRAW transfers the same way. Their read records keep the original references, amounts and Changes; they leave active Ledger activity. Reload a saved voided movement address: it is read-only.',
+      'In Ledger open the Expense reimbursement row for $10.00 and check its Bank reference reads prefix-REPAY (Ledger rows do not show references). Void this transfer… asks only for a reason and keeps its saved amount/date/kind/link. Reason Stage 1 owner walk cleanup, Void transfer. Save its movement address in these notes to reopen the voided record later.',
+      'Void the Owner contribution row ($21.00, reference prefix-CONTRIBUTION) and the Owner draw row ($5.00, reference prefix-DRAW) the same way. Their read records keep the original references, amounts and Changes; they leave active Ledger activity. Reload a saved voided movement address: it is read-only, with no pencil and no Void.',
       'Void prefix-CAD, prefix-USD and prefix-DATED with Reason Stage 1 owner walk cleanup. CAD now succeeds because its reimbursement is void. The expense receipt links and earlier Changes remain readable. COPY was already voided.',
-      'Expenses → All dates, Active, search prefix now has no matches. Voided shows exactly the four expenses. Reports filtered to the prefix has $0 active spend. All synthetic transfer and expense history remains; no record was deleted. Leave any failed cleanup IDs and the reason in these notes, then choose each part’s verdict and copy your result.'
+      'Expenses → All dates, Active, search prefix now has no matches. Voided shows the four prefix expenses and nothing else that matches the prefix. Reports filtered to the prefix has $0 active spend. All synthetic transfer and expense history remains; no record was deleted. Leave any failed cleanup IDs and the reason in these notes, then choose each part’s verdict and copy your result.'
     ]]
   ];
-  const key = 'bookkeeping-stage1-owner-walk-v1';
+  const key = 'bookkeeping-stage1-owner-walk-v2';
   const nav = document.getElementById('nav'), root = document.getElementById('parts');
   for (const [id, title, steps] of sections) {
     const link = document.createElement('a'); link.href = '#part-' + id; link.textContent = id; link.setAttribute('aria-label', id + ' · ' + title); nav.insertBefore(link, document.getElementById('progress'));
@@ -148,4 +149,3 @@
   update();
 })();
 </script>
-</html>

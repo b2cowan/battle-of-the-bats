@@ -1,7 +1,9 @@
 # Plan & billing, Stage 5: help, demos, tests and walks (build prompt)
 
 > **Written 2026-10-28.** Paste into a new Codex chat on `dev`. **First read `PLAN_AND_BILLING_CODEX_RULES.md`**, then the
-> plan. **Gate:** Stages 1–4 committed and verified; the owner has said "build Stage 5". Follow `.claude/commands/docs.md` for the
+> plan. **Gate:** Stages 1–4 **and Stage 4b (Parts 1–4)** committed and verified; **Plans end at renewal shipped (its Stage 4
+> words join this pass) and the `/marketing` price-form call made (owner sequence rulings 4 and 6, 2026-10-31)**; the owner has
+> said "build Stage 5". Follow `.claude/commands/docs.md` for the
 > help system (you cannot run the slash command; read the file and apply it). The in-app help in `lib/help-content/*.tsx` is the
 > single source of truth.
 

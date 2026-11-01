@@ -1,0 +1,541 @@
+<title>Plans End at Renewal</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;700&family=Inter:wght@400;600;700;800&display=swap">
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="color-scheme" content="light dark">
+<style>
+/* Layout: the house drawings frame (sticky numbered tabs, a View row, one specimen + its explanation at a time).
+   Review chrome sits on a darker ground; every product specimen is drawn at true size in the warm portal tokens.
+   Rust = new or changed. Numbered pins and NEW / RESTYLED / UNCHANGED tags open an explanation on click. */
+:root{
+  --bg:#ECE8DF; --fg:#241E15; --fg2:#4A4235; --dim:#6B6358; --card:#FBF9F4; --line:rgba(70,55,30,.16); --line2:rgba(70,55,30,.28);
+  --accent:#57651E; --accent-soft:rgba(87,101,30,.12); --pin:#C2410C; --pin-ink:#fff; --warn:#835006; --good:#34662A; --bad:#B03A22;
+  --font:Inter,system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#16140F; --fg:#F1EBDD; --fg2:#CFC6B3; --dim:#A59C89; --card:#201D16; --line:rgba(241,235,221,.14); --line2:rgba(241,235,221,.26);
+  --accent:#BCD26B; --accent-soft:rgba(188,210,107,.14); --pin:#FB923C; --pin-ink:#1a1308; --warn:#E3A33C; --good:#8DBF6A; --bad:#EE8A72; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140F; --fg:#F1EBDD; --fg2:#CFC6B3; --dim:#A59C89; --card:#201D16; --line:rgba(241,235,221,.14); --line2:rgba(241,235,221,.26);
+  --accent:#BCD26B; --accent-soft:rgba(188,210,107,.14); --pin:#FB923C; --pin-ink:#1a1308; --warn:#E3A33C; --good:#8DBF6A; --bad:#EE8A72; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:14px/1.55 var(--font);margin:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 80px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+button,input,textarea{font:inherit}button{cursor:pointer}
+button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid var(--pin);outline-offset:2px}
+.wrap{max-width:1360px;margin:0 auto}
+h1.doc{font:750 26px/1.15 var(--font);margin:0 0 .3rem;text-wrap:balance}
+.lede{max-width:80ch;color:var(--fg2);margin:.2rem 0 .8rem}
+.owner-summary{max-width:100ch;background:var(--card);border-left:3px solid var(--accent);padding:12px 16px;margin:12px 0}
+.owner-summary p{margin:4px 0}
+.legend{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;font-size:12px;color:var(--dim);margin:0 0 .9rem}
+.legend b{color:var(--fg2)}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding:.5rem 0;border-bottom:1px solid var(--line);margin-bottom:1.2rem}
+.bar-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.tabs{display:flex;gap:.25rem;flex-wrap:wrap;flex:1}
+.tabs button{font:600 13px var(--font);color:var(--fg2);background:transparent;border:1px solid transparent;border-radius:999px;padding:.4rem .8rem}
+.tabs button:hover{background:var(--accent-soft)}
+.tabs button[aria-selected="true"]{background:var(--fg);color:var(--bg)}
+.theme{border:1px solid var(--line2);border-radius:6px;background:var(--card);color:var(--fg);padding:7px 12px;flex:none}
+.viewrow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:10px;font-size:13px;color:var(--fg2)}
+.mode,.seg{display:inline-flex;flex-wrap:wrap;max-width:100%;background:#fff;border:1px solid var(--line2);border-radius:8px;padding:3px;gap:2px}
+.mode button,.seg button{font:600 12px var(--font);border:0;background:transparent;color:#4a4235;padding:.35rem .75rem;border-radius:6px}
+.mode button[aria-pressed="true"],.seg button[aria-pressed="true"]{background:#241e15;color:#fff}
+.segs{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center;margin:.2rem 0 1rem;font-size:12px;color:var(--dim)}
+.panel h2{font:700 20px/1.2 var(--font);margin:0 0 .3rem}
+.panel>h3{font:700 15px/1.3 var(--font);margin:1.6rem 0 .3rem}
+.intro{max-width:86ch;color:var(--fg2);margin:.2rem 0 1rem}
+figure.fr{margin:0 0 30px;max-width:100%}
+.frh{display:flex;flex-wrap:wrap;gap:.3rem .8rem;align-items:center;margin-bottom:.45rem}
+.frh b{font:700 14px var(--font)}
+.specgrid{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:16px;align-items:start}
+.specgrid>*{min-width:0}
+.specgrid aside{border-left:3px solid var(--pin);padding:8px 12px;background:var(--card);font-size:13px;color:var(--fg2)}
+.specgrid aside p{margin:0 0 10px}
+.specgrid aside b{color:var(--fg)}
+.stage{overflow-x:auto;max-width:100%;padding:20px;background:color-mix(in srgb,var(--fg) 7%,var(--bg));border-radius:8px}
+.stage.row{display:flex;gap:1.4rem;align-items:flex-start}
+.pinbox{margin:.5rem 0 0;padding:.55rem .8rem;border:1px dashed var(--line2);border-radius:8px;font-size:13px;color:var(--fg2);background:var(--card);max-width:100ch}
+.pinbox b{color:var(--fg)}
+.ev{font:11px/1.5 var(--mono);color:var(--dim);display:block;margin-top:6px;overflow-wrap:anywhere}
+.pin{all:unset;box-sizing:border-box;display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--pin);color:var(--pin-ink);font:700 11px var(--font);cursor:pointer;margin:0 3px;vertical-align:middle;flex:none}
+.pin[aria-expanded="true"]{outline:2px solid var(--fg);outline-offset:1px}
+.pin:focus-visible,.mk:focus-visible{outline:2px solid var(--pin);outline-offset:2px}
+.mk{all:unset;box-sizing:border-box;display:inline-block;font:700 10px var(--mono);letter-spacing:.05em;padding:.12rem .5rem;border-radius:999px;border:1px solid var(--line2);color:var(--fg2);cursor:pointer;white-space:nowrap}
+.mk.new{color:var(--pin);border-color:var(--pin)} .mk.restyled{color:var(--warn);border-color:var(--warn)} .mk.unchanged{color:var(--dim)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tblw{overflow-x:auto;max-width:100%;margin:.4rem 0 1rem}
+.tbl th,.tbl td{padding:.5rem .65rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.tbl th{font:650 12px var(--font);color:var(--dim);background:var(--bg)}
+.tbl tr:last-child td{border-bottom:0}
+.ask{border:1px solid var(--line2);background:var(--card);border-radius:10px;padding:1rem 1.1rem;margin:0 0 1rem;max-width:100ch}
+.ask h3{margin:0 0 .3rem;font-size:15px}
+.ask .why{color:var(--fg2);margin:.2rem 0 .6rem}
+.opts{display:grid;gap:.5rem}
+button.opt{all:unset;box-sizing:border-box;display:block;width:100%;text-align:left;border:1px solid var(--line);border-radius:8px;padding:.55rem .75rem;background:var(--bg);cursor:pointer;color:var(--fg)}
+button.opt:hover{border-color:var(--accent)}
+button.opt:focus-visible{outline:2px solid var(--pin);outline-offset:2px}
+button.opt[aria-pressed="true"]{border-color:var(--pin);box-shadow:inset 0 0 0 1px var(--pin);background:var(--card)}
+.opt.rec{border-color:var(--accent)}
+.opt .t{font:700 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-left:.4rem}
+.opt .you{display:none;font:700 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--pin);margin-left:.4rem}
+.opt[aria-pressed="true"] .you{display:inline}
+.opt .od{display:block;color:var(--fg2);font-size:13px}
+.answers{border:1px solid var(--line2);background:var(--card);border-radius:10px;padding:.8rem 1rem;margin:0 0 1rem;max-width:100ch}
+.ah{display:flex;flex-wrap:wrap;gap:.5rem .8rem;align-items:center}
+.ah b{margin-right:auto}
+.abtn{font:600 12px var(--font);border:1px solid var(--line2);background:transparent;color:var(--fg);border-radius:6px;padding:.35rem .7rem}
+.answers textarea{width:100%;margin-top:.6rem;min-height:110px;font:12px/1.5 var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:.5rem}
+.reviewlist{max-width:100ch;color:var(--fg2)} .reviewlist li{margin-bottom:10px} .reviewlist b{color:var(--fg)}
+.diff-only .same{opacity:.22;filter:grayscale(1)}
+
+/* ── Product specimens: the shipped warm tokens, fixed sizes, independent of the review viewport ── */
+.scr{--paper:#f8f4ed;--card:#fff;--ink:#241e15;--ink2:#4a4235;--dim:#615a54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.20);--olive:#57651e;--olive-soft:rgba(87,101,30,.10);--lime:#d9f99d;--warn:#835006;--danger:#b03a22;--info:#2c5a8a;font:14px/1.5 var(--font);background:var(--paper);color:var(--ink);text-align:left}
+:root[data-theme=dark] .scr{--paper:#16140f;--card:#201d16;--ink:#f1ebdd;--ink2:#cfc6b3;--dim:#a59c89;--line:rgba(241,235,221,.14);--line2:rgba(241,235,221,.26);--olive:#d9f99d;--olive-soft:rgba(217,249,157,.10);--warn:#f59e0b;--danger:#f87171;--info:#93b8e0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .scr{--paper:#16140f;--card:#201d16;--ink:#f1ebdd;--ink2:#cfc6b3;--dim:#a59c89;--line:rgba(241,235,221,.14);--line2:rgba(241,235,221,.26);--olive:#d9f99d;--olive-soft:rgba(217,249,157,.10);--warn:#f59e0b;--danger:#f87171;--info:#93b8e0}}
+.scr h1,.scr h2,.scr h3,.scr p{color:inherit}
+.scr h1{font:700 20px/1.2 var(--font);margin:0}
+.scr h2{font:700 16px/1.3 var(--font);margin:0 0 9px}
+.scr h3{font:650 15px/1.3 var(--font);margin:0 0 7px}
+.scr p{margin:7px 0}
+.scr small,.scr .hint{font-size:12px;color:var(--dim)}
+.cap{display:block;padding:5px 12px;font:10px/1.4 var(--mono);color:var(--dim);border-bottom:1px solid var(--line);background:var(--card)}
+.desk{width:1280px;flex:none;border:1px solid var(--line2);border-radius:10px;overflow:hidden}
+.strip{display:flex;align-items:center;height:48px;padding:0 20px;gap:14px;background:var(--card);border-bottom:1px solid var(--line)}
+.strip b{color:var(--olive);font-size:15px}.strip small{font-size:11px}.spacer{flex:1}
+.deskbody{display:flex;min-height:640px}
+.rail{display:flex;flex-direction:column;flex:none;width:220px;background:var(--card);border-right:1px solid var(--line);padding:12px 0}
+.rail .head{font-size:14px;font-weight:700;padding:8px 20px}
+.rail .rh{padding:9px 20px 4px;font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--dim);text-transform:uppercase}
+.ri{display:flex;gap:8px;align-items:center;padding:8px 20px;font-size:14px;color:var(--dim);min-height:34px}
+.ri.active{background:var(--olive-soft);color:var(--olive);font-weight:600}
+.rfoot{margin-top:auto;border-top:1px solid var(--line);padding-top:6px}
+.main{flex:1;min-width:0;padding:32px;background-image:linear-gradient(color-mix(in srgb,var(--olive) 5%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--olive) 5%,transparent) 1px,transparent 1px);background-size:40px 40px}
+.page{max-width:960px;margin:auto}
+.pagehead{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+.pagehead .eb{font:700 11px/1.4 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.tile{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;color:var(--olive);background:var(--olive-soft);border:1px solid var(--line2);font-weight:700}
+.help{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;border:1px solid var(--line2);margin-left:auto;background:var(--card)}
+.card{padding:18px 20px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.section{margin-top:26px}
+.plangrid{display:grid;grid-template-columns:1.1fr 1fr;gap:24px}
+.eyebrow{font:700 11px/1.5 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin:0 0 7px;display:flex;align-items:center;gap:8px}
+.planname{font:750 20px/1.2 var(--font);margin:6px 0 2px}
+.price{margin:2px 0}
+.chip{display:inline-block;border:1px solid var(--line2);border-radius:999px;padding:1px 8px;font:700 10px var(--mono);letter-spacing:.04em;color:var(--olive);white-space:nowrap;text-transform:none}
+.chip.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent);background:color-mix(in srgb,var(--warn) 9%,transparent)}
+.chip.bad{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 40%,transparent)}
+.chip.info{color:var(--info);border-color:color-mix(in srgb,var(--info) 40%,transparent)}
+.chip.quiet{color:var(--dim)}
+.sched{color:var(--warn);font-size:12px;margin:3px 0 0}
+.sched .link{margin-left:4px}
+.buttons{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;font:650 14px/1.3 var(--font);padding:8px 12px;border:1px solid var(--line2);border-radius:6px;background:var(--card);color:var(--ink2);white-space:nowrap}
+.btn.lime{background:var(--lime);border-color:transparent;color:#241e15}
+.btn.danger{background:color-mix(in srgb,var(--danger) 15%,transparent);border-color:color-mix(in srgb,var(--danger) 30%,transparent);color:var(--danger)}
+.btn.dtext{color:var(--danger)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.sm{min-height:28px;padding:4px 10px;font-size:13px}
+.link{all:unset;color:var(--olive);border-bottom:1px solid currentColor;font-weight:600;cursor:pointer;line-height:1.3}
+.link.dlink{color:var(--danger)}
+.meter{height:10px;background:var(--line);border-radius:5px;margin:8px 0 14px}.meter span{display:block;height:100%;background:var(--olive);border-radius:inherit}
+.callout{padding:12px 14px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--olive);border-radius:8px;margin:14px 0}
+.callout.warn{border-left-color:var(--warn)}.callout.bad{border-left-color:var(--danger)}
+.callout .eyebrow{margin-bottom:4px}
+.notice{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-size:12px;margin:0 0 14px}
+.notice.bad{border-color:color-mix(in srgb,var(--danger) 35%,transparent);background:color-mix(in srgb,var(--danger) 7%,transparent)}
+.notice.good{background:var(--olive-soft);border-color:color-mix(in srgb,var(--olive) 30%,transparent)}
+/* Design pass: PageNotice ships only good + bad. A wait is the white callout with an amber edge (tinted panels retired). */
+.notice.warn{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--warn);font-size:13px;color:var(--ink)}
+.notice.warn .ico{display:none}
+.notice .ico{flex:none;font-weight:800;width:15px;text-align:center}
+.notice.bad .ico{color:var(--danger)}.notice.good .ico{color:var(--olive)}.notice.warn .ico{color:var(--warn)}
+.notice p{margin:0}
+.ptable{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:14px}
+.ptable td,.ptable th{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.ptable th,.qtable th{font:700 13px/1.3 "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2)}
+.ptable .num{text-align:right;font-variant-numeric:tabular-nums}
+.ptable tr:last-child td{border-bottom:0}
+.ptable small{display:block}
+.includes{columns:2;padding-left:20px;margin:0;color:var(--ink2)}.includes li{margin-bottom:6px}.includes li::marker{color:var(--olive)}
+.ghost{border:1px dashed var(--line2);border-radius:8px;padding:12px 14px;color:var(--dim);font:11px/1.5 var(--mono);text-align:center}
+.changed{position:relative;outline:2px solid var(--pin);outline-offset:3px;border-radius:6px}
+/* windows */
+.wstage{width:820px;min-height:600px;display:grid;place-items:center;background:color-mix(in srgb,var(--ink) 30%,var(--paper));padding:30px;border-radius:10px;border:1px solid var(--line2)}
+.window{width:520px;border:1px solid rgba(44,90,138,.3);border-radius:12px;background:var(--card);display:flex;flex-direction:column;overflow:hidden}
+.window.q{width:416px}
+.whead{display:flex;align-items:flex-start;gap:10px;padding:18px 24px 7px}
+.whead h2{flex:1;margin:3px 0;font-size:16px}
+.close{color:var(--dim);font:22px/1 var(--font)}
+.wbody{padding:8px 24px 20px;color:var(--ink2)}
+.wbody h3{font:650 13px var(--font);color:var(--ink);margin:14px 0 4px}
+.wbody ul{margin:4px 0;padding-left:20px}
+.wfoot{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding:14px 24px}
+.wfoot .sentence{flex:1;font-size:12px;color:var(--dim)}
+.wfoot .buttons{margin:0;flex-wrap:nowrap}
+.sbox{background:var(--olive-soft);border-radius:8px;padding:10px 12px;margin:6px 0 12px;font-size:13px;color:var(--ink)}
+.sbox.bad{background:color-mix(in srgb,var(--danger) 8%,transparent)}
+.field{display:block;margin:14px 0 4px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--ink)}
+.field .req{color:var(--danger)}
+.field .ta{border:1px solid var(--line2);border-radius:6px;background:var(--paper);min-height:64px;padding:8px 10px;font-size:13px;color:var(--dim)}
+.field .help2{font-size:12px;color:var(--dim);margin-top:4px}
+.choices{border:1px solid var(--line);border-radius:8px;margin:8px 0}
+.choice{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;border-bottom:1px solid var(--line);font-size:14px;color:var(--ink)}
+.choice:last-child{border-bottom:0}
+.box{width:16px;height:16px;border:1.5px solid var(--line2);border-radius:3px;flex:none;display:grid;place-items:center;font-size:11px;font-weight:800}
+.box.on{background:var(--olive);border-color:var(--olive);color:var(--card)}
+.choice small{margin-left:auto}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:12px 0;color:var(--ink)}
+/* platform-admin record */
+.recordhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.back{font-size:13px;color:var(--olive);font-weight:600;margin-bottom:8px;display:block}
+.inforow{display:flex;gap:16px;align-items:center;font-size:13px;color:var(--dim);margin:8px 0 16px;flex-wrap:wrap}
+.inforow .sp{flex:1}
+.rband{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card);margin:14px 0}
+.rband>div{padding:12px 14px;border-left:1px solid var(--line)}.rband>div:first-child{border-left:0}
+.rband .k{font:700 10px/1.4 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.rband .v{font:700 16px/1.3 var(--font);margin-top:3px;font-variant-numeric:tabular-nums}
+.rband .n{font-size:12px;color:var(--dim)}
+.rtabs{display:flex;gap:18px;border-bottom:1px solid var(--line);margin:14px 0 18px;font-size:14px;color:var(--dim)}
+.rtabs span{padding:8px 0}.rtabs .on{color:var(--ink);font-weight:650;border-bottom:2px solid var(--olive)}
+.qtable{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:13px}
+.qtable th,.qtable td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+.qtable .num{text-align:right;font-variant-numeric:tabular-nums}
+.qtable td.nm{color:var(--olive);font-weight:650}
+.qtable tr:last-child td{border-bottom:0}
+.code{font:12px var(--mono);background:var(--olive-soft);padding:1px 5px;border-radius:4px}
+/* phone */
+.phone{width:390px;height:844px;flex:none;display:flex;flex-direction:column;border:1px solid var(--line2);border-radius:24px;overflow:hidden;background:var(--paper)}
+.phone .strip{padding:0 16px}
+.pcontent{flex:1;overflow:auto;padding:20px 16px}
+.phone .plangrid{grid-template-columns:1fr;gap:14px}
+.phone .plangrid>div+div{border-top:1px solid var(--line);padding-top:14px}
+.phone .btn{min-height:44px}
+.phone .card{padding:16px}
+.pbar{display:flex;justify-content:space-around;background:var(--card);border-top:1px solid var(--line);padding:12px 0;min-height:70px;font-size:10px;color:var(--dim)}
+.pbar span{display:grid;justify-items:center;gap:5px}.pbar .on{color:var(--olive);font-weight:700}
+.pwin{flex:1;display:flex;flex-direction:column;background:var(--card)}
+.pwin .whead{border-bottom:1px solid var(--line);padding:14px 16px;align-items:center}
+.pwin .wbody{flex:1;overflow:auto;padding:12px 16px}
+.pwin .wfoot{flex-wrap:wrap;padding:12px 16px}
+.pwin .wfoot .sentence{flex-basis:100%}
+.pwin .wfoot .buttons{margin-left:auto}
+/* email */
+/* The stage is a mail app's plain ground: the shipped envelope has no beige frame and no footer word (owner 2026-10-20). */
+.mailstage{width:820px;padding:28px;background:#f2f2f0;border-radius:10px;border:1px solid var(--line2)}
+:root[data-theme=dark] .mailstage{background:#2b2b2a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .mailstage{background:#2b2b2a}}
+.subj{font:13px/1.5 Arial,sans-serif;color:#241e15;background:#fff;border:1px solid #c9c1b2;border-radius:8px;padding:8px 12px;margin:0 auto 12px;max-width:600px}
+.subj b{display:inline-block;width:62px;color:#665f57;font-weight:400}
+.mail{max-width:600px;margin:0 auto;background:#fff;border:1px solid #c9c1b2;border-radius:12px;padding:28px 26px;font:15px/1.6 Arial,Helvetica,sans-serif;color:#211c15}
+.mail .wm{font-weight:700;font-size:18px;margin-bottom:18px}.mail .wm span{color:#55641c}
+.mail h1{font:700 22px/1.3 Arial,sans-serif;margin:0 0 12px;color:#211c15}
+.mail p{margin:0 0 12px;color:#211c15}
+.mail .mp{background:#f6f1ea;border-left:3px solid #665f57;padding:12px 14px;margin:14px 0}
+.mail .mp b.t{display:block;margin-bottom:4px}
+.mail .mb{display:inline-block;background:#d9f99d;border:1px solid #55641c;border-radius:10px;padding:14px 26px;font-weight:700;color:#211c15;margin:6px 0 12px}
+.mail .fine{font-size:13px;color:#665f57}
+@media(max-width:1050px){.specgrid{grid-template-columns:1fr}}
+@media(max-width:520px){.bar-top{align-items:flex-start}.theme{padding:6px}.stage{padding:12px}.tabs{max-height:150px;overflow:auto}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<h1 class="doc">Plans end at the renewal date · Stage 0 drawings</h1>
+<p class="lede">First pass · October 31, 2026 · drawn for the owner before any of Stage 1 or Stage 2 is built (plan §3a G12).</p>
+<div class="owner-summary">
+<p><b>What changes for the customer.</b> Cancelling, or moving down to the free plan, no longer takes anything away at the click. The account stays fully open until the renewal date, the end of the period they paid for. Until that date the plan card says when it ends, and one door puts the plan back. Our operators get the same waiting cancel by default. They also get a separate red <b>End now</b> for fraud, abuse or a chargeback, and a way to finish an ending that Stripe never reported to us.</p>
+<p><b>The main drawing choice.</b> The billing page already has a shape for a change that is waiting: the amber line <i>“Moves to Club on {date}.”</i> followed by an olive <i>“Keep Club · Association”</i> link. A waiting cancel is drawn on that same line, not as a new band. Ask 1 puts that to you.</p>
+</div>
+<p class="legend"><span><b>Rust outline / pins</b> = new or changed; every pin opens an explanation.</span><span><b>NEW · RESTYLED · UNCHANGED</b> tags open on click too.</span><span><b>True size</b>: 1280px computer, 520px window, 390px phone. Scroll a specimen sideways if your screen is narrower.</span><span><b>All words are draft.</b> Stage 4 settles the final words. Names, dates and money are examples.</span></p>
+<div class="bar">
+<div class="bar-top"><nav class="tabs" role="tablist" aria-label="Drawing sections" id="tabs"></nav><button class="theme" id="theme" type="button" aria-pressed="false">Dark look</button></div>
+<div class="viewrow" id="viewrow"><span>View</span><div class="mode" role="group" aria-label="View comparison"><button type="button" data-view="all" aria-pressed="true">Everything</button><button type="button" data-view="diff" aria-pressed="false">Show only what differs</button></div></div>
+</div>
+<main id="panels"></main>
+<noscript>This drawing needs JavaScript for its tabs. It makes no network requests.</noscript>
+</div>
+
+<script>
+'use strict';
+// Self-contained drawing. No fetch, no external resource, no product call. Example names, dates and money throughout.
+const ORG='Riverside Minor Ball', CLUB='Falcons Community Club', END='November 30, 2026', ENDS='November 30', KEPT_UNTIL='February 28, 2027';
+let serial=0; const NOTES=new Map();
+const SRC={
+  body:'components/billing/BillingBody.tsx · plan card ~229-238, scheduled line ~235, Reduce or cancel ~347-352',
+  words:'lib/plan-billing-words.ts · plan.renews / scheduled / keep / kept, cancel.*, downgrade.*',
+  dialog:'components/shared/KitDialog.tsx · form 520px, question 416px; foot sentence left, actions right',
+  record:'app/platform-admin/orgs/[id]/ClubRecord.tsx · header chips ~401-425, band ~557-563, Cancel window ~1020-1064',
+  money:'app/platform-admin/orgs/[id]/MoneyTab.tsx + lib/console-money.ts ~386-395 (Next charge: “it ends at the period end”)',
+  retention:'app/platform-admin/retention/RetentionQueueClient.tsx · columns ~169-178',
+  email:'lib/email.ts · cancellationConfirmationHtml ~1947, trialEndingHtml ~1537; lib/email-envelope-warm.ts',
+  plan:'PLAN_ENDS_AT_RENEWAL_PLAN.md'
+};
+function pin(text,src){const id=++serial;NOTES.set(id,{text,src});return `<button type="button" class="pin" data-pin="${id}" aria-expanded="false" aria-controls="pin-note-${id}" aria-label="Open explanation ${id}">${id}</button>`;}
+function mk(kind,text,src){const id=++serial;NOTES.set(id,{text,src});return `<button type="button" class="mk ${kind.toLowerCase()}" data-pin="${id}" aria-expanded="false" aria-controls="pin-note-${id}">${kind}</button>`;}
+function fig(title,tag,body,aside,{row=false}={}){
+  const ids=[...(tag+body+aside).matchAll(/data-pin="(\d+)"/g)].map(m=>Number(m[1]));
+  const notes=ids.map(id=>{const n=NOTES.get(id);return `<div class="pinbox" hidden id="pin-note-${id}" aria-live="polite"><b>${id}.</b> ${n.text}${n.src?`<span class="ev">${n.src}</span>`:''}</div>`;}).join('');
+  return `<figure class="fr"><div class="frh"><b>${title}</b>${tag}</div><div class="specgrid"><div class="stage${row?' row':''}">${body}</div><aside>${aside}</aside></div>${notes}</figure>`;
+}
+const btn=(t,cls='')=>`<span class="btn ${cls}">${t}</span>`;
+const S=(cls,html)=>`<div class="${cls}">${html}</div>`;
+
+// ── chrome ──
+function strip(kind,name){const area={admin:'Admin Area',coach:'Coaches Portal',console:'Platform admin'}[kind];return `<div class="strip"><b>FieldLogicHQ</b><small>${area}</small><span class="spacer"></span><span>${name}</span></div>`;}
+function ri(label,active=false){return `<div class="ri${active?' active':''}">${label}</div>`;}
+function rail(kind){
+  if(kind==='coach')return `<div class="rail"><div class="head">Falcons U12 · 2026 Season</div>${ri('Overview')}<div class="rh">Season</div>${ri('Schedule')}${ri('Practice plans')}${ri('Lineups')}${ri('Tournaments')}<div class="rh">Money ›</div><div class="rh">Team ›</div><div class="rfoot">${ri('Help')}${ri('Plan &amp; billing',true)}${ri('Collapse sidebar')}</div></div>`;
+  if(kind==='club')return `<div class="rail"><div class="head">${CLUB}</div>${ri('Overview')}${ri('Calendar')}<div class="rh">Programs</div>${ri('Rep teams ›')}${ri('Accounting')}${ri('Families')}<div class="rh">Organization</div>${ri('Organization ›')}<div class="rfoot">${ri('Plan &amp; billing',true)}${ri('Help')}</div></div>`;
+  if(kind==='console')return `<div class="rail"><div class="head">Support console</div>${ri('Clubs &amp; portals',true)}${ri('Retention')}${ri('Money')}${ri('Emails')}${ri('Audit log')}</div>`;
+  if(kind==='console-ret')return `<div class="rail"><div class="head">Support console</div>${ri('Clubs &amp; portals')}${ri('Retention',true)}${ri('Money')}${ri('Emails')}${ri('Audit log')}</div>`;
+  return `<div class="rail"><div class="head">${ORG}</div>${ri('Overview')}${ri('Tournaments')}${ri('Registrations')}${ri('Schedules')}<div class="rh">Organization</div>${ri('Organization ›')}<div class="rfoot">${ri('Plan &amp; billing',true)}${ri('Help')}</div></div>`;
+}
+function desk(body,{kind='admin',railKind,name}={}){const k=kind==='console'?'console':kind;return `<div class="scr desk"><span class="cap">draft words · example names, dates and money · the side rail is approximate, the page is the subject</span>${strip(k,name||(kind==='coach'?'Falcons U12':kind==='console'?'Operator':ORG))}<div class="deskbody">${rail(railKind||kind)}<div class="main"><div class="page">${body}</div></div></div></div>`;}
+
+// ── the owner billing page ──
+const V={
+  plus:{label:'Tournament Plus',org:ORG,price:'$X CAD / month · example',kind:'admin',eyebrow:false,slots:'2 of 3 tournament slots',offline:'tournament pages, registration and online payments'},
+  club:{label:'Club · Association',org:CLUB,price:'$X CAD / month · example',kind:'club',eyebrow:true,slots:'18 of 30 teams',offline:'rep teams, families, accounting and your public site'},
+  coach:{label:'Premium Coaches Portal',short:'Premium',org:'Falcons U12',price:'$X CAD / month · example',kind:'coach',eyebrow:false,slots:'0 of 1 tournament slot',offline:''}
+};
+function keepWord(v){return 'Keep '+(v.short||v.label);}
+function planCard(v,state,phone=false){
+  // state: today | ending | movefree | kept-fail
+  const chip=state==='ending'?`<span class="chip warn">Ending</span>`:`<span class="chip">Active</span>`;
+  let lines='';
+  if(state==='ending'&&phone)return `<div class="card"><div class="plangrid"><div><div class="eyebrow">Your plan ${chip}</div><div class="planname">${v.label}</div><p class="price">${v.price}</p><p class="sched">Ends on ${END}, the last day you paid for.</p><div class="buttons"><span class="btn lime changed" style="width:100%">${keepWord(v)}</span>${pin(`<b>On a phone the Keep door is a full-width 44px lime button (Ask 9).</b> <i>Design pass:</i> the first drawing kept the desk’s olive text link inside the sentence. Support Console Stage 4b already ruled the phone shape for “Keep Premium” when free time ends: the one lime button, 44px, full width, with Join a club outlined. Using the same shape here means one door looks the same in both cases, and it meets the 44px tap floor. On the desk the link stays, matching the waiting-move line.`,'design_decisions 2026-10-27 Support Console 4b Q12 D-1/D-5')}</div><div class="buttons">${btn('▭ Payment method &amp; invoices')}</div></div></div></div>`;
+  if(state==='today'){lines=`<small class="same">Renews ${END}</small>`+(v===V.club?`<p class="sched same">Moves to Club on ${END}. <button type="button" class="link">Keep Club · Association</button></p>`:'');}
+  if(state==='ending'){lines=`<p class="sched changed">Ends on ${END}, the last day you paid for. <button type="button" class="link">${keepWord(v)}</button>${pin(`<b>The waiting cancel, on the line the product already uses for a waiting change.</b> Today a scheduled move to a cheaper plan reads “Moves to Club on {date}. Keep Club · Association” in amber under the price, with the olive Keep link. A waiting cancel uses that exact shape: the renewal line is replaced (it would be untrue), the date is said once, and the undo sits beside it. The chip turns to an amber “Ending”. Ask 1 is whether this is enough, or whether the page also needs a band across the top.`,SRC.body+' · '+SRC.words)}</p>`+(v===V.club?`<small class="changed">If you keep it, you renew as Club, the move you chose on October 12. ${pin(`<b>G1 · the waiting cheaper move is not lost.</b> This club had already chosen to move from Club · Association down to Club at renewal, then cancelled. Stripe will not let us cancel a subscription that has a waiting move on it, so the cancel sets the move aside and we remember it. This small line tells the owner that keeping the plan brings the cheaper move back. They never renew at the price they had chosen to leave.`,SRC.plan+' §3a G1')}</small>`:'');}
+  if(state==='movefree'){lines=`<p class="sched">Moves to Tournament on ${END}. <button type="button" class="link">Keep Tournament Plus</button> ${mk('UNCHANGED',`The existing scheduled-move line, word for word. Today it only ever shows for a paid move (Club · Association → Club). Stage 2 makes the move down to the free plan wait for the renewal date too, so this same line appears for it.`,SRC.words+' · plan.scheduled')}</p>`;}
+  if(state==='kept-fail'){lines=`<small>Renews ${END}</small>`;}
+  return `<div class="card"><div class="plangrid"><div><div class="eyebrow">Your plan ${chip}${state==='ending'?pin(`<b>The status chip.</b> Stripe still calls the subscription “active”, so today’s chip would say Active. The drawing proposes an amber <b>Ending</b> chip, so the page looks different at a glance. Ask 1 covers it. The platform-admin record keeps Stripe’s own status (tab 5).`,SRC.body):''}</div><div class="planname">${v.label}</div><p class="price">${v.price}</p>${lines}<div class="buttons">${btn('▭ Payment method &amp; invoices')}</div></div><div class="same"><div class="eyebrow">What's in use</div><p>${v.slots}</p><div class="meter"><span style="width:60%"></span></div></div></div></div>`;
+}
+function changeTable(v,state){
+  const blocked=state==='ending';
+  const gone=`<span class="hint">·</span>`;
+  let rows;
+  if(v===V.coach)rows=`<tr><td><b>Premium Coaches Portal</b><small><span class="link">See what Premium includes</span></small></td><td>1 tournament at a time</td><td class="num">$X · example</td><td class="num">$X · example</td><td><span class="chip">Your plan</span></td></tr><tr><td><b>Club</b><small>Start your own club</small></td><td>Up to 15 teams</td><td class="num">$X · example</td><td class="num">$X · example</td><td>${blocked?gone:btn('Start my club')}</td></tr>`;
+  else if(v===V.club)rows=`<tr><td><b>Club</b><small><span class="link">See what Club includes</span></small></td><td>Up to 15 teams</td><td class="num">$X · example</td><td class="num">$X · example</td><td>${blocked?gone:`<span class="chip warn">From November 30</span>`}</td></tr><tr><td><b>Club · Association</b><small><span class="link">See what Club · Association includes</span></small></td><td>Up to 30 teams</td><td class="num">$X · example</td><td class="num">$X · example</td><td><span class="chip">Your plan</span></td></tr>`;
+  else rows=`<tr><td><b>Tournament</b><small><span class="link">See what Tournament includes</span></small></td><td>1 tournament at a time</td><td class="num">Free</td><td class="num">Free</td><td>${state==='movefree'?`<span class="chip warn">From November 30</span>`:blocked?gone:btn('Downgrade to Tournament')}</td></tr><tr><td><b>Tournament Plus</b><small><span class="link">See what Tournament Plus includes</span></small></td><td>3 tournaments at a time</td><td class="num">$X · example</td><td class="num">$X · example</td><td><span class="chip">Your plan</span></td></tr><tr><td><b>Club</b><small><span class="link">See what Club includes</span></small></td><td>Up to 15 teams</td><td class="num">$X · example</td><td class="num">$X · example</td><td>${blocked?gone:btn('Move to Club')}</td></tr>`;
+  const refuse=blocked?`<div class="callout warn changed"><p style="margin:0">Your plan ends on ${END}. ${keepWord(v)} first, then change it.</p>${pin(`<b>No plan change while a cancel waits (the /billing review, §3 (a)).</b> If an upgrade went through now, Stripe would charge for it and the plan would still end. A move down would build a schedule on a subscription that is set to cancel. So the change doors are <b>absent</b>, not greyed out, and one amber line above the table says why and what to do. The prices stay readable. <i>Design pass:</i> the first drawing showed the doors switched off. The standing rule is that a door is absent when the product knows before the click that it cannot go (absent-not-disabled, October 11; Support Console Stage 4 D-3). A cancel that waits is a standing state, not a passing moment.`,SRC.plan+' §3 (a); design_decisions 2026-10-11 (5), 2026-10-25 Q11 D-3')}</div>`:'';
+  return `<section class="section"><h2>Change plan</h2>${refuse}<table class="ptable${blocked?'':' same'}"><thead><tr><th>Plan</th><th>Holds</th><th class="num">Monthly · CAD</th><th class="num">Yearly · CAD</th><th>Your choice</th></tr></thead><tbody>${rows}</tbody></table></section>`;
+}
+function reduce(v,state){
+  if(state==='ending')return `<section class="section"><div class="ghost changed">“Reduce or cancel” is not shown while the plan is ending ${pin(`<b>Ask 3.</b> The plan is already cancelled, so the section has nothing left to offer. Showing a second “Keep” door here would state the status twice. The recommendation is to hide the section until the cancel is kept or the plan has ended. The other option is to keep the section with one sentence that points up to the Keep link.`,SRC.body+' ~347')}</div></section>`;
+  if(state==='movefree')return `<section class="section same"><h2>Reduce or cancel</h2><p>Cancelling suspends ${v.org}: ${v.offline} go offline. Your data is kept for 90 days.</p>${btn('Cancel and suspend '+v.org+'…','dtext')}</section>`;
+  const body=v===V.coach?'Cancelling turns off Premium tools. Basic tournament records stay available. Premium team data is kept for 365 days and comes back if you reactivate within that time.':`Cancelling suspends ${v.org}: ${v.offline} go offline. Your data is kept for 90 days. Reactivate within that time to restore the tools and records your plan allows.`;
+  return `<section class="section same"><h2>Reduce or cancel</h2><p>${body}</p>${btn(v===V.coach?'Cancel Premium…':'Cancel and suspend '+v.org+'…','dtext')}</section>`;
+}
+function billingPage(v,state,extraTop=''){
+  const head=`<div class="pagehead same"><div class="tile">▭</div><div>${v.eyebrow?'<div class="eb">Organization</div>':''}<h1>Plan &amp; billing</h1></div><span class="help">?</span></div>`;
+  const join=v===V.coach?`<div class="card section same"><h3>Part of a club?</h3><p>If your club runs on FieldLogicHQ, it can bring your team in.</p>${btn('Join a club','lime')}</div>`:'';
+  const incl=`<section class="section same"><h2>What's included</h2><ul class="includes"><li>Registration and payments</li><li>Schedules and brackets</li><li>Public tournament pages</li><li>Branding on your pages</li><li>Staff seats</li><li>PDF schedules</li></ul></section>`;
+  return head+extraTop+planCard(v,state)+changeTable(v,state)+join+incl+reduce(v,state);
+}
+
+// ── windows ──
+function win(title,body,foot,{q=false,cls=''}={}){return `<div class="window${q?' q':''} ${cls}"><div class="whead"><h2>${title}</h2><span class="close">×</span></div><div class="wbody">${body}</div><div class="wfoot">${foot}</div></div>`;}
+const stageW=w=>`<div class="scr wstage">${w}</div>`;
+const foot=(sentence,buttons)=>`<span class="sentence">${sentence}</span><div class="buttons">${buttons}</div>`;
+const ta=(label,help,req=false)=>`<div class="field"><label>${label}${req?' <span class="req">*</span>':''}</label><div class="ta">${req?'Why are you cancelling?':''}</div>${help?`<div class="help2">${help}</div>`:''}</div>`;
+
+// ── state ──
+const SEG={page:{v:'plus',w:'after'},cancel:{v:'stripe',w:'after'},keep:{v:'plain'},free:{v:'band'},op:{v:'record'},overdue:{v:'list'},mail:{v:'ends'}};
+function seg(tab,key,label,opts){return `<span>${label}</span><div class="seg" role="group" aria-label="${label}">${opts.map(([val,t])=>`<button type="button" data-seg="${tab}|${key}|${val}" aria-pressed="${SEG[tab][key]===val}">${t}</button>`).join('')}</div>`;}
+const WHEN=(tab)=>seg(tab,'w','Show',[['before','Today'],['after','Proposed']]);
+
+// ── 1 · billing page ──
+function tab1(){
+  const s=SEG.page, v=V[s.v], after=s.w==='after';
+  const body=billingPage(v,after?'ending':'today');
+  const name=v===V.coach?'Falcons U12':v.org;
+  const aside=after?`<p><b>${v.label}, cancelled on October 31, ends ${END}.</b></p><p>Everything else on the page is unchanged and fully working: payment method, usage and what’s included. The account itself stays open: site, payments and tournament creation.</p><p>Three things change: the plan card line, the change doors stepping aside, and the missing Reduce or cancel section. Each has a pin.</p><p>Use <b>Show only what differs</b> to grey out the rest.</p>`:`<p><b>Today.</b> Cancelling here suspends ${v===V.coach?'Premium':v.org} the moment the owner confirms, and Stripe cancels the subscription at once. Nothing is refunded. That is the time they paid for and lose.</p>${v===V.club?'<p>This club also has a move to Club waiting at renewal (the amber line). That line is the shape the proposal reuses.</p>':''}`;
+  return `<h2>The billing page while a cancel waits</h2><p class="intro">One whole screen, before and after, for each of the three billing pages that have a cancel door. The Coaches Portal and Premium are the same page today (one billing body), so they are drawn once, as the Premium coach.</p><div class="segs">${seg('page','v','Account',[['plus','Tournament Plus org'],['club','Club with a waiting move'],['coach','Premium coach']])}${WHEN('page')}</div>`+
+  fig(after?'Plan & billing · proposed':'Plan & billing · today',after?mk('RESTYLED',`The page keeps its structure. The plan card line, the change doors and the Reduce or cancel section change while a cancel waits. Nothing else does.`,SRC.body):mk('UNCHANGED','What ships today.',SRC.body),desk(body,{kind:v.kind,name}),aside);
+}
+
+// ── 2 · cancel window ──
+function cancelWin(kind,after){
+  const v=V.plus;
+  if(!after||kind==='nostripe'){
+    const lead=kind==='nostripe'&&after?`<div class="notice warn changed"><span class="ico">!</span><p>${ORG} is on free time with no card, so there is no paid period to wait for. It ends when you confirm.</p>${pin(`<b>No real Stripe subscription: the cancel stays immediate.</b> This covers comped accounts, Founding Season accounts and mock subscriptions. There is no paid period to honour, so the window is today’s, with one added sentence explaining why it ends now when other accounts wait. The build tests for a live subscription, not for a missing id, because mock ids are not empty.`,SRC.plan+' §3 “No REAL Stripe subscription”')}</div>`:'';
+    return win(`Cancel and suspend ${ORG}?`,lead+`<div class="notice bad"><span class="ico">▲</span><p>${ORG} is suspended the moment you confirm: ${v.offline} go offline, and families opening your pages will see that they aren’t available.</p></div><p>Your data is kept for 90 days. Reactivate within that time to restore the tools and records your plan allows.</p><p>2 tournaments move into the archive until then.</p><h3>What goes offline</h3><ul><li>Tournament pages</li><li>Registration</li><li>Online payments</li></ul><h3>Online payments stop now</h3><p>Families can’t pay online from the moment you confirm.</p>${ta('Why are you cancelling?','For your records and ours. You can leave it empty.')}`,foot('Your data is kept for 90 days.',btn('Keep Tournament Plus')+btn('Cancel and suspend','danger')));
+  }
+  if(kind==='trial')return win('Cancel Tournament Plus?',`<div class="notice warn changed"><span class="ico">!</span><p>Your trial runs until November 13, 2026. ${ORG} stays open until then. Your card is not charged.</p>${pin(`<b>A cancel during a trial ends at the trial’s end.</b> No money has been paid, so no refund is involved, but the owner still keeps the trial days they were given. The date shown is the trial end, not a renewal date.`,SRC.plan+' §3 · “A trialing subscription ends at trial end”')}</div><p>On November 13, 2026 it is suspended: ${v.offline} go offline. Your data is kept for 90 days after that.</p><p>You can keep your plan any time before November 13.</p>${ta('Why are you cancelling?','For your records and ours. You can leave it empty.')}`,foot('Ends November 13, 2026.',btn('Keep Tournament Plus')+btn('Cancel on November 13','danger')));
+  const move=kind==='move'?`<div class="callout changed"><p style="margin:0">You chose to move to Club on ${ENDS}. Cancelling sets that move aside. Keep your plan before then and the move to Club comes back.</p>${pin(`<b>G1, said in the window.</b> Stripe will not cancel a subscription that has a waiting move on it, so the cancel has to release the move first. The owner is told the move is set aside and comes back if they keep the plan. The page and the Keep window (tab 3) say the same thing.`,SRC.plan+' §3a G1')}</div>`:'';
+  const o=kind==='move'?CLUB:ORG, lab=kind==='move'?'Club · Association':'Tournament Plus', off=kind==='move'?V.club.offline:v.offline;
+  return win(`Cancel ${lab}?`,`<div class="notice warn changed"><span class="ico">!</span><p>${o} stays open until ${END}, the end of the period you paid for. Nothing more is charged and nothing is refunded.</p>${pin(`<b>Red becomes amber, and the first sentence is the date.</b> Today the window opens on a red warning that the account is suspended the moment the owner confirms. That is no longer true, so the first thing the owner reads is how long they keep everything. The suspension is still stated plainly in the next line, so nobody is surprised on the day.`,SRC.words+' · cancel.orgWarning')}</div>${move}<p>On ${END} it is suspended: ${off} go offline. Your data is kept for 90 days after that, until ${KEPT_UNTIL}.${pin(`<b>The retention clock starts on the end date, not the click.</b> “Kept for 90 days” now counts from ${END}. The window, the email and the operator record all show the same day, using the product’s one date format (G4).`,SRC.plan+' §3 “Retention clock”, §3a G4')}</p><p>You can keep your plan any time before ${ENDS}.</p><h3>What goes offline on ${ENDS}</h3><ul><li>${kind==='move'?'Rep teams and tryouts':'Tournament pages'}</li><li>${kind==='move'?'Families and accounting':'Registration'}</li><li>Online payments</li></ul><h3>Online payments stop on ${END}</h3><p>Families can keep paying online until then.</p>${ta('Why are you cancelling?','For your records and ours. You can leave it empty.')}`,foot(`Ends ${END}.`,btn('Keep '+lab)+`<span class="btn danger changed">Cancel on ${ENDS}</span>`));
+}
+function tab2(){
+  const s=SEG.cancel, after=s.w==='after';
+  const label={stripe:'A paid plan',move:'A paid plan with a cheaper move waiting',nostripe:'No paid period (free time, Founding, comp)',trial:'During a trial'}[s.v];
+  const aside=!after?`<p><b>Today</b>, every case gets this window. The account is suspended at the click and Stripe cancels at once.</p><p>The data clock starts that day.</p>`:s.v==='nostripe'?`<p><b>Unchanged on purpose.</b> With no paid period there is nothing to wait for. One sentence says why this account ends now.</p>`:`<p><b>${label}.</b> The window keeps its form, its foot and its reason box. Its words now describe a cancel that waits.</p><p>The red button says the date (“Cancel on ${ENDS}”), so the owner knows what they are confirming without rereading.</p><p>The busy label becomes “Cancelling…” (today it borrows the downgrade’s “Applying…”).</p>`;
+  return `<h2>The owner’s Cancel window</h2><p class="intro">Four cases. Only the case with no paid period keeps ending at the click.</p><div class="segs">${seg('cancel','v','Case',[['stripe','Paid plan'],['move','Cheaper move waiting'],['nostripe','No paid period'],['trial','During a trial']])}${WHEN('cancel')}</div>`+
+  fig(`Cancel window · ${label} · ${after?'proposed':'today'}`,after&&s.v!=='nostripe'?mk('RESTYLED','The same KitDialog form window (520px, sentence left in the foot, actions right). Its words and its first notice change.',SRC.dialog):mk('UNCHANGED','Today’s window.',SRC.words+' · cancel.*'),stageW(cancelWin(s.v,after)),aside);
+}
+
+// ── 3 · keep ──
+function tab3(){
+  const s=SEG.keep;let body,aside,title,tag;
+  if(s.v==='plain'){title='Keep window · plain';tag=mk('NEW','A new question window (416px). It opens from the Keep link on the plan card, from the email’s button, and from the operator’s Keep the plan door.',SRC.dialog);
+    body=stageW(win('Keep Tournament Plus?',`<p>${ORG} stays on Tournament Plus and renews on ${END} at $X CAD / month (example).</p><p>Nothing else changes.</p>`,foot('',btn('Not now')+btn('Keep Tournament Plus','lime')),{q:true}))+`<div style="height:14px"></div><div class="scr" style="width:820px;padding:16px;border-radius:10px;border:1px solid var(--line2)"><div class="notice good"><span class="ico">✓</span><p>${ORG} stays on Tournament Plus.</p></div><span class="hint">The page after Keep: today’s “kept” notice, word for word ${mk('UNCHANGED','The existing words for undoing a waiting move: “{Org} stays on {Plan}.” The plan card returns to “Renews November 30, 2026” and the Active chip.',SRC.words+' · plan.kept')}</span></div>`;
+    aside=`<p><b>Why a window, not one click (Ask 4).</b> Keeping the plan commits the owner to another charge. The window states the renewal date and the price before they confirm. One click would be faster, but it would charge a card without the owner seeing the amount.</p><p>Plan §1.4 calls this door “Keep my plan”. The product already says <b>Keep {Plan}</b> for the same undo, so the drawing uses that (Ask 2).</p>`;}
+  if(s.v==='move'){title='Keep window · puts the cheaper move back (G1)';tag=mk('NEW','The Keep window when a cheaper move was set aside by the cancel.',SRC.plan+' §3a G1');
+    body=stageW(win('Keep Club · Association?',`<p>${CLUB} stays on Club · Association until ${END}.</p><p>Then it renews as <b>Club</b>, the move you chose on October 12, at $X CAD / month (example).</p>`,foot('',btn('Not now')+btn('Keep and renew as Club','lime')),{q:true}));
+    aside=`<p><b>The price they had chosen is the price they renew at.</b> The second sentence names the cheaper plan and its charge, so the owner can see they are not being moved back up.</p><p>Behind the button: Stripe is told to renew, then the move is scheduled again through the same path as any move down. Nothing is built by hand.</p>`;}
+  if(s.v==='fail'){title='After Keep · the move could not be put back';tag=mk('NEW','A new page notice for the one failure G1 names.',SRC.plan+' §3a G1');
+    body=desk(billingPage(V.club,'kept-fail',`<div class="notice warn changed"><span class="ico">!</span><p>Your plan is kept and renews on ${END} as Club · Association. The move to Club couldn’t be put back. Choose it again under Change plan, or it renews at the Club · Association price.</p>${pin(`<b>Never a silent renewal at the higher price.</b> If the plan is kept but the move cannot be rebuilt (for example the plan was retired), the owner is told plainly and the door to choose the move again is right below. The notice stays until they leave the page, the same as other errors.`,SRC.plan+' §3a G1')}</div>`),{kind:'club',name:CLUB});
+    aside=`<p><b>The rare case.</b> The keep worked, so the account is safe and renews. Only the cheaper move was lost.</p><p>The notice uses an amber edge, not red, because nothing has gone wrong with the account itself. The owner just has one choice to make again.</p>`;}
+  return `<h2>Keep {Plan} · the undo</h2><p class="intro">Shown while a cancel or a move down waits. It is offered to the owner and to our operators.</p><div class="segs">${seg('keep','v','Case',[['plain','Plain'],['move','Puts a cheaper move back'],['fail','The move could not come back']])}</div>`+fig(title,tag,body,aside);
+}
+
+// ── 4 · moves to free ──
+function freeBand(edge=false){
+  if(edge)return `<div class="callout warn changed"><div class="eyebrow">On ${END}</div><p style="margin:0 0 6px">Spring Classic 2027 was deleted, so choose the tournament you keep. If you don’t choose by ${ENDS}, we keep Winter Cup 2027, your newest.</p><button type="button" class="link">Choose the tournament you keep</button>${pin(`<b>G2’s open edge, proposed (Ask 8).</b> If the kept tournament is deleted or archived during the wait, the band asks again. If the date passes with no choice, the newest Draft or Active tournament is kept, and the band says so ahead of time, so nothing happens that the owner was not told about.`,SRC.plan+' §3a G2')}</div>`;
+  return `<div class="callout changed"><div class="eyebrow">On ${END}</div><p style="margin:0 0 6px">You keep <b>Spring Classic 2027</b>. Fall Invitational 2026 and Winter Cup 2027 are archived then and kept for 90 days, so they can come back.</p><button type="button" class="link">Change which tournament you keep</button>${pin(`<b>G2 · the band names what stays and what goes.</b> While the move waits, the account keeps Tournament Plus, so new tournaments can be created. Winter Cup 2027 was created after the owner chose, and it is listed here. On the date, every tournament not kept is archived with restore records, recoverable for the usual 90 days. The door re-opens the same choice the owner made in the downgrade window.`,SRC.plan+' §3a G2')}</div>`;
+}
+function tab4(){
+  const s=SEG.free;let title,tag,body,aside;
+  if(s.v==='band'||s.v==='edge'){title=s.v==='edge'?'Plan & billing · the kept tournament is gone':'Plan & billing · a move to free waits';tag=mk('NEW','A callout under the plan card, only while a move to the free plan waits.',SRC.body);
+    const pageBody=`<div class="pagehead same"><div class="tile">▭</div><h1>Plan &amp; billing</h1><span class="help">?</span></div>${planCard(V.plus,'movefree')}${freeBand(s.v==='edge')}${changeTable(V.plus,'movefree')}${reduce(V.plus,'movefree')}`;
+    body=desk(pageBody,{kind:'admin'});
+    aside=`<p><b>Today</b> a downgrade to the free plan takes effect at the click: tournaments are archived and the tools stop the same minute.</p><p><b>Proposed</b>: the existing amber “Moves to Tournament on…” line, plus one white callout below it with an olive edge. It says which tournament stays and which are archived on the date.</p><p>The Tournament row in Change plan shows the existing “From November 30” chip. Cancel stays offered, because a cancel can replace a waiting move.</p>`;}
+  if(s.v==='window'){title='Downgrade window · proposed';tag=mk('RESTYLED','Today’s Downgrade window. The first line and the date words change. The keep list stays the same checkbox list.',SRC.words+' · downgrade.*');
+    body=stageW(win('Downgrade to Tournament?',`<p class="changed">This takes effect on ${END}, the end of the period you paid for. Until then you keep every Tournament Plus tool. Nothing is credited.${pin(`<b>The one sentence that changes most.</b> Today it reads “This takes effect today and ends your subscription. Nothing is credited for the rest of the current period.” The no-credit part stays true. “Today” is no longer true.`,SRC.words+' · downgrade.when')}</p><p>One tournament at a time: a draft or an active event holds the slot, and a finished one stays online.</p><p>In use now: 3.</p><p>Moving to Tournament turns off these tools that come only with Tournament Plus: branding, staff seats and PDF schedules. Saved branding is kept.</p><p>Choose 1 tournament to keep active. On ${ENDS} the rest move to archive retention for 90 days.</p><div class="choices"><div class="choice"><span class="box on">✓</span>Spring Classic 2027<small>Draft</small></div><div class="choice"><span class="box"></span>Fall Invitational 2026<small>Active</small></div></div><h3>Online payments stop on ${END}</h3>${ta('Why are you downgrading?','For your records and ours. You can leave it empty.')}`,foot(`Moves on ${END}.`,btn('Keep Tournament Plus')+btn('Downgrade on '+ENDS,'lime'))));
+    aside=`<p><b>The same window, with words that wait.</b> The keep list is today’s checkbox list. Confirm stays off until exactly one is ticked.</p><p>The green button names the date, the same way the Cancel window does.</p>`;}
+  if(s.v==='change'){title='Change which tournament you keep';tag=mk('NEW','A form window (520px) that re-runs the downgrade’s own keep choice and updates the waiting move. Nothing else changes.',SRC.plan+' §3a G2');
+    body=stageW(win('Change which tournament you keep',`<p>On ${END}, ${ORG} moves to Tournament, which holds 1 tournament at a time. Choose the one that stays active. The rest are archived then and kept for 90 days.</p><div class="choices"><div class="choice"><span class="box"></span>Spring Classic 2027<small>Draft · your choice so far</small></div><div class="choice"><span class="box"></span>Fall Invitational 2026<small>Active</small></div><div class="choice"><span class="box on">✓</span>Winter Cup 2027<small>Draft · added October 28</small></div></div>`,foot(`Nothing changes until ${ENDS}.`,btn('Close')+btn('Save choice','lime'))));
+    aside=`<p><b>Tournaments created during the wait are in the list.</b> Winter Cup 2027 did not exist when the owner first chose. The small grey line shows which one was chosen before.</p><p>Saving changes only the waiting choice. No tournament moves until the date.</p>`;}
+  return `<h2>Moves to the free plan · Stage 2</h2><p class="intro">Tournament Plus → Tournament, the only paid-to-free move with a screen. A paid move to a cheaper paid plan already waits for renewal today, so it is not drawn.</p><div class="segs">${seg('free','v','Show',[['band','The page'],['window','Downgrade window'],['change','Change which you keep'],['edge','Kept one is gone']])}</div>`+fig(title,tag,body,aside);
+}
+
+// ── 5 · operator ──
+function recordHead(chips,extra=''){return `<span class="back">← Clubs &amp; portals</span><div class="recordhead"><h1>${ORG}</h1><span class="chip quiet">Tournament Plus</span>${chips}</div><div class="inforow"><span>Owner sam@example.org · <span class="code">riverside-minor-ball</span> · Created March 4, 2025</span><span class="sp"></span><span class="link">Email the owner</span><span class="link">Add a note</span></div>${extra}`;}
+function rband(last){return `<div class="rband"><div><div class="k">Members</div><div class="v">4</div></div><div><div class="k">Tournaments</div><div class="v">3</div></div><div><div class="k">Free time</div><div class="v">None</div></div><div><div class="k">Seats</div><div class="v">2 of 3</div></div>${last}</div>`;}
+function tab5(){
+  const s=SEG.op;let title,tag,body,aside;
+  if(s.v==='record'){title='The org record · a cancel waits';tag=mk('RESTYLED','The record keeps its header, info row, band and tabs. A callout and the band’s last cell change.',SRC.record);
+    const b=recordHead(`<span class="chip">Active</span>`,`<div class="callout warn changed"><div class="eyebrow">Ending</div><p style="margin:0">Ends ${END}, at the period end. Cancelled by the owner on October 31, 2026: “We’re running one event next year.”</p><div class="buttons">${btn('Keep the plan','sm')}${btn('End now…','sm dtext')}</div>${pin(`<b>Who asked, when, why, and the two doors.</b> The callout uses the console’s own amber-edged callout. It names who cancelled (owner, operator, or “in Stripe’s billing portal”), the day, and the owner’s reason when they gave one. <b>Keep the plan</b> opens the same Keep window the owner sees, with the console’s required Why and the “email the owner” box. <b>End now…</b> opens tab 5’s red window. That is the only immediate door (Ask 5).`,SRC.record+' · '+SRC.plan+' §1.5')}</div>`)+rband(`<div class="changed"><div class="k">Ends</div><div class="v">${END}</div><div class="n">cancelled · from Stripe</div></div>`)+`<div class="rtabs"><span>Story</span><span class="on">Money</span><span>Access</span><span>People &amp; tournaments</span></div><div class="same"><div class="callout"><p style="margin:0">Stripe and our record agree.</p></div><div class="rband" style="grid-template-columns:repeat(3,1fr)"><div><div class="k">Paid, last 12 months</div><div class="v">$X · example</div></div><div><div class="k">Refunded</div><div class="v">$0</div></div><div><div class="k">Next charge</div><div class="v">None</div><div class="n">it ends at the period end ${mk('UNCHANGED','The Money tab already reads Stripe’s cancel-at-period-end and says “it ends at the period end”. Nothing to build here.',SRC.money)}</div></div></div></div>`;
+    body=desk(b,{kind:'console',name:'Operator'});
+    aside=`<p><b>The header chip keeps Stripe’s status</b> (Active). The callout, not the chip, says it is ending. The console shows what Stripe says, and the Money tab already compares the two.</p><p>The band’s last cell is today’s “Renews / Trial ends / Ended” cell. It gains an <b>Ends</b> wording while a cancel waits.</p>`;}
+  if(s.v==='cancel'){title='Operator Cancel window · proposed';tag=mk('RESTYLED','The console’s record window, with the same fields: sentence box, what stops, email-the-owner box, required Why. The words change, and one quiet link leads to End now.',SRC.record+' ~1020-1064');
+    body=stageW(win(`Cancel the subscription for ${ORG}`,`<div class="sbox changed">Stripe stops charging ${ORG} after ${END}, the end of the period it paid for. Until then everything stays open. On that day its 3 tournaments are archived and kept for 90 days. The owner can keep the plan until then, and so can you.${pin(`<b>“This cannot be put back” is gone from the default.</b> Today’s sentence ends with “This cannot be put back: the owner would have to buy again.” A waiting cancel can be put back until the date, so plan §1.4 drops the line here. It stays on End now.`,SRC.record+' ~1034; '+SRC.plan+' §1.4')}</div><h3>What stops on ${ENDS}</h3><ul><li>Tournament pages and registration</li><li>Online payments</li></ul><div class="check"><span class="box"></span><span>Email the owner that the plan ends on ${END} (this reaches an inbox and cannot be taken back)</span></div>${ta('Why','',true)}<p style="font-size:13px">Fraud, abuse or a chargeback? <button type="button" class="link dlink">End it today instead…</button>${pin(`<b>End now is never the default and never side by side with Cancel (Ask 5).</b> It sits as a quiet red link inside the Cancel window and on the waiting callout, so an operator reaches it only after reading what the normal cancel does.`,SRC.plan+' §1.5')}</p>`,foot(`Reaches Stripe. Can be kept until ${ENDS}.`,btn('Keep it')+btn('Cancel at the period end','danger'))));
+    aside=`<p><b>The operator’s default is the same waiting cancel the owner gets.</b> The “email the owner” box is still off by default, as today.</p><p>The foot no longer says “Never offered as Put it back”, because this one can be.</p>`;}
+  if(s.v==='endnow'){title='End now · the immediate door';tag=mk('NEW','A new red record window: today’s immediate path, behind its own window, for operators only.',SRC.plan+' §1.5, §3 “Operator doors”');
+    body=stageW(win(`End the plan for ${ORG} today`,`<div class="sbox bad">This ends the plan today, 30 days before the period it paid for is over. Nothing is refunded. ${ORG} is suspended now, and its 3 tournaments are archived and kept for 90 days. <b>This cannot be put back</b>: the owner would have to buy again.</div><p class="changed" style="font-size:13px">It was already set to end on ${END}. This finishes it today instead.${pin(`<b>(c) in plan §3: End now finishes the waiting cancel.</b> This line shows only when a cancel was waiting. It tells the operator they are not starting a second cancel, and the build updates the waiting record instead of adding another.`,SRC.plan+' §3 (c)')}</p><h3>What stops now</h3><ul><li>Tournament pages and registration</li><li>Online payments</li></ul><div class="check"><span class="box"></span><span>Email the owner that the plan has ended (this reaches an inbox and cannot be taken back)</span></div><div class="field"><label>Why end it today <span class="req">*</span></label><div class="ta">Fraud, abuse, a chargeback…</div></div>${pin(`<b>Ask 6 · the reason.</b> Plan §5 recommends a required reason. Every console record window already requires a typed Why, so this one does too. The other option is a picker (fraud, abuse, chargeback, other) plus text, which the money reports could count.`,SRC.plan+' §5')}`,foot('Reaches Stripe. Never offered as Put it back.',btn('Keep it')+btn('End the plan now','danger'))));
+    aside=`<p><b>Today’s behaviour, kept exactly, behind a red window.</b> Platform admin only. The owner never sees this.</p><p>The first sentence counts the days they lose, so the operator sees the cost of the shortcut.</p>`;}
+  return `<h2>Our operators’ side</h2><p class="intro">The platform-admin org record, its Cancel window, and the new End now.</p><div class="segs">${seg('op','v','Show',[['record','The record'],['cancel','Cancel window'],['endnow','End now window']])}</div>`+fig(title,tag,body,aside);
+}
+
+// ── 6 · overdue ──
+function tab6(){
+  const s=SEG.overdue;let title,tag,body,aside;
+  if(s.v==='list'){title='Retention page · endings Stripe hasn’t finished';tag=mk('NEW','A new section at the top of the retention page. It is empty, and hidden, nearly every day.',SRC.retention);
+    const b=`<div class="pagehead"><h1>Retention queue</h1><span class="spacer"></span>${btn('Process expiry','lime')}</div><section class="changed" style="padding:2px"><h2>Endings Stripe hasn’t finished <span class="chip bad">1</span></h2><p class="hint" style="margin:0 0 10px">A plan that should have ended more than 3 days ago and is still open. The daily job finds these. Open one to finish it.${pin(`<b>G3 · found by the existing daily job, acted on by a person.</b> The overdue check is a new step of the product’s existing daily job. It looks for a waiting change more than 3 days past its date, because Stripe retries a failed message for up to three days. It never acts by itself. It lists the account here and on its record, and an operator finishes it.`,SRC.plan+' §3a G3')}</p><table class="qtable"><thead><tr><th>Org</th><th>Plan</th><th>Should have ended</th><th class="num">Days over</th><th>Asked by</th><th></th></tr></thead><tbody><tr><td class="nm">${ORG}</td><td>Tournament Plus · cancel</td><td>October 27, 2026</td><td class="num">4</td><td>The owner</td><td>›</td></tr></tbody></table>${pin(`<b>No buttons in the rows.</b> This follows the portal’s table rule: the name is the link and one chevron opens the record, where the door lives. The retention table below still has its “+30 days” button in each row. That is existing drift, listed on the Asks tab.`,'docs/agents/design/TABLE_AND_LIST_STANDARD.md')}</section><section class="section same"><div class="callout warn"><b>Records approaching purge</b><p class="hint" style="margin:2px 0 0">Sends 14-day warnings and moves expired records into pending purge.</p></div><p class="hint">12 records</p><table class="qtable"><thead><tr><th>Org</th><th>Record</th><th>Type</th><th>State</th><th>Retention deadline</th><th class="num">Days</th></tr></thead><tbody><tr><td class="nm">Lakeside Hockey</td><td>Fall Cup 2025</td><td>Tournament</td><td><span class="code">retained_inactive</span></td><td>November 12, 2026</td><td class="num">12</td></tr></tbody></table></section>`;
+    body=desk(b,{kind:'console',railKind:'console-ret',name:'Operator'});
+    aside=`<p><b>Rare by design.</b> It shows only when Stripe’s end-of-period message never reached us. The section is not drawn when the list is empty.</p><p>The record of a listed account carries the same warning and the door (next).</p>`;}
+  if(s.v==='record'){title='The org record · overdue';tag=mk('NEW','A red callout replaces the amber “Ending” callout once the date is more than 3 days past.',SRC.record);
+    const b=recordHead(`<span class="chip">Active</span>`,`<div class="callout bad changed"><div class="eyebrow">Overdue</div><p style="margin:0">This plan should have ended on October 27, 2026 and is still open. Stripe’s end-of-period message never reached us.</p><div class="buttons">${btn('Finish this ending now','sm dtext')}</div>${pin(`<b>The record is suspect, not the account.</b> The callout says what we know: our record says it should have ended, and nothing arrived. The door reads Stripe before it changes anything (next tab).`,SRC.plan+' §3a G3')}</div>`)+rband(`<div class="changed"><div class="k">Should have ended</div><div class="v">October 27, 2026</div><div class="n">4 days over · not confirmed</div></div>`);
+    body=desk(b,{kind:'console',name:'Operator'});
+    aside=`<p>An operator can reach this from the list or from the club’s own record.</p>`;}
+  if(s.v==='finish'){title='Finish this ending now';tag=mk('NEW','A question-style record window. It reads Stripe first, then does only what Stripe confirms.',SRC.plan+' §3a G3');
+    body=stageW(win('Finish this ending now?',`<p>We read Stripe first.</p><p>If Stripe has ended the subscription, ${ORG} is suspended the way it would have been on October 27, 2026. Its 3 tournaments are archived and kept until January 25, 2027, and the owner gets the “cancelled” email.${pin(`<b>Ask 7 · which day starts the clock.</b> The plan says the retention clock starts at the end date, so an overdue ending counts from October 27, not from today. That loses 4 days of the 90. The other option is to count from the day it is finished.`,SRC.plan+' §3 “Retention clock”')}</p><p>If Stripe says the subscription is still live, nothing changes.</p><div class="field"><label>Why <span class="req">*</span></label><div class="ta"></div></div>`,foot('Reads Stripe before it changes anything.',btn('Not now')+btn('Read Stripe and finish','danger')),{q:true}));
+    aside=`<p><b>It never trusts our record over Stripe.</b> It runs the same end-of-period steps the missed message would have run, and only if Stripe confirms.</p>`;}
+  if(s.v==='results'){title='What the operator sees after';tag=mk('NEW','Two outcomes, shown in the record’s existing notice box.',SRC.record+' ~461-466');
+    body=`<div class="scr" style="width:820px;padding:18px;border-radius:10px;border:1px solid var(--line2)"><div class="notice good"><span class="ico">✓</span><p><b>Finished.</b> Stripe ended this subscription on October 27, 2026. ${ORG} is suspended and its 3 tournaments are archived until January 25, 2027. The owner was emailed.</p></div><div class="notice warn"><span class="ico">!</span><p><b>Nothing changed.</b> Stripe says this subscription is still live and renews November 27, 2026. Our record is wrong, not the account. Check the Money tab, where Stripe and our record are compared.</p></div></div>`;
+    aside=`<p>The second outcome changes nothing on purpose. A live Stripe subscription means the customer is still being charged, so ending it from our side would be the wrong fix.</p>`;}
+  return `<h2>The safety net · an ending Stripe never told us about</h2><p class="intro">A missed message must not leave a paid plan running free, or a cancelled one still being charged.</p><div class="segs">${seg('overdue','v','Show',[['list','Retention page'],['record','The record'],['finish','Finish window'],['results','After']])}</div>`+fig(title,tag,body,aside);
+}
+
+// ── 7 · emails ──
+function mail(subject,inner){return `<div class="mailstage"><div class="subj"><b>Subject</b>${subject}</div><div class="mail"><div class="wm">FieldLogic<span>HQ</span></div>${inner}</div></div>`;}
+function tab7(){
+  const s=SEG.mail;let title,body,aside;
+  if(s.v==='ends'){title='“Your plan ends on {date}” · sent at the click';
+    body=mail(`Your Tournament Plus plan ends on ${END}`,`<h1>Your plan ends on ${END}</h1><p>You cancelled <b>Tournament Plus</b> for <b>${ORG}</b> on October 31, 2026. Everything stays open until ${END}, the end of the period you paid for. Nothing more is charged.</p><div class="mp"><b class="t">On ${END}</b>${ORG} is suspended and its 3 tournaments are archived. Your data is kept until <b>${KEPT_UNTIL}</b>, and everything comes back if you resubscribe before then.</div><p>Changed your mind? Keep your plan any time before ${ENDS}.</p><span class="mb">Keep Tournament Plus</span><p class="fine">We’ll remind you seven days before it ends.</p>`);
+    aside=`<p><b>One email per waiting cancel, whichever door it came through (G6 a).</b> The first sentence changes with the door:</p><p>owner: “You cancelled…” · operator: “We cancelled… at your request” (only when the operator ticked the box) · Stripe’s billing portal: “You cancelled in the billing portal…”.</p><p>The button opens Plan &amp; billing with the Keep window ready.</p><p>Built on the shipped warm email: white card, text wordmark, one lime button, one grey-edged panel.</p>`;}
+  if(s.v==='kept'){title='“Your plan will renew” · sent when they keep it';
+    body=mail(`Tournament Plus will renew on ${END}`,`<h1>Tournament Plus stays on</h1><p>You kept <b>Tournament Plus</b> for <b>${ORG}</b>. It renews on ${END} at $X CAD / month (example). Nothing else changes.</p><span class="mb">Open Plan &amp; billing</span>`);
+    aside=`<p><b>Short on purpose (G6 b).</b> It confirms the charge that is coming back.</p>`;}
+  if(s.v==='keptmove'){title='Kept, renewing on the cheaper plan (G1)';
+    body=mail(`${CLUB} will renew as Club on ${END}`,`<h1>Your plan stays on</h1><p>You kept your plan for <b>${CLUB}</b>. Club · Association runs until ${END}. Then it renews as <b>Club</b>, the move you chose on October 12, at $X CAD / month (example).</p><span class="mb">Open Plan &amp; billing</span>`);
+    aside=`<p>The same email, naming the cheaper plan and its charge, so the owner can see it matches what they chose.</p>`;}
+  if(s.v==='seven'){title='Seven days before · the reminder';
+    body=mail(`Your Tournament Plus plan ends in 7 days`,`<h1>7 days left on Tournament Plus</h1><p>Your <b>Tournament Plus</b> plan for <b>${ORG}</b> ends on ${END}. Until then everything stays open.</p><div class="mp"><b class="t">On ${END}</b>${ORG} is suspended and its 3 tournaments are archived. Your data is kept until <b>${KEPT_UNTIL}</b>.</div><span class="mb">Keep Tournament Plus</span>`);
+    aside=`<p><b>Covers the forgetting (G6 c, plan §5).</b> An annual plan can wait up to 11 months between the click and the end.</p><p>Sent by the same daily job, once per waiting cancel. It is skipped if the plan was kept, or if the cancel was made with less than seven days left.</p><p>No “trial ending, add a card” email is sent while a cancel waits (G5).</p>`;}
+  const tag=mk('NEW','A new email on the shipped warm layout. Each gets a template key in the platform-admin email list and in the email preview page.',SRC.email);
+  return `<h2>The emails</h2><p class="intro">Three new emails. The “cancelled” email on the end date is unchanged, except that its data date now counts from the end date.</p><div class="segs">${seg('mail','v','Email',[['ends','Ends on'],['seven','7 days before'],['kept','Kept'],['keptmove','Kept, cheaper move']])}</div>`+fig(title,tag,body,aside);
+}
+
+// ── 8 · phone ──
+function tab8(){
+  const page=`<div class="scr phone"><span class="cap">draft words · 390px</span>${strip('coach','Falcons U12')}<div class="pcontent"><div class="pagehead"><div class="tile">▭</div><h1>Plan &amp; billing</h1><span class="help">?</span></div>${planCard(V.coach,'ending',true)}<section class="section"><h2>Change plan</h2><div class="callout warn"><p style="margin:0">Your plan ends on ${END}. Keep Premium first, then change it.</p></div></section></div><div class="pbar"><span>Home</span><span>Schedule</span><span>Team</span><span>Money</span><span class="on">More</span></div></div>`;
+  const w=`<div class="scr phone"><span class="cap">draft words · the Cancel window fills the screen</span><div class="pwin"><div class="whead"><span class="close">←</span><h2>Cancel Premium?</h2></div><div class="wbody"><div class="notice warn"><span class="ico">!</span><p>Premium stays on until ${END}, the end of the period you paid for. Nothing more is charged and nothing is refunded.</p></div><p>On ${END} Premium tools stop. Premium team data is kept for 365 days after that, until November 30, 2027. Basic tournament records stay available.</p><p>You can keep Premium any time before ${ENDS}.</p><div class="field"><label>Why are you cancelling?</label><div class="ta"></div><div class="help2">For your records and ours. You can leave it empty.</div></div></div><div class="wfoot"><span class="sentence">Ends ${END}.</span><div class="buttons">${btn('Keep Premium')}${btn('Cancel on '+ENDS,'danger')}</div></div></div></div>`;
+  return `<h2>On a phone</h2><p class="intro">Coaches run Premium from their phones, so the Premium coach is drawn at 390px. Open this drawing on a real phone to judge the Keep link’s size.</p>`+fig('Premium coach · phone',mk('RESTYLED','The phone billing page and the full-screen form window, unchanged in layout. Only the words and the plan card line change.',SRC.body+' · '+SRC.dialog),page+w,`<p>The phone page stacks the plan card. The Keep door becomes the full-width lime button (pin on the card). The change doors step aside with the same sentence.</p><p>The window keeps its foot: the sentence on its own line, the two buttons on the right.</p>`,{row:true});
+}
+
+// ── 9 · asks ──
+const ASKS=[
+ ['Where a waiting cancel shows on the billing page','A · On the plan card: the existing amber “Moves to… / Keep…” line becomes “Ends on {date}… Keep {Plan}”, and the chip turns to amber “Ending”.','B · A page-wide amber notice at the top as well as the plan card line.','A uses the shape the product already has for a waiting change, and states the date once. The plan card is already the first thing on the page.'],
+ ['What the undo door is called','A · “Keep {Plan}”: Keep Tournament Plus, Keep Premium, Keep Club · Association, as the product already says for undoing a waiting move.','B · “Keep my plan”, as plan §1.4 names it.','One spelling rule: the same undo already ships as “Keep {Plan}”. B would create a second name for one action.'],
+ ['The Reduce or cancel section while a cancel waits','A · Hidden until the cancel is kept or the plan ends.','B · Shown, with one sentence that points up to the Keep link.','There is nothing left to reduce or cancel, and A avoids saying the status twice.'],
+ ['Keep: a window or one click','A · A small question window that names the renewal date and the charge.','B · One click and a notice.','Keeping commits a card to another charge. A shows the amount first, and G1 needs a place to say “renews as Club”.'],
+ ['Where End now lives (operators only)','A · A quiet red link inside the Cancel window, and on the waiting callout of the record.','B · Its own door on the record’s Access tab, always shown.','A means an operator always reads what the normal cancel does before reaching the shortcut.'],
+ ['End now’s reason','A · A required typed Why, like every console record window.','B · A required picker (fraud, abuse, chargeback, other) plus text.','A matches the console. B is better only if you want the money reports to count End now reasons.'],
+ ['When the data clock starts for an overdue ending','A · From the day it should have ended (October 27 in the drawing).','B · From the day an operator finishes it.','A keeps one rule (the clock starts at the end date). B gives back the days lost to our missed message. I lean A, but this is a fairness call.'],
+ ['The kept tournament disappears during a move to free (G2 edge)','A · The band asks again. If the date passes with no choice, the newest Draft or Active tournament is kept, as the band says.','B · Nothing is archived until they choose.','B leaves a free account over its limit with no end date. A tells them ahead of time what will happen.'],
+ ['The Keep door on a phone','A · A full-width 44px lime “Keep {Plan}” button under the line, phones only. The desk keeps the olive link.','B · The same olive text link as on the desk.','A is the shape you already ruled for “Keep Premium” on a phone when free time ends, and it meets the 44px tap floor. B keeps one shape on every screen. Judge it on a real phone. (Changed in the design pass: the first drawing recommended the link.)']
+];
+function tab9(){
+  return `<h2>Asks</h2><p class="intro"><b>Ruled October 31, 2026: all nine as recommended (A). These drawings are approved for Stage 1.</b></p><p class="intro">Only the choices these drawings leave open. The ruling itself (end at renewal, no refund, Keep on both doors, End now for operators, the no-paid-period case ends at once) is settled and not asked again. Tap an option to choose it, then copy your answers back into the chat.</p><div class="answers"><div class="ah"><b>Your answers</b><button type="button" class="abtn" id="copy">Copy my answers</button><button type="button" class="abtn" id="recs">Choose every recommendation</button></div><textarea id="ans" readonly aria-label="Your answers"></textarea></div>`+
+  ASKS.map((a,i)=>`<article class="ask"><h3>${i+1}. ${a[0]}</h3><p class="why">${a[3]}</p><div class="opts"><button type="button" class="opt rec" data-ask="${i+1}" data-opt="A" aria-pressed="${ANS[i+1]==='A'}">${a[1]}<span class="t">Recommended</span><span class="you">Your choice</span></button><button type="button" class="opt" data-ask="${i+1}" data-opt="B" aria-pressed="${ANS[i+1]==='B'}">${a[2]}<span class="you">Your choice</span></button></div></article>`).join('')+
+  `<h3>What the design pass changed · proposals until you rule</h3><ol class="reviewlist">
+  <li><b>Change doors are absent, not greyed out, while a cancel waits.</b> The product already knows before the click that a change cannot go through, and the standing rule is absent with one line saying why. The prices stay readable.</li>
+  <li><b>No amber tinted notice.</b> The product’s page notice has only a green and a red tone, and tinted panels are retired. Every “stays open until…” and “nothing changed” message is now the white callout with an amber edge, the colour for a wait that is nobody’s fault.</li>
+  <li><b>The waiting line is drawn at its shipped size</b> (12px amber, close under the price), not the 13px of the first pass.</li>
+  <li><b>Table headings use the display face</b> (condensed capitals), per the table standard. The drawing now loads the product’s three faces.</li>
+  <li><b>The phone Keep door follows the Keep Premium ruling</b>: a full-width 44px lime button. Ask 9’s recommendation flipped to match.</li>
+  <li><b>The emails sit on a plain mail-app ground</b>, because the shipped envelope has no beige frame and no footer word. The overdue record’s band says “Should have ended”, not “Ended?”.</li>
+  <li><b>Checked and kept:</b> red only on the buttons that take something away (Cancel on {date}, End the plan now, Read Stripe and finish); Keep is lime and back-outs are plain. Window widths are 520 for a form and 416 for a question, with the sentence at the left of every foot. One lime per view. In the overdue list the name is the link with one chevron and no buttons in the rows.</li></ol>
+  <h3>Found in the shipped product · listed, not fixed</h3><ol class="reviewlist">
+  <li><b>The owner Cancel window’s busy label borrows the downgrade’s word.</b> It says “Applying…”. The cancel’s own “Suspending…” is never used. Stage 4 fixes it with the new words.</li>
+  <li><b>The email preview page has neither the cancelled email nor the trial-ending email.</b> G6 says to register the new emails there, so Stage 1 adds the two existing emails alongside them.</li>
+  <li><b>The trial-ending email has two wordings.</b> The code says “Your {plan} trial ends {date}”. The stored template says “…trial ends soon” with a title-case “Manage Billing →” button. The stored words are used only when an operator has customised the template.</li>
+  <li><b>The retention table has a “+30 days” button in every row.</b> The portal table rule keeps actions out of rows. The new overdue section follows the rule. The existing table is left for whoever owns that page.</li>
+  <li><b>The operator Cancel window’s foot says “Never offered as Put it back”.</b> Plan §1.4 says that applies again only once the plan has actually ended, so it moves to End now (tab 5).</li></ol>
+  <h3>Least sure of</h3><ol class="reviewlist"><li><b>Whether the plan card line is loud enough</b> for an org that will be suspended (Ask 1). The seven-day email is the backstop.</li><li><b>The status chip “Ending”.</b> It is a new word. The other choice is to leave the chip as Active and let the line carry it.</li><li><b>The operator chrome is approximate.</b> The record’s header, band, callout and windows were read from the code. The side rail was not.</li></ol>`;
+}
+
+const ANS={1:'A',2:'A',3:'A',4:'A',5:'A',6:'A',7:'A',8:'A',9:'A'};
+function answersText(){const lines=ASKS.map((a,i)=>`${i+1}. ${a[0]}: ${ANS[i+1]||'(not chosen)'}`);return 'Plans end at renewal · Stage 0 drawings · my answers\n'+lines.join('\n');}
+
+const TABS=[['page','1 · The billing page',true,tab1],['cancel','2 · Cancel window',true,tab2],['keep','3 · Keep the plan',true,tab3],['free','4 · Moves to free',true,tab4],['operator','5 · Operators',true,tab5],['overdue','6 · Overdue endings',true,tab6],['emails','7 · Emails',false,tab7],['phone','8 · Phone',true,tab8],['asks','9 · Asks',false,tab9]];
+const tabs=document.getElementById('tabs'),panels=document.getElementById('panels'),viewrow=document.getElementById('viewrow');
+let current='page',diff=false;
+function show(id,focus=false){
+  const item=TABS.find(x=>x[0]===id)||TABS[0];current=item[0];NOTES.clear();serial=0;
+  tabs.innerHTML=TABS.map(x=>`<button type="button" id="tab-${x[0]}" role="tab" aria-controls="panel-${x[0]}" tabindex="${x[0]===current?0:-1}" aria-selected="${x[0]===current}" data-tab="${x[0]}">${x[1]}</button>`).join('');
+  panels.innerHTML=`<section class="panel${diff?' diff-only':''}" id="panel-${current}" role="tabpanel" aria-labelledby="tab-${current}" tabindex="0">${item[3]()}</section>`;
+  viewrow.hidden=!item[2];
+  if(current==='asks'){const t=document.getElementById('ans');if(t)t.value=answersText();}
+  try{history.replaceState(null,'','#'+current);}catch(e){}
+  if(focus)document.getElementById('tab-'+current).focus();
+}
+tabs.addEventListener('click',e=>{const t=e.target.closest('[data-tab]');if(t){show(t.dataset.tab);window.scrollTo(0,0);}});
+tabs.addEventListener('keydown',e=>{const i=TABS.findIndex(x=>x[0]===current);let n;if(e.key==='ArrowRight')n=(i+1)%TABS.length;if(e.key==='ArrowLeft')n=(i+TABS.length-1)%TABS.length;if(e.key==='Home')n=0;if(e.key==='End')n=TABS.length-1;if(n!==undefined){e.preventDefault();show(TABS[n][0],true);}});
+viewrow.addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(!b)return;diff=b.dataset.view==='diff';viewrow.querySelectorAll('[data-view]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));show(current);});
+panels.addEventListener('click',e=>{
+  const p=e.target.closest('[data-pin]');
+  if(p){e.preventDefault();e.stopPropagation();const box=document.getElementById(p.getAttribute('aria-controls'));const was=p.getAttribute('aria-expanded')==='true';const f=p.closest('figure');if(f){f.querySelectorAll('[data-pin]').forEach(x=>x.setAttribute('aria-expanded','false'));f.querySelectorAll('.pinbox').forEach(x=>x.hidden=true);}if(box){box.hidden=was;}p.setAttribute('aria-expanded',String(!was));return;}
+  const s=e.target.closest('[data-seg]');
+  if(s){const [tab,key,val]=s.dataset.seg.split('|');SEG[tab][key]=val;show(current);return;}
+  const o=e.target.closest('[data-ask]');
+  if(o){ANS[o.dataset.ask]=o.dataset.opt;show('asks');return;}
+  if(e.target.id==='recs'){ASKS.forEach((a,i)=>ANS[i+1]='A');show('asks');return;}
+  if(e.target.id==='copy'){const t=document.getElementById('ans');const txt=answersText();const done=()=>{e.target.textContent='Copied';};try{navigator.clipboard.writeText(txt).then(done,()=>{t.focus();t.select();});}catch(err){t.focus();t.select();}}
+});
+document.getElementById('theme').addEventListener('click',e=>{const dark=document.documentElement.dataset.theme!=='dark';document.documentElement.dataset.theme=dark?'dark':'light';e.currentTarget.setAttribute('aria-pressed',String(dark));e.currentTarget.textContent=dark?'Light look':'Dark look';});
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(h&&h!==current)show(h);});
+show(location.hash.slice(1)||'page');
+</script>

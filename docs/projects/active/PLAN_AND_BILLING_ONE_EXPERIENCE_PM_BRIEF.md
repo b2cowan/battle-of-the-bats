@@ -62,6 +62,8 @@ shippable on its own: drawn first (you rule on every plan and state), then one s
 Coaches Portal version and its door, then retiring the coach's admin view, then the remaining pieces and the
 help guides. Each stage ends with a walk you can follow.
 
+**The stages in plain words (2026-10-31).** Done: the drawings, the one shared page, the Coaches Portal version and its door, retiring the coach's admin view, and the "Covered by {Club}" line with consistent plan words. Premium coach becoming a club (4b): the server, money and screens are built; you still owe the walk of those screens, then Part 4 proves the whole path and settles the sign-in header gap (and its fix, plus a check of Stripe's own portal "Renew"). Stage 5 is one help pass written together with the "plans end at renewal" project once tax is live: it also covers the trial sentence wording, one small decision about a failed payer lookup, a red billing-usage test, and the style-baseline cleanup (which waits on other projects). Stage 6 is the close: a final walk of the billing screens, everything on production, the project archived. The project is done when 4b, Stage 5 and Stage 6 are complete. Checking that Club's live prices exist belongs to the Club on-sale gate, not here.
+
 ## Stage 1 copy review checkpoint — 2026-10-28
 
 `PLAN_AND_BILLING_COPY.md` compares both existing pages and records the accepted vocabulary and the dated decisions. It corrects contradictory

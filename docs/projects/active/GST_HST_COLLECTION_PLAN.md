@@ -5,14 +5,55 @@
 > page https://claude.ai/artifact/Si21JDJNyhQLFjmaS9Wy3t, paste-back 7/7). US club payments review DONE 2026-10-31;
 > its owner decisions U1–U5 RULED 2026-10-31 (§4 Stage 8a).
 > **PM brief:** [GST_HST_COLLECTION_PM_BRIEF.md](GST_HST_COLLECTION_PM_BRIEF.md)
+> **Sequence rulings (owner, 2026-10-31, all as recommended)** — cross-plan index
+> https://claude.ai/artifact/Kua6RAqMA7ChA7QBTNE63a (source `BILLING_TAX_PRICING_SEQUENCE_INDEX.html`). For this plan:
+> **(1)** the app creates and pins its own Stripe portal configuration (Stage 2's portal bullet stands; it is built in Plans &
+> pricing Stage 0, S8); **(4)** one `/marketing` call settles how a price reads with "plus applicable taxes" beside the ruled
+> "$29 CAD / month per team" form, before Plan & billing's help rewrite; **(5)** Stage 2's rework list includes the
+> Premium→Club "Due today" window (see Stage 2).
 > **Not professional advice.** Items marked **[ACCT]** need the accountant, **[LAW]** the lawyer, before they are built
 > or switched on.
+
+## Stage list of record (owner, 2026-10-31)
+
+Every outstanding piece of work in this plan has a home in one of these stages. Status anchors are the plan's own header
+(nothing built as of 2026-10-31).
+
+- **Stage 0 — Admin, no code (owner):** IN PROGRESS — effective date found (2026-09-26) and production sales answered
+  (owner replies, §4); still open: Stripe invoice settings, foreign-vendor number, ITC receipts, accountant package,
+  counsel add-ons. Waits on nothing; gates nothing.
+- **Stage 1 — Know where every buyer is:** NOT STARTED — country, province/state, address and US declaration on our own
+  records. Needs T1 (ruled).
+- **Stage 2 — Subscriptions charge the right tax:** NOT STARTED — Stripe Tax registration, tax on every checkout path and
+  preview, "plus applicable taxes", province test matrix; exit step re-runs the Stripe audit. Needs Stage 1, T4, T5.
+- **Stage 3 — Every tax result has a reason, and staff can see it:** NOT STARTED — charge-level tax record and the Money
+  tab. Needs Stage 2.
+- **Stage 4 — The books carry the sales side of GST/HST:** NOT STARTED — built in the Bookkeeping ladder; can run beside
+  Stages 1–3; must exist before the first return with sales on it.
+- **Stage 5 — The online-payment fee:** NOT STARTED — tax on the fee, monthly statement per club. Depends on Club Stage 12,
+  counsel and T2/T3, and **closes with Club Stage 12** (a required stage, not a trigger).
+- **Stage 6 — Terms:** NOT STARTED — Terms of Service, signup acceptance, payments terms, Québec review, privacy policy.
+  Waits on the lawyer; gates the first paid subscription of any plan not yet on sale.
+- **Stage 7 — Provincial registrations as they come due:** NOT STARTED — **STANDING TRIGGER** (BC $10,000, Québec $30,000,
+  first Saskatchewan or Manitoba sale).
+- **Stage 8 — US clubs:** 8a DONE 2026-10-31 (review + rulings U1–U5). **8b NOT STARTED — STANDING TRIGGER** (Stripe's
+  written confirmation + US demand): USD prices and grandfathering (D03/D04), U2, U3, the U4 per-state tracker, USD payout
+  accounts, 1099-K set-up, marketplace-facilitator opinion.
+- **Stage 9 — Release and docs:** NOT STARTED (new, 2026-10-31) — help articles and `/docs`, demo check, data dictionary
+  and snapshots, production migrations, `/accounting` review, owner walk, on production. Needs Stages 1–3 (and 6).
+- **Ongoing — operating rhythm:** STANDING TRIGGER — monthly close and missing-reason check, each return, the January
+  digital-platform report, the yearly `/accounting` re-verify.
+
+**Done when** Stages 0–6 and 9 are complete. **Standing triggers (not needed to close):** Stage 7 (provincial
+registrations), Stage 8b (US clubs), the Ongoing rhythm (returns, January report, yearly re-verify), and the first
+GST/HST return (owner: out of scope, sequence item i04).
 
 ## 0. Facts this plan starts from (2026-10-31)
 
 - FieldLogicHQ is **registered for GST/HST** (number received the week of 2026-10-24). **Nothing has ever been sold**, so
-  there is no past tax to correct — this plan is entirely forward-looking. Effective date on CRA's letter: unconfirmed
-  (the revenue plan's D01 records a requested backdate to 2026-05-01).
+  there is no past tax to correct — this plan is entirely forward-looking. Effective date on CRA's letter: **2026-09-26**
+  (owner, confirmed 2026-10-31); a backdate request to 2026-05-01 is pending with CRA and affects only rebates on past
+  expenses, not this project (revenue plan D01).
 - Registered means **every taxable sale carries tax from the first one** — the $30,000 small-supplier threshold no
   longer matters.
 - Today the code charges **no tax anywhere**; Stripe Tax is on with **zero registrations**; prices are
@@ -36,8 +77,10 @@ surface. It does **not** take over the surfaces themselves; each stage names the
 | Terms, counsel questions | [Facilitated payments counsel brief](FACILITATED_PAYMENTS_COUNSEL_BRIEF.md) | Stage 6 below adds the subscription Terms of Service, which no plan owns today |
 | US clubs | TODO line "US clubs get their own review" | Stage 8 below |
 
-⚠ Drift noticed: the revenue plan still says the bookkeeping project is "stopped and archived" (§6, §7); it was
-restarted as the owner-experience plan after 2026-10-23. Flag for that plan's next update.
+⚠ Drift noticed: the revenue plan still said the bookkeeping project is "stopped and archived" (§6, §7); it was
+restarted as the owner-experience plan after 2026-10-23. **Fixed in the revenue plan 2026-10-31** (see its "Scope after the
+2026-10-31 hand-off"). Gate B (registration payments) moved out of the revenue plan to Club Stage 12; the books side to the
+Bookkeeping plan; tax stays here.
 
 ## 2. End state — what is true when this plan is done
 
@@ -80,9 +123,11 @@ restarted as the owner-experience plan after 2026-10-23. Flag for that plan's ne
 3. **Claim tax you pay on business expenses** from the effective date: keep receipts showing the supplier's GST/HST
    number (feeds Bookkeeping Stage 4).
 4. Add your GST/HST number to the Stripe account's invoice settings so Stripe invoices and receipts show it.
-5. Put the **first GST/HST return** on the calendar, and **file it even with nothing sold** (a nil return). If CRA
-   assigned annual filing: for an individual with business income and a Dec 31 year end, the return is due **June 15**
-   and any payment **April 30** — confirm on the CRA letter / My Business Account.
+5. ~~Put the **first GST/HST return** on the calendar, and **file it even with nothing sold** (a nil return).~~
+   **OUT OF SCOPE for this project (owner, 2026-10-31):** the first return is handled next year, outside this work; it is a
+   standing trigger (see "Stage list of record" above). For reference only: if CRA assigned annual filing, for an
+   individual with business income and a Dec 31 year end the return is due **June 15** and any payment **April 30** —
+   confirm on the CRA letter / My Business Account.
 6. **Prepare the accountant package — NOT a launch gate (T6, ruled 2026-10-31).** It goes to the accountant at the first
    tax time (or sooner if the owner chooses); until then we charge what the research says. The package (most of it is already drafted in
    `REVENUE_ACCOUNTING_CANADA_ROLLOUT.md` §5 and `REVENUE_ACCOUNTING_PHASE0_TAX_REVIEW.csv`):
@@ -93,6 +138,23 @@ restarted as the owner-experience plan after 2026-10-23. Flag for that plan's ne
    (e) is FieldLogicHQ a reporting platform under CRA's digital-platform reporting rules (due each January 31);
    (f) filing frequency and the effective date.
 7. **[LAW]** The counsel brief already has the fee/terms questions; add T3 and the subscription Terms of Service (Stage 6).
+
+**Owner replies on Stage 0, 2026-10-31 (recorded as given):**
+- **Production today (sequence item 5):** the Coaches Portal and Premium tournament plans can be bought; nobody is buying yet.
+  Owner's view: a sale before tax is built is minor and does not affect this project. ⚠ **One correction to the reasoning:**
+  because FieldLogicHQ is registered, the $30,000 small-supplier threshold no longer lets it skip tax (§0, and the
+  Accounting Facts doc). A sale made before Stage 2 is still taxable: FieldLogicHQ owes the tax on it even though the buyer
+  was not charged it, so it comes out of FieldLogicHQ's own pocket (the accountant confirms the exact mechanics). The amount is small and does not change the plan; it is a reason to keep the first-sale gate.
+- **Effective date (item 1):** the effective date on the registration is **2026-09-26**, with a backdate request to CRA
+  pending (owner, confirmed 2026-10-31: it affects only rebates on past expenses, not this project).
+  Annual filing, Dec 31 year end; a nil return is expected for the first period.
+- **Stripe invoice and receipt settings (item 2):** not done. Owner: not a prerequisite; done in parallel with the build.
+- **Foreign vendors (item 1 of the list above):** none has been given the number yet. The six categories are right, plus a
+  small OpenAI Codex subscription. **Owner, 2026-10-31: an accountant confirmed that the GST/HST paid on these is rebatable
+  in a year with little or no revenue (any amount over sales comes back),** so this is not a concern for 2026. This
+  settles the point for a no-revenue year; it overrides this plan's warning that tax a vendor charges after being told not to
+  is lost. It does not remove the reason to give vendors the number once sales begin, when tax paid and tax collected net
+  against each other. Giving the number stays a low-priority desk task, not a gate.
 
 ### Stage 1 — Know where every buyer is
 *Owner: revenue plan (D05). Needs T1.*
@@ -115,7 +177,9 @@ restarted as the owner-experience plan after 2026-10-23. Flag for that plan's ne
 - **Automatic tax on every subscription Checkout path** (workspace plans, coach Premium, next-season choice, plan
   changes, the org add-on) and on any invoice we raise by hand. Offer tax-ID entry (a club's GST/QST number prints on its
   invoice; for a Canadian seller it must **not** remove GST/HST — prove it in test mode).
-- **Everything that assumes "no tax" must learn tax**: the plan-move preview, the workspace-upgrade preview, the
+- **Everything that assumes "no tax" must learn tax**: the plan-move preview, the workspace-upgrade preview (incl. the
+  Premium→Club "Due today" window — built with no tax line, and its quote creates no customer, so it must quote against
+  the buyer's address or it will disagree with checkout; sequence ruling (5), 2026-10-31), the
   console's money reader, and the credit-note math on the pass-through invoices all currently assume or refuse tax
   lines (see §6). Adding tax is, in effect, a price change to every one of them.
 - Customer portal: a FieldLogicHQ configuration (not Stripe's default) that keeps address and tax ID editable.
@@ -124,6 +188,8 @@ restarted as the owner-experience plan after 2026-10-23. Flag for that plan's ne
   Facts doc records tax-exclusive pricing → `/strategy`).
 - **Test matrix**: one test buyer per province/territory group (ON, NS, NB/NL/PE, AB/territories, BC, SK, MB, QC) plus a
   US buyer and a mismatched buyer; renewals, plan changes, refunds and credit notes in each.
+- **Exit step (owner, 2026-10-31):** re-run the read-only revenue-readiness Stripe audit
+  (`scripts/audit-revenue-readiness.mjs`, §6) after Stage 2 ships, and record that the tax settings it reads now match.
 
 ### Stage 3 — Every tax result has a reason, and staff can see it
 *Owner: revenue plan (D17) + Support console Money tab.*
@@ -147,7 +213,9 @@ that input tax credits are claimable.*
   already ruled for Bookkeeping.
 
 ### Stage 5 — The online-payment fee
-*Owner: Club Stage 12. Gated on counsel and T2/T3. Online payments stay off in production until then.*
+*Owner: Club Stage 12. Gated on counsel and T2/T3. Online payments stay off in production until then.
+**Depends on Club Stage 12 and closes with it (owner, 2026-10-31) — it is a required stage of this project, not a standing
+trigger:** this plan is not done until Club Stage 12's fee-tax work ships.*
 - If taxable: tax by the **club's** province, 0% for a verified US club (Stage 1 evidence applies to clubs too).
 - A **monthly fee statement per club** — fees taken, tax on them, our GST/HST number — because Stripe's application fee
   is not a tax invoice and Stripe Tax does not tax it.
@@ -185,7 +253,7 @@ that input tax credits are claimable.*
   needs a US EIN, IRS e-filing, state payer IDs, per-form penalties up to US$340, state thresholds as low as US$600;
   (3) the card fee added on top for families looks like a **card surcharge**, capped at 3% in the US (2.4% in Canada,
   the A14 question already owed to counsel), credit cards only, banned or capped in several states.
-  **Owner rulings 2026-10-31 (U1, U2, U3, U5 as recommended; U4 recommendation pending his yes):**
+  **Owner rulings 2026-10-31 (U1, U2, U3 as recommended; U4 and U5 RULED — see below, U5 overrode the recommendation):**
   - **All products — including coach Premium — open to US customers together**, once this project's US work is done.
   - **U1** US clubs pay Stripe's fees directly, so Stripe files the 1099-Ks; FieldLogicHQ keeps only its own fee, which
     needs a separate margin-only US fee schedule → `/strategy` (amounts NOT decided).
@@ -200,14 +268,36 @@ that input tax credits are claimable.*
     the tracker alerts in any state; Stripe or a regulator asks about licensing or tax; or **U1 proves impossible** (if
     Stripe can't file the 1099-Ks for our US clubs, per-form penalties return and a US CPA is needed before the first US
     payment). The Stripe written confirmation (blocker 1) is a free support ticket and stays a blocker.
-- **8b — the build** the review calls for. Known already:
+- **8b — the build** the review calls for. **A standing trigger** (owner, 2026-10-31): it starts when Stripe's written
+  confirmation arrives and US demand exists; this plan counts as complete without it. Named deliverables:
+  - **USD list prices and grandfathering (revenue plan D03/D04)** — plus the margin-only US fee schedule (U1, `/strategy`);
+  - **U2** — no fee added on top for US families (the club pays it, or builds it into its registration price);
+  - **U3** — ACH bank debit for US clubs;
+  - **U4 — the per-state US tracker in platform admin** (sales and payment counts by state, alert well before any
+    threshold, a state-specific check when one alerts);
   - club payout accounts by the club's own country, in USD (today hard-wired to Canada/CAD);
   - who files the US 1099-K forms — Stripe's rule makes the platform the filer under today's set-up (the platform pays
     Stripe's fees) — decide the set-up or file through Stripe;
   - a US marketplace-facilitator opinion for the first clubs' states;
   - currency on cross-border registrations (a Canadian team paying a US tournament in USD).
 
+### Stage 9 — Release and docs (added by owner ruling, 2026-10-31)
+*Owner: this plan. Closes the project; no earlier stage is "done" without it. Needs Stages 1–3 built (and Stage 6 for the
+Terms wording).*
+- **Help articles and `/docs`** for the new address step at first paid checkout and for the tax lines on every paid step
+  (checkout, billing screens, invoices and receipts) — the in-app guides in `lib/help-content/*.tsx`, with their search text.
+- **Demo check**: the demo sandboxes still pass the build's tour check with the new address step; any number quoted in a
+  demo sentence is computed from the seed.
+- **Data dictionary and snapshots**: every new address, tax and reason column documented in
+  `docs/agents/db/DATA_DICTIONARY.md` and `npm run refresh:snapshots` run; the **migrations applied on production**.
+- **`/accounting` pre-handoff review** (CLAUDE.md requires it for work that changes what we charge, collect or record):
+  applied, or recorded as an owner question.
+- **Owner browser walk** of the checkout, the preview windows and the Money tab with tax on, in test mode first.
+- **On production**: the Stripe Tax registration live, the `scripts/audit-revenue-readiness.mjs` re-run clean, and the
+  release recorded in the release-history record.
+
 ### Ongoing — the operating rhythm (owner)
+*Standing triggers — none of this is needed to close the project (see "Stage list of record").*
 - Monthly: Bookkeeping close; check charges with a missing tax reason.
 - Each return: run the Stage 4 worksheet, file, pay.
 - Each January: CRA digital-platform report if the accountant says it applies (due Jan 31).
@@ -215,12 +305,21 @@ that input tax credits are claimable.*
 
 ## 5. Order and dependencies (no dates — sequencing only)
 
+**Order across the five plans (set by Claude at the owner's request 2026-10-31; the owner may reverse it on the index; index
+https://claude.ai/artifact/Kua6RAqMA7ChA7QBTNE63a):** **0 owner desk (this plan's Stage 0)** → 1 Plan & billing 4b Part 4 → 2 Plans
+& pricing Stage 0 → **3 Stage 1 (the address), beside Plans end at renewal Stages 1–3** → **4 Stages 2–3 and the Terms (tax live)**
+→ 5 ONE help pass → 6 Club on sale (Coaches Portal and Tournament Plus already selling; "launch together" dropped 2026-10-31) → 7 Plans & pricing program. Stage 0 gates nothing in steps 1–4 (owner,
+2026-10-31); it is free and its savings begin the day it is done.
+
 Stage 0 first: it's free and makes money (vendor tax stops, credits start). Stage 1 → 2 → 3 is one chain and is the
-gate for the **first paid subscription**. Stage 6's Terms of Service also gates the first paid subscription. The
+gate for the **first paid subscription of any plan not yet on sale**. Stage 6's Terms of Service also gates it. ⚠ Owner
+exception, 2026-10-31: Coaches Portal and Tournament Plus are already on sale in production and stay on sale; a sale made
+before tax is built is paid out of the owner's revenue and blocks nothing. The
 accountant is **not** a gate (T6). Stage 4 can run beside 1–3 inside the Bookkeeping ladder and must be in place before
 the first return with sales on it. Stage 5 waits on counsel (the existing lawyer gate) and gates online payments going
 live. Stage 7 is triggered, not scheduled. Stage 8 opens US clubs only when both its halves are done: Stages 1–3 for
-subscriptions, and 8a → 8b for payments.
+subscriptions, and 8a → 8b for payments. Stage 9 (release and docs) follows the build stages and closes the project; Stage 7,
+Stage 8b and the Ongoing rhythm are standing triggers that the project does not wait for (owner, 2026-10-31).
 
 ## 6. Technical touchpoints (for the build sessions)
 
