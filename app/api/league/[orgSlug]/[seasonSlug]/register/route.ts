@@ -18,6 +18,8 @@ import { notify } from '@/lib/notify';
 import { signupNotice, signupSubject, type PlacedChild } from '@/lib/league-signup';
 import { buildLeaguePayView, leagueMailPay } from '@/lib/league-pay-view';
 import { getClubSiteContent } from '@/lib/club-page-meta';
+import { leaguePayToken } from '@/lib/league-pay-link';
+import { SIGNUP_LINK_WORDS as SW } from '@/lib/league-pay-words';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,7 +58,7 @@ function str(v: unknown, max?: number): string | null {
 
 type ChildIn = { firstName: string | null; lastName: string | null; dob: string | null; divisionId: string | null; jersey: string | null; position: string | null; notes: string | null };
 
-/** A family's reference: eight characters they can read back (the status page takes it with their email). */
+/** A family's reference: eight characters they can read back, to quote to the club (it opens nothing). */
 function newReference(): string {
   return randomBytes(4).toString('hex').toUpperCase();
 }
@@ -189,7 +191,7 @@ export const POST = withObservability(async (req: Request,
   if (placedKids.length === 0) {
     const dup = results.find(r => r.outcome === 'duplicate');
     return NextResponse.json({
-      error: dup ? `${dup.firstName} ${dup.lastName} is already signed up for this season. Use your reference to check their status.` : 'Nothing was signed up.',
+      error: dup ? `${dup.firstName} ${dup.lastName} is already signed up for this season. To see their sign-up, use "${SW.door}" on the season page.` : 'Nothing was signed up.',
       code: dup ? 'duplicate' : 'nothing',
     }, { status: 409 });
   }
@@ -252,6 +254,9 @@ export const POST = withObservability(async (req: Request,
     howToPay: anyAccepted ? season.howToPay : null,
     // 12b: the pay block for the confirmation, while the club takes card payments; null keeps today's words (A6).
     pay: pay?.kind === 'owing' ? pay : null,
+    // Signed-in family accounts Stage 1: the success screen's "Your sign-up →" opens the family's own page, signed.
+    // A sign-up made a moment ago is at link version 0 (the column's default; only the club's reset moves it).
+    signupToken: leaguePayToken(placedKids[0].id!, 0),
     children: results.map(r => ({
       firstName: r.firstName, lastName: r.lastName, outcome: r.outcome, status: r.status, divisionName: r.divisionName,
       waitlistPosition: r.waitlistPosition, fee: r.fee,

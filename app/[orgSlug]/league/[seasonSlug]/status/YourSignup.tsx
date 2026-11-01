@@ -2,22 +2,25 @@
 
 import { useState } from 'react';
 import kit from '@/components/public/ClubKit.module.css';
+import form from '@/components/public/ClubForm.module.css';
 import { childTag, nameList } from '@/lib/league-signup';
 import { dollarsLine } from '@/lib/house-league-season';
 import { clubDay } from '@/lib/league-registration-state';
 import { ASK_WORDS, methodInBrackets } from '@/lib/house-league-money-words';
-import { LEAGUE_PAY_WORDS as LW } from '@/lib/league-pay-words';
+import { LEAGUE_PAY_WORDS as LW, SIGNUP_LINK_WORDS as SW } from '@/lib/league-pay-words';
 import type { LeaguePayView } from '@/lib/league-pay-view';
 import LeaguePayBlock from '@/components/public/LeaguePayBlock';
 
 /**
- * THE FAMILY'S STATUS PAGE (Club Tier Stage 9b-1, Part 5; drawing §5, words HOUSE_LEAGUE_STAGE9B1_COPY.md §9). The email they
- * signed up with and their reference find the whole sign-up: each child with its tag ("Accepted", never "Approved"), its
- * division and its fee, then ONE pay block for what is still owed with the club's own how-to-pay words. No team yet.
+ * THE FAMILY'S "YOUR SIGN-UP" PAGE (Club Tier Stage 9b-1, Part 5; drawing §5, words HOUSE_LEAGUE_STAGE9B1_COPY.md §9;
+ * renamed from the status lookup form by Signed-in family accounts Stage 1, drawing tab 1). The family's signed link
+ * opens the whole sign-up: each child by FIRST name with its tag ("Accepted", never "Approved"), its division and its
+ * fee, then ONE pay block for what is still owed with the club's own how-to-pay words. The email-and-reference form is
+ * gone (Stage 1: "Email me my link", `EmailMyLinkForm`, sends the link to the inbox instead); the reference stays as a
+ * number to quote to the club, and a quiet foot line says the club can replace the link.
  * 9b-2 (copy §14): the money is read from the club's book — a part payment after a price change, a refund, a fee the club
  * kept on an ended child — and "Ask to withdraw a child" sends the club a request (nothing changes until the club acts).
- * 12b (owner §0e c): the family's PAY LINK opens this page already unlocked (`initial`, from /status/{token}), and while
- * the club takes card payments the pay block is THE one pay block (Pay by card, receipts, confirming). When it doesn't,
+ * 12b (owner §0e c): while the club takes card payments the pay block is THE one pay block (Pay by card, receipts, confirming). When it doesn't,
  * the block is today's, word for word, and there is no button at all (A6) — the greyed "Pay now" is gone.
  */
 
@@ -25,7 +28,6 @@ type Registration = {
   ref: string;
   status: string;
   playerFirstName: string;
-  playerLastName: string;
   divisionName: string;
   waitlistPosition: number | null;
   fee: number | null;
@@ -47,16 +49,8 @@ type Found = {
   pay: LeaguePayView | null;
 };
 
-// Field, label and button faces are the club frame's (Club Tier Stage 4b-1): 44px fields with the form-field border,
-// 14px/600 labels, the club's fill on the one button.
-const inputStyle: React.CSSProperties = {
-  width: '100%', background: 'var(--club-card)',
-  border: '1px solid var(--club-field)', borderRadius: '8px',
-  color: 'var(--club-text)', font: '400 1rem var(--club-text-face)',
-  minHeight: '44px', padding: '0 0.75rem',
-  outline: 'none', minWidth: 0, boxSizing: 'border-box',
-};
-
+// Field, label and button faces are the club frame's (Club Tier Stage 4b-1): the note is ClubForm's textarea (its focus
+// ring included), 14px/600 labels, the club's fill on the one button.
 const labelStyle: React.CSSProperties = {
   display: 'block', fontSize: '0.875rem', fontWeight: 600,
   color: 'var(--club-text)', marginBottom: '0.4rem',
@@ -88,30 +82,30 @@ function feeLine(r: Registration): { text: string; sub?: string; owing: boolean 
   return { text: paid, sub: r.refund ? `${dollarsLine(r.refund.amount)} refunded ${clubDay(r.refund.day)}.` : undefined, owing: false };
 }
 
-export default function StatusLookupForm({
+export default function YourSignup({
   orgSlug,
   seasonSlug,
   contactEmail,
-  initial,
+  found,
+  token,
+  guardianEmail,
   returnedSession = null,
   left = false,
 }: {
   orgSlug: string;
   seasonSlug: string;
   contactEmail: string | null;
-  /** Opened from the family's pay link (12b): the sign-up, already found, and the link's key. */
-  initial?: { found: Found; token: string; guardianEmail: string | null };
+  /** The sign-up the link opened (`openSignupLink`), shaped by `buildSignupStatus`, with its pay block. */
+  found: Found;
+  /** The link's key: the withdraw request's possession proof. */
+  token: string;
+  guardianEmail: string | null;
   /** Stripe's return (`?paid=`): the pay block waits for the record. */
   returnedSession?: string | null;
   /** Left Stripe's page before paying (`?left=1`). */
   left?: boolean;
 }) {
-  const [email, setEmail] = useState('');
-  const [refCode, setRefCode] = useState('');
-  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>(initial ? 'done' : 'idle');
-  const [found, setFound] = useState<Found | null>(initial?.found ?? null);
-  const [errorMsg, setErrorMsg] = useState('');
-  // "Ask to withdraw a child" (9b-2): the reference the family looked up with is the possession proof again.
+  // "Ask to withdraw a child" (9b-2): the link is the possession proof (Stage 1: the only one).
   const [asked, setAsked] = useState<string | null>(null);
   const [askOpen, setAskOpen] = useState(false);
   const [askChild, setAskChild] = useState('');
@@ -120,41 +114,13 @@ export default function StatusLookupForm({
   const [askError, setAskError] = useState('');
   const [askSent, setAskSent] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setState('loading');
-    setErrorMsg('');
-    try {
-      const res = await fetch(`/api/league/${orgSlug}/${seasonSlug}/status-lookup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, refCode }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setErrorMsg(data?.error ?? 'Something went wrong. Please try again.');
-        setState('error');
-        return;
-      }
-      setFound({
-        registrations: Array.isArray(data.registrations) ? data.registrations : [],
-        howToPay: data.howToPay ?? null, clubName: data.clubName ?? '', reviewFirst: !!data.reviewFirst, finished: !!data.finished,
-        pay: data.pay ?? null,
-      });
-      setState('done');
-    } catch {
-      setErrorMsg('Network error. Please try again.');
-      setState('error');
-    }
-  }
-
-  const regs = found?.registrations ?? [];
+  const regs = found.registrations;
   const owed = regs.filter(r => feeLine(r).owing);
   const toPay = owed.reduce((s, r) => s + r.owing, 0);
   const paidKids = regs.filter(r => r.status === 'active' && r.paid && (r.fee ?? 0) > 0);
   const accepted = regs.filter(r => r.status === 'active' && (r.fee ?? 0) > 0);
   // A child can be asked about while live and not already asked about.
-  const askable = found?.finished ? [] : regs.filter(r => !ended(r) && !r.withdrawRequestedAt && asked !== r.child);
+  const askable = found.finished ? [] : regs.filter(r => !ended(r) && !r.withdrawRequestedAt && asked !== r.child);
   const askOne = askable.length === 1 ? askable[0] : null;
   const askFor = askOne ?? askable.find(r => r.child === askChild) ?? null;
 
@@ -166,15 +132,12 @@ export default function StatusLookupForm({
       const res = await fetch(`/api/league/${orgSlug}/${seasonSlug}/withdraw-request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // The pay link is the same possession proof as the email and the reference (12b §0e c).
-        body: JSON.stringify(initial
-          ? { token: initial.token, child: askFor.child, note: askNote.trim() || null }
-          : { email, refCode, child: askFor.child, note: askNote.trim() || null }),
+        body: JSON.stringify({ token, child: askFor.child, note: askNote.trim() || null }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { setAskError(data?.error ?? ASK_WORDS.errGeneric); setAskState('error'); return; }
       setAsked(askFor.child);
-      setAskSent(ASK_WORDS.sent(initial ? initial.guardianEmail ?? '' : email.trim(), askFor.playerFirstName));
+      setAskSent(ASK_WORDS.sent(guardianEmail ?? '', askFor.playerFirstName));
       setAskOpen(false);
       setAskNote('');
       setAskState('idle');
@@ -185,90 +148,23 @@ export default function StatusLookupForm({
   }
   const sharedRef = regs.length > 0 && regs.every(r => r.ref === regs[0].ref) ? regs[0].ref : null;
 
-  const pay = found?.pay ?? null;
+  const pay = found.pay;
   // The one pay block owns the money's end of the page while it is waiting on Stripe or there is something to pay.
   const payBlockOwns = !!pay && (!!returnedSession || pay.kind === 'owing' || pay.kind === 'refused' || pay.receipts.length > 0 || pay.clearing.length > 0);
   const endedOnly = pay?.kind === 'ended' ? regs.filter(ended) : [];
 
   return (
     <>
-      {!initial && <form onSubmit={handleSubmit} style={{ marginBottom: '2rem' }}>
-        <p style={{ ...soft, marginBottom: '1rem' }}>Enter the email you signed up with and your reference.</p>
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={labelStyle} htmlFor="status-email">Parent or guardian email</label>
-          <input
-            id="status-email"
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            required
-            autoComplete="email"
-            style={inputStyle}
-          />
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={labelStyle} htmlFor="status-ref">Reference</label>
-          {/* A reference is read off a confirmation and typed back, so the field shows capitals whichever way it is
-              typed; the face is the club's text face, not a typewriter's. */}
-          <input
-            id="status-ref"
-            type="text"
-            value={refCode}
-            onChange={e => setRefCode(e.target.value)}
-            placeholder="e.g. 069806EA"
-            required
-            maxLength={12}
-            style={{ ...inputStyle, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}
-          />
-          <p style={{ ...soft, margin: '0.4rem 0 0' }}>The 8 characters on your confirmation screen and in your email.</p>
-        </div>
-        <button
-          type="submit"
-          disabled={state === 'loading'}
-          className={`${kit.btn} ${kit.btnPrimary}`}
-          style={{ whiteSpace: 'nowrap' }}
-        >
-          {state === 'loading' ? 'Looking up…' : 'Look up'}
-        </button>
-      </form>}
-
-      {state === 'error' && (
-        <div
-          className={kit.card}
-          style={{ padding: '1rem 1.25rem', marginBottom: '1.5rem', borderColor: 'var(--danger)' }}
-        >
-          <p style={{ fontSize: '0.875rem', color: 'var(--danger)', margin: 0 }}>{errorMsg}</p>
-        </div>
-      )}
-
-      {state === 'done' && regs.length === 0 && (
-        <div className={kit.card} style={{ padding: '2rem', textAlign: 'center' }}>
-          <p style={{ fontSize: '1rem', color: 'var(--club-text)', margin: 0 }}>
-            We couldn&apos;t find a sign-up with that email and reference.
-          </p>
-          <p style={{ ...soft, marginTop: '0.75rem' }}>
-            Check both against your confirmation email, or{' '}
-            {contactEmail ? (
-              <a href={`mailto:${contactEmail}`} style={{ color: 'var(--club-ink)', textDecoration: 'underline' }}>
-                contact the club
-              </a>
-            ) : 'contact the club'}.
-          </p>
-        </div>
-      )}
-
-      {state === 'done' && regs.length > 0 && (
+      {regs.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <h2 className={kit.band} style={{ margin: 0 }}>{regs.length === 1 ? 'Your registration' : 'Your registrations'}</h2>
-          {sharedRef && <p style={soft}>Reference: <strong style={{ color: 'var(--club-text)' }}>{sharedRef}</strong></p>}
+          {sharedRef && <p style={soft}>{SW.reference} <strong style={{ color: 'var(--club-text)' }}>{sharedRef}</strong> {SW.referenceQuote}</p>}
           {regs.map(r => {
             const fee = feeLine(r);
             return (
-              <div key={`${r.ref}-${r.playerFirstName}-${r.playerLastName}`} className={kit.card}>
+              <div key={r.child} className={kit.card}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '0.5rem' }}>
                   <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--club-text)' }}>
-                    {r.playerFirstName} {r.playerLastName}
+                    {r.playerFirstName}
                   </div>
                   <span className={`${kit.chip} ${r.status === 'active' ? kit.chipOk : kit.chipNeutral}`}>
                     {childTag(r.status, r.waitlistPosition)}
@@ -315,11 +211,11 @@ export default function StatusLookupForm({
                 <span style={{ fontWeight: 750, fontSize: '1.15rem', color: 'var(--club-text)' }}>{dollarsLine(toPay)}</span>
               </div>
               <p style={{ ...soft, marginTop: '0.35rem' }}>
-                {owed.map(r => `${r.playerFirstName} ${r.playerLastName} · ${r.divisionName}`).join('; ')}.
+                {owed.map(r => `${r.playerFirstName} · ${r.divisionName}`).join('; ')}.
                 {paidKids.length > 0 && ` ${nameList(paidKids.map(r => r.playerFirstName))} ${paidKids.length === 1 ? 'is' : 'are'} paid.`}
               </p>
-              {found?.howToPay && <p style={{ fontSize: '0.875rem', color: 'var(--club-text)', margin: '0.6rem 0 0' }}>How to pay: {found.howToPay}</p>}
-              <p style={{ ...soft, marginTop: '0.35rem' }}>Payable separately to {found?.clubName}.</p>
+              {found.howToPay && <p style={{ fontSize: '0.875rem', color: 'var(--club-text)', margin: '0.6rem 0 0' }}>How to pay: {found.howToPay}</p>}
+              <p style={{ ...soft, marginTop: '0.35rem' }}>Payable separately to {found.clubName}.</p>
             </div>
           ) : pay?.kind === 'ended' && endedOnly.length === regs.length ? (
             // b5: a link to a sign-up that has ended — nothing to pay, and where questions go.
@@ -328,11 +224,11 @@ export default function StatusLookupForm({
               {endedOnly.map(r => (
                 <p key={r.child} style={soft}>
                   {r.status === 'withdrawn'
-                    ? LW.endedWithdrawn(`${r.playerFirstName} ${r.playerLastName}`, r.endedAt ? clubDay(r.endedAt.slice(0, 10)) : null)
-                    : LW.endedDeclined(`${r.playerFirstName} ${r.playerLastName}`)}
+                    ? LW.endedWithdrawn(r.playerFirstName, r.endedAt ? clubDay(r.endedAt.slice(0, 10)) : null)
+                    : LW.endedDeclined(r.playerFirstName)}
                 </p>
               ))}
-              <p style={{ ...soft, marginTop: '0.35rem' }}>{LW.endedQuestions(found?.clubName ?? '', contactEmail)}</p>
+              <p style={{ ...soft, marginTop: '0.35rem' }}>{LW.endedQuestions(found.clubName, contactEmail)}</p>
             </div>
           ) : accepted.length > 0 && accepted.every(r => r.paid) ? (
             <p style={soft}>Everything is paid. Thank you.</p>
@@ -355,14 +251,14 @@ export default function StatusLookupForm({
                   {askable.map(r => (
                     <label key={r.child} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minHeight: '44px', color: 'var(--club-text)' }}>
                       <input type="radio" name="ask-child" value={r.child} checked={askChild === r.child} onChange={() => setAskChild(r.child)} />
-                      {r.playerFirstName} {r.playerLastName}
+                      {r.playerFirstName}
                     </label>
                   ))}
                 </fieldset>
               )}
               <label style={labelStyle} htmlFor="ask-note">{ASK_WORDS.noteLabel}</label>
               <textarea id="ask-note" value={askNote} maxLength={300} rows={3} onChange={e => setAskNote(e.target.value)}
-                style={{ ...inputStyle, minHeight: '88px', padding: '0.6rem 0.75rem', resize: 'vertical' }} aria-describedby="ask-note-hint" />
+                className={form.textarea} style={{ minHeight: '88px' }} aria-describedby="ask-note-hint" />
               <p id="ask-note-hint" style={{ ...soft, margin: '0.4rem 0 0.9rem' }}>{ASK_WORDS.noteHint}</p>
               {askState === 'error' && <p style={{ fontSize: '0.875rem', color: 'var(--danger)', margin: '0 0 0.75rem' }} role="alert">{askError}</p>}
               <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem' }}>
@@ -378,6 +274,8 @@ export default function StatusLookupForm({
               </div>
             </div>
           )}
+
+          <p style={{ ...soft, borderTop: '1px solid var(--club-line)', paddingTop: '0.75rem', marginTop: '0.5rem' }}>{SW.foot}</p>
         </div>
       )}
     </>

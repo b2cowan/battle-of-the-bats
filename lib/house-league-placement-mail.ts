@@ -36,14 +36,14 @@ interface EmailRow {
 }
 interface RegRow {
   id: string; player_first_name: string; player_last_name: string; guardian_first_name: string | null;
-  team_id: string | null; status: string;
+  team_id: string | null; status: string; link_version: number;
 }
 
 export interface SendOutcome { sent: number; failed: number; skipped: number }
 
 /** The family's way back: their status page opened for their sign-up (the signed link), or the plain page. */
-function statusUrl(org: MailOrg, season: MailSeason, registrationId: string): string {
-  return leaguePayUrl(SITE_URL, { orgSlug: org.slug, seasonSlug: season.slug, registrationId })
+function statusUrl(org: MailOrg, season: MailSeason, reg: RegRow): string {
+  return leaguePayUrl(SITE_URL, { orgSlug: org.slug, seasonSlug: season.slug, registrationId: reg.id, version: Number(reg.link_version ?? 0) })
     ?? `${SITE_URL}/${encodeURIComponent(org.slug)}/league/${encodeURIComponent(season.slug)}/status`;
 }
 
@@ -137,7 +137,7 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
   const regs = new Map<string, RegRow>();
   for (const chunk of chunked(regIds)) {
     const { data, error } = await supabaseAdmin.from('league_registrations')
-      .select('id, player_first_name, player_last_name, guardian_first_name, team_id, status')
+      .select('id, player_first_name, player_last_name, guardian_first_name, team_id, status, link_version')
       .in('id', chunk).eq('season_id', season.id);
     if (error) throw new Error(`Couldn't read the children for the email: ${error.message}`);
     for (const r of (data ?? []) as RegRow[]) regs.set(r.id, r);
@@ -160,7 +160,7 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
     if (children.length === 0) { nothingToSay.push(row.id); continue; }
     const division = divisionName.get(row.division_id) ?? '';
     const guardianFirstName = children[0].guardian_first_name?.trim() || 'there';
-    const url = statusUrl(org, season, children[0].id);
+    const url = statusUrl(org, season, children[0]);
     // A move stays a move email when its old team has since been deleted: the family reads "their old team", never
     // "The teams are set".
     if (row.kind === 'moved') {

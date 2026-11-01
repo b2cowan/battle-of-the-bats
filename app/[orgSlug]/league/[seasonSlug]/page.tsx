@@ -282,7 +282,7 @@ export default async function LeagueSeasonPage({
         {/* A family who already signed up finds their child's status here, whatever state the season is in. Hidden only before registration opens, when nobody can have signed up yet. */}
         {!(season.registrationOpenAt && new Date(season.registrationOpenAt) > new Date()) && (
           <p style={{ marginTop: '1.25rem', fontSize: '0.875rem', color: 'var(--club-soft)' }}>
-            Already registered? <Link href={href(`/league/${seasonSlug}/status`)}>Check your registration</Link>
+            Already signed up? <Link href={href(`/league/${seasonSlug}/status`)}>Email me my link</Link>
           </p>
         )}
       </div>

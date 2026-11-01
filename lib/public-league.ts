@@ -4,7 +4,7 @@ import type { Organization } from './types';
 /**
  * The single gate for every PUBLIC house-league surface — the league index, all of
  * its sub-pages (season / schedule / standings / register / status), and the public
- * register + status-lookup APIs.
+ * register, email-my-link and withdraw-request APIs.
  *
  * Mirrors the league index's own check: the org must exist, be public, not be
  * canceled, and carry the house-league module. Returns the org, or null when any

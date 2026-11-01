@@ -9,15 +9,17 @@ import { lastPayment, lastRefund, receivedOf, refundedOf } from './league-money'
 import type { LeagueSeason } from './types';
 
 /**
- * WHAT A FAMILY'S STATUS PAGE SHOWS for one sign-up (Club Tier 9b-1 Part 5, 9b-2; shared since Stage 12b). Two doors
- * reach it with the same possession proof: the email and the reference (`status-lookup`), and the signed pay link
- * (`/league/{season}/status/{token}`). Both read the children of ONE sign-up — never every child under an email.
+ * WHAT A FAMILY'S "YOUR SIGN-UP" PAGE SHOWS for one sign-up (Club Tier 9b-1 Part 5, 9b-2, Stage 12b). One door reaches
+ * it since Signed-in family accounts Stage 1: the signed link (`/league/{season}/status/{token}`), through
+ * `openSignupLink` (lib/league-signup-link.ts) — the email and reference open nothing now. It reads the children of ONE
+ * sign-up, never every child under an email, and names each child by FIRST name only: a forwarded link never gives a
+ * stranger a child's full name (the club's screens and the emails keep full names, ask 7).
  */
 export const SIGNUP_STATUS_COLUMNS =
-  'id, status, player_first_name, player_last_name, division_id, waitlist_position, signup_ref, fee_amount, end_money, end_money_reason, withdraw_requested_at, ended_at, team_id, previous_team_id, team_changed_at';
+  'id, status, player_first_name, division_id, waitlist_position, signup_ref, fee_amount, end_money, end_money_reason, withdraw_requested_at, ended_at, team_id, previous_team_id, team_changed_at';
 
 export type SignupStatusRow = {
-  id: string; status: string; player_first_name: string; player_last_name: string; division_id: string | null;
+  id: string; status: string; player_first_name: string; division_id: string | null;
   waitlist_position: number | null; signup_ref: string | null; fee_amount: number | null; end_money: string | null;
   end_money_reason: string | null; withdraw_requested_at: string | null; ended_at: string | null;
   team_id?: string | null; previous_team_id?: string | null; team_changed_at?: string | null;
@@ -31,7 +33,6 @@ export interface SignupStatusRegistration {
   child: string;
   status: string;
   playerFirstName: string;
-  playerLastName: string;
   divisionName: string;
   waitlistPosition: number | null;
   fee: number | null;
@@ -59,18 +60,18 @@ export interface SignupStatus {
   finished: boolean;
 }
 
+/** The anchor row a link names, as the one door reads it (it has already checked the club and season). */
+export type SignupAnchorRow = SignupStatusRow & { org_id: string; season_id: string };
+
 /**
  * The sign-up a pay link names (Stage 12b): the anchor registration and every child signed up with it (the same
- * reference and family email), or the one registration when it has none — `null` when the link names a registration of
- * another club or season (a link opened under the wrong address is refused, never redirected).
+ * reference and family email), or the one registration when it has none. The door hands in the anchor it read, so the
+ * anchor is never read twice.
  */
-export async function signupRowsForLink(registrationId: string, at: { orgId: string; seasonId: string }): Promise<SignupStatusRow[] | null> {
-  const { data: anchor } = await supabaseAdmin.from('league_registrations')
-    .select(`${SIGNUP_STATUS_COLUMNS}, org_id, season_id, guardian_email`).eq('id', registrationId).maybeSingle();
-  if (!anchor || anchor.org_id !== at.orgId || anchor.season_id !== at.seasonId) return null;
-  if (!anchor.signup_ref) return [anchor as unknown as SignupStatusRow];
+export async function signupRowsFromAnchor(anchor: SignupAnchorRow): Promise<SignupStatusRow[]> {
+  if (!anchor.signup_ref) return [anchor];
   let q = supabaseAdmin.from('league_registrations').select(`${SIGNUP_STATUS_COLUMNS}, guardian_email`)
-    .eq('season_id', at.seasonId).eq('org_id', at.orgId).eq('signup_ref', anchor.signup_ref as string);
+    .eq('season_id', anchor.season_id).eq('org_id', anchor.org_id).eq('signup_ref', anchor.signup_ref as string);
   q = anchor.guardian_email ? q.eq('guardian_email', anchor.guardian_email as string) : q.is('guardian_email', null);
   const { data, error } = await q.order('registered_at', { ascending: true });
   if (error) throw error;
@@ -96,7 +97,6 @@ export async function buildSignupStatus(season: LeagueSeason, clubName: string, 
       child: registrationReference(String(r.id)),
       status: r.status,
       playerFirstName: r.player_first_name,
-      playerLastName: r.player_last_name,
       divisionName: (r.division_id && divisionMap[r.division_id]) || '—',
       waitlistPosition: r.waitlist_position ?? null,
       fee,

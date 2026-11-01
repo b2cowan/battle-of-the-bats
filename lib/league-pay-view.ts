@@ -1,15 +1,15 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { loadLeaguePayFacts, type LeaguePayFacts } from './league-pay-facts';
-import { leaguePayToken, leaguePayUrl } from './league-pay-link';
+import { leaguePayToken, leaguePayUrl, payLinkSecret } from './league-pay-link';
 import type { LeagueMailPay } from './email';
 import { LEAGUE_PAY_WORDS as LW } from './league-pay-words';
 import { toCents } from './online-payment-fee';
 
 /**
  * A house-league sign-up's pay block, as one plain object (Club Tier Stage 12b; drawn b1, k1). Built on the server from
- * the sign-up the family proved they hold (the pay link, or the email and reference), so the page never holds more than
- * that sign-up. `null` = the club is not taking card payments: the page keeps today's words, word for word, and draws no
+ * the sign-up the family proved they hold (their "Your sign-up" link), so the page never holds more than that sign-up.
+ * Children are named by first name only (Stage 1). `null` = the club is not taking card payments: the page keeps today's words, word for word, and draws no
  * button (A6).
  */
 /** 12c: 'clearing' — every child still owing is on a bank debit on its way: no Pay buttons, the spots held (ask 6). */
@@ -80,9 +80,15 @@ export interface LeaguePayView {
   receipts: LeaguePayReceipt[];
 }
 
-/** The sign-up's card payments (paid, part-refunded or refunded), newest first, one line per child. */
-async function receiptsFor(regIds: string[]): Promise<LeaguePayReceipt[]> {
+/**
+ * The sign-up's card payments (paid, part-refunded or refunded), newest first, one line per child. Each line names the
+ * child by FIRST name only (Signed-in family accounts Stage 1: a forwarded link never gives a stranger a child's full
+ * name): the stored description ("Maya Okafor · U9 Rookie") is shaped here, at read, and never rewritten.
+ */
+async function receiptsFor(children: Array<{ registrationId: string; firstName: string; lastName: string }>): Promise<LeaguePayReceipt[]> {
+  const regIds = children.map(c => c.registrationId);
   if (!regIds.length) return [];
+  const child = new Map(children.map(c => [c.registrationId, c]));
   const { data: items } = await supabaseAdmin.from('online_payment_items').select('online_payment_id').in('registration_id', regIds);
   const ids = [...new Set(((items ?? []) as Array<{ online_payment_id: string }>).map(i => i.online_payment_id))];
   if (!ids.length) return [];
@@ -90,12 +96,12 @@ async function receiptsFor(regIds: string[]): Promise<LeaguePayReceipt[]> {
     supabaseAdmin.from('online_payments')
       .select('id, receipt_no, base_amount, fee_amount, total_amount, fee_payer, card_brand, card_last4, paid_at, status, livemode, rail, bank_last4, clearing_at, reversed_at')
       .in('id', ids).in('status', ['paid', 'partly_refunded', 'refunded', 'reversed']).order('paid_at', { ascending: false }),
-    supabaseAdmin.from('online_payment_items').select('online_payment_id, description, amount').in('online_payment_id', ids).order('created_at'),
+    supabaseAdmin.from('online_payment_items').select('online_payment_id, registration_id, description, amount').in('online_payment_id', ids).order('created_at'),
   ]);
   const byPay = new Map<string, { label: string; cents: number }[]>();
-  for (const l of (lines ?? []) as Array<{ online_payment_id: string; description: string; amount: number }>) {
+  for (const l of (lines ?? []) as Array<{ online_payment_id: string; registration_id: string | null; description: string; amount: number }>) {
     const list = byPay.get(l.online_payment_id) ?? [];
-    list.push({ label: l.description, cents: toCents(l.amount) });
+    list.push({ label: firstNameLabel(l.description, l.registration_id ? child.get(l.registration_id) : undefined), cents: toCents(l.amount) });
     byPay.set(l.online_payment_id, list);
   }
   return ((pays ?? []) as Array<Record<string, unknown>>).map(p => ({
@@ -115,6 +121,16 @@ async function receiptsFor(regIds: string[]): Promise<LeaguePayReceipt[]> {
     startedAt: (p.clearing_at as string | null) ?? null,
     reversedAt: p.status === 'reversed' ? ((p.reversed_at as string | null) ?? null) : null,
   }));
+}
+
+/** A stored line reads "{full name as it was when paid} · {division}". The family sees the child's first name as it is
+ *  now, from the registration, and only the text after the first " · ": the stored name never reaches the page, so a
+ *  child renamed after paying, or a line whose registration is not this sign-up's, cannot carry a last name with it. */
+export function firstNameLabel(label: string, c: { firstName: string } | undefined): string {
+  const cut = label.indexOf(' · ');
+  const rest = cut >= 0 ? label.slice(cut + 3) : '';
+  if (!c) return rest;
+  return rest ? `${c.firstName} · ${rest}` : c.firstName;
 }
 
 function kindOf(f: LeaguePayFacts): LeaguePayKind | null {
@@ -147,7 +163,7 @@ export function viewFromFacts(f: LeaguePayFacts, token: string, receipts: League
     howToPay: f.season.howToPay?.trim() || null,
     lines: kind === 'owing'
       ? f.children.filter(c => c.owingCents > 0).map(c => ({
-        childName: `${c.firstName} ${c.lastName}`, divisionName: c.divisionName, owingCents: c.owingCents,
+        childName: c.firstName, divisionName: c.divisionName, owingCents: c.owingCents,
         feeCents: toCents(c.fee ?? 0), part: c.receivedCents > 0,
       }))
       : [],
@@ -157,7 +173,7 @@ export function viewFromFacts(f: LeaguePayFacts, token: string, receipts: League
     bankFeeCents: kind === 'owing' && f.bankFee ? f.bankFee.feeCents : null,
     bankTotalCents: kind === 'owing' && f.bankFee ? f.bankFee.totalCents : null,
     clearingLines: f.children.filter(c => c.clearingCents > 0)
-      .map(c => ({ childName: `${c.firstName} ${c.lastName}`, divisionName: c.divisionName, cents: c.clearingCents })),
+      .map(c => ({ childName: c.firstName, divisionName: c.divisionName, cents: c.clearingCents })),
     clearing: f.clearing,
     returned: kind === 'owing' ? f.returned : null,
     reversed: kind === 'owing' ? f.reversed : null,
@@ -174,19 +190,21 @@ export function viewFromFacts(f: LeaguePayFacts, token: string, receipts: League
 export async function leagueMailPay(registrationId: string): Promise<LeagueMailPay | null> {
   const f = await loadLeaguePayFacts(registrationId).catch(() => null);
   if (!f || f.refusal !== null) return null;
-  const payUrl = leaguePayUrl(process.env.NEXT_PUBLIC_APP_URL ?? '', { orgSlug: f.org.slug, seasonSlug: f.season.slug, registrationId });
+  const payUrl = leaguePayUrl(process.env.NEXT_PUBLIC_APP_URL ?? '', { orgSlug: f.org.slug, seasonSlug: f.season.slug, registrationId, version: f.linkVersion });
   return payUrl ? { payUrl, familyPaysFee: f.account?.feePayer === 'family' } : null;
 }
 
 /** The pay block for the sign-up a registration belongs to; null when the club is not taking card payments (or no
  *  link can be signed in this environment — then no button is drawn, never a dead one). */
 export async function buildLeaguePayView(registrationId: string, contactEmail: string | null): Promise<LeaguePayView | null> {
-  const token = leaguePayToken(registrationId);
-  if (!token) return null;
+  if (!payLinkSecret()) return null;
   // 12c: a bank debit still clearing past Stripe's window is asked of Stripe first (loaded late: the landing reads this file).
   await (await import('./bank-debit-overdue')).settleOverdueDebits({ registrationId });
   const f = await loadLeaguePayFacts(registrationId);
   if (!f) return null;
-  const receipts = await receiptsFor(f.children.map(c => c.registrationId));
+  // Signed at the anchor's current link version (mig 419), so the page's Pay carries the link that opened it.
+  const token = leaguePayToken(registrationId, f.linkVersion);
+  if (!token) return null;
+  const receipts = await receiptsFor(f.children);
   return viewFromFacts(f, token, receipts, contactEmail);
 }

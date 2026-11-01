@@ -37,6 +37,8 @@ type Result = {
   children: (PlacedChild & { outcome: 'active' | 'pending_review' | 'waitlisted' | 'duplicate' | 'nofit' })[];
   /** 12b: the pay block while the club takes card payments and something is owed; null keeps today's words. */
   pay?: LeaguePayView | null;
+  /** Signed-in family accounts Stage 1: the family's "Your sign-up" link (null when this server signs no links). */
+  signupToken?: string | null;
 };
 
 interface Props {
@@ -134,7 +136,7 @@ export default function RegisterForm({
     }
   }
 
-  if (result) return <Confirmation result={result} seasonName={seasonName} orgName={orgName} statusHref={orgHref(`/league/${seasonSlug}/status`)} forecast={children.map((c, i) => ({ name: c.firstName, kind: forecast[i].kind }))} />;
+  if (result) return <Confirmation result={result} seasonName={seasonName} orgName={orgName} statusHref={orgHref(result.signupToken ? `/league/${seasonSlug}/status/${result.signupToken}` : `/league/${seasonSlug}/status`)} forecast={children.map((c, i) => ({ name: c.firstName, kind: forecast[i].kind }))} />;
 
   // ── The total (copy §7.8): accepted children only ──
   const free = divisions.every(d => ((d.price ?? season.registrationFee) ?? 0) === 0);
@@ -434,9 +436,9 @@ function Confirmation({ result, seasonName, orgName, statusHref, forecast }: {
         <p className={styles.fitDim}>Nothing to pay unless a spot opens. We’ll email you if one does.</p>
       ) : null}
 
-      <p className={formKit.successBody} style={{ marginTop: '1.5rem' }}>We’ve emailed this to <strong>{result.guardianEmail}</strong>. Keep your reference to check your status.</p>
-      <p className={styles.fitDim}>Didn’t get it? Check your spam folder, or look up your status with your reference.</p>
-      <p className={styles.successStatusLink}><a href={statusHref}>Check your registration →</a></p>
+      <p className={formKit.successBody} style={{ marginTop: '1.5rem' }}>We’ve emailed this to <strong>{result.guardianEmail}</strong>. Keep your reference to quote if you contact the club.</p>
+      <p className={styles.fitDim}>Didn’t get it? Check your spam folder.</p>
+      <p className={styles.successStatusLink}><a href={statusHref}>{result.signupToken ? 'Your sign-up →' : 'Email me my link →'}</a></p>
     </div>
   );
 }

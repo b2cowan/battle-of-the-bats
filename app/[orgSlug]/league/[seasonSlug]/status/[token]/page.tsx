@@ -5,31 +5,35 @@ import type { Metadata } from 'next';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason, getClubSiteContent } from '@/lib/club-page-meta';
 import { orgLinks } from '@/lib/org-links';
-import { registrationFromPayToken } from '@/lib/league-pay-link';
-import { buildSignupStatus, signupRowsForLink } from '@/lib/league-signup-status';
+import { openSignupLink } from '@/lib/league-signup-link';
+import { buildSignupStatus } from '@/lib/league-signup-status';
 import { buildLeaguePayView } from '@/lib/league-pay-view';
-import { LEAGUE_PAY_WORDS as LW } from '@/lib/league-pay-words';
-import StatusLookupForm from '../StatusLookupForm';
+import { SIGNUP_LINK_WORDS as SW } from '@/lib/league-pay-words';
+import YourSignup from '../YourSignup';
+import EmailMyLinkForm from '../EmailMyLinkForm';
 import column from '../../../league-column.module.css';
 import kit from '@/components/public/ClubKit.module.css';
+import card from '../EmailMyLinkForm.module.css';
 
 export const dynamic = 'force-dynamic';
 
-/** The tab names the page (the status page's own name); a pay link is a key: never indexed, never cached. */
+/** The tab names the page ("Your sign-up", the email button's words); a link is a key: never indexed, never cached. */
 export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string; seasonSlug: string }> }): Promise<Metadata> {
   const { orgSlug, seasonSlug } = await params;
-  const meta = await clubPageMetadata(orgSlug, () => 'Check your registration', { path: `/league/${seasonSlug}/status` });
+  const meta = await clubPageMetadata(orgSlug, () => SW.title, { path: `/league/${seasonSlug}/status` });
   return { ...meta, robots: { index: false, follow: false } };
 }
 
 /**
- * A FAMILY'S PAY LINK OPENS THEIR STATUS PAGE, ALREADY UNLOCKED (Club Tier Stage 12b, owner §0e c; drawings b1, b2, b5).
- * The signed link names one registration and shows its whole sign-up — the children, what is owed, Pay, the receipts,
- * and "Ask to withdraw a child" — exactly what the email and the reference open. `?paid={session}` is Stripe's return
- * (the page then waits for the record); `?left=1` is a family that left Stripe's page before paying. A link under another
- * club's or season's address is refused.
+ * A FAMILY'S "YOUR SIGN-UP" LINK OPENS THEIR PAGE (Club Tier Stage 12b, owner §0e c; Signed-in family accounts Stage 1,
+ * drawing tabs 1, 3 and 6). The signed link names one registration and shows its whole sign-up — the children by first
+ * name, what is owed, Pay, the receipts, and "Ask to withdraw a child". Whether it opens is the one door's answer
+ * (`openSignupLink`): a link the club replaced, a mangled one, or one under another club's or season's address shows
+ * "This link no longer works" with "Email me my link" right there (ask 5: the two look the same on purpose); a finished
+ * season's closed link shows "This season has finished", with no form (ask 1). `?paid={session}` is Stripe's return
+ * (the page then waits for the record); `?left=1` is a family that left Stripe's page before paying.
  */
-export default async function PayLinkStatusPage({
+export default async function YourSignupPage({
   params,
   searchParams,
 }: {
@@ -47,10 +51,9 @@ export default async function PayLinkStatusPage({
   if (!season) notFound();
   const contactEmail = siteContent?.contactEmail ?? null;
 
-  const regId = registrationFromPayToken(token);
-  const rows = regId ? await signupRowsForLink(regId, { orgId: org.id, seasonId: season.id }) : null;
-  const [found, pay] = rows && regId
-    ? await Promise.all([buildSignupStatus(season, org.name, rows), buildLeaguePayView(regId, contactEmail)])
+  const link = await openSignupLink(token, { at: { orgId: org.id, seasonId: season.id } });
+  const [found, pay] = link.ok
+    ? await Promise.all([buildSignupStatus(season, org.name, link.rows), buildLeaguePayView(link.registrationId, contactEmail)])
     : [null, null];
 
   const innerStyle = { '--league-measure': '560px' } as React.CSSProperties;
@@ -63,21 +66,29 @@ export default async function PayLinkStatusPage({
 
         <div style={{ marginBottom: '2rem' }}>
           <div className={kit.sub} style={{ marginBottom: '0.4rem' }}>{org.name}</div>
-          <h1 className={kit.title}>Check your registration</h1>
+          <h1 className={kit.title}>{SW.title}</h1>
           <p className={kit.sub}>{season.name}</p>
         </div>
 
-        {found ? (
-          <StatusLookupForm
+        {link.ok && found ? (
+          <YourSignup
             orgSlug={orgSlug}
             seasonSlug={seasonSlug}
             contactEmail={contactEmail}
-            initial={{ found: { ...found, pay }, token, guardianEmail: rows?.[0]?.guardian_email ?? null }}
+            found={{ ...found, pay }}
+            token={token}
+            guardianEmail={link.rows[0]?.guardian_email ?? null}
             returnedSession={paid ?? null}
             left={left === '1'}
           />
+        ) : !link.ok && link.ended === 'finished' ? (
+          <div className={kit.card}>
+            <h2 className={card.heading}>{SW.finishedTitle}</h2>
+            <p style={{ margin: 0, color: 'var(--club-text)' }}>{SW.finishedBody(season.name)}</p>
+            <p className={card.soft} style={{ marginTop: '0.6rem' }}>{SW.finishedQuestions(org.name, contactEmail)}</p>
+          </div>
         ) : (
-          <div className={kit.card}><p style={{ margin: 0 }}>{LW.error.linkInvalid(org.name)}</p></div>
+          <EmailMyLinkForm orgSlug={orgSlug} seasonSlug={seasonSlug} seasonName={season.name} clubName={org.name} variant="replaced" />
         )}
       </div>
     </div>

@@ -88,7 +88,7 @@ async function sendLeagueReceipt(op: OnlineForEmail): Promise<void> {
   });
   const receiptNo = receiptLabel(op.receipt_no ?? '');
   const test = !op.livemode;
-  const link = leaguePayUrl(appUrl(), { orgSlug: facts.org.slug, seasonSlug: facts.season.slug, registrationId: anchor! });
+  const link = leaguePayUrl(appUrl(), { orgSlug: facts.org.slug, seasonSlug: facts.season.slug, registrationId: anchor!, version: facts.linkVersion });
   const lines = [
     warmEmailHeading(escapeHtml(E.receiptNumber(receiptNo))),
     warmEmailParagraph(escapeHtml(E.receiptThanks(facts.org.name, null))),
@@ -266,7 +266,7 @@ export async function sendLeaguePayLink(
   }
   if (facts.refusal) return { error: facts.refusal === 'switch_off' || facts.refusal === 'not_taking_payments' ? 'The club isn’t taking card payments right now.' : 'There’s nothing owing to send a pay link for.' };
   if (!facts.guardianEmail) return { error: 'This family has no email address.' };
-  const payLink = leaguePayUrl(appUrl(), { orgSlug: facts.org.slug, seasonSlug: facts.season.slug, registrationId });
+  const payLink = leaguePayUrl(appUrl(), { orgSlug: facts.org.slug, seasonSlug: facts.season.slug, registrationId, version: facts.linkVersion });
   if (!payLink) return { error: 'Pay links aren’t set up on this server.' };
   if (lost && opts.askIfLost) return { error: DISPUTE_WORDS.sendAnywayBody(false), disputeLost: 'ask' };
   const face = await systemMailFace({

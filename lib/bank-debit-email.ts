@@ -68,7 +68,7 @@ async function debitContext(onlinePaymentId: string): Promise<DebitContext | nul
     op, org: facts.org, who: childList(firsts), season: facts.season.name,
     held: firsts.length === 1 ? B.holdChild(possessive(firsts[0])) : B.holdChildren(childList(firsts)),
     stillHeld: firsts.length === 1 ? D.returnedHeldChild(possessive(firsts[0])) : D.returnedHeldChildren(childList(firsts)),
-    payLink: leaguePayUrl(appUrl(), { orgSlug: facts.org.slug, seasonSlug: facts.season.slug, registrationId: anchor }),
+    payLink: leaguePayUrl(appUrl(), { orgSlug: facts.org.slug, seasonSlug: facts.season.slug, registrationId: anchor, version: facts.linkVersion }),
     canPayAgain: !facts.refusal,
     howToPay: facts.season.howToPay?.trim() || null,
   };

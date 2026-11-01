@@ -7,14 +7,17 @@ import { readCode } from './_source-code.ts';
  * CLUB TIER STAGE 9b-1, PARTS 5–6 — ONE SIGN-UP, SEVERAL CHILDREN (owner Q5, 9b·4, 9b·5, 9b·12, F23; plan §2 CASL line).
  * The sign-up route places each child through the locked step, sends ONE email per sign-up (awaited: it carries the
  * reference and how to pay), puts ONE notice in the club's Needs attention, and files the email-consent row when ticked.
- * The family reads "Accepted", never "Approved". The status page finds a whole sign-up by its reference.
+ * The family reads "Accepted", never "Approved". The family's page opens a whole sign-up — since Signed-in family
+ * accounts Stage 1 by its signed link alone (the reference opens nothing; tests/unit/league-signup-link.test.ts).
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
 const ROUTE = readCode('app/api/league/[orgSlug]/[seasonSlug]/register/route.ts');
 const FORM = readCode('components/league/RegisterForm.tsx');
-const STATUS = readCode('app/[orgSlug]/league/[seasonSlug]/status/StatusLookupForm.tsx');
-const LOOKUP = readCode('app/api/league/[orgSlug]/[seasonSlug]/status-lookup/route.ts');
+const STATUS = readCode('app/[orgSlug]/league/[seasonSlug]/status/YourSignup.tsx');
+// Stage 1: the email-and-reference lookup is gone; the signed link's page and its one door are the sign-up's home.
+const LINK_PAGE = readCode('app/[orgSlug]/league/[seasonSlug]/status/[token]/page.tsx');
+const DOOR = readCode('lib/league-signup-link.ts');
 const SIGNUP_STATUS = readCode('lib/league-signup-status.ts');
 const EMAIL = readCode('lib/email.ts');
 
@@ -78,27 +81,27 @@ describe('the family’s words', () => {
   });
 });
 
-describe('the status page finds the whole sign-up', () => {
-  it('by its reference or (an older registration) its own, and ONLY the registrations that reference names', () => {
-    assert.match(LOOKUP, /const named = rows\.filter\(\(r: any\) => r\.signup_ref === refCode \|\| registrationReference\(String\(r\.id\)\) === refCode\)/);
-    // Never every child under the email: anyone can sign up under any email and get a reference for it. The shaping is
-    // shared with the pay link's page (12b) and reads only the rows it is handed.
-    assert.match(LOOKUP, /buildSignupStatus\(season, org\.name, named as SignupStatusRow\[\]\)/);
-    assert.doesNotMatch(LOOKUP, /rows\.map\(\(r: any\) => \{/);
+describe('the family’s page opens the whole sign-up', () => {
+  it('by the link’s anchor: its reference AND family email (or, an older registration, that one), and ONLY those rows', () => {
+    // Never every child under the email: anyone can sign up under any email they type. The door hands the page only the
+    // rows of the one sign-up, and the shaping reads only the rows it is handed.
+    assert.match(SIGNUP_STATUS, /\.eq\('signup_ref', anchor\.signup_ref as string\)/);
+    assert.match(SIGNUP_STATUS, /q = anchor\.guardian_email \? q\.eq\('guardian_email', anchor\.guardian_email as string\) : q\.is\('guardian_email', null\)/);
+    assert.match(DOOR, /const rows = await signupRowsFromAnchor\(anchor\)/);
+    assert.match(LINK_PAGE, /buildSignupStatus\(season, org\.name, link\.rows\)/);
     assert.match(SIGNUP_STATUS, /const registrations = rows\.map\(/);
   });
   it('shows the club’s how-to-pay words only while an accepted child owes something', () => {
     assert.match(SIGNUP_STATUS, /howToPay: owes \? season\.howToPay : null/);
   });
-  it('12b: the pay block covers the whole sign-up, so a child’s own code opens no pay block', () => {
-    assert.match(LOOKUP, /const wholeSignup = named\.every\(\(r: any\) => r\.signup_ref === refCode \|\| !r\.signup_ref\)/);
-    assert.match(LOOKUP, /wholeSignup \? buildLeaguePayView\(/);
+  it('12b: the pay block covers the whole sign-up, so only a link the door opened carries it', () => {
+    assert.match(LINK_PAGE, /link\.ok\s*\? await Promise\.all\(\[buildSignupStatus\(season, org\.name, link\.rows\), buildLeaguePayView\(link\.registrationId, contactEmail\)\]\)/);
   });
   it('12b: the status page draws no greyed Pay now — THE one pay block while the club takes card payments, none otherwise (A6)', () => {
     assert.doesNotMatch(STATUS, /Online payment isn’t available yet/);
     assert.doesNotMatch(STATUS, /disabled title=/);
     assert.match(STATUS, /<LeaguePayBlock pay=\{pay\}/);
     // Not taking payments: today's words stay ("Payable separately", the club's how-to-pay text).
-    assert.match(STATUS, /Payable separately to \{found\?\.clubName\}/);
+    assert.match(STATUS, /Payable separately to \{found\.clubName\}/);
   });
 });

@@ -46,7 +46,10 @@ const FRAME_CSS = 'components/public/ClubFrame.module.css';
  *  redefines their faces and colours, so they carry no mono THERE without changing the surfaces they share. */
 const CLUB_SURFACES = [
   ...CLUB_PAGES,
-  `${ORG}/league/[seasonSlug]/status/StatusLookupForm.tsx`,
+  // Signed-in family accounts Stage 1: the family's page (renamed from the lookup form) and "Email me my link".
+  `${ORG}/league/[seasonSlug]/status/YourSignup.tsx`,
+  `${ORG}/league/[seasonSlug]/status/EmailMyLinkForm.tsx`,
+  `${ORG}/league/[seasonSlug]/status/EmailMyLinkForm.module.css`,
   'components/public/RepTeamPublicSchedule.tsx',
   'components/public/RepTeamPublicSchedule.module.css',
   // Stage 4b-2a: the club's home, its Teams page and the team page's own styles.

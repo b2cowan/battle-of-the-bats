@@ -77,6 +77,8 @@ export interface LeaguePayFacts {
   /** The sign-up's key (`online_payments.signup_key`): its reference, or the one registration's id. */
   signupKey: string;
   guardianEmail: string | null;
+  /** The anchor's `link_version` (mig 419): every link minted from these facts signs with it. */
+  linkVersion: number;
   children: LeaguePayChild[];
   account: PayoutsAccountFacts | null;
   owingCents: number;
@@ -99,8 +101,9 @@ export interface LeaguePayFacts {
 type RegRow = {
   id: string; org_id: string; season_id: string; status: string; player_first_name: string; player_last_name: string;
   division_id: string | null; signup_ref: string | null; guardian_email: string | null; fee_amount: number | null;
+  link_version: number;
 };
-const REG_COLUMNS = 'id, org_id, season_id, status, player_first_name, player_last_name, division_id, signup_ref, guardian_email, fee_amount';
+const REG_COLUMNS = 'id, org_id, season_id, status, player_first_name, player_last_name, division_id, signup_ref, guardian_email, fee_amount, link_version';
 
 /** The children of the sign-up a registration belongs to (the same reference and family), oldest first. */
 async function signupRows(anchor: RegRow): Promise<RegRow[]> {
@@ -322,7 +325,8 @@ export async function clubPayoutsConnected(orgId: string): Promise<boolean> {
 /** Why the family cannot pay online right now, in words (copy §11): the pay route's JSON and the page say the same. */
 export function leagueRefusalMessage(f: Pick<LeaguePayFacts, 'refusal' | 'children' | 'org'>, contactEmail: string | null): string | null {
   const first = f.children[0];
-  const name = first ? `${first.firstName} ${first.lastName}` : '';
+  // First name only: this goes to the family's browser (the pay route's 409), where a child is never shown by last name.
+  const name = first ? first.firstName : '';
   switch (f.refusal) {
     case null: return null;
     case 'switch_off': return W.error.switchOff;
@@ -433,7 +437,7 @@ export async function loadLeaguePayFacts(registrationId: string): Promise<League
   if (refusal === null && (!hasPlanFeature(org.planId, 'online_payments') || isOrgBillingSuspended(org))) refusal = 'switch_off';
 
   return {
-    org, season, anchorId: anchor.id, signupKey: anchor.signup_ref ?? anchor.id, guardianEmail: anchor.guardian_email,
+    org, season, anchorId: anchor.id, signupKey: anchor.signup_ref ?? anchor.id, guardianEmail: anchor.guardian_email, linkVersion: Number(anchor.link_version ?? 0),
     children, account, owingCents, fee, shares, bankDebit, bankFee, bankShares,
     clearing: debits.clearing, returned: debits.returned, reversed: debits.reversed, refusal,
   };

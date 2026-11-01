@@ -55,7 +55,10 @@ describe('2 · every listed route asks the gate about ratings before anything el
 
 describe('3 · the surfaces a rating must never reach do not import it (9c·2a, 9c·2c)', () => {
   const NEVER = [
-    'app/api/league/[orgSlug]/[seasonSlug]/status-lookup/route.ts',
+    // Signed-in family accounts Stage 1: "Email me my link" (replacing the status lookup), its email and the link's door.
+    'app/api/league/[orgSlug]/[seasonSlug]/email-my-link/route.ts',
+    'lib/league-signup-link-mail.ts',
+    'lib/league-signup-link.ts',
     'lib/league-signup-status.ts',
     'lib/house-league-coach.ts',
     'app/api/admin/house-league/seasons/[seasonId]/registrations/route.ts',

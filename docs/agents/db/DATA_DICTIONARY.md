@@ -7290,6 +7290,10 @@ Sent and By).
 <!-- dict:col:league_registrations.pay_link_sent_at -->
 **`pay_link_sent_at`** (timestamptz, nullable; migration 374, Stage 12b) — when the convenor last emailed this child's family the pay link ("Pay link sent Oct 20" on the Registrations row; the menu item stays so it can be sent again). The `teams.pay_link_sent_at` pattern. The link itself is a derived token scoped to the sign-up, never stored. A card payment's money is not here: it is `online_payment_items` → the house-league line (`entry_id`).
 
+<!-- dict:col:league_registrations.link_version -->
+<!-- dict:col:league_registrations.link_replaced_at -->
+**`link_version` / `link_replaced_at`** (int NOT NULL DEFAULT 0, CHECK ≥ 0 `league_registrations_link_version_check` / timestamptz nullable; mig 419, Signed-in family accounts Stage 1) — the family's "Your sign-up" link can be replaced. The link stays a derived token (never stored), but its signature now covers the version: **0 signs the original message** (`league-pay:{id}`), so links already emailed keep working; n ≥ 1 signs `league-pay:{id}:v{n}` and the token carries the version as a third segment. The club's "Send a new link" bumps the version and stamps `link_replaced_at` on **every row of the sign-up** in one statement (the same `signup_ref` + `guardian_email`, the set `signupRowsFromAnchor` reads), so every brother's and sister's old link stops at once. Every door that reads a family token checks the version against the anchor row's (`lib/league-signup-link.ts` `openSignupLink`); minting signs with the anchor's current version. `link_replaced_at` drives the history line "New link sent; the old one stopped". Never rotates `PAY_LINK_SECRET`, so a reset cannot touch a tournament team's pay link.
+
 ---
 
 ## `league_registration_price_changes`

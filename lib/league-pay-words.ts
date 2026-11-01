@@ -96,3 +96,47 @@ export const LEAGUE_PAY_WORDS = {
   },
 } as const;
 
+
+/**
+ * A FAMILY'S "YOUR SIGN-UP" LINK — the words (Signed-in family accounts Stage 1; drawing
+ * `docs/projects/active/SIGNED_IN_FAMILY_STAGE1_DRAWINGS.html` tabs 1–3, 5 and 6, words exactly as drawn). The family's
+ * page, "Email me my link", the two screens a closed link shows, and the email "Email me my link" sends.
+ */
+export const SIGNUP_LINK_WORDS = {
+  // Tab 1 · the page
+  title: 'Your sign-up',
+  reference: 'Reference:',
+  referenceQuote: '· quote it if you contact the club',
+  foot: 'Anyone with this link can open this page. If it has been shared, ask the club to send you a new one.',
+  // Tab 2 · Email me my link
+  door: 'Email me my link',
+  intro: 'Lost the email? Enter the email you signed up with. If it has a sign-up for this season, we’ll send your link there.',
+  emailLabel: 'Parent or guardian email',
+  emailPlaceholder: 'you@example.com',
+  sending: 'Sending…',
+  sentTitle: 'Check your inbox',
+  sentBody: (season: string) => ({ before: 'If ', after: ` has a sign-up for ${season}, the link is on its way. It can take a few minutes, so check junk mail too.` }),
+  sentNote: (club: string) => `Nothing came? You may have signed up with a different email. Ask ${club} and quote your reference if you have it.`,
+  tryAgain: 'Try a different email',
+  errEmail: 'Enter the email you signed up with.',
+  errGeneric: 'Something went wrong. Please try again.',
+  // Tab 3 · when it ends
+  finishedTitle: 'This season has finished',
+  finishedBody: (season: string) => `${season} is over, so this page is closed. The receipts we sent you by email are still yours to keep.`,
+  finishedQuestions: (club: string, contact: string | null) => (contact ? `Questions go to ${club}: ${contact}` : `Questions go to ${club}.`),
+  replacedTitle: 'This link no longer works',
+  replacedBody: 'The club may have sent you a newer one, so check your inbox. Or have your link sent again.',
+  // Tab 2 · the email it sends (and tab 5: one "Your sign-up" button)
+  mail: {
+    subject: (season: string) => `Your sign-up link · ${season}`,
+    heading: 'Your sign-up link',
+    hi: (first: string) => `Hi ${first},`,
+    body: (children: string, season: string) => `You asked for the link to your sign-up for ${children} in ${season}.`,
+    bodyMany: (season: string) => `You asked for the links to your sign-ups in ${season}. There is one for each sign-up.`,
+    forChildren: (children: string) => `For ${children}`,
+    button: 'Your sign-up',
+    notYou: 'Didn’t ask for this? You can ignore it. Your link has not changed.',
+    reference: (ref: string) => `Reference ${ref}. Quote it if you contact the club.`,
+    because: 'someone asked for this link on the club’s site',
+  },
+} as const;

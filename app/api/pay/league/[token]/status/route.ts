@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { onlinePaymentsOn } from '@/lib/online-payments-switch';
 import { landCheckoutSession } from '@/lib/online-payment-landing';
-import { registrationFromPayToken } from '@/lib/league-pay-link';
+import { openSignupLink } from '@/lib/league-signup-link';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,17 +20,16 @@ const ASK_STRIPE_AFTER_MS = 8_000;
 export const GET = withObservability(async (req: Request, { params }: { params: Promise<{ token: string }> }) => {
   const { token } = await params;
   if (!onlinePaymentsOn()) return NextResponse.json({ state: 'unknown' }, { status: 404 });
-  const regId = registrationFromPayToken(token);
   const sessionId = new URL(req.url).searchParams.get('session');
-  if (!regId || !sessionId) return NextResponse.json({ state: 'unknown' }, { status: 404 });
-  const [{ data: reg }, { data: op }] = await Promise.all([
-    supabaseAdmin.from('league_registrations').select('id, season_id, signup_ref').eq('id', regId).maybeSingle(),
+  if (!sessionId) return NextResponse.json({ state: 'unknown' }, { status: 404 });
+  // Stage 1: the one door, past the season's clock — a family who paid the last dollar still sees it confirmed.
+  const [link, { data: op }] = await Promise.all([
+    openSignupLink(token, { afterCheckout: true }),
     supabaseAdmin.from('online_payments')
       .select('id, flow, season_id, signup_key, status, landed_at, stripe_account_id, updated_at')
       .eq('stripe_checkout_session_id', sessionId).maybeSingle(),
   ]);
-  const signupKey = reg ? ((reg.signup_ref as string | null) ?? (reg.id as string)) : null;
-  if (!reg || !op || op.flow !== 'league_signup' || op.season_id !== reg.season_id || op.signup_key !== signupKey) {
+  if (!link.ok || !op || op.flow !== 'league_signup' || op.season_id !== link.seasonId || op.signup_key !== link.signupKey) {
     return NextResponse.json({ state: 'unknown' }, { status: 404 });
   }
   // 12c: a bank debit clearing (or returned) reloads the page too, which then says so.

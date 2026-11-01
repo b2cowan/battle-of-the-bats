@@ -6,12 +6,13 @@ import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 import { onlinePaymentsOn } from '@/lib/online-payments-switch';
 import { createCheckout, expireCheckout, retrieveCheckout } from '@/lib/stripe-connect';
 import { leagueRefusalMessage, loadLeaguePayFacts } from '@/lib/league-pay-facts';
-import { leaguePayPath, registrationFromPayToken } from '@/lib/league-pay-link';
+import { leaguePayPath } from '@/lib/league-pay-link';
+import { openSignupLink } from '@/lib/league-signup-link';
 import { getClubSiteContent } from '@/lib/club-page-meta';
 import { throttlePublicForm } from '@/lib/public-form-throttle';
 import { toDollars } from '@/lib/online-payment-fee';
 import { BANK_DEBIT_WORDS as B, PAY_WORDS as W } from '@/lib/online-payment-words';
-import { LEAGUE_PAY_WORDS as LW } from '@/lib/league-pay-words';
+import { LEAGUE_PAY_WORDS as LW, childList } from '@/lib/league-pay-words';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -68,8 +69,10 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   // Public: throttled like every family form (/review: each press asks Stripe).
   const throttled = throttlePublicForm(req);
   if (throttled) return throttled;
-  const regId = registrationFromPayToken(token);
-  if (!regId) return NextResponse.json({ error: LW.error.linkInvalid(null) }, { status: 404 });
+  // Stage 1: the one door — a replaced link, or a finished season's closed link, pays nothing.
+  const link = await openSignupLink(token);
+  if (!link.ok) return NextResponse.json({ error: LW.error.linkInvalid(null) }, { status: 404 });
+  const regId = link.registrationId;
   const body = await req.json().catch(() => ({}));
   // 12c: the button pressed decides the rail (each has its own fee, its own split and its own Checkout).
   const rail: 'card' | 'bank_debit' = body.rail === 'bank_debit' ? 'bank_debit' : 'card';
@@ -92,7 +95,11 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   const account = facts.account!;
 
   const who = shares.map(s => s.description.split(' · ')[0]).join(', ');
-  const reuse = await openSessionFor(facts.season.id, facts.signupKey, rail, fee.totalCents, who, facts.org.name);
+  // The clearing answer goes to the family's browser, so it names the children by first name; `who` (full names) stays
+  // in the club's record.
+  const firstNames = new Map(facts.children.map(c => [c.registrationId, c.firstName]));
+  const whoFirst = childList(shares.map(s => firstNames.get(s.registrationId) ?? '').filter(Boolean));
+  const reuse = await openSessionFor(facts.season.id, facts.signupKey, rail, fee.totalCents, whoFirst, facts.org.name);
   if (reuse) return reuse;
 
   // Asked of Stripe FIRST and recorded after, under the one-open-per-sign-up index (the team route's order, review H1).
@@ -147,7 +154,7 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   if (openError) {
     // Another press recorded its page first (or a child changed in between): close ours before anyone sees it.
     await expireCheckout(account.stripeAccountId, session.id);
-    const theirs = await openSessionFor(facts.season.id, facts.signupKey, rail, fee.totalCents, who, facts.org.name);
+    const theirs = await openSessionFor(facts.season.id, facts.signupKey, rail, fee.totalCents, whoFirst, facts.org.name);
     return theirs ?? NextResponse.json({ error: W.error.couldntOpen }, { status: 409 });
   }
   return NextResponse.json({ url: session.url });

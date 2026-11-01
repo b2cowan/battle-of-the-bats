@@ -17,16 +17,32 @@ const REG = '0f8b3c1e-2d4a-4b6c-9e8f-1a2b3c4d5e6f';
 describe('the family pay link (§0e c)', () => {
   it('names one registration, signed, and reads back only under the same secret', () => {
     const token = signLeaguePayToken(REG, SECRET);
-    assert.equal(readLeaguePayToken(token, SECRET), REG);
+    assert.deepEqual(readLeaguePayToken(token, SECRET), { registrationId: REG, version: 0 });
     assert.equal(readLeaguePayToken(token, 'y'.repeat(40)), null);
     // A changed signature character (the 5th of the signature half: its bits are all real, never padding).
     const at = token.indexOf('.') + 5;
     assert.equal(readLeaguePayToken(token.slice(0, at) + (token[at] === 'A' ? 'B' : 'A') + token.slice(at + 1), SECRET), null);
     assert.equal(readLeaguePayToken('not-a-token', SECRET), null);
   });
-  it('a team’s link never opens a family’s page, nor a family’s a team’s', () => {
+  it('a team’s link never opens a family’s page, nor a family’s a team’s (at any version)', () => {
     assert.equal(readLeaguePayToken(signTeamPayToken(REG, SECRET), SECRET), null);
     assert.equal(readTeamPayToken(signLeaguePayToken(REG, SECRET), SECRET), null);
+    assert.equal(readTeamPayToken(signLeaguePayToken(REG, SECRET, 3), SECRET), null);
+  });
+  it('Stage 1: version 0 is today’s link exactly; a version is signed in, and cannot be edited to another', () => {
+    // A link emailed before mig 419 — two segments, the original message — reads as version 0, unchanged.
+    const today = signLeaguePayToken(REG, SECRET);
+    assert.equal(today.split('.').length, 2);
+    assert.equal(signLeaguePayToken(REG, SECRET, 0), today);
+    const v2 = signLeaguePayToken(REG, SECRET, 2);
+    assert.equal(v2.split('.').length, 3);
+    assert.deepEqual(readLeaguePayToken(v2, SECRET), { registrationId: REG, version: 2 });
+    // The signature covers the version: a version-0 signature with ".2" added, or a v2 token with its version changed or
+    // dropped, reads as nothing.
+    assert.equal(readLeaguePayToken(`${today}.2`, SECRET), null);
+    assert.equal(readLeaguePayToken(v2.replace(/.2$/, '.3'), SECRET), null);
+    assert.equal(readLeaguePayToken(v2.replace(/.2$/, ''), SECRET), null);
+    assert.equal(readLeaguePayToken(`${today}.0`, SECRET), null, 'no ".0" spelling of version 0');
   });
   it('opens the status page under the club’s own season address, never a top-level /pay', () => {
     assert.equal(leaguePayPath('dev-league', '2026-season', 'abc.def'), '/dev-league/league/2026-season/status/abc.def');
@@ -61,7 +77,7 @@ describe('the pay route (Part 2)', () => {
   const ROUTE = readCode('app/api/pay/league/[token]/route.ts');
   const STATUS = readCode('app/api/pay/league/[token]/status/route.ts');
   it('reads the switch first, then the link, then RE-READS what is owed at the moment of paying', () => {
-    assert.ok(ROUTE.indexOf('onlinePaymentsOn()') < ROUTE.indexOf('registrationFromPayToken(token)'));
+    assert.ok(ROUTE.indexOf('onlinePaymentsOn()') < ROUTE.indexOf('openSignupLink(token)'));
     assert.match(ROUTE, /const facts = await loadLeaguePayFacts\(regId\)/);
     // 12c: the fee and the split are the pressed rail's (a bank button whose account stopped taking bank debit reloads).
     assert.match(ROUTE, /const fee = rail === 'bank_debit' \? facts\.bankFee : facts\.fee;/);
@@ -79,7 +95,7 @@ describe('the pay route (Part 2)', () => {
     assert.match(ROUTE, /if \(openError\) \{\s*await expireCheckout\(account\.stripeAccountId, session\.id\)/);
   });
   it('the status route answers from the RECORD and only for the sign-up the link opens', () => {
-    assert.match(STATUS, /op\.flow !== 'league_signup' \|\| op\.season_id !== reg\.season_id \|\| op\.signup_key !== signupKey/);
+    assert.match(STATUS, /op\.flow !== 'league_signup' \|\| op\.season_id !== link\.seasonId \|\| op\.signup_key !== link\.signupKey/);
     assert.match(STATUS, /landCheckoutSession\(op\.stripe_account_id as string, sessionId\)/);
   });
   it('only the pay route opens a house-league payment', () => {

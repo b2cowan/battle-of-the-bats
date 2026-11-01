@@ -160,6 +160,16 @@ export function houseLeagueCoachAccess(
   return coachPageOpenUntil(season?.finishedAt ?? null, now) ? 'finished' : 'ended';
 }
 
+/**
+ * A family's "Your sign-up" link runs on the same clock (Signed-in family accounts Stage 1, ask 1): true once the season
+ * was marked finished and its 30 days have run, after which only money still owed keeps a link open
+ * (`openSignupLink`, lib/league-signup-link.ts). A season not finished — or reopened, its finish time cleared — never.
+ */
+export function signupLinkClockRanOut(season: { status: LeagueSeasonStatus | string; finished_at: string | null } | null, now: Date = new Date()): boolean {
+  if (!season || !isFinishedLeagueSeason(season)) return false;
+  return coachPageOpenUntil(season.finished_at, now) === null;
+}
+
 /** The day a finished season's coach page closes, or null once it has (or when the finish time is unknown). */
 export function coachPageOpenUntil(finishedAt: string | null, now: Date = new Date()): Date | null {
   if (!finishedAt) return null;

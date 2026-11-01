@@ -52,7 +52,8 @@ export function isPlausibleNoLoginToken(token: unknown): token is string {
 export type NoLoginRail =
   | 'family_join_view'      // GET the request page's team card
   | 'family_join_request'   // POST an access request
-  | 'calendar_refused';     // a calendar feed read that was REFUSED — never a good one (see below)
+  | 'calendar_refused'      // a calendar feed read that was REFUSED — never a good one (see below)
+  | 'signup_link_email';    // "Email me my link" on a house-league season (Signed-in family accounts Stage 1)
 
 interface RailPolicy {
   limit: number;
@@ -69,6 +70,8 @@ const POLICIES: Record<NoLoginRail, RailPolicy> = {
   family_join_view:    { limit: 60,  windowSeconds: 600 },
   family_join_request: { limit: 10,  windowSeconds: 3600 },
   calendar_refused:    { limit: 600, windowSeconds: 3600 },
+  // Each ask may send an email: a family who mistypes twice sits well inside it; a script walking addresses does not.
+  signup_link_email:   { limit: 10,  windowSeconds: 3600 },
 };
 
 /**

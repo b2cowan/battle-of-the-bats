@@ -105,7 +105,7 @@ export default async function RegisterPage({
             <p style={{ fontSize: '0.875rem', color: 'var(--club-soft)', margin: 0 }}>{closedLine}</p>
             {!notYet && (
               <p style={{ fontSize: '0.875rem', color: 'var(--club-soft)', margin: '0.5rem 0 0' }}>
-                Already signed up? <Link href={href(`/league/${seasonSlug}/status`)}>Check your registration</Link>.
+                Already signed up? <Link href={href(`/league/${seasonSlug}/status`)}>Email me my link</Link>
               </p>
             )}
           </div>

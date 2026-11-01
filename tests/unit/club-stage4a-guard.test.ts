@@ -34,7 +34,9 @@ const CLUB_ROUTES = [...filesUnder(ORG, '.tsx'), ...filesUnder(ORG, '.ts')]
 const CLUB_APIS = [
   'app/api/rep-teams/[orgSlug]/[teamSlug]/tryouts/[yearId]/register/route.ts',
   'app/api/league/[orgSlug]/[seasonSlug]/register/route.ts',
-  'app/api/league/[orgSlug]/[seasonSlug]/status-lookup/route.ts',
+  // Signed-in family accounts Stage 1: "Email me my link" replaced the status lookup; the withdraw request rides the link.
+  'app/api/league/[orgSlug]/[seasonSlug]/email-my-link/route.ts',
+  'app/api/league/[orgSlug]/[seasonSlug]/withdraw-request/route.ts',
 ];
 
 /** The one question, and the resolvers built on it. (The shortcut helper does NOT ask it — by design, it forwards to a
