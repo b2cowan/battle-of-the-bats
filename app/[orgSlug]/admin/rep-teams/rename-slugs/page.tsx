@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link2 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
-import FeedbackModal from '@/components/FeedbackModal';
+import KitDialog from '@/components/admin/kit/club/KitDialog';
+import { NoticePill } from '@/components/admin/kit/club/RepKit';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from '../rep-teams.module.css';
 import type { RepTeam } from '@/lib/types';
@@ -37,12 +38,11 @@ export default function RenameSlugPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackType, setFeedbackType] = useState<'success' | 'danger'>('success');
-  const [feedbackMsg, setFeedbackMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [notice, setNotice] = useState<string | null>(null);
 
   function showFeedback(type: 'success' | 'danger', msg: string) {
-    setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
+    if (type === 'success') setNotice(msg); else setErrorMsg(msg);
   }
 
   const load = useCallback(async () => {
@@ -232,13 +232,18 @@ export default function RenameSlugPage() {
         </>
       )}
 
-      <FeedbackModal
-        isOpen={feedbackOpen}
-        onClose={() => setFeedbackOpen(false)}
-        title={feedbackType === 'success' ? 'Done' : 'Error'}
-        message={feedbackMsg}
-        type={feedbackType}
-      />
+      {errorMsg && (
+        <KitDialog
+          kind="question"
+          title="Error"
+          onClose={() => setErrorMsg('')}
+          openOn="panel"
+          footer={<button type="button" className="btn btn-outline" onClick={() => setErrorMsg('')}>Close</button>}
+        >
+          <p>{errorMsg}</p>
+        </KitDialog>
+      )}
+      {notice && <NoticePill key={notice} message={notice} onDone={() => setNotice(null)} />}
     </div>
   );
 }

@@ -155,10 +155,16 @@
       <code>localhost:3000/uat-plus-org/admin/tournaments</code>
     </div>
     <div class="cred">
-      <span class="who">3. Club Admin, UAT Rep Club owner (Part D)</span>
+      <span class="who">3. Club Admin, UAT Rep Club owner (Part D &amp; F)</span>
       <code>uat-club-owner@uat-rep-club.local</code>
       <code>UATPassword2026!</code>
       <code>localhost:3000/uat-rep-club/admin/rep-teams/shared-library</code>
+    </div>
+    <div class="cred">
+      <span class="who">4. Platform admin, super admin (Part F)</span>
+      <code>uat-platform@fieldlogichq.ca</code>
+      <code>UATPassword2026!</code>
+      <code>localhost:3000/platform-admin/login</code>
     </div>
     <p class="meta" style="margin:8px 0 0">Tip: click any pill above to select the full email, password, or starting URL for copy-pasting.</p>
   </div>
@@ -220,6 +226,15 @@
     {id:'E',title:'Phone (390 × 844) & Dark Mode Check',who:'Coach (uat-coach@uat-test-org.local) or Club Admin (uat-club-owner@uat-rep-club.local)',steps:[
       'Open DevTools → toggle Device Toolbar to 390 × 844 (iPhone). Trigger any question window (e.g. Shared Library tag delete, or Coaches Roster player status toggle). Verify the question window stays a centred ~350 px card (never a full-screen sheet), its foot buttons are 44 px tall for fingertip tap targets, and pressing the browser/phone Back button answers “no” (closes the question without leaving the page).',
       'Switch your account theme to Dark and open one question window in Coaches and one in Admin. Verify both read cleanly on the dark surface and the red-tinted danger button stands out clearly.'
+    ]},
+    {id:'F',title:'Stage 3 remainder · the last five grey popup boxes, and Unsaved changes everywhere',who:'Club Admin (uat-club-owner@uat-rep-club.local) for steps 1–4; Platform admin (uat-platform@fieldlogichq.ca) for step 6; Coach (uat-coach@uat-test-org.local) for step 5',steps:[
+      'House league schedule: open Admin → House League → a season → Schedule. Do something that produces a bare message — generate or save practices in a way that creates a scheduling clash, or trigger any “possible clash” / “saved” notice. The ones that used to pop a plain grey box (a clash warning, a save error) now open in the one question window (title + message + a single “Close” button, 416 px, no icon badge, no × in the corner). A plain “done” notice (e.g. “N practices created…”) still just fades on its own as a small pill — it never became a window.',
+      'PDF export settings: open Admin → Organization → Settings → PDF export. Click “Save”: “PDF settings saved…” now appears as a small fading pill, not a popup you have to click through. Then cause a save or preview to fail (e.g. click Preview with an invalid accent colour, or try while offline) — the error now opens in the one question window with a single “Close” button.',
+      'Rename team web addresses: open Admin → Rep Teams → Rename team web addresses. Save a valid rename — the confirmation (“N team URLs updated.”) is now a fading pill, no popup. Then try to save an invalid or duplicate web address — the error now opens in the one question window with “Close”.',
+      'Plan upgrade panel: on an organization not already on the top plan, click any locked feature’s padlock or “Upgrade” link (an Export menu’s locked row, a Tools row, or the game-day board’s “Running late?” door all open the same panel). Upgrade to an included/Founding Season plan: the success no longer pops a box you must click through — it shows the small fading pill and the panel closes itself a few seconds later on its own. If you can force a failed upgrade (e.g. a network hiccup), confirm it still opens the one question window with “Close” and stays up until you dismiss it.',
+      'Unsaved changes, in the Coaches Portal: open any coach edit screen, change something without saving, then click a sidebar or bottom-nav link elsewhere in the portal. The “Unsaved changes” prompt now renders in the one question window’s shape (title, one short sentence, “Stay on this page” / “Leave without saving” with the red-tinted button) instead of the old plain grey box. Click “Leave without saving” and confirm the browser actually navigates to the link you clicked — not just the prompt closing while you stay put.',
+      'Unsaved changes, in Platform admin: sign in to Platform admin, open any record with an editable field (Organizations → open an org → Overrides is a good one; an Early access lead or a Feedback record also works), change something, then click away to a different nav item. The SAME “Unsaved changes” window renders correctly here too, outside the coaches/club-admin look — same shape, same two buttons. Click “Leave without saving” and confirm it actually leaves for the link, not just closing the prompt.',
+      'Repeat the “Leave without saving” check from the two steps above once each in Dark mode, and once each at phone width (390 × 844) on a computer and a phone if one is handy — the window itself needs no separate check (it is the same shared window already proved in Parts A–E); this is only confirming it now appears at all on these two screens, in both themes.'
     ]}
   ];
   var KEY='ow3-step1-walk', st={};

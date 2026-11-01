@@ -67,8 +67,6 @@ const DIRS = [
   'components/platform-admin',
 ];
 const FILES = [
-  'components/FeedbackModal.module.css',
-  'components/FeedbackModal.tsx',
   'components/InstallAppPrompt.module.css',
   'components/InstallAppPrompt.tsx',
   'components/coaches/CoachTopStrip.module.css',

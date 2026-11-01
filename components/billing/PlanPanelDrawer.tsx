@@ -18,7 +18,8 @@ import { isEffectivelyGated } from '@/lib/plan-config';
 import { getBillingHref } from '@/lib/billing-urls';
 import { planUpdatedMessage, requestPlanUpgrade, upgradePlansFor, type PanelPlanKey } from '@/lib/plan-upgrade';
 import { ownPlanOf } from '@/lib/free-time';
-import FeedbackModal from '@/components/FeedbackModal';
+import KitDialog from '@/components/shared/KitDialog';
+import { NoticePill } from '@/components/admin/kit/club/RepKit';
 import PlanArticlePanel from './PlanArticlePanel';
 
 type Outcome = { title: string; message: string; type: 'success' | 'danger' };
@@ -82,7 +83,20 @@ export default function PlanPanelDrawer({ plan, onClose }: { plan: PanelPlanKey;
         // includes, with no Upgrade that would only be refused.
         canUpgrade={hasBillingAccess(userRole, userCapabilities) && (upgradePlansFor(currentOrg ? ownPlanOf(currentOrg) : undefined) as PanelPlanKey[]).includes(plan)}
       />
-      {outcome && <FeedbackModal isOpen onClose={onClose} title={outcome.title} message={outcome.message} type={outcome.type} />}
+      {outcome?.type === 'success' && (
+        <NoticePill message={outcome.message} onDone={onClose} news />
+      )}
+      {outcome?.type === 'danger' && (
+        <KitDialog
+          kind="question"
+          title={outcome.title}
+          onClose={onClose}
+          openOn="panel"
+          footer={<button type="button" className="btn btn-outline" onClick={onClose}>Close</button>}
+        >
+          <p>{outcome.message}</p>
+        </KitDialog>
+      )}
     </>
   );
 }

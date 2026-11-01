@@ -68,6 +68,25 @@ describe('3 · Coaches Portal and Tournament Admin have zero FeedbackModal mount
     assert.deepEqual(offenders, [], 'Coaches and Tournament Admin use KitDialog kind="question" or non-blocking notices');
   });
 
+  it('components/FeedbackModal.tsx is gone, and no file anywhere imports or renders FeedbackModal (Stage 3 remainder)', () => {
+    assert.ok(!ALL_FILES.includes('components/FeedbackModal.tsx'), 'the retired component must be deleted, not just unused');
+    assert.ok(!ALL_FILES.includes('components/FeedbackModal.module.css'), 'its stylesheet must be deleted too');
+    const offenders = ALL_FILES.filter(f => {
+      const raw = readSource(f);
+      return raw.includes('FeedbackModal') && stripComments(raw).includes('FeedbackModal');
+    });
+    assert.deepEqual(offenders, [], 'the whole product is off FeedbackModal: KitDialog kind="question" or a non-blocking notice everywhere');
+  });
+
+  it('The Unsaved changes guard renders KitDialog kind="question" and still replays the clicked link (One Window 2d)', () => {
+    const code = readCode('components/shared/UnsavedChangesGuard.tsx');
+    assert.match(code, /import KitDialog from '@\/components\/shared\/KitDialog';/);
+    assert.match(code, /<KitDialog\s+kind="question"\s+title="Unsaved changes"/);
+    assert.match(code, /className="btn btn-danger"[^]*?Leave without saving/);
+    assert.match(code, /held\.anchor\.click\(\); onLeave\?\.\(\);/, 'Leave must replay the coach\'s own click, never a bare router.push');
+    assert.doesNotMatch(code, /useBackStep/, 'KitDialog already registers the Back step via useDialogFloor');
+  });
+
   it('Roster page routes add-player outcomes to PageNotice and errors to KitDialog kind="question" (Q13)', () => {
     const roster = readCode('app/[orgSlug]/coaches/teams/[teamId]/roster/page.tsx');
     assert.match(roster, /import PageNotice, \{ useNotice \} from '@\/components\/shared\/PageNotice';/);

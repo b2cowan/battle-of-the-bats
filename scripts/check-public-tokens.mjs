@@ -186,9 +186,6 @@ const SCOPES = {
     files: [
       'components/InstallAppPrompt.module.css',
       'components/TeamAvatar.module.css',
-      // The product-wide confirm/feedback dialog: global .modal classes carry the admin look,
-      // the module carries the coaches-portal skin — one dialog, every shell.
-      'components/FeedbackModal.module.css',
       /* ⚰ `components/notifications/PushPermissionPrompt.module.css` was listed here and went with
          its component on 2026-09-01 (cleanup tranche 6) — both were unimported. A dead entry here
          is inert (the walker skips a missing file) but it makes this list describe a product that

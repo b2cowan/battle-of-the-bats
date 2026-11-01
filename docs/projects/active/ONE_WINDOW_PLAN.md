@@ -666,10 +666,32 @@ Walk: [`docs/projects/active/ONE_WINDOW_STAGE3_WALK.html`](ONE_WINDOW_STAGE3_WAL
 - **Help Center (`/docs` item from Stage 2d)** —
   - `lib/help-content/coaches.tsx`: updated `faq-money-discard-prompt` to note that alongside the player panel on Player
     dues, an unsaved credit split on a sponsor also asks in the small question window with `Keep editing`.
-- **Remaining in Stage 3 (Wave 2 Step 4, held aside while Claude/Codex finish Club/Stripe/Bookkeeping)** — the last 4
-  `FeedbackModal` mounts (`components/billing/PlanPanelDrawer.tsx`, `app/[orgSlug]/admin/rep-teams/rename-slugs/page.tsx`,
-  `app/[orgSlug]/admin/org/settings/pdf/page.tsx`, `app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx`)
-  and deleting `components/FeedbackModal.tsx` + `components/FeedbackModal.module.css`.
+- **Stage 3 — as built (Step 2, the remainder, 2026-10-31)** — the last 6 `FeedbackModal` mounts (the census at build
+  time found 2 more than Step 1's plan note: `MockPortalClient.tsx` had two, and the cross-portal `UnsavedChangesGuard`
+  was still on it) retired, and the component itself deleted:
+  - `components/billing/PlanPanelDrawer.tsx`: a successful plan Upgrade now shows `NoticePill` (`news`) that closes the
+    whole drawer on `onDone`, per Q13 ("outcomes are not windows"); a failed Upgrade still opens `KitDialog`
+    `kind="question"` with one `Close`.
+  - `app/[orgSlug]/admin/rep-teams/rename-slugs/page.tsx`, `app/[orgSlug]/admin/org/settings/pdf/page.tsx`: the same
+    split — a bare "done" message is now `NoticePill`, an error is `KitDialog` `kind="question"` with `Close`.
+  - `app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx`: its `feedback` state's confirm/refuse shape
+    now renders through `KitDialog` `kind="question"`, mirroring Tournament Admin's `schedule/page.tsx` footer exactly
+    (danger-vs-lime confirm button, or a single `Close` with no `onConfirm`).
+  - `app/[orgSlug]/admin/org/billing/mock-portal/MockPortalClient.tsx` (dev-only, gated by `isBillingMockEnabled()`,
+    never ships to production): same split.
+  - `components/shared/UnsavedChangesGuard.tsx` — the one cross-portal case (coaches, club admin, **and** platform
+    admin all mount it): "Unsaved changes" now renders through `KitDialog` `kind="question"`, same words, `Leave
+    without saving` wearing `.btn-danger`; the click-replay logic that makes Back-button navigation actually work is
+    untouched byte-for-byte. `KitDialog` already registers `useDialogFloor`/`useBackStep` and already tolerates
+    mounting outside the coaches/club-admin providers (`useOverlayOpenIfAvailable`), so no new wiring was needed for
+    the platform-admin screens that mount it (`PersonRecord`, `LeadRecord`, `FeedbackRecord`, `ClubRecord`).
+  - `components/FeedbackModal.tsx` + `.module.css` deleted; removed from the allow-lists in
+    `scripts/check-admin-type.mjs` and `scripts/check-public-tokens.mjs`.
+  - `tests/unit/one-window-stage3-guard.test.ts` extended: zero `FeedbackModal` imports/mentions anywhere in `app/`,
+    `components/`, `lib/` (not just the Coaches/Tournament-Admin scope Step 1 guarded), and the guard renders through
+    `KitDialog` with the click-replay intact.
+  - Walk: `docs/projects/active/ONE_WINDOW_STAGE3_WALK.html` Part F.
+  - **Stage 4 (the strays — 17+ house-league windows and more) is not started; it has no build prompt yet.**
 
 ### Stage 4 · Strays join
 - House league's 17 windows → KitDialog (forms and questions), losing the banded head and foot, the grey Cancel and the

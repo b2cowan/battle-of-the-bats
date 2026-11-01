@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import FeedbackModal from '@/components/FeedbackModal';
+import KitDialog from '@/components/shared/KitDialog';
 
 /**
  * Warns before leaving a form with unsaved changes — covers BOTH:
@@ -85,32 +85,44 @@ export default function UnsavedChangesGuard({
     return () => document.removeEventListener('click', onClick, true);
   }, [interceptClicks]);
 
+  if (!pending) return null;
+
   return (
-    <FeedbackModal
-      isOpen={!!pending}
-      onClose={() => setPending(null)}
-      onConfirm={() => {
-        const held = pending;
-        setPending(null);
-        if (!held) return;
-        /* ⚠ "LEAVE" REPLAYS THE COACH'S OWN CLICK, never a bare `router.push` (/review, One Window 2d). The link then does
-           everything it does unguarded: its own handler runs (a door in a window closes that window), and the back-step
-           press gate (`useBackStep`) hears a link leaving, so a window closed by it keeps its history entry for the
-           navigation to push over. Closed beside a `router.push`, the window's exit ran `history.back()` and cancelled
-           the navigation: the coach answered Leave and stayed. `onLeave` runs inside the same click, for the same reason. */
-        if (held.anchor.isConnected) {
-          answeredUntil.current = Date.now() + 3000;
-          replaying.current = true;
-          try { held.anchor.click(); onLeave?.(); } finally { replaying.current = false; }
-          return;
-        }
-        router.push(held.href);
-      }}
+    <KitDialog
+      kind="question"
       title="Unsaved changes"
-      message={message}
-      confirmText="Leave without saving"
-      cancelText="Stay on this page"
-      type="danger"
-    />
+      onClose={() => setPending(null)}
+      openOn="panel"
+      footer={(
+        <>
+          <button type="button" className="btn btn-outline" onClick={() => setPending(null)}>Stay on this page</button>
+          <button
+            type="button"
+            className="btn btn-danger"
+            onClick={() => {
+              const held = pending;
+              setPending(null);
+              if (!held) return;
+              /* ⚠ "LEAVE" REPLAYS THE COACH'S OWN CLICK, never a bare `router.push` (/review, One Window 2d). The link then does
+                 everything it does unguarded: its own handler runs (a door in a window closes that window), and the back-step
+                 press gate (`useBackStep`) hears a link leaving, so a window closed by it keeps its history entry for the
+                 navigation to push over. Closed beside a `router.push`, the window's exit ran `history.back()` and cancelled
+                 the navigation: the coach answered Leave and stayed. `onLeave` runs inside the same click, for the same reason. */
+              if (held.anchor.isConnected) {
+                answeredUntil.current = Date.now() + 3000;
+                replaying.current = true;
+                try { held.anchor.click(); onLeave?.(); } finally { replaying.current = false; }
+                return;
+              }
+              router.push(held.href);
+            }}
+          >
+            Leave without saving
+          </button>
+        </>
+      )}
+    >
+      <p>{message}</p>
+    </KitDialog>
   );
 }

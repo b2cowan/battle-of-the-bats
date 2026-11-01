@@ -51,10 +51,6 @@
     "caps": 2,
     "heavy": 1
   },
-  "components/FeedbackModal.module.css": {
-    "face": 1,
-    "heavy": 1
-  },
   "components/admin/AdminPageHeader.module.css": {
     "face": 1,
     "caps": 1

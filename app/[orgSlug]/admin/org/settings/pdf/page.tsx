@@ -5,12 +5,12 @@ import { useOrg } from '@/lib/org-context';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { DEFAULT_PDF_SETTINGS, downloadPDF, fetchResolvedPdfSettings, type OrgPdfSettings } from '@/lib/export/pdf';
 import HelpCallout from '@/components/help/HelpCallout';
-import FeedbackModal from '@/components/FeedbackModal';
+import KitDialog from '@/components/admin/kit/club/KitDialog';
 import s from '@/app/[orgSlug]/admin/admin-common.module.css';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { tournamentToday } from '@/lib/timezone';
 import LoadingState from '@/components/shared/LoadingState';
-import { repKit } from '@/components/admin/kit/club/RepKit';
+import { NoticePill, repKit } from '@/components/admin/kit/club/RepKit';
 import { getBillingHref } from '@/lib/billing-urls';
 
 // ── Placeholder data for the preview PDF ─────────────────────────────────────
@@ -41,10 +41,8 @@ export default function PdfSettingsPage() {
   const [saved, setSaved]   = useState<OrgPdfSettings | null>(null);
   const [saving, setSaving] = useState(false);
   const [previewing, setPreviewing] = useState(false);
-  const [feedback, setFeedback] = useState<{
-    isOpen: boolean; title: string; message: string;
-    type: 'primary' | 'danger' | 'warning' | 'success' | 'info';
-  }>({ isOpen: false, title: '', message: '', type: 'primary' });
+  const [feedback, setFeedback] = useState<{ isOpen: boolean; title: string; message: string }>({ isOpen: false, title: '', message: '' });
+  const [notice, setNotice] = useState<string | null>(null);
 
   const canCustomize = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_template_settings') : false;
 
@@ -84,9 +82,9 @@ export default function PdfSettingsPage() {
       });
       if (!res.ok) throw new Error('Save failed');
       setSaved({ ...form });
-      setFeedback({ isOpen: true, title: 'Saved', message: 'PDF settings saved. All future exports will use these settings.', type: 'success' });
+      setNotice('PDF settings saved. All future exports will use these settings.');
     } catch {
-      setFeedback({ isOpen: true, title: 'Error', message: 'Failed to save PDF settings. Please try again.', type: 'danger' });
+      setFeedback({ isOpen: true, title: 'Error', message: 'Failed to save PDF settings. Please try again.' });
     } finally {
       setSaving(false);
     }
@@ -118,7 +116,7 @@ export default function PdfSettingsPage() {
         { identity: currentOrg?.name },
       );
     } catch {
-      setFeedback({ isOpen: true, title: 'Preview error', message: 'Could not generate preview PDF. Please try again.', type: 'danger' });
+      setFeedback({ isOpen: true, title: 'Preview error', message: 'Could not generate preview PDF. Please try again.' });
     } finally {
       setPreviewing(false);
     }
@@ -416,10 +414,18 @@ export default function PdfSettingsPage() {
         </section>
       </div>
 
-      <FeedbackModal
-        {...feedback}
-        onClose={() => setFeedback(f => ({ ...f, isOpen: false }))}
-      />
+      {feedback.isOpen && (
+        <KitDialog
+          kind="question"
+          title={feedback.title}
+          onClose={() => setFeedback(f => ({ ...f, isOpen: false }))}
+          openOn="panel"
+          footer={<button type="button" className="btn btn-outline" onClick={() => setFeedback(f => ({ ...f, isOpen: false }))}>Close</button>}
+        >
+          <p>{feedback.message}</p>
+        </KitDialog>
+      )}
+      {notice && <NoticePill key={notice} message={notice} onDone={() => setNotice(null)} />}
     </div>
   );
 }

@@ -6,7 +6,8 @@ import { useOrg } from '@/lib/org-context';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { getBillingHref } from '@/lib/billing-urls';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
-import FeedbackModal from '@/components/FeedbackModal';
+import KitDialog from '@/components/admin/kit/club/KitDialog';
+import { NoticePill } from '@/components/admin/kit/club/RepKit';
 import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
 import styles from './mock-portal.module.css';
 
@@ -120,7 +121,7 @@ export default function MockPortalPage() {
           <button
             className="btn btn-primary"
             onClick={handleApply}
-            disabled={saving}
+            disabled={saving || saved}
             id="mock-portal-apply"
           >
             {saving ? 'Applying…' : 'Apply changes'}
@@ -128,21 +129,25 @@ export default function MockPortalPage() {
         </div>
       </div>
 
-      <FeedbackModal
-        isOpen={saved}
-        onClose={() => { setSaved(false); handleReturn(); }}
-        title="Changes applied"
-        message={`Plan set to ${PLAN_CONFIG[plan].label}, status set to ${status}. Returning to subscription page.`}
-        type="success"
-      />
+      {saved && (
+        <NoticePill
+          message={`Plan set to ${PLAN_CONFIG[plan].label}, status set to ${status}. Returning to subscription page.`}
+          onDone={() => { setSaved(false); handleReturn(); }}
+          news
+        />
+      )}
 
-      <FeedbackModal
-        isOpen={!!error}
-        onClose={() => setError('')}
-        title="Error"
-        message={error}
-        type="danger"
-      />
+      {error && (
+        <KitDialog
+          kind="question"
+          title="Error"
+          onClose={() => setError('')}
+          openOn="panel"
+          footer={<button type="button" className="btn btn-outline" onClick={() => setError('')}>Close</button>}
+        >
+          <p>{error}</p>
+        </KitDialog>
+      )}
     </div>
   );
 }
