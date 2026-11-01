@@ -11,6 +11,7 @@ import {
 } from '@/lib/league-practice-time';
 import { facilityListWords } from '@/lib/permit-words';
 import { joinWithAnd } from '@/lib/utils';
+import { handOutAgainCounts, predictHandOut, PRACTICE_TELL_WORDS as TW } from '@/lib/league-practice-tell';
 import s from './LeagueTime.module.css';
 import p from './PracticeTime.module.css';
 
@@ -18,8 +19,10 @@ import p from './PracticeTime.module.css';
  * PRACTICE TIME (Club Tier Stage 11b Part 4, frame h1; words HOUSE_LEAGUE_STAGE9D2_11B_COPY.md "Practice time (h1)"). A
  * division's practice time, from house league's time, handed to its teams: each practice's length and teams at once are
  * two dropdowns, and the result line answers as they change — the window plans with the same pure planner the server
- * plans with again (lib/league-practice-time.ts). The lime hands them out; families aren't emailed (the first notice is
- * 9d-3's call, a later change is Part 5's).
+ * plans with again (lib/league-practice-time.ts). The lime hands them out; families aren't emailed by it — the page opens
+ * the Tell step next (House League 9d-3, PracticeTellWindow), where nothing goes until Send is pressed.
+ * ⚖ HAND OUT AGAIN (9d3·6): when any team's families were already told, the lime first asks, with how many of those
+ * teams the hand-out changes — the planner's rows against what they were told, before anything is written.
  *
  * ⚖ "+ Give U12 more time" is House league's time opened on U12 practice time's piece — the page mounts that window and
  * brings this one back after it (`onGiveMore`), never a second copy of its logic.
@@ -43,6 +46,7 @@ export default function PracticeTimeWindow({ orgSlug, seasonId, seasonName, divi
   const [failed, setFailed] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [settings, setSettings] = useState<PracticeSettings | null>(null);
+  const [again, setAgain] = useState<{ told: number; change: number; same: number } | null>(null);
   const url = `/api/admin/house-league/seasons/${seasonId}/practice-time?orgSlug=${encodeURIComponent(orgSlug)}`;
 
   const load = useCallback(async () => {
@@ -60,8 +64,24 @@ export default function PracticeTimeWindow({ orgSlug, seasonId, seasonName, divi
 
   const plan = useMemo(() => (read && settings ? planPractices({ slots: read.slots, teams: read.teams, settings }) : null), [read, settings]);
 
+  /** The lime: straight to the hand-out, or — a told team in the division — the question first (copy section B). */
+  function askOrHandOut() {
+    if (!read || !settings || !plan) return;
+    const told = new Map(Object.entries(read.told?.snapshot ?? {}).map(([t, snapshot]) => [t, { snapshot }]));
+    if (told.size > 0) {
+      const nowMs = Date.now();
+      const predicted = predictHandOut({
+        current: new Map(Object.entries(read.told?.current ?? {})), rows: plan.rows, slots: read.slots, slotIds: plan.slotIds, nowMs,
+      });
+      setAgain(handOutAgainCounts({ predicted, told, nowMs }));
+      return;
+    }
+    void handOut();
+  }
+
   async function handOut() {
     if (!read || !settings) return;
+    setAgain(null);
     setBusy(true);
     setFailed(null);
     const r = await fetch(url, {
@@ -114,6 +134,21 @@ export default function PracticeTimeWindow({ orgSlug, seasonId, seasonName, divi
     }
   }
 
+  if (again) {
+    return (
+      <KitDialog kind="question" title={TW.againTitle(count)} onClose={() => setAgain(null)} busy={busy}
+        footerStart={<span>{TW.againNobody}</span>}
+        footer={<>
+          <button type="button" className="btn btn-outline" onClick={() => setAgain(null)} disabled={busy}>{TW.keep}</button>
+          <button type="button" className="btn btn-lime" onClick={() => void handOut()} disabled={busy}>{TW.again}</button>
+        </>}>
+        <p className={ck.hint}>{TW.againTold(again.told)}</p>
+        <p className={ck.hint}><b>{TW.againChange(again.change, again.same)}</b></p>
+        <p className={ck.hint}>{TW.againNext}</p>
+      </KitDialog>
+    );
+  }
+
   const minutes = settings ? [...new Set([...PRACTICE_MINUTES, settings.practiceMinutes])].sort((a, b) => a - b) : [...PRACTICE_MINUTES];
 
   return (
@@ -122,7 +157,7 @@ export default function PracticeTimeWindow({ orgSlug, seasonId, seasonName, divi
       footer={<>
         <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>{count > 0 ? W.cancel : W.close}</button>
         {count > 0 && (
-          <button type="button" className="btn btn-lime" onClick={() => void handOut()} disabled={busy}>
+          <button type="button" className="btn btn-lime" onClick={askOrHandOut} disabled={busy}>
             <span className={p.desk}>{W.handOut(count)}</span><span className={p.phone}>{W.handOutPhone}</span>
           </button>
         )}

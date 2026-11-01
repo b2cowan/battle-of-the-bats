@@ -8,7 +8,7 @@ import { ORG_TIME_ZONE, mondayOfDay, orgDayKey, utcToZonedInputs, tournamentToda
 import { isFreeFloorLeague } from '@/lib/free-floor';
 import { useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import { fieldNounFor } from '@/lib/sports';
-import FeedbackModal from '@/components/FeedbackModal';
+import KitDialog from '@/components/admin/kit/club/KitDialog';
 import WhereField from '@/components/venue/WhereField';
 import { EMPTY_WHERE, clubVenueOptions, whereLibraryBody, whereOfLibraryRow, type WhereValue } from '@/lib/where-field';
 import { permitAfterSave } from '@/lib/permit-words';
@@ -60,6 +60,7 @@ import HouseLeagueTimeWindow from '@/components/admin/kit/club/league/time/House
 import HouseLeagueTimeLine, { showTimeLine, useBuildsSchedules } from '@/components/admin/kit/club/league/time/HouseLeagueTimeLine';
 import { LEAGUE_TIME_WORDS, type LeagueTime, type LeagueUse } from '@/lib/league-time';
 import PracticeTimeWindow from '@/components/admin/kit/club/league/time/PracticeTimeWindow';
+import PracticeTellWindow, { PracticeTellReminder } from '@/components/admin/kit/club/league/time/PracticeTellWindow';
 import PracticeWindow from '@/components/admin/kit/club/league/practices/PracticeWindow';
 import { PRACTICE_TIME_WORDS, PRACTICE_WINDOW_WORDS } from '@/lib/league-practice-time';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -124,11 +125,6 @@ interface PracticeForm {
 
 interface FeedbackState {
   isOpen: boolean; title: string; message: string;
-  type: 'success' | 'danger' | 'info';
-  /** A question rather than a notice: the act, and its two words. */
-  onConfirm?: () => void;
-  confirmText?: string;
-  cancelText?: string;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -701,7 +697,7 @@ export default function SchedulePage() {
   const [openPractice, setOpenPractice] = useState<LeaguePractice | null>(null);
   const [editingPractice, setEditingPractice] = useState<{ practice: LeaguePractice; scope: 'one' | 'rest'; reach: { id: string; date: string }[] } | null>(null);
 
-  const [feedback, setFeedback] = useState<FeedbackState>({ isOpen: false, title: '', message: '', type: 'success' });
+  const [feedback, setFeedback] = useState<FeedbackState>({ isOpen: false, title: '', message: '' });
   /** A thing that just happened ("Published Oct 28 · 7 families emailed."): the portal's fading pill, never a window. */
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -730,6 +726,16 @@ export default function SchedulePage() {
     if (data) setLeagueTime(data as LeagueTime);
   }, [seasonId, orgQuery]);
   useDeferredLoad(!!orgQuery, loadLeagueTime);
+  // Tell the families (House League 9d-3, frames c1–c3): the step after a hand-out, and each division's amber count of
+  // teams whose families haven't been told (the league's runners only — anyone else's read is refused and shows nothing).
+  const [tellOpen, setTellOpen] = useState(false);
+  const [tellReminders, setTellReminders] = useState<Record<string, number>>({});
+  const loadTellReminders = useCallback(async () => {
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/practice-tell${orgQuery}&reminders=1`, { cache: 'no-store' }).catch(() => null);
+    const data = res?.ok ? await res.json().catch(() => null) : null;
+    setTellReminders((data as { divisions?: Record<string, number> } | null)?.divisions ?? {});
+  }, [seasonId, orgQuery]);
+  useDeferredLoad(!!orgQuery, loadTellReminders);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('time') !== '1') return;
@@ -943,7 +949,7 @@ export default function SchedulePage() {
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   function showError(title: string, message: string) {
-    setFeedback({ isOpen: true, title, message, type: 'danger' });
+    setFeedback({ isOpen: true, title, message });
   }
 
   function openCreate() { setGameWindow('create'); }
@@ -1000,10 +1006,9 @@ export default function SchedulePage() {
       setFeedback({
         isOpen: true, title: `${warnings.length} ${noun.toLowerCase()} clash${warnings.length !== 1 ? 'es' : ''} in the generated schedule`,
         message: `The schedule was saved, but some games share a ${noun.toLowerCase()} at the same time — spread them across times or ${noun.toLowerCase()}s. First: ${warnings[0]}${outside ? ` ${outside.sentence}` : ''}`,
-        type: 'info',
       });
     } else if (outside) {
-      setFeedback({ isOpen: true, title: outside.title, message: `The schedule was saved. ${outside.sentence}`, type: 'info' });
+      setFeedback({ isOpen: true, title: outside.title, message: `The schedule was saved. ${outside.sentence}` });
     }
     await reload();
   }
@@ -1033,7 +1038,7 @@ export default function SchedulePage() {
     }
     setEditingPractice(null);
     if (Array.isArray(data?.warnings) && data.warnings.length) {
-      setFeedback({ isOpen: true, title: PRACTICE_WINDOW_WORDS.saved(data.count ?? 1), message: `Possible clash: ${data.warnings[0]}`, type: 'info' });
+      setFeedback({ isOpen: true, title: PRACTICE_WINDOW_WORDS.saved(data.count ?? 1), message: `Possible clash: ${data.warnings[0]}` });
     }
     await reload();
   }
@@ -1081,7 +1086,6 @@ export default function SchedulePage() {
     setFeedback({
       isOpen: true, title: 'Practices created',
       message: `${count} practice${count !== 1 ? 's' : ''} added successfully.${warningNote}`,
-      type: warningNote ? 'info' : 'success',
     });
     await reload();
   }
@@ -1189,12 +1193,22 @@ export default function SchedulePage() {
       }}
       onHandedOut={() => {
         setPracticeTimeOpen(false);
+        setTellOpen(true);
         void reload();
         void loadLeagueTime();
+        void loadTellReminders();
       }} />
   ) : null;
+  // The step after it (9d-3): Tell the families. "Hand out for them" goes back to Practice time.
+  const practiceTellWindow = tellOpen && season && selectedDiv ? (
+    <PracticeTellWindow orgSlug={orgSlug} seasonId={seasonId} seasonName={season.name}
+      divisionId={selectedDiv.id} divisionName={selectedDiv.name}
+      onClose={() => { setTellOpen(false); void loadTellReminders(); }}
+      onHandOut={() => { setTellOpen(false); setPracticeTimeOpen(true); }}
+      onSent={() => void loadTellReminders()} />
+  ) : null;
 
-  if (loading) return <><LoadingState label="Loading the schedule…" />{timeWindow}{practiceTimeWindow}</>;
+  if (loading) return <><LoadingState label="Loading the schedule…" />{timeWindow}{practiceTimeWindow}{practiceTellWindow}</>;
 
   if (!hasAccess) {
     return (
@@ -1384,6 +1398,8 @@ export default function SchedulePage() {
       {leagueTime && selectedDivId && showTimeLine(leagueTime, buildsSchedules) && (
         <HouseLeagueTimeLine time={leagueTime} divisionId={selectedDivId} divisionName={divName} onOpen={openLeagueTime} />
       )}
+      {/* 9d-3, frame c3: this division's teams whose families haven't been told their practice times · Tell them. */}
+      {canManage && selectedDivId && <PracticeTellReminder teams={tellReminders[selectedDivId] ?? 0} onOpen={() => setTellOpen(true)} />}
       {selectedDiv && scheduleRead === 'ok' && divGames.length > 0 && (
         <SchedulePublishLine divisionName={divName} games={divLiveGames} teamsPublished={divTeamsPublished}
           publishing={divPublishing} canRun={canManage} missedHref={`/${orgSlug}/admin/house-league/seasons/${seasonId}/notifications`} />
@@ -1455,7 +1471,7 @@ export default function SchedulePage() {
           onSeePermit={setPermitOpen}
           onSaved={(said, permit) => {
             setGenerate(null);
-            if (permit) setFeedback({ isOpen: true, title: said, message: `${permit.title}. ${permit.sentence}`, type: 'info' });
+            if (permit) setFeedback({ isOpen: true, title: said, message: `${permit.title}. ${permit.sentence}` });
             else setNotice(said);
             void reload();
           }}
@@ -1472,7 +1488,7 @@ export default function SchedulePage() {
           orgQuery={orgQuery}
           onDone={r => {
             setPublishOpen(false);
-            if (r.partial) setFeedback({ isOpen: true, title: r.said, message: '', type: 'info' });
+            if (r.partial) setFeedback({ isOpen: true, title: r.said, message: '' });
             else setNotice(r.said);
             void reload();
           }}
@@ -1495,7 +1511,7 @@ export default function SchedulePage() {
           placeOf={placeWords}
           onSent={(said, partial) => {
             setChangesOpen(false);
-            if (partial) setFeedback({ isOpen: true, title: said, message: '', type: 'info' });
+            if (partial) setFeedback({ isOpen: true, title: said, message: '' });
             else setNotice(said);
             void reload();
           }}
@@ -1530,7 +1546,7 @@ export default function SchedulePage() {
           onChanged={reload}
           onCreated={warning => {
             setGameWindow(null);
-            if (warning) setFeedback({ isOpen: true, title: 'Saved — possible clash', message: warning, type: 'info' });
+            if (warning) setFeedback({ isOpen: true, title: 'Saved — possible clash', message: warning });
             void reload();
           }}
           onDeleted={() => { setGameWindow(null); void reload(); }}
@@ -1639,21 +1655,23 @@ export default function SchedulePage() {
         />
       )}
 
-      <FeedbackModal
-        isOpen={feedback.isOpen}
-        title={feedback.title}
-        message={feedback.message}
-        type={feedback.type}
-        onConfirm={feedback.onConfirm}
-        confirmText={feedback.confirmText}
-        cancelText={feedback.cancelText}
-        onClose={() => setFeedback(f => ({ ...f, isOpen: false }))}
-      />
+      {feedback.isOpen && (
+        <KitDialog
+          kind="question"
+          title={feedback.title}
+          onClose={() => setFeedback(f => ({ ...f, isOpen: false }))}
+          openOn="panel"
+          footer={<button type="button" className="btn btn-outline" onClick={() => setFeedback(f => ({ ...f, isOpen: false }))}>Close</button>}
+        >
+          <p>{feedback.message}</p>
+        </KitDialog>
+      )}
       {notice && <NoticePill key={notice} message={notice} onDone={() => setNotice(null)} />}
     </div>
     {/* Second in both returns, so the loading swap keeps it mounted. */}
     {timeWindow}
     {practiceTimeWindow}
+    {practiceTellWindow}
     </>
   );
 }

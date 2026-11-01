@@ -4,6 +4,7 @@ import { getLeagueEmailLog, resolvePersonNamer } from './db';
 import { personDisplayName } from './families-read';
 import { CLUB_EMAIL_STOPPED_AFTER_MS, SEASON_EMAIL_WORDS as SW, familiesNamed } from './families-words';
 import { PRACTICES_CHANGED_NOTICE } from './club-schedule-league-words';
+import { PRACTICES_SENT_NOTICE } from './league-practice-tell';
 import { SCHEDULE_NOTICE_WORDS } from './league-schedule-words';
 import { pluralize } from './utils';
 
@@ -55,7 +56,7 @@ export interface EmailLogRow {
   state: 'sending' | 'stopped' | 'done';
 }
 
-export type NoticeKind = 'teams_published' | 'practices_changed' | 'schedule_published' | 'games_changed';
+export type NoticeKind = 'teams_published' | 'practices_changed' | 'schedule_published' | 'games_changed' | 'practices_sent';
 
 /** A notice's subject and To (f4: "Schedule published: U12 Division" · "U12 Division · 66 families · reached 66"). */
 function noticeFace(kind: NoticeKind, division: string | null, families: number, reached: number): { subject: string; to: string } {
@@ -64,6 +65,8 @@ function noticeFace(kind: NoticeKind, division: string | null, families: number,
     case 'practices_changed': return { subject: PRACTICES_CHANGED_NOTICE.subject(division), to: division ?? pluralize(families, 'family', 'families') };
     case 'schedule_published': return { subject: SCHEDULE_NOTICE_WORDS.publishedSubject(division), to: SCHEDULE_NOTICE_WORDS.to(division, families, reached) };
     case 'games_changed': return { subject: SCHEDULE_NOTICE_WORDS.changesSubject(division), to: SCHEDULE_NOTICE_WORDS.to(division, families, reached) };
+    // House League 9d-3: a league admin told a division's families their practice times (copy section E).
+    case 'practices_sent': return { subject: PRACTICES_SENT_NOTICE.subject(division), to: SCHEDULE_NOTICE_WORDS.to(division, families, reached) };
     default: return { subject: SW.teamsPublished(division), to: division ?? SW.everyone };
   }
 }
@@ -71,7 +74,7 @@ function noticeFace(kind: NoticeKind, division: string | null, families: number,
 /** A schedule notice is a send that can stop partway (9d-2b): its `failed_count` is every family still to reach (failed,
  *  or never tried), recounted after each send — so "stopped" is exactly when "Send to the N it missed" has someone to send. */
 function noticeState(kind: NoticeKind, n: { id: string; failed_count: number }, inFlight: ReadonlySet<string>): EmailLogRow['state'] {
-  if (kind !== 'schedule_published' && kind !== 'games_changed') return 'done';
+  if (kind !== 'schedule_published' && kind !== 'games_changed' && kind !== 'practices_sent') return 'done';
   return n.failed_count === 0 ? 'done' : inFlight.has(n.id) ? 'sending' : 'stopped';
 }
 
@@ -81,10 +84,13 @@ const SENDING_FRESH_MS = 10 * 60 * 1000;
 async function noticesSending(ids: readonly string[]): Promise<Set<string>> {
   if (ids.length === 0) return new Set();
   try {
-    const { data, error } = await supabaseAdmin.from('league_schedule_emails').select('notice_id')
-      .in('notice_id', [...ids]).eq('status', 'sending').gt('updated_at', new Date(Date.now() - SENDING_FRESH_MS).toISOString()).limit(1000);
-    if (error) throw error;
-    return new Set((data ?? []).map(r => r.notice_id as string));
+    const fresh = new Date(Date.now() - SENDING_FRESH_MS).toISOString();
+    // A schedule notice's families, and (9d-3) a practice-times notice's households.
+    const reads = await Promise.all(['league_schedule_emails', 'league_practice_emails'].map(table => supabaseAdmin.from(table)
+      .select('notice_id').in('notice_id', [...ids]).eq('status', 'sending').gt('updated_at', fresh).limit(1000)));
+    const failed = reads.find(r => r.error);
+    if (failed?.error) throw failed.error;
+    return new Set(reads.flatMap(r => (r.data ?? []).map(x => (x as { notice_id: string }).notice_id)));
   } catch (err) {
     console.error('[families-emails-log] which schedule sends are in flight was not read:', err instanceof Error ? err.message : String(err));
     return new Set();

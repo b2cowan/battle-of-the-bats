@@ -82,7 +82,7 @@
 > left, and the owner answered it the same day: the club gives time to house league as a whole, and dividing it among
 > divisions and teams is the convenor's job. That step is drawn, and the club-time half is built first.
 >
-> **9d-3 drawn 2026-10-29, asks open.** Drawings: https://claude.ai/artifact/Uazj5c2RKqVPAs1Gwpm9pM. Today a family is never
+> **9d-3 drawn 2026-10-29; the six open asks ruled as recommended 2026-11-01** (words pass and build prompt next). Drawings: https://claude.ai/artifact/Uazj5c2RKqVPAs1Gwpm9pM. Today a family is never
 > told when their child's team practises, unless a practice later changes, and a house-league coach has no calendar at all
 > (a rep coach has had one for a while). Recommended: when the convenor hands practices out, the last step of the same window
 > offers one button, "Send to 99 families", one email per household with the team's practice dates; nothing goes until that

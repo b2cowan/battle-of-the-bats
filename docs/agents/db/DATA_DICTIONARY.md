@@ -265,7 +265,7 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 1. **Every reader goes through ONE door.** `lib/entitlement-grants.ts` (rules in `lib/free-time.ts`) folds the running grants into `planId`, both limits, `subscriptionStatus` and `enabledAddons`; the three org builders call it and raw-column readers call `effectiveOrgFacts*`. `tests/unit/plan-reader-door-guard.test.ts` fails the build on a new raw read of `organizations.plan_id`/`tournament_limit`/`team_limit`/`subscription_status`/`enabled_addons` around it. Billing ACTIONS read the club's own plan (`ownPlanOf`), never the door's. Gated by `ENTITLEMENT_GRANTS_ENABLED` (on in dev and prod); off, every club reads its stored columns and the console refuses to give free time.
 2. **Running = not revoked, started, and before `expires_at` (exclusive)**, compared with the moment of reading on the server; revert is implicit (no cron). This **supersedes DBA Findings #22–24** (which described the pre-mig-109 state).
 3. **Three of four types have access effect.** `plan_tier` (the plan in `target.plan`; only `tournament_plus`/`club`/`club_large`; lifts the plan only when above the club's own; limits follow the given plan, raised by the club's own), `module_addon` (union `target.addons`) and `subscription_status` (newest running wins). `comp_period` gives none. **The database's one copy of the plan rule** is `org_effective_plan(org)` + `org_has_effective_addon(org, addon)` (mig 373), which `tournament_fee_book_on` calls so a club's tournament fees post to its book during free time; keep it in step with `foldGrants`.
-4. **`target.plan` is written for `plan_tier`, `target.addons` for `module_addon`; `subscription_status` uses the legacy `value` column** (`target.status` is read first but never written). **`expires_at` is always set** by the console (the first moment after the last free day, Eastern; the server takes a day, never an instant), capped at 6 months for Billing and 12 for Super admin; a club the staff member belongs to, a demo club, a Coaches Portal and (for a plan) a club with a live Stripe subscription are refused. Changing the end is a compare-and-set on `expires_at`.
+4. **`target.plan` is written for `plan_tier`, `target.addons` for `module_addon`; `subscription_status` uses the legacy `value` column** (`target.status` is read first but never written). **`expires_at` is the first moment after the last free day, Eastern, or NULL for free time with no end date** (the server takes a day, never an instant; owner ruling 2026-10-30): Billing is capped at 6 months, a Super admin has no month limit (last day no later than 2099-12-31) and alone can give or move a grant to NULL; a NULL grant runs until staff end it, and the one-plan-grant exclusion constraint treats it as unbounded. A club the staff member belongs to, a demo club, a Coaches Portal and (for a plan) a club with a live Stripe subscription are refused. Changing the end is a compare-and-set on `expires_at`.
 5. **`suppress_billing` has NO reader** — written + echoed to the audit payload, never consumed. Inert.
 6. **Mutations log to `platform_audit_log`, not `org_audit_log`** (POST `create_override`, DELETE `revoke_override`). `created_by`/`revoked_by` are free-text identity strings — a platform-admin email, or the literal `'system'` for the founding-season auto-grant at organization and league creation ([app/api/org/create/route.ts](../../../app/api/org/create/route.ts), [app/api/league/create/route.ts](../../../app/api/league/create/route.ts), both through `ensureFoundingSeasonCompPeriod`; the sign-up no longer makes an organization since Account-First Sign-up Part 2, 2026-10-19) — not FKs. (Those `'system'` grants are `comp_period`, so they're inert for access per gotcha 3 — founding-season free access isn't delivered through this enforcement path.)
 7. **One plan grant at a time, in the database** (mig 380, Stage 3 Q8): the exclusion constraint `org_overrides_one_plan_grant_at_a_time` (`btree_gist`, `org_id WITH =`, `tstzrange(starts_at, expires_at, '[)') WITH &&`, `WHERE type = 'plan_tier' AND revoked_at IS NULL`) refuses two un-ended plan grants of one club that overlap in time (SQLSTATE 23P01; the console maps it to its "already has free time" refusal). A grant that ran out by itself keeps `revoked_at` NULL but its range has passed, so it never blocks a new one — why this is an exclusion rule and not a partial unique index.
@@ -6889,6 +6889,71 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 
 ---
 
+## `league_team_practices_told`
+<!-- dict:table:league_team_practices_told -->
+
+**Purpose:** one row per house-league **team whose families were told their practice times** (House League 9d-3, rulings 9d3·1 and 9d3·6, **mig 415**): when, and the practices they were told (the snapshot). **No row = never told.** It answers the three questions the told state exists for: the change email's **Now / Was** lines, the coach's "Families were told different times" line, and the re-hand-out confirm's "{c} teams' practices change. {u} team's don't." ⚠ **Its own table, not columns on `league_teams`** (the build prompt's first shape): mig 020's "public can read teams of active seasons" lets anyone read `league_teams`, so a snapshot there would publish every team's practice times and places, and families have no page that shows practices. **Service-role only** (RLS enabled, no policies).
+
+<!-- dict:col:league_team_practices_told.team_id -->
+<!-- dict:col:league_team_practices_told.org_id -->
+<!-- dict:col:league_team_practices_told.season_id -->
+**`team_id`** (PK, FK → `league_teams` ON DELETE CASCADE) / **`org_id`** / **`season_id`** (FKs CASCADE) — whose families.
+
+<!-- dict:col:league_team_practices_told.told_at -->
+<!-- dict:col:league_team_practices_told.snapshot -->
+**`told_at`** (timestamptz NOT NULL) / **`snapshot`** (jsonb NOT NULL, CHECK an array) — when the send that told them was pressed (its notice's `created_at`), and what it told: `[{s, e, v, f, l}]` = start and end (ISO instants; `e` null when none was stored), venue id, facility id, the typed place when there is no venue. Upcoming, not-cancelled practices as of the press. ⚠ **Compare only its FUTURE entries** with the team's practices now (`lib/league-practice-tell.ts`): a past practice falls off the current list while it stays here, so a naive diff calls every old team changed. Written **only** by `league_practice_emails_sent` (advanced once any of the team's families is reached, never moved back to an older send) and by the club's practice-change send refreshing a told team whose families it emailed (`lib/club-schedule-league-mail.ts`, so a later hand-out never sends families a change they already had).
+
+<!-- dict:col:league_team_practices_told.notice_id -->
+<!-- dict:col:league_team_practices_told.updated_at -->
+**`notice_id`** (FK → `league_season_notices` ON DELETE SET NULL) / **`updated_at`** — the `practices_sent` notice that told them; null when the club's change send refreshed the row.
+
+---
+
+## `league_practice_tells`
+<!-- dict:table:league_practice_tells -->
+
+**Purpose:** one row per **team a `practices_sent` notice told** (House League 9d-3, **mig 415**): first or change, and the snapshot that send carried (the shape of `league_team_practices_told.snapshot`). Written by `league_practices_tell` in the press's transaction; read when a household's email is marked sent (the team's told row advances to it) and by a resend (the email says what was sent, not what the practices became). **Service-role only** (RLS enabled, no policies).
+
+<!-- dict:col:league_practice_tells.id -->
+<!-- dict:col:league_practice_tells.org_id -->
+<!-- dict:col:league_practice_tells.season_id -->
+<!-- dict:col:league_practice_tells.division_id -->
+<!-- dict:col:league_practice_tells.team_id -->
+<!-- dict:col:league_practice_tells.notice_id -->
+**`id`** / **`org_id`** / **`season_id`** (FKs CASCADE) / **`division_id`** (FK SET NULL) / **`team_id`** (FK → `league_teams` CASCADE) / **`notice_id`** (FK → `league_season_notices` CASCADE, NOT NULL; UNIQUE with `team_id`) — which send, which team.
+
+<!-- dict:col:league_practice_tells.kind -->
+<!-- dict:col:league_practice_tells.snapshot -->
+<!-- dict:col:league_practice_tells.created_at -->
+<!-- dict:col:league_practice_tells.told_before -->
+**`kind`** (text NOT NULL, CHECK `first` · `change`) / **`snapshot`** (jsonb NOT NULL, an array) / **`told_before`** (jsonb, an array; CHECK set exactly when `kind = 'change'`) / **`created_at`** (`clock_timestamp()`, the notice's) — `first`: the team was never told (the first email, every date); `change`: told before and its practices differ (the 11b change email, Now / Was). `told_before` is the Was side — what the families had been told — read by `league_practices_tell` from `league_team_practices_told` under the division's lock (never the caller's word), so a resend days later says the same change.
+
+---
+
+## `league_practice_emails`
+<!-- dict:table:league_practice_emails -->
+
+**Purpose:** one row per **household** a `practices_sent` notice was going to (House League 9d-3, **mig 415**; the 9d-2b shape of `league_schedule_emails`, migs 409/410). ⚖ The households are the app's (`readHouseholds` in `lib/club-schedule-league-mail.ts`, the one reader Stage 3 of `SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md` widens), passed to `league_practices_tell`, never re-grouped in SQL. A **service** notice about the family's own children (`sendFamilyServiceBatch`): it reaches a family who left club news. **Service-role only** (RLS enabled, no policies). Holds an address.
+
+<!-- dict:col:league_practice_emails.id -->
+<!-- dict:col:league_practice_emails.org_id -->
+<!-- dict:col:league_practice_emails.season_id -->
+<!-- dict:col:league_practice_emails.division_id -->
+<!-- dict:col:league_practice_emails.notice_id -->
+**`id`** / **`org_id`** / **`season_id`** (FKs CASCADE) / **`division_id`** (FK SET NULL) / **`notice_id`** (FK → `league_season_notices` CASCADE, NOT NULL; UNIQUE with `guardian_email`; indexed with `status`) — whose email, for which send.
+
+<!-- dict:col:league_practice_emails.guardian_email -->
+<!-- dict:col:league_practice_emails.registration_ids -->
+<!-- dict:col:league_practice_emails.team_ids -->
+**`guardian_email`** (text NOT NULL, CHECK lower-cased, trimmed, non-empty) / **`registration_ids`** (uuid[] NOT NULL, non-empty) / **`team_ids`** (uuid[] NOT NULL, non-empty; GIN-indexed while open) — the household, the children the email is about (name order, one part each) and their teams. A household with two teams in one send is ONE row and one email; "first" stays per team through `league_practice_tells`.
+
+<!-- dict:col:league_practice_emails.status -->
+<!-- dict:col:league_practice_emails.created_at -->
+<!-- dict:col:league_practice_emails.updated_at -->
+**`status`** (text NOT NULL default `pending`, CHECK `pending` · `sending` · `sent` · `failed` · `skipped`) / **`created_at`** / **`updated_at`** — `pending` at the press → `sending` (claimed by `league_practice_emails_claim`; a row left `sending` ten minutes can be claimed again) → `sent` (`league_practice_emails_sent`, which marks the row's teams told in the same statement), `failed` (offered as "Send again") or `skipped` (nothing left to say, an address no mail can reach, a later press of the same teams superseded it, or — through `league_practice_emails_add`, "Send again" after an address was fixed — a `failed` row whose children a live row now covers). A press refuses `sending` while a row of its teams is `pending` / `sending` within ten minutes (the double press). The notice's `reached_count` / `failed_count` are recounted from these rows after every send.
+
+---
+
 ## `league_teams`
 <!-- dict:table:league_teams -->
 
@@ -7023,7 +7088,7 @@ any allowance and never in `family_email_sends`** (9d1·7). Written by `league_d
 was about.
 
 <!-- dict:col:league_season_notices.kind -->
-**`kind`** (text NOT NULL, CHECK `teams_published` · `practices_changed` · `schedule_published` · `games_changed`) — what the notice was. **`schedule_published`** / **`games_changed`** (**mig 409**, House League 9d-2b): Publish schedule, and a division's Changes to send (or one urgent cancel or postpone), each written in its SQL function's transaction with its `league_schedule_emails` rows; the history's "Schedule published: {division}" / "Schedule changes: {division}". **`practices_changed`**
+**`kind`** (text NOT NULL, CHECK `teams_published` · `practices_changed` · `schedule_published` · `games_changed` · `practices_sent`) — what the notice was. **`practices_sent`** (**mig 415**, House League 9d-3, 9d3·1 / 9d3·6): a league admin told a division's families their practice times (first, or a change after a second hand-out), written by `league_practices_tell` with its `league_practice_tells` and `league_practice_emails` rows; the history's "Practice times sent: {division}". For it, as for the 9d-2b kinds, `failed_count` is every household still to reach. **`schedule_published`** / **`games_changed`** (**mig 409**, House League 9d-2b): Publish schedule, and a division's Changes to send (or one urgent cancel or postpone), each written in its SQL function's transaction with its `league_schedule_emails` rows; the history's "Schedule published: {division}" / "Schedule changes: {division}". **`practices_changed`**
 (**mig 400**, Club Tier Stage 11b Part 5, ruling 9d2·2): the club's Send the changes moved or cancelled this season's
 house-league practices and emailed the teams' families (one service notice per household); one row per season a send
 touched, written by `lib/club-schedule-league-mail.ts` AFTER the send's step landed, its counts set from the emails'

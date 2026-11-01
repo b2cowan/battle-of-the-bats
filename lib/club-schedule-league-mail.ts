@@ -6,6 +6,7 @@ import { leaguePracticesChangedHtml } from './email';
 import { systemMailFace, type ClubEmailOrg } from './club-email-context';
 import { seasonEmailReason } from './families-words';
 import { familyEmailWords, type FamilyPart } from './club-schedule-league-words';
+import { refreshToldAfterClubSend } from './league-practice-tell-server';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -32,7 +33,7 @@ export interface Household {
   seasonId: string;
   email: string;
   guardianFirst: string | null;
-  children: { name: string; teamId: string }[];
+  children: { name: string; teamId: string; registrationId: string }[];
 }
 
 /** The households of these house-league teams: active registrations with an email, grouped as Publish teams groups them. */
@@ -48,7 +49,7 @@ export async function readHouseholds(teamIds: readonly string[]): Promise<Househ
     if (!email) continue;
     const key = `${r.season_id}|${email}`;
     const h = out.get(key) ?? out.set(key, { key, seasonId: r.season_id, email, guardianFirst: r.guardian_first_name, children: [] }).get(key)!;
-    h.children.push({ name: `${r.player_first_name} ${r.player_last_name}`.trim(), teamId: r.team_id });
+    h.children.push({ name: `${r.player_first_name} ${r.player_last_name}`.trim(), teamId: r.team_id, registrationId: r.id });
   }
   return [...out.values()];
 }
@@ -103,6 +104,12 @@ export async function sendPracticeChangeNotices(p: {
         fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null,
       });
       const sent = results.filter(r => r.status === 'sent').length;
+      // 9d-3: a told team whose families this reached now knows the moved times, so a later hand-out never sends them the
+      // same change again (the told snapshot follows; an untold team stays untold — its first email lists every date).
+      const reachedTeams = new Set<string>();
+      // (Dev sends nothing — "skipped" — and counts as reached there, so a walk can see the told state follow.)
+      results.forEach((r, i) => { if (r.status === 'sent' || (r.status === 'skipped' && process.env.NODE_ENV !== 'production')) for (const c of list[i].h.children) reachedTeams.add(c.teamId); });
+      await refreshToldAfterClubSend(p.org.id, [...reachedTeams]);
       outcome.families += list.length;
       outcome.sent += sent;
       outcome.failed += list.length - sent;

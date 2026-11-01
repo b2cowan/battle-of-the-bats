@@ -16,6 +16,7 @@ import { ChevronRight } from 'lucide-react';
 import { CLUB_EMAIL_CAP, FAMILY_EMAILS_TAB_WORDS as W, SEASON_EMAIL_WORDS as SW } from '@/lib/families-words';
 import { PRACTICES_CHANGED_NOTICE } from '@/lib/club-schedule-league-words';
 import { SCHEDULE_NOTICE_WORDS } from '@/lib/league-schedule-words';
+import { PRACTICES_SENT_NOTICE } from '@/lib/league-practice-tell';
 import type { ClubEmailRecord, EmailLogRow } from '@/lib/families-emails-log';
 import LoadingState from '@/components/shared/LoadingState';
 import KitDialog, { DialogCancel } from '../KitDialog';
@@ -228,6 +229,12 @@ export function EmailRecord({ row, eyebrow, detailUrl, resend, teamsHref, onClos
           <p className={`${ck.hint} ${fam.readAfter}`}>
             {r.noticeKind === 'schedule_published' ? SCHEDULE_NOTICE_WORDS.publishedBody(r.division ?? null) : SCHEDULE_NOTICE_WORDS.changesBody(r.division ?? null)}
           </p>
+          {r.state === 'stopped' && <p className={ck.hint}>{SW.stoppedNote(missed)}</p>}
+        </>
+      ) : r.kind === 'notice' && r.noticeKind === 'practices_sent' ? (
+        // A league admin told a division's families their practice times (House League 9d-3, copy section E).
+        <>
+          <p className={`${ck.hint} ${fam.readAfter}`}>{PRACTICES_SENT_NOTICE.body(r.division ?? null, CLUB_EMAIL_CAP)}</p>
           {r.state === 'stopped' && <p className={ck.hint}>{SW.stoppedNote(missed)}</p>}
         </>
       ) : r.kind === 'notice' && r.noticeKind === 'practices_changed' ? (

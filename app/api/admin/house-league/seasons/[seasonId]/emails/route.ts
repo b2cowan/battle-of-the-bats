@@ -7,6 +7,7 @@ import { isSeasonDoorScope, parseScope, type FamilyAudienceScope } from '@/lib/f
 import { resendSeasonEmail, seasonEmailPreview, sendSeasonEmail } from '@/lib/house-league-email';
 import { writeOrgAudit } from '@/lib/org-audit';
 import { sendScheduleNotice } from '@/lib/league-schedule-mail';
+import { resendPracticeNotice } from '@/lib/league-practice-tell-server';
 import { withObservability } from '@/lib/observability';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
@@ -93,8 +94,15 @@ export const POST = withObservability(async (req: Request,
     if (typeof body.noticeId !== 'string') return NextResponse.json({ error: 'Not found' }, { status: 404 });
     const { data: notice } = await supabaseAdmin.from('league_season_notices').select('id, kind')
       .eq('id', body.noticeId).eq('org_id', ctx!.org.id).eq('season_id', seasonId).maybeSingle();
-    if (!notice || (notice.kind !== 'schedule_published' && notice.kind !== 'games_changed')) {
+    if (!notice || (notice.kind !== 'schedule_published' && notice.kind !== 'games_changed' && notice.kind !== 'practices_sent')) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+    if (notice.kind === 'practices_sent') {
+      // House League 9d-3: the practice times' households still to reach (a fixed address joins first).
+      const r = await resendPracticeNotice({ org: ctx!.org, season, noticeId: notice.id as string });
+      if ('refusal' in r) return NextResponse.json({ error: 'Not found' }, { status: r.refusal === 'finished' ? 423 : 404 });
+      await writeOrgAudit(ctx!.org.id, ctx!.user.id, null, 'families_emailed', { seasonId, resend: true, notice: notice.id, practices: true, reached: r.reached, families: r.families });
+      return NextResponse.json({ ok: true, reached: r.reached, families: r.families, claimed: r.failed });
     }
     const r = await sendScheduleNotice({ org: ctx!.org, season, noticeId: notice.id as string });
     await writeOrgAudit(ctx!.org.id, ctx!.user.id, null, 'families_emailed', { seasonId, resend: true, notice: notice.id, reached: r.reached, families: r.families });

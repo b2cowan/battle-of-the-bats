@@ -36,6 +36,7 @@ import { weekdayOf } from './permit-time.ts';
 import { SCHEDULE_COACH_WORDS, SCHEDULE_WORDS } from './club-schedule-words.ts';
 import { SERIES_SCOPE_ROWS } from './coach-series-scope.ts';
 import type { LeaguePractice } from './types.ts';
+import type { CurrentPractice, ToldPractice } from './league-practice-tell.ts';
 
 /** One slot of a division's practice time, its club day and clock already worked out in the club's zone. */
 export interface PracticeTimeSlot {
@@ -91,6 +92,9 @@ export interface PracticeTimeRead {
   teams: PracticeTimeTeam[];
   settings: PracticeSettings;
   saved: boolean;
+  /** 9d-3 (9d3·6): each team's practices now and what its families were told (told teams only), so the window's
+   *  re-hand-out confirm says how many told teams a hand-out changes BEFORE it is written (lib/league-practice-tell.ts). */
+  told?: { current: Record<string, CurrentPractice[]>; snapshot: Record<string, ToldPractice[]> };
 }
 
 /**
@@ -313,9 +317,9 @@ export const PRACTICE_TIME_WORDS = {
   tooShort: (n: number) => (n === 1 ? '1 part is shorter than a practice, so it stays open.' : `${n} parts are shorter than a practice, so they stay open.`),
   /** [marketing] a division with no teams to hand practices to. */
   noTeams: (division: string) => `${division} has no teams yet.`,
-  foot: 'The practices show on the schedule and on each coach’s team page. Families aren’t emailed.',
-  /** [marketing] the phone's short foot. */
-  footPhone: 'Families aren’t emailed.',
+  /** 9d-3 (copy section A): step 1's foot — the Tell step follows the hand-out. */
+  foot: 'The practices show on the schedule and on each coach’s team page. Next you choose whether to tell the families.',
+  footPhone: 'Next you choose whether to tell the families.',
   handOut: (n: number) => `Hand out ${pluralize(n, 'practice')} a week`,
   handOutPhone: 'Hand out',
   cancel: 'Cancel',

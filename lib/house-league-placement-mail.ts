@@ -1,4 +1,7 @@
 import 'server-only';
+import { toldDateLines } from './league-practice-tell-server';
+import { PRACTICE_TELL_WORDS } from './league-practice-tell';
+import { timesInZoneSentence } from './timezone';
 import { supabaseAdmin } from './supabase-admin';
 import { chunked } from './supabase-paging';
 import { sendFamilyServiceBatch, type FamilyServiceMessage } from './family-email';
@@ -144,7 +147,9 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
   const divisionName = new Map((divisions ?? []).map(d => [d.id as string, d.name as string]));
   const teamIds = [...regs.values()].map(r => r.team_id).filter((t): t is string => !!t)
     .concat(rows.map(r => r.from_team_id).filter((t): t is string => !!t));
-  const [facts, face] = await Promise.all([readTeamFacts(teamIds), systemMailFace(org)]);
+  // 9d-3 Part 4: a moved child's new team's practice dates, when that team's families have been told them.
+  const movedTo = rows.filter(r => r.kind === 'moved').flatMap(r => r.registration_ids.map(id => regs.get(id)?.team_id)).filter((t): t is string => !!t);
+  const [facts, face, toldLines] = await Promise.all([readTeamFacts(teamIds), systemMailFace(org), toldDateLines(org.id, movedTo)]);
 
   const messages: FamilyServiceMessage[] = [];
   const messageRows: string[] = [];
@@ -168,6 +173,10 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
           divisionName: division, clubName: org.name,
           fromTeam: (row.from_team_id && facts.names.get(row.from_team_id)) || 'their old team', toTeam: facts.names.get(child.team_id!) ?? '',
           coaches: facts.coaches.get(child.team_id!) ?? [], statusUrl: url, contactEmail: face?.contact ?? null, face,
+          practices: toldLines.has(child.team_id!) ? {
+            heading: PRACTICE_TELL_WORDS.firstOpening(child.player_first_name, facts.names.get(child.team_id!) ?? ''),
+            lines: toldLines.get(child.team_id!)!, zone: timesInZoneSentence(),
+          } : null,
         }),
       });
     } else {

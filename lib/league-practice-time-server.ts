@@ -13,6 +13,7 @@ import {
   type HandOutBody, type PracticeTimeRead, type PracticeTimeSlot,
 } from './league-practice-time';
 import type { LeagueSeason } from './types';
+import { readPracticesNow, readTold } from './league-practice-tell-server';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -65,12 +66,15 @@ export async function readPracticeTime(orgId: string, season: LeagueSeason, divi
       practicesAWeek: await practicesAWeekNow(orgId, slots.map(x => x.id)),
     })
     : null;
+  const teamIds = teams.map(t => t.id);
+  const [current, told] = await Promise.all([readPracticesNow(orgId, teamIds), readTold(teamIds)]);
   return {
     division: { id: division.id, name: division.name },
     slots,
     teams: teams.map(t => ({ id: t.id, name: t.name })),
     settings: saved ?? DEFAULT_SETTINGS,
     saved: !!saved,
+    told: { current: Object.fromEntries(current), snapshot: Object.fromEntries([...told].map(([t, r]) => [t, r.snapshot])) },
   };
 }
 

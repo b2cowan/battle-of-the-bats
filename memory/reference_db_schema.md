@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-10-30 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-11-01 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-10-30
+# DB Schema Reference — 2026-11-01
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -113,6 +113,14 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → lea
 registration_id (uuid) → league_registrations.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, rating NOT NULL, rated_by (uuid), rated_at
 - Indexes: league_player_ratings_org_id_idx, league_player_ratings_season_idx
 
+### league_practice_emails
+id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, notice_id (uuid) → league_season_notices.id NOT NULL, guardian_email NOT NULL, registration_ids NOT NULL, team_ids NOT NULL, status, created_at, updated_at
+- Indexes: league_practice_emails_division_idx, league_practice_emails_notice_id_guardian_email_key, league_practice_emails_notice_idx, league_practice_emails_open_idx, league_practice_emails_org_idx, league_practice_emails_season_idx
+
+### league_practice_tells
+id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, team_id (uuid) → league_teams.id NOT NULL, notice_id (uuid) → league_season_notices.id NOT NULL, kind NOT NULL, snapshot (jsonb) NOT NULL, told_before (jsonb), created_at
+- Indexes: league_practice_tells_division_idx, league_practice_tells_notice_id_team_id_key, league_practice_tells_org_idx, league_practice_tells_season_idx, league_practice_tells_team_idx
+
 ### league_practice_time
 season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, practice_minutes (integer) NOT NULL, teams_at_once (integer), updated_by (uuid), updated_at
 - Indexes: league_practice_time_division_idx, league_practice_time_org_idx
@@ -152,6 +160,10 @@ slot_id (uuid) → club_schedule_slots.id NOT NULL, org_id (uuid) → organizati
 ### league_team_coaches
 id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, team_id (uuid) → league_teams.id NOT NULL, name NOT NULL, email NOT NULL, user_id (uuid), token_hash, invited_at, expires_at, accepted_at, removed_at, invited_by (uuid), created_by (uuid), created_at, updated_at, invite_failed_at, first_name, last_name
 - Indexes: league_team_coaches_one_per_team, league_team_coaches_org_id_idx, league_team_coaches_season_idx, league_team_coaches_token, league_team_coaches_user_idx
+
+### league_team_practices_told
+team_id (uuid) → league_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, told_at NOT NULL, snapshot (jsonb) NOT NULL, notice_id (uuid) → league_season_notices.id, updated_at
+- Indexes: league_team_practices_told_notice_idx, league_team_practices_told_org_idx, league_team_practices_told_season_idx
 
 ### league_teams
 id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id NOT NULL, name NOT NULL, color, coach_name, sort_order (integer), created_at
@@ -1018,10 +1030,10 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **248 tables** across 10 modules.
+Total: **251 tables** across 10 modules.
 
 - Tournament: 17 tables
-- League: 18 tables
+- League: 21 tables
 - Rep Teams: 76 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
