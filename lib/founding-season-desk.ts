@@ -7,6 +7,7 @@ import {
 // screens) — a second copy here would drift the next time a plan is renamed.
 import { planLabel } from '@/lib/platform-metrics';
 import { pluralize } from '@/lib/utils';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
 // The card and the next-season choice live in their own service-role-only table (mig 283) — NOT on
 // `organizations`, which is anon-readable for every public org.
 import { getOrgBillingFactsBulk } from '@/lib/billing-setup';
@@ -177,7 +178,7 @@ export async function getFoundingSeasonDeskData(): Promise<FoundingDeskData> {
 
     const workspace = workspaceByOrg.get(orgId);
     const kind: FoundingAccountKind =
-      (org.account_kind as string) === 'team_workspace' || (org.plan_id as string) === 'team'
+      isTeamWorkspaceOrg({ accountKind: org.account_kind as string, planId: org.plan_id as string })
         ? 'coaches_portal'
         : 'organization';
 

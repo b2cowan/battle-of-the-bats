@@ -16,6 +16,7 @@ import type {
 } from './team-workspace-entitlements';
 import type { MoveHistoryState } from './team-move-words';
 import { askedByOf, historyStateOf, type TeamMoveAskedBy } from './team-move-state';
+import { isTeamWorkspaceOrg } from './team-workspace-kind';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -399,7 +400,7 @@ export async function findLinkableOrg(targetInput: string): Promise<OrgLinkRow |
 }
 
 export function isTeamWorkspaceOrgRow(org: Pick<OrgLinkRow, 'account_kind' | 'plan_id'>): boolean {
-  return org.account_kind === 'team_workspace' || org.plan_id === 'team';
+  return isTeamWorkspaceOrg({ accountKind: org.account_kind, planId: org.plan_id });
 }
 
 export type CoachOwnTeamLookup =

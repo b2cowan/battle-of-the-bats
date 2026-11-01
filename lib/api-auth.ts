@@ -6,6 +6,7 @@ import type { Organization, OrgPlan, OrgRole } from './types';
 import type { User } from '@supabase/supabase-js';
 import { hasCapability } from './roles';
 import type { Capability } from './roles';
+import { isTeamWorkspaceOrg } from './team-workspace-kind';
 import { assertSafeSupabaseServerEnvironment } from './supabase-safety';
 import { getEffectiveTournamentLimit, getEffectiveTeamLimit } from './plan-config';
 import { applyEntitlementGrants } from './entitlement-grants';
@@ -142,7 +143,7 @@ export const getAuthenticatedUser = cache(async (): Promise<User | null> => {
 function pickHomeMembership(rows: AuthMemberOrgRow[]): AuthMemberOrgRow | undefined {
   const withOrg = rows.filter((row): row is AuthMemberOrgRow & { organizations: AuthOrgRow } => row.organizations !== null);
   if (withOrg.length <= 1) return withOrg[0];
-  const isTeamWorkspace = (o: AuthOrgRow) => o.account_kind === 'team_workspace' || o.plan_id === 'team';
+  const isTeamWorkspace = (o: AuthOrgRow) => isTeamWorkspaceOrg({ accountKind: o.account_kind, planId: o.plan_id });
   return [...withOrg].sort((a, b) => {
     // A membership the person has ACCEPTED before one still waiting on them (J10-006): a pending
     // invite is not a workspace yet, and the role-aware gates below refuse it.

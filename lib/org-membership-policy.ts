@@ -1,4 +1,5 @@
 import { supabaseAdmin } from './supabase-admin';
+import { isTeamWorkspaceOrg } from './team-workspace-kind';
 
 /**
  * Single-org-by-default policy helpers (decision 2026-06-19, see
@@ -31,7 +32,7 @@ function firstRel(o: OrgRel | OrgRel[] | null | undefined): OrgRel | null {
 /** A standalone Coaches Portal stub org (`account_kind='team_workspace'` / `plan_id='team'`). */
 export function isTeamWorkspaceRelation(o: OrgRel | OrgRel[] | null | undefined): boolean {
   const r = firstRel(o);
-  return r?.account_kind === 'team_workspace' || r?.plan_id === 'team';
+  return isTeamWorkspaceOrg({ accountKind: r?.account_kind, planId: r?.plan_id });
 }
 
 /**

@@ -10,6 +10,7 @@ import { accountedCellKeys, scopeCompleteness } from './development-session-view
 import { getEffectiveTournamentLimit, getEffectiveTeamLimit, PLAN_CONFIG } from './plan-config';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
+import { isTeamWorkspaceOrg } from './team-workspace-kind';
 import { applyEntitlementGrants, effectiveStatuses } from './entitlement-grants';
 import { isReservedOrgSlug } from './reserved-slugs';
 import { isDemoOrgSlug } from './demo-org';
@@ -4166,9 +4167,7 @@ async function loadCoachAssignmentRows(
       .eq('id', orgId)
       .maybeSingle();
     if (orgAccessError) throw orgAccessError;
-    isTeamWorkspace =
-      orgAccessRow?.account_kind === 'team_workspace' ||
-      orgAccessRow?.plan_id === 'team';
+    isTeamWorkspace = isTeamWorkspaceOrg({ accountKind: orgAccessRow?.account_kind, planId: orgAccessRow?.plan_id });
   }
 
   const { data, error } = await supabaseAdmin
