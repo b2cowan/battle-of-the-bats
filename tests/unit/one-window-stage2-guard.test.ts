@@ -519,7 +519,10 @@ describe('2d · the rest of the hand-built coach windows move onto the one windo
     // corrected counts as typing there (it closed with the drawer, and with its own Cancel, with nothing asking).
     assert.equal((code.match(/className=\{styles\.modalOverlay\}/g) ?? []).length, 1, 'only the player drawer builds a .modalOverlay window');
     assert.match(code, /const drawerFormDirty = scheduleDirty \|\| creditDirty \|\| payDirty;/);
-    assert.match(code, /onClick=\{\(\) => \{ void cancelPayCorrection\(\); \}\}/);
+    // 2026-10-31: the receipt correction left the drawer's body (it opened off-screen above the pencil) and is a
+    // question window like the credit correction beside it; its Cancel is the window's, asking when `payDirty`.
+    assert.match(code, /<QuestionShell\s+open=\{recordingPayment && tabActive\}\s+onClose=\{closeMoneySheets\}\s+dirty=\{payDirty\}/);
+    assert.doesNotMatch(code, /cancelPayCorrection/);
     assert.doesNotMatch(code, /settlementPanelRef|choicePanelRef|confirmRemindersPanelRef|modalSettlement|settlementScroll/);
     // The settlement's window shape left the stylesheet; its content rules key on its own body, its inert Pay on its button.
     assert.doesNotMatch(coachesCss, /\.modalSettlement\b|\.settlementScroll\b|\.settlementSubtitle\b/);

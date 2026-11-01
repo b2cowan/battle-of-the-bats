@@ -1521,12 +1521,6 @@ export function PlayerDuesPanel({
     close: () => { setSelected(null); setEditingSchedule(false); setScheduleBaseline(null); setCreditBaseline(null); closeMoneySheets(); },
     noun: scheduleDirty ? 'dues schedule' : creditDirty ? 'credit' : 'payment correction',
   });
-  /** The receipt correction's own Cancel — back to the drawer, asking first when the receipt was changed. */
-  const cancelPayCorrection = useDiscardGuard({
-    dirty: payDirty,
-    close: () => closeMoneySheets(),
-    noun: 'payment correction',
-  });
   /** The schedule editor's own Cancel — back to the drawer, not out of it. */
   const cancelScheduleEdit = useDiscardGuard({
     dirty: scheduleDirty,
@@ -4045,122 +4039,6 @@ export function PlayerDuesPanel({
                       </p>
                     )}
 
-                    {/* ⚖⚖ A CORRECTION FORM NOW, AND ONLY THAT (money centralization P2,
-                        2026-08-23). It served two acts from one panel — record a receipt that just
-                        arrived, and fix one already recorded — and the ADD half moved to the one
-                        conversation. The pencil on a receipt below is the only way in.
-
-                        ⚠ THAT MAKES THE 2026-08-14 CRITICAL STRUCTURALLY IMPOSSIBLE: this panel
-                        used to open blank with a stale edit id still set, so what a coach believed
-                        was a second payment silently PATCHed the family's first receipt. There is
-                        no blank-open path left — `editingPaymentId` is set by the only opener.
-
-                        ⚠ It keeps its own words on purpose: it says which receipt it is replacing
-                        and that the old books entry is voided. That is a different sentence from
-                        "a payment arrived", because it is a different act. */}
-                    {recordingPayment && (
-                      <div style={{
-                        padding: '0.85rem', marginBottom: '1rem',
-                        background: 'var(--home-card, rgba(255,255,255,0.03))', borderRadius: 8,
-                        border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
-                      }}>
-                        {/* ⚠ THE FORM NAMES THE RECEIPT IT REPLACES (owner, QA §123 Phase D) —
-                            "$120.00, Aug 12", NOT the player: the drawer's title bar already
-                            carries the name, and this line is the residual risk the August
-                            Critical's structural fix left open (a blank-looking form with a
-                            stale id had nothing on screen saying which row it pointed at). */}
-                        {editingReceipt && (
-                          <p style={{ margin: '0 0 0.6rem', fontWeight: 700, fontSize: '0.85rem', color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>
-                            Correct a receipt — {fmt(editingReceipt.amount)}, {fmtDate(editingReceipt.receivedDate, { withYear: false })}
-                          </p>
-                        )}
-                        <div className={styles.formGrid} style={{ gap: '0.6rem', marginBottom: '0.6rem' }}>
-                          <div>
-                            <label className={styles.label}>Amount received *</label>
-                            <input
-                              className={styles.input}
-                              type="number"
-                              min={0}
-                              step="0.01"
-                              placeholder="e.g. 100"
-                              value={payForm.amount}
-                              onChange={e => setPayForm(f => ({ ...f, amount: e.target.value }))}
-                            />
-                          </div>
-                          <div>
-                            <label className={styles.label}>Date received *</label>
-                            <DateInput
-                              className={styles.input}
-                              max={tournamentToday()}
-                              value={payForm.receivedDate}
-                              onChange={v => setPayForm(f => ({ ...f, receivedDate: v }))}
-                            />
-                          </div>
-                        </div>
-                        <div className={styles.formGrid} style={{ gap: '0.6rem', marginBottom: '0.6rem' }}>
-                          <div>
-                            <label className={styles.label}>Method</label>
-                            <DuesMethodSelect
-                              className={styles.input}
-                              value={payForm.method}
-                              onChange={m => setPayForm(f => ({ ...f, method: m }))}
-                            />
-                          </div>
-                          <div>
-                            <label className={styles.label}>Note</label>
-                            <input
-                              className={styles.input}
-                              /* Neutral example on purpose (owner ruling 2026-08-13, thread 3A):
-                                 the old "from Dana's account" TAUGHT coaches to put guardian
-                                 names where money-view assistants without the family-privacy
-                                 grant can read them. */
-                              placeholder="e.g. paid at practice"
-                              value={payForm.note}
-                              onChange={e => setPayForm(f => ({ ...f, note: e.target.value }))}
-                            />
-                          </div>
-                        </div>
-                        {(() => {
-                          const amt = parseFloat(payForm.amount);
-                          if (isNaN(amt) || amt <= 0 || !selected.schedule) return null;
-                          const paymentsTotal = selected.payments.reduce((s, p) => s + p.amount, 0);
-                          // The SAME cents-safe helper the server's write path uses — a preview
-                          // that does its own arithmetic is a preview that can disagree with
-                          // the credit actually created.
-                          // ⚠ On a correction the row being replaced must come OUT of the running
-                          // total first — otherwise the preview counts the old receipt and the
-                          // new one together and warns about an overpayment that will never
-                          // exist. (`editingReceipt` is the shared lookup the heading also uses.)
-                          const excess = overpaymentExcess(
-                            selected.schedule.totalAmount,
-                            paymentsTotal - (editingReceipt?.amount ?? 0),
-                            amt,
-                          );
-                          return (
-                            <p style={{ margin: '0 0 0.6rem', fontSize: '0.78rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
-                              {/* ⚠ ONE SENTENCE, because there is one act left (P2): this panel is
-                                  only ever opened on an existing receipt. The "Posts {'{'}amount{'}'} income"
-                                  wording it used to carry for the ADD case moved with that case,
-                                  into the conversation, where it reads the same. */}
-                              Replaces this receipt: the old books entry is voided and {fmt(amt)} is
-                              posted afresh, dated {fmtDate(payForm.receivedDate || tournamentToday())}.
-                              {excess > 0.005 && (
-                                <span style={{ display: 'block', color: 'var(--warning)', marginTop: '0.2rem' }}>
-                                  {fmt(excess)} is more than what&apos;s left on this schedule — it will be saved as an overpayment credit.
-                                </span>
-                              )}
-                            </p>
-                          );
-                        })()}
-                        {payError && <p className={styles.errorText}>{payError}</p>}
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                          <button className={styles.btnGhost} onClick={() => { void cancelPayCorrection(); }} disabled={paySaving} style={{ fontSize: '0.8rem' }}>Cancel</button>
-                          <button className={styles.btnPrimary} disabled={paySaving} onClick={savePayment} style={{ fontSize: '0.8rem' }}>
-                            {paySaving ? 'Saving…' : 'Save correction'}
-                          </button>
-                        </div>
-                      </div>
-                    )}
                     {payNotice && (
                       <p style={{ margin: '0 0 0.75rem', fontSize: '0.78rem', color: 'var(--warning)' }}>{payNotice}</p>
                     )}
@@ -4845,6 +4723,123 @@ export function PlayerDuesPanel({
               );
             })()}
             <QuestionReason className={styles.errorText}>{creditError}</QuestionReason>
+          </form>
+        </QuestionShell>
+      )}
+      {/* ⚖⚖ A CORRECTION IS A QUESTION, NOT A PANEL IN THE DRAWER (owner, 2026-10-31). It used to open inline at
+          the TOP of a long drawer while its pencil sat at the bottom, so it opened off-screen and read as a dead
+          button. It stands in the same window as the credit correction beside it.
+
+          ⚠ It is a correction form ONLY, and the pencil on a receipt is the only way in: `editingPaymentId` is set
+          by the one opener, so there is no blank-open path (the 2026-08-14 Critical — a stale edit id PATCHing the
+          family's first receipt — stays structurally impossible).
+
+          ⚠ It keeps its own words: it says which receipt it replaces and that the old books entry is voided, which is
+          a different sentence from "a payment arrived".
+
+          ⚠ NO `leaveGuard`, same reason as the credit window: the drawer already mounts the route guard for
+          `drawerFormDirty`, which includes `payDirty`. */}
+      {selected && (
+        <QuestionShell
+          open={recordingPayment && tabActive}
+          onClose={closeMoneySheets}
+          dirty={payDirty}
+          ariaLabel={`Correct a receipt for ${playerName(selected.player) || 'this player'}`}
+          title="Correct a receipt"
+          subtitle={playerName(selected.player) || undefined}
+          busy={paySaving}
+          footer={<>
+            <QuestionCancel className={styles.btnGhost} />
+            <button type="submit" form="dues-payment-correction-form" className={styles.btnPrimary} disabled={paySaving}>
+              {paySaving ? 'Saving…' : 'Save correction'}
+            </button>
+          </>}
+        >
+          <form id="dues-payment-correction-form" onSubmit={e => { e.preventDefault(); void savePayment(); }}>
+                        {editingReceipt && (
+                          <p style={{ margin: '0 0 0.6rem', fontWeight: 700, fontSize: '0.85rem', color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>
+                            Correct a receipt — {fmt(editingReceipt.amount)}, {fmtDate(editingReceipt.receivedDate, { withYear: false })}
+                          </p>
+                        )}
+                        <div className={styles.formGrid} style={{ gap: '0.6rem', marginBottom: '0.6rem' }}>
+                          <div>
+                            <label className={styles.label}>Amount received *</label>
+                            <input
+                              className={styles.input}
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              placeholder="e.g. 100"
+                              value={payForm.amount}
+                              onChange={e => setPayForm(f => ({ ...f, amount: e.target.value }))}
+                            />
+                          </div>
+                          <div>
+                            <label className={styles.label}>Date received *</label>
+                            <DateInput
+                              className={styles.input}
+                              max={tournamentToday()}
+                              value={payForm.receivedDate}
+                              onChange={v => setPayForm(f => ({ ...f, receivedDate: v }))}
+                            />
+                          </div>
+                        </div>
+                        <div className={styles.formGrid} style={{ gap: '0.6rem', marginBottom: '0.6rem' }}>
+                          <div>
+                            <label className={styles.label}>Method</label>
+                            <DuesMethodSelect
+                              className={styles.input}
+                              value={payForm.method}
+                              onChange={m => setPayForm(f => ({ ...f, method: m }))}
+                            />
+                          </div>
+                          <div>
+                            <label className={styles.label}>Note</label>
+                            <input
+                              className={styles.input}
+                              /* Neutral example on purpose (owner ruling 2026-08-13, thread 3A):
+                                 the old "from Dana's account" TAUGHT coaches to put guardian
+                                 names where money-view assistants without the family-privacy
+                                 grant can read them. */
+                              placeholder="e.g. paid at practice"
+                              value={payForm.note}
+                              onChange={e => setPayForm(f => ({ ...f, note: e.target.value }))}
+                            />
+                          </div>
+                        </div>
+                        {(() => {
+                          const amt = parseFloat(payForm.amount);
+                          if (isNaN(amt) || amt <= 0 || !selected.schedule) return null;
+                          const paymentsTotal = selected.payments.reduce((s, p) => s + p.amount, 0);
+                          // The SAME cents-safe helper the server's write path uses — a preview
+                          // that does its own arithmetic is a preview that can disagree with
+                          // the credit actually created.
+                          // ⚠ On a correction the row being replaced must come OUT of the running
+                          // total first — otherwise the preview counts the old receipt and the
+                          // new one together and warns about an overpayment that will never
+                          // exist. (`editingReceipt` is the shared lookup the heading also uses.)
+                          const excess = overpaymentExcess(
+                            selected.schedule.totalAmount,
+                            paymentsTotal - (editingReceipt?.amount ?? 0),
+                            amt,
+                          );
+                          return (
+                            <p style={{ margin: '0 0 0.6rem', fontSize: '0.78rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
+                              {/* ⚠ ONE SENTENCE, because there is one act left (P2): this panel is
+                                  only ever opened on an existing receipt. The "Posts {'{'}amount{'}'} income"
+                                  wording it used to carry for the ADD case moved with that case,
+                                  into the conversation, where it reads the same. */}
+                              Replaces this receipt: the old books entry is voided and {fmt(amt)} is
+                              posted afresh, dated {fmtDate(payForm.receivedDate || tournamentToday())}.
+                              {excess > 0.005 && (
+                                <span style={{ display: 'block', color: 'var(--warning)', marginTop: '0.2rem' }}>
+                                  {fmt(excess)} is more than what&apos;s left on this schedule — it will be saved as an overpayment credit.
+                                </span>
+                              )}
+                            </p>
+                          );
+                        })()}
+            <QuestionReason className={styles.errorText}>{payError}</QuestionReason>
           </form>
         </QuestionShell>
       )}
