@@ -424,10 +424,10 @@ const SPECIAL: Record<string, [Klass, string]> = {
   'lib/portal-free-time-give.ts': ['tombstone-aware', 'reads org_owned as "moved into a club", which blocks a further portal give ("give the club free time instead")'],
   'lib/founding-season.ts': ['tombstone-aware', 'the reactivation read needs billing_mode platform_override; a comp on the org is revoked by applyPlanChangeSideEffects before the flip runs'],
   'lib/portal-free-time-tab.ts': ['harmless-read', 'the staff console lists the tombstone as "in a club, and the club pays for it", which is true; its record read runs only for account_kind team_workspace'],
-  'lib/basic-coach-teams.ts': ['harmless-read', 'finds the workspace by team to merge the portal-era tournament history through the free-team shadow: still the same team\'s history'],
+  'lib/basic-coach-teams.ts': ['harmless-read', 'resolveBasicCoachTeamIdForWorkspace takes a workspace its caller already holds and returns at once when the free-team shadow exists (a flipped portal keeps it); the history merge\'s own by-team lookup is getTeamWorkspaceForRepTeam, not these reads'],
   'lib/chat-resolvers.ts': ['harmless-read', 'uses the workspace id and rep team only to reach the team\'s staff and claimed tournaments'],
   'lib/coach-registration-access.ts': ['harmless-read', 'maps a registration to its rep team and shadow; access is the coaching assignment, not the portal'],
-  'lib/coach-upgrade-migration.ts': ['harmless-read', 'writes migration_summary on the workspace id its caller passes; the caller is the known gap below'],
+  'lib/coach-upgrade-migration.ts': ['harmless-read', 'writes migration_summary on the workspace id its caller passes; the read is in retryCoachUpgradeMigration, whose only caller is the retry route below, which skips workspace_state org_owned'],
   'lib/staff-own-club.ts': ['harmless-read', 'billing_owner_org_id is the club itself after the flip, so it only confirms "this is your own club" (it narrows, never widens)'],
   // Found as gaps by this census and fixed in Part 4 (owner yes 2026-10-31): the flip keeps migration_summary on the tombstone, so
   // without the filter an unacknowledged "Welcome to Premium" banner, and its retry, carried on into the club's team page.

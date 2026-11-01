@@ -209,17 +209,29 @@ test.describe.serial('C · a coach on free time becomes the club (mock billing)'
   let made: Made | null = null;
   let previousMock: boolean | null = null;
   let adminCtx: BrowserContext | null = null;
+  let mockBillingOn = false;
+  let flipped = false;
 
-  async function signedIn(browser: Browser, viewport = DESKTOP): Promise<{ ctx: BrowserContext; page: Page }> {
-    test.skip(!made, 'the coach for this group could not be made (see the first test)');
-    const ctx = await browser.newContext({ viewport });
+  // A cold dev server compiles the billing page, the checkout and Admin inside these tests; the default 60 s is not enough.
+  test.describe.configure({ timeout: 180_000 });
+
+  /** A fresh context signed in through the login form (the made coach has no session file). */
+  async function logIn(browser: Browser, email: string, viewport = DESKTOP): Promise<{ ctx: BrowserContext; page: Page }> {
+    // ⚠ An EXPLICITLY empty session: a bare newContext() inherits the project's org-owner storageState, and the sign-in page
+    // forwards a signed-in visitor away, so the form would never appear (tests/uat/helpers/fixtures.ts, anonPage).
+    const ctx = await browser.newContext({ viewport, storageState: { cookies: [], origins: [] } });
     const page = await ctx.newPage();
     await page.goto('/auth/login');
-    await page.locator('#login-email').fill(made!.email);
+    await page.locator('#login-email').fill(email);
     await page.locator('#login-password').fill(PASSWORD);
     await page.locator('#login-submit').click();
     await page.waitForURL(url => !url.pathname.startsWith('/auth/login'), { timeout: 90_000 });
     return { ctx, page };
+  }
+
+  function signedIn(browser: Browser, viewport = DESKTOP) {
+    test.skip(!made, 'the coach for this group could not be made (see the first test)');
+    return logIn(browser, made!.email, viewport);
   }
 
   test.beforeAll(async ({ browser }) => {
@@ -228,7 +240,8 @@ test.describe.serial('C · a coach on free time becomes the club (mock billing)'
     const current = await adminCtx.request.get('/api/dev/mock-billing');
     if (!current.ok()) return;
     previousMock = ((await current.json()) as { override?: boolean | null }).override ?? null;
-    await adminCtx.request.post('/api/dev/mock-billing', { data: { enabled: true } });
+    // Checked, not assumed: with mock billing off, the checkout button would reach a real Stripe session.
+    mockBillingOn = (await adminCtx.request.post('/api/dev/mock-billing', { data: { enabled: true } })).ok();
   });
 
   test.afterAll(async () => {
@@ -244,19 +257,13 @@ test.describe.serial('C · a coach on free time becomes the club (mock billing)'
   });
 
   test('make a free coach, give them free time from FieldLogicHQ: a Premium portal they own', async ({ browser }) => {
-    test.skip(!adminCtx, 'needs the platform admin session and the dev mock-billing tool');
+    test.skip(!adminCtx || !mockBillingOn, 'needs the platform admin session and the dev mock-billing tool switched on');
     const email = `premium-to-club-${suffix}@dev.local`;
     const { data: user, error } = await supabaseAdmin.auth.admin.createUser({ email, password: PASSWORD, email_confirm: true });
     if (error || !user.user) throw error ?? new Error('no user');
     const partial: Partial<Made> = { userId: user.user.id, email };
     try {
-      const ctx = await browser.newContext();
-      const page = await ctx.newPage();
-      await page.goto('/auth/login');
-      await page.locator('#login-email').fill(email);
-      await page.locator('#login-password').fill(PASSWORD);
-      await page.locator('#login-submit').click();
-      await page.waitForURL(url => !url.pathname.startsWith('/auth/login'), { timeout: 90_000 });
+      const { ctx, page } = await logIn(browser, email);
       const team = await page.request.post('/api/coaches/teams', { data: { name: `UAT Path ${suffix}`, sport: 'baseball' } });
       expect(team.ok(), 'the free team').toBe(true);
       partial.basicTeamId = ((await team.json()) as { id: string }).id;
@@ -329,11 +336,13 @@ test.describe.serial('C · a coach on free time becomes the club (mock billing)'
       const { dialog } = await openClubWindow(page);
       await dialog.getByLabel(new RegExp(`^${W.clubUpgrade.name}`)).fill(clubName);
 
-      // A marker on this document: a client-side route push would keep it, a full load drops it.
-      await page.evaluate(() => { (window as unknown as { __beforeFlip?: boolean }).__beforeFlip = true; });
+      // Every full document load the page makes from here on. The checkout leaves this document on its own, so a marker set
+      // here proves nothing about the LAST hop; a document load whose address is the club's Admin does.
+      const documentLoads: string[] = [];
+      page.on('load', loaded => { documentLoads.push(new URL(loaded.url()).pathname); });
       await dialog.getByRole('button', { name: W.move.checkout }).click();
       await page.waitForURL(url => url.pathname === `/${made!.slug}/admin` && url.searchParams.get('inPlace') === 'club', { timeout: 60_000 });
-      expect(await page.evaluate(() => (window as unknown as { __beforeFlip?: boolean }).__beforeFlip), 'a full page load, not a client push').toBeUndefined();
+      await expect.poll(() => documentLoads, { message: 'the hop into Admin is a full document load, not a client push' }).toContain(`/${made!.slug}/admin`);
 
       // The landing: ready, the coach is the owner of the club they named, the setup list, their team.
       await expect(page.getByRole('heading', { name: W.clubUpgrade.ready })).toBeVisible({ timeout: 20_000 });
@@ -356,12 +365,15 @@ test.describe.serial('C · a coach on free time becomes the club (mock billing)'
       expect(ws).toMatchObject({ workspace_state: 'org_owned', billing_mode: 'club_included', stripe_subscription_id: null, stripe_customer_id: null, rep_team_id: made!.repTeamId });
       const running = (grants ?? []).filter(g => !g.revoked_at && (!g.expires_at || new Date(g.expires_at) > new Date()));
       expect(running, 'the staff-given free time ended at the upgrade').toEqual([]);
+      flipped = true;
     } finally {
       await ctx.close();
     }
   });
 
   test('the menu swapped: on a computer and in the phone\'s More sheet, Plan & billing and Tournaments you run gave way to Admin', async ({ browser }) => {
+    // A skipped checkout leaves an unflipped coach; "serial" does not skip what follows, so say so here instead of failing misleadingly.
+    test.skip(!flipped, 'the previous test did not flip this coach (skipped or failed): there is no club menu to check');
     const desk = await signedIn(browser, DESKTOP);
     try {
       await desk.page.goto(`/${made!.slug}/coaches`, { waitUntil: 'networkidle' });
