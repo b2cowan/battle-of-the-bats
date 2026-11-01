@@ -22,9 +22,10 @@
  * House rules: the clock through `formatTime` / `formatTimeRange`; "practice" (one spelling); `possessive()`.
  */
 import { formatShortWeekdayDate, mondayOfDay, utcToZonedInputs } from './timezone';
-import { joinWithAnd, pluralize, possessive, formatTimeRange } from './utils';
+import { joinWithAnd, pluralize, possessive, formatTime, formatTimeRange } from './utils';
 import { weekdayOf } from './permit-time';
-import { CLUB_EMAIL_CAP } from './families-words';
+import { weekdaysWords } from './permit-words';
+import { SCHEDULE_PUBLISH_WORDS } from './league-schedule-words';
 import { leagueRows, type LeagueChange, type LeagueRow, type PracticeFace } from './club-schedule-league-plan';
 import {
   familyClose, familyPartOpening, familyRowLines, familySubject, rowWhen, type LeaguePlace,
@@ -136,6 +137,7 @@ export function placeOfTold(names: { venue: (id: string) => string | null; facil
 export interface TeamChange { rows: LeagueRow[]; added: { days: string[]; face: PracticeFace }[]; firstDay: string | null }
 
 const endMsOf = (p: ToldPractice) => (p.e ? ms(p.e) : NaN);
+const faceOf = (p: ToldPractice) => faceOfTold(ms(p.s), endMsOf(p), placeKeyOf(p));
 
 /** What changed for one team between what families were told and what is there now (upcoming only). */
 export function teamChange(teamId: string, told: readonly ToldPractice[], now: readonly ToldPractice[], nowMs: number): TeamChange {
@@ -147,12 +149,11 @@ export function teamChange(teamId: string, told: readonly ToldPractice[], now: r
     const k = toldKey(p), left = nowKeys.get(k) ?? 0;
     if (left > 0) { nowKeys.set(k, left - 1); stays.push(p); } else gone.push(p);
   }
-  const keep = new Map<string, number>();
-  for (const p of stays) keep.set(toldKey(p), (keep.get(toldKey(p)) ?? 0) + 1);
+  // What the told ones left over in `nowKeys` is exactly the new practices (identical keys are interchangeable).
   const fresh: ToldPractice[] = [];
   for (const p of n) {
-    const k = toldKey(p), left = keep.get(k) ?? 0;
-    if (left > 0) keep.set(k, left - 1); else fresh.push(p);
+    const k = toldKey(p), left = nowKeys.get(k) ?? 0;
+    if (left > 0) { nowKeys.set(k, left - 1); fresh.push(p); }
   }
 
   // Paired within each week, nearest start first.
@@ -179,10 +180,10 @@ export function teamChange(teamId: string, told: readonly ToldPractice[], now: r
     b.forEach((y, j) => { if (!usedB.has(j)) added.push(y); });
   }
 
-  const rows = leagueRows(changes, faceOfTold, stays.map(p => ({ teamId, face: faceOfTold(ms(p.s), endMsOf(p), placeKeyOf(p)) })));
+  const rows = leagueRows(changes, faceOfTold, stays.map(p => ({ teamId, face: faceOf(p) })));
   const addedGroups = new Map<string, { days: string[]; face: PracticeFace }>();
   for (const p of added) {
-    const face = faceOfTold(ms(p.s), endMsOf(p), placeKeyOf(p));
+    const face = faceOf(p);
     const sig = `${face.weekday}|${face.startClock}|${face.endClock}|${face.venueId}|${face.facilityId ?? ''}`;
     (addedGroups.get(sig) ?? addedGroups.set(sig, { days: [], face }).get(sig)!).days.push(face.day);
   }
@@ -198,7 +199,8 @@ export function changeLines(c: TeamChange, placeOf: (f: PracticeFace) => LeagueP
   const lines = c.rows.flatMap(r => familyRowLines(r, placeOf));
   for (const g of c.added) {
     const when = rowWhen({ days: g.days, throughEnd: false, was: g.face });
-    lines.push(`Added: ${when}, ${formatTimeRange(g.face.startClock, g.face.endClock)} · ${fullPlace(placeOf(g.face))}`);
+    const place = fullPlace(placeOf(g.face));
+    lines.push(`Added: ${when}, ${formatTimeRange(g.face.startClock, g.face.endClock)}${place ? ` · ${place}` : ''}`);
   }
   return lines;
 }
@@ -207,10 +209,33 @@ export function changeLines(c: TeamChange, placeOf: (f: PracticeFace) => LeagueP
  *  Maple Grove Park · Diamond 1" — a team's dates can span venues, so the place is never in the heading). */
 export function dateLines(now: readonly ToldPractice[], nowMs: number, placeOf: (f: PracticeFace) => LeaguePlace): string[] {
   return upcoming(now, nowMs).map(p => {
-    const face = faceOfTold(ms(p.s), endMsOf(p), placeKeyOf(p));
+    const face = faceOf(p);
     const place = fullPlace(placeOf(face));
     return `${formatShortWeekdayDate(face.day)}, ${formatTimeRange(face.startClock, face.endClock)}${place ? ` · ${place}` : ''}`;
   });
+}
+
+/**
+ * A team's upcoming practices said once, for its row in the Tell window: the weekly pattern as the time line says it
+ * ("Tue and Thu, 6:00–7:00 p.m.") and where, each place named once (three or more is "3 places"). Dates are not listed:
+ * the email carries every date, the row only says what families are about to be told.
+ */
+export function practiceSummary(now: readonly ToldPractice[], nowMs: number, placeOf: (f: PracticeFace) => LeaguePlace): { when: string; where: string } {
+  const faces = upcoming(now, nowMs).map(faceOf);
+  // One shape per start and end (or the start alone when none was stored), the weekdays that share it gathered. Never
+  // merged: these are different weeks' practices, so two touching times are two shapes, not one long practice (/review).
+  const shapes = new Map<string, { days: Set<number>; words: string }>();
+  for (const f of faces) {
+    const words = f.endClock ? formatTimeRange(f.startClock, f.endClock) : formatTime(f.startClock);
+    const shape = shapes.get(words) ?? shapes.set(words, { days: new Set(), words }).get(words)!;
+    shape.days.add(f.weekday);
+  }
+  const when = [...shapes.values()]
+    .sort((a, b) => Math.min(...a.days) - Math.min(...b.days))
+    .map(s => `${weekdaysWords([...s.days])}, ${s.words}`)
+    .join('; ');
+  const places = [...new Set(faces.map(f => fullPlace(placeOf(f))).filter(Boolean))];
+  return { when, where: places.length > 2 ? `${places.length} places` : joinWithAnd(places) };
 }
 
 // ── The family's email (frame c4; copy section C) ─────────────────────────────────────────────────────────────
@@ -252,34 +277,39 @@ export function practiceTimesEmailWords(p: { club: string; season: string; guard
 // ── Words (copy sections A, B, C, E, G) ───────────────────────────────────────────────────────────────────────
 
 const families = (n: number) => pluralize(n, 'family', 'families');
-const haveNotBeenTold = (n: number) => (n === 1 ? '1 family hasn’t been told.' : `${n} families haven’t been told.`);
 const teamsPossessive = (n: number) => (n === 1 ? '1 team’s' : `${n} teams’`);
-/** The owner's cap noun (2026-10-31): "the season's 3 emails", the number from the real cap. */
-const capNoun = `the season’s ${CLUB_EMAIL_CAP} emails`;
 
 export const PRACTICE_TELL_WORDS = {
   // A · the window
-  step1Foot: 'The practices show on the schedule and on each coach’s team page. Next you choose whether to tell the families.',
-  step1FootPhone: 'Next you choose whether to tell the families.',
   title: 'Tell the families their practice times',
   titlePhone: 'Tell the families',
-  statement: (perWeek: number, untold: number) => `${pluralize(perWeek, 'practice')} a week handed out. ${haveNotBeenTold(untold)}`,
-  tileTeams: 'Teams',
-  tileFamilies: 'Families',
-  tileTwoTeams: (n: number) => `${n} ${n === 1 ? 'has' : 'have'} a child on two teams`,
-  tileWillBeSent: 'Will be sent',
-  tileOneEach: 'one email each',
-  tileNoEmail: 'No email',
-  getsHead: 'What each family gets',
-  gets: 'Their child’s team practice dates and places. Nothing about fees.',
+  /** A division whose teams aren't published tells nobody anything yet (owner 2026-11-01, /ux): the one sentence the game
+   *  Publish uses for the same rule, and the door to the Teams screen where they are published. */
+  teamsFirst: (division: string) => SCHEDULE_PUBLISH_WORDS.teamsFirst(division),
+  teamsFirstDoor: 'Go to Teams',
+  teamsFirstFoot: 'The practices stay handed out. The reminder comes back once the teams are published.',
+  /** The step's opening: what pressing Send does, said as who gets what (owner 2026-10-31, the redrawn window). */
+  lead: (n: number, teams: number) => `Practice times go to ${families(n)} on ${pluralize(teams, 'team')}.`,
+  leadNobody: 'No family on these teams can be emailed yet.',
+  rowFamilies: (n: number) => families(n),
+  /** A team told about a change that leaves it no upcoming practice (every one was cancelled): a row never goes blank. */
+  rowNoTimes: 'No upcoming practices',
+  changedTag: 'Changed',
+  totalLabel: 'Total',
+  totalWords: (twoTeams: number) => (twoTeams > 0
+    ? `One email per family. ${families(twoTeams)} ${twoTeams === 1 ? 'has' : 'have'} a child on more than one team, so ${twoTeams === 1 ? 'it counts' : 'they count'} once.`
+    : 'One email per family.'),
+  totalEmails: (n: number) => pluralize(n, 'email'),
+  /** The amber row: the one thing a person can still fix before sending. "more" when others are being sent. */
+  leftOutRow: (n: number, more: boolean) => `${n} ${more ? 'more ' : ''}${n === 1 ? 'family has' : 'families have'} no working email, so they won’t get this.`,
+  leftOutRowPhone: (n: number) => `${n} ${n === 1 ? 'family has' : 'families have'} no working email.`,
+  getsLine: 'Each email lists their child’s team practice dates and places. Nothing about fees.',
   seeExample: 'See an example',
   exampleTitle: 'An example',
   exampleTo: (to: string) => `To ${to}`,
   notYet: 'Not yet',
   send: (n: number) => `Send to ${families(n)}`,
   sendPhone: (n: number) => `Send to ${n}`,
-  foot: `Each family gets one email, sent now. It doesn’t count toward ${capNoun}.`,
-  footPhone: `One email each, sent now. Not counted toward ${capNoun}.`,
   leftOut: (n: number) => (n === 1 ? '1 family has no email that works, so they won’t get this.' : `${n} families have no email that works, so they won’t get this.`),
   leftOutPhone: (n: number) => (n === 1 ? '1 family has no email that works.' : `${n} families have no email that works.`),
   seeThem: 'See them',
@@ -309,7 +339,6 @@ export const PRACTICE_TELL_WORDS = {
   everyoneTitle: 'Everyone has been told',
   everyone: (name: string, n: number, date: string, time: string) => `${name} sent the practice times to ${families(n)} on ${date} at ${time}.`,
   everyoneFoot: 'The reminder on the schedule is gone. If you hand practices out again, this step reopens for the teams whose practices change.',
-  someTeams: (withPractices: number, of: number, untold: number) => `${withPractices} of ${of} teams have practices. ${haveNotBeenTold(untold)}`,
   noPractices: (teams: readonly string[], m: number) =>
     `${joinWithAnd(teams)} ${teams.length === 1 ? 'has' : 'have'} no practices handed out, so their ${m === 1 ? '1 family isn’t' : `${m} families aren’t`} included. Hand them out, then tell those families.`,
   handOutFor: 'Hand out for them',
@@ -328,8 +357,8 @@ export const PRACTICE_TELL_WORDS = {
     `${families(told)} who ${told === 1 ? 'was' : 'were'} told will get the change.`,
     fresh ? `${fresh === 1 ? '1 team hasn’t' : `${fresh} teams haven’t`} been told yet, so their ${families(freshFamilies)} get their practice times for the first time.` : '',
   ].filter(Boolean).join(' '),
-  reminder: (n: number) => `${teamsPossessive(n)} families haven’t been told`,
-  tellThem: 'Tell them',
+  reminder: (n: number) => `${teamsPossessive(n)} families haven’t been sent their practice times`,
+  tellThem: 'Tell the families',
   // C · the email
   intro: (season: string) => `Here are the practice times for ${season}. Every date is listed, because the time can change from week to week.`,
   firstOpening: (child: string, team: string) => `${possessive(child)} practices with ${team}:`,
@@ -338,6 +367,7 @@ export const PRACTICE_TELL_WORDS = {
   // The route's refusals ([marketing]).
   refusals: {
     finished: 'This season is finished, so its families can’t be sent practice times.',
+    teamsFirst: 'Publish this division’s teams first, so every family knows its child’s team.',
     nothing: 'There’s nobody to tell: every team’s families know their practice times.',
     sending: 'These practice times are being sent right now.',
     loadFailed: 'Who to tell didn’t load. Try again.',

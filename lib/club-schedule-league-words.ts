@@ -157,12 +157,14 @@ const nowWhen = (r: LeagueRow, f: PracticeFace) => (r.days.length === 1 ? format
 export function familyRowLines(r: LeagueRow, placeOf: (f: PracticeFace) => LeaguePlace): string[] {
   const was = placeOf(r.was);
   const wasRange = formatTimeRange(r.was.startClock, r.was.endClock);
-  if (r.kind === 'cancelled' || !r.now) return [`Cancelled: ${rowWhen(r)}, ${wasRange} · ${full(was)}`];
+  // A practice with no place (hand-booked without one) reads with no trailing "·".
+  const at = (place: string) => (place ? ` · ${place}` : '');
+  if (r.kind === 'cancelled' || !r.now) return [`Cancelled: ${rowWhen(r)}, ${wasRange}${at(full(was))}`];
   const now = placeOf(r.now);
   const timeChanged = r.now.startClock !== r.was.startClock || r.now.endClock !== r.was.endClock;
   const wasPlace = samePlace(r.was, r.now) ? '' : r.was.venueId === r.now.venueId ? short(was) : full(was);
   return [
-    `Now: ${nowWhen(r, r.now)}, ${formatTimeRange(r.now.startClock, r.now.endClock)} · ${full(now)}`,
+    `Now: ${nowWhen(r, r.now)}, ${formatTimeRange(r.now.startClock, r.now.endClock)}${at(full(now))}`,
     `Was: ${nowWhen(r, r.was)}${timeChanged ? `, ${wasRange}` : ''}${wasPlace ? ` · ${wasPlace}` : ''}`,
   ];
 }

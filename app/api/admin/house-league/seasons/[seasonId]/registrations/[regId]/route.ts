@@ -403,8 +403,10 @@ export const PATCH = withObservability(async (req: Request,
 
   // ── the family's email (House League 9d-3, owner 2026-10-31: "See them" adds or fixes it) ──────────────────────
   // The league's runners (owner, admin, league admin) on a live season. The sign-up's other children this season on the
-  // same address follow it, so a household never splits in two. A family is attached by person_id, never by address, so
-  // its Families record keeps it; the next "Send again" reaches the new address.
+  // same address follow it, so a household never splits in two. ⚠ The Families book follows the ADDRESS too (mig 333, E02:
+  // the next attach re-points a child whose typed address is no longer one of its person's) — a fixed typo moves the child
+  // and its siblings to whoever owns the new address, and the duplicate queue proposes the pair; nothing merges on its own.
+  // The next "Send again" reaches the new address.
   if ('guardianEmail' in body) {
     const refused = houseLeagueRefusal(ctx, 'run', season);
     if (refused) return refused;
@@ -413,20 +415,17 @@ export const PATCH = withObservability(async (req: Request,
       return NextResponse.json({ error: 'Enter an email address that can receive mail.', code: 'bad_email' }, { status: 400 });
     }
     const was = normalizeGuardianEmail(reg.guardianEmail);
-    const at = new Date().toISOString();
-    const { error: upErr } = await supabaseAdmin.from('league_registrations')
-      .update({ guardian_email: next, updated_at: at }).eq('id', regId).eq('season_id', seasonId);
-    if (upErr) throw upErr;
+    // The household is read first and written once: a failure never leaves half of it on the old address.
+    const ids = [regId];
     if (was) {
       const { data: same, error: sameErr } = await supabaseAdmin.from('league_registrations')
         .select('id, guardian_email').eq('season_id', seasonId).neq('id', regId).ilike('guardian_email', was);
       if (sameErr) throw sameErr;
-      const ids = (same ?? []).filter(r => normalizeGuardianEmail(r.guardian_email as string | null) === was).map(r => r.id as string);
-      if (ids.length) {
-        const { error } = await supabaseAdmin.from('league_registrations').update({ guardian_email: next, updated_at: at }).in('id', ids);
-        if (error) throw error;
-      }
+      ids.push(...(same ?? []).filter(r => normalizeGuardianEmail(r.guardian_email as string | null) === was).map(r => r.id as string));
     }
+    const { error: upErr } = await supabaseAdmin.from('league_registrations')
+      .update({ guardian_email: next, updated_at: new Date().toISOString() }).in('id', ids).eq('season_id', seasonId);
+    if (upErr) throw upErr;
     await writeOrgAudit(ctx!.org.id, ctx!.user.id, regId, 'league_guardian_email_changed', { seasonId, had: !!was });
     return NextResponse.json({ registration: await fetchReg(regId, seasonId) });
   }

@@ -27423,3 +27423,16 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **Acceptance limits, not passes:** the owner visual walk is separate from automated checks. Register’s two existing small inline help links remain under the unchanged-form ruling. Admin preview requires a real accepted membership/tournament scope; no access was granted for this walk, and missing populated scenarios remain incomplete. Cached share cards need a fresh check. The demo is included for manual compatibility, without a demo rewrite. No tournament-application deployment, production-database work or whole-product sweep was performed.
 <!-- /§435 -->
+
+## §436 · House League · Stage 9d-3 walk A — **a league admin tells a division's families their practice times after a hand-out: the amber reminder, the Tell step's figures and example email, "See them" with the email fix, the history row, handing out again with nothing changed and with a change, a changed team and a never-told team in one send, a moved child, and a registrar who sees none of it**
+<!-- §436 -->
+**Built 2026-10-31:** Session 1 (Parts 1–4), committed `3dcb06705` by another session; the "family nobody could reach" and "fuller example" fixes made after it are in the working tree for the /simplify and /review sessions. Mig 415 on dev only (prod `pending`). Plan: [HOUSE_LEAGUE_STAGE9D3_BUILD_PROMPT.md](HOUSE_LEAGUE_STAGE9D3_BUILD_PROMPT.md).
+
+**The walk (checkable):** https://claude.ai/artifact/AekSh8zqvmJD7piaLEX4DM (source [HOUSE_LEAGUE_STAGE9D3_WALK_A.html](HOUSE_LEAGUE_STAGE9D3_WALK_A.html)). One purpose, 27 steps in seven parts: A the reminder and the step (6); B send and the history (4); C hand out again unchanged, then the family nobody could reach (4); D hand out again with a change (4); E a changed and a never-told team in one send (5); F a moved child (2); G who sees it (2). Fixture: `.probe/9d3-walkA/fixture.mjs` (add-only on U9 Rookie; `--greens`, `--reset`, `--remove`). Walk after /simplify and /review, on a restarted dev server.
+
+**Known before the walk:** E3's "their {m} families" counts only households with no child on a changed team (the walk pins 2; the code says 1). Fix owed. Dev counts a transport-skipped send as reached. The moved-child email's words have no dev preview (unit-test pinned). The season-wide "not told" total is not built.
+
+**Owner calls open with it:** the door back to a family nobody could reach once every team is told (C3); the build's "Added:" line in a change email (E4); "Reached 10 of 10" after Send again counts the whole send (C4).
+
+**WALKED 2026-10-31 (pasted 11-01), PASSED 27/27, no changes asked** — A 6/6 · B 4/4 · C 4/4 · D 4/4 · E 5/5 · F 2/2 · G 2/2. No notes came back with the paste, so the three open owner calls (C3 the door back to a family nobody could reach, E4 the "Added:" line, C4 the "Reached 10 of 10" count) stand as built and the "known before the walk" items stay open. /simplify, /review and /docs were already run 2026-10-31 (build prompt Progress block). Still owed for 9d-3 Session 1: the commit and the "See an example" multi-word first-name defect (owner call); then Session 2 (Parts 5–7, mig 416).
+<!-- /§436 -->

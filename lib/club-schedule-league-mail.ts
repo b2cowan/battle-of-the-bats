@@ -106,10 +106,19 @@ export async function sendPracticeChangeNotices(p: {
       const sent = results.filter(r => r.status === 'sent').length;
       // 9d-3: a told team whose families this reached now knows the moved times, so a later hand-out never sends them the
       // same change again (the told snapshot follows; an untold team stays untold — its first email lists every date).
-      const reachedTeams = new Set<string>();
+      // A team follows only when this email was ABOUT it (a child with a part on it) and EVERY household it was about was
+      // reached — one family's email going must not tell the rest (review 2026-10-31). A team left behind reads "changed"
+      // on the Tell step, so the unreached families hear it there.
       // (Dev sends nothing — "skipped" — and counts as reached there, so a walk can see the told state follow.)
-      results.forEach((r, i) => { if (r.status === 'sent' || (r.status === 'skipped' && process.env.NODE_ENV !== 'production')) for (const c of list[i].h.children) reachedTeams.add(c.teamId); });
-      await refreshToldAfterClubSend(p.org.id, [...reachedTeams]);
+      const heard = new Map<string, boolean>();
+      results.forEach((r, i) => {
+        const reached = r.status === 'sent' || (r.status === 'skipped' && process.env.NODE_ENV !== 'production');
+        for (const c of list[i].h.children) {
+          if (!p.partOf(c.teamId, c.name.split(' ')[0] || c.name)) continue;
+          heard.set(c.teamId, (heard.get(c.teamId) ?? true) && reached);
+        }
+      });
+      await refreshToldAfterClubSend(p.org.id, [...heard].filter(([, all]) => all).map(([teamId]) => teamId));
       outcome.families += list.length;
       outcome.sent += sent;
       outcome.failed += list.length - sent;

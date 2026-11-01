@@ -1,18 +1,19 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
-import { chunked, fetchAll, fetchAllIn } from './supabase-paging';
+import { chunked, fetchAll, fetchAllIn, inParallel } from './supabase-paging';
 import { getOrgPlaceNames } from './db';
+import { isFinishedLeagueSeason } from './house-league-access';
 import { sendFamilyServiceBatch, type FamilyServiceMessage } from './family-email';
 import { isSendableGuardianEmail, normalizeGuardianEmail } from './guardian-email';
 import { leaguePracticesChangedHtml } from './email';
 import { systemMailFace, type ClubEmailOrg } from './club-email-context';
 import { seasonEmailReason, SEASON_EMAIL_WORDS as SW } from './families-words';
-import { formatShortWeekdayDate, mondayOfDay, timesInZoneSentence, utcToZonedInputs } from './timezone';
+import { formatShortWeekdayDate, timesInZoneSentence, utcToZonedInputs } from './timezone';
 import { formatTime } from './utils';
 import { memberDisplayName } from './member-names';
 import { readHouseholds, type Household } from './club-schedule-league-mail';
 import {
-  changeLines, dateLines, placeOfTold, practiceTimesEmailWords, snapshotOf, teamChange, tellStateOf,
+  changeLines, dateLines, placeOfTold, practiceSummary, practiceTimesEmailWords, snapshotOf, teamChange, tellStateOf,
   type CurrentPractice, type TeamTellState, type TellPart, type ToldPractice,
 } from './league-practice-tell';
 import type { EmailWords } from './club-schedule-words';
@@ -85,12 +86,12 @@ export async function refreshToldAfterClubSend(orgId: string, teamIds: readonly 
     if (!told.size) return;
     const now = await readPracticesNow(orgId, [...told.keys()]);
     const at = new Date().toISOString();
-    for (const teamId of told.keys()) {
+    await inParallel([...told.keys()], 8, async teamId => {
       const { error } = await supabaseAdmin.from('league_team_practices_told')
         .update({ told_at: at, snapshot: snapshotOf(now.get(teamId) ?? [], Date.now()), notice_id: null, updated_at: at })
         .eq('team_id', teamId);
       if (error) throw error;
-    }
+    });
   } catch (err) {
     console.error('[league-practice-tell] a told team was not refreshed after the club\'s send:', err instanceof Error ? err.message : String(err));
   }
@@ -127,10 +128,21 @@ async function placeReader(orgId: string) {
 /** A household that can be emailed: a usable address, and only its children on these teams. */
 function sendableHouseholds(all: readonly Household[], seasonId: string, teams: ReadonlySet<string>): Household[] {
   return all
-    .filter(h => h.seasonId === seasonId && isSendableGuardianEmail(normalizeGuardianEmail(h.email)))
+    .filter(h => h.seasonId === seasonId && isSendableGuardianEmail(h.email))
     .map(h => ({ ...h, children: h.children.filter(c => teams.has(c.teamId)) }))
     .filter(h => h.children.length > 0);
 }
+
+/** A household as the send's rows take it (`league_practices_tell`, `league_practice_emails_add`). */
+const householdRows = (hs: readonly Household[]) => hs.map(h => ({
+  email: normalizeGuardianEmail(h.email), registrationIds: h.children.map(c => c.registrationId), teamIds: [...new Set(h.children.map(c => c.teamId))],
+}));
+
+/** A send row that has not gone: still to try, failed, or held by a send that may have died. */
+const UNSENT = ['pending', 'failed', 'sending'];
+
+const fullName = (first: string, last: string) => `${first} ${last}`.trim();
+const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
 
 /** Who won't get it: an active child on these teams with no email, or one no mail can reach. */
 export interface LeftOutFamily { registrationId: string; name: string; team: string; email: string | null }
@@ -142,40 +154,38 @@ async function readLeftOut(seasonId: string, teams: ReadonlyMap<string, string>)
       .select('id, team_id, player_first_name, player_last_name, guardian_email')
       .eq('season_id', seasonId).eq('status', 'active').in('team_id', c).order('id').range(a, b));
   return regs
-    .filter(r => !isSendableGuardianEmail(normalizeGuardianEmail(r.guardian_email)))
-    .map(r => ({ registrationId: r.id, name: `${r.player_first_name} ${r.player_last_name}`.trim(), team: teams.get(r.team_id) ?? '', email: r.guardian_email?.trim() || null }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-}
-
-/** Most practices any team has in one week, upcoming (the step's "{n} practices a week handed out" — the window's count). */
-function perWeekOf(now: ReadonlyMap<string, readonly ToldPractice[]>): number {
-  let total = 0;
-  for (const list of now.values()) {
-    const weeks = new Map<string, number>();
-    for (const p of list) { const w = mondayOfDay(utcToZonedInputs(p.s).date); weeks.set(w, (weeks.get(w) ?? 0) + 1); }
-    total += Math.max(0, ...weeks.values());
-  }
-  return total;
+    .filter(r => !isSendableGuardianEmail(r.guardian_email))
+    .map(r => ({ registrationId: r.id, name: fullName(r.player_first_name, r.player_last_name), team: teams.get(r.team_id) ?? '', email: r.guardian_email?.trim() || null }))
+    .sort(byName);
 }
 
 // ── The Tell step's read ─────────────────────────────────────────────────────────────────────────────────────
 
-export interface TellTeam { id: string; name: string; state: TeamTellState; toldAt: string | null; families: number }
+export interface TellTeam { id: string; name: string; state: TeamTellState; toldAt: string | null }
 /** A team to tell, with the told time the step read (the press refuses when it moved underneath). */
 export interface TellSaw { teamId: string; saw: string | null; kind: 'first' | 'change' }
+/** One team being told, as the step lists it: when and where its practices are, and how many families will be emailed. */
+export interface TellRow { teamId: string; name: string; kind: 'first' | 'change'; when: string; where: string; families: number }
 
 export interface TellRead {
   division: { id: string; name: string };
   finished: boolean;
+  /**
+   * ⚖ Families are told their team BEFORE anything about it (the Teams publish is the placement email; the game
+   * Publish is gated on it the same way). A division whose teams aren't published has placements that are still a draft,
+   * so the step names no one and sends nothing: the window says "Publish {division}'s teams first".
+   */
+  teamsPublished: boolean;
   teams: TellTeam[];
   tell: TellSaw[];
+  /** The same teams, one row each, for the step's list. */
+  rows: TellRow[];
   /** Households that will be sent (usable address, a child on a team to tell). */
   households: number;
   twoTeams: number;
   /** Of them: households with a child on a CHANGED team; households only on never-told teams. */
   toldHouseholds: number;
   freshHouseholds: number;
-  perWeek: number;
   leftOut: LeftOutFamily[];
   /** Teams with families and no practices (frame c1b: "Hand out for them"), and their households. */
   noPractices: { teams: string[]; families: number };
@@ -186,46 +196,71 @@ export interface TellRead {
   sample: { to: string; words: EmailWords } | null;
 }
 
+/** The divisions of a season whose teams are published (their placements are no longer a draft). */
+async function publishedDivisions(seasonId: string): Promise<Set<string>> {
+  const { data, error } = await supabaseAdmin.from('league_divisions').select('id, teams_published_at').eq('season_id', seasonId);
+  if (error) throw error;
+  return new Set((data ?? []).filter(d => d.teams_published_at).map(d => d.id as string));
+}
+
+/** A division whose teams aren't published: nothing to tell yet, and nobody named. */
+const unpublishedRead = (season: LeagueSeason, division: { id: string; name: string }): TellRead => ({
+  division, finished: isFinishedLeagueSeason(season), teamsPublished: false, teams: [], tell: [], rows: [], households: 0, twoTeams: 0,
+  toldHouseholds: 0, freshHouseholds: 0, leftOut: [], noPractices: { teams: [], families: 0 }, last: null, open: null, sample: null,
+});
+
 export async function readTell(org: TellMailOrg, season: LeagueSeason, division: { id: string; name: string }): Promise<TellRead> {
+  if (!(await publishedDivisions(season.id)).has(division.id)) return unpublishedRead(season, division);
   const teams = await divisionTeams(season.id, division.id);
   const ids = teams.map(t => t.id);
   const nowMs = Date.now();
-  const [now, told, all] = await Promise.all([readPracticesNow(org.id, ids), readTold(ids), readHouseholds(ids)]);
+  // A team counts once it has families (`registered`: anyone registered on it, with an email or not).
+  const [now, told, all, registered] = await Promise.all([readPracticesNow(org.id, ids), readTold(ids), readHouseholds(ids), registeredTeams(season.id, ids)]);
   const names = new Map(teams.map(t => [t.id, t.name]));
   const reachable = sendableHouseholds(all, season.id, new Set(ids));
-  const familiesOf = (teamId: string) => all.filter(h => h.seasonId === season.id && h.children.some(c => c.teamId === teamId)).length;
 
   const rows: TellTeam[] = teams.map(t => {
     const tl = told.get(t.id) ?? null;
-    return { id: t.id, name: t.name, state: tellStateOf(now.get(t.id) ?? [], tl, nowMs), toldAt: tl?.at ?? null, families: familiesOf(t.id) };
+    return { id: t.id, name: t.name, state: tellStateOf(now.get(t.id) ?? [], tl, nowMs), toldAt: tl?.at ?? null };
   });
-  // A team counts once it has families (anyone registered on it, with an email or not).
-  const registered = await registeredTeams(season.id, ids);
   const tell: TellSaw[] = rows.filter(r => (r.state === 'untold' || r.state === 'changed') && registered.has(r.id))
     .map(r => ({ teamId: r.id, saw: r.toldAt, kind: r.state === 'changed' ? 'change' : 'first' }));
   const tellSet = new Set(tell.map(t => t.teamId));
   const changed = new Set(tell.filter(t => t.kind === 'change').map(t => t.teamId));
   const going = sendableHouseholds(all, season.id, tellSet);
 
-  const tellNames = new Map([...tellSet].map(t => [t, names.get(t) ?? '']));
+  // Who won't get it: on the teams being told — or, once every team is told, on the told teams (so a family with no
+  // email can still be given one, and "Send again" then reaches it).
+  const leftOutTeams = tellSet.size ? tellSet : new Set(told.keys());
+  const leftOutNames = new Map([...leftOutTeams].map(t => [t, names.get(t) ?? '']));
   const [leftOut, lastAndOpen, sample] = await Promise.all([
-    readLeftOut(season.id, tellNames),
-    readLast(org.id, season.id, division.id, names),
+    readLeftOut(season.id, leftOutNames),
+    readLast(org.id, season.id, division.id, names, reachable),
     going.length ? sampleOf(org, season, going, names, now, told, changed, nowMs) : Promise.resolve(null),
   ]);
   const without = rows.filter(r => r.state === 'none' && registered.has(r.id));
+  const withoutIds = new Set(without.map(r => r.id));
+  const toldHouseholds = going.filter(h => h.children.some(c => changed.has(c.teamId))).length;
+  const placeOf = tell.length ? await placeReader(org.id) : null;
+  const tellRows: TellRow[] = tell.map(t => ({
+    teamId: t.teamId, name: names.get(t.teamId) ?? '', kind: t.kind,
+    ...(placeOf ? practiceSummary(now.get(t.teamId) ?? [], nowMs, placeOf) : { when: '', where: '' }),
+    families: going.filter(h => h.children.some(c => c.teamId === t.teamId)).length,
+  }));
   return {
     division,
-    finished: season.status === 'completed' || season.status === 'archived',
+    finished: isFinishedLeagueSeason(season),
+    teamsPublished: true,
     teams: rows,
     tell,
+    rows: tellRows,
     households: going.length,
     twoTeams: going.filter(h => new Set(h.children.map(c => c.teamId)).size > 1).length,
-    toldHouseholds: going.filter(h => h.children.some(c => changed.has(c.teamId))).length,
-    freshHouseholds: going.filter(h => h.children.every(c => !changed.has(c.teamId))).length,
-    perWeek: perWeekOf(new Map([...now].filter(([t]) => tellSet.has(t) || told.has(t)))),
+    toldHouseholds,
+    // The rest: a household has a child on a changed team, or it hasn't.
+    freshHouseholds: going.length - toldHouseholds,
     leftOut,
-    noPractices: { teams: without.map(r => r.name), families: reachable.filter(h => h.children.some(c => without.some(w => w.id === c.teamId))).length },
+    noPractices: { teams: without.map(r => r.name), families: reachable.filter(h => h.children.some(c => withoutIds.has(c.teamId))).length },
     ...lastAndOpen,
     sample,
   };
@@ -238,7 +273,7 @@ async function registeredTeams(seasonId: string, teamIds: readonly string[]): Pr
   return new Set(regs.map(r => r.team_id));
 }
 
-async function readLast(orgId: string, seasonId: string, divisionId: string, names: ReadonlyMap<string, string>): Promise<Pick<TellRead, 'last' | 'open'>> {
+async function readLast(orgId: string, seasonId: string, divisionId: string, names: ReadonlyMap<string, string>, reachable: readonly Household[]): Promise<Pick<TellRead, 'last' | 'open'>> {
   const { data, error } = await supabaseAdmin.from('league_season_notices')
     .select('id, family_count, reached_count, failed_count, created_by, created_at')
     .eq('org_id', orgId).eq('season_id', seasonId).eq('division_id', divisionId).eq('kind', 'practices_sent')
@@ -249,8 +284,17 @@ async function readLast(orgId: string, seasonId: string, divisionId: string, nam
   const at = utcToZonedInputs(data.created_at as string);
   const last = { by, families: data.reached_count as number, date: formatShortWeekdayDate(at.date), time: formatTime(at.time) };
   const missed = await missedOf(data.id as string, seasonId, names);
-  const open = missed.length
-    ? { noticeId: data.id as string, families: data.family_count as number, reached: data.reached_count as number, missed: missed.length, missedFamilies: missed }
+  // "Send again" also reaches a household of the send's teams that has a usable address now and no email in it — one
+  // whose address was added since, or a family placed since (league_practice_emails_add joins them).
+  const [teams, rows] = await Promise.all([
+    fetchAll<{ team_id: string }>((a, b) => supabaseAdmin.from('league_practice_tells').select('team_id').eq('notice_id', data.id).order('team_id').range(a, b)),
+    fetchAll<{ guardian_email: string }>((a, b) => supabaseAdmin.from('league_practice_emails').select('guardian_email').eq('notice_id', data.id).order('id').range(a, b)),
+  ]);
+  const sentTeams = new Set(teams.map(t => t.team_id));
+  const inIt = new Set(rows.map(r => r.guardian_email));
+  const joining = reachable.filter(h => h.children.some(c => sentTeams.has(c.teamId)) && !inIt.has(normalizeGuardianEmail(h.email) ?? h.email)).length;
+  const open = missed.length + joining > 0
+    ? { noticeId: data.id as string, families: data.family_count as number, reached: data.reached_count as number, missed: missed.length + joining, missedFamilies: missed }
     : null;
   return { last, open };
 }
@@ -259,7 +303,7 @@ async function readLast(orgId: string, seasonId: string, divisionId: string, nam
 async function missedOf(noticeId: string, seasonId: string, names: ReadonlyMap<string, string>): Promise<LeftOutFamily[]> {
   const rows = await fetchAll<{ guardian_email: string; registration_ids: string[]; status: string; updated_at: string }>((a, b) =>
     supabaseAdmin.from('league_practice_emails').select('guardian_email, registration_ids, status, updated_at')
-      .eq('notice_id', noticeId).in('status', ['failed', 'pending', 'sending']).order('id').range(a, b));
+      .eq('notice_id', noticeId).in('status', UNSENT).order('id').range(a, b));
   // A row a live send holds is going, not missed.
   const stale = rows.filter(r => r.status === 'failed' || Date.parse(r.updated_at) < Date.now() - 10 * 60_000);
   if (!stale.length) return [];
@@ -269,8 +313,8 @@ async function missedOf(noticeId: string, seasonId: string, names: ReadonlyMap<s
   const reg = new Map(regs.map(r => [r.id, r]));
   return stale.map(r => {
     const g = reg.get(r.registration_ids[0]);
-    return { registrationId: r.registration_ids[0], name: g ? `${g.player_first_name} ${g.player_last_name}`.trim() : r.guardian_email, team: g?.team_id ? names.get(g.team_id) ?? '' : '', email: r.guardian_email };
-  }).sort((a, b) => a.name.localeCompare(b.name));
+    return { registrationId: r.registration_ids[0], name: g ? fullName(g.player_first_name, g.player_last_name) : r.guardian_email, team: g?.team_id ? names.get(g.team_id) ?? '' : '', email: r.guardian_email };
+  }).sort(byName);
 }
 
 // ── The email ────────────────────────────────────────────────────────────────────────────────────────────────
@@ -279,7 +323,7 @@ interface TellFact { kind: 'first' | 'change'; snapshot: ToldPractice[]; toldBef
 interface RegRow { id: string; player_first_name: string; player_last_name: string; guardian_first_name: string | null; team_id: string | null; status: string }
 
 /** One household's parts: each child on a team of the send, its lines from what the send told it. */
-function partsFor(children: readonly { registrationId: string; teamId: string; first: string }[], names: ReadonlyMap<string, string>,
+function partsFor(children: readonly { teamId: string; first: string }[], names: ReadonlyMap<string, string>,
   facts: ReadonlyMap<string, TellFact>, placeOf: ReturnType<typeof placeOfTold>, nowMs: number): TellPart[] {
   const parts: TellPart[] = [];
   for (const c of children) {
@@ -306,15 +350,19 @@ function wordsFor(org: TellMailOrg, season: LeagueSeason, guardianFirst: string 
 /** "See an example": the household with the most children among those that will be sent, as the press would email it. */
 async function sampleOf(org: TellMailOrg, season: LeagueSeason, going: readonly Household[], names: ReadonlyMap<string, string>,
   now: ReadonlyMap<string, readonly ToldPractice[]>, told: ReadonlyMap<string, ToldRow>, changed: ReadonlySet<string>, nowMs: number) {
-  const h = [...going].sort((a, b) => b.children.length - a.children.length || a.children[0].name.localeCompare(b.children[0].name))[0];
+  // The fullest shape: the household on the most teams (a told team's change beside a new team's first email), then the
+  // most children, then by name — the 9d-2b "See their email" pick.
+  const teamsOf = (x: Household) => new Set(x.children.map(c => c.teamId)).size;
+  const h = [...going].sort((a, b) => teamsOf(b) - teamsOf(a) || b.children.length - a.children.length || a.children[0].name.localeCompare(b.children[0].name))[0];
   const placeOf = await placeReader(org.id);
   const facts = new Map<string, TellFact>();
   for (const c of h.children) {
+    const snapshot = [...(now.get(c.teamId) ?? [])];
     facts.set(c.teamId, changed.has(c.teamId)
-      ? { kind: 'change', snapshot: [...(now.get(c.teamId) ?? [])], toldBefore: told.get(c.teamId)?.snapshot ?? [] }
-      : { kind: 'first', snapshot: [...(now.get(c.teamId) ?? [])], toldBefore: null });
+      ? { kind: 'change', snapshot, toldBefore: told.get(c.teamId)?.snapshot ?? [] }
+      : { kind: 'first', snapshot, toldBefore: null });
   }
-  const parts = partsFor(h.children.map(c => ({ registrationId: c.registrationId, teamId: c.teamId, first: firstNameOf(c.name) })), names, facts, placeOf, nowMs);
+  const parts = partsFor(h.children.map(c => ({ teamId: c.teamId, first: firstNameOf(c.name) })), names, facts, placeOf, nowMs);
   if (!parts.length) return null;
   const last = h.children[0].name.split(' ').slice(1).join(' ');
   return { to: last ? SW.oneFamilyTo(last) : (h.guardianFirst ?? h.email), words: wordsFor(org, season, h.guardianFirst, parts) };
@@ -324,7 +372,7 @@ async function sampleOf(org: TellMailOrg, season: LeagueSeason, going: readonly 
 
 export type TellResult =
   | { refusal: null; noticeId: string | null; families: number; reached: number; failed: number }
-  | { refusal: 'finished' | 'nothing' | 'nobody' | 'changed' | 'already' | 'sending'; noticeId: null; families: 0; reached: 0; failed: 0 };
+  | { refusal: 'finished' | 'teams_first' | 'nothing' | 'nobody' | 'changed' | 'already' | 'sending'; noticeId: null; families: 0; reached: 0; failed: 0 };
 
 const refusedWith = (refusal: Exclude<TellResult['refusal'], null>): TellResult => ({ refusal, noticeId: null, families: 0, reached: 0, failed: 0 });
 
@@ -336,6 +384,7 @@ const refusedWith = (refusal: Exclude<TellResult['refusal'], null>): TellResult 
 export async function tellFamilies(p: { org: TellMailOrg; season: LeagueSeason; division: { id: string; name: string }; actorId: string; saw: readonly TellSaw[]; families: number }): Promise<TellResult> {
   const read = await readTell(p.org, p.season, p.division);
   if (read.finished) return refusedWith('finished');
+  if (!read.teamsPublished) return refusedWith('teams_first');
   if (!read.tell.length) return refusedWith(p.saw.length ? 'already' : 'nothing');
   const key = (list: readonly TellSaw[]) => list.map(t => `${t.teamId}@${t.saw ?? ''}#${t.kind}`).sort().join(',');
   if (key(read.tell) !== key(p.saw) || read.households !== p.families) return refusedWith('changed');
@@ -348,9 +397,7 @@ export async function tellFamilies(p: { org: TellMailOrg; season: LeagueSeason; 
   const { data, error } = await supabaseAdmin.rpc('league_practices_tell', {
     p_org: p.org.id, p_season: p.season.id, p_division: p.division.id, p_actor: p.actorId,
     p_teams: read.tell.map(t => ({ teamId: t.teamId, saw: t.saw, kind: t.kind, snapshot: snapshotOf(now.get(t.teamId) ?? [], nowMs) })),
-    p_households: households.map(h => ({
-      email: normalizeGuardianEmail(h.email), registrationIds: h.children.map(c => c.registrationId), teamIds: [...new Set(h.children.map(c => c.teamId))],
-    })),
+    p_households: householdRows(households),
   });
   if (error) throw error;
   const row = (Array.isArray(data) ? data[0] : data) as { refusal: string | null; notice: string | null; families: number } | null;
@@ -376,24 +423,28 @@ async function markSent(orgId: string, ids: readonly string[]): Promise<void> {
   if (error) console.error('[league-practice-tell] a sent email was not recorded (its family may read as missed):', error.message);
 }
 
-/** The notice's reached / failed, recounted from its rows (failed = every household still to reach). Never throws. */
-async function refreshCounts(noticeId: string): Promise<PracticeSendOutcome> {
+/**
+ * The notice's reached / failed, recounted from its rows (failed = every household still to reach). Never throws. A call
+ * that took no rows only READS (`write` false): another send holds them, and a stale write here could land after its last
+ * one (the schedule notice's rule, lib/league-schedule-mail.ts).
+ */
+async function refreshCounts(noticeId: string, write = true): Promise<PracticeSendOutcome> {
   try {
     const rows = await fetchAll<{ status: string }>((a, b) => supabaseAdmin.from('league_practice_emails')
       .select('status').eq('notice_id', noticeId).order('id').range(a, b));
     const reached = rows.filter(r => r.status === 'sent').length;
-    const failed = rows.filter(r => r.status === 'failed' || r.status === 'pending' || r.status === 'sending').length;
+    const failed = rows.filter(r => UNSENT.includes(r.status)).length;
     const families = rows.filter(r => r.status !== 'skipped').length;
-    const { error } = await supabaseAdmin.from('league_season_notices').update({ reached_count: reached, failed_count: failed }).eq('id', noticeId);
-    if (error) throw error;
+    if (write) {
+      const { error } = await supabaseAdmin.from('league_season_notices').update({ reached_count: reached, failed_count: failed }).eq('id', noticeId);
+      if (error) throw error;
+    }
     return { families, reached, failed };
   } catch (err) {
     console.error('[league-practice-tell] a notice\'s counts were not updated (the emails went):', err instanceof Error ? err.message : String(err));
     return { families: 0, reached: 0, failed: 0 };
   }
 }
-
-const UNSENT = ['pending', 'failed', 'sending'];
 
 /**
  * Send a practices_sent notice's households every email not yet sent (pending, failed, or left `sending` by a send that
@@ -402,14 +453,16 @@ const UNSENT = ['pending', 'failed', 'sending'];
  */
 export async function sendPracticeNotice(p: { org: TellMailOrg; season: LeagueSeason; noticeId: string }): Promise<PracticeSendOutcome> {
   try {
-    const unsent = await fetchAll<{ id: string }>((a, b) => supabaseAdmin.from('league_practice_emails')
-      .select('id').eq('notice_id', p.noticeId).eq('org_id', p.org.id).in('status', UNSENT).order('id').range(a, b));
-    await refreshCounts(p.noticeId);
+    const unsent = await fetchAll<{ id: string; status: string }>((a, b) => supabaseAdmin.from('league_practice_emails')
+      .select('id, status').eq('notice_id', p.noticeId).eq('org_id', p.org.id).in('status', UNSENT).order('id').range(a, b));
     if (!unsent.length) return refreshCounts(p.noticeId);
+    // ⚖ Counted BEFORE the first email, so a send that dies partway still reads "stopped" with its "Send again". Only when
+    // something is free to send: a call that finds every row held by another send writes nothing.
+    if (unsent.some(r => r.status !== 'sending')) await refreshCounts(p.noticeId);
     const { data: claimed, error } = await supabaseAdmin.rpc('league_practice_emails_claim', { p_org: p.org.id, p_ids: unsent.map(r => r.id) });
     if (error) throw new Error(`Couldn't claim the emails: ${error.message}`);
     const ids = ((claimed ?? []) as unknown[]).map(v => (typeof v === 'string' ? v : (v as Record<string, string>).league_practice_emails_claim));
-    if (!ids.length) return refreshCounts(p.noticeId);
+    if (!ids.length) return refreshCounts(p.noticeId, false);
     try {
       await sendClaimed(p, ids);
     } catch (err) {
@@ -424,18 +477,19 @@ export async function sendPracticeNotice(p: { org: TellMailOrg; season: LeagueSe
 }
 
 async function sendClaimed(p: { org: TellMailOrg; season: LeagueSeason; noticeId: string }, ids: readonly string[]): Promise<void> {
-  const rows = await fetchAllIn<{ id: string; guardian_email: string; registration_ids: string[]; team_ids: string[] }>([...ids], (c, a, b) =>
-    supabaseAdmin.from('league_practice_emails').select('id, guardian_email, registration_ids, team_ids').in('id', c).order('id').range(a, b));
-  const tells = await fetchAll<{ team_id: string; kind: 'first' | 'change'; snapshot: ToldPractice[]; told_before: ToldPractice[] | null }>((a, b) =>
-    supabaseAdmin.from('league_practice_tells').select('team_id, kind, snapshot, told_before').eq('notice_id', p.noticeId).order('team_id').range(a, b));
-  const facts = new Map(tells.map(t => [t.team_id, { kind: t.kind, snapshot: t.snapshot ?? [], toldBefore: t.told_before } satisfies TellFact]));
-  const teamIds = [...facts.keys()];
-  const [regRows, teamRows, placeOf, face] = await Promise.all([
-    fetchAllIn<RegRow>([...new Set(rows.flatMap(r => r.registration_ids))], (c, a, b) => supabaseAdmin.from('league_registrations')
-      .select('id, player_first_name, player_last_name, guardian_first_name, team_id, status').in('id', c).eq('season_id', p.season.id).order('id').range(a, b)),
-    fetchAllIn<{ id: string; name: string }>(teamIds, (c, a, b) => supabaseAdmin.from('league_teams').select('id, name').in('id', c).order('id').range(a, b)),
+  const [rows, tells, placeOf, face] = await Promise.all([
+    fetchAllIn<{ id: string; guardian_email: string; registration_ids: string[]; team_ids: string[] }>([...ids], (c, a, b) =>
+      supabaseAdmin.from('league_practice_emails').select('id, guardian_email, registration_ids, team_ids').in('id', c).order('id').range(a, b)),
+    fetchAll<{ team_id: string; kind: 'first' | 'change'; snapshot: ToldPractice[]; told_before: ToldPractice[] | null }>((a, b) =>
+      supabaseAdmin.from('league_practice_tells').select('team_id, kind, snapshot, told_before').eq('notice_id', p.noticeId).order('team_id').range(a, b)),
     placeReader(p.org.id),
     systemMailFace(p.org),
+  ]);
+  const facts = new Map(tells.map(t => [t.team_id, { kind: t.kind, snapshot: t.snapshot ?? [], toldBefore: t.told_before } satisfies TellFact]));
+  const [regRows, teamRows] = await Promise.all([
+    fetchAllIn<RegRow>([...new Set(rows.flatMap(r => r.registration_ids))], (c, a, b) => supabaseAdmin.from('league_registrations')
+      .select('id, player_first_name, player_last_name, guardian_first_name, team_id, status').in('id', c).eq('season_id', p.season.id).order('id').range(a, b)),
+    fetchAllIn<{ id: string; name: string }>([...facts.keys()], (c, a, b) => supabaseAdmin.from('league_teams').select('id, name').in('id', c).order('id').range(a, b)),
   ]);
   const regs = new Map(regRows.map(r => [r.id, r]));
   const names = new Map(teamRows.map(t => [t.id, t.name]));
@@ -449,9 +503,9 @@ async function sendClaimed(p: { org: TellMailOrg; season: LeagueSeason; noticeId
     const children = row.registration_ids
       .map(id => regs.get(id))
       .filter((r): r is RegRow => !!r && r.status === 'active' && !!r.team_id && row.team_ids.includes(r.team_id))
-      .map(r => ({ registrationId: r.id, teamId: r.team_id!, first: r.player_first_name.trim() || `${r.player_first_name} ${r.player_last_name}`.trim() }));
+      .map(r => ({ teamId: r.team_id!, first: r.player_first_name.trim() || fullName(r.player_first_name, r.player_last_name) }));
     const parts = partsFor(children, names, facts, placeOf, nowMs);
-    if (!parts.length || !isSendableGuardianEmail(normalizeGuardianEmail(row.guardian_email))) { nothingToSay.push(row.id); continue; }
+    if (!parts.length || !isSendableGuardianEmail(row.guardian_email)) { nothingToSay.push(row.id); continue; }
     const first = regs.get(row.registration_ids[0])?.guardian_first_name ?? null;
     const w = wordsFor(p.org, p.season, first, parts);
     messages.push({
@@ -462,10 +516,12 @@ async function sendClaimed(p: { org: TellMailOrg; season: LeagueSeason; noticeId
   }
   if (nothingToSay.length) await recordOutcome(nothingToSay, 'skipped');
   if (!messages.length) return;
+  const answered = new Set<string>();
   await sendFamilyServiceBatch({
     kind: 'house_league_practice_times', messages, fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null,
     onBatch: async (indexes, result) => {
       const batch = indexes.map(i => messageRows[i]);
+      batch.forEach(id => answered.add(id));
       if (result.status === 'sent' || (result.status === 'skipped' && quietTransport())) {
         if (result.status === 'skipped') console.info('[league-practice-tell] dev: would have emailed', indexes.map(i => messages[i].to).join(', '));
         await markSent(p.org.id, batch);
@@ -475,7 +531,8 @@ async function sendClaimed(p: { org: TellMailOrg; season: LeagueSeason; noticeId
     },
   });
   // Anything the batches never answered for is a failure, once (recordOutcome only touches rows still `sending`).
-  await recordOutcome(messageRows, 'failed');
+  const unanswered = messageRows.filter(id => !answered.has(id));
+  if (unanswered.length) await recordOutcome(unanswered, 'failed');
 }
 
 /**
@@ -484,7 +541,7 @@ async function sendClaimed(p: { org: TellMailOrg; season: LeagueSeason; noticeId
  * every household still to reach is sent. Refuses a finished season.
  */
 export async function resendPracticeNotice(p: { org: TellMailOrg; season: LeagueSeason; noticeId: string }): Promise<PracticeSendOutcome | { refusal: 'finished' | 'not_found' }> {
-  if (p.season.status === 'completed' || p.season.status === 'archived') return { refusal: 'finished' };
+  if (isFinishedLeagueSeason(p.season)) return { refusal: 'finished' };
   const { data: notice } = await supabaseAdmin.from('league_season_notices').select('id')
     .eq('id', p.noticeId).eq('org_id', p.org.id).eq('season_id', p.season.id).eq('kind', 'practices_sent').maybeSingle();
   if (!notice) return { refusal: 'not_found' };
@@ -494,9 +551,7 @@ export async function resendPracticeNotice(p: { org: TellMailOrg; season: League
   const households = sendableHouseholds(await readHouseholds(teamIds), p.season.id, new Set(teamIds));
   const { error } = await supabaseAdmin.rpc('league_practice_emails_add', {
     p_org: p.org.id, p_notice: p.noticeId,
-    p_households: households.map(h => ({
-      email: normalizeGuardianEmail(h.email), registrationIds: h.children.map(c => c.registrationId), teamIds: [...new Set(h.children.map(c => c.teamId))],
-    })),
+    p_households: householdRows(households),
   });
   if (error) {
     if (/\bfinished\b/.test(error.message ?? '')) return { refusal: 'finished' };
@@ -513,13 +568,17 @@ export async function readTellReminders(orgId: string, seasonId: string): Promis
   if (error) throw error;
   const teams = (data ?? []) as { id: string; division_id: string }[];
   const ids = teams.map(t => t.id);
-  const [now, told, registered] = await Promise.all([readPracticesNow(orgId, ids), readTold(ids), registeredTeams(seasonId, ids)]);
+  const [now, told] = await Promise.all([readPracticesNow(orgId, ids), readTold(ids)]);
   const nowMs = Date.now();
-  const out: Record<string, number> = {};
-  for (const t of teams) {
-    if (!registered.has(t.id)) continue;
+  const waiting = teams.filter(t => {
     const state = tellStateOf(now.get(t.id) ?? [], told.get(t.id) ?? null, nowMs);
-    if (state === 'untold' || state === 'changed') out[t.division_id] = (out[t.division_id] ?? 0) + 1;
-  }
+    return state === 'untold' || state === 'changed';
+  });
+  // The usual state is "everyone told": no registrations read at all.
+  if (!waiting.length) return {};
+  // A division whose teams aren't published owes nobody a practice time yet (its placements are a draft).
+  const [registered, published] = await Promise.all([registeredTeams(seasonId, waiting.map(t => t.id)), publishedDivisions(seasonId)]);
+  const out: Record<string, number> = {};
+  for (const t of waiting) if (registered.has(t.id) && published.has(t.division_id)) out[t.division_id] = (out[t.division_id] ?? 0) + 1;
   return out;
 }

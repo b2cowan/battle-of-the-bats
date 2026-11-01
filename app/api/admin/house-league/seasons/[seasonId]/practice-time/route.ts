@@ -30,7 +30,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: { para
   if (!(await divisionInSeason(season.id, divisionId.toLowerCase()))) {
     return NextResponse.json({ error: PRACTICE_TIME_REFUSALS.notFound, code: 'not_found' }, { status: 404 });
   }
-  const read = await readPracticeTime(ctx.org.id, season, divisionId.toLowerCase());
+  const read = await readPracticeTime(ctx.org.id, season, divisionId.toLowerCase(), true);
   if (!read) return NextResponse.json({ error: PRACTICE_TIME_REFUSALS.notFound, code: 'not_found' }, { status: 404 });
   return NextResponse.json(read);
 }, { route: '/api/admin/house-league/seasons/[seasonId]/practice-time' });

@@ -58,6 +58,49 @@
   `/review`, `/docs`; the commit. **`check:schema-parity` fails until 415 reaches prod** (dev-only tables) — a database gate,
   owner's call (accept in the baseline, or apply 415 to prod first). `verify:changed` also stops on other sessions' failures
   (tournament schedule CSS, admin lettering, platform-admin orphans, export catalog, root files, billing/stage-6/console tests).
+- **`/simplify` ✅ run 2026-10-31 (uncommitted, on top of 3dcb06705):** one household→rows mapping, `UNSENT` and name helpers
+  shared inside the sender; the shared finished-season test; the send's recount ported from the schedule sender's guard (no
+  write when another send holds the rows); independent reads in parallel (press, send, reminders, club-send refresh); the
+  reminder reads registrations only when a team is waiting; the Practice-time read carries the told block only for the window's
+  GET, and only for told teams; dead fields and the unused step-1 foot copy removed; the route's refusals are one table; the
+  window's two sends share one POST helper; a registrar/treasurer no longer fires the refused reminder call; the staff email fix
+  reads the household first and writes once. **Left for a later pass:** the circular import with the 11b sender (clean break
+  edits `club-schedule-send.ts`); splitting `readTell` so the press skips the sample/last reads (the Session 2 hunks sit in it).
+- **`/docs` ✅ run 2026-10-31 (uncommitted):** `lib/help-content/house-league.tsx`, "House league's time" section: three new sub-topics
+  (Telling families their practice times; Families who won't get it, and sending again; When told practices change); the two
+  "hand-out emails no one" sentences now point to the Tell step; the section's summary, keywords and searchText, the Email families
+  guide (Automatic rows, "Practice times sent") and "Who can do what" (registrar and treasurer never see it) updated. Coach line, coach
+  copy email and Subscribe (Session 2) not documented. `check:spelling` ✅. No customer string outside the help changed, nothing for `/marketing`.
+- **⚠ Open defect, logged 2026-10-31 (found by `/simplify`, NOT fixed — a behavior change, not a cleanup):** "See an example"
+  (`sampleOf` in `lib/league-practice-tell-server.ts`) takes the child's first name by splitting the joined name on the first
+  space and the family name from the rest, so "Mary Jane Smith" reads "Mary" and "The Jane Smith family". The real send uses
+  the registration's own `player_first_name` ("Mary Jane"), so the example disagrees with the email for multi-word first
+  names. Fix: add `first` and `last` to `Household.children` in `readHouseholds` (`lib/club-schedule-league-mail.ts`; every
+  family email reads that one reader) and have the sample and the 11b sender use them. TODO.md carries the one-liner.
+- **`/review` ✅ run 2026-10-31 (scope: commit 3dcb06705 + the uncommitted /simplify hunks; high-risk; three finders — SQL/RLS,
+  the compare, the email fix + club refresh — each finding read against the code before it was believed).** Gate: typecheck
+  clean, lint clean, 35/35 tests, `house-league-9d3-check.sql` ends HOUSE_LEAGUE_9D3_PASSED (re-run after the fixes).
+  **Fixed (uncommitted):** (1) HIGH — a press that covered only SOME of a failed row's teams skipped the whole row, so a family's
+  other child was in no live row and its team read told (mig 415 now takes only the covered children off the row; a row left
+  with nothing is skipped; a dead `sending` row returns `failed`; check T7b/T7d). (2) `league_practice_emails_add` was
+  `ON CONFLICT DO NOTHING`: a child added under a skipped row's address, or a fixed address another family already had, was
+  never emailed — now merged into the row and pending again (T8d). (3) The 11b refresh marked every team of a reached household
+  told, on ANY household reached — now only teams the email was about, and only when every household it was about was reached.
+  (4) The season emails route let a registrar resend a `practices_sent` notice (the Tell route refuses the registrar): **decided —
+  yes it was wrong**; now 'run' on the server and the button hidden for a registrar; the registrar still resends the other
+  notices. (5) A practice with no place printed a trailing "·" in the change email (Cancelled / Now / Added). (6) The email-fix
+  comment claimed the Families book keeps a family by `person_id` — migration 333 (E02) re-points the child to the new address's
+  owner and the duplicate queue proposes the pair; comment corrected, behavior kept (it is the designed "edited email follows the
+  child"). **Cleared:** the claim is atomic; two presses serialise on the division lock; the 'run' gate and season scoping are right;
+  `ilike` wildcards are harmless (the exact compare follows); `skipped` counts as reached only outside production; the compare's
+  past/pairing/null-end rules and `predictHandOut` match the mig 393 SQL; RLS + grants are service-role-only on all three tables
+  and four functions. **Carried (not fixed, owner's call):** (a) the 11b refresh snapshots the practices AS THEY ARE, so an
+  un-told hand edit on a told team is swallowed by a club send; (b) no claim token — a send running past ten minutes can be
+  reclaimed and re-emailed (needs a column + TS); (c) "Send again" on an OLD notice sends its older times to a household a newer
+  notice already told; (d) `league_practice_emails_sent` marks every team on a row told even if a roster change left the email
+  with no line about one of them; (e) the "Hand out again" confirm counts a told team whose families have all moved out;
+  (f) the address check lets `a@b.c,d.com` through and the PATCH takes `guardianEmail` ahead of other fields. Dev-only: 415 re-applied
+  to dev (prod pending, unchanged); snapshots + dictionary refreshed.
 
 ## What the owner sees after this build (present a version of this as the PM summary BEFORE any code)
 

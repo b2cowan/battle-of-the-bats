@@ -98,7 +98,11 @@ export const POST = withObservability(async (req: Request,
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
     if (notice.kind === 'practices_sent') {
-      // House League 9d-3: the practice times' households still to reach (a fixed address joins first).
+      // House League 9d-3: the practice times' households still to reach (a fixed address joins first). The league's
+      // runners only, like the Tell step that sent it — a registrar holds the email right but sees none of this (review
+      // 2026-10-31; the other notices stay open to the registrar).
+      const notRun = houseLeagueRefusal(ctx, 'run', season);
+      if (notRun) return notRun;
       const r = await resendPracticeNotice({ org: ctx!.org, season, noticeId: notice.id as string });
       if ('refusal' in r) return NextResponse.json({ error: 'Not found' }, { status: r.refusal === 'finished' ? 423 : 404 });
       await writeOrgAudit(ctx!.org.id, ctx!.user.id, null, 'families_emailed', { seasonId, resend: true, notice: notice.id, practices: true, reached: r.reached, families: r.families });

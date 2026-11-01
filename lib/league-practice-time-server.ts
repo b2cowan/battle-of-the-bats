@@ -35,7 +35,7 @@ import { readPracticesNow, readTold } from './league-practice-tell-server';
 
 /** THE WINDOW: a division's practice time still to come, its teams and its settings. Null when the division isn't the
  *  season's. */
-export async function readPracticeTime(orgId: string, season: LeagueSeason, divisionId: string): Promise<PracticeTimeRead | null> {
+export async function readPracticeTime(orgId: string, season: LeagueSeason, divisionId: string, withTold = false): Promise<PracticeTimeRead | null> {
   const divisions = await getDivisionsForSeason(season.id);
   const division = divisions.find(d => d.id === divisionId);
   if (!division) return null;
@@ -66,15 +66,17 @@ export async function readPracticeTime(orgId: string, season: LeagueSeason, divi
       practicesAWeek: await practicesAWeekNow(orgId, slots.map(x => x.id)),
     })
     : null;
-  const teamIds = teams.map(t => t.id);
-  const [current, told] = await Promise.all([readPracticesNow(orgId, teamIds), readTold(teamIds)]);
+  // The re-hand-out confirm's facts, for the window only (a hand-out reads the division again and never asks): the told
+  // teams' practices now and what they were told. A team never told has nobody to tell twice.
+  const told = withTold ? await readTold(teams.map(t => t.id)) : null;
+  const current = told ? await readPracticesNow(orgId, [...told.keys()]) : null;
   return {
     division: { id: division.id, name: division.name },
     slots,
     teams: teams.map(t => ({ id: t.id, name: t.name })),
     settings: saved ?? DEFAULT_SETTINGS,
     saved: !!saved,
-    told: { current: Object.fromEntries(current), snapshot: Object.fromEntries([...told].map(([t, r]) => [t, r.snapshot])) },
+    ...(told && current ? { told: { current: Object.fromEntries(current), snapshot: Object.fromEntries([...told].map(([t, r]) => [t, r.snapshot])) } } : {}),
   };
 }
 

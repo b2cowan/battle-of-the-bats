@@ -5,7 +5,8 @@ import { getLeagueSeasonById, getDivisionsForSeason } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { writeOrgAudit } from '@/lib/org-audit';
 import { isUuid } from '@/lib/utils';
-import { readTell, readTellReminders, resendPracticeNotice, tellFamilies, type TellSaw } from '@/lib/league-practice-tell-server';
+import { isFinishedLeagueSeason } from '@/lib/house-league-access';
+import { readTell, readTellReminders, resendPracticeNotice, tellFamilies, type TellResult, type TellSaw } from '@/lib/league-practice-tell-server';
 import { PRACTICE_TELL_WORDS } from '@/lib/league-practice-tell';
 import { divisionInSeason } from '@/lib/league-season-scope';
 
@@ -25,6 +26,17 @@ export const maxDuration = 120;
 
 const R = PRACTICE_TELL_WORDS.refusals;
 
+/** The press's refusals, one row each — a new refusal is a compile error here, not a fall-through. */
+const PRESS_REFUSALS: Record<Exclude<TellResult['refusal'], null>, { status: number; error: string }> = {
+  finished: { status: 423, error: R.finished },
+  teams_first: { status: 409, error: R.teamsFirst },
+  changed: { status: 409, error: PRACTICE_TELL_WORDS.changed },
+  sending: { status: 409, error: R.sending },
+  already: { status: 409, error: PRACTICE_TELL_WORDS.everyoneTitle },
+  nothing: { status: 409, error: R.nothing },
+  nobody: { status: 409, error: R.nothing },
+};
+
 /** The division's name, once the handler has tied its id to the season (divisionInSeason). */
 async function divisionOf(seasonId: string, divisionId: string) {
   const divisions = await getDivisionsForSeason(seasonId);
@@ -41,8 +53,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: { para
   const season = await getLeagueSeasonById(seasonId, ctx.org.id);
   if (!season) return NextResponse.json({ error: R.notFound, code: 'not_found' }, { status: 404 });
   if (url.searchParams.get('reminders')) {
-    const finished = season.status === 'completed' || season.status === 'archived';
-    return NextResponse.json({ divisions: finished ? {} : await readTellReminders(ctx.org.id, season.id) });
+    return NextResponse.json({ divisions: isFinishedLeagueSeason(season) ? {} : await readTellReminders(ctx.org.id, season.id) });
   }
   const divisionId = (url.searchParams.get('divisionId') ?? '').toLowerCase();
   const division = isUuid(divisionId) && (await divisionInSeason(season.id, divisionId)) ? await divisionOf(season.id, divisionId) : null;
@@ -92,11 +103,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: { par
     const saw = readSaw(body.saw);
     if (!division || !saw || typeof body.families !== 'number') return NextResponse.json({ error: R.badRequest, code: 'bad_request' }, { status: 400 });
     const r = await tellFamilies({ org: ctx.org, season, division, actorId: ctx.user.id, saw, families: body.families });
-    if (r.refusal === 'finished') return NextResponse.json({ error: R.finished, code: 'finished' }, { status: 423 });
-    if (r.refusal === 'changed') return NextResponse.json({ error: PRACTICE_TELL_WORDS.changed, code: 'changed' }, { status: 409 });
-    if (r.refusal === 'sending') return NextResponse.json({ error: R.sending, code: 'sending' }, { status: 409 });
-    if (r.refusal === 'already') return NextResponse.json({ error: PRACTICE_TELL_WORDS.everyoneTitle, code: 'already' }, { status: 409 });
-    if (r.refusal) return NextResponse.json({ error: R.nothing, code: r.refusal }, { status: 409 });
+    if (r.refusal) return NextResponse.json({ error: PRESS_REFUSALS[r.refusal].error, code: r.refusal }, { status: PRESS_REFUSALS[r.refusal].status });
     await writeOrgAudit(ctx.org.id, ctx.user.id, null, 'families_emailed', { seasonId, notice: r.noticeId, practices: true, reached: r.reached, families: r.families });
     return NextResponse.json({ ok: true, ...r });
   }

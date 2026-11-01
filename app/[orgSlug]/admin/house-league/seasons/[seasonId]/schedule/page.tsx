@@ -735,7 +735,7 @@ export default function SchedulePage() {
     const data = res?.ok ? await res.json().catch(() => null) : null;
     setTellReminders((data as { divisions?: Record<string, number> } | null)?.divisions ?? {});
   }, [seasonId, orgQuery]);
-  useDeferredLoad(!!orgQuery, loadTellReminders);
+  useDeferredLoad(!!orgQuery && canManage, loadTellReminders);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('time') !== '1') return;
@@ -792,8 +792,9 @@ export default function SchedulePage() {
     setScheduleRead('ok');
   }, [seasonId, orgQuery, beginRead]);
   useDeferredLoad(!!orgQuery, loadSchedule);
-  /** After a write: the season reads again (Schedule health is worked out from it, so it follows). */
-  const reload = () => loadSchedule();
+  /** After a write: the season reads again (Schedule health is worked out from it, so it follows), and so does the
+   *  amber "families haven't been told" count — a new or moved practice is what puts a team on it. */
+  const reload = () => Promise.all([loadSchedule(), canManage ? loadTellReminders() : undefined]).then(() => undefined);
 
   useEffect(() => {
     setLoading(true);
@@ -1397,7 +1398,7 @@ export default function SchedulePage() {
 
       {/* The header's block, loudest first (redrawn 2026-10-31): the one thing owed, then the quiet facts. The state (Draft ·
           Published) is the chip beside the title. */}
-      {/* 9d-3, frame c3: this division's teams whose families haven't been told their practice times · Tell them. */}
+      {/* 9d-3, frame c3: this division's teams whose families haven't been sent their practice times · Tell the families. */}
       {canManage && selectedDivId && <PracticeTellReminder teams={tellReminders[selectedDivId] ?? 0} onOpen={() => setTellOpen(true)} />}
       {/* The time line (Stage 11b Part 3): where this division's time comes from, and the door to House league's time. */}
       {leagueTime && selectedDivId && showTimeLine(leagueTime, buildsSchedules) && (

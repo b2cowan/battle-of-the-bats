@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  changeLines, dateLines, firstSubject, handOutAgainCounts, placeOfTold, practiceTimesEmailWords, predictHandOut,
+  changeLines, dateLines, firstSubject, handOutAgainCounts, placeOfTold, practiceSummary, practiceTimesEmailWords, predictHandOut,
   sameUpcoming, snapshotOf, teamChange, tellStateOf, PRACTICE_TELL_WORDS as W, PRACTICES_SENT_NOTICE,
   type CurrentPractice, type ToldPractice,
 } from '../../lib/league-practice-tell.ts';
@@ -74,6 +74,13 @@ describe('the change, as the 11b rows (Now / Was), paired within the week neares
     assert.ok(lines.some(l => l.startsWith('Added: Fri, Jun 18')), lines.join(' | '));
     assert.ok(!lines.some(l => l.includes('Jun 16')), 'the unchanged date is not news');
   });
+  it('a practice with no place reads with no trailing "·" (review 2026-10-31)', () => {
+    const nowhere = (day: string, hourZ = 22): ToldPractice => ({ s: `${day}T${hourZ}:00:00.000Z`, e: null, v: null, f: null, l: null });
+    const c = teamChange('t', [nowhere('2027-06-16'), nowhere('2027-06-23')], [nowhere('2027-06-16'), nowhere('2027-06-24', 23), nowhere('2027-06-18', 23)], NOW);
+    const lines = changeLines(c, placeOf);
+    assert.ok(lines.length >= 3, lines.join(' | '));
+    for (const l of lines) assert.ok(!/·\s*$/.test(l) && !l.includes('null') && !l.includes('undefined'), l);
+  });
 });
 
 describe('a second hand-out, predicted before it is written (the re-hand-out confirm)', () => {
@@ -99,6 +106,32 @@ describe('a second hand-out, predicted before it is written (the re-hand-out con
       ['c', { snapshot: [] as ToldPractice[] }],
     ]);
     assert.deepEqual(handOutAgainCounts({ predicted, told, nowMs: NOW }), { told: 2, change: 1, same: 1 });
+  });
+});
+
+describe('a team’s row in the Tell step (redrawn 2026-10-31)', () => {
+  it('says the weekly pattern once and each place once, whatever the number of dates', () => {
+    const s = practiceSummary([at('2027-06-16'), at('2027-06-23'), at('2027-06-30')], NOW, placeOf);
+    assert.deepEqual(s, { when: 'Wed, 6:00–7:00 p.m.', where: 'Maple Grove · Diamond 1' });
+  });
+  it('two places are both named; three or more are a count; a past date is not said', () => {
+    assert.equal(practiceSummary([at('2027-06-16'), at('2027-06-23', 22, F2)], NOW, placeOf).where, 'Maple Grove · Diamond 1 and Maple Grove · Diamond 2');
+    const third = { ...at('2027-06-30'), v: null, f: null, l: 'Kinsmen Park' };
+    const three = practiceSummary([at('2027-06-16'), at('2027-06-23', 22, F2), third], NOW, placeOf);
+    assert.equal(three.where, '3 places');
+    assert.deepEqual(practiceSummary([at('2027-06-02')], NOW, placeOf), { when: '', where: '' });
+  });
+  it('different weeks are never merged into one long practice (/review 2026-11-01)', () => {
+    // Tue 6–7 one week and Tue 7–8 the next are two shapes, not a two-hour practice; two clocks on one day stay two clocks.
+    const touching = practiceSummary([at('2027-06-16', 22), at('2027-06-23', 23)], NOW, placeOf).when;
+    assert.equal(touching, 'Wed, 6:00–7:00 p.m.; Wed, 7:00–8:00 p.m.');
+    assert.ok(!touching.includes('6:00–8:00'));
+    const twoDays = practiceSummary([at('2027-06-16', 22), at('2027-06-17', 22), at('2027-06-23', 22)], NOW, placeOf).when;
+    assert.equal(twoDays, 'Wed and Thu, 6:00–7:00 p.m.');
+  });
+  it('a practice with no end time still says its start', () => {
+    const open: ToldPractice = { ...at('2027-06-16'), e: null };
+    assert.equal(practiceSummary([open], NOW, placeOf).when, 'Wed, 6:00 p.m.');
   });
 });
 
@@ -139,13 +172,18 @@ describe('the family email (copy section C)', () => {
 describe('the words', () => {
   it('the cap noun is the owner\'s "the season\'s 3 emails", from the real cap', () => {
     assert.equal(CLUB_EMAIL_CAP, 3);
-    assert.equal(W.foot, `Each family gets one email, sent now. It doesn’t count toward the season’s ${CLUB_EMAIL_CAP} emails.`);
+    assert.equal('foot' in W, false, 'the window has no foot sentence (owner dropped it 2026-11-01)');
     assert.match(PRACTICES_SENT_NOTICE.body('U12', CLUB_EMAIL_CAP), /U12’s families their practice times.*the season’s 3 emails\.$/);
-    assert.ok(!/a day/.test(W.foot + W.footPhone), 'a rolling 24 hours has no "a day"');
   });
   it('singulars', () => {
-    assert.equal(W.statement(1, 1), '1 practice a week handed out. 1 family hasn’t been told.');
-    assert.equal(W.reminder(1), '1 team’s families haven’t been told');
+    assert.equal(W.lead(1, 1), 'Practice times go to 1 family on 1 team.');
+    assert.equal(W.lead(8, 2), 'Practice times go to 8 families on 2 teams.');
+    assert.equal(W.reminder(1), '1 team’s families haven’t been sent their practice times');
+    assert.equal(W.tellThem, 'Tell the families');
+    assert.equal(W.totalWords(0), 'One email per family.');
+    assert.equal(W.totalWords(1), 'One email per family. 1 family has a child on more than one team, so it counts once.');
+    assert.equal(W.leftOutRow(2, true), '2 more families have no working email, so they won’t get this.');
+    assert.equal(W.leftOutRow(1, false), '1 family has no working email, so they won’t get this.');
     assert.equal(W.againChange(2, 1), '2 teams’ practices change. 1 team’s don’t.');
     assert.equal(W.leftOut(1), '1 family has no email that works, so they won’t get this.');
     assert.equal(W.send(1), 'Send to 1 family');
@@ -172,7 +210,7 @@ describe('guards (owner 2026-10-31: no link is ever sent to a family; one househ
   it('households come from readHouseholds and nowhere else', () => {
     assert.ok(sender.includes("import { readHouseholds, type Household } from './club-schedule-league-mail';"));
     // Every household list handed to the database is the reader's, filtered.
-    const passed = [...sender.matchAll(/p_households: (\w+)\.map/g)].map(m => m[1]);
+    const passed = [...sender.matchAll(/p_households: householdRows\((\w+)\)/g)].map(m => m[1]);
     assert.deepEqual(passed, ['households', 'households']);
     assert.equal((sender.match(/const households = sendableHouseholds\(/g) ?? []).length, 2);
     assert.ok(!/group\w*\(.*guardian_email/i.test(sender));
@@ -192,5 +230,24 @@ describe('the moved child (Part 4, owner 2026-10-31: dates only once the new tea
     const moved = html.slice(html.indexOf('export function leagueTeamMovedHtml'), html.indexOf('export function leaguePracticesChangedHtml'));
     assert.equal(moved.split('warmEmailButton(').length - 1, 1, 'one button, as before');
     assert.ok(moved.includes('input.practices.zone'));
+  });
+});
+
+describe('families are told their team before anything about it (owner 2026-11-01, /ux)', () => {
+  const server = readCode('lib/league-practice-tell-server.ts');
+  it('a division whose teams are not published names nobody and refuses the press', () => {
+    const readTell = server.slice(server.indexOf('export async function readTell('), server.indexOf('async function registeredTeams'));
+    assert.ok(readTell.includes('publishedDivisions(season.id)') && readTell.includes('unpublishedRead('));
+    const press = server.slice(server.indexOf('export async function tellFamilies('), server.indexOf('export async function sendPracticeNotice'));
+    assert.ok(press.indexOf("refusedWith('teams_first')") > -1 && press.indexOf("refusedWith('teams_first')") < press.indexOf("refusedWith(p.saw.length ? 'already' : 'nothing')"),
+      'the teams-first refusal comes before any other reading of the teams');
+  });
+  it('the schedule’s reminder counts only divisions with published teams', () => {
+    const reminders = server.slice(server.indexOf('export async function readTellReminders('));
+    assert.ok(reminders.includes('publishedDivisions(seasonId)') && reminders.includes('published.has(t.division_id)'));
+  });
+  it('says it with the game Publish’s own sentence, and the route has a row for the refusal', () => {
+    assert.equal(W.teamsFirst('U9'), 'Publish U9’s teams first, so every family knows its child’s team.');
+    assert.ok(readCode('app/api/admin/house-league/seasons/[seasonId]/practice-tell/route.ts').includes('teams_first: { status: 409, error: R.teamsFirst }'));
   });
 });

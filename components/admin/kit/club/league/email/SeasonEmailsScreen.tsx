@@ -108,7 +108,9 @@ export default function SeasonEmailsScreen() {
         <EmailRecord row={open} eyebrow={season.name}
           detailUrl={`/api/admin/house-league/seasons/${seasonId}/emails/history?${q}&send=${encodeURIComponent(open.id)}`}
           // A schedule notice (9d-2b) finishes from its own rows; a typed email from its send.
-          resend={{ url: `/api/admin/house-league/seasons/${seasonId}/emails?${q}`, body: open.kind === 'notice' ? { action: 'resendNotice', noticeId: open.id } : { action: 'resend', sendId: open.id }, owner: 'season' }}
+          // The practice times' notice is the runners' (the registrar sees it in the history but cannot finish it — the server refuses).
+          resend={open.kind === 'notice' && open.noticeKind === 'practices_sent' && !gate.run ? null
+            : { url: `/api/admin/house-league/seasons/${seasonId}/emails?${q}`, body: open.kind === 'notice' ? { action: 'resendNotice', noticeId: open.id } : { action: 'resend', sendId: open.id }, owner: 'season' }}
           teamsHref={`${seasonHref}/teams`}
           onClose={() => setOpen(null)}
           onResent={text => { setOpen(null); setSaid({ text, sendId: null }); void load(); }} />

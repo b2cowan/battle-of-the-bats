@@ -1,0 +1,284 @@
+<title>9d-3 Walk A · Telling families their practice times</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the 9d-2b walks' frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.opts { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.opt { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--fg); cursor: pointer; }
+.opt input { margin-top: 0; }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · House League · Stage 9d-3 · Walk A · §436</span>
+    <h1>Telling families their practice times</h1>
+    <p class="sub">Written 2026-10-31 for Stage 9d-3, Session 1 (Parts 1–4). One purpose; sign it off on its own. Walk B (the coach's line, copy email and Subscribe) comes after Session 2.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Handing out practices emails nobody. The step after it asks <strong>“Tell the families?”</strong>, and nothing goes until Send is pressed. A second hand-out for a team whose families were already told reopens the same step as a change, for exactly the teams whose practices differ. This walk reads that step, its email (through “See an example”; dev has no email key) and the history it leaves.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>The amber line under the practice time says how many teams’ families haven’t been told, and opens the step.</li>
+    <li>The step’s numbers match what the fixture printed. The example email lists every date with its place on each line, and has no link and no button.</li>
+    <li>“See them” names the families who won’t get it, and fixing or adding an email brings them in.</li>
+    <li>After a send the line is gone, and the season’s Email families history has a <strong>Practice times sent: U9 Rookie</strong> row.</li>
+    <li>Handing out again with nothing changed says the told teams don’t change and sends nothing. Handing out again with a change sends the change email (Now / Was) to the told teams.</li>
+    <li>A send mixing a changed team and a never-told team gives a family on both one email with both parts.</li>
+    <li>A registrar sees none of it.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li>Real mail. Dev has no email key, and on dev a household the transport skipped counts as reached. So “Reached 9 of 9” is right on dev; a real partial send is read on the first production send.</li>
+    <li>The words of the moved-child email. It has no preview on dev; the unit test pins them, and they are read on the first production move. Part F checks only that the move does not bring the reminder back.</li>
+    <li>The club’s own Send the changes refreshing a told team (it needs a club schedule send; it is code-checked).</li>
+    <li>The coach’s team-page line, the coach’s copy email and the house-league coach’s Subscribe: Session 2, walk B.</li>
+    <li>The season-wide “not told” total beside the season’s other waiting counts. It is not built yet; only the division’s line is.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Order</dt><dd>Walk this after the <code>/simplify</code> and <code>/review</code> sessions finish. Then <strong>restart the dev server</strong> (<code>npm run dev</code>; this build added files and migration 415).</dd>
+    <dt>Fixture</dt><dd>In the project folder: <code>node --env-file=.env.local .probe/9d3-walkA/fixture.mjs</code>. It adds five children to <strong>U9 Rookie</strong>: the <strong>Okafors</strong> (Ava on Reds, Ben on Blues), <strong>Cleo Marsh</strong> (no email), <strong>Dev Patel</strong> (an address mail can’t take) and <strong>Eli Brandt</strong> (Blues). It prints the numbers the step should show. Made 2026-10-31, when it printed: <em>Families 8 (1 with a child on two teams) · Will be sent 8 · No email 2.</em> If it prints different numbers, use its numbers: the pass condition is the step matching the fixture.</dd>
+    <dt>Walk it again</dt><dd><code>node --env-file=.env.local .probe/9d3-walkA/fixture.mjs --reset</code> clears who was told, the walk’s notices and emails, puts Patel’s and Cleo’s addresses and Eli’s team back, and removes Greens. It does not undo a hand-out. To put the practices back, hand out once more at the length you noted in D1.</dd>
+    <dt>Part E</dt><dd>Needs <code>node --env-file=.env.local .probe/9d3-walkA/fixture.mjs --greens</code> (a third team with two children and no practices).</dd>
+  </dl></section>
+  <section class="card"><h2>Sign in as</h2><p>One browser window per person (a private window for the second). Dev only, keep this page private.</p><dl class="facts">
+    <dt>League admin</dt><dd><code>uat-club-league-admin@uat-rep-club.local</code> · <code>UATPassword2026!</code> (Jordan Pike): Parts A to F</dd>
+    <dt>Registrar</dt><dd><code>uat-club-registrar@uat-rep-club.local</code> · <code>UATPassword2026!</code>: Part G (a private window)</dd>
+  </dl><p class="sub">Sign in at <code>http://localhost:3000/login</code>.</p></section>
+  <section class="card"><h2>Where and on what</h2><dl class="facts">
+    <dt>Club</dt><dd><code>uat-rep-club</code> (UAT Rep Club). House league <strong>2026 Fall House League</strong>, division <strong>U9 Rookie</strong>: teams Reds and Blues, practice time already given and practices already handed out (weekday evenings, mid-November to mid-December). Nobody has been told yet.</dd>
+    <dt>Season schedule</dt><dd><code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code></dd>
+    <dt>Email families</dt><dd><code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/notifications</code></dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>The family nobody could reach (C3–C4).</strong> Once every team is told, the amber line goes. The only door back to a family with no email is handing out again, which opens “Everyone has been told” with its See them. Say whether that is enough, or whether the line should also count families nobody could reach.</li>
+    <li><strong>An added practice in a change email (E4).</strong> The 11b change email had no word for a practice added to a told team. The build says “Added: {date}, {time} · {place}”. That wording is the build’s own; confirm it, or route it to /marketing.</li>
+    <li><strong>“Reached 10 of 10” after Send again (C4).</strong> The result counts the whole send, not only the family just added. Say if it should count only the new one.</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "hl9d3-walkA-practice-times-v1";
+  var TITLE = "9d-3 walk A §436 · Telling families their practice times (2026-10-31)";
+  var LA = "League admin · uat-club-league-admin@uat-rep-club.local";
+  var SCHED = "<code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code>";
+  var PARTS = [
+ { id: "A", title: "Before anything is sent: the reminder and the step", steps: [
+  { who: LA, do: "Open the season’s Schedule (" + SCHED + ") and pick <strong>U9 Rookie</strong>.",
+    see: "<strong>Stop check:</strong> under the division’s time line, an amber count <strong>2</strong> and “2 teams’ families haven’t been told · <u>Tell them</u>”. If there is no such line, run the fixture’s <code>--reset</code>, reload, and start again." },
+  { who: LA, do: "Press <strong>Tell them</strong>.",
+    see: "A window titled “Tell the families their practice times”, eyebrow “2026 Fall House League · U9 Rookie”. A bold line “{n} practices a week handed out. 8 families haven’t been told.” Then one band of four figures: <strong>Teams 2</strong> · <strong>Families 8</strong> (under it “1 has a child on two teams”) · <strong>Will be sent 8</strong> (“one email each”) · <strong>No email 2</strong>. The foot says “Each family gets one email, sent now. It doesn’t count toward the season’s 3 emails.” The buttons are <strong>Not yet</strong> and <strong>Send to 8 families</strong>." },
+  { who: LA, do: "Under “What each family gets · Their child’s team practice dates and places. Nothing about fees.”, press <strong>See an example</strong>.",
+    see: "The window becomes the email, behind a named back. To “the Okafor family”. Subject “Practice times for Reds and Blues”. “Hi Chidi,”, then “Here are the practice times for 2026 Fall House League. Every date is listed, because the time can change from week to week.” Then <strong>“Ava’s practices with Reds:”</strong> with one line per upcoming date, each reading like “Tue, Nov 17, 6:10–7:10 p.m. · {venue} · {facility}” (the place on every line, never in the heading), and the same for Ben with Blues. It closes with “Questions? Ask the Reds or Blues coach.” and “Times in Eastern time.” No link and no button anywhere." },
+  { who: LA, do: "Go back. Read the line under the figures, and press its <strong>See them</strong>.",
+    see: "“2 families have no email that works, so they won’t get this. See them.” The level is titled “2 families won’t get this email”. It has two rows: <strong>Cleo Marsh</strong> · Blues · no email on file, with <u>Add an email</u>; and <strong>Dev Patel</strong> · Reds · the address was refused (patel.at.example), with <u>Fix the email</u>. A hint (“After you fix an email, Send again goes only to the families who didn’t get this one.”) and a foot (“A family is marked as told only once its email goes.”)." },
+  { who: LA, do: "On Dev Patel press <strong>Fix the email</strong>. Type <code>patel@example.invalid</code> and press <strong>Done</strong> beside it. Then press the window’s <strong>Done</strong>.",
+    see: "Patel’s row goes, and the title reads “1 family won’t get this email”. Back on the step: Families <strong>9</strong>, Will be sent <strong>9</strong>, No email <strong>1</strong>, and the button reads <strong>Send to 9 families</strong>." },
+  { who: LA, do: "Press <strong>Not yet</strong>.",
+    see: "The window closes, nothing was sent, and the amber line still reads “2 teams’ families haven’t been told”." }
+ ]},
+ { id: "B", title: "Send, and the history", steps: [
+  { who: LA, do: "Press <strong>Tell them</strong>, then <strong>Send to 9 families</strong>.",
+    see: "The foot reads “Sending to 9 families… Keep this window open until it finishes.” and both buttons are greyed. Then a green result: “Reached 9 of 9 families” and “This send is in the season’s history.”, with one <strong>Done</strong>." },
+  { who: LA, do: "Press <strong>Done</strong>.",
+    see: "The amber line under U9 Rookie’s time line is gone." },
+  { who: LA, do: "Open the season’s <strong>Email families</strong> tab (link above).",
+    see: "A new row on top, tagged <strong>Automatic</strong>: “Practice times sent: U9 Rookie”, to U9 Rookie, 9 families." },
+  { who: LA, do: "Open that row.",
+    see: "The record reads “FieldLogicHQ sent this when a league admin told U9 Rookie’s families their practice times: one email per family, about their own children’s teams. Automatic emails don’t count toward the season’s 3 emails.” and no “Send to the N it missed” (nobody was missed)." }
+ ]},
+ { id: "C", title: "Hand out again with nothing changed, then the family nobody could reach", steps: [
+  { who: LA, do: "Back on the Schedule (U9 Rookie), open <strong>Tools ⋯ › Practice time</strong>. Change nothing. Read the foot, then press <strong>Hand out {n} practices a week</strong>.",
+    see: "Before the press, the foot reads “The practices show on the schedule and on each coach’s team page. Next you choose whether to tell the families.” (never “Families aren’t emailed.”). The press asks first: “Hand out {n} practices a week again?”, then “2 teams’ families were already told their practice times. Handing out again replaces those teams’ upcoming practices.”, then in bold “2 teams’ don’t.”, then “You’ll choose whether to tell those families next.” The foot reads “Nobody is emailed until you press Send.” and the buttons are <strong>Keep what’s there</strong> and <strong>Hand out again</strong>." },
+  { who: LA, do: "Press <strong>Keep what’s there</strong>, then the lime again, then <strong>Hand out again</strong>.",
+    see: "Keep what’s there goes back to Practice time with nothing written. After Hand out again, the Tell step opens on a green “Everyone has been told · Jordan Pike sent the practice times to 9 families on {today} at {time}.”, then “The reminder on the schedule is gone. If you hand practices out again, this step reopens for the teams whose practices change.” Below it: “1 family has no email that works, so they won’t get this. See them”." },
+  { who: LA, do: "Press <strong>See them</strong>. On Cleo Marsh press <strong>Add an email</strong>, type <code>marsh@example.invalid</code>, press <strong>Done</strong> beside it, then the window’s <strong>Done</strong>.",
+    see: "Back on “Everyone has been told”, the no-email line is gone, and the foot now has <strong>Send again to 1</strong> beside Done.",
+    call: "Call: is handing out again the right door to this family, or should the schedule’s line also count families nobody could reach?" },
+  { who: LA, do: "Press <strong>Send again to 1</strong>.",
+    see: "The result reads “Reached 10 of 10 families” (the whole send, now with the Marsh family in it). On the Email families tab, the same “Practice times sent: U9 Rookie” row now counts 10. No second row was added.",
+    call: "Call: should the result count only the family just added (“Reached 1 of 1”)?" }
+ ]},
+ { id: "D", title: "Hand out again with a change: the change email", steps: [
+  { who: LA, do: "Tools ⋯ › Practice time. <strong>Note the current “Each practice” length</strong> (you need it for a re-walk), then pick a different length. Press the lime.",
+    see: "The question now says, in bold, “2 teams’ practices change.” (and no “don’t” half)." },
+  { who: LA, do: "Press <strong>Hand out again</strong>.",
+    see: "The Tell step opens titled <strong>“Tell the families about the changes”</strong>, with the line “2 teams’ practices changed. 10 families who were told will get the change.” Figures: Teams 2 · Families 10 · Will be sent 10 · No email 0. The button reads <strong>Send to 10 families</strong>." },
+  { who: LA, do: "Press <strong>See an example</strong>.",
+    see: "To the Okafor family. Subject “Practices changed for Reds and Blues”. No “Here are the practice times” paragraph. Ava’s part opens “UAT Rep Club changed Ava’s practices with Reds, from {first changed date}:”, then pairs of lines: “Now: Tuesdays, {new time} · {venue} · {facility}” and “Was: Tuesdays, {old time}”. The Was line names only what changed: no place when the place stayed. Ben’s part is the same for Blues." },
+  { who: LA, do: "Go back and press <strong>Send to 10 families</strong>, then Done. Check the Schedule and the Email families tab.",
+    see: "“Reached 10 of 10 families”. No amber line. A second <strong>Practice times sent: U9 Rookie</strong> row, 10 families, above the first." }
+ ]},
+ { id: "E", title: "A changed team and a never-told team in one send", steps: [
+  { who: LA, do: "In the project folder run <code>node --env-file=.env.local .probe/9d3-walkA/fixture.mjs --greens</code>. Reload the Schedule (U9 Rookie).",
+    see: "The fixture says Greens is ready with Cy Okafor and Fia Lund. No amber line: Greens has families but no practices, so there is nothing to tell yet." },
+  { who: LA, do: "Using the Schedule’s <strong>Add › Practice</strong>, add one practice for <strong>Greens</strong> (any date in the next two weeks, any place). Then add one practice for <strong>Reds</strong> the same way (another date).",
+    see: "The amber line reads “2 teams’ families haven’t been told · Tell them”." },
+  { who: LA, do: "Press <strong>Tell them</strong>.",
+    see: "Titled “Tell the families about the changes”. The line reads “1 team’s practices changed. 3 families who were told will get the change. 1 team hasn’t been told yet, so their 2 families get their practice times for the first time.” Figures: Teams 2 · Families 4 (“1 has a child on two teams”) · Will be sent 4.",
+    call: "If it says “their 1 family” rather than “their 2 families”, that is the known defect noted at hand-off. It counted the Okafors only as a told family. Mark it Issue." },
+  { who: LA, do: "Press <strong>See an example</strong>.",
+    see: "To the Okafor family. Subject “Practice times for Reds and Greens”, with the “Here are the practice times…” paragraph. Ava’s part is the change: “UAT Rep Club changed Ava’s practices with Reds, from {the Reds date you added}:” then “Added: {that date}, {time} · {place}”. Cy’s part is the first email: “Cy’s practices with Greens:” then the one Greens date. Nothing about Ben (Blues didn’t change).",
+    call: "Call: the “Added:” wording is the build’s own (the 11b email never needed one). Confirm it, or route it to /marketing." },
+  { who: LA, do: "Press <strong>Send to 4 families</strong>, then Done.",
+    see: "“Reached 4 of 4 families”; the amber line is gone; a third Practice times sent row, 4 families." }
+ ]},
+ { id: "F", title: "A child moved onto a team that was told", steps: [
+  { who: LA, do: "Open the season’s <strong>Teams &amp; draft</strong>. In U9 Rookie move <strong>Eli Brandt</strong> from Blues to <strong>Reds</strong> and save the move as the screen asks.",
+    see: "Eli is on Reds. The move’s own email is queued as before (dev mails nothing). Its new block, “Eli’s practices with Reds:” with every date and the zone line, is not readable on dev: see “Not in this walk”." },
+  { who: LA, do: "Go back to the Schedule (U9 Rookie).",
+    see: "No amber line: Reds is still told. The Brandts got Reds’ dates in the move email, so they are not counted as untold." }
+ ]},
+ { id: "G", title: "Who sees it", steps: [
+  { who: "Registrar · uat-club-registrar@uat-rep-club.local (private window)", do: "Open the same Schedule and pick U9 Rookie. Open <strong>Tools ⋯</strong>.",
+    see: "No amber “haven’t been told” line, even if you first add another practice as the league admin to bring it back. No <strong>Practice time</strong> in Tools." },
+  { who: "Registrar · uat-club-registrar@uat-rep-club.local", do: "Open the Email families tab and open a <strong>Practice times sent</strong> row.",
+    see: "The registrar can read the row (the season’s history is theirs to read). Nothing on the page offers to tell families their practice times." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

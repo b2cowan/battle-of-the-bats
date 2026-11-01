@@ -1,8 +1,9 @@
 'use client';
 import { useCallback, useState } from 'react';
+import Link from 'next/link';
 import KitDialog from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
-import { repKit, useDeferredLoad } from '../../RepKit';
+import { Callout, repKit, useDeferredLoad } from '../../RepKit';
 import { EmailWordsSample, MailView, SendDoor, useSendLevel } from '../../SendParts';
 import LoadingState from '@/components/shared/LoadingState';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
@@ -31,6 +32,22 @@ type Phase =
   | { kind: 'result'; reached: number; families: number; failed: number }
   | { kind: 'couldnt' }
   | { kind: 'changed' };
+
+type SendBody = { reached?: number; families?: number; failed?: number; code?: string; error?: string };
+
+/** POST to the route: the response, and its body when one came back. */
+async function post(url: string, body: object): Promise<{ r: Response | null; data: SendBody | null }> {
+  const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).catch(() => null);
+  return { r, data: (r ? await r.json().catch(() => null) : null) as SendBody | null };
+}
+
+function Notice({ tone, title, text, alert }: { tone: string; title: string; text: string; alert?: boolean }) {
+  return (
+    <div className={`${ck.notice} ${tone} ${p.result}`} role={alert ? 'alert' : undefined}>
+      <b>{title}</b><span>{text}</span>
+    </div>
+  );
+}
 
 export default function PracticeTellWindow({ orgSlug, seasonId, seasonName, divisionId, divisionName, onClose, onHandOut, onSent }: {
   orgSlug: string;
@@ -64,21 +81,18 @@ export default function PracticeTellWindow({ orgSlug, seasonId, seasonName, divi
   const lv = useSendLevel(W.title);
   const level = lv.level;
 
+  function landed(data: SendBody) {
+    setPhase({ kind: 'result', reached: data.reached ?? 0, families: data.families ?? 0, failed: data.failed ?? 0 });
+    onSent();
+    void load();
+  }
+
   async function send() {
     if (!read) return;
     setError(null);
     setPhase({ kind: 'sending', families: read.households });
-    const r = await fetch(url, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'send', divisionId, saw: read.tell, families: read.households }),
-    }).catch(() => null);
-    const data = (r ? await r.json().catch(() => null) : null) as { reached?: number; families?: number; failed?: number; code?: string; error?: string } | null;
-    if (r?.ok && data) {
-      setPhase({ kind: 'result', reached: data.reached ?? 0, families: data.families ?? 0, failed: data.failed ?? 0 });
-      onSent();
-      void load();
-      return;
-    }
+    const { r, data } = await post(url, { action: 'send', divisionId, saw: read.tell, families: read.households });
+    if (r?.ok && data) { landed(data); return; }
     if (data?.code === 'changed') { setPhase({ kind: 'changed' }); return; }
     if (data?.code === 'already') { setPhase({ kind: 'step' }); await load(); return; }
     if (!r || (r.status >= 500 && !data)) { setPhase({ kind: 'couldnt' }); return; }
@@ -89,17 +103,8 @@ export default function PracticeTellWindow({ orgSlug, seasonId, seasonName, divi
   async function sendAgain(noticeId: string) {
     setError(null);
     setPhase({ kind: 'sending', families: read?.open?.missed ?? 0 });
-    const r = await fetch(url, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'resend', noticeId }),
-    }).catch(() => null);
-    const data = (r ? await r.json().catch(() => null) : null) as { reached?: number; families?: number; failed?: number; error?: string } | null;
-    if (r?.ok && data) {
-      lv.open('form');
-      setPhase({ kind: 'result', reached: data.reached ?? 0, families: data.families ?? 0, failed: data.failed ?? 0 });
-      onSent();
-      void load();
-      return;
-    }
+    const { r, data } = await post(url, { action: 'resend', noticeId });
+    if (r?.ok && data) { lv.open('form'); landed(data); return; }
     setPhase({ kind: 'step' });
     setError(data?.error ?? W.couldnt);
   }
@@ -136,22 +141,14 @@ export default function PracticeTellWindow({ orgSlug, seasonId, seasonName, divi
   } else if (!read) {
     body = <LoadingState inline label={W.loading} />;
   } else if (phase.kind === 'couldnt') {
-    body = (
-      <div className={`${ck.notice} ${ck.noticeBad} ${p.result}`} role="alert">
-        <b>{W.couldntTitle}</b><span>{W.couldnt}</span>
-      </div>
-    );
+    body = <Notice tone={ck.noticeBad} title={W.couldntTitle} text={W.couldnt} alert />;
     footerStart = <span>{W.couldntFoot}</span>;
     footer = <>
       <button type="button" className="btn btn-outline" onClick={onClose}>{W.close}</button>
       <button type="button" className="btn btn-lime" onClick={() => void send()}>{W.tryAgain}</button>
     </>;
   } else if (phase.kind === 'changed') {
-    body = (
-      <div className={`${ck.notice} ${ck.noticeWarn} ${p.result}`} role="alert">
-        <b>{W.changedTitle}</b><span>{W.changed}</span>
-      </div>
-    );
+    body = <Notice tone={ck.noticeWarn} title={W.changedTitle} text={W.changed} alert />;
     footerStart = <span>{W.changedFoot}</span>;
     footer = <button type="button" className="btn btn-lime" onClick={() => { setPhase({ kind: 'step' }); void load(); }}>{W.review}</button>;
   } else if (phase.kind === 'result') {
@@ -166,18 +163,31 @@ export default function PracticeTellWindow({ orgSlug, seasonId, seasonName, divi
     footer = <button type="button" className="btn btn-lime" onClick={onClose}>{W.done}</button>;
   } else if (read.finished) {
     body = <p className={ck.hint}>{W.refusals.finished}</p>;
+  } else if (!read.teamsPublished) {
+    // Placements are still a draft: families don't know their team yet, so nobody is named and nothing can be sent.
+    body = <p className={ck.hint}>{W.teamsFirst(divisionName)}</p>;
+    footerStart = <span>{W.teamsFirstFoot}</span>;
+    footer = <>
+      <button type="button" className="btn btn-outline" onClick={onClose}>{W.close}</button>
+      <Link className="btn btn-lime" href={`/${orgSlug}/admin/house-league/seasons/${seasonId}/teams`}>{W.teamsFirstDoor}</Link>
+    </>;
   } else if (told) {
     const last = read.last!;
     body = (
       <>
-        <div className={`${ck.notice} ${ck.noticeGood} ${p.result}`}>
-          <b>{W.everyoneTitle}</b><span>{W.everyone(last.by, last.families, last.date, last.time)}</span>
-        </div>
+        <Notice tone={ck.noticeGood} title={W.everyoneTitle} text={W.everyone(last.by, last.families, last.date, last.time)} />
         <p className={ck.hint}>{W.everyoneFoot}</p>
         {missed.length > 0 && <LeftOutLine n={missed.length} isPhone={isPhone} onOpen={() => lv.open('who')} />}
+        {error && <p className={repKit.formError} role="alert">{error}</p>}
       </>
     );
-    footer = <button type="button" className="btn btn-lime" onClick={onClose}>{W.done}</button>;
+    // A family still to reach (missed, or given an email since): the same "Send again" the See them window offers.
+    footer = read.open
+      ? <>
+        <button type="button" className="btn btn-outline" onClick={onClose}>{W.done}</button>
+        <button type="button" className="btn btn-lime" onClick={() => void sendAgain(read.open!.noticeId)}>{W.sendAgain(read.open.missed)}</button>
+      </>
+      : <button type="button" className="btn btn-lime" onClick={onClose}>{W.done}</button>;
   } else if (read.tell.length === 0) {
     body = <p className={ck.hint}>{W.refusals.nothing}</p>;
   } else {
@@ -189,34 +199,45 @@ export default function PracticeTellWindow({ orgSlug, seasonId, seasonName, divi
         <p className={p.statement}>
           {changeMode
             ? W.changeStatement(changed, read.toldHouseholds, fresh, read.freshHouseholds)
-            : someTeams
-              ? W.someTeams(read.teams.length - read.noPractices.teams.length, read.teams.length, read.households)
-              : W.statement(read.perWeek, read.households)}
+            : read.households > 0 ? W.lead(read.households, read.rows.filter(r => r.families > 0).length) : W.leadNobody}
         </p>
-        <dl className={p.tiles}>
-          <div><dt>{W.tileTeams}</dt><dd>{read.tell.length}</dd></div>
-          <div><dt>{W.tileFamilies}</dt><dd>{read.households}</dd>{read.twoTeams > 0 && <small>{W.tileTwoTeams(read.twoTeams)}</small>}</div>
-          <div><dt>{W.tileWillBeSent}</dt><dd>{read.households}</dd><small>{W.tileOneEach}</small></div>
-          <div><dt>{W.tileNoEmail}</dt><dd>{read.leftOut.length}</dd></div>
-        </dl>
-        <div className={p.gets}>
-          <span className={p.getsHead}>{W.getsHead}</span>
-          <span className={p.getsBody}>{W.gets}</span>
-          {read.sample && <SendDoor onOpen={() => lv.open('email')}>{W.seeExample}</SendDoor>}
-        </div>
-        {read.leftOut.length > 0 && <LeftOutLine n={read.leftOut.length} isPhone={isPhone} onOpen={() => lv.open('who')} />}
+        {/* Who gets what: a row per team being told, then what the send adds up to. */}
+        <ul className={p.teams}>
+          {read.rows.map(r => (
+            <li key={r.teamId} className={p.teamRow}>
+              <b>{r.name}{changeMode && r.kind === 'change' && <span className={p.rowTag}>{W.changedTag}</span>}</b>
+              <span className={p.teamWhen}>{r.when || W.rowNoTimes}{r.where && <small>{r.where}</small>}</span>
+              <span className={p.teamCount}>{W.rowFamilies(r.families)}</span>
+            </li>
+          ))}
+          <li className={`${p.teamRow} ${p.teamTotal}`}>
+            <b>{W.totalLabel}</b>
+            <span className={p.teamWhen}>{W.totalWords(read.twoTeams)}</span>
+            <span className={p.teamCount}>{W.totalEmails(read.households)}</span>
+          </li>
+        </ul>
+        {/* The one thing still fixable before sending: families the email can't reach. */}
+        {read.leftOut.length > 0 && (
+          <Callout tone="warn" action={<button type="button" className="btn btn-outline" onClick={() => lv.open('who')}>{W.seeThem}</button>}>
+            {isPhone ? W.leftOutRowPhone(read.leftOut.length) : W.leftOutRow(read.leftOut.length, read.households > 0)}
+          </Callout>
+        )}
         {someTeams && (
           <div className={`${ck.notice} ${ck.noticeWarn} ${p.result}`}>
             <span>{W.noPractices(read.noPractices.teams, read.noPractices.families)}</span>
             <button type="button" className={`${ck.link} ${p.door}`} onClick={onHandOut} disabled={busy}>{W.handOutFor}</button>
           </div>
         )}
+        <div className={p.gets}>
+          <span className={p.getsBody}>{W.getsLine}</span>
+          {read.sample && <SendDoor onOpen={() => lv.open('email')}>{W.seeExample}</SendDoor>}
+        </div>
         {error && <p className={repKit.formError} role="alert">{error}</p>}
       </>
     );
     footerStart = busy
       ? <span>{W.sending(phase.families)} {!isPhone && W.sendingHint}</span>
-      : <span>{isPhone ? W.footPhone : W.foot}</span>;
+      : undefined;
     footer = <>
       <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>{W.notYet}</button>
       <button type="button" className="btn btn-lime" onClick={() => void send()} disabled={busy || read.households === 0}>
@@ -306,14 +327,19 @@ function SeeThem({ orgSlug, seasonId, families, onClose, onFixed, onDone, sendAg
   );
 }
 
-/** The schedule's reminder (frame c3): "{n} teams' families haven't been told · Tell them", in the waiting-count idiom. */
+/**
+ * The schedule's one action row (frame c3, redrawn owner 2026-10-31): "{n} teams' families haven't been sent their practice
+ * times" with its button, in the house's white card with an amber edge, the count in the waiting-count chip. It is the
+ * first thing under the title, and absent when nobody is owed anything.
+ */
 export function PracticeTellReminder({ teams, onOpen }: { teams: number; onOpen: () => void }) {
   if (teams <= 0) return null;
   return (
-    <p className={`${ck.hint} ${p.reminder}`}>
-      <span className={cts.count} aria-hidden>{teams > 9 ? '9+' : teams}</span>
-      <span>{W.reminder(teams)}</span>{' · '}
-      <button type="button" className={repKit.inlineLink} onClick={onOpen}>{W.tellThem}</button>
-    </p>
+    <Callout tone="warn" role="status" action={<button type="button" className="btn btn-outline" onClick={onOpen}>{W.tellThem}</button>}>
+      <span className={p.reminder}>
+        <span className={cts.count} aria-hidden>{teams > 9 ? '9+' : teams}</span>
+        <span>{W.reminder(teams)}</span>
+      </span>
+    </Callout>
   );
 }

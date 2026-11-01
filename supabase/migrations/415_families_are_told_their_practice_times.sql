@@ -178,6 +178,7 @@ DECLARE
   v_notice   uuid;
   v_n        integer;
   v_now      timestamptz;
+  v_regs     uuid[];
 BEGIN
   PERFORM pg_advisory_xact_lock(hashtextextended('league_practices_tell:' || p_division::text, 0));
   SELECT s.status INTO v_status FROM league_seasons s WHERE s.id = p_season AND s.org_id = p_org;
@@ -227,9 +228,24 @@ BEGIN
     RETURN QUERY SELECT 'sending'::text, NULL::uuid, 0; RETURN;
   END IF;
 
-  -- An earlier send of these teams that never finished is superseded: this one says what is true now.
-  UPDATE league_practice_emails e SET status = 'skipped', updated_at = now()
-   WHERE e.org_id = p_org AND e.team_ids && v_ids AND e.status IN ('pending', 'sending', 'failed');
+  -- An earlier send of these teams that never finished is superseded: this one says what is true now. Only what THIS press
+  -- covers is taken off the old row — a household with a child on a team that is not in this press keeps that child on its
+  -- row (still offered as "Send again"), and a row left with nothing is skipped. (Review 2026-10-31: skipping the whole
+  -- row dropped the family's other child, and the team read as told.) A dead `sending` row comes back as `failed`.
+  SELECT coalesce(array_agg(DISTINCT x::uuid), ARRAY[]::uuid[]) INTO v_regs
+    FROM jsonb_array_elements(p_households) h, jsonb_array_elements_text(h->'registrationIds') x;
+  UPDATE league_practice_emails e
+     SET registration_ids = CASE WHEN cardinality(k.regs) = 0 OR cardinality(k.teams) = 0 THEN e.registration_ids ELSE k.regs END,
+         team_ids = CASE WHEN cardinality(k.regs) = 0 OR cardinality(k.teams) = 0 THEN e.team_ids ELSE k.teams END,
+         updated_at = now(),
+         status = CASE WHEN cardinality(k.regs) = 0 OR cardinality(k.teams) = 0 THEN 'skipped'
+                       WHEN e.status = 'sending' THEN 'failed' ELSE e.status END
+    FROM (SELECT o.id,
+                 ARRAY(SELECT r FROM unnest(o.registration_ids) r WHERE r <> ALL (v_regs)) AS regs,
+                 ARRAY(SELECT t FROM unnest(o.team_ids) t WHERE t <> ALL (v_ids)) AS teams
+            FROM league_practice_emails o
+           WHERE o.org_id = p_org AND o.team_ids && v_ids AND o.status IN ('pending', 'sending', 'failed')) k
+   WHERE e.id = k.id;
 
   v_now := clock_timestamp();
   INSERT INTO league_season_notices(org_id, season_id, division_id, kind, family_count, created_by, created_at)
@@ -290,7 +306,15 @@ BEGIN
     VALUES (p_org, v_season, v_division, p_notice, lower(btrim(v_hh->>'email')),
             ARRAY(SELECT x::uuid FROM jsonb_array_elements_text(v_hh->'registrationIds') x),
             ARRAY(SELECT DISTINCT x::uuid FROM jsonb_array_elements_text(v_hh->'teamIds') x))
-    ON CONFLICT (notice_id, guardian_email) DO NOTHING;
+    -- An address already in this send (its row was skipped, failed or not yet going) takes the new children and teams too —
+    -- DO NOTHING dropped them, so a child added under a skipped row's address, or a fixed address another family already
+    -- had, was never emailed (review 2026-10-31). A row already sent or going is left alone.
+    ON CONFLICT (notice_id, guardian_email) DO UPDATE
+      SET registration_ids = ARRAY(SELECT DISTINCT r FROM unnest(league_practice_emails.registration_ids || excluded.registration_ids) r),
+          team_ids = ARRAY(SELECT DISTINCT t FROM unnest(league_practice_emails.team_ids || excluded.team_ids) t),
+          status = 'pending', updated_at = now()
+      WHERE league_practice_emails.status IN ('skipped', 'failed')
+        AND NOT league_practice_emails.registration_ids @> excluded.registration_ids;
     GET DIAGNOSTICS v_one = ROW_COUNT;
     v_added := v_added + v_one;
   END LOOP;
