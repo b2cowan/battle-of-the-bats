@@ -62,7 +62,7 @@ describe('ruling 6: a fee left pending on a subscription that can no longer carr
   const release = /export async function releaseStrandedSubscriptionFees[\s\S]*?\n}\n/.exec(readCode(FEES))?.[0] ?? '';
 
   it('a line already on an invoice, or still on a subscription that rides, is left alone', () => {
-    assert.match(release, /\.eq\('billed_on', 'subscription'\)\.eq\('livemode', LIVE_KEY\(\)\)\.gte\('billed_at', since\)/);
+    assert.match(release, /\.eq\('billed_on', 'subscription'\)\.eq\('livemode', stripeKeyIsLive\(\)\)\.gte\('billed_at', since\)/);
     assert.match(release, /if \(before\?\.invoice\) continue;/);
     // Stripe names the subscription on a pending line it was created on (test-mode probe 2026-10-27); a line it didn't
     // name is left alone while the club rides one.

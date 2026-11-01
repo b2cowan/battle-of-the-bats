@@ -21,6 +21,11 @@ export function stripeKeyIsTest(key: string | undefined = process.env.STRIPE_SEC
   return !!key && TEST.test(key);
 }
 
+/** Stripe's dashboard root for the key's mode (`/test` in the sandbox). `live` defaults to this process's own key. */
+export function stripeDashboardBase(live: boolean = stripeKeyIsLive()): string {
+  return `https://dashboard.stripe.com${live ? '' : '/test'}`;
+}
+
 /** The `stripe_prices.environment` value for the key: 'live' for a live key, otherwise 'sandbox' (an empty key too). */
 export function stripeEnvironment(key: string | undefined = process.env.STRIPE_SECRET_KEY): 'live' | 'sandbox' {
   return stripeKeyIsLive(key) ? 'live' : 'sandbox';

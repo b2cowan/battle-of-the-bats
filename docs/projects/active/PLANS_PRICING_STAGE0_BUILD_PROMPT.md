@@ -111,6 +111,13 @@
   OK. Full unit run: 12,935 pass / 5 fail, all five in other work (support-console §12 on the bookkeeping ExpenseFormWindow;
   plan-billing-usage free-time route returning 503 under its mocks; three tests of a Stage 6 owner-walk HTML). Next: Session 3
   (Parts 8–12); `/accounting` runs at Part 12's closeout for the whole stage, as this prompt places it.
+- **Simplify + review of Parts 1–7 (owner, another chat, 2026-11-01).** No behaviour change, found no defect. Simplify only:
+  `stripeDashboardBase(live?)` in `lib/stripe-mode.ts` replaces three hand-built dashboard links (webhook unrecognised-price mail,
+  dispute/refund mail, the club record page); the `LIVE_KEY` and `getStripeEnvironment` one-line wrappers are gone (callers ask
+  `stripeKeyIsLive()` / `stripeEnvironment()` directly; two fee guard tests follow); `IGNORED_REASONS` is the one list of
+  `ignored_reason` words, the two outcome types derive from it, and a new test pins it to mig 416's CHECK; `chargeStoryEntry` lost its
+  unreachable `null` arm; the key-prefix guard now also scans `.cjs/.mts/.jsx` and catches `startsWith('sk_'|'rk_'|'pk_')`.
+  Checked 2026-11-01 by Session 3: Stage 0 unit tests 244/244, typecheck clean.
 
 ## What the owner sees after this build (present a version of this as the PM summary BEFORE any code)
 
@@ -443,6 +450,27 @@ ruled T5), which builds on its Stage 1 and needs the portal pinned by Part 3 bel
   never "uncommitted" or "dev only" as a negative.
 - Release note for the owner, one line each: migrations to apply to production **before** the code (list them), the Stripe dashboard steps he
   must do (Part 4's four events on the billing endpoint, test then live), the first-live-portal-open note (Part 3), the dispute policy question (Part 4).
+
+#### ✅ Owner checklist: Stage 0 is not closed until every line is ticked (added 2026-11-01)
+
+The ONE home of the owner's Stage 0 steps (the Stripe plan's Stage 0 entry and the sequence index item "Plans & pricing, Stages 0–1" point
+here). Part 12 copies the open lines into the release note and the Stage 0 walk; a session that finds a line already done ticks it with its
+anchor (date, commit, walk §), never deletes it.
+
+- [ ] **O1 · Simplify + review of Parts 1–7** (commit `63988b38c`), run by the owner in another chat 2026-11-01; its fixes committed.
+- [ ] **O2 · Stripe dashboard, TEST mode:** add `charge.dispute.created`, `charge.dispute.updated`, `charge.dispute.closed`, `charge.refunded`
+  to the **billing** webhook endpoint (not the Connect one). Before the Stage 0 walk, which exercises a test dispute.
+- [ ] **O3 · Stripe dashboard, LIVE mode:** the same four events on the live billing endpoint. Before the Stage 0 release reaches production.
+  Confirm with `node scripts/audit-stripe-billing.mjs` (its expected-event list carries the four).
+- [ ] **O4 · Ruling: does a dispute on a subscription charge flag or suspend the account?** Today it records and emails only.
+- [ ] **O5 · Ruling: one-off read-only backfill of what existing customers pay** (Part 6). Needs a production read first (refused to the
+  build session); without it, each customer's real amount appears after their next billing event.
+- [ ] **O6 · Confirm:** the first live portal open creates our portal settings in the live Stripe account (Part 3), or ask for a one-off
+  owner-run script instead (watched: its own go and commit).
+- [ ] **O7 · Go for Part 11's daily comparison job** (watched automation, its own commit).
+- [ ] **O8 · Production order:** migrations 416, 417, 418 (and any Session 3 adds) applied to production BEFORE the promote that ships the code
+  (`MANUAL_PROD_STEPS.json`).
+- [ ] **O9 · Exit walks:** re-run Stripe Walk 6 (webhook hardening) and the Stage 0 walk (both test mode).
 
 ## Not in this stage (stay out)
 

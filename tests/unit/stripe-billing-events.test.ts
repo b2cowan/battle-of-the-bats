@@ -2,11 +2,11 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type Stripe from 'stripe';
 import {
-  billingEventFacts, receiveBillingEvent,
+  IGNORED_REASONS, billingEventFacts, receiveBillingEvent,
   type BillingEventClaim, type BillingEventFacts, type BillingEventOutcome, type BillingEventStore,
 } from '../../lib/stripe-billing-events.ts';
 import { invoiceFailureIsCurrent, statusAfterInvoicePaid, subscriptionEventIsStale } from '../../lib/stripe-billing-state.ts';
-import { functionBody, readCode } from './_source-code.ts';
+import { functionBody, readCode, readSource } from './_source-code.ts';
 
 /**
  * Plans & pricing Stage 0, Part 2 (S5): the billing webhook keeps a record of every event, ignores a replay, ignores the
@@ -217,5 +217,15 @@ describe('the webhook wears it', () => {
     assert.doesNotMatch(paid, /subscription_status: 'active'/);
     const failed = arm('invoice.payment_failed');
     assert.ok(failed.indexOf('invoiceFailureIsCurrent(') < failed.indexOf("subscription_status: 'past_due'"));
+  });
+});
+
+describe('the ignored reasons the record can hold', () => {
+  it('the table CHECK (mig 416) lists exactly the words the code names', () => {
+    const sql = readSource('supabase/migrations/416_the_billing_webhook_keeps_a_record_of_every_event.sql');
+    const check = /ADD CONSTRAINT stripe_billing_events_ignored_reason_check\s+CHECK \(ignored_reason IS NULL OR ignored_reason IN \(([^)]*)\)\)/.exec(sql);
+    assert.ok(check, 'the CHECK is still where this test looks for it');
+    const words = [...check[1].matchAll(/'([a-z_]+)'/g)].map(m => m[1]);
+    assert.deepEqual([...words].sort(), [...IGNORED_REASONS].sort());
   });
 });

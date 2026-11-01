@@ -25,7 +25,7 @@ import { isInAppUpMove } from '@/lib/plan-growth';
 import { clubNameFromMetadata } from '@/lib/workspace-upgrade';
 import { restoreAfterReactivation } from '@/lib/billing-reactivation';
 import { trialEndingHtml, welcomeBackHtml, teamWorkspaceCancelledHtml, SITE_URL, ADMIN_EMAIL, sendEmail, escapeHtml } from '@/lib/email';
-import { stripeKeyIsLive } from '@/lib/stripe-mode';
+import { stripeDashboardBase, stripeKeyIsLive } from '@/lib/stripe-mode';
 import {
   handleSubscriptionChargeEvent, isSubscriptionChargeEvent, type SubscriptionChargeDeps,
 } from '@/lib/stripe-subscription-charges';
@@ -167,7 +167,7 @@ async function tellOwnerOfUnrecognisedPrice(sub: Stripe.Subscription, priceId: s
     metadata: { priceId, stripeSubscriptionId: sub.id, stripeCustomerId: customerId },
   });
   const club = org?.name ?? 'A customer we could not match to a club';
-  const dashboard = `https://dashboard.stripe.com${stripeKeyIsLive() ? '' : '/test'}`;
+  const dashboard = stripeDashboardBase();
   await alertOwner('unrecognised_price_alert', `A subscription is on a price we do not know: ${club}`,
     `<p>${escapeHtml(club)} has a subscription on a Stripe price that no plan slot has ever used, so our record of their plan was not changed.</p>`
       + `<ul><li>Price: ${escapeHtml(priceId)}</li><li>Subscription: ${escapeHtml(sub.id)} (${escapeHtml(sub.status)})</li></ul>`

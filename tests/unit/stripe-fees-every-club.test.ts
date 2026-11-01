@@ -34,7 +34,7 @@ describe('one billing path for every fee kind', () => {
     const src = readCode(FEES);
     assert.doesNotMatch(src, /workspaceHoldsFoundingComp|freeTime/, 'a comp never decides billing');
     assert.doesNotMatch(src, /exempt_reason: '(comped|no_subscription)'/);
-    assert.match(src, /if \(f\.livemode !== LIVE_KEY\(\)\) \{[\s\S]{0,200}exempt_reason: 'test_mode'/);
+    assert.match(src, /if \(f\.livemode !== stripeKeyIsLive\(\)\) \{[\s\S]{0,200}exempt_reason: 'test_mode'/);
   });
 
   it('a returned answering fee is a credit: a negative line beside its answering fee, and a month they cancel out is finalized at nothing owed (ruling 7)', () => {

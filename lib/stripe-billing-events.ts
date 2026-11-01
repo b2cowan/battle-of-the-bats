@@ -15,10 +15,14 @@ import { stripeKeyIsLive } from './stripe-mode';
 
 export type BillingEventClaim = 'new' | 'retry' | 'duplicate' | 'busy';
 /**
- * What running an event came to. `no_customer`: nothing to act on (the webhook answers it without touching a record).
- * `not_ours`: a dispute or refund on a charge that paid no subscription invoice (Part 4), recorded and left alone.
+ * Why an event was recorded and never acted on: `wrong_mode` (the other Stripe mode), `no_customer` (nothing to act on; the
+ * webhook answers it without touching a record), `not_ours` (a dispute or refund on a charge that paid no subscription
+ * invoice, Part 4). The `ignored_reason` CHECK in migration 416 lists the same words; `stripe-billing-events.test.ts` compares.
  */
-export type BillingEventOutcome = 'processed' | 'no_customer' | 'not_ours';
+export const IGNORED_REASONS = ['wrong_mode', 'no_customer', 'not_ours'] as const;
+export type IgnoredReason = (typeof IGNORED_REASONS)[number];
+/** What running an event came to: it ran, or it was left alone for a reason a run can reach (`wrong_mode` is decided earlier). */
+export type BillingEventOutcome = 'processed' | Exclude<IgnoredReason, 'wrong_mode'>;
 
 export type BillingEventFacts = {
   id: string;

@@ -2,6 +2,8 @@ import type Stripe from 'stripe';
 import type { PlatformEventInput, PlatformEventType } from './platform-events';
 import { formatCents } from './console-money';
 import { formatStoredDate } from './timezone';
+import { stripeDashboardBase } from './stripe-mode';
+import type { BillingEventOutcome } from './stripe-billing-events';
 
 /**
  * Disputes and refunds on OUR subscription charges (Plans & pricing Stage 0, Part 4, S9). The billing webhook hands these
@@ -82,7 +84,7 @@ export function disputeStatusWords(status: string | null | undefined): string {
   }
 }
 
-export type SubscriptionChargeOutcome = 'processed' | 'not_ours';
+export type SubscriptionChargeOutcome = Extract<BillingEventOutcome, 'processed' | 'not_ours'>;
 
 /**
  * Runs one dispute or refund event. `not_ours`: the charge paid no subscription invoice, so nothing was written.
@@ -164,7 +166,7 @@ function ownerAlert(p: {
   const { type, charge, dispute, latestRefund, owner } = p;
   const club = owner?.orgName ?? 'A customer we could not match to a club';
   const amount = formatCents(charge.amount, charge.currency);
-  const dashboard = `https://dashboard.stripe.com${p.deps.live() ? '' : '/test'}`;
+  const dashboard = stripeDashboardBase(p.deps.live());
   const links = [
     owner ? `<a href="${esc(`${p.deps.siteUrl}/platform-admin/orgs/${owner.orgId}`)}">Open the club's record</a>` : null,
     dispute

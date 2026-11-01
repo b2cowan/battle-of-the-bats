@@ -14,7 +14,7 @@ import { freeTimeDoorFacts } from '@/lib/free-time-writes';
 import { canGiveIndefinitely, capMonthsFor, earliestLastDay, grantablePlansAbove, isGrantRunning, lastDayOfInstant, latestLastDay } from '@/lib/free-time';
 import { isFoundingSeasonCompExpiry } from '@/lib/plan-config';
 import { stripeStillBills } from '@/lib/stripe-billing-state';
-import { stripeKeyIsLive } from '@/lib/stripe-mode';
+import { stripeDashboardBase } from '@/lib/stripe-mode';
 import { readPortalRecordFreeTime } from '@/lib/portal-free-time-tab';
 import ClubRecord, { type ClubRecordProps } from './ClubRecord';
 import { readClubOnlinePayments } from '@/lib/platform-online-payments';
@@ -34,11 +34,6 @@ import { readClubOnlinePayments } from '@/lib/platform-online-payments';
 export const metadata = { title: 'Club record — Support console' };
 
 const STORY_PAGE = 50;
-
-function stripeBase() {
-  // The mode comes from the secret key's prefix, not the id (a `sub_…` looks the same in both modes).
-  return `https://dashboard.stripe.com${stripeKeyIsLive() ? '' : '/test'}`;
-}
 
 /** The coach's own teams brought into this club (Club Tier Stage 2, B04): finished moves and open requests. Read only. */
 async function getTeamMoves(orgId: string): Promise<ClubRecordProps['teamMoves']> {
@@ -190,7 +185,8 @@ export default async function ClubRecordPage({ params, searchParams }: {
       enabledAddons: org.enabled_addons ?? [],
       planSections: (PLAN_CONFIG[plan]?.moduleEntitlements ?? []) as string[],
     },
-    stripeBase: stripeBase(),
+    // The mode comes from the secret key's prefix, not the id (a `sub_…` looks the same in both modes).
+    stripeBase: stripeDashboardBase(),
     ownerEmail: owners[0]?.email ?? null,
     ownerLastSignIn,
     teamCount: teamCountRes.count ?? 0,

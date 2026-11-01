@@ -32,7 +32,6 @@ import { addCalendarMonths, formatStoredDate, orgMonthKey, zonedWallClockToUtc }
  * a failure is stored on the row (`bill_error`) and retried by the daily job and from platform admin.
  */
 
-const LIVE_KEY = () => stripeKeyIsLive();
 /** Ours, not Stripe's: how long a club has to pay its own invoice. Printed from Stripe's due date, never typed. */
 const FEE_INVOICE_DAYS_DUE = 30;
 const LIVE_SUBSCRIPTION = new Set(['active', 'trialing', 'past_due']);
@@ -210,7 +209,7 @@ export async function billFee(feeId: string): Promise<BillOutcome> {
   const { data } = await supabaseAdmin.from('platform_stripe_fees').select(FEE_COLUMNS).eq('id', feeId).maybeSingle();
   const f = data as FeeRow | null;
   if (!f || f.billed_at || f.exempt_reason || f.fee_invoice_id) return 'done';
-  if (f.livemode !== LIVE_KEY()) {
+  if (f.livemode !== stripeKeyIsLive()) {
     await supabaseAdmin.from('platform_stripe_fees').update({ exempt_reason: 'test_mode', bill_error: null }).eq('id', f.id).is('billed_at', null);
     return 'test_mode';
   }
@@ -379,7 +378,7 @@ export function feeInvoicePeriod(now: Date = new Date()): { cutoff: string; peri
  * answering fee is finalized at nothing owed and sends no email.
  */
 export async function sendMonthlyFeeInvoices(now: Date = new Date()): Promise<{ sent: number; failed: number }> {
-  const live = LIVE_KEY();
+  const live = stripeKeyIsLive();
   const { cutoff, periodStart } = feeInvoicePeriod(now);
   const { data } = await supabaseAdmin.from('platform_stripe_fees').select(FEE_COLUMNS)
     .is('billed_at', null).is('exempt_reason', null).eq('livemode', live).lt('created_at', cutoff)
@@ -548,7 +547,7 @@ export async function syncFeeInvoiceFromEvent(inv: Stripe.Invoice): Promise<bool
 /** The daily job's re-read of every invoice still open, so a missed event never leaves one unpaid on our side. */
 export async function syncOpenFeeInvoices(): Promise<void> {
   const { data } = await supabaseAdmin.from('platform_fee_invoices').select('id, stripe_invoice_id')
-    .eq('status', 'open').eq('livemode', LIVE_KEY()).not('stripe_invoice_id', 'is', null).limit(500);
+    .eq('status', 'open').eq('livemode', stripeKeyIsLive()).not('stripe_invoice_id', 'is', null).limit(500);
   for (const r of (data ?? []) as Array<{ id: string; stripe_invoice_id: string }>) {
     try { await writeInvoiceState(r.id, await stripe.invoices.retrieve(r.stripe_invoice_id)); }
     catch (err) { console.error('[platform-stripe-fees] couldn’t re-read the invoice:', r.id, errText(err)); }
@@ -603,7 +602,7 @@ async function emailFeeInvoice(rowId: string): Promise<void> {
 /** The one reminder on an unpaid invoice past its due date (§7 ruling 3). Nothing switches off; nothing says it will. */
 export async function remindUnpaidFeeInvoices(now: Date = new Date()): Promise<number> {
   const { data } = await supabaseAdmin.from('platform_fee_invoices').select(INVOICE_COLUMNS)
-    .eq('status', 'open').eq('livemode', LIVE_KEY()).is('reminded_at', null).not('emailed_at', 'is', null)
+    .eq('status', 'open').eq('livemode', stripeKeyIsLive()).is('reminded_at', null).not('emailed_at', 'is', null)
     .lt('due_at', now.toISOString()).limit(200);
   let n = 0;
   for (const row of (data ?? []) as InvoiceRow[]) {
@@ -640,7 +639,7 @@ export async function remindUnpaidFeeInvoices(now: Date = new Date()): Promise<n
  */
 export async function sweepDisputeFees(now: Date = new Date()): Promise<void> {
   const since = new Date(now.getTime() - 60 * 86_400_000).toISOString();
-  const live = LIVE_KEY();
+  const live = stripeKeyIsLive();
   const twoWeeks = new Date(now.getTime() - 14 * 86_400_000).toISOString();
   const [{ data: disputes }, { data: debits }, { data: returned }] = await Promise.all([
     supabaseAdmin.from('online_payment_disputes')
@@ -690,7 +689,7 @@ async function readInvoiceItem(id: string): Promise<Stripe.InvoiceItem | null> {
 export async function releaseStrandedSubscriptionFees(now: Date = new Date()): Promise<number> {
   const since = new Date(now.getTime() - 400 * 86_400_000).toISOString();
   const { data } = await supabaseAdmin.from('platform_stripe_fees').select(FEE_COLUMNS)
-    .eq('billed_on', 'subscription').eq('livemode', LIVE_KEY()).gte('billed_at', since)
+    .eq('billed_on', 'subscription').eq('livemode', stripeKeyIsLive()).gte('billed_at', since)
     .order('billed_at', { ascending: true }).limit(1000);
   const rides = new Map<string, Promise<{ customer: string; subscription: string } | null>>();
   let released = 0;

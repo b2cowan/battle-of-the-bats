@@ -62,11 +62,11 @@ describe('no other file reads a key prefix', () => {
     'lib/stripe-mode.ts': 'the one place the prefix is read',
     'lib/online-payments-switch.ts': 'onlinePaymentsOn stays on sk_live_ alone (family payments safety switch)',
   };
-  const PREFIX = /\b(sk|rk)_(live|test)_|\(sk\|rk\)_/;
+  const PREFIX = /\b(sk|rk)_(live|test)_|\(sk\|rk\)_|startsWith\(['"](sk|rk|pk)_/;
 
   it('app, lib, components and scripts carry no prefix test outside the allow-list', () => {
     const files = ['app', 'lib', 'components', 'scripts']
-      .flatMap(dir => ['.ts', '.tsx', '.mjs', '.js'].flatMap(ext => filesUnder(dir, ext)))
+      .flatMap(dir => ['.ts', '.tsx', '.mjs', '.cjs', '.mts', '.js', '.jsx'].flatMap(ext => filesUnder(dir, ext)))
       .filter(f => !/\.test\.tsx?$/.test(f));
     const offenders = files.filter(f => !(f in ALLOWED) && PREFIX.test(readCode(f)));
     assert.deepEqual(offenders, [], 'decide live/test with lib/stripe-mode.ts, never a prefix test of your own');

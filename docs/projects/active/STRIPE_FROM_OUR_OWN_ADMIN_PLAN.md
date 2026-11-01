@@ -10,7 +10,12 @@ Plan & billing project is complete", owner 2026-10-30.) Everything under "Claude
 Every piece of outstanding work in this combined program (this plan, Support console S10 and `STAGE10_PLANS_PRICING_THIRD_PASS_GAPS.md`)
 has a home in one of these stages. Order is by dependency and rework risk, never by date. Item numbers (§6 …) refer to the gaps document.
 
-0. **Stage 0 — the 12 fixes.** Not built; design done. (1) Billing page shows what each customer actually pays; (2) old price links stay recognised;
+0. **Stage 0 — the 12 fixes.** Fixes 1, 2, 5, 7, 8, 9, 10 built and committed `63988b38c` 2026-11-01 (build prompt Parts 1–7; migrations
+   416–418 applied to dev); fixes 3, 4, 6, 12 and the closeout are build prompt Parts 8–12 (`PLANS_PRICING_STAGE0_BUILD_PROMPT.md`).
+   **Owner steps that close Stage 0** (the one list, kept in the build prompt's Part 12 "Owner checklist"; the stage is not done until each is
+   ticked there): simplify + review of Parts 1–7; the four dispute/refund events on the billing webhook endpoint (test, then live); dispute
+   policy ruling; paid-amount backfill yes/no; first live portal open writes our settings (confirm); Part 11's daily job go; migrations to prod
+   before the code; the exit walks. (1) Billing page shows what each customer actually pays; (2) old price links stay recognised;
    (3) "None" told apart from a failed read, plus the 20-subscription cap; (4) strict change log (who, what, when, why); (5) S5 webhook event log,
    ordering guard, refuse the wrong mode; (6) S6 daily read-only comparison with Stripe; (7) S7 a restricted live key reads as live everywhere;
    (8) S8 our own pinned portal settings; (9) S9 subscription disputes and refunds handled; (10) S10 one Stripe customer per buyer plus the trial-history

@@ -75,17 +75,13 @@ function afterBulkAddons(before: Set<string>, newValue: unknown): Set<string> {
  */
 const CHARGE_STORY_EVENTS = ['subscription_charge_disputed', 'subscription_dispute_closed'] as const;
 
-function chargeStoryEntry(type: string, m: Record<string, unknown> | null): Pick<StoryEntry, 'title' | 'sub'> | null {
+function chargeStoryEntry(type: string, m: Record<string, unknown> | null): Pick<StoryEntry, 'title' | 'sub'> {
   const cents = typeof m?.disputeAmountCents === 'number' ? m.disputeAmountCents : typeof m?.amountCents === 'number' ? m.amountCents : null;
   const amount = cents === null ? 'a charge' : formatCents(cents, str(m?.currency) ?? 'cad');
   const reason = disputeReasonWords(str(m?.reason));
-  if (type === 'subscription_charge_disputed') {
-    return { title: `Disputed ${amount} with their bank`, sub: `${reason} · nothing on the account changed` };
-  }
-  if (type === 'subscription_dispute_closed') {
-    return { title: `Dispute closed: ${disputeStatusWords(str(m?.status))}`, sub: `${amount} · ${reason}` };
-  }
-  return null;
+  return type === 'subscription_charge_disputed'
+    ? { title: `Disputed ${amount} with their bank`, sub: `${reason} · nothing on the account changed` }
+    : { title: `Dispute closed: ${disputeStatusWords(str(m?.status))}`, sub: `${amount} · ${reason}` };
 }
 
 /**
@@ -337,8 +333,7 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
   for (const e of (eventsRes.data ?? []) as Array<{ id: string; event_type: string; source: string | null; actor_email: string | null; previous_plan_id: string | null; plan_id: string | null; occurred_at: string; metadata: unknown }>) {
     const who = e.source === 'stripe' && e.event_type !== 'subscription_started' ? 'Stripe' : e.actor_email ?? 'The customer';
     if ((CHARGE_STORY_EVENTS as readonly string[]).includes(e.event_type)) {
-      const entry = chargeStoryEntry(e.event_type, obj(e.metadata));
-      if (entry) entries.push({ key: `event:${e.id}`, at: e.occurred_at, kind: 'billing', who, why: null, ...entry });
+      entries.push({ key: `event:${e.id}`, at: e.occurred_at, kind: 'billing', who, why: null, ...chargeStoryEntry(e.event_type, obj(e.metadata)) });
       continue;
     }
     if (e.event_type === 'subscription_started') {

@@ -16,13 +16,11 @@ export type StripePriceRow = {
   last_change_note: string | null;
 };
 
-const getStripeEnvironment = () => stripeEnvironment();
-
 export async function getStripePriceId(
   planId: OrgPlan | string,
   billingCycle: BillingCycle | string,
 ): Promise<string | null> {
-  const env = getStripeEnvironment();
+  const env = stripeEnvironment();
   const { data } = await supabaseAdmin
     .from('stripe_prices')
     .select('price_id')
@@ -55,7 +53,7 @@ export type PlanFromPrice = { planId: string; billingCycle: string; retired: boo
  */
 export async function getPlanFromPriceId(priceId: string): Promise<PlanFromPrice | null> {
   if (!priceId) return null;
-  const env = getStripeEnvironment();
+  const env = stripeEnvironment();
   const [current, retired] = await Promise.all([
     supabaseAdmin.from('stripe_prices').select('plan_id, billing_cycle')
       .eq('price_id', priceId).eq('environment', env).limit(1).maybeSingle(),
