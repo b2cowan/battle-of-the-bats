@@ -9,6 +9,7 @@ import { sandboxExitResponse, isSandboxSurfacePath } from './lib/sandbox-exit';
 import { decodePathSegment } from './lib/demo-org';
 import { isOwnHost } from './lib/own-hosts';
 import { clubHostResponse } from './lib/club-host-response';
+import { RESERVED_ORG_SLUGS } from './lib/reserved-slugs';
 
 /**
  * The org sections this file bounces an unauthenticated visitor out of (see the guards below).
@@ -99,6 +100,18 @@ export async function proxy(request: NextRequest) {
     const sandboxRes = NextResponse.next({ request: { headers: requestHeaders } });
     sandboxRes.headers.set('x-request-id', requestId);
     return sandboxRes;
+  }
+
+  // ── A club's Coaches Portal pages: the headers, and nothing else ──────────────────────────────────
+  // Matched ONLY so `x-pathname` is the proxy's, never the browser's: the coaches layout opens its billing exception on the
+  // suspended wall (and its zero-team door) when this header names the billing page, and a header the browser sent itself
+  // used to reach it unchanged (Plan & billing Stage 4b Part 4, owner yes 2026-10-31). No session round-trip, as before: the
+  // portal never had proxy work of its own and the layout authorizes. A reserved first segment (`/platform-admin/coaches`,
+  // `/my/…`, `/api/…`) is not a club and falls through to its own rules below.
+  if (segments[1] === 'coaches' && !RESERVED_ORG_SLUGS.has(decodePathSegment(segments[0]))) {
+    const coachesRes = NextResponse.next({ request: { headers: requestHeaders } });
+    coachesRes.headers.set('x-request-id', requestId);
+    return coachesRes;
   }
 
   // Redirect legacy /[orgSlug]/admin/tournaments/teams → /[orgSlug]/admin/tournaments/registrations
@@ -323,6 +336,9 @@ export const config = {
     '/my/:path*',
     '/coaches',
     '/coaches/:path*',
+    // A club's Coaches Portal: so `x-pathname` is ours (the early return above sets the headers and stops).
+    '/:slug/coaches',
+    '/:slug/coaches/:path*',
     // ── Every route in the app, for a browser that has been through a demo door ────────────
     // The leave-the-demo rule (lib/sandbox-exit.ts) is dead code on a route the proxy never sees,
     // and the entries above are an allow-list — which is exactly HOW a demo session came to be

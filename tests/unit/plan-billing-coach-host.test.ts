@@ -7,7 +7,10 @@ import { billingTestLoader } from './_billing-test-loader.ts';
 import { coachBillingLink, coachHostedTournamentsLink, isStandaloneCoachOwner } from '../../lib/coach-billing-access.ts';
 import { isTeamWorkspaceOrg } from '../../lib/team-workspace-kind.ts';
 import type { Organization, OrgRole } from '../../lib/types.ts';
-import { readCode } from './_source-code.ts';
+import { readCode, readSource } from './_source-code.ts';
+import { NextRequest } from 'next/server';
+import { proxy, config as proxyConfig } from '../../proxy.ts';
+import { RESERVED_ORG_SLUGS } from '../../lib/reserved-slugs.ts';
 
 const workspace: Organization = {
   id: 'workspace-a', slug: 'falcons', name: 'Falcons Coaches Portal', planId: 'team', ownPlanId: 'team',
@@ -188,6 +191,29 @@ describe('server wall order and exact owner billing exception', () => {
     assert.match(result.html, /billing-child/);
     assert.doesNotMatch(result.html, /Coaches Portal not ready/);
     assert.equal(allElements(result.tree).find(element => 'billingOnlyHref' in element.props)?.props.billingOnlyHref, null);
+  });
+});
+
+// The tests above hand the layout an `x-pathname`; this proves the running app hands it the TRUE one. Until Stage 4b Part 4 the
+// proxy matcher had no `/:slug/coaches/…` entry, so the header was absent (the owner met the wall) or the browser's own (the wall
+// opened on any page). Calls the real proxy: a club coaches page never reaches its Supabase session work, so this needs no network.
+describe('the page the coaches layout trusts is the proxy\'s, never the browser\'s', () => {
+  for (const pathname of ['/falcons/coaches', '/falcons/coaches/billing', '/falcons/coaches/teams/t1/settings']) {
+    it(`${pathname}: a forged header is replaced by the real address, with no redirect`, async () => {
+      const res = await proxy(new NextRequest(`http://localhost:3000${pathname}`, {
+        headers: { host: 'localhost:3000', 'x-pathname': '/falcons/coaches/billing' },
+      }));
+      assert.equal(res.headers.get('x-middleware-request-x-pathname'), pathname);
+      assert.equal(res.headers.get('location'), null);
+    });
+  }
+  it('the matcher reaches a club\'s portal, and the header-only exit leaves reserved first segments to their own rules', () => {
+    const matcher = proxyConfig.matcher as unknown[];
+    assert.ok(matcher.includes('/:slug/coaches') && matcher.includes('/:slug/coaches/:path*'));
+    // readSource, not readCode: proxy.ts:70 has "/api/admin/*" inside a line comment, and readCode's block-comment pass reads that
+    // `/*` as an opener and drops everything to the next `*/` (line ~143), this branch included. Anchored on code at a line start.
+    assert.match(readSource('proxy.ts'), /^\s+if \(segments\[1\] === 'coaches' && !RESERVED_ORG_SLUGS\.has\(decodePathSegment\(segments\[0\]\)\)\) \{$/m);
+    for (const root of ['platform-admin', 'admin', 'my', 'api', 'auth', 'coaches']) assert.ok(RESERVED_ORG_SLUGS.has(root), root);
   });
 });
 
