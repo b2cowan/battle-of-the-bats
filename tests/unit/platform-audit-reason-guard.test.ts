@@ -63,7 +63,8 @@ function writerCalls(): Array<{ file: string; call: string }> {
   for (const file of [...filesUnder('app', '.ts'), ...filesUnder('lib', '.ts')]) {
     if (file === 'lib/platform-audit.ts') continue;
     const code = readCode(file);
-    for (const m of code.matchAll(/writePlatformAuditLog(?:Strict)?\(/g)) {
+    // Stage 0 Part 9: a money change's row written first (`writeAuditBeforeChange`) is held to the same reason rule.
+    for (const m of code.matchAll(/(?:writePlatformAuditLog(?:Strict)?|writeAuditBeforeChange)\(/g)) {
       let depth = 0;
       let i = m.index! + m[0].length - 1;
       for (; i < code.length; i++) {

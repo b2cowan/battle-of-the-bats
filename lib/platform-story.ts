@@ -30,6 +30,7 @@ import { CONSOLE_REFUND_TAIL } from './console-money-story';
 import { disputeReasonWords, disputeStatusWords } from './stripe-subscription-charges';
 import { hasPlatformPower } from './platform-areas';
 import { LEAD_ACTIONS } from './platform-audit-reason';
+import { withoutFailedChanges } from './platform-audit';
 import type { PlatformRole } from './platform-auth';
 import { listSentEmails } from './sent-log';
 import { SENT_STATES } from './sent-log-words';
@@ -135,7 +136,8 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
   } | null;
   if (!org) return [];
 
-  const audit = (auditRes.data ?? []) as AuditRow[];
+  // A money change's row is written before the change (Stage 0, Part 9); one whose change then failed is not told.
+  const audit = withoutFailedChanges((auditRes.data ?? []) as AuditRow[]);
   const members = (membersRes.data ?? []) as Array<{ user_id: string; role: string; status: string | null; invited_at: string | null; accepted_at: string | null; invited_email: string | null }>;
   const orgAudit = (orgAuditRes.data ?? []) as Array<{ id: string; actor_id: string | null; target_id: string | null; action: string; payload: unknown; created_at: string }>;
 
@@ -300,6 +302,11 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
     }
     if (r.action === 'cancel_subscription_stripe_failed') {
       entries.push({ key, at: r.created_at, kind: 'staff', title: 'Stripe did not stop the subscription', sub: 'It needs cancelling in Stripe by hand', who, ...whyFields(r, true) });
+      continue;
+    }
+    if (r.action === 'cancel_subscription_incomplete') {
+      entries.push({ key, at: r.created_at, kind: 'staff', title: 'The cancel did not finish',
+        sub: 'Its tournaments may be archived, but the club was not marked cancelled. Cancel it again.', who, ...whyFields(r, true) });
       continue;
     }
     if (r.action === 'extend_billing_retention') {

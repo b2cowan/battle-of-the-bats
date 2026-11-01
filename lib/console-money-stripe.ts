@@ -3,7 +3,7 @@
 import type Stripe from 'stripe';
 import {
   REFUND_WORDS, decideRefund, formatCents, cardWords, remainingCents, stripeReasonFor, stripeRefusalWords,
-  type MoneyCharge, type MoneyInvoice, type MoneyRead, type MoneyRefund, type MoneySubscription, type RefundAsk,
+  type MoneyCharge, type MoneyInvoice, type MoneyRead, type MoneyRefund, type MoneySubscription, type NextCharge, type RefundAsk,
 } from './console-money';
 import { FEE_INVOICE_META } from './online-payment-words';
 
@@ -164,19 +164,25 @@ export async function readClubMoney(stripe: Stripe, customerId: string, opts: { 
   const created = { gte: Math.floor(sinceMs / 1000), ...(until ? { lt: Math.floor(until / 1000) } : {}) };
 
   // The next charge is Stripe's own preview of the live subscription, never a price we work out. It starts as soon as the
-  // subscriptions are read, beside the charges and invoices; a courtesy, so a failed preview reads "None", never a failed tab.
-  const subsRead = stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 20, expand: ['data.default_payment_method'] }, READ_OPTS);
-  const nextRead = subsRead.then(async (list): Promise<MoneyRead['nextCharge']> => {
-    const live = list.data.map(sub => toMoneySubscription(sub, opts.prices))
+  // subscriptions are read, beside the charges and invoices; a failed preview reads "Not read", never "None" and never a
+  // failed tab. Subscriptions page like charges (newest first, up to the page ceiling), so the live one is found on any page.
+  const subsRead = listAll<Stripe.Subscription>(after => stripe.subscriptions.list({ customer: customerId, status: 'all', limit: PAGE, expand: ['data.default_payment_method'], ...(after ? { starting_after: after } : {}) }, READ_OPTS));
+  // Each subscription is put into the console's shape once, here, for the preview and for the tab.
+  const subsShaped = subsRead.then(list => list.items.map(sub => toMoneySubscription(sub, opts.prices)));
+  const nextRead = Promise.all([subsRead, subsShaped]).then(async ([list, subscriptions]): Promise<NextCharge> => {
+    if (until) return { kind: 'none' }; // an older-charges read shows no band
+    const live = subscriptions
       .find(sub => (sub.status === 'active' || sub.status === 'trialing' || sub.status === 'past_due') && !sub.cancelAtPeriodEnd);
-    if (!live || until) return null;
+    // None live among the newest read, but Stripe holds more: it was not asked about the rest, so not "None".
+    if (!live) return list.more ? { kind: 'unread' } : { kind: 'none' };
     const preview = await stripe.invoices.createPreview({ customer: customerId, subscription: live.id }, READ_OPTS);
     const at = iso(preview.next_payment_attempt) ?? live.currentPeriodEnd;
-    return at ? { amountCents: preview.amount_due, currency: preview.currency, at } : null;
-  }).catch(() => null);
-  const [customer, subs, charges, invoices, nextCharge] = await Promise.all([
+    return at ? { kind: 'charge', amountCents: preview.amount_due, currency: preview.currency, at } : { kind: 'none' };
+  }).catch((): NextCharge => ({ kind: 'unread' }));
+  const [customer, subs, subscriptions, charges, invoices, nextCharge] = await Promise.all([
     stripe.customers.retrieve(customerId, { expand: ['invoice_settings.default_payment_method'] }, READ_OPTS),
     subsRead,
+    subsShaped,
     listAll<Stripe.Charge>(after => stripe.charges.list({ customer: customerId, created, limit: PAGE, expand: ['data.refunds'], ...(after ? { starting_after: after } : {}) }, READ_OPTS)),
     // An invoice is made before its charges (a retry pays days later), so the invoices reach back 45 days further.
     listAll<Stripe.Invoice & { id: string }>(after => stripe.invoices.list({ customer: customerId, created: { gte: created.gte - 45 * 86400, ...(created.lt ? { lt: created.lt } : {}) }, limit: PAGE, expand: ['data.payments'], ...(after ? { starting_after: after } : {}) }, READ_OPTS) as Promise<Stripe.ApiList<Stripe.Invoice & { id: string }>>),
@@ -202,7 +208,6 @@ export async function readClubMoney(stripe: Stripe, customerId: string, opts: { 
     if (inv) byIntent.set(pi, inv);
   }));
 
-  const subscriptions = subs.data.map(s => toMoneySubscription(s, opts.prices));
   const moneyCharges = charges.items
     .map(c => toMoneyCharge(c, byCharge.get(c.id) ?? (c.payment_intent ? byIntent.get(idOf(c.payment_intent)!) : undefined) ?? null))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -211,7 +216,7 @@ export async function readClubMoney(stripe: Stripe, customerId: string, opts: { 
   // The payment method on file is the one Stripe charges next: the live subscription's own first (a subscription bought
   // through Checkout keeps it there, not on the customer), then the customer's default. Whatever kind it is — a card,
   // Link, a bank account — a method with no card details is named, never reported as missing.
-  const liveSub = subs.data.find(sub => sub.status === 'active' || sub.status === 'trialing' || sub.status === 'past_due');
+  const liveSub = subs.items.find(sub => sub.status === 'active' || sub.status === 'trialing' || sub.status === 'past_due');
   const subPm = liveSub?.default_payment_method;
   const custPm = cust?.invoice_settings?.default_payment_method;
   const pm = subPm && typeof subPm !== 'string' ? subPm : custPm;
@@ -230,6 +235,7 @@ export async function readClubMoney(stripe: Stripe, customerId: string, opts: { 
     subscriptions,
     charges: moneyCharges,
     olderBefore: charges.more && oldest ? oldest.createdAt : (oldest ? new Date(sinceMs).toISOString() : null), // utc-intentional
+    subscriptionsMore: subs.more,
     nextCharge,
   };
 }

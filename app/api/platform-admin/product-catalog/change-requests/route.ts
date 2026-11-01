@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { writePlatformAuditLog } from '@/lib/platform-audit';
+import { writeAuditBeforeChange, writePlatformAuditLog } from '@/lib/platform-audit';
 import { requirePlatformPower } from '@/lib/platform-auth';
 import { recordCatalogChangeApplication } from '@/lib/platform-catalog-approval';
 import { sanitizePlatformChangeNote } from '@/lib/platform-change-note';
@@ -289,27 +289,8 @@ async function applyStripePriceUpdateProposal(
     }
   }
 
-  const updatedAt = new Date().toISOString();
-  const { data: updatedPrice, error: updateError } = await supabaseAdmin
-    .from('stripe_prices')
-    .update({
-      price_id: proposal.proposedPriceId || null,
-      updated_at: updatedAt,
-      updated_by_email: actorEmail,
-      last_change_note: proposal.changeNote,
-    })
-    .eq('id', proposal.stripePriceId)
-    .select('*')
-    .single<StripePriceRow>();
-
-  if (updateError) {
-    return {
-      ok: false,
-      response: NextResponse.json({ error: updateError.message }, { status: 500 }),
-    };
-  }
-
-  await writePlatformAuditLog(
+  // Stage 0 Part 9: switching a live price slot changes what new customers are charged: its row first, or no switch.
+  const changeFailed = await writeAuditBeforeChange(
     actorEmail,
     null,
     'update_stripe_price_id',
@@ -335,6 +316,27 @@ async function applyStripePriceUpdateProposal(
     },
     { reason: proposal.changeNote },
   );
+
+  const updatedAt = new Date().toISOString();
+  const { data: updatedPrice, error: updateError } = await supabaseAdmin
+    .from('stripe_prices')
+    .update({
+      price_id: proposal.proposedPriceId || null,
+      updated_at: updatedAt,
+      updated_by_email: actorEmail,
+      last_change_note: proposal.changeNote,
+    })
+    .eq('id', proposal.stripePriceId)
+    .select('*')
+    .single<StripePriceRow>();
+
+  if (updateError) {
+    await changeFailed(updateError);
+    return {
+      ok: false,
+      response: NextResponse.json({ error: updateError.message }, { status: 500 }),
+    };
+  }
 
   await recordCatalogChangeApplication(
     changeRequestId,

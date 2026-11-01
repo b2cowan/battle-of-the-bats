@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
 import { canViewPlatformArea } from '@/lib/platform-areas';
 import { auditDoors, isScheduledEntry } from '@/lib/platform-audit-doors';
+import { FAILED_SUFFIX, baseAction, failedAuditIds, failedEntryOf } from '@/lib/platform-audit';
 import { auditReasonText, hiddenEntryLine } from '@/lib/platform-audit-reason';
 import { reasonOfRow } from '@/lib/platform-story-view';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -80,10 +81,27 @@ const ACTION_LABELS: Record<string, string> = {
   update_stripe_price_id: 'Update Stripe price ID',
 };
 
-function actionLabel(action: string) {
+/**
+ * Stage 0 Part 9: a money change's row is written first; when the change then failed, both rows stay here (this page is
+ * the record) and say so: the failure row ("…: not made") by the row it names, the first row ("(not made)") by a failure
+ * row naming it. Only a row carrying `failedEntryId` is a failure row: `cancel_subscription_stripe_failed` is not one.
+ */
+type NotMade = 'failure_row' | 'not_made' | null;
+
+function actionLabel(action: string, notMade: NotMade = null) {
   // Curated label when we have one; otherwise a clean sentence-case fallback (never the raw snake_case key).
-  if (ACTION_LABELS[action]) return ACTION_LABELS[action];
-  return humanize(action);
+  const key = notMade === 'failure_row' ? baseAction(action) : action;
+  const label = ACTION_LABELS[key] ?? humanize(key);
+  if (notMade === 'failure_row') return `${label}: not made`;
+  return notMade === 'not_made' ? `${label} (not made)` : label;
+}
+
+/** The shown rows a failure row names, read across every page and filter (the pair can be split by both). */
+async function notMadeIds(ids: string[]): Promise<Set<string>> {
+  if (ids.length === 0) return new Set();
+  const { data } = await supabaseAdmin.from('platform_audit_log').select('action, new_value, reason')
+    .like('action', `%${FAILED_SUFFIX}`).in('new_value->>failedEntryId', ids);
+  return failedAuditIds((data ?? []) as Array<{ action: string; new_value: unknown }>);
 }
 
 function orgNameFromJoin(value: AuditLogRow['organizations']) {
@@ -212,6 +230,9 @@ export default async function AuditLogPage({
 
   const readsMoney = hasPlatformPower(auth.role, 'find_stripe');
   const readsLeads = hasPlatformPower(auth.role, 'growth');
+  const notMade = await notMadeIds(rows.map(r => r.id));
+  const markOf = (r: { id: string; action: string; newValue: unknown }): NotMade =>
+    failedEntryOf({ action: r.action, new_value: r.newValue }) ? 'failure_row' : notMade.has(r.id) ? 'not_made' : null;
   const rowViews: AuditRowView[] = rows.map(raw => {
     // A refund's details are the Stripe readers', a lead's the growth power's; the rest see that one was made.
     const hidden = hiddenEntryLine(raw.action, { money: readsMoney, leads: readsLeads });
@@ -226,7 +247,7 @@ export default async function AuditLogPage({
       orgId: row.orgId,
       orgName: row.orgName,
       action: row.action,
-      actionLabel: actionLabel(row.action),
+      actionLabel: actionLabel(row.action, markOf(raw)),
       field: row.field,
       oldValue: row.oldValue,
       newValue: row.newValue,
@@ -237,7 +258,7 @@ export default async function AuditLogPage({
       momentKey: new Date(row.createdAt).toISOString().slice(0, 19),
       orgFilterHref,
       doors: auditDoors({
-        action: row.action,
+        action: markOf(raw) === 'failure_row' ? baseAction(row.action) : row.action,
         orgId: row.orgId,
         orgName: row.orgName,
         orgEntriesHref: orgFilterHref ?? buildAuditHref(filters, { offset: 0 }),

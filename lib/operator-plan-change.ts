@@ -1,5 +1,5 @@
 import { supabaseAdmin } from './supabase-admin';
-import { writePlatformAuditLog } from './platform-audit';
+import { writeAuditBeforeChange, writePlatformAuditLog } from './platform-audit';
 import { getEffectiveTournamentLimit } from './plan-config';
 import { archiveOverCapTournamentsForPlanChange, isLowerPlan } from './billing-retention';
 import { isClubPlan } from './module-entitlements';
@@ -209,12 +209,34 @@ export async function applyOperatorPlanChange(input: OperatorPlanChangeInput): P
     }
   }
 
+  // Stage 0 Part 9: the change's own row, with its reason, is written first or the plan is not changed. The per-field rows
+  // below follow the change (they say what it came to), and the Story folds them in as its sub-line.
+  const changeFailed = await writeAuditBeforeChange(actor, orgId, input.audit.action, 'plan_and_limit',
+    current
+      ? {
+          plan_id: current.plan_id,
+          tournament_limit: currentEffectiveLimit,
+          subscription_status: current.subscription_status,
+          stripe_subscription_id: current.stripe_subscription_id,
+          subscription_period: current.subscription_period,
+          current_period_end: current.current_period_end,
+        }
+      : null,
+    {
+      plan_id: planId,
+      tournament_limit: effectiveTournamentLimit,
+      non_archived_tournaments: nonArchivedTournamentCount ?? 0,
+      free_plan_billing_reset: planId === 'tournament',
+      ...extra,
+    }, { reason });
+
   const { error } = await supabaseAdmin
     .from('organizations')
     .update(updatePayload)
     .eq('id', orgId);
   if (error) {
     console.error('[platform-admin] org plan update error:', error);
+    await changeFailed(error);
     throw new PlanUpdateError(error.message);
   }
 
@@ -275,24 +297,6 @@ export async function applyOperatorPlanChange(input: OperatorPlanChangeInput): P
     }
   }
 
-  await writePlatformAuditLog(actor, orgId, input.audit.action, 'plan_and_limit',
-    current
-      ? {
-          plan_id: current.plan_id,
-          tournament_limit: currentEffectiveLimit,
-          subscription_status: current.subscription_status,
-          stripe_subscription_id: current.stripe_subscription_id,
-          subscription_period: current.subscription_period,
-          current_period_end: current.current_period_end,
-        }
-      : null,
-    {
-      plan_id: planId,
-      tournament_limit: effectiveTournamentLimit,
-      non_archived_tournaments: nonArchivedTournamentCount ?? 0,
-      free_plan_billing_reset: planId === 'tournament',
-      ...extra,
-    }, { reason });
   if (current?.tournament_limit !== effectiveTournamentLimit) {
     await writePlatformAuditLog(actor, orgId, 'update_plan', 'tournament_limit',
       current?.tournament_limit, effectiveTournamentLimit, { reason });

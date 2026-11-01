@@ -9,7 +9,7 @@
  * marks the old entry "Put back at …" without ever editing it.
  */
 import { supabaseAdmin } from './supabase-admin';
-import { writePlatformAuditLog } from './platform-audit';
+import { auditFirst, writePlatformAuditLog } from './platform-audit';
 import { CLUB_SECTIONS } from './platform-labels';
 
 // The four add-on sections and their names live with the console's other words (client-safe), re-exported here.
@@ -134,7 +134,17 @@ export async function endClubOverride(opts: {
   actorEmail: string;
   extra?: Record<string, unknown>;
 }): Promise<ChangeResult & { override?: { id: string; revoked_at: string; revoked_by: string } }> {
-  // Only a row that is still live: a wrong id, another club's row or an already-ended one is a no-op, reported as such.
+  const alreadyEnded = { ok: false as const, status: 404, error: 'That override has already ended.' };
+  // A wrong id, another club's row or an already-ended one ends nothing, so it writes no row either.
+  const { data: live, error: readError } = await supabaseAdmin.from('org_overrides').select('id')
+    .eq('id', opts.overrideId).eq('org_id', opts.orgId).is('revoked_at', null).maybeSingle();
+  if (readError) return { ok: false, status: 500, error: 'The override could not be ended.' };
+  if (!live) return alreadyEnded;
+  // Stage 0 Part 9: free time is what a club is charged, so its row comes first, or nothing is ended.
+  const first = await auditFirst(opts.actorEmail, opts.orgId, 'revoke_override', 'id', opts.overrideId,
+    opts.extra && Object.keys(opts.extra).length ? opts.extra : null, { reason: opts.reason });
+  if (!first.ok) return first;
+  // Only a row that is still live (another staff member may have ended it since the read above).
   const { data: updated, error } = await supabaseAdmin
     .from('org_overrides')
     .update({ revoked_at: new Date().toISOString(), revoked_by: opts.actorEmail })
@@ -142,10 +152,10 @@ export async function endClubOverride(opts: {
     .eq('org_id', opts.orgId)
     .is('revoked_at', null)
     .select('id, revoked_at, revoked_by');
-  if (error) return { ok: false, status: 500, error: 'The override could not be ended.' };
-  if (!updated || updated.length === 0) return { ok: false, status: 404, error: 'That override has already ended.' };
-
-  await writePlatformAuditLog(opts.actorEmail, opts.orgId, 'revoke_override', 'id', opts.overrideId,
-    opts.extra && Object.keys(opts.extra).length ? opts.extra : null, { reason: opts.reason });
+  if (error) { await first.failed(error); return { ok: false, status: 500, error: 'The override could not be ended.' }; }
+  if (!updated || updated.length === 0) {
+    await first.failed('already ended');
+    return alreadyEnded;
+  }
   return { ok: true, override: updated[0] as { id: string; revoked_at: string; revoked_by: string } };
 }

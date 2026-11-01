@@ -6,6 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgPlan } from '@/lib/types';
 import { applyClubIdentity, applyClubSections } from '@/lib/club-record-changes';
 import { applyOperatorPlanChange, PlanRefusedError, PlanUpdateError } from '@/lib/operator-plan-change';
+import { AUDIT_FIRST_REFUSAL, AuditFirstError } from '@/lib/platform-audit';
 
 /**
  * The club record's one pencil, saved (Support console Stage 2, owner ruling A6 — "one pencil for the whole record; the
@@ -99,6 +100,7 @@ export const PATCH = withObservability(async (req: Request, { params }: { params
       }
     } catch (err) {
       if (err instanceof PlanRefusedError) return fail(409, err.message);
+      if (err instanceof AuditFirstError) return fail(err.status, AUDIT_FIRST_REFUSAL); // keeps what was already saved
       return fail(500, err instanceof PlanUpdateError ? 'The plan could not be saved.' : 'The plan could not be saved.');
     }
     saved.push('plan and limits');

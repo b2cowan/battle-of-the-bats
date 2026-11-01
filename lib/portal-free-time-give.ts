@@ -1,6 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
-import { writePlatformAuditLog } from './platform-audit';
+import { randomUUID } from 'node:crypto';
+import { auditFirst, writePlatformAuditLog } from './platform-audit';
 import { isPlatformAdminEmail } from './platform-auth';
 import { isDemoOrganizerEmail } from './demo-org';
 import { grantsEnabled } from './entitlement-grants';
@@ -264,6 +265,8 @@ export async function givePortalFreeTime(input: PortalGiveInput): Promise<Portal
     return { ok: false, status: 500, error: 'Nothing was given. The server could not make the portal. Your answers are kept; try again.' };
   }
 
+  // ⚠ The one Part 9 exception: the first give makes the portal's organization, and its row belongs on that organization
+  // (the Story reads it there), which does not exist until the give is made. Written after, best-effort, as before.
   await writePlatformAuditLog(input.actor.email, orgId, 'give_portal_free_time', 'type', null, {
     mode: 'first', override_id: overrideId, last_day: lastDay, team: team.name, basic_coach_team_id: team.id, coach_user_id: coach.id,
   }, { reason });
@@ -279,8 +282,17 @@ async function giveAgain(
   row: Record<string, unknown>,
   ctx: { lastDay: string; reason: string; actor: Actor; coach: CoachIdentity },
 ): Promise<PortalGiveResult> {
-  const { data: grant, error } = await supabaseAdmin.from('org_overrides').insert(row).select('id').single();
-  if (error || !grant) return { ok: false, status: 500, error: 'Nothing was given. The server could not save it. Your answers are kept; try again.' };
+  // Stage 0 Part 9: the row first, or nothing is given. The grant's id is made here so the row can name it.
+  const grantId = randomUUID();
+  const first = await auditFirst(ctx.actor.email, portal.orgId, 'give_portal_free_time', 'type', null, {
+    mode: 'again', override_id: grantId, last_day: ctx.lastDay, coach_user_id: ctx.coach.id,
+  }, { reason: ctx.reason });
+  if (!first.ok) return first;
+  const { data: grant, error } = await supabaseAdmin.from('org_overrides').insert({ ...row, id: grantId }).select('id').single();
+  if (error || !grant) {
+    await first.failed(error ?? 'no row');
+    return { ok: false, status: 500, error: 'Nothing was given. The server could not save it. Your answers are kept; try again.' };
+  }
 
   // Compare-and-set: only an entitlement that has ended. Two Super admins at once: the second finds it running.
   const now = new Date().toISOString();
@@ -297,22 +309,20 @@ async function giveAgain(
     if (!entError && (opened ?? []).length === 0) {
       const finished = await finishHalfMadePortal(portal, String(row.expires_at));
       if (finished) {
-        await writePlatformAuditLog(ctx.actor.email, portal.orgId, 'give_portal_free_time', 'type', null, {
-          mode: 'again', override_id: grant.id, last_day: ctx.lastDay, coach_user_id: ctx.coach.id, finished_half_made: true,
+        await writePlatformAuditLog(ctx.actor.email, portal.orgId, 'give_portal_free_time', 'finished_half_made', null, {
+          override_id: grant.id, finished_half_made: true,
         }, { reason: ctx.reason });
         return { ok: true, orgId: portal.orgId, mode: 'again' };
       }
     }
     const { error: undoError } = await supabaseAdmin.from('org_overrides').delete().eq('id', grant.id);
+    // A grant left behind is not "not made": the give's row stays as the record of it (and the server log says remove it).
     if (undoError) console.error('[portal-free-time-give] a refused give left its grant behind; remove it by hand:', grant.id, undoError.message);
+    else await first.failed(entError ?? 'someone gave free time while the window was open');
     return entError
       ? { ok: false, status: 500, error: 'Nothing was given. The server could not save it. Your answers are kept; try again.' }
       : { ok: false, status: 409, error: 'Someone gave this coach free time while you had it open. Look again before you give.' };
   }
-
-  await writePlatformAuditLog(ctx.actor.email, portal.orgId, 'give_portal_free_time', 'type', null, {
-    mode: 'again', override_id: grant.id, last_day: ctx.lastDay, coach_user_id: ctx.coach.id,
-  }, { reason: ctx.reason });
   return { ok: true, orgId: portal.orgId, mode: 'again' };
 }
 
@@ -395,6 +405,11 @@ export async function changePortalFreeTimeEnd(input: PortalChangeInput): Promise
   }
   if (new Date(row.expires_at).getTime() === new Date(expiresAt).getTime()) return refuse(400, 'That is already its last free day.');
 
+  // Stage 0 Part 9: the row first, or nothing is changed.
+  const first = await auditFirst(input.actor.email, input.orgId, 'change_override_end', 'expires_at', row.expires_at, {
+    override_id: row.id, expires_at: expiresAt, last_day: lastDay, was_last_day: lastDayOfInstant(row.expires_at!), portal: true, ...input.extra,
+  }, { reason });
+  if (!first.ok) return first;
   const { data: written, error } = await supabaseAdmin
     .from('org_overrides')
     .update({ expires_at: expiresAt })
@@ -404,9 +419,13 @@ export async function changePortalFreeTimeEnd(input: PortalChangeInput): Promise
     .eq('expires_at', row.expires_at)
     .gt('expires_at', new Date().toISOString()) // never revive a grant that ran out since it was read
     .select('id');
-  if (error) return refuse(500, 'Nothing was changed. The server could not save it.');
+  if (error) { await first.failed(error); return refuse(500, 'Nothing was changed. The server could not save it.'); }
   if (!written || written.length === 0) {
-    const { data: now } = await supabaseAdmin.from('org_overrides').select('expires_at, created_by').eq('id', row.id).maybeSingle();
+    // The failure row lands before "someone changed it" is read, which must not name this refused change as the last one.
+    const [{ data: now }] = await Promise.all([
+      supabaseAdmin.from('org_overrides').select('expires_at, created_by').eq('id', row.id).maybeSingle(),
+      first.failed('changed by someone else while the window was open'),
+    ]);
     return refuse(409, await staleSentence(input.orgId, row.id, now?.created_by ?? row.created_by, now?.expires_at ?? row.expires_at));
   }
 
@@ -418,13 +437,12 @@ export async function changePortalFreeTimeEnd(input: PortalChangeInput): Promise
     .eq('ends_at', row.expires_at)
     .select('id');
   if (entError || !ent || ent.length !== 1) {
-    await supabaseAdmin.from('org_overrides').update({ expires_at: row.expires_at }).eq('id', row.id).eq('expires_at', expiresAt);
+    const { error: backError } = await supabaseAdmin.from('org_overrides').update({ expires_at: row.expires_at }).eq('id', row.id).eq('expires_at', expiresAt);
+    // The grant not put back is a change that stands: its row stays as the record of it.
+    if (backError) console.error('[portal-free-time-give] a refused change left the grant on its new end; set it back by hand:', row.id, backError.message);
+    else await first.failed(entError ?? 'the entitlement did not follow; the grant was put back');
     return refuse(500, 'Nothing was changed. The server could not save it.');
   }
-
-  await writePlatformAuditLog(input.actor.email, input.orgId, 'change_override_end', 'expires_at', row.expires_at, {
-    override_id: row.id, expires_at: expiresAt, last_day: lastDay, was_last_day: lastDayOfInstant(row.expires_at), portal: true, ...input.extra,
-  }, { reason });
   return { ok: true };
 }
 

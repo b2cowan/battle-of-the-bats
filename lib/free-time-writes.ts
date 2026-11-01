@@ -1,6 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
-import { writePlatformAuditLog } from './platform-audit';
+import { randomUUID } from 'node:crypto';
+import { auditFirst, FAILED_SUFFIX, withoutFailedChanges } from './platform-audit';
 import { isDemoOrgId } from './demo-org-server';
 import { hasLiveSubscription } from './plan-move';
 import { grantsEnabled } from './entitlement-grants';
@@ -124,9 +125,16 @@ export async function giveFreeTime(input: GiveInput): Promise<Refusal | { ok: tr
   );
   if (!decision.ok) return decision;
 
+  // Stage 0 Part 9: the row first, or nothing is given. The grant's id is made here so the row can name it.
+  const overrideId = randomUUID();
+  const first = await auditFirst(input.actor.email, club.id, 'create_override', 'type', null, {
+    ...decision.row, last_day: decision.lastDay, override_id: overrideId,
+  }, { reason: decision.reason });
+  if (!first.ok) return first;
   const { data: created, error } = await supabaseAdmin
     .from('org_overrides')
     .insert({
+      id: overrideId,
       org_id: club.id,
       ...decision.row,
       starts_at: new Date().toISOString(),
@@ -135,16 +143,13 @@ export async function giveFreeTime(input: GiveInput): Promise<Refusal | { ok: tr
     })
     .select('id')
     .single();
+  if (error || !created) await first.failed(error ?? 'no row');
   // Two staff giving a plan at the same instant: the database's one-plan-grant-at-a-time rule (mig 380, Q8) refuses the
   // second, and it reads as the refusal the window would have shown had it seen the first.
   if (error?.code === '23P01') {
     return { ok: false, status: 409, error: `${club.name} already has a plan given as free time. Give it more time from that entry instead of a second grant.` };
   }
   if (error || !created) return { ok: false, status: 500, error: 'Nothing was given. The server could not save it. Your answers are kept; try again.' };
-
-  await writePlatformAuditLog(input.actor.email, club.id, 'create_override', 'type', null, {
-    ...decision.row, last_day: decision.lastDay, override_id: created.id,
-  }, { reason: decision.reason });
   return { ok: true, override: { id: created.id } };
 }
 
@@ -199,6 +204,12 @@ export async function changeFreeTimeEnd(input: ChangeInput): Promise<Refusal | {
   }
   if (sameEnd(row.expires_at, expiresAt)) return refuse(400, expiresAt ? 'That is already its last free day.' : 'It already has no end date.');
 
+  // Stage 0 Part 9: the row first, or nothing is changed.
+  const first = await auditFirst(input.actor.email, club.id, 'change_override_end', 'expires_at', row.expires_at, {
+    override_id: row.id, expires_at: expiresAt, last_day: lastDay, was_last_day: row.expires_at ? lastDayOfInstant(row.expires_at) : null, ...input.extra,
+  }, { reason });
+  if (!first.ok) return first;
+
   // Compare-and-set: only the row whose end is still the one the window was opened with.
   let write = supabaseAdmin
     .from('org_overrides')
@@ -210,15 +221,18 @@ export async function changeFreeTimeEnd(input: ChangeInput): Promise<Refusal | {
     ? write.eq('expires_at', row.expires_at).gt('expires_at', new Date().toISOString()) // never revive a grant that ran out since it was read
     : write.is('expires_at', null);
   const { data: written, error } = await write.select('id');
-  if (error) return refuse(500, 'Nothing was changed. The server could not save it.');
+  if (error) {
+    await first.failed(error);
+    return refuse(500, 'Nothing was changed. The server could not save it.');
+  }
   if (!written || written.length === 0) {
-    const { data: now } = await supabaseAdmin.from('org_overrides').select('expires_at, created_by').eq('id', row.id).maybeSingle();
+    // The failure row lands before "someone changed it" is read, which must not name this refused change as the last one.
+    const [{ data: now }] = await Promise.all([
+      supabaseAdmin.from('org_overrides').select('expires_at, created_by').eq('id', row.id).maybeSingle(),
+      first.failed('changed by someone else while the window was open'),
+    ]);
     return refuse(409, await staleSentence(club.id, row.id, now?.created_by ?? row.created_by, now?.expires_at ?? row.expires_at));
   }
-
-  await writePlatformAuditLog(input.actor.email, club.id, 'change_override_end', 'expires_at', row.expires_at, {
-    override_id: row.id, expires_at: expiresAt, last_day: lastDay, was_last_day: row.expires_at ? lastDayOfInstant(row.expires_at) : null, ...input.extra,
-  }, { reason });
   return { ok: true };
 }
 
@@ -226,12 +240,14 @@ export async function changeFreeTimeEnd(input: ChangeInput): Promise<Refusal | {
 export async function staleSentence(orgId: string, overrideId: string, createdBy: string, expiresAt: string | null): Promise<string> {
   const { data } = await supabaseAdmin
     .from('platform_audit_log')
-    .select('actor_email, new_value')
+    .select('id, action, actor_email, new_value')
     .eq('org_id', orgId)
-    .eq('action', 'change_override_end')
+    .in('action', ['change_override_end', `change_override_end${FAILED_SUFFIX}`])
     .order('created_at', { ascending: false })
     .limit(50);
-  const last = (data ?? []).find(e => (e.new_value as { override_id?: string } | null)?.override_id === overrideId);
+  // A change whose row was written first and then did not happen (Part 9) is not who changed it: the refused one included.
+  const last = withoutFailedChanges(data ?? [])
+    .find(e => (e.new_value as { override_id?: string } | null)?.override_id === overrideId);
   const who = last?.actor_email ?? createdBy;
   const runs = expiresAt ? ` It now runs through ${formatLongDay(lastDayOfInstant(expiresAt))}.` : ' It now has no end date.';
   return `${who} changed this free time while you had it open.${runs} Look again before you change it.`;

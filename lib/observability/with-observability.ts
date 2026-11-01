@@ -72,7 +72,8 @@ export function withObservability<T extends AnyRouteHandler>(handler: T, opts: {
           // wrapper every authenticated route already passes through, so no route can forget —
           // and via the HttpError contract, so a second such error needs no edit to this file.
           if (isHttpError(err)) {
-            recordRequest(opts.route, false);
+            // A 5xx answer (the change log refusing a money change, Stage 0 Part 9) still counts as a failed request.
+            recordRequest(opts.route, err.status >= 500);
             const res = err.toResponse();
             try { res.headers.set('x-request-id', requestId); } catch { /* immutable headers */ }
             return res;

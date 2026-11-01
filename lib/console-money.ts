@@ -86,8 +86,19 @@ export type MoneyRead = {
   charges: MoneyCharge[];
   /** Where "Show older charges" reads from (the oldest charge read), or null when there are no older ones. */
   olderBefore: string | null;
-  nextCharge: { amountCents: number; currency: string; at: string } | null;
+  /** True when Stripe holds more subscriptions than the read pages through (the newest are read). */
+  subscriptionsMore: boolean;
+  nextCharge: NextCharge;
 };
+
+/**
+ * Stripe's own preview of the next charge. `none`: no live subscription, or it ends at the period end. `unread`: Stripe
+ * could not be asked, which is never "None" (Plans & pricing Stage 0, Part 8).
+ */
+export type NextCharge =
+  | { kind: 'charge'; amountCents: number; currency: string; at: string }
+  | { kind: 'none' }
+  | { kind: 'unread' };
 
 /** Our side of the comparison: what we keep (the plan the club PAYS for, never free time's). */
 export type OurMoneyRecord = {
@@ -389,10 +400,24 @@ export function moneyBand(read: MoneyRead, since: string): Array<{ label: string
     { label: 'Refunded', value: formatCents(refunds.reduce((s, r) => s + r.amountCents, 0), currency),
       note: refunds.length === 0 ? 'none in 12 months' : refunds.length === 1 ? `1 refund, ${consoleDay(refunds[0].createdAt)}` : `${refunds.length} refunds`,
       ...(refunds.length ? { tone: 'warn' as const } : {}) },
-    read.nextCharge
-      ? { label: 'Next charge', value: formatCents(read.nextCharge.amountCents, read.nextCharge.currency), note: `on ${formatStoredDate(read.nextCharge.at)}` }
-      : { label: 'Next charge', value: 'None', note: read.subscriptions.some(s => isLiveSubscription(s.status) && s.cancelAtPeriodEnd) ? 'it ends at the period end' : 'no live subscription' },
+    nextChargeCell(read),
   ];
+}
+
+function nextChargeCell(read: MoneyRead): ReturnType<typeof moneyBand>[number] {
+  const next = read.nextCharge;
+  const cell = (value: string, note: string, tone?: 'warn') => ({ label: 'Next charge', value, note, ...(tone ? { tone } : {}) });
+  switch (next.kind) {
+    case 'charge': return cell(formatCents(next.amountCents, next.currency), `on ${formatStoredDate(next.at)}`);
+    case 'unread': return cell('Not read', 'Stripe could not be asked for the next charge. Read again.', 'warn');
+    case 'none': return cell('None',
+      read.subscriptions.some(s => isLiveSubscription(s.status) && s.cancelAtPeriodEnd) ? 'it ends at the period end' : 'no live subscription');
+  }
+}
+
+/** Under the subscription when Stripe holds more than the read pages through. */
+export function subscriptionsMoreWords(read: number): string {
+  return `This customer has more than ${read} subscriptions in Stripe. The newest ${read} were read; open the customer in Stripe to see the rest.`;
 }
 
 // ── A refund's rules (drawing G, H; owner Q1, Q2) ──────────────────────────────────────────────

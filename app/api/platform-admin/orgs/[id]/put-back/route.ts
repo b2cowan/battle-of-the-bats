@@ -5,6 +5,7 @@ import type { OrgPlan } from '@/lib/types';
 import { buildClubStory } from '@/lib/platform-story';
 import { applyClubSections, endClubOverride } from '@/lib/club-record-changes';
 import { applyOperatorPlanChange, PlanRefusedError } from '@/lib/operator-plan-change';
+import { isHttpError } from '@/lib/http-error';
 import { changeFreeTimeEnd } from '@/lib/free-time-writes';
 import { earliestLastDay } from '@/lib/free-time';
 import { changePortalFreeTimeEnd, endPortalFreeTimeNow, readFreeTimePortal } from '@/lib/portal-free-time-give';
@@ -94,6 +95,7 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     return NextResponse.json({ ok: true, warnings: [...result.warnings, ...(result.archiveWarning ? [result.archiveWarning] : [])] });
   } catch (err) {
     if (err instanceof PlanRefusedError) return NextResponse.json({ error: err.message }, { status: 409 });
+    if (isHttpError(err)) throw err; // the change log refused it first: the wrapper answers
     return NextResponse.json({ error: 'The plan could not be put back.' }, { status: 500 });
   }
 }, { route: '/api/platform-admin/orgs/[id]/put-back' });

@@ -399,7 +399,7 @@ describe('6 · Stripe is read only for its readers, never stored, and its outage
     assert.match(readCode('app/platform-admin/orgs/[id]/MoneyTab.tsx'), /Stripe could not be read at \{consoleClock\(m\.readAt\)\}\. Our record is below/);
   });
   it('our record beside Stripe’s: free time is ours only, and a club on free time never reads as "Differs" on its plan', () => {
-    const read: MoneyRead = { readAt: NOW.toISOString(), testMode: true, customer: { id: 'cus_1', email: null }, card: null, charges: [], olderBefore: null, nextCharge: null,
+    const read: MoneyRead = { readAt: NOW.toISOString(), testMode: true, customer: { id: 'cus_1', email: null }, card: null, charges: [], olderBefore: null, subscriptionsMore: false, nextCharge: { kind: 'none' },
       subscriptions: [{ id: 'sub_1', status: 'active', planId: 'tournament_plus', cycle: 'monthly', amountCents: 3900, currency: 'cad', currentPeriodEnd: '2026-11-01T13:00:00.000Z', createdAt: '2026-06-01T13:00:00.000Z', cancelAtPeriodEnd: false, endedAt: null }] };
     const rows = compareRecord({ planId: 'tournament_plus', status: 'active', currentPeriodEnd: '2026-11-01T13:00:00.000Z', subscriptionId: 'sub_1', customerId: 'cus_1', freeThrough: { lastDay: '2027-03-31', what: 'free time' } }, read);
     assert.ok(!rows.some(r => r.differs));
@@ -407,7 +407,7 @@ describe('6 · Stripe is read only for its readers, never stored, and its outage
   });
   it('the payment-method row names whatever the default is: a card, Link, or nothing — Link is never "no card"', () => {
     const ours = { planId: 'tournament_plus', status: 'active', currentPeriodEnd: null, subscriptionId: null, customerId: 'cus_1', freeThrough: null };
-    const base: MoneyRead = { readAt: NOW.toISOString(), testMode: true, customer: { id: 'cus_1', email: null }, card: null, charges: [], olderBefore: null, nextCharge: null, subscriptions: [] };
+    const base: MoneyRead = { readAt: NOW.toISOString(), testMode: true, customer: { id: 'cus_1', email: null }, card: null, charges: [], olderBefore: null, subscriptionsMore: false, nextCharge: { kind: 'none' }, subscriptions: [] };
     const words = (read: MoneyRead) => compareRecord(ours, read).find(r => r.key === 'card')?.stripe;
     assert.equal(words({ ...base, otherMethod: 'Link · a@b.ca' }), 'Link · a@b.ca');
     assert.match(words({ ...base, card: { brand: 'visa', last4: '4242', expMonth: 3, expYear: 2030 } }) ?? '', /ending 4242 · expires 03\/2030/);

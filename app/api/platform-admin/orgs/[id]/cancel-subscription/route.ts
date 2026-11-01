@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformPower } from '@/lib/platform-auth';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
-import { writePlatformAuditLog } from '@/lib/platform-audit';
+import { writeAuditBeforeChange, writePlatformAuditLog } from '@/lib/platform-audit';
 import {
   buildCancellationPreflight,
   COACHES_PORTAL_RETENTION_REASON,
@@ -155,6 +155,23 @@ export const POST = withObservability(async (req: NextRequest,
   // 30-day warning lead, which a Coaches Portal is owed either way.
   const retentionReason = isCoachesPortal ? COACHES_PORTAL_RETENTION_REASON : 'account_cancellation';
 
+  // Stage 0 Part 9: the cancel's row, with its reason, before anything is written, or nothing is cancelled. Stripe is
+  // still asked after it, and a Stripe failure is its own second row (unchanged).
+  const changeFailed = await writeAuditBeforeChange(
+    auth.user.email!,
+    id,
+    'cancel_subscription',
+    'subscription_status',
+    orgRow.subscription_status,
+    {
+      status: 'canceled',
+      retentionUntil,
+      retainedTournamentIds: preflight.tournaments.map(t => t.id),
+      stripeSubscriptionId: orgRow.stripe_subscription_id,
+    },
+    { reason },
+  );
+
   const { data: intent, error: intentError } = await supabaseAdmin
     .from('billing_retention_intents')
     .insert({
@@ -174,6 +191,7 @@ export const POST = withObservability(async (req: NextRequest,
     .single();
 
   if (intentError) {
+    await changeFailed(intentError);
     return captureAndJson(intentError, { error: intentError.message }, 500);
   }
 
@@ -248,25 +266,15 @@ export const POST = withObservability(async (req: NextRequest,
     .eq('id', id);
 
   if (updateError) {
+    // Not "not made": the retention intent is written and the tournaments are archived by now. The cancel's row stays
+    // and a second one says it did not finish (the Story tells it), in the way a Stripe failure below is told.
+    await writePlatformAuditLog(auth.user.email!, id, 'cancel_subscription_incomplete', 'subscription_status',
+      orgRow.subscription_status, { error: updateError.message, intentId: intent.id, archivedTournamentIds: preflight.tournaments.map(t => t.id) },
+      { reason });
     return captureAndJson(updateError, { error: updateError.message }, 500);
   }
   // 12d-2 (ask 11): the operator's cancel is an ending too — the club's open pay pages close; the account stays (ask 4).
   await closePagesIfPaymentsEnded(id, 'operator cancel', { ended: true });
-
-  await writePlatformAuditLog(
-    auth.user.email!,
-    id,
-    'cancel_subscription',
-    'subscription_status',
-    orgRow.subscription_status,
-    {
-      status: 'canceled',
-      retentionUntil,
-      retainedTournamentIds: preflight.tournaments.map(t => t.id),
-      stripeSubscriptionId: orgRow.stripe_subscription_id,
-    },
-    { reason },
-  );
 
   let stripeWarning: string | null = null;
   const stripeSubscriptionId = orgRow.stripe_subscription_id;

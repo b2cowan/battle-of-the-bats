@@ -117,7 +117,64 @@
   `stripeKeyIsLive()` / `stripeEnvironment()` directly; two fee guard tests follow); `IGNORED_REASONS` is the one list of
   `ignored_reason` words, the two outcome types derive from it, and a new test pins it to mig 416's CHECK; `chargeStoryEntry` lost its
   unreachable `null` arm; the key-prefix guard now also scans `.cjs/.mts/.jsx` and catches `startsWith('sk_'|'rk_'|'pk_')`.
-  Checked 2026-11-01 by Session 3: Stage 0 unit tests 244/244, typecheck clean.
+  Checked 2026-11-01 by Session 3: Stage 0 unit tests 244/244, typecheck clean. **Committed `46cb0d55a` 2026-11-01.**
+- **Part 10 — not built in Session 3 (owner ruling 2026-11-01: draw it first).** The frame check stopped it: no sign-in-again window is
+  drawn, and neither of today's two doors (Bulk changes, the price-slot change) is framed with the step. A server-only gate would
+  just make both doors fail. Owner checklist O10 holds the design session; Part 10 is then its own build session.
+- **Part 8 — built 2026-11-01, uncommitted at time of writing. No migration.** `MoneyRead['nextCharge']` is now the union `NextCharge`
+  (`{kind:'charge',…} | {kind:'none'} | {kind:'unread'}`, `lib/console-money.ts`); the preview's `.catch` returns `unread`. The band
+  words it **"Not read"** (the word the comparison rows already use for a Stripe that did not answer) with the note "Stripe could not be
+  asked for the next charge. Read again." and the warn tone; the existing Read again door sits directly under the band, so no new door.
+  Subscriptions page through `listAll` (100 a page, 3 pages: the same ceiling as charges), the live one is picked across every page;
+  `subscriptionsMore` puts one caption under the subscription card (`subscriptionsMoreWords`, count = what was read). The second-live-
+  subscription sentence reads the same `subscriptions` list, unchanged. The refund window's "next charge is still …" reads only a
+  `charge`. Tests: `tests/unit/console-money-next-charge.test.ts` (11, the real read over a fake Stripe); two stage-3 guard fixtures
+  moved from `null` to `{kind:'none'}`. Typecheck: clean in Stage 0's files (one error in another session's
+  `components/public/PublicRuleSections.tsx`, not touched).
+- **Part 9 — built 2026-11-01, uncommitted at time of writing. No migration (the append-only guard is NOT built; see below).** One
+  helper in `lib/platform-audit.ts`: `writeAuditBeforeChange(...)` inserts the row strictly and returns `failed(error)`, which writes
+  `<action>_failed` `{failedEntryId, error}` (best-effort; same reason); a refused row throws `AuditFirstError` and routes answer
+  `AUDIT_FIRST_REFUSAL` with a 503; `auditFirst()` adapts it for the `{ok,status,error}` writers; `failedAuditIds()` lets readers
+  leave a change that did not happen out. **The list, decided by reading** (helper census, lines opened): the plan/limit/status change's
+  headline row (`applyOperatorPlanChange`, all four callers: plan, record, put-back, bulk), cancel (`cancel_subscription`, before the
+  retention intent; the Stripe-failure row unchanged), Bulk changes' **run row** (first, before any club; it now holds the request, the
+  counts stay on the `platform_bulk_operations` row) and its per-club billing-status row (`bulk_create_override`), the price-slot
+  switch (`update_stripe_price_id`), club free time (give `create_override`, change `change_override_end`, end `revoke_override` in
+  `endClubOverride`), Coaches Portal free time (give again, change), retention extend. Every one was best-effort AND after its change
+  before this Part. **Per-club rows in a bulk run:** the money ones (billing status, plan) are strict-first, because a club whose row
+  cannot be written is then simply that club's failure in the run's results while the batch carries on; sections stay best-effort
+  after (not money). **Detail rows** (`update_plan` per-field, archived tournaments, trial, comp revoked) stay after the change: they
+  say what it came to. Moving the headline first also lets the Story fold the archived-tournaments row in (it used to be written just
+  BEFORE the headline and fell outside the fold window). **Exceptions, named in the guard:** the FIRST Coaches Portal give (its row
+  belongs on the portal organization the give creates), the keep-Premium checkout's revoke (the product acting for the customer).
+  **Not on the list (entitlement, not charge):** sections, plan availability and plan settings in the catalog, feature matrix; the
+  Stripe-fee retry is a product re-run (NO_REASON_FILES). Readers: the club Story and free time's "someone changed it" sentence skip a
+  failed row (that sentence would otherwise name the refused writer as the one who changed it). Free-time grant ids are now made in
+  the app (`randomUUID`) so the first row can name them. **Append-only guard NOT built** (the prompt's own condition fails):
+  `platform_audit_log.org_id` is `ON DELETE SET NULL` (mig 018), so every club delete UPDATEs its rows, and mig 405 rewrote lead rows
+  to remove personal details (a privacy erasure); a refuse-UPDATE/DELETE trigger would break club deletes and the next erasure. A
+  narrower guard (refuse every UPDATE except `org_id` → NULL, refuse DELETE) is possible; owner's call (Owner checklist O11).
+  Tests: `tests/unit/platform-audit-money-first.test.ts` (19: site order, no best-effort regression, refusal wording, the helper
+  over a stand-in client, the readers); `platform-audit-reason-guard.test.ts` now scans `writeAuditBeforeChange` too.
+  **Also fixed:** `tests/unit/bank-debit-desk.test.ts` still pinned `LIVE_KEY()`, which the Step 0 simplify (`46cb0d55a`) removed;
+  repointed to `stripeKeyIsLive()`. Full unit run after Part 9: 12,987 tests, the 5 known unrelated failures only.
+- **Parts 8–9 · `/simplify` + `/review` (2026-11-01, this session).** Simplify: `AuditFirstError` is now an `HttpError` (503, the
+  refusal), so `withObservability` answers it and the per-route catches are gone (the wrapper counts a 5xx HttpError as a failed
+  request); `auditFirst(...args)` takes the writer's arguments; `withoutFailedChanges` / `failedEntryOf` / `baseAction` are the one
+  reader rule; subscriptions are shaped once. Review (4 lenses; all findings checked in the main loop) fixed: the audit page marked
+  `cancel_subscription_stripe_failed` "not made" (only a row carrying `failedEntryId` is a failure row now) and paired rows only
+  within one page (now one read by the shown ids, so an action filter or a page break no longer hides the mark); the club record's
+  save lost "Already saved: …" on a refused plan (answers through its own `fail()` again); a cancel whose last step fails after
+  archiving was marked "not made" (now `cancel_subscription_incomplete`, told in the Story as "The cancel did not finish");
+  `endClubOverride` wrote two rows for an already-ended grant (reads first now); next charge read "None" when Stripe held more than
+  300 subscriptions and none live among them (now `unread`); two portal double failures (grant left behind / not put back) no longer
+  say "not made"; **mig 417's backfill** now skips a price switch whose row a `_failed` row names (edited in place: dev-applied,
+  prod-pending, `ON CONFLICT DO NOTHING`, safe to re-run). **Not fixed, reported:** two staff changing the same club's plan in the
+  same instant can leave the log's order different from the database's (no compare-and-set on the plan update, as before); a
+  failure row that itself cannot be written leaves the first row unmarked (best-effort by design); the Story folds a plan change's
+  detail rows within 10 seconds of its row, which a very slow over-cap archive could pass; the audit CSV export carries both rows
+  unmarked (it is the raw record); Bulk changes' run row no longer carries the counts (they live on the operation's own row); a
+  refused audit write is logged to the server, not captured as an error event.
 
 ## What the owner sees after this build (present a version of this as the PM summary BEFORE any code)
 
@@ -457,7 +514,8 @@ The ONE home of the owner's Stage 0 steps (the Stripe plan's Stage 0 entry and t
 here). Part 12 copies the open lines into the release note and the Stage 0 walk; a session that finds a line already done ticks it with its
 anchor (date, commit, walk §), never deletes it.
 
-- [ ] **O1 · Simplify + review of Parts 1–7** (commit `63988b38c`), run by the owner in another chat 2026-11-01; its fixes committed.
+- [x] **O1 · Simplify + review of Parts 1–7** (commit `63988b38c`), run by the owner in another chat 2026-11-01; its fixes committed
+  `46cb0d55a` 2026-11-01.
 - [ ] **O2 · Stripe dashboard, TEST mode:** add `charge.dispute.created`, `charge.dispute.updated`, `charge.dispute.closed`, `charge.refunded`
   to the **billing** webhook endpoint (not the Connect one). Before the Stage 0 walk, which exercises a test dispute.
 - [ ] **O3 · Stripe dashboard, LIVE mode:** the same four events on the live billing endpoint. Before the Stage 0 release reaches production.
@@ -471,6 +529,15 @@ anchor (date, commit, walk §), never deletes it.
 - [ ] **O8 · Production order:** migrations 416, 417, 418 (and any Session 3 adds) applied to production BEFORE the promote that ships the code
   (`MANUAL_PROD_STEPS.json`).
 - [ ] **O9 · Exit walks:** re-run Stripe Walk 6 (webhook hardening) and the Stage 0 walk (both test mode).
+- [ ] **O10 · `/design` session for Part 10 (sign in again), then its own build session** (owner ruling 2026-11-01, Session 3). The
+  round-2 drawings place the sentence on the Stage 3–8 screens only; they draw no sign-in-again window and no frame for today's Bulk
+  changes or today's price-slot change. Draw: the window (password only), where it opens on those two screens, the owner email.
+  Note for the session: today's Bulk changes never calls Stripe (status overrides and sections), so it is a many-customer
+  entitlement action, not yet a money one.
+- [ ] **O11 · Ruling: a narrower lock on the change log?** (Part 9, 2026-11-01.) The full append-only lock was not built: deleting a
+  club blanks the club on its log rows, and the October lead-privacy fix rewrote old rows. Option: refuse every edit except that
+  blanking, and refuse deletes (a migration; a future privacy erasure would then need the lock lifted on purpose). Recommend yes,
+  low urgency.
 
 ## Not in this stage (stay out)
 

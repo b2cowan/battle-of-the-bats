@@ -7,7 +7,7 @@ import { subscriptionStatusLabel } from '@/lib/platform-labels';
 import { isClubPlan } from '@/lib/module-entitlements';
 import { getPlanConfigOverride } from '@/lib/plan-config-db';
 import { hasPlatformPower, requireAnyPlatformPower } from '@/lib/platform-auth';
-import { writePlatformAuditLog } from '@/lib/platform-audit';
+import { writeAuditBeforeChange, writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgPlan } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
@@ -193,6 +193,16 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: operationError.message }, { status: 500 });
   }
 
+  // Stage 0 Part 9: the run's own row, with its reason, is written before any club is touched, or no club is. The counts
+  // live on the operation row above (updated at the end); each club's own row follows its change, or comes first when the
+  // change is money's (a billing status, a plan).
+  await writeAuditBeforeChange(auth.user.email!, null, 'run_bulk_operation', actionType, null, {
+    bulk_operation_id: operation.id,
+    action_type: actionType,
+    target_count: orgs.length,
+    parameters,
+  }, { reason });
+
   const results: BulkResult[] = [];
   // One read of the target plan's trial length for the whole batch, not one per org.
   const batchTrialDays = actionType === 'plan_change' && isClubPlan(targetPlan)
@@ -219,6 +229,13 @@ export const POST = withObservability(async (req: Request) => {
             message: "Skipped: you belong to this club, so you can't give it a billing status. Another staff member can." });
           continue;
         }
+        const changeFailed = await writeAuditBeforeChange(auth.user.email!, org.id, 'bulk_create_override', 'subscription_status', null, {
+          bulk_operation_id: operation.id,
+          type: 'subscription_status',
+          value: targetStatus,
+          expires_at: expiresAt,
+          last_day: indefinite ? null : lastDay,
+        }, { reason });
         const { error } = await supabaseAdmin
           .from('org_overrides')
           .insert({
@@ -229,15 +246,7 @@ export const POST = withObservability(async (req: Request) => {
             reason,
             created_by: auth.user.email!,
           });
-        if (error) throw error;
-
-        await writePlatformAuditLog(auth.user.email!, org.id, 'bulk_create_override', 'subscription_status', null, {
-          bulk_operation_id: operation.id,
-          type: 'subscription_status',
-          value: targetStatus,
-          expires_at: expiresAt,
-          last_day: indefinite ? null : lastDay,
-        }, { reason });
+        if (error) { await changeFailed(error); throw error; }
         results.push({ orgId: org.id, name: org.name, slug: org.slug, ok: true,
           message: indefinite
             ? `Billing status reads ${subscriptionStatusLabel(targetStatus)} with no end date`
@@ -357,15 +366,6 @@ export const POST = withObservability(async (req: Request) => {
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 500 });
   }
-
-  await writePlatformAuditLog(auth.user.email!, null, 'run_bulk_operation', actionType, null, {
-    bulk_operation_id: operation.id,
-    action_type: actionType,
-    target_count: results.length,
-    success_count: successCount,
-    failure_count: failureCount,
-    parameters,
-  }, { reason });
 
   return NextResponse.json({ ok: failureCount === 0, operation: updatedOperation, results, portalSkipLine });
 }, { route: '/api/platform-admin/bulk-operations' });

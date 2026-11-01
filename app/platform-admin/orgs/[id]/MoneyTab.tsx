@@ -14,7 +14,7 @@ import { formatStoredDate } from '@/lib/timezone';
 import { possessive } from '@/lib/utils';
 import {
   agreeLine, cardWords, centsFromTyped, compareRecord, differsWords, findPatterns, flagWords, formatCents,
-  moneyBand, paidForWords, refundDoorRefusal, remainingCents, stripeSaysWords, REFUND_REASON_MAX, REFUND_WORDS,
+  moneyBand, paidForWords, refundDoorRefusal, remainingCents, stripeSaysWords, subscriptionsMoreWords, REFUND_REASON_MAX, REFUND_WORDS,
   type ChargeFlag, type CompareRow, type MoneyCharge, type MoneyRead, type OurMoneyRecord,
 } from '@/lib/console-money';
 import { brandLabel } from '@/lib/online-payment-words';
@@ -202,6 +202,7 @@ export default function MoneyTab({
           </table>
         </div>
       </div>
+      {read?.subscriptionsMore && <p className={kit.caption}>{subscriptionsMoreWords(read.subscriptions.length)}</p>}
       {rows.some(r => r.differs) && (
         <p className={kit.caption}>Nothing here changes our record. A difference usually clears when Stripe’s next update arrives. If it is still there tomorrow, tell the product team.</p>
       )}
@@ -418,7 +419,7 @@ function RefundWindow({ orgId, orgName, charge, read, flaggedDuplicate, onClose,
   const earlier = charge.refundedCents;
   const card = cardWords(charge.card);
   const when = consoleWhen(charge.createdAt);
-  const next = read.nextCharge;
+  const next = read.nextCharge.kind === 'charge' ? read.nextCharge : null;
   const receipt = read.testMode
     ? 'Test payment: no money moves.'
     : read.customer.email ? `Stripe emails a receipt to ${read.customer.email}.` : 'Stripe has no email for this customer, so no receipt is sent.';

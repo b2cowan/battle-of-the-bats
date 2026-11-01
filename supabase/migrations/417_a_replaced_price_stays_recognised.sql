@@ -80,6 +80,9 @@ SELECT a.old_value->>'price_id', a.old_value->>'plan_id', a.old_value->>'billing
    AND a.old_value->>'billing_cycle' IS NOT NULL
    AND a.old_value->>'environment' IS NOT NULL
    AND a.old_value->>'price_id' IS DISTINCT FROM a.new_value->>'price_id'
+   -- Stage 0 Part 9 writes this row BEFORE the switch: a switch that then failed is named by a `_failed` row and replaced nothing.
+   AND NOT EXISTS (SELECT 1 FROM public.platform_audit_log f
+                    WHERE f.action = 'update_stripe_price_id_failed' AND f.new_value->>'failedEntryId' = a.id::text)
  ORDER BY a.created_at
 ON CONFLICT (price_id) DO NOTHING;
 

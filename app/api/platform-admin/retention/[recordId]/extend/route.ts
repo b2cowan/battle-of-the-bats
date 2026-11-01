@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requirePlatformPower } from '@/lib/platform-auth';
-import { writePlatformAuditLog } from '@/lib/platform-audit';
+import { writeAuditBeforeChange } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
@@ -48,6 +48,17 @@ export const POST = withObservability(async (req: Request, ctx: { params: Promis
   nextDate.setDate(nextDate.getDate() + days);
   const nextIso = nextDate.toISOString();
 
+  // Stage 0 Part 9: the row first, or the retention is not extended.
+  const changeFailed = await writeAuditBeforeChange(
+    auth.user.email ?? 'platform-admin',
+    current.org_id,
+    'extend_billing_retention',
+    'retention_until',
+    current.retention_until,
+    { retentionUntil: nextIso, days, recordId },
+    { reason },
+  );
+
   const { error: updateError } = await supabaseAdmin
     .from('billing_retained_records')
     .update({
@@ -59,18 +70,9 @@ export const POST = withObservability(async (req: Request, ctx: { params: Promis
     })
     .eq('id', recordId);
   if (updateError) {
+    await changeFailed(updateError);
     return NextResponse.json({ error: updateError.message }, { status: 500 });
   }
-
-  await writePlatformAuditLog(
-    auth.user.email ?? 'platform-admin',
-    current.org_id,
-    'extend_billing_retention',
-    'retention_until',
-    current.retention_until,
-    { retentionUntil: nextIso, days, recordId },
-    { reason },
-  );
 
   return NextResponse.json({ ok: true, retentionUntil: nextIso });
 }, { route: '/api/platform-admin/retention/[recordId]/extend' });
