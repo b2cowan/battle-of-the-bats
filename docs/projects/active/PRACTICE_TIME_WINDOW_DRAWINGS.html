@@ -1,0 +1,443 @@
+<title>Practice Time Window Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: sticky numbered tabs, one section at a time, framed specimens on a neutral ground; product frames wear the real warm palette. */
+:root {
+  --bg: #E7E9EC;
+  --panel: #F6F7F8;
+  --fg: #1B2330;
+  --muted: #566073;
+  --line: #CBD0D8;
+  --accent: #2F4B7C;
+  --accent-ink: #FFFFFF;
+  --good: #1F6B3A;
+  --warn: #8A5A00;
+  --bad: #A8321F;
+  --pin: #A8321F;
+  --stage: #B9B6AD;
+
+  /* Product frame palette (FieldLogicHQ warm portal, real values). Same in both page themes: the frame is a specimen. */
+  --p-card: #FFFFFF;
+  --p-ink: #241E15;
+  --p-ink-soft: #4A4235;
+  --p-dim: #615A54;
+  --p-line: rgba(70, 55, 30, 0.12);
+  --p-olive: #57651E;
+  --p-lime: #D6F58C;
+  --p-lime-ink: #241E15;
+  --p-field: #F7F1E8;
+  --p-result: #ECECE4;
+  --p-row: #FFFFFF;
+  --p-amber: #835006;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161D; --panel: #1B212B; --fg: #E6E9EF; --muted: #A2ABBB; --line: #333C4B;
+    --accent: #8FB0F0; --accent-ink: #0E1522; --good: #6CCB8C; --warn: #E0B050; --bad: #F08A78; --pin: #F08A78;
+    --stage: #5D5B55;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161D; --panel: #1B212B; --fg: #E6E9EF; --muted: #A2ABBB; --line: #333C4B;
+  --accent: #8FB0F0; --accent-ink: #0E1522; --good: #6CCB8C; --warn: #E0B050; --bad: #F08A78; --pin: #F08A78;
+  --stage: #5D5B55;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 980px; margin: 0 auto; }
+
+header.top { padding: 22px 0 10px; }
+header.top h1 { margin: 0 0 4px; font-size: 22px; line-height: 1.2; text-wrap: balance; }
+header.top p { margin: 0; color: var(--muted); max-width: 70ch; }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); padding: 8px 0 0; border-bottom: 1px solid var(--line); }
+.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex: 0 0 auto; border: 1px solid transparent; border-bottom: 0; background: transparent; color: var(--muted);
+  font: inherit; font-weight: 600; padding: 9px 14px; border-radius: 8px 8px 0 0; cursor: pointer; white-space: nowrap;
+}
+.tab:hover { color: var(--fg); }
+.tab[aria-selected="true"] { background: var(--panel); color: var(--fg); border-color: var(--line); margin-bottom: -1px; }
+.tab:focus-visible, .pin:focus-visible, .seg button:focus-visible, .copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.viewrow { display: flex; align-items: center; gap: 12px; padding: 12px 0 4px; flex-wrap: wrap; }
+.viewrow .lab { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.seg { display: inline-flex; background: #FFFFFF; border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: #4A4235; padding: 6px 14px; border-radius: 8px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: #EDEBE3; color: #241E15; box-shadow: 0 0 0 1px rgba(70,55,30,0.18); }
+
+section.pane { display: none; padding: 14px 0 0; }
+section.pane.on { display: block; }
+.say { max-width: 74ch; margin: 6px 0 14px; }
+.say h2 { margin: 0 0 4px; font-size: 18px; text-wrap: balance; }
+.say p { margin: 0 0 8px; color: var(--muted); }
+
+.cap { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 14px 0 8px; }
+.cap h3 { margin: 0; font-size: 15px; }
+.tag { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel); }
+.tag.new { color: var(--good); border-color: var(--good); }
+.tag.rest { color: var(--warn); border-color: var(--warn); }
+.tag.same { color: var(--muted); }
+.tag.bad { color: var(--bad); border-color: var(--bad); }
+
+.scroll { overflow-x: auto; border-radius: 10px; }
+.stage { background: var(--stage); padding: 28px 34px; width: 800px; max-width: none; border-radius: 10px; position: relative; }
+.stage.phone { width: 420px; padding: 24px 15px 0; display: flex; align-items: flex-end; min-height: 640px; }
+
+/* ── The product frame (warm portal, 14px body, 12px support) ── */
+.pn { background: var(--p-card); color: var(--p-ink); border-radius: 14px; box-shadow: 0 12px 40px rgba(36,30,21,0.28); font-size: 14px; line-height: 1.4; position: relative; width: 100%; }
+.pn .head { padding: 18px 24px 4px; position: relative; }
+.pn .eyebrow { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--p-ink-soft); }
+.pn .title { font-size: 17px; font-weight: 700; margin: 3px 0 0; }
+.pn .x { position: absolute; right: 22px; top: 20px; font-size: 20px; color: var(--p-ink-soft); }
+.pn .body { padding: 10px 24px 18px; display: grid; gap: 14px; }
+.pn h4 { margin: 0 0 8px; font-size: 14px; font-weight: 700; }
+.pn h4 .from { font-weight: 400; color: var(--p-dim); }
+.pn .card { border: 1px solid var(--p-line); border-radius: 10px; padding: 11px 14px; display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.pn .card b { display: block; font-size: 15px; }
+.pn .card small { font-size: 12px; color: var(--p-dim); }
+.pn .card .hrs { color: var(--p-ink-soft); white-space: nowrap; }
+.pn .door { display: inline-block; margin-top: 8px; color: var(--p-olive); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.pn .fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.pn .field label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: var(--p-ink-soft); }
+.pn .sel { background: var(--p-field); border: 1px solid var(--p-line); border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; }
+.pn .result { margin-top: 12px; background: var(--p-result); border: 1px solid var(--p-line); border-radius: 8px; padding: 10px 14px; font-weight: 700; }
+.pn .foot { border-top: 1px solid var(--p-line); padding: 12px 24px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; position: relative; }
+.pn .footStart { margin-right: auto; }
+.pn .footStart.full { flex: 1 1 100%; margin-right: 0; }
+.pn .footStart .bigfoot { font-size: 16px; color: var(--p-ink); line-height: 1.45; display: block; }
+.pn .footStart .quiet { font-size: 12px; color: var(--p-dim); line-height: 1.4; }
+.pn .footEnd { display: flex; gap: 8px; margin-left: auto; }
+.pn .btn { border: 1px solid var(--p-line); border-radius: 8px; padding: 8px 14px; font-weight: 700; background: var(--p-card); font-size: 14px; }
+.pn .btn.lime { background: var(--p-lime); border-color: var(--p-lime); color: var(--p-lime-ink); }
+.pn .gone { opacity: .35; text-decoration: line-through; }
+
+.diff [data-same] { opacity: 0.18; filter: grayscale(1); transition: opacity .15s; }
+
+/* clickable pins */
+.pin {
+  position: absolute; z-index: 3; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #FFFFFF;
+  background: var(--pin); color: #FFFFFF; font: 700 12px/1 system-ui, sans-serif; display: grid; place-items: center; cursor: pointer; padding: 0;
+}
+.pin:hover { transform: scale(1.12); }
+.ring { outline: 2px dashed var(--pin); outline-offset: 3px; border-radius: 6px; }
+
+.measure { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px; font-size: 13px; color: var(--muted); }
+.measure b { color: var(--fg); }
+
+/* foot options */
+.optrow { margin: 0 0 16px; }
+.optrow .stage { padding: 20px 34px; }
+.optrow .pn .foot { border-top: 0; }
+.optrow .pn { border-radius: 10px; }
+.optrow .fade { padding: 12px 24px 0; }
+
+/* names tab */
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.pair .stage { width: auto; padding: 18px; }
+@media (max-width: 760px) { .pair { grid-template-columns: 1fr; } }
+
+/* asks */
+.ask { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 0 0 12px; scroll-margin-top: 90px; }
+.ask.flash { box-shadow: 0 0 0 3px var(--pin); }
+.ask h3 { margin: 0 0 2px; font-size: 16px; }
+.ask > p { margin: 0 0 10px; color: var(--muted); max-width: 72ch; }
+.opts { display: grid; gap: 8px; }
+.opt { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; cursor: pointer; background: var(--bg); }
+.opt:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.opt input { margin: 3px 0 0; }
+.opt b { display: block; }
+.opt span { color: var(--muted); font-size: 14px; }
+.rec { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: var(--good); margin-left: 6px; }
+.copy { margin-top: 6px; font: inherit; font-weight: 700; padding: 10px 18px; border-radius: 8px; border: 0; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+#answers { width: 100%; min-height: 150px; margin-top: 10px; font: 13px/1.45 ui-monospace, Consolas, monospace; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+.note { color: var(--muted); font-size: 13px; margin-top: 8px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Practice time window</h1>
+    <p>House league · Season schedule · Tools › Practice time. A cleaner version of the first step of the two-step hand-out, drawn as a before and after.</p>
+  </header>
+
+  <div class="bar">
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-tab="window" aria-selected="true">1 · The window</button>
+      <button class="tab" role="tab" data-tab="foot" aria-selected="false">2 · The foot</button>
+      <button class="tab" role="tab" data-tab="names" aria-selected="false">3 · The names</button>
+      <button class="tab" role="tab" data-tab="phone" aria-selected="false">4 · Phone</button>
+      <button class="tab" role="tab" data-tab="asks" aria-selected="false">5 · Asks</button>
+    </div>
+  </div>
+
+  <div class="viewrow" id="viewrow">
+    <span class="lab">View</span>
+    <div class="seg" role="group" aria-label="View">
+      <button type="button" id="vAll" aria-pressed="true">Everything</button>
+      <button type="button" id="vDiff" aria-pressed="false">Show only what differs</button>
+    </div>
+  </div>
+
+  <!-- 1 -->
+  <section class="pane on" id="p-window">
+    <div class="say">
+      <h2>Two fixes and nothing else moves</h2>
+      <p>The body of the window is already right: what you have, then how to hand it out, with the answer live underneath. What goes wrong is at the bottom. Tap a numbered pin to jump to that ask.</p>
+    </div>
+
+    <div class="cap"><h3>Before · what you see today</h3><span class="tag bad">TWO DEFECTS</span></div>
+    <div class="scroll"><div class="stage" id="stBefore"></div></div>
+    <div class="measure"><span><b>1</b> Foot sentence: 16px dark body type, on its own row, above the buttons</span><span><b>2</b> Result says 1 a week, button says 2 a week</span></div>
+
+    <div class="cap"><h3>After · the proposal</h3><span class="tag rest">RESTYLED foot</span><span class="tag new">NEW button wording</span><span class="tag same">UNCHANGED everything else</span></div>
+    <div class="scroll"><div class="stage" id="stAfter"></div></div>
+    <div class="measure"><span><b>1</b> Foot: 12px quiet grey, left of the buttons, one sentence</span><span><b>2</b> “Hand out practices”, the same words the phone already uses</span></div>
+  </section>
+
+  <!-- 2 -->
+  <section class="pane" id="p-foot">
+    <div class="say">
+      <h2>What the foot says, if anything</h2>
+      <p>The first sentence (“show on the schedule and on each coach’s team page”) describes what any hand-out does. The second (“Next you choose whether to tell the families”) is the only one that tells you there is a step after this. Option A keeps that one.</p>
+    </div>
+    <div class="optrow"><div class="cap"><h3>Today (broken styling)</h3><span class="tag bad">AS SHIPPED</span></div><div class="scroll"><div class="stage" id="fToday"></div></div></div>
+    <div class="optrow"><div class="cap"><h3>A · One quiet sentence</h3><span class="tag new">RECOMMENDED</span></div><div class="scroll"><div class="stage" id="fA"></div></div></div>
+    <div class="optrow"><div class="cap"><h3>B · No foot sentence</h3><span class="tag same">LIKE THE TELL WINDOW</span></div><div class="scroll"><div class="stage" id="fB"></div></div></div>
+    <div class="optrow"><div class="cap"><h3>C · Both sentences, quiet</h3><span class="tag same">KEEPS THE WORDS</span></div><div class="scroll"><div class="stage" id="fC"></div></div></div>
+  </section>
+
+  <!-- 3 -->
+  <section class="pane" id="p-names">
+    <div class="say">
+      <h2>Optional: say “U9 Rookie” once, not three times</h2>
+      <p>The division is in the small heading above the title, in the section heading and in the link. Nothing in the window gets harder to read if two of those go. The catch: the link’s wording was settled earlier and the help article quotes it, so this costs a help-text update. I would leave it unless you want the window tighter still.</p>
+    </div>
+    <div class="pair">
+      <div><div class="cap"><h3>Today</h3><span class="tag same">3 MENTIONS</span></div><div class="scroll"><div class="stage" id="nBefore"></div></div></div>
+      <div><div class="cap"><h3>Trimmed</h3><span class="tag new">1 MENTION</span></div><div class="scroll"><div class="stage" id="nAfter"></div></div></div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="pane" id="p-phone">
+    <div class="say">
+      <h2>Phone: same fix, nothing new</h2>
+      <p>The phone sheet already says “Hand out” and already has the short next-step sentence. Today it has the same styling defect as the desktop foot, so it gets the same fix. Dropdowns stack one under another.</p>
+    </div>
+    <div class="cap"><h3>After · phone sheet</h3><span class="tag rest">RESTYLED foot</span><span class="tag same">UNCHANGED button</span></div>
+    <div class="scroll"><div class="stage phone" id="phoneAfter"></div></div>
+  </section>
+
+  <!-- 5 -->
+  <section class="pane" id="p-asks">
+    <div class="say">
+      <h2>Your calls</h2>
+      <p>Pick an answer for each, then copy them and paste them back. Nothing is built until you do.</p>
+    </div>
+
+    <div class="ask" id="ask1">
+      <h3>1 · The sentence at the bottom</h3>
+      <p>Recommendation: A. It fixes the defect and keeps the one line that tells people a second step follows.</p>
+      <div class="opts" data-ask="1">
+        <label class="opt"><input type="radio" name="a1" value="A" checked><div><b>A · One quiet sentence<span class="rec">RECOMMENDED</span></b><span>“Next you choose whether to tell the families.” Small grey, at the left of the buttons. Desktop matches phone.</span></div></label>
+        <label class="opt"><input type="radio" name="a1" value="B"><div><b>B · No sentence</b><span>Same as the Tell window now. The lime button is the only signpost.</span></div></label>
+        <label class="opt"><input type="radio" name="a1" value="C"><div><b>C · Keep both sentences, quiet</b><span>Same words as today, fixed styling only.</span></div></label>
+      </div>
+    </div>
+
+    <div class="ask" id="ask2">
+      <h3>2 · The button and the line above it</h3>
+      <p>Today the line says 1 practice a week per team and the button says 2 practices a week in total. Two numbers, one view.</p>
+      <div class="opts" data-ask="2">
+        <label class="opt"><input type="radio" name="a2" value="A" checked><div><b>A · Button says “Hand out practices”<span class="rec">RECOMMENDED</span></b><span>No number on the button, so nothing to disagree with the line. Same as the phone.</span></div></label>
+        <label class="opt"><input type="radio" name="a2" value="B"><div><b>B · Keep the count, explain it</b><span>Button stays “Hand out 2 practices a week”; the line becomes “Every team gets 1 practice a week · 2 in all.”</span></div></label>
+        <label class="opt"><input type="radio" name="a2" value="C"><div><b>C · Leave as is</b></div></label>
+      </div>
+    </div>
+
+    <div class="ask" id="ask3">
+      <h3>3 · Division name repeated three times (tab 3)</h3>
+      <p>Optional. Trimming it means editing a help article that quotes the link’s wording.</p>
+      <div class="opts" data-ask="3">
+        <label class="opt"><input type="radio" name="a3" value="A" checked><div><b>A · Leave the names<span class="rec">RECOMMENDED</span></b></div></label>
+        <label class="opt"><input type="radio" name="a3" value="B"><div><b>B · Trim the heading and the link</b><span>“Time to use · from house league’s time” and “+ Give more time”.</span></div></label>
+      </div>
+    </div>
+
+    <div class="ask" id="ask4">
+      <h3>4 · The three dropdowns</h3>
+      <p>Each one is easy to use on its own. “1 per facility” is the only wording that makes you think. Turning the three into one sentence is a bigger redraw that I have not drawn.</p>
+      <div class="opts" data-ask="4">
+        <label class="opt"><input type="radio" name="a4" value="A" checked><div><b>A · Leave them<span class="rec">RECOMMENDED</span></b></div></label>
+        <label class="opt"><input type="radio" name="a4" value="B"><div><b>B · Draw the one-sentence version first</b></div></label>
+      </div>
+    </div>
+
+    <button class="copy" id="copyBtn" type="button">Copy my answers</button>
+    <div class="note" id="copyNote" role="status"></div>
+    <textarea id="answers" readonly aria-label="Your answers"></textarea>
+  </section>
+</div>
+
+<script>
+(function () {
+  var NAMES = { window: 1, foot: 1, names: 1, phone: 1, asks: 1 };
+  var SEG = 'U9 Rookie';
+
+  function pn(opts) {
+    // opts: eyebrow, divisionHead, door, footKind, button, pins
+    var foot = '';
+    if (opts.footKind === 'bad') {
+      foot = '<div class="foot"><div class="footStart full"><span class="bigfoot">The practices show on the schedule and on each coach’s team page. Next you choose whether to tell the families.</span></div>' +
+        '<div class="footEnd"><span class="btn">Cancel</span><span class="btn lime">' + opts.button + '</span></div></div>';
+    } else {
+      var inner = '';
+      if (opts.footKind === 'A') inner = '<span class="quiet">Next you choose whether to tell the families.</span>';
+      if (opts.footKind === 'C') inner = '<span class="quiet">The practices show on the schedule and on each coach’s team page. Next you choose whether to tell the families.</span>';
+      foot = '<div class="foot"><div class="footStart">' + inner + '</div>' +
+        '<div class="footEnd"><span class="btn">Cancel</span><span class="btn lime">' + opts.button + '</span></div></div>';
+    }
+    return '' +
+    '<div class="pn">' +
+      '<div data-same><div class="head"><div class="eyebrow">2026 Fall House League · ' + (opts.eyebrowDiv || 'U9 Rookie') + '</div><div class="title">Practice time</div><span class="x">×</span></div></div>' +
+      '<div class="body">' +
+        '<div data-same><h4>' + opts.divisionHead + '<span class="from"> · from house league’s time</span></h4>' +
+          '<div class="card"><div><b>Tue · 6:10–7:40 p.m.</b><small>Kinsmen Park · Diamond A and Diamond B</small></div><span class="hrs">3 hours a week</span></div>' +
+          '<span class="door">' + opts.door + '</span></div>' +
+        '<div data-same><h4>Hand it to the teams</h4>' +
+          '<div class="fields"><div class="field"><label>Each practice</label><div class="sel"><span>60 minutes</span><span>⌄</span></div></div>' +
+          '<div class="field"><label>Teams at once</label><div class="sel"><span>1 per facility</span><span>⌄</span></div></div>' +
+          '<div class="field"><label>Practices a week</label><div class="sel"><span>1 a week</span><span>⌄</span></div></div></div>' +
+          '<div class="result">' + (opts.result || 'Every team gets 1 practice a week.') + '</div></div>' +
+      '</div>' +
+      foot +
+    '</div>';
+  }
+
+  function pin(n, style) { return '<button type="button" class="pin" data-ask="' + n + '" style="' + style + '" aria-label="Go to ask ' + n + '">' + n + '</button>'; }
+  function put(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
+
+  var head = SEG + '’s practice time';
+  var door = '+ Give ' + SEG + ' more time';
+
+  put('stBefore',
+    pn({ divisionHead: head, door: door, footKind: 'bad', button: 'Hand out 2 practices a week' }) +
+    pin(1, 'left:4px; bottom:98px;') + pin(2, 'right:12px; bottom:34px;') +
+    '');
+  put('stAfter',
+    pn({ divisionHead: head, door: door, footKind: 'A', button: 'Hand out practices' }) +
+    pin(1, 'left:4px; bottom:20px;') + pin(2, 'right:12px; bottom:34px;'));
+
+  function strip(kind, button) {
+    var r = pn({ divisionHead: head, door: door, footKind: kind, button: button });
+    return r;
+  }
+  function footOnly(kind) {
+    var h = pn({ divisionHead: head, door: door, footKind: kind, button: kind === 'bad' ? 'Hand out 2 practices a week' : 'Hand out practices' });
+    // keep the result line + foot only, to avoid repeating the frame the reader has seen
+    return '<div class="pn"><div class="fade"><div class="result" style="margin-top:0">Every team gets 1 practice a week.</div></div>' + h.slice(h.indexOf('<div class="foot">'));
+  }
+  put('fToday', footOnly('bad'));
+  put('fA', footOnly('A'));
+  put('fB', footOnly('B'));
+  put('fC', footOnly('C'));
+
+  function nameFrame(trim) {
+    return '<div class="pn" style="font-size:13px"><div class="head"><div class="eyebrow">2026 Fall House League · ' + SEG + '</div><div class="title">Practice time</div></div>' +
+      '<div class="body" style="padding-bottom:16px"><div><h4>' + (trim ? 'Time to use' : head) + '<span class="from"> · from house league’s time</span></h4>' +
+      '<div class="card"><div><b>Tue · 6:10–7:40 p.m.</b><small>Kinsmen Park · Diamond A and Diamond B</small></div><span class="hrs">3 hours a week</span></div>' +
+      '<span class="door">' + (trim ? '+ Give more time' : door) + '</span></div></div></div>';
+  }
+  put('nBefore', nameFrame(false));
+  put('nAfter', nameFrame(true));
+
+  put('phoneAfter',
+    '<div class="pn" style="border-radius:18px 18px 0 0; font-size:14px">' +
+      '<div class="head" style="padding:16px 18px 2px"><div class="eyebrow">2026 Fall House League · ' + SEG + '</div><div class="title">Practice time</div><span class="x" style="right:16px">×</span></div>' +
+      '<div class="body" style="padding:10px 18px 14px; gap:12px">' +
+        '<div><h4>' + head + '<span class="from"> · from house league’s time</span></h4>' +
+        '<div class="card"><div><b>Tue · 6:10–7:40 p.m.</b><small>Kinsmen Park · Diamond A and Diamond B</small><div style="margin-top:4px;font-size:12px;color:var(--p-ink-soft)">3 hours a week</div></div></div>' +
+        '<span class="door">' + door + '</span></div>' +
+        '<div><h4>Hand it to the teams</h4><div style="display:grid;gap:10px">' +
+          '<div class="field"><label>Each practice</label><div class="sel"><span>60 minutes</span><span>⌄</span></div></div>' +
+          '<div class="field"><label>Teams at once</label><div class="sel"><span>1 per facility</span><span>⌄</span></div></div>' +
+          '<div class="field"><label>Practices a week</label><div class="sel"><span>1 a week</span><span>⌄</span></div></div></div>' +
+          '<div class="result">Every team gets 1 practice a week.</div></div>' +
+      '</div>' +
+      '<div class="foot" style="padding:10px 18px 16px; gap:8px"><div class="footStart full"><span class="quiet">Next you choose whether to tell the families.</span></div>' +
+        '<div class="footEnd" style="width:100%"><span class="btn" style="flex:1;text-align:center;padding:12px">Cancel</span><span class="btn lime" style="flex:1;text-align:center;padding:12px">Hand out</span></div></div>' +
+    '</div>');
+
+  // ── tabs
+  var tabs = document.querySelectorAll('.tab');
+  function show(name, noHash) {
+    if (!NAMES[name]) name = 'window';
+    tabs.forEach(function (t) { t.setAttribute('aria-selected', t.dataset.tab === name ? 'true' : 'false'); });
+    document.querySelectorAll('section.pane').forEach(function (p) { p.classList.toggle('on', p.id === 'p-' + name); });
+    document.getElementById('viewrow').hidden = (name === 'asks' || name === 'phone' || name === 'names');
+    if (!noHash) { try { history.replaceState(null, '', '#' + name); } catch (e) { location.hash = name; } }
+    if (!noHash) window.scrollTo({ top: 0 });
+  }
+  tabs.forEach(function (t) { t.addEventListener('click', function () { show(t.dataset.tab); }); });
+  window.addEventListener('hashchange', function () { show((location.hash || '').replace('#', ''), true); });
+  show((location.hash || '').replace('#', '') || 'window', true);
+
+  // ── view toggle
+  var wrap = document.querySelector('.wrap');
+  function setView(diff) {
+    wrap.classList.toggle('diff', diff);
+    document.getElementById('vAll').setAttribute('aria-pressed', diff ? 'false' : 'true');
+    document.getElementById('vDiff').setAttribute('aria-pressed', diff ? 'true' : 'false');
+  }
+  document.getElementById('vAll').addEventListener('click', function () { setView(false); });
+  document.getElementById('vDiff').addEventListener('click', function () { setView(true); });
+
+  // ── pins jump to the ask
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('.pin') : null;
+    if (!b) return;
+    show('asks');
+    var a = document.getElementById('ask' + b.dataset.ask);
+    if (a) { a.scrollIntoView({ block: 'start' }); a.classList.add('flash'); setTimeout(function () { a.classList.remove('flash'); }, 1600); }
+  });
+
+  // ── answers
+  var LABELS = {
+    1: { A: 'One quiet sentence (“Next you choose whether to tell the families.”)', B: 'No foot sentence', C: 'Both sentences, quiet' },
+    2: { A: 'Button “Hand out practices”, line unchanged', B: 'Keep the count, line adds “· 2 in all”', C: 'Leave as is' },
+    3: { A: 'Leave the names', B: 'Trim the heading and the link' },
+    4: { A: 'Leave the dropdowns', B: 'Draw the one-sentence version first' }
+  };
+  function answers() {
+    var out = ['Practice time window — my answers'];
+    [1, 2, 3, 4].forEach(function (n) {
+      var c = document.querySelector('input[name="a' + n + '"]:checked');
+      out.push(n + ' · ' + (c ? c.value + ' — ' + LABELS[n][c.value] : 'not chosen'));
+    });
+    return out.join('\n');
+  }
+  var ta = document.getElementById('answers');
+  function refresh() { ta.value = answers(); }
+  document.querySelectorAll('.ask input').forEach(function (i) { i.addEventListener('change', refresh); });
+  refresh();
+  document.getElementById('copyBtn').addEventListener('click', function () {
+    var note = document.getElementById('copyNote');
+    function fallback() { ta.focus(); ta.select(); note.textContent = 'Selected. Press Ctrl+C to copy.'; }
+    try {
+      navigator.clipboard.writeText(ta.value).then(function () { note.textContent = 'Copied. Paste it back in the chat.'; }, fallback);
+    } catch (e) { fallback(); }
+  });
+})();
+</script>

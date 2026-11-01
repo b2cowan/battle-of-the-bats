@@ -317,10 +317,10 @@ export const PRACTICE_TIME_WORDS = {
   tooShort: (n: number) => (n === 1 ? '1 part is shorter than a practice, so it stays open.' : `${n} parts are shorter than a practice, so they stay open.`),
   /** [marketing] a division with no teams to hand practices to. */
   noTeams: (division: string) => `${division} has no teams yet.`,
-  /** 9d-3 (copy section A): step 1's foot — the Tell step follows the hand-out. */
-  foot: 'The practices show on the schedule and on each coach’s team page. Next you choose whether to tell the families.',
-  footPhone: 'Next you choose whether to tell the families.',
-  handOut: (n: number) => `Hand out ${pluralize(n, 'practice')} a week`,
+  /** 9d-3 (copy section A): step 1's foot — the Tell step follows the hand-out. One sentence, desk and phone alike. */
+  foot: 'Next you choose whether to tell the families.',
+  /** No count on the lime: the line above says what each team gets, and a total beside it read as a second answer. */
+  handOut: 'Hand out practices',
   handOutPhone: 'Hand out',
   cancel: 'Cancel',
   close: 'Close',

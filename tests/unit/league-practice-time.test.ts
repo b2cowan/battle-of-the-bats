@@ -9,7 +9,7 @@ import { partsShapes } from '../../lib/league-time.ts';
 /**
  * CLUB TIER STAGE 11b PART 4 — PRACTICE TIME, PLANNED (frame h1). The drawing's numbers: U12 holds Mondays and Wednesdays
  * 6:00–9:00 p.m. on two diamonds (12 hours a week); 60-minute practices, 1 per facility, 10 teams → every team 1 practice
- * a week, 2 slots stay open, "Hand out 10 practices a week", and the early and late times go round week by week.
+ * a week, 2 slots stay open, "Hand out practices", and the early and late times go round week by week.
  */
 
 let n = 0;
@@ -64,7 +64,8 @@ describe('Practice time: the drawing\'s numbers', () => {
     assert.equal(plan.goWithout, 0);
     assert.equal(W.everyTeam(plan.perTeam), 'Every team gets 1 practice a week.');
     assert.equal(W.open(plan.openAWeek), '2 slots stay open.');
-    assert.equal(W.handOut(plan.practicesAWeek), 'Hand out 10 practices a week');
+    assert.equal(W.handOut, 'Hand out practices');
+    assert.equal(W.foot, 'Next you choose whether to tell the families.');
   });
 
   it('each week: ten practices, every team once, each inside its slot, on the hour', () => {

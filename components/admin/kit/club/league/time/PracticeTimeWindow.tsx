@@ -153,12 +153,12 @@ export default function PracticeTimeWindow({ orgSlug, seasonId, seasonName, divi
 
   return (
     <KitDialog kind="form" size="medium" eyebrow={W.eyebrow(seasonName, divisionName)} title={W.title} onClose={onClose} busy={busy}
-      footerStart={count > 0 ? <><span className={p.desk}>{W.foot}</span><span className={p.phone}>{W.footPhone}</span></> : null}
+      footerStart={count > 0 ? <span>{W.foot}</span> : null}
       footer={<>
         <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>{count > 0 ? W.cancel : W.close}</button>
         {count > 0 && (
           <button type="button" className="btn btn-lime" onClick={askOrHandOut} disabled={busy}>
-            <span className={p.desk}>{W.handOut(count)}</span><span className={p.phone}>{W.handOutPhone}</span>
+            <span className={p.desk}>{W.handOut}</span><span className={p.phone}>{W.handOutPhone}</span>
           </button>
         )}
       </>}>
