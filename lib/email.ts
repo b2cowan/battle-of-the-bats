@@ -293,6 +293,8 @@ function updatesGoToHtml(p: RegistrationEmailParams): string {
 export function registrationConfirmationHtml(p: RegistrationEmailParams & {
   /** False for "Not tracked here" (lib/tournament-payments-tracked): the email says nothing about payment. */
   paymentsTracked?: boolean;
+  /** True while the event takes card payments (lib/tournament-online-payments): the email promises the pay link, not "no online payments". */
+  online?: boolean;
 }) {
   // Carry the registrationId so the portal link is a CLAIM link: a coach who clicks it
   // (signed out, or on another device) lands on /coaches/join with this exact registration
@@ -307,6 +309,10 @@ export function registrationConfirmationHtml(p: RegistrationEmailParams & {
   const teamName = escapeEmailHtml(p.teamName);
   const divisionName = escapeEmailHtml(p.divisionName);
   const tournamentName = escapeEmailHtml(p.tournamentName);
+  const paymentSentence = p.paymentsTracked === false ? ''
+    : p.online
+      ? ' Once the organizer accepts your team, we’ll email you a link to pay online by card. You can also pay the organizer directly.'
+      : ' If payment is required, the organizer will share payment instructions directly. FieldLogicHQ does not process online payments.';
   return wrap(`
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration Received!</h2>
     <p>Hi <strong>${greetingName(p.registrantName)}</strong>,</p>
@@ -321,7 +327,7 @@ export function registrationConfirmationHtml(p: RegistrationEmailParams & {
         Tournament: <strong>${tournamentName}</strong>
       </p>
     </div>
-    <p>Your registration is currently <strong>pending review</strong>.${p.paymentsTracked === false ? '' : ' If payment is required, the organizer will share payment instructions directly. FieldLogicHQ does not process online payments.'}</p>
+    <p>Your registration is currently <strong>pending review</strong>.${paymentSentence}</p>
     <div style="${warmPanelStyle('olive')}">
       <p style="${WARM_EMAIL_STYLE.panelLabel}">Track your registration</p>
       <p style="margin:0 0 1rem;color:${WARM_EMAIL.ink};line-height:1.6;">Your free FieldLogicHQ Coaches Portal account is ready. Open it to track your registration status, see your game schedule once it's published, and receive announcements from the organizer.</p>
@@ -335,6 +341,8 @@ export function manualTeamRegistrationHtml(p: {
   paymentStatus: 'pending' | 'paid';
   /** False for "Not tracked here" (lib/tournament-payments-tracked): the email says nothing about payment. */
   paymentsTracked?: boolean;
+  /** True while the event takes card payments (lib/tournament-online-payments). */
+  online?: boolean;
   contactEmail?: string;
   registrationId?: string;
   coachEmail?: string;
@@ -342,7 +350,9 @@ export function manualTeamRegistrationHtml(p: {
   const paymentLine = p.paymentsTracked === false ? null
     : p.paymentStatus === 'paid'
       ? 'The organizer has marked your tournament fee as paid.'
-      : 'If payment is required, the organizer will follow up with payment instructions.';
+      : p.online
+        ? 'If payment is required, we’ll email you a link to pay online by card. You can also pay the organizer directly.'
+        : 'If payment is required, the organizer will follow up with payment instructions.';
   return wrap(`
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Team Registered</h2>
     <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
@@ -406,8 +416,10 @@ export function adminNotificationHtml(p: {
   /** Set when someone other than the coach registered (Stage 1b): who pressed Submit. */
   registeredBy?: { name: string | null; email: string } | null;
   divisionName: string; tournamentName: string;
+  /** The tournament's own club and id — the button opens THAT club's registrations, never a guessed one. */
+  orgSlug: string; tournamentId: string;
 }) {
-  const adminUrl = `${SITE_URL}/admin/registrations`;
+  const adminUrl = `${SITE_URL}/${p.orgSlug}/admin/tournaments/registrations?tournamentId=${encodeURIComponent(p.tournamentId)}`;
   const email = escapeEmailHtml(p.contactEmail);
   const by = p.registeredBy;
   const byEmail = by ? escapeEmailHtml(by.email) : '';
@@ -1291,9 +1303,16 @@ export function leagueTeamMovedHtml(input: {
   statusUrl: string;
   contactEmail?: string | null;
   face?: FamilyMailFace | null;
+  /** House League 9d-3 Part 4: the new team's practice dates, when its families have been told them ("{First}'s
+   *  practices with {team}:", a line a date, then the zone line). No second button or link. */
+  practices?: { heading: string; lines: readonly string[]; zone: string } | null;
 }) {
   const p = escapeEmailFields(input);
   const first = input.childName.split(' ')[0] ?? input.childName;
+  const practices = input.practices && input.practices.lines.length ? `
+    <p style="margin:0 0 0.35rem;">${escapeEmailHtml(input.practices.heading)}</p>
+    <ul style="margin:0 0 0.5rem;padding-left:1.2rem;color:${WARM_EMAIL.ink};">${input.practices.lines.map(l => `<li style="margin:0 0 0.25rem;">${escapeEmailHtml(l)}</li>`).join('')}</ul>
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;">${escapeEmailHtml(input.practices.zone)}</p>` : '';
   const coach = input.coaches.length === 0
     ? 'Coach to be announced.'
     : `${input.coaches.length === 1 ? 'Coach' : 'Coaches'}: ${escapeEmailHtml(joinWithAnd(input.coaches))}`;
@@ -1302,6 +1321,7 @@ export function leagueTeamMovedHtml(input: {
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>${p.childName} has moved from ${p.fromTeam} to ${p.toTeam} in ${p.divisionName}.</p>
     <p>${coach}</p>
+    ${practices}
     ${warmEmailButton('See your registration', input.statusUrl)}
     ${teamsContactLine(input.clubName, input.contactEmail)}
   `, input.face, `${first} is registered for ${input.seasonName}`);
@@ -1315,6 +1335,8 @@ export function leagueTeamMovedHtml(input: {
  */
 export function leaguePracticesChangedHtml(input: {
   greeting: string;
+  /** House League 9d-3: the first practice email's one paragraph before the parts ("Here are the practice times for…"). */
+  intro?: string | null;
   parts: readonly { title: string | null; items: readonly string[] }[];
   outro: string | null;
   foot: string | null;
@@ -1327,6 +1349,7 @@ export function leaguePracticesChangedHtml(input: {
     <ul style="margin:0 0 1rem;padding-left:1.2rem;color:${WARM_EMAIL.ink};">${part.items.map(i => `<li style="margin:0 0 0.25rem;">${escapeEmailHtml(i)}</li>`).join('')}</ul>`).join('');
   return familyNotice(`
     <p>${p.greeting}</p>
+    ${input.intro ? `<p>${escapeEmailHtml(input.intro)}</p>` : ''}
     ${parts}
     ${p.outro ? `<p>${p.outro}</p>` : ''}
     ${p.foot ? `<p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;">${p.foot}</p>` : ''}

@@ -1319,7 +1319,7 @@ const orgHelp: HelpPageContent = {
           content: (
             <>
               <p>When the club has payouts connected and moves to a plan that doesn&rsquo;t include online payments, the move window on <strong>Plan &amp; billing</strong> adds a section, <strong>Online payments stop on</strong> the move date. It says families and teams see your How to pay text instead of Pay now, that open pay pages close then, how many families and teams still owe today, that bank debits clearing finish, that refunds and disputes keep working, and that your payouts stay connected.</p>
-              <p>On the move date, <strong>Pay now</strong> becomes <strong>How to pay</strong> and open pay pages close. The Payouts card reads <strong>Online payments off</strong>, and keeps <strong>Open Stripe</strong>, the record, the payouts list and <strong>Disconnect payouts</strong>.</p>
+              <p>On the move date, <strong>Pay now</strong> becomes <strong>How to pay</strong> and open pay pages close. The Payouts card reads <strong>Online payments off</strong>, and keeps <strong>Open Stripe</strong>, the record, the payouts list and <strong>Disconnect payouts</strong>. <strong>Open Stripe</strong> opens your Stripe dashboard in a new tab, so your page here stays as you left it.</p>
               <HelpNote variant="info" title="An ending you didn&rsquo;t choose">When free time from FieldLogicHQ is running out, or a subscription payment fails, you click nothing, so you are told instead: a notice on the Payouts card, a Needs attention item and one email, <em>Online payments stop on</em> the date. Free time warns you 7 days ahead; a failed subscription payment warns you the day it fails.</HelpNote>
             </>
           ),

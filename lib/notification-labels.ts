@@ -108,7 +108,7 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
 export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
   registration_new:                  'A team completes and submits a registration for a tournament.',
   registration_status_changed:       'A registration is approved, waitlisted, or declined.',
-  payment_received:                  'A team payment is recorded or confirmed.',
+  payment_received:                  'A payment is recorded by hand, or a team or family pays online.',
   payment_failed:                    'A scheduled or automatic payment fails.',
   roster_change_requested:           'A coach submits a roster change request for review.',
   score_submitted:                   'A scorekeeper or coach submits a game result.',

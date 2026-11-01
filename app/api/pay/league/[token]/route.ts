@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 import { onlinePaymentsOn } from '@/lib/online-payments-switch';
 import { createCheckout, expireCheckout, retrieveCheckout } from '@/lib/stripe-connect';
 import { leagueRefusalMessage, loadLeaguePayFacts } from '@/lib/league-pay-facts';
@@ -97,7 +98,9 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   // Asked of Stripe FIRST and recorded after, under the one-open-per-sign-up index (the team route's order, review H1).
   const id = randomUUID();
   const description = [who, facts.season.name].join(' · ');
-  const origin = new URL(req.url).origin;
+  // Not `new URL(req.url).origin`: on the hosted site the server reports its own internal address (localhost), so
+  // Stripe sent the family back to localhost. The browser's own Origin (checked against our hosts) is the address.
+  const origin = resolveTrustedAppOrigin(req);
   const back = leaguePayPath(facts.org.slug, facts.season.slug, token);
   let session: Awaited<ReturnType<typeof createCheckout>>;
   try {

@@ -11,16 +11,21 @@ import styles from './TournamentRegistrationCard.module.css';
  * every date reads in one short form on the CLUB's clock (`formatStoredDate` — a timestamp resolves
  * through the org zone, so an evening entry never reads as the next day; T7).
  *
- * There is NO pay button — payment is organizer-recorded. Fee rows are hidden exactly as before: for a
- * money-off assistant and a tournament that does not track payments (`hideFeeRow`), and the club's
- * own team owes nothing (`clubOwnTeam`).
+ * Paying: when the club takes payments online the card carries Pay now — the same signed pay page the
+ * acceptance email links to (`payOnline`). Only when the team cannot pay online does it fall back to the
+ * organizer's "how to pay" text and "records payment manually" (true then, and only then). Fee rows are
+ * hidden exactly as before: for a money-off assistant and a tournament that does not track payments
+ * (`hideFeeRow`), and the club's own team owes nothing (`clubOwnTeam`).
  */
+
+/** What the pay page says about this entry right now: open (a link), or a bank debit on its way, or no online payment. */
+export type RegistrationPayOnline = { state: 'ready'; href: string } | { state: 'clearing' } | null;
 
 const money = formatMoney;
 
 const short = (value: string | null | undefined) => (value ? formatStoredDate(value, { withYear: false }) : null);
 
-/** The Fee row's words — "$475.00 · paid Sep 12", "Deposit paid · $375.00 owing", "No fee · your club's team". */
+/** The Fee row's words — "$475.00 · paid Sep 12", "Deposit paid · $375.00 owing · due Feb 28", "No fee · your club's team". */
 function registrationFeeWords(
   fee: CoachTournamentStatus['fee'] | null,
   opts: { clubOwnTeam: boolean; pendingFeeAmount: number | null },
@@ -33,9 +38,9 @@ function registrationFeeWords(
     return [fee.totalFee != null ? money(fee.totalFee) : null, paid ? `paid ${paid}` : 'paid'].filter(Boolean).join(' · ');
   }
   const owing = fee.amountDue != null ? `${money(fee.amountDue)} owing` : 'Owing';
-  if (fee.state === 'deposit-paid') return `Deposit paid · ${owing}`;
   const due = short(fee.dueDate);
-  return due ? `${owing} · due ${due}` : owing;
+  const owingWords = due ? `${owing} · due ${due}` : owing;
+  return fee.state === 'deposit-paid' ? `Deposit paid · ${owingWords}` : owingWords;
 }
 
 const CHECK_IN_WORDS: Record<string, string> = {
@@ -56,6 +61,7 @@ export default function TournamentRegistrationCard({
   pendingFeeAmount = null,
   rosterPointer = false,
   waitlisted = false,
+  payOnline = null,
 }: {
   phase: CoachTournamentPhase;
   /** 5b status model — accepted teams only; null for pending/waitlist/rejected. */
@@ -75,6 +81,8 @@ export default function TournamentRegistrationCard({
   rosterPointer?: boolean;
   /** Waitlist shares the 'pending' phase; its decision row must not promise a review turnaround. */
   waitlisted?: boolean;
+  /** Accepted and owing, and the club takes payments online: Pay now, or the bank-debit-on-its-way line. */
+  payOnline?: RegistrationPayOnline;
 }) {
   const pendingLike = phase === 'pending';
   const rejected = phase === 'rejected';
@@ -135,8 +143,24 @@ export default function TournamentRegistrationCard({
 
       {owed && (
         <div className={styles.pay}>
-          {paymentInstructions && <p className={styles.payInstructions}>{paymentInstructions}</p>}
-          <p className={styles.note}>Your organizer records payment manually.</p>
+          {payOnline?.state === 'ready' ? (
+            <>
+              <a className={`btn btn-primary ${styles.payButton}`} href={payOnline.href}>Pay now</a>
+              {paymentInstructions && (
+                <>
+                  <p className={styles.note}>Or pay another way:</p>
+                  <p className={styles.payInstructions}>{paymentInstructions}</p>
+                </>
+              )}
+            </>
+          ) : payOnline?.state === 'clearing' ? (
+            <p className={styles.note}>Your bank payment is on its way. You don’t need to pay again; your organizer will email you when it clears.</p>
+          ) : (
+            <>
+              {paymentInstructions && <p className={styles.payInstructions}>{paymentInstructions}</p>}
+              <p className={styles.note}>Your organizer records payment manually.</p>
+            </>
+          )}
         </div>
       )}
       {pendingLike && (

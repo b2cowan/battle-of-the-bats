@@ -330,10 +330,10 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-payment-instructions',
           question: 'Where do my payment instructions show up?',
-          answerText: 'Payment instructions you enter with the fee schedule in Event settings are always included in the team\'s acceptance email and shown to accepted coaches in their Coaches Portal. The "Where these appear" toggle controls the public registration form only — choose "Form & email" to also show them before teams register. Payment is recorded manually; there is no online payment. Tournament Plus and above only: the free Tournament plan has no fees or payment instructions.',
+          answerText: 'Payment instructions you enter with the fee schedule in Event settings are always included in the team\'s acceptance email and shown to accepted coaches in their Coaches Portal. The "Where these appear" toggle controls the public registration form only — choose "Form & email" to also show them before teams register. Payment is recorded manually unless you take payments online, in which case accepted coaches also get a Pay now button. Tournament Plus and above only: the free Tournament plan has no fees or payment instructions.',
           keywords: ['payment instructions', 'how to pay', 'e-transfer', 'acceptance email', 'coaches portal', 'registration form'],
           answer: (
-            <p>Payment instructions you enter with the fee schedule in <strong>Event settings</strong> are always included in the team&apos;s acceptance email and shown to accepted coaches in their <strong>Coaches Portal</strong>. The <strong>Where these appear</strong> toggle controls the public registration form only — choose <strong>Form &amp; email</strong> to also show them to teams before they register. Payment is recorded manually; there is no online payment through FieldLogicHQ.</p>
+            <p>Payment instructions you enter with the fee schedule in <strong>Event settings</strong> are always included in the team&apos;s acceptance email and shown to accepted coaches in their <strong>Coaches Portal</strong>. The <strong>Where these appear</strong> toggle controls the public registration form only — choose <strong>Form &amp; email</strong> to also show them to teams before they register. Payment is recorded manually unless you take payments online, in which case accepted coaches also get a <strong>Pay now</strong> button.</p>
           ),
         },
         {
@@ -1025,7 +1025,7 @@ const tournamentsHelp: HelpPageContent = {
               <HelpDefs>
                 <HelpDef term="Not set up"><em>Let teams pay online.</em> Button: <strong>Set up payouts</strong>, which opens <em>Before you set up payouts</em>.</HelpDef>
                 <HelpDef term="Setting up"><em>Stripe needs a few more details.</em> You started and didn&rsquo;t finish. Teams keep seeing your <strong>How to pay</strong> text until setup is done. Button: <strong>Continue setup</strong>.</HelpDef>
-                <HelpDef term="Taking payments"><em>Teams can pay online.</em> Receipts go out in your organization&rsquo;s name. Button: <strong>Open Stripe</strong>, which opens your Stripe dashboard (your payouts, balance and bank account live there).</HelpDef>
+                <HelpDef term="Taking payments"><em>Teams can pay online.</em> Receipts go out in your organization&rsquo;s name. Button: <strong>Open Stripe</strong>, which opens your Stripe dashboard in a new tab (your payouts, balance and bank account live there). Your page here stays as you left it.</HelpDef>
                 <HelpDef term="Needs attention">Stripe needs something more from you. Often payments stay on while it asks: the card says <em>Online payments are still on</em>, with the date to do it by when Stripe gave one, and teams still see <strong>Pay now</strong>. If Stripe has paused them, the card says <em>Online payments are paused</em> and teams see your <strong>How to pay</strong> text instead. Nothing already paid is affected. Button: <strong>Fix in Stripe</strong>.</HelpDef>
                 <HelpDef term="Disconnected"><em>Online payments are off.</em> It names the day and who disconnected. Button: <strong>Set up payouts again</strong>, which starts at <em>Before you set up payouts</em> again.</HelpDef>
               </HelpDefs>

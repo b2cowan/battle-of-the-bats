@@ -260,6 +260,7 @@ const TO_THE_ORGANIZER: Preview[] = [
       teamName: S.teamName, coachName: S.coachName, contactEmail: S.coachEmail,
       registeredBy: { name: 'Alex Morgan', email: 'alex@example.ca' },
       divisionName: S.divisionName, tournamentName: S.tournamentName,
+      orgSlug: 'dev-test-org', tournamentId: S.teamId,
     }),
   },
 ];

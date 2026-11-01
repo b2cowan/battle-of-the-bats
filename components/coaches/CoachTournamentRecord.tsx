@@ -24,7 +24,9 @@ import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { possessive } from '@/lib/utils';
 
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
-import TournamentRegistrationCard from '@/components/coaches/TournamentRegistrationCard';
+import TournamentRegistrationCard, { type RegistrationPayOnline } from '@/components/coaches/TournamentRegistrationCard';
+import { loadTeamPayFacts } from '@/lib/team-pay-facts';
+import { teamPayUrl } from '@/lib/team-pay-link';
 import CoachLiveSchedule, { type CoachScheduleGame, SCHEDULE_ALERT_SLOT_ID } from '@/components/coaches/CoachLiveSchedule';
 import CoachTeamAutoFollow from '@/components/coaches/CoachTeamAutoFollow';
 import TournamentRosterSubmit from '@/components/coaches/TournamentRosterSubmit';
@@ -79,6 +81,12 @@ type RecordProps = {
    * Defaults false so the free-portal caller is unchanged.
    */
   moneyRedacted?: boolean;
+  /**
+   * Pay now carries a signed link to the team's pay page, which can take a payment and shows its receipts — so it is
+   * the WRITE side of team money, not the read side. The paid page passes `canWriteMoney`; the free portal's caller is
+   * the team's owner, so it defaults true.
+   */
+  canPayOnline?: boolean;
   backHref?: string;
   /**
    * The FREE portal's shell renders the tournament's identity + Flip in its persistent header, so the
@@ -107,6 +115,7 @@ export default async function CoachTournamentRecord({
   suppressUpsell = false,
   welcome = false,
   moneyRedacted = false,
+  canPayOnline = true,
   backHref,
   hideHeader = false,
   allowAssignmentAccess = false,
@@ -347,6 +356,23 @@ export default async function CoachTournamentRecord({
       dueDate: null,
       collectedAt: null,
     };
+  }
+
+  // Pay now: only for an entry the card shows as owing, and only when the club can take the payment online right
+  // now (the same answer the acceptance email's Pay button reads). A failed read is no button — the manual wording.
+  let payOnline: RegistrationPayOnline = null;
+  if (canPayOnline && coachStatus && coachStatus.fee.hasSchedule && !coachStatus.fee.isPaid && !feeHidden && !clubOwnTeam) {
+    try {
+      const facts = await loadTeamPayFacts(teamId);
+      if (facts?.refusal === 'clearing') payOnline = { state: 'clearing' };
+      else if (facts && facts.refusal === null) {
+        const href = teamPayUrl(process.env.NEXT_PUBLIC_APP_URL ?? '', { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId });
+        if (href) payOnline = { state: 'ready', href };
+      }
+    } catch (e) {
+      console.error('[coach tournament record] couldn’t read the pay facts for Pay now:', teamId, e instanceof Error ? e.message : String(e));
+      payOnline = null;
+    }
   }
 
   const coachPhase = deriveCoachTournamentPhase({
@@ -673,6 +699,7 @@ export default async function CoachTournamentRecord({
                 pendingFeeAmount={feeHidden || clubOwnTeam ? null : pendingFeeAmount}
                 rosterPointer={showRosterSubmit && canEditHeadCoach && !team.roster_submitted_at}
                 waitlisted={team.status === 'waitlist'}
+                payOnline={payOnline}
               />
             </div>
 

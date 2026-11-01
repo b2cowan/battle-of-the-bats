@@ -20,6 +20,7 @@ import { isValidEmail, signInErrorCopy } from '@/lib/auth-errors';
 import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
 import VerifyEmailSent, { requestVerificationLink } from '@/components/auth/VerifyEmailSent';
 import PasswordInput from '@/components/auth/PasswordInput';
+import { PAY_WORDS } from '@/lib/online-payment-words';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 
 /**
@@ -140,7 +141,7 @@ function resolveFeeSchedule(tournament: Tournament | null, group: Division | und
 }
 
 /**
- * Shared "Payment handled by organizer" panel — rendered identically on the form
+ * Shared "Pay the organizer directly" panel — rendered identically on the form
  * step and the review step. `instructions` is only passed when the organizer chose
  * to surface their how-to-pay text on the public form (default: email-only).
  */
@@ -149,14 +150,15 @@ function PaymentPanel({ feeSchedule, instructions, style, online = false }: {
   instructions: string;
   style?: React.CSSProperties;
   /** Club Tier Stage 12a (copy §10): the club takes payments online, so the box says what happens once the team is
-   *  accepted. False → today's box, word for word (A6). Only the review step passes it. */
+   *  accepted. False → today's box, word for word (A6). Both steps pass it, so the form never says "outside the
+   *  platform" and the review then says "pay online" (they disagreed until 2026-10-30). */
   online?: boolean;
 }) {
   return (
     <div className={styles.paymentNotice} style={style}>
       <div className={styles.paymentNoticeHeader}>
         <CreditCard size={18} />
-        <span>{online ? 'Payment' : 'Payment handled by organizer'}</span>
+        <span>{online ? 'Payment' : PAY_WORDS.notTakingHeader}</span>
       </div>
       {feeSchedule?.totalFeeAmount ? (
         <div className={styles.paymentDetails}>
@@ -187,7 +189,7 @@ function PaymentPanel({ feeSchedule, instructions, style, online = false }: {
         </div>
       )}
       <p>{!online
-        ? 'Payments are made directly to the organizer, outside the platform.'
+        ? PAY_WORDS.notTakingFoot(!!instructions)
         : instructions
           ? `Once the organizer accepts your team, we’ll email you a link to pay online by card. You can also pay another way: ${instructions}`
           : 'Once the organizer accepts your team, we’ll email you a link to pay online by card. You can also pay the organizer directly.'}</p>
@@ -1185,7 +1187,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       )}
 
       {selectedGroup && showFees && (
-        <PaymentPanel feeSchedule={selectedFeeSchedule} instructions={formInstructions} />
+        <PaymentPanel feeSchedule={selectedFeeSchedule} instructions={formInstructions} online={takesOnline} />
       )}
 
       {registrationFields.length > 0 && (

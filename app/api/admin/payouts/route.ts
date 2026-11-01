@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, forbidden, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { onlineFeeRateLabel } from '@/lib/plan-config';
 import { onlinePaymentsOn, stripeKeyIsTest, ONLINE_PAYMENTS_OFF_ERROR } from '@/lib/online-payments-switch';
@@ -174,7 +175,8 @@ export const POST = withObservability(async (req: Request) => {
   if (c instanceof Response) return c;
   if (!c.isOwner) return forbidden();
   const { ctx } = c;
-  const origin = new URL(req.url).origin;
+  // Not `new URL(req.url).origin`: on the hosted site that is the server's internal address (localhost).
+  const origin = resolveTrustedAppOrigin(req);
   const back = (refresh: boolean) =>
     `${origin}/api/admin/payouts/return?orgSlug=${encodeURIComponent(ctx.org.slug)}${refresh ? '&refresh=1' : ''}`;
   const row = await readAccount(ctx.org.id);

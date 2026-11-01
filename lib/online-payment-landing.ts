@@ -159,7 +159,7 @@ type OnlineRow = {
 /** Where a payment's record lives: the team's tournament, or the season's Registrations (house league, 12b). A child's
  *  notice opens that child's record (12c F5: `reg`, at its Fee section, or at its "To the card" block). */
 function recordHref(org: Organization, op: Pick<OnlineRow, 'tournament_id' | 'season_id'>, child?: { regId: string | null; at?: 'fee' | 'card' }): string {
-  if (op.tournament_id) return `/${org.slug}/admin/tournaments/registrations?tournament=${op.tournament_id}`;
+  if (op.tournament_id) return `/${org.slug}/admin/tournaments/registrations?tournamentId=${op.tournament_id}`;
   if (op.season_id) {
     const base = `/${org.slug}/admin/house-league/seasons/${op.season_id}/registrations`;
     return child?.regId ? `${base}?reg=${child.regId}&at=${child.at ?? 'fee'}` : base;
@@ -920,6 +920,7 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
     await sendOnlineReceiptOnce(op.id);
     return 'not_recorded';
   }
+  if (!(landed as { already?: boolean } | null)?.already) await tellPaymentReceived(op);
   await sendOnlineReceiptOnce(op.id);
   await carryOutDecisions(op.id); // 12c Part 6: a team declined while its debit cleared
   // 12d-1 (ask 10): booked in full, and flagged when it was past what the team owed. Read from the row, never from the
@@ -951,6 +952,39 @@ async function bookDisputesLostBeforeLanding(stripeAccountId: string, onlinePaym
       charge: (op.stripe_charge_id as string | null) ?? '',
       payment_intent: (op.stripe_payment_intent_id as string | null) ?? null,
     });
+  }
+}
+
+/**
+ * "Payment received" for the organizer: the first time an online payment lands in the record, the people who run the
+ * money get the same bell (and email, where their settings ask for it) a hand-recorded payment gives. A tournament tells
+ * whoever the host's own rule tells (every member, staff scoped to their tournaments, the per-tournament switch honoured);
+ * a house-league payment tells the registration desk. Never throws: the payment is already in the book and the family's
+ * receipt is still to go, so a failed notice is logged, not retried (a replay answers `already` and never raises it again).
+ */
+async function tellPaymentReceived(op: OnlineRow): Promise<void> {
+  try {
+    const org = await orgById(op.org_id);
+    if (!org) return;
+    const amount = formatMoney(Number(op.total_amount));
+    const bank = op.rail === 'bank_debit';
+    if (op.flow === 'league_signup') {
+      const userIds = await leagueRefundPeople(org);
+      if (!userIds.length) return;
+      await notify({
+        orgId: org.id, userIds, eventType: 'payment_received',
+        title: LW.receivedTitle, body: LW.receivedBody(op.description, amount, bank), link: recordHref(org, op),
+      });
+      return;
+    }
+    const { data: team } = op.team_id ? await supabaseAdmin.from('teams').select('name').eq('id', op.team_id).maybeSingle() : { data: null };
+    const name = (team?.name as string | undefined) ?? op.description.split(' · ')[0];
+    await notify({
+      orgId: org.id, tournamentId: op.tournament_id ?? undefined, eventType: 'payment_received',
+      title: W.receivedTitle(name), body: W.receivedBody(amount, bank), link: recordHref(org, op),
+    });
+  } catch (e) {
+    console.error('[online-payment-landing] couldn’t tell the organizer a payment landed:', op.id, e instanceof Error ? e.message : String(e));
   }
 }
 
@@ -1025,6 +1059,8 @@ async function landLeague(
   await carryOutDecisions(op.id); // 12c Part 6
   if (result?.already) return 'already';
   await clearSettled({ orgIds: [op.org_id], kinds: ['online_payment_not_recorded'] });
+  // A child left off the registrations has its own notice, which already says the money came; this one would contradict it.
+  if (!result?.unrecorded?.length) await tellPaymentReceived(op);
   await sendOnlineReceiptOnce(op.id);
   await reconcileDashboardRefunds(op.stripe_account_id, op.id);
   return result?.unrecorded?.length ? 'not_recorded' : 'landed';
@@ -1078,7 +1114,7 @@ async function overPeople(org: Organization): Promise<string[]> {
 
 /** Where the item opens: the team's record, with the refund window set to the extra (`refund`). */
 export function overHref(org: Pick<Organization, 'slug'>, op: { id: string; tournament_id: string | null; team_id: string | null }, refund = true): string {
-  const q = new URLSearchParams({ tournament: op.tournament_id ?? '', ...(op.team_id ? { team: op.team_id } : {}), ...(refund ? { refund: op.id } : {}) });
+  const q = new URLSearchParams({ tournamentId: op.tournament_id ?? '', ...(op.team_id ? { team: op.team_id } : {}), ...(refund ? { refund: op.id } : {}) });
   return `/${org.slug}/admin/tournaments/registrations?${q.toString()}`;
 }
 
@@ -1179,7 +1215,7 @@ async function refundFailed(refundId: string, stripeRefundId: string | null, rea
     subjectKey: 'onlinePaymentId', subjectId: onlinePaymentId,
     title: data.title,
     body: data.body,
-    link: data.tournament_id ? `/${org.slug}/admin/tournaments/registrations?tournament=${data.tournament_id}` : `/${org.slug}/admin`,
+    link: data.tournament_id ? `/${org.slug}/admin/tournaments/registrations?tournamentId=${data.tournament_id}` : `/${org.slug}/admin`,
   });
 }
 
@@ -1465,7 +1501,7 @@ async function teamPartRefundFailed(refundId: string, stripeRefundId: string | n
     org, userIds: await refundPeople(org), eventType: 'card_refund_failed',
     subjectKey: 'onlinePaymentId', subjectId: onlinePaymentId,
     title: op.title, body: op.body,
-    link: op.tournament_id ? `/${org.slug}/admin/tournaments/registrations?tournament=${op.tournament_id}` : `/${org.slug}/admin`,
+    link: op.tournament_id ? `/${org.slug}/admin/tournaments/registrations?tournamentId=${op.tournament_id}` : `/${org.slug}/admin`,
     extra: { refundId },
   });
 }

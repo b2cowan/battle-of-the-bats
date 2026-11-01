@@ -24,6 +24,7 @@ import { assertNotDemoOrg } from '@/lib/demo-guard';
 import { tournamentToday } from '@/lib/timezone';
 import type { OrgPlan, TournamentRegistrationField } from '@/lib/types';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
+import { tournamentTakesOnlinePayments } from '@/lib/tournament-online-payments';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import { INVITE_REFUSALS } from '@/lib/invite-only-words';
 import {
@@ -624,6 +625,7 @@ export const POST = withObservability(async (req: NextRequest) => {
         `New Registration: ${teamName} (${divisionName})${isWaitlist ? ' - Waitlist' : ''}`,
         adminNotificationHtml({
           teamName, coachName: entryCoach, contactEmail: entryCoachEmail ?? email, divisionName, tournamentName,
+          orgSlug: organization.slug, tournamentId,
           registeredBy: headCoachElsewhere ? { name: registrantName, email } : null,
         }),
         { kind: 'registration_admin_alert' },
@@ -646,7 +648,11 @@ export const POST = withObservability(async (req: NextRequest) => {
           defaultSubject: isWaitlist ? `Waitlist Confirmation - ${teamName}` : `Registration Received - ${teamName}`,
           defaultHtml: isWaitlist
             ? waitlistConfirmationHtml(confirmation)
-            : registrationConfirmationHtml({ ...confirmation, paymentsTracked: tournamentTracksPayments(tournament.settings) }),
+            : registrationConfirmationHtml({
+              ...confirmation,
+              paymentsTracked: tournamentTracksPayments(tournament.settings),
+              online: await tournamentTakesOnlinePayments(tournamentId),
+            }),
         })
       );
     }

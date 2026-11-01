@@ -1,5 +1,8 @@
-import { describe, it } from 'node:test';
+import { describe, it, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
+import * as React from 'react';
+import { billingTestLoader } from './_billing-test-loader.ts';
+import type { PayoutsView } from '../../components/admin/kit/club/PayoutsCard.tsx';
 import { payOptions } from '../../lib/team-pay-options.ts';
 import { onlineFee } from '../../lib/online-payment-fee.ts';
 import { readTeamPayToken, signTeamPayToken, teamPayPath } from '../../lib/team-pay-link.ts';
@@ -13,6 +16,173 @@ import { factsFromStripe, payoutsState, takesPayments, type PayoutsAccountFacts,
 
 const fee = (total: number | null, deposit: number | null) => ({
   totalFeeAmount: total, totalFeeDueDate: '2026-11-30', depositAmount: deposit, depositDueDate: '2026-11-01',
+});
+
+/** Exercise the shipped card's click handler with held network responses, without a browser or Stripe calls. */
+function payoutsHarness(t: TestContext, home: 'club' | 'tournament', state: PayoutsView['state'] = 'taking_payments', blocked = false) {
+  const slots: unknown[] = [];
+  let cursor = 0;
+  const hooks = {
+    ...React,
+    useState<T>(initial: T) {
+      const at = cursor++;
+      if (!(at in slots)) slots[at] = initial;
+      return [slots[at] as T, (next: T | ((previous: T) => T)) => {
+        slots[at] = typeof next === 'function' ? (next as (previous: T) => T)(slots[at] as T) : next;
+      }] as const;
+    },
+    useRef<T>(initial: T) {
+      const at = cursor++;
+      if (!(at in slots)) slots[at] = { current: initial };
+      return slots[at] as { current: T };
+    },
+    useCallback<T>(callback: T) { return callback; },
+  };
+  const initial: PayoutsView = {
+    state, isOwner: true, testMode: true, rateLabel: '3%', example: { baseCents: 10000, feeCents: 300 },
+    feePayer: 'family', refundPolicy: 'Ask the club.', requirementsDue: 0, deadline: null, paymentsOn: true,
+    connectedAt: '2026-10-25', disconnectedAt: null, disconnectedBy: null, teamsStillOwing: 0,
+  };
+  const events: string[] = [];
+  const requests: Record<string, unknown>[] = [];
+  const assigned: string[] = [];
+  let navigations = 0;
+  const link = { href: '', target: '', rel: '', referrerPolicy: '', click() { navigations++; } };
+  const tab = {
+    opener: {} as unknown, closed: false,
+    close() { this.closed = true; },
+    document: {
+      createElement(tag: string) { assert.equal(tag, 'a'); return link; },
+      body: { appendChild(child: unknown) { assert.equal(child, link); } },
+    },
+  };
+  const previousWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: {
+    open(url: string, target: string) {
+      assert.equal(url, 'about:blank'); assert.equal(target, '_blank');
+      events.push('open'); return blocked ? null : tab;
+    },
+    location: { assign(url: string) { assigned.push(url); } },
+  } });
+  t.after(() => {
+    if (previousWindow) Object.defineProperty(globalThis, 'window', previousWindow);
+    else Reflect.deleteProperty(globalThis, 'window');
+  });
+  let resolveResponse!: (response: Response) => void;
+  let rejectResponse!: (error: Error) => void;
+  t.mock.method(globalThis, 'fetch', (_input: unknown, init: RequestInit) => {
+    events.push('fetch');
+    if (state === 'taking_payments') assert.equal(tab.opener, null, 'Detach opener before the request');
+    requests.push(JSON.parse(String(init.body)));
+    return new Promise<Response>((resolve, reject) => { resolveResponse = resolve; rejectResponse = reject; });
+  });
+  const load = billingTestLoader({ react: hooks });
+  const Card = (load('components/admin/kit/club/PayoutsCard.tsx') as { default: React.ComponentType<Record<string, unknown>> }).default;
+  type Element = React.ReactElement<Record<string, unknown>>;
+  function elements(node: unknown): Element[] {
+    if (Array.isArray(node)) return node.flatMap(elements);
+    if (!React.isValidElement(node)) return [];
+    const element = node as Element;
+    return [element, ...elements(element.props.children)];
+  }
+  function render() {
+    cursor = 0;
+    return elements((Card as (props: Record<string, unknown>) => unknown)({ orgSlug: 'test-club', clubName: 'Test Club', home, initial }));
+  }
+  const button = () => render().find(e => e.type === 'button' && e.props.className === 'btn btn-lime')!;
+  return {
+    tab, link, events, requests, assigned, render, button,
+    get navigations() { return navigations; },
+    click() { (button().props.onClick as () => void)(); },
+    alert() { return render().find(e => e.props.role === 'alert')?.props.children; },
+    async reply(data: unknown, ok = true) {
+      resolveResponse({ ok, json: async () => data } as Response);
+      await new Promise(resolve => setImmediate(resolve));
+    },
+    async fail() {
+      rejectResponse(new Error('Failed to fetch'));
+      await new Promise(resolve => setImmediate(resolve));
+    },
+  };
+}
+
+describe('Open Stripe keeps the organizer page and opens a protected tab', () => {
+  for (const home of ['club', 'tournament'] as const) {
+    it(`${home}: reserves one tab before fetching, preserves edits, and enables another visit after success`, async t => {
+      const h = payoutsHarness(t, home);
+      const pencil = h.render().find(e => e.props['aria-pressed'] === false)!;
+      (pencil.props.onClick as () => void)();
+      h.click();
+      assert.deepEqual(h.events, ['open', 'fetch']);
+      assert.equal(h.button().props.disabled, true);
+      assert.match(JSON.stringify(h.button().props.children), /Opening/);
+      h.click();
+      assert.equal(h.requests.length, 1);
+      assert.deepEqual(h.requests[0], { orgSlug: 'test-club', action: 'dashboard' });
+      await h.reply({ url: 'https://connect.stripe.com/express/test-single-use' });
+      assert.equal(h.navigations, 1);
+      assert.equal(h.link.target, '_self');
+      assert.equal(h.link.rel, 'noopener noreferrer');
+      assert.equal(h.link.referrerPolicy, 'no-referrer');
+      assert.match(h.link.href, /test-single-use$/);
+      assert.deepEqual(h.assigned, []);
+      assert.equal(h.tab.closed, false);
+      assert.equal(h.button().props.disabled, false);
+      assert.ok(h.render().some(e => e.props['aria-pressed'] === true), 'Keep record editing open');
+      assert.match(JSON.stringify(h.button().props.children), /opens in a new tab/);
+    });
+  }
+
+  for (const failure of ['network', 'http', 'missing-url'] as const) {
+    it(`${failure}: closes the temporary tab, retains the error, and permits retry`, async t => {
+      const h = payoutsHarness(t, 'club');
+      h.click();
+      if (failure === 'network') await h.fail();
+      else if (failure === 'http') await h.reply({ error: 'Finish setting up payouts first.' }, false);
+      else await h.reply({});
+      assert.equal(h.tab.closed, true);
+      assert.equal(h.navigations, 0);
+      assert.equal(h.button().props.disabled, false);
+      assert.equal(h.alert(), failure === 'network' ? 'Failed to fetch'
+        : failure === 'http' ? 'Finish setting up payouts first.'
+          : 'Something went wrong. Try again.');
+      assert.deepEqual(h.assigned, []);
+      h.click();
+      assert.equal(h.requests.length, 2);
+      await h.reply({});
+    });
+  }
+
+  it('a blocked tab shows how to retry without creating a single-use link', t => {
+    const h = payoutsHarness(t, 'club', 'taking_payments', true);
+    h.click();
+    assert.deepEqual(h.events, ['open']);
+    assert.equal(h.alert(), 'Allow pop-ups for this site, then try again.');
+    assert.equal(h.button().props.disabled, false);
+    assert.deepEqual(h.assigned, []);
+  });
+
+  it('does not reopen a tab the organizer closed while waiting', async t => {
+    const h = payoutsHarness(t, 'tournament');
+    h.click(); h.tab.close();
+    await h.reply({ url: 'https://connect.stripe.com/express/test-single-use' });
+    assert.equal(h.navigations, 0);
+    assert.equal(h.button().props.disabled, false);
+    assert.deepEqual(h.events, ['open', 'fetch']);
+  });
+
+  for (const state of ['setting_up', 'needs_attention'] as const) {
+    it(`${state} keeps onboarding in the original tab`, async t => {
+      const h = payoutsHarness(t, 'club', state);
+      assert.doesNotMatch(JSON.stringify(h.button().props.children), /opens in a new tab/);
+      h.click();
+      assert.deepEqual(h.events, ['fetch']);
+      assert.equal(h.requests[0].action, 'continue');
+      await h.reply({ url: 'https://connect.stripe.com/setup/test' });
+      assert.deepEqual(h.assigned, ['https://connect.stripe.com/setup/test']);
+      assert.equal(h.button().props.disabled, true);
+    });
+  }
 });
 
 describe('deposit or full (A7)', () => {

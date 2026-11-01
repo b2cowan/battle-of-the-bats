@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
 import { getCoachingAssignmentsForUser, getOrganizationBySlug } from '@/lib/db';
-import { canOpenTournaments, isMoneyRedactedForTeam } from '@/lib/coach-capabilities';
+import { canOpenTournaments, canWriteMoney, isMoneyRedactedForTeam } from '@/lib/coach-capabilities';
 import { registrationBelongsToRepTeam, tournamentEntryNames, tournamentEntryTabTitle } from '@/lib/coach-registration-access';
 import { CoachTournamentRecordHeader } from '@/components/coaches/CoachTournamentRecordParts';
 import CoachTournamentRecord from '@/components/coaches/CoachTournamentRecord';
@@ -73,6 +73,7 @@ export default async function PremiumCoachTournamentRecordPage({ params }: Route
       email={user.email}
       suppressUpsell
       moneyRedacted={moneyRedacted}
+      canPayOnline={canWriteMoney(assignment.capabilities)}
       allowAssignmentAccess
       backHref={backHref}
       scheduleHref={`/${orgSlug}/coaches/teams/${teamId}/schedule`}

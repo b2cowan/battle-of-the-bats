@@ -11,8 +11,8 @@
  * (Tournament Plus). The OWNER acts (A1); the treasurer reads the state and gets "needs attention" (`canSeePayouts`).
  * The card renders nothing while the launch switch is off or the plan lacks the feature — the API answers 404 then.
  */
-import { useCallback, useState } from 'react';
-import { Check, Pencil, Unplug } from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
+import { Check, ExternalLink, Pencil, Unplug } from 'lucide-react';
 import { formatStoredDate } from '@/lib/timezone';
 import { LEAVING_WORDS, PAYMENTS_TERMS_SUMMARY, PAYMENTS_TERMS_VERSION, TERMS_PLACEHOLDER, TERMS_WORDS, money, payoutsWords, type PayoutsHome } from '@/lib/online-payment-words';
 import type { PayoutsState } from '@/lib/online-payment-account';
@@ -100,6 +100,7 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
   const W = payoutsWords(home);
   const [view, setView] = useState<PayoutsView | null>(initial);
   const [opening, setOpening] = useState(false);
+  const openingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [before, setBefore] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
@@ -112,17 +113,46 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
   if (!view) return null;
   const { state, isOwner } = view;
 
-  /** Hand over to Stripe (onboarding or the Express Dashboard). The button says what is happening and stays pressed. */
+  /** Onboarding returns here; the Express Dashboard opens alongside the organizer's unchanged page. */
   async function goToStripe(action: 'continue' | 'dashboard') {
+    if (openingRef.current) return;
+    openingRef.current = true;
     setOpening(true);
     setError(null);
+    let stripeTab: Window | null = null;
     try {
+      if (action === 'dashboard') {
+        // Reserve the tab during the click, before any await (Safari/mobile popup blockers).
+        // Keep its handle for failure cleanup; window.open's noopener feature would return null.
+        stripeTab = window.open('about:blank', '_blank');
+        if (!stripeTab) throw new Error('Allow pop-ups for this site, then try again.');
+        stripeTab.opener = null;
+      }
       const { url } = await post(orgSlug, { action });
-      if (url) window.location.assign(url);
-      else { setOpening(false); await reload(); }
+      if (stripeTab) {
+        if (!url) throw new Error('Something went wrong. Try again.');
+        if (!stripeTab.closed) {
+          // Navigate the reserved tab without a Referer or access back to the organizer's tab.
+          const link = stripeTab.document.createElement('a');
+          link.href = url;
+          link.target = '_self';
+          link.rel = 'noopener noreferrer';
+          link.referrerPolicy = 'no-referrer';
+          stripeTab.document.body.appendChild(link);
+          link.click();
+        }
+      } else if (url) window.location.assign(url);
+      else { openingRef.current = false; setOpening(false); await reload(); }
     } catch (e) {
+      stripeTab?.close();
       setError(e instanceof Error ? e.message : String(e));
+      openingRef.current = false;
       setOpening(false);
+    } finally {
+      if (action === 'dashboard') {
+        openingRef.current = false;
+        setOpening(false);
+      }
     }
   }
 
@@ -197,6 +227,10 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
           <div className={pc.actions}>
             <button type="button" className="btn btn-lime" onClick={primary} disabled={opening}>
               {opening ? W.opening : W.button[state]}
+              {state === 'taking_payments' && <>
+                <ExternalLink size={14} aria-hidden />
+                <span className="sr-only"> (opens in a new tab)</span>
+              </>}
             </button>
           </div>
         )) : (

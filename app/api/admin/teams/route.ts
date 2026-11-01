@@ -16,6 +16,7 @@ import { captureError, withObservability } from '@/lib/observability';
 import { refreshTournamentChatMembership } from '@/lib/chat-service';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
+import { tournamentTakesOnlinePayments } from '@/lib/tournament-online-payments';
 import { notifyTeamCoaches } from '@/lib/team-coach-notices';
 import { TEAM_COACH_WORDS } from '@/lib/team-coach-notice-plan';
 
@@ -415,6 +416,7 @@ export const POST = withObservability(async (req: Request) => {
             tournamentName: tournament?.name ?? 'Tournament',
             paymentStatus,
             paymentsTracked: tournamentTracksPayments(tournament?.settings),
+            online: await tournamentTakesOnlinePayments(team.tournamentId),
             contactEmail: tournament?.contact_email ?? ctx.org.contactEmail ?? undefined,
             registrationId: id,
             coachEmail: team.email.trim(),

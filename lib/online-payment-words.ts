@@ -106,6 +106,10 @@ export const ONLINE_NOTICE_WORDS = {
   // 12c: a bank debit lands through the same door once it clears, so the notice says which rail the money came by.
   notRecordedBody: (description: string, amount: string, reason: string, bank = false) =>
     `${description}: ${amount} was paid by ${bank ? 'bank debit' : 'card'}, but it couldn’t be added to the team’s record (${reason}). Refund it to the ${bank ? 'bank account' : 'card'} from the team’s record or in Stripe.`,
+  // The organizer's "Payment received" bell: a team paid online and it is in the team's record. Told on every payment
+  // (a part payment included); a bank debit is told the day it clears, never when it starts.
+  receivedTitle: (team: string) => `Payment received: ${team}`,
+  receivedBody: (amount: string, bank = false) => `${amount} was paid online by ${bank ? 'bank debit' : 'card'}.`,
   refundFailedTitle: 'A refund didn’t reach the card',
   // 12c words §1.6: a team can have a part refund and a later one, so the item names which.
   // 12c words §3.6/§3.9: a refund to a bank account says the account (`card` is then "the account ending 1234").
@@ -157,6 +161,10 @@ export const LEAGUE_ONLINE_NOTICE_WORDS = {
   unrecordedBodyTwice: (guardian: string | null, date: string | null, childPossessive: string, bank = false) =>
     `${guardian ?? 'The family'} paid by ${bank ? 'bank debit' : 'card'}${date ? ` on ${date}` : ''}, after ${childPossessive} fee was already marked received. The money is in the club’s Stripe balance. Refund it to the ${bank ? 'bank account' : 'card'}.`,
   // Derived: the whole landing threw (the season is gone, Stripe's amount differs) — no child's share is on a registration.
+  // The desk's "Payment received" bell: a family paid online and it is on the registration (a bank debit, the day it clears).
+  receivedTitle: 'Payment received: house league',
+  receivedBody: (description: string, amount: string, bank = false) =>
+    `${description}: ${amount} was paid online by ${bank ? 'bank debit' : 'card'}.`,
   unrecordedSignupTitle: 'A house-league card payment couldn’t be recorded',
   unrecordedSignupTitleBank: 'A house-league bank debit couldn’t be recorded',
   unrecordedSignupBody: (description: string, amount: string, reason: string, bank = false) =>
@@ -589,13 +597,16 @@ export const PAY_WORDS = {
   testLine: 'Test payment: no money moves.',
   testReceipt: 'Test payment · no money moved',
   // Today's words, verbatim, when the club isn't taking payments (A6; RegisterContent's PaymentPanel).
-  notTakingHeader: 'Payment handled by organizer',
+  notTakingHeader: 'Pay the organizer directly',
   notTakingTotal: 'Total fee',
   notTakingDeposit: 'Deposit',
   notTakingDue: (date: string) => `Due ${date}`,
   notTakingNoSchedule: 'The organizer has not published a fee schedule for this division yet.',
   notTakingHowLabel: 'How to pay',
-  notTakingFoot: 'Payments are made directly to the organizer, outside the platform.',
+  // Owner 2026-10-30: say what happens next, never "outside the platform" (a family has no word for our side of it).
+  notTakingFoot: (hasHowToPay: boolean) => hasHowToPay
+    ? 'You won’t be charged here. Pay the organizer using the instructions above.'
+    : 'You won’t be charged here. The organizer will send you details on how to pay.',
   error: {
     notAccepted: (team: string) => `${team} hasn’t been accepted yet. You can pay once the organizer accepts it.`,
     ended: (team: string, tournament: string) => `${team} is no longer in ${tournament}, so there’s nothing to pay.`,

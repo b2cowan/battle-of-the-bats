@@ -180,7 +180,7 @@ function Owing({ token, view }: { token: string; view: PayPageView }) {
   );
 }
 
-/** Not taking payments: today's "Payment handled by organizer" panel, word for word (A6). */
+/** Not taking payments: the "Pay the organizer directly" panel (reworded 2026-10-30). */
 function TodaysPanel({ view }: { view: PayPageView }) {
   const s = view.schedule;
   return (
@@ -210,7 +210,7 @@ function TodaysPanel({ view }: { view: PayPageView }) {
           <p>{view.howToPay}</p>
         </div>
       )}
-      <p>{W.notTakingFoot}</p>
+      <p>{W.notTakingFoot(!!view.howToPay)}</p>
     </div>
   );
 }

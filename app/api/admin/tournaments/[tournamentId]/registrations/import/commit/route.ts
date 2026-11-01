@@ -30,6 +30,7 @@ import {
 } from '../shared';
 import { withObservability } from '@/lib/observability';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
+import { tournamentTakesOnlinePayments } from '@/lib/tournament-online-payments';
 import { IMPORTED_PAYMENT_LABEL } from '@/lib/import/tournament-team-money';
 import { ourTeamIdsAmong, ourTournamentTeamIds } from '@/lib/club-own-tournament-team';
 import { paymentErrorResponse, payTeamDue, recordTeamPayment } from '@/lib/team-payments-server';
@@ -417,6 +418,7 @@ async function sendImportPortalEmails(input: {
   const tournamentName = tournament?.name ?? 'Tournament';
   // "Not tracked here": the email says nothing about payment.
   const paymentsTracked = tournamentTracksPayments(tournament?.settings);
+  const online = await tournamentTakesOnlinePayments(input.tournamentId);
   const contactEmail = tournament?.contact_email ?? undefined;
 
   let sent = 0;
@@ -433,6 +435,7 @@ async function sendImportPortalEmails(input: {
         tournamentName,
         paymentStatus: row.normalized.paymentStatus === 'paid' ? 'paid' : 'pending',
         paymentsTracked,
+        online,
         contactEmail,
         registrationId: teamId,
         coachEmail: email,

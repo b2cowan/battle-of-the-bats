@@ -56,6 +56,15 @@
   margin-top: 0.6rem;
 }
 
+.payButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--tap-min, 44px);
+  text-decoration: none;
+}
+
 .payInstructions {
   margin: 0 0 0.35rem;
   font-size: var(--type-body);
