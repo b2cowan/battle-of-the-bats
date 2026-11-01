@@ -1920,7 +1920,7 @@ export const SCREENS = [
       if (!counts.includes('games final') || counts.includes('left to play')) throw new Error('Finished standings fixture is not final.');
     } },
   { id: 'pubt-playoffs-live', session: 'anon', path: () => '/stage1-metro-sports/stage4-live/playoffs',
-    ready: '[data-public-playoffs="live"] [data-public-playoff-game]', route: 'app/[orgSlug]/[tournamentSlug]/playoffs',
+    ready: '[data-public-playoffs="live"] [data-public-live-card]', route: 'app/[orgSlug]/[tournamentSlug]/playoffs',
     interact: async page => { await page.getByRole('button', { name: /How seeding works/ }).click(); } },
   { id: 'pubt-playoffs-seeded', session: 'anon', path: () => '/stage1-metro-sports/stage4-seeded/playoffs',
     ready: '[data-public-playoffs="upcoming"] [data-bracket-game]', route: 'app/[orgSlug]/[tournamentSlug]/playoffs',
