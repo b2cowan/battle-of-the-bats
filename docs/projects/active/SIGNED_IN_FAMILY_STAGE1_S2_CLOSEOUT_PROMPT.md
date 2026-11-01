@@ -97,7 +97,15 @@
   only. **Checks:** `measure:help` 0 unconverted (both new sub-topics under 350; *Paying by bank debit* at 376 was over
   before this edit, words unchanged in length); ESLint 0 errors (the line-1 unused-disable warning is old); spelling passes;
   the 8 suites that read these guides 235/235. `tsc` not re-run here (no contract change); Step 4 re-runs it.
-- [ ] **Step 4 · commit**
+- [x] **Step 4 · commit** — 2026-11-01. **Session 2 committed `0e8294ddf`** on `dev` (44 files, parent `e6b3cad3a`). The 20
+  suites re-run first: 905/905; `tsc` clean. Built in a temp index on that base, pre-commit hook run by hand (tokens, dates,
+  lockfile pass), `commit-tree` + compare-and-swap `update-ref`. Two files carry Session 2's lines only: the Owner QA Ledger
+  (§437; the billing session's paste-back above it stays in the working copy) and `league-practice-tell.test.ts` (the
+  moved-email pin; house league's published-division reader test and `lib/club-schedule-league-mail.ts` stay in the working
+  copy). **Also committed:** `SIGNED_IN_FAMILY_STAGE1_DRAWINGS.html` (Session 1 left it untracked while committed code and docs
+  already named it). **Left out on purpose:** the schema snapshot files, `memory/reference_db_schema.md`, `.probe/`. No
+  committed file imports another session's uncommitted module. This hash line and the other record edits (build prompt, plan,
+  TODO, §437, memory) are uncommitted record edits.
 
 ## The Session 2 files (the whole scope of every step)
 

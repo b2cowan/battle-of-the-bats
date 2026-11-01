@@ -215,6 +215,12 @@ describe('guards (owner 2026-10-31: no link is ever sent to a family; one househ
     assert.equal((sender.match(/const households = sendableHouseholds\(/g) ?? []).length, 2);
     assert.ok(!/group\w*\(.*guardian_email/i.test(sender));
   });
+  it('the shared household reader drops a division whose teams are not published, so the club\'s practice-change email agrees with the Tell gate', () => {
+    const mail = readCode('lib/club-schedule-league-mail.ts');
+    const reader = mail.slice(mail.indexOf('export async function readHouseholds'), mail.indexOf('export function householdParts'));
+    assert.ok(reader.includes("select('id, teams_published_at')"), 'the reader looks up which divisions are published');
+    assert.ok(/filter\(x => x\.division_id && published\.has\(x\.division_id\)\)/.test(reader), 'and keeps only a published division\'s registrations');
+  });
 });
 
 describe('the moved child (Part 4, owner 2026-10-31: dates only once the new team has been TOLD)', () => {

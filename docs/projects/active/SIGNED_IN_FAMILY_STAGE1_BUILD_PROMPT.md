@@ -60,7 +60,8 @@
     page}. You'll need this reference and your email." The plain page now emails the link, so it still leads somewhere, but
     "you'll need this reference" is false. Part 5 replaces it; do not ship Session 1 to production without Part 5.
     **Closed by Session 2 (Part 5).**
-- **Session 2 (Parts 5–8) built 2026-11-01, uncommitted; no new migration.** Tests: the Session 1 suites plus
+- **Session 2 (Parts 5–8) built 2026-11-01; walk §437 PASSED 17/17; simplify + review + docs done; committed `0e8294ddf`
+  2026-11-01; no new migration** (closeout record: `SIGNED_IN_FAMILY_STAGE1_S2_CLOSEOUT_PROMPT.md`). Tests: the Session 1 suites plus
   `house-league-registrations`, `league-practice-tell`, `stripe-fees-owner-rulings`, `public-face-s3a/s3b`, `house-league-gate-guard`,
   `club-stage5c-families-guard`, `marketing-campaign-registry`, `plan-billing-host-links`, `house-league-9d3-coach`,
   `bank-debit-desk`: **905/905 pass**. `tsc` clean (8 GB heap). ESLint 0 errors on the 25 touched files. Spelling, tokens and

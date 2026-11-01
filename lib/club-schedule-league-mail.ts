@@ -36,15 +36,25 @@ export interface Household {
   children: { name: string; teamId: string; registrationId: string }[];
 }
 
-/** The households of these house-league teams: active registrations with an email, grouped as Publish teams groups them. */
+/**
+ * The households of these house-league teams: active registrations with an email, grouped as Publish teams groups them.
+ * ⚖ Only a PUBLISHED division's placements count. Until a division's teams are published a child's team is the club's
+ * draft, and the family has not been told it — a practice email must not be the first they hear (nor name a team they
+ * may yet be moved off). The Tell step's own gate says the same on its side; this makes the club's Send the changes
+ * agree, since both read their families here.
+ */
 export async function readHouseholds(teamIds: readonly string[]): Promise<Household[]> {
   if (!teamIds.length) return [];
-  const regs = await fetchAllIn<{ id: string; season_id: string; team_id: string; player_first_name: string; player_last_name: string; guardian_first_name: string | null; guardian_email: string | null }>(
+  const regs = await fetchAllIn<{ id: string; season_id: string; division_id: string | null; team_id: string; player_first_name: string; player_last_name: string; guardian_first_name: string | null; guardian_email: string | null }>(
     teamIds, (c, a, b) => supabaseAdmin.from('league_registrations')
-      .select('id, season_id, team_id, player_first_name, player_last_name, guardian_first_name, guardian_email')
+      .select('id, season_id, division_id, team_id, player_first_name, player_last_name, guardian_first_name, guardian_email')
       .in('team_id', c).eq('status', 'active').order('id').range(a, b));
+  const divisionIds = [...new Set(regs.map(r => r.division_id).filter((d): d is string => !!d))];
+  const published = new Set((await fetchAllIn<{ id: string; teams_published_at: string | null }>(divisionIds, (c, a, b) => supabaseAdmin
+    .from('league_divisions').select('id, teams_published_at').in('id', c).order('id').range(a, b)))
+    .filter(d => d.teams_published_at).map(d => d.id));
   const out = new Map<string, Household>();
-  for (const r of [...regs].sort((x, y) => `${x.player_first_name} ${x.player_last_name}`.localeCompare(`${y.player_first_name} ${y.player_last_name}`))) {
+  for (const r of [...regs].filter(x => x.division_id && published.has(x.division_id)).sort((x, y) => `${x.player_first_name} ${x.player_last_name}`.localeCompare(`${y.player_first_name} ${y.player_last_name}`))) {
     const email = (r.guardian_email ?? '').trim().toLowerCase();
     if (!email) continue;
     const key = `${r.season_id}|${email}`;

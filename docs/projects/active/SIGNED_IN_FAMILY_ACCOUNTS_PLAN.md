@@ -33,7 +33,8 @@ Sequenced by dependency and rework risk, not by date. Each stage that changes wh
 ### Stage 1 — Harden the "Your sign-up" door (house league) · no prerequisite
 
 > **Built 2026-11-01.** Session 1 (Parts 1–4) committed `d79603110` (mig 419, dev only). Session 2 (Parts 5–8) built
-> 2026-11-01, uncommitted, no new migration; walk §437 owed. What shipped, and the differences from the items below (no
+> 2026-11-01, walk §437 PASSED 17/17, committed `0e8294ddf` 2026-11-01, no new migration. Before the promote that carries
+> Stage 1: mig 419 to prod, UNSUBSCRIBE_SECRET confirmed in Amplify, prod's customised family templates checked. What shipped, and the differences from the items below (no
 > separate family secret; a second address leak in the pay block masked; marketing sends refused without the unsubscribe
 > secret): the build prompt's ▶ Progress block, `SIGNED_IN_FAMILY_STAGE1_BUILD_PROMPT.md`.
 
@@ -95,7 +96,7 @@ Coaches keep their account at registration (unchanged). What changes:
 
 Re-verify items 1–3 against the code when the stage starts: they come from the 2026-10-31 trace, not a fresh read.
 
-Draw first: the finish screen and the one email.
+Draw first: the finish screen and the one email. **Drawing prompt written 2026-11-01:** `SIGNED_IN_FAMILY_STAGE2_DRAWING_PROMPT.md`.
 
 ### Stage 3 — An optional second guardian email (house league) · no prerequisite
 
