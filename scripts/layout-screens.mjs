@@ -1989,6 +1989,12 @@ export const SCREENS = [
     route: 'app/[orgSlug]/[tournamentSlug]/rules' },
   { id: 'pubt-champions-after',   session: 'anon', path: () => '/stage1-northfield/fall-ball/champions',            ready: '[data-public-frame-band]',
     route: 'app/[orgSlug]/[tournamentSlug]/champions' },
+  // Stage 7: the focused page (the team pay page) — the slim band, the page, the short footer. A real pay link is signed
+  // with the environment's secret and changes with every walk-fixture reset, so the entry opens a link that does not
+  // work: the same focused chrome, the broken-link sentence, on every environment. The paying states were measured on
+  // the real links (Stage 7 Part 2, the walk fixture); the ready marker fails loudly if the page is not focused.
+  { id: 'pubt-pay-focused',       session: 'anon', path: () => '/stage1-lakeshore-lightning/fall-classic/pay/not-a-real-link', ready: '[data-public-frame-focused-band]',
+    route: 'app/[orgSlug]/[tournamentSlug]/pay/[token]' },
 
   /*
    * ══════════════════════════════════════════════════════════════════════════════════════════

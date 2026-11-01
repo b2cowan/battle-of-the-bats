@@ -13,9 +13,16 @@
  *   not finished   left Stripe's page: nothing charged, the owing block again
  *   paid           the receipt(s); the balance still owed, if any, under them
  *   nothing / already paid / refused, and NOT TAKING PAYMENTS — today's panel, word for word (A6)
+ *
+ * FOCUSED (Public tournament pages Stage 7, under the preview switch — the layout's slim band and short footer around it):
+ * the heading line is "Team payment" (the band names the event) over the team at the page-title size (A7), and one
+ * contact line follows the pay block on every state (A1) — but clearing, which names the club in its own sentence, and a
+ * real link opened under another tournament's address, whose organizer cannot send a new one (A2). The pay block inside
+ * is untouched.
  */
 import { useMemo, useState } from 'react';
-import { CreditCard } from 'lucide-react';
+import { Check, Copy, CreditCard } from 'lucide-react';
+import { useCopyToClipboard } from '@/lib/hooks/useCopyToClipboard';
 import { BANK_DEBIT_WORDS as B, PAY_WORDS as W } from '@/lib/online-payment-words';
 import { possessive } from '@/lib/utils';
 import { formatStoredDate } from '@/lib/timezone';
@@ -31,25 +38,37 @@ import styles from './TeamPay.module.css';
 
 const day = (d: string | null) => (d ? formatStoredDate(d, { withYear: false }) : null);
 
-export default function TeamPayContent({ token, view, returnedSession, left }: {
+export default function TeamPayContent({ token, view, returnedSession, left, focused = false, contactEmail = null }: {
   token: string; view: PayPageView; returnedSession: string | null; left: boolean;
+  /** The preview switch is on: the focused page (Stage 7). */
+  focused?: boolean;
+  /** The address's organizer's public contact, focused only; null when the organizer hides it. */
+  contactEmail?: string | null;
 }) {
   // Back from Stripe: wait for the record. Paid reloads the page from the server; nothing here ever says Paid by itself.
   const { confirming, slow } = usePaymentConfirming(s => `/api/pay/team/${token}/status?session=${encodeURIComponent(s)}`, returnedSession);
 
+  // A1: every state but clearing (its own sentence names the club); A2: not under another tournament's address.
+  const contact = focused && contactEmail && view.kind !== 'clearing' && !view.misaddressed
+    ? <ContactLine email={contactEmail} /> : null;
+
+  // `page-content` pads a page below the old fixed event header and is a screen tall at the least. The focused page has no
+  // fixed header, and its short footer already sits at the foot of the screen, so the floor only left a gap above it.
+  const wrap = focused ? undefined : 'page-content';
+
   if (view.kind === 'invalid') {
-    return <div className="page-content"><div className={styles.page}><div className={reg.errorCard}><p>{view.message}</p></div></div></div>;
+    return <div className={wrap}><div className={styles.page}><div className={focused ? `${reg.errorCard} ${styles.errorFocused}` : reg.errorCard}><p>{view.message}</p></div>{contact}</div></div>;
   }
 
   // `page-content` is what every other tournament page wraps in: it pads the page below the fixed event header (date and
   // countdown line) and the ticker, which otherwise print over the heading.
   return (
-    <div className="page-content">
-    <div className={styles.page}>
+    <div className={wrap}>
+    <div className={styles.page} data-pay-focused={focused ? '' : undefined}>
       <div className={reg.formCard}>
         <PayFrame>
-          <p className={styles.eyebrow}>{view.tournamentName}</p>
-          <h1 className={styles.title}>{W.who(view.teamName, view.divisionName)}</h1>
+          <p className={styles.eyebrow}>{focused ? W.focusedEyebrow : view.tournamentName}</p>
+          <h1 className={focused ? `${styles.title} ${styles.titleFocused}` : styles.title}>{W.who(view.teamName, view.divisionName)}</h1>
           {view.testMode && <TestLine text={W.testLine} />}
 
           {confirming ? (
@@ -86,8 +105,27 @@ export default function TeamPayContent({ token, view, returnedSession, left }: {
             </>
           )}
         </PayFrame>
+        {contact}
       </div>
     </div>
+    </div>
+  );
+}
+
+/** A1: the focused page's one way to ask — the organizer's public address, with Copy (the footer's own pattern). */
+function ContactLine({ email }: { email: string }) {
+  const { copied, copy } = useCopyToClipboard();
+  return (
+    <div className={styles.contact}>
+      <span className={styles.contactLabel}>{W.questions}</span>
+      <div className={styles.mailRow}>
+        <a href={`mailto:${email}`} className={styles.mail}>{email}</a>
+        <button type="button" className={styles.copy} onClick={() => copy(email)}
+          aria-label="Copy email address" title={copied ? 'Copied' : 'Copy email address'}>
+          {copied ? <Check size={18} aria-hidden /> : <Copy size={18} aria-hidden />}
+        </button>
+        <span className={styles.srOnly} aria-live="polite">{copied ? 'Copied' : ''}</span>
+      </div>
     </div>
   );
 }

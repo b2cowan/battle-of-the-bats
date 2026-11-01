@@ -29,6 +29,7 @@ import TournamentAcquisitionBanner from '@/components/marketing/TournamentAcquis
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import MyTeamDock from '@/components/public/MyTeamDock';
 import PublicAppOnly from '@/components/public/PublicAppOnly';
+import NotOnFocusedPage from '@/components/public/NotOnFocusedPage';
 import FollowDeepLinkPrompt from '@/components/public/FollowDeepLinkPrompt';
 import AlertsNudge from '@/components/public/AlertsNudge';
 import FollowAccountNudge from '@/components/public/FollowAccountNudge';
@@ -327,6 +328,13 @@ export default async function TournamentLayout({
     </>
   );
 
+  // Stage 7 (Ask 6): the focused page (the team pay page, lib/public-focused-page.ts) wears none of the event's chrome.
+  // Under the frame only, each piece that simply goes away there is wrapped in the one gate that asks the rule; the band
+  // and the footer change shape instead and ask it themselves. Switch off, nothing is wrapped.
+  const unlessFocused = (node: React.ReactNode) => (frameOn
+    ? <NotOnFocusedPage orgSlug={orgSlug} tournamentSlug={tournament.slug}>{node}</NotOnFocusedPage>
+    : node);
+
   const page = (
     <>
       <OrgNavSync
@@ -411,8 +419,8 @@ export default async function TournamentLayout({
             frameContent={frameContent}
           />
         )}
-        {frameOn && <TournamentSideRail publicFrame hiddenPages={navHiddenPages}
-          hasBracket={hasPublicBracket} frameContent={frameContent} />}
+        {frameOn && unlessFocused(<TournamentSideRail publicFrame hiddenPages={navHiddenPages}
+          hasBracket={hasPublicBracket} frameContent={frameContent} />)}
         {frameOn ? (
           <div className={frameStyles.main}>
             <TodaysResultsLine />
@@ -444,24 +452,24 @@ export default async function TournamentLayout({
       </div>
       {/* Game-day "now playing" dock for the followed team (self-gates: followers
           on game day only; mobile-only). */}
-      {frameOn ? <PublicAppOnly><MyTeamDock
+      {frameOn ? unlessFocused(<PublicAppOnly><MyTeamDock
         publicFrame
         orgSlug={orgSlug}
         tournamentSlug={tournament.slug}
         inProgress={tournamentInProgress}
         fanAlertsEnabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
-      /></PublicAppOnly> : <MyTeamDock
+      /></PublicAppOnly>) : <MyTeamDock
         orgSlug={orgSlug}
         tournamentSlug={tournament.slug}
         inProgress={tournamentInProgress}
         fanAlertsEnabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
       />}
       {/* Self-onboarding shared links: ?follow=teamId → one-tap "Follow [team]?" (J6-012). */}
-      {frameOn ? <PublicAppOnly><FollowDeepLinkPrompt orgSlug={orgSlug} tournamentSlug={tournament.slug} publicFrame /></PublicAppOnly>
+      {frameOn ? unlessFocused(<PublicAppOnly><FollowDeepLinkPrompt orgSlug={orgSlug} tournamentSlug={tournament.slug} publicFrame /></PublicAppOnly>)
         : <FollowDeepLinkPrompt orgSlug={orgSlug} tournamentSlug={tournament.slug} />}
       {/* Post-install one-time nudge → turn on score alerts (J6-048). Self-gates to
           the installed app + a followed team; suppressed once the event is finished. */}
-      {!effectivelyFinished && (
+      {!effectivelyFinished && unlessFocused(
         <AlertsNudge
           orgSlug={orgSlug}
           tournamentSlug={tournament.slug}
@@ -470,7 +478,7 @@ export default async function TournamentLayout({
       )}
       {/* Fan app install — active/upcoming events only; suppressed once finished
           (no live scores/alerts left to follow — J6-054). */}
-      {!effectivelyFinished && (
+      {!effectivelyFinished && unlessFocused(
         <InstallAppPrompt
           appName="FieldLogicHQ"
           subtitle={
@@ -486,12 +494,12 @@ export default async function TournamentLayout({
           visitors right after they follow a team. The follow already saved locally; this is
           a non-blocking upsell with a "just this device" escape (unified-app Phase 2). It
           self-gates (checks sign-in lazily, only after a follow), so no auth call per view. */}
-      {frameOn ? <PublicAppOnly><FollowAccountNudge orgSlug={orgSlug} tournamentSlug={tournament.slug} /></PublicAppOnly>
+      {frameOn ? unlessFocused(<PublicAppOnly><FollowAccountNudge orgSlug={orgSlug} tournamentSlug={tournament.slug} /></PublicAppOnly>)
         : <FollowAccountNudge orgSlug={orgSlug} tournamentSlug={tournament.slug} />}
       {/* N2: hydrates the signed-in account's follows into the client follow layer
           (pin seeding + "Following" buttons). Client-only identity — never SSR'd
           into this SW-cached layout (see the account-chip note above). */}
-      {frameOn ? <PublicAppOnly><AccountFollowSync orgSlug={orgSlug} tournamentSlug={tournament.slug} /></PublicAppOnly>
+      {frameOn ? unlessFocused(<PublicAppOnly><AccountFollowSync orgSlug={orgSlug} tournamentSlug={tournament.slug} /></PublicAppOnly>)
         : <AccountFollowSync orgSlug={orgSlug} tournamentSlug={tournament.slug} />}
     </>
   );
@@ -499,6 +507,6 @@ export default async function TournamentLayout({
   // The frame's one outer element: the marker every frame style is keyed to, and the club site's token block (the ONE
   // light set). Fixed parts inside it (the rail, the dock, the prompts) inherit its tokens like everything else.
   return frameOn
-    ? <>{growthChrome}<div className={`${clubFrameStyles.tokens} ${frameStyles.frame}`} {...publicFrameAttr}>{page}</div></>
+    ? <>{unlessFocused(growthChrome)}<div className={`${clubFrameStyles.tokens} ${frameStyles.frame}`} {...publicFrameAttr}>{page}</div></>
     : page;
 }

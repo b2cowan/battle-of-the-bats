@@ -17,13 +17,20 @@
  *
  * In the organizer's admin preview (`basePath`) every link stays inside the preview, and the host line is plain text —
  * the preview never sends the organizer out to the live site.
+ *
+ * THE SHORT FOOTER (Stage 7, Ask A5) is the focused page's (lib/public-focused-page.ts — the team pay page): the event's
+ * name and the credit, nothing else. The page list, the host line and the address go (that page carries its own one way
+ * to ask, under the pay block, A1). The credit shows for EVERY plan there, a free event's included: the focused page wears
+ * no floating badge, so the footer is its one credit. Never in the demo (the credit is a door out of it).
  */
 import Link from 'next/link';
 import { Check, Copy } from 'lucide-react';
 import { useParams } from 'next/navigation';
+import { isDemoOrgSlug } from '@/lib/demo-org';
+import { isFocusedPublicPage } from '@/lib/public-focused-page';
 import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
 import { useCopyToClipboard } from '@/lib/hooks/useCopyToClipboard';
-import { useOrgHref } from '@/lib/use-public-pathname';
+import { useOrgHref, usePublicPathname } from '@/lib/use-public-pathname';
 import { visibleTournamentTabs, type FrameTabContent } from '@/lib/tournament-page-tabs';
 import type { PublicPageKey } from '@/lib/public-pages';
 import type { PublicFrameHost } from '@/lib/public-frame';
@@ -52,9 +59,22 @@ export default function TournamentFooter({
   const orgSlug = (params?.orgSlug as string) || '';
   const tournamentSlug = (params?.tournamentSlug as string) || '';
   const orgHref = useOrgHref(orgSlug);
+  const pathname = usePublicPathname() ?? '';
+  const short = !basePath && isFocusedPublicPage(pathname, orgSlug, tournamentSlug);
   const pageHref = (key: string) => (basePath ? `${basePath}/${key}` : orgHref(`/${tournamentSlug}/${key}`));
   // The preview has no bracket route to point at (as its tab row and rail).
   const pages = visibleTournamentTabs(hiddenPages, !basePath && hasBracket, frameContent);
+
+  if (short) {
+    return (
+      <footer className={clubStyles.footer} data-public-frame-footer="">
+        <div className={clubStyles.footInner}>
+          <p className={clubStyles.footName}>{name}</p>
+          {!isDemoOrgSlug(orgSlug) && <BuiltOnCredit className={clubStyles.credit} />}
+        </div>
+      </footer>
+    );
+  }
 
   return (
     <footer className={clubStyles.footer} data-public-frame-footer="">

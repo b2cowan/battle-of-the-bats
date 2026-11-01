@@ -1,0 +1,480 @@
+<title>Team Pay Page Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: the house drawings page. Sticky numbered tabs, a View switch, one section at a time; specimens at true size
+   (phone 390, desk 1280) on the light frame's own tokens, on a cooler document ground so they read as specimens. */
+:root{
+  --doc-bg:#E9ECEE; --doc-panel:#FFFFFF; --doc-ink:#1C2126; --doc-soft:#4A535C; --doc-dim:#6B747D; --doc-line:#D3D8DD;
+  --doc-accent:#2F5D50; --doc-accent-ink:#FFFFFF; --doc-flag:#8A5300; --doc-flag-bg:#FFF3DC; --doc-good:#2C6A2A; --doc-good-bg:#E6F0E2;
+  --f-title:"Barlow Condensed","Arial Narrow",Arial,sans-serif; --f-text:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --doc-bg:#14181B; --doc-panel:#1D2226; --doc-ink:#E8ECEF; --doc-soft:#B9C1C8; --doc-dim:#8E979F; --doc-line:#323A40;
+  --doc-accent:#7FC2AE; --doc-accent-ink:#0E1A16; --doc-flag:#F2B35C; --doc-flag-bg:#3A2C14; --doc-good:#8FD08A; --doc-good-bg:#1D3320; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --doc-bg:#14181B; --doc-panel:#1D2226; --doc-ink:#E8ECEF; --doc-soft:#B9C1C8; --doc-dim:#8E979F; --doc-line:#323A40;
+  --doc-accent:#7FC2AE; --doc-accent-ink:#0E1A16; --doc-flag:#F2B35C; --doc-flag-bg:#3A2C14; --doc-good:#8FD08A; --doc-good-bg:#1D3320; color-scheme:dark}
+body{background:var(--doc-bg);color:var(--doc-ink);font:15px/1.6 var(--f-text);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--doc-bg)}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1360px;margin:0 auto}
+header.top{padding-block:20px 0}
+header.top h1{font:700 30px/1.1 var(--f-title);margin:0;text-wrap:balance}
+header.top p{margin:4px 0 0;color:var(--doc-dim);font-size:13px;max-width:90ch}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--doc-bg);border-bottom:1px solid var(--doc-line);margin-top:14px}
+nav.tabs .in{display:flex;overflow-x:auto;gap:2px}
+nav.tabs a{flex:none;padding:12px 12px 10px;color:var(--doc-soft);text-decoration:none;font-weight:600;font-size:14px;border-bottom:3px solid transparent;white-space:nowrap}
+nav.tabs a[aria-current="page"]{color:var(--doc-ink);border-bottom-color:var(--doc-accent)}
+nav.tabs a:focus-visible,button:focus-visible,label:focus-within{outline:2px solid var(--doc-accent);outline-offset:-2px}
+.viewrow{display:flex;align-items:center;gap:10px;padding-block:10px;flex-wrap:wrap;font-size:13px;color:var(--doc-dim)}
+.vs{display:inline-flex;background:#FFFFFF;border:1px solid #D6D0C4;border-radius:999px;padding:3px}
+.vs button{font:600 13px/1 var(--f-text);border:0;background:none;color:#4E473D;border-radius:999px;padding:8px 14px;min-height:40px;cursor:pointer}
+.vs button[aria-pressed="true"]{background:#E8EDDC;color:#2F3A12}
+main{padding-block:8px 64px}
+h2{font:700 26px/1.15 var(--f-title);margin:0 0 6px;text-wrap:balance}
+h3{font:700 19px/1.2 var(--f-title);margin:22px 0 6px}
+.lede{max-width:78ch;color:var(--doc-soft);margin:0 0 16px}
+.row{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.spec{min-width:0}
+.cap{font:600 12px/1.3 var(--f-text);color:var(--doc-dim);letter-spacing:.03em;text-transform:uppercase;margin:0 0 6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.note{max-width:390px;font-size:13.5px;color:var(--doc-soft);margin:8px 0 0}
+.note b{color:var(--doc-ink)}
+.tag{display:inline-block;font:700 11px/1 var(--f-text);letter-spacing:.05em;padding:4px 7px;border-radius:4px;text-transform:uppercase}
+.tag.new{background:var(--doc-good-bg);color:var(--doc-good)}.tag.re{background:var(--doc-flag-bg);color:var(--doc-flag)}.tag.un{background:var(--doc-line);color:var(--doc-soft)}
+.panel{background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:10px;padding:14px 18px;margin:0 0 16px;max-width:90ch}
+.panel ul{margin:6px 0 0;padding-left:20px}
+.phonebox{width:390px;height:760px;overflow-y:auto;overflow-x:hidden;border:1px solid var(--doc-line);border-radius:22px;background:#F6F5F2;position:relative}
+.deskwrap{overflow-x:auto;max-width:100%;border:1px solid var(--doc-line);border-radius:10px}
+.deskbox{width:1280px;height:720px;overflow-y:auto;background:#F6F5F2}
+.mk{font:700 12px/1 var(--f-text);background:#D9480F;color:#FFFFFF;border:2px solid #FFFFFF;border-radius:999px;padding:6px 9px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.35);position:absolute;z-index:5}
+.mk:hover{background:#B33A0A}
+
+/* ── The specimen: the light frame's tokens, as shipped (ClubFrame / TournamentFrame / TeamPay / PayBlock) ── */
+.tf{--g:#F6F5F2;--card:#FFFFFF;--ink:#1F1B16;--soft:#4E473D;--dim:#6F675B;--line:#E4E0D8;--err:#B03A22;
+  --fill:#1E3A8A;--on:#FFFFFF;--cink:#1E3A8A;--edge:#1E3A8A;--acc:#1E3A8A;--tile:#FFFFFF;--tileink:#1E3A8A;
+  background:var(--g);color:var(--ink);font:400 16px/1.6 var(--f-text);position:relative;color-scheme:light;min-height:100%;display:flex;flex-direction:column}
+.tf.free{--fill:#1F1B16;--cink:#1F1B16;--edge:#1F1B16;--acc:#1F1B16}
+.tf *{box-sizing:border-box}
+.tf .grow{flex:1}
+/* The focused band: 52px, the colour role and the name. */
+.fband{height:55px;border-bottom:3px solid var(--acc);background:var(--fill);color:var(--on);display:flex;align-items:center;padding:0 16px;position:relative;flex:none}
+.fband .ghost{margin-left:auto;font:600 14px/1 var(--f-text);border:1px dashed currentColor;border-radius:6px;padding:8px 10px;opacity:.55;text-decoration:line-through}
+.fband .nm{font:700 18px/1.1 var(--f-title);color:inherit;text-decoration:none;min-height:44px;display:flex;align-items:center;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.desk .fband{padding:0 32px}
+.desk .fband .nm{font-size:24px}
+/* Today's full band, tabs and footer. */
+.band72{height:72px;background:var(--fill);color:var(--on);display:flex;align-items:center;gap:12px;padding:0 8px 0 16px;border-bottom:3px solid var(--acc);flex:none}
+.band72 .logo{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;font:700 16px/1 var(--f-title);background:var(--tile);color:var(--tileink);flex:none}
+.band72 .bn{min-width:0;flex:1}.band72 .bn b{display:block;font:700 20px/1.1 var(--f-title)}
+.band72 .bn span{display:block;font:500 12px/1.3 var(--f-text);margin-top:3px}
+.band72 .ico{width:44px;height:44px;display:grid;place-items:center}
+.band72 .si{font:600 14px/1 var(--f-text);padding:0 10px;min-height:44px;display:flex;align-items:center}
+.ttabs{background:#FFFFFF;border-bottom:1px solid var(--line);display:flex;gap:4px;padding:0 8px;overflow:hidden;flex:none}
+.ttabs span{font:600 14px/1 var(--f-text);color:var(--soft);min-height:44px;display:flex;align-items:center;padding:3px 8px 0;border-bottom:3px solid transparent;white-space:nowrap}
+.dock{position:sticky;bottom:0;background:#FFFFFF;border-top:1px solid var(--line);padding:10px 16px;font:600 13px/1.3 var(--f-text);color:var(--soft);display:flex;justify-content:space-between;align-items:center;min-height:56px}
+.dock i{font-style:normal;font-weight:500;color:var(--dim);font-size:12px}
+/* The page column. */
+.pg{width:100%;max-width:640px;margin:0 auto;padding:24px 16px 32px;display:flex;flex-direction:column;gap:12px}
+.eb{font:700 11px/1.3 var(--f-text);color:var(--dim);margin:0}
+.h1old{font:700 16px/1.15 var(--f-title);margin:0}
+.h1{font:700 32px/1.1 var(--f-title);margin:0;text-wrap:balance}
+body.t20 .h1{font-size:20px}
+.hd{display:flex;flex-direction:column;gap:4px}
+.h2{font:700 16px/1.15 var(--f-title);margin:0}
+.p{margin:0;color:var(--soft)}
+.nt{font-size:12px;line-height:1.45;color:var(--dim);margin:0}
+.test{font-size:12px;line-height:1.45;color:var(--dim);margin:0}
+.lg{font:600 12px/1.3 var(--f-text);color:var(--soft);margin:0 0 2px}
+.ch{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border:1px solid var(--line);border-radius:6px;min-height:44px}
+.ch input{margin-top:5px;flex:none}
+.ch span{display:flex;flex-direction:column;gap:2px}
+.ch strong{font-weight:700}
+.stack{display:flex;flex-direction:column;gap:14.4px}
+.info{color:#3B82F6}
+.chs{display:flex;flex-direction:column;gap:8px}
+.fld{display:flex;flex-direction:column;gap:4px}
+.fld label{font:600 12px/1.3 var(--f-text);color:var(--soft)}
+.fld .in{height:44px;border:1px solid var(--line);border-radius:6px;padding:0 12px;display:flex;align-items:center;color:var(--dim);font-size:15px}
+.btns{display:flex;flex-direction:column;gap:12px}
+.bt{display:flex;flex-direction:column;gap:4px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border-radius:6px;padding:10px 20px;font:700 16px/1 var(--f-title);background:var(--fill);color:var(--on);border:1px solid var(--fill);width:100%}
+.btn.out{background:#FFFFFF;color:var(--cink);border-color:var(--edge)}
+.desk .btn{width:auto;align-self:flex-start}
+.lnk{color:var(--ink);text-decoration:underline;text-underline-offset:3px;font-size:12px;align-self:flex-start}
+.rc{border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.rc dl{margin:6px 0 0;display:grid;grid-template-columns:1fr auto;font-size:15px;color:var(--soft)}
+.rc dt,.rc dd{margin:0;padding:3px 0}
+.rc dd{text-align:right;font-variant-numeric:tabular-nums}
+.rc .tot{border-top:1px solid var(--line);font-weight:700;color:var(--ink);padding-top:6px}
+.ntp{border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:13px}
+.ntp .hdr{display:flex;align-items:center;gap:8px;font:800 12.8px/1.2 var(--f-text);color:var(--cink)}
+.ntp .rows{display:flex;gap:24px;flex-wrap:wrap}
+.ntp .rows div{display:flex;flex-direction:column}
+.ntp .rows small{font:700 11.2px/1.3 var(--f-text);color:var(--dim)}
+.ntp .rows b{font-weight:400;font-size:16px;font-variant-numeric:tabular-nums}
+.ntp .rows i{font-style:normal;font-size:12px;color:var(--dim)}
+.ntp hr{border:0;border-top:1px dashed var(--line);margin:0;width:100%}
+.ntp .htp{font:800 11.2px/1.3 var(--f-text);color:var(--cink)}
+.ntp p{margin:0;font-size:13.6px;line-height:1.5;color:var(--dim)}
+.ntp p.org{color:var(--soft)}
+.err{text-align:center;padding:48px 32px;color:var(--dim)}
+.err p{margin:0}
+/* A1: the contact line. */
+.ct{display:flex;flex-direction:column;gap:0;margin-top:8px;position:relative}
+.ct small{font:500 12px/1.3 var(--f-text);color:var(--soft)}
+.ct div{display:flex;align-items:center;gap:4px;min-width:0}
+.ct u{font:600 16px/1.2 var(--f-text);color:var(--cink);min-height:44px;display:inline-flex;align-items:center;text-underline-offset:3px;overflow-wrap:anywhere}
+.ct .cp{width:44px;height:44px;display:grid;place-items:center;color:var(--cink);flex:none}
+/* The short footer. */
+.ff{background:var(--fill);color:var(--on);border-top:3px solid var(--acc);padding:22px 16px 18px;display:flex;flex-direction:column;gap:14px;position:relative;flex:none}
+.ff b{font:700 20px/1.1 var(--f-title)}
+.ff .cr{font:500 12px/1.3 var(--f-text);border-top:1px solid currentColor;padding-top:10px;opacity:.95}
+.ff .cr u{font-weight:600;text-underline-offset:2px;display:inline-flex;align-items:center;min-height:44px}
+.desk .ff{flex-direction:row;flex-wrap:wrap;gap:20px;padding:28px 32px 22px}
+.desk .ff .cr{flex-basis:100%}
+/* Today's full footer extras. */
+.ff .q small{display:block;font:500 12px/1.3 var(--f-text)}
+.ff .q u{font:600 16px/1.2 var(--f-text);text-underline-offset:3px}
+.ff .pl{display:flex;flex-wrap:wrap;gap:6px 18px;font:600 14px/1.3 var(--f-text)}
+.ff .pl u{text-underline-offset:3px}
+.ff .hb{font:600 14px/1.3 var(--f-text)}
+/* The free plan's badge and banner, today. */
+.badge{position:sticky;bottom:0;margin:0;background:rgba(9,12,20,.86);border-top:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.58);font:500 11.8px/1.3 var(--f-text);padding:10px 16px;text-align:center}
+.badge b{color:#C6F24E;font-weight:700}
+/* "Show only what differs": the parts every state shares go quiet. */
+body.differs section:not(#whole) [data-same], body.differs #whole [data-same-whole]{opacity:.16;filter:grayscale(1)}
+.ask{background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:10px;padding:16px 18px;margin:0 0 14px;max-width:96ch}
+.ask.hl{box-shadow:0 0 0 3px var(--doc-flag)}
+.ask h3{margin:0 0 4px}
+.ask .why{color:var(--doc-soft);margin:0 0 10px;font-size:14px}
+.ask label{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:14.5px}
+.ask label:hover{background:var(--doc-bg)}
+.ask input[type=radio]{margin-top:4px;accent-color:var(--doc-accent);width:18px;height:18px;flex:none}
+.ask textarea{width:100%;min-height:52px;margin-top:8px;font:14px/1.5 var(--f-text);padding:8px 10px;border:1px solid var(--doc-line);border-radius:8px;background:var(--doc-bg);color:var(--doc-ink);box-sizing:border-box}
+.rec{font-weight:700;color:var(--doc-good)}
+.btnd{font:600 14px/1 var(--f-text);background:var(--doc-accent);color:var(--doc-accent-ink);border:0;border-radius:8px;padding:12px 16px;cursor:pointer;min-height:44px}
+pre.paste{white-space:pre-wrap;background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:10px;padding:14px;font:13px/1.5 ui-monospace,Consolas,monospace;max-width:100ch}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <h1>Stage 7 · The team pay page</h1>
+  <p>Public tournament pages, Stage 7 Part 1 · drawn 2026-11-01 · the focused page ruled at Ask 6 (2026-10-27). Every specimen is true size. Open this page on a phone to judge the phone frames. Amounts are the real figures the product computes for a $100 deposit / $300 entry (the Stage 7 walk fixture).</p>
+</header>
+<nav class="tabs" aria-label="Sections"><div class="in">
+  <a href="#whole">1 · Whole screen</a>
+  <a href="#paying">2 · Paying</a>
+  <a href="#paid">3 · Paid or refused</a>
+  <a href="#direct">4 · Pay directly</a>
+  <a href="#broken">5 · Broken link</a>
+  <a href="#free">6 · Free event</a>
+  <a href="#desk">7 · Desk</a>
+  <a href="#asks">8 · Asks</a>
+</div></nav>
+<div class="viewrow"><span>View</span>
+  <div class="vs" role="group" aria-label="View"><button type="button" id="v-all" aria-pressed="true">Everything</button><button type="button" id="v-diff" aria-pressed="false">Show only what differs</button></div>
+  <span id="vhint">On tab 1 it quiets the pay block (unchanged) so the new shell stands out. On the state tabs it quiets the band, heading, contact line and footer, which every state shares.</span>
+</div>
+
+<main>
+<!-- ================= 1 · WHOLE SCREEN ================= -->
+<section id="whole" data-tab>
+  <h2>The whole screen, today and after</h2>
+  <p class="lede">A coach opens the emailed link with a deposit to pay. Today the page sits in the full tournament shell. After, it is the focused page: a slim band, the pay block, one way to ask a question, a short footer. The orange markers are the asks; tap one to jump to it.</p>
+  <div class="row">
+    <div class="spec"><p class="cap">Today · switch on, the full shell <span class="tag un">Today</span></p>
+      <div class="phonebox"><div class="tf">
+        <div class="band72"><div class="logo">RS</div><div class="bn"><b>Riverdale Summer Classic</b><span>Dec 13–15 · <b style="font:600 12px var(--f-text);display:inline">Registration open</b></span></div>
+          <span class="ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8h16v-8M12 3v13M7 8l5-5 5 5"/></svg></span><span class="si">Sign in</span></div>
+        <div class="ttabs"><span>Overview</span><span>Schedule</span><span>Standings</span><span>Teams</span><span>Register</span></div>
+        <div class="pg">
+          <div class="hd"><p class="eb">Riverdale Summer Classic</p><h1 class="h1old">Riverdale Rapids · U11</h1></div>
+          <p class="test">Test payment: no money moves.</p>
+          <div id="blk-today"></div>
+        </div>
+        <div class="grow"></div>
+        <div class="ff"><b>Riverdale Summer Classic</b>
+          <div class="q"><small>Questions? Email the tournament</small><u>tournaments@riverdaleminor.ca</u></div>
+          <div class="pl"><u>Overview</u><u>Schedule</u><u>Standings</u><u>Teams</u><u>Register</u></div>
+          <div class="hb">Hosted by Riverdale Minor Ball ›</div>
+          <div class="cr">Built on <u>FieldLogicHQ</u></div></div>
+        <div class="dock">My team dock<i>(schematic: drawn as a strip)</i></div>
+      </div></div>
+      <p class="note"><b>Switch off, customers keep the old dark page, untouched.</b> On game days today's games line also runs under the tabs, and the follow, alerts and install prompts can appear. The heading repeats the event name the band already shows.</p>
+    </div>
+    <div class="spec"><p class="cap">After · the focused page <span class="tag re">Restyled</span></p>
+      <div class="phonebox"><div class="tf" id="after-owing">
+        <div class="fband" data-same><a class="nm" href="#whole" onclick="return false">Riverdale Summer Classic</a><span class="ghost" aria-hidden="true">Sign in</span>
+          <button class="mk" style="left:208px;top:12px" data-ask="A3">A3</button><button class="mk" style="right:84px;top:12px" data-ask="A4">A4</button></div>
+        <div class="pg">
+          <div class="hd" data-same style="position:relative"><p class="eb">Team payment</p><h1 class="h1">Riverdale Rapids · U11</h1><button class="mk" style="right:0;top:6px" data-ask="A7">A7</button></div>
+          <p class="test">Test payment: no money moves.</p>
+          <div class="blk-owing" data-same-whole></div>
+          <div class="ct" data-same><button class="mk" style="right:0;top:-6px" data-ask="A1">A1</button></div>
+        </div>
+        <div class="grow"></div>
+        <div class="ff" data-same><b>Riverdale Summer Classic</b><div class="cr">Built on <u>FieldLogicHQ</u></div>
+          <button class="mk" style="right:12px;top:12px" data-ask="A5">A5</button></div>
+      </div></div>
+    </div>
+    <div class="read" style="max-width:420px;min-width:280px;flex:1">
+      <div class="panel">
+        <b>What changes</b>
+        <ul>
+          <li>Band: 72&nbsp;px with a tab row → <b>52&nbsp;px plus the 3&nbsp;px accent rule, the name only</b> (one line, as the hub drew it). No tabs, no Sign in (A4), no Share. The name goes back to the Overview (A3).</li>
+          <li>No side rail, today's games line, my-team dock, follow/alerts/install prompts, or free-plan badge and banner.</li>
+          <li>Heading: the band already names the event, so the small line above the team becomes <b>"Team payment"</b> and the team takes the big title, as the hub drew it at Ask 6. The small line stays the shipped 11&nbsp;px (the hub drew 14). The title size is A7: 32&nbsp;px as the hub drew, or the written page-title size of 20.</li>
+          <li>"Test payment: no money moves." shows only while the organizer's payment account is in test mode.</li>
+          <li>The pay block itself is the shipped one: the same words, amounts, choices and buttons.</li>
+          <li>One way to ask a question, under the pay block (A1). The footer drops its page list, host line and email.</li>
+          <li>Still private and never indexed.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <b>Checked by eye on the 390 frame</b>
+        <ul>
+          <li>The first Pay button sits above the fold on the 390 frame with the deposit choice open. Part 2 measures it on the real page at 360, 390 and 1280.</li>
+          <li>The buttons are 48&nbsp;px and the band name, contact line and footer credit 44. The pay block's own "Refund policy" link is 12&nbsp;px text with no tap height (A8).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 2 · PAYING ================= -->
+<section id="paying" data-tab hidden>
+  <h2>Paying: owing, not finished, confirming</h2>
+  <p class="lede">The states a coach sees on the way through a payment. Only the middle of the page changes; switch the view to see just that. The test line shows only in test mode.</p>
+  <div class="row" id="row-paying"></div>
+</section>
+
+<!-- ================= 3 · PAID OR REFUSED ================= -->
+<section id="paid" data-tab hidden>
+  <h2>Paid, clearing, nothing to pay, or refused</h2>
+  <p class="lede">After paying, the link keeps working as the receipt. A team the organizer has not accepted gets one sentence and no buttons.</p>
+  <div class="row" id="row-paid"></div>
+</section>
+
+<!-- ================= 4 · PAY DIRECTLY ================= -->
+<section id="direct" data-tab hidden>
+  <h2>Not taking payments here: pay the organizer directly</h2>
+  <p class="lede">The event does not take online payments: the organizer has no payment account, has switched it off, does not track the fee here, or the plan has no online payments. The coach sees the fee, the due dates and the organizer's own how-to-pay words.</p>
+  <div class="row" id="row-direct"></div>
+</section>
+
+<!-- ================= 5 · BROKEN LINK ================= -->
+<section id="broken" data-tab hidden>
+  <h2>A link that doesn't work</h2>
+  <p class="lede">A mangled or old link, or one opened under another tournament's address. The address still names a real tournament, so its band can show.</p>
+  <div class="row" id="row-broken"></div>
+</section>
+
+<!-- ================= 6 · FREE EVENT ================= -->
+<section id="free" data-tab hidden>
+  <h2>A free event</h2>
+  <p class="lede">A free event never takes online payments (they come with Tournament Plus and up), so its pay page is always <b>Pay the organizer directly</b>, or the receipt-free <i>paid in full</i>. The band is the neutral near-black with no mark, and the button colour follows it.</p>
+  <div class="row" id="row-free"></div>
+</section>
+
+<!-- ================= 7 · DESK ================= -->
+<section id="desk" data-tab hidden>
+  <h2>The desk, 1280 wide</h2>
+  <p class="lede">Today a desk shows an 88&nbsp;px band, "Hosted by" and Sign in, and a 248&nbsp;px side rail beside the pay block. After: the band runs full width at 52&nbsp;px, and the page is one centred column at the pay block's own width (640&nbsp;px). Scroll sideways inside the frame on a narrow screen.</p>
+  <div class="deskwrap"><div class="deskbox"><div class="tf desk" style="position:relative">
+    <div class="fband" data-same><a class="nm" href="#desk" onclick="return false">Riverdale Summer Classic</a></div>
+    <button class="mk" style="left:330px;top:120px" data-ask="A6">A6</button>
+    <div class="pg">
+      <div class="hd" data-same><p class="eb">Team payment</p><h1 class="h1">Riverdale Rapids · U11</h1></div>
+      <p class="test">Test payment: no money moves.</p>
+      <div class="blk-owing"></div>
+      <div class="ct" data-same></div>
+    </div>
+    <div class="grow"></div>
+    <div class="ff" data-same><b>Riverdale Summer Classic</b><div class="cr">Built on <u>FieldLogicHQ</u></div></div>
+  </div></div></div>
+  <p class="note" style="max-width:80ch">Buttons keep their own width on a desk (full width only at 640&nbsp;px and under), as they do today.</p>
+</section>
+
+<!-- ================= 8 · ASKS ================= -->
+<section id="asks" data-tab hidden>
+  <h2>Asks</h2>
+  <p class="lede">Eight calls the drawing needs before Part 2 builds it. Each has a recommendation. Pick one per ask, add notes if you like, then copy the summary into the chat. Your picks stay in this browser only.</p>
+  <p class="note" style="max-width:none"><label style="display:inline-flex;gap:8px;align-items:center;cursor:pointer;min-height:44px"><input type="checkbox" id="t20"> Show every team title at 20&nbsp;px (A7)</label></p>
+  <div id="asklist"></div>
+  <button class="btnd" id="copybtn" type="button">Copy my answers</button> <span id="copied" class="note" style="display:inline"></span>
+  <pre class="paste" id="paste" aria-live="polite"></pre>
+</section>
+</main>
+</div>
+
+<script>
+(function(){
+  var cardIco='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>';
+  var bankIco='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 10h18L12 4zM5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg>';
+  var copyIco='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+
+  // The shipped pay block, its words verbatim (online-payment-words.ts PAY_WORDS), the fixture's real amounts.
+  var nOwing=0;
+  function owing(){nOwing++;return OWING.split('name="x"').join('name="ch'+nOwing+'"');}
+  var OWING=
+    '<fieldset class="chs" style="border:0;padding:0;margin:0"><legend class="lg">To pay now</legend>'+
+    '<label class="ch"><input type="radio" name="x" checked tabindex="-1"><span><strong>Pay the deposit, $100.00</strong><small class="nt">The $200.00 balance is due Dec 1.</small></span></label>'+
+    '<label class="ch"><input type="radio" name="x" tabindex="-1"><span><strong>Pay in full, $300.00</strong><small class="nt">$1.50 less in processing fees by card, or $1.00 less by bank debit, than paying the deposit and the balance separately.</small></span></label></fieldset>'+
+    '<div class="fld"><label>Email for the receipt</label><div class="in">coach@example.com</div></div>'+
+    '<div class="btns"><div class="bt"><span class="btn">'+cardIco+'Pay $105.00 by card</span><p class="nt">Includes a $5.00 processing fee.</p></div>'+
+    '<div class="bt"><span class="btn out">'+bankIco+'Pay $103.50 by bank debit</span><p class="nt">Includes a $3.50 processing fee. Takes up to 5 business days.</p></div></div>'+
+    '<span class="lnk">Refund policy</span>';
+  var BALANCE=
+    '<p class="nt">Riverdale Rapids has paid $100.00 so far.</p><h2 class="h2">Pay the balance, $200.00</h2><p class="nt">Due Dec 1.</p>'+
+    '<div class="fld"><label>Email for the receipt</label><div class="in">coach@example.com</div></div>'+
+    '<div class="btns"><div class="bt"><span class="btn">'+cardIco+'Pay $208.50 by card</span><p class="nt">Includes a $8.50 processing fee.</p></div>'+
+    '<div class="bt"><span class="btn out">'+bankIco+'Pay $206.00 by bank debit</span><p class="nt">Includes a $6.00 processing fee. Takes up to 5 business days.</p></div></div>'+
+    '<span class="lnk">Refund policy</span>';
+  var CLEARING=
+    '<h2 class="h2 info">Bank debit clearing</h2><p class="p">$308.50 from the account ending 6789, started Oct 26. Banks take up to 5 business days. We’ll email you when it clears.</p>'+
+    '<p class="p">Riverdale Rapids’ place is held.</p><p class="nt">Wrong account, or a question? Contact Riverdale Minor Ball at info@riverdaleminor.ca.</p>';
+  var CONTACT='<small>Questions about this payment?</small><div><u>tournaments@riverdaleminor.ca</u><span class="cp" aria-label="Copy the address">'+copyIco+'</span></div>';
+  var RECEIPT=
+    '<div class="rc"><p class="test">Test payment · no money moved</p><h2 class="h2">Paid, thank you</h2><b style="font-weight:700">$312.00 to Riverdale Minor Ball</b>'+
+    '<p class="nt">Visa •••• 4242 · Nov 1, 2026, 8:14 p.m. · receipt 1042</p>'+
+    '<dl><dt>Entry fee</dt><dd>$300.00</dd><dt>Processing fee</dt><dd>$12.00</dd><dt class="tot">Paid</dt><dd class="tot">$312.00</dd></dl></div>'+
+    '<p class="nt">This page shows your receipt any time you open your pay link.</p><p class="nt">There’s nothing left to pay.</p>';
+  var DIRECT=
+    '<div class="ntp"><div class="hdr">'+cardIco+'Pay the organizer directly</div>'+
+    '<div class="rows"><div><small>Total fee</small><b>$300.00</b><i>Due Dec 1</i></div><div><small>Deposit</small><b>$100.00</b><i>Due Nov 15</i></div></div>'+
+    '<hr><div class="htp">How to pay</div><p class="org">E-transfer to tournaments@riverdaleminor.ca with your team name in the message.</p>'+
+    '<p>You won’t be charged here. Pay the organizer using the instructions above.</p></div>';
+
+  function phone(o){
+    var tf='<div class="tf'+(o.free?' free':'')+'">';
+    var band=o.band===false?'':'<div class="fband" data-same><a class="nm" href="#" onclick="return false">'+(o.name||'Riverdale Summer Classic')+'</a>'+(o.bandMk||'')+'</div>';
+    var head=o.head===false?'':'<div class="hd" data-same><p class="eb">Team payment</p><h1 class="h1">'+(o.team||'Riverdale Rapids · U11')+'</h1></div>';
+    var test=o.test===false?'':'<p class="test">Test payment: no money moves.</p>';
+    var ct=o.contact===false?'':'<div class="ct" data-same>'+CONTACT+(o.ctMk||'')+'</div>';
+    var foot=o.foot===false?'':'<div class="ff" data-same><b>'+(o.name||'Riverdale Summer Classic')+'</b><div class="cr">Built on <u>FieldLogicHQ</u></div>'+(o.ffMk||'')+'</div>';
+    return '<div class="spec"><p class="cap">'+o.cap+'</p><div class="phonebox">'+tf+(o.pre||'')+band+(o.raw||'<div class="pg">'+head+test+o.body+ct+'</div>')+'<div class="grow"></div>'+foot+(o.post||'')+'</div></div>'+(o.note?'<p class="note">'+o.note+'</p>':'')+'</div>';
+  }
+  function mk(id,css){return '<button class="mk" style="'+css+'" data-ask="'+id+'">'+id+'</button>';}
+
+  // Fill the whole-screen specimens.
+    [].forEach.call(document.querySelectorAll('.blk-owing'),function(el){el.outerHTML='<div class="stack"'+(el.hasAttribute('data-same-whole')?' data-same-whole':'')+'>'+owing()+'</div>';});
+  [].forEach.call(document.querySelectorAll('#after-owing .ct, #desk .ct'),function(el){el.insertAdjacentHTML('afterbegin',CONTACT);});
+  document.getElementById('blk-today').outerHTML='<div class="stack" data-same-whole>'+owing()+'</div>';
+
+  var UN='<span class="tag un">Unchanged block</span>';
+  document.getElementById('row-paying').innerHTML=
+    phone({cap:'Owing · the deposit or the full entry '+UN,body:'<div class="stack">'+owing()+'</div>',note:'The deposit is chosen first, as today. The buttons follow the choice ($312.00 / $308.50 for the full entry).'})+
+    phone({cap:'Not finished · back from the secure page '+UN,body:'<h2 class="h2">Payment not finished</h2><p class="p">You left the secure payment page before paying. Nothing was charged.</p><div class="stack">'+owing()+'</div>',note:'The coach left the card page without paying. The same choice follows.'})+
+    phone({cap:'Owing the balance · the deposit already paid '+UN,body:'<div class="stack">'+BALANCE+'</div>',note:'Card and bank amounts follow from the same fee rule as the choice above.'})+
+    phone({cap:'Confirming · back from paying '+UN,body:'<h2 class="h2">Confirming your payment</h2><p class="p">We have your payment and are waiting for it to confirm. This usually takes a few seconds and the page updates by itself. Don’t pay again.</p>',note:'After 20 seconds the sentence becomes "This is taking longer than usual. You don’t need to pay again: we’ll email your receipt to {email} as soon as it confirms." The page opens straight into the focused frame, with no flash of the old shell.'});
+
+  document.getElementById('row-paid').innerHTML=
+    phone({cap:'Paid in full, with the receipt '+UN,body:RECEIPT,note:'Each payment is one receipt card. A deposit paid earlier shows its own card above, and the balance-only choice replaces the buttons until the balance is paid.'})+
+    phone({cap:'Clearing · a bank debit on its way '+UN,body:CLEARING,contact:false,note:'The one state that already names someone, the club and its address, so it skips the A1 line (A1’s recommendation). No buttons.'})+
+    phone({cap:'Nothing to pay '+UN,body:'<h2 class="h2">Nothing to pay</h2><p class="p">There’s no entry fee to pay for Riverdale Rapids.</p>',test:false,note:'No fee, or the host club’s own team. Not drawn: a refunded receipt and a returned bank debit, which reuse the receipt card above with their own heading.'})+
+    phone({cap:'Refused · not accepted yet '+UN,body:'<p class="p">Riverdale Rapids hasn’t been accepted yet. You can pay once the organizer accepts it.</p>',note:'The other refusals read the same way: no longer in the tournament, a payment still being recorded, the club not taking payments right now.'});
+
+  document.getElementById('row-direct').innerHTML=
+    phone({cap:'Pay the organizer directly '+UN,body:DIRECT,test:false,note:'No test line: nothing is paid here. With no fee schedule the rows read "The organizer has not published a fee schedule for this division yet."'});
+
+  document.getElementById('row-broken').innerHTML=
+    '<div class="spec"><p class="cap">Today · a bare sentence <span class="tag un">Today</span></p><div class="phonebox"><div class="tf">'+
+      '<div class="band72"><div class="logo">RS</div><div class="bn"><b>Riverdale Summer Classic</b><span>Dec 13–15 · Registration open</span></div><span class="si">Sign in</span></div>'+
+      '<div class="ttabs"><span>Overview</span><span>Schedule</span><span>Standings</span><span>Teams</span><span>Register</span></div>'+
+      '<div class="pg"><div class="err"><p>This payment link doesn’t work. Ask the organizer to email you a new one.</p></div></div><div class="grow"></div>'+
+      '<div class="ff"><b>Riverdale Summer Classic</b><div class="pl"><u>Overview</u><u>Schedule</u><u>Standings</u><u>Teams</u><u>Register</u></div><div class="cr">Built on <u>FieldLogicHQ</u></div></div></div></div>'+
+      '<p class="note">No heading, no team, and no way to reach the organizer it tells the coach to ask.</p></div>'+
+    phone({cap:'After · the band, the sentence, who to ask <span class="tag re">Restyled</span>',head:false,test:false,
+      body:'<div class="err" style="padding:40px 8px 8px;position:relative"><p>This payment link doesn’t work. Ask the organizer to email you a new one.</p>'+mk('A2','right:-4px;top:8px')+'</div>',
+      note:'The sentence stays word for word. The contact line names the one person who can send a new link. No team is named: a broken link proves nothing about which team it was. A real link opened under another tournament’s address shows that tournament’s band and no contact line, since its organizer cannot send the link (A2).'});
+
+  document.getElementById('row-free').innerHTML=
+    '<div class="spec"><p class="cap">Today · free event, the badge on top <span class="tag un">Today</span></p><div class="phonebox"><div class="tf free">'+
+      '<div class="band72" style="border-bottom-color:#1F1B16"><div class="bn"><b>Maple Leaf Fall Ball</b><span>Oct 3–5 · Registration open</span></div><span class="si">Sign in</span></div>'+
+      '<div class="ttabs"><span>Overview</span><span>Schedule</span><span>Standings</span><span>Teams</span></div>'+
+      '<div class="pg"><div class="hd"><p class="eb">Maple Leaf Fall Ball</p><h1 class="h1old">Kanata Cardinals · 13U</h1></div>'+DIRECT.replace('tournaments@riverdaleminor.ca','fallball@mapleleafbaseball.ca')+'</div><div class="grow"></div>'+
+      '<div class="ff"><b>Maple Leaf Fall Ball</b><div class="pl"><u>Overview</u><u>Schedule</u><u>Standings</u><u>Teams</u></div></div>'+
+      '<p class="badge">Powered by FieldLogicHQ · <b>Run your own tournament</b></p></div></div>'+
+      '<p class="note">The floating "Powered by" badge (and, with it, the sign-up banner) sits over a coach paying an entry fee. No footer credit.</p></div>'+
+    phone({cap:'After · neutral band, credit in the footer <span class="tag re">Restyled</span>',free:true,name:'Maple Leaf Fall Ball',team:'Kanata Cardinals · 13U',test:false,
+      body:DIRECT.replace('tournaments@riverdaleminor.ca','fallball@mapleleafbaseball.ca'),
+      ffMk:mk('A5','right:12px;top:12px'),
+      note:'No badge, no banner. The short footer carries "Built on FieldLogicHQ", the same as every plan. The contact line (A1) uses the organizer’s public contact.'}).replace(/tournaments@riverdaleminor\.ca<\/u>/,'fallball@mapleleafbaseball.ca</u>');
+
+  // Tabs, routed on the hash.
+  var tabs=[].slice.call(document.querySelectorAll('nav.tabs a')), secs=[].slice.call(document.querySelectorAll('section[data-tab]'));
+  function show(id){
+    if(!document.getElementById(id))id='whole';
+    secs.forEach(function(s){s.hidden=s.id!==id;});
+    tabs.forEach(function(a){a.getAttribute('href')==='#'+id?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current');});
+  }
+  window.addEventListener('hashchange',function(){show(location.hash.slice(1));});
+  show(location.hash.slice(1));
+
+  // The View switch.
+  var vAll=document.getElementById('v-all'), vDiff=document.getElementById('v-diff');
+  function view(d){document.body.classList.toggle('differs',d);vAll.setAttribute('aria-pressed',String(!d));vDiff.setAttribute('aria-pressed',String(d));}
+  vAll.onclick=function(){view(false);}; vDiff.onclick=function(){view(true);};
+
+  // The asks.
+  var ASKS=[
+    {id:'A1',t:'A contact line on every state',why:'The hub drew "Questions about this payment?" with the organizer’s address under the pay block. Today only the clearing state (a bank debit on its way) names anyone. A coach whose payment fails, or who is refused, has no one to ask.',
+      o:['One line under the pay block on every state, from the organizer’s public contact; the clearing state keeps its own sentence and skips this one. Absent when the organizer hides the contact.','Only on the clearing state, as today.','In the short footer instead of under the pay block.']},
+    {id:'A2',t:'The broken link',why:'Today a bare sentence with no title in the full shell. It tells the coach to ask the organizer and does not say who that is.',
+      o:['The slim band (the address names a real tournament), the existing sentence word for word, and the A1 contact line. When the link is a real one opened under another tournament’s address, the band shows and the contact line does not.','As today: the sentence alone, no band, no contact.']},
+    {id:'A3',t:'A way back to the event',why:'With no tabs, a coach has no route to the schedule or the Overview from this page.',
+      o:['The event name in the band links to the Overview, styled as the name (no arrow, no button look). The trade-off: a coach has to guess that the name is a link.','No link: the page is a dead end on purpose.','A separate "Back to the event" link under the pay block.']},
+    {id:'A4',t:'Sign in in the band',why:'Stage 1 put Sign in in a browser’s band on every public page.',
+      o:['Absent here: paying never needs an account, and the page has one job.','Keep Sign in in the band in a browser, as on the other pages.']},
+    {id:'A5',t:'A free event’s credit',why:'A free event normally shows the floating "Powered by" badge and the sign-up banner, and no footer credit. Here they would float over a coach paying an entry fee.',
+      o:['On this page, no badge and no banner; the short footer carries "Built on FieldLogicHQ" for every plan, as the hub drew it.','Keep the badge and banner on a free event, as today.','Neither: no credit at all on this page.']},
+    {id:'A7',t:'The team title’s size',why:'The hub drew the team name at 32 px. The written type scale keeps 32 px for a number read across a room (the score) and gives a page title 20 px; today the title is 16 px. Tick the box above the asks to see 20 px on every specimen.',
+      o:['20 px, the written page-title size.','32 px, as the hub drew it.','16 px, as today.']},
+    {id:'A8',t:'The Refund policy link’s tap height',why:'The pay block’s Refund policy link is 12 px text with no tap height, about 17 px tall: under the 44 px floor every other control on this page meets. Fixing it is the one edit inside the pay block this stage would make; its words and look stay the same.',
+      o:['Give the link a 44 px tap height (no visible change).','Leave the pay block exactly as shipped.']},
+    {id:'A6',t:'The desk',why:'Today a desk shows the 248 px side rail beside the pay block.',
+      o:['One centred column at the pay block’s width (640 px), the band full width.','Keep the rail’s column, empty, so the page lines up with the other pages.']}
+  ];
+  ASKS.sort(function(a,b){return a.id<b.id?-1:1;});
+  var KEY='stage7-pay-asks-v1', saved={};
+  try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){saved={};}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  var list=document.getElementById('asklist');
+  ASKS.forEach(function(a){
+    var d=document.createElement('div');d.className='ask';d.id='ask-'+a.id;
+    var h='<h3>'+a.id+' · '+a.t+'</h3><p class="why">'+a.why+'</p>';
+    a.o.forEach(function(txt,i){
+      var oid='o-'+a.id+'-'+i, ch=(saved[a.id]&&saved[a.id].pick===i);
+      h+='<label for="'+oid+'"><input type="radio" id="'+oid+'" name="'+a.id+'" value="'+i+'"'+(ch?' checked':'')+'><span>'+(i===0?'<span class="rec">Recommended · </span>':'')+txt+'</span></label>';
+    });
+    h+='<textarea id="n-'+a.id+'" placeholder="Notes (optional)">'+((saved[a.id]&&saved[a.id].note)||'').replace(/</g,'&lt;')+'</textarea>';
+    d.innerHTML=h;list.appendChild(d);
+    d.addEventListener('change',function(e){if(e.target.name===a.id){saved[a.id]=saved[a.id]||{};saved[a.id].pick=Number(e.target.value);save();}});
+    d.querySelector('textarea').addEventListener('input',function(e){saved[a.id]=saved[a.id]||{};saved[a.id].note=e.target.value;save();});
+  });
+  document.getElementById('copybtn').onclick=function(){
+    var lines=['Stage 7 pay page drawing: my answers'];
+    ASKS.forEach(function(a){
+      var s=saved[a.id]||{}, p=(typeof s.pick==='number')?s.pick:null;
+      lines.push(a.id+' · '+a.t+': '+(p===null?'(no pick)':String.fromCharCode(97+p)+(p===0?' (recommended)':'')+' — '+a.o[p])+(s.note?'\n   Note: '+s.note:''));
+    });
+    var txt=lines.join('\n'), out=document.getElementById('paste'), msg=document.getElementById('copied');
+    out.textContent=txt;
+    try{navigator.clipboard.writeText(txt).then(function(){msg.textContent='Copied.';},function(){msg.textContent='Select the text below and copy it.';});}
+    catch(e){msg.textContent='Select the text below and copy it.';}
+  };
+
+  var t20=document.getElementById('t20');t20.onchange=function(){document.body.classList.toggle('t20',t20.checked);};
+
+  // Markers jump to their ask.
+  document.addEventListener('click',function(e){
+    var b=e.target.closest&&e.target.closest('.mk'); if(!b)return;
+    var id=b.getAttribute('data-ask'); location.hash='asks'; show('asks');
+    var el=document.getElementById('ask-'+id);
+    [].forEach.call(document.querySelectorAll('.ask.hl'),function(x){x.classList.remove('hl');});
+    if(el){el.classList.add('hl');el.scrollIntoView({block:'center'});}
+  });
+})();
+</script>

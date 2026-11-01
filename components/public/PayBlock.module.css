@@ -27,6 +27,9 @@
 .payButton { min-height: 48px; display: inline-flex; align-items: center; gap: 0.5rem; }
 .error { margin: 0; color: rgb(var(--danger-rgb)); }
 .link { align-self: flex-start; padding: 0; border: 0; background: none; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; font-size: var(--type-support); }
+/* Public tournament pages Stage 7, A8: on the focused team pay page (TeamPayContent marks it; frame-only) the link gets a
+   44 px tap height. The negative margins hand back exactly what the taller box adds, so nothing on the page moves. */
+:global([data-pay-focused]) .link { display: inline-flex; align-items: center; min-height: 44px; margin-block: -12px; }
 /* The sign-up confirmation centres its whole card; the button, its fee note and the policy link follow the rest of it. */
 .centered .payRow { align-items: center; }
 .centered .link { align-self: center; }

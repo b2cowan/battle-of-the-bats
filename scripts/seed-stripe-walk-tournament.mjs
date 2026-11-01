@@ -36,6 +36,22 @@
  *                      pay-link stamps and coach links; puts the filler back to an unpaid, accepted state; then makes
  *                      sure the rest of the fixture is in place. Every delete is scoped by this tournament's id.
  *
+ *   --pay-page         Also builds the public pay page's walk (Public tournament pages Stage 7; build prompt
+ *                      docs/projects/active/PUBLIC_TOURNAMENT_STAGE7_BUILD_PROMPT.md) and prints a real pay link per
+ *                      team with the state it opens on. Every row it adds is named "Pay Page …", so it is easy to spot:
+ *                        · division "Walk Pay Page" (its own, so Walk 13U / 15U and the Stripe walks' counts never move)
+ *                          holding "Pay Page Owing" (accepted, unpaid: the deposit-or-full choice, look only),
+ *                          "Pay Page Pay Me" (accepted, unpaid: the walk pays it in full with a test card, and it then
+ *                          opens on "paid in full" with its receipt) and "Pay Page Not Accepted" (pending: refused);
+ *                        · tournament "Stripe Walk Pay Direct" (slug `stripe-walk-pay-direct`), the fee NOT tracked,
+ *                          with one accepted team "Pay Page Pay Direct": "Pay the organizer directly". Not taking
+ *                          payments is decided per tournament (or club), so it cannot share the first tournament.
+ *                          Its contact is PUBLIC and made up (`payments@stripe-walk.example`), so the walk sees the pay page's
+ *                          contact line there (Stage 7 A1) and its absence on the first tournament, whose is hidden.
+ *                      Reversible: --reset removes the three teams with every other walk team (and the payment the
+ *                      walk made); --pay-page puts them back unpaid. The second tournament holds no money ever. To
+ *                      remove all of it, delete that tournament and the "Walk Pay Page" division in the admin.
+ *
  * Re-running without --reset is safe: the tournament, the two divisions and the filler are looked up first and only
  * put back to the shape above (a start date that has drifted inside 14 days is moved out to 45 days; teams a walk
  * registered are left alone).
@@ -46,11 +62,13 @@
  *   there); Stripe's log of them is not ours to delete.
  */
 import { createClient } from '@supabase/supabase-js';
+import { createHmac } from 'node:crypto';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const DEV_REF = 'npgnrxaitgbtbtvvykto';
 const ORG_SLUG = 'uat-rep-club';
 const TOURNAMENT_SLUG = 'stripe-walk-invitational';
+const DIRECT_CONTACT = 'payments@stripe-walk.example'; // the Pay Direct tournament's public, made-up contact (Stage 7 A1)
 const TOURNAMENT_NAME = 'Stripe Walk Invitational';
 const FILLER_NAME = 'Walk Filler Team';
 const DIVISIONS = [
@@ -66,17 +84,20 @@ const DAY = 86_400_000;
 // ── Arguments (parsed and refused BEFORE anything touches the environment or the database) ──────────────────────
 const argv = process.argv.slice(2);
 const usage = [
-  'Usage: node --env-file=.env.local scripts/seed-stripe-walk-tournament.mjs --inbox <your real email address> [--reset]',
-  '  --inbox  REQUIRED. Where the organizer\'s emails go. Never defaulted.',
-  '  --reset  Remove every team registered to the walk tournament except "Walk Filler Team" (and their payments).',
+  'Usage: node --env-file=.env.local scripts/seed-stripe-walk-tournament.mjs --inbox <your real email address> [--reset] [--pay-page]',
+  '  --inbox     REQUIRED. Where the organizer\'s emails go. Never defaulted.',
+  '  --reset     Remove every team registered to the walk tournament except "Walk Filler Team" (and their payments).',
+  '  --pay-page  Also build the pay page walk\'s teams and print a real pay link for each.',
 ].join('\n');
 function refuse(message) { console.error(`✗ ${message}\n\n${usage}`); process.exit(1); }
 
 let inbox = null;
 let RESET = false;
+let PAY_PAGE = false;
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i];
   if (a === '--reset') RESET = true;
+  else if (a === '--pay-page') PAY_PAGE = true;
   else if (a === '--inbox') { inbox = argv[i + 1] ?? ''; i++; }
   else if (a.startsWith('--inbox=')) inbox = a.slice('--inbox='.length);
   else refuse(`Unknown argument "${a}".`);
@@ -309,13 +330,87 @@ const live = (id) => counts.filter(x => x.division_id === id && x.status !== 're
 ok(`Walk 13U holds ${live(divId['Walk 13U'])} of 12 · Walk 15U holds ${live(divId['Walk 15U'])} of 1 (${live(divId['Walk 15U']) >= 1 ? 'next entry waitlists' : 'NOT full — the waitlist walk will not hold'})`);
 
 const site = process.env.NEXT_PUBLIC_APP_URL && process.env.NEXT_PUBLIC_APP_URL.includes('dev.fieldlogichq.ca') ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '') : 'https://dev.fieldlogichq.ca';
+
+// ── The pay page walk (--pay-page; Public tournament pages Stage 7) ──────────────────────────────────────────────
+// The token is lib/team-pay-link.ts signTeamPayToken, copied (a .mjs cannot import the .ts): the team id in base64url,
+// a dot, the first 16 bytes of HMAC-SHA256 over "team-pay:{id}" under PAY_LINK_SECRET.
+function payToken(teamId, secret) {
+  const id = Buffer.from(teamId.replace(/-/g, ''), 'hex').toString('base64url');
+  return `${id}.${createHmac('sha256', secret).update(`team-pay:${teamId.toLowerCase()}`).digest().subarray(0, 16).toString('base64url')}`;
+}
+async function ensureTeam(tid, divisionId, name, status) {
+  const shape = {
+    division_id: divisionId, status, payment_status: 'pending', waitlist_position: null,
+    deposit_paid: 0, total_paid: 0, entry_lowered: 0, fee_book_baseline: 0, payment_collected_at: null, pay_link_sent_at: null,
+    check_in_status: 'not_arrived', checked_in_at: null,
+  };
+  const found = await one(`find ${name}`, db.from('teams').select('id, total_paid').eq('tournament_id', tid).eq('name', name).maybeSingle());
+  // A team the walk already paid keeps its payment until --reset (the "paid in full" state is the point of paying it).
+  if (found && Number(found.total_paid ?? 0) > 0) { ok(`"${name}" found, already paid (--reset puts it back unpaid)`); return found.id; }
+  if (found) { die(`update ${name}`, (await db.from('teams').update(shape).eq('id', found.id)).error); ok(`"${name}" found, ${status} + unpaid`); return found.id; }
+  const made = await one(`insert ${name}`, db.from('teams').insert({ tournament_id: tid, name, registered_at: new Date().toISOString(), ...shape }).select('id').single());
+  ok(`"${name}" created, ${status} + unpaid`);
+  return made.id;
+}
+async function ensureDivision(tid, name) {
+  const existing = await one(`find ${name}`, db.from('divisions').select('id').eq('tournament_id', tid).eq('name', name).maybeSingle());
+  const row = { capacity: 10, display_order: 2, is_closed: false };
+  if (existing) { die(`update ${name}`, (await db.from('divisions').update(row).eq('id', existing.id)).error); return existing.id; }
+  return (await one(`insert ${name}`, db.from('divisions').insert({ tournament_id: tid, name, ...row }).select('id').single())).id;
+}
+
+let payLinks = '';
+if (PAY_PAGE) {
+  head('The pay page walk (Stage 7)');
+  const secret = process.env.PAY_LINK_SECRET?.trim();
+  if (!secret || secret.length < 32) { console.error('✗ PAY_LINK_SECRET is missing or under 32 characters in .env.local: no link can be signed.'); process.exit(1); }
+
+  const payDiv = await ensureDivision(tournamentId, 'Walk Pay Page');
+  ok('division "Walk Pay Page" (capacity 10, open)');
+  const rows = [
+    { name: 'Pay Page Owing', state: 'owing: the deposit-or-full choice (look only, do not pay)', id: await ensureTeam(tournamentId, payDiv, 'Pay Page Owing', 'accepted') },
+    { name: 'Pay Page Pay Me', state: 'owing: PAY THIS ONE in full with a test card; afterwards it opens on paid in full + its receipt', id: await ensureTeam(tournamentId, payDiv, 'Pay Page Pay Me', 'accepted') },
+    { name: 'Pay Page Not Accepted', state: 'refused: not accepted yet', id: await ensureTeam(tournamentId, payDiv, 'Pay Page Not Accepted', 'pending') },
+  ];
+
+  // The second tournament: the fee not tracked, so its team opens on "Pay the organizer directly".
+  const DIRECT_SLUG = 'stripe-walk-pay-direct';
+  // The amounts stay stored: an untracked fee shows none of them (lib/team-pay-view.ts), which is what this proves. Its
+  // contact is shown, and made up (never the walker's inbox on a public page): no registration ever alerts it.
+  const directShape = {
+    ...shape, name: 'Stripe Walk Pay Direct', public_hidden_pages: ['register'],
+    contact_email: DIRECT_CONTACT, contact_show_on_public: true,
+  };
+  const directSettings = { ...settings, fee_scope: 'free' };
+  let direct = await one('find pay direct', db.from('tournaments').select('id').eq('org_id', org.id).eq('slug', DIRECT_SLUG).neq('status', 'archived').maybeSingle());
+  if (direct) die('update pay direct', (await db.from('tournaments').update({ ...directShape, settings: directSettings }).eq('id', direct.id)).error);
+  else direct = await one('insert pay direct', db.from('tournaments').insert({ org_id: org.id, slug: DIRECT_SLUG, settings: directSettings, ...directShape }).select('id').single());
+  ok('tournament "Stripe Walk Pay Direct" (fee not tracked)');
+  const directDiv = await ensureDivision(direct.id, 'Walk Pay Page');
+  rows.push({ name: 'Pay Page Pay Direct', state: 'not taking: pay the organizer directly', id: await ensureTeam(direct.id, directDiv, 'Pay Page Pay Direct', 'accepted'), slug: DIRECT_SLUG });
+
+  // Signed with THIS environment's secret, so the links open on this environment's site (the local server under
+  // .env.local), not the deployed dev site, whose secret may differ.
+  const payOrigin = (process.env.NEXT_PUBLIC_APP_URL || site).replace(/\/$/, '');
+  const link = (r) => `${payOrigin}/${ORG_SLUG}/${r.slug ?? TOURNAMENT_SLUG}/pay/${payToken(r.id, secret)}`;
+  const owing = link(rows[0]);
+  payLinks = `
+  Pay page links (real, signed; they never expire):
+${rows.map(r => `    ${r.name.padEnd(22)} ${r.state}\n      ${link(r)}`).join('\n')}
+    Not finished (left Stripe)  ${owing}?left=1
+    Broken link                 ${owing.slice(0, -4)}AAAA
+    Broken, organizer shown     ${payOrigin}/${ORG_SLUG}/${DIRECT_SLUG}/pay/${payToken(rows[0].id, secret).slice(0, -4)}AAAA
+    Real link, wrong tournament ${payOrigin}/${ORG_SLUG}/${DIRECT_SLUG}/pay/${payToken(rows[0].id, secret)}
+`;
+}
+
 console.log(`
 Done. Organizer contact (alerts and walk emails go here): ${inbox}
 
   Public page : ${site}/${ORG_SLUG}/${TOURNAMENT_SLUG}
   Register    : ${site}/${ORG_SLUG}/${TOURNAMENT_SLUG}/register
   Organizer   : ${site}/${ORG_SLUG}/admin/tournaments/registrations  (sign in as the club owner, pick "${TOURNAMENT_NAME}")
-
+${payLinks}
 Next: walk "Walk 0 — Setup check" (it opens the public page and the register form), then Walk 9.
 Between walk runs:  node --env-file=.env.local scripts/seed-stripe-walk-tournament.mjs --inbox ${inbox} --reset
 (Reset clears the product's rows only; test payments stay in the Stripe sandbox.)`);

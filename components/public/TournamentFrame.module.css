@@ -121,6 +121,53 @@
   }
 }
 
+/* ── The focused page (Stage 7, Ask 6; lib/public-focused-page.ts — the team pay page) ────────────────────────────────
+   The slim band (TournamentBand's focused branch, its own marker so none of the full band's width rules reach it): 52 px
+   of the organizer's colour over the 3 px accent rule, the name on one line in the title face, 18 px on a phone and 24 at
+   a desk (the full band's sizes). The name is the way to the Overview, so it keeps a 44 px tap height. At a desk the
+   rail is not drawn, so the grid is one column: the band and the footer full width, the page's own 640 px column
+   centred in the middle (A6). */
+.focusBand {
+  display: flex;
+  align-items: center;
+  height: 55px;               /* 52 px of colour + the 3 px accent rule */
+  padding: 0 16px;
+  background: var(--club-fill);
+  color: var(--club-on-fill);
+  border-bottom: 3px solid var(--club-accent);
+}
+.focusName {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  font: var(--club-title-weight) 18px/44px var(--club-title-face);
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.focusName:focus-visible {
+  outline: 2px solid var(--club-on-fill);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+@media (min-width: 901px) {
+  .focusBand { padding: 0 24px; }
+  .focusName { font-size: 24px; }
+}
+@media (min-width: 1024px) {
+  .focusBand { padding: 0 32px; }
+  .frame .deskShell:has(> :global([data-public-frame-focused-band])) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'band'
+      'main'
+      'foot';
+  }
+  .frame .deskShell > :global([data-public-frame-focused-band]) { grid-area: band; }
+}
+
 /* The main column is only a grid slot at a desk; on a phone it is nothing, so the page flows as it did in Part 1. */
 @media (max-width: 1023px) {
   .main { display: contents; }

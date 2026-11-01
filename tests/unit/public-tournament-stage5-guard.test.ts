@@ -132,9 +132,10 @@ describe('Stage 5 Part 3: the team page and installed-app mounts', () => {
     assert.match(gate,/useSyncExternalStore\(subscribe, installed, server\)/);
     assert.match(gate,/const server = \(\) => false/);
     assert.match(gate,/active \? children : null/);
-    assert.match(layout,/frameOn \? <PublicAppOnly><MyTeamDock\s+publicFrame/);
+    // Stage 7: under the frame both also pass through the focused-page gate (public-focused-page.test.ts).
+    assert.match(layout,/frameOn \? unlessFocused\(<PublicAppOnly><MyTeamDock\s+publicFrame/);
     assert.match(layout,/: <MyTeamDock/);
-    assert.match(layout,/frameOn \? <PublicAppOnly><FollowDeepLinkPrompt/);
+    assert.match(layout,/frameOn \? unlessFocused\(<PublicAppOnly><FollowDeepLinkPrompt/);
     assert.match(readCode('components/public/TournamentSideRail.tsx'),/publicFrame \? <PublicAppOnly><DesktopMyTeamRailCard publicFrame/);
     for(const file of ['PublicSchedule','PublicStandings','TournamentOverview','PublicTeams','PublicTeamPage'])
       assert.doesNotMatch(readCode(`components/public/${file}.tsx`),/<MyTeamCard/);

@@ -73,6 +73,9 @@ export interface PayPageView {
   /** The fee schedule as today's panel shows it, for the not-taking state (A6: today's words, verbatim). */
   schedule: { totalCents: number | null; totalDue: string | null; depositCents: number | null; depositDue: string | null };
   receipts: PayPageReceipt[];
+  /** Invalid only: a real link opened under another tournament's address. That organizer cannot send its team a new link,
+   *  so the focused page names no one to ask (Public tournament pages Stage 7, Ask A2). */
+  misaddressed?: boolean;
 }
 
 const blank = (message: string): PayPageView => ({
@@ -130,7 +133,7 @@ export async function buildTeamPayView(token: string, at?: { orgSlug: string; to
   await (await import('./bank-debit-overdue')).settleOverdueDebits({ teamId });
   const f = await loadTeamPayFacts(teamId);
   if (!f) return blank(W.error.linkInvalid);
-  if (at && (at.orgSlug !== f.org.slug || at.tournamentSlug !== f.tournament.slug)) return blank(W.error.linkInvalid);
+  if (at && (at.orgSlug !== f.org.slug || at.tournamentSlug !== f.tournament.slug)) return { ...blank(W.error.linkInvalid), misaddressed: true };
   const settings = (f.tournament.settings ?? {}) as { payment_instructions?: string };
   const tracked = tournamentTracksPayments(f.tournament.settings);
   // An event that does not track payments shows no fee, amount, due date or how-to-pay text — whatever was typed before.

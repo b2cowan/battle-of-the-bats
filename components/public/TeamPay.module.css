@@ -10,3 +10,20 @@
 .choice { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.7rem 0.8rem; border: 1px solid var(--border-2); border-radius: var(--radius-sm); cursor: pointer; min-height: 44px; }
 .choice input { margin-top: 0.25rem; }
 .choice > span { display: flex; flex-direction: column; gap: 0.1rem; color: var(--text-primary); }
+
+/* ── The focused page (Public tournament pages Stage 7, under the preview switch, so the club's tokens are set) ───────
+   The team at the written page-title size (A7, 20 px), and the one contact line under the pay block (A1): the footer's
+   own pattern — a 12 px label over the address at 16 px and a Copy button, both 44 px tall, in the organizer's ink. */
+.titleFocused { font-size: var(--type-title); }
+.contact { display: flex; flex-direction: column; margin-top: 0.5rem; }
+.contactLabel { font: 500 12px/1.3 var(--club-text-face); color: var(--club-soft); }
+.mailRow { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.mail { display: inline-flex; align-items: center; min-height: 44px; min-width: 0; font: 600 16px/1.2 var(--club-text-face); color: var(--club-ink); text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.copy { flex: none; display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--club-ink); cursor: pointer; }
+.copy:hover { background: color-mix(in srgb, currentColor 8%, transparent); }
+.mail:focus-visible, .copy:focus-visible { outline: 2px solid var(--club-ink); outline-offset: 2px; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+/* A broken link on the focused page (A2): the sentence, then the contact line close under it, as drawn — not the old
+   error card's 48 px floor, which was the end of the page. */
+.page .errorFocused { padding: 2.5rem 0.5rem 0.5rem; }
+.page .errorFocused p { margin: 0; }

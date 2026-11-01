@@ -28,12 +28,17 @@
  *
  * Identity resolves in the browser after the page loads, never on the server, so the page a service worker caches for an
  * anonymous visitor carries no one's doors (the anonymous-public invariant, as ClubBar).
+ *
+ * ON THE FOCUSED PAGE (Stage 7, lib/public-focused-page.ts — the team pay page) it is the slim band: 52 px over the accent
+ * rule, the event's name on one line and nothing else (no mark, dates, tabs, Share, Sign in or operator door — Asks A3,
+ * A4). The name is still the way to the Overview, styled as the name. Never in the preview, which has no focused page.
  */
 import Link from 'next/link';
 import { User } from 'lucide-react';
 import { useOrgHref, usePublicPathname, useSignInHref } from '@/lib/use-public-pathname';
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
 import { isDemoOrgSlug } from '@/lib/demo-org';
+import { isFocusedPublicPage } from '@/lib/public-focused-page';
 import type { PublicPageKey } from '@/lib/public-pages';
 import type { FrameTabContent } from '@/lib/tournament-page-tabs';
 import type { PublicFrameHost } from '@/lib/public-frame';
@@ -75,8 +80,17 @@ export default function TournamentBand({
   const homeHref = basePath ?? href(`/${tournamentSlug}`);
   // The demo is a closed world: every sign-in door is a door out of it (ConsumerNav's strip rule), so it shows none.
   const inSandbox = isDemoOrgSlug(orgSlug);
-  // The preview shows no visitor's door, so it asks nobody who they are.
-  const signedIn = useClientSignedIn(!inSandbox && !preview);
+  const focused = !preview && isFocusedPublicPage(pathname, orgSlug, tournamentSlug);
+  // The preview, and the focused page, show no visitor's door, so they ask nobody who they are.
+  const signedIn = useClientSignedIn(!inSandbox && !preview && !focused);
+
+  if (focused) {
+    return (
+      <header className={styles.focusBand} data-public-frame-focused-band="">
+        <Link href={homeHref} className={styles.focusName}>{name}</Link>
+      </header>
+    );
+  }
 
   const mark = logoUrl
     ? <img src={logoUrl} alt="" className={clubStyles.logo} />

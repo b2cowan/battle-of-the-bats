@@ -27461,3 +27461,15 @@ performed over the shared working tree. The original walk result is not claimed 
 **WALKED 2026-11-01, PASSED 34/34, no changes asked** — A 7/7 · B 7/7 · C 5/5 · D 4/4 · E 3/3 · F 8/8. No notes came back with the paste, so the three open owner calls (the Schedule heading's new space; a draft season counting as live for Subscribe; the once-only copy spent on an invited-only team) stand as built. Still owed for Session 2: the commit.
 <!-- /§439 -->
 
+## §440 · Public tournament pages · Stage 7 owner walk — **a coach opens a pay link and sees one job: the slim band, the pay block unchanged, one line saying who to ask, a short footer; preview off keeps today’s page**
+<!-- §440 -->
+**Walk published 2026-11-01, owed.** [Interactive walk](https://claude.ai/artifact/4ioawHQVFheWCkR76LpRCd) · [repository HTML](PUBLIC_TOURNAMENT_STAGE7_WALK.html). One walk, 10 parts, 34 steps: A fixture, B owing on a phone, C leaving the card page (not finished), D a real test-card payment through Confirming to the receipt, E refused / pay directly / the contact line, F the broken link three ways (A2), G a free event (A5), H the desk and 901–1024, I preview off unchanged, J put back.
+
+**Authority and scope:** [Stage 7 build prompt](PUBLIC_TOURNAMENT_STAGE7_BUILD_PROMPT.md) Part 2 (and its Part 2 execution block); owner rulings A1–A8 2026-11-01; [drawing](https://claude.ai/artifact/Hag6q9kkPzHiYKkRh1A1fS); [plan §9](PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md).
+
+**Fixtures:** `node --env-file=.env.local scripts/seed-stripe-walk-tournament.mjs --inbox b2cowan+setupcheck@gmail.com --pay-page` (Stripe test mode; Pay Direct carries a made-up public contact); the free event is `stage1-northfield/fall-ball`. Part D runs on the computer (Stripe returns to its address).
+
+**Verification before the walk:** every fixture state measured at 360/390/1280; `/review` (one High fixed: the offline-copy rule on a club’s own address); focused suites 99/99, typecheck, lint, spelling; `check:layout` entry `pubt-pay-focused` clean.
+
+**Acceptance limits, not passes:** offline (no stored copy) is not walkable on the dev server, where the worker is off; it is pinned by the worker guard and walked at Stage 8. Committed 2026-11-01 on the owner’s word, step 0 (the offline-copy fix) in its own commit first.
+<!-- /§440 -->

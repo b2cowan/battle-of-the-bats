@@ -1,0 +1,316 @@
+<title>Team Pay Page Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=JetBrains+Mono&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* One page, one walk (the focused pay page, with real links). Each walk has its own purpose, pass line and sign-off; its parts carry a verdict each; paste-back per walk and for all.
+   Same shell as the Stage 6 walk (§435). An optional step carries two boxes (Did it · Skipped it) and a ruling step one box per option,
+   so a tick says which. A part with no verdict heads the summary as INCOMPLETE. */
+:root {
+  --bg: #f6f7f4; --surface: #ffffff; --ink: #1d2420; --muted: #5a6560; --line: #d9ded8;
+  --accent: #2f6b4f; --accent-soft: #e3efe8; --warn: #8a5a00; --warn-soft: #fbf0d9; --bad: #9b2c2c; --bad-soft: #f8e2e2;
+  --display: "Fraunces", Georgia, serif; --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151a17; --surface: #1e2521; --ink: #e6ebe7; --muted: #9aa69f; --line: #34403a;
+  --accent: #7cc3a0; --accent-soft: #233a2f; --warn: #e8b45a; --warn-soft: #3a2f1a; --bad: #f08a8a; --bad-soft: #3d2222; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #151a17; --surface: #1e2521; --ink: #e6ebe7; --muted: #9aa69f; --line: #34403a;
+  --accent: #7cc3a0; --accent-soft: #233a2f; --warn: #e8b45a; --warn-soft: #3a2f1a; --bad: #f08a8a; --bad-soft: #3d2222; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body); margin: 0; }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
+h1 { font: 600 1.9rem/1.15 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 600 1.25rem/1.25 var(--display); margin: 0; text-wrap: balance; }
+h3 { font: 600 1rem/1.3 var(--body); margin: 0; }
+.eyebrow { font: 600 .75rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+p { margin: 0; max-width: 65ch; }
+.intro { display: grid; gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; }
+.card dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.card dt { color: var(--muted); }
+.card dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .card dl { grid-template-columns: 1fr; } .card dd { padding-bottom: 6px; } }
+code, .mono { font-family: var(--mono); font-size: .86em; overflow-wrap: anywhere; }
+.facts { display: grid; gap: 8px; }
+.facts ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.progress { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.bar { flex: 1 1 200px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+.index { display: grid; gap: 8px; }
+.index a { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); text-decoration: none; min-height: 44px; align-items: center; }
+.index a b { font-weight: 600; }
+.chip { font: 600 .78rem/1 var(--body); padding: 5px 8px; border-radius: 6px; background: var(--line); color: var(--muted); white-space: nowrap; }
+.chip.pass { background: var(--accent-soft); color: var(--accent); } .chip.issue { background: var(--bad-soft); color: var(--bad); } .chip.call, .chip.warn { background: var(--warn-soft); color: var(--warn); }
+.walk { display: grid; gap: 14px; scroll-margin-top: 12px; }
+.walk > .head { display: grid; gap: 8px; padding: 16px 18px; border: 1px solid var(--accent); border-radius: 10px; background: var(--accent-soft); }
+.walk > .head p { max-width: 68ch; }
+.walk > .head .k { font-weight: 600; }
+.part { display: grid; gap: 12px; }
+.part header { display: grid; gap: 4px; }
+.part header p { color: var(--muted); }
+.who { display: inline-block; font: 600 .8rem/1 var(--body); padding: 5px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); justify-self: start; }
+.step { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow-wrap: anywhere; }
+.step input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .txt { display: grid; gap: 4px; min-width: 0; }
+.step .do { font-weight: 600; }
+.step .see::before { content: "You should see: "; color: var(--muted); font-weight: 600; }
+.step .rb { color: var(--warn); font-weight: 600; }
+.step.stop { border-color: var(--warn); background: var(--warn-soft); }
+.step.done { opacity: .72; }
+.opts { display: flex; gap: 18px; flex-wrap: wrap; padding-top: 4px; }
+.opts label { display: inline-flex; gap: 8px; align-items: center; font-weight: 600; min-height: 32px; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; }
+.verdict button { font: 600 .9rem/1 var(--body); padding: 9px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; min-height: 44px; }
+.verdict button[aria-pressed="true"][data-v="pass"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.verdict button[aria-pressed="true"][data-v="issue"] { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.verdict button[aria-pressed="true"][data-v="call"] { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 70px; font: inherit; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { font: 600 .95rem/1 var(--body); padding: 11px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); cursor: pointer; min-height: 44px; }
+.btn.ghost { background: transparent; color: var(--accent); }
+#summary { font-family: var(--mono); font-size: .85rem; min-height: 200px; }
+a { color: var(--accent); }
+input.host { box-sizing: border-box; width: 100%; min-height: 44px; font: inherit; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+</style>
+<main class="wrap">
+<div class="intro"><span class="eyebrow">Owner QA · §440 · Public tournament Stage 7</span>
+<h1>A coach opens a pay link and sees one job: paying the entry.</h1>
+<p><strong>What this is.</strong> With the new look (“preview”) on, the team pay page becomes a focused page. It has a slim band with the event’s name, then the pay block exactly as it is today, one way to ask a question, and a short footer. None of the event’s tabs, rail, games line, dock, prompts, badge or banner appear on it. With the preview off, the page stays exactly as it is today. This is one walk with real links, including a real test-card payment.</p>
+<p><strong>Nothing is pre-ticked or pre-approved.</strong> The build’s automated checks passed (measured at 360, 390 and 1280 on every state), but they are not your verdict.</p></div>
+
+<section class="card"><h2>Where and who</h2><dl>
+<dt>Who</dt><dd>Nobody. A <strong>private window, signed out</strong>, so you see what a coach sees.</dd>
+<dt>Server</dt><dd><input class="host" id="host" type="url" value="http://localhost:3000" aria-label="Target server origin">On the computer, leave it at <span class="mono">http://localhost:3000</span>. For a phone on the same Wi-Fi, change it to the computer’s address (on 2026-10-31 that was <span class="mono">http://192.168.2.200:3000</span>). The box only changes the links on this page. <strong>Part D (the real payment) is done on the computer</strong>: Stripe sends the coach back to the computer’s own address.</dd>
+<dt>Widths</dt><dd>Phone: your phone, or Chrome’s device toolbar (Ctrl+Shift+M) at <strong>390</strong>, then <strong>360</strong>. Desk: <strong>1280</strong>, and the in-between <strong>901</strong>, <strong>1023</strong> and <strong>1024</strong>.</dd>
+<dt>The switch</dt><dd>Every link turns the preview on (or, in Part I, off) for that browser window, then opens the page.</dd>
+<dt>Fixture</dt><dd>“Stripe Walk Invitational” under UAT Rep Club (Stripe test mode, no real money), with four “Pay Page …” teams, plus a second event “Stripe Walk Pay Direct” that does not take payments here, and the free event “Northfield Fall Ball”. Command, from the project folder (or ask me in chat and I run it and read it back): <span class="mono">node --env-file=.env.local scripts/seed-stripe-walk-tournament.mjs --inbox b2cowan+setupcheck@gmail.com --pay-page</span>. It prints the same links this page uses.</dd>
+<dt>Saved progress</dt><dd>Ticks, notes and verdicts stay in this browser only. Use “Copy this walk’s result” and paste it into chat.</dd>
+</dl></section>
+
+<section class="card facts"><h3>Known and accepted, so they are not fails</h3><ul>
+<li><strong>No contact line on the Invitational’s pages.</strong> That organizer hides its contact on purpose, because the fixture’s address is your own inbox. The line is absent when the organizer hides the contact (ruling A1). “Stripe Walk Pay Direct” has a made-up public address (<span class="mono">payments@stripe-walk.example</span>) so you can see the line there.</li>
+<li>The pay block itself is unchanged: its words, amounts, choices and buttons. The receipt email box starts empty for these teams, and “The $200.00 balance is paid later.” is because the fixture has no due date. Neither is a Stage 7 change.</li>
+<li><strong>Offline is not walkable on this server.</strong> The installed app’s offline worker only runs in a production build; the dev server switches it off. That a pay page is never stored for offline is proven by an automated check that runs the real worker. It is walked on a production build when the preview is switched on for customers (Stage 8).</li>
+<li>The small “Skip to content” link appears only when you press Tab, on every page of the site. It is not new.</li>
+<li>Tapping an email address may open your mail app or may do nothing, depending on the device. The Copy button is the reliable way.</li>
+</ul></section>
+
+<section class="card"><h2>The walk</h2>
+<div class="progress"><strong id="count">0 of 0 checked</strong><div class="bar" aria-hidden="true"><span id="fill"></span></div><button class="btn ghost" id="reset" type="button">Clear my ticks</button></div>
+<div class="index" id="index"></div></section>
+
+<div id="walks"></div>
+
+<section class="card"><h2>Send the result</h2><p>Set Pass, Issue or Needs a call on each part, and add what you actually saw in its notes. A pass button alone is not evidence: read the “checked” fraction beside it.</p>
+<div class="actions"><button class="btn" id="build" type="button">Build the result</button><button class="btn ghost" id="copy" type="button">Copy</button></div>
+<textarea id="summary" readonly aria-label="Walk summary"></textarea></section>
+</main>
+<script>
+var HOST = "http://localhost:3000";
+var INV = "/uat-rep-club/stripe-walk-invitational/pay/";
+var DIR = "/uat-rep-club/stripe-walk-pay-direct/pay/";
+var OWING = INV + "bqc8rkhuQMCrS6ofLOcbKg.AlSgk7l1BB8PSdTsqHo0FA";
+var PAYME = INV + "wxoUIrWsQpWM5sOwBCeVjA.d9JxzLbQF2GQ3juVimNYTg";
+var NOTACC = INV + "SSoe-7FaQa-f1Ciq2Yl_gQ.7eZmlmu3kseVxU8guErjfA";
+var DIRECT = DIR + "TesMDs20QKm56wokh6QS1g.xyIM1Hnq03Bn5GRDZOLlHQ";
+var BROKEN = INV + "bqc8rkhuQMCrS6ofLOcbKg.AlSgk7l1BB8PSdTsqHAAAA";
+var BROKEN_SHOWN = DIR + "bqc8rkhuQMCrS6ofLOcbKg.AlSgk7l1BB8PSdTsqHAAAA";
+var WRONG = DIR + "bqc8rkhuQMCrS6ofLOcbKg.AlSgk7l1BB8PSdTsqHo0FA";
+var FREE = "/stage1-northfield/fall-ball/pay/P08mcc0LTS-wKQp25c6VEQ.pswOns8_UHzmhGjDaY0Hqw";
+function a(path, label) { return '<a data-route="' + path + '" href="' + HOST + path + '" target="_blank" rel="noopener">' + label + '</a>'; }
+function sw(frame, path, label) { return a('/api/public-frame?frame=' + frame + '&to=' + encodeURIComponent(path), label); }
+function on(path, label) { return sw('on', path, label); }
+function off(path, label) { return sw('off', path, label); }
+function fx(mode) { return '<code>node --env-file=.env.local scripts/seed-stripe-walk-tournament.mjs --inbox b2cowan+setupcheck@gmail.com ' + mode + '</code>'; }
+function tell(text) { return ' <span class="rb">Tell me: ' + text + '</span>'; }
+
+var WALKS = [
+{ id: "W1", title: "The team pay page, focused, with a real link",
+  purpose: "A coach who opens an emailed pay link sees one job. A slim band names the event and leads back to it. The pay block is the shipped one. One line says who to ask. A short footer closes the page. Nothing else from the event is around it, on a phone or at a desk. With the preview off, the page is today’s.",
+  passes: "every state below reads as drawn, a real test payment goes from the card page through Confirming to the receipt with no flash of the old page, and the preview-off page is unchanged.",
+  notIn: "Changes to the pay block’s words, amounts or buttons (there are none). The family league pay page (a different page). Offline (see Known and accepted).",
+  parts: [
+{id:'A',title:'Part A · Start from the known fixture',who:'Terminal or ask me',steps:[
+ {stop:true,do:'Run '+fx('--pay-page')+'.',see:'Six “✓” lines (the division, four “Pay Page …” teams and “Stripe Walk Pay Direct”), then the pay links. The four team links match the ones on this page. If “Pay Page Pay Me” says paid, run '+fx('--reset')+' then '+fx('--pay-page')+' again; its link changes, so tell me and I will update this page.'+tell('the six ✓ lines.')}
+]},
+{id:'B',title:'Part B · Owing, on a phone',who:'Private window, signed out · 390 px, then 360 px',steps:[
+ {do:'Open '+on(OWING,'the “Pay Page Owing” link')+'. Look only; do not pay this one.',see:'A slim purple band with just “Stripe Walk Invitational” on one line. No logo, dates, tabs, Share or Sign in.'},
+ {do:'Read the heading.',see:'A small “Team payment” line, then “Pay Page Owing · Walk Pay Page” at the page-title size, then “Test payment: no money moves.”'},
+ {do:'Look at the pay block without scrolling.',see:'“To pay now” with “Pay the deposit, $100.00” chosen and “Pay in full, $300.00” below it, the receipt email box, then “Pay $105.00 by card”. The card button is on screen without scrolling on a 390 phone.'},
+ {do:'Choose “Pay in full”, then back to the deposit.',see:'The buttons change to $312.00 by card and $308.50 by bank debit, then back to $105.00 and $103.50. Nothing else on the page moves.'},
+ {do:'Tap “Refund policy”.',see:'The policy text opens under it, and tapping again closes it. It looks as it always has: small underlined words. It is easy to hit with a thumb, though nothing about it looks bigger.'},
+ {do:'Scroll the whole page.',see:'No games line, no “My team” strip at the bottom, no follow, alerts or install prompts, and no FieldLogicHQ badge or sign-up banner. No contact line, because this organizer hides its contact (see Known and accepted).'},
+ {do:'Read the footer.',see:'The event’s name, a hairline, then “Built on FieldLogicHQ”. No list of the event’s pages, no “Hosted by” line, and no email address. It sits at the foot of the screen with no large empty gap above it.'},
+ {do:'Tap the event name in the band.',see:'The event’s Overview opens with its full band and tabs. The browser’s Back returns to the pay page.'},
+ {do:'Repeat the first and last looks at 360 px.',see:'The same page. Nothing scrolls sideways and the name fits on one line, or is cut short with “…”.'}
+]},
+{id:'C',title:'Part C · Leaving the card page without paying',who:'The computer · private window',steps:[
+ {do:'On '+on(OWING,'the “Pay Page Owing” link')+', tap “Pay $105.00 by card”.',see:'Stripe’s secure card page opens, in test mode.'},
+ {do:'Use Stripe’s back arrow (top left) without paying.',see:'Back on the focused pay page: “Payment not finished. You left the secure payment page before paying. Nothing was charged.”, then the same choice and buttons. The slim band and short footer, as in Part B.'}
+]},
+{id:'D',title:'Part D · A real test-card payment',who:'The computer · private window',steps:[
+ {do:'Open '+on(PAYME,'the “Pay Page Pay Me” link')+'. Choose “Pay in full, $300.00” and type <span class="mono">b2cowan+setupcheck@gmail.com</span> as the receipt email.',see:'“Pay $312.00 by card” and “Pay $308.50 by bank debit”.'},
+ {do:'Tap “Pay $312.00 by card”. On Stripe’s page use card <span class="mono">4242 4242 4242 4242</span>, any future date, any 3-digit code, any name and postal code. Pay.',see:'Stripe accepts the test card and sends you back.'},
+ {do:'Watch the page Stripe returns you to.',see:'It opens straight into the focused page: the slim band, “Confirming your payment”, and the short footer. The old full band and tabs never flash first. Within a few seconds it turns into the receipt by itself.'},
+ {do:'Read the receipt.',see:'“Paid, thank you”, $312.00 to UAT Rep Club, the card ending 4242 with the date and a receipt number, the fee lines, then “There’s nothing left to pay.” The same band and footer.'},
+ {do:'Open the same link again in a new window.',see:'The receipt again, not the pay buttons.'},
+ {opt:true,do:'Check the inbox for <span class="mono">b2cowan+setupcheck@gmail.com</span>.',see:'A receipt email for $312.00. (Emails are not changed by Stage 7; this only confirms the payment was recorded.)'}
+]},
+{id:'E',title:'Part E · The other answers a link can give',who:'Phone · private window · 390 px',steps:[
+ {do:'Open '+on(NOTACC,'the “Pay Page Not Accepted” link')+'.',see:'The same band, heading and footer, then one sentence saying the team hasn’t been accepted yet and can pay once the organizer accepts it. No buttons.'},
+ {do:'Open '+on(DIRECT,'the “Pay Page Pay Direct” link')+'.',see:'The band reads “Stripe Walk Pay Direct”. The “Pay the organizer directly” panel. Under it, “Questions about this payment?” over <span class="mono">payments@stripe-walk.example</span> and a copy icon.'},
+ {do:'Tap the copy icon, then paste somewhere (a note or the address bar).',see:'The address pastes exactly. The icon briefly turns into a tick.'}
+]},
+{id:'F',title:'Part F · A link that doesn’t work',who:'Phone · private window · 390 px',steps:[
+ {do:'Open '+on(BROKEN,'a broken Invitational link')+'.',see:'The slim “Stripe Walk Invitational” band, then “This payment link doesn’t work. Ask the organizer to email you a new one.” word for word. No team name. No contact line (this organizer hides it). The short footer.'},
+ {do:'Open '+on(BROKEN_SHOWN,'a broken link under Pay Direct')+'.',see:'The “Stripe Walk Pay Direct” band, the same sentence, and just under it “Questions about this payment?” with <span class="mono">payments@stripe-walk.example</span>, so the coach knows who can send a new link.'},
+ {do:'Open '+on(WRONG,'a real Invitational link under Pay Direct’s address')+'.',see:'The “Stripe Walk Pay Direct” band and the same sentence, but no contact line: that organizer cannot send this team a new link (ruling A2).'}
+]},
+{id:'G',title:'Part G · A free event',who:'Phone · private window · 390 px',steps:[
+ {do:'Open '+on(FREE,'a pay link in the free event “Northfield Fall Ball”')+'.',see:'A near-black band with the name and no logo, “Team payment · Bears U13 · U13”, then “Pay the organizer directly” with the fee, deposit and how-to-pay words. (A free plan never takes payments online.)'},
+ {do:'Scroll to the foot of the page.',see:'No floating “Powered by FieldLogicHQ” badge and no “Run your own tournament” sign-up banner. The footer carries the name and “Built on FieldLogicHQ”, as on a paid plan.'}
+]},
+{id:'H',title:'Part H · At a desk',who:'The computer · private window · 1280 px, then 1024, 1023 and 901',steps:[
+ {do:'Open '+on(OWING,'the “Pay Page Owing” link')+' at 1280.',see:'The band runs the full width with the name a little larger. No side rail. The page is one centred column, about half the screen wide. The pay buttons keep their own width, not the column’s.'},
+ {do:'Scroll to the footer.',see:'Full width, the name on the left, “Built on FieldLogicHQ” under a hairline.'},
+ {do:'Narrow the window to 1024, 1023 and 901.',see:'Still the slim band and one centred column. No rail appears, no tab row appears, and no empty column is left where the rail would be.'}
+]},
+{id:'I',title:'Part I · Preview off: today’s page',who:'Private window · 390 px, then 1280',steps:[
+ {do:'Open '+off(OWING,'the “Pay Page Owing” link with the preview off')+'.',see:'Today’s page, as before Stage 7: the event page with its full event header, the event’s name above the team in small capitals, the team in a smaller title, the same pay block, and no contact line.'},
+ {do:'Widen to 1280.',see:'Today’s desk page, with the event’s rail and header as before.'},
+ {do:'Open '+on(OWING,'the link again with the preview on')+'.',see:'The focused page again: this window has the preview back on.'}
+]},
+{id:'J',title:'Part J · Put it back and report',who:'Terminal or ask me',steps:[
+ {opt:true,do:'To walk again later, run '+fx('--reset')+' then '+fx('--pay-page')+'.',see:'“Pay Page Pay Me” is unpaid again (its link changes; I update this page). The test payment stays in Stripe’s sandbox.'},
+ {do:'Give every part a verdict, then use “Copy this walk’s result”.',see:'The result lists checked, unchecked and skipped steps, your notes and every verdict. An incomplete part is labelled.'}
+]}
+]}
+];
+
+var KEY = "qa-440-stage7-walk-v1";
+var state = { ticks: {}, verdict: {}, notes: {} };
+try { var saved = JSON.parse(localStorage.getItem(KEY) || "null"); if (saved) state = saved; } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+var root = document.getElementById("walks");
+var total = 0;
+function stepId(p, i) { return p.id + (i + 1); }
+WALKS.forEach(function (w) {
+  var wsec = document.createElement("section"); wsec.className = "walk"; wsec.id = w.id;
+  var n = 0; w.parts.forEach(function (p) { n += p.steps.length; });
+  var html = '<div class="head"><h2>' + w.title + '</h2><p><span class="k">What this walk is for.</span> ' + w.purpose + '</p>' +
+    '<p><span class="k">It passes when</span> ' + w.passes + '</p><p><span class="k">Not in this walk.</span> ' + w.notIn + '</p></div>';
+  w.parts.forEach(function (p) {
+    html += '<section class="part"><header><h3>' + p.title + '</h3><span class="who">' + p.who + '</span>' + (p.note ? '<p>' + p.note + '</p>' : '') + '</header>';
+    p.steps.forEach(function (s, i) {
+      var id = stepId(p, i); total++;
+      if (s.opt) {
+        html += '<div class="step" id="row-' + id + '"><span></span><span class="txt"><span class="do">' + id + ' · Optional. ' + s.do + '</span><span class="see">' + s.see + '</span>' +
+          '<span class="opts"><label><input type="checkbox" data-id="' + id + '"> Did it</label><label><input type="checkbox" data-id="' + id + 's"> Skipped it</label></span></span></div>';
+      } else {
+        html += '<label class="step' + (s.stop ? ' stop' : '') + '" id="row-' + id + '"><input type="checkbox" data-id="' + id + '"><span class="txt"><span class="do">' + id + ' · ' + s.do + '</span><span class="see">' + s.see + '</span></span></label>';
+      }
+    });
+    html += '<div class="verdict" role="group" aria-label="' + p.title + ' verdict">' +
+      '<button type="button" data-p="' + p.id + '" data-v="pass" aria-pressed="false">Pass</button>' +
+      '<button type="button" data-p="' + p.id + '" data-v="issue" aria-pressed="false">Issue</button>' +
+      '<button type="button" data-p="' + p.id + '" data-v="call" aria-pressed="false">Needs a call</button></div>' +
+      '<textarea id="notes-' + p.id + '" data-p="' + p.id + '" aria-label="Notes for ' + p.title + '" placeholder="Notes for ' + p.title + ' (what you saw, anything odd)"></textarea></section>';
+  });
+  html += '<div class="actions"><button class="btn" type="button" data-copywalk="' + w.id + '">Copy this walk’s result</button></div>';
+  wsec.innerHTML = html; root.appendChild(wsec);
+});
+
+function stepDone(id) { return !!(state.ticks[id] || state.ticks[id + "s"]); }
+var WORD = { pass: "PASS", issue: "ISSUE", call: "NEEDS A CALL" };
+function walkStats(w) {
+  var done = 0, all = 0, verdicts = 0, parts = w.parts.length, issue = 0, call = 0;
+  w.parts.forEach(function (p) {
+    p.steps.forEach(function (s, i) { all++; if (stepDone(stepId(p, i))) done++; });
+    if (state.verdict[p.id]) verdicts++;
+    if (state.verdict[p.id] === "issue") issue++;
+    if (state.verdict[p.id] === "call") call++;
+  });
+  return { done: done, all: all, verdicts: verdicts, parts: parts, issue: issue, call: call };
+}
+function render() {
+  var n = 0;
+  document.querySelectorAll("input[type=checkbox][data-id]").forEach(function (cb) { cb.checked = !!state.ticks[cb.dataset.id]; });
+  WALKS.forEach(function (w) { w.parts.forEach(function (p) { p.steps.forEach(function (s, i) {
+    var id = stepId(p, i), d = stepDone(id); if (d) n++;
+    document.getElementById("row-" + id).classList.toggle("done", d);
+  }); }); });
+  document.querySelectorAll(".verdict button").forEach(function (b) { b.setAttribute("aria-pressed", String(state.verdict[b.dataset.p] === b.dataset.v)); });
+  document.querySelectorAll("textarea[data-p]").forEach(function (t) { if (document.activeElement !== t) t.value = state.notes[t.dataset.p] || ""; });
+  document.getElementById("count").textContent = n + " of " + total + " checked";
+  document.getElementById("fill").style.width = (total ? (100 * n / total) : 0) + "%";
+  var ix = "";
+  WALKS.forEach(function (w) {
+    var s = walkStats(w), cls = "", label = "Not started";
+    if (s.done > 0 || s.verdicts > 0) { label = s.done + " of " + s.all; }
+    if (s.verdicts === s.parts) { cls = s.issue ? "issue" : s.call ? "call" : (s.done < s.all ? "warn" : "pass"); label = (s.issue ? "Issue" : s.call ? "Needs a call" : "Passed") + (s.done < s.all ? " · only " + s.done + " of " + s.all + " ticked" : " · " + s.done + " of " + s.all); }
+    ix += '<a href="#' + w.id + '"><b>' + w.title + '</b><span class="chip ' + cls + '">' + label + '</span></a>';
+  });
+  document.getElementById("index").innerHTML = ix;
+}
+root.addEventListener("change", function (e) {
+  var id = e.target.dataset && e.target.dataset.id; if (!id) return;
+  state.ticks[id] = e.target.checked;
+  if (e.target.checked) { var other = /s$/.test(id) ? id.slice(0, -1) : id + "s"; if (document.querySelector('[data-id="' + other + '"]')) state.ticks[other] = false; }
+  save(); render();
+});
+root.addEventListener("click", function (e) {
+  var b = e.target.closest(".verdict button");
+  if (b) { state.verdict[b.dataset.p] = state.verdict[b.dataset.p] === b.dataset.v ? null : b.dataset.v; save(); render(); return; }
+  var c = e.target.closest("[data-copywalk]");
+  if (c) { var text = buildSummary(c.dataset.copywalk); copyText(text); }
+});
+root.addEventListener("input", function (e) { if (e.target.dataset.p && e.target.tagName === "TEXTAREA") { state.notes[e.target.dataset.p] = e.target.value; save(); } });
+document.getElementById("reset").addEventListener("click", function () { state = { ticks: {}, verdict: {}, notes: {} }; save(); render(); document.getElementById("summary").value = ""; });
+
+function buildSummary(only) {
+  var lines = ["§440 · Stage 7 · the team pay page walk"], all = 0, every = 0, noVerdict = [];
+  WALKS.forEach(function (w) {
+    if (only && w.id !== only) return;
+    var s = walkStats(w);
+    lines.push("");
+    lines.push(w.title + " · checked " + s.done + " of " + s.all);
+    w.parts.forEach(function (p) {
+      var ids = p.steps.map(function (st, i) { return stepId(p, i); });
+      var done = ids.filter(stepDone).length; all += done; every += ids.length;
+      var missing = ids.filter(function (id) { return !stepDone(id); });
+      var skipped = ids.filter(function (id) { return state.ticks[id + "s"]; });
+      if (!state.verdict[p.id]) noVerdict.push(p.id);
+      lines.push(p.title + " [" + (WORD[state.verdict[p.id]] || "NO VERDICT SET") + "] " + done + "/" + ids.length +
+        (missing.length ? " · unticked: " + missing.join(", ") : "") + (skipped.length ? " · skipped: " + skipped.join(", ") : ""));
+      if (state.notes[p.id]) lines.push("  Notes: " + state.notes[p.id].replace(/\n+/g, " / "));
+    });
+  });
+  var head = [];
+  if (every && all < every) head.push("INCOMPLETE: unperformed steps remain; do not record an owner pass. Read the fraction, not the verdict word.");
+  if (noVerdict.length) head.push("INCOMPLETE: no verdict set on part(s) " + noVerdict.join(", ") + ".");
+  var out = lines.slice(0, 1).concat(head, lines.slice(1)).join("\n");
+  document.getElementById("summary").value = out;
+  return out;
+}
+function copyText(text) {
+  var t = document.getElementById("summary");
+  try { navigator.clipboard.writeText(text).catch(function () { t.select(); }); } catch (e) { t.select(); }
+}
+document.getElementById("build").addEventListener("click", function () { buildSummary(null); });
+document.getElementById("copy").addEventListener("click", function () { copyText(buildSummary(null)); });
+render();
+
+var hostInput = document.getElementById("host");
+try { var h = localStorage.getItem("qa-440-host-v1"); if (h) hostInput.value = h; } catch (e) {}
+function updateLinks() {
+  try {
+    var parsed = new URL(hostInput.value);
+    if (!/^https?:$/.test(parsed.protocol)) throw Error("Use http or https");
+    HOST = parsed.origin; hostInput.setCustomValidity("");
+    try { localStorage.setItem("qa-440-host-v1", HOST); } catch (e) {}
+  } catch (e) { hostInput.setCustomValidity("Enter the server origin, starting with http:// or https://"); hostInput.reportValidity(); }
+  document.querySelectorAll("a[data-route]").forEach(function (link) { link.href = HOST + link.dataset.route; });
+}
+hostInput.addEventListener("change", updateLinks); updateLinks();
+</script>

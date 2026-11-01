@@ -551,6 +551,9 @@ export const PAYOUTS_LIST_WORDS = {
 /** The team's pay page and the pay block (copy §8, §9, §13 and §18). */
 export const PAY_WORDS = {
   who: (team: string, division: string | null) => (division ? `${team} · ${division}` : team),
+  // Public tournament pages Stage 7: the focused page's heading line (the band names the event) and its one way to ask (A1).
+  focusedEyebrow: 'Team payment',
+  questions: 'Questions about this payment?',
   heading: 'To pay now',
   chooseDeposit: (deposit: string) => `Pay the deposit, ${deposit}`,
   chooseDepositHint: (balance: string, date: string | null) => (date ? `The ${balance} balance is due ${date}.` : `The ${balance} balance is paid later.`),
