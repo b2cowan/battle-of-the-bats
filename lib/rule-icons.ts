@@ -16,7 +16,7 @@ export type RuleIconName = (typeof RULE_ICONS)[number]['value'];
 const GLYPHS: Record<RuleIconName, LucideIcon> = { Shield, BookOpen, AlertCircle, CheckCircle, Info, HelpCircle };
 
 /** A section's icon, drawn. Unset or unknown is the Shield every new section starts with. */
-export function RuleIcon({ name, ...props }: { name: string | null | undefined } & LucideProps) {
+export function RuleIcon({ name, ...props }: { name: string | null | undefined } & Omit<LucideProps, 'name'>) {
   const glyph = name && Object.hasOwn(GLYPHS, name) ? GLYPHS[name as RuleIconName] : Shield;
   return createElement(glyph, props);
 }

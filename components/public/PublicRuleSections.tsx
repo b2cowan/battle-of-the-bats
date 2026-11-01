@@ -1,17 +1,18 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Check, Copy, ExternalLink } from 'lucide-react';
+import { Check, Copy, ExternalLink, FileText } from 'lucide-react';
 import { useCopyToClipboard } from '@/lib/hooks/useCopyToClipboard';
+import { RuleIcon } from '@/lib/rule-icons';
 import PublicDisclosure from './PublicDisclosure';
 import styles from './PublicRules.module.css';
 
-type Section = { anchor: string; title: string; items: string[] };
+type Section = { anchor: string; title: string; icon: string | null; items: string[] };
 const DOWNLOADS_ANCHOR = 'rule-downloads-and-resources';
 
 function RuleLink({ anchor, title, shareAllDivisions }: { anchor: string; title: string; shareAllDivisions: boolean }) {
   const { copied, copy } = useCopyToClipboard();
-  return <div className={styles.share}>
-    <button type="button" className={styles.copy} aria-label={`Copy a link to ${title}`} onClick={() => {
+  return <>
+    <button type="button" className={styles.copy} aria-label={`Copy a link to ${title}`} title={copied ? 'Link copied' : 'Copy link'} onClick={() => {
       const url = new URL(window.location.href);
       url.hash = anchor;
       // A recipient's saved division must never hide the section being shared with them.
@@ -19,7 +20,7 @@ function RuleLink({ anchor, title, shareAllDivisions }: { anchor: string; title:
       void copy(url.toString());
     }}>{copied ? <Check size={18} aria-hidden /> : <Copy size={18} aria-hidden />}</button>
     <span className="sr-only" role="status">{copied ? 'Link copied' : ''}</span>
-  </div>;
+  </>;
 }
 
 /** Rules' private interactive list; only public titles, text and resource links cross this client boundary. */
@@ -48,23 +49,20 @@ export default function PublicRuleSections({ sections, resources, isPreview, sha
 
   const changeOpen = (anchor: string, open: boolean) => setOpenAnchor(current => open ? anchor : current === anchor ? null : current);
   return <>
-    {sections.length > 4 && <nav className={styles.jump} aria-label="Jump to a rules section">
-      {sections.map(section => <a key={section.anchor} href={`#${section.anchor}`}
-        onClick={() => setOpenAnchor(section.anchor)}>{section.title}</a>)}
-    </nav>}
     <div className={styles.sections}>
       {sections.map(section => <div key={section.anchor} id={section.anchor} className={styles.section}>
         <PublicDisclosure title={section.title} modalOnDesktop open={openAnchor === section.anchor}
+          icon={<RuleIcon name={section.icon} size={20} aria-hidden />}
+          action={isPreview ? undefined : <RuleLink anchor={section.anchor} title={section.title} shareAllDivisions={shareAllDivisions} />}
           onOpenChange={open => changeOpen(section.anchor, open)}>
           <div className={styles.body}>
             <ul className={styles.items}>{section.items.map((item, index) => <li key={index}>{item}</li>)}</ul>
-            {!isPreview && <RuleLink anchor={section.anchor} title={section.title} shareAllDivisions={shareAllDivisions} />}
           </div>
         </PublicDisclosure>
       </div>)}
       {resources.length > 0 && <div id={downloadsAnchor} className={styles.section}>
         <PublicDisclosure title="Downloads & Resources" sub={`${resources.length} ${resources.length === 1 ? 'file' : 'files'}`}
-          modalOnDesktop open={openAnchor === downloadsAnchor} onOpenChange={open => changeOpen(downloadsAnchor, open)}>
+          icon={<FileText size={20} aria-hidden />} modalOnDesktop open={openAnchor === downloadsAnchor} onOpenChange={open => changeOpen(downloadsAnchor, open)}>
           <div className={styles.body}><div className={styles.resources}>
             {resources.map((resource, index) => isPreview
               ? <span key={index} className={styles.resource}>{resource.label}</span>

@@ -44,7 +44,7 @@ export default async function PublicRules({
     sectionAnchors.set(section.id, anchor);
   }
   const sections = displayRules.map(section => ({
-    anchor: sectionAnchors.get(section.id)!, title: section.title, items: section.items.map(item => item.content),
+    anchor: sectionAnchors.get(section.id)!, title: section.title, icon: section.icon ?? null, items: section.items.map(item => item.content),
   }));
 
   return <div className={styles.rules}>

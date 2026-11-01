@@ -74,9 +74,9 @@ describe('Stage 6 Part 2: Rules renders the original content inside the preview 
   it('sends only public section text and resource links to the interactive list', async () => {
     const tree = await Rules(props()) as ReactElement<{ children: ReactNode[] }>;
     const list = tree.props.children.at(-1) as ReactElement<{ sections: Record<string, unknown>[] }>;
-    assert.deepEqual(Object.keys(list.props.sections[0]).sort(), ['anchor', 'items', 'title']);
+    assert.deepEqual(Object.keys(list.props.sections[0]).sort(), ['anchor', 'icon', 'items', 'title']);
   });
-  it('retains desktop chips, a shared single-open state and initial/hash-change section reveal', () => {
+  it('has no jump pills, keeps a shared single-open state and initial/hash-change section reveal', () => {
     const code = readCode('components/public/PublicRuleSections.tsx');
     assert.match(code, /open=\{openAnchor === section.anchor\}/);
     assert.match(code, /modalOnDesktop/);
@@ -84,8 +84,9 @@ describe('Stage 6 Part 2: Rules renders the original content inside the preview 
     assert.match(code, /revealHash\(\);/);
     assert.match(code, /url\.searchParams\.set\('view', 'all'\)/);
     const css = readSource('components/public/PublicRules.module.css');
-    assert.match(css, /\.jump \{ display: none; \}/);
-    assert.match(css, /@media \(min-width: 1024px\)[\s\S]*\.jump \{ display: flex/);
+    // The rows are the one way in; a second row of pills opened the same windows (owner 2026-11-01).
+    assert.doesNotMatch(code, /Jump to a rules section/);
+    assert.doesNotMatch(css, /\.jump/);
   });
 });
 

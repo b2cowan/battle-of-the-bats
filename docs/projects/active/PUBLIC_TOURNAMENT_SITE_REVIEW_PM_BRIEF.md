@@ -1,10 +1,33 @@
 # PM brief — Public tournament pages: easy to read in a parking lot, and a door to the club
 
 **Status:** Stages 0–5 implemented; Stage 5 owner walk §432 passed 2026-10-31. Stage 6 implementation and manual
-review completed 2026-10-31; the private 66-step owner walk §435 is published and awaits the owner's result.
-Priority: Stage 6 owner acceptance, then Stage 7 (pay page) or Stage 1a (look ownership), at the owner's choice.
-**Stage 6 implementation:** committed `295ebce8a` on dev 2026-10-31 (all parts combined). Owner walk §435 remains open.
+review completed 2026-10-31; owner walk §435 PASSED 68/68 on 2026-11-01 (Stage 6 closed).
+Priority: Stage 7 (pay page) or Stage 1a (look ownership), at the owner's choice.
+**Stage 6 implementation:** committed `295ebce8a` on dev 2026-10-31 (all parts combined). Owner walk §435 passed 2026-11-01.
 Plan: `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md`. Mockups: the review hub (Claude Artifact).
+
+## Stage 10 — a printable, branded copy of the rules (added 2026-11-01)
+
+**What changes for a family or coach:** the Rules page gets a "Download rules" button beside the "rules are subject to
+change" line. It gives them a clean, branded PDF of the same rules they can read on the page: the tournament's or
+club's name and colours, each section with its icon and its numbered rules, the downloads listed as readable text,
+and a "rules as of {date}" line with the live page's address, so a printed copy says where to check for changes.
+
+**Why it matters:** people at a field, a hotel lobby or a binder meeting don't want to scroll a phone, and an umpire
+or a coach wants one sheet to hand out. It also makes the tournament look organized, which is the point of the
+branding work.
+
+**Who sees what:** everyone who can read the Rules page can download it. An organizer sees nothing new in admin
+(unless the drawing's fourth ask is answered yes). A Rules page that is switched off, or a section held back, never
+appears in the PDF.
+
+**This stage is a drawing only.** It ends with four owner asks (whole rulebook or just my division's; club or
+tournament look; date stamp and QR code; public only or an organizer's copy too). Nothing is built until they are
+ruled.
+
+**Priority:** after the Rules page is on for everyone (it hangs off that page); no dependency on the pay page.
+**Success:** a printed copy reads as clearly as the page, still works in black and white, and a long section runs onto
+a second page without orphaning a heading.
 
 ## Stage 6 Part 4 — consistent navigation and a checkable owner walk (2026-10-31)
 

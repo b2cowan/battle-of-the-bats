@@ -16,8 +16,12 @@ const isDesktop = () => window.matchMedia(DESKTOP).matches;
  * Shared tap-open row; Schedule finals stay open at the frame's desktop breakpoint. `modalOnDesktop` keeps the row a
  * dropdown on a phone but opens its content in a window on a desk, so reading it never pushes the page below it down.
  */
-export default function PublicDisclosure({ title, sub, children, desktopOpen = false, reveal = false, modalOnDesktop = false, open: controlledOpen, onOpenChange }: {
+export default function PublicDisclosure({ title, sub, icon, action, children, desktopOpen = false, reveal = false, modalOnDesktop = false, open: controlledOpen, onOpenChange }: {
   title: string; sub?: string; children: ReactNode; desktopOpen?: boolean; reveal?: boolean; modalOnDesktop?: boolean;
+  /** A glyph before the title, on the row and in the window's title bar. */
+  icon?: ReactNode;
+  /** A control that belongs to the section: in the window's title bar on a desk, after the content in a dropdown. */
+  action?: ReactNode;
   /** Optional group control (Rules keeps one section open); other callers keep their own state. */
   open?: boolean; onOpenChange?: (open: boolean) => void;
 }) {
@@ -48,18 +52,23 @@ export default function PublicDisclosure({ title, sub, children, desktopOpen = f
   return <section className={styles.disclosure} data-desktop-open={desktopOpen || undefined}>
     <button className={styles.toggle} type="button" data-modal={modal || undefined}
       aria-expanded={modal ? undefined : open} aria-controls={id} aria-haspopup={modal ? 'dialog' : undefined} onClick={() => setOpen(!open)}>
-      <span>{title}{sub && <small>{sub}</small>}</span><ChevronDown size={20} aria-hidden />
+      {icon && <span className={styles.icon} aria-hidden>{icon}</span>}
+      <span className={styles.label}>{title}{sub && <small>{sub}</small>}</span><ChevronDown className={styles.chevron} size={20} aria-hidden />
     </button>
     {desktopOpen && <div className={styles.desktopTitle}>{title} · all final</div>}
     {modal
       ? <dialog ref={dialogRef} id={id} className={styles.modal} aria-labelledby={`${id}-title`}
           onClose={() => setOpen(false)} onClick={event => { if (event.target === event.currentTarget) setOpen(false); }}>
           <div className={styles.modalHead}>
+            {icon && <span className={styles.icon} aria-hidden>{icon}</span>}
             <h2 id={`${id}-title`}>{title}{sub && <small>{sub}</small>}</h2>
-            <button type="button" className={styles.modalClose} aria-label="Close" onClick={() => setOpen(false)}><X size={20} aria-hidden /></button>
+            <span className={styles.modalActions}>
+              {action}
+              <button type="button" className={styles.modalClose} aria-label="Close" onClick={() => setOpen(false)}><X size={20} aria-hidden /></button>
+            </span>
           </div>
           <div className={styles.modalBody}>{children}</div>
         </dialog>
-      : <div id={id} className={styles.content} data-open={open}>{children}</div>}
+      : <div id={id} className={styles.content} data-open={open}>{children}{action && <div className={styles.contentAction}>{action}</div>}</div>}
   </section>;
 }
