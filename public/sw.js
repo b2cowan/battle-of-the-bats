@@ -42,7 +42,9 @@
 //      old icons and the old offline page from every installed worker's cache.
 // v12: The public face, warm S5 (2026-10-23) — the offline page's new words; the bump drops the old copy of the
 //      offline page from every installed phone's saved shell.
-const CACHE_VERSION = 'v12';
+// v13: Public tournament pages Stage 7 step 0 (2026-11-01) — a team's pay page (/{org}/{tournament}/pay/{token},
+//      with its ?paid= / ?left=1 returns) joined the never-cache rule; the bump drops every copy already stored.
+const CACHE_VERSION = 'v13';
 const SHELL_CACHE = 'flhq-shell-' + CACHE_VERSION; // precache + content-hashed static
 const PAGES_CACHE = 'flhq-pages-' + CACHE_VERSION; // last-good public tournament pages
 const DATA_CACHE  = 'flhq-data-'  + CACHE_VERSION; // last-good anonymous public API JSON
@@ -93,6 +95,11 @@ function isNeverCache(pathname) {
   }
   var seg = pathname.split('/').filter(Boolean);
   if (seg.length >= 2 && PRIVATE_ORG_SECTIONS.indexOf(seg[1]) !== -1) return true;
+  // A team's pay page (/{org}/{tournament}/pay/{token}): the token is a key that never expires, so its page
+  // must not sit in the shared page cache of a family's phone (Stage 7 step 0). On a club's own web address the
+  // browser's path has no org segment (/{tournament}/pay/{token}; the host rewrite adds it on the server only), so
+  // the section is one place earlier there. A tournament slugged "pay" loses its offline copy: harmless.
+  if (seg.length >= 3 && (seg[2] === 'pay' || seg[1] === 'pay')) return true;
   return false;
 }
 
