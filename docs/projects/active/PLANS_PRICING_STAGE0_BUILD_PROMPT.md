@@ -175,7 +175,7 @@
   detail rows within 10 seconds of its row, which a very slow over-cap archive could pass; the audit CSV export carries both rows
   unmarked (it is the raw record); Bulk changes' run row no longer carries the counts (they live on the operation's own row); a
   refused audit write is logged to the server, not captured as an error event.
-- **Part 11 — built 2026-11-01 (Session 4 chat; the owner's go asked again there and given: "Go, schedule on dev too", and
+- **Part 11 — committed `6d2acb568` 2026-11-01 (its own commit), built 2026-11-01 (Session 4 chat; the owner's go asked again there and given: "Go, schedule on dev too", and
   "yes, once a day" to an email when Stripe cannot be read). Migrations 421 (table `stripe_billing_drift_checks`) and 422
   (pg_cron `billing-drift-daily`, `15 12 * * *`) applied to DEV 2026-11-01 (dev cron job 15, active); MANUAL_PROD_STEPS
   `pending` for both (421 before the code; 422 after the code is serving, its own yes).** 420 was the house league's, so 421/422.
@@ -238,9 +238,9 @@
   second resend answers duplicate" + D11 "D7 now stays on the NEW cycle"; the existing data byte-identical, checked). `/docs`
   offered, not run. TODO line added under "Run Stripe from our own platform admin". ⚠ The walk needs the Stage 0 commits
   PUSHED: on 2026-11-01 `origin/dev` held none of them, and Stripe's test webhooks point at the dev site.
-- **▶ NEXT (2026-11-01):** the owner's go to commit Part 11 (its own commit: watched automation; this file's Progress edits
-  since `ee2f55acf` ride with it) and the Part 12 docs (a second commit); a push so the walk can run; then `/simplify` and
-  `/review` of Part 11 as offered (Parts 8–9 had theirs); the walk §438 and Walk 6; Part 10's `/design` session (O10).
+- **▶ NEXT (2026-11-01):** Part 11 committed `6d2acb568` (its own commit: watched automation) and the Part 12 docs committed
+  right after it (a second commit), both 2026-11-01, `/simplify` + `/review` done. Next: a push so the walk can run
+  (Stripe's test webhooks point at the dev site); the walk §438 and Walk 6; Part 10's `/design` session (O10).
 
 ## What the owner sees after this build (present a version of this as the PM summary BEFORE any code)
 

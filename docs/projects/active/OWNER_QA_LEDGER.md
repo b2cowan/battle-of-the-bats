@@ -27436,3 +27436,14 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **WALKED 2026-10-31 (pasted 11-01), PASSED 27/27, no changes asked** — A 6/6 · B 4/4 · C 4/4 · D 4/4 · E 5/5 · F 2/2 · G 2/2. No notes came back with the paste, so the three open owner calls (C3 the door back to a family nobody could reach, E4 the "Added:" line, C4 the "Reached 10 of 10" count) stand as built and the "known before the walk" items stay open. /simplify, /review and /docs were already run 2026-10-31 (build prompt Progress block). Still owed for 9d-3 Session 1: the commit and the "See an example" multi-word first-name defect (owner call); then Session 2 (Parts 5–7, mig 416).
 <!-- /§436 -->
+
+## §438 · Plans & pricing · Stage 0 walk — **our billing records tell the truth about Stripe: Plan & billing prints what Stripe charges, the Money tab's next charge, a replaced price still recognised, a disputed charge reaches the owner and suspends nothing, the portal on our own settings, the daily Stripe check**
+<!-- §438 -->
+**Built 2026-11-01:** Stage 0 Parts 1–9 committed `63988b38c`, `46cb0d55a`, `ee2f55acf`; Part 11 (the daily read-only comparison, migs 421–422, dev cron job 15) committed `6d2acb568` 2026-11-01 (its own commit, on the owner's go; `/simplify` + `/review` done). Part 10 (sign in again) is not built: it waits on its `/design` session (build prompt Owner checklist O10). Plan: [PLANS_PRICING_STAGE0_BUILD_PROMPT.md](PLANS_PRICING_STAGE0_BUILD_PROMPT.md).
+
+**The walk (checkable):** https://claude.ai/artifact/QZ1mimtjT3xdYa7MRYEYTg (source [PLANS_PRICING_STAGE0_WALK.html](PLANS_PRICING_STAGE0_WALK.html)). Test mode, on the dev site. 32 steps (69 boxes) in seven parts, six of them one-purpose walks signed off on their own: A stop checks (2); B Plan & billing's price line = Stripe's price, club and portal (4); C the Money tab's next charge and a plain "None" (4); D a replaced Test price still recognised, then put back (8; writes the shared dev catalogue); E a test-card dispute on a new Premium portal: two emails, two Story lines, nothing suspended (7); F the billing portal on our settings (3); G the daily check's email, one true line, no second email the same day (4). Every pass is a relationship to Stripe, never a pinned figure.
+
+**Before it can be walked:** the Stage 0 commits pushed and the dev deploy finished (A1); the four dispute/refund events on the sandbox Billing destination (A2, Owner checklist O2). The other exit walk is Stripe Walk 6, with two add-only steps for Stage 0 (B13 the second resend answers duplicate; D11 the older event now stays on the NEW cycle).
+
+**Not in the walk:** "Not read" on the Money tab and the 20-subscription cap, the wrong-mode refusal, one customer per buyer, the strict change log (tests only); the portal configuration as Stripe holds it (Claude runs the Stripe audit after Walk F).
+<!-- /§438 -->

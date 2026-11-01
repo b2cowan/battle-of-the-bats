@@ -1,0 +1,236 @@
+<title>Stage 0 Billing Walk</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+
+.stop { border-left: 4px solid var(--warn); }
+.step.opt { flex-direction: column; gap: 4px; }
+.step .optrow { display: flex; gap: 10px; align-items: flex-start; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Plans &amp; pricing · Stage 0 · §438</span>
+    <h1>Our billing records tell the truth about Stripe</h1>
+    <p class="sub">Written 2026-11-01. Test mode only. Stage 0 changed almost nothing you can see, on purpose: it makes what we record about each customer’s plan true. This walk looks at the few places where that shows. Six short walks; sign each off on its own.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Each walk has one job:</p>
+    <ul>
+      <li><strong>B</strong> · a customer’s Plan &amp; billing page prints what Stripe actually charges them.</li>
+      <li><strong>C</strong> · on a club’s Money tab, staff see a real next charge, or a plain “None” when there is none.</li>
+      <li><strong>D</strong> · when a plan’s price is replaced, customers still paying the old price are still recognised as on that plan.</li>
+      <li><strong>E</strong> · when a bank disputes one of our subscription charges, you get an email and a line on the record, and nothing is suspended.</li>
+      <li><strong>F</strong> · the billing portal opens on our own settings: no plan switching there, and cancel waits for the end of the period.</li>
+      <li><strong>G</strong> · the new daily check emails you when Stripe and our records disagree, and only once a day.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>It passes when</h2>
+    <ul>
+      <li>B and C: every comparison matches (the pass is “the same as Stripe”, never a number written here).</li>
+      <li>D: the plan stays recognised while the old price is retired, and no “price we do not know” email arrives.</li>
+      <li>E: two dispute emails in all, two Story lines, and the portal keeps working.</li>
+      <li>F: no plan change in the portal; cancel ends at the period end.</li>
+      <li>G: the email matches the outcome, the line you check is true, and a second run sends nothing.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private: it holds dev passwords.</p>
+    <dl class="facts"><dt>Where</dt><dd>The dev site <strong>https://dev.fieldlogichq.ca</strong>, plus the <strong>Stripe dashboard</strong> (the sandbox) and the <strong>fieldlogichq@gmail.com</strong> inbox, where every owner alert goes.</dd><dt>Needs</dt><dd>Walk 2’s Tournament Plus club with its real subscription, and Walk 1’s Premium coach. Walk E makes a new portal; Walk D changes a test price and puts it back.</dd><dt>Order</dt><dd>A first. B before C and D (they reuse what B writes down). E, F and G in any order.</dd></dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <dl class="facts"><dt>Platform admin (Super admin)</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code> at <code>/platform-admin/login</code>. Super admin is the only role that can run the daily check by hand.</dd><dt>The club owner from Walk 2</dt><dd>The owner of the Tournament Plus club bought in Walk 2 (“Plan Walk Club”): its <code>+owner</code> plus-address and the password you chose then.</dd><dt>The coach from Walk 1</dt><dd>The plus-address you used in Walk 1 (<code>yourname+coach1@…</code>) and its password.</dd><dt>A new coach (Walk E)</dt><dd>A fresh plus-address, <code>yourname+coach3@…</code>, made during the walk, in a private window.</dd></dl>
+  </section>
+
+  <section class="card stop">
+    <h2>Stop check</h2>
+    <p><strong>Walk A must pass first.</strong> Stage 0 has to be on the dev site, and Walk E needs the four dispute and refund events added to Stripe’s Billing destination (owner checklist O2).</p>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    <ul>
+      <li><strong>Sign in again before a many-customer money action.</strong> Not built: it waits on its design session (owner checklist O10).</li>
+      <li><strong>A replayed or out-of-order event.</strong> Stripe Walk 6 covers it, with two steps added 2026-11-01 for what Stage 0 changed (B13 and D11). Re-run it as the other exit walk.</li>
+      <li><strong>“Not read” on the Money tab.</strong> It shows only when Stripe fails to answer, which nobody can cause on purpose; the tests cover it. Likewise a customer with more than 20 subscriptions.</li>
+      <li><strong>An event from the other Stripe mode, and one Stripe customer per buyer with no second trial.</strong> Covered by the tests; there is no screen that shows them.</li>
+      <li><strong>The change log written first, or not at all.</strong> Visible only when the log cannot be written, which needs a broken database; the tests cover it.</li>
+      <li><strong>Our portal settings in Stripe itself.</strong> Claude reads them with the Stripe audit after Walk F; it is not an owner step.</li>
+      <li><strong>Production.</strong> Nothing here touches it. The live Stripe steps are owner checklist O3 and O6.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  var DATA = {"key":"plans-pricing-stage0-walk-v1","title":"Plans & pricing Stage 0 walk: our billing records tell the truth about Stripe","parts":[{"id":"A","title":"Stop checks: the build is on the dev site, and Stripe sends the dispute events","steps":[{"who":"You · ask Claude","do":"Ask Claude whether Stage 0 (including the daily check) is pushed and the dev site’s deploy has finished. The walk runs on the dev site because Stripe’s test webhooks point there.","see":"Claude says yes, with the commit. If not, STOP: nothing below can pass on the old build.","options":["Yes: pushed and deployed","Not yet: STOP and come back later"]},{"who":"You · computer · Stripe dashboard (sandbox) › Workbench › Webhooks › Billing","do":"Open the destination named “Billing” and read the list of events it listens to (owner checklist O2).","see":"The list includes all four: charge.dispute.created, charge.dispute.updated, charge.dispute.closed, charge.refunded.","options":["All four are there","Some are missing: add them now, or skip Walk E (B, C, D, F, G can still run)"]}]},{"id":"B","title":"Plan & billing says what the customer actually pays","steps":[{"who":"The club owner from Walk 2 · computer · https://dev.fieldlogichq.ca/{the club}/admin/org/billing","do":"Sign in as Walk 2’s club owner and open Plan & billing (the Plan & billing row in the club admin’s left rail). Write down the price line under “Your plan” as PRICE-LINE (it reads “… CAD / month” or “… CAD / year”).","see":"A price line and a “Renews …” date. If it reads Free or shows no “Renews” date, the club has no real subscription: STOP this walk and tell Claude."},{"who":"You · computer · Stripe dashboard (sandbox) › Customers","do":"Open this club’s customer (search by the owner’s plus-address) and its subscription. Read the price’s amount and how often it bills.","see":"One active subscription with one amount and one interval (month or year). Write it down as STRIPE-PRICE."},{"who":"You · compare","do":"Compare PRICE-LINE with STRIPE-PRICE.","see":"Same amount and same interval. This is the pass condition: the page prints what Stripe charges, so a yearly plan reads “/ year” at its yearly amount (before Stage 0 every yearly plan printed “/ month”).","options":["Same amount, same interval","The amount differs: write both in the notes","The interval differs: write both in the notes"]},{"who":"The coach from Walk 1 · computer · https://dev.fieldlogichq.ca/{the portal}/coaches/billing","do":"Sign in as Walk 1’s coach and open Plan & billing (left rail; on a phone, the More sheet). Then find the same coach’s subscription in Stripe › Customers.","see":"The price line under “Your plan” and Stripe’s price agree on amount and interval, as for the club.","options":["They agree","They differ: write both in the notes","This portal has no paid subscription any more: skipped"]}]},{"id":"C","title":"Staff see a real next charge, or a plain “None”","steps":[{"who":"Platform admin · computer · https://dev.fieldlogichq.ca/platform-admin/orgs","do":"Open Clubs & portals, find Walk 2’s club and open its record. Choose the Money tab.","see":"The band reads “Paid, last 12 months”, “Refunded” and “Next charge”. Next charge shows an amount and “on {date}”."},{"who":"You · compare","do":"Compare the Next charge date with the subscription’s next renewal in Stripe (from B2), and the amount with STRIPE-PRICE.","see":"The same date and the same amount (a trial or a coupon would make the amount differ: say so in the notes).","options":["Same date and amount","Different: write both in the notes"]},{"who":"Platform admin · computer","do":"Press “Read again” beside “The subscription”.","see":"It reads “Reading…”, then the same answer, and the “Read from Stripe at …” time moves forward. A “Test mode” chip is shown."},{"who":"Platform admin · computer · Clubs & portals","do":"Open the record of a club you know has no paid plan (any free Tournament club) and choose Money.","see":"Next charge reads “None” with the note “no live subscription”. It never says “Not read” for a club that simply has no subscription.","options":["“None” · no live subscription","“Not read” appeared: write the club in the notes","Something else: write it in the notes"]}]},{"id":"D","title":"A replaced price is still recognised (changes the shared test catalogue, then puts it back)","steps":[{"who":"You · read this first","do":"This walk switches the TEST price of Walk 2’s plan to a new one, as a real price change would, then switches it back. Other testers on dev see the switch for a few minutes. Production is not touched. Do it in one sitting.","see":"You decide.","options":["I will run Walk D now","Skipping Walk D"]},{"who":"You · computer · Stripe dashboard (sandbox) › Product catalog","do":"Open the product for Walk 2’s plan (Tournament Plus). Add a price: recurring, the same interval as STRIPE-PRICE, a different amount (for example 34.50 CAD). Copy the new price’s id as NEW-PRICE.","see":"A new price on the product. The club’s subscription is still on the old one."},{"who":"Platform admin · computer · https://dev.fieldlogichq.ca/platform-admin/plans-pricing","do":"Open the plan, then its Pricing panel. Set “Stripe mode” to Test (it opens on Production). In the row for the club’s interval, click the price id, write the old id down as OLD-PRICE, paste NEW-PRICE, write the change note “Stage 0 walk: old price stays recognised”, press the tick (“Request approval”), then “Submit for review”.","see":"The window closes and a change is waiting for approval. No “sign in again” step appears (that is Part 10, not built yet)."},{"who":"Platform admin · computer · https://dev.fieldlogichq.ca/platform-admin/change-requests","do":"In the Approval queue, open the request and press “Approve & apply”.","see":"It reads “Approved, applied, and marked implemented.” The plan’s Test price now shows NEW-PRICE."},{"who":"Platform admin · computer · Walk 2’s club › Money","do":"Press “Read again” and look at the comparison row “Plan”.","see":"The Stripe column reads “Tournament Plus · {its interval}”, the same as ours. It does NOT read “A price we do not know”, although the club pays a price the plan no longer uses.","options":["Tournament Plus, the same as ours","“A price we do not know”","Something else: write it in the notes"]},{"who":"You · computer · Stripe dashboard (sandbox) › the club’s subscription","do":"Edit the subscription’s metadata: add the key walk with the value stage0 and save. That makes Stripe send a “subscription updated” event to the Billing destination.","see":"A new customer.subscription.updated delivery on the Billing destination, status 200."},{"who":"You · computer · the fieldlogichq@gmail.com inbox · then the club owner’s Plan & billing","do":"Wait two minutes. Look for an email titled “A subscription is on a price we do not know: {the club}”. Then reload the club’s Plan & billing.","see":"No such email. Plan & billing still shows Tournament Plus and PRICE-LINE.","options":["No email, page unchanged","The email arrived","The page changed: write what in the notes"]},{"who":"Platform admin · computer · plans-pricing","do":"Put it back: switch the Test price back to OLD-PRICE the same way (Request approval, Submit for review, Approve & apply). In Stripe you may archive NEW-PRICE.","see":"The plan’s Test price shows OLD-PRICE again, and the club’s Money tab reads Tournament Plus after Read again.","options":["Put back, matches again","Could not put it back: tell Claude now"]}]},{"id":"E","title":"A disputed subscription charge reaches you, and nothing is suspended","steps":[{"who":"A new coach · computer · a private window · https://dev.fieldlogichq.ca","do":"Buy a Premium Coaches Portal the way Walk 1 Part A did, with a fresh plus-address (yourname+coach3@…) and the team name “Walk Dispute Hawks”. At Stripe’s checkout use the test card 4000 0000 0000 0259, any future date, any CVC.","see":"The purchase completes and the portal opens. (That card pays, then its bank disputes the charge a few moments later.) If the checkout offered a free trial, nothing was charged: STOP and tell Claude.","options":["Bought, paid today","A trial started, nothing charged: STOP"]},{"who":"You · computer · Stripe dashboard (sandbox) › Payments","do":"Find the payment for that purchase.","see":"It is marked Disputed. On Workbench › Webhooks › Billing a charge.dispute.created delivery reads 200.","options":["Disputed, delivered 200","Not disputed after 10 minutes","Delivered, but not 200: write the code in the notes"]},{"who":"You · computer · the fieldlogichq@gmail.com inbox","do":"Look for the dispute email.","see":"One email titled “Dispute: {the portal}, {amount} subscription charge”, saying nothing on the account was changed and that flagging or suspending is not decided.","options":["One email, as described","No email","More than one"]},{"who":"Platform admin · computer · the portal’s record › Story","do":"Open the new portal’s record (Clubs & portals, search “Walk Dispute Hawks”) on the Story tab.","see":"A line “Disputed {amount} with their bank”, below it “Fraudulent · nothing on the account changed”, by Stripe."},{"who":"The new coach · computer","do":"Reload the portal and open Plan & billing.","see":"The portal works as before and the plan reads Premium. Nothing is suspended or flagged (owner checklist O4 is still open).","options":["Works, Premium, nothing suspended","Something was blocked: write what in the notes"]},{"who":"You · computer · Stripe dashboard (sandbox) › the disputed payment","do":"Open the dispute, choose to submit evidence, type winning_evidence in the text box and submit. Wait a few minutes.","see":"The dispute reads Won."},{"who":"You · computer · the fieldlogichq@gmail.com inbox · and the portal’s Story","do":"Look for the closing email and reload the Story.","see":"An email titled “Dispute closed (Won): {the portal}”, and a Story line “Dispute closed: Won”. You have exactly two dispute emails in all: Stripe’s in-between updates send none.","options":["Both, and two dispute emails in all","Something missing: write what in the notes","More than two dispute emails"]}]},{"id":"F","title":"The billing portal opens on our own settings","steps":[{"who":"The club owner from Walk 2 · computer · Plan & billing","do":"Press “Payment method & invoices”.","see":"It reads “Opening payment portal…” and Stripe’s billing portal opens (test mode). It does not answer “Billing portal is not configured.”","options":["The portal opened","“Billing portal is not configured.”","Something else: write it in the notes"]},{"who":"The club owner from Walk 2 · computer · Stripe’s portal","do":"Look at what the portal offers.","see":"Payment method, invoice history and billing details (name, email, address, tax ID) are there. There is NO way to change or update the plan.","options":["As described, no plan change","A plan change is offered: write what in the notes"]},{"who":"The club owner from Walk 2 · computer · Stripe’s portal","do":"Find the cancel option and read it. Do NOT confirm the cancel.","see":"Cancel is offered, and it says the plan stays until the end of the current period (no money back for the rest of it).","options":["Ends at the period end","Cancels at once, or offers a refund: write the words in the notes","No cancel option"]}]},{"id":"G","title":"The daily check tells you when Stripe and our records disagree","steps":[{"who":"Platform admin · computer · any platform-admin page","do":"Run today’s check now: open the browser’s console (F12, Console tab), paste fetch('/api/platform-admin/billing-drift-daily',{method:'POST'}).then(r=>r.json()).then(console.log) and press Enter. Or skip this step and wait for the scheduled run at 7:15 a.m. Toronto time (12:15 GMT).","see":"An answer with ok and one step “billing_drift”, whose result names an outcome (equal or differs), how many differences, and how many records and subscriptions were read.","options":["Ran it by hand: equal","Ran it by hand: differs","Waited for the scheduled run","It said it could not compare: write the error in the notes"]},{"who":"You · computer · the fieldlogichq@gmail.com inbox","do":"Look for today’s check email.","see":"If the outcome was “differs”: one email titled “Stripe and our billing records disagree: {n} differences”, each line naming a club or portal (or “No record of ours”) and what differs. If “equal”: no email. Old dev test data can hold real differences: that is data, not a defect.","options":["Email matches the outcome","No email although it differs","An email although it was equal"]},{"who":"You · compare","do":"Pick one line that names a club. Open it with the link in the email, choose Money, and read the comparison rows. Open the line’s Stripe link too.","see":"The club’s record and Stripe really do disagree in the way the line says (for example status: ours active, Stripe past due).","options":["The line is true","The line is false: write which in the notes","No line named a club: skipped"]},{"who":"Platform admin · computer · the console","do":"Run the check a second time today (the same line as G1).","see":"The same outcome, and NO second email of the same kind today.","options":["Same outcome, no second email","A second email arrived","Skipped (waited for the schedule)"]}]}]};
+  var KEY = DATA.key, PARTS = DATA.parts;
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+  function box(id, partId, label) {
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+    boxes.push({ part: partId, id: id, cb: cb, label: label });
+    return cb;
+  }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(txt('strong', null, p.id + ' \u00b7 ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(txt('span', 'who', id + ' \u00b7 ' + s.who));
+      t.appendChild(txt('span', null, s['do']));
+      t.appendChild(txt('span', 'see', 'You should see: ' + s.see));
+      if (s.options && s.options.length) {
+        var wrap = el('div', 'step opt'); wrap.appendChild(t);
+        s.options.forEach(function (o, k) {
+          var row = el('label', 'optrow'); var cb = box(id + '-' + (k + 1), p.id, id + ' = ' + o);
+          row.appendChild(cb); row.appendChild(txt('span', null, o)); wrap.appendChild(row);
+        });
+        body.appendChild(wrap);
+      } else {
+        var row2 = el('label', 'step'); var cb2 = box(id, p.id, id);
+        row2.appendChild(cb2); row2.appendChild(t); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' \u00b7 ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [DATA.title + ' (written 2026-11-01)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length + ' (a step with options counts one box per option)');
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join('; ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

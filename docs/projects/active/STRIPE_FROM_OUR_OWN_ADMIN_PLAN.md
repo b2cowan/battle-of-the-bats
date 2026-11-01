@@ -11,7 +11,11 @@ Every piece of outstanding work in this combined program (this plan, Support con
 has a home in one of these stages. Order is by dependency and rework risk, never by date. Item numbers (§6 …) refer to the gaps document.
 
 0. **Stage 0 — the 12 fixes.** Fixes 1, 2, 5, 7, 8, 9, 10 built and committed `63988b38c` 2026-11-01 (build prompt Parts 1–7; migrations
-   416–418 applied to dev); fixes 3, 4, 6, 12 and the closeout are build prompt Parts 8–12 (`PLANS_PRICING_STAGE0_BUILD_PROMPT.md`).
+   416–418 applied to dev); fixes 3 and 4 committed `ee2f55acf` 2026-11-01 (Parts 8–9); fix 6 (the daily read-only comparison, Part 11)
+   committed `6d2acb568` 2026-11-01 on the owner's go (its own commit), migrations 421–422 applied to dev (dev cron job 15); fix 12 (Part 10, sign in again)
+   waits on its `/design` session (owner ruling 2026-11-01, Owner checklist O10). **Fix 11 (tax) is carried, not built:** it is met when the
+   GST/HST plan's Stage 2 (Stripe Tax) is built; Parts 3 (our pinned portal settings) and 6 (the stored amount is the price, not a
+   tax-inclusive total) were built to receive it, and Stage 0 changed nothing about tax in code (`PLANS_PRICING_STAGE0_BUILD_PROMPT.md`).
    **Owner steps that close Stage 0** (the one list, kept in the build prompt's Part 12 "Owner checklist"; the stage is not done until each is
    ticked there): simplify + review of Parts 1–7; the four dispute/refund events on the billing webhook endpoint (test, then live); dispute
    policy ruling; paid-amount backfill yes/no; first live portal open writes our settings (confirm); Part 11's daily job go; migrations to prod

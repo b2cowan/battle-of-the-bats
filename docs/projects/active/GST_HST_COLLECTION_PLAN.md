@@ -330,12 +330,17 @@ Stage 8b and the Ongoing rhythm are standing triggers that the project does not 
 - Code that assumes no tax: `lib/plan-move-preview-lines.ts:11,63` (returns null on tax lines),
   `lib/workspace-upgrade-preview.ts:29`, `lib/console-money-stripe.ts:173`, `lib/platform-stripe-fees.ts:339,448-451`
   (credit-note math; invoices with memo/footer only).
-- Portal on Stripe's default configuration: `app/api/billing/portal/route.ts:53`.
+- Portal on Stripe's default configuration: `app/api/billing/portal/route.ts:53`. *(Updated 2026-11-01, `/accounting` review of
+  Plans & pricing Stage 0: Part 3 replaced this with our own pinned configuration, `lib/stripe-portal-settings.ts`, version
+  `1`; Stage 2's tax-ID field is switched on there by bumping the version.)*
 - No address/country columns on organizations (`supabase/migrations/001_multi_tenant.sql`); payout country exists
   (`org_payment_accounts.country`, mig 358) and card country (mig 390). Any new column → DATA_DICTIONARY + snapshots.
 - Canada/CAD hard-wiring for US payments: `lib/stripe-connect.ts:42-45,130`; `America/Toronto` in `lib/plan-config.ts`.
 - Price copy without "plus tax": `app/pricing/page.tsx:23,482`, `app/for-clubs/page.tsx:94,308`,
-  `app/for-coaches/page.tsx:119`, `components/PricingSection.tsx`.
+  `app/for-coaches/page.tsx:119`, `components/PricingSection.tsx`. *(Added 2026-11-01, `/accounting` review of Plans &
+  pricing Stage 0: Plan & billing's own price line now prints what the customer pays, `W.plan.paidPrice` in
+  `BillingBody.tsx`, from `organizations.subscription_amount_cents`, the price's pre-tax `unit_amount`. Once tax is
+  charged that line is the price, not the total: it needs the same "plus applicable taxes" wording.)*
 - Payments terms placeholder: `lib/online-payment-words.ts:39-41`; acceptance columns mig 358 (+401, 403).
 - Read-only Stripe audit to re-run after Stage 2: `scripts/audit-revenue-readiness.mjs`.
 
