@@ -24,7 +24,7 @@
 
 - Fill this in as each Part lands: Part, date, commit (or "uncommitted"), migration number and whether it is on
   dev only, tests run, anything the Part did differently from this prompt and why.
-- **Part 1 — built 2026-11-01, awaiting the owner's commit go.** The one rule lives in a new leaf module `lib/stripe-mode.ts`
+- **Part 1 — built 2026-11-01, committed `63988b38c` 2026-11-01.** The one rule lives in a new leaf module `lib/stripe-mode.ts`
   (`stripeKeyIsLive`, `stripeKeyIsTest`, `stripeEnvironment`; no imports, so the `.mjs` scripts load it directly under node 24);
   `lib/online-payments-switch.ts` re-exports the two helpers so no caller changed its import. Every prefix site in the prompt's list
   now asks it (stripe-prices, stripe-price-validation, platform-stripe-fees, dev team-checkout-readiness, both Connect webhooks, the
@@ -33,7 +33,7 @@
   while the price validator and the dev readiness route keep "no key configured" as their own diagnostic (a fact about the key, not a
   mode). `onlinePaymentsOn` stays on `sk_live_` alone, commented and pinned. Tests: `tests/unit/stripe-mode.test.ts` (helper + guard
   that no file in app/lib/components/scripts tests a prefix outside the allow-list).
-- **Part 2 — built 2026-11-01, awaiting commit go. Migration 416 applied to DEV only** (MANUAL_PROD_STEPS `pending`; **prod must get it
+- **Part 2 — built 2026-11-01, committed `63988b38c` 2026-11-01. Migration 416 applied to DEV only** (MANUAL_PROD_STEPS `pending`; **prod must get it
   BEFORE the code**, or every billing event answers 500 until it does). Table `stripe_billing_events` + atomic
   `stripe_billing_event_claim` (proved by `scripts/stripe-billing-events-check.sql`, STRIPE_BILLING_EVENTS_PASSED). The pipeline is
   `receiveBillingEvent` in `lib/stripe-billing-events.ts`; **THE SEAM is `runVerifiedBillingEvent(event, customerId)` in
@@ -48,7 +48,7 @@
   ignored once the subscription recovered or ended; the payment-failed notice is not cleared while the subscription is still past
   due. An invoice that names no subscription (a one-off made in Stripe's dashboard) keeps the old "set active" rule — not touched
   here, flagged for Stage 2. Tests: `tests/unit/stripe-billing-events.test.ts` (17).
-- **Part 3 — built 2026-11-01, awaiting commit go.** Settings in `lib/stripe-portal-settings.ts` (leaf, so the audit script loads
+- **Part 3 — built 2026-11-01, committed `63988b38c` 2026-11-01.** Settings in `lib/stripe-portal-settings.ts` (leaf, so the audit script loads
   it), find-or-create in `lib/stripe-portal-config.ts` (metadata key `fieldlogichq_portal_version`, version `1`, cached per mode per
   process, an older version deactivated, never edited), the portal route passes `configuration` and answers "not configured" when it
   cannot be found or made. **Cancel: ON, at period end, no proration**, per the owner's sequence ruling (1) of 2026-10-31, which names
@@ -57,7 +57,7 @@
   in a mode; read in sandbox 2026-11-01: not created yet). ⚖ The first live portal open creates it in the live Stripe account: owner
   to confirm before the release. Tests: `tests/unit/stripe-portal-config.test.ts`; `plan-billing-admin-host.test.ts` now mocks the
   module and asserts the session names it.
-- **Part 4 — built 2026-11-01, awaiting commit go.** `lib/stripe-subscription-charges.ts` (`handleSubscriptionChargeEvent`, deps
+- **Part 4 — built 2026-11-01, committed `63988b38c` 2026-11-01.** `lib/stripe-subscription-charges.ts` (`handleSubscriptionChargeEvent`, deps
   injected; the route builds them in `subscriptionChargeDeps()`), called from THE SEAM **before** the customer-less return. Resolution:
   charge re-read (refunds expanded) → `invoicePayments.list` by its payment intent → the invoice's subscription → organization on that
   subscription, else the Coaches Portal on it (its paying club, else its workspace), else the ONE organization holding the customer
@@ -73,7 +73,7 @@
   production like the error alert (rare, and the owner tests in test mode) and a failed send is logged, not a 500. ⚖ Dispute policy
   (flag/suspend) not built: owner's call. Tests: `tests/unit/stripe-subscription-charges.test.ts` (14). Pre-existing unrelated failure
   seen: `support-console-stage3-guard` §12 on `app/platform-admin/bookkeeping/ExpenseFormWindow.tsx` (not this stage's file).
-- **Part 5 — built 2026-11-01, awaiting commit go. Migration 417 applied to DEV only** (MANUAL_PROD_STEPS `pending`; **prod before the
+- **Part 5 — built 2026-11-01, committed `63988b38c` 2026-11-01. Migration 417 applied to DEV only** (MANUAL_PROD_STEPS `pending`; **prod before the
   code**: the lookup reads the table and a missing table is a thrown lookup, i.e. every subscription event answers 500). Table
   `stripe_price_ids_retired` (append-only: service role SELECT only, the trigger the one writer), trigger `stripe_prices_record_retired_id` (AFTER UPDATE OF
   price_id OR DELETE; a non-null id replaced, cleared or deleted is recorded; first retirement wins), backfill from the audit log
@@ -86,7 +86,7 @@
   Tests: `tests/unit/stripe-price-retired.test.ts` (7, real module over a fake client), SQL `scripts/stripe-price-retired-check.sql`
   (STRIPE_PRICE_RETIRED_PASSED). The grants guard asked for the table's write grants; it carries the guard's
   `no-service-role-grant` exception instead (append-only on purpose).
-- **Part 6 — built 2026-11-01, awaiting commit go. Migration 418 applied to DEV only** (MANUAL_PROD_STEPS `pending`; prod before the
+- **Part 6 — built 2026-11-01, committed `63988b38c` 2026-11-01. Migration 418 applied to DEV only** (MANUAL_PROD_STEPS `pending`; prod before the
   code). `organizations.subscription_amount_cents` / `subscription_currency` (nullable, CHECKed), from `subscriptionAmount(sub)`
   (`lib/stripe-billing-state.ts`: first item's price `unit_amount`, `currency`; non-flat price → null). Written in the club arm's update
   (so the second-subscription rule already gates it), by `recordSubscriptionAmount(sub)` after the Coaches Portal path and the
@@ -98,7 +98,7 @@
   copied, with the two new fields. **No backfill** (per the prompt); ⚖ owner's choice of a one-off read-only backfill if production has
   paying subscriptions (not checked: a production read was refused to this session). Tests: `tests/unit/plan-billing-paid-amount.test.ts`
   (10).
-- **Part 7 — built 2026-11-01, awaiting commit go. No migration.** `lib/team-checkout-customer.ts` (`buyerStripeCustomer`, deps
+- **Part 7 — built 2026-11-01, committed `63988b38c` 2026-11-01. No migration.** `lib/team-checkout-customer.ts` (`buyerStripeCustomer`, deps
   injected). Order used: (1) the customer on a Coaches Portal the person is **billing owner** of (`team_workspaces.billing_owner_user_id`;
   not `org_team_addon`, not `workspace_state = 'org_owned'`, whose customer is the club's), newest first; (2) `customers.search` on
   `metadata['ownerUserId']` (every customer this checkout creates already carries it, so nothing new needed storing); (3) create. A
