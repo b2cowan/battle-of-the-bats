@@ -25184,6 +25184,87 @@
         "column_default": "now()"
       },
       {
+        "table_name": "stripe_billing_drift_checks",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "stripe_billing_drift_checks",
+        "pos": 2,
+        "column_name": "checked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "stripe_billing_drift_checks",
+        "pos": 3,
+        "column_name": "environment",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_billing_drift_checks",
+        "pos": 4,
+        "column_name": "outcome",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_billing_drift_checks",
+        "pos": 5,
+        "column_name": "subscriptions_read",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "stripe_billing_drift_checks",
+        "pos": 6,
+        "column_name": "records_compared",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "stripe_billing_drift_checks",
+        "pos": 7,
+        "column_name": "differences",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "table_name": "stripe_billing_drift_checks",
+        "pos": 8,
+        "column_name": "error",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_billing_drift_checks",
+        "pos": 9,
+        "column_name": "owner_emailed",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
         "table_name": "stripe_billing_events",
         "pos": 1,
         "column_name": "id",
@@ -38627,6 +38708,16 @@
         "indexdef": "CREATE UNIQUE INDEX schedule_facility_lanes_unique_label ON public.schedule_facility_lanes USING btree (tournament_id, division_id, label)"
       },
       {
+        "tablename": "stripe_billing_drift_checks",
+        "indexname": "stripe_billing_drift_checks_checked_idx",
+        "indexdef": "CREATE INDEX stripe_billing_drift_checks_checked_idx ON public.stripe_billing_drift_checks USING btree (checked_at DESC)"
+      },
+      {
+        "tablename": "stripe_billing_drift_checks",
+        "indexname": "stripe_billing_drift_checks_pkey",
+        "indexdef": "CREATE UNIQUE INDEX stripe_billing_drift_checks_pkey ON public.stripe_billing_drift_checks USING btree (id)"
+      },
+      {
         "tablename": "stripe_billing_events",
         "indexname": "stripe_billing_events_customer_idx",
         "indexdef": "CREATE INDEX stripe_billing_events_customer_idx ON public.stripe_billing_events USING btree (customer_id) WHERE (customer_id IS NOT NULL)"
@@ -43721,6 +43812,36 @@
       {
         "kind": "RLS",
         "table_name": "schedule_facility_lanes",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "stripe_billing_drift_checks",
+        "detail": "stripe_billing_drift_checks_counts_check",
+        "check_clause": "((subscriptions_read >= 0) AND (records_compared >= 0))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "stripe_billing_drift_checks",
+        "detail": "stripe_billing_drift_checks_differences_check",
+        "check_clause": "(jsonb_typeof(differences) = 'array'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "stripe_billing_drift_checks",
+        "detail": "stripe_billing_drift_checks_environment_check",
+        "check_clause": "(environment = ANY (ARRAY['live'::text, 'sandbox'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "stripe_billing_drift_checks",
+        "detail": "stripe_billing_drift_checks_outcome_check",
+        "check_clause": "(outcome = ANY (ARRAY['equal'::text, 'differs'::text, 'could_not_compare'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "stripe_billing_drift_checks",
         "detail": "ENABLED",
         "check_clause": null
       },

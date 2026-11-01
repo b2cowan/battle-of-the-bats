@@ -538,6 +538,14 @@
     "419_a_familys_link_can_be_replaced.sql": {
       "prod": "pending",
       "note": "Signed-in family accounts Stage 1 Part 1 (docs/projects/active/SIGNED_IN_FAMILY_STAGE1_BUILD_PROMPT.md): a family's Your sign-up link can be replaced. Visible: two columns on league_registrations (link_version int NOT NULL DEFAULT 0 with CHECK >= 0, link_replaced_at timestamptz nullable). Constant default, no rewrite of existing values; re-runnable. Apply to prod BEFORE the promote that ships Stage 1 (every family link door reads link_version: without it every family page and pay link answers 500). Applied to dev 2026-11-01. Verify on prod: both columns present in information_schema.columns; constraint league_registrations_link_version_check exists."
+    },
+    "421_the_daily_billing_check_keeps_its_results.sql": {
+      "prod": "pending",
+      "note": "Plans & pricing Stage 0 Part 11 (docs/projects/active/PLANS_PRICING_STAGE0_BUILD_PROMPT.md; owner's go 2026-11-01): the daily read-only comparison with Stripe keeps its results. Visible: table stripe_billing_drift_checks (RLS on, no policies, service role only). Additive, no row changed, re-runnable; safe with live subscriptions. Apply to prod BEFORE the promote that ships Part 11 (the job's save fails without it and the day's run is marked failed; nothing customer-facing breaks). Applied to dev 2026-11-01. Verify on prod: SELECT count(*) FROM information_schema.tables WHERE table_name = 'stripe_billing_drift_checks' -> 1."
+    },
+    "422_the_daily_billing_check_is_scheduled.sql": {
+      "prod": "pending",
+      "note": "Plans & pricing Stage 0 Part 11: schedules the pg_cron job 'billing-drift-daily' (15 12 * * *, daily) that calls POST /api/platform-admin/billing-drift-daily through app_cron_http_tick: a READ-ONLY comparison of every Stripe subscription with our billing records, one row in stripe_billing_drift_checks, and an email to the owner's inbox when they differ or Stripe could not be read (at most once a day per outcome). It never repairs. WATCHED AUTOMATION: written 2026-11-01 on the owner's go in conversation ('Go, schedule on dev too'). APPLIED TO DEV 2026-11-01 (cron job 15 created, active). Prod needs its own yes. No table, column or function change, so check:migrations cannot see it. Apply on prod only AFTER the code is serving on production (the route must exist) and mig 421 is applied. Verify after applying: SELECT schedule FROM cron.job WHERE jobname = 'billing-drift-daily' -> '15 12 * * *'."
     }
   }
 }

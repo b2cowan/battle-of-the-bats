@@ -121,7 +121,7 @@
 - **Part 10 — not built in Session 3 (owner ruling 2026-11-01: draw it first).** The frame check stopped it: no sign-in-again window is
   drawn, and neither of today's two doors (Bulk changes, the price-slot change) is framed with the step. A server-only gate would
   just make both doors fail. Owner checklist O10 holds the design session; Part 10 is then its own build session.
-- **Part 8 — built 2026-11-01, uncommitted at time of writing. No migration.** `MoneyRead['nextCharge']` is now the union `NextCharge`
+- **Part 8 — built 2026-11-01, committed `ee2f55acf` 2026-11-01. No migration.** `MoneyRead['nextCharge']` is now the union `NextCharge`
   (`{kind:'charge',…} | {kind:'none'} | {kind:'unread'}`, `lib/console-money.ts`); the preview's `.catch` returns `unread`. The band
   words it **"Not read"** (the word the comparison rows already use for a Stripe that did not answer) with the note "Stripe could not be
   asked for the next charge. Read again." and the warn tone; the existing Read again door sits directly under the band, so no new door.
@@ -131,7 +131,7 @@
   `charge`. Tests: `tests/unit/console-money-next-charge.test.ts` (11, the real read over a fake Stripe); two stage-3 guard fixtures
   moved from `null` to `{kind:'none'}`. Typecheck: clean in Stage 0's files (one error in another session's
   `components/public/PublicRuleSections.tsx`, not touched).
-- **Part 9 — built 2026-11-01, uncommitted at time of writing. No migration (the append-only guard is NOT built; see below).** One
+- **Part 9 — built 2026-11-01, committed `ee2f55acf` 2026-11-01. No migration (the append-only guard is NOT built; see below).** One
   helper in `lib/platform-audit.ts`: `writeAuditBeforeChange(...)` inserts the row strictly and returns `failed(error)`, which writes
   `<action>_failed` `{failedEntryId, error}` (best-effort; same reason); a refused row throws `AuditFirstError` and routes answer
   `AUDIT_FIRST_REFUSAL` with a 503; `auditFirst()` adapts it for the `{ok,status,error}` writers; `failedAuditIds()` lets readers
@@ -175,6 +175,72 @@
   detail rows within 10 seconds of its row, which a very slow over-cap archive could pass; the audit CSV export carries both rows
   unmarked (it is the raw record); Bulk changes' run row no longer carries the counts (they live on the operation's own row); a
   refused audit write is logged to the server, not captured as an error event.
+- **Part 11 — built 2026-11-01 (Session 4 chat; the owner's go asked again there and given: "Go, schedule on dev too", and
+  "yes, once a day" to an email when Stripe cannot be read). Migrations 421 (table `stripe_billing_drift_checks`) and 422
+  (pg_cron `billing-drift-daily`, `15 12 * * *`) applied to DEV 2026-11-01 (dev cron job 15, active); MANUAL_PROD_STEPS
+  `pending` for both (421 before the code; 422 after the code is serving, its own yes).** 420 was the house league's, so 421/422.
+  Rules in `lib/billing-drift.ts` (pure compare + `runBillingDriftCheck`, deps injected), reads in `lib/billing-drift-server.ts`,
+  route `app/api/platform-admin/billing-drift-daily/route.ts` (cron secret or `run_jobs`, 207 when it could not compare).
+  Compared: every `organizations` row holding a subscription id (clubs and the portal's workspace row: what Plan & billing reads)
+  on status (folded alike on both sides, because the portal row stores a mapped status and the club row Stripe's raw one), the
+  STORED plan (the club's own; free time is in `org_overrides`), cycle, renewal (> 1 hour apart), unknown price; plus a billing
+  subscription nothing follows (org rows, `team_workspaces` ids, next-season choices). Stripe read once, paged (100 × 50 pages;
+  past that = could not compare); a record whose subscription the list lacks is retrieved by itself. **Differences from the
+  prompt:** (a) "could not compare" ALSO emails the owner, once a day (owner 2026-11-01: a broken check must not be silent);
+  (b) `team_workspaces.subscription_status` is not compared separately (the portal's org row is, and is what the customer
+  reads); (c) the email kind is `billing_drift_alert` (inbox), once-only key `billing-drift:{env}:{outcome}:{UTC day}`.
+  Guards updated on purpose: plan-reader door (`stored`), workspace census (`tombstone-aware`), audit reason (product job).
+  Tests: `tests/unit/billing-drift.test.ts` (23, incl. read-only source guards). Typecheck clean; lint, spelling, dictionary OK.
+  `scripts/stack-health.mjs` untouched. No run against Stripe yet: the first is the Stage 0 walk's (or tomorrow's dev tick).
+  **`/simplify` + `/review` of Part 11 (2026-11-01), no change to the rulings, the schedule, the email's subject or either
+  migration.** *Simplify, fixed:* the paging loop is now the shared `fetchAll` (kept a thin wrapper so a failed read still names
+  what it was reading); single Stripe retrievals and price lookups run 4 at a time instead of one by one; the renewal test and
+  the status fold are shorter; one duplicate log removed; three exports nobody imports made private; the price lookup passes the
+  shared function straight through. *Review, fixed:* (1) the daily audit entry was missing from the "product job, no reason"
+  list, so the audit screen would have shown every daily row as "Not recorded" (added to `lib/platform-audit-reason.ts`); (2) the
+  error text kept and emailed is capped at 300 characters (a gateway's whole HTML page can ride in one); (3) an unreadable
+  renewal date on our side counts as "not recorded" instead of silently matching (+1 test); (4) a blank subscription id is skipped.
+  *Reported, NOT fixed (each is a behaviour change or outside Part 11):* a Stripe key from the wrong mode or account would make
+  every record "gone" and every subscription "not followed" (a mass-difference email, correctly loud but mislabelled; cheap guard:
+  treat "every record gone while Stripe lists some" as could-not-compare); Stripe `incomplete`/`paused` fold to active, so a
+  long-lived `incomplete` subscription nothing follows reads as "not followed"; the portal's mapped `incomplete_expired` (active)
+  against Stripe's raw one shows as a status difference; a manual run followed by the cron run the same UTC day with a different
+  count gets the mail provider's duplicate-key refusal, so the second row says `owner_emailed=false` though the first run did
+  email (mig 421's column comment is only half right there); the email is sent before the row is saved, and the scheduler's
+  27-second wait is shorter than a slow run (siblings share the shape); a renewal difference under a day prints the same date
+  on both sides (the date is day-only); the result table has no retention and keeps every difference (the email caps at 50);
+  service role holds UPDATE/DELETE on the table though only INSERT is used; a record holding a real id from the OTHER Stripe
+  mode would read "gone" daily; four near-copies of Stripe's "missing" test, a second Stripe pager, a third monthly/yearly word
+  map, and a fourth copy of the cron door exist elsewhere in `lib/` (a repo-wide tidy, not this part). Full unit run: 12,961 of
+  12,967 pass; the 6 failures are all on the known list (support-console §12, plan-billing-usage ×2, Stage 6 walk ×3); one
+  further guard failure during the run was another session's `__lintprobe.tsx` vanishing mid-read and passes alone (23/23).
+- **Fix 11 (tax) — carried, not built (Part 12, 2026-11-01).** Met when the GST/HST plan's Stage 2 (Stripe Tax) is built
+  (`GST_HST_COLLECTION_PLAN.md`). Parts 3 (our pinned portal settings, where a tax-ID field would be switched on) and 6 (the
+  stored amount is the price's `unit_amount`, never a tax-inclusive total) were built to receive it. No tax change in code.
+- **`/accounting` review of the whole stage (Part 12, 2026-11-01): no conflict found; nothing to change in code.**
+  (1) The stored amount is the price's pre-tax `unit_amount`, which matches the tax-exclusive pricing in
+  `STRIPE_TAX_SETUP.md`; once tax is charged the Plan & billing line is the price, not the total, so it joins the GST/HST plan's
+  "plus applicable taxes" copy list (note added there, with Part 3's portal settings replacing the stale "default configuration"
+  line). (2) Disputes and refunds are recorded and emailed only: correct today, since nothing has been taxed or sold; refunds and
+  credit notes on a taxed charge are already in the GST/HST plan's Stage 2 test matrix. The owner's Bookkeeping is not fed by the
+  alerts: a lost dispute or its Stripe fee is entered by hand, prompted by the email. (3) Records: CRA wants books kept six years,
+  and **in Canada** unless CRA permits otherwise. The app's logs are controls, not the books: Stripe's invoices, charges, refunds
+  and disputes are. New topic `docs/agents/accounting/RECORDS_RETENTION_AND_LOCATION.md` recommends a yearly in-Canada export
+  and carries ONE accountant question (is that enough, or ask CRA's written permission, given Stripe and the AWS us-east-2
+  Bookkeeping store). Not a launch gate (owner 2026-10-31). (4) The daily comparison, the event log and one customer per buyer
+  raise nothing.
+- **Part 12 — closeout done 2026-11-01 (Session 4 chat), except what is the owner's.** Fix 11 carried (line above; the Stripe
+  plan's Stage 0 entry says it too). `/accounting` run (above). **Stage 0 walk** = Owner QA Ledger §438, checkable at
+  https://claude.ai/artifact/QZ1mimtjT3xdYa7MRYEYTg (source `PLANS_PRICING_STAGE0_WALK.html`, built from Walk 6's instrument):
+  A stop checks, B price line = Stripe, C next charge / "None", D a replaced Test price still recognised (writes the shared dev
+  catalogue, puts it back), E a test-card dispute (4000 0000 0000 0259) on a new Premium portal, F the portal on our settings, G
+  the daily check. Sign in again is not in it (Part 10 not built). **Walk 6 updated add-only** (a dated notice card + B13 "the
+  second resend answers duplicate" + D11 "D7 now stays on the NEW cycle"; the existing data byte-identical, checked). `/docs`
+  offered, not run. TODO line added under "Run Stripe from our own platform admin". ⚠ The walk needs the Stage 0 commits
+  PUSHED: on 2026-11-01 `origin/dev` held none of them, and Stripe's test webhooks point at the dev site.
+- **▶ NEXT (2026-11-01):** the owner's go to commit Part 11 (its own commit: watched automation; this file's Progress edits
+  since `ee2f55acf` ride with it) and the Part 12 docs (a second commit); a push so the walk can run; then `/simplify` and
+  `/review` of Part 11 as offered (Parts 8–9 had theirs); the walk §438 and Walk 6; Part 10's `/design` session (O10).
 
 ## What the owner sees after this build (present a version of this as the PM summary BEFORE any code)
 
@@ -525,9 +591,11 @@ anchor (date, commit, walk §), never deletes it.
   build session); without it, each customer's real amount appears after their next billing event.
 - [ ] **O6 · Confirm:** the first live portal open creates our portal settings in the live Stripe account (Part 3), or ask for a one-off
   owner-run script instead (watched: its own go and commit).
-- [ ] **O7 · Go for Part 11's daily comparison job** (watched automation, its own commit).
-- [ ] **O8 · Production order:** migrations 416, 417, 418 (and any Session 3 adds) applied to production BEFORE the promote that ships the code
-  (`MANUAL_PROD_STEPS.json`).
+- [x] **O7 · Go for Part 11's daily comparison job** (watched automation, its own commit). Given 2026-11-01 in the Session 4
+  chat ("Go, schedule on dev too"; an email when Stripe cannot be read: yes, once a day). Dev cron job 15. Prod scheduling
+  (mig 422) still needs its own yes after the code is serving: carried in O8.
+- [ ] **O8 · Production order:** migrations 416, 417, 418 and 421 applied to production BEFORE the promote that ships the code
+  (`MANUAL_PROD_STEPS.json`); migration 422 (the daily job's schedule) AFTER the code is serving, on its own yes.
 - [ ] **O9 · Exit walks:** re-run Stripe Walk 6 (webhook hardening) and the Stage 0 walk (both test mode).
 - [ ] **O10 · `/design` session for Part 10 (sign in again), then its own build session** (owner ruling 2026-11-01, Session 3). The
   round-2 drawings place the sentence on the Stage 3–8 screens only; they draw no sign-in-again window and no frame for today's Bulk

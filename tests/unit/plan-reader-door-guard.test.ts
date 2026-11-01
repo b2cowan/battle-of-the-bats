@@ -83,6 +83,7 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/platform-events.ts': ['writer', 'event rows carry the plan and status columns'],
   // ── stored on purpose ──
   'lib/platform-metrics.ts': ['stored', 'revenue and customer counts: free time is never revenue (/billing 2026-10-25)'],
+  'lib/billing-drift-server.ts': ['stored', 'the daily comparison with Stripe (Stage 0 Part 11) compares what the club HOLDS with what Stripe bills: free time is not billed, so it must not be compared; read-only'],
   'lib/lead-book.ts': ['stored', 'Stage 7 "pays now" (owner Q2): the club’s OWN plan, status and subscription, with free time read through the door and never counted as paying; and an offered club’s plan name'],
   'lib/lead-timeline.ts': ['stored', 'Stage 7: the plan named on the subscription-start fact a linked club’s billing records hold'],
   'app/platform-admin/early-access/[leadId]/page.tsx': ['stored', 'Stage 7: the linked club’s own plan and trial, in words ("on a League Plus trial until Nov 25"); whether it pays is `readPaying`'],

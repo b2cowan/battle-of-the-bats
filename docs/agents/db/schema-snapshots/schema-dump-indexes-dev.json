@@ -5185,6 +5185,16 @@
     "indexdef": "CREATE UNIQUE INDEX schedule_facility_lanes_unique_label ON public.schedule_facility_lanes USING btree (tournament_id, division_id, label)"
   },
   {
+    "tablename": "stripe_billing_drift_checks",
+    "indexname": "stripe_billing_drift_checks_checked_idx",
+    "indexdef": "CREATE INDEX stripe_billing_drift_checks_checked_idx ON public.stripe_billing_drift_checks USING btree (checked_at DESC)"
+  },
+  {
+    "tablename": "stripe_billing_drift_checks",
+    "indexname": "stripe_billing_drift_checks_pkey",
+    "indexdef": "CREATE UNIQUE INDEX stripe_billing_drift_checks_pkey ON public.stripe_billing_drift_checks USING btree (id)"
+  },
+  {
     "tablename": "stripe_billing_events",
     "indexname": "stripe_billing_events_customer_idx",
     "indexdef": "CREATE INDEX stripe_billing_events_customer_idx ON public.stripe_billing_events USING btree (customer_id) WHERE (customer_id IS NOT NULL)"

@@ -8160,6 +8160,32 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 <!-- dict:col:stripe_billing_events.ignored_reason -->
 **`ignored_reason`** (text, nullable, CHECK `wrong_mode` | `no_customer` | `not_ours`) — why it never acted: the other Stripe mode (never claimed, `processed_at` NULL), nothing to act on (claimed and processed), or a dispute/refund on a charge that paid no subscription invoice (Stage 0 Part 4: claimed and processed, the charge re-read from Stripe). NULL when it ran. A row with a reason is a `duplicate` to every later claim.
 
+## `stripe_billing_drift_checks`
+<!-- dict:table:stripe_billing_drift_checks -->
+
+**Purpose (migration 421, Plans & pricing Stage 0 Part 11 / S6, 2026-11-01):** one row per run of the **daily read-only comparison with Stripe** (`POST /api/platform-admin/billing-drift-daily`, scheduled by mig 422 as pg_cron job `billing-drift-daily`, `15 12 * * *`; rules in `lib/billing-drift.ts`, reads in `lib/billing-drift-server.ts`). It lists every Stripe subscription not cancelled (one paged pass, ceiling 5,000), retrieves by itself any subscription a record follows that the list lacks, and compares each `organizations` row holding a `stripe_subscription_id` (clubs and the Coaches Portal's workspace row; `mock_` ids left out) on status (folded: trial / past due / ended / otherwise active), the stored `plan_id` (the club's own plan: free time is in `org_overrides`) and `subscription_period` against the plan of the subscription's first item price (`getPlanFromPriceId`, replaced prices included), and `current_period_end` (> 1 hour apart). A billing subscription that no org row, no `team_workspaces.stripe_subscription_id` and no `organization_billing_facts.next_season_subscription_id` follows is `not_followed`. **It never repairs: this table is the only thing it writes.** When the outcome is not `equal`, one email to the owner's inbox (kind `billing_drift_alert`; Resend once-only key `billing-drift:{env}:{outcome}:{UTC day}`). Stage 2's Watching Stripe tab will read it. One row a day; no pruning. RLS on, no policies, grants revoked from `anon`/`authenticated`.
+
+<!-- dict:col:stripe_billing_drift_checks.id -->
+<!-- dict:col:stripe_billing_drift_checks.checked_at -->
+**`id`** (uuid PK, default `gen_random_uuid()`) / **`checked_at`** (timestamptz, NOT NULL, default now(); indexed DESC) — the run and when it finished.
+
+<!-- dict:col:stripe_billing_drift_checks.environment -->
+**`environment`** (text, NOT NULL, CHECK `live` | `sandbox`) — the Stripe mode it read (`stripeEnvironment()`).
+
+<!-- dict:col:stripe_billing_drift_checks.outcome -->
+<!-- dict:col:stripe_billing_drift_checks.error -->
+**`outcome`** (text, NOT NULL, CHECK `equal` | `differs` | `could_not_compare`) / **`error`** (text, nullable) — `could_not_compare` when any read failed (Stripe's list or a single retrieve, our tables, a price lookup) or Stripe held more than the ceiling: `error` says why, `differences` is empty. It is never counted as a difference, and the route answers 207 so the job's health reading sees it.
+
+<!-- dict:col:stripe_billing_drift_checks.subscriptions_read -->
+<!-- dict:col:stripe_billing_drift_checks.records_compared -->
+**`subscriptions_read`** / **`records_compared`** (integer, NOT NULL, default 0, CHECK ≥ 0) — subscriptions Stripe listed; our records compared.
+
+<!-- dict:col:stripe_billing_drift_checks.differences -->
+**`differences`** (jsonb, NOT NULL, default `[]`, CHECK array) — `{kind, subscriptionId, orgId, name, ours, stripe}` per difference. `kind`: `gone` (Stripe has no such subscription), `status`, `plan`, `cycle`, `renewal` (ISO timestamps), `price` (a price no slot has used: plan and cycle not compared; `stripe` = the price id), `not_followed` (`orgId` null, `stripe` = the customer id). Plan, cycle and renewal are not compared on an ended subscription.
+
+<!-- dict:col:stripe_billing_drift_checks.owner_emailed -->
+**`owner_emailed`** (boolean, NOT NULL, default false) — the mail service accepted the owner's email for this run (false on `equal` and on a send that failed). A same-day re-run under the same once-only key delivers no second email, whatever this column says.
+
 ## `stripe_price_ids_retired`
 <!-- dict:table:stripe_price_ids_retired -->
 

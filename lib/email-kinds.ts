@@ -125,6 +125,8 @@ export const EMAIL_KINDS = {
   subscription_charge_alert:            { klass: 'inbox', label: 'Subscription charge disputed or refunded' },
   // Part 5: a subscription on a Stripe price no plan slot has ever used (at most once a day per subscription).
   unrecognised_price_alert:             { klass: 'inbox', label: 'Subscription on a price we do not know' },
+  // Part 11: the daily comparison with Stripe found a difference, or could not compare (at most once a day per outcome).
+  billing_drift_alert:                  { klass: 'inbox', label: 'Stripe and our billing records disagree' },
   ops_alert:                            { klass: 'alert', label: 'Error alert' },
   template_test:                        { klass: 'test', label: 'Template test' },
 } as const satisfies Record<string, KindEntry>;

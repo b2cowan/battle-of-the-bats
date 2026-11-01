@@ -24,6 +24,8 @@ const NO_REASON = new Set([
   'stripe_fees_sweep', 'retry_stripe_fee',
   // Stage 4b: the Coaches Portal free-time daily job (the ending reminders).
   'portal_free_time_sweep',
+  // Stage 0 Part 11: the daily comparison with Stripe (reports only; its result row is its own record).
+  'billing_drift_check',
 ]);
 
 /**
