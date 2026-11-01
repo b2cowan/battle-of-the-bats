@@ -1,12 +1,317 @@
 {
-  "generated": "2026-10-30",
-  "total": 0,
+  "generated": "2026-11-01",
+  "total": 76,
   "counts": {
-    "tables": 0,
-    "columns": 0,
-    "indexes": 0,
-    "constraints": 0,
-    "rls": 0
+    "tables": 3,
+    "columns": 28,
+    "indexes": 17,
+    "constraints": 18,
+    "rls": 10
   },
-  "items": []
+  "items": [
+    {
+      "key": "check:changed:league_season_notices.league_season_notices_kind_check",
+      "sig": "(kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text, 'practices_sent'::text])) :: (kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text]))"
+    },
+    {
+      "key": "check:only-dev:league_practice_emails.league_practice_emails_guardian_email_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_practice_emails.league_practice_emails_registration_ids_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_practice_emails.league_practice_emails_status_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_practice_emails.league_practice_emails_team_ids_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_practice_tells.league_practice_tells_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_practice_tells.league_practice_tells_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_practice_tells.league_practice_tells_snapshot_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_practice_tells.league_practice_tells_told_before_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_team_practices_told.league_team_practices_told_snapshot_check",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_emails.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_emails.division_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_emails.guardian_email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_emails.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_emails.notice_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_emails.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_emails.registration_ids",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_emails.season_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_emails.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_emails.team_ids",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_emails.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_tells.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_tells.division_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_tells.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_tells.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_tells.notice_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_tells.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_tells.season_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_tells.snapshot",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_tells.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_tells.told_before",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_practices_told.notice_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_practices_told.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_practices_told.season_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_practices_told.snapshot",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_practices_told.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_practices_told.told_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_practices_told.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_practice_emails.league_practice_emails_division_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_practice_emails.league_practice_emails_notice_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_practice_emails.league_practice_emails_notice_id_guardian_email_key",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_practice_emails.league_practice_emails_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_practice_emails.league_practice_emails_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_practice_emails.league_practice_emails_season_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_practice_tells.league_practice_tells_division_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_practice_tells.league_practice_tells_notice_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_practice_tells.league_practice_tells_notice_id_team_id_key",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_practice_tells.league_practice_tells_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_practice_tells.league_practice_tells_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_practice_tells.league_practice_tells_season_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_practice_tells.league_practice_tells_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_team_practices_told.league_team_practices_told_notice_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_team_practices_told.league_team_practices_told_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_team_practices_told.league_team_practices_told_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_team_practices_told.league_team_practices_told_season_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_team_practices_told.league_team_practices_told_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practice_emails_division_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practice_emails_notice_id_guardian_email_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practice_emails_notice_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practice_emails_open_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practice_emails_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practice_emails_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practice_emails_season_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practice_tells_division_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practice_tells_notice_id_team_id_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practice_tells_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practice_tells_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practice_tells_season_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practice_tells_team_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_team_practices_told_notice_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_team_practices_told_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_team_practices_told_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_team_practices_told_season_idx",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:league_practice_emails",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:league_practice_tells",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:league_team_practices_told",
+      "sig": ""
+    }
+  ]
 }

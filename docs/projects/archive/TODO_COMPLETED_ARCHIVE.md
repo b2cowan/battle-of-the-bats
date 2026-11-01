@@ -6,6 +6,10 @@ Everything below was moved out of TODO.md verbatim on 2026-10-26. Add new comple
 
 (Newest additions go here.)
 
+- [x] Public tournament Stage 5 acceptance and review corrections — owner walk §432 PASS 60/60 checked 2026-10-31 (O1–O3 optional skipped; both desktop layouts approved as built); eight findings corrected with 680 tournament-focused tests and full types passing; follow-up browser checks recorded separately (see docs/projects/active/PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md §13 and OWNER_QA_LEDGER.md §432).
+
+- [x] Stripe end-to-end walks on the dev site (Walks 0–9, real Stripe test mode + webhooks + email) — written 2026-10-28, Walk 0 setup check passed 2026-10-29 (club-payment webhook destinations still unproven until Walk 8/9), Walk 1 coach Premium passed 2026-10-30, Walk 2 club plan changes passed 2026-10-30 (A3 portal-return re-walk and the downgrade-review "when / no credit" wording owed), Walk 3 payment fails passed 2026-10-30, Walk 9 coach registers and pays passed 2026-10-30, Walk 7 platform admin ends a club closed by the owner 2026-10-31 (role-gating checks waived: walked as the owner's own login), Walks 4 and 6 skipped by the owner 2026-10-31 (closed unwalked), Walk 8 family payments re-check marked complete by the owner 2026-10-31 (no paste-back, results not recorded); closed out 2026-10-31 by the owner — every walk resolved (4 and 6 skipped, 7 role-gating waived, 8 and 9 marked complete without paste-back); the setup items once listed as owed no longer gate anything (see OWNER_QA_LEDGER §419)
+
 - [x] 👕 "My team" on the club site for a house-league coach; the globe door goes for coach-only accounts (owner ruled 2026-10-26, A1–A5 as recommended; committed `710af3207` + fix `c2fdd9231` 2026-10-26; owner QA §386 ✅ 2026-10-26 — drawing docs/projects/active/CLUB_SITE_MY_TEAM_DRAWING.html)
 
 ## Checked items lifted out of the open list (2026-10-26)

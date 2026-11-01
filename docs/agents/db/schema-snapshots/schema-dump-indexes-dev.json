@@ -1425,6 +1425,71 @@
     "indexdef": "CREATE INDEX league_player_ratings_season_idx ON public.league_player_ratings USING btree (season_id)"
   },
   {
+    "tablename": "league_practice_emails",
+    "indexname": "league_practice_emails_division_idx",
+    "indexdef": "CREATE INDEX league_practice_emails_division_idx ON public.league_practice_emails USING btree (division_id)"
+  },
+  {
+    "tablename": "league_practice_emails",
+    "indexname": "league_practice_emails_notice_id_guardian_email_key",
+    "indexdef": "CREATE UNIQUE INDEX league_practice_emails_notice_id_guardian_email_key ON public.league_practice_emails USING btree (notice_id, guardian_email)"
+  },
+  {
+    "tablename": "league_practice_emails",
+    "indexname": "league_practice_emails_notice_idx",
+    "indexdef": "CREATE INDEX league_practice_emails_notice_idx ON public.league_practice_emails USING btree (notice_id, status)"
+  },
+  {
+    "tablename": "league_practice_emails",
+    "indexname": "league_practice_emails_open_idx",
+    "indexdef": "CREATE INDEX league_practice_emails_open_idx ON public.league_practice_emails USING gin (team_ids) WHERE (status = ANY (ARRAY['pending'::text, 'sending'::text, 'failed'::text]))"
+  },
+  {
+    "tablename": "league_practice_emails",
+    "indexname": "league_practice_emails_org_idx",
+    "indexdef": "CREATE INDEX league_practice_emails_org_idx ON public.league_practice_emails USING btree (org_id)"
+  },
+  {
+    "tablename": "league_practice_emails",
+    "indexname": "league_practice_emails_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_practice_emails_pkey ON public.league_practice_emails USING btree (id)"
+  },
+  {
+    "tablename": "league_practice_emails",
+    "indexname": "league_practice_emails_season_idx",
+    "indexdef": "CREATE INDEX league_practice_emails_season_idx ON public.league_practice_emails USING btree (season_id)"
+  },
+  {
+    "tablename": "league_practice_tells",
+    "indexname": "league_practice_tells_division_idx",
+    "indexdef": "CREATE INDEX league_practice_tells_division_idx ON public.league_practice_tells USING btree (division_id)"
+  },
+  {
+    "tablename": "league_practice_tells",
+    "indexname": "league_practice_tells_notice_id_team_id_key",
+    "indexdef": "CREATE UNIQUE INDEX league_practice_tells_notice_id_team_id_key ON public.league_practice_tells USING btree (notice_id, team_id)"
+  },
+  {
+    "tablename": "league_practice_tells",
+    "indexname": "league_practice_tells_org_idx",
+    "indexdef": "CREATE INDEX league_practice_tells_org_idx ON public.league_practice_tells USING btree (org_id)"
+  },
+  {
+    "tablename": "league_practice_tells",
+    "indexname": "league_practice_tells_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_practice_tells_pkey ON public.league_practice_tells USING btree (id)"
+  },
+  {
+    "tablename": "league_practice_tells",
+    "indexname": "league_practice_tells_season_idx",
+    "indexdef": "CREATE INDEX league_practice_tells_season_idx ON public.league_practice_tells USING btree (season_id)"
+  },
+  {
+    "tablename": "league_practice_tells",
+    "indexname": "league_practice_tells_team_idx",
+    "indexdef": "CREATE INDEX league_practice_tells_team_idx ON public.league_practice_tells USING btree (team_id, created_at DESC)"
+  },
+  {
     "tablename": "league_practice_time",
     "indexname": "league_practice_time_division_idx",
     "indexdef": "CREATE INDEX league_practice_time_division_idx ON public.league_practice_time USING btree (division_id)"
@@ -1683,6 +1748,26 @@
     "tablename": "league_team_coaches",
     "indexname": "league_team_coaches_user_idx",
     "indexdef": "CREATE INDEX league_team_coaches_user_idx ON public.league_team_coaches USING btree (user_id) WHERE (user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "league_team_practices_told",
+    "indexname": "league_team_practices_told_notice_idx",
+    "indexdef": "CREATE INDEX league_team_practices_told_notice_idx ON public.league_team_practices_told USING btree (notice_id) WHERE (notice_id IS NOT NULL)"
+  },
+  {
+    "tablename": "league_team_practices_told",
+    "indexname": "league_team_practices_told_org_idx",
+    "indexdef": "CREATE INDEX league_team_practices_told_org_idx ON public.league_team_practices_told USING btree (org_id)"
+  },
+  {
+    "tablename": "league_team_practices_told",
+    "indexname": "league_team_practices_told_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_team_practices_told_pkey ON public.league_team_practices_told USING btree (team_id)"
+  },
+  {
+    "tablename": "league_team_practices_told",
+    "indexname": "league_team_practices_told_season_idx",
+    "indexdef": "CREATE INDEX league_team_practices_told_season_idx ON public.league_team_practices_told USING btree (season_id)"
   },
   {
     "tablename": "league_teams",

@@ -7353,6 +7353,195 @@
     "ordinal_position": 6
   },
   {
+    "table_name": "league_practice_emails",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "league_practice_emails",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "league_practice_emails",
+    "column_name": "season_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "league_practice_emails",
+    "column_name": "division_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "league_practice_emails",
+    "column_name": "notice_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "league_practice_emails",
+    "column_name": "guardian_email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "league_practice_emails",
+    "column_name": "registration_ids",
+    "data_type": "ARRAY",
+    "udt_name": "_uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "league_practice_emails",
+    "column_name": "team_ids",
+    "data_type": "ARRAY",
+    "udt_name": "_uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "league_practice_emails",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'pending'::text",
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "league_practice_emails",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "league_practice_emails",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "league_practice_tells",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "league_practice_tells",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "league_practice_tells",
+    "column_name": "season_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "league_practice_tells",
+    "column_name": "division_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "league_practice_tells",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "league_practice_tells",
+    "column_name": "notice_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "league_practice_tells",
+    "column_name": "kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "league_practice_tells",
+    "column_name": "snapshot",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "league_practice_tells",
+    "column_name": "told_before",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "league_practice_tells",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "clock_timestamp()",
+    "ordinal_position": 10
+  },
+  {
     "table_name": "league_practice_time",
     "column_name": "season_id",
     "data_type": "uuid",
@@ -8737,6 +8926,69 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 19
+  },
+  {
+    "table_name": "league_team_practices_told",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "league_team_practices_told",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "league_team_practices_told",
+    "column_name": "season_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "league_team_practices_told",
+    "column_name": "told_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "league_team_practices_told",
+    "column_name": "snapshot",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "league_team_practices_told",
+    "column_name": "notice_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "league_team_practices_told",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 7
   },
   {
     "table_name": "league_teams",

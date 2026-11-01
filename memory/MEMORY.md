@@ -2,6 +2,10 @@
 
 - [Public tournament Stage 6](../docs/projects/active/PUBLIC_TOURNAMENT_STAGE6_BUILD_PROMPT.md) — implementation and manual review completed 2026-10-31; shared first-paint tab facts, current-publication crown gate and empty-withheld-division fix verified; 315 tests pass. [Owner walk §435](https://fieldlogichq-stage6-owner-walk.b2cowan.chatgpt.site) published privately (66 steps/16 parts); owner result pending. Implementation committed `295ebce8a` on dev 2026-10-31 (all parts combined). Next build: Stage 7 (pay page) or Stage 1a (look ownership), owner's choice.
 
+- [Public tournament Stage 5](public-tournament-stage5.md) — owner walk §432 passed 2026-10-31; both desktop layouts approved, optional installed-app checks skipped; eight review corrections and their verification are recorded in the plan and ledger.
+
+- [Plans end at renewal · Stage 0](design_decisions.md) — owner ruled all nine asks as recommended 2026-10-31: a waiting cancel rides the plan card's amber waiting-change line with an "Ending" chip; the undo door is spelled "Keep {Plan}", never "Keep my plan"; Keep is a question window; End now is an operator-only red link with a typed Why; the overdue data clock starts on the end date. Plan: `docs/projects/active/PLAN_ENDS_AT_RENEWAL_PLAN.md`.
+
 - [Compact public Schedule](design_decisions.md) — owner approved 2026-10-29: time above division/pool, status top right, each team paired with its score; location/maps belong on the game page. Preview Schedule only; desktop retains one-line rows.
 
 - [Stage 7a payment details](design_decisions.md) — owner rules from the build: paid-only house fees, one shared transfer line, tournament filing on settings save, void-and-replace corrections, no historical backfill, and the own-team link order.

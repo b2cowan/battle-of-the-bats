@@ -7355,6 +7355,195 @@
         "column_default": "now()"
       },
       {
+        "table_name": "league_practice_emails",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "league_practice_emails",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_emails",
+        "pos": 3,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_emails",
+        "pos": 4,
+        "column_name": "division_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_emails",
+        "pos": 5,
+        "column_name": "notice_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_emails",
+        "pos": 6,
+        "column_name": "guardian_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_emails",
+        "pos": 7,
+        "column_name": "registration_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_emails",
+        "pos": 8,
+        "column_name": "team_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_emails",
+        "pos": 9,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'pending'::text"
+      },
+      {
+        "table_name": "league_practice_emails",
+        "pos": 10,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "league_practice_emails",
+        "pos": 11,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "league_practice_tells",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "league_practice_tells",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_tells",
+        "pos": 3,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_tells",
+        "pos": 4,
+        "column_name": "division_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_tells",
+        "pos": 5,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_tells",
+        "pos": 6,
+        "column_name": "notice_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_tells",
+        "pos": 7,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_tells",
+        "pos": 8,
+        "column_name": "snapshot",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_tells",
+        "pos": 9,
+        "column_name": "told_before",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_tells",
+        "pos": 10,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "clock_timestamp()"
+      },
+      {
         "table_name": "league_practice_time",
         "pos": 1,
         "column_name": "season_id",
@@ -8739,6 +8928,69 @@
         "udt_name": "text",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "league_team_practices_told",
+        "pos": 1,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_practices_told",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_practices_told",
+        "pos": 3,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_practices_told",
+        "pos": 4,
+        "column_name": "told_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_practices_told",
+        "pos": 5,
+        "column_name": "snapshot",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_practices_told",
+        "pos": 6,
+        "column_name": "notice_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_practices_told",
+        "pos": 7,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
       },
       {
         "table_name": "league_teams",
@@ -28626,6 +28878,69 @@
         "constraint_name": "league_player_ratings_season_id_fkey"
       },
       {
+        "table_name": "league_practice_emails",
+        "column_name": "division_id",
+        "foreign_table": "league_divisions",
+        "foreign_column": "id",
+        "constraint_name": "league_practice_emails_division_id_fkey"
+      },
+      {
+        "table_name": "league_practice_emails",
+        "column_name": "notice_id",
+        "foreign_table": "league_season_notices",
+        "foreign_column": "id",
+        "constraint_name": "league_practice_emails_notice_id_fkey"
+      },
+      {
+        "table_name": "league_practice_emails",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_practice_emails_org_id_fkey"
+      },
+      {
+        "table_name": "league_practice_emails",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_practice_emails_season_id_fkey"
+      },
+      {
+        "table_name": "league_practice_tells",
+        "column_name": "division_id",
+        "foreign_table": "league_divisions",
+        "foreign_column": "id",
+        "constraint_name": "league_practice_tells_division_id_fkey"
+      },
+      {
+        "table_name": "league_practice_tells",
+        "column_name": "notice_id",
+        "foreign_table": "league_season_notices",
+        "foreign_column": "id",
+        "constraint_name": "league_practice_tells_notice_id_fkey"
+      },
+      {
+        "table_name": "league_practice_tells",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_practice_tells_org_id_fkey"
+      },
+      {
+        "table_name": "league_practice_tells",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_practice_tells_season_id_fkey"
+      },
+      {
+        "table_name": "league_practice_tells",
+        "column_name": "team_id",
+        "foreign_table": "league_teams",
+        "foreign_column": "id",
+        "constraint_name": "league_practice_tells_team_id_fkey"
+      },
+      {
         "table_name": "league_practice_time",
         "column_name": "division_id",
         "foreign_table": "league_divisions",
@@ -28939,6 +29254,34 @@
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "league_team_coaches_user_id_fkey"
+      },
+      {
+        "table_name": "league_team_practices_told",
+        "column_name": "notice_id",
+        "foreign_table": "league_season_notices",
+        "foreign_column": "id",
+        "constraint_name": "league_team_practices_told_notice_id_fkey"
+      },
+      {
+        "table_name": "league_team_practices_told",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_team_practices_told_org_id_fkey"
+      },
+      {
+        "table_name": "league_team_practices_told",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_team_practices_told_season_id_fkey"
+      },
+      {
+        "table_name": "league_team_practices_told",
+        "column_name": "team_id",
+        "foreign_table": "league_teams",
+        "foreign_column": "id",
+        "constraint_name": "league_team_practices_told_team_id_fkey"
       },
       {
         "table_name": "league_teams",
@@ -34344,6 +34687,71 @@
         "indexdef": "CREATE INDEX league_player_ratings_season_idx ON public.league_player_ratings USING btree (season_id)"
       },
       {
+        "tablename": "league_practice_emails",
+        "indexname": "league_practice_emails_division_idx",
+        "indexdef": "CREATE INDEX league_practice_emails_division_idx ON public.league_practice_emails USING btree (division_id)"
+      },
+      {
+        "tablename": "league_practice_emails",
+        "indexname": "league_practice_emails_notice_id_guardian_email_key",
+        "indexdef": "CREATE UNIQUE INDEX league_practice_emails_notice_id_guardian_email_key ON public.league_practice_emails USING btree (notice_id, guardian_email)"
+      },
+      {
+        "tablename": "league_practice_emails",
+        "indexname": "league_practice_emails_notice_idx",
+        "indexdef": "CREATE INDEX league_practice_emails_notice_idx ON public.league_practice_emails USING btree (notice_id, status)"
+      },
+      {
+        "tablename": "league_practice_emails",
+        "indexname": "league_practice_emails_open_idx",
+        "indexdef": "CREATE INDEX league_practice_emails_open_idx ON public.league_practice_emails USING gin (team_ids) WHERE (status = ANY (ARRAY['pending'::text, 'sending'::text, 'failed'::text]))"
+      },
+      {
+        "tablename": "league_practice_emails",
+        "indexname": "league_practice_emails_org_idx",
+        "indexdef": "CREATE INDEX league_practice_emails_org_idx ON public.league_practice_emails USING btree (org_id)"
+      },
+      {
+        "tablename": "league_practice_emails",
+        "indexname": "league_practice_emails_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_practice_emails_pkey ON public.league_practice_emails USING btree (id)"
+      },
+      {
+        "tablename": "league_practice_emails",
+        "indexname": "league_practice_emails_season_idx",
+        "indexdef": "CREATE INDEX league_practice_emails_season_idx ON public.league_practice_emails USING btree (season_id)"
+      },
+      {
+        "tablename": "league_practice_tells",
+        "indexname": "league_practice_tells_division_idx",
+        "indexdef": "CREATE INDEX league_practice_tells_division_idx ON public.league_practice_tells USING btree (division_id)"
+      },
+      {
+        "tablename": "league_practice_tells",
+        "indexname": "league_practice_tells_notice_id_team_id_key",
+        "indexdef": "CREATE UNIQUE INDEX league_practice_tells_notice_id_team_id_key ON public.league_practice_tells USING btree (notice_id, team_id)"
+      },
+      {
+        "tablename": "league_practice_tells",
+        "indexname": "league_practice_tells_org_idx",
+        "indexdef": "CREATE INDEX league_practice_tells_org_idx ON public.league_practice_tells USING btree (org_id)"
+      },
+      {
+        "tablename": "league_practice_tells",
+        "indexname": "league_practice_tells_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_practice_tells_pkey ON public.league_practice_tells USING btree (id)"
+      },
+      {
+        "tablename": "league_practice_tells",
+        "indexname": "league_practice_tells_season_idx",
+        "indexdef": "CREATE INDEX league_practice_tells_season_idx ON public.league_practice_tells USING btree (season_id)"
+      },
+      {
+        "tablename": "league_practice_tells",
+        "indexname": "league_practice_tells_team_idx",
+        "indexdef": "CREATE INDEX league_practice_tells_team_idx ON public.league_practice_tells USING btree (team_id, created_at DESC)"
+      },
+      {
         "tablename": "league_practice_time",
         "indexname": "league_practice_time_division_idx",
         "indexdef": "CREATE INDEX league_practice_time_division_idx ON public.league_practice_time USING btree (division_id)"
@@ -34602,6 +35010,26 @@
         "tablename": "league_team_coaches",
         "indexname": "league_team_coaches_user_idx",
         "indexdef": "CREATE INDEX league_team_coaches_user_idx ON public.league_team_coaches USING btree (user_id) WHERE (user_id IS NOT NULL)"
+      },
+      {
+        "tablename": "league_team_practices_told",
+        "indexname": "league_team_practices_told_notice_idx",
+        "indexdef": "CREATE INDEX league_team_practices_told_notice_idx ON public.league_team_practices_told USING btree (notice_id) WHERE (notice_id IS NOT NULL)"
+      },
+      {
+        "tablename": "league_team_practices_told",
+        "indexname": "league_team_practices_told_org_idx",
+        "indexdef": "CREATE INDEX league_team_practices_told_org_idx ON public.league_team_practices_told USING btree (org_id)"
+      },
+      {
+        "tablename": "league_team_practices_told",
+        "indexname": "league_team_practices_told_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_team_practices_told_pkey ON public.league_team_practices_told USING btree (team_id)"
+      },
+      {
+        "tablename": "league_team_practices_told",
+        "indexname": "league_team_practices_told_season_idx",
+        "indexdef": "CREATE INDEX league_team_practices_told_season_idx ON public.league_team_practices_told USING btree (season_id)"
       },
       {
         "tablename": "league_teams",
@@ -39697,6 +40125,66 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "league_practice_emails",
+        "detail": "league_practice_emails_guardian_email_check",
+        "check_clause": "((guardian_email = lower(btrim(guardian_email))) AND (guardian_email <> ''::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_practice_emails",
+        "detail": "league_practice_emails_registration_ids_check",
+        "check_clause": "(cardinality(registration_ids) > 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_practice_emails",
+        "detail": "league_practice_emails_status_check",
+        "check_clause": "(status = ANY (ARRAY['pending'::text, 'sending'::text, 'sent'::text, 'failed'::text, 'skipped'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_practice_emails",
+        "detail": "league_practice_emails_team_ids_check",
+        "check_clause": "(cardinality(team_ids) > 0)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_practice_emails",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_practice_tells",
+        "detail": "league_practice_tells_check",
+        "check_clause": "((kind = 'change'::text) = (told_before IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_practice_tells",
+        "detail": "league_practice_tells_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['first'::text, 'change'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_practice_tells",
+        "detail": "league_practice_tells_snapshot_check",
+        "check_clause": "(jsonb_typeof(snapshot) = 'array'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_practice_tells",
+        "detail": "league_practice_tells_told_before_check",
+        "check_clause": "((told_before IS NULL) OR (jsonb_typeof(told_before) = 'array'::text))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_practice_tells",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "league_practice_time",
         "detail": "league_practice_time_practice_minutes_check",
         "check_clause": "((practice_minutes >= 15) AND (practice_minutes <= 240))"
@@ -39831,7 +40319,7 @@
         "kind": "CHECK",
         "table_name": "league_season_notices",
         "detail": "league_season_notices_kind_check",
-        "check_clause": "(kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text]))"
+        "check_clause": "(kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text, 'practices_sent'::text]))"
       },
       {
         "kind": "CHECK",
@@ -39914,6 +40402,18 @@
       {
         "kind": "RLS",
         "table_name": "league_team_coaches",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_team_practices_told",
+        "detail": "league_team_practices_told_snapshot_check",
+        "check_clause": "(jsonb_typeof(snapshot) = 'array'::text)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_team_practices_told",
         "detail": "ENABLED",
         "check_clause": null
       },

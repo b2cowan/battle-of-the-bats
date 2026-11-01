@@ -2710,6 +2710,156 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "league_practice_emails",
+    "constraint_name": "league_practice_emails_division_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "division_id",
+    "foreign_table": "league_divisions",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_practice_emails",
+    "constraint_name": "league_practice_emails_notice_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "notice_id",
+    "foreign_table": "league_season_notices",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_practice_emails",
+    "constraint_name": "league_practice_emails_notice_id_guardian_email_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "notice_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_practice_emails",
+    "constraint_name": "league_practice_emails_notice_id_guardian_email_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "guardian_email",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_practice_emails",
+    "constraint_name": "league_practice_emails_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_practice_emails",
+    "constraint_name": "league_practice_emails_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_practice_emails",
+    "constraint_name": "league_practice_emails_season_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "season_id",
+    "foreign_table": "league_seasons",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_practice_tells",
+    "constraint_name": "league_practice_tells_division_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "division_id",
+    "foreign_table": "league_divisions",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_practice_tells",
+    "constraint_name": "league_practice_tells_notice_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "notice_id",
+    "foreign_table": "league_season_notices",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_practice_tells",
+    "constraint_name": "league_practice_tells_notice_id_team_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "notice_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_practice_tells",
+    "constraint_name": "league_practice_tells_notice_id_team_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "team_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_practice_tells",
+    "constraint_name": "league_practice_tells_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_practice_tells",
+    "constraint_name": "league_practice_tells_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_practice_tells",
+    "constraint_name": "league_practice_tells_season_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "season_id",
+    "foreign_table": "league_seasons",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_practice_tells",
+    "constraint_name": "league_practice_tells_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "league_teams",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "league_practice_time",
     "constraint_name": "league_practice_time_division_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -3287,6 +3437,56 @@
     "foreign_table": null,
     "foreign_column": null,
     "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_team_practices_told",
+    "constraint_name": "league_team_practices_told_notice_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "notice_id",
+    "foreign_table": "league_season_notices",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_team_practices_told",
+    "constraint_name": "league_team_practices_told_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_team_practices_told",
+    "constraint_name": "league_team_practices_told_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "team_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_team_practices_told",
+    "constraint_name": "league_team_practices_told_season_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "season_id",
+    "foreign_table": "league_seasons",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_team_practices_told",
+    "constraint_name": "league_team_practices_told_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "league_teams",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
   {
