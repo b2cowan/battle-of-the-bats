@@ -86,6 +86,7 @@ All planning and reference documentation follows a three-tier structure:
 - `docs/agents/design/` → `/design` agent (design reviews, visual guidelines)
 - `docs/agents/db/` → `/db` + `/dba` agents (architecture review, schema snapshots, SQL utilities)
 - `docs/agents/ops/` → `/release` + dev ops reference (setup guides, runbooks)
+- `docs/agents/accounting/` → `/accounting` agent (FieldLogicHQ's own business accounting facts + topic research, not the product's customer-facing bookkeeping)
 
 When an agent is asked to write up an implementation plan, it must create a new dedicated file at `docs/projects/active/<PLAN_NAME>.md` and add only a summary line to `TODO.md` that links to it.
 

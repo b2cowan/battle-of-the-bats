@@ -97,6 +97,24 @@ After a substantive code change that also **adds a new abstraction** — a new s
 
 When a change alters a **user-facing flow** (admin/coaches UI behavior, a screen/step a customer follows, plan-gating of a visible feature, or new/renamed terminology), proactively offer to run `/docs` — the help-system agent in `.claude/commands/docs.md` — so the in-app guides don't drift. In-app help content is the single source of truth in `lib/help-content/*.tsx` (indexed by the hub arrays in the `help/page.tsx` shells); keeping it current is a code-time task, not a periodic manual sweep. Offer once per logical chunk; skip for purely internal changes (refactors, platform-admin-only ops, DB plumbing with no UI change) and skip if the user already updated docs or declined.
 
+# Accounting & tax review — route it to `/accounting`, by default (owner 2026-10-31)
+
+Any question about **FieldLogicHQ's own** accounting or tax goes to `/accounting` (`.claude/commands/accounting.md`,
+research in `docs/agents/accounting/`, index `ACCOUNTING_INDEX.md`) — the same way drawings go through `/design`. This
+covers GST/HST, provincial sales tax, US sales tax, zero-rating, invoices and receipts we issue, the payment fee's tax,
+Stripe Tax, the owner's Bookkeeping in platform admin, CRA/IRS reporting, currency, and the business's registrations.
+
+- **A question:** answer it from `/accounting` (it reads its index first and only re-researches a stale topic), never
+  from memory or a fresh web search in the main chat.
+- **Work that touches it:** a session whose change alters what FieldLogicHQ charges, collects, invoices, records or
+  reports (checkout, prices, fees, invoices, refunds, payouts, Bookkeeping, a new country or province) runs the
+  `/accounting` review **before handing off** — not offered as an optional extra at the end. Apply what it finds, or
+  record it as an owner question.
+- **Not this agent:** the product's *customer* bookkeeping features (club/coach money tracking) — that is product work.
+- **No professional gate:** the owner ruled (2026-10-31, `BUSINESS_DECISIONS.md`) that neither an accountant nor a US
+  lawyer holds a launch; `/accounting` flags what a professional should look at, and the owner decides when.
+- Plan of record for our own tax: `docs/projects/active/GST_HST_COLLECTION_PLAN.md`.
+
 # Demo sandboxes — they follow the product; they never gate it
 
 Two no-login demos run the **real** product on fictional clubs (tournament `riverdale-minor-ball`,
