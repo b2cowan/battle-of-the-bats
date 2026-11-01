@@ -70,13 +70,10 @@ export function useAdminKitNav() {
   // The person's own Coaches Portal door — the rail's foot and the More sheet's "You" both show it.
   const coachDoor = coachDoorFor(useCurrentOrgCoachAccess(currentOrg?.slug, !isCanceled), currentOrg?.slug,
     isStandaloneCoachOwner(currentOrg, userRole, userCapabilities));
-  // The tournament's groups as this person sees them, every row's address resolved ONCE: an event page, or a door outside
-  // the event (Accounting, the club's book read for this event — the lone row's gate and address, kept).
+  // The tournament's groups as this person sees them, every row's address resolved ONCE. Every row is an event page:
+  // the club's Accounting book is not one (owner 2026-10-30 — a tournament admin manages payments on Teams).
   const tournamentGroups = kitTournamentGroups({
     status: currentTournament?.status, isSandbox, role: userRole, planId: currentOrg?.planId,
-    accountingHref: canUse('module_accounting')
-      ? (currentTournament ? `${base}/accounting?tournamentId=${currentTournament.id}` : `${base}/accounting`)
-      : null,
   }).map(g => ({ ...g, items: g.items.map(i => ({ ...i, href: i.href ?? `${base}/tournaments/${i.key}` })) }));
   // Is the Public site program a row this nav draws (a club, not cancelled)? Then a separate door to the live site would be
   // the same idea twice (N4: "Public site" once per screen). The sidebar's foot and the phone's More both read this.

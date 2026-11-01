@@ -176,13 +176,9 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
     assert.match(readCode('components/coaches/MoreSheetFoot.tsx'), /\{canInstall && !inSandbox && \(/);
   });
 
-  it('tournament Accounting is the Admin group’s last row, the same list for the sidebar and the sheet (B4)', () => {
-    const groups = kitTournamentGroups({ status: 'active', isSandbox: false, role: 'owner', planId: 'club', accountingHref: '/o/admin/accounting?tournamentId=t' });
-    const admin = groups.find(g => g.key === 'admin')!;
-    assert.equal(admin.items.at(-1)?.key, 'accounting');
-    assert.equal(admin.items.at(-1)?.href, '/o/admin/accounting?tournamentId=t');
-    const without = kitTournamentGroups({ status: 'active', isSandbox: false, role: 'owner', planId: 'club', accountingHref: null });
-    assert.ok(!without.some(g => g.items.some(i => i.key === 'accounting')));
+  it('a tournament’s nav has no Accounting row: the club’s book is not an event page (owner 2026-10-30)', () => {
+    const groups = kitTournamentGroups({ status: 'active', isSandbox: false, role: 'owner', planId: 'club' });
+    assert.ok(!groups.some(g => g.items.some(i => i.key === 'accounting')));
     assert.doesNotMatch(readCode(ADMIN_RAIL), /label="Accounting"/, 'no lone Accounting row after the groups');
   });
 });

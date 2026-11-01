@@ -446,7 +446,7 @@ function defaultGroups(status: string): Set<string> {
   return new Set(TOUR_GROUPS.filter(g => g.defaultOpenFor.includes(status)).map(g => g.key));
 }
 
-/** Today's tournament rail, restyled: switcher, Operations / Setup / Admin (Accounting is Admin's last row). */
+/** Today's tournament rail, restyled: switcher, Operations / Setup / Admin. */
 function TournamentRail({ labelled }: { labelled: boolean }) {
   const pathname = usePathname();
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
@@ -559,8 +559,6 @@ function TournamentRail({ labelled }: { labelled: boolean }) {
           </div>
         );
       })}
-      {/* ⚰ Accounting's lone row after the groups is gone: it is the Admin group's last row (Ask B4,
-          `kit-tournament-groups.ts`), the same list the phone's More sheet reads. */}
       <SidebarStripMenu key={openKey ?? 'closed'} open={openKey === 'tournament'} anchorRef={anchorRef} title="Tournaments" onClose={close}>
         {tournaments.map(t => (
           <StripMenuButton
