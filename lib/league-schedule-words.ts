@@ -11,16 +11,19 @@ const families = (n: number) => pluralize(n, 'family', 'families');
 
 /** e1 · e2: the draft, and Publish schedule. */
 export const SCHEDULE_PUBLISH_WORDS = {
-  draft: (games: number) => `Draft · ${pluralize(games, 'game')} · families see nothing yet`,
-  /** A reader sees the state alone. */
-  draftShort: 'Draft',
+  /** The state beside the page's title (redrawn 2026-10-31): the word alone, in the one state chip. */
+  tagDraft: 'Draft',
+  tagPublished: 'Published',
   teamsFirst: (division: string) => `Publish ${possessive(division)} teams first, so every family knows its child’s team.`,
   button: 'Publish schedule',
   buttonPhone: 'Publish',
+  /** The Publish window's own result line (a confirmation of the press, so it names the state itself). */
   publishedOn: (day: string) => `Published ${day}`,
-  published: (day: string, n: number) => `Published ${day} · ${families(n)} told`,
+  /** The line under the tag says only what the tag doesn't: when, and how many families were told. */
+  wentLiveOn: (day: string) => `On the public schedule since ${day}`,
+  toldOn: (day: string, n: number) => `Told ${families(n)} on ${day}`,
   notSent: (n: number) => ` · ${pluralize(n, 'change')} not sent`,
-  partial: (reached: number, n: number, missed: number) => `reached ${reached} of ${families(n)} · ${missed} didn’t send.`,
+  partialOn: (day: string, reached: number, n: number, missed: number) => `Told ${reached} of ${families(n)} on ${day} · ${missed} didn’t send.`,
   seeThem: 'See them',
   /** A build word: the link's name for a screen reader. */
   seeThemAria: 'See the families it missed',

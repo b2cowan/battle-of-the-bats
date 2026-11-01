@@ -89,6 +89,10 @@
 }
 .line b { font-weight: 600; color: var(--text-primary); }
 .lineIcon { flex: none; margin-top: 0.2rem; color: var(--text-tertiary); }
+/* The time line, fact first: days and clocks in the line's own colour, the schedule that gives them lighter and after. */
+.lineFacts { margin-right: 0.9rem; }
+.lineFrom { margin-right: 0.9rem; color: var(--text-tertiary); }
+.lineFrom b { font-weight: 600; color: var(--text-secondary); }
 /* A second sentence under a .line (compose with ck.hint): pulled up to its line, indented to the line's text (icon 15px
    + the 0.5rem gap), and given the line's own gap below so it never touches the toolbar. */
 p.lineNote { margin: -0.6rem 0 0.9rem calc(15px + 0.5rem); }

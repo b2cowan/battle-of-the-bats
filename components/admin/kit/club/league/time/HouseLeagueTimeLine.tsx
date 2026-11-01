@@ -31,19 +31,24 @@ export default function HouseLeagueTimeLine({ time, divisionId, divisionName, on
   divisionName: string;
   onOpen: () => void;
 }) {
-  const words = timeLineWords(divisionName, divisionTimeLine(time.sources, divisionId));
+  const words = timeLineWords(divisionTimeLine(time.sources, divisionId));
   const door = <button type="button" className={s.lineDoor} onClick={onOpen}>{W.line.door}</button>;
   return (
     <p className={s.line}>
       <CalendarDays size={15} aria-hidden className={s.lineIcon} />
       <span className={s.lineDesk}>
         {words
-          ? <>{words.lead}{words.schedules.map((name, i) => (
-              <Fragment key={name}>
-                <b>{name}</b>
-                {i < words.schedules.length - 2 ? ', ' : i === words.schedules.length - 2 ? ' and ' : ''}
-              </Fragment>
-            ))}{words.tail} </>
+          ? <>
+              {words.facts && <span className={s.lineFacts}>{words.facts}</span>}
+              <span className={s.lineFrom}>
+                {words.from}{words.schedules.map((name, i) => (
+                  <Fragment key={name}>
+                    <b>{name}</b>
+                    {i < words.schedules.length - 2 ? ', ' : i === words.schedules.length - 2 ? ' and ' : ''}
+                  </Fragment>
+                ))}
+              </span>{' '}
+            </>
           : <>{W.line.none(divisionName)} </>}
         {door}
       </span>

@@ -483,17 +483,15 @@ export function divisionTimeLine(sources: readonly LeagueTimeSource[], divisionI
   return { schedules, games: games.length ? daysAndClocksWords(games) : null, practices: practices.length ? daysAndClocksWords(practices) : null };
 }
 
-/** The time line said: "U12’s time comes from the club’s schedule, {A}. Games: … Practice time: …" (the link follows). */
-export function timeLineWords(division: string, line: DivisionTimeLine): { lead: string; schedules: string[]; tail: string } | null {
+/**
+ * The time line said (redrawn 2026-10-31, the fact first and its source after): "Games: Tue and Thu, 6:00–7:30 p.m. ·
+ * Practice time: Mon and Wed, 6:00–9:00 p.m." then "From {A}" (the link follows). `facts` is null when the division has
+ * a schedule but neither a game nor a practice time in it; the source still says where its time comes from.
+ */
+export function timeLineWords(line: DivisionTimeLine): { facts: string | null; from: string; schedules: string[] } | null {
   if (!line.schedules.length) return null;
-  // A clause ends in its clock's own "p.m." — never a second period after it.
-  const end = (s: string) => (s.endsWith('.') ? s : `${s}.`);
-  const clauses = [line.games && end(`Games: ${line.games}`), line.practices && end(`Practice time: ${line.practices}`)].filter(Boolean);
-  return {
-    lead: `${possessive(division)} time comes from the club’s ${line.schedules.length > 1 ? 'schedules' : 'schedule'}, `,
-    schedules: line.schedules,
-    tail: `. ${clauses.join(' ')}`,
-  };
+  const clauses = [line.games && `Games: ${line.games}`, line.practices && `Practice time: ${line.practices}`].filter(Boolean);
+  return { facts: clauses.length ? clauses.join(' · ') : null, from: 'From ', schedules: line.schedules };
 }
 
 /** Teams named in a question: up to three by name, then a count, so a long list never wraps the window. */

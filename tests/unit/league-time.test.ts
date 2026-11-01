@@ -237,14 +237,14 @@ describe('A division’s piece — parts without their use, ticks that stage, on
 
 describe('The time line — where a division’s time comes from, days and clocks, no facilities', () => {
   it('says games and practice time, each as its own clause', () => {
-    const w = timeLineWords('U12', divisionTimeLine(sources, U12))!;
-    assert.equal(`${w.lead}${w.schedules.join(' and ')}${w.tail}`,
-      'U12’s time comes from the club’s schedule, Maple Grove · summer 2027. Games: Tue and Thu, 6:00–7:30 p.m. Practice time: Mon and Wed, 6:00–9:00 p.m.');
+    const w = timeLineWords(divisionTimeLine(sources, U12))!;
+    assert.equal(`${w.facts} ${w.from}${w.schedules.join(' and ')}`,
+      'Games: Tue and Thu, 6:00–7:30 p.m. · Practice time: Mon and Wed, 6:00–9:00 p.m. From Maple Grove · summer 2027');
   });
   it('a clause only for what the division has; none at all is no line of time', () => {
-    const w = timeLineWords('U14', divisionTimeLine(sources, U14))!;
-    assert.equal(w.tail, '. Games: Sat, 10:00–11:30 a.m.');
-    assert.equal(timeLineWords('U9', divisionTimeLine(sources, '44444444-4444-4444-8444-444444444444')), null);
+    const w = timeLineWords(divisionTimeLine(sources, U14))!;
+    assert.equal(w.facts, 'Games: Sat, 10:00–11:30 a.m.');
+    assert.equal(timeLineWords(divisionTimeLine(sources, '44444444-4444-4444-8444-444444444444')), null);
     assert.equal(LEAGUE_TIME_WORDS.line.none('U9'), 'U9 has no time from the club yet.');
   });
   it('two clocks on one day read joined; a day’s facilities never repeat it', () => {

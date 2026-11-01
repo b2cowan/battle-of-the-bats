@@ -34,7 +34,7 @@ import { NeedsDateFold, SeasonListView, SeasonMonthView } from '@/components/adm
 import GameWindow from '@/components/admin/kit/club/league/schedule/GameWindow';
 import GenerateGamesWindow from '@/components/admin/kit/club/league/schedule/GenerateGamesWindow';
 import PublishScheduleWindow from '@/components/admin/kit/club/league/schedule/PublishScheduleWindow';
-import SchedulePublishLine, { showPublishButton, type SchedulePublishing } from '@/components/admin/kit/club/league/schedule/SchedulePublishLine';
+import SchedulePublishLine, { SchedulePublishTag, showPublishButton, type SchedulePublishing } from '@/components/admin/kit/club/league/schedule/SchedulePublishLine';
 import { CHANGES_TO_SEND_WORDS, SCHEDULE_PUBLISH_WORDS } from '@/lib/league-schedule-words';
 import ChangesToSendWindow from '@/components/admin/kit/club/league/schedule/ChangesToSendWindow';
 import cts from '@/components/admin/kit/club/league/schedule/ChangesToSend.module.css';
@@ -1359,6 +1359,7 @@ export default function SchedulePage() {
         title="Schedule"
         backTo={{ href: backHref, label: season?.name ?? 'Season' }}
         inlineActions
+        titleChips={selectedDiv && scheduleRead === 'ok' && divGames.length > 0 ? <SchedulePublishTag published={!!divPublishing} /> : undefined}
         actions={<>
           <span className={cal.viewPhone}>
             <CoachToolbarMenu label={`Change view · ${VIEW_WORD[shownView]}`} icon={<ViewGlyph size={20} aria-hidden />} variant="glyph" drawerOnPhone drawerTitle="View">
@@ -1394,14 +1395,16 @@ export default function SchedulePage() {
         </>}
       />
 
+      {/* The header's block, loudest first (redrawn 2026-10-31): the one thing owed, then the quiet facts. The state (Draft ·
+          Published) is the chip beside the title. */}
+      {/* 9d-3, frame c3: this division's teams whose families haven't been told their practice times · Tell them. */}
+      {canManage && selectedDivId && <PracticeTellReminder teams={tellReminders[selectedDivId] ?? 0} onOpen={() => setTellOpen(true)} />}
       {/* The time line (Stage 11b Part 3): where this division's time comes from, and the door to House league's time. */}
       {leagueTime && selectedDivId && showTimeLine(leagueTime, buildsSchedules) && (
         <HouseLeagueTimeLine time={leagueTime} divisionId={selectedDivId} divisionName={divName} onOpen={openLeagueTime} />
       )}
-      {/* 9d-3, frame c3: this division's teams whose families haven't been told their practice times · Tell them. */}
-      {canManage && selectedDivId && <PracticeTellReminder teams={tellReminders[selectedDivId] ?? 0} onOpen={() => setTellOpen(true)} />}
       {selectedDiv && scheduleRead === 'ok' && divGames.length > 0 && (
-        <SchedulePublishLine divisionName={divName} games={divLiveGames} teamsPublished={divTeamsPublished}
+        <SchedulePublishLine divisionName={divName} teamsPublished={divTeamsPublished}
           publishing={divPublishing} canRun={canManage} missedHref={`/${orgSlug}/admin/house-league/seasons/${seasonId}/notifications`} />
       )}
 
