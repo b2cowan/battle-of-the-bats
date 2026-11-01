@@ -47,6 +47,8 @@ export const POST = withObservability(async (req: Request,
     .select('id, basic_coach_team_id, migration_summary')
     .eq('workspace_org_id', orgId)
     .eq('rep_team_id', teamId)
+    // A portal that became the club keeps this row as a tombstone: nothing left to repair from the free team (Stage 4b).
+    .neq('workspace_state', 'org_owned')
     .maybeSingle<WorkspaceRow>();
 
   const summary = workspace?.migration_summary ?? null;

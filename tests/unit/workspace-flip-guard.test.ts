@@ -14,8 +14,9 @@
  *   2. A WORKSPACE FIXTURE with the flip's column set applied (the assignments are READ OUT OF THE SQL, never retyped here):
  *      every portal test that can be loaded says "not a portal", the billing link is the admin one, the directory clauses
  *      pass, the portal's cancel branch and a late old-price event find nothing to match.
- *   + THE CENSUS: every production file that reads the portal tag or a workspace's Stripe id is on an allowlist with a
- *     reason. A new one fails — that is the decision point: does a flipped club behave correctly there?
+ *   + THE CENSUS: every production file that reads the portal tag or the workspace row (by ANY column — widened in Part 4,
+ *     when 22 readers by org, team or owner were found outside it) is on an allowlist with a reason. A new one fails — that is
+ *     the decision point: does a flipped club behave correctly there?
  *
  * Nothing here talks to a database. The RPC itself has not run anywhere (mig 414 is not applied); its behaviour on real rows
  * is the dev walk's to prove.
@@ -373,7 +374,10 @@ describe('3 · every entry that can put a workspace on Club meets the one hook',
 
 // ── The census ──────────────────────────────────────────────────────────────────────────────────────
 
-type Klass = 'live-row' | 'portal-only' | 'tombstone-aware' | 'definition' | 'dev';
+// `harmless-read` matches the tombstone but uses only what stays true after the flip (the team, the owner, the shadow) and
+// behaves no differently for a club. `known-gap` matches it AND misbehaves; each is a reported finding awaiting the owner, and
+// the last test in this block fails the day one is fixed, so the entry is removed rather than left to excuse the next reader.
+type Klass = 'live-row' | 'portal-only' | 'tombstone-aware' | 'harmless-read' | 'definition' | 'dev' | 'known-gap';
 
 const LIVE = 'reads the organization row fresh on each request (or a row the caller just read); both halves of the portal test turn false at the flip, so it behaves as a club afterwards';
 
@@ -396,11 +400,39 @@ const SPECIAL: Record<string, [Klass, string]> = {
   'app/api/platform-admin/find/route.ts': ['tombstone-aware', 'finds a workspace by Stripe id, which the flip NULLs; the club is found through its own organization'],
   'lib/platform-story.ts': ['live-row', 'reads free_time_given_at and the migration summary for the Story: history, not behaviour'],
   'lib/operator-plan-change.ts': ['tombstone-aware', 'refuses a plan change only while billing_mode is platform_override; a tombstone is club_included'],
-  'lib/workspace-upgrade.ts': ['portal-only', 'Stage 4b Part 2: decides whether a Club checkout is a Coaches Portal becoming the club (the portal test is the one function); a club buying a band is not asked for a name'],
+  'lib/workspace-upgrade.ts': ['live-row', 'Stage 4b Part 2: decides whether a Club checkout is a Coaches Portal becoming the club (the portal test is the one function; a club buying a band is not asked for a name); Part 3: clubUpgradeStateOf reads the tag on BOTH sides of the flip and calls it "became" only with the tombstone too'],
   'lib/workspace-upgrade-status.ts': ['live-row', 'Stage 4b Part 2: the "has it become the club yet" read; it reads the organization and its workspace row fresh, on both sides of the flip'],
   'app/api/dev/seed/status/route.ts': ['dev', 'seed tooling'],
   'app/api/dev/seed/users/route.ts': ['dev', 'seed tooling'],
   'lib/free-time-writes.ts': ['live-row', 'portal free-time writes guarded by billing_mode platform_override, which the tombstone is not'],
+
+  // ── Part 4 (2026-10-31): readers of the workspace ROW by something other than its Stripe id ──────────────────────────────
+  // The census used to count a `team_workspaces` file only when it also named `stripe_subscription_id`. The flip keeps the row
+  // (a tombstone whose workspace_org_id IS the club), so a lookup by org, team or owner finds it; these were invisible until now.
+  'lib/workspace-flip.ts': ['definition', 'the flip\'s own wrapper: finds the workspace row first, so an ordinary club never reaches the RPC (block 3 pins it)'],
+  'app/api/billing/choose-next-season/route.ts': ['portal-only', 'refuses 403 before its workspace read for any plan the Founding comp does not apply to, and every Club plan is one (D6)'],
+  'app/api/coaches/[orgSlug]/teams/[teamId]/seasons/route.ts': ['portal-only', 'its season rollover is behind orgManagesOwnSeasons (lib/season-doors.ts), which asks the one portal test; a club runs seasons from admin'],
+  'lib/rep-season-rollover.ts': ['portal-only', 'writes active_program_year_id on the workspace id its portal-gated caller passes; the club admin route passes none'],
+  'app/api/dev/seed/team-workspace/route.ts': ['dev', 'seed tooling'],
+  'app/platform-admin/customer-users/people-rows.ts': ['tombstone-aware', 'counts a portal only through portalsInForce, which needs a running team_entitlements row; the flip cancels them'],
+  'lib/coach-team-page.ts': ['tombstone-aware', 'getActivePremiumPortal and the upgrade filter go through portalsInForce / workspacesInForce (cancelled entitlements)'],
+  'lib/portal-in-force-server.ts': ['tombstone-aware', 'the in-force read itself: a workspace is in force only with an active, trialing or past_due entitlement'],
+  'lib/team-workspace-owned.ts': ['tombstone-aware', 'finds the owner\'s workspaces, then keeps only those in force, so a flipped club owner does not "already own a portal"'],
+  'lib/registrable-teams-server.ts': ['tombstone-aware', 'portalsInForce, and its standalone test excludes workspace_state org_owned'],
+  'lib/portal-free-time-reminders.ts': ['tombstone-aware', 'selects and claims only billing_mode platform_override, so no free-time reminder reaches a flipped club (free_time_given_at survives)'],
+  'lib/portal-free-time-server.ts': ['tombstone-aware', 'every read requires billing_mode platform_override and an unrevoked grant; the flip revokes the grant'],
+  'lib/portal-free-time-give.ts': ['tombstone-aware', 'reads org_owned as "moved into a club", which blocks a further portal give ("give the club free time instead")'],
+  'lib/founding-season.ts': ['tombstone-aware', 'the reactivation read needs billing_mode platform_override; a comp on the org is revoked by applyPlanChangeSideEffects before the flip runs'],
+  'lib/portal-free-time-tab.ts': ['harmless-read', 'the staff console lists the tombstone as "in a club, and the club pays for it", which is true; its record read runs only for account_kind team_workspace'],
+  'lib/basic-coach-teams.ts': ['harmless-read', 'finds the workspace by team to merge the portal-era tournament history through the free-team shadow: still the same team\'s history'],
+  'lib/chat-resolvers.ts': ['harmless-read', 'uses the workspace id and rep team only to reach the team\'s staff and claimed tournaments'],
+  'lib/coach-registration-access.ts': ['harmless-read', 'maps a registration to its rep team and shadow; access is the coaching assignment, not the portal'],
+  'lib/coach-upgrade-migration.ts': ['harmless-read', 'writes migration_summary on the workspace id its caller passes; the caller is the known gap below'],
+  'lib/staff-own-club.ts': ['harmless-read', 'billing_owner_org_id is the club itself after the flip, so it only confirms "this is your own club" (it narrows, never widens)'],
+  // Found as gaps by this census and fixed in Part 4 (owner yes 2026-10-31): the flip keeps migration_summary on the tombstone, so
+  // without the filter an unacknowledged "Welcome to Premium" banner, and its retry, carried on into the club's team page.
+  'app/api/coaches/[orgSlug]/teams/[teamId]/upgrade-summary/route.ts': ['tombstone-aware', 'the banner\'s read skips workspace_state org_owned, so a club never shows the portal\'s "Welcome to Premium" record'],
+  'app/api/coaches/[orgSlug]/teams/[teamId]/upgrade-summary/retry/route.ts': ['tombstone-aware', 'the banner\'s retry skips workspace_state org_owned, so nothing re-copies from the free team into a club'],
 };
 
 /** Every other production file that reads the tag: the list the scan found on 2026-10-30, each opened or read by the census helper. */
@@ -509,15 +541,18 @@ describe('4 · the census: every reader of the portal tag is accounted for', () 
     assert.ok(sources.length > 500, `only ${sources.length} source files found`);
   });
 
-  it('no file reads the portal tag, or a workspace\'s Stripe id, unless it is on the list with a reason', () => {
+  it('no file reads the portal tag, or the workspace row, unless it is on the list with a reason', () => {
+    // ANY read of the workspace table counts, not only one that names its Stripe id (Part 4): the tombstone is still found by
+    // its organization, its team and its owner. Plan-only tests (`plan_id === 'team'`) are deliberately NOT counted: both the
+    // webhook and the flip write the Club plan, so they turn false at the flip, and the plan is compared in hundreds of places.
     const readers = sources.filter(f => {
       const code = readCode(f);
-      return TAG.test(code) || (/team_workspaces/.test(code) && /stripe_subscription_id/.test(code));
+      return TAG.test(code) || /\bteam_workspaces\b/.test(code);
     });
     const unlisted = readers.filter(f => !(f in ALLOWED));
-    assert.deepEqual(unlisted, [], `A file now reads the Coaches Portal tag or a workspace's Stripe id. Decide how a club that was a portal
-behaves there (the flip resets organizations.account_kind and tombstones the workspace row), then add it to LIVE_ROW_FILES or SPECIAL
-with the reason:\n  ${unlisted.join('\n  ')}`);
+    assert.deepEqual(unlisted, [], `A file now reads the Coaches Portal tag or the workspace row. Decide how a club that was a portal
+behaves there (the flip resets organizations.account_kind and keeps the workspace row as a tombstone: org_owned, club_included,
+Stripe ids NULL, entitlements cancelled), then add it to LIVE_ROW_FILES or SPECIAL with the reason:\n  ${unlisted.join('\n  ')}`);
     const stale = Object.keys(ALLOWED).filter(f => !readers.includes(f));
     assert.deepEqual(stale, [], `These entries no longer read the tag; remove them:\n  ${stale.join('\n  ')}`);
   });
@@ -531,6 +566,15 @@ with the reason:\n  ${unlisted.join('\n  ')}`);
     const copies = sources.filter(f => /(account_kind|accountKind)\)?\s*(as [A-Za-z]+\)?\s*)?===\s*'team_workspace'\s*\|\|/.test(readCode(f)));
     const fresh = copies.filter(f => !KNOWN_COPIES.has(f));
     assert.deepEqual(fresh, [], `A new hand-copied "account kind OR plan team" test. Use isTeamWorkspaceOrg (lib/team-workspace-kind.ts):\n  ${fresh.join('\n  ')}`);
+  });
+
+  it('no known gap is waiting, and the two this census found stay fixed', () => {
+    const gaps = Object.entries(ALLOWED).filter(([, [k]]) => k === 'known-gap').map(([f]) => f);
+    assert.deepEqual(gaps, [], 'a new known gap needs the owner, not an allowlist line');
+    // The flip leaves migration_summary on the tombstone, so these two reads are what keeps the portal's banner off a club.
+    for (const f of ['app/api/coaches/[orgSlug]/teams/[teamId]/upgrade-summary/route.ts', 'app/api/coaches/[orgSlug]/teams/[teamId]/upgrade-summary/retry/route.ts']) {
+      assert.match(readCode(f), /\.eq\('rep_team_id', teamId\)\s*\.neq\('workspace_state', 'org_owned'\)/, f);
+    }
   });
 
   it('the only documented leftovers of the old identity test are cosmetic wording in the staff console', () => {

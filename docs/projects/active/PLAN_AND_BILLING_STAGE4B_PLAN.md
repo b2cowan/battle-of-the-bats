@@ -262,3 +262,65 @@ Owed before treating this substantive, shared-module, money-adjacent work as rev
 **OPEN, needs the owner (found by review, confirmed by reading `proxy.ts`).** The suspended-wall billing exception, and the committed zero-team wall door before it, compare the page against the `x-pathname` header. `proxy.ts` sets that header only for the paths in its matcher, and the matcher has no `/:slug/coaches/…` entry. If that holds on a running server, then (a) the recovery door never opens for a real owner (they meet the wall), and (b) the owner of that same organization could send the header themselves and open any coaches page inside the wall frame (bounded: owner of that org only, coach APIs still closed). The unit tests mock the header, so they cannot see this. **First thing the owner walk checks.** Fix options: add the coaches path to the proxy matcher, or take the page from a source the browser cannot set. Not changed here: it is a `proxy.ts` / shared-auth change that was not approved.
 
 **Not Part 3's, reported unchanged.** `plan-billing-usage.test.ts:112` (503, from before this stage), `support-console-stage3-guard` footer check, and `support-console-stage5-guard` (a deleted `components/FeedbackModal.tsx` in another session's tree). `check:layout` skipped (no browser per the build prompt). Production note: once promoted, every paying Premium owner sees the Club row reading "Contact us to move" until Club opens for sale (owner's pre-sale ruling).
+
+## 10. Part 4 · verify the whole path — build record, 2026-10-31
+
+Proof, plus the two defects it exposed, fixed on the owner's word (the proxy header, the surviving banner). Build prompt:
+`PLAN_AND_BILLING_STAGE4B_PART4_BUILD_PROMPT.md`. Owed: `/simplify`, `/review`, the docs drift check, in a fresh chat
+(`PLAN_AND_BILLING_STAGE4B_PART4_REVIEW_PROMPT.md`).
+
+**The census was searching the wrong shape [saw in code].** Its workspace clause counted a file only when it named both `team_workspaces` and
+`stripe_subscription_id`. The flip keeps the row as a tombstone whose `workspace_org_id` IS the club, so a lookup by org, team or owner finds it
+and was invisible: **22 production readers** outside the list. The clause is now any read of the table (`workspace-flip-guard.test.ts` §4), and
+each of the 22 is listed with a verdict read from its code: 3 portal-only, 9 tombstone-aware (a `platform_override` filter, `portalsInForce`'s
+running entitlement, or `org_owned` read as "moved into a club"), 6 harmless reads, 1 dev, the flip's own wrapper, and **2 gaps** (below,
+now fixed and tombstone-aware).
+Plan-only tests (`plan_id === 'team'`) stay out by design, said in the test: both the webhook and the flip write the Club plan. No entry went
+stale; one reason was incomplete and is corrected (`lib/workspace-upgrade.ts` also holds the "became the club" test, on both sides of the flip).
+The Part 2-3 readers the prompt named were already covered or read nothing: `portal-retained-restore.ts`, the status route, the checkout quote
+and the setup card take ids or the URL marker, not the tag; the coaches layout and `workspace-upgrade(-status).ts` were listed.
+
+**Gap found, FIXED (owner "fix it", 2026-10-31) [saw in code]: the "Welcome to Premium" banner survived the flip.** The two upgrade-summary
+routes found the workspace by org and team with no portal or tombstone test, and the flip does not clear `migration_summary`. A coach who went
+free → Premium, never dismissed that banner, then became the club saw "Welcome to Premium — your team came with you" on the club's team page; if
+that copy had failed, its retry kept re-copying from the free team. Fix: both reads now carry `.neq('workspace_state', 'org_owned')`. The guard
+lists both as tombstone-aware, pins the filter, and holds the `known-gap` class empty.
+
+**The `x-pathname` finding holds [saw in code].** `proxy.ts` sets the header (line 43) only on matched paths; the matcher has `/coaches/:path*`
+but no `/:slug/coaches/…` entry, and nothing else sets it. So (a) the suspended owner's billing exception and the older zero-team wall door
+(`coaches/layout.tsx` 144 and 256; the comment at 254 says the proxy overwrites the header, which is not true for this path) never see it and
+the owner meets the wall; (b) the owner of that org can send the header themselves and open another coaches page inside the wall frame (coach APIs
+stay closed). **FIXED (owner "go with what you recommend", 2026-10-31):** the matcher gains `'/:slug/coaches'` and `'/:slug/coaches/:path*'`,
+and a header-only early return after the sandbox fast-path sets `x-pathname`/`x-request-id` and stops, so a coach page still pays no session
+round-trip (the file's own stated reason for leaving the portal unmatched). The early return is skipped when the first segment is in
+`RESERVED_ORG_SLUGS` (`/platform-admin/coaches`, `/my/…`, `/api/…` keep their own rules: a blanket `segments[1] === 'coaches'` exit would
+have skipped the platform-admin session check). Pinned by calling the real proxy with a forged header (`plan-billing-coach-host`, "the page the
+coaches layout trusts is the proxy's"); the UAT spec's Walk 6 tests are ordinary passing expectations now. Dev server restarted after.
+⚠ Found on the way, not changed (a shared test helper): `readCode` strips block comments first, and `proxy.ts:70` has "/api/admin/*" inside a
+line comment, so every guard that reads proxy.ts through `readCode` loses lines ~70-143 (the new branch included). The new pin reads raw source.
+
+**§6, bullet by bullet, to the test that pins it.** Behavioural flip → guard §2 (three fixtures, assignments read from the SQL). Census → guard §4
+(widened above). Late old-price event and a Club cancellation finding no workspace → guard §2 "a Club cancellation and a late old-price event"
+and money §6 "the event that follows the swap". Pinned `MOVES` → `club-stage1-server-guard` (the `team` rows). `validateMove`: same interval
+→ money §2 "keeps the billing interval"; no live subscription → §2 "a coach with no subscription is not moved"; trialing → §2 "a trialing
+Premium coach moves too"; past due → §2 "REFUSES a move while the payment is failing"; non-owner → money §7 "owner-only", `plan-billing-body`
+"non-owner gets no billing facts", `plan-billing-actions` marker-by-role table. Preview lines add up / fall back → money §3. Free-time path:
+in place → §4 "is an in-place upgrade only for a portal"; marker → §4 "carries the marker"; both-sides address → §4 "returns to an address
+that works BEFORE and AFTER the flip"; leaving keeps free time → §4 "a coach who leaves the payment page keeps their free time". Words →
+`check:spelling` and money §7/§8 "plain words". **Nothing in §6 was unpinned**; the only new contract is the census widening and the known-gap pin.
+
+**Money helper (one place for the GST/HST edit).** `tests/unit/_club-upgrade-money.ts` `dueTodayOf(lines)`; the money contract's line
+expectations go through it. ⚠ The tax edit is two edits: `trustedPreviewLines` refuses ANY tax on the invoice (its own fallback test,
+"tax on the invoice"), so once tax is collected every taxed coach gets the total-only window until the tax stage teaches it a tax line.
+
+**UAT spec, written, not run: `tests/uat/scenarios/premium-to-club-path.spec.ts`.** A (read-only, walk fixtures): Club row or its pre-sale
+door; the free-time window (free-days band, trial, empty required name, address, Due today, no "card"); an empty name refused with no request; a
+non-owner refused at the page, the marker and the status read. B (Walk 6 fixture): the wall elsewhere; the billing exception opens; a forged
+header does not. C (a coach it makes and deletes: free team → staff free time → mock billing): Setting up → Taking longer → Couldn't
+confirm on a fake clock; Start my club → checkout → flip → a full document load into Admin with the setup list and the team; rows checked
+against §3.2; the rail and the phone More sheet swapped. Not reachable, said in its header: the paying window (a mock subscription is never
+"live"), the real webhook return, once-paid and set-to-end, a portal staff member. Found on the way: a mock-made Premium coach can never get
+a quote (its fake Stripe customer fails the history read), which is why group C makes a free-time coach instead.
+
+**Not mine, reported unchanged:** the three known-red tests; `check:org-slug-callers`' two public-site callers; the dev mock-apply flip gap;
+the customer-scoped trial history. Pre-existing "card" words on the billing page (Founding and past-due copy) predate this stage.

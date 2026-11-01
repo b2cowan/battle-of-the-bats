@@ -31,6 +31,8 @@ async function loadWorkspaceSummary(orgId: string, teamId: string): Promise<Summ
     .select('id, migration_summary')
     .eq('workspace_org_id', orgId)
     .eq('rep_team_id', teamId)
+    // A portal that became the club keeps this row as a tombstone; its "Welcome to Premium" record is not the club's (Stage 4b).
+    .neq('workspace_state', 'org_owned')
     .maybeSingle<SummaryRow>();
   if (error) throw error;
   return data ?? null;

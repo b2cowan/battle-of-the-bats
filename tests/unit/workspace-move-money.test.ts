@@ -41,6 +41,7 @@ import { isInAppUpMove, MOVE_METADATA_KEY } from '../../lib/plan-growth.ts';
 import { restoreAfterReactivation } from '../../lib/billing-reactivation.ts';
 import { PLAN_CONFIG } from '../../lib/plan-config.ts';
 import { previewClubCheckout } from '../../lib/workspace-upgrade-preview.ts';
+import { dueTodayOf } from './_club-upgrade-money.ts';
 
 // ── Recorders ───────────────────────────────────────────────────────────────────────────────────────
 
@@ -432,8 +433,7 @@ describe('3 · the preview’s lines', () => {
   it('maps a charge on the new plan and a credit on the old, and they add up to the amount due', () => {
     const lines = trustedPreviewLines(invoiceOf([line(5000, NEW_PRICE), line(-1800, OLD_PRICE)]), ends);
     assert.deepEqual(lines, [{ kind: 'charge', plan: 'club', amount: 5000 }, { kind: 'credit', plan: 'team', amount: 1800 }]);
-    const due = lines!.reduce((n, l) => n + (l.kind === 'charge' ? l.amount : -l.amount), 0);
-    assert.equal(due, 3200);
+    assert.equal(dueTodayOf(lines!), 3200);
   });
 
   it('adds lines of one price together, so the screen draws one charge and one credit', () => {
@@ -476,6 +476,7 @@ describe('3 · the preview’s lines', () => {
     const trusted = await previewMove(premiumOrg(), 'club') as Extract<MovePreview, { direction: 'up' }>;
     assert.equal(trusted.amountDueToday, 3000);
     assert.deepEqual(trusted.lines, [{ kind: 'charge', plan: 'club', amount: 5000 }, { kind: 'credit', plan: 'team', amount: 2000 }]);
+    assert.equal(dueTodayOf(trusted.lines!), trusted.amountDueToday, 'the lines the screen draws add up to the figure it charges');
     unstubStripe();
     stubStripe({ sub: subscription(), invoice: invoiceOf([line(5000, NEW_PRICE), line(-2000, OLD_PRICE)], { total_taxes: [{ amount: 390 }], amount_due: 3390 }) });
     const untrusted = await previewMove(premiumOrg(), 'club') as Extract<MovePreview, { direction: 'up' }>;
