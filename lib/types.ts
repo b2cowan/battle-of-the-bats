@@ -251,6 +251,10 @@ export interface Organization {
   subscriptionStatus: SubscriptionStatus;
   subscriptionPeriod?: 'monthly' | 'annual';
   currentPeriodEnd?: string | null;
+  /** What the subscription on file charges per period (its price, not the invoice total), from the billing webhook
+   *  (Plans & pricing Stage 0, mig 418). Null until its next webhook; the billing page then shows the list price. */
+  subscriptionAmountCents?: number | null;
+  subscriptionCurrency?: string | null;
   repTeamSubscriptionItemId?: string | null;
   tournamentLimit: number;
   // Effective rep-team capacity (Club Repackaging): per-org override ?? plan band default.

@@ -4,6 +4,7 @@ import { createCardSetupSession } from '@/lib/billing-setup';
 import { withObservability } from '@/lib/observability';
 import { getBillingHref } from '@/lib/billing-urls';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
+import { ourPortalConfigurationId } from '@/lib/stripe-portal-config';
 
 export const POST = withObservability(async (req: Request) => {
   // Scope to the org whose billing page invoked this — never the caller's home org
@@ -50,8 +51,21 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   const { stripe } = await import('@/lib/stripe');
+  // Plans & pricing Stage 0 (S8): always OUR pinned settings, never Stripe's dashboard default. When they cannot be found
+  // or made, the portal is not configured — there is no fallback.
+  let configuration: string;
+  try {
+    configuration = await ourPortalConfigurationId(stripe);
+  } catch (error) {
+    console.error('[billing portal] our portal configuration could not be found or created:', error);
+    return new Response(JSON.stringify({ error: 'Billing portal is not configured.' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
   const session = await stripe.billingPortal.sessions.create({
     customer: auth.org.stripeCustomerId,
+    configuration,
     return_url: `${appUrl}${getBillingHref(auth.org, { purpose: 'return' })}`,
   });
 

@@ -10840,10 +10840,30 @@
     "update_rule": null
   },
   {
+    "table_name": "stripe_billing_events",
+    "constraint_name": "stripe_billing_events_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "stripe_connect_events",
     "constraint_name": "stripe_connect_events_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "stripe_price_ids_retired",
+    "constraint_name": "stripe_price_ids_retired_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "price_id",
     "foreign_table": null,
     "foreign_column": null,
     "delete_rule": null,

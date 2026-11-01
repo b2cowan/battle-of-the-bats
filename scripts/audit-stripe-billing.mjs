@@ -13,6 +13,8 @@
 
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
+import { stripeKeyIsLive, stripeKeyIsTest } from '../lib/stripe-mode.ts';
+import { PORTAL_CONFIG_VERSION, PORTAL_FEATURES, portalConfigVersion } from '../lib/stripe-portal-settings.ts';
 
 const args = process.argv.slice(2);
 
@@ -55,9 +57,9 @@ const stripeSecretKey = process.env.STRIPE_SECRET_KEY ?? '';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
 
-const keyEnvironment = stripeSecretKey.startsWith('sk_live_')
+const keyEnvironment = stripeKeyIsLive(stripeSecretKey)
   ? 'live'
-  : stripeSecretKey.startsWith('sk_test_')
+  : stripeKeyIsTest(stripeSecretKey)
     ? 'sandbox'
     : null;
 const environment = requestedEnvironment ?? keyEnvironment ?? 'live';
@@ -76,6 +78,11 @@ const EXPECTED_WEBHOOK_EVENTS = [
   'invoice.payment_succeeded',
   'invoice.payment_failed',
   'customer.subscription.trial_will_end',
+  // Plans & pricing Stage 0, Part 4: disputes and refunds on our subscription charges (owner adds them in the dashboard).
+  'charge.dispute.created',
+  'charge.dispute.updated',
+  'charge.dispute.closed',
+  'charge.refunded',
 ];
 
 const EXPECTED_PRICE_SLOTS = [
@@ -185,8 +192,8 @@ function assertEnv() {
     throw new Error(`Missing ${missing.join(', ')} in ${envPath}`);
   }
 
-  if (environment === 'live' && !stripeSecretKey.startsWith('sk_live_')) {
-    throw new Error('Refusing live audit because STRIPE_SECRET_KEY is not an sk_live_ key. Pass --environment sandbox --allow-test for sandbox.');
+  if (environment === 'live' && !stripeKeyIsLive(stripeSecretKey)) {
+    throw new Error('Refusing live audit because STRIPE_SECRET_KEY is not a live key. Pass --environment sandbox --allow-test for sandbox.');
   }
 
   if (environment === 'sandbox' && !allowTest) {
@@ -373,61 +380,54 @@ async function auditWebhook(stripe) {
   return checks;
 }
 
+// Plans & pricing Stage 0 (S8): the app pins its OWN portal configuration (lib/stripe-portal-config.ts), found by its
+// metadata; Stripe's dashboard default no longer reaches a customer. This asserts ours against the same constants, so the
+// audit and Plans end at renewal's G13 read one thing.
 async function auditPortal(stripe) {
   const checks = [];
-  const configs = await stripe.billingPortal.configurations.list({ limit: 100 });
-  const activeConfigs = configs.data.filter(config => config.active);
-
-  if (activeConfigs.length === 0) {
-    return [check('FAIL', 'portal', 'configuration', 'No active Stripe customer portal configuration found.')];
+  const ours = [];
+  for await (const config of stripe.billingPortal.configurations.list({ active: true, limit: 100 })) {
+    if (portalConfigVersion(config) !== null) ours.push(config);
   }
+  const config = ours.find(item => portalConfigVersion(item) === PORTAL_CONFIG_VERSION);
 
-  const config = activeConfigs.find(item => item.is_default) ?? activeConfigs[0];
-  checks.push(check('PASS', 'portal', 'configuration', `${config.id} is active${config.is_default ? ' and default' : ''}.`));
+  if (!config) {
+    const older = ours.map(item => `${item.id} (v${portalConfigVersion(item)})`).join(', ');
+    return [check('WARN', 'portal', 'configuration', `Our portal configuration v${PORTAL_CONFIG_VERSION} does not exist in this mode yet; the app creates it the first time anyone opens the portal.${older ? ` Active older versions: ${older}.` : ''}`)];
+  }
+  checks.push(check('PASS', 'portal', 'configuration', `${config.id} is ours (v${PORTAL_CONFIG_VERSION}) and active.`));
+  const stale = ours.filter(item => item.id !== config.id);
+  if (stale.length > 0) {
+    checks.push(check('WARN', 'portal', 'old_versions', `Older configurations of ours are still active: ${stale.map(item => item.id).join(', ')}. The app deactivates them on the next portal open.`));
+  }
 
   const features = config.features ?? {};
-  if (features.payment_method_update?.enabled) {
-    checks.push(check('PASS', 'portal', 'payment_method_update', 'Customers can update payment methods.'));
-  } else {
-    checks.push(check('FAIL', 'portal', 'payment_method_update', 'Payment method updates are disabled.'));
-  }
+  checks.push(features.payment_method_update?.enabled
+    ? check('PASS', 'portal', 'payment_method_update', 'Customers can update payment methods.')
+    : check('FAIL', 'portal', 'payment_method_update', 'Payment method updates are disabled.'));
+  checks.push(features.invoice_history?.enabled
+    ? check('PASS', 'portal', 'invoice_history', 'Invoice history is enabled.')
+    : check('FAIL', 'portal', 'invoice_history', 'Invoice history is disabled.'));
 
-  if (features.invoice_history?.enabled) {
-    checks.push(check('PASS', 'portal', 'invoice_history', 'Invoice history is enabled.'));
-  } else {
-    checks.push(check('FAIL', 'portal', 'invoice_history', 'Invoice history is disabled.'));
-  }
+  const wanted = PORTAL_FEATURES.customer_update.allowed_updates;
+  const allowed = features.customer_update?.enabled ? features.customer_update.allowed_updates ?? [] : [];
+  const missing = wanted.filter(item => !allowed.includes(item));
+  checks.push(missing.length === 0
+    ? check('PASS', 'portal', 'customer_update', `Customer updates enabled for ${allowed.join(', ')}.`)
+    : check('FAIL', 'portal', 'customer_update', `Customer updates are missing: ${missing.join(', ')} (address and tax ID are needed for GST/HST).`));
 
-  if (features.customer_update?.enabled) {
-    const allowed = features.customer_update.allowed_updates ?? [];
-    const recommended = ['address', 'tax_id'];
-    const missing = recommended.filter(item => !allowed.includes(item));
-    if (missing.length === 0) {
-      checks.push(check('PASS', 'portal', 'customer_update', `Customer updates enabled for ${allowed.join(', ')}.`));
-    } else {
-      checks.push(check('WARN', 'portal', 'customer_update', `Customer updates enabled, but missing recommended allowed update(s): ${missing.join(', ')}.`));
-    }
-  } else {
-    checks.push(check('WARN', 'portal', 'customer_update', 'Customer billing-detail updates are disabled.'));
-  }
+  checks.push(features.subscription_update?.enabled
+    ? check('FAIL', 'portal', 'subscription_update', 'Plan switching is enabled in our portal configuration; plan moves belong to the app.')
+    : check('PASS', 'portal', 'subscription_update', 'Plan switching is off.'));
 
-  if (features.subscription_update?.enabled) {
-    checks.push(check('WARN', 'portal', 'subscription_update', 'Subscription changes are enabled in Stripe portal; app-owned downgrade/change flows may be bypassed.'));
-  } else {
-    checks.push(check('PASS', 'portal', 'subscription_update', 'Subscription changes are disabled in Stripe portal.'));
-  }
+  const cancel = features.subscription_cancel;
+  checks.push(cancel?.enabled && cancel.mode === 'at_period_end'
+    ? check('PASS', 'portal', 'subscription_cancel', 'Cancel is on and ends the subscription at its period end (owner ruling 2026-10-31).')
+    : check('FAIL', 'portal', 'subscription_cancel', `Cancel must be on at period end; it is ${cancel?.enabled ? `on, mode ${cancel.mode}` : 'off'}.`));
 
-  if (features.subscription_cancel?.enabled) {
-    checks.push(check('WARN', 'portal', 'subscription_cancel', 'Cancellation is enabled in Stripe portal; app-owned cancellation/retention flow may be bypassed.'));
-  } else {
-    checks.push(check('PASS', 'portal', 'subscription_cancel', 'Cancellation is disabled in Stripe portal.'));
-  }
-
-  if (features.subscription_pause?.enabled) {
-    checks.push(check('WARN', 'portal', 'subscription_pause', 'Subscription pause is enabled; app flows do not currently model pause state.'));
-  } else {
-    checks.push(check('PASS', 'portal', 'subscription_pause', 'Subscription pause is disabled.'));
-  }
+  checks.push(features.subscription_pause?.enabled
+    ? check('FAIL', 'portal', 'subscription_pause', 'Subscription pause is enabled; the app does not model a paused subscription.')
+    : check('PASS', 'portal', 'subscription_pause', 'Subscription pause is off.'));
 
   return checks;
 }

@@ -541,9 +541,16 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 
 ## Module: Stripe / Billing
 
+### stripe_billing_events
+id NOT NULL, type NOT NULL, livemode (boolean) NOT NULL, customer_id, subscription_id, object_id, received_at, claimed_at, processed_at, attempts (integer), error, ignored_reason
+- Indexes: stripe_billing_events_customer_idx, stripe_billing_events_received_idx, stripe_billing_events_unprocessed_idx
+
 ### stripe_connect_events
 id NOT NULL, type NOT NULL, account, livemode (boolean), org_id (uuid), received_at, processed_at, attempts (integer), error
 - Indexes: stripe_connect_events_org_id_idx, stripe_connect_events_received_idx, stripe_connect_events_unprocessed_idx
+
+### stripe_price_ids_retired
+price_id NOT NULL, plan_id NOT NULL, billing_cycle NOT NULL, environment NOT NULL, retired_at, retired_by_email
 
 ### stripe_prices
 id (uuid), plan_id NOT NULL, billing_cycle NOT NULL, environment NOT NULL, price_id, product_name, created_at, updated_at, last_change_note, updated_by_email
@@ -580,7 +587,7 @@ id (uuid), organization_id (uuid) → organizations.id NOT NULL, user_id (uuid) 
 - Indexes: organization_members_invited_email_idx, organization_members_organization_id_user_id_key
 
 ### organizations
-id (uuid), name NOT NULL, slug NOT NULL, logo_url, plan_id, stripe_customer_id, stripe_subscription_id, subscription_status, tournament_limit (integer), is_public (boolean), created_at, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization (boolean), onboarding_completed_at, enabled_addons (jsonb), internal_notes, billing_suspended_at, billing_suspension_reason, subscription_period, current_period_end, rep_team_subscription_item_id, pdf_settings (jsonb), account_kind, team_workspace_status, is_discoverable (boolean), email_marketing_opt_out (boolean), email_opt_out_at, free_floor, team_limit (integer), privacy_policy_url, coach_settings (jsonb), club_book_sharing_enabled (boolean), fiscal_first_month, birthday_cutoffs (jsonb), coach_names_policy
+id (uuid), name NOT NULL, slug NOT NULL, logo_url, plan_id, stripe_customer_id, stripe_subscription_id, subscription_status, tournament_limit (integer), is_public (boolean), created_at, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization (boolean), onboarding_completed_at, enabled_addons (jsonb), internal_notes, billing_suspended_at, billing_suspension_reason, subscription_period, current_period_end, rep_team_subscription_item_id, pdf_settings (jsonb), account_kind, team_workspace_status, is_discoverable (boolean), email_marketing_opt_out (boolean), email_opt_out_at, free_floor, team_limit (integer), privacy_policy_url, coach_settings (jsonb), club_book_sharing_enabled (boolean), fiscal_first_month, birthday_cutoffs (jsonb), coach_names_policy, subscription_amount_cents (integer), subscription_currency
 - Indexes: idx_organizations_email_opt_out, organizations_slug_key
 
 ## Module: Platform Admin
@@ -1030,14 +1037,14 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **251 tables** across 10 modules.
+Total: **253 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 21 tables
 - Rep Teams: 76 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
-- Stripe / Billing: 2 tables
+- Stripe / Billing: 4 tables
 - Organization / Platform Core: 8 tables
 - Platform Admin: 29 tables
 - CRM / Leads: 6 tables

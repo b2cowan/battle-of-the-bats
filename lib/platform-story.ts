@@ -27,6 +27,7 @@ import { possessive } from './utils';
 import { freeTimeStoryEntries, type PortalCopySummary } from './free-time-story';
 import { formatCents } from './console-money';
 import { CONSOLE_REFUND_TAIL } from './console-money-story';
+import { disputeReasonWords, disputeStatusWords } from './stripe-subscription-charges';
 import { hasPlatformPower } from './platform-areas';
 import { LEAD_ACTIONS } from './platform-audit-reason';
 import type { PlatformRole } from './platform-auth';
@@ -69,6 +70,25 @@ function afterBulkAddons(before: Set<string>, newValue: unknown): Set<string> {
 }
 
 /**
+ * Stage 0 Part 4: a dispute on one of the subscription's charges, opened and closed. Not the update (noise), and not the
+ * refund: Stripe's refunds already join the Story from the Money tab's live read (`lib/console-money-story.ts`).
+ */
+const CHARGE_STORY_EVENTS = ['subscription_charge_disputed', 'subscription_dispute_closed'] as const;
+
+function chargeStoryEntry(type: string, m: Record<string, unknown> | null): Pick<StoryEntry, 'title' | 'sub'> | null {
+  const cents = typeof m?.disputeAmountCents === 'number' ? m.disputeAmountCents : typeof m?.amountCents === 'number' ? m.amountCents : null;
+  const amount = cents === null ? 'a charge' : formatCents(cents, str(m?.currency) ?? 'cad');
+  const reason = disputeReasonWords(str(m?.reason));
+  if (type === 'subscription_charge_disputed') {
+    return { title: `Disputed ${amount} with their bank`, sub: `${reason} · nothing on the account changed` };
+  }
+  if (type === 'subscription_dispute_closed') {
+    return { title: `Dispute closed: ${disputeStatusWords(str(m?.status))}`, sub: `${amount} · ${reason}` };
+  }
+  return null;
+}
+
+/**
  * The club's Story, newest first. `money` (a role with the Stripe-reading power, owner A2/Q4): the customer's purchases
  * and the refunds made in this console join it, from what we keep, so they show even when Stripe is down. Stripe's own
  * charges and dashboard refunds are merged in on screen from the Money tab's live read (`lib/console-money-story.ts`).
@@ -87,10 +107,11 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
       .eq('org_id', orgId).order('created_at', { ascending: false }).limit(SOURCE_CAP),
     supabaseAdmin.from('org_internal_notes').select('id, body, created_by_email, created_at, deleted_at, deleted_by_email')
       .eq('org_id', orgId).order('created_at', { ascending: false }).limit(SOURCE_CAP),
-    supabaseAdmin.from('platform_events').select('id, event_type, source, actor_email, previous_plan_id, plan_id, occurred_at')
+    supabaseAdmin.from('platform_events').select('id, event_type, source, actor_email, previous_plan_id, plan_id, occurred_at, metadata')
       .eq('org_id', orgId)
       .in('event_type', ['plan_downgraded', 'subscription_canceled', 'subscription_past_due', 'subscription_recovered',
-        ...(opts.money ? ['subscription_started'] : [])])
+        // Stage 0 Part 4: disputes and refunds on the subscription's charges carry amounts, so they are money-only too.
+        ...(opts.money ? ['subscription_started', ...CHARGE_STORY_EVENTS] : [])])
       .order('occurred_at', { ascending: false }).limit(SOURCE_CAP),
     supabaseAdmin.from('org_audit_log').select('id, actor_id, target_id, action, payload, created_at')
       .eq('org_id', orgId)
@@ -313,8 +334,13 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
   }
 
   // ── The customer's own billing ───────────────────────────────────────────────────────────────────────────────────
-  for (const e of (eventsRes.data ?? []) as Array<{ id: string; event_type: string; source: string | null; actor_email: string | null; previous_plan_id: string | null; plan_id: string | null; occurred_at: string }>) {
+  for (const e of (eventsRes.data ?? []) as Array<{ id: string; event_type: string; source: string | null; actor_email: string | null; previous_plan_id: string | null; plan_id: string | null; occurred_at: string; metadata: unknown }>) {
     const who = e.source === 'stripe' && e.event_type !== 'subscription_started' ? 'Stripe' : e.actor_email ?? 'The customer';
+    if ((CHARGE_STORY_EVENTS as readonly string[]).includes(e.event_type)) {
+      const entry = chargeStoryEntry(e.event_type, obj(e.metadata));
+      if (entry) entries.push({ key: `event:${e.id}`, at: e.occurred_at, kind: 'billing', who, why: null, ...entry });
+      continue;
+    }
     if (e.event_type === 'subscription_started') {
       // A first purchase (Stage 3). An upgrade is already "Moved up" from the club's own log, so plan_upgraded is not read.
       entries.push({ key: `event:${e.id}`, at: e.occurred_at, kind: 'billing', title: `Bought ${planName(e.plan_id)}`, who, why: null, moneyEvent: 'bought' });

@@ -101,6 +101,10 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 <!-- dict:col:organizations.rep_team_subscription_item_id -->
 **Stripe / subscription block** (`stripe_customer_id`, `stripe_subscription_id`, `subscription_status`, `subscription_period`, `current_period_end`, `rep_team_subscription_item_id`) — Stripe linkage + subscription state. `subscription_status` (no DB CHECK; code domain `active|trialing|past_due|canceled`, [lib/types.ts:13](../../../lib/types.ts#L13)) defaults `'active'`; `subscriptionStatus==='canceled'` hard-disables module entitlements ([lib/module-entitlements.ts:15](../../../lib/module-entitlements.ts#L15)) and blocks public tournament context ([lib/public-tournament-data.ts:60](../../../lib/public-tournament-data.ts#L60)). **Main writer = the Stripe webhook** ([app/api/billing/webhook/route.ts](../../../app/api/billing/webhook/route.ts): `subscription.updated/created` ~:233, `payment_succeeded`→active ~:528, `payment_failed`→`past_due` ~:557, `subscription.deleted`→`canceled`+null ~:466); also `updateOrgSubscription` ([lib/db.ts:2457-2464](../../../lib/db.ts#L2457)). **`rep_team_subscription_item_id` is RETIRING (Club Repackaging 2026-06-22):** it tracked the now-retired per-team "$19/team beyond 3" rep-team Stripe add-on item; its writer (`syncRepTeamBilling`) was deleted. The column is now read-only/vestigial (0 rows carry a value) — no new writes; safe to drop post-cutover. *(Billing-flow narrative + the `stripe_prices` table → the Stripe/Billing phase; these columns are documented here.)*
 
+<!-- dict:col:organizations.subscription_amount_cents -->
+<!-- dict:col:organizations.subscription_currency -->
+**`subscription_amount_cents`** (integer, nullable, CHECK ≥ 0) / **`subscription_currency`** (text, nullable, CHECK `^[a-z]{3}$`) — migration 418 (Plans & pricing Stage 0 Part 6 / fix 1, 2026-11-01): what the subscription on file charges per period, from its first item's price (`unit_amount`, `currency`), written by the billing webhook from Stripe's CURRENT subscription (`subscriptionAmount()` in `lib/stripe-billing-state.ts`): with the plan in the club arm, and after the Coaches Portal paths onto the record whose `stripe_subscription_id` is that subscription; cleared with `subscription_period` when a subscription ends. **The price, not the invoice total** (no discount, quantity or tax). A price with no flat unit amount records NULL. Read by Plan & billing's price line (`components/billing/BillingBody.tsx`) when the currency is `cad` and the shown plan is the club's own; NULL → the price list, as before. **No backfill:** an existing subscription fills in on its next webhook.
+
 <!-- dict:col:organizations.billing_suspended_at -->
 <!-- dict:col:organizations.billing_suspension_reason -->
 **`billing_suspended_at` / `billing_suspension_reason`** (timestamptz / text, nullable) — suspension audit stamp; set on subscription deletion, cancel-confirm, and platform-admin cancel; cleared on team-workspace reactivation. **Not on the `Organization` type** (subsystem-only).
@@ -8121,6 +8125,54 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 <!-- dict:col:stripe_connect_events.error -->
 **`attempts`** (integer, NOT NULL, default 1) / **`error`** (text, nullable) — delivery count and the last handler error.
 
+## `stripe_billing_events`
+<!-- dict:table:stripe_billing_events -->
+
+**Purpose (migration 416, Plans & pricing Stage 0 Part 2 / S5, 2026-11-01):** every verified Stripe event delivered to the **billing** webhook (`/api/billing/webhook`: subscriptions, invoices, checkout, payment methods), one row per event id. Unlike `stripe_connect_events` the claim IS atomic: `stripe_billing_event_claim(p_id, p_type, p_livemode, p_customer, p_subscription, p_object)` (SECURITY DEFINER, service role only) inserts the row or reclaims it and answers `new` / `retry` / `duplicate` / `busy`, so two simultaneous deliveries cannot both run. Order in the code (`lib/stripe-billing-events.ts`): signature → **mode** (an event whose `livemode` differs from the key's mode is recorded with `ignored_reason = 'wrong_mode'` and never run) → **claim** (`duplicate` → 200; `busy` → 500 so Stripe retries later) → run (`runVerifiedBillingEvent` in the route, the seam a replay will call) → outcome (`processed_at`; or `error` + 500). **No payload is stored** (customer details; Stripe keeps it, a replay re-fetches by id). Grows by a few rows per paying customer per month; no pruning job yet. RLS on, no policies, grants revoked from `anon`/`authenticated`.
+
+<!-- dict:col:stripe_billing_events.id -->
+**`id`** (text PK) — Stripe's event id (`evt_…`).
+
+<!-- dict:col:stripe_billing_events.type -->
+**`type`** (text, NOT NULL) — the event type (`customer.subscription.updated`, `invoice.payment_succeeded`, …).
+
+<!-- dict:col:stripe_billing_events.livemode -->
+**`livemode`** (boolean, NOT NULL) — the event's own mode. With `ignored_reason = 'wrong_mode'` it came from the other Stripe mode than the server's key (`lib/stripe-mode.ts`).
+
+<!-- dict:col:stripe_billing_events.customer_id -->
+<!-- dict:col:stripe_billing_events.subscription_id -->
+<!-- dict:col:stripe_billing_events.object_id -->
+**`customer_id`** / **`subscription_id`** / **`object_id`** (text, nullable, no FK) — read from the event's object, never fetched: the Stripe customer it names (a dispute names none), the subscription it is about (the object itself for `customer.subscription.*`, the invoice's parent subscription, the checkout session's subscription), and the object's own id. Partial index on `customer_id`.
+
+<!-- dict:col:stripe_billing_events.received_at -->
+<!-- dict:col:stripe_billing_events.claimed_at -->
+<!-- dict:col:stripe_billing_events.processed_at -->
+**`received_at`** (timestamptz, NOT NULL, default now()) / **`claimed_at`** (timestamptz, nullable) / **`processed_at`** (timestamptz, nullable) — first delivery; when the delivery now running it claimed it (cleared on any outcome; older than five minutes with no outcome = a delivery that died, claimable again); when it ran to the end, including events the webhook answers without acting (a club's fee invoice; no customer). Partial index `(received_at) WHERE processed_at IS NULL AND ignored_reason IS NULL` finds the unhandled.
+
+<!-- dict:col:stripe_billing_events.attempts -->
+<!-- dict:col:stripe_billing_events.error -->
+**`attempts`** (integer, NOT NULL, default 1) / **`error`** (text, nullable) — deliveries that claimed it (+1 per retry); the last failure's message (≤500 chars; the webhook answered 500), cleared by the next claim.
+
+<!-- dict:col:stripe_billing_events.ignored_reason -->
+**`ignored_reason`** (text, nullable, CHECK `wrong_mode` | `no_customer` | `not_ours`) — why it never acted: the other Stripe mode (never claimed, `processed_at` NULL), nothing to act on (claimed and processed), or a dispute/refund on a charge that paid no subscription invoice (Stage 0 Part 4: claimed and processed, the charge re-read from Stripe). NULL when it ran. A row with a reason is a `duplicate` to every later claim.
+
+## `stripe_price_ids_retired`
+<!-- dict:table:stripe_price_ids_retired -->
+
+**Purpose (migration 417, Plans & pricing Stage 0 Part 5 / fix 2, 2026-11-01):** every Stripe price id a `stripe_prices` slot stopped using, with the plan and cycle it was for, so a customer still paying a replaced price is recognised (`getPlanFromPriceId` in `lib/stripe-prices.ts` reads the current slots first, then this, filtered to the key's mode; the Money tab's `priceMap()` reads both, current winning). **Append-only:** RLS on, no policies, the service role may only SELECT. Written only by the trigger `stripe_prices_record_retired_id` (AFTER UPDATE OF `price_id` OR DELETE on `stripe_prices`, SECURITY DEFINER): a non-null id replaced, cleared or deleted is recorded; an unrelated column update records nothing. First retirement wins (`ON CONFLICT DO NOTHING`). Backfilled from `platform_audit_log` rows with `action = 'update_stripe_price_id'` (dev: 2 rows on 2026-11-01). Proved by `scripts/stripe-price-retired-check.sql`.
+
+<!-- dict:col:stripe_price_ids_retired.price_id -->
+**`price_id`** (text PK) — the Stripe price id (`price_…`) the slot used before. Unique to its Stripe mode.
+
+<!-- dict:col:stripe_price_ids_retired.plan_id -->
+<!-- dict:col:stripe_price_ids_retired.billing_cycle -->
+<!-- dict:col:stripe_price_ids_retired.environment -->
+**`plan_id`** / **`billing_cycle`** / **`environment`** (text, NOT NULL) — copied from the slot at the moment it was replaced: the plan, `monthly`/`annual`, and `sandbox`/`live` (the Stripe mode the id belongs to).
+
+<!-- dict:col:stripe_price_ids_retired.retired_at -->
+<!-- dict:col:stripe_price_ids_retired.retired_by_email -->
+**`retired_at`** (timestamptz, NOT NULL, default now()) / **`retired_by_email`** (text, nullable) — when the slot stopped using it, and who: the slot's `updated_by_email` written with the change (NULL on a delete); for a backfilled id, the audit row's time and actor.
+
 ## `tournament_fee_receipts`
 <!-- dict:table:tournament_fee_receipts -->
 
@@ -8669,7 +8721,7 @@ The platform's **Stripe surface** — deliberately **column-light**: ONE dedicat
 ### Gotchas first (the cross-cutting traps)
 
 - **The webhook derives the plan from the PRICE, not from metadata — an unmapped `price_id` silently no-ops entitlement.** `customer.subscription.created/updated` reverse-looks-up `getPlanFromPriceId(priceId)` ([app/api/billing/webhook/route.ts:137](../../../app/api/billing/webhook/route.ts#L137)); no matching `stripe_prices` row → the whole handler body is skipped and the webhook still ACKs 200. The org's `plan_id`/`subscription_status` never update, and **nothing is logged** — the webhook route does not import `lib/observability/capture` (verified: zero matches). A paid subscription on an unmapped price is invisible.
-- **Environment = `STRIPE_SECRET_KEY` prefix sniff; the CHECK value is `sandbox`, never `test`.** `'live'` iff the key starts with `sk_live_`, else `'sandbox'` ([lib/stripe-prices.ts:18-19](../../../lib/stripe-prices.ts#L18)) — `NODE_ENV` is irrelevant (a dev deployment holding a live key reads live rows). The same sniff is re-implemented in 4+ places (stripe-prices PATCH, change-request apply, dev readiness route, audit script) — drift risk if the convention changes.
+- **Environment = `STRIPE_SECRET_KEY` prefix sniff; the CHECK value is `sandbox`, never `test`.** `'live'` iff the key is a live key (`sk_live_` or a restricted `rk_live_`), else `'sandbox'` (an empty key too) — `stripeEnvironment()` in [lib/stripe-mode.ts](../../../lib/stripe-mode.ts), the ONE place a key prefix is read since Plans & pricing Stage 0 (2026-11-01; a guard test fails on a second one). `NODE_ENV` is irrelevant (a dev deployment holding a live key reads live rows).
 - **Live content is mirror-imaged ON PURPOSE (content "drift" that isn't drift).** Both env DBs hold the same 24 seed slots (6 plan keys × 2 cycles × 2 environments), but the dev DB maps only its 12 `sandbox` rows (`price_id` set) and prod maps only its 12 `live` rows — each DB's other-environment rows are inert seed scaffolding (probed live 2026-06-10). Structure is zero-drift.
 - **RLS-with-no-policies is the ONLY thing keeping this table off prod's public REST API.** Probed live: prod grants `anon`+`authenticated` SELECT on `public.stripe_prices` (`has_table_privilege` = true; dev does NOT — the [[reference_supabase_rls_grants]] class). With RLS enabled and zero policies, `anon` resolves to 0 rows via PostgREST while `supabaseAdmin` (service-role, BYPASSRLS) does all reads/writes. Don't "simplify" by disabling RLS.
 - **`organizations.subscription_status` can hold RAW Stripe statuses outside the 4-value TS type.** The org webhook path writes `sub.status` **verbatim** ([webhook/route.ts:233](../../../app/api/billing/webhook/route.ts#L233)) — Stripe statuses like `incomplete`/`unpaid`/`paused` can land in a column typed `active|trialing|past_due|canceled` ([lib/types.ts:13](../../../lib/types.ts#L13)). Only the team-workspace paths normalize via `mapStripeStatusToOrgStatus` ([lib/team-checkout.ts:205-210](../../../lib/team-checkout.ts#L205)). Every entitlement gate checks only `=== 'canceled'`, so e.g. `unpaid` keeps full access.

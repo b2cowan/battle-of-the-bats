@@ -29,6 +29,7 @@ import https from 'https';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { stripeEnvironment } from '../lib/stripe-mode.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -64,7 +65,7 @@ const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
 if (!SUPABASE_TOKEN) { console.error('SUPABASE_ACCESS_TOKEN not set in .env.local'); process.exit(1); }
 if (!STRIPE_KEY) { console.error('STRIPE_SECRET_KEY not set in .env.local'); process.exit(1); }
 
-const stripeMode = STRIPE_KEY.startsWith('sk_live_') ? 'live' : 'sandbox';
+const stripeMode = stripeEnvironment(STRIPE_KEY);
 if (apply && target === 'prod' && stripeMode !== 'live') {
   console.error('Refusing to apply: --prod paired with a SANDBOX Stripe key would stamp production rows from test data.');
   process.exit(1);

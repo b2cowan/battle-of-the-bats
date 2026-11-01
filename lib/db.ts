@@ -1785,6 +1785,8 @@ function mapOrg(r: any): Organization {
     subscriptionStatus:          r.subscription_status ?? 'active',
     subscriptionPeriod:          r.subscription_period ?? undefined,
     currentPeriodEnd:            r.current_period_end ?? null,
+    subscriptionAmountCents:     r.subscription_amount_cents ?? null,
+    subscriptionCurrency:        r.subscription_currency ?? null,
     repTeamSubscriptionItemId:   r.rep_team_subscription_item_id ?? null,
     tournamentLimit:             getEffectiveTournamentLimit(r.plan_id, r.tournament_limit),
     teamLimit:                   getEffectiveTeamLimit(r.plan_id, r.team_limit),

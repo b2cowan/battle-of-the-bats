@@ -71,7 +71,7 @@ const origin = process.env.NEXT_PUBLIC_APP_URL ?? '';
 
 describe('Stripe and mock returns keep every plan inside its billing tier boundary', () => {
   for (const planId of plans) for (const mock of [true, false]) it(`${planId}/${mock ? 'mock' : 'Stripe'}: portal, card and no-customer fallback`, async () => {
-    const authCalls: unknown[] = [], capabilityCalls: unknown[] = [], portalCalls: Array<{ return_url: string }> = [], setups: unknown[] = [];
+    const authCalls: unknown[] = [], capabilityCalls: unknown[] = [], portalCalls: Array<{ return_url: string; configuration?: string }> = [], setups: unknown[] = [];
     const org = { id: 'org-b', slug: 'falcons', planId, stripeCustomerId: 'cus_b' as string | null, accountKind: 'organization' };
     const load = billingTestLoader({
       '@/lib/observability': { withObservability: (fn: unknown) => fn },
@@ -83,6 +83,8 @@ describe('Stripe and mock returns keep every plan inside its billing tier bounda
       '@/lib/billing-mock': { isBillingMockEnabled: () => mock, isStripeConfigured: () => true },
       '@/lib/billing-setup': { createCardSetupSession: async (input: unknown) => { setups.push(input); return 'https://stripe.test/setup'; } },
       '@/lib/stripe': { stripe: { billingPortal: { sessions: { create: async (params: { return_url: string }) => { portalCalls.push(params); return { url: 'https://stripe.test/portal' }; } } } } },
+      // Plans & pricing Stage 0 (S8): the session names our pinned settings, never the dashboard default.
+      '@/lib/stripe-portal-config': { ourPortalConfigurationId: async () => 'bpc_ours' },
     });
     const portal = (load('app/api/billing/portal/route.ts') as { POST: JsonPost }).POST;
     const card = (load('app/api/billing/setup-payment-method/route.ts') as { POST: JsonPost }).POST;
@@ -91,6 +93,7 @@ describe('Stripe and mock returns keep every plan inside its billing tier bounda
     assert.equal(portalResponse.status, 200);
     assert.equal((await portalResponse.json()).url, mock ? `${origin}${base}${planId === 'team' ? '' : '/mock-portal'}` : 'https://stripe.test/portal');
     if (!mock) assert.equal(portalCalls[0].return_url, `${origin}${base}`);
+    if (!mock) assert.equal(portalCalls[0].configuration, 'bpc_ours');
     const cardResponse = await card(post({ orgSlug: org.slug }));
     assert.equal((await cardResponse.json()).url, mock ? `${origin}${base}?card_saved=1` : 'https://stripe.test/setup');
     org.stripeCustomerId = null;

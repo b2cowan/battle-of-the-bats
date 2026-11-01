@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-01",
-  "total": 76,
+  "total": 108,
   "counts": {
-    "tables": 3,
-    "columns": 28,
-    "indexes": 17,
-    "constraints": 18,
-    "rls": 10
+    "tables": 5,
+    "columns": 48,
+    "indexes": 22,
+    "constraints": 20,
+    "rls": 13
   },
   "items": [
     {
@@ -47,6 +47,18 @@
     },
     {
       "key": "check:only-dev:league_team_practices_told.league_team_practices_told_snapshot_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:organizations.organizations_subscription_amount_cents_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:organizations.organizations_subscription_currency_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:stripe_billing_events.stripe_billing_events_ignored_reason_check",
       "sig": ""
     },
     {
@@ -162,6 +174,86 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:organizations.subscription_amount_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organizations.subscription_currency",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_events.attempts",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_events.claimed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_events.customer_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_events.error",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_events.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_events.ignored_reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_events.livemode",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_events.object_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_events.processed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_events.received_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_events.subscription_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_billing_events.type",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_price_ids_retired.billing_cycle",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_price_ids_retired.environment",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_price_ids_retired.plan_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_price_ids_retired.price_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_price_ids_retired.retired_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:stripe_price_ids_retired.retired_by_email",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:league_practice_emails.league_practice_emails_division_id_fkey",
       "sig": ""
     },
@@ -234,6 +326,14 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:stripe_billing_events.stripe_billing_events_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:stripe_price_ids_retired.stripe_price_ids_retired_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:league_practice_emails_division_idx",
       "sig": ""
     },
@@ -302,6 +402,26 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:stripe_billing_events_customer_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:stripe_billing_events_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:stripe_billing_events_received_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:stripe_billing_events_unprocessed_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:stripe_price_ids_retired_pkey",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:league_practice_emails",
       "sig": ""
     },
@@ -311,6 +431,14 @@
     },
     {
       "key": "table:only-dev:league_team_practices_told",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:stripe_billing_events",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:stripe_price_ids_retired",
       "sig": ""
     }
   ]

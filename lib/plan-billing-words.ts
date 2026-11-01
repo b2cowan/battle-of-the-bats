@@ -50,6 +50,9 @@ export const PLAN_BILLING_WORDS = {
   plan: {
     free: 'Free', monthly: 'Monthly', annual: 'Yearly', billing: 'Billing', unavailable: 'Billing status unavailable',
     price,
+    /** Stage 0 Part 6: what the subscription charges (cents), in the same words as `price` ("$29 CAD / month", "$34.50 …"). */
+    paidPrice: (cents: number, billing: BillingCycle) => cents % 100 === 0 ? price(cents / 100, billing)
+      : `$${(cents / 100).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CAD / ${period(billing)}`,
     fromPrice: (amount: number) => amount === 0 ? formatPriceAmount(amount) : `From ${formatPriceAmount(amount)} CAD / month`,
     billed: (billing: BillingCycle) => `billed ${cycle(billing)}`,
     renews: (iso: string) => `Renews ${day(iso)}`,

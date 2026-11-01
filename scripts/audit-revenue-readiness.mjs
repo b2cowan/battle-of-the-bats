@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
+import { stripeKeyIsLive, stripeKeyIsTest } from '../lib/stripe-mode.ts';
 
 const args = process.argv.slice(2);
 const arg = key => { const i = args.indexOf(key); return i >= 0 ? args[i + 1] : null; };
@@ -24,7 +25,7 @@ if (!['live', 'sandbox'].includes(mode) || !envFile || !output || !/^\d{4}-\d{2}
 // Parse just this file; do not silently use another environment's inherited credentials.
 const env = dotenv.parse(fs.readFileSync(envFile));
 const secret = env.STRIPE_SECRET_KEY ?? '';
-const actualMode = secret.startsWith('sk_live_') ? 'live' : secret.startsWith('sk_test_') ? 'sandbox' : null;
+const actualMode = stripeKeyIsLive(secret) ? 'live' : stripeKeyIsTest(secret) ? 'sandbox' : null;
 if (mode !== actualMode) throw new Error('The selected file/key does not match the explicit mode.');
 const outPath = path.resolve(output);
 const permitted = path.resolve('docs/projects/active/revenue-accounting-evidence');

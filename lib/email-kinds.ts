@@ -119,6 +119,10 @@ export const EMAIL_KINDS = {
   // ── our own mail: never logged ─────────────────────────────────────────────
   feedback_received:                    { klass: 'inbox', label: 'New feedback' },
   org_deletion_request:                 { klass: 'inbox', label: 'Deletion request' },
+  // Plans & pricing Stage 0, Part 4: a dispute opened or closed, or a refund, on one of our subscription charges.
+  subscription_charge_alert:            { klass: 'inbox', label: 'Subscription charge disputed or refunded' },
+  // Part 5: a subscription on a Stripe price no plan slot has ever used (at most once a day per subscription).
+  unrecognised_price_alert:             { klass: 'inbox', label: 'Subscription on a price we do not know' },
   ops_alert:                            { klass: 'alert', label: 'Error alert' },
   template_test:                        { klass: 'test', label: 'Template test' },
 } as const satisfies Record<string, KindEntry>;

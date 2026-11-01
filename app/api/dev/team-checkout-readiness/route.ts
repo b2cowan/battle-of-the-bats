@@ -4,6 +4,7 @@ import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { requireDevToolPlatformAdmin } from '@/lib/platform-auth';
 import { getStripe } from '@/lib/stripe';
 import { getAllStripePrices, type StripePriceRow } from '@/lib/stripe-prices';
+import { stripeEnvironment } from '@/lib/stripe-mode';
 
 type CheckStatus = 'pass' | 'warn' | 'fail';
 
@@ -24,7 +25,7 @@ const EXPECTED_PRICES = {
 function getStripeEnvironment(): StripeEnvironment {
   const key = process.env.STRIPE_SECRET_KEY ?? '';
   if (!key) return 'not_configured';
-  return key.startsWith('sk_live_') ? 'live' : 'sandbox';
+  return stripeEnvironment(key);
 }
 
 function check(status: CheckStatus, key: string, label: string, detail: string): ReadinessCheck {

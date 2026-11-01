@@ -13547,6 +13547,24 @@
         "column_default": "'coaches_choose'::text"
       },
       {
+        "table_name": "organizations",
+        "pos": 47,
+        "column_name": "subscription_amount_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organizations",
+        "pos": 48,
+        "column_name": "subscription_currency",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "pitch_decks",
         "pos": 1,
         "column_name": "id",
@@ -25166,6 +25184,114 @@
         "column_default": "now()"
       },
       {
+        "table_name": "stripe_billing_events",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_billing_events",
+        "pos": 2,
+        "column_name": "type",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_billing_events",
+        "pos": 3,
+        "column_name": "livemode",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_billing_events",
+        "pos": 4,
+        "column_name": "customer_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_billing_events",
+        "pos": 5,
+        "column_name": "subscription_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_billing_events",
+        "pos": 6,
+        "column_name": "object_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_billing_events",
+        "pos": 7,
+        "column_name": "received_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "stripe_billing_events",
+        "pos": 8,
+        "column_name": "claimed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_billing_events",
+        "pos": 9,
+        "column_name": "processed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_billing_events",
+        "pos": 10,
+        "column_name": "attempts",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "1"
+      },
+      {
+        "table_name": "stripe_billing_events",
+        "pos": 11,
+        "column_name": "error",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_billing_events",
+        "pos": 12,
+        "column_name": "ignored_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "stripe_connect_events",
         "pos": 1,
         "column_name": "id",
@@ -25241,6 +25367,60 @@
         "table_name": "stripe_connect_events",
         "pos": 9,
         "column_name": "error",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_price_ids_retired",
+        "pos": 1,
+        "column_name": "price_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_price_ids_retired",
+        "pos": 2,
+        "column_name": "plan_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_price_ids_retired",
+        "pos": 3,
+        "column_name": "billing_cycle",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_price_ids_retired",
+        "pos": 4,
+        "column_name": "environment",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_price_ids_retired",
+        "pos": 5,
+        "column_name": "retired_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "stripe_price_ids_retired",
+        "pos": 6,
+        "column_name": "retired_by_email",
         "data_type": "text",
         "udt_name": "text",
         "is_nullable": "YES",
@@ -38447,6 +38627,26 @@
         "indexdef": "CREATE UNIQUE INDEX schedule_facility_lanes_unique_label ON public.schedule_facility_lanes USING btree (tournament_id, division_id, label)"
       },
       {
+        "tablename": "stripe_billing_events",
+        "indexname": "stripe_billing_events_customer_idx",
+        "indexdef": "CREATE INDEX stripe_billing_events_customer_idx ON public.stripe_billing_events USING btree (customer_id) WHERE (customer_id IS NOT NULL)"
+      },
+      {
+        "tablename": "stripe_billing_events",
+        "indexname": "stripe_billing_events_pkey",
+        "indexdef": "CREATE UNIQUE INDEX stripe_billing_events_pkey ON public.stripe_billing_events USING btree (id)"
+      },
+      {
+        "tablename": "stripe_billing_events",
+        "indexname": "stripe_billing_events_received_idx",
+        "indexdef": "CREATE INDEX stripe_billing_events_received_idx ON public.stripe_billing_events USING btree (received_at)"
+      },
+      {
+        "tablename": "stripe_billing_events",
+        "indexname": "stripe_billing_events_unprocessed_idx",
+        "indexdef": "CREATE INDEX stripe_billing_events_unprocessed_idx ON public.stripe_billing_events USING btree (received_at) WHERE ((processed_at IS NULL) AND (ignored_reason IS NULL))"
+      },
+      {
         "tablename": "stripe_connect_events",
         "indexname": "stripe_connect_events_org_id_idx",
         "indexdef": "CREATE INDEX stripe_connect_events_org_id_idx ON public.stripe_connect_events USING btree (org_id)"
@@ -38465,6 +38665,11 @@
         "tablename": "stripe_connect_events",
         "indexname": "stripe_connect_events_unprocessed_idx",
         "indexdef": "CREATE INDEX stripe_connect_events_unprocessed_idx ON public.stripe_connect_events USING btree (received_at) WHERE (processed_at IS NULL)"
+      },
+      {
+        "tablename": "stripe_price_ids_retired",
+        "indexname": "stripe_price_ids_retired_pkey",
+        "indexdef": "CREATE UNIQUE INDEX stripe_price_ids_retired_pkey ON public.stripe_price_ids_retired USING btree (price_id)"
       },
       {
         "tablename": "stripe_prices",
@@ -41314,6 +41519,18 @@
       {
         "kind": "CHECK",
         "table_name": "organizations",
+        "detail": "organizations_subscription_amount_cents_check",
+        "check_clause": "((subscription_amount_cents IS NULL) OR (subscription_amount_cents >= 0))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organizations",
+        "detail": "organizations_subscription_currency_check",
+        "check_clause": "((subscription_currency IS NULL) OR (subscription_currency ~ '^[a-z]{3}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organizations",
         "detail": "organizations_subscription_period_check",
         "check_clause": "(subscription_period = ANY (ARRAY['monthly'::text, 'annual'::text]))"
       },
@@ -43508,8 +43725,26 @@
         "check_clause": null
       },
       {
+        "kind": "CHECK",
+        "table_name": "stripe_billing_events",
+        "detail": "stripe_billing_events_ignored_reason_check",
+        "check_clause": "((ignored_reason IS NULL) OR (ignored_reason = ANY (ARRAY['wrong_mode'::text, 'no_customer'::text, 'not_ours'::text])))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "stripe_billing_events",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "RLS",
         "table_name": "stripe_connect_events",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "stripe_price_ids_retired",
         "detail": "ENABLED",
         "check_clause": null
       },

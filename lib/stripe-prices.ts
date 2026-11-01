@@ -1,6 +1,7 @@
 import { supabaseAdmin } from './supabase-admin';
 import type { OrgPlan } from './types';
 import type { BillingCycle } from './plan-config';
+import { stripeEnvironment } from './stripe-mode';
 
 export type StripePriceRow = {
   id: string;
@@ -15,9 +16,7 @@ export type StripePriceRow = {
   last_change_note: string | null;
 };
 
-function getStripeEnvironment(): 'sandbox' | 'live' {
-  return (process.env.STRIPE_SECRET_KEY ?? '').startsWith('sk_live_') ? 'live' : 'sandbox';
-}
+const getStripeEnvironment = () => stripeEnvironment();
 
 export async function getStripePriceId(
   planId: OrgPlan | string,
@@ -47,16 +46,27 @@ export async function isPlanCheckoutPriceConfigured(
   return (await getStripePriceId(planId, billingCycle)) != null;
 }
 
-export async function getPlanFromPriceId(
-  priceId: string,
-): Promise<{ planId: string; billingCycle: string } | null> {
-  const { data } = await supabaseAdmin
-    .from('stripe_prices')
-    .select('plan_id, billing_cycle')
-    .eq('price_id', priceId)
-    .maybeSingle();
-  if (!data) return null;
-  return { planId: data.plan_id, billingCycle: data.billing_cycle };
+export type PlanFromPrice = { planId: string; billingCycle: string; retired: boolean };
+
+/**
+ * The plan and cycle a Stripe price is for, in the current key's mode (Plans & pricing Stage 0, Part 5): the current
+ * slots first, then the prices a slot has stopped using (`stripe_price_ids_retired`, mig 417), so a customer still paying
+ * a replaced price is recognised. `null` means NO SUCH PRICE; a failed lookup THROWS (it is never "no such price").
+ */
+export async function getPlanFromPriceId(priceId: string): Promise<PlanFromPrice | null> {
+  if (!priceId) return null;
+  const env = getStripeEnvironment();
+  const [current, retired] = await Promise.all([
+    supabaseAdmin.from('stripe_prices').select('plan_id, billing_cycle')
+      .eq('price_id', priceId).eq('environment', env).limit(1).maybeSingle(),
+    supabaseAdmin.from('stripe_price_ids_retired').select('plan_id, billing_cycle')
+      .eq('price_id', priceId).eq('environment', env).maybeSingle(),
+  ]);
+  if (current.error) throw new Error(`Couldn't look up the price: ${current.error.message}`);
+  if (current.data) return { planId: current.data.plan_id, billingCycle: current.data.billing_cycle, retired: false };
+  if (retired.error) throw new Error(`Couldn't look up the replaced prices: ${retired.error.message}`);
+  if (retired.data) return { planId: retired.data.plan_id, billingCycle: retired.data.billing_cycle, retired: true };
+  return null;
 }
 
 export async function getAllStripePrices(): Promise<StripePriceRow[]> {

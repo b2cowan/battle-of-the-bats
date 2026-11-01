@@ -6,6 +6,7 @@ import { foreignCardFeeCents } from './online-payment-fee';
 import { ensureStripeCustomer } from './billing-setup';
 import { retrieveCheckout } from './stripe-connect';
 import { sendEmail, escapeHtml } from './email';
+import { stripeKeyIsLive } from './stripe-mode';
 import { warmEmailButton, warmEmailDocument, warmEmailParagraph, warmEmailSmall } from './email-envelope-warm';
 import { emailFactsPanel } from './online-refund-block';
 import {
@@ -31,7 +32,7 @@ import { addCalendarMonths, formatStoredDate, orgMonthKey, zonedWallClockToUtc }
  * a failure is stored on the row (`bill_error`) and retried by the daily job and from platform admin.
  */
 
-const LIVE_KEY = () => (process.env.STRIPE_SECRET_KEY ?? '').startsWith('sk_live_');
+const LIVE_KEY = () => stripeKeyIsLive();
 /** Ours, not Stripe's: how long a club has to pay its own invoice. Printed from Stripe's due date, never typed. */
 const FEE_INVOICE_DAYS_DUE = 30;
 const LIVE_SUBSCRIPTION = new Set(['active', 'trialing', 'past_due']);

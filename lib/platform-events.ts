@@ -10,6 +10,14 @@ export type PlatformEventType =
   | 'subscription_canceled'
   | 'subscription_past_due'
   | 'subscription_recovered'
+  // Plans & pricing Stage 0, Part 4: a dispute or refund on OUR subscription charge (lib/stripe-subscription-charges.ts).
+  // Recorded and told, nothing suspended (not ruled). The club's Story shows all but the update.
+  | 'subscription_charge_disputed'
+  | 'subscription_dispute_updated'
+  | 'subscription_dispute_closed'
+  | 'subscription_charge_refunded'
+  // Part 5: a subscription on a price no slot has ever used (keyed on the subscription and the day). Nothing acts on it.
+  | 'unrecognised_price'
   | 'tournament_plus_upgrade_gate_viewed'
   | 'tournament_plus_upgrade_gate_clicked'
   | 'tournament_plus_acquisition_cta_viewed'

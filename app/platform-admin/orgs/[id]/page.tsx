@@ -14,6 +14,7 @@ import { freeTimeDoorFacts } from '@/lib/free-time-writes';
 import { canGiveIndefinitely, capMonthsFor, earliestLastDay, grantablePlansAbove, isGrantRunning, lastDayOfInstant, latestLastDay } from '@/lib/free-time';
 import { isFoundingSeasonCompExpiry } from '@/lib/plan-config';
 import { stripeStillBills } from '@/lib/stripe-billing-state';
+import { stripeKeyIsLive } from '@/lib/stripe-mode';
 import { readPortalRecordFreeTime } from '@/lib/portal-free-time-tab';
 import ClubRecord, { type ClubRecordProps } from './ClubRecord';
 import { readClubOnlinePayments } from '@/lib/platform-online-payments';
@@ -36,7 +37,7 @@ const STORY_PAGE = 50;
 
 function stripeBase() {
   // The mode comes from the secret key's prefix, not the id (a `sub_…` looks the same in both modes).
-  return `https://dashboard.stripe.com${(process.env.STRIPE_SECRET_KEY ?? '').startsWith('sk_live_') ? '' : '/test'}`;
+  return `https://dashboard.stripe.com${stripeKeyIsLive() ? '' : '/test'}`;
 }
 
 /** The coach's own teams brought into this club (Club Tier Stage 2, B04): finished moves and open requests. Read only. */

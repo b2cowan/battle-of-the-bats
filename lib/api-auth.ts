@@ -70,6 +70,10 @@ type AuthOrgRow = {
   stripe_subscription_id: string | null;
   /** The trial's last day, or the next renewal; the select is `*`. */
   current_period_end?: string | null;
+  /** Plans & pricing Stage 0, Part 6: the cycle and what the subscription charges, for Plan & billing's price line. */
+  subscription_period?: 'monthly' | 'annual' | null;
+  subscription_amount_cents?: number | null;
+  subscription_currency?: string | null;
   is_public: boolean | null;
   created_at: string;
   require_score_finalization: boolean | null;
@@ -202,6 +206,11 @@ export async function getAuthContext(options: AuthContextOptions = {}): Promise<
     stripeSubscriptionId: orgRow.stripe_subscription_id ?? undefined,
     // Plan & billing prints "Trial ends …" / "Renews …" from this; it was never copied here, so the line never showed.
     currentPeriodEnd: orgRow.current_period_end ?? null,
+    // Stage 0 Part 6: never copied before, so Plan & billing read every yearly plan as monthly; now its price line reads
+    // the cycle and what the subscription actually charges.
+    subscriptionPeriod: orgRow.subscription_period ?? undefined,
+    subscriptionAmountCents: orgRow.subscription_amount_cents ?? null,
+    subscriptionCurrency: orgRow.subscription_currency ?? null,
     isPublic: orgRow.is_public ?? true,
     createdAt: orgRow.created_at,
     requireScoreFinalization: orgRow.require_score_finalization ?? false,

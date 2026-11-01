@@ -2,6 +2,7 @@ import { getStripe } from './stripe';
 import { supabaseAdmin } from './supabase-admin';
 import { PLAN_CONFIG } from './plan-config';
 import type { OrgPlan } from './types';
+import { stripeEnvironment } from './stripe-mode';
 
 /**
  * Validates a Stripe price ID against the catalog slot it is being attached to, so an operator
@@ -64,9 +65,9 @@ export interface PriceSlotContext {
   environment: string;
 }
 
+/** The key's mode (lib/stripe-mode.ts), or null when no key is configured at all, so nothing can be checked against Stripe. */
 function serverStripeEnvironment(): 'live' | 'sandbox' | null {
-  const key = process.env.STRIPE_SECRET_KEY ?? '';
-  return key.startsWith('sk_live_') ? 'live' : key ? 'sandbox' : null;
+  return process.env.STRIPE_SECRET_KEY ? stripeEnvironment() : null;
 }
 
 /** Catalog price for a plan+cycle in cents, from the canonical PLAN_CONFIG (matched to PLAN_PRICING_FACTS). */

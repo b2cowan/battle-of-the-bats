@@ -24,7 +24,11 @@ import { applyPlanChangeSideEffects } from '@/lib/plan-move';
 import { isInAppUpMove } from '@/lib/plan-growth';
 import { clubNameFromMetadata } from '@/lib/workspace-upgrade';
 import { restoreAfterReactivation } from '@/lib/billing-reactivation';
-import { trialEndingHtml, welcomeBackHtml, teamWorkspaceCancelledHtml, SITE_URL } from '@/lib/email';
+import { trialEndingHtml, welcomeBackHtml, teamWorkspaceCancelledHtml, SITE_URL, ADMIN_EMAIL, sendEmail, escapeHtml } from '@/lib/email';
+import { stripeKeyIsLive } from '@/lib/stripe-mode';
+import {
+  handleSubscriptionChargeEvent, isSubscriptionChargeEvent, type SubscriptionChargeDeps,
+} from '@/lib/stripe-subscription-charges';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { teamWorkspaceDisplayName, teamWorkspaceReactivatePath } from '@/lib/coaches-portal-routes';
 import { cancelScheduledEmail } from '@/lib/email-sender';
@@ -36,7 +40,11 @@ import { clearSettled } from '@/lib/needs-attention';
 import type { OrgPlan } from '@/lib/types';
 import type Stripe from 'stripe';
 import { withObservability } from '@/lib/observability';
-import { isTheRecordsSubscription, recordFollowsSubscription, subscriptionIsPaying } from '@/lib/stripe-billing-state';
+import {
+  invoiceFailureIsCurrent, isTheRecordsSubscription, recordFollowsSubscription, statusAfterInvoicePaid, subscriptionAmount,
+  subscriptionEventIsStale, subscriptionIsPaying,
+} from '@/lib/stripe-billing-state';
+import { receiveBillingEvent, type BillingEventOutcome } from '@/lib/stripe-billing-events';
 import { closePagesIfPaymentsEnded } from '@/lib/online-payment-endings';
 import { getBillingHref, billingUrlOrgFromRow } from '@/lib/billing-urls';
 
@@ -80,6 +88,95 @@ async function cancelPriorTeamSubscription(subscriptionId: string | null | undef
   }
 }
 
+/**
+ * Stage 0 (S9): what the dispute and refund handler reads and writes. The club a subscription bills: the organization on
+ * it, else the Coaches Portal on it (its paying club, else its own workspace), else, once it has ended and been cleared
+ * from the record, the ONE organization holding its customer (a shared customer names no club).
+ */
+function subscriptionChargeDeps(): SubscriptionChargeDeps {
+  const orgName = async (id: string) => {
+    const { data, error } = await supabaseAdmin.from('organizations').select('name').eq('id', id).maybeSingle();
+    if (error) throw new Error(`Couldn't read the club: ${error.message}`);
+    return (data as { name: string } | null)?.name ?? 'A club';
+  };
+  return {
+    retrieveCharge: id => stripe.charges.retrieve(id, { expand: ['refunds'] }),
+    async invoiceForPaymentIntent(paymentIntent) {
+      const res = await stripe.invoicePayments.list({ payment: { type: 'payment_intent', payment_intent: paymentIntent }, limit: 1, expand: ['data.invoice'] });
+      const inv = res.data[0]?.invoice;
+      return inv && typeof inv !== 'string' && !('deleted' in inv && inv.deleted) ? inv as Stripe.Invoice : null;
+    },
+    async ownerOf(subscriptionId, customerId) {
+      const { data: org, error } = await supabaseAdmin.from('organizations').select('id, name')
+        .eq('stripe_subscription_id', subscriptionId).limit(1).maybeSingle();
+      if (error) throw new Error(`Couldn't find the subscription's club: ${error.message}`);
+      if (org) return { orgId: org.id, orgName: org.name, teamWorkspaceId: null };
+      const { data: ws, error: wsError } = await supabaseAdmin.from('team_workspaces')
+        .select('id, workspace_org_id, billing_owner_org_id').eq('stripe_subscription_id', subscriptionId).limit(1).maybeSingle();
+      if (wsError) throw new Error(`Couldn't find the subscription's portal: ${wsError.message}`);
+      const wsOrgId = (ws?.billing_owner_org_id ?? ws?.workspace_org_id) as string | null | undefined;
+      if (ws && wsOrgId) return { orgId: wsOrgId, orgName: await orgName(wsOrgId), teamWorkspaceId: ws.id };
+      if (!customerId) return null;
+      const { data: holders, error: holdersError } = await supabaseAdmin.from('organizations').select('id, name')
+        .eq('stripe_customer_id', customerId).limit(2);
+      if (holdersError) throw new Error(`Couldn't find the customer's club: ${holdersError.message}`);
+      return holders?.length === 1 ? { orgId: holders[0].id, orgName: holders[0].name, teamWorkspaceId: null } : null;
+    },
+    async consoleRefundIds(chargeId) {
+      const { data, error } = await supabaseAdmin.from('platform_refunds').select('stripe_refund_id').eq('stripe_charge_id', chargeId);
+      if (error) throw new Error(`Couldn't read the console's refunds: ${error.message}`);
+      return new Set(((data ?? []) as Array<{ stripe_refund_id: string | null }>).map(r => r.stripe_refund_id).filter((v): v is string => !!v));
+    },
+    writeEvent: writePlatformEvent,
+    alertOwner: ({ subject, html, idempotencyKey }) => alertOwner('subscription_charge_alert', subject, html, idempotencyKey),
+    live: () => stripeKeyIsLive(),
+    siteUrl: SITE_URL,
+  };
+}
+
+/**
+ * An email to the owner's inbox about our own billing (Stage 0). Not gated to production like the error alert: these are
+ * rare and the owner tests them in test mode. A failed send is logged, never a 500: the platform event is the record, the
+ * email the alarm. The once-only key keeps a retried event from sending twice.
+ */
+async function alertOwner(kind: 'subscription_charge_alert' | 'unrecognised_price_alert', subject: string, html: string, idempotencyKey: string) {
+  const result = await sendEmail(ADMIN_EMAIL, subject, html, { kind, idempotencyKey })
+    .catch(error => { console.error('[billing webhook] the owner alert could not be sent:', error); return null; });
+  if (result && result.status === 'provider_error') console.error('[billing webhook] the owner alert was refused:', subject);
+}
+
+/**
+ * Stage 0 (fix 1): what a Coaches Portal's subscription charges, onto the record that follows it. The portal paths write
+ * the plan in lib/team-checkout.ts; this writes the amount after them, matched on the subscription id, so only a record
+ * that follows this subscription gets it (a club-paid portal's record holds none, and is never written).
+ */
+async function recordSubscriptionAmount(sub: Stripe.Subscription) {
+  const { error } = await supabaseAdmin.from('organizations').update(subscriptionAmount(sub)).eq('stripe_subscription_id', sub.id);
+  if (error) throw new Error(`Couldn't record what the subscription charges: ${error.message}`);
+}
+
+/** Stage 0 (fix 2): a subscription on a price we know nothing of. Keyed on the subscription and the day, so once a day. */
+async function tellOwnerOfUnrecognisedPrice(sub: Stripe.Subscription, priceId: string, customerId: string) {
+  // utc-intentional: a dedupe key, not a calendar answer; any fixed day boundary gives "at most once a day".
+  const key = `${sub.id}:unrecognised_price:${new Date().toISOString().slice(0, 10)}`;
+  console.warn(`[billing webhook] ${sub.id} is on ${priceId}, a price no slot has ever used: the record was not changed`);
+  const { data: org } = await supabaseAdmin.from('organizations').select('id, name')
+    .eq('stripe_customer_id', customerId).limit(1).maybeSingle();
+  await writePlatformEvent({
+    eventType: 'unrecognised_price', source: 'stripe', sourceEventId: key, orgId: org?.id ?? null, subscriptionStatus: sub.status,
+    metadata: { priceId, stripeSubscriptionId: sub.id, stripeCustomerId: customerId },
+  });
+  const club = org?.name ?? 'A customer we could not match to a club';
+  const dashboard = `https://dashboard.stripe.com${stripeKeyIsLive() ? '' : '/test'}`;
+  await alertOwner('unrecognised_price_alert', `A subscription is on a price we do not know: ${club}`,
+    `<p>${escapeHtml(club)} has a subscription on a Stripe price that no plan slot has ever used, so our record of their plan was not changed.</p>`
+      + `<ul><li>Price: ${escapeHtml(priceId)}</li><li>Subscription: ${escapeHtml(sub.id)} (${escapeHtml(sub.status)})</li></ul>`
+      + '<p>Nothing on the account has been changed. Either put the price in a plan slot, or move the subscription to a known price in Stripe.</p>'
+      + `<p>${org ? `<a href="${SITE_URL}/platform-admin/orgs/${org.id}">Open the club's record</a> &middot; ` : ''}`
+      + `<a href="${dashboard}/subscriptions/${encodeURIComponent(sub.id)}">Open the subscription in Stripe</a></p>`,
+    key);
+}
+
 /** The subscription an invoice bills, when it bills one (a one-off invoice made in Stripe's dashboard bills none). */
 function invoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
   return stripeId(invoice.parent?.subscription_details?.subscription ?? null);
@@ -99,21 +196,28 @@ export const POST = withObservability(async (req: Request) => {
     });
   }
 
-  const eventObject = event.data.object as { customer?: string | { id?: string } | null };
-  const customerId = typeof eventObject.customer === 'string'
-    ? eventObject.customer
-    : eventObject.customer?.id ?? null;
+  // Plans & pricing Stage 0 (S5): the mode check, the claim and the outcome live in lib/stripe-billing-events.ts.
+  return receiveBillingEvent(event, runVerifiedBillingEvent);
+}, { route: '/api/billing/webhook' });
 
-  if (!customerId) {
-    return new Response('ok', { status: 200 });
-  }
+/**
+ * THE SEAM (Plans & pricing Stage 0, S5): runs one verified, claimed billing event. The POST above reaches it through
+ * `receiveBillingEvent`, which has already refused the other Stripe mode and a replay; a later replay of a stored event
+ * (Stage 2) and Plans end at renewal's webhook work build on this one function. Throwing is the failure answer: the event's
+ * row keeps the error, the webhook answers 500 and Stripe sends it again.
+ */
+async function runVerifiedBillingEvent(event: Stripe.Event, customerId: string | null): Promise<BillingEventOutcome> {
+  // Stage 0 (S9): a dispute names no customer, so these are resolved through their charge BEFORE the early return below.
+  if (isSubscriptionChargeEvent(event.type)) return handleSubscriptionChargeEvent(event, subscriptionChargeDeps());
+
+  if (!customerId) return 'no_customer';
 
   // 12d-1 Part 4: a club's own invoice of Stripe fees is written to its own row and NOTHING else. Read before the switch,
   // because the invoice cases below would read its payment as the subscription's (a comped club with no subscription would
   // turn "active", and a failed fee payment "past due").
   if (event.type.startsWith('invoice.') && (event.data.object as Stripe.Invoice).metadata?.[FEE_INVOICE_META]) {
     await syncFeeInvoiceFromEvent(event.data.object as Stripe.Invoice);
-    return new Response('ok', { status: 200 });
+    return 'processed';
   }
 
   switch (event.type) {
@@ -223,6 +327,7 @@ export const POST = withObservability(async (req: Request) => {
           eventSource: 'stripe',
           sourceEventId: `${event.id}:team_workspace_created`,
         });
+        if (sub) await recordSubscriptionAmount(sub);
         break;
       }
 
@@ -267,7 +372,10 @@ export const POST = withObservability(async (req: Request) => {
 
     case 'customer.subscription.created':
     case 'customer.subscription.updated': {
-      const sub = event.data.object as Stripe.Subscription;
+      // Stage 0 (S5): Stripe's CURRENT subscription, not the event's copy, so a late event cannot write an older status or
+      // price over a newer one. A failed read throws: 500, and Stripe sends the event again.
+      const eventSub = event.data.object as Stripe.Subscription;
+      const sub = await stripe.subscriptions.retrieve(eventSub.id);
       const priceId: string = sub.items?.data?.[0]?.price?.id ?? '';
 
       // ── The next-season plan choice ───────────────────────────────────────────
@@ -302,6 +410,12 @@ export const POST = withObservability(async (req: Request) => {
         // Still before the first charge — the plan does not move (ruling D2). Once it converts,
         // this falls through and the plan applies exactly as any other subscription's would.
         if (state === 'pending') break;
+      }
+
+      // A late event about a subscription that has since ended: its deletion speaks for it (and has cleared the record).
+      if (subscriptionEventIsStale(eventSub.status, sub.status)) {
+        console.warn(`[billing webhook] ${event.id} is stale: ${sub.id} is ${sub.status} now`);
+        break;
       }
 
       const matchedPlan = await getPlanFromPriceId(priceId);
@@ -388,6 +502,7 @@ export const POST = withObservability(async (req: Request) => {
               }
             }
           }
+          await recordSubscriptionAmount(sub);
           break;
         }
 
@@ -419,6 +534,8 @@ export const POST = withObservability(async (req: Request) => {
             stripe_subscription_id: sub.id,
             subscription_period: billingCycle,
             current_period_end: currentPeriodEnd,
+            // Stage 0 (fix 1): what this subscription charges, so the billing page shows it rather than the price list.
+            ...subscriptionAmount(sub),
           })
           .eq('stripe_customer_id', customerId)
           .select('id, name, slug')
@@ -543,6 +660,10 @@ export const POST = withObservability(async (req: Request) => {
             }
           }
         }
+      } else if (priceId) {
+        // Stage 0 (fix 2): unknown even among the replaced prices. Nothing changes on the record (as before), but it is no
+        // longer silent: an event and an email to the owner, at most once per subscription per day.
+        await tellOwnerOfUnrecognisedPrice(sub, priceId, customerId);
       }
       break;
     }
@@ -741,6 +862,8 @@ export const POST = withObservability(async (req: Request) => {
               stripe_subscription_id: null,
               subscription_period: null,
               current_period_end: null,
+              subscription_amount_cents: null,
+              subscription_currency: null,
               is_public: false,
               billing_suspended_at: new Date().toISOString(),
               billing_suspension_reason: 'Stripe subscription deleted',
@@ -773,6 +896,8 @@ export const POST = withObservability(async (req: Request) => {
               stripe_subscription_id: null,
               subscription_period: null,
               current_period_end: null,
+              subscription_amount_cents: null,
+              subscription_currency: null,
             })
             .eq('stripe_customer_id', customerId);
         } else {
@@ -785,6 +910,8 @@ export const POST = withObservability(async (req: Request) => {
               stripe_subscription_id: null,
               subscription_period: null,
               current_period_end: null,
+              subscription_amount_cents: null,
+              subscription_currency: null,
             })
             .eq('stripe_customer_id', customerId);
         }
@@ -802,10 +929,20 @@ export const POST = withObservability(async (req: Request) => {
         .maybeSingle();
       // A stray subscription's payment (or a Coaches Portal's) says nothing about the club's own.
       if (currentOrg && !isTheRecordsSubscription(currentOrg.stripe_subscription_id, invoiceSubscriptionId(invoice))) break;
+      // Stage 0 (S5): what the subscription is NOW decides the status, so a late payment never reactivates a cancelled
+      // subscription. An invoice that bills none (a one-off made in Stripe's dashboard) keeps the old rule. A failed read throws.
+      const paidSubscriptionId = invoiceSubscriptionId(invoice);
+      const status = paidSubscriptionId
+        ? statusAfterInvoicePaid((await stripe.subscriptions.retrieve(paidSubscriptionId)).status)
+        : 'active';
+      if (!status) {
+        console.warn(`[billing webhook] ${event.id} is stale: ${paidSubscriptionId} no longer pays`);
+        break;
+      }
       await supabaseAdmin
         .from('organizations')
         .update({
-          subscription_status: 'active',
+          subscription_status: status,
           ...(currentPeriodEnd ? { current_period_end: currentPeriodEnd } : {}),
         })
         .eq('stripe_customer_id', customerId);
@@ -824,16 +961,17 @@ export const POST = withObservability(async (req: Request) => {
           previousStatus: currentOrg.subscription_status,
           previousSubscriptionId: currentOrg.stripe_subscription_id,
           planId: currentOrg.plan_id,
-          status: 'active',
+          status,
           ignoreUpgrade: true,
           metadata: { stripeCustomerId: customerId, invoiceId: invoice.id },
         });
       }
 
-      // A failed payment's notice leaves Needs attention for everyone once billing is good again.
-      if (currentOrg) await clearSettled({ orgIds: [currentOrg.id], kinds: ['payment_failed'] });
+      // A failed payment's notice leaves Needs attention for everyone once billing is good again (not while another
+      // invoice keeps the subscription past due).
+      if (currentOrg && status !== 'past_due') await clearSettled({ orgIds: [currentOrg.id], kinds: ['payment_failed'] });
 
-      if (currentOrg && isRecoveryTransition(currentOrg.subscription_status, 'active')) {
+      if (currentOrg && isRecoveryTransition(currentOrg.subscription_status, status)) {
         await writePlatformEvent({
           eventType: 'subscription_recovered',
           source: 'stripe',
@@ -842,7 +980,7 @@ export const POST = withObservability(async (req: Request) => {
           previousPlanId: currentOrg.plan_id,
           planId: currentOrg.plan_id,
           previousSubscriptionStatus: currentOrg.subscription_status,
-          subscriptionStatus: 'active',
+          subscriptionStatus: status,
           metadata: { stripeCustomerId: customerId, invoiceId: invoice.id },
         });
       }
@@ -857,6 +995,13 @@ export const POST = withObservability(async (req: Request) => {
         .eq('stripe_customer_id', customerId)
         .maybeSingle();
       if (currentOrg && !isTheRecordsSubscription(currentOrg.stripe_subscription_id, invoiceSubscriptionId(failedInvoice))) break;
+      // Stage 0 (S5): a failure Stripe has since moved past (a later payment went through, or the subscription ended) must
+      // not mark the club past due or tell its owners. A failed read throws.
+      const failedSubscriptionId = invoiceSubscriptionId(failedInvoice);
+      if (failedSubscriptionId && !invoiceFailureIsCurrent((await stripe.subscriptions.retrieve(failedSubscriptionId)).status)) {
+        console.warn(`[billing webhook] ${event.id} is stale: ${failedSubscriptionId} has moved on`);
+        break;
+      }
       await supabaseAdmin
         .from('organizations')
         .update({ subscription_status: 'past_due' })
@@ -924,5 +1069,5 @@ export const POST = withObservability(async (req: Request) => {
     }
   }
 
-  return new Response('ok', { status: 200 });
-}, { route: '/api/billing/webhook' });
+  return 'processed';
+}

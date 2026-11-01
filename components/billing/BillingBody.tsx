@@ -108,7 +108,11 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   const preflight = s.cancellation.status === 'ready' ? s.cancellation.data : null;
   const changes = ownProfile.changes;
   const scheduled = s.move.status === 'ready' ? s.move.data.scheduledMove : null;
+  // Plans & pricing Stage 0 (fix 1): what the customer's own subscription charges, when the webhook has recorded it (in
+  // CAD, the only currency these words say); otherwise the price list, as before. The price, not the invoice total.
+  const paidCents = profile.key === ownProfile.key && org.subscriptionCurrency === 'cad' ? org.subscriptionAmountCents ?? null : null;
   const price = freeCard?.price ?? (comp ? W.founding.price : profile.config.monthlyPrice === 0 ? W.plan.free
+    : paidCents !== null ? W.plan.paidPrice(paidCents, org.subscriptionPeriod ?? 'monthly')
     : W.plan.price(org.subscriptionPeriod === 'annual' ? profile.config.annualPrice : profile.config.monthlyPrice, org.subscriptionPeriod ?? 'monthly'));
   const disabled = a.busy !== null;
   const premium = ownProfile.cancellationKind === 'premium';

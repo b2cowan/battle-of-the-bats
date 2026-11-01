@@ -21,6 +21,8 @@ import {
 import { TeamWorkspaceProvisioningError } from '@/lib/team-workspace-provisioning';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { captureError, withObservability } from '@/lib/observability';
+import { buyerStripeCustomer } from '@/lib/team-checkout-customer';
+import { hadSubscriptionBefore } from '@/lib/plan-move';
 
 function appendSuccess(url: string) {
   return `${url}${url.includes('?') ? '&' : '?'}success=1`;
@@ -321,22 +323,40 @@ export const POST = withObservability(async (req: Request) => {
     request: checkoutRequest,
   });
   const { stripe } = await import('@/lib/stripe');
-  const customer = await stripe.customers.create({
-    email: user.email,
-    metadata: {
-      checkoutKind: metadata.checkoutKind,
-      ownerUserId: user.id,
-      planKey: 'team',
+  // Stage 0 (S10): the buyer's own Stripe customer, found before one is made, so their history is in one place.
+  const { customerId, source } = await buyerStripeCustomer(user.id, {
+    async portalCustomerIds(userId) {
+      const { data, error } = await supabaseAdmin.from('team_workspaces').select('stripe_customer_id')
+        .eq('billing_owner_user_id', userId).neq('billing_mode', 'org_team_addon').neq('workspace_state', 'org_owned')
+        .not('stripe_customer_id', 'is', null).order('updated_at', { ascending: false }).limit(5);
+      if (error) throw error;
+      return ((data ?? []) as Array<{ stripe_customer_id: string }>).map(r => r.stripe_customer_id);
     },
+    async customersByOwner(userId) {
+      const res = await stripe.customers.search({ query: `metadata['ownerUserId']:'${userId}'`, limit: 10 });
+      return res.data.sort((a, b) => b.created - a.created).map(c => c.id);
+    },
+    async create() {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: { checkoutKind: metadata.checkoutKind, ownerUserId: user.id, planKey: 'team' },
+      });
+      return customer.id;
+    },
+    report: error => void captureError(error, { user: { id: user.id, email: user.email }, route: '/api/billing/create-team-checkout', method: 'POST' }),
   });
+
+  // Keep Premium is a coach who already had Premium free: a trial on top would only push the first charge out. And, as the
+  // club checkout rules, no second trial for a customer that ever held a subscription (a new customer has held none).
+  const trialDays = !keepPortal && mergedConfig.trialDays > 0 && !(source !== 'created' && await hadSubscriptionBefore(customerId))
+    ? mergedConfig.trialDays : 0;
 
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
-    customer: customer.id,
+    customer: customerId,
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
-      // Keep Premium is a coach who already had Premium free: a trial on top would only push the first charge out.
-      ...(!keepPortal && mergedConfig.trialDays > 0 ? { trial_period_days: mergedConfig.trialDays } : {}),
+      ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
       metadata,
     },
     metadata,

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureError } from '@/lib/observability';
+import { stripeKeyIsLive } from '@/lib/stripe-mode';
 import { connectAccountWebhookSecret, parseAccountEvent } from '@/lib/stripe-connect';
 import { syncPayoutsAccount } from '@/lib/online-payment-landing';
 
@@ -48,7 +49,7 @@ export const POST = withObservability(async (req: Request) => {
   if (!account) return NextResponse.json({ received: true });
 
   // A test event must never touch a live account's records, nor a live event a test environment's.
-  const liveKey = (process.env.STRIPE_SECRET_KEY ?? '').startsWith('sk_live_');
+  const liveKey = stripeKeyIsLive();
   if (event.livemode !== liveKey) return NextResponse.json({ received: true });
 
   const { data: seen } = await supabaseAdmin.from('stripe_connect_events').select('processed_at, attempts').eq('id', event.id).maybeSingle();

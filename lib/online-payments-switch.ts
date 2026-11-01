@@ -14,25 +14,18 @@
  * reads `onlinePaymentsOn()`.
  */
 
+import { stripeKeyIsTest } from './stripe-mode';
+
+export { stripeKeyIsLive, stripeKeyIsTest } from './stripe-mode';
+
 export const LIVE_PAYMENTS_ALLOWED: boolean = false;
-
-/** True when the server's Stripe key is a test key (`sk_test_`). A missing key is not a test key. */
-export function stripeKeyIsTest(key: string | undefined = process.env.STRIPE_SECRET_KEY): boolean {
-  return !!key && key.startsWith('sk_test_');
-}
-
-/**
- * True when the server's Stripe key is a LIVE key (`sk_live_`, or a restricted `rk_live_`). A Stripe object is this site's
- * only when its `livemode` matches (the support console's Money tab, refunds and Find, Stage 3).
- */
-export function stripeKeyIsLive(key: string | undefined = process.env.STRIPE_SECRET_KEY): boolean {
-  return !!key && /^(sk|rk)_live_/.test(key);
-}
 
 /** The one question every online-payments door asks. */
 export function onlinePaymentsOn(env: Record<string, string | undefined> = process.env): boolean {
   if (env.ONLINE_PAYMENTS_ENABLED !== 'true') return false;
   if (stripeKeyIsTest(env.STRIPE_SECRET_KEY)) return true;
+  // Deliberately strict, and the one prefix test outside lib/stripe-mode.ts: a restricted `rk_live_` key does NOT open
+  // family payments. Widening this is its own decision, not part of the shared live/test rule (Stage 0, S7).
   return LIVE_PAYMENTS_ALLOWED && !!env.STRIPE_SECRET_KEY?.startsWith('sk_live_');
 }
 

@@ -2,27 +2,29 @@
 
 **Generated:** 2026-11-01 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 76 divergence(s)** across dev/prod.
+**⚠️ 108 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 3 | 0 | — |
-| Columns | 28 | 0 | 0 |
-| Indexes | 17 | 0 | 0 |
-| Constraints | 18 | 0 | — |
-| RLS / CHECK | 9 | 0 | 0 (RLS state) |
+| Tables | 5 | 0 | — |
+| Columns | 48 | 0 | 0 |
+| Indexes | 22 | 0 | 0 |
+| Constraints | 20 | 0 | — |
+| RLS / CHECK | 12 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (3)
+### Only in DEV (5)
 - `league_practice_emails`
 - `league_practice_tells`
 - `league_team_practices_told`
+- `stripe_billing_events`
+- `stripe_price_ids_retired`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (28)
+### Only in DEV (48)
 - `league_practice_emails.created_at`
 - `league_practice_emails.division_id`
 - `league_practice_emails.guardian_email`
@@ -51,6 +53,26 @@ _none_
 - `league_team_practices_told.team_id`
 - `league_team_practices_told.told_at`
 - `league_team_practices_told.updated_at`
+- `organizations.subscription_amount_cents`
+- `organizations.subscription_currency`
+- `stripe_billing_events.attempts`
+- `stripe_billing_events.claimed_at`
+- `stripe_billing_events.customer_id`
+- `stripe_billing_events.error`
+- `stripe_billing_events.id`
+- `stripe_billing_events.ignored_reason`
+- `stripe_billing_events.livemode`
+- `stripe_billing_events.object_id`
+- `stripe_billing_events.processed_at`
+- `stripe_billing_events.received_at`
+- `stripe_billing_events.subscription_id`
+- `stripe_billing_events.type`
+- `stripe_price_ids_retired.billing_cycle`
+- `stripe_price_ids_retired.environment`
+- `stripe_price_ids_retired.plan_id`
+- `stripe_price_ids_retired.price_id`
+- `stripe_price_ids_retired.retired_at`
+- `stripe_price_ids_retired.retired_by_email`
 
 ### Only in PROD (0)
 _none_
@@ -59,7 +81,7 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (17)
+### Only in DEV (22)
 - `league_practice_emails_division_idx`
 - `league_practice_emails_notice_id_guardian_email_key`
 - `league_practice_emails_notice_idx`
@@ -77,6 +99,11 @@ _none_
 - `league_team_practices_told_org_idx`
 - `league_team_practices_told_pkey`
 - `league_team_practices_told_season_idx`
+- `stripe_billing_events_customer_idx`
+- `stripe_billing_events_pkey`
+- `stripe_billing_events_received_idx`
+- `stripe_billing_events_unprocessed_idx`
+- `stripe_price_ids_retired_pkey`
 
 ### Only in PROD (0)
 _none_
@@ -85,7 +112,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (18)
+### Only in DEV (20)
 - `league_practice_emails.league_practice_emails_division_id_fkey`
 - `league_practice_emails.league_practice_emails_notice_id_fkey`
 - `league_practice_emails.league_practice_emails_notice_id_guardian_email_key`
@@ -104,6 +131,8 @@ _none_
 - `league_team_practices_told.league_team_practices_told_pkey`
 - `league_team_practices_told.league_team_practices_told_season_id_fkey`
 - `league_team_practices_told.league_team_practices_told_team_id_fkey`
+- `stripe_billing_events.stripe_billing_events_pkey`
+- `stripe_price_ids_retired.stripe_price_ids_retired_pkey`
 
 ### Only in PROD (0)
 _none_
@@ -112,7 +141,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (9)
+### CHECK only in DEV (12)
 - `league_practice_emails.league_practice_emails_guardian_email_check`
 - `league_practice_emails.league_practice_emails_registration_ids_check`
 - `league_practice_emails.league_practice_emails_status_check`
@@ -122,6 +151,9 @@ _none_
 - `league_practice_tells.league_practice_tells_snapshot_check`
 - `league_practice_tells.league_practice_tells_told_before_check`
 - `league_team_practices_told.league_team_practices_told_snapshot_check`
+- `organizations.organizations_subscription_amount_cents_check`
+- `organizations.organizations_subscription_currency_check`
+- `stripe_billing_events.stripe_billing_events_ignored_reason_check`
 
 ### CHECK only in PROD (0)
 _none_

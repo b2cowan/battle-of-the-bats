@@ -433,6 +433,8 @@ const SPECIAL: Record<string, [Klass, string]> = {
   // without the filter an unacknowledged "Welcome to Premium" banner, and its retry, carried on into the club's team page.
   'app/api/coaches/[orgSlug]/teams/[teamId]/upgrade-summary/route.ts': ['tombstone-aware', 'the banner\'s read skips workspace_state org_owned, so a club never shows the portal\'s "Welcome to Premium" record'],
   'app/api/coaches/[orgSlug]/teams/[teamId]/upgrade-summary/retry/route.ts': ['tombstone-aware', 'the banner\'s retry skips workspace_state org_owned, so nothing re-copies from the free team into a club'],
+  // Plans & pricing Stage 0 Part 7: the buyer's own Stripe customer for a new portal checkout.
+  'app/api/billing/create-team-checkout/route.ts': ['tombstone-aware', 'the buyer\'s-customer read skips workspace_state org_owned (a portal that became a club bills on the club\'s customer now) and org_team_addon, so a club\'s customer is never lent to a coach\'s checkout'],
 };
 
 /** Every other production file that reads the tag: the list the scan found on 2026-10-30, each opened or read by the census helper. */

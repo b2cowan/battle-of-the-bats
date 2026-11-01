@@ -69,6 +69,51 @@ export async function subscriptionIsPaying(
   }
 }
 
+/*
+ * ── Stripe's CURRENT answer, not the event's copy (Plans & pricing Stage 0, S5) ──────────────────────────────────────
+ * Stripe does not deliver events in order. The webhook re-reads the subscription before it writes, and these say what a
+ * late event may still change once the current subscription is in hand.
+ */
+
+/**
+ * A subscription event is stale when it describes a subscription that was alive but Stripe now says it has ended: the
+ * ending's own event (`customer.subscription.deleted`) speaks for it, and a late `updated` must not write the ended
+ * subscription back onto a record the deletion already cleared. An event that itself reports the ending is not stale.
+ */
+export function subscriptionEventIsStale(eventStatus: string, currentStatus: string): boolean {
+  return isEndedSubscriptionStatus(currentStatus) && !isEndedSubscriptionStatus(eventStatus);
+}
+
+/**
+ * The status a paid invoice writes: the subscription's current one while it is paying (active, a $0 trial invoice's
+ * `trialing`, or `past_due` while another invoice is still open), and NOTHING (null) once it no longer pays: a late
+ * payment must never reactivate a cancelled subscription.
+ */
+export function statusAfterInvoicePaid(currentStatus: string): string | null {
+  return PAYING_STATUSES.has(currentStatus) ? currentStatus : null;
+}
+
+/**
+ * Whether a failed invoice still says something: not once the subscription has recovered (active, trialing; a later
+ * payment went through) or ended (its deletion speaks). Otherwise it is past due, as before.
+ */
+export function invoiceFailureIsCurrent(currentStatus: string): boolean {
+  return currentStatus !== 'active' && currentStatus !== 'trialing' && !isEndedSubscriptionStatus(currentStatus);
+}
+
 /** The one sentence a refused staff plan change shows (drawing G 10), on the pencil and from every route that refuses. */
 export const PAYING_CLUB_PLAN_REFUSAL =
   'This club pays through Stripe, so its plan changes there. The owner moves plan on their Plan & billing page, or cancel the subscription first. Changing it here would leave Stripe charging the old price.';
+
+/**
+ * What a subscription charges per period, for the record (Plans & pricing Stage 0, Part 6, mig 418): its first item's
+ * price. The PRICE, not the invoice total: a discount, a quantity above one and (later) tax are not in it. A price with no
+ * flat unit amount (tiered, metered) records null, and the billing page then shows the list price.
+ */
+export function subscriptionAmount(sub: { items?: { data?: Array<{ price?: { unit_amount?: number | null; currency?: string | null } | null }> } | null }): {
+  subscription_amount_cents: number | null; subscription_currency: string | null;
+} {
+  const price = sub.items?.data?.[0]?.price;
+  const cents = typeof price?.unit_amount === 'number' ? price.unit_amount : null;
+  return { subscription_amount_cents: cents, subscription_currency: cents === null ? null : price?.currency?.toLowerCase() ?? null };
+}

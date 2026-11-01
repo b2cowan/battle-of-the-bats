@@ -71,11 +71,20 @@ export async function clubStripeFacts(orgId: string): Promise<{ name: string; cu
   return { name: row.name, customerId, customerShared, subscriptionId: row.stripe_subscription_id, portalSubscriptionIds };
 }
 
-/** Stripe price → our plan and cycle, from the prices we configured (both modes: a price id is unique to its mode). */
+/**
+ * Stripe price → our plan and cycle, from the prices we configured (both modes: a price id is unique to its mode), and
+ * the prices a slot has since replaced (Stage 0 Part 5, mig 417), so a customer still on an old price is not "a price we
+ * do not know". A current slot wins over a retired row for the same id.
+ */
 export async function priceMap(): Promise<PriceMap> {
-  const { data, error } = await supabaseAdmin.from('stripe_prices').select('price_id, plan_id, billing_cycle').not('price_id', 'is', null);
-  if (error) throw error;
-  return new Map(((data ?? []) as Array<{ price_id: string; plan_id: string; billing_cycle: string }>)
+  const [current, retired] = await Promise.all([
+    supabaseAdmin.from('stripe_prices').select('price_id, plan_id, billing_cycle').not('price_id', 'is', null),
+    supabaseAdmin.from('stripe_price_ids_retired').select('price_id, plan_id, billing_cycle'),
+  ]);
+  if (current.error) throw current.error;
+  if (retired.error) throw retired.error;
+  type Row = { price_id: string; plan_id: string; billing_cycle: string };
+  return new Map([...(retired.data ?? []) as Row[], ...(current.data ?? []) as Row[]]
     .map(r => [r.price_id, { planId: r.plan_id, cycle: r.billing_cycle }] as const));
 }
 
