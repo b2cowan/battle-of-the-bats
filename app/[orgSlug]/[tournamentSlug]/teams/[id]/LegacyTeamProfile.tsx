@@ -6,7 +6,6 @@ import { downloadTeamScheduleICS } from '@/lib/team-calendar';
 import type { Game, PublicTeam, Division } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { teamColor, teamInitials, teamInk } from '@/lib/team-color';
-import SharePageButton from '@/components/public/SharePageButton';
 import FollowAlertsToggle from '@/components/public/FollowAlertsToggle';
 import { useOrgNav } from '@/components/OrgNavContext';
 import { useFollowedTeam, useAccountFollowedTeamIds, unfollowTeamEverywhere } from '@/lib/follow';
@@ -290,8 +289,8 @@ export default function TeamProfilePage({
                   </span>
                 )}
               </div>
-              {/* One ≥44px action row (R3-1): Follow stays labeled; calendar/alerts/
-                  share go icon-only on phones (labels stay on desktop, per the
+              {/* One ≥44px action row (R3-1): Follow stays labeled; calendar/alerts
+                  go icon-only on phones (labels stay on desktop, per the
                   icon+label-desktop / icon-only-mobile convention). */}
               <div className={styles.heroActions}>
                 <button
@@ -324,14 +323,6 @@ export default function TeamProfilePage({
                     labelClassName={styles.btnLabel}
                   />
                 )}
-                <SharePageButton
-                  url={`${orgHref(`/${tournamentSlug}/teams/${id}`)}?follow=${id}`}
-                  title={cleanedName}
-                  text={`Follow ${cleanedName} on FieldLogicHQ`}
-                  label="Share team"
-                  className={`${styles.followHeroBtn} ${styles.iconableBtn}`}
-                  labelClassName={styles.btnLabel}
-                />
               </div>
             </div>
 

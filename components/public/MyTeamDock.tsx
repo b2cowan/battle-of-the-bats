@@ -24,7 +24,6 @@ import { tournamentToday } from '@/lib/timezone';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import RollingNumber from '@/components/public/RollingNumber';
-import ShareScoreButton from '@/components/public/ShareScoreButton';
 import LocationLink from '@/components/LocationLink';
 import FollowAlertsToggle from '@/components/public/FollowAlertsToggle';
 import UnfollowConfirmSheet from '@/components/public/UnfollowConfirmSheet';
@@ -59,7 +58,6 @@ function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAlertsEnabled = fa
   const [teams, setTeams] = useState<PublicTeam[]>([]);
   const [games, setGames] = useState<Game[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
-  const [tournamentName, setTournamentName] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -100,7 +98,6 @@ function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAlertsEnabled = fa
       setTeams(data.teams ?? []);
       setGames(data.games ?? []);
       setVenues(data.venues ?? []);
-      setTournamentName(data.tournament?.name ?? '');
       setLoaded(true);
     });
     return () => { cancelled = true; };
@@ -195,16 +192,6 @@ function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAlertsEnabled = fa
   const myScore = liveGame ? ((liveGame.homeTeamId === team.id ? liveGame.homeScore : liveGame.awayScore) ?? 0) : null;
   const oppScore = liveGame ? ((liveGame.homeTeamId === team.id ? liveGame.awayScore : liveGame.homeScore) ?? 0) : null;
 
-  // Most recent scored game (live or final) → a shareable result card. A live game nobody has scored yet has no
-  // result to share, so the card offers the latest final until it does (D2: never a shared "LIVE 0–0").
-  const latestResult = teamGames
-    .filter(g => (g.status === 'completed' || g.status === 'submitted') && g.homeScore != null && g.awayScore != null)
-    .slice()
-    .sort((a, b) => (b.date.localeCompare(a.date) || (b.time ?? '').localeCompare(a.time ?? '')))[0] ?? null;
-  const shareGame = liveGame && !noScoreYet ? liveGame : latestResult;
-  const shareIsLive = !!liveGame && shareGame === liveGame;
-  const shareAwayName = shareGame ? (teams.find(t => t.id === shareGame.awayTeamId)?.name ?? shareGame.awayPlaceholder ?? 'TBD') : '';
-  const shareHomeName = shareGame ? (teams.find(t => t.id === shareGame.homeTeamId)?.name ?? shareGame.homePlaceholder ?? 'TBD') : '';
 
   // Tournament-timezone start instant so the countdown is correct regardless of the
   // viewer's device zone (and so it never goes stale at the UTC day boundary).
@@ -215,7 +202,6 @@ function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAlertsEnabled = fa
   // of the denormalized game.location snapshot the dock used to show.
   const venueLabel = resolveGameVenueLabel(game, venues);
   const venue = game.venueId ? venues.find(v => v.id === game.venueId) ?? null : null;
-  const shareVenueLabel = shareGame ? resolveGameVenueLabel(shareGame, venues) : '';
 
   // One live/next cluster serves the full bar AND the minimized pill (G1) —
   // the two renderings must never drift.
@@ -282,24 +268,6 @@ function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAlertsEnabled = fa
                 {nextGame.time ? ` · ${formatTime(nextGame.time)}` : ''}
               </span>
             </div>
-          )}
-          {shareGame && (
-            <ShareScoreButton
-              wrapClassName={styles.expandShare}
-              menuPlacement="up"
-              menuAlign="left"
-              gameHref={href(`/${tournamentSlug}/schedule/${shareGame.id}`)}
-              tournamentName={tournamentName}
-              awayName={shareAwayName}
-              homeName={shareHomeName}
-              awayScore={shareGame.awayScore ?? 0}
-              homeScore={shareGame.homeScore ?? 0}
-              statusLabel={shareIsLive ? 'LIVE' : 'FINAL'}
-              live={shareIsLive}
-              dateLabel={new Date(shareGame.date + 'T12:00:00').toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-              venueLabel={shareVenueLabel || null}
-              gameType={shareGame.isPlayoff ? (shareGame.bracketCode || 'Playoff') : null}
-            />
           )}
           {fanAlertsEnabled && (
             <div className={styles.expandAlerts}>

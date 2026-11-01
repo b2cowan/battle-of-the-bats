@@ -273,12 +273,6 @@
   text-align: center;
 }
 
-/* Share live score — the prominent action in the panel when a game is live. */
-/* Positioning wrapper for the share menu (compact Share button + popover). */
-.expandShare {
-  margin-top: 0.5rem;
-}
-
 .expandAlerts {
   margin-top: 0.5rem;
 }

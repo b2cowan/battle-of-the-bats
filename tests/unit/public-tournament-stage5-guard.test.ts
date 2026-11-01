@@ -21,7 +21,7 @@ describe('Stage 5 Part 1: server-selected bodies, legacy preserved', () => {
   it('the complete old bodies and their styles retain their bytes', () => {
     for (const [path, hash] of [
       ['components/public/TeamsContent.tsx', '7f200dae903de81ebe556ee7940c44725e2541f2ae153395b6719167771005ab'],
-      [`${ROOT}/[id]/LegacyTeamProfile.tsx`, '5c830912f621fbb3e73d2a77c38e2b2f2ca0769ec6e65089ff04cac1516640aa'],
+      [`${ROOT}/[id]/LegacyTeamProfile.tsx`, '7071c1db5de25d65b28e6ad927f7e349b77ef2435fedb3fb7aa2fa16fb42c58f'],
       ['app/[orgSlug]/teams/teams.module.css', '40217be79c184858c6faf9f486025b729d4a747a7b1c9c91db120dff568181c3'],
       [`${ROOT}/[id]/team-profile.module.css`, '64067fa3a959ff77eb4bd31b0cb07c8f5561dec7726f02ce14f24e2f2c31bc36'],
     ]) assert.equal(digest(readSource(path)), hash, path);

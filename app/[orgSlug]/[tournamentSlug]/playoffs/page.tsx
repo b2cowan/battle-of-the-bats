@@ -18,7 +18,6 @@ import type { DivisionStandingRow } from '@/lib/tie-breakers';
 import { isPublicPageEnabled, isPublicBracketVisible } from '@/lib/public-pages';
 import { formatTime, formatPoolName, splitTeamQualifier } from '@/lib/utils';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
-import SharePageButton from '@/components/public/SharePageButton';
 import styles from '@/components/public/PlayoffPicture.module.css';
 // Canonical soft LIVE chip — same classes the schedule + game-detail pages use.
 import liveStyles from '@/app/[orgSlug]/schedule/schedule.module.css';
@@ -132,10 +131,6 @@ export default async function PlayoffsPage({
     );
   }
 
-  const shareText = picture.divisions
-    .map(d => (d.seeds[0] ? `${d.divisionName}: ${d.seeds[0].teamName} #1 seed` : d.divisionName))
-    .join(' · ');
-
   const legacyBody = (
     <div className="page-content">
       {/* Hero — desktop/tablet only. On the mobile LIVE shell the unified event header
@@ -147,20 +142,13 @@ export default async function PlayoffsPage({
           <span className={styles.heroEyebrow}><Trophy size={13} /> Playoff Picture</span>
           <h1 className={styles.heroTitle}>The Bracket Is Set</h1>
           <p className={styles.heroSub}>{tournament.name} — here&apos;s the seeding, who plays who, and the numbers that got them there.</p>
-          <div className={styles.heroActions}>
-            <SharePageButton
-              url={`${publicBase}/playoffs`}
-              title={`${tournament.name} — Playoff Picture`}
-              text={shareText}
-              label="Share the bracket"
-              className="btn btn-primary btn-sm"
-            />
-            {showStandings && (
+          {showStandings && (
+            <div className={styles.heroActions}>
               <Link href={`${publicBase}/standings`} className="btn btn-outline btn-sm">
                 Full Bracket <ChevronRight size={14} />
               </Link>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -3,10 +3,8 @@
  * components/public/FollowTournamentStrip.tsx — Phase 6 (F1)
  *
  * The event ACTION ROW that sits directly under the unified event header on the tournament HOME
- * tab only: Follow (leading) + Share (secondary), one row, one baseline. Share used to live in a
- * separate right-aligned row below the hero; on mobile the hero is hidden, so the two landed
- * back-to-back on opposite edges and read as a zig-zag (owner call 2026-07-29, Option A). The
- * desktop share row is unchanged and now hides ≤900px, so exactly one Share renders per width.
+ * tab only: the Follow pill. Share used to sit beside it; it was removed (owner call 2026-11-01) —
+ * the only public-tournament shares left are the header icon and the single game page's.
  *
  * One tap follows the WHOLE event (not a team) — instantly, no account (free-first business
  * decision). States:
@@ -21,7 +19,6 @@
  */
 import { Star, X } from 'lucide-react';
 import { useTournamentFollowToggle } from '@/lib/hooks/useTournamentFollowToggle';
-import SharePageButton from '@/components/public/SharePageButton';
 import styles from './FollowTournamentStrip.module.css';
 
 import { hideOnClubOwnHost } from '@/components/public/hideOnClubOwnHost';
@@ -29,11 +26,9 @@ interface Props {
   orgSlug: string;
   tournamentSlug: string;
   tournamentName: string;
-  /** Path the Share partner sends (origin prepended by SharePageButton). */
-  shareUrl: string;
 }
 
-function FollowTournamentStrip({ orgSlug, tournamentSlug, tournamentName, shareUrl }: Props) {
+function FollowTournamentStrip({ orgSlug, tournamentSlug, tournamentName }: Props) {
   const { following, saving, showNudge, toggle, dismissNudge } = useTournamentFollowToggle(orgSlug, tournamentSlug, tournamentName);
 
   const returnPath = (() => {
@@ -52,14 +47,6 @@ function FollowTournamentStrip({ orgSlug, tournamentSlug, tournamentName, shareU
           <Star size={14} strokeWidth={2.2} fill={following ? 'currentColor' : 'none'} aria-hidden />
           {following ? 'Following' : 'Follow this tournament'}
         </button>
-        {/* The quieter partner: same height, same baseline, its own type register so
-            Follow stays the one branded thing in the row. */}
-        <SharePageButton
-          url={shareUrl}
-          title={tournamentName}
-          text="Live on FieldLogicHQ"
-          className={styles.share}
-        />
       </div>
 
       {showNudge && (

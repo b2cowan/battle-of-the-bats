@@ -223,7 +223,7 @@ export default async function TournamentPreviewSectionPage({
     if (!(await isPublicFrameOn())) notFound();
     if (!isPublicPageEnabled(tournament, 'standings')) {
       return <PublicChampionsPage standingsHidden cards={[]} homeHref={`/${orgSlug}/admin/tournaments/preview/${tournamentSlug}`}
-        tournamentName={tournament.name} isPreview />;
+        isPreview />;
     }
     const [rawGames, allTeams, divisions] = await Promise.all([
       getGames(tournament.id, readOptions),
@@ -239,7 +239,7 @@ export default async function TournamentPreviewSectionPage({
     const cards = playoffsComplete && divisions.every(division => division.scheduleVisibility === 'published')
       ? championCards(tierChampions, sortedDivisions.length > 1) : [];
     return <PublicChampionsPage standingsHidden={false} cards={cards} homeHref={`/${orgSlug}/admin/tournaments/preview/${tournamentSlug}`}
-      tournamentName={tournament.name} showPlayoffs isPreview />;
+      showPlayoffs isPreview />;
   }
 
   // ── Register (preview — the real form, with submission disabled) ───────────

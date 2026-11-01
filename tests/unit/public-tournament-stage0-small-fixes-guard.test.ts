@@ -44,8 +44,8 @@ describe('D2 · a live game nobody has scored', () => {
       assert.match(code, /\bNO_SCORE_YET\b/, `${file} says so in the one spelling`);
     }
   });
-  it('the follower dock never shares a live game nobody has scored', () => {
-    assert.match(readCode('components/public/MyTeamDock.tsx'), /const shareGame = liveGame && !noScoreYet \? liveGame : latestResult;/);
+  it('the follower dock has no share at all, so it can never share a live game nobody has scored (owner 2026-11-01)', () => {
+    assert.doesNotMatch(readCode('components/public/MyTeamDock.tsx'), /ShareScoreButton|shareGame/);
   });
   it('the home never prints the raw scores either side of a dash', () => {
     assert.doesNotMatch(readCode(HOME), /\{game\.awayScore\}–\{game\.homeScore\}/);

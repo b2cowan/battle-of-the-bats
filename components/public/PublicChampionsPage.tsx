@@ -19,14 +19,12 @@ import type { ChampionCardView } from '@/lib/public-host-card';
 import PublicTournamentState from './PublicTournamentState';
 import PublicChampions from './PublicChampions';
 import PublicDoorRow from './PublicDoorRow';
-import SharePageButton from './SharePageButton';
 import styles from './PublicChampionsPage.module.css';
 
 export default function PublicChampionsPage({
   standingsHidden,
   cards,
   homeHref,
-  tournamentName,
   showPlayoffs = false,
   isPreview = false,
 }: {
@@ -35,7 +33,6 @@ export default function PublicChampionsPage({
   /** Already D1-filtered by the caller (`onlyPublishedGames`); empty means no champion yet. */
   cards: ChampionCardView[];
   homeHref: string;
-  tournamentName: string;
   showPlayoffs?: boolean;
   isPreview?: boolean;
 }) {
@@ -74,9 +71,6 @@ export default function PublicChampionsPage({
     );
   }
 
-  const top = cards.filter(card => card.top);
-  const title = `${tournamentName} — ${top.length > 1 ? 'Champions' : 'Champion'}`;
-  const shareText = `${top.map(card => `${card.name}${card.division ? ` (${card.division})` : ''}`).join(', ')} — ${top.length > 1 ? 'Champions' : 'Champion'}`;
   return <div className={styles.page}>
     <h1 className="sr-only">Champions</h1>
     <div className={styles.content}>
@@ -86,8 +80,6 @@ export default function PublicChampionsPage({
           label="The playoff bracket" sub="Every playoff game and score" />}
         <PublicDoorRow href={isPreview ? null : `${homeHref}/standings`} label="Final standings" />
       </div>
-      {!isPreview && <SharePageButton url={`${homeHref}/champions`} title={title} text={shareText}
-        label="Share results" ariaLabel="Share results" className={styles.share} />}
     </div>
   </div>;
 }

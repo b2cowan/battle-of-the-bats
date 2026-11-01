@@ -47,7 +47,7 @@ describe('Stage 4 Part 1: both pages have one server-decided preview branch', ()
     const page = readSource(PLAYOFFS_PAGE).replace(/\r\n/g, '\n');
     const start = page.indexOf('  const legacyBody = ') + '  const legacyBody = '.length;
     const end = page.indexOf('\n  return legacyBody;', start);
-    assert.equal(digest(page.slice(start, end)), '5dfaa54531b4faa0b213e21eea8ff62ffc0f13e26be58d34fd18d58dd09324d6');
+    assert.equal(digest(page.slice(start, end)), 'a31e5296cc76ab27e75a4fd2a07e7aed2c7a676f4ccbc8997caa8c0a36c5cc2a');
   });
   it('exactly one frame-on page owns the bracket, now on Playoffs with both doors pointing there', () => {
     const standings = bracketOwners('components/public/PublicStandings.tsx');

@@ -86,8 +86,8 @@ describe('Stage 6 Part 3: the live and preview Champions readers use the existin
           assert.doesNotMatch(html, /Winner a|Winner b|HELD_BACK_WINNER|<article/);
         }
         assert.doesNotMatch(html, /PRIVATE_/);
-        if (preview) assert.doesNotMatch(html, /<a |Share results/);
-        else if (kind === 'one' || kind === 'several') assert.match(html, /Share results/);
+        if (preview) assert.doesNotMatch(html, /<a /);
+        assert.doesNotMatch(html, /Share results/);
       });
     }
     it(`${preview ? 'preview' : 'live'}: Standings-hidden suppresses every champion`, async () => {
@@ -97,11 +97,11 @@ describe('Stage 6 Part 3: the live and preview Champions readers use the existin
       assert.doesNotMatch(html, /Winner a|Share results|<article/);
     });
   }
-  it('keeps the switch-off recap and its share button', async () => {
+  it('keeps the switch-off recap, with no share button (owner 2026-11-01)', async () => {
     const html = await renderPage(fixture(), false, false);
     assert.match(html, /class="hero"/);
     assert.match(html, /the final results are in/);
-    assert.match(html, /Share results/);
+    assert.doesNotMatch(html, /Share results/);
   });
   for (const preview of [false, true]) {
     it(`withholds the ${preview ? 'preview' : 'live'} recap even if an unpublished division has no games`, async () => {
@@ -119,7 +119,7 @@ describe('Stage 6 Part 3: the live and preview Champions readers use the existin
     const html = await renderPage(data);
     assert.match(html, /Gold · Champion/); assert.match(html, /Silver Champion/);
     assert.equal((html.match(/<article/g) ?? []).length, 2);
-    assert.match(html, /Share results/);
+    assert.doesNotMatch(html, /Share results/);
   });
   it('retains the club forward and leaves the legacy JSX below the frame return', () => {
     const page = readCode('app/[orgSlug]/[tournamentSlug]/champions/page.tsx');

@@ -18,7 +18,6 @@ import {
 import { deriveTierChampions, tierBadgeLabel, isTournamentPlayoffsComplete } from '@/lib/champions';
 import { fanRoundLabel } from '@/lib/playoff-bracket';
 import { isGameLive, gameStartMs, hasNoScoreYet, NO_SCORE_YET, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
-import SharePageButton from '@/components/public/SharePageButton';
 import LocationLink from '@/components/LocationLink';
 import { resolveGameVenueLabel } from '@/lib/venue-label';
 import MyTournamentCard from '@/components/public/MyTournamentCard';
@@ -723,7 +722,6 @@ export default async function TournamentHomeContent({
   ) : null;
 
   const multiDivision = divisions.length > 1;
-  const topTierChampions = tierChampions.filter(c => c.isTopTier);
   // Headline a single centered card ONLY when the whole tournament produced exactly one
   // crowned team AND it's a genuine top-tier champion (one division, one bracket). Any
   // tiers or extra divisions → the per-division podium below, so every medalling tier
@@ -732,9 +730,6 @@ export default async function TournamentHomeContent({
   // that lone winner falls through to the podium (badged "Tier N Champion") instead of
   // being mis-shown as THE champion.
   const singleTierChampion = tierChampions.length === 1 && tierChampions[0].isTopTier;
-  // Share the top-tier winners; fall back to any decided tier winner in that same edge
-  // case so the share text is never an empty "— Champions".
-  const shareChampions = topTierChampions.length > 0 ? topTierChampions : tierChampions;
 
   const championBanner = isFinished && tierChampions.length > 0 ? (
     <section className={`section ${styles.championSection}`} id="champions">
@@ -793,26 +788,19 @@ export default async function TournamentHomeContent({
           </div>
         )}
 
-        <div className={styles.championShareRow}>
-          {/* The Champions recap inherits Standings visibility (it shows final
-              results/standings), so only offer it when Standings is public — same
-              gate as the pre-complete hero takeover. */}
-          {/* Differentiated from the record panel's primary "Full Standings" (C5):
-              this is the recap/story page, so it wears the outline weight and a
-              name that doesn't echo "Final ___". */}
-          {showStandingsPage && (
+        {/* The Champions recap inherits Standings visibility (it shows final
+            results/standings), so only offer it when Standings is public — same
+            gate as the pre-complete hero takeover. */}
+        {/* Differentiated from the record panel's primary "Full Standings" (C5):
+            this is the recap/story page, so it wears the outline weight and a
+            name that doesn't echo "Final ___". */}
+        {showStandingsPage && (
+          <div className={styles.championShareRow}>
             <Link href={`${publicBase}/champions`} className="btn btn-outline btn-sm">
               <Trophy size={16} /> Champions Recap
             </Link>
-          )}
-          <SharePageButton
-            url={showStandingsPage ? `${publicBase}/champions` : publicBase}
-            title={tournament.name}
-            text={`${shareChampions.map(c => `${c.champion}${multiDivision ? ` (${c.division})` : ''}`).join(', ')} — Champions`}
-            label="Share results"
-            className="btn btn-outline btn-sm"
-          />
-        </div>
+          </div>
+        )}
       </div>
     </section>
   ) : null;
@@ -975,16 +963,14 @@ export default async function TournamentHomeContent({
 
   return (
     <div className={styles.page}>
-      {/* F1: the mobile event ACTION ROW (Follow + Share) — HOME tab only, directly under the
+      {/* F1: the mobile event ACTION ROW (Follow) — HOME tab only, directly under the
           event header. Inside .page so it sits below the mobile header clearance (padding-top).
-          Live public affordance — never in the admin preview. Desktop keeps its own share row
-          below the hero (.eventShareRow), which hides ≤900px so Share renders once per width. */}
+          Live public affordance — never in the admin preview. */}
       {!isPreview && (
         <FollowTournamentStrip
           orgSlug={orgSlug}
           tournamentSlug={tournamentSlug}
           tournamentName={tournament.name}
-          shareUrl={publicBase}
         />
       )}
       {playoffsSet && (
@@ -1147,22 +1133,6 @@ export default async function TournamentHomeContent({
           <div className={styles.scrollLine} />
         </div>
       </section>
-      )}
-
-      {/* Share this event — the persistent header Share button was retired in "The Flip" P2 (the
-          top-right corner is the role pill for a hat-holder, or the fan's own space), so the
-          shareable event link now lives in the Overview content. Game score-card + champions
-          shares stay where they are (they're content-level already). Never in the admin preview. */}
-      {!isPreview && (
-        <div className={`container ${styles.eventShareRow}`}>
-          <SharePageButton
-            url={publicBase}
-            title={tournament.name}
-            text="Live on FieldLogicHQ"
-            label="Share this event"
-            className="btn btn-outline btn-sm"
-          />
-        </div>
       )}
 
       {liveNowSection}

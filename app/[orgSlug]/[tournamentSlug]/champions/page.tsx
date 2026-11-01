@@ -18,7 +18,6 @@ import { isPublicPageEnabled, isPublicBracketVisible } from '@/lib/public-pages'
 import { formatPoolName } from '@/lib/utils';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import PublicChampionsPage from '@/components/public/PublicChampionsPage';
-import SharePageButton from '@/components/public/SharePageButton';
 import styles from '@/components/public/ChampionsRecap.module.css';
 import { orgLinks } from '@/lib/org-links';
 import { isPublicFrameOn } from '@/lib/public-frame-server';
@@ -46,7 +45,7 @@ export default async function ChampionsPage({
   // Standings page's visibility — an organizer who hid Standings must not have the final
   // results leaked through this URL (same rule as the Playoff Picture).
   if (!isPublicPageEnabled(tournament, 'standings')) {
-    if (frameOn) return <PublicChampionsPage standingsHidden cards={[]} homeHref={publicBase} tournamentName={tournament.name} />;
+    if (frameOn) return <PublicChampionsPage standingsHidden cards={[]} homeHref={publicBase} />;
     return (
       <div className="page-content">
         <div className="section">
@@ -89,7 +88,7 @@ export default async function ChampionsPage({
   const frameResultsWithheld = frameOn && divisions.some(division => division.scheduleVisibility !== 'published');
   if (!playoffsComplete || tierChampions.length === 0 || frameResultsWithheld) {
     if (frameOn) return <PublicChampionsPage standingsHidden={false} cards={[]} homeHref={publicBase}
-      tournamentName={tournament.name} showPlayoffs={isPublicBracketVisible(tournament)} />;
+      showPlayoffs={isPublicBracketVisible(tournament)} />;
     return (
       <div className="page-content">
         <div className="section">
@@ -112,19 +111,15 @@ export default async function ChampionsPage({
 
   if (frameOn) {
     return <PublicChampionsPage standingsHidden={false} cards={championCards(tierChampions, sortedDivisions.length > 1)}
-      homeHref={publicBase} tournamentName={tournament.name} showPlayoffs={isPublicBracketVisible(tournament)} />;
+      homeHref={publicBase} showPlayoffs={isPublicBracketVisible(tournament)} />;
   }
 
   // Final standings per division.
   const standingsByDivision: Record<string, DivisionStandingRow[]> =
     await getPublicStandingsByDivision(tournament, sortedDivisions, { games: allGames, teams: allTeams });
 
-  const multiDivision = sortedDivisions.length > 1;
   const topChampions = tierChampions.filter(c => c.isTopTier);
   const heroTitle = topChampions.length === 1 ? topChampions[0].champion : 'Champions';
-  const shareText = `${topChampions
-    .map(c => `${c.champion}${multiDivision ? ` (${c.division})` : ''}`)
-    .join(', ')} — ${topChampions.length > 1 ? 'Champions' : 'Champion'}`;
 
   return (
     <div className="page-content">
@@ -136,13 +131,6 @@ export default async function ChampionsPage({
           <h1 className={styles.heroTitle}>{heroTitle}</h1>
           <p className={styles.heroSub}>{tournament.name} — the final results are in. Congratulations to every team that competed.</p>
           <div className={styles.heroActions}>
-            <SharePageButton
-              url={`${publicBase}/champions`}
-              title={`${tournament.name} — ${topChampions.length > 1 ? 'Champions' : 'Champion'}`}
-              text={shareText}
-              label="Share results"
-              className="btn btn-primary btn-sm"
-            />
             <Link href={`${publicBase}/standings`} className="btn btn-outline btn-sm">
               Full Standings <ChevronRight size={14} />
             </Link>

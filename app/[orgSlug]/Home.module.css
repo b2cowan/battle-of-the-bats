@@ -1766,23 +1766,6 @@
   border-radius: 10px;
 }
 
-/* "Share this event" — sits just under the hero on the Overview, right-aligned where the header
-   Share button used to live before "The Flip" P2 moved it into the page (layout only; the button
-   carries its own global .btn styling, so no color declared here — public-token ratchet safe). */
-.eventShareRow {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 1rem;
-  margin-bottom: 0.25rem;
-}
-
-/* ≤900px the hero is hidden, so this row used to land right under the follow strip — one
-   button on the left edge, one on the right, two heights (the "stagger", owner 2026-07-29).
-   Share now rides IN the follow strip on mobile (Option A), so this row is desktop-only. */
-@media (max-width: 900px) {
-  .eventShareRow { display: none; }
-}
-
 /* CSS-Modules keyframe scoping fix (2026-07-27). The 7 `animation: fadeInUp ...` rules in
    this file referenced the GLOBAL @keyframes in globals.css. Turbopack rewrites animation
    names in a module to the module-scoped identifier, so those references resolved to a
