@@ -1,12 +1,9 @@
 import { stripe } from '@/lib/stripe';
 import { PLAN_CONFIG, type BillingCycle } from '@/lib/plan-config';
 import { getPlanFromPriceId } from '@/lib/stripe-prices';
-import {
-  applyCoachesPortalStripeRetention,
-  restoreRetainedDowngradeTournaments,
-  retentionDateLabel,
-  retentionDeadline,
-} from '@/lib/billing-retention';
+import { restoreRetainedDowngradeTournaments } from '@/lib/billing-retention';
+import { endingForDeletedSubscription, recordStripeSignal } from '@/lib/plan-ending';
+import { endingAccountForSubscription, endingDeps, readEndingAccount, readPendingEnding, withdrawPendingEnding } from '@/lib/plan-ending-server';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { isPastDueTransition, isRecoveryTransition, writeGrowthEvent, writePlatformEvent } from '@/lib/platform-events';
 import {
@@ -24,13 +21,12 @@ import { applyPlanChangeSideEffects } from '@/lib/plan-move';
 import { isInAppUpMove } from '@/lib/plan-growth';
 import { clubNameFromMetadata } from '@/lib/workspace-upgrade';
 import { restoreAfterReactivation } from '@/lib/billing-reactivation';
-import { trialEndingHtml, welcomeBackHtml, teamWorkspaceCancelledHtml, SITE_URL, ADMIN_EMAIL, sendEmail, escapeHtml } from '@/lib/email';
+import { trialEndingHtml, welcomeBackHtml, SITE_URL, ADMIN_EMAIL, sendEmail, escapeHtml } from '@/lib/email';
 import { stripeDashboardBase, stripeKeyIsLive } from '@/lib/stripe-mode';
 import {
   handleSubscriptionChargeEvent, isSubscriptionChargeEvent, type SubscriptionChargeDeps,
 } from '@/lib/stripe-subscription-charges';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
-import { teamWorkspaceDisplayName, teamWorkspaceReactivatePath } from '@/lib/coaches-portal-routes';
 import { cancelScheduledEmail } from '@/lib/email-sender';
 import { notify } from '@/lib/notify';
 import { syncFeeInvoiceFromEvent } from '@/lib/platform-stripe-fees';
@@ -45,7 +41,6 @@ import {
   subscriptionEventIsStale, subscriptionIsPaying,
 } from '@/lib/stripe-billing-state';
 import { receiveBillingEvent, type BillingEventOutcome } from '@/lib/stripe-billing-events';
-import { closePagesIfPaymentsEnded } from '@/lib/online-payment-endings';
 import { getBillingHref, billingUrlOrgFromRow } from '@/lib/billing-urls';
 
 export const runtime = 'nodejs';
@@ -81,6 +76,8 @@ function subscriptionItemId(sub: Stripe.Subscription): string | null {
 
 async function cancelPriorTeamSubscription(subscriptionId: string | null | undefined, newSubscriptionId: string | null | undefined) {
   if (!subscriptionId || subscriptionId === newSubscriptionId || !subscriptionId.startsWith('sub_')) return;
+  // The club's subscription replaces this one: a waiting cancel on it is withdrawn, or its deletion would end the portal.
+  await withdrawPendingEnding({ subscriptionId }, 'Replaced by the club’s subscription');
   try {
     await stripe.subscriptions.cancel(subscriptionId);
   } catch (error) {
@@ -412,6 +409,13 @@ async function runVerifiedBillingEvent(event: Stripe.Event, customerId: string |
         if (state === 'pending') break;
       }
 
+      // Plans end at renewal (Stage 1): the waiting cancel agrees with Stripe — recorded when a cancel is set in Stripe's
+      // own portal (or a dated cancel_at), withdrawn when both signals clear. AFTER the next-season block, so a placeholder
+      // that is pending or withdrawn never gets one; from the LIVE subscription, so a late event cannot undo a Keep.
+      // Only for the subscription our record follows (a Coaches Portal's, or the club's on file).
+      const endingAccount = await endingAccountForSubscription(sub.id, customerId);
+      if (endingAccount) await recordStripeSignal(endingAccount, sub, endingDeps);
+
       // A late event about a subscription that has since ended: its deletion speaks for it (and has cleared the record).
       if (subscriptionEventIsStale(eventSub.status, sub.status)) {
         console.warn(`[billing webhook] ${event.id} is stale: ${sub.id} is ${sub.status} now`);
@@ -701,54 +705,19 @@ async function runVerifiedBillingEvent(event: Stripe.Event, customerId: string |
       });
 
       if (syncedTeamWorkspace) {
-        await writePlatformEvent({
-          eventType: 'subscription_canceled',
-          source: 'stripe',
-          sourceEventId: `${event.id}:team_subscription_canceled`,
-          planId: 'team',
-          subscriptionStatus: 'canceled',
-          metadata: { stripeCustomerId: customerId, stripeSubscriptionId: sub.id, scope: 'team_workspace' },
-        });
-
+        // The `subscription_canceled` event has ONE writer, the ending (keyed to its intent, with the portal's org) — this
+        // arm used to write a second, org-less one, so an owner's cancel counted twice in churn.
         const { data: cancelledWs } = await supabaseAdmin
           .from('team_workspaces')
           .select('id, workspace_org_id')
           .eq('stripe_subscription_id', sub.id)
           .maybeSingle();
         if (cancelledWs?.workspace_org_id) {
-          // Retention first — the email states its deadline. When the in-app or platform-admin
-          // cancel already retained this workspace, that door sent its own email: do not send a
-          // second one.
-          const retention = await applyCoachesPortalStripeRetention({
-            workspaceOrgId: cancelledWs.workspace_org_id,
-            teamWorkspaceId: cancelledWs.id,
-          });
-          if (!retention.applied || !retention.retentionUntil) break;
-          const retentionUntil = retentionDateLabel(retention.retentionUntil);
-
-          const [wsOwnerEmail, wsOrg] = await Promise.all([
-            getOrgOwnerEmail(cancelledWs.workspace_org_id),
-            supabaseAdmin
-              .from('organizations')
-              .select('name, slug')
-              .eq('id', cancelledWs.workspace_org_id)
-              .maybeSingle()
-              .then(r => r.data),
-          ]);
-          if (wsOwnerEmail && wsOrg) {
-            // Team name alone (the copy supplies "Coaches Portal"); Resubscribe reactivates THIS
-            // workspace rather than opening the new-portal signup.
-            const workspaceName = teamWorkspaceDisplayName(wsOrg.name);
-            const resubscribeUrl = `${SITE_URL}${teamWorkspaceReactivatePath(wsOrg)}`;
-            await sendTransactionalEmail({
-              key: 'team_workspace_cancelled',
-              to: wsOwnerEmail,
-              vars: { workspaceName, resubscribeUrl, retentionUntil },
-              defaultSubject: `Your ${workspaceName} Coaches Portal has been cancelled`,
-              defaultHtml: teamWorkspaceCancelledHtml({ workspaceName, resubscribeUrl, retentionUntil }),
-              orgId: cancelledWs.workspace_org_id,
-            });
-          }
+          // Plans end at renewal (Stage 1): THE ending — the waiting cancel's (with the owner's reason and date), else this
+          // subscription's own applied one means a door already ended it (and sent its email), else Stripe ended it
+          // with nobody asking. Records, archive, suspension, pay pages, the one event and the email are all in it.
+          const account = await readEndingAccount(cancelledWs.workspace_org_id);
+          if (account) await endingForDeletedSubscription(account, sub, endingDeps);
         }
         break;
       }
@@ -768,153 +737,30 @@ async function runVerifiedBillingEvent(event: Stripe.Event, customerId: string |
       }
 
       if (org) {
-        // Check whether an in-app confirm route (cancel or downgrade-to-free) already
-        // applied a retention intent. Select intent_type so we can differentiate the
-        // update applied below.
-        const { data: existingIntent } = await supabaseAdmin
-          .from('billing_retention_intents')
-          .select('id, intent_type')
-          .eq('org_id', org.id)
-          .eq('status', 'applied')
-          .in('intent_type', ['cancellation', 'downgrade'])
-          .order('applied_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        // Plans end at renewal (Stage 1): THE ending (lib/plan-ending.ts). The waiting cancel first — it carries the
+        // owner's reason and the date; the ending promotes it in place. Else this subscription's OWN applied ending (an End
+        // now, an immediate cancel, a downgrade to free) means a door already ran it. Else Stripe ended it with nobody
+        // asking (a card that failed for good): records, archive, suspension, the one `subscription_canceled` event and the
+        // pay pages closing, as before.
+        //
+        // ⚠ The old check took "the latest applied cancellation or downgrade, at any age": a stale downgrade from an earlier
+        // year let a later paid plan that Stripe ended skip its suspension and stay free for good. The applied row must now
+        // belong to THIS subscription (review S4).
+        const account = await readEndingAccount(org.id);
+        if (account) await endingForDeletedSubscription(account, sub, endingDeps);
 
-        if (!existingIntent) {
-          // Stripe-initiated deletion (payment failure, portal cancel, etc.) — run full
-          // retention logic and suspend the org.
-          const retentionUntil = retentionDeadline();
-          const { data: intent } = await supabaseAdmin
-            .from('billing_retention_intents')
-            .insert({
-              org_id: org.id,
-              intent_type: 'cancellation',
-              status: 'applied',
-              from_plan: org.plan_id,
-              target_plan: null,
-              retention_until: retentionUntil,
-              reason: 'Stripe subscription deleted',
-              created_by_email: 'stripe-webhook',
-              applied_at: new Date().toISOString(),
-            })
-            .select('id')
-            .single();
-
-          const { data: tournaments } = await supabaseAdmin
-            .from('tournaments')
-            .select('id, name, slug, status, year, start_date, end_date')
-            .eq('org_id', org.id)
-            .neq('status', 'archived');
-
-          if (intent && tournaments && tournaments.length > 0) {
-            await supabaseAdmin
-              .from('tournaments')
-              .update({ status: 'archived', is_active: false })
-              .eq('org_id', org.id)
-              .in('id', tournaments.map(t => t.id));
-
-            await supabaseAdmin
-              .from('billing_retained_records')
-              .insert(tournaments.map(t => ({
-                intent_id: intent.id,
-                org_id: org.id,
-                record_type: 'tournament',
-                record_id: t.id,
-                display_name: t.name,
-                retained_state: 'retained_inactive',
-                retention_until: retentionUntil,
-                metadata: {
-                  previousStatus: t.status,
-                  slug: t.slug,
-                  year: t.year,
-                  startDate: t.start_date,
-                  endDate: t.end_date,
-                  retentionReason: 'stripe_subscription_deleted',
-                  fromPlan: org.plan_id,
-                },
-              })));
-          }
-
-          if (intent) {
-            await supabaseAdmin
-              .from('billing_retained_records')
-              .insert({
-                intent_id: intent.id,
-                org_id: org.id,
-                record_type: 'account',
-                record_id: null,
-                display_name: org.name,
-                retained_state: 'retained_inactive',
-                retention_until: retentionUntil,
-                metadata: {
-                  retentionReason: 'stripe_subscription_deleted',
-                  fromPlan: org.plan_id,
-                },
-              });
-          }
-
-          // Stripe-initiated: full suspension update.
-          await supabaseAdmin
-            .from('organizations')
-            .update({
-              subscription_status: 'canceled',
-              stripe_subscription_id: null,
-              subscription_period: null,
-              current_period_end: null,
-              subscription_amount_cents: null,
-              subscription_currency: null,
-              is_public: false,
-              billing_suspended_at: new Date().toISOString(),
-              billing_suspension_reason: 'Stripe subscription deleted',
-            })
-            .eq('stripe_customer_id', customerId);
-
-          await writePlatformEvent({
-            eventType: 'subscription_canceled',
-            source: 'stripe',
-            sourceEventId: `${event.id}:subscription_canceled`,
-            orgId: org.id,
-            previousPlanId: org.plan_id,
-            planId: org.plan_id,
-            previousSubscriptionStatus: org.subscription_status,
-            subscriptionStatus: 'canceled',
-            metadata: { stripeCustomerId: customerId, reason: 'Stripe subscription deleted' },
-          });
-          // 12d-2 (ask 11): a suspension the owner didn't choose stops online payments now — open pay pages close. LAST, after
-          // the event is written, so a slow Stripe can never cost the event on a retry (/review of Part 3); a suspended club
-          // is refused Pay now by the pay facts whatever happens here.
-          await closePagesIfPaymentsEnded(org.id, 'stripe suspension', { ended: true });
-        } else if (existingIntent.intent_type === 'cancellation') {
-          // In-app cancellation already applied — org is already suspended. Clear the
-          // Stripe subscription fields that only become accurate once Stripe confirms
-          // the deletion. subscription_status, is_public, and billing_suspended_at
-          // were already set correctly by the cancel/confirm route.
-          await supabaseAdmin
-            .from('organizations')
-            .update({
-              stripe_subscription_id: null,
-              subscription_period: null,
-              current_period_end: null,
-              subscription_amount_cents: null,
-              subscription_currency: null,
-            })
-            .eq('stripe_customer_id', customerId);
-        } else {
-          // intent_type === 'downgrade' (downgrade-to-free): confirm route already set
-          // plan_id='tournament' and subscription_status='active'. Clear Stripe fields
-          // only — do NOT set subscription_status='canceled' or is_public=false.
-          await supabaseAdmin
-            .from('organizations')
-            .update({
-              stripe_subscription_id: null,
-              subscription_period: null,
-              current_period_end: null,
-              subscription_amount_cents: null,
-              subscription_currency: null,
-            })
-            .eq('stripe_customer_id', customerId);
-        }
+        // Every path: the Stripe subscription fields become accurate only now that Stripe confirms the deletion. A downgrade
+        // to free keeps its plan and status (the confirm route set them); an ending has already set canceled and suspended.
+        await supabaseAdmin
+          .from('organizations')
+          .update({
+            stripe_subscription_id: null,
+            subscription_period: null,
+            current_period_end: null,
+            subscription_amount_cents: null,
+            subscription_currency: null,
+          })
+          .eq('stripe_customer_id', customerId);
       }
       break;
     }
@@ -1047,6 +893,8 @@ async function runVerifiedBillingEvent(event: Stripe.Event, customerId: string |
         .eq('stripe_customer_id', customerId)
         .maybeSingle();
       if (!org || !isTheRecordsSubscription(org.stripe_subscription_id, sub.id)) break;
+      // Plans end at renewal (G5): an account that cancelled is not asked to add a card for a plan it is leaving.
+      if (sub.cancel_at_period_end || sub.cancel_at || await readPendingEnding(org.id)) break;
 
       const ownerEmail = await getOrgOwnerEmail(org.id);
       if (!ownerEmail) break;

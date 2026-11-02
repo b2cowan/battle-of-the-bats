@@ -19,6 +19,8 @@ import { captureError, captureAndJson, withObservability } from '@/lib/observabi
 import { ownPlanOf } from '@/lib/entitlement-grants';
 import { closePagesIfPaymentsEnded } from '@/lib/online-payment-endings';
 import { getBillingHref } from '@/lib/billing-urls';
+import { futureMoveAnswer } from '@/lib/plan-ending';
+import { readPendingEnding } from '@/lib/plan-ending-server';
 
 type ConfirmBody = {
   targetPlan?: unknown;
@@ -50,6 +52,11 @@ export const POST = withObservability(async (req: Request) => {
   if (!isLowerPlan(ownPlanOf(ctx.org), targetPlan)) {
     return Response.json({ error: 'You can only confirm a downgrade to a lower plan.' }, { status: 400 });
   }
+  // Plans end at renewal (Stage 1): while a cancel waits, a downgrade would drop the plan now and the end date would then
+  // suspend a free account. Keep {Plan} first (the one rule for a subscription's future — refuse in plain words).
+  const pendingEnding = await readPendingEnding(ctx.org.id);
+  const refusal = futureMoveAnswer('downgrade', { ownPlan: ownPlanOf(ctx.org), pending: !!pendingEnding, pendingEndsAt: pendingEnding?.effectiveAt ?? null });
+  if (refusal.answer === 'refuse') return Response.json({ error: refusal.reason, code: 'subscription_ending' }, { status: 409 });
 
   const preflight = await buildDowngradePreflight(ctx.org, targetPlan);
   const keepTournamentIds = normalizeKeepIds(body.keepTournamentIds);

@@ -17,6 +17,10 @@
  * cancel at season's end and return for next year's tryouts), warned 30 days out. Recorded in
  * docs/agents/strategy/BUSINESS_DECISIONS.md.
  *
+ * Plans end at renewal (Stage 1, 2026-11-01): every door — the owner's, the platform admin's, Stripe ending it — now
+ * reaches ONE ending (lib/plan-ending.ts), and its email is sent from ONE place (lib/plan-ending-server.ts). The three
+ * promises above are pinned there, and the doors are held to sending none of their own.
+ *
  * ⚠ IT SCANS CODE. The email senders are two webhook/route branches nobody exercises by hand.
  */
 import assert from 'node:assert/strict';
@@ -29,7 +33,9 @@ import { teamWorkspaceReactivatePath } from '../../lib/coaches-portal-routes';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 
-const SENDERS = [
+const ENDING = 'lib/plan-ending.ts';
+const SENDER = 'lib/plan-ending-server.ts';
+const DOORS = [
   'app/api/billing/cancel/confirm/route.ts',
   'app/api/billing/webhook/route.ts',
   // Review 2026-09-24: this door still sent the generic ORG email to a Coaches Portal owner.
@@ -43,32 +49,31 @@ test('the reactivation path names the workspace and the bare team name', () => {
   );
 });
 
-for (const rel of SENDERS) {
-  test(`${rel}: the cancelled email uses the team name, the reactivation door, and a deadline`, () => {
-    const src = read(rel);
-    const at = src.indexOf("key: 'team_workspace_cancelled'");
-    assert.ok(at > 0, 'the Coaches Portal cancellation email is sent here');
-    const block = src.slice(Math.max(0, at - 1200), at + 800);
-    assert.match(block, /teamWorkspaceDisplayName\(/, 'pass the team name, not the "{team} Coaches Portal" org name');
-    assert.match(block, /teamWorkspaceReactivatePath\(/, 'Resubscribe must reactivate THIS workspace');
-    assert.doesNotMatch(block, /\$\{SITE_URL\}\/coaches\/start`/, 'a bare /coaches/start is the new-portal signup');
-    assert.match(block, /retentionUntil/, 'the email states the date the team is kept until');
-  });
-}
+test('the cancelled email uses the team name, the reactivation door, and a deadline — sent by the one ending only', () => {
+  const src = read(SENDER);
+  const at = src.indexOf("key: 'team_workspace_cancelled'");
+  assert.ok(at > 0, 'the Coaches Portal cancellation email is sent here');
+  const block = src.slice(Math.max(0, at - 1200), at + 800);
+  assert.match(block, /teamWorkspaceDisplayName\(/, 'pass the team name, not the "{team} Coaches Portal" org name');
+  assert.match(block, /teamWorkspaceReactivatePath\(/, 'Resubscribe must reactivate THIS workspace');
+  assert.doesNotMatch(block, /\$\{SITE_URL\}\/coaches\/start`/, 'a bare /coaches/start is the new-portal signup');
+  assert.match(block, /retentionUntil/, 'the email states the date the team is kept until');
+  for (const rel of DOORS) assert.doesNotMatch(read(rel), /key: 'team_workspace_cancelled'/, `${rel} sends no email of its own`);
+});
 
 test('a Stripe-side end retains the workspace before emailing, and never double-emails', () => {
-  const src = read('app/api/billing/webhook/route.ts');
-  const retain = src.indexOf('applyCoachesPortalStripeRetention({');
-  const send = src.indexOf("key: 'team_workspace_cancelled'");
-  assert.ok(retain > 0 && retain < send, 'retention is applied before the email');
-  assert.match(src.slice(retain, send), /if \(!retention\.applied/, 'skip the email when another door already retained it');
-
-  // "Already retained" has no age window — a late re-send must not re-retain and quote a later date.
-  const helper = read('lib/billing-retention.ts');
-  const body = helper.slice(helper.indexOf('export async function applyCoachesPortalStripeRetention'));
-  const check = body.slice(0, body.indexOf('if (existing)'));
-  assert.match(check, /retentionReason', COACHES_PORTAL_RETENTION_REASON/);
-  assert.doesNotMatch(check, /\.(gte|gt)\('retained_at'/, 'no age window on the already-retained check');
+  const src = read(ENDING);
+  const body = src.slice(src.indexOf('export async function applyEnding'));
+  const retain = body.indexOf('await deps.insertRecords(');
+  const send = body.indexOf('await deps.sendEndedEmail(');
+  assert.ok(retain > 0 && retain < send, 'retention is recorded before the email');
+  assert.match(body.slice(retain, send), /if \(notify && !endedEmailSentAt\)/, 'one email per ending, whatever replays');
+  // An ending that already ran (a door ended it and sent its email) is not run again by the deletion that follows. No age
+  // window either: the applied row is recognised by ITS subscription, so a late re-send finds it and quotes no later date.
+  const deleted = src.slice(src.indexOf('export async function endingForDeletedSubscription'));
+  assert.ok(deleted.indexOf("if (applied) return { kind: 'already'") > 0);
+  assert.ok(deleted.indexOf("if (applied) return { kind: 'already'") < deleted.lastIndexOf('applyEnding('));
+  assert.match(read('app/api/billing/webhook/route.ts'), /if \(account\) await endingForDeletedSubscription\(account, sub, endingDeps\);/);
 });
 
 test('a Coaches Portal is kept 365 days and warned 30 days out; the cancel screen reads the same number', () => {
@@ -82,15 +87,9 @@ test('a Coaches Portal is kept 365 days and warned 30 days out; the cancel scree
 });
 
 test('every door that ends a Coaches Portal tags its records for reactivation', () => {
-  for (const rel of [
-    'app/api/billing/cancel/confirm/route.ts',
-    'app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts',
-  ]) {
-    assert.match(read(rel), /retentionDaysFor\(/, `${rel} picks the window by account kind`);
-  }
-  assert.match(
-    read('app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts'),
-    /COACHES_PORTAL_RETENTION_REASON/,
-    'the platform-admin cancel tags a Coaches Portal so reactivation restores it',
-  );
+  // The one ending picks the window by account kind and tags a Coaches Portal with the reason reactivation restores.
+  assert.match(read(SENDER), /retentionDays: account => retentionDaysFor\(/);
+  assert.match(read(ENDING), /\? 'coaches_portal_cancellation'/);
+  assert.match(read('lib/billing-retention.ts'), /COACHES_PORTAL_RETENTION_REASON = 'coaches_portal_cancellation';/);
+  for (const rel of DOORS) assert.match(read(rel), /readEndingAccount\(/, `${rel} ends through the one ending`);
 });

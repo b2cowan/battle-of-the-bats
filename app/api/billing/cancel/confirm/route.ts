@@ -1,27 +1,21 @@
 import { getAuthContextWithRole, forbidden, unauthorized } from '@/lib/api-auth';
-import {
-  buildCancellationPreflight,
-  retentionDateLabel,
-  retentionDaysFor,
-  retentionDeadline,
-  writeOrgBillingAudit,
-} from '@/lib/billing-retention';
-import { writePlatformEvent } from '@/lib/platform-events';
-import { stripe } from '@/lib/stripe';
-import { supabaseAdmin } from '@/lib/supabase-admin';
-import { cancellationConfirmationHtml, teamWorkspaceCancelledHtml, SITE_URL } from '@/lib/email';
-import { sendTransactionalEmail } from '@/lib/platform-email-templates';
-import { PLAN_CONFIG } from '@/lib/plan-config';
+import { writeOrgBillingAudit } from '@/lib/billing-retention';
+import { captureAndJson, withObservability } from '@/lib/observability';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
-import { teamWorkspaceDisplayName, teamWorkspaceReactivatePath } from '@/lib/coaches-portal-routes';
-import type { OrgPlan } from '@/lib/types';
-import { captureError, captureAndJson, withObservability } from '@/lib/observability';
-import { ownPlanOf } from '@/lib/entitlement-grants';
-import { closePagesIfPaymentsEnded } from '@/lib/online-payment-endings';
-import { getBillingHref } from '@/lib/billing-urls';
 import { endedPortalFreeTime, runningPortalFreeTime } from '@/lib/portal-free-time-server';
 import { coachCancelEndedRefusal, coachCancelRefusal } from '@/lib/portal-free-time';
+import { scheduleEnding } from '@/lib/plan-ending';
+import { endingDeps, readEndingAccount } from '@/lib/plan-ending-server';
+import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 
+/**
+ * POST /api/billing/cancel/confirm — the owner cancels. Owner-only (ruling 2026-10-29: never a billing delegate).
+ *
+ * Plans end at the renewal date (owner ruling 2026-10-31, Stage 1): a paying Stripe subscription is SCHEDULED to end on
+ * its renewal date — Stripe first, then the waiting row — and nothing is archived, suspended, hidden or closed now. The
+ * ending itself runs when Stripe deletes the subscription (the webhook, through lib/plan-ending.ts). An account with no
+ * real subscription (comped, Founding Season, a dev mock) has no date to wait for and ends now, through the same ending.
+ */
 export const POST = withObservability(async (req: Request) => {
   // Scope to the org the caller is acting on (multi-org owners), NOT their home org — fail closed
   // if no orgSlug is supplied, so a destructive cancel can never default to the wrong subscription.
@@ -41,365 +35,49 @@ export const POST = withObservability(async (req: Request) => {
     const ended = await endedPortalFreeTime(ctx.org.id);
     if (ended) return Response.json({ error: coachCancelEndedRefusal(ended.lastDay) }, { status: 409 });
   }
+  if (ctx.org.subscriptionStatus === 'canceled') return Response.json({ error: W.cancel.alreadyEnded }, { status: 409 });
 
   const reason = typeof body.reason === 'string' && body.reason.trim()
     ? body.reason.trim()
     : null;
 
-  const preflight = await buildCancellationPreflight(ctx.org);
-  // A Coaches Portal is kept for a season cycle; every other account for the org window.
-  const retentionUntil = retentionDeadline(new Date(), retentionDaysFor(ctx.org));
-  const actorEmail = ctx.user.email ?? null;
-  const isTeamWorkspaceCancellation = isTeamWorkspaceOrg(ctx.org);
+  try {
+    const account = await readEndingAccount(ctx.org.id);
+    if (!account) return Response.json({ error: 'Organization not found' }, { status: 404 });
+    const portal = account.isCoachesPortal;
+    const result = await scheduleEnding(account, { door: 'owner', userId: ctx.user.id, email: ctx.user.email ?? null }, { reason, notifyOwner: true }, endingDeps);
 
-  const { data: intent, error: intentError } = await supabaseAdmin
-    .from('billing_retention_intents')
-    .insert({
-      org_id: ctx.org.id,
-      intent_type: 'cancellation',
-      status: 'applied',
-      from_plan: ownPlanOf(ctx.org),
-      target_plan: null,
-      keep_tournament_ids: [],
-      retention_until: retentionUntil,
-      reason,
-      created_by: ctx.user.id,
-      created_by_email: actorEmail,
-      applied_at: new Date().toISOString(),
-    })
-    .select('id')
-    .single();
-  if (intentError) return captureAndJson(intentError, { error: intentError.message }, 500);
+    if (result.outcome === 'refused') return Response.json({ error: result.error }, { status: result.status });
 
-  if (isTeamWorkspaceCancellation) {
-    const { data: workspace, error: workspaceError } = await supabaseAdmin
-      .from('team_workspaces')
-      .select('id, stripe_subscription_id, billing_mode')
-      .eq('workspace_org_id', ctx.org.id)
-      .maybeSingle<{
-        id: string;
-        stripe_subscription_id: string | null;
-        billing_mode: string | null;
-      }>();
-    if (workspaceError) return captureAndJson(workspaceError, { error: workspaceError.message }, 500);
-    if (!workspace) return Response.json({ error: 'Coaches Portal workspace was not found.' }, { status: 404 });
-
-    if (preflight.tournaments.length > 0) {
-      const retainedIds = preflight.tournaments.map(t => t.id);
-      const { error: archiveError } = await supabaseAdmin
-        .from('tournaments')
-        .update({ status: 'archived', is_active: false })
-        .eq('org_id', ctx.org.id)
-        .in('id', retainedIds);
-      if (archiveError) return captureAndJson(archiveError, { error: archiveError.message }, 500);
-
-      await supabaseAdmin
-        .from('billing_retained_records')
-        .update({ retained_state: 'purged' })
-        .eq('org_id', ctx.org.id)
-        .in('record_id', retainedIds)
-        .in('retained_state', ['retained_inactive', 'pending_purge']);
-
-      const { error: tournamentRecordError } = await supabaseAdmin
-        .from('billing_retained_records')
-        .insert(preflight.tournaments.map(t => ({
-          intent_id: intent.id,
-          org_id: ctx.org.id,
-          record_type: 'tournament',
-          record_id: t.id,
-          display_name: t.name,
-          retained_state: 'retained_inactive',
-          retention_until: retentionUntil,
-          metadata: {
-            previousStatus: t.status,
-            slug: t.slug,
-            year: t.year,
-            startDate: t.startDate,
-            endDate: t.endDate,
-            retentionReason: 'coaches_portal_cancellation',
-            fromPlan: ownPlanOf(ctx.org),
-          },
-        })));
-      if (tournamentRecordError) return captureAndJson(tournamentRecordError, { error: tournamentRecordError.message }, 500);
-    }
-
-    const { error: accountRecordError } = await supabaseAdmin
-      .from('billing_retained_records')
-      .insert({
-        intent_id: intent.id,
-        org_id: ctx.org.id,
-        record_type: 'account',
-        record_id: null,
-        display_name: `${ctx.org.name} Premium workspace`,
-        retained_state: 'retained_inactive',
-        retention_until: retentionUntil,
-        metadata: {
-          retentionReason: 'coaches_portal_cancellation',
-          fromPlan: ownPlanOf(ctx.org),
-          teamWorkspaceId: workspace.id,
-          premiumToolsInactive: preflight.shutsDown,
-          basicTournamentRecordsRemainAvailable: true,
-        },
+    if (result.outcome === 'ended') {
+      await writeOrgBillingAudit(ctx.org.id, ctx.user.id, portal ? 'coaches_portal_cancellation_confirmed' : 'billing_cancellation_confirmed', {
+        fromPlan: account.ownPlan,
+        retainedTournamentIds: result.ended.retainedTournamentIds,
+        retentionUntil: result.ended.retentionUntil,
+        ...(portal ? { teamWorkspaceId: account.teamWorkspaceId } : {}),
       });
-    if (accountRecordError) return captureAndJson(accountRecordError, { error: accountRecordError.message }, 500);
-
-    const now = new Date().toISOString();
-    const [{ error: workspaceUpdateError }, { error: entitlementError }, { error: orgError }] = await Promise.all([
-      supabaseAdmin
-        .from('team_workspaces')
-        .update({ subscription_status: 'canceled', updated_at: now })
-        .eq('id', workspace.id),
-      supabaseAdmin
-        .from('team_entitlements')
-        .update({ status: 'canceled', updated_at: now })
-        .eq('team_workspace_id', workspace.id),
-      supabaseAdmin
-        .from('organizations')
-        .update({
-          subscription_status: 'canceled',
-          billing_suspended_at: now,
-          billing_suspension_reason: reason,
-        })
-        .eq('id', ctx.org.id),
-    ]);
-    if (workspaceUpdateError) return captureAndJson(workspaceUpdateError, { error: workspaceUpdateError.message }, 500);
-    if (entitlementError) return captureAndJson(entitlementError, { error: entitlementError.message }, 500);
-    if (orgError) return captureAndJson(orgError, { error: orgError.message }, 500);
-
-    await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'coaches_portal_cancellation_confirmed', {
-      fromPlan: ownPlanOf(ctx.org),
-      teamWorkspaceId: workspace.id,
-      retainedTournamentIds: preflight.tournaments.map(t => t.id),
-      retentionUntil,
-    });
-
-    await writePlatformEvent({
-      eventType: 'subscription_canceled',
-      source: 'app',
-      orgId: ctx.org.id,
-      actorUserId: ctx.user.id,
-      actorEmail,
-      previousPlanId: ownPlanOf(ctx.org),
-      planId: ownPlanOf(ctx.org),
-      previousSubscriptionStatus: ctx.org.subscriptionStatus,
-      subscriptionStatus: 'canceled',
-      metadata: {
-        scope: 'coaches_portal',
-        teamWorkspaceId: workspace.id,
-        retainedTournamentIds: preflight.tournaments.map(t => t.id),
-        retentionUntil,
-        reason,
-      },
-    });
-
-    const stripeSubscriptionId = ctx.org.stripeSubscriptionId ?? workspace.stripe_subscription_id ?? null;
-    if (stripeSubscriptionId) {
-      try {
-        await stripe.subscriptions.cancel(stripeSubscriptionId);
-      } catch (stripeErr) {
-        const message = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
-        console.error('[cancel/confirm] Coaches Portal Stripe reconciliation failed:', message);
-        await captureError(stripeErr, { ctx, route: '/api/billing/cancel/confirm', method: 'POST', statusCode: 500 });
-        await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_stripe_reconciliation_failed', {
-          action: 'coaches_portal_cancellation',
-          stripeSubscriptionId,
-          error: message,
-        });
-        return Response.json(
-          {
-            error:
-              'Your Coaches Portal was canceled in FieldLogicHQ but the Stripe subscription could not be stopped. ' +
-              'Contact support to cancel your billing.',
-            retainedCount: preflight.tournaments.length + 1,
-            retentionUntil,
-          },
-          { status: 500 },
-        );
-      }
-    }
-
-    if (actorEmail) {
-      // The org is named "{team} Coaches Portal" and the copy says "Coaches Portal" itself — pass
-      // the team name alone. Resubscribe is the reactivation door, never the new-portal signup.
-      const workspaceName = teamWorkspaceDisplayName(ctx.org.name);
-      const resubscribeUrl = `${SITE_URL}${teamWorkspaceReactivatePath(ctx.org)}`;
-      await sendTransactionalEmail({
-        key: 'team_workspace_cancelled',
-        to: actorEmail,
-        vars: { workspaceName, resubscribeUrl, retentionUntil: retentionDateLabel(retentionUntil) },
-        defaultSubject: `Your ${workspaceName} Coaches Portal has been cancelled`,
-        defaultHtml: teamWorkspaceCancelledHtml({
-          workspaceName,
-          resubscribeUrl,
-          retentionUntil: retentionDateLabel(retentionUntil),
-        }),
-        orgId: ctx.org.id,
-        askedBy: ctx.user.id,
+      return Response.json({
+        ok: true,
+        outcome: 'ended',
+        retainedCount: result.ended.retainedTournamentIds.length + 1,
+        retentionUntil: result.ended.retentionUntil,
       });
     }
 
+    await writeOrgBillingAudit(ctx.org.id, ctx.user.id, portal ? 'coaches_portal_cancellation_scheduled' : 'billing_cancellation_scheduled', {
+      fromPlan: account.ownPlan,
+      endsAt: result.endsAt,
+      heldMovePlan: result.heldMovePlan,
+      recorded: result.recorded,
+    });
     return Response.json({
       ok: true,
-      retainedCount: preflight.tournaments.length + 1,
-      retentionUntil,
+      outcome: 'scheduled',
+      endsAt: result.endsAt,
+      recorded: result.recorded,
+      ...(result.recorded ? {} : { notice: W.cancel.notRecorded }),
     });
+  } catch (error) {
+    return captureAndJson(error, { error: error instanceof Error ? error.message : 'The cancel could not be completed.' }, 500);
   }
-
-  if (preflight.tournaments.length > 0) {
-    const retainedIds = preflight.tournaments.map(t => t.id);
-    const { error: archiveError } = await supabaseAdmin
-      .from('tournaments')
-      .update({ status: 'archived', is_active: false })
-      .eq('org_id', ctx.org.id)
-      .in('id', retainedIds);
-    if (archiveError) return captureAndJson(archiveError, { error: archiveError.message }, 500);
-
-    // Supersede any existing active retained records for these tournaments before
-    // inserting fresh ones — prevents unique constraint violations if a prior retention
-    // event left stale rows (e.g. after a test reset or a resubscription that did not
-    // clean up billing_retained_records).
-    await supabaseAdmin
-      .from('billing_retained_records')
-      .update({ retained_state: 'purged' })
-      .eq('org_id', ctx.org.id)
-      .in('record_id', retainedIds)
-      .in('retained_state', ['retained_inactive', 'pending_purge']);
-
-    const { error: recordError } = await supabaseAdmin
-      .from('billing_retained_records')
-      .insert(preflight.tournaments.map(t => ({
-        intent_id: intent.id,
-        org_id: ctx.org.id,
-        record_type: 'tournament',
-        record_id: t.id,
-        display_name: t.name,
-        retained_state: 'retained_inactive',
-        retention_until: retentionUntil,
-        metadata: {
-          previousStatus: t.status,
-          slug: t.slug,
-          year: t.year,
-          startDate: t.startDate,
-          endDate: t.endDate,
-          retentionReason: 'account_cancellation',
-          fromPlan: ownPlanOf(ctx.org),
-        },
-      })));
-    if (recordError) return captureAndJson(recordError, { error: recordError.message }, 500);
-  }
-
-  const { error: accountRecordError } = await supabaseAdmin
-    .from('billing_retained_records')
-    .insert({
-      intent_id: intent.id,
-      org_id: ctx.org.id,
-      record_type: 'account',
-      record_id: null,
-      display_name: ctx.org.name,
-      retained_state: 'retained_inactive',
-      retention_until: retentionUntil,
-      metadata: {
-        retentionReason: 'account_cancellation',
-        fromPlan: ownPlanOf(ctx.org),
-        moduleShutdown: preflight.shutsDown,
-      },
-    });
-  if (accountRecordError) return captureAndJson(accountRecordError, { error: accountRecordError.message }, 500);
-
-  const { error: orgError } = await supabaseAdmin
-    .from('organizations')
-    .update({
-      subscription_status: 'canceled',
-      is_public: false,
-      billing_suspended_at: new Date().toISOString(),
-      billing_suspension_reason: reason,
-    })
-    .eq('id', ctx.org.id);
-  if (orgError) return captureAndJson(orgError, { error: orgError.message }, 500);
-  // 12d-2 (ask 11): a cancel stops online payments now — the open pay pages close (the account stays connected, ask 4).
-  await closePagesIfPaymentsEnded(ctx.org.id, 'owner cancel', { ended: true });
-
-  await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_cancellation_confirmed', {
-    fromPlan: ownPlanOf(ctx.org),
-    retainedTournamentIds: preflight.tournaments.map(t => t.id),
-    retentionUntil,
-  });
-
-  await writePlatformEvent({
-    eventType: 'subscription_canceled',
-    source: 'app',
-    orgId: ctx.org.id,
-    actorUserId: ctx.user.id,
-    actorEmail,
-    previousPlanId: ownPlanOf(ctx.org),
-    planId: ownPlanOf(ctx.org),
-    previousSubscriptionStatus: ctx.org.subscriptionStatus,
-    subscriptionStatus: 'canceled',
-    metadata: {
-      retainedTournamentIds: preflight.tournaments.map(t => t.id),
-      retentionUntil,
-      reason,
-    },
-  });
-
-  // — D4: Stripe reconciliation —
-  // All DB writes have succeeded. Cancel the Stripe subscription immediately so
-  // billing stops at the same moment the in-app suspension takes effect.
-  // customer.subscription.deleted will fire; the dedup guard in the webhook will
-  // find this intent (status='applied', intent_type='cancellation') and skip the
-  // retention logic (already applied here) while still clearing Stripe fields.
-  const stripeSubscriptionId = ctx.org.stripeSubscriptionId ?? null;
-  if (stripeSubscriptionId) {
-    try {
-      await stripe.subscriptions.cancel(stripeSubscriptionId);
-    } catch (stripeErr) {
-      const message = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
-      console.error('[cancel/confirm] Stripe reconciliation failed:', message);
-      await captureError(stripeErr, { ctx, route: '/api/billing/cancel/confirm', method: 'POST', statusCode: 500 });
-      await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_stripe_reconciliation_failed', {
-        action: 'cancellation',
-        stripeSubscriptionId,
-        error: message,
-      });
-      return Response.json(
-        {
-          error:
-            'Your account was canceled in FieldLogicHQ but the Stripe subscription could not be stopped. ' +
-            'Contact support to cancel your billing.',
-          retainedCount: preflight.tournaments.length + 1,
-          retentionUntil,
-        },
-        { status: 500 },
-      );
-    }
-  }
-
-  if (actorEmail) {
-    const planLabel = PLAN_CONFIG[ownPlanOf(ctx.org) as OrgPlan]?.label ?? ownPlanOf(ctx.org);
-    const retentionDate = new Date(retentionUntil).toLocaleDateString('en-CA', {
-      year: 'numeric', month: 'long', day: 'numeric',
-    });
-    const resubscribeUrl = `${SITE_URL}${getBillingHref({ ...ctx.org, planId: ownPlanOf(ctx.org), subscriptionStatus: 'canceled' })}`;
-    await sendTransactionalEmail({
-      key: 'cancellation_confirmation',
-      to: actorEmail,
-      vars: { orgName: ctx.org.name, planLabel, retentionUntil: retentionDate, resubscribeUrl },
-      defaultSubject: `Your ${ctx.org.name} subscription has been cancelled`,
-      defaultHtml: cancellationConfirmationHtml({
-        orgName: ctx.org.name,
-        planLabel,
-        retentionUntil: retentionDate,
-        retainedTournaments: preflight.tournaments.length,
-        resubscribeUrl,
-      }),
-      orgId: ctx.org.id,
-      askedBy: ctx.user.id,
-    });
-  }
-
-  return Response.json({
-    ok: true,
-    retainedCount: preflight.tournaments.length + 1,
-    retentionUntil,
-  });
 }, { route: '/api/billing/cancel/confirm' });

@@ -1,17 +1,21 @@
 {
-  "generated": "2026-11-01",
-  "total": 132,
+  "generated": "2026-11-02",
+  "total": 143,
   "counts": {
     "tables": 6,
-    "columns": 62,
-    "indexes": 24,
+    "columns": 71,
+    "indexes": 25,
     "constraints": 21,
-    "rls": 19
+    "rls": 20
   },
   "items": [
     {
       "key": "check:changed:league_season_notices.league_season_notices_kind_check",
       "sig": "(kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text, 'practices_sent'::text])) :: (kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text]))"
+    },
+    {
+      "key": "check:only-dev:billing_retention_intents.billing_retention_intents_change_log_check",
+      "sig": ""
     },
     {
       "key": "check:only-dev:league_practice_emails.league_practice_emails_guardian_email_check",
@@ -83,6 +87,42 @@
     },
     {
       "key": "check:only-dev:stripe_billing_events.stripe_billing_events_ignored_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_retention_intents.change_log",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_retention_intents.ended_email_sent_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_retention_intents.ends_on_email_sent_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_retention_intents.held_move_plan",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_retention_intents.kept_email_sent_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_retention_intents.notify_owner",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_retention_intents.reminder_email_sent_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_retention_intents.stripe_subscription_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_divisions.show_standings",
       "sig": ""
     },
     {
@@ -415,6 +455,10 @@
     },
     {
       "key": "constraint:only-dev:stripe_price_ids_retired.stripe_price_ids_retired_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:billing_retention_intents_one_pending_cancellation",
       "sig": ""
     },
     {

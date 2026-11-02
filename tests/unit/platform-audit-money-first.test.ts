@@ -31,7 +31,10 @@ const MONEY_FIRST: Site[] = [
   { file: 'lib/operator-plan-change.ts', fn: 'applyOperatorPlanChange', action: 'input.audit.action', change: /\.update\(updatePayload\)/ },
   { file: 'app/api/platform-admin/bulk-operations/route.ts', action: "'run_bulk_operation'", change: /const results: BulkResult\[\] = \[\]/ },
   { file: 'app/api/platform-admin/bulk-operations/route.ts', action: "'bulk_create_override'", change: /\.from\('org_overrides'\)\s*\.insert/ },
-  { file: 'app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts', action: "'cancel_subscription'", change: /\.from\('billing_retention_intents'\)\s*\.insert/ },
+  // Plans end at renewal (Stage 1): the operator's three doors reach the one ending (lib/plan-ending.ts), which writes the intent.
+  { file: 'app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts', action: "'cancel_subscription'", change: /scheduleEnding\(account,/ },
+  { file: 'app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts', action: "'end_subscription_now'", change: /applyEnding\(account,/ },
+  { file: 'app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts', action: "'keep_subscription'", change: /keepEnding\(account,/ },
   { file: 'app/api/platform-admin/product-catalog/change-requests/route.ts', fn: 'applyStripePriceUpdateProposal', action: "'update_stripe_price_id'", change: /\.from\('stripe_prices'\)\s*\.update/ },
   { file: 'lib/free-time-writes.ts', fn: 'giveFreeTime', action: "'create_override'", change: /\.from\('org_overrides'\)\s*\.insert/ },
   { file: 'lib/free-time-writes.ts', fn: 'changeFreeTimeEnd', action: "'change_override_end'", change: /\.update\(\{ expires_at: expiresAt \}\)/ },
@@ -99,11 +102,14 @@ describe('1 · each money action writes its row first, strictly', () => {
   });
 
   it('a cancel that stops after archiving is told as unfinished, never as not made', () => {
+    // Plans end at renewal (Stage 1): the ending may have archived tournaments before it threw — the route's catch around it
+    // tells it as unfinished. A Stripe refusal before anything was written is the only "not made".
     const code = readCode('app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts');
-    const update = code.indexOf("subscription_status: 'canceled',");
-    const after = code.slice(update, code.indexOf('closePagesIfPaymentsEnded', update));
-    assert.match(after, /'cancel_subscription_incomplete'/);
-    assert.doesNotMatch(after, /changeFailed\(/);
+    const post = code.slice(code.indexOf('export const POST'), code.indexOf('export const DELETE'));
+    const caught = post.slice(post.indexOf('} catch (error) {'), post.indexOf("if (outcome.kind === 'scheduled')"));
+    assert.match(caught, /'cancel_subscription_incomplete'/);
+    assert.doesNotMatch(caught, /changeFailed\(/);
+    assert.ok(post.indexOf("if (scheduled.outcome === 'refused')") < post.indexOf('await changeFailed(scheduled.error)'));
     assert.match(readCode('lib/platform-story.ts'), /r\.action === 'cancel_subscription_incomplete'/);
   });
 });

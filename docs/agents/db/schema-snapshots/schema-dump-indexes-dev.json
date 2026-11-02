@@ -236,6 +236,11 @@
   },
   {
     "tablename": "billing_retention_intents",
+    "indexname": "billing_retention_intents_one_pending_cancellation",
+    "indexdef": "CREATE UNIQUE INDEX billing_retention_intents_one_pending_cancellation ON public.billing_retention_intents USING btree (org_id) WHERE ((intent_type = 'cancellation'::text) AND (status = 'pending'::text))"
+  },
+  {
+    "tablename": "billing_retention_intents",
     "indexname": "billing_retention_intents_pkey",
     "indexdef": "CREATE UNIQUE INDEX billing_retention_intents_pkey ON public.billing_retention_intents USING btree (id)"
   },

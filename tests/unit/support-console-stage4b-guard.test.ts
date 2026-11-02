@@ -82,9 +82,10 @@ describe('Part 0 · 2 — a copy that stops halfway can always be repaired (Q11-
 
 describe('Part 0 · 3 — a cancel never runs on free time (Q11-4, T15)', () => {
   it('the coach cancel refuses before it writes its retention intent', () => {
+    // Plans end at renewal (Stage 1): the intent is written by the one ending the route calls (lib/plan-ending.ts).
     const code = readCode('app/api/billing/cancel/confirm/route.ts');
     const refuse = code.indexOf('runningPortalFreeTime(ctx.org.id)');
-    assert.ok(refuse > 0 && refuse < code.indexOf("from('billing_retention_intents')"));
+    assert.ok(refuse > 0 && refuse < code.indexOf('scheduleEnding('));
     assert.match(code, /coachCancelRefusal\(freeTime\.lastDay\)/);
   });
 

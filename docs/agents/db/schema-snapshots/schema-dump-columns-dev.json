@@ -1602,6 +1602,78 @@
     "ordinal_position": 15
   },
   {
+    "table_name": "billing_retention_intents",
+    "column_name": "stripe_subscription_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "billing_retention_intents",
+    "column_name": "held_move_plan",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "billing_retention_intents",
+    "column_name": "notify_owner",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "true",
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "billing_retention_intents",
+    "column_name": "ends_on_email_sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "billing_retention_intents",
+    "column_name": "reminder_email_sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 20
+  },
+  {
+    "table_name": "billing_retention_intents",
+    "column_name": "kept_email_sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
+  },
+  {
+    "table_name": "billing_retention_intents",
+    "column_name": "ended_email_sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 22
+  },
+  {
+    "table_name": "billing_retention_intents",
+    "column_name": "change_log",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'[]'::jsonb",
+    "ordinal_position": 23
+  },
+  {
     "table_name": "budget_categories",
     "column_name": "id",
     "data_type": "uuid",
@@ -6721,6 +6793,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 16
+  },
+  {
+    "table_name": "league_divisions",
+    "column_name": "show_standings",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "true",
+    "ordinal_position": 17
   },
   {
     "table_name": "league_email_log",

@@ -1604,6 +1604,78 @@
         "column_default": null
       },
       {
+        "table_name": "billing_retention_intents",
+        "pos": 16,
+        "column_name": "stripe_subscription_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "billing_retention_intents",
+        "pos": 17,
+        "column_name": "held_move_plan",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "billing_retention_intents",
+        "pos": 18,
+        "column_name": "notify_owner",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "table_name": "billing_retention_intents",
+        "pos": 19,
+        "column_name": "ends_on_email_sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "billing_retention_intents",
+        "pos": 20,
+        "column_name": "reminder_email_sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "billing_retention_intents",
+        "pos": 21,
+        "column_name": "kept_email_sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "billing_retention_intents",
+        "pos": 22,
+        "column_name": "ended_email_sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "billing_retention_intents",
+        "pos": 23,
+        "column_name": "change_log",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
         "table_name": "budget_categories",
         "pos": 1,
         "column_name": "id",
@@ -6723,6 +6795,15 @@
         "udt_name": "int2",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "league_divisions",
+        "pos": 17,
+        "column_name": "show_standings",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "true"
       },
       {
         "table_name": "league_email_log",
@@ -33804,6 +33885,11 @@
       },
       {
         "tablename": "billing_retention_intents",
+        "indexname": "billing_retention_intents_one_pending_cancellation",
+        "indexdef": "CREATE UNIQUE INDEX billing_retention_intents_one_pending_cancellation ON public.billing_retention_intents USING btree (org_id) WHERE ((intent_type = 'cancellation'::text) AND (status = 'pending'::text))"
+      },
+      {
+        "tablename": "billing_retention_intents",
         "indexname": "billing_retention_intents_pkey",
         "indexdef": "CREATE UNIQUE INDEX billing_retention_intents_pkey ON public.billing_retention_intents USING btree (id)"
       },
@@ -39467,6 +39553,12 @@
         "table_name": "billing_retained_records",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "billing_retention_intents",
+        "detail": "billing_retention_intents_change_log_check",
+        "check_clause": "(jsonb_typeof(change_log) = 'array'::text)"
       },
       {
         "kind": "CHECK",

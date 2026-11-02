@@ -1,16 +1,16 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-11-01 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-11-02 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 132 divergence(s)** across dev/prod.
+**⚠️ 143 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 6 | 0 | — |
-| Columns | 62 | 0 | 0 |
-| Indexes | 24 | 0 | 0 |
+| Columns | 71 | 0 | 0 |
+| Indexes | 25 | 0 | 0 |
 | Constraints | 21 | 0 | — |
-| RLS / CHECK | 18 | 0 | 0 (RLS state) |
+| RLS / CHECK | 19 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (6)
@@ -25,7 +25,16 @@
 _none_
 
 ## Columns
-### Only in DEV (62)
+### Only in DEV (71)
+- `billing_retention_intents.change_log`
+- `billing_retention_intents.ended_email_sent_at`
+- `billing_retention_intents.ends_on_email_sent_at`
+- `billing_retention_intents.held_move_plan`
+- `billing_retention_intents.kept_email_sent_at`
+- `billing_retention_intents.notify_owner`
+- `billing_retention_intents.reminder_email_sent_at`
+- `billing_retention_intents.stripe_subscription_id`
+- `league_divisions.show_standings`
 - `league_practice_emails.created_at`
 - `league_practice_emails.division_id`
 - `league_practice_emails.guardian_email`
@@ -96,7 +105,8 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (24)
+### Only in DEV (25)
+- `billing_retention_intents_one_pending_cancellation`
 - `league_practice_emails_division_idx`
 - `league_practice_emails_notice_id_guardian_email_key`
 - `league_practice_emails_notice_idx`
@@ -159,7 +169,8 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (18)
+### CHECK only in DEV (19)
+- `billing_retention_intents.billing_retention_intents_change_log_check`
 - `league_practice_emails.league_practice_emails_guardian_email_check`
 - `league_practice_emails.league_practice_emails_registration_ids_check`
 - `league_practice_emails.league_practice_emails_status_check`

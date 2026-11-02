@@ -4,6 +4,7 @@ import { writePlatformEvent } from './platform-events';
 import { isStripeConfigured } from './billing-mock';
 import { stripe } from './stripe';
 import { supabaseAdmin } from './supabase-admin';
+import { withdrawPendingEnding } from './plan-ending-store';
 import {
   ACTIVE_LINK_STATUSES,
   findCoachOwnTeamByEmail,
@@ -533,6 +534,9 @@ async function cancelCoachSubscription(subscriptionId: string | null): Promise<{
   // A Founding Season coach (platform_override) has no subscription: nothing to cancel.
   if (!subscriptionId || !subscriptionId.startsWith('sub_')) return { status: 'not_needed' };
   if (!isStripeConfigured()) return { status: 'failed', error: 'Stripe is not configured; cancel the prior Team subscription by hand.' };
+  // Plans end at renewal: the coach's own subscription ends now because the club takes the team over — a waiting cancel
+  // on it is withdrawn, or its deletion would find it and end the moved portal.
+  await withdrawPendingEnding({ subscriptionId }, 'The team moved into a club');
   try {
     // Cancel now; Stripe's default is no proration and no refund (owner ruling 2026-09-28).
     await stripe.subscriptions.cancel(subscriptionId);

@@ -17,8 +17,11 @@ import { freeTimeCopy } from './free-time-copy';
 import { portalFreeTimeCopy, KEEP_PREMIUM_LINE, PORTAL_FREE_TIME_HOSTING_LINE } from './portal-free-time';
 import { STRIPE_FEE_WORDS } from './online-payment-words';
 import { PLAN_BILLING_TITLE } from './plan-billing-title';
+import type { OrgPlan as OrgPlanKey } from './types';
 
 const day = (iso: string) => formatStoredDate(iso, { longMonth: true });
+/** The door that undoes a waiting cancel (Plans end at renewal, Stage 0 ruling 2): "Keep {Plan}", and "Keep Premium" for a Coaches Portal. */
+const keepDoor = (plan: OrgPlanKey) => plan === 'team' ? 'Keep Premium' : `Keep ${PLAN_CONFIG[plan].label}`;
 const cycle = (value: BillingCycle) => value === 'annual' ? 'yearly' : 'monthly';
 const period = (value: BillingCycle) => value === 'annual' ? 'year' : 'month';
 const price = (amount: number, billing: BillingCycle) => amount === 0 ? formatPriceAmount(amount) : `${formatPriceAmount(amount)} CAD / ${period(billing)}`;
@@ -127,6 +130,16 @@ export const PLAN_BILLING_WORDS = {
     confirm: 'Cancel and suspend', premiumConfirm: 'Cancel Premium', working: 'Suspending…', premiumWorking: 'Cancelling Premium…',
     // Approved replacement for the existing server wording; wire once with the shared body.
     accountingOffline: 'Accounting: ledgers, the club budget, allocations to teams',
+    // Plans end at the renewal date (Stage 0 rulings 2–3, owner 2026-10-31): the door is "Keep {Plan}"; a Coaches Portal's is "Keep Premium".
+    keepDoor,
+    endingRefusal: (plan: OrgPlanKey, iso: string | null) => `Your plan ends${iso ? ` on ${day(iso)}` : ' at renewal'}. ${keepDoor(plan)} first, then change it.`,
+    foreignSchedule: 'A change made outside FieldLogicHQ is waiting on this subscription, so it can’t be cancelled here. Contact us and we’ll sort it out.',
+    stripeRefused: 'The payment provider didn’t accept the cancel. Nothing was changed — try again in a moment.',
+    keepRefused: 'The payment provider didn’t accept the change. Your plan still ends on its date — try again in a moment.',
+    notRecorded: 'Your cancel is scheduled with the payment provider. We’re still recording it here — refresh the page in a minute.',
+    nothingToKeep: 'Your plan isn’t set to end, so there’s nothing to keep.',
+    alreadyEnded: 'This plan has already ended.',
+    moveNotRestored: (label: string) => `Your plan is kept. The move to ${label} at renewal couldn’t be put back — choose it again below.`,
   },
   reactivate: {
     cancelled: (org: string) => `${org} is cancelled`, premiumCancelled: 'Premium is cancelled',

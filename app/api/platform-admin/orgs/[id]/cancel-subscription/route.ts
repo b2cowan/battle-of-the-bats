@@ -1,26 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformPower } from '@/lib/platform-auth';
-import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writeAuditBeforeChange, writePlatformAuditLog } from '@/lib/platform-audit';
-import {
-  buildCancellationPreflight,
-  COACHES_PORTAL_RETENTION_REASON,
-  retentionDateLabel,
-  retentionDaysFor,
-  retentionDeadline,
-} from '@/lib/billing-retention';
-import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
-import { teamWorkspaceDisplayName, teamWorkspaceReactivatePath } from '@/lib/coaches-portal-routes';
-import { stripe } from '@/lib/stripe';
-import { cancellationConfirmationHtml, teamWorkspaceCancelledHtml, SITE_URL } from '@/lib/email';
-import { sendTransactionalEmail } from '@/lib/platform-email-templates';
+import { buildCancellationPreflight } from '@/lib/billing-retention';
+import { getStripe } from '@/lib/stripe';
 import { PLAN_CONFIG, getEffectiveTeamLimit } from '@/lib/plan-config';
 import type { OrgPlan, Organization } from '@/lib/types';
 import { withObservability, captureAndJson } from '@/lib/observability';
-import { closePagesIfPaymentsEnded, endingSection } from '@/lib/online-payment-endings';
+import { endingSection } from '@/lib/online-payment-endings';
 import { runningPortalFreeTime } from '@/lib/portal-free-time-server';
 import { staffCancelRefusal } from '@/lib/portal-free-time';
-import { getBillingHref, billingUrlOrgFromRow } from '@/lib/billing-urls';
+import { applyEnding, hasRealSubscription, keepEnding, scheduleEnding, type EndingAccount } from '@/lib/plan-ending';
+import { endingDeps, readEndingAccount, readPendingEnding } from '@/lib/plan-ending-server';
+import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
+
+/**
+ * The platform admin's cancel (org record → Access). Plans end at the renewal date (owner ruling 2026-10-31, Stage 1):
+ *   POST            Cancel — the SAME scheduled cancel the owner makes: ends on the renewal date, they keep everything until then.
+ *   POST endNow     End now — immediate (abuse, fraud, a chargeback): the ending runs now and Stripe stops now. Never offered
+ *                   to owners; secondary, behind its own red window.
+ *   DELETE          Keep {Plan} on their behalf — withdraws a waiting cancel.
+ * Every door needs a typed reason, and its audit row is written BEFORE the change (Stage 0 Part 9). While a cancel waits,
+ * operator plan moves stay refused (lib/operator-plan-change.ts refuses while Stripe bills): End now or Keep are the exits.
+ */
 
 type OrgRow = {
   id: string;
@@ -33,6 +35,7 @@ type OrgRow = {
   account_kind: string | null;
   tournament_limit: number | null;
   team_limit: number | null;
+  current_period_end: string | null;
 };
 
 function mapOrgRow(row: OrgRow): Organization {
@@ -55,20 +58,25 @@ function mapOrgRow(row: OrgRow): Organization {
   };
 }
 
+const ORG_COLUMNS = 'id, name, slug, plan_id, subscription_status, stripe_subscription_id, enabled_addons, account_kind, tournament_limit, team_limit, current_period_end';
+
+async function readOrg(id: string) {
+  const { data, error } = await supabaseAdmin.from('organizations').select(ORG_COLUMNS).eq('id', id).single<OrgRow>();
+  return error ? null : data;
+}
+
+function readReason(body: { reason?: unknown }): string | null {
+  return typeof body.reason === 'string' && body.reason.trim() ? body.reason.trim() : null;
+}
+
 export const GET = withObservability(async (_req: NextRequest,
   { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requirePlatformPower('club_billing');
   if (auth.response) return auth.response;
 
   const { id } = await params;
-
-  const { data: orgRow, error: orgError } = await supabaseAdmin
-    .from('organizations')
-    .select('id, name, slug, plan_id, subscription_status, stripe_subscription_id, enabled_addons, account_kind, tournament_limit, team_limit')
-    .eq('id', id)
-    .single<OrgRow>();
-
-  if (orgError || !orgRow) {
+  const orgRow = await readOrg(id);
+  if (!orgRow) {
     return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
   }
 
@@ -82,7 +90,7 @@ export const GET = withObservability(async (_req: NextRequest,
   }
 
   const org = mapOrgRow(orgRow);
-  const preflight = await buildCancellationPreflight(org);
+  const [preflight, account, pending] = await Promise.all([buildCancellationPreflight(org), readEndingAccount(id), readPendingEnding(id)]);
 
   return NextResponse.json({
     subscriptionStatus: orgRow.subscription_status,
@@ -90,6 +98,11 @@ export const GET = withObservability(async (_req: NextRequest,
     planId: orgRow.plan_id,
     planLabel: PLAN_CONFIG[orgRow.plan_id as OrgPlan]?.label ?? orgRow.plan_id,
     ...preflight,
+    // Plans end at renewal: a real subscription waits for its renewal date (shown as a preview; Stripe's date is the one
+    // recorded); with none (comped, Founding Season, a dev mock) the cancel ends now and there is no date to promise.
+    waitsForRenewal: !!account && hasRealSubscription(account),
+    renewsOn: account && hasRealSubscription(account) ? orgRow.current_period_end : null,
+    pending: pending ? { endsAt: pending.effectiveAt, reason: pending.reason, requestedBy: pending.createdByEmail, heldMovePlan: pending.heldMovePlan } : null,
     // 12d-2 (words §4.3): the operator sees what the owner would — what stops, what is owed and clearing.
     onlinePayments: await endingSection(id),
   });
@@ -104,23 +117,18 @@ export const POST = withObservability(async (req: NextRequest,
   const body = await req.json().catch(() => ({})) as {
     reason?: string;
     notifyOwner?: boolean;
+    endNow?: boolean;
   };
-  const reason = typeof body.reason === 'string' && body.reason.trim()
-    ? body.reason.trim()
-    : null;
+  const reason = readReason(body);
   const notifyOwner = body.notifyOwner === true;
+  const endNow = body.endNow === true;
 
   if (!reason) {
     return NextResponse.json({ error: 'Reason is required' }, { status: 400 });
   }
 
-  const { data: orgRow, error: orgError } = await supabaseAdmin
-    .from('organizations')
-    .select('id, name, slug, plan_id, subscription_status, stripe_subscription_id, enabled_addons, account_kind, tournament_limit, team_limit')
-    .eq('id', id)
-    .single<OrgRow>();
-
-  if (orgError || !orgRow) {
+  const orgRow = await readOrg(id);
+  if (!orgRow) {
     return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
   }
 
@@ -135,152 +143,54 @@ export const POST = withObservability(async (req: NextRequest,
     return NextResponse.json({ error: 'Subscription is already cancelled' }, { status: 400 });
   }
 
-  const org = mapOrgRow(orgRow);
-  const preflight = await buildCancellationPreflight(org);
-  const retentionUntil = retentionDeadline(new Date(), retentionDaysFor(org));
-
-  // A Coaches Portal's records carry the Coaches Portal reason + its workspace id — reactivation
-  // restores only those, so untagged ones would outlive it and later warn an active customer.
-  const isCoachesPortal = isTeamWorkspaceOrg(org);
-  let teamWorkspaceId: string | null = null;
-  if (isCoachesPortal) {
-    const { data: workspace } = await supabaseAdmin
-      .from('team_workspaces')
-      .select('id')
-      .eq('workspace_org_id', id)
-      .maybeSingle<{ id: string }>();
-    teamWorkspaceId = workspace?.id ?? null;
-  }
-  // Tag by account KIND, not by whether the workspace row resolved: the reason also sets the
-  // 30-day warning lead, which a Coaches Portal is owed either way.
-  const retentionReason = isCoachesPortal ? COACHES_PORTAL_RETENTION_REASON : 'account_cancellation';
+  const account = await readEndingAccount(id);
+  if (!account) return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+  const actor = { door: 'operator' as const, userId: null, email: auth.user.email ?? null };
+  const waits = !endNow && hasRealSubscription(account);
 
   // Stage 0 Part 9: the cancel's row, with its reason, before anything is written, or nothing is cancelled. Stripe is
   // still asked after it, and a Stripe failure is its own second row (unchanged).
-  const changeFailed = await writeAuditBeforeChange(
-    auth.user.email!,
-    id,
-    'cancel_subscription',
-    'subscription_status',
-    orgRow.subscription_status,
-    {
-      status: 'canceled',
-      retentionUntil,
-      retainedTournamentIds: preflight.tournaments.map(t => t.id),
-      stripeSubscriptionId: orgRow.stripe_subscription_id,
-    },
-    { reason },
-  );
+  const change = { status: waits ? 'ends_at_renewal' : 'canceled', stripeSubscriptionId: account.subscriptionId, notifyOwner };
+  const changeFailed = endNow
+    ? await writeAuditBeforeChange(auth.user.email!, id, 'end_subscription_now', 'subscription_status', orgRow.subscription_status, change, { reason })
+    : await writeAuditBeforeChange(auth.user.email!, id, 'cancel_subscription', 'subscription_status', orgRow.subscription_status, change, { reason });
 
-  const { data: intent, error: intentError } = await supabaseAdmin
-    .from('billing_retention_intents')
-    .insert({
-      org_id: id,
-      intent_type: 'cancellation',
-      status: 'applied',
-      from_plan: orgRow.plan_id,
-      target_plan: null,
-      keep_tournament_ids: [],
-      retention_until: retentionUntil,
-      reason,
-      created_by: null,
-      created_by_email: auth.user.email,
-      applied_at: new Date().toISOString(),
-    })
-    .select('id')
-    .single();
-
-  if (intentError) {
-    await changeFailed(intentError);
-    return captureAndJson(intentError, { error: intentError.message }, 500);
-  }
-
-  if (preflight.tournaments.length > 0) {
-    const retainedIds = preflight.tournaments.map(t => t.id);
-
-    await supabaseAdmin
-      .from('tournaments')
-      .update({ status: 'archived', is_active: false })
-      .eq('org_id', id)
-      .in('id', retainedIds);
-
-    await supabaseAdmin
-      .from('billing_retained_records')
-      .update({ retained_state: 'purged' })
-      .eq('org_id', id)
-      .in('record_id', retainedIds)
-      .in('retained_state', ['retained_inactive', 'pending_purge']);
-
-    await supabaseAdmin
-      .from('billing_retained_records')
-      .insert(preflight.tournaments.map(t => ({
-        intent_id: intent.id,
-        org_id: id,
-        record_type: 'tournament',
-        record_id: t.id,
-        display_name: t.name,
-        retained_state: 'retained_inactive',
-        retention_until: retentionUntil,
-        metadata: {
-          previousStatus: t.status,
-          slug: t.slug,
-          year: t.year,
-          startDate: t.startDate,
-          endDate: t.endDate,
-          retentionReason,
-          fromPlan: orgRow.plan_id,
-          initiatedBy: 'platform_admin',
-          adminEmail: auth.user.email,
-        },
-      })));
-  }
-
-  await supabaseAdmin
-    .from('billing_retained_records')
-    .insert({
-      intent_id: intent.id,
-      org_id: id,
-      record_type: 'account',
-      record_id: null,
-      display_name: orgRow.name,
-      retained_state: 'retained_inactive',
-      retention_until: retentionUntil,
-      metadata: {
-        retentionReason,
-        ...(teamWorkspaceId ? { teamWorkspaceId } : {}),
-        fromPlan: orgRow.plan_id,
-        moduleShutdown: preflight.shutsDown,
-        initiatedBy: 'platform_admin',
-        adminEmail: auth.user.email,
-      },
-    });
-
-  const { error: updateError } = await supabaseAdmin
-    .from('organizations')
-    .update({
-      subscription_status: 'canceled',
-      is_public: false,
-      billing_suspended_at: new Date().toISOString(),
-      billing_suspension_reason: reason,
-    })
-    .eq('id', id);
-
-  if (updateError) {
-    // Not "not made": the retention intent is written and the tournaments are archived by now. The cancel's row stays
-    // and a second one says it did not finish (the Story tells it), in the way a Stripe failure below is told.
+  let outcome: { kind: 'scheduled'; endsAt: string | null; recorded: boolean } | { kind: 'ended'; retentionUntil: string | null; retainedTournamentIds: string[] };
+  try {
+    if (endNow) {
+      const ended = await applyEnding(account, { actor, reason, notifyOwner, origin: 'request' }, endingDeps);
+      outcome = { kind: 'ended', retentionUntil: ended.retentionUntil, retainedTournamentIds: ended.retainedTournamentIds };
+    } else {
+      const scheduled = await scheduleEnding(account, actor, { reason, notifyOwner }, endingDeps);
+      if (scheduled.outcome === 'refused') {
+        // Stripe refused before anything was written: the change was not made.
+        await changeFailed(scheduled.error);
+        return NextResponse.json({ error: scheduled.error }, { status: scheduled.status });
+      }
+      outcome = scheduled.outcome === 'scheduled'
+        ? { kind: 'scheduled', endsAt: scheduled.endsAt, recorded: scheduled.recorded }
+        : { kind: 'ended', retentionUntil: scheduled.ended.retentionUntil, retainedTournamentIds: scheduled.ended.retainedTournamentIds };
+    }
+  } catch (error) {
+    // Not "not made": the ending may have archived tournaments by now. The cancel's row stays and a second one says it
+    // did not finish (the Story tells it), in the way a Stripe failure below is told. Cancelling again finishes it.
     await writePlatformAuditLog(auth.user.email!, id, 'cancel_subscription_incomplete', 'subscription_status',
-      orgRow.subscription_status, { error: updateError.message, intentId: intent.id, archivedTournamentIds: preflight.tournaments.map(t => t.id) },
+      orgRow.subscription_status, { error: error instanceof Error ? error.message : String(error) },
       { reason });
-    return captureAndJson(updateError, { error: updateError.message }, 500);
+    return captureAndJson(error, { error: error instanceof Error ? error.message : 'The cancel did not finish.' }, 500);
   }
-  // 12d-2 (ask 11): the operator's cancel is an ending too — the club's open pay pages close; the account stays (ask 4).
-  await closePagesIfPaymentsEnded(id, 'operator cancel', { ended: true });
 
+  if (outcome.kind === 'scheduled') {
+    return NextResponse.json({ ok: true, outcome: 'scheduled', endsAt: outcome.endsAt, recorded: outcome.recorded });
+  }
+
+  // Ended now (End now, or no real subscription): Stripe stops now. The ending is recorded first, so the deletion Stripe
+  // sends next finds this subscription's applied row and only clears the Stripe fields.
   let stripeWarning: string | null = null;
-  const stripeSubscriptionId = orgRow.stripe_subscription_id;
+  const stripeSubscriptionId = endNow ? endNowSubscriptionId(account) : null;
   if (stripeSubscriptionId) {
     try {
-      await stripe.subscriptions.cancel(stripeSubscriptionId);
+      await getStripe().subscriptions.cancel(stripeSubscriptionId);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error('[platform-admin cancel-subscription] Stripe cancel failed:', message);
@@ -297,51 +207,51 @@ export const POST = withObservability(async (req: NextRequest,
     }
   }
 
-  if (notifyOwner) {
-    const ownerEmail = await getOrgOwnerEmail(id);
-    if (ownerEmail && isCoachesPortal) {
-      // A Coaches Portal owner gets the Coaches Portal email — the same one the in-app and Stripe
-      // doors send: team name once, the kept-until date, Resubscribe = reactivate THIS workspace.
-      const workspaceName = teamWorkspaceDisplayName(orgRow.name);
-      const resubscribeUrl = `${SITE_URL}${teamWorkspaceReactivatePath(orgRow)}`;
-      const retentionDate = retentionDateLabel(retentionUntil);
-      await sendTransactionalEmail({
-        key: 'team_workspace_cancelled',
-        to: ownerEmail,
-        vars: { workspaceName, resubscribeUrl, retentionUntil: retentionDate },
-        defaultSubject: `Your ${workspaceName} Coaches Portal has been cancelled`,
-        defaultHtml: teamWorkspaceCancelledHtml({ workspaceName, resubscribeUrl, retentionUntil: retentionDate }),
-        orgId: id,
-        askedBy: auth.user.id,
-      });
-    } else if (ownerEmail) {
-      const planLabel = PLAN_CONFIG[orgRow.plan_id as OrgPlan]?.label ?? orgRow.plan_id;
-      const retentionDate = retentionDateLabel(retentionUntil);
-      const resubscribeUrl = `${SITE_URL}${getBillingHref(billingUrlOrgFromRow(orgRow, 'canceled'))}`;
-      await sendTransactionalEmail({
-        key: 'cancellation_confirmation',
-        to: ownerEmail,
-        vars: { orgName: orgRow.name, planLabel, retentionUntil: retentionDate, resubscribeUrl },
-        defaultSubject: `Your ${orgRow.name} subscription has been cancelled`,
-        defaultHtml: cancellationConfirmationHtml({
-          orgName: orgRow.name,
-          planLabel,
-          retentionUntil: retentionDate,
-          retainedTournaments: preflight.tournaments.length,
-          resubscribeUrl,
-        }),
-        orgId: id,
-        askedBy: auth.user.id,
-      });
-    }
-  }
-
   return NextResponse.json({
     ok: true,
-    retainedCount: preflight.tournaments.length + 1,
-    retentionUntil,
+    outcome: 'ended',
+    retainedCount: outcome.retainedTournamentIds.length + 1,
+    retentionUntil: outcome.retentionUntil,
     stripeWarning,
-    shutsDown: preflight.shutsDown,
-    tournaments: preflight.tournaments,
   });
+}, { route: '/api/platform-admin/orgs/[id]/cancel-subscription' });
+
+/** End now stops a real Stripe subscription (any live status); a dev `mock_…` id is not one. */
+function endNowSubscriptionId(account: EndingAccount): string | null {
+  return account.subscriptionId?.startsWith('sub_') ? account.subscriptionId : null;
+}
+
+export const DELETE = withObservability(async (req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }) => {
+  const auth = await requirePlatformPower('club_billing');
+  if (auth.response) return auth.response;
+
+  const { id } = await params;
+  const body = await req.json().catch(() => ({})) as { reason?: string };
+  const reason = readReason(body);
+  if (!reason) return NextResponse.json({ error: 'Reason is required' }, { status: 400 });
+
+  const account = await readEndingAccount(id);
+  if (!account) return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+  const pending = await readPendingEnding(id);
+
+  const changeFailed = await writeAuditBeforeChange(
+    auth.user.email!, id, 'keep_subscription', 'subscription_status', 'ends_at_renewal',
+    { status: account.subscriptionStatus, endsAt: pending?.effectiveAt ?? null }, { reason },
+  );
+  try {
+    const result = await keepEnding(account, { door: 'operator', userId: null, email: auth.user.email ?? null }, endingDeps);
+    if (result.outcome !== 'kept') {
+      const error = result.outcome === 'nothing' ? W.cancel.nothingToKeep : result.error;
+      await changeFailed(error);
+      return NextResponse.json({ error }, { status: result.outcome === 'nothing' ? 409 : result.status });
+    }
+    return NextResponse.json({
+      ok: true, renewsOn: result.renewsOn, renewsAs: result.renewsAs,
+      ...(result.movePlan && result.moveNotRestored ? { notice: W.cancel.moveNotRestored(PLAN_CONFIG[result.movePlan].label) } : {}),
+    });
+  } catch (error) {
+    await changeFailed(error);
+    return captureAndJson(error, { error: error instanceof Error ? error.message : 'The plan could not be kept.' }, 500);
+  }
 }, { route: '/api/platform-admin/orgs/[id]/cancel-subscription' });

@@ -296,8 +296,21 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
       continue;
     }
     if (r.action === 'cancel_subscription') {
+      // Plans end at renewal (Stage 1): a cancel on a paying subscription waits for the renewal date.
+      if (str(obj(r.new_value)?.status) === 'ends_at_renewal') {
+        entries.push({ key, at: r.created_at, kind: 'staff', title: 'Cancel scheduled', sub: 'Ends on the renewal date; they keep everything until then', who, ...whyFields(r, true) });
+        continue;
+      }
       const until = str(obj(r.new_value)?.retentionUntil);
       entries.push({ key, at: r.created_at, kind: 'staff', title: 'Subscription cancelled', sub: until ? `Its data is kept until ${consoleDay(until)}` : undefined, who, ...whyFields(r, true) });
+      continue;
+    }
+    if (r.action === 'end_subscription_now') {
+      entries.push({ key, at: r.created_at, kind: 'staff', title: 'Subscription ended now', sub: 'Ended immediately, not at the renewal date', who, ...whyFields(r, true) });
+      continue;
+    }
+    if (r.action === 'keep_subscription') {
+      entries.push({ key, at: r.created_at, kind: 'staff', title: 'Cancel withdrawn', sub: 'The plan renews as before', who, ...whyFields(r, true) });
       continue;
     }
     if (r.action === 'cancel_subscription_stripe_failed') {

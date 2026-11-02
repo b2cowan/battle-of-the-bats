@@ -69,7 +69,8 @@ describe('the webhook asks these questions before it writes', () => {
     assert.ok(before('recordFollowsSubscription(', ".from('organizations')\n          .update({\n            plan_id: planKey"));
   });
   it('guards the deletion before any archive or suspension', () => {
-    assert.ok(before('isTheRecordsSubscription(org.stripe_subscription_id, sub.id)', "reason: 'Stripe subscription deleted'"));
+    // Plans end at renewal (Stage 1): the archive and suspension are the one ending's, reached after this guard.
+    assert.ok(before('isTheRecordsSubscription(org.stripe_subscription_id, sub.id)', 'await endingForDeletedSubscription(account, sub, endingDeps)'));
   });
   it('guards both invoice events and the trial-ending email', () => {
     assert.ok(before("case 'invoice.payment_succeeded'", 'isTheRecordsSubscription(currentOrg.stripe_subscription_id, invoiceSubscriptionId(invoice))'));

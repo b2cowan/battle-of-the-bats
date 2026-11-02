@@ -170,14 +170,15 @@ describe('every billing link resolves the tier', () => {
     ['app/api/billing/webhook/route.ts', /getBillingHref\(billingUrlOrgFromRow\(org\)\)/],
     // The plan the club holds (plan-reader-door-guard): a billing action never reads the door's planId.
     ['app/api/billing/downgrade/confirm/route.ts', /getBillingHref\(\{ \.\.\.ctx\.org, planId: ownPlanOf\(ctx\.org\) \}\)/],
-    ['app/api/billing/cancel/confirm/route.ts', /getBillingHref\(\{ \.\.\.ctx\.org, planId: ownPlanOf\(ctx\.org\), subscriptionStatus: 'canceled' \}\)/],
     ['lib/billing-retention.ts', /getBillingHref\(billingUrlOrgFromRow\(org\)\)/],
     ['lib/online-payment-owner-notices.ts', /getBillingHref\(org\)/],
-    ['app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts', /getBillingHref\(billingUrlOrgFromRow\(orgRow, 'canceled'\)\)/],
+    // Plans end at renewal (Stage 1): the owner's and the operator's cancel email is sent by the one ending, with the plan
+    // the club holds and the cancelled status.
+    ['lib/plan-ending-server.ts', /getBillingHref\(billingUrlOrgFromRow\(\{ slug: account\.slug, plan_id: account\.ownPlan, account_kind: account\.accountKind, name: account\.name \}, 'canceled'\)\)/],
   ];
   for (const [file, pattern] of sites) it(`${file} builds its billing link with getBillingHref`, () => assert.match(readCode(file), pattern));
   it('no server file hard-codes an organization billing address any more (the one known leftover is named)', () => {
-    for (const file of ['app/api/billing/webhook/route.ts', 'app/api/billing/downgrade/confirm/route.ts', 'app/api/billing/cancel/confirm/route.ts', 'lib/billing-retention.ts', 'lib/online-payment-owner-notices.ts', 'app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts']) {
+    for (const file of ['app/api/billing/webhook/route.ts', 'app/api/billing/downgrade/confirm/route.ts', 'app/api/billing/cancel/confirm/route.ts', 'lib/billing-retention.ts', 'lib/online-payment-owner-notices.ts', 'app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts', 'lib/plan-ending-server.ts']) {
       assert.doesNotMatch(readCode(file), /admin\/org\/billing/, file);
     }
   });

@@ -90,9 +90,12 @@ describe('every ending, against each kind of money in flight', () => {
     ['Disconnect', 'app/api/admin/payouts/route.ts', /closeClubPayPages\(ctx\.org\.id, 'disconnect'\)/],
     ['a plan move on its date (the webhook’s flip, the operator’s change, an in-app move)', 'lib/plan-move.ts', /closePagesIfPaymentsEnded\(p\.orgId, `plan move/],
     ['the owner’s downgrade (it takes effect now)', 'app/api/billing/downgrade/confirm/route.ts', /closePagesIfPaymentsEnded\(ctx\.org\.id, 'owner downgrade'\)/],
-    ['the owner’s cancel', 'app/api/billing/cancel/confirm/route.ts', /closePagesIfPaymentsEnded\(ctx\.org\.id, 'owner cancel', \{ ended: true \}\)/],
-    ['the operator’s cancel', 'app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts', /closePagesIfPaymentsEnded\(id, 'operator cancel', \{ ended: true \}\)/],
-    ['a suspension by Stripe', 'app/api/billing/webhook/route.ts', /closePagesIfPaymentsEnded\(org\.id, 'stripe suspension', \{ ended: true \}\)/],
+    // Plans end at renewal (Stage 1): every cancel ends through ONE ending (lib/plan-ending.ts) — on its date, or now for End
+    // now / no subscription — which names the door and closes the pages with `ended: true` (lib/plan-ending-server.ts).
+    ['the owner’s cancel', 'lib/plan-ending.ts', /if \(door === 'owner' \|\| door === 'stripe_portal'\) return 'owner cancel';/],
+    ['the operator’s cancel', 'lib/plan-ending.ts', /if \(door === 'operator'\) return 'operator cancel';/],
+    ['a suspension by Stripe', 'lib/plan-ending.ts', /return 'stripe suspension';/],
+    ['every cancel, whichever door', 'lib/plan-ending-server.ts', /closePagesIfPaymentsEnded\(orgId, where, \{ ended: true \}\)/],
     ['the operator’s delete', 'app/api/platform-admin/orgs/[id]/delete/route.ts', /closeClubPayPages\(id, 'operator delete'\)/],
   ];
   for (const [name, file, pattern] of ENDS) {
@@ -177,8 +180,10 @@ describe('the /review of Part 3', () => {
   });
   it('a plan move never throws for the page closing, and the suspension closes pages after its event', () => {
     assert.match(readCode('lib/plan-move.ts'), /try \{\s*const \{ closePagesIfPaymentsEnded \} = await import/);
-    const hook = readCode('app/api/billing/webhook/route.ts');
-    assert.ok(hook.indexOf("eventType: 'subscription_canceled'") < hook.indexOf("closePagesIfPaymentsEnded(org.id, 'stripe suspension'"));
+    const ending = readCode('lib/plan-ending.ts');
+    const body = ending.slice(ending.indexOf('export async function applyEnding'));
+    assert.ok(body.indexOf('await deps.writeEndedEvent(') > 0);
+    assert.ok(body.indexOf('await deps.writeEndedEvent(') < body.indexOf('await deps.closePayPages('));
   });
   it('a downgraded club’s status line and Payouts tile say online payments are off, never "Taking payments"', () => {
     assert.match(readCode('components/admin/kit/club/PayoutsStatusLine.tsx'), /if \(view\.windDown && view\.state !== 'disconnected'/);

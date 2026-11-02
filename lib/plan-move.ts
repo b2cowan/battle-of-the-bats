@@ -6,6 +6,7 @@ import { getStripePriceId } from './stripe-prices';
 import { foundingCompAppliesToPlan, revokeFoundingSeasonComp } from './founding-season';
 import { writeGrowthEvent } from './platform-events';
 import { MOVE_METADATA_KEY } from './plan-growth';
+import { futureMoveAnswer, stripeCancelSignal } from './plan-ending';
 import type { OrgPlan } from './types';
 import { ownPlanOf } from './entitlement-grants';
 import { PAYING_STATUSES } from './stripe-billing-state';
@@ -15,7 +16,6 @@ import { trustedPreviewLines, type MovePreviewLine } from './plan-move-preview-l
 import { inPlaceMetadata, parseClubName } from './workspace-upgrade';
 import { workspaceCannotBecomeClub } from './workspace-upgrade-status';
 import { restoreCoachesPortalRetainedRecords } from './portal-retained-restore';
-import { PLAN_BILLING_WORDS as W } from './plan-billing-words';
 
 /**
  * MOVING A PAYING ORGANIZATION BETWEEN PLANS — ONE SUBSCRIPTION, NEVER A SECOND CHECKOUT
@@ -158,13 +158,14 @@ async function validateMove(org: MoveOrg, toPlan: OrgPlan): Promise<
   const live = await loadLiveSubscription(org);
   if ('code' in live) return { ok: false, refusal: live };
 
-  // Owner, Stage 4b Part 3: keep the coach's decision to leave until they explicitly keep Premium.
-  if (ownPlanOf(org) === 'team' && direction === 'up' && live.sub.cancel_at_period_end) {
-    return { ok: false, refusal: {
-      code: 'subscription_ending',
-      error: W.clubUpgrade.ending(isoFromUnix(live.item.current_period_end)),
-      endsAt: isoFromUnix(live.item.current_period_end),
-    } };
+  // Owner, Stage 4b Part 3: keep the coach's decision to leave until they explicitly keep Premium — generalised to EVERY plan
+  // and both directions by Plans end at renewal (decision 5, owner 2026-11-01). While a cancel waits, an up move would
+  // charge a proration on a plan that still ends, and a down move would build a schedule on a subscription set to cancel.
+  // Keep {Plan} first. Either Stripe signal counts (G8); the refusal is the one rule for a subscription's future.
+  const ending = stripeCancelSignal(live.sub);
+  if (ending.scheduled) {
+    const answer = futureMoveAnswer('plan_move', { ownPlan: ownPlanOf(org), pending: true, pendingEndsAt: ending.endsAt });
+    if (answer.answer === 'refuse') return { ok: false, refusal: { code: 'subscription_ending', error: answer.reason, endsAt: ending.endsAt } };
   }
 
   // Stage 4b: a Premium coach moves onto Club only on a subscription that is paying. A failing payment is allowed to be MOVED by
@@ -353,7 +354,8 @@ export async function applyMove(
   try {
     if (direction === 'up') {
       // A move UP replaces any down-move waiting at renewal — release it first, or the schedule
-      // would take the club back down at the period's end.
+      // would take the club back down at the period's end. (The one rule for a subscription's future: this is the customer
+      // choosing a new plan, and it never meets a waiting cancel — validateMove refuses every move while one waits.)
       const existing = scheduleOf(live.sub);
       if (existing) await stripe.subscriptionSchedules.release(existing.id);
 
@@ -409,7 +411,8 @@ export async function applyMove(
       }
     }
 
-    // DOWN — at renewal. One schedule per subscription: reuse the one that exists (ours), or build it.
+    // DOWN — at renewal. One schedule per subscription: reuse the one that exists (ours), or build it. Never while a cancel
+    // waits (refused above); Keep {Plan} rebuilds a move the cancel carried through here (lib/plan-ending.ts, G1).
     const existing = scheduleOf(live.sub);
     const schedule = existing
       ?? await stripe.subscriptionSchedules.create({ from_subscription: live.sub.id });
@@ -477,7 +480,8 @@ export async function getScheduledMove(org: MoveOrg): Promise<ScheduledMove | nu
   return { toPlan, effectiveAt: isoFromUnix(live.item.current_period_end), scheduleId: schedule.id };
 }
 
-/** Keep the current band: cancels a down-move waiting at renewal. True when one was cancelled. */
+/** Keep the current band: cancels a down-move waiting at renewal. True when one was cancelled. A waiting cancel has already
+ *  released any schedule (the move it carried lives on its row), so this finds none then and drops nothing. */
 export async function cancelScheduledMove(org: MoveOrg): Promise<boolean | MoveRefusal> {
   const scheduled = await getScheduledMove(org);
   if (!scheduled) return false;

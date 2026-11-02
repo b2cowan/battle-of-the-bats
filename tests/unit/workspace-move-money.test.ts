@@ -158,16 +158,20 @@ const ends = { fromPriceId: OLD_PRICE, toPriceId: NEW_PRICE, fromPlan: 'team' as
 const isRefusal = (r: unknown): r is MoveRefusal => !!r && typeof r === 'object' && 'code' in r;
 
 describe('Part 3 · before the owner confirms money', () => {
-  it('a Premium subscription set to end is refused before preview or charge; other move sources keep their behavior', async () => {
+  it('a subscription set to end is refused before preview or charge — a Premium coach, and since Plans end at renewal every plan', async () => {
     stubDatabase(PRICES);
     stubStripe({ sub: subscription({ cancel_at_period_end: true }), invoice: invoiceOf([line(9900, NEW_PRICE)]) });
     for (const result of [await previewMove(premiumOrg(), 'club'), await applyMove(premiumOrg(), 'club', { actor: 'test', clubName: 'Falcons' })]) {
       assert.ok('code' in result && result.code === 'subscription_ending');
       assert.ok('endsAt' in result && result.endsAt);
+      assert.match(result.error, /Keep Premium first, then change it\./);
     }
     assert.equal(stripeCalls.createPreview, 0);
     assert.equal(stripeCalls.update.length, 0);
-    assert.ok(!isRefusal(await previewMove(premiumOrg({ planId: 'club' }), 'club_large')));
+    // Decision 5 (owner 2026-11-01): the rule the owner ruled for a Premium coach now holds for every plan and both directions.
+    const club = await previewMove(premiumOrg({ planId: 'club' }), 'club_large');
+    assert.ok(isRefusal(club) && club.code === 'subscription_ending');
+    assert.match(club.error, /Keep Club first, then change it\./);
   });
   for (const cycle of ['monthly', 'annual'] as const) {
     it(`${cycle}: first purchase quotes the effective trial and server price without creating anything`, async () => {
@@ -644,8 +648,11 @@ describe('6 · the webhook: the reactivation verdict, and the event that follows
     });
     const result = await restoreAfterReactivation('org_1', PLAN_CONFIG.club.tournamentLimit);
     assert.deepEqual(result, { unsuspended: false, siteBackOnline: false, restoredTournamentIds: [], stillRetainedTournaments: 0, closedIntents: 1 });
-    assert.deepEqual(log.filter(c => c.verb !== 'select').map(c => [c.table, c.verb]), [['billing_retention_intents', 'update']]);
+    // Plans end at renewal (Stage 1): the second write withdraws a waiting cancel the old subscription left (this stub answers
+    // every read of the table with the same row, so it finds one).
+    assert.deepEqual(log.filter(c => c.verb !== 'select').map(c => [c.table, c.verb]), [['billing_retention_intents', 'update'], ['billing_retention_intents', 'update']]);
     assert.deepEqual(writesTo('billing_retention_intents')[0].args, [{ status: 'restored' }]);
+    assert.equal((writesTo('billing_retention_intents')[1].args[0] as { status: string }).status, 'canceled');
     for (const untouched of ['organizations', 'tournaments', 'billing_retained_records']) assert.equal(writesTo(untouched).length, 0, untouched);
   });
 

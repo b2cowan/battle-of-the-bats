@@ -1,5 +1,6 @@
 import { supabaseAdmin } from './supabase-admin';
 import { SLOT_STATUSES, withinFreeSlots } from './tournament-slot';
+import { withdrawPendingEnding } from './plan-ending-store';
 
 /**
  * REACTIVATION RESTORES EVERYTHING CANCELLATION TOOK (A07, Club Tier Stage 1b).
@@ -153,6 +154,8 @@ export async function restoreAfterReactivation(orgId: string, tournamentLimit: n
     .select('id');
   if (intentError) throw intentError;
   result.closedIntents = closed?.length ?? 0;
+  // Plans end at renewal: a waiting cancel left behind by the old subscription would end the new one on its date.
+  await withdrawPendingEnding({ orgId }, 'Reactivated');
 
   return result;
 }

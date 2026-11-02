@@ -311,7 +311,7 @@ describe('2 · a flipped workspace is a club everywhere a portal test is asked',
     const webhook = readCode('app/api/billing/webhook/route.ts');
     const deleted = webhook.slice(webhook.indexOf("case 'customer.subscription.deleted'"));
     assert.ok(deleted.indexOf('syncTeamWorkspaceSubscription') < deleted.indexOf('if (syncedTeamWorkspace)'));
-    assert.ok(deleted.indexOf('if (syncedTeamWorkspace)') < deleted.indexOf('applyCoachesPortalStripeRetention'));
+    assert.ok(deleted.indexOf('if (syncedTeamWorkspace)') < deleted.indexOf('endingForDeletedSubscription('));
     // The next-season choice writer cannot put an id back on a tombstone either.
     const setup = readCode('lib/billing-setup.ts');
     assert.match(setup, /\.eq\('id', params\.teamWorkspaceId\)\s*\.neq\('workspace_state', 'org_owned'\)/);
@@ -486,6 +486,11 @@ const LIVE_ROW_FILES: string[] = [
   'lib/api-auth.ts',
   'lib/billing-retention.ts',
   'lib/billing-urls.ts',
+  // Plans end at renewal: reads the workspace row only for a live Coaches Portal (account_kind) and finds a portal by its
+  // subscription id — a flipped club's tombstone holds no Stripe id, so its endings take the club path. The logic file only
+  // carries the account kind the server read (for retention days); it reads nothing.
+  'lib/plan-ending-server.ts',
+  'lib/plan-ending.ts',
   'lib/club-payees.ts',
   'lib/coach-billing-access.ts',
   'lib/coach-calendar-feed.ts',

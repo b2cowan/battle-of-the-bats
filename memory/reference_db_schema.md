@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-11-01 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-11-02 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-11-01
+# DB Schema Reference — 2026-11-02
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -86,7 +86,7 @@ id (uuid), venue_id (uuid) → diamonds.id NOT NULL, tournament_id (uuid) → to
 ## Module: League
 
 ### league_divisions
-id (uuid), season_id (uuid) → league_seasons.id NOT NULL, name NOT NULL, capacity (integer), sort_order (integer), created_at, born_from_year, born_to_year, price (numeric), early_price (numeric), note, teams_published_at, teams_published_by (uuid), schedule_published_at, schedule_published_by (uuid), games_per_team
+id (uuid), season_id (uuid) → league_seasons.id NOT NULL, name NOT NULL, capacity (integer), sort_order (integer), created_at, born_from_year, born_to_year, price (numeric), early_price (numeric), note, teams_published_at, teams_published_by (uuid), schedule_published_at, schedule_published_by (uuid), games_per_team, show_standings (boolean)
 - Indexes: league_divisions_season_id_idx
 
 ### league_email_log
@@ -516,8 +516,8 @@ id (uuid), intent_id (uuid) → billing_retention_intents.id NOT NULL, org_id (u
 - Indexes: billing_retained_records_intent_id_idx, idx_billing_retained_records_active_unique, idx_billing_retained_records_org, idx_billing_retained_records_pending_purge, idx_billing_retained_records_retention, idx_billing_retained_records_warning
 
 ### billing_retention_intents
-id (uuid), org_id (uuid) → organizations.id NOT NULL, intent_type NOT NULL, status, from_plan, target_plan, keep_tournament_ids, effective_at, retention_until NOT NULL, reason, created_by (uuid), created_by_email, created_at, updated_at, applied_at
-- Indexes: idx_billing_retention_intents_org, idx_billing_retention_intents_retention
+id (uuid), org_id (uuid) → organizations.id NOT NULL, intent_type NOT NULL, status, from_plan, target_plan, keep_tournament_ids, effective_at, retention_until NOT NULL, reason, created_by (uuid), created_by_email, created_at, updated_at, applied_at, stripe_subscription_id, held_move_plan, notify_owner (boolean), ends_on_email_sent_at, reminder_email_sent_at, kept_email_sent_at, ended_email_sent_at, change_log (jsonb)
+- Indexes: billing_retention_intents_one_pending_cancellation, idx_billing_retention_intents_org, idx_billing_retention_intents_retention
 
 ### budget_categories
 id (uuid), org_id (uuid) → organizations.id, name NOT NULL, scope, sort_order (integer), is_default (boolean), created_at, sports, team_id (uuid) → rep_teams.id, income_source

@@ -217,6 +217,8 @@ export async function sendTransactionalEmail(opts: {
   /** The sent-email log's club and the person whose action sent it (logged kinds only; lib/email.ts). */
   orgId?: string | null;
   askedBy?: string | null;
+  /** The mail service's once-only key (24 hours): a retried send under the same key goes once (Plans end at renewal, G7). */
+  idempotencyKey?: string;
 }): Promise<SendEmailResult> {
   const { subject, html } = await renderResolvedEmail({
     key: opts.key,
@@ -224,7 +226,7 @@ export async function sendTransactionalEmail(opts: {
     fallback: { subject: opts.defaultSubject, html: opts.defaultHtml },
     family: opts.family,
   });
-  const log = { kind: opts.key, orgId: opts.orgId, askedBy: opts.askedBy };
+  const log = { kind: opts.key, orgId: opts.orgId, askedBy: opts.askedBy, ...(opts.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : {}) };
   if (!opts.family) return sendEmail(opts.to, subject, html, log);
   return sendEmail(opts.to, subject, html, {
     ...log,

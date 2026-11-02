@@ -1,12 +1,13 @@
 # Plans end at the renewal date · Stage 1: cancel at renewal, both doors (build prompt)
 
-> ⛔ **HOLD — do not start this build yet (owner sequence rulings, 2026-10-31; plan header, index
-> https://claude.ai/artifact/Kua6RAqMA7ChA7QBTNE63a).** (a) The one rule for a subscription's future (Plans & pricing G5:
-> a customer or staff action that meets a scheduled price move carries it forward or refuses in plain words, never drops it)
-> must first be written into this prompt. (b) Plans & pricing Stage 0 S5 (webhook event log, ordering, live/test) lands
-> first or is built in the same session — do not build a separate replay workaround. (c) The portal configuration is created
-> and pinned in our code by Plans & pricing Stage 0 S8; anything below that says the portal is a Dashboard-only setting is
-> superseded. Remove this block when (a) is written and (b) is scheduled.
+> ✅ **HOLD LIFTED 2026-11-01** (it stood from the owner's sequence rulings of 2026-10-31; index
+> https://claude.ai/artifact/Kua6RAqMA7ChA7QBTNE63a). (a) The one rule for a subscription's future (Plans & pricing G5) is now
+> written into this prompt — see **"The one rule for a subscription's future"** below; it binds this stage. (b) Plans & pricing
+> Stage 0 S5 (webhook event log, ordering guard, live/test check) is built and committed (Part 2, `63988b38c`, 2026-11-01): **build
+> on its log, never a separate replay workaround.** Its migration 416 is applied to dev only — prod must get it before this stage
+> is promoted. (c) The portal configuration is created and pinned in our code (S8, Part 3, same commit); anything that says the
+> portal is a Dashboard-only setting is superseded. **Re-read `PLANS_PRICING_STAGE0_BUILD_PROMPT.md`'s Progress block for what S5
+> actually shipped before you touch the webhook.**
 
 > **Written 2026-10-31.** Paste into a new Codex chat on `dev`. **Re-verify every lead before building on it.** The leads
 > were read in the code on 2026-10-31; a plan or an audit has been wrong in this repo before. This is **Stage 1** in
@@ -52,6 +53,9 @@
 8. A wait message is the **white callout with an amber left edge** — `PageNotice` has no amber tone; do not add one.
 
 (Ask 8, the G2 edge, is Stage 2: the band asks again; with no choice by the date, the newest Draft or Active tournament is kept.)
+
+**Open, not in this stage unless the owner says so (found 2026-11-01):** an ordinary active plan card shows no "Renews {date}" line.
+It is not drawn or ruled; see the plan's §5. Do not add it on the way past; ask in your first message where it should land.
 
 ## Overrides of the Codex rules file (this project is different from Plan & billing)
 
@@ -248,6 +252,36 @@ Full text, code citations and tests in plan §3a; these are Stage 1's. Re-verify
 - **G8 · Two cancel signals.** Pending = `cancel_at_period_end` **or** a dated `cancel_at`; withdraw only when both are clear on the
   retrieved live subscription; date = `cancel_at` when set, else the item's `current_period_end`.
 - **G9 · Stages 1 and 2 reach customers together** — say in the hand-off that Stage 1 is not to be released alone.
+
+## The one rule for a subscription's future (Plans & pricing G5; owner sequence ruling 3, 2026-10-31 — binds this stage)
+
+(Not to be confused with gap-review "G5" above, the trial-email skip — the two numberings collided.)
+
+**The rule:** any customer or staff action that meets a **scheduled price move** (a cheaper-plan move waiting at renewal) either
+**carries it forward or refuses in plain words — it never drops it silently.** Nothing may leave a customer on a price or plan they
+did not choose with no screen saying so.
+
+**Why it bites here (read in the code 2026-11-01; re-verify):** `lib/plan-move.ts` ~357 releases any waiting schedule on an up-move,
+and ~413-420 reuses and rewrites any schedule on a down-move with no ownership check. A cancel at renewal has to release the same
+schedule (Stripe allows one per subscription), so without this rule: cancel → **Keep {Plan}** leaves the customer on the old,
+higher price and says nothing; and a later move can rewrite a customer's waiting downgrade.
+
+**What it means for this stage's actions:**
+1. **Schedule a cancel** over a waiting cheaper-plan move → carry it: record the target on the pending row (G1), and say in the cancel
+   window that the move is paused and returns if they keep the plan.
+2. **Keep {Plan}** → restore the move through `applyMove` (G1); if that fails, say so plainly with the move door on the page — never
+   report a clean keep that quietly renews at the higher price.
+3. **End now / the end date** → the plan ends, so the move has nothing left to apply to: end it deliberately and record that it was
+   dropped *and why* on the row — a ruled, recorded end, not a silent loss.
+4. **Another action that arrives while a cancel waits** (a move, an operator plan change, a team transfer, a reactivation) → refuse in
+   plain words, or withdraw the pending cancel as the lead above says; never leave the pending row and the schedule contradicting
+   each other. The existing paths that release or rewrite a schedule (`plan-move.ts` ~358, ~420, ~485) must each say which they do.
+5. **Make it testable:** one pure function that, given the live schedule and the pending row, returns *carry*, *restore* or *refuse*
+   (with the plain-words reason), used by every action above, with a test per action. Hand-off lists each action and its answer.
+6. **The "Changed by the customer" state on Watch** is a Plans & pricing build, not this stage's — but **leave the record it needs**
+   (who acted, what was carried or refused) on the pending row so that build has something to read.
+
+**Stage 2 and the Premium → Club move inherit this rule**; do not build them here.
 
 ## The work, in order
 
