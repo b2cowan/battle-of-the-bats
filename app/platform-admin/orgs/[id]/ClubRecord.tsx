@@ -42,6 +42,7 @@ import type { ClubOnlinePayments } from '@/lib/platform-online-payments';
 import type { OrgPlan } from '@/lib/types';
 import OnlinePaymentsTab from './OnlinePaymentsTab';
 import type { EndingSection } from '@/lib/online-payment-endings';
+import { wholeDaysUntil } from '@/lib/format-date';
 
 const NOT_IN_STORY = 'Not in the Story yet: account emails such as password resets.';
 /** For a role without the Stripe-reading power (A2): the money entries it does not see, said once (drawing D). */
@@ -94,6 +95,14 @@ export type ClubRecordProps = {
   portalFreeTime: PortalRecordFreeTime | null;
   /** The portal's free-time read failed: the record says so and offers no cancel, delete or plan door on a guess. */
   portalReadFailed: boolean;
+  /** Plans end at the renewal date (Stage 1): a cancel waiting for its date — who asked (`door`, `by`), when, and why. */
+  ending: {
+    endsAt: string; reason: string | null; door: string | null; by: string | null; at: string | null;
+    /** A cheaper move the cancel set aside; Keep puts it back (gap review G1). */
+    heldMovePlanLabel: string | null;
+  } | null;
+  /** The waiting-cancel read failed: said, and the Cancel door held back rather than offered on a guess. */
+  endingReadFailed: boolean;
   /** Club Tier 12d-2: the Online payments tab's read (the roles that read Stripe's records; null = no tab — never
    *  connected, or a role without it; 'failed' = the tab shows, its read offers Read again). */
   onlinePayments: ClubOnlinePayments | 'failed' | null;
@@ -129,8 +138,18 @@ type Window =
   | { kind: 'portalChange' }
   | { kind: 'portalEnd' }
   | { kind: 'cancel' }
+  | { kind: 'keepPlan' }
+  | { kind: 'endPlanNow' }
   | { kind: 'delete' }
   | null;
+
+/** Who asked for a waiting cancel, as the callout says it: the door its log records. */
+function askedBy(ending: NonNullable<ClubRecordProps['ending']>): string {
+  if (ending.door === 'owner') return 'the owner';
+  if (ending.door === 'stripe_portal') return 'the owner in Stripe’s billing portal';
+  if (ending.door === 'operator') return ending.by ?? 'an operator';
+  return ending.by ?? 'Stripe';
+}
 
 /** A limit as it reads in a field or a fact: "No limit", or the number. */
 const limitText = (n: number | null | undefined) => cap(limitWords(n));
@@ -153,6 +172,7 @@ export default function ClubRecord(props: ClubRecordProps) {
   const [editing, setEditing] = useState(false);
   const [win, setWin] = useState<Window>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const doneWithNotice = (message: string | null) => { setWin(null); setNotice(message); router.refresh(); };
 
   // Recent (Find's open-empty list) remembers this record in this browser only.
   useEffect(() => { rememberConsoleRecent({ kind: 'club', id: org.id, title: org.name }); }, [org.id, org.name]);
@@ -369,6 +389,13 @@ export default function ClubRecord(props: ClubRecordProps) {
       <span className={`${kit.bandValueText} ${styles.quietValue}`}>{freeThroughShort(foundingRow.lastDay)}</span>
       <span className={kit.bandNote}>Founding Season, no Stripe subscription</span>
     </div>
+  ) : props.ending ? (
+    // A cancel waits for its date (Plans end at renewal): the date it ends replaces the renewal it no longer has.
+    <div className={kit.bandCell}>
+      <span className={kit.bandLabel}>Ends</span>
+      <span className={`${kit.bandValue} ${kit.bandValueSm}`}>{consoleDate(props.ending.endsAt)}</span>
+      <span className={kit.bandNote}>cancelled · from Stripe</span>
+    </div>
   ) : (
     <div className={kit.bandCell}>
       <span className={kit.bandLabel}>{org.status === 'canceled' ? 'Ended' : org.status === 'trialing' ? 'Trial ends' : 'Renews'}</span>
@@ -463,7 +490,30 @@ export default function ClubRecord(props: ClubRecordProps) {
           This portal&rsquo;s free time could not be read, so its status and the Cancel and Delete doors are held back. Reload to try again.
         </div>
       )}
+      {props.endingReadFailed && (
+        <div className={kit.notice} role="status">
+          Whether a cancel is waiting could not be read, so the Cancel door is held back. Reload to try again.
+        </div>
+      )}
       {notice && <div className={kit.notice} role="status">{notice}</div>}
+      {/* Plans end at the renewal date: a waiting cancel says who asked, when and why, with its two exits (Stage 0 ruling 5).
+          While it waits, operator plan moves stay refused, so Keep and End now are the only doors. */}
+      {!editing && props.ending && (
+        <div className={`${kit.callout} ${kit.calloutWarn}`}>
+          <span>
+            <strong>Ending.</strong> Ends {consoleDate(props.ending.endsAt)}, at the period end.
+            <> Cancelled by {askedBy(props.ending)}{props.ending.at && <> on {consoleDate(props.ending.at)}</>}</>
+            {props.ending.reason ? <>: “{props.ending.reason}”</> : '.'}
+            {props.ending.heldMovePlanLabel && <> If the plan is kept, it renews as {props.ending.heldMovePlanLabel}, the move the owner chose.</>}
+          </span>
+          {can.billing && (
+            <span className={kit.calloutEnd}>
+              <button type="button" className={`${kit.door} ${kit.doorSm}`} onClick={() => setWin({ kind: 'keepPlan' })}>Keep the plan</button>
+              <button type="button" className={styles.redDoor} onClick={() => setWin({ kind: 'endPlanNow' })}>End now…</button>
+            </span>
+          )}
+        </div>
+      )}
 
       {editing ? (
         <div className={`${kit.card} ${kit.cardPad}`}>
@@ -728,8 +778,17 @@ export default function ClubRecord(props: ClubRecordProps) {
           onDone={() => { setWin(null); router.refresh(); }} onClose={() => setWin(null)} />
       )}
       {win?.kind === 'cancel' && (
-        <CancelWindow orgId={org.id} orgName={org.name} hasStripe={!!org.stripeSubscriptionId}
-          onDone={message => { setWin(null); setNotice(message); router.refresh(); }} onClose={() => setWin(null)} />
+        <CancelWindow orgId={org.id} orgName={org.name} onEndNow={() => setWin({ kind: 'endPlanNow' })}
+          onDone={doneWithNotice} onClose={() => setWin(null)} />
+      )}
+      {win?.kind === 'endPlanNow' && (
+        // A `mock_…` id is not a Stripe subscription (lead 8): only a real `sub_…` one is said to reach Stripe.
+        <EndPlanNowWindow orgId={org.id} orgName={org.name} hasStripe={!!org.stripeSubscriptionId?.startsWith('sub_')} ending={props.ending}
+          onDone={doneWithNotice} onClose={() => setWin(null)} />
+      )}
+      {win?.kind === 'keepPlan' && props.ending && (
+        <KeepPlanWindow orgId={org.id} orgName={org.name} planLabel={org.planLabel} ending={props.ending}
+          onDone={doneWithNotice} onClose={() => setWin(null)} />
       )}
       {win?.kind === 'delete' && (
         <DeleteWindow orgId={org.id} orgName={org.name} orgSlug={org.slug} hasStripeCustomer={!!org.stripeCustomerId}
@@ -752,7 +811,9 @@ function AccessTab(props: ClubRecordProps & {
   const running = props.overrides.filter(o => o.running).sort((a, b) => (a.lastDay ?? '9999').localeCompare(b.lastDay ?? '9999'));
   const giver = can.billing && props.freeTime;
   const block = props.freeTime?.block ?? null;
-  const canCancel = can.billing && org.status !== 'canceled' && (org.planId !== 'tournament' || !!org.stripeSubscriptionId);
+  // A cancel already waiting has its own doors on the record's callout (Keep, End now); none is offered on a failed read.
+  const canCancel = can.billing && org.status !== 'canceled' && (org.planId !== 'tournament' || !!org.stripeSubscriptionId)
+    && !props.ending && !props.endingReadFailed;
   return (
     <div className={kit.page}>
       <section className={kit.section}>
@@ -1017,49 +1078,167 @@ function NoteWindow({ orgId, orgName, onDone, onClose }: { orgId: string; orgNam
   );
 }
 
-// ── Cancel the subscription (red: it reaches Stripe and is never offered as Put it back) ──────────────────────────────
-function CancelWindow({ orgId, orgName, hasStripe, onDone, onClose }: {
-  orgId: string; orgName: string; hasStripe: boolean; onDone: (message: string | null) => void; onClose: () => void;
-}) {
-  const [pre, setPre] = useState<{ activeTournamentCount?: number; retentionDays?: number; shutsDown?: string[]; onlinePayments?: EndingSection | null } | null>(null);
-  const [notify, setNotify] = useState(false);
+type CancelPreflight = {
+  activeTournamentCount?: number; retentionDays?: number; shutsDown?: string[]; onlinePayments?: EndingSection | null;
+  /** A real Stripe subscription: the cancel waits for its renewal date. False: no paid period, it ends at the click. */
+  waitsForRenewal?: boolean; renewsOn?: string | null;
+};
+
+/** The cancel window's read; a refusal (free time, already cancelled) is the window's sentence and holds the confirm. */
+function useCancelPreflight(orgId: string) {
+  const [pre, setPre] = useState<CancelPreflight | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
   useEffect(() => {
-    void sendJson(`/api/platform-admin/orgs/${orgId}/cancel-subscription`, 'GET').then(({ ok, data }) => { if (ok) setPre(data); });
+    void sendJson(`/api/platform-admin/orgs/${orgId}/cancel-subscription`, 'GET').then(({ ok, data }) => {
+      if (ok) setPre(data as CancelPreflight); else setFailed(errorOf(data, 'The subscription could not be read.'));
+    });
   }, [orgId]);
+  return { pre, failed };
+}
+
+/** "Its 3 tournaments are archived and kept for 90 days." — said only when there are some. */
+function archivedLine(pre: CancelPreflight | null) {
+  return pre?.activeTournamentCount
+    ? <> Its {pre.activeTournamentCount} tournament{pre.activeTournamentCount === 1 ? ' is' : 's are'} archived and kept for {pre.retentionDays} days.</>
+    : null;
+}
+
+// ── Cancel the subscription: plans end at the renewal date (owner 2026-10-31). A paying Stripe subscription waits for its
+// date and can be kept until then, by the owner or by us; with no paid period it ends at the click, as before. The quiet
+// red link leads to End now — never the default, never beside Cancel (Stage 0 ruling 5). ─────────────────────────────────
+function CancelWindow({ orgId, orgName, onEndNow, onDone, onClose }: {
+  orgId: string; orgName: string; onEndNow: () => void; onDone: (message: string | null) => void; onClose: () => void;
+}) {
+  const { pre, failed } = useCancelPreflight(orgId);
+  const [notify, setNotify] = useState(false);
+  const endsOn = pre?.waitsForRenewal ? pre.renewsOn ?? null : null;
+  // A subscription that waits for a date we don't hold can't be promised one, nor said to end now.
+  const dateMissing = !!pre?.waitsForRenewal && !endsOn;
+  const stops = pre?.shutsDown && pre.shutsDown.length > 0 && (
+    <div className={kit.fieldGroup}>
+      <span className={kit.label}>{endsOn ? `What stops on ${consoleDay(endsOn)}` : 'What stops'}</span>
+      <ul className={kit.caption}>{pre.shutsDown.map(s => <li key={s}>{s}</li>)}</ul>
+    </div>
+  );
   return (
     <RecordWindow
       title={`Cancel the subscription for ${orgName}`}
-      sentence={<>
-        {hasStripe ? <>Stripe stops charging {orgName}. </> : <>{possessive(orgName)} subscription ends here. </>}
-        <strong>This cannot be put back</strong>: the owner would have to buy again.
-        {pre?.activeTournamentCount ? <> Its {pre.activeTournamentCount} tournament{pre.activeTournamentCount === 1 ? ' is' : 's are'} archived and kept for {pre.retentionDays} days.</> : null}
-      </>}
+      sentence={failed ? <>{failed}</> : !pre ? <>Reading the subscription…</>
+        : dateMissing ? <>Stripe bills {orgName}, but its renewal date isn’t on our record, so this cancel can’t say when it would end. Check the Money tab.</>
+        : endsOn ? <>
+          Stripe stops charging {orgName} after {consoleDate(endsOn)}, the end of the period it paid for. Until then everything stays open.
+          {pre.activeTournamentCount ? <> On that day its {pre.activeTournamentCount} tournament{pre.activeTournamentCount === 1 ? ' is' : 's are'} archived and kept for {pre.retentionDays} days.</> : null}
+          {' '}The owner can keep the plan until then, and so can you.
+        </> : <>
+          {possessive(orgName)} subscription ends here: there is no paid period to wait for. <strong>This cannot be put back</strong>: the owner would have to buy again.
+          {archivedLine(pre)}
+        </>}
       whyPlaceholder="Why are you cancelling?"
-      footNote="Reaches Stripe. Never offered as Put it back."
+      footNote={endsOn ? `Reaches Stripe. Can be kept until ${consoleDay(endsOn)}.` : 'Never offered as Put it back.'}
       cancelLabel="Keep it"
-      confirmLabel="Cancel the subscription"
+      confirmLabel={endsOn ? 'Cancel at the period end' : 'Cancel the subscription'}
       danger
+      confirmBlocked={!pre || !!failed || dateMissing}
       onConfirm={async reason => {
         const { ok, data } = await sendJson(`/api/platform-admin/orgs/${orgId}/cancel-subscription`, 'POST', { reason, notifyOwner: notify });
         if (!ok) return errorOf(data, 'The subscription could not be cancelled.');
-        onDone(typeof data.stripeWarning === 'string' ? `Cancelled here. Stripe needs it cancelled by hand: ${data.stripeWarning}` : null);
+        onDone(data.outcome === 'scheduled'
+          ? data.recorded === false ? 'Scheduled in Stripe. Our record of it is still catching up: reload in a minute.' : null
+          : typeof data.stripeWarning === 'string' ? `Cancelled here. Stripe needs it cancelled by hand: ${data.stripeWarning}` : null);
         return null;
       }}
       onClose={onClose}
     >
+      {stops}
+      {/* 12d-2 (words §4.3, ask 11): the same count the owner reads, in the console's words. Its "now" is true only for a
+          cancel that ends now; the dated sentence for a waiting one is Stage 1 Part C's. */}
+      {pre?.onlinePayments && !endsOn && <p className={kit.caption}>{LEAVING_WORDS.operator(pre.onlinePayments.outstanding, 'now')}</p>}
+      <label className={kit.check}>
+        <input type="checkbox" checked={notify} onChange={e => setNotify(e.target.checked)} />
+        {endsOn
+          ? <>Email the owner that the plan ends on {consoleDate(endsOn)} (this reaches an inbox and cannot be taken back)</>
+          : <>Email the owner that it is cancelled (this reaches an inbox and cannot be taken back)</>}
+      </label>
+      {endsOn && (
+        <p className={kit.caption}>
+          Fraud, abuse or a chargeback? <button type="button" className={styles.redDoor} onClick={onEndNow}>End it today instead…</button>
+        </p>
+      )}
+    </RecordWindow>
+  );
+}
+
+// ── End now: today's immediate cancel, kept exactly, behind its own red window (platform admin only; abuse, fraud, a
+// chargeback). With a cancel already waiting it finishes that one — the server promotes the waiting row, never a second. ──
+function EndPlanNowWindow({ orgId, orgName, hasStripe, ending, onDone, onClose }: {
+  orgId: string; orgName: string; hasStripe: boolean; ending: ClubRecordProps['ending'];
+  onDone: (message: string | null) => void; onClose: () => void;
+}) {
+  const { pre, failed } = useCancelPreflight(orgId);
+  const [notify, setNotify] = useState(false);
+  const paidThrough = ending?.endsAt ?? (pre?.waitsForRenewal ? pre.renewsOn ?? null : null);
+  const daysLost = wholeDaysUntil(paidThrough);
+  return (
+    <RecordWindow
+      title={`End the plan for ${orgName} today`}
+      sentence={failed ? <>{failed}</> : <>
+        This ends the plan today{daysLost > 0 ? <>, {daysLost} day{daysLost === 1 ? '' : 's'} before the period it paid for is over</> : null}. Nothing is refunded.
+        {' '}{orgName} is suspended now.{archivedLine(pre)} <strong>This cannot be put back</strong>: the owner would have to buy again.
+      </>}
+      whyPlaceholder="Fraud, abuse, a chargeback…"
+      footNote={`Ends immediately. No refund. This cannot be put back.${hasStripe ? ' Reaches Stripe.' : ''}`}
+      cancelLabel="Keep it"
+      confirmLabel="End the plan now"
+      danger
+      confirmBlocked={!pre || !!failed}
+      onConfirm={async reason => {
+        const { ok, data } = await sendJson(`/api/platform-admin/orgs/${orgId}/cancel-subscription`, 'POST', { reason, notifyOwner: notify, endNow: true });
+        if (!ok) return errorOf(data, 'The plan could not be ended.');
+        onDone(typeof data.stripeWarning === 'string' ? `Ended here. Stripe needs it cancelled by hand: ${data.stripeWarning}` : null);
+        return null;
+      }}
+      onClose={onClose}
+    >
+      {ending && <p className={kit.caption}>It was already set to end on {consoleDate(ending.endsAt)}. This finishes it today instead.</p>}
       {pre?.shutsDown && pre.shutsDown.length > 0 && (
         <div className={kit.fieldGroup}>
-          <span className={kit.label}>What stops</span>
+          <span className={kit.label}>What stops now</span>
           <ul className={kit.caption}>{pre.shutsDown.map(s => <li key={s}>{s}</li>)}</ul>
         </div>
       )}
-      {/* 12d-2 (words §4.3, ask 11): the same count the owner reads, in the console's words. */}
       {pre?.onlinePayments && <p className={kit.caption}>{LEAVING_WORDS.operator(pre.onlinePayments.outstanding, 'now')}</p>}
       <label className={kit.check}>
         <input type="checkbox" checked={notify} onChange={e => setNotify(e.target.checked)} />
-        Email the owner that it is cancelled (this reaches an inbox and cannot be taken back)
+        Email the owner that the plan has ended (this reaches an inbox and cannot be taken back)
       </label>
     </RecordWindow>
+  );
+}
+
+// ── Keep the plan: the operator's Keep {Plan}, undoing a waiting cancel on the owner's behalf (a typed Why, like every
+// console record window). Stripe renews it on its date; a cheaper move the cancel set aside comes back (G1). ─────────────
+function KeepPlanWindow({ orgId, orgName, planLabel, ending, onDone, onClose }: {
+  orgId: string; orgName: string; planLabel: string; ending: NonNullable<ClubRecordProps['ending']>;
+  onDone: (message: string | null) => void; onClose: () => void;
+}) {
+  return (
+    <RecordWindow
+      title={`Keep ${planLabel} for ${orgName}`}
+      sentence={ending.heldMovePlanLabel
+        ? <>{orgName} stays on {planLabel} until {consoleDate(ending.endsAt)}. Then it renews as <strong>{ending.heldMovePlanLabel}</strong>, the move the owner chose.</>
+        : <>{orgName} stays on {planLabel} and renews on {consoleDate(ending.endsAt)}. Stripe charges it again then. Nothing else changes.</>}
+      whyPlaceholder="Why are you keeping the plan?"
+      footNote="Reaches Stripe. Writes a new entry in the Story."
+      cancelLabel="Not now"
+      confirmLabel={ending.heldMovePlanLabel ? `Keep and renew as ${ending.heldMovePlanLabel}` : `Keep ${planLabel}`}
+      onConfirm={async reason => {
+        const { ok, data } = await sendJson(`/api/platform-admin/orgs/${orgId}/cancel-subscription`, 'DELETE', { reason });
+        if (!ok) return errorOf(data, 'The plan could not be kept.');
+        onDone(typeof data.notice === 'string' ? data.notice : null);
+        return null;
+      }}
+      onClose={onClose}
+    />
   );
 }
 

@@ -16,6 +16,16 @@ export type BillingCancellation = {
   currentPlan: OrgPlan; activeTournamentCount: number; tournaments: BillingTournament[]; retentionDays: number;
   shutsDown: string[]; shortShutsDown: string[]; activeTeams: number | null;
   cancelled: { at: string | null; keptUntil: string | null } | null; onlinePayments?: EndingSection | null;
+  /** Plans end at the renewal date (Stage 1). Null while the account is cancelled (the reactivate card reads `cancelled`). */
+  ending?: BillingEnding | null;
+};
+export type BillingEnding = {
+  /** A real Stripe subscription: a cancel waits for its date. False: no paid period to wait for, so it ends at the click. */
+  waits: boolean;
+  /** The date a cancel made now would end on (the renewal, or the trial's end) — the window's preview; Stripe's is recorded. */
+  endsOn: string | null;
+  /** The cancel already waiting: the page's "Ends on" line and Keep {Plan}. `heldMovePlan` is a cheaper move it set aside (G1). */
+  pending: { endsAt: string; heldMovePlan: OrgPlan | null } | null;
 };
 export type BillingDowngrade = {
   currentPlan: OrgPlan; targetPlan: OrgPlan; targetPlanLabel: string; targetTournamentLimit: number;

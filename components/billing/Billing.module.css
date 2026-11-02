@@ -268,3 +268,18 @@
   .table td:last-child { justify-content: flex-end; }
   .table .num { text-align: left; }
 }
+
+/* Plans end at the renewal date (Stage 0 design pass): a wait is the white callout with an amber left edge, the recipe the
+   admin kit ships (Schedules, Rep teams) — PageNotice has no amber tone, and none is added. */
+.waitCallout {
+  margin: 0 0 0.9rem; max-width: 64ch; padding: 0.75rem 1rem;
+  background: var(--card-bg); border: 1px solid var(--home-line); border-left: 3px solid var(--warning); border-radius: 8px;
+  font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary);
+}
+/* Keep {Plan}: the olive link on a desk; on a phone a full-width 44px lime button under the line (Stage 0 ruling 7).
+   Doubled classes beat the global .btn display on bundle order. */
+.keepButton.keepButton { display: none; }
+@media (max-width: 640px) {
+  .keepLink { display: none; }
+  .keepButton.keepButton { display: inline-flex; justify-content: center; width: 100%; min-height: var(--tap-min, 44px); margin-top: 0.35rem; }
+}

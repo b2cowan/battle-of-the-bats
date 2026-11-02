@@ -41,13 +41,17 @@ export function billingReturnState(search: string, billingBase: string, showFoun
   const notice: Notice | null = justChose ? { tone: 'good', text: showFoundingSeason ? W.notice.nextSeason : W.notice.active }
     : query.get('card_saved') === '1' ? { tone: 'good', text: W.notice.cardSaved }
       : query.get('success') === '1' ? { tone: 'good', text: W.notice.active } : null;
-  const consumed = ['success', 'card_saved', 'next_season'].some(flag => query.has(flag));
-  for (const flag of ['success', 'card_saved', 'next_season']) query.delete(flag);
-  return { justChose, cardSaved, detail, notice, consumed, destination: `${billingBase}${query.size ? `?${query}` : ''}` };
+  // `keep_plan` opens the Keep {Plan} window once the waiting cancel has loaded (the plan-change window's door elsewhere).
+  const keepPlan = query.get('keep_plan') === '1';
+  const consumed = ['success', 'card_saved', 'next_season', 'keep_plan'].some(flag => query.has(flag));
+  for (const flag of ['success', 'card_saved', 'next_season', 'keep_plan']) query.delete(flag);
+  return { justChose, cardSaved, keepPlan, detail, notice, consumed, destination: `${billingBase}${query.size ? `?${query}` : ''}` };
 }
 type Action = {
   busy: string | null; cycle: BillingCycle; setCycle: (value: BillingCycle) => void;
   portal: () => void; card: () => void; reactivate: () => void; keep: () => void; cancel: () => void;
+  /** Keep {Plan}: opens the question window that undoes a waiting cancel (Plans end at renewal, Stage 0 ruling 4). */
+  keepPlan: () => void;
   /** A checkout change asks how to pay first (the payment step) unless the cycle is already chosen, as in the details panel. */
   change: (change: BillingPlanChange<string>, cycle?: BillingCycle) => void; details: (key: string) => void;
   choose: (key: string, cycle: BillingCycle) => void; retry: () => void;
@@ -55,6 +59,8 @@ type Action = {
 export type BillingBodyViewProps = {
   snapshot: BillingSnapshot; profile: PlanBillingProfile<string>; ownProfile: PlanBillingProfile<string>;
   profiles?: Registry; actions: Action; notice?: Notice | null; justChose?: boolean;
+  /** A wait, not a failure (the white callout with an amber edge): a kept plan whose cheaper move couldn't come back. */
+  waitNotice?: string | null;
   cardWindowOpen?: boolean; foundingActive?: boolean; fees?: ReactNode;
   /** The plan whose details panel is open (`?plan=` or a Details link), and how it closes. */
   detail?: string | null; onCloseDetail?: () => void;
@@ -78,7 +84,7 @@ function LockedCard({ orgName }: { orgName: string }) {
 
 /** The actual billing presentation, also rendered by the isolated profile fixtures. No portal chrome or providers. */
 export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = PLAN_BILLING_PROFILES, actions: a,
-  notice, justChose = false, cardWindowOpen = false, foundingActive = false, fees, detail = null, onCloseDetail = () => {},
+  notice, waitNotice = null, justChose = false, cardWindowOpen = false, foundingActive = false, fees, detail = null, onCloseDetail = () => {},
 }: BillingBodyViewProps) {
   const org = s.org;
   if (!s.canManageBilling) return <LockedCard orgName={org.name} />;
@@ -106,6 +112,11 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   const comp = founding && foundingActive;
   const paid = ownProfile.config.monthlyPrice > 0;
   const preflight = s.cancellation.status === 'ready' ? s.cancellation.data : null;
+  // Plans end at the renewal date (Stage 0 rulings 1–3): a waiting cancel takes the plan card's waiting-change line, and
+  // the change doors and Reduce or cancel are absent until it is kept.
+  const pending = ownBilling && !cancelled ? preflight?.ending?.pending ?? null : null;
+  const keepLabel = pending ? W.cancel.keepDoor(ownProfile.key as OrgPlan) : '';
+  const trialingNow = org.subscriptionStatus === 'trialing';
   const changes = ownProfile.changes;
   const scheduled = s.move.status === 'ready' ? s.move.data.scheduledMove : null;
   // Plans & pricing Stage 0 (fix 1): what the customer's own subscription charges, when the webhook has recorded it (in
@@ -135,7 +146,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     onBillingCycleChange={a.setCycle}
     onUpgrade={() => { onCloseDetail(); if (detailChange) a.change(detailChange, a.cycle); }} upgradeLoading={a.busy === 'checkout' ? detailPlan : null}
     isComingSoon={s.gating.status === 'ready' && s.gating.data[detailProfile.key as OrgPlan] !== false}
-    canUpgrade={Boolean(detailChange) && controlsReady && ownBilling && !cancelled && sale(detailProfile.key)} foundingOfferHeld={false} /> : null;
+    canUpgrade={Boolean(detailChange) && controlsReady && ownBilling && !cancelled && !pending && sale(detailProfile.key)} foundingOfferHeld={false} /> : null;
   // A failed grant read cannot distinguish an actual cancellation from staff free time.
   // Offer help without asserting cancellation, renewal, a price, or a retention clock.
   if (s.freeTime.status === 'error') return <><div className={styles.body}>
@@ -225,18 +236,24 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   const endingContact = !portal && ft?.freeTime?.state === 'ending' && sale(ft.freeTime.plan);
   return <><div className={styles.body}>
     {notice && <PageNotice notice={notice} />}
+    {waitNotice && <p className={styles.waitCallout} role="status">{waitNotice}</p>}
     {readRecovery}
     {org.subscriptionStatus === 'past_due' && <PageNotice notice={{ tone: 'bad', text: W.plan.pastDue }} />}
     <CoachCard className={styles.planCard}>
       <div className={styles.planGrid}>
         <div className={styles.planSide}>
-          <CoachEyebrow chip={<CoachChip tone={staffFree ? band?.tone === 'amber' ? 'warn' : 'good' : org.subscriptionStatus === 'canceled' ? 'danger' : org.subscriptionStatus === 'past_due' ? 'warn' : 'good'}>{portalCopy?.band.eyebrow ?? (staffFree ? freeCopy?.band.eyebrow : W.plan.status(org.subscriptionStatus))}</CoachChip>}>{W.page.sections.plan}</CoachEyebrow>
+          <CoachEyebrow chip={<CoachChip tone={pending ? 'warn' : staffFree ? band?.tone === 'amber' ? 'warn' : 'good' : org.subscriptionStatus === 'canceled' ? 'danger' : org.subscriptionStatus === 'past_due' ? 'warn' : 'good'}>{pending ? W.plan.ending : portalCopy?.band.eyebrow ?? (staffFree ? freeCopy?.band.eyebrow : W.plan.status(org.subscriptionStatus))}</CoachChip>}>{W.page.sections.plan}</CoachEyebrow>
           <h2 className={styles.planName}>{profile.config.label}</h2>
           {s.freeTime.status === 'loading' ? <LoadingState inline label={W.page.loading} /> : <p className={styles.planPrice}>{price}</p>}
           {freeCard && <p className={styles.hint}>{freeCard.from}</p>}
           {comp && <p className={styles.hint}>{W.founding.priceHelp(profile.config.annualPrice)}</p>}
-          {controlsReady && ownBilling && !cancelled && !comp && org.currentPeriodEnd && <p className={styles.hint}>{org.subscriptionStatus === 'trialing' ? W.plan.trialEnds(org.currentPeriodEnd) : W.plan.renews(org.currentPeriodEnd)}</p>}
-          {ownBilling && scheduled && <p className={styles.scheduled}>{W.plan.scheduled(profiles[scheduled.toPlan].config.label, scheduled.effectiveAt)} <button type="button" className={styles.link} disabled={disabled} onClick={a.keep}>{W.plan.keep(ownProfile.config.label)}</button></p>}
+          {controlsReady && ownBilling && !cancelled && !comp && !pending && org.currentPeriodEnd && <p className={styles.hint}>{org.subscriptionStatus === 'trialing' ? W.plan.trialEnds(org.currentPeriodEnd) : W.plan.renews(org.currentPeriodEnd)}</p>}
+          {pending && <>
+            <p className={styles.scheduled}>{W.plan.endsOn(pending.endsAt, org.subscriptionStatus === 'trialing')} <button type="button" className={`${styles.link} ${styles.keepLink}`} disabled={disabled} onClick={a.keepPlan}>{keepLabel}</button></p>
+            {pending.heldMovePlan && <p className={styles.hint}>{W.plan.renewsAs(PLAN_CONFIG[pending.heldMovePlan].label)}</p>}
+            <button type="button" className={`btn btn-lime ${styles.keepButton}`} disabled={disabled} onClick={a.keepPlan}>{keepLabel}</button>
+          </>}
+          {ownBilling && scheduled && !pending && <p className={styles.scheduled}>{W.plan.scheduled(profiles[scheduled.toPlan].config.label, scheduled.effectiveAt)} <button type="button" className={styles.link} disabled={disabled} onClick={a.keep}>{W.plan.keep(ownProfile.config.label)}</button></p>}
           {controlsReady && paid && !staffFree && !endedPortal && !founding && <div className={styles.planActions}>
             <button type="button" className="btn btn-outline" id="billing-manage-btn" onClick={a.portal} disabled={disabled}><CreditCard size={14} aria-hidden />{a.busy === 'portal' ? W.plan.openingPortal : W.plan.payment}</button>
           </div>}
@@ -269,7 +286,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
                 {!staffFree && value.count >= value.limit && (() => {
                   const larger = ownProfile.changes.find(change => change.mechanism === 'move' && profiles[change.target].config.teamLimit > value.limit);
                   return <p className={styles.hint}>{larger ? W.usage.fullTeams(org.name, value.limit, profile.config.label, profiles[larger.target].config.label) : W.usage.fullContact(org.name, value.limit, profile.config.label)}{' '}
-                    {larger && sale(larger.target) && controlsReady ? <button type="button" className={styles.link} onClick={() => a.change(larger)} disabled={disabled}>{W.change.move(profiles[larger.target].config.label)}</button> : <a href={CONTACT_HREF} className={styles.link}>{W.change.contact}</a>}
+                    {pending ? null : larger && sale(larger.target) && controlsReady ? <button type="button" className={styles.link} onClick={() => a.change(larger)} disabled={disabled}>{W.change.move(profiles[larger.target].config.label)}</button> : <a href={CONTACT_HREF} className={styles.link}>{W.change.contact}</a>}
                   </p>;
                 })()}
               </>}
@@ -311,6 +328,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     {keepPremium}
     {(showChanges && changes.length > 0 || profile.joinClub) && <Section id="billing-change" title={W.page.sections.change}>
       {showChanges && changes.length > 0 && <>
+        {pending && <p className={styles.waitCallout}>{W.cancel.endingRefusal(ownProfile.key as OrgPlan, pending.endsAt)}</p>}
         <div className={styles.tableFrame}><table className={styles.table}>
           <thead><tr><th scope="col">{W.change.headings.plan}</th><th scope="col">{W.change.headings.holds}</th><th scope="col" className={styles.num}>{W.change.headings.monthly}</th><th scope="col" className={styles.num}>{W.change.headings.annual}</th><th scope="col"><span className={styles.srOnly}>{W.change.headings.choice}</span></th></tr></thead>
           <tbody>{changeKeys.map(key => {
@@ -322,6 +340,8 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
               <td data-label={W.change.headings.monthly} className={styles.num}>{target.config.monthlyPrice === 0 ? W.plan.free : formatPriceAmount(target.config.monthlyPrice)}</td>
               <td data-label={W.change.headings.annual} className={styles.num}>{target.config.annualPrice === 0 ? W.plan.free : formatPriceAmount(target.config.annualPrice)}</td>
               <td data-label={W.change.headings.choice}>{key === ownProfile.key ? <CoachChip tone="good">{W.change.current}</CoachChip>
+                // A waiting cancel: the doors are absent, not disabled; the line above the table says why (Stage 0 ruling 3).
+                : pending ? null
                 : scheduled?.toPlan === key ? <CoachChip tone="warn">{W.plan.scheduledFrom(scheduled.effectiveAt)}</CoachChip>
                   // A Founding Season comp has no subscription to reduce; the old page hid the downgrade with Cancel.
                   : founding && change?.mechanism === 'downgrade' ? null
@@ -348,10 +368,14 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
         {profiles[key].cancellationKind === 'premium' && s.gating.status !== 'loading' && (sale(key) ? <a href={COACHES_START_PATH} className={`btn btn-outline ${styles.discoveryAction}`}>{W.shelf.startCoach}</a> : <a href={CONTACT_HREF} className={`${styles.link} ${styles.discoveryAction}`}>{W.change.contact}</a>)}
       </CoachCard>)}</div>
     </Section>}
-    {controlsReady && paid && ownBilling && !founding && <Section id="billing-cancel" title={W.page.sections.cancel}>
-      {preflight ? <>
-        <p className={styles.cancelCopy}>{premium ? W.cancel.premiumBody(preflight.retentionDays) : W.cancel.orgBody(org.name, preflight.shortShutsDown, preflight.retentionDays)}</p>
-        <button type="button" className={`btn btn-outline ${styles.dangerText}`} id="billing-cancel-btn" onClick={a.cancel} disabled={disabled}>{premium ? W.cancel.premiumDoor : W.cancel.orgDoor(org.name)}</button>
+    {controlsReady && paid && ownBilling && !founding && !pending && <Section id="billing-cancel" title={W.page.sections.cancel}>
+      {/* A subscription that waits for a date it can't name: no door that would promise one, or wrongly say "now". */}
+      {preflight?.ending?.waits && !preflight.ending.endsOn ? <p role="alert" className={styles.hint}>{W.errors.read('the renewal date')}</p>
+        : preflight ? <>
+        <p className={styles.cancelCopy}>{preflight.ending?.endsOn
+          ? premium ? W.cancel.premiumWaitBody(preflight.ending.endsOn, preflight.retentionDays, trialingNow) : W.cancel.waitBody(org.name, preflight.shortShutsDown, preflight.ending.endsOn, preflight.retentionDays, trialingNow)
+          : premium ? W.cancel.premiumBody(preflight.retentionDays) : W.cancel.orgBody(org.name, preflight.shortShutsDown, preflight.retentionDays)}</p>
+        <button type="button" className={`btn btn-outline ${styles.dangerText}`} id="billing-cancel-btn" onClick={a.cancel} disabled={disabled}>{premium ? W.cancel.premiumDoor : preflight.ending?.endsOn ? W.cancel.waitDoor(ownProfile.config.label) : W.cancel.orgDoor(org.name)}</button>
       </> : s.cancellation.status === 'loading' ? <LoadingState inline label="Loading cancellation details…" /> : <ReadFailure read={s.cancellation} section="cancellation details" />}
     </Section>}
   </div>{panel}</>;
@@ -412,6 +436,12 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
   const [reviewError, setReviewError] = useState<string | null>(null);
   const leaving = useRef(false);
   const [keepIds, setKeepIds] = useState<string[]>([]);
+  // Keep {Plan} (Plans end at renewal): its question window, its error, a `keep_plan` arrival, and a kept plan whose
+  // cheaper move couldn't come back (said as a wait, not a failure — the plan IS kept).
+  // Arriving by `keep_plan=1` starts it open; it shows once the waiting cancel has loaded (derived, never set in an effect).
+  const [keepOpen, setKeepOpen] = useState(initialReturn.keepPlan);
+  const [keepError, setKeepError] = useState<string | null>(null);
+  const [waitNotice, setWaitNotice] = useState<string | null>(null);
   const scope = `orgSlug=${encodeURIComponent(org.slug)}`;
   const version = `${org.planId}:${ownProfile.key}:${org.subscriptionStatus}:${revision}`;
   const usage = useBillingRead<BillingUsage>(`/api/billing/usage?${scope}`, version);
@@ -420,6 +450,8 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
   const gating = useBillingRead<Partial<Record<OrgPlan, boolean>>>('/api/plan-gating', version);
   const cancellation = useBillingRead<BillingCancellation>(`/api/billing/cancel/preflight?${scope}`, version);
   const move = useBillingRead<BillingMove>(ownProfile.changes.some(c => c.mechanism === 'move') && org.subscriptionStatus !== 'canceled' ? `/api/billing/move?${scope}` : null, version);
+  const pendingEnding = cancellation.status === 'ready' && org.subscriptionStatus !== 'canceled' ? cancellation.data.ending?.pending ?? null : null;
+  const openKeep = () => { setKeepError(null); setKeepOpen(true); };
   const [retrying, setRetrying] = useState(false);
   const reload = useCallback(async () => {
     try { await refresh(); }
@@ -515,7 +547,9 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
     card: () => void run('card', async () => { const result = await post('/api/billing/setup-payment-method', { returnTo: billingBase }); if (result.url) leave(result.url); else if (live.current) throw new Error(W.errors.card); }),
     reactivate: () => void checkout(ownProfile.key),
     keep: () => void run('keep', async () => { await post(`/api/billing/move?${scope}`, {}, 'DELETE'); if (live.current) { setNotice({ tone: 'good', text: W.plan.kept(org.name, ownProfile.config.label) }); reloadAfterAction(); } }),
-    cancel: () => { if (cancellation.status === 'ready') { setReason(''); setReviewError(null); setReview({ kind: 'cancel', data: cancellation.data }); } },
+    // A `keep_plan` arrival that found nothing waiting must not open Keep over the cancel this starts.
+    cancel: () => { if (cancellation.status === 'ready') { setKeepOpen(false); setReason(''); setReviewError(null); setReview({ kind: 'cancel', data: cancellation.data }); } },
+    keepPlan: openKeep,
     change: (change, chosen) => {
       if (change.mechanism === 'move') setMoveTo(change.target as OrgPlan);
       else if (change.mechanism === 'downgrade') void openDowngrade(change.target as OrgPlan);
@@ -535,6 +569,18 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
   const cancel = review?.kind === 'cancel' ? review.data : null;
   const target = downgrade ? PLAN_BILLING_PROFILES[downgrade.targetPlan] : null;
   const premium = ownProfile.cancellationKind === 'premium';
+  const ownKey = ownProfile.key as OrgPlan;
+  const keepLabel = W.cancel.keepDoor(ownKey);
+  // Plans end at the renewal date (Stage 1): a real subscription's cancel waits for its date; with none it ends at the click.
+  const ending = cancel?.ending ?? null;
+  const endsOn = ending?.waits ? ending.endsOn : null;
+  const trialing = org.subscriptionStatus === 'trialing';
+  // A cheaper move waiting at renewal: the cancel sets it aside, and Keep {Plan} brings it back (gap review G1).
+  const heldMove = move.status === 'ready' ? move.data.scheduledMove : null;
+  const period = org.subscriptionPeriod ?? 'monthly';
+  const listPrice = (key: OrgPlan) => W.plan.price(period === 'annual' ? PLAN_CONFIG[key].annualPrice : PLAN_CONFIG[key].monthlyPrice, period);
+  // The Keep window names the charge: what the subscription charges when the webhook recorded it, else the price list.
+  const ownPrice = org.subscriptionCurrency === 'cad' && org.subscriptionAmountCents != null ? W.plan.paidPrice(org.subscriptionAmountCents, period) : listPrice(ownKey);
   const closeReview = () => setReview(null);
   async function confirmReview() {
     if (!cancel && !downgrade) return;
@@ -544,31 +590,77 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
     const result = cancel ? await post('/api/billing/cancel/confirm', { reason }) : await post('/api/billing/downgrade/confirm', { targetPlan: downgrade!.targetPlan, keepTournamentIds: keepIds, reason });
       if (!live.current) return;
       setReview(null);
-      setNotice({ tone: 'good', text: cancel ? premium ? W.notice.premiumCancelled(cancel.retentionDays) : W.notice.cancelled(org.name, cancel.retentionDays)
+      setWaitNotice(null);
+      // Scheduled: nothing has ended yet. Stripe holds the cancel and our record may still be catching up (said as a wait).
+      if (cancel && result.outcome === 'scheduled') {
+        if (typeof result.notice === 'string') setWaitNotice(result.notice);
+        else setNotice({ tone: 'good', text: W.notice.ending(premium ? 'Premium' : org.name, result.endsAt ?? null) });
+      } else setNotice({ tone: 'good', text: cancel ? premium ? W.notice.premiumCancelled(cancel.retentionDays) : W.notice.cancelled(org.name, cancel.retentionDays)
         : W.notice.downgraded(target!.config.label, result.retainedCount ?? 0, downgrade!.retentionDays) });
       reloadAfterAction();
     });
   }
+  async function confirmKeep() {
+    await run('keepPlan', async () => {
+      setKeepError(null);
+      try {
+        // org-slug-ok: post() adds orgSlug to every body
+        const result = await post('/api/billing/cancel/keep');
+        if (!live.current) return;
+        setKeepOpen(false);
+        setWaitNotice(typeof result.notice === 'string' ? result.notice : null);
+        if (typeof result.notice !== 'string') setNotice({ tone: 'good', text: W.plan.kept(org.name, ownProfile.config.label) });
+        reloadAfterAction();
+      } catch (error) { if (live.current) setKeepError(error instanceof Error ? error.message : W.errors.keep); }
+    });
+  }
   return <>
-    <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, founding, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} justChose={justChose} detail={detail} onCloseDetail={() => setDetail(null)} cardWindowOpen={isFoundingSeasonCardWindowOpen()} foundingActive={isFoundingSeasonActive()} fees={<StripeFeesList key={org.id} slug={org.slug} />} />
+    <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, founding, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} waitNotice={waitNotice} justChose={justChose} detail={detail} onCloseDetail={() => setDetail(null)} cardWindowOpen={isFoundingSeasonCardWindowOpen()} foundingActive={isFoundingSeasonActive()} fees={<StripeFeesList key={org.id} slug={org.slug} />} />
     {moveTo && <PlanMoveDialog key={`${org.id}:${moveTo}`} org={{ ...org, planId: ownProfile.key }} toPlan={moveTo} returnTo={billingBase} teamsHref={teamsHref}
       freeThrough={freeTime.status === 'ready' ? freeTime.data.portal?.lastDay ?? freeTime.data.freeTime?.lastDay ?? (founding.status === 'ready' && founding.data.isFoundingSeason ? founding.data.compUntil : null) : null}
+      // A waiting cancel refuses every move: the window's door is Keep {Plan}, here the same question window.
+      onKeep={pendingEnding ? () => { setMoveTo(null); openKeep(); } : undefined}
       onClose={() => setMoveTo(null)} onMoved={text => { if (live.current) {
+        setWaitNotice(null);
         if (ownProfile.key === 'team') { window.location.replace(inPlaceReturnPath(org.slug)); return; }
         setMoveTo(null); setNotice({ tone: 'good', text }); reloadAfterAction();
       } }} />}
     {payFor && <PlanCycleDialog key={`${org.id}:${payFor}`} label={PLAN_BILLING_PROFILES[payFor].config.label} monthlyPrice={PLAN_BILLING_PROFILES[payFor].config.monthlyPrice}
       annualPrice={PLAN_BILLING_PROFILES[payFor].config.annualPrice} savings={W.plan.savings(payFor)} initial={cycle} onClose={() => setPayFor(null)}
       onContinue={chosen => { setPayFor(null); setCycle(chosen); void checkout(payFor, chosen); }} />}
-    {review && <KitDialog kind="form" title={review.kind === 'cancel' ? premium ? W.cancel.premiumTitle : W.cancel.orgTitle(org.name) : target ? W.downgrade.title(target.config.label) : W.page.sections.change} onClose={closeReview} busy={busy !== null} dirty={reason.trim().length > 0 || Boolean(downgrade?.requiresTournamentChoice && keepIds.length)}
-      footerStart={cancel || downgrade ? <span>{W.cancel.footer((cancel ?? downgrade)!.retentionDays)}</span> : undefined}
-      footer={<><DialogCancel>{premium && cancel ? W.change.keepPremium : W.plan.keep(ownProfile.config.label)}</DialogCancel>
-        {(cancel || downgrade) && <button type="button" className={cancel ? 'btn btn-danger' : 'btn btn-lime'} onClick={() => void confirmReview()} disabled={busy !== null || Boolean(downgrade?.requiresTournamentChoice && keepIds.length !== downgrade.allowedKeepCount)}>{busy === 'confirm' ? W.downgrade.applying : cancel ? premium ? W.cancel.premiumConfirm : W.cancel.confirm : W.downgrade.confirm(target!.config.label)}</button>}</>}
+    {keepOpen && pendingEnding && <KitDialog kind="question" title={W.cancel.keepTitle(ownKey)} onClose={() => setKeepOpen(false)} busy={busy !== null}
+      footer={<><DialogCancel>{W.cancel.notNow}</DialogCancel>
+        <button type="button" className="btn btn-lime" onClick={() => void confirmKeep()} disabled={busy !== null}>{busy === 'keepPlan' ? W.cancel.keeping : pendingEnding.heldMovePlan ? W.cancel.keepAndMove(PLAN_CONFIG[pendingEnding.heldMovePlan].label) : keepLabel}</button></>}
+    >
+      <DialogReason className={styles.dangerText}>{keepError}</DialogReason>
+      {pendingEnding.heldMovePlan ? <>
+        <p>{W.cancel.keepStaysUntil(org.name, ownProfile.config.label, pendingEnding.endsAt)}</p>
+        <p>{W.cancel.keepThenMove(PLAN_CONFIG[pendingEnding.heldMovePlan].label, listPrice(pendingEnding.heldMovePlan))}</p>
+      </> : <>
+        <p>{(trialing ? W.cancel.keepTrial : W.cancel.keepRenews)(org.name, ownProfile.config.label, pendingEnding.endsAt, ownPrice)}</p>
+        <p>{W.cancel.keepNothingElse}</p>
+      </>}
+    </KitDialog>}
+    {review && <KitDialog kind="form" title={review.kind === 'cancel' ? endsOn && !premium ? W.cancel.waitTitle(ownProfile.config.label) : premium ? W.cancel.premiumTitle : W.cancel.orgTitle(org.name) : target ? W.downgrade.title(target.config.label) : W.page.sections.change} onClose={closeReview} busy={busy !== null} dirty={reason.trim().length > 0 || Boolean(downgrade?.requiresTournamentChoice && keepIds.length)}
+      footerStart={cancel || downgrade ? <span>{endsOn ? W.cancel.waitFooter(endsOn) : W.cancel.footer((cancel ?? downgrade)!.retentionDays)}</span> : undefined}
+      footer={<><DialogCancel>{keepLabel}</DialogCancel>
+        {(cancel || downgrade) && <button type="button" className={cancel ? 'btn btn-danger' : 'btn btn-lime'} onClick={() => void confirmReview()} disabled={busy !== null || Boolean(downgrade?.requiresTournamentChoice && keepIds.length !== downgrade.allowedKeepCount)}>{busy === 'confirm' ? cancel ? W.cancel.working : W.downgrade.applying : cancel ? endsOn ? W.cancel.waitConfirm(endsOn) : premium ? W.cancel.premiumConfirm : W.cancel.confirm : W.downgrade.confirm(target!.config.label)}</button>}</>}
     >
       <DialogReason className={styles.dangerText}>{reviewError}</DialogReason>
       {review.kind === 'downgrade' && review.read.status === 'loading' && <LoadingState inline label="Loading plan-change review…" />}
       {review.kind === 'downgrade' && review.read.status === 'error' && <PageNotice notice={{ tone: 'bad', text: review.read.error }} />}
-      {cancel && <>
+      {cancel && endsOn && <>
+        <p className={styles.waitCallout}>{trialing ? W.cancel.trialStays(org.name, endsOn) : premium ? W.cancel.premiumStays(endsOn) : W.cancel.stays(org.name, endsOn)}</p>
+        {heldMove && <p className={styles.waitCallout}>{W.cancel.moveSetAside(PLAN_CONFIG[heldMove.toPlan].label, heldMove.effectiveAt, keepLabel)}</p>}
+        <p>{premium ? W.cancel.premiumOnDate(endsOn, cancel.retentionDays) : W.cancel.onDate(org.name, cancel.shortShutsDown, endsOn, cancel.retentionDays)}</p>
+        <p>{W.cancel.keepAnyTime(premium ? 'Premium' : ownProfile.config.label, endsOn)}</p>
+        <h3 className={`${styles.sectionTitle} ${styles.reviewHeading}`}>{premium ? W.cancel.premiumOfflineOn(endsOn) : W.cancel.offlineOn(endsOn)}</h3>
+        <ul className={styles.offlineList}>{cancel.shutsDown.map(line => <li key={line}>{line}</li>)}</ul>
+        <PaymentsEndingSection section={cancel.onlinePayments} ending={{ kind: 'move', dateLong: moveDateLong(endsOn) }} />
+      </>}
+      {cancel && !endsOn && <>
+        {/* No paid period to wait for (comped, Founding Season, a dev mock): today's immediate cancel, and why. */}
+        {ending && !ending.waits && <p className={styles.waitCallout}>{W.cancel.noPeriod(premium ? 'Premium' : org.name)}</p>}
         <PageNotice notice={{ tone: 'bad', text: premium ? W.cancel.premiumWarning(cancel.retentionDays) : W.cancel.orgWarning(org.name, cancel.shortShutsDown) }} />
         <p>{W.cancel.retained(cancel.retentionDays)}</p><p>{premium ? W.cancel.premiumRetained(cancel.retentionDays) : W.cancel.archived(cancel.tournaments.length)}</p>
         <h3 className={`${styles.sectionTitle} ${styles.reviewHeading}`}>{premium ? W.cancel.premiumOfflineHeading : W.cancel.offlineHeading}</h3>

@@ -18,6 +18,7 @@ import { stripeDashboardBase } from '@/lib/stripe-mode';
 import { readPortalRecordFreeTime } from '@/lib/portal-free-time-tab';
 import ClubRecord, { type ClubRecordProps } from './ClubRecord';
 import { readClubOnlinePayments } from '@/lib/platform-online-payments';
+import { readPendingEnding } from '@/lib/plan-ending-server';
 
 /**
  * A club's record (Support console Stage 2, owner rulings A4 + A6 + R2 + R6, 2026-10-25; drawings Ub7fXLh29SC34Zp4oqKUx1,
@@ -91,6 +92,12 @@ export default async function ClubRecordPage({ params, searchParams }: {
   const { via } = await searchParams;
   const readsStripe = hasPlatformPower(auth.role, 'find_stripe');
   const onlinePaymentsRead = readsStripe ? readClubOnlinePayments(id).catch(() => 'failed' as const) : Promise.resolve(null);
+  // Plans end at the renewal date (Stage 1): a cancel waiting for its date — the record's "Ending" callout, its band cell and
+  // the Keep and End now doors. A failed read is SAID and holds the Cancel door back, never read as "nothing is waiting".
+  const waitingRead = readPendingEnding(id).then(
+    intent => ({ intent, failed: false }),
+    () => ({ intent: null, failed: true }),
+  );
 
   // Every read at once; the members' sign-in facts chain straight off the members read. Opening the record is the read
   // that matters after a complaint (A3): its trail row is written alongside, best effort, never a gate.
@@ -127,6 +134,11 @@ export default async function ClubRecordPage({ params, searchParams }: {
   // Club Tier 12d-2: the Online payments tab's read — ours only (no Stripe call), for the roles that read Stripe's records,
   // started beside the record's other reads (/review).
   const onlinePayments = await onlinePaymentsRead;
+  const waiting = await waitingRead;
+  // Who asked, and when: the newest scheduling entry by a person on the row's own log (the owner or an operator). Stripe moving
+  // the date later is not a new ask; a cancel made in Stripe's portal has only Stripe's entries, so it falls back to those.
+  const scheduling = waiting.intent ? [...waiting.intent.changeLog].reverse().filter(e => e.action === 'scheduled' || e.action === 'rescheduled') : [];
+  const asked = scheduling.find(e => e.door === 'owner' || e.door === 'operator') ?? scheduling[0] ?? null;
 
   const members = memberRows.map(m => {
     const p = people.get(m.user_id);
@@ -201,6 +213,15 @@ export default async function ClubRecordPage({ params, searchParams }: {
     planOptions: Object.entries(PLAN_CONFIG).map(([key, c]) => ({ id: key, label: c.label, tournamentLimit: c.tournamentLimit, teamLimit: c.teamLimit })),
     portalFreeTime,
     portalReadFailed,
+    ending: waiting.intent ? {
+      endsAt: waiting.intent.effectiveAt,
+      reason: waiting.intent.reason,
+      door: asked?.door ?? null,
+      by: asked?.by ?? waiting.intent.createdByEmail,
+      at: asked?.at ?? null,
+      heldMovePlanLabel: waiting.intent.heldMovePlan ? planLabel(waiting.intent.heldMovePlan) : null,
+    } : null,
+    endingReadFailed: waiting.failed,
     freeTime: isPortal || !doorFacts ? null : {
       block: doorFacts.block,
       planBlock: doorFacts.planBlock,

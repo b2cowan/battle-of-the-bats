@@ -28,7 +28,7 @@ function fixture(key: keyof typeof PLAN_CONFIG): BillingBodyViewProps {
     cancellation: ready({ currentPlan: key, ...impact, activeTeams: 9, activeTournamentCount: 0, tournaments: [], cancelled: null }),
     move: ready({ live: false, scheduledMove: null }),
   };
-  return { snapshot, profile, ownProfile: profile, actions: { busy: null, cycle: 'monthly', setCycle() {}, portal() {}, card() {}, reactivate() {}, keep() {}, cancel() {}, change() {}, details() {}, choose() {}, retry() {} }, fees: createElement('div', { 'data-fees': true }, 'Stripe fees fixture') };
+  return { snapshot, profile, ownProfile: profile, actions: { busy: null, cycle: 'monthly', setCycle() {}, portal() {}, card() {}, reactivate() {}, keep() {}, keepPlan() {}, cancel() {}, change() {}, details() {}, choose() {}, retry() {} }, fees: createElement('div', { 'data-fees': true }, 'Stripe fees fixture') };
 }
 const html = (props: BillingBodyViewProps) => renderToStaticMarkup(createElement(BillingBodyView, props)).replaceAll('&#x27;', "'").replaceAll('&amp;', '&');
 const body = readCode('components/billing/BillingBody.tsx');

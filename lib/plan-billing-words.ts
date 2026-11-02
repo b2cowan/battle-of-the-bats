@@ -20,6 +20,11 @@ import { PLAN_BILLING_TITLE } from './plan-billing-title';
 import type { OrgPlan as OrgPlanKey } from './types';
 
 const day = (iso: string) => formatStoredDate(iso, { longMonth: true });
+/** "November 30" — a date the sentence has already given with its year. */
+const dayOnly = (iso: string) => formatStoredDate(iso, { longMonth: true, withYear: false });
+/** The day the data clock runs out, counted from the end date — `retentionUntilFrom` in lib/plan-ending.ts on the server,
+ *  which adds whole UTC days (here too, whatever the browser's zone). It cannot be imported: plan-ending imports these words. */
+const retainedUntil = (iso: string, days: number) => new Date(new Date(iso).getTime() + days * 86_400_000).toISOString();
 /** The door that undoes a waiting cancel (Plans end at renewal, Stage 0 ruling 2): "Keep {Plan}", and "Keep Premium" for a Coaches Portal. */
 const keepDoor = (plan: OrgPlanKey) => plan === 'team' ? 'Keep Premium' : `Keep ${PLAN_CONFIG[plan].label}`;
 const cycle = (value: BillingCycle) => value === 'annual' ? 'yearly' : 'monthly';
@@ -68,6 +73,10 @@ export const PLAN_BILLING_WORDS = {
     scheduledFrom: (iso: string | null) => `From ${iso ? formatStoredDate(iso, { withYear: false }) : 'renewal'}`,
     keep: (label: string) => `Keep ${label}`,
     kept: (org: string, label: string) => `${org} stays on ${label}.`,
+    // Plans end at the renewal date (Stage 0 ruling 1): a waiting cancel on the plan card's waiting-change line.
+    ending: 'Ending',
+    endsOn: (iso: string, trial: boolean) => `Ends on ${day(iso)}, ${trial ? 'when the trial ends' : 'the last day you paid for'}.`,
+    renewsAs: (label: string) => `If you keep it, you renew as ${label}, the move you chose.`,
     savings: formatAnnualSavings,
     // A conditional sentence only; eligibility/duration must come from checkout, not default config.
     // The public Club helper is changed in its separate /marketing step (T1).
@@ -110,7 +119,8 @@ export const PLAN_BILLING_WORDS = {
     availabilityTag: gatedPlanTag, availabilityNote: gatedPlanNote,
     clubTitle: 'Part of a club?', joinClub: 'Join a club',
     clubBody: 'If your club runs on FieldLogicHQ, it can bring your team in. Everything the team built comes with it, and you won’t be charged for your own Coaches Portal again.',
-    keepPremium: 'Keep Premium', keepPremiumHelp: KEEP_PREMIUM_LINE, hostingExcluded: PORTAL_FREE_TIME_HOSTING_LINE,
+    // One spelling with the Keep {Plan} door (Stage 0 ruling 2): both mean "stay on Premium", and never share a screen.
+    keepPremium: keepDoor('team'), keepPremiumHelp: KEEP_PREMIUM_LINE, hostingExcluded: PORTAL_FREE_TIME_HOSTING_LINE,
   },
   cancel: {
     orgBody: (org: string, offline: readonly string[], days: number) => `Cancelling suspends ${org}: ${joinWithAnd(offline)} go offline. Your data is kept for ${days} days. Reactivate within that time to restore the tools and records your plan allows.`,
@@ -127,7 +137,30 @@ export const PLAN_BILLING_WORDS = {
     premiumOfflineHelp: 'Basic tournament records stay available. These Premium tools stop when you confirm.',
     reason: 'Why are you cancelling?', reasonHelp: 'For your records and ours. You can leave it empty.',
     footer: (days: number) => `Your data is kept for ${days} days.`,
-    confirm: 'Cancel and suspend', premiumConfirm: 'Cancel Premium', working: 'Suspending…', premiumWorking: 'Cancelling Premium…',
+    confirm: 'Cancel and suspend', premiumConfirm: 'Cancel Premium', working: 'Cancelling…',
+    // A cancel that waits for the renewal date (Plans end at renewal, Stage 1). The words above stay for an account with no
+    // paid period, which still ends at the click.
+    waitBody: (org: string, offline: readonly string[], iso: string, days: number, trialing = false) => `Cancelling ends ${possessive(org)} plan on ${day(iso)}, ${trialing ? 'when your trial ends' : 'the end of the period you paid for'}. Then ${joinWithAnd(offline)} go offline. Your data is kept for ${days} days after that. Reactivate within that time to restore the tools and records your plan allows.`,
+    premiumWaitBody: (iso: string, days: number, trialing = false) => `Cancelling turns off Premium tools on ${day(iso)}, ${trialing ? 'when your trial ends' : 'the end of the period you paid for'}. Basic tournament records stay available. Premium team data is kept for ${days} days after that and comes back if you reactivate within that time.`,
+    waitDoor: (label: string) => `Cancel ${label}…`, waitTitle: (label: string) => `Cancel ${label}?`,
+    stays: (org: string, iso: string) => `${org} stays open until ${day(iso)}, the end of the period you paid for. Nothing more is charged and nothing is refunded.`,
+    premiumStays: (iso: string) => `Premium stays on until ${day(iso)}, the end of the period you paid for. Nothing more is charged and nothing is refunded.`,
+    trialStays: (org: string, iso: string) => `Your trial runs until ${day(iso)}. ${org} stays open until then. Your card is not charged.`,
+    moveSetAside: (move: string, iso: string | null, keep: string) => `You chose to move to ${move}${iso ? ` on ${dayOnly(iso)}` : ' at renewal'}. Cancelling sets that move aside. ${keep} before then and the move to ${move} comes back.`,
+    onDate: (org: string, offline: readonly string[], iso: string, days: number) => `On ${day(iso)} ${org} is suspended: ${joinWithAnd(offline)} go offline. Your data is kept for ${days} days after that, until ${day(retainedUntil(iso, days))}.`,
+    premiumOnDate: (iso: string, days: number) => `On ${day(iso)} Premium tools stop. Premium team data is kept for ${days} days after that, until ${day(retainedUntil(iso, days))}. Basic tournament records stay available.`,
+    keepAnyTime: (name: string, iso: string) => `You can keep ${name} any time before ${dayOnly(iso)}.`,
+    offlineOn: (iso: string) => `What goes offline on ${dayOnly(iso)}`, premiumOfflineOn: (iso: string) => `Premium tools that stop on ${dayOnly(iso)}`,
+    waitFooter: (iso: string) => `Ends ${day(iso)}.`, waitConfirm: (iso: string) => `Cancel on ${dayOnly(iso)}`,
+    noPeriod: (name: string) => `${name} has no paid period to wait for, so it ends when you confirm.`,
+    // Keep {Plan}: the question window (Stage 0 ruling 4) — it names the date and the charge before a card is committed again.
+    keepTitle: (plan: OrgPlanKey) => `${keepDoor(plan)}?`,
+    keepRenews: (org: string, label: string, iso: string, price: string) => `${org} stays on ${label} and renews on ${day(iso)} at ${price}.`,
+    keepTrial: (org: string, label: string, iso: string, price: string) => `${org} stays on ${label}. The trial ends on ${day(iso)}, and then it’s ${price}.`,
+    keepStaysUntil: (org: string, label: string, iso: string) => `${org} stays on ${label} until ${day(iso)}.`,
+    keepThenMove: (move: string, price: string) => `Then it renews as ${move}, the move you chose, at ${price}.`,
+    keepNothingElse: 'Nothing else changes.',
+    keepAndMove: (move: string) => `Keep and renew as ${move}`, notNow: 'Not now', keeping: 'Keeping…',
     // Approved replacement for the existing server wording; wire once with the shared body.
     accountingOffline: 'Accounting: ledgers, the club budget, allocations to teams',
     // Plans end at the renewal date (Stage 0 rulings 2–3, owner 2026-10-31): the door is "Keep {Plan}"; a Coaches Portal's is "Keep Premium".
@@ -135,11 +168,15 @@ export const PLAN_BILLING_WORDS = {
     endingRefusal: (plan: OrgPlanKey, iso: string | null) => `Your plan ends${iso ? ` on ${day(iso)}` : ' at renewal'}. ${keepDoor(plan)} first, then change it.`,
     foreignSchedule: 'A change made outside FieldLogicHQ is waiting on this subscription, so it can’t be cancelled here. Contact us and we’ll sort it out.',
     stripeRefused: 'The payment provider didn’t accept the cancel. Nothing was changed — try again in a moment.',
+    /** An immediate cancel ended the plan here, but the payment provider would not stop the subscription. */
+    stripeNotStopped: 'Your plan was cancelled here, but the payment provider could not stop the subscription. Contact support to stop your billing.',
     keepRefused: 'The payment provider didn’t accept the change. Your plan still ends on its date — try again in a moment.',
     notRecorded: 'Your cancel is scheduled with the payment provider. We’re still recording it here — refresh the page in a minute.',
     nothingToKeep: 'Your plan isn’t set to end, so there’s nothing to keep.',
     alreadyEnded: 'This plan has already ended.',
-    moveNotRestored: (label: string) => `Your plan is kept. The move to ${label} at renewal couldn’t be put back — choose it again below.`,
+    /** The operator's Keep: the same fact, said to staff about the owner's account. */
+    moveNotRestoredStaff: (current: string, move: string, iso: string | null) => `The plan is kept and renews${iso ? ` on ${day(iso)}` : ''} as ${current}. The owner’s move to ${move} couldn’t be put back; they can choose it again under Change plan, or it renews at the ${current} price.`,
+    moveNotRestored: (current: string, move: string, iso: string | null) => `Your plan is kept and renews${iso ? ` on ${day(iso)}` : ''} as ${current}. The move to ${move} couldn’t be put back. Choose it again under Change plan, or it renews at the ${current} price.`,
   },
   reactivate: {
     cancelled: (org: string) => `${org} is cancelled`, premiumCancelled: 'Premium is cancelled',
@@ -193,6 +230,7 @@ export const PLAN_BILLING_WORDS = {
     downgraded: (label: string, count: number, days: number) => `Your plan is now ${label}.${count ? ` ${pluralize(count, 'tournament')} moved to retention for ${days} days.` : ''}`,
     cancelled: (org: string, days: number) => `${org} is cancelled. Your data is kept for ${days} days.`,
     premiumCancelled: (days: number) => `Premium is cancelled. Basic tournament records stay available. Premium team data is kept for ${days} days.`,
+    ending: (name: string, iso: string | null) => `${name} ends${iso ? ` on ${day(iso)}` : ' at renewal'}. You can keep it until then.`,
   },
   errors: {
     retry: 'Try again', retrying: 'Trying again…', refresh: 'We couldn’t refresh your organization. Try again.',
@@ -262,8 +300,6 @@ export const PLAN_BILLING_WORDS = {
     cannotBecome: 'This portal can’t become a club. Contact us for help.',
     paymentProvider: 'We couldn’t reach the payment provider. Please check again.',
     priceMissing: 'This checkout is not configured yet. Contact us for help.',
-    paymentSettings: 'Open payment settings',
-    ending: (iso: string | null) => `${PLAN_CONFIG.team.label} is set to end${iso ? ` on ${day(iso)}` : ' at renewal'}. Open payment settings to keep your current subscription first, then start your club.`,
     finishing: 'Your upgrade is going through. Please don’t start another payment.',
     settingTitle: 'Setting up your club',
     settingBody: 'We’re setting up your club. Your team and everything in it stays as it is. Please don’t start another payment.',

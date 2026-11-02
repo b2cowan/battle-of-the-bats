@@ -171,9 +171,10 @@ function assertRequest(request: Request | undefined, endpoint: string, method: s
   else assert.equal(request.init?.body, undefined);
 }
 
-async function ownerHarness(options: { plan?: OrgPlan; search?: string; refresh?: () => Promise<void>; returnTo?: string; founding?: BillingFounding; foundingActive?: boolean; } = {}) {
+async function ownerHarness(options: { plan?: OrgPlan; search?: string; refresh?: () => Promise<void>; returnTo?: string; founding?: BillingFounding; foundingActive?: boolean; cancellation?: BillingCancellation } = {}) {
   const env = environment();
   if (options.founding) env.answer('/api/admin/org/founding-season-status?orgSlug=falcons-club', options.founding);
+  if (options.cancellation) env.answer('/api/billing/cancel/preflight?orgSlug=falcons-club', options.cancellation);
   const runner = hookRunner();
   const org = organization(options.plan);
   if (options.returnTo?.endsWith('/coaches/billing')) {
@@ -556,5 +557,118 @@ describe('the club landing after an in-place upgrade', () => {
         for (const href of ['/falcons-club/admin/org/settings', '/falcons-club/admin/org/members', '/falcons-club/admin/public-site']) assert.ok(elements(tree).some(e => e.props.href === href));
       } else assert.equal(replaced.length, 0);
     } finally { runner.dispose(); env.dispose(); }
+  });
+});
+
+// Plans end at the renewal date, Stage 1 Part B: the owner's Keep {Plan} window and the cancel that waits for its date.
+describe('a waiting cancel: Keep {Plan} and the dated Cancel window', () => {
+  const endsAt = '2027-03-01T05:00:00Z';
+  const label = planConfig.PLAN_CONFIG.tournament_plus.label;
+  const waiting = (heldMovePlan: OrgPlan | null = null): BillingCancellation => ({
+    ...cancellation, ending: { waits: true, endsOn: endsAt, pending: { endsAt, heldMovePlan } },
+  });
+  const keepWindow = (tree: React.ReactNode) => find(tree, element => element.props.kind === 'question' && Object.hasOwn(element.props, 'footer'));
+  const text = (node: unknown) => elements(node).filter(e => e.type === 'p').map(e => e.props.children);
+
+  it('Keep names the date and the charge, posts the owner Keep with only its organization, and says it stayed', async () => {
+    const h = await ownerHarness({ cancellation: waiting() });
+    try {
+      h.view().actions.keepPlan(); h.render();
+      const keep = keepWindow(h.tree());
+      assert.equal(keep.props.title, `Keep ${label}?`);
+      const price = W.plan.price(planConfig.PLAN_CONFIG.tournament_plus.monthlyPrice, 'monthly');
+      assert.deepEqual(text(keep.props.children), [W.cancel.keepRenews('Falcons', label, endsAt, price), W.cancel.keepNothingElse]);
+      h.answer('/api/billing/cancel/keep', { ok: true, renewsOn: endsAt, renewsAs: null });
+      click(find(keep.props.footer, element => element.type === 'button' && element.props.className === 'btn btn-lime'));
+      await h.settle();
+      assertRequest(h.requests[0], '/api/billing/cancel/keep', 'POST', { orgSlug: h.org.slug });
+      assert.equal(h.view().notice?.text, W.plan.kept('Falcons', label));
+      assert.equal(elements(h.tree()).some(element => element.props.kind === 'question'), false, 'the window closes once kept');
+    } finally { h.dispose(); }
+  });
+
+  it('a carried cheaper move renews as that plan, and a move that could not come back is said as a wait, never a clean keep (G1)', async () => {
+    const h = await ownerHarness({ plan: 'club_large', cancellation: waiting('club') });
+    try {
+      h.view().actions.keepPlan(); h.render();
+      const keep = keepWindow(h.tree());
+      const club = planConfig.PLAN_CONFIG.club;
+      assert.deepEqual(text(keep.props.children), [
+        W.cancel.keepStaysUntil('Falcons', planConfig.PLAN_CONFIG.club_large.label, endsAt),
+        W.cancel.keepThenMove(club.label, W.plan.price(club.monthlyPrice, 'monthly')),
+      ]);
+      const notice = W.cancel.moveNotRestored(planConfig.PLAN_CONFIG.club_large.label, club.label, endsAt);
+      h.answer('/api/billing/cancel/keep', { ok: true, renewsOn: endsAt, renewsAs: null, notice, moveToChooseAgain: 'club' });
+      click(find(keep.props.footer, element => element.type === 'button' && element.props.children === W.cancel.keepAndMove(club.label)));
+      await h.settle();
+      assert.equal(h.view().waitNotice, notice);
+      assert.notEqual(h.view().notice?.tone, 'good', 'never a clean "stays on" beside it');
+    } finally { h.dispose(); }
+  });
+
+  it('a refused Keep stays in its window with the server’s sentence', async () => {
+    const h = await ownerHarness({ cancellation: waiting() });
+    try {
+      h.view().actions.keepPlan(); h.render();
+      h.answer('/api/billing/cancel/keep', { error: W.cancel.keepRefused }, false);
+      click(find(keepWindow(h.tree()).props.footer, element => element.type === 'button' && element.props.className === 'btn btn-lime'));
+      await h.settle();
+      assert.ok(elements(keepWindow(h.tree()).props.children).some(element => element.props.children === W.cancel.keepRefused));
+    } finally { h.dispose(); }
+  });
+
+  it('keep_plan=1 opens the Keep window once the waiting cancel has loaded, and only then', async () => {
+    const h = await ownerHarness({ cancellation: waiting(), search: 'keep_plan=1' });
+    try { assert.equal(keepWindow(h.tree()).props.title, `Keep ${label}?`); } finally { h.dispose(); }
+    const none = await ownerHarness({ search: 'keep_plan=1' });
+    try { assert.equal(elements(none.tree()).some(element => element.props.kind === 'question'), false); } finally { none.dispose(); }
+  });
+
+  it('a paying plan’s Cancel names its date on the red button and the foot, and a scheduled cancel says when it ends', async () => {
+    const h = await ownerHarness({ cancellation: { ...cancellation, ending: { waits: true, endsOn: endsAt, pending: null } } });
+    try {
+      h.view().actions.cancel(); h.render();
+      const review = h.review();
+      assert.equal(review.props.title, W.cancel.waitTitle(label));
+      assert.equal(elements(review.props.footerStart)[0].props.children, W.cancel.waitFooter(endsAt));
+      const confirm = find(review.props.footer, element => element.type === 'button' && element.props.className === 'btn btn-danger');
+      assert.equal(confirm.props.children, 'Cancel on March 1');
+      const body = text(review.props.children);
+      assert.ok(body.includes(W.cancel.stays('Falcons', endsAt)));
+      assert.ok(body.includes(W.cancel.onDate('Falcons', cancellation.shortShutsDown, endsAt, 90)));
+      assert.ok(!body.some(line => typeof line === 'string' && /suspended the moment/.test(line)), 'the click suspends nothing');
+      h.answer('/api/billing/cancel/confirm', { ok: true, outcome: 'scheduled', endsAt, recorded: true });
+      click(confirm); await h.settle();
+      assert.equal(h.view().notice?.text, W.notice.ending('Falcons', endsAt));
+    } finally { h.dispose(); }
+  });
+
+  it('an account with no paid period keeps today’s immediate window, and says why it does not wait', async () => {
+    const h = await ownerHarness({ cancellation: { ...cancellation, ending: { waits: false, endsOn: null, pending: null } } });
+    try {
+      h.view().actions.cancel(); h.render();
+      const review = h.review();
+      assert.equal(review.props.title, W.cancel.orgTitle('Falcons'));
+      assert.ok(text(review.props.children).includes(W.cancel.noPeriod('Falcons')));
+      assert.equal(find(review.props.footer, element => element.type === 'button' && element.props.className === 'btn btn-danger').props.children, W.cancel.confirm);
+    } finally { h.dispose(); }
+  });
+
+  it('the plan-change window refuses with the one ending sentence and offers Keep {Plan}, in place or on the billing page', async () => {
+    for (const inPlace of [true, false]) {
+      const env = environment(), runner = hookRunner();
+      try {
+        env.answer('/api/billing/move/preview', { code: 'subscription_ending', error: 'refused', endsAt }, false);
+        const Dialog = (billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (p: Record<string, unknown>) => Element }).default;
+        const kept: string[] = [];
+        const render = () => runner.render(() => Dialog({ org: organization('club_large'), toPlan: 'club', returnTo: billingBase, teamsHref: '/teams', onClose() {}, onMoved() {},
+          ...(inPlace ? { onKeep: () => kept.push('keep') } : {}) }));
+        render(); await new Promise<void>(resolve => setImmediate(resolve)); const dialog = render();
+        const notice = find(dialog, element => Object.hasOwn(element.props, 'notice')).props.notice as { text: string };
+        assert.equal(notice.text, W.cancel.endingRefusal('club_large', endsAt));
+        const door = find(dialog.props.footer, element => element.props.children === W.cancel.keepDoor('club_large'));
+        if (inPlace) { click(door); assert.deepEqual(kept, ['keep']); } else assert.equal(door.props.href, `${billingBase}?keep_plan=1`);
+      } finally { runner.dispose(); env.dispose(); }
+    }
   });
 });

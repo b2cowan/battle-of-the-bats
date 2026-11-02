@@ -41,10 +41,13 @@ export function money(cents: number, currency = 'cad'): string {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: currency.toUpperCase() }).format(cents / 100);
 }
 
-export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeThrough = null, onClose, onMoved }: {
+export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeThrough = null, onClose, onMoved, onKeep }: {
   org: { slug: string; name: string; planId: OrgPlan; subscriptionPeriod?: 'monthly' | 'annual' };
   toPlan: OrgPlan; returnTo: string; teamsHref: string; freeThrough?: string | null;
   onClose: () => void; onMoved: (notice: string) => void;
+  /** A waiting cancel refuses every move (Plans end at renewal): the billing page opens its Keep {Plan} window in place.
+   *  Without it (Rep teams' team-limit window) the door goes to the billing page, which opens the same window. */
+  onKeep?: () => void;
 }) {
   const target = PLAN_CONFIG[toPlan];
   const inPlace = isPremiumToClub(org.planId, toPlan);
@@ -97,7 +100,7 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
       case 'club_name_required': return W.clubUpgrade.nameEmpty;
       case 'club_name_too_long': return W.clubUpgrade.nameLong(CLUB_NAME_MAX);
       case 'stripe_error': return refusal.error || W.clubUpgrade.paymentProvider;
-      case 'subscription_ending': return W.clubUpgrade.ending(refusal.endsAt ?? null);
+      case 'subscription_ending': return W.cancel.endingRefusal(org.planId, refusal.endsAt ?? null);
       default: return refusal.error;
     }
   }
@@ -202,7 +205,9 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
     {canCheckout && <button type="button" className="btn btn-lime" onClick={() => void checkout()} disabled={working}>{working ? W.plan.openingCheckout : W.move.checkout}</button>}
     {refusal?.code === 'band_too_small' && <Link href={teamsHref} className="btn btn-lime">{W.move.repTeams}</Link>}
     {refusal?.code === 'plan_not_on_sale' && <a href={CONTACT_HREF} className="btn btn-lime">{W.change.contact}</a>}
-    {refusal?.code === 'subscription_ending' && <button type="button" className="btn btn-lime" onClick={() => void paymentPortal()} disabled={working}>{W.clubUpgrade.paymentSettings}</button>}
+    {refusal?.code === 'subscription_ending' && (onKeep
+      ? <button type="button" className="btn btn-lime" onClick={onKeep} disabled={working}>{W.cancel.keepDoor(org.planId)}</button>
+      : <a className="btn btn-lime" href={`${returnTo}?keep_plan=1`}>{W.cancel.keepDoor(org.planId)}</a>)}
     {refusal?.code === 'payment_failing' && <button type="button" className="btn btn-lime" onClick={() => void paymentPortal()} disabled={working}>{W.plan.payment}</button>}
     {refusal?.code === 'cannot_become_club' && <a href={CONTACT_HREF} className="btn btn-lime">{W.change.contact}</a>}
     {retryable && <button type="button" className="btn btn-lime" onClick={retry}>{W.clubUpgrade.checkAgain}</button>}

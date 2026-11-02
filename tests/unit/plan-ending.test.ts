@@ -19,7 +19,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type Stripe from 'stripe';
 import {
-  OVERDUE_GRACE_DAYS, applyEnding, endedAtFor, endingForDeletedSubscription, futureMoveAnswer, hasRealSubscription,
+  OVERDUE_GRACE_DAYS, applyEnding, endedAtFor, endingForDeletedSubscription, futureMoveAnswer, hasRealSubscription, stripeIdToStopNow,
   isOverdueEnding, keepEnding, pickAppliedEnding, recordStripeSignal, retentionUntilFrom, scheduleEnding, stripeCancelSignal,
   waitingMoveOf, type EndedEvent, type EndingAccount, type EndingActor, type EndingDeps, type EndingIntent,
   type RetainedRecordRow,
@@ -202,6 +202,26 @@ describe('1 · the click schedules the end and takes nothing away', () => {
     assert.equal(hasRealSubscription({ subscriptionId: 'sub_1', subscriptionStatus: 'past_due' }), true);
     assert.equal(hasRealSubscription({ subscriptionId: 'mock_1', subscriptionStatus: 'active' }), false);
     assert.equal(hasRealSubscription({ subscriptionId: null, subscriptionStatus: 'active' }), false);
+  });
+
+  it('the data clock is whole UTC days, the same on any host (across a clock change too)', () => {
+    assert.equal(retentionUntilFrom('2026-10-20T02:00:00.000Z', 30), '2026-11-19T02:00:00.000Z');
+    assert.equal(retentionUntilFrom('2026-03-01T15:30:00.000Z', 90), new Date(Date.parse('2026-03-01T15:30:00.000Z') + 90 * 86_400_000).toISOString());
+  });
+
+  it('a cancel that ends at once stops a real subscription that is not paying, and nothing else', () => {
+    for (const status of ['unpaid', 'incomplete', 'paused']) assert.equal(stripeIdToStopNow({ subscriptionId: 'sub_1', subscriptionStatus: status }), 'sub_1');
+    // paying: it waits (or End now stops it by name); already ended in Stripe; a dev mock; none at all
+    for (const status of ['active', 'trialing', 'past_due', 'canceled', 'incomplete_expired']) assert.equal(stripeIdToStopNow({ subscriptionId: 'sub_1', subscriptionStatus: status }), null);
+    assert.equal(stripeIdToStopNow({ subscriptionId: 'mock_1', subscriptionStatus: 'unpaid' }), null);
+    assert.equal(stripeIdToStopNow({ subscriptionId: null, subscriptionStatus: 'unpaid' }), null);
+  });
+
+  it('both cancel doors stop that Stripe subscription (Part A dropped the call; review 2026-11-02)', () => {
+    for (const route of ['app/api/billing/cancel/confirm/route.ts', 'app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts']) {
+      assert.match(readCode(route), /stripeIdToStopNow\(account\)/, route);
+    }
+    assert.match(readCode('app/api/billing/cancel/confirm/route.ts'), /subscriptions\.cancel\(stripeSubscriptionId\)/);
   });
 });
 

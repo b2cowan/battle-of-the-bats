@@ -10,7 +10,7 @@ import { withObservability, captureAndJson } from '@/lib/observability';
 import { endingSection } from '@/lib/online-payment-endings';
 import { runningPortalFreeTime } from '@/lib/portal-free-time-server';
 import { staffCancelRefusal } from '@/lib/portal-free-time';
-import { applyEnding, hasRealSubscription, keepEnding, scheduleEnding, type EndingAccount } from '@/lib/plan-ending';
+import { applyEnding, hasRealSubscription, keepEnding, scheduleEnding, stripeIdToStopNow, type EndingAccount } from '@/lib/plan-ending';
 import { endingDeps, readEndingAccount, readPendingEnding } from '@/lib/plan-ending-server';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 
@@ -90,7 +90,7 @@ export const GET = withObservability(async (_req: NextRequest,
   }
 
   const org = mapOrgRow(orgRow);
-  const [preflight, account, pending] = await Promise.all([buildCancellationPreflight(org), readEndingAccount(id), readPendingEnding(id)]);
+  const [preflight, account, pending, onlinePayments] = await Promise.all([buildCancellationPreflight(org), readEndingAccount(id), readPendingEnding(id), endingSection(id)]);
 
   return NextResponse.json({
     subscriptionStatus: orgRow.subscription_status,
@@ -104,7 +104,7 @@ export const GET = withObservability(async (_req: NextRequest,
     renewsOn: account && hasRealSubscription(account) ? orgRow.current_period_end : null,
     pending: pending ? { endsAt: pending.effectiveAt, reason: pending.reason, requestedBy: pending.createdByEmail, heldMovePlan: pending.heldMovePlan } : null,
     // 12d-2 (words §4.3): the operator sees what the owner would — what stops, what is owed and clearing.
-    onlinePayments: await endingSection(id),
+    onlinePayments,
   });
 }, { route: '/api/platform-admin/orgs/[id]/cancel-subscription' });
 
@@ -187,7 +187,8 @@ export const POST = withObservability(async (req: NextRequest,
   // Ended now (End now, or no real subscription): Stripe stops now. The ending is recorded first, so the deletion Stripe
   // sends next finds this subscription's applied row and only clears the Stripe fields.
   let stripeWarning: string | null = null;
-  const stripeSubscriptionId = endNow ? endNowSubscriptionId(account) : null;
+  // End now stops any real subscription; a plain Cancel that ended at once (a subscription not paying) stops it too.
+  const stripeSubscriptionId = endNow ? endNowSubscriptionId(account) : stripeIdToStopNow(account);
   if (stripeSubscriptionId) {
     try {
       await getStripe().subscriptions.cancel(stripeSubscriptionId);
@@ -248,7 +249,9 @@ export const DELETE = withObservability(async (req: NextRequest,
     }
     return NextResponse.json({
       ok: true, renewsOn: result.renewsOn, renewsAs: result.renewsAs,
-      ...(result.movePlan && result.moveNotRestored ? { notice: W.cancel.moveNotRestored(PLAN_CONFIG[result.movePlan].label) } : {}),
+      ...(result.movePlan && result.moveNotRestored
+        ? { notice: W.cancel.moveNotRestoredStaff(PLAN_CONFIG[account.ownPlan].label, PLAN_CONFIG[result.movePlan].label, result.renewsOn) }
+        : {}),
     });
   } catch (error) {
     await changeFailed(error);

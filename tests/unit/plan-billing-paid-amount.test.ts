@@ -33,7 +33,7 @@ function fixture(key: keyof typeof PLAN_CONFIG, org: Partial<BillingSnapshot['or
     cancellation: ready({ currentPlan: key, ...planCancellationImpact(profile, [], 9), activeTeams: 9, activeTournamentCount: 0, tournaments: [], cancelled: null }),
     move: ready({ live: false, scheduledMove: null }),
   };
-  return { snapshot, profile, ownProfile: profile, actions: { busy: null, cycle: 'monthly', setCycle() {}, portal() {}, card() {}, reactivate() {}, keep() {}, cancel() {}, change() {}, details() {}, choose() {}, retry() {} } };
+  return { snapshot, profile, ownProfile: profile, actions: { busy: null, cycle: 'monthly', setCycle() {}, portal() {}, card() {}, reactivate() {}, keep() {}, keepPlan() {}, cancel() {}, change() {}, details() {}, choose() {}, retry() {} } };
 }
 const html = (props: BillingBodyViewProps) => renderToStaticMarkup(createElement(BillingBodyView, props)).replaceAll('&#x27;', "'").replaceAll('&amp;', '&');
 const listPrice = (key: keyof typeof PLAN_CONFIG, cycle: 'monthly' | 'annual') =>

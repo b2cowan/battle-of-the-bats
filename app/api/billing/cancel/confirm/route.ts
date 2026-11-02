@@ -1,10 +1,11 @@
 import { getAuthContextWithRole, forbidden, unauthorized } from '@/lib/api-auth';
 import { writeOrgBillingAudit } from '@/lib/billing-retention';
-import { captureAndJson, withObservability } from '@/lib/observability';
+import { captureAndJson, captureError, withObservability } from '@/lib/observability';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { endedPortalFreeTime, runningPortalFreeTime } from '@/lib/portal-free-time-server';
 import { coachCancelEndedRefusal, coachCancelRefusal } from '@/lib/portal-free-time';
-import { scheduleEnding } from '@/lib/plan-ending';
+import { scheduleEnding, stripeIdToStopNow } from '@/lib/plan-ending';
+import { getStripe } from '@/lib/stripe';
 import { endingDeps, readEndingAccount } from '@/lib/plan-ending-server';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 
@@ -56,6 +57,19 @@ export const POST = withObservability(async (req: Request) => {
         retentionUntil: result.ended.retentionUntil,
         ...(portal ? { teamWorkspaceId: account.teamWorkspaceId } : {}),
       });
+      // Ended at once because the subscription is not paying: Stripe still holds it open, so stop it (as the cancel always did).
+      const stripeSubscriptionId = stripeIdToStopNow(account);
+      if (stripeSubscriptionId) {
+        try {
+          await getStripe().subscriptions.cancel(stripeSubscriptionId);
+        } catch (stripeErr) {
+          const message = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
+          console.error('[cancel/confirm] Stripe reconciliation failed:', message);
+          await captureError(stripeErr, { ctx, route: '/api/billing/cancel/confirm', method: 'POST', statusCode: 500 });
+          await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_stripe_reconciliation_failed', { action: 'cancellation', stripeSubscriptionId, error: message });
+          return Response.json({ error: W.cancel.stripeNotStopped, retainedCount: result.ended.retainedTournamentIds.length + 1, retentionUntil: result.ended.retentionUntil }, { status: 500 });
+        }
+      }
       return Response.json({
         ok: true,
         outcome: 'ended',

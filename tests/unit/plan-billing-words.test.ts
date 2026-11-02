@@ -15,7 +15,9 @@ describe('shared billing vocabulary', () => {
     assert.match(W.clubUpgrade.credit(PLAN_CONFIG.team.label), /Credit for unused/);
     assert.match(W.clubUpgrade.billingKept('annual'), /yearly billing stays yearly/);
     assert.equal(W.clubUpgrade.renewal('$219.00', 'monthly', 'cad'), '$219.00 CAD / month');
-    assert.match(W.clubUpgrade.ending('2026-11-03'), /November 3, 2026.*Open payment settings/);
+    // Plans end at renewal (Stage 1 Part B): the old Premium-only "Open payment settings" refusal is the one ending sentence.
+    assert.equal(W.cancel.endingRefusal('team', '2026-11-03T12:00:00Z'), 'Your plan ends on November 3, 2026. Keep Premium first, then change it.');
+    assert.ok(!('ending' in W.clubUpgrade) && !('paymentSettings' in W.clubUpgrade));
     assert.match(W.clubUpgrade.freeWarning('2026-11-03'), /Free through November 3, 2026/);
     assert.doesNotMatch(W.move.previewHelp + W.clubUpgrade.trial(90), /\bcard\b/i);
     for (const text of [W.clubUpgrade.finishing, W.clubUpgrade.longerBody, W.clubUpgrade.unconfirmedBody]) {

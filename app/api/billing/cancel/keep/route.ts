@@ -37,7 +37,7 @@ export const POST = withObservability(async (req: Request) => {
       renewsAs: result.renewsAs,
       // G1: kept, but the cheaper move could not be put back — said plainly, with the move door on the page.
       ...(result.movePlan && result.moveNotRestored
-        ? { notice: W.cancel.moveNotRestored(PLAN_CONFIG[result.movePlan].label), moveToChooseAgain: result.movePlan }
+        ? { notice: W.cancel.moveNotRestored(PLAN_CONFIG[account.ownPlan].label, PLAN_CONFIG[result.movePlan].label, result.renewsOn), moveToChooseAgain: result.movePlan }
         : {}),
     });
   } catch (error) {

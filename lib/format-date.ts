@@ -112,8 +112,12 @@ export function fmtSince(
  * absolute date, e.g. `reverts ${fmtAbsoluteDate(iso)}${fmtDaysLeft(iso)}`.
  */
 export function fmtDaysLeft(value: string | Date | null | undefined): string {
-  const d = toDate(value);
-  if (!d) return '';
-  const days = Math.ceil((d.getTime() - Date.now()) / 86_400_000);
+  const days = wholeDaysUntil(value);
   return days > 0 ? ` (${days}d left)` : '';
+}
+
+/** Whole days from now to a future instant, rounded up; 0 when it is past or missing. CLIENT-ONLY: reads Date.now(). */
+export function wholeDaysUntil(value: string | Date | null | undefined): number {
+  const d = toDate(value);
+  return d ? Math.max(0, Math.ceil((d.getTime() - Date.now()) / 86_400_000)) : 0;
 }

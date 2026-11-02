@@ -160,6 +160,16 @@ export function hasRealSubscription(account: Pick<EndingAccount, 'subscriptionId
 }
 
 /**
+ * A real Stripe subscription that is NOT paying (unpaid, incomplete, paused) has no date to wait for, so a cancel ends the plan
+ * now — and Stripe must be told to stop it too, or it stays open and a late payment could switch the plan back on. Null for
+ * a paying one (it waits, or End now stops it by name), for one Stripe already ended, and for a dev `mock_…` id.
+ */
+export function stripeIdToStopNow(account: Pick<EndingAccount, 'subscriptionId' | 'subscriptionStatus'>): string | null {
+  if (hasRealSubscription(account) || ENDED.has(account.subscriptionStatus ?? '')) return null;
+  return account.subscriptionId?.startsWith('sub_') ? account.subscriptionId : null;
+}
+
+/**
  * G8 · Stripe says a cancel is scheduled two ways: `cancel_at_period_end`, or a dated `cancel_at` (a Dashboard "custom
  * date", flexible billing). Either one is a waiting cancel; it is withdrawn only when BOTH are clear. The date is
  * `cancel_at` when set, else the item's period end (a trial's end while trialing, which Stripe keeps there too).
@@ -190,10 +200,13 @@ export function endedAtFor(intent: Pick<EndingIntent, 'effectiveAt'> | null, now
   return new Date(intent.effectiveAt).getTime() < now.getTime() ? intent.effectiveAt : now.toISOString();
 }
 
-/** The same arithmetic as `retentionDeadline` in lib/billing-retention.ts, from the instant the plan ended. */
+/**
+ * `retentionDeadline` in lib/billing-retention.ts, from the instant the plan ended. Whole UTC days, so the stored date is the
+ * same on any host and equals the sum the billing words show (`retainedUntil` in lib/plan-billing-words.ts).
+ */
 export function retentionUntilFrom(endedAt: string, days: number): string {
   const d = new Date(endedAt);
-  d.setDate(d.getDate() + days);
+  d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString();
 }
 

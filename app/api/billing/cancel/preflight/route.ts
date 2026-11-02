@@ -3,6 +3,9 @@ import { buildCancellationPreflight } from '@/lib/billing-retention';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { endingSection } from '@/lib/online-payment-endings';
+import { hasRealSubscription } from '@/lib/plan-ending';
+import { readEndingAccount, readPendingEnding } from '@/lib/plan-ending-server';
+import type { BillingEnding } from '@/lib/plan-billing-data';
 
 /**
  * GET /api/billing/cancel/preflight — what cancelling would do. Owner-only.
@@ -21,7 +24,12 @@ export const GET = withObservability(async (req: Request) => {
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') return forbidden();
 
-  const preflight = await buildCancellationPreflight(ctx.org);
+  // These reads do not depend on one another, so they run together.
+  const [preflight, endingRead, onlinePayments] = await Promise.all([
+    buildCancellationPreflight(ctx.org),
+    ctx.org.subscriptionStatus !== 'canceled' ? Promise.all([readEndingAccount(ctx.org.id), readPendingEnding(ctx.org.id)]) : null,
+    endingSection(ctx.org.id),
+  ]);
 
   let cancelled: { at: string | null; keptUntil: string | null } | null = null;
   if (ctx.org.subscriptionStatus === 'canceled') {
@@ -41,6 +49,19 @@ export const GET = withObservability(async (req: Request) => {
     };
   }
 
+  // Plans end at the renewal date (Stage 1): whether a cancel waits for a date, and the one already waiting. Never keyed off
+  // the stored renewal date alone — an operator trial or comp carries one with no subscription (lead 8).
+  let ending: BillingEnding | null = null;
+  if (endingRead) {
+    const [account, pending] = endingRead;
+    const waits = !!account && hasRealSubscription(account);
+    ending = {
+      waits,
+      endsOn: waits ? ctx.org.currentPeriodEnd ?? null : null,
+      pending: pending ? { endsAt: pending.effectiveAt, heldMovePlan: pending.heldMovePlan } : null,
+    };
+  }
+
   // 12d-2 (words §4.3): what stops now, what is still owed and clearing, and that the Stripe account stays the club's.
-  return Response.json({ ...preflight, cancelled, onlinePayments: await endingSection(ctx.org.id) });
+  return Response.json({ ...preflight, cancelled, ending, onlinePayments });
 }, { route: '/api/billing/cancel/preflight' });

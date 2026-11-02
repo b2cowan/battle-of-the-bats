@@ -37,7 +37,7 @@ function fixture(key: OrgPlan): BillingBodyViewProps {
     cancellation: ready({ currentPlan: key, ...impact, activeTeams: 9, activeTournamentCount: 0, tournaments: [], cancelled: null }),
     move: ready({ live: false, scheduledMove: null }),
   };
-  return { snapshot, profile, ownProfile: profile, actions: { busy: null, cycle: 'monthly', setCycle() {}, portal() {}, card() {}, reactivate() {}, keep() {}, cancel() {}, change() {}, details() {}, choose() {}, retry() {} } };
+  return { snapshot, profile, ownProfile: profile, actions: { busy: null, cycle: 'monthly', setCycle() {}, portal() {}, card() {}, reactivate() {}, keep() {}, keepPlan() {}, cancel() {}, change() {}, details() {}, choose() {}, retry() {} } };
 }
 const html = (props: BillingBodyViewProps) => renderToStaticMarkup(createElement(BillingBodyView, props)).replaceAll('&#x27;', "'").replaceAll('&amp;', '&');
 
@@ -129,7 +129,8 @@ describe('the plan panel offers Upgrade where the Change plan table does', () =>
     assert.match(body, /onUpgrade=\{\(\) => \{ onCloseDetail\(\); if \(detailChange\) a\.change\(detailChange, a\.cycle\); \}\}/);
     assert.match(body, /billingCycle=\{a\.cycle\}/);
     assert.match(body, /onBillingCycleChange=\{a\.setCycle\}/);
-    assert.match(body, /canUpgrade=\{Boolean\(detailChange\) && controlsReady && ownBilling && !cancelled && sale\(detailProfile\.key\)\}/);
+    // Plans end at renewal (Stage 1 Part B): and never while a cancel waits — the same absent door as the table's.
+    assert.match(body, /canUpgrade=\{Boolean\(detailChange\) && controlsReady && ownBilling && !cancelled && !pending && sale\(detailProfile\.key\)\}/);
   });
 });
 
