@@ -222,6 +222,28 @@ async function markStartupTask(taskId: StartupActionTaskId | LeagueStartupAction
 // admin is always on the kit, so the switch this wrapper read is gone — Tournament admin redesign Stage 5.)
 const ClubSetupKit = dynamic(() => import('@/components/admin/kit/club/ClubSetupKit'));
 
+/** The holding screen while setup hands over to the workspace. If the move has not finished after a few seconds it
+ *  offers the way there itself, so nobody is left staring at it. */
+function RedirectPanel({ href }: { href: string }) {
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSlow(true), 4000);
+    return () => window.clearTimeout(timer);
+  }, []);
+  return (
+    <div className={styles.workflowOnlyPage} aria-busy="true">
+      <div className={styles.redirectPanel}>
+        <div className={styles.headerIcon}><Rocket size={22} /></div>
+        <div>
+          <h1 className={styles.title}>Opening admin</h1>
+          <p className={styles.sub}>Your setup is saved. Taking you to the right workspace now.</p>
+        </div>
+        {slow && <a className="btn btn-primary" href={href}>Continue to admin</a>}
+      </div>
+    </div>
+  );
+}
+
 export default function OnboardingPage() {
   const { currentOrg, userRole } = useOrg();
   return userRole === 'owner' && isClubPlan(currentOrg?.planId) ? <ClubSetupKit /> : <OnboardingPageLegacy />;
@@ -605,7 +627,9 @@ function OnboardingPageLegacy() {
       if (isGuidedTournamentPlan) {
         clearStepError();
         setWorkflowRedirecting(true);
-        router.replace(getPostOnboardingHref(currentOrg, { hasTournament: Boolean(startupProgress?.firstTournament) }));
+        // A full page load, not the in-app hop: Cancel was left on "Opening admin" on dev when the client-side move
+        // never finished (owner 2026-11-02), and a person leaving setup has nothing here worth keeping alive.
+        window.location.assign(getPostOnboardingHref(currentOrg, { hasTournament: Boolean(startupProgress?.firstTournament) }));
         return;
       }
     }
@@ -1388,15 +1412,7 @@ function OnboardingPageLegacy() {
 
   if (workflowRedirecting || shouldRedirectFromTournamentOnboarding) {
     return (
-      <div className={styles.workflowOnlyPage} aria-busy="true">
-        <div className={styles.redirectPanel}>
-          <div className={styles.headerIcon}><Rocket size={22} /></div>
-          <div>
-            <h1 className={styles.title}>Opening admin</h1>
-            <p className={styles.sub}>Your setup is saved. Taking you to the right workspace now.</p>
-          </div>
-        </div>
-      </div>
+      <RedirectPanel href={getPostOnboardingHref(currentOrg, { hasTournament: Boolean(startupProgress?.firstTournament) })} />
     );
   }
 
