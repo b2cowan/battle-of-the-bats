@@ -58,6 +58,8 @@ export default function ClubBar({ club, preview = false }: { club: ClubFrameClub
   const myTeams = (roles?.leagueTeams ?? []).filter(t => t.orgSlug === club.slug)
     .map(t => ({ teamName: t.teamName, href: href(t.href.slice(club.slug.length + 1)), current: pathname === t.href }));
   const onMyTeam = myTeams.some(t => t.current);
+  // A demo club shows no account menu (the shared demo account is never offered Sign out), so nothing carries the door there.
+  const accountMounted = signedIn && !isDemoOrgSlug(club.slug);
 
   return (
     // data-club-chrome: the club refusal steps this bar aside (components/public/ClubNotFound.module.css).
@@ -88,8 +90,8 @@ export default function ClubBar({ club, preview = false }: { club: ClubFrameClub
         {signedIn && myTeams.length === 1 && <MyTeamDoor team={myTeams[0]} />}
         {signedIn ? (
           // The shared demo account is never offered Sign out (the strips' rule), so a demo club shows no Account.
-          !isDemoOrgSlug(club.slug) && (
-            <AccountMenu className={styles.word} wrapClassName={styles.account} signOutTo="here" teams={myTeams}>
+          accountMounted && (
+            <AccountMenu className={styles.word} wrapClassName={styles.account} signOutTo="here" teams={myTeams} door={door}>
               <User className={styles.wordIcon} strokeWidth={1.8} aria-hidden />
             </AccountMenu>
           )
@@ -98,7 +100,8 @@ export default function ClubBar({ club, preview = false }: { club: ClubFrameClub
           // pathname is the club-named path, which is exactly the page's address on fieldlogichq.ca.
           <Link href={signInHref(pathname)} className={styles.word}>Sign in</Link>
         )}
-        {door && <FlipPill resolution={door} variant="inline" compact className={flipStyles.clubLook} />}
+        {/* On a phone the account sheet carries this door ("Go to"), so the bar's own icon steps aside — only where the menu is. */}
+        {door && <FlipPill resolution={door} variant="inline" compact className={`${flipStyles.clubLook} ${accountMounted ? styles.doorInSheet : ''}`} />}
       </div>
     </header>
   );

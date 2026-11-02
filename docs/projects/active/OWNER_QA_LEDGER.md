@@ -27506,3 +27506,18 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **Acceptance limits, not passes:** offline (no stored copy) is not walkable on the dev server, where the worker is off; it is pinned by the worker guard and walked at Stage 8. Committed 2026-11-01 on the owner’s word, step 0 (the offline-copy fix) in its own commit first.
 <!-- /§440 -->
+
+## §441 · Account sheet on a phone · owner walk — **the person icon opens a bottom sheet at 900 px and narrower on the tournament band, the club bar, the marketing bar and the support console; your own side is a "Go to" row in it, and the building icon is gone from the first two on a phone**
+<!-- §441 -->
+**Walk published 2026-11-01, owed.** [Interactive walk](https://claude.ai/artifact/24JTb4uvhDmFJd3hce8wNM) · [repository HTML](ACCOUNT_SHEET_PHONE_WALK.html). One walk, 12 parts (A–L), 37 steps: A tournament page as an operator, B an operator with two roles, C a fan and a signed-out visitor, D the club bar (staff, two teams, one team), E the marketing bar at 390 and 320, F the support console (Appearance, Sign out), G every way of closing it, H Send feedback, I the installed app, J the swap at 900/901, K the demo sandbox, L dark phone settings.
+
+**Authority and scope:** [build prompt](ACCOUNT_SHEET_PHONE_BUILD_PROMPT.md); owner rulings Asks 1–5, all as recommended, 2026-11-01; [drawings](https://claude.ai/artifact/ScXydWMxExZ2kGfJF8mH5C). Amends the 2026-07-22 corner-door rule on two public phone bars only (design log 2026-11-01).
+
+**Built, not walked:** the sheet is the shared bottom sheet with one new optional attach point, so it paints in each bar's own colours; the door's rows come from one shared helper that the labelled pill also uses. Checks that ran: 178 focused tests (the new guard, a door-rows test, the club-frame, console and tournament-frame guards), typecheck clean. **Could not be measured without a browser, so Parts A, D, E and F are the real test:** that the sheet is the right colours and covers the screen on each of the four bars (the marketing bar and the console are the two to look at hardest), and that it is never hidden behind the bar or the page.
+
+**Not run:** `check:layout --changed` (shared files are touched, so it would sweep every screen, which the dev server must not be asked to do; its coach fixture is also unavailable), and eslint (its react-hooks plugin fails to load in this checkout, before any file is read). Five tests outside this change fail in the full suite (the support console's bookkeeping window, billing free time, team-coach notices and a QA-walk summary), all in other sessions' uncommitted files.
+
+**One deviation from the prompt, on purpose:** it asked for the door-hiding rule to be `@media not all and (display-mode: standalone) and (max-width: 900px)`. A leading `not` negates the whole query, so that rule would have hidden the door on every desk. It is written as the two conditions nested instead, and the guard pins that.
+
+**WALKED 2026-11-01, COMPLETE** — logged on the owner's word; the per-part counts did not come back with the report, so none are recorded here. Account sheet on a phone closed. The build is still uncommitted as of this entry.
+<!-- /§441 -->

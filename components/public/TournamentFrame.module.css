@@ -307,6 +307,16 @@
 @media (display-mode: standalone) and (min-width: 901px) {
   .bandDoor { display: none; }
 }
+/* On a phone in a browser the account sheet carries the operator door ("Go to"), so the band's own icon steps aside — which
+   frees the room the event's name and dates were being cut for. Only where the sheet's trigger is drawn: the installed app
+   hides that trigger (`.browserOnly` above) at every width, so there the icon stays.
+   ⚠ NOT `@media not all and (display-mode: standalone) and (max-width: 900px)`: a leading `not` negates the WHOLE query, so
+   that reads "not (installed AND narrow)" and would hide the door on every desk too. Nest the two conditions instead. */
+@media (max-width: 900px) {
+  @media not all and (display-mode: standalone) {
+    .bandDoor.bandDoorInSheet { display: none; }
+  }
+}
 
 /* In a browser there is no app bar on a tournament page (Ask 16: the browser's back is the way home), and so no room is
    kept for one at the foot of the page. Inside the installed app the bar stays (ConsumerShell.module.css draws it on

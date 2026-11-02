@@ -22,11 +22,11 @@
  * never where to.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePublicPathname } from '@/lib/use-public-pathname';
 import { Building2, ChevronDown, Globe } from 'lucide-react';
-import { readReturnMemory, writeReturnMemory, clearReturnMemory, flipSurfaceLabel, flipLandsOnPublic, type FlipResolution, type FlipTarget } from '@/lib/flip-twins';
+import { flipDoorRows, flipLandsOnPublic, type FlipResolution } from '@/lib/flip-twins';
+import { useFlipReturn } from '@/lib/hooks/useFlipReturn';
 import { useDismissable } from '@/lib/overlay-hooks';
 import styles from './FlipPill.module.css';
 
@@ -44,52 +44,13 @@ interface FlipPillProps {
 }
 
 export default function FlipPill({ resolution, variant = 'inline', compact = false, ariaLabel, className }: FlipPillProps) {
-  const pathname = usePublicPathname();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  // Return-memory read (post-mount, so SSR/hydration is stateless — no flash, no CLS).
-  const [back, setBack] = useState<{ href: string; label: string } | null>(null);
-  // The page the flip landed on: the direct-return affordance lives ONLY on this page. Once
-  // the user navigates to a different section on this side, the memory is spent and the pill reverts
-  // to the stateless page-matched twin (ratified spec: revert on navigate-to-a-different-section — a
-  // per-instance ref, so a fresh arrival-side pill starts clean after each hop).
-  const arrivalPathRef = useRef<string | null>(null);
-  useEffect(() => {
-    const mem = readReturnMemory(Date.now());
-    if (!mem) { setBack(null); return; }
-    const here = `${pathname}`;
-    // Never offer a return to the page we're already on.
-    if (mem.originUrl === here || mem.originUrl.startsWith(`${here}?`)) { setBack(null); return; }
-    if (arrivalPathRef.current === null) arrivalPathRef.current = here; // first page after the hop
-    if (arrivalPathRef.current === here) {
-      // Labelled by DESTINATION, never "Back to …" (owner call 2026-07-31). The href still carries
-      // the exact page they came from — the link is no less smart, it just stops narrating itself.
-      //
-      // Derived from the stored URL rather than the stored label so a snapshot written by the
-      // PREVIOUS build (which stored a screen name — "Dashboard", "Results") can't surface the old
-      // vocabulary for the 20 minutes it stays fresh. Storage outlives a deploy; this read doesn't.
-      setBack({ href: mem.originUrl, label: flipSurfaceLabel(mem.originUrl) });
-    } else {
-      // Moved on to another section → spend the memory so the pill returns to the page-matched twin.
-      clearReturnMemory();
-      setBack(null);
-    }
-  }, [pathname]);
+  // Return-memory read + stamp: shared with the account sheet's Go to block (lib/hooks/useFlipReturn.ts).
+  const { back, stampReturn } = useFlipReturn();
 
   useDismissable(open, wrapRef, () => setOpen(false));
-
-  // Stamp the return snapshot the instant a flip is taken — on EVERY hop, both directions — so the
-  // arrival side's pill can offer a direct return here. The origin is the exact current URL
-  // (search included, so a filtered schedule returns filtered); the label is derived from the path.
-  const stampReturn = () => {
-    try {
-      const search = typeof window !== 'undefined' ? window.location.search : '';
-      writeReturnMemory({ originUrl: `${pathname}${search}`, label: flipSurfaceLabel(pathname) }, Date.now());
-    } catch {
-      /* non-fatal — stateless resolution still works */
-    }
-  };
 
   const rootClass = `${styles.wrap} ${variant === 'floating' ? styles.floating : styles.inline} ${className ?? ''}`;
   const pillClass = `${styles.pill} ${compact ? styles.compact : ''}`;
@@ -160,7 +121,7 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
   // depending on how they arrived, and the destination is already in the list under its own name —
   // so returning is still one row away, just labelled by WHERE it goes rather than how you got here.
   // (Single-target pills keep the ratified one-tap direct return above — nothing to shift.)
-  const rows: FlipTarget[] = resolution.targets;
+  const rows = flipDoorRows(resolution, back);
 
   return (
     <div className={rootClass} ref={wrapRef}>

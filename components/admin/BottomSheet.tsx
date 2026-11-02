@@ -33,6 +33,7 @@ export default function BottomSheet({
   children,
   ariaLabel,
   maxHeight,
+  portalTo,
 }: {
   open: boolean;
   onClose: () => void;
@@ -43,6 +44,9 @@ export default function BottomSheet({
   children: ReactNode;
   ariaLabel?: string;
   maxHeight?: string;
+  /** A host that must keep its own colours names the element the sheet attaches inside (the account menu's sheet, on bars
+   *  whose tokens live on their own elements). Omitted: the public light frame if present, else <body>, as ever. */
+  portalTo?: HTMLElement | null;
 }) {
   const sheetRef = useRef<HTMLDivElement>(null);
 
@@ -77,7 +81,7 @@ export default function BottomSheet({
   // Under the public tournament pages' light frame the club's tokens live on the frame's own element, so a sheet
   // attached to <body> would fall back to the platform's dark ground. Attach inside the frame instead (nothing there
   // is transformed, so the fixed backdrop still covers the screen); everywhere else it stays on <body>.
-  const portalTarget = document.querySelector<HTMLElement>('[data-public-frame="light"]') ?? document.body;
+  const portalTarget = portalTo ?? document.querySelector<HTMLElement>('[data-public-frame="light"]') ?? document.body;
 
   // Admin Design Continuity slice 4c — this sheet `createPortal`s to `document.body`, a SIBLING of the
   // admin shell, so no `[data-admin-kit]` rule could reach it (nor the caller's content inside it: the

@@ -518,3 +518,16 @@ export function flipLandsOnPublic(resolution: FlipResolution): boolean {
   const targets = resolution.kind === 'single' ? [resolution.target] : resolution.targets;
   return targets.length > 0 && targets.every(t => flipSurfaceLabel(t.href) === 'Public site');
 }
+
+/**
+ * The rows a door offers, named by destination: the ONE answer the labelled pill's popover and the account sheet's "Go to"
+ * block both read, so the two can never disagree. A single door with a fresh return memory (`back`) is the one row that
+ * returns to the exact page they came from, labelled by WHERE it goes, never "Back to" (2026-07-31). A chooser lists the
+ * same named destinations every time and ignores the memory (owner 2026-07-28: a list that rewrites itself by how you
+ * arrived reads as a bug). A pending door has nothing to offer yet.
+ */
+export function flipDoorRows(resolution: FlipResolution, back: { href: string; label: string } | null): FlipTarget[] {
+  if (resolution.pending) return [];
+  if (resolution.kind === 'multi') return resolution.targets;
+  return [back ?? resolution.target];
+}

@@ -297,8 +297,9 @@ describe('Part 2: the desk, the footer and the admin preview', () => {
     assert.match(preview, /basePath=\{previewBase\}\s*\/>\s*<TournamentSideRail basePath=\{previewBase\}/);
     assert.match(preview, /<TournamentPreviewNav/, 'today\'s preview, when off');
     assert.match(band, /\{!preview && <SharePageButton/);
-    assert.match(band, /\{!inSandbox && !preview && \(/);
-    assert.match(band, /\{!preview && \(\s*<span className=\{styles\.bandDoor\}>/);
+    // The visitor's doors share one read of the viewer's hats (BandDoors); the sandbox shows no account menu but keeps its door.
+    assert.match(band, /\{!inSandbox && !preview \? \(\s*<BandDoors/);
+    assert.match(band, /\) : !preview && \(\s*<span className=\{styles\.bandDoor\}>/);
   });
 });
 

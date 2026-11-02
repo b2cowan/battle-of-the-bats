@@ -212,7 +212,7 @@ export default function Navbar() {
                 identical shell and face; signing out from it stays on this page. */}
             <div className={styles.marketingActions}>
               {marketingSignedIn ? (
-                <AccountMenu className={quietCtaClass} wrapClassName={styles.marketingAccount} signOutTo="here" warm>
+                <AccountMenu className={quietCtaClass} signOutTo="here" warm>
                   {quietCtaFace('Account')}
                 </AccountMenu>
               ) : (

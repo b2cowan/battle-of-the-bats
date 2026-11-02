@@ -44,7 +44,8 @@ import type { FrameTabContent } from '@/lib/tournament-page-tabs';
 import type { PublicFrameHost } from '@/lib/public-frame';
 import AccountMenu from '@/components/shared/AccountMenu';
 import SharePageButton from './SharePageButton';
-import TournamentFlipPill from './TournamentFlipPill';
+import TournamentFlipPill, { TournamentFlipDoor } from './TournamentFlipPill';
+import { usePublicFlip } from '@/lib/use-public-flip';
 import TournamentTopTabs from './TournamentTopTabs';
 import clubStyles from './ClubFrame.module.css';
 import styles from './TournamentFrame.module.css';
@@ -126,18 +127,10 @@ export default function TournamentBand({
             : <Link href={href()} className={styles.hostLink}>Hosted by {host.name} ›</Link>
         )}
         {!preview && <SharePageButton url={homeHref} title={name} text="Live on FieldLogicHQ" compact className={styles.icon} />}
-        {!inSandbox && !preview && (
-          <span className={styles.browserOnly}>
-            {signedIn ? (
-              <AccountMenu className={clubStyles.word} wrapClassName={clubStyles.account} signOutTo="here">
-                <User className={clubStyles.wordIcon} strokeWidth={1.8} aria-hidden />
-              </AccountMenu>
-            ) : (
-              <Link href={signInHref(pathname)} className={clubStyles.word}>Sign in</Link>
-            )}
-          </span>
-        )}
-        {!preview && (
+        {!inSandbox && !preview ? (
+          <BandDoors signedIn={signedIn} signInHref={signInHref(pathname)} />
+        ) : !preview && (
+          // The demo sandbox shows no account menu, so nothing carries the door for it: it keeps its own icon at every width.
           <span className={styles.bandDoor}>
             <TournamentFlipPill look="band" />
           </span>
@@ -153,5 +146,29 @@ export default function TournamentBand({
         className={`${clubStyles.tabsSlot} ${styles.tabs}`}
       />
     </header>
+  );
+}
+
+/** The visitor's own door and the operator door, sharing ONE read of the viewer's hats. In a browser on a phone the account
+ *  sheet carries the operator door as its "Go to" block, so the band's separate icon steps aside there (TournamentFrame
+ *  `.bandDoorInSheet`); the installed app has no account menu in the band, so it keeps the icon. Mounted only where the
+ *  account menu is (not in the demo sandbox, not in the preview), which is also the only time there is a hat-holder to show. */
+function BandDoors({ signedIn, signInHref }: { signedIn: boolean; signInHref: string }) {
+  const { resolution } = usePublicFlip();
+  return (
+    <>
+      <span className={styles.browserOnly}>
+        {signedIn ? (
+          <AccountMenu className={clubStyles.word} wrapClassName={clubStyles.account} signOutTo="here" door={resolution}>
+            <User className={clubStyles.wordIcon} strokeWidth={1.8} aria-hidden />
+          </AccountMenu>
+        ) : (
+          <Link href={signInHref} className={clubStyles.word}>Sign in</Link>
+        )}
+      </span>
+      <span className={`${styles.bandDoor} ${styles.bandDoorInSheet}`}>
+        <TournamentFlipDoor resolution={resolution} look="band" />
+      </span>
+    </>
   );
 }

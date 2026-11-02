@@ -1,0 +1,476 @@
+<title>Account Sheet Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky tab row + View row, one section at a time; each section = a true-size 390 px phone specimen (product
+   colours, fixed light ground) on the document's own cool-grey ground, with a numbered, clickable note list beside it. */
+:root {
+  --bg: #E9EDF4;
+  --panel: #FFFFFF;
+  --ink: #1B2230;
+  --dim: #566078;
+  --line: #CDD4E2;
+  --accent: #3446C9;
+  --accent-ink: #FFFFFF;
+  --soft: #E3E8D3;
+  --mark: #E8590C;
+  --new: #1E6B3A;
+  --new-bg: #DDF0E2;
+  --chg: #8A5300;
+  --chg-bg: #F8E9CC;
+  --same: #4A5468;
+  --same-bg: #E4E8F0;
+  --gone: #9B2C1C;
+  --gone-bg: #F8DDD7;
+  --font-doc: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151D; --panel: #1A202C; --ink: #E7EBF3; --dim: #98A3BA; --line: #2B3447; --accent: #8F9CFF; --accent-ink: #0F1320;
+    --soft: #34402B; --mark: #FF8A47; --new: #7FD39B; --new-bg: #17301F; --chg: #F0C46A; --chg-bg: #3A2E12;
+    --same: #AAB4C8; --same-bg: #262E3E; --gone: #FF9F8E; --gone-bg: #3D1C17; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151D; --panel: #1A202C; --ink: #E7EBF3; --dim: #98A3BA; --line: #2B3447; --accent: #8F9CFF; --accent-ink: #0F1320;
+  --soft: #34402B; --mark: #FF8A47; --new: #7FD39B; --new-bg: #17301F; --chg: #F0C46A; --chg-bg: #3A2E12;
+  --same: #AAB4C8; --same-bg: #262E3E; --gone: #FF9F8E; --gone-bg: #3D1C17; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 14px/1.5 var(--font-doc); padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 50; background: var(--panel); }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; }
+
+/* ── Document chrome ───────────────────────────────────────────────────────────────────────────────────────────── */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 40; margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))) calc(-1 * max(16px, env(safe-area-inset-right, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); background: var(--panel); border-bottom: 1px solid var(--line); }
+.title { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding-top: 12px; }
+.title h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.title p { color: var(--dim); font-size: 12px; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; margin-top: 6px; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex: none; padding: 9px 12px; border: 0; background: none; border-bottom: 3px solid transparent; font-weight: 600; font-size: 13px; color: var(--dim); cursor: pointer; white-space: nowrap; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab:focus-visible, .opt:focus-visible, .mk:focus-visible, .copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; align-items: center; gap: 10px; padding: 8px 0 10px; }
+.viewrow[hidden] { display: none; }
+.viewrow .cap { font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--dim); }
+/* The view switch: ONE white track, the chosen option in soft olive (the shipped ViewSwitch). */
+.track { display: inline-flex; padding: 3px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; gap: 2px; }
+.track .opt { border: 0; background: none; padding: 5px 12px; border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--dim); cursor: pointer; }
+.track .opt[aria-checked="true"] { background: var(--soft); color: var(--ink); }
+
+main { padding-block: 18px 64px; max-width: 1240px; margin-inline: auto; }
+section[hidden] { display: none; }
+.lede { max-width: 70ch; color: var(--ink); font-size: 15px; margin-bottom: 18px; text-wrap: pretty; }
+.lede b { font-weight: 700; }
+.split { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+.stage { min-width: 0; max-width: 100%; overflow-x: auto; padding: 4px 4px 14px; }
+.row-frames { display: flex; gap: 22px; align-items: flex-start; }
+.col { display: flex; flex-direction: column; gap: 8px; flex: none; }
+.col > .lab { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--ink); }
+.col > .sub { font-size: 12px; color: var(--dim); max-width: 390px; }
+.tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 0.08em; padding: 2px 6px; border-radius: 4px; }
+.tag.new { background: var(--new-bg); color: var(--new); }
+.tag.chg { background: var(--chg-bg); color: var(--chg); }
+.tag.same { background: var(--same-bg); color: var(--same); }
+.tag.gone { background: var(--gone-bg); color: var(--gone); }
+.notes { flex: 1 1 320px; min-width: 0; max-width: 520px; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.notes li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; transition: box-shadow .15s, border-color .15s; }
+.notes li.on { border-color: var(--mark); box-shadow: 0 0 0 2px color-mix(in srgb, var(--mark) 35%, transparent); }
+.notes .n { width: 24px; height: 24px; border-radius: 50%; background: var(--mark); color: #fff; font-size: 12px; font-weight: 700; display: grid; place-items: center; border: 0; cursor: pointer; }
+.notes b { display: block; font-size: 13px; margin-bottom: 2px; }
+.notes p { font-size: 13px; color: var(--dim); text-wrap: pretty; }
+.notes p + p { margin-top: 4px; }
+.notes .tag { margin-left: 6px; vertical-align: 1px; }
+.fig { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+
+/* Show only what differs: the identical parts of every specimen step back. */
+.same-dim { transition: opacity .15s; }
+body.diff-only .same-dim { opacity: 0.16; filter: grayscale(1); }
+
+table.hosts { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.tablewrap { overflow-x: auto; max-width: 100%; }
+.hosts th { text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); padding: 8px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.hosts td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.hosts tr:last-child td { border-bottom: 0; }
+.hosts td:first-child { font-weight: 600; white-space: nowrap; }
+
+.ask { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; max-width: 760px; }
+.ask h3 { font-size: 14px; margin-bottom: 4px; display: flex; gap: 8px; align-items: center; }
+.ask h3 .n { width: 24px; height: 24px; border-radius: 50%; background: var(--mark); color: #fff; font-size: 12px; display: grid; place-items: center; flex: none; }
+.ask p { color: var(--dim); font-size: 13px; margin-bottom: 8px; text-wrap: pretty; }
+.ask label { display: flex; gap: 8px; align-items: flex-start; padding: 6px 0; font-size: 13px; cursor: pointer; }
+.ask input { margin-top: 3px; accent-color: var(--accent); }
+.ask .rec { font-size: 10px; font-weight: 800; letter-spacing: .08em; color: var(--new); background: var(--new-bg); padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
+.copy { padding: 9px 14px; border-radius: 9px; border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 13px; cursor: pointer; }
+.copybox { margin-top: 10px; max-width: 760px; width: 100%; min-height: 90px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); font: 12px/1.5 ui-monospace, Consolas, monospace; }
+.settled { max-width: 760px; font-size: 13px; color: var(--dim); background: var(--panel); border: 1px dashed var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; }
+
+/* ═══ PRODUCT FRAMES — the public tournament page's own palette (ClubFrame.module.css), fixed light whatever the viewer's theme ═══ */
+.pf {
+  --club-ground: #F6F5F2; --club-card: #FFFFFF; --club-text: #1F1B16; --club-soft: #4E473D; --club-dim: #6F675B;
+  --club-line: #E4E0D8; --club-line-2: #D6D0C4; --club-fill: #4B1D70; --club-on-fill: #FFFFFF; --club-accent: #C9A8F0;
+  --club-ink: #4B1D70; --danger: #B03A22;
+  position: relative; flex: none; width: 390px; overflow: hidden; background: var(--club-ground); color: var(--club-text);
+  font: 400 14px/1.4 'Inter', system-ui, sans-serif; border: 1px solid var(--line); border-radius: 22px; isolation: isolate;
+}
+.pf.tall { height: 780px; }
+.pf svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; display: block; }
+.pf .bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'identity actions' 'tabs tabs'; background: var(--club-fill); color: var(--club-on-fill); border-bottom: 3px solid var(--club-accent); }
+.pf .identity { grid-area: identity; display: flex; align-items: center; gap: 12px; min-width: 0; min-height: 72px; padding: 0 8px 0 16px; }
+.pf .logo { flex: none; width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; background: #EADCF8; color: #4B1D70; font: 700 16px/1 'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing: .02em; }
+.pf .name { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pf .nameText { font: 700 20px/1.1 'Barlow Condensed', 'Arial Narrow', sans-serif; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pf .meta { display: flex; align-items: center; gap: 8px; min-width: 0; font: 500 12px/1.3 'Inter', sans-serif; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pf .dates { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.pf .msep { flex: none; opacity: .7; }
+.pf .chip { flex: none; font-weight: 600; }
+.pf .actions { grid-area: actions; display: flex; align-items: center; gap: 4px; padding: 0 8px 0 0; position: relative; }
+.pf .ico { width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: none; color: var(--club-on-fill); border-radius: 10px; cursor: default; }
+.pf .ico.open { background: rgba(255,255,255,.14); }
+.pf .ico svg.i { width: 22px; height: 22px; }
+.pf .ptabs { grid-area: tabs; display: flex; background: #fff; color: var(--club-text); overflow: hidden; }
+.pf .ptab { flex: none; padding: 0 14px; height: 44px; display: grid; place-items: center; font: 600 14px/1 'Inter', sans-serif; color: var(--club-soft); border-bottom: 3px solid transparent; }
+.pf .ptab.on { color: var(--club-ink); border-bottom-color: var(--club-ink); }
+.pf .page { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.pf .card { background: var(--club-card); border: 1px solid var(--club-line); border-radius: 12px; padding: 16px; }
+.pf .card h4 { margin: 0 0 6px; font: 700 24px/1.1 'Barlow Condensed', sans-serif; }
+.pf .card p { margin: 0 0 12px; font-size: 14px; color: var(--club-soft); }
+.pf .cta { display: grid; place-items: center; height: 48px; border-radius: 10px; background: var(--club-fill); color: #fff; font: 700 15px/1 'Inter', sans-serif; margin-bottom: 12px; }
+.pf .facts .fr { display: flex; justify-content: space-between; gap: 12px; padding: 13px 16px; border-bottom: 1px solid var(--club-line); font-size: 14px; color: var(--club-soft); }
+.pf .facts .fr:last-child { border-bottom: 0; }
+.pf .facts { padding: 0; overflow: hidden; }
+.pf .facts b { color: var(--club-text); font-weight: 600; text-align: right; }
+.pf .facts .lnk { color: var(--club-ink); }
+
+/* The popover today (AccountMenu.module.css) */
+.pf .pop { position: absolute; z-index: 5; display: flex; flex-direction: column; gap: 2px; padding: 5px; width: max-content; background: var(--club-card); border: 1px solid var(--club-line); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+.pf .pop .ident { display: flex; align-items: center; gap: 10px; padding: 8px 10px 9px; border-bottom: 1px solid var(--club-line); margin-bottom: 2px; }
+.pf .avatar { width: 30px; height: 30px; border-radius: 8px; background: rgba(75,29,112,.16); display: grid; place-items: center; font: 700 12.8px/1 ui-monospace, Consolas, monospace; color: var(--club-text); flex: none; }
+.pf .cap { font: 700 11px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .09em; text-transform: uppercase; color: var(--club-dim); }
+.pf .em { font: 500 11.84px/1.3 ui-monospace, Consolas, monospace; color: var(--club-text); white-space: nowrap; }
+.pf .prow { display: flex; align-items: center; gap: 9px; padding: 7px 10px; border-radius: 7px; font: 650 14px/1.25 'Inter', sans-serif; white-space: nowrap; }
+.pf .prow svg.i { width: 15px; height: 15px; color: var(--club-dim); }
+.pf .psep, .pf .ssep { height: 1px; background: var(--club-line); margin: 2px 0; }
+.pf .out, .pf .out svg.i { color: var(--danger); }
+
+/* The phone sheet (the shared BottomSheet, public skin — BottomSheet.module.css) */
+.pf .dim { position: absolute; inset: 0; z-index: 6; background: rgba(13,17,26,.45); display: flex; align-items: flex-end; }
+.pf .sheet { width: 100%; background: var(--club-card); border: 1px solid var(--club-line-2); border-bottom: 0; border-radius: 18px 18px 0 0; padding-bottom: 16px; }
+.pf .handle { width: 38px; height: 4px; margin: 10px auto 0; border-radius: 2px; background: rgba(75,29,112,.4); }
+.pf .shead { display: flex; align-items: flex-start; gap: 8px; padding: 8px 6px 12px 20px; border-bottom: 1px solid rgba(75,29,112,.18); }
+.pf .shead .ht { flex: 1; min-width: 0; padding-top: 9px; }
+.pf .shead .t { display: block; font: 700 16px/1.3 'Inter', sans-serif; }
+.pf .shead .s { display: block; margin-top: 3px; font: 500 12px/1.35 ui-monospace, Consolas, monospace; color: var(--club-dim); overflow-wrap: anywhere; }
+.pf .x { width: 44px; height: 44px; display: grid; place-items: center; color: var(--club-dim); }
+.pf .sbody { padding: 6px 8px 0; display: flex; flex-direction: column; }
+.pf .scap { padding: 12px 12px 4px; font: 700 11px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .09em; text-transform: uppercase; color: var(--club-dim); }
+.pf .srow { display: flex; align-items: center; gap: 14px; min-height: 48px; padding: 0 12px; border-radius: 10px; font: 650 14px/1.25 'Inter', sans-serif; color: var(--club-text); }
+.pf .srow svg.i { color: var(--club-dim); }
+.pf .srow.dest { min-height: 48px; padding-block: 6px; }
+.pf .srow .tx { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.pf .srow .sl { font: 500 12px/1.3 'Inter', sans-serif; color: var(--club-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf .srow .chev { margin-left: auto; color: var(--club-dim); }
+.pf .srow.hl { background: rgba(75,29,112,.08); }
+.pf .ssep { margin: 6px 12px; }
+.pf .theme { padding: 10px 12px 12px; }
+.pf .seg { display: flex; border: 1px solid var(--club-line-2); border-radius: 9px; overflow: hidden; margin-top: 6px; }
+.pf .seg span { flex: 1; text-align: center; padding: 15px 0; font: 650 14px/1 'Inter', sans-serif; color: var(--club-dim); }
+.pf .seg .on { background: rgba(75,29,112,.12); color: var(--club-text); }
+.pf.mini { display: flex; flex-direction: column; }
+.pf.mini .ctx { height: 54px; background: var(--club-fill); border-bottom: 3px solid var(--club-accent); opacity: .5; flex: none; }
+.pf.mini .dim { position: relative; inset: auto; flex: none; background: rgba(13,17,26,.45); padding-top: 14px; }
+
+/* Markers */
+.mk { position: absolute; z-index: 20; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff; background: var(--mark); color: #fff; font: 700 12px/1 'Inter', sans-serif; display: grid; place-items: center; padding: 0; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.35); }
+.mk.on { transform: scale(1.2); }
+.gapnote { font-size: 12px; color: var(--dim); max-width: 390px; }
+
+@media (max-width: 760px) { .row-frames { flex-direction: column; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></symbol>
+    <symbol id="i-building" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></symbol>
+    <symbol id="i-shirt" viewBox="0 0 24 24"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-msg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v6"/><path d="M9 10h6"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
+  </defs>
+</svg>
+
+<div class="top">
+  <div class="title"><h1>Account sheet · phone</h1><p>Public pages and every bar that carries the account door · drawn at a true 390 px</p></div>
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" data-tab="whole" aria-selected="true">1 · Whole screen</button>
+    <button class="tab" role="tab" data-tab="sheet" aria-selected="false">2 · The sheet</button>
+    <button class="tab" role="tab" data-tab="bars" aria-selected="false">3 · The bars</button>
+    <button class="tab" role="tab" data-tab="desk" aria-selected="false">4 · Desk and app</button>
+    <button class="tab" role="tab" data-tab="asks" aria-selected="false">5 · Asks</button>
+  </nav>
+  <div class="viewrow" id="viewrow">
+    <span class="cap">View</span>
+    <div class="track" role="radiogroup" aria-label="View">
+      <button class="opt" role="radio" aria-checked="true" data-view="all" id="view-all">Everything</button>
+      <button class="opt" role="radio" aria-checked="false" data-view="diff" id="view-diff">Show only what differs</button>
+    </div>
+  </div>
+</div>
+
+<main>
+<!-- ═══ 1 · WHOLE SCREEN ═══ -->
+<section id="s-whole">
+  <p class="lede">A phone visitor, signed in, on the tournament page. <b>Before:</b> three icons crowd the band and the account opens a small popover. <b>After:</b> two icons, and the account opens a sheet from the bottom that also carries the way to their own side.</p>
+  <div class="split">
+    <div class="stage"><div class="row-frames">
+      <div class="col"><div class="lab">Before — today <span class="tag same">TODAY</span></div><div id="f-before"></div><div class="sub">In your screenshot the popover is about 380 px wide, the width of the signed-in address, and it hangs from the icon's right edge. At 390 px that puts its left edge off the screen, as drawn here.</div></div>
+      <div class="col"><div class="lab">After — the account sheet <span class="tag new">NEW</span></div><div id="f-after"></div><div class="sub">Same page behind, dimmed. The sheet is the shared one the follow sheets already use.</div></div>
+    </div></div>
+    <ol class="notes" id="n-whole">
+      <li data-n="1"><button class="n" data-n="1">1</button><div><b>The person icon opens a sheet <span class="tag new">NEW</span></b><p>At phone width only. A 44 px tap area as today; nothing else about the icon changes.</p></div></li>
+      <li data-n="2"><button class="n" data-n="2">2</button><div><b>The building icon leaves the band <span class="tag gone">REMOVED</span></b><p>It never said where it went. Its destination becomes a labelled row in the sheet (note 5).</p></div></li>
+      <li data-n="3"><button class="n" data-n="3">3</button><div><b>The event name and dates get room back <span class="tag chg">RESTYLED</span></b><p>At 390 px the text column goes from <span class="fig">162 px</span> to <span class="fig">210 px</span>, so the dates stop being cut to "Dec 4…".</p></div></li>
+      <li data-n="4"><button class="n" data-n="4">4</button><div><b>The sheet itself <span class="tag same">UNCHANGED</span></b><p>The shared bottom sheet: 18 px corners, grab line, × in a 44 px tap area, the dim behind. Tap outside, ×, or Esc closes it.</p></div></li>
+      <li data-n="5"><button class="n" data-n="5">5</button><div><b>"Go to" rows <span class="tag new">NEW</span></b><p>The destination in words ("Admin", "Coach"), with the same building icon the band's door wears today (the 2026-10-20 ruling). First thing under the head, because it is the one row here that leaves the page for somewhere you work.</p></div></li>
+      <li data-n="6"><button class="n" data-n="6">6</button><div><b>The usual rows, same order <span class="tag same">UNCHANGED</span></b><p>Notification settings, Send feedback, Account settings, then Sign out in red, as the popover has them. Rows are 48 px tall.</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ═══ 2 · THE SHEET ═══ -->
+<section id="s-sheet" hidden>
+  <p class="lede">The sheet's five cases. Only the "Go to" block (or the club's "My teams", or the console's Appearance) changes between them; the head and Sign out are the same every time.</p>
+  <div class="split">
+    <div class="stage"><div class="row-frames" style="flex-wrap:wrap">
+      <div class="col"><div class="lab">A · One side <span class="tag new">NEW</span></div><div id="f-a"></div><div class="sub">Runs the event. One row, labelled by where it goes.</div></div>
+      <div class="col"><div class="lab">B · Two sides <span class="tag new">NEW</span></div><div id="f-b"></div><div class="sub">Runs the event and coaches at the club. Today this is the "Roles" chooser; here it is two rows, same names every time.</div></div>
+      <div class="col"><div class="lab">C · No other side <span class="tag same">UNCHANGED</span></div><div id="f-c"></div><div class="sub">A fan with an account, a parent. No "Go to" block at all, so the sheet is short.</div></div>
+      <div class="col"><div class="lab">D · Club site, staff who also coach two teams <span class="tag new">NEW</span></div><div id="f-d"></div><div class="sub">The club bar already hands the menu a "My teams" list. Someone who is also club staff gets both blocks: Go to first, then My teams.</div></div>
+      <div class="col"><div class="lab">E · Support console <span class="tag chg">RESTYLED</span></div><div id="f-e"></div><div class="sub">Our own staff screen: no settings rows and no feedback (as today), and the Warm / Dark choice moves into the sheet. Drawn in the club frame's colours; each bar keeps its own.</div></div>
+    </div></div>
+    <ol class="notes" id="n-sheet">
+      <li data-n="1"><button class="n" data-n="1">1</button><div><b>Head <span class="tag chg">RESTYLED</span></b><p>"Account" with the signed-in address under it, in the shared sheet's head. The popover's initial tile and "Signed in" caption are not carried over.</p></div></li>
+      <li data-n="2"><button class="n" data-n="2">2</button><div><b>Destination rows <span class="tag new">NEW</span></b><p>Named by the surface: "Admin", "Coach" and "Scorekeeper" on a tournament page, "Coaches Portal" on the club bar. On a tournament page that is all the row says; the club bar adds the place under it (variant D), as its chooser does today. A row that returns you to where you just came from keeps its name; it never says "Back to".</p></div></li>
+      <li data-n="3"><button class="n" data-n="3">3</button><div><b>Two sides <span class="tag same">UNCHANGED</span></b><p>The chooser rule from 2026-07-28 holds: the same named destinations every time, however you arrived.</p></div></li>
+      <li data-n="4"><button class="n" data-n="4">4</button><div><b>Nothing to go to <span class="tag same">UNCHANGED</span></b><p>The block is absent, not empty, and nothing in the band is reserved for it.</p></div></li>
+      <li data-n="5"><button class="n" data-n="5">5</button><div><b>My teams <span class="tag same">UNCHANGED</span></b><p>Same rows the popover shows, the page being viewed shaded. One team reads "My team".</p></div></li>
+      <li data-n="6"><button class="n" data-n="6">6</button><div><b>Appearance <span class="tag chg">RESTYLED</span></b><p>The Warm / Dark switch is the same control, full width and 44 px tall instead of a small strip. Only the support console shows it on a phone.</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ═══ 3 · THE BARS ═══ -->
+<section id="s-bars" hidden>
+  <p class="lede"><b>"Apply to all" is four bars, not seven.</b> On a phone the coach, admin and signed-in-app bars have no account icon at all: their top strip is hidden at 900 px and Account is a tab in the bottom bar (a tab marks where you are, which is why it stays a tab). Those need no change. The four that do are below, and only the first two also carry the building door.</p>
+  <div class="split">
+    <div class="stage"><div class="row-frames">
+      <div class="col"><div class="lab">Before <span class="tag same">TODAY</span></div><div id="f-bar-b"></div></div>
+      <div class="col"><div class="lab">After <span class="tag chg">RESTYLED</span></div><div id="f-bar-a"></div></div>
+    </div></div>
+    <ol class="notes" id="n-bars">
+      <li data-n="1"><button class="n" data-n="1">1</button><div><b>Name column <span class="tag chg">RESTYLED</span></b><p><span class="fig">162 px → 210 px</span> at 390 px: 390 − 72 (mark and gap) − 8 − actions (<span class="fig">148 → 100 px</span>).</p></div></li>
+      <li data-n="2"><button class="n" data-n="2">2</button><div><b>Dates <span class="tag chg">RESTYLED</span></b><p>The state word never shrinks, so the dates give way first. 162 px leaves them about 40 px; 210 px shows them whole.</p></div></li>
+    </ol>
+  </div>
+  <div style="height:18px"></div>
+  <div class="tablewrap"><table class="hosts">
+    <thead><tr><th>Bar</th><th>On a phone today</th><th>After</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>Tournament page band</td><td>Person icon (popover) + building door, for people who hold a side</td><td>Person icon opens the sheet; Go to rows replace the building icon</td><td><span class="tag chg">CHANGES</span></td></tr>
+      <tr><td>Club's public bar</td><td>Person icon (popover) + building door for club staff; My teams rows in the popover</td><td>Sheet with Go to, then My teams</td><td><span class="tag chg">CHANGES</span></td></tr>
+      <tr><td>Marketing bar (home, pricing)</td><td>Person icon (a word on wider phones) with a popover re-anchored by hand so it does not clip at 320 px</td><td>Sheet, no Go to block. The re-anchoring workaround is no longer needed</td><td><span class="tag chg">CHANGES</span></td></tr>
+      <tr><td>Skins</td><td colspan="3">The tournament band and club bar are on the club's light frame (drawn). The marketing bar and the console wear the warm paper skin; each sheet takes its bar's own colours, as the popover does today.</td></tr>
+      <tr><td>Support console (our staff)</td><td>Person icon (popover) with Appearance, no settings or feedback rows</td><td>Sheet with Appearance and Sign out (variant E)</td><td><span class="tag chg">CHANGES</span></td></tr>
+      <tr><td>Coaches Portal · club and tournament admin · signed-in app</td><td>No account icon. Account is a bottom-bar tab. Their own header keeps its door icon</td><td>Same</td><td><span class="tag same">NO CHANGE</span></td></tr>
+      <tr><td>Scorekeeper and check-in</td><td>Their own account sheet and event-specific door already</td><td>Same</td><td><span class="tag same">NO CHANGE</span></td></tr>
+      <tr><td>Older event header (while the new tournament frame is behind its switch)</td><td>The door only; this header has no account icon</td><td>Same, and it goes when the new frame is switched on for everyone</td><td><span class="tag same">NO CHANGE</span></td></tr>
+    </tbody></table></div>
+</section>
+
+<!-- ═══ 4 · DESK AND APP ═══ -->
+<section id="s-desk" hidden>
+  <p class="lede">What does not change. From the bar's desk layout up, the popover stays, and the building door stays beside it as a labelled icon. Inside the installed app the band carries no account door at all (the app's own bar does), so there is nothing to change there.</p>
+  <div class="split">
+    <div class="stage"><div class="row-frames"><div class="col"><div class="lab">Desk · popover and door <span class="tag same">UNCHANGED</span></div><div id="f-desk"></div></div></div></div>
+    <ol class="notes" id="n-desk">
+      <li data-n="1"><button class="n" data-n="1">1</button><div><b>Desk: the person icon <span class="tag same">UNCHANGED</span></b><p>A small popover under the icon. A mouse and a wide screen are what it suits.</p></div></li>
+      <li data-n="2"><button class="n" data-n="2">2</button><div><b>Desk: the building door <span class="tag same">UNCHANGED</span></b><p>Still a bare icon in the band, named for its destination on hover and to screen readers.</p></div></li>
+      <li data-n="3"><button class="n" data-n="3">3</button><div><b>Signed out <span class="tag same">UNCHANGED</span></b><p>The word "Sign in" stays a word at every width. Fans and signed-out visitors see no difference anywhere.</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ═══ 5 · ASKS ═══ -->
+<section id="s-asks" hidden>
+  <p class="lede">Five rulings. Recommended answers are selected; change any, then copy the answers back to me. Ask 5 is the one with a real cost, so read it first.</p>
+  <div class="settled"><b>Not asks, settled and kept:</b> labelled by destination, never "Back to…" (2026-07-31); a chooser lists the same destinations every time (2026-07-28); the popover stays on a desk; "Sign in" stays a word when signed out.</div>
+  <div id="asks"></div>
+  <button class="copy" id="copyAnswers" type="button">Copy my answers</button>
+  <textarea class="copybox" id="answersBox" readonly aria-label="Your answers" hidden></textarea>
+</section>
+</main>
+
+<script>
+(function () {
+  var I = function (n, cls) { return '<svg class="i ' + (cls || '') + '" aria-hidden="true"><use href="#i-' + n + '"/></svg>'; };
+  var EMAIL = 'uat-club-league-admin@uat-rep-club.local';
+  var MK = function (n, style) { return '<button class="mk" type="button" data-n="' + n + '" style="' + style + '" aria-label="Note ' + n + '">' + n + '</button>'; };
+
+  function band(opts) {
+    var door = opts.door ? '<span class="ico" title="Admin" aria-label="Admin">' + I('building') + '</span>' : '';
+    return '<header class="bar">' +
+      '<div class="identity"><span class="logo same-dim">SW</span><span class="name"><span class="nameText">Stripe Walk Invitational</span>' +
+      '<span class="meta"><span class="dates">Dec 4–6, 2026</span><span class="msep">·</span><span class="chip">Registration open</span></span></span></div>' +
+      '<div class="actions"><span class="ico same-dim" aria-label="Share">' + I('share') + '</span>' +
+      '<span class="ico' + (opts.open ? ' open' : '') + '" aria-label="Account">' + I('user') + '</span>' + door + '</div>' +
+      (opts.tabs === false ? '' : '<div class="ptabs same-dim"><span class="ptab on">Overview</span><span class="ptab">Schedule</span><span class="ptab">Teams</span><span class="ptab">Standings</span><span class="ptab">Register</span></div>') +
+      '</header>';
+  }
+  function page() {
+    return '<div class="page same-dim"><div class="card"><h4>Registration is open</h4>' +
+      '<p>Teams in 13U and 15U can register until Nov 28.</p><div class="cta">Register a team</div>' +
+      '<p style="margin:0">Registering also sets up your free Coaches Portal: schedule, status and organizer updates in one place. Just following along? You don\'t need an account.</p></div>' +
+      '<div class="card facts"><div class="fr"><span>Divisions</span><b>13U · 15U</b></div><div class="fr"><span>Schedule</span><b>Posted before the event</b></div><div class="fr"><span>Rules</span><b class="lnk">Format and rules ›</b></div></div></div>';
+  }
+  function popover(style) {
+    return '<div class="pop" style="' + style + '"><div class="ident"><span class="avatar">U</span><span><span class="cap">Signed in</span><br><span class="em">' + EMAIL + '</span></span></div>' +
+      '<div class="prow">' + I('bell') + 'Notification settings</div><div class="prow">' + I('msg') + 'Send feedback</div><div class="prow">' + I('gear') + 'Account settings</div>' +
+      '<div class="psep"></div><div class="prow out">' + I('out') + 'Sign out</div></div>';
+  }
+  function destRow(d, hl) {
+    return '<div class="srow dest' + (hl ? ' hl' : '') + '">' + I(d.icon) + '<span class="tx"><span>' + d.label + '</span>' + (d.sub ? '<span class="sl">' + d.sub + '</span>' : '') + '</span></div>';
+  }
+  function sheet(opts) {
+    var go = '';
+    if (opts.go && opts.go.length) {
+      go = '<div class="scap">Go to</div>' + opts.go.map(function (d) { return destRow(d); }).join('') + '<div class="ssep"></div>';
+    }
+    if (opts.teams) {
+      go += (opts.teams.length > 1 ? '<div class="scap">My teams</div>' : '') +
+        opts.teams.map(function (t) { return '<div class="srow' + (t.cur ? ' hl' : '') + '">' + I('shirt') + '<span>' + (opts.teams.length > 1 ? t.n : 'My team') + '</span></div>'; }).join('') + '<div class="ssep"></div>';
+    }
+    if (opts.console) {
+      return '<div class="sheet"><div class="handle"></div><div class="shead same-dim"><div class="ht"><span class="t">Account</span><span class="s">staff@fieldlogichq.example</span></div><span class="x">' + I('x') + '</span></div>' +
+        '<div class="sbody"><div class="theme"><div class="scap" style="padding:0">Appearance</div><div class="seg"><span class="on">Warm</span><span>Dark</span></div></div>' +
+        '<div class="ssep"></div><div class="srow out" style="color:var(--danger)">' + I('out') + 'Sign out</div></div></div>';
+    }
+    return '<div class="sheet"><div class="handle"></div><div class="shead same-dim"><div class="ht"><span class="t">Account</span><span class="s">' + EMAIL + '</span></div><span class="x">' + I('x') + '</span></div>' +
+      '<div class="sbody">' + go +
+      '<div class="same-dim"><div class="srow">' + I('bell') + 'Notification settings</div><div class="srow">' + I('msg') + 'Send feedback</div><div class="srow">' + I('gear') + 'Account settings</div>' +
+      '<div class="ssep"></div><div class="srow out" style="color:var(--danger)">' + I('out') + 'Sign out</div></div></div></div>';
+  }
+  function mini(sheetHtml) {
+    return '<div class="pf mini"><div class="ctx"></div><div class="dim">' + sheetHtml + '</div></div>';
+  }
+  // The tournament page's rows carry the surface's name only (the hat label); the club bar's rows add the place under it.
+  var ADMIN = { icon: 'building', label: 'Admin', sub: '' };
+  var COACH = { icon: 'building', label: 'Coach', sub: '' };
+  var CLUB_ADMIN = { icon: 'building', label: 'Admin', sub: 'Riverdale Minor Ball' };
+
+  // 1 · whole screen
+  document.getElementById('f-before').innerHTML = '<div class="pf tall">' + band({ door: true, open: true }) + page() +
+    popover('top:66px;right:52px') +
+    MK(1, 'left:300px;top:-2px') + MK(2, 'left:352px;top:-2px') + MK(3, 'left:62px;top:-6px') + '</div>';
+  document.getElementById('f-after').innerHTML = '<div class="pf tall">' + band({ door: false, open: true }) + page() +
+    '<div class="dim">' + sheet({ go: [ADMIN] }) + '</div>' +
+    MK(1, 'left:344px;top:-2px') + MK(3, 'left:62px;top:-6px') + MK(4, 'left:18px;top:330px') + MK(5, 'left:18px;top:440px') + MK(6, 'left:18px;top:560px') + '</div>';
+
+  // 2 · the sheet
+  document.getElementById('f-a').innerHTML = mini(sheet({ go: [ADMIN] }));
+  document.getElementById('f-b').innerHTML = mini(sheet({ go: [ADMIN, COACH] }));
+  document.getElementById('f-c').innerHTML = mini(sheet({}));
+  document.getElementById('f-d').innerHTML = mini(sheet({ go: [CLUB_ADMIN], teams: [{ n: 'Ridge 11U', cur: true }, { n: 'Ridge 13U' }] }));
+  function markIn(id, items) {
+    var host = document.getElementById(id).firstChild;
+    host.style.position = 'relative';
+    host.insertAdjacentHTML('beforeend', items.join(''));
+  }
+  markIn('f-a', [MK(1, 'left:300px;top:76px'), MK(2, 'left:8px;top:150px')]);
+  markIn('f-b', [MK(3, 'left:8px;top:150px')]);
+  markIn('f-c', [MK(4, 'left:8px;top:150px')]);
+  markIn('f-d', [MK(5, 'left:8px;top:150px')]);
+  document.getElementById('f-e').innerHTML = mini(sheet({ console: true }));
+  markIn('f-e', [MK(6, 'left:8px;top:150px')]);
+
+  // 3 · the bars
+  document.getElementById('f-bar-b').innerHTML = '<div class="pf" style="border-radius:12px">' + band({ door: true, tabs: false }) + MK(1, 'left:62px;top:-6px') + MK(2, 'left:236px;top:46px') + '</div>';
+  document.getElementById('f-bar-a').innerHTML = '<div class="pf" style="border-radius:12px">' + band({ door: false, tabs: false }) + MK(1, 'left:62px;top:-6px') + MK(2, 'left:284px;top:46px') + '</div>';
+
+  // 4 · desk (a 390 px crop of the band's right side)
+  document.getElementById('f-desk').innerHTML = '<div class="pf" style="height:330px;border-radius:12px"><header class="bar" style="grid-template-areas:\'identity actions\'"><div class="identity"><span class="logo same-dim">SW</span><span class="name"><span class="nameText">Stripe Walk Invitational</span></span></div>' +
+    '<div class="actions"><span class="ico" aria-label="Account">' + I('user') + '</span><span class="ico" title="Admin" aria-label="Admin">' + I('building') + '</span></div></header>' +
+    popover('top:62px;right:52px') + MK(1, 'left:236px;top:6px') + MK(2, 'left:336px;top:6px') + '</div>' +
+    '<div class="gapnote" style="margin-top:8px">Drawn from the band\'s own corner. At a desk the share icon and tab row are elsewhere (the side rail).</div>';
+
+  // 5 · asks
+  var ASKS = [
+    { id: 'A1', q: 'Where does "phone" end?', p: 'Below this width the account opens a sheet and the building icon leaves the bar; above it everything is as today. The code answers most of this already: the building icon turns icon-only, the club bar goes to its phone layout, and the app\'s top strips hide, all at 900 px.',
+      o: [['A', 'At 900 px, where the bars already change. Tablets held upright get the sheet too.', 1], ['B', 'At 640 px, true phones only. A tablet between 641 and 900 px would keep the popover but see an icon-only building door, a mixed state no other width has.', 0]] },
+    { id: 'A2', q: 'Where does "Go to" sit in the sheet?', p: 'It is the one row that leaves the page for a place you work.',
+      o: [['A', 'First, under the head, with its own "Go to" caption (as drawn).', 1], ['B', 'After the settings rows, just above Sign out.', 0]] },
+    { id: 'A3', q: 'Which sheet, and so which head?', p: 'The public pages already use one bottom sheet (the follow sheets), headed by a name and one context line. The portal\'s menu sheets are a different component, headed by a small-capitals label (the 2026-10-18 ruling for pick-one sheets).',
+      o: [['A', 'The public pages\' sheet, with "Account" over the address (as drawn). One sheet on public pages, no new component.', 1], ['B', 'The portal\'s menu sheet, headed ACCOUNT in small capitals, the address as the first line. Matches the app, but needs the public frame\'s colours added to it.', 0]] },
+    { id: 'A4', q: 'Does Share move into the sheet too?', p: 'It is a page action, not an account one, but it is the other icon in the band.',
+      o: [['A', 'No. Share stays in the band, where fans (who have no account) also find it.', 1], ['B', 'Yes. The band is then the mark, the name and one icon. Fans lose the quick Share.', 0]] },
+    { id: 'A5', q: 'Going to your own side becomes two taps on these bars. Accept?', p: 'Today, on a tournament page, it is one tap on the building icon, and after a hop the same corner offers a one-tap way back (the 2026-07-22 Flip ruling wanted one door in one corner on every surface for that reason). Admin, coach and scorekeeper screens keep their corner icon. Only fans never see this icon at all, so the band is crowded only for people who hold a side, the same people who pay the extra tap.',
+      o: [['A', 'Accept. The door lives in the sheet, the band loses the icon (as drawn, and as you asked).', 1], ['B', 'Keep the building icon on the band. The sheet gets no Go to rows. The crowding is solved by Ask 4 B (Share into the sheet) instead.', 0]] }
+  ];
+  var asksEl = document.getElementById('asks');
+  asksEl.innerHTML = ASKS.map(function (a, k) {
+    return '<div class="ask"><h3><span class="n">' + (k + 1) + '</span>' + a.q + '</h3><p>' + a.p + '</p>' +
+      a.o.map(function (o) { return '<label><input type="radio" name="' + a.id + '" value="' + o[0] + '"' + (o[2] ? ' checked' : '') + '><span><b>' + o[0] + '</b> · ' + o[1] + (o[2] ? '<span class="rec">RECOMMENDED</span>' : '') + '</span></label>'; }).join('') + '</div>';
+  }).join('');
+  document.getElementById('copyAnswers').addEventListener('click', function () {
+    var lines = ASKS.map(function (a) { var c = document.querySelector('input[name="' + a.id + '"]:checked'); return a.id + ': ' + (c ? c.value : '-'); });
+    var text = 'Account sheet asks\n' + lines.join('\n');
+    var box = document.getElementById('answersBox');
+    box.hidden = false; box.value = text; box.focus(); box.select();
+    try { navigator.clipboard.writeText(text).catch(function () {}); } catch (e) {}
+  });
+
+  // tabs + hash
+  var NAMES = ['whole', 'sheet', 'bars', 'desk', 'asks'];
+  function show(name) {
+    if (NAMES.indexOf(name) < 0) name = 'whole';
+    NAMES.forEach(function (n) { document.getElementById('s-' + n).hidden = n !== name; });
+    document.querySelectorAll('.tab').forEach(function (t) { t.setAttribute('aria-selected', t.dataset.tab === name ? 'true' : 'false'); });
+    document.getElementById('viewrow').hidden = !(name === 'whole' || name === 'sheet' || name === 'bars');
+    try { if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name); } catch (e) {}
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll('.tab').forEach(function (t) { t.addEventListener('click', function () { show(t.dataset.tab); }); });
+  window.addEventListener('hashchange', function () { show(location.hash.slice(1)); });
+  show(location.hash.slice(1) || 'whole');
+
+  // view toggle
+  document.querySelectorAll('.opt').forEach(function (o) {
+    o.addEventListener('click', function () {
+      document.querySelectorAll('.opt').forEach(function (x) { x.setAttribute('aria-checked', x === o ? 'true' : 'false'); });
+      document.body.classList.toggle('diff-only', o.dataset.view === 'diff');
+    });
+  });
+
+  // clickable markers <-> notes
+  function light(section, n) {
+    section.querySelectorAll('.notes li').forEach(function (li) { li.classList.toggle('on', li.dataset.n === String(n)); });
+    section.querySelectorAll('.mk').forEach(function (m) { m.classList.toggle('on', m.dataset.n === String(n)); });
+    var li = section.querySelector('.notes li[data-n="' + n + '"]');
+    if (li) li.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('.mk, .notes .n');
+    if (!b) return;
+    light(b.closest('section'), b.dataset.n);
+  });
+})();
+</script>

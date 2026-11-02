@@ -1,0 +1,311 @@
+<title>Account Sheet Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=JetBrains+Mono&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* One page, one walk (the account sheet on a phone, with real links). Each walk has its own purpose, pass line and sign-off; its parts carry a verdict each; paste-back per walk and for all.
+   Same shell as the Stage 7 walk (§440). An optional step carries two boxes (Did it · Skipped it) and a ruling step one box per option,
+   so a tick says which. A part with no verdict heads the summary as INCOMPLETE. */
+:root {
+  --bg: #f6f7f4; --surface: #ffffff; --ink: #1d2420; --muted: #5a6560; --line: #d9ded8;
+  --accent: #2f6b4f; --accent-soft: #e3efe8; --warn: #8a5a00; --warn-soft: #fbf0d9; --bad: #9b2c2c; --bad-soft: #f8e2e2;
+  --display: "Fraunces", Georgia, serif; --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151a17; --surface: #1e2521; --ink: #e6ebe7; --muted: #9aa69f; --line: #34403a;
+  --accent: #7cc3a0; --accent-soft: #233a2f; --warn: #e8b45a; --warn-soft: #3a2f1a; --bad: #f08a8a; --bad-soft: #3d2222; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #151a17; --surface: #1e2521; --ink: #e6ebe7; --muted: #9aa69f; --line: #34403a;
+  --accent: #7cc3a0; --accent-soft: #233a2f; --warn: #e8b45a; --warn-soft: #3a2f1a; --bad: #f08a8a; --bad-soft: #3d2222; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body); margin: 0; }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
+h1 { font: 600 1.9rem/1.15 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 600 1.25rem/1.25 var(--display); margin: 0; text-wrap: balance; }
+h3 { font: 600 1rem/1.3 var(--body); margin: 0; }
+.eyebrow { font: 600 .75rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+p { margin: 0; max-width: 65ch; }
+.intro { display: grid; gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; }
+.card dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.card dt { color: var(--muted); }
+.card dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .card dl { grid-template-columns: 1fr; } .card dd { padding-bottom: 6px; } }
+code, .mono { font-family: var(--mono); font-size: .86em; overflow-wrap: anywhere; }
+.facts { display: grid; gap: 8px; }
+.facts ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.progress { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.bar { flex: 1 1 200px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+.index { display: grid; gap: 8px; }
+.index a { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); text-decoration: none; min-height: 44px; align-items: center; }
+.index a b { font-weight: 600; }
+.chip { font: 600 .78rem/1 var(--body); padding: 5px 8px; border-radius: 6px; background: var(--line); color: var(--muted); white-space: nowrap; }
+.chip.pass { background: var(--accent-soft); color: var(--accent); } .chip.issue { background: var(--bad-soft); color: var(--bad); } .chip.call, .chip.warn { background: var(--warn-soft); color: var(--warn); }
+.walk { display: grid; gap: 14px; scroll-margin-top: 12px; }
+.walk > .head { display: grid; gap: 8px; padding: 16px 18px; border: 1px solid var(--accent); border-radius: 10px; background: var(--accent-soft); }
+.walk > .head p { max-width: 68ch; }
+.walk > .head .k { font-weight: 600; }
+.part { display: grid; gap: 12px; }
+.part header { display: grid; gap: 4px; }
+.part header p { color: var(--muted); }
+.who { display: inline-block; font: 600 .8rem/1 var(--body); padding: 5px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); justify-self: start; }
+.step { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow-wrap: anywhere; }
+.step input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .txt { display: grid; gap: 4px; min-width: 0; }
+.step .do { font-weight: 600; }
+.step .see::before { content: "You should see: "; color: var(--muted); font-weight: 600; }
+.step .rb { color: var(--warn); font-weight: 600; }
+.step.stop { border-color: var(--warn); background: var(--warn-soft); }
+.step.done { opacity: .72; }
+.opts { display: flex; gap: 18px; flex-wrap: wrap; padding-top: 4px; }
+.opts label { display: inline-flex; gap: 8px; align-items: center; font-weight: 600; min-height: 32px; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; }
+.verdict button { font: 600 .9rem/1 var(--body); padding: 9px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; min-height: 44px; }
+.verdict button[aria-pressed="true"][data-v="pass"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.verdict button[aria-pressed="true"][data-v="issue"] { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.verdict button[aria-pressed="true"][data-v="call"] { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 70px; font: inherit; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { font: 600 .95rem/1 var(--body); padding: 11px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); cursor: pointer; min-height: 44px; }
+.btn.ghost { background: transparent; color: var(--accent); }
+#summary { font-family: var(--mono); font-size: .85rem; min-height: 200px; }
+a { color: var(--accent); }
+input.host { box-sizing: border-box; width: 100%; min-height: 44px; font: inherit; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+</style>
+<main class="wrap">
+<div class="intro"><span class="eyebrow">Owner QA · §441 · Account sheet on a phone</span>
+<h1>On a phone, the person icon opens a sheet, and your own side is one row in it.</h1>
+<p><strong>What this is.</strong> On a phone (900 px and narrower), tapping the person icon on a public page no longer opens a small floating menu that ran off the left edge. It opens a sheet from the bottom with who you are, a <strong>Go to</strong> block for your own side (Admin, Coach, Scorekeeper), your settings, and Sign out. The separate building icon is gone from the tournament band and the club bar on a phone. A desk (901 px and up) is unchanged. This is one walk with real links.</p>
+<p><strong>Nothing is pre-ticked or pre-approved.</strong> The build’s automated checks passed, but they are not your verdict. The sheet’s colours and its place on screen on each of the four bars could only be reasoned from the code, not measured in a browser, so Parts A to F are the real test of that.</p></div>
+
+<section class="card"><h2>Where and who</h2><dl>
+<dt>Who</dt><dd>Several people, named in each part: an <strong>operator</strong> (someone who runs the tournament, ideally one who also coaches, so the sheet shows two rows), a <strong>fan with an account</strong> (no role on the event), a <strong>signed-out</strong> visitor, a <strong>club staff member</strong>, a <strong>coach of two teams</strong>, and a <strong>support console</strong> staff login. Use a private window per person.</dd>
+<dt>Server</dt><dd><input class="host" id="host" type="url" value="http://localhost:3000" aria-label="Target server origin">On the computer, leave it at <span class="mono">http://localhost:3000</span>. For a phone on the same Wi-Fi, change it to the computer’s address. The box only changes the links on this page.</dd>
+<dt>Widths</dt><dd>A real phone is best. Otherwise Chrome’s device toolbar (Ctrl+Shift+M) at <strong>390</strong>, then <strong>360</strong>, and <strong>320</strong> for the marketing bar. The swap point is checked at <strong>900</strong> and <strong>901</strong>.</dd>
+<dt>The new look</dt><dd>The tournament band is part of the new public look, which is behind a switch. The tournament links on this page turn it on for that browser window, then open the page.</dd>
+<dt>Fixture</dt><dd>“Stripe Walk Invitational” under UAT Rep Club for the tournament page, and UAT Rep Club’s own public site for the club bar. Use the logins you normally use for those. If you want me to name them in chat, say so.</dd>
+<dt>Saved progress</dt><dd>Ticks, notes and verdicts stay in this browser only. Use “Copy this walk’s result” and paste it into chat.</dd>
+</dl></section>
+
+<section class="card facts"><h3>Known and accepted, so they are not fails</h3><ul>
+<li><strong>Going to your own side from a public page is now two taps</strong> (open the sheet, tap the row) instead of one. You accepted this (Ask 5). The way back from Admin, Coach and Scorekeeper screens is still one tap.</li>
+<li>No drag-to-close. The little grab line is only a mark, as on the other sheets. Tap outside, ×, Esc or a row closes it.</li>
+<li>If the account menu is in the demo sandbox, it is absent by design. Part K checks that the door is still there.</li>
+</ul></section>
+
+<section class="card"><h2>The walk</h2>
+<div class="progress"><strong id="count">0 of 0 checked</strong><div class="bar" aria-hidden="true"><span id="fill"></span></div><button class="btn ghost" id="reset" type="button">Clear my ticks</button></div>
+<div class="index" id="index"></div></section>
+
+<div id="walks"></div>
+
+<section class="card"><h2>Send the result</h2><p>Set Pass, Issue or Needs a call on each part, and add what you actually saw in its notes. A pass button alone is not evidence: read the “checked” fraction beside it.</p>
+<div class="actions"><button class="btn" id="build" type="button">Build the result</button><button class="btn ghost" id="copy" type="button">Copy</button></div>
+<textarea id="summary" readonly aria-label="Walk summary"></textarea></section>
+</main>
+<script>
+var HOST = "http://localhost:3000";
+var TOURN = "/uat-rep-club/stripe-walk-invitational";
+var CLUB = "/uat-rep-club";
+function a(path, label) { return '<a data-route="' + path + '" href="' + HOST + path + '" target="_blank" rel="noopener">' + label + '</a>'; }
+function sw(frame, path, label) { return a('/api/public-frame?frame=' + frame + '&to=' + encodeURIComponent(path), label); }
+function on(path, label) { return sw('on', path, label); }
+function tell(text) { return ' <span class="rb">Tell me: ' + text + '</span>'; }
+
+var WALKS = [
+{ id: "W1", title: "The account sheet on a phone",
+  purpose: "A person on a phone taps the person icon on a public page and gets a sheet that fits the screen, in the bar’s own colours. If they run something, their own side is the first row, in words. The building icon is gone from the tournament band and the club bar, and the event name and its dates read whole. A desk is unchanged.",
+  passes: "the sheet fits and reads right on all four bars, an operator reaches their side in two taps, a fan sees no Go to block, every way of closing works, Send feedback still opens, and the installed app, the demo and every desk width are unchanged.",
+  notIn: "The Coaches Portal, the club and tournament admin, the app’s bottom-bar Account tab, the scorekeeper and check-in screens. Dragging the sheet down.",
+  parts: [
+{id:'A',title:'Part A · Tournament page, signed in as an operator',who:'Operator account · 390 px',steps:[
+ {do:'Sign in as someone who runs the Invitational, then open '+on(TOURN,'the tournament page')+'.',see:'The organizer’s colour band with the event name, its dates on one line and the state word. At the right: Share and the person icon. No building icon.'},
+ {do:'Look at the event name and its dates.',see:'The dates read whole (for example “Dec 4–6”), not cut to “Dec 4…”. The name has room for two lines.'},
+ {do:'Tap the person icon.',see:'A sheet rises from the bottom. It stays on the screen: nothing runs off the left or right.'},
+ {do:'Read the sheet from the top.',see:'“Account” with your email under it (it wraps if it is long). Then “Go to”, then one row, “Admin”, with the building icon. Then Notification settings, Send feedback, Account settings, a line, and Sign out in red. Rows are tall enough to tap comfortably.'},
+ {do:'Check the colours.',see:'The sheet is white with dark text, like the page, not the dark platform colours. The band behind it is dimmed.'},
+ {do:'Tap “Admin”.',see:'The sheet closes and you land on the matching admin screen for THIS event (the Schedule page lands on admin Schedule, the Overview on the Dashboard).'},
+ {do:'Press your browser’s Back to return to the public page, tap the person icon again, then tap Admin once more.',see:'The sheet opens again and the row works again. If you came from an admin screen the row may take you back to that exact screen, but it is still labelled by where it goes, never “Back to”.'}
+]},
+{id:'B',title:'Part B · Tournament page, an operator with two roles',who:'An operator who is also a coach on that event · 390 px',steps:[
+ {do:'Open the same tournament page signed in as someone with two roles on it (for example admin and coach).',see:'Still no building icon in the band.'},
+ {do:'Tap the person icon.',see:'The Go to block has TWO rows, named by the role (“Admin” and “Coach”). The same two rows every time you open it.'},
+ {do:'Tap “Coach”.',see:'You land in the Coaches Portal on this event’s record.'}
+]},
+{id:'C',title:'Part C · A fan with an account, and a signed-out visitor',who:'A fan account, then a private window with nobody signed in · 390 px',steps:[
+ {do:'Signed in as someone with NO role on the event, open '+on(TOURN,'the tournament page')+' and tap the person icon.',see:'The sheet has no “Go to” block and no empty caption. It starts with Notification settings under the head. The band looks exactly as it did before (Share and the person icon).'},
+ {do:'In a private window, signed out, open the same page.',see:'“Sign in” is a word, as before. Nothing else changed.'}
+]},
+{id:'D',title:'Part D · The club’s public bar',who:'Club staff, then a coach of two teams, then a coach of one team · 390 px',steps:[
+ {do:'Signed in as staff of UAT Rep Club, open '+a(CLUB,'the club’s public site')+'.',see:'The club colour band with the person icon. No building icon.'},
+ {do:'Tap the person icon.',see:'The sheet shows “Go to” with the staff door, in words, with the club’s name under it where the row carries one. The colours are the club’s light ones.'},
+ {do:'As someone who is both staff and a coach of two teams (if you have one), open the sheet.',see:'Go to first, then a “My teams” caption with each team by name, the one you are looking at shaded, then the rest of the sheet.'},
+ {do:'As a coach of two teams only, open the sheet.',see:'No Go to block. “My teams” lists both teams by name.'},
+ {do:'As a coach of ONE team, open the sheet.',see:'One row reading “My team”, no caption above it.'}
+]},
+{id:'E',title:'Part E · The marketing bar',who:'Anyone signed in · 390 px, then 320 px',steps:[
+ {do:'Signed in, open '+a('/pricing','the pricing page')+' at 390 px and tap Account.',see:'The sheet fits the screen. It is white with dark ink and olive accents (the marketing bar’s warm colours), not the dark platform colours. No Go to block.'},
+ {do:'Repeat at 320 px.',see:'The sheet still fits; “Open app” and the person icon in the bar are unchanged behind it.'},
+ {do:'Scroll the page behind it while the sheet is open, then close it.',see:'The page behind does not scroll while the sheet is open. It scrolls again after it closes. The sheet is never hidden behind the bar or the page.'}
+]},
+{id:'F',title:'Part F · The support console',who:'A support console login · 390 px',steps:[
+ {do:'Open '+a('/platform-admin','the support console')+' and tap the person icon.',see:'The sheet shows “Account”, your email, an “Appearance” block, then Sign out in red. No Notification settings, no Send feedback, no Account settings. No Go to.'},
+ {do:'Look at Appearance.',see:'A full-width Warm / Dark switch, 44 px tall, with the active one marked.'},
+ {do:'Tap Dark, then Warm.',see:'The console changes at once, and the sheet’s own colours follow (it stays readable on both).'},
+ {do:'Tap Sign out.',see:'You land on the console’s own sign-in page.'}
+]},
+{id:'G',title:'Part G · Every way of closing it',who:'Any signed-in person, any bar · 390 px',steps:[
+ {do:'Open the sheet and tap the dimmed area outside it.',see:'It closes.'},
+ {do:'Open it and tap the × at the top right.',see:'It closes and the person icon has the focus again.'},
+ {do:'Open it and press Esc (keyboard attached, or Chrome’s device toolbar).',see:'It closes.'},
+ {do:'Open it and tap Account settings (or Notification settings).',see:'It closes and the page opens.'},
+ {do:'Open it, then use the browser’s Back.',see:'The sheet is not left hanging over the page you return to.'}
+]},
+{id:'H',title:'Part H · Send feedback',who:'Any signed-in person with the row · 390 px',steps:[
+ {do:'Open the sheet on the tournament page or the club bar and tap Send feedback.',see:'The sheet closes and then the feedback window opens. The window stays open after the sheet is gone. Close it.'}
+]},
+{id:'I',title:'Part I · The installed app on a phone',who:'The installed app, or Chrome’s installed-app window · phone width',steps:[
+ {do:'Open '+on(TOURN,'the tournament page')+' in the installed app as an operator.',see:'The band still shows its operator door (the building icon), as before. The person icon is not in the band (the app’s own bar has it). Nothing else changed.'}
+]},
+{id:'J',title:'Part J · The swap at 900 and 901',who:'Operator account · Chrome’s device toolbar, drag the width',steps:[
+ {do:'On the tournament page, set the width to 900 and tap the person icon.',see:'The sheet. No building icon in the band.'},
+ {do:'Set it to 901 and tap the person icon.',see:'The small floating menu, as before, and the labelled door beside it (the building icon). Nothing changed at a desk.'},
+ {do:'With the sheet open at 900, widen the window past 901.',see:'It swaps to the floating menu without a flicker or a stuck dim.'}
+]},
+{id:'K',title:'Part K · The demo sandbox',who:'No login · 390 px',steps:[
+ {do:'Open the demo tournament from the home page (“See it live”).',see:'No account menu, as before. The operator door is still there, the building icon, and nothing is broken.'}
+]},
+{id:'L',title:'Part L · Dark phone settings',who:'A phone or window set to dark mode · 390 px',steps:[
+ {do:'With the device set to dark, open the sheet on the club bar and the tournament band.',see:'The club frame and the warm bars keep their own light colours; the sheet matches the bar it came from and is readable.'},
+ {do:'With the device set to dark, open the sheet on the marketing bar.',see:'It stays warm and light (the marketing bar has no dark version).'}
+]}
+]}
+];
+
+var KEY = "qa-441-account-sheet-walk-v1";
+var state = { ticks: {}, verdict: {}, notes: {} };
+try { var saved = JSON.parse(localStorage.getItem(KEY) || "null"); if (saved) state = saved; } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+var root = document.getElementById("walks");
+var total = 0;
+function stepId(p, i) { return p.id + (i + 1); }
+WALKS.forEach(function (w) {
+  var wsec = document.createElement("section"); wsec.className = "walk"; wsec.id = w.id;
+  var n = 0; w.parts.forEach(function (p) { n += p.steps.length; });
+  var html = '<div class="head"><h2>' + w.title + '</h2><p><span class="k">What this walk is for.</span> ' + w.purpose + '</p>' +
+    '<p><span class="k">It passes when</span> ' + w.passes + '</p><p><span class="k">Not in this walk.</span> ' + w.notIn + '</p></div>';
+  w.parts.forEach(function (p) {
+    html += '<section class="part"><header><h3>' + p.title + '</h3><span class="who">' + p.who + '</span>' + (p.note ? '<p>' + p.note + '</p>' : '') + '</header>';
+    p.steps.forEach(function (s, i) {
+      var id = stepId(p, i); total++;
+      if (s.opt) {
+        html += '<div class="step" id="row-' + id + '"><span></span><span class="txt"><span class="do">' + id + ' · Optional. ' + s.do + '</span><span class="see">' + s.see + '</span>' +
+          '<span class="opts"><label><input type="checkbox" data-id="' + id + '"> Did it</label><label><input type="checkbox" data-id="' + id + 's"> Skipped it</label></span></span></div>';
+      } else {
+        html += '<label class="step' + (s.stop ? ' stop' : '') + '" id="row-' + id + '"><input type="checkbox" data-id="' + id + '"><span class="txt"><span class="do">' + id + ' · ' + s.do + '</span><span class="see">' + s.see + '</span></span></label>';
+      }
+    });
+    html += '<div class="verdict" role="group" aria-label="' + p.title + ' verdict">' +
+      '<button type="button" data-p="' + p.id + '" data-v="pass" aria-pressed="false">Pass</button>' +
+      '<button type="button" data-p="' + p.id + '" data-v="issue" aria-pressed="false">Issue</button>' +
+      '<button type="button" data-p="' + p.id + '" data-v="call" aria-pressed="false">Needs a call</button></div>' +
+      '<textarea id="notes-' + p.id + '" data-p="' + p.id + '" aria-label="Notes for ' + p.title + '" placeholder="Notes for ' + p.title + ' (what you saw, anything odd)"></textarea></section>';
+  });
+  html += '<div class="actions"><button class="btn" type="button" data-copywalk="' + w.id + '">Copy this walk’s result</button></div>';
+  wsec.innerHTML = html; root.appendChild(wsec);
+});
+
+function stepDone(id) { return !!(state.ticks[id] || state.ticks[id + "s"]); }
+var WORD = { pass: "PASS", issue: "ISSUE", call: "NEEDS A CALL" };
+function walkStats(w) {
+  var done = 0, all = 0, verdicts = 0, parts = w.parts.length, issue = 0, call = 0;
+  w.parts.forEach(function (p) {
+    p.steps.forEach(function (s, i) { all++; if (stepDone(stepId(p, i))) done++; });
+    if (state.verdict[p.id]) verdicts++;
+    if (state.verdict[p.id] === "issue") issue++;
+    if (state.verdict[p.id] === "call") call++;
+  });
+  return { done: done, all: all, verdicts: verdicts, parts: parts, issue: issue, call: call };
+}
+function render() {
+  var n = 0;
+  document.querySelectorAll("input[type=checkbox][data-id]").forEach(function (cb) { cb.checked = !!state.ticks[cb.dataset.id]; });
+  WALKS.forEach(function (w) { w.parts.forEach(function (p) { p.steps.forEach(function (s, i) {
+    var id = stepId(p, i), d = stepDone(id); if (d) n++;
+    document.getElementById("row-" + id).classList.toggle("done", d);
+  }); }); });
+  document.querySelectorAll(".verdict button").forEach(function (b) { b.setAttribute("aria-pressed", String(state.verdict[b.dataset.p] === b.dataset.v)); });
+  document.querySelectorAll("textarea[data-p]").forEach(function (t) { if (document.activeElement !== t) t.value = state.notes[t.dataset.p] || ""; });
+  document.getElementById("count").textContent = n + " of " + total + " checked";
+  document.getElementById("fill").style.width = (total ? (100 * n / total) : 0) + "%";
+  var ix = "";
+  WALKS.forEach(function (w) {
+    var s = walkStats(w), cls = "", label = "Not started";
+    if (s.done > 0 || s.verdicts > 0) { label = s.done + " of " + s.all; }
+    if (s.verdicts === s.parts) { cls = s.issue ? "issue" : s.call ? "call" : (s.done < s.all ? "warn" : "pass"); label = (s.issue ? "Issue" : s.call ? "Needs a call" : "Passed") + (s.done < s.all ? " · only " + s.done + " of " + s.all + " ticked" : " · " + s.done + " of " + s.all); }
+    ix += '<a href="#' + w.id + '"><b>' + w.title + '</b><span class="chip ' + cls + '">' + label + '</span></a>';
+  });
+  document.getElementById("index").innerHTML = ix;
+}
+root.addEventListener("change", function (e) {
+  var id = e.target.dataset && e.target.dataset.id; if (!id) return;
+  state.ticks[id] = e.target.checked;
+  if (e.target.checked) { var other = /s$/.test(id) ? id.slice(0, -1) : id + "s"; if (document.querySelector('[data-id="' + other + '"]')) state.ticks[other] = false; }
+  save(); render();
+});
+root.addEventListener("click", function (e) {
+  var b = e.target.closest(".verdict button");
+  if (b) { state.verdict[b.dataset.p] = state.verdict[b.dataset.p] === b.dataset.v ? null : b.dataset.v; save(); render(); return; }
+  var c = e.target.closest("[data-copywalk]");
+  if (c) { var text = buildSummary(c.dataset.copywalk); copyText(text); }
+});
+root.addEventListener("input", function (e) { if (e.target.dataset.p && e.target.tagName === "TEXTAREA") { state.notes[e.target.dataset.p] = e.target.value; save(); } });
+document.getElementById("reset").addEventListener("click", function () { state = { ticks: {}, verdict: {}, notes: {} }; save(); render(); document.getElementById("summary").value = ""; });
+
+function buildSummary(only) {
+  var lines = ["§441 · Account sheet on a phone walk"], all = 0, every = 0, noVerdict = [];
+  WALKS.forEach(function (w) {
+    if (only && w.id !== only) return;
+    var s = walkStats(w);
+    lines.push("");
+    lines.push(w.title + " · checked " + s.done + " of " + s.all);
+    w.parts.forEach(function (p) {
+      var ids = p.steps.map(function (st, i) { return stepId(p, i); });
+      var done = ids.filter(stepDone).length; all += done; every += ids.length;
+      var missing = ids.filter(function (id) { return !stepDone(id); });
+      var skipped = ids.filter(function (id) { return state.ticks[id + "s"]; });
+      if (!state.verdict[p.id]) noVerdict.push(p.id);
+      lines.push(p.title + " [" + (WORD[state.verdict[p.id]] || "NO VERDICT SET") + "] " + done + "/" + ids.length +
+        (missing.length ? " · unticked: " + missing.join(", ") : "") + (skipped.length ? " · skipped: " + skipped.join(", ") : ""));
+      if (state.notes[p.id]) lines.push("  Notes: " + state.notes[p.id].replace(/\n+/g, " / "));
+    });
+  });
+  var head = [];
+  if (every && all < every) head.push("INCOMPLETE: unperformed steps remain; do not record an owner pass. Read the fraction, not the verdict word.");
+  if (noVerdict.length) head.push("INCOMPLETE: no verdict set on part(s) " + noVerdict.join(", ") + ".");
+  var out = lines.slice(0, 1).concat(head, lines.slice(1)).join("\n");
+  document.getElementById("summary").value = out;
+  return out;
+}
+function copyText(text) {
+  var t = document.getElementById("summary");
+  try { navigator.clipboard.writeText(text).catch(function () { t.select(); }); } catch (e) { t.select(); }
+}
+document.getElementById("build").addEventListener("click", function () { buildSummary(null); });
+document.getElementById("copy").addEventListener("click", function () { copyText(buildSummary(null)); });
+render();
+
+var hostInput = document.getElementById("host");
+try { var h = localStorage.getItem("qa-441-host-v1"); if (h) hostInput.value = h; } catch (e) {}
+function updateLinks() {
+  try {
+    var parsed = new URL(hostInput.value);
+    if (!/^https?:$/.test(parsed.protocol)) throw Error("Use http or https");
+    HOST = parsed.origin; hostInput.setCustomValidity("");
+    try { localStorage.setItem("qa-441-host-v1", HOST); } catch (e) {}
+  } catch (e) { hostInput.setCustomValidity("Enter the server origin, starting with http:// or https://"); hostInput.reportValidity(); }
+  document.querySelectorAll("a[data-route]").forEach(function (link) { link.href = HOST + link.dataset.route; });
+}
+hostInput.addEventListener("change", updateLinks); updateLinks();
+</script>

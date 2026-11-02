@@ -39,6 +39,13 @@
  * reaching for a neighbor. The consumer account page's own sign-out keeps its Discover
  * landing — fan-side convention, deliberately not unified.
  *
+ * ON A PHONE (≤900 px, Account sheet on a phone, owner 2026-11-01; `docs/projects/active/ACCOUNT_SHEET_PHONE_BUILD_PROMPT.md`) the
+ * trigger opens the shared bottom sheet instead of the popover, which was as wide as the signed-in address and ran off the
+ * left of a 390 px screen. The sheet carries a "Go to" block (`door`): the viewer's own side, which the public bars' separate
+ * building icon used to be — a deliberate amendment of the 2026-07-22 "one corner door" rule on those phone bars only. The
+ * sheet attaches INSIDE this menu's own wrapper (BottomSheet `portalTo`), so it inherits the host bar's colours; `warm` remaps
+ * the handful of tokens the sheet reads onto the --home-* set. Desk widths keep the popover exactly.
+ *
  * Identity reads getSession() (local storage read, no network) lazily on first open — the
  * strip mounts on every portal pageview and must not open an auth roundtrip per view.
  * The theme block is AppearanceCard's exact contract: applyTheme (instant, device-wide) +
@@ -48,9 +55,12 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePublicPathname } from '@/lib/use-public-pathname';
-import { User, Shirt, Bell, Settings, MessageSquarePlus, LogOut, Check } from 'lucide-react';
+import { User, Shirt, Bell, Settings, MessageSquarePlus, LogOut, Check, Building2, Globe } from 'lucide-react';
 import { getSession, signOut } from '@/lib/auth';
 import { useDismissable } from '@/lib/overlay-hooks';
+import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
+import { useFlipReturn } from '@/lib/hooks/useFlipReturn';
+import { flipDoorRows, flipSurfaceLabel, type FlipResolution } from '@/lib/flip-twins';
 import {
   applyTheme,
   getEffectiveTheme,
@@ -58,12 +68,17 @@ import {
   type UserTheme,
 } from '@/lib/user-theme';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
+import BottomSheet from '@/components/admin/BottomSheet';
 import styles from './AccountMenu.module.css';
 
 const THEME_OPTIONS: { value: UserTheme; label: string }[] = [
   { value: 'warm', label: 'Warm' },
   { value: 'dark', label: 'Dark' },
 ];
+
+// Sheet rows are links and buttons inside a dialog; only the desk popover's rows are menu items.
+const itemRole = (inSheet: boolean) => (inSheet ? undefined : 'menuitem');
+const rowClass = (extra = '') => `${styles.row} ${extra}`;
 
 export default function AccountMenu({
   settingsHref = '/account/notifications',
@@ -73,6 +88,7 @@ export default function AccountMenu({
   signOutTo = 'sign-in',
   showAccount = true,
   teams,
+  door,
   className,
   wrapClassName,
   children,
@@ -94,9 +110,12 @@ export default function AccountMenu({
    *  a "My teams" caption by name, the one being viewed shaded. The phone's way to the team, and a desk coach of two or more
    *  teams' only door from the bar; a desk coach of one also has the bar's own "My team" link. Nothing renders when empty. */
   teams?: { teamName: string; href: string; current: boolean }[];
+  /** The viewer's own side (Admin / Coach / Scorekeeper), when the host bar has one to offer: on a phone it is the sheet's
+   *  "Go to" block, replacing the bar's separate building icon. Absent or null: no block, no empty caption. */
+  door?: FlipResolution | null;
   /** The host bar's icon-door class — the trigger wears that row's exact skin. */
   className?: string;
-  /** Lets a host re-anchor the popover (the marketing bar pins it to its own right edge on a phone). */
+  /** Lets a host style the menu's wrapper (the club and tournament bars lay it out as their account tile). */
   wrapClassName?: string;
   /** The trigger's content when the host's door is not the bare person glyph (a labelled pill,
    *  a word). The accessible name stays "Account" either way. */
@@ -107,7 +126,18 @@ export default function AccountMenu({
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
-  useDismissable(open, wrapRef, () => setOpen(false));
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  // The phone's sheet attaches inside this element (state, not a ref: the sheet reads it while rendering).
+  const [sheetHost, setSheetHost] = useState<HTMLElement | null>(null);
+  // Live, so rotating or resizing across 900 px while open swaps popover and sheet cleanly.
+  const isPhone = useIsPhoneNav();
+  // The sheet brings its own dim, ×, and Esc; the popover's click-away boundary would only fight them.
+  useDismissable(open && !isPhone, wrapRef, () => setOpen(false));
+  // Closing from the sheet's own controls hands focus back to the trigger (the sheet moved it inside).
+  function closeSheet() {
+    setOpen(false);
+    triggerRef.current?.focus();
+  }
 
   // Close on ANY route change — persistent layout chrome, so browser Back/Forward would
   // otherwise leave a stale popover over the new page. The repo's lastPath render-time
@@ -171,19 +201,116 @@ export default function AccountMenu({
   const notifHref = `${settingsHref}${settingsHref.includes('?') ? '&' : '?'}back=${back}`;
   const accountHref = `/account?back=${back}`;
 
+  function themeBlock() {
+    if (!showTheme) return null;
+    return (
+      <div className={styles.themeBlock}>
+        <span className={styles.identityCap}>Appearance</span>
+        <div className={styles.themeSeg} role="radiogroup" aria-label="App theme">
+          {THEME_OPTIONS.map(opt => {
+            const active = theme === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                className={`${styles.themeOpt} ${active ? styles.themeOptActive : ''}`}
+                onClick={() => chooseTheme(opt.value)}
+              >
+                {opt.label}
+                {active && <Check size={12} strokeWidth={3} aria-hidden />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  function teamRows(inSheet: boolean) {
+    if (!teams || teams.length === 0) return null;
+    return (
+      <>
+        {teams.length > 1 && <span className={`${styles.identityCap} ${styles.groupCap}`}>My teams</span>}
+        {teams.map(t => (
+          <Link
+            key={t.href}
+            href={t.href}
+            className={rowClass(t.current ? styles.rowCurrent : '')}
+            role={itemRole(inSheet)}
+            aria-current={t.current ? 'page' : undefined}
+            onClick={() => setOpen(false)}
+          >
+            <Shirt size={15} aria-hidden />
+            {teams.length > 1 ? t.teamName : 'My team'}
+          </Link>
+        ))}
+        {(inSheet || teams.length > 1) && <div className={styles.sep} aria-hidden />}
+      </>
+    );
+  }
+
+  function settingRows(inSheet: boolean) {
+    return (
+      <>
+        {showAccount && (
+          <Link href={notifHref} className={rowClass()} role={itemRole(inSheet)} onClick={() => setOpen(false)}>
+            <Bell size={15} aria-hidden />
+            Notification settings
+          </Link>
+        )}
+        {showFeedback && (
+          <button
+            type="button"
+            className={rowClass()}
+            role={itemRole(inSheet)}
+            // The feedback window outlives this menu: close it, then open the window (it stays mounted below).
+            onClick={() => { setOpen(false); setFeedbackOpen(true); }}
+          >
+            <MessageSquarePlus size={15} aria-hidden />
+            Send feedback
+          </button>
+        )}
+        {showAccount && (
+          <Link href={accountHref} className={rowClass()} role={itemRole(inSheet)} onClick={() => setOpen(false)}>
+            <Settings size={15} aria-hidden />
+            Account settings
+          </Link>
+        )}
+      </>
+    );
+  }
+
+  function signOutRow(inSheet: boolean) {
+    return (
+      <button
+        type="button"
+        className={rowClass(styles.signOut)}
+        role={itemRole(inSheet)}
+        onClick={handleSignOut}
+        disabled={signingOut}
+      >
+        <LogOut size={15} aria-hidden />
+        {signingOut ? 'Signing out…' : 'Sign out'}
+      </button>
+    );
+  }
+
   return (
     <div className={`${styles.wrap} ${warm ? styles.warm : ''} ${wrapClassName ?? ''}`} ref={wrapRef}>
       <button
         type="button"
+        ref={triggerRef}
         className={`${styles.trigger} ${className ?? ''}`}
         onClick={toggle}
-        aria-haspopup="menu"
+        aria-haspopup={isPhone ? 'dialog' : 'menu'}
         aria-expanded={open}
         aria-label="Account"
       >
         {children ?? <User size={17} strokeWidth={1.8} />}
       </button>
-      {open && (
+      {open && !isPhone && (
         <div className={styles.popover} role="menu">
           <div className={styles.identity}>
             <span className={styles.avatar} aria-hidden>
@@ -194,84 +321,67 @@ export default function AccountMenu({
               <span className={styles.identityValue}>{email ?? '…'}</span>
             </span>
           </div>
-
-          {showTheme && (
-            <div className={styles.themeBlock}>
-              <span className={styles.identityCap}>Appearance</span>
-              <div className={styles.themeSeg} role="radiogroup" aria-label="App theme">
-                {THEME_OPTIONS.map(opt => {
-                  const active = theme === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      role="radio"
-                      aria-checked={active}
-                      className={`${styles.themeOpt} ${active ? styles.themeOptActive : ''}`}
-                      onClick={() => chooseTheme(opt.value)}
-                    >
-                      {opt.label}
-                      {active && <Check size={12} strokeWidth={3} aria-hidden />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {teams && teams.length > 1 && <span className={`${styles.identityCap} ${styles.groupCap}`}>My teams</span>}
-          {teams?.map(t => (
-            <Link
-              key={t.href}
-              href={t.href}
-              className={`${styles.row} ${t.current ? styles.rowCurrent : ''}`}
-              role="menuitem"
-              aria-current={t.current ? 'page' : undefined}
-              onClick={() => setOpen(false)}
-            >
-              <Shirt size={15} aria-hidden />
-              {teams.length > 1 ? t.teamName : 'My team'}
-            </Link>
-          ))}
-          {teams && teams.length > 1 && <div className={styles.sep} aria-hidden />}
-          {showAccount && (
-            <Link href={notifHref} className={styles.row} role="menuitem" onClick={() => setOpen(false)}>
-              <Bell size={15} aria-hidden />
-              Notification settings
-            </Link>
-          )}
-          {showFeedback && (
-            <button
-              type="button"
-              className={styles.row}
-              role="menuitem"
-              onClick={() => { setOpen(false); setFeedbackOpen(true); }}
-            >
-              <MessageSquarePlus size={15} aria-hidden />
-              Send feedback
-            </button>
-          )}
-          {showAccount && (
-            <Link href={accountHref} className={styles.row} role="menuitem" onClick={() => setOpen(false)}>
-              <Settings size={15} aria-hidden />
-              Account settings
-            </Link>
-          )}
-
+          {themeBlock()}
+          {teamRows(false)}
+          {settingRows(false)}
           <div className={styles.sep} aria-hidden />
-          <button
-            type="button"
-            className={`${styles.row} ${styles.signOut}`}
-            role="menuitem"
-            onClick={handleSignOut}
-            disabled={signingOut}
-          >
-            <LogOut size={15} aria-hidden />
-            {signingOut ? 'Signing out…' : 'Sign out'}
-          </button>
+          {signOutRow(false)}
         </div>
       )}
+      {/* The phone's sheet. Its host is a layout-less element inside the wrapper, so the sheet inherits this bar's colours
+          (the warm remap in the stylesheet) and fixed positioning is untouched. Rows are links and buttons, not menu items:
+          the sheet is a dialog, and a menu item must sit in a menu. */}
+      <div className={styles.sheetHost} ref={setSheetHost} />
+      <BottomSheet
+        open={open && isPhone}
+        onClose={closeSheet}
+        title="Account"
+        subtitle={<span className={styles.sheetEmail}>{email ?? '…'}</span>}
+        portalTo={sheetHost}
+      >
+        {open && isPhone && (
+          <div className={styles.sheetList}>
+            {door && <GoToBlock door={door} onPick={() => setOpen(false)} />}
+            {teamRows(true)}
+            {themeBlock()}
+            {settingRows(true)}
+            <div className={styles.sep} aria-hidden />
+            {signOutRow(true)}
+          </div>
+        )}
+      </BottomSheet>
       <FeedbackWidget open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </div>
+  );
+}
+
+/** The sheet's "Go to" block: the viewer's own side, in words. Mounted only while the sheet is open, so the return-memory
+ *  read (the same hook the labelled door uses) never runs on a bar that is not showing it. */
+function GoToBlock({ door, onPick }: { door: FlipResolution; onPick: () => void }) {
+  const { back, stampReturn } = useFlipReturn();
+  const rows = flipDoorRows(door, back);
+  if (rows.length === 0) return null;
+  return (
+    <>
+      <span className={`${styles.identityCap} ${styles.groupCap}`}>Go to</span>
+      {rows.map(target => {
+        const Icon = flipSurfaceLabel(target.href) === 'Public site' ? Globe : Building2;
+        return (
+          <Link
+            key={target.href}
+            href={target.href}
+            className={rowClass(styles.sheetDest)}
+            onClick={() => { stampReturn(); onPick(); }}
+          >
+            <Icon size={15} aria-hidden />
+            <span className={styles.destText}>
+              <span>{target.label}</span>
+              {target.sublabel && <span className={styles.destSub}>{target.sublabel}</span>}
+            </span>
+          </Link>
+        );
+      })}
+      <div className={styles.sep} aria-hidden />
+    </>
   );
 }

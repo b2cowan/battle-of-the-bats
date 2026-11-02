@@ -370,7 +370,12 @@
 .mineIcon { width: 19px; height: 19px; flex: none; }
 @media (min-width: 901px) { .mine { display: inline-flex; } }
 
-/* The staff door (Ask S1) is the shared FlipPill in its club look (FlipPill.module.css `.clubLook`). */
+/* The staff door (Ask S1) is the shared FlipPill in its club look (FlipPill.module.css `.clubLook`). On a phone the account
+   sheet carries it ("Go to"), so the bar's own icon steps aside there. The club bar has no installed-app rule, so a plain
+   width query is right. Two classes so it outranks the pill's own display whatever order the bundles load in. */
+@media (max-width: 900px) {
+  .actions .doorInSheet { display: none; }
+}
 
 /* ── The footer (End state 1; /design change 5) ──────────────────────────────────────────────────────────────────── */
 .footer {
