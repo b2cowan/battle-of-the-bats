@@ -143,7 +143,9 @@ describe('the operator record while a cancel waits (source)', () => {
   });
   it('Keep the plan withdraws through the console DELETE with a typed Why', () => {
     const keep = fn('KeepPlanWindow');
-    assert.match(keep, /'DELETE', \{ reason \}/);
+    assert.match(keep, /'DELETE', \{ reason, notifyOwner: notify \}/);
+    // Part C (G6 b): the owner hears of an operator's keep only when ticked — off by default, like Cancel's tick.
+    assert.match(keep, /useState\(false\)[\s\S]*Email the owner that the plan renews on/);
     assert.doesNotMatch(keep, /askWhy=\{false\}|danger/);
   });
   it('a mock subscription id is not said to reach Stripe (lead 8: the old `!!id` read a mock as real)', () => {

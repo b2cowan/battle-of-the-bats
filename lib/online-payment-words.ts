@@ -450,6 +450,13 @@ export const LEAVING_WORDS = {
       ? `Your Stripe account stays yours: money in it keeps paying out to your bank. Refunds and the ${disputes} open ${disputes === 1 ? 'dispute' : 'disputes'} are handled in Stripe while you’re suspended.`
       : 'Your Stripe account stays yours: money in it keeps paying out to your bank. Refunds are handled in Stripe while you’re suspended.'),
   },
+  // Plans end at the renewal date (Part C): a cancel that waits for its date. Its heading is the move's ("stop on {date}");
+  // the rest is its own — nothing stops at the click, and the way back is keeping the plan, not "moving back up". Derived:
+  // owed to /marketing (Stage 4).
+  cancelOn: {
+    stops: (owe: string) => `Until then families and teams pay you online as now. From that day they see your “How to pay” text instead of Pay now, and any pay pages still open close.${owe ? ` ${owe}` : ''}`,
+    connected: (plan: string) => `Your payouts stay connected: keep ${plan} before then and nothing stops; reactivate later and online payments come back.`,
+  },
   delete: {
     heading: 'Your online payments',
     waiting: (disputes: number, clearing: number) => {
@@ -478,7 +485,8 @@ export const LEAVING_WORDS = {
     failedSubject: (clubName: string) => `Online payments for ${clubName} stop if the subscription payment doesn’t go through`,
   },
   // Derived (console words, owed to /marketing): what the operator's cancel or plan change stops, from the same count.
-  operator: (o: { familiesOwing: number; teamsOwing: number; openPages: number; debitsClearing: number; openDisputes: number }, when: 'now' | 'on the move') => {
+  // `when`: 'now', 'on the move', or 'on {date}' for a cancel that waits for its date (Plans end at the renewal date, Part C).
+  operator: (o: { familiesOwing: number; teamsOwing: number; openPages: number; debitsClearing: number; openDisputes: number }, when: 'now' | 'on the move' | `on ${string}`) => {
     const parts = [
       oweToday(o.familiesOwing, o.teamsOwing).replace(/\.$/, ''),
       o.openPages ? (o.openPages === 1 ? '1 pay page closes' : `${o.openPages} pay pages close`) : '',
@@ -486,7 +494,7 @@ export const LEAVING_WORDS = {
       o.openDisputes ? (o.openDisputes === 1 ? '1 card dispute is open' : `${o.openDisputes} card disputes are open`) : '',
     ].filter(Boolean);
     const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0] ?? '';
-    return `Online payments stop ${when === 'now' ? 'now' : 'on the move'}${list ? `: ${list}` : ''}. The club’s Stripe account stays connected.`;
+    return `Online payments stop ${when}${list ? `: ${list}` : ''}. The club’s Stripe account stays connected.`;
   },
   // Derived: the Payouts card after an ending while the account stays connected (the drawing's "wind-down card"; the
   // words doc has none). Built from §4.2's own sentences.

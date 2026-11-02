@@ -19,6 +19,7 @@ import { readPortalRecordFreeTime } from '@/lib/portal-free-time-tab';
 import ClubRecord, { type ClubRecordProps } from './ClubRecord';
 import { readClubOnlinePayments } from '@/lib/platform-online-payments';
 import { readPendingEnding } from '@/lib/plan-ending-server';
+import { daysOverdue, isOverdueEnding } from '@/lib/plan-ending';
 
 /**
  * A club's record (Support console Stage 2, owner rulings A4 + A6 + R2 + R6, 2026-10-25; drawings Ub7fXLh29SC34Zp4oqKUx1,
@@ -220,6 +221,11 @@ export default async function ClubRecordPage({ params, searchParams }: {
       by: asked?.by ?? waiting.intent.createdByEmail,
       at: asked?.at ?? null,
       heldMovePlanLabel: waiting.intent.heldMovePlan ? planLabel(waiting.intent.heldMovePlan) : null,
+      // Part C (G3): more than three days past its date and still waiting — Stripe's end-of-period message never arrived.
+      overdue: isOverdueEnding(waiting.intent, new Date()),
+      daysOver: daysOverdue(waiting.intent, new Date()),
+      notifyOwner: waiting.intent.notifyOwner,
+      retentionUntil: waiting.intent.retentionUntil,
     } : null,
     endingReadFailed: waiting.failed,
     freeTime: isPortal || !doorFacts ? null : {

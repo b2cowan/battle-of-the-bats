@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requirePlatformAreaView, hasPlatformPower } from '@/lib/platform-auth';
+import { readOverdueEndings } from '@/lib/plan-ending-server';
 import RetentionQueueClient from './RetentionQueueClient';
 
 type RetentionRowDb = {
@@ -58,7 +59,11 @@ async function getRetentionRows() {
 export default async function RetentionQueuePage() {
   const auth = await requirePlatformAreaView('retention');
   const canManageBilling = hasPlatformPower(auth.role, 'retention');
-  const rows = await getRetentionRows();
+  // Plans end at the renewal date, Part C (G3): endings Stripe hasn't finished. A failed read is said, never an empty list.
+  const [rows, overdue] = await Promise.all([
+    getRetentionRows(),
+    readOverdueEndings(new Date()).catch(error => { console.error('[retention] overdue endings read failed:', error); return 'failed' as const; }),
+  ]);
 
-  return <RetentionQueueClient rows={rows} canManageBilling={canManageBilling} />;
+  return <RetentionQueueClient rows={rows} overdue={overdue} canManageBilling={canManageBilling} />;
 }

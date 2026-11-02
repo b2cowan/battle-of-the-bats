@@ -18,7 +18,13 @@ import {
   teamWorkspaceWelcomeHtml,
   signupVerificationHtml,
   platformPasswordResetHtml,
+  cancellationConfirmationHtml,
+  teamWorkspaceCancelledHtml,
+  trialEndingHtml,
 } from '@/lib/email';
+import { endingEmail, type EndingEmailFacts } from '@/lib/plan-ending-emails';
+import { PLAN_BILLING_WORDS } from '@/lib/plan-billing-words';
+import { PLAN_CONFIG } from '@/lib/plan-config';
 import { VERIFICATION_NEXT_STEP } from '@/lib/verification-next-step';
 import { registrationEmailSubject } from '@/lib/registration-email-plan';
 import { INVITATION_EMAIL_WORDS } from '@/lib/invite-only-words';
@@ -298,6 +304,44 @@ const ACCOUNT: Preview[] = [
   },
 ];
 
+// A plan that ends on its renewal date (Plans end at the renewal date, Stage 1 Part C, G6), and the two plan emails that
+// were missing here (the drawings' Asks tab): the "cancelled" email on the end date and the trial-ending email.
+const ENDING_SAMPLE: EndingEmailFacts = {
+  kind: 'ends_on', portal: false, orgName: 'Riverside Minor Ball', plan: 'tournament_plus', planLabel: 'Tournament Plus', door: 'owner',
+  clickedAt: '2026-10-31T15:00:00Z', date: '2026-12-01T02:00:00Z', retentionUntil: '2027-03-01T02:00:00Z', tournaments: 3, trialing: false,
+  remindLater: true, daysLeft: 7, renewsAs: null, price: PLAN_BILLING_WORDS.plan.price(PLAN_CONFIG.tournament_plus.monthlyPrice, 'monthly'),
+  keepUrl: 'https://dev.fieldlogichq.ca/riverside-minor-ball/admin/tournaments/settings/subscription?keep_plan=1',
+  billingUrl: 'https://dev.fieldlogichq.ca/riverside-minor-ball/admin/tournaments/settings/subscription',
+};
+const PORTAL_ENDING: EndingEmailFacts = { ...ENDING_SAMPLE, portal: true, orgName: 'Toronto Blue Jays U13', plan: 'team', planLabel: 'Premium', tournaments: 0 };
+const ending = (id: string, label: string, trigger: string, facts: EndingEmailFacts): Preview => {
+  const out = endingEmail(facts);
+  return { id, label, subject: out.subject, trigger, html: out.html };
+};
+const PLAN: Preview[] = [
+  ending('plan-ends-on', 'Your plan ends on {date}', 'The click: an owner’s cancel, an operator’s (only when "Email the owner" is ticked), or a cancel in Stripe’s billing portal. Once per waiting cancel.', ENDING_SAMPLE),
+  ending('plan-ends-on-portal', 'Premium ends on {date} (Coaches Portal)', 'The same, for a Coaches Portal on Premium.', PORTAL_ENDING),
+  ending('plan-ending-reminder', 'Seven days before the end', 'The daily job, once per waiting cancel; skipped when it was made with under seven days left or the plan was kept.', { ...ENDING_SAMPLE, kind: 'reminder' }),
+  ending('plan-kept', 'Your plan will renew', 'Keep {Plan} (the owner’s, or the operator’s when ticked), or Renew in Stripe’s billing portal.', { ...ENDING_SAMPLE, kind: 'kept' }),
+  ending('plan-kept-cheaper', 'Your plan will renew as a cheaper plan', 'Keep {Plan} when a cheaper-plan move the cancel set aside came back (G1).',
+    { ...ENDING_SAMPLE, kind: 'kept', orgName: 'Falcons Community Club', plan: 'club_large', planLabel: PLAN_CONFIG.club_large.label, renewsAs: PLAN_CONFIG.club.label, price: PLAN_BILLING_WORDS.plan.price(PLAN_CONFIG.club.monthlyPrice, 'monthly') }),
+  {
+    id: 'cancellation-confirmation', label: 'Subscription cancelled', subject: 'Your Riverside Minor Ball subscription has been cancelled',
+    trigger: 'The end date (or End now): the plan has ended. Its data date counts from the end date.',
+    html: cancellationConfirmationHtml({ orgName: 'Riverside Minor Ball', planLabel: 'Tournament Plus', retentionUntil: 'February 28, 2027', retainedTournaments: 3, resubscribeUrl: 'https://dev.fieldlogichq.ca/riverside-minor-ball/admin/tournaments/settings/subscription' }),
+  },
+  {
+    id: 'team-workspace-cancelled', label: 'Coaches Portal cancelled', subject: 'Your Toronto Blue Jays U13 Coaches Portal has been cancelled',
+    trigger: 'The end date (or End now) for a Coaches Portal on Premium.',
+    html: teamWorkspaceCancelledHtml({ workspaceName: 'Toronto Blue Jays U13', resubscribeUrl: 'https://dev.fieldlogichq.ca/coaches/start', retentionUntil: 'February 28, 2027' }),
+  },
+  {
+    id: 'trial-ending', label: 'Trial ending', subject: 'Your Tournament Plus trial ends November 30, 2026',
+    trigger: 'Stripe, three days before a trial ends — never while a cancel waits (G5).',
+    html: trialEndingHtml({ orgName: 'Riverside Minor Ball', planLabel: 'Tournament Plus', trialEndDate: 'November 30, 2026', billingUrl: 'https://dev.fieldlogichq.ca/riverside-minor-ball/admin/tournaments/settings/subscription' }),
+  },
+];
+
 function EmailCard({ p }: { p: Preview }) {
   return (
     <section id={p.id} style={{ marginBottom: '2.5rem', scrollMarginTop: '1rem' }}>
@@ -323,6 +367,7 @@ export default function CoachEmailPreviewPage() {
     { title: 'Organizer-initiated', note: 'These only send when the organizer chooses to send them.', items: ORGANIZER_INITIATED },
     { title: 'To the organizer', note: 'Not a coach email: what the organizer receives about a registration.', items: TO_THE_ORGANIZER },
     { title: 'Account emails', note: 'Everyone’s: confirming a new account and resetting a password. They wear the warm envelope.', items: ACCOUNT },
+    { title: 'Plan and billing', note: 'To the owner: a plan that ends on its renewal date, its reminder, keeping it, and the plan’s end.', items: PLAN },
   ];
 
   return (

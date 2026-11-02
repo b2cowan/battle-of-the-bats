@@ -8,6 +8,7 @@ import { sendEndingWarnings, sendTermsNotices } from '@/lib/online-payment-owner
 import {
   releaseStrandedSubscriptionFees, remindUnpaidFeeInvoices, retryFailedFees, sendMonthlyFeeInvoices, sweepDisputeFees, syncOpenFeeInvoices,
 } from '@/lib/platform-stripe-fees';
+import { countOverdueEndings, sendEndingEmails } from '@/lib/plan-ending-server';
 
 /**
  * THE ONLINE-PAYMENTS DAILY JOB (Club Tier Stage 12d-1 Part 4; owner 2026-10-27, the build's ask 2: one new daily job).
@@ -26,7 +27,11 @@ import {
  *      one reminder 14 days later (nothing while the version is counsel's draft);
  *  10. (12d-2) an ending the owner didn't choose: the owners' item and one email (seven days before a comp runs out; the
  *      day a subscription payment fails), and the open pay pages of a club whose plan no longer offers online payments
- *      closed (free time runs out with no event of its own).
+ *      closed (free time runs out with no event of its own);
+ *  11. (Plans end at the renewal date, Part C, G6) a cancel that waits: the "ends on" email a failed send left owed, and
+ *      the ONE reminder seven days before the end — each stamped once on its row;
+ *  12. (G3) the endings Stripe hasn't finished — a cancel still waiting more than three days past its date — counted on
+ *      this job's record. Never acted on here: a platform admin finishes each from the club's record, after Stripe is read.
  * One step's failure never stops the next.
  *
  * Callers: the pg_cron scheduler (daily, via x-cron-secret) or a person with `run_jobs`, by hand.
@@ -61,6 +66,8 @@ export const POST = withObservability(async (req: Request) => {
   await run('lost_disputes', () => bookLostDisputesSweep(now));
   await run('terms_notices', () => sendTermsNotices(now));
   await run('ending_warnings', () => sendEndingWarnings(now));
+  await run('plan_ending_emails', () => sendEndingEmails(now));
+  await run('overdue_endings', () => countOverdueEndings(now));
 
   await writePlatformAuditLog(actor, null, 'stripe_fees_sweep', 'result', null, steps);
   const ok = steps.every(s => s.ok);

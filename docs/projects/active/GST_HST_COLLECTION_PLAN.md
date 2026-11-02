@@ -181,7 +181,10 @@ Bookkeeping plan; tax stays here.
   Premium→Club "Due today" window — built with no tax line, and its quote creates no customer, so it must quote against
   the buyer's address or it will disagree with checkout; sequence ruling (5), 2026-10-31), the
   console's money reader, and the credit-note math on the pass-through invoices all currently assume or refuse tax
-  lines (see §6). Adding tax is, in effect, a price change to every one of them.
+  lines (see §6). Adding tax is, in effect, a price change to every one of them. **Also (added 2026-11-02, `/accounting` on
+  Plans end at renewal Part C):** the billing page's Keep {Plan} window and the "Your plan will renew on {date} at {price}"
+  email quote the renewal charge from one helper (`W.plan.charge`, `lib/plan-billing-words.ts`) with no tax — it gains
+  "plus applicable taxes" (T4) in the same pass.
 - Customer portal: a FieldLogicHQ configuration (not Stripe's default) that keeps address and tax ID editable.
 - **Shown before paying**: the amount, the tax by name ("HST 13%"), and the total, on every paid step.
 - Pricing pages, plan panels and marketing: "**plus applicable taxes**" beside every price (→ `/marketing`; the Pricing

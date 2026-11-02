@@ -33,6 +33,15 @@ const price = (amount: number, billing: BillingCycle) => amount === 0 ? formatPr
 const perTeam = 'per team';
 const coachMonthlyPrice = () => `${price(PLAN_CONFIG.team.monthlyPrice, 'monthly')} ${perTeam}`;
 
+/** Stage 0 Part 6: what the subscription charges (cents), in the same words as `price` ("$29 CAD / month", "$34.50 …"). */
+const paidPrice = (cents: number, billing: BillingCycle) => cents % 100 === 0 ? price(cents / 100, billing)
+  : `$${(cents / 100).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CAD / ${period(billing)}`;
+/** The next charge for a plan: its subscription's own recorded charge (in CAD, the only currency these words say), else the
+ *  price list. One rule for the billing page's Keep window and the Keep email (Plans end at renewal, Part C). */
+const charge = (plan: OrgPlanKey, billing: BillingCycle, cents?: number | null, currency?: string | null) => currency === 'cad' && cents != null
+  ? paidPrice(cents, billing)
+  : price(billing === 'annual' ? PLAN_CONFIG[plan].annualPrice : PLAN_CONFIG[plan].monthlyPrice, billing);
+
 export const PLAN_BILLING_WORDS = {
   coverage: {
     eyebrow: 'Plan',
@@ -58,9 +67,7 @@ export const PLAN_BILLING_WORDS = {
   plan: {
     free: 'Free', monthly: 'Monthly', annual: 'Yearly', billing: 'Billing', unavailable: 'Billing status unavailable',
     price,
-    /** Stage 0 Part 6: what the subscription charges (cents), in the same words as `price` ("$29 CAD / month", "$34.50 …"). */
-    paidPrice: (cents: number, billing: BillingCycle) => cents % 100 === 0 ? price(cents / 100, billing)
-      : `$${(cents / 100).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CAD / ${period(billing)}`,
+    paidPrice, charge,
     fromPrice: (amount: number) => amount === 0 ? formatPriceAmount(amount) : `From ${formatPriceAmount(amount)} CAD / month`,
     billed: (billing: BillingCycle) => `billed ${cycle(billing)}`,
     renews: (iso: string) => `Renews ${day(iso)}`,
@@ -174,6 +181,32 @@ export const PLAN_BILLING_WORDS = {
     notRecorded: 'Your cancel is scheduled with the payment provider. We’re still recording it here — refresh the page in a minute.',
     nothingToKeep: 'Your plan isn’t set to end, so there’s nothing to keep.',
     alreadyEnded: 'This plan has already ended.',
+    /** Finish this ending now (G3, staff): the refusals. The two outcomes are the record's own notices. */
+    finish: {
+      nothingWaiting: 'Nothing is waiting to end on this account, so there is nothing to finish.',
+      notOverdue: 'This ending isn’t overdue yet. Stripe still has time to send its message.',
+      noSubscription: 'This ending names no Stripe subscription, so Stripe can’t be read for it. Nothing was changed.',
+      stripeUnread: 'Stripe couldn’t be read. Nothing was changed. Try again in a moment.',
+      otherSubscription: 'This ending is for a subscription the club no longer pays on — it pays on another now. Nothing was changed. Check the Money tab.',
+      // The two outcomes (Stage 0 Tab 6, "After"): done, and a wait that is nobody's fault.
+      finishedLead: 'Finished.',
+      finished: (org: string, endedAt: string | null, tournaments: number, until: string | null, emailed: boolean) => [
+        `Stripe ended this subscription${endedAt ? ` on ${day(endedAt)}` : ''}.`,
+        tournaments > 0
+          ? `${org} is suspended and ${tournaments === 1 ? 'its tournament is' : `its ${pluralize(tournaments, 'tournament')} are`} archived${until ? ` until ${day(until)}` : ''}.`
+          : `${org} is suspended${until ? ` and its data is kept until ${day(until)}` : ''}.`,
+        emailed ? 'The owner was emailed.' : '',
+      ].filter(Boolean).join(' '),
+      liveLead: 'Nothing changed.',
+      correctedLead: 'Record corrected.',
+      // Stripe still bills it: the account is untouched; our record agrees with Stripe now, or already did (owner 2026-11-02).
+      live: (nextDate: string | null, cancelScheduled: boolean, record: 'withdrawn' | 'rescheduled' | 'unchanged') => {
+        const stripe = `Stripe says this subscription is still live${nextDate ? `${cancelScheduled ? ' and is set to end' : ' and renews'} ${day(nextDate)}` : ''}.`;
+        if (record === 'withdrawn') return `${stripe} Nothing was cancelled there, so the waiting cancel is withdrawn here, as Stripe’s missed message would have done. The account was not touched.`;
+        if (record === 'rescheduled') return `${stripe} Our record now waits for that date too, as Stripe’s missed message would have done. The account was not touched.`;
+        return `${stripe} Our record is wrong, not the account. Check the Money tab, where Stripe and our record are compared.`;
+      },
+    },
     /** The operator's Keep: the same fact, said to staff about the owner's account. */
     moveNotRestoredStaff: (current: string, move: string, iso: string | null) => `The plan is kept and renews${iso ? ` on ${day(iso)}` : ''} as ${current}. The owner’s move to ${move} couldn’t be put back; they can choose it again under Change plan, or it renews at the ${current} price.`,
     moveNotRestored: (current: string, move: string, iso: string | null) => `Your plan is kept and renews${iso ? ` on ${day(iso)}` : ''} as ${current}. The move to ${move} couldn’t be put back. Choose it again under Change plan, or it renews at the ${current} price.`,

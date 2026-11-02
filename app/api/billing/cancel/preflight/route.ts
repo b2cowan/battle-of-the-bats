@@ -3,7 +3,7 @@ import { buildCancellationPreflight } from '@/lib/billing-retention';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { endingSection } from '@/lib/online-payment-endings';
-import { hasRealSubscription } from '@/lib/plan-ending';
+import { hasRealSubscription, upcomingDate } from '@/lib/plan-ending';
 import { readEndingAccount, readPendingEnding } from '@/lib/plan-ending-server';
 import type { BillingEnding } from '@/lib/plan-billing-data';
 
@@ -57,7 +57,8 @@ export const GET = withObservability(async (req: Request) => {
     const waits = !!account && hasRealSubscription(account);
     ending = {
       waits,
-      endsOn: waits ? ctx.org.currentPeriodEnd ?? null : null,
+      // A stored date already past (a missed invoice webhook) is no end date to promise: it reads as missing (Part C, a).
+      endsOn: waits ? upcomingDate(ctx.org.currentPeriodEnd, new Date()) : null,
       pending: pending ? { endsAt: pending.effectiveAt, heldMovePlan: pending.heldMovePlan } : null,
     };
   }

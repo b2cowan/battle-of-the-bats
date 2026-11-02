@@ -8676,7 +8676,7 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 <!-- dict:col:billing_retention_intents.reminder_email_sent_at -->
 <!-- dict:col:billing_retention_intents.kept_email_sent_at -->
 <!-- dict:col:billing_retention_intents.ended_email_sent_at -->
-**`ends_on_email_sent_at` / `reminder_email_sent_at` / `kept_email_sent_at` / `ended_email_sent_at`** (timestamptz, nullable; mig 424) — once-only stamps for the four emails of a waiting cancel ("ends on" at the click, the seven-day reminder, the Keep confirmation, the "cancelled" email at the end; gap review G6). `ended_email_sent_at` is written by the ending; the other three by the email steps (Plans end at renewal Stage 1, Part C).
+**`ends_on_email_sent_at` / `reminder_email_sent_at` / `kept_email_sent_at` / `ended_email_sent_at`** (timestamptz, nullable; mig 424) — once-only stamps for the four emails of a waiting cancel ("ends on" at the click, the seven-day reminder, the Keep confirmation, the "cancelled" email at the end; gap review G6). `ended_email_sent_at` is written by the ending; the other three by the email steps (Plans end at renewal Stage 1, Part C). **Part C semantics (2026-11-02): the stamp is a CLAIM, written BEFORE the send** (`claimEmail` in `lib/plan-ending-server.ts`: only while NULL and while the row's status allows — `pending` for ends-on and the reminder, `canceled` for kept) and set back to NULL when the send did not go, so the daily job (`stripe-fees-daily`, step `plan_ending_emails`) retries it; a process killed between claim and send loses that one email rather than sending two (owner ruling 2026-11-02). A row whose owner is not to be told (`notify_owner` false) keeps NULL stamps for good — NULL does not by itself mean "owed".
 
 <!-- dict:col:billing_retention_intents.change_log -->
 **`change_log`** (jsonb array, NOT NULL, default `'[]'`; CHECK array; mig 424) — append-only `{at, action: scheduled|rescheduled|kept|withdrawn|ended, door: owner|operator|stripe_portal|stripe|system, by, move?: carried|restored|restore_failed|dropped, plan?, note?}`: who acted, and what happened to a waiting move (the one rule for a subscription's future). Plans & pricing's "Changed by the customer" state reads it.
@@ -10334,7 +10334,7 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 **Fields** (boilerplate `updated_at` omitted — code-maintained; no `id` [`key` is PK] / no `created_at`):
 
 <!-- dict:col:platform_email_templates.key -->
-**`key`** (text, **PK**) — stable template id mirroring a `lib/email.ts` template; the lookup key for GET/PUT/test-send. Value domain = the seeded keys (decide the live set from the snapshot, not migration 083).
+**`key`** (text, **PK**) — stable template id mirroring a `lib/email.ts` template; the lookup key for GET/PUT/test-send. Value domain = the seeded keys (decide the live set from the snapshot, not migration 083). **Mig 425 (data-only, 2026-11-02, dev; prod owed — MANUAL_PROD_STEPS.json) adds six `billing` rows** for a cancel that waits: `plan_ends_on`, `plan_ending_reminder`, `plan_kept` and their `team_workspace_` variants; their built-in words live in `lib/plan-ending-emails.ts`, not `lib/email.ts`.
 
 <!-- dict:col:platform_email_templates.label -->
 **`label`** (text, NN) — human display name in the admin template list.

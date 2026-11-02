@@ -10,7 +10,7 @@ import { withObservability, captureAndJson } from '@/lib/observability';
 import { endingSection } from '@/lib/online-payment-endings';
 import { runningPortalFreeTime } from '@/lib/portal-free-time-server';
 import { staffCancelRefusal } from '@/lib/portal-free-time';
-import { applyEnding, hasRealSubscription, keepEnding, scheduleEnding, stripeIdToStopNow, type EndingAccount } from '@/lib/plan-ending';
+import { applyEnding, hasRealSubscription, keepEnding, scheduleEnding, stripeIdToStopNow, upcomingDate, type EndingAccount } from '@/lib/plan-ending';
 import { endingDeps, readEndingAccount, readPendingEnding } from '@/lib/plan-ending-server';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 
@@ -19,7 +19,7 @@ import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
  *   POST            Cancel — the SAME scheduled cancel the owner makes: ends on the renewal date, they keep everything until then.
  *   POST endNow     End now — immediate (abuse, fraud, a chargeback): the ending runs now and Stripe stops now. Never offered
  *                   to owners; secondary, behind its own red window.
- *   DELETE          Keep {Plan} on their behalf — withdraws a waiting cancel.
+ *   DELETE          Keep {Plan} on their behalf — withdraws a waiting cancel (and emails the owner only when ticked).
  * Every door needs a typed reason, and its audit row is written BEFORE the change (Stage 0 Part 9). While a cancel waits,
  * operator plan moves stay refused (lib/operator-plan-change.ts refuses while Stripe bills): End now or Keep are the exits.
  */
@@ -101,7 +101,8 @@ export const GET = withObservability(async (_req: NextRequest,
     // Plans end at renewal: a real subscription waits for its renewal date (shown as a preview; Stripe's date is the one
     // recorded); with none (comped, Founding Season, a dev mock) the cancel ends now and there is no date to promise.
     waitsForRenewal: !!account && hasRealSubscription(account),
-    renewsOn: account && hasRealSubscription(account) ? orgRow.current_period_end : null,
+    // A stored date already past (a missed invoice webhook) is no end date to promise: it reads as missing (Part C, a).
+    renewsOn: account && hasRealSubscription(account) ? upcomingDate(orgRow.current_period_end, new Date()) : null,
     pending: pending ? { endsAt: pending.effectiveAt, reason: pending.reason, requestedBy: pending.createdByEmail, heldMovePlan: pending.heldMovePlan } : null,
     // 12d-2 (words §4.3): the operator sees what the owner would — what stops, what is owed and clearing.
     onlinePayments,
@@ -228,9 +229,11 @@ export const DELETE = withObservability(async (req: NextRequest,
   if (auth.response) return auth.response;
 
   const { id } = await params;
-  const body = await req.json().catch(() => ({})) as { reason?: string };
+  const body = await req.json().catch(() => ({})) as { reason?: string; notifyOwner?: boolean };
   const reason = readReason(body);
   if (!reason) return NextResponse.json({ error: 'Reason is required' }, { status: 400 });
+  // Part C (G6 b): "Your plan will renew" goes to the owner only when the operator ticked "Email the owner" (off by default).
+  const notifyOwner = body.notifyOwner === true;
 
   const account = await readEndingAccount(id);
   if (!account) return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
@@ -238,10 +241,10 @@ export const DELETE = withObservability(async (req: NextRequest,
 
   const changeFailed = await writeAuditBeforeChange(
     auth.user.email!, id, 'keep_subscription', 'subscription_status', 'ends_at_renewal',
-    { status: account.subscriptionStatus, endsAt: pending?.effectiveAt ?? null }, { reason },
+    { status: account.subscriptionStatus, endsAt: pending?.effectiveAt ?? null, notifyOwner }, { reason },
   );
   try {
-    const result = await keepEnding(account, { door: 'operator', userId: null, email: auth.user.email ?? null }, endingDeps);
+    const result = await keepEnding(account, { door: 'operator', userId: null, email: auth.user.email ?? null }, endingDeps, { notifyOwner });
     if (result.outcome !== 'kept') {
       const error = result.outcome === 'nothing' ? W.cancel.nothingToKeep : result.error;
       await changeFailed(error);

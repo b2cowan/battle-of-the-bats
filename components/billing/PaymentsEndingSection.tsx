@@ -12,19 +12,22 @@ import { LEAVING_WORDS as L } from '@/lib/online-payment-words';
 import type { EndingSection } from '@/lib/online-payment-endings';
 import ck from './Billing.module.css';
 
-export type PaymentsEndingKind = { kind: 'move'; dateLong: string } | { kind: 'cancel' } | { kind: 'delete' };
+/** `cancelOn`: a cancel that waits for its date (Plans end at the renewal date, Part C) — dated, with its own way back. */
+export type PaymentsEndingKind = { kind: 'move'; dateLong: string } | { kind: 'cancelOn'; dateLong: string; plan: string } | { kind: 'cancel' } | { kind: 'delete' };
 
 export default function PaymentsEndingSection({ section, ending }: { section: EndingSection | null | undefined; ending: PaymentsEndingKind }) {
   if (!section) return null;
   const o = section.outstanding;
   const owe = section.counted ? L.oweToday(o.familiesOwing, o.teamsOwing) : '';
-  if (ending.kind === 'move') {
+  // A dated stop: a move to a plan without online payments, or a cancel that waits for its date (one heading, its own lines).
+  if (ending.kind === 'move' || ending.kind === 'cancelOn') {
+    const cancel = ending.kind === 'cancelOn';
     return (
       <section aria-label={L.move.heading(ending.dateLong)}>
         <h3 className={ck.label}>{L.move.heading(ending.dateLong)}</h3>
-        <p>{L.move.stops(owe)}</p>
+        <p>{cancel ? L.cancelOn.stops(owe) : L.move.stops(owe)}</p>
         <p>{L.move.finish}</p>
-        <p>{L.move.connected}</p>
+        <p>{cancel ? L.cancelOn.connected(ending.plan) : L.move.connected}</p>
       </section>
     );
   }

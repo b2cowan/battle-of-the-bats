@@ -21,7 +21,7 @@ import { consoleClock, consoleDate, consoleDay } from '@/lib/console-dates';
 import { rememberConsoleRecent } from '@/lib/console-recent';
 import { cap, CLUB_SECTIONS, humanize, limitWords, sectionLabel, STORY_KINDS } from '@/lib/platform-labels';
 import { daysLeft, formatShortDay, freeThroughShort, type GiveBlock, type PlanBlock } from '@/lib/free-time';
-import { possessive } from '@/lib/utils';
+import { pluralize, possessive } from '@/lib/utils';
 import StoryTable from '../../StoryTable';
 import { mergeMoneyIntoStory } from '@/lib/console-money-story';
 import type { OurMoneyRecord } from '@/lib/console-money';
@@ -100,6 +100,14 @@ export type ClubRecordProps = {
     endsAt: string; reason: string | null; door: string | null; by: string | null; at: string | null;
     /** A cheaper move the cancel set aside; Keep puts it back (gap review G1). */
     heldMovePlanLabel: string | null;
+    /** Part C (G3): more than three days past its date and still waiting — Stripe's message never arrived. */
+    overdue: boolean;
+    /** Whole days past its date (the band's "4 days over"), from the server's clock. */
+    daysOver: number;
+    /** The "tell the owner" choice the cancel was made with: the ending's "cancelled" email honours it. */
+    notifyOwner: boolean;
+    /** When the data is kept until, counted from the day it ends (Stage 0 ruling 6). */
+    retentionUntil: string;
   } | null;
   /** The waiting-cancel read failed: said, and the Cancel door held back rather than offered on a guess. */
   endingReadFailed: boolean;
@@ -140,6 +148,7 @@ type Window =
   | { kind: 'cancel' }
   | { kind: 'keepPlan' }
   | { kind: 'endPlanNow' }
+  | { kind: 'finishEnding' }
   | { kind: 'delete' }
   | null;
 
@@ -150,6 +159,20 @@ function askedBy(ending: NonNullable<ClubRecordProps['ending']>): string {
   if (ending.door === 'operator') return ending.by ?? 'an operator';
   return ending.by ?? 'Stripe';
 }
+
+/** A record notice: the server's sentence (neutral), or a result with its tone — done (green), or a wait that is nobody's
+ *  fault (the white callout with the amber edge; there is no amber notice — Stage 0 design pass). */
+type RecordNotice = string | { tone: 'good' | 'wait'; lead: string; text: string };
+
+function NoticeLine({ notice }: { notice: RecordNotice }) {
+  if (typeof notice === 'string') return <div className={kit.notice} role="status">{notice}</div>;
+  return (
+    <div className={notice.tone === 'good' ? `${kit.notice} ${kit.noticeGood}` : `${kit.callout} ${kit.calloutWarn}`} role="status">
+      <span><strong>{notice.lead}</strong> {notice.text}</span>
+    </div>
+  );
+}
+
 
 /** A limit as it reads in a field or a fact: "No limit", or the number. */
 const limitText = (n: number | null | undefined) => cap(limitWords(n));
@@ -171,8 +194,8 @@ export default function ClubRecord(props: ClubRecordProps) {
 
   const [editing, setEditing] = useState(false);
   const [win, setWin] = useState<Window>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const doneWithNotice = (message: string | null) => { setWin(null); setNotice(message); router.refresh(); };
+  const [notice, setNotice] = useState<RecordNotice | null>(null);
+  const doneWithNotice = (message: RecordNotice | null) => { setWin(null); setNotice(message); router.refresh(); };
 
   // Recent (Find's open-empty list) remembers this record in this browser only.
   useEffect(() => { rememberConsoleRecent({ kind: 'club', id: org.id, title: org.name }); }, [org.id, org.name]);
@@ -389,6 +412,13 @@ export default function ClubRecord(props: ClubRecordProps) {
       <span className={`${kit.bandValueText} ${styles.quietValue}`}>{freeThroughShort(foundingRow.lastDay)}</span>
       <span className={kit.bandNote}>Founding Season, no Stripe subscription</span>
     </div>
+  ) : props.ending?.overdue ? (
+    // Part C (G3): past its date and Stripe never said it ended — what our record says, not a confirmed end.
+    <div className={kit.bandCell}>
+      <span className={kit.bandLabel}>Should have ended</span>
+      <span className={`${kit.bandValue} ${kit.bandValueSm}`}>{consoleDate(props.ending.endsAt)}</span>
+      <span className={kit.bandNote}>{pluralize(props.ending.daysOver, 'day')} over · not confirmed</span>
+    </div>
   ) : props.ending ? (
     // A cancel waits for its date (Plans end at renewal): the date it ends replaces the renewal it no longer has.
     <div className={kit.bandCell}>
@@ -495,10 +525,23 @@ export default function ClubRecord(props: ClubRecordProps) {
           Whether a cancel is waiting could not be read, so the Cancel door is held back. Reload to try again.
         </div>
       )}
-      {notice && <div className={kit.notice} role="status">{notice}</div>}
+      {notice && <NoticeLine notice={notice} />}
       {/* Plans end at the renewal date: a waiting cancel says who asked, when and why, with its two exits (Stage 0 ruling 5).
           While it waits, operator plan moves stay refused, so Keep and End now are the only doors. */}
-      {!editing && props.ending && (
+      {/* Part C (G3, Stage 0 Tab 6): an overdue ending is the red callout; its one door reads Stripe before it changes anything. */}
+      {!editing && props.ending?.overdue && (
+        <div className={`${kit.callout} ${kit.calloutBad}`}>
+          <span>
+            <strong>Overdue.</strong> This plan should have ended on {consoleDate(props.ending.endsAt)} and is still open. Stripe’s end-of-period message never reached us.
+          </span>
+          {can.billing && (
+            <span className={kit.calloutEnd}>
+              <button type="button" className={styles.redDoor} onClick={() => setWin({ kind: 'finishEnding' })}>Finish this ending now</button>
+            </span>
+          )}
+        </div>
+      )}
+      {!editing && props.ending && !props.ending.overdue && (
         <div className={`${kit.callout} ${kit.calloutWarn}`}>
           <span>
             <strong>Ending.</strong> Ends {consoleDate(props.ending.endsAt)}, at the period end.
@@ -784,6 +827,10 @@ export default function ClubRecord(props: ClubRecordProps) {
       {win?.kind === 'endPlanNow' && (
         // A `mock_…` id is not a Stripe subscription (lead 8): only a real `sub_…` one is said to reach Stripe.
         <EndPlanNowWindow orgId={org.id} orgName={org.name} hasStripe={!!org.stripeSubscriptionId?.startsWith('sub_')} ending={props.ending}
+          onDone={doneWithNotice} onClose={() => setWin(null)} />
+      )}
+      {win?.kind === 'finishEnding' && props.ending && (
+        <FinishEndingWindow orgId={org.id} orgName={org.name} ending={props.ending} tournamentCount={props.tournaments.length}
           onDone={doneWithNotice} onClose={() => setWin(null)} />
       )}
       {win?.kind === 'keepPlan' && props.ending && (
@@ -1150,16 +1197,17 @@ function CancelWindow({ orgId, orgName, onEndNow, onDone, onClose }: {
       onClose={onClose}
     >
       {stops}
-      {/* 12d-2 (words §4.3, ask 11): the same count the owner reads, in the console's words. Its "now" is true only for a
-          cancel that ends now; the dated sentence for a waiting one is Stage 1 Part C's. */}
-      {pre?.onlinePayments && !endsOn && <p className={kit.caption}>{LEAVING_WORDS.operator(pre.onlinePayments.outstanding, 'now')}</p>}
+      {/* 12d-2 (words §4.3, ask 11): the same count the owner reads, in the console's words — "now" for a cancel that ends
+          now, dated for one that waits (Plans end at the renewal date, Part C). */}
+      {pre?.onlinePayments && <p className={kit.caption}>{LEAVING_WORDS.operator(pre.onlinePayments.outstanding, endsOn ? `on ${consoleDate(endsOn)}` : 'now')}</p>}
       <label className={kit.check}>
         <input type="checkbox" checked={notify} onChange={e => setNotify(e.target.checked)} />
         {endsOn
           ? <>Email the owner that the plan ends on {consoleDate(endsOn)} (this reaches an inbox and cannot be taken back)</>
           : <>Email the owner that it is cancelled (this reaches an inbox and cannot be taken back)</>}
       </label>
-      {endsOn && (
+      {/* Also when the renewal date can't be read: that blocks Cancel, never the immediate door (/review 2026-11-02). */}
+      {(endsOn || dateMissing) && (
         <p className={kit.caption}>
           Fraud, abuse or a chargeback? <button type="button" className={styles.redDoor} onClick={onEndNow}>End it today instead…</button>
         </p>
@@ -1219,8 +1267,9 @@ function EndPlanNowWindow({ orgId, orgName, hasStripe, ending, onDone, onClose }
 // console record window). Stripe renews it on its date; a cheaper move the cancel set aside comes back (G1). ─────────────
 function KeepPlanWindow({ orgId, orgName, planLabel, ending, onDone, onClose }: {
   orgId: string; orgName: string; planLabel: string; ending: NonNullable<ClubRecordProps['ending']>;
-  onDone: (message: string | null) => void; onClose: () => void;
+  onDone: (message: RecordNotice | null) => void; onClose: () => void;
 }) {
+  const [notify, setNotify] = useState(false);
   return (
     <RecordWindow
       title={`Keep ${planLabel} for ${orgName}`}
@@ -1232,9 +1281,53 @@ function KeepPlanWindow({ orgId, orgName, planLabel, ending, onDone, onClose }: 
       cancelLabel="Not now"
       confirmLabel={ending.heldMovePlanLabel ? `Keep and renew as ${ending.heldMovePlanLabel}` : `Keep ${planLabel}`}
       onConfirm={async reason => {
-        const { ok, data } = await sendJson(`/api/platform-admin/orgs/${orgId}/cancel-subscription`, 'DELETE', { reason });
+        const { ok, data } = await sendJson(`/api/platform-admin/orgs/${orgId}/cancel-subscription`, 'DELETE', { reason, notifyOwner: notify });
         if (!ok) return errorOf(data, 'The plan could not be kept.');
         onDone(typeof data.notice === 'string' ? data.notice : null);
+        return null;
+      }}
+      onClose={onClose}
+    >
+      {/* Part C (G6 b): off by default, like Cancel's — "Your plan will renew" reaches the owner only when ticked. */}
+      <label className={kit.check}>
+        <input type="checkbox" checked={notify} onChange={e => setNotify(e.target.checked)} />
+        Email the owner that the plan renews on {consoleDate(ending.endsAt)} (this reaches an inbox and cannot be taken back)
+      </label>
+    </RecordWindow>
+  );
+}
+
+// ── Finish this ending now (Part C, G3; Stage 0 Tab 6): an ending past its date that Stripe never confirmed. It reads Stripe
+// first and does only what Stripe says — ended: the same ending its missed message would have run, the data clock from the
+// day it should have ended; still live: the account is untouched and our record agrees with Stripe (owner 2026-11-02). A typed Why, like every record window — so 520px, the house width
+// for a form (owner ruling 2026-11-02, d; the drawing's 416 is a question's). ─────────────────────────────────────────────
+function FinishEndingWindow({ orgId, orgName, ending, tournamentCount: count, onDone, onClose }: {
+  orgId: string; orgName: string; ending: NonNullable<ClubRecordProps['ending']>; tournamentCount: number;
+  onDone: (message: RecordNotice | null) => void; onClose: () => void;
+}) {
+  return (
+    <RecordWindow
+      title="Finish this ending now?"
+      sentence={<>
+        <p>We read Stripe first.</p>
+        <p>
+          If Stripe has ended the subscription, {orgName} is suspended the way it would have been on {consoleDate(ending.endsAt)}.
+          {count > 0
+            ? <> Its {count} tournament{count === 1 ? ' is' : 's are'} archived and kept until {consoleDate(ending.retentionUntil)}</>
+            : <> Its data is kept until {consoleDate(ending.retentionUntil)}</>}
+          {ending.notifyOwner ? <>, and the owner gets the “cancelled” email.</> : '.'}
+        </p>
+        <p>If Stripe says the subscription is still live, the account is not touched, and our record is corrected to match Stripe.</p>
+      </>}
+      whyPlaceholder=""
+      footNote="Reads Stripe before it changes anything."
+      cancelLabel="Not now"
+      confirmLabel="Read Stripe and finish"
+      danger
+      onConfirm={async reason => {
+        const { ok, data } = await sendJson(`/api/platform-admin/orgs/${orgId}/finish-ending`, 'POST', { reason });
+        if (!ok) return errorOf(data, 'The ending could not be finished.');
+        onDone(data.notice as RecordNotice);
         return null;
       }}
       onClose={onClose}

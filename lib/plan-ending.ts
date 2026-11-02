@@ -29,6 +29,7 @@ import { PLAN_BILLING_WORDS as W } from './plan-billing-words';
 
 /** Stripe retries a failed webhook for up to three days; a waiting cancel still pending after that has been missed (G3). */
 export const OVERDUE_GRACE_DAYS = 3;
+export const DAY_MS = 86_400_000;
 
 /** Who acted. `stripe_portal` is the customer in Stripe's own billing portal; `stripe` is Stripe ending it by itself. */
 export type EndingDoor = 'owner' | 'operator' | 'stripe_portal' | 'stripe' | 'system';
@@ -60,10 +61,16 @@ export type EndingIntent = {
   heldMovePlan: OrgPlan | null;
   notifyOwner: boolean;
   endedEmailSentAt: string | null;
+  /** The once-only stamps of the three Part C emails (G6): set when the email was claimed and went. */
+  endsOnEmailSentAt: string | null;
+  reminderEmailSentAt: string | null;
+  keptEmailSentAt: string | null;
+  createdAt: string;
   changeLog: EndingLogEntry[];
 };
 
-export type NewEndingIntent = Omit<EndingIntent, 'id' | 'status' | 'appliedAt' | 'endedEmailSentAt'> & { status: 'pending' };
+export type NewEndingIntent = Omit<EndingIntent,
+  'id' | 'status' | 'appliedAt' | 'endedEmailSentAt' | 'endsOnEmailSentAt' | 'reminderEmailSentAt' | 'keptEmailSentAt' | 'createdAt'> & { status: 'pending' };
 export type EndingIntentPatch = Partial<Omit<EndingIntent, 'id' | 'orgId'>>;
 
 /** The account a cancel is about. A Coaches Portal's subscription may sit only on its workspace row. */
@@ -119,6 +126,19 @@ export interface EndingDeps {
   writeEndedEvent(p: EndedEvent): Promise<void>;
   sendEndedEmail(p: { account: EndingAccount; intentId: string; retentionUntil: string; retainedTournaments: number; askedBy: string | null }): Promise<void>;
 
+  /**
+   * The once-only claim of a Part C email (G6): stamps it only while it is unstamped and the row's status is one of
+   * `onlyIf`, and resolves the stamp written — null when another run (or the webhook) had already claimed it.
+   */
+  claimEmail(intentId: string, stamp: EndingEmailStamp, onlyIf: EndingStatus[]): Promise<string | null>;
+  /** Hands a claim back after a send that did not go, so a later run tries again (only while the stamp is still ours). */
+  releaseEmail(intentId: string, stamp: EndingEmailStamp, claimedAt: string): Promise<void>;
+  /** 'sent' (or the email service is switched off here); 'not_sent' when nothing went — refused outright, nobody to send to,
+   *  or it failed before the send; 'unknown' when it may have gone (no answer, a 5xx, a 429, a key still in flight). */
+  sendEndingEmail(email: EndingEmail): Promise<EmailSendOutcome>;
+  /** What our record does once Stripe confirms a deletion (the webhook's own, after its ending): the subscription fields cleared. */
+  clearEndedSubscription(account: EndingAccount, sub: Stripe.Subscription): Promise<void>;
+
   retrieveSubscription(id: string): Promise<Stripe.Subscription>;
   scheduleCancel(id: string): Promise<Stripe.Subscription>;
   clearCancel(id: string, clear: CancelClear): Promise<Stripe.Subscription>;
@@ -128,6 +148,17 @@ export interface EndingDeps {
 }
 
 export type PayPagesWhere = 'owner cancel' | 'operator cancel' | 'stripe suspension';
+
+/** The three Part C emails (G6), each stamped once on its row. The "cancelled" email on the end date is `sendEndedEmail`. */
+export type EndingEmailStamp = 'ends_on' | 'reminder' | 'kept';
+export type EmailSendOutcome = 'sent' | 'not_sent' | 'unknown';
+export type EndingEmail =
+  /** "Your plan ends on {date}" — once per waiting cancel, whichever door it came through. */
+  | { kind: 'ends_on'; account: EndingAccount; intent: EndingIntent }
+  /** Seven days before the end, from the daily job. */
+  | { kind: 'reminder'; account: EndingAccount; intent: EndingIntent }
+  /** Keep {Plan}: "renews on {date}", or "renews as {cheaper plan}" when the move came back (G1). */
+  | { kind: 'kept'; account: EndingAccount; intent: EndingIntent; door: EndingDoor; renewsOn: string | null; renewsAs: OrgPlan | null };
 
 export type EndedEvent = {
   account: EndingAccount;
@@ -186,7 +217,7 @@ export function stripeCancelSignal(sub: Pick<Stripe.Subscription, 'cancel_at' | 
 /** G3 · A waiting cancel past its date by more than Stripe's retry window: the deletion was missed. */
 export function isOverdueEnding(intent: Pick<EndingIntent, 'status' | 'effectiveAt'>, now: Date): boolean {
   if (intent.status !== 'pending') return false;
-  return new Date(intent.effectiveAt).getTime() + OVERDUE_GRACE_DAYS * 86_400_000 < now.getTime();
+  return new Date(intent.effectiveAt).getTime() + OVERDUE_GRACE_DAYS * DAY_MS < now.getTime();
 }
 
 /**
@@ -208,6 +239,95 @@ export function retentionUntilFrom(endedAt: string, days: number): string {
   const d = new Date(endedAt);
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString();
+}
+
+/**
+ * A stored renewal date the page may promise as an end date: only one still ahead. A date already past (an invoice webhook
+ * that never landed) is treated like a missing one (Part B review, owner 2026-11-02) — never "ends on" a day already gone.
+ */
+export function upcomingDate(iso: string | null | undefined, now: Date): string | null {
+  return iso && new Date(iso).getTime() > now.getTime() ? iso : null;
+}
+
+/** The seven-day reminder (G6 c). */
+export const REMINDER_DAYS = 7;
+/** How long a keep that is putting a cheaper move back owns its row against Stripe's own "renewed" event. */
+export const KEEP_IN_PROGRESS_MS = 15 * 60_000;
+
+/**
+ * A Keep {Plan} under way: the row's last entry is a person's keep, minutes old, and the row still waits. Keep marks the
+ * row so before the slow calls that put a cheaper move back; Stripe's "renewed" event (fired by Keep's own clear) then
+ * leaves the row alone instead of reading it as a Renew in its portal — and a keep that died part-way leaves the row
+ * waiting, so Keep again finishes it, the move included (/review 2026-11-02).
+ */
+export function keepInProgress(intent: Pick<EndingIntent, 'status' | 'changeLog'>, now: Date): boolean {
+  const last = intent.changeLog.at(-1);
+  return intent.status === 'pending' && last?.action === 'kept' && last.door !== 'stripe_portal'
+    && now.getTime() - new Date(last.at).getTime() < KEEP_IN_PROGRESS_MS;
+}
+
+/** Whole days past an overdue ending's date (the record's band, the retention page's "Days over"). */
+export function daysOverdue(intent: Pick<EndingIntent, 'effectiveAt'>, now: Date): number {
+  return Math.max(0, Math.floor((now.getTime() - new Date(intent.effectiveAt).getTime()) / DAY_MS));
+}
+
+/** The door a waiting cancel came through: its first log entry (the ends-on email's first sentence, the reminder's). */
+export function askingDoor(intent: Pick<EndingIntent, 'changeLog'>): EndingDoor {
+  return intent.changeLog[0]?.door ?? 'owner';
+}
+
+/** What an ends-on or reminder email says about time: whether the reminder is still to come, and the days left. */
+export function endingEmailTiming(intent: Pick<EndingIntent, 'effectiveAt'>, now: Date): { remindLater: boolean; daysLeft: number } {
+  const left = new Date(intent.effectiveAt).getTime() - now.getTime();
+  return { remindLater: left >= REMINDER_DAYS * DAY_MS, daysLeft: Math.max(1, Math.ceil(left / DAY_MS)) };
+}
+
+/** When the cancel was made: its first "scheduled" entry (a later Stripe date move is not a new click), else the row's birth. */
+export function clickedAt(intent: Pick<EndingIntent, 'changeLog' | 'createdAt'>): string {
+  return intent.changeLog.find(e => e.action === 'scheduled')?.at ?? intent.createdAt;
+}
+
+/**
+ * G6 c · the reminder is due once the end is seven days away or less — never for a withdrawn row, one the owner is not to
+ * be told about, one already reminded, one whose date has passed, or one made with under seven days left at the click.
+ */
+export function reminderDue(
+  intent: Pick<EndingIntent, 'status' | 'effectiveAt' | 'notifyOwner' | 'reminderEmailSentAt' | 'changeLog' | 'createdAt'>, now: Date,
+): boolean {
+  if (intent.status !== 'pending' || !intent.notifyOwner || intent.reminderEmailSentAt) return false;
+  const end = new Date(intent.effectiveAt).getTime();
+  if (end <= now.getTime() || end - now.getTime() > REMINDER_DAYS * DAY_MS) return false;
+  return end - new Date(clickedAt(intent)).getTime() >= REMINDER_DAYS * DAY_MS;
+}
+
+/** The click's "ends on" email that never went (a send that failed): the daily job sends it, once, while the date is ahead. */
+export function endsOnEmailOwed(intent: Pick<EndingIntent, 'status' | 'effectiveAt' | 'notifyOwner' | 'endsOnEmailSentAt'>, now: Date): boolean {
+  return intent.status === 'pending' && intent.notifyOwner && !intent.endsOnEmailSentAt && new Date(intent.effectiveAt).getTime() > now.getTime();
+}
+
+const STAMP_STATUS: Record<EndingEmailStamp, EndingStatus[]> = { ends_on: ['pending'], reminder: ['pending'], kept: ['canceled'] };
+
+/**
+ * ⚠⚠ ONE EMAIL, NOT TWO (G6, G7). The email service forgets a repeat after 24 hours — exactly the daily job's beat — so
+ * the row is the guard: claim the stamp FIRST (only one run, door or webhook wins it), then send. Only a send that
+ * certainly did NOT go hands the claim back for the next run; one that MAY have gone (no answer, a 5xx) keeps it — and so
+ * does the process dying between the claim and the send. Either way that one email is lost rather than sent twice (owner
+ * ruled 2026-11-02: a missed reminder beats two; /review 2026-11-02). Never throws: an email never fails the cancel, the
+ * keep or the job step that carries it.
+ */
+export async function sendEndingEmailOnce(email: EndingEmail, notify: boolean, deps: EndingDeps): Promise<'sent' | 'off' | 'already' | 'failed'> {
+  if (!notify) return 'off';
+  const stamp: EndingEmailStamp = email.kind;
+  try {
+    const claimedAt = await deps.claimEmail(email.intent.id, stamp, STAMP_STATUS[stamp]);
+    if (!claimedAt) return 'already';
+    const went = await deps.sendEndingEmail(email).catch((): EmailSendOutcome => 'unknown');
+    if (went === 'sent') return 'sent';
+    if (went === 'not_sent') await deps.releaseEmail(email.intent.id, stamp, claimedAt).catch(() => undefined);
+    return 'failed';
+  } catch {
+    return 'failed';
+  }
 }
 
 /**
@@ -377,11 +497,22 @@ export async function scheduleEnding(
 
   try {
     const written = await writePending(account.orgId, fields, entry, deps);
+    if (written) await announceEndsOn(account, written, deps);
     return { outcome: 'scheduled', endsAt, intentId: written?.id ?? null, recorded: !!written, heldMovePlan };
   } catch {
     // Stripe holds the cancel; the `subscription.updated` arm records it from Stripe. Never a plain failure.
     return { outcome: 'scheduled', endsAt, intentId: null, recorded: false, heldMovePlan };
   }
+}
+
+/**
+ * G6 a · "Your plan ends on {date}", once per waiting row whichever door wrote it (owner, operator — only with the "tell
+ * the owner" tick — or Stripe's portal through the webhook); the row's stamp makes an `updated` storm send one.
+ */
+async function announceEndsOn(account: EndingAccount, intent: EndingIntent, deps: EndingDeps): Promise<void> {
+  // Stripe gave no end date (the row fell back to now): no date to promise, so no "ends on" email.
+  if (!upcomingDate(intent.effectiveAt, deps.now())) return;
+  await sendEndingEmailOnce({ kind: 'ends_on', account, intent }, intent.notifyOwner, deps);
 }
 
 /** Find-then-write the one waiting row: update the one that is there (the webhook's, a double click's), else insert. */
@@ -415,7 +546,7 @@ export type KeepResult =
  * the cancel carried is put back through the ordinary move (G1); if that fails, the plan is still kept and the caller is
  * told plainly — never a clean "kept" that quietly renews at the higher price.
  */
-export async function keepEnding(account: EndingAccount, actor: EndingActor, deps: EndingDeps): Promise<KeepResult> {
+export async function keepEnding(account: EndingAccount, actor: EndingActor, deps: EndingDeps, opts: { notifyOwner: boolean } = { notifyOwner: true }): Promise<KeepResult> {
   const pending = await deps.findPending(account.orgId);
   const subscriptionId = pending?.stripeSubscriptionId ?? (account.subscriptionId?.startsWith('sub_') ? account.subscriptionId : null);
   let renewsOn: string | null = null;
@@ -446,19 +577,30 @@ export async function keepEnding(account: EndingAccount, actor: EndingActor, dep
   let moveNotRestored: string | null = null;
   let renewsAs: OrgPlan | null = null;
   const answer = futureMoveAnswer('keep', { ownPlan: account.ownPlan, heldMovePlan: pending?.heldMovePlan ?? null });
+
   if (answer.answer === 'restore') {
+    // A keep in progress (keepInProgress): marked BEFORE the slow calls, withdrawn only AFTER the move is back.
+    if (pending) await deps.updateIntent(pending.id, { changeLog: [...pending.changeLog, logEntry(now, actor, 'kept')] }, ['pending']);
     const restored = await deps.rescheduleMove(account, answer.plan, actor.email ?? 'plan-ending')
       .catch(error => ({ ok: false as const, error: error instanceof Error ? error.message : String(error) }));
     if (restored.ok) renewsAs = answer.plan;
     else moveNotRestored = restored.error;
   }
 
+  // 'canceled' too: Stripe's own event may have withdrawn it first — the keep's record still goes on it.
+  const kept = pending
+    ? await deps.updateIntent(pending.id, {
+      status: 'canceled',
+      changeLog: [...pending.changeLog, logEntry(now, actor, 'kept', answer.answer === 'restore'
+        ? { move: moveNotRestored ? 'restore_failed' : 'restored', plan: answer.plan, ...(moveNotRestored ? { note: moveNotRestored } : {}) }
+        : {})],
+    }, ['pending', 'canceled'])
+    : null;
+
   if (pending) {
-    const entry = logEntry(now, actor, 'kept', answer.answer === 'restore'
-      ? { move: moveNotRestored ? 'restore_failed' : 'restored', plan: answer.plan, ...(moveNotRestored ? { note: moveNotRestored } : {}) }
-      : {});
-    // 'canceled' too: Stripe's own `updated` event may have withdrawn it first — the keep's record still goes on it.
-    await deps.updateIntent(pending.id, { status: 'canceled', changeLog: [...pending.changeLog, entry] }, ['pending', 'canceled']);
+    // G6 b · "Your plan will renew on {date}" (as the cheaper plan when it came back), once per row. The owner's own keep
+    // always; the operator's only with the "email the owner" tick.
+    await sendEndingEmailOnce({ kind: 'kept', account, intent: kept ?? pending, door: actor.door, renewsOn, renewsAs }, opts.notifyOwner, deps);
   }
   return { outcome: 'kept', renewsOn, renewsAs, movePlan: answer.answer === 'restore' ? answer.plan : null, moveNotRestored };
 }
@@ -470,6 +612,10 @@ export type ApplyResult = {
   intentId: string | null;
   retentionUntil: string | null;
   retainedTournamentIds: string[];
+  /** The "cancelled" email went to the owner in this run. */
+  emailed: boolean;
+  /** When the plan ended — the data clock's start. */
+  endedAt: string | null;
 };
 
 /**
@@ -491,13 +637,15 @@ export async function applyEnding(
     origin: 'request' | 'stripe';
     intent?: EndingIntent | null;
     stripeEndedAt?: string | null;
+    /** Said on the row's "ended" entry — who finished an overdue ending, and why (G3). */
+    note?: string;
   },
   deps: EndingDeps,
 ): Promise<ApplyResult> {
   const now = deps.now();
   let intent = p.intent ?? await deps.findPending(account.orgId);
   if (intent && intent.status === 'applied') {
-    return { applied: false, intentId: intent.id, retentionUntil: intent.retentionUntil, retainedTournamentIds: [] };
+    return { applied: false, intentId: intent.id, retentionUntil: intent.retentionUntil, retainedTournamentIds: [], emailed: false, endedAt: intent.effectiveAt };
   }
 
   const endedAt = endedAtFor(intent, now, p.stripeEndedAt);
@@ -570,7 +718,8 @@ export async function applyEnding(
   // 6 · the "cancelled" email, once per ending.
   const notify = isRequest ? intent.notifyOwner : account.isCoachesPortal;
   let endedEmailSentAt = intent.endedEmailSentAt;
-  if (notify && !endedEmailSentAt) {
+  const emailed = notify && !endedEmailSentAt;
+  if (emailed) {
     await deps.sendEndedEmail({ account, intentId: intent.id, retentionUntil, retainedTournaments: allRetained.length, askedBy: p.actor.userId ?? intent.createdBy });
     endedEmailSentAt = deps.now().toISOString();
     await deps.updateIntent(intent.id, { endedEmailSentAt }, ['pending']);
@@ -578,13 +727,17 @@ export async function applyEnding(
 
   // 7 · LAST: the row says it is done.
   const dropped = futureMoveAnswer('end', { ownPlan: account.ownPlan, heldMovePlan: intent.heldMovePlan });
-  const entry = logEntry(now, p.actor, 'ended', dropped.answer === 'drop' ? { move: 'dropped', plan: dropped.plan, note: dropped.why } : {});
+  const notes = [p.note, dropped.answer === 'drop' ? dropped.why : null].filter((n): n is string => !!n);
+  const entry = logEntry(now, p.actor, 'ended', {
+    ...(dropped.answer === 'drop' ? { move: 'dropped' as const, plan: dropped.plan } : {}),
+    ...(notes.length ? { note: notes.join(' ') } : {}),
+  });
   await deps.updateIntent(intent.id, {
     status: 'applied', appliedAt: now.toISOString(), effectiveAt: endedAt, retentionUntil, notifyOwner: intent.notifyOwner,
     endedEmailSentAt, changeLog: [...intent.changeLog, entry],
   }, ['pending']);
 
-  return { applied: true, intentId: intent.id, retentionUntil, retainedTournamentIds: allRetained };
+  return { applied: true, intentId: intent.id, retentionUntil, retainedTournamentIds: allRetained, emailed, endedAt };
 }
 
 // ── What Stripe says (the webhook) ───────────────────────────────────────────────────────────────
@@ -612,7 +765,9 @@ export async function recordStripeSignal(account: EndingAccount, sub: Stripe.Sub
         createdBy: null, createdByEmail: 'stripe-webhook', stripeSubscriptionId: sub.id, heldMovePlan: null, notifyOwner: true,
         changeLog: [logEntry(now, stripe, 'scheduled')],
       });
-      return inserted === 'conflict' ? 'unchanged' : 'recorded';
+      if (inserted === 'conflict') return 'unchanged';
+      await announceEndsOn(account, inserted, deps);
+      return 'recorded';
     }
     if (new Date(pending.effectiveAt).getTime() === new Date(effectiveAt).getTime()) return 'unchanged';
     await deps.updateIntent(pending.id, {
@@ -623,9 +778,16 @@ export async function recordStripeSignal(account: EndingAccount, sub: Stripe.Sub
   }
 
   if (!pending || (pending.stripeSubscriptionId && pending.stripeSubscriptionId !== sub.id)) return 'unchanged';
-  await deps.updateIntent(pending.id, {
+  // Our own Keep cleared the cancel and is still putting a cheaper move back: the keep withdraws the row, not this event.
+  if (keepInProgress(pending, now)) return 'unchanged';
+  const withdrawn = await deps.updateIntent(pending.id, {
     status: 'canceled', changeLog: [...pending.changeLog, logEntry(now, stripe, 'withdrawn', { note: 'Renewed in Stripe' })],
   }, ['pending']);
+  // G6 b · Renew in Stripe's portal is a keep too (owner 2026-11-02): the same email, once per row. A cheaper move the cancel
+  // set aside is NOT put back on this path (see plan §4 item 1) — the email names the price it renews at, so nothing is silent.
+  if (withdrawn) {
+    await sendEndingEmailOnce({ kind: 'kept', account, intent: withdrawn, door: 'stripe_portal', renewsOn: signal.endsAt, renewsAs: null }, pending.notifyOwner, deps);
+  }
   return 'withdrawn';
 }
 
@@ -642,14 +804,14 @@ export type DeletedResult =
  * a downgrade only when it was to the free plan). The old "latest applied, at any age" let a stale downgrade from an
  * earlier year skip the suspension of a later paid plan that Stripe ended — leaving it free for good (review S4).
  */
-export async function endingForDeletedSubscription(account: EndingAccount, sub: Stripe.Subscription, deps: EndingDeps): Promise<DeletedResult> {
+export async function endingForDeletedSubscription(account: EndingAccount, sub: Stripe.Subscription, deps: EndingDeps, note?: string): Promise<DeletedResult> {
   const stripeEndedAt = iso(sub.ended_at) ?? iso(sub.canceled_at);
   const pending = await deps.findPending(account.orgId);
   if (pending) {
     // Who asked is the door that scheduled it (its first log entry); the ending acts in their name.
     const door = pending.changeLog[0]?.door ?? (pending.createdByEmail === 'stripe-webhook' ? 'stripe_portal' : 'owner');
     const asker: EndingActor = { door, userId: pending.createdBy, email: door === 'stripe_portal' ? null : pending.createdByEmail };
-    return { kind: 'ended', result: await applyEnding(account, { actor: asker, reason: pending.reason, notifyOwner: pending.notifyOwner, origin: 'request', intent: pending, stripeEndedAt }, deps) };
+    return { kind: 'ended', result: await applyEnding(account, { actor: asker, reason: pending.reason, notifyOwner: pending.notifyOwner, origin: 'request', intent: pending, stripeEndedAt, note }, deps) };
   }
   const applied = await deps.findAppliedFor(account.orgId, sub.id, iso(sub.created));
   if (applied) return { kind: 'already', intentType: applied.intentType };
@@ -658,5 +820,98 @@ export async function endingForDeletedSubscription(account: EndingAccount, sub: 
     result: await applyEnding(account, {
       actor: { door: 'stripe', userId: null, email: 'stripe-webhook' }, reason: 'Stripe subscription deleted', notifyOwner: false, origin: 'stripe', stripeEndedAt,
     }, deps),
+  };
+}
+
+// ── The safety net (G3): the daily job's steps and Finish this ending now ────────────────────────
+
+/**
+ * G6 · the daily job's email step: the click's "ends on" email that never went, then the seven-day reminder — each once
+ * per row through `sendEndingEmailOnce`, so a re-run (by hand, or the next day after a crash) sends nothing twice. A row
+ * whose "ends on" email goes out in this run waits for the next run for its reminder. One row's failure never stops the next.
+ */
+export async function sendDueEndingEmails(
+  intents: EndingIntent[],
+  readAccount: (orgId: string) => Promise<EndingAccount | null>,
+  deps: EndingDeps,
+): Promise<{ endsOn: number; reminders: number; failed: number }> {
+  const now = deps.now();
+  const tally = { endsOn: 0, reminders: 0, failed: 0 };
+  for (const intent of intents) {
+    const owedEndsOn = endsOnEmailOwed(intent, now);
+    if (!owedEndsOn && !reminderDue(intent, now)) continue;
+    const account = await readAccount(intent.orgId).catch(() => null);
+    if (!account) { tally.failed += 1; continue; }
+    if (owedEndsOn) {
+      const sent = await sendEndingEmailOnce({ kind: 'ends_on', account, intent }, intent.notifyOwner, deps);
+      if (sent === 'sent') tally.endsOn += 1;
+      if (sent === 'failed') tally.failed += 1;
+      continue;
+    }
+    const sent = await sendEndingEmailOnce({ kind: 'reminder', account, intent }, intent.notifyOwner, deps);
+    if (sent === 'sent') tally.reminders += 1;
+    if (sent === 'failed') tally.failed += 1;
+  }
+  return tally;
+}
+
+/** One row of the endings Stripe hasn't finished (the retention page's section, G3). */
+export type OverdueEnding = {
+  orgId: string; orgName: string; planLabel: string; shouldHaveEnded: string; daysOver: number;
+  door: EndingDoor | null; by: string | null;
+};
+
+export type FinishResult =
+  | { outcome: 'finished'; endedAt: string | null; retentionUntil: string | null; retainedTournaments: number; emailed: boolean }
+  /** Stripe still bills it: the account is untouched. `nextDate` is its renewal, or the date it is set to end when
+   *  `cancelScheduled`; `record` is what became of our waiting row (made to agree with Stripe, or left when it already did). */
+  | { outcome: 'live'; status: string; nextDate: string | null; cancelScheduled: boolean; record: 'withdrawn' | 'rescheduled' | 'unchanged' }
+  | { outcome: 'refused'; error: string; status: number };
+
+/**
+ * G3 · Finish this ending now — a platform admin's door for an overdue ending (Stage 0 Tab 6). It NEVER trusts our record
+ * over Stripe: the live subscription is read first. Stripe says it ended → the very ending the missed `deleted` event would
+ * have run (the waiting row promoted, the data clock from the day it should have ended — Stage 0 ruling 6 — the email as
+ * the asker chose), then the record's subscription fields cleared as the webhook clears them. Stripe says it is still
+ * live → the ACCOUNT is left exactly as it is; our record is wrong, and is made to agree with Stripe as the missed
+ * `updated` message would have done (owner ruling 2026-11-02): no cancel in Stripe → the waiting row is withdrawn; a later
+ * date in Stripe → the row moves to it. Never runs by itself.
+ */
+export async function finishOverdueEnding(account: EndingAccount, actor: EndingActor, why: string, deps: EndingDeps): Promise<FinishResult> {
+  const pending = await deps.findPending(account.orgId);
+  if (!pending) return { outcome: 'refused', error: W.cancel.finish.nothingWaiting, status: 409 };
+  if (!isOverdueEnding(pending, deps.now())) return { outcome: 'refused', error: W.cancel.finish.notOverdue, status: 409 };
+  const subscriptionId = pending.stripeSubscriptionId ?? (account.subscriptionId?.startsWith('sub_') ? account.subscriptionId : null);
+  if (!subscriptionId) return { outcome: 'refused', error: W.cancel.finish.noSubscription, status: 409 };
+  // ⚠ The webhook ends a plan only for the subscription our record follows (billing-one-subscription-record). A waiting row
+  // left on an OLD subscription while the club pays on a new one must never suspend it (/review 2026-11-02).
+  if (account.subscriptionId?.startsWith('sub_') && account.subscriptionId !== subscriptionId) {
+    return { outcome: 'refused', error: W.cancel.finish.otherSubscription, status: 409 };
+  }
+
+  let sub: Stripe.Subscription;
+  try {
+    sub = await deps.retrieveSubscription(subscriptionId);
+  } catch {
+    return { outcome: 'refused', error: W.cancel.finish.stripeUnread, status: 502 };
+  }
+  if (!ENDED.has(sub.status)) {
+    const signal = stripeCancelSignal(sub);
+    const agreed = await recordStripeSignal(account, sub, deps);
+    const record = agreed === 'withdrawn' || agreed === 'rescheduled' ? agreed : 'unchanged';
+    return { outcome: 'live', status: sub.status, nextDate: signal.endsAt, cancelScheduled: signal.scheduled, record };
+  }
+
+  // The record's subscription fields first: the ending flips the row to applied LAST, and once it has, Finish has nothing
+  // to finish — so a clear left for after it could be lost for good (/review 2026-11-02). Both are safe to run again.
+  await deps.clearEndedSubscription(account, sub);
+  const ended = await endingForDeletedSubscription(account, sub, deps, `Finished by ${actor.email ?? 'an operator'}: ${why}`);
+  const result = ended.kind === 'ended' ? ended.result : null;
+  return {
+    outcome: 'finished',
+    endedAt: result?.endedAt ?? null,
+    retentionUntil: result?.retentionUntil ?? null,
+    retainedTournaments: result?.retainedTournamentIds.length ?? 0,
+    emailed: result?.emailed ?? false,
   };
 }

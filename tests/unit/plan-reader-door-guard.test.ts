@@ -68,6 +68,7 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/club-record-changes.ts': ['writer', "the console's section writer (compare-and-set on the stored sections)"],
   'app/api/platform-admin/bulk-operations/route.ts': ['writer', 'bulk plan, status and section changes (stored)'],
   'app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts': ['writer', 'console cancel'],
+  'app/api/platform-admin/orgs/[id]/finish-ending/route.ts': ['writer', 'console Finish this ending now: an overdue cancel, ended through the one ending once Stripe confirms'],
   'app/api/platform-admin/orgs/[id]/delete/route.ts': ['writer', 'console delete'],
   'app/api/platform-admin/orgs/[id]/plan/route.ts': ['writer', 'console plan change'],
   'app/api/platform-admin/orgs/[id]/record/route.ts': ['writer', 'console record edits (stored vs proposed)'],

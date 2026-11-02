@@ -550,6 +550,10 @@
     "422_the_daily_billing_check_is_scheduled.sql": {
       "prod": "pending",
       "note": "Plans & pricing Stage 0 Part 11: schedules the pg_cron job 'billing-drift-daily' (15 12 * * *, daily) that calls POST /api/platform-admin/billing-drift-daily through app_cron_http_tick: a READ-ONLY comparison of every Stripe subscription with our billing records, one row in stripe_billing_drift_checks, and an email to the owner's inbox when they differ or Stripe could not be read (at most once a day per outcome). It never repairs. WATCHED AUTOMATION: written 2026-11-01 on the owner's go in conversation ('Go, schedule on dev too'). APPLIED TO DEV 2026-11-01 (cron job 15 created, active). Prod needs its own yes. No table, column or function change, so check:migrations cannot see it. Apply on prod only AFTER the code is serving on production (the route must exist) and mig 421 is applied. Verify after applying: SELECT schedule FROM cron.job WHERE jobname = 'billing-drift-daily' -> '15 12 * * *'."
+    },
+    "425_a_cancel_that_waits_has_its_emails.sql": {
+      "prod": "pending",
+      "note": "Plans end at the renewal date, Stage 1 Part C: DATA-ONLY insert of six platform_email_templates rows (plan_ends_on, plan_ending_reminder, plan_kept and their team_workspace_ variants) so the emails of a cancel that waits are listed on the platform-admin Email templates page. ON CONFLICT DO NOTHING. Applied to dev 2026-11-02. Apply on prod with migration 424, before the promote that ships Part C. Verify: SELECT count(*) FROM platform_email_templates WHERE key IN ('plan_ends_on','plan_ending_reminder','plan_kept','team_workspace_ends_on','team_workspace_ending_reminder','team_workspace_kept') -> 6."
     }
   }
 }

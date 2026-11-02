@@ -43,6 +43,13 @@ export const EMAIL_KINDS = {
   team_workspace_welcome:               { klass: 'account', label: 'Coaches Portal welcome' },
   team_workspace_cancelled:             { klass: 'account', label: 'Coaches Portal cancelled' },
   cancellation_confirmation:            { klass: 'account', label: 'Subscription cancelled' },
+  // Plans end at the renewal date (Stage 1 Part C, G6): a cancel that waits, its reminder, and Keep {Plan}.
+  plan_ends_on:                         { klass: 'account', label: 'Plan ends on a date' },
+  plan_ending_reminder:                 { klass: 'account', label: 'Plan ending reminder' },
+  plan_kept:                            { klass: 'account', label: 'Plan kept' },
+  team_workspace_ends_on:               { klass: 'account', label: 'Coaches Portal Premium ends on a date' },
+  team_workspace_ending_reminder:       { klass: 'account', label: 'Coaches Portal Premium ending reminder' },
+  team_workspace_kept:                  { klass: 'account', label: 'Coaches Portal Premium kept' },
   welcome_back:                         { klass: 'account', label: 'Welcome back' },
   trial_ending:                         { klass: 'account', label: 'Trial ending' },
   portal_free_time_ending:              { klass: 'account', label: 'Free time ending' },

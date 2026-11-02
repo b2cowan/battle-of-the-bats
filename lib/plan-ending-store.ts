@@ -7,13 +7,15 @@ import type { OrgPlan } from './types';
 import type { EndingIntent, EndingIntentPatch, EndingLogEntry, EndingStatus } from './plan-ending';
 
 export const INTENT_COLUMNS = 'id, org_id, status, effective_at, retention_until, reason, from_plan, created_by, created_by_email, applied_at, '
-  + 'stripe_subscription_id, held_move_plan, notify_owner, ended_email_sent_at, change_log';
+  + 'stripe_subscription_id, held_move_plan, notify_owner, ended_email_sent_at, ends_on_email_sent_at, reminder_email_sent_at, kept_email_sent_at, '
+  + 'created_at, change_log';
 
 export type IntentRow = {
   id: string; org_id: string; status: EndingStatus; effective_at: string; retention_until: string; reason: string | null;
   from_plan: string | null; created_by: string | null; created_by_email: string | null; applied_at: string | null;
   stripe_subscription_id: string | null; held_move_plan: string | null; notify_owner: boolean | null;
-  ended_email_sent_at: string | null; change_log: EndingLogEntry[] | null;
+  ended_email_sent_at: string | null; ends_on_email_sent_at: string | null; reminder_email_sent_at: string | null;
+  kept_email_sent_at: string | null; created_at: string; change_log: EndingLogEntry[] | null;
 };
 
 export function fromRow(r: IntentRow): EndingIntent {
@@ -21,7 +23,9 @@ export function fromRow(r: IntentRow): EndingIntent {
     id: r.id, orgId: r.org_id, status: r.status, effectiveAt: r.effective_at, retentionUntil: r.retention_until, reason: r.reason,
     fromPlan: r.from_plan, createdBy: r.created_by, createdByEmail: r.created_by_email, appliedAt: r.applied_at,
     stripeSubscriptionId: r.stripe_subscription_id, heldMovePlan: (r.held_move_plan as OrgPlan | null) ?? null,
-    notifyOwner: r.notify_owner ?? true, endedEmailSentAt: r.ended_email_sent_at, changeLog: Array.isArray(r.change_log) ? r.change_log : [],
+    notifyOwner: r.notify_owner ?? true, endedEmailSentAt: r.ended_email_sent_at,
+    endsOnEmailSentAt: r.ends_on_email_sent_at ?? null, reminderEmailSentAt: r.reminder_email_sent_at ?? null,
+    keptEmailSentAt: r.kept_email_sent_at ?? null, createdAt: r.created_at, changeLog: Array.isArray(r.change_log) ? r.change_log : [],
   };
 }
 
@@ -29,7 +33,8 @@ export function toRow(p: EndingIntentPatch): Record<string, unknown> {
   const map: Record<string, string> = {
     status: 'status', effectiveAt: 'effective_at', retentionUntil: 'retention_until', reason: 'reason', fromPlan: 'from_plan',
     createdBy: 'created_by', createdByEmail: 'created_by_email', appliedAt: 'applied_at', stripeSubscriptionId: 'stripe_subscription_id',
-    heldMovePlan: 'held_move_plan', notifyOwner: 'notify_owner', endedEmailSentAt: 'ended_email_sent_at', changeLog: 'change_log',
+    heldMovePlan: 'held_move_plan', notifyOwner: 'notify_owner', endedEmailSentAt: 'ended_email_sent_at', endsOnEmailSentAt: 'ends_on_email_sent_at',
+    reminderEmailSentAt: 'reminder_email_sent_at', keptEmailSentAt: 'kept_email_sent_at', changeLog: 'change_log',
   };
   const row: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(p)) if (key in map && value !== undefined) row[map[key]] = value;

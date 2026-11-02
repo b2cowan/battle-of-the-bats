@@ -7,6 +7,8 @@ import RequiresAccess from '@/components/platform-admin/RequiresAccess';
 import HelpCallout from '@/components/help/HelpCallout';
 import { fmtAbsoluteDate } from '@/lib/format-date';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { consoleDate } from '@/lib/console-dates';
+import type { OverdueEnding } from '@/lib/plan-ending';
 import kit from '../console.module.css';
 import styles from './retention.module.css';
 
@@ -28,6 +30,67 @@ type RetentionRow = {
 
 const fmtDate = (iso: string) => fmtAbsoluteDate(iso);
 
+/** Who asked for an overdue ending, as the record's callout says it. */
+function askedBy(row: OverdueEnding): string {
+  if (row.door === 'owner') return 'The owner';
+  if (row.door === 'stripe_portal') return 'Stripe’s billing portal';
+  if (row.door === 'operator') return row.by ?? 'An operator';
+  return row.by ?? 'Stripe';
+}
+
+/**
+ * ENDINGS STRIPE HASN'T FINISHED (Plans end at the renewal date, Part C, G3; Stage 0 Tab 6). A plan more than three days past
+ * its end date and still open: Stripe's end-of-period message never reached us. Rare by design, so the section is absent
+ * when the list is empty. No buttons in the rows (the portal's table rule): the name and the chevron open the record, where
+ * Finish this ending now lives.
+ */
+function OverdueEndings({ overdue }: { overdue: OverdueEnding[] | 'failed' }) {
+  if (overdue !== 'failed' && overdue.length === 0) return null;
+  return (
+    <section className={kit.section}>
+      <h2 className={kit.sectionTitle}>
+        Endings Stripe hasn’t finished{overdue !== 'failed' && <> <span className={`${kit.chip} ${kit.chipBad}`}>{overdue.length}</span></>}
+      </h2>
+      <p className={kit.sectionLede}>A plan that should have ended more than 3 days ago and is still open. The daily job finds these. Open one to finish it.</p>
+      <div className={kit.card}>
+        {overdue === 'failed' ? (
+          <p className={kit.empty} role="alert">The endings Stripe hasn’t finished couldn’t be read. Reload to try again.</p>
+        ) : (
+          <div className={`${kit.tableWrap} table-cards`}>
+            <table className={kit.comfortable}>
+              <thead>
+                <tr>
+                  <th>Org</th>
+                  <th>Plan</th>
+                  <th>Should have ended</th>
+                  <th className={kit.num}>Days over</th>
+                  <th>Asked by</th>
+                  <th aria-label="Open" />
+                </tr>
+              </thead>
+              <tbody>
+                {overdue.map(row => {
+                  const href = `/platform-admin/orgs/${row.orgId}`;
+                  return (
+                    <tr key={row.orgId}>
+                      <td className="table-cards-title"><Link href={href} className={kit.nameLink}>{row.orgName}</Link></td>
+                      <td data-label="Plan">{row.planLabel} · cancel</td>
+                      <td data-label="Should have ended" className={kit.nowrap}>{consoleDate(row.shouldHaveEnded)}</td>
+                      <td data-label="Days over" className={kit.num}>{row.daysOver}</td>
+                      <td data-label="Asked by">{askedBy(row)}</td>
+                      <td className={kit.rowDoor}><Link href={href} className={kit.rowDoorLink} tabIndex={-1} aria-hidden>›</Link></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function noticeLabel(row: RetentionRow) {
   const notices: string[] = [];
   if (row.warningSentAt) notices.push(`Warning ${fmtDate(row.warningSentAt)}`);
@@ -36,7 +99,9 @@ function noticeLabel(row: RetentionRow) {
   return notices.length ? notices.join(' / ') : 'None';
 }
 
-export default function RetentionQueueClient({ rows, canManageBilling }: { rows: RetentionRow[]; canManageBilling: boolean }) {
+export default function RetentionQueueClient({ rows, overdue, canManageBilling }: {
+  rows: RetentionRow[]; overdue: OverdueEnding[] | 'failed'; canManageBilling: boolean;
+}) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -124,6 +189,8 @@ export default function RetentionQueueClient({ rows, canManageBilling }: { rows:
           </button>
         }
       />
+
+      <OverdueEndings overdue={overdue} />
 
       <HelpCallout
         variant="warning"

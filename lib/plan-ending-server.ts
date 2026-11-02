@@ -6,7 +6,7 @@ import 'server-only';
  */
 import { getStripe } from './stripe';
 import { supabaseAdmin, getOrgOwnerEmail } from './supabase-admin';
-import { buildCancellationPreflight, retentionDateLabel, retentionDaysFor } from './billing-retention';
+import { buildCancellationPreflight, getNonArchivedTournaments, retentionDateLabel, retentionDaysFor } from './billing-retention';
 import { closePagesIfPaymentsEnded } from './online-payment-endings';
 import { writePlatformEvent } from './platform-events';
 import { sendTransactionalEmail } from './platform-email-templates';
@@ -14,10 +14,16 @@ import { cancellationConfirmationHtml, teamWorkspaceCancelledHtml, SITE_URL } fr
 import { teamWorkspaceDisplayName, teamWorkspaceReactivatePath } from './coaches-portal-routes';
 import { getBillingHref, billingUrlOrgFromRow } from './billing-urls';
 import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
-import { PLAN_CONFIG } from './plan-config';
+import { PLAN_CONFIG, type BillingCycle } from './plan-config';
 import { moveDirection } from './plan-move-options';
 import type { Organization, OrgPlan } from './types';
-import { pickAppliedEnding, type EndingAccount, type EndingDeps, type NewEndingIntent } from './plan-ending';
+import { syncTeamWorkspaceSubscription } from './team-checkout';
+import { PLAN_BILLING_WORDS as W } from './plan-billing-words';
+import { endingEmail, type EndingEmailFacts } from './plan-ending-emails';
+import {
+  askingDoor, clickedAt, daysOverdue, endingEmailTiming, isOverdueEnding, pickAppliedEnding, sendDueEndingEmails,
+  type EndingAccount, type EndingDeps, type EndingEmail, type EndingEmailStamp, type EndingIntent, type NewEndingIntent, type OverdueEnding,
+} from './plan-ending';
 import { INTENT_COLUMNS, findPending, fromRow, toRow, updateIntent, type IntentRow } from './plan-ending-store';
 
 export { readPendingEnding, withdrawPendingEnding } from './plan-ending-store';
@@ -88,6 +94,105 @@ function asOrganization(account: EndingAccount): Organization {
     // Billing-only projection of the org — no coach-facing setting is read from it.
     clubBookSharingEnabled: false,
   };
+}
+
+const STAMP_COLUMN: Record<EndingEmailStamp, string> = {
+  ends_on: 'ends_on_email_sent_at', reminder: 'reminder_email_sent_at', kept: 'kept_email_sent_at',
+};
+
+/** What a Part C email says, read fresh: the plan, the charge, the live tournaments the date archives, the links. */
+async function endingEmailFacts(email: EndingEmail): Promise<EndingEmailFacts> {
+  const { account, intent } = email;
+  const { data: org, error } = await supabaseAdmin
+    .from('organizations')
+    .select('subscription_period, subscription_amount_cents, subscription_currency')
+    .eq('id', account.orgId)
+    .maybeSingle<{ subscription_period: string | null; subscription_amount_cents: number | null; subscription_currency: string | null }>();
+  if (error) throw new Error(`Couldn't read the plan's charge: ${error.message}`);
+  const period: BillingCycle = org?.subscription_period === 'annual' ? 'annual' : 'monthly';
+  const renewsAs = email.kind === 'kept' ? email.renewsAs : null;
+  // The billing page's Keep window's rule: a cheaper move's list price, else what the subscription charges.
+  const price = renewsAs ? W.plan.charge(renewsAs, period)
+    : PLAN_CONFIG[account.ownPlan] ? W.plan.charge(account.ownPlan, period, org?.subscription_amount_cents, org?.subscription_currency) : null;
+  const timing = endingEmailTiming(intent, new Date());
+  // What the end date archives: every tournament not archived yet (the same read the ending makes on the day).
+  const tournaments = email.kind === 'kept' ? 0 : (await getNonArchivedTournaments(account.orgId)).length;
+  const billingUrl = `${SITE_URL}${getBillingHref(billingUrlOrgFromRow({ slug: account.slug, plan_id: account.ownPlan, account_kind: account.accountKind, name: account.name }), { purpose: 'return' })}`;
+  const date = email.kind === 'kept' ? email.renewsOn : intent.effectiveAt;
+  return {
+    kind: email.kind,
+    portal: account.isCoachesPortal,
+    orgName: account.isCoachesPortal ? teamWorkspaceDisplayName(account.name) : account.name,
+    plan: account.isCoachesPortal ? 'team' : account.ownPlan,
+    planLabel: account.isCoachesPortal ? 'Premium' : PLAN_CONFIG[account.ownPlan]?.label ?? account.ownPlan,
+    door: email.kind === 'kept' ? email.door : askingDoor(intent),
+    clickedAt: clickedAt(intent),
+    date,
+    retentionUntil: intent.retentionUntil,
+    tournaments,
+    trialing: account.subscriptionStatus === 'trialing',
+    remindLater: email.kind === 'ends_on' && timing.remindLater,
+    daysLeft: timing.daysLeft,
+    renewsAs: renewsAs ? PLAN_CONFIG[renewsAs]?.label ?? renewsAs : null,
+    price,
+    keepUrl: `${billingUrl}?keep_plan=1`,
+    billingUrl,
+  };
+}
+
+/** Every cancel waiting for its date — the daily job's rows. A handful at most; read whole. */
+async function readPendingEndings(): Promise<EndingIntent[]> {
+  const { data, error } = await supabaseAdmin
+    .from('billing_retention_intents')
+    .select(INTENT_COLUMNS)
+    .eq('intent_type', 'cancellation')
+    .eq('status', 'pending')
+    .order('effective_at');
+  if (error) throw new Error(`Couldn't read the waiting cancels: ${error.message}`);
+  return ((data ?? []) as unknown as IntentRow[]).map(fromRow);
+}
+
+/** The daily job's email step (G6): the click's "ends on" email that never went, then the seven-day reminder. */
+export async function sendEndingEmails(now: Date): Promise<{ endsOn: number; reminders: number; failed: number }> {
+  return sendDueEndingEmails(await readPendingEndings(), readEndingAccount, { ...endingDeps, now: () => now });
+}
+
+/**
+ * G3 · the endings Stripe hasn't finished: a cancel still waiting more than three days past its date. The daily job counts
+ * them; the retention page and the club's record list them. A read only — it never acts.
+ */
+export async function readOverdueEndings(now: Date): Promise<OverdueEnding[]> {
+  const overdue = await readOverdueIntents(now);
+  if (overdue.length === 0) return [];
+  const { data, error } = await supabaseAdmin
+    .from('organizations')
+    .select('id, name, plan_id')
+    .in('id', overdue.map(i => i.orgId));
+  if (error) throw new Error(`Couldn't read the overdue accounts: ${error.message}`);
+  const orgs = new Map(((data ?? []) as Array<{ id: string; name: string; plan_id: string }>).map(o => [o.id, o]));
+  return overdue.map(i => {
+    const org = orgs.get(i.orgId);
+    const asked = i.changeLog.find(e => e.action === 'scheduled') ?? i.changeLog[0] ?? null;
+    return {
+      orgId: i.orgId,
+      orgName: org?.name ?? 'Unknown club',
+      planLabel: PLAN_CONFIG[(org?.plan_id ?? i.fromPlan) as OrgPlan]?.label ?? org?.plan_id ?? '',
+      shouldHaveEnded: i.effectiveAt,
+      daysOver: daysOverdue(i, now),
+      door: asked?.door ?? null,
+      by: asked?.by ?? i.createdByEmail,
+    };
+  });
+}
+
+async function readOverdueIntents(now: Date): Promise<EndingIntent[]> {
+  return (await readPendingEndings()).filter(i => isOverdueEnding(i, now));
+}
+
+/** The daily job's overdue step (G3): counted on the job's own record. Never acts. */
+export async function countOverdueEndings(now: Date): Promise<{ overdue: number; orgIds: string[] }> {
+  const rows = await readOverdueIntents(now);
+  return { overdue: rows.length, orgIds: rows.map(r => r.orgId) };
 }
 
 export const endingDeps: EndingDeps = {
@@ -258,6 +363,79 @@ export const endingDeps: EndingDeps = {
       askedBy,
       idempotencyKey,
     });
+  },
+
+  async claimEmail(intentId, stamp, onlyIf) {
+    const column = STAMP_COLUMN[stamp];
+    const at = new Date().toISOString();
+    const { data, error } = await supabaseAdmin
+      .from('billing_retention_intents')
+      .update({ [column]: at, updated_at: at })
+      .eq('id', intentId)
+      .is(column, null)
+      .in('status', onlyIf)
+      .select('id');
+    if (error) throw new Error(`Couldn't claim the email: ${error.message}`);
+    return data && data.length > 0 ? at : null;
+  },
+
+  async releaseEmail(intentId, stamp, claimedAt) {
+    const column = STAMP_COLUMN[stamp];
+    const { error } = await supabaseAdmin
+      .from('billing_retention_intents')
+      .update({ [column]: null })
+      .eq('id', intentId)
+      .eq(column, claimedAt);
+    if (error) throw new Error(`Couldn't hand the email back: ${error.message}`);
+  },
+
+  async sendEndingEmail(email) {
+    // Before the send: a failure here means nothing went, so the claim goes back for the next run.
+    let to: string;
+    let out: ReturnType<typeof endingEmail>;
+    try {
+      const ownerEmail = await getOrgOwnerEmail(email.account.orgId);
+      if (!ownerEmail) return 'not_sent';
+      to = ownerEmail;
+      out = endingEmail(await endingEmailFacts(email));
+    } catch {
+      return 'not_sent';
+    }
+    try {
+      const sent = await sendTransactionalEmail({
+        key: out.key, to, vars: out.vars, defaultSubject: out.subject, defaultHtml: out.html,
+        orgId: email.account.orgId, askedBy: email.intent.createdBy,
+        // The email service's own guard for a retry inside a day; the row's stamp is the real one.
+        idempotencyKey: `intent:${email.intent.id}:${email.kind}_email`,
+      });
+      // 'skipped': no email service here (dev) — nothing to retry. Only a definite refusal is "not sent" (lib/email.ts).
+      if (sent.status === 'sent' || sent.status === 'skipped') return 'sent';
+      return sent.status === 'provider_error' && sent.refused ? 'not_sent' : 'unknown';
+    } catch {
+      return 'unknown'; // the request may have reached the email service
+    }
+  },
+
+  async clearEndedSubscription(account, sub) {
+    // What the webhook's `deleted` arm does after its ending (app/api/billing/webhook/route.ts), for an ending finished by
+    // hand because that event never arrived. Not shared code: the arm is pinned by its own guard tests.
+    if (account.isCoachesPortal) {
+      await syncTeamWorkspaceSubscription({
+        stripeCustomerId: typeof sub.customer === 'string' ? sub.customer : sub.customer?.id ?? null,
+        stripeSubscriptionId: sub.id,
+        stripeSubscriptionItemId: sub.items?.data?.[0]?.id ?? null,
+        subscriptionStatus: 'canceled',
+        currentPeriodEnd: sub.items?.data?.[0]?.current_period_end ? new Date(sub.items.data[0].current_period_end * 1000).toISOString() : null,
+      });
+      return;
+    }
+    // Only the subscription our record follows (billing-one-subscription-record).
+    const { error } = await supabaseAdmin
+      .from('organizations')
+      .update({ stripe_subscription_id: null, subscription_period: null, current_period_end: null, subscription_amount_cents: null, subscription_currency: null })
+      .eq('id', account.orgId)
+      .eq('stripe_subscription_id', sub.id);
+    if (error) throw new Error(`Couldn't clear the ended subscription: ${error.message}`);
   },
 
   retrieveSubscription: id => getStripe().subscriptions.retrieve(id, { expand: ['schedule'] }),

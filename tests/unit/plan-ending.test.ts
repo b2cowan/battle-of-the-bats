@@ -19,12 +19,15 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type Stripe from 'stripe';
 import {
-  OVERDUE_GRACE_DAYS, applyEnding, endedAtFor, endingForDeletedSubscription, futureMoveAnswer, hasRealSubscription, stripeIdToStopNow,
+  OVERDUE_GRACE_DAYS, applyEnding, clickedAt, endedAtFor, endingForDeletedSubscription, finishOverdueEnding, futureMoveAnswer, hasRealSubscription,
+  askingDoor, endingEmailTiming, reminderDue, sendDueEndingEmails, stripeIdToStopNow, upcomingDate,
   isOverdueEnding, keepEnding, pickAppliedEnding, recordStripeSignal, retentionUntilFrom, scheduleEnding, stripeCancelSignal,
-  waitingMoveOf, type EndedEvent, type EndingAccount, type EndingActor, type EndingDeps, type EndingIntent,
+  waitingMoveOf, type EndedEvent, type EndingAccount, type EndingActor, type EndingDeps, type EndingEmail, type EndingIntent,
   type RetainedRecordRow,
 } from '../../lib/plan-ending.ts';
 import { formatStoredDate } from '../../lib/timezone.ts';
+import { endingEmail, type EndingEmailFacts } from '../../lib/plan-ending-emails.ts';
+import { PLAN_BILLING_WORDS as W } from '../../lib/plan-billing-words.ts';
 import { readCode } from './_source-code.ts';
 
 const unix = (iso: string) => Math.floor(new Date(iso).getTime() / 1000);
@@ -65,7 +68,11 @@ function world(opts: { sub?: Stripe.Subscription; tournaments?: string[]; intent
   const moves: string[] = [];
   let sub = opts.sub ?? subscription();
   let seq = intents.size;
-  const state = { failAt: null as string | null, stripeFails: null as string | null, moveFails: false, now: NOW };
+  const state = { failAt: null as string | null, stripeFails: null as string | null, moveFails: false, now: NOW, mailFails: false, mailMaybeWent: false, mailDiesAfterClaim: false, duringMove: null as null | (() => Promise<unknown>) };
+  /** Every Part C email that went, in order. */
+  const mail: Array<{ kind: string; intentId: string; door: string | null; email: EndingEmail }> = [];
+  const cleared: string[] = [];
+  const STAMP = { ends_on: 'endsOnEmailSentAt', reminder: 'reminderEmailSentAt', kept: 'keptEmailSentAt' } as const;
 
   const step = (name: string) => {
     calls.push(name);
@@ -90,7 +97,10 @@ function world(opts: { sub?: Stripe.Subscription; tournaments?: string[]; intent
     async insertIntent(row) {
       step('db:insert');
       if (row.status === 'pending' && [...intents.values()].some(i => i.orgId === row.orgId && i.status === 'pending')) return 'conflict';
-      const intent: EndingIntent = { ...row, id: `intent-${++seq}`, appliedAt: null, endedEmailSentAt: null };
+      const intent: EndingIntent = {
+        ...row, id: `intent-${++seq}`, appliedAt: null, endedEmailSentAt: null,
+        endsOnEmailSentAt: null, reminderEmailSentAt: null, keptEmailSentAt: null, createdAt: state.now.toISOString(),
+      };
       intents.set(intent.id, intent);
       return intent;
     },
@@ -116,12 +126,35 @@ function world(opts: { sub?: Stripe.Subscription; tournaments?: string[]; intent
     async closePayPages(_orgId, where) { step('payPages'); payPages.push(where); },
     async writeEndedEvent(e) { step('event'); if (!events.has(e.sourceEventId)) events.set(e.sourceEventId, e); },
     async sendEndedEmail(p) { step('email'); const key = `intent:${p.intentId}:ended_email`; emails.set(key, (emails.get(key) ?? 0) + 1); },
+    async claimEmail(intentId, stamp, onlyIf) {
+      calls.push(`claim:${stamp}`);
+      const current = intents.get(intentId);
+      if (!current || !onlyIf.includes(current.status) || current[STAMP[stamp]]) return null;
+      const at = state.now.toISOString();
+      intents.set(intentId, { ...current, [STAMP[stamp]]: at });
+      if (state.mailDiesAfterClaim) { state.mailDiesAfterClaim = false; throw new Error('process died after the claim'); }
+      return at;
+    },
+    async releaseEmail(intentId, stamp, claimedAt) {
+      calls.push(`release:${stamp}`);
+      const current = intents.get(intentId);
+      if (current && current[STAMP[stamp]] === claimedAt) intents.set(intentId, { ...current, [STAMP[stamp]]: null });
+    },
+    async sendEndingEmail(email) {
+      calls.push(`mail:${email.kind}`);
+      if (state.mailFails) return 'not_sent';
+      if (state.mailMaybeWent) return 'unknown';
+      mail.push({ kind: email.kind, intentId: email.intent.id, door: 'door' in email ? email.door : null, email });
+      return 'sent';
+    },
+    async clearEndedSubscription(_a, s) { calls.push('clear'); cleared.push(s.id); },
     async retrieveSubscription() { stripeStep('stripe:retrieve'); return sub; },
     async scheduleCancel() { stripeStep('stripe:schedule'); sub = { ...sub, cancel_at_period_end: true, cancel_at: sub.items.data[0].current_period_end, schedule: null } as Stripe.Subscription; return sub; },
     async clearCancel(_id, clear) { stripeStep(`stripe:clear:${clear}`); sub = { ...sub, cancel_at_period_end: false, cancel_at: null } as Stripe.Subscription; return sub; },
     async releaseSchedule() { stripeStep('stripe:release'); sub = { ...sub, schedule: null } as Stripe.Subscription; },
     async rescheduleMove(_a, plan) {
       calls.push(`move:${plan}`);
+      if (state.duringMove) await state.duringMove();
       if (state.moveFails) return { ok: false, error: 'That plan is retired.' };
       moves.push(plan);
       sub = { ...sub, schedule: moveSchedule(plan) } as unknown as Stripe.Subscription;
@@ -129,7 +162,7 @@ function world(opts: { sub?: Stripe.Subscription; tournaments?: string[]; intent
     },
   };
   return {
-    deps, calls, intents, records, live, archived, events, emails, suspensions, payPages, moves, state,
+    deps, calls, intents, records, live, archived, events, emails, suspensions, payPages, moves, state, mail, cleared,
     get sub() { return sub; },
     set sub(next: Stripe.Subscription) { sub = next; },
     pending: () => [...intents.values()].find(i => i.status === 'pending') ?? null,
@@ -569,5 +602,349 @@ describe('7 · the doors', () => {
       assert.doesNotMatch(readCode(file), /eventType: 'subscription_canceled'/, file);
     }
     assert.match(readCode('lib/plan-ending.ts'), /sourceEventId: `intent:\$\{intent\.id\}:subscription_canceled`/);
+  });
+});
+
+// ── 8 · Part C: the emails, the daily job's steps, Finish this ending now (G3, G4, G6) ──────────────────────────────
+
+const DAY = 86_400_000;
+const at = (iso: string, days: number) => new Date(new Date(iso).getTime() + days * DAY);
+const sent = (w: World, kind: string) => w.mail.filter(m => m.kind === kind);
+
+describe('8a · "Your plan ends on {date}" — once per waiting cancel, whichever door (G6 a)', () => {
+  it('the owner’s cancel sends it once, from the owner’s door, promising the reminder when seven days or more are left', async () => {
+    const w = world();
+    await scheduleEnding(account(), OWNER, { reason: null, notifyOwner: true }, w.deps);
+    await scheduleEnding(account(), OWNER, { reason: null, notifyOwner: true }, w.deps); // a double click
+    assert.equal(sent(w, 'ends_on').length, 1);
+    const email = sent(w, 'ends_on')[0].email;
+    assert.equal(askingDoor(email.intent), 'owner');
+    assert.ok(endingEmailTiming(email.intent, NOW).remindLater);
+    assert.ok(w.only().endsOnEmailSentAt, 'stamped on the row');
+  });
+
+  it('an operator’s cancel emails the owner only when ticked', async () => {
+    const quiet = world();
+    await scheduleEnding(account(), OPERATOR, { reason: 'Asked by phone', notifyOwner: false }, quiet.deps);
+    assert.equal(sent(quiet, 'ends_on').length, 0);
+    assert.equal(quiet.only().endsOnEmailSentAt, null);
+    const told = world();
+    await scheduleEnding(account(), OPERATOR, { reason: 'Asked by phone', notifyOwner: true }, told.deps);
+    assert.equal(askingDoor(sent(told, 'ends_on')[0].email.intent), 'operator');
+  });
+
+  it('a cancel set in Stripe’s portal is emailed by the webhook — and an `updated` storm sends one', async () => {
+    const w = world({ sub: subscription({ cancel_at_period_end: true }) });
+    for (let i = 0; i < 4; i += 1) await recordStripeSignal(account(), w.sub, w.deps);
+    assert.equal(sent(w, 'ends_on').length, 1);
+    assert.equal(askingDoor(sent(w, 'ends_on')[0].email.intent), 'stripe_portal');
+  });
+
+  it('a send that fails hands the claim back (the daily job tries again) and never fails the cancel', async () => {
+    const w = world();
+    w.state.mailFails = true;
+    const result = await scheduleEnding(account(), OWNER, { reason: null, notifyOwner: true }, w.deps);
+    assert.equal(result.outcome, 'scheduled');
+    assert.equal(w.only().endsOnEmailSentAt, null, 'released');
+    w.state.mailFails = false;
+    const job = await sendDueEndingEmails([w.only()], async () => account(), w.deps);
+    assert.deepEqual(job, { endsOn: 1, reminders: 0, failed: 0 });
+    assert.equal(sent(w, 'ends_on').length, 1);
+    await sendDueEndingEmails([w.only()], async () => account(), w.deps);
+    assert.equal(sent(w, 'ends_on').length, 1, 'a re-run sends nothing twice');
+  });
+
+  it('a send that MAY have gone (no answer, a 5xx) keeps its claim — never a second copy (owner ruling 2026-11-02)', async () => {
+    const w = world();
+    w.state.mailMaybeWent = true;
+    await scheduleEnding(account(), OWNER, { reason: null, notifyOwner: true }, w.deps);
+    assert.ok(w.only().endsOnEmailSentAt, 'the claim stays');
+    w.state.mailMaybeWent = false;
+    await sendDueEndingEmails([w.only()], async () => account(), w.deps);
+    assert.equal(sent(w, 'ends_on').length, 0, 'not sent again');
+  });
+
+  it('a cancel Stripe gave no end date to sends no "ends on" email (never "ends on {today}")', async () => {
+    const w = world({ sub: subscription({ items: { data: [{ current_period_end: null }] } }) });
+    await scheduleEnding(account(), OWNER, { reason: null, notifyOwner: true }, w.deps);
+    assert.equal(sent(w, 'ends_on').length, 0);
+  });
+
+  it('no promise of a reminder when under seven days are left; nothing at all for a plan that ends at once', async () => {
+    const soon = world();
+    soon.state.now = at(RENEWAL, -3);
+    await scheduleEnding(account(), OWNER, { reason: null, notifyOwner: true }, soon.deps);
+    const email = sent(soon, 'ends_on')[0].email;
+    assert.equal(endingEmailTiming(email.intent, soon.state.now).remindLater, false);
+    const now = world();
+    await scheduleEnding(account({ subscriptionId: 'mock_1' }), OWNER, { reason: null, notifyOwner: true }, now.deps);
+    assert.equal(sent(now, 'ends_on').length, 0, 'it ended: the "cancelled" email speaks for it');
+  });
+});
+
+describe('8b · Keep {Plan} — "Your plan will renew on {date}" (G6 b)', () => {
+  it('the owner’s keep sends it once, with the renewal date', async () => {
+    const w = world();
+    await scheduleEnding(account(), OWNER, { reason: null, notifyOwner: true }, w.deps);
+    await keepEnding(account(), OWNER, w.deps);
+    await keepEnding(account(), OWNER, w.deps);
+    assert.equal(sent(w, 'kept').length, 1);
+    const email = sent(w, 'kept')[0].email;
+    assert.ok(email.kind === 'kept' && email.renewsOn === RENEWAL && email.renewsAs === null);
+  });
+
+  it('the operator’s keep emails only when ticked', async () => {
+    const quiet = world();
+    await scheduleEnding(account(), OWNER, { reason: null, notifyOwner: true }, quiet.deps);
+    await keepEnding(account(), OPERATOR, quiet.deps, { notifyOwner: false });
+    assert.equal(sent(quiet, 'kept').length, 0);
+    const told = world();
+    await scheduleEnding(account(), OWNER, { reason: null, notifyOwner: true }, told.deps);
+    await keepEnding(account(), OPERATOR, told.deps, { notifyOwner: true });
+    assert.equal(sent(told, 'kept')[0]?.door, 'operator');
+  });
+
+  it('a kept cheaper move: Stripe’s own "renewed" event mid-keep leaves the row to the keep — one email, naming the cheaper plan (G1)', async () => {
+    const club = account({ ownPlan: 'club' });
+    const w = world({ account: club, sub: subscription({ schedule: moveSchedule('league') }) });
+    await scheduleEnding(club, OWNER, { reason: null, notifyOwner: true }, w.deps);
+    // The event Keep's own clear fires, landing while the move is being put back.
+    w.state.duringMove = () => recordStripeSignal(club, subscription({ cancel_at_period_end: false }), w.deps);
+    await keepEnding(club, OWNER, w.deps);
+    assert.equal(w.only().status, 'canceled');
+    assert.equal(w.only().changeLog.at(-1)?.move, 'restored');
+    assert.equal(sent(w, 'kept').length, 1);
+    const email = sent(w, 'kept')[0].email;
+    assert.ok(email.kind === 'kept' && email.renewsAs === 'league' && email.door === 'owner');
+  });
+
+  it('a keep that dies while the move is put back leaves the row waiting — Keep again finishes it, the move included', async () => {
+    const club = account({ ownPlan: 'club' });
+    const w = world({ account: club, sub: subscription({ schedule: moveSchedule('league') }) });
+    await scheduleEnding(club, OWNER, { reason: null, notifyOwner: true }, w.deps);
+    // The move is back; the process dies on the write that withdraws the row.
+    w.state.duringMove = async () => { w.state.failAt = 'db:update'; };
+    await keepEnding(club, OWNER, w.deps).catch(() => undefined);
+    assert.equal(w.only().status, 'pending', 'still waiting, so the page still offers Keep');
+    w.state.duringMove = null;
+    const again = await keepEnding(club, OWNER, w.deps);
+    assert.ok(again.outcome === 'kept' && again.renewsAs === 'league');
+    assert.equal(w.only().status, 'canceled');
+  });
+
+  it('Renew in Stripe’s portal is a keep too: one email from the portal’s door, however many events arrive', async () => {
+    const w = world();
+    await scheduleEnding(account(), OWNER, { reason: null, notifyOwner: true }, w.deps);
+    w.sub = subscription({ cancel_at_period_end: false });
+    await recordStripeSignal(account(), w.sub, w.deps);
+    await recordStripeSignal(account(), w.sub, w.deps);
+    assert.equal(sent(w, 'kept').length, 1);
+    assert.equal(sent(w, 'kept')[0].door, 'stripe_portal');
+  });
+});
+
+describe('8c · the seven-day reminder, a step of the daily job (G6 c)', () => {
+  const base = { status: 'pending' as const, effectiveAt: RENEWAL, notifyOwner: true, reminderEmailSentAt: null, changeLog: [], createdAt: NOW.toISOString() };
+
+  it('due from seven days out — never for a withdrawn row, an untold owner, a row already reminded, or after the date', () => {
+    assert.equal(reminderDue(base, at(RENEWAL, -8)), false, 'eight days out');
+    assert.equal(reminderDue(base, at(RENEWAL, -6)), true, 'six days out');
+    assert.equal(reminderDue({ ...base, status: 'canceled' }, at(RENEWAL, -6)), false);
+    assert.equal(reminderDue({ ...base, notifyOwner: false }, at(RENEWAL, -6)), false);
+    assert.equal(reminderDue({ ...base, reminderEmailSentAt: NOW.toISOString() }, at(RENEWAL, -6)), false);
+    assert.equal(reminderDue(base, at(RENEWAL, 1)), false);
+  });
+
+  it('skipped when the cancel was made with under seven days left (the click, not a later date move, decides)', () => {
+    const clicked = at(RENEWAL, -5).toISOString();
+    const row = { ...base, createdAt: clicked, changeLog: [{ at: clicked, action: 'scheduled' as const, door: 'owner' as const, by: null }] };
+    assert.equal(reminderDue(row, at(RENEWAL, -4)), false);
+    assert.equal(clickedAt(row), clicked);
+  });
+
+  it('the job sends it once; a re-run sends nothing; a failed send is tried again next run', async () => {
+    const w = world();
+    await scheduleEnding(account(), OWNER, { reason: null, notifyOwner: true }, w.deps);
+    w.state.now = at(RENEWAL, -6);
+    w.state.mailFails = true;
+    assert.deepEqual(await sendDueEndingEmails([w.only()], async () => account(), w.deps), { endsOn: 0, reminders: 0, failed: 1 });
+    w.state.mailFails = false;
+    assert.deepEqual(await sendDueEndingEmails([w.only()], async () => account(), w.deps), { endsOn: 0, reminders: 1, failed: 0 });
+    assert.deepEqual(await sendDueEndingEmails([w.only()], async () => account(), w.deps), { endsOn: 0, reminders: 0, failed: 0 });
+    assert.equal(sent(w, 'reminder').length, 1);
+  });
+
+  it('a crash between the claim and the send loses that one email — it never sends two (owner ruling 2026-11-02)', async () => {
+    const w = world();
+    await scheduleEnding(account(), OWNER, { reason: null, notifyOwner: true }, w.deps);
+    w.state.now = at(RENEWAL, -6);
+    w.state.mailDiesAfterClaim = true;
+    await sendDueEndingEmails([w.only()], async () => account(), w.deps);
+    await sendDueEndingEmails([w.only()], async () => account(), w.deps);
+    assert.equal(sent(w, 'reminder').length, 0);
+  });
+
+  it('a row whose "ends on" email is caught up this run waits for the next run for its reminder', async () => {
+    const w = world();
+    w.state.mailFails = true;
+    await scheduleEnding(account(), OWNER, { reason: null, notifyOwner: true }, w.deps);
+    w.state.mailFails = false;
+    w.state.now = at(RENEWAL, -6);
+    assert.deepEqual(await sendDueEndingEmails([w.only()], async () => account(), w.deps), { endsOn: 1, reminders: 0, failed: 0 });
+    assert.deepEqual(await sendDueEndingEmails([w.only()], async () => account(), w.deps), { endsOn: 0, reminders: 1, failed: 0 });
+  });
+});
+
+describe('8d · Finish this ending now — Stripe first, then only what Stripe confirms (G3)', () => {
+  async function overdueWorld(sub: Stripe.Subscription) {
+    const w = world();
+    await scheduleEnding(account(), OWNER, { reason: 'Season over', notifyOwner: true }, w.deps);
+    w.state.now = at(RENEWAL, OVERDUE_GRACE_DAYS + 1);
+    w.sub = sub;
+    w.calls.length = 0;
+    return w;
+  }
+
+  it('Stripe says it ended: the ending the missed message would have run, once, the clock from the day it should have ended', async () => {
+    const w = await overdueWorld(subscription({ status: 'canceled', cancel_at_period_end: true, ended_at: unix(RENEWAL) }));
+    const result = await finishOverdueEnding(account(), OPERATOR, 'Webhook never arrived', w.deps);
+    assert.ok(result.outcome === 'finished', JSON.stringify(result));
+    assert.equal(result.endedAt, RENEWAL);
+    assert.equal(result.emailed, true);
+    assert.equal(result.retainedTournaments, 2);
+    const row = w.only();
+    assert.equal(row.status, 'applied');
+    assert.equal(row.retentionUntil, retentionUntilFrom(RENEWAL, 90), 'Stage 0 ruling 6: from the day it should have ended');
+    assert.match(row.changeLog.at(-1)?.note ?? '', /Finished by admin@fieldlogichq\.com: Webhook never arrived/);
+    assert.deepEqual(w.cleared, ['sub_1'], 'the record’s subscription fields cleared, as the webhook clears them');
+    assert.ok(w.calls.indexOf('clear') < w.calls.indexOf('suspend'), 'cleared BEFORE the row flips to applied, so it can never be stranded');
+    assert.equal(w.calls.indexOf('stripe:retrieve'), 0, 'Stripe is read before anything changes');
+    const again = await finishOverdueEnding(account(), OPERATOR, 'twice', w.deps);
+    assert.equal(again.outcome, 'refused', 'a second finish finds nothing waiting');
+    assert.equal(w.suspensions.length, 1);
+  });
+
+  it('a finish that dies part-way is finished by finishing again — one of everything', async () => {
+    const w = await overdueWorld(subscription({ status: 'canceled', ended_at: unix(RENEWAL) }));
+    w.state.failAt = 'suspend';
+    await finishOverdueEnding(account(), OPERATOR, 'first try', w.deps).catch(() => undefined);
+    assert.equal(w.only().status, 'pending');
+    const result = await finishOverdueEnding(account({ subscriptionId: null }), OPERATOR, 'second try', w.deps);
+    assert.equal(result.outcome, 'finished');
+    assert.equal(w.only().status, 'applied');
+    assert.equal(w.suspensions.length, 1);
+    assert.equal(w.events.size, 1);
+    assert.equal(w.emails.size, 1);
+  });
+
+  it('never ends a club for an OLD subscription when it now pays on another', async () => {
+    const w = await overdueWorld(subscription({ status: 'canceled', ended_at: unix(RENEWAL) }));
+    const result = await finishOverdueEnding(account({ subscriptionId: 'sub_new' }), OPERATOR, 'x', w.deps);
+    assert.equal(result.outcome, 'refused');
+    assert.deepEqual(w.calls, [], 'nothing read, nothing touched');
+    assert.equal(w.only().status, 'pending');
+  });
+
+  it('Stripe says it is still live with no cancel: the account is untouched and the waiting cancel is withdrawn (owner 2026-11-02)', async () => {
+    const w = await overdueWorld(subscription({ status: 'active' }));
+    const result = await finishOverdueEnding(account(), OPERATOR, 'Check', w.deps);
+    assert.ok(result.outcome === 'live', JSON.stringify(result));
+    assert.equal(result.status, 'active');
+    assert.equal(result.nextDate, RENEWAL);
+    assert.equal(result.cancelScheduled, false);
+    assert.equal(result.record, 'withdrawn');
+    assert.deepEqual(tornDown(w), [], 'the account is not ended');
+    assert.equal(w.only().status, 'canceled');
+    assert.equal(sent(w, 'kept').length, 1, 'the owner hears the plan renews, as from a Renew in the portal');
+  });
+
+  it('Stripe still live and set to end LATER: our record moves to Stripe’s date and is no longer overdue', async () => {
+    const later = unix('2027-02-15T02:00:00Z');
+    const w = await overdueWorld(subscription({ status: 'active', cancel_at_period_end: true, items: { data: [{ current_period_end: later }] } }));
+    const result = await finishOverdueEnding(account(), OPERATOR, 'Check', w.deps);
+    assert.ok(result.outcome === 'live' && result.record === 'rescheduled' && result.cancelScheduled);
+    assert.equal(w.only().status, 'pending');
+    assert.equal(w.only().effectiveAt, '2027-02-15T02:00:00.000Z');
+    assert.equal(isOverdueEnding(w.only(), w.state.now), false);
+    assert.deepEqual(tornDown(w), []);
+  });
+
+  it('Stripe still live on the same date our record holds: nothing changes, and the notice says so', async () => {
+    const w = await overdueWorld(subscription({ status: 'past_due', cancel_at_period_end: true }));
+    const result = await finishOverdueEnding(account(), OPERATOR, 'Check', w.deps);
+    assert.ok(result.outcome === 'live' && result.record === 'unchanged');
+    assert.equal(w.only().status, 'pending');
+    assert.match(W.cancel.finish.live(RENEWAL, true, 'unchanged'), /Our record is wrong, not the account/);
+  });
+
+  it('refuses an ending that is not overdue yet, and a Stripe it cannot read — touching nothing', async () => {
+    const early = world();
+    await scheduleEnding(account(), OWNER, { reason: null, notifyOwner: true }, early.deps);
+    early.state.now = at(RENEWAL, 1);
+    assert.equal((await finishOverdueEnding(account(), OPERATOR, 'x', early.deps)).outcome, 'refused');
+    const w = await overdueWorld(subscription({ status: 'canceled' }));
+    w.state.stripeFails = 'stripe:retrieve';
+    const result = await finishOverdueEnding(account(), OPERATOR, 'x', w.deps);
+    assert.ok(result.outcome === 'refused' && result.status === 502);
+    assert.equal(w.only().status, 'pending');
+  });
+});
+
+describe('8e · the words and the wiring', () => {
+  const facts = (over: Partial<EndingEmailFacts> = {}): EndingEmailFacts => ({
+    kind: 'ends_on', portal: false, orgName: 'Riverside', plan: 'tournament_plus', planLabel: 'Tournament Plus', door: 'owner',
+    clickedAt: NOW.toISOString(), date: RENEWAL, retentionUntil: retentionUntilFrom(RENEWAL, 90), tournaments: 3, trialing: false,
+    remindLater: true, daysLeft: 7, renewsAs: null, price: '$39 CAD / month', keepUrl: 'https://x/billing?keep_plan=1', billingUrl: 'https://x/billing', ...over,
+  });
+
+  it('G4 · every email reads an evening-Eastern end on the page’s own day', () => {
+    for (const kind of ['ends_on', 'reminder', 'kept'] as const) {
+      for (const portal of [false, true]) {
+        const out = endingEmail(facts({ kind, portal, ...(portal ? { plan: 'team' as const, planLabel: 'Premium' } : {}) }));
+        assert.match(out.html, /January 14, 2027/, `${kind} ${portal}`);
+        assert.doesNotMatch(out.html + out.subject, /January 15, 2027/, `${kind} ${portal}`);
+      }
+    }
+  });
+
+  it('the first sentence names the door; the button is Keep {Plan}; Premium for a Coaches Portal', () => {
+    assert.match(endingEmail(facts({ door: 'operator' })).html, /We cancelled .* at your request\./);
+    assert.match(endingEmail(facts({ door: 'stripe_portal' })).html, /in the billing portal on/);
+    assert.match(endingEmail(facts()).html, />Keep Tournament Plus</);
+    assert.match(endingEmail(facts({ portal: true, plan: 'team', planLabel: 'Premium' })).html, />Keep Premium</);
+    assert.equal(endingEmail(facts({ portal: true, plan: 'team', planLabel: 'Premium' })).key, 'team_workspace_ends_on');
+    assert.doesNotMatch(endingEmail(facts({ remindLater: false })).html, /remind you/);
+    assert.match(endingEmail(facts({ kind: 'kept', renewsAs: 'Club' })).subject, /will renew as Club on January 14, 2027/);
+    assert.doesNotMatch(endingEmail(facts({ orgName: '<b>x</b>' })).html, /<b>x<\/b>/, 'names are escaped');
+  });
+
+  it('a stored renewal date already past is no end date to promise (Part C, a)', () => {
+    assert.equal(upcomingDate('2026-10-01T00:00:00Z', NOW), null);
+    assert.equal(upcomingDate(RENEWAL, NOW), RENEWAL);
+    assert.equal(upcomingDate(null, NOW), null);
+  });
+
+  it('the daily job carries both steps and never acts on an overdue ending by itself', () => {
+    const job = readCode('app/api/platform-admin/stripe-fees-daily/route.ts');
+    assert.match(job, /run\('plan_ending_emails', \(\) => sendEndingEmails\(now\)\)/);
+    assert.match(job, /run\('overdue_endings', \(\) => countOverdueEndings\(now\)\)/);
+    assert.doesNotMatch(job, /finishOverdueEnding|applyEnding/);
+  });
+
+  it('Finish this ending now’s two outcomes are the drawn notices (Stage 0 Tab 6, "After")', () => {
+    assert.equal(W.cancel.finish.finished('Riverside', RENEWAL, 3, retentionUntilFrom(RENEWAL, 90), true),
+      'Stripe ended this subscription on January 14, 2027. Riverside is suspended and its 3 tournaments are archived until April 14, 2027. The owner was emailed.');
+    assert.match(W.cancel.finish.live(RENEWAL, false, 'withdrawn'), /^Stripe says this subscription is still live and renews January 14, 2027\. Nothing was cancelled there, so the waiting cancel is withdrawn here/);
+  });
+
+  it('Finish this ending now is billing staff only, asks why, and writes its audit row before the change', () => {
+    const code = readCode('app/api/platform-admin/orgs/[id]/finish-ending/route.ts');
+    assert.ok(code.indexOf("requirePlatformPower('club_billing')") < code.indexOf("'Reason is required'"));
+    assert.ok(code.indexOf('writeAuditBeforeChange') < code.indexOf('finishOverdueEnding('));
+  });
+
+  it('a cancel that waits says its own dated payments words — never a downgrade’s "moving back up"', () => {
+    assert.match(readCode('components/billing/BillingBody.tsx'), /ending=\{\{ kind: 'cancelOn', dateLong: moveDateLong\(endsOn\)/);
+    assert.match(readCode('app/platform-admin/orgs/[id]/ClubRecord.tsx'), /LEAVING_WORDS\.operator\(pre\.onlinePayments\.outstanding, endsOn \? `on \$\{consoleDate\(endsOn\)\}` : 'now'\)/);
   });
 });
