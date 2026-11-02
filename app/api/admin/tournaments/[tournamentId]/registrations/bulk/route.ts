@@ -166,7 +166,7 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
       await sendTransactionalEmail({
         key: 'tournament_registration_accepted',
         to: recipient,
-        vars: { coachName: payload.coachName, teamName: payload.teamName, ageGroupName: payload.divisionName, tournamentName: payload.tournamentName, profileUrl: coachPortalUrl({ registrationId: payload.teamId, email: payload.coachEmail }) },
+        vars: { coachName: payload.coachName, teamName: payload.teamName, ageGroupName: payload.divisionName, tournamentName: payload.tournamentName, profileUrl: coachPortalUrl({ registrationId: payload.teamId }) },
         defaultSubject: `Your Team Has Been Accepted - ${team.name}`,
         // Club Tier Stage 12a: Pay now while the club takes payments online (absent → today's email).
         defaultHtml: acceptanceHtml({ ...payload, paymentInstructions, feeLine, paymentsTracked,

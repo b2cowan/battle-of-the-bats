@@ -2437,9 +2437,9 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 ### `team_workspace_claims`
 <!-- dict:table:team_workspace_claims -->
 
-**Purpose:** **single-use claim records** that let a tournament team's contact activate (claim) a standalone Team workspace — the tournament-team → paid-workspace funnel. Low-traffic, one-time setup.
+**Purpose:** **past single-use claim records** that let a tournament team's contact activate (claim) a standalone Team workspace. **No claim link exists any more** (removed by Signed-in family accounts Stage 2, Part 2: nothing in production ever created one, and a tournament coach keeps their account at registration). The table stays because **Tournament Chat reads it** to work out which coaches are in a tournament's chat (`lib/chat-resolvers.ts`), and checkout metadata that already carries a claim id is still honoured.
 
-**Gotchas:** (1) **The token is never stored** — only `claim_token_hash`; lookups hash the incoming token (`hashClaimToken`). (2) **`tournament_team_id` is a plain `uuid` with NO FK constraint** (type-vs-constraint smell) even though code treats it as a `teams.id`. (3) `contact_email` is an **identity gate** — the claimer's email must equal it (lowercased). (4) Workspace/org tenancy is 2-hop via `team_workspace_id`. (5) **No `updated_at`** — `status` + `claimed_at` carry mutation history.
+**Gotchas:** (1) **The token is never stored** — only `claim_token_hash` (nothing reads it by token any more). (2) **`tournament_team_id` is a plain `uuid` with NO FK constraint** (type-vs-constraint smell) even though code treats it as a `teams.id`. (3) `contact_email` is an **identity gate** — the claimer's email must equal it (lowercased). (4) Workspace/org tenancy is 2-hop via `team_workspace_id`. (5) **No `updated_at`** — `status` + `claimed_at` carry mutation history.
 
 **Fields** (boilerplate `id`, `created_at` omitted):
 

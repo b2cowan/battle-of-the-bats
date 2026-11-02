@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendEmail, registrationConfirmationHtml, waitlistConfirmationHtml, adminNotificationHtml, ADMIN_EMAIL, coachEmailEnabled } from '@/lib/email';
-import { sendTransactionalEmail } from '@/lib/platform-email-templates';
+import { isPlatformTemplateCustomised, sendTransactionalEmail } from '@/lib/platform-email-templates';
+import { openRegistrationAccount } from '@/lib/registration-account';
+import { planCoachRegistrationEmails, registrationEmailSubject } from '@/lib/registration-email-plan';
+import { sendSignupVerificationEmail, shouldRequireEmailVerification, signupConfirmUrl } from '@/lib/signup-verification';
+import { registrationPortalPath } from '@/lib/coaches-portal-routes';
+import { resolveTrustedAppOrigin } from '@/lib/app-origin';
+import { clientIpFrom } from '@/lib/rate-limit';
 import { getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { getTournamentRegistrationFields, saveTournamentRegistrationFieldAnswers } from '@/lib/db';
 import { hasPlanFeature } from '@/lib/plan-features';
@@ -21,6 +27,7 @@ import { notifyTeamCoaches } from '@/lib/team-coach-notices';
 import { registrationNoticeWords } from '@/lib/team-coach-notice-plan';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 import { assertNotDemoOrg } from '@/lib/demo-guard';
+import { throttleRegisterForm, throttleRegisterRecipient } from '@/lib/public-form-throttle';
 import { tournamentToday } from '@/lib/timezone';
 import type { OrgPlan, TournamentRegistrationField } from '@/lib/types';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
@@ -46,6 +53,10 @@ type RegistrationRequestBody = {
   basicCoachTeamId?: unknown;
   /** C2: the head coach picked on Step 2 when the team has two or more (a staff membership id). */
   headCoachId?: unknown;
+  /** A new coach registering signed out on the live site: their account is made here, after the entry (Stage 2, Part 4). */
+  password?: unknown;
+  firstName?: unknown;
+  lastName?: unknown;
 };
 
 type TournamentRow = {
@@ -150,6 +161,9 @@ async function parseRegistrationRequest(req: NextRequest) {
         tournamentId: formData.get('tournamentId'),
         basicCoachTeamId: formData.get('basicCoachTeamId'),
         headCoachId: formData.get('headCoachId'),
+        password: formData.get('password'),
+        firstName: formData.get('firstName'),
+        lastName: formData.get('lastName'),
       } satisfies RegistrationRequestBody,
       formData,
     };
@@ -220,6 +234,9 @@ function validateCustomAnswers(fields: TournamentRegistrationField[], formData: 
 
 export const POST = withObservability(async (req: NextRequest) => {
   try {
+    const refused = throttleRegisterForm(req);
+    if (refused) return refused;
+
     const { body, formData } = await parseRegistrationRequest(req);
     const teamName = cleanString(body.teamName);
     const coachName = cleanString(body.coachName);
@@ -232,6 +249,9 @@ export const POST = withObservability(async (req: NextRequest) => {
     if (!teamName || !email || !divisionId || !tournamentId) {
       return NextResponse.json({ error: 'Missing required registration details.' }, { status: 400 });
     }
+
+    const refusedRecipient = throttleRegisterRecipient(email);
+    if (refusedRecipient) return refusedRecipient;
 
     // FieldLogicHQ staff emails must never become a public team contact.
     if (await isPlatformAdminEmail(email)) {
@@ -615,11 +635,10 @@ export const POST = withObservability(async (req: NextRequest) => {
       ? divisionMemberEmail
       : (tournamentDefaultMemberEmail || tournament.contact_email || resolvedContactEmail || ADMIN_EMAIL);
 
-    // The admin notification always fires; the coach confirmation respects the
-    // per-tournament "automatic coach emails" switch (Settings → Notifications & Contact).
+    // The admin notification always fires, and leaves first: the organizer never waits on the coach's account.
     // The organizer's alert names the coach and where their emails go; the confirmation goes to the person
     // who registered, greets THEM, and says where updates go when the head coach is someone else (Stage 1b).
-    const emailSends = [
+    const emailSends: Promise<unknown>[] = [
       sendEmail(
         adminEmailToUse,
         `New Registration: ${teamName} (${divisionName})${isWaitlist ? ' - Waitlist' : ''}`,
@@ -629,32 +648,79 @@ export const POST = withObservability(async (req: NextRequest) => {
           registeredBy: headCoachElsewhere ? { name: registrantName, email } : null,
         }),
         { kind: 'registration_admin_alert' },
-      ),
+      // Handled at once: it is in flight across the account step's awaits below, and a send that fails in that window
+      // must not be an unhandled rejection (/review 2026-11-01). allSettled below swallowed it the same way.
+      ).catch(() => undefined),
     ];
-    if (coachEmailEnabled(tournament.settings, 'confirmation')) {
+
+    // THE ACCOUNT STEP (Signed-in family accounts Stage 2, Part 4). A new coach registering signed out on the live site
+    // sends their password with the entry, and their waiting account is made HERE, after the entry is filed, so the
+    // coach's ONE email carries its confirm link. In this request, not a second one from the browser: an email held for a
+    // call that a closed tab never makes would leave the coach with none (lib/registration-account.ts). Never throws.
+    const origin = resolveTrustedAppOrigin(req);
+    const portalNext = registrationPortalPath(data.id);
+    const accountFirstName = cleanString(body.firstName);
+    const accountPassword = typeof body.password === 'string' ? body.password : '';
+    const withAccount = !!accountPassword && !signedInCoach && shouldRequireEmailVerification();
+
+    // The coach's emails (lib/registration-email-plan.ts): the confirmation respects the per-tournament "automatic coach
+    // emails" switch (Settings → Notifications & Contact); a confirm link that was made always goes out in one of them.
+    const emailKey = isWaitlist ? 'tournament_registration_waitlist' : 'tournament_registration_confirmation';
+    const confirmationOn = coachEmailEnabled(tournament.settings, 'confirmation');
+    // Neither depends on the account step, so both run beside it. Neither throws. Customised words have no place for
+    // the confirm panel: asked only where a panel may be placed.
+    const customisedCheck = withAccount && confirmationOn ? isPlatformTemplateCustomised(emailKey) : null;
+    const onlineCheck = confirmationOn && !isWaitlist ? tournamentTakesOnlinePayments(tournamentId) : null;
+
+    const account = withAccount
+      ? await openRegistrationAccount({
+        ip: clientIpFrom(req), email, password: accountPassword, firstName: accountFirstName, lastName: cleanString(body.lastName),
+        origin, next: portalNext,
+      })
+      : null;
+    const actionLink = account?.actionLink ?? null;
+    const coachEmails = planCoachRegistrationEmails({
+      confirmationOn,
+      customised: !!actionLink && (await customisedCheck) === true,
+      confirmLink: !!actionLink,
+    });
+    if (coachEmails.some(e => e !== 'confirm_only')) {
       const confirmation = {
         teamName, coachName: entryCoach, registrantName, divisionName, tournamentName,
         // "Organizer emails go to the head coach" only when they will: a refused address leaves them here.
         headCoachElsewhere: headCoachElsewhere && entryCoachEmail !== null,
-        contactEmail: footerContactEmail, registrationId: data?.id, coachEmail: email,
+        contactEmail: footerContactEmail, registrationId: data?.id,
       };
-      emailSends.push(
-        sendTransactionalEmail({
-          key: isWaitlist ? 'tournament_registration_waitlist' : 'tournament_registration_confirmation',
+      const payment = isWaitlist ? null : {
+        paymentsTracked: tournamentTracksPayments(tournament.settings),
+        online: await (onlineCheck ?? tournamentTakesOnlinePayments(tournamentId)),
+      };
+      const html = (confirmUrl?: string) => payment
+        ? registrationConfirmationHtml({ ...confirmation, ...payment, confirmUrl })
+        : waitlistConfirmationHtml({ ...confirmation, confirmUrl });
+      const subject = registrationEmailSubject(teamName, isWaitlist);
+      if (coachEmails.includes('registration')) {
+        emailSends.push(sendTransactionalEmail({
+          key: emailKey,
           to: email,
           orgId: tournament.org_id,
           // A customised platform template greets `{{coachName}}`: the person this email goes to.
           vars: { coachName: registrantName?.trim() || 'Coach', teamName, ageGroupName: divisionName, tournamentName },
-          defaultSubject: isWaitlist ? `Waitlist Confirmation - ${teamName}` : `Registration Received - ${teamName}`,
-          defaultHtml: isWaitlist
-            ? waitlistConfirmationHtml(confirmation)
-            : registrationConfirmationHtml({
-              ...confirmation,
-              paymentsTracked: tournamentTracksPayments(tournament.settings),
-              online: await tournamentTakesOnlinePayments(tournamentId),
-            }),
-        })
-      );
+          defaultSubject: subject,
+          defaultHtml: html(),
+        }));
+      }
+      if (coachEmails.includes('registration_with_confirm') && actionLink) {
+        // Sent as built, never through the template resolver: a template customised since the check above must not
+        // swap in words that drop the confirm button.
+        emailSends.push(sendEmail(email, subject, html(signupConfirmUrl(origin, actionLink)), { kind: emailKey, orgId: tournament.org_id }));
+      }
+    }
+    if (coachEmails.includes('confirm_only') && actionLink) {
+      emailSends.push(sendSignupVerificationEmail({
+        to: email, origin, actionLink, next: portalNext, registration: true,
+        firstName: accountFirstName || undefined, continueName: teamName,
+      }));
     }
     await Promise.all([
       Promise.allSettled(emailSends),
@@ -682,7 +748,11 @@ export const POST = withObservability(async (req: NextRequest) => {
       }).catch(console.error);
     }
 
-    return NextResponse.json({ ok: true, id: data.id, status: finalStatus });
+    // `account` picks the form's finish screen. A waiting account and a confirmed one both answer "exists", as the
+    // sign-up's 409 does: the form never learns whether someone's account has been confirmed.
+    // `linkSent`: a confirm link went in one of the coach's emails (a link that was made always goes,
+    // planCoachRegistrationEmails); the finish screen says "open the link we sent" only then (/review 2026-11-01).
+    return NextResponse.json({ ok: true, id: data.id, status: finalStatus, account: account?.outcome, linkSent: !!actionLink });
   } catch (e) {
     console.error('Register route error:', e);
     await captureError(e, { route: '/api/register', method: 'POST', statusCode: 500 });

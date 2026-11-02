@@ -25,7 +25,7 @@ export default function SiteChrome() {
     // the marketing Navbar is a jarring context switch for fans/coaches arriving
     // mid-flow from app surfaces, and it pushes the form below the fold on phones.
     pathname.startsWith('/auth') ||
-    // The warm sign-up journey (the /start family + /coaches/start + /coaches/claim + the
+    // The warm sign-up journey (the /start family + /coaches/start + the
     // post-provision success screen) wears the consumer shell's own warm nav — the marketing
     // Navbar would double up (and previously fell into its empty org-home branch on /start,
     // hijacking taps to '/'). Single source of truth in lib/consumer-routes.

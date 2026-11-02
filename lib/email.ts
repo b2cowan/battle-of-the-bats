@@ -21,6 +21,7 @@ import {
   warmEmailButton, warmEmailDocument, warmEmailHeading, warmEmailParagraph, warmEmailSmall,
 } from '@/lib/email-envelope-warm';
 import { VERIFICATION_NEXT_STEP, type VerificationNextStep } from '@/lib/verification-next-step';
+import { registrationPortalPanelHtml } from './registration-email-plan';
 import { htmlToText } from '@/lib/email-plain-text';
 import type { FamilyMailFace } from '@/lib/email-club-identity';
 import { accountNoticeFootnoteHtml } from '@/lib/family-mail-footer';
@@ -217,14 +218,14 @@ export const wrap = (content: string) => warmEmailDocument(content);
 const DATA_FACE = 'font-family:monospace;';
 
 /**
- * Build the coach-portal link for an email. Carries registrationId + email so it doubles as a
- * CLAIM link: a coach WITH access lands on their team; a coach WITHOUT creates an account and
- * the registration links automatically (the email half of the claim-by-email gap fix).
+ * Build the coach-portal link for an email. Carries the registrationId, which is what joins a coach to their entry: a coach
+ * WITH access lands on their team; a coach WITHOUT is asked for the email they registered with and then signs in or creates
+ * an account, and the registration links automatically. NEVER the coach's address (Signed-in family accounts Stage 2,
+ * Part 3): a forwarded email, a screenshot or a browser history would show it, and the registrationId alone opens nothing.
  */
-export function coachPortalUrl(p: { registrationId?: string; email?: string; registered?: boolean }): string {
+export function coachPortalUrl(p: { registrationId?: string; registered?: boolean }): string {
   const params = new URLSearchParams();
   if (p.registrationId) params.set('registrationId', p.registrationId);
-  if (p.email) params.set('email', p.email);
   // A4.1: `/coaches/join` greets a just-registered coach differently (`fromReg`), so the
   // confirmation email must keep this flag when it adopts the helper — dropping it would
   // silently downgrade the welcome for the one coach who most needs it.
@@ -240,7 +241,7 @@ export function coachPortalUrl(p: { registrationId?: string; email?: string; reg
  * shared wrap() shell (which org/billing/founding/auth/league/rep emails also use, so a footer
  * there would leak the coach CTA everywhere). Gives every coach email one tap back to the portal.
  */
-export function coachPortalFooter(p: { registrationId?: string; email?: string }): string {
+export function coachPortalFooter(p: { registrationId?: string }): string {
   return `
     <div style="${WARM_EMAIL_STYLE.footRule}">
       <a href="${coachPortalUrl(p)}" style="${WARM_EMAIL_STYLE.textLink}font-family:${WARM_EMAIL.font};font-size:14px;line-height:1.55;">See your team's schedule, status and updates in your Coaches Portal</a>
@@ -273,8 +274,10 @@ type RegistrationEmailParams = {
   headCoachElsewhere?: boolean;
   divisionName: string; tournamentName: string;
   contactEmail?: string;
-  coachEmail?: string;
   registrationId?: string;
+  /** The confirm button's address for a new coach whose account waits for its email (Stage 2, Part 4): the panel asks
+   *  them to confirm instead of opening the portal (registrationPortalPanelHtml). */
+  confirmUrl?: string;
 };
 
 /**
@@ -290,22 +293,21 @@ function updatesGoToHtml(p: RegistrationEmailParams): string {
   return `<p>Organizer emails about this registration go to ${who}. You can change that on the tournament’s page in your Coaches Portal.</p>`;
 }
 
+/** The registration emails' portal panel (lib/registration-email-plan.ts). Its "Open your Coaches Portal" carries the
+ *  registrationId, so the link joins the coach to this entry on /coaches/join (coachPortalUrl). */
+function registrationPanelHtml(p: RegistrationEmailParams): string {
+  return registrationPortalPanelHtml({
+    confirmUrl: p.confirmUrl,
+    joinUrl: coachPortalUrl({ registrationId: p.registrationId, registered: true }),
+  });
+}
+
 export function registrationConfirmationHtml(p: RegistrationEmailParams & {
   /** False for "Not tracked here" (lib/tournament-payments-tracked): the email says nothing about payment. */
   paymentsTracked?: boolean;
   /** True while the event takes card payments (lib/tournament-online-payments): the email promises the pay link, not "no online payments". */
   online?: boolean;
 }) {
-  // Carry the registrationId so the portal link is a CLAIM link: a coach who clicks it
-  // (signed out, or on another device) lands on /coaches/join with this exact registration
-  // pre-selected and links it on sign-in — the email half of the claim-by-email gap fix.
-  // A4.1: this used to hand-build the URL and hard-code `next` to the LIST even though it
-  // holds the registrationId, so the one email every new coach opens was the only one that
-  // didn't deep-link to the registration it's about. Now it uses the shared helper like its
-  // 8 siblings (which resolves `next` to the record when an id is present).
-  const joinUrl = p.coachEmail
-    ? coachPortalUrl({ registrationId: p.registrationId, email: p.coachEmail, registered: true })
-    : `${SITE_URL}/coaches/join`;
   const teamName = escapeEmailHtml(p.teamName);
   const divisionName = escapeEmailHtml(p.divisionName);
   const tournamentName = escapeEmailHtml(p.tournamentName);
@@ -314,7 +316,7 @@ export function registrationConfirmationHtml(p: RegistrationEmailParams & {
       ? ' Once the organizer accepts your team, we’ll email you a link to pay online by card. You can also pay the organizer directly.'
       : ' If payment is required, the organizer will share payment instructions directly. FieldLogicHQ does not process online payments.';
   return wrap(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration Received!</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">We’ve got your registration</h2>
     <p>Hi <strong>${greetingName(p.registrantName)}</strong>,</p>
     <p>Thanks for registering <strong>${teamName}</strong> for <strong>${tournamentName}</strong>! 🎉 We've got your entry for the <strong>${divisionName}</strong> division.</p>
     ${updatesGoToHtml(p)}
@@ -328,11 +330,7 @@ export function registrationConfirmationHtml(p: RegistrationEmailParams & {
       </p>
     </div>
     <p>Your registration is currently <strong>pending review</strong>.${paymentSentence}</p>
-    <div style="${warmPanelStyle('olive')}">
-      <p style="${WARM_EMAIL_STYLE.panelLabel}">Track your registration</p>
-      <p style="margin:0 0 1rem;color:${WARM_EMAIL.ink};line-height:1.6;">Your free FieldLogicHQ Coaches Portal account is ready. Open it to track your registration status, see your game schedule once it's published, and receive announcements from the organizer.</p>
-      ${warmEmailButton('Open your Coaches Portal', joinUrl)}
-    </div>
+    ${registrationPanelHtml(p)}
   `);
 }
 
@@ -367,7 +365,7 @@ export function manualTeamRegistrationHtml(p: {
       </p>
     </div>
     ${paymentLine ? `<p>${paymentLine}</p>` : ''}
-    ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
+    ${coachPortalFooter({ registrationId: p.registrationId })}
   `);
 }
 
@@ -385,7 +383,7 @@ export function teamInvitationHtml(p: {
   const teamName = escapeEmailHtml(p.teamName);
   const divisionName = escapeEmailHtml(p.divisionName);
   const tournamentName = escapeEmailHtml(p.tournamentName);
-  const claimUrl = coachPortalUrl({ registrationId: p.registrationId, email: p.coachEmail });
+  const claimUrl = coachPortalUrl({ registrationId: p.registrationId });
   return wrap(`
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">${INVITE.heading}</h2>
     <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
@@ -508,7 +506,7 @@ export function acceptanceHtml(p: {
 }) {
   // Claim-aware portal link: carries the registration (teamId) so the coach lands on this team
   // (or creates an account and it links). dashboardUrl override kept for back-compat.
-  const dashboardUrl = p.dashboardUrl ?? coachPortalUrl({ registrationId: p.teamId, email: p.coachEmail });
+  const dashboardUrl = p.dashboardUrl ?? coachPortalUrl({ registrationId: p.teamId });
   const contact = p.contactEmail ?? ADMIN_EMAIL;
   const instructions = p.paymentInstructions?.trim();
   const paymentBody = instructions
@@ -555,7 +553,7 @@ export function waitlistConfirmationHtml(p: RegistrationEmailParams) {
       </p>
     </div>
     <p>The <strong>${divisionName}</strong> division is currently full. Your team has been added to the waitlist and you will be notified by email if a spot becomes available.</p>
-    ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
+    ${p.confirmUrl ? registrationPanelHtml(p) : coachPortalFooter({ registrationId: p.registrationId })}
   `);
 }
 
@@ -584,7 +582,7 @@ export function paymentConfirmationHtml(p: {
     <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p>The tournament organizer has recorded payment for <strong>${p.teamName}</strong>. Your registration for the <strong>${p.divisionName}</strong> division of <strong>${p.tournamentName}</strong> is now marked <strong>paid</strong>.</p>
     <p>Stay tuned for schedule announcements — good luck this season!</p>
-    ${coachPortalFooter({ registrationId: p.teamId, email: p.coachEmail })}
+    ${coachPortalFooter({ registrationId: p.teamId })}
   `);
 }
 
@@ -639,7 +637,7 @@ export function announcementHtml(p: {
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.35rem;margin:0 0 1.25rem;">${escapeEmailHtml(p.title)}</h2>
     ${bodyHtml}
     ${p.contactEmail ? `<p style="color:${WARM_EMAIL.secondary};font-size:0.85rem;margin-top:1.5rem;">Questions? Contact <a href="mailto:${escapeEmailHtml(p.contactEmail)}" style="color:${WARM_EMAIL.olive};">${escapeEmailHtml(p.contactEmail)}</a></p>` : ''}
-    ${coachPortalFooter({ email: p.coachEmail })}
+    ${coachPortalFooter({})}
   `);
 }
 
@@ -682,7 +680,7 @@ export function paymentReminderHtml(p: {
     <p style="color:${WARM_EMAIL.secondary};font-size:0.86rem;">${p.payUrl
       ? 'Paid by another way already? Tell the organizer and they’ll update your record.'
       : 'FieldLogicHQ records payment status for the organizer but does not process tournament payments online.'}</p>
-    ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
+    ${coachPortalFooter({ registrationId: p.registrationId })}
   `);
 }
 
@@ -811,7 +809,7 @@ export function tournamentResultsFinalizedHtml(p: {
     <p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;line-height:1.55;margin-top:1.5rem;">
       Running your own tournament? <a href="${escapeEmailHtml(p.fieldLogicUrl)}" style="color:${WARM_EMAIL.olive};">See how FieldLogicHQ helps organizers manage registration, schedules, results, and post-event reporting.</a>
     </p>
-    ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
+    ${coachPortalFooter({ registrationId: p.registrationId })}
   `);
 }
 
@@ -1521,7 +1519,7 @@ export function schedulePublishedHtml(p: {
     </div>
     <p style="color:${WARM_EMAIL.secondary};font-size:0.88rem;">${nameNote}</p>
     ${warmEmailButton('View Schedule', p.scheduleUrl)}
-    ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
+    ${coachPortalFooter({ registrationId: p.registrationId })}
   `);
 }
 

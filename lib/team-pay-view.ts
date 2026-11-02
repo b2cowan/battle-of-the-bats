@@ -10,6 +10,7 @@ import { toCents } from './online-payment-fee';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
 import type { PayScope } from './team-pay-options';
 import { clubPublicContact } from './club-email-context';
+import { maskEmail } from './utils';
 
 /**
  * The team's pay page, as one plain object (Club Tier Stage 12a, drawn 12c §1–§3 and the Checkout tab). Built on the
@@ -49,6 +50,8 @@ export interface PayPageView {
   teamName: string;
   divisionName: string | null;
   testMode: boolean;
+  /** The coach's address MASKED ("s•••@example.com"): a forwarded link never hands the full address to the browser
+   *  (Signed-in family accounts Stage 2, Part 6; the league page's rule). The pay route uses the address on file. */
   payerEmail: string | null;
   feePaidByPayer: boolean;
   refundPolicy: string | null;
@@ -153,7 +156,7 @@ export async function buildTeamPayView(token: string, at?: { orgSlug: string; to
     teamName: f.teamName,
     divisionName: f.divisionName,
     testMode: f.account ? !f.account.livemode : false,
-    payerEmail: f.teamEmail,
+    payerEmail: f.teamEmail ? maskEmail(f.teamEmail) : null,
     feePaidByPayer: f.account?.feePayer === 'family',
     refundPolicy: f.account?.refundPolicy?.trim() || null,
     howToPay,

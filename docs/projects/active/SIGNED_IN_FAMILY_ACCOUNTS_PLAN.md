@@ -98,6 +98,79 @@ Re-verify items 1–3 against the code when the stage starts: they come from the
 
 Draw first: the finish screen and the one email. **Drawing prompt written 2026-11-01:** `SIGNED_IN_FAMILY_STAGE2_DRAWING_PROMPT.md`.
 
+**Drawing page /design round 2 applied 2026-11-01** (version 2 of the same page; visual fidelity and two "Watch your email"
+sentences that were false in some cases; no ask changed). The rulings below were made on version 1.
+
+**The code evidence behind the corrections below (2026-11-01 re-verify, for the build):**
+- Item 1: the "Confirm your email" email is ours (`lib/signup-verification.ts:67`, "Confirm your FieldLogicHQ email",
+  sent via our mailer, production only via `shouldRequireEmailVerification`), not Supabase's. The registration email fires
+  from `/api/register` (`route.ts:641-659`) BEFORE the account exists: the form posts the registration signed out
+  (`RegisterContent.tsx:697`), then calls `/api/auth/coach-signup` (:699), deliberately organizer-first. So the merge must
+  keep that order and send the coach's ONE email after the account step (or make the account inside `/api/register`).
+  "Your free FieldLogicHQ Coaches Portal account is ready" (`lib/email.ts:333`) is hard-coded for EVERY coach (signed-in
+  coaches and managers too), not just new ones. Two cases stay at two emails: a platform-admin-customised registration
+  template (no place for the panel) and the organizer's coach-confirmation switch off (only the confirm email goes).
+- Item 2: the finish screen already carries the check-your-email block (`RegisterContent.tsx:1509-1520`). What is wrong is
+  the primary "Create Coaches Portal Account" (:1585-1587, which dead-ends at "Confirm your email before signing in") and
+  the "Create your Coaches Portal · Set a password" row (:1570-1580). A signed-in coach never sees the screen (redirect to
+  the portal, :854-859); invite-only events have no form. A new coach cannot sign in unconfirmed (`lib/auth.ts:48`); the
+  registration stands regardless.
+- Item 3: the address rides in EVERY tournament coach email's portal link (`coachPortalUrl`, `lib/email.ts:227`, ~12
+  callers incl. game-day reminders and schedule publish), the confirm link's nested return (`registrationPortalPath`,
+  `RegisterContent.tsx:252-258`) and the join page's own hand-offs. On `/coaches/join` it is load-bearing: it gates the
+  signed-out "You're already set up" answer (`/api/coaches/registration-account-status` returns only on a match) and names
+  the invited address on the wrong-account screen. Hence ask 2.
+- Item 4: confirmed no throttle. A 429 renders in the existing "Registration Failed" card with no client change
+  (`RegisterContent.tsx:651-662`, :1329-1336). The family buckets' global ceiling (150 / 5 min) is shared across every public
+  form, hence ask 4.
+- Item 5: **no migration.** `team_workspace_claims` stays: `lib/chat-resolvers.ts:126` reads it for Tournament Chat and no
+  FK points at it. Redemption lives in team checkout (`app/api/billing/create-team-checkout/route.ts:65-90`,
+  `lib/team-checkout.ts`), so the claim branch goes there too, plus `app/team/claim/[token]` and the dev-tools card.
+- Found in passing (ask 5): the team pay page pre-fills the coach's FULL email for the receipt (`lib/team-pay-view.ts:156`),
+  while Stage 1 masked the family page's (`lib/league-pay-view.ts:163`). Payment already stops once the tournament is over
+  (`lib/team-pay-refusal.ts`), and the portal already has Pay now; only a per-team reset is missing.
+- Help for the build's `/docs` step: `lib/help-content/tournaments.tsx` `faq-new-coach-confirm-email` (:735-742) and
+  `lib/help-content/coaches.tsx` `faq-coach-confirm-email` (:216-227). No demo moment or tour stop is affected.
+
+**Drawn 2026-11-01** (page https://claude.ai/artifact/LcsxtXG1eQ5HRwEPqLp9CV, source `SIGNED_IN_FAMILY_STAGE2_DRAWINGS.html`).
+
+**Ruled 2026-11-01 (owner, all five asks A).** Where these differ from items 1–5 above, these win; build to the drawing.
+1. **The one email leads with the registration** ("We've got your registration"); the confirm panel sits where the portal panel
+   is today. A coach who already has an account gets the same email with "Open your Coaches Portal" instead; the waitlist email
+   gets the same panel.
+2. **Nothing replaces the address in portal links;** the join page asks for the email first. This applies to every coach email
+   that links to the portal (registration, waitlist, accepted, schedule, reminders, the organizer's invitation), not only the
+   registration email.
+3. **The finish screen keeps "You're In Motion";** the confirm block leads, with a quiet "Already confirmed? Sign in"; no big
+   button.
+4. **The form has its own limits,** the same numbers and the same words as the family forms.
+5. **The team pay link:** mask the coach's address on the team pay page in this stage, **after the Stage 7 walk passes**; no
+   reset (no "Send a new link" for a team).
+
+**Corrections to the plan, from the drawing session's reading of the code.** (a) Item 5 needs **no migration**: the table of past
+claims stays because Tournament Chat reads it to work out which coaches are in a tournament's chat; only the claim page, its
+address, the developer tool and its seed, and the claim branch inside team checkout go. (b) Item 1: the confirm email is ours (not
+the sign-in service's), and the registration email is sent before the account exists on purpose (the organizer gets the entry
+first); the build keeps that order and sends the coach's one email after the account step. (c) Item 3 reaches six emails, not one.
+
+**Build prompt:** `SIGNED_IN_FAMILY_STAGE2_BUILD_PROMPT.md`.
+
+**Built 2026-11-01/02 (Parts 1–7; commit hashes go in the build prompt's Progress block when the owner commits).**
+- **Parts 1–3 (Session 1):** the Register form's own limits (ruling 4); the claim link, its developer tool and the claim
+  branch in team checkout are gone, the table stays (correction a); no address in any coach email's portal link, and the
+  join page asks for it (ruling 2).
+- **Part 4:** ONE email, made server-side: `/api/register` files the entry, starts the organizer's alert, then makes the
+  waiting account and sends the registration email with the confirm panel in it. Not the prompt's browser-released hold
+  (a lost second call would have left the coach with no email). Two emails stay where ruled: a customised template;
+  "Registration received" off sends the plain confirm email only.
+- **Part 5:** the finish screen as drawn (ruling 3): the confirm block leads with its heading and a quiet "Already
+  confirmed? Sign in"; no big button for a new coach; an address that already has an account gets one Sign in. The card
+  says "open the link we sent" only when the server says a link went.
+- **Part 6:** the team pay page shows the coach's address partly hidden (ruling 5, after walk §440 passed); no reset.
+- **Part 7:** `/simplify`, `/review` (no Critical or High), `/docs`. Reported for the owner: a stranger who registers with
+  someone else's address chooses that account's password (the coach sign-up has the same shape; the fix is a passwordless
+  account with the password set at confirm, a product call).
+
 ### Stage 3 — An optional second guardian email (house league) · no prerequisite
 
 An optional "Second parent's email" on the house-league sign-up form (F1). Both addresses receive the sign-up emails and,

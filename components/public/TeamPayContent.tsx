@@ -167,7 +167,8 @@ function Owing({ token, view }: { token: string; view: PayPageView }) {
     if (totalCents == null) return;
     setOpening(rail);
     setError(null);
-    const r = await openCheckout(`/api/pay/team/${token}`, { scope: chosen.scope, rail, totalCents, email });
+    // The field opens on the masked address on file: left as it is, send none and the route uses the one on file.
+    const r = await openCheckout(`/api/pay/team/${token}`, { scope: chosen.scope, rail, totalCents, email: email === view.payerEmail ? '' : email });
     if ('url' in r) { window.location.assign(r.url); return; }
     if ('changed' in r) { window.location.reload(); return; }
     setError(r.error);

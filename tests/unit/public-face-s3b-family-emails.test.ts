@@ -327,8 +327,9 @@ describe('S3b — the words (copy items 10, 11)', () => {
       assert.ok(!src.includes(old), `${name} still says “${old}”`);
       assert.doesNotMatch(src, /✅|🎉/u, `${name} still has an emoji`);
     }
-    // the coach-facing tournament registration email is not a family email and keeps its own headline
-    assert.ok(builder('registrationConfirmationHtml').includes('margin:0 0 1rem;">Registration Received!</h2>'));
+    // the coach-facing tournament registration email is not a family email and keeps its own headline (Signed-in family
+    // accounts Stage 2, Part 4: "We’ve got your registration", registration-one-email.test.ts)
+    assert.ok(builder('registrationConfirmationHtml').includes('margin:0 0 1rem;">We’ve got your registration</h2>'));
   });
   it('the game-change link loses its arrow and stays an olive text link', () => {
     const code = readCode('lib/family-notify.ts');

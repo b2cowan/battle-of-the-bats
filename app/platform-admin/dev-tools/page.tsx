@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import {
   Building2, Users, Trophy, CalendarDays, UserCheck, Shield,
   Lock, RefreshCw, Trash2, CheckCircle, AlertCircle, Loader, Zap,
-  CreditCard, BookOpen, Terminal, ClipboardList, X,
+  CreditCard, BookOpen, Terminal, X,
 } from 'lucide-react';
 import styles from './dev.module.css';
 import kit from '../console.module.css';
@@ -52,7 +52,6 @@ interface Status {
   leagueSeasons: number;
   repTeams: number;
   teamWorkspaces: number;
-  teamClaims: number;
   orgUsers: number;
   orgList: OrgRow[];
 }
@@ -892,7 +891,7 @@ const CARD_SECTIONS: { label: string; sublabel?: string; keys: string[] }[] = [
   {
     label:    'Standalone products',
     sublabel: 'creates its own org space',
-    keys:     ['team-workspace', 'team-claim'],
+    keys:     ['team-workspace'],
   },
 ];
 
@@ -1215,19 +1214,6 @@ export default function DevDashboard() {
       lockReason:  undefined as string | undefined,
       orgOptions:  undefined as OrgSelectOption[] | undefined,
       badges:      <StatusPill count={status?.teamWorkspaces ?? 0} label="premium portals" />,
-    },
-    {
-      key:         'team-claim',
-      endpoint:    '/api/dev/seed/team-claim',
-      icon:        ClipboardList,
-      title:       'Coaches Portal claim link',
-      description: 'Creates a secure claim link for a dev tournament team contact',
-      creates:     'one available Coaches Portal claim URL',
-      kind:        'standalone' as 'additive' | 'standalone' | undefined,
-      locked:      (status?.tournaments ?? 0) === 0,
-      lockReason:  'Seed tournament first — claim links attach to a tournament team contact' as string | undefined,
-      orgOptions:  undefined as OrgSelectOption[] | undefined,
-      badges:      <StatusPill count={status?.teamClaims ?? 0} label="portal claims" />,
     },
   ];
 

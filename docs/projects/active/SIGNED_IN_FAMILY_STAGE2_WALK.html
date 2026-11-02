@@ -1,0 +1,283 @@
+<title>Registration Email Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Signed-in family accounts · Stage 2 · §443</span>
+    <h1>A new coach registers: one email, an honest finish screen</h1>
+    <p class="sub">Written 2026-11-02 for Stage 2 (Parts 4–5 and the Part 7 fixes). One purpose: a coach who registers a team on the Register form gets one email with the confirm button inside it, and the screen after Submit says what is really next.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Before this build a new coach got two emails seconds apart: “Registration Received”, which said their portal account “is ready” while it was still waiting for its email, and a separate “Confirm your FieldLogicHQ email”. The finish screen then offered <strong>Create Coaches Portal Account</strong> for the account they had just made, which dead-ended at “Confirm your email before signing in”. Now the server files the entry, tells the organizer, makes the waiting account, and sends one email: the registration, with a <strong>Confirm my email</strong> button in it. The finish screen leads with “Confirm your email to open your portal”, with a quiet “Already confirmed? Sign in” and no big button.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>A new coach gets exactly one email, “We’ve got your registration”, with the confirm button in it, and no separate confirm email.</li>
+    <li>Pressing the button signs them in and opens the team’s registration in their Coaches Portal; pressing it a second time explains itself.</li>
+    <li>The finish screen never offers to create an account, and says “open the link we sent” only when a link really went.</li>
+    <li>The waitlist gets the same: one email, the same button.</li>
+    <li>With the organizer’s “Registration received” email off, the coach still gets a way in: one short confirm email.</li>
+    <li>The join page asks for the address rather than reading it from the link.</li>
+    <li>Every screen reads well at 390 px and at a desk.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>The team pay page’s partly hidden receipt address</strong> (Part 6). It gets its own short walk.</li>
+    <li><strong>The form’s limits.</strong> Reaching them takes about 30 registrations from one computer. Unit tests pin them, and the “Registration Failed” card they show is unchanged.</li>
+    <li><strong>A customised registration email.</strong> Only a platform admin can customise it, and none is customised on dev. That case sends two emails by design, and unit tests pin it.</li>
+    <li><strong>The 1-hour expiry itself.</strong> Part C uses a link that has already been used, which opens the same sign-in notice.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Verification on</dt><dd>In <code>.env.local</code> add a line <code>REQUIRE_SIGNUP_EMAIL_VERIFICATION=true</code>. Leave <code>RESEND_API_KEY=</code> <strong>empty</strong> for Part A; Part B has you fill it with the dev Resend key. When you save the file, the dev terminal should print a line saying it reloaded the environment. If it doesn’t, stop and restart the server (<code>npm run dev</code>).</dd>
+    <dt>Fixture</dt><dd>In the project folder: <code>node --env-file=.env.local scripts/seed-stripe-walk-tournament.mjs --inbox &lt;your plain address&gt;</code>. It builds <strong>Stripe Walk Invitational</strong> under UAT Rep Club: <strong>Walk 13U</strong> (empty, so you get a normal Pending entry) and <strong>Walk 15U</strong> (full, so you land on the waitlist). The organizer’s alerts go to your plain address.</dd>
+    <dt>Coach addresses</dt><dd>Your own inbox with a plus part: <code>+s2c0</code> to <code>+s2c4</code> (for example <code>you+s2c1@gmail.com</code>). Each becomes an account, and the fixture’s reset does not remove accounts, so <strong>a second run needs new tags</strong> (<code>+s2d1</code> …). Any password of 8 or more characters; use the same one throughout.</dd>
+    <dt>Team names</dt><dd><code>S2 Team 0</code> to <code>S2 Team 4</code>, matching the tag.</dd>
+    <dt>Email not there?</dt><dd>Wait 2 minutes, then look in Resend › Emails (search the address).</dd>
+    <dt>When done</dt><dd>Part I.</dd>
+  </dl></section>
+  <section class="card"><h2>Where</h2><dl class="facts">
+    <dt>Register page</dt><dd><code>http://localhost:3000/uat-rep-club/stripe-walk-invitational/register</code></dd>
+    <dt>Organizer</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> · Tournaments › Stripe Walk Invitational › Settings › Event › <strong>Coach Emails</strong></dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>The join page’s mismatch line (G4).</strong> “That isn’t the email this registration was made with. Use the address you registered with.” These are Session 1’s words; the drawing had none. Confirm them or give new ones.</li>
+    <li><strong>The “couldn’t set up your account” card (A2).</strong> It has no button now: the drawing kept today’s sentence and drew nothing more. Say if you want one.</li>
+    <li><strong>A coach whose account is still waiting registers again (H).</strong> The form asks them to sign in, and sign-in refuses until they confirm. Fine as is, or should that step send the link again?</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "sifa-stage2-walk-registration-v1";
+  var TITLE = "Stage 2 walk §443 · A new coach registers: one email, an honest finish screen (2026-11-02)";
+  var REG = "<code>http://localhost:3000/uat-rep-club/stripe-walk-invitational/register</code>";
+  var ORG = "Organizer · uat-club-owner@uat-rep-club.local";
+  var FX = "<code>node --env-file=.env.local scripts/seed-stripe-walk-tournament.mjs --inbox &lt;your plain address&gt;";
+  var CARD_TOP = "Title <strong>You’re In Motion</strong>, then “S2 Team N is registered for Stripe Walk Invitational and sent to the organizer for review.”";
+  var BLOCK = "a block with the bold heading <strong>Confirm your email to open your portal</strong>, then “Open the link we sent. It works for 1 hour.”, “Verification email sent to” your address, “You’ll hear from the organizer at this address either way.”, a <strong>Send the link again</strong> button, and at its foot “Already confirmed? <u>Sign in</u>”";
+  var PARTS = [
+ { id: "A", title: "No mail service: the honest fallback", steps: [
+  { who: "Terminal", do: "Run " + FX + "</code>. Check <code>.env.local</code> has <code>REQUIRE_SIGNUP_EMAIL_VERIFICATION=true</code> and an <strong>empty</strong> <code>RESEND_API_KEY=</code>.",
+    see: "The fixture prints the tournament and its two divisions." },
+  { who: "Coach 0 · computer, private window", do: "Open " + REG + ". Enter <code>+s2c0</code> and press Continue. Fill in the form for <strong>S2 Team 0</strong> in <strong>Walk 13U</strong> with a password, and submit.",
+    see: CARD_TOP + " <strong>No</strong> confirm block. One line: “We couldn’t set up your Coaches Portal account just now. The link in your registration email opens it.” <strong>No button</strong> under it (no Create, no Sign in, no Open Coaches Portal).",
+    call: "Call: no button on this card (recommended, as drawn), or add one?" },
+  { who: "Organizer", do: "Sign in, open Stripe Walk Invitational’s Teams.",
+    see: "S2 Team 0 is there, Pending, although its coach got no account. The registration never waits for the account." }
+ ]},
+ { id: "B", title: "A new coach on a phone: one email, the button", steps: [
+  { who: "You", do: "Put the dev Resend key in <code>RESEND_API_KEY=</code> in <code>.env.local</code> and save.",
+    see: "The dev terminal prints that it reloaded the environment (if not, restart the server)." },
+  { who: "Coach 1 · phone width (390 px), private window", do: "Open " + REG + ". Enter <code>+s2c1</code>, Continue, fill in <strong>S2 Team 1</strong> in <strong>Walk 13U</strong> with a password, and submit.",
+    see: CARD_TOP + " Under it " + BLOCK + ". Nothing runs off the side of the screen." },
+  { who: "Coach 1", do: "Read the rest of the card.",
+    see: "<strong>Save the dates</strong> with Add to calendar. <strong>Watch your email</strong>: “Check your inbox for your confirmation and the link to confirm your email. The organizer follows up with approval and how to pay.” <strong>No</strong> “Track your team” row, no “Create Coaches Portal Account”, no big button at the bottom." },
+  { who: "Coach 1 · your inbox, the +s2c1 messages", do: "Open the +s2c1 messages.",
+    see: "<strong>Exactly one</strong> email: subject “We’ve got your registration · S2 Team 1”. Its green panel reads <strong>Confirm your email to open your Coaches Portal</strong>, a sentence about what the portal does, a <strong>Confirm my email</strong> button, and “The button works for 1 hour. After that it opens sign-in, where you can send yourself a new link.” Nowhere does it say the account “is ready”. There is <strong>no</strong> separate “Confirm your FieldLogicHQ email” message." },
+  { who: "Organizer · your plain address", do: "Open the organizer’s inbox.",
+    see: "A “New Registration” email for S2 Team 1, as before." },
+  { who: "Coach 1 · on the phone", do: "Press <strong>Confirm my email</strong> in that email.",
+    see: "A page titled <strong>Confirm your email</strong> (“One tap and you’re back to finish setting up.”) with a Confirm my email button. Press it: you are signed in and land on S2 Team 1’s registration in your Coaches Portal, Pending." }
+ ]},
+ { id: "C", title: "The same link a second time", steps: [
+  { who: "Coach 1 · private window, signed out", do: "Open a new private window and press <strong>Confirm my email</strong> in the same email again.",
+    see: "Sign-in opens with a notice that the link has expired or was already used, and an <strong>Email me a new link</strong> button. No error page." }
+ ]},
+ { id: "D", title: "The finish screen at a desk, and its two ways on", steps: [
+  { who: "Coach 2 · computer (1440 px), private window", do: "Open " + REG + ". Enter <code>+s2c2</code>, Continue, fill in <strong>S2 Team 2</strong> in <strong>Walk 13U</strong>, submit.",
+    see: CARD_TOP + " Under it the same block as B2, with “Already confirmed? Sign in” at its foot. The block reads as one piece and the heading is the first thing your eye lands on." },
+  { who: "Coach 2", do: "Press <strong>Send the link again</strong>.",
+    see: "It confirms the link was sent again. A short “Confirm your FieldLogicHQ email” message arrives at +s2c2, beside the registration email. That second message is expected here, because you asked for it." },
+  { who: "Coach 2", do: "Press <strong>Sign in</strong> in “Already confirmed? Sign in”, and look at the address bar.",
+    see: "The sign-in page opens. The address bar holds <strong>no email address</strong>, only where to go next. Don’t confirm +s2c2: Part H needs it unconfirmed." }
+ ]},
+ { id: "E", title: "The waitlist", steps: [
+  { who: "Coach 3 · phone width, private window", do: "Open " + REG + ". Enter <code>+s2c3</code>, fill in <strong>S2 Team 3</strong> in <strong>Walk 15U</strong> (the full one), submit.",
+    see: "Title <strong>Waitlist Request Received</strong>, “S2 Team 3 has been added to the waitlist for Walk 15U.”, then the same confirm block. <strong>Watch your email</strong>: “Check your inbox for your waitlist confirmation and the link to confirm your email. The organizer will reach out if a spot opens.”" },
+  { who: "Coach 3 · your inbox, +s2c3", do: "Open the +s2c3 messages.",
+    see: "Exactly one email, subject “Waitlist Confirmation - S2 Team 3”, with the same <strong>Confirm my email</strong> panel as B4. Pressing it lands on S2 Team 3’s registration in the portal." }
+ ]},
+ { id: "F", title: "The organizer has switched off “Registration received”", steps: [
+  { who: ORG, do: "Open Stripe Walk Invitational › Settings › Event › <strong>Coach Emails</strong> and switch off <strong>Registration received</strong>.",
+    see: "It saves." },
+  { who: "Coach 4 · private window", do: "Open " + REG + ". Enter <code>+s2c4</code>, fill in <strong>S2 Team 4</strong> in <strong>Walk 13U</strong>, submit.",
+    see: "The confirm block as in B2. The row below reads <strong>What happens next</strong>: “The organizer reviews your registration and will follow up with approval and how to pay.” (no “Check your inbox”)." },
+  { who: "Coach 4 · your inbox, +s2c4", do: "Open the +s2c4 messages.",
+    see: "<strong>One</strong> email: the short “Confirm your FieldLogicHQ email” with its Confirm my email button. No registration email, because the organizer turned it off, but the coach still has a way into their portal." },
+  { who: ORG, do: "Switch <strong>Registration received</strong> back on.",
+    see: "It saves." }
+ ]},
+ { id: "G", title: "An address that already has an account, and the join page", steps: [
+  { who: "Coach 1 · private window, signed out", do: "Open " + REG + " and enter <code>+s2c1</code> (confirmed in B6). Press Continue.",
+    see: "The form asks for your password to sign in (this address has an account). Sign in, register <strong>S2 Team 1B</strong> in <strong>Walk 13U</strong>. You go to the portal, not to the finish screen." },
+  { who: "Coach 1 · your inbox, +s2c1", do: "Open the newest +s2c1 message.",
+    see: "One email, “We’ve got your registration · S2 Team 1B”, with an <strong>Open your Coaches Portal</strong> button instead of the confirm panel, and no “is ready”." },
+  { who: "Anyone · a fresh private window", do: "Press <strong>Open your Coaches Portal</strong> in that email.",
+    see: "The join page, <strong>Open your team</strong>: “Enter the email you registered with. We’ll take you to sign in, or set up your account if you don’t have one yet.” The address box is <strong>empty</strong>. The link no longer carries it." },
+  { who: "Anyone", do: "Type <code>+s2c2</code> and continue.",
+    see: "“That isn’t the email this registration was made with. Use the address you registered with.”",
+    call: "Call: are these the words you want?" },
+  { who: "Anyone", do: "Type <code>+s2c1</code> and continue.",
+    see: "<strong>You’re already set up</strong>: “Your Coaches Portal account is ready. Sign in to see your team and track its status.” and <strong>Sign in to your Coaches Portal</strong>." }
+ ]},
+ { id: "H", title: "An account still waiting registers again", steps: [
+  { who: "Coach 2 · private window", do: "Open " + REG + ", enter <code>+s2c2</code> (never confirmed), and press Continue. Type the password and sign in.",
+    see: "The form asks for the password (the account exists, though it waits). Signing in says “Confirm your email before signing in. Check your inbox for the link we sent.” The coach can still confirm from either earlier email, then register.",
+    call: "Call: fine as is, or should this step send the link again?" }
+ ]},
+ { id: "I", title: "Put back", steps: [
+  { who: "Terminal", do: "Run " + FX + " --reset</code>.",
+    see: "It removes every walk team except Walk Filler Team. The +s2c accounts stay; use new tags on a second run." },
+  { who: "You", do: "In <code>.env.local</code>, remove <code>REQUIRE_SIGNUP_EMAIL_VERIFICATION=true</code> (or keep it if you want dev to verify), and decide whether to keep the Resend key.",
+    see: "Dev is back to signing new coaches in straight away." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

@@ -10,6 +10,7 @@
   text-align: left;
 }
 
+.head { margin: 0; line-height: 1.35; font-weight: 700; }
 .lead { margin: 0; line-height: 1.55; }
 .sent { margin: 0; padding: 0.65rem 0.8rem; overflow-wrap: anywhere; }
 .after { margin: 0; line-height: 1.5; }
@@ -58,6 +59,7 @@
 .footLink:hover { text-decoration: underline; }
 
 /* ── the event's public Register page (register.module.css's success card) ────────────────────────── */
+.register .head { font-size: 1.06rem; color: var(--white); }
 .register .lead { font-size: 0.95rem; color: var(--white-60); }
 .register .sent {
   font-size: 0.9rem;

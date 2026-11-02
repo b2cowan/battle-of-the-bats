@@ -59,7 +59,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   // Trusted base URL for the emailed access links — only our own hosts are honored from the
   // request Origin; an attacker host falls back to the canonical URL. See resolveTrustedAppOrigin.
   const origin = resolveTrustedAppOrigin(req);
-  const joinUrl = `${origin}/coaches/join?registrationId=${encodeURIComponent(regId)}&email=${encodeURIComponent(email)}&next=${encodeURIComponent('/coaches/tournaments')}`;
+  const joinUrl = `${origin}/coaches/join?registrationId=${encodeURIComponent(regId)}&next=${encodeURIComponent('/coaches/tournaments')}`;
   const loginUrl = `${origin}/auth/login?next=${encodeURIComponent('/coaches/tournaments')}`;
 
   // An invite-only event (the free tournament tier, B3): "Resend the invitation" sends the invitation to claim the team.

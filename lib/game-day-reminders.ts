@@ -125,7 +125,7 @@ export async function syncGameDayRemindersAfterReschedule(params: SyncParams): P
         firstGameLabel,
         location: g.location,
         opponentName,
-        portalUrl: coachPortalUrl({ registrationId: team.id, email: team.email ?? undefined }),
+        portalUrl: coachPortalUrl({ registrationId: team.id }),
         contactEmail,
         paymentsTracked: tournamentTracksPayments(tournament.settings),
       }),

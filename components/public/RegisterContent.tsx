@@ -17,8 +17,8 @@ import {
   type CardHeadCoach, type RegistrableTeam,
 } from '@/lib/registrable-teams';
 import { isValidEmail, signInErrorCopy } from '@/lib/auth-errors';
-import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
-import VerifyEmailSent, { requestVerificationLink } from '@/components/auth/VerifyEmailSent';
+import { COACHES_TOURNAMENTS_PATH, registrationPortalPath } from '@/lib/coaches-portal-routes';
+import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
 import PasswordInput from '@/components/auth/PasswordInput';
 import { PAY_WORDS } from '@/lib/online-payment-words';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
@@ -57,6 +57,8 @@ type RegistrationConfirmation = {
   verifyEmail?: string;
   /** A line for the success card when the coach's account couldn't be made here. */
   note?: string;
+  /** The address already has an account: the card's one button is Sign in (Signed-in family accounts Stage 2, Part 5). */
+  accountExists?: boolean;
 };
 
 /** How a card reads: greyed (`blocked`) or a radio, the sentence under its name, and an optional link after it. */
@@ -249,13 +251,11 @@ function downloadTournamentCalendar(tournament: Tournament, url: string) {
  * as a registrant will, without creating a registration or an account. In preview, Step 1's
  * Continue goes straight to the new-coach form (no account lookup, no sign-in).
  */
-/** The verification link's return for a registration made signed out: the join page links it, then opens its record
- *  with the portal's welcome (verify every sign-up, 2026-10-16). */
-function registrationPortalPath(registrationId: string | undefined, email: string): string {
-  if (!registrationId) return '/coaches/tournaments';
-  const record = `/coaches/tournaments/${registrationId}?welcome=1`;
-  return `/coaches/join?registered=1&registrationId=${encodeURIComponent(registrationId)}&email=${encodeURIComponent(email)}&next=${encodeURIComponent(record)}&verified=1`;
-}
+/** The finish screen's note when `/api/register`'s account step made no confirm link: the registration email's "Open your
+ *  Coaches Portal" sets the account up (Signed-in family accounts Stage 2, Part 4). */
+const ACCOUNT_STEP_FAILED_NOTE = 'We couldn’t set up your Coaches Portal account just now. The link in your registration email opens it.';
+/** The address already had an account (Step 1 couldn't check). The drawing keeps today's words (Stage 2, tab 3). */
+const ACCOUNT_EXISTS_NOTE = 'This email already has a FieldLogicHQ account. Sign in to see this registration in your Coaches Portal. If you never opened its verification email, we’ve sent the link again.';
 
 export default function RegisterContent({ isPreview = false, initialData = null }: { isPreview?: boolean; initialData?: PublicTournamentPageData | null }) {
   const params         = useParams();
@@ -609,9 +609,16 @@ export default function RegisterContent({ isPreview = false, initialData = null 
     try {
       const { selectedGroup, isWaitlist, headCoach } = validateRegistrationDetails();
 
-      /** Sends the registration to the organizer — signed in (it links to the portal) or signed out. */
-      const postRegistration = async (): Promise<{ id?: string; status?: 'pending' | 'waitlist' }> => {
+      /** Sends the registration to the organizer — signed in (it links to the portal) or signed out. `withAccount`: a new
+       *  coach on the live site, whose waiting account the server makes after the entry, so the coach's ONE email carries
+       *  the confirm link (Signed-in family accounts Stage 2, Part 4). */
+      const postRegistration = async (withAccount = false): Promise<{ id?: string; status?: 'pending' | 'waitlist'; account?: 'created' | 'exists' | 'failed' }> => {
         const payload = new FormData();
+        if (withAccount) {
+          payload.append('password', form.password);
+          payload.append('firstName', form.firstName.trim());
+          payload.append('lastName', form.lastName.trim());
+        }
         // The name this team goes by in THIS tournament (A2) — for a chosen team, the coach may have
         // changed it from the team's own name; the team's own name never changes here.
         payload.append('teamName', form.teamName.trim());
@@ -661,31 +668,36 @@ export default function RegisterContent({ isPreview = false, initialData = null 
           }
           throw new Error(error ?? 'Registration failed');
         }
-        return await res.json() as { id?: string; status?: 'pending' | 'waitlist' };
+        return await res.json() as { id?: string; status?: 'pending' | 'waitlist'; account?: 'created' | 'exists' | 'failed'; linkSent?: boolean };
       };
+      // Which card a registration sent signed out ends on: the check-your-email block only when a confirm link really went;
+      // the already-has-an-account card when the address had one and no link went; otherwise the account-step note.
+      const signedOutFinish = (registered: { account?: string; linkSent?: boolean }, emailNorm: string): Pick<RegistrationConfirmation, 'verifyEmail' | 'note' | 'accountExists'> =>
+        registered.linkSent ? { verifyEmail: emailNorm }
+        : registered.account === 'exists' ? { note: ACCOUNT_EXISTS_NOTE, accountExists: true }
+        : { note: ACCOUNT_STEP_FAILED_NOTE };
 
-      // An account already waiting for its email (made by this form when Step 1's check was busy, or earlier and never
-      // opened): the registration goes in signed out, and a fresh link opens it in the portal. Remembered, so a retry
-      // after a failed registration comes back here rather than to a sign-in that cannot succeed yet.
       // The success card for a registration sent signed out: the link opens it in the coach's portal.
-      const showVerifySuccess = (registered: { id?: string; status?: 'pending' | 'waitlist' }, joinHref: string, extra: Pick<RegistrationConfirmation, 'verifyEmail' | 'note'>) => {
+      const showVerifySuccess = (registered: { id?: string; status?: 'pending' | 'waitlist' }, joinHref: string, extra: Pick<RegistrationConfirmation, 'verifyEmail' | 'note' | 'accountExists'>) => {
         const status = registered.status === 'waitlist' ? 'waitlist' : isWaitlist ? 'waitlist' : 'pending';
         setConfirmation({ id: registered.id, status, joinHref, ...extra });
         setStep('success');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       };
+      // An account already waiting for its email (made by this form when Step 1's check was busy, or earlier and never
+      // opened): the registration goes in signed out, and its email carries a fresh link that opens it in the portal.
+      // Remembered, so a retry after a failed registration comes back here rather than to a sign-in that cannot succeed yet.
       const registerForWaitingAccount = async (emailNorm: string) => {
         setVerifies(true);
         setWaitingEmail(emailNorm);
-        const registered = await postRegistration();
-        const portalNext = registrationPortalPath(registered.id, emailNorm);
-        await requestVerificationLink({ email: emailNorm, next: portalNext, continueName: form.teamName.trim() }).catch(() => null);
-        showVerifySuccess(registered, portalNext, { verifyEmail: emailNorm });
+        const registered = await postRegistration(true);
+        showVerifySuccess(registered, registrationPortalPath(registered.id), signedOutFinish(registered, emailNorm));
       };
 
       // VERIFY EVERY SIGN-UP (owner 2026-10-16, V2): a new coach's registration goes to the organizer FIRST, signed
-      // out; then the account is made to wait for its email, and the link opens this registration in their portal
-      // (through the join page, which links it). The organizer never waits on the coach's inbox.
+      // out; then the server makes the account wait for its email, in the same request, and the coach's one email
+      // carries the link that opens this registration in their portal (through the join page, which links it).
+      // The organizer never waits on the coach's inbox (Signed-in family accounts Stage 2, Part 4: one email, not two).
       if (!signedIn && verifies) {
         const emailNorm = form.email.trim().toLowerCase();
         setErrorMsg('');
@@ -694,33 +706,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
           await registerForWaitingAccount(emailNorm);
           return;
         }
-        const registered = await postRegistration();
-        const portalNext = registrationPortalPath(registered.id, emailNorm);
-        const signupRes = await fetch('/api/auth/coach-signup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: emailNorm,
-            password: form.password,
-            firstName: form.firstName.trim(),
-            lastName: form.lastName.trim(),
-            next: portalNext,
-            continueName: form.teamName.trim(),
-          }),
-        }).catch(() => null);
-        const created = signupRes?.ok ? await signupRes.json().catch(() => ({})) as { requiresEmailVerification?: boolean } : null;
-        if (created?.requiresEmailVerification) {
-          showVerifySuccess(registered, portalNext, { verifyEmail: emailNorm });
-        } else if (signupRes?.status === 409) {
-          // The account may be one still waiting for its email (made on an earlier visit, never opened): the resend
-          // sends only to a waiting account and answers the same either way, so it reveals nothing the 409 didn't.
-          await requestVerificationLink({ email: emailNorm, next: portalNext, continueName: form.teamName.trim() }).catch(() => null);
-          showVerifySuccess(registered, portalNext, { note: 'This email already has a FieldLogicHQ account. Sign in to see this registration in your Coaches Portal. If you never opened its verification email, we’ve sent the link again.' });
-        } else if (!signupRes?.ok) {
-          showVerifySuccess(registered, portalNext, { note: 'We couldn’t set up your Coaches Portal account just now. The link in your registration email opens it.' });
-        } else {
-          showVerifySuccess(registered, portalNext, {});
-        }
+        const registered = await postRegistration(true);
+        showVerifySuccess(registered, registrationPortalPath(registered.id), signedOutFinish(registered, emailNorm));
         return;
       }
 
@@ -916,6 +903,9 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   const homeHref = orgHref(`/${tournamentSlug}`);
   const scheduleHref = orgHref(`/${tournamentSlug}/schedule`);
   const rulesHref = orgHref(`/${tournamentSlug}/rules`);
+  // The finish screen's sign-in returns through the join link, which opens the registration. No address in it (Signed-in
+  // family accounts Stage 2: the drawing's "the coach's address in a link 1 → 0").
+  const finishSignInHref = confirmation ? www(`/auth/login?next=${encodeURIComponent(confirmation.joinHref)}`) : '';
   const showSchedulePage = Boolean(tournament && isPublicPageEnabled(tournament, 'schedule'));
   const showStandingsPage = Boolean(tournament && isPublicPageEnabled(tournament, 'standings'));
   const showRulesPage = Boolean(tournament && isPublicPageEnabled(tournament, 'rules'));
@@ -1511,10 +1501,12 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                     <VerifyEmailSent
                       tone="register"
                       email={confirmation.verifyEmail}
-                      lead={<>Open the link we sent to see this registration in your Coaches Portal.</>}
+                      heading="Confirm your email to open your portal"
+                      lead={<>Open the link we sent. It works for 1 hour.</>}
                       after={<>You’ll hear from the organizer at this address either way.</>}
                       resendNext={confirmation.joinHref}
                       continueName={form.teamName.trim()}
+                      signInHref={finishSignInHref}
                     />
                   </div>
                 )}
@@ -1555,10 +1547,12 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                         {confirmationEmailEnabled ? 'Watch your email' : 'What happens next'}
                       </span>
                       <span className={styles.successDescInner}>
+                        {/* Names the confirm link only where one went: the inbox holds it, in one email or (a customised
+                            registration email) two. The already-has-an-account and failed cards keep today's words. */}
                         {confirmationEmailEnabled
                           ? (confirmation.status === 'waitlist'
-                              ? 'Check your inbox for your waitlist confirmation. The organizer will reach out if a spot opens'
-                              : 'Check your inbox for your confirmation. The organizer follows up with approval and how to pay')
+                              ? `Check your inbox for your waitlist confirmation${confirmation.verifyEmail ? ' and the link to confirm your email' : ''}. The organizer will reach out if a spot opens`
+                              : `Check your inbox for your confirmation${confirmation.verifyEmail ? ' and the link to confirm your email' : ''}. The organizer follows up with approval and how to pay`)
                           : (confirmation.status === 'waitlist'
                               ? 'The organizer reviews waitlist requests and will reach out if a spot opens'
                               : 'The organizer reviews your registration and will follow up with approval and how to pay')}
@@ -1566,25 +1560,26 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                       </span>
                     </div>
                   </div>
-                  <div className={styles.successItem}>
-                    <CheckCircle size={18} className={styles.successIcon} />
-                    <div>
-                      <span className={styles.successTitleInner}>
-                        {signedInCoachEmail ? 'Track your team' : 'Create your Coaches Portal'}
-                      </span>
-                      <span className={styles.successDescInner}>
-                        {signedInCoachEmail
-                          ? `Follow your team's status, schedule, and updates for ${tournament?.name ?? 'this tournament'}.`
-                          : `Set a password to track your team's status, schedule, and updates for ${tournament?.name ?? 'this tournament'}.`}
-                      </span>
+                  {/* Signed in only (the rare card when the entry came back without an id). A signed-out coach made
+                      their account on the form, so nothing here offers to create one (Stage 2, Part 5). */}
+                  {signedInCoachEmail && (
+                    <div className={styles.successItem}>
+                      <CheckCircle size={18} className={styles.successIcon} />
+                      <div>
+                        <span className={styles.successTitleInner}>Track your team</span>
+                        <span className={styles.successDescInner}>
+                          {`Follow your team's status, schedule, and updates for ${tournament?.name ?? 'this tournament'}.`}
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
+                {/* No big button for a new coach: the one thing left to do is in their inbox. */}
                 <div className={styles.successActions}>
-                  <Link href={www(confirmation.joinHref)} className="btn btn-primary">
-                    {signedInCoachEmail ? 'Open Coaches Portal' : 'Create Coaches Portal Account'}
-                  </Link>
+                  {signedInCoachEmail
+                    ? <Link href={www(confirmation.joinHref)} className="btn btn-primary">Open Coaches Portal</Link>
+                    : confirmation.accountExists && <Link href={finishSignInHref} className="btn btn-primary">Sign in</Link>}
                   {showSchedulePage && <Link href={scheduleHref} className="btn btn-outline">Follow the Schedule</Link>}
                   {showRulesPage && <Link href={rulesHref} className="btn btn-ghost">Tournament Rules</Link>}
                   <Link href={homeHref} className="btn btn-ghost">Tournament Home</Link>

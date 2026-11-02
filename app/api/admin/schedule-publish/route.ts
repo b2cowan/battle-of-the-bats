@@ -279,7 +279,7 @@ export const POST = withObservability(async (req: Request) => {
                 firstGameLabel,
                 location: g.location,
                 opponentName,
-                portalUrl: coachPortalUrl({ registrationId: team.id, email: team.email ?? undefined }),
+                portalUrl: coachPortalUrl({ registrationId: team.id }),
                 contactEmail,
                 paymentsTracked: tournamentTracksPayments(tournament.settings),
               }),

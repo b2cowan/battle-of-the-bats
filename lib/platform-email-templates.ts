@@ -109,6 +109,17 @@ export async function resolvePlatformTemplate(
   return data as PlatformEmailTemplate;
 }
 
+/** Has a platform admin customised this email's words? A sender that adds something the template has no place for (the
+ *  registration email's confirm panel, Signed-in family accounts Stage 2, Part 4) asks first. Never throws: an error
+ *  reads as "no", and that sender then sends its own built email, never the template. */
+export async function isPlatformTemplateCustomised(key: EmailKind): Promise<boolean> {
+  try {
+    return (await resolvePlatformTemplate(key))?.is_customised === true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * If the CTA is expressed via the dedicated cta_label / cta_url_pattern columns (as the
  * transactional templates are), append it to the body markup as a `::button` so the one

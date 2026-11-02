@@ -12,6 +12,7 @@ import { teamPayPath } from '@/lib/team-pay-link';
 import { toDollars } from '@/lib/online-payment-fee';
 import { BANK_DEBIT_WORDS as B, PAY_WORDS as W, SCOPE_LINE } from '@/lib/online-payment-words';
 import type { PayScope } from '@/lib/team-pay-options';
+import { isMaskedEmail } from '@/lib/utils';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -72,7 +73,8 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   // 12c: the button pressed decides the rail (each has its own fee and its own Checkout).
   const rail: 'card' | 'bank_debit' = body.rail === 'bank_debit' ? 'bank_debit' : 'card';
   const shownTotalCents = Number(body.totalCents);
-  const email = typeof body.email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email.trim()) ? body.email.trim() : null;
+  // A masked address (the page shows the one on file masked) is text, never a receipt address: fall back to the file.
+  const email = typeof body.email === 'string' && !isMaskedEmail(body.email) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email.trim()) ? body.email.trim() : null;
 
   const facts = await loadTeamPayFacts(teamId);
   if (!facts) return NextResponse.json({ error: W.error.linkInvalid }, { status: 404 });

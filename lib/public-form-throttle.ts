@@ -19,12 +19,19 @@ const ipLimiter = new FixedWindowRateLimiter(60 * MINUTE, 30);        // per sou
 const globalLimiter = new FixedWindowRateLimiter(5 * MINUTE, 150);    // ceiling across all callers
 const recipientLimiter = new FixedWindowRateLimiter(60 * MINUTE, 8);  // per guardian email — caps mail to one inbox
 
-const TOO_MANY = 'Too many attempts. Please wait a few minutes and try again.';
+/** The one refusal sentence every public form shows. Exported so a test can pin that no form words it differently. */
+export const TOO_MANY = 'Too many attempts. Please wait a few minutes and try again.';
 
 // The early-access lead form has buckets of its own (Stage 7 Part 8 review): it is the one public form anyone can aim at a
 // stranger's address, and its traffic must never spend the family registration forms' budget.
 const leadIpLimiter = new FixedWindowRateLimiter(60 * MINUTE, 30);
 const leadGlobalLimiter = new FixedWindowRateLimiter(5 * MINUTE, 150);
+
+// The tournament Register form has buckets of its own too (Signed-in family accounts Stage 2, ask 4): same numbers and words as
+// the family forms, but a coach registering a team must never spend a family's budget, nor the other way round.
+const registerIpLimiter = new FixedWindowRateLimiter(60 * MINUTE, 30);
+const registerGlobalLimiter = new FixedWindowRateLimiter(5 * MINUTE, 150);
+const registerRecipientLimiter = new FixedWindowRateLimiter(60 * MINUTE, 8);
 
 /** Call first thing in the handler. Returns a 429 to send back, or null to carry on. */
 export function throttlePublicForm(req: Request): NextResponse | null {
@@ -37,6 +44,22 @@ export function throttlePublicForm(req: Request): NextResponse | null {
 /** Call first thing in the early-access lead form's handler: the same shape as `throttlePublicForm`, its own buckets. */
 export function throttleLeadForm(req: Request): NextResponse | null {
   if (!leadIpLimiter.take(clientIpFrom(req)) || !leadGlobalLimiter.take('global')) {
+    return NextResponse.json({ error: TOO_MANY }, { status: 429 });
+  }
+  return null;
+}
+
+/** Call first thing in the tournament Register handler: the same shape as `throttlePublicForm`, its own buckets. */
+export function throttleRegisterForm(req: Request): NextResponse | null {
+  if (!registerIpLimiter.take(clientIpFrom(req)) || !registerGlobalLimiter.take('global')) {
+    return NextResponse.json({ error: TOO_MANY }, { status: 429 });
+  }
+  return null;
+}
+
+/** Call once the registrant's email is known, before anything is written or sent: at most 8 registrations an hour per address. */
+export function throttleRegisterRecipient(email: string): NextResponse | null {
+  if (!registerRecipientLimiter.take(email.trim().toLowerCase())) {
     return NextResponse.json({ error: TOO_MANY }, { status: 429 });
   }
   return null;

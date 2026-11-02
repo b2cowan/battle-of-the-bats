@@ -20,7 +20,7 @@ describe('one rule', () => {
     assert.match(lib, /export function shouldRequireEmailVerification\(\): boolean \{\s*const explicit = process\.env\.REQUIRE_SIGNUP_EMAIL_VERIFICATION;\s*if \(explicit !== undefined\) return explicit === 'true';\s*return process\.env\.NODE_ENV === 'production';/);
   });
   it('every sign-up reads it; none keeps a copy', () => {
-    for (const f of ['app/api/auth/signup/route.ts', 'app/api/auth/team-signup/route.ts', 'app/api/auth/coach-signup/route.ts', 'app/api/auth/resend-verification/route.ts', 'app/api/register/account-check/route.ts']) {
+    for (const f of ['app/api/auth/signup/route.ts', 'app/api/auth/team-signup/route.ts', 'app/api/auth/coach-signup/route.ts', 'app/api/auth/resend-verification/route.ts', 'app/api/register/account-check/route.ts', 'app/api/register/route.ts']) {
       const src = readCode(f);
       assert.doesNotMatch(src, /function shouldRequireEmailVerification\(/, `${f} keeps no copy`);
       assert.match(src, /shouldRequireEmailVerification[,\s}][\s\S]*from '@\/lib\/signup-verification'/, `${f} imports the rule`);
@@ -31,17 +31,19 @@ describe('one rule', () => {
     // next step); a customised template escapes its variables itself, so it gets the raw name
     assert.match(lib, /defaultHtml: signupVerificationHtml\(\{\s*verifyUrl,\s*firstName: p\.firstName \? escapeHtml\(p\.firstName\) : undefined,\s*nextStep: verificationNextStep\(\{ door: p\.door, next: p\.next, registration: p\.registration \}\),\s*\}\),/);
     assert.match(lib, /vars: \{ verifyUrl, orgName: continueName \?\? 'your account' \},/);
-    assert.match(lib, /`\$\{p\.origin\}\/auth\/signup-confirm\?link=\$\{encodeURIComponent\(p\.actionLink\)\}`/);
+    assert.match(lib, /return `\$\{origin\}\/auth\/signup-confirm\?link=\$\{encodeURIComponent\(actionLink\)\}`;/);
+    assert.match(lib, /const verifyUrl = signupConfirmUrl\(p\.origin, p\.actionLink\);/);
     // a start door's step 2 first (Account-First Sign-up, 2026-10-18), else a same-site path
     assert.match(lib, /return safeNextPath\(next, door \? startDoorLinkPath\(door\) : fallback\);/);
   });
   it('every sign-up sends the verification email through the one helper (simplify 2026-10-17)', () => {
-    for (const f of ['app/api/auth/signup/route.ts', 'app/api/auth/team-signup/route.ts', 'app/api/auth/coach-signup/route.ts', 'app/api/auth/resend-verification/route.ts']) {
+    // The tournament registration makes its account itself since Signed-in family accounts Stage 2, Part 4.
+    for (const f of ['app/api/auth/signup/route.ts', 'app/api/auth/team-signup/route.ts', 'app/api/auth/coach-signup/route.ts', 'app/api/auth/resend-verification/route.ts', 'app/api/register/route.ts', 'lib/registration-account.ts']) {
       const src = readCode(f);
       assert.doesNotMatch(src, /signup-confirm\?link=/, `${f} builds no confirm link of its own`);
       assert.doesNotMatch(src, /key: 'signup_verification'/, `${f} sends no verification email of its own`);
       assert.doesNotMatch(src, /\/auth\/callback\?next=/, `${f} builds no callback URL of its own`);
-      assert.match(src, /sendSignupVerificationEmail\(/, `${f} uses the helper`);
+      if (f !== 'lib/registration-account.ts') assert.match(src, /sendSignupVerificationEmail\(/, `${f} uses the helper`);
     }
   });
 });
@@ -68,7 +70,7 @@ describe('the coach sign-up', () => {
   });
   it('refuses a staff address and keeps its throttle', () => {
     assert.ok(at(route, 'if (await isPlatformAdminEmail(email))') < at(route, "type: 'signup',"));
-    assert.ok(at(route, "if (!ipLimiter.take(ip) || !emailLimiter.take(email) || !globalLimiter.take('global'))") < at(route, "type: 'signup',"));
+    assert.ok(at(route, 'if (!takeCoachSignupBudget(ip, email))') < at(route, "type: 'signup',"));
   });
 });
 
@@ -133,11 +135,12 @@ describe('the screens', () => {
     const src = readCode('components/public/RegisterContent.tsx');
     assert.match(src, /if \(signInErr === 'email_not_confirmed'\) \{\s*await registerForWaitingAccount\(emailNorm\);\s*return;/);
     assert.match(src, /if \(waitingEmail === emailNorm\) \{\s*await registerForWaitingAccount\(emailNorm\);/);
-    // the three ways to reach a waiting account share one answer: registration, then a fresh link
+    // the three ways to reach a waiting account share one answer: the registration, whose email carries a fresh link
+    // (Signed-in family accounts Stage 2, Part 4: the server makes it in the same request, so no second call)
     assert.equal([...src.matchAll(/await registerForWaitingAccount\(emailNorm\);/g)].length, 3);
     const helper = src.slice(at(src, 'const registerForWaitingAccount = async'), at(src, 'if (!signedIn && verifies) {'));
-    assert.ok(at(helper, 'setWaitingEmail(emailNorm);') < at(helper, 'await postRegistration();'), 'remembered before the registration can fail');
-    assert.ok(at(helper, 'await postRegistration();') < at(helper, 'requestVerificationLink('), 'registration first (V2)');
+    assert.ok(at(helper, 'setWaitingEmail(emailNorm);') < at(helper, 'await postRegistration(true);'), 'remembered before the registration can fail');
+    assert.doesNotMatch(helper, /requestVerificationLink\(/, 'no separate link email');
     // the check-your-email address rides on the confirmation, so it can't outlive the registration it belongs to
     assert.match(src, /email=\{confirmation\.verifyEmail\}/);
     assert.doesNotMatch(src, /setVerifyEmail|setSuccessNote/, 'no separate verify/note state');
@@ -148,11 +151,13 @@ describe('the screens', () => {
   it('the tournament form: the registration goes FIRST, then the waiting account (V2); the card says check your email', () => {
     const src = readCode('components/public/RegisterContent.tsx');
     assert.match(src, /setVerifies\(data\.verifies === true\);/);
-    const branch = src.slice(at(src, 'if (!signedIn && verifies) {'));
-    assert.ok(at(branch, 'const registered = await postRegistration();') < at(branch, "fetch('/api/auth/coach-signup'"), 'registration before the account');
-    assert.match(branch, /next: portalNext,\s*continueName: form\.teamName\.trim\(\),/);
+    // Signed-in family accounts Stage 2, Part 4: one post carries the account too, and /api/register makes it AFTER the
+    // entry (registration-one-email.test.ts pins the server's order). The form calls the sign-up only where
+    // verification is off, and there it signs in before registering.
+    const branch = src.slice(at(src, 'if (!signedIn && verifies) {'), at(src, 'if (!signedIn) {'));
+    assert.match(branch, /const registered = await postRegistration\(true\);/);
+    assert.doesNotMatch(branch, /\/api\/auth\/coach-signup|requestVerificationLink\(/, 'no second call, so no second email');
     assert.match(src, /<VerifyEmailSent\s+tone="register"/);
-    assert.match(src, /function registrationPortalPath\(registrationId: string \| undefined, email: string\): string \{/);
     assert.equal([...src.matchAll(/new FormData\(\)/g)].length, 1, 'one registration post, shared by both paths');
   });
   it('the org sign-up shows the same block, with resend (V3)', () => {

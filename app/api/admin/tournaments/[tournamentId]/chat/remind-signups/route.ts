@@ -203,7 +203,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
 
   const results = await Promise.allSettled(targets.map(async (team) => {
     const email = (team.email ?? '').trim().toLowerCase();
-    const joinUrl = `${origin}/coaches/join?registrationId=${encodeURIComponent(team.teamId)}&email=${encodeURIComponent(email)}&next=${encodeURIComponent('/coaches/tournaments')}`;
+    const joinUrl = `${origin}/coaches/join?registrationId=${encodeURIComponent(team.teamId)}&next=${encodeURIComponent('/coaches/tournaments')}`;
     return sendEmail(
       email,
       `Your FieldLogicHQ registration dashboard — ${team.teamName}`,

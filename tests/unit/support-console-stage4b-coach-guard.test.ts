@@ -182,7 +182,7 @@ describe('Part 6 · Keep Premium attaches to the same portal (Q11-2)', () => {
   const keep = readCode('lib/portal-keep-premium.ts');
   it('only a portal named by the checkout, never a tournament claim', () => {
     const find = keep.slice(keep.indexOf('export async function findKeepPremiumPortal'), keep.indexOf('export type KeepPremiumResult'));
-    assert.match(find, /if \(input\.claimToken \|\| input\.teamWorkspaceClaimId\) return null;/);
+    assert.match(find, /if \(input\.teamWorkspaceClaimId\) return null;/);
     assert.match(find, /input\.reactivateOrgSlug === org\.slug/);
     assert.match(find, /input\.basicCoachTeamId === ws\.basic_coach_team_id/);
     assert.match(find, /\.eq\('primary_owner_user_id', input\.ownerUserId\)/);

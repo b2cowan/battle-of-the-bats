@@ -1,0 +1,825 @@
+<title>Tournament Registration Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky numbered tabs, one section at a time, framed specimens on a neutral ground. Tournament frames wear the public site's approved light look (Public tournament pages Stage 1); the account page wears the app's warm frame; emails wear the shipped warm card. */
+:root {
+  --bg: #E7E9EC;
+  --panel: #F6F7F8;
+  --fg: #1B2330;
+  --muted: #566073;
+  --line: #CBD0D8;
+  --accent: #2F4B7C;
+  --accent-ink: #FFFFFF;
+  --good: #1F6B3A;
+  --warn: #8A5A00;
+  --bad: #A8321F;
+  --pin: #A8321F;
+  --stage: #B9B6AD;
+  --scrim: rgba(10, 14, 20, 0.45);
+
+  /* Public tournament frame (plan §4 tokens). Same in both page themes: the frame is a specimen. */
+  --t-ground: #F6F5F2;
+  --t-card: #FFFFFF;
+  --t-ink: #1F1B16;
+  --t-soft: #4E473D;
+  --t-line: #E4E0D8;
+  --t-line2: #D6D0C4;
+  --t-dim: #6F675B;
+  --t-ok: #2C6A2A;
+  --t-bad: #B03A22;
+  --org: #1E3A8A;
+  --org-on: #FFFFFF;
+  --org-ink: #1E3A8A;
+  --org-accent: #E2B33C;
+
+  /* App account frame (AccountForm, warm home kit). */
+  --h-ground: #F6F1EA;
+  --h-ink: #241E15;
+  --h-soft: #4A4235;
+  --h-dim: #615A54;
+  --h-line: rgba(70, 55, 30, 0.12);
+  --h-field: #948B7D;
+  --h-olive: #57651E;
+  --h-lime: #D6F58C;
+
+  /* Warm email (email-envelope-warm.ts). */
+  --e-ground: #F6F1EA;
+  --e-card: #FFFFFF;
+  --e-edge: #DAD3C9;
+  --e-ink: #211C15;
+  --e-soft: #665F57;
+  --e-olive: #55641C;
+  --e-lime: #D9F99D;
+
+  --font-ui: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-text: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-title: "Barlow Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161D; --panel: #1B212B; --fg: #E6E9EF; --muted: #A2ABBB; --line: #333C4B;
+    --accent: #8FB0F0; --accent-ink: #0E1522; --good: #6CCB8C; --warn: #E0B050; --bad: #F08A78; --pin: #E0604A;
+    --stage: #5D5B55; --scrim: rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161D; --panel: #1B212B; --fg: #E6E9EF; --muted: #A2ABBB; --line: #333C4B;
+  --accent: #8FB0F0; --accent-ink: #0E1522; --good: #6CCB8C; --warn: #E0B050; --bad: #F08A78; --pin: #E0604A;
+  --stage: #5D5B55; --scrim: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-ui); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 1000px; margin: 0 auto; }
+
+header.top { padding: 22px 0 10px; }
+header.top h1 { margin: 0 0 4px; font-size: 22px; line-height: 1.2; text-wrap: balance; }
+header.top p { margin: 0; color: var(--muted); max-width: 74ch; }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); padding: 8px 0 0; border-bottom: 1px solid var(--line); }
+.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex: 0 0 auto; border: 1px solid transparent; border-bottom: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 600; padding: 9px 14px; border-radius: 8px 8px 0 0; cursor: pointer; white-space: nowrap; }
+.tab:hover { color: var(--fg); }
+.tab[aria-selected="true"] { background: var(--panel); color: var(--fg); border-color: var(--line); margin-bottom: -1px; }
+button:focus-visible, .opt:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.viewrow { display: flex; align-items: center; gap: 12px; padding: 12px 0 4px; flex-wrap: wrap; }
+.viewrow .lab { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.seg { display: inline-flex; background: #FFFFFF; border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: #4A4235; padding: 6px 14px; border-radius: 8px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: #EDEBE3; color: #241E15; box-shadow: 0 0 0 1px rgba(70,55,30,0.18); }
+
+section.pane { display: none; padding: 14px 0 0; }
+section.pane.on { display: block; }
+.say { max-width: 76ch; margin: 6px 0 14px; }
+.say h2 { margin: 0 0 4px; font-size: 18px; text-wrap: balance; }
+.say p { margin: 0 0 8px; color: var(--muted); }
+.found { background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--pin); border-radius: 8px; padding: 12px 16px; margin: 0 0 16px; max-width: 80ch; }
+.found.settled { border-left-color: var(--good); }
+.found h3 { margin: 0 0 6px; font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.found ol, .found ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.found li { color: var(--fg); }
+.found li span { color: var(--muted); }
+
+.cap { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 18px 0 8px; }
+.cap h3 { margin: 0; font-size: 15px; }
+.tag { font: inherit; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; padding: 2px 9px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); cursor: pointer; }
+.tag.new { color: var(--good); border-color: var(--good); }
+.tag.rest { color: var(--warn); border-color: var(--warn); }
+.tag.bad { color: var(--bad); border-color: var(--bad); }
+.tag:hover { filter: brightness(0.95); }
+
+.pin { display: inline-grid; place-items: center; vertical-align: middle; width: 22px; height: 22px; margin-left: 6px; border-radius: 50%; border: 2px solid #FFFFFF; background: var(--pin); color: #FFFFFF; font: 700 11px/1 system-ui, sans-serif; cursor: pointer; padding: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.pin:hover { transform: scale(1.12); }
+
+.scroll { overflow-x: auto; border-radius: 10px; }
+.stage { background: var(--stage); padding: 26px 30px; width: 860px; max-width: none; border-radius: 10px; }
+.stage.phone { width: 430px; padding: 22px 20px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.pair > div { min-width: 0; }
+.pair .stage { width: auto; min-width: 400px; padding: 18px; }
+.pair .stage.phone { width: 430px; min-width: 430px; padding: 22px 20px; }
+@media (max-width: 820px) { .pair { grid-template-columns: 1fr; } }
+.measure { display: flex; gap: 6px 18px; flex-wrap: wrap; margin-top: 10px; font-size: 13px; color: var(--muted); max-width: 90ch; }
+.measure b { color: var(--fg); }
+
+.diff [data-same] { opacity: 0.16; filter: grayscale(1); transition: opacity .15s; }
+
+/* ── Public tournament frame (approved light look) + register.module.css success card ── */
+.tf { background: var(--t-ground); color: var(--t-ink); font-family: var(--font-text); font-size: 15px; line-height: 1.6; border-radius: 10px; overflow: hidden; box-shadow: 0 12px 36px rgba(20, 24, 30, 0.25); }
+.tf-band { background: var(--org); color: var(--org-on); min-height: 72px; display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 3px solid var(--org-accent); }
+.tf-logo { width: 44px; height: 44px; border-radius: 10px; background: var(--org-on); color: var(--org); display: grid; place-items: center; font-family: var(--font-text); font-weight: 700; font-size: 16px; letter-spacing: 0.02em; flex: 0 0 auto; }
+.tf-name { font-family: var(--font-title); font-weight: 700; font-size: 20px; line-height: 1.1; }
+.tf-line { font-size: 12px; font-weight: 500; margin-top: 2px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; line-height: 1.3; }
+.tf-line .sep { opacity: 0.7; }
+.tf-line .st { font-weight: 600; }
+.tf-right { margin-left: auto; display: flex; gap: 16px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.tf-tabs { background: var(--t-card); border-bottom: 1px solid var(--t-line); display: flex; gap: 4px; padding: 0 16px; height: 44px; align-items: stretch; font-size: 14px; font-weight: 600; color: var(--t-dim); overflow: hidden; }
+.tf-tabs span { display: flex; align-items: center; white-space: nowrap; padding: 0 10px; }
+.tf-tabs .on { color: var(--t-ink); box-shadow: inset 0 -3px 0 var(--t-ink); }
+.tf-main { padding: 28px 28px 34px; }
+.tf-col { max-width: 640px; margin: 0 auto; }
+.tf-card { background: var(--t-card); border: 1px solid var(--t-line); border-radius: 12px; text-align: center; padding: 48px 32px; }
+.tf-ico { width: 44px; height: 44px; margin: 0 auto 16px; display: block; color: var(--t-ok); }
+.tf-ico.bad { width: 40px; height: 40px; color: var(--t-bad); }
+.tf-title { font-family: var(--font-title); font-weight: 700; font-size: 32px; line-height: 1.05; color: var(--t-ok); margin: 0 0 16px; text-wrap: balance; }
+.tf-title.ink { color: var(--t-ink); font-size: 24px; margin: 0 0 12px; }
+.tf-text { font-size: 16.8px; color: var(--t-dim); margin: 0 0 24px; text-wrap: pretty; }
+.tf-text b { color: var(--t-ink); }
+.tf-verify { max-width: 30rem; margin: 0 auto 24px; text-align: left; display: grid; gap: 12px; }
+.tf-verify .lead { margin: 0; color: var(--t-dim); font-size: 15.2px; }
+.tf-verify .after { margin: 0; color: var(--t-dim); font-size: 13.6px; }
+.tf-verify .head { margin: 0; color: var(--t-ink); font-size: 17px; font-weight: 700; line-height: 1.35; }
+.tf-sent { background: rgba(44, 106, 42, 0.07); border: 1px solid rgba(44, 106, 42, 0.25); color: var(--t-ok); border-radius: 6px; padding: 10px 14px; font-size: 14.4px; font-weight: 400; overflow-wrap: anywhere; }
+.tf-resend { min-height: 44px; border: 1px solid rgba(44, 106, 42, 0.35); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14.4px; color: var(--t-ink); background: transparent; }
+.tf-vfoot { margin-top: 8px; padding-top: 14px; border-top: 1px solid rgba(44, 106, 42, 0.2); font-size: 13.6px; color: var(--t-dim); text-align: right; }
+.tf-vfoot b { color: var(--t-ok); font-weight: 700; }
+.tf-motion { display: inline-flex; align-items: center; gap: 8px; margin: 0 auto 24px; padding: 7px 16px; background: transparent; border: 1px solid var(--t-line); border-radius: 999px; font-size: 14.4px; color: var(--org-ink); font-weight: 700; }
+.tf-motion svg { width: 16px; height: 16px; flex: 0 0 auto; }
+.tf-row svg { width: 18px; height: 18px; flex: 0 0 auto; }
+.tf-rows { text-align: left; display: grid; gap: 16px; margin: 24px 0; }
+.tf-row { display: flex; gap: 16px; align-items: flex-start; }
+.tf-row > svg { color: var(--org-ink); margin-top: 4px; }
+.tf-row b { display: block; font-weight: 700; color: var(--t-ink); margin-bottom: 2px; }
+.tf-row span { font-size: 13.6px; color: var(--t-dim); line-height: 1.4; }
+.tf-row .tf-btn { margin-top: 10px; }
+.tf-row.gone b, .tf-row.gone span { text-decoration: line-through; text-decoration-color: var(--t-bad); }
+.tf-acts { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; border-top: 1px solid var(--t-line); padding-top: 20px; margin-top: 24px; }
+.tf-btn { border-radius: 6px; font-family: var(--font-title); font-weight: 700; font-size: 16px; line-height: 1.2; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border: 1px solid var(--t-line2); background: #FFFFFF; color: var(--t-ink); white-space: nowrap; }
+.tf-btn.primary { background: var(--org); border-color: var(--org); color: var(--org-on); }
+.tf-btn.outline { background: #FFFFFF; border-color: var(--org); color: var(--t-ink); }
+.tf-btn.sm { min-height: 36px; font-size: 14px; padding: 6px 12px; }
+.tf-btn.gone { text-decoration: line-through; text-decoration-color: var(--t-bad); outline: 2px dashed var(--t-bad); outline-offset: 2px; }
+.tf-btn svg { width: 15px; height: 15px; }
+.tf-foot { border-top: 1px solid var(--t-line); background: var(--t-card); padding: 14px 24px; font-size: 13px; color: var(--t-dim); display: flex; gap: 8px 18px; flex-wrap: wrap; }
+.tf.phone .tf-band { padding: 10px 16px; gap: 10px; }
+.tf.phone .tf-right .sh { display: none; }
+.tf.phone .tf-tabs { padding: 0 6px; }
+.tf.phone .tf-main { padding: 14px 12px 22px; }
+.tf.phone .tf-acts .tf-btn { width: 100%; min-height: 44px; }
+.tf.phone .tf-foot { padding: 12px 16px; }
+
+/* ── App account frame (AccountForm: StartColumn, StartHead, fields, lime primary) ── */
+.hf { background: var(--h-ground); color: var(--h-ink); font-family: var(--font-text); border-radius: 10px; overflow: hidden; box-shadow: 0 12px 36px rgba(20, 24, 30, 0.25); }
+.hf-bar { height: 56px; display: flex; align-items: center; gap: 8px; padding: 0 22px; border-bottom: 1px solid var(--h-line); font-family: var(--font-text); font-size: 17px; }
+.hf-mark { width: 22px; height: 22px; border-radius: 6px; background: var(--h-olive); flex: 0 0 auto; }
+.hf-bar b { font-weight: 700; color: var(--h-ink); }
+.hf-bar i { font-style: normal; font-weight: 600; color: var(--h-olive); margin-left: -8px; }
+.hf-nav { margin-left: auto; display: flex; gap: 18px; align-items: center; font-size: 14px; font-weight: 600; color: var(--h-soft); }
+.hf-pill { border: 1px solid rgba(70, 55, 30, 0.28); border-radius: 99px; padding: 5px 14px; color: var(--h-ink); }
+.hf.phone .hf-nav .nl { display: none; }
+.hf-page { padding: 34px 22px 40px; display: flex; justify-content: center; }
+.hf-col { width: 100%; max-width: 420px; display: grid; gap: 14px; }
+.hf-head { text-align: center; padding-bottom: 16px; border-bottom: 1px solid var(--h-line); }
+.hf-title { font-family: var(--font-title); font-weight: 700; font-size: 32px; line-height: 1.05; margin: 4px 0 8px; text-wrap: balance; }
+.hf-sub { font-size: 16px; line-height: 1.45; color: var(--h-dim); margin: 0; text-wrap: pretty; }
+.hf-sub b { color: var(--h-ink); font-weight: 600; }
+.hf-field { display: grid; gap: 6px; }
+.hf-field label { font-size: 14px; font-weight: 600; color: var(--h-soft); }
+.hf-input { height: 48px; border: 1px solid var(--h-field); border-radius: 10px; background: #FFFFFF; padding: 0 14px; display: flex; align-items: center; font-size: 16px; color: var(--h-ink); }
+.hf-input.ph { color: #8F877C; }
+.hf-primary { min-height: 48px; border-radius: 10px; background: var(--h-lime); color: var(--h-ink); font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+.hf-foot { text-align: center; font-size: 14px; color: var(--h-dim); border-top: 1px solid var(--h-line); min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap; }
+.hf-foot u { color: var(--h-olive); text-decoration: none; font-weight: 600; }
+.hf.phone .hf-page { padding: 22px 16px 28px; }
+.hf.phone .hf-title { font-size: 28px; }
+
+/* ── Warm email (email-envelope-warm.ts, the platform card: wordmark, no club band) ── */
+.em { background: var(--e-ground); padding: 24px 8px; border-radius: 10px; font-family: Arial, Helvetica, sans-serif; color: var(--e-ink); font-size: 16px; line-height: 1.55; }
+.em-meta { font-size: 13px; color: var(--e-soft); margin: 0 auto 10px; max-width: 600px; }
+.em-meta b { color: var(--e-ink); }
+.em-card { background: var(--e-card); border: 1px solid #C9C1B2; border-radius: 12px; max-width: 600px; margin: 0 auto; padding: 28px 26px; }
+.em-word { font-size: 18px; margin: 0 0 22px; }
+.em-word b { font-weight: 700; }
+.em-word i { font-style: normal; color: var(--e-olive); }
+.em-card h4 { margin: 0 0 16px; font-size: 22.4px; line-height: 1.25; }
+.em-card h4.h1 { font-size: 24px; line-height: 1.2; margin: 0 0 14px; }
+.em-card p { margin: 0 0 12px; }
+.em-card.raw > p { margin: 0 0 16px; line-height: normal; }
+.em-panel { background: var(--e-ground); border: 1px solid var(--e-edge); border-left: 3px solid var(--e-soft); padding: 20px; margin: 24px 0; }
+.em-panel.olive { border-left-color: var(--e-olive); }
+.em-panel .lab { font-size: 16px; font-weight: 700; margin: 0 0 8px; }
+.em-panel p { margin: 0 0 10px; }
+.em-panel p:last-child { margin-bottom: 0; }
+.em-panel .facts { line-height: 1.8; }
+.em-btn { display: inline-block; background: var(--e-lime); border: 1px solid var(--e-olive); border-radius: 10px; padding: 14px 26px; font-weight: 700; font-size: 16px; line-height: 1.2; color: var(--e-ink); margin: 6px 0 18px; }
+.em-small { font-size: 13px; color: var(--e-soft); }
+.em-foot { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--e-edge); font-size: 14px; }
+.em-foot a { color: var(--e-olive); font-weight: 700; text-decoration: underline; }
+.em-gone { text-decoration: line-through; text-decoration-color: var(--bad); }
+.em.phone { padding: 24px 8px; }
+.em.phone .em-card { padding: 22px 18px; }
+
+/* the address-in-the-link strip */
+.url { font-family: var(--font-mono); font-size: 13px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; overflow-wrap: anywhere; color: var(--muted); }
+.url mark { background: transparent; color: var(--bad); font-weight: 700; text-decoration: underline wavy; text-decoration-color: var(--bad); }
+.url .k { color: var(--fg); }
+
+/* tables on the page itself */
+.tbl { overflow-x: auto; }
+.tbl table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+.tbl th { text-align: left; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 9px 12px; border-bottom: 1px solid var(--line); }
+.tbl td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl .off { color: var(--muted); }
+.tbl .chg { color: var(--good); font-weight: 600; }
+.tbl .gone { color: var(--bad); }
+
+/* asks */
+.ask { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 0 0 12px; scroll-margin-top: 90px; }
+.ask.flash { box-shadow: 0 0 0 3px var(--pin); }
+.ask h3 { margin: 0 0 2px; font-size: 16px; }
+.ask > p { margin: 0 0 10px; color: var(--muted); max-width: 76ch; }
+.ask .see { font: inherit; font-size: 13px; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.opts { display: grid; gap: 8px; }
+.opt { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; cursor: pointer; background: var(--bg); }
+.opt:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.opt input { margin: 3px 0 0; }
+.opt b { display: block; }
+.opt span { color: var(--muted); font-size: 14px; }
+.rec { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: var(--good); margin-left: 6px; }
+.ask textarea { width: 100%; min-height: 54px; margin-top: 8px; font: inherit; font-size: 14px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.copy { margin-top: 6px; font: inherit; font-weight: 700; padding: 10px 18px; border-radius: 8px; border: 0; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+#answers { width: 100%; min-height: 170px; margin-top: 10px; font: 13px/1.45 var(--font-mono); background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+.note { color: var(--muted); font-size: 13px; margin-top: 8px; }
+
+/* explanation box */
+.nb-scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 50; display: grid; place-items: center; padding: 16px; }
+.nb { background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 12px; max-width: 520px; width: 100%; padding: 18px 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+.nb h3 { margin: 0 0 6px; font-size: 16px; }
+.nb p { margin: 0 0 12px; color: var(--fg); }
+.nb .row { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.nb button { font: inherit; font-weight: 700; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+.nb button.go { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } .pin:hover { transform: none; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Tournament registration · Stage 2 drawings</h1>
+    <p>Signed-in family accounts, Stage 2. A tournament coach keeps their account at registration, unchanged. These drawings tidy what surrounds it: the emails a new coach gets, the screen they finish on, the address that rides inside portal links, a limit on the form, and an old claim link that goes. Every pin opens the ask it belongs to; every tag explains itself.</p>
+  </header>
+
+  <div class="bar">
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-tab="email" aria-selected="true">1 · The one email</button>
+      <button class="tab" role="tab" data-tab="every" aria-selected="false">2 · Every coach’s email</button>
+      <button class="tab" role="tab" data-tab="finish" aria-selected="false">3 · The finish screen</button>
+      <button class="tab" role="tab" data-tab="links" aria-selected="false">4 · No address in links</button>
+      <button class="tab" role="tab" data-tab="limit" aria-selected="false">5 · Limit &amp; clean-up</button>
+      <button class="tab" role="tab" data-tab="phone" aria-selected="false">6 · Phone</button>
+      <button class="tab" role="tab" data-tab="asks" aria-selected="false">7 · Asks</button>
+    </div>
+  </div>
+
+  <div class="viewrow" id="viewrow">
+    <span class="lab">View</span>
+    <div class="seg" role="group" aria-label="View">
+      <button type="button" id="vAll" aria-pressed="true">Everything</button>
+      <button type="button" id="vDiff" aria-pressed="false">Show only what differs</button>
+    </div>
+  </div>
+
+  <!-- 1 · THE ONE EMAIL -->
+  <section class="pane on" id="p-email">
+    <div class="say">
+      <h2>A new coach gets one email, and it tells the truth</h2>
+      <p>Today a coach registering for the first time gets two emails within seconds. The first says their portal account “is ready” when it cannot be opened yet. The second, from FieldLogicHQ, asks them to confirm their email. Stage 2 makes them one email: the registration, with the confirm button inside it.</p>
+    </div>
+
+    <div class="found">
+      <h3>What the code says, against the plan</h3>
+      <ol>
+        <li>The confirm email is ours, not the sign-in service’s. <span>It is “Confirm your FieldLogicHQ email”, sent only on the live site. Both emails are ours to merge.</span></li>
+        <li>The registration email is sent before the account exists. <span>The organizer gets the entry first, on purpose, so a failed account never loses a registration. The account is made a moment later, which is why “your account is ready” is never true when it arrives. The build keeps the organizer-first order and sends the coach’s one email after the account step.</span></li>
+        <li>“Your account is ready” goes to every coach, not only new ones. <span>A coach who already has an account, and a manager registering for someone else’s team, get the same sentence (tab 2).</span></li>
+        <li>The confirm button works for one hour. <span>After that it opens sign-in with “That link has expired or was already used. Sign in, or send yourself a new one.” and an “Email me a new link” button. So a keepsake email with an old button does not dead-end.</span></li>
+      </ol>
+    </div>
+
+    <div class="pair">
+      <div>
+        <div class="cap"><h3>Before · email 1 of 2</h3><button class="tag bad" data-note="The registration email. Its green panel says “Your free FieldLogicHQ Coaches Portal account is ready” while the account is still waiting for its email to be confirmed, and its button opens a sign-in the coach cannot pass yet.">NOT TRUE YET</button></div>
+        <div class="scroll"><div class="stage" id="mailRegBefore" style="width:auto; padding:0"></div></div>
+      </div>
+      <div>
+        <div class="cap"><h3>Before · email 2 of 2</h3><button class="tag bad" data-note="Sent seconds later from the account step. It is the only email that can open the portal, but it is the one with less to say, and it lands second.">SECOND EMAIL</button></div>
+        <div class="scroll"><div class="stage" id="mailConfirmBefore" style="width:auto; padding:0"></div></div>
+      </div>
+    </div>
+
+    <div class="cap"><h3>After · the one email</h3>
+      <button class="tag new" data-note="Subject and heading: “We’ve got your registration”, the words the journeys page set as the end state. The registration leads because it is what the coach came to do, and what the organizer’s later emails refer back to.">NEW heading</button>
+      <button class="tag rest" data-note="The green panel keeps its place and changes its job: it now asks the coach to confirm their email, with the “Confirm my email” button from the old second email. The portal’s benefits stay in one sentence so the coach knows why to press it.">RESTYLED panel</button>
+      <button class="tag new" data-note="Two quiet lines from the old confirm email: the one-hour limit, with what happens after it, and “If you didn’t register this team, you can ignore this email.”">NEW small print</button>
+      <button class="tag" data-note="The greeting, the thank-you line, the Registration Details panel and the pending-review sentence with how to pay are unchanged.">UNCHANGED body</button>
+      <button class="pin" data-ask="1" aria-label="Go to ask 1">1</button></div>
+    <div class="scroll"><div class="stage" id="mailOneAfter" style="width:640px; padding:0"></div></div>
+    <div class="measure"><span><b>Emails a new coach gets</b> 2 → 1</span><span><b>Buttons</b> 2 → 1 (“Confirm my email”)</span><span><b>Sentences that aren’t true yet</b> 1 → 0</span><span><b>The coach’s address in a link</b> 2 → 0 (tab 4)</span></div>
+  </section>
+
+  <!-- 2 · EVERY COACH'S EMAIL -->
+  <section class="pane" id="p-every">
+    <div class="say">
+      <h2>Every case, and the coach who already has an account</h2>
+      <p>The merge only applies when the registration also makes the account. Everyone else gets one email today and keeps one, minus the false “is ready” sentence. The organizer’s side does not change: their “New Registration” alert says nothing about the coach’s account, today or after.</p>
+    </div>
+
+    <div class="tbl"><table>
+      <thead><tr><th>Who registers</th><th>Today</th><th>After</th></tr></thead>
+      <tbody>
+        <tr><td>New coach, team goes in</td><td>Two: “Registration Received” (says the account “is ready”) and “Confirm your FieldLogicHQ email”</td><td class="chg">One: “We’ve got your registration”, with Confirm my email (tab 1)</td></tr>
+        <tr><td>New coach, division full (waitlist)</td><td>Two: “Waitlist Confirmation” and “Confirm your FieldLogicHQ email”</td><td class="chg">One: the waitlist email with the same confirm panel</td></tr>
+        <tr><td>Coach already signed in (“Which team?”)</td><td>One: “Registration Received”, with “your account is ready”</td><td class="chg">One: “We’ve got your registration”, with Open your Coaches Portal (drawn below)</td></tr>
+        <tr><td>Manager registering for a head coach</td><td>One, plus “Organizer emails about this registration go to Jordan Lee, your team’s head coach.”</td><td class="chg">Same as the row above, keeping that sentence</td></tr>
+        <tr><td>Address already has an account (step 1 couldn’t check)</td><td>“Registration Received”, plus the confirm link sent again if never opened</td><td class="chg">One email with the confirm panel if the account is still waiting, otherwise the signed-in version</td></tr>
+        <tr><td>Organizer switched off the coach confirmation</td><td>New coach: only “Confirm your FieldLogicHQ email”</td><td class="off">Unchanged. The confirm email still goes; without it the portal can’t open</td></tr>
+        <tr><td>The registration email’s words were customised in platform admin</td><td>The customised email, and the confirm email</td><td class="off">Unchanged: two emails. Custom words have no place for the panel (the head-coach sentence has the same limit today)</td></tr>
+        <tr><td>Invite-only event</td><td>No form, so no email</td><td class="off">Unchanged</td></tr>
+        <tr><td>The organizer</td><td>“New Registration: Lakeshore Lightning (U11)” alert</td><td class="off">Unchanged</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="cap"><h3>After · a coach who already has an account</h3>
+      <button class="tag rest" data-note="The panel keeps “Open your Coaches Portal” and drops “Your free FieldLogicHQ Coaches Portal account is ready”, which this coach already knows. Its link no longer carries their address (tab 4).">RESTYLED panel</button>
+      <button class="tag new" data-note="The same heading and subject as the new coach’s email, so every coach registration email has one name.">NEW heading</button>
+      <button class="pin" data-ask="1" aria-label="Go to ask 1">1</button></div>
+    <div class="scroll"><div class="stage" id="mailSignedAfter" style="width:640px; padding:0"></div></div>
+  </section>
+
+  <!-- 3 · THE FINISH SCREEN -->
+  <section class="pane" id="p-finish">
+    <div class="say">
+      <h2>The finish screen says what’s really next</h2>
+      <p>This is the screen a new coach sees after pressing Register. It already tells them to open the link we sent. What it gets wrong is the big button, “Create Coaches Portal Account”, for the account they made one step earlier, and a row asking them to “Set a password”. Pressed before confirming, that button leads to a sign-in that says “Confirm your email before signing in”.</p>
+    </div>
+
+    <div class="found settled">
+      <h3>Settled by the code, so not asked</h3>
+      <ul>
+        <li>A coach who is already signed in never sees this screen. <span>Register takes them straight to the team’s tournament page in their portal, with its welcome.</span></li>
+        <li>An invite-only event has no form. <span>Its Register address goes to the tournament’s home page.</span></li>
+        <li>The promise is true. <span>On the live site a new coach cannot sign in until they confirm. The registration stands either way: it is with the organizer before the account is made.</span></li>
+        <li>No other project redraws this screen. <span>Public tournament pages Stage 1 only recoloured it for the light ground. The card above the form (closing date, spots taken) belongs to that project and is not drawn here. This stage owns the finish screen.</span></li>
+      </ul>
+    </div>
+
+    <div class="cap"><h3>Before · today, new coach</h3>
+      <button class="tag bad" data-note="“Create Coaches Portal Account” offers to create the account they made on the step before. It opens the join page, which sends an unconfirmed coach to sign in, where they are told to confirm first. Its web address also carries their email.">WRONG BUTTON</button>
+      <button class="tag bad" data-note="“Create your Coaches Portal · Set a password to track your team’s status…” describes the step they just finished.">STALE ROW</button>
+      <button class="tag" data-note="The desk frame is the event site between 901 and 1,023 pixels wide, with the tab row under the band. From 1,024 pixels a white side rail replaces the tab row. The card in the middle is the same at every width, and the card is all this stage changes. Register is a tab only while registration is open, and it comes last.">DESK WIDTH</button></div>
+    <div class="scroll"><div class="stage" id="finishBefore"></div></div>
+
+    <div class="cap"><h3>After · the proposal</h3>
+      <button class="tag rest" data-note="The check-your-email block becomes the one thing to do. It gets a heading, “Confirm your email to open your portal”, and a shorter first line that says the link works for an hour. Its shipped lines stay: “Verification email sent to …”, “You’ll hear from the organizer at this address either way.” and “Send the link again”.">RESTYLED block</button>
+      <button class="tag new" data-note="A quiet “Already confirmed? Sign in” under the block, for the coach who opened the email on their phone and is still looking at this screen on a laptop. The shipped block already has this line; this screen just never turned it on.">NEW sign-in line</button>
+      <button class="tag rest" data-note="“Watch your email” now says the inbox holds the confirm link as well as the confirmation. It stays true whether that is one email or, in the rare customised case, two.">RESTYLED row</button>
+      <button class="tag bad" data-note="The “Create your Coaches Portal” row and the “Create Coaches Portal Account” button go. Nothing replaces them as a big button: the one thing left to do is in the coach’s inbox.">REMOVED</button>
+      <button class="tag" data-note="The tick, “You’re In Motion”, the sentence about the organizer’s review, the countdown, Save the dates and the three tournament buttons are unchanged.">UNCHANGED</button>
+      <button class="pin" data-ask="3" aria-label="Go to ask 3">3</button></div>
+    <div class="scroll"><div class="stage" id="finishAfter"></div></div>
+    <div class="measure"><span><b>Rows</b> 3 → 2</span><span><b>Buttons</b> 4 → 3, none of them a dead end</span><span><b>The coach’s address in a link</b> 1 → 0</span></div>
+
+    <div class="pair" style="margin-top:6px">
+      <div>
+        <div class="cap"><h3>After · waitlist</h3><button class="tag" data-note="The same screen with the waitlist title and sentence it has today. The coach still confirms their email, so the block is the same.">SAME BLOCK</button></div>
+        <div class="scroll"><div class="stage" id="finishWait" style="width:auto"></div></div>
+      </div>
+      <div>
+        <div class="cap"><h3>After · the address already has an account</h3><button class="tag new" data-note="Rare: step 1 could not check the address, so the coach typed a new password for an email that already has an account. The shipped note stays. Under it, one real button, “Sign in”, in place of “Create Coaches Portal Account”.">SIGN IN</button></div>
+        <div class="scroll"><div class="stage" id="finishExists" style="width:auto"></div></div>
+      </div>
+    </div>
+    <div class="measure"><span><b>Organizer switched the confirmation email off</b> the row keeps today’s “What happens next” words, and the confirm block is unchanged: the confirm email still goes</span><span><b>The account step failed (rare)</b> today’s note stays: “We couldn’t set up your Coaches Portal account just now. The link in your registration email opens it.” With no account, that email carries “Open your Coaches Portal”, which creates one. Not drawn: it is a sentence, no new screen</span></div>
+  </section>
+
+  <!-- 4 · NO ADDRESS IN LINKS -->
+  <section class="pane" id="p-links">
+    <div class="say">
+      <h2>No email address inside a portal link</h2>
+      <p>Every tournament coach email that links to the portal writes the coach’s address into the web address. That covers the registration email, the waitlist email, the accepted email, the schedule email, the night-before reminder and the organizer’s invitation. A forwarded email, a shared screenshot or a browser history shows it. Stage 2 takes it out of all of them, not only the registration email.</p>
+      <p>Nothing on this tab or the next two is marked unchanged, so the view switch is hidden there.</p>
+    </div>
+
+    <div class="found">
+      <h3>What the address does today</h3>
+      <ol>
+        <li>It fills in the email box on the join page and on sign-in. <span>A typing saving.</span></li>
+        <li>It lets the join page tell a signed-out visitor “You’re already set up. Sign in to see Lakeshore Lightning.” <span>The page only answers when the address matches the registration, so the address is the proof. Without it, the page cannot know which screen to show.</span></li>
+        <li>It names the invited address when someone opens the link signed in as somebody else. <span>“This invite is for sam.rivera@example.com, but you’re signed in as…”</span></li>
+      </ol>
+    </div>
+
+    <div class="cap"><h3>The link, before → after</h3><button class="tag" data-note="The registration number stays: it is what joins the coach to their entry, and on its own it opens nothing. The join page only links a registration to an account whose email matches it.">THE NUMBER STAYS</button><button class="pin" data-ask="2" aria-label="Go to ask 2">2</button></div>
+    <div style="display:grid; gap:8px; max-width:900px">
+      <div class="url"><span class="k">Before</span> fieldlogichq.com/coaches/join?registrationId=8f2c…&amp;<mark>email=sam.rivera%40example.com</mark>&amp;registered=1&amp;next=…</div>
+      <div class="url"><span class="k">After&nbsp;</span> fieldlogichq.com/coaches/join?registrationId=8f2c…&amp;registered=1&amp;next=…</div>
+    </div>
+
+    <div class="tbl" style="margin-top:14px"><table>
+      <thead><tr><th>Where the address rides today</th><th>After</th></tr></thead>
+      <tbody>
+        <tr><td>The registration email’s button</td><td class="chg">No address</td></tr>
+        <tr><td>The portal line at the foot of every later coach email (waitlist, accepted, schedule, reminders, invitation, …)</td><td class="chg">No address</td></tr>
+        <tr><td>Where the confirm button returns to</td><td class="chg">No address. The confirm link signs the coach in, so the page already knows who they are</td></tr>
+        <tr><td>The finish screen’s button</td><td class="chg">The button goes (tab 3)</td></tr>
+        <tr><td>The join page’s own hand-offs to sign-in</td><td class="chg">No address</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="pair" style="margin-top:6px">
+      <div>
+        <div class="cap"><h3>Before · join page, signed out</h3><button class="tag bad" data-note="Today’s screen for a signed-out coach who already has an account. It can only appear because the address came in the link.">NEEDS THE ADDRESS</button></div>
+        <div class="scroll"><div class="stage" id="joinBefore" style="width:auto"></div></div>
+      </div>
+      <div>
+        <div class="cap"><h3>After · join page, signed out</h3><button class="tag new" data-note="One email box first, the same as the first step of the Register form. Continue checks it against the registration, then shows Sign in or Create account, as today. A coach who is signed in on that device never sees this: they go straight to their team.">NEW first step</button><button class="pin" data-ask="2" aria-label="Go to ask 2">2</button></div>
+        <div class="scroll"><div class="stage" id="joinAfter" style="width:auto"></div></div>
+      </div>
+    </div>
+    <div class="measure"><span><b>Who sees the new box</b> only a signed-out coach on a device they haven’t signed in on</span><span><b>Signed in as someone else</b> the screen says “You’re signed in as …, which isn’t linked to this registration”, without naming the other address</span></div>
+  </section>
+
+  <!-- 5 · LIMIT & CLEAN-UP -->
+  <section class="pane" id="p-limit">
+    <div class="say">
+      <h2>A limit on the form, and an old door that goes</h2>
+      <p>The tournament Register form is the only public form with no limit on how often it can be sent. Each send puts a team in the organizer’s list and emails the organizer. Stage 2 adds the same limit the family forms have, with the same words.</p>
+    </div>
+
+    <div class="cap"><h3>After · a coach who has sent too many</h3>
+      <button class="tag new" data-note="“Too many attempts. Please wait a few minutes and try again.” is word for word what the house-league, tryout and “Email me my link” forms say. It shows in the form’s existing error card; Try Again returns to the form with everything still filled in.">SAME WORDS</button>
+      <button class="tag" data-note="The family forms’ limit: 30 sends an hour from one connection, and a ceiling of 150 every five minutes from everyone together. Plus at most 8 emails an hour to any one address.">THE NUMBERS</button>
+      <button class="pin" data-ask="4" aria-label="Go to ask 4">4</button></div>
+    <div class="scroll"><div class="stage" id="limitAfter"></div></div>
+    <div class="measure"><span><b>A real coach</b> registers one team, maybe three; never near 30 an hour</span><span><b>The first step’s account check</b> already has its own limit and is unchanged</span></div>
+
+    <div class="found" style="margin-top:18px; border-left-color:var(--muted)">
+      <h3>Goes, with nothing to draw · the old tournament-team claim link</h3>
+      <ul>
+        <li>A link that let a tournament coach claim a paid team page. <span>No email or screen has sent one for months. Only a developer tool can make one.</span></li>
+        <li>What goes: the claim page, its old address, the developer tool and its seed, and the claim branch inside team checkout. <span>The organizer’s “invitation” for a team they add by hand is a different, live thing and stays.</span></li>
+        <li>No database change. <span>The table of past claims stays, because Tournament Chat reads it to work out which coaches are in a tournament’s chat. Nothing else points at it. This corrects the plan, which expected a column to be dropped.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 6 · PHONE -->
+  <section class="pane" id="p-phone">
+    <div class="say">
+      <h2>Most coaches register from a phone</h2>
+      <p>Same screens, one column, at true size. The tournament buttons stack full width as they do today. Open this page on your phone to judge it.</p>
+    </div>
+    <div class="pair">
+      <div><div class="cap"><h3>Finish screen · 390px</h3><button class="tag" data-note="The phone frame at 390 pixels wide. Buttons and the resend are 44 pixels tall, as shipped.">TRUE SIZE</button></div><div class="scroll"><div class="stage phone" id="phoneFinish"></div></div></div>
+      <div><div class="cap"><h3>The one email · 390px</h3><button class="tag" data-note="The warm card narrows to 18 pixels of padding on a phone, as the shipped email does below 480 pixels.">TRUE SIZE</button></div><div class="scroll"><div class="stage phone" id="phoneMail"></div></div>
+        <div class="cap" style="margin-top:18px"><h3>Join page · 390px</h3><button class="tag" data-note="The signed-out join page on a phone. The top bar keeps the name and Sign in; Home and Scores fold away as they do today. The email field and Continue are 48 pixels tall, the account pages’ size.">TRUE SIZE</button></div><div class="scroll"><div class="stage phone" id="phoneJoin"></div></div></div>
+    </div>
+  </section>
+
+  <!-- 7 · ASKS -->
+  <section class="pane" id="p-asks">
+    <div class="say">
+      <h2>Your calls</h2>
+      <p><b>Ruled 2026-11-01: all five A, as recommended.</b> The build follows the A answers below.</p>
+      <p>Five calls. Pick an answer for each, add a note if you like, then copy and paste them back. Already ruled and not asked again: a tournament coach keeps their account at registration; tournaments stay public; the team pay link stays as a sent link; no other link is sent to a family.</p>
+    </div>
+
+    <div class="ask" id="ask1">
+      <h3>1 · The one email: what leads</h3>
+      <p>Merging the two emails means one of them leads. The coach keeps this email as their record of the registration; the confirm button inside it stops working after an hour and then offers a new link. <button class="see" data-goto="email">See tab 1</button></p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="a1" value="A" checked><div><b>A · The registration leads; the confirm panel sits where the portal panel is today<span class="rec">RECOMMENDED</span></b><span>“We’ve got your registration” is what the coach came for and what they search for later. The panel names the one thing to do. A coach with an account gets the same email with “Open your Coaches Portal” instead; the waitlist email gets the same panel.</span></div></label>
+        <label class="opt"><input type="radio" name="a1" value="B"><div><b>B · The confirm leads; the registration details follow</b><span>More coaches may confirm at once. But the email they keep for weeks opens on a button that stopped working an hour after it arrived.</span></div></label>
+        <label class="opt"><input type="radio" name="a1" value="C"><div><b>C · Keep two emails and fix the words</b><span>The registration email drops “is ready” and says to look for the confirm email. Least to build; the coach still gets two emails, which is what the plan set out to fix.</span></div></label>
+      </div>
+      <textarea id="n1" aria-label="Notes on ask 1" placeholder="Notes (optional)"></textarea>
+    </div>
+
+    <div class="ask" id="ask2">
+      <h3>2 · What replaces the address in portal links</h3>
+      <p>The address does a real job on the join page: it decides whether a signed-out visitor is asked to sign in or to create an account. <button class="see" data-goto="links">See tab 4</button></p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="a2" value="A" checked><div><b>A · Nothing; the join page asks for the email first<span class="rec">RECOMMENDED</span></b><span>One email box, the same as the Register form’s first step, then Sign in or Create account. It costs a signed-out coach one typed address; a signed-in coach sees no change. It applies to every coach email at once.</span></div></label>
+        <label class="opt"><input type="radio" name="a2" value="B"><div><b>B · A sealed code in place of the address</b><span>The link carries a code only our server can read, so the page still knows the address and nothing changes for the coach. More to build, and whoever holds a forwarded link still lands on a screen that names the coach’s address.</span></div></label>
+        <label class="opt"><input type="radio" name="a2" value="C"><div><b>C · Nothing; the link opens plain sign-in</b><span>Simplest, but a coach an organizer added by hand, who has no account yet, lands on a sign-in they cannot use.</span></div></label>
+      </div>
+      <textarea id="n2" aria-label="Notes on ask 2" placeholder="Notes (optional)"></textarea>
+    </div>
+
+    <div class="ask" id="ask3">
+      <h3>3 · The finish screen for a new coach</h3>
+      <p>Whether the screen keeps a big button, and what the title says. <button class="see" data-goto="finish">See tab 3</button></p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="a3" value="A" checked><div><b>A · Keep “You’re In Motion”; the confirm block leads, with a quiet “Already confirmed? Sign in”; no big button<span class="rec">RECOMMENDED</span></b><span>The registration really is done, so the title stays. The one thing left to do happens in the inbox, so no button on this screen pretends to do it.</span></div></label>
+        <label class="opt"><input type="radio" name="a3" value="B"><div><b>B · The title itself becomes “Confirm your email to open your portal”</b><span>The next step is impossible to miss. The registration being done drops to the sentence under it.</span></div></label>
+        <label class="opt"><input type="radio" name="a3" value="C"><div><b>C · As A, plus a big “Open Coaches Portal” button that goes to sign-in</b><span>A clear door for the coach who confirms on another device. Before confirming, it leads to “Confirm your email before signing in”.</span></div></label>
+      </div>
+      <textarea id="n3" aria-label="Notes on ask 3" placeholder="Notes (optional)"></textarea>
+    </div>
+
+    <div class="ask" id="ask4">
+      <h3>4 · The form’s limit: shared with the family forms, or its own?</h3>
+      <p>The family forms share one budget on purpose: one visitor gets 30 sends an hour across all of them. They also share a ceiling of 150 sends every five minutes across everyone. <button class="see" data-goto="limit">See tab 5</button></p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="a4" value="A" checked><div><b>A · Its own limits, with the same numbers and the same words<span class="rec">RECOMMENDED</span></b><span>A big league’s sign-up night and a tournament’s opening rush should not use up each other’s ceiling. The account check on Register’s first step already has its own for the same reason.</span></div></label>
+        <label class="opt"><input type="radio" name="a4" value="B"><div><b>B · Share the family forms’ limits</b><span>One budget for every public form, as the family forms’ comment intends. A busy night on one can refuse the other.</span></div></label>
+      </div>
+      <textarea id="n4" aria-label="Notes on ask 4" placeholder="Notes (optional)"></textarea>
+    </div>
+
+    <div class="ask" id="ask5">
+      <h3>5 · The team pay link: raised, not drawn</h3>
+      <p>The journeys page says a team’s pay link “ends when the tournament ends”, that “the organizer can send a new one, the same as the families’ link”, and that “the coach can also pay from the portal”. The plan’s Stage 2 does not include any of it. Public tournament pages Stage 7 rebuilt the team pay page and is waiting on its walk; it kept the pay block, its words and the link as they were. In the code: once a tournament is over the page already refuses payment and says so. The coach can already pay from the portal: its tournament page has Pay now, which opens the same page. What is missing is a way to stop one team’s old link: the organizer’s “Email the pay link” sends the identical link again. <b>And one thing nobody listed: the team pay page fills in the coach’s full email for the receipt, so anyone holding a forwarded link sees it. Stage 1 masked the parent’s address on the family page for exactly this reason.</b></p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="a5" value="A" checked><div><b>A · Mask the coach’s address on the team pay page in this stage, after the Stage 7 walk passes; no reset<span class="rec">RECOMMENDED</span></b><span>It is the same small change Stage 1 made for families. Sequenced after Stage 7’s walk, so it does not rework a page under test. The reset is not worth a database change here. A team pay page shows the team, the amount and the pay buttons, with no child or family details. A forwarded link’s worst case is someone paying the team’s fee.</span></div></label>
+        <label class="opt"><input type="radio" name="a5" value="B"><div><b>B · A, plus the organizer’s “Send a new link” that stops the old one</b><span>Parity with the families’ link: one change to the database, a new door on Team payments, and a “this link no longer works” card on the pay page.</span></div></label>
+        <label class="opt"><input type="radio" name="a5" value="C"><div><b>C · Hand it to the public tournament pages project as a Stage 7 follow-up</b><span>That project owns the pay page. It reopens a stage that is waiting on its walk.</span></div></label>
+        <label class="opt"><input type="radio" name="a5" value="D"><div><b>D · Leave the team pay link as it is</b><span>The address stays visible to anyone holding the link.</span></div></label>
+      </div>
+      <textarea id="n5" aria-label="Notes on ask 5" placeholder="Notes (optional)"></textarea>
+    </div>
+
+    <div class="found" style="border-left-color:var(--accent)">
+      <h3>What the design check changed (round 2)</h3>
+      <ol>
+        <li>The tournament buttons wear the event site’s real style: the title face at 16, squarer corners, white Rules and Home buttons, an outlined Follow the Schedule.</li>
+        <li>The check-your-email block keeps its shipped sentence, “Verification email sent to …”, its shipped sizes, and “Already confirmed? Sign in” at its foot, as the shipped block places it.</li>
+        <li>The event band matches the site: the state is plain text after the dates, with a gold rule under the band, Share and Sign in on the right. The tab row is in its real order.</li>
+        <li>The “Watch your email” row no longer claims the registration email holds the link. It is only true in some cases. The already-has-an-account frame keeps today’s words.</li>
+        <li>The join page wears the app’s top bar: the name with its mark, Home, Scores and a Sign in pill. Its sizes and its olive foot link match the account pages.</li>
+        <li>The emails’ panels, button and spacing match the shipped card, and the “before” words use the shipped punctuation.</li>
+      </ol>
+    </div>
+
+    <button class="copy" id="copyBtn" type="button">Copy my answers</button>
+    <div class="note" id="copyNote" role="status"></div>
+    <textarea id="answers" readonly aria-label="Your answers"></textarea>
+  </section>
+</div>
+
+<div class="nb-scrim" id="nbScrim" hidden>
+  <div class="nb" role="dialog" aria-modal="true" aria-labelledby="nbTitle">
+    <h3 id="nbTitle">What this is</h3>
+    <p id="nbText"></p>
+    <div class="row"><button type="button" class="go" id="nbClose">Close</button></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var T = 'Riverdale Invitational';
+  var HOST = 'Riverdale Minor Ball';
+  var TEAM = 'Lakeshore Lightning';
+  var DIV = 'U11';
+  var EMAIL = 'sam.rivera@example.com';
+  var CONTACT = 'tournaments@riverdaleminorball.ca';
+
+  function put(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
+  function pin(n) { return '<button type="button" class="pin" data-ask="' + n + '" aria-label="Go to ask ' + n + '">' + n + '</button>'; }
+
+  function icon(kind) {
+    var p = {
+      check: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+      cal: '<rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>',
+      mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+      alert: '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>'
+    }[kind];
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>';
+  }
+
+  // ── The public tournament frame
+  function tframe(inner, phone) {
+    return '<div class="tf' + (phone ? ' phone' : '') + '">' +
+      '<div class="tf-band" data-same><span class="tf-logo">RM</span><div><div class="tf-name">' + T + '</div>' +
+        '<div class="tf-line"><span>Nov 14–16</span><span class="sep">·</span><span class="st">Registration open</span></div></div>' +
+        '<div class="tf-right"><span class="sh">Share</span><span>Sign in</span></div></div>' +
+      '<div class="tf-tabs" data-same><span>Overview</span><span>Schedule</span><span>Standings</span><span>Teams</span><span>Rules</span><span class="on">Register</span></div>' +
+      '<div class="tf-main"><div class="tf-col">' + inner + '</div></div>' +
+      '<div class="tf-foot" data-same><span>' + T + ' · hosted by ' + HOST + '</span><span>' + CONTACT + '</span></div>' +
+    '</div>';
+  }
+
+  function finish(o) {
+    var wait = o.wait;
+    var h = '<div class="tf-card">' +
+      '<div data-same>' + icon('check').replace('<svg ', '<svg class="tf-ico" ') + '</div>' +
+      '<h3 class="tf-title" data-same>' + (wait ? 'Waitlist Request Received' : 'You\'re In Motion') + '</h3>' +
+      '<p class="tf-text" data-same>' + (wait ? '<b>' + TEAM + '</b> has been added to the waitlist for ' + DIV + '.' : '<b>' + TEAM + '</b> is registered for ' + T + ' and sent to the organizer for review.') + '</p>';
+
+    if (o.exists) {
+      h += '<p class="tf-text" data-same>This email already has a FieldLogicHQ account. Sign in to see this registration in your Coaches Portal. If you never opened its verification email, we’ve sent the link again.</p>';
+    } else if (o.after) {
+      h += '<div class="tf-verify">' +
+        '<p class="head">Confirm your email to open your portal' + (o.pins ? pin(3) : '') + '</p>' +
+        '<p class="lead">Open the link we sent. It works for 1 hour.</p>' +
+        '<div class="tf-sent" data-same>Verification email sent to ' + EMAIL + '.</div>' +
+        '<p class="after" data-same>You’ll hear from the organizer at this address either way.</p>' +
+        '<div class="tf-resend" data-same>Send the link again</div>' +
+        '<div class="tf-vfoot">Already confirmed? <b>Sign in</b></div>' +
+      '</div>';
+    } else {
+      h += '<div class="tf-verify">' +
+        '<p class="lead">Open the link we sent to see this registration in your Coaches Portal.</p>' +
+        '<div class="tf-sent">Verification email sent to ' + EMAIL + '.</div>' +
+        '<p class="after">You’ll hear from the organizer at this address either way.</p>' +
+        '<div class="tf-resend">Send the link again</div>' +
+      '</div>';
+    }
+
+    h += '<div data-same><span class="tf-motion">' + icon('cal') + 'First game in 13 days</span></div>' +
+      '<div class="tf-rows">' +
+        '<div class="tf-row" data-same>' + icon('cal') + '<div><b>Save the dates</b><span>Add ' + T + ' to your calendar so you don\'t miss a game.</span><div><span class="tf-btn outline sm">' + icon('cal') + 'Add to calendar</span></div></div></div>';
+    var watchToday = 'Check your inbox for your confirmation. The organizer follows up with approval and how to pay';
+    if (o.after && !o.exists) {
+      h += '<div class="tf-row">' + icon('mail') + '<div><b>Watch your email</b><span>' + (wait
+        ? 'Check your inbox for your waitlist confirmation and the link to confirm your email. The organizer will reach out if a spot opens'
+        : 'Check your inbox for your confirmation and the link to confirm your email. The organizer follows up with approval and how to pay') +
+        ' — reach them anytime at ' + CONTACT + ' with questions.</span></div></div>';
+    } else {
+      h += '<div class="tf-row"' + (o.exists ? ' data-same' : '') + '>' + icon('mail') + '<div><b>Watch your email</b><span>' + watchToday + ' — reach them anytime at ' + CONTACT + ' with questions.</span></div></div>';
+      if (!o.after) h += '<div class="tf-row' + (o.mark ? ' gone' : '') + '">' + icon('check') + '<div><b>Create your Coaches Portal</b><span>Set a password to track your team\'s status, schedule, and updates for ' + T + '.</span></div></div>';
+    }
+    h += '</div>' +
+      '<div class="tf-acts">' +
+        (o.after ? (o.exists ? '<span class="tf-btn primary">Sign in</span>' : '') : '<span class="tf-btn primary' + (o.mark ? ' gone' : '') + '">Create Coaches Portal Account</span>') +
+        '<span class="tf-btn outline" data-same>Follow the Schedule</span><span class="tf-btn" data-same>Tournament Rules</span><span class="tf-btn" data-same>Tournament Home</span>' +
+      '</div>' +
+    '</div>';
+    return h;
+  }
+  put('finishBefore', tframe(finish({ after: false, mark: true })));
+  put('finishAfter', tframe(finish({ after: true, pins: true })));
+  put('finishWait', tframe(finish({ after: true, wait: true })));
+  put('finishExists', tframe(finish({ after: true, exists: true })));
+  put('phoneFinish', tframe(finish({ after: true }), true));
+
+  put('limitAfter', tframe('<div class="tf-card">' +
+    icon('alert').replace('<svg ', '<svg class="tf-ico bad" ') +
+    '<h3 class="tf-title ink">Registration Failed</h3>' +
+    '<p class="tf-text">Too many attempts. Please wait a few minutes and try again.</p>' +
+    '<span class="tf-btn primary">Try Again</span></div>'));
+
+  // ── The app account frame
+  function hframe(inner, phone) {
+    return '<div class="hf' + (phone ? ' phone' : '') + '"><div class="hf-bar" data-same><span class="hf-mark" aria-hidden="true"></span><b>FieldLogic</b><i>HQ</i>' +
+      '<span class="hf-nav"><span class="nl">Home</span><span class="nl">Scores</span><span class="hf-pill">Sign in</span></span></div><div class="hf-page"><div class="hf-col">' + inner + '</div></div></div>';
+  }
+  put('joinBefore', hframe(
+    '<div class="hf-head"><h1 class="hf-title">You\'re already set up</h1><p class="hf-sub">Your Coaches Portal account is ready. Sign in to see <b>' + TEAM + '</b> and track its status.</p></div>' +
+    '<div class="hf-primary">Sign in to your Coaches Portal</div>' +
+    '<div class="hf-foot">Not you, or need a different account? <u>Create a new account</u></div>'));
+  function joinAfter(phone) {
+    return hframe(
+      '<div class="hf-head"><h1 class="hf-title">Open your team</h1><p class="hf-sub">Enter the email you registered with. We’ll take you to sign in, or set up your account if you don’t have one yet.</p></div>' +
+      '<div class="hf-field"><label>Email</label><div class="hf-input ph">you@example.com</div></div>' +
+      '<div class="hf-primary">Continue</div>', phone);
+  }
+  put('joinAfter', joinAfter());
+  put('phoneJoin', joinAfter(true));
+
+  // ── Emails (platform warm card: wordmark, no club band)
+  // `raw`: the registration builders use unstyled <p> (browser margins), the confirm email uses styled paragraphs.
+  function mail(subject, body, phone, raw) {
+    return '<div class="em' + (phone ? ' phone' : '') + '"><div class="em-meta"><b>FieldLogicHQ</b><br>' + subject + '</div>' +
+      '<div class="em-card' + (raw ? ' raw' : '') + '"><div class="em-word" data-same><b>FieldLogic</b><i>HQ</i></div>' + body + '</div></div>';
+  }
+  var details = '<div class="em-panel" data-same><p class="lab">Registration Details</p><p class="facts">Team: <b>' + TEAM + '</b><br>Coach: <b>Sam Rivera</b><br>Division: <b>' + DIV + '</b><br>Tournament: <b>' + T + '</b></p></div>';
+  var pending = '<p data-same>Your registration is currently <b>pending review</b>. Once the organizer accepts your team, we’ll email you a link to pay online by card. You can also pay the organizer directly.</p>';
+  var thanks = '<p data-same>Hi <b>Sam</b>,</p><p data-same>Thanks for registering <b>' + TEAM + '</b> for <b>' + T + '</b>! 🎉 We\'ve got your entry for the <b>' + DIV + '</b> division.</p>';
+
+  put('mailRegBefore', mail('Registration Received - ' + TEAM,
+    '<h4>Registration Received!</h4>' + thanks + details + pending +
+    '<div class="em-panel olive"><p class="lab">Track your registration</p><p><span class="em-gone">Your free FieldLogicHQ Coaches Portal account is ready.</span> Open it to track your registration status, see your game schedule once it\'s published, and receive announcements from the organizer.</p><span class="em-btn">Open your Coaches Portal</span></div>', false, true));
+
+  put('mailConfirmBefore', mail('Confirm your FieldLogicHQ email',
+    '<h4 class="h1">Confirm your email</h4><p>Hi Sam, welcome to FieldLogicHQ.</p><p>Confirm your email to finish your account. Then we’ll connect you to your team’s registration.</p>' +
+    '<span class="em-btn">Confirm my email</span><p class="em-small">The link works for 1 hour.</p><p class="em-small">If you didn’t create this account, you can ignore this email.</p>'));
+
+  function oneMail(phone) {
+    return mail('We’ve got your registration · ' + TEAM,
+      '<h4>We’ve got your registration' + (phone ? '' : pin(1)) + '</h4>' + thanks + details + pending +
+      '<div class="em-panel olive"><p class="lab">Confirm your email to open your Coaches Portal</p><p>Your free Coaches Portal tracks this registration, shows your game schedule once it’s published, and brings you the organizer’s announcements.</p><span class="em-btn">Confirm my email</span>' +
+      '<p class="em-small">The button works for 1 hour. After that it opens sign-in, where you can send yourself a new link.</p></div>' +
+      '<p class="em-small">If you didn’t register this team, you can ignore this email.</p>', phone, true);
+  }
+  put('mailOneAfter', oneMail());
+  put('phoneMail', oneMail(true));
+
+  put('mailSignedAfter', mail('We’ve got your registration · ' + TEAM,
+    '<h4>We’ve got your registration</h4>' + thanks + details + pending +
+    '<div class="em-panel olive"><p class="lab">Track your registration</p><p>Open your Coaches Portal to track your registration status, see your game schedule once it\'s published, and receive announcements from the organizer.</p><span class="em-btn">Open your Coaches Portal</span></div>', false, true));
+
+  // ── tabs
+  var NAMES = { email: 1, every: 1, finish: 1, links: 1, limit: 1, phone: 1, asks: 1 };
+  var VIEW_ON = { email: 1, every: 1, finish: 1 };
+  var tabs = document.querySelectorAll('.tab');
+  function show(name, noHash) {
+    if (!NAMES[name]) name = 'email';
+    tabs.forEach(function (t) { t.setAttribute('aria-selected', t.dataset.tab === name ? 'true' : 'false'); });
+    document.querySelectorAll('section.pane').forEach(function (p) { p.classList.toggle('on', p.id === 'p-' + name); });
+    document.getElementById('viewrow').hidden = !VIEW_ON[name];
+    if (!noHash) { try { history.replaceState(null, '', '#' + name); } catch (e) { location.hash = name; } window.scrollTo({ top: 0 }); }
+  }
+  tabs.forEach(function (t) { t.addEventListener('click', function () { show(t.dataset.tab); }); });
+  window.addEventListener('hashchange', function () { show((location.hash || '').replace('#', ''), true); });
+  show((location.hash || '').replace('#', '') || 'email', true);
+
+  var wrap = document.querySelector('.wrap');
+  function setView(diff) {
+    wrap.classList.toggle('diff', diff);
+    document.getElementById('vAll').setAttribute('aria-pressed', diff ? 'false' : 'true');
+    document.getElementById('vDiff').setAttribute('aria-pressed', diff ? 'true' : 'false');
+  }
+  document.getElementById('vAll').addEventListener('click', function () { setView(false); });
+  document.getElementById('vDiff').addEventListener('click', function () { setView(true); });
+
+  // ── explanation box, pins, "see" links
+  var scrim = document.getElementById('nbScrim');
+  var lastFocus = null;
+  function openNote(title, text) {
+    lastFocus = document.activeElement;
+    document.getElementById('nbTitle').textContent = title;
+    document.getElementById('nbText').textContent = text;
+    scrim.hidden = false;
+    document.getElementById('nbClose').focus();
+  }
+  function closeNote() { scrim.hidden = true; if (lastFocus) lastFocus.focus(); }
+  document.getElementById('nbClose').addEventListener('click', closeNote);
+  scrim.addEventListener('click', function (e) { if (e.target === scrim) closeNote(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !scrim.hidden) closeNote(); });
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target.closest('.tag[data-note]') : null;
+    if (t) { e.preventDefault(); openNote(t.textContent.trim(), t.dataset.note); return; }
+    var p = e.target.closest ? e.target.closest('.pin') : null;
+    if (p) {
+      e.preventDefault();
+      show('asks');
+      var a = document.getElementById('ask' + p.dataset.ask);
+      if (a) { a.scrollIntoView({ block: 'start' }); a.classList.add('flash'); setTimeout(function () { a.classList.remove('flash'); }, 1600); }
+      return;
+    }
+    var s = e.target.closest ? e.target.closest('.see') : null;
+    if (s) { e.preventDefault(); show(s.dataset.goto); }
+  });
+
+  // ── answers
+  var TITLES = {
+    1: 'The one email: what leads', 2: 'What replaces the address in links', 3: 'The finish screen for a new coach',
+    4: 'The form’s limit', 5: 'The team pay link'
+  };
+  function answers() {
+    var out = ['Tournament registration · Stage 2 drawings — my answers'];
+    for (var n = 1; n <= 5; n++) {
+      var c = document.querySelector('input[name="a' + n + '"]:checked');
+      var label = c ? c.closest('.opt').querySelector('b').firstChild.textContent.trim() : 'not chosen';
+      var note = (document.getElementById('n' + n).value || '').trim();
+      out.push(n + ' · ' + TITLES[n] + ': ' + label + (note ? '\n    note: ' + note : ''));
+    }
+    return out.join('\n');
+  }
+  var ta = document.getElementById('answers');
+  function refresh() { ta.value = answers(); }
+  document.querySelectorAll('.ask input, .ask textarea').forEach(function (i) { i.addEventListener('input', refresh); i.addEventListener('change', refresh); });
+  refresh();
+  document.getElementById('copyBtn').addEventListener('click', function () {
+    var note = document.getElementById('copyNote');
+    function fallback() { ta.focus(); ta.select(); note.textContent = 'Selected. Press Ctrl+C to copy.'; }
+    try { navigator.clipboard.writeText(ta.value).then(function () { note.textContent = 'Copied. Paste it back in the chat.'; }, fallback); }
+    catch (e) { fallback(); }
+  });
+})();
+</script>

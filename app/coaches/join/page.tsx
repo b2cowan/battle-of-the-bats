@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import LoadingState from '@/components/shared/LoadingState';
 import ChoicePair from '@/components/shared/ChoicePair';
-import { AccountFields, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
+import { AccountFields, EmailField, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
 import {
   COACHES_TOURNAMENTS_PATH,
   normalizeCoachPortalNext,
@@ -43,7 +43,8 @@ function JoinForm() {
   const router       = useRouter();
   const searchParams = useSearchParams();
 
-  const emailParam = searchParams.get('email') ?? '';
+  // No address rides in this page's link (Signed-in family accounts Stage 2, Part 3): a signed-in coach is known by their
+  // session, and a signed-out one is asked for the email they registered with (the "Open your team" step).
   const nextParam  = normalizeCoachPortalNext(searchParams.get('next'), COACHES_TOURNAMENTS_PATH);
   const fromReg    = searchParams.get('registered') === '1';
   const registrationId = searchParams.get('registrationId') ?? '';
@@ -51,7 +52,7 @@ function JoinForm() {
   const verifiedParam = searchParams.get('verified') === '1';
   const [firstNameInit, lastNameInit] = splitFullName(searchParams.get('coach') ?? '');
 
-  const [email, setEmail]       = useState(emailParam);
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState(firstNameInit);
   const [lastName, setLastName]   = useState(lastNameInit);
@@ -88,6 +89,10 @@ function JoinForm() {
   // Signed-out + an existing account for this registration's email → offer sign-in, not a
   // redundant second "create account" form (the merged register+account flow already made it).
   const [existingAccount, setExistingAccount] = useState<{ teamName: string } | null>(null);
+  // Signed-out with a registration: the address the visitor typed is the one this registration was made with (checked by
+  // the server). Until then the page asks for it; after it, Sign in (an account exists) or Create account (none yet).
+  const [addressConfirmed, setAddressConfirmed] = useState(false);
+  const [checkingAddress, setCheckingAddress] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -99,25 +104,8 @@ function JoinForm() {
         const { getUser } = await import('@/lib/auth');
         const user = await getUser();
         if (!user?.email) {
-          // No session — if this registration's coach already has an account, the page should
-          // ask them to SIGN IN rather than re-collect name/password. Existence is scoped to the
-          // registration's own email (server-side), so this is not an enumeration oracle.
-          if (emailParam) {
-            try {
-              const statusRes = await fetch(
-                `/api/coaches/registration-account-status?registrationId=${encodeURIComponent(registrationId)}&email=${encodeURIComponent(emailParam)}`,
-                { cache: 'no-store' },
-              );
-              if (statusRes.ok) {
-                const status = await statusRes.json() as { accountExists?: boolean; teamName?: string };
-                if (!cancelled && status.accountExists) {
-                  setExistingAccount({ teamName: status.teamName ?? '' });
-                }
-              }
-            } catch {
-              // Fail open to the normal create-account form.
-            }
-          }
+          // No session: the page asks which email this registration was made with (handleCheckAddress) before it says
+          // anything about an account, so the answer is scoped to the registration's own email, not an enumeration oracle.
           if (!cancelled) setCheckingSession(false);
           return;
         }
@@ -177,7 +165,42 @@ function JoinForm() {
     return () => {
       cancelled = true;
     };
-  }, [registrationId, router, nextParam, emailParam, verifiedParam]);
+  }, [registrationId, router, nextParam, verifiedParam]);
+
+  /** Signed out, with a registration: is the typed address the one it was made with, and does that coach have an account? */
+  async function handleCheckAddress(e: React.FormEvent) {
+    e.preventDefault();
+    if (checkingAddress) return;
+    setError('');
+    const typed = email.trim().toLowerCase();
+    if (!typed) {
+      setError('Enter the email you registered with.');
+      return;
+    }
+    setCheckingAddress(true);
+    try {
+      const res = await fetch(
+        `/api/coaches/registration-account-status?registrationId=${encodeURIComponent(registrationId)}&email=${encodeURIComponent(typed)}`,
+        { cache: 'no-store' },
+      );
+      const status = await res.json().catch(() => ({})) as { matches?: boolean; accountExists?: boolean; teamName?: string; error?: string };
+      if (!res.ok) {
+        setError(status.error ?? 'We couldn’t check that just now. Please try again.');
+        return;
+      }
+      if (!status.matches) {
+        setError('That isn’t the email this registration was made with. Use the address you registered with.');
+        return;
+      }
+      setEmail(typed);
+      if (status.accountExists) setExistingAccount({ teamName: status.teamName ?? '' });
+      setAddressConfirmed(true);
+    } catch {
+      setError('We couldn’t check that just now. Please try again.');
+    } finally {
+      setCheckingAddress(false);
+    }
+  }
 
   async function linkRegistrationToTeam(basicCoachTeamId?: string | null) {
     if (!registrationId) return;
@@ -220,7 +243,7 @@ function JoinForm() {
 
     if (res.status === 409) {
       const nextAfterLogin = registrationId
-        ? `/coaches/join?registered=1&registrationId=${encodeURIComponent(registrationId)}&email=${encodeURIComponent(email.trim())}&next=${encodeURIComponent(nextParam)}`
+        ? `/coaches/join?registered=1&registrationId=${encodeURIComponent(registrationId)}&next=${encodeURIComponent(nextParam)}`
         : nextParam;
       router.push(accountExistsSignInHref(nextAfterLogin, email.trim()));
       return;
@@ -265,7 +288,7 @@ function JoinForm() {
   /** Back from the verification link: this page, signed in, for this registration (or the portal when there is none). */
   function verifyReturnPath(): string {
     return registrationId
-      ? `/coaches/join?registered=1&registrationId=${encodeURIComponent(registrationId)}&email=${encodeURIComponent(email.trim().toLowerCase())}&next=${encodeURIComponent(nextParam)}&verified=1`
+      ? `/coaches/join?registered=1&registrationId=${encodeURIComponent(registrationId)}&next=${encodeURIComponent(nextParam)}&verified=1`
       : nextParam;
   }
 
@@ -290,8 +313,8 @@ function JoinForm() {
   async function handleSwitchAccount() {
     const { signOut } = await import('@/lib/auth');
     await signOut();
-    // Reload the same invite URL, now signed-out: the signed-out flow re-runs and offers
-    // sign-in / create-account for the INVITED email (emailParam) instead of dead-ending.
+    // Reload the same invite URL, now signed-out: the signed-out flow re-runs and asks which email
+    // this registration was made with, then offers sign-in / create-account, instead of dead-ending.
     window.location.reload();
   }
 
@@ -299,10 +322,13 @@ function JoinForm() {
     firstName: setFirstName, lastName: setLastName, email: setEmail, password: setPassword,
   };
 
+  // The address in the sign-in hand-off is the one this visitor typed on this page (a pre-fill for the next screen, never a
+  // link we send): the page's own link carries none.
+  const typedAddress = addressConfirmed || verifyEmail ? email.trim().toLowerCase() : '';
   const loginNext = registrationId
-    ? `/coaches/join?registered=1&registrationId=${encodeURIComponent(registrationId)}&email=${encodeURIComponent(emailParam)}&next=${encodeURIComponent(nextParam)}`
+    ? `/coaches/join?registered=1&registrationId=${encodeURIComponent(registrationId)}&next=${encodeURIComponent(nextParam)}`
     : nextParam;
-  const loginHref = `/auth/login?next=${encodeURIComponent(loginNext)}${emailParam ? `&email=${encodeURIComponent(emailParam)}` : ''}`;
+  const loginHref = `/auth/login?next=${encodeURIComponent(loginNext)}${typedAddress ? `&email=${encodeURIComponent(typedAddress)}` : ''}`;
 
   if (checkingSession || redirecting) {
     return (
@@ -316,7 +342,7 @@ function JoinForm() {
   // flow, or a returning coach on a new device). Offer SIGN IN — don't re-collect name/password.
   // Sign-in lands straight on the team record (nextParam = /coaches/tournaments/{id}).
   if (existingAccount && registrationId) {
-    const existingLoginHref = `/auth/login?next=${encodeURIComponent(nextParam)}${emailParam ? `&email=${encodeURIComponent(emailParam)}` : ''}`;
+    const existingLoginHref = `/auth/login?next=${encodeURIComponent(nextParam)}${typedAddress ? `&email=${encodeURIComponent(typedAddress)}` : ''}`;
     return (
       <StartColumn>
         <StartHead
@@ -342,27 +368,22 @@ function JoinForm() {
   // resolved) — the classic "already signed in as a DIFFERENT coach than the invite is addressed
   // to". The link POST would 403 with a cryptic "not linked to your signed-in email" and the
   // interstitial's subtitle silently degrades to the generic "This registration". Detect it and
-  // offer to switch accounts instead of showing a doomed "Choose a team profile" form.
+  // offer to switch accounts instead of showing a doomed "Choose a team profile" form. It never names the
+  // address the registration was made with: the link does not carry it, and a forwarded link must not reveal it.
   const signedInMismatch =
     Boolean(signedInEmail) &&
     Boolean(registrationId) &&
-    !pendingRegistration &&
-    (!emailParam || signedInEmail!.trim().toLowerCase() !== emailParam.trim().toLowerCase());
+    !pendingRegistration;
 
   if (signedInMismatch) {
     return (
       <StartColumn>
         <StartHead
           title="You're signed in as a different account"
-          sub={emailParam ? (
-            <>This invite is for <strong>{emailParam}</strong>, but you&apos;re signed in as{' '}
-            <strong>{signedInEmail}</strong>. Sign out and continue with the invited email to open this team.</>
-          ) : (
-            <>You&apos;re signed in as <strong>{signedInEmail}</strong>, which isn&apos;t linked to this registration.</>
-          )}
+          sub={<>You&apos;re signed in as <strong>{signedInEmail}</strong>, which isn&apos;t linked to this registration.</>}
         />
         <button type="button" className={accountForm.primary} onClick={handleSwitchAccount}>
-          {emailParam ? `Sign out & continue as ${emailParam}` : 'Sign out & use a different account'}
+          Sign out &amp; use a different account
         </button>
         <StartFoot>
           <p>
@@ -451,6 +472,27 @@ function JoinForm() {
 
           <button type="submit" className={accountForm.primary} disabled={loading || registrableTeams === null}>
             {loading ? 'Linking…' : 'Continue'}
+          </button>
+        </form>
+      </StartColumn>
+    );
+  }
+
+  // Signed out, with a registration: ask which email it was made with before anything else (Signed-in family accounts
+  // Stage 2, Part 3, ask 2 = A; the drawing's "Open your team"). The link carries no address, so this box is how the page
+  // knows whether to offer Sign in or Create account. A coach already signed in on this device never sees it.
+  if (registrationId && !addressConfirmed) {
+    return (
+      <StartColumn>
+        <StartHead
+          title="Open your team"
+          sub="Enter the email you registered with. We’ll take you to sign in, or set up your account if you don’t have one yet."
+        />
+        <form onSubmit={handleCheckAddress} className={accountForm.form}>
+          <EmailField id="join-registered-email" value={email} onChange={setEmail} disabled={checkingAddress} autoFocus />
+          {error && <p className={accountForm.error} role="alert">{error}</p>}
+          <button type="submit" className={accountForm.primary} disabled={checkingAddress}>
+            {checkingAddress ? 'Checking…' : 'Continue'}
           </button>
         </form>
       </StartColumn>

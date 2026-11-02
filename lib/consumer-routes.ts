@@ -37,7 +37,7 @@ export function isConsumerShellPath(pathname: string): boolean {
 // /coaches/join joined 2026-10-19 (The first look, Ask 5a): the organizer's coach email lands there, and it is a
 // first-run screen like the rest — the app's frame, never the marketing bar and footer. /coaches/checkout joined
 // 2026-10-20 (The first look, Stage 3b, F06): checkout complete is the welcome's other door, on the same card.
-export const WARM_JOURNEY_PREFIXES = ['/start', '/coaches/start', '/coaches/claim', '/coaches/welcome', '/coaches/join', '/coaches/checkout'] as const;
+export const WARM_JOURNEY_PREFIXES = ['/start', '/coaches/start', '/coaches/welcome', '/coaches/join', '/coaches/checkout'] as const;
 
 export function isWarmJourneyPath(pathname: string): boolean {
   return WARM_JOURNEY_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'));

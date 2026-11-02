@@ -6,7 +6,6 @@ export const COACHES_TEAMS_PATH = '/coaches/teams';
 /** Org-less Basic coach team home (identity-resolved by `basic_coach_teams.id`).
  *  Distinct from the Premium workspace list at COACHES_TEAMS_PATH (`/coaches/teams`). */
 export const COACHES_TEAM_PATH = '/coaches/team';
-export const COACHES_CLAIM_PATH = '/coaches/claim';
 export const COACHES_CHECKOUT_COMPLETE_PATH = '/coaches/checkout/complete';
 export const COACHES_HELP_PATH = '/coaches/help';
 /** The free coach's Notifications page — the paid page, inside the free portal (Free coach header
@@ -48,14 +47,24 @@ export function portalTournamentRecordPath(orgSlug: string, repTeamId: string, r
   return `/${orgSlug}/coaches/teams/${repTeamId}/tournaments/${registrationId}`;
 }
 
+/** The confirm link's return for a registration made signed out: the join page links it, then opens its record with the
+ *  portal's welcome (verify every sign-up, 2026-10-16). No address in it: the link signs the coach in, so the join page
+ *  already knows who they are (Signed-in family accounts Stage 2, Part 3). One spelling for the form and `/api/register`,
+ *  which builds the confirm link inside the registration email (Part 4). */
+export function registrationPortalPath(registrationId: string | undefined): string {
+  if (!registrationId) return COACHES_TOURNAMENTS_PATH;
+  const record = `${COACHES_TOURNAMENTS_PATH}/${registrationId}?welcome=1`;
+  return `${COACHES_JOIN_PATH}?registered=1&registrationId=${encodeURIComponent(registrationId)}&next=${encodeURIComponent(record)}&verified=1`;
+}
+
 export type SearchParamsRecord = Record<string, string | string[] | undefined>;
 
 /**
  * Authenticated tournament coach-portal routes that render inside `CoachPortalShell`
  * (and therefore suppress the global marketing top nav + footer). The signup /
- * marketing surfaces — `/coaches/join`, `/coaches/start`, `/coaches/claim`,
+ * marketing surfaces — `/coaches/join`, `/coaches/start`,
  * `/coaches/checkout`, `/coaches/welcome` — are intentionally excluded so the shell passes
- * their children through untouched. NOTE: `/coaches/start`, `/coaches/claim`, `/coaches/welcome`, (since The first
+ * their children through untouched. NOTE: `/coaches/start`, `/coaches/welcome`, (since The first
  * look, 2026-10-19) `/coaches/join` and (since 2026-10-20) `/coaches/checkout` now wear the consumer WARM chrome via their own nested layout
  * (CoachJourneyChrome + isWarmJourneyPath), not the marketing chrome. `/coaches/help` IS included so the
  * marketing nav + footer are suppressed — but `CoachPortalShell` renders it as a FOCUSED
@@ -101,9 +110,6 @@ export function rewriteLegacyCoachPortalPath(value: string): string {
 
   if (pathname === '/team') return formatUrl(COACHES_START_PATH, search, hash);
   if (pathname === '/team/checkout/complete') return formatUrl(COACHES_CHECKOUT_COMPLETE_PATH, search, hash);
-  if (pathname.startsWith('/team/claim/')) {
-    return formatUrl(pathname.replace('/team/claim', COACHES_CLAIM_PATH), search, hash);
-  }
 
   return value;
 }

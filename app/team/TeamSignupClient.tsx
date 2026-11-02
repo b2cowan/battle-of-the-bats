@@ -6,10 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { OFFERED_SPORT_OPTIONS as SHARED_SPORT_OPTIONS } from '@/lib/sports';
 import { signIn } from '@/lib/auth';
 import { signInErrorCopy } from '@/lib/auth-errors';
-import {
-  COACHES_CLAIM_PATH,
-  COACHES_START_PATH,
-} from '@/lib/coaches-portal-routes';
+import { COACHES_START_PATH } from '@/lib/coaches-portal-routes';
 import { formatPlanPeriodPrice, normalizeBillingCycle, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
 import { startDoorLinkPath } from '@/lib/start-door';
 import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
@@ -31,19 +28,8 @@ import { KEEP_PREMIUM_LINE } from '@/lib/portal-free-time';
 type BillingCycle = 'monthly' | 'annual';
 type AuthMode = 'signup' | 'signin';
 
-export type TeamClaimPrefill = {
-  token: string;
-  contactEmail: string;
-  teamName: string;
-  coachName: string | null;
-  division: string | null;
-  tournamentName: string;
-  seasonYear: number;
-};
-
 type TeamSignupClientProps = {
   teamIsGated: boolean;
-  claim?: TeamClaimPrefill | null;
   /**
    * Pre-fill from an existing FREE Coaches Portal team when the coach arrived via that team's
    * "Upgrade to Premium" CTA (resolved + ownership-checked server-side in /coaches/start). Makes the
@@ -106,12 +92,11 @@ function getPayloadError(payload: Record<string, unknown>, fallback: string) {
  * COACH PREMIUM'S SIGN-UP, AS ONE OF THE DOORS (The first look R1, owner 2026-10-19: "if someone is already signing up,
  * I don't see why we need this much marketing on the coaches portal sign up. it should look like the other 2"). Both
  * steps are the start column: the heading, the offer as the one sub line, the step line, the shared fields, one button,
- * the foot link. The selling lives on /for-coaches and the pricing page. The tournament claim, the free-team upgrade and
- * the reactivation share this card, each under its own heading (the owner, 2026-10-19: the single column for all).
+ * the foot link. The selling lives on /for-coaches and the pricing page. The free-team upgrade and the reactivation share
+ * this card, each under its own heading (the owner, 2026-10-19: the single column for all).
  */
 export default function TeamSignupClient({
   teamIsGated,
-  claim = null,
   prefillTeamName = null,
   prefillSport = null,
   prefillBasicTeamId = null,
@@ -130,17 +115,17 @@ export default function TeamSignupClient({
   // the reactivation (the server attaches it to that portal), under its own words.
   const isKeepPremium = isReactivation && searchParams.get('keep') === '1';
   // Warm upgrade: the coach arrived from a free team's "Upgrade to Premium" CTA (team prefilled).
-  // Not a tournament claim, not a reactivation.
-  const isWarmUpgrade = !claim && !isReactivation && Boolean(prefillBasicTeamId);
-  const [teamName, setTeamName] = useState(claim?.teamName ?? prefillTeamName ?? reactivationTeamName);
+  // Not a reactivation.
+  const isWarmUpgrade = !isReactivation && Boolean(prefillBasicTeamId);
+  const [teamName, setTeamName] = useState(prefillTeamName ?? reactivationTeamName);
   const [sport, setSport] = useState(normalizeSport(prefillSport));
-  // Season is no longer asked at signup — it defaults silently (claim season, else current year).
-  const seasonYear = claim?.seasonYear ?? currentYear;
+  // Season is no longer asked at signup — it defaults silently to the current year.
+  const seasonYear = currentYear;
   // The pricing page's billing: in the address, or remembered on the account across the email (F02: no browser-tab draft).
   const [billingCycle, setBillingCycle] = useState<BillingCycle>(normalizeBillingCycle(searchParams.get('billing') ?? rememberedBilling));
   const [authMode, setAuthMode] = useState<AuthMode>((confirmed && !signedInEmail) || isReactivation ? 'signin' : 'signup');
-  // Signed in: the account's own address (a claim reserved for another address says so). Signed out: the claim's.
-  const [email, setEmail] = useState(signedInEmail ?? claim?.contactEmail ?? '');
+  // Signed in: the account's own address.
+  const [email, setEmail] = useState(signedInEmail ?? '');
   const [password, setPassword] = useState('');
   // Signup collects the coach's real name — a Basic account has none otherwise (was landing as "n/a").
   const [firstName, setFirstName] = useState('');
@@ -160,37 +145,29 @@ export default function TeamSignupClient({
   const onAccountStep = !isAuthenticated;
   // Step 2 shows the step line to someone who has just come through step 1: by the email link, or in this visit.
   const cameThroughStep1 = !isReactivation && (confirmed || (isAuthenticated && startedSignedOut));
-  const claimEmailMismatch = !!claim && isAuthenticated && !!email && email.trim().toLowerCase() !== claim.contactEmail.toLowerCase();
-  const claimPath = claim ? `${COACHES_CLAIM_PATH}/${encodeURIComponent(claim.token)}` : COACHES_START_PATH;
   const returnPath = isReactivation
     ? `${COACHES_START_PATH}?${new URLSearchParams({ reactivateOrgSlug: reactivationOrgSlug ?? '', ...(reactivationTeamName ? { teamName: reactivationTeamName } : {}), ...(isKeepPremium ? { keep: '1' } : {}) })}`
-    : `${claimPath}?billing=${billingCycle}`;
-  // Where the verification link returns: step 2 of this card — the claim, the reactivation, or Coach Premium's own step
+    : `${COACHES_START_PATH}?billing=${billingCycle}`;
+  // Where the verification link returns: step 2 of this card — the reactivation, or Coach Premium's own step
   // (the account remembers the door, so a resend from sign-in lands there too).
   const confirmedAt = (path: string) => `${path}${path.includes('?') ? '&' : '?'}confirmed=1`;
-  const linkPath = claim ? confirmedAt(claimPath) : isReactivation ? confirmedAt(returnPath) : startDoorLinkPath('premium');
+  const linkPath = isReactivation ? confirmedAt(returnPath) : startDoorLinkPath('premium');
   const founding = foundingPromoActive && !isReactivation;
-  // A claim is reserved for one address: the locked field says why.
-  const claimEmailHint = claim ? 'This team claim is reserved for this address.' : undefined;
   const seasonName = cleanTeamName ? `${cleanTeamName} ${seasonYear}` : `Team ${seasonYear}`;
 
   // The heading names what the person came to do (rule 3); the offer is the one sub line, read from the plan settings so
-  // it changes by itself when the Founding Season window closes. The claim, the upgrade and the reactivation keep their own.
+  // it changes by itself when the Founding Season window closes. The upgrade and the reactivation keep their own.
   const offer = foundingPromoActive
     ? `Premium Coaches Portal. Free through ${FOUNDING_SEASON_END_LABEL}, then ${MONTHLY}.`
     : `Premium Coaches Portal. ${MONTHLY} or ${ANNUAL}.`;
-  const title = claim
-    ? 'Activate from tournament'
-    : isKeepPremium
-      ? 'Keep Premium'
-      : isReactivation
+  const title = isKeepPremium
+    ? 'Keep Premium'
+    : isReactivation
       ? 'Reactivate Premium'
       : isWarmUpgrade ? `Upgrade ${prefillTeamName?.trim() || 'your team'} to Premium` : 'Coach a team';
-  const sub = claim
-    ? `${claim.tournamentName} already has your team details.`
-    : isKeepPremium
-      ? KEEP_PREMIUM_LINE
-      : isReactivation
+  const sub = isKeepPremium
+    ? KEEP_PREMIUM_LINE
+    : isReactivation
       ? 'Restore your team workspace instead of starting a new one.'
       : offer;
   // Step 2 names what it makes (rule 3, D-F6): "Create team" while the Founding Season covers it, "Continue to checkout"
@@ -212,9 +189,6 @@ export default function TeamSignupClient({
 
   function validateAccount() {
     if (!email.trim()) return 'Enter your email address.';
-    if (claim && email.trim().toLowerCase() !== claim.contactEmail.toLowerCase()) {
-      return `This team claim is reserved for ${claim.contactEmail}.`;
-    }
     if (authMode === 'signup') {
       if (!firstName.trim()) return 'Enter your first name.';
       if (!lastName.trim()) return 'Enter your last name.';
@@ -227,9 +201,6 @@ export default function TeamSignupClient({
   function validateTeam() {
     if (teamIsGated) return 'Coaches Portal self-serve signup is not open yet.';
     if (cleanTeamName.length < 2) return 'Enter your team name.';
-    if (claimEmailMismatch) {
-      return `You are signed in as ${email}. Sign in with ${claim.contactEmail} to claim this team.`;
-    }
     return '';
   }
 
@@ -252,10 +223,8 @@ export default function TeamSignupClient({
           body: JSON.stringify({
             email, password, firstName: firstName.trim(), lastName: lastName.trim(),
             next: linkPath,
-            // A reactivation is a returning coach, not a start. A claim keeps the offer's locked door (edge (b)) but no
-            // remembered door: Home and a resend would lead to a blank Premium step, where a new team could be bought
-            // and the claim left open.
-            ...(isReactivation ? {} : { startDoor: 'premium', billing: billingCycle, ...(claim ? { claim: true } : {}) }),
+            // A reactivation is a returning coach, not a start: it keeps no remembered door.
+            ...(isReactivation ? {} : { startDoor: 'premium', billing: billingCycle }),
           }),
         });
         const signupPayload = await readJson(signupRes);
@@ -305,23 +274,22 @@ export default function TeamSignupClient({
         teamName: cleanTeamName,
         workspaceName: `${cleanTeamName} Coaches Portal`,
         sport,
-        division: claim?.division ?? null,
+        division: null,
         seasonName,
         seasonYear,
         billingCycle,
         returnTo: returnPath,
-        claimToken: claim?.token ?? null,
         reactivateOrgSlug: reactivationOrgSlug,
         // Per-team upgrade: forward the originating free team so the server (after re-verifying
         // ownership) back-links the new Premium workspace to it and migrates its data. Null for
-        // brand-new / claim signups.
+        // brand-new signups.
         basicCoachTeamId: prefillBasicTeamId,
       }),
     });
 
     const payload = await readJson(response);
     if (response.status === 401) {
-      window.location.assign(`/auth/login?next=${encodeURIComponent(claimPath)}`);
+      window.location.assign(`/auth/login?next=${encodeURIComponent(COACHES_START_PATH)}`);
       return;
     }
     if (!response.ok) {
@@ -391,12 +359,10 @@ export default function TeamSignupClient({
           <VerifyEmailSent
             tone="start"
             email={verificationEmail}
-            lead={claim
-              ? <>Your account is almost ready. Open the link we sent to confirm your email. It brings you straight back here to activate {claim.teamName}.</>
-              : <>Your account is almost ready. Open the link we sent to confirm your email. It brings you straight to naming your team.</>}
+            lead={<>Your account is almost ready. Open the link we sent to confirm your email. It brings you straight to naming your team.</>}
             after={<>Open it on any phone or computer.</>}
             resendNext={linkPath}
-            onChangeEmail={claim ? undefined : () => { setVerificationEmail(''); setFocusEmail(true); }}
+            onChangeEmail={() => { setVerificationEmail(''); setFocusEmail(true); }}
             signInHref={`/auth/login?next=${encodeURIComponent(linkPath)}&email=${encodeURIComponent(verificationEmail)}`}
           />
         ) : (
@@ -407,14 +373,12 @@ export default function TeamSignupClient({
                   idPrefix="premium"
                   values={{ firstName, lastName, email, password }}
                   onChange={(field, value) => setAccountField[field](value)}
-                  emailLocked={!!claim}
-                  emailHint={claimEmailHint}
                   disabled={busy}
                   autoFocus={focusEmail ? 'email' : undefined}
                 />
               ) : (
                 <>
-                  <EmailField id="premium-email" value={email} onChange={setEmail} locked={!!claim} hint={claimEmailHint} disabled={busy} autoFocus={focusEmail} />
+                  <EmailField id="premium-email" value={email} onChange={setEmail} disabled={busy} autoFocus={focusEmail} />
                   <PasswordField id="premium-password" value={password} onChange={setPassword} purpose="current" disabled={busy} />
                 </>
               )}
@@ -460,7 +424,7 @@ export default function TeamSignupClient({
               />
             </Field>
             {/* Warm upgrade already knows the sport (carried from the free team), so the picker
-                is hidden — the value still rides along to checkout. Cold/claim signups pick it. */}
+                is hidden — the value still rides along to checkout. Cold signups pick it. */}
             {!isWarmUpgrade && (
               <Field id="premium-sport" label="Sport">
                 <select id="premium-sport" className={accountForm.select} value={sport} onChange={event => setSport(event.target.value)} disabled={busy}>
@@ -484,9 +448,6 @@ export default function TeamSignupClient({
               {founding && <p className={accountForm.hint} id="premium-billing-hint">Change it any time before then. No card today.</p>}
             </div>
 
-            {claimEmailMismatch && (
-              <p className={accountForm.error} role="alert">Signed in as {email}. This claim is reserved for {claim?.contactEmail}.</p>
-            )}
             {notices}
             {/* Tappable whenever it can work: a missing name or the wrong account says so beside it (validateTeam). */}
             <button type="submit" className={accountForm.primary} disabled={busy || teamIsGated}>

@@ -14,10 +14,7 @@ import {
 import { getBasicCoachTeamForUser } from '@/lib/basic-coach-teams';
 import { getActiveOwnedTeamWorkspace } from '@/lib/team-workspace-owned';
 import { findKeepPremiumPortal } from '@/lib/portal-keep-premium';
-import {
-  TeamWorkspaceClaimError,
-  verifyTeamWorkspaceClaimForCheckout,
-} from '@/lib/team-workspace-claims';
+import { TeamWorkspaceClaimError } from '@/lib/team-workspace-claims';
 import { TeamWorkspaceProvisioningError } from '@/lib/team-workspace-provisioning';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { captureError, withObservability } from '@/lib/observability';
@@ -62,44 +59,15 @@ export const POST = withObservability(async (req: Request) => {
     });
   }
 
-  if (checkoutRequest.claimToken) {
-    try {
-      const claim = await verifyTeamWorkspaceClaimForCheckout({
-        token: checkoutRequest.claimToken,
-        userId: user.id,
-        userEmail: user.email,
-      });
-
-      checkoutRequest = {
-        ...checkoutRequest,
-        source: 'tournament_claim' as const,
-        sourceTournamentId: claim.tournament.id,
-        sourceTournamentTeamId: claim.tournamentTeam.id,
-        teamWorkspaceClaimId: claim.id,
-      };
-    } catch (error) {
-      if (error instanceof TeamWorkspaceClaimError) {
-        return new Response(JSON.stringify({ error: error.message, code: error.code }), {
-          status: error.code === 'claim_email_mismatch' ? 403 : 400,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-      throw error;
-    }
-  }
-
   // Per-team upgrade from an existing FREE Basic team: carry it forward so the new workspace
   // back-links to it (and Phase 4 migrates its data). The client-supplied id is NEVER trusted —
   // re-verify the authenticated user owns it first; an unowned/unknown id is silently ignored
-  // (falls back to a fresh team). Claim checkouts derive their free team from the tournament
-  // registration instead, so skip this there.
-  if (!checkoutRequest.claimToken) {
-    const basicTeamIdInput = typeof rawBody.basicCoachTeamId === 'string' ? rawBody.basicCoachTeamId.trim() : '';
-    if (basicTeamIdInput) {
-      const ownedTeam = await getBasicCoachTeamForUser({ userId: user.id, basicCoachTeamId: basicTeamIdInput });
-      if (ownedTeam) {
-        checkoutRequest = { ...checkoutRequest, basicCoachTeamId: ownedTeam.id };
-      }
+  // (falls back to a fresh team).
+  const basicTeamIdInput = typeof rawBody.basicCoachTeamId === 'string' ? rawBody.basicCoachTeamId.trim() : '';
+  if (basicTeamIdInput) {
+    const ownedTeam = await getBasicCoachTeamForUser({ userId: user.id, basicCoachTeamId: basicTeamIdInput });
+    if (ownedTeam) {
+      checkoutRequest = { ...checkoutRequest, basicCoachTeamId: ownedTeam.id };
     }
   }
 
@@ -116,7 +84,6 @@ export const POST = withObservability(async (req: Request) => {
     ownerUserId: user.id,
     reactivateOrgSlug: checkoutRequest.reactivateOrgSlug,
     basicCoachTeamId: checkoutRequest.basicCoachTeamId,
-    claimToken: checkoutRequest.claimToken,
   });
   const existingPortal = await getActiveOwnedTeamWorkspace(user.id);
   if (existingPortal && existingPortal.workspaceOrgId !== keepPortal?.orgId) {

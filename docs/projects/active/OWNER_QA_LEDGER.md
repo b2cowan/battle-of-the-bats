@@ -27521,3 +27521,12 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **WALKED 2026-11-01, COMPLETE** — logged on the owner's word; the per-part counts did not come back with the report, so none are recorded here. Account sheet on a phone closed. The build is still uncommitted as of this entry.
 <!-- /§441 -->
+
+## §443 · Signed-in family accounts · Stage 2 owner walk — **a new coach who registers a team gets one email, the registration, with the Confirm my email button inside it; the finish screen leads with "Confirm your email to open your portal" and no longer offers to create the account they just made**
+<!-- §443 -->
+**Walk published 2026-11-02, owed.** [Interactive walk](https://claude.ai/artifact/2dA8ScXrLPJ5uNFQXxrRKe) · [repository HTML](SIGNED_IN_FAMILY_STAGE2_WALK.html). One purpose (registration emails and the finish screen), 9 parts (A–I), 27 steps: A no mail service (the honest fallback card), B a new coach on a phone (one email, the button), C the same link twice, D the finish screen at a desk and its two ways on, E the waitlist, F "Registration received" switched off, G an address with an account and the join page, H a waiting account registers again, I put back. Runs on the dev server with `REQUIRE_SIGNUP_EMAIL_VERIFICATION=true` and a Resend key, on the Stripe walk tournament fixture.
+
+**Authority and scope:** [build prompt](SIGNED_IN_FAMILY_STAGE2_BUILD_PROMPT.md) Parts 4–5 and the Part 7 `/review` fixes; owner rulings asks 1–5, all A, 2026-11-01; [drawings](https://claude.ai/artifact/LcsxtXG1eQ5HRwEPqLp9CV). The team pay page's hidden receipt address (Part 6) is not in this walk.
+
+**Owner calls open with it:** the join page's mismatch line (G4, Session 1's words, not drawn); no button on the "couldn't set up your account" card (A2, as drawn); a coach whose account still waits is asked to sign in when registering again and refused until they confirm (H). Reported by `/review`, not walked: a stranger who registers with someone else's address chooses that account's password (fix = passwordless account, password set at confirm; a product call).
+<!-- /§443 -->

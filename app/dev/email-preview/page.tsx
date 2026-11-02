@@ -20,6 +20,7 @@ import {
   platformPasswordResetHtml,
 } from '@/lib/email';
 import { VERIFICATION_NEXT_STEP } from '@/lib/verification-next-step';
+import { registrationEmailSubject } from '@/lib/registration-email-plan';
 import { INVITATION_EMAIL_WORDS } from '@/lib/invite-only-words';
 
 // Sample "amount due" line (deposit-first), as the acceptance email now shows (J5-063).
@@ -68,13 +69,25 @@ type Preview = {
 // Coach-facing emails, grouped by how they fire.
 const AUTOMATIC: Preview[] = [
   {
-    id: 'registration',
-    label: 'Registration received',
-    subject: 'Registration Received - ' + S.teamName,
-    trigger: 'Coach submits the public registration form.',
+    // Signed-in family accounts Stage 2, Part 4: a new coach's ONE email, the confirm button inside it.
+    id: 'registration-new-coach',
+    label: 'Registration received — a new coach (confirm inside)',
+    subject: registrationEmailSubject(S.teamName, false),
+    trigger: 'A new coach submits the public registration form signed out on the live site; their account waits for its email.',
     html: registrationConfirmationHtml({
       teamName: S.teamName, coachName: S.coachName, registrantName: S.coachName, divisionName: S.divisionName,
-      tournamentName: S.tournamentName, contactEmail: S.contactEmail, coachEmail: S.coachEmail,
+      tournamentName: S.tournamentName, contactEmail: S.contactEmail,
+      registrationId: S.teamId, confirmUrl: 'https://fieldlogichq.com/auth/signup-confirm?link=sample',
+    }),
+  },
+  {
+    id: 'registration',
+    label: 'Registration received — a coach with an account',
+    subject: registrationEmailSubject(S.teamName, false),
+    trigger: 'A signed-in coach (or one whose account is already confirmed) submits the public registration form.',
+    html: registrationConfirmationHtml({
+      teamName: S.teamName, coachName: S.coachName, registrantName: S.coachName, divisionName: S.divisionName,
+      tournamentName: S.tournamentName, contactEmail: S.contactEmail,
       registrationId: S.teamId,
     }),
   },
@@ -83,12 +96,12 @@ const AUTOMATIC: Preview[] = [
     // them, and says the organizer's emails go to the head coach the portal named.
     id: 'registration-by-staff',
     label: 'Registration received — someone else is the head coach',
-    subject: 'Registration Received - ' + S.teamName,
+    subject: registrationEmailSubject(S.teamName, false),
     trigger: 'A team manager registers a Premium team whose head coach is someone else.',
     html: registrationConfirmationHtml({
       teamName: S.teamName, coachName: S.coachName, registrantName: 'Alex Morgan', headCoachElsewhere: true,
       divisionName: S.divisionName, tournamentName: S.tournamentName, contactEmail: S.contactEmail,
-      coachEmail: 'alex@example.ca', registrationId: S.teamId,
+      registrationId: S.teamId,
     }),
   },
   {
@@ -98,7 +111,7 @@ const AUTOMATIC: Preview[] = [
     trigger: 'Coach registers into a full division (or organizer sets status to waitlist).',
     html: waitlistConfirmationHtml({
       teamName: S.teamName, coachName: S.coachName, registrantName: S.coachName, divisionName: S.divisionName,
-      tournamentName: S.tournamentName, contactEmail: S.contactEmail, coachEmail: S.coachEmail,
+      tournamentName: S.tournamentName, contactEmail: S.contactEmail,
       registrationId: S.teamId,
     }),
   },

@@ -31,7 +31,6 @@ export type TeamCheckoutRequest = {
   seasonYear: number;
   billingCycle: BillingCycle;
   returnTo: string;
-  claimToken: string | null;
   source: TeamWorkspaceSource;
   sourceTournamentId: string | null;
   sourceTournamentTeamId: string | null;
@@ -151,7 +150,6 @@ export function normalizeTeamCheckoutRequest(body: Record<string, unknown>): Tea
     seasonYear,
     billingCycle: normalizeBillingCycle(body.billingCycle),
     returnTo,
-    claimToken: cleanOptionalText(body.claimToken, 200),
     source: 'direct_signup',
     sourceTournamentId: null,
     sourceTournamentTeamId: null,

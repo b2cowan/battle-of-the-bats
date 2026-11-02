@@ -13,14 +13,18 @@ const at = (src: string, needle: string) => { const i = src.indexOf(needle); ass
 describe('the coach sign-up throttle', () => {
   const route = readCode('app/api/auth/coach-signup/route.ts');
 
-  it('has the three limits', () => {
-    assert.match(route, /const ipLimiter = new FixedWindowRateLimiter\(15 \* MINUTE, 15\);/);
-    assert.match(route, /const emailLimiter = new FixedWindowRateLimiter\(60 \* MINUTE, 5\);/);
-    assert.match(route, /const globalLimiter = new FixedWindowRateLimiter\(5 \* MINUTE, 60\);/);
+  it('has the three limits, one budget shared with the tournament registration’s account step (Signed-in family accounts Stage 2)', () => {
+    const lib = readCode('lib/signup-verification.ts');
+    assert.match(lib, /const coachSignupIp = new FixedWindowRateLimiter\(15 \* MINUTE, 15\);/);
+    assert.match(lib, /const coachSignupEmail = new FixedWindowRateLimiter\(60 \* MINUTE, 5\);/);
+    assert.match(lib, /const coachSignupGlobal = new FixedWindowRateLimiter\(5 \* MINUTE, 60\);/);
+    assert.match(lib, /return coachSignupIp\.take\(ip\) && coachSignupEmail\.take\(email\) && coachSignupGlobal\.take\('global'\);/);
+    assert.doesNotMatch(route, /new FixedWindowRateLimiter/, 'no copy of its own');
+    assert.match(readCode('lib/registration-account.ts'), /if \(!takeCoachSignupBudget\(p\.ip, p\.email\)\) \{/);
   });
 
   it('refuses with 429 after the request is well-formed and before the account is made', () => {
-    const check = at(route, "if (!ipLimiter.take(ip) || !emailLimiter.take(email) || !globalLimiter.take('global')) {");
+    const check = at(route, 'if (!takeCoachSignupBudget(ip, email)) {');
     assert.ok(at(route, "return json({ error: 'Please enter a valid email address.' }, 400);") < check, 'after the shape checks');
     assert.ok(check < at(route, 'supabaseAdmin.auth.admin.createUser('), 'before the account is made');
     assert.match(route, /return json\(\{ error: 'Too many sign-up attempts\. Please wait a few minutes and try again\.' \}, 429\);/);

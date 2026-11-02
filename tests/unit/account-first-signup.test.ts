@@ -425,9 +425,10 @@ describe('Home’s waiting workspace (A4 revised 2026-10-19)', () => {
 });
 
 /**
- * PART 3 — COACH PREMIUM AND THE CLAIM LINK (2026-10-19). Step 1 is the account card alone; the
+ * PART 3 — COACH PREMIUM (2026-10-19). Step 1 is the account card alone; the
  * team, the sport and the plan are step 2 — today's signed-in card. Nothing typed lives in the browser tab any more (F02):
- * the billing rides on the account. The claim link keeps its server re-fill; its token is never kept on the account.
+ * the billing rides on the account. (The tournament-team claim link that shared this card was removed by Signed-in family
+ * accounts Stage 2, Part 2; the sign-up route still refuses to remember a door for a `claim: true` request.)
  */
 describe('Coach Premium, account first (Part 3)', () => {
   const route = readCode('app/api/auth/team-signup/route.ts');
@@ -451,8 +452,8 @@ describe('Coach Premium, account first (Part 3)', () => {
     assert.match(card, /const onAccountStep = !isAuthenticated;/);
     assert.match(card, /<form className=\{accountForm\.form\} onSubmit=\{handleAccount\}>/);
     assert.match(card, /<form className=\{accountForm\.form\} onSubmit=\{handleSubmit\}>/);
-    // a reactivation is no start; a claim says so, keeping the offer's locked door but no remembered one (/review)
-    assert.match(card, /\.\.\.\(isReactivation \? \{\} : \{ startDoor: 'premium', billing: billingCycle, \.\.\.\(claim \? \{ claim: true \} : \{\}\) \}\),/);
+    // a reactivation is no start: it keeps no remembered door (/review)
+    assert.match(card, /\.\.\.\(isReactivation \? \{\} : \{ startDoor: 'premium', billing: billingCycle \}\),/);
     // signing in on the card re-asks the server, so the offer and the billing are the account's (/review)
     assert.match(card, /setIsAuthenticated\(true\);[\s\S]{0,300}?router\.refresh\(\);/);
     // a waiting account that signs in gets the check-your-email block with its resend, not a dead end (/review)
@@ -482,7 +483,7 @@ describe('Coach Premium, account first (Part 3)', () => {
   it('the card shows the price the checkout will charge: the server’s answer, not the bare window', () => {
     assert.match(card, /foundingOffer: foundingPromoActive,/);
     assert.doesNotMatch(card, /isFoundingSeasonPromoActive/);
-    for (const f of ['app/coaches/start/page.tsx', 'app/coaches/claim/[token]/page.tsx']) {
+    for (const f of ['app/coaches/start/page.tsx']) {
       assert.match(readCode(f), /foundingOffer=\{foundingSeasonOfferFor\(user, 'premium'\)\}/, f);
       assert.match(readCode(f), /signedInEmail=\{user\?\.email \?\? null\}/, f);
       assert.match(readCode(f), /rememberedBilling=\{readStartDoor\(user\?\.user_metadata\)\?\.billing \?\? null\}/, f);

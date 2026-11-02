@@ -15,6 +15,23 @@ import { verificationNextStep } from './verification-next-step';
 import { sendTransactionalEmail } from './platform-email-templates';
 import { safeNextPath } from './safe-redirect';
 import { startDoorLinkPath, type StartDoor } from './start-door';
+import { FixedWindowRateLimiter } from './rate-limit';
+
+/**
+ * The coach sign-up's budget, ONE set of buckets for both of its doors: the coach sign-up route and the tournament
+ * registration's account step (lib/registration-account.ts). Separate copies let a caller double it by alternating.
+ * Looser per source than the org sign-up — every new coach registering for a tournament comes through here, often
+ * several from one venue's Wi-Fi — plus a per-address ceiling and a global one. Most specific first, so a throttled
+ * caller can't spend the global one.
+ */
+const MINUTE = 60_000;
+const coachSignupIp = new FixedWindowRateLimiter(15 * MINUTE, 15);     // per source IP (spoofable → global backstop); a
+                                                                       // short window, so a venue's Wi-Fi recovers in minutes
+const coachSignupEmail = new FixedWindowRateLimiter(60 * MINUTE, 5);   // per address being signed up
+const coachSignupGlobal = new FixedWindowRateLimiter(5 * MINUTE, 60);  // spoofing-proof ceiling across all callers
+export function takeCoachSignupBudget(ip: string, email: string): boolean {
+  return coachSignupIp.take(ip) && coachSignupEmail.take(email) && coachSignupGlobal.take('global');
+}
 
 /** Does a new account prove its email by link? One answer for every sign-up route. */
 export function shouldRequireEmailVerification(): boolean {
@@ -38,6 +55,12 @@ export function verificationRedirect(origin: string, next: string): string {
   return `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
 }
 
+/** The button's address: the Supabase action link wrapped in the confirm page, so a mail scanner that opens links can't
+ *  spend the one-time token. The verification email and the tournament registration email (Stage 2, Part 4) both use it. */
+export function signupConfirmUrl(origin: string, actionLink: string): string {
+  return `${origin}/auth/signup-confirm?link=${encodeURIComponent(actionLink)}`;
+}
+
 /**
  * Send the verification email for a Supabase action link. The link is wrapped in the confirm page so a mail scanner
  * that opens links can't spend the one-time token. `door`, `next` (where the link returns) and `registration` (the
@@ -55,7 +78,7 @@ export async function sendSignupVerificationEmail(p: {
   firstName?: string;
   continueName?: string | null;
 }): Promise<void> {
-  const verifyUrl = `${p.origin}/auth/signup-confirm?link=${encodeURIComponent(p.actionLink)}`;
+  const verifyUrl = signupConfirmUrl(p.origin, p.actionLink);
   const continueName = p.continueName?.trim() ? p.continueName.trim().slice(0, 120) : null;
   await sendTransactionalEmail({
     key: 'signup_verification',

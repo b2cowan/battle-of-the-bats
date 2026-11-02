@@ -315,15 +315,20 @@ describe('the public form tells the rest of the team (registered / waitlisted)',
     assert.match(code, /await linkTournamentRegistrationToBasicCoachTeam\(\{[\s\S]*?\}\);\s*linkedCoachId = signedInCoach\.id;/);
     assert.match(code, /linkedCoachId && notifyTeamCoaches\(\{[\s\S]*?compose: registrationNoticeWords\(finalStatus\),\s*excludeUserIds: \[linkedCoachId\],/);
     assert.ok(code.lastIndexOf("finalStatus = 'waitlist'") < call, 'after the slot claim can turn the entry into a waitlist entry');
-    // A6: the email switch's own block closes before the call (brace-matched, so moving the call inside it fails).
-    const emailSwitch = code.indexOf("if (coachEmailEnabled(tournament.settings, 'confirmation'))");
-    assert.ok(emailSwitch > 0, 'the email switch is still there');
-    let depth = 0, switchClosed = -1;
-    for (let i = code.indexOf('{', emailSwitch); i < code.length; i++) {
-      if (code[i] === '{') depth++;
-      else if (code[i] === '}' && --depth === 0) { switchClosed = i; break; }
+    // A6: the email switch only feeds the coach's emails (Signed-in family accounts Stage 2, Part 4: through
+    // planCoachRegistrationEmails), and every coach-email block closes before the call (brace-matched, so moving the
+    // call inside one fails).
+    assert.match(code, /const confirmationOn = coachEmailEnabled\(tournament\.settings, 'confirmation'\);/, 'the email switch is still there');
+    for (const block of ["if (coachEmails.some(e => e !== 'confirm_only')) {", "if (coachEmails.includes('confirm_only') && actionLink) {"]) {
+      const start = code.indexOf(block);
+      assert.ok(start > 0, block);
+      let depth = 0, closed = -1;
+      for (let i = code.indexOf('{', start + block.length - 1); i < code.length; i++) {
+        if (code[i] === '{') depth++;
+        else if (code[i] === '}' && --depth === 0) { closed = i; break; }
+      }
+      assert.ok(closed > 0 && closed < call, `A6: not inside ${block}`);
     }
-    assert.ok(switchClosed > 0 && switchClosed < call, 'A6: not inside the email switch');
   });
 });
 

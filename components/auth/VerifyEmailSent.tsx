@@ -21,6 +21,9 @@ export { requestVerificationLink } from './ResendLink';
 export default function VerifyEmailSent(props: {
   tone: 'start' | 'register';
   email: string;
+  /** `register` only: a heading over `lead`, where the block is the one thing left to do (Signed-in family accounts
+   *  Stage 2, Part 5: the finish screen). */
+  heading?: ReactNode;
   lead: ReactNode;
   after?: ReactNode;
   /** Where the resent link returns to (the same place the first link does), and the name it continues. */
@@ -31,7 +34,7 @@ export default function VerifyEmailSent(props: {
   /** "Already confirmed? Sign in". */
   signInHref?: string;
 }) {
-  const { tone, email, lead, after, resendNext, continueName, onChangeEmail, signInHref } = props;
+  const { tone, email, heading, lead, after, resendNext, continueName, onChangeEmail, signInHref } = props;
   // The start look takes focus when it opens: the button that submitted the form is gone, and a status line inserted
   // with its text already in it is not reliably spoken (The first look, the Stage 1 screen-reader pass).
   const blockRef = useRef<HTMLDivElement>(null);
@@ -63,6 +66,7 @@ export default function VerifyEmailSent(props: {
 
   return (
     <div className={`${styles.root} ${styles[tone]}`}>
+      {heading && <p className={styles.head}>{heading}</p>}
       <p className={styles.lead}>{lead}</p>
       <p className={styles.sent} role="status">Verification email sent to {email}.</p>
       {after && <p className={styles.after}>{after}</p>}

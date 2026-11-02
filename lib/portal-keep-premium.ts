@@ -35,7 +35,6 @@ export async function findKeepPremiumPortal(input: {
   ownerUserId: string;
   reactivateOrgSlug?: string | null;
   basicCoachTeamId?: string | null;
-  claimToken?: string | null;
   teamWorkspaceClaimId?: string | null;
   /**
    * The webhook's subscription: a portal this same subscription already converted is found again, so a delivery that
@@ -43,7 +42,7 @@ export async function findKeepPremiumPortal(input: {
    */
   stripeSubscriptionId?: string | null;
 }): Promise<KeepPremiumPortal | null> {
-  if (input.claimToken || input.teamWorkspaceClaimId) return null;
+  if (input.teamWorkspaceClaimId) return null;
   if (!input.reactivateOrgSlug && !input.basicCoachTeamId) return null;
   // One staff-given portal per coach (mig 406's partial unique index on the mark), so at most one row.
   const { data: ws, error } = await supabaseAdmin

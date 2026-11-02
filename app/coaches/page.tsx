@@ -136,7 +136,7 @@ export default async function CoachesPortalPage() {
                   </p>
                 </div>
                 <Link
-                  href={`/coaches/join?registrationId=${encodeURIComponent(reg.id)}&email=${encodeURIComponent(email)}&next=${encodeURIComponent(COACHES_TOURNAMENTS_PATH)}`}
+                  href={`/coaches/join?registrationId=${encodeURIComponent(reg.id)}&next=${encodeURIComponent(COACHES_TOURNAMENTS_PATH)}`}
                   className="btn btn-lime"
                   style={{ width: '100%', marginTop: 'auto' }}
                 >

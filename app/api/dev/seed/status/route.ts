@@ -27,7 +27,6 @@ export async function GET() {
     { count: leagueSeasons },
     { count: repTeams },
     { count: teamWorkspaces },
-    { count: teamClaims },
     { count: orgUsers },
   ] = await Promise.all([
     supabaseAdmin.from('organizations').select('*', { count: 'exact', head: true }),
@@ -40,7 +39,6 @@ export async function GET() {
     supabaseAdmin.from('league_seasons').select('*', { count: 'exact', head: true }),
     repTeamsQuery,
     supabaseAdmin.from('team_workspaces').select('*', { count: 'exact', head: true }),
-    supabaseAdmin.from('team_workspace_claims').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('organization_members').select('*', { count: 'exact', head: true })
       .neq('role', 'owner'),
   ]);
@@ -52,7 +50,6 @@ export async function GET() {
     leagueSeasons:  leagueSeasons ?? 0,
     repTeams:       repTeams ?? 0,
     teamWorkspaces: teamWorkspaces ?? 0,
-    teamClaims:     teamClaims ?? 0,
     orgUsers:       orgUsers ?? 0,
     orgList: (orgRows ?? []).map(o => ({
       id:           o.id,

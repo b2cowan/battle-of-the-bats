@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { withObservability, captureError, captureAndJson } from '@/lib/observability';
-import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
+import { clientIpFrom } from '@/lib/rate-limit';
 import { authAccountExistsForEmail } from '@/lib/auth-account-lookup';
 import { getAssistantInviteByToken } from '@/lib/assistant-invites';
 import { leagueCoachInviteProvesEmail } from '@/lib/house-league-coach-invites';
 import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 import {
-  sendSignupVerificationEmail, shouldRequireEmailVerification, verificationRedirect, verificationReturnPath,
+  sendSignupVerificationEmail, shouldRequireEmailVerification, takeCoachSignupBudget, verificationRedirect, verificationReturnPath,
 } from '@/lib/signup-verification';
 import { parseStartDoor } from '@/lib/start-door';
 import { lockStartDoorOrUndo } from '@/lib/founding-season';
@@ -28,14 +28,9 @@ function json(data: unknown, status = 200) {
  * already proves the inbox: a live assistant invitation whose invited email is this one (`inviteToken`) — that link
  * was emailed to the address, so the account is ready at once, as before.
  *
- * Throttled (interim from 2026-10-16, kept): looser per source than the org sign-up — every new coach registering for
- * a tournament comes through here, often several from one venue's Wi-Fi — plus a per-address ceiling and a global one.
+ * Throttled (interim from 2026-10-16, kept): `takeCoachSignupBudget` (lib/signup-verification.ts), the budget this route
+ * shares with the tournament registration's account step.
  */
-const MINUTE = 60_000;
-const ipLimiter = new FixedWindowRateLimiter(15 * MINUTE, 15);      // per source IP (spoofable → global backstop); a short
-                                                                    // window, so a venue's shared Wi-Fi recovers in minutes
-const emailLimiter = new FixedWindowRateLimiter(60 * MINUTE, 5);    // per address being signed up
-const globalLimiter = new FixedWindowRateLimiter(5 * MINUTE, 60);   // spoofing-proof ceiling across all callers
 
 /** Does this request already prove the inbox? A live assistant (or house-league coach) invitation addressed to this email. */
 async function inviteProvesEmail(inviteToken: unknown, email: string): Promise<boolean> {
@@ -80,9 +75,9 @@ export const POST = withObservability(async (req: NextRequest) => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return json({ error: 'Please enter a valid email address.' }, 400);
   }
-  // Only a well-formed request spends budget; most specific first, so a throttled caller can't spend the global one.
+  // Only a well-formed request spends budget.
   const ip = clientIpFrom(req);
-  if (!ipLimiter.take(ip) || !emailLimiter.take(email) || !globalLimiter.take('global')) {
+  if (!takeCoachSignupBudget(ip, email)) {
     console.warn(`[auth/coach-signup] rate-limited sign-up attempt ip=${ip}`);
     return json({ error: 'Too many sign-up attempts. Please wait a few minutes and try again.' }, 429);
   }

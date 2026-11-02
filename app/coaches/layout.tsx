@@ -9,7 +9,7 @@ import { getStartMenuConfig } from '@/lib/start-menu';
 /**
  * Wraps every /coaches route. The shell renders the portal chrome (A2 consumer chrome:
  * global consumer nav + team/event header + section tabs/rail) only on the authenticated
- * portal routes. The warm journey (/coaches/start, /coaches/claim, /coaches/welcome, /coaches/join since The first look
+ * portal routes. The warm journey (/coaches/start, /coaches/welcome, /coaches/join since The first look
  * 2026-10-19, and /coaches/checkout since 2026-10-20)
  * also passes through here but wears the consumer WARM chrome via its own nested layout
  * (CoachJourneyChrome), with the marketing Navbar/Footer suppressed via isWarmJourneyPath.
