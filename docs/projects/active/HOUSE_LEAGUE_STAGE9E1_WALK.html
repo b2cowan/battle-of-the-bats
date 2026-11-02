@@ -1,0 +1,301 @@
+<title>9e-1 Standings Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · House League · Stage 9e-1 · §442</span>
+    <h1>Standings: the season’s rules, the switch, the coach’s line</h1>
+    <p class="sub">Written 2026-11-01 for Stage 9e-1 (Parts 1–6, uncommitted). One purpose: the standings table ranks one honest way, says how, shows only when families should see it, and a game counts once both scores are in.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Before this build the standings counted a finished game with no scores as a 0–0 tie, showed a table of zeros for a division whose schedule wasn’t published, broke a tie by the order the teams were created in, and called the columns GF, GA and Diff for a baseball season. Now the table follows the season’s sport (RF, RA, RD), a game counts once both scores are in, teams level on points are split by the game between them (only when exactly two are level), then run differential, then runs for, and teams still level share a place (“T-5”). A division can turn its standings off. A coach sees one quiet line about where the team stands.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>The public table for U11 Walk reads exactly as the fixture prints it, in the sport’s words, with the box that explains it.</li>
+    <li>A division whose schedule isn’t published, or whose standings are off, shows no table to families, and says why in a plain line.</li>
+    <li>The club’s admin table always shows, names who a shared place is shared with, and says when families can’t see it.</li>
+    <li>The Show standings switch saves when pressed, says so, and the public page and the coach’s line follow it.</li>
+    <li>Scoring a game moves the table (two teams level on points are split by the game between them), and clearing both scores puts the game back and the table with it.</li>
+    <li>A coach of a ranked team reads one line and a link; a coach of a hidden or unpublished division reads no line.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>A direct call that marks a game finished with no scores.</strong> The game window can’t send one (it holds one score alone, and clearing both sends “scheduled”), so the server’s refusal is pinned by unit tests rather than walked.</li>
+    <li><strong>Other sports.</strong> House league offers softball and baseball only, and both read RF, RA, RD and 2 / 1 / 0. Basketball’s words are unit-pinned, not offered.</li>
+    <li><strong>Coach score entry, rainout, “Final standings”.</strong> Those are 9e-2, 9e-3 and 9f.</li>
+    <li><strong>The admin table on a phone.</strong> The drawing gave it a record column; this build keeps the admin table one scrolling table (see the calls below).</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd>Restarted 2026-11-01 for this walk (new files, a migration, shared modules). Login page answers 200.</dd>
+    <dt>Fixture</dt><dd>In the project folder: <code>node --env-file=.env.local .probe/9e1-walk/fixture.mjs</code>. It (re)builds three walk divisions beside U9 Rookie and prints the expected table and every link this walk uses. <strong>The team and division links change each time it builds</strong>, so use the ones it printed last. Modes: <code>--all-off</code> (Part H) · <code>--reset</code>. Dev only; it refuses production and never touches a sign-in.</dd>
+    <dt>The three divisions</dt><dd><strong>U11 Walk</strong>: published, standings on, six teams and the worked table. <strong>U13 Walk</strong>: not published, one scored game. <strong>U7 Walk</strong>: published, standings off. U9 Rookie (walk A and B’s division) is not published and is not changed.</dd>
+    <dt>When done</dt><dd>Run <code>--reset</code>. It removes the walk divisions and their coach seats and puts every switch back.</dd>
+  </dl></section>
+  <section class="card"><h2>Sign in as</h2><p>One browser window per person (a private window for the second). Dev only, keep this page private. All passwords <code>UATPassword2026!</code>. The public page needs no sign-in.</p><dl class="facts">
+    <dt>League admin</dt><dd><code>uat-club-league-admin@uat-rep-club.local</code> (Jordan Pike): Parts D, E, F</dd>
+    <dt>Morgan Reid</dt><dd><code>uat-hl-coach-reds@uat-rep-club.local</code>: coaches Reds (U9 Rookie) and, from the fixture, Rays (U11 Walk): Part G</dd>
+    <dt>Sam Blake</dt><dd><code>uat-hl-coach-blues@uat-rep-club.local</code>: coaches Blues and, from the fixture, Hawks (U11 Walk) and Bees (U7 Walk): Part G (a private window)</dd>
+  </dl></section>
+  <section class="card"><h2>Where</h2><dl class="facts">
+    <dt>Public standings</dt><dd><code>http://localhost:3000/uat-rep-club/league/2026-fall-house-league/standings</code></dd>
+    <dt>Admin standings</dt><dd><code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/standings</code></dd>
+    <dt>The season</dt><dd><code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77</code> (Divisions)</dd>
+    <dt>The schedule</dt><dd><code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code></dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>The words.</strong> Every new sentence is the copy you accepted on 2026-11-01 (Part A), including <strong>Level with</strong>. The only words of the build’s own are the switch’s read row (E3). Each string is one edit.</li>
+    <li><strong>Teams that haven’t played yet, once others have (D3).</strong> In a division with some scores, a team with no scored game still gets a place on 0 points and shows dashes; two such teams share a place. The copy says “a dash, not 0, before a team has a counted game” but doesn’t say whether it is ranked. Recommend keep: it is how a league table reads mid-season.</li>
+    <li><strong>The admin table on a phone (D).</strong> Built as one scrolling table, not the drawn record-column version. Say if you want the drawn one.</li>
+    <li><strong>The game window’s two new hints (F).</strong> The accepted copy adds “A game counts in the standings once both scores are in. Clear both to put it back to scheduled.” under the score boxes, and “Back to scheduled.” after a clear. The build prompt said not to touch the window’s words, so neither shows. Say if you want them.</li>
+    <li><strong>The switch’s read row (E3).</strong> The record reads “Show standings · On / Off”. Those two words are the build’s, not the copy’s.</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "hl9e1-walk-standings-v1";
+  var TITLE = "9e-1 walk §442 · Standings: the season’s rules, the switch, the coach’s line (2026-11-01)";
+  var FX = "<code>node --env-file=.env.local .probe/9e1-walk/fixture.mjs";
+  var LA = "League admin · uat-club-league-admin@uat-rep-club.local";
+  var MO = "Morgan · uat-hl-coach-reds@uat-rep-club.local";
+  var SAM = "Sam · uat-hl-coach-blues@uat-rep-club.local (private window)";
+  var PUB = "<code>http://localhost:3000/uat-rep-club/league/2026-fall-house-league/standings</code>";
+  var ADM = "<code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/standings</code>";
+  var SEA = "<code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77</code>";
+  var SCH = "<code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code>";
+  var TABLE = "<strong>1</strong> Twins 3 · 3-0-0 · 6 · RF 21 · RA 1 · <strong>+20</strong>; <strong>2</strong> Royals 2-1-0 · 4 · 15 · 6 · +9; <strong>3</strong> Rays 2-1-0 · 4 · 10 · 8 · +2; <strong>4</strong> Orioles 2-1-0 · 4 · 10 · 15 · −5; <strong>T-5</strong> Cubs 0-3-1 · 1 · 4 · 17 · −13; <strong>T-5</strong> Hawks 0-3-1 · 1 · 4 · 17 · −13";
+  var PARTS = [
+ { id: "A", title: "The public table at a desk", steps: [
+  { who: "Terminal", do: "Run " + FX + "</code>.",
+    see: "<strong>Stop check:</strong> “Built.” then the expected U11 Walk table, then a list of links (public, the U13 and U7 links, admin, season, schedule, three coach pages). Keep that output open; Parts B and G use its links." },
+  { who: "Anyone (no sign-in)", do: "Open " + PUB + ".",
+    see: "Title “Standings”, “2026 Fall House League” under it. Three tabs: <strong>U9 Rookie · coming</strong>, <strong>U11 Walk</strong>, <strong>U13 Walk · coming</strong>. <strong>No U7 Walk tab.</strong> The page opens on U9 Rookie (the first division) and says “Standings show here once the schedule is up and the first scores are in.”" },
+  { who: "Anyone", do: "Press the <strong>U11 Walk</strong> tab.",
+    see: "Columns <strong># · Team · GP · W · L · T · Pts · RF · RA · RD</strong> (no GF, GA or Diff). Rows in this order: " + TABLE + ". RD is green above 0 and red below. Twins’ name is the boldest." },
+  { who: "Anyone", do: "Rest the pointer on the RF, RA and RD headings, then on a <strong>T-5</strong>.",
+    see: "“Runs for”, “Runs against”, “Run differential (runs for minus runs against)”; on T-5, “Tied for 5th”." },
+  { who: "Anyone", do: "Read the box under the table.",
+    see: "<strong>How the table is ranked</strong> · “A win is 2 points, a tie 1, a loss 0. Teams level on points are ordered by:” then 1. The game between them, when exactly two teams are level · 2. Run differential (RD) · 3. Runs for (RF), then “Teams still level share a place, shown as “T-3”. A game counts once both scores are in.”" },
+  { who: "Anyone", do: "Check the order against the box.",
+    see: "Royals, Rays and Orioles are three teams on 4 points, so the game between them is skipped: Rays beat Royals, yet Royals are 2nd on run differential. Cubs and Hawks are level on points, run differential and runs for: they share 5th. The fixture also holds an old Orioles–Hawks game marked finished with no scores; it does not count (if it did as 0–0, Orioles would have 5 points and be 2nd)." }
+ ]},
+ { id: "B", title: "Before there is a table to show", steps: [
+  { who: "Anyone", do: "Press <strong>U13 Walk · coming</strong>.",
+    see: "No table, and “Standings show here once the schedule is up and the first scores are in.”, although Aces beat Bolts 4–2 there. The schedule isn’t published, so nothing is public." },
+  { who: "Anyone", do: "Open the <strong>U7 Walk (off)</strong> link the fixture printed.",
+    see: "The tabs (still no U7 Walk tab), and “U7 Walk doesn’t keep standings. Its games are on the <u>Schedule</u>.”" },
+  { who: "Anyone", do: "Press <strong>Schedule</strong> in that line.",
+    see: "The public schedule, open on <strong>U7 Walk</strong>, with Ants vs Bees and Bees vs Crickets." }
+ ]},
+ { id: "C", title: "The public table on a phone", steps: [
+  { who: "Anyone", do: "Open the U11 Walk tab at phone width (390 px: a phone, or the browser’s device toolbar).",
+    see: "Columns <strong># · Team · W-L-T · Pts · RD</strong> first (Twins “3-0-0 · 6 · +20”, Cubs and Hawks “T-5 · 0-3-1 · 1 · −13”), and GP, RF, RA to the right." },
+  { who: "Anyone", do: "Swipe the table sideways.",
+    see: "GP, RF, RA come into view; the page itself doesn’t move sideways. Under the table: “Swipe the table for GP, RF and RA.”" },
+  { who: "Anyone", do: "Read the box under it.",
+    see: "<strong>How the table is ranked</strong> as one paragraph: “A win is 2 points, a tie 1. Level on points: the game between them (when exactly two teams are level), then run differential, then runs for. Still level: a shared place.”" }
+ ]},
+ { id: "D", title: "The club’s admin table", steps: [
+  { who: LA, do: "Open " + ADM + " and pick <strong>U11 Walk</strong> in the division list.",
+    see: "The same order as A3, with the same column words and a last column <strong>Level with</strong>: Cubs’ row says “Hawks”, Hawks’ row says “Cubs”, every other row is empty. No note above the table. Under it the ranking box and “Ranked the way the public page ranks it. The rules come from the season’s sport (Baseball) and can’t be changed here.”" },
+  { who: LA, do: "Pick <strong>U13 Walk</strong>.",
+    see: "Above the table: “Families can’t see this table yet: U13 Walk’s schedule isn’t published.” The table shows: <strong>1</strong> Aces (1-0-0 · 2), then Comets and Darts at <strong>T-2</strong> with dashes in every number, then <strong>4</strong> Bolts (0-1-0 · 0 · −2)." },
+  { who: LA, do: "Look at Comets and Darts in that table.",
+    see: "They haven’t played, show dashes, and still share 2nd on 0 points, above Bolts, who lost.",
+    call: "Call: keep teams with no game ranked once others have played (recommended), or list them last / unranked?" },
+  { who: LA, do: "Pick <strong>U7 Walk</strong>.",
+    see: "“Families can’t see this table: standings are off for U7 Walk.” and the table: Ants and Bees at <strong>T-1</strong> (0-0-1 · 1, Level with each other), Crickets <strong>3</strong> with dashes." },
+  { who: LA, do: "Back on <strong>U11 Walk</strong>, press <strong>Export</strong> and download the spreadsheet.",
+    see: "Columns Rank · Team · GP · W · L · T · Pts · <strong>RF · RA · RD</strong> · <strong>Level with</strong>; Cubs and Hawks read <strong>T-5</strong> in Rank and name each other in Level with." }
+ ]},
+ { id: "E", title: "The Show standings switch", steps: [
+  { who: LA, do: "Open " + SEA + ", go to Divisions, open <strong>U11 Walk</strong> and press the pencil.",
+    see: "At the end of the form, a row <strong>Show standings</strong> with a switch, on, and under the name: “Turn off for a division that doesn’t rank teams. Families won’t see its table and coaches won’t see a standing line. You still see the table here.”" },
+  { who: LA, do: "Turn the switch off.",
+    see: "It saves at once (no ✓ needed): a note in the window’s corner, “Standings are off for U11 Walk. Families can’t see them.”" },
+  { who: LA, do: "Press ✓ to leave the form.",
+    see: "The record now reads <strong>Show standings · Off</strong> at its end." },
+  { who: "Anyone", do: "Reload the public standings page.",
+    see: "Tabs <strong>U9 Rookie · coming</strong> and <strong>U13 Walk · coming</strong> only; no U11 Walk tab. The admin table for U11 Walk now shows “Families can’t see this table: standings are off for U11 Walk.”" },
+  { who: LA, do: "Back in the window, turn the switch on again.",
+    see: "“Standings are on for U11 Walk.”; the public U11 Walk tab is back with the table from A3." }
+ ]},
+ { id: "F", title: "A game counts once both scores are in", steps: [
+  { who: LA, do: "Open " + SCH + ", pick <strong>U11 Walk</strong>, and open yesterday’s <strong>Royals vs Twins</strong>. Press the pencil.",
+    see: "Two score boxes, empty (the game started yesterday)." },
+  { who: LA, do: "Type 5 for Royals and leave Twins empty.",
+    see: "“Enter both scores, or neither.” and the ✓ holds." },
+  { who: LA, do: "Type 1 for Twins and press ✓. Then reload the public U11 Walk table.",
+    see: "<strong>1</strong> Royals (3-1-0 · 6 · +13), <strong>2</strong> Twins (3-1-0 · 6 · +16). Both on 6 points, and only two of them, so the game between them decides: Royals won it, so Royals are 1st although Twins’ run differential is better. The rest is as in A3." },
+  { who: LA, do: "Open the game again, press the pencil, clear <strong>both</strong> boxes, and press ✓. Reload the public table.",
+    see: "The game reads as on again (no score) on the schedule, and the public table is back exactly as in A3: Twins 1st." }
+ ]},
+ { id: "G", title: "The coach’s line", steps: [
+  { who: MO, do: "Open the <strong>Coach (Morgan Reid, Rays)</strong> link the fixture printed.",
+    see: "The section heading reads <strong>Scores and standings</strong>, then “3rd of 6 · 2-1-0 · 4 points”, then a <strong>See the standings</strong> link, then “The club enters scores for now.”" },
+  { who: MO, do: "Press <strong>See the standings</strong>.",
+    see: "The public standings page, open on <strong>U11 Walk</strong>." },
+  { who: MO, do: "Open Reds’ page from the “Your teams” strip.",
+    see: "Reds is in U9 Rookie, not published: the heading reads just <strong>Scores</strong>, with no standing line." },
+  { who: SAM, do: "Open the <strong>Coach (Sam Blake, Hawks)</strong> link.",
+    see: "<strong>Scores and standings</strong> · “Tied for 5th of 6 · 0-3-1 · 1 point” (one point, singular) and See the standings." },
+  { who: SAM, do: "Open the <strong>Coach (Sam Blake, Bees)</strong> link.",
+    see: "Bees is in U7 Walk, standings off: the heading reads <strong>Scores</strong>, no line, no link." }
+ ]},
+ { id: "H", title: "No division keeps standings, and put back", steps: [
+  { who: "Terminal", do: "Run " + FX + " --all-off</code>, then reload the public standings page.",
+    see: "No tabs, and “This league doesn’t show standings. The games are on the <u>Schedule</u>.”" },
+  { who: "Terminal", do: "Run " + FX + " --reset</code>, then reload the public page.",
+    see: "“Reset: the walk divisions… are gone; every switch is as it was.” The page shows U9 Rookie only (no tabs), with “Standings show here once the schedule is up and the first scores are in.”" }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

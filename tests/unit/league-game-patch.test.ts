@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
-import { invalidGamePatch } from '../../lib/league-game-patch.ts';
+import { invalidGamePatch, scoreRuleStatus } from '../../lib/league-game-patch.ts';
 
 /** 9d-2a /review call 7a (owner 2026-10-28): a bad status or score is a 400 with a sentence, never a 500. */
 describe('a house-league game\'s patch: status and score', () => {
@@ -46,5 +46,41 @@ describe('Generate games\' check fails closed', () => {
     assert.match(lookup, /if \(permitFailed\) \(out\.unread \?\?= \[\]\)\.push\('permit'\)/);
     const venue = readFileSync(new URL('../../lib/league-venue.ts', import.meta.url), 'utf8');
     assert.match(venue, /if \(gamesRes\.error \|\| practicesRes\.error\) result\.unread = true/);
+  });
+});
+
+/** House League 9e-1: a game counts once both scores are in — and the server, not only the window, says so. */
+describe('the score rule (stored row + patch)', () => {
+  const played = { status: 'completed', homeScore: 5, awayScore: 3 };
+  const on = { status: 'scheduled', homeScore: null, awayScore: null };
+  it('both scores in, no status: played', () => {
+    assert.deepEqual(scoreRuleStatus(on, { homeScore: 4, awayScore: 4 }), { status: 'completed' });
+    assert.deepEqual(scoreRuleStatus(played, { homeScore: 6, awayScore: 3 }), { status: 'completed' });
+  });
+  it('both cleared, no status: a played game is on again; an unplayed one is left as it is', () => {
+    assert.deepEqual(scoreRuleStatus(played, { homeScore: null, awayScore: null }), { status: 'scheduled' });
+    assert.deepEqual(scoreRuleStatus(on, { homeScore: null, awayScore: null }), { status: undefined });
+    assert.deepEqual(scoreRuleStatus({ ...on, status: 'postponed' }, { homeScore: null, awayScore: null }), { status: undefined });
+  });
+  it('refuses a game completed without both scores — cleared with completed, or completed alone on an unscored game', () => {
+    assert.equal(scoreRuleStatus(played, { homeScore: null, awayScore: null, status: 'completed' }), 'refused');
+    assert.equal(scoreRuleStatus(on, { status: 'completed' }), 'refused');
+    assert.equal(scoreRuleStatus({ status: 'scheduled', homeScore: 2, awayScore: null }, { status: 'completed' }), 'refused');
+  });
+  it('lets through what it always did: the window’s own saves, postpone and cancel, put back on, a note', () => {
+    assert.deepEqual(scoreRuleStatus(played, { homeScore: null, awayScore: null, status: 'scheduled' }), { status: 'scheduled' });
+    assert.deepEqual(scoreRuleStatus(on, { homeScore: 2, awayScore: 1, status: 'completed' }), { status: 'completed' });
+    assert.deepEqual(scoreRuleStatus(played, { status: 'cancelled' }), { status: 'cancelled' });
+    assert.deepEqual(scoreRuleStatus(on, { status: 'postponed' }), { status: 'postponed' });
+    assert.deepEqual(scoreRuleStatus(played, { status: 'completed' }), { status: 'completed' });
+    assert.deepEqual(scoreRuleStatus({ status: 'completed', homeScore: null, awayScore: null }, {}), { status: undefined });
+  });
+  it('the route reads the stored scores and runs the rule before the write', () => {
+    const code = readFileSync(new URL('../../app/api/admin/house-league/seasons/[seasonId]/schedule/[gameId]/route.ts', import.meta.url), 'utf8');
+    assert.ok(code.includes(".select('id, division_id, status, home_score, away_score,"), 'the stored scores are read');
+    const patch = code.slice(code.indexOf('export const PATCH'), code.indexOf('export const DELETE'));
+    const rule = patch.indexOf('scoreRuleStatus(');
+    assert.ok(rule > patch.indexOf('invalidGamePatch(body)') && rule < patch.indexOf('updateLeagueGame(gameId, patch'));
+    assert.doesNotMatch(patch, /If entering scores, auto-set status to completed/);
   });
 });

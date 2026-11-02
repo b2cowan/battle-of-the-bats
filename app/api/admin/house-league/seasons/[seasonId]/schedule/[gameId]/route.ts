@@ -7,7 +7,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { zonedWallClockToUtc } from '@/lib/timezone';
 import { clashReportForLeagueRows, emptyReport } from '@/lib/venue-clash-lookup';
-import { invalidGamePatch } from '@/lib/league-game-patch';
+import { invalidGamePatch, scoreRuleStatus } from '@/lib/league-game-patch';
 import { sameMs } from '@/lib/league-game-changes';
 import { houseLeagueAccess } from '@/lib/house-league-access';
 import { placeGame } from '@/lib/league-game-place';
@@ -15,6 +15,7 @@ import { heldChangesOf, heldGamesOf, isShownHeld } from '@/lib/league-game-chang
 import { sendChangesAndTell } from '@/lib/league-schedule-mail';
 import { CHANGES_TO_SEND_WORDS as CW } from '@/lib/league-schedule-words';
 import { GAME_WINDOW_WORDS } from '@/lib/league-season-calendar';
+import { STANDINGS_WORDS } from '@/lib/league-standings';
 
 // f5's "tell families now" emails the game's two teams' families inside the request (the season emails' rule).
 export const maxDuration = 120;
@@ -22,7 +23,7 @@ export const maxDuration = 120;
 async function verifyGame(gameId: string, seasonId: string) {
   const { data } = await supabaseAdmin
     .from('league_games')
-    .select('id, division_id, status, scheduled_at, ends_at, org_venue_id, org_venue_facility_id, location, home_team_id, away_team_id, updated_at')
+    .select('id, division_id, status, home_score, away_score, scheduled_at, ends_at, org_venue_id, org_venue_facility_id, location, home_team_id, away_team_id, updated_at')
     .eq('id', gameId)
     .eq('season_id', seasonId)
     .single();
@@ -128,10 +129,13 @@ export const PATCH = withObservability(async (req: Request,
   if ('homeScore' in body) patch.homeScore = body.homeScore ?? null;
   if ('awayScore' in body) patch.awayScore = body.awayScore ?? null;
 
-  // If entering scores, auto-set status to completed
-  if (patch.homeScore !== undefined && patch.awayScore !== undefined && patch.status === undefined) {
-    patch.status = 'completed';
+  // ⚖ THE SCORE RULE (House League 9e-1, `scoreRuleStatus`): a game counts once both scores are in. Both in: played; both
+  // cleared on a played game: on again; completed without both: refused.
+  const ruled = scoreRuleStatus({ status: game.status, homeScore: game.home_score, awayScore: game.away_score }, patch);
+  if (ruled === 'refused') {
+    return NextResponse.json({ error: `${STANDINGS_WORDS.counts} ${GAME_WINDOW_WORDS.bothScores}` }, { status: 400 });
   }
+  if (ruled.status !== undefined) patch.status = ruled.status;
 
   if (!Object.keys(patch).length) {
     return NextResponse.json({ error: 'No fields to update' }, { status: 400 });

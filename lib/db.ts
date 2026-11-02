@@ -31,7 +31,7 @@ import { toCents, toDollars } from './coach-register';
 import { registrationOwes } from './league-price';
 import { checklistLeft, seasonChecklist } from './house-league-season';
 import { cleanSiteList } from './public-site-patch';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, ClubNotice, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, PracticePlanSendAudience, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamCallUpAppearance, RepCallUpPoolEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepTeamPlace, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, ClubNotice, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, PracticePlanSendAudience, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamCallUpAppearance, RepCallUpPoolEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepTeamPlace, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan, type PracticePlanBlock } from './rep-practice-plan';
 import { planToTemplateShape } from './rep-plan-templates';
 import { blockToCircuitShape } from './rep-circuits';
@@ -46,6 +46,7 @@ import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
 import { readStoredEventKind, scrimmageFlagFor } from './coach-schedule-vocab';
 import { storedCutoffs } from './born-years';
 import { sanitizeCoachNamesPolicy } from './coach-names-policy';
+import { rankStandings, type LeagueStandings } from './league-standings';
 import { commitmentStanding, effectivePayerId, type PayableInstallment, type PayablePayment, type CommitmentStanding } from './payable-standing';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
 export { computeTournamentStandings } from './tie-breakers';
@@ -2350,6 +2351,7 @@ function mapLeagueDivision(row: any): LeagueDivision {
     teamsPublishedAt:    row.teams_published_at ?? null,
     schedulePublishedAt: row.schedule_published_at ?? null,
     gamesPerTeam:        row.games_per_team ?? null,
+    showStandings:       row.show_standings !== false,
     createdAt: row.created_at,
   };
 }
@@ -2568,9 +2570,10 @@ export async function getDivisionsForSeason(seasonId: string): Promise<LeagueDiv
 export async function updateDivision(
   divisionId: string,
   input: Partial<{ name: string; capacity: number | null; sortOrder: number; bornFromYear: number | null; bornToYear: number | null;
-    price: number | null; earlyPrice: number | null; note: string | null }>
+    price: number | null; earlyPrice: number | null; note: string | null; showStandings: boolean }>
 ): Promise<void> {
   const patch: Record<string, unknown> = {};
+  if (input.showStandings !== undefined) patch.show_standings = input.showStandings;
   if (input.price      !== undefined) patch.price       = input.price;
   if (input.earlyPrice !== undefined) patch.early_price = input.earlyPrice;
   if (input.note       !== undefined) patch.note        = input.note;
@@ -2937,45 +2940,16 @@ export async function updateLeagueGame(
 
 // ─── Standings (computed, not stored) ────────────────────────────────────────
 
-export async function computeStandings(divisionId: string): Promise<LeagueStandingsRow[]> {
+/**
+ * A division's table (House League 9e-1): its teams and games, ranked by `rankStandings` with the season's sport — the one
+ * rule every surface reads. A game counts once completed with both scores in.
+ */
+export async function computeStandings(divisionId: string, sport: string | null | undefined): Promise<LeagueStandings> {
   const [teams, games] = await Promise.all([
     getTeamsForDivision(divisionId),
     getGamesForDivision(divisionId),
   ]);
-  const completedGames = games.filter(g => g.status === 'completed');
-
-  const rows: LeagueStandingsRow[] = teams.map(team => {
-    let wins = 0, losses = 0, ties = 0, runsFor = 0, runsAgainst = 0;
-    for (const g of completedGames) {
-      const isHome = g.homeTeamId === team.id;
-      const isAway = g.awayTeamId === team.id;
-      if (!isHome && !isAway) continue;
-      const tf = isHome ? (g.homeScore ?? 0) : (g.awayScore ?? 0);
-      const ta = isHome ? (g.awayScore ?? 0) : (g.homeScore ?? 0);
-      runsFor     += tf;
-      runsAgainst += ta;
-      if      (tf > ta) wins++;
-      else if (tf < ta) losses++;
-      else              ties++;
-    }
-    return {
-      team,
-      gamesPlayed:     wins + losses + ties,
-      wins,
-      losses,
-      ties,
-      points:          wins * 2 + ties,
-      runsFor,
-      runsAgainst,
-      runDifferential: runsFor - runsAgainst,
-    };
-  });
-
-  return rows.sort((a, b) =>
-    b.points - a.points ||
-    b.runDifferential - a.runDifferential ||
-    b.runsFor - a.runsFor
-  );
+  return rankStandings(teams, games, sport);
 }
 
 // ─── Season summary ───────────────────────────────────────────────────────────

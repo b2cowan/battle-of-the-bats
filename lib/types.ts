@@ -1003,6 +1003,8 @@ export interface LeagueDivision {
   schedulePublishedAt: string | null;
   /** Games per team, Schedule health's third rule (mig 412): null = the number most of its teams were given. */
   gamesPerTeam: number | null;
+  /** Show standings (mig 423, 9e·5): false = no public table and no coach line; the admin table shows either way. */
+  showStandings: boolean;
   createdAt: string;
 }
 
@@ -1117,19 +1119,6 @@ export interface LeaguePractice {
   fromSchedule?: string | null;
   createdAt: string;
   updatedAt: string;
-}
-
-// Computed standings row per team within a division
-export interface LeagueStandingsRow {
-  team: LeagueTeam;
-  gamesPlayed: number;
-  wins: number;
-  losses: number;
-  ties: number;
-  points: number;      // W=2, T=1, L=0
-  runsFor: number;
-  runsAgainst: number;
-  runDifferential: number;
 }
 
 // Summary shape for the season overview card

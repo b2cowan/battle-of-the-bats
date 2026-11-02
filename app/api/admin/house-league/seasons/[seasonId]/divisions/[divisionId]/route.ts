@@ -83,11 +83,19 @@ export const PATCH = withObservability(async (req: Request,
   const price = priceFromBody(body.price), earlyPrice = priceFromBody(body.earlyPrice);
   if (price && 'error' in price) return NextResponse.json({ error: price.error }, { status: 400 });
   if (earlyPrice && 'error' in earlyPrice) return NextResponse.json({ error: earlyPrice.error }, { status: 400 });
-  const early = earlyPriceRefusal((price ? price.value : stored.price) ?? stored.season.registrationFee, earlyPrice ? earlyPrice.value : stored.earlyPrice);
+  // Only a save that touches a price is held to it: a switch or a note on a division with an old odd pair isn't refused for it.
+  const early = price || earlyPrice
+    ? earlyPriceRefusal((price ? price.value : stored.price) ?? stored.season.registrationFee, earlyPrice ? earlyPrice.value : stored.earlyPrice)
+    : null;
   if (early) return NextResponse.json({ error: early }, { status: 400 });
   if (price) patch.price = price.value;
   if (earlyPrice) patch.earlyPrice = earlyPrice.value;
   if ('note' in body) patch.note = typeof body.note === 'string' && body.note.trim() ? body.note.trim().slice(0, 120) : null;
+  // Show standings (9e·5): on or off, nothing else.
+  if ('showStandings' in body) {
+    if (typeof body.showStandings !== 'boolean') return NextResponse.json({ error: 'Show standings is on or off.' }, { status: 400 });
+    patch.showStandings = body.showStandings;
+  }
 
   if (Object.keys(patch).length === 0) {
     return NextResponse.json({ error: 'No fields to update' }, { status: 400 });

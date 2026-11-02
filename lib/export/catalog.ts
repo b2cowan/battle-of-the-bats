@@ -771,7 +771,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     includesSensitiveFields: false,
     respectsCurrentFilters: true,
     serverSide: false,
-    helpSummary: 'Export season standings by team with W, L, T, points, GF, and GA.',
+    helpSummary: 'Export a division’s standings by team: place (T-3 for a shared place), W, L, T, points, the sport’s for, against and differential (RF, RA and RD for ball), and who a shared place is level with.',
   },
   {
     id: 'house-league-season-teams',

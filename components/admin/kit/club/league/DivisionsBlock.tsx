@@ -1,15 +1,16 @@
 'use client';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronRight, Plus } from 'lucide-react';
 import ck from '../ClubKit.module.css';
 import KitDialog from '../KitDialog';
-import { ClubSection, RecordDelete, SavePill, repKit } from '../RepKit';
+import { ClubSection, NoticePill, RecordDelete, SavePill, repKit } from '../RepKit';
 import { BornYearsBoxes } from '../BornYears';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { bornLine, checkBornYears, cutoffWords, isJan1, type Cutoff } from '@/lib/born-years';
 import { dollarsLine } from '@/lib/house-league-season';
 import { clubDay } from '@/lib/league-registration-state';
 import { pluralize } from '@/lib/utils';
+import { STANDINGS_WORDS } from '@/lib/league-standings';
 import type { LeagueSeason } from '@/lib/types';
 import s from './LeagueSeason.module.css';
 import fy from '../money/FiscalYear.module.css';
@@ -24,6 +25,8 @@ export type SeasonDivision = {
   price: number | null;
   earlyPrice: number | null;
   note: string | null;
+  /** Show standings (mig 423, 9e·5). */
+  showStandings: boolean;
   /** Accepted. */
   activeCount: number;
   /** Accepted and received: what holds a spot (mig 362). */
@@ -191,6 +194,20 @@ function DivisionWindow({ division: d, season, divisions, cutoff, canEdit, orgSl
   const [asking, setAsking] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [removeError, setRemoveError] = useState<string | null>(null);
+  // Show standings (9e·5) saves the moment it is pressed — the payee window's sharing switch — and says what it did.
+  const [standings, setStandings] = useState(d.showStandings);
+  const [switching, setSwitching] = useState(false);
+  const [switchError, setSwitchError] = useState<string | null>(null);
+  const [switchSaid, setSwitchSaid] = useState<string | null>(null);
+  // Which division the window shows right now: a press that finishes after the stepper moved on must not write into the next one.
+  const shownId = useRef(d.id);
+  useEffect(() => { shownId.current = d.id; }, [d.id]);
+  // The page's re-read brings another admin's press too.
+  const [seenStandings, setSeenStandings] = useState(d.showStandings);
+  if (seenStandings !== d.showStandings) {
+    setSeenStandings(d.showStandings);
+    setStandings(d.showStandings);
+  }
   if (seededFor !== d.id) {
     setSeededFor(d.id);
     setEditing(false);
@@ -199,6 +216,10 @@ function DivisionWindow({ division: d, season, divisions, cutoff, canEdit, orgSl
     setRefusedOnce(false);
     setNoLongerFit(0);
     setRemoveError(null);
+    setStandings(d.showStandings);
+    setSwitching(false);
+    setSwitchError(null);
+    setSwitchSaid(null);
   }
   // The page's re-read after a save is not awaited: until it lands the window reads (and the pencil opens on) what it last
   // wrote, and a re-read that brings different values (another admin) is taken while the window is reading.
@@ -260,6 +281,26 @@ function DivisionWindow({ division: d, season, divisions, cutoff, canEdit, orgSl
     ? { prev: stepTo(divisions[at - 1]), next: stepTo(divisions[at + 1]), position: `${at + 1} of ${divisions.length}`, noun: 'division' }
     : undefined;
 
+  async function switchStandings(next: boolean) {
+    if (switching) return;
+    setSwitching(true); setSwitchError(null); setSwitchSaid(null);
+    const pressedOn = d.id;
+    const moved = () => shownId.current !== pressedOn;
+    try {
+      const res = await fetch(base, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ showStandings: next }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { if (!moved()) setSwitchError(data.error ?? 'Couldn’t save. Try again.'); return; }
+      if (moved()) { onChanged(); return; }
+      setStandings(next);
+      setSwitchSaid(next ? STANDINGS_WORDS.switch.on(shown.name) : STANDINGS_WORDS.switch.off(shown.name));
+      onChanged();
+    } catch {
+      if (!moved()) setSwitchError('Couldn’t save. Check your connection and try again.');
+    } finally {
+      setSwitching(false);
+    }
+  }
+
   const empty = d.heldCount + d.waitlistCount === 0;
   async function remove() {
     setRemoving(true);
@@ -299,7 +340,8 @@ function DivisionWindow({ division: d, season, divisions, cutoff, canEdit, orgSl
         title={shown.name}
         onClose={() => void leave(onClose)}
         edit={canEdit ? { editing, onToggle: () => void toggleEdit(), label: `Edit ${shown.name}` } : undefined}
-        status={editing ? <SavePill inline saving={saving} dirty={dirty} error={saveError || null} held={blocked} onRetry={() => void handleSave()} /> : undefined}
+        status={switchSaid ? <NoticePill inline message={switchSaid} onDone={() => setSwitchSaid(null)} />
+          : editing ? <SavePill inline saving={saving} dirty={dirty} error={saveError || null} held={blocked} onRetry={() => void handleSave()} /> : undefined}
         steps={steps}
         record
         levelKey={d.id}
@@ -354,6 +396,15 @@ function DivisionWindow({ division: d, season, divisions, cutoff, canEdit, orgSl
                 onChange={e => change({ ...draft, note: e.target.value })} />
               <span className={ck.hint}>Shown on the sign-up form when a child fits more than one division.</span>
             </label>
+            <div className={ck.switchRow}>
+              <div className={ck.switchText}>
+                <span className={ck.switchName} id={`rec-${d.id}-standings`}>{STANDINGS_WORDS.switch.label}</span>
+                <p className={ck.hint}>{STANDINGS_WORDS.switch.help}</p>
+                {switchError && <p className={repKit.formError} role="alert">{switchError}</p>}
+              </div>
+              <button type="button" role="switch" aria-checked={standings} aria-labelledby={`rec-${d.id}-standings`}
+                className={ck.switch} disabled={switching} onClick={() => void switchStandings(!standings)} />
+            </div>
           </>
         ) : (
           <dl className={fy.read}>
@@ -382,6 +433,8 @@ function DivisionWindow({ division: d, season, divisions, cutoff, canEdit, orgSl
             </dd>
             <dt>Note for families</dt>
             <dd>{shown.note ?? '—'}</dd>
+            <dt>{STANDINGS_WORDS.switch.label}</dt>
+            <dd>{standings ? STANDINGS_WORDS.switch.yes : STANDINGS_WORDS.switch.no}</dd>
           </dl>
         )}
         {/* ⚖ The record's door ends the body, never a foot row (owner, 2026-10-09): red, asking first, only while empty. */}

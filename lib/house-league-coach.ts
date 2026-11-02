@@ -9,7 +9,8 @@ import { clubPublicContact } from './club-email-context';
 import { orgDayKey, zonedWallClockToUtc } from './timezone';
 import { publicState } from './league-game-changes';
 import { asLastSent, heldChangesOf, type GameFaceFields } from './league-game-changes-server';
-import { getOrgPlaceNames } from './db';
+import { computeStandings, getOrgPlaceNames } from './db';
+import { coachStandingLine, type CoachStandingLine, type LeagueStandings } from './league-standings';
 import { resultWords } from './league-season-calendar';
 import { readPracticesNow, readTold } from './league-practice-tell-server';
 import { coachToldLine, tellStateOf, type CoachToldLine, type TeamTellState } from './league-practice-tell';
@@ -73,6 +74,8 @@ export interface CoachTeamPage {
   gamesPublished: boolean;
   /** Whether the families know these practice times (9d-3 Part 5, frame b2): a live season only; null = no line. */
   practiceTold: CoachToldLine | null;
+  /** The team's place in its division (9e-1, 9e·6): a live season, a published schedule and standings on; null = no line. */
+  standing: (CoachStandingLine & { divisionId: string }) | null;
 }
 
 /** A game on the coach's page (g3): from today on, or waiting for a new date (postponed, or saved with no date). */
@@ -109,14 +112,17 @@ interface LinkRow {
   removed_at: string | null;
 }
 
+/** The team's division as the coach read joins it: its name, and whether families see its schedule and its table. */
+interface TeamDivision { name: string; schedule_published_at: string | null; show_standings: boolean | null }
+
 interface TeamRow {
   id: string;
   name: string;
   season_id: string;
   division_id: string | null;
-  league_divisions: { name: string; schedule_published_at: string | null } | { name: string; schedule_published_at: string | null }[] | null;
+  league_divisions: TeamDivision | TeamDivision[] | null;
   league_seasons: {
-    name: string; slug: string; status: string; finished_at: string | null; org_id: string;
+    name: string; slug: string; status: string; finished_at: string | null; org_id: string; sport: string | null;
     organizations: { slug: string; name: string } | { slug: string; name: string }[] | null;
   } | null;
 }
@@ -124,7 +130,7 @@ interface TeamRow {
 const one = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
 
 const TEAM_SELECT =
-  'id, name, season_id, division_id, league_divisions(name, schedule_published_at), league_seasons(name, slug, status, finished_at, org_id, organizations(slug, name))';
+  'id, name, season_id, division_id, league_divisions(name, schedule_published_at, show_standings), league_seasons(name, slug, status, finished_at, org_id, sport, organizations(slug, name))';
 
 function toCard(t: TeamRow): CoachTeamCard | null {
   const season = t.league_seasons;
@@ -197,16 +203,20 @@ export async function readCoachTeamPage(
     { status: season.status, finishedAt: season.finished_at }, now);
   if (view === 'none') return null;
 
-  const [coachRows, players, myTeams, contactEmail, practices, games, tell] = await Promise.all([
+  const division = one(team.league_divisions);
+  // The standing line (9e·6): a live season, the division's schedule published and its "Show standings" on — else absent.
+  const ranks = view === 'open' && !!team.division_id && !!division?.schedule_published_at && division.show_standings !== false;
+  const [coachRows, players, myTeams, contactEmail, practices, games, tell, standings] = await Promise.all([
     view === 'gone' ? Promise.resolve([] as { name: string }[]) : readCoachNames(teamId),
     view === 'open' || view === 'finished' ? readTeamPlayers(teamId) : Promise.resolve([] as CoachPlayer[]),
     getCoachTeamCards(userId, now),
     clubPublicContact(card.orgId),
     view === 'open' ? readTeamPractices(card.orgId, teamId, now) : Promise.resolve([] as CoachPractice[]),
-    view === 'open' && team.division_id && one(team.league_divisions)?.schedule_published_at
+    view === 'open' && team.division_id && division?.schedule_published_at
       ? readTeamGames(card.orgId, team.season_id, team.division_id, teamId, now)
       : Promise.resolve({ published: false, games: [] as CoachGame[] }),
     view === 'open' ? readTellOf(card.orgId, teamId) : Promise.resolve(null),
+    ranks ? computeStandings(team.division_id!, season.sport) : Promise.resolve(null),
   ]);
   const practiceTold = tell && coachToldLine({
     state: tell.state, toldAt: tell.at, listed: practices.length,
@@ -223,7 +233,14 @@ export async function readCoachTeamPage(
     games: games.games,
     gamesPublished: games.published,
     practiceTold,
+    standing: standingOf(standings, teamId, team.division_id),
   };
+}
+
+/** The coach's standing line, with the division it links to ("See the standings" opens that division's table). */
+function standingOf(standings: LeagueStandings | null, teamId: string, divisionId: string | null) {
+  const line = standings && divisionId ? coachStandingLine(standings, teamId) : null;
+  return line && divisionId ? { ...line, divisionId } : null;
 }
 
 /** The team's told state (9d-3): its upcoming practices against what its families were told — the Tell step's rule. */

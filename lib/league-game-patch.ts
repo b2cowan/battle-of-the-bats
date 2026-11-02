@@ -12,6 +12,30 @@ export const LEAGUE_GAME_STATUSES = ['scheduled', 'completed', 'cancelled', 'pos
 
 const wholeScore = (v: unknown) => typeof v === 'number' && Number.isInteger(v) && v >= 0;
 
+/**
+ * ⚖ THE SCORE RULE (House League 9e-1): a game counts once both scores are in — the standings' one definition
+ * (`gameCounts`). Read on the game as it will be (stored row + patch), because a status-only patch needs the stored
+ * scores. Both in with no status: played (`completed`). Both cleared on a played game with no status: on again
+ * (`scheduled`, the window's rule, now for a direct call too). A save that would leave a game completed without both
+ * scores is refused; a patch that touches neither status nor score (a note on an old row) is not. Cancelled and
+ * postponed are untouched. Call after `invalidGamePatch` (one score alone never reaches here).
+ */
+export function scoreRuleStatus(
+  stored: { status: string; homeScore: number | null; awayScore: number | null },
+  patch: { status?: string; homeScore?: number | null; awayScore?: number | null },
+): { status: string | undefined } | 'refused' {
+  const scoring = patch.homeScore !== undefined;
+  const home = scoring ? patch.homeScore : stored.homeScore, away = scoring ? patch.awayScore : stored.awayScore;
+  const bothIn = home != null && away != null;
+  let status = patch.status;
+  if (scoring && status === undefined) {
+    if (bothIn) status = 'completed';
+    else if (stored.status === 'completed') status = 'scheduled';
+  }
+  if ((scoring || status !== undefined) && (status ?? stored.status) === 'completed' && !bothIn) return 'refused';
+  return { status };
+}
+
 /** The sentence to send back with a 400, or null when the status and score are fine. */
 export function invalidGamePatch(body: Record<string, unknown>): string | null {
   if ('status' in body && !(LEAGUE_GAME_STATUSES as readonly unknown[]).includes(body.status)) {

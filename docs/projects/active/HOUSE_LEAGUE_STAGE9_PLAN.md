@@ -303,6 +303,67 @@ team) was not ruled: it is ask **9d2·15**, open.
   - **Build defaults stated at the start (not asked):** a published game's Home and Away read as facts (a different matchup is
     cancel + add); the coach's page shows what families see — the last-SENT values, never a held change.
 
+## 0i · 9e drawn 2026-11-01 — asks 9e·1 to 9e·14 RULED 2026-11-01 (all as recommended); 9e·15 flagged for /strategy
+
+**Rulings (owner paste-back 2026-11-01, recorded as ruled — nothing added).** The asks below are kept as drawn, with their
+alternatives, for the reasoning; the line here is what was ruled.
+
+- **9e·1** Three builds: **9e-1** standings and the score rule, then **9e-2** rainout, then **9e-3** coach scores.
+- **9e·2** The table reads the season's sport (points and column words: RF/RA/RD for ball), shown in the ranking box; no per-season points door now.
+- **9e·3** Points, then the game between them (only when exactly two teams are level), then run differential, then runs for. Still level: a shared place ("T-3"). No coin.
+- **9e·4** The table appears only once the division's schedule is published; until the first score the teams are listed alphabetically with dashes and no rank.
+- **9e·5** A "Show standings" switch on each division, on by default; off hides the public table, the admin table stays, the coach line is absent.
+- **9e·6** A quiet line on the coach's team page ("1st of 6 · 4-1-0 · 8 points") with a link to the standings.
+- **9e·7** The home team's coach enters the score, from the game's start time, once; the home coach is the usual keeper of the book.
+- **9e·8** It counts at once; the club sees "Entered by Alex Moreau" and a count of scores to check.
+- **9e·9** The other coach can flag it ("Report this score"); the score stands; the entering coach can change it until it is flagged or the club touches it; the league admin corrects.
+- **9e·10** A Rainout button on the schedule header; games only; the window names tonight's practices and says where they change.
+- **9e·11** Postpone is the default; cancel is a choice; no make-up date is picked in the window ("Give it a new date" does that later, on allocated time).
+- **9e·12** "Email the families now" is ticked by default; unticking holds the changes in Changes to send.
+- **9e·13** "Put all back" only while the changes are held (all-or-nothing, persistent); after the send, no Undo and the result says emails can't be taken back.
+- **9e·14** One optional line (up to 120 characters), shown near the top of the email and the coach copy.
+- **9e·15** Plan gate: **flagged for /strategy, no answer needed** — still not decided.
+
+**Done 2026-11-01:** the /marketing words pass (`HOUSE_LEAGUE_STAGE9E_COPY.md` — **accepted by the owner 2026-11-01** as written, incl. the
+recommendation on each §14 word question) and the 9e-1 build prompt (`HOUSE_LEAGUE_STAGE9E1_BUILD_PROMPT.md`). **Next:** the 9e-1 build; the 9e-2 and 9e-3 prompts are written after 9e-1 lands (9e-3 depends on its counted-game
+rule). Nothing committed.
+
+Drawings: https://claude.ai/artifact/V9exKafSgmHc3XuFFar5Qo (version 1; source `HOUSE_LEAGUE_STAGE9E_DRAWINGS.html`; prompt
+`HOUSE_LEAGUE_STAGE9E_DRAWING_PROMPT.md`). The 9e row had no asks; these are the first. **Ruled and carried, not reopened:** Q7,
+9c·1, 9d2·1, 9d2·2, 9d2·13 (scores and notes never email), Q16 (the club's finished season reads in place, locked; the Coaches
+Portal's one-page rule is not this), the pencil's both-or-neither score rule, a postponed game's rules. Recommendations are marked;
+each ask is answerable by paste-back on the page's last tab.
+
+- **9e·1** Three builds, in this order by dependency and rework risk: **9e-1** standings and the score rule (S), **9e-2** rainout (M),
+  **9e-3** coach scores (M; a migration, a new coach route). Rainout depends on neither; coach scores depends on 9e-1; 9f depends on 9e-1.
+- **9e·2** Standings read the season's sport pack for points and column words (RF/RA/RD for ball); **no per-season points door now**
+  (both offered sports give 2/1/0, so no number changes).
+- **9e·3** Order: points, head-to-head (exactly two teams level), run differential, runs for, then a shared place ("T-3"); no coin.
+  Alternatives: a per-game differential cap; today's order, said aloud; a coin.
+- **9e·4** A division's table appears once its schedule is published; before the first score the teams are listed alphabetically,
+  unranked.
+- **9e·5** A per-division "Show standings" switch, on by default (younger divisions often don't rank).
+- **9e·6** A one-line standing on the coach's own team page, linking to the standings.
+- **9e·7** Who enters a score: the **home** team's coach, from the start time, once (alt: either coach; alt: staff only).
+- **9e·8** It **counts at once**; the club sees who entered it (alts: held for approval; a season switch like the tournament's).
+- **9e·9** The other coach can **report** the score; it stands; the entering coach can change it until it is reported or the club
+  touches it; the league admin corrects. New record on the game: who, when, reported.
+- **9e·10** A **Rainout** button on the schedule header; **games only**; tonight's practices are named and pointed to where they
+  change (a club practice is the club's; a hand-booked practice's cancel sends no family email today).
+- **9e·11** Postpone is the default, cancel a choice; no make-up date in the window ("Give it a new date" does that, on allocated time).
+- **9e·12** "Email the families now" ticked by default (one email per household **per division**, coaches copied; the window says how
+  many households get two); untick to hold in Changes to send.
+- **9e·13** "Put all back" only while held; after a send there is no Undo and the result says emails can't be taken back.
+- **9e·14** One optional line (120 characters) for the family email and the coach copy.
+- **9e·15** Plan-gating like the tournament's Rain delay (Tournament Plus) — **flagged for /strategy, not decided; no checkbox.**
+
+**Found on the way (not asks):** the sport is stored and never read; standings ignore whether a division is published (a draft
+division shows a table of zeros publicly); the pencil's "both empty = back to scheduled" is window-only, so a direct server call
+marks a game played at 0–0 (fixed inside 9e-1); the tournament's pending-score precedent is volunteer/staff, not coach; a postponed
+game keeps its date; the urgent send never counts toward the cap; a send is per division; "Final standings" is date-driven and
+standings are computed live, so 9f must define the frozen table. The data dictionary's `league_games` Gotchas 2 and 3 are stale
+(Postpone is a door, not a dropdown; DELETE hard-deletes a draft division's game and refuses a published one).
+
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 
 - The trust list re-verified (§3); the coupling check for a standalone League Plus club; the ledger seam under D1 (C18);
@@ -392,7 +453,7 @@ check the snapshot before touching it); the org home's empty-tournaments hero (S
 | **9d-1** One email composer — **split from 9d 2026-10-26 (owner)** · **DRAWN · RULED · BUILT 2026-10-26** (commits in the status log; walk §388 ✅ 10-26, 35/35) (§0g, all twelve as recommended; drawings https://claude.ai/artifact/Xy8ENL1KbUZVbWpDthD9EB, source `HOUSE_LEAGUE_STAGE9D1_DRAWINGS.html`; build prompt `HOUSE_LEAGUE_STAGE9D1_BUILD_PROMPT.md`; §9) | The season's email onto the Families window and the batched sender (Q12b): opened from the season already set to it; division / team / status / "Selected" audiences; the season's own 3 typed sends a day, automatic notices never counted (Q12c); the season's own sent history (the registrar has no Families access); the old Notifications page and "Message registrants" window retire; the green "0 delivered" goes with them | Q12b Q12c (ruled) | M |
 | **9d-2** The schedule — **split from 9d 2026-10-26 (owner)** · **DRAWN 2026-10-26 · RULED 2026-10-27** (§0h: 13 as recommended, ask 2 the alternative, the owner's amendment that house league never picks time the club has not allocated to it; 9d2·15 ruled the same day: the club gives time to House league as a whole, the convenor divides it) (with 11b, one round; drawings https://claude.ai/artifact/TdXm5jmTEJ9qPvR3T5H9qU, source `HOUSE_LEAGUE_STAGE9D2_DRAWINGS.html`; round 2 the same day: the club's schedule owns every hour, Generate games is match-ups only, List · Week · Month with games and practices together; recommended order now 11b → 9d-2a → 9d-2b, ask 9d2·6; §9) | Generator rebuilt; C1–C12 admin + public; health (Q11); 11b; venue/permit links; Publish schedule + change notices (sent through 9d-1's composer path) | Q11 (ruled) | L |
 | **9d-3** House league's families: practice notices and calendars — **logged 2026-10-27 (owner) · DRAWN 2026-10-29, asks open** (drawings https://claude.ai/artifact/Uazj5c2RKqVPAs1Gwpm9pM, source `HOUSE_LEAGUE_STAGE9D3_DRAWINGS.html`; prompt `HOUSE_LEAGUE_STAGE9D3_DRAWING_PROMPT.md`; recommended one build, the notice first, then the coach's Subscribe; the family calendar link WITHDRAWN 2026-10-29, §9) | The first practice notice to a team's families (deferred from 9d2·2: a practice *change* already emails them). A house-league coach's calendar to subscribe to: Stage 6d built the feed for rep teams only, so a house-league coach has none. The family half was a private team link, **withdrawn 2026-10-29**: the owner's end state is a signed-in app where a parent is linked to their child, and a no-login family link would be a stop-gap to reverse later (the public team page stays games-only, ruled). | 9d3·2 and 9d3·8 withdrawn 2026-10-29, the rest open (9d3·1, 9d3·3–9d3·7; 9d3·3 re-asked); drawn after 9d-2b was built, sequenced before 9e | M |
-| **9e** Game day | Standings by sport pack; score entry (coaches if Q7); rainout as one action | — | S–M |
+| **9e** Game day — **DRAWN 2026-11-01, asks open** (§0i; drawings https://claude.ai/artifact/V9exKafSgmHc3XuFFar5Qo, source `HOUSE_LEAGUE_STAGE9E_DRAWINGS.html`; recommended three builds: **9e-1** standings and the score rule, **9e-2** rainout, **9e-3** coach scores) | Standings that follow the sport pack and say how ties break; score entry (the home coach, counts at once, the other coach can report it, the league admin corrects); rainout as one window (postpone or cancel, one email per household per division, Undo only while held) | 9e·1–9e·15 (open; 9e·15 for /strategy) | S + M + M |
 | **9f** Season end | Archive; the finished-season record (Q16); Start next season copies forward. Returning families with a pre-filled form wait on Stage 14 — and the pre-fill is for a **signed-in** parent only, never a sent link (owner 2026-10-31, `SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md` Stage 5) | — | M |
 
 Changes from the kickoff's proposal (argued on the hub's Ladder tab): 9b split into 9b-1 and 9b-2; the season email moves
@@ -1215,3 +1276,4 @@ open it, and the menu's top level is Stage 13's.
   re-dated; a seat handed to another person also kills the link (the trigger fires on `user_id` too); the coach page brings its
   own confirm so Reset asks first. Proof: `tests/unit/house-league-9d3-coach.test.ts` 10/10; 362 related tests pass; typecheck,
   lint, spelling and dictionary clean. **Walk B §439 PASSED 34/34 2026-11-01, no changes asked** (/simplify, /review, /docs done 11-01). **Open:** schema parity until 415 and 420 reach prod (apply BEFORE the promote); next 9e (not drawn).
+- **2026-11-01 — 9e DRAWN, asks 9e·1–9e·15 open, nothing newly ruled** (drawings https://claude.ai/artifact/V9exKafSgmHc3XuFFar5Qo, source `HOUSE_LEAGUE_STAGE9E_DRAWINGS.html`; §0i). Push-back: three builds, not one — 9e-1 standings and the score rule, 9e-2 rainout, 9e-3 coach scores. Every lead in the drawing prompt was re-read against the code: the sport pack is unread and both offered sports give identical values (so "by sport pack" changes no number); standings ignore publish state; the "both empty" score rule is window-only (a direct server call marks a game played at 0–0); the tournament's pending score is volunteer/staff, not coach; a postponed game keeps its date; the urgent send never counts toward the cap; a send is per division. /design ran on the drawings (14 findings fixed before the hand-off). **No code, migration, seed, help article or demo change; nothing committed.** Next: the owner's paste-back, then the `/marketing` words pass (`HOUSE_LEAGUE_STAGE9E_COPY.md`), then the 9e-1 build prompt.

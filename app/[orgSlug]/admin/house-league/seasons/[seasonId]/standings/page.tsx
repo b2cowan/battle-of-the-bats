@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
 import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
@@ -12,25 +12,32 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
-import type { LeagueDivision, LeagueStandingsRow } from '@/lib/types';
+import type { LeagueDivision } from '@/lib/types';
+import { STANDINGS_WORDS as W, diffWords, type LeagueStandings, type StandingsLabels } from '@/lib/league-standings';
 import LoadingState from '@/components/shared/LoadingState';
 
 // ── Export definition ─────────────────────────────────────────────────────────
 
-const STANDINGS_EXPORT_COLS: ExportColumnDef[] = [
-  { label: 'Rank', key: 'rank',           format: 'number' },
-  { label: 'Team', key: 'teamName',       format: 'text'   },
-  { label: 'GP',   key: 'gamesPlayed',    format: 'number' },
-  { label: 'W',    key: 'wins',           format: 'number' },
-  { label: 'L',    key: 'losses',         format: 'number' },
-  { label: 'T',    key: 'ties',           format: 'number' },
-  { label: 'Pts',  key: 'points',         format: 'number' },
-  { label: 'GF',   key: 'runsFor',        format: 'number' },
-  { label: 'GA',   key: 'runsAgainst',    format: 'number' },
-  { label: 'Diff', key: 'runDifferential',format: 'number' },
-];
+/** The export's columns follow the season's sport (RF / RA / RD for ball, 9e·2); a shared place reads "T-3", as on screen. */
+function standingsExportCols(l: StandingsLabels): ExportColumnDef[] {
+  return [
+    { label: 'Rank', key: 'rank',           format: 'text'   },
+    { label: 'Team', key: 'teamName',       format: 'text'   },
+    { label: 'GP',   key: 'gamesPlayed',    format: 'number' },
+    { label: 'W',    key: 'wins',           format: 'number' },
+    { label: 'L',    key: 'losses',         format: 'number' },
+    { label: 'T',    key: 'ties',           format: 'number' },
+    { label: 'Pts',  key: 'points',         format: 'number' },
+    { label: l.forAbbr,     key: 'runsFor',         format: 'number' },
+    { label: l.againstAbbr, key: 'runsAgainst',     format: 'number' },
+    { label: l.diffAbbr,    key: 'runDifferential', format: 'number' },
+    { label: W.admin.levelCol, key: 'levelWith', format: 'text' },
+  ];
+}
 
 interface SeasonInfo { id: string; name: string; }
+/** What families can see of the division (the route's answer). */
+interface DivisionState { name: string; published: boolean; showStandings: boolean }
 
 export default function StandingsPage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
@@ -46,9 +53,14 @@ export default function StandingsPage() {
   const [season, setSeason]         = useState<SeasonInfo | null>(null);
   const [divisions, setDivisions]   = useState<LeagueDivision[]>([]);
   const [selectedDiv, setSelectedDiv] = useState<string>('');
-  const [standings, setStandings]   = useState<LeagueStandingsRow[]>([]);
+  const [standings, setStandings]   = useState<LeagueStandings | null>(null);
+  const [divState, setDivState]     = useState<DivisionState | null>(null);
   const [loading, setLoading]       = useState(true);
   const [standingsLoading, setStandingsLoading] = useState(false);
+  // A table that failed to load reads as empty, not as loading forever.
+  const [loadFailed, setLoadFailed] = useState(false);
+  // Only the newest request may write: a slower answer for the division just left is dropped.
+  const latestLoad = useRef(0);
 
   // Load season + divisions
   useEffect(() => {
@@ -68,16 +80,25 @@ export default function StandingsPage() {
   // Load standings when division changes
   const loadStandings = useCallback(async (divId: string) => {
     if (!divId) return;
+    const mine = ++latestLoad.current;
     setStandingsLoading(true);
+    setLoadFailed(false);
+    setStandings(null);
+    setDivState(null);
     try {
       const orgParam = orgQuery ? orgQuery.replace('?', '&') : '';
       const r = await fetch(
         `/api/admin/house-league/seasons/${seasonId}/standings?divisionId=${divId}${orgParam}`,
       );
-      const d = await r.json();
-      setStandings(d.standings ?? []);
+      const d = await r.json().catch(() => ({}));
+      if (mine !== latestLoad.current) return;
+      setStandings(d.standings ?? null);
+      setDivState(d.division ?? null);
+      setLoadFailed(!r.ok || !d.standings);
+    } catch {
+      if (mine === latestLoad.current) setLoadFailed(true);
     } finally {
-      setStandingsLoading(false);
+      if (mine === latestLoad.current) setStandingsLoading(false);
     }
   }, [seasonId, orgQuery]);
 
@@ -89,9 +110,12 @@ export default function StandingsPage() {
 
   const selectedDivName = divisions.find(d => d.id === selectedDiv)?.name;
 
+  const rows = standings?.rows ?? [];
+  const scored = !!standings?.scored;
+
   function buildStandingsExportRows() {
-    return standings.map((row, i) => ({
-      rank:            i + 1,
+    return rows.map(row => ({
+      rank:            row.place == null ? '' : W.place(row.place, row.tied),
       teamName:        row.team.name,
       gamesPlayed:     row.gamesPlayed,
       wins:            row.wins,
@@ -101,28 +125,29 @@ export default function StandingsPage() {
       runsFor:         row.runsFor,
       runsAgainst:     row.runsAgainst,
       runDifferential: row.runDifferential,
+      levelWith:       W.admin.levelCell(row.levelWith.map(t => t.name)),
     }));
   }
 
+  function buildExport(ext: 'xlsx' | 'csv') {
+    const exportCols = standingsExportCols(standings!.labels);
+    return {
+      headers: serializeHeaders(exportCols),
+      data: serializeRows(buildStandingsExportRows(), exportCols),
+      filename: buildFilename(
+        { org: currentOrg?.slug, dataset: 'standings', scope: season?.name ?? selectedDivName },
+        ext,
+      ),
+    };
+  }
+
   function handleExportXLSX() {
-    const rows     = buildStandingsExportRows();
-    const headers  = serializeHeaders(STANDINGS_EXPORT_COLS);
-    const data     = serializeRows(rows, STANDINGS_EXPORT_COLS);
-    const filename = buildFilename(
-      { org: currentOrg?.slug, dataset: 'standings', scope: season?.name ?? selectedDivName },
-      'xlsx',
-    );
+    const { headers, data, filename } = buildExport('xlsx');
     downloadXLSX(filename, headers, data, 'Standings');
   }
 
   function handleExportCSV() {
-    const rows     = buildStandingsExportRows();
-    const headers  = serializeHeaders(STANDINGS_EXPORT_COLS);
-    const data     = serializeRows(rows, STANDINGS_EXPORT_COLS);
-    const filename = buildFilename(
-      { org: currentOrg?.slug, dataset: 'standings', scope: season?.name ?? selectedDivName },
-      'csv',
-    );
+    const { headers, data, filename } = buildExport('csv');
     downloadCSVBlob(filename, generateCSV(headers, data));
   }
 
@@ -178,15 +203,22 @@ export default function StandingsPage() {
             formats={['xlsx', 'csv']}
             onExportXLSX={handleExportXLSX}
             onExportCSV={handleExportCSV}
-            disabled={standings.length === 0}
+            disabled={!scored}
           />
         </div>
       </div>
 
+      {/* What families can't see (9e·4, 9e·5): said above the table, which the club always sees. */}
+      {divState && !standingsLoading && (!divState.showStandings ? (
+        <p className={styles.standNote} role="note">{W.admin.noteOff(divState.name)}</p>
+      ) : !divState.published ? (
+        <p className={styles.standNote} role="note">{W.admin.noteUnpub(divState.name)}</p>
+      ) : null)}
+
       {/* Standings table */}
-      {standingsLoading ? (
+      {standingsLoading || (!!selectedDiv && !standings && !loadFailed) ? (
         <LoadingState label="Loading standings…" />
-      ) : standings.length === 0 ? (
+      ) : !scored ? (
         <div style={kx({
           padding: '2.5rem 1.5rem',
           textAlign: 'center',
@@ -195,70 +227,85 @@ export default function StandingsPage() {
           color: 'var(--white-35)',
           fontSize: '0.9rem',
         }, KIT_SURFACE.empty)}>
-          No completed games yet — standings will appear once scores are entered.
+          {W.admin.empty}
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
           <table className={styles.scheduleTable}>
             <thead>
               <tr>
-                <th style={{ width: '2.5rem', textAlign: 'center' }}>#</th>
-                <th>Team</th>
-                <th style={{ textAlign: 'center' }}>GP</th>
-                <th style={{ textAlign: 'center' }}>W</th>
-                <th style={{ textAlign: 'center' }}>L</th>
-                <th style={{ textAlign: 'center' }}>T</th>
-                <th style={{ textAlign: 'center' }}>Pts</th>
-                <th style={{ textAlign: 'center' }}>GF</th>
-                <th style={{ textAlign: 'center' }}>GA</th>
-                <th style={{ textAlign: 'center' }}>Diff</th>
+                <th scope="col" style={{ width: '2.5rem', textAlign: 'center' }}>{W.col.rank}</th>
+                <th scope="col">{W.col.team}</th>
+                <th scope="col" style={{ textAlign: 'center' }} title={W.tip.gp}>{W.col.gp}</th>
+                <th scope="col" style={{ textAlign: 'center' }} title={W.tip.w}>{W.col.w}</th>
+                <th scope="col" style={{ textAlign: 'center' }} title={W.tip.l}>{W.col.l}</th>
+                <th scope="col" style={{ textAlign: 'center' }} title={W.tip.t}>{W.col.t}</th>
+                <th scope="col" style={{ textAlign: 'center' }} title={W.tip.pts}>{W.col.pts}</th>
+                <th scope="col" style={{ textAlign: 'center' }} title={standings.labels.forName}>{standings.labels.forAbbr}</th>
+                <th scope="col" style={{ textAlign: 'center' }} title={standings.labels.againstName}>{standings.labels.againstAbbr}</th>
+                <th scope="col" style={{ textAlign: 'center' }} title={W.tip.diff(standings.labels)}>{standings.labels.diffAbbr}</th>
+                <th scope="col" title={W.admin.levelTip(standings.labels)}>{W.admin.levelCol}</th>
               </tr>
             </thead>
             <tbody>
-              {standings.map((row, i) => (
-                <tr key={row.team.id} style={i === 0 ? leaderRowStyle : undefined}>
-                  <td style={rankCellStyle}>
-                    {i + 1}
-                  </td>
-                  <td>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
-                      {row.team.color && (
-                        <span className={styles.teamDot} style={{ background: row.team.color }} />
-                      )}
-                      <span style={i === 0 ? leaderNameStyle : teamNameStyle}>
-                        {row.team.name}
+              {rows.map(row => {
+                const lead = row.place === 1;
+                // A team with no counted game reads dashes, not zeros (copy §1.1).
+                const dash = <span className={styles.standDash} title={W.tip.dash}>{W.dash}</span>;
+                const n = (v: number) => (row.counted ? v : dash);
+                return (
+                  <tr key={row.team.id} style={lead ? leaderRowStyle : undefined}>
+                    <td style={rankCellStyle} title={row.tied ? W.placeTip(row.place!) : undefined}>
+                      {W.place(row.place!, row.tied)}
+                    </td>
+                    <td>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                        {row.team.color && (
+                          <span className={styles.teamDot} style={{ background: row.team.color }} />
+                        )}
+                        <span style={lead ? leaderNameStyle : teamNameStyle}>
+                          {row.team.name}
+                        </span>
                       </span>
-                    </span>
-                  </td>
-                  <td style={{ textAlign: 'center' }}>{row.gamesPlayed}</td>
-                  <td style={{ textAlign: 'center', fontWeight: 600 }}>{row.wins}</td>
-                  <td style={{ textAlign: 'center' }}>{row.losses}</td>
-                  <td style={{ textAlign: 'center' }}>{row.ties}</td>
-                  <td className={styles.scoreCell} style={{ textAlign: 'center' }}>{row.points}</td>
-                  <td style={{ textAlign: 'center' }}>{row.runsFor}</td>
-                  <td style={{ textAlign: 'center' }}>{row.runsAgainst}</td>
-                  <td style={{
-                    textAlign: 'center',
-                    fontWeight: 600,
-                    color: row.runDifferential > 0
-                      ? 'var(--success-light)'
-                      : row.runDifferential < 0
-                        ? 'var(--danger-light)'
-                        : 'var(--text-tertiary)', // 0 differential: --white-40 was 3.77:1 on Dark
-                  }}>
-                    {row.runDifferential > 0 ? '+' : ''}{row.runDifferential}
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>{n(row.gamesPlayed)}</td>
+                    <td style={{ textAlign: 'center', fontWeight: 600 }}>{n(row.wins)}</td>
+                    <td style={{ textAlign: 'center' }}>{n(row.losses)}</td>
+                    <td style={{ textAlign: 'center' }}>{n(row.ties)}</td>
+                    <td className={styles.scoreCell} style={{ textAlign: 'center' }}>{n(row.points)}</td>
+                    <td style={{ textAlign: 'center' }}>{n(row.runsFor)}</td>
+                    <td style={{ textAlign: 'center' }}>{n(row.runsAgainst)}</td>
+                    <td style={{
+                      textAlign: 'center',
+                      fontWeight: 600,
+                      color: row.runDifferential > 0
+                        ? 'var(--success-light)'
+                        : row.runDifferential < 0
+                          ? 'var(--danger-light)'
+                          : 'var(--text-tertiary)', // 0 differential: --white-40 was 3.77:1 on Dark
+                    }}>
+                      {row.counted ? diffWords(row.runDifferential) : dash}
+                    </td>
+                    <td title={row.tied ? W.admin.levelTip(standings.labels) : undefined}>
+                      {row.tied ? W.admin.levelCell(row.levelWith.map(t => t.name)) : null}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
 
-      {standings.length > 0 && (
-        <p style={kx({ marginTop: '1rem', fontSize: '0.72rem', color: 'var(--white-30)' }, KIT_INK.tertiary)}>
-          Pts: W=2, T=1, L=0 &nbsp;·&nbsp; Tiebreaker: run differential, then runs for
-        </p>
+      {/* "How the table is ranked" (9e·2): the rules the public page shows, built from what the table sorts by. */}
+      {standings && scored && !standingsLoading && (
+        <div className={styles.rankBox}>
+          <b>{W.rank.title}</b>
+          <p>{W.rank.points(standings.rules.pointsPerWin, standings.rules.pointsPerDraw)}</p>
+          <ol>{standings.rules.steps.map(step => <li key={step}>{W.rank.step(step, standings.labels)}</li>)}</ol>
+          <p>{W.rank.shared}</p>
+          <p className={styles.rankBoxHint}>{W.admin.rules(standings.labels.sport)}</p>
+        </div>
       )}
     </div>
   );

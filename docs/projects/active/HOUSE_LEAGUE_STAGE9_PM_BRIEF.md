@@ -145,7 +145,19 @@ gets sign-ups and money ready for online payment, which is the stage after this 
    *Status 2026-11-01:* the notice is built and walked (§436, 27/27). Session 2 is built: the coach's team page says whether
    families know the practice times, the coaches get one copy the first time their families are told, and the coach has the
    same calendar Subscribe a rep coach has. Next: tidy-up and review passes, then the coach's walk (walk B).
-8. **9e · Game day.** Standings that follow the sport's scoring rules, and scores entered by coaches.
+8. **9e · Game day.** Standings that say how they are ranked, scores entered by the home team's coach, and one window for a rainout.
+   *Status 2026-11-01 — drawn, fifteen asks open.* Why it matters: today a parent sees a table of zeros for a division that
+   isn't published, nobody can tell how a tie was settled, only the club can enter a score (so convenors chase coaches), and a
+   rained-out evening means cancelling or postponing games one at a time. Proposed as three builds, in this order:
+   (1) **Standings and the score rule.** The table follows the sport, explains its tie-breaks, appears once a division's
+   schedule is published, and shows a shared place when teams are truly level. A coach sees one line, "1st of 6 · 4-1-0".
+   (2) **Rainout.** The convenor picks the day and the games, chooses postpone (the default) or cancel, and families are
+   emailed once each per division with the teams' coaches copied; the window says beforehand how many families and how many
+   households get two emails. An Undo exists only until families are told. (3) **Coach scores.** The home coach enters the
+   score from their team page; it counts at once; the other coach can report it as wrong; the league admin corrects it and sees
+   who entered what. Nobody is emailed about a score. Success: a convenor stops chasing scores, a parent can see why their team
+   is where it is, and a wet evening is one action. Priority: standings first (the season-end work freezes that table).
+   Whether the rainout is a paid-plan feature is a question for /strategy, not decided.
 9. **9f · Season end.** Finishing a season, looking back at past seasons, and starting next season from this one.
 
 ## Who it affects

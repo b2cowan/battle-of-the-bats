@@ -167,3 +167,70 @@
   .match { flex-basis: 100%; order: 3; }
   .state { margin-left: auto; }
 }
+
+/* ── The public standings (House League 9e-1, frames s2/s3) ──────────────────────────────────────────────────────────
+   One table, the sport's own column words, a shared place as "T-3". The desk reads every column; the phone reads
+   # · Team · W-L-T · Pts · RD with GP, RF and RA one swipe away (the tournament table's phone recipe) — two renderings of
+   one ranking, one shown per width. The leader reads by weight alone (DC-02: no row tint). */
+.standTable {
+  width: 100%;
+  border-collapse: collapse;
+  font: 400 0.875rem var(--club-text-face);
+}
+.standTable th {
+  padding: 0.55rem 0.75rem;
+  font: 700 0.75rem var(--club-text-face);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--club-soft);
+  border-bottom: 1px solid var(--club-line-2);
+  white-space: nowrap;
+  text-align: center;
+}
+.standTable td {
+  padding: 0.6rem 0.75rem;
+  text-align: center;
+  color: var(--club-soft);
+  border-bottom: 1px solid var(--club-line);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.standTable .standLeft { text-align: left; }
+.standRank { color: var(--club-dim); font-weight: 600; }
+.standTeam { display: inline-flex; align-items: center; gap: 0.45rem; font-weight: 600; color: var(--club-text); white-space: normal; }
+.standLead { font-weight: 700; }
+.standDot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.standStrong { font-weight: 700; color: var(--club-text); }
+.standPos { font-weight: 600; color: var(--club-ok); }
+.standNeg { font-weight: 600; color: var(--danger); }
+.standZero { font-weight: 600; color: var(--club-dim); }
+.standDash { color: var(--club-dim); }
+.standScroll { overflow-x: auto; }
+.standFoot {
+  margin-top: 0.75rem;
+  font: 400 0.75rem/1.45 var(--club-text-face);
+  color: var(--club-dim);
+}
+
+/* "How the table is ranked": built from the rules the table sorts by. */
+.rankBox {
+  margin-top: 1.25rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+  background: var(--club-card);
+  font: 400 0.875rem/1.5 var(--club-text-face);
+  color: var(--club-soft);
+}
+.rankBox > b { display: block; margin-bottom: 0.25rem; color: var(--club-text); font-weight: 700; }
+.rankBox ol { margin: 0.35rem 0; padding-left: 1.25rem; }
+.rankBox p { margin: 0; }
+
+.standLink { color: var(--club-ink); font-weight: 600; }
+
+.phoneOnly { display: none; }
+@media (max-width: 480px) {
+  .deskOnly { display: none; }
+  .phoneOnly { display: block; }
+  .standTable th, .standTable td { padding-left: 0.5rem; padding-right: 0.5rem; }
+}

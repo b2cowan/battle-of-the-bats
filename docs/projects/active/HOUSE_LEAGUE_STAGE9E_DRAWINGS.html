@@ -1,0 +1,1531 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>House League 9e Drawings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700;800&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) that holds captures of today's product and true-size
+   specimens of the club admin kit. Chrome and specimens deliberately do not share a ground.
+   Source of truth: docs/projects/active/HOUSE_LEAGUE_STAGE9_HUB.html ({{IMG:…}} placeholders);
+   the build (.probe/hl/build.mjs) inlines the captures. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+.doc{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:16px 90px}
+@media (max-width:600px){.doc{padding-inline:16px}}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:24px;margin:44px 0 8px;letter-spacing:-.01em;scroll-margin-top:70px}
+.doc h3{font-size:18px;margin:24px 0 6px}
+.doc p,.doc li{max-width:82ch}
+.muted{color:var(--muted)} .mo{font-family:var(--f-mono)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16.5px;max-width:82ch}
+/* top tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+.tabs .sp{flex:1}
+.thm{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.thm button{border-radius:0;min-height:36px;font-size:13px}
+.thm button[aria-pressed="true"]{background:var(--surface);color:var(--ink)}
+section.pane[hidden]{display:none}
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);margin:14px 0}
+.card h3{margin-top:0}
+.card ul,.card ol{margin:6px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--fix);border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.push{border-left-color:var(--ask)}
+.verdict h3{margin:0 0 6px}
+.verdict ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+/* station */
+.st{border-top:2px solid var(--line);padding-top:8px;margin-top:40px}
+.st>h2{margin-top:6px}
+.st .who{font-size:13.5px;color:var(--muted);margin:0 0 10px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:20px;align-items:start;margin:10px 0}
+@media (max-width:1000px){.cols{grid-template-columns:minmax(0,1fr)}}
+.cols>*{min-width:0}
+.shot{border-radius:10px;outline:1px solid var(--line);box-shadow:var(--shadow);background:var(--surface);overflow:hidden;position:relative}
+.shot .sc{max-height:520px;overflow:auto}
+.shot.open .sc{max-height:none}
+.shot img{display:block;width:100%;height:auto;max-width:none}
+.shot.desk img{min-width:0}
+.shot .bar{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 10px;border-top:1px solid var(--line);font:600 12px/1.3 var(--f-mono);color:var(--muted);background:var(--surface-2)}
+.shot .bar button{font:600 12px/1 var(--f-doc);min-height:30px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);cursor:pointer}
+.ph-shot{width:390px;max-width:100%}
+.meas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:8px;margin:10px 0}
+.meas div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.meas b{display:block;font:700 18px/1.2 var(--f-mono);font-variant-numeric:tabular-nums}
+.meas span{font-size:12.5px;color:var(--muted)}
+.meas .bad b{color:var(--flag)} .meas .ok b{color:var(--fix)}
+.read{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+@media (max-width:900px){.read{grid-template-columns:minmax(0,1fr)}}
+.read>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.read h4{margin:0 0 6px;font:700 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.read .w h4{color:var(--fix)} .read .g h4{color:var(--flag)} .read .c h4{color:var(--t-res)}
+.read ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+/* flags + tags */
+.fl{font:700 11px/1 var(--f-mono);letter-spacing:.03em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid var(--flag);color:var(--flag);background:var(--flag-soft);min-height:24px;vertical-align:1px;white-space:nowrap}
+.fl.fix{border-color:var(--fix);color:var(--fix);background:var(--fix-soft)}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:22px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)}
+.mk.s{color:var(--ask)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;box-sizing:border-box;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted);max-width:90ch;margin:4px 0}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:52px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{color:var(--ink);padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.y{color:var(--fix);font-weight:700} .x{color:var(--flag);font-weight:700}
+/* paste */
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:260px;font:12.5px/1.5 var(--f-mono)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+/* dialog */
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:17px;flex:1}
+dialog.note .x{font-size:22px;line-height:1;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px;display:flex;flex-direction:column;gap:10px}
+dialog.note .nb h4{margin:0;font:700 11px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+dialog.note .nb p{margin:0}
+
+/* ===== the product kit, for specimens (Warm default; .dk = Dark) ===== */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.22);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#B03A22;--amber:#835006;--amber-soft:#FBEFD9;--green:#34662A;--green-soft:#E6F0E2;--blue:#1D4A8A;--blue-soft:#E3ECF8;--grid:rgba(70,55,30,.06);--dimbg:rgba(36,30,21,.28);
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative;text-align:left}
+.ak.dk{--paper:#0A0A0A;--card:#141A22;--ink:#F1F5F9;--soft:rgba(255,255,255,.72);--dim:rgba(255,255,255,.55);--line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.18);
+  --olive:#D9F99D;--olive-soft:rgba(217,249,157,.12);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#F08A74;--amber:#F2B55A;--amber-soft:rgba(242,181,90,.14);--green:#9BD58C;--green-soft:rgba(155,213,140,.13);--blue:#9CC2F5;--blue-soft:rgba(156,194,245,.13);--grid:rgba(255,255,255,.03);--dimbg:rgba(0,0,0,.6)}
+.ak *{box-sizing:border-box}
+.dt-wrap{overflow-x:auto;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);max-width:100%;margin:8px 0}
+.dt{width:1440px}
+.ph{width:390px;max-width:100%;flex:none;border-radius:18px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow)}
+.ak .tb{display:flex;align-items:center;gap:10px;height:48px;padding:0 20px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .tb .lg{width:18px;height:18px;background:var(--olive);border-radius:4px}
+.ak .tb .ar{font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--dim);border-left:1px solid var(--line2);padding-left:12px;margin-left:4px}
+.ak .tb .sp{flex:1}
+.ak .tb .ic{width:30px;height:30px;border-radius:50%;border:1px solid var(--line2)}
+.ak .shell{display:flex;min-height:760px}
+.ak .sb{width:240px;flex:none;background:var(--card);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .it{font:500 14px/1 'Inter';color:var(--soft);padding:10px;border-radius:7px;display:flex;align-items:center;gap:8px;min-height:38px}
+.ak .sb .it.sub{padding-left:26px;font-size:13.5px}
+.ak .sb .it.on{background:var(--olive-soft);color:var(--ink);font-weight:650}
+.ak .sb .grp{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:14px 10px 6px}
+.ak .sb .sw{margin:4px 10px 6px 26px;border:1px solid var(--line2);border-radius:7px;padding:8px 10px;font:600 13px/1.2 'Inter';display:flex;justify-content:space-between;align-items:center;background:var(--paper)}
+.ak .chev{width:8px;height:8px;border:solid var(--dim);border-width:0 2px 2px 0;transform:rotate(45deg);margin-top:-4px;flex:none}
+.ak .mn{flex:1;min-width:0;padding:22px 0 60px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px}
+.ak .pg{width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.ak .ey{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.ak .ph1{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.ak .ph1 h1{font:700 28px/1.1 'Barlow Condensed',sans-serif;margin:2px 0 0;letter-spacing:.005em}
+.ak .ph1 .sp{flex:1}
+.ak .sub{color:var(--soft);font-size:14px;margin:4px 0 0}
+.ak .btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line2);background:var(--card);font:600 14px/1 'Inter';color:var(--ink);white-space:nowrap}
+.ak .btn.pri{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.ak .btn.dng{color:var(--red)}
+.ak .btn.ic{width:44px;padding:0;justify-content:center}
+.ak .pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 'Inter';border-radius:999px;padding:5px 10px;border:1px solid var(--line2);color:var(--soft);white-space:nowrap}
+.ak .pill.live{color:var(--green);background:var(--green-soft);border-color:transparent}
+.ak .pill.reg{color:var(--blue);background:var(--blue-soft);border-color:transparent}
+.ak .pill.wait{color:var(--amber);background:var(--amber-soft);border-color:transparent}
+.ak .pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.ak .panel{background:var(--card);border:1px solid var(--line);border-radius:10px}
+.ak .panel>.hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.ak .panel>.hd h2{font:700 16px/1.2 'Inter';margin:0;flex:1}
+.ak .rows .r{display:flex;align-items:center;gap:14px;padding:12px 16px;min-height:64px;border-top:1px solid var(--line)}
+.ak .rows .r:first-child{border-top:0}
+.ak .rows .r .m{flex:1;min-width:0}
+.ak .rows .r b{font:650 15px/1.3 'Inter';display:block}
+.ak .rows .r .d{font-size:13px;color:var(--soft);margin-top:2px}
+.ak .rows .r .u{font:500 12px/1.3 'IBM Plex Mono',monospace;color:var(--dim);margin-top:3px}
+.ak .band{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .band>div{padding:12px 16px;border-left:1px solid var(--line);min-width:0}
+.ak .band>div:first-child{border-left:0}
+.ak .band .k{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.ak .band .v{font:700 22px/1.2 'Inter';font-variant-numeric:tabular-nums;margin-top:4px}
+.ak .band .v.am{color:var(--amber)}
+.ak .band .h{font-size:12px;color:var(--soft)}
+.ak table.kt{width:100%;border-collapse:collapse;font-size:14px;color:var(--ink)}
+.ak table.kt td{color:var(--ink)}
+.ak table.kt th{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);text-align:left;padding:10px 16px;border-bottom:1px solid var(--line)}
+.ak table.kt td{padding:12px 16px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.ak table.kt tr:last-child td{border-bottom:0}
+.ak .meter{height:6px;border-radius:3px;background:var(--line);overflow:hidden;width:110px;display:inline-block;vertical-align:middle;margin-right:8px}
+.ak .meter i{display:block;height:100%;background:var(--olive)}
+.ak .rare{font-size:13.5px;color:var(--soft);display:flex;gap:10px;align-items:center;padding:6px 2px}
+.ak .rare a{color:var(--soft);text-decoration:underline;font-weight:600}
+.ak .fold{display:flex;align-items:center;gap:10px;padding:14px 16px;min-height:56px}
+.ak .fold b{flex:1;font:650 15px/1.2 'Inter'}
+.ak .amb{display:inline-flex;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--amber-soft);color:var(--amber);font:700 12px/22px 'Inter';justify-content:center}
+.ak .lnk{color:var(--olive);font-weight:650;text-decoration:none}
+/* phone frame */
+.ak .pbar{height:52px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .pbar .sp{flex:1}
+.ak .pin{padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.ak .ptabs{display:flex;gap:6px;overflow-x:auto;padding:0 16px 10px;border-bottom:1px solid var(--line);scrollbar-width:none;background:var(--card)}
+.ak .pswitch{display:flex;align-items:center;gap:8px;padding:12px 16px 10px;background:var(--card)}
+.ak .pswitch .t{flex:1;min-width:0}
+.ak .pswitch .t b{font:700 22px/1.1 'Barlow Condensed',sans-serif;display:block}
+.ak .bnav{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--card);height:62px}
+.ak .bnav span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 11px/1 'Inter';color:var(--soft)}
+.ak .bnav span i{width:20px;height:20px;border-radius:5px;border:1.5px solid currentColor;display:block}
+.ak .bnav span.on{color:var(--olive)}
+/* window */
+.ak.win{padding:40px 28px;background:var(--dimbg)}
+.ak .dlg{background:var(--card);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);max-width:480px;margin:0 auto;display:flex;flex-direction:column}
+.ak .dlg .dh{display:flex;align-items:center;padding:16px 18px 6px}
+.ak .dlg .dh h4{font:700 17px/1.3 'Inter';margin:0;flex:1}
+.ak .dlg .dh .xx{font-size:22px;color:var(--dim);width:44px;text-align:center}
+.ak .dlg .db{padding:4px 18px 16px;display:flex;flex-direction:column;gap:10px;color:var(--soft);font-size:14px}
+.ak .dlg .db ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.ak .dlg .df{display:flex;align-items:center;gap:10px;padding:12px 18px;border-top:1px solid var(--line)}
+.ak .dlg .df .s{flex:1;font-size:13px;color:var(--dim)}
+/* public face (club site), fixed light like the product */
+.pub{background:#F5F4F0;color:#1B1B1B;font:15px/1.5 'Inter',system-ui,sans-serif}
+.pub .nv{background:#1F3A8A;color:#fff;display:flex;align-items:center;gap:22px;padding:0 24px;height:64px;font:700 20px/1 'Barlow Condensed',sans-serif}
+.pub .nv span{font:600 15px/1 'Inter'} .pub .nv .on{border-bottom:2px solid #fff;padding-bottom:6px}
+.pub .in{max-width:1000px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:14px}
+.pub h3{font:700 17px/1.2 'Inter';margin:6px 0 0}
+.pub .rw{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:14px 16px;display:flex;align-items:center;gap:12px;min-height:64px}
+.pub .rw .m{flex:1;min-width:0} .pub .rw b{display:block;font:650 16px/1.3 'Inter'} .pub .rw .d{font-size:13.5px;color:#555}
+.pub .tag{font:600 12px/1 'Inter';padding:5px 9px;border-radius:999px;background:#E3ECF8;color:#1D4A8A}
+.pub .tag.g{background:#E6F0E2;color:#34662A}
+.pub .lk{font:600 14px/1 'Inter';color:#1F3A8A}
+/* design-review additions (2026-10-24) */
+.dt-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:6px 0}
+.dt-wrap.fit .dt{zoom:var(--z,1)}
+.ak .ptabs>span{flex:none;font:600 14px/1 'Inter';color:var(--soft);padding:0 14px;min-height:44px;display:inline-flex;align-items:center;border-radius:999px;border:1px solid var(--line2)}
+.ak .ptabs>span.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ak .ptabs .on .amb{background:var(--amber);color:var(--paper)}
+.ak.ph-in .btn,.ak.ph-in .btn.ic{min-height:44px}
+.ak.ph-in .btn.ic{border-color:transparent;background:none}
+.ak .utabs{display:flex;gap:18px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.ak .utabs span{flex:none;min-height:44px;display:inline-flex;align-items:center;gap:6px;font:600 14px/1 'Inter';color:var(--soft);border-bottom:2px solid transparent}
+.ak .utabs span.on{color:var(--ink);border-bottom-color:var(--olive)}
+.ak .utabs .c{font:700 11px/1 'Inter';background:var(--olive-soft);border-radius:999px;padding:3px 7px}
+.ak .ico{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ak .band .mk,.ak th .mk,.ak .sb .it .mk{position:absolute;top:3px;right:3px}
+.ak .band>div,.ak th,.ak .sb .it{position:relative}
+.ak .sb .blk{margin-left:18px;border-left:2px solid var(--line2);padding-left:4px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .blk .it.sub{padding-left:14px}
+.ak .sb .it i{width:16px;height:16px;border:1.5px solid currentColor;border-radius:4px;opacity:.6;flex:none}
+.ak .sb .it .mk{top:8px}
+.ak .fsw{display:flex;flex-direction:column;min-height:700px;background:var(--card)}
+.ak .fsw .fh{display:flex;align-items:center;gap:6px;height:56px;padding:0 6px;border-bottom:1px solid var(--line);font:700 16px/1.2 'Inter'}
+.ak .fsw .fb{padding:16px;display:flex;flex-direction:column;gap:10px;color:var(--soft);font-size:15px;flex:1}
+.ak .fsw .fb ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.ak .fsw .ff{border-top:1px solid var(--line);padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.ak .fsw .ff .s{font-size:13px;color:var(--dim)}
+.ak .fsw .ff .bb{display:flex;gap:10px;justify-content:flex-end}
+.pub .rw .lk{min-height:44px;display:inline-flex;align-items:center}
+.pub .hdr{display:flex;align-items:center;gap:12px;font:700 20px/1 'Barlow Condensed',sans-serif}
+.pub .mono{width:40px;height:40px;border-radius:8px;background:#fff;color:#1F3A8A;display:grid;place-items:center;font:700 14px/1 'Inter'}
+.pub .si{margin-left:auto;font:600 15px/1 'Inter'}
+.pub .cols2{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px}
+.pub .chev{width:9px;height:9px;border:solid #555;border-width:0 2px 2px 0;transform:rotate(-45deg);flex:none}
+.pub .rw2{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.pub .rw2 .top{display:flex;align-items:center;gap:10px;min-height:44px}
+.pub .rw2 .top b{flex:1;font:650 16px/1.3 'Inter'}
+.pub .rw2 .ln{display:flex;gap:18px}
+table.t.stick td:first-child,table.t.stick th:first-child{position:sticky;left:0;background:var(--surface);z-index:1}
+table.t td.no{color:var(--muted)}
+.spec{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin:10px 0}
+.spec>.col{min-width:0;display:flex;flex-direction:column;gap:8px;max-width:100%}
+.sp-cap{font:600 12px/1.35 var(--f-mono);letter-spacing:.04em;color:var(--muted);margin:0}
+.ann{position:absolute;z-index:3}
+</style>
+<style>
+/* 9c round additions, carried (2026-10-25) */
+.ak .fld{display:inline-flex;align-items:center;min-height:40px;padding:0 10px;border:1px solid var(--line2);border-radius:8px;background:var(--card);font:500 14px/1.3 'Inter';color:var(--ink);min-width:72px}
+.ak .fld.wide{flex:1;min-width:0;display:flex}
+.ak .fld.empty{color:var(--dim)}
+.ak .hint{font-size:12.5px;color:var(--dim);margin:0;line-height:1.45}
+.ak .dim,.ak .d2{color:var(--dim);font-size:12.5px}
+.ak .facts2{padding:14px 16px;display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px 20px;font-size:14px;align-items:baseline}
+.ak .facts2>span:nth-child(odd){color:var(--dim)}
+.ak .bulk{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:var(--ink);color:var(--paper)}
+.ak .bulk .btn{background:transparent;color:var(--paper);border-color:rgba(255,255,255,.35)}
+.ak.dk .bulk{background:var(--olive-soft);color:var(--ink)}
+.ak.dk .bulk .btn{color:var(--ink);border-color:var(--line2)}
+.ak .bulk .sp{flex:1}
+.ak .note{background:var(--amber-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:13.5px;line-height:1.45}
+.ak .note.blue{background:var(--blue-soft)}
+.ak .note.green{background:var(--green-soft)}
+.ak .lnk{color:var(--olive);font-weight:650;text-decoration:none}
+.ak .panel,.ak .dlg .db{overflow-x:auto}
+.ak .dlg,.ak .panel{min-width:0;max-width:100%}
+.ak.win{max-width:100%}
+.ak .dlg .df{flex-wrap:wrap}
+.ak .ph1 h1{font:700 26px/1.15 'Inter',system-ui,sans-serif;letter-spacing:0}
+.ak .pswitch .t b{font:700 18px/1.2 'Inter',system-ui,sans-serif}
+.mail{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;max-width:560px}
+.mail .mh{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface-2);font-size:14px;display:flex;flex-direction:column;gap:2px}
+.mail .mb{padding:14px 16px;font-size:14px;line-height:1.55;display:flex;flex-direction:column;gap:10px}
+.mail .mb p{margin:0}
+.mail .club{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#1F3A8A;color:#fff;font:700 15px/1 'Inter',sans-serif}
+.mail .club .mono{width:30px;height:30px;border-radius:6px;background:#fff;color:#1F3A8A;display:grid;place-items:center;font:700 12px/1 'Inter',sans-serif}
+.mail .foot{padding:10px 16px 14px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.mail .foot u{color:var(--muted)}
+.mail .newv{background:var(--fix-soft);border-radius:4px;padding:0 4px;margin-left:-4px}
+.cap{font-size:13.5px;color:var(--muted);max-width:92ch;margin:6px 0 0}
+table.t.gate td:not(:first-child),table.t.gate th:not(:first-child){text-align:center}
+table.t.gate td.co,table.t.gate th.co{background:var(--fix-soft)}
+.edges{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px;margin:12px 0}
+.edges>.card{margin:0;min-width:0}
+.edges .card h3{font-size:16px}
+.rec-line{font-size:14px;margin:8px 0 0}
+.rec-line b{color:var(--fix)}
+/* 9d-1 round (2026-10-26): the composer */
+.ak .mn{position:relative}
+.ak .shell:has(.ov){min-height:1020px}
+.ak .ov{position:absolute;inset:0;background:rgba(24,22,14,.42);display:flex;justify-content:center;align-items:flex-start;padding-top:36px;z-index:2}
+.ak .ov .dlg{width:640px;max-width:calc(100% - 32px);margin:0}
+.ak .dlg .ey,.ak .fsw .ey{font:700 11px/1.2 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);display:block}
+.ak .dlg .dh{align-items:flex-start;padding:18px 18px 8px 24px}
+.ak .dlg .dh .tt{flex:1;display:flex;flex-direction:column;gap:4px}
+.ak .dlg .dh .tt h4{flex:none}
+.ak .dlg .db{padding:6px 24px 18px;gap:12px}
+.ak .dlg .df{padding:14px 24px}
+.ak .stmt{border-left:3px solid var(--olive);background:var(--card);border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0 8px 8px 0;padding:10px 14px;font:600 13.5px/1.45 'Inter';color:var(--ink)}
+.ak .lbl{font:700 11px/1.2 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin:2px 0 -4px}
+.ak .flbl{font:600 13px/1.2 'Inter';color:var(--ink);margin:2px 0 -6px}
+.ak .who{border:1px solid var(--line2);border-radius:10px;background:var(--card);overflow:hidden}
+.ak .who .o{display:flex;gap:12px;align-items:flex-start;padding:11px 14px;border-top:1px solid var(--line);min-height:44px;box-sizing:border-box}
+.ak .who .o:first-child{border-top:0}
+.ak .who .o .rd{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line2);flex:none;margin-top:1px;box-sizing:border-box}
+.ak .who .o.on .rd{border:5px solid var(--olive)}
+.ak .who .o .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ak .who .o b{font:500 14.5px/1.3 'Inter';color:var(--ink)}
+.ak .who .o .d{font-size:12.5px;color:var(--soft)}
+.ak .who .o .n{font:600 13px/1.3 'Inter';color:var(--soft);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ak .who .sub{padding:4px 14px 12px 44px;display:flex;flex-wrap:wrap;gap:6px}
+.ak .chipk{display:inline-flex;align-items:center;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--line2);font:600 13px/1 'Inter';color:var(--soft);background:var(--card)}
+.ak .chipk.on{background:var(--olive-soft);border-color:var(--olive);color:var(--ink)}
+.ak .chipk.no{border-style:dashed;color:var(--dim)}
+.ak.ph-in .chipk{min-height:44px}
+.ak .tx{width:100%;min-height:40px;border:1px solid var(--line2);border-radius:8px;background:var(--paper);padding:9px 12px;font:500 14px/1.4 'Inter';color:var(--ink);box-sizing:border-box}
+.ak .tx.ta{min-height:120px;white-space:pre-line}
+.ak .tx.ph{color:var(--dim)}
+.ak .lime{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.ak .fixedto{display:flex;gap:12px;align-items:center;border:1px solid var(--line2);border-radius:10px;padding:12px 14px;background:var(--card)}
+.ak .fixedto .m{flex:1;min-width:0}
+.ak .fixedto b{font:600 14.5px/1.3 'Inter';display:block}
+.ak .fixedto .d{font-size:12.5px;color:var(--soft)}
+.ak .allow{display:inline-flex;align-items:center;gap:6px;font:600 12.5px/1.2 'Inter';color:var(--soft)}
+.ak .allow .pips{display:inline-flex;gap:3px}
+.ak .allow .pips i{width:8px;height:8px;border-radius:50%;background:var(--olive);display:block}
+.ak .allow .pips i.u{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line2)}
+.ak .held{background:var(--amber-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font:500 13.5px/1.45 'Inter';flex:1;min-width:220px}
+.ak .tagA{display:inline-flex;align-items:center;font:700 10.5px/1 'Inter';letter-spacing:.02em;border-radius:999px;padding:4px 8px;background:var(--blue-soft);color:var(--blue);white-space:nowrap}
+.ak .tagO{display:inline-flex;align-items:center;font:700 10.5px/1 'Inter';border-radius:999px;padding:4px 8px;background:var(--paper);border:1px solid var(--line2);color:var(--dim);white-space:nowrap}
+.ak .warnc{display:inline-flex;align-items:center;font:700 10.5px/1 'Inter';border-radius:999px;padding:4px 8px;background:var(--amber-soft);color:var(--amber);white-space:nowrap}
+.ak table.kt td .sm{display:block;font-size:12.5px;color:var(--dim);margin-top:2px}
+.ak table.kt tr.div td{background:var(--paper);font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);padding:8px 16px}
+.ak table.kt tr.old td{color:var(--soft)}
+.ak .lrow{display:flex;gap:10px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);min-height:56px}
+.ak .lrow:first-child{border-top:0}
+.ak .lrow .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ak .lrow b{font:600 14.5px/1.3 'Inter'}
+.ak .lrow .d{font-size:12.5px;color:var(--soft)}
+.ak .lrow .r{font:600 13px/1.3 'Inter';color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums;text-align:right}
+.ak .empt{padding:28px 20px;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center;color:var(--soft);font-size:14px}
+.ak .empt b{font:650 16px/1.3 'Inter';color:var(--ink)}
+.ak .fsw .fb .lbl{margin-top:4px}
+.ak .fsw .ff .s{line-height:1.45}
+.ak .fsw .ff .bb .btn{min-height:44px}
+.optgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin:12px 0}
+.optgrid .card{margin:0}
+.optgrid .card.rec{outline:2px solid var(--fix)}
+.optgrid .card h3{font-size:16px;margin-top:0}
+.optgrid .card ul{padding-left:18px;margin:6px 0 0;display:flex;flex-direction:column;gap:5px;font-size:14px}
+.bn{font-size:14px}
+.bn li{margin:4px 0}
+</style>
+<style>
+/* /design pass 2026-10-26 */
+.ak .dlg .lnk,.ak .fsw .lnk{text-decoration:underline;text-underline-offset:3px}
+.ak table.kt td:first-child,.ak table.kt td:last-child{white-space:nowrap}
+@media (max-width:640px){
+  .ak .dlg .df{flex-wrap:wrap}
+  .ak .dlg .df .s,.ak .dlg .df .held,.ak .dlg .df .note{flex:1 0 100%;min-width:0}
+  .ak .dlg .df{justify-content:flex-end}
+  .ak .chipk{min-height:44px}
+}
+</style>
+
+<style>
+/* 9d-2 round (2026-10-26): the schedule */
+.ak .seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;background:var(--card)}
+.ak .seg span{min-height:38px;display:inline-flex;align-items:center;padding:0 12px;font:600 13.5px/1 'Inter';color:var(--soft);border-left:1px solid var(--line2)}
+.ak .seg span:first-child{border-left:0}
+.ak .seg span.on{background:var(--olive-soft);color:var(--ink)}
+.ak .scope{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 12px 0 14px;border-radius:999px;background:var(--olive);color:var(--paper);font:650 14px/1 'Inter';white-space:nowrap}
+.ak.dk .scope{color:#141A22}
+.ak .scope .chev{border-color:currentColor}
+.ak .tbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ak .tbar .sp{flex:1}
+.ak .hb{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 12px;border-radius:8px;border:1px solid var(--line2);background:var(--card);font:600 14px/1 'Inter';color:var(--ink);white-space:nowrap}
+.ak .hb .sc{font:700 15px/1 'Inter';font-variant-numeric:tabular-nums}
+.ak .hb .sc.am{color:var(--amber)} .ak .hb .sc.gd{color:var(--green)}
+.ak .stl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13.5px;color:var(--soft)}
+.ak table.kt tr.wk td{background:var(--paper);font:650 13px/1.3 'Inter';color:var(--ink);padding:9px 16px}
+.ak table.kt tr.wk td .d2{font-weight:500;margin-left:8px}
+.ak table.kt tr.now td{padding:0;border-bottom:0}
+.ak .nowl{display:flex;align-items:center;gap:8px;font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--olive);padding:6px 16px}
+.ak .nowl::after{content:"";flex:1;height:2px;background:var(--olive);border-radius:2px}
+.ak table.kt td.tm{width:170px;color:var(--soft);white-space:nowrap}
+.ak table.kt td.tm b{color:var(--ink);font-weight:600;display:block}
+.ak table.kt td.gm b{font-weight:600}
+.ak table.kt td.st{text-align:right;white-space:nowrap}
+.ak .w-final{font:600 13px/1 'Inter';color:var(--ink)}
+.ak .w-final .s{font-variant-numeric:tabular-nums;margin-left:6px}
+.ak .w-st{font:650 12.5px/1 'Inter';white-space:nowrap}
+.ak .w-st.cx{color:var(--red)} .ak .w-st.pp{color:var(--amber)} .ak .w-st.mv{color:var(--blue)} .ak .w-st.dr{color:var(--dim)}
+.ak tr.cxr td.gm b,.ak tr.cxr td.tm b{text-decoration:line-through;text-decoration-thickness:1.5px;color:var(--soft)}
+.ak .src{display:inline-flex;align-items:center;gap:6px;font:600 12px/1.2 'Inter';color:var(--olive);background:var(--olive-soft);border-radius:999px;padding:4px 9px;white-space:nowrap}
+.ak .day{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:4px}
+.ak .day b{flex:1;text-align:center;font:650 15px/1.2 'Inter'}
+.ak .prow{display:flex;gap:12px;padding:12px 14px;border-top:1px solid var(--line);min-height:64px;align-items:flex-start}
+.ak .prow:first-child{border-top:0}
+.ak .prow .t{width:74px;flex:none;font:600 14px/1.3 'Inter';font-variant-numeric:tabular-nums}
+.ak .prow .t .d2{display:block;font-weight:500}
+.ak .prow .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ak .prow .m b{font:600 15px/1.3 'Inter'}
+.ak .prow .m .d{font-size:13px;color:var(--soft)}
+.ak .prow.cxr .m b{text-decoration:line-through;color:var(--soft)}
+.ak .sec{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.ak .sec h5{margin:0;font:650 15px/1.3 'Inter';color:var(--ink);display:flex;align-items:center;gap:8px}
+.ak .sec h5 .d2{font-weight:500}
+.ak .ckl{display:flex;flex-direction:column;gap:2px}
+.ak .ckl .o{display:flex;gap:10px;align-items:center;min-height:40px;font-size:14px;color:var(--ink)}
+.ak .ckl .o .bx{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--line2);flex:none;display:grid;place-items:center}
+.ak .ckl .o.on .bx{background:var(--olive);border-color:var(--olive)}
+.ak .ckl .o.on .bx::after{content:"";width:8px;height:4px;border:solid var(--paper);border-width:0 0 2px 2px;transform:rotate(-45deg) translate(1px,-1px)}
+.ak.dk .ckl .o.on .bx::after{border-color:#141A22}
+.ak .ckl .o .n{margin-left:auto;color:var(--soft);font-size:13px}
+.ak .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ak.ph-in .grid2{grid-template-columns:minmax(0,1fr)}
+.ak .fcol{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ak .res{border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--ink)}
+.ak .res b{font:650 14.5px/1.35 'Inter'}
+.ak .res ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.ak .res.ok{background:var(--green-soft)} .ak .res.warn{background:var(--amber-soft)} .ak .res.block{background:rgba(176,58,34,.10)}
+.ak.dk .res.block{background:rgba(240,138,116,.13)}
+.ak .res .lnk,.ak .iss .lnk,.ak .quiet .lnk{text-decoration:underline;text-underline-offset:3px}
+.ak .quiet{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--soft);line-height:1.45}
+.ak .quiet .ico{width:15px;height:15px;margin-top:2px}
+.ak .tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+.ak .tiles>div{padding:12px 14px;border-left:1px solid var(--line);min-width:0}
+.ak .tiles>div:first-child{border-left:0}
+.ak .tiles .k{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.ak .tiles .v{font:700 20px/1.2 'Inter';font-variant-numeric:tabular-nums;margin-top:4px}
+.ak .tiles .h{font-size:12px;color:var(--soft)}
+.ak .tiles .v.am{color:var(--amber)}
+.ak.ph-in .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ak.ph-in .tiles>div:nth-child(3){border-left:0}
+.ak.ph-in .tiles>div:nth-child(n+3){border-top:1px solid var(--line)}
+.ak .score{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.ak .score .n{font:700 34px/1 'Inter';font-variant-numeric:tabular-nums}
+.ak .score .n.am{color:var(--amber)} .ak .score .n.gd{color:var(--green)}
+.ak .score .of{font:600 14px/1 'Inter';color:var(--dim)}
+.ak .score .cap{font-size:14px;color:var(--soft)}
+.ak .iss{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);font-size:14px;color:var(--ink)}
+.ak .iss:first-child{border-top:0}
+.ak .iss .dt2{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none;background:var(--amber)}
+.ak .iss .dt2.r{background:var(--red)}
+.ak .iss .m{flex:1;min-width:0}
+.ak .chg{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.ak .chg:first-child{border-top:0}
+.ak .chg .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;font-size:14px;color:var(--ink)}
+.ak .chg .m b{font-weight:600}
+.ak .chg .m .d{font-size:12.5px;color:var(--soft)}
+.ak .chg s{color:var(--dim)}
+.pub .tz{font-size:13.5px;color:#555;margin:0}
+.pub .wkh{font:650 14px/1.3 'Inter';color:#1B1B1B;margin:10px 0 0}
+.pub .gr{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;display:flex;flex-direction:column}
+.pub .gr .g{display:flex;gap:14px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.08);align-items:center;min-height:60px}
+.pub .gr .g:first-child{border-top:0}
+.pub .gr .g .t{width:118px;flex:none;font:600 14px/1.35 'Inter';font-variant-numeric:tabular-nums}
+.pub .gr .g .t span{display:block;font-weight:500;color:#555;font-size:13px}
+.pub .gr .g .m{flex:1;min-width:0}
+.pub .gr .g .m b{display:block;font:650 15.5px/1.3 'Inter'}
+.pub .gr .g .m .d{font-size:13.5px;color:#555}
+.pub .gr .g .r{font:650 13.5px/1.2 'Inter';white-space:nowrap;text-align:right}
+.pub .gr .g.cx .m b,.pub .gr .g.cx .t{text-decoration:line-through;color:#777}
+.pub .gr .g .r.cx{color:#9C2F1A} .pub .gr .g .r.pp{color:#8A5300}
+.pub .dtabs{display:flex;gap:6px;flex-wrap:wrap}
+.pub .dtabs span{min-height:40px;display:inline-flex;align-items:center;padding:0 14px;border-radius:999px;border:1px solid rgba(0,0,0,.18);font:600 14px/1 'Inter'}
+.pub .dtabs span.on{background:#1F3A8A;color:#fff;border-color:#1F3A8A}
+.pub .emp{background:#fff;border:1px dashed rgba(0,0,0,.2);border-radius:8px;padding:22px 18px;text-align:center;color:#444}
+.pub .emp b{display:block;font:650 16px/1.3 'Inter';color:#1B1B1B;margin-bottom:4px}
+.pub.ph .gr .g{flex-wrap:wrap;gap:4px 12px}
+.pub.ph .gr .g .t{width:auto}
+.pub.ph .in{padding:16px}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px;margin:10px 0}
+.cmp>div{min-width:0}
+/* round 2: the month grid */
+.ak .mgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.ak .mgrid .mh{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);padding:8px 10px;border-bottom:1px solid var(--line)}
+.ak .mgrid .mc{min-height:104px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.ak .mgrid .mc:nth-child(7n){border-right:0}
+.ak .mgrid .mc i{font:600 12.5px/1.2 'Inter';font-style:normal;color:var(--soft)}
+.ak .mgrid .mc.out{background:var(--paper)} .ak .mgrid .mc.out i{color:var(--dim)}
+.ak .mgrid .mc.today{background:var(--olive-soft)} .ak .mgrid .mc.today i{color:var(--olive);font-weight:700}
+.ak .mgrid .ch{font:600 11.5px/1.25 'Inter';border-radius:5px;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ak .mgrid .ch.g{background:var(--olive-soft);color:var(--ink)}
+.ak .mgrid .ch.p{background:var(--blue-soft);color:var(--ink)}
+.ak .mgrid .ch.cx{text-decoration:line-through;color:var(--soft)}
+.ak .mgrid .ch.pp{background:var(--amber-soft)}
+.ak .mgrid .more{font:600 11.5px/1.2 'Inter';color:var(--olive)}
+.ak .lrow .r{font:600 13px/1.3 'Inter';color:var(--soft);white-space:nowrap}
+/* /design pass 2026-10-26 */
+.ak .seg{gap:2px;padding:3px;border:1px solid var(--line2);border-radius:999px;background:var(--card);overflow:visible}
+.ak .seg span{border:0;border-left:0;border-radius:999px;min-height:34px;padding:0 12px;background:none;color:var(--soft)}
+.ak .seg span.on{background:var(--olive-soft);color:var(--olive)}
+.ak.ph-in .seg span{min-height:44px}
+.ak .qp{display:inline-flex;align-items:center;font:600 11.5px/1 'Inter';border-radius:999px;padding:4px 8px;background:var(--line);color:var(--soft);margin-left:8px;vertical-align:1px;text-decoration:none;white-space:nowrap}
+.ak .prow .m b .qp,.ak .prow.cxr .m .qp{margin-left:6px}
+.pub .qp{display:inline-flex;font:600 12px/1 'Inter';border-radius:999px;padding:4px 8px;background:#ECEAE4;color:#555;margin-left:8px;vertical-align:1px}
+.pub .tl{display:flex;align-items:center;gap:8px;font:650 12.5px/1 'Inter';color:#1F3A8A;padding:8px 16px;border-top:1px solid rgba(0,0,0,.08)}
+.pub .tl::after{content:"";flex:1;height:2px;background:#1F3A8A;border-radius:2px}
+</style>
+<style>
+/* 9d-3 round (2026-10-29): the first practice notice, and calendars for house league */
+.doc{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.calapp{background:#fff;color:#1B1B1B;border:1px solid rgba(0,0,0,.14);border-radius:12px;overflow:hidden;font:14px/1.4 'Inter',system-ui,sans-serif;max-width:390px;width:100%}
+.calapp .h{padding:10px 14px;font:700 15px/1.2 'Inter',sans-serif;border-bottom:1px solid rgba(0,0,0,.1);display:flex;justify-content:space-between;gap:8px}
+.calapp .h span{font-weight:500;color:#666;font-size:13px}
+.calapp .e{display:flex;gap:10px;padding:9px 14px;border-top:1px solid rgba(0,0,0,.07)}
+.calapp .e:first-of-type{border-top:0}
+.calapp .e i{width:4px;border-radius:2px;background:#2E7D5B;flex:none}
+.calapp .e.g i{background:#1F3A8A}
+.calapp .e.cx i{background:#bbb}
+.calapp .e b{display:block;font-weight:650}
+.calapp .e span{display:block;font-size:12.5px;color:#666}
+.calapp .e.cx b{color:#777}
+.calapp .d{padding:6px 14px;background:#F2F1EC;font:700 11.5px/1.3 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#555}
+.ak .shd{display:flex;align-items:center;gap:10px;min-height:44px}
+.ak .shd .lbl{margin:0;flex:1}
+.ak .qline{font-size:13px;color:var(--soft);display:flex;gap:8px;align-items:flex-start;line-height:1.45;margin:0}
+.ak .qline .ico{width:15px;height:15px;margin-top:2px;color:var(--dim)}
+.ak .linkbox{border:1px solid var(--line2);border-radius:8px;padding:9px 12px;font:500 12.5px/1.45 'IBM Plex Mono',monospace;word-break:break-all;background:var(--paper);color:var(--ink)}
+.ak .apps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ak .apps .btn{justify-content:center}
+.ak .hair{border-top:1px solid var(--line);margin:2px 0}
+.ak .twocol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ak .tcount{font:700 11px/1 'Inter';border-radius:999px;padding:3px 8px;background:var(--amber-soft);color:var(--amber)}
+.mail .btnm{display:inline-block;background:#1F3A8A;color:#fff;border-radius:8px;padding:11px 16px;font:600 14px/1 'Inter',sans-serif;align-self:flex-start}
+.mail .att{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px;align-self:flex-start;background:var(--surface-2)}
+.mail .prov{font:700 10.5px/1 var(--f-mono);letter-spacing:.05em;color:var(--ask);background:var(--ask-soft);border-radius:4px;padding:3px 6px;align-self:flex-start}
+.mail .wasl{color:var(--muted)}
+.flow{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;margin:10px 0}
+.flow>div{flex:1 1 260px;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.flow>div.sec{border-top:4px solid var(--fix)}
+.flow>div.thr{border-top:4px solid var(--t-res)}
+.flow h4{margin:0 0 6px;font:700 12px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase}
+.flow ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:14px}
+table.t.cmpx td:first-child{white-space:nowrap;font-weight:600}
+table.t td .y,table.t td .x{white-space:nowrap}
+.cf{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;border:1.5px solid var(--ask);color:var(--ask);background:var(--ask-soft);white-space:nowrap;display:inline-block}
+.recbox{outline:2px solid var(--fix);outline-offset:-1px}
+.stepn{font:700 11px/1 var(--f-mono);color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.words td:first-child{white-space:nowrap;font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+.words td:nth-child(2){font-size:14px}
+.ak .linkrow{display:flex;gap:8px;align-items:stretch}
+.ak .linkrow .linkbox{flex:1;min-width:0}
+.ak .linkrow .btn.ic{min-height:44px;width:44px}
+.ak.ph-in .lnk,.ak .fsw .lnk{display:inline-flex;align-items:center;min-height:44px}
+.mk.cf{font:700 10.5px/1 var(--f-mono)}
+.askw{background:var(--surface-2);border:1px solid var(--line);border-left:5px solid var(--t-unc);border-radius:0 12px 12px 0;padding:4px 18px 12px;margin:16px 0;color:var(--muted)}
+.askw summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:10px;font-weight:600;color:var(--ink);list-style:none}
+.askw summary::-webkit-details-marker{display:none}
+.askw summary::before{content:"+";font:700 14px/1 var(--f-mono);color:var(--muted);width:14px}
+.askw[open] summary::before{content:"−"}
+.askw p{margin:6px 0;max-width:90ch}
+.askw ul{margin:6px 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.askw .no{font:700 13px/1 var(--f-mono);color:var(--muted)}
+.mk.wd{color:var(--t-unc)}
+</style>
+<style>
+/* 9e additions: standings specimens (public face stays fixed light), pickers, score boxes */
+.pub .dv{display:flex;gap:6px;flex-wrap:wrap}
+.pub .dv span{min-height:44px;display:inline-flex;align-items:center;padding:0 14px;border-radius:999px;border:1px solid rgba(0,0,0,.18);font:600 14px/1 'Inter',sans-serif;background:#fff;color:#1B1B1B}
+.pub .dv span.on{background:#1F3A8A;color:#fff;border-color:#1F3A8A}
+.pub .sw{overflow-x:auto;border:1px solid rgba(0,0,0,.1);border-radius:8px;background:#fff}
+.pub .stt{width:100%;border-collapse:collapse;font-size:14px;color:#1B1B1B;min-width:560px}
+.pub .stt.nar{min-width:0}
+.pub .stt th{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#5E5E5E;text-align:left;padding:10px 12px;background:#FAF9F6;border-bottom:1px solid rgba(0,0,0,.1);white-space:nowrap}
+.pub .stt td{padding:11px 12px;border-bottom:1px solid rgba(0,0,0,.07);font-variant-numeric:tabular-nums;color:#1B1B1B;white-space:nowrap}
+.pub .stt tr:last-child td{border-bottom:0}
+.pub .stt .n{text-align:right}
+.pub .stt .rk{width:46px;color:#5E5E5E}
+.pub .stt .tm{font-weight:650;white-space:normal}
+.pub .stt .pos{color:#34662A}.pub .stt .neg{color:#B03A22}.pub .stt .zero{color:#7A7A7A}
+.pub .stt tr.me td{background:#EEF3FB}
+.pub .stt tr.lead .tm{font-weight:750}
+.pub .stt .dash{color:#8A8A8A}
+.pub .how{border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;padding:12px 14px;font-size:13.5px;color:#333;display:flex;flex-direction:column;gap:6px}
+.pub .how b{font:650 14px/1.3 'Inter',sans-serif;color:#1B1B1B}
+.pub .how ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:2px}
+.pub .foot1{font-size:13px;color:#555}
+.pub .empty1{background:#fff;border:1px dashed rgba(0,0,0,.25);border-radius:8px;padding:16px;font-size:14px;color:#444}
+.ak .chk{width:20px;height:20px;border:1.5px solid var(--line2);border-radius:5px;flex:none;box-sizing:border-box;display:inline-block;background:var(--card);position:relative}
+.ak .chk.on{background:var(--olive);border-color:var(--olive)}
+.ak .chk.on::after{content:"";position:absolute;left:5.5px;top:1.5px;width:5px;height:10px;border:solid var(--card);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.ak .chk.off{opacity:.4}
+.ak .pk{display:flex;flex-direction:column;border:1px solid var(--line2);border-radius:10px;overflow:hidden;background:var(--card)}
+.ak .pk .gh{display:flex;gap:12px;align-items:center;padding:10px 14px;background:var(--paper);border-bottom:1px solid var(--line);font:700 13px/1.3 'Inter';min-height:44px}
+.ak .pk .gh .sp{flex:1}
+.ak .pk .gh .d2{font-weight:500;color:var(--dim)}
+.ak .pk .g{display:flex;gap:12px;align-items:center;padding:8px 14px 8px 14px;border-bottom:1px solid var(--line);min-height:44px;font-size:14px}
+.ak .pk .g:last-child{border-bottom:0}
+.ak .pk .g .m{flex:1;min-width:0}
+.ak .pk .g .m b{font:600 14px/1.3 'Inter';display:block}
+.ak .pk .g .m .d{font-size:12.5px;color:var(--soft)}
+.ak .pk .g.dis{opacity:.55}
+.ak .pk .g.skip .m b{color:var(--dim)}
+.ak .rad{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line2);flex:none;box-sizing:border-box}
+.ak .rad.on{border:5px solid var(--olive)}
+.ak .scrow{display:flex;gap:14px;align-items:center;justify-content:center;padding:6px 0}
+.ak .scbox{width:72px;min-height:56px;border:1px solid var(--line2);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font:700 26px/1 'Inter';font-variant-numeric:tabular-nums;background:var(--paper);color:var(--ink)}
+.ak .scbox.ph{color:var(--dim)}
+.ak .scteam{display:flex;flex-direction:column;align-items:center;gap:6px;font:600 14px/1.2 'Inter';min-width:84px;text-align:center}
+.ak .scteam small{font:500 12px/1.2 'Inter';color:var(--dim)}
+.ak .res{font:700 13px/1 'Inter';font-variant-numeric:tabular-nums;background:var(--paper);border:1px solid var(--line2);border-radius:999px;padding:5px 10px;white-space:nowrap;color:var(--ink)}
+.ak .entby{font-size:12.5px;color:var(--soft);margin:0;line-height:1.45}
+.ak .tagF{display:inline-flex;align-items:center;font:700 10.5px/1 'Inter';border-radius:999px;padding:4px 8px;background:var(--amber-soft);color:var(--amber);white-space:nowrap}
+.ak .tagC{display:inline-flex;align-items:center;font:700 10.5px/1 'Inter';border-radius:999px;padding:4px 8px;background:var(--green-soft);color:var(--green);white-space:nowrap}
+.ak .recbar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--card);border:1px solid var(--line);border-radius:10px;font-size:14px}
+.ak .recbar b{font:700 20px/1 'Inter';font-variant-numeric:tabular-nums}
+.ak .recbar .d{color:var(--soft);font-size:13px}
+.ak .qdone{display:flex;gap:10px;align-items:flex-start;background:var(--green-soft);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--ink);line-height:1.45}
+.ak .qdone.am{background:var(--amber-soft)}
+.ak .qdone .ico{margin-top:2px}
+.ak .gs{border-bottom:1px solid var(--line);padding:10px 16px;background:var(--paper);font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim)}
+.inbox{border:1px solid var(--line);border-radius:10px;background:var(--surface);max-width:560px;overflow:hidden}
+.inbox div{display:flex;gap:12px;padding:10px 14px;border-top:1px solid var(--line);font-size:14px;align-items:baseline}
+.inbox div:first-child{border-top:0}
+.inbox b{flex:0 0 150px;font-weight:600}
+.inbox span{flex:1;min-width:0}
+.mail .newl{background:var(--fix-soft);border-radius:4px;padding:1px 4px}
+@media (max-width:700px){.inbox b{flex-basis:90px}}
+</style>
+
+<div class="doc">
+<p class="eyebrow">FieldLogicHQ · Club Tier · Stage 9 · house league · round 7 · 9e · drawn 2026-11-01</p>
+<h1>9e drawn: standings, scores and a rainout</h1>
+<p class="lede">Three different things sit under one name: <b>a table families read</b>, <b>a permission no coach has had</b> and <b>an emergency action</b>. The first tab says whether they should be one build or three, and why. Every claim about today’s code was re-read; the places the drawing prompt was wrong are flagged in red.</p>
+
+<div class="verdict push"><h3>Nothing in 9e is ruled yet</h3>
+<ul>
+  <li>The plan’s 9e row has no asks. Fifteen are drawn here (9e·1 to 9e·15), each with a recommendation, answerable by paste-back on the last tab. 9e·15 is a plan-gating question for /strategy and carries no checkbox.</li>
+  <li><b>Not reopened:</b> Q7 (light coach accounts), 9c·1, 9d2·1, 9d2·2, 9d2·13 (families hear once, from the league admin’s send; a game change emails both teams and copies their coaches; scores and notes never email), Q16 (a finished season reads in place, locked), and the pencil’s built score rule.</li>
+</ul></div>
+
+<div class="card">
+  <h3>How to read this</h3>
+  <ul>
+    <li>Each tab draws one piece, desk and phone. Tags: <button class="mk new" data-note="NEW marks something the product does not have today.">NEW</button> <button class="mk res" data-note="RESTYLED marks something that exists today and is redrawn.">RESTYLED</button> <button class="mk unc" data-note="UNCHANGED marks something kept as it is.">UNCHANGED</button>. Red flags open a finding about today’s code. Every tag and flag opens an explanation when clicked.</li>
+    <li><b>Today’s screens are redrawn from the code, not captured.</b> I read the pages and their styles; I did not run a browser. Where a frame says TODAY it shows the sections and words the code renders.</li>
+    <li><b>All words are provisional.</b> Final words go through /marketing after you rule, before any code.</li>
+    <li>Desk drawings fit your screen; “Show at true size” shows them at 1440. Open this page on a phone to judge the phone drawings. The public club site and the family email are fixed light on purpose, as the product is.</li>
+  </ul>
+  <p class="muted" style="margin:10px 0 0;font-size:13.5px">The example is <b>Draft Test 2027</b> at the club <b>Dev League Org</b>, drawn as if it were Thursday, June 17, 2027. The U12 Division is trimmed to six teams so the table fits. The Kim family has Ava on the Twins and Henry on the Rays; the Okafor family has Mia in U10 and Jonah in U12. <b>Every name, count, time and score below is an example.</b></p>
+</div>
+<p class="muted" style="font-size:13.5px">Earlier rounds: <a href="https://claude.ai/artifact/Uazj5c2RKqVPAs1Gwpm9pM">9d-3 drawings</a> · <a href="https://claude.ai/artifact/TdXm5jmTEJ9qPvR3T5H9qU">9d-2 drawings</a>.</p>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" data-pane="why" aria-selected="true">Push-backs</button>
+  <button role="tab" data-pane="stand" aria-selected="false">Standings</button>
+  <button role="tab" data-pane="scores" aria-selected="false">Scores</button>
+  <button role="tab" data-pane="rain" aria-selected="false">Rainout</button>
+  <button role="tab" data-pane="since" aria-selected="false">Since 9d-3</button>
+  <button role="tab" data-pane="asks" aria-selected="false">Asks &amp; paste-back</button>
+  <span class="sp"></span>
+  <span class="thm" role="group" aria-label="Drawing theme"><button type="button" data-thm="warm" aria-pressed="true">Warm</button><button type="button" data-thm="dark" aria-pressed="false">Dark</button></span>
+</nav>
+<div class="dt-tools"><button type="button" class="btn-d" data-fit>Show at true size</button><span class="zl">Scaled to fit; use the button for true size.</span></div>
+
+<!-- ======================= PUSH-BACKS ======================= -->
+<section class="pane" id="why" data-pane="why">
+<h2 style="margin-top:16px">Push-backs, before any drawing</h2>
+
+<div class="verdict"><h3>The answer, before the detail</h3>
+<ul>
+  <li><b>Three builds, not one</b> (ask 9e·1). <b>9e-1 Standings and the score rule</b>, then <b>9e-2 Rainout</b>, then <b>9e-3 Coach scores</b>. Standings come first because 9f freezes them and because “does a coach’s score count?” can only be answered against a defined table. Rainout needs nothing from the other two and uses machinery that already exists. Coach scores is the only new permission and the only new record, so it goes last, with the most settled picture under it.</li>
+  <li><b>“By sport pack” changes no number anyone sees today.</b> House league offers softball and baseball, and both packs say exactly what the code already does (2 for a win, 1 for a tie). The real standings faults are different: the table is public for a division that is still a draft, a division with no scores shows a wall of zeros, and ties past run differential are settled by team order without saying so <button class="fl" data-f="E01">E01</button> <button class="fl" data-f="E02">E02</button> <button class="fl" data-f="E04">E04</button>.</li>
+  <li><b>A coach can enter the score for their own home games, and it counts at once</b> (9e·7, 9e·8). The club sees who entered it and can correct it; the other team’s coach can say “not right” but cannot overwrite. Nobody is emailed (ruled).</li>
+  <li><b>A rainout is one window that moves many games into the machinery that exists</b> (9e·10 to 9e·13): pick the day, the divisions and the games; postpone (default) or cancel; one email per family per division. The honest limit is drawn, not hidden: <b>an Undo exists only until families are told</b> <button class="fl" data-f="E08">E08</button>.</li>
+</ul></div>
+
+<div class="verdict push"><h3>What the code showed that the prompt did not say <span class="muted" style="font-weight:400;font-size:14px">(every flag opens the lines I read)</span></h3>
+<ul>
+  <li><b>The sport is stored and never read.</b> Nothing that scores or ranks a league game reads the season’s sport; only softball and baseball can be chosen; both give identical values <button class="fl" data-f="E01">E01</button>.</li>
+  <li><b>Standings ignore whether a division is published.</b> Anyone with the link sees a table of zeros for a draft division, and the page never explains how ties break past the second rule <button class="fl" data-f="E02">E02</button> <button class="fl" data-f="E04">E04</button>.</li>
+  <li><b>The pencil’s “both empty = back to scheduled” rule is built in the window only.</b> A direct call to the server with both scores empty marks the game played, and standings count a 0–0. A small server fix, drawn into 9e-1 <button class="fl" data-f="E03">E03</button>.</li>
+  <li><b>The tournament’s “pending score” is not a coach feature.</b> It holds scores entered by a volunteer or staff member when the organizer asks to review; an owner’s save is final at once. It does count pending scores in the table, with an “Unofficial” note <button class="fl" data-f="E05">E05</button>.</li>
+  <li><b>A postponed game keeps its old date</b> (it reads “Was Thu, Jun 17”), and <b>the urgent send never counts toward the rolling cap</b> <button class="fl" data-f="E06">E06</button>.</li>
+  <li><b>A send is per division.</b> A household with children in two divisions gets two emails from one rainout. The window says so before you press <button class="fl" data-f="E07">E07</button>.</li>
+  <li><b>Practices are not the league admin’s to cancel when they came from the club’s time</b>, and cancelling one the convenor booked by hand emails nobody <button class="fl" data-f="E09">E09</button>.</li>
+  <li><b>9f depends on a table that is computed live, every view</b>, and the “Final standings” tag is just a date. Whatever 9e decides about ties and points is what 9f must freeze <button class="fl" data-f="E10">E10</button>.</li>
+  <li><b>Which rule applies to a finished season:</b> the club’s house-league seasons follow Q16 (in place, locked), not the coaches’ portal’s one-page rule. Both standings and score entry lock the same way <button class="fl" data-f="E11">E11</button>.</li>
+</ul></div>
+
+<div class="st"><h2>Why three builds, by what each one needs</h2>
+<div class="tw"><table class="t">
+<thead><tr><th></th><th>9e-1 Standings and the score rule</th><th>9e-2 Rainout</th><th>9e-3 Coach scores</th></tr></thead>
+<tbody>
+<tr><td><b>What it is</b></td><td>A public number, made honest and explained</td><td>An emergency action</td><td>A permission</td></tr>
+<tr><td><b>New record</b></td><td>None (reads the sport; one switch if 9e·5 says yes)</td><td>None (reuses the change record)</td><td>Who entered a score, when, and whether it was flagged</td></tr>
+<tr><td><b>New permission</b></td><td>None</td><td>None (a league admin already postpones one game at a time)</td><td>A coach writes a score, for the first time</td></tr>
+<tr><td><b>Depends on</b></td><td>Nothing</td><td>Nothing in 9e</td><td>9e-1 (what a counted game is)</td></tr>
+<tr><td><b>9f needs it</b></td><td><span class="y">Yes</span>: the table it freezes</td><td>No</td><td>No</td></tr>
+<tr><td><b>Rework risk if built after the others</b></td><td>High: the score rule moves under coach entry</td><td>None</td><td>Low once 9e-1 is fixed</td></tr>
+<tr><td><b>Size</b></td><td>S</td><td>M</td><td>M (a migration, a new coach route, a flag)</td></tr>
+</tbody></table></div>
+<p class="cap">“S–M” in the plan row hid that these are three sizes. If you would rather ship the rainout first (it is the one a convenor needs on the first wet evening) nothing breaks: it does not depend on the other two. I recommend the order above only because standings and the score rule are the ones 9f waits on.</p>
+</div>
+</section>
+
+<!-- ======================= STANDINGS ======================= -->
+<section class="pane" id="stand" data-pane="stand" hidden>
+<h2 style="margin-top:16px">Standings</h2>
+<div class="verdict"><h3>The answer</h3>
+<ul>
+  <li><b>Same table, honest rules.</b> The table keeps points, then run differential, then runs for, and adds head-to-head between exactly two tied teams. Teams still level share the place (“T-3”). No coin, and no silent fall back to team order (9e·3).</li>
+  <li><b>The page says how it ranks.</b> A short “How the table is ranked” box replaces the hard-coded footer, and it reads from the same rules the table uses, so the two cannot disagree (9e·2, 9e·3).</li>
+  <li><b>A division’s table appears when its schedule is published</b>, and until the first score it lists the teams with dashes and says “Standings start with the first score” (9e·4).</li>
+  <li><b>A coach sees one quiet line</b> on their own team page: “1st of 6 · 4-1-0” (9e·6). A division can opt out of a public table (9e·5).</li>
+  <li><b>Not built, deliberately:</b> a per-season points override door. Both offered sports give 2/1/0 and nobody can choose another sport. It can be added when a sport with different points is offered.</li>
+</ul></div>
+
+<div class="st"><h2>s1 · The public table, TODAY <button class="mk unc" data-note="TODAY, redrawn from the code. The columns, the leader’s bolder name, the green and red Diff, and the footer line are exactly what the page renders.">TODAY</button></h2>
+<p class="who">Anyone with the link. The example is a division whose schedule is still a draft: no game has been played and nothing is published.</p>
+<div class="spec"><div class="col" style="flex:1 1 520px"><p class="sp-cap">TODAY · desk · a draft division</p>
+<div class="dt-wrap"><div class="dt pub">
+  <div class="nv">Dev League Org <span class="on">Spring House League</span><span>Schedule</span><span>Standings</span></div>
+  <div class="in">
+    <div class="dv"><span>U10 Division</span><span class="on">U12 Division</span><span>U14 Division</span></div>
+    <h3>U12 Division <button class="fl" data-f="E02" data-here="This table is public although the division’s schedule is not published: nothing reads the publish state.">E02</button></h3>
+    <div class="sw"><table class="stt"><thead><tr><th>#</th><th>Team</th><th class="n">GP</th><th class="n">W</th><th class="n">L</th><th class="n">T</th><th class="n">Pts</th><th class="n">GF</th><th class="n">GA</th><th class="n">Diff</th></tr></thead><tbody>
+      <tr class="lead"><td class="rk">1</td><td class="tm">Twins</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n zero">0</td></tr>
+      <tr><td class="rk">2</td><td class="tm">Royals</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n zero">0</td></tr>
+      <tr><td class="rk">3</td><td class="tm">Orioles</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n zero">0</td></tr>
+      <tr><td class="rk">4</td><td class="tm">Rays</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n zero">0</td></tr>
+    </tbody></table></div>
+    <p class="foot1">Pts: W=2, T=1, L=0 &nbsp;·&nbsp; Tiebreaker: run differential, then runs for <button class="fl" data-f="E04">E04</button></p>
+  </div>
+</div></div></div></div>
+<p class="cap">Three faults in one frame: the table is public for a draft division; it ranks zeros 1 to 4 by team order, which looks like a result; and the footer is hard-coded text that says nothing about the order teams fall back to when everything is level. The footer is typed out twice, once here and once on the admin screen.</p>
+</div>
+
+<div class="st"><h2>s2 · The public table, AFTER <button class="mk res" data-note="RESTYLED: the same table with a ranking box that reads the real rules, the sport’s own column words, a shared place for a true tie, and a phone recipe. Nothing else on the page moves.">RESTYLED</button></h2>
+<p class="who">A division with a published schedule and games played. The columns are the sport’s own words (runs for, runs against, run differential); the phone keeps the columns that answer “where are we?” and puts the rest one swipe away.</p>
+<div class="spec">
+<div class="col" style="flex:1 1 520px"><p class="sp-cap">AFTER · desk · working</p>
+<div class="dt-wrap"><div class="dt pub">
+  <div class="nv">Dev League Org <span class="on">Spring House League</span><span>Schedule</span><span>Standings</span></div>
+  <div class="in">
+    <div class="dv"><span>U10 Division</span><span class="on">U12 Division</span><span>U14 Division</span></div>
+    <h3>U12 Division <span class="tag g">Thu, Jun 17</span></h3>
+    <div class="sw"><table class="stt"><thead><tr><th>#</th><th>Team</th><th class="n">GP</th><th class="n">W</th><th class="n">L</th><th class="n">T</th><th class="n">Pts</th><th class="n">RF</th><th class="n">RA</th><th class="n">RD</th></tr></thead><tbody>
+      <tr class="lead"><td class="rk">1</td><td class="tm">Twins</td><td class="n">5</td><td class="n">4</td><td class="n">1</td><td class="n">0</td><td class="n">8</td><td class="n">41</td><td class="n">22</td><td class="n pos">+19</td></tr>
+      <tr><td class="rk">2</td><td class="tm">Royals</td><td class="n">5</td><td class="n">3</td><td class="n">1</td><td class="n">1</td><td class="n">7</td><td class="n">33</td><td class="n">25</td><td class="n pos">+8</td></tr>
+      <tr><td class="rk">3</td><td class="tm">Orioles</td><td class="n">5</td><td class="n">3</td><td class="n">2</td><td class="n">0</td><td class="n">6</td><td class="n">30</td><td class="n">29</td><td class="n pos">+1</td></tr>
+      <tr><td class="rk">4</td><td class="tm">Rays</td><td class="n">5</td><td class="n">2</td><td class="n">2</td><td class="n">1</td><td class="n">5</td><td class="n">28</td><td class="n">30</td><td class="n neg">−2</td></tr>
+      <tr><td class="rk">5</td><td class="tm">Hawks</td><td class="n">5</td><td class="n">2</td><td class="n">3</td><td class="n">0</td><td class="n">4</td><td class="n">24</td><td class="n">31</td><td class="n neg">−7</td></tr>
+      <tr><td class="rk">6</td><td class="tm">Cubs</td><td class="n">5</td><td class="n">0</td><td class="n">5</td><td class="n">0</td><td class="n">0</td><td class="n">15</td><td class="n">34</td><td class="n neg">−19</td></tr>
+    </tbody></table></div>
+    <div class="how"><b>How the table is ranked <button class="mk new" data-note="NEW (9e·2, 9e·3): replaces the hard-coded footer. Built from the same rules the table is sorted by, so the words and the order cannot disagree.">NEW</button></b>
+      <span>A win is 2 points, a tie 1, a loss 0. Teams level on points are ordered by:</span>
+      <ol><li>The game between them, when exactly two teams are level</li><li>Run differential (RD)</li><li>Runs for (RF)</li></ol>
+      <span>Teams still level share a place, shown as “T-3”. Only played games count.</span></div>
+  </div>
+</div></div></div>
+<div class="col"><p class="sp-cap">AFTER · phone, 390 · # Team Record Pts, the rest one swipe away</p>
+<div class="ph pub" style="padding-bottom:16px"><div class="nv" style="height:56px;padding:0 16px;font-size:18px">Dev League Org</div>
+  <div class="in" style="padding:14px 16px;gap:12px">
+    <div class="dv" style="flex-wrap:nowrap;overflow-x:auto"><span>U10</span><span class="on">U12</span><span>U14</span></div>
+    <h3>U12 Division</h3>
+    <div class="sw"><table class="stt nar"><thead><tr><th>#</th><th>Team</th><th class="n">W-L-T</th><th class="n">Pts</th><th class="n">RD</th></tr></thead><tbody>
+      <tr class="lead"><td class="rk">1</td><td class="tm">Twins</td><td class="n">4-1-0</td><td class="n">8</td><td class="n pos">+19</td></tr>
+      <tr><td class="rk">2</td><td class="tm">Royals</td><td class="n">3-1-1</td><td class="n">7</td><td class="n pos">+8</td></tr>
+      <tr><td class="rk">3</td><td class="tm">Orioles</td><td class="n">3-2-0</td><td class="n">6</td><td class="n pos">+1</td></tr>
+      <tr><td class="rk">4</td><td class="tm">Rays</td><td class="n">2-2-1</td><td class="n">5</td><td class="n neg">−2</td></tr>
+      <tr><td class="rk">5</td><td class="tm">Hawks</td><td class="n">2-3-0</td><td class="n">4</td><td class="n neg">−7</td></tr>
+      <tr><td class="rk">6</td><td class="tm">Cubs</td><td class="n">0-5-0</td><td class="n">0</td><td class="n neg">−19</td></tr>
+    </tbody></table></div>
+    <p class="foot1">Swipe the table for GP, RF and RA.</p>
+    <div class="how" style="font-size:13px"><b>How the table is ranked</b><span>2 points for a win, 1 for a tie. Level teams: head-to-head between two, then run differential, then runs for. Still level: shared place.</span></div>
+  </div></div>
+<p class="cap" style="max-width:390px">The rest of the ten columns are one swipe away. This is the tournament table’s phone recipe (a record column, a swipe for the rest), not a new one.</p></div>
+</div>
+<p class="cap">Three changes to the page itself: the column words (RF, RA and RD for ball; today it says GF, GA and Diff for every sport), the ranking box, and the shared place. Which sport’s words appear comes from the season’s sport, which is stored today and never read (ask 9e·2).</p>
+</div>
+
+<div class="st"><h2>s3 · Before the first score, and before the schedule is published <button class="mk new" data-note="NEW (9e·4): today both cases show a table of zeros. After: a division with an unpublished schedule shows no table; a published one with no score shows the teams with dashes and no ranking.">NEW</button></h2>
+<div class="spec">
+<div class="col"><p class="sp-cap">SCHEDULE NOT PUBLISHED · the division’s tab shows a plain line, no table</p>
+<div class="pub" style="padding:16px;border-radius:10px;outline:1px solid var(--line);max-width:430px;display:flex;flex-direction:column;gap:10px">
+  <div class="dv"><span>U10 Division</span><span class="on">U12 Division</span></div>
+  <div class="empty1"><b>U12 Division</b><br>Standings appear once the schedule is published and games are played.</div></div></div>
+<div class="col"><p class="sp-cap">PUBLISHED, NO SCORE YET · teams listed, nobody ranked</p>
+<div class="pub" style="padding:16px;border-radius:10px;outline:1px solid var(--line);max-width:430px;display:flex;flex-direction:column;gap:10px">
+  <div class="dv"><span>U10 Division</span><span class="on">U12 Division</span></div>
+  <div class="sw"><table class="stt nar"><thead><tr><th>Team</th><th class="n">W-L-T</th><th class="n">Pts</th></tr></thead><tbody>
+    <tr><td class="tm">Cubs</td><td class="n dash">–</td><td class="n dash">–</td></tr>
+    <tr><td class="tm">Hawks</td><td class="n dash">–</td><td class="n dash">–</td></tr>
+    <tr><td class="tm">Orioles</td><td class="n dash">–</td><td class="n dash">–</td></tr>
+    <tr><td class="tm">Rays</td><td class="n dash">–</td><td class="n dash">–</td></tr></tbody></table></div>
+  <p class="foot1">Standings start with the first score. Teams are in alphabetical order until then.</p></div></div>
+<div class="col"><p class="sp-cap">A DIVISION THAT HIDES ITS TABLE · 9e·5 · no tab for it</p>
+<div class="pub" style="padding:16px;border-radius:10px;outline:1px solid var(--line);max-width:430px;display:flex;flex-direction:column;gap:10px">
+  <div class="dv"><span class="on">U12 Division</span><span>U14 Division</span></div>
+  <div class="empty1">The U10 Division doesn’t keep a table. Its games are on the <a class="lk">Schedule</a>.</div></div></div>
+</div>
+<p class="cap">The alphabetical order is deliberate: today’s zero table ranks teams 1 to 4 in draft order, which reads like a result. A table that ranks nothing yet shows nothing as ranked.</p>
+</div>
+
+<div class="st"><h2>s4 · A sport with draws, and one without <button class="mk unc" data-note="UNCHANGED today and NOT OFFERED: only softball and baseball can be chosen for a house league. Basketball is drawn only because its sport pack already says win percentage and no ties; it shows that the table follows the pack rather than a new setting.">NOT OFFERED TODAY</button></h2>
+<p class="who">The sport pack already holds the rule: baseball and softball use points and allow ties; basketball uses win percentage and has no ties. Drawn so the columns are seen to follow the pack. No new sport is proposed.</p>
+<div class="spec">
+<div class="col" style="flex:1 1 380px"><p class="sp-cap">SOFTBALL / BASEBALL · what is offered · points, ties allowed</p>
+<div class="pub" style="padding:14px;border-radius:10px;outline:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
+  <div class="sw"><table class="stt nar"><thead><tr><th>#</th><th>Team</th><th class="n">W-L-T</th><th class="n">Pts</th><th class="n">RD</th></tr></thead><tbody>
+  <tr class="lead"><td class="rk">1</td><td class="tm">Twins</td><td class="n">4-1-0</td><td class="n">8</td><td class="n pos">+19</td></tr>
+  <tr><td class="rk">2</td><td class="tm">Royals</td><td class="n">3-1-1</td><td class="n">7</td><td class="n pos">+8</td></tr></tbody></table></div>
+  <p class="foot1">2 points for a win, 1 for a tie.</p></div></div>
+<div class="col" style="flex:1 1 380px"><p class="sp-cap">BASKETBALL · not offered · win percentage, no ties</p>
+<div class="pub" style="padding:14px;border-radius:10px;outline:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
+  <div class="sw"><table class="stt nar"><thead><tr><th>#</th><th>Team</th><th class="n">W-L</th><th class="n">Win %</th><th class="n">PD</th></tr></thead><tbody>
+  <tr class="lead"><td class="rk">1</td><td class="tm">Twins</td><td class="n">4-1</td><td class="n">.800</td><td class="n pos">+36</td></tr>
+  <tr><td class="rk">2</td><td class="tm">Royals</td><td class="n">3-2</td><td class="n">.600</td><td class="n pos">+9</td></tr></tbody></table></div>
+  <p class="foot1">Ranked by win percentage. Level teams: head-to-head, then point differential.</p></div></div>
+</div>
+<p class="cap">Neither is a request to offer basketball. The point is that reading the pack costs nothing now and means a later sport arrives with its own table. The tournament’s table does not read the pack either; it hard-codes the same 2/1/0 <button class="fl" data-f="E01">E01</button>.</p>
+</div>
+
+<div class="st"><h2>s5 · What a tie looks like <button class="mk new" data-note="NEW (9e·3): the order, worked on three small examples. All numbers are examples.">NEW</button></h2>
+<p class="who">A recreational league needs a tie rule a parent can check against the table without arithmetic. Three cases, from the common one to the rare one. These are separate small examples, not the table in s2.</p>
+<div class="spec">
+<div class="col" style="flex:1 1 320px"><p class="sp-cap">TWO TEAMS LEVEL · the game between them</p>
+<div class="pub" style="padding:14px;border-radius:10px;outline:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
+  <div class="sw"><table class="stt nar"><thead><tr><th>#</th><th>Team</th><th class="n">Pts</th><th class="n">RD</th></tr></thead><tbody>
+  <tr><td class="rk">4</td><td class="tm">Hawks</td><td class="n">5</td><td class="n neg">−2</td></tr>
+  <tr><td class="rk">5</td><td class="tm">Rays</td><td class="n">5</td><td class="n pos">+3</td></tr></tbody></table></div>
+  <p class="foot1">Hawks beat Rays 6 to 4 on May 29, so Hawks are ahead although Rays’ run differential is better.</p></div></div>
+<div class="col" style="flex:1 1 320px"><p class="sp-cap">THREE TEAMS LEVEL · head-to-head skipped, run differential decides</p>
+<div class="pub" style="padding:14px;border-radius:10px;outline:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
+  <div class="sw"><table class="stt nar"><thead><tr><th>#</th><th>Team</th><th class="n">Pts</th><th class="n">RD</th></tr></thead><tbody>
+  <tr><td class="rk">3</td><td class="tm">Rays</td><td class="n">6</td><td class="n pos">+4</td></tr>
+  <tr><td class="rk">4</td><td class="tm">Orioles</td><td class="n">6</td><td class="n pos">+1</td></tr>
+  <tr><td class="rk">5</td><td class="tm">Hawks</td><td class="n">6</td><td class="n neg">−3</td></tr></tbody></table></div>
+  <p class="foot1">With three teams level, a head-to-head circle can’t settle it, so the table goes straight to run differential.</p></div></div>
+<div class="col" style="flex:1 1 320px"><p class="sp-cap">STILL LEVEL AFTER ALL THREE · a shared place</p>
+<div class="pub" style="padding:14px;border-radius:10px;outline:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
+  <div class="sw"><table class="stt nar"><thead><tr><th>#</th><th>Team</th><th class="n">Pts</th><th class="n">RD</th><th class="n">RF</th></tr></thead><tbody>
+  <tr><td class="rk">T-3</td><td class="tm">Orioles</td><td class="n">6</td><td class="n pos">+1</td><td class="n">30</td></tr>
+  <tr><td class="rk">T-3</td><td class="tm">Rays</td><td class="n">6</td><td class="n pos">+1</td><td class="n">30</td></tr>
+  <tr><td class="rk">5</td><td class="tm">Hawks</td><td class="n">4</td><td class="n neg">−7</td><td class="n">24</td></tr></tbody></table></div>
+  <p class="foot1">No coin toss. The next place is 5, as in any league table.</p></div></div>
+</div>
+<p class="cap">Today the third case is settled by the order the teams were created in, and the page never says so. The tournament’s engine only resolves head-to-head for exactly two tied teams and ends in a coin toss; a recreational league has no organizer to flip it. Rec leagues also argue about run differential in kids’ games (a blowout helps nobody); the tournament caps a game’s differential, and 9e·3 does not propose a cap here, but you can ask for one.</p>
+</div>
+
+<div class="st"><h2>s6 · The admin’s table <button class="mk res" data-note="RESTYLED: the same columns and division switch as today; adds the ranking box, the shared place and the sport’s words. The export gains a tie-break column.">RESTYLED</button></h2>
+<p class="who">The league admin, registrar, treasurer and anyone who can read house league. It already exists as the “Standings” item of the season rail; today its hard-coded footer is a second copy of the public one. The numbers here are a snapshot a week later than s2, so that a shared place can show.</p>
+<div class="spec">
+<div class="col" style="flex:1 1 520px"><p class="sp-cap">AFTER · desk · working</p>
+<div class="dt-wrap"><div class="dt ak">
+  <div class="tb"><span class="lg"></span>Dev League Org<span class="ar">ADMIN</span><span class="sp"></span><span class="ic"></span></div>
+  <div class="shell">
+    <div class="sb"><span class="grp">House league</span>
+      <span class="it">Overview</span><span class="it">Registrations</span><span class="it">Teams</span><span class="it">Schedule</span><span class="it on">Standings</span><span class="it">Money</span><span class="it">Email families</span></div>
+    <div class="mn"><div class="pg">
+      <div class="ph1"><div><span class="ey">Draft Test 2027</span><h1>Standings</h1></div><span class="sp"></span><span class="fld" style="min-width:150px">U12 Division ▾</span><span class="btn">Export</span></div>
+      <div class="panel"><table class="kt"><thead><tr><th>#</th><th>Team</th><th>GP</th><th>W</th><th>L</th><th>T</th><th>Pts</th><th>RF</th><th>RA</th><th>RD</th><th>Level on</th></tr></thead><tbody>
+        <tr><td>1</td><td><b>Twins</b></td><td>5</td><td>4</td><td>1</td><td>0</td><td>8</td><td>41</td><td>22</td><td>+19</td><td></td></tr>
+        <tr><td>2</td><td><b>Royals</b></td><td>5</td><td>3</td><td>1</td><td>1</td><td>7</td><td>33</td><td>25</td><td>+8</td><td></td></tr>
+        <tr><td>T-3</td><td><b>Orioles</b></td><td>5</td><td>3</td><td>2</td><td>0</td><td>6</td><td>30</td><td>29</td><td>+1</td><td><span class="warnc">Level on RF <button class="mk new" data-note="NEW (9e·3): on the admin table only, a team that shares a place says which rule it is still level on. The public table shows only the shared place.">NEW</button></span></td></tr>
+        <tr><td>T-3</td><td><b>Rays</b></td><td>5</td><td>3</td><td>2</td><td>0</td><td>6</td><td>30</td><td>29</td><td>+1</td><td><span class="warnc">Level on RF</span></td></tr>
+        <tr><td>5</td><td><b>Hawks</b></td><td>5</td><td>2</td><td>3</td><td>0</td><td>4</td><td>24</td><td>31</td><td>−7</td><td></td></tr></tbody></table></div>
+      <p class="hint">The ranking rules are the ones the public page shows. They come from the season’s sport (softball) and can’t be edited here.</p>
+    </div></div>
+  </div>
+</div></div></div>
+<div class="col"><p class="sp-cap">AFTER · phone, 390</p>
+<div class="ph"><div class="ak ph-in" style="min-height:560px;display:flex;flex-direction:column">
+  <div class="pbar"><span>Standings</span><span class="sp"></span><span class="fld">U12 ▾</span></div>
+  <div class="pin">
+    <div class="panel"><table class="kt" style="font-size:13.5px"><thead><tr><th style="padding:10px 10px">#</th><th style="padding:10px 6px">Team</th><th style="padding:10px 6px">W-L-T</th><th style="padding:10px 6px">Pts</th><th style="padding:10px 6px">RD</th></tr></thead><tbody>
+      <tr><td style="padding:12px 10px">1</td><td style="padding:12px 6px"><b>Twins</b></td><td style="padding:12px 6px">4-1-0</td><td style="padding:12px 6px">8</td><td style="padding:12px 6px">+19</td></tr>
+      <tr><td style="padding:12px 10px">2</td><td style="padding:12px 6px"><b>Royals</b></td><td style="padding:12px 6px">3-1-1</td><td style="padding:12px 6px">7</td><td style="padding:12px 6px">+8</td></tr>
+      <tr><td style="padding:12px 10px">T-3</td><td style="padding:12px 6px"><b>Orioles</b><span class="sm">Level on RF</span></td><td style="padding:12px 6px">3-2-0</td><td style="padding:12px 6px">6</td><td style="padding:12px 6px">+1</td></tr>
+      <tr><td style="padding:12px 10px">T-3</td><td style="padding:12px 6px"><b>Rays</b><span class="sm">Level on RF</span></td><td style="padding:12px 6px">3-2-0</td><td style="padding:12px 6px">6</td><td style="padding:12px 6px">+1</td></tr></tbody></table></div>
+    <p class="hint">Swipe the table for GP, RF and RA.</p>
+  </div></div></div></div>
+</div>
+<p class="cap">The admin screen reads the finished-season rule from Q16 as it does today: nothing on it changes when a season finishes, and it has no write control to lock. The “Final standings” tag on the public season page stays date-driven until 9f decides what a frozen final table is <button class="fl" data-f="E10">E10</button>.</p>
+</div>
+
+<div class="st"><h2>s7 · The coach’s team page, one line <button class="mk new" data-note="NEW (9e·6): a quiet line on the coach’s own team page. Today the page has no standing at all. Shown only when the division’s table is shown.">NEW</button></h2>
+<p class="who">A house-league coach (Q7): own team only. The line sits at the top of the “Scores” section, which today holds a single sentence.</p>
+<div class="spec">
+<div class="col" style="flex:1 1 520px"><p class="sp-cap">AFTER · desk · working</p>
+<div class="ak" style="max-width:760px;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);padding:24px 28px;display:flex;flex-direction:column;gap:14px">
+  <span class="ey">U12 Division · Draft Test 2027</span>
+  <div><h1 style="font:700 28px/1.1 'Inter',sans-serif;margin:0">Twins</h1><p class="sub">Coached by Alex Moreau</p></div>
+  <div class="shd"><span class="lbl">Scores and standings</span></div>
+  <div class="recbar"><b>1st</b><span>of 6 in the U12 Division</span><span class="d">4-1-0 · 8 points</span><span style="flex:1"></span><a class="lnk">See the standings</a></div>
+</div></div>
+<div class="col"><p class="sp-cap">AFTER · phone, 390</p>
+<div class="ph"><div class="ak ph-in" style="display:flex;flex-direction:column;min-height:300px">
+  <div class="pbar"><span>Twins</span><span class="sp"></span><span class="pill">U12 Division</span></div>
+  <div class="pin"><div class="shd"><span class="lbl">Scores and standings</span></div>
+  <div class="recbar" style="flex-wrap:wrap"><b>1st</b><span>of 6</span><span class="d">4-1-0 · 8 points</span></div>
+  <a class="lnk" style="min-height:44px;display:inline-flex;align-items:center">See the standings</a></div></div></div></div>
+</div>
+<p class="cap">When the division hides its table (9e·5) or its schedule is not published, the line is absent, not “unranked”. The link goes to the public standings page, which a signed-in coach can already open.</p>
+</div>
+</section>
+
+<!-- ======================= SCORES ======================= -->
+<section class="pane" id="scores" data-pane="scores" hidden>
+<h2 style="margin-top:16px">Scores</h2>
+<div class="verdict"><h3>The answer</h3>
+<ul>
+  <li><b>The home team’s coach enters the score</b>, from their own team page, once the game’s start time has passed (9e·7). Both scores or neither, as the pencil already requires.</li>
+  <li><b>It counts at once</b> in the standings and on the schedule, and the club sees “Entered by Alex Moreau” (9e·8). A held-until-approved score would make the table lag and turn the league admin into the bottleneck coach entry is meant to remove.</li>
+  <li><b>The other coach cannot overwrite; they can say “not right”</b> (9e·9). The score stays as entered, the game gets a flag, and the league admin corrects it. The entering coach can change their own entry until it is flagged or the club touches it.</li>
+  <li><b>The league admin has the last word</b> and can correct any score. Nobody is emailed about a score or a correction (ruled).</li>
+  <li><b>Needs a new record</b> (who entered it, when, flagged or not): the league’s game has none today <button class="fl" data-f="E03">E03</button>. The coach’s route must be a new one, signed in as the coach and checked against the coach’s own team, never the admin gate <button class="fl" data-f="E12">E12</button>.</li>
+</ul></div>
+
+<div class="st"><h2>c1 · The coach’s Scores section, TODAY and AFTER <button class="mk res" data-note="RESTYLED: today the section is one sentence, “The club enters scores for now.” After: a record line, the games waiting for a score, and recent results.">RESTYLED</button></h2>
+<p class="who">A house-league coach (Q7). Today the coach’s game list starts from today and the section holds a stub, although the coach’s page already loads every scored game’s result.</p>
+<div class="spec">
+<div class="col"><p class="sp-cap">TODAY · desk</p>
+<div class="ak" style="padding:18px 22px;border-radius:12px;outline:1px solid var(--line);max-width:430px;display:flex;flex-direction:column;gap:10px">
+  <div class="shd"><span class="lbl">Scores</span></div>
+  <p class="sub" style="margin:0">The club enters scores for now. <button class="fl" data-f="E12" data-here="This is the whole Scores section today.">E12</button></p></div></div>
+<div class="col" style="flex:1 1 520px"><p class="sp-cap">AFTER · desk · working</p>
+<div class="ak" style="max-width:760px;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);padding:24px 28px;display:flex;flex-direction:column;gap:14px">
+  <span class="ey">U12 Division · Draft Test 2027</span>
+  <div><h1 style="font:700 28px/1.1 'Inter',sans-serif;margin:0">Twins</h1><p class="sub">Coached by Alex Moreau</p></div>
+  <div class="shd"><span class="lbl">Scores and standings</span></div>
+  <div class="recbar"><b>1st</b><span>of 6 in the U12 Division</span><span class="d">4-1-0 · 8 points</span></div>
+  <div class="panel">
+    <div class="prow"><div class="t">Today<span class="d2">Jun 17</span></div><div class="m"><b>Twins vs Royals · 6:00 p.m.</b><span class="d">Maple Grove Park · Diamond 2 · you are the home team</span></div><span class="btn pri lime">Enter the score <button class="mk new" data-note="NEW (9e·7): offered to the coach of the HOME team only, from the game’s start time, until a score exists. Opens the entry window drawn in c2.">NEW</button></span></div>
+    <div class="prow"><div class="t">Sat<span class="d2">Jun 12</span></div><div class="m"><b>Twins vs Orioles</b><span class="d">Maple Grove Park · Diamond 1</span></div><span class="res">Final 9–3</span></div>
+    <div class="prow"><div class="t">Sat<span class="d2">Jun 5</span></div><div class="m"><b>Cubs vs Twins</b><span class="d">Riverside · Diamond 3 · the Cubs’ coach enters this one</span></div><span class="res">Final 4–6</span></div>
+  </div>
+  <p class="entby">Scores count in the standings as soon as they are entered. The league admin can correct them. Families aren’t emailed.</p>
+</div></div>
+<div class="col"><p class="sp-cap">AFTER · phone, 390</p>
+<div class="ph"><div class="ak ph-in" style="min-height:560px;display:flex;flex-direction:column">
+  <div class="pbar"><span>Twins</span><span class="sp"></span><span class="pill">U12 Division</span></div>
+  <div class="pin">
+    <div class="shd"><span class="lbl">Scores and standings</span></div>
+    <div class="recbar" style="flex-wrap:wrap"><b>1st</b><span>of 6</span><span class="d">4-1-0 · 8 points</span></div>
+    <div class="panel">
+      <div class="prow" style="flex-wrap:wrap"><div class="t">Today<span class="d2">Jun 17</span></div><div class="m"><b>Twins vs Royals · 6:00 p.m.</b><span class="d">Diamond 2 · you are home</span></div><span class="btn pri lime" style="width:100%;justify-content:center;min-height:44px">Enter the score</span></div>
+      <div class="prow"><div class="t">Sat<span class="d2">Jun 12</span></div><div class="m"><b>Twins vs Orioles</b></div><span class="res">9–3</span></div>
+    </div>
+  </div></div></div></div>
+</div>
+<p class="cap">The coach’s list today begins at the start of today and shows only the schedule as families last heard it. The build adds one thing to the read: a home game that has started and has no score stays on the list until it is scored, even when it was yesterday’s <button class="fl" data-f="E12">E12</button>.</p>
+</div>
+
+<div class="st"><h2>c2 · Entering the score <button class="mk new" data-note="NEW (9e·7, 9e·8): a small window opened from “Enter the score”. Both boxes or neither; the same sentence the pencil uses.">NEW</button></h2>
+<p class="who">The home team’s coach. A menu-layer window on a desk; a full-screen sheet on a phone with the Save button in a foot that stays in view, 44 px tall.</p>
+<div class="cmp">
+<div><p class="sp-cap">AFTER · desk · working</p>
+<div class="ak win"><div class="dlg" style="max-width:480px">
+  <div class="dh"><div class="tt"><span class="ey">Twins vs Royals · Thu, Jun 17 · 6:00 p.m.</span><h4>Enter the score</h4></div><span class="xx">×</span></div>
+  <div class="db">
+    <div class="scrow"><div class="scteam">Twins<small>Home · you</small><span class="scbox">7</span></div><span style="font:600 18px/1 'Inter';color:var(--dim)">–</span><div class="scteam">Royals<small>Away</small><span class="scbox">4</span></div></div>
+    <p class="hint">It counts in the standings right away. The league admin can correct it, and you can change it until they do. Families aren’t emailed.</p>
+  </div>
+  <div class="df"><span class="s">Entered as Alex Moreau</span><span class="btn">Cancel</span><span class="btn pri lime">Save the score</span></div>
+</div></div></div>
+<div><p class="sp-cap">AFTER · phone, 390 · full-screen sheet</p>
+<div class="ph"><div class="ak ph-in fsw">
+  <div class="fh"><span style="width:44px;text-align:center;font-size:22px;color:var(--dim)">×</span><span style="flex:1">Enter the score</span></div>
+  <div class="fb">
+    <span class="ey" style="margin:0">Twins vs Royals · Thu, Jun 17 · 6:00 p.m.</span>
+    <div class="scrow"><div class="scteam">Twins<small>Home · you</small><span class="scbox">7</span></div><span style="font:600 18px/1 'Inter';color:var(--dim)">–</span><div class="scteam">Royals<small>Away</small><span class="scbox">4</span></div></div>
+    <p class="hint">It counts in the standings right away. The league admin can correct it. Families aren’t emailed.</p>
+  </div>
+  <div class="ff"><span class="s">Entered as Alex Moreau</span><div class="bb"><span class="btn pri lime" style="flex:1;justify-content:center;min-height:44px">Save the score</span></div></div>
+</div></div></div>
+</div>
+<div class="spec">
+<div class="col"><p class="sp-cap">ONE BOX ONLY · Save is held and fades, as the pencil’s ✓ does today</p>
+<div class="ak" style="padding:16px;border-radius:10px;outline:1px solid var(--line);max-width:430px;display:flex;flex-direction:column;gap:10px">
+  <div class="scrow"><div class="scteam">Twins<span class="scbox">7</span></div><span style="color:var(--dim)">–</span><div class="scteam">Royals<span class="scbox ph">&nbsp;</span></div></div>
+  <p class="hint" style="color:var(--red)">Enter both scores, or neither.</p><div style="display:flex;justify-content:flex-end"><span class="btn pri lime" style="opacity:.5">Save the score</span></div></div></div>
+<div class="col"><p class="sp-cap">YOU ARE THE AWAY COACH · no entry, a plain line</p>
+<div class="ak" style="padding:16px;border-radius:10px;outline:1px solid var(--line);max-width:430px;display:flex;flex-direction:column;gap:10px">
+  <div class="prow" style="border:0;padding:0"><div class="t">Today<span class="d2">Jun 17</span></div><div class="m"><b>Royals vs Twins · 6:00 p.m.</b><span class="d">The Twins’ coach enters the score.</span></div></div></div></div>
+</div>
+<p class="cap">The server enforces both-or-neither and the home-coach rule, not just the window (today the “both empty” half is window-only <button class="fl" data-f="E03">E03</button>). A cancelled or postponed game can’t be scored, and the server refuses it; today it doesn’t.</p>
+</div>
+
+<div class="st"><h2>c3 · The other coach: seeing it, and saying it’s wrong <button class="mk new" data-note="NEW (9e·9): the away coach reads the score on their own page and can flag it. A flag never changes the score.">NEW</button></h2>
+<p class="who">The away team’s coach, on their own team page. Their one action is to tell the club.</p>
+<div class="cmp">
+<div><p class="sp-cap">AFTER · desk · the Royals’ page</p>
+<div class="ak" style="padding:16px 18px;border-radius:12px;outline:1px solid var(--line);display:flex;flex-direction:column;gap:10px">
+  <div class="panel"><div class="prow"><div class="t">Today<span class="d2">Jun 17</span></div><div class="m"><b>Twins vs Royals</b><span class="d">Entered by the Twins’ coach at 8:12 p.m.</span></div><span class="res">Final 7–4</span><span class="btn">Report this score</span></div></div></div></div>
+<div><p class="sp-cap">AFTER · desk · the window</p>
+<div class="ak win"><div class="dlg" style="max-width:480px">
+  <div class="dh"><div class="tt"><span class="ey">Twins 7, Royals 4 · Thu, Jun 17</span><h4>Report this score</h4></div><span class="xx">×</span></div>
+  <div class="db"><span class="flbl">What should it be?</span><div class="tx">We had it 6–4. The 7th-inning run was a foul ball.</div>
+    <p class="hint">You can leave this empty. The score stays as entered until the league admin looks. Families aren’t emailed.</p></div>
+  <div class="df"><span class="s">Sent to the league admin</span><span class="btn">Cancel</span><span class="btn pri lime">Report to the league admin</span></div>
+</div></div></div>
+</div>
+<div class="spec">
+<div class="col"><p class="sp-cap">AFTER · phone, 390 · the Royals’ page · the flag mark alone, 44 px</p>
+<div class="ph"><div class="ak ph-in" style="min-height:140px;display:flex;flex-direction:column"><div class="pin"><div class="panel"><div class="prow" style="align-items:center"><div class="t">Today<span class="d2">Jun 17</span></div><div class="m"><b>Twins vs Royals</b><span class="d">Entered by the Twins’ coach</span></div><span class="res">7–4</span><span class="btn ic" aria-label="Report this score"><svg class="ico" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg></span></div></div></div></div></div></div>
+<div class="col"><p class="sp-cap">AFTER · the Twins’ coach, once it is flagged · the line replaces the change door</p>
+<div class="ak" style="padding:16px;border-radius:10px;outline:1px solid var(--line);max-width:430px;display:flex;flex-direction:column;gap:10px">
+  <div class="prow" style="border:0;padding:0"><div class="t">Today<span class="d2">Jun 17</span></div><div class="m"><b>Twins vs Royals</b><span class="d">The Royals say this isn’t right. The league admin is checking it.</span></div><span class="res">Final 7–4</span></div></div></div>
+<div class="col"><p class="sp-cap">AFTER · phone, 390 · the Royals’ coach, same screen as a full-screen sheet</p>
+<div class="ph"><div class="ak ph-in fsw" style="min-height:420px">
+  <div class="fh"><span style="width:44px;text-align:center;font-size:22px;color:var(--dim)">×</span><span style="flex:1">Score isn’t right</span></div>
+  <div class="fb"><span class="ey" style="margin:0">Twins 7, Royals 4 · Thu, Jun 17</span><span class="flbl">What should it be?</span><div class="tx ta" style="min-height:90px">We had it 6–4.</div><p class="hint">The score stays until the league admin looks.</p></div>
+  <div class="ff"><div class="bb"><span class="btn pri lime" style="flex:1;justify-content:center;min-height:44px">Report to the league admin</span></div></div>
+</div></div></div>
+</div>
+<p class="cap">Not drawn, deliberately: the away coach entering a different score. Two scores for one game is the case a single writer avoids. The flag is the whole of the disagreement.</p>
+</div>
+
+<div class="st"><h2>c4 · The league admin’s side <button class="mk res" data-note="RESTYLED: the game window already shows the score and lets the pencil change it. After: it also says who entered it, and a flagged game is easy to find. The pencil’s score rule and stale-window guard are unchanged.">RESTYLED</button></h2>
+<p class="who">League admin (owner, admin, league admin). A coach cannot reach any of this. Three states of the same game window, then the place a flagged game surfaces.</p>
+<div class="spec">
+<div class="col"><p class="sp-cap">REPORTED BY A COACH · read-first window</p>
+<div class="ak win" style="padding:20px"><div class="dlg" style="max-width:420px">
+  <div class="dh"><div class="tt"><span class="ey">U12 Division · Thu, Jun 17 · 6:00 p.m.</span><h4>Twins vs Royals</h4></div><span class="xx">✎</span></div>
+  <div class="db"><div class="scrow"><div class="scteam">Twins<span class="scbox">7</span></div><span style="color:var(--dim)">–</span><div class="scteam">Royals<span class="scbox">4</span></div></div>
+    <p class="entby"><span class="tagC">Coach entered</span> Entered by Alex Moreau, the Twins’ coach, today at 8:12 p.m. <button class="mk new" data-note="NEW (9e·9): a quiet line saying who entered the score and when. Needs the new record; nothing today stores it.">NEW</button></p></div></div></div></div>
+<div class="col"><p class="sp-cap">FLAGGED BY THE OTHER COACH</p>
+<div class="ak win" style="padding:20px"><div class="dlg" style="max-width:420px">
+  <div class="dh"><div class="tt"><span class="ey">U12 Division · Thu, Jun 17 · 6:00 p.m.</span><h4>Twins vs Royals</h4></div><span class="xx">✎</span></div>
+  <div class="db"><div class="scrow"><div class="scteam">Twins<span class="scbox">7</span></div><span style="color:var(--dim)">–</span><div class="scteam">Royals<span class="scbox">4</span></div></div>
+    <p class="entby"><span class="tagF">Flagged</span> Entered by Alex Moreau, 8:12 p.m. The Royals’ coach says: “We had it 6–4. The 7th-inning run was a foul ball.”</p>
+    <p class="hint">The score counts until you change it.</p></div>
+  <div class="df"><span class="s"></span><span class="btn">Keep 7–4</span><span class="btn pri lime">Correct the score</span></div></div></div></div>
+<div class="col"><p class="sp-cap">ENTERED BY THE CLUB · after a correction</p>
+<div class="ak win" style="padding:20px"><div class="dlg" style="max-width:420px">
+  <div class="dh"><div class="tt"><span class="ey">U12 Division · Thu, Jun 17 · 6:00 p.m.</span><h4>Twins vs Royals</h4></div><span class="xx">✎</span></div>
+  <div class="db"><div class="scrow"><div class="scteam">Twins<span class="scbox">6</span></div><span style="color:var(--dim)">–</span><div class="scteam">Royals<span class="scbox">4</span></div></div>
+    <p class="entby">Entered by the league admin, Jun 18 at 9:05 a.m. Both coaches see the new score; they can’t change it.</p></div></div></div></div>
+</div>
+<div class="spec">
+<div class="col" style="flex:1 1 520px"><p class="sp-cap">AFTER · desk · the schedule list, a fold like “Needs a new date”</p>
+<div class="ak" style="padding:16px;border-radius:12px;outline:1px solid var(--line);display:flex;flex-direction:column;gap:10px;max-width:760px">
+  <div class="panel"><div class="fold"><b>Scores to check</b><span class="amb">2</span><span class="ico" style="width:12px;height:12px;border:solid var(--dim);border-width:0 2px 2px 0;transform:rotate(45deg);margin-top:-4px"></span></div></div>
+  <div class="panel" style="padding:0"><div class="prow"><div class="t">Thu<span class="d2">Jun 17</span></div><div class="m"><b>Twins vs Royals · 6:00 p.m. <span class="tagF">Flagged</span></b><span class="d">Final 7–4 · entered by Alex Moreau</span></div></div>
+  <div class="prow"><div class="t">Thu<span class="d2">Jun 17</span></div><div class="m"><b>Hawks vs Cubs · 7:30 p.m. <span class="tagC">Coach entered</span></b><span class="d">Final 5–5 · entered by Dana Silva</span></div></div></div>
+</div></div>
+<div class="col"><p class="sp-cap">AFTER · phone, 390</p>
+<div class="ph"><div class="ak ph-in" style="min-height:320px;display:flex;flex-direction:column">
+  <div class="pbar"><span>Schedule</span><span class="sp"></span></div>
+  <div class="pin"><div class="panel"><div class="fold"><b>Scores to check</b><span class="amb">2</span></div></div>
+  <div class="panel"><div class="prow"><div class="t">Thu<span class="d2">Jun 17</span></div><div class="m"><b>Twins vs Royals</b><span class="d">7–4 · <span class="tagF">Flagged</span></span></div></div></div></div></div></div></div>
+</div>
+<p class="cap">The fold shows flagged games first and then recent coach-reported scores the club has not looked at. “Scores to check” is a count, not an alert: a reported score already counts. Opening a game and pressing ✓ without changing anything marks it as looked at. This is the same fold recipe as “Needs a new date”; nothing else on the schedule screen moves.</p>
+</div>
+
+<div class="st"><h2>c5 · What changes when a score is saved <button class="mk unc" data-note="UNCHANGED for staff: a score edit already updates all of these at once (nothing is cached). The new fact is that a coach’s save now does the same.">UNCHANGED</button></h2>
+<div class="tw"><table class="t">
+<thead><tr><th>Where</th><th>Changes when a score is saved or corrected?</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td>The public standings</td><td><span class="y">At once.</span> No cache.</td><td>Twins 4-1-0 → 5-1-0, 10 points, RF 48, RA 26, RD +22. Royals 3-1-1 → 3-2-1, 7 points, RF 37, RA 32, RD +5. Still 1st and 2nd.</td></tr>
+<tr><td>The public schedule</td><td><span class="y">At once.</span> The game shows “Final 7–4”.</td><td></td></tr>
+<tr><td>Both teams’ coach pages</td><td><span class="y">At once.</span></td><td>The result chip; the entering coach also sees their change door.</td></tr>
+<tr><td>The admin standings</td><td>On the next load.</td><td></td></tr>
+<tr><td>The families’ email</td><td><span class="x">Never.</span> Ruled (9d2·2, 9d2·13).</td><td>A score is not news that is mailed.</td></tr>
+<tr><td>“Changes to send”</td><td><span class="x">No.</span> A score is never a held change.</td><td></td></tr>
+<tr><td>Calendar feeds</td><td><span class="x">No.</span></td><td></td></tr>
+<tr><td>A table families already saw</td><td>It changes with no notice. That is true today for every staff correction.</td><td>This is why a coach’s entry is single-writer and the club corrects: the table moves less often.</td></tr>
+</tbody></table></div>
+<p class="cap">Counted games are those with a played status and both scores. A tie (7–7) counts as a tie. A score entered for a game that is later cancelled is not possible: the pencil clears the scores first, and the server will refuse the other order.</p>
+</div>
+
+<div class="st"><h2>c6 · Edges <button class="mk unc" data-note="Edge cases the drawing resolves, with the rule each one follows.">EDGES</button></h2>
+<div class="tw"><table class="t">
+<thead><tr><th>Case</th><th>What happens</th></tr></thead>
+<tbody>
+<tr><td>The season is finished</td><td>Entry and correction are refused for everyone (Q16: in place, locked). The coach page has no Enter control, and the schedule section is already hidden for a finished season.</td></tr>
+<tr><td>The game hasn’t started, or is cancelled or postponed</td><td>No “Enter the score” (the window already asks for scores only after the start time). The server refuses it too.</td></tr>
+<tr><td>The home coach never enters it</td><td>The league admin enters it, as today. Nothing chases; the schedule list simply shows the game without a result.</td></tr>
+<tr><td>Both teams’ coaches are the same person</td><td>They are the home coach; they can enter and change it.</td></tr>
+<tr><td>A coach is removed from the team</td><td>They lose entry at once. Scores they entered stay, still marked “Entered by” their name.</td></tr>
+<tr><td>Two coaches on one team</td><td>Either can enter; the later change replaces the earlier while the score is unflagged. The “changed while open” refusal already protects a stale window.</td></tr>
+<tr><td>The entering coach mistypes</td><td>Changes it themselves from the same window until a flag or the club’s change closes it.</td></tr>
+<tr><td>Both boxes emptied</td><td>The game goes back to scheduled, and the server now does this too. Today only the window does <button class="fl" data-f="E03">E03</button>.</td></tr>
+<tr><td>A game is deleted</td><td>Only in a draft division, as today; a coach cannot reach it.</td></tr>
+<tr><td>A phone with no signal</td><td>The sheet keeps what was typed and says “Couldn’t save. Check your connection and try again.” Nothing is queued.</td></tr>
+</tbody></table></div>
+</div>
+</section>
+
+<!-- ======================= RAINOUT ======================= -->
+<section class="pane" id="rain" data-pane="rain" hidden>
+<h2 style="margin-top:16px">Rainout</h2>
+<div class="verdict"><h3>The answer</h3>
+<ul>
+  <li><b>One window, on the schedule’s header</b> (9e·10): pick the day, the divisions and the games; <b>postpone</b> (the default) or <b>cancel</b>; say whether to email families now. Postponed games go to “Needs a new date”, where the existing “Give it a new date” door gives each one a date on time the club has allocated (9e·11).</li>
+  <li><b>Games only.</b> The window names tonight’s practices and says where they change, and touches none of them (9e·10). A club practice is the club’s to change; the practice the convenor booked by hand has no family email at all today <button class="fl" data-f="E09">E09</button>.</li>
+  <li><b>Families are emailed in the same action by default</b> (9e·12), one email per household per division, with the teams’ coaches copied. Rain is urgent, and the existing urgent send already works this way for one game. A tick turns it into “hold in Changes to send”.</li>
+  <li><b>The window says what it will do before you press</b>: how many emails, how many households get two (children in two divisions), and what is not told (a draft division) <button class="fl" data-f="E07">E07</button>.</li>
+  <li><b>Undo is real only while nobody has been told</b> (9e·13). After the send, the result says plainly that emails can’t be taken back, and offers “Give them new dates” instead <button class="fl" data-f="E08">E08</button>.</li>
+  <li><b>A plan question, flagged for /strategy, not decided</b> (9e·15): the tournament sells its rain delay at Tournament Plus; house league gates postpone, cancel and the urgent send by module and role only.</li>
+</ul></div>
+
+<div class="st"><h2>r1 · The door <button class="mk new" data-note="NEW (9e·10): a Rainout button on the schedule’s header, beside Changes to send. The Tools menu holds only setup items today and is a phone drawer, which is the wrong place for an urgent action.">NEW</button></h2>
+<p class="who">League admin (owner, admin, league admin) on an active season. On a phone the button keeps its word, the exception to “a phone’s secondary action is its symbol alone”: it can email hundreds of families on a stressed evening, so nobody should have to guess what a cloud means. Absent for the registrar, treasurer and coaches, and absent on a finished season (Q16).</p>
+<div class="spec">
+<div class="col" style="flex:1 1 520px"><p class="sp-cap">AFTER · desk · the schedule’s header and toolbar</p>
+<div class="ak" style="max-width:860px;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);padding:20px 24px;display:flex;flex-direction:column;gap:14px">
+  <div class="ph1"><div><span class="ey">Draft Test 2027</span><h1>Schedule</h1></div><span class="sp"></span>
+    <span class="btn">Schedule health</span><span class="btn">Publish schedule</span><span class="btn pri lime">Changes to send <span class="amb">3</span></span>
+    <span class="btn"><svg class="ico" viewBox="0 0 24 24"><path d="M7 17a4 4 0 1 1 1-7.9A5 5 0 0 1 17.5 10 3.5 3.5 0 0 1 17 17"/><path d="M9 20l1-2M13 20l1-2M17 20l1-2"/></svg>Rainout</span><button class="mk new" data-note="NEW: the Rainout button. It opens the window drawn in r2.">NEW</button></div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="pill">U12 Division ▾</span><span class="chipk on">List</span><span class="chipk">Week</span><span class="chipk">Month</span><span style="flex:1"></span><span class="btn">Export</span><span class="btn">Add ▾</span><span class="btn">Tools ⋯</span></div>
+</div></div>
+<div class="col"><p class="sp-cap">AFTER · phone, 390 · the word stays: a consequential action, not a symbol alone</p>
+<div class="ph"><div class="ak ph-in" style="min-height:240px;display:flex;flex-direction:column">
+  <div class="pbar"><span>Schedule</span><span class="sp"></span>
+    <span class="btn" aria-label="Rainout"><svg class="ico" viewBox="0 0 24 24"><path d="M7 17a4 4 0 1 1 1-7.9A5 5 0 0 1 17.5 10 3.5 3.5 0 0 1 17 17"/><path d="M9 20l1-2M13 20l1-2M17 20l1-2"/></svg>Rainout</span>
+    <span class="btn ic"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></div>
+  <div class="pin"><div class="ptabs" style="padding:0 0 10px"><span class="on">Week</span><span>Month</span></div><p class="hint">Phones show Week and Month, as built.</p></div></div></div></div>
+</div>
+<p class="cap">The window works across all divisions, not the one the schedule is scoped to: a real rainout spans divisions, and the page is scoped to one. So the window has its own division list rather than reading the page’s switch. In a Week or Month day header there is no extra door; one door is enough, and the window opens on today (or the next day with games).</p>
+</div>
+
+<div class="st"><h2>r2 · Calling off the day <button class="mk new" data-note="NEW (9e·10, 9e·11, 9e·12): the whole interaction in one window. There is no separate preview screen; the list and the sentence under it are the preview, as in the tournament’s rain delay.">NEW</button></h2>
+<p class="who">The window opens with everything on that day ticked, because a rainout is usually the whole day. The picker has real checkboxes (the tournament’s has none); here a drained diamond or one division’s evening is a normal case.</p>
+<div class="cmp">
+<div><p class="sp-cap">AFTER · desk · working</p>
+<div class="ak win"><div class="dlg" style="max-width:600px">
+  <div class="dh"><div class="tt"><span class="ey">Draft Test 2027</span><h4>Rainout</h4></div><span class="xx">×</span></div>
+  <div class="db">
+    <span class="flbl">Day</span><span class="fld wide">Today · Thu, Jun 17 · 12 games still to play ▾</span>
+    <span class="flbl">What happens to them</span>
+    <div class="who"><div class="o on"><span class="rd"></span><div class="m"><b>Postpone them</b><span class="d">They leave their week and wait under “Needs a new date”. You give each a new date later.</span></div></div>
+      <div class="o"><span class="rd"></span><div class="m"><b>Cancel them</b><span class="d">They are called off for good. They come back only if you add a game.</span></div></div></div>
+    <span class="flbl">Which games</span>
+    <div class="chips"><span class="chipk on">All places</span><span class="chipk">Maple Grove Park</span><span class="chipk">Riverside</span></div>
+    <div class="pk">
+      <div class="gh"><span class="chk on"></span>U10 Division<span class="sp"></span><span class="d2">4 games · 8 teams</span></div>
+      <div class="g"><span class="chk on"></span><div class="m"><b>Wrens vs Finches</b><span class="d">5:30 p.m. · Maple Grove Park · Diamond 1</span></div></div>
+      <div class="g"><span class="chk on"></span><div class="m"><b>Robins vs Larks</b><span class="d">5:30 p.m. · Riverside · Diamond 3</span></div></div>
+      <div class="g"><span class="chk on"></span><div class="m"><b>Swifts vs Wrens</b><span class="d">7:00 p.m. · Maple Grove Park · Diamond 1</span></div></div>
+      <div class="g"><span class="chk on"></span><div class="m"><b>Larks vs Finches</b><span class="d">7:00 p.m. · Riverside · Diamond 3</span></div></div>
+      <div class="gh"><span class="chk on"></span>U12 Division<span class="sp"></span><span class="d2">5 games · 10 teams</span></div>
+      <div class="g"><span class="chk on"></span><div class="m"><b>Twins vs Royals</b><span class="d">6:00 p.m. · Maple Grove Park · Diamond 2</span></div></div>
+      <div class="g"><span class="d2" style="padding-left:32px;color:var(--dim)">4 more, all ticked</span></div>
+      <div class="gh"><span class="chk on"></span>U14 Division<span class="sp"></span><span class="d2">3 games · 6 teams</span></div>
+      <div class="g"><span class="d2" style="padding-left:32px;color:var(--dim)">3 games, all ticked</span></div>
+      <p class="entby" style="padding:10px 14px;border-top:1px solid var(--line);margin:0">U8 Division is a draft, so none of its games are listed.</p>
+    </div>
+    <div class="stmt">12 games, 24 teams, 3 divisions. <b>214 emails to 208 households</b>, sent as 3 (one per division). 6 households have children in two divisions and will get two. The 24 teams’ coaches get a copy. <button class="mk new" data-note="NEW: the numbers are worked out on the server from the ticked games before you press, the way the Changes to send window already counts families. They must match what is sent.">NEW</button></div>
+    <p class="entby">Tonight’s practices aren’t changed here. 3 are the club’s time: change them in the club’s <a class="lnk">Schedules</a>. 1 you booked yourself: change it in <a class="lnk">Practices</a>.</p>
+    <div style="display:flex;gap:12px;align-items:center;min-height:44px"><span class="chk on"></span><span style="font:600 14px/1.3 'Inter';color:var(--ink)">Email the families now</span></div>
+    <p class="hint" style="margin-top:-6px">Untick to hold them in Changes to send and review first.</p>
+    <span class="flbl">A line for the email <button class="mk new" data-note="NEW (9e·14): one optional line, up to 120 characters, shown near the top of the email. Without it the email says only which games changed.">NEW</button></span>
+    <div class="tx">Rain: the fields are closed tonight.</div>
+    <p class="hint" style="margin-top:-6px">You can leave this empty. 120 characters at most.</p>
+  </div>
+  <div class="df"><span class="s">Nothing changes until you press the button.</span><span class="btn">Close</span><span class="btn pri lime">Postpone 12 games and email 214 families</span></div>
+</div></div></div>
+<div><p class="sp-cap">AFTER · phone, 390 · full-screen sheet, foot always in view</p>
+<div class="ph"><div class="ak ph-in fsw" style="min-height:820px">
+  <div class="fh"><span style="width:44px;text-align:center;font-size:22px;color:var(--dim)">×</span><span style="flex:1">Rainout</span></div>
+  <div class="fb">
+    <span class="flbl">Day</span><span class="fld wide">Today · Thu, Jun 17 ▾</span>
+    <div class="who"><div class="o on"><span class="rd"></span><div class="m"><b>Postpone them</b><span class="d">They wait under “Needs a new date”.</span></div></div>
+      <div class="o"><span class="rd"></span><div class="m"><b>Cancel them</b><span class="d">Called off for good.</span></div></div></div>
+    <div class="pk">
+      <div class="gh"><span class="chk on"></span>U10 Division<span class="sp"></span><span class="d2">4 of 4</span><span style="font-size:22px;line-height:1;color:var(--dim);width:32px;text-align:center">›</span></div>
+      <div class="gh"><span class="chk on"></span>U12 Division<span class="sp"></span><span class="d2">5 of 5</span><span style="font-size:22px;line-height:1;color:var(--dim);width:32px;text-align:center">›</span></div>
+      <div class="gh"><span class="chk on"></span>U14 Division<span class="sp"></span><span class="d2">3 of 3</span><span style="font-size:22px;line-height:1;color:var(--dim);width:32px;text-align:center">›</span></div>
+      <p class="entby" style="padding:10px 14px;border-top:1px solid var(--line);margin:0">U8 is a draft, so none of its games are listed.</p></div>
+    <p class="hint">Tick a division for all its games, or tap › to choose some.</p>
+    <div class="stmt">12 games. <b>214 emails to 208 households</b> in 3 sends. 6 households get two.</div>
+    <p class="entby">3 club practices and 1 of yours tonight aren’t changed here.</p>
+    <div style="display:flex;gap:12px;align-items:center;min-height:44px"><span class="chk on"></span><span style="font:600 14px/1.3 'Inter'">Email the families now</span></div>
+  </div>
+  <div class="ff"><span class="s">Nothing changes until you press.</span><div class="bb"><span class="btn pri lime" style="flex:1;justify-content:center;min-height:44px">Postpone 12 games, email 214</span></div></div>
+</div></div></div>
+</div>
+<p class="cap">The button’s words are the preview: they change with the verb, the count and the tick (“Cancel 12 games and email 214 families”, “Postpone 12 games”). The dismiss is “Close” so it can’t be read as the Cancel option. A draft division is not in the list; one line says why, because no one has seen its games and there is nothing to call off. The Day is a pick from the days that still have games, not a free date field. The places chips narrow the list to one park when only one is under water; they are filters, so changing one resets the ticks.</p>
+</div>
+
+<div class="st"><h2>r3 · What it says afterwards <button class="mk new" data-note="NEW (9e·12, 9e·13): the result window. The wording of the Undo depends on whether families were told.">NEW</button></h2>
+<p class="who">Three results: the usual one, a send that partly failed, and the held one with its Undo.</p>
+<div class="spec">
+<div class="col"><p class="sp-cap">TOLD NOW · the usual result, no Undo</p>
+<div class="ak win" style="padding:20px"><div class="dlg" style="max-width:440px">
+  <div class="dh"><div class="tt"><span class="ey">Thu, Jun 17</span><h4>12 games postponed</h4></div><span class="xx">×</span></div>
+  <div class="db">
+    <div class="qdone"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg><span>214 emails sent (U10 74, U12 88, U14 52). The 24 teams’ coaches have a copy.</span></div>
+    <p class="hint">Emails can’t be taken back. To reverse a game, give it a new date or put it back on; its families are told again.</p>
+  </div>
+  <div class="df"><span class="s"></span><span class="btn">Done</span><span class="btn pri lime">Give them new dates</span></div></div></div></div>
+<div class="col"><p class="sp-cap">TOLD NOW, ONE SEND FAILED · nothing is lost</p>
+<div class="ak win" style="padding:20px"><div class="dlg" style="max-width:440px">
+  <div class="dh"><div class="tt"><span class="ey">Thu, Jun 17</span><h4>12 games postponed</h4></div><span class="xx">×</span></div>
+  <div class="db">
+    <div class="qdone am"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span>U10 and U12 families were emailed (162). The U14 email didn’t go: its 3 postponements are waiting in Changes to send.</span></div>
+  </div>
+  <div class="df"><span class="s"></span><span class="btn">Done</span><span class="btn pri lime">Open Changes to send</span></div></div></div></div>
+<div class="col"><p class="sp-cap">HELD · the Undo is real</p>
+<div class="ak win" style="padding:20px"><div class="dlg" style="max-width:440px">
+  <div class="dh"><div class="tt"><span class="ey">Thu, Jun 17</span><h4>12 games postponed</h4></div><span class="xx">×</span></div>
+  <div class="db">
+    <div class="qdone"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg><span>Nobody has been told. The 12 changes are waiting in Changes to send.</span></div>
+    <p class="hint">You can put all 12 back until the changes are sent. If any game has changed since, nothing is put back and you can undo them one at a time in Changes to send.</p>
+  </div>
+  <div class="df"><span class="s"></span><span class="btn">Put all 12 back</span><span class="btn pri lime">Send the changes</span></div></div></div></div>
+</div>
+<p class="cap">The tournament’s Undo is a pill that fades after 8 seconds and lives only in that browser tab. A league rainout cannot copy that honestly: once families are emailed there is nothing to undo, and a held rainout deserves an Undo that is still there tomorrow, because the changes wait. So “told” has no Undo and “held” has a persistent one <button class="fl" data-f="E08">E08</button>.</p>
+</div>
+
+<div class="st"><h2>r4 · What a family reads, and what a coach copies <button class="mk res" data-note="RESTYLED: the built Games changed email, unchanged except for the optional line near the top (green). The words are the built ones. No new link, no Your sign-up button.">RESTYLED</button></h2>
+<p class="who">The Kim family: Ava on the Twins, Henry on the Rays, both in the U12 Division. One email, one part per child. The words are the built ones; the green line is the only addition (9e·14).</p>
+<div class="spec">
+<div class="col" style="flex:1 1 360px"><p class="sp-cap">FAMILY · one email, two children</p>
+<div class="mail"><div class="club"><span class="mono">DL</span>Dev League Org</div>
+  <div class="mh"><span><b>Subject:</b> Games changed for Twins and Rays</span><span class="muted">To: Sarah Kim · 6:41 p.m.</span></div>
+  <div class="mb">
+    <p class="newl">Rain: the fields are closed tonight. <button class="mk new" data-note="NEW (9e·14): the optional line the league admin types in the Rainout window. Without it the email starts at the first changed game.">NEW</button></p>
+    <p>Dev League Org changed Ava’s games with Twins:</p>
+    <p>Postponed: Twins vs Royals, Thu, Jun 17. A new date is to come.</p>
+    <p>Dev League Org changed Henry’s games with Rays:</p>
+    <p>Postponed: Hawks vs Rays, Thu, Jun 17. A new date is to come.</p>
+    </div>
+  <div class="foot"><span>Dev League Org sent this because Ava and Henry play in its house league.</span></div></div>
+<p class="cap" style="max-width:520px">All words here are provisional. No link, no “Your sign-up” button. Neither is on the built email, and the 10-31 rulings put that button only on emails that carry a status or pay link.</p></div>
+<div class="col" style="flex:1 1 360px"><p class="sp-cap">COACH · a copy, per team</p>
+<div class="mail"><div class="club"><span class="mono">DL</span>Dev League Org</div>
+  <div class="mh"><span><b>Subject:</b> Copy: games changed for Twins</span><span class="muted">To: Alex Moreau · 6:41 p.m.</span></div>
+  <div class="mb">
+    <p>Postponed: Twins vs Royals, Thu, Jun 17. A new date is to come.</p>
+    <p class="muted">This went to 10 Twins families.</p></div></div></div>
+<div class="col" style="flex:1 1 360px"><p class="sp-cap">A HOUSEHOLD IN TWO DIVISIONS · two emails, from two sends</p>
+<div class="inbox"><div><b>Dev League Org</b><span>Games changed for Wrens</span></div><div><b>Dev League Org</b><span>Games changed for Hawks</span></div></div>
+<p class="cap" style="max-width:520px">The Okafors have Mia in U10 and Jonah in U12. A send is per division, so they get one email each. The window’s sentence says how many households this will be (6 here) before you press.</p></div>
+</div>
+</div>
+
+<div class="st"><h2>r5 · Edges <button class="mk unc" data-note="Edge cases the drawing resolves, with the rule each one follows.">EDGES</button></h2>
+<div class="tw"><table class="t">
+<thead><tr><th>Case</th><th>What happens</th></tr></thead>
+<tbody>
+<tr><td>A game already played, cancelled or postponed</td><td>Not listed. Only games still to play are.</td></tr>
+<tr><td>A division whose schedule is a draft</td><td>Not in the list; one line under it says it is a draft. A draft’s games are deleted, not cancelled, and nobody has seen them.</td></tr>
+<tr><td>Another admin changes a game while the window is open</td><td>The press is refused: “These games changed while the window was open. Nothing was changed. Look again.” The ticks are kept.</td></tr>
+<tr><td>One division’s send fails</td><td>The statuses stay; that division’s changes wait in Changes to send; the result says so (r3). Pressing again is refused for the divisions already told.</td></tr>
+<tr><td>A very large rainout</td><td>The sends run inside one request that is allowed 120 seconds and sends in batches of 100. The window disables the button and shows “Sending…”; if it times out, the result is the failed-send case above.</td></tr>
+<tr><td>The same email cap</td><td>The urgent send is a service notice and never counts toward the three-a-day or the season’s three. A rainout of any size, and a second one tomorrow, are exempt <button class="fl" data-f="E06">E06</button>.</td></tr>
+<tr><td>Calendar feeds</td><td>A postponed game leaves the coach’s calendar until it has a date. A cancelled game stays, marked.</td></tr>
+<tr><td>The make-up</td><td>None is created. A postponed game keeps “Was Thu, Jun 17”; “Give it a new date” gives it a date on time the club allocated to the division, never any other (9d2b·B). A cancelled game has no replacement link: add a game.</td></tr>
+<tr><td>Who sees the button</td><td>Owner, admin and league admin. Registrar, treasurer and coach: absent. A finished season: absent.</td></tr>
+<tr><td>The 6:00 p.m. game has started when the window opens</td><td>It is still “to play” until a score exists, so it is listed. Entering a score first removes it from the list.</td></tr>
+</tbody></table></div>
+</div>
+
+<div class="st"><h2>r6 · Why not copy the tournament’s Rain delay? <button class="mk unc" data-note="Comparison, drawn from the built tournament flow and the built league machinery.">COMPARISON</button></h2>
+<div class="tw"><table class="t">
+<thead><tr><th></th><th>Tournament: Rain delay</th><th>House league: Rainout</th></tr></thead>
+<tbody>
+<tr><td>The verb</td><td>Push games later by a number of minutes, or cancel one</td><td>Postpone (to a date to come) or cancel. No minutes: a recreational evening is usually lost, not shifted</td></tr>
+<tr><td>Picking games</td><td>Every game that day moves; “Cancel game” on a row</td><td>Real checkboxes, by division</td></tr>
+<tr><td>Telling people</td><td>A pinned message plus a push to fans and staff</td><td>The built Games changed email, one per household per division, coaches copied</td></tr>
+<tr><td>Undo</td><td>An 8-second pill, this browser only, all-or-nothing</td><td>Only until families are told; persistent while held</td></tr>
+<tr><td>Bracket and playoffs</td><td>A guard against moving a playoff game before its feeders</td><td>None: house league has no bracket</td></tr>
+<tr><td>The plan</td><td>Tournament Plus and up</td><td>No per-action gate today <button class="fl" data-f="E13">E13</button></td></tr>
+</tbody></table></div>
+<p class="cap">What the tournament gets right and this copies: the list under the verb is the preview, the button’s words say what it will do, and one window does the whole day.</p>
+</div>
+</section>
+
+<!-- ======================= SINCE 9d-3 ======================= -->
+<section class="pane" id="since" data-pane="since" hidden>
+<h2 style="margin-top:16px">Since 9d-3</h2>
+<p class="lede">9d-3 closed on 2026-11-01, and two sets of rulings landed around it: <b>signed-in family accounts</b> (2026-10-31: everyone signs in, an account is made when the child is placed on a team, the emailed “Your sign-up” link stays for paying and status, and no other link is sent to a family) and the <b>club-time rulings</b> (2026-10-27: a league admin never picks time the club has not allocated to house league). Every frame in this round was checked against both.</p>
+
+<div class="verdict"><h3>Nothing in these drawings has to change for either, and five things are worth saying out loud</h3>
+<ul>
+  <li><b>No frame sends a new link.</b> The rainout email and the coach’s copy carry no link; the standings and the score entry add none. The “Your sign-up” button stays off the Games changed email, as the built email has it.</li>
+  <li><b>The coach is already signed in</b> (the coach invite made the account), so score entry needs no new door and no link.</li>
+  <li><b>The rainout never places a game on time.</b> “Give it a new date” is the existing door, which keeps a league admin on the division’s allocated game time (9d2b·B). The rainout window adds no way around it.</li>
+  <li><b>The public standings page exists today.</b> 9e makes it honest and adds no new public door. In the end state a family sees the table in the signed-in app, and the public page would shrink; that is a later redraw, and nothing here has to be undone for it.</li>
+  <li><b>The rainout email follows 9c·4’s lane</b> (a notice about their own child reaches a family who unsubscribed from club news, and never counts toward a cap), which the built Games changed email already does.</li>
+</ul></div>
+
+<div class="st"><h2>Frame by frame</h2>
+<div class="tw"><table class="t">
+<thead><tr><th>Frame</th><th>Signed-in family accounts (10-31, 11-01)</th><th>Club time (10-27)</th><th>Other rulings</th></tr></thead>
+<tbody>
+<tr><td>s1–s7 · standings</td><td><span class="y">Fits.</span> Public pages are not a family door that needs a sign-in; the table is a record, not a link. Later it belongs in the app.</td><td>Not touched.</td><td>Q16: the table reads in place on a finished season. 9d2·8: shown once the division’s schedule is published.</td></tr>
+<tr><td>c1–c6 · coach scores</td><td><span class="y">Fits.</span> The coach has an account from the invite. No link is sent anywhere.</td><td>Not touched.</td><td>Q7 and 9c·1: a coach sees and writes their own team only, and the Coaches Portal is untouched. 9d2·2 and 9d2·13: scores and notes never email. Q16: locked.</td></tr>
+<tr><td>r1–r2 · the window</td><td><span class="y">Fits.</span> The count of “households” counts a household once even when a second parent’s email exists.</td><td><span class="y">Fits.</span> The window postpones and cancels; it never picks time. A draft division is not shown.</td><td>9d2·9: before publishing, Delete; after, Cancel. 9d2·1: an urgent cancel or postpone sends at once.</td></tr>
+<tr><td>r3 · result and Undo</td><td>Not touched.</td><td><span class="y">Fits.</span> “Give them new dates” opens the existing door on allocated time.</td><td>9d2·10: a postponed game leaves its week for “Needs a new date”.</td></tr>
+<tr><td>r4 · the family email</td><td><span class="y">Fits.</span> No new link. “Your sign-up” is not added: it goes only on emails that already carry a status or pay link. A second parent’s email receives it too, by the rule 9d-3 ruled on 11-01 (follow the sign-up work’s consent rule).</td><td>Not touched.</td><td>9c·4: the service lane. 9d2·2: both teams’ families, coaches copied, one email per household per send, scores never.</td></tr>
+<tr><td>r2 · practices line</td><td>Not touched.</td><td><span class="y">Fits.</span> A club practice is read-only to a league admin; the window sends them to the club’s Schedules.</td><td>9d2·2: a practice change emails that team’s families. The hand-booked practice has no such email today <button class="fl" data-f="E09">E09</button>.</td></tr>
+<tr><td>9d-3’s practice notice and Subscribe</td><td>Not touched.</td><td>Not touched.</td><td>The coach’s page gains a standing line and a Scores section. Nothing in the Schedule heading’s line or the “told on…” line moves.</td></tr>
+</tbody></table></div>
+</div>
+
+<div class="st"><h2>What I could not check and am not claiming</h2>
+<ul>
+  <li>Whether the signed-in app will hold standings and scores on day one. Nothing says so; this round assumes the public page carries them until it does.</li>
+  <li>How a second parent’s address will be consented. 9e only counts households; the rule is the sign-up work’s.</li>
+</ul>
+</div>
+</section>
+
+<!-- ======================= ASKS ======================= -->
+<section class="pane" id="asks" data-pane="asks" hidden>
+<h2 style="margin-top:16px">Asks &amp; paste-back</h2>
+<div class="verdict"><h3>Nothing in 9e is ruled yet</h3><p>Fourteen asks carry checkboxes; 9e·15 is flagged for /strategy and has none. Each ask has my recommendation marked in green; tick what you decide and use “Build the summary” to paste back. Nothing here reopens Q7, 9c·1, 9d2·1, 9d2·2, 9d2·13, Q16, the pencil’s score rule, or the postponed-game rule.</p></div>
+
+<h3>Build and standings</h3>
+<div class="ask" data-ask="A1"><h3><span class="no">9e·1</span>One build or three, and in what order</h3>
+<p class="rides">Push-back tab. Rides on it: how many walks and how many sets of records there are.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A1" value="three builds: 9e-1 standings and the score rule, 9e-2 rainout, 9e-3 coach scores"><span>Three builds: 9e-1 standings and the score rule, then 9e-2 rainout, then 9e-3 coach scores</span></label>
+<label><input type="checkbox" name="A1" value="three builds, rainout first"><span>Three builds, rainout first (it depends on neither)</span></label>
+<label><input type="checkbox" name="A1" value="two builds: standings and scores together, rainout"><span>Two builds: standings with coach scores, then rainout</span></label>
+<label><input type="checkbox" name="A1" value="one build"><span>One build</span></label>
+</div><textarea aria-label="Notes for 9e·1" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="A2"><h3><span class="no">9e·2</span>What decides the points, and the column words</h3>
+<p class="rides">Tab Standings, s2 and s4, finding E01. Both offered sports give 2 for a win and 1 for a tie today, so no number changes.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A2" value="read the season's sport pack for points and column words; no override door"><span>The table reads the season’s sport (points and column words: RF/RA/RD for ball), shown in the ranking box; no per-season points door now</span></label>
+<label><input type="checkbox" name="A2" value="add a per-season points door beside Adjust the rules"><span>Also a points door beside “Adjust the rules”, so a club can set its own (new columns and a new save)</span></label>
+<label><input type="checkbox" name="A2" value="keep it hard-coded"><span>Keep it hard-coded at 2/1/0 and change only the words</span></label>
+</div><textarea aria-label="Notes for 9e·2" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="A3"><h3><span class="no">9e·3</span>The tie-break order, shown publicly</h3>
+<p class="rides">Tab Standings, s5, finding E04. Today: points, run differential, runs for, then the order the teams were created in, said nowhere.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A3" value="points, head-to-head for exactly two, run differential, runs for, then a shared place; no coin"><span>Points, then the game between them (only when exactly two teams are level), then run differential, then runs for. Still level: a shared place (“T-3”). No coin</span></label>
+<label><input type="checkbox" name="A3" value="same as the recommended with a cap on a game's run differential"><span>The same, and each game’s run differential capped (the tournament caps it); the number is a setting</span></label>
+<label><input type="checkbox" name="A3" value="keep today's order and say it"><span>Keep today’s order (points, run differential, runs for) and add the missing sentence about team order</span></label>
+<label><input type="checkbox" name="A3" value="end with a coin toss"><span>As the recommended, ending in a coin toss as the tournament does</span></label>
+</div><textarea aria-label="Notes for 9e·3" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="A4"><h3><span class="no">9e·4</span>When a division’s table appears</h3>
+<p class="rides">Tab Standings, s3, finding E02. Today it is visible for any non-draft season, even for a division whose schedule is a draft, and shows a table of zeros.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A4" value="only once the division's schedule is published; teams listed with dashes until the first score"><span>Only once the division’s schedule is published; until the first score the teams are listed alphabetically with dashes and no rank</span></label>
+<label><input type="checkbox" name="A4" value="as today"><span>As today (visible, zeros)</span></label>
+</div><textarea aria-label="Notes for 9e·4" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="A5"><h3><span class="no">9e·5</span>Can a division keep no public table?</h3>
+<p class="rides">Tab Standings, s3. Younger divisions often don’t rank children’s games. This is a product question, not a code finding. Rides on it: one switch on the division’s setup and the coach line.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A5" value="a Show standings switch per division, on by default"><span>A “Show standings” switch on each division, on by default; off hides the public table, the admin table stays, the coach line is absent</span></label>
+<label><input type="checkbox" name="A5" value="no switch"><span>No switch: every division with games has a table</span></label>
+</div><textarea aria-label="Notes for 9e·5" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="A6"><h3><span class="no">9e·6</span>The coach’s standing line</h3>
+<p class="rides">Tab Standings, s7. Today the coach page shows no standing.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A6" value="a quiet line on the coach's own team page with a link to the standings"><span>A quiet line on the coach’s team page (“1st of 6 · 4-1-0 · 8 points”) with a link to the standings</span></label>
+<label><input type="checkbox" name="A6" value="none"><span>None; the coach reads the public standings</span></label>
+</div><textarea aria-label="Notes for 9e·6" placeholder="Notes"></textarea></div>
+
+<h3>Scores</h3>
+<div class="ask" data-ask="A7"><h3><span class="no">9e·7</span>Can a coach enter a score, and which coach</h3>
+<p class="rides">Tab Scores, c1–c2, findings E03, E12. Today only the club can. Rides on it: a new coach route, a new record of who entered it.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A7" value="the home team's coach, from the start time, once"><span>The home team’s coach enters it, from the game’s start time, once; the home coach is the usual keeper of the book</span></label>
+<label><input type="checkbox" name="A7" value="either coach, first one in"><span>Either team’s coach, whoever enters first; the other can flag it</span></label>
+<label><input type="checkbox" name="A7" value="staff only"><span>Staff only, as today (9e-3 not built; the stub stays)</span></label>
+</div><textarea aria-label="Notes for 9e·7" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="A8"><h3><span class="no">9e·8</span>Does a coach’s score count at once?</h3>
+<p class="rides">Tab Scores, c4, c5, finding E05. The tournament holds a volunteer’s score for the organizer when the event asks for review, and counts it with an “Unofficial” note.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A8" value="counts at once; the club sees who entered it"><span>It counts at once; the club sees “Entered by Alex Moreau” and a count of scores to check</span></label>
+<label><input type="checkbox" name="A8" value="held until the league admin approves"><span>Held until the league admin approves it; the table lags until then</span></label>
+<label><input type="checkbox" name="A8" value="a season switch"><span>A switch on the season: counts at once, or held for approval (the tournament’s own setting)</span></label>
+</div><textarea aria-label="Notes for 9e·8" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="A9"><h3><span class="no">9e·9</span>When the coaches disagree, and corrections</h3>
+<p class="rides">Tab Scores, c3, c4. Rides on it: the flag, the “Scores to check” fold, who may change what.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A9" value="other coach can flag; the score stands; the entering coach can change it until flagged or touched; the league admin corrects"><span>The other coach can flag it (“Report this score”), the score stands, the entering coach can change it until it is flagged or the club touches it, and the league admin corrects</span></label>
+<label><input type="checkbox" name="A9" value="the other coach must confirm"><span>The other coach confirms it; until then it is “waiting for the Royals” and counts as unconfirmed</span></label>
+<label><input type="checkbox" name="A9" value="no flag; coaches tell the club by message"><span>No flag; a coach who disagrees messages the league admin</span></label>
+</div><textarea aria-label="Notes for 9e·9" placeholder="Notes"></textarea></div>
+
+<h3>Rainout</h3>
+<div class="ask" data-ask="A10"><h3><span class="no">9e·10</span>The door, and what a rainout touches</h3>
+<p class="rides">Tab Rainout, r1, r2, findings E07, E09. Rides on it: the header, the window’s division list, whether practices are in it.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A10" value="a Rainout button on the schedule header; games only; practices named and pointed to where they change"><span>A Rainout button on the schedule header; games only; the window names tonight’s practices and says where they change</span></label>
+<label><input type="checkbox" name="A10" value="games and the convenor's hand-booked practices"><span>Games, and the practices the convenor booked by hand (they would need their own family email, which does not exist today)</span></label>
+<label><input type="checkbox" name="A10" value="inside the Tools menu"><span>Games only, but inside the Tools menu rather than the header</span></label>
+</div><textarea aria-label="Notes for 9e·10" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="A11"><h3><span class="no">9e·11</span>Postpone or cancel, and a make-up date</h3>
+<p class="rides">Tab Rainout, r2, r5, finding E06. A postponed game keeps its old date as “Was…”; there is no make-up concept anywhere.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A11" value="postpone by default; cancel is a choice; no make-up date in the window"><span>Postpone is the default; cancel is a choice; no make-up date is picked in the window (“Give it a new date” does that later, on allocated time)</span></label>
+<label><input type="checkbox" name="A11" value="offer a make-up date in the window"><span>Also offer one make-up date for the whole day in the window (it must land on time the club allocated to each division)</span></label>
+</div><textarea aria-label="Notes for 9e·11" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="A12"><h3><span class="no">9e·12</span>Email now, or hold for review</h3>
+<p class="rides">Tab Rainout, r2, r3, findings E06, E07. The urgent single-game send already tells families at once.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A12" value="Email the families now is ticked by default; untick to hold in Changes to send"><span>“Email the families now” is ticked by default; unticking holds the changes in Changes to send</span></label>
+<label><input type="checkbox" name="A12" value="hold by default"><span>Held by default; the admin presses Send the changes afterwards</span></label>
+<label><input type="checkbox" name="A12" value="always tell now, no choice"><span>Always tell now; no hold option</span></label>
+</div><textarea aria-label="Notes for 9e·12" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="A13"><h3><span class="no">9e·13</span>Undo</h3>
+<p class="rides">Tab Rainout, r3, finding E08.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A13" value="Put all back only while held; after a send, no Undo and the result says so"><span>“Put all back” only while the changes are held (all-or-nothing, persistent); after the send, no Undo and the result says emails can’t be taken back</span></label>
+<label><input type="checkbox" name="A13" value="a short Undo pill like the tournament"><span>A short Undo pill like the tournament’s (8 seconds, this browser only)</span></label>
+<label><input type="checkbox" name="A13" value="no bulk undo"><span>No bulk Undo; use each game’s Undo in Changes to send</span></label>
+</div><textarea aria-label="Notes for 9e·13" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="A14"><h3><span class="no">9e·14</span>A line for the family email</h3>
+<p class="rides">Tab Rainout, r2, r4. The built email says only which games changed.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="A14" value="one optional line, 120 characters, near the top"><span>One optional line (up to 120 characters), shown near the top of the email and the coach copy</span></label>
+<label><input type="checkbox" name="A14" value="no extra line"><span>No extra line; the email says only which games changed</span></label>
+</div><textarea aria-label="Notes for 9e·14" placeholder="Notes"></textarea></div>
+
+<details class="askw"><summary><span class="no">9e·15</span> Whether the rainout is plan-gated like the tournament’s <button class="mk unc wd" data-note="FLAGGED for /strategy, not decided here. No checkboxes; it is not in the paste-back.">FOR /STRATEGY</button></summary>
+<p><b>Flagged, not decided.</b> The tournament sells its Rain delay at Tournament Plus. House league gates postpone, cancel and the urgent send by module and role only, with no per-action plan gate, so a rainout window built from them is available to every plan that has house league. Gating a window that only batches what is already available one game at a time would sell a convenience, not a capability. That is a pricing decision for /strategy, <button class="fl" data-f="E13">E13</button>.</p>
+<p>Nothing in the drawings changes either way: the button would show locked with a plan prompt, as the tournament’s does.</p></details>
+
+<div class="tw"><table class="t" id="askIndex"><thead><tr><th>Ask</th><th>Where</th><th>Your answer so far</th></tr></thead><tbody></tbody></table></div>
+<div class="paste">
+  <div class="row"><button type="button" class="btn-d pri" id="build">Build the summary</button><button type="button" class="btn-d" id="copy">Copy</button><span id="copied" class="muted"></span></div>
+  <textarea id="out" readonly aria-label="Paste this back"></textarea>
+</div>
+
+<div class="card" id="reviews"><h3>What the /design review changed before you saw this</h3>
+<p>Run against the table and list standard, the coach surface addendum and the recorded design decisions (the owner’s UI conventions included). Fixed before you saw it:</p>
+<ul>
+  <li><b>No “(optional)” tags.</b> Both labels are bare; a hint says the field can be left empty.</li>
+  <li><b>The draft division is a line, not a dead checkbox.</b> Absent beats disabled: the Rainout list simply doesn’t include it, and one line under the list says why.</li>
+  <li><b>The phone can reach a single game.</b> Each division row on the phone sheet has its own tick, a count (“4 of 4”) and a chevron that opens its games.</li>
+  <li><b>One word per thing.</b> The coach’s door is “Report this score” (the flag mark alone on a phone), the button is “Report to the league admin”, a coach’s own entry is tagged “Coach entered” (not a green “Reported”), and “the league admin” is used throughout instead of “the club” for who corrects a score.</li>
+  <li><b>The Rainout button keeps its word on a phone</b> (a consequential action: it can email hundreds of families), and the button and the window have one name. The window’s dismiss is “Close” so it can’t be read as the Cancel option.</li>
+  <li><b>Smaller:</b> a wrong team named in one row (the Cubs’ coach enters that game), the empty “Needs a new date” pill removed, the phone tables agree (same columns, a swipe not a link), “Words are provisional” moved out of the email body, the green email line is clickable, and the held Save button is drawn.</li>
+  <li><b>Checked and fine:</b> every time reads “6:00 p.m.”; “cancelled” has two Ls; sentence left and buttons right on the desk windows; 44 px phone floors; the absent-line empties; the standings phone recipe matches the tournament’s; Export beside Tools ⋯ is how the built toolbar sits.</li>
+</ul></div>
+</section>
+</div>
+
+<dialog class="note" id="dlg" aria-labelledby="dlgT"><div class="nh"><h3 id="dlgT">Note</h3><button type="button" class="x" aria-label="Close" id="dlgX">×</button></div><div class="nb" id="dlgB"></div></dialog>
+
+<script>
+(function(){
+var FINDINGS = {
+ E01:{t:'The sport is stored and never read', today:'LeagueSeason.sport is saved at creation (softball or baseball; the create window offers only those two) and no code that scores or ranks a league game reads it. computeStandings takes a division id only and hard-codes points as wins x 2 + ties. The sport pack (lib/sports.ts) holds pointsPerWin, pointsPerDraw, usesDraws, standingsPrimary and tie-break defaults, and nothing outside that file reads them, including the tournament’s own engine, which also hard-codes 2 and 1. Softball and baseball both say 2, 1, points, ties allowed. No screen edits a season’s sport after creation.', fix:'Standings read the pack, so a later sport arrives with its own table; no number changes today. No override door is proposed (ask 9e·2).', st:'9e-1'},
+ E02:{t:'Standings ignore whether a division is published', today:'The public standings page returns 404 only for a draft season. It never reads a division’s schedule-published state, and computeStandings returns one row per team even with no games. So a division with an unpublished schedule shows a table of zeros ranked by team order, and a division with teams and no scores never shows the “no games yet” message (it fires only when the division has no teams).', fix:'Show a division’s table once its schedule is published; before the first score list the teams without ranking (ask 9e·4).', st:'9e-1'},
+ E03:{t:'The “both empty” rule is in the window, not the server, and nothing records who scored', today:'The pencil sends scores plus a status, and sends back-to-scheduled when both are emptied. The PATCH route itself sets status completed whenever both score keys are present and no status is sent, including both null. A direct call with both scores null therefore marks the game played, and standings count a 0 to 0 (null counts as 0). The route also never checks a game’s status before taking a score. The league game record (types, data dictionary) has no scored-by, scored-at, flag or audit field; only updated_at, which any edit bumps.', fix:'The server enforces both-or-neither and refuses a cancelled or postponed game (9e-1). A coach’s entry needs three new facts on the game: who, when, flagged (9e-3, ask 9e·9).', st:'9e-1, 9e-3'},
+ E04:{t:'The tie-break line is typed twice and hides the fallback', today:'The footer “Pts: W=2, T=1, L=0 · Tiebreaker: run differential, then runs for” is hard-coded on the public page and the admin page (and a comment in the types). Sorting is points, run differential, runs for, then the order the teams came back from the database (sort order, then creation time). There is no head-to-head, no win percentage, no coin. Nothing tells a parent what happens past the second rule.', fix:'One set of rules drives both the sort and the ranking box, so they cannot disagree (ask 9e·3).', st:'9e-1'},
+ E05:{t:'The tournament’s pending score is not a coach feature', today:'The tournament holds a score as “submitted” when the person entering is a volunteer scorekeeper or staff and the event requires review; owners and admins save final at once, and a final result cannot be flipped by a direct call. A pending score still counts in the table with a clock icon and the note “Unofficial scores are included here for visibility.” The prompt describes it as coach-submitted; it is not. Disagreement is not modelled there either: one score slot, the latest submit overwrites, and the organizer finalizes or sends it back.', fix:'A precedent for “entered, then confirmed”, not for coaches. Ask 9e·8 offers counts-at-once (recommended), held, or a season switch.', st:'9e-3'},
+ E06:{t:'A postponed game keeps its date, and the urgent send never counts toward the cap', today:'Postponing sets the status and leaves the date; the game reads “Was Thu, Jun 17”, leaves its week for “Needs a new date” and leaves calendar feeds until it is re-dated. There is no make-up date concept: no field, no link from a cancelled game to a replacement. The urgent send and the Games changed email are service notices, documented as never counted toward any cap; the code that applies the rolling three-a-day cap is not used by them.', fix:'The rainout window needs no new date field and no cap logic (asks 9e·11, 9e·12).', st:'9e-2'},
+ E07:{t:'A send is per division', today:'The sender takes a division id and a list of held changes for that division and writes one notice. Families are grouped by guardian email within a send, so a household is one email per send. There is no multi-division send. A household with children in two divisions therefore gets two emails from one rainout. The per-game “tell families now” would send one email per game per household, which is the wrong tool for twelve games.', fix:'The rainout writes the status changes, then runs the built send once per division, and says before the press how many emails and how many households get two (9e·12).', st:'9e-2'},
+ E08:{t:'Undo exists per game and only until the send', today:'The league’s Undo is per game, persistent, offered only for held changes, and gone once they are sent; it is not offered for a game the club moved or a game that was played. There is no batch Undo. The tournament’s Undo is a pill that fades after eight seconds, kept only in the browser, and refuses everything if any game changed since.', fix:'“Put all back” only while held; after a send the result says plainly that emails can’t be taken back (ask 9e·13).', st:'9e-2'},
+ E09:{t:'Practices are not the league admin’s to cancel when they came from the club, and a hand-booked one emails nobody', today:'Practices are their own records. A practice handed out from the club’s time cannot be moved or cancelled by a league admin: the server answers “Only the club can move or remove this practice.” A practice the convenor booked by hand can be cancelled, but that route sends no email and holds nothing. The only practice-change email lives in the club’s Send the changes, in the club’s Schedules.', fix:'The window names tonight’s practices and says where they change; it changes none (ask 9e·10).', st:'9e-2'},
+ E10:{t:'9f freezes a table that is computed on every view', today:'Standings are computed, not stored. The “Final standings” tag on the public season page is just “after the season’s last day”; nothing freezes anything. A finished season’s table therefore changes if a score changes afterwards or if the rules in the sport pack change. The 9e prompt names this dependency; the plan’s 9f row does not.', fix:'9e hands 9f one function from rules and games to a table, with the rules printed beside it. What a frozen final table is belongs to 9f.', st:'9f'},
+ E11:{t:'Which finished-season rule applies', today:'CLAUDE.md’s “a closed season is one page” is the Coaches Portal’s rule. The club’s house-league seasons follow Q16: a finished season reads in place, locked. The admin gate already answers 423 to every write on a finished season, and the admin standings screen has no write control to lock.', fix:'Score entry and the rainout are refused on a finished season; standings read in place.', st:'All'},
+ E12:{t:'A coach’s score route is a new route, not the admin gate', today:'A house-league coach is tied to a team by a link row (user, team, removed-at); the coach role itself has no capabilities. Coach pages check the signed-in user against that row and answer 404 for anyone else. There are no coach-writable routes on games or scores today. The coach’s page shows the stub “The club enters scores for now.” and lists only games from today on, as families last heard them, although the read already loads every result.', fix:'A new coach-family route: signed-in user, then the link row open, then the game’s home team is the coach’s team, then both-or-neither, then the stale-window guard. Never the admin gate (ask 9e·7).', st:'9e-3'},
+ E13:{t:'No plan gate on house league’s postpone, cancel or urgent send', today:'The tournament’s Rain delay needs the bulk_reschedule feature (Tournament Plus and up) in the window, the route and the undo route. House league’s postpone, cancel and urgent send carry only the module and the league-admin role, and a finished season refuses all writes.', fix:'Flagged for /strategy, not decided (9e·15).', st:'Strategy'}
+};
+function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+var dlg=$('#dlg'), dT=$('#dlgT'), dB=$('#dlgB');
+function esc(t){return String(t).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+function open(title, parts){ dT.textContent=title; dB.innerHTML=parts.map(function(p){return '<div><h4>'+esc(p[0])+'</h4><p>'+esc(p[1])+'</p></div>'}).join(''); if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open',''); }
+$('#dlgX').addEventListener('click',function(){dlg.close()});
+dlg.addEventListener('click',function(e){ if(e.target===dlg) dlg.close(); });
+document.addEventListener('click',function(e){
+  var f=e.target.closest('.fl'); if(f){ e.preventDefault(); e.stopPropagation(); var k=f.getAttribute('data-f'), F=FINDINGS[k]; if(!F) return;
+    var parts=[['What the code does today',F.today]]; var h=f.getAttribute('data-here'); if(h) parts.push(['Where you are looking',h]); parts.push(['What the proposal does',F.fix]); parts.push(['Stage',F.st]);
+    open(k+' · '+F.t, parts); return; }
+  var m=e.target.closest('.mk'); if(m){ e.preventDefault(); e.stopPropagation(); var kind=m.classList.contains('new')?'NEW':m.classList.contains('res')?'RESTYLED':m.classList.contains('unc')?'UNCHANGED or noted':'Note';
+    open(m.textContent.trim(), [[kind, m.getAttribute('data-note')||'']]); return; }
+}, true);
+var tabs=$$('.tabs [role=tab]');
+function show(p, scrollTo){ tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p}); if(p==='asks') buildIndex(); try{localStorage.setItem('hl9e-tab',p)}catch(e){}
+  if(scrollTo){ var el=document.getElementById(scrollTo); if(el) el.scrollIntoView({block:'start'}); } else window.scrollTo(0, $('.tabs').offsetTop - 4); }
+tabs.forEach(function(t){ t.addEventListener('click',function(){ show(t.getAttribute('data-pane')) }) });
+function thm(v){ $$('.ak').forEach(function(a){ a.classList.toggle('dk', v==='dark') }); $$('[data-thm]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-thm')===v)) }); try{localStorage.setItem('hl9-thm',v)}catch(e){} }
+$$('[data-thm]').forEach(function(b){ b.addEventListener('click',function(){ thm(b.getAttribute('data-thm')) }) });
+var KEY='hl9e-asks';
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}') }catch(e){ return {} } }
+function save(){ var st={}; $$('.ask').forEach(function(a){ var id=a.getAttribute('data-ask'); st[id]={c:$$('input[type=checkbox]',a).filter(function(i){return i.checked}).map(function(i){return i.value}), n:($('textarea',a)||{}).value||''} }); try{ localStorage.setItem(KEY, JSON.stringify(st)) }catch(e){} }
+(function restore(){ var st=load(); $$('.ask').forEach(function(a){ var id=a.getAttribute('data-ask'), v=st[id]; if(!v) return; $$('input[type=checkbox]',a).forEach(function(i){ i.checked = v.c.indexOf(i.value)>=0 }); var ta=$('textarea',a); if(ta) ta.value=v.n||''; }) })();
+document.addEventListener('change',function(e){ if(e.target.closest('.ask')) save() });
+document.addEventListener('input',function(e){ if(e.target.closest('.ask')) save() });
+function askTitle(a){ var h=$('h3',a); var no=$('.no',h); return {no:no?no.textContent.trim():a.getAttribute('data-ask'), t:h.textContent.replace(no?no.textContent:'','').trim()} }
+function chosen(a){ return $$('input:checked',a).map(function(i){return i.closest('label').textContent.replace('Recommended','').trim()}) }
+function buildIndex(){ var tb=$('#askIndex tbody'); tb.innerHTML=''; $$('.ask').forEach(function(a){ var T=askTitle(a), pane=a.closest('section.pane').getAttribute('data-pane'); var ch=chosen(a); var tr=document.createElement('tr');
+  if(!a.id) a.id='ask-'+a.getAttribute('data-ask');
+  tr.innerHTML='<td><b>'+esc(T.no)+'</b> '+esc(T.t)+'</td><td><a href="#'+a.id+'" data-go="'+pane+'">'+(($('.tabs [data-pane='+pane+']')||{}).textContent||pane)+'</a></td><td>'+(ch.length?esc(ch.join(' + ')):'<span class="muted">not answered</span>')+'</td>'; tb.appendChild(tr); });
+  $$('[data-go]',tb).forEach(function(l){ l.addEventListener('click',function(e){ e.preventDefault(); show(l.getAttribute('data-go'), l.getAttribute('href').slice(1)) }) }); }
+$('#build').addEventListener('click',function(){ var L=['House league · Stage 9 · 9e · rulings ('+new Date().toISOString().slice(0,10)+')','']; $$('.ask').forEach(function(a){ var T=askTitle(a); var ch=chosen(a); var n=(($('textarea',a)||{}).value||'').trim(); L.push(T.no+' '+T.t); L.push('  → '+(ch.length?ch.join(' + '):'(no answer)')); if(n) L.push('  note: '+n.replace(/\n+/g,' / ')); }); L.push('9e·15 plan gate: flagged for /strategy, no answer needed'); $('#out').value=L.join('\n'); buildIndex(); });
+$('#copy').addEventListener('click',function(){ var t=$('#out'); if(!t.value) $('#build').click(); var done=function(){ $('#copied').textContent='Copied' }; try{ navigator.clipboard.writeText(t.value).then(done, function(){ t.select(); $('#copied').textContent='Selected; press Ctrl+C' }) }catch(e){ t.select(); $('#copied').textContent='Selected; press Ctrl+C' } });
+var trueSize=false;
+function fitAll(){ $$('.dt-wrap').forEach(function(w){ var avail=w.parentElement.clientWidth||w.clientWidth; var z=trueSize?1:Math.min(1,avail/1440); w.style.setProperty('--z',z); w.classList.toggle('fit',!trueSize); }) }
+$$('[data-fit]').forEach(function(b){ b.addEventListener('click',function(){ trueSize=!trueSize; fitAll(); $$('[data-fit]').forEach(function(x){ x.textContent=trueSize?'Fit to width':'Show at true size' }); $$('.zl').forEach(function(z){ z.textContent=trueSize?'True size. Scroll sideways.':'Scaled to fit; use the button for true size.' }) }) });
+window.addEventListener('resize',fitAll);
+var p0='why', t0='warm'; try{ p0=localStorage.getItem('hl9e-tab')||'why'; t0=localStorage.getItem('hl9-thm')||'warm' }catch(e){}
+var h=(location.hash||'').slice(1); if(tabs.map(function(t){return t.getAttribute('data-pane')}).indexOf(h)>=0) p0=h;
+if(tabs.map(function(t){return t.getAttribute('data-pane')}).indexOf(p0)<0) p0='why';
+thm(t0); tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p0))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p0}); if(p0==='asks') buildIndex();
+fitAll();
+})();
+</script>

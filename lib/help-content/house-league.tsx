@@ -761,22 +761,56 @@ const houseLeagueHelp: HelpPageContent = {
       id: 'recipe-record-house-league-scores',
       group: 'How-to recipes',
       heading: 'How to record scores and read standings',
-      summary: 'Open a played game, enter both scores, and understand the points-based standings.',
-      keywords: ['scores', 'standings', 'completed games', 'points', 'tiebreaker', 'final', 'correct a score'],
-      searchText: 'record scores update standings completed games played final home score away score both scores or neither points win two tie one loss zero differential GF GA standings page tiebreaker edit this game pencil correct a score score boxes',
+      summary: 'Open a played game, enter both scores, and see how the standings table is ranked and who can see it.',
+      keywords: ['scores', 'standings', 'completed games', 'points', 'tiebreaker', 'tie break', 'how the table is ranked', 'tied for', 'level on points', 'the game between them', 'run differential', 'runs for', 'shared place', 't-3', 'show standings', 'hide standings', 'division without standings', 'standings before first score', 'a game counts when both scores are in', 'rf ra rd', 'final', 'correct a score'],
+      searchText: 'record scores update standings completed games played final home score away score both scores or neither enter both scores or neither a game counts in the standings once it is completed and both scores are in clearing both scores puts the game back to scheduled points win two tie one loss zero how the table is ranked tie break tiebreaker level on points two teams level the game between them decides more wins ranks first tied or not played undecided three or more teams skip that step run differential rd runs for rf runs against ra rf ra rd shared place tied for t-3 next team takes 5th no coin toss standings page level with show standings switch hide standings division window edit form on by default off families see no table and no tab coaches see no standing line division without standings families can’t see this table standings are off schedule isn’t published standings before the first score teams listed a to z dashes no places export edit this game pencil correct a score score boxes scores and standings coach team page see the standings first of tied for',
       content: (
-        <>
-          <p>Standings are based on played games, so a game needs both scores.</p>
-          <ol>
-            <li>Open the season&apos;s <strong>Schedule</strong> and click the game that has been played.</li>
-            <li>Choose the pencil, <strong>Edit this game</strong>. Once a game&apos;s start time has passed, the two score boxes appear.</li>
-            <li>Enter the home and away scores and press <strong>✓</strong>. The game reads <strong>Final</strong> with its result.</li>
-            <li>Open <strong>Standings</strong> (its own page, reached from the division) to see the updated table.</li>
-          </ol>
-          <p>Enter both scores or neither. A single score is held with <em>Enter both scores, or neither.</em> To correct a result, edit the game and change the numbers; clearing both puts the game back to scheduled. A game that hasn&apos;t started has no score boxes.</p>
-          <p>Standings rank teams by <strong>points</strong> — a win is worth 2, a tie 1, and a loss 0. Ties in points are broken by score differential, then by total scored (the GF/GA columns). If standings look wrong, check for games still scheduled, postponed, or missing scores — only played games count.</p>
-        </>
+        <p>Standings are built from played games, so a game needs both scores. This topic covers entering a score, how the table is ranked, and who can see it.</p>
       ),
+      subtopics: [
+        {
+          id: 'recipe-record-house-league-scores-t-enter',
+          title: 'Enter or correct a score',
+          content: (
+            <>
+              <ol>
+                <li>Open the season&apos;s <strong>Schedule</strong> and click the game that has been played.</li>
+                <li>Choose the pencil, <strong>Edit this game</strong>. Once a game&apos;s start time has passed, the two score boxes appear.</li>
+                <li>Enter the home and away scores and press <strong>✓</strong>. The game reads <strong>Final</strong> with its result.</li>
+                <li>Open <strong>Standings</strong> (its own page, reached from the division) to see the updated table.</li>
+              </ol>
+              <p>Enter both scores or neither. A single score is refused with <em>Enter both scores, or neither.</em> A game counts in the standings once it is completed and both scores are in. To correct a result, edit the game and change the numbers; clearing both puts the game back to scheduled and it stops counting. A game that hasn&apos;t started has no score boxes.</p>
+            </>
+          ),
+        },
+        {
+          id: 'recipe-record-house-league-scores-t-ranked',
+          title: 'How the table is ranked',
+          content: (
+            <>
+              <p>Standings follow the season&apos;s sport. In softball and baseball a win is worth 2 points, a tie 1, and a loss 0. Teams level on points are separated in this order:</p>
+              <ol>
+                <li>If exactly two teams are level, the game or games between them: the team with more wins ranks first. If those games are tied, or weren&apos;t played, this step decides nothing. With three or more teams level, this step is skipped.</li>
+                <li>Run differential (<strong>RD</strong>), runs for minus runs against.</li>
+                <li>Runs for (<strong>RF</strong>). <strong>RA</strong> is runs against.</li>
+              </ol>
+              <p>Teams still level after that share a place, shown like <strong>T-3</strong>; when two teams share 3rd, the next team is 5th. There is no coin toss and no ordering by when teams were created. The admin Standings page has a <strong>Level with</strong> column naming who a shared place is shared with, and its export follows the sport (RF, RA, RD) plus Level with.</p>
+            </>
+          ),
+        },
+        {
+          id: 'recipe-record-house-league-scores-t-who-sees',
+          title: 'Who sees standings, and the Show standings switch',
+          content: (
+            <>
+              <p>A division&apos;s public table shows only once its schedule is published. Before the first score, the teams are listed A to Z with dashes and no places. A <em>How the table is ranked</em> box on the page explains the rules.</p>
+              <p>Each division has a <strong>Show standings</strong> switch, in its edit form in the division window; it is on by default and saves when you press it. Turn it off and families see no table and no tab for it, and coaches see no standing line. Your own Standings page still shows the table once a game has both scores, with a note: <em>Families can&apos;t see this table: standings are off for</em> the division, or <em>Families can&apos;t see this table yet</em> when its schedule isn&apos;t published.</p>
+              <p>A house league coach&apos;s team page shows a line under <strong>Scores and standings</strong> with the team&apos;s place, record and points and a <strong>See the standings</strong> link, or <em>Standings start with the first score.</em> It appears only for a live season, with the schedule published and the switch on; otherwise the heading stays <strong>Scores</strong>.</p>
+              <p>If standings look wrong, check for games still scheduled, postponed, or missing scores, and check that the division&apos;s <strong>Show standings</strong> switch is on.</p>
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'house-league-time',

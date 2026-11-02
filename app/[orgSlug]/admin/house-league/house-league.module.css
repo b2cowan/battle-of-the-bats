@@ -889,3 +889,27 @@
 }
 :global([data-admin-kit]) .scheduleTable tr:hover td { background: var(--home-olive-soft); }
 
+
+/* ── Standings (House League 9e-1, frame s6) ─────────────────────────────────────────────────────────────────────────
+   The note families can't see the table, a dash for a team with no counted game, and "How the table is ranked".
+   The kit's answer, written directly (no legacy branch). */
+.standNote {
+  margin: 0 0 0.75rem;
+  font-size: var(--type-support);
+  color: var(--badge-warning-ink);
+}
+.standDash { color: var(--text-tertiary); }
+.rankBox {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  font-size: var(--type-support);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.rankBox > b { display: block; margin-bottom: 0.2rem; color: var(--text-primary); }
+.rankBox ol { margin: 0.3rem 0; padding-left: 1.25rem; }
+.rankBox p { margin: 0; }
+.rankBox .rankBoxHint { margin-top: 0.5rem; color: var(--text-tertiary); }

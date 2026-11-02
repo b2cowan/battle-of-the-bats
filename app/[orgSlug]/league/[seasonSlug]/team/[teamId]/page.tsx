@@ -11,6 +11,7 @@ import CopyEmails from './CopyEmails';
 import CoachSchedule from './CoachSchedule';
 import CoachSubscribe from './CoachSubscribe';
 import { SCHEDULE_PUBLIC_WORDS } from '@/lib/league-schedule-words';
+import { STANDINGS_WORDS } from '@/lib/league-standings';
 import column from '../../../league-column.module.css';
 import kit from '@/components/public/ClubKit.module.css';
 import styles from './CoachTeam.module.css';
@@ -96,7 +97,16 @@ export default async function CoachTeamPage({ params }: { params: Promise<{ orgS
       </section>
 
       <section className={styles.section} aria-labelledby="coach-scores">
-        <h2 id="coach-scores" className={styles.sectionTitle}>Scores</h2>
+        {/* 9e·6: the team's standing, one quiet line — only while families see the table (published and on). */}
+        <h2 id="coach-scores" className={styles.sectionTitle}>{STANDINGS_WORDS.coach.heading(!!page.standing)}</h2>
+        {page.standing && (
+          <>
+            <p className={kit.sub}>{page.standing.text}</p>
+            <p className={`${kit.sub} ${styles.seeAll}`}>
+              <Link href={`/${orgSlug}/league/${seasonSlug}/standings?d=${page.standing.divisionId}`} className={styles.link}>{STANDINGS_WORDS.coach.link}</Link>
+            </p>
+          </>
+        )}
         <p className={kit.sub}>The club enters scores for now.</p>
       </section>
 

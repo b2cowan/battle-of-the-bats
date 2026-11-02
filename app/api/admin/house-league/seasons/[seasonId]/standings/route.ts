@@ -3,8 +3,14 @@ import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getLeagueSeasonById, computeStandings } from '@/lib/db';
 import { divisionInSeason } from '@/lib/league-season-scope';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
+/**
+ * The club's standings table (House League 9e-1, frame s6): the division ranked the way the public page ranks it, with
+ * the sport's words and what families can see — its schedule published, its "Show standings" on. The admin table shows
+ * either way; the page says when families can't.
+ */
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
   const url = new URL(req.url);
@@ -25,6 +31,17 @@ export const GET = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Division not found' }, { status: 404 });
   }
 
-  const standings = await computeStandings(divisionId);
-  return NextResponse.json({ standings });
+  const [standings, { data: division, error }] = await Promise.all([
+    computeStandings(divisionId, season.sport),
+    supabaseAdmin.from('league_divisions').select('name, schedule_published_at, show_standings').eq('id', divisionId).single(),
+  ]);
+  if (error || !division) return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+  return NextResponse.json({
+    standings,
+    division: {
+      name: division.name as string,
+      published: !!division.schedule_published_at,
+      showStandings: division.show_standings !== false,
+    },
+  });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/standings' });

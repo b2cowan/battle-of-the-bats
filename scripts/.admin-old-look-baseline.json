@@ -10,7 +10,7 @@
     "helpers": 6
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx": {
-    "kx": 7,
+    "kx": 6,
     "helpers": 1
   },
   "app/[orgSlug]/admin/tournaments/schedule/components/BracketBuilder.module.css": {
