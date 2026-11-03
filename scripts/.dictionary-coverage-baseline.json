@@ -461,10 +461,6 @@
       "created_at",
       "updated_at"
     ],
-    "platform_audit_log": [
-      "id",
-      "created_at"
-    ],
     "platform_user_notes": [
       "id",
       "created_at"
