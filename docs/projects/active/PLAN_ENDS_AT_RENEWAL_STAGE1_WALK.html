@@ -1,0 +1,359 @@
+<title>Plan Ending Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<style>
+.opts { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.opt { display: flex; gap: 8px; align-items: flex-start; font-size: 0.95em; }
+.opt input { margin-top: 3px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Plans end at the renewal date · Stage 1 · §444</span>
+    <h1>A cancel waits for the renewal date: the owner, the emails, the operator</h1>
+    <p class="sub">Written 2026-11-02 for Stage 1 (Parts A, B and C: <code>ebffbc1c7</code>, <code>b6ae3de78</code>, <code>8ce1f4a14</code>). This is the one owner walk the plan puts at the end of Stage 1. It runs on the dev site against real Stripe test-mode subscriptions.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Before Stage 1, cancelling a paid plan ended it at the click and took away time the club had already paid for. Now a cancel waits for the renewal date. The club stays open until then, and the owner can keep the plan any time before. Three emails tell them what is happening: the date it ends, a reminder seven days before, and a note when they keep it. The operator sees the same waiting cancel on the club record, with Keep and End now. When Stripe’s end-of-period message goes missing, the club shows as overdue, with a Finish button that reads Stripe before it changes anything. This walk proves that whole loop, from both sides.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>Cancelling a paid plan leaves the club open and shows “Ending” with the date. Nothing ends at the click.</li>
+    <li>Keep League undoes it from the billing page, from the email’s button and from Stripe’s own billing page, and each keep sends one “will renew” email.</li>
+    <li>A cheaper plan chosen before the cancel comes back when the plan is kept.</li>
+    <li>Each email arrives once, with the right dates, even when the daily job runs twice.</li>
+    <li>The operator’s Cancel and Keep email the owner only when the box is ticked.</li>
+    <li>An overdue ending is listed. Finish ends it only when Stripe says it ended, with the data kept from the day it should have ended. When Stripe still bills, the club is untouched and only our record changes.</li>
+    <li>End now still ends a plan at once.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>Stripe ending a plan by itself on the renewal date.</strong> That date is a month away. Stage 3’s test-clock rehearsal covers it, and unit tests cover the code.</li>
+    <li><strong>A Coaches Portal (Premium).</strong> No portal on dev has a Stripe test subscription. It runs the same code, and unit tests pin its Premium words. Say if you want a portal part added.</li>
+    <li><strong>The online-payments lines in the Cancel windows.</strong> None of the walk clubs takes payments online, and the lines show only for a club that does. Unit tests pin the words.</li>
+    <li><strong>Downgrading to the free plan at renewal</strong> (Stage 2) and <strong>the help articles</strong> (Stage 4).</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev site</dt><dd>I pushed dev on 2026-11-02, so <strong>https://dev.fieldlogichq.ca</strong> rebuilds with Stage 1 (about 20 minutes). Step A2 checks it. Don’t cancel anything before A2 passes: the old build ends a plan at the click.</dd>
+    <dt>Fixture</dt><dd>In the project folder: <code>node --env-file=.env.local scripts/seed-plan-ending-walk.mjs --inbox &lt;your plain address&gt;</code>. It takes about a minute and builds four clubs on real Stripe test subscriptions. Each club’s owner is your inbox with a plus part, <code>+pe1</code> to <code>+pe4</code>, password <code>UATPassword2026!</code>. It prints each club’s record link.</dd>
+    <dt>The clubs</dt><dd><strong>Ending Walk Club</strong> (+pe1): League, $89 CAD / month, for Parts B to E and I. <strong>Reminder Walk Club</strong> (+pe2): a cancel ending in 6 days, for Part F. <strong>Overdue Walk Ended</strong> (+pe3) and <strong>Overdue Walk Live</strong> (+pe4): cancels 5 and 4 days past their date, for Parts G and H.</dd>
+    <dt>Dates</dt><dd>They depend on the day you build the fixture, so steps name them. <strong>“The renewal date”</strong> is Ending Walk Club’s, which the fixture prints (about a month from today). “+90 days” means 90 days after the date it follows.</dd>
+    <dt>Emails</dt><dd>They arrive in your inbox at the +pe addresses (sender FieldLogicHQ), and they are listed in platform admin › Sent emails. Allow 2 minutes before you count.</dd>
+    <dt>Two windows</dt><dd>Keep the owner and the platform admin signed in side by side: a normal window and a private window, or two browsers.</dd>
+    <dt>When done</dt><dd>Part J.</dd>
+  </dl></section>
+  <section class="card"><h2>Sign in as</h2><dl class="facts">
+    <dt>Club owner</dt><dd><code>you+pe1@…</code> (your address with +pe1) · <code>UATPassword2026!</code> · billing page <code>https://dev.fieldlogichq.ca/ending-walk-club/admin/org/billing</code></dd>
+    <dt>Platform admin</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code> · <code>https://dev.fieldlogichq.ca/platform-admin/login</code></dd>
+    <dt>Keep it private</dt><dd>These are dev-only passwords, and this page carries them.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>Stripe’s own Cancel (C2).</strong> Your tick records whether dev’s Stripe billing page cancels at the period end or at once (plan item G13). The live setting is read before customers get Stages 1 and 2.</li>
+    <li><strong>“at your request” (D3).</strong> When we cancel for the owner, their email says “We cancelled League for Ending Walk Club on {date}, at your request.” Keep the words, or change them for a cancel that was our decision?</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "plan-ending-stage1-walk-v1";
+  var TITLE = "Plans end at the renewal date · Stage 1 walk §444 · A cancel waits for the renewal date (2026-11-02)";
+  var PA = "Platform admin";
+  var OWN = "Owner (+pe1)";
+  var BILL = "<code>https://dev.fieldlogichq.ca/ending-walk-club/admin/org/billing</code>";
+  var FX = "<code>node --env-file=.env.local scripts/seed-plan-ending-walk.mjs";
+  var ENDING = "the plan card has an amber <strong>Ending</strong> chip and the line “Ends on {the renewal date}, the last day you paid for.” with a <strong>Keep League</strong> link. The Change plan buttons are gone, with one line saying to keep the plan first. The Reduce or cancel section is gone";
+  var KEPT = "the Ending chip and line are gone, “Renews {the renewal date}” is back, and so are Change plan and Reduce or cancel";
+  var PARTS = [
+ { id: "A", title: "The dev site has Stage 1 (stop check), and the six emails are registered", steps: [
+  { who: "Terminal", do: "Run " + FX + " --inbox &lt;your plain address&gt;</code>.",
+    see: "It prints four clubs, three “ends … asked by …” lines (Reminder Walk Club about 6 days from today, the two Overdue clubs 5 and 4 days ago) and four record links. Write down the date it prints for Ending Walk Club’s subscription (“renews …”): that is <strong>the renewal date</strong>." },
+  { who: PA + " · computer", do: "Sign in and open <code>https://dev.fieldlogichq.ca/platform-admin/retention</code>.",
+    see: "A section <strong>Endings Stripe hasn’t finished</strong> with a red <strong>2</strong>, listing Overdue Walk Ended and Overdue Walk Live. The Plan column reads “Tournament Plus · cancel”. Asked by reads “The owner” and “uat-platform@fieldlogichq.ca”. Overdue Walk Ended’s Days over is one more than Overdue Walk Live’s.",
+    options: ["The section is there with both clubs", "No such section: the dev site is still on the old build. STOPPED, will wait and retry"] },
+  { who: PA, do: "Open <strong>Email templates</strong> in the left rail.",
+    see: "Six new entries: <strong>Plan ends on a date</strong>, <strong>Plan ending reminder</strong>, <strong>Plan kept</strong>, and their three “Coaches Portal Premium …” twins." }
+ ]},
+ { id: "B", title: "The owner cancels, and keeps it", steps: [
+  { who: OWN + " · computer", do: "Sign in and open " + BILL + ".",
+    see: "Your plan: <strong>League</strong>, $89 CAD / month, Renews {the renewal date}. At the foot, Reduce or cancel reads “Cancelling ends Ending Walk Club’s plan on {the renewal date}, the end of the period you paid for. Then …”, with a <strong>Cancel League…</strong> button." },
+  { who: OWN, do: "Press <strong>Cancel League…</strong>.",
+    see: "A window titled <strong>Cancel League?</strong>. An amber-edged line: “Ending Walk Club stays open until {the renewal date}, the end of the period you paid for. Nothing more is charged and nothing is refunded.” Then “On {the renewal date} Ending Walk Club is suspended: … Your data is kept for 90 days after that, until {the renewal date +90 days}.”, “You can keep League any time before {the renewal date}.” and a list headed “What goes offline on {the renewal date}”. The footer reads “Ends {the renewal date}.” beside a red <strong>Cancel on {the renewal date}</strong>." },
+  { who: OWN, do: "Type “Walk B” as the reason and press <strong>Cancel on {the renewal date}</strong>.",
+    see: "The window closes and " + ENDING + ". Open Tournaments in the left rail: the club’s admin works as before, and nothing is suspended." },
+  { who: "Inbox · +pe1", do: "Open the new message.",
+    see: "<strong>One</strong> email, subject “Your League plan ends on {the renewal date}”. It reads “You cancelled League for Ending Walk Club on {today}. Everything stays open until {the renewal date}, the end of the period you paid for. Nothing more is charged.” A panel “On {the renewal date}”: “Ending Walk Club is suspended. Your data is kept until {the renewal date +90 days}, and everything comes back if you resubscribe before then.” Then “Changed your mind? You can keep League any time before …”, a <strong>Keep League</strong> button and “We’ll remind you seven days before it ends.”" },
+  { who: PA, do: "Open Ending Walk Club’s record (the first link the fixture printed).",
+    see: "An amber callout: “<strong>Ending.</strong> Ends {the renewal date}, at the period end. Cancelled by the owner on {today}: “Walk B”.”, with <strong>Keep the plan</strong> and a red <strong>End now…</strong>. The top band shows “Ends {the renewal date}” where the renewal date was." },
+  { who: OWN + " · phone width (390 px)", do: "Reload the billing page.",
+    see: "The Ending chip and line, with Keep League as a full-width lime button under it. Nothing runs off the side." },
+  { who: OWN + " · computer", do: "In the B4 email, press <strong>Keep League</strong>.",
+    see: "The billing page opens with a window, <strong>Keep League?</strong>: “Ending Walk Club stays on League and renews on {the renewal date} at $89 CAD / month.” and “Nothing else changes.”, with Not now and <strong>Keep League</strong>." },
+  { who: OWN, do: "Press <strong>Keep League</strong>.",
+    see: "The window closes: " + KEPT + "." },
+  { who: "Inbox · +pe1", do: "Open the new message.",
+    see: "<strong>One</strong> email, subject “League will renew on {the renewal date}”, heading “League stays on”: “You kept League for Ending Walk Club. It renews on {the renewal date} at $89 CAD / month. Nothing else changes.”, with an <strong>Open Plan &amp; billing</strong> button." },
+  { who: PA, do: "Reload the record.",
+    see: "The Ending callout is gone, and the band shows the renewal date again." }
+ ]},
+ { id: "C", title: "Stripe’s own billing page", steps: [
+  { who: OWN, do: "On the billing page press <strong>Payment method &amp; invoices</strong>.",
+    see: "Stripe’s billing page opens (test mode) with the League subscription." },
+  { who: OWN + " · Stripe’s page", do: "Look for a way to cancel the subscription. If it says the plan would end <strong>immediately</strong>, do NOT confirm. If you don’t cancel here, leave C3 to C7 unticked and say why in the notes.",
+    see: "Tick what Stripe offers.",
+    options: ["Offered, ending at the end of the period: I cancelled", "Offered, but it would end immediately: did NOT confirm", "No cancel offered"] },
+  { who: OWN, do: "Come back to the billing page and reload it (allow a minute).",
+    see: ENDING + ", exactly as after B3." },
+  { who: "Inbox · +pe1", do: "Open the new message.",
+    see: "One “Your League plan ends on {the renewal date}” email whose first line reads “You cancelled League for Ending Walk Club <strong>in the billing portal</strong> on {today}.”" },
+  { who: PA, do: "Reload the record.",
+    see: "The Ending callout says “Cancelled by the owner in Stripe’s billing portal on {today}.”" },
+  { who: OWN + " · Stripe’s page", do: "Open Payment method &amp; invoices again and undo the cancel (Stripe calls it <strong>Renew</strong>, or Don’t cancel).",
+    see: "Stripe shows the subscription renewing again." },
+  { who: OWN + " and inbox", do: "Reload the billing page after a minute, then check +pe1.",
+    see: "On the page, " + KEPT + ". In the inbox, one “League will renew on {the renewal date}” email reading “You kept League for Ending Walk Club in the billing portal. It renews on {the renewal date} at $89 CAD / month. Nothing else changes.”" }
+ ]},
+ { id: "D", title: "The operator cancels and keeps, with and without the email", steps: [
+  { who: PA, do: "On Ending Walk Club’s record open the <strong>Access</strong> tab and press <strong>Cancel the subscription</strong>.",
+    see: "A window, <strong>Cancel the subscription for Ending Walk Club</strong>: “Stripe stops charging Ending Walk Club after {the renewal date}, the end of the period it paid for. Until then everything stays open. … The owner can keep the plan until then, and so can you.” An <strong>unticked</strong> box, “Email the owner that the plan ends on {the renewal date} …”, and a quiet line “Fraud, abuse or a chargeback? End it today instead…”. The footnote reads “Reaches Stripe. Can be kept until …”, and the red button reads <strong>Cancel at the period end</strong>." },
+  { who: PA, do: "Tick the email box, type “Walk D2” as the Why, and press <strong>Cancel at the period end</strong>.",
+    see: "The amber Ending callout: “… Cancelled by uat-platform@fieldlogichq.ca on {today}: “Walk D2”.”" },
+  { who: "Inbox · +pe1", do: "Open the new message.",
+    see: "One “Your League plan ends on {the renewal date}” email whose first line reads “We cancelled League for Ending Walk Club on {today}, at your request.”",
+    call: "Call: keep “at your request”, or other words for a cancel that was our decision? Say in the notes." },
+  { who: OWN, do: "Reload the billing page.",
+    see: ENDING + ". The operator’s cancel looks the same to the owner." },
+  { who: PA, do: "Press <strong>Keep the plan</strong> on the callout.",
+    see: "A window, <strong>Keep League for Ending Walk Club</strong>: “Ending Walk Club stays on League and renews on {the renewal date}. Stripe charges it again then. Nothing else changes.” Its box, “Email the owner that the plan renews on {the renewal date} …”, is <strong>unticked</strong>." },
+  { who: PA, do: "Tick the box, type “Walk D6” as the Why, and press <strong>Keep League</strong>.",
+    see: "The callout is gone. In +pe1, one email “League will renew on {the renewal date}”: “We kept League for Ending Walk Club, at your request. It renews on {the renewal date} at $89 CAD / month. Nothing else changes.”" },
+  { who: PA, do: "Cancel again with the email box <strong>left unticked</strong> (Why “Walk D7”). Then press Keep the plan, again with its box <strong>unticked</strong> (Why “Walk D7 keep”).",
+    see: "The Ending callout comes, then goes." },
+  { who: "Inbox · +pe1", do: "Wait 2 minutes and look again.",
+    see: "<strong>No</strong> new email from D7. The newest are still the two from D3 and D6." }
+ ]},
+ { id: "E", title: "A cheaper plan chosen first comes back", steps: [
+  { who: OWN, do: "On the billing page, under <strong>Change plan</strong>, choose <strong>Tournament Plus</strong> and confirm the move.",
+    see: "The move waits for the renewal date: the plan card shows the waiting change to Tournament Plus from {the renewal date}. League stays until then." },
+  { who: OWN, do: "Press <strong>Cancel League…</strong>.",
+    see: "The window has a second amber line: “You chose to move to Tournament Plus on {the renewal date}. Cancelling sets that move aside. Keep League before then and the move to Tournament Plus comes back.”" },
+  { who: OWN, do: "Type “Walk E” and press <strong>Cancel on {the renewal date}</strong>.",
+    see: "The Ending chip and line, and under them “If you keep it, you renew as Tournament Plus, the move you chose.” The waiting move line is gone." },
+  { who: OWN, do: "Press <strong>Keep League</strong>.",
+    see: "The window reads “Ending Walk Club stays on League until {the renewal date}.” and “Then it renews as Tournament Plus, the move you chose, at $39 CAD / month.” Its button reads <strong>Keep and renew as Tournament Plus</strong>." },
+  { who: OWN, do: "Press <strong>Keep and renew as Tournament Plus</strong>.",
+    see: "The Ending chip is gone, and the waiting change to Tournament Plus from {the renewal date} is back." },
+  { who: "Inbox · +pe1", do: "Open the new message.",
+    see: "One email, subject “Ending Walk Club will renew as Tournament Plus on {the renewal date}”, heading “Your plan stays on”: “You kept your plan for Ending Walk Club. League runs until {the renewal date}. Then it renews as Tournament Plus, the move you chose, at $39 CAD / month.”" }
+ ]},
+ { id: "F", title: "The seven-day reminder, once (Reminder Walk Club, +pe2)", steps: [
+  { who: "Terminal", do: "Run " + FX + " --daily</code>. It runs the daily job on the dev site, the same call the 6:15 a.m. run makes.",
+    see: "“sent.”" },
+  { who: "Inbox · +pe2", do: "Wait 2 minutes and open the new message. Don’t press its Keep button: this club has no Stripe subscription.",
+    see: "<strong>One</strong> email, subject “Your Tournament Plus plan ends in N days”, heading “N days left on Tournament Plus”: “Your Tournament Plus plan for Reminder Walk Club ends on {date}. Until then everything stays open.” A panel “On {date}”: “Reminder Walk Club is suspended. Your data is kept until {date +90 days}.” and a <strong>Keep Tournament Plus</strong> button. N is the number of days from today to the date in the email (6, or 5 late in the evening)." },
+  { who: "Terminal", do: "Run " + FX + " --daily</code> a second time and wait 2 minutes.",
+    see: "<strong>No</strong> second reminder at +pe2. Nothing new at +pe1, +pe3 or +pe4: the job counts overdue endings, and it never ends one or emails about it." },
+  { who: PA, do: "Reload <code>/platform-admin/retention</code>.",
+    see: "Both Overdue clubs are still listed. The job didn’t end them." }
+ ]},
+ { id: "G", title: "Finish an ending Stripe already ended (Overdue Walk Ended, +pe3)", steps: [
+  { who: PA, do: "On the retention page, press <strong>Overdue Walk Ended</strong>.",
+    see: "Its record, with a red callout: “<strong>Overdue.</strong> This plan should have ended on {date} and is still open. Stripe’s end-of-period message never reached us.” and <strong>Finish this ending now</strong>. The band reads <strong>Should have ended</strong> {date}, “N days over · not confirmed”. Write the date down: <strong>the should-have-ended date</strong>." },
+  { who: PA, do: "Press <strong>Finish this ending now</strong>.",
+    see: "A window, <strong>Finish this ending now?</strong>: “We read Stripe first.” Then “If Stripe has ended the subscription, Overdue Walk Ended is suspended the way it would have been on {the should-have-ended date}. Its data is kept until {that date +90 days}, and the owner gets the “cancelled” email.” Then “If Stripe says the subscription is still live, the account is not touched, and our record is corrected to match Stripe.” The footnote reads “Reads Stripe before it changes anything.”, with a red <strong>Read Stripe and finish</strong>." },
+  { who: PA, do: "Type “Walk G” as the Why and press <strong>Read Stripe and finish</strong>.",
+    see: "A green notice: “<strong>Finished.</strong> Stripe ended this subscription on {today}. Overdue Walk Ended is suspended and its data is kept until {X}. The owner was emailed.” <strong>The pass condition:</strong> X is 90 days after the should-have-ended date, not 90 days after today. The red callout is gone." },
+  { who: "Inbox · +pe3", do: "Open the new message.",
+    see: "One cancellation email (“Subscription cancelled” in platform admin › Sent emails)." },
+  { who: PA, do: "Reload <code>/platform-admin/retention</code>.",
+    see: "The section now shows <strong>1</strong>: only Overdue Walk Live." }
+ ]},
+ { id: "H", title: "Finish an ending Stripe still bills (Overdue Walk Live)", steps: [
+  { who: PA, do: "Open <strong>Overdue Walk Live</strong> from the retention page, then press <strong>Finish this ending now</strong>.",
+    see: "The red Overdue callout and the same window as G2. The middle sentence ends without “and the owner gets the “cancelled” email”, because this cancel was asked with the email box unticked." },
+  { who: PA, do: "Type “Walk H” and press <strong>Read Stripe and finish</strong>.",
+    see: "A notice: “<strong>Record corrected.</strong> Stripe says this subscription is still live and renews {about a month from today}. Nothing was cancelled there, so the waiting cancel is withdrawn here, as Stripe’s missed message would have done. The account was not touched.”" },
+  { who: PA, do: "Reload the record, then the retention page.",
+    see: "The record has no Overdue or Ending callout, and the club is active, not suspended. On the retention page the section <strong>Endings Stripe hasn’t finished</strong> is gone, because none are left." },
+  { who: "Inbox · +pe4", do: "Look.",
+    see: "Nothing. The owner was never emailed." }
+ ]},
+ { id: "I", title: "End now still ends at once (destructive, so it goes last)", steps: [
+  { who: PA, do: "On Ending Walk Club’s record, Access tab, press <strong>Cancel the subscription</strong>, then the quiet <strong>End it today instead…</strong>.",
+    see: "A red window, <strong>End the plan for Ending Walk Club today</strong>: “This ends the plan today, N days before the period it paid for is over. Nothing is refunded. Ending Walk Club is suspended now. <strong>This cannot be put back</strong> …”. The footnote reads “Ends immediately. No refund. This cannot be put back. Reaches Stripe.”" },
+  { who: PA, do: "Type “Walk I” and press <strong>End the plan now</strong>.",
+    see: "The record shows the club cancelled. There is no Ending callout: it ended now, not on a date." },
+  { who: OWN, do: "Reload the billing page.",
+    see: "Ending Walk Club is cancelled, with the Reactivate door. Nothing says it ends on a date." }
+ ]},
+ { id: "J", title: "Put back", steps: [
+  { who: "Terminal", do: "Run " + FX + " --reset</code>.",
+    see: "It removes the four clubs and then stops their Stripe subscriptions. The +pe sign-ins stay. If it says a club couldn’t be removed, tell me what it printed." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var steps = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var rec = { part: p.id, step: id, boxes: [], options: s.options || null };
+      if (s.options) {
+        // One box per answer: the tick IS the answer, and the summary prints which one.
+        var opts = el('span', 'opts');
+        s.options.forEach(function (label, k) {
+          var oid = id + String.fromCharCode(97 + k);
+          var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!state.ticks[oid];
+          cb.addEventListener('change', function () { state.ticks[oid] = cb.checked; save(); refresh(); });
+          rec.boxes.push({ cb: cb, label: label });
+          var o = el('label', 'opt'); o.appendChild(cb); o.appendChild(el('span', null, label)); opts.appendChild(o);
+        });
+        t.appendChild(opts);
+        var row = el('div', 'step'); row.appendChild(el('span', null, '')); row.appendChild(t); body.appendChild(row);
+      } else {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+        cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+        rec.boxes.push({ cb: cb, label: null });
+        var row2 = el('label', 'step'); row2.appendChild(cb); row2.appendChild(t); body.appendChild(row2);
+      }
+      steps.push(rec);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function isDone(r) { return r.boxes.some(function (b) { return b.cb.checked; }); }
+  function doneSteps(partId) { return steps.filter(function (r) { return (!partId || r.part === partId) && isDone(r); }); }
+  var totalSteps = steps.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length
+        + (ticked.length ? ' (' + ticked.map(function (r) { return r.step; }).join(', ') + ')' : ''));
+      ticked.filter(function (r) { return r.options; }).forEach(function (r) {
+        lines.push('  ' + r.step + ': ' + r.boxes.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; }).join(' + '));
+      });
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    steps.forEach(function (r) { r.boxes.forEach(function (b) { b.cb.checked = false; }); });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

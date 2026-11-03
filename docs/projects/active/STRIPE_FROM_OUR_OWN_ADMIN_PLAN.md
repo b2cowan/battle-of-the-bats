@@ -13,7 +13,7 @@ has a home in one of these stages. Order is by dependency and rework risk, never
 0. **Stage 0 — the 12 fixes.** Fixes 1, 2, 5, 7, 8, 9, 10 built and committed `63988b38c` 2026-11-01 (build prompt Parts 1–7; migrations
    416–418 applied to dev); fixes 3 and 4 committed `ee2f55acf` 2026-11-01 (Parts 8–9); fix 6 (the daily read-only comparison, Part 11)
    committed `6d2acb568` 2026-11-01 on the owner's go (its own commit), migrations 421–422 applied to dev (dev cron job 15); fix 12 (Part 10, sign in again)
-   drawn 2026-11-02, all 13 asks ruled, built, simplified and reviewed 2026-11-02, committed `1e18e9e4f`; a walk and the "Secure password change" setting owed (Owner checklist O10). O11 (the change log cannot be edited or deleted) committed `aef88a5e4` 2026-11-03: migration 429 applied to dev 2026-11-03, proved by `scripts/platform-audit-log-lock-check.sql`; prod apply pending (any time, no code depends on it). **Fix 11 (tax) is carried, not built:** it is met when the
+   drawn 2026-11-02, all 13 asks ruled, built, simplified and reviewed 2026-11-02, committed `1e18e9e4f`; the sign-in settings done 2026-11-03 (owner); walk §446 owed (Owner checklist O10). O5 ruled 2026-11-03 (no backfill); O3 moved into the reconciliation (R, below). O11 (the change log cannot be edited or deleted) committed `aef88a5e4` 2026-11-03: migration 429 applied to dev 2026-11-03, proved by `scripts/platform-audit-log-lock-check.sql`; prod apply pending (any time, no code depends on it). **Fix 11 (tax) is carried, not built:** it is met when the
    GST/HST plan's Stage 2 (Stripe Tax) is built; Parts 3 (our pinned portal settings) and 6 (the stored amount is the price, not a
    tax-inclusive total) were built to receive it, and Stage 0 changed nothing about tax in code (`PLANS_PRICING_STAGE0_BUILD_PROMPT.md`).
    **Owner steps that close Stage 0** (the one list, kept in the build prompt's Part 12 "Owner checklist"; the stage is not done until each is
@@ -52,7 +52,21 @@ has a home in one of these stages. Order is by dependency and rework risk, never
 9. **Stage 9 — closeout.** Not built. Help articles and `/docs` for the new staff screens and notices; demo check; the migration (price-change record) applied to
    production with the data dictionary and dev+prod snapshots refreshed; the `/accounting` review; final owner walk; confirmed on production.
 
-**Done when** Stages 0–9 are complete.
+R. **Stripe test ↔ live reconciliation (owner ask 2026-11-03).** Not planned yet. Owner: "at the end of this billing project we
+   will have to do a full reconciliation of dev and prod in stripe. I would like to clean up anything that is old or inconsistent in
+   both environments and make sure we are set up for success; I have made many changes in dev only over the past few weeks and will
+   need to do this final check in prod before we go live with club." **Placed by Claude** (the owner may move it): in the cross-plan
+   order, right before step 6 "Club on sale". Not one of Stages 0–9 and not a code stage at heart: a read-only comparison of the two
+   Stripe accounts and our two databases first, the owner's list of what to keep, archive or fix, then the owner makes the dashboard
+   changes (Stripe settings stay the owner's; Claude never changes them). Starting list, to confirm in its planning session:
+   products and prices against the Facts doc (names, amounts, intervals; old ones archived); our price slots (test on dev, Production
+   on prod) pointing at those prices; webhook destinations (billing + both Connect: URLs, events incl. O3's four, API version, no
+   stale endpoints); the customer portal (our pinned settings, older configurations off); customer emails, retries and invoice
+   settings; tax settings once GST/HST Stage 2 is built; Connect platform settings; which key each site uses and what it may do;
+   coupons and promotions; walk leftovers in test mode. Ends with a live purchase on production (Stage 0's O6 test, repeated).
+   A good use of Stage 2's read-only views if they exist by then; it does not wait for them.
+
+**Done when** Stages 0–9 are complete (R is its own owner ask).
 Open questions, not stages (to `/strategy`): pay by invoice (net 30) for Club and Association; pause billing for the off-season.
 
 ## Owner rulings (2026-10-30, later the same day) — these update the status above
@@ -113,7 +127,7 @@ From the cross-plan review of this program, GST/HST, Plan & billing, Plans end a
 
 **Order across the five plans (set by Claude at the owner's request 2026-10-31; the owner may reverse it on the index):** 0 owner desk → 1 finish Plan & billing
 4b Part 4 → **2 this program's Stage 0 (S5 first, then S8 — see rulings 1 and 2)** → 3 Plans end at renewal Stages 1–3 + GST/HST
-Stage 1 → 4 tax live (GST/HST Stages 2–3 + Terms) → 5 ONE help pass → 6 Club on sale (Coaches Portal and Tournament Plus already selling; "launch together" dropped 2026-10-31) → **7 the rest of this
+Stage 1 → 4 tax live (GST/HST Stages 2–3 + Terms) → 5 ONE help pass → **5b Stripe test ↔ live reconciliation (R, owner ask 2026-11-03)** → 6 Club on sale (Coaches Portal and Tournament Plus already selling; "launch together" dropped 2026-10-31) → **7 the rest of this
 program (invoices, plan and price changes)**. (The numbered stages of this program are in "Stage list of record" near the top.) Step 2 needs the Plan & billing Stage 5 gate taken off Stage 0, the one change
 in this list the owner has not yet ruled.
 

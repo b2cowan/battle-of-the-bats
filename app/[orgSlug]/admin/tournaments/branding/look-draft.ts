@@ -46,12 +46,9 @@ export const ICON_SCALE_DEFAULT = 100;
 export function frameBodyOf(d: FrameBodyDraft, advanced: boolean, themeChanged: boolean, typeChanged: boolean) {
   const pages = { publicHiddenPages: normalizeHiddenPublicPages(d.publicHiddenPages), coachNamesShowOnPublic: d.coachNamesShowOnPublic };
   if (!advanced) return pages;
-  const theme = !themeChanged ? {}
-    : !d.own
-      ? { themePreset: null, themePrimary: null, themeAccent: null }
-      : d.presetKey === 'custom'
-        ? { themePreset: 'platform', themePrimary: d.customPrimary, themeAccent: d.customAccent }
-        : { themePreset: d.presetKey, themePrimary: null, themeAccent: null };
+  // The same encoding the preview reads (lookOfDraft), so what shows and what saves cannot drift.
+  const { themePreset, themePrimary, themeAccent } = lookOfDraft(d, null);
+  const theme = themeChanged ? { themePreset, themePrimary, themeAccent } : {};
   return {
     ...theme,
     ...(typeChanged ? { typeLook: d.typeKey } : {}),

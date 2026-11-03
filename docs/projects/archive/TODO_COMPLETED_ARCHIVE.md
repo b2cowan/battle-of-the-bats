@@ -989,3 +989,5 @@ All items below were already checked complete but had never been moved here (the
 
 
 - [x] 📅 House League 9d-3 — drawings brought into line with the signed-in-app end state (family calendar link withdrawn: asks 9d3·2 and 9d3·8; 9d3·3 re-asked; drawings republished to the same link 2026-10-29) and the direction logged through /strategy in BUSINESS_DECISIONS.md (Decided = owner direction only; Proposed and Open listed). Uncommitted — see docs/projects/active/HOUSE_LEAGUE_STAGE9D3_END_STATE_PROMPT.md
+
+- [x] 📱 Account sheet on a phone — the person icon opens a bottom sheet at ≤900 px on the tournament page, club bar, marketing bar and support console, and the building door moves into it as "Go to" rows; drawn and ruled 2026-11-01 (all five asks as recommended); built 2026-11-01; owner walk §441 complete 2026-11-01 (build uncommitted at that point; see docs/projects/active/ACCOUNT_SHEET_PHONE_BUILD_PROMPT.md)

@@ -65,7 +65,7 @@ import { OWN_ADDRESS_WORDS as OW } from '@/lib/own-address-screen-words';
 import { COACH_NAMES_WORDS as CW, coachNamesChoiceName } from '@/lib/coach-names-words';
 import { sanitizeCoachNamesPolicy, type CoachNamesPolicy } from '@/lib/coach-names-policy';
 import { sanitizeTournamentLookPolicy } from '@/lib/tournament-look';
-import { tournamentLookWords } from '@/lib/tournament-look-words';
+import { lookNounOf, tournamentLookWords } from '@/lib/tournament-look-words';
 import SitePreview from './SitePreview';
 import styles from './public-site.module.css';
 
@@ -456,7 +456,7 @@ export default function PublicSitePage() {
   const isOwner = userRole === 'owner';
   const on = currentOrg.isPublic;
   const noun = isClubPlan(currentOrg.planId) ? 'club' : currentOrg.planId === 'league' ? 'league' : 'organization';
-  const lookNoun = noun === 'league' ? 'league' : 'club';
+  const lookNoun = lookNounOf(currentOrg.planId);
   const tournamentLook = sanitizeTournamentLookPolicy(currentOrg.tournamentLookPolicy);
 
   const header = (

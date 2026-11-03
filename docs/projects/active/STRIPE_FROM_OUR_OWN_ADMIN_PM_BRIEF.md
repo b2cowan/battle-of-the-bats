@@ -56,8 +56,16 @@ Drawings: https://claude.ai/artifact/QJ3t9cHTLPski7xvL2uFcX (source `PLANS_PRICI
 - **Success looks like:** no bulk change or Production price switch runs on a session whose password is more than 10
   minutes old; every one produces an email or an "Owner email: not sent" row; no staff member types a password only
   to be refused.
-- **Owed by the owner:** turn on "Secure password change" in the sign-in service on both projects. Without it, someone
-  holding a copied session could set a new password and then pass the check (found in review, 2026-11-02).
+- **Done by the owner 2026-11-03:** both settings are on in dev and production; a new invite and a password reset were tried on dev and both worked. (Original note follows.) Turn on "Secure password change" in the sign-in service on both projects. Without it, someone
+  holding a copied session could set a new password and then pass the check (found in review, 2026-11-02). That setting
+  covers a session more than a day old only; "Require current password when changing password" closes the rest, once a
+  dev test shows invites and password resets still work with it on (2026-11-03).
+- **Walk owed:** Owner QA Ledger §446 (written 2026-11-03). **Next small build:** the change log cannot be edited
+  (O11, build prompt `PLANS_PRICING_STAGE0_O11_AUDIT_LOCK_BUILD_PROMPT.md`).
+- **Before Club goes on sale (owner ask, 2026-11-03):** one full Stripe test ↔ live reconciliation. Compare both Stripe
+  accounts and both of our databases, clean up what is old or inconsistent, and finish with a real purchase on production.
+  The live dispute events (O3) are done there. What existing customers pay is not looked back on (O5, ruled no). The first
+  live portal test (O6) is recommended for the day Stage 0 reaches production, and is repeated in the reconciliation.
 
 ## Priority and risk
 Start the planning session at the end of the billing project. The invoice list is the natural first deliverable. The bulk

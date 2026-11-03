@@ -291,27 +291,37 @@ export default function RainoutWindow({ seasonName, api, orgQuery, teamName, sch
         </SendRows>
 
         <p className={repKit.factsLabel}>{W.which}</p>
-        {places.length > 1 && (placeViews.length <= 3
-          ? <ViewSwitch views={placeViews} value={place} onChange={pickPlace} label={W.which} />
-          : (
-            <label className={ck.field}>
-              <span className={repKit.srOnly}>{W.which}</span>
-              <select className={ck.select} value={place} onChange={e => pickPlace(e.target.value)} disabled={busy}>
-                {placeViews.map(v => <option key={v.id} value={v.id}>{v.label}</option>)}
-              </select>
-            </label>
-          ))}
-        {listed.length === 0 ? <p className={ck.hint}>{W.none}</p> : (
-          <FormTable
-            ariaLabel={W.which}
-            leadLabel={W.colGame}
-            columns={[{ key: 'when', label: W.colWhen }]}
-            rows={rows}
-            groups={groups}
-            closing={{ label: total, cells: { when: '' }, phone: total }}
-          />
+        {places.length > 1 && (
+          <div className={r.placeRow}>
+            {placeViews.length <= 3
+              ? <ViewSwitch views={placeViews} value={place} onChange={pickPlace} label={W.which} />
+              : (
+                <label className={ck.field}>
+                  <span className={repKit.srOnly}>{W.which}</span>
+                  <select className={ck.select} value={place} onChange={e => pickPlace(e.target.value)} disabled={busy}>
+                    {placeViews.map(v => <option key={v.id} value={v.id}>{v.label}</option>)}
+                  </select>
+                </label>
+              )}
+          </div>
         )}
-        {list?.drafts.map(name => <p key={name} className={ck.hint}>{W.draft(phone ? shortDivision(name) : name)}</p>)}
+        {listed.length === 0 ? <p className={ck.hint}>{W.none}</p> : (
+          <div className={r.tableRow}>
+            <FormTable
+              ariaLabel={W.which}
+              leadLabel={W.colGame}
+              columns={[{ key: 'when', label: W.colWhen }]}
+              rows={rows}
+              groups={groups}
+              closing={{ label: total, cells: { when: '' }, phone: total }}
+            />
+          </div>
+        )}
+        {!!list?.drafts.length && (
+          <div className={r.draftNotes}>
+            {list.drafts.map(name => <p key={name} className={ck.hint}>{W.draft(phone ? shortDivision(name) : name)}</p>)}
+          </div>
+        )}
 
         {mail && <Statement lead={mail} rest={emailNow && sum && sum.emails > 0 ? W.sumCap : undefined} />}
 

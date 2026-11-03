@@ -117,8 +117,8 @@ describe('2a · closing with words typed asks in the foot (Q7, answers A and B)'
     assert.match(kit, /if \(asking && \(busy \|\| !dirty\)\) setAsking\(false\);/);
     assert.match(kit, /onClick=\{keepWriting\} disabled=\{busy\}/);
     // Discard is the red-tinted danger button, Keep writing the quiet outline (owner 2026-10-19: two outlines went unnoticed).
-    assert.match(kit, /className="btn btn-danger" onClick=\{onClose\} disabled=\{busy\}>\{WINDOW_ASK\.discard\}/);
-    assert.match(kit, /className="btn btn-outline" onClick=\{keepWriting\} disabled=\{busy\}>\{WINDOW_ASK\.keep\}/);
+    assert.match(kit, /className=\{`btn btn-danger \$\{styles\.askBtn\}`\} onClick=\{onClose\} disabled=\{busy\}>\{WINDOW_ASK\.discard\}/);
+    assert.match(kit, /className=\{`btn btn-outline \$\{styles\.askBtn\}`\} onClick=\{keepWriting\} disabled=\{busy\}>\{WINDOW_ASK\.keep\}/);
   });
 
   it('a window nested inside another owns its keys: one Escape never reaches the window behind it (/review)', () => {

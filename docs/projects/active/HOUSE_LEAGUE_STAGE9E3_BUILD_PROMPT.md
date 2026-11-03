@@ -78,8 +78,8 @@
   see the review report in the session summary (Undo race in mig 413, home-team swap on a scored game, the shared public-form
   throttle bucket, focus return after a save).
 - **Committed `5e09022ee` 2026-11-03** (46 files; mig 428 applied to DEV only, prod `pending`, apply BEFORE the promote, after 423
-  and 427; the schema snapshots in it describe 427 and 428). The owner's walk §447 ran before the review's changes: Part D (the
-  league admin) has no verdict yet, and the report/Keep/Correct steps are worth walking again. The dev-server restart (new files and
+  and 427; the schema snapshots in it describe 427 and 428). The owner's walk §447 ran before the review's changes and was marked
+  WALKED, COMPLETE 2026-11-03 on the owner's word (Part D had no ticks; its eight steps are closed by that word). The dev-server restart (new files and
   a changed database function) is still owed, asked first because 9e-2's walk may be using it. The dev-server restart
   (new files + mig) is still owed before the walk: ask first, 9e-2's walk §445 may be running on it.
 

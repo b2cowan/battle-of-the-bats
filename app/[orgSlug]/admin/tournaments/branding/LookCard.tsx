@@ -35,16 +35,13 @@ import { lookWords } from '@/lib/colour-words';
 import { clubLookOf } from '@/lib/public-site-builder';
 import { PUBLIC_SITE_WORDS as SITE_WORDS } from '@/lib/public-site-words';
 import { PUBLIC_SITE_WORDS as W } from '@/lib/tournament-settings-words';
-import { LOOK_PREVIEW_WORDS, PLAIN_LOOK_LINE, tournamentLookCardWords, type LookNoun } from '@/lib/tournament-look-words';
-import {
-  hasClubTournamentLook, resolveTournamentLook, sanitizeTournamentLookPolicy,
-  type TournamentFace,
-} from '@/lib/tournament-look';
+import { LOOK_PREVIEW_WORDS, PLAIN_LOOK_LINE, lookNounOf, tournamentLookCardWords } from '@/lib/tournament-look-words';
+import { hasClubTournamentLook, resolveTournamentLook, type TournamentFace } from '@/lib/tournament-look';
 import { publicFrameAttr, publicFrameBand, publicFrameRoleCss } from '@/lib/public-frame';
 import { hasRoundRobin } from '@/lib/tournament-phase';
 import { tournamentToday } from '@/lib/timezone';
 import type { FrameTabContent } from '@/lib/tournament-page-tabs';
-import type { PublicPageKey } from '@/lib/public-pages';
+import { withInviteOnlyPages, type PublicPageKey } from '@/lib/public-pages';
 import type { Organization, Tournament } from '@/lib/types';
 import { lookOfDraft, type LookDraft } from './look-draft';
 import css from './LookCard.module.css';
@@ -75,13 +72,13 @@ export default function LookCard({ org, tournament, draft: d, logoUrl, facts, in
   const [seed, setSeed] = useState({ primary: d.customPrimary, accent: d.customAccent });
 
   const clubLayer = hasClubTournamentLook(org);
-  const always = clubLayer && sanitizeTournamentLookPolicy(org.tournamentLookPolicy) === 'always_club';
-  const noun: LookNoun = org.planId === 'league' ? 'league' : 'club';
-  const words = tournamentLookCardWords(noun);
+  const words = tournamentLookCardWords(lookNounOf(org.planId));
   const custom = d.presetKey === 'custom';
+  const ownCustom = d.own && custom;
 
   const asSaved = lookOfDraft(d, logoUrl);
   const look = resolveTournamentLook(org, asSaved);
+  const always = look.policy === 'always_club';
   const font = FONT_OF[look.face];
   const colour = lookWords({ preset: look.preset, primary: look.primary, accent: look.accent, font });
   const typeName = SITE_WORDS.typeLooks[clubLookOf(font)];
@@ -91,15 +88,13 @@ export default function LookCard({ org, tournament, draft: d, logoUrl, facts, in
 
   // The band as families will see it: the real component, from the draft (lib/public-frame.ts).
   const band = publicFrameBand(org, { ...tournament, ...asSaved }, tournamentToday(), facts?.registrationOpen ?? false);
-  const hiddenPages: PublicPageKey[] = Array.from(new Set<PublicPageKey>([
-    ...d.publicHiddenPages,
-    ...(!hasRoundRobin(tournament) ? ['standings' as const] : []),
-    ...(inviteOnly ? ['register' as const] : []),
-  ]));
+  const withRegister = withInviteOnlyPages({ publicHiddenPages: d.publicHiddenPages }, inviteOnly).publicHiddenPages;
+  const hiddenPages: PublicPageKey[] = hasRoundRobin(tournament) || withRegister.includes('standings')
+    ? withRegister : [...withRegister, 'standings'];
 
   const club = resolveTheme(org.themePreset ?? null, org.themePrimary ?? null, org.themeAccent ?? null);
   const shownColours = resolveTheme(look.preset, look.primary, look.accent);
-  const own = custom && d.own ? { primary: d.customPrimary, accent: d.customAccent } : seed;
+  const own = ownCustom ? { primary: d.customPrimary, accent: d.customAccent } : seed;
 
   const preview = (
     <div className={css.preview}>
@@ -144,15 +139,15 @@ export default function LookCard({ org, tournament, draft: d, logoUrl, facts, in
               <h3 className={css.partTitle} id="t-look-colours">{words.coloursPart}</h3>
               <LookSwatches labelledBy="t-look-colours" idPrefix="t-look" hex
                 before={clubLayer && (
-                  <LookPill primary={club.primary} accent={club.accent} label={words.pill} on={!d.own}
+                  <LookPill primary={club.primary} accent={club.accent} label={words.pill} on={follows}
                     onClick={() => { setOwnOpen(false); if (d.own || d.typeKey !== null) onChange({ own: false, typeKey: null }); }} />
                 )}
-                chosenPreset={d.own && !custom ? d.presetKey : !clubLayer && !d.own ? 'platform' : null}
-                ownChosen={d.own && custom}
-                ownOpen={ownOpen || (d.own && custom)}
+                chosenPreset={d.own && !custom ? d.presetKey : look.source === 'plain' ? 'platform' : null}
+                ownChosen={ownCustom}
+                ownOpen={ownOpen || ownCustom}
                 onPreset={key => { setOwnOpen(false); onChange({ own: true, presetKey: key }); }}
                 onOwnToggle={() => {
-                  if (d.own && custom) return;
+                  if (ownCustom) return;
                   // Custom starts from the colours on show, so opening it to look changes nothing families see.
                   if (!ownOpen) setSeed({ primary: shownColours.primary.toUpperCase(), accent: shownColours.accent.toUpperCase() });
                   setOwnOpen(o => !o);

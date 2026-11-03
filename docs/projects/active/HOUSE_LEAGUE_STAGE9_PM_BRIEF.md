@@ -159,6 +159,16 @@ gets sign-ups and money ready for online payment, which is the stage after this 
    is where it is, and a wet evening is one action. Priority: standings first (the season-end work freezes that table).
    Whether the rainout is a paid-plan feature is a question for /strategy, not decided.
 9. **9f · Season end.** Finishing a season, looking back at past seasons, and starting next season from this one.
+   *Status 2026-11-03:* drawn, seventeen asks open (plan §0j). Proposed: the convenor's **New season** window gains "Start
+   from last season". It brings the season's settings, its age groups (born years moved up a year), team names and practice
+   settings, with the dates moved to the same weekdays next year. It never brings families, money, games or the club's time, and it
+   leaves last season exactly as it was. Coaches come only if the convenor ticks them, and nobody is invited until teams are
+   published. A finished season reads as one state, "Finished": Archive is retired. Families see "Final standings" only once the
+   club has completed the season. A coach keeps "Final place: 2nd of 6" for the 30 days their page lasts. The Complete and Reopen
+   windows say player ratings are erased. Why it matters: a club runs this league every year, and today it re-types every age
+   group, price and team by hand. Success: next season set up in one window and a check of each line, with nothing from last year's
+   families leaking in. Priority: the small "finished, honestly" build first, then Start next season. Whether Start next season is
+   a paid-plan feature is for /strategy, not decided.
 
 ## Who it affects
 

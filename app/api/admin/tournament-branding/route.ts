@@ -77,8 +77,22 @@ export const GET = withObservability(async (req: Request) => {
   // For the App Icon control: auto-sample the colour the icon would use by default.
   // The icon resolves the effective logo as tournament logo → org logo, so mirror that
   // fallback here. Only worth computing for plans that can use advanced branding.
+  const advanced = hasPlanFeature(ctx.org.planId, 'advanced_tournament_branding');
+
+  // Public tournament pages Stage 1a Part 3: the preview switch decides which Branding page draws (switch off, today's),
+  // and under it the Look card's band preview needs the two facts the band reads from the event's records. Nothing is
+  // skipped: the draft can switch a hidden page back on before it saves. The card draws only on a plan with advanced
+  // branding, so no other plan pays for the read; it starts now and runs beside the logo sampling below.
+  const frameOn = await isPublicFrameOn();
+  const bandRead = frameOn && advanced
+    ? publicFrameBandFacts(
+      { id: tournamentId, status: data.status, startDate: data.start_date, endDate: data.end_date, championsCrownedAt: data.champions_crowned_at },
+      { register: false, news: false, rules: false },
+    ).catch(() => null)
+    : Promise.resolve(null);
+
   let iconBgSuggested: string | null = null;
-  if (hasPlanFeature(ctx.org.planId, 'advanced_tournament_branding')) {
+  if (advanced) {
     let effectiveLogo = data.logo_url as string | null;
     if (!effectiveLogo) {
       const { data: orgRow } = await supabaseAdmin
@@ -88,16 +102,7 @@ export const GET = withObservability(async (req: Request) => {
     iconBgSuggested = await suggestIconBg(effectiveLogo);
   }
 
-  // Public tournament pages Stage 1a Part 3: the preview switch decides which Branding page draws (switch off, today's),
-  // and under it the Look card's band preview needs the two facts the band reads from the event's records. Nothing is
-  // skipped: the draft can switch a hidden page back on before it saves.
-  const frameOn = await isPublicFrameOn();
-  const band = frameOn
-    ? await publicFrameBandFacts(
-      { id: tournamentId, status: data.status, startDate: data.start_date, endDate: data.end_date, championsCrownedAt: data.champions_crowned_at },
-      { register: false, news: false, rules: false },
-    ).catch(() => null)
-    : null;
+  const band = await bandRead;
 
   return NextResponse.json({
     logoUrl:                  data.logo_url,

@@ -1,0 +1,1482 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>House League 9f Drawings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700;800&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) that holds captures of today's product and true-size
+   specimens of the club admin kit. Chrome and specimens deliberately do not share a ground.
+   Source of truth: docs/projects/active/HOUSE_LEAGUE_STAGE9_HUB.html ({{IMG:…}} placeholders);
+   the build (.probe/hl/build.mjs) inlines the captures. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+.doc{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:16px 90px}
+@media (max-width:600px){.doc{padding-inline:16px}}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:24px;margin:44px 0 8px;letter-spacing:-.01em;scroll-margin-top:70px}
+.doc h3{font-size:18px;margin:24px 0 6px}
+.doc p,.doc li{max-width:82ch}
+.muted{color:var(--muted)} .mo{font-family:var(--f-mono)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16.5px;max-width:82ch}
+/* top tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+.tabs .sp{flex:1}
+.thm{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.thm button{border-radius:0;min-height:36px;font-size:13px}
+.thm button[aria-pressed="true"]{background:var(--surface);color:var(--ink)}
+section.pane[hidden]{display:none}
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);margin:14px 0}
+.card h3{margin-top:0}
+.card ul,.card ol{margin:6px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--fix);border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.push{border-left-color:var(--ask)}
+.verdict h3{margin:0 0 6px}
+.verdict ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+/* station */
+.st{border-top:2px solid var(--line);padding-top:8px;margin-top:40px}
+.st>h2{margin-top:6px}
+.st .who{font-size:13.5px;color:var(--muted);margin:0 0 10px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:20px;align-items:start;margin:10px 0}
+@media (max-width:1000px){.cols{grid-template-columns:minmax(0,1fr)}}
+.cols>*{min-width:0}
+.shot{border-radius:10px;outline:1px solid var(--line);box-shadow:var(--shadow);background:var(--surface);overflow:hidden;position:relative}
+.shot .sc{max-height:520px;overflow:auto}
+.shot.open .sc{max-height:none}
+.shot img{display:block;width:100%;height:auto;max-width:none}
+.shot.desk img{min-width:0}
+.shot .bar{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 10px;border-top:1px solid var(--line);font:600 12px/1.3 var(--f-mono);color:var(--muted);background:var(--surface-2)}
+.shot .bar button{font:600 12px/1 var(--f-doc);min-height:30px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);cursor:pointer}
+.ph-shot{width:390px;max-width:100%}
+.meas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:8px;margin:10px 0}
+.meas div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.meas b{display:block;font:700 18px/1.2 var(--f-mono);font-variant-numeric:tabular-nums}
+.meas span{font-size:12.5px;color:var(--muted)}
+.meas .bad b{color:var(--flag)} .meas .ok b{color:var(--fix)}
+.read{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+@media (max-width:900px){.read{grid-template-columns:minmax(0,1fr)}}
+.read>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.read h4{margin:0 0 6px;font:700 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.read .w h4{color:var(--fix)} .read .g h4{color:var(--flag)} .read .c h4{color:var(--t-res)}
+.read ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+/* flags + tags */
+.fl{font:700 11px/1 var(--f-mono);letter-spacing:.03em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid var(--flag);color:var(--flag);background:var(--flag-soft);min-height:24px;vertical-align:1px;white-space:nowrap}
+.fl.fix{border-color:var(--fix);color:var(--fix);background:var(--fix-soft)}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:22px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)}
+.mk.s{color:var(--ask)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;box-sizing:border-box;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted);max-width:90ch;margin:4px 0}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:52px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{color:var(--ink);padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.y{color:var(--fix);font-weight:700} .x{color:var(--flag);font-weight:700}
+/* paste */
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:260px;font:12.5px/1.5 var(--f-mono)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+/* dialog */
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:17px;flex:1}
+dialog.note .x{font-size:22px;line-height:1;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px;display:flex;flex-direction:column;gap:10px}
+dialog.note .nb h4{margin:0;font:700 11px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+dialog.note .nb p{margin:0}
+
+/* ===== the product kit, for specimens (Warm default; .dk = Dark) ===== */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.22);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#B03A22;--amber:#835006;--amber-soft:#FBEFD9;--green:#34662A;--green-soft:#E6F0E2;--blue:#1D4A8A;--blue-soft:#E3ECF8;--grid:rgba(70,55,30,.06);--dimbg:rgba(36,30,21,.28);
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative;text-align:left}
+.ak.dk{--paper:#0A0A0A;--card:#141A22;--ink:#F1F5F9;--soft:rgba(255,255,255,.72);--dim:rgba(255,255,255,.55);--line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.18);
+  --olive:#D9F99D;--olive-soft:rgba(217,249,157,.12);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#F08A74;--amber:#F2B55A;--amber-soft:rgba(242,181,90,.14);--green:#9BD58C;--green-soft:rgba(155,213,140,.13);--blue:#9CC2F5;--blue-soft:rgba(156,194,245,.13);--grid:rgba(255,255,255,.03);--dimbg:rgba(0,0,0,.6)}
+.ak *{box-sizing:border-box}
+.dt-wrap{overflow-x:auto;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);max-width:100%;margin:8px 0}
+.dt{width:1440px}
+.ph{width:390px;max-width:100%;flex:none;border-radius:18px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow)}
+.ak .tb{display:flex;align-items:center;gap:10px;height:48px;padding:0 20px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .tb .lg{width:18px;height:18px;background:var(--olive);border-radius:4px}
+.ak .tb .ar{font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--dim);border-left:1px solid var(--line2);padding-left:12px;margin-left:4px}
+.ak .tb .sp{flex:1}
+.ak .tb .ic{width:30px;height:30px;border-radius:50%;border:1px solid var(--line2)}
+.ak .shell{display:flex;min-height:760px}
+.ak .sb{width:240px;flex:none;background:var(--card);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .it{font:500 14px/1 'Inter';color:var(--soft);padding:10px;border-radius:7px;display:flex;align-items:center;gap:8px;min-height:38px}
+.ak .sb .it.sub{padding-left:26px;font-size:13.5px}
+.ak .sb .it.on{background:var(--olive-soft);color:var(--ink);font-weight:650}
+.ak .sb .grp{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:14px 10px 6px}
+.ak .sb .sw{margin:4px 10px 6px 26px;border:1px solid var(--line2);border-radius:7px;padding:8px 10px;font:600 13px/1.2 'Inter';display:flex;justify-content:space-between;align-items:center;background:var(--paper)}
+.ak .chev{width:8px;height:8px;border:solid var(--dim);border-width:0 2px 2px 0;transform:rotate(45deg);margin-top:-4px;flex:none}
+.ak .mn{flex:1;min-width:0;padding:22px 0 60px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px}
+.ak .pg{width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.ak .ey{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.ak .ph1{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.ak .ph1 h1{font:700 28px/1.1 'Barlow Condensed',sans-serif;margin:2px 0 0;letter-spacing:.005em}
+.ak .ph1 .sp{flex:1}
+.ak .sub{color:var(--soft);font-size:14px;margin:4px 0 0}
+.ak .btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line2);background:var(--card);font:600 14px/1 'Inter';color:var(--ink);white-space:nowrap}
+.ak .btn.pri{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.ak .btn.dng{color:var(--red)}
+.ak .btn.ic{width:44px;padding:0;justify-content:center}
+.ak .pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 'Inter';border-radius:999px;padding:5px 10px;border:1px solid var(--line2);color:var(--soft);white-space:nowrap}
+.ak .pill.live{color:var(--green);background:var(--green-soft);border-color:transparent}
+.ak .pill.reg{color:var(--blue);background:var(--blue-soft);border-color:transparent}
+.ak .pill.wait{color:var(--amber);background:var(--amber-soft);border-color:transparent}
+.ak .pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.ak .panel{background:var(--card);border:1px solid var(--line);border-radius:10px}
+.ak .panel>.hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.ak .panel>.hd h2{font:700 16px/1.2 'Inter';margin:0;flex:1}
+.ak .rows .r{display:flex;align-items:center;gap:14px;padding:12px 16px;min-height:64px;border-top:1px solid var(--line)}
+.ak .rows .r:first-child{border-top:0}
+.ak .rows .r .m{flex:1;min-width:0}
+.ak .rows .r b{font:650 15px/1.3 'Inter';display:block}
+.ak .rows .r .d{font-size:13px;color:var(--soft);margin-top:2px}
+.ak .rows .r .u{font:500 12px/1.3 'IBM Plex Mono',monospace;color:var(--dim);margin-top:3px}
+.ak .band{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .band>div{padding:12px 16px;border-left:1px solid var(--line);min-width:0}
+.ak .band>div:first-child{border-left:0}
+.ak .band .k{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.ak .band .v{font:700 22px/1.2 'Inter';font-variant-numeric:tabular-nums;margin-top:4px}
+.ak .band .v.am{color:var(--amber)}
+.ak .band .h{font-size:12px;color:var(--soft)}
+.ak table.kt{width:100%;border-collapse:collapse;font-size:14px;color:var(--ink)}
+.ak table.kt td{color:var(--ink)}
+.ak table.kt th{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);text-align:left;padding:10px 16px;border-bottom:1px solid var(--line)}
+.ak table.kt td{padding:12px 16px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.ak table.kt tr:last-child td{border-bottom:0}
+.ak .meter{height:6px;border-radius:3px;background:var(--line);overflow:hidden;width:110px;display:inline-block;vertical-align:middle;margin-right:8px}
+.ak .meter i{display:block;height:100%;background:var(--olive)}
+.ak .rare{font-size:13.5px;color:var(--soft);display:flex;gap:10px;align-items:center;padding:6px 2px}
+.ak .rare a{color:var(--soft);text-decoration:underline;font-weight:600}
+.ak .fold{display:flex;align-items:center;gap:10px;padding:14px 16px;min-height:56px}
+.ak .fold b{flex:1;font:650 15px/1.2 'Inter'}
+.ak .amb{display:inline-flex;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--amber-soft);color:var(--amber);font:700 12px/22px 'Inter';justify-content:center}
+.ak .lnk{color:var(--olive);font-weight:650;text-decoration:none}
+/* phone frame */
+.ak .pbar{height:52px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .pbar .sp{flex:1}
+.ak .pin{padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.ak .ptabs{display:flex;gap:6px;overflow-x:auto;padding:0 16px 10px;border-bottom:1px solid var(--line);scrollbar-width:none;background:var(--card)}
+.ak .pswitch{display:flex;align-items:center;gap:8px;padding:12px 16px 10px;background:var(--card)}
+.ak .pswitch .t{flex:1;min-width:0}
+.ak .pswitch .t b{font:700 22px/1.1 'Barlow Condensed',sans-serif;display:block}
+.ak .bnav{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--card);height:62px}
+.ak .bnav span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 11px/1 'Inter';color:var(--soft)}
+.ak .bnav span i{width:20px;height:20px;border-radius:5px;border:1.5px solid currentColor;display:block}
+.ak .bnav span.on{color:var(--olive)}
+/* window */
+.ak.win{padding:40px 28px;background:var(--dimbg)}
+.ak .dlg{background:var(--card);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);max-width:480px;margin:0 auto;display:flex;flex-direction:column}
+.ak .dlg .dh{display:flex;align-items:center;padding:16px 18px 6px}
+.ak .dlg .dh h4{font:700 17px/1.3 'Inter';margin:0;flex:1}
+.ak .dlg .dh .xx{font-size:22px;color:var(--dim);width:44px;text-align:center}
+.ak .dlg .db{padding:4px 18px 16px;display:flex;flex-direction:column;gap:10px;color:var(--soft);font-size:14px}
+.ak .dlg .db ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.ak .dlg .df{display:flex;align-items:center;gap:10px;padding:12px 18px;border-top:1px solid var(--line)}
+.ak .dlg .df .s{flex:1;font-size:13px;color:var(--dim)}
+/* public face (club site), fixed light like the product */
+.pub{background:#F5F4F0;color:#1B1B1B;font:15px/1.5 'Inter',system-ui,sans-serif}
+.pub .nv{background:#1F3A8A;color:#fff;display:flex;align-items:center;gap:22px;padding:0 24px;height:64px;font:700 20px/1 'Barlow Condensed',sans-serif}
+.pub .nv span{font:600 15px/1 'Inter'} .pub .nv .on{border-bottom:2px solid #fff;padding-bottom:6px}
+.pub .in{max-width:1000px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:14px}
+.pub h3{font:700 17px/1.2 'Inter';margin:6px 0 0}
+.pub .rw{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:14px 16px;display:flex;align-items:center;gap:12px;min-height:64px}
+.pub .rw .m{flex:1;min-width:0} .pub .rw b{display:block;font:650 16px/1.3 'Inter'} .pub .rw .d{font-size:13.5px;color:#555}
+.pub .tag{font:600 12px/1 'Inter';padding:5px 9px;border-radius:999px;background:#E3ECF8;color:#1D4A8A}
+.pub .tag.g{background:#E6F0E2;color:#34662A}
+.pub .lk{font:600 14px/1 'Inter';color:#1F3A8A}
+/* design-review additions (2026-10-24) */
+.dt-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:6px 0}
+.dt-wrap.fit .dt{zoom:var(--z,1)}
+.ak .ptabs>span{flex:none;font:600 14px/1 'Inter';color:var(--soft);padding:0 14px;min-height:44px;display:inline-flex;align-items:center;border-radius:999px;border:1px solid var(--line2)}
+.ak .ptabs>span.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ak .ptabs .on .amb{background:var(--amber);color:var(--paper)}
+.ak.ph-in .btn,.ak.ph-in .btn.ic{min-height:44px}
+.ak.ph-in .btn.ic{border-color:transparent;background:none}
+.ak .utabs{display:flex;gap:18px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.ak .utabs span{flex:none;min-height:44px;display:inline-flex;align-items:center;gap:6px;font:600 14px/1 'Inter';color:var(--soft);border-bottom:2px solid transparent}
+.ak .utabs span.on{color:var(--ink);border-bottom-color:var(--olive)}
+.ak .utabs .c{font:700 11px/1 'Inter';background:var(--olive-soft);border-radius:999px;padding:3px 7px}
+.ak .ico{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ak .band .mk,.ak th .mk,.ak .sb .it .mk{position:absolute;top:3px;right:3px}
+.ak .band>div,.ak th,.ak .sb .it{position:relative}
+.ak .sb .blk{margin-left:18px;border-left:2px solid var(--line2);padding-left:4px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .blk .it.sub{padding-left:14px}
+.ak .sb .it i{width:16px;height:16px;border:1.5px solid currentColor;border-radius:4px;opacity:.6;flex:none}
+.ak .sb .it .mk{top:8px}
+.ak .fsw{display:flex;flex-direction:column;min-height:700px;background:var(--card)}
+.ak .fsw .fh{display:flex;align-items:center;gap:6px;height:56px;padding:0 6px;border-bottom:1px solid var(--line);font:700 16px/1.2 'Inter'}
+.ak .fsw .fb{padding:16px;display:flex;flex-direction:column;gap:10px;color:var(--soft);font-size:15px;flex:1}
+.ak .fsw .fb ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.ak .fsw .ff{border-top:1px solid var(--line);padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.ak .fsw .ff .s{font-size:13px;color:var(--dim)}
+.ak .fsw .ff .bb{display:flex;gap:10px;justify-content:flex-end}
+.pub .rw .lk{min-height:44px;display:inline-flex;align-items:center}
+.pub .hdr{display:flex;align-items:center;gap:12px;font:700 20px/1 'Barlow Condensed',sans-serif}
+.pub .mono{width:40px;height:40px;border-radius:8px;background:#fff;color:#1F3A8A;display:grid;place-items:center;font:700 14px/1 'Inter'}
+.pub .si{margin-left:auto;font:600 15px/1 'Inter'}
+.pub .cols2{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px}
+.pub .chev{width:9px;height:9px;border:solid #555;border-width:0 2px 2px 0;transform:rotate(-45deg);flex:none}
+.pub .rw2{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.pub .rw2 .top{display:flex;align-items:center;gap:10px;min-height:44px}
+.pub .rw2 .top b{flex:1;font:650 16px/1.3 'Inter'}
+.pub .rw2 .ln{display:flex;gap:18px}
+table.t.stick td:first-child,table.t.stick th:first-child{position:sticky;left:0;background:var(--surface);z-index:1}
+table.t td.no{color:var(--muted)}
+.spec{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin:10px 0}
+.spec>.col{min-width:0;display:flex;flex-direction:column;gap:8px;max-width:100%}
+.sp-cap{font:600 12px/1.35 var(--f-mono);letter-spacing:.04em;color:var(--muted);margin:0}
+.ann{position:absolute;z-index:3}
+</style>
+<style>
+/* 9c round additions, carried (2026-10-25) */
+.ak .fld{display:inline-flex;align-items:center;min-height:40px;padding:0 10px;border:1px solid var(--line2);border-radius:8px;background:var(--card);font:500 14px/1.3 'Inter';color:var(--ink);min-width:72px}
+.ak .fld.wide{flex:1;min-width:0;display:flex}
+.ak .fld.empty{color:var(--dim)}
+.ak .hint{font-size:12.5px;color:var(--dim);margin:0;line-height:1.45}
+.ak .dim,.ak .d2{color:var(--dim);font-size:12.5px}
+.ak .facts2{padding:14px 16px;display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px 20px;font-size:14px;align-items:baseline}
+.ak .facts2>span:nth-child(odd){color:var(--dim)}
+.ak .bulk{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:var(--ink);color:var(--paper)}
+.ak .bulk .btn{background:transparent;color:var(--paper);border-color:rgba(255,255,255,.35)}
+.ak.dk .bulk{background:var(--olive-soft);color:var(--ink)}
+.ak.dk .bulk .btn{color:var(--ink);border-color:var(--line2)}
+.ak .bulk .sp{flex:1}
+.ak .note{background:var(--amber-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:13.5px;line-height:1.45}
+.ak .note.blue{background:var(--blue-soft)}
+.ak .note.green{background:var(--green-soft)}
+.ak .lnk{color:var(--olive);font-weight:650;text-decoration:none}
+.ak .panel,.ak .dlg .db{overflow-x:auto}
+.ak .dlg,.ak .panel{min-width:0;max-width:100%}
+.ak.win{max-width:100%}
+.ak .dlg .df{flex-wrap:wrap}
+.ak .ph1 h1{font:700 26px/1.15 'Inter',system-ui,sans-serif;letter-spacing:0}
+.ak .pswitch .t b{font:700 18px/1.2 'Inter',system-ui,sans-serif}
+.mail{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;max-width:560px}
+.mail .mh{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface-2);font-size:14px;display:flex;flex-direction:column;gap:2px}
+.mail .mb{padding:14px 16px;font-size:14px;line-height:1.55;display:flex;flex-direction:column;gap:10px}
+.mail .mb p{margin:0}
+.mail .club{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#1F3A8A;color:#fff;font:700 15px/1 'Inter',sans-serif}
+.mail .club .mono{width:30px;height:30px;border-radius:6px;background:#fff;color:#1F3A8A;display:grid;place-items:center;font:700 12px/1 'Inter',sans-serif}
+.mail .foot{padding:10px 16px 14px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.mail .foot u{color:var(--muted)}
+.mail .newv{background:var(--fix-soft);border-radius:4px;padding:0 4px;margin-left:-4px}
+.cap{font-size:13.5px;color:var(--muted);max-width:92ch;margin:6px 0 0}
+table.t.gate td:not(:first-child),table.t.gate th:not(:first-child){text-align:center}
+table.t.gate td.co,table.t.gate th.co{background:var(--fix-soft)}
+.edges{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px;margin:12px 0}
+.edges>.card{margin:0;min-width:0}
+.edges .card h3{font-size:16px}
+.rec-line{font-size:14px;margin:8px 0 0}
+.rec-line b{color:var(--fix)}
+/* 9d-1 round (2026-10-26): the composer */
+.ak .mn{position:relative}
+.ak .shell:has(.ov){min-height:1020px}
+.ak .ov{position:absolute;inset:0;background:rgba(24,22,14,.42);display:flex;justify-content:center;align-items:flex-start;padding-top:36px;z-index:2}
+.ak .ov .dlg{width:640px;max-width:calc(100% - 32px);margin:0}
+.ak .dlg .ey,.ak .fsw .ey{font:700 11px/1.2 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);display:block}
+.ak .dlg .dh{align-items:flex-start;padding:18px 18px 8px 24px}
+.ak .dlg .dh .tt{flex:1;display:flex;flex-direction:column;gap:4px}
+.ak .dlg .dh .tt h4{flex:none}
+.ak .dlg .db{padding:6px 24px 18px;gap:12px}
+.ak .dlg .df{padding:14px 24px}
+.ak .stmt{border-left:3px solid var(--olive);background:var(--card);border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0 8px 8px 0;padding:10px 14px;font:600 13.5px/1.45 'Inter';color:var(--ink)}
+.ak .lbl{font:700 11px/1.2 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin:2px 0 -4px}
+.ak .flbl{font:600 13px/1.2 'Inter';color:var(--ink);margin:2px 0 -6px}
+.ak .who{border:1px solid var(--line2);border-radius:10px;background:var(--card);overflow:hidden}
+.ak .who .o{display:flex;gap:12px;align-items:flex-start;padding:11px 14px;border-top:1px solid var(--line);min-height:44px;box-sizing:border-box}
+.ak .who .o:first-child{border-top:0}
+.ak .who .o .rd{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line2);flex:none;margin-top:1px;box-sizing:border-box}
+.ak .who .o.on .rd{border:5px solid var(--olive)}
+.ak .who .o .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ak .who .o b{font:500 14.5px/1.3 'Inter';color:var(--ink)}
+.ak .who .o .d{font-size:12.5px;color:var(--soft)}
+.ak .who .o .n{font:600 13px/1.3 'Inter';color:var(--soft);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ak .who .sub{padding:4px 14px 12px 44px;display:flex;flex-wrap:wrap;gap:6px}
+.ak .chipk{display:inline-flex;align-items:center;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--line2);font:600 13px/1 'Inter';color:var(--soft);background:var(--card)}
+.ak .chipk.on{background:var(--olive-soft);border-color:var(--olive);color:var(--ink)}
+.ak .chipk.no{border-style:dashed;color:var(--dim)}
+.ak.ph-in .chipk{min-height:44px}
+.ak .tx{width:100%;min-height:40px;border:1px solid var(--line2);border-radius:8px;background:var(--paper);padding:9px 12px;font:500 14px/1.4 'Inter';color:var(--ink);box-sizing:border-box}
+.ak .tx.ta{min-height:120px;white-space:pre-line}
+.ak .tx.ph{color:var(--dim)}
+.ak .lime{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.ak .fixedto{display:flex;gap:12px;align-items:center;border:1px solid var(--line2);border-radius:10px;padding:12px 14px;background:var(--card)}
+.ak .fixedto .m{flex:1;min-width:0}
+.ak .fixedto b{font:600 14.5px/1.3 'Inter';display:block}
+.ak .fixedto .d{font-size:12.5px;color:var(--soft)}
+.ak .allow{display:inline-flex;align-items:center;gap:6px;font:600 12.5px/1.2 'Inter';color:var(--soft)}
+.ak .allow .pips{display:inline-flex;gap:3px}
+.ak .allow .pips i{width:8px;height:8px;border-radius:50%;background:var(--olive);display:block}
+.ak .allow .pips i.u{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line2)}
+.ak .held{background:var(--amber-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font:500 13.5px/1.45 'Inter';flex:1;min-width:220px}
+.ak .tagA{display:inline-flex;align-items:center;font:700 10.5px/1 'Inter';letter-spacing:.02em;border-radius:999px;padding:4px 8px;background:var(--blue-soft);color:var(--blue);white-space:nowrap}
+.ak .tagO{display:inline-flex;align-items:center;font:700 10.5px/1 'Inter';border-radius:999px;padding:4px 8px;background:var(--paper);border:1px solid var(--line2);color:var(--dim);white-space:nowrap}
+.ak .warnc{display:inline-flex;align-items:center;font:700 10.5px/1 'Inter';border-radius:999px;padding:4px 8px;background:var(--amber-soft);color:var(--amber);white-space:nowrap}
+.ak table.kt td .sm{display:block;font-size:12.5px;color:var(--dim);margin-top:2px}
+.ak table.kt tr.div td{background:var(--paper);font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);padding:8px 16px}
+.ak table.kt tr.old td{color:var(--soft)}
+.ak .lrow{display:flex;gap:10px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);min-height:56px}
+.ak .lrow:first-child{border-top:0}
+.ak .lrow .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ak .lrow b{font:600 14.5px/1.3 'Inter'}
+.ak .lrow .d{font-size:12.5px;color:var(--soft)}
+.ak .lrow .r{font:600 13px/1.3 'Inter';color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums;text-align:right}
+.ak .empt{padding:28px 20px;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center;color:var(--soft);font-size:14px}
+.ak .empt b{font:650 16px/1.3 'Inter';color:var(--ink)}
+.ak .fsw .fb .lbl{margin-top:4px}
+.ak .fsw .ff .s{line-height:1.45}
+.ak .fsw .ff .bb .btn{min-height:44px}
+.optgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin:12px 0}
+.optgrid .card{margin:0}
+.optgrid .card.rec{outline:2px solid var(--fix)}
+.optgrid .card h3{font-size:16px;margin-top:0}
+.optgrid .card ul{padding-left:18px;margin:6px 0 0;display:flex;flex-direction:column;gap:5px;font-size:14px}
+.bn{font-size:14px}
+.bn li{margin:4px 0}
+</style>
+<style>
+/* /design pass 2026-10-26 */
+.ak .dlg .lnk,.ak .fsw .lnk{text-decoration:underline;text-underline-offset:3px}
+.ak table.kt td:first-child,.ak table.kt td:last-child{white-space:nowrap}
+@media (max-width:640px){
+  .ak .dlg .df{flex-wrap:wrap}
+  .ak .dlg .df .s,.ak .dlg .df .held,.ak .dlg .df .note{flex:1 0 100%;min-width:0}
+  .ak .dlg .df{justify-content:flex-end}
+  .ak .chipk{min-height:44px}
+}
+</style>
+
+<style>
+/* 9d-2 round (2026-10-26): the schedule */
+.ak .seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;background:var(--card)}
+.ak .seg span{min-height:38px;display:inline-flex;align-items:center;padding:0 12px;font:600 13.5px/1 'Inter';color:var(--soft);border-left:1px solid var(--line2)}
+.ak .seg span:first-child{border-left:0}
+.ak .seg span.on{background:var(--olive-soft);color:var(--ink)}
+.ak .scope{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 12px 0 14px;border-radius:999px;background:var(--olive);color:var(--paper);font:650 14px/1 'Inter';white-space:nowrap}
+.ak.dk .scope{color:#141A22}
+.ak .scope .chev{border-color:currentColor}
+.ak .tbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ak .tbar .sp{flex:1}
+.ak .hb{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 12px;border-radius:8px;border:1px solid var(--line2);background:var(--card);font:600 14px/1 'Inter';color:var(--ink);white-space:nowrap}
+.ak .hb .sc{font:700 15px/1 'Inter';font-variant-numeric:tabular-nums}
+.ak .hb .sc.am{color:var(--amber)} .ak .hb .sc.gd{color:var(--green)}
+.ak .stl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13.5px;color:var(--soft)}
+.ak table.kt tr.wk td{background:var(--paper);font:650 13px/1.3 'Inter';color:var(--ink);padding:9px 16px}
+.ak table.kt tr.wk td .d2{font-weight:500;margin-left:8px}
+.ak table.kt tr.now td{padding:0;border-bottom:0}
+.ak .nowl{display:flex;align-items:center;gap:8px;font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--olive);padding:6px 16px}
+.ak .nowl::after{content:"";flex:1;height:2px;background:var(--olive);border-radius:2px}
+.ak table.kt td.tm{width:170px;color:var(--soft);white-space:nowrap}
+.ak table.kt td.tm b{color:var(--ink);font-weight:600;display:block}
+.ak table.kt td.gm b{font-weight:600}
+.ak table.kt td.st{text-align:right;white-space:nowrap}
+.ak .w-final{font:600 13px/1 'Inter';color:var(--ink)}
+.ak .w-final .s{font-variant-numeric:tabular-nums;margin-left:6px}
+.ak .w-st{font:650 12.5px/1 'Inter';white-space:nowrap}
+.ak .w-st.cx{color:var(--red)} .ak .w-st.pp{color:var(--amber)} .ak .w-st.mv{color:var(--blue)} .ak .w-st.dr{color:var(--dim)}
+.ak tr.cxr td.gm b,.ak tr.cxr td.tm b{text-decoration:line-through;text-decoration-thickness:1.5px;color:var(--soft)}
+.ak .src{display:inline-flex;align-items:center;gap:6px;font:600 12px/1.2 'Inter';color:var(--olive);background:var(--olive-soft);border-radius:999px;padding:4px 9px;white-space:nowrap}
+.ak .day{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:4px}
+.ak .day b{flex:1;text-align:center;font:650 15px/1.2 'Inter'}
+.ak .prow{display:flex;gap:12px;padding:12px 14px;border-top:1px solid var(--line);min-height:64px;align-items:flex-start}
+.ak .prow:first-child{border-top:0}
+.ak .prow .t{width:74px;flex:none;font:600 14px/1.3 'Inter';font-variant-numeric:tabular-nums}
+.ak .prow .t .d2{display:block;font-weight:500}
+.ak .prow .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ak .prow .m b{font:600 15px/1.3 'Inter'}
+.ak .prow .m .d{font-size:13px;color:var(--soft)}
+.ak .prow.cxr .m b{text-decoration:line-through;color:var(--soft)}
+.ak .sec{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.ak .sec h5{margin:0;font:650 15px/1.3 'Inter';color:var(--ink);display:flex;align-items:center;gap:8px}
+.ak .sec h5 .d2{font-weight:500}
+.ak .ckl{display:flex;flex-direction:column;gap:2px}
+.ak .ckl .o{display:flex;gap:10px;align-items:center;min-height:40px;font-size:14px;color:var(--ink)}
+.ak .ckl .o .bx{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--line2);flex:none;display:grid;place-items:center}
+.ak .ckl .o.on .bx{background:var(--olive);border-color:var(--olive)}
+.ak .ckl .o.on .bx::after{content:"";width:8px;height:4px;border:solid var(--paper);border-width:0 0 2px 2px;transform:rotate(-45deg) translate(1px,-1px)}
+.ak.dk .ckl .o.on .bx::after{border-color:#141A22}
+.ak .ckl .o .n{margin-left:auto;color:var(--soft);font-size:13px}
+.ak .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ak.ph-in .grid2{grid-template-columns:minmax(0,1fr)}
+.ak .fcol{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ak .res{border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--ink)}
+.ak .res b{font:650 14.5px/1.35 'Inter'}
+.ak .res ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.ak .res.ok{background:var(--green-soft)} .ak .res.warn{background:var(--amber-soft)} .ak .res.block{background:rgba(176,58,34,.10)}
+.ak.dk .res.block{background:rgba(240,138,116,.13)}
+.ak .res .lnk,.ak .iss .lnk,.ak .quiet .lnk{text-decoration:underline;text-underline-offset:3px}
+.ak .quiet{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--soft);line-height:1.45}
+.ak .quiet .ico{width:15px;height:15px;margin-top:2px}
+.ak .tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+.ak .tiles>div{padding:12px 14px;border-left:1px solid var(--line);min-width:0}
+.ak .tiles>div:first-child{border-left:0}
+.ak .tiles .k{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.ak .tiles .v{font:700 20px/1.2 'Inter';font-variant-numeric:tabular-nums;margin-top:4px}
+.ak .tiles .h{font-size:12px;color:var(--soft)}
+.ak .tiles .v.am{color:var(--amber)}
+.ak.ph-in .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ak.ph-in .tiles>div:nth-child(3){border-left:0}
+.ak.ph-in .tiles>div:nth-child(n+3){border-top:1px solid var(--line)}
+.ak .score{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.ak .score .n{font:700 34px/1 'Inter';font-variant-numeric:tabular-nums}
+.ak .score .n.am{color:var(--amber)} .ak .score .n.gd{color:var(--green)}
+.ak .score .of{font:600 14px/1 'Inter';color:var(--dim)}
+.ak .score .cap{font-size:14px;color:var(--soft)}
+.ak .iss{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);font-size:14px;color:var(--ink)}
+.ak .iss:first-child{border-top:0}
+.ak .iss .dt2{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none;background:var(--amber)}
+.ak .iss .dt2.r{background:var(--red)}
+.ak .iss .m{flex:1;min-width:0}
+.ak .chg{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.ak .chg:first-child{border-top:0}
+.ak .chg .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;font-size:14px;color:var(--ink)}
+.ak .chg .m b{font-weight:600}
+.ak .chg .m .d{font-size:12.5px;color:var(--soft)}
+.ak .chg s{color:var(--dim)}
+.pub .tz{font-size:13.5px;color:#555;margin:0}
+.pub .wkh{font:650 14px/1.3 'Inter';color:#1B1B1B;margin:10px 0 0}
+.pub .gr{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;display:flex;flex-direction:column}
+.pub .gr .g{display:flex;gap:14px;padding:12px 16px;border-top:1px solid rgba(0,0,0,.08);align-items:center;min-height:60px}
+.pub .gr .g:first-child{border-top:0}
+.pub .gr .g .t{width:118px;flex:none;font:600 14px/1.35 'Inter';font-variant-numeric:tabular-nums}
+.pub .gr .g .t span{display:block;font-weight:500;color:#555;font-size:13px}
+.pub .gr .g .m{flex:1;min-width:0}
+.pub .gr .g .m b{display:block;font:650 15.5px/1.3 'Inter'}
+.pub .gr .g .m .d{font-size:13.5px;color:#555}
+.pub .gr .g .r{font:650 13.5px/1.2 'Inter';white-space:nowrap;text-align:right}
+.pub .gr .g.cx .m b,.pub .gr .g.cx .t{text-decoration:line-through;color:#777}
+.pub .gr .g .r.cx{color:#9C2F1A} .pub .gr .g .r.pp{color:#8A5300}
+.pub .dtabs{display:flex;gap:6px;flex-wrap:wrap}
+.pub .dtabs span{min-height:40px;display:inline-flex;align-items:center;padding:0 14px;border-radius:999px;border:1px solid rgba(0,0,0,.18);font:600 14px/1 'Inter'}
+.pub .dtabs span.on{background:#1F3A8A;color:#fff;border-color:#1F3A8A}
+.pub .emp{background:#fff;border:1px dashed rgba(0,0,0,.2);border-radius:8px;padding:22px 18px;text-align:center;color:#444}
+.pub .emp b{display:block;font:650 16px/1.3 'Inter';color:#1B1B1B;margin-bottom:4px}
+.pub.ph .gr .g{flex-wrap:wrap;gap:4px 12px}
+.pub.ph .gr .g .t{width:auto}
+.pub.ph .in{padding:16px}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px;margin:10px 0}
+.cmp>div{min-width:0}
+/* round 2: the month grid */
+.ak .mgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.ak .mgrid .mh{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);padding:8px 10px;border-bottom:1px solid var(--line)}
+.ak .mgrid .mc{min-height:104px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.ak .mgrid .mc:nth-child(7n){border-right:0}
+.ak .mgrid .mc i{font:600 12.5px/1.2 'Inter';font-style:normal;color:var(--soft)}
+.ak .mgrid .mc.out{background:var(--paper)} .ak .mgrid .mc.out i{color:var(--dim)}
+.ak .mgrid .mc.today{background:var(--olive-soft)} .ak .mgrid .mc.today i{color:var(--olive);font-weight:700}
+.ak .mgrid .ch{font:600 11.5px/1.25 'Inter';border-radius:5px;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ak .mgrid .ch.g{background:var(--olive-soft);color:var(--ink)}
+.ak .mgrid .ch.p{background:var(--blue-soft);color:var(--ink)}
+.ak .mgrid .ch.cx{text-decoration:line-through;color:var(--soft)}
+.ak .mgrid .ch.pp{background:var(--amber-soft)}
+.ak .mgrid .more{font:600 11.5px/1.2 'Inter';color:var(--olive)}
+.ak .lrow .r{font:600 13px/1.3 'Inter';color:var(--soft);white-space:nowrap}
+/* /design pass 2026-10-26 */
+.ak .seg{gap:2px;padding:3px;border:1px solid var(--line2);border-radius:999px;background:var(--card);overflow:visible}
+.ak .seg span{border:0;border-left:0;border-radius:999px;min-height:34px;padding:0 12px;background:none;color:var(--soft)}
+.ak .seg span.on{background:var(--olive-soft);color:var(--olive)}
+.ak.ph-in .seg span{min-height:44px}
+.ak .qp{display:inline-flex;align-items:center;font:600 11.5px/1 'Inter';border-radius:999px;padding:4px 8px;background:var(--line);color:var(--soft);margin-left:8px;vertical-align:1px;text-decoration:none;white-space:nowrap}
+.ak .prow .m b .qp,.ak .prow.cxr .m .qp{margin-left:6px}
+.pub .qp{display:inline-flex;font:600 12px/1 'Inter';border-radius:999px;padding:4px 8px;background:#ECEAE4;color:#555;margin-left:8px;vertical-align:1px}
+.pub .tl{display:flex;align-items:center;gap:8px;font:650 12.5px/1 'Inter';color:#1F3A8A;padding:8px 16px;border-top:1px solid rgba(0,0,0,.08)}
+.pub .tl::after{content:"";flex:1;height:2px;background:#1F3A8A;border-radius:2px}
+</style>
+<style>
+/* 9d-3 round (2026-10-29): the first practice notice, and calendars for house league */
+.doc{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.calapp{background:#fff;color:#1B1B1B;border:1px solid rgba(0,0,0,.14);border-radius:12px;overflow:hidden;font:14px/1.4 'Inter',system-ui,sans-serif;max-width:390px;width:100%}
+.calapp .h{padding:10px 14px;font:700 15px/1.2 'Inter',sans-serif;border-bottom:1px solid rgba(0,0,0,.1);display:flex;justify-content:space-between;gap:8px}
+.calapp .h span{font-weight:500;color:#666;font-size:13px}
+.calapp .e{display:flex;gap:10px;padding:9px 14px;border-top:1px solid rgba(0,0,0,.07)}
+.calapp .e:first-of-type{border-top:0}
+.calapp .e i{width:4px;border-radius:2px;background:#2E7D5B;flex:none}
+.calapp .e.g i{background:#1F3A8A}
+.calapp .e.cx i{background:#bbb}
+.calapp .e b{display:block;font-weight:650}
+.calapp .e span{display:block;font-size:12.5px;color:#666}
+.calapp .e.cx b{color:#777}
+.calapp .d{padding:6px 14px;background:#F2F1EC;font:700 11.5px/1.3 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#555}
+.ak .shd{display:flex;align-items:center;gap:10px;min-height:44px}
+.ak .shd .lbl{margin:0;flex:1}
+.ak .qline{font-size:13px;color:var(--soft);display:flex;gap:8px;align-items:flex-start;line-height:1.45;margin:0}
+.ak .qline .ico{width:15px;height:15px;margin-top:2px;color:var(--dim)}
+.ak .linkbox{border:1px solid var(--line2);border-radius:8px;padding:9px 12px;font:500 12.5px/1.45 'IBM Plex Mono',monospace;word-break:break-all;background:var(--paper);color:var(--ink)}
+.ak .apps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ak .apps .btn{justify-content:center}
+.ak .hair{border-top:1px solid var(--line);margin:2px 0}
+.ak .twocol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ak .tcount{font:700 11px/1 'Inter';border-radius:999px;padding:3px 8px;background:var(--amber-soft);color:var(--amber)}
+.mail .btnm{display:inline-block;background:#1F3A8A;color:#fff;border-radius:8px;padding:11px 16px;font:600 14px/1 'Inter',sans-serif;align-self:flex-start}
+.mail .att{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px;align-self:flex-start;background:var(--surface-2)}
+.mail .prov{font:700 10.5px/1 var(--f-mono);letter-spacing:.05em;color:var(--ask);background:var(--ask-soft);border-radius:4px;padding:3px 6px;align-self:flex-start}
+.mail .wasl{color:var(--muted)}
+.flow{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;margin:10px 0}
+.flow>div{flex:1 1 260px;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.flow>div.sec{border-top:4px solid var(--fix)}
+.flow>div.thr{border-top:4px solid var(--t-res)}
+.flow h4{margin:0 0 6px;font:700 12px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase}
+.flow ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:14px}
+table.t.cmpx td:first-child{white-space:nowrap;font-weight:600}
+table.t td .y,table.t td .x{white-space:nowrap}
+.cf{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;border:1.5px solid var(--ask);color:var(--ask);background:var(--ask-soft);white-space:nowrap;display:inline-block}
+.recbox{outline:2px solid var(--fix);outline-offset:-1px}
+.stepn{font:700 11px/1 var(--f-mono);color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.words td:first-child{white-space:nowrap;font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+.words td:nth-child(2){font-size:14px}
+.ak .linkrow{display:flex;gap:8px;align-items:stretch}
+.ak .linkrow .linkbox{flex:1;min-width:0}
+.ak .linkrow .btn.ic{min-height:44px;width:44px}
+.ak.ph-in .lnk,.ak .fsw .lnk{display:inline-flex;align-items:center;min-height:44px}
+.mk.cf{font:700 10.5px/1 var(--f-mono)}
+.askw{background:var(--surface-2);border:1px solid var(--line);border-left:5px solid var(--t-unc);border-radius:0 12px 12px 0;padding:4px 18px 12px;margin:16px 0;color:var(--muted)}
+.askw summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:10px;font-weight:600;color:var(--ink);list-style:none}
+.askw summary::-webkit-details-marker{display:none}
+.askw summary::before{content:"+";font:700 14px/1 var(--f-mono);color:var(--muted);width:14px}
+.askw[open] summary::before{content:"−"}
+.askw p{margin:6px 0;max-width:90ch}
+.askw ul{margin:6px 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.askw .no{font:700 13px/1 var(--f-mono);color:var(--muted)}
+.mk.wd{color:var(--t-unc)}
+</style>
+<style>
+/* 9e additions: standings specimens (public face stays fixed light), pickers, score boxes */
+.pub .dv{display:flex;gap:6px;flex-wrap:wrap}
+.pub .dv span{min-height:44px;display:inline-flex;align-items:center;padding:0 14px;border-radius:999px;border:1px solid rgba(0,0,0,.18);font:600 14px/1 'Inter',sans-serif;background:#fff;color:#1B1B1B}
+.pub .dv span.on{background:#1F3A8A;color:#fff;border-color:#1F3A8A}
+.pub .sw{overflow-x:auto;border:1px solid rgba(0,0,0,.1);border-radius:8px;background:#fff}
+.pub .stt{width:100%;border-collapse:collapse;font-size:14px;color:#1B1B1B;min-width:560px}
+.pub .stt.nar{min-width:0}
+.pub .stt th{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#5E5E5E;text-align:left;padding:10px 12px;background:#FAF9F6;border-bottom:1px solid rgba(0,0,0,.1);white-space:nowrap}
+.pub .stt td{padding:11px 12px;border-bottom:1px solid rgba(0,0,0,.07);font-variant-numeric:tabular-nums;color:#1B1B1B;white-space:nowrap}
+.pub .stt tr:last-child td{border-bottom:0}
+.pub .stt .n{text-align:right}
+.pub .stt .rk{width:46px;color:#5E5E5E}
+.pub .stt .tm{font-weight:650;white-space:normal}
+.pub .stt .pos{color:#34662A}.pub .stt .neg{color:#B03A22}.pub .stt .zero{color:#7A7A7A}
+.pub .stt tr.me td{background:#EEF3FB}
+.pub .stt tr.lead .tm{font-weight:750}
+.pub .stt .dash{color:#8A8A8A}
+.pub .how{border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;padding:12px 14px;font-size:13.5px;color:#333;display:flex;flex-direction:column;gap:6px}
+.pub .how b{font:650 14px/1.3 'Inter',sans-serif;color:#1B1B1B}
+.pub .how ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:2px}
+.pub .foot1{font-size:13px;color:#555}
+.pub .empty1{background:#fff;border:1px dashed rgba(0,0,0,.25);border-radius:8px;padding:16px;font-size:14px;color:#444}
+.ak .chk{width:20px;height:20px;border:1.5px solid var(--line2);border-radius:5px;flex:none;box-sizing:border-box;display:inline-block;background:var(--card);position:relative}
+.ak .chk.on{background:var(--olive);border-color:var(--olive)}
+.ak .chk.on::after{content:"";position:absolute;left:5.5px;top:1.5px;width:5px;height:10px;border:solid var(--card);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.ak .chk.off{opacity:.4}
+.ak .pk{display:flex;flex-direction:column;border:1px solid var(--line2);border-radius:10px;overflow:hidden;background:var(--card)}
+.ak .pk .gh{display:flex;gap:12px;align-items:center;padding:10px 14px;background:var(--paper);border-bottom:1px solid var(--line);font:700 13px/1.3 'Inter';min-height:44px}
+.ak .pk .gh .sp{flex:1}
+.ak .pk .gh .d2{font-weight:500;color:var(--dim)}
+.ak .pk .g{display:flex;gap:12px;align-items:center;padding:8px 14px 8px 14px;border-bottom:1px solid var(--line);min-height:44px;font-size:14px}
+.ak .pk .g:last-child{border-bottom:0}
+.ak .pk .g .m{flex:1;min-width:0}
+.ak .pk .g .m b{font:600 14px/1.3 'Inter';display:block}
+.ak .pk .g .m .d{font-size:12.5px;color:var(--soft)}
+.ak .pk .g.dis{opacity:.55}
+.ak .pk .g.skip .m b{color:var(--dim)}
+.ak .rad{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line2);flex:none;box-sizing:border-box}
+.ak .rad.on{border:5px solid var(--olive)}
+.ak .scrow{display:flex;gap:14px;align-items:center;justify-content:center;padding:6px 0}
+.ak .scbox{width:72px;min-height:56px;border:1px solid var(--line2);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font:700 26px/1 'Inter';font-variant-numeric:tabular-nums;background:var(--paper);color:var(--ink)}
+.ak .scbox.ph{color:var(--dim)}
+.ak .scteam{display:flex;flex-direction:column;align-items:center;gap:6px;font:600 14px/1.2 'Inter';min-width:84px;text-align:center}
+.ak .scteam small{font:500 12px/1.2 'Inter';color:var(--dim)}
+.ak .res{font:700 13px/1 'Inter';font-variant-numeric:tabular-nums;background:var(--paper);border:1px solid var(--line2);border-radius:999px;padding:5px 10px;white-space:nowrap;color:var(--ink)}
+.ak .entby{font-size:12.5px;color:var(--soft);margin:0;line-height:1.45}
+.ak .tagF{display:inline-flex;align-items:center;font:700 10.5px/1 'Inter';border-radius:999px;padding:4px 8px;background:var(--amber-soft);color:var(--amber);white-space:nowrap}
+.ak .tagC{display:inline-flex;align-items:center;font:700 10.5px/1 'Inter';border-radius:999px;padding:4px 8px;background:var(--green-soft);color:var(--green);white-space:nowrap}
+.ak .recbar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--card);border:1px solid var(--line);border-radius:10px;font-size:14px}
+.ak .recbar b{font:700 20px/1 'Inter';font-variant-numeric:tabular-nums}
+.ak .recbar .d{color:var(--soft);font-size:13px}
+.ak .qdone{display:flex;gap:10px;align-items:flex-start;background:var(--green-soft);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--ink);line-height:1.45}
+.ak .qdone.am{background:var(--amber-soft)}
+.ak .qdone .ico{margin-top:2px}
+.ak .gs{border-bottom:1px solid var(--line);padding:10px 16px;background:var(--paper);font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim)}
+.inbox{border:1px solid var(--line);border-radius:10px;background:var(--surface);max-width:560px;overflow:hidden}
+.inbox div{display:flex;gap:12px;padding:10px 14px;border-top:1px solid var(--line);font-size:14px;align-items:baseline}
+.inbox div:first-child{border-top:0}
+.inbox b{flex:0 0 150px;font-weight:600}
+.inbox span{flex:1;min-width:0}
+.mail .newl{background:var(--fix-soft);border-radius:4px;padding:1px 4px}
+@media (max-width:700px){.inbox b{flex-basis:90px}}
+</style>
+
+<style>
+/* 9f additions (2026-11-03): the View switch, the date field, the copy list, storyboards */
+.viewrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:4px 0 6px;font-size:13.5px;color:var(--muted)}
+.vsw{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+.vsw button{font:600 13px/1 var(--f-doc);min-height:34px;padding:0 14px;border-radius:999px;border:0;background:none;color:var(--muted);cursor:pointer}
+.vsw button[aria-pressed="true"]{background:var(--fix-soft);color:var(--ink)}
+body.only-diff .same{opacity:.16;filter:grayscale(1)}
+body.only-diff .same-st{display:none}
+.ak .dfld{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 10px;border:1px solid var(--line2);border-radius:8px;background:var(--card);font:500 14px/1.3 'Inter';color:var(--ink);white-space:nowrap}
+.ak .dfld svg{width:16px;height:16px;stroke:var(--dim);fill:none;stroke-width:1.8;flex:none}
+.ak .crow{display:flex;gap:12px;align-items:flex-start;padding:11px 14px;border-top:1px solid var(--line);min-height:44px}
+.ak .crow:first-child{border-top:0}
+.ak .crow .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ak .crow .m b{font:600 14.5px/1.3 'Inter';color:var(--ink)}
+.ak .crow .m .d{font-size:12.5px;color:var(--soft);line-height:1.4}
+.ak .crow .n{font:600 13px/1.3 'Inter';color:var(--soft);white-space:nowrap;font-variant-numeric:tabular-nums}
+.ak .clist{border:1px solid var(--line2);border-radius:10px;background:var(--card);overflow:hidden}
+.ak .empt2{font-size:13px;color:var(--soft);line-height:1.5;border:1px dashed var(--line2);border-radius:10px;padding:10px 12px}
+.ak .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ak .lock{background:var(--blue-soft);border-radius:8px;padding:10px 12px;font-size:13.5px;color:var(--ink)}
+.ak .blk{background:var(--card);border:1px solid var(--line);border-radius:10px}
+.ak .blk .hd{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);font:700 15px/1.2 'Inter'}
+.ak .blk .hd .sp{flex:1}
+.ak .blk .bd{padding:12px 16px;display:grid;grid-template-columns:170px minmax(0,1fr);gap:8px 18px;font-size:14px}
+.ak .blk .bd>span:nth-child(odd){color:var(--dim)}
+.ak .steps li{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);list-style:none}
+.ak .steps{margin:0;padding:0 16px}
+.ak .steps li:first-child{border-top:0}
+.ak .tick{width:20px;height:20px;border-radius:50%;background:var(--green-soft);color:var(--green);display:grid;place-items:center;font:700 12px/1 'Inter';flex:none}
+.ak .tick.opt{background:var(--paper);color:var(--dim);border:1px solid var(--line2)}
+.ak .steps .tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ak .steps .tt b{font:600 14px/1.3 'Inter'}
+.ak .steps .tt span{font-size:12.5px;color:var(--soft)}
+.ak .from{font:600 11.5px/1.3 'Inter';color:var(--olive);background:var(--olive-soft);border-radius:999px;padding:3px 8px;white-space:nowrap}
+.ak .menu{border:1px solid var(--line2);border-radius:10px;background:var(--card);box-shadow:0 10px 30px rgba(0,0,0,.18);overflow:hidden;max-width:340px}
+.ak .menu div{padding:10px 14px;min-height:44px;display:flex;flex-direction:column;justify-content:center;border-top:1px solid var(--line);font-size:14px}
+.ak .menu div:first-child{border-top:0}
+.ak .menu div.on{background:var(--olive-soft)}
+.ak .menu div small{font-size:12px;color:var(--dim)}
+.ak .menu .gh{min-height:0;padding:8px 14px;font:700 11px/1.2 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);background:var(--paper)}
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:14px;margin:10px 0}
+.board>div{min-width:0;display:flex;flex-direction:column;gap:8px}
+.board .stepno{font:700 12px/1.3 var(--f-mono);color:var(--muted)}
+.mini{border-radius:10px;outline:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden}
+.mini .ak{padding:12px}
+.ak table.kt.sm td,.ak table.kt.sm th{padding:8px 10px;font-size:13px}
+.ak tr.moved td{background:var(--amber-soft)}
+.ak .cap2{font-size:12px;color:var(--dim)}
+.cmpt td:first-child{font-weight:600}
+.cmpt .old{color:var(--muted)}
+.cmpt .nw{color:var(--fix);font-weight:600}
+.cmpt .gone{color:var(--flag);font-weight:600}
+@media (max-width:700px){.ak .blk .bd{grid-template-columns:1fr}.ak .two{grid-template-columns:1fr}}
+</style>
+
+<div class="doc">
+<p class="eyebrow">FieldLogicHQ · Club Tier · Stage 9 · house league · 9f · drawn 2026-11-03</p>
+<h1>9f drawn: the end of a season, and the next one</h1>
+<p class="lede">Three different things share the name “Season end”. <b>Archive</b> does almost nothing. <b>The finished record</b> is mostly built and has two small gaps. <b>Start next season</b> is the one large piece and the one a club will thank us for. The first tab says how I’d split and order them, and where I disagree with the drawing prompt. Every claim about today’s code was re-read; the red flags open what the code does.</p>
+
+<div class="verdict push"><h3>Nothing in 9f is ruled yet</h3>
+<ul>
+  <li>The plan’s 9f row has no asks. Seventeen are drawn here (9f·1 to 9f·17), each with a recommendation, answerable by paste-back on the last tab. <b>9f·16</b> (is Start next season plan-gated?) is for /strategy and has no checkbox.</li>
+  <li><b>Not reopened:</b> Q14 (several live seasons), Q16 (a finished season reads in place, locked, Money and Email families still open), 9a·4 (every status change asks in a window; the doors end the Overview’s body; families are not emailed), 9b·8, 9b·9, 9c·2b (ratings erased at finish), 9c·10 (coaches invited at Publish), 9d2·15 (the club gives time to house league), 9e·15, the 30-day coach page and sign-up link, and the signed-in family rulings (no new sent links; returning-family pre-fill is Stage 14’s).</li>
+</ul></div>
+
+<div class="card">
+  <h3>How to read this</h3>
+  <ul>
+    <li>Each tab draws one decision, desk and phone. Tags: <button class="mk new" data-note="NEW marks something the product does not have today.">NEW</button> <button class="mk res" data-note="RESTYLED marks something that exists today and is redrawn or reworded.">RESTYLED</button> <button class="mk unc" data-note="UNCHANGED marks something kept exactly as it is.">UNCHANGED</button>. Every tag and red flag opens an explanation when clicked.</li>
+    <li><b>Today’s screens are redrawn from the code, not captured.</b> I read the pages and their words; I did not run a browser. A frame marked TODAY shows the sections and words the code renders.</li>
+    <li><b>View</b> switches between every frame and only what changes: unchanged frames dim and unchanged stations hide.</li>
+    <li><b>All words are provisional.</b> The final words go through /marketing after you rule.</li>
+    <li>Desk drawings fit your screen; “Show at true size” shows them at 1440. Open this page on a phone to judge the phone drawings. The public club site is fixed light on purpose, as the product is.</li>
+  </ul>
+  <p class="muted" style="margin:10px 0 0;font-size:13.5px">The example is <b>Draft Test 2027</b> at the club <b>Dev League Org</b>: four age groups (U8, U10, U12, U14), 22 teams, 212 players, Saturday May 1 to Saturday August 28, 2027. It was completed on Friday September 3, and the page is drawn as if it were <b>Tuesday, September 7, 2027</b>. Three players still owe fees. <b>Every name, count, date and amount below is an example.</b></p>
+</div>
+<p class="muted" style="font-size:13.5px">Earlier rounds: <a href="https://claude.ai/artifact/V9exKafSgmHc3XuFFar5Qo">9e drawings</a> · <a href="https://claude.ai/artifact/Uazj5c2RKqVPAs1Gwpm9pM">9d-3 drawings</a>.</p>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" data-pane="why" aria-selected="true">1 · Push-backs</button>
+  <button role="tab" data-pane="today" aria-selected="false">2 · A season ends today</button>
+  <button role="tab" data-pane="archive" aria-selected="false">3 · Archive</button>
+  <button role="tab" data-pane="record" aria-selected="false">4 · The finished record</button>
+  <button role="tab" data-pane="next" aria-selected="false">5 · Start next season</button>
+  <button role="tab" data-pane="edges" aria-selected="false">6 · Edges</button>
+  <button role="tab" data-pane="since" aria-selected="false">7 · Since 9e</button>
+  <button role="tab" data-pane="asks" aria-selected="false">8 · Asks</button>
+  <span class="sp"></span>
+  <span class="thm" role="group" aria-label="Drawing theme"><button type="button" data-thm="warm" aria-pressed="true">Warm</button><button type="button" data-thm="dark" aria-pressed="false">Dark</button></span>
+</nav>
+<div class="viewrow"><span>View</span><span class="vsw" role="group" aria-label="View"><button type="button" data-view="all" aria-pressed="true">Everything</button><button type="button" data-view="diff" aria-pressed="false">Show only what differs</button></span>
+<span class="sp" style="flex:1"></span><button type="button" class="btn-d" data-fit>Show at true size</button><span class="zl">Scaled to fit; use the button for true size.</span></div>
+
+<!-- ======================= 1 · PUSH-BACKS ======================= -->
+<section class="pane" id="why" data-pane="why">
+<h2 style="margin-top:16px">Push-backs, before any drawing</h2>
+
+<div class="verdict"><h3>The answer, before the detail</h3>
+<ul>
+  <li><b>Two builds, and the small one goes first</b> (9f·1). <b>9f-1 “Finished, honestly”</b> (S): Archive decided, the word “Final” only once a season is complete, the coach keeps their final place for the 30 days, the Reopen window says ratings are gone, and the season limit counts the right seasons. <b>9f-2 “Start next season”</b> (M) then builds on a settled set of season states. The prompt leaned the other way. I reversed it because Start next season reads every one of those decisions: built first, it would be built twice.</li>
+  <li><b>No frozen standings table</b> (9f·2). A finished season is locked; only Reopen changes a result, on purpose, and since 9e-3 every score records who entered or corrected it. A stored final table would be a second answer that disagrees with the games the moment someone reopens to fix a score, which is the one reason to reopen. The real defect is the word: a season past its last day reads “Final standings” to families even when the club forgot to complete it and every score is still editable <button class="fl" data-f="F04">F04</button>.</li>
+  <li><b>Start next season is not a new door; it is “Start from” in the New season window</b> (9f·8). It copies from any season, finished or live, and leaves that season exactly as it was (9f·10, 9f·11). It brings settings, age groups and team names, and the born years move up a year. It never brings anyone’s registration, money, games or club time, and it says so before anything else.</li>
+  <li><b>Archive has no job worth keeping</b> (9f·4). Today it changes one sentence and one chip on the public page, and it is the only way to free the one-season slot on the free League plan. That plan is parked, and its limit already contradicts its own words <button class="fl" data-f="F01">F01</button> <button class="fl" data-f="F02">F02</button>. Recommendation: stop offering Archive; a finished season is “Finished”, full stop.</li>
+</ul></div>
+
+<div class="verdict push"><h3>Where the code disagreed with the drawing prompt <span class="muted" style="font-weight:400;font-size:14px">(every flag opens the lines I read)</span></h3>
+<ul>
+  <li><b>The free League plan’s one-season limit counts finished seasons too</b>, not just live ones. Its own refusal says “includes one active season”, yet a completed season still holds the slot. Today a free club must archive last year before it can create next year. The tournament fixed the same rule on 2026-10-10 (“a Completed event stops holding the slot”) <button class="fl" data-f="F02">F02</button>.</li>
+  <li><b>Reopen skips that limit.</b> Reopening an archived season on the free plan gives it two live seasons; the status change never checks <button class="fl" data-f="F03">F03</button>.</li>
+  <li><b>Archive differs in more places than one sentence:</b> the public header chip, the club setup checklist’s “runs house league”, and the birthday cut-off card’s sports all ignore an archived season. None of those is a job anyone designed <button class="fl" data-f="F01">F01</button>.</li>
+  <li><b>The public season header still shows “Season complete” and “Archived” chips</b>, which the 9a copy pass retired <button class="fl" data-f="F10">F10</button>.</li>
+  <li><b>Practice length and teams-at-once belong to each age group</b>, not to the season, and born years have no “carried” marker: divisions are typed fresh every year <button class="fl" data-f="F12">F12</button>.</li>
+  <li><b>The coach loses more than the standing line</b> after finish: the Schedule heading stays with no list under it <button class="fl" data-f="F06">F06</button>.</li>
+</ul></div>
+
+<div class="read">
+  <div class="w"><h4>The lean I kept</h4><ul><li>Start next season does not close the old season (Q14 allows several live; Money stays open on the old one).</li><li>No frozen table; the locked season is the frozen table.</li><li>Pre-fill for returning families is not 9f.</li><li>The CLAUDE.md line goes in the asks (9f·17), not into CLAUDE.md today.</li></ul></div>
+  <div class="g"><h4>The lean I overturned</h4><ul><li>Order: the small build first, not Start next season first.</li><li>Coaches copy <b>off</b> by default: a copied coach becomes an invite email at Publish, to whoever coached last year.</li><li>Archive: retired, not decided “in the asks” and kept.</li></ul></div>
+  <div class="c"><h4>Not touched here</h4><ul><li>Ratings carried forward, a player across seasons, returning-family pre-fill (Stage 14 and the family plan’s Stage 5).</li><li>Club time: a copy starts with none (9d2·15).</li><li>The plan gate (9f·16, /strategy).</li></ul></div>
+</div>
+</section>
+
+<!-- ======================= 2 · A SEASON ENDS TODAY ======================= -->
+<section class="pane" id="today" data-pane="today" hidden>
+<h2 style="margin-top:16px">A season ends today</h2>
+<p class="muted">What the league admin, the coach and the family each read after Complete. The whole-screen before and after comes first, because the one change to the admin’s Overview sits at the very end of a long page.</p>
+
+<div class="st"><h2>s1 · The finished Overview, whole screen <button class="mk res" data-note="RESTYLED: the page is unchanged except its last lines. Archive’s door goes (9f·4) and the Start next season door arrives (9f·8). Everything above the doors is UNCHANGED.">RESTYLED</button></h2>
+<p class="who">The league runners (owner, club admin, league admin) see the doors; a registrar or treasurer sees the page without them, as today.</p>
+<div class="spec">
+<div class="col" style="flex:1 1 520px"><p class="sp-cap">TODAY · desk</p>
+<div class="dt-wrap same"><div class="dt ak">
+  <div class="tb"><span class="lg"></span>Dev League Org<span class="ar">ADMIN</span><span class="sp"></span><span class="ic"></span></div>
+  <div class="shell">
+    <div class="sb"><span class="grp">House league</span><span class="sw">Draft Test 2027 · Finished <i class="chev"></i></span>
+      <span class="it on">Overview</span><span class="it">Registrations</span><span class="it">Teams</span><span class="it">Schedule</span><span class="it">Standings</span><span class="it">Money</span><span class="it">Email families</span></div>
+    <div class="mn"><div class="pg">
+      <div class="ph1"><div><span class="ey">House league</span><h1>Draft Test 2027</h1></div></div>
+      <p class="sub" style="display:flex;gap:10px;align-items:center;margin:-8px 0 0">May 1 – Aug 28, 2027 · Softball <span class="pill">Finished</span></p>
+      <div class="lock">This season is finished, so this page is locked. Money stays open for late fees and refunds.</div>
+      <div class="band"><div><div class="k">Players</div><div class="v">212</div><div class="h">of 240 spots</div></div><div><div class="k">To review</div><div class="v">0</div><div class="h">Registrations</div></div><div><div class="k">Waitlist</div><div class="v">0</div></div><div><div class="k">Teams</div><div class="v">22</div></div><div><div class="k">Owed</div><div class="v">$37,100</div><div class="h">212 players</div></div><div><div class="k">Still owing</div><div class="v am">$525</div><div class="h">3 players</div></div></div>
+      <div class="blk"><div class="hd">Season</div><div class="bd"><span>Name</span><span>Draft Test 2027</span><span>Dates</span><span>Sat, May 1 – Sat, Aug 28, 2027</span><span>Sport</span><span>Softball</span></div></div>
+      <div class="blk"><div class="hd">Registration</div><div class="bd"><span>Opened</span><span>Mon, Mar 1, 2027, 8:00 a.m.</span><span>Closed</span><span>Fri, Apr 16, 2027, 11:59 p.m.</span><span>Early price until</span><span>Mon, Mar 15, 2027</span><span>How to pay</span><span>E-transfer to treasurer@devleague.ca …</span></div></div>
+      <div class="blk"><div class="hd">Age groups</div><div class="bd"><span>U8</span><span>Born 2019–2020 · 48 spots · $150</span><span>U10</span><span>Born 2017–2018 · 64 spots · $175</span><span>U12</span><span>Born 2015–2016 · 64 spots · $175</span><span>U14</span><span>Born 2013–2014 · 64 spots · $195</span></div></div>
+      <div class="rare">Finished and settled? <a>Archive the season…</a></div>
+      <div class="rare">Need to change something? <a>Reopen the season…</a></div>
+    </div></div>
+  </div>
+</div></div></div>
+<div class="col" style="flex:1 1 520px"><p class="sp-cap">AFTER · desk</p>
+<div class="dt-wrap"><div class="dt ak">
+  <div class="tb"><span class="lg"></span>Dev League Org<span class="ar">ADMIN</span><span class="sp"></span><span class="ic"></span></div>
+  <div class="shell">
+    <div class="sb"><span class="grp">House league</span><span class="sw">Draft Test 2027 · Finished <i class="chev"></i></span>
+      <span class="it on">Overview</span><span class="it">Registrations</span><span class="it">Teams</span><span class="it">Schedule</span><span class="it">Standings</span><span class="it">Money</span><span class="it">Email families</span></div>
+    <div class="mn"><div class="pg">
+      <div class="same" style="display:flex;flex-direction:column;gap:16px">
+      <div class="ph1"><div><span class="ey">House league</span><h1>Draft Test 2027</h1></div></div>
+      <p class="sub" style="display:flex;gap:10px;align-items:center;margin:-8px 0 0">May 1 – Aug 28, 2027 · Softball <span class="pill">Finished</span></p>
+      <div class="lock">This season is finished, so this page is locked. Money stays open for late fees and refunds.</div>
+      <div class="band"><div><div class="k">Players</div><div class="v">212</div><div class="h">of 240 spots</div></div><div><div class="k">To review</div><div class="v">0</div><div class="h">Registrations</div></div><div><div class="k">Waitlist</div><div class="v">0</div></div><div><div class="k">Teams</div><div class="v">22</div></div><div><div class="k">Owed</div><div class="v">$37,100</div><div class="h">212 players</div></div><div><div class="k">Still owing</div><div class="v am">$525</div><div class="h">3 players</div></div></div>
+      <div class="blk"><div class="hd">Season</div><div class="bd"><span>Name</span><span>Draft Test 2027</span><span>Dates</span><span>Sat, May 1 – Sat, Aug 28, 2027</span><span>Sport</span><span>Softball</span></div></div>
+      <div class="blk"><div class="hd">Registration</div><div class="bd"><span>Opened</span><span>Mon, Mar 1, 2027, 8:00 a.m.</span><span>Closed</span><span>Fri, Apr 16, 2027, 11:59 p.m.</span><span>Early price until</span><span>Mon, Mar 15, 2027</span><span>How to pay</span><span>E-transfer to treasurer@devleague.ca …</span></div></div>
+      <div class="blk"><div class="hd">Age groups</div><div class="bd"><span>U8</span><span>Born 2019–2020 · 48 spots · $150</span><span>U10</span><span>Born 2017–2018 · 64 spots · $175</span><span>U12</span><span>Born 2015–2016 · 64 spots · $175</span><span>U14</span><span>Born 2013–2014 · 64 spots · $195</span></div></div>
+      </div>
+      <div class="rare">Running it again? <a>Start next season from this one…</a> <button class="mk new" data-note="NEW (9f·8): opens the New season window with Start from already set to this season. The same window the house-league home’s New season button opens. Shown to the league runners only (9f·9).">NEW</button></div>
+      <div class="rare">Need to change something? <a>Reopen the season…</a> <button class="mk unc" data-note="UNCHANGED door; its window gains one line about ratings (9f·7, tab 4).">UNCHANGED</button></div>
+    </div></div>
+  </div>
+</div></div></div>
+</div>
+<div class="spec">
+<div class="col"><p class="sp-cap">TODAY · phone, 390 · the end of the page</p>
+<div class="ph same"><div class="ak ph-in" style="display:flex;flex-direction:column">
+  <div class="pbar"><span>Overview</span><span class="sp"></span><span class="pill">Finished</span></div>
+  <div class="pin">
+    <div class="lock">This season is finished, so this page is locked. Money stays open for late fees and refunds.</div>
+    <div class="band" style="grid-auto-flow:row;grid-template-columns:1fr 1fr"><div><div class="k">Players</div><div class="v">212</div></div><div><div class="k">Still owing</div><div class="v am">$525</div><div class="h">3 players</div></div></div>
+    <p class="hint">… Season, Registration and Age groups, read only …</p>
+    <div class="rare">Finished and settled? <a>Archive the season…</a></div>
+    <div class="rare">Need to change something? <a>Reopen the season…</a></div>
+  </div>
+  <div class="bnav"><span class="on"><i></i>Overview</span><span><i></i>Sign-ups</span><span><i></i>Teams</span><span><i></i>Schedule</span><span><i></i>More</span></div>
+</div></div></div>
+<div class="col"><p class="sp-cap">AFTER · phone, 390 · the end of the page</p>
+<div class="ph"><div class="ak ph-in" style="display:flex;flex-direction:column">
+  <div class="pbar"><span>Overview</span><span class="sp"></span><span class="pill">Finished</span></div>
+  <div class="pin">
+    <div class="same" style="display:flex;flex-direction:column;gap:14px">
+    <div class="lock">This season is finished, so this page is locked. Money stays open for late fees and refunds.</div>
+    <div class="band" style="grid-auto-flow:row;grid-template-columns:1fr 1fr"><div><div class="k">Players</div><div class="v">212</div></div><div><div class="k">Still owing</div><div class="v am">$525</div><div class="h">3 players</div></div></div>
+    <p class="hint">… Season, Registration and Age groups, read only …</p>
+    </div>
+    <div class="rare" style="flex-wrap:wrap">Running it again? <a>Start next season from this one…</a></div>
+    <div class="rare">Need to change something? <a>Reopen the season…</a></div>
+  </div>
+  <div class="bnav"><span class="on"><i></i>Overview</span><span><i></i>Sign-ups</span><span><i></i>Teams</span><span><i></i>Schedule</span><span><i></i>More</span></div>
+</div></div></div>
+</div>
+<p class="cap">The only change to the whole screen is its last two lines. The Start next season door is a rare door because it is pressed once a year; it ends the body, never a foot row. It sits <b>below</b> what the season holds, so the live and finished content stays the focus. On a season that is still live but past its last day, the door appears under the “Next step: Complete the season” card too (tab 6, edge 5).</p>
+</div>
+
+<div class="st same-st"><h2>s2 · The house-league home and its Past seasons shelf <button class="mk unc" data-note="UNCHANGED: the shelf is collapsed with a count; each row opens the season’s Overview; finished rows carry no pill (the shelf is the label). The New season button already exists; 9f changes the window it opens (tab 5).">UNCHANGED</button></h2>
+<p class="who">Everyone who can read house league. New season is the league runners’ only.</p>
+<div class="spec">
+<div class="col" style="flex:1 1 520px"><p class="sp-cap">TODAY = AFTER · desk fragment</p>
+<div class="ak" style="max-width:860px;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);padding:20px;display:flex;flex-direction:column;gap:14px">
+  <div class="ph1"><div><span class="ey">Dev League Org</span><h1>House league</h1></div><span class="sp"></span><span class="btn pri">New season</span></div>
+  <div class="panel"><div class="rows"><div class="r"><div class="m"><b>Draft Test 2028</b><div class="d">Getting ready · Sat, Apr 29 – Sat, Aug 26, 2028</div></div><span class="pill reg">Getting ready</span><i class="chev" style="transform:rotate(-45deg)"></i></div></div></div>
+  <div class="panel"><div class="fold"><b>Past seasons</b><span class="pill">3</span><i class="chev"></i></div>
+    <div class="rows"><div class="r"><div class="m"><b>Draft Test 2027</b><div class="d">May 1 – Aug 28, 2027 · 212 players · 22 teams</div></div><i class="chev" style="transform:rotate(-45deg)"></i></div>
+    <div class="r"><div class="m"><b>Spring 2026</b><div class="d">May 2 – Aug 29, 2026 · 198 players · 20 teams</div></div><i class="chev" style="transform:rotate(-45deg)"></i></div></div></div>
+</div></div>
+</div>
+<p class="cap">Drawn with the next season already made, so you can see where it lands: a running season is a row above the shelf with its pill. Nothing on the shelf gains a door. A door on each past row (the prompt’s idea) would put a once-a-year act on every row of a list that grows by one a year; Start from in the New season window covers it with one control (9f·8).</p>
+</div>
+
+<div class="st"><h2>s3 · The Complete window <button class="mk res" data-note="RESTYLED by one line (9f·7): “Player ratings are erased.” Everything else is as built in 9a·4: it says what locks first, warns about money and never blocks, and says families are not emailed.">RESTYLED</button></h2>
+<p class="who">The league runners. Kept as built, one line added: it already does what the coaches’ rollover learned the hard way.</p>
+<div class="spec">
+<div class="col"><p class="sp-cap">AFTER · desk window (today’s window plus one line)</p>
+<div class="ak win" style="border-radius:12px;max-width:640px"><div class="dlg" style="max-width:560px">
+  <div class="dh"><div class="tt"><h4>Complete Draft Test 2027?</h4></div><span class="xx">×</span></div>
+  <div class="db"><p style="margin:0">The season moves to Past seasons. What changes:</p>
+    <ul class="same"><li>Registrations, teams and the schedule can no longer be changed.</li><li>Money stays open: you can still mark fees received and record refunds.</li><li>You can still email its families.</li><li>Your public site lists it under Past seasons, and its schedule and standings stay up.</li></ul>
+    <ul><li><b>Player ratings are erased.</b> <button class="mk new" data-note="NEW (9f·7): Complete erases the season’s ratings (9c·2b, ruled) and no window says so today. Complete is the moment they are lost, so the line belongs here first.">NEW</button></li><li>Families are not emailed.</li></ul>
+    <div class="note">3 players still owing fees.</div></div>
+  <div class="df"><span class="s">You can reopen it from Past seasons.</span><span class="btn">Cancel</span><span class="btn pri">Complete season</span></div>
+</div></div></div>
+</div>
+<p class="cap">Complete erases player ratings (9c·2b, ruled), and today neither Complete nor Reopen says so <button class="fl" data-f="F07">F07</button>. The line goes here, where they are lost, and in Reopen, where someone might expect them back (9f·7). The money line stays a warning that never blocks.</p>
+</div>
+
+<div class="st"><h2>s4 · What the coach and the family read today <button class="mk unc" data-note="TODAY frames. The AFTER versions are on tab 4 (the coach’s final place, the family’s Final standings) and tab 3 (the public header’s chip).">TODAY</button></h2>
+<p class="who">The coach’s team page (30 days after finish); a family on the club’s public site.</p>
+<div class="spec">
+<div class="col"><p class="sp-cap">TODAY · coach’s team page, phone</p>
+<div class="ph"><div class="ak ph-in" style="min-height:520px">
+  <div class="pbar"><span>Twins · U10</span></div>
+  <div class="pin">
+    <div class="note blue">Draft Test 2027 has finished. This page stays until Sun, Oct 3.</div>
+    <div class="panel"><div class="hd"><h2>Players</h2><span class="pill">10</span></div><div class="rows"><div class="r" style="min-height:44px"><div class="m"><b>Ava Kim</b></div></div><div class="r" style="min-height:44px"><div class="m"><b>Noah Patel</b></div></div><div class="r" style="min-height:44px"><div class="m d">… 8 more</div></div></div></div>
+    <div class="panel"><div class="hd"><h2>Schedule</h2></div><div class="fold" style="min-height:0;padding:10px 16px"><a class="lnk">See the season’s schedule</a></div></div>
+    <div class="panel"><div class="hd"><h2>Scores</h2></div><div class="rows"><div class="r" style="min-height:44px"><div class="m"><b>Sat, Aug 28 · vs Royals</b></div><span class="res">W 7–5</span></div><div class="r" style="min-height:44px"><div class="m"><b>Sat, Aug 21 · at Rays</b></div><span class="res">L 3–4</span></div></div></div>
+    <p class="hint">No standing line: the coach no longer sees where the team finished <button class="fl" data-f="F06">F06</button></p>
+  </div></div></div></div>
+<div class="col"><p class="sp-cap">TODAY · the family’s season page, phone (public, fixed light)</p>
+<div class="ph pub"><div style="background:#1F3A8A;color:#fff;height:56px;display:flex;align-items:center;padding:0 16px;font:700 18px/1 'Barlow Condensed',sans-serif">Dev League Org</div>
+  <div class="in" style="padding:16px">
+    <div><span class="tag">Season complete</span> <button class="fl" data-f="F10">F10</button></div>
+    <h3 style="font-size:22px">Draft Test 2027</h3>
+    <p style="margin:0;color:#555">This season has concluded.</p>
+    <div class="rw"><div class="m"><b>Final standings →</b><div class="d">Computed from the scores, as they stand</div></div></div>
+    <div class="rw"><div class="m"><b>Schedule →</b></div></div>
+  </div></div></div>
+</div>
+</div>
+</section>
+
+<!-- ======================= 3 · ARCHIVE ======================= -->
+<section class="pane" id="archive" data-pane="archive" hidden>
+<h2 style="margin-top:16px">Archive: keep it, give it a job, or retire it</h2>
+<div class="verdict"><h3>Recommendation (9f·4): retire the door</h3>
+<ul>
+  <li>Archive was built as a label in 9a, with its job left to 9f. Read against the code, its only effect a club could notice is one sentence and one chip on the public page <button class="fl" data-f="F01">F01</button>.</li>
+  <li>Its one real effect is on the free League plan: archiving frees the plan’s one season. That plan is parked, and that limit should count only live seasons anyway, as the tournament’s now does (9f·5) <button class="fl" data-f="F02">F02</button>. Fix the count, and Archive has nothing left to do.</li>
+  <li>Two finished states that read the same to everyone teach admins to wonder what they missed. One state, “Finished”, is honest.</li>
+</ul></div>
+
+<div class="st"><h2>s5 · Archive today <button class="mk unc" data-note="TODAY: the Archive window as built in 9a, and what an archived season reads like to a family.">TODAY</button></h2>
+<div class="spec">
+<div class="col"><p class="sp-cap">TODAY · the Archive window, desk</p>
+<div class="ak win" style="border-radius:12px;max-width:640px"><div class="dlg" style="max-width:560px">
+  <div class="dh"><div class="tt"><h4>Archive Draft Test 2027?</h4></div><span class="xx">×</span></div>
+  <div class="db"><p style="margin:0">The season is put away. What changes:</p>
+    <ul><li>Its public page says “This season has been archived.”</li><li>It stays under Past seasons, and its schedule and standings stay up.</li><li>Nothing else changes: it stays locked, and Money stays open.</li><li>Families are not emailed.</li></ul>
+    <div class="note">3 players still owing fees.</div></div>
+  <div class="df"><span class="s">You can reopen it from Past seasons.</span><span class="btn">Cancel</span><span class="btn pri">Archive season</span></div>
+</div></div></div>
+<div class="col"><p class="sp-cap">TODAY · an archived season, family’s phone</p>
+<div class="ph pub"><div style="background:#1F3A8A;color:#fff;height:56px;display:flex;align-items:center;padding:0 16px;font:700 18px/1 'Barlow Condensed',sans-serif">Dev League Org</div>
+  <div class="in" style="padding:16px">
+    <div><span class="tag">Archived</span></div>
+    <h3 style="font-size:22px">Draft Test 2027</h3>
+    <p style="margin:0;color:#555">This season has been archived.</p>
+    <div class="rw"><div class="m"><b>Final standings →</b></div></div>
+    <div class="rw"><div class="m"><b>Schedule →</b></div></div>
+  </div></div></div>
+</div>
+<p class="cap">The window is honest; the 9a copy pass made it promise nothing more than the code does. The problem is that there is nothing more.</p>
+</div>
+
+<div class="st"><h2>s6 · What each reads, today and after <button class="mk res" data-note="RESTYLED (9f·4 option A): Archive is no longer offered. Already-archived seasons keep their stored state and read exactly like a completed one everywhere. No data changes.">RESTYLED</button></h2>
+<div class="tw"><table class="t cmpt"><thead><tr><th>Where</th><th>Completed, today</th><th>Archived, today</th><th>Any finished season, after</th></tr></thead><tbody>
+<tr><td>Admin switcher and Overview pill</td><td>Finished</td><td>Finished</td><td class="same">Finished</td></tr>
+<tr><td>Past seasons shelf (admin and public)</td><td>Listed</td><td>Listed</td><td class="same">Listed</td></tr>
+<tr><td>Rare doors at the end of the Overview</td><td>Archive · Reopen</td><td>Reopen</td><td class="nw">Start next season · Reopen</td></tr>
+<tr><td>Public header chip</td><td>“Season complete”</td><td>“Archived”</td><td class="nw">No chip (as 9a ruled)</td></tr>
+<tr><td>Public sentence</td><td>This season has concluded.</td><td>This season has been archived.</td><td class="nw">This season has concluded.</td></tr>
+<tr><td>Club setup checklist “runs house league”, birthday cut-off card</td><td>Counts</td><td>Ignored</td><td class="nw">Counts</td></tr>
+<tr><td>Free League plan’s one season (parked)</td><td>Holds the slot</td><td>Frees it</td><td class="nw">Only live seasons hold it (9f·5)</td></tr>
+<tr><td>Coach page, sign-up link (30 days)</td><td>From finish</td><td>From finish (archiving does not restart it)</td><td class="same">From finish</td></tr>
+</tbody></table></div>
+<p class="cap">The alternative with a job (9f·4 option B): Archive takes the season off the public site’s Past seasons list, while its pages still open from a link. I don’t recommend it now. Nothing tells us a club wants that, and what the public site shows at all is the signed-in family plan’s question.</p>
+</div>
+
+<div class="st"><h2>s7 · The free League plan’s limit <button class="mk res" data-note="RESTYLED, and a /strategy + /billing call (9f·5): the limit counts seasons that are getting ready, open or running; a finished season holds nothing. The refusal’s words already say “one active season”.">/billing</button></h2>
+<p class="who">Free League plan only. The plan is parked (not on sale, switched off in production), so this changes nothing a customer sees today; it is recorded so the plan is right when it comes back.</p>
+<div class="spec">
+<div class="col"><p class="sp-cap">TODAY · the refusal a free club meets when it presses New season with a finished season on the shelf</p>
+<div class="ak win" style="border-radius:12px;max-width:600px"><div class="dlg" style="max-width:520px">
+  <div class="dh"><div class="tt"><h4>One season on your free plan</h4></div><span class="xx">×</span></div>
+  <div class="db"><p style="margin:0">Your free League plan includes one active season. League Plus lets you run multiple seasons and age groups side by side.</p></div>
+  <div class="df"><span class="btn">Maybe later</span><span class="btn pri">Express interest in League Plus →</span></div>
+</div></div></div>
+</div>
+<p class="cap">The words say “active”; the count includes a completed season. A free club that finished 2027 therefore cannot start 2028 at all unless it first archives 2027, which no window tells it. Recommendation: count live seasons only, and give Reopen the same check <button class="fl" data-f="F03">F03</button>. Routed to /strategy to log and /billing to build; it rides 9f-1.</p>
+</div>
+</section>
+
+<!-- ======================= 4 · THE FINISHED RECORD ======================= -->
+<section class="pane" id="record" data-pane="record" hidden>
+<h2 style="margin-top:16px">The finished record</h2>
+<div class="verdict"><h3>The locked season is the frozen table (9f·2)</h3>
+<ul>
+  <li>Standings are worked out from the games every time anyone looks <button class="fl" data-f="F05">F05</button>. On a finished season nothing can change a game except Reopen, so the table cannot move by accident.</li>
+  <li>When a club reopens to fix a wrong score, the table should move: that is why they reopened. The score keeps who entered it and who corrected it (9e-3), so the change is not silent.</li>
+  <li>What does need fixing is the word “Final” (9f·3) and the coach’s lost line (9f·6).</li>
+</ul></div>
+
+<div class="st same-st"><h2>s8 · The admin’s Standings on a finished season <button class="mk unc" data-note="UNCHANGED: the admin table reads in place under Q16 with the lock line; its division switch and Export still work; nothing on it writes.">UNCHANGED</button></h2>
+<div class="spec">
+<div class="col" style="flex:1 1 520px"><p class="sp-cap">TODAY = AFTER · desk fragment</p>
+<div class="ak" style="max-width:860px;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);padding:20px;display:flex;flex-direction:column;gap:12px">
+  <div class="ph1"><div><span class="ey">Draft Test 2027</span><h1>Standings</h1></div><span class="sp"></span><span class="fld" style="min-width:150px">U10 ▾</span><span class="btn">Export</span></div>
+  <div class="lock">This season is finished, so this page is locked. Money stays open for late fees and refunds.</div>
+  <div class="panel"><table class="kt"><thead><tr><th>#</th><th>Team</th><th>GP</th><th>W</th><th>L</th><th>T</th><th>Pts</th><th>RF</th><th>RA</th><th>RD</th></tr></thead><tbody>
+    <tr><td>1</td><td><b>Royals</b></td><td>12</td><td>9</td><td>3</td><td>0</td><td>18</td><td>88</td><td>51</td><td>+37</td></tr>
+    <tr><td>2</td><td><b>Twins</b></td><td>12</td><td>8</td><td>3</td><td>1</td><td>17</td><td>80</td><td>55</td><td>+25</td></tr>
+    <tr><td>3</td><td><b>Rays</b></td><td>12</td><td>6</td><td>6</td><td>0</td><td>12</td><td>61</td><td>64</td><td>−3</td></tr></tbody></table></div>
+</div></div>
+</div>
+</div>
+
+<div class="st"><h2>s9 · “Final” means the club has completed it <button class="mk res" data-note="RESTYLED (9f·3): today the public chip says “Final standings” for any live season past its last day; after, a live season past its end reads “Ended Aug 28” and links “Standings →”; “Final standings” appears only once the season is completed, and the standings page itself is titled Final standings then.">RESTYLED</button></h2>
+<p class="who">A family on the public site. Three states of the same season, phone.</p>
+<div class="spec">
+<div class="col"><p class="sp-cap">TODAY · past its last day, never completed</p>
+<div class="ph pub same"><div style="background:#1F3A8A;color:#fff;height:56px;display:flex;align-items:center;padding:0 16px;font:700 18px/1 'Barlow Condensed',sans-serif">Dev League Org</div>
+  <div class="in" style="padding:16px">
+    <div><span class="tag g">Final standings</span> <button class="fl" data-f="F04">F04</button></div>
+    <h3 style="font-size:22px">Draft Test 2027</h3>
+    <div class="rw"><div class="m"><b>Standings →</b></div></div>
+    <p class="foot1">Every score is still editable: nothing is final.</p>
+  </div></div></div>
+<div class="col"><p class="sp-cap">AFTER · past its last day, never completed</p>
+<div class="ph pub"><div style="background:#1F3A8A;color:#fff;height:56px;display:flex;align-items:center;padding:0 16px;font:700 18px/1 'Barlow Condensed',sans-serif">Dev League Org</div>
+  <div class="in" style="padding:16px">
+    <div><span class="tag">Ended Aug 28</span></div>
+    <h3 style="font-size:22px">Draft Test 2027</h3>
+    <div class="rw"><div class="m"><b>Standings →</b></div></div>
+    <p class="foot1">The admin’s Overview already shows “Next step: Complete the season” here.</p>
+  </div></div></div>
+<div class="col"><p class="sp-cap">AFTER · completed: the standings page</p>
+<div class="ph pub"><div style="background:#1F3A8A;color:#fff;height:56px;display:flex;align-items:center;padding:0 16px;font:700 18px/1 'Barlow Condensed',sans-serif">Dev League Org</div>
+  <div class="in" style="padding:16px">
+    <h3 style="font-size:22px">Final standings</h3>
+    <p style="margin:0;color:#555;font-size:14px">Draft Test 2027 · completed Fri, Sep 3</p>
+    <div class="dv"><span>U8</span><span class="on">U10</span><span>U12</span><span>U14</span></div>
+    <div class="sw"><table class="stt nar"><thead><tr><th class="rk">#</th><th>Team</th><th class="n">W-L-T</th><th class="n">Pts</th></tr></thead><tbody>
+      <tr class="lead"><td class="rk">1</td><td class="tm">Royals</td><td class="n">9-3-0</td><td class="n">18</td></tr>
+      <tr><td class="rk">2</td><td class="tm">Twins</td><td class="n">8-3-1</td><td class="n">17</td></tr>
+      <tr><td class="rk">3</td><td class="tm">Rays</td><td class="n">6-6-0</td><td class="n">12</td></tr></tbody></table></div>
+  </div></div></div>
+</div>
+<p class="cap">The chip and the title follow the club’s act (Complete), not the calendar. The table itself is the same computed table in every state. A division whose schedule was never published, or whose “Show standings” is off, still shows nothing after finish, as today.</p>
+</div>
+
+<div class="st"><h2>s10 · The coach keeps the team’s final place for the 30 days <button class="mk new" data-note="NEW (9f·6): the finished coach page carries “Final place: 2nd of 6” under the notice while the page lasts. Shown only when the division’s schedule was published and Show standings is on (the live line’s rule). The empty Schedule heading goes.">NEW</button></h2>
+<div class="spec">
+<div class="col"><p class="sp-cap">TODAY · coach, phone</p>
+<div class="ph same"><div class="ak ph-in" style="min-height:430px">
+  <div class="pbar"><span>Twins · U10</span></div>
+  <div class="pin">
+    <div class="note blue">Draft Test 2027 has finished. This page stays until Sun, Oct 3.</div>
+    <div class="panel"><div class="hd"><h2>Players</h2><span class="pill">10</span></div></div>
+    <div class="panel"><div class="hd"><h2>Schedule</h2></div><div class="fold" style="min-height:0;padding:10px 16px"><a class="lnk">See the season’s schedule</a></div></div>
+    <div class="panel"><div class="hd"><h2>Scores</h2></div><div class="rows"><div class="r" style="min-height:44px"><div class="m"><b>Sat, Aug 28 · vs Royals</b></div><span class="res">W 7–5</span></div></div></div>
+  </div></div></div></div>
+<div class="col"><p class="sp-cap">AFTER · coach, phone</p>
+<div class="ph"><div class="ak ph-in" style="min-height:430px">
+  <div class="pbar"><span>Twins · U10</span></div>
+  <div class="pin">
+    <div class="note blue">Draft Test 2027 has finished. This page stays until Sun, Oct 3.</div>
+    <div class="recbar"><div><span class="cap2">FINAL PLACE</span><br><b>2nd</b> <span class="d">of 6 · 8-3-1 · 17 pts</span></div></div>
+    <div class="panel same"><div class="hd"><h2>Players</h2><span class="pill">10</span></div></div>
+    <div class="panel same"><div class="hd"><h2>Scores</h2></div><div class="rows"><div class="r" style="min-height:44px"><div class="m"><b>Sat, Aug 28 · vs Royals</b></div><span class="res">W 7–5</span></div></div></div>
+  </div></div></div></div>
+</div>
+<p class="cap">Thirty days is the page’s own life, already ruled; the line lives and goes with the page. After the 30 days the card shows only “Draft Test 2027 has finished.”, as today. Alternative in 9f·6: no line (today).</p>
+</div>
+
+<div class="st"><h2>s11 · Reopen, then correct a score <button class="mk new" data-note="A storyboard of the case the prompt asked to see drawn: a wrong final score found after Complete. Every step is today’s machinery; the only new words are the Reopen window’s ratings line (9f·7).">CASE</button></h2>
+<div class="board">
+  <div><span class="stepno">1 · Sep 7: finished, locked</span><div class="mini"><div class="ak"><table class="kt sm"><thead><tr><th>#</th><th>Team</th><th>Pts</th></tr></thead><tbody><tr><td>1</td><td><b>Royals</b></td><td>18</td></tr><tr><td>2</td><td><b>Twins</b></td><td>17</td></tr></tbody></table><p class="cap2" style="margin:8px 0 0">A parent says the Aug 28 Twins–Royals score was entered backwards.</p></div></div></div>
+  <div><span class="stepno">2 · Reopen (asks in a window)</span><div class="mini"><div class="ak"><p style="margin:0;font-size:13px">“Reopen Draft Test 2027?” The window now also says ratings were erased and don’t come back (s12).</p><p class="cap2" style="margin:8px 0 0">The season is Running; the coach page’s 30-day clock stops (it restarts at the next Complete).</p></div></div></div>
+  <div><span class="stepno">3 · Correct the score</span><div class="mini"><div class="ak"><div class="pk"><div class="g"><div class="m"><b>Sat, Aug 28 · Twins vs Royals</b><div class="d">Royals 7, Twins 5 · <span class="tagC">Corrected</span></div></div></div></div><p class="entby" style="margin-top:8px">Entered by the Twins’ coach; corrected by Sam Lee, Tue, Sep 7.</p></div></div></div>
+  <div><span class="stepno">4 · The table moves; Complete again</span><div class="mini"><div class="ak"><table class="kt sm"><thead><tr><th>#</th><th>Team</th><th>Pts</th></tr></thead><tbody><tr class="moved"><td>1</td><td><b>Royals</b></td><td>20</td></tr><tr class="moved"><td>2</td><td><b>Twins</b></td><td>15</td></tr></tbody></table><p class="cap2" style="margin:8px 0 0">No record of the old table. The game says who corrected it. Families are not emailed.</p></div></div></div>
+</div>
+<p class="cap">With a stored final table, step 4 would show two different first places: the stored one and the one the games add up to. The club would then have to pick which is true, and that is the bug. Alternative in 9f·2: store the table at Complete and mark it “changed after finish”. That is a new record for a case the score correction already explains.</p>
+</div>
+
+<div class="st"><h2>s12 · The Reopen window <button class="mk res" data-note="RESTYLED (9f·7): two lines added. The ratings line always (they were erased at finish and the reopen does not restore them). The newer-season line only when another season was created after this one (9f·7, edge 2).">RESTYLED</button></h2>
+<div class="spec">
+<div class="col"><p class="sp-cap">TODAY · desk</p>
+<div class="ak win same" style="border-radius:12px;max-width:600px"><div class="dlg" style="max-width:520px">
+  <div class="dh"><div class="tt"><h4>Reopen Draft Test 2027?</h4></div><span class="xx">×</span></div>
+  <div class="db"><p style="margin:0">The season comes back to Running now. What changes:</p>
+    <ul><li>Registrations, teams and the schedule can be changed again.</li><li>Your public site lists it as Playing now, or as Final standings if its dates have passed.</li><li>If its end date has passed it reads “Ended Aug 28”, so you can complete it again.</li><li>Families are not emailed.</li></ul></div>
+  <div class="df"><span class="s">You can complete it again at any time.</span><span class="btn">Cancel</span><span class="btn pri">Reopen season</span></div>
+</div></div></div>
+<div class="col"><p class="sp-cap">AFTER · desk</p>
+<div class="ak win" style="border-radius:12px;max-width:600px"><div class="dlg" style="max-width:520px">
+  <div class="dh"><div class="tt"><h4>Reopen Draft Test 2027?</h4></div><span class="xx">×</span></div>
+  <div class="db"><p style="margin:0">The season comes back to Running now. What changes:</p>
+    <ul><li>Registrations, teams and the schedule can be changed again.</li><li>Your public site lists it as Ended Aug 28 until you complete it again. <button class="mk res" data-note="RESTYLED to match 9f·3: no “Final standings” while it is open.">9f·3</button></li><li><b>Player ratings were erased when it finished. They don’t come back.</b> <button class="mk new" data-note="NEW (9f·7): the trigger erased ratings at Complete (9c·2b) and Reopen does not restore them; today the window is silent about it.">NEW</button></li><li>Draft Test 2028 is not changed. <button class="mk new" data-note="NEW (9f·7): shown only when a season was created after this one. Reopen stays offered (Q14 allows several live seasons); the coaches’ rule of hiding Reopen once a newer season exists is a rep-team rule.">NEW</button></li><li>Families are not emailed.</li></ul></div>
+  <div class="df"><span class="s">You can complete it again at any time.</span><span class="btn">Cancel</span><span class="btn pri">Reopen season</span></div>
+</div></div></div>
+<div class="col"><p class="sp-cap">AFTER · phone sheet</p>
+<div class="ph"><div class="ak ph-in fsw" style="min-height:600px">
+  <div class="fh"><span class="btn ic">×</span>Reopen the season?</div>
+  <div class="fb"><p style="margin:0">The season comes back to Running now. What changes:</p><ul><li>Registrations, teams and the schedule can be changed again.</li><li>Your public site lists it as Ended Aug 28 until you complete it again.</li><li><b>Player ratings were erased when it finished. They don’t come back.</b></li><li>Draft Test 2028 is not changed.</li><li>Families are not emailed.</li></ul></div>
+  <div class="ff"><span class="s">You can complete it again at any time.</span><div class="bb"><span class="btn">Cancel</span><span class="btn pri">Reopen season</span></div></div>
+</div></div></div>
+</div>
+</div>
+</section>
+
+<!-- ======================= 5 · START NEXT SEASON ======================= -->
+<section class="pane" id="next" data-pane="next" hidden>
+<h2 style="margin-top:16px">Start next season</h2>
+<div class="verdict"><h3>One window, which already exists, learns to start from a season</h3>
+<ul>
+  <li><b>Doors:</b> the house-league home’s <b>New season</b> button (as today) and the rare door at the end of any season’s Overview (s1). Both open the same window; the rare door presets Start from to its season (9f·8).</li>
+  <li><b>Who:</b> the league runners, the same people who can create a season today (9f·9).</li>
+  <li><b>What it says first:</b> what does <b>not</b> come with it. The source season is not touched (9f·11).</li>
+  <li><b>Result:</b> a new “Getting ready” season with no club time, no families and no invites sent. Publish rules unchanged: coaches are invited only at Publish (9c·10).</li>
+</ul></div>
+
+<div class="st"><h2>s13 · The New season window, starting from last season <button class="mk new" data-note="NEW (9f·8, 9f·12, 9f·13): the existing window (name, sport, first and last day) gains Start from, the copy list and the shifted dates. With Start from on “A blank season” it is exactly today’s window.">NEW</button></h2>
+<p class="who">League runners. Opened from New season (Start from defaults to the most recent season) or from a season’s rare door (preset to that season).</p>
+<div class="spec">
+<div class="col" style="flex:1 1 620px"><p class="sp-cap">AFTER · desk window, 640</p>
+<div class="ak win" style="border-radius:12px;max-width:760px"><div class="dlg" style="max-width:640px">
+  <div class="dh"><div class="tt"><span class="ey">House league</span><h4>New season</h4></div><span class="xx">×</span></div>
+  <div class="db">
+    <span class="flbl">Start from</span>
+    <span class="fld wide" style="justify-content:space-between">Draft Test 2027 · Finished <i class="chev"></i></span>
+    <div class="stmt">Draft Test 2027 isn’t changed. Its families, payments, games and scores stay with it. <button class="mk new" data-note="NEW: the coach plan’s lesson, say what happens to the old season FIRST, in a plain statement, not an amber alert. The copy is the ordinary end-of-year act.">NEW</button></div>
+    <div class="two"><div style="display:flex;flex-direction:column;gap:6px"><span class="flbl">Name</span><span class="tx">Draft Test 2028</span></div><div style="display:flex;flex-direction:column;gap:6px"><span class="flbl">Sport</span><span class="fld wide">Softball</span></div></div>
+    <div class="two"><div style="display:flex;flex-direction:column;gap:6px"><span class="flbl">First day</span><span class="dfld"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Sat, Apr 29, 2028</span></div><div style="display:flex;flex-direction:column;gap:6px"><span class="flbl">Last day</span><span class="dfld"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Sat, Aug 26, 2028</span></div></div>
+    <p class="hint">52 weeks after Draft Test 2027’s, so every date falls on the same weekday. Registration dates and the early price move the same way; check them on the new season’s Overview. <button class="mk new" data-note="NEW (9f·13): five dates move by 52 weeks (364 days): first and last day, registration opens and closes, early price until. Same weekday, one or two calendar days earlier. Every date is the shared date field.">9f·13</button></p>
+    <span class="lbl">Bring with it</span>
+    <div class="clist">
+      <div class="crow"><span class="chk on"></span><div class="m"><b>The season’s settings</b><span class="d">Fee, how to pay, waiver, email consent, approval and waitlist rules, when “owing” turns amber, home and away balance, two games in a day.</span></div></div>
+      <div class="crow"><span class="chk on"></span><div class="m"><b>Age groups</b><span class="d">Names, sizes, prices, early prices, notes, games per team, Show standings. Born years move up one year: U10 becomes born 2018–2019.</span></div><span class="n">4</span></div>
+      <div class="crow"><span class="chk on"></span><div class="m"><b>Team names and colours</b><span class="d">No players. You draft again.</span></div><span class="n">22</span></div>
+      <div class="crow"><span class="chk on"></span><div class="m"><b>Practice length and teams at once</b><span class="d">For each age group.</span></div></div>
+      <div class="crow"><span class="chk"></span><div class="m"><b>Coaches</b><span class="d">Names and emails, on the same teams. Nobody is invited until you publish teams.</span></div><span class="n">31</span></div>
+    </div>
+    <div class="empt2"><b>Always starts empty:</b> registrations and payments, ratings, games and scores, practices, emails and notices, and club time. The club gives the new season its time, as it does every season.</div>
+  </div>
+  <div class="df"><span class="s">Families are not emailed.</span><span class="btn">Cancel</span><span class="btn pri">Create season</span></div>
+</div></div></div>
+<div class="col"><p class="sp-cap">AFTER · Start from, opened</p>
+<div class="ak" style="padding:14px;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow)"><div class="menu">
+  <div>A blank season<small>Name, sport and dates only, as today</small></div>
+  <div class="gh">Copy a season</div>
+  <div class="on">Draft Test 2027<small>Finished · 4 age groups · 22 teams</small></div>
+  <div>Fall Ball 2027<small>Running · 2 age groups · 6 teams</small></div>
+  <div>Spring 2026<small>Finished · 4 age groups · 20 teams</small></div>
+</div></div>
+<p class="hint" style="max-width:360px">Newest first. A running season is listed too (9f·10): that is how a club makes an age group on its own calendar (Q19, edge 3).</p>
+</div>
+</div>
+<p class="cap">Why each default: settings, age groups and team names are ticked because they are what the club re-types every year today (the plan’s F22). Coaches are <b>unticked</b>: house-league coaches are volunteer parents who change, and a copied coach becomes an invite email at Publish. Ticking it is one tap, and the teams page lists every copied coach before Publish. The ticks are the copy’s only choices; nothing else in the window is new.</p>
+</div>
+
+<div class="st"><h2>s14 · The same window on a phone <button class="mk new" data-note="NEW: the window becomes the full-screen sheet below 600, foot sentence above its buttons as the house phone sheet does.">NEW</button></h2>
+<div class="spec">
+<div class="col"><p class="sp-cap">AFTER · phone sheet, 390 (scrolls)</p>
+<div class="ph"><div class="ak ph-in fsw" style="min-height:760px">
+  <div class="fh"><span class="btn ic">×</span>New season</div>
+  <div class="fb" style="gap:12px">
+    <span class="flbl">Start from</span><span class="fld wide" style="justify-content:space-between;min-height:44px">Draft Test 2027 · Finished <i class="chev"></i></span>
+    <div class="stmt">Draft Test 2027 isn’t changed. Its families, payments, games and scores stay with it.</div>
+    <span class="flbl">Name</span><span class="tx" style="min-height:44px">Draft Test 2028</span>
+    <span class="flbl">First day</span><span class="dfld" style="min-height:44px">Sat, Apr 29, 2028</span>
+    <span class="flbl">Last day</span><span class="dfld" style="min-height:44px">Sat, Aug 26, 2028</span>
+    <p class="hint">52 weeks after Draft Test 2027’s, on the same weekdays.</p>
+    <span class="lbl">Bring with it</span>
+    <div class="clist">
+      <div class="crow"><span class="chk on"></span><div class="m"><b>The season’s settings</b></div></div>
+      <div class="crow"><span class="chk on"></span><div class="m"><b>Age groups</b><span class="d">Born years move up one year.</span></div><span class="n">4</span></div>
+      <div class="crow"><span class="chk on"></span><div class="m"><b>Team names and colours</b></div><span class="n">22</span></div>
+      <div class="crow"><span class="chk on"></span><div class="m"><b>Practice length and teams at once</b></div></div>
+      <div class="crow"><span class="chk"></span><div class="m"><b>Coaches</b><span class="d">Invited only when you publish teams.</span></div><span class="n">31</span></div>
+    </div>
+    <div class="empt2">Always starts empty: registrations, payments, ratings, games, practices, emails and club time.</div>
+  </div>
+  <div class="ff"><span class="s">Families are not emailed.</span><div class="bb"><span class="btn">Cancel</span><span class="btn pri">Create season</span></div></div>
+</div></div></div>
+</div>
+<p class="cap">On a phone each date is the phone’s own date wheel (the shared field’s touch face); on a desk it is our calendar.</p>
+</div>
+
+<div class="st"><h2>s15 · How the dates and born years move <button class="mk new" data-note="NEW (9f·13): the rule drawn as numbers. 52 weeks keeps the weekday; a straight “plus one year” would move a Saturday opener to a Sunday.">9f·13</button></h2>
+<div class="tw"><table class="t cmpt"><thead><tr><th>Field</th><th>Draft Test 2027</th><th>Draft Test 2028 (52 weeks later)</th><th>“Same date, next year” instead</th></tr></thead><tbody>
+<tr><td>First day</td><td class="old">Sat, May 1, 2027</td><td class="nw">Sat, Apr 29, 2028</td><td>Mon, May 1, 2028</td></tr>
+<tr><td>Last day</td><td class="old">Sat, Aug 28, 2027</td><td class="nw">Sat, Aug 26, 2028</td><td>Mon, Aug 28, 2028</td></tr>
+<tr><td>Registration opens</td><td class="old">Mon, Mar 1, 2027, 8:00 a.m.</td><td class="nw">Mon, Feb 28, 2028, 8:00 a.m.</td><td>Wed, Mar 1, 2028</td></tr>
+<tr><td>Registration closes</td><td class="old">Fri, Apr 16, 2027, 11:59 p.m.</td><td class="nw">Fri, Apr 14, 2028, 11:59 p.m.</td><td>Sun, Apr 16, 2028</td></tr>
+<tr><td>Early price until</td><td class="old">Mon, Mar 15, 2027</td><td class="nw">Mon, Mar 13, 2028</td><td>Wed, Mar 15, 2028</td></tr>
+<tr><td>U8 born</td><td class="old">2019–2020</td><td class="nw">2020–2021</td><td rowspan="4" style="vertical-align:middle">Born years move by the whole years between the two first days (here, one).</td></tr>
+<tr><td>U10 born</td><td class="old">2017–2018</td><td class="nw">2018–2019</td></tr>
+<tr><td>U12 born</td><td class="old">2015–2016</td><td class="nw">2016–2017</td></tr>
+<tr><td>U14 born</td><td class="old">2013–2014</td><td class="nw">2014–2015</td></tr>
+</tbody></table></div>
+<p class="cap">The window shows the first and last day; the other three follow and are checked on the new season’s Overview, where each already has its field. If the admin changes the first day in the window, the other dates keep the same gap to it. The name: a four-digit year in the source’s name goes up by the same years (“Draft Test 2027” → “Draft Test 2028”). A name without a year comes in empty, with the source’s name as its placeholder. A name another season already uses is refused, as today.</p>
+</div>
+
+<div class="st"><h2>s16 · The result: a new season, getting ready <button class="mk res" data-note="RESTYLED: the getting-ready Overview as built in 9a·4. The only new marks are “From Draft Test 2027” on the lines that came across, so the convenor knows what to check, and the club-time line.">RESTYLED</button></h2>
+<div class="spec">
+<div class="col" style="flex:1 1 520px"><p class="sp-cap">AFTER · desk fragment</p>
+<div class="ak" style="max-width:860px;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);padding:20px;display:flex;flex-direction:column;gap:14px">
+  <div class="ph1"><div><span class="ey">House league</span><h1>Draft Test 2028</h1></div></div>
+  <p class="sub" style="display:flex;gap:10px;align-items:center;margin:-8px 0 0">Apr 29 – Aug 26, 2028 · Softball <span class="pill reg">Getting ready</span></p>
+  <div class="qdone">Started from Draft Test 2027: settings, 4 age groups, 22 team names. Check each line, then open registration.</div>
+  <div class="panel"><div class="hd"><h2>Before you open registration</h2><span class="btn pri">Open registration</span></div>
+    <ul class="steps">
+      <li><span class="tick">✓</span><span class="tt"><b>Age groups</b><span>U8, U10, U12, U14 · born years moved up one</span></span><span class="from">From Draft Test 2027</span></li>
+      <li><span class="tick">✓</span><span class="tt"><b>Prices</b><span>$150 – $195</span></span><span class="from">From Draft Test 2027</span></li>
+      <li><span class="tick">✓</span><span class="tt"><b>Registration dates</b><span>Mon, Feb 28 – Fri, Apr 14, 2028</span></span><span class="from">Moved 52 weeks</span></li>
+      <li><span class="tick">✓</span><span class="tt"><b>How to pay</b><span>E-transfer to treasurer@devleague.ca …</span></span><span class="from">From Draft Test 2027</span></li>
+      <li><span class="tick">✓</span><span class="tt"><b>Waiver</b><span>Optional</span></span><span class="from">From Draft Test 2027</span></li>
+    </ul></div>
+  <div class="note blue">No club time yet. The club gives this season its time in the club’s Schedules; games and practices can be made once it has. <button class="mk new" data-note="NEW line (9d2·15): a copied season never carries last year’s slots; those belong to specific club dates. Shown on a season with no club time, copied or not.">NEW</button></div>
+</div></div>
+<div class="col"><p class="sp-cap">AFTER · phone</p>
+<div class="ph"><div class="ak ph-in">
+  <div class="pbar"><span>Draft Test 2028</span><span class="sp"></span><span class="pill reg">Getting ready</span></div>
+  <div class="pin">
+    <div class="qdone">Started from Draft Test 2027. Check each line, then open registration.</div>
+    <div class="panel"><div class="hd"><h2>Before you open registration</h2></div>
+      <ul class="steps"><li><span class="tick">✓</span><span class="tt"><b>Age groups</b><span>From Draft Test 2027</span></span></li><li><span class="tick">✓</span><span class="tt"><b>Prices</b><span>From Draft Test 2027</span></span></li><li><span class="tick">✓</span><span class="tt"><b>Registration dates</b><span>Moved 52 weeks</span></span></li><li><span class="tick">✓</span><span class="tt"><b>How to pay</b><span>From Draft Test 2027</span></span></li></ul>
+      <div style="padding:0 16px 14px"><span class="btn pri" style="width:100%;justify-content:center">Open registration</span></div></div>
+    <div class="note blue">No club time yet. The club gives this season its time.</div>
+  </div></div></div>
+</div>
+<p class="cap">Every line is ticked because everything came across. So Open registration is offered at once, and it still asks in its window (9a·4). The “From Draft Test 2027” marks are why a ticked list is safe here: they say “this was copied, check it”, and they go once the line is edited. Published marks start empty, so Teams and Schedule both start unpublished. <b>Where Stage 14 plugs in:</b> a signed-in returning parent’s pre-filled form lives on this season’s registration form, not in this window. Nothing is drawn for it.</p>
+</div>
+
+<div class="st"><h2>s17 · Exactly what copies <button class="mk new" data-note="The list on which 9f·12 is ruled, re-verified against the dev schema snapshot on 2026-11-03.">9f·12</button></h2>
+<div class="tw"><table class="t"><thead><tr><th>Thing</th><th>Copies?</th><th>Default</th><th>Why</th></tr></thead><tbody>
+<tr><td>Fee, how to pay, waiver, email consent, approval and waitlist rules, owing threshold, home/away balance, two games a day, description</td><td class="y">Yes</td><td>Ticked</td><td>How-to-pay and the owing threshold are already ruled “copied forward” (9b·9, 9b·8).</td></tr>
+<tr><td>Age groups: name, size, order, born years (+N), price, early price, note, games per team, Show standings</td><td class="y">Yes</td><td>Ticked</td><td>The work a club re-types every year (F22).</td></tr>
+<tr><td>Teams: name, colour, order</td><td class="y">Yes</td><td>Ticked (with age groups)</td><td>Sponsor names repeat; never a player.</td></tr>
+<tr><td>Practice length and teams at once (per age group)</td><td class="y">Yes</td><td>Ticked (with age groups)</td><td>A setting, not a booking.</td></tr>
+<tr><td>Coaches: name and email, on their team</td><td class="y">Yes</td><td><b>Unticked</b></td><td>Invited only at Publish (9c·10); a wrong carry is an email to last year’s volunteer.</td></tr>
+<tr><td>Dates (5)</td><td class="y">Moved</td><td>52 weeks</td><td>Same weekday (9f·13).</td></tr>
+<tr><td>Name, web address</td><td class="nw">New</td><td>Year bumped</td><td>Each season’s address is unique.</td></tr>
+<tr><td>Teams published, schedule published</td><td class="x">No</td><td>Empty</td><td>There is no unpublish, so a copy must start unpublished.</td></tr>
+<tr><td>Registrations, payments, price changes, refunds</td><td class="x">No</td><td></td><td>They are last season’s record; owing stays on its Money.</td></tr>
+<tr><td>Ratings</td><td class="x">No</td><td></td><td>Already erased (9c·2b); carrying is Stage 14’s.</td></tr>
+<tr><td>Games, scores, changes, rainouts, practices, what each team was told</td><td class="x">No</td><td></td><td>Records of a season that happened.</td></tr>
+<tr><td>Club time given to the season</td><td class="x">No</td><td></td><td>Belongs to dated club slots (9d2·15).</td></tr>
+<tr><td>Notices, email logs, invites and their links</td><td class="x">No</td><td></td><td>Sent things.</td></tr>
+<tr><td>The budget category and its first budget line</td><td class="x">No</td><td></td><td>Made fresh when the new season’s fees first need it, in the fiscal year its sign-ups open (9b·11).</td></tr>
+</tbody></table></div>
+</div>
+</section>
+
+<!-- ======================= 6 · EDGES ======================= -->
+<section class="pane" id="edges" data-pane="edges" hidden>
+<h2 style="margin-top:16px">Edges</h2>
+<div class="edges">
+  <div class="card"><h3>1 · Copying while the old season still has money owing</h3>
+    <div class="ak" style="padding:12px;border-radius:10px;outline:1px solid var(--line)"><div class="stmt">Draft Test 2027 isn’t changed. Its families, payments, games and scores stay with it. 3 players still owe $525 there; that stays on its Money.</div></div>
+    <p class="cap">Warn, never block, and not amber: the copy closes nothing, so there is nothing to settle first. One clause in the statement, only when someone owes. A family that owes last year and signs up this year is not linked: that is Stage 14’s player across seasons.</p></div>
+  <div class="card"><h3>2 · Reopen after a newer season exists</h3>
+    <p class="cap" style="margin-top:0">Allowed on every paid plan (Q14: several live seasons). The Reopen window adds “Draft Test 2028 is not changed.” (s12). The two seasons share nothing, so neither can damage the other. On the free League plan (parked), Reopen is refused when it would make two live seasons, with the plan’s refusal window <button class="fl" data-f="F03">F03</button>.</p>
+    <p class="cap">The coaches’ rule (Reopen only while no newer season exists) protects one program year per team. A league has no such thing, so the rule doesn’t transfer.</p></div>
+  <div class="card"><h3>3 · An age group on its own calendar (Q19)</h3>
+    <div class="ak" style="padding:12px;border-radius:10px;outline:1px solid var(--line);display:flex;flex-direction:column;gap:8px"><span class="fld wide">Draft Test 2027 · Running ▾</span><div class="crow" style="padding:6px 0;border:0"><span class="chk on"></span><div class="m"><b>Age groups</b><span class="d" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"><span class="chipk on">U8</span><span class="chipk">U10</span><span class="chipk">U12</span><span class="chipk">U14</span></span></div></div></div>
+    <p class="cap">“An age group on its own calendar is a different season, copied by 9f’s Start next season.” So Start from lists running seasons too (9f·10), and the Age groups line opens to chips, all on, so the club can take just U8. When copying from a live season the dates come in <b>empty</b>, not moved 52 weeks: a second calendar this year is not next year.</p></div>
+  <div class="card"><h3>4 · The free League plan’s one season</h3>
+    <p class="cap" style="margin-top:0">Parked, so no customer meets it. With 9f·5: a finished season holds nothing, so a free club can start next season from last year in the ordinary way. It is also capped at one age group and eight teams, so the copy brings at most what the plan allows (the same caps the age-group and team routes already check). Without 9f·5, the window needs a line telling a free club to archive first, and Archive keeps a job.</p></div>
+  <div class="card"><h3>5 · A season the admin forgot to complete</h3>
+    <div class="ak" style="padding:12px;border-radius:10px;outline:1px solid var(--line)"><div class="stmt">Draft Test 2027 isn’t changed. It is still running: complete it from its Overview once its scores are in.</div></div>
+    <p class="cap">Start from is allowed from it (9f·10). The family reads “Ended Aug 28”, not “Final standings”, until it is completed (9f·3). Its Overview shows the “Next step: Complete the season” card as today, with the Start next season door at the body’s end.</p></div>
+  <div class="card"><h3>6 · Pressing Create twice, or a name in use</h3>
+    <p class="cap" style="margin-top:0">Each season’s address is unique, so a second “Draft Test 2028” is refused with today’s words, and the window stays open with the name field marked. Nothing is half-made: the season and everything copied into it are one save.</p></div>
+  <div class="card"><h3>7 · A source with a division that has no born years, or a free season</h3>
+    <p class="cap" style="margin-top:0">An age group without born years copies without them and its checklist line stays open, as for any new age group. A free source (all prices $0) copies “Free”; how-to-pay is then not required (9b·9).</p></div>
+</div>
+</section>
+
+<!-- ======================= 7 · SINCE 9E ======================= -->
+<section class="pane" id="since" data-pane="since" hidden>
+<h2 style="margin-top:16px">Since 9e: every frame checked against the rulings</h2>
+<div class="tw"><table class="t gate"><thead><tr><th>Ruling</th><th>s1 Overview</th><th>s9 Final</th><th>s10 Coach</th><th>s12 Reopen</th><th>s13 Window</th><th>s16 Result</th></tr></thead><tbody>
+<tr><td>Q16 finished reads in place, locked; Money and Email families open</td><td class="co">✓ lock line kept</td><td class="co">✓</td><td class="co">✓ no doors</td><td class="co">✓</td><td class="co">✓ reads only</td><td>—</td></tr>
+<tr><td>9e-3: no score doors on a finished season; no Rainout; Subscribe live-only</td><td class="co">✓</td><td>—</td><td class="co">✓ none added</td><td>—</td><td class="co">✓ none copied</td><td>—</td></tr>
+<tr><td>9a·4 every status change asks; doors end the body; families not emailed</td><td class="co">✓</td><td>—</td><td>—</td><td class="co">✓</td><td class="co">✓ (a create asks)</td><td class="co">✓ Open registration asks</td></tr>
+<tr><td>Q14 several live seasons</td><td>—</td><td>—</td><td>—</td><td class="co">✓ newer line</td><td class="co">✓ old not closed</td><td>—</td></tr>
+<tr><td>9c·2b ratings erased at finish</td><td>—</td><td>—</td><td>—</td><td class="co">✓ said</td><td class="co">✓ never copied</td><td>—</td></tr>
+<tr><td>9c·10 coaches invited at Publish</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="co">✓ unticked, no invite</td><td class="co">✓</td></tr>
+<tr><td>9d2·15 club time is the club’s to give</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="co">✓ starts empty</td><td class="co">✓ said</td></tr>
+<tr><td>Signed-in families: no new sent links; pre-fill is Stage 14’s</td><td>—</td><td class="co">✓</td><td>—</td><td>—</td><td class="co">✓ nothing sent</td><td class="co">✓ plug-in named only</td></tr>
+<tr><td>Absent beats disabled; a rare door ends the body; window foot sentence left</td><td class="co">✓</td><td>—</td><td class="co">✓ empty Schedule removed</td><td class="co">✓</td><td class="co">✓</td><td>—</td></tr>
+<tr><td>Every date is the shared date field</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="co">✓</td><td class="co">✓</td></tr>
+<tr><td>CLAUDE.md’s one-page closed season (Coaches Portal only)</td><td class="co">✓ not applied</td><td class="co">✓</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+</tbody></table></div>
+<div class="card"><h3>Found on the way (findings for the build, not fixes now)</h3><ul>
+  <li>The data dictionary still says a season’s status is forward-only and “archived is terminal”. Completed and archived both go back to Running, and its line references are out of date <button class="fl" data-f="F11">F11</button>.</li>
+  <li>The Reopen window is silent about erased ratings <button class="fl" data-f="F07">F07</button>; Reopen is offered with a newer season and skips the free limit <button class="fl" data-f="F08">F08</button> <button class="fl" data-f="F03">F03</button>.</li>
+  <li>The public season header still shows the “Season complete” and “Archived” chips that 9a retired <button class="fl" data-f="F10">F10</button>.</li>
+  <li>Today’s “defaults” for a new age group come from the same season’s last age group, never from a previous season <button class="fl" data-f="F09">F09</button>.</li>
+  <li>9e-1 left one ranking call open (a team with no counted game ranks above a team that lost); it is 9e’s, not reopened here.</li>
+</ul></div>
+</section>
+
+<!-- ======================= 8 · ASKS ======================= -->
+<section class="pane" id="asks" data-pane="asks" hidden>
+<h2 style="margin-top:16px">Asks</h2>
+<p class="muted">Tick an answer (or several), add a note if you like, then build the paste-back at the bottom and paste it into the chat. The recommended answer is shaded.</p>
+
+<h3>The shape of 9f</h3>
+<div class="ask" data-ask="F1"><h3><span class="no">9f·1</span>One build or two, and in what order</h3>
+<p class="rides">Rides on every other ask. The prompt leaned to Start next season first.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="F1" value="a"><span>Two builds: <b>9f-1 Finished, honestly</b> (S: Archive, the word “Final”, the coach’s final place, the Reopen lines, the free limit) then <b>9f-2 Start next season</b> (M)</span></label>
+<label><input type="checkbox" name="F1" value="b"><span>Two builds, Start next season first</span></label>
+<label><input type="checkbox" name="F1" value="c"><span>One build</span></label>
+</div><textarea aria-label="Notes on 9f·1" placeholder="Notes (optional)"></textarea></div>
+
+<div class="ask" data-ask="F2"><h3><span class="no">9f·2</span>A frozen final table, or the locked season</h3>
+<p class="rides">Tab 4, s11. The plan said “9f must define the frozen table”.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="F2" value="a"><span>The locked season is the frozen table; nothing is stored; a correction after Reopen moves the table, and the game records who corrected it</span></label>
+<label><input type="checkbox" name="F2" value="b"><span>Store the table at Complete, and mark it “changed after finish” if a later Complete differs</span></label>
+</div><textarea aria-label="Notes on 9f·2" placeholder="Notes (optional)"></textarea></div>
+
+<div class="ask" data-ask="F3"><h3><span class="no">9f·3</span>When families read “Final”</h3>
+<p class="rides">Tab 4, s9.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="F3" value="a"><span>Only once the club completes it: a live season past its end reads “Ended Aug 28” and “Standings →”; a completed one reads “Final standings” on its link and its page title</span></label>
+<label><input type="checkbox" name="F3" value="b"><span>Keep today’s rule: “Final standings” after the last day, whether completed or not</span></label>
+</div><textarea aria-label="Notes on 9f·3" placeholder="Notes (optional)"></textarea></div>
+
+<h3>Archive and the free limit</h3>
+<div class="ask" data-ask="F4"><h3><span class="no">9f·4</span>Archive’s job</h3>
+<p class="rides">Tab 3. Already-archived seasons keep their stored state either way; no data changes.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="F4" value="a"><span>Retire the door: a finished season is “Finished”; archived ones read exactly like completed ones everywhere (public chip gone, “This season has concluded.”)</span></label>
+<label><input type="checkbox" name="F4" value="b"><span>Give it a job: Archive takes the season off the public Past seasons list (its pages still open from a link)</span></label>
+<label><input type="checkbox" name="F4" value="c"><span>Keep it as it is</span></label>
+</div><textarea aria-label="Notes on 9f·4" placeholder="Notes (optional)"></textarea></div>
+
+<div class="ask" data-ask="F5"><h3><span class="no">9f·5</span>The free League plan’s one season counts live seasons only</h3>
+<p class="rides">Tab 3, s7. A packaging fact: if you agree, /strategy logs it and /billing builds it (in 9f-1). The plan is parked; this changes no customer today.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="F5" value="a"><span>Yes: getting-ready, open and running seasons hold the one slot; a finished season holds nothing; Reopen checks the same limit (as the tournament ruled 2026-10-10)</span></label>
+<label><input type="checkbox" name="F5" value="b"><span>No: keep counting finished seasons, and Archive keeps its job of freeing the slot</span></label>
+</div><textarea aria-label="Notes on 9f·5" placeholder="Notes (optional)"></textarea></div>
+
+<h3>The finished record</h3>
+<div class="ask" data-ask="F6"><h3><span class="no">9f·6</span>What the coach reads after finish</h3>
+<p class="rides">Tab 4, s10.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="F6" value="a"><span>A “Final place: 2nd of 6” line for the page’s 30 days (when the table was public), and the empty Schedule heading goes</span></label>
+<label><input type="checkbox" name="F6" value="b"><span>As today: no standing line</span></label>
+</div><textarea aria-label="Notes on 9f·6" placeholder="Notes (optional)"></textarea></div>
+
+<div class="ask" data-ask="F7"><h3><span class="no">9f·7</span>Reopen: the ratings line, and Reopen when a newer season exists</h3>
+<p class="rides">Tab 4, s12; tab 6, edge 2.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="F7" value="a"><span>Reopen stays offered; its window says ratings were erased and don’t come back, and names a newer season as not changed. The Complete window also says ratings are erased.</span></label>
+<label><input type="checkbox" name="F7" value="b"><span>Hide Reopen once a newer season exists (the coaches’ rule)</span></label>
+</div><textarea aria-label="Notes on 9f·7" placeholder="Notes (optional)"></textarea></div>
+
+<h3>Start next season</h3>
+<div class="ask" data-ask="F8"><h3><span class="no">9f·8</span>Where it lives</h3>
+<p class="rides">Tab 5, s13; tab 2, s1.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="F8" value="a"><span>“Start from” in the existing New season window (defaults to the most recent season), plus a rare door at the end of each season’s Overview that opens it preset</span></label>
+<label><input type="checkbox" name="F8" value="b"><span>A separate “Start next season” window, with a door on each Past seasons row</span></label>
+</div><textarea aria-label="Notes on 9f·8" placeholder="Notes (optional)"></textarea></div>
+
+<div class="ask" data-ask="F9"><h3><span class="no">9f·9</span>Who may press it</h3>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="F9" value="a"><span>The league runners only (owner, club admin, league admin): the people who can create a season today</span></label>
+<label><input type="checkbox" name="F9" value="b"><span>Also the registrar</span></label>
+</div><textarea aria-label="Notes on 9f·9" placeholder="Notes (optional)"></textarea></div>
+
+<div class="ask" data-ask="F10"><h3><span class="no">9f·10</span>Copy from which seasons</h3>
+<p class="rides">Tab 6, edges 3 and 5.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="F10" value="a"><span>Any season, finished or live (a live one is how an age group gets its own calendar, Q19); from a live one, dates come in empty</span></label>
+<label><input type="checkbox" name="F10" value="b"><span>Finished seasons only</span></label>
+</div><textarea aria-label="Notes on 9f·10" placeholder="Notes (optional)"></textarea></div>
+
+<div class="ask" data-ask="F11"><h3><span class="no">9f·11</span>Does it close the old season</h3>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="F11" value="a"><span>No: the source is left exactly as it was, and the window says so first</span></label>
+<label><input type="checkbox" name="F11" value="b"><span>Yes, if the source is still live: it completes it as part of the copy (the coaches’ way)</span></label>
+</div><textarea aria-label="Notes on 9f·11" placeholder="Notes (optional)"></textarea></div>
+
+<div class="ask" data-ask="F12"><h3><span class="no">9f·12</span>Exactly what copies</h3>
+<p class="rides">Tab 5, s17. The budget seed (9b·11) is the unruled item.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="F12" value="a"><span>The s17 list: settings, age groups (born years moved up), team names and colours, practice settings ticked; coaches unticked; never registrations, money, ratings, games, practices, sends, club time or the budget seed</span></label>
+<label><input type="checkbox" name="F12" value="b"><span>The same, with coaches ticked by default</span></label>
+<label><input type="checkbox" name="F12" value="c"><span>Also carry last season’s budget amounts as the new season’s starting budget</span></label>
+</div><textarea aria-label="Notes on 9f·12" placeholder="Notes (optional)"></textarea></div>
+
+<div class="ask" data-ask="F13"><h3><span class="no">9f·13</span>How dates move and how the name is proposed</h3>
+<p class="rides">Tab 5, s15.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="F13" value="a"><span>52 weeks later (same weekday) for all five dates; born years by the whole years between; a year in the name goes up, otherwise the name comes in empty</span></label>
+<label><input type="checkbox" name="F13" value="b"><span>The same calendar dates, one year later</span></label>
+<label><input type="checkbox" name="F13" value="c"><span>Dates always come in empty</span></label>
+</div><textarea aria-label="Notes on 9f·13" placeholder="Notes (optional)"></textarea></div>
+
+<h3>Notices, retention, the gate and the record</h3>
+<div class="ask" data-ask="F14"><h3><span class="no">9f·14</span>Any end-of-season notice to families or coaches</h3>
+<p class="rides">None is ruled. Every status change already says “Families are not emailed”; the coach page names its own last day.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="F14" value="a"><span>None. The final standings are on the public site; the coach page says when it closes; Email families is still open if the club wants to thank them</span></label>
+<label><input type="checkbox" name="F14" value="b"><span>An email to families at Complete, held for the admin to send</span></label>
+<label><input type="checkbox" name="F14" value="c"><span>A note to coaches at Complete</span></label>
+</div><textarea aria-label="Notes on 9f·14" placeholder="Notes (optional)"></textarea></div>
+
+<div class="ask" data-ask="F15"><h3><span class="no">9f·15</span>How long a finished season stays listed</h3>
+<p class="rides">No retention ruling exists. The admin shelf is already collapsed with a count.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="F15" value="a"><span>No limit: listed on the admin shelf, the switcher and the public Past seasons, newest first, for as long as the club has it</span></label>
+<label><input type="checkbox" name="F15" value="b"><span>The public list shows the newest few, then “Show all”</span></label>
+</div><textarea aria-label="Notes on 9f·15" placeholder="Notes (optional)"></textarea></div>
+
+<details class="askw"><summary><b>9f·16</b> Is Start next season plan-gated? Flagged for /strategy, not decided, no checkbox</summary>
+<p class="rides" style="margin:8px 0">What the code says: house league is gated as a whole (League Plus, Club, Club · Association), and 9e·15 ruled that 9e’s pieces ride it, never an upgrade lever. Start next season copies what the club could re-type by hand, so a gate on it would gate typing. The free League plan is capped at one season either way. /strategy decides.</p></details>
+
+<div class="ask" data-ask="F17"><h3><span class="no">9f·17</span>Record house league’s finished-season rule in CLAUDE.md</h3>
+<p class="rides">Tab 7. Not edited in this session. Same shape as the club fiscal-year line.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" name="F17" value="a"><span>Yes: “House-league seasons read in place under Q16 (locked, Money and Email families open). The one-page closed season is the Coaches Portal’s rule. This is deliberate, not drift.”</span></label>
+<label><input type="checkbox" name="F17" value="b"><span>No: the Stage 9 plan’s record is enough</span></label>
+</div><textarea aria-label="Notes on 9f·17" placeholder="Notes (optional)"></textarea></div>
+
+<h3>Where your answers stand</h3>
+<div class="tw"><table class="t" id="askIndex"><thead><tr><th>Ask</th><th>Where</th><th>Your answer so far</th></tr></thead><tbody></tbody></table></div>
+<div class="paste"><div class="row"><button type="button" class="btn-d pri" id="build">Build the paste-back</button><button type="button" class="btn-d" id="copy">Copy</button><span id="copied" class="muted"></span></div>
+<textarea id="out" readonly aria-label="Paste-back text"></textarea></div>
+<div class="card" id="reviews"><h3>What /design changed before the hand-off</h3><ul id="revlist"><li>Pending.</li></ul></div>
+</section>
+</div>
+
+<dialog class="note" id="dlg"><div class="nh"><h3 id="dlgT"></h3><button class="x" id="dlgX" aria-label="Close">×</button></div><div class="nb" id="dlgB"></div></dialog>
+
+<script>
+(function(){
+var FINDINGS = {
+ F01:{t:'Archive does almost nothing', today:'The only status writer is the season PATCH; completed may go to archived or back to active, and archived only to active. Archived differs from completed in: the public sentence “This season has been archived.” (public season page ~258); the public header chip “Archived” vs “Season complete” (STATUS_LABEL ~35); the club setup checklist and the birthday cut-off card ignore archived seasons (club-checklist ~76, birthday-cutoff-server ~22); the free League limit ignores archived seasons; the public RLS policy excludes archived (the pages read with the service role). It does not restamp finished_at, so the 30-day coach page and sign-up link are not restarted. The gate, the admin switcher, both Past seasons shelves, the coach page and the sign-up link treat the two the same.', fix:'Retire the door; archived seasons read exactly like completed ones (9f·4). No data change.', st:'9f-1'},
+ F02:{t:'The free League limit counts finished seasons', today:'Create season (seasons POST ~41-50) counts every season that is not archived (draft, open, running and completed) against FREE_FLOOR_LIMITS.league_starter.houseLeagueSeasons = 1. The refusal says “Your free League plan includes one active season.” So a free club with a completed season cannot create another until it archives. The free League floor is parked (flag off in production, PLAN_PRICING_FACTS). The tournament’s one-at-a-time rule was changed on 2026-10-10 so a Completed event stops holding the slot.', fix:'Count getting-ready, open and running seasons only (9f·5, /strategy then /billing).', st:'9f-1'},
+ F03:{t:'Reopen skips the free limit', today:'The status PATCH has no cap check. On the free floor, archiving a season frees the slot, a new season can be made, and reopening the archived one gives the club two live seasons.', fix:'Reopen checks the same limit and shows the plan’s refusal window (9f·5).', st:'9f-1'},
+ F04:{t:'“Final standings” follows the calendar, not the club', today:'publicSeasonState (house-league-season ~166) returns “Final standings” for any active season past its end date. The public season page’s link reads “Final standings →” on a completed or archived season. The standings page itself is always titled “Standings”. So a season the admin forgot to complete reads Final standings while every score is still editable.', fix:'“Final” only once completed; a live season past its end reads “Ended Aug 28” (9f·3).', st:'9f-1'},
+ F05:{t:'There is no stored table', today:'computeStandings (db ~2959) reads the division’s teams and games and ranks them (league-standings rankStandings, gameCounts) on every read. No table or column stores standings; the only standings field is the division’s Show standings switch. A finished season refuses every game write (423), so only Reopen can change it. 9e-3 records who entered, reported, checked or corrected each score.', fix:'Keep it: the locked season is the frozen table (9f·2).', st:'9f-1'},
+ F06:{t:'The coach loses the final place', today:'On a finished season (the 30 days) the coach page reads players and scores; the standing line needs the live view (house-league-coach ~215, ranks = view open). Practices and games are live-only, but the page still renders the Schedule heading with “See the season’s schedule” and no list. The notice reads “{season} has finished. This page stays until {date}.”', fix:'A “Final place” line while the page lasts, on the live line’s conditions; the empty Schedule heading goes (9f·6).', st:'9f-1'},
+ F07:{t:'The Reopen window says nothing about ratings', today:'The season trigger (migration 377) erases the season’s ratings when it first becomes completed or archived, and on reopen only clears finished_at: ratings do not come back. The Reopen window (status-words ~201) lists four lines, none about ratings; the Complete window does not mention them either.', fix:'A line in both windows (9f·7).', st:'9f-1'},
+ F08:{t:'Reopen is offered with a newer season', today:'movesFrom, the Overview and the PATCH never look for a season created after this one. On a paid plan that is correct under Q14; the window just does not say the newer one is untouched.', fix:'Keep Reopen; the window names the newer season as not changed (9f·7).', st:'9f-1'},
+ F09:{t:'Nothing copies forward', today:'The create window asks name, sport and first and last day only, and the POST stores those; the season starts as draft (“Getting ready” is draft’s label). A new age group’s size and price default from the same season’s last age group (season page ~355), never from another season. There is no copy route.', fix:'Start from in the New season window (9f·8 to 9f·13).', st:'9f-2'},
+ F10:{t:'Retired public chips are still shown', today:'The public season header shows registrationChip, else STATUS_LABEL: “Season complete” for completed, “Archived” for archived. The 9a copy pass listed both as retired public words.', fix:'No chip on a finished season; the page’s sentence stays (9f·4).', st:'9f-1'},
+ F11:{t:'The data dictionary’s status line is stale', today:'DATA_DICTIONARY league_seasons gotcha 2 (~6710) says the lifecycle is forward-only, one hop at a time, and archived is terminal, with line references that no longer match. The route allows registration_open ↔ registration_closed, registration_open → active, completed → active and archived → active.', fix:'Rewrite the gotcha in the 9f-1 build (same unit of work as any status change).', st:'9f-1'},
+ F12:{t:'Some settings are per age group, and born years are typed fresh', today:'Practice length and teams at once live in league_practice_time, one row per season and age group (not on the season). Games per team is per age group; home/away balance and two-a-day are per season. The dictionary says age groups are typed fresh every season, with no “carried” marker on born years (unlike rep program years).', fix:'The copy brings practice settings per age group and moves born years by the whole years between first days (9f·12, 9f·13).', st:'9f-2'}
+};
+function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+var dlg=$('#dlg'), dT=$('#dlgT'), dB=$('#dlgB');
+function esc(t){return String(t).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+function open(title, parts){ dT.textContent=title; dB.innerHTML=parts.map(function(p){return '<div><h4>'+esc(p[0])+'</h4><p>'+esc(p[1])+'</p></div>'}).join(''); if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open',''); }
+$('#dlgX').addEventListener('click',function(){dlg.close()});
+dlg.addEventListener('click',function(e){ if(e.target===dlg) dlg.close(); });
+document.addEventListener('click',function(e){
+  var f=e.target.closest('.fl'); if(f){ e.preventDefault(); e.stopPropagation(); var k=f.getAttribute('data-f'), F=FINDINGS[k]; if(!F) return;
+    var parts=[['What the code does today',F.today]]; var h=f.getAttribute('data-here'); if(h) parts.push(['Where you are looking',h]); parts.push(['What the proposal does',F.fix]); parts.push(['Build',F.st]);
+    open(k+' · '+F.t, parts); return; }
+  var m=e.target.closest('.mk'); if(m){ e.preventDefault(); e.stopPropagation(); var kind=m.classList.contains('new')?'NEW':m.classList.contains('res')?'RESTYLED':m.classList.contains('unc')?'UNCHANGED or noted':'Note';
+    open(m.textContent.trim(), [[kind, m.getAttribute('data-note')||'']]); return; }
+}, true);
+var tabs=$$('.tabs [role=tab]');
+function show(p, scrollTo){ tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p}); if(p==='asks') buildIndex(); try{localStorage.setItem('hl9f-tab',p)}catch(e){}
+  fitAll(); if(scrollTo){ var el=document.getElementById(scrollTo); if(el) el.scrollIntoView({block:'start'}); } else window.scrollTo(0, $('.tabs').offsetTop - 4); }
+tabs.forEach(function(t){ t.addEventListener('click',function(){ show(t.getAttribute('data-pane')) }) });
+function thm(v){ $$('.ak').forEach(function(a){ a.classList.toggle('dk', v==='dark') }); $$('[data-thm]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-thm')===v)) }); try{localStorage.setItem('hl9-thm',v)}catch(e){} }
+$$('[data-thm]').forEach(function(b){ b.addEventListener('click',function(){ thm(b.getAttribute('data-thm')) }) });
+function view(v){ document.body.classList.toggle('only-diff', v==='diff'); $$('[data-view]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-view')===v)) }); }
+$$('[data-view]').forEach(function(b){ b.addEventListener('click',function(){ view(b.getAttribute('data-view')) }) });
+var KEY='hl9f-asks';
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}') }catch(e){ return {} } }
+function save(){ var st={}; $$('.ask').forEach(function(a){ var id=a.getAttribute('data-ask'); st[id]={c:$$('input[type=checkbox]',a).filter(function(i){return i.checked}).map(function(i){return i.value}), n:($('textarea',a)||{}).value||''} }); try{ localStorage.setItem(KEY, JSON.stringify(st)) }catch(e){} }
+(function restore(){ var st=load(); $$('.ask').forEach(function(a){ var id=a.getAttribute('data-ask'), v=st[id]; if(!v) return; $$('input[type=checkbox]',a).forEach(function(i){ i.checked = v.c.indexOf(i.value)>=0 }); var ta=$('textarea',a); if(ta) ta.value=v.n||''; }) })();
+document.addEventListener('change',function(e){ if(e.target.closest('.ask')) save() });
+document.addEventListener('input',function(e){ if(e.target.closest('.ask')) save() });
+function askTitle(a){ var h=$('h3',a); var no=$('.no',h); return {no:no?no.textContent.trim():a.getAttribute('data-ask'), t:h.textContent.replace(no?no.textContent:'','').trim()} }
+function chosen(a){ return $$('input:checked',a).map(function(i){return i.closest('label').textContent.replace('Recommended','').trim()}) }
+function buildIndex(){ var tb=$('#askIndex tbody'); tb.innerHTML=''; $$('.ask').forEach(function(a){ var T=askTitle(a), pane=a.closest('section.pane').getAttribute('data-pane'); var ch=chosen(a); var tr=document.createElement('tr');
+  if(!a.id) a.id='ask-'+a.getAttribute('data-ask');
+  tr.innerHTML='<td><b>'+esc(T.no)+'</b> '+esc(T.t)+'</td><td><a href="#'+a.id+'" data-go="'+pane+'">'+(($('.tabs [data-pane='+pane+']')||{}).textContent||pane)+'</a></td><td>'+(ch.length?esc(ch.join(' + ')):'<span class="muted">not answered</span>')+'</td>'; tb.appendChild(tr); });
+  $$('[data-go]',tb).forEach(function(l){ l.addEventListener('click',function(e){ e.preventDefault(); show(l.getAttribute('data-go'), l.getAttribute('href').slice(1)) }) }); }
+$('#build').addEventListener('click',function(){ var L=['House league · Stage 9 · 9f · rulings ('+new Date().toISOString().slice(0,10)+')','']; $$('.ask').forEach(function(a){ var T=askTitle(a); var ch=chosen(a); var n=(($('textarea',a)||{}).value||'').trim(); L.push(T.no+' '+T.t); L.push('  → '+(ch.length?ch.join(' + '):'(no answer)')); if(n) L.push('  note: '+n.replace(/\n+/g,' / ')); }); L.push('9f·16 plan gate: flagged for /strategy, no answer needed'); $('#out').value=L.join('\n'); buildIndex(); });
+$('#copy').addEventListener('click',function(){ var t=$('#out'); if(!t.value) $('#build').click(); var done=function(){ $('#copied').textContent='Copied' }; try{ navigator.clipboard.writeText(t.value).then(done, function(){ t.select(); $('#copied').textContent='Selected; press Ctrl+C' }) }catch(e){ t.select(); $('#copied').textContent='Selected; press Ctrl+C' } });
+var trueSize=false;
+function fitAll(){ $$('.dt-wrap').forEach(function(w){ var avail=w.parentElement.clientWidth||w.clientWidth; var z=trueSize?1:Math.min(1,avail/1440); w.style.setProperty('--z',z); w.classList.toggle('fit',!trueSize); }) }
+$$('[data-fit]').forEach(function(b){ b.addEventListener('click',function(){ trueSize=!trueSize; fitAll(); $$('[data-fit]').forEach(function(x){ x.textContent=trueSize?'Fit to width':'Show at true size' }); $$('.zl').forEach(function(z){ z.textContent=trueSize?'True size. Scroll sideways.':'Scaled to fit; use the button for true size.' }) }) });
+window.addEventListener('resize',fitAll);
+var p0='why', t0='warm'; try{ p0=localStorage.getItem('hl9f-tab')||'why'; t0=localStorage.getItem('hl9-thm')||'warm' }catch(e){}
+var h=(location.hash||'').slice(1); if(tabs.map(function(t){return t.getAttribute('data-pane')}).indexOf(h)>=0) p0=h;
+if(tabs.map(function(t){return t.getAttribute('data-pane')}).indexOf(p0)<0) p0='why';
+thm(t0); tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p0))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p0}); if(p0==='asks') buildIndex();
+fitAll();
+})();
+</script>

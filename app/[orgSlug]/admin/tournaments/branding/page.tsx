@@ -39,7 +39,8 @@ import PlanLockLine, { tournamentPlusPanelHref } from '@/components/admin/tourna
 import { hasCapability } from '@/lib/roles';
 import { publicHref, useClubPublicOrigin } from '@/lib/use-club-public-origin';
 import { PUBLIC_SITE_WORDS as W, appIconSummary, themeSummary } from '@/lib/tournament-settings-words';
-import { HexField } from '@/components/admin/kit/club/LookControls';
+import { HexField, sameHex } from '@/components/admin/kit/club/LookControls';
+import { lookNounOf } from '@/lib/tournament-look-words';
 import { hasOwnTournamentColours, hasClubTournamentLook, resolveTournamentLook } from '@/lib/tournament-look';
 import { mayOpenSiteEditor, mayWriteSite } from '@/lib/public-site-rules';
 import LookCard, { type LookBandFacts } from './LookCard';
@@ -99,7 +100,6 @@ type Draft = {
 const ICON_SCALE_MIN = 70;
 const ICON_SCALE_MAX = 125;
 
-const sameHex = (a: string | null, b: string | null) => (a ?? '').toLowerCase() === (b ?? '').toLowerCase();
 
 function draftOf(data: BrandingSettings, advanced: boolean): Draft {
   const custom = Boolean(data.themePrimary && advanced);
@@ -417,7 +417,7 @@ export default function TournamentBrandingPage() {
   const clubLayer = !!currentOrg && hasClubTournamentLook(currentOrg);
   // The logo's fallback, said as it now is under the frame: the club's (the league's) logo, none on Tournament Plus.
   const logoHint = !frameOn ? W.logoHint
-    : clubLayer ? W.logoHintFallback[currentOrg?.planId === 'league' ? 'league' : 'club'] : W.logoHintOwn;
+    : clubLayer ? W.logoHintFallback[lookNounOf(currentOrg?.planId)] : W.logoHintOwn;
   const iconBgButton = (label: string, value: string | null, chip: string, pressed: boolean) => (
     <button type="button" aria-pressed={pressed} className={`${styles.iconBgOption} ${pressed ? styles.iconBgOptionActive : ''}`}
       onClick={() => change({ iconBg: value })}>

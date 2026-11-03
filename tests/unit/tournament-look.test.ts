@@ -166,6 +166,14 @@ describe('the question before Always: who it names', () => {
     assert.equal(finished, 0);
   });
 
+  it('a draft whose dates have started is named but never "on now" (the review\'s finding 2)', () => {
+    const { current } = tournamentsWithOwnColours([
+      row('Draft', { status: 'draft', startDate: '2026-11-01', endDate: '2026-11-03' }),
+      row('Now', { startDate: '2026-11-01', endDate: '2026-11-03' }),
+    ], today);
+    assert.deepEqual(current.map(t => [t.name, t.live]), [['Now', true], ['Draft', false]]);
+  });
+
   it('finished ones are counted, not named: completed, archived, crowned or past', () => {
     const { current, finished } = tournamentsWithOwnColours([
       row('Done', { status: 'completed' }),
@@ -323,7 +331,7 @@ describe('Part 2: the club editor (source guards)', () => {
     assert.match(look, /<LookTypeTiles /);
     assert.doesNotMatch(look, /Object\.entries\(PRESETS\)/);
     const branding = readCode('app/[orgSlug]/admin/tournaments/branding/page.tsx');
-    assert.match(branding, /import \{ HexField \} from '@\/components\/admin\/kit\/club\/LookControls';/);
+    assert.match(branding, /import \{ HexField, sameHex \} from '@\/components\/admin\/kit\/club\/LookControls';/);
     assert.doesNotMatch(branding, /function HexField\(/);
   });
 });
@@ -438,7 +446,8 @@ describe('Part 3: the Branding page and its route (source guards)', () => {
 
   it('the read says whether the switch is on, with the band\'s facts only under it', () => {
     assert.match(route, /const frameOn = await isPublicFrameOn\(\);/);
-    assert.match(route, /const band = frameOn\s*\? await publicFrameBandFacts\(/);
+    assert.match(route, /const bandRead = frameOn && advanced\s*\? publicFrameBandFacts\(/);
+    assert.match(route, /const band = await bandRead;/);
     assert.match(route, /frameOn,\s*band,\s*\}\);/);
     assert.match(page, /setFrameOn\(data\.frameOn === true\);/);
   });

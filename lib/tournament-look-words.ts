@@ -10,6 +10,9 @@ import type { TournamentLookPolicy } from './tournament-look';
 
 export type LookNoun = 'club' | 'league';
 
+/** League Plus says "league"; every other plan with a look says "club". */
+export const lookNounOf = (planId: string | null | undefined): LookNoun => (planId === 'league' ? 'league' : 'club');
+
 /** The possessive, written out (never built on a noun — the possessive guard). */
 const OF: Record<LookNoun, { the: string; The: string }> = {
   club: { the: "the club's", The: "The club's" },

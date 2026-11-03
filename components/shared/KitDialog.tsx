@@ -376,8 +376,8 @@ export default function KitDialog({
   const footStart = asking ? <p className={styles.ask} role="alert">{discardAsk ?? WINDOW_ASK.sentence}</p> : footerStart;
   const footEnd = asking ? (
     <>
-      <button type="button" ref={keepRef} className="btn btn-outline" onClick={keepWriting} disabled={busy}>{WINDOW_ASK.keep}</button>
-      <button type="button" className="btn btn-danger" onClick={onClose} disabled={busy}>{WINDOW_ASK.discard}</button>
+      <button type="button" ref={keepRef} className={`btn btn-outline ${styles.askBtn}`} onClick={keepWriting} disabled={busy}>{WINDOW_ASK.keep}</button>
+      <button type="button" className={`btn btn-danger ${styles.askBtn}`} onClick={onClose} disabled={busy}>{WINDOW_ASK.discard}</button>
     </>
   ) : footer;
 

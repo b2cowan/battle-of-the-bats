@@ -14,9 +14,10 @@
  *
  * The honest limit (Ask 12): a browser that saves the password fills the window in. This defeats a copied session; the
  * owner's email is the alarm against someone at an unlocked computer. A second sign-in factor is its own project.
- * ⚠ It defeats a copied session only while that session cannot SET a new password itself: the sign-in service's
- * "Secure password change" (re-authentication before a password change) must be on in both projects, and nothing in
- * the repo records that it is (review 2026-11-02; an owner step in the build prompt's Part 10 notes).
+ * ⚠ It defeats a copied session only while that session cannot SET a new password itself. The sign-in service's
+ * "Secure password change" asks again only for a session more than 24 hours old; "Require current password when
+ * changing password" closes the first day too, but must be tried against accept-invite (a FIRST password) and the
+ * reset page first. Nothing in the repo records either setting (an owner step in the build prompt's Part 10 notes).
  */
 
 import { pluralize } from './utils';

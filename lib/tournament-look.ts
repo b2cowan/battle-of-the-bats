@@ -29,6 +29,7 @@
 import { canUseAdvancedTournamentBranding } from './tournament-branding';
 import { planCarriesModule, type EntitlementOrg } from './module-entitlements';
 import { clubFace } from './club-site';
+import { CLUB_LOOKS } from './public-site-builder';
 import { tournamentHomeStatus } from './club-site-home';
 import type { Organization, Tournament } from './types';
 
@@ -53,7 +54,7 @@ export function parseTournamentLookPolicy(input: unknown): TournamentLookPolicy 
  * stored values (Classic, Serif, Clean — `CLUB_LOOKS` in lib/public-site-builder.ts; a test holds the two equal). Null
  * follows the club. Classic is stored as 'system', never as null.
  */
-export const TOURNAMENT_TYPE_LOOKS = ['system', 'dm-serif', 'inter'] as const;
+export const TOURNAMENT_TYPE_LOOKS: readonly string[] = CLUB_LOOKS.map(l => l.font);
 
 /** The face vocabulary of the club frame's `data-club-face` (lib/club-site.ts `clubFace`): Classic, Serif, Clean. */
 export type TournamentFace = ReturnType<typeof clubFace>;
@@ -157,7 +158,9 @@ export function tournamentsWithOwnColours(
     if (!hasOwnTournamentColours(t)) continue;
     const state = tournamentHomeStatus(t, todayISO, false);
     if (state === 'finished') { finished += 1; continue; }
-    current.push({ id: t.id, name: t.name, startDate: t.startDate ?? null, live: state === 'live' });
+    // A draft is named (it will wear the rule when it is published) but is never "on now": nobody can see it yet, and the
+    // club's Tournaments tab does not list it either (isListedTournament).
+    current.push({ id: t.id, name: t.name, startDate: t.startDate ?? null, live: state === 'live' && t.status !== 'draft' });
   }
   current.sort((a, b) =>
     Number(b.live) - Number(a.live)

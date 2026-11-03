@@ -8,6 +8,29 @@
 
 ---
 
+### 2026-11-02 — House League 9e (standings, coach scores, rainout) carries no gate of its own: it rides house league as a whole (Decided)
+**Status:** **Decided** (owner, 2026-11-02, in chat: "accepted" to the recommendation below, as written; the same reply confirmed the family email's unreviewed club line is OK). Nothing built. Points 3–4's free-floor consequence takes effect only if the free League floor un-parks (still held, flag off), as with the scheduler (2026-10-08).
+**The question, re-framed:** 9e·15 asked for "plan-gating like the tournament's Rain delay (Tournament Plus)". That rule draws a line between the *free Tournament plan* and *Tournament Plus*. House league has no free tier on sale: its lowest paid plan is **League Plus**, and the existing rain-delay key (`bulk_reschedule`, `tournament_plus`) already passes League Plus, Club and Club · Association on the rank ladder. So on every plan that can be sold today the answer is "included"; the only live question is the held free League floor.
+**Decision:**
+1. **Standings (the sport's table, the per-division Show standings switch, the coach's one-line standing), coach score entry/reporting, and the Rainout button all ride house league as a whole: League Plus, Club and Club · Association, identically.** No new feature key, no price, band or SKU change.
+2. **Never an upgrade lever between League Plus and Club** — same rule as the scheduler (2026-10-08) and permits (2026-10-11), and the brand tier rule ("League is a peer of Club, not a stepping stone"). No copy may offer any of the three as a reason to move up.
+3. **The Rainout button reuses the existing `bulk_reschedule` key** rather than inventing a house-league one. Paid plans pass it by the ladder; a free League floor org sits on `plan_id='tournament'` (rank 0) and is excluded for free, matching the tournament's line ("free keeps one-at-a-time edits; only the bulk convenience is paid", 2026-07-07). Standings and coach scores stay **included on the floor** — a season that cannot show a table or record a score is not "a first house-league season".
+4. **Free League floor stays Proposed/held (flag off).** Nothing here un-parks it. At un-park, `/marketing` fixes the upsell line for `bulk_reschedule` (it names Tournament Plus) and the owner confirms point 3.
+**Rationale:** Plan choice follows what an organization runs, not a feature an upgrade unlocks (2026-10-08). All three features are core to *running* a season, so withholding them from the paid house-league plan would only make League Plus feel half-built. Rainout is the one bulk convenience with a precedent line, and reusing its key keeps tournament and league consistent with zero new gating code. ⚠ **Pre-revenue hypothesis:** League Plus has never been sold (parked 2026-07-28); no customer has asked about any of this.
+**Affects:** the 9e-2 (rainout) and 9e-3 (coach scores) builds — **no plan, lock or upgrade wording in either**; `PLAN_PRICING_FACTS.md` inclusions line added 2026-11-02.
+**Handoff:**
+```
+HANDOFF → /billing
+- Rainout route checks `bulk_reschedule` (server side, like every gate); standings and coach-score routes check house league only. No new key. Facts doc inclusions line DONE 2026-11-02; drift check at the 9e-2 build.
+HANDOFF → /marketing
+- Nothing now. At floor un-park: reword the `bulk_reschedule` upsell for a house league; never present standings/scores/rainout as a League Plus → Club reason.
+HANDOFF → /plan
+- HOUSE_LEAGUE_STAGE9_PLAN.md §0i: 9e·15 recorded as ruled (done 2026-11-02).
+```
+**Supersedes:** nothing. **Relates to:** 2026-10-08 scheduler; 2026-10-11 permits; 2026-07-28 League & Club park; free League floor (Proposed, held).
+
+---
+
 ### 2026-10-31 — Subscriptions do not wait for family payments: the "launch together" rule is dropped; Coaches Portal and Tournament Plus stay on sale and any tax owed before tax is built comes out of the owner's own revenue (Decided)
 **Status:** **Decided** (owner, 2026-10-31, in chat: "agreed except tournament plus and coaches portal are already on sale, if anyone
 signs up before we add tax on top I will just pay it out of my revenue so it is not a blocker"). Closes sequence item

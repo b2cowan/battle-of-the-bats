@@ -253,5 +253,8 @@ export function memberOpensSentence(role: string, capabilities: Record<string, b
     const job = volunteerJobOf(capabilities);
     if (job) return VOLUNTEER_OPENS[job];
   }
+  // The invitee is told what the role opens, never what it withholds. The limit on an admin stays in
+  // `roleOpensSentence`, where the person choosing the role needs it.
+  if (role === 'admin') return "You'd help run the organization: every program on its plan.";
   return roleOpensSentence(role);
 }

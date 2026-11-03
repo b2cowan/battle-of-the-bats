@@ -322,7 +322,7 @@ alternatives, for the reasoning; the line here is what was ruled.
 - **9e·12** "Email the families now" is ticked by default; unticking holds the changes in Changes to send.
 - **9e·13** "Put all back" only while the changes are held (all-or-nothing, persistent); after the send, no Undo and the result says emails can't be taken back.
 - **9e·14** One optional line (up to 120 characters), shown near the top of the email and the coach copy.
-- **9e·15** Plan gate: **flagged for /strategy, no answer needed** — still not decided.
+- **9e·15** Plan gate: **RULED 2026-11-02 (owner "accepted" the /strategy recommendation; logged Decided in BUSINESS_DECISIONS.md):** no gate of its own for standings, coach scores or the rainout — they ride house league as a whole (League Plus, Club, Club · Association), never an upgrade lever; the rainout reuses the existing `bulk_reschedule` key so a parked free League floor would be excluded automatically. The 9e-2 prompt builds to this (`HOUSE_LEAGUE_STAGE9E2_BUILD_PROMPT.md`).
 
 **Done 2026-11-01:** the /marketing words pass (`HOUSE_LEAGUE_STAGE9E_COPY.md` — **accepted by the owner 2026-11-01** as written, incl. the
 recommendation on each §14 word question) and the 9e-1 build prompt (`HOUSE_LEAGUE_STAGE9E1_BUILD_PROMPT.md`). **Next:** the 9e-1 build; the 9e-2 and 9e-3 prompts are written after 9e-1 lands (9e-3 depends on its counted-game
@@ -363,6 +363,62 @@ marks a game played at 0–0 (fixed inside 9e-1); the tournament's pending-score
 game keeps its date; the urgent send never counts toward the cap; a send is per division; "Final standings" is date-driven and
 standings are computed live, so 9f must define the frozen table. The data dictionary's `league_games` Gotchas 2 and 3 are stale
 (Postpone is a door, not a dropdown; DELETE hard-deletes a draft division's game and refuses a published one).
+
+## 0j · 9f drawn 2026-11-03 — asks 9f·1 to 9f·17 OPEN (9f·16 flagged for /strategy); nothing ruled
+
+Drawings: https://claude.ai/artifact/UN6Su7DsmAU8tcLyAu1d4Z (source `HOUSE_LEAGUE_STAGE9F_DRAWINGS.html`; prompt
+`HOUSE_LEAGUE_STAGE9F_DRAWING_PROMPT.md`). **Ruled and carried, not reopened:** Q14, Q16 (in place, locked, Money and Email
+families open; the Coaches Portal's one-page rule is not this), Q19, 9a·4, 9b·8, 9b·9, 9b-2's Money stays open, 9c·2b, 9c·10,
+9d2·15, 9e·15, the 30-day coach page and sign-up link, the signed-in family rulings (no new sent links; returning-family pre-fill is
+`SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md` Stage 5 after Stage 14).
+
+**Push-back (drawn on tab 1):** 9f is three things. Archive does almost nothing; the finished record is mostly built (two gaps);
+Start next season is the one large piece. Recommended **two builds, the small one first** (reversing the prompt's lean), because
+Start next season reads every one of the small build's decisions. No frozen table: the locked season is the frozen table. Start
+next season is "Start from" in the existing New season window, from any season, and never closes the source.
+
+The asks as drawn (recommendation first, alternatives after):
+- **9f·1** Two builds: **9f-1 Finished, honestly** (S: Archive, "Final" wording, the coach's final place, the Reopen and Complete
+  lines, the free limit), then **9f-2 Start next season** (M). Alternatives: Start next season first; one build.
+- **9f·2** No stored table: the locked season is the frozen table; a correction after Reopen moves it, and the game records who
+  corrected it (9e-3). Alternative: store the table at Complete and mark "changed after finish".
+- **9f·3** "Final" only once completed: a live season past its end reads "Ended {date}" and "Standings →"; a completed one reads
+  "Final standings" on its link and page title. Alternative: today's date-driven rule.
+- **9f·4** Retire the Archive door; archived seasons read exactly like completed ones (public chip gone, "This season has
+  concluded."); no data change. Alternatives: Archive takes the season off the public Past seasons list; keep as is.
+- **9f·5** The free League plan's one season counts live seasons only (getting ready, open, running); Reopen checks the same limit
+  — as the tournament ruled 2026-10-10. A packaging fact: if agreed, /strategy logs it and /billing builds it in 9f-1. The free
+  League plan is parked. Alternative: keep counting finished seasons, and Archive keeps its job of freeing the slot.
+- **9f·6** The finished coach page carries "Final place: 2nd of 6" for its 30 days (on the live line's conditions); the empty
+  Schedule heading goes. Alternative: as today.
+- **9f·7** Reopen stays offered when a newer season exists; its window says ratings were erased and don't come back and names the
+  newer season as not changed; the Complete window says ratings are erased. Alternative: hide Reopen once a newer season exists.
+- **9f·8** "Start from" in the New season window (defaults to the most recent season) plus a rare door at the end of each season's
+  Overview that opens it preset. Alternative: a separate window with a door on each Past seasons row.
+- **9f·9** The league runners only (owner, club admin, league admin). Alternative: also the registrar.
+- **9f·10** From any season, finished or live (a live source is Q19's own-calendar age group; its dates come in empty).
+  Alternative: finished only.
+- **9f·11** Never closes the source; the window says so first. Alternative: completes a live source as part of the copy.
+- **9f·12** Copies: settings, age groups (born years moved up), team names and colours, practice settings (ticked); coaches
+  (unticked; invited only at Publish). Never: registrations, money, ratings, games, practices, sends, club time, publish marks, the
+  budget seed. Alternatives: coaches ticked; carry last season's budget amounts.
+- **9f·13** Five dates move 52 weeks (same weekday); born years by the whole years between first days; a year in the name goes up,
+  otherwise the name comes in empty. Alternatives: same calendar date next year; dates empty.
+- **9f·14** No end-of-season notice to families or coaches. Alternatives: a held email to families at Complete; a note to coaches.
+- **9f·15** No retention limit: finished seasons stay listed (admin shelf, switcher, public Past seasons). Alternative: the public
+  list shows the newest few, then "Show all".
+- **9f·16** Is Start next season plan-gated? **Flagged for /strategy, not decided; no checkbox.**
+- **9f·17** Record a scoped line in CLAUDE.md: house-league seasons read in place under Q16; the one-page closed season is the
+  Coaches Portal's. Not edited in the drawing session. Alternative: the plan's record is enough.
+
+**Found on the way (findings for the build, not fixes now):** the free limit counts completed seasons although its refusal says
+"one active season", and Reopen skips it; Archive also changes the public header chip, the club setup checklist's "runs house
+league" and the birthday cut-off card's sports, and does not restart the 30-day clocks; the public header still shows the
+"Season complete" / "Archived" chips the 9a copy pass retired; the finished coach page keeps an empty Schedule heading; neither
+Complete nor Reopen says ratings are erased; practice length and teams-at-once are per age group, not per season; born years have
+no carried marker; a new age group's defaults come from the same season's last age group, never another season. The data
+dictionary's `league_seasons` gotcha 2 (forward-only, "archived is terminal", stale line references) is wrong: completed and
+archived both go back to active.
 
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 
@@ -454,7 +510,7 @@ check the snapshot before touching it); the org home's empty-tournaments hero (S
 | **9d-2** The schedule — **split from 9d 2026-10-26 (owner)** · **DRAWN 2026-10-26 · RULED 2026-10-27** (§0h: 13 as recommended, ask 2 the alternative, the owner's amendment that house league never picks time the club has not allocated to it; 9d2·15 ruled the same day: the club gives time to House league as a whole, the convenor divides it) (with 11b, one round; drawings https://claude.ai/artifact/TdXm5jmTEJ9qPvR3T5H9qU, source `HOUSE_LEAGUE_STAGE9D2_DRAWINGS.html`; round 2 the same day: the club's schedule owns every hour, Generate games is match-ups only, List · Week · Month with games and practices together; recommended order now 11b → 9d-2a → 9d-2b, ask 9d2·6; §9) | Generator rebuilt; C1–C12 admin + public; health (Q11); 11b; venue/permit links; Publish schedule + change notices (sent through 9d-1's composer path) | Q11 (ruled) | L |
 | **9d-3** House league's families: practice notices and calendars — **logged 2026-10-27 (owner) · DRAWN 2026-10-29, asks open** (drawings https://claude.ai/artifact/Uazj5c2RKqVPAs1Gwpm9pM, source `HOUSE_LEAGUE_STAGE9D3_DRAWINGS.html`; prompt `HOUSE_LEAGUE_STAGE9D3_DRAWING_PROMPT.md`; recommended one build, the notice first, then the coach's Subscribe; the family calendar link WITHDRAWN 2026-10-29, §9) | The first practice notice to a team's families (deferred from 9d2·2: a practice *change* already emails them). A house-league coach's calendar to subscribe to: Stage 6d built the feed for rep teams only, so a house-league coach has none. The family half was a private team link, **withdrawn 2026-10-29**: the owner's end state is a signed-in app where a parent is linked to their child, and a no-login family link would be a stop-gap to reverse later (the public team page stays games-only, ruled). | 9d3·2 and 9d3·8 withdrawn 2026-10-29, the rest open (9d3·1, 9d3·3–9d3·7; 9d3·3 re-asked); drawn after 9d-2b was built, sequenced before 9e | M |
 | **9e** Game day — **DRAWN 2026-11-01, asks open** (§0i; drawings https://claude.ai/artifact/V9exKafSgmHc3XuFFar5Qo, source `HOUSE_LEAGUE_STAGE9E_DRAWINGS.html`; recommended three builds: **9e-1** standings and the score rule, **9e-2** rainout, **9e-3** coach scores) | Standings that follow the sport pack and say how ties break; score entry (the home coach, counts at once, the other coach can report it, the league admin corrects); rainout as one window (postpone or cancel, one email per household per division, Undo only while held) | 9e·1–9e·15 (open; 9e·15 for /strategy) | S + M + M |
-| **9f** Season end | Archive; the finished-season record (Q16); Start next season copies forward. Returning families with a pre-filled form wait on Stage 14 — and the pre-fill is for a **signed-in** parent only, never a sent link (owner 2026-10-31, `SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md` Stage 5) | — | M |
+| **9f** Season end — **DRAWN 2026-11-03, asks open** (§0j; drawings https://claude.ai/artifact/UN6Su7DsmAU8tcLyAu1d4Z, source `HOUSE_LEAGUE_STAGE9F_DRAWINGS.html`; recommended two builds: **9f-1** finished, honestly (S), then **9f-2** Start next season (M)) | Archive; the finished-season record (Q16); Start next season copies forward. Returning families with a pre-filled form wait on Stage 14 — and the pre-fill is for a **signed-in** parent only, never a sent link (owner 2026-10-31, `SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md` Stage 5) | — | M |
 
 Changes from the kickoff's proposal (argued on the hub's Ladder tab): 9b split into 9b-1 and 9b-2; the season email moves
 onto the batched sender in 9d (its change notices need it); the season Money page must be right on its own because a League
@@ -1277,3 +1333,4 @@ open it, and the menu's top level is Stage 13's.
   own confirm so Reset asks first. Proof: `tests/unit/house-league-9d3-coach.test.ts` 10/10; 362 related tests pass; typecheck,
   lint, spelling and dictionary clean. **Walk B §439 PASSED 34/34 2026-11-01, no changes asked** (/simplify, /review, /docs done 11-01). **Open:** schema parity until 415 and 420 reach prod (apply BEFORE the promote); next 9e (not drawn).
 - **2026-11-01 — 9e DRAWN, asks 9e·1–9e·15 open, nothing newly ruled** (drawings https://claude.ai/artifact/V9exKafSgmHc3XuFFar5Qo, source `HOUSE_LEAGUE_STAGE9E_DRAWINGS.html`; §0i). Push-back: three builds, not one — 9e-1 standings and the score rule, 9e-2 rainout, 9e-3 coach scores. Every lead in the drawing prompt was re-read against the code: the sport pack is unread and both offered sports give identical values (so "by sport pack" changes no number); standings ignore publish state; the "both empty" score rule is window-only (a direct server call marks a game played at 0–0); the tournament's pending score is volunteer/staff, not coach; a postponed game keeps its date; the urgent send never counts toward the cap; a send is per division. /design ran on the drawings (14 findings fixed before the hand-off). **No code, migration, seed, help article or demo change; nothing committed.** Next: the owner's paste-back, then the `/marketing` words pass (`HOUSE_LEAGUE_STAGE9E_COPY.md`), then the 9e-1 build prompt.
+- **2026-11-03 — 9f DRAWN, asks 9f·1–9f·17 open, nothing newly ruled** (drawings https://claude.ai/artifact/UN6Su7DsmAU8tcLyAu1d4Z, source `HOUSE_LEAGUE_STAGE9F_DRAWINGS.html`; §0j). Push-back: two builds with the small one first (9f-1 finished, honestly; 9f-2 Start next season), reversing the prompt's lean; no frozen table (the locked season is it); Start next season is "Start from" in the existing New season window, from any season, never closing the source; coaches copy unticked; Archive retired (its only real effect is the parked free League plan's slot, whose count should be live seasons only, 9f·5 for /strategy + /billing). Found: the free limit counts completed seasons and Reopen skips it; the retired public chips still show; the dictionary's `league_seasons` gotcha 2 is stale. /design ran on the drawings before the hand-off. **No code, migration, seed, help article or demo change; nothing committed.** Next: the owner's paste-back, then the `/marketing` words pass, then the 9f-1 build prompt.

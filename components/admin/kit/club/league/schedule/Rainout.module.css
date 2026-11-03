@@ -5,6 +5,15 @@
 .lineStack { display: flex; flex-direction: column; gap: 0.3rem; }
 .counter { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
 
+/* The window's body spaces only its paragraphs (`.body p`), so the place switch and the notes under the table carry
+   their own gap, the lede's 0.75rem step (ClubKit's tableNote), or they touch the table's edge. A wrapper div, not a
+   class on the `p`: a `p.class` margin ties the body's paragraph rule and loses on stylesheet order. */
+.placeRow { margin: 0 0 0.75rem; }
+.tableRow { margin: 0 0 0.75rem; }
+.draftNotes { margin: 0.75rem 0; }
+div.draftNotes > p { margin: 0 0 0.25rem; }
+div.draftNotes > p:last-child { margin-bottom: 0; }
+
 /* The day's practices: named, never touched (9e·10). */
 .practices { margin: 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
 .practices a { color: var(--home-olive); font-weight: 600; }

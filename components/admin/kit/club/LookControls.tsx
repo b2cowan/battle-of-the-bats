@@ -20,7 +20,7 @@ import css from './LookControls.module.css';
 
 export type OwnColours = { primary: string; accent: string };
 
-const sameHex = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+export const sameHex = (a: string | null, b: string | null) => (a ?? '').toLowerCase() === (b ?? '').toLowerCase();
 const twoTone = (primary: string, accent: string) => `linear-gradient(135deg, ${primary} 50%, ${accent} 50%)`;
 
 export function HexField({ id, label, value, onChange }: { id: string; label: string; value: string; onChange: (hex: string) => void }) {

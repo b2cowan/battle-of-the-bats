@@ -155,7 +155,7 @@ first); the build keeps that order and sends the coach's one email after the acc
 
 **Build prompt:** `SIGNED_IN_FAMILY_STAGE2_BUILD_PROMPT.md`.
 
-**Built 2026-11-01/02 (Parts 1–7; commit hashes go in the build prompt's Progress block when the owner commits).**
+**Built 2026-11-01/02 (Parts 1–7), committed `ce3085b88` 2026-11-02.**
 - **Parts 1–3 (Session 1):** the Register form's own limits (ruling 4); the claim link, its developer tool and the claim
   branch in team checkout are gone, the table stays (correction a); no address in any coach email's portal link, and the
   join page asks for it (ruling 2).

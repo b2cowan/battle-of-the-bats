@@ -93,7 +93,9 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  /* Above the console's fixed top strip (80), level with the shared kit window (`KitDialog` overlay, 400): at 50 the
+     strip painted over the top of a tall window on a short screen. */
+  z-index: 400;
   display: grid;
   place-items: center;
   padding: 1.25rem;

@@ -1,0 +1,261 @@
+<title>Look Ownership Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Same instrument as the Stage 0 / Part 10 walks: one narrow column, parts as folds, steps, a verdict row and a notes box per part. */
+:root {
+  --bg: #f6f5f1; --panel: #ffffff; --fg: #23251f; --muted: #666a5d; --line: #dcdacf;
+  --accent: #4d5c1a; --accent-fg: #ffffff; --good: #2f6b2f; --warn: #8a5a00; --bad: #a3321f; --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+a { color: var(--accent); overflow-wrap: anywhere; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.step.opt { flex-direction: column; gap: 4px; }
+.step .optrow { display: flex; gap: 10px; align-items: flex-start; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Public tournament pages · Stage 1a · §448</span>
+    <h1>Who owns a tournament’s look: the club, or the tournament</h1>
+    <p class="sub">Written 2026-11-03. Test data only, on the dev database. About 40 minutes. One purpose: a club sets one rule for its tournaments’ colours and type, a tournament can follow it or choose its own, and Tournament Plus (no club) stays plain.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>A club can now say “my tournaments wear my look” in one place (its Public site, Look row, new <strong>Tournaments</strong> part). A tournament’s Branding page gets one <strong>Look</strong> card in place of the old Theme, Font, Card style, Dark/Light and Hero banner cards, with a real preview of the band families see on a phone. Everything below is behind the preview switch, except the three share images (the picture that shows when a link is shared), which follow the same rule from today.</p>
+  </section>
+
+  <section class="card">
+    <h2>It passes when</h2>
+    <ul>
+      <li>A and B: the club’s Tournaments part saves both choices, and choosing <em>Always</em> first asks a plain question that names the tournaments it will change, and does nothing until you confirm.</li>
+      <li>C: under <em>Always</em> every tournament, finished ones too, wears the club’s colours and type; going back restores each tournament’s own look.</li>
+      <li>D: a tournament’s Look card works in all three club cases (follows, own look, locked), and the preview matches the live band.</li>
+      <li>E: Tournament Plus has no “club’s look” anywhere and starts on the plain FieldLogicHQ look.</li>
+      <li>F: with the preview off, the Branding page and the club editor are today’s.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private: it holds dev passwords.</p>
+    <dl class="facts">
+      <dt>Where</dt><dd><strong>http://localhost:3000</strong> on your computer, with the dev server running (ask Claude first: step S1). Test data only.</dd>
+      <dt>The test club</dt><dd><strong>UAT Rep Club</strong> (<code>uat-rep-club</code>), set up by Claude for this walk: type is <strong>Serif</strong>, the club’s colour is purple, its rule is “the club’s look, unless a tournament chooses its own”, and three of its tournaments carry colours of their own: <strong>UAT Rep Club Invitational 2026</strong> (pink, on now), <strong>Stripe Walk Invitational</strong> (ocean blue, coming up) and <strong>UAT Rep Club Summer Slam 2026</strong> (crimson, finished). <strong>Stripe Walk Pay Direct</strong> has nothing of its own (it follows the club).</dd>
+      <dt>The preview switch</dt><dd>On by default on localhost. These links set it for this browser: <a href="http://localhost:3000/api/public-frame?frame=on&to=/uat-rep-club/uat-rep-club-invitational-2026">turn it on</a> · <a href="http://localhost:3000/api/public-frame?frame=off&to=/uat-rep-club/uat-rep-club-invitational-2026">turn it off</a>.</dd>
+      <dt>Leaves behind</dt><dd>The club’s rule is set back to the default in C4. Part D2 gives Stripe Walk Pay Direct a colour of its own and D4 takes it away again. At the end Claude runs <code>node .probe/stage1a-look-fixture.mjs undo</code> (step Z1) to put every test value back.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <dl class="facts">
+      <dt>Club owner (A to D, F)</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> · <code>http://localhost:3000/auth/login</code></dd>
+      <dt>Tournament Plus owner (E)</dt><dd><code>uat-owner@uat-test-org.local</code> · <code>UATPassword2026!</code> · org UAT Test Org, tournament <strong>UAT Import Smoke Tournament</strong>. Use a private window so the two sign-ins do not collide.</dd>
+      <dt>Picking a tournament</dt><dd>In the admin, the tournament picker at the top chooses which tournament the Branding page (called <strong>Public site</strong> in the tournament menu) edits. <code>?section=look</code> on the address opens the Look card.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    <ul>
+      <li><strong>League Plus words (“the league’s look”).</strong> The dev League org has no tournaments and no sign-in. The wording is built from one table and pinned by an automated check for both nouns.</li>
+      <li><strong>The free-plan lock line.</strong> No dev sign-in exists for a free tournament plan. The card’s lock line and its words are pinned by an automated check.</li>
+      <li><strong>A coach who runs one tournament.</strong> No dev coach has that access. The check that the “Change the club’s look” button is absent (not greyed) for anyone who cannot edit the club’s look is automated.</li>
+      <li><strong>A draft tournament in the question.</strong> A draft with colours is named in the question but never “(on now)”; an automated check holds it.</li>
+      <li><strong>Production.</strong> Nothing here touches it. The migration that adds the rule is still owed to production.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  var DATA = {"key":"public-tournament-stage1a-walk-v1","title":"Public tournament pages Stage 1a walk (§448): who owns the look","written":"2026-11-03","parts":[
+{"id":"S","title":"Start: the build is running","steps":[
+{"who":"You · ask Claude","do":"Ask Claude whether the dev server is running the Stage 1a build, and whether the test club is set to “the club’s look, unless a tournament chooses its own”.","see":"Claude says yes to both. If not, STOP.","options":["Yes to both","Not yet: STOP"]},
+{"who":"Club owner · computer · /auth/login","do":"Sign in as uat-club-owner@uat-rep-club.local. Open the link to turn the preview on, then open the club’s Public site in the admin.","see":"The Public site editor with its rows (Look, Home page, About, …). Nothing is asked of you yet."}]},
+{"id":"A","title":"The club’s Tournaments part","steps":[
+{"who":"Club owner · Public site · Look row","do":"Open the Look row and scroll to its end.","see":"After the logo, colours and type, a part titled “Tournaments” with two choices: “The club’s look, unless a tournament chooses its own” (chosen), and “Always the club’s look”. Under each a sentence: “New tournaments wear the club’s colours and type. Whoever runs one can give it its own.” and “Every tournament wears the club’s colours and type. Each keeps its own logo.” A hint: “Every tournament page says it is hosted by the club.”"},
+{"who":"Club owner · the same row, closed","do":"Close the row and read its summary line.","see":"It ends with “tournaments follow” (for example “Purple · Serif type · tournaments follow”)."},
+{"who":"Club owner · the Look row, colours","do":"Open the row again and choose “Custom” (the rainbow circle) in the colours.","see":"Two colour boxes appear, each with a hex code field beside it that you can type in. Do not change the colours: close Custom without picking, or press the club’s own preset again. (The club’s colours must stay purple for the rest of the walk.)","options":["Hex fields are there; colours left purple","Hex fields missing","I changed the colours: tell Claude now"]}]},
+{"id":"B","title":"The question before “Always”","steps":[
+{"who":"Club owner · Tournaments part","do":"Choose “Always the club’s look”.","see":"A window titled “Always use the club’s look?” with ONE sentence naming the tournaments that will change: UAT Rep Club Invitational 2026 (on now) and Stripe Walk Invitational will change to the club’s colours and type, along with 1 finished tournament. At the left of the foot: “Their own looks are kept.” Two buttons: “Not now” (focused) and a lime “Use the club’s look”. Behind the window the choice has not moved."},
+{"who":"Club owner · the window","do":"Press Escape. Then choose “Always the club’s look” again and press “Not now”.","see":"Each time the window closes, the choice stays on “The club’s look, unless a tournament chooses its own”, and nothing is saved (no “Saved” pill)."},
+{"who":"Club owner · the window, on a phone","do":"Optional: on a phone (or the window narrowed to 360 px), open the question again.","see":"The window fits the screen; both buttons are fully visible and easy to tap. Press Not now.","options":["Did it: fits, buttons reachable","Did it: something clipped (write it in the notes)","Skipped"]},
+{"who":"Club owner · the window","do":"Choose “Always the club’s look” and press “Use the club’s look”.","see":"The window closes, the choice moves to Always, the Saved pill shows, and the Look row’s summary now ends “every tournament”."}]},
+{"id":"C","title":"Under “Always”, every tournament wears the club’s look","steps":[
+{"who":"Anyone · public page · /uat-rep-club/uat-rep-club-invitational-2026","do":"Open UAT Rep Club Invitational 2026’s public page (reload if it was open).","see":"The band is the club’s purple, not pink, and its type is the club’s Serif look. The page still says it is hosted by the club."},
+{"who":"Anyone · public pages · /uat-rep-club/uat-summer-slam-2026","do":"Open the finished Summer Slam, then the coming Stripe Walk Invitational (/uat-rep-club/stripe-walk-invitational).","see":"Both wear the same purple and Serif: finished and coming events change too, not just the one on now."},
+{"who":"Anyone · the share picture · /uat-rep-club/uat-rep-club-invitational-2026/opengraph-image","do":"Open that address (it is the picture a shared link shows).","see":"A picture in the club’s purple, not pink. (This picture follows the rule even with the preview off.)"},
+{"who":"Club owner · Public site · Tournaments part","do":"Put it back: choose “The club’s look, unless a tournament chooses its own”.","see":"It saves at once with NO question (going back never asks). Reloading the Invitational shows pink again, Stripe Walk Invitational is ocean blue and Summer Slam is crimson: each kept its own look.","options":["Back to default; each tournament’s own look is back","A tournament lost its look: write which in the notes"]}]},
+{"id":"D","title":"A tournament’s Look card (club owner, Branding page)","steps":[
+{"who":"Club owner · tournament picker, then Public site","do":"Pick Stripe Walk Pay Direct (it has nothing of its own) and open its Public site page (Branding).","see":"The cards, top to bottom: the door to the public page, Pages, Look, Logo, App icon. NO Theme, Hero banner, Font or Card style cards, and no App name field."},
+{"who":"Club owner · the Look card, nothing saved (case A)","do":"Open the Look card.","see":"“The club’s look” is the first choice and chosen, its dot in the club’s two purples. Beside the swatches, “Type: Serif, the club’s”. The line “Follows the club’s look and changes when the club does. The club sets it on its Public site.” with “Public site” as a link. Under it a heading “On a phone” and a preview of the band in the club’s purple and Serif. The FieldLogicHQ swatch is NOT shown as chosen."},
+{"who":"Club owner · the Look card","do":"Pick the green (or any) swatch, but do not press Save yet.","see":"The pill is no longer chosen, the swatch has a double ring, a line says how readable the colour is, three type tiles appear with the club’s type chosen, and the preview’s band turns that colour at once. Pick one type tile (Clean): the preview’s lettering changes.","options":["Colour and type both change the preview","Something did not change: write what in the notes"]},
+{"who":"Club owner · the Look card","do":"Press Save, then open that tournament’s public page (/uat-rep-club/stripe-walk-pay-direct).","see":"The live band matches the preview you saw: the chosen colour and Clean type."},
+{"who":"Club owner · the Look card","do":"Choose “The club’s look” again and Save. Reload the public page.","see":"Back to the club’s purple and Serif, including the type: going back lets go of the type too."},
+{"who":"Club owner · UAT Rep Club Invitational 2026, Look card (case B)","do":"Pick UAT Rep Club Invitational 2026 in the tournament picker and open its Look card.","see":"Its own pink is chosen with a double ring (not the club’s pill), the readability line, three type tiles with the club’s Serif chosen, and a preview of the pink band."},
+{"who":"Club owner · Public site · Tournaments part, then the Invitational’s Look card (case C)","do":"Set the rule to Always (confirm the question), then reload the Invitational’s Look card.","see":"The colour and type choices are gone. In their place a plain line: “The club uses its look on every tournament: colours and type.” and a button “Change the club’s look” (you are the owner, so it shows). The preview shows the club’s purple band. Press the button: it opens the Public site editor."},
+{"who":"Club owner · Public site · Tournaments part","do":"Put the rule back to “The club’s look, unless a tournament chooses its own”.","see":"Saved at once, no question. The Invitational’s Look card offers its pink again."}]},
+{"id":"E","title":"Tournament Plus has no club layer","steps":[
+{"who":"Tournament Plus owner · private window · /auth/login","do":"Sign in as uat-owner@uat-test-org.local. Pick UAT Import Smoke Tournament, open its Public site page, then its Look card.","see":"The cards: door, Pages, Look, Logo, App icon. In the Look card there is NO “The club’s look” choice and no mention of a club or a league. The FieldLogicHQ swatch is chosen, with the line “FieldLogicHQ, the plain look. Pick a colour to make it yours.” Three type tiles, with Classic chosen."},
+{"who":"Tournament Plus owner · the same card","do":"Look at the preview.","see":"A band in the plain FieldLogicHQ colour, with no organization logo (Tournament Plus never shows a leftover look).","options":["Plain band, no logo","A colour or logo from the organization: write it in the notes"]},
+{"who":"Tournament Plus owner · Settings","do":"Open the admin’s Settings page and look for “Open Public site”.","see":"It is not there: Tournament Plus has no public site, so the door that led to a dead page is gone. (Open /uat-test-org/admin/public-site by typing the address: it says “Your plan doesn’t include a public site.”)","options":["No door; the typed address explains","The door is still there: write it in the notes"]}]},
+{"id":"F","title":"The preview off is today’s pages","steps":[
+{"who":"Club owner · computer","do":"Open the “turn it off” link in this page’s setup card. Then open the Public site editor, Look row.","see":"Today’s Look row: logo, colours, type, banner. NO “Tournaments” part, no hex fields on Custom, and the row’s summary does not mention tournaments."},
+{"who":"Club owner · tournament picker, then Public site","do":"Open Stripe Walk Pay Direct’s Public site page.","see":"Today’s page: all its old cards (Logo, App icon with the App name field, Theme with Dark/Light, Hero banner, Font, Card style). NO Look card and no phone preview."},
+{"who":"Anyone · public page","do":"Open the Invitational’s public page.","see":"Today’s page and band, as before this work. (Only the share picture in C3 moves with the preview off.)"},
+{"who":"You · the link","do":"Turn the preview back on with the setup card’s link.","see":"The new pages return."}]},
+{"id":"Z","title":"Put back","steps":[
+{"who":"You · ask Claude","do":"Ask Claude to run the fixture’s undo (Z1) so the test club and its tournaments go back to how they were before this walk.","see":"Claude confirms “Restored UAT Rep Club and 3 tournaments.”","options":["Restored","Not yet: ask again"]}]}
+]};
+  var KEY = DATA.key, PARTS = DATA.parts;
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+  function box(id, partId, label) {
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+    boxes.push({ part: partId, id: id, cb: cb, label: label });
+    return cb;
+  }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(txt('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(txt('span', 'who', id + ' · ' + s.who));
+      t.appendChild(txt('span', null, s['do']));
+      t.appendChild(txt('span', 'see', 'You should see: ' + s.see));
+      if (s.options && s.options.length) {
+        var wrap = el('div', 'step opt'); wrap.appendChild(t);
+        s.options.forEach(function (o, k) {
+          var row = el('label', 'optrow'); var cb = box(id + '-' + (k + 1), p.id, id + ' = ' + o);
+          row.appendChild(cb); row.appendChild(txt('span', null, o)); wrap.appendChild(row);
+        });
+        body.appendChild(wrap);
+      } else {
+        var row2 = el('label', 'step'); var cb2 = box(id, p.id, id);
+        row2.appendChild(cb2); row2.appendChild(t); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [DATA.title + ' (written ' + DATA.written + ')'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length + ' (a step with options counts one box per option)');
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join('; ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

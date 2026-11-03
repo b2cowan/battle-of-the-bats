@@ -183,6 +183,14 @@
   no Why can still be approved; its email reads "Reason: Not recorded". (6) Bulk's portal/billed split reads the refusal's
   sentence, not a code (`PlanRefusedError.code` is one value for both); rewording that sentence would move the counts.
   **Committed `1e18e9e4f` 2026-11-02.** Browser walk owed.
+  **Walk written 2026-11-03: Owner QA Ledger §446,** https://claude.ai/artifact/37WEGfaCvyLLQNDtXqZ2R1 (source
+  `PLANS_PRICING_STAGE0_PART10_WALK.html`), runs on localhost (the email path there is "could not be sent"); its E and F
+  parts need the build on the dev site. Found while writing it and fixed: the Bulk changes finish notice had no full stop
+  before "The owner was emailed." **Correction to (1), 2026-11-03:** "Secure password change" asks again only when the
+  session is more than 24 hours old (Supabase's password-security guide), so a session copied within its first day could
+  still set a new password. The setting that closes it is "Require current password when changing password"; but the
+  accept-invite page sets a FIRST password (there is no current one) and the reset page sets one from a recovery link,
+  so it must be tried on dev against both before production. Owner steps for both are in O10.
 - **Part 8 — built 2026-11-01, committed `ee2f55acf` 2026-11-01. No migration.** `MoneyRead['nextCharge']` is now the union `NextCharge`
   (`{kind:'charge',…} | {kind:'none'} | {kind:'unread'}`, `lib/console-money.ts`); the preview's `.catch` returns `unread`. The band
   words it **"Not read"** (the word the comparison rows already use for a Stripe that did not answer) with the note "Stripe could not be
@@ -648,21 +656,38 @@ anchor (date, commit, walk §), never deletes it.
   to the **billing** webhook endpoint (not the Connect one). Before the Stage 0 walk, which exercises a test dispute.
 - [ ] **O3 · Stripe dashboard, LIVE mode:** the same four events on the live billing endpoint. Before the Stage 0 release reaches production.
   Confirm with `node scripts/audit-stripe-billing.mjs` (its expected-event list carries the four).
-- [ ] **O4 · Ruling: does a dispute on a subscription charge flag or suspend the account?** Today it records and emails only.
-- [ ] **O5 · Ruling: one-off read-only backfill of what existing customers pay** (Part 6). Needs a production read first (refused to the
+  **Owner 2026-11-03: done as part of the Stripe test ↔ live reconciliation before Club goes on sale** (Stripe plan,
+  "Stripe test ↔ live reconciliation"), not on its own. It no longer gates the Stage 0 promote: the code works without
+  the events (a live dispute is then simply not recorded by us, as today; Stripe still emails the account owner).
+- [x] **O4 · Ruling: does a dispute on a subscription charge flag or suspend the account?** Today it records and emails only.
+  **RULED 2026-11-02 (owner, agreeing with the recommendation): NO suspension and no flag. A dispute stays as built: recorded, an
+  email to the owner, "disputed" on the customer's Money tab.** Nothing to build.
+- [x] **O5 · Ruling: one-off read-only backfill of what existing customers pay** (Part 6). Needs a production read first (refused to the
   build session); without it, each customer's real amount appears after their next billing event.
+  **RULED 2026-11-03 (owner, agreeing with the recommendation): no backfill.** Each customer's real amount appears after their
+  next billing event; until then the page prints the list price, as before Stage 0. The confirming production read (count of
+  subscriptions on organizations and team workspaces) was given to the owner to run; the session's own attempt was blocked by
+  its permission rules (production reads), so it was not run by Claude; the
+  recommendation rested on the business log's "no customers yet". If a real paying customer turns up, reopen this line.
 - [ ] **O6 · Confirm:** the first live portal open creates our portal settings in the live Stripe account (Part 3), or ask for a one-off
   owner-run script instead (watched: its own go and commit).
+  **Asked 2026-11-03 (owner: "when/how should we run this test on production?"). Recommended, not ruled:** a live purchase
+  on production the same day as the Stage 0 promote (a throwaway club, the cheapest plan, a real card, press "Payment method
+  & invoices", then the live audit, then cancel and refund). Not deferred to the reconciliation: Coaches Portal and Tournament
+  Plus already sell on production, so after the promote the first real customer's press would otherwise be the test, and a
+  failure there reads "Billing portal is not configured" to that customer. Repeated as the reconciliation's last step.
 - [x] **O7 · Go for Part 11's daily comparison job** (watched automation, its own commit). Given 2026-11-01 in the Session 4
   chat ("Go, schedule on dev too"; an email when Stripe cannot be read: yes, once a day). Dev cron job 15. Prod scheduling
   (mig 422) still needs its own yes after the code is serving: carried in O8.
 - [ ] **O8 · Production order:** migrations 416, 417, 418 and 421 applied to production BEFORE the promote that ships the code
   (`MANUAL_PROD_STEPS.json`); migration 422 (the daily job's schedule) AFTER the code is serving, on its own yes.
-- [ ] **O9 · Exit walks:** re-run Stripe Walk 6 (webhook hardening) and the Stage 0 walk (both test mode).
+- [x] **O9 · Exit walks:** re-run Stripe Walk 6 (webhook hardening) and the Stage 0 walk (both test mode). Stage 0 walk §438 WALKED
+  COMPLETE 2026-11-02; Walk 6 marked complete by the owner 2026-11-02 (no counts given; ledger §419).
 - [ ] **O10 · `/design` session for Part 10 (sign in again), then its own build session** (owner ruling 2026-11-01, Session 3).
   **Design half DONE 2026-11-02: drawn, all 13 asks ruled (see Part 10's status line above). BUILT, simplified and reviewed
-  2026-11-02, committed `1e18e9e4f` on the owner's go; the browser walk and the "Secure password change"
-  setting (Part 10's note) still owed, so this line stays open until it ships.** The
+  2026-11-02, committed `1e18e9e4f` on the owner's go; the browser walk (§446, written 2026-11-03) and the sign-in
+  settings (Part 10's note and its 2026-11-03 correction) are DONE 2026-11-03: both on in dev and production, invite + reset
+  tried on dev and both pass; the walk is the only thing still owed, so this line stays open until it ships.** The
   round-2 drawings place the sentence on the Stage 3–8 screens only; they draw no sign-in-again window and no frame for today's Bulk
   changes or today's price-slot change. Draw: the window (password only), where it opens on those two screens, the owner email.
   Note for the session: today's Bulk changes never calls Stripe (status overrides and sections), so it is a many-customer

@@ -271,6 +271,15 @@
   border: 0;
 }
 
+/* The ask's two buttons always wear the body face, as the rest of the window does. The global `.btn` takes the club's
+   DISPLAY face (a serif on some clubs), and only the coaches portal and the admin kit re-face it — a window opened from a
+   public club page (the coach's score windows) showed Keep writing / Discard in serif. (0,2,0), above the bare `.btn`. */
+.foot .askBtn {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+}
+
 @media (max-width: 768px) {
   .foot button,
   .foot a,

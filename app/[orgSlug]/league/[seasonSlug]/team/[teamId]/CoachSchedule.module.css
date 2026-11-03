@@ -2,6 +2,7 @@
    schedule's game row (league-column.module.css), read-only. */
 .heading {
   margin: 0 0 0.5rem;
+  font-family: var(--club-text-face);
   font-size: 0.95rem;
   font-weight: 650;
   color: var(--club-text);

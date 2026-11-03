@@ -188,7 +188,7 @@ Where: the coach's team page. Coach of the team only (Q7). Replaces the stub **"
 |---|---|---|
 | `cs.title` | Scores | keep (see `coachStand.heading`) |
 | `cs.today` | Today · {Jun 17} (the game row's day head) | drawn, keep |
-| `cs.row.home` | {Twins} vs {Royals} · {6:00 p.m.}, {Maple Grove Park · Diamond 2}, you are the home team | drawn: "you are the home team" kept |
+| `cs.row.home` | {Twins} vs {Royals} · {6:00 p.m.}, {Maple Grove Park · Diamond 2}, a small "Home" tag after the field | CHANGED 2026-11-03 (phone review): was "you are the home team" on every row |
 | `cs.enter` | Enter the score | keep as drawn (button, desk and phone) |
 | `cs.change` | Change the score | NEW (the same door once a score is in; absent when reported or corrected) |
 | `cs.final` | Final {9–3} | keep (the built public word) |
@@ -201,7 +201,7 @@ Where: the coach's team page. Coach of the team only (Q7). Replaces the stub **"
 
 | Key | Reader | String | Tag |
 |---|---|---|---|
-| `cs.by.me` | The coach who entered it | You entered this at {8:12 p.m.}. You can change it until {Royals}’ coach reports it or the league admin corrects it. | NEW: says the "change until" rule once, in place |
+| `cs.by.me` | The coach who entered it | Entered by you at {8:12 p.m.} | CHANGED 2026-11-03 (phone review): was a two-sentence line; the "change until" rule is said once, in the Change window (`win.hint`) |
 | `cs.by.other` | The other team's coach | Entered by {Twins}’ coach at {8:12 p.m.} | CHANGED: was "…the Twins’ coach…" |
 | `cs.by.club` | Either coach, after a correction | The league admin corrected this score. | NEW |
 | `cs.reported.me` | The coach who reported | You told the league admin this isn’t right. The score stands until they look. | NEW |

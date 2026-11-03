@@ -23,7 +23,9 @@
 .copy:hover { background: color-mix(in srgb, currentColor 8%, transparent); }
 .mail:focus-visible, .copy:focus-visible { outline: 2px solid var(--club-ink); outline-offset: 2px; }
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-/* A broken link on the focused page (A2): the sentence, then the contact line close under it, as drawn — not the old
-   error card's 48 px floor, which was the end of the page. */
+/* A broken link on the focused page (A2): the sentence, then the contact line under it — not the old error card's
+   48 px floor, which was the end of the page. The sentence is centred with no title above it, so the contact line
+   centres with it (24 px down) and the two read as one stack; left-aligned, the address hung off the page's edge. */
 .page .errorFocused { padding: 2.5rem 0.5rem 0.5rem; }
 .page .errorFocused p { margin: 0; }
+.page .errorFocused + .contact { align-items: center; text-align: center; margin-top: 1rem; }

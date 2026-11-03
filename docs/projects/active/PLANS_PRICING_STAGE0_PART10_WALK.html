@@ -1,0 +1,276 @@
+<title>Sign In Again Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. Same instrument as the Stage 0 walk. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.stop { border-left: 4px solid var(--warn); }
+.step.opt { flex-direction: column; gap: 4px; }
+.step .optrow { display: flex; gap: 10px; align-items: flex-start; }
+.clock { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.clock div { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+.clock strong { font-variant-numeric: tabular-nums; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Plans &amp; pricing · Stage 0 · Part 10 · §446</span>
+    <h1>Staff type their password again before a change that reaches many customers</h1>
+    <p class="sub">Written 2026-11-03 for commit 1e18e9e4f. Test only: nothing here reaches a real customer or a real Stripe price. About 35 minutes, most of it two waits of about 11 minutes each, because a typed password counts for 10 minutes.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Two staff doors change many customers at once, or what every new customer pays: <strong>Bulk changes</strong>, and <strong>Approve &amp; apply</strong> on a Production price. Each now asks for the password when it was last typed more than 10 minutes ago, carries on by itself once it is accepted, and emails the owner afterwards. This walk proves each door asks, that No means nothing happened, that a wrong password changes nothing, that a fresh password is not asked for twice, and that the audit log records each step.</p>
+  </section>
+
+  <section class="card">
+    <h2>It passes when</h2>
+    <ul>
+      <li>A: both screens say what will happen before anything asks, and the Production price window requires a Why.</li>
+      <li>B: Bulk changes asks after 10 minutes. Cancel runs nothing, a wrong password runs nothing, and the right one runs the change with no second press. A second run straight after does not ask.</li>
+      <li>C: Approve &amp; apply on a Production price asks, the request window cannot be closed behind the question, and the switch back straight after does not ask.</li>
+      <li>D: the audit log shows each step by name, and none of the new lines reads “Not recorded”.</li>
+      <li>E and F (dev site only): the owner email reads as drawn, and on a phone the question sits above the keyboard.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private: it holds a dev password.</p>
+    <dl class="facts">
+      <dt>Where</dt><dd><strong>http://localhost:3000</strong> on your computer works now. The <strong>dev site</strong> (https://dev.fieldlogichq.ca) works only once Claude pushes this build: ask first. Parts E and F need the dev site.</dd>
+      <dt>The email</dt><dd>On localhost no email can be sent (there is no mail key there), so you will see “The email to the owner could not be sent. The change stands, and the audit log has it.” That is the right answer on localhost: it is the path the product takes when the mail service fails. On the dev site the email goes to the owner inbox, <strong>fieldlogichq@gmail.com</strong>.</dd>
+      <dt>Leaves behind</dt><dd>On UAT Test Org, Public site is turned on in B and turned off again in B7. Production Club annual on dev gets the made-up price <code>price_part10_walk</code> in C and is cleared again in C5 (dev has no Production prices, so it ends empty, as it started). Neither touches a real customer.</dd>
+      <dt>Order</dt><dd>S, then A while the first wait runs, then B, then C after the second wait, then D. E and F only on the dev site.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <dl class="facts">
+      <dt>Platform admin (Super admin)</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code> at <code>/platform-admin/login</code>. One account for the whole walk.</dd>
+      <dt>A wrong password for B4</dt><dd>Anything else, for example <code>NotMyPassword1</code>.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Your clock</h2>
+    <p class="sub">Write the times down as you go. Each wait is “at least 11 minutes after” the time named.</p>
+    <div class="clock">
+      <div><span class="label">T0 · signed in (S2)</span><strong>B can start at T0 + 11</strong></div>
+      <div><span class="label">T1 · password accepted (B6)</span><strong>C can start at T1 + 11</strong></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    <ul>
+      <li><strong>A Test price never asks.</strong> Approving a Test price would change the shared test catalogue other walks use. A1 shows the Test window has no Why field, and the tests prove a Test approval does not ask.</li>
+      <li><strong>“Too many tries” and “could not be checked”.</strong> They need the sign-in service to refuse or fail, which nobody can cause on purpose without locking the account. The tests cover both.</li>
+      <li><strong>A copied session.</strong> The check reads this session’s own password time, not the account’s, so a stolen session does not pass when you sign in elsewhere. There is no screen for that; the tests cover it. The setting it relies on is owner step 1 in Claude’s instructions.</li>
+      <li><strong>One-customer actions</strong> (a refund, a cancel, a plan change, free time). They do not ask, as ruled. Nothing changed there.</li>
+      <li><strong>Production.</strong> Nothing here touches it.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  var DATA = {"key":"plans-pricing-stage0-part10-walk-v1","title":"Plans & pricing Stage 0 Part 10 walk (§446): sign in again before a many-customer change","written":"2026-11-03","parts":[
+{"id":"S","title":"Start: the build is running, and the clock starts","steps":[
+{"who":"You · ask Claude","do":"Ask Claude whether the server you will use (localhost or the dev site) is running the Part 10 build.","see":"Claude says yes and names the place. If not, STOP.","options":["Yes, on localhost","Yes, on the dev site","Not yet: STOP"]},
+{"who":"Platform admin · computer · /platform-admin/login","do":"If you are signed in to platform admin already, sign out first. Sign in as uat-platform@fieldlogichq.ca with UATPassword2026!. Write the time down as T0.","see":"The console opens. T0 written down."}]},
+{"id":"A","title":"Both screens say it before anything asks (read and set up during the first wait)","steps":[
+{"who":"Platform admin · /platform-admin/plans-pricing","do":"Open the Club plan, then its Pricing panel. Set “Stripe mode” to Test. In any row, click the price id, change one character, and press the tick (“Request approval”).","see":"A window titled “Submit price change” whose band reads Environment “Test”. The note field is labelled “Change note” with no star. Press Cancel: nothing is submitted."},
+{"who":"Platform admin · the same Pricing panel","do":"Set “Stripe mode” to Production. In the annual row (Club annual), click the price id (it is empty on dev), type price_part10_walk and press the tick.","see":"“Submit price change” with Environment “Production” and Proposed price_part10_walk. The note field is “Why *”, with the hint “Goes in the audit log and the owner’s email.” “Submit for review” stays greyed out while Why is empty."},
+{"who":"Platform admin · the same window","do":"Type the Why “Part 10 walk: a Production price asks for the password”, then press “Submit for review”.","see":"The window closes and the request is waiting. No password was asked: submitting never asks, only applying does.","options":["Submitted, no password asked","A password was asked: write where in the notes"]},
+{"who":"Platform admin · /platform-admin/change-requests","do":"Open the request you just submitted. Read it, then press Close (do NOT approve yet).","see":"It says Production, never “live”. Under “Stripe price check” it says “Not checked against Stripe in this environment”: a Production price can only be checked in production, so that is expected here. The last line above the buttons reads “A Production price: asks for your password if it was last entered more than 10 minutes ago, then emails the owner.” Its buttons are “Approve & apply” and Reject."},
+{"who":"Platform admin · /platform-admin/bulk-operations","do":"Read the “Preview and confirm” card. Then set “Bulk action” to “Plan change” and read the note, then set it back to “Billing status override”.","see":"Under the main button: “Asks for your password if it was last entered more than 10 minutes ago. The owner gets an email after it runs.” Above it: “Up to 100 accounts at a time.” The Plan change note starts “This changes access only, not billing.” and there is no red paragraph about unlinking the subscription."},
+{"who":"Platform admin · the same page","do":"Optional: if the account list lets you tick more than 100 accounts (for example with a select-all), do it, read the button, then untick them all.","see":"The button reads “Select 100 or fewer” and cannot be pressed.","options":["Did it: “Select 100 or fewer”","Did it: something else (write it in the notes)","Skipped it"]}]},
+{"id":"B","title":"Bulk changes asks after 10 minutes, and runs by itself once the password is accepted","steps":[
+{"who":"You · the clock","do":"Check that at least 11 minutes have passed since T0. If not, wait.","see":"It is T0 + 11 or later. Do not go on before it, or nothing will ask, and the steps below cannot pass.","options":["T0 + 11 or later: go on","Not yet: wait"]},
+{"who":"Platform admin · /platform-admin/bulk-operations","do":"Tick UAT Test Org only. Set “Bulk action” to “Extra feature access”, “Extra feature” to “Public site” and “Operation” to “Turn on extra feature”. Reason: “Part 10 walk”. Press “Review bulk operation”, then “Confirm bulk operation”.","see":"A small window titled “Sign in again to run this change”, showing uat-platform@fieldlogichq.ca. It reads “This changes 1 account at once, and your password was last entered more than 10 minutes ago. The change runs as soon as it is accepted.” Its foot reads “You get an email after it runs.”, with Cancel and “Sign in and run”."},
+{"who":"Platform admin · the small window","do":"Press Cancel.","see":"The window closes and nothing ran: no “Latest operation” appears, and nothing new is at the top of “Recent bulk operations”.","options":["Closed, nothing ran","Something ran: write what in the notes"]},
+{"who":"Platform admin · the same page","do":"Press “Confirm bulk operation” again (press “Review bulk operation” first if it is showing). In the window, type a wrong password (NotMyPassword1) and press “Sign in and run”.","see":"It reads “Checking…”, then a red line under the field: “That password doesn’t match. Nothing was changed.” The window stays open, and the text you typed is selected, so typing replaces it."},
+{"who":"Platform admin · the same window","do":"Press the eye button beside the field, then press it again.","see":"The first press shows the typed text; the second hides it again."},
+{"who":"Platform admin · the same window","do":"Type the right password, UATPassword2026!, and press “Sign in and run”. Do not press anything else. Write the time down as T1.","see":"The window closes and the run happens without a second press. The notice reads “1 succeeded / 0 failed.”, then either the sentence “The owner was emailed.” or, below it in amber, “The email to the owner could not be sent. The change stands, and the audit log has it.” “Latest operation” shows UAT Test Org.","options":["“The owner was emailed.” (dev site)","Amber “could not be sent” notice (localhost: expected)","Something else: write it in the notes"]},
+{"who":"Platform admin · the same page, straight away","do":"Put it back: tick UAT Test Org only, “Extra feature access”, “Public site”, Operation “Remove extra feature”, Reason “Part 10 walk: put back”. Press “Review bulk operation”, then “Confirm bulk operation”.","see":"NO password window this time: the password from the step before still counts. The run goes at once, “1 succeeded / 0 failed.”, with the same email sentence or amber notice as before.","options":["Ran at once, no window","The window opened: write it in the notes"]}]},
+{"id":"C","title":"Approve & apply on a Production price asks, and the request cannot be closed behind it","steps":[
+{"who":"You · the clock","do":"Check that at least 11 minutes have passed since T1 (B6). If not, wait.","see":"It is T1 + 11 or later.","options":["T1 + 11 or later: go on","Not yet: wait"]},
+{"who":"Platform admin · /platform-admin/change-requests","do":"Open the request from A3. If a box reading “I’ve reviewed the ⚠ warnings and want to apply this price anyway.” shows, tick it. Press “Approve & apply”.","see":"A small window titled “Sign in again to switch this price”: “From now on, new Club annual customers are charged price_part10_walk. Customers on today’s price keep it. The switch is made as soon as your password is accepted.” (no amount, because Stripe could not be read here). Its foot reads “You get an email after it is switched.”, with Cancel and “Sign in and switch”."},
+{"who":"Platform admin · the request window, behind the small one","do":"Look at the request window behind the small window. Then press Escape (or click outside the small window).","see":"Behind it, the request window’s Close button and its X are greyed out. Escape closes only the small window. The request still shows “Approve & apply”, and nothing was switched.","options":["Greyed out, and Escape switched nothing","Close still worked behind it: write it in the notes","Something was switched: write it in the notes"]},
+{"who":"Platform admin · the same request","do":"Press “Approve & apply” again, type UATPassword2026! and press “Sign in and switch”.","see":"Both windows close, with the notice “Approved, applied, and marked implemented.”, then either “The owner was emailed.” or the amber “could not be sent” notice. On Plans & pricing (Production), Club annual now shows price_part10_walk.","options":["Switched: the owner was emailed (dev site)","Switched: amber “could not be sent” notice (localhost: expected)","Something else: write it in the notes"]},
+{"who":"Platform admin · Plans & pricing, then the Approval queue, straight away","do":"Put it back: on Plans & pricing (Production), click Club annual’s price id, clear the box completely and press the tick. The window shows Proposed “Clear price ID”. Why: “Part 10 walk: put back”. Submit for review, then open it in the Approval queue and press “Approve & apply”.","see":"NO password window (C4’s password still counts). “Approved, applied, and marked implemented.” Club annual on Production is empty again.","options":["Cleared, no window","The window opened: write it in the notes","Could not put it back: tell Claude now"]}]},
+{"id":"D","title":"The audit log tells the story","steps":[
+{"who":"Platform admin · /platform-admin/audit","do":"Read the newest entries for uat-platform@fieldlogichq.ca, back to T0.","see":"Two “Signed in again” lines (B6 and C4), one “Sign in again: wrong password” (B4), the two bulk runs and the two price switches. On localhost, also four “Owner email: not sent” lines, one after each change. Cancel and Escape left no line.","options":["All there, as described","Something missing or extra: write what in the notes"]},
+{"who":"Platform admin · the same entries","do":"Read the Reason column on the new lines.","see":"The bulk runs and price switches show the reasons you typed. The “Signed in again”, wrong password and “Owner email: not sent” lines show a dash. None of them reads “Not recorded”.","options":["No “Not recorded” anywhere","“Not recorded” on a line: write which in the notes"]}]},
+{"id":"E","title":"The owner email reads as drawn (dev site only)","steps":[
+{"who":"You · fieldlogichq@gmail.com","do":"Only if you walked on the dev site: open the email for B6, subject “Bulk change: Public site turned on for 1 account”.","see":"It names uat-platform@fieldlogichq.ca, never “You”. It says what happened and when (a.m./p.m. Eastern), the Reason “Part 10 walk”, “Password last entered at …”, that real billing in Stripe is unchanged, and a button to the audit log.","options":["Did it: reads as described","Did it: something is off (write it in the notes)","Skipped: walked on localhost"]},
+{"who":"You · fieldlogichq@gmail.com","do":"Only on the dev site: open the emails for C4 and C5.","see":"C4: “Production price switched: Club annual”, saying new customers are charged price_part10_walk from now on, with the Why. C5: “Production price cleared: Club annual”, saying new customers cannot buy it until a price is set. Neither says “charged no price”.","options":["Did it: both read as described","Did it: something is off (write it in the notes)","Skipped: walked on localhost"]}]},
+{"id":"F","title":"On a phone, the question sits above the keyboard (dev site only)","steps":[
+{"who":"Platform admin · phone · https://dev.fieldlogichq.ca/platform-admin","do":"Only on the dev site, and at least 11 minutes after your last password: on the phone, start the B2 run again (Public site on, UAT Test Org). When the small window opens, tap the password field so the keyboard comes up. Then turn the phone sideways. Then press Cancel.","see":"A centred card. With the keyboard up, the title, the field and both buttons can all be seen or reached, upright and sideways. Cancel runs nothing.","options":["Did it: all reachable, Cancel ran nothing","Did it: something was hidden (write what in the notes)","Skipped"]}]}
+]};
+  var KEY = DATA.key, PARTS = DATA.parts;
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+  function box(id, partId, label) {
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+    boxes.push({ part: partId, id: id, cb: cb, label: label });
+    return cb;
+  }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(txt('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(txt('span', 'who', id + ' · ' + s.who));
+      t.appendChild(txt('span', null, s['do']));
+      t.appendChild(txt('span', 'see', 'You should see: ' + s.see));
+      if (s.options && s.options.length) {
+        var wrap = el('div', 'step opt'); wrap.appendChild(t);
+        s.options.forEach(function (o, k) {
+          var row = el('label', 'optrow'); var cb = box(id + '-' + (k + 1), p.id, id + ' = ' + o);
+          row.appendChild(cb); row.appendChild(txt('span', null, o)); wrap.appendChild(row);
+        });
+        body.appendChild(wrap);
+      } else {
+        var row2 = el('label', 'step'); var cb2 = box(id, p.id, id);
+        row2.appendChild(cb2); row2.appendChild(t); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [DATA.title + ' (written ' + DATA.written + ')'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length + ' (a step with options counts one box per option)');
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join('; ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
