@@ -67,6 +67,7 @@
   walk §442, mig 423 on PROD **strictly before** a promote (the coach team card and the admin standings read name the
   column, so code without the column fails), and the TODO / ledger / snapshot records, which share files with other
   sessions and were left for their own commit.
+- **2026-11-02, walk §442 PASSED 33/33 (walked 2026-11-01), no changes asked.** The four open owner calls stand as built; the ranking call above (a team with no counted game) is still the owner's. Still owed: mig 423 on PROD before a promote.
 
 ## What a person sees after this build (for the UX summary)
 
