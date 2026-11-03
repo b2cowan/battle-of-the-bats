@@ -218,5 +218,6 @@ add it to the Owner QA Ledger (never sort the § numbers) and the TODO line.
   send WROTE (Changes to send's "Sent to N"), not those delivered (dev has no email key; delivery failures show as
   "Reached N of M families"). Walk published https://claude.ai/artifact/3CrozfbYHrPAwYqwQF5b9F (source
   `HOUSE_LEAGUE_STAGE9E2_WALK.html`, 38 steps, fixture `.probe/9e2-walk/fixture.mjs`, left built for 2026-11-03); ledger
-  §445; TODO line updated. **Owed:** the owner's walk, then the commit on the owner's word (own hunks only), then mig 427
-  on prod before the promote.
+  §445; TODO line updated. **Committed `4528b4a2d` 2026-11-03** (own hunks only; the schema snapshots are not in it —
+  the working copy's refresh also carried the 9e-3 session's mig 428, so they ride with that session's next refresh).
+  **Owed:** the owner's walk, then mig 427 on prod before the promote.
