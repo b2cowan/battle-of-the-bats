@@ -1,0 +1,324 @@
+<title>9e-2 Rainout Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+table.nums { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.nums th, table.nums td { text-align: left; padding: 4px 8px 4px 0; border-top: 1px solid var(--line); vertical-align: top; font-variant-numeric: tabular-nums; }
+table.nums th { color: var(--muted); font-weight: 600; border-top: 0; }
+.scroll { overflow-x: auto; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · House League · Stage 9e-2</span>
+    <h1>Rainout: call off a day’s games in one press</h1>
+    <p class="sub">Written 2026-11-03 for Stage 9e-2 (built, uncommitted). One purpose: a rainout calls off a day’s games in one press, tells families or holds the changes, and can be put back while held.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Before this build, a rained-out evening meant opening each game and postponing it by hand, division by division, and then sending each division’s changes. Now a <strong>Rainout</strong> button on the schedule’s header opens one window: pick the day, postpone (the default) or cancel, tick the games (each published division’s, grouped), add a line of your own for the email, and either email the families now or hold the changes in Changes to send to look first. A held rainout can be put back in one press until anything is sent. Once emails go, they can’t be taken back, and the window says so.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>Only people who run the season see the Rainout button, and it keeps its word on a phone.</li>
+    <li>The window lists exactly the games still to play on the day in published divisions, names a draft division instead of listing it, and every count, sentence and button reads the numbers the fixture printed.</li>
+    <li>Holding a rainout changes the games, writes the changes into Changes to send, tells nobody, and the club’s line is in the family email there, word for word.</li>
+    <li>Put all back returns every game at its old time, asks first, and works only while nothing has been sent.</li>
+    <li>Sending a division’s changes from Changes to send carries the line, and afterwards the rainout can no longer be put back.</li>
+    <li>Emailing now says how many families were written, offers no Undo, and “Give them new dates” opens that division’s Needs a new date.</li>
+    <li>A game that changed in another tab is refused, nothing is changed, and the window lists what is still left.</li>
+  </ul></section>
+  <section class="card"><h2>Known before the walk</h2><ul>
+    <li><strong>Dev has no email key.</strong> A send is recorded and its families are counted (“N emails sent”), but nothing arrives in an inbox. This walk never checks an inbox: the family email’s words are read through <strong>See their email</strong> in Changes to send, on a <em>held</em> rainout (Part C).</li>
+    <li><strong>Where the build differs from the drawing</strong> (say if any of these should change): no phone “4 of 4 ›” drill-in (the form table lists every game, with a “2 of 2” figure per division); no desk “4 more, all ticked” collapse (every game is listed); places are a white-track switch (or a dropdown with more places), never pills; “Practices” in the practices line is words, not a link (only “Schedules” links); the button counts families (“email 18 families”), as accepted.</li>
+    <li><strong>The line rides the whole division’s email.</strong> If a held rainout is sent from Changes to send alongside unrelated held changes in that division, the line appears in that one email. This is the disclosed design: the email says one thing to a family.</li>
+    <li><strong>Put all back does not re-check bookings.</strong> It returns games to their old times the same way Undo does; if a field was booked for something else in between, nothing stops it.</li>
+    <li><strong>The practices line counts the whole season’s practices that day</strong>, not just the walk’s: U9 Rookie’s own practice on the same evening is in the “booked by hand” count when the fixture runs on a Tuesday.</li>
+    <li><strong>The fixture’s day is today.</strong> Run it on the day you walk, and again at the start of D, E, F and G (each part says so). It clears what the earlier part left.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>Email delivery.</strong> No inbox is checked (no email key in dev). The sample and the counts stand in.</li>
+    <li><strong>A failed send.</strong> The “one division’s email didn’t go” wording needs a failing mail transport; it is pinned by unit tests.</li>
+    <li><strong>Rainout on a finished season.</strong> The button isn’t offered there; the server’s refusal is unit-pinned.</li>
+    <li><strong>Coach score entry and “Final standings”.</strong> Those are 9e-3 and 9f.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd>It must have been restarted after this build (new files, a migration, shared modules). Login page answers 200. If the Rainout button never appears for the league admin, say so before walking anything else.</dd>
+    <dt>Fixture</dt><dd>In the project folder: <code>node --env-file=.env.local .probe/9e2-walk/fixture.mjs</code>. It (re)builds three walk divisions beside U9 Rookie in UAT Rep Club and prints today’s numbers and the schedule link. <strong>It uses today’s date in the club’s zone (America/Toronto)</strong>, so run it again if the day changes while you walk, and at the start of D, E, F and G. Modes: <code>--reset</code>. Dev only; it refuses production and never touches a sign-in.</dd>
+    <dt>The three divisions</dt><dd><strong>R1 Walk</strong>: published, four teams (Ash, Birch, Cedar, Dogwood). <strong>R2 Walk</strong>: published, four teams (Elm, Fir, Gum, Hazel). <strong>R3 Walk</strong>: a draft, two teams (Iris, Juniper). U9 Rookie is not published and is not changed.</dd>
+    <dt>When done</dt><dd>Run <code>--reset</code>. It removes the walk divisions, their children, practices, change rows, rainout records, notices and emails.</dd>
+  </dl></section>
+  <section class="card"><h2>The numbers the fixture printed</h2><p class="sub">As printed on 2026-11-03. The steps below point at these rows by name. If your fixture printed something different, trust yours and say so in the notes.</p>
+    <div class="scroll"><table class="nums">
+      <tr><th>Row of the printout</th><th>Games</th><th>Teams</th><th>Divisions</th><th>Emails</th><th>Families</th><th>In two divisions</th></tr>
+      <tr><td>All of today’s listed games</td><td>4</td><td>8</td><td>2</td><td>19</td><td>18</td><td>1</td></tr>
+      <tr><td>R1 Walk alone</td><td>2</td><td>4</td><td>1</td><td>10</td><td>10</td><td>0</td></tr>
+      <tr><td>R2 Walk alone</td><td>2</td><td>4</td><td>1</td><td>9</td><td>9</td><td>0</td></tr>
+      <tr><td>All but Gum vs Hazel</td><td>3</td><td>6</td><td>2</td><td>15</td><td>14</td><td>1</td></tr>
+      <tr><td>Only Lions Park</td><td>2</td><td>4</td><td>2</td><td>11</td><td>10</td><td>1</td></tr>
+      <tr><td>Only Walk Park</td><td>2</td><td>4</td><td>2</td><td>9</td><td>9</td><td>0</td></tr>
+      <tr><td>Tomorrow (R1 Ash vs Cedar)</td><td>1</td><td>2</td><td>1</td><td>6</td><td>6</td><td>0</td></tr>
+    </table></div>
+    <p class="sub">Per game, families hearing it: Ash vs Birch 6, Cedar vs Dogwood 5, Elm vs Fir 5, Gum vs Hazel 4. Today’s practices as the window counts them: 1 uses the club’s time, 2 were booked by hand (one is the fixture’s Birch practice, one is U9 Rookie’s own).</p>
+  </section>
+  <section class="card"><h2>Sign in as</h2><p>One browser window per person (a private window for the second). Dev only, keep this page private. All passwords <code>UATPassword2026!</code>.</p><dl class="facts">
+    <dt>League admin</dt><dd><code>uat-club-league-admin@uat-rep-club.local</code> (Jordan Pike): every part except A3</dd>
+    <dt>Registrar</dt><dd><code>uat-club-registrar@uat-rep-club.local</code>: A3 only (a private window)</dd>
+  </dl></section>
+  <section class="card"><h2>Where</h2><dl class="facts">
+    <dt>The schedule</dt><dd><code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code> (pick R1 Walk or R2 Walk in the division picker)</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>The words.</strong> Every sentence is the copy you accepted on 2026-11-01 (Part C of the Stage 9e copy). The only words of the build’s own are the list’s two column headings (“Game”, “Time and place”), “Every R1 Walk game” (a box’s name for a screen reader), “The day’s games didn’t load…” and “Sending…”.</li>
+    <li><strong>The banner’s number (C3).</strong> Changes to send on R1 says “4 games postponed” and offers “Put all 4 back”, because Put all back is one press for the whole rainout across divisions, but the list under it holds R1’s 2 changes. Recommend keep (the number is what the button does); say if the banner should name how many are in this division as well.</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "hl9e2-walk-rainout-v1";
+  var TITLE = "9e-2 walk · Rainout: call off a day’s games in one press (2026-11-03)";
+  var FX = "<code>node --env-file=.env.local .probe/9e2-walk/fixture.mjs";
+  var LA = "League admin · uat-club-league-admin@uat-rep-club.local";
+  var REG = "Registrar · uat-club-registrar@uat-rep-club.local (private window)";
+  var SCH = "<code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code>";
+  var LINE = "The fields are closed tonight.";
+  var PARTS = [
+ { id: "A", title: "Who sees the door", steps: [
+  { who: "Terminal", do: "Run " + FX + "</code>.",
+    see: "<strong>Stop check:</strong> “Built for TODAY = …”, the four listed games, the expected numbers, per-game family counts, today’s practices, the schedule link and the three division ids. Keep that output open: every part reads its numbers from it." },
+  { who: LA, do: "Open " + SCH + " and pick <strong>R1 Walk</strong> in the division picker.",
+    see: "In the header, an outlined button with a cloud icon reading <strong>Rainout</strong>. It is there for any division (U9 Rookie too), because a published division exists in the season." },
+  { who: REG, do: "Sign in as the registrar in a private window and open the same schedule link.",
+    see: "<strong>No Rainout button</strong> (and no Changes to send). The page may show less, or its own no-access words; either way there is no Rainout." },
+  { who: LA, do: "Back as the league admin, narrow the window to phone width (390 px: a phone, or the browser’s device toolbar) and look at the header.",
+    see: "The button still reads <strong>Rainout</strong> with its icon (it can email families, so it keeps its word), and does not become an icon on its own." },
+  { who: "Terminal", do: "Run " + FX + " --reset</code>, then reload the schedule as the league admin. Then run " + FX + "</code> again and reload.",
+    see: "After the reset only U9 Rookie is left, and it is not published: <strong>the Rainout button is gone</strong>. After the rebuild it is back." }
+ ]},
+ { id: "B", title: "The window", steps: [
+  { who: LA, do: "Press <strong>Rainout</strong> (no division picked matters).",
+    see: "A window titled <strong>Rainout</strong> over “2026 Fall House League”. <strong>Day</strong> reads “Today · ” and today’s short date, then “· 4 games still to play” (the fixture’s all-of-today games); the list also holds tomorrow, “1 game still to play”. No U9 Rookie dates (a draft). <strong>What happens to them</strong>: <strong>Postpone them</strong> (chosen), “They leave their week and wait under “Needs a new date”. You give each a new date later.”; <strong>Cancel them</strong>, “They stay on the schedule, struck through. You can put one back on later.”" },
+  { who: LA, do: "Read <strong>Which games</strong> under the verbs.",
+    see: "A table grouped by division, each with a box and every game ticked. <strong>R1 Walk</strong> (“2 games · 4 teams”): Ash vs Birch, “6:00 p.m. · Lions Park · Diamond 1”; Cedar vs Dogwood, “7:30 p.m. · Walk Park”. <strong>R2 Walk</strong> (“2 games · 4 teams”): Elm vs Fir, “6:00 p.m. · Lions Park · Diamond 2”; Gum vs Hazel, “6:30 p.m. · Walk Park”. Closing row <strong>“4 games, 8 teams, 2 divisions.”</strong> Under it: <strong>“R3 Walk is a draft, so none of its games are listed.”</strong> <strong>Not listed:</strong> Birch vs Dogwood at 9:00 p.m. (already postponed) and tomorrow’s Ash vs Cedar. The statement under the table follows the fixture’s all-of-today row: “19 emails to 18 families, sent as 2, one per division. 1 of those families has children in two divisions and gets two emails. The 8 teams’ coaches get a copy.” then “Doesn’t count toward today’s 3.”" },
+  { who: LA, do: "Above the list there is a switch of places. Press <strong>Lions Park</strong>, then <strong>Walk Park</strong>, then <strong>All places</strong>.",
+    see: "<strong>All places · Lions Park · Walk Park</strong> as one white-track switch (not pills). Lions Park: only Ash vs Birch and Elm vs Fir, both ticked, “2 games, 4 teams, 2 divisions.”, statement per the fixture’s Only Lions Park row (11 emails to 10 families, 1 in two divisions). Walk Park: Cedar vs Dogwood and Gum vs Hazel, per Only Walk Park (9 emails to 9 families). All places: all four ticked again. Each pick re-ticks everything it lists." },
+  { who: LA, do: "On All places, untick <strong>Gum vs Hazel</strong>. Then untick <strong>R2 Walk’s box</strong>. Then untick <strong>R1 Walk’s box</strong>. Tick both boxes again.",
+    see: "<strong>One game off:</strong> R2’s box shows the mixed state, “3 games, 6 teams, 2 divisions.”, statement per All but Gum vs Hazel (15 emails to 14 families), button <strong>“Postpone 3 games and email 14 families”</strong>. <strong>R2 off:</strong> “2 games, 4 teams, 1 division.”, the one-division form, <strong>“One division: 10 emails to 10 families. The 4 teams’ coaches get a copy.”</strong> + “Doesn’t count toward today’s 3.”, button “Postpone 2 games and email 10 families”. <strong>Both off:</strong> “0 games, 0 teams, 0 divisions.”, no statement, the footer reads <strong>“Tick at least one game.”</strong> and the button is dimmed. Both boxes on: back to four." },
+  { who: LA, do: "Read the paragraph under the statement. Then pick tomorrow in <strong>Day</strong> and look again; set it back to today.",
+    see: "<strong>“Tonight’s practices aren’t changed here. 1 uses the club’s time: change it in the club’s Schedules. 2 were booked by hand: change them in Practices. Cancelling them doesn’t email families.”</strong> (the fixture’s practices row). <strong>Schedules</strong> is a link; <strong>Practices</strong> is not. On tomorrow the wording is “Practices on {date} aren’t changed here.” and a line only shows if something is booked that day; there is no place switch (one place), no draft line, and the list is one division." },
+  { who: LA, do: "Read <strong>A line for the email</strong>. Type the line, then paste something longer than 120 characters, then clear it back to the line. Untick <strong>Email the families now</strong>. Choose <strong>Cancel them</strong>, then tick the email box on again. Close without pressing the button.",
+    see: "Placeholder “For example: the fields are closed tonight.”, hint “You can leave this empty. It goes at the top of the family email and the coaches’ copy, in your words. 120 characters at most.” No counter while empty. Typing <strong>“" + LINE + "”</strong> shows <strong>“90 left”</strong>; the long paste stops at 120 and reads “0 left”. <strong>Email unticked:</strong> caption “Untick to hold them in Changes to send and review first.”, the hint gains “It goes out with the changes when you send them.”, the statement says <strong>“Nobody is emailed now. The changes wait in Changes to send.”</strong>, the button reads <strong>“Postpone 4 games”</strong>. <strong>Cancel them:</strong> “Cancel 4 games”, and with the tick back on “Cancel 4 games and email 18 families”. The footer says “Nothing changes until you press the button.” Closing may ask whether to discard what you typed; discard." }
+ ]},
+ { id: "C", title: "Hold, look, put back", steps: [
+  { who: LA, do: "Press <strong>Rainout</strong>, leave <strong>Postpone them</strong> and all four games ticked, <strong>untick Email the families now</strong>, and type <strong>“" + LINE + "”</strong> as the line.",
+    see: "“90 left”, the hint’s extra sentence, <strong>“Nobody is emailed now. The changes wait in Changes to send.”</strong>, button <strong>“Postpone 4 games”</strong>." },
+  { who: LA, do: "Press <strong>Postpone 4 games</strong>.",
+    see: "The window turns into a result titled <strong>“4 games postponed”</strong> (today’s date above it): a green notice <strong>“Nobody has been told. The 4 changes are waiting in Changes to send.”</strong> and “You can put all 4 back until the changes are sent. If any game has changed since, nothing is put back and you can undo them one at a time in Changes to send.” Footer buttons <strong>Put all 4 back</strong> and <strong>Send the changes</strong>. Do not press either: close the window with its ✕." },
+  { who: LA, do: "On the schedule pick <strong>R1 Walk</strong>. The header now has <strong>Changes to send</strong> with a count; open it.",
+    see: "The count is <strong>2</strong> (R1’s two changes). Inside, at the top, an olive banner <strong>“Rainout on {today’s short date}: 4 games postponed, waiting to be sent.”</strong> with <strong>Put all 4 back</strong>. Two rows, each with Undo: Ash vs Birch (“Ash and Birch families · 6 families”) and Cedar vs Dogwood (“Cedar and Dogwood families · 5 families”). Footer: “Reaches 10 families, one email each. The 4 teams’ coaches get a copy. Doesn’t count toward today’s 3.”",
+    call: "Call: the banner says 4 while this division lists 2 (see Calls above). Keep, or name both numbers?" },
+  { who: LA, do: "Still in Changes to send, press <strong>See their email</strong> (under “The Dubes have Ned on the Birch and Ivy on the Cedar. They get one email with both changes.”).",
+    see: "The email the Dubes would get, one email with both changes (Ned’s Birch game and Ivy’s Cedar game). <strong>At the top of the email, before the changes, the line “" + LINE + "” word for word.</strong> Go back out of the sample." },
+  { who: LA, do: "Press the banner’s <strong>Put all 4 back</strong>. First answer <strong>Keep them postponed</strong>; then press the banner’s button again and confirm.",
+    see: "A question <strong>“Put all 4 games back?”</strong>: “They return to the schedule at their old times. Nobody was told, so nobody is told now.” with <strong>Keep them postponed</strong> and <strong>Put all 4 back</strong>. Keeping changes nothing and the banner stays. Confirming closes Changes to send with the notice <strong>“4 games put back. Nothing was sent.”</strong>" },
+  { who: LA, do: "Look at R1 Walk and R2 Walk, then open <strong>Rainout</strong> again.",
+    see: "No Changes to send button on either division, no Needs a new date games, all four games back at their old times and places. The window opens as in B1: today, 4 games still to play, everything ticked, the line empty. Close it." }
+ ]},
+ { id: "D", title: "Hold, then send from Changes to send", steps: [
+  { who: "Terminal", do: "Run " + FX + "</code> again (it clears C’s leftovers and puts every game back).",
+    see: "The same numbers as the first run, for today." },
+  { who: LA, do: "Press <strong>Rainout</strong>, untick <strong>Email the families now</strong>, type <strong>Fields closed tonight.</strong> as the line, and press <strong>Postpone 4 games</strong>. Close the result with its ✕.",
+    see: "The held result as in C2: “4 games postponed”, “Nobody has been told. The 4 changes are waiting in Changes to send.”" },
+  { who: LA, do: "Pick <strong>R1 Walk</strong> and open <strong>Changes to send</strong>. Press <strong>See their email</strong> once, then go back and press <strong>Send 2 changes</strong>.",
+    see: "The banner “Rainout on {date}: 4 games postponed, waiting to be sent.” is there. The sample email carries <strong>“Fields closed tonight.”</strong> at the top. Sending closes the window with a passing line <strong>“Sent to 10 families.”</strong> (the families the send wrote: the fixture’s R1 row). Dev delivers nothing; a count of families is the whole check." },
+  { who: LA, do: "Look at R1 Walk after the send.",
+    see: "The Changes to send button is gone from R1. The R1 games Ash vs Birch and Cedar vs Dogwood wait under <strong>Needs a new date</strong> (postponed)." },
+  { who: LA, do: "Pick <strong>R2 Walk</strong> (its two changes are still held) and open <strong>Changes to send</strong>.",
+    see: "<strong>No rainout banner now</strong>: R1’s changes were sent, so Put all back is no longer offered anywhere. The two rows (Elm vs Fir, Gum vs Hazel) each still have <strong>Undo</strong>. Footer: “Reaches 9 families, one email each…”. Close with Not yet." },
+  { who: LA, do: "Press <strong>Rainout</strong>.",
+    see: "Today has nothing left to play, so the window opens on the next day with games: <strong>“{tomorrow’s short date} · 1 game still to play”</strong>, with no “Today ·” in front. Close it." }
+ ]},
+ { id: "E", title: "Email now", steps: [
+  { who: "Terminal", do: "Run " + FX + "</code> again.",
+    see: "Fresh numbers; tomorrow’s row is the one this part uses." },
+  { who: LA, do: "Press <strong>Rainout</strong>, pick tomorrow in <strong>Day</strong>, and type <strong>Makeup dates to follow.</strong> as the line. Leave <strong>Email the families now</strong> ticked.",
+    see: "One division, R1 Walk, with Ash vs Cedar at “6:00 p.m. · Walk Park”; no place switch. Closing row <strong>“1 game, 2 teams, 1 division.”</strong>; statement <strong>“One division: 6 emails to 6 families. The 2 teams’ coaches get a copy.”</strong> + “Doesn’t count toward today’s 3.” (the fixture’s Tomorrow row); button <strong>“Postpone 1 game and email 6 families”</strong>." },
+  { who: LA, do: "Press <strong>Postpone 1 game and email 6 families</strong>.",
+    see: "The result is titled <strong>“1 game postponed”</strong> (tomorrow’s date above it): a green notice <strong>“6 emails sent. The 2 teams’ coaches have a copy.”</strong> and “Emails can’t be taken back. To change a game, give it a new date; its families are told again.” Buttons <strong>Done</strong> and <strong>Give them new dates</strong>. <strong>No Undo and no Put all back anywhere.</strong> Dev sends nothing; there is no amber “didn’t send” line." },
+  { who: LA, do: "Press <strong>Give them new dates</strong>.",
+    see: "The window closes, R1 Walk is the picked division, the page scrolls to <strong>Needs a new date</strong> and that fold is open with Ash vs Cedar in it." },
+  { who: LA, do: "Open Changes to send for R1 Walk, if its button is there.",
+    see: "<strong>No button</strong>: nothing was held, because the families were told in the press. Nothing to put back." }
+ ]},
+ { id: "F", title: "Someone else got there first", steps: [
+  { who: "Terminal", do: "Run " + FX + "</code> again.",
+    see: "Fresh numbers." },
+  { who: LA, do: "<strong>Tab 1:</strong> open the schedule, press <strong>Rainout</strong> and leave everything ticked and the email on. <strong>Do not press the button.</strong>",
+    see: "Four games ticked, button “Postpone 4 games and email 18 families”." },
+  { who: LA, do: "<strong>Tab 2</strong> (a new tab, same sign-in): open the schedule, press <strong>Rainout</strong>, <strong>untick R1 Walk’s box</strong> and <strong>untick Email the families now</strong>, press <strong>Postpone 2 games</strong>. Close the result with its ✕.",
+    see: "“2 games postponed”, held, “Nobody has been told. The 2 changes are waiting in Changes to send.” R2’s Elm vs Fir and Gum vs Hazel are now postponed." },
+  { who: LA, do: "Back in <strong>tab 1</strong>, press <strong>Postpone 4 games and email 18 families</strong>.",
+    see: "A red line in the window: <strong>“These games changed while the window was open. Nothing was changed. Look again.”</strong> The list now holds only R1 Walk’s two games, still ticked (R2’s two are gone from it); the statement becomes the one-division form for R1 (10 emails to 10 families), the button “Postpone 2 games and email 10 families”. No result appears." },
+  { who: LA, do: "Still in tab 1, close the window without pressing again. On the schedule check R1 Walk and R2 Walk.",
+    see: "<strong>Nothing was changed by the refused press:</strong> R1 Walk has no Changes to send button and its games are untouched; R2 Walk shows only tab 2’s two held changes. No family was emailed." }
+ ]},
+ { id: "G", title: "A phone", steps: [
+  { who: "Terminal", do: "Run " + FX + "</code> again.",
+    see: "Fresh numbers." },
+  { who: LA, do: "Narrow the window to phone width (390 px). Open the schedule and press <strong>Rainout</strong>.",
+    see: "The window fits with no sideways scroll. <strong>Day</strong> reads the short form <strong>“Today · {short date}”</strong> (no “· 4 games still to play”). The verbs’ lines are short: “They wait under “Needs a new date”.” and “They stay on the schedule, struck through.”" },
+  { who: LA, do: "Read the list.",
+    see: "Each division’s row carries a figure, <strong>“2 of 2”</strong>, and its games sit under it, each with “time · place” on its own line; every game is listed (no drill-in). The place switch fits one row. Closing row “4 games, 8 teams, 2 divisions.”" },
+  { who: LA, do: "Read the statement and the practices line under the list.",
+    see: "Short statement: <strong>“4 games. 19 emails to 18 families in 2 sends. 1 gets two.”</strong> Practices: <strong>“Practices aren’t changed here: 1 uses the club’s time (Schedules), 2 were booked by hand (Practices; cancelling them emails no one).”</strong> (the fixture’s practices counts)." },
+  { who: LA, do: "Read the footer and the button. Untick <strong>Email the families now</strong>, then tick it again.",
+    see: "Footer “Nothing changes until you press.” Button <strong>“Postpone 4 games, email 18”</strong>; unticked, <strong>“Postpone 4 games”</strong>. Close without pressing." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

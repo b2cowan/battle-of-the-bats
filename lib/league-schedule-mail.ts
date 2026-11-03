@@ -14,6 +14,7 @@ import { asLastSent, heldChangesOf, sendHeldChanges, snapshotOf, type HeldGameOf
 import { familiesFor, netChangeOf, publicState, type GameSnapshot, type HeldChange, type NetChange } from './league-game-changes';
 import { emailChangeLine, publishedLine, scheduleEmailWords, type PlaceText, type SchedulePart } from './league-schedule-email';
 import { SCHEDULE_EMAIL_WORDS } from './league-schedule-words';
+import { rainoutLinesFor } from './league-rainout-server';
 import type { EmailWords } from './club-schedule-words';
 
 /**
@@ -112,16 +113,18 @@ export function changedLinesByTeam(nets: readonly TeamsNet[], names: ReadonlyMap
   return out;
 }
 
-/** What a sent "games changed" notice told families: each game's net effect over the rows the send stamped. */
-async function sentNets(noticeId: string): Promise<TeamsNet[]> {
+/** The rows a sent "games changed" notice stamped, in the order they were made. */
+async function sentChanges(noticeId: string): Promise<HeldChange[]> {
   const rows = await fetchAll<{ id: string; game_id: string; kind: HeldChange['kind']; before: GameSnapshot | null; after: GameSnapshot; source: HeldChange['source']; created_at: string }>(
     (a, b) => supabaseAdmin.from('league_game_changes').select('id, game_id, kind, before, after, source, created_at')
       .eq('notice_id', noticeId).order('created_at').order('id').range(a, b));
+  return rows.map(r => ({ id: r.id, gameId: r.game_id, kind: r.kind, before: r.before, after: r.after, source: r.source, createdAt: r.created_at }));
+}
+
+/** What a sent "games changed" notice told families: each game's net effect over the rows the send stamped. */
+async function sentNets(changes: readonly HeldChange[]): Promise<TeamsNet[]> {
   const byGame = new Map<string, HeldChange[]>();
-  for (const r of rows) {
-    const c: HeldChange = { id: r.id, gameId: r.game_id, kind: r.kind, before: r.before, after: r.after, source: r.source, createdAt: r.created_at };
-    (byGame.get(r.game_id) ?? byGame.set(r.game_id, []).get(r.game_id)!).push(c);
-  }
+  for (const c of changes) (byGame.get(c.gameId) ?? byGame.set(c.gameId, []).get(c.gameId)!).push(c);
   if (!byGame.size) return [];
   const games = await fetchAllIn<{ id: string; home_team_id: string; away_team_id: string; status: string }>(
     [...byGame.keys()], (c, a, b) => supabaseAdmin.from('league_games').select('id, home_team_id, away_team_id, status').in('id', c).order('id').range(a, b));
@@ -194,17 +197,19 @@ async function noticeFacts(org: ScheduleMailOrg, season: ScheduleMailSeason, not
   const divisionId = notice.division_id;
   if (!divisionId) throw new Error('A schedule notice has no division');
   const [names, placeOf] = await Promise.all([teamNames(divisionId), placeReader(org.id)]);
-  const nets = notice.kind === 'games_changed' ? await sentNets(notice.id) : [];
+  const sent = notice.kind === 'games_changed' ? await sentChanges(notice.id) : [];
+  // 9e·14: a rainout's line, found through the rows this notice sent (the window's send, or Changes to send a day later).
+  const [nets, note] = await Promise.all([sentNets(sent), rainoutLinesFor(sent.map(c => c.id))]);
   const linesByTeam = notice.kind === 'games_changed'
     ? changedLinesByTeam(nets, names, placeOf)
     : await publishedLinesByTeam(season.id, divisionId, names, placeOf);
-  return { names, linesByTeam };
+  return { names, linesByTeam, note };
 }
 
-const wordsFor = (org: ScheduleMailOrg, season: ScheduleMailSeason, kind: NoticeKind, guardianFirst: string | null, parts: readonly SchedulePart[]) =>
+const wordsFor = (org: ScheduleMailOrg, season: ScheduleMailSeason, kind: NoticeKind, guardianFirst: string | null, parts: readonly SchedulePart[], note: readonly string[] = []) =>
   scheduleEmailWords({
     kind: kind === 'schedule_published' ? 'published' : 'changed', club: org.name, season: season.name, guardianFirst, parts,
-    zoneSentence: timesInZoneSentence(), schedulePath: schedulePath(org, season),
+    zoneSentence: timesInZoneSentence(), schedulePath: schedulePath(org, season), note,
   });
 
 /**
@@ -291,10 +296,10 @@ async function sendClaimed(p: { org: ScheduleMailOrg; season: ScheduleMailSeason
     // Nothing left to say (the children left the teams), or an address no mail can reach: resending can't change either.
     if (!parts.length || !isSendableGuardianEmail(normalizeGuardianEmail(row.guardian_email))) { nothingToSay.push(row.id); continue; }
     const first = regs.get(row.registration_ids[0])?.guardian_first_name ?? null;
-    const w = wordsFor(p.org, p.season, notice.kind, first, parts);
+    const w = wordsFor(p.org, p.season, notice.kind, first, parts, facts.note);
     messages.push({
       to: row.guardian_email, subject: w.subject,
-      html: leagueScheduleNoticeHtml({ greeting: w.greeting, lists: w.lists, link: w.link, outro: w.outro, foot: w.foot ?? null, reason: seasonEmailReason(p.season.name), face }),
+      html: leagueScheduleNoticeHtml({ greeting: w.greeting, paragraphs: w.paragraphs, lists: w.lists, link: w.link, outro: w.outro, foot: w.foot ?? null, reason: seasonEmailReason(p.season.name), face }),
     });
     // The teams this family's email carries lines for (the parts', not wherever its children are now).
     messageRows.push({ id: row.id, email: normalizeGuardianEmail(row.guardian_email) ?? row.guardian_email, teams: [...new Set(parts.map(x => x.teamId).filter((t): t is string => !!t))] });
@@ -336,7 +341,7 @@ async function sendClaimed(p: { org: ScheduleMailOrg; season: ScheduleMailSeason
  * (lib/families-email-coaches.ts), the 9d-1 coach copy's words. Never throws: the families' emails have gone.
  */
 async function copyCoaches(org: ScheduleMailOrg, season: ScheduleMailSeason, actorId: string,
-  facts: { names: ReadonlyMap<string, string>; linesByTeam: ReadonlyMap<string, string[]> },
+  facts: { names: ReadonlyMap<string, string>; linesByTeam: ReadonlyMap<string, string[]>; note: readonly string[] },
   reachedEmails: ReadonlyMap<string, ReadonlySet<string>>, reachedByTeam: ReadonlyMap<string, number>, replyTo: string | null) {
   try {
     const sender = (await memberDisplayName(org.id, actorId)) ?? org.name;
@@ -347,7 +352,7 @@ async function copyCoaches(org: ScheduleMailOrg, season: ScheduleMailSeason, act
       if (!coaches.length) continue;
       await sendCoachCopies(coaches, c => coachCopyWords({
         orgName: org.name, audience: team, families: reachedByTeam.get(teamId) ?? 0,
-        subject: SCHEDULE_EMAIL_WORDS.changedSubject([team]), body: lines.map(l => l.replace(/\n/g, ' · ')).join('\n\n'),
+        subject: SCHEDULE_EMAIL_WORDS.changedSubject([team]), body: [...facts.note, ...lines.map(l => l.replace(/\n/g, ' · '))].join('\n\n'),
         sender, coachName: c.name, league: true,
       }), replyTo);
     }
@@ -376,7 +381,8 @@ export async function sendChangesAndTell(p: {
 export interface ScheduleSample { to: string; words: EmailWords }
 
 async function sampleFor(org: ScheduleMailOrg, season: ScheduleMailSeason, kind: NoticeKind, teamIds: ReadonlySet<string>,
-  names: ReadonlyMap<string, string>, linesByTeam: ReadonlyMap<string, string[]>, pick?: (families: RegRow[][]) => RegRow[] | undefined): Promise<ScheduleSample | null> {
+  names: ReadonlyMap<string, string>, linesByTeam: ReadonlyMap<string, string[]>, pick?: (families: RegRow[][]) => RegRow[] | undefined,
+  note: readonly string[] = []): Promise<ScheduleSample | null> {
   const regs = await fetchAllIn<RegRow & { guardian_email: string | null }>([...teamIds], (c, a, b) => supabaseAdmin.from('league_registrations')
     .select('id, player_first_name, player_last_name, guardian_first_name, team_id, status, guardian_email')
     .eq('season_id', season.id).eq('status', 'active').in('team_id', c).order('id').range(a, b));
@@ -390,7 +396,7 @@ async function sampleFor(org: ScheduleMailOrg, season: ScheduleMailSeason, kind:
   if (!parts.length) return null;
   return {
     to: family[0].player_last_name ? SW.oneFamilyTo(family[0].player_last_name) : (family[0].guardian_first_name ?? ''),
-    words: wordsFor(org, season, kind, family[0].guardian_first_name, parts),
+    words: wordsFor(org, season, kind, family[0].guardian_first_name, parts, note),
   };
 }
 
@@ -405,9 +411,10 @@ export async function publishSample(org: ScheduleMailOrg, season: ScheduleMailSe
 export async function changesSample(org: ScheduleMailOrg, season: ScheduleMailSeason, divisionId: string, held: readonly HeldGameOf[]): Promise<ScheduleSample | null> {
   const nets: TeamsNet[] = held.filter(h => h.news).map(h => ({ net: h.news!, homeTeamId: h.homeTeamId, awayTeamId: h.awayTeamId }));
   if (!nets.length) return null;
-  const [names, placeOf] = await Promise.all([teamNames(divisionId), placeReader(org.id)]);
+  const [names, placeOf, note] = await Promise.all([teamNames(divisionId), placeReader(org.id), rainoutLinesFor(held.flatMap(h => h.changeIds))]);
   const linesByTeam = changedLinesByTeam(nets, names, placeOf);
   const teams = new Set([...linesByTeam.keys()]);
   return sampleFor(org, season, 'games_changed', teams, names, linesByTeam,
-    list => list.filter(f => new Set(f.map(r => r.team_id)).size > 1).sort((a, b) => a[0].player_first_name.localeCompare(b[0].player_first_name))[0]);
+    list => list.filter(f => new Set(f.map(r => r.team_id)).size > 1).sort((a, b) => a[0].player_first_name.localeCompare(b[0].player_first_name))[0],
+    note);
 }

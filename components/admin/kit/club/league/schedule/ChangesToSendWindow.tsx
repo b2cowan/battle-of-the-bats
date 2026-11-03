@@ -10,13 +10,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import KitDialog, { DialogCancel } from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
-import { NoticePill, repKit } from '../../RepKit';
+import { Callout, NoticePill, repKit } from '../../RepKit';
 import { RotateCcw } from 'lucide-react';
 import { formatInOrgZone, utcToZonedInputs } from '@/lib/timezone';
 import { formatTime } from '@/lib/utils';
 import { CHANGES_TO_SEND_WORDS as W, reachedLine } from '@/lib/league-schedule-words';
 import { SampleMail, SendDoor, useEmailSample, useSendLevel } from '../../SendParts';
 import type { GameSnapshot, NetChange } from '@/lib/league-game-changes';
+import { RAIN_WORDS as RW, type WaitingRainout } from '@/lib/league-rainout';
+import { PutBackQuestion, rainoutAction } from './RainoutParts';
 import t from './ChangesToSend.module.css';
 
 interface HeldRow { gameId: string; news: NetChange | null; played: boolean; homeTeamId: string; awayTeamId: string; families: number }
@@ -26,6 +28,8 @@ interface Tray {
   families: number;
   teams: number;
   household: { family: string; parts: { child: string; teamId: string }[] } | null;
+  /** 9e-2: the held rainouts on this division that Put all back would still restore (the banner at the top). */
+  rainouts?: WaitingRainout[];
 }
 
 const dayOf = (iso: string) => formatInOrgZone(iso, { weekday: 'short', month: 'short', day: 'numeric' });
@@ -73,6 +77,8 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
   const [error, setError] = useState<string | null>(null);
   /** "Undone. Orioles vs Twins is back as families last heard." — the window's own passing status. */
   const [said, setSaid] = useState<string | null>(null);
+  /** The rainout whose Put all back is being asked (9e·13). */
+  const [askBack, setAskBack] = useState<WaitingRainout | null>(null);
   const sep = orgQuery ? '&' : '?';
   const url = `${api}/changes${orgQuery}`;
 
@@ -137,9 +143,30 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
     setBusy(false);
   }
 
+  /** Put all back (9e·13): every game of the held rainout, all or nothing, across its divisions; nobody is told. */
+  async function putBack(rain: WaitingRainout) {
+    setBusy(true); setError(null);
+    const r = await rainoutAction(api, orgQuery, rain.id, 'back');
+    setAskBack(null);
+    if (!r.ok) {
+      setError(r.error);
+      if (r.status === 409) { onUndone(); await read(); }
+      setBusy(false);
+      return;
+    }
+    const done = RW.backDone(rain.games);
+    const got = await fetchTray();
+    if ('tray' in got && got.tray.games.length === 0) { onUndone(done); onClose(); return; }
+    setSaid(done);
+    onUndone();
+    show(got);
+    setBusy(false);
+  }
+
   const rows = tray?.games ?? [];
   const household = tray?.household;
   return (
+    <>
     <KitDialog kind="form" size="medium" {...lv.dialog} eyebrow={division.name} title={W.title} onClose={onClose} busy={busy}
       status={said ? <NoticePill inline message={said} onDone={() => setSaid(null)} /> : undefined}
       footerStart={rows.length > 0 && tray ? <span>{sending ? W.sending : W.foot(tray.families, tray.teams)}</span> : undefined}
@@ -154,6 +181,12 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
         </>
       )}>
       {error && <p className={repKit.formError} role="alert">{error}</p>}
+      {lv.level !== 'email' && (tray?.rainouts ?? []).map(rain => (
+        <Callout key={rain.id} tone="olive"
+          action={<button type="button" className="btn btn-outline" disabled={busy} onClick={() => setAskBack(rain)}>{RW.back(rain.games)}</button>}>
+          {RW.banner(rain.day, rain.games, rain.verb)}
+        </Callout>
+      ))}
       {lv.level === 'email' ? (
         <SampleMail state={email} failedText={W.sampleFailed} />
       ) : (<>
@@ -190,5 +223,9 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
       )}
       </>)}
     </KitDialog>
+    {askBack && (
+      <PutBackQuestion games={askBack.games} verb={askBack.verb} busy={busy} onYes={() => void putBack(askBack)} onClose={() => setAskBack(null)} />
+    )}
+    </>
   );
 }

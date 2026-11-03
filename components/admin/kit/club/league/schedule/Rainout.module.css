@@ -1,0 +1,10 @@
+/* RAINOUT (House League 9e-2): the window's own two pieces. Everything else is the kit's (ClubKit, SendParts,
+   FormTable, Statement, ScreenParts). Tokens only. */
+
+/* The line for the email: the counter sits at the left under the hint, as the club's other "From the club" box. */
+.lineStack { display: flex; flex-direction: column; gap: 0.3rem; }
+.counter { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* The day's practices: named, never touched (9e·10). */
+.practices { margin: 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
+.practices a { color: var(--home-olive); font-weight: 600; }

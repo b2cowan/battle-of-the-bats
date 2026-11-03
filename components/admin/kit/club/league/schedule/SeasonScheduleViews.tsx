@@ -242,10 +242,11 @@ export function SeasonMonthView({ cursor, bookings, today, onOpen, onDay }: {
  * "NEEDS A NEW DATE" (9d2·10, b1/b3): the postponed games and any game saved with no date, above the views, collapsed, with
  * the amber count. Each row opens its game's window, which offers "Give it a new date".
  */
-export function NeedsDateFold({ bookings, onOpen }: { bookings: readonly SeasonBooking[]; onOpen: Open }) {
+/** `startOpen`: drawn unfolded (the Rainout result's "Give them new dates", 9e-2); the caller remounts it to open it again. */
+export function NeedsDateFold({ bookings, onOpen, startOpen = false }: { bookings: readonly SeasonBooking[]; onOpen: Open; startOpen?: boolean }) {
   if (!bookings.length) return null;
   return (
-    <details className={sv.fold}>
+    <details className={sv.fold} open={startOpen || undefined}>
       <summary className={sv.foldHead}>
         <span className={sv.foldTitle}>{W.needsDate}</span>
         <span className={sv.foldCount} aria-label={pluralize(bookings.length, 'game')}>{bookings.length}</span>

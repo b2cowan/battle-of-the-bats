@@ -80,12 +80,14 @@ export function scheduleEmailWords(p: {
   zoneSentence: string;
   /** The public schedule's path ("See the full schedule →"). */
   schedulePath: string;
+  /** 9e·14: the club's own line from a rainout (`rainMail.line`), verbatim, above the first part (the sender passes it on Games changed only). */
+  note?: readonly string[];
 }): EmailWords {
   const teams = p.parts.map(x => x.team);
   return {
     subject: p.kind === 'published' ? W.publishedSubject(teams) : W.changedSubject(teams),
     greeting: p.guardianFirst?.trim() ? `Hi ${p.guardianFirst.trim()},` : 'Hi,',
-    paragraphs: [],
+    paragraphs: [...(p.note ?? [])],
     lists: p.parts.map(x => ({
       title: p.kind === 'published' ? W.publishedPart(p.club, p.season, x.child, x.team) : W.changedPart(p.club, x.child, x.team),
       items: x.lines,

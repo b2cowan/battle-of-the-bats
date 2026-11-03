@@ -10,6 +10,7 @@ import { changesSample, sendChangesAndTell } from '@/lib/league-schedule-mail';
 import { familiesFor, teamsHearing } from '@/lib/league-game-changes';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { orgClock } from '@/lib/club-board-view';
+import { rainoutsWaiting } from '@/lib/league-rainout-server';
 import { withObservability } from '@/lib/observability';
 
 // The families' emails go inside the request, a hundred to a provider request (the season emails' rule).
@@ -89,6 +90,11 @@ export const GET = withObservability(async (req: Request,
     families: households.size,
     teams: hearing.size,
     household,
+    // 9e-2: the held rainouts touching this division that Put all back would still restore (the banner at the top).
+    rainouts: await rainoutsWaiting(g.ctx.org.id, g.seasonId, divisionId!).catch(e => {
+      console.error('[schedule/changes] the held rainouts did not read (no banner):', e instanceof Error ? e.message : String(e));
+      return [];
+    }),
   });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule/changes' });
 

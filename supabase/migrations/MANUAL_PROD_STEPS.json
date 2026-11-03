@@ -558,6 +558,10 @@
     "426_a_club_decides_its_tournaments_look.sql": {
       "prod": "pending",
       "note": "Public tournament pages Stage 1a Part 1: adds organizations.tournament_look_policy (visible) AND a DATA-ONLY UPDATE that empties tournaments.theme_font (never read publicly; an invisible pick from the retired font list). Applied to dev 2026-11-02 (2 rows emptied, both inter). Apply on prod before the promote that ships Stage 1a Part 1. Verify: SELECT count(*) FROM tournaments WHERE theme_font IS NOT NULL -> 0."
+    },
+    "427_a_rainout_calls_off_a_day_in_one_press.sql": {
+      "prod": "pending",
+      "note": "House League Stage 9e-2 Part 1 (docs/projects/active/HOUSE_LEAGUE_STAGE9E2_BUILD_PROMPT.md, rulings 9e·10 to 9e·14): a rainout calls off a day's games in one press. Needs 409 and 413 first. Visible: table league_rainouts (RLS on, no policies, service role only). INVISIBLE to check:migrations: functions league_rainout_press(uuid, uuid, uuid, date, text, text, jsonb), league_rainout_refusal(league_rainouts), league_rainout_put_back(uuid, uuid, uuid, uuid), league_rainouts_waiting(uuid, uuid, uuid) (service role only). No change to any existing table, trigger or function; no row changed; re-runnable. Apply to prod BEFORE the promote that ships 9e-2 (the Rainout routes call the functions: without it the Rainout window answers 500; the schedule send and the Changes to send banner read league_rainouts but never fail on it, they send without a line and show no banner). Applied to DEV 2026-11-02; proved by scripts/house-league-9e2-rainout-check.sql (T1-T14, rolled back). Verify on prod: SELECT count(*) FROM pg_proc WHERE proname IN ('league_rainout_press','league_rainout_refusal','league_rainout_put_back','league_rainouts_waiting') -> 4; the table exists; routine_privileges EXECUTE on the four = postgres + service_role only."
     }
   }
 }

@@ -6876,6 +6876,40 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 
 ---
 
+## `league_rainouts`
+<!-- dict:table:league_rainouts -->
+
+**Purpose:** **Rainout** (House League 9e-2, rulings 9e·10 to 9e·14, **mig 427**): one row per press of the schedule's Rainout window — the day, postponed or cancelled, the club's optional line for the email, and the games, divisions and held `league_game_changes` rows the press made. RLS on, no policies, **service role only** (nothing public reads it). ⚠ **Written only by `league_rainout_press`** (all or nothing: locks the games' divisions in id order with the send's advisory lock, refuses `changed` (a game moved on, no longer to play, or not on `day` in the org zone) / `draft` / `not_found` / `finished` / `invalid` with nothing written, sets every game's status — the mig 409 trigger records each change — and inserts this row). `put_back_*` is stamped only by `league_rainout_put_back`.
+
+**Gotchas (read first):**
+1. **The line is read at SEND time**, through `change_ids`: whichever press sends those rows (the window's own send, or Changes to send a day later) finds this row by its change ids and puts `line` at the top of the Games changed email and the coaches' copy. An email is rebuilt from the stamped rows when it goes, so the line cannot live in memory.
+2. **Put all back is NOT `league_game_undo`.** Undo returns a game to what families last heard, discarding an older held change on it; Put all back returns each game's **status** to its rainout row's `before` and deletes that row and the put-back's own row, keeping an older held change. One rule decides when it works — `league_rainout_refusal(r)`: null = yes; `back` = already put back; `gone` = one of its changes was sent; `refused` = a change was undone, a later held change exists on one of its games, or a game's status is no longer the verb. `league_rainouts_waiting(org, season, division?)` lists the rows the rule allows, with their `division_ids` (the banner at the top of Changes to send, one division's when named).
+3. **A draft division's game is never in a rainout** (a draft records no change and emails nobody).
+
+<!-- dict:col:league_rainouts.id -->
+<!-- dict:col:league_rainouts.org_id -->
+<!-- dict:col:league_rainouts.season_id -->
+**`id`** / **`org_id`** (FK → `organizations` CASCADE) / **`season_id`** (FK → `league_seasons` CASCADE; partial index `WHERE put_back_at IS NULL`) — whose rainout.
+
+<!-- dict:col:league_rainouts.day -->
+<!-- dict:col:league_rainouts.verb -->
+**`day`** (date NOT NULL) — the org-zone day called off (the window's Day). / **`verb`** (text NOT NULL, CHECK `postponed` · `cancelled`) — what happened to the games.
+
+<!-- dict:col:league_rainouts.line -->
+**`line`** (text, CHECK 1–120 characters; null = none) — the club's own words for the email (9e·14), trimmed, never edited by the product. Goes out verbatim above the first part of the family email and the coaches' copy.
+
+<!-- dict:col:league_rainouts.game_ids -->
+<!-- dict:col:league_rainouts.division_ids -->
+<!-- dict:col:league_rainouts.change_ids -->
+**`game_ids`** / **`division_ids`** / **`change_ids`** (uuid[] NOT NULL; CHECK same count of games and changes, at least one; GIN index on `change_ids`) — the games postponed or cancelled, their divisions (sorted: the lock order), and the one held `league_game_changes` row the press made on each game.
+
+<!-- dict:col:league_rainouts.created_by -->
+<!-- dict:col:league_rainouts.created_at -->
+<!-- dict:col:league_rainouts.put_back_at -->
+<!-- dict:col:league_rainouts.put_back_by -->
+**`created_by`** / **`put_back_by`** (FK → `auth.users` ON DELETE SET NULL) / **`created_at`** / **`put_back_at`** (null = not put back) — who pressed, and whether and when Put all back restored every game.
+
+---
 ## `league_schedule_emails`
 <!-- dict:table:league_schedule_emails -->
 

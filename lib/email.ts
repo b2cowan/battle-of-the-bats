@@ -1373,6 +1373,8 @@ export function leaguePracticesChangedHtml(input: {
  */
 export function leagueScheduleNoticeHtml(input: {
   greeting: string;
+  /** A rainout's line (9e·14), the club's own words, a paragraph each above the first part. */
+  paragraphs?: readonly string[];
   lists: readonly { title: string | null; items: readonly string[] }[];
   link: { label: string; path: string } | null;
   outro: string | null;
@@ -1388,8 +1390,10 @@ export function leagueScheduleNoticeHtml(input: {
   const link = input.link
     ? `<p style="margin:1rem 0;"><a href="${escapeEmailHtml(`${SITE_URL}${input.link.path}`)}" style="color:${WARM_EMAIL.olive};font-weight:700;">${escapeEmailHtml(input.link.label)}</a></p>`
     : '';
+  const paragraphs = (input.paragraphs ?? []).map(t => `<p>${escapeEmailHtml(t)}</p>`).join('');
   return familyNotice(`
     <p>${p.greeting}</p>
+    ${paragraphs}
     ${parts}
     ${link}
     ${p.outro ? `<p>${p.outro}</p>` : ''}

@@ -27547,3 +27547,14 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **Owner calls open with it:** the join page's mismatch line (G4, Session 1's words, not drawn); no button on the "couldn't set up your account" card (A2, as drawn); a coach whose account still waits is asked to sign in when registering again and refused until they confirm (H). Reported by `/review`, not walked: a stranger who registers with someone else's address chooses that account's password (fix = passwordless account, password set at confirm; a product call).
 <!-- /§443 -->
+
+## §445 · House League · Stage 9e-2 owner walk — **a rainout calls off a day's games in one press: only those who run the season see it, it lists exactly the day's games in published divisions, it emails one per family per division or holds the changes in Changes to send with the club's line, Put all back works only while nothing is sent, and a game changed elsewhere is refused with nothing written**
+<!-- §445 -->
+**Built 2026-11-02/03:** Parts 1–6 of [HOUSE_LEAGUE_STAGE9E2_BUILD_PROMPT.md](HOUSE_LEAGUE_STAGE9E2_BUILD_PROMPT.md) (Progress block has every detail), uncommitted at writing. Mig 427 (`league_rainouts` + four functions) dev only (prod `pending` in MANUAL_PROD_STEPS.json, apply BEFORE the promote). Help sub-topic `recipe-generate-house-league-schedule-t-rainout` + FAQ `faq-house-league-rainout-undo` by a `/docs` pass. `/simplify` and `/review` (high-risk, 4 lenses, nothing Critical/High) run 2026-11-02/03, fixes applied; SQL proof `scripts/house-league-9e2-rainout-check.sql` T1–T14. Plan gate as Decided 2026-11-02 (rides house league; the existing `bulk_reschedule` key, absent on the free floor, no upgrade words).
+
+**The walk (checkable):** https://claude.ai/artifact/3CrozfbYHrPAwYqwQF5b9F (source [HOUSE_LEAGUE_STAGE9E2_WALK.html](HOUSE_LEAGUE_STAGE9E2_WALK.html)). One purpose, 38 steps in seven parts: A who sees the door (5) · B the window (6) · C hold, look, put back (6) · D hold, then send from Changes to send (6) · E email now (5) · F someone else got there first (5) · G a phone (5). Fixture `.probe/9e2-walk/fixture.mjs` (dev only, today's date in the club's zone, `--reset`).
+
+**Known before the walk:** dev has no email key (counts and "See their email" stand in for an inbox); drawing deviations (no phone "4 of 4 ›" drill-in, no desk "4 more" collapse, places as a white-track switch or dropdown, "Practices" not a link); the line rides the whole division's email when a held rainout goes with unrelated changes (disclosed at the UX step); Put all back doesn't re-check bookings (as Undo); the practices line counts the whole season's practices that day.
+
+**Owner calls open with it:** the banner's number is the whole rainout's (Put all 4 back on a division listing 2; recommend keep, C3).
+<!-- /§445 -->

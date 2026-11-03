@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { Calendar, CalendarClock, CalendarDays, CalendarRange, Clock, List, MoreHorizontal, Plus, X, Wand2 } from 'lucide-react';
+import { Calendar, CalendarClock, CalendarDays, CalendarRange, Clock, CloudRain, List, MoreHorizontal, Plus, X, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import { ORG_TIME_ZONE, mondayOfDay, orgDayKey, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
@@ -37,6 +37,9 @@ import PublishScheduleWindow from '@/components/admin/kit/club/league/schedule/P
 import SchedulePublishLine, { SchedulePublishTag, showPublishButton, type SchedulePublishing } from '@/components/admin/kit/club/league/schedule/SchedulePublishLine';
 import { CHANGES_TO_SEND_WORDS, SCHEDULE_PUBLISH_WORDS } from '@/lib/league-schedule-words';
 import ChangesToSendWindow from '@/components/admin/kit/club/league/schedule/ChangesToSendWindow';
+import RainoutWindow from '@/components/admin/kit/club/league/schedule/RainoutWindow';
+import { RAIN_WORDS } from '@/lib/league-rainout';
+import { hasPlanFeature } from '@/lib/plan-features';
 import cts from '@/components/admin/kit/club/league/schedule/ChangesToSend.module.css';
 import type { ChangeKind, GameSnapshot } from '@/lib/league-game-changes';
 import LeagueHealthWindow from '@/components/admin/kit/club/league/schedule/LeagueHealthWindow';
@@ -664,6 +667,10 @@ export default function SchedulePage() {
   /** Each game with a change waiting to be sent (9d-2b f1/f2): its net kind, or played since. Runners only. */
   const [changes, setChanges] = useState<Record<string, { kind: ChangeKind | null; played: boolean }>>({});
   const [changesOpen, setChangesOpen] = useState(false);
+  /** Rainout (9e-2): the header's window, across divisions; "Give them new dates" unfolds Needs a new date (a new key). */
+  const [rainOpen, setRainOpen] = useState(false);
+  const [newDatesKey, setNewDatesKey] = useState(0);
+  const needsDateRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -1250,6 +1257,10 @@ export default function SchedulePage() {
   const canPublish = showPublishButton({ canRun: canManage, published: !!divPublishing, teamsPublished: divTeamsPublished, games: divLiveGames });
   // Changes to send (f2): the header's button once a published division has a change waiting, its count the amber pill.
   const divHeld = canManage && divPublishing ? divPublishing.held : 0;
+  // Rainout (9e-2): whoever runs the live season, once a division is published; the plan check is the server's too
+  // (9e·15: every paid house-league plan has it). The window says when no day has a game left.
+  const canRainout = canManage && scheduleRead === 'ok' && Object.keys(publishing).length > 0
+    && !!currentOrg && hasPlanFeature(currentOrg.planId, 'bulk_reschedule');
   /** A place as a Changes to send row says it: the facility alone when it has one ("Diamond 2"), else the venue or the text. */
   const placeWords = (snap: GameSnapshot) => {
     const v = snap.venueId ? venues.find(x => x.id === snap.venueId) : null;
@@ -1392,6 +1403,13 @@ export default function SchedulePage() {
               {CHANGES_TO_SEND_WORDS.button}<span className={cts.count} aria-hidden>{divHeld > 9 ? '9+' : divHeld}</span>
             </button>
           )}
+          {/* Rainout (9e·10): a word on a phone too — it can email hundreds of families. Absent where the plan lacks it
+              (9e·15, never an upgrade line) and for anyone who can't run the season. */}
+          {canRainout && (
+            <button type="button" className="btn btn-outline" onClick={() => setRainOpen(true)}>
+              <CloudRain size={16} aria-hidden />{RAIN_WORDS.button}
+            </button>
+          )}
           {phone && addMenu}
         </>}
       />
@@ -1433,7 +1451,11 @@ export default function SchedulePage() {
       {dateNav && <div className={cal.dateRow}>{dateNav}</div>}
 
       {/* Postponed games wait above every view until they have a date (9d2·10). */}
-      {scheduleRead === 'ok' && <NeedsDateFold bookings={calendar.needsDate} onOpen={openBooking} />}
+      {scheduleRead === 'ok' && (
+        <div ref={needsDateRef}>
+          <NeedsDateFold key={newDatesKey} bookings={calendar.needsDate} onOpen={openBooking} startOpen={newDatesKey > 0} />
+        </div>
+      )}
 
       {body}
 
@@ -1497,6 +1519,27 @@ export default function SchedulePage() {
             void reload();
           }}
           onClose={() => setPublishOpen(false)}
+        />
+      )}
+
+      {/* Rainout (9e-2): a day's games across divisions, postponed or cancelled in one press. */}
+      {rainOpen && (
+        <RainoutWindow
+          seasonName={season?.name ?? ''}
+          /* org-slug-ok: the window adds `orgQuery` (below) to every call it makes */
+          api={`/api/admin/house-league/seasons/${seasonId}/schedule`}
+          orgQuery={orgQuery}
+          teamName={id => teamName.get(id) ?? ''}
+          schedulesHref={buildsSchedules ? `/${orgSlug}/admin/schedules` : null}
+          onChanged={() => { void reload(); }}
+          onNotice={setNotice}
+          onOpenChanges={divisionId => { if (divisionId) setSelectedDivId(divisionId); setChangesOpen(true); }}
+          onNewDates={divisionId => {
+            setSelectedDivId(divisionId);
+            setNewDatesKey(k => k + 1);
+            requestAnimationFrame(() => needsDateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+          }}
+          onClose={() => setRainOpen(false)}
         />
       )}
 

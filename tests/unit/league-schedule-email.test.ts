@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import { emailChangeLine, publishedLine, scheduleEmailWords } from '../../lib/league-schedule-email.ts';
 import { netChangeOf, type GameSnapshot, type HeldChange } from '../../lib/league-game-changes.ts';
 import { SCHEDULE_NOTICE_WORDS, reachedLine } from '../../lib/league-schedule-words.ts';
+import { billingTestLoader } from './_billing-test-loader.ts';
 
 /** House League 9d-2b Part 4 (frame f3): what a family's game email says, from the net effect of the changes sent. */
 const snap = (o: Partial<GameSnapshot> = {}): GameSnapshot => ({
@@ -96,6 +97,27 @@ describe('the families\' email words', () => {
     assert.equal(two.subject, 'The schedule is up for Twins and Rays');
     assert.equal(two.lists[1].title, 'Riverdale published the 2027 schedule. Here are Henry’s games with Rays:');
     assert.equal(two.greeting, 'Hi,');
+  });
+
+  // 9e-2 Part 4 (9e·14): a rainout's line, the club's own words, above the first part; nothing at all without one.
+  it('a rainout\'s line opens a Games changed email, verbatim; no line adds nothing', () => {
+    const base = { kind: 'changed' as const, club: 'Riverdale', season: '2027', guardianFirst: 'Sam', parts, zoneSentence: 'z', schedulePath: '/p' };
+    assert.deepEqual(scheduleEmailWords({ ...base, note: ['Rain: the fields are closed tonight.'] }).paragraphs,
+      ['Rain: the fields are closed tonight.']);
+    assert.deepEqual(scheduleEmailWords(base).paragraphs, []);
+    assert.deepEqual(scheduleEmailWords({ ...base, note: [] }).paragraphs, []);
+  });
+
+  it('the line is drawn after the greeting and before the first part, escaped', () => {
+    const { leagueScheduleNoticeHtml } = billingTestLoader()('lib/email.ts') as typeof import('../../lib/email.ts');
+    const w = scheduleEmailWords({ kind: 'changed', club: 'Riverdale', season: '2027', guardianFirst: 'Sam', parts, zoneSentence: 'z', schedulePath: '/p',
+      note: ['Rain <b>tonight</b> & tomorrow.'] });
+    const html = leagueScheduleNoticeHtml({ greeting: w.greeting, paragraphs: w.paragraphs, lists: w.lists, link: w.link, outro: w.outro, foot: w.foot, reason: 'r' });
+    const line = html.indexOf('Rain &lt;b&gt;tonight&lt;/b&gt; &amp; tomorrow.');
+    assert.ok(line > html.indexOf('Hi Sam,'), 'after the greeting');
+    assert.ok(line < html.indexOf('Riverdale changed Ava’s games with Twins:'), 'before the first part');
+    const none = leagueScheduleNoticeHtml({ greeting: w.greeting, lists: w.lists, link: w.link, outro: w.outro, foot: w.foot, reason: 'r' });
+    assert.doesNotMatch(none, /Rain/);
   });
 
   it('a published game\'s line', () => {
