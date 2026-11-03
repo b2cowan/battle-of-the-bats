@@ -1,0 +1,12 @@
+/* A phone window (PhoneWindow.tsx): a frame as wide as a phone, never wider than its column, no border of its own — the
+   band inside draws its own edges. A hairline radius matches the admin's inset previews. */
+.window {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  overflow: hidden;
+  /* Nothing in it is reached by a pointer either (the `inert` attribute already holds focus and clicks). */
+  pointer-events: none;
+}

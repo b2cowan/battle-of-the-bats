@@ -1,0 +1,56 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   A TOURNAMENT'S LOOK CARD (LookCard.tsx, Public tournament pages Stage 1a Part 3; the drawing's tabs 3 and 4).
+   Colours and type on the left, the band's preview beside them from 1,024 px (the drawing's desk), under them on a
+   phone and a tablet. Born on the kit: TOKENS ONLY. The swatches, pill and tiles are the shared Look controls'.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+@media (min-width: 1024px) {
+  .grid { grid-template-columns: minmax(0, 1fr) minmax(0, 390px); gap: 24px; align-items: start; }
+}
+
+.controls { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.part { display: flex; flex-direction: column; gap: 8px; }
+.partTitle {
+  margin: 0;
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--text-secondary);
+}
+
+.line {
+  margin: 0;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+/* Under *Always*: a plain lock line, no box (the drawing's case C). */
+.lock {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--type-body);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.lockIcon { flex: none; margin-top: 3px; color: var(--text-tertiary); }
+
+/* "Change the club's look": a link on its own line, a full tap target on a phone. */
+.door {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--home-olive);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@media (min-width: 641px) { .door { min-height: 32px; } }
+
+.inlineDoor { color: var(--home-olive); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+.preview { display: flex; flex-direction: column; gap: 8px; min-width: 0; }

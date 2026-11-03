@@ -183,6 +183,20 @@ function openBuilderRow(id) {
   };
 }
 
+/** The question before "Always the club's look" (Public tournament pages Stage 1a, Part 2): the Look row opened and the
+ *  rule's second radio picked. It asks only when a tournament has colours of its own (`.probe/stage1a-look-fixture.mjs`
+ *  gives the rep club three) and saves nothing until its lime answer — Not now is never pressed here. Behind the public
+ *  pages' preview switch, which is on in development. Tolerant of a club with nothing to ask (then the row is measured). */
+async function openTournamentLookQuestion(page) {
+  await openBuilderRow('look')(page);
+  const always = page.getByRole('radio', { name: /^Always the (club|league)'s look/ });
+  // The part draws once the editor's own read is back, after the h1 the screen waits on.
+  if (!(await always.first().waitFor({ timeout: 8000 }).then(() => true, () => false))) return;
+  await always.first().click();
+  await page.locator('[role="dialog"]').first().waitFor({ state: 'visible', timeout: 8000 }).catch(() => {});
+  await page.waitForTimeout(250);
+}
+
 /** The scorekeeper's score SHEET, raised from the first game a volunteer can still score. Opening
  *  it writes nothing — only its Save does. Tolerant of a day with nothing left to score.
  *  ⚠ The sheet is a modal DIALOG, not a `form[role="dialog"]` (since `1b1546b9`, 2026-10-07): the phone's sheet frame
@@ -1650,8 +1664,14 @@ export const SCREENS = [
   // document is the public home, swept as that. ──
   { id: 'admin-public-site',           area: 'public-site', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/public-site` },
   { id: 'admin-public-site-look',      area: 'public-site', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/public-site`, interact: openBuilderRow('look') },
+  { id: 'admin-public-site-look-ask',  area: 'public-site', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/public-site`, interact: openTournamentLookQuestion },
   { id: 'admin-public-site-lists',     area: 'public-site', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/public-site`, interact: openBuilderRow('lists') },
   { id: 'admin-public-site-visibility', area: 'public-site', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/public-site`, interact: openBuilderRow('visibility') },
+  // Public tournament pages Stage 1a Part 3 — a tournament's Branding page under the public pages' new frame (on in dev),
+  // its Look card opened by the `?section=look` deep link: a club's tournament (the club's look, the shared swatches, the
+  // band's phone window) and a Tournament Plus one (the plain look and the type tiles).
+  { id: 'admin-t-branding-look-club', area: 'public-site', session: 'repClubOwner', ready: '#section-look', path: (c) => `/${c.clubSlug}/admin/tournaments/branding?section=look` },
+  { id: 'admin-t-branding-look',      area: 'tournaments', session: 'orgOwner', ready: '#section-look', path: (c) => `/${c.tournOrgSlug}/admin/tournaments/branding?section=look&tournamentId=${c.tournamentId}` },
 
   // ── House league (the 2026 Fall season, registration open) ──
   { id: 'admin-house-league',          area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league` },

@@ -320,11 +320,121 @@ plugin config (environment); ESLint run directly on every file this part touched
 spelling, contrast, public tokens/type, dictionary coverage, manual prod migrations, snapshot freshness OK;
 schema parity lists the new column dev-only (expected until prod), the other failures name other sessions' files.
 
-### Part 2 kick-off
+**Committed `4c2efbce6` 2026-11-03** (owner yes, before Part 2). The schema snapshots were left out of that commit: they
+also carry other sessions' tables (migs 427/428); the next snapshot refresh commits them.
 
-Execute `docs/projects/active/PUBLIC_TOURNAMENT_STAGE1A_BUILD_PROMPT.md` **Part 2** (the club side, behind the switch).
-Part 1 is built and uncommitted (see the record above; confirm with the owner whether it was committed). Start from:
-`lib/tournament-look-words.ts` (`tournamentLookChoices(noun)`, `tournamentLookWords(noun)` — the part's words are
-already there), the org-settings field `tournamentLookPolicy`, the question's list at `GET /api/admin/org/tournament-look`,
-and `CoachNamesPanel.tsx` as the SendRows + `KitDialog kind="question"` precedent. The public-site GET must return
-`frameOn`; switch off, the editor is unchanged. Fixture: `node .probe/stage1a-look-fixture.mjs default`.
+## Part 2 record (2026-11-03, Claude) — built, verified, NOT committed
+
+**Built.** The shared controls `components/admin/kit/club/LookControls.tsx` (+ `.module.css`): `LookSwatches` (the nine
+presets two-tone, double ring on the chosen, rainbow Custom whose pickers open under the row, `hex` adds a code field
+beside each), `LookPill` (two-tone dot + name — the club's "From your logo" today, a tournament's "The club's look" in
+Part 3), `LookTypeTiles` (the three looks showing a given name), `HexField` (lifted from the Branding page, which now
+imports it; its local copy and the `.hexInput`/`.mistake` rules went). The club Look panel draws through them; its old
+swatch/tile CSS moved verbatim (the strip name's faces stayed). The part: `app/[orgSlug]/admin/public-site/TournamentLookPart.tsx`
+(SendRows radio pair, the hint, a reader sees the rule in words; *Always* reads the Part 1 list and asks through
+`KitDialog kind="question"` — names, "(on now)", "and N more", finished counted, "Their own looks are kept." in
+`footerStart`, Not now focused, lime confirm; the radio waits; with nothing to name it saves at once). It saves through
+the Look row's queue (`orgPatch({ tournamentLookPolicy })`, the one pill, Retry). The question's sentence:
+`tournamentLookQuestion(noun, list)` in `lib/tournament-look-words.ts`. The editor's GET (`with=editor`) returns
+`frameOn`; the page renders the part only when `frameOn && carries.tournaments`, gives the Look panel `hex={frameOn}`, and
+appends "tournaments follow" / "every tournament" to the row summary under the same condition. Switch off: no part, no
+hex fields, the summary as before. Tests: `tests/unit/tournament-look.test.ts` Part 2 blocks (the sentence in every shape,
+the league's words, the switch, the save path, the question's guards, one hex field and one swatch row).
+
+**Measured (dev, rep-club owner, fixture `default`; probes `.probe/stage1a-part2-question.mjs`, `-hex.mjs`).** At
+360/390/1280: no sideways scroll; the question fits a 360 phone (window 20–340 px, both buttons 44 px tall on a phone)
+and reads "UAT Rep Club Invitational 2026 (on now) and Stripe Walk Invitational will change to the club's colours and
+type, along with 1 finished tournament."; Not now has the focus; the radio does not move while asking and Not now leaves
+the default; the row summary reads "Purple · Serif type · tournaments follow". Hex fields 44 px on a phone, aligned.
+Added the layout screen `admin-public-site-look-ask` (`scripts/layout-screens.mjs`).
+
+**Found on the way, not this part's (reported to the owner, not changed):**
+- `check:layout` on the editor's Look screens flags the swatches and the From your logo pill at 768 px (32 px; the
+  sheet makes them 44 px only at ≤ 640 px) and each SendRow radio's native input (18 px; the row is the target — the
+  same finding other screens carry in the baseline). Neither is new: the CSS moved verbatim. They were never measured
+  because the layout helper `openBuilderRow` checks the row's toggle once at the h1, before the editor's own read draws
+  the rows, so the Look row usually stayed closed. Not baselined here.
+- A hydration mismatch on the editor's header address (`localhost:3000/uat-rep-club` vs empty on the server: the page
+  reads `window` while rendering). Pre-existing, the Stage 4e header.
+
+**Verify.** Typecheck clean for this part (`NODE_OPTIONS=--max-old-space-size=6144`; the one error is another session's
+missing `./CoachScores` in the league team page). Focused suites 69/69. ESLint on every touched file: 0 errors.
+`check:spelling` OK; `check:admin-type` flags only other sessions' files.
+
+### Part 3 kick-off
+
+Execute `docs/projects/active/PUBLIC_TOURNAMENT_STAGE1A_BUILD_PROMPT.md` **Part 3** (the tournament side, behind the
+switch). Parts 1 (`4c2efbce6`) and 2 (see its record; confirm with the owner whether it was committed) are in. Start
+from: `components/admin/kit/club/LookControls.tsx` (`LookSwatches`, `LookPill` for "The club's look", `LookTypeTiles`,
+`HexField`), `resolveTournamentLook` / `publicFrameRolesOf` in `lib/tournament-look.ts` + `lib/public-frame.ts` for the
+draft's preview, and the trap in the Part 1 record (the branding route stores `'system'` as NULL; under the frame it
+must store it). The tournament-branding GET must return `frameOn`; switch off, today's page untouched. Fixture:
+`node .probe/stage1a-look-fixture.mjs default|always|undo`.
+
+## Part 3 record (2026-11-03, Claude) — built, verified, NOT committed (Part 2 was still uncommitted when Part 3 began)
+
+**Built.** `app/[orgSlug]/admin/tournaments/branding/LookCard.tsx` (+ `.module.css`): the Look card in its four cases from
+`resolveTournamentLook` applied to the draft — A the pill chosen with "Type: Serif, the club's" and the follow line (its
+"Public site" a link only for `mayOpenSiteEditor`); B the shared swatches with the chosen ring, `lookWords` readability
+lines, the three type tiles starting on the club's face; C the plain lock line and "Change the club's look" only for
+`mayOpenSiteEditor && mayWriteSite` (a coach: absent); D no pill, FieldLogicHQ chosen with `PLAIN_LOOK_LINE`, Classic. Card
+meta: "The club's look" while it follows, else "{preset name or Custom colours} · {type}". The pure half
+`branding/look-draft.ts`: `lookOfDraft` (the draft as a saved look) and `frameBodyOf` (the save under the frame). The page
+(`page.tsx`) learns `frameOn` + the band's facts from its GET; switch on it renders door, Pages, **Look**, Logo, App icon
+(App name hidden, value kept; the logo hint says the club's/league's fallback, or none on Tournament Plus; the App icon's
+"Brand" is the colour the band wears); switch off it renders exactly today's page and today's body. The free/Premium lock
+line reads `LOCK_WORDS.brandingLook` ("Your logo, colours and type on this site") under the frame only. Words:
+`tournamentLookCardWords(noun)`, `PLAIN_LOOK_LINE`, `LOOK_PREVIEW_WORDS` (`lib/tournament-look-words.ts`); `look`,
+`logoHintFallback`, `logoHintOwn` (`lib/tournament-settings-words.ts`).
+
+**The preview (ask 3) — the shipped `TournamentBand` in a phone window.** `components/admin/kit/club/PhoneWindow.tsx`
+renders its children through a portal into a same-origin `<iframe srcDoc>` 390 px wide (never wider than its column),
+mirroring the page's stylesheets and font variables, inert and `aria-hidden` (the caption says what it shows), sized to its
+content. Why not a box: the band's phone shape is written in `@media (max-width: 900px)` rules, which read the WINDOW's
+width — in a box on a desk the real band draws its desk shape. Inside the window the live frame's token element and
+`data-public-frame` marker are used as in the admin preview layout; the marker's `html:has()` rule reaches only the
+window's own document. `basePath` is the Branding page's own address so Overview reads as chosen; the links are inert.
+
+**The save (D7's rule widened, step 4).** New body under the frame: the theme rides only once touched (as before, now also
+`own`), the type rides only once a tile or the pill is touched (`typeLook`), and `themeFont`, `themeCardStyle`,
+`colorMode`, `appName` never ride. "The club's look" writes the theme and `typeLook` null. The route takes `typeLook`
+(`TOURNAMENT_TYPE_LOOKS` = `system | dm-serif | inter`, a test holds it equal to `CLUB_LOOKS`), stores Classic as
+`'system'` (the Part 1 trap), refuses anything else; the old `themeFont` path is unchanged for the switch-off body.
+
+**One shared read for the band's facts.** `publicFrameBandFacts` in `lib/public-frame-server.ts` (registration open + the
+tab row's content facts) — the admin preview layout now calls it (same skip-when-hidden rule), and the Branding GET calls it
+under the frame with nothing skipped (the draft can switch a hidden page back on). Five older guards that pinned the
+preview layout's / page's exact old text were moved to the new shape, keeping their intent (stage 0, 1, 2, 5, 6 suites).
+
+**Measured (dev, probes `.probe/stage1a-part3-look.mjs`, `-switch-off.mjs`; screenshots `.probe/stage1a-part3-*.png`).**
+At 360/390/1280 for A (stripe-walk-pay-direct, nothing saved), B (Rep Club Invitational, own pink), C (fixture `always`), D
+(uat-test-org, Tournament Plus): no sideways scroll; the window 294/324/390 px; the band 120 px with the right fill (A/C the
+club's `#47166C`, B `#D04072` darkened, D `#1E3A8A`), face (`dm-serif` / `warm`), Overview chosen, a Register tab on D
+(registration open), no logo on D. Saves: a swatch sent the theme only; the pill sent the theme + `typeLook` null; a type
+tile sent `{ typeLook: 'inter' }` only and stored `inter` (put back after). Switch off: today's six cards, the App name
+field, today's logo hint, nothing saved on open. `check:layout` entries added (`admin-t-branding-look-club`,
+`admin-t-branding-look`): clean at 361/390/1440.
+
+**Found, not changed (for the owner / Part 4):**
+- `check:layout` @768 flags the shared swatches and pill at 32–36 px (they reach 44 px only ≤ 640 px) — the same finding
+  Part 2 reported on the club editor, now on a second screen. A one-line change in `LookControls.module.css` (44 px up to
+  1,023 px) fixes both; it changes the club editor too, so it is the owner's call. Not baselined.
+- `check:layout` flags a `Dismiss` button on uat-test-org's admin pages at 361–768 — page chrome, already in the baseline on
+  159 screens; not this part's.
+- **For `/review` (Part 4):** the window's links are real `Link`s; in a production build Next may prefetch them (they point
+  at `/…/branding/schedule` etc., which do not exist). Behind the switch until Stage 8; decide there (a `prefetch` prop on
+  the band, or point `basePath` at the preview). The card reads the club's look from the org context, so a change made in
+  another tab shows after a reload.
+
+**Verify.** Typecheck clean (`NODE_OPTIONS=--max-old-space-size=6144`). `tests/unit/tournament-look.test.ts` 48/48 (Part 3
+blocks: the draft through the resolver in A–D, the save body, the words, the source guards); the related suites (stage 0,
+1, 2, 5, 6, admin kit, invite-only) green. ESLint on every touched file: 0 problems. `check:spelling` OK. Dev server
+restarted (new files, shared module).
+
+### Part 4 kick-off
+
+Execute `docs/projects/active/PUBLIC_TOURNAMENT_STAGE1A_BUILD_PROMPT.md` **Part 4** (`/simplify`, `/review`, the QA walk,
+the records). Parts 1 (`4c2efbce6`), 2 and 3 (see their records; confirm with the owner what has been committed). New
+abstractions for `/simplify`: `LookControls`, `PhoneWindow`, `look-draft.ts`, `publicFrameBandFacts`. Carry the Part 3
+"Found" list into `/review` (the window's prefetch, the 768 px swatch size). Fixture:
+`node .probe/stage1a-look-fixture.mjs default|always|undo`; case tournaments in `.probe/stage1a-part3-look.mjs`.

@@ -15,18 +15,19 @@
  * Below the desk width that holds the preview, a strip of the club's own bar sits at the top, so a phone sees each pick
  * land (the drawing's phone ②).
  */
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { ImageIcon, Library, Upload } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
 import StockLogoWindow from '@/components/admin/kit/club/StockLogoWindow';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
-import { PRESETS, resolveTheme } from '@/lib/themes';
+import { LookPill, LookSwatches, LookTypeTiles } from '@/components/admin/kit/club/LookControls';
+import { resolveTheme } from '@/lib/themes';
 import { lookWords } from '@/lib/colour-words';
 import { clubInitials } from '@/lib/club-site';
 import { ORG_BANNER_MAX_BYTES, ORG_IMAGE_TYPES, ORG_LOGO_MAX_BYTES } from '@/lib/org-image-limits';
 import { pickLogoColours, type LogoColours } from '@/lib/logo-colours';
 import { isStockLogoUrl } from '@/lib/stock-logos';
-import { CLUB_LOOKS, clubLookOf, type ClubLook } from '@/lib/public-site-builder';
+import { clubLookOf, type ClubLook } from '@/lib/public-site-builder';
 import { PUBLIC_SITE_WORDS as W } from '@/lib/public-site-words';
 import type { Organization } from '@/lib/types';
 import styles from './public-site.module.css';
@@ -72,9 +73,13 @@ function useLogoColours(url: string | null | undefined): LogoColours | null {
   return src && read?.url === src ? read.colours : null;
 }
 
-export default function LookPanel({ org, orgSlug, run, onChanged, readOnly = false }: {
+export default function LookPanel({ org, orgSlug, run, onChanged, readOnly = false, hex = false, children }: {
   org: Organization;
   orgSlug: string;
+  /** Custom's two colours take a typed hex code too (Stage 1a, behind the public pages' preview switch). */
+  hex?: boolean;
+  /** Parts after the Look's own, in its column (the Tournaments part). */
+  children?: ReactNode;
   /** Staff who may read the editor but not write it: the look in words, no controls. */
   readOnly?: boolean;
   /** The editor's look queue: one save at a time, the floating pill, Retry. */
@@ -213,6 +218,7 @@ export default function LookPanel({ org, orgSlug, run, onChanged, readOnly = fal
         {strip}
         <p className={styles.readable}><strong>{words.summary}.</strong> {words.readable}</p>
         {words.darkened && <p className={styles.readable}>{words.darkened}</p>}
+        {children}
       </div>
     );
   }
@@ -246,42 +252,20 @@ export default function LookPanel({ org, orgSlug, run, onChanged, readOnly = fal
       {/* ── Colours ── */}
       <div className={styles.lookPart}>
         <h3 className={styles.lookPartTitle} id="site-colours">{W.colours}</h3>
-        <div className={styles.swatches} role="group" aria-labelledby="site-colours">
-          {fromLogo && (
-            <button type="button" className={`${styles.fromLogo}${colourPick.kind === 'logo' ? ` ${styles.fromLogoOn}` : ''}`}
-              aria-pressed={colourPick.kind === 'logo'} onClick={pickFromLogo}>
-              <span className={styles.dual} style={{ background: `linear-gradient(135deg, ${fromLogo.primary} 50%, ${fromLogo.accent} 50%)` }} aria-hidden />
-              {W.fromLogo}
-            </button>
+        <LookSwatches labelledBy="site-colours" idPrefix="site" hex={hex}
+          before={fromLogo && (
+            <LookPill primary={fromLogo.primary} accent={fromLogo.accent} label={W.fromLogo} on={colourPick.kind === 'logo'} onClick={pickFromLogo} />
           )}
-          {Object.entries(PRESETS).map(([key, p]) => {
-            const on = colourPick.kind === 'preset' && colourPick.key === key;
-            return (
-              <button key={key} type="button" title={p.name} aria-label={p.name} aria-pressed={on}
-                className={`${styles.swatch}${on ? ` ${styles.swatchOn}` : ''}`}
-                style={{ background: `linear-gradient(135deg, ${p.primary} 50%, ${p.accent} 50%)` }}
-                onClick={() => pickPreset(key)} />
-            );
-          })}
-          <button type="button" title={W.ownColours} aria-label={W.ownColours} aria-pressed={colourPick.kind === 'own'} aria-expanded={ownShown}
-            className={`${styles.swatch} ${styles.swatchOwn}${colourPick.kind === 'own' ? ` ${styles.swatchOn}` : ''}`}
-            onClick={() => {
-              if (!ownShown) setOwn({ primary: current.primary.toUpperCase(), accent: current.accent.toUpperCase() });
-              setOwnOpen(o => !o);
-            }} />
-        </div>
-        {ownShown && (
-          <div className={styles.ownColours}>
-            <label className={styles.ownColour}>
-              <input type="color" value={own.primary} onChange={e => changeOwn({ ...own, primary: e.target.value })} />
-              <span>{W.mainColour}</span>
-            </label>
-            <label className={styles.ownColour}>
-              <input type="color" value={own.accent} onChange={e => changeOwn({ ...own, accent: e.target.value })} />
-              <span>{W.accentColour}</span>
-            </label>
-          </div>
-        )}
+          chosenPreset={colourPick.kind === 'preset' ? colourPick.key : null}
+          ownChosen={colourPick.kind === 'own'}
+          ownOpen={ownShown}
+          onPreset={pickPreset}
+          onOwnToggle={() => {
+            if (!ownShown) setOwn({ primary: current.primary.toUpperCase(), accent: current.accent.toUpperCase() });
+            setOwnOpen(o => !o);
+          }}
+          own={own}
+          onOwnChange={changeOwn} />
         <p className={styles.readable}>{words.readable}</p>
         {words.darkened && <p className={styles.readable}>{words.darkened}</p>}
       </div>
@@ -289,16 +273,7 @@ export default function LookPanel({ org, orgSlug, run, onChanged, readOnly = fal
       {/* ── Type ── */}
       <div className={styles.lookPart}>
         <h3 className={styles.lookPartTitle} id="site-type">{W.type}</h3>
-        <div className={styles.looks} role="group" aria-labelledby="site-type">
-          {CLUB_LOOKS.map(l => (
-            <button key={l.key} type="button" aria-pressed={lookPick === l.key} data-look={l.key}
-              className={`${styles.lookTile}${lookPick === l.key ? ` ${styles.lookTileOn}` : ''}`} onClick={() => pickLook(l)}>
-              <span className={styles.lookTileName}>{W.typeLooks[l.key]}</span>
-              <span className={styles.lookTileTitle}>{org.name}</span>
-              <span className={styles.lookTileText}>{W.typeSample}</span>
-            </button>
-          ))}
-        </div>
+        <LookTypeTiles labelledBy="site-type" name={org.name} chosen={lookPick} onPick={pickLook} />
       </div>
 
       {/* ── Banner photo ── */}
@@ -318,6 +293,8 @@ export default function LookPanel({ org, orgSlug, run, onChanged, readOnly = fal
           : <p className={ck.hint}>{W.bannerHint}</p>}
         <input ref={bannerInput} type="file" accept={IMAGE_ACCEPT} hidden onChange={e => upload('banner', e)} />
       </div>
+
+      {children}
 
       {stockOpen && (
         <StockLogoWindow

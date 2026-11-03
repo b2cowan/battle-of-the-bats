@@ -164,9 +164,12 @@ describe('Register tabs follow the existing registration CTA; the form and page 
     });
   }
   it('live and preview layouts use the same CTA and skip hidden/invite-only registration reads', () => {
-    for (const path of ['app/[orgSlug]/[tournamentSlug]/layout.tsx', 'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/layout.tsx']) {
+    // The preview reads them through the one shared read (Stage 1a Part 3), handed the same skip-when-hidden rule.
+    assert.match(readCode('app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/layout.tsx'),
+      /register: hiddenPages\.includes\('register'\) \|\| runsInviteOnlyEvents\(org\.planId\)/);
+    for (const path of ['app/[orgSlug]/[tournamentSlug]/layout.tsx', 'lib/public-frame-server.ts']) {
       const source = readCode(path);
-      assert.match(source, /registerHidden \? Promise.resolve\(null\) : getTeams/);
+      assert.match(source, /(?:registerHidden|skip\.register) \? Promise.resolve\(null\) : getTeams/);
       assert.match(source, /tournamentFrameTabContent\(/);
       assert.match(source, /registrationCta: (?:registerCta|registration\?\.cta \?\? null)/);
     }

@@ -6,12 +6,16 @@ import {
   resolveTournamentLook,
   sanitizeTournamentLookPolicy,
   tournamentsWithOwnColours,
+  TOURNAMENT_TYPE_LOOKS,
   type LookOrg,
   type LookTournament,
 } from '../../lib/tournament-look.ts';
-import { tournamentLookChoices, tournamentLookWords } from '../../lib/tournament-look-words.ts';
+import {
+  PLAIN_LOOK_LINE, tournamentLookCardWords, tournamentLookChoices, tournamentLookQuestion, tournamentLookWords,
+} from '../../lib/tournament-look-words.ts';
+import { frameBodyOf, lookOfDraft } from '../../app/[orgSlug]/admin/tournaments/branding/look-draft.ts';
 import { publicFrameBand } from '../../lib/public-frame.ts';
-import { CLUB_LOOK_FIELDS } from '../../lib/public-site-builder.ts';
+import { CLUB_LOOK_FIELDS, CLUB_LOOKS } from '../../lib/public-site-builder.ts';
 import { readCode } from './_source-code.ts';
 
 /**
@@ -234,5 +238,243 @@ describe('the gate, the band and the doors (source guards)', () => {
     assert.match(settings, /\{hasModuleEntitlement\(currentOrg, 'module_public_site'\) && \(\s*<section[^>]*aria-labelledby="settings-public-site"/);
     const editor = readCode('app/[orgSlug]/admin/public-site/page.tsx');
     assert.match(editor, /const noSite = !!currentOrg && !hasModuleEntitlement\(currentOrg, 'module_public_site'\);/);
+  });
+});
+
+/**
+ * PART 2 — THE CLUB SIDE (2026-11-03): the Look row's Tournaments part, the question before *Always*, the shared colour and
+ * type controls. Behind the preview switch: off, the editor is today's.
+ */
+describe('Part 2: the question\'s one sentence (the drawing\'s tab 2)', () => {
+  const said = (q: ReturnType<typeof tournamentLookQuestion>) =>
+    q?.sentence.map(p => (typeof p === 'string' ? p : `<${p.name}>`)).join('');
+  const t = (name: string, live = false) => ({ name, live });
+
+  it('three or fewer named, the one on now marked, finished ones counted', () => {
+    const q = tournamentLookQuestion('club', { current: [t('Riverdale Fall Classic', true), t('Winter Indoor Showdown'), t('Spring Opener')], finished: 3 });
+    assert.equal(q?.title, 'Always use the club\'s look?');
+    assert.equal(said(q), '<Riverdale Fall Classic> (on now), <Winter Indoor Showdown> and <Spring Opener> will change to the club\'s colours and type, along with 3 finished tournaments.');
+    assert.equal(q?.kept, 'Their own looks are kept.');
+    assert.equal(q?.notNow, 'Not now');
+    assert.equal(q?.confirm, 'Use the club\'s look');
+  });
+
+  it('more than three: three named, the rest counted; no finished clause when none finished', () => {
+    const q = tournamentLookQuestion('club', { current: ['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(n => t(n)), finished: 0 });
+    assert.equal(said(q), '<A>, <B>, <C> and 4 more will change to the club\'s colours and type.');
+  });
+
+  it('one or two named; one finished is singular', () => {
+    assert.equal(said(tournamentLookQuestion('club', { current: [t('Solo')], finished: 1 })),
+      '<Solo> will change to the club\'s colours and type, along with 1 finished tournament.');
+    assert.equal(said(tournamentLookQuestion('club', { current: [t('A'), t('B', true)], finished: 0 })),
+      '<A> and <B> (on now) will change to the club\'s colours and type.');
+  });
+
+  it('only finished ones: counted as the subject', () => {
+    assert.equal(said(tournamentLookQuestion('club', { current: [], finished: 2 })),
+      '2 finished tournaments will change to the club\'s colours and type.');
+  });
+
+  it('nothing with its own colours: no question (it saves at once)', () => {
+    assert.equal(tournamentLookQuestion('club', { current: [], finished: 0 }), null);
+  });
+
+  it('League Plus asks in the league\'s words', () => {
+    const q = tournamentLookQuestion('league', { current: [t('Cup')], finished: 0 });
+    assert.equal(q?.title, 'Always use the league\'s look?');
+    assert.equal(q?.confirm, 'Use the league\'s look');
+    assert.match(said(q) ?? '', /the league's colours and type/);
+  });
+});
+
+describe('Part 2: the club editor (source guards)', () => {
+  const editor = readCode('app/[orgSlug]/admin/public-site/page.tsx');
+  const part = readCode('app/[orgSlug]/admin/public-site/TournamentLookPart.tsx');
+  const look = readCode('app/[orgSlug]/admin/public-site/LookPanel.tsx');
+
+  it('the editor learns the switch from its own read; off, no part, no hex fields', () => {
+    assert.match(readCode('app/api/admin/public-site/route.ts'), /isPublicFrameOn\(\),[\s\S]*?NextResponse\.json\(\{[^}]*frameOn \}\)/);
+    assert.match(editor, /setFrameOn\(data\.frameOn === true\)/);
+    assert.match(editor, /const tournamentRule = frameOn && carries\.tournaments;/);
+    assert.match(editor, /\{tournamentRule && \(\s*<TournamentLookPart/);
+    assert.match(editor, /<LookPanel [^>]*hex=\{frameOn\}>/);
+    assert.match(editor, /\.\.\.\(tournamentRule \? \[tournamentLookWords\(lookNoun\)\.summary\[tournamentLook\]\] : \[\]\)/);
+  });
+
+  it('the part saves through the Look row\'s queue and the org-settings field, for anyone who may write the Look (Ask 13)', () => {
+    assert.match(editor, /onSave=\{next => lookQ\.run\(\(\) => orgPatch\(\{ tournamentLookPolicy: next \}\), W\.lookFailed\)\}/);
+    assert.match(editor, /readOnly=\{!canWrite\}\s*onSave=/);
+    assert.doesNotMatch(part, /isOwner/);
+  });
+
+  it('only Always asks, from the question list; Not now holds the focus and the radio waits for the lime answer', () => {
+    assert.match(part, /if \(next !== 'always_club'\) return void save\(next\);/);
+    assert.match(part, /\/api\/admin\/org\/tournament-look\?orgSlug=/);
+    assert.match(part, /kind="question"/);
+    assert.match(part, /onClose=\{\(\) => setAsking\(null\)\}/);
+    assert.match(part, /data-autofocus="">\{asking\.notNow\}/);
+    assert.match(part, /className="btn btn-lime" onClick=\{\(\) => void save\('always_club'\)\}/);
+    assert.match(part, /footerStart=\{<span className=\{repKit\.footNote\}>\{asking\.kept\}<\/span>\}/);
+  });
+
+  it('one colour control and one type control: the club\'s Look and the Branding page share them', () => {
+    assert.match(look, /<LookSwatches [^]*?hex=\{hex\}/);
+    assert.match(look, /<LookTypeTiles /);
+    assert.doesNotMatch(look, /Object\.entries\(PRESETS\)/);
+    const branding = readCode('app/[orgSlug]/admin/tournaments/branding/page.tsx');
+    assert.match(branding, /import \{ HexField \} from '@\/components\/admin\/kit\/club\/LookControls';/);
+    assert.doesNotMatch(branding, /function HexField\(/);
+  });
+});
+
+/**
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ * PART 3 (2026-11-03): THE TOURNAMENT SIDE — the Branding page's Look card, behind the switch (the drawing's tabs 3–4).
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ */
+describe('Part 3: the Look card\'s draft reads through the one rule', () => {
+  const draft = { own: false, presetKey: 'platform', customPrimary: '#1E3A8A', customAccent: '#D9F99D', typeKey: null as string | null, publicHiddenPages: [] };
+
+  it('A · a club\'s tournament with nothing saved follows the club — the FieldLogicHQ swatch is not a pick', () => {
+    const l = resolveTournamentLook(club, lookOfDraft(draft, null));
+    assert.equal(l.source, 'club');
+    assert.equal(l.preset, 'forest');
+    assert.equal(l.face, 'dm-serif');
+    assert.equal(l.logoUrl, 'https://x/club.png', 'no event logo: the club\'s');
+  });
+
+  it('B · a swatch gives it its own look, the type starting on the club\'s; a tile is its own type', () => {
+    const own = lookOfDraft({ ...draft, own: true, presetKey: 'crimson' }, 'https://x/t.png');
+    assert.deepEqual([own.themePreset, own.themePrimary, own.themeFont], ['crimson', null, null]);
+    const l = resolveTournamentLook(club, own);
+    assert.equal(l.source, 'own');
+    assert.equal(l.face, 'dm-serif');
+    assert.equal(l.logoUrl, 'https://x/t.png');
+    assert.equal(resolveTournamentLook(club, lookOfDraft({ ...draft, own: true, presetKey: 'crimson', typeKey: 'system' }, null)).face, 'warm',
+      'Classic picked under a Serif club stays Classic');
+    const custom = lookOfDraft({ ...draft, own: true, presetKey: 'custom', customPrimary: '#D04072' }, null);
+    assert.deepEqual([custom.themePreset, custom.themePrimary], ['platform', '#D04072']);
+  });
+
+  it('C · Always: the club\'s colours and type over a saved look, which the draft keeps', () => {
+    const always = { ...club, tournamentLookPolicy: 'always_club' } as LookOrg;
+    const l = resolveTournamentLook(always, lookOfDraft({ ...draft, own: true, presetKey: 'crimson', typeKey: 'inter' }, 'https://x/t.png'));
+    assert.equal(l.source, 'club');
+    assert.equal(l.face, 'dm-serif');
+    assert.equal(l.logoUrl, 'https://x/t.png', 'each keeps its own logo (Ask 10)');
+  });
+
+  it('D · Tournament Plus with nothing saved is the plain look, Classic — no leftover org look', () => {
+    const l = resolveTournamentLook(plus, lookOfDraft(draft, null));
+    assert.equal(l.source, 'plain');
+    assert.equal(l.face, 'warm');
+    assert.equal(l.logoUrl, null);
+  });
+
+  it('the type looks the card writes are the club\'s three, Classic stored as itself', () => {
+    assert.deepEqual([...TOURNAMENT_TYPE_LOOKS], CLUB_LOOKS.map(l => l.font));
+  });
+});
+
+describe('Part 3: the save under the frame (D7\'s rule, widened to the type)', () => {
+  const d = {
+    own: false, presetKey: 'platform', customPrimary: '#1E3A8A', customAccent: '#D9F99D', typeKey: null as string | null,
+    iconBg: null, iconScale: 100, publicHiddenPages: [], coachNamesShowOnPublic: false,
+  };
+
+  it('a save that touched neither carries no theme and no type — nor anything the page no longer shows', () => {
+    const body = frameBodyOf(d, true, false, false) as Record<string, unknown>;
+    for (const k of ['themePreset', 'themePrimary', 'themeAccent', 'typeLook', 'themeFont', 'themeCardStyle', 'colorMode', 'appName']) {
+      assert.equal(k in body, false, k);
+    }
+    assert.equal(body.iconScale, null);
+    assert.equal('publicHiddenPages' in body, true);
+  });
+
+  it('"The club\'s look" writes the theme and the type null', () => {
+    assert.deepEqual(frameBodyOf(d, true, true, true), {
+      themePreset: null, themePrimary: null, themeAccent: null, typeLook: null,
+      iconBgColor: null, iconScale: null, publicHiddenPages: [], coachNamesShowOnPublic: false,
+    });
+  });
+
+  it('a swatch, Custom, and a type tile', () => {
+    const swatch = frameBodyOf({ ...d, own: true, presetKey: 'crimson' }, true, true, false) as Record<string, unknown>;
+    assert.deepEqual([swatch.themePreset, swatch.themePrimary, 'typeLook' in swatch], ['crimson', null, false]);
+    const custom = frameBodyOf({ ...d, own: true, presetKey: 'custom', customPrimary: '#D04072' }, true, true, false) as Record<string, unknown>;
+    assert.deepEqual([custom.themePreset, custom.themePrimary], ['platform', '#D04072']);
+    const type = frameBodyOf({ ...d, typeKey: 'system' }, true, false, true) as Record<string, unknown>;
+    assert.equal(type.typeLook, 'system');
+    assert.equal('themePreset' in type, false);
+  });
+
+  it('a plan without branding sends the pages only', () => {
+    assert.deepEqual(Object.keys(frameBodyOf({ ...d, own: true }, false, true, true)).sort(), ['coachNamesShowOnPublic', 'publicHiddenPages']);
+  });
+});
+
+describe('Part 3: the Look card\'s words', () => {
+  it('the club\'s words, and the league\'s on League Plus', () => {
+    const c = tournamentLookCardWords('club');
+    assert.equal(c.pill, "The club's look");
+    assert.equal(`${c.typeLine.lead}Serif${c.typeLine.tail}`, "Type: Serif, the club's");
+    assert.equal(`${c.follow.lead}${c.follow.door}${c.follow.tail}`,
+      "Follows the club's look and changes when the club's does. The club sets it on its Public site.");
+    assert.equal(c.lock, 'The club uses its look on every tournament: colours and type.');
+    assert.equal(c.change, "Change the club's look");
+    const l = tournamentLookCardWords('league');
+    assert.equal(l.pill, "The league's look");
+    assert.equal(l.lock, 'The league uses its look on every tournament: colours and type.');
+    assert.equal(PLAIN_LOOK_LINE, 'FieldLogicHQ, the plain look. Pick a colour to make it yours.');
+  });
+});
+
+describe('Part 3: the Branding page and its route (source guards)', () => {
+  const page = readCode('app/[orgSlug]/admin/tournaments/branding/page.tsx');
+  const card = readCode('app/[orgSlug]/admin/tournaments/branding/LookCard.tsx');
+  const route = readCode('app/api/admin/tournament-branding/route.ts');
+  const win = readCode('components/admin/kit/club/PhoneWindow.tsx');
+
+  it('the read says whether the switch is on, with the band\'s facts only under it', () => {
+    assert.match(route, /const frameOn = await isPublicFrameOn\(\);/);
+    assert.match(route, /const band = frameOn\s*\? await publicFrameBandFacts\(/);
+    assert.match(route, /frameOn,\s*band,\s*\}\);/);
+    assert.match(page, /setFrameOn\(data\.frameOn === true\);/);
+  });
+
+  it('switch off is today\'s page: its body, its eight cards, its lock words', () => {
+    assert.match(page, /held\.frameOn\s*\? frameBodyOf\([^)]*\)\s*: bodyOf\(held\.draft, held\.advanced, held\.themeChanged\)/);
+    assert.match(page, /\{!frameOn && \(<>[\s\S]{0,120}?<CollapsibleCard title=\{W\.theme\}/);
+    assert.match(page, /\{!frameOn && \(\s*<div className=\{styles\.iconNameField\}>/);
+    assert.match(page, /\{frameOn \? LOCK_WORDS\.brandingLook : LOCK_WORDS\.branding\}/);
+    assert.match(page, /const logoHint = !frameOn \? W\.logoHint/);
+  });
+
+  it('under the frame the Look card comes first after Pages, before the Logo', () => {
+    const at = (s: string) => page.indexOf(s);
+    assert.ok(at('id="pages"') < at('<LookCard ') && at('<LookCard ') < at('title={W.logo}'));
+  });
+
+  it('the type is stored as picked, Classic included, and nothing outside the three', () => {
+    assert.match(route, /'iconScale',\s*'typeLook',\s*\] as const;/);
+    assert.match(route, /if \(!\(TOURNAMENT_TYPE_LOOKS as readonly string\[\]\)\.includes\(look\)\)/);
+    assert.match(route, /updates\.theme_font = look;/);
+    assert.match(route, /updates\.theme_font = font === 'system' \? null : font;/, 'the switch-off body keeps today\'s rule');
+  });
+
+  it('"Change the club\'s look" only for who may edit it; the Public site link only for who may open the editor', () => {
+    assert.match(page, /mayChangeClubLook=\{mayOpenEditor && mayWriteSite\(userRole \?\? ''\)\}/);
+    assert.match(page, /const editorHref = mayOpenEditor \?/);
+    assert.match(card, /\{mayChangeClubLook && editorHref && <Link href=\{editorHref\}/);
+    assert.match(card, /\{editorHref \? <Link href=\{editorHref\}[^>]*>\{words\.follow\.door\}<\/Link> : words\.follow\.door\}/);
+  });
+
+  it('the preview is the shipped band in a phone window, from the draft — never a drawing of it (ask 3)', () => {
+    assert.match(card, /import TournamentBand from '@\/components\/public\/TournamentBand';/);
+    assert.match(card, /const band = publicFrameBand\(org, \{ \.\.\.tournament, \.\.\.asSaved \}/);
+    assert.match(card, /<PhoneWindow [^>]*>[\s\S]*<TournamentBand[\s\S]*<\/PhoneWindow>/);
+    assert.match(win, /aria-hidden inert/);
+    assert.match(win, /createPortal\(children, root\)/);
   });
 });

@@ -6,6 +6,7 @@ import { parsePublicSitePatch } from '@/lib/public-site-patch';
 import { withoutMissingLogos } from '@/lib/sponsor-logo-storage';
 import { PUBLIC_SITE_WORDS as W } from '@/lib/public-site-words';
 import { withObservability } from '@/lib/observability';
+import { isPublicFrameOn } from '@/lib/public-frame-server';
 
 export const GET = withObservability(async (req: Request) => {
   const r = await publicSiteEditor(req, { write: false });
@@ -13,14 +14,17 @@ export const GET = withObservability(async (req: Request) => {
   const org = r.ctx.org;
 
   // The editor (Stage 4c-1) asks for its rows' facts and the live notice too; other callers (onboarding) get the content.
+  // `frameOn`: the public pages' preview switch (Public tournament pages Stage 1a) — the Look row's Tournaments part and
+  // its hex fields show only while it is on; off, the editor is today's.
   if (new URL(req.url).searchParams.get('with') === 'editor') {
     const contentRead = getOrgPublicSiteContent(org.id);
-    const [content, editor, notice] = await Promise.all([
+    const [content, editor, notice, frameOn] = await Promise.all([
       contentRead,
       publicSiteEditorFacts(org, contentRead),
       getLiveClubNotice(org.id),
+      isPublicFrameOn(),
     ]);
-    return NextResponse.json({ content: content ?? null, ...editor, notice });
+    return NextResponse.json({ content: content ?? null, ...editor, notice, frameOn });
   }
   const content = await getOrgPublicSiteContent(org.id);
   return NextResponse.json(content ?? {});

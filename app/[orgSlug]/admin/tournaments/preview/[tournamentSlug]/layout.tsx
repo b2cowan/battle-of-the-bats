@@ -12,15 +12,12 @@ import {
 } from '@/lib/tournament-preview';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import { hasRoundRobin } from '@/lib/tournament-phase';
-import { getDivisions, getTeams, getAnnouncements, getRules, getResources } from '@/lib/db';
-import { tournamentFrameTabContent } from '@/lib/tournament-page-tabs';
 import { resolveOrgHomeHref } from '@/lib/module-entitlements';
-import { getRegistrationState } from '@/lib/registration-state';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import { showsFreeCredit } from '@/lib/plan-config';
 import { isDemoOrgSlug } from '@/lib/demo-org';
 import { tournamentToday } from '@/lib/timezone';
-import { isPublicFrameOn, publicTournamentContactEmail } from '@/lib/public-frame-server';
+import { isPublicFrameOn, publicFrameBandFacts, publicTournamentContactEmail } from '@/lib/public-frame-server';
 import { publicFrameAttr, publicFrameBand, publicFrameHost, publicFrameRoleCss } from '@/lib/public-frame';
 import TournamentBand from '@/components/public/TournamentBand';
 import TournamentFooter from '@/components/public/TournamentFooter';
@@ -56,28 +53,19 @@ export default async function TournamentPreviewLayout({
   // Public tournament pages Stage 1 Part 2: the organizer's preview follows the same preview switch as the live pages
   // (lib/public-frame.ts — the one helper), so it shows the frame exactly when the live page would. Off: today's preview.
   if (await isPublicFrameOn()) {
-    const registerHidden = hiddenPages.includes('register') || runsInviteOnlyEvents(org.planId);
-    // Public tournament pages Stage 6 (Ask 14): same facts the live layout computes, same skip-when-hidden rule.
-    const newsHidden = hiddenPages.includes('news');
-    const rulesHidden = hiddenPages.includes('rules');
-    const [divisions, regTeams, orgHomeHref, contactEmail, frameAnnouncements, frameRules, frameResources] = await Promise.all([
-      getDivisions(tournament.id, { admin: true }),
-      registerHidden ? Promise.resolve(null) : getTeams(tournament.id, { admin: true }),
+    // Public tournament pages Stage 6 (Ask 14): same facts the live layout computes, same skip-when-hidden rule — one read
+    // shared with the Branding page's Look card preview (lib/public-frame-server.ts).
+    const [{ registrationOpen, frameContent }, orgHomeHref, contactEmail] = await Promise.all([
+      publicFrameBandFacts(tournament, {
+        register: hiddenPages.includes('register') || runsInviteOnlyEvents(org.planId),
+        news: hiddenPages.includes('news'),
+        rules: hiddenPages.includes('rules'),
+      }),
       resolveOrgHomeHref(org).catch(() => null),
       publicTournamentContactEmail(tournament.id, org.contactEmail ?? null).catch(() => null),
-      newsHidden ? Promise.resolve([]) : getAnnouncements(tournament.id, { admin: true }),
-      rulesHidden ? Promise.resolve([]) : getRules(tournament.id, { admin: true }),
-      rulesHidden ? Promise.resolve([]) : getResources(tournament.id, { admin: true }),
     ]);
-    const registration = regTeams
-      ? getRegistrationState(tournament, divisions, regTeams.filter(t => t.status !== 'rejected'))
-      : null;
-    const band = publicFrameBand(org, tournament, tournamentToday(), registration?.state === 'open');
+    const band = publicFrameBand(org, tournament, tournamentToday(), registrationOpen);
     const host = publicFrameHost(org.name, tournament.name, orgHomeHref);
-    const frameContent = tournamentFrameTabContent({
-      announcementCount: frameAnnouncements.length, ruleCount: frameRules.length, resourceCount: frameResources.length,
-      registrationCta: registration?.cta ?? null, championsCrownedAt: tournament.championsCrownedAt, divisions,
-    });
     return (
       <>
         <style dangerouslySetInnerHTML={{ __html: `:root { ${themeVars} }` }} />

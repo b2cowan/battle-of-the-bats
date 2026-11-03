@@ -57,12 +57,15 @@ import BuilderRow from './BuilderRow';
 import LookPanel from './LookPanel';
 import VisibilityPanel from './VisibilityPanel';
 import CoachNamesPanel from './CoachNamesPanel';
+import TournamentLookPart from './TournamentLookPart';
 import OwnAddressPanel from './OwnAddressPanel';
 import { useOwnAddress } from './useOwnAddress';
 import { headerAddress, ownAddressInUse, rowChip, rowSummary } from '@/lib/own-address-view';
 import { OWN_ADDRESS_WORDS as OW } from '@/lib/own-address-screen-words';
 import { COACH_NAMES_WORDS as CW, coachNamesChoiceName } from '@/lib/coach-names-words';
 import { sanitizeCoachNamesPolicy, type CoachNamesPolicy } from '@/lib/coach-names-policy';
+import { sanitizeTournamentLookPolicy } from '@/lib/tournament-look';
+import { tournamentLookWords } from '@/lib/tournament-look-words';
 import SitePreview from './SitePreview';
 import styles from './public-site.module.css';
 
@@ -165,6 +168,8 @@ export default function PublicSitePage() {
   const [facts, setFacts] = useState<SectionFacts | null>(null);
   const [carries, setCarries] = useState<SectionCarries | null>(null);
   const [notice, setNotice] = useState<ClubNotice | null>(null);
+  // The public pages' preview switch (Stage 1a): the Look row's Tournaments part and its hex fields wait on it.
+  const [frameOn, setFrameOn] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [fetching, setFetching] = useState(true);
 
@@ -227,6 +232,7 @@ export default function PublicSitePage() {
       setFacts(data.facts);
       setCarries(data.carries);
       setNotice(data.notice ?? null);
+      setFrameOn(data.frameOn === true);
       setTyped(Object.fromEntries(TEXT_KEYS.map(k => [k, (c?.[k] as string | null) ?? ''])) as Record<TextKey, string>);
     } catch {
       setLoadError(true);
@@ -450,6 +456,8 @@ export default function PublicSitePage() {
   const isOwner = userRole === 'owner';
   const on = currentOrg.isPublic;
   const noun = isClubPlan(currentOrg.planId) ? 'club' : currentOrg.planId === 'league' ? 'league' : 'organization';
+  const lookNoun = noun === 'league' ? 'league' : 'club';
+  const tournamentLook = sanitizeTournamentLookPolicy(currentOrg.tournamentLookPolicy);
 
   const header = (
     <>
@@ -506,8 +514,14 @@ export default function PublicSitePage() {
 
   const shownSections = rows.filter(r => !r.locked && r.shown);
   const socials = SOCIAL.filter(s => (content?.[s.key] as string | null | undefined)?.trim()).length;
+  // The Tournaments part (Stage 1a) shows behind the preview switch, on a plan that carries tournaments.
+  const tournamentRule = frameOn && carries.tournaments;
   const summary = {
-    look: look ? `${look.summary}${currentOrg.heroBannerUrl ? ` · ${W.lookSummaryBanner}` : ''}` : '',
+    look: look ? [
+      look.summary,
+      ...(currentOrg.heroBannerUrl ? [W.lookSummaryBanner] : []),
+      ...(tournamentRule ? [tournamentLookWords(lookNoun).summary[tournamentLook]] : []),
+    ].join(' · ') : '',
     home: W.homeSummary(shownSections.length, shownSections[0]?.name ?? null),
     about: W.aboutSummary([
       content?.tagline?.trim() || W.aboutNoTagline,
@@ -628,7 +642,12 @@ export default function PublicSitePage() {
           )}
 
           <BuilderRow id="look" title={W.look} summary={summary.look} mark={mark(ready.look)} open={rowOpen === 'look'} onToggle={() => toggle('look')}>
-            <LookPanel org={currentOrg} orgSlug={orgSlug} run={lookQ.run} onChanged={lookChanged} readOnly={!canWrite} />
+            <LookPanel org={currentOrg} orgSlug={orgSlug} run={lookQ.run} onChanged={lookChanged} readOnly={!canWrite} hex={frameOn}>
+              {tournamentRule && (
+                <TournamentLookPart orgSlug={orgSlug} noun={lookNoun} policy={tournamentLook} readOnly={!canWrite}
+                  onSave={next => lookQ.run(() => orgPatch({ tournamentLookPolicy: next }), W.lookFailed)} />
+              )}
+            </LookPanel>
           </BuilderRow>
 
           <BuilderRow id="home-page" title={W.homePage} summary={summary.home} mark={mark(ready.home)} open={rowOpen === 'home'} onToggle={() => toggle('home')}>

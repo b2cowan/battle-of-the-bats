@@ -518,68 +518,8 @@
   .imageButtons :global(.btn) { min-height: 44px; }
 }
 
-/* Colours: From your logo first, then the presets, then the club's own (A3). */
-.swatches {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-.swatch {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border-radius: 50%;
-  border: 2px solid var(--card-bg);
-  box-shadow: 0 0 0 1px var(--home-line-strong);
-  cursor: pointer;
-}
-.swatchOn { box-shadow: 0 0 0 2px var(--card-bg), 0 0 0 4px var(--home-olive); }
-.swatchOwn { background: conic-gradient(var(--danger), var(--warning), var(--home-olive), var(--home-blue), var(--home-plum), var(--danger)); }
-.swatch:focus-visible,
-.fromLogo:focus-visible,
-.lookTile:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 3px; }
-@media (max-width: 640px) {
-  /* A fingertip each: 44 px circles. */
-  .swatches { gap: 4px 6px; }
-  .swatch { width: 44px; height: 44px; }
-}
-.fromLogo {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 36px;
-  padding: 3px 12px 3px 4px;
-  border-radius: 999px;
-  border: 1px solid var(--home-line-strong);
-  background: var(--card-bg);
-  color: var(--text-secondary);
-  font-size: var(--type-support);
-  font-weight: 650;
-  cursor: pointer;
-}
-.fromLogoOn { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--home-olive); }
-.dual { width: 28px; height: 28px; border-radius: 50%; flex: none; }
-@media (max-width: 640px) { .fromLogo { min-height: 44px; } }
-.ownColours { display: flex; flex-wrap: wrap; gap: 12px 18px; }
-.ownColour {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: var(--type-support);
-  font-weight: 650;
-  color: var(--text-secondary);
-}
-.ownColour input {
-  width: 44px;
-  height: 36px;
-  padding: 0;
-  border: 1px solid var(--home-line-strong);
-  border-radius: 6px;
-  background: var(--home-card);
-  cursor: pointer;
-}
-@media (max-width: 640px) { .ownColour input { height: 44px; } }
+/* Colours and type: the swatches, the From your logo pill and the type tiles are the shared Look controls
+   (components/admin/kit/club/LookControls). Under them, the colours in words. */
 .readable {
   margin: 0;
   font-size: var(--type-support);
@@ -587,49 +527,11 @@
   color: var(--text-secondary);
 }
 
-/* Type: three looks, each showing the club's name in its own faces (A4). */
-.looks {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-@media (max-width: 640px) { .looks { grid-template-columns: minmax(0, 1fr); } }
-.lookTile {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
-  min-width: 0;
-  min-height: 44px;
-  padding: 9px 10px;
-  border: 1px solid var(--home-line-strong);
-  border-radius: 8px;
-  background: var(--card-bg);
-  color: var(--text-primary);
-  text-align: left;
-  cursor: pointer;
-}
-.lookTileOn { border-color: var(--home-olive); background: var(--home-olive-soft); }
-.lookTileName { font-size: var(--type-support); font-weight: 650; color: var(--text-secondary); }
-.lookTileTitle {
-  max-width: 100%;
-  font-size: 19px;
-  line-height: 1.15;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.lookTileText { font-size: var(--type-token); color: var(--text-tertiary); }
-/* The faces themselves — the club's three pairs (lib/club-site.ts `clubFace`), loaded by the org layout. */
-[data-look='classic'] .lookTileTitle,
+/* The strip's name in the club's faces (lib/club-site.ts `clubFace`), loaded by the org layout. The type tiles' own faces
+   live with the shared controls (components/admin/kit/club/LookControls.module.css). */
 [data-look='classic'].lookStripName { font-family: var(--font-barlow), 'Barlow Condensed', sans-serif; font-weight: 700; } /* type-ok: the club's own face, a sample */
-[data-look='classic'] .lookTileText { font-family: var(--font-inter), sans-serif; } /* type-ok: the club's own face, a sample */
-[data-look='serif'] .lookTileTitle,
 [data-look='serif'].lookStripName { font-family: var(--font-dm-serif), 'DM Serif Display', serif; font-weight: 400; } /* type-ok: the club's own face, a sample */
-[data-look='serif'] .lookTileText { font-family: var(--font-dm-sans), sans-serif; } /* type-ok: the club's own face, a sample */
-[data-look='clean'] .lookTileTitle,
 [data-look='clean'].lookStripName { font-family: var(--font-inter), sans-serif; font-weight: 700; font-size: 17px; } /* type-ok: the club's own face, a sample */
-[data-look='clean'] .lookTileText { font-family: var(--font-inter), sans-serif; } /* type-ok: the club's own face, a sample */
 
 /* ── Visibility (the owner's; an admin reads it) ── */
 .addressFact {

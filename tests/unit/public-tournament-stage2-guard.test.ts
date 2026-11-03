@@ -198,7 +198,9 @@ describe('Stage 6 (Ask 14, "tabs follow what there is"): News, Rules, Register, 
     }
   });
   it('the live layout and preview use the same stamped-champion visibility helper — no result re-derivation', () => {
-    for (const file of ['app/[orgSlug]/[tournamentSlug]/layout.tsx', 'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/layout.tsx']) {
+    // The preview reads them through the one shared read (Stage 1a Part 3), which the Branding page's Look card uses too.
+    assert.match(readCode('app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/layout.tsx'), /publicFrameBandFacts\(tournament,/);
+    for (const file of ['app/[orgSlug]/[tournamentSlug]/layout.tsx', 'lib/public-frame-server.ts']) {
       assert.match(readCode(file), /tournamentFrameTabContent\(/, file);
       assert.match(readCode(file), /championsCrownedAt: tournament\.championsCrownedAt/, file);
     }

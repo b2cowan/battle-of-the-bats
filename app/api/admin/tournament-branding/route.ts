@@ -8,6 +8,8 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import type { PublicPageKey } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { fetchAsDataUrl, detectBackgroundHex } from '@/lib/pwa-icon';
+import { isPublicFrameOn, publicFrameBandFacts } from '@/lib/public-frame-server';
+import { TOURNAMENT_TYPE_LOOKS } from '@/lib/tournament-look';
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
 const VALID_PRESETS = new Set(Object.keys(PRESETS));
@@ -23,6 +25,7 @@ const PLUS_VISUAL_FIELDS = [
   'iconBgColor',
   'appName',
   'iconScale',
+  'typeLook',
 ] as const;
 
 const APP_NAME_MAX = 30;
@@ -56,7 +59,7 @@ export const GET = withObservability(async (req: Request) => {
 
   const { data, error } = await supabaseAdmin
     .from('tournaments')
-    .select('logo_url, hero_banner_url, theme_preset, theme_primary, theme_accent, theme_font, theme_card_style, color_mode, icon_bg_color, app_name, app_icon_scale, require_score_finalization')
+    .select('logo_url, hero_banner_url, theme_preset, theme_primary, theme_accent, theme_font, theme_card_style, color_mode, icon_bg_color, app_name, app_icon_scale, require_score_finalization, status, start_date, end_date, champions_crowned_at')
     .eq('id', tournamentId)
     .eq('org_id', ctx.org.id)
     .single();
@@ -85,6 +88,17 @@ export const GET = withObservability(async (req: Request) => {
     iconBgSuggested = await suggestIconBg(effectiveLogo);
   }
 
+  // Public tournament pages Stage 1a Part 3: the preview switch decides which Branding page draws (switch off, today's),
+  // and under it the Look card's band preview needs the two facts the band reads from the event's records. Nothing is
+  // skipped: the draft can switch a hidden page back on before it saves.
+  const frameOn = await isPublicFrameOn();
+  const band = frameOn
+    ? await publicFrameBandFacts(
+      { id: tournamentId, status: data.status, startDate: data.start_date, endDate: data.end_date, championsCrownedAt: data.champions_crowned_at },
+      { register: false, news: false, rules: false },
+    ).catch(() => null)
+    : null;
+
   return NextResponse.json({
     logoUrl:                  data.logo_url,
     heroBannerUrl:            data.hero_banner_url,
@@ -101,6 +115,8 @@ export const GET = withObservability(async (req: Request) => {
     requireScoreFinalization: data.require_score_finalization,
     publicHiddenPages:        normalizeHiddenPublicPages(pageData?.public_hidden_pages),
     coachNamesShowOnPublic:   pageData?.coach_names_show_on_public === true,
+    frameOn,
+    band,
   });
 }, { route: '/api/admin/tournament-branding' });
 
@@ -126,6 +142,7 @@ export const PATCH = withObservability(async (req: Request) => {
     iconBgColor?: string | null;
     appName?: string | null;
     iconScale?: number | null;
+    typeLook?: string | null;
     publicHiddenPages?: PublicPageKey[] | null;
     coachNamesShowOnPublic?: boolean | null;
     requireScoreFinalization?: boolean | null;
@@ -206,6 +223,21 @@ export const PATCH = withObservability(async (req: Request) => {
       );
     }
     updates.theme_font = font === 'system' ? null : font;
+  }
+
+  // The Look card's type (Stage 1a Part 3, behind the preview switch): one of the three type looks, stored as picked, or
+  // null to follow the club. Unlike the retired font list's `themeFont` above, Classic ('system') is STORED: under the new
+  // meaning a null follows the club, so a tournament that picks Classic under a Serif club must keep it.
+  if ('typeLook' in body) {
+    if (body.typeLook === null) {
+      updates.theme_font = null;
+    } else {
+      const look = String(body.typeLook);
+      if (!(TOURNAMENT_TYPE_LOOKS as readonly string[]).includes(look)) {
+        return NextResponse.json({ error: 'Invalid type look' }, { status: 400 });
+      }
+      updates.theme_font = look;
+    }
   }
 
   if ('themeCardStyle' in body) {

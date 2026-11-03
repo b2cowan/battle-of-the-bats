@@ -48,6 +48,13 @@ export function parseTournamentLookPolicy(input: unknown): TournamentLookPolicy 
     : null;
 }
 
+/**
+ * What a tournament's `theme_font` may hold once the Look card writes it (Stage 1a Part 3): the club's three type looks'
+ * stored values (Classic, Serif, Clean — `CLUB_LOOKS` in lib/public-site-builder.ts; a test holds the two equal). Null
+ * follows the club. Classic is stored as 'system', never as null.
+ */
+export const TOURNAMENT_TYPE_LOOKS = ['system', 'dm-serif', 'inter'] as const;
+
 /** The face vocabulary of the club frame's `data-club-face` (lib/club-site.ts `clubFace`): Classic, Serif, Clean. */
 export type TournamentFace = ReturnType<typeof clubFace>;
 

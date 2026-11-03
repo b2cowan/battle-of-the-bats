@@ -294,7 +294,7 @@ describe('Part 2: the desk, the footer and the admin preview', () => {
   it('the admin preview follows the same switch, with its links kept inside the preview', () => {
     const preview = readCode('app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/layout.tsx');
     assert.match(preview, /if \(await isPublicFrameOn\(\)\) \{/);
-    assert.match(preview, /const band = publicFrameBand\(org, tournament, tournamentToday\(\), registration\?\.state === 'open'\);/,
+    assert.match(preview, /const band = publicFrameBand\(org, tournament, tournamentToday\(\), registrationOpen\);/,
       'the live band\'s one helper');
     assert.match(preview, /basePath=\{previewBase\}\s*\/>\s*<TournamentSideRail basePath=\{previewBase\}/);
     assert.match(preview, /<TournamentPreviewNav/, 'today\'s preview, when off');

@@ -254,6 +254,11 @@ export const PUBLIC_SITE_WORDS = {
   replaceBanner: 'Replace banner',
   remove: 'Remove',
   logoHint: 'JPG, PNG, or WebP · max 2 MB. Falls back to the organization’s logo when not set.',
+  // Under the public pages' new frame (Stage 1a Part 3): the Look card, and the logo's fallback said as it now is — the
+  // club's (or the league's) where there is a club layer, none on Tournament Plus (lib/tournament-look.ts).
+  look: 'Look',
+  logoHintFallback: { club: 'JPG, PNG, or WebP · max 2 MB. Falls back to the club’s logo when not set.', league: 'JPG, PNG, or WebP · max 2 MB. Falls back to the league’s logo when not set.' },
+  logoHintOwn: 'JPG, PNG, or WebP · max 2 MB.',
   bannerHint: 'JPG, PNG, or WebP · max 4 MB. Recommended 16:5 ratio.',
   bannerLine: 'A full-width image at the top of this tournament’s public page. Falls back to the organization’s banner when not set.',
   uploadFailed: 'Couldn’t upload it. Nothing was changed.',

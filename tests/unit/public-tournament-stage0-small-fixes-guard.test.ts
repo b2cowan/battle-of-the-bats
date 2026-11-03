@@ -83,8 +83,9 @@ describe('D7 · the Branding page keeps the club\'s colours', () => {
     assert.match(code, /bodyOf\(held\.draft, held\.advanced, held\.themeChanged\)/);
   });
   it('a fresh read starts unchanged; touching a theme field marks it, and the mark stays', () => {
-    assert.match(code, /draft: d, themeChanged: false \}/);
+    assert.match(code, /draft: d, themeChanged: false, typeChanged: false, frameOn: data\.frameOn === true \}/);
     assert.match(code, /themeChanged: held\.themeChanged \|\| THEME_FIELDS\.some\(k => k in patch\)/);
-    assert.match(code, /THEME_FIELDS = \['presetKey', 'customPrimary', 'customAccent'\]/);
+    // Stage 1a Part 3 added `own` (the Look card's "The club's look" vs a colour of its own), a theme field like the rest.
+    assert.match(code, /THEME_FIELDS = \['presetKey', 'customPrimary', 'customAccent', 'own'\]/);
   });
 });

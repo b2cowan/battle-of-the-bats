@@ -45,7 +45,7 @@ describe('the screen (E7)', () => {
     assert.ok(page.indexOf('{door}') < page.indexOf('<ClubSection id="pages"'));
   });
   it('a save goes to the tournament its draft was read from, never another (a switch mid-edit)', () => {
-    assert.match(page, /type Held = \{ url: string; advanced: boolean; draft: Draft; themeChanged: boolean \}/);
+    assert.match(page, /type Held = \{ url: string; advanced: boolean; draft: Draft; themeChanged: boolean; typeChanged: boolean; frameOn: boolean \}/);
     assert.match(page, /latest\.current && latest\.current\.url === held\.url \? latest\.current : held/);
     assert.match(page, /if \(edits\.current !== editsAtStart && latest\.current\?\.url === brandingUrl\) return;/);
   });
@@ -72,7 +72,8 @@ describe('the screen (E7)', () => {
   // line replaces the Unlock box and six Locked cards, and an invite-only event has no Registration switch.
   it('the free plan meets one branding lock line, no Unlock box or Locked cards (screen 6)', () => {
     assert.doesNotMatch(page, /Unlock Advanced Branding|lockedBadge|CompactUpsell/);
-    assert.match(page, /\{LOCK_WORDS\.branding\}<\/PlanLockLine>/);
+    // Switch off, today's words; under the frame (Stage 1a Part 3) the same one line in the Look's words.
+    assert.match(page, /\{frameOn \? LOCK_WORDS\.brandingLook : LOCK_WORDS\.branding\}<\/PlanLockLine>/);
     assert.match(page, /PUBLIC_PAGE_OPTIONS\.filter\(p => p\.key !== 'register'\)/);
   });
   it('the settings sheet carries no old-look layer', () => {

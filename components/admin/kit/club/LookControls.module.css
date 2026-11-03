@@ -1,0 +1,133 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE LOOK'S CONTROLS — one colour control and one type control on both screens that set a look: the club's Public site
+   editor (its Look row) and a tournament's Branding page (Public tournament pages Stage 1a, drawing ask 4, ruled
+   2026-11-02). Moved here from the club editor's sheet unchanged. Born on the kit: TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* Colours: a pill first when the screen has one (From your logo; the club's look), then the presets, then Custom. */
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.swatch {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--card-bg);
+  box-shadow: 0 0 0 1px var(--home-line-strong);
+  cursor: pointer;
+}
+.swatchOn { box-shadow: 0 0 0 2px var(--card-bg), 0 0 0 4px var(--home-olive); }
+.swatchOwn { background: conic-gradient(var(--danger), var(--warning), var(--home-olive), var(--home-blue), var(--home-plum), var(--danger)); }
+.swatch:focus-visible,
+.pill:focus-visible,
+.tile:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 3px; }
+@media (max-width: 640px) {
+  /* A fingertip each: 44 px circles. */
+  .swatches { gap: 4px 6px; }
+  .swatch { width: 44px; height: 44px; }
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 3px 12px 3px 4px;
+  border-radius: 999px;
+  border: 1px solid var(--home-line-strong);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-size: var(--type-support);
+  font-weight: 650;
+  cursor: pointer;
+}
+.pillOn { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--home-olive); }
+.dual { width: 28px; height: 28px; border-radius: 50%; flex: none; }
+@media (max-width: 640px) { .pill { min-height: 44px; } }
+.ownColours { display: flex; flex-wrap: wrap; gap: 12px 18px; }
+.ownColour {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--text-secondary);
+}
+.ownColour input {
+  width: 44px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 6px;
+  background: var(--home-card);
+  cursor: pointer;
+}
+@media (max-width: 640px) { .ownColour input { height: 44px; } }
+/* A colour with its hex code beside it: the picker and its name, then the code (wraps under on a narrow phone). */
+.ownColourHex { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+/* The two codes line up: each picker-and-name is as wide as the longer name. */
+.ownColourHex > .ownColour { min-width: 9.5rem; }
+
+/* A colour's hex code, typed. */
+.hexInput {
+  width: 7.5rem;
+  min-height: var(--admin-control-h);
+  padding: 0 0.6rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 7px;
+  background: var(--home-card);
+  color: var(--text-primary);
+  font-family: var(--font-data); /* type-ok: code */
+  font-size: var(--type-body);
+  font-weight: 400;
+  letter-spacing: normal;
+}
+.hexInput:focus { outline: none; border-color: var(--home-olive); }
+.mistake { margin: 0.25rem 0 0; font-size: var(--type-support); font-weight: 600; color: var(--danger-light); }
+@media (max-width: 768px) {
+  .hexInput { min-height: var(--tap-min, 44px); }
+}
+
+/* Type: three looks, each showing the name in its own faces (the club's A4). */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (max-width: 640px) { .tiles { grid-template-columns: minmax(0, 1fr); } }
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px 10px;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+.tileOn { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.tileName { font-size: var(--type-support); font-weight: 650; color: var(--text-secondary); }
+.tileTitle {
+  max-width: 100%;
+  font-size: 19px;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tileText { font-size: var(--type-token); color: var(--text-tertiary); }
+/* The faces themselves — the club's three pairs (lib/club-site.ts `clubFace`), loaded by the org layout. */
+[data-look='classic'] .tileTitle { font-family: var(--font-barlow), 'Barlow Condensed', sans-serif; font-weight: 700; } /* type-ok: the club's own face, a sample */
+[data-look='classic'] .tileText { font-family: var(--font-inter), sans-serif; } /* type-ok: the club's own face, a sample */
+[data-look='serif'] .tileTitle { font-family: var(--font-dm-serif), 'DM Serif Display', serif; font-weight: 400; } /* type-ok: the club's own face, a sample */
+[data-look='serif'] .tileText { font-family: var(--font-dm-sans), sans-serif; } /* type-ok: the club's own face, a sample */
+[data-look='clean'] .tileTitle { font-family: var(--font-inter), sans-serif; font-weight: 700; font-size: 17px; } /* type-ok: the club's own face, a sample */
+[data-look='clean'] .tileText { font-family: var(--font-inter), sans-serif; } /* type-ok: the club's own face, a sample */
