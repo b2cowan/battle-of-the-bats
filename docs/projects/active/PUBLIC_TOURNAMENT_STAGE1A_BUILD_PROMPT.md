@@ -323,7 +323,7 @@ schema parity lists the new column dev-only (expected until prod), the other fai
 **Committed `4c2efbce6` 2026-11-03** (owner yes, before Part 2). The schema snapshots were left out of that commit: they
 also carry other sessions' tables (migs 427/428); the next snapshot refresh commits them.
 
-## Part 2 record (2026-11-03, Claude) — built, verified, NOT committed
+## Part 2 record (2026-11-03, Claude) — built, verified, committed `cb9e17d3b` 2026-11-03 (with Part 3)
 
 **Built.** The shared controls `components/admin/kit/club/LookControls.tsx` (+ `.module.css`): `LookSwatches` (the nine
 presets two-tone, double ring on the chosen, rainbow Custom whose pickers open under the row, `hex` adds a code field
@@ -371,7 +371,7 @@ draft's preview, and the trap in the Part 1 record (the branding route stores `'
 must store it). The tournament-branding GET must return `frameOn`; switch off, today's page untouched. Fixture:
 `node .probe/stage1a-look-fixture.mjs default|always|undo`.
 
-## Part 3 record (2026-11-03, Claude) — built, verified, NOT committed (Part 2 was still uncommitted when Part 3 began)
+## Part 3 record (2026-11-03, Claude) — built, verified, committed `cb9e17d3b` 2026-11-03 (with Part 2)
 
 **Built.** `app/[orgSlug]/admin/tournaments/branding/LookCard.tsx` (+ `.module.css`): the Look card in its four cases from
 `resolveTournamentLook` applied to the draft — A the pill chosen with "Type: Serif, the club's" and the follow line (its
@@ -434,7 +434,7 @@ restarted (new files, shared module).
 ### Part 4 kick-off
 
 Execute `docs/projects/active/PUBLIC_TOURNAMENT_STAGE1A_BUILD_PROMPT.md` **Part 4** (`/simplify`, `/review`, the QA walk,
-the records). Parts 1 (`4c2efbce6`), 2 and 3 (see their records; confirm with the owner what has been committed). New
+the records). Parts 1 (`4c2efbce6`), 2 and 3 (`cb9e17d3b`) are committed. New
 abstractions for `/simplify`: `LookControls`, `PhoneWindow`, `look-draft.ts`, `publicFrameBandFacts`. Carry the Part 3
 "Found" list into `/review` (the window's prefetch, the 768 px swatch size). Fixture:
 `node .probe/stage1a-look-fixture.mjs default|always|undo`; case tournaments in `.probe/stage1a-part3-look.mjs`.
