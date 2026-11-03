@@ -6910,6 +6910,49 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 **`created_by`** / **`put_back_by`** (FK → `auth.users` ON DELETE SET NULL) / **`created_at`** / **`put_back_at`** (null = not put back) — who pressed, and whether and when Put all back restored every game.
 
 ---
+
+## `league_game_scores`
+<!-- dict:table:league_game_scores -->
+
+**Purpose:** **Coach scores** (House League 9e-3, rulings 9e·7 to 9e·9, **mig 428**): one row per house-league game saying who entered its score, who reported it, and who checked or corrected it. The scores themselves stay on `league_games` (`home_score`, `away_score`, `status`). RLS on, no policies, **service role only** — ⚠ **never columns on `league_games`**, which is anon-readable column by column (mig 020): who entered a score and a coach's note are not public. **No row = no score, or a score the club entered before 9e-3.** Written only by the four functions below; each locks the game row and checks the `updated_at` the window saw.
+
+**Gotchas (read first):**
+1. **`league_game_coach_score(org, game, team, user, name, home, away, seen)`** — the home coach's Enter / Change / clear (both null). Refusals: `notFound` (also a draft division), `finished`, `notHome`, `gone`, `calledOff` (postponed or cancelled — read on the LIVE row, so a held rainout counts), `notStarted`, `changed`, `closed` (a report, a Keep, a correction, a club entry, or a pre-9e-3 club score). Writes the game (both in: `completed`; both null: `scheduled`) and this row together, and **moves `league_games.updated_at`** (a rainout window opened before refuses `changed`). A clear deletes the row. Never writes a `league_game_changes` row (scheduled and completed are both public state `on`).
+2. **`league_game_score_report(org, game, team, user, name, note, seen)`** — the away coach's report; refusals `notFound` / `finished` / `notAway` / `gone` / `own` (they also coach the home team) / `calledOff` / `changed` / `closed`. **Moves `league_games.updated_at`** (a report is news about the score: a Keep or a Change from a window opened before it refuses `changed`).
+3. **`league_game_score_keep(org, game, user, name, seen)`** — Keep (or ✓ with no change); `nothing` unless the row is a coach's uncorrected score; already checked = a no-op success.
+4. **`league_game_club_write(org, game, seen, patch jsonb, user, name)`** — the club's game PATCH when it carries a score: the patch keyed by **column name** (absent = kept) and the stamp in one block. Over a coach's score → `corrected_*`; on a game with none (or a club one) → `entered_side = 'club'`; both scores emptied → the row is deleted and the home coach can enter again.
+5. **Names are snapshots** (`*_by_name`, as they read at the press), so a removed coach's entry keeps their name. A coach's screen never reads another person's name from here: the other team's coach reads "{Team}’ coach".
+
+<!-- dict:col:league_game_scores.game_id -->
+<!-- dict:col:league_game_scores.org_id -->
+<!-- dict:col:league_game_scores.season_id -->
+**`game_id`** (PK, FK → `league_games` CASCADE) / **`org_id`** (FK → `organizations` CASCADE) / **`season_id`** (FK → `league_seasons` CASCADE; indexed — the club's "Scores to check" read) — whose game.
+
+<!-- dict:col:league_game_scores.entered_side -->
+<!-- dict:col:league_game_scores.entered_by -->
+<!-- dict:col:league_game_scores.entered_by_name -->
+<!-- dict:col:league_game_scores.entered_for_team -->
+<!-- dict:col:league_game_scores.entered_at -->
+**`entered_side`** (text NOT NULL, CHECK `coach` · `club`) / **`entered_by`** (FK → `auth.users` ON DELETE SET NULL) / **`entered_by_name`** (text NOT NULL; a coach's `league_team_coaches.name`, a staff member's `memberDisplayName`) / **`entered_for_team`** (FK → `league_teams` ON DELETE SET NULL; the home team on a coach entry, CHECK null on a club one) / **`entered_at`** — who last entered the score. A coach's later change (unreported) replaces these.
+
+<!-- dict:col:league_game_scores.reported_by -->
+<!-- dict:col:league_game_scores.reported_by_name -->
+<!-- dict:col:league_game_scores.reported_for_team -->
+<!-- dict:col:league_game_scores.reported_at -->
+<!-- dict:col:league_game_scores.report_note -->
+**`reported_by`** / **`reported_by_name`** / **`reported_for_team`** / **`reported_at`** (all null until reported; CHECK at and name together) / **`report_note`** (text, CHECK 1–280 characters, trimmed; null = no note) — the away coach's "Report this score". The score stands. Never public, never emailed (9d2·13); the club reads it in the game window and the "Scores to check" fold (reported first).
+
+<!-- dict:col:league_game_scores.checked_by -->
+<!-- dict:col:league_game_scores.checked_by_name -->
+<!-- dict:col:league_game_scores.checked_at -->
+<!-- dict:col:league_game_scores.corrected_by -->
+<!-- dict:col:league_game_scores.corrected_by_name -->
+<!-- dict:col:league_game_scores.corrected_at -->
+<!-- dict:col:league_game_scores.updated_at -->
+**`checked_*`** (the league admin kept the coach's score) / **`corrected_*`** (the league admin changed it) / **`updated_at`** — either closes both coaches' doors and takes the game out of "Scores to check".
+
+---
+
 ## `league_schedule_emails`
 <!-- dict:table:league_schedule_emails -->
 

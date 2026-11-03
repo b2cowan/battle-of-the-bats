@@ -10,6 +10,7 @@ import { coachesLine } from '@/lib/house-league-teams-words';
 import CopyEmails from './CopyEmails';
 import CoachSchedule from './CoachSchedule';
 import CoachSubscribe from './CoachSubscribe';
+import CoachScores from './CoachScores';
 import { SCHEDULE_PUBLIC_WORDS } from '@/lib/league-schedule-words';
 import { STANDINGS_WORDS } from '@/lib/league-standings';
 import column from '../../../league-column.module.css';
@@ -107,7 +108,11 @@ export default async function CoachTeamPage({ params }: { params: Promise<{ orgS
             </p>
           </>
         )}
-        <p className={kit.sub}>The club enters scores for now.</p>
+        {/* 9e-3: the team's started games — the home coach enters the score, the away coach can report it. */}
+        {(page.gamesPublished || page.scores.length > 0) && (
+          <CoachScores rows={page.scores} standings={page.scoresStandings} live={view === 'open'}
+            orgSlug={orgSlug} seasonSlug={seasonSlug} teamId={team.teamId} />
+        )}
       </section>
 
       <section className={styles.section} aria-labelledby="coach-players">

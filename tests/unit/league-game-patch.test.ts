@@ -18,6 +18,12 @@ describe('a house-league game\'s patch: status and score', () => {
     assert.equal(invalidGamePatch({ notes: 'x' }), null);
   });
 
+  it('bounds a score at 999, so a typo is a sentence and not a database error', () => {
+    assert.equal(invalidGamePatch({ homeScore: 999, awayScore: 0 }), null);
+    assert.match(invalidGamePatch({ homeScore: 1000, awayScore: 0 })!, /0 to 999/);
+    assert.match(invalidGamePatch({ homeScore: 3, awayScore: 3_000_000_000 })!, /0 to 999/);
+  });
+
   it('refuses one score alone, a half-clear, a negative, a fraction, a string', () => {
     for (const body of [
       { homeScore: 3 }, { awayScore: 3 }, { homeScore: 3, awayScore: null }, { homeScore: null, awayScore: 2 },

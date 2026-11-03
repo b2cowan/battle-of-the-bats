@@ -14,6 +14,8 @@ import { coachStandingLine, type CoachStandingLine, type LeagueStandings } from 
 import { resultWords } from './league-season-calendar';
 import { readPracticesNow, readTold } from './league-practice-tell-server';
 import { coachToldLine, tellStateOf, type CoachToldLine, type TeamTellState } from './league-practice-tell';
+import { coachScoreView, type CoachScoreRow } from './league-coach-scores';
+import { readScoreRecords } from './league-coach-scores-server';
 import type { LeagueGame } from './types';
 
 /**
@@ -76,6 +78,11 @@ export interface CoachTeamPage {
   practiceTold: CoachToldLine | null;
   /** The team's place in its division (9e-1, 9e·6): a live season, a published schedule and standings on; null = no line. */
   standing: (CoachStandingLine & { divisionId: string }) | null;
+  /** The Scores section (9e-3): every started game of the team, newest first, each from its LIVE row — a published
+   *  division only. A finished season lists them with no doors (Q16). */
+  scores: CoachScoreRow[];
+  /** The division's "Show standings": the section's foot and the window's words say where a score counts. */
+  scoresStandings: boolean;
 }
 
 /** A game on the coach's page (g3): from today on, or waiting for a new date (postponed, or saved with no date). */
@@ -206,7 +213,8 @@ export async function readCoachTeamPage(
   const division = one(team.league_divisions);
   // The standing line (9e·6): a live season, the division's schedule published and its "Show standings" on — else absent.
   const ranks = view === 'open' && !!team.division_id && !!division?.schedule_published_at && division.show_standings !== false;
-  const [coachRows, players, myTeams, contactEmail, practices, games, tell, standings] = await Promise.all([
+  const scored = (view === 'open' || view === 'finished') && !!team.division_id && !!division?.schedule_published_at;
+  const [coachRows, players, myTeams, contactEmail, practices, games, tell, standings, scores] = await Promise.all([
     view === 'gone' ? Promise.resolve([] as { name: string }[]) : readCoachNames(teamId),
     view === 'open' || view === 'finished' ? readTeamPlayers(teamId) : Promise.resolve([] as CoachPlayer[]),
     getCoachTeamCards(userId, now),
@@ -217,6 +225,7 @@ export async function readCoachTeamPage(
       : Promise.resolve({ published: false, games: [] as CoachGame[] }),
     view === 'open' ? readTellOf(card.orgId, teamId) : Promise.resolve(null),
     ranks ? computeStandings(team.division_id!, season.sport) : Promise.resolve(null),
+    scored ? readTeamScores(card.orgId, team.division_id!, teamId, userId, now, view === 'open') : Promise.resolve([] as CoachScoreRow[]),
   ]);
   const practiceTold = tell && coachToldLine({
     state: tell.state, toldAt: tell.at, listed: practices.length,
@@ -234,6 +243,62 @@ export async function readCoachTeamPage(
     gamesPublished: games.published,
     practiceTold,
     standing: standingOf(standings, teamId, team.division_id),
+    scores,
+    scoresStandings: division?.show_standings !== false,
+  };
+}
+
+/**
+ * THE SCORES SECTION'S READ (House League 9e-3): the team's started games that are on, newest first, each from its LIVE
+ * row — not as last sent, so a game the club rained out an hour ago (held or sent) is not listed and offers no "Enter the
+ * score" (the Schedule's read above is the families' view and stays so). Each with its score record and the viewer's
+ * side: they coach the home team (a coach of both teams is the home coach). `live` false (a finished season): no doors.
+ * ⚠ A failed read THROWS.
+ */
+async function readTeamScores(orgId: string, divisionId: string, teamId: string, userId: string, now: Date, live: boolean): Promise<CoachScoreRow[]> {
+  const [gameRes, teamRes, seatRes, places] = await Promise.all([
+    supabaseAdmin.from('league_games')
+      .select('id, home_team_id, away_team_id, scheduled_at, location, org_venue_id, org_venue_facility_id, status, home_score, away_score, updated_at')
+      // The team id was checked as a UUID before any read (readCoachTeamPage), so the filter string is safe.
+      .eq('org_id', orgId).eq('division_id', divisionId).or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`)
+      .in('status', ['scheduled', 'completed']).lte('scheduled_at', now.toISOString())
+      .order('scheduled_at', { ascending: false }).order('id').limit(500),
+    supabaseAdmin.from('league_teams').select('id, name').eq('division_id', divisionId),
+    // This person's own live seats — their id, nobody else's — to know whether they also coach the other team.
+    supabaseAdmin.from('league_team_coaches').select('team_id, name').eq('user_id', userId).is('removed_at', null).not('accepted_at', 'is', null),
+    getOrgPlaceNames(orgId),
+  ]);
+  for (const r of [gameRes, teamRes, seatRes]) if (r.error) throw new Error(`Couldn't read the team's scores: ${r.error.message}`);
+  type Row = { id: string; home_team_id: string; away_team_id: string; scheduled_at: string; location: string | null; org_venue_id: string | null;
+    org_venue_facility_id: string | null; status: LeagueGame['status']; home_score: number | null; away_score: number | null; updated_at: string };
+  const rows = (gameRes.data ?? []) as Row[];
+  const records = await readScoreRecords(orgId, rows.map(r => r.id));
+  const teamName = new Map(((teamRes.data ?? []) as { id: string; name: string }[]).map(t => [t.id, t.name]));
+  const seatName = new Map(((seatRes.data ?? []) as { team_id: string; name: string }[]).map(s => [s.team_id, s.name]));
+  const placeOf = placeNamer(places);
+  const nowMs = now.getTime();
+  return rows.map(r => {
+    const game = { status: r.status, scheduledAt: r.scheduled_at, homeScore: r.home_score, awayScore: r.away_score };
+    const names = { home: teamName.get(r.home_team_id) ?? 'A team', away: teamName.get(r.away_team_id) ?? 'A team' };
+    const home = seatName.has(r.home_team_id);
+    const view = coachScoreView(game, records.get(r.id) ?? null, { userId, home }, names, nowMs);
+    return {
+      gameId: r.id, startsAt: r.scheduled_at, homeName: names.home, awayName: names.away,
+      place: placeOf({ orgVenueId: r.org_venue_id, orgVenueFacilityId: r.org_venue_facility_id, location: r.location }),
+      home, homeScore: r.home_score, awayScore: r.away_score,
+      view: live ? view : { ...view, door: null },
+      seen: r.updated_at, enteredAs: home ? seatName.get(r.home_team_id) ?? null : null,
+    };
+  }).filter(r => r.view.state !== 'notStarted' && r.view.state !== 'calledOff');
+}
+
+/** "Maple Grove Park · Diamond 2", or the typed place: the club's venue names for a game's place. */
+function placeNamer(places: Awaited<ReturnType<typeof getOrgPlaceNames>>) {
+  return (g: Pick<GameFaceFields, 'orgVenueId' | 'orgVenueFacilityId' | 'location'>) => {
+    const venue = g.orgVenueId ? places.venues.get(g.orgVenueId)?.name : null;
+    if (!venue) return g.location || null;
+    const facility = g.orgVenueFacilityId ? places.facilities.get(g.orgVenueFacilityId) : null;
+    return facility ? `${venue} · ${facility}` : venue;
   };
 }
 
@@ -303,13 +368,7 @@ async function readGamesAsSent(orgId: string, seasonId: string, divisionId: stri
   } satisfies GameFaceFields & Pick<LeagueGame, 'homeTeamId' | 'awayTeamId' | 'homeScore' | 'awayScore'>));
   const teamName = new Map(((teamRes.data ?? []) as { id: string; name: string }[]).map(t => [t.id, t.name]));
   const name = (id: string) => teamName.get(id) ?? 'A team';
-  const placeOf = (g: GameFaceFields) => {
-    const venue = g.orgVenueId ? places.venues.get(g.orgVenueId)?.name : null;
-    if (!venue) return g.location || null;
-    const facility = g.orgVenueFacilityId ? places.facilities.get(g.orgVenueFacilityId) : null;
-    return facility ? `${venue} · ${facility}` : venue;
-  };
-  return { games: asLastSent(games, held), name, placeOf };
+  return { games: asLastSent(games, held), name, placeOf: placeNamer(places) };
 }
 
 /**

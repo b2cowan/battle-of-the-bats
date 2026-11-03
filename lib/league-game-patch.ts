@@ -10,7 +10,9 @@
 /** The four states a `league_games` row can hold (its check constraint). */
 export const LEAGUE_GAME_STATUSES = ['scheduled', 'completed', 'cancelled', 'postponed'] as const;
 
-const wholeScore = (v: unknown) => typeof v === 'number' && Number.isInteger(v) && v >= 0;
+/** The most runs a side can be given: a bound the database's integer never reaches, so a typo is a sentence, not a 500. */
+export const MAX_SCORE = 999;
+const wholeScore = (v: unknown) => typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= MAX_SCORE;
 
 /**
  * ⚖ THE SCORE RULE (House League 9e-1): a game counts once both scores are in — the standings' one definition
@@ -46,7 +48,7 @@ export function invalidGamePatch(body: Record<string, unknown>): string | null {
   if (hasHome && hasAway) {
     const home = body.homeScore ?? null, away = body.awayScore ?? null;
     if (home === null && away === null) return null;
-    if (!wholeScore(home) || !wholeScore(away)) return 'A score must be a whole number, 0 or more. Enter both scores, or neither.';
+    if (!wholeScore(home) || !wholeScore(away)) return `A score must be a whole number from 0 to ${MAX_SCORE}. Enter both scores, or neither.`;
   }
   return null;
 }

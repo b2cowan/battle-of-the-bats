@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
-import { getLeagueSeasonById, updateLeagueGame } from '@/lib/db';
+import { getLeagueSeasonById, leagueGameRow, updateLeagueGame } from '@/lib/db';
+import { clubWriteGame, staffName } from '@/lib/league-coach-scores-server';
 import { resolveLeagueVenueSelection, checkLeagueBookings, resolveEndInstant } from '@/lib/league-venue';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -209,7 +210,15 @@ export const PATCH = withObservability(async (req: Request,
 
   // On a published division the database records the change as it writes it (mig 409's trigger): it waits in Changes to
   // send, and the public page keeps what families last heard until it goes.
-  if (!(await updateLeagueGame(gameId, patch, game.updated_at))) {
+  // ⚖ A SAVE THAT CARRIES A SCORE (9e-3, mig 428) writes the game and stamps who entered or corrected it in one locked
+  // function: "entered by" the club on a game with no score, "corrected by" over a coach's score (the coaches' doors
+  // close), the record gone when both boxes are emptied. Never a best-effort second write.
+  const written = patch.homeScore !== undefined
+    ? (await clubWriteGame({
+        orgId: ctx!.org.id, gameId, seen: game.updated_at, row: leagueGameRow(patch), userId: ctx!.user.id, name: await staffName(ctx!),
+      })) === null
+    : await updateLeagueGame(gameId, patch, game.updated_at);
+  if (!written) {
     return NextResponse.json({ error: CW.gameChanged, code: 'changed' }, { status: 409 });
   }
 

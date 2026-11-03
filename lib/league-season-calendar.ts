@@ -385,7 +385,7 @@ export const asksScores = (g: Pick<LeagueGame, 'status' | 'scheduledAt'>, nowMs:
 export function scoresToSave(home: string, away: string): { homeScore: number | null; awayScore: number | null; status: 'scheduled' | 'completed' } | null {
   const h = home.trim(), a = away.trim();
   if (!h && !a) return { homeScore: null, awayScore: null, status: 'scheduled' };
-  if (!/^\d+$/.test(h) || !/^\d+$/.test(a)) return null;
+  if (!/^\d{1,3}$/.test(h) || !/^\d{1,3}$/.test(a)) return null; // up to 999: the server's bound (MAX_SCORE)
   return { homeScore: Number(h), awayScore: Number(a), status: 'completed' };
 }
 

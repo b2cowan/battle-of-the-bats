@@ -95,7 +95,11 @@ describe('3. a state is a door', () => {
     assert.match(functionBody(w, 'act'), /seen: \{ status: game\.status, updatedAt: game\.updatedAt \}/);
     const patch = readCode(ROUTE);
     assert.match(patch, /seen\.status !== game\.status \|\| !sameInstant\(seen\.updatedAt, game\.updated_at\)/);
-    assert.match(patch, /if \(!\(await updateLeagueGame\(gameId, patch, game\.updated_at\)\)\)/);
+    // Both writes are a compare-and-set on the row read here: the plain one, and a save carrying a score (9e-3, mig 428),
+    // whose function checks the same updated_at under the game's lock.
+    assert.match(patch, /: await updateLeagueGame\(gameId, patch, game\.updated_at\);/);
+    assert.match(patch, /clubWriteGame\(\{\s*orgId: ctx!\.org\.id, gameId, seen: game\.updated_at,/);
+    assert.match(patch, /if \(!written\) \{\s*return NextResponse\.json\(\{ error: CW\.gameChanged, code: 'changed' \}, \{ status: 409 \}\);/);
   });
   it('a re-dated game is put back on by the same form', () => {
     assert.match(functionBody(readCode(WINDOW), 'changes'), /if \(mode === 'redate'\) out\.status = 'scheduled';/);
@@ -175,6 +179,6 @@ describe('5. a published game is never let through by a failed read, and a reviv
   it('a 409 "changed" re-reads the season, and a press stays busy until that read lands', () => {
     const w = readCode(WINDOW);
     assert.match(w, /res\.status === 409 && data\.code === 'changed'\) \{ await onChanged\(\); setMode\('read'\); \}/);
-    assert.equal((w.match(/try \{ await onChanged\(\); \} finally \{ setSaving\(false\); \}/g) ?? []).length, 2, 'save and act');
+    assert.equal((w.match(/try \{ await onChanged\(\); \} finally \{ setSaving\(false\); \}/g) ?? []).length, 3, 'save, act and keep');
   });
 });

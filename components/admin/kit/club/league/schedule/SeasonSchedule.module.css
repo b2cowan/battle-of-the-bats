@@ -23,6 +23,8 @@
   color: var(--home-amber); background: rgba(var(--home-amber-rgb), 0.11); border: 1px solid rgba(var(--home-amber-rgb), 0.32);
 }
 .fold[open] > .foldHead { margin-bottom: 0.4rem; }
+/* "Scores to check" (9e-3): what the count means, said once it is opened — a line, not a hover. */
+.foldHelp { margin: 0 0 0.5rem; font-size: var(--type-support); color: var(--text-secondary); }
 
 /* Schedule health's window (step 6, d2–d4): the phone's "{n} more. Show all", and the rules said at the foot (no door
    until 9d-2b can save them). The rest of the window is the tournament's. */

@@ -57,8 +57,8 @@ export default function CoachSchedule({ practices, games, gamesPublished, divisi
   );
 }
 
-/** The day cell: "Today" or "Wed" over "Jun 23" (g3); a postponed game's "Was Sat" over the day it had. */
-function When({ iso, today, was }: { iso: string; today: string; was?: boolean }) {
+/** The day cell: "Today" or "Wed" over "Jun 23" (g3); a postponed game's "Was Sat" over the day it had. The Scores section's too. */
+export function When({ iso, today, was }: { iso: string; today: string; was?: boolean }) {
   const weekday = formatInOrgZone(iso, { weekday: 'short' });
   const top = was ? SEASON_PUBLIC_WORDS.was(weekday) : orgDayKey(iso) === today ? TODAY_WORD : weekday;
   return (
@@ -68,7 +68,7 @@ function When({ iso, today, was }: { iso: string; today: string; was?: boolean }
   );
 }
 
-const clockAt = (iso: string) => formatTime(utcToZonedInputs(iso).time);
+export const clockAt = (iso: string) => formatTime(utcToZonedInputs(iso).time);
 
 function GameRow({ game: g, today }: { game: CoachGame; today: string }) {
   const cancelled = g.state === 'cancelled', postponed = g.state === 'postponed';

@@ -1,12 +1,12 @@
 {
-  "generated": "2026-11-02",
-  "total": 143,
+  "generated": "2026-11-03",
+  "total": 209,
   "counts": {
-    "tables": 6,
-    "columns": 71,
-    "indexes": 25,
-    "constraints": 21,
-    "rls": 20
+    "tables": 8,
+    "columns": 105,
+    "indexes": 32,
+    "constraints": 36,
+    "rls": 28
   },
   "items": [
     {
@@ -15,6 +15,22 @@
     },
     {
       "key": "check:only-dev:billing_retention_intents.billing_retention_intents_change_log_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_game_scores.league_game_scores_entered_side_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_game_scores.league_game_scores_report_note_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_game_scores.league_game_scores_report_whole",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_game_scores.league_game_scores_side_team",
       "sig": ""
     },
     {
@@ -50,6 +66,18 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:league_rainouts.league_rainouts_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_rainouts.league_rainouts_line_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_rainouts.league_rainouts_verb_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:league_registrations.league_registrations_link_version_check",
       "sig": ""
     },
@@ -67,6 +95,10 @@
     },
     {
       "key": "check:only-dev:organizations.organizations_subscription_currency_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:organizations.organizations_tournament_look_policy_check",
       "sig": ""
     },
     {
@@ -123,6 +155,86 @@
     },
     {
       "key": "column:only-dev:league_divisions.show_standings",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.checked_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.checked_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.checked_by_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.corrected_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.corrected_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.corrected_by_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.entered_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.entered_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.entered_by_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.entered_for_team",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.entered_side",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.game_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.report_note",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.reported_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.reported_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.reported_by_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.reported_for_team",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.season_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_game_scores.updated_at",
       "sig": ""
     },
     {
@@ -210,6 +322,58 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:league_rainouts.change_ids",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_rainouts.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_rainouts.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_rainouts.day",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_rainouts.division_ids",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_rainouts.game_ids",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_rainouts.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_rainouts.line",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_rainouts.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_rainouts.put_back_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_rainouts.put_back_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_rainouts.season_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_rainouts.verb",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:league_registrations.link_replaced_at",
       "sig": ""
     },
@@ -263,6 +427,10 @@
     },
     {
       "key": "column:only-dev:organizations.subscription_currency",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organizations.tournament_look_policy",
       "sig": ""
     },
     {
@@ -374,6 +542,46 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:league_game_scores.league_game_scores_checked_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_game_scores.league_game_scores_corrected_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_game_scores.league_game_scores_entered_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_game_scores.league_game_scores_entered_for_team_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_game_scores.league_game_scores_game_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_game_scores.league_game_scores_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_game_scores.league_game_scores_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_game_scores.league_game_scores_reported_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_game_scores.league_game_scores_reported_for_team_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_game_scores.league_game_scores_season_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:league_practice_emails.league_practice_emails_division_id_fkey",
       "sig": ""
     },
@@ -426,6 +634,26 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:league_rainouts.league_rainouts_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_rainouts.league_rainouts_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_rainouts.league_rainouts_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_rainouts.league_rainouts_put_back_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_rainouts.league_rainouts_season_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:league_team_practices_told.league_team_practices_told_notice_id_fkey",
       "sig": ""
     },
@@ -459,6 +687,18 @@
     },
     {
       "key": "index:only-dev:billing_retention_intents_one_pending_cancellation",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_game_scores_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_game_scores_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_game_scores_season_idx",
       "sig": ""
     },
     {
@@ -514,6 +754,22 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:league_rainouts_changes_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_rainouts_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_rainouts_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_rainouts_season_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:league_team_practices_told_notice_idx",
       "sig": ""
     },
@@ -558,11 +814,19 @@
       "sig": ""
     },
     {
+      "key": "table:only-dev:league_game_scores",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:league_practice_emails",
       "sig": ""
     },
     {
       "key": "table:only-dev:league_practice_tells",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:league_rainouts",
       "sig": ""
     },
     {

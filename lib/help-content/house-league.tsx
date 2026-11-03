@@ -441,7 +441,7 @@ const houseLeagueHelp: HelpPageContent = {
       heading: 'How coaches get their team page',
       summary: 'A coach is added in a team’s window with their email, invited when you publish, and sees one page: their players and each family’s contact details.',
       keywords: ['coach', 'house league coach', 'coach invite', 'invite coach', 'team page', 'coach team page', 'send again', 'invite expired', 'invite didn’t send', 'remove a coach', 'coach email', 'fix a coach', 'edit a coach', 'change coach email', 'change coach name', 'coach typo', 'copy emails', 'coach sign in', 'coach access', 'my team', 'my teams', 'find my team', 'back to my team', 'where is my team page', 'subscribe', 'subscribe to the schedule', 'calendar link', 'my calendar', 'reset the link', 'were families told', 'families told practice times', 'practice times copy', 'coach copy email'],
-      searchText: 'coach team page schedule line families were told these practice times on families haven’t been told these practice times yet a club admin or league admin sends them families were told different times they haven’t been sent these times yet those practices have since been taken away no practices yet nobody has handed any out coach copy email teams families were sent their practice times the first time only subscribe in your calendar app your own calendar link games once the division’s schedule is published as last sent practices cancelled events stay marked live season only reset the link new link made leave the team removed coach calendar empties how coaches get their team page house league coach added in a team window with an email invited when you publish or at once after you confirm if added later invite link works 7 days signs in only with that email one page their players each family name email and phone copy emails the team’s schedule games and practices from today on needs a new date schedule isn’t published yet see the season’s schedule the club enters scores never ratings fees or other teams never the coaches portal invited when you publish invited signed in invite expired invite didn’t send fix the email send again removing a coach takes the page away at once families are not told coach who is a registrar or admin keeps their club role page stays 30 days after the season finishes back to the team page my team at the top right of the club site my teams lists each team on a phone the first row of the account menu',
+      searchText: 'coach team page schedule line families were told these practice times on families haven’t been told these practice times yet a club admin or league admin sends them families were told different times they haven’t been sent these times yet those practices have since been taken away no practices yet nobody has handed any out coach copy email teams families were sent their practice times the first time only subscribe in your calendar app your own calendar link games once the division’s schedule is published as last sent practices cancelled events stay marked live season only reset the link new link made leave the team removed coach calendar empties how coaches get their team page house league coach added in a team window with an email invited when you publish or at once after you confirm if added later invite link works 7 days signs in only with that email one page their players each family name email and phone copy emails the team’s schedule games and practices from today on needs a new date schedule isn’t published yet see the season’s schedule scores the home team’s coach enters never ratings fees or other teams never the coaches portal invited when you publish invited signed in invite expired invite didn’t send fix the email send again removing a coach takes the page away at once families are not told coach who is a registrar or admin keeps their club role page stays 30 days after the season finishes back to the team page my team at the top right of the club site my teams lists each team on a phone the first row of the account menu',
       content: (
         <>
           <p>A house league coach never needs the Coaches Portal. They get one page for their team, by an emailed link, and it shows only what they need to reach their families.</p>
@@ -475,7 +475,7 @@ const houseLeagueHelp: HelpPageContent = {
               <ul>
                 <li>The team&apos;s name, division and coaches.</li>
                 <li><strong>Players</strong>, each with the family&apos;s name, email and phone (a missing phone is left out), and <strong>Copy emails</strong> to copy every family&apos;s address at once.</li>
-                <li><strong>Schedule</strong>: the team&apos;s games (once the division&apos;s schedule is published, as last sent to families) and its practices, from today on, with anything waiting for a new date after them, and a link to <strong>See the season&apos;s schedule</strong>. A line says the club enters scores, and another says whether families have been told the practice times (see <a href="#coach-page-told-subscribe">Whether families know the practices, and Subscribe</a>), beside <strong>Subscribe</strong>.</li>
+                <li><strong>Schedule</strong>: the team&apos;s games (once the division&apos;s schedule is published, as last sent to families) and its practices, from today on, with anything waiting for a new date after them, and a link to <strong>See the season&apos;s schedule</strong>. Below them, <strong>Scores</strong> lists the games that have started (the home team&apos;s coach can enter the score; the other coach can report it), and a line says whether families have been told the practice times (see <a href="#coach-page-told-subscribe">Whether families know the practices, and Subscribe</a>), beside <strong>Subscribe</strong>.</li>
                 <li>A coach of two teams switches between them.</li>
               </ul>
               <p>To get back to it, a coach signs in on the club&apos;s site and clicks <strong>My team</strong> at the top right. A coach of two or more teams taps the person icon and picks a team from the menu, then switches between them with the <strong>Your teams</strong> buttons at the top of each team page. On a phone, tap the person icon: the team is a row in the sheet that opens.</p>
@@ -795,11 +795,11 @@ const houseLeagueHelp: HelpPageContent = {
       id: 'recipe-record-house-league-scores',
       group: 'How-to recipes',
       heading: 'How to record scores and read standings',
-      summary: 'Open a played game, enter both scores, and see how the standings table is ranked and who can see it.',
-      keywords: ['scores', 'standings', 'completed games', 'points', 'tiebreaker', 'tie break', 'how the table is ranked', 'tied for', 'level on points', 'the game between them', 'run differential', 'runs for', 'shared place', 't-3', 'show standings', 'hide standings', 'division without standings', 'standings before first score', 'a game counts when both scores are in', 'rf ra rd', 'final', 'correct a score'],
-      searchText: 'record scores update standings completed games played final home score away score both scores or neither enter both scores or neither a game counts in the standings once it is completed and both scores are in clearing both scores puts the game back to scheduled points win two tie one loss zero how the table is ranked tie break tiebreaker level on points two teams level the game between them decides more wins ranks first tied or not played undecided three or more teams skip that step run differential rd runs for rf runs against ra rf ra rd shared place tied for t-3 next team takes 5th no coin toss standings page level with show standings switch hide standings division window edit form on by default off families see no table and no tab coaches see no standing line division without standings families can’t see this table standings are off schedule isn’t published standings before the first score teams listed a to z dashes no places export edit this game pencil correct a score score boxes scores and standings coach team page see the standings first of tied for',
+      summary: 'Enter a score or let the home coach enter it, check the scores coaches enter, and see how the standings table is ranked and who can see it.',
+      keywords: ['scores', 'standings', 'completed games', 'points', 'tiebreaker', 'tie break', 'how the table is ranked', 'tied for', 'level on points', 'the game between them', 'run differential', 'runs for', 'shared place', 't-3', 'show standings', 'hide standings', 'division without standings', 'standings before first score', 'a game counts when both scores are in', 'rf ra rd', 'final', 'correct a score', 'enter the score', 'change the score', 'coach enters score', 'home team enters the score', 'report this score', 'score isn’t right', 'reported score', 'scores to check', 'coach entered', 'keep the score', 'who entered the score', 'entered by', 'scores never email'],
+      searchText: 'coach enters the score home coach enters the score from their team page enter the score change the score save the score report this score what should it be reported score score isn’t right the score stands coach entered keep the score correct the score corrected by checked by entered by who entered the score scores to check needs a new date reported first coaches can’t change this score the league admin checked this score the league admin corrected this score the league admin entered this score a coach of both teams is the home coach postponed or cancelled game can’t be scored scores never email nobody is emailed about a score who entered a score is never public record scores update standings completed games played final home score away score both scores or neither enter both scores or neither a game counts in the standings once it is completed and both scores are in clearing both scores puts the game back to scheduled points win two tie one loss zero how the table is ranked tie break tiebreaker level on points two teams level the game between them decides more wins ranks first tied or not played undecided three or more teams skip that step run differential rd runs for rf runs against ra rf ra rd shared place tied for t-3 next team takes 5th no coin toss standings page level with show standings switch hide standings division window edit form on by default off families see no table and no tab coaches see no standing line division without standings families can’t see this table standings are off schedule isn’t published standings before the first score teams listed a to z dashes no places export edit this game pencil correct a score score boxes scores and standings coach team page see the standings first of tied for',
       content: (
-        <p>Standings are built from played games, so a game needs both scores. This topic covers entering a score, how the table is ranked, and who can see it.</p>
+        <p>Standings are built from played games, so a game needs both scores. This topic covers entering a score (yours, or the home coach&apos;s), checking the scores coaches enter, how the table is ranked, and who can see it.</p>
       ),
       subtopics: [
         {
@@ -813,7 +813,55 @@ const houseLeagueHelp: HelpPageContent = {
                 <li>Enter the home and away scores and press <strong>✓</strong>. The game reads <strong>Final</strong> with its result.</li>
                 <li>Open <strong>Standings</strong> (its own page, reached from the division) to see the updated table.</li>
               </ol>
-              <p>Enter both scores or neither. A single score is refused with <em>Enter both scores, or neither.</em> A game counts in the standings once it is completed and both scores are in. To correct a result, edit the game and change the numbers; clearing both puts the game back to scheduled and it stops counting. A game that hasn&apos;t started has no score boxes.</p>
+              <p>Enter both scores or neither. A single score is refused with <em>Enter both scores, or neither.</em> A game counts in the standings once it is completed and both scores are in. To correct a result, edit the game and change the numbers; clearing both puts the game back to scheduled and it stops counting, and the home coach can enter it again. A game that hasn&apos;t started has no score boxes. A score a coach entered is covered in the next two topics.</p>
+            </>
+          ),
+        },
+        {
+          id: 'recipe-record-house-league-scores-t-coach',
+          title: 'Let the home coach enter the score',
+          content: (
+            <>
+              <p>The home team&apos;s coach can enter a game&apos;s score from their own team page, so you don&apos;t have to. It counts at once.</p>
+              <ol>
+                <li>The coach opens their house league team page and finds the game under <strong>Scores</strong>. From the game&apos;s start time it offers <strong>Enter the score</strong>.</li>
+                <li>They enter both scores, or neither, and press <strong>Save the score</strong>.</li>
+              </ol>
+              <ul>
+                <li>The score counts in the standings right away, or shows on the schedule when the division&apos;s <strong>Show standings</strong> switch is off.</li>
+                <li>The home coach can use <strong>Change the score</strong>, or clear both boxes to put the game back to scheduled, until the away coach reports it or you look at it.</li>
+                <li>A coach of both teams is the home coach. A postponed or cancelled game can&apos;t be scored, a finished season has no score doors, and a division that isn&apos;t published has no <strong>Scores</strong> list.</li>
+                <li>Nobody is emailed about a score, ever.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'recipe-record-house-league-scores-t-report',
+          title: 'When the away coach says a score isn’t right',
+          content: (
+            <>
+              <p>The away coach sees who entered the score, for example <em>Entered by Reds&rsquo; coach</em> and the time, and can press <strong>Report this score</strong>. They may add a note under <em>What should it be?</em> or leave it empty.</p>
+              <ul>
+                <li>The score stands. A report never changes it.</li>
+                <li>The report reaches you only as the first row of <strong>Scores to check</strong>. There is no email and no notification.</li>
+                <li>Once a score is reported, the home coach can no longer change it, and both coaches read that the league admin is checking it.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'recipe-record-house-league-scores-t-check',
+          title: 'Check the scores coaches enter',
+          content: (
+            <>
+              <p>Open a coach&apos;s game on the <strong>Schedule</strong>. Its window shows a <strong>Coach entered</strong> or <strong>Reported</strong> tag, who entered the score and when, and the other coach&apos;s note if there is one.</p>
+              <HelpDefs>
+                <HelpDef term="Keep">The score looks right. Press <strong>Keep</strong> with the score on it, for example <strong>Keep 7&ndash;4</strong>, to mark it checked. Pressing <strong>✓</strong> on the pencil with no change keeps it too. Both coaches then read <em>The league admin checked this score.</em></HelpDef>
+                <HelpDef term="Correct the score">Opens the pencil. Saving stamps <em>Corrected by</em> with your name, and both coaches read <em>The league admin corrected this score.</em></HelpDef>
+                <HelpDef term="A score you entered">Coaches read <em>The league admin entered this score.</em> They can&apos;t change or report it.</HelpDef>
+              </HelpDefs>
+              <p>The Schedule has a <strong>Scores to check</strong> fold beside <strong>Needs a new date</strong>: coach scores you haven&apos;t looked at yet, reported ones first. It disappears at zero. It is a count, not an alert, because those scores already count in the standings. A registrar sees the tags and the fold but can&apos;t keep or correct. Who entered a score, and any report, is never public.</p>
             </>
           ),
         },

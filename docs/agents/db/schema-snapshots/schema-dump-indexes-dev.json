@@ -1330,6 +1330,21 @@
     "indexdef": "CREATE INDEX league_game_changes_season_idx ON public.league_game_changes USING btree (season_id) WHERE (sent_at IS NULL)"
   },
   {
+    "tablename": "league_game_scores",
+    "indexname": "league_game_scores_org_idx",
+    "indexdef": "CREATE INDEX league_game_scores_org_idx ON public.league_game_scores USING btree (org_id)"
+  },
+  {
+    "tablename": "league_game_scores",
+    "indexname": "league_game_scores_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_game_scores_pkey ON public.league_game_scores USING btree (game_id)"
+  },
+  {
+    "tablename": "league_game_scores",
+    "indexname": "league_game_scores_season_idx",
+    "indexdef": "CREATE INDEX league_game_scores_season_idx ON public.league_game_scores USING btree (season_id)"
+  },
+  {
     "tablename": "league_games",
     "indexname": "idx_league_games_org_venue",
     "indexdef": "CREATE INDEX idx_league_games_org_venue ON public.league_games USING btree (org_venue_id)"
@@ -1558,6 +1573,26 @@
     "tablename": "league_practices",
     "indexname": "league_practices_team_idx",
     "indexdef": "CREATE INDEX league_practices_team_idx ON public.league_practices USING btree (team_id)"
+  },
+  {
+    "tablename": "league_rainouts",
+    "indexname": "league_rainouts_changes_idx",
+    "indexdef": "CREATE INDEX league_rainouts_changes_idx ON public.league_rainouts USING gin (change_ids)"
+  },
+  {
+    "tablename": "league_rainouts",
+    "indexname": "league_rainouts_org_idx",
+    "indexdef": "CREATE INDEX league_rainouts_org_idx ON public.league_rainouts USING btree (org_id)"
+  },
+  {
+    "tablename": "league_rainouts",
+    "indexname": "league_rainouts_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_rainouts_pkey ON public.league_rainouts USING btree (id)"
+  },
+  {
+    "tablename": "league_rainouts",
+    "indexname": "league_rainouts_season_idx",
+    "indexdef": "CREATE INDEX league_rainouts_season_idx ON public.league_rainouts USING btree (season_id) WHERE (put_back_at IS NULL)"
   },
   {
     "tablename": "league_registration_price_changes",

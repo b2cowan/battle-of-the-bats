@@ -7004,6 +7004,186 @@
         "column_default": null
       },
       {
+        "table_name": "league_game_scores",
+        "pos": 1,
+        "column_name": "game_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 3,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 4,
+        "column_name": "entered_side",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 5,
+        "column_name": "entered_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 6,
+        "column_name": "entered_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 7,
+        "column_name": "entered_for_team",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 8,
+        "column_name": "entered_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 9,
+        "column_name": "reported_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 10,
+        "column_name": "reported_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 11,
+        "column_name": "reported_for_team",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 12,
+        "column_name": "reported_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 13,
+        "column_name": "report_note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 14,
+        "column_name": "checked_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 15,
+        "column_name": "checked_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 16,
+        "column_name": "checked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 17,
+        "column_name": "corrected_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 18,
+        "column_name": "corrected_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 19,
+        "column_name": "corrected_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_game_scores",
+        "pos": 20,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "league_games",
         "pos": 1,
         "column_name": "id",
@@ -7826,6 +8006,123 @@
         "table_name": "league_practices",
         "pos": 16,
         "column_name": "club_schedule_slot_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_rainouts",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "league_rainouts",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_rainouts",
+        "pos": 3,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_rainouts",
+        "pos": 4,
+        "column_name": "day",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_rainouts",
+        "pos": 5,
+        "column_name": "verb",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_rainouts",
+        "pos": 6,
+        "column_name": "line",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_rainouts",
+        "pos": 7,
+        "column_name": "game_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_rainouts",
+        "pos": 8,
+        "column_name": "division_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_rainouts",
+        "pos": 9,
+        "column_name": "change_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_rainouts",
+        "pos": 10,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_rainouts",
+        "pos": 11,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "league_rainouts",
+        "pos": 12,
+        "column_name": "put_back_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_rainouts",
+        "pos": 13,
+        "column_name": "put_back_by",
         "data_type": "uuid",
         "udt_name": "uuid",
         "is_nullable": "YES",
@@ -13689,6 +13986,15 @@
         "udt_name": "text",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "organizations",
+        "pos": 49,
+        "column_name": "tournament_look_policy",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'club_default'::text"
       },
       {
         "table_name": "pitch_decks",
@@ -29139,6 +29445,69 @@
         "constraint_name": "league_game_changes_season_id_fkey"
       },
       {
+        "table_name": "league_game_scores",
+        "column_name": "checked_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_game_scores_checked_by_fkey"
+      },
+      {
+        "table_name": "league_game_scores",
+        "column_name": "corrected_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_game_scores_corrected_by_fkey"
+      },
+      {
+        "table_name": "league_game_scores",
+        "column_name": "entered_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_game_scores_entered_by_fkey"
+      },
+      {
+        "table_name": "league_game_scores",
+        "column_name": "entered_for_team",
+        "foreign_table": "league_teams",
+        "foreign_column": "id",
+        "constraint_name": "league_game_scores_entered_for_team_fkey"
+      },
+      {
+        "table_name": "league_game_scores",
+        "column_name": "game_id",
+        "foreign_table": "league_games",
+        "foreign_column": "id",
+        "constraint_name": "league_game_scores_game_id_fkey"
+      },
+      {
+        "table_name": "league_game_scores",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_game_scores_org_id_fkey"
+      },
+      {
+        "table_name": "league_game_scores",
+        "column_name": "reported_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_game_scores_reported_by_fkey"
+      },
+      {
+        "table_name": "league_game_scores",
+        "column_name": "reported_for_team",
+        "foreign_table": "league_teams",
+        "foreign_column": "id",
+        "constraint_name": "league_game_scores_reported_for_team_fkey"
+      },
+      {
+        "table_name": "league_game_scores",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_game_scores_season_id_fkey"
+      },
+      {
         "table_name": "league_games",
         "column_name": "away_team_id",
         "foreign_table": "league_teams",
@@ -29396,6 +29765,34 @@
         "foreign_table": "league_teams",
         "foreign_column": "id",
         "constraint_name": "league_practices_team_id_fkey"
+      },
+      {
+        "table_name": "league_rainouts",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_rainouts_created_by_fkey"
+      },
+      {
+        "table_name": "league_rainouts",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_rainouts_org_id_fkey"
+      },
+      {
+        "table_name": "league_rainouts",
+        "column_name": "put_back_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_rainouts_put_back_by_fkey"
+      },
+      {
+        "table_name": "league_rainouts",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_rainouts_season_id_fkey"
       },
       {
         "table_name": "league_registration_price_changes",
@@ -34979,6 +35376,21 @@
         "indexdef": "CREATE INDEX league_game_changes_season_idx ON public.league_game_changes USING btree (season_id) WHERE (sent_at IS NULL)"
       },
       {
+        "tablename": "league_game_scores",
+        "indexname": "league_game_scores_org_idx",
+        "indexdef": "CREATE INDEX league_game_scores_org_idx ON public.league_game_scores USING btree (org_id)"
+      },
+      {
+        "tablename": "league_game_scores",
+        "indexname": "league_game_scores_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_game_scores_pkey ON public.league_game_scores USING btree (game_id)"
+      },
+      {
+        "tablename": "league_game_scores",
+        "indexname": "league_game_scores_season_idx",
+        "indexdef": "CREATE INDEX league_game_scores_season_idx ON public.league_game_scores USING btree (season_id)"
+      },
+      {
         "tablename": "league_games",
         "indexname": "idx_league_games_org_venue",
         "indexdef": "CREATE INDEX idx_league_games_org_venue ON public.league_games USING btree (org_venue_id)"
@@ -35207,6 +35619,26 @@
         "tablename": "league_practices",
         "indexname": "league_practices_team_idx",
         "indexdef": "CREATE INDEX league_practices_team_idx ON public.league_practices USING btree (team_id)"
+      },
+      {
+        "tablename": "league_rainouts",
+        "indexname": "league_rainouts_changes_idx",
+        "indexdef": "CREATE INDEX league_rainouts_changes_idx ON public.league_rainouts USING gin (change_ids)"
+      },
+      {
+        "tablename": "league_rainouts",
+        "indexname": "league_rainouts_org_idx",
+        "indexdef": "CREATE INDEX league_rainouts_org_idx ON public.league_rainouts USING btree (org_id)"
+      },
+      {
+        "tablename": "league_rainouts",
+        "indexname": "league_rainouts_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_rainouts_pkey ON public.league_rainouts USING btree (id)"
+      },
+      {
+        "tablename": "league_rainouts",
+        "indexname": "league_rainouts_season_idx",
+        "indexdef": "CREATE INDEX league_rainouts_season_idx ON public.league_rainouts USING btree (season_id) WHERE (put_back_at IS NULL)"
       },
       {
         "tablename": "league_registration_price_changes",
@@ -40498,6 +40930,36 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "league_game_scores",
+        "detail": "league_game_scores_entered_side_check",
+        "check_clause": "(entered_side = ANY (ARRAY['coach'::text, 'club'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_game_scores",
+        "detail": "league_game_scores_report_note_check",
+        "check_clause": "((report_note IS NULL) OR ((char_length(report_note) >= 1) AND (char_length(report_note) <= 280)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_game_scores",
+        "detail": "league_game_scores_report_whole",
+        "check_clause": "((reported_at IS NULL) = (reported_by_name IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_game_scores",
+        "detail": "league_game_scores_side_team",
+        "check_clause": "((entered_side = 'coach'::text) OR (entered_for_team IS NULL))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_game_scores",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "league_games",
         "detail": "league_games_status_check",
         "check_clause": "(status = ANY (ARRAY['scheduled'::text, 'completed'::text, 'cancelled'::text, 'postponed'::text]))"
@@ -40643,6 +41105,30 @@
       {
         "kind": "RLS",
         "table_name": "league_practices",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_rainouts",
+        "detail": "league_rainouts_check",
+        "check_clause": "((cardinality(game_ids) > 0) AND (cardinality(game_ids) = cardinality(change_ids)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_rainouts",
+        "detail": "league_rainouts_line_check",
+        "check_clause": "((line IS NULL) OR ((char_length(line) >= 1) AND (char_length(line) <= 120)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_rainouts",
+        "detail": "league_rainouts_verb_check",
+        "check_clause": "(verb = ANY (ARRAY['postponed'::text, 'cancelled'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_rainouts",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -41779,6 +42265,12 @@
         "table_name": "organizations",
         "detail": "organizations_team_workspace_status_check",
         "check_clause": "((team_workspace_status IS NULL) OR (team_workspace_status = ANY (ARRAY['active'::text, 'linked'::text, 'org_owned'::text, 'archived'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organizations",
+        "detail": "organizations_tournament_look_policy_check",
+        "check_clause": "(tournament_look_policy = ANY (ARRAY['club_default'::text, 'always_club'::text]))"
       },
       {
         "kind": "RLS",

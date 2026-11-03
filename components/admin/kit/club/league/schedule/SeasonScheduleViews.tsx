@@ -20,8 +20,9 @@
  *            carve-out), up to three, then "+{n} more", which opens the day (in List; in Week on a phone — the page decides).
  *            A night of practices is one chip, "Practices · 5". A postponed game shows on the day it had, "· Postponed"; at
  *            and under 768 px it is the touch Month (dots; the whole day taps).
- *   Fold   — "Needs a new date" (9d2·10): the postponed games, and any game saved with no date, above every view with the
+ *   Folds  — "Needs a new date" (9d2·10): the postponed games, and any game saved with no date, above every view with the
  *            amber count (the waiting-count ruling), collapsed. They are never in a week: a view must not draw them as on.
+ *            "Scores to check" (9e-3) beside it: the coach scores the league admin hasn't looked at.
  *
  * ⚖ NOTHING HIDDEN (C9): a cancelled booking is struck in its place with its word, never a clash.
  */
@@ -43,6 +44,7 @@ import {
   SEASON_PUBLIC_WORDS, SEASON_SCHEDULE_WORDS as W, foldNights, nightPlaces, seasonWeeks, todayLineAt,
   type SeasonBooking, type SeasonListRow,
 } from '@/lib/league-season-calendar';
+import { SCORE_WORDS as SW, scoreTagChip, scoresToCheck, type GameScoreRecord } from '@/lib/league-coach-scores';
 
 type Open = (b: SeasonBooking) => void;
 
@@ -256,6 +258,42 @@ export function NeedsDateFold({ bookings, onOpen, startOpen = false }: { booking
           <BookingRow key={b.key} b={b} onOpen={onOpen} wide
             lead={b.startMs ? SEASON_PUBLIC_WORDS.was(`${dayWords(b.day)} · ${timeWords(b)}`) : SEASON_PUBLIC_WORDS.dateToCome} />
         ))}
+      </ClubRowList>
+    </details>
+  );
+}
+
+/**
+ * "SCORES TO CHECK" (9e-3, COPY §8.2, drawing c4): the scores coaches entered that the league admin hasn't looked at,
+ * reported first — the "Needs a new date" recipe, beside it, collapsed, absent at zero. A count, not an alert: they
+ * already count. Each row opens its game's window (Keep · Correct). A reader (the registrar) sees it too, read only.
+ */
+export function ScoresToCheckFold({ bookings, scores, onOpen }: {
+  bookings: readonly SeasonBooking[]; scores: ReadonlyMap<string, GameScoreRecord>; onOpen: Open;
+}) {
+  const byGame = new Map(bookings.flatMap(b => (b.source.kind === 'game' ? [[b.source.game.id, b] as const] : [])));
+  const rows = scoresToCheck(bookings.flatMap(b => (b.source.kind === 'game' ? [b.source.game] : [])), scores);
+  if (!rows.length) return null;
+  return (
+    <details className={sv.fold}>
+      <summary className={sv.foldHead}>
+        <span className={sv.foldTitle}>{SW.checkTitle}</span>
+        <span className={sv.foldCount} aria-label={SW.checkCount(rows.length)}>{rows.length}</span>
+      </summary>
+      <p className={sv.foldHelp}>{SW.checkHelp}</p>
+      <ClubRowList label={SW.checkTitle}>
+        {rows.map(({ game, record, tag }) => {
+          const b = byGame.get(game.id)!;
+          return (
+            <ClubRow key={b.key} as="button" onClick={() => onOpen(b)} aria-haspopup="dialog"
+              mark={<span className={cal.swatch} style={edge(b)} />}
+              lead={<span className={cal.timeCell}>{`${dayWords(b.day)} · ${timeWords(b)}`}</span>} leadWide
+              title={b.who}
+              caption={`${SW.final(game.homeScore!, game.awayScore!)} · ${SW.checkEnteredBy(record.enteredByName)}`}
+              trail={<RepChip tone={scoreTagChip(tag).tone}>{scoreTagChip(tag).label}</RepChip>}
+              chevron />
+          );
+        })}
       </ClubRowList>
     </details>
   );

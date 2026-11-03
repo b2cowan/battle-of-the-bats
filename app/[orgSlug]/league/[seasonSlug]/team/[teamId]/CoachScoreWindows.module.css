@@ -1,0 +1,38 @@
+/* The coach's score windows (House League 9e-3, c2–c3): inside the one window (KitDialog), wearing the portal's fields as
+   the coach page's Subscribe window does. Only the layout of the two boxes and the lines under them live here. */
+
+/* The two scores side by side with an en dash between them — the score as it is written ("7–4"). */
+.pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: 0.75rem;
+}
+.dash {
+  padding-bottom: 0.6rem;
+  font-size: var(--type-body);
+  color: var(--text-tertiary);
+}
+/* A thumb's box: 44 tall, the number large enough to check at a glance. */
+.box {
+  min-height: var(--tap-min);
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+.note { min-height: 5.5rem; }
+
+.hint,
+.error {
+  margin: 0.75rem 0 0;
+  font-size: var(--type-support);
+  line-height: 1.45;
+}
+.hint { color: var(--text-secondary); }
+.error {
+  margin: 0 0 0.75rem;
+  color: var(--danger-light);
+}
+.left {
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}

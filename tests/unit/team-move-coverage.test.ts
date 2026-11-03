@@ -121,6 +121,7 @@ const STAYS: Record<string, string> = {
   league_game_changes: 'house league (a published game’s change waiting to be sent, 9d-2b mig 409)',
   league_schedule_emails: 'house league (a family’s schedule email, 9d-2b mig 409)',
   league_rainouts: 'house league (one press of the schedule’s Rainout window, 9e-2 mig 427)',
+  league_game_scores: 'house league (who entered, reported, checked or corrected a game’s score, 9e-3 mig 428)',
   league_team_practices_told: 'house league (what a team’s families were told of its practices, 9d-3 mig 415)',
   league_practice_tells: 'house league (what one practice-times send told a team, 9d-3 mig 415)',
   league_practice_emails: 'house league (a household’s practice-times email, 9d-3 mig 415)',

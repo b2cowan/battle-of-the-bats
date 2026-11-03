@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Ban, CalendarPlus, CalendarX2, RotateCcw } from 'lucide-react';
 import KitDialog from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
-import { NoticePill, RecordAction, RecordDelete, repKit } from '../../RepKit';
+import { NoticePill, RecordAction, RecordDelete, RepChip, repKit } from '../../RepKit';
 import WhereField, { WhereLine } from '@/components/venue/WhereField';
 import DateInput from '@/components/shared/DateInput';
 import TimeInput from '@/components/shared/TimeInput';
@@ -19,6 +19,7 @@ import {
   GAME_WINDOW_WORDS as W, SEASON_PUBLIC_WORDS, asksScores, gameStateWords, gameWindowDoors, scoresToSave, type SeasonBooking,
 } from '@/lib/league-season-calendar';
 import { CHANGES_TO_SEND_WORDS, SCHEDULE_PUBLIC_WORDS } from '@/lib/league-schedule-words';
+import { SCORE_WORDS as SW, clubScoreLines, scoreTagChip, type GameScoreRecord } from '@/lib/league-coach-scores';
 import type { ClubVenueOption, LeagueGame, LeagueTeam } from '@/lib/types';
 import { SeePermitDoor, useLeagueLine } from './useLeagueLine';
 import s from '../time/LeagueTime.module.css';
@@ -45,6 +46,9 @@ import g from './GameWindow.module.css';
  * ⚖ EVERY PRESS CARRIES WHAT THE WINDOW SAW (`seen`): a game changed since it opened is refused, not written over.
  * Where a game may go is the server's (`placeGame`, 9d2b·B): a league admin's move off the division's game time comes
  * back as the form's error.
+ * ⚖ WHO ENTERED THE SCORE (9e-3, COPY §8.1): a coach's score reads "Coach entered" or "Reported" with who and when
+ * (and the note), and whoever runs the season has Keep {7–4} and Correct the score (owner 2026-11-03: Keep on both). The
+ * pencil's ✓ with no change on such a score is a Keep too. Correct is the pencil: its save stamps "Corrected by".
  * ⚖ THE PERMIT LINE (step 7, frame i) reads in the record and lives under Where in the form, each with "See the permit",
  * which the page opens raised over this window (the window waits underneath). A reader sees neither: the season's read
  * carries no permit answer for them.
@@ -87,9 +91,11 @@ function whenWords(game: LeagueGame): string | null {
   return `${formatInOrgZone(game.scheduledAt, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} · ${formatTimeRange(start.time, game.endsAt ? utcToZonedInputs(game.endsAt).time : null)}`;
 }
 
-export default function GameWindow({ game, booking, divisionId, divisionName, published, teams, venues, sport, api, orgQuery, checkPath, orgSlug, canRun, opensToRedate, onSeePermit, onChanged, onCreated, onDeleted, onClose }: {
+export default function GameWindow({ game, score = null, booking, divisionId, divisionName, published, teams, venues, sport, api, orgQuery, checkPath, orgSlug, canRun, opensToRedate, onSeePermit, onChanged, onCreated, onDeleted, onClose }: {
   /** The game, or null for Add › A game. */
   game: LeagueGame | null;
+  /** Who entered its score (9e-3); null: no score, or a club score from before the record. */
+  score?: GameScoreRecord | null;
   /** The game as the views draw it: its place's words and "Time from" (`gameSlotOf`). */
   booking: SeasonBooking | null;
   /** The division a new game goes into (an existing one keeps its own). */
@@ -141,6 +147,7 @@ export default function GameWindow({ game, booking, divisionId, divisionName, pu
   /** Something typed that closing would lose (the window asks first). */
   const dirty = editing && JSON.stringify(draft) !== JSON.stringify(seed);
   const held = editing && scored && !scores ? W.bothScores : null;
+  const scoreSays = game ? clubScoreLines(game, score, { home: team(game.homeTeamId) || W.home, away: team(game.awayTeamId) || W.away }) : null;
 
   // The league's line under Venue (Club Tier Stage 6a), checked only while the form is open: a postponed game given a new
   // date holds a slot again, so it is checked as one.
@@ -178,11 +185,11 @@ export default function GameWindow({ game, booking, divisionId, divisionName, pu
   };
 
   /** One write; its error is said in the window, which stays where it was. */
-  async function write(method: 'POST' | 'PATCH' | 'DELETE', body?: Record<string, unknown>) {
+  async function write(method: 'POST' | 'PATCH' | 'DELETE', body?: Record<string, unknown>, suffix = '') {
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`${api}${game ? `/${game.id}` : ''}${orgQuery}`, {
+      const res = await fetch(`${api}${game ? `/${game.id}` : ''}${suffix}${orgQuery}`, {
         method, ...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}),
       });
       const data = await res.json().catch(() => ({}));
@@ -223,8 +230,13 @@ export default function GameWindow({ game, booking, divisionId, divisionName, pu
 
   async function save() {
     if (blocked || saving) return;
-    // ✓ on an unchanged form is Done — except a re-date, whose ✓ puts the game back on even on its old date.
-    if (!creating && !dirty && mode !== 'redate') { setMode('read'); return; }
+    // ✓ on an unchanged form is Done — except a re-date, whose ✓ puts the game back on even on its old date. On a coach's
+    // score nobody has looked at, Done is a Keep (9e-3: ✓ with no change marks it checked).
+    if (!creating && !dirty && mode !== 'redate') {
+      if (canRun && scoreSays?.tag && !(await keep())) return;
+      setMode('read');
+      return;
+    }
     if (!(await lineIsCurrent())) return;
     const data = await write(creating ? 'POST' : 'PATCH', changes());
     if (!data) return;
@@ -256,6 +268,16 @@ export default function GameWindow({ game, booking, divisionId, divisionName, pu
     }
     // Saved, and its send didn't go: said where it stays (an error persists; it waits in Changes to send).
     else if (data.sendFailed) setError(data.sendFailed);
+  }
+
+  /** Keep {7–4}: the coach's score, checked as it is (9e-3). True when it landed. */
+  async function keep(): Promise<boolean> {
+    if (!game || saving) return false;
+    if (!(await write('POST', { seen: game.updatedAt }, '/keep'))) return false;
+    setSaving(true);
+    try { await onChanged(); } finally { setSaving(false); }
+    setSaid(SW.keptToast);
+    return true;
   }
 
   async function remove() {
@@ -365,6 +387,7 @@ export default function GameWindow({ game, booking, divisionId, divisionName, pu
           ) : null}
         />
         </div>
+        {scored && scoreSays?.tag === 'reported' && scoreSays.lines.map(l => <p key={l} className={ck.hint}>{l}</p>)}
         {scored && (
           <div className={g.pair}>
             <label className={ck.field}>
@@ -431,6 +454,19 @@ export default function GameWindow({ game, booking, divisionId, divisionName, pu
       </dl>
       {permit && <WhereLine tone="quiet" mark="clock" rest={permitLine(permit, sport)} door={<SeePermitDoor permitId={permit.permitId} onOpen={onSeePermit} />} />}
       {warning && <p className={ck.hint} role="status">{W.possibleClash(warning)}</p>}
+      {scoreSays && scoreSays.lines.length > 0 && (
+        <div className={g.score}>
+          {scoreSays.tag && <RepChip tone={scoreTagChip(scoreSays.tag).tone}>{scoreTagChip(scoreSays.tag).label}</RepChip>}
+          {scoreSays.lines.map(l => <p key={l} className={ck.hint}>{l}</p>)}
+          {scoreSays.note && <p className={ck.hint}>{scoreSays.note}</p>}
+          {canRun && scoreSays.keep && doors?.pencil && (
+            <div className={g.scoreDoors}>
+              <button type="button" className="btn btn-outline" onClick={() => void keep()} disabled={saving}>{scoreSays.keep}</button>
+              <button type="button" className="btn btn-outline" onClick={() => openForm('edit')} disabled={saving}>{SW.correct}</button>
+            </div>
+          )}
+        </div>
+      )}
       {canRun && doors && (
         <div className={g.doors}>
           {doors.giveDate && <RecordAction icon={<CalendarPlus size={13} aria-hidden />} onClick={() => openForm('redate')} disabled={saving}>{W.giveDate}</RecordAction>}

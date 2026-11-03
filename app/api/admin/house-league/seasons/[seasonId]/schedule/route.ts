@@ -15,6 +15,7 @@ import { houseLeagueAccess } from '@/lib/house-league-access';
 import { placeGame } from '@/lib/league-game-place';
 import { asLastSent, heldChangesOf, heldGamesOf, isShownHeld, type HeldGameOf } from '@/lib/league-game-changes-server';
 import type { ChangeKind } from '@/lib/league-game-changes';
+import { readSeasonScoreRecords } from '@/lib/league-coach-scores-server';
 
 function mapGame(row: any) {
   return {
@@ -73,9 +74,13 @@ export const GET = withObservability(async (req: Request,
   // it leaves the schedule loading, as a failed permit read does.
   const runs = !houseLeagueRefusal(ctx, 'run', season);
   const heldRowsRead = heldChangesOf(seasonId);
-  const [{ data, error }, gameSlots, held, heldRows] = await Promise.all([
+  // Who entered each score (9e-3, mig 428): the window's "Coach entered" / "Reported" and the "Scores to check" fold —
+  // staff only (this read is the 'read' gate), never on a public read. Decoration, as the permit line is: a failed read
+  // leaves the schedule loading, with no tags.
+  const [{ data, error }, gameSlots, held, heldRows, scoreRecords] = await Promise.all([
     q, runs ? seasonGameSlots(ctx!.org.id, seasonId).catch(() => []) : Promise.resolve([]),
     heldRowsRead.then(rows => heldGamesOf(seasonId, undefined, rows)), heldRowsRead,
+    readSeasonScoreRecords(ctx!.org.id, seasonId).catch(() => []),
   ]);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   // ⚖ Whoever runs the season reads the games as they are, each held change marked (`changes`); a reader (the registrar)
@@ -94,8 +99,10 @@ export const GET = withObservability(async (req: Request,
     permits = Object.fromEntries(await checkClubPermitsQuietly(ctx!.org.id, placed));
   }
 
+  const scores = Object.fromEntries(scoreRecords.map(r => [r.gameId, r]));
+
   // The season's game time (9d-2a step 4): the game window's "Time from {schedule}" matches a game to it.
-  return NextResponse.json({ games, gameSlots, permits, publishing, changes });
+  return NextResponse.json({ games, gameSlots, permits, publishing, changes, scores });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule' });
 
 /**

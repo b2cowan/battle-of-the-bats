@@ -6,6 +6,11 @@
 .pair { grid-template-columns: 1fr 1fr; }
 .three { grid-template-columns: 1.4fr 1fr 1fr; }
 
+/* Who entered the score (9e-3): the tag, its lines, and Keep · Correct side by side under them. */
+.score { margin-top: 1rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
+.score > p { margin: 0; }
+.scoreDoors { margin-top: 0.35rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
 /* The doors end the body, one under another (a rare door ends the body, 2026-10-09). */
 .doors { margin-top: 1rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem; }
 

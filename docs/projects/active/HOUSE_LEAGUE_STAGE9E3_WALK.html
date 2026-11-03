@@ -1,0 +1,320 @@
+<title>9e-3 Coach Scores Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+table.nums { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.nums th, table.nums td { text-align: left; padding: 4px 8px 4px 0; border-top: 1px solid var(--line); vertical-align: top; font-variant-numeric: tabular-nums; }
+table.nums th { color: var(--muted); font-weight: 600; border-top: 0; }
+.scroll { overflow-x: auto; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · House League · Stage 9e-3 · Ledger §447</span>
+    <h1>Coach scores: the home coach enters, the away coach can report</h1>
+    <p class="sub">Written 2026-11-03 for Stage 9e-3 (built, uncommitted). One purpose: the home team’s coach enters a game’s score from their own team page, the other coach can report it, and the league admin keeps or corrects it.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Until now only the club could enter a house-league score. Now the <strong>home team’s coach</strong> enters it on their team page once the game has started, and it counts straight away. The <strong>away coach</strong> sees who entered it and can <strong>Report this score</strong> with a note; the score stands. The league admin sees a <strong>Coach entered</strong> or <strong>Reported</strong> tag in the game’s window, presses <strong>Keep</strong> or <strong>Correct the score</strong>, and finds what is waiting in a <strong>Scores to check</strong> fold. Nobody is emailed about a score.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>The home coach sees every started game of the team, newest first, with Enter the score on the ones with no score, and nothing for a game not started or postponed.</li>
+    <li>A saved score counts at once (the standing line moves), and the home coach can change or clear it until it is reported or the league admin looks at it.</li>
+    <li>The away coach reads the team, never the person (“Oak’s coach”), can report once, and the score stays as entered.</li>
+    <li>The league admin sees who entered it and the note, and Keep, Correct and ✓ with no change each close both coaches’ doors with the right line.</li>
+    <li>Scores to check lists reported scores first, empties itself, and is read only for the registrar.</li>
+    <li>A window that is out of date is refused with nothing changed, a division with standings off says “shows on the schedule”, and nothing private reaches the public pages.</li>
+  </ul></section>
+  <section class="card"><h2>Known before the walk</h2><ul>
+    <li><strong>The dev server must be restarted first.</strong> This build adds new pages and a database change. Before the restart the coach’s Save answers “not found”.</li>
+    <li><strong>No email of any kind.</strong> There is no score email and no report notification (your answer, 2026-11-03). A report reaches the league admin only as the first row of Scores to check.</li>
+    <li><strong>Your four answers are built as you chose them</strong>: Keep closes both doors and both coaches read “The league admin checked this score.”; no Report on a club score, coaches read “The league admin entered this score.”; “Sent to the league admin” kept; Keep is offered on a Coach entered score too.</li>
+    <li><strong>Build choices to confirm</strong> (say if any should change): the league admin clearing a score gives it back to the home coach to enter (E4); a finished season lists its scores with no doors (not in this walk); a postponed or cancelled game leaves the coach’s Scores list, even a rainout still held in Changes to send; the windows are the house 520 width, not 480.</li>
+    <li><strong>A score the club entered before this build has no “entered by” line</strong> in the club’s window (G7): nobody recorded who typed it. The coaches read “The league admin entered this score.”</li>
+    <li><strong>Times are relative to when you ran the fixture.</strong> G1 started an hour before it ran. Re-run it if you walk on another day.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>A finished season.</strong> No doors anywhere; the server refusal is tested.</li>
+    <li><strong>A coach removed from the team</strong>, and two coaches on one team. Both are proved in the database check and the tests.</li>
+    <li><strong>The rainout meeting a scored game.</strong> A rainout lists only games with no score, and a score saved after a rainout window opened is refused there. Proved by the tests.</li>
+    <li><strong>The help article.</strong> Read it if you like (Help › House league › Record scores and standings); it is not a walk step.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd>Restarted after this build. The login page answers 200.</dd>
+    <dt>Fixture</dt><dd>In the project folder: <code>node --env-file=.env.local .probe/9e3-walk/fixture.mjs</code>. It (re)builds two walk divisions beside U9 Rookie in UAT Rep Club and prints the games, the five coach-page links and the schedule link. <strong>The team links change every time it runs</strong>, so use the ones it printed. Dev only; it refuses production and never touches a sign-in. When done: <code>--reset</code> (Morgan and Sam keep their Reds and Blues).</dd>
+    <dt>S1 Walk</dt><dd>Published, standings on. Oak (Morgan coaches), Pine (Sam), Willow (Morgan too), Spruce.</dd>
+    <dt>S2 Walk</dt><dd>Published, standings <strong>off</strong>. Larch (Morgan), Maple (Sam).</dd>
+  </dl></section>
+  <section class="card"><h2>The games the fixture makes</h2><p class="sub">G-numbers are the walk’s names for them; the screens show only the teams and times. Newest first, the order the coach’s list uses.</p>
+    <div class="scroll"><table class="nums">
+      <tr><th>Game</th><th>Home vs away</th><th>When</th><th>State</th><th>What a coach should see</th></tr>
+      <tr><td>G4</td><td>Oak vs Pine</td><td>Tomorrow</td><td>Not started</td><td>Not in Scores</td></tr>
+      <tr><td>G1</td><td>Oak vs Pine</td><td>Started an hour ago</td><td>No score</td><td>Morgan: Enter · Sam: “Oak’s coach enters the score.”</td></tr>
+      <tr><td>G6</td><td>Oak vs Willow</td><td>Yesterday</td><td>No score</td><td>Morgan coaches both: Enter, never Report</td></tr>
+      <tr><td>G5</td><td>Oak vs Pine</td><td>2 days ago</td><td>Postponed</td><td>Not in Scores</td></tr>
+      <tr><td>G3</td><td>Pine vs Oak</td><td>3 days ago</td><td>No score</td><td>Sam: Enter · Morgan: “Pine’s coach enters the score.”</td></tr>
+      <tr><td>G7</td><td>Oak vs Spruce</td><td>5 days ago</td><td>The club’s 7–2</td><td>“The league admin entered this score.”</td></tr>
+      <tr><td>G2</td><td>Oak vs Pine</td><td>6 days ago</td><td>No score</td><td>Morgan: Enter (an old game still waits)</td></tr>
+      <tr><td>G8</td><td>Larch vs Maple (S2)</td><td>Started 30 minutes ago</td><td>No score</td><td>The standings-off words</td></tr>
+    </table></div>
+  </section>
+  <section class="card"><h2>Sign in as</h2><p>One browser window per person (private windows for the others). Dev only, keep this page private. Passwords are the UAT set.</p><dl class="facts">
+    <dt>Home coach</dt><dd><code>uat-hl-coach-reds@uat-rep-club.local</code> (Morgan Reid): Oak, Willow, Larch</dd>
+    <dt>Away coach</dt><dd><code>uat-hl-coach-blues@uat-rep-club.local</code> (Sam Blake): Pine, Maple</dd>
+    <dt>League admin</dt><dd><code>uat-club-league-admin@uat-rep-club.local</code> (Jordan Pike)</dd>
+    <dt>Registrar</dt><dd><code>uat-club-registrar@uat-rep-club.local</code>: D7 only</dd>
+  </dl></section>
+  <section class="card"><h2>Where</h2><dl class="facts">
+    <dt>Coach pages</dt><dd>The five links the fixture printed (Oak, Willow, Larch for Morgan; Pine, Maple for Sam).</dd>
+    <dt>The schedule</dt><dd><code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code> (pick S1 Walk or S2 Walk)</dd>
+    <dt>Public schedule</dt><dd><code>http://localhost:3000/uat-rep-club/league/2026-fall-house-league/schedule</code></dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>The words.</strong> Every sentence is the copy you accepted on 2026-11-01 (Part B of the Stage 9e copy) and your three lines of 2026-11-03. The build’s own: “You entered this <em>on</em> Oct 28 at 8:15 a.m.” for an entry from another day (the copy gave only the other coach’s form), and the “{n} left” counter on the note (the rainout’s word; 280 characters).</li>
+    <li><strong>Where the fold sits (D1).</strong> Scores to check sits beside Needs a new date, above every view (List, Week, Month), as that fold does, rather than on the List alone. Recommend keep.</li>
+    <li><strong>The fold’s explanation (D1)</strong> is a line inside the fold once it is opened, not a hover tooltip (a hover can’t be read on a phone). Recommend keep.</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "hl9e3-walk-coach-scores-v1";
+  var TITLE = "9e-3 walk · Coach scores: the home coach enters, the away coach can report (2026-11-03) · §447";
+  var FX = "<code>node --env-file=.env.local .probe/9e3-walk/fixture.mjs";
+  var MO = "Morgan Reid (home coach) · uat-hl-coach-reds@uat-rep-club.local";
+  var SA = "Sam Blake (away coach) · uat-hl-coach-blues@uat-rep-club.local (private window)";
+  var LA = "League admin · uat-club-league-admin@uat-rep-club.local (private window)";
+  var REG = "Registrar · uat-club-registrar@uat-rep-club.local (private window)";
+  var SCH = "<code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code>";
+  var PARTS = [
+ { id: "A", title: "The home coach’s Scores list", steps: [
+  { who: "Terminal", do: "With the dev server restarted, run " + FX + "</code>.",
+    see: "<strong>Stop check:</strong> “Built …”, the eight games G1–G8 with their times, five coach-page links and the schedule link. Keep it open: the links change every run." },
+  { who: MO, do: "Sign in and open the <strong>Oak</strong> link. Scroll to the section under Schedule.",
+    see: "The heading <strong>Scores and standings</strong>, the standing line (Oak has G7’s win, so 1st of 4 · 1-0-0 · 2 points) and <strong>See the standings</strong>. The old “The club enters scores for now.” is gone." },
+  { who: MO, do: "Read the list under the standing line.",
+    see: "Newest first: <strong>G1</strong> Oak vs Pine (Today, “Lions Park · Diamond 1 · you are the home team”, <strong>Enter the score</strong>); <strong>G6</strong> Oak vs Willow (Enter the score); <strong>G3</strong> Pine vs Oak (“Pine’s coach enters the score.”, no button, no “you are the home team”); <strong>G7</strong> Oak vs Spruce (<strong>Final 7–2</strong>, “The league admin entered this score.”, no button); <strong>G2</strong> Oak vs Pine six days ago (Enter the score)." },
+  { who: MO, do: "Look for G4 (tomorrow) and G5 (postponed) in the list.",
+    see: "Neither is in Scores. G4 is in the Schedule section above; G5 is under the Schedule’s Needs a new date." },
+  { who: MO, do: "Read the line under the list.",
+    see: "“Scores count in the standings as soon as they are entered. The league admin can correct them. Families aren’t emailed.”" }
+ ]},
+ { id: "B", title: "Enter, change and clear a score", steps: [
+  { who: MO, do: "Press <strong>Enter the score</strong> on G1.",
+    see: "A window: “Oak vs Pine · {day}, {date} · {time}” over the title <strong>Enter the score</strong>; two boxes “Oak · Home · you” – “Pine · Away”; the line “It counts in the standings right away. You can change it until the other coach reports it or the league admin corrects it. Families aren’t emailed.”; the foot reads “Entered as Morgan Reid” with Cancel and <strong>Save the score</strong> (faded)." },
+  { who: MO, do: "Type <strong>7</strong> in Oak’s box only.",
+    see: "The line changes to “Enter both scores, or neither.” and Save the score stays faded." },
+  { who: MO, do: "Type <strong>4</strong> in Pine’s box and press Save the score.",
+    see: "The window closes; a quiet note at the bottom right, “Score saved. It counts in the standings now.”, fades. G1 reads <strong>Final 7–4</strong>, “You entered this at {time}. You can change it until Pine’s coach reports it or the league admin corrects it.”, and <strong>Change the score</strong>. The standing line now counts two wins (2-0-0 · 4 points)." },
+  { who: MO, do: "Press Change the score on G1, change Oak to <strong>8</strong>, then press ×.",
+    see: "The title reads <strong>Change the score</strong> with 7 and 4 filled in; × asks before throwing away what you typed. Go back and press Save the score: G1 reads Final 8–4." },
+  { who: MO, do: "On <strong>G6</strong> enter 3–3 and save. Press Change the score and empty both boxes.",
+    see: "With both boxes empty: “Both boxes are empty. Saving puts this game back to scheduled.” and Save is live. Save: G6 offers <strong>Enter the score</strong> again and the standing line drops the tie." },
+  { who: MO, do: "On <strong>G2</strong> (six days ago) enter <strong>5–1</strong> and save.",
+    see: "G2 reads Final 5–1 and “You entered this at {time}. …” (an entry is dated by when it was entered, and that was today)." }
+ ]},
+ { id: "C", title: "The away coach reports a score", steps: [
+  { who: SA, do: "Sign in as Sam and open the <strong>Pine</strong> link.",
+    see: "G1 Oak vs Pine: <strong>Final 8–4</strong>, “Entered by Oak’s coach at {time}” (no “Morgan” anywhere) and <strong>Report this score</strong>. G3 Pine vs Oak: “you are the home team” and Enter the score. G2: Final 5–1 with Report this score." },
+  { who: SA, do: "Press Report this score on G1. Type a few letters in the box.",
+    see: "“Oak 8, Pine 4 · {day}, {date}” over <strong>Report this score</strong>; the label “What should it be?” with the example “For example: we had it 6–4.”; “You can leave this empty. The score stays as entered until the league admin looks. Families aren’t emailed.”, and once you type, “{n} left”. The foot: “Sent to the league admin”, Cancel, <strong>Report to the league admin</strong>." },
+  { who: SA, do: "Make the note <strong>We had it 6–4.</strong> and press Report to the league admin.",
+    see: "The note “Reported. The league admin will look at it.” fades. G1 still reads Final 8–4, now with “You told the league admin this isn’t right. The score stands until they look.” and no button." },
+  { who: MO, do: "Reload Oak’s page.",
+    see: "G1: Final 8–4 and “Pine’s coach says this isn’t right. The league admin is checking it.” <strong>No Change the score.</strong>" },
+  { who: SA + " and " + MO, do: "Sam: open Report this score on <strong>G2</strong> and leave it open. Morgan: Change G2 to <strong>5–2</strong> and save. Sam: type anything and press Report to the league admin.",
+    see: "Sam’s window says “This score changed while the window was open. Close it and look again.” Nothing is reported. Close it: G2 reads Final 5–2 with Report this score. Leave G2 unreported." }
+ ]},
+ { id: "D", title: "The league admin keeps and corrects", steps: [
+  { who: LA, do: "Open " + SCH + " and pick <strong>S1 Walk</strong>.",
+    see: "Beside Needs a new date, a fold <strong>Scores to check</strong> with the amber count <strong>2</strong>. Opened: “Scores coaches entered that you haven’t looked at. They already count in the standings.”, then G1 Oak vs Pine first with a <strong>Reported</strong> chip and “Final 8–4 · entered by Morgan Reid”, then G2 with <strong>Coach entered</strong> and “Final 5–2 · entered by Morgan Reid”." },
+  { who: LA, do: "Open the G1 row.",
+    see: "The window: the Reported chip; “Entered by Morgan Reid, {date} at {time}. Pine’s coach says: “We had it 6–4.””; “This score counts until you change it.”; buttons <strong>Keep 8–4</strong> and <strong>Correct the score</strong>." },
+  { who: LA, do: "Press Correct the score, set the boxes to <strong>6</strong> and <strong>4</strong>, press ✓.",
+    see: "It reads Final 6–4. Under it, the report line stays, then “Corrected by Jordan Pike, {date} at {time}. Coaches can’t change this score now.” No chip, no Keep. Scores to check now counts 1." },
+  { who: LA, do: "Open G2 (Coach entered) and press <strong>Keep 5–2</strong>.",
+    see: "“Marked as checked.” in the window. It reads “Entered by Morgan Reid, Oak’s coach, {date} at {time}” and “Checked by Jordan Pike, {date} at {time}”, no buttons. Close it: <strong>the Scores to check fold is gone</strong>." },
+  { who: MO + " and " + SA, do: "Reload Oak (Morgan) and Pine (Sam).",
+    see: "G1: Final 6–4 and “The league admin corrected this score.” for both. G2: Final 5–2 and “The league admin checked this score.” for both. <strong>No buttons</strong> on either game for either coach." },
+  { who: SA, do: "On Pine’s page, Enter the score on <strong>G3</strong> (Pine at home): 2–1, and save.",
+    see: "Sam reads “You entered this at {time}. You can change it until Oak’s coach reports it…”. Morgan (reload Oak) sees “Entered by Pine’s coach at {time}” and Report this score: the sides follow the home team." },
+  { who: REG, do: "Open the schedule, S1 Walk. Open the fold and G3’s row.",
+    see: "Scores to check (1) with Pine vs Oak, Coach entered, “entered by Sam Blake”. The window shows the chip and the entered line, but <strong>no Keep, no Correct, no pencil</strong>." },
+  { who: LA, do: "Open G3, press the pencil, change nothing, press ✓.",
+    see: "“Marked as checked.” and “Checked by Jordan Pike, …”. The fold is gone again." }
+ ]},
+ { id: "E", title: "Edges", steps: [
+  { who: MO, do: "Open the <strong>Willow</strong> link (Morgan coaches Willow and Oak). Enter 2–2 on G6 Oak vs Willow.",
+    see: "On Willow’s page G6 says “you are the home team” (a coach of both teams is the home coach) and offers Enter the score, never Report. After saving, Oak’s page shows the same “You entered this…” line." },
+  { who: LA, do: "Open <strong>G7</strong> Oak vs Spruce (the club’s 7–2 from before this build).",
+    see: "Final 7–2 and no “entered by” line or chip. Morgan’s Oak page reads “The league admin entered this score.” with no button." },
+  { who: MO, do: "Open the <strong>Larch</strong> link (S2 Walk, standings off). Enter 3–1 on G8 and save.",
+    see: "The heading is just <strong>Scores</strong>, with no standing line. The foot says “Scores show on the schedule as soon as they are entered…”, the window’s line “It shows on the schedule right away…”, and the note after saving is “Score saved.” alone." },
+  { who: LA, do: "Open G6 (Coach entered 2–2), Correct the score, empty both boxes, press ✓. Then reload Morgan’s Oak page.",
+    see: "The game has no score. Morgan’s G6 offers <strong>Enter the score</strong> again (a cleared score goes back to the home coach: the build’s choice, say if it should not)." },
+  { who: LA, do: "Open G6 again, pencil, enter 4–0, ✓. Reload Morgan’s Oak page.",
+    see: "The club’s window reads “Entered by Jordan Pike, {date} at {time}”. Morgan reads “The league admin entered this score.” and has no button." },
+  { who: "Signed out (any window)", do: "Open the public schedule and the standings, S1 Walk.",
+    see: "The games show their finals (Final 6–4 and so on) and the standings count them. <strong>Nowhere</strong> does a name, “entered by”, “Reported” or the note “We had it 6–4.” appear." }
+ ]},
+ { id: "F", title: "A phone", steps: [
+  { who: "Terminal", do: "Run " + FX + "</code> again for fresh games, and use its new links.",
+    see: "The same printout with new team links." },
+  { who: MO, do: "Narrow the window to 390 px (or use a phone) on Oak’s page.",
+    see: "Each row wraps: the day and time on one line with the score side at the right, the match under it. Enter the score keeps its words and is a 44 px tap." },
+  { who: MO, do: "Tap Enter the score on G1, then tap a box.",
+    see: "The window fills the screen. With the number keyboard up, Save the score is still in view at the foot. The boxes are tall enough to tap (44 px). Save 1–0." },
+  { who: SA, do: "At 390 px on Pine’s page, look at G1’s Report this score.",
+    see: "Only the <strong>flag mark</strong>, a 44 px square (a screen reader names it “Report this score”). Tapped, the full-screen window titled <strong>Report this score</strong>. Cancel it." },
+  { who: "Terminal", do: "When you are finished, run " + FX + " --reset</code>.",
+    see: "“Reset: … gone. Morgan and Sam keep Reds and Blues.”" }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

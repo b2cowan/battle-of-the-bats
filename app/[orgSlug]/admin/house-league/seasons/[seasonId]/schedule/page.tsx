@@ -30,7 +30,8 @@ import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import FilterGroup from '@/components/coaches/FilterGroup';
 import { WeekView } from '@/components/admin/kit/club/ClubCalendarViews';
 import { CalendarViewSwitch, ScheduleDateNav } from '@/components/coaches/ScheduleCalendarViews';
-import { NeedsDateFold, SeasonListView, SeasonMonthView } from '@/components/admin/kit/club/league/schedule/SeasonScheduleViews';
+import { NeedsDateFold, ScoresToCheckFold, SeasonListView, SeasonMonthView } from '@/components/admin/kit/club/league/schedule/SeasonScheduleViews';
+import type { GameScoreRecord } from '@/lib/league-coach-scores';
 import GameWindow from '@/components/admin/kit/club/league/schedule/GameWindow';
 import GenerateGamesWindow from '@/components/admin/kit/club/league/schedule/GenerateGamesWindow';
 import PublishScheduleWindow from '@/components/admin/kit/club/league/schedule/PublishScheduleWindow';
@@ -652,6 +653,8 @@ export default function SchedulePage() {
   // The whole season's (step 3): the division is a scope over them, never a second read.
   const [teams, setTeams] = useState<LeagueTeam[]>([]);
   const [games, setGames] = useState<LeagueGame[]>([]);
+  /** Who entered each game's score (9e-3), by game id: the window's tag and "Scores to check". */
+  const [scoreRecords, setScoreRecords] = useState<ReadonlyMap<string, GameScoreRecord>>(() => new Map());
   const [practices, setPractices] = useState<LeaguePractice[]>([]);
   /** The season's game time, slot by slot (step 4): "Time from {schedule}" on a game that sits on one. */
   const [gameSlots, setGameSlots] = useState<SeasonGameSlot[]>([]);
@@ -795,6 +798,7 @@ export default function SchedulePage() {
     setGamePermits(g.permits ?? {});
     setPublishing(g.publishing ?? {});
     setChanges(g.changes ?? {});
+    setScoreRecords(new Map(Object.entries((g.scores ?? {}) as Record<string, GameScoreRecord>)));
     setPractices(p.practices ?? []);
     setScheduleRead('ok');
   }, [seasonId, orgQuery, beginRead]);
@@ -1454,6 +1458,7 @@ export default function SchedulePage() {
       {scheduleRead === 'ok' && (
         <div ref={needsDateRef}>
           <NeedsDateFold key={newDatesKey} bookings={calendar.needsDate} onOpen={openBooking} startOpen={newDatesKey > 0} />
+          <ScoresToCheckFold bookings={calendar.bookings} scores={scoreRecords} onOpen={openBooking} />
         </div>
       )}
 
@@ -1575,6 +1580,7 @@ export default function SchedulePage() {
         <GameWindow
           key={gameWindow === 'create' ? 'create' : gameWindow.id}
           game={openedGame}
+          score={openedGame ? scoreRecords.get(openedGame.id) ?? null : null}
           booking={openedGame ? [...calendar.bookings, ...calendar.needsDate].find(b => b.key === `league_game:${openedGame.id}`) ?? null : null}
           divisionId={openedGame?.divisionId ?? selectedDivId}
           divisionName={(openedGame ? divisions.find(d => d.id === openedGame.divisionId)?.name : null) ?? divName}
