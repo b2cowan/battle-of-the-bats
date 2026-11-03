@@ -670,8 +670,8 @@ anchor (date, commit, walk §), never deletes it.
 - [x] **O11 · Ruling: a narrower lock on the change log?** **RULED YES 2026-11-02 (owner, agreeing with the recommendation). BUILT
   2026-11-03: migration 429 (`429_the_change_log_cannot_be_edited.sql`) applied to dev 2026-11-03, proved by
   `scripts/platform-audit-log-lock-check.sql` (PLATFORM_AUDIT_LOG_LOCK_PASSED, T1–T9), guarded by
-  `tests/unit/platform-audit-log-lock.test.ts`; prod apply pending in `MANUAL_PROD_STEPS.json` (any time). When it is committed and
-  shipped is the owner's call.** Build prompt: `PLANS_PRICING_STAGE0_O11_AUDIT_LOCK_BUILD_PROMPT.md`. (Part 9, 2026-11-01.) The full append-only lock was not built: deleting a
+  `tests/unit/platform-audit-log-lock.test.ts`; prod apply pending in `MANUAL_PROD_STEPS.json` (any time). Committed `aef88a5e4`
+  2026-11-03 (owner: "review then commit").** Build prompt: `PLANS_PRICING_STAGE0_O11_AUDIT_LOCK_BUILD_PROMPT.md`. (Part 9, 2026-11-01.) The full append-only lock was not built: deleting a
   club blanks the club on its log rows, and the October lead-privacy fix rewrote old rows. Option: refuse every edit except that
   blanking, and refuse deletes (a migration; a future privacy erasure would then need the lock lifted on purpose). Recommend yes,
   low urgency.

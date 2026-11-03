@@ -25,7 +25,7 @@ full lock was not built). **When it ships is not ruled**: build it, then commit 
   acknowledged columns for the table removed (the baseline is not a watched path). `check:dictionary` and
   `check:manual-migrations` pass. `verify:changed` stops at 9 failing tests, all in other sessions' uncommitted work.
 - ⚖ TRUNCATE is refused too (read as inside "refuse deletes"); drop `platform_audit_log_no_truncate` if the owner disagrees.
-- Owner said "review then commit" 2026-11-03.
+- Committed `aef88a5e4` 2026-11-03 (owner: "review then commit").
 
 ## The ruling, exactly
 
