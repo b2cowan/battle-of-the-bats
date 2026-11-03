@@ -182,7 +182,7 @@
   password doesn't match": the staff sign-in is password-only, so rare. (5) A Production request created before today with
   no Why can still be approved; its email reads "Reason: Not recorded". (6) Bulk's portal/billed split reads the refusal's
   sentence, not a code (`PlanRefusedError.code` is one value for both); rewording that sentence would move the counts.
-  Browser walk owed.
+  **Committed `1e18e9e4f` 2026-11-02.** Browser walk owed.
 - **Part 8 — built 2026-11-01, committed `ee2f55acf` 2026-11-01. No migration.** `MoneyRead['nextCharge']` is now the union `NextCharge`
   (`{kind:'charge',…} | {kind:'none'} | {kind:'unread'}`, `lib/console-money.ts`); the preview's `.catch` returns `unread`. The band
   words it **"Not read"** (the word the comparison rows already use for a Stripe that did not answer) with the note "Stripe could not be
@@ -661,7 +661,7 @@ anchor (date, commit, walk §), never deletes it.
 - [ ] **O9 · Exit walks:** re-run Stripe Walk 6 (webhook hardening) and the Stage 0 walk (both test mode).
 - [ ] **O10 · `/design` session for Part 10 (sign in again), then its own build session** (owner ruling 2026-11-01, Session 3).
   **Design half DONE 2026-11-02: drawn, all 13 asks ruled (see Part 10's status line above). BUILT, simplified and reviewed
-  2026-11-02, committed on the owner's go (the hash is in Part 10's note); the browser walk and the "Secure password change"
+  2026-11-02, committed `1e18e9e4f` on the owner's go; the browser walk and the "Secure password change"
   setting (Part 10's note) still owed, so this line stays open until it ships.** The
   round-2 drawings place the sentence on the Stage 3–8 screens only; they draw no sign-in-again window and no frame for today's Bulk
   changes or today's price-slot change. Draw: the window (password only), where it opens on those two screens, the owner email.
