@@ -15,6 +15,7 @@ import { LOCKED_RESULTS } from './tournament-status-words';
 import { GROUP_UNSCOPED_ROLES } from './member-access';
 import { storedCutoffs } from './born-years';
 import { sanitizeCoachNamesPolicy } from './coach-names-policy';
+import { sanitizeTournamentLookPolicy } from './tournament-look';
 
 export interface AuthContext {
   user: User;
@@ -91,6 +92,7 @@ type AuthOrgRow = {
   birthday_cutoffs?: unknown;
   /** Who the club lists as a coach (mig 352); the select is `*`. */
   coach_names_policy?: unknown;
+  tournament_look_policy?: unknown;
   /** The club's public look. The row is read with `*`, so these are always present. */
   theme_preset?: string | null;
   theme_primary?: string | null;
@@ -226,6 +228,7 @@ export async function getAuthContext(options: AuthContextOptions = {}): Promise<
     birthdayCutoffs: storedCutoffs(orgRow.birthday_cutoffs),
     // Who the club lists as a coach (mig 352) — fails closed to 'coaches_choose' if the column is unreadable.
     coachNamesPolicy: sanitizeCoachNamesPolicy(orgRow.coach_names_policy),
+    tournamentLookPolicy: sanitizeTournamentLookPolicy(orgRow.tournament_look_policy),
     // The public site editor reads the saved look from here (and re-reads it after every pick); without these
     // it saw "no colour chosen" and always showed the default, whatever had been saved.
     themePreset: orgRow.theme_preset ?? undefined,

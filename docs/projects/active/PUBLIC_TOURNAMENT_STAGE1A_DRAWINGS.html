@@ -1,0 +1,740 @@
+<title>Who Owns the Look</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=DM+Sans:wght@400;500;700&family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a document page (cool grey, follows the viewer's theme) holding specimens drawn on the product's own warm admin
+   and club-frame tokens (fixed, light), so the frames read as specimens. Sticky numbered tabs, one decision per tab. */
+:root{
+  --doc-bg:#EEF0F2; --doc-panel:#FFFFFF; --doc-fg:#1B1F24; --doc-muted:#58616D; --doc-line:#D3D8DF; --doc-accent:#2F5D8A;
+  --doc-new:#1F6B3A; --doc-new-bg:#E3F1E7; --doc-re:#8A5A00; --doc-re-bg:#F7ECD6; --doc-gone:#9B2C2C; --doc-gone-bg:#F8E1E1;
+  --doc-same:#5B6470; --doc-same-bg:#E7EAEE; --doc-mark:#2F5D8A; --doc-mark-ink:#FFFFFF;
+  --f-doc:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  /* product specimen tokens (Warm admin kit + club frame), fixed */
+  --k-paper:#F8F4ED; --k-card:#FFFFFF; --k-line:rgba(70,55,30,.12); --k-line-strong:rgba(70,55,30,.20); --k-fill:rgba(70,55,30,.08);
+  --k-olive:#57651E; --k-olive-soft:rgba(87,101,30,.10); --k-ink:#241E15; --k-ink-2:#4A4235; --k-ink-3:#615A54;
+  --k-lime:#D9F99D; --k-scrim:rgba(36,30,21,.34);
+  --c-ground:#F6F5F2; --c-ink:#1F1B16; --c-soft:#4E473D; --c-dim:#6F675B; --c-line:#E4E0D8;
+  --f-ui:'Inter',system-ui,sans-serif; --f-title:'Barlow Condensed','Arial Narrow',sans-serif;
+  --f-serif:'DM Serif Display',Georgia,serif; --f-dmsans:'DM Sans','Inter',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --doc-bg:#14171B; --doc-panel:#1C2025; --doc-fg:#E5E8EC; --doc-muted:#9AA3AE; --doc-line:#2E343C; --doc-accent:#8DB4DE;
+  --doc-new:#8FD3A4; --doc-new-bg:#1E3426; --doc-re:#E9C27A; --doc-re-bg:#3A2E16; --doc-gone:#F0A3A3; --doc-gone-bg:#3D2020;
+  --doc-same:#A7B0BB; --doc-same-bg:#272C33; --doc-mark:#8DB4DE; --doc-mark-ink:#14171B; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --doc-bg:#14171B; --doc-panel:#1C2025; --doc-fg:#E5E8EC; --doc-muted:#9AA3AE; --doc-line:#2E343C; --doc-accent:#8DB4DE;
+  --doc-new:#8FD3A4; --doc-new-bg:#1E3426; --doc-re:#E9C27A; --doc-re-bg:#3A2E16; --doc-gone:#F0A3A3; --doc-gone-bg:#3D2020;
+  --doc-same:#A7B0BB; --doc-same-bg:#272C33; --doc-mark:#8DB4DE; --doc-mark-ink:#14171B; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--doc-bg);color:var(--doc-fg);font:14px/1.55 var(--f-doc);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--doc-bg)}
+.wrap{max-width:1360px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 64px}
+header.top h1{font-size:26px;line-height:1.2;margin:4px 0 6px;text-wrap:balance}
+header.top .eyebrow{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--doc-muted);font-weight:600}
+header.top p{margin:0;color:var(--doc-muted);max-width:78ch}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--doc-bg);margin-top:16px;border-bottom:1px solid var(--doc-line);display:flex;gap:4px;overflow-x:auto;scrollbar-width:thin}
+nav.tabs button{font:600 13px/1 var(--f-doc);color:var(--doc-muted);background:none;border:0;border-bottom:3px solid transparent;padding:14px 12px 11px;white-space:nowrap;cursor:pointer}
+nav.tabs button[aria-selected="true"]{color:var(--doc-fg);border-bottom-color:var(--doc-accent)}
+nav.tabs button:focus-visible{outline:2px solid var(--doc-accent);outline-offset:-2px}
+.viewrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 0 4px;color:var(--doc-muted);font-size:13px}
+.track{display:inline-flex;background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:999px;padding:3px;gap:2px}
+.track button{font:600 13px/1 var(--f-doc);border:0;background:none;color:var(--doc-muted);padding:8px 14px;border-radius:999px;cursor:pointer;min-height:34px}
+.track button[aria-pressed="true"]{background:color-mix(in srgb,var(--doc-accent) 16%,transparent);color:var(--doc-fg)}
+.track button:focus-visible{outline:2px solid var(--doc-accent)}
+section[data-tab]{padding-top:18px}
+h2{font-size:21px;margin:0 0 6px;text-wrap:balance}
+h3{font-size:16px;margin:26px 0 8px}
+.lede{color:var(--doc-muted);max-width:80ch;margin:0 0 14px}
+.row{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+.spec{min-width:0;display:flex;flex-direction:column;gap:8px}
+.cap{font-size:12px;font-weight:600;color:var(--doc-muted);letter-spacing:.02em;margin:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.note{font-size:13px;color:var(--doc-muted);max-width:60ch;margin:0}
+.note b{color:var(--doc-fg)}
+.tag{font:700 10px/1 var(--f-doc);letter-spacing:.06em;text-transform:uppercase;padding:4px 6px;border-radius:4px}
+.tag.new{color:var(--doc-new);background:var(--doc-new-bg)} .tag.re{color:var(--doc-re);background:var(--doc-re-bg)}
+.tag.gone{color:var(--doc-gone);background:var(--doc-gone-bg)} .tag.same{color:var(--doc-same);background:var(--doc-same-bg)}
+.mk{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--doc-mark);color:var(--doc-mark-ink);font:700 11px/1 var(--f-doc);text-decoration:none;flex:none;cursor:pointer}
+.mk:focus-visible{outline:2px solid var(--doc-fg);outline-offset:2px}
+.scrollx{overflow-x:auto;max-width:100%;padding-bottom:6px}
+.panel{background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:10px;padding:14px 16px;max-width:80ch}
+.panel p{margin:0 0 8px} .panel p:last-child{margin:0}
+table.t{border-collapse:collapse;font-size:13px;min-width:640px;background:var(--doc-panel)}
+table.t th,table.t td{border:1px solid var(--doc-line);padding:8px 10px;text-align:left;vertical-align:top}
+table.t th{font-weight:600;color:var(--doc-muted);font-size:12px}
+/* the compare toggle */
+body[data-view="diff"] .same-part{opacity:.18;filter:grayscale(1)}
+body[data-view="diff"] .gone-hint{outline:2px dashed var(--doc-gone);outline-offset:2px}
+
+/* ============ specimens: the warm admin kit ============ */
+.adm{font-family:var(--f-ui);color:var(--k-ink);background:var(--k-paper);border-radius:6px;padding:16px;font-size:14px;line-height:1.45}
+.adm *{font-family:inherit}
+.phone{width:390px;flex:none}
+.brow{background:var(--k-card);border:1px solid var(--k-line);border-radius:8px}
+.brow.open{border-color:var(--k-line-strong)}
+.brow .hd{min-height:60px;padding:12px 16px;display:flex;gap:12px;align-items:center}
+.brow .hd .tx{flex:1;min-width:0} .brow .hd b{display:block;font-size:16px;font-weight:700}
+.brow .hd small{display:block;font-size:12px;color:var(--k-ink-3);line-height:1.4}
+.chev{width:18px;height:18px;color:var(--k-ink-3);flex:none} .open>.hd .chev{transform:rotate(180deg)}
+.brow .bd{padding:0 16px 18px}
+.rows{display:flex;flex-direction:column;gap:12px}
+.pt{font-size:12px;font-weight:650;color:var(--k-ink-2);margin:14px 0 8px}
+.pt:first-child{margin-top:0}
+.collide{box-shadow:0 0 0 2px #B03A22 inset;border-radius:6px}
+.sub-sw{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--k-line);font-size:13px}
+.sw-tg{width:36px;height:20px;border-radius:999px;background:var(--k-olive);position:relative;flex:none}
+.sw-tg::after{content:"";position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff}
+.sw-tg.off{background:rgba(70,55,30,.25)} .sw-tg.off::after{right:auto;left:2px}
+/* SendRows radio list */
+.radios{border:1px solid var(--k-line);border-radius:8px;background:var(--k-card);margin:3px 0 12px}
+.radios .r{display:flex;gap:10px;padding:9px 12px;min-height:44px;align-items:flex-start}
+.radios .r+.r{border-top:1px solid var(--k-line)}
+.radio{width:18px;height:18px;border-radius:50%;border:1px solid rgba(87,101,30,.42);background:#fff;flex:none;margin-top:1px;display:grid;place-items:center}
+.radio.on{border-color:rgba(87,101,30,.85);background:rgba(87,101,30,.14)}
+.radio.on::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--k-olive)}
+.radios .r b{display:block;font-size:14px;font-weight:600} .radios .r small{display:block;font-size:12px;color:var(--k-ink-3);margin-top:2px;line-height:1.4}
+.hint{font-size:12px;color:var(--k-ink-3);margin:0}
+.hint a,.golink{color:var(--k-olive);font-weight:600;text-decoration:underline;text-underline-offset:2px}
+/* swatches: the club Look's control */
+.sws{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.dot{width:32px;height:32px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--k-line-strong);flex:none}
+.phone .dot{width:44px;height:44px}
+.dot.on{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--k-olive)}
+.dot.own{background:conic-gradient(#e11d48,#f59e0b,#16a34a,#2563eb,#9333ea,#e11d48)}
+.pill{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px 0 4px;border-radius:999px;border:1px solid var(--k-line-strong);background:#fff;font-size:13px;font-weight:600;color:var(--k-ink-2)}
+.phone .pill{height:44px}
+.pill i{width:28px;height:28px;border-radius:50%;display:block}
+.pill.on{border-color:var(--k-olive);background:var(--k-olive-soft);color:var(--k-olive)}
+/* old single swatches */
+.osw{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:14px;font-weight:700;flex:none}
+.phone .osw{width:44px;height:44px}
+.osw.on{border:2px solid var(--k-olive)}
+/* type tiles */
+.types{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ty{border:1px solid var(--k-line-strong);border-radius:8px;padding:9px 10px;background:#fff;min-width:0}
+.ty.on{border-color:var(--k-olive);background:var(--k-olive-soft)}
+.ty b{display:block;font-size:17px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ty small{display:block;font-size:11px;color:var(--k-ink-3)}
+.ty .lbl{font:600 12px var(--f-ui);color:var(--k-ink-2);margin-top:4px}
+.f-classic b{font-family:var(--f-title);font-weight:700} .f-serif b{font-family:var(--f-serif);font-weight:400} .f-clean b{font-family:var(--f-ui);font-weight:700}
+.typeline{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--k-ink-2);padding:8px 0}
+/* lock line */
+.lock{display:flex;align-items:center;gap:10px;min-height:44px;font-size:13px;color:var(--k-ink-2)}
+.lock svg{width:16px;height:16px;flex:none;color:var(--k-ink-3)}
+.planchip{margin-left:auto;font-size:11px;font-weight:700;color:var(--k-olive);border:1px solid rgba(87,101,30,.35);border-radius:999px;padding:3px 8px;white-space:nowrap}
+/* collapsible cards (tournament admin) */
+.cc{background:var(--k-card);border:1px solid var(--k-line);border-radius:8px}
+.cc .hd{min-height:48px;padding:11px 20px;display:flex;gap:10px;align-items:center}
+.cc .hd b{font-size:16px;font-weight:700} .cc .hd small{margin-left:auto;font-size:12px;color:var(--k-ink-3);text-align:right}
+.phone .cc .hd{padding:11px 16px}
+.cc .bd{padding:2px 20px 18px;display:flex;flex-direction:column;gap:10px}
+.phone .cc .bd{padding:2px 16px 16px}
+.cc .bd p{margin:0}
+.stack{display:flex;flex-direction:column;gap:12px}
+.pagehd{display:flex;align-items:center;gap:10px} .pagehd h4{margin:0;font-size:20px;font-weight:700}
+.help{width:28px;height:28px;border-radius:50%;border:1px solid var(--k-line-strong);display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--k-ink-3)}
+.door{background:#fff;border:1px solid var(--k-line);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.door .tx{flex:1;min-width:0} .door .ey{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--k-olive)}
+.door b{display:block;font-size:16px} .door small{display:block;font-size:12px;color:var(--k-ink-3);overflow-wrap:anywhere}
+.pages .sl{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.phone .pages .sl{grid-template-columns:1fr}
+.swrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--k-line);font-size:14px}
+.swrow small{display:block;font-size:12px;color:var(--k-ink-3)}
+.seg{display:inline-flex;border:1px solid var(--k-line-strong);border-radius:6px;overflow:hidden}
+.seg span{padding:7px 14px;font-size:13px;font-weight:600;color:var(--k-ink-2)} .seg span.on{background:var(--k-olive-soft);color:var(--k-olive)}
+.fonts,.cards4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.fonts span,.cards4 span{border:1px solid var(--k-line-strong);border-radius:8px;padding:10px;font-size:12px;text-align:center}
+.savepill{align-self:flex-end;font-size:12px;font-weight:600;color:var(--k-olive);background:var(--k-olive-soft);border-radius:999px;padding:6px 12px}
+/* KitDialog question */
+.scrim{background:var(--k-scrim);border-radius:6px;padding:36px 20px;display:grid;place-items:center}
+.dlg{width:416px;max-width:100%;background:#fff;border:1px solid rgba(87,101,30,.30);border-radius:12px;font-family:var(--f-ui);color:var(--k-ink)}
+.dlg h5{margin:0;padding:18px 24px 6px;font-size:16px;font-weight:700}
+.dlg p{margin:0;padding:10px 24px 16px;font-size:14px;line-height:1.5;color:var(--k-ink-2)}
+.dlg p em{font-style:normal;font-weight:600;color:var(--k-ink)}
+.dlg .ft{border-top:1px solid var(--k-line);padding:14px 24px;display:flex;gap:8px;align-items:center}
+.dlg .ft small{font-size:12px;color:var(--k-ink-3);margin-right:auto}
+.btn{min-height:34px;padding:7px 14px;border-radius:6px;font:700 14px/1.4 var(--f-ui);display:inline-flex;align-items:center;white-space:nowrap}
+.btn-o{background:#fff;border:1px solid var(--k-line-strong);color:var(--k-ink-2)} .btn-l{background:var(--k-lime);color:var(--k-ink);border:1px solid transparent}
+.toast{display:inline-flex;gap:8px;align-items:center;background:#fff;border:1px solid var(--k-line-strong);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--k-olive)}
+/* admin desktop chrome */
+.desk{display:grid;grid-template-columns:240px 1fr;width:1280px;min-height:900px;background:var(--k-paper);font-family:var(--f-ui);color:var(--k-ink);border:1px solid var(--doc-line);border-radius:8px;overflow:hidden}
+.side{background:#F1EBDF;border-right:1px solid var(--k-line);padding:16px 12px;display:flex;flex-direction:column;gap:2px;font-size:13px}
+.side .tn{font-weight:700;font-size:14px;padding:6px 10px 12px;border-bottom:1px solid var(--k-line);margin-bottom:8px}
+.side span{padding:8px 10px;border-radius:6px;color:var(--k-ink-2)} .side span.on{background:var(--k-olive-soft);color:var(--k-olive);font-weight:700}
+.side .chrome{margin-top:auto;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--k-ink-3)}
+.deskmain{padding:28px 32px}
+.deskcol{max-width:1200px;display:flex;flex-direction:column;gap:12px}
+.deskcol .lookgrid{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:24px;align-items:start}
+[data-ba="before"] .is-after,[data-ba="after"] .is-before{display:none}
+
+/* ============ specimens: the public band (club frame) ============ */
+.pub{background:var(--c-ground);font-family:var(--f-ui);color:var(--c-ink);border-radius:6px;overflow:hidden;width:390px;flex:none}
+.pub.inset{width:100%;border:1px solid var(--k-line)}
+.band{height:72px;background:var(--fill);color:var(--on);display:flex;align-items:center;gap:12px;padding:0 8px 0 16px;border-bottom:3px solid var(--acc)}
+.band .lg{width:44px;height:44px;border-radius:10px;flex:none;display:grid;place-items:center;font:700 16px var(--f-title)}
+.lg.club{background:#fff;color:#166534;font-family:var(--f-serif);font-weight:400;font-size:17px}
+.lg.crest{background:radial-gradient(circle at 50% 40%,#F3C74E,#B7861B);color:#3B2A06;border-radius:50%}
+.lg.metro{background:#fff;color:#1E3A8A}
+.band .bt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.band .bt b{font:700 20px/1.1 var(--f-title);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.band[data-face="serif"] .bt b{font-family:var(--f-serif);font-weight:400;font-size:19px}
+.band[data-face="clean"] .bt b{font-family:var(--f-ui);font-weight:700;font-size:17px}
+.band .bt span{font:500 12px/1.3 var(--f-ui);opacity:.92}
+.band .sh{width:44px;height:44px;display:grid;place-items:center;flex:none}
+.band .sh svg{width:20px;height:20px}
+.ptabs{height:48px;background:#fff;border-bottom:1px solid var(--c-line);display:flex;align-items:stretch;gap:2px;padding:0 8px;font-size:14px;font-weight:600;color:var(--c-soft)}
+.ptabs span{display:flex;align-items:center;padding:0 10px;border-bottom:3px solid transparent}
+.ptabs span.on{color:var(--c-ink);border-bottom-color:var(--c-ink)}
+.pbody{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px}
+.pbody .line{height:10px;border-radius:5px;background:var(--c-line)}
+.foot{padding:10px 16px 14px;font-size:12px;color:var(--c-dim);border-top:1px solid var(--c-line)}
+.foot a{color:var(--c-ink);font-weight:600;text-decoration:underline}
+/* share image (1200x630 at a quarter) */
+.og{width:300px;height:158px;border-radius:8px;overflow:hidden;background:var(--fill);color:var(--on);position:relative;padding:16px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;flex:none;border:1px solid var(--doc-line)}
+.og b{font:700 22px/1.05 var(--f-title)} .og[data-face="serif"] b{font-family:var(--f-serif);font-weight:400}
+.og small{font-size:11px;opacity:.9}
+.og .lg{position:absolute;top:14px;left:16px;width:36px;height:36px;border-radius:9px;display:grid;place-items:center;font:700 13px var(--f-title)}
+
+/* asks */
+.ask{background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:10px;padding:14px 16px;max-width:900px;margin-bottom:12px;scroll-margin-top:70px}
+.ask h4{margin:0 0 4px;font-size:15px;display:flex;gap:8px;align-items:center}
+.ask .why{font-size:13px;color:var(--doc-muted);margin:0 0 10px}
+.ask label{display:flex;gap:10px;align-items:flex-start;padding:8px 6px;border-radius:6px;cursor:pointer;font-size:14px}
+.ask label:hover{background:color-mix(in srgb,var(--doc-accent) 8%,transparent)}
+.ask input[type=radio]{margin-top:3px;accent-color:var(--doc-accent);width:16px;height:16px;flex:none}
+.ask textarea{width:100%;min-height:44px;margin-top:6px;font:13px/1.4 var(--f-doc);color:var(--doc-fg);background:var(--doc-bg);border:1px solid var(--doc-line);border-radius:6px;padding:8px}
+.ask.flash{outline:3px solid var(--doc-accent);outline-offset:2px}
+.copybar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:16px 0}
+.copybar button{font:700 14px var(--f-doc);background:var(--doc-accent);color:var(--doc-panel);border:0;border-radius:8px;padding:11px 18px;cursor:pointer;min-height:44px}
+#copy-out{width:100%;max-width:900px;min-height:160px;font:12px/1.5 ui-monospace,Consolas,monospace;background:var(--doc-panel);color:var(--doc-fg);border:1px solid var(--doc-line);border-radius:8px;padding:10px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:520px){header.top h1{font-size:22px}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Public tournament pages · Stage 1a · drawings for the owner · 2026-11-02</div>
+  <h1>Who owns the look</h1>
+  <p>Whether a club's tournaments wear the club's look or their own, and what the club's Public site editor and a tournament's Branding page offer under each case. Asks 9–13 are ruled; this page draws them, with your three 11-02 rulings (the banner goes, Tournament Plus falls back to plain, share images move into this stage). Everything here sits behind the preview switch until Stage 8. Specimens are drawn at true size: open this page on a phone for the phone frames.</p>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" data-go="rule" aria-selected="true">1 · The club's rule</button>
+  <button role="tab" data-go="ask-first" aria-selected="false">2 · Asking first</button>
+  <button role="tab" data-go="look-card" aria-selected="false">3 · A tournament's Look</button>
+  <button role="tab" data-go="whole-page" aria-selected="false">4 · The whole page</button>
+  <button role="tab" data-go="families" aria-selected="false">5 · What families see</button>
+  <button role="tab" data-go="asks" aria-selected="false">6 · Asks</button>
+</nav>
+<div class="viewrow" id="viewrow" hidden>
+  <span>View</span>
+  <div class="track" role="group" aria-label="View">
+    <button type="button" data-view="all" aria-pressed="true">Everything</button>
+    <button type="button" data-view="diff" aria-pressed="false">Show only what differs</button>
+  </div>
+</div>
+
+<!-- ================= 1 · THE CLUB'S RULE ================= -->
+<section data-tab="rule">
+  <h2>The club's rule for its tournaments</h2>
+  <p class="lede">One setting on the club's Public site editor, for League Plus, Club and Club · Association. It is applied when pages are shown and never writes a tournament's saved look, so switching back returns every tournament to exactly what it had (Ask 9). The owner and admins who can edit the club's Look set it (Ask 13). That is the same group as the Look row, which is the main reason to put it there.</p>
+  <div class="row">
+    <div class="spec">
+      <p class="cap"><span class="tag new">New</span> Recommended · a part inside the Look row · editor column, true width 440 px <a class="mk" data-ask="a1" href="#asks">1</a></p>
+      <div class="adm" style="width:472px">
+        <div class="rows">
+          <div class="brow open">
+            <div class="hd"><div class="tx"><b>Look</b><small>Forest Green · Serif · tournaments follow</small></div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+            <div class="bd">
+              <div class="same-part">
+                <p class="pt">Logo</p>
+                <div style="display:flex;gap:10px;align-items:center"><div class="lg club" style="width:44px;height:44px;border-radius:10px;display:grid;place-items:center;border:1px solid var(--k-line)">RM</div><span class="hint">riverdale-crest.png · Replace · Browse stock logos</span></div>
+                <p class="pt">Colours</p>
+                <div class="sws">
+                  <span class="dot" style="background:linear-gradient(135deg,#1E3A8A 50%,#D9F99D 50%)"></span>
+                  <span class="dot" style="background:linear-gradient(135deg,#8B2FC9 50%,#C084FC 50%)"></span>
+                  <span class="dot" style="background:linear-gradient(135deg,#075985 50%,#38BDF8 50%)"></span>
+                  <span class="dot on" style="background:linear-gradient(135deg,#166534 50%,#86EFAC 50%)"></span>
+                  <span class="dot" style="background:linear-gradient(135deg,#9A3412 50%,#FDBA74 50%)"></span>
+                  <span class="dot" style="background:linear-gradient(135deg,#9F1239 50%,#FB7185 50%)"></span>
+                  <span class="dot own"></span>
+                </div>
+                <p class="pt">Type</p>
+                <div class="types">
+                  <div class="ty f-classic"><b>Riverdale</b><small>Teams and tryouts</small><div class="lbl">Classic</div></div>
+                  <div class="ty f-serif on"><b>Riverdale</b><small>Teams and tryouts</small><div class="lbl">Serif</div></div>
+                  <div class="ty f-clean"><b>Riverdale</b><small>Teams and tryouts</small><div class="lbl">Clean</div></div>
+                </div>
+                <p class="pt">Banner photo</p>
+                <p class="hint">riverdale-field.jpg · Replace · Remove</p>
+              </div>
+              <p class="pt">Tournaments</p>
+              <div class="radios" role="radiogroup">
+                <div class="r"><span class="radio on"></span><div><b>The club's look, unless a tournament chooses its own</b><small>New tournaments wear the club's colours and type. Whoever runs one can give it its own.</small></div></div>
+                <div class="r"><span class="radio"></span><div><b>Always the club's look</b><small>Every tournament wears the club's colours and type. Each keeps its own logo.</small></div></div>
+              </div>
+              <p class="hint">Every tournament page says it is hosted by the club.</p>
+            </div>
+          </div>
+          <div class="brow same-part"><div class="hd"><div class="tx"><b>Home page</b><small>Open now, Tournaments, Teams, News</small></div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+        </div>
+      </div>
+      <p class="note"><b>Why here:</b> it is a rule about the look, it sits beside the colours and type it imposes, and the people who may change it are exactly the people who may change the Look. <b>The row's summary</b> gains "tournaments follow" or "every tournament" so the rule is visible with the row closed. The part sits last in the row and is absent for a plan with no tournaments.</p>
+    </div>
+
+    <div class="spec">
+      <p class="cap"><span class="tag new">New</span> The 10-27 drawing · its own row · why I moved it <a class="mk" data-ask="a1" href="#asks">1</a></p>
+      <div class="adm" style="width:472px">
+        <div class="rows">
+          <div class="brow open">
+            <div class="hd"><div class="tx"><b>Home page</b><small>Open now, Tournaments, Teams, News</small></div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+            <div class="bd">
+              <div class="sub-sw"><span style="flex:1">Open now</span><span class="hint">Always first</span></div>
+              <div class="sub-sw collide"><span style="flex:1"><b style="font-weight:600">Tournaments</b><br><span class="hint">The Tournaments tab and its home section</span></span><span class="sw-tg"></span></div>
+              <div class="sub-sw" style="padding-left:24px"><span style="flex:1">Past tournaments</span><span class="sw-tg"></span></div>
+              <div class="sub-sw"><span style="flex:1">Teams</span><span class="sw-tg"></span></div>
+            </div>
+          </div>
+          <div class="brow"><div class="hd"><div class="tx"><b>Coaches on team pages</b><small>Coaches choose</small></div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+          <div class="brow collide"><div class="hd"><div class="tx"><b>Tournaments</b><small>The club's look by default</small></div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+          <div class="brow"><div class="hd"><div class="tx"><b>Web address</b><small>riverdaleminor.ca</small></div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+        </div>
+      </div>
+      <p class="note"><b>The collision (red):</b> since Stage 4f the Home page row already has a "Tournaments" switch (the club's Tournaments tab). A second row called Tournaments that means something else is the one-word, two-meanings problem. The 10-27 drawing modelled it on <i>Coaches on team pages</i>, but that row is owner-only and about privacy; Ask 13 put this one with the Look.</p>
+    </div>
+  </div>
+
+  <h3>Who sees what on the club side</h3>
+  <div class="scrollx"><table class="t">
+    <thead><tr><th>Plan</th><th>Owner</th><th>Admin</th><th>Anyone else</th></tr></thead>
+    <tbody>
+      <tr><td>Club, Club · Association</td><td>The part, both choices</td><td>The part, both choices (Ask 13)</td><td>No editor (unchanged)</td></tr>
+      <tr><td>League Plus</td><td colspan="2">The same, in the league's words: "The league's look, unless a tournament chooses its own"</td><td>No editor</td></tr>
+      <tr><td>Tournament Plus, Tournament (free), Premium coach</td><td colspan="3">No club rule; no Public site editor. The Settings page's "Open Public site" door, which opens to a failed load on these plans today, is hidden (your 11-02 ruling).</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= 2 · ASKING FIRST ================= -->
+<section data-tab="ask-first" hidden>
+  <h2>Asking before "Always"</h2>
+  <p class="lede">Choosing <b>Always the club's look</b> asks first only when at least one tournament has its own colours today; otherwise it saves at once, like the default. The question names what will change. "Has its own look" means its own colours; a tournament's own logo does not count, because it keeps it (Ask 10). The window follows the shipped question shape: a title, one sentence, the answers; the reassurance sits in the foot on the left; "Not now" has the focus; Escape or a tap outside leaves the choice where it was (the coach-names precedent).</p>
+  <div class="row">
+    <div class="spec">
+      <p class="cap"><span class="tag new">New</span> Three or fewer to name, one on now · 416 px <a class="mk" data-ask="a2" href="#asks">2</a></p>
+      <div class="scrim"><div class="dlg">
+        <h5>Always use the club's look?</h5>
+        <p><em>Riverdale Fall Classic</em> (on now), <em>Winter Indoor Showdown</em> and <em>Spring Opener</em> will change to the club's colours and type, along with 3 finished tournaments.</p>
+        <div class="ft"><small>Their own looks are kept.</small><span class="btn btn-o">Not now</span><span class="btn btn-l">Use the club's look</span></div>
+      </div></div>
+      <p class="note"><b>Order:</b> on now first, then by start date; finished ones are counted, not named. <b>"(on now)"</b> is the live-today call-out: families see the change on their next page load, mid-event. Lime, not red: it is reversible.</p>
+    </div>
+    <div class="spec">
+      <p class="cap"><span class="tag new">New</span> More than three to name</p>
+      <div class="scrim"><div class="dlg">
+        <h5>Always use the club's look?</h5>
+        <p><em>Winter Indoor Showdown</em>, <em>Spring Opener</em>, <em>Riverdale Invitational</em> and 4 more will change to the club's colours and type.</p>
+        <div class="ft"><small>Their own looks are kept.</small><span class="btn btn-o">Not now</span><span class="btn btn-l">Use the club's look</span></div>
+      </div></div>
+      <p class="note">Names stop at three so the window stays one sentence on a phone. Nothing on now, nothing finished: those clauses are simply absent.</p>
+    </div>
+    <div class="spec">
+      <p class="cap"><span class="tag new">New</span> No tournament has its own look · no question</p>
+      <div class="adm" style="width:416px">
+        <div class="radios">
+          <div class="r"><span class="radio"></span><div><b>The club's look, unless a tournament chooses its own</b></div></div>
+          <div class="r"><span class="radio on"></span><div><b>Always the club's look</b><small>Every tournament wears the club's colours and type. Each keeps its own logo.</small></div></div>
+        </div>
+        <span class="toast">✓ Saved</span>
+      </div>
+      <p class="note">Saves at once with the editor's Saved pill. Switching back from Always never asks: every tournament's own look returns as it was.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 3 · A TOURNAMENT'S LOOK ================= -->
+<section data-tab="look-card" hidden>
+  <h2>A tournament's Look card, under each case</h2>
+  <p class="lede">Drawn at phone width (390 px), the tighter case; tab 4 shows it on the desktop page. Theme, Font, Card style, Dark/Light and Hero banner become one card, <b>Look</b>: colours, type, and a preview of the real band <a class="mk" data-ask="a3" href="#asks">3</a>. The swatches are the club Look's own control, made shared <a class="mk" data-ask="a4" href="#asks">4</a>.</p>
+  <div class="row">
+
+    <div class="spec">
+      <p class="cap"><span class="tag re">Restyled</span> A · Club's tournament · the default · nothing saved</p>
+      <div class="adm phone">
+        <div class="cc open"><div class="hd"><b>Look</b><small>The club's look</small></div>
+          <div class="bd">
+            <div class="sws">
+              <span class="pill on"><i style="background:linear-gradient(135deg,#166534 50%,#86EFAC 50%)"></i>The club's look</span>
+              <span class="dot" style="background:linear-gradient(135deg,#1E3A8A 50%,#D9F99D 50%)" title="FieldLogicHQ"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#8B2FC9 50%,#C084FC 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#075985 50%,#38BDF8 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#166534 50%,#86EFAC 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#9A3412 50%,#FDBA74 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#9F1239 50%,#FB7185 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#92400E 50%,#FACC15 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#115E59 50%,#5EEAD4 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#1E40AF 50%,#93C5FD 50%)"></span>
+              <span class="dot own" title="Custom colours"></span>
+            </div>
+            <div class="typeline">Type: <b style="font-family:var(--f-serif);font-weight:400;font-size:16px">Serif</b>, the club's</div>
+            <div class="pub inset"><div class="band" data-face="serif" style="--fill:#166534;--on:#fff;--acc:#86EFAC"><div class="lg club">RM</div><div class="bt"><b>Riverdale Fall Classic</b><span>Oct 31 – Nov 2 · ● Live now</span></div></div></div>
+            <p class="hint">Follows the club's look and changes when the club's does. The club sets it on its <a href="#">Public site</a>.</p>
+          </div></div>
+      </div>
+      <p class="note">"The club's look" is a real first choice, chosen when nothing is saved: the half of D7 still on screen today (the FieldLogicHQ swatch shown as chosen) goes. Type follows the club and is only a line here <a class="mk" data-ask="a5" href="#asks">5</a>. With no event logo, the band shows the club's.</p>
+    </div>
+
+    <div class="spec">
+      <p class="cap"><span class="tag re">Restyled</span> B · Club's tournament · the default · its own look</p>
+      <div class="adm phone">
+        <div class="cc open"><div class="hd"><b>Look</b><small>Crimson · Classic</small></div>
+          <div class="bd">
+            <div class="sws">
+              <span class="pill"><i style="background:linear-gradient(135deg,#166534 50%,#86EFAC 50%)"></i>The club's look</span>
+              <span class="dot" style="background:linear-gradient(135deg,#1E3A8A 50%,#D9F99D 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#8B2FC9 50%,#C084FC 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#075985 50%,#38BDF8 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#166534 50%,#86EFAC 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#9A3412 50%,#FDBA74 50%)"></span>
+              <span class="dot on" style="background:linear-gradient(135deg,#9F1239 50%,#FB7185 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#92400E 50%,#FACC15 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#115E59 50%,#5EEAD4 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#1E40AF 50%,#93C5FD 50%)"></span>
+              <span class="dot own"></span>
+            </div>
+            <p class="hint" style="font-weight:600;color:var(--k-ink-2)">Crimson. White text on crimson, readable on every page.</p>
+            <div class="types">
+              <div class="ty f-classic on"><b>Fall Classic</b><div class="lbl">Classic</div></div>
+              <div class="ty f-serif"><b>Fall Classic</b><div class="lbl">Serif</div></div>
+              <div class="ty f-clean"><b>Fall Classic</b><div class="lbl">Clean</div></div>
+            </div>
+            <div class="pub inset"><div class="band" style="--fill:#9F1239;--on:#fff;--acc:#FB7185"><div class="lg crest">FC</div><div class="bt"><b>Riverdale Fall Classic</b><span>Oct 31 – Nov 2 · ● Live now</span></div></div></div>
+          </div></div>
+      </div>
+      <p class="note">Tapping a swatch gives the event its own look, and the three type looks appear, starting on the club's. Tapping "The club's look" goes back. Custom keeps today's two pickers with hex fields.</p>
+    </div>
+
+    <div class="spec">
+      <p class="cap"><span class="tag new">New</span> C · Club's tournament · "Always the club's look"</p>
+      <div class="adm phone">
+        <div class="cc open"><div class="hd"><b>Look</b><small>The club's look</small></div>
+          <div class="bd">
+            <div class="lock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>The club uses its look on every tournament: colours and type.</span></div>
+            <a class="golink" href="#" style="font-size:13px">Change the club's look</a>
+            <div class="pub inset"><div class="band" data-face="serif" style="--fill:#166534;--on:#fff;--acc:#86EFAC"><div class="lg crest">FC</div><div class="bt"><b>Riverdale Fall Classic</b><span>Oct 31 – Nov 2 · ● Live now</span></div></div></div>
+          </div></div>
+        <div class="cc" style="margin-top:12px"><div class="hd"><b>Logo</b><small>fall-classic-crest.png</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+      </div>
+      <p class="note">A plain lock line, no box. <b>"Change the club's look"</b> is there for the owner and admins only; a coach running the event sees the line and the preview, with the link absent, not greyed. The Logo card stays the tournament's (Ask 10), and the preview shows its crest on the club's colour.</p>
+    </div>
+
+    <div class="spec">
+      <p class="cap"><span class="tag re">Restyled</span> D · Standalone · Tournament Plus · nothing saved</p>
+      <div class="adm phone">
+        <div class="cc open"><div class="hd"><b>Look</b><small>FieldLogicHQ · Classic</small></div>
+          <div class="bd">
+            <div class="sws">
+              <span class="dot on" style="background:linear-gradient(135deg,#1E3A8A 50%,#D9F99D 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#8B2FC9 50%,#C084FC 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#075985 50%,#38BDF8 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#166534 50%,#86EFAC 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#9A3412 50%,#FDBA74 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#9F1239 50%,#FB7185 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#92400E 50%,#FACC15 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#115E59 50%,#5EEAD4 50%)"></span>
+              <span class="dot" style="background:linear-gradient(135deg,#1E40AF 50%,#93C5FD 50%)"></span>
+              <span class="dot own"></span>
+            </div>
+            <p class="hint" style="font-weight:600;color:var(--k-ink-2)">FieldLogicHQ, the plain look. Pick a colour to make it yours.</p>
+            <div class="types">
+              <div class="ty f-classic on"><b>Spring Showcase</b><div class="lbl">Classic</div></div>
+              <div class="ty f-serif"><b>Spring Showcase</b><div class="lbl">Serif</div></div>
+              <div class="ty f-clean"><b>Spring Showcase</b><div class="lbl">Clean</div></div>
+            </div>
+            <div class="pub inset"><div class="band" style="--fill:#1E3A8A;--on:#fff;--acc:#D9F99D"><div class="lg metro">MS</div><div class="bt"><b>Metro Spring Showcase</b><span>May 8–10, 2027 · Registration open</span></div></div></div>
+          </div></div>
+      </div>
+      <p class="note">No club layer, so no "club's look" choice. Nothing saved now means the plain FieldLogicHQ colour that this card shows, not an organization look left over from an earlier plan (your 11-02 ruling). The leftover is kept and returns on an upgrade to a plan with a public site.</p>
+    </div>
+
+    <div class="spec">
+      <p class="cap"><span class="tag re">Restyled</span> E · Free event or a Premium coach's event</p>
+      <div class="adm phone">
+        <div class="cc same-part"><div class="hd"><b>Pages</b><small>6 of 7 shown</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+        <div class="lock" style="margin-top:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>Your logo, colours and type on this site</span><span class="planchip">Tournament Plus</span></div>
+        <div class="pub inset" style="margin-top:10px"><div class="band" style="--fill:#1F1B16;--on:#fff;--acc:#1F1B16"><div class="bt"><b>Lakeside Fun Day</b><span>Jun 6, 2027</span></div></div></div>
+        <p class="hint" style="margin-top:8px">The band families see: neutral, no mark (unchanged from Stage 1). Drawn here for comparison, not on the page.</p>
+      </div>
+      <p class="note">Unchanged shape: one lock line opening the plan panel. Its words drop "banner" and "fonts", which no longer exist: "Your logo, theme, banner and fonts on this site" → <b>"Your logo, colours and type on this site"</b>.</p>
+    </div>
+  </div>
+
+  <h3>Who sees what on a tournament's Branding page</h3>
+  <div class="scrollx"><table class="t">
+    <thead><tr><th>Case</th><th>Owner / admin</th><th>Coach with "Run tournaments" (their own events)</th></tr></thead>
+    <tbody>
+      <tr><td>Club's tournament, the default</td><td>A or B</td><td>A or B: may give the event its own look, as Ask 9 ruled ("a tournament may choose its own"). Clubs that don't want that pick Always.</td></tr>
+      <tr><td>Club's tournament, Always</td><td>C with "Change the club's look"</td><td>C without the link</td></tr>
+      <tr><td>Tournament Plus</td><td>D</td><td>D</td></tr>
+      <tr><td>Free / Premium coach</td><td>E</td><td>E</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= 4 · THE WHOLE PAGE ================= -->
+<section data-tab="whole-page" hidden>
+  <h2>The whole Branding page, before and after</h2>
+  <p class="lede">A club's tournament under the default, with its own look (case B). Eight cards become five. <b>Gone:</b> Theme (into Look), Hero banner (your 11-02 ruling), Font (D8), Card style (Ask 11), the Dark/Light switch (Ask 1) and the App name field (D9; its saved value is kept). <b>Stays:</b> the door, Pages, Logo, App icon. "Show only what differs" fades what does not change.</p>
+
+  <h3>Phone · 390 px · at rest, every card closed</h3>
+  <div class="scrollx"><div class="row" style="flex-wrap:nowrap">
+    <div class="spec">
+      <p class="cap"><span class="tag same">Before</span> Today</p>
+      <div class="adm phone"><div class="stack">
+        <div class="pagehd same-part"><h4>Public site</h4><span class="help">?</span></div>
+        <div class="door same-part"><div class="tx"><span class="ey">Online</span><b>See your public site</b><small>Opens in a new tab · riverdaleminor.ca/fall-classic</small></div><span>↗</span></div>
+        <div class="cc same-part"><div class="hd"><b>Pages</b><small>6 of 7 shown</small></div></div>
+        <div class="cc same-part"><div class="hd"><b>Logo</b><small>fall-classic-crest.png</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+        <div class="cc same-part"><div class="hd"><b>App icon</b><small>Your logo · auto background</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+        <div class="cc gone-hint"><div class="hd"><b>Theme</b><small>Crimson · dark</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+        <div class="cc gone-hint"><div class="hd"><b>Hero banner</b><small>None</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+        <div class="cc gone-hint"><div class="hd"><b>Font</b><small>Barlow</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+        <div class="cc gone-hint"><div class="hd"><b>Card style</b><small>Glass</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+      </div></div>
+    </div>
+    <div class="spec">
+      <p class="cap"><span class="tag new">After</span> Stage 1a</p>
+      <div class="adm phone"><div class="stack">
+        <div class="pagehd same-part"><h4>Public site</h4><span class="help">?</span></div>
+        <div class="door same-part"><div class="tx"><span class="ey">Online</span><b>See your public site</b><small>Opens in a new tab · riverdaleminor.ca/fall-classic</small></div><span>↗</span></div>
+        <div class="cc same-part"><div class="hd"><b>Pages</b><small>6 of 7 shown</small></div></div>
+        <div class="cc" style="border-color:var(--k-line-strong)"><div class="hd"><b>Look</b><small>Crimson · Classic</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+        <div class="cc same-part"><div class="hd"><b>Logo</b><small>fall-classic-crest.png</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+        <div class="cc same-part"><div class="hd"><b>App icon</b><small>Your logo · auto background</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+      </div></div>
+    </div>
+    <div class="spec" style="max-width:300px">
+      <p class="note"><b>Order:</b> Look moves above Logo because it decides what the logo sits on, and it is the card a club's tournament is most often told about ("wear the club's look"). <a class="mk" data-ask="a6" href="#asks">6</a><br><br><b>Under Always (case C)</b> the page is the same five cards; the Look card holds the lock line.<br><br><b>Free (case E)</b>: header, door, Pages, the lock line. Unchanged except its words.</p>
+    </div>
+  </div></div>
+
+  <h3>Desktop · 1280 px window · Look open</h3>
+  <div class="viewrow" style="padding-top:0">
+    <span>Show</span>
+    <div class="track" role="group" aria-label="Before or after">
+      <button type="button" data-ba="before" aria-pressed="false">Before</button>
+      <button type="button" data-ba="after" aria-pressed="true">After</button>
+    </div>
+  </div>
+  <div class="scrollx"><div class="desk" id="desk" data-ba="after">
+    <div class="side"><div class="tn">Riverdale Fall Classic</div><span>Dashboard</span><span>Schedule</span><span>Teams</span><span>Registration</span><span>Rules &amp; resources</span><span class="on">Public site</span><span>Settings</span><div class="chrome">Admin chrome, simplified</div></div>
+    <div class="deskmain"><div class="deskcol">
+      <div class="pagehd same-part"><h4>Public site</h4><span class="help">?</span></div>
+      <div class="door same-part"><div class="tx"><span class="ey">Online</span><b>See your public site</b><small>Opens in a new tab · riverdaleminor.ca/fall-classic</small></div><span>↗</span></div>
+      <div class="cc same-part pages"><div class="hd"><b>Pages</b></div><div class="bd"><p class="hint">Which pages families see on this tournament's public site.</p><div class="sl">
+        <div class="swrow">Schedule<span class="sw-tg"></span></div><div class="swrow">Standings<span class="sw-tg"></span></div>
+        <div class="swrow">Playoffs<span class="sw-tg"></span></div><div class="swrow">Teams<span class="sw-tg"></span></div>
+        <div class="swrow">News<span class="sw-tg off"></span></div><div class="swrow">Rules<span class="sw-tg"></span></div></div>
+        <div class="swrow"><div>Show coaches' names<small>On Teams and team pages</small></div><span class="sw-tg off"></span></div></div></div>
+
+      <!-- BEFORE -->
+      <div class="is-before stack">
+        <div class="cc same-part"><div class="hd"><b>Logo</b><small>fall-classic-crest.png</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+        <div class="cc same-part"><div class="hd"><b>App icon</b><small>Your logo · auto background</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+        <div class="cc gone-hint"><div class="hd"><b>Theme</b><small>Crimson · dark</small></div>
+          <div class="bd"><p class="hint">The colours and background of this tournament's public site.</p>
+            <div class="sws">
+              <span class="osw" style="background:#1E3A8A"></span><span class="osw" style="background:#8B2FC9"></span><span class="osw" style="background:#075985"></span><span class="osw" style="background:#166534"></span><span class="osw" style="background:#9A3412"></span><span class="osw on" style="background:#9F1239">✓</span><span class="osw" style="background:#92400E"></span><span class="osw" style="background:#115E59"></span><span class="osw" style="background:#1E40AF"></span><span class="osw" style="background:conic-gradient(#e11d48,#f59e0b,#16a34a,#2563eb,#9333ea,#e11d48)"></span>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center"><b style="font-size:13px">Background</b><span class="seg"><span class="on">Dark</span><span>Light</span></span></div>
+            <p class="hint">When not set, this tournament uses the organization's colours.</p>
+            <p class="hint" style="font-style:italic">No preview: the door above opens the real page.</p></div></div>
+        <div class="cc gone-hint"><div class="hd"><b>Hero banner</b><small>None</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+        <div class="cc gone-hint"><div class="hd"><b>Font</b><small>Barlow</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+        <div class="cc gone-hint"><div class="hd"><b>Card style</b><small>Glass</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+      </div>
+
+      <!-- AFTER -->
+      <div class="is-after stack">
+        <div class="cc" style="border-color:var(--k-line-strong)"><div class="hd"><b>Look</b><small>Crimson · Classic</small></div>
+          <div class="bd"><div class="lookgrid">
+            <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+              <p class="pt" style="margin:0">Colours</p>
+              <div class="sws">
+                <span class="pill"><i style="background:linear-gradient(135deg,#166534 50%,#86EFAC 50%)"></i>The club's look</span>
+                <span class="dot" style="background:linear-gradient(135deg,#1E3A8A 50%,#D9F99D 50%)"></span><span class="dot" style="background:linear-gradient(135deg,#8B2FC9 50%,#C084FC 50%)"></span><span class="dot" style="background:linear-gradient(135deg,#075985 50%,#38BDF8 50%)"></span><span class="dot" style="background:linear-gradient(135deg,#166534 50%,#86EFAC 50%)"></span><span class="dot" style="background:linear-gradient(135deg,#9A3412 50%,#FDBA74 50%)"></span><span class="dot on" style="background:linear-gradient(135deg,#9F1239 50%,#FB7185 50%)"></span><span class="dot" style="background:linear-gradient(135deg,#92400E 50%,#FACC15 50%)"></span><span class="dot" style="background:linear-gradient(135deg,#115E59 50%,#5EEAD4 50%)"></span><span class="dot" style="background:linear-gradient(135deg,#1E40AF 50%,#93C5FD 50%)"></span><span class="dot own"></span>
+              </div>
+              <p class="hint" style="font-weight:600;color:var(--k-ink-2)">Crimson. White text on crimson, readable on every page.</p>
+              <p class="pt" style="margin:0">Type</p>
+              <div class="types" style="max-width:520px">
+                <div class="ty f-classic on"><b>Fall Classic</b><div class="lbl">Classic</div></div>
+                <div class="ty f-serif"><b>Fall Classic</b><div class="lbl">Serif</div></div>
+                <div class="ty f-clean"><b>Fall Classic</b><div class="lbl">Clean</div></div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <p class="pt" style="margin:0">On a phone</p>
+              <div class="pub inset" style="width:390px"><div class="band" style="--fill:#9F1239;--on:#fff;--acc:#FB7185"><div class="lg crest">FC</div><div class="bt"><b>Riverdale Fall Classic</b><span>Oct 31 – Nov 2 · ● Live now</span></div><div class="sh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v14"/></svg></div></div><div class="ptabs"><span class="on">Overview</span><span>Schedule</span><span>Standings</span><span>Teams</span></div></div>
+              <p class="hint">The real band, as it reads now. The door above opens the whole page.</p>
+            </div>
+          </div></div></div>
+        <div class="cc same-part"><div class="hd"><b>Logo</b><small>fall-classic-crest.png</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+        <div class="cc same-part"><div class="hd"><b>App icon</b><small>Your logo · auto background</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+      </div>
+      <span class="savepill">Saved</span>
+    </div></div>
+  </div></div>
+</section>
+
+<!-- ================= 5 · WHAT FAMILIES SEE ================= -->
+<section data-tab="families" hidden>
+  <h2>What families see</h2>
+  <p class="lede">The phone band and tab row (true size, 390 px) for the same weekend under each case, then the link preview a family sees when the page is shared. The host line is Stage 1's and does not change: "Hosted by" wherever the club has a public page.</p>
+  <div class="row">
+    <div class="spec"><p class="cap">Club's tournament · the club's look (the default)</p>
+      <div class="pub"><div class="band" data-face="serif" style="--fill:#166534;--on:#fff;--acc:#86EFAC"><div class="lg club">RM</div><div class="bt"><b>Riverdale Fall Classic</b><span>Oct 31 – Nov 2 · ● Live now</span></div><div class="sh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v14"/></svg></div></div>
+        <div class="ptabs same-part"><span class="on">Overview</span><span>Schedule</span><span>Standings</span><span>Teams</span></div>
+        <div class="foot same-part">Hosted by <a href="#">Riverdale Minor Ball Association ›</a></div></div>
+      <p class="note">Club colours <b>and the club's Serif type</b> in the title: new in 1a (today's band always uses Classic).</p></div>
+    <div class="spec"><p class="cap">Its own look, still hosted by the club</p>
+      <div class="pub"><div class="band" style="--fill:#9F1239;--on:#fff;--acc:#FB7185"><div class="lg crest">FC</div><div class="bt"><b>Riverdale Fall Classic</b><span>Oct 31 – Nov 2 · ● Live now</span></div><div class="sh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v14"/></svg></div></div>
+        <div class="ptabs same-part"><span class="on">Overview</span><span>Schedule</span><span>Standings</span><span>Teams</span></div>
+        <div class="foot same-part">Hosted by <a href="#">Riverdale Minor Ball Association ›</a></div></div>
+      <p class="note">Crimson, the event's crest, its own type.</p></div>
+    <div class="spec"><p class="cap">"Always the club's look" · own logo kept</p>
+      <div class="pub"><div class="band" data-face="serif" style="--fill:#166534;--on:#fff;--acc:#86EFAC"><div class="lg crest">FC</div><div class="bt"><b>Riverdale Fall Classic</b><span>Oct 31 – Nov 2 · ● Live now</span></div><div class="sh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v14"/></svg></div></div>
+        <div class="ptabs same-part"><span class="on">Overview</span><span>Schedule</span><span>Standings</span><span>Teams</span></div>
+        <div class="foot same-part">Hosted by <a href="#">Riverdale Minor Ball Association ›</a></div></div>
+      <p class="note">The club's colour and type; the event's crest (Ask 10).</p></div>
+    <div class="spec"><p class="cap">Tournament Plus · nothing saved</p>
+      <div class="pub"><div class="band" style="--fill:#1E3A8A;--on:#fff;--acc:#D9F99D"><div class="lg metro">MS</div><div class="bt"><b>Metro Spring Showcase</b><span>May 8–10, 2027 · Registration open</span></div><div class="sh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v14"/></svg></div></div>
+        <div class="ptabs same-part"><span class="on">Overview</span><span>Schedule</span><span>Register</span><span>Rules</span></div>
+        <div class="foot same-part">Run by Metro Sports Events</div></div>
+      <p class="note">The plain FieldLogicHQ colour, never a leftover organization look.</p></div>
+    <div class="spec"><p class="cap">Free event (unchanged)</p>
+      <div class="pub"><div class="band" style="--fill:#1F1B16;--on:#fff;--acc:#1F1B16"><div class="bt"><b>Lakeside Fun Day</b><span>Jun 6, 2027</span></div><div class="sh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v14"/></svg></div></div>
+        <div class="ptabs same-part"><span class="on">Overview</span><span>Schedule</span><span>Teams</span></div>
+        <div class="foot same-part">Powered by FieldLogicHQ</div></div>
+      <p class="note">Neutral band, no mark (Stage 1).</p></div>
+  </div>
+
+  <h3>The link preview · shown at a quarter of its 1200 × 630 size <span class="tag new">Moved into 1a</span></h3>
+  <p class="lede">Today all three share images (the event, a team, a game) use the tournament's own saved colour only: no club fallback, no plan check (D10). In 1a they follow the page's rule, so a shared link under "Always" shows what the page shows. Their layout and what they reveal (Stage 6's gates) do not change; only the colour, type and mark.</p>
+  <div class="row">
+    <div class="spec"><p class="cap"><span class="tag same">Today</span> Under "Always": the old colour</p>
+      <div class="og" style="--fill:#9F1239;--on:#fff"><span class="lg" style="background:radial-gradient(circle at 50% 40%,#F3C74E,#B7861B);color:#3B2A06;border-radius:50%">FC</span><b>Riverdale Fall Classic</b><small>Oct 31 – Nov 2 · Riverdale Minor Ball Association</small></div>
+      <p class="note">Disagrees with the page the link opens.</p></div>
+    <div class="spec"><p class="cap"><span class="tag new">After</span> Under "Always": the page's look</p>
+      <div class="og" data-face="serif" style="--fill:#166534;--on:#fff"><span class="lg" style="background:radial-gradient(circle at 50% 40%,#F3C74E,#B7861B);color:#3B2A06;border-radius:50%">FC</span><b>Riverdale Fall Classic</b><small>Oct 31 – Nov 2 · Riverdale Minor Ball Association</small></div>
+      <p class="note">Same rule as the band: club colour and type, own crest.</p></div>
+    <div class="spec"><p class="cap"><span class="tag new">After</span> A free event</p>
+      <div class="og" style="--fill:#1F1B16;--on:#fff"><b>Lakeside Fun Day</b><small>Jun 6, 2027</small></div>
+      <p class="note">Today a free event whose row still carries an old paid colour shows it here; after, neutral, as the page.</p></div>
+  </div>
+  <div class="panel" style="margin-top:18px">
+    <p><b>Timing.</b> Link previews are fetched without the preview switch, so the share images change for customers as soon as 1a ships, ahead of Stage 8. That is safe: under the default rule a club's tournament reads exactly as today's rule, and no customer can choose "Always" until the club's part is switched on at Stage 8. The two visible changes on day one are fixes: a club tournament with no colour of its own now shows the club's colour instead of the platform's, and a free event stops showing an old paid colour. Emails stay in the later stage (Ask 12).</p>
+  </div>
+</section>
+
+<!-- ================= 6 · ASKS ================= -->
+<section data-tab="asks" hidden>
+  <h2>Asks</h2>
+  <p class="lede">Asks 9–13 and your three 11-02 rulings are settled and not repeated here. These six come from drawing it. The first option is my recommendation. Pick, add a note if you like, then <b>Copy my answers</b> and paste them back.</p>
+  <div id="asklist"></div>
+  <div class="copybar"><button type="button" id="copy-btn">Copy my answers</button><span id="copy-msg" class="note" role="status"></span></div>
+  <textarea id="copy-out" readonly aria-label="Your answers as text" hidden></textarea>
+
+  <h3>Settled, drawn as ruled (not asks)</h3>
+  <div class="scrollx"><table class="t">
+    <thead><tr><th>Piece</th><th>Ruling</th></tr></thead>
+    <tbody>
+      <tr><td>Two choices, default "the club's look unless a tournament chooses its own"; applied when shown, never written</td><td>Ask 9</td></tr>
+      <tr><td>Under Always the event logo stays the tournament's</td><td>Ask 10</td></tr>
+      <tr><td>Club type looks for tournaments; Font list goes; Card style goes; App name hidden (value kept)</td><td>Ask 11</td></tr>
+      <tr><td>Emails wear the page's look, later stage</td><td>Ask 12 (share images moved into 1a, 11-02)</td></tr>
+      <tr><td>Owner and Look-editing admins set the rule</td><td>Ask 13</td></tr>
+      <tr><td>Dark/Light switch goes</td><td>Ask 1</td></tr>
+      <tr><td>Hero banner goes; Tournament Plus falls back to plain; share images in 1a</td><td>Owner, 11-02</td></tr>
+      <tr><td>Everything here behind the preview switch, on for everyone at Stage 8 (share images excepted, see tab 5)</td><td>Ladder rule; detail in the build prompt</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</div>
+
+<script>
+(function(){
+  var ASKS=[
+    {id:'a1',t:'1 · Where the club’s rule lives',why:'The 10-27 drawing gave it its own row called Tournaments. The Home page row already has a Tournaments switch (Stage 4f), and Ask 13 gave the rule to the same people who edit the Look (tab 1).',o:['A part at the end of the Look row, titled Tournaments; the Look row’s summary says "tournaments follow" or "every tournament"','Its own row, named something other than Tournaments (e.g. "Tournament look")','Its own row called Tournaments, as drawn 10-27']},
+    {id:'a2',t:'2 · The question before "Always"',why:'Tab 2. Names on-now and upcoming tournaments with their own colours, up to three, marks the one on now, counts finished ones, one sentence, "Their own looks are kept" in the foot.',o:['As drawn','Name every affected tournament in a list inside the window','Count only ("4 tournaments will change")']},
+    {id:'a3',t:'3 · A live band preview on the tournament’s Look card',why:'Reverses the 2026-10-10 Branding ruling "the drawn mock went (the door shows the real page)". That mock was a drawn imitation that disagreed with the page; this is the real band, built by the same code as the public page, so it cannot disagree. It is what shows a coach the club’s look before they override it, and a white logo vanishing on a pale colour before families see it.',o:['Bring back a preview: the real band and tab row only, on the Look card','No preview; the door stays the only way to see it']},
+    {id:'a4',t:'4 · One colour control for both screens',why:'Today the club picks colour with two-tone swatches and a double ring; a tournament with one-colour swatches and a tick. The accent shows on the band (its bottom rule), so the two-tone swatch tells the truth. Custom keeps hex fields on the tournament (organizers match brand colours); the club gains them too.',o:['The club’s two-tone swatches with the double ring on both screens; hex fields for Custom on both','Two-tone on both, hex fields on the tournament only','Leave each screen’s control as it is']},
+    {id:'a5',t:'5 · Type under the default',why:'"The club’s look" covers colours and type together. When a tournament takes its own colours, should it also choose its type?',o:['Yes: own colours bring the three type looks, starting on the club’s (case B)','No: a club’s tournament always uses the club’s type, even with its own colours']},
+    {id:'a6',t:'6 · The card’s name and place',why:'The club calls this "Look"; the tournament calls it "Theme". One idea, one word (the one-spelling rule). Placed above Logo because it decides what the logo sits on.',o:['"Look", first card after Pages','"Look", in Theme’s old place (after App icon)','Keep "Theme"']}
+  ];
+  var KEY='stage1a-asks-v1', saved={};
+  try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){saved={};}
+  function store(){try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  var list=document.getElementById('asklist');
+  ASKS.forEach(function(a){
+    var d=document.createElement('div');d.className='ask';d.id='ask-'+a.id;
+    var h=document.createElement('h4');h.textContent=a.t;d.appendChild(h);
+    var w=document.createElement('p');w.className='why';w.textContent=a.why;d.appendChild(w);
+    a.o.forEach(function(txt,i){
+      var l=document.createElement('label');var r=document.createElement('input');
+      r.type='radio';r.name=a.id;r.id=a.id+'-'+i;r.value=String(i);
+      if(saved[a.id]&&saved[a.id].pick===i)r.checked=true;
+      r.addEventListener('change',function(){saved[a.id]=saved[a.id]||{};saved[a.id].pick=i;store();});
+      var s=document.createElement('span');s.textContent=txt+(i===0?' (recommended)':'');
+      l.appendChild(r);l.appendChild(s);d.appendChild(l);
+    });
+    var ta=document.createElement('textarea');ta.id=a.id+'-note';ta.placeholder='Note (optional)';
+    ta.value=(saved[a.id]&&saved[a.id].note)||'';
+    ta.addEventListener('input',function(){saved[a.id]=saved[a.id]||{};saved[a.id].note=ta.value;store();});
+    d.appendChild(ta);list.appendChild(d);
+  });
+  function answers(){
+    var out=['Stage 1a "Who owns the look" asks: owner answers'];
+    ASKS.forEach(function(a){
+      var p=saved[a.id]&&typeof saved[a.id].pick==='number'?saved[a.id].pick:null;
+      var n=saved[a.id]&&saved[a.id].note?saved[a.id].note.trim():'';
+      out.push(a.t+': '+(p===null?'(no answer)':(p===0?'A, as recommended: ':String.fromCharCode(65+p)+': ')+a.o[p]));
+      if(n)out.push('   Note: '+n);
+    });
+    return out.join('\n');
+  }
+  var btn=document.getElementById('copy-btn'),msg=document.getElementById('copy-msg'),outEl=document.getElementById('copy-out');
+  btn.addEventListener('click',function(){
+    var txt=answers();outEl.value=txt;outEl.hidden=false;
+    function fallback(){outEl.focus();outEl.select();msg.textContent='Selected below: copy it with Ctrl+C or a long press.';}
+    try{navigator.clipboard.writeText(txt).then(function(){msg.textContent='Copied. Paste it back in the chat.';},fallback);}catch(e){fallback();}
+  });
+
+  var tabs=[].slice.call(document.querySelectorAll('nav.tabs button'));
+  var secs=[].slice.call(document.querySelectorAll('section[data-tab]'));
+  var viewrow=document.getElementById('viewrow');
+  var COMPARE={'whole-page':1,'families':1};
+  function show(name,scrollTo){
+    if(!secs.some(function(s){return s.dataset.tab===name;}))name='rule';
+    secs.forEach(function(s){s.hidden=s.dataset.tab!==name;});
+    tabs.forEach(function(b){b.setAttribute('aria-selected',b.dataset.go===name?'true':'false');});
+    viewrow.hidden=!COMPARE[name];
+    if(scrollTo){var el=document.getElementById(scrollTo);if(el){el.scrollIntoView({block:'start'});el.classList.add('flash');setTimeout(function(){el.classList.remove('flash');},1600);}}
+    else window.scrollTo(0,0);
+  }
+  tabs.forEach(function(b){b.addEventListener('click',function(){if(location.hash!=='#'+b.dataset.go)location.hash=b.dataset.go;else show(b.dataset.go);});});
+  window.addEventListener('hashchange',function(){show(location.hash.slice(1));});
+  document.querySelectorAll('.mk[data-ask]').forEach(function(m){m.addEventListener('click',function(e){e.preventDefault();history.replaceState(null,'','#asks');show('asks','ask-'+m.dataset.ask);});});
+  document.querySelectorAll('#viewrow .track button').forEach(function(b){b.addEventListener('click',function(){
+    document.body.dataset.view=b.dataset.view;
+    document.querySelectorAll('#viewrow .track button').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+  });});
+  var desk=document.getElementById('desk');
+  document.querySelectorAll('[data-ba]').forEach(function(b){if(b.tagName!=='BUTTON')return;b.addEventListener('click',function(){
+    desk.dataset.ba=b.dataset.ba;
+    document.querySelectorAll('button[data-ba]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+  });});
+  show(location.hash.slice(1)||'rule');
+})();
+</script>

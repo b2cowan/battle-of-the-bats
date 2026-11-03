@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, CheckCircle2, Globe } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { usePageTitle } from '@/lib/usePageTitle';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { stepOf } from '@/components/coaches/backStep';
@@ -291,7 +292,9 @@ export default function SettingsKit() {
           {/* ── When birthdays count from (Club Tier Stage 4c-2): saves by itself through the pill, apart from the Save above ── */}
           <BirthdayCutoffCard orgQuery={orgQuery} initial={cutoffData} />
 
-          {/* ── Your public site: a door (Public site builder, 2026-10-21) — what families see moved there ── */}
+          {/* ── Your public site: a door (Public site builder, 2026-10-21) — what families see moved there. Only on a plan
+               with the site (Public tournament pages 1a, owner 2026-11-02): on Tournament Plus it opened to a load failure. ── */}
+          {hasModuleEntitlement(currentOrg, 'module_public_site') && (
           <section className={`${styles.card} ${styles.doorCard}`} aria-labelledby="settings-public-site">
             <Globe size={20} className={styles.doorIcon} aria-hidden />
             <div className={styles.doorText}>
@@ -300,6 +303,7 @@ export default function SettingsKit() {
             </div>
             <Link href={`/${slug}/admin/public-site`} className="btn btn-outline">Open Public site</Link>
           </section>
+          )}
 
           {/* ── Payouts: the club's own Stripe account (Club Tier Stage 12a) — after the public-site door, before Delete ── */}
           {payouts && <PayoutsCard orgSlug={slug} clubName={currentOrg?.name ?? ''} home="club" initial={payouts} />}

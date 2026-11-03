@@ -6,6 +6,8 @@ import { withObservability, captureError } from '@/lib/observability';
 import { remakeStockLogoForTheme } from '@/lib/stock-logo-render';
 import { clubLookEditor } from '@/lib/public-site-access';
 import { CLUB_LOOK_FIELDS } from '@/lib/public-site-builder';
+import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { parseTournamentLookPolicy, sanitizeTournamentLookPolicy } from '@/lib/tournament-look';
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
 const VALID_PRESETS     = new Set(Object.keys(PRESETS));
@@ -23,7 +25,7 @@ export const GET = withObservability(async (req: Request) => {
 
   const { data, error } = await supabaseAdmin
     .from('organizations')
-    .select('name, slug, logo_url, is_public, is_discoverable, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization')
+    .select('name, slug, logo_url, is_public, is_discoverable, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization, tournament_look_policy')
     .eq('id', org.id)
     .single();
 
@@ -48,6 +50,7 @@ export const GET = withObservability(async (req: Request) => {
     themeFont:                data.theme_font                ?? 'system',
     themeCardStyle:           data.theme_card_style          ?? 'default',
     requireScoreFinalization: data.require_score_finalization ?? false,
+    tournamentLookPolicy:     sanitizeTournamentLookPolicy(data.tournament_look_policy),
   });
 }, { route: '/api/admin/org-settings' });
 
@@ -165,6 +168,18 @@ export const PATCH = withObservability(async (req: Request) => {
     updates.theme_card_style = VALID_CARD_STYLES.has(style) ? style : 'default';
   }
 
+  // Public tournament pages Stage 1a: the club's rule for its tournaments' look (lib/tournament-look.ts). It means nothing
+  // without a club layer, so it is refused on a plan without the public site for EVERYONE — the owner included, whom
+  // clubLookEditor lets through on any plan.
+  if (body.tournamentLookPolicy !== undefined) {
+    if (!hasModuleEntitlement(org, 'module_public_site')) {
+      return NextResponse.json({ error: 'The tournaments rule comes with the public site.' }, { status: 403 });
+    }
+    const policy = parseTournamentLookPolicy(body.tournamentLookPolicy);
+    if (!policy) return NextResponse.json({ error: 'Invalid tournamentLookPolicy' }, { status: 400 });
+    updates.tournament_look_policy = policy;
+  }
+
   if (body.requireScoreFinalization !== undefined) {
     updates.require_score_finalization = Boolean(body.requireScoreFinalization);
   }
@@ -177,7 +192,7 @@ export const PATCH = withObservability(async (req: Request) => {
     .from('organizations')
     .update(updates)
     .eq('id', org.id)
-    .select('name, slug, logo_url, is_public, is_discoverable, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization')
+    .select('name, slug, logo_url, is_public, is_discoverable, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization, tournament_look_policy')
     .single();
 
   if (error) {
@@ -213,5 +228,6 @@ export const PATCH = withObservability(async (req: Request) => {
     themeFont:                updated.theme_font                ?? 'system',
     themeCardStyle:           updated.theme_card_style          ?? 'default',
     requireScoreFinalization: updated.require_score_finalization ?? false,
+    tournamentLookPolicy:     sanitizeTournamentLookPolicy(updated.tournament_look_policy),
   });
 }, { route: '/api/admin/org-settings' });

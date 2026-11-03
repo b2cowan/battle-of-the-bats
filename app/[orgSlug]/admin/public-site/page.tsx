@@ -434,12 +434,15 @@ export default function PublicSitePage() {
   const look = useMemo(() => currentOrg ? lookWords({ preset: currentOrg.themePreset, primary: currentOrg.themePrimary, accent: currentOrg.themeAccent, font: currentOrg.themeFont }) : null, [currentOrg]);
 
   if (loading) return <LoadingState label={W.loading} />;
-  if (!userRole || !hasCapability(userRole, userCapabilities, 'module_public_site') || !currentOrg) {
+  // The capability AND the plan (Public tournament pages 1a): an owner who types the address on a plan without the site
+  // reads that the plan has none, not a page that fails to load (the API refuses without the entitlement).
+  const noSite = !!currentOrg && !hasModuleEntitlement(currentOrg, 'module_public_site');
+  if (!userRole || !hasCapability(userRole, userCapabilities, 'module_public_site') || !currentOrg || noSite) {
     return (
       <div className={styles.accessDenied}>
         <Globe size={32} aria-hidden />
         <h2>{W.noAccessTitle}</h2>
-        <p>{W.noAccess}</p>
+        <p>{noSite ? W.noSiteOnPlan : W.noAccess}</p>
       </div>
     );
   }

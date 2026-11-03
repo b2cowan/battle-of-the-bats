@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
-import { resolveTheme } from '@/lib/themes';
+import { shareImageTheme } from '@/lib/tournament-share-look';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import { publicGameStatus, publicGameStatusLabel, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
@@ -72,7 +72,7 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
     const statusLabel = (view ? view.cancelled ? 'Cancelled' : view.stateLabel ?? 'Up next' : publicGameStatusLabel(state)).toUpperCase();
 
     const t = data.tournament;
-    const theme = resolveTheme(t.themePreset, t.themePrimary, t.themeAccent);
+    const theme = await shareImageTheme(orgSlug, t);
 
     const dateLabel = game.date
       ? new Date(`${game.date}T12:00:00`).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })

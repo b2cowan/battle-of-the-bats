@@ -293,6 +293,9 @@ export interface Organization {
   /** Who the club lists under Coaches on a team's public page (mig 352). Absent = 'coaches_choose'. Read it through
    *  `coachNameListing()` in lib/coach-names-policy.ts, never by comparing strings. */
   coachNamesPolicy?: import('./coach-names-policy').CoachNamesPolicy;
+  /** The club's rule for its tournaments' look (mig 426, Public tournament pages Stage 1a). Absent = 'club_default'. Read
+   *  it through `resolveTournamentLook()` in lib/tournament-look.ts, never by comparing strings. */
+  tournamentLookPolicy?: import('./tournament-look').TournamentLookPolicy;
 }
 
 export interface OrganizationMember {

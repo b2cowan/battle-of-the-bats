@@ -4,6 +4,7 @@ import { applyEntitlementGrants } from './entitlement-grants';
 import type { Organization } from './types';
 import { storedCutoffs } from './born-years';
 import { sanitizeCoachNamesPolicy } from './coach-names-policy';
+import { sanitizeTournamentLookPolicy } from './tournament-look';
 
 type OrganizationRow = {
   id: string;
@@ -38,6 +39,7 @@ type OrganizationRow = {
   birthday_cutoffs?: unknown;
   /** Who the club lists as a coach (mig 352); the select is `*`. */
   coach_names_policy?: unknown;
+  tournament_look_policy?: unknown;
 };
 
 function mapOrganization(row: OrganizationRow): Organization {
@@ -73,6 +75,7 @@ function mapOrganization(row: OrganizationRow): Organization {
     birthdayCutoffs: storedCutoffs(row.birthday_cutoffs),
     // Who the club lists as a coach (mig 352) — fails closed to 'coaches_choose' (each coach decides).
     coachNamesPolicy: sanitizeCoachNamesPolicy(row.coach_names_policy),
+    tournamentLookPolicy: sanitizeTournamentLookPolicy(row.tournament_look_policy),
   };
 }
 

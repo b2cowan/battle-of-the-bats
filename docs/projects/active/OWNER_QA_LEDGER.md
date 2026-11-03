@@ -27505,6 +27505,10 @@ performed over the shared working tree. The original walk result is not claimed 
 **Verification before the walk:** every fixture state measured at 360/390/1280; `/review` (one High fixed: the offline-copy rule on a club’s own address); focused suites 99/99, typecheck, lint, spelling; `check:layout` entry `pubt-pay-focused` clean.
 
 **Acceptance limits, not passes:** offline (no stored copy) is not walkable on the dev server, where the worker is off; it is pinned by the worker guard and walked at Stage 8. Committed 2026-11-01 on the owner’s word, step 0 (the offline-copy fix) in its own commit first.
+
+**WALKED 2026-11-01, PASSED 34/34, no changes asked** — A 1/1 · B 9/9 · C 2/2 · D 6/6 · E 3/3 · F 3/3 · G 2/2 · H 3/3 · I 3/3 · J 2/2 (J1, the optional fixture reset, skipped). Stage 7 closed.
+
+**One note came back, and it is not a defect:** in Part D (the optional inbox check, D6) no receipt email arrived on localhost. Read from the code 2026-11-01: the receipt is the platform’s own email, sent when the payment is recorded, and it also fires from the return page, so a missing `stripe listen` is not the cause. This machine’s `.env.local` carries no email key, and with no key the send is skipped with only a console warning and the receipt is still stamped as sent, so it is never retried. Expected on dev; the receipt email itself is unchanged by Stage 7 and stays covered by the Stage 12 payments walks (§404/§405). Open question for the owner only if an email is wanted on dev: add a key to `.env.local`.
 <!-- /§440 -->
 
 ## §441 · Account sheet on a phone · owner walk — **the person icon opens a bottom sheet at 900 px and narrower on the tournament band, the club bar, the marketing bar and the support console; your own side is a "Go to" row in it, and the building icon is gone from the first two on a phone**

@@ -46,6 +46,7 @@ import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
 import { readStoredEventKind, scrimmageFlagFor } from './coach-schedule-vocab';
 import { storedCutoffs } from './born-years';
 import { sanitizeCoachNamesPolicy } from './coach-names-policy';
+import { sanitizeTournamentLookPolicy } from './tournament-look';
 import { rankStandings, type LeagueStandings } from './league-standings';
 import { commitmentStanding, effectivePayerId, type PayableInstallment, type PayablePayment, type CommitmentStanding } from './payable-standing';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
@@ -1815,6 +1816,7 @@ function mapOrg(r: any): Organization {
     birthdayCutoffs: storedCutoffs(r.birthday_cutoffs),
     // Who the club lists as a coach (mig 352). An absent column reads as the default — each coach decides.
     coachNamesPolicy: sanitizeCoachNamesPolicy(r.coach_names_policy),
+    tournamentLookPolicy: sanitizeTournamentLookPolicy(r.tournament_look_policy),
   };
 }
 

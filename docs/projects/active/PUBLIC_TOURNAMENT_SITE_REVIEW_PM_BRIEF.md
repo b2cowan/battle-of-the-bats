@@ -2,9 +2,29 @@
 
 **Status:** Stages 0–5 implemented; Stage 5 owner walk §432 passed 2026-10-31. Stage 6 implementation and manual
 review completed 2026-10-31; owner walk §435 PASSED 68/68 on 2026-11-01 (Stage 6 closed).
-Priority: Stage 7 (pay page) or Stage 1a (look ownership), at the owner's choice.
+Priority: Stage 7 closed 2026-11-01; Stage 1a (look ownership) drawn and ruled 2026-11-02, build next.
 **Stage 6 implementation:** committed `295ebce8a` on dev 2026-10-31 (all parts combined). Owner walk §435 passed 2026-11-01.
 Plan: `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md`. Mockups: the review hub (Claude Artifact).
+
+## Stage 1a — who owns the look (drawn and ruled 2026-11-02; build prompt written, nothing built)
+
+**What changes for a club:** one new choice at the end of the club's Look settings: its tournaments wear the club's
+look unless one chooses its own (today's behaviour), or always wear the club's look. Choosing "always" first names
+the tournaments that will change, including one on right now. Switching back gives every tournament its own look back.
+
+**What changes for whoever runs a tournament:** the Branding page's Theme, Font, Card style, Dark/Light and Hero banner
+become one **Look** card: colours on the same swatches the club uses, three type looks, and a preview of the real band
+families see. A club's tournament starts on "The club's look"; under "always" the card is a single locked line, and the
+event's own logo stays. Tournament Plus picks per event and starts on the plain FieldLogicHQ look. Free is unchanged.
+
+**What changes for families:** the band wears the club's type as well as its colours; a shared link's preview matches
+the page (this part ships with the stage, not at Stage 8).
+
+**Why it matters:** clubs can protect their brand on flagship events, the Branding page stops offering controls that
+do nothing on the new pages, and what an organizer picks is what families see.
+
+**Success:** a club admin can tell, without leaving the editor, how its tournaments look and change that in one step;
+an organizer sees the result before saving; no leftover look appears that no screen can change.
 
 ## Stage 10 — a printable, branded copy of the rules (added 2026-11-01)
 

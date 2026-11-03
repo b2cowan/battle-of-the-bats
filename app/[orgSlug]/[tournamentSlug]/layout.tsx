@@ -338,7 +338,8 @@ export default async function TournamentLayout({
   const page = (
     <>
       <OrgNavSync
-        logoUrl={canUseAdvancedBranding ? tournament.logoUrl ?? org.logoUrl ?? null : null}
+        // Under the frame the mark is the one rule's (lib/tournament-look.ts — Tournament Plus never borrows an org logo).
+        logoUrl={frameBand ? frameBand.logoUrl : canUseAdvancedBranding ? tournament.logoUrl ?? org.logoUrl ?? null : null}
         orgName={org.name}
         orgHomeHref={orgHomeHref}
         // Restore the ORG identity on unmount: navigating up to /{orgSlug} via the new
@@ -400,7 +401,9 @@ export default async function TournamentLayout({
           identity to, so it keeps the in-page titles (preview↔public parity). */}
       <div
         className={frameOn ? `${railStyles.shell} ${frameStyles.deskShell}` : railStyles.shell}
-        data-card-style={cardStyle}
+        // Card style leaves with the frame (Ask 11): 'default' under it — the marker stays, since the light wrapper rule
+        // (globals.css `[data-card-style][data-color-mode="light"]`) keys on it; the org layout's style is excluded there too.
+        data-card-style={frameOn ? 'default' : cardStyle}
         data-color-mode={effectiveColorMode}
         data-live-chrome=""
       >
@@ -507,6 +510,6 @@ export default async function TournamentLayout({
   // The frame's one outer element: the marker every frame style is keyed to, and the club site's token block (the ONE
   // light set). Fixed parts inside it (the rail, the dock, the prompts) inherit its tokens like everything else.
   return frameOn
-    ? <>{unlessFocused(growthChrome)}<div className={`${clubFrameStyles.tokens} ${frameStyles.frame}`} {...publicFrameAttr}>{page}</div></>
+    ? <>{unlessFocused(growthChrome)}<div className={`${clubFrameStyles.tokens} ${frameStyles.frame}`} data-club-face={frameBand?.face} {...publicFrameAttr}>{page}</div></>
     : page;
 }

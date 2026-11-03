@@ -34,8 +34,9 @@ export const PREVIEW_MESSAGE = 'site-preview';
  * field outside `CLUB_LOOK_FIELDS` (lib/public-site-access.ts asks the role; the editor's preview asks the same).
  */
 export const CLUB_LOOK_ROLES: readonly string[] = ['owner', 'admin'];
-/** The org-settings fields an admin may send: the colours and the type. Anything else from an admin is refused whole. */
-export const CLUB_LOOK_FIELDS: readonly string[] = ['themePreset', 'themePrimary', 'themeAccent', 'themeFont'];
+/** The org-settings fields an admin may send: the colours, the type and the rule for the club's tournaments (Stage 1a,
+ *  Ask 13 — whoever may edit the club's Look sets it; NOT owner-only). Anything else from an admin is refused whole. */
+export const CLUB_LOOK_FIELDS: readonly string[] = ['themePreset', 'themePrimary', 'themeAccent', 'themeFont', 'tournamentLookPolicy'];
 
 export type ClubLook = 'classic' | 'serif' | 'clean';
 

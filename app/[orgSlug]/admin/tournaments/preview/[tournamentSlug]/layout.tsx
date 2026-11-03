@@ -84,8 +84,9 @@ export default async function TournamentPreviewLayout({
         <style dangerouslySetInnerHTML={{ __html: publicFrameRoleCss(band.roles) }} />
         {/* The live frame's one outer element, its marker and token block; data-live-chrome too, since under the frame
             the preview has the band that the in-page titles would repeat (preview ↔ live parity). */}
-        <div className={`${clubFrameStyles.tokens} ${frameStyles.frame}`} {...publicFrameAttr}>
-          <div className={`${railStyles.shell} ${frameStyles.deskShell}`} data-card-style={cardStyle} data-color-mode="light" data-live-chrome="">
+        <div className={`${clubFrameStyles.tokens} ${frameStyles.frame}`} data-club-face={band.face} {...publicFrameAttr}>
+          {/* No card style under the frame (Ask 11), as on the live page: the marker stays 'default' for the light wrapper rule. */}
+          <div className={`${railStyles.shell} ${frameStyles.deskShell}`} data-card-style="default" data-color-mode="light" data-live-chrome="">
             <TournamentBand
               orgSlug={orgSlug}
               tournamentSlug={tournamentSlug}

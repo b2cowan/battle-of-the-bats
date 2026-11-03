@@ -271,7 +271,8 @@ the QA walk (next ledger §), records.
   sessions' working-tree hunks (plan-billing-usage, public-tournament-stage6-walk ×3, support-console-stage3-guard).
 - **Walk §440** published: https://claude.ai/artifact/4ioawHQVFheWCkR76LpRCd (source `PUBLIC_TOURNAMENT_STAGE7_WALK.html`),
   one walk, 10 parts, 34 steps, including a real test-card payment. Offline is not walkable on the dev server (the worker
-  is production-only); it is pinned by the worker guard and walked at Stage 8.
+  is production-only); it is pinned by the worker guard and walked at Stage 8. **Walked 2026-11-01: PASSED 34/34**
+  (J1, the optional fixture reset, skipped); Stage 7 closed. Record: ledger §440.
 - **Committed 2026-11-01 (owner: "commit"), two commits.** Step 0's own commit: `public/sw.js`, `tests/unit/sw-pay-page-never-cached.test.ts`. The
   rest: `lib/public-focused-page.ts`, `lib/public-ticker-pages.ts`, `components/public/NotOnFocusedPage.tsx`,
   `TournamentBand.tsx`, `TournamentFooter.tsx`, `TeamPayContent.tsx`, `TeamPay.module.css`, `PayBlock.module.css`,

@@ -16,12 +16,12 @@
  * later stage asks, the share image.
  */
 import { CLUB_NEAR_BLACK, clubColourRoles, hexChannels, type ClubColourRoles } from './club-colour-roles';
-import { canUseAdvancedTournamentBranding } from './tournament-branding';
+import { resolveTournamentLook, type LookOrg, type LookTournament, type TournamentFace, type TournamentLook } from './tournament-look';
 import { TOURNAMENT_STATUS_WORD, tournamentHomeStatus } from './club-site-home';
 import { formatEventDateRange } from './timezone';
 import { clubInitials } from './club-site';
 import { safeNextPath } from './safe-redirect';
-import type { Organization, Tournament } from './types';
+import type { Tournament } from './types';
 
 /** The browser's own answer, set by the preview link and its twin. */
 export const PUBLIC_FRAME_COOKIE = 'flhq_public_frame';
@@ -46,8 +46,6 @@ export function safePublicFrameReturn(to: string | null | undefined): string {
   return to?.startsWith('/') ? safeNextPath(to, '/') : '/';
 }
 
-type FrameOrg = Pick<Organization, 'planId' | 'themePreset' | 'themePrimary' | 'themeAccent'>;
-type FrameTournament = Pick<Tournament, 'themePreset' | 'themePrimary' | 'themeAccent'>;
 
 export interface PublicFrameRoles extends ClubColourRoles {
   /** No tournament branding on the plan: the neutral near-black band, no logo and no initials. */
@@ -58,30 +56,34 @@ const WHITE = '#FFFFFF';
 
 /**
  * The band's colour, worked through the club's own roles (lib/club-colour-roles.ts): fill, text on fill, ink, edge,
- * accent as decoration only. WHICH colour is today's read rule (lib/public-tournament-theme.ts's
- * resolvePublicTournamentTheme): the tournament's own when it has one, else the organizer's. The club's rule for its
- * tournaments is Stage 1a's, not this one's.
+ * accent as decoration only. WHICH colour is Stage 1a's one rule (lib/tournament-look.ts `resolveTournamentLook`): the
+ * club's rule for its tournaments, the tournament's own, the plain FieldLogicHQ look on Tournament Plus.
  *
  * A plan without tournament branding (below Tournament Plus — `advanced_tournament_branding`; the free plan and a Premium
  * coach's event) gets a neutral near-black band with white text and no mark, which keeps the rule that a free event
  * carries no host logo or custom colour. Its FieldLogicHQ badge is unchanged.
  */
-export function publicFrameRoles(org: FrameOrg, tournament?: FrameTournament | null): PublicFrameRoles {
-  if (!canUseAdvancedTournamentBranding(org)) {
+export function publicFrameRolesOf(look: TournamentLook): PublicFrameRoles {
+  if (look.source === 'neutral') {
     return {
       fill: CLUB_NEAR_BLACK, onFill: WHITE, ink: CLUB_NEAR_BLACK, edge: CLUB_NEAR_BLACK, accent: CLUB_NEAR_BLACK,
       mark: WHITE, tile: WHITE, tileInk: CLUB_NEAR_BLACK, darkened: false, neutral: true,
     };
   }
-  const own = !!(tournament?.themePreset || tournament?.themePrimary);
-  const source = own ? tournament! : org;
-  return { ...clubColourRoles(source.themePreset, source.themePrimary, source.themeAccent), neutral: false };
+  return { ...clubColourRoles(look.preset, look.primary, look.accent), neutral: false };
+}
+
+export function publicFrameRoles(org: LookOrg, tournament?: LookTournament | null): PublicFrameRoles {
+  return publicFrameRolesOf(resolveTournamentLook(org, tournament));
 }
 
 /** Everything the band shows, worked out once for the live layout and the organizer's admin preview alike. */
 export interface PublicFrameBand {
   roles: PublicFrameRoles;
-  /** The event's logo (today's rule: the tournament's, else the organizer's); null on a plan without tournament branding. */
+  /** The type look (Classic, Serif, Clean), written as `data-club-face` on the frame's token element. */
+  face: TournamentFace;
+  /** The event's logo (lib/tournament-look.ts: the tournament's, else the club's; the tournament's only on Tournament
+   *  Plus); null on a plan without tournament branding. */
   logoUrl: string | null;
   /** Initials for the tile when there is no logo; null when the plan allows no mark at all. */
   initials: string | null;
@@ -90,8 +92,8 @@ export interface PublicFrameBand {
   status: { word: string; live: boolean } | null;
 }
 
-type BandOrg = FrameOrg & Pick<Organization, 'logoUrl'>;
-type BandTournament = FrameTournament & Pick<Tournament, 'name' | 'logoUrl' | 'status' | 'startDate' | 'endDate' | 'championsCrownedAt'>;
+type BandOrg = LookOrg;
+type BandTournament = LookTournament & Pick<Tournament, 'name' | 'logoUrl' | 'status' | 'startDate' | 'endDate' | 'championsCrownedAt'>;
 
 /**
  * The band's colour (above), mark, dates and state. The state word is the club's Tournaments tab's own rule and words
@@ -104,11 +106,13 @@ export function publicFrameBand(
   todayISO: string,
   registrationOpen: boolean,
 ): PublicFrameBand {
-  const roles = publicFrameRoles(org, tournament);
+  const look = resolveTournamentLook(org, tournament);
+  const roles = publicFrameRolesOf(look);
   const state = tournamentHomeStatus(tournament, todayISO, registrationOpen);
   return {
     roles,
-    logoUrl: roles.neutral ? null : tournament.logoUrl ?? org.logoUrl ?? null,
+    face: look.face,
+    logoUrl: look.logoUrl,
     initials: roles.neutral ? null : clubInitials(tournament.name) || null,
     dates: tournament.startDate
       ? formatEventDateRange(tournament.startDate, tournament.endDate, !tournament.startDate.startsWith(todayISO.slice(0, 4)))

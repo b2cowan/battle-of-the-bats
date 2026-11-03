@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
 import { isPublicPageEnabled } from '@/lib/public-pages';
-import { resolveTheme } from '@/lib/themes';
+import { shareImageTheme } from '@/lib/tournament-share-look';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import { isPublicFrameOn } from '@/lib/public-frame-server';
 
@@ -50,7 +50,7 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
       else l++;
     }
 
-    const theme = resolveTheme(data.tournament.themePreset, data.tournament.themePrimary, data.tournament.themeAccent);
+    const theme = await shareImageTheme(orgSlug, data.tournament);
     const clean = team.name.replace(/\s*\([^)]*\)\s*/g, ' ').trim() || team.name;
 
     return {

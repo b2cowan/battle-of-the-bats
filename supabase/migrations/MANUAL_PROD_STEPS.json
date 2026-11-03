@@ -554,6 +554,10 @@
     "425_a_cancel_that_waits_has_its_emails.sql": {
       "prod": "pending",
       "note": "Plans end at the renewal date, Stage 1 Part C: DATA-ONLY insert of six platform_email_templates rows (plan_ends_on, plan_ending_reminder, plan_kept and their team_workspace_ variants) so the emails of a cancel that waits are listed on the platform-admin Email templates page. ON CONFLICT DO NOTHING. Applied to dev 2026-11-02. Apply on prod with migration 424, before the promote that ships Part C. Verify: SELECT count(*) FROM platform_email_templates WHERE key IN ('plan_ends_on','plan_ending_reminder','plan_kept','team_workspace_ends_on','team_workspace_ending_reminder','team_workspace_kept') -> 6."
+    },
+    "426_a_club_decides_its_tournaments_look.sql": {
+      "prod": "pending",
+      "note": "Public tournament pages Stage 1a Part 1: adds organizations.tournament_look_policy (visible) AND a DATA-ONLY UPDATE that empties tournaments.theme_font (never read publicly; an invisible pick from the retired font list). Applied to dev 2026-11-02 (2 rows emptied, both inter). Apply on prod before the promote that ships Stage 1a Part 1. Verify: SELECT count(*) FROM tournaments WHERE theme_font IS NOT NULL -> 0."
     }
   }
 }

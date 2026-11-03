@@ -1755,21 +1755,23 @@ h1, h2, h3, h4, h5, h6 {
    shell. `:where()` carries ZERO specificity, so each rule weighs exactly what it always did and
    nothing it used to beat (or lose to) changes; on the public pages `:not()` matches every card, as
    it always has. A public preview inside the admin keeps the org's style: it is
-   `[data-public-preview]`, and a card inside it is excluded from the exclusion. */
-[data-card-style="glass"] .card:where(:not([data-admin-kit] .card), [data-public-preview] .card) {
+   `[data-public-preview]`, and a card inside it is excluded from the exclusion.
+   Under the public tournament frame there is NO card style (Stage 1a, Ask 11): the org layout's wrapper still carries
+   the org's value, so a frame card is excluded by a second, zero-specificity `:where()`. */
+[data-card-style="glass"] .card:where(:not([data-admin-kit] .card), [data-public-preview] .card):where(:not([data-public-frame] .card)) {
   background: rgba(26, 21, 48, 0.4);
   backdrop-filter: blur(16px);
 }
-[data-card-style="outlined"] .card:where(:not([data-admin-kit] .card), [data-public-preview] .card) {
+[data-card-style="outlined"] .card:where(:not([data-admin-kit] .card), [data-public-preview] .card):where(:not([data-public-frame] .card)) {
   background: transparent;
   border-width: 2px;
 }
-[data-card-style="flat"] .card:where(:not([data-admin-kit] .card), [data-public-preview] .card) {
+[data-card-style="flat"] .card:where(:not([data-admin-kit] .card), [data-public-preview] .card):where(:not([data-public-frame] .card)) {
   background: var(--surface);
   border: none;
   box-shadow: none;
 }
-[data-card-style="flat"] .card:where(:not([data-admin-kit] .card), [data-public-preview] .card):hover {
+[data-card-style="flat"] .card:where(:not([data-admin-kit] .card), [data-public-preview] .card):where(:not([data-public-frame] .card)):hover {
   box-shadow: none;
   transform: none;
 }

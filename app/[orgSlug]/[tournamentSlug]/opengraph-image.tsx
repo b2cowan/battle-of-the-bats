@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
-import { resolveTheme } from '@/lib/themes';
+import { shareImageTheme } from '@/lib/tournament-share-look';
 import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
 import { deriveChampions, isTournamentPlayoffsComplete, type ChampionInfo } from '@/lib/champions';
@@ -55,7 +55,7 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
     const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'teams');
     if (!data?.tournament) return null;
     const t = data.tournament;
-    const theme = resolveTheme(t.themePreset, t.themePrimary, t.themeAccent);
+    const theme = await shareImageTheme(orgSlug, t);
 
     const teams = data.teams ?? [];
     const games = data.games ?? [];

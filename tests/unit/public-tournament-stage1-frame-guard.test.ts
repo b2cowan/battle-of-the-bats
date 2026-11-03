@@ -10,6 +10,7 @@ import {
   publicFrameRoles,
   safePublicFrameReturn,
 } from '../../lib/public-frame.ts';
+import type { LookOrg } from '../../lib/tournament-look.ts';
 import { CLUB_GROUND, CLUB_NEAR_BLACK } from '../../lib/club-colour-roles.ts';
 import { contrastRatio } from '../../lib/color-contrast.ts';
 
@@ -71,7 +72,7 @@ describe('with the switch off, nothing a customer sees changes', () => {
     assert.equal(PUBLIC_FRAME_ATTR, 'data-public-frame');
     assert.deepEqual(publicFrameAttr, { 'data-public-frame': 'light' });
     // Stage 7: under the frame the growth chrome goes through the focused-page gate (public-focused-page.test.ts).
-    assert.match(layout, /return frameOn\s*\?\s*<>\{unlessFocused\(growthChrome\)\}<div className=\{`\$\{clubFrameStyles\.tokens\} \$\{frameStyles\.frame\}`\} \{\.\.\.publicFrameAttr\}>\{page\}<\/div><\/>\s*:\s*page;/);
+    assert.match(layout, /return frameOn\s*\?\s*<>\{unlessFocused\(growthChrome\)\}<div className=\{`\$\{clubFrameStyles\.tokens\} \$\{frameStyles\.frame\}`\} data-club-face=\{frameBand\?\.face\} \{\.\.\.publicFrameAttr\}>\{page\}<\/div><\/>\s*:\s*page;/);
     assert.match(layout, /\{!frameOn && growthChrome\}/, 'the free badge and banner where they always were, when off');
     assert.equal((layout.match(/publicFrameAttr/g) ?? []).length, 2, 'imported once, spread once — on the frame\'s element only');
     assert.match(layout, /\{frameBand && \(\s*<TournamentBand/);
@@ -143,7 +144,8 @@ describe('the new frame\'s ticker, as ruled 2026-10-28 (F\'s behaviour in D\'s l
 });
 
 describe('the band\'s colour, for four kinds of organizer (hub "Four organizers, one frame")', () => {
-  const plus = { planId: 'tournament_plus', themePreset: 'platform', themePrimary: undefined, themeAccent: undefined } as const;
+  // A club org (Stage 1a: only an org with the site module lends its look to its tournaments — lib/tournament-look.ts).
+  const plus = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [], freeFloor: null, themePreset: 'platform', themePrimary: undefined, themeAccent: undefined } as unknown as LookOrg;
   const none = { themePreset: undefined, themePrimary: undefined, themeAccent: undefined } as const;
 
   it('a free event: a neutral near-black band with white text and no mark', () => {
@@ -191,7 +193,7 @@ describe('the band (Asks 2, 8, 16 and the app-bar direction)', () => {
     assert.match(frame, /const state = tournamentHomeStatus\(tournament, todayISO, registrationOpen\);/);
     assert.match(frame, /word: TOURNAMENT_STATUS_WORD\[state\]/);
     const t = { name: 'Riverdale Summer Classic', status: 'active', startDate: '2026-10-25', endDate: '2026-10-27' };
-    const org = { planId: 'tournament_plus', themePreset: 'platform' };
+    const org = { planId: 'tournament_plus', enabledAddons: [], themePreset: 'platform' };
     assert.deepEqual(publicFrameBand(org as never, t as never, '2026-10-26', false).status, { word: 'Live now', live: true });
     // A crowned champion is Finished the moment it is crowned, with no live dot (owner, Stage 2, 2026-10-28).
     const crowned = { ...t, championsCrownedAt: '2026-10-26T21:00:00.000Z' };
@@ -212,7 +214,7 @@ describe('the band (Asks 2, 8, 16 and the app-bar direction)', () => {
     const free = publicFrameBand({ planId: 'tournament', logoUrl: 'https://x/org.png' } as never, t as never, '2026-10-26', false);
     assert.equal(free.logoUrl, null);
     assert.equal(free.initials, null);
-    const paid = publicFrameBand({ planId: 'tournament_plus' } as never, { ...t, logoUrl: undefined } as never, '2026-10-26', false);
+    const paid = publicFrameBand({ planId: 'tournament_plus', enabledAddons: [] } as never, { ...t, logoUrl: undefined } as never, '2026-10-26', false);
     assert.equal(paid.initials, 'NF', 'initials when the plan allows a mark and there is no logo');
   });
 
