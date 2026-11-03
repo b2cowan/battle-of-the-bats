@@ -51,6 +51,8 @@ const NO_REASON_FILES: Record<string, string> = {
   'app/api/platform-admin/pitch-deck-studio/deck/route.ts': 'work tool: a pitch deck',
   'app/api/platform-admin/pitch-deck-studio/pull/route.ts': 'work tool: a pitch deck',
   'app/api/platform-admin/product-catalog/campaigns/route.ts': 'work tool: a campaign',
+  'lib/platform-sign-in-again.ts': 'a staff member proving their own password (Stage 0 Part 10: "Signed in again", each wrong try); no customer is changed, and the change it unlocks carries its own reason',
+  'lib/staff-change-alert.ts': '"Owner email: not sent" (Stage 0 Part 10, Ask 9): a row beside a change that already carries its reason, naming it',
 };
 /** Single actions in a file that otherwise passes a reason. */
 const NO_REASON_ACTIONS: Record<string, string> = {

@@ -119,6 +119,12 @@ export function formatCents(cents: number, currency = 'cad'): string {
     .format(cents / 100);
 }
 
+/** "$660.00 a year": a Stripe price's checked amount; null when Stripe was not read, so it is left out, never guessed. */
+export function stripeAmountWords(facts: { amountCents: number | null; currency?: string | null; interval: string | null } | undefined): string | null {
+  if (!facts || facts.amountCents == null || !facts.interval) return null;
+  return `${formatCents(facts.amountCents, facts.currency ?? 'cad')} a ${facts.interval}`;
+}
+
 /** "Visa ending 4242" (the card a refund goes back to; the drawings' words). The brand table is the product's one. */
 export function cardWords(card: { brand: string; last4: string } | null): string {
   return card ? `${brandLabel(card.brand)} ending ${card.last4}` : 'the card it came from';

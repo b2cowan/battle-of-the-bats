@@ -16,6 +16,7 @@ import type {
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import kit from '../console.module.css';
 import { cap } from '../chips';
+import { stripeModeWord } from '@/lib/platform-labels';
 import styles from './plans-pricing.module.css';
 import { pluralize } from '@/lib/utils';
 import { fmtAbsoluteDate, fmtAbsoluteDateTime } from '@/lib/format-date';
@@ -410,7 +411,7 @@ function buildPriceChangeRequestDraft(
 ): PriceChangeRequestDraft {
   const planName = PRICE_PLAN_LABELS[row.plan_id] ?? row.plan_id;
   const cycle = cap(row.billing_cycle);
-  const environment = row.environment === 'live' ? 'Production' : 'Test';
+  const environment = stripeModeWord(row.environment);
   const targets = priceRequestTargets(row);
   const currentPrice = row.price_id ?? 'not set';
   const nextPrice = proposedPriceId || 'clear current price ID';
@@ -691,6 +692,8 @@ export default function PlansPricingClient({
   const [priceErrors, setPriceErrors] = useState<Record<string, string>>({});
   const [priceSaved, setPriceSaved] = useState<Record<string, boolean>>({});
   const [priceRequestDraft, setPriceRequestDraft] = useState<PriceChangeRequestDraft | null>(null);
+  /** A Production price request needs its Why (Part 10, Ask 13a); a Test one keeps the optional note. */
+  const liveRequest = priceRequestDraft?.row.environment === 'live';
   const [priceRequestError, setPriceRequestError] = useState('');
   const [selectedPriceProductId, setSelectedPriceProductId] = useState<string | null>(null);
 
@@ -2760,7 +2763,7 @@ export default function PlansPricingClient({
               </div>
               <div className={kit.bandCell}>
                 <span className={kit.bandLabel}>Environment</span>
-                <strong className={kit.bandValueText}>{priceRequestDraft.row.environment}</strong>
+                <strong className={kit.bandValueText}>{stripeModeWord(priceRequestDraft.row.environment)}</strong>
               </div>
               <div className={kit.bandCell}>
                 <span className={kit.bandLabel}>Proposed</span>
@@ -2801,14 +2804,21 @@ export default function PlansPricingClient({
                   onChange={event => setPriceRequestDraft(draft => draft ? { ...draft, impact_summary: event.target.value } : draft)}
                 />
               </label>
+              {/* Part 10 (Ask 13a): a Production price needs its Why, quoted by the audit log and the owner's email. A Test
+                  price keeps the optional note. */}
               <label className={`${kit.fieldGroup} ${styles.wide}`}>
-                <span className={kit.label}>Change note</span>
+                <span className={kit.label}>
+                  {liveRequest ? <>Why<span className={kit.req} aria-hidden="true"> *</span></> : 'Change note'}
+                </span>
                 <input
                   className={kit.field}
                   value={priceRequestDraft.changeNote}
-                  placeholder="Why is this Stripe price ID changing?"
+                  placeholder={liveRequest ? 'Why is this Production price changing?' : 'Why is this Stripe price ID changing?'}
+                  required={liveRequest}
+                  aria-required={liveRequest || undefined}
                   onChange={event => setPriceRequestDraft(draft => draft ? { ...draft, changeNote: event.target.value } : draft)}
                 />
+                {liveRequest && <span className={kit.hint}>Goes in the audit log and the owner’s email.</span>}
               </label>
               <label className={`${kit.fieldGroup} ${styles.wide}`}>
                 <span className={kit.label}>Description</span>
@@ -2833,7 +2843,8 @@ export default function PlansPricingClient({
                 type="button"
                 className="btn btn-primary"
                 onClick={submitPriceChangeRequest}
-                disabled={catalogBusy === 'price-change-request' || !priceRequestDraft.title.trim()}
+                disabled={catalogBusy === 'price-change-request' || !priceRequestDraft.title.trim()
+                  || (liveRequest && !priceRequestDraft.changeNote.trim())}
               >
                 {catalogBusy === 'price-change-request'
                   ? <Loader size={14} className={kit.spin} />

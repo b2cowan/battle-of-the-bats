@@ -60,6 +60,10 @@ const ACTION_LABELS: Record<string, string> = {
   refund_charge_resolved: 'Refund checked with Stripe',
   revoke_override: 'Revoke override',
   run_bulk_operation: 'Run bulk operation',
+  // Stage 0 Part 10 (tab 5): the sign-in-again step's rows, and the owner email that could not be sent.
+  signed_in_again: 'Signed in again',
+  sign_in_again_wrong_password: 'Sign in again: wrong password',
+  owner_email_not_sent: 'Owner email: not sent',
   update_addons: 'Update add-ons',
   update_early_access_lead: 'Update early access lead',
   link_early_access_lead: 'Linked a club to a lead',

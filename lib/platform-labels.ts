@@ -34,6 +34,11 @@ export function subscriptionStatusLabel(status: string): string {
   return SUBSCRIPTION_STATUS_LABELS[status] ?? humanize(status);
 }
 
+/** A Stripe price's mode in the product's word: Production or Test, never live or sandbox. */
+export function stripeModeWord(environment: string): string {
+  return environment === 'live' ? 'Production' : environment === 'sandbox' ? 'Test' : environment;
+}
+
 /** A plan's name as the product prints it ("Club · Association"); an unknown key, humanized. */
 export function planLabel(planId: string): string {
   return PLAN_CONFIG[planId as OrgPlan]?.label ?? planId.replace(/_/g, ' ');

@@ -11,6 +11,8 @@ import { SUBSCRIPTION_STATUS_LABELS, humanize } from '../chips';
 import styles from './bulk-operations.module.css';
 import DateInput from '@/components/shared/DateInput';
 import { formatLongDay, lastDayRefusal } from '@/lib/free-time';
+import { BULK_MAX_ACCOUNTS as MAX_ACCOUNTS, SIGN_IN_AGAIN_WORDS } from '@/lib/sign-in-again';
+import { useSignInAgain } from '../SignInAgain';
 
 type BulkActionType = 'subscription_status_override' | 'plan_change' | 'module_addon_enablement';
 type ModuleOperation = 'enable' | 'disable';
@@ -70,9 +72,11 @@ export default function BulkOperationsClient({
   canManageBilling,
   canManageProduct,
   freeThrough,
+  currentUserEmail,
 }: {
   orgs: BulkOrgRow[];
   recentOperations: BulkOperationRow[];
+  currentUserEmail: string;
   canManageBilling: boolean;
   canManageProduct: boolean;
   freeThrough: FreeThroughBounds;
@@ -95,6 +99,7 @@ export default function BulkOperationsClient({
   const [saved, setSaved] = useState('');
   const [results, setResults] = useState<ApplyResult[]>([]);
   const [operations, setOperations] = useState(recentOperations);
+  const signInAgain = useSignInAgain(currentUserEmail);
 
   const filteredOrgs = useMemo(() => orgs.filter(org => {
     if (search) {
@@ -116,6 +121,7 @@ export default function BulkOperationsClient({
     .map(org => org.id);
   const allFilteredSelected = filteredOrgs.length > 0 && selectedFilteredIds.length === filteredOrgs.length;
   const canApplySelectedAction = actionType === 'module_addon_enablement' ? canManageProduct : canManageBilling;
+  const overLimit = selectedIds.length > MAX_ACCOUNTS;
   const moduleLabel = MODULE_OPTIONS.find(module => module.value === targetModule)?.label ?? targetModule;
 
   const previewCopy = actionType === 'subscription_status_override'
@@ -181,21 +187,29 @@ export default function BulkOperationsClient({
 
     setBusy(true);
     try {
-      const res = await fetch('/api/platform-admin/bulk-operations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action_type: actionType,
-          org_ids: selectedIds,
-          target_status: targetStatus,
-          target_plan: targetPlan,
-          target_module: targetModule,
-          module_operation: moduleOperation,
-          last_day: actionType === 'subscription_status_override' && !indefinite ? lastDay : null,
-          indefinite: actionType === 'subscription_status_override' && indefinite,
-          reason,
-        }),
+      const body = JSON.stringify({
+        action_type: actionType,
+        org_ids: selectedIds,
+        target_status: targetStatus,
+        target_plan: targetPlan,
+        target_module: targetModule,
+        module_operation: moduleOperation,
+        last_day: actionType === 'subscription_status_override' && !indefinite ? lastDay : null,
+        indefinite: actionType === 'subscription_status_override' && indefinite,
+        reason,
       });
+      // Part 10: the server may ask for the password again; the window then sends this same run once more (Ask 4).
+      const res = await signInAgain.send(
+        () => fetch('/api/platform-admin/bulk-operations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }),
+        {
+          title: SIGN_IN_AGAIN_WORDS.bulkTitle,
+          lead: SIGN_IN_AGAIN_WORDS.bulkLead(selectedIds.length),
+          confirm: SIGN_IN_AGAIN_WORDS.bulkConfirm,
+          foot: SIGN_IN_AGAIN_WORDS.bulkFoot,
+        },
+      );
+      // Cancel: nothing ran, and the screen still shows "Confirm bulk operation".
+      if (!res) return;
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? 'Bulk operation failed');
 
@@ -203,7 +217,7 @@ export default function BulkOperationsClient({
       setOperations(prev => [json.operation, ...prev].slice(0, 8));
       const applied: ApplyResult[] = json.results ?? [];
       const skipped = applied.filter(r => r.skipped).length;
-      setSaved(`${json.operation.success_count} succeeded / ${json.operation.failure_count - skipped} failed${skipped ? ` / ${skipped} skipped` : ''}${json.portalSkipLine ? `. ${json.portalSkipLine}` : ''}`);
+      setSaved(`${json.operation.success_count} succeeded / ${json.operation.failure_count - skipped} failed${skipped ? ` / ${skipped} skipped` : ''}${json.portalSkipLine ? `. ${json.portalSkipLine}` : ''}${signInAgain.ownerEmailed(json)}`);
       resetAfterApply();
     } catch (err) {
       setError((err as Error).message);
@@ -251,6 +265,8 @@ export default function BulkOperationsClient({
           {error || saved}
         </div>
       )}
+      {saved && signInAgain.ownerNotice}
+      {signInAgain.window}
 
       <div className={styles.workspace}>
         <div className={styles.column}>
@@ -345,7 +361,7 @@ export default function BulkOperationsClient({
             {actionType === 'subscription_status_override' && (
               <label className={kit.fieldGroup}>
                 <span className={kit.label}>Billing status</span>
-                <select className={`${kit.select} ${kit.wide}`} value={targetStatus} onChange={event => setTargetStatus(event.target.value)}>
+                <select className={`${kit.select} ${kit.wide}`} value={targetStatus} onChange={event => { setTargetStatus(event.target.value); setConfirming(false); }}>
                   {STATUSES.map(status => <option key={status} value={status}>{SUBSCRIPTION_STATUS_LABELS[status]}</option>)}
                 </select>
               </label>
@@ -355,17 +371,16 @@ export default function BulkOperationsClient({
               <>
                 <label className={kit.fieldGroup}>
                   <span className={kit.label}>Target plan</span>
-                  <select className={`${kit.select} ${kit.wide}`} value={targetPlan} onChange={event => setTargetPlan(event.target.value)}>
+                  <select className={`${kit.select} ${kit.wide}`} value={targetPlan} onChange={event => { setTargetPlan(event.target.value); setConfirming(false); }}>
                     {PLANS.map(plan => <option key={plan} value={plan}>{PLAN_LABELS[plan]}</option>)}
                   </select>
                 </label>
                 <div className={styles.note}>
+                  {/* Part 10, Ask 13d: what the server does now (it skips every club Stripe still bills). */}
                   <p>
-                    <strong>This changes access only — not billing.</strong> A plan change here updates each
-                    org&rsquo;s plan and resets its tournament limit to the new plan&rsquo;s default. It does{' '}
-                    <strong>not</strong> touch Stripe — no charge, refund, proration, or cancellation. Any paid
-                    org keeps billing at its old price and goes out of sync. Re-price each org from its own
-                    Billing &amp; Access screen (downgrades, prorated) or the Stripe Dashboard (upgrades).
+                    <strong>This changes access only, not billing.</strong> Each account&rsquo;s plan and tournament
+                    limit change. A club that Stripe still bills is skipped and keeps its plan: its owner moves plan
+                    on their Plan &amp; billing page.
                   </p>
                   <p>
                     Each org gets exactly what its own plan change would do: moving onto Club starts its Club
@@ -374,14 +389,6 @@ export default function BulkOperationsClient({
                     tournaments over the new limit are archived. Each org&rsquo;s result line says which of
                     these happened.
                   </p>
-                  {targetPlan === 'tournament' && (
-                    <p>
-                      🛑 For orgs with a live subscription, setting them to free will <strong>not</strong> stop
-                      Stripe billing — it unlinks the subscription from our records while the real one keeps
-                      charging, and it can no longer be cancelled from here afterward. Cancel each subscription
-                      first (per-org <strong>Cancel Subscription</strong>) or in the Stripe Dashboard.
-                    </p>
-                  )}
                 </div>
               </>
             )}
@@ -466,8 +473,9 @@ export default function BulkOperationsClient({
             <div className={`${kit.card} ${kit.cardPad} ${styles.form}`}>
             <div className={styles.preview}>
               <span className={kit.eye}>{ACTION_LABELS[actionType]}</span>
-              <strong className={styles.previewCount}>{selectedOrgs.length} account{selectedOrgs.length === 1 ? '' : 's'}</strong>
+              <strong className={`${styles.previewCount}${overLimit ? ` ${styles.previewOver}` : ''}`}>{selectedOrgs.length} account{selectedOrgs.length === 1 ? '' : 's'}</strong>
               <p className={kit.caption}>{previewCopy}</p>
+              <p className={kit.caption}>Up to {MAX_ACCOUNTS} accounts at a time.</p>
             </div>
 
             {selectedOrgs.length > 0 && (
@@ -490,10 +498,13 @@ export default function BulkOperationsClient({
               type="button"
               className={`btn btn-primary ${kit.wide}`}
               onClick={applyBulkOperation}
-              disabled={busy || !canApplySelectedAction || selectedIds.length === 0}
+              disabled={busy || !canApplySelectedAction || selectedIds.length === 0 || overLimit}
             >
-              {busy ? <Loader size={13} className={kit.spin} /> : confirming ? 'Confirm bulk operation' : 'Review bulk operation'}
+              {busy ? <Loader size={13} className={kit.spin} />
+                : overLimit ? `Select ${MAX_ACCOUNTS} or fewer`
+                  : confirming ? 'Confirm bulk operation' : 'Review bulk operation'}
             </button>
+            <p className={styles.signInNote}>{SIGN_IN_AGAIN_WORDS.bulkWarning}</p>
             </div>
           </section>
         </div>

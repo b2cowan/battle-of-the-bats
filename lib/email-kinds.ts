@@ -138,6 +138,8 @@ export const EMAIL_KINDS = {
   unrecognised_price_alert:             { klass: 'inbox', label: 'Subscription on a price we do not know' },
   // Part 11: the daily comparison with Stripe found a difference, or could not compare (at most once a day per outcome).
   billing_drift_alert:                  { klass: 'inbox', label: 'Stripe and our billing records disagree' },
+  // Part 10: after every bulk change and Production price switch (the run that asked for the password again).
+  staff_change_alert:                   { klass: 'inbox', label: 'Bulk change or Production price switch' },
   ops_alert:                            { klass: 'alert', label: 'Error alert' },
   template_test:                        { klass: 'test', label: 'Template test' },
 } as const satisfies Record<string, KindEntry>;

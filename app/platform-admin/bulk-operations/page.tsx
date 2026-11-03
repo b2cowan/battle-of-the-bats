@@ -73,6 +73,7 @@ export default async function BulkOperationsPage() {
     <BulkOperationsClient
       orgs={orgs}
       recentOperations={recentOperations}
+      currentUserEmail={auth?.user.email ?? ''}
       canManageBilling={auth ? hasPlatformPower(auth.role, 'bulk_plan_status') : false}
       canManageProduct={auth ? hasPlatformPower(auth.role, 'bulk_sections') : false}
       freeThrough={{

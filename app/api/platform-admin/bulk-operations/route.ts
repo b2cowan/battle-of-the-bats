@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PLAN_CONFIG } from '@/lib/plan-config';
-import { applyOperatorPlanChange, PlanRefusedError } from '@/lib/operator-plan-change';
+import { applyOperatorPlanChange, PlanRefusedError, PORTAL_FREE_TIME_PLAN_REFUSAL } from '@/lib/operator-plan-change';
 import { canGiveIndefinitely, endInstantForLastDay, formatLongDay, INDEFINITE_REFUSAL, lastDayRefusal } from '@/lib/free-time';
 import { clubsStaffBelongsTo } from '@/lib/staff-own-club';
 import { subscriptionStatusLabel } from '@/lib/platform-labels';
@@ -12,6 +12,9 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgPlan } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { bulkPortalSkipLine } from '@/lib/portal-free-time';
+import { requireFreshSignIn } from '@/lib/platform-sign-in-again';
+import { BULK_MAX_ACCOUNTS } from '@/lib/sign-in-again';
+import { alertOwnerOfStaffChange } from '@/lib/staff-change-alert';
 
 type BulkActionType = 'subscription_status_override' | 'plan_change' | 'module_addon_enablement';
 type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled';
@@ -40,6 +43,11 @@ type BulkResult = {
   skipped?: boolean;
   /** Skipped because it is a Coaches Portal (Stage 4b, Q9): counted into the summary line. */
   portal?: boolean;
+  /** Skipped because Stripe still bills it (a plan change), or because the staff member belongs to it (a status). */
+  billed?: boolean;
+  ownClub?: boolean;
+  /** Extra feature only: it was already as asked, so nothing changed. */
+  already?: boolean;
   message: string;
 };
 
@@ -57,7 +65,7 @@ const ADDON_MODULE_LABELS: Record<string, string> = {
   module_rep_teams: 'Rep teams',
 };
 const VALID_ADDON_MODULES = new Set(Object.keys(ADDON_MODULE_LABELS));
-const MAX_TARGETS = 100;
+const MAX_TARGETS = BULK_MAX_ACCOUNTS;
 // A plan change runs the full operator rule per org (Club trial check incl. a Stripe history read,
 // side effects, restore, archive, audit) one org at a time — far more than the old bare UPDATE.
 export const maxDuration = 300;
@@ -164,6 +172,11 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'One or more selected organizations could not be found' }, { status: 400 });
   }
 
+  // Stage 0 Part 10: many accounts in one press asks for the password again (every run, Ask 2), LAST of the checks so
+  // nobody types it only to be refused (Ask 13c), and before anything is written.
+  const fresh = await requireFreshSignIn(auth.user);
+  if (fresh.response) return fresh.response;
+
   const parameters = {
     target_status: actionType === 'subscription_status_override' ? targetStatus : null,
     target_plan: actionType === 'plan_change' ? targetPlan : null,
@@ -213,6 +226,8 @@ export const POST = withObservability(async (req: Request) => {
   const ownClubs = actionType === 'subscription_status_override'
     ? await clubsStaffBelongsTo(orgs.map(o => o.id), { id: auth.user.id, email: auth.user.email ?? '' })
     : new Set<string>();
+  // A plan change's side effects, counted for the owner's email ("Also: 1 Club trial started · …").
+  const sideEffects = { clubTrials: 0, compsEnded: 0, archived: 0, archivedAccounts: 0 };
 
   for (const org of (orgs as OrgRow[])) {
     // Every bulk action skips a Coaches Portal (Stage 4b, owner ruling Q9, T8/T33): a portal's plan, billing status and
@@ -225,7 +240,7 @@ export const POST = withObservability(async (req: Request) => {
     try {
       if (actionType === 'subscription_status_override') {
         if (ownClubs.has(org.id)) {
-          results.push({ orgId: org.id, name: org.name, slug: org.slug, ok: false, skipped: true,
+          results.push({ orgId: org.id, name: org.name, slug: org.slug, ok: false, skipped: true, ownClub: true,
             message: "Skipped: you belong to this club, so you can't give it a billing status. Another staff member can." });
           continue;
         }
@@ -276,6 +291,9 @@ export const POST = withObservability(async (req: Request) => {
         if (change.reactivated) notes.push('restored from cancellation');
         const archived = change.archivedTournaments.length;
         if (archived > 0) notes.push(`${archived} over-cap tournament${archived === 1 ? '' : 's'} archived`);
+        if (change.clubTrialDays > 0) sideEffects.clubTrials += 1;
+        if (change.revokedComps > 0) sideEffects.compsEnded += 1;
+        if (archived > 0) { sideEffects.archived += archived; sideEffects.archivedAccounts += 1; }
         if (change.archiveWarning) notes.push('⚠ over-cap tournaments could NOT be archived; this org is over its limit');
         for (const warning of change.warnings) notes.push(`⚠ ${warning}`);
         results.push({
@@ -298,6 +316,7 @@ export const POST = withObservability(async (req: Request) => {
             name: org.name,
             slug: org.slug,
             ok: true,
+            already: true,
             message: moduleOperation === 'enable'
               ? `${moduleLabel} was already enabled`
               : `${moduleLabel} was already removed`,
@@ -330,7 +349,9 @@ export const POST = withObservability(async (req: Request) => {
       // A paying club's plan changes in Stripe, never here (owner Q9): the club is skipped with the one sentence, and the
       // batch carries on.
       if (err instanceof PlanRefusedError) {
-        results.push({ orgId: org.id, name: org.name, slug: org.slug, ok: false, skipped: true, message: `Skipped: ${err.message}` });
+        results.push({ orgId: org.id, name: org.name, slug: org.slug, ok: false,
+          portal: err.message === PORTAL_FREE_TIME_PLAN_REFUSAL || undefined, billed: err.message !== PORTAL_FREE_TIME_PLAN_REFUSAL || undefined,
+          skipped: true, message: `Skipped: ${err.message}` });
         continue;
       }
       results.push({
@@ -350,22 +371,52 @@ export const POST = withObservability(async (req: Request) => {
   const portalSkipLine = bulkPortalSkipLine(results.filter(result => result.portal).length);
   const resultSummary = { results, portalSkipLine };
 
-  const { data: updatedOperation, error: updateError } = await supabaseAdmin
-    .from('platform_bulk_operations')
-    .update({
-      status,
-      success_count: successCount,
-      failure_count: failureCount,
-      result_summary: resultSummary,
-      completed_at: completedAt,
-    })
-    .eq('id', operation.id)
-    .select('*')
-    .single();
+  // Stage 0 Part 10: one email to the owner after the run, saying what actually happened; none when nothing changed.
+  // Sent alongside the operation row's update, never waiting on it: the clubs above have changed whatever that write answers.
+  const changed = results.filter(result => result.ok && !result.already).length;
+  const [{ data: updatedOperation, error: updateError }, ownerEmailed] = await Promise.all([
+    supabaseAdmin
+      .from('platform_bulk_operations')
+      .update({
+        status,
+        success_count: successCount,
+        failure_count: failureCount,
+        result_summary: resultSummary,
+        completed_at: completedAt,
+      })
+      .eq('id', operation.id)
+      .select('*')
+      .single(),
+    changed > 0
+      ? alertOwnerOfStaffChange({
+          kind: 'bulk',
+          actor: auth.user.email!,
+          at: completedAt,
+          passwordAt: fresh.passwordAt.toISOString(),
+          reason,
+          bulkOperationId: operation.id,
+          accounts: orgs.length,
+          action: actionType === 'subscription_status_override'
+            ? { type: actionType, status: subscriptionStatusLabel(targetStatus), lastDay: indefinite ? null : lastDay }
+            : actionType === 'plan_change'
+              ? { type: actionType, plan: PLAN_CONFIG[targetPlan as OrgPlan].label }
+              : { type: actionType, feature: ADDON_MODULE_LABELS[targetModule] ?? targetModule, on: moduleOperation === 'enable' },
+          changed,
+          already: results.filter(result => result.already).length,
+          failed: results.filter(result => !result.ok && !result.skipped).length,
+          skipped: {
+            portals: results.filter(result => result.portal).length,
+            billed: results.filter(result => result.billed).length,
+            ownClubs: results.filter(result => result.ownClub).length,
+          },
+          also: sideEffects,
+        })
+      : null,
+  ]);
 
   if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 });
+    return NextResponse.json({ error: updateError.message, ownerEmailed }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: failureCount === 0, operation: updatedOperation, results, portalSkipLine });
+  return NextResponse.json({ ok: failureCount === 0, operation: updatedOperation, results, portalSkipLine, ownerEmailed });
 }, { route: '/api/platform-admin/bulk-operations' });

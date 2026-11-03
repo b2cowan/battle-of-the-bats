@@ -24,6 +24,17 @@
 /* ONE form over another (Stage 3d, Ask 7a — Payees over the entry being typed): between the form layer and the
    question layer, so a question opened from it still lands on top. Its own scrim dims the form beneath. */
 .overlayRaised { z-index: 405; }
+/* `followKeyboard`: the layer fills the VISUAL viewport (`--vvh` / `--vv-offset-top`, published for every page by the
+   root layout), so a question with a field keeps the field and both buttons above a phone's keyboard. Without the
+   variables it sits where any question does. */
+.overlayFollowKeyboard {
+  bottom: auto;
+  top: var(--vv-offset-top, 0px);
+  height: var(--vvh, 100dvh);
+}
+/* A short visible area (a phone on its side, keyboard up): the card shrinks with it and its body scrolls, so the title
+   and both buttons stay reachable. */
+.overlayFollowKeyboard .panel { max-height: calc(var(--vvh, 100dvh) - 2.5rem); }
 
 /* ONE WINDOW, Stage 1 (owner 2026-10-18, Q4 and Q6): a tinted edge and NO shadow, the coaches portal's window
    (`coaches.module.css` `.modal`); the dimmed page already separates the card. Guarded:

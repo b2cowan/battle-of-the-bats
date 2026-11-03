@@ -8,6 +8,10 @@ import { fmtAbsoluteDateTime } from '@/lib/format-date';
 import { pluralize } from '@/lib/utils';
 import type { PlatformChangeApplicationRow, PlatformChangeRequestRow } from './types';
 import type { PriceValidationResult } from '@/lib/stripe-price-validation';
+import { SIGN_IN_AGAIN_WORDS } from '@/lib/sign-in-again';
+import { stripeAmountWords } from '@/lib/console-money';
+import { stripeModeWord } from '@/lib/platform-labels';
+import { useSignInAgain } from '../SignInAgain';
 import kit from '../console.module.css';
 import styles from './change-requests.module.css';
 
@@ -269,7 +273,7 @@ function targetLabel(request: PlatformChangeRequestRow) {
 
 function priceProposalSummary(priceProposal: StripePriceUpdateProposal) {
   const plan = PLAN_LABELS[priceProposal.planId] ?? priceProposal.planId;
-  const scope = `${priceProposal.environment} ${priceProposal.billingCycle} ${plan}`;
+  const scope = `${stripeModeWord(priceProposal.environment)} ${priceProposal.billingCycle} ${plan}`;
 
   if (!priceProposal.currentPriceId && priceProposal.proposedPriceId) {
     return `Set ${scope} Stripe price to ${priceProposal.proposedPriceId}.`;
@@ -343,6 +347,7 @@ export default function ChangeRequestsClient({
   const [priceValidation, setPriceValidation] = useState<PriceValidationResult | null>(null);
   const [validatingPrice, setValidatingPrice] = useState(false);
   const [warnConfirmed, setWarnConfirmed] = useState(false);
+  const signInAgain = useSignInAgain(currentUserEmail);
 
   const applicationsByRequest = useMemo(() => {
     const grouped = new Map<string, PlatformChangeApplicationRow[]>();
@@ -402,6 +407,9 @@ export default function ChangeRequestsClient({
     [requests, selectedRequestId],
   );
   const selectedApplications = selectedRequest ? applicationsByRequest.get(selectedRequest.id) ?? [] : [];
+  const selectedPriceProposal = selectedRequest ? getStripePriceProposal(selectedRequest) : null;
+  // The window stays while a decision is in flight: a Production switch may still ask for the password inside it (Part 10).
+  const closeDetail = () => { if (!busy) setSelectedRequestId(null); };
 
   // When a Stripe-price request is opened, validate the proposed price against the slot so the
   // operator sees the Catalog-vs-Stripe checks (and any warnings) before approving.
@@ -431,13 +439,30 @@ export default function ChangeRequestsClient({
     setError('');
 
     try {
-      const res = await fetch('/api/platform-admin/product-catalog/change-requests', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: request.id, status }),
-      });
+      const priceProposal = getStripePriceProposal(request);
+      // Part 10: switching a Production price may ask for the password again; the window then sends this once more.
+      const res = await signInAgain.send(
+        () => fetch('/api/platform-admin/product-catalog/change-requests', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: request.id, status }),
+        }),
+        {
+          title: SIGN_IN_AGAIN_WORDS.priceTitle,
+          lead: SIGN_IN_AGAIN_WORDS.priceLead(
+            priceProposal ? `${PLAN_LABELS[priceProposal.planId] ?? priceProposal.planId} ${priceProposal.billingCycle}` : 'plan',
+            priceProposal?.proposedPriceId ?? null,
+            stripeAmountWords(priceValidation?.stripe),
+          ),
+          confirm: SIGN_IN_AGAIN_WORDS.priceConfirm,
+          foot: SIGN_IN_AGAIN_WORDS.priceFoot,
+        },
+      );
+      // Cancel: nothing changed, and the detail window still shows "Approve & apply".
+      if (!res) return;
       const json = await res.json() as {
         error?: string;
+        ownerEmailed?: boolean | null;
         changeRequest?: PlatformChangeRequestRow;
         appliedStripePrice?: { id?: string; price_id?: string | null; already_current?: boolean } | null;
         appliedPlanGating?: { plan_key?: string; gating_status?: string; already_current?: boolean } | null;
@@ -459,7 +484,7 @@ export default function ChangeRequestsClient({
         }, ...prev]);
         setNotice(json.appliedStripePrice.already_current
           ? 'Marked implemented; the Stripe price slot already matched this approved request.'
-          : 'Approved, applied, and marked implemented.');
+          : `Approved, applied, and marked implemented.${signInAgain.ownerEmailed(json)}`);
         setSelectedRequestId(null);
       } else if (json.appliedPlanGating?.plan_key) {
         setApplicationRows(prev => [{
@@ -593,6 +618,7 @@ export default function ChangeRequestsClient({
           {error || notice}
         </div>
       )}
+      {notice && signInAgain.ownerNotice}
 
       <div className={kit.card}>
         <div className={kit.toolbar} role="group" aria-label="Change request filters">
@@ -703,7 +729,7 @@ export default function ChangeRequestsClient({
       </div>
 
       {selectedRequest && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setSelectedRequestId(null))?.(); }}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) closeDetail(); }}>
           <div
             className={styles.detailModal}
             role="dialog"
@@ -719,7 +745,8 @@ export default function ChangeRequestsClient({
               <button
                 type="button"
                 className={styles.modalCloseBtn}
-                onClick={() => setSelectedRequestId(null)}
+                onClick={closeDetail}
+                disabled={Boolean(busy)}
                 aria-label="Close request detail"
               >
                 <X size={16} />
@@ -761,6 +788,14 @@ export default function ChangeRequestsClient({
                 <p>{requestDisplaySummary(selectedRequest)}</p>
                 {selectedRequest.description && <p>{selectedRequest.description}</p>}
               </section>
+
+              {/* Part 10 (Ask 13a): a price request's reason, which the audit log and the owner's email quote. */}
+              {selectedPriceProposal?.changeNote && (
+                <section className={styles.detailSection}>
+                  <h3>Why</h3>
+                  <p>{selectedPriceProposal.changeNote}</p>
+                </section>
+              )}
 
               <section className={styles.detailSection}>
                 <h3>Proposal</h3>
@@ -834,10 +869,17 @@ export default function ChangeRequestsClient({
                   {selectedRequest.implementation_notes && <span>Notes: {selectedRequest.implementation_notes}</span>}
                 </div>
               </section>
+
+              {/* Part 10 (Ask 6): the last line of the body, above the foot (this window keeps Close at the foot's left). */}
+              {/* A Production price: switching it asks for the password again and emails the owner (Ask 1). */}
+              {canManageProduct && selectedPriceProposal?.environment === 'live'
+                && (selectedRequest.status === 'needs_review' || selectedRequest.status === 'approved') && (
+                <p className={kit.muted}>{SIGN_IN_AGAIN_WORDS.priceWarning}</p>
+              )}
             </div>
 
             <div className={styles.modalFooter}>
-              <button type="button" className="btn btn-secondary" onClick={() => setSelectedRequestId(null)}>
+              <button type="button" className="btn btn-secondary" onClick={closeDetail} disabled={Boolean(busy)}>
                 Close
               </button>
               <div className={styles.modalActions}>{renderActions(selectedRequest, (() => {
@@ -851,6 +893,8 @@ export default function ChangeRequestsClient({
               })())}</div>
             </div>
           </div>
+          {/* Inside the detail window's layer, so the small window opens on top of it (tab 4). */}
+          {signInAgain.window}
         </div>
       )}
     </div>

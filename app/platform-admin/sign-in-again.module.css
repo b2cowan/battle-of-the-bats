@@ -1,0 +1,26 @@
+/* SIGN IN AGAIN (Stage 0, Part 10, tabs 2 and 6): the shipped small question window with one password field. */
+
+.window { display: grid; gap: 0.85rem; }
+.lead { margin: 0; }
+
+/* The staff sign-in page's field, with the eye that shows the password (tab 2). */
+.pwWrap { position: relative; display: block; }
+.pwWrap input { width: 100%; padding-right: 2.75rem; }
+.pwToggle {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  padding: 0.5rem;
+  cursor: pointer;
+}
+.pwToggle:hover { color: var(--text-primary); }
+
+/* On a phone it stays the small centred card and lifts above the keyboard (tab 6, Ask 5): KitDialog's `followKeyboard`. */
+@media (max-width: 640px) {
+  .pwWrap input { min-height: 44px; }
+}

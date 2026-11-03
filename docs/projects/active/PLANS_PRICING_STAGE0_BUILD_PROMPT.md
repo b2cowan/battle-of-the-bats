@@ -121,6 +121,68 @@
 - **Part 10 — not built in Session 3 (owner ruling 2026-11-01: draw it first).** The frame check stopped it: no sign-in-again window is
   drawn, and neither of today's two doors (Bulk changes, the price-slot change) is framed with the step. A server-only gate would
   just make both doors fail. Owner checklist O10 holds the design session; Part 10 is then its own build session.
+- **Part 10 — DRAWN 2026-11-02 (`/design`); ALL 13 ASKS RULED 2026-11-02 (owner, every one as recommended).**
+  https://claude.ai/artifact/QJ3t9cHTLPski7xvL2uFcX (source `PLANS_PRICING_STAGE0_PART10_SIGN_IN_AGAIN_DRAWINGS.html`). Build to
+  that frame, not to the round-2 sentence. Two corrections to the spec below: the price gate sits on the Approval queue's
+  "Approve & apply" / "Apply price" for a Production request (PATCH), not on Plans & pricing's Submit; and the freshness check
+  runs after the request's own checks (count ≤ 100, reason), so nobody types a password only to be refused.
+  **The rulings (owner paste-back, 2026-11-02):**
+  1. Rule = many customers at once, or what every new customer pays: Bulk changes (all three actions) + Approve & apply /
+     Apply price on a Production Stripe price request. Not Submit, not Test requests, not plan availability or trial days.
+  2. Every Bulk changes run asks, whatever the count.
+  3. 10 minutes, counted from the last password entry (a sign-in or this window).
+  4. After the password is accepted, the change carries on by itself.
+  5. The shipped small question window; a centred card on a phone.
+  6. One fixed sentence on each screen beforehand, always shown.
+  7. A wrong password: logged, no email.
+  8. The owner email as drawn, naming the person by email.
+  9. When the email cannot be sent: the change stands, an audit row, and the finish notice says so.
+  10. One-customer actions (refunds, cancels, plan changes, free time) stay without it.
+  11. Campaigns "Send now" is the next door, drawn later, not in Part 10.
+  12. Accept the honest limit (a saved password fills the window in); a second sign-in factor is its own later project.
+  13. All four ride along: (a) a Production price request needs a Why; (b) the queue reads Production / Test, never
+      live / sandbox; (c) Bulk changes shows the 100 limit and the server asks for the password last; (d) the Bulk
+      plan-change note is rewritten to what the server does.
+  Scope is the drawing's "For the build session" box: nothing else.
+- **Part 10 — BUILT 2026-11-02 (build session). No migration.** The gate (`requireFreshSignIn`, `lib/platform-sign-in-again.ts`)
+  reads the session's own `amr` password entry, verified by `getClaims()` — **not** `last_sign_in_at`, which is account-wide, so a
+  copied session would pass the moment its owner signed in anywhere else (the spec's own caveat, answered). The window posts
+  the password to `POST /api/platform-admin/sign-in-again`, which signs in again server-side as the session's own user (so each
+  wrong try is written honestly) and replaces the browser's session; the screen then resends once (`useSignInAgain`,
+  `app/platform-admin/SignInAgain.tsx`, on `KitDialog kind="question"`). Bulk changes asks after the org lookup, before the run's
+  row; a Production price asks inside `applyStripePriceUpdateProposal` after the stale/Stripe checks, before its row. Owner email:
+  `lib/staff-change-alert.ts` (sender) + `lib/staff-change-alert-email.ts` (words), kind `staff_change_alert`; not sent →
+  `owner_email_not_sent` row + finish notice. Audit labels: Signed in again / Sign in again: wrong password / Owner email: not sent.
+  Ask 13: (a) Why required on a Production price request, server + window; (b) queue summary and the request window say
+  Production/Test; (c) "Up to 100 accounts at a time.", the over-100 button, gate last; (d) note rewritten, the red
+  "unlinks the subscription" paragraph removed. Also fixed in passing: Bulk's status and target-plan selects now reset the
+  Confirm step like every other input. **Departures from the drawing, stated:** no customer count in the price window or email
+  ("Customers on today’s price keep it."): no such count exists on a request, and the drawing forbids guessing; the old
+  price's amount is not shown (only the new price is read from Stripe); the bulk subject counts what changed, not what was
+  asked ("35 accounts now read…", true of each one). The raw proposal JSON in the queue's detail still shows
+  `"environment": "live"` (data, not words). Tests: `tests/unit/sign-in-again.test.ts`, `tests/unit/staff-change-alert.test.ts`;
+  typecheck clean.
+  **`/simplify` + `/review` DONE 2026-11-02; the owner said "simplify, review, and commit".** Simplify: one amount formatter
+  (`stripeAmountWords`, `lib/console-money.ts`) and one mode word (`stripeModeWord`, `lib/platform-labels.ts`) for the window,
+  the email and both screens; the 100 limit shared (`BULK_MAX_ACCOUNTS`); the owner-email notice owned by the hook; the phone
+  keyboard lift is now KitDialog's opt-in `followKeyboard` (no `:has()` reach-in); the email is sent alongside the run's last
+  writes. The shared password field (`components/auth/PasswordInput`) was NOT reused: it wears the public pages' tokens
+  (`--fl-text` is near-white), so its eye would vanish on the console's white; its `aria-pressed`/`aria-controls` were copied.
+  Review fixes: the audit log no longer reads the three new rows "Not recorded" (`NO_REASON`); the approval window cannot be
+  closed while a decision is in flight (it would have left the password question with no screen to open on); a cleared
+  Production price says "New customers cannot buy it until a price is set", never "charged no price"; a last day in another
+  year keeps its year in the subject; one question at a time in the hook; the card shrinks with a short phone screen.
+  **Not changed, recorded:** (1) ⚠ **OWNER STEP — the copied-session promise needs a sign-in setting.** A copied session can
+  set a NEW password itself (the sign-in service's change-password call) and then pass this check, unless "Secure password
+  change" is on in the Supabase dashboard (Authentication → Providers → Email) on BOTH projects. Nothing in the repo records
+  it; the header of `lib/sign-in-again.ts` now says so. (2) The read-only session read can refresh a nearly expired session
+  and discard the result: the platform context's own `getUser()` already does exactly this on every staff route, so the gate
+  adds nothing new; a fix belongs to `lib/platform-auth.ts`, not here. (3) Wrong tries are limited only by the sign-in
+  service's own rate limit and send no email (Ask 7, as ruled). (4) A staff account with no password (never set) gets "That
+  password doesn't match": the staff sign-in is password-only, so rare. (5) A Production request created before today with
+  no Why can still be approved; its email reads "Reason: Not recorded". (6) Bulk's portal/billed split reads the refusal's
+  sentence, not a code (`PlanRefusedError.code` is one value for both); rewording that sentence would move the counts.
+  Browser walk owed.
 - **Part 8 — built 2026-11-01, committed `ee2f55acf` 2026-11-01. No migration.** `MoneyRead['nextCharge']` is now the union `NextCharge`
   (`{kind:'charge',…} | {kind:'none'} | {kind:'unread'}`, `lib/console-money.ts`); the preview's `.catch` returns `unread`. The band
   words it **"Not read"** (the word the comparison rows already use for a Stripe that did not answer) with the note "Stripe could not be
@@ -597,7 +659,10 @@ anchor (date, commit, walk §), never deletes it.
 - [ ] **O8 · Production order:** migrations 416, 417, 418 and 421 applied to production BEFORE the promote that ships the code
   (`MANUAL_PROD_STEPS.json`); migration 422 (the daily job's schedule) AFTER the code is serving, on its own yes.
 - [ ] **O9 · Exit walks:** re-run Stripe Walk 6 (webhook hardening) and the Stage 0 walk (both test mode).
-- [ ] **O10 · `/design` session for Part 10 (sign in again), then its own build session** (owner ruling 2026-11-01, Session 3). The
+- [ ] **O10 · `/design` session for Part 10 (sign in again), then its own build session** (owner ruling 2026-11-01, Session 3).
+  **Design half DONE 2026-11-02: drawn, all 13 asks ruled (see Part 10's status line above). BUILT, simplified and reviewed
+  2026-11-02, committed on the owner's go (the hash is in Part 10's note); the browser walk and the "Secure password change"
+  setting (Part 10's note) still owed, so this line stays open until it ships.** The
   round-2 drawings place the sentence on the Stage 3–8 screens only; they draw no sign-in-again window and no frame for today's Bulk
   changes or today's price-slot change. Draw: the window (password only), where it opens on those two screens, the owner email.
   Note for the session: today's Bulk changes never calls Stripe (status overrides and sections), so it is a many-customer

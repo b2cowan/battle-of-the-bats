@@ -74,6 +74,10 @@
 }
 
 .preview p { margin: 0; }
+/* Above the server's limit the count turns warn; the button says why in its place (Part 10, Ask 13c). */
+.previewOver { color: var(--warning); }
+/* The fixed sentence under the button: a password may be asked, an email follows (Part 10, Ask 6). */
+.signInNote { margin: 0; font-size: var(--type-support); color: var(--text-secondary); }
 
 .selectedList {
   display: grid;

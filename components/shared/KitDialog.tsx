@@ -183,6 +183,7 @@ export default function KitDialog({
   busy = false,
   size,
   raised = false,
+  followKeyboard = false,
   progress,
   aside,
   dirty = false,
@@ -245,6 +246,9 @@ export default function KitDialog({
   size?: 'medium' | 'wide';
   /** A form opened from INSIDE another form stands one layer above it (see the header; Stage 3d, Ask 7a). */
   raised?: boolean;
+  /** A question with a field to type in (Sign in again): its layer follows the phone's VISIBLE area, so the card lifts
+   *  above the keyboard instead of centring behind it (Safari ignores the root's `interactive-widget` hint). */
+  followKeyboard?: boolean;
   /** A form in steps: the step bar under the head (see the header; Stage 5). */
   progress?: { at: number; of: number };
   /** A live preview beside a form at 1280 and wider (see the header; Stage 5). */
@@ -379,7 +383,7 @@ export default function KitDialog({
 
   return (
     <div
-      className={`${styles.overlay} ${kind === 'question' ? styles.overlayQuestion : styles.overlayForm}${raised && kind === 'form' ? ` ${styles.overlayRaised}` : ''}`}
+      className={`${styles.overlay} ${kind === 'question' ? styles.overlayQuestion : styles.overlayForm}${raised && kind === 'form' ? ` ${styles.overlayRaised}` : ''}${followKeyboard ? ` ${styles.overlayFollowKeyboard}` : ''}`}
       // The fixed layer itself, named for a page stylesheet that must leave it alone (the practice page's phone gutter
       // rule skips it — a margin on a fixed overlay pulls it in from the glass). The panel inside is `data-kit-dialog`.
       data-kit-overlay=""

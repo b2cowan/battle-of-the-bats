@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
+import type { User } from '@supabase/supabase-js';
 import { writeAuditBeforeChange, writePlatformAuditLog } from '@/lib/platform-audit';
 import { requirePlatformPower } from '@/lib/platform-auth';
+import { requireFreshSignIn } from '@/lib/platform-sign-in-again';
+import { alertOwnerOfStaffChange } from '@/lib/staff-change-alert';
+import { stripeAmountWords } from '@/lib/console-money';
+import { planLabel } from '@/lib/platform-labels';
 import { recordCatalogChangeApplication } from '@/lib/platform-catalog-approval';
 import { sanitizePlatformChangeNote } from '@/lib/platform-change-note';
 import { upsertPlanConfigOverride } from '@/lib/plan-config-db';
@@ -182,16 +187,19 @@ function getPlanConfigUpdateProposal(value: unknown): PlanConfigUpdateProposal |
 async function applyStripePriceUpdateProposal(
   changeRequestId: string,
   proposal: StripePriceUpdateProposal,
-  actorEmail: string,
+  actor: User,
 ): Promise<
   | {
       ok: true;
       stripePrice: StripePriceRow;
       stripeValidation: StripePriceValidationRecord;
       alreadyCurrent?: boolean;
+      /** A Production switch only: when this session last proved the password (Part 10). */
+      passwordAt?: Date;
     }
   | { ok: false; response: NextResponse }
 > {
+  const actorEmail = actor.email!;
   if (proposal.proposedPriceId && !proposal.proposedPriceId.startsWith('price_')) {
     return {
       ok: false,
@@ -289,6 +297,16 @@ async function applyStripePriceUpdateProposal(
     }
   }
 
+  // Stage 0 Part 10: switching a Production price changes what every new customer pays, so it asks for the password again
+  // — after the request's own checks above (so nobody types it only to be refused, Ask 13c) and before its row is
+  // written. A Test price charges nobody and does not ask (Ask 1).
+  let passwordAt: Date | undefined;
+  if (current.environment === 'live') {
+    const fresh = await requireFreshSignIn(actor);
+    if (fresh.response) return { ok: false, response: fresh.response };
+    passwordAt = fresh.passwordAt;
+  }
+
   // Stage 0 Part 9: switching a live price slot changes what new customers are charged: its row first, or no switch.
   const changeFailed = await writeAuditBeforeChange(
     actorEmail,
@@ -355,7 +373,7 @@ async function applyStripePriceUpdateProposal(
     },
   );
 
-  return { ok: true, stripePrice: updatedPrice, stripeValidation };
+  return { ok: true, stripePrice: updatedPrice, stripeValidation, passwordAt };
 }
 
 async function applyPlanGatingUpdateProposal(
@@ -620,6 +638,12 @@ export const POST = withObservability(async (req: Request) => {
   if (!VALID_PRIORITIES.has(priority)) {
     return NextResponse.json({ error: 'Invalid priority' }, { status: 400 });
   }
+  // Stage 0 Part 10 (Ask 13a): a Production price request carries its Why, so the audit log and the owner's email never
+  // read "Not recorded". A Test request keeps the note optional.
+  const priceProposal = getStripePriceUpdateProposal(body.proposal);
+  if (priceProposal?.environment === 'live' && !priceProposal.changeNote) {
+    return NextResponse.json({ error: 'Say why this Production price is changing.' }, { status: 400 });
+  }
 
   const status = body.submit_for_review === true ? 'needs_review' : 'draft';
   const submittedAt = status === 'needs_review' ? new Date().toISOString() : null;
@@ -699,7 +723,7 @@ export const PATCH = withObservability(async (req: Request) => {
   const shouldApplyPlanGatingProposal = status === 'approved' && planGatingProposal && current.status !== 'implemented';
   const shouldApplyPlanConfigProposal = status === 'approved' && planConfigProposal && current.status !== 'implemented';
   const appliedStripePrice = shouldApplyStripePriceProposal
-    ? await applyStripePriceUpdateProposal(current.id, stripePriceProposal, auth.user.email!)
+    ? await applyStripePriceUpdateProposal(current.id, stripePriceProposal, auth.user)
     : null;
   const appliedPlanGating = shouldApplyPlanGatingProposal
     ? await applyPlanGatingUpdateProposal(current.id, planGatingProposal, auth.user.email!)
@@ -717,6 +741,22 @@ export const PATCH = withObservability(async (req: Request) => {
   if (appliedPlanConfig && !appliedPlanConfig.ok) {
     return appliedPlanConfig.response;
   }
+  // Stage 0 Part 10: the owner's email once a Production price is switched (a slot that already matched switched nothing).
+  // Started here and awaited at the answer, so the request's own row and audit write go alongside it.
+  const ownerEmailedPromise = appliedStripePrice?.ok && appliedStripePrice.passwordAt && !appliedStripePrice.alreadyCurrent && stripePriceProposal
+    ? alertOwnerOfStaffChange({
+        kind: 'price',
+        actor: auth.user.email!,
+        at: new Date().toISOString(),
+        passwordAt: appliedStripePrice.passwordAt.toISOString(),
+        reason: stripePriceProposal.changeNote,
+        changeRequestId: current.id,
+        slot: `${planLabel(stripePriceProposal.planId)} ${stripePriceProposal.billingCycle}`,
+        newPriceId: stripePriceProposal.proposedPriceId,
+        newAmount: stripeAmountWords('stripe' in appliedStripePrice.stripeValidation ? appliedStripePrice.stripeValidation.stripe : undefined),
+        oldPriceId: stripePriceProposal.currentPriceId,
+      })
+    : Promise.resolve(null);
 
   const now = new Date().toISOString();
   const appliedGeneratedProposal = Boolean(
@@ -762,7 +802,7 @@ export const PATCH = withObservability(async (req: Request) => {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message, ownerEmailed: await ownerEmailedPromise }, { status: 500 });
   }
 
   await writePlatformAuditLog(
@@ -786,6 +826,7 @@ export const PATCH = withObservability(async (req: Request) => {
   return NextResponse.json({
     ok: true,
     changeRequest: data,
+    ownerEmailed: await ownerEmailedPromise,
     appliedStripePrice: appliedStripePrice && appliedStripePrice.ok
       ? {
           ...appliedStripePrice.stripePrice,

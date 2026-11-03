@@ -39,6 +39,26 @@ retiring an old price; **5** our own branded invoices for staff, with our tax nu
 (designed first); **7** the new price for new customers; **8** moving existing customers to the new price, last and most careful; **9** closeout:
 help articles, demo check, going live on production. The program is done when all ten are done.
 
+## Stage 0, Part 10: "sign in again" (drawn 2026-11-02; all 13 asks ruled 2026-11-02, as recommended; built, reviewed and committed 2026-11-02; walk owed)
+Drawings: https://claude.ai/artifact/QJ3t9cHTLPski7xvL2uFcX (source `PLANS_PRICING_STAGE0_PART10_SIGN_IN_AGAIN_DRAWINGS.html`).
+- **What staff see:** when they press the last button of a bulk change, or approve a Production price switch, and their
+  password was last typed more than 10 minutes ago, the product's small question window asks for it. Once accepted, the
+  change goes ahead with no second press. Each screen says so beforehand in one fixed sentence. One-customer work
+  (refunds, cancels, plan changes, free time) never asks.
+- **What the owner gets:** one email after each run: who did it, what happened (including a partial result), the reason,
+  and a link to the audit log. If the email cannot be sent, the change still stands, the audit log says "Owner email: not
+  sent", and the person who ran it is told on the screen.
+- **Why it matters:** with one admin and no second approver, an open session should not be enough to change many
+  customers at once or what every new customer pays. The email is the alarm when it is not you.
+- **Tradeoffs called out:** Bulk changes is covered because it reaches up to 100 accounts, not because it moves money.
+  A browser that saves the password fills the window in, so this stops a stolen session but not someone at an unlocked
+  computer; a second sign-in factor is its own later project. Campaigns "Send now" is the next door, drawn separately.
+- **Success looks like:** no bulk change or Production price switch runs on a session whose password is more than 10
+  minutes old; every one produces an email or an "Owner email: not sent" row; no staff member types a password only
+  to be refused.
+- **Owed by the owner:** turn on "Secure password change" in the sign-in service on both projects. Without it, someone
+  holding a copied session could set a new password and then pass the check (found in review, 2026-11-02).
+
 ## Priority and risk
 Start the planning session at the end of the billing project. The invoice list is the natural first deliverable. The bulk
 price-change tool is the highest-risk piece and comes last.

@@ -1,0 +1,831 @@
+<title>Sign In Again Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: sticky numbered tabs, one section visible at a time. A 920 reading column for words and asks; each drawing breaks
+   out to a true-size frame (1440 desk, 390 phone) in its own horizontal scroller. Document chrome is cool stone; frames wear
+   the console's real warm (or dark) tokens, the same set as the round-2 Plans & pricing drawings. Every figure is an EXAMPLE. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8; --red: #9c321d; --red-soft: #f6e2dc;
+  --tag: #1d4f8a; --tag-soft: #dde8f5;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1914;
+  --tag: #9cc2f0; --tag-soft: #16243a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1914;
+  --tag: #9cc2f0; --tag-soft: #16243a; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--ground); }
+.wrap { max-width: 920px; margin: 0 auto; padding-block: 24px 90px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; letter-spacing: -.4px; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 21px; line-height: 1.3; margin: 0; text-wrap: balance; }
+h3 { font-size: 16px; margin: 0 0 4px; }
+p { margin: 0; max-width: 72ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.stack { display: grid; gap: 14px; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--ground); border-bottom: 1px solid var(--line); padding-block: 10px; margin-inline: calc(50% - 50vw); padding-inline: max(16px, calc(50vw - 460px)); display: grid; gap: 8px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tabs button { font: 600 13px/1 var(--font-body); padding: 9px 12px; min-height: 36px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; white-space: nowrap; }
+.tabs button .n { font-family: var(--font-data); opacity: .6; margin-right: 6px; }
+.tabs button[aria-selected="true"] { background: var(--olive-soft); color: var(--olive); border-color: var(--olive); }
+.ctl { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; font-size: 12.5px; color: var(--dim); }
+.ctl .lbl { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; }
+.sw { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 2px; }
+.sw button { font: 600 13px/1 var(--font-body); min-height: 32px; padding: 6px 12px; border: 0; border-radius: 6px; background: transparent; color: var(--soft); cursor: pointer; }
+.sw button[aria-pressed="true"] { background: var(--olive-soft); color: var(--olive); }
+.tab { display: none; padding-top: 22px; gap: 18px; }
+.tab.on { display: grid; }
+.lbl { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.hint { font-size: 12.5px; color: var(--dim); }
+.scroller { overflow-x: auto; margin-inline: calc(50% - 50vw); padding-inline: max(16px, calc(50vw - 736px)); padding-block: 4px 10px; }
+.scroller > .fx { width: 1440px; }
+.rowf { display: flex; gap: 16px; align-items: flex-start; width: max-content; }
+.rowf > .fx { flex: none; }
+.cap { font: 600 11px/1.3 var(--font-data); letter-spacing: .08em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.grid2 .card h3 { display: flex; gap: 8px; align-items: baseline; }
+.grid2 .card .num { font: 700 12px/1 var(--font-data); color: var(--olive); }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+table.doc { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.doc th { text-align: left; font: 600 11px/1.3 var(--font-data); letter-spacing: .08em; text-transform: uppercase; color: var(--soft); padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.doc td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.doc tr:last-child td { border-bottom: 0; }
+table.doc td.y { color: var(--olive); font-weight: 700; white-space: nowrap; }
+table.doc td.no { color: var(--dim); font-weight: 700; white-space: nowrap; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; color: var(--soft); }
+.t-new, .t-chg, .t-same { font: 700 10px/1 var(--font-data); letter-spacing: .06em; padding: 3px 6px; border-radius: 4px; border: 1px solid; }
+.t-new { color: var(--olive); background: var(--olive-soft); border-color: var(--olive); }
+.t-chg { color: var(--amber); background: var(--amber-soft); border-color: var(--amber); }
+.t-same { color: var(--dim); border-color: var(--line); }
+.ask { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--olive); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; }
+.ask .q { font-weight: 700; }
+.ask .rec { font-size: 14px; color: var(--soft); }
+.ask .rec b { color: var(--ink); }
+.ask .opts { display: grid; gap: 4px; }
+.ask label { display: flex; gap: 10px; align-items: flex-start; min-height: 32px; cursor: pointer; font-size: 14.5px; }
+.ask input[type="checkbox"] { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--olive); flex: none; }
+.ask textarea, .paste textarea { width: 100%; min-height: 52px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); resize: vertical; }
+.ask .for { font: 600 11px/1.3 var(--font-data); letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+.paste { display: grid; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.paste textarea { min-height: 220px; font: 13px/1.5 var(--font-data); }
+.btn-doc { font: 600 14px/1 var(--font-body); min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive); color: var(--card); cursor: pointer; justify-self: start; }
+.build { background: var(--card); border: 1px solid var(--olive); border-radius: 10px; padding: 14px 16px; font-size: 14px; }
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); max-width: min(520px, calc(100vw - 32px)); padding: 18px 18px 14px; }
+dialog::backdrop { background: rgba(20, 24, 18, .45); }
+dialog .foot { display: flex; justify-content: flex-end; margin-top: 12px; }
+dialog button.close { font: 600 14px/1 var(--font-body); min-height: 40px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+body.diff .same { opacity: .22; }
+body.diff .gone { display: none; }
+
+/* ═════ Product frames: the console's warm tokens (dark on the switch). Type ladder 11·12·14·16·20·24 ═════ */
+.fx { --p: #F8F4ED; --c: #FFFFFF; --ln: rgba(70,55,30,.12); --ln2: rgba(70,55,30,.20); --fieldbg: #FFFFFF;
+  --i: #241E15; --i2: #4A4235; --i3: #615A54; --ol: #57651E; --ols: rgba(87,101,30,.10); --lime: #D9F99D; --limei: #241E15;
+  --am: #835006; --rd: #B03A22; --gr: #34662A; --scrim: rgba(36,30,21,.34); --edge: rgba(87,101,30,.30); --kb: #d1d5db; --kbk: #ffffff;
+  background: var(--p); color: var(--i); font: 14px/1.45 var(--font-body); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; position: relative; }
+.fx.dark { --p: #0A0A0A; --c: #111827; --ln: rgba(255,255,255,.08); --ln2: rgba(255,255,255,.14); --fieldbg: rgba(255,255,255,.05);
+  --i: #F1F5F9; --i2: rgba(255,255,255,.70); --i3: rgba(255,255,255,.50); --ol: #D9F99D; --ols: rgba(217,249,157,.10); --lime: #D9F99D; --limei: #0A0A0A;
+  --am: #F59E0B; --rd: #EF4444; --gr: #22C55E; --scrim: rgba(13,17,26,.55); --edge: rgba(217,249,157,.30); --kb: #2b2f36; --kbk: #4a4f57; }
+.fx * { box-sizing: border-box; }
+.strip { height: 48px; display: grid; grid-template-columns: 240px 1fr auto; align-items: center; background: var(--c); border-bottom: 1px solid var(--ln); }
+.strip .lock { display: flex; align-items: center; gap: 8px; padding-left: 20px; font: 700 16px/1 var(--font-body); }
+.strip .lock .mk { width: 20px; height: 20px; border-radius: 5px; background: var(--ol); }
+.strip .lock small { font: 600 11px/1 var(--font-data); letter-spacing: .1em; color: var(--i3); padding-left: 10px; border-left: 1px solid var(--ln2); }
+.strip .find { margin: 0 auto; width: 440px; display: flex; align-items: center; height: 34px; border: 1px solid var(--ln2); border-radius: 999px; padding: 0 12px; color: var(--i3); font-size: 14px; background: var(--fieldbg); }
+.strip .end { padding-right: 20px; color: var(--i2); }
+.app { display: grid; grid-template-columns: 240px minmax(0, 1fr); }
+.side { background: var(--c); border-right: 1px solid var(--ln); padding: 12px 0 16px; display: flex; flex-direction: column; min-height: 640px; }
+.gl { display: flex; align-items: center; gap: 8px; font: 700 11px/1.2 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i3); padding: 12px 20px 6px; }
+.gl .cv { margin-left: auto; opacity: .55; }
+.it { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 20px; color: var(--i2); font-size: 14px; }
+.it.on { background: var(--ols); color: var(--ol); font-weight: 600; }
+.side .foot { margin-top: auto; border-top: 1px solid var(--ln); padding: 10px 20px 0; color: var(--i2); font-size: 12px; }
+.main { padding: 28px 40px 44px; min-width: 0; }
+.page { max-width: 1200px; margin: 0 auto; display: grid; gap: 18px; }
+.ph h1 { font: 700 20px/1.3 var(--font-body); margin: 0; letter-spacing: 0; color: var(--i); }
+.chip { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 999px; font: 700 11px/1.3 var(--font-data); letter-spacing: .05em; border: 1px solid var(--ln2); background: var(--ols); color: var(--i2); white-space: nowrap; }
+.chip.ok { color: var(--ol); background: color-mix(in srgb, var(--ol) 7%, transparent); border-color: color-mix(in srgb, var(--ol) 25%, transparent); }
+.chip.warn { color: var(--am); background: color-mix(in srgb, var(--am) 8%, transparent); border-color: color-mix(in srgb, var(--am) 30%, transparent); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 6px; font: 650 14px/1 var(--font-body); border: 1px solid var(--ln2); background: var(--c); color: var(--i2); white-space: nowrap; }
+.btn.lime { background: var(--lime); border-color: var(--lime); color: var(--limei); }
+.btn.danger { color: var(--rd); background: color-mix(in srgb, var(--rd) 15%, transparent); border-color: color-mix(in srgb, var(--rd) 30%, transparent); }
+.btn.off { opacity: .5; }
+.btn.full { width: 100%; }
+.btn.sm { height: 28px; padding: 0 10px; font-size: 12px; }
+.band { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--c); border: 1px solid var(--ln); border-radius: 8px; }
+.band > div { padding: 12px 16px; border-right: 1px solid var(--ln); min-width: 0; display: grid; gap: 4px; }
+.band > div:last-child { border-right: 0; }
+.band .k { font: 700 11px/1.2 var(--font-data); letter-spacing: .07em; text-transform: uppercase; color: var(--i3); }
+.band .v { font: 700 24px/1.1 var(--font-body); font-variant-numeric: tabular-nums; }
+.band .v.good { color: var(--ol); }
+.sec { font: 700 16px/1.3 var(--font-body); margin: 0; display: flex; gap: 8px; align-items: center; }
+.sec .stp { font: 700 12px/1 var(--font-data); color: var(--ol); }
+.sub { font-size: 12px; color: var(--i3); }
+.card2 { background: var(--c); border: 1px solid var(--ln); border-radius: 8px; }
+.pad { padding: 14px 16px; }
+.ws { display: grid; grid-template-columns: 1.45fr minmax(340px, .8fr); gap: 18px; align-items: start; }
+.col { display: grid; gap: 14px; }
+.tb { display: flex; gap: 8px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--ln); }
+.tb .inp { flex: 1; }
+.tb .sel { width: 140px; }
+table.t { width: 100%; border-collapse: collapse; }
+table.t th { font: 700 12px/1.2 var(--font-display); letter-spacing: .05em; text-transform: uppercase; color: var(--i2); text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--ln); white-space: nowrap; }
+table.t td { padding: 9px 14px; border-bottom: 1px solid var(--ln); vertical-align: middle; font-variant-numeric: tabular-nums; }
+table.t tr:last-child td { border-bottom: 0; }
+table.t .nm { color: var(--i); font-weight: 600; text-decoration: underline; text-decoration-color: var(--ln2); text-underline-offset: 3px; }
+.box { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--ln2); display: inline-block; vertical-align: middle; }
+.box.on { background: var(--ol); border-color: var(--ol); position: relative; }
+.box.on::after { content: ""; position: absolute; left: 4px; top: 1px; width: 5px; height: 9px; border: solid var(--c); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.mono { font: 400 12px/1.3 var(--font-data); color: var(--i3); }
+.fld { display: grid; gap: 6px; }
+.fld .fl { font-size: 12px; font-weight: 650; color: var(--i2); }
+.fld .fl .rq { color: var(--i2); }
+.inp { min-height: 34px; border: 1px solid var(--ln2); border-radius: 8px; padding: 0 12px; display: flex; align-items: center; gap: 8px; color: var(--i); background: var(--fieldbg); font-size: 14px; }
+.inp.ph { color: var(--i3); }
+.inp.area { min-height: 72px; align-items: flex-start; padding-top: 8px; border-radius: 6px; }
+.inp.sel::after { content: "⌄"; margin-left: auto; color: var(--i3); }
+.inp.focus { border-color: var(--ol); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ol) 18%, transparent); }
+.inp.bad { border-color: var(--rd); }
+.inp .eye { margin-left: auto; color: var(--i3); font-size: 13px; }
+.inp .dots { letter-spacing: 3px; font-size: 16px; }
+.inp .caret { display: inline-block; width: 1px; height: 18px; background: var(--i); margin-left: -6px; }
+.hintx { font-size: 12px; color: var(--i3); }
+.ferr { font-size: 12px; color: var(--rd); }
+.preview { background: var(--ols); border-radius: 8px; padding: 14px 16px; display: grid; gap: 4px; }
+.preview .eye2 { font: 700 11px/1.2 var(--font-data); letter-spacing: .07em; text-transform: uppercase; color: var(--i3); }
+.preview .big { font: 700 24px/1.1 var(--font-body); }
+.sel-list { display: grid; gap: 0; }
+.sel-list > div { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--ln); font-size: 13px; }
+.sel-list > div:last-child { border-bottom: 0; }
+.notice { border-radius: 8px; padding: 10px 14px; font-size: 14px; border: 1px solid var(--ln); background: var(--c); border-left: 3px solid var(--ol); color: var(--i); }
+.notice.warn { border-left-color: var(--am); }
+.callout { display: flex; gap: 10px; align-items: flex-start; background: var(--c); border: 1px solid var(--ln); border-left: 3px solid var(--am); border-radius: 8px; padding: 10px 12px; font-size: 13px; color: var(--i); }
+.newline { font-size: 12px; color: var(--i3); line-height: 1.45; }
+.note { background: color-mix(in srgb, var(--am) 7%, transparent); border: 1px solid color-mix(in srgb, var(--am) 25%, transparent); border-radius: 8px; padding: 10px 12px; font-size: 12.5px; color: var(--i2); display: grid; gap: 6px; }
+.res { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.res > div { border: 1px solid var(--ln); border-left: 3px solid var(--ol); border-radius: 6px; padding: 8px 10px; font-size: 12px; background: var(--c); }
+.res > div.skip { border-left-color: var(--am); }
+.res b { display: block; font-size: 13px; color: var(--i); }
+.ex { position: absolute; right: 14px; bottom: 10px; font: 700 10px/1 var(--font-data); color: var(--i2); letter-spacing: .06em; text-transform: uppercase; }
+
+/* The shipped window: KitDialog kind="question" — 416 max, 12px corner, tinted olive edge, NO shadow, no ×, 24px sides. */
+.scrimL { position: absolute; inset: 0; background: var(--scrim); display: flex; align-items: center; justify-content: center; z-index: 5; }
+.kd { width: 416px; max-width: 100%; background: var(--c); border: 1px solid var(--edge); border-radius: 12px; color: var(--i); text-align: left; }
+.kd .h { padding: 18px 24px 6px; }
+.kd .h h2 { font: 700 16px/1.25 var(--font-body); margin: 0; color: var(--i); letter-spacing: 0; }
+.kd .h .idt { font-size: 12px; color: var(--i3); margin-top: 3px; }
+.kd .b { padding: 10px 24px 16px; display: grid; gap: 12px; font-size: 14px; line-height: 1.5; color: var(--i2); }
+.kd .f { padding: 13px 24px; border-top: 1px solid var(--ln); display: flex; gap: 8px; align-items: center; }
+.kd .f .l { margin-right: auto; font-size: 12px; color: var(--i3); line-height: 1.4; max-width: 170px; }
+.kd .f .l.bad { color: var(--rd); }
+.stage { background: var(--scrim); padding: 36px 32px; display: flex; justify-content: center; }
+.fx.ph390 { width: 390px; }
+.ph390 .pbar { height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 16px; background: var(--c); border-bottom: 1px solid var(--ln); font-weight: 700; }
+.ph390 .pbar .mk { width: 18px; height: 18px; border-radius: 5px; background: var(--ol); }
+.ph390 .pbar .r { margin-left: auto; color: var(--i3); font-size: 18px; }
+.ph390 .pmain { padding: 16px; display: grid; gap: 14px; }
+.ph390 .btn { height: 44px; }
+.ph390 .inp { min-height: 44px; }
+.ph390 .kd { width: 358px; }
+.ph390 .kd .h, .ph390 .kd .b, .ph390 .kd .f { padding-left: 20px; padding-right: 20px; }
+.ph390 .kd .f { flex-wrap: wrap; }
+.ph390 .kd .f .l { flex-basis: 100%; max-width: none; margin: 0 0 4px; }
+.ph390 .kd .f .btn { flex: 1; }
+.kbd { position: absolute; left: 0; right: 0; bottom: 0; height: 290px; background: var(--kb); padding: 8px 4px; display: grid; gap: 8px; align-content: start; z-index: 6; }
+.kbd .r { display: flex; gap: 5px; justify-content: center; }
+.kbd span { width: 33px; height: 42px; border-radius: 5px; background: var(--kbk); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--i); }
+.kbd .bar2 { height: 30px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--i2); gap: 6px; }
+/* Approval queue detail window (bespoke today, 760) */
+.dm { width: 760px; background: var(--c); border: 1px solid var(--ln2); border-radius: 12px; display: grid; }
+.dm .mh { padding: 16px 22px; border-bottom: 1px solid var(--ln); display: flex; align-items: flex-start; }
+.dm .mh .x { margin-left: auto; color: var(--i3); font-size: 18px; }
+.dm .mb { padding: 14px 22px; display: grid; gap: 14px; }
+.dm .mf { padding: 12px 22px; border-top: 1px solid var(--ln); display: flex; gap: 8px; align-items: center; }
+.facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.facts > div { display: grid; gap: 2px; font-size: 13px; }
+.facts .k { font: 700 11px/1.2 var(--font-data); letter-spacing: .07em; text-transform: uppercase; color: var(--i3); }
+.chk { display: grid; gap: 0; }
+.chk > div { display: flex; gap: 10px; padding: 5px 0; font-size: 13px; border-bottom: 1px solid var(--ln); }
+.chk > div:last-child { border-bottom: 0; }
+.chk .g { color: var(--gr); font-weight: 700; width: 14px; }
+/* Email on the warm envelope (light only, by ruling) */
+.env { width: 600px; background: #f6f1ea; border: 1px solid #c9c1b2; padding: 24px; font-family: Arial, Helvetica, sans-serif; color: #211c15; }
+.env .eh { font-size: 12px; color: #615a54; display: grid; gap: 2px; margin-bottom: 12px; }
+.env .eh b { color: #211c15; font-size: 14px; }
+.env .ec { background: #ffffff; border: 1px solid #e4dccd; border-radius: 6px; padding: 22px 24px; font-size: 14px; line-height: 1.55; display: grid; gap: 12px; }
+.env .ec .wm { font-weight: 700; font-size: 15px; }
+.env .ec ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
+.env .ec .eb { justify-self: start; background: #d9f99d; border: 1px solid #57651e; color: #211c15; border-radius: 6px; padding: 9px 16px; font-weight: 700; font-size: 14px; }
+.env .ec .q { color: #4a4235; }
+.env .ft { font-size: 11px; color: #615a54; margin-top: 12px; text-align: center; }
+.envpane[hidden] { display: none; }
+.mkb { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 999px; border: 0; background: var(--tag); color: #fff; font: 700 11px/1 var(--font-data); cursor: pointer; vertical-align: middle; margin-left: 4px; flex: none; }
+.fx.dark .mkb { background: #9cc2f0; color: #0a0a0a; }
+.env .mkb { background: #1d4f8a; color: #fff; }
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Support console · Plans &amp; pricing · Stage 0, Part 10 · drawn Nov 2, 2026 · nothing built</p>
+  <h1>Sign in again before a change that reaches many customers</h1>
+  <p class="hint">Two screens that exist today get one new small window: <b>Bulk changes</b> and <b>switching a Production price</b> in the Approval queue. This page draws that window, where it opens on each screen, the email to you afterwards, and the phone. Frames are true size (1440 at a desk, 390 on a phone); open it on a desktop at full width. Every name, count and price is an <b>example</b>. Click any blue number to see why it is there. Your rulings are on tab 8.</p>
+
+  <div class="bar">
+    <nav class="tabs" role="tablist" aria-label="Sections" id="tabs"></nav>
+    <div class="ctl">
+      <span class="lbl">View</span>
+      <div class="sw" id="viewsw"><button type="button" data-d="0" aria-pressed="true">Everything</button><button type="button" data-d="1" aria-pressed="false">Show only what differs</button></div>
+      <span class="lbl">Frames</span>
+      <div class="sw" id="themesw"><button type="button" data-t="warm" aria-pressed="true">Warm</button><button type="button" data-t="dark" aria-pressed="false">Dark</button></div>
+    </div>
+  </div>
+
+  <!-- 1 · THE PICTURE -->
+  <section class="tab" id="t1" data-title="1 · The picture">
+    <div class="stack">
+      <h2>One small window, on two doors. Everything else stays as it is.</h2>
+      <p>When a staff member presses the last button of a bulk change, or approves a Production price switch, and their password was last typed more than 10 minutes ago, a small window asks for it. Once it is accepted, the change goes ahead without another press, and an email lands in the owner’s inbox saying what happened. If you signed in a few minutes ago, nothing asks. One-customer work (refunds, plan changes, free time) never asks.</p>
+    </div>
+    <div class="tbl"><table class="doc">
+      <thead><tr><th>Action</th><th>Asks for the password?</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td><b>Bulk changes</b>: billing status, plan change, extra feature (all three, every run)</td><td class="y">Yes</td><td>Up to 100 accounts in one press. Setting 100 clubs to “Cancelled” locks them all out.</td></tr>
+        <tr><td><b>Approve &amp; apply</b> (or <b>Apply price</b>) on a <b>Production</b> Stripe price request</td><td class="y">Yes</td><td>Every new customer is charged the new price from that moment.</td></tr>
+        <tr><td>Submitting a price request on Plans &amp; pricing</td><td class="no">No</td><td>Submitting changes nothing. The switch happens at Approve &amp; apply.</td></tr>
+        <tr><td>A <b>Test</b> price request</td><td class="no">No</td><td>Nobody is charged.</td></tr>
+        <tr><td>Refund, end or cancel a subscription, plan change, free time, put back (one customer)</td><td class="no">No</td><td>Tab 7. One customer, a reason, logged first, and a refund already emails you.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="stack">
+      <h3>Where I disagree with the spec, or go wider than it</h3>
+      <div class="grid2">
+        <div class="card"><h3><span class="num">A</span>Bulk changes asks because of reach, not money</h3><p class="hint">Today it never touches Stripe. It still changes up to 100 accounts in one press, and that is the reason Ask 17 gave (“an open session should not be enough”). So the rule becomes: <b>many customers at once, or what every new customer pays</b>. Later doors join by the same rule. Ask 1.</p></div>
+        <div class="card"><h3><span class="num">B</span>The password goes on Approve, not on Submit</h3><p class="hint">The live switch happens in the Approval queue at “Approve &amp; apply”. Plans &amp; pricing only files a request. Asking at Submit would protect nothing. Ask 1.</p></div>
+        <div class="card"><h3><span class="num">C</span>It stops a stolen session. It does not stop someone at your unlocked computer.</h3><p class="hint">If your browser saves the password, it fills this window in. That is still worth having: a copied session cookie cannot get past it. Against someone at your desk, the email is the alarm. A second sign-in factor would be its own project. Ask 12.</p></div>
+        <div class="card"><h3><span class="num">D</span>The email names the person, not “You”</h3><p class="hint">It goes to the owner’s inbox, and Billing and Product staff can run bulk changes too. “you@… changed 37 accounts” is true whoever pressed the button. Ask 8.</p></div>
+        <div class="card"><h3><span class="num">E</span>Never type your password to be refused</h3><p class="hint">Bulk changes refuses more than 100 accounts, but only after the button is pressed. The server checks everything else first and asks for the password last, and the screen shows the limit. Ask 13.</p></div>
+        <div class="card"><h3><span class="num">F</span>One wider door: Campaigns “Send now”</h3><p class="hint">It emails a whole audience, and that cannot be taken back. Not money, but it fits the rule better than anything else in the console. I recommend it as the next door, drawn on its own. Not in this build. Ask 11.</p></div>
+      </div>
+    </div>
+    <div class="legend"><span class="t-new">NEW</span> new on screen <span class="t-chg">CHANGED</span> words or place changed <span class="t-same">UNCHANGED</span> fades under “Show only what differs”</div>
+  </section>
+
+  <!-- 2 · THE WINDOW -->
+  <section class="tab" id="t2" data-title="2 · The window">
+    <div class="stack">
+      <h2>The shipped small window, with one field</h2>
+      <p>This is the product’s own small question window, the same one every “are you sure” uses: a title, one sentence, the answers. No ×. Cancel, Esc or a tap outside means no. The only new part is the password field, drawn from the staff sign-in page’s field (the eye shows the password). The main button names the action, because pressing it does the action.</p>
+    </div>
+    <div class="scroller"><div class="rowf">
+      <div>
+        <p class="cap">1 · Asking · desk, true size</p>
+        <div class="fx" style="width:480px"><div class="stage">
+          <div class="kd">
+            <div class="h"><h2>Sign in again to run this change<button class="mkb" data-tag="NEW" data-note="The title says what you are doing and what it needs. 'Sign in again' is the name staff help will use for this step everywhere.">1</button></h2><div class="idt">you@fieldlogichq.ca</div></div>
+            <div class="b">
+              <p>This changes 37 accounts at once, and your password was last entered more than 10 minutes ago. The change runs as soon as it is accepted.<button class="mkb" data-tag="NEW" data-note="The count comes from the screen's own preview. 'More than 10 minutes ago' tells the person why it asked now and not last time, with no countdown on the screen. Ask 3.">2</button></p>
+              <div class="fld"><span class="fl">Password <span class="rq">*</span></span><div class="inp focus"><span class="caret"></span><span class="eye"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span></div></div>
+            </div>
+            <div class="f"><span class="l">You get an email after it runs.<button class="mkb" data-tag="NEW" data-note="The foot sentence sits left, as every window's does. It tells the person an email is coming before they press anything. Ask 8.">3</button></span><span class="btn">Cancel</span><span class="btn lime">Sign in and run<button class="mkb" data-tag="NEW" data-note="Pressing it checks the password and then runs the change you already confirmed. No second press. Ask 4. Lime, because the action itself is reversible; the bulk screen's own confirm stays the place you read what will change.">4</button></span></div>
+          </div>
+        </div></div>
+      </div>
+      <div>
+        <p class="cap">2 · Wrong password</p>
+        <div class="fx" style="width:480px"><div class="stage">
+          <div class="kd">
+            <div class="h"><h2>Sign in again to run this change</h2><div class="idt">you@fieldlogichq.ca</div></div>
+            <div class="b">
+              <p>This changes 37 accounts at once, and your password was last entered more than 10 minutes ago. The change runs as soon as it is accepted.</p>
+              <div class="fld"><span class="fl">Password <span class="rq">*</span></span><div class="inp bad focus"><span class="dots">•••••••••</span><span class="eye"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span></div><span class="ferr">That password doesn’t match. Nothing was changed.<button class="mkb" data-tag="NEW" data-note="Red is for a wrong password alone (the sign-in ruling). The field keeps focus with the text selected, so typing again replaces it. The try is written to the audit log (Ask 7). No 'Forgot password?' here: forgetting means signing out and resetting, never a reset from inside a money step.">5</button></span></div>
+            </div>
+            <div class="f"><span class="l">You get an email after it runs.</span><span class="btn">Cancel</span><span class="btn lime">Sign in and run</span></div>
+          </div>
+        </div></div>
+      </div>
+      <div>
+        <p class="cap">3 · Too many tries</p>
+        <div class="fx" style="width:480px"><div class="stage">
+          <div class="kd">
+            <div class="h"><h2>Sign in again to run this change</h2><div class="idt">you@fieldlogichq.ca</div></div>
+            <div class="b">
+              <div class="callout">Too many tries. Wait a minute, then try again. Nothing was changed.<button class="mkb" data-tag="NEW" data-note="The white callout with an amber edge, the wait style. The sign-in service sets the limit; these are our words, never the service's own English.">6</button></div>
+              <div class="fld"><span class="fl">Password <span class="rq">*</span></span><div class="inp"><span class="dots">•••••••••</span><span class="eye"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span></div></div>
+            </div>
+            <div class="f"><span class="l">You get an email after it runs.</span><span class="btn">Cancel</span><span class="btn lime">Sign in and run</span></div>
+          </div>
+        </div></div>
+      </div>
+      <div>
+        <p class="cap">4 · The password could not be checked</p>
+        <div class="fx" style="width:480px"><div class="stage">
+          <div class="kd">
+            <div class="h"><h2>Sign in again to run this change</h2><div class="idt">you@fieldlogichq.ca</div></div>
+            <div class="b">
+              <div class="callout">Your password could not be checked just now. Nothing was changed. Try again in a moment.<button class="mkb" data-tag="NEW" data-note="A slow connection or the sign-in service down. Amber, one sentence, the way forward. The password stays typed so 'Try again' is one press.">7</button></div>
+              <div class="fld"><span class="fl">Password <span class="rq">*</span></span><div class="inp"><span class="dots">•••••••••</span><span class="eye"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span></div></div>
+            </div>
+            <div class="f"><span class="l">You get an email after it runs.</span><span class="btn">Cancel</span><span class="btn lime">Sign in and run</span></div>
+          </div>
+        </div></div>
+      </div>
+      <div>
+        <p class="cap">5 · Checking</p>
+        <div class="fx" style="width:480px"><div class="stage">
+          <div class="kd">
+            <div class="h"><h2>Sign in again to run this change</h2><div class="idt">you@fieldlogichq.ca</div></div>
+            <div class="b">
+              <p>This changes 37 accounts at once, and your password was last entered more than 10 minutes ago. The change runs as soon as it is accepted.</p>
+              <div class="fld"><span class="fl">Password <span class="rq">*</span></span><div class="inp"><span class="dots">•••••••••</span><span class="eye"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span></div></div>
+            </div>
+            <div class="f"><span class="l">You get an email after it runs.</span><span class="btn off">Cancel</span><span class="btn lime off">Checking…<button class="mkb" data-tag="NEW" data-note="While it checks, the window holds: Esc and Cancel do nothing. Once accepted, the window closes and the screen shows its own busy state ('Working…' / the spinner), then its own finish notice (tabs 3 and 4).">8</button></span></div>
+          </div>
+        </div></div>
+      </div>
+    </div></div>
+    <div class="card stack">
+      <h3>What it does, step by step</h3>
+      <div class="tbl"><table class="doc"><tbody>
+        <tr><td><b>Opens</b></td><td>Only when the server answers “sign in again” to the press. If the password was typed in the last 10 minutes, the press just runs and nothing opens. The cursor starts in the field. Enter presses <b>Sign in and run</b>.</td></tr>
+        <tr><td><b>Accepted</b></td><td>The window closes and the same request goes again once. The screen shows its usual busy state and finish notice. The person stays on the page; nothing reloads.</td></tr>
+        <tr><td><b>Refused</b></td><td>Stays open, nothing runs. A wrong password is written to the audit log (Ask 7).</td></tr>
+        <tr><td><b>Cancel / Esc / tap outside</b></td><td>Closes. Nothing runs. The screen is exactly as it was, still showing “Confirm bulk operation” or “Approve &amp; apply”.</td></tr>
+        <tr><td><b>Browsers</b></td><td>The field is marked as the current password, so password managers offer to fill it (tab 7, the honest limit).</td></tr>
+      </tbody></table></div>
+    </div>
+  </section>
+
+  <!-- 3 · BULK CHANGES -->
+  <section class="tab" id="t3" data-title="3 · Bulk changes">
+    <div class="stack">
+      <h2>Bulk changes: one quiet sentence by the button, then the window</h2>
+      <p>The screen keeps its own two presses (“Review bulk operation”, then “Confirm bulk operation”). Under the button, one new sentence says a password may be asked and an email follows. It is always there, so the screen never counts down. Step 3 also says the 100-account limit, so nobody types a password only to be refused.</p>
+    </div>
+    <p class="cap">Before · today · 1440</p>
+    <div class="scroller"><div class="fx" data-nav="bulk" data-ex="Example accounts">
+      <div class="ph"><h1>Bulk changes</h1></div>
+      <p class="sub" style="margin-top:-10px">Select organizations, preview the impact, add a reason, then confirm the guarded operation.</p>
+      <div class="band"><div><span class="k">Total accounts</span><span class="v">212</span></div><div><span class="k">Filtered</span><span class="v">48</span></div><div><span class="k">Selected</span><span class="v good">37</span></div><div><span class="k">Recent batches</span><span class="v">6</span></div></div>
+      <div class="ws">
+        <div class="col">
+          <h2 class="sec"><span class="stp">1</span>Choose accounts</h2>
+          <div class="card2">
+            <div class="tb"><div class="inp ph">Search account or slug...</div><div class="inp sel">All plans</div><div class="inp sel">Trial</div><span class="btn sm">Clear filtered</span></div>
+            <table class="t"><thead><tr><th style="width:36px"></th><th>Account</th><th>Plan</th><th>Status</th></tr></thead><tbody>
+              <tr><td><span class="box on"></span></td><td><span class="nm">Burlington Minor Ball</span><div class="mono">burlington-minor-ball</div></td><td>Club</td><td><span class="chip warn">Trial</span></td></tr>
+              <tr><td><span class="box on"></span></td><td><span class="nm">Caledon Rep Softball</span><div class="mono">caledon-rep</div></td><td>League Plus</td><td><span class="chip warn">Trial</span></td></tr>
+              <tr><td><span class="box on"></span></td><td><span class="nm">Grimsby Girls Fastpitch</span><div class="mono">grimsby-fastpitch</div></td><td>Tournament Plus</td><td><span class="chip warn">Trial</span></td></tr>
+              <tr><td><span class="box on"></span></td><td><span class="nm">Halton Hills Baseball</span><div class="mono">halton-hills-baseball</div></td><td>Club</td><td><span class="chip warn">Trial</span></td></tr>
+              <tr><td><span class="box"></span></td><td><span class="nm">Kitchener Minor Ball</span><div class="mono">kitchener-minor</div></td><td>Club</td><td><span class="chip warn">Trial</span></td></tr>
+              <tr><td><span class="box on"></span></td><td><span class="nm">Oakville Softball Assoc.</span><div class="mono">oakville-softball</div></td><td>Club · Association</td><td><span class="chip warn">Trial</span></td></tr>
+            </tbody></table>
+          </div>
+        </div>
+        <div class="col">
+          <h2 class="sec"><span class="stp">2</span>Configure action</h2>
+          <div class="card2 pad col">
+            <div class="fld"><span class="fl">Bulk action</span><div class="inp sel">Billing status override</div></div>
+            <div class="fld"><span class="fl">Billing status</span><div class="inp sel">Trial</div></div>
+            <div class="fld"><span class="fl">Free through <span class="rq">*</span></span><div class="inp">Dec 31, 2026</div><span class="hintx">The last day it applies; it ends that midnight, Eastern. A club you belong to is skipped.</span></div>
+            <div class="fld"><span class="fl">Reason <span class="rq">*</span></span><div class="inp area">Trial extended for the clubs at the Oct 28 coaches clinic.</div></div>
+          </div>
+          <h2 class="sec"><span class="stp">3</span>Preview and confirm</h2>
+          <div class="card2 pad col">
+            <div class="preview"><span class="eye2">Billing status override</span><span class="big">37 accounts</span><span class="sub">Billing status reads Trial through December 31, 2026. The club’s real billing is unchanged.</span></div>
+            <div class="sel-list"><div><b>Burlington Minor Ball</b><span class="sub">Club / Trial</span></div><div><b>Caledon Rep Softball</b><span class="sub">League Plus / Trial</span></div><div><b>Grimsby Girls Fastpitch</b><span class="sub">Tournament Plus / Trial</span></div><div><span class="sub">29 more</span><span class="sub">Included in this operation</span></div></div>
+            <span class="btn lime full">Confirm bulk operation</span>
+          </div>
+        </div>
+      </div>
+    </div></div>
+
+    <p class="cap">After · the same screen · 1440</p>
+    <div class="scroller"><div class="fx" data-nav="bulk" data-ex="Example accounts">
+      <div class="ph same"><h1>Bulk changes</h1></div>
+      <p class="sub same" style="margin-top:-10px">Select organizations, preview the impact, add a reason, then confirm the guarded operation.</p>
+      <div class="band same"><div><span class="k">Total accounts</span><span class="v">212</span></div><div><span class="k">Filtered</span><span class="v">48</span></div><div><span class="k">Selected</span><span class="v good">37</span></div><div><span class="k">Recent batches</span><span class="v">6</span></div></div>
+      <div class="ws">
+        <div class="col same">
+          <h2 class="sec"><span class="stp">1</span>Choose accounts</h2>
+          <div class="card2">
+            <div class="tb"><div class="inp ph">Search account or slug...</div><div class="inp sel">All plans</div><div class="inp sel">Trial</div><span class="btn sm">Clear filtered</span></div>
+            <table class="t"><thead><tr><th style="width:36px"></th><th>Account</th><th>Plan</th><th>Status</th></tr></thead><tbody>
+              <tr><td><span class="box on"></span></td><td><span class="nm">Burlington Minor Ball</span><div class="mono">burlington-minor-ball</div></td><td>Club</td><td><span class="chip warn">Trial</span></td></tr>
+              <tr><td><span class="box on"></span></td><td><span class="nm">Caledon Rep Softball</span><div class="mono">caledon-rep</div></td><td>League Plus</td><td><span class="chip warn">Trial</span></td></tr>
+              <tr><td><span class="box on"></span></td><td><span class="nm">Grimsby Girls Fastpitch</span><div class="mono">grimsby-fastpitch</div></td><td>Tournament Plus</td><td><span class="chip warn">Trial</span></td></tr>
+              <tr><td><span class="box on"></span></td><td><span class="nm">Halton Hills Baseball</span><div class="mono">halton-hills-baseball</div></td><td>Club</td><td><span class="chip warn">Trial</span></td></tr>
+              <tr><td><span class="box"></span></td><td><span class="nm">Kitchener Minor Ball</span><div class="mono">kitchener-minor</div></td><td>Club</td><td><span class="chip warn">Trial</span></td></tr>
+              <tr><td><span class="box on"></span></td><td><span class="nm">Oakville Softball Assoc.</span><div class="mono">oakville-softball</div></td><td>Club · Association</td><td><span class="chip warn">Trial</span></td></tr>
+            </tbody></table>
+          </div>
+        </div>
+        <div class="col">
+          <h2 class="sec same"><span class="stp">2</span>Configure action</h2>
+          <div class="card2 pad col same">
+            <div class="fld"><span class="fl">Bulk action</span><div class="inp sel">Billing status override</div></div>
+            <div class="fld"><span class="fl">Billing status</span><div class="inp sel">Trial</div></div>
+            <div class="fld"><span class="fl">Free through <span class="rq">*</span></span><div class="inp">Dec 31, 2026</div><span class="hintx">The last day it applies; it ends that midnight, Eastern. A club you belong to is skipped.</span></div>
+            <div class="fld"><span class="fl">Reason <span class="rq">*</span></span><div class="inp area">Trial extended for the clubs at the Oct 28 coaches clinic.</div></div>
+          </div>
+          <h2 class="sec same"><span class="stp">3</span>Preview and confirm</h2>
+          <div class="card2 pad col">
+            <div class="preview"><span class="eye2 same">Billing status override</span><span class="big same">37 accounts</span><span class="sub same">Billing status reads Trial through December 31, 2026. The club’s real billing is unchanged.</span><span class="sub">Up to 100 accounts at a time.<button class="mkb" data-tag="NEW" data-note="The server has always refused more than 100, but the screen never said so and 'Select filtered' can pick 212. Said here; above 100, the count turns warn and the button reads 'Select 100 or fewer' (the reason in the button's place). Ask 13.">1</button></span></div>
+            <div class="sel-list same"><div><b>Burlington Minor Ball</b><span class="sub">Club / Trial</span></div><div><b>Caledon Rep Softball</b><span class="sub">League Plus / Trial</span></div><div><b>Grimsby Girls Fastpitch</b><span class="sub">Tournament Plus / Trial</span></div><div><span class="sub">29 more</span><span class="sub">Included in this operation</span></div></div>
+            <span class="btn lime full same">Confirm bulk operation</span>
+            <p class="newline">Asks for your password if it was last entered more than 10 minutes ago. The owner gets an email after it runs.<button class="mkb" data-tag="NEW" data-note="Always shown, on both 'Review' and 'Confirm', for all three actions. A fixed sentence: no timer, no 'you will be asked in 4 minutes'. Ask 6.">2</button></p>
+          </div>
+        </div>
+      </div>
+    </div></div>
+
+    <p class="cap">After · pressed “Confirm bulk operation”, password last entered 42 minutes ago · 1440</p>
+    <div class="scroller"><div class="fx" data-nav="bulk" data-ex="Example accounts">
+      <div class="ph"><h1>Bulk changes</h1></div>
+      <div class="band"><div><span class="k">Total accounts</span><span class="v">212</span></div><div><span class="k">Filtered</span><span class="v">48</span></div><div><span class="k">Selected</span><span class="v good">37</span></div><div><span class="k">Recent batches</span><span class="v">6</span></div></div>
+      <div class="ws"><div class="col"><div class="card2" style="height:360px"></div></div><div class="col"><div class="card2" style="height:360px"></div></div></div>
+      <div class="scrimL"><div class="kd">
+        <div class="h"><h2>Sign in again to run this change</h2><div class="idt">you@fieldlogichq.ca</div></div>
+        <div class="b"><p>This changes 37 accounts at once, and your password was last entered more than 10 minutes ago. The change runs as soon as it is accepted.</p><div class="fld"><span class="fl">Password <span class="rq">*</span></span><div class="inp focus"><span class="caret"></span><span class="eye"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span></div></div></div>
+        <div class="f"><span class="l">You get an email after it runs.<button class="mkb" data-tag="NEW" data-note="The window opens over the whole screen, centred, 416 wide, the same as every question window. The screen behind keeps every choice; Cancel puts you back on 'Confirm bulk operation'.">3</button></span><span class="btn">Cancel</span><span class="btn lime">Sign in and run</span></div>
+      </div></div>
+    </div></div>
+
+    <p class="cap">After · it ran · the finish, two ways · (cropped to the top of the screen)</p>
+    <div class="scroller"><div class="rowf">
+      <div class="fx" style="width:712px"><div class="pad col" style="padding:20px 24px">
+        <p class="cap" style="margin:0">The email went</p>
+        <div class="notice">35 succeeded / 0 failed / 2 skipped. Skipped 2 Coaches Portals: their plan and free time can only be changed on each portal’s own record. <b>The owner was emailed.</b><button class="mkb" data-tag="CHANGED" data-note="Today's finish notice, plus one sentence at the end. It stays until read, like every notice that reports a result.">4</button></div>
+        <div class="res same"><div><b>Burlington Minor Ball</b>Billing status reads Trial through Dec 31</div><div><b>Caledon Rep Softball</b>Billing status reads Trial through Dec 31</div><div class="skip"><b>Ridge Rockets 13U</b>Skipped: a Coaches Portal</div><div><b>Grimsby Girls Fastpitch</b>Billing status reads Trial through Dec 31</div></div>
+      </div></div>
+      <div class="fx" style="width:712px"><div class="pad col" style="padding:20px 24px">
+        <p class="cap" style="margin:0">The email could not be sent</p>
+        <div class="notice">35 succeeded / 0 failed / 2 skipped. Skipped 2 Coaches Portals: their plan and free time can only be changed on each portal’s own record.</div>
+        <div class="notice warn">The email to the owner could not be sent. The change stands, and the audit log has it.<button class="mkb" data-tag="NEW" data-note="A second notice in the amber edge: a failure that changed nothing about the result. The audit log gets a row 'Owner email: not sent' beside the run (tab 5). The change is never undone because an email failed. Ask 9.">5</button></div>
+        <div class="res same"><div><b>Burlington Minor Ball</b>Billing status reads Trial through Dec 31</div><div><b>Caledon Rep Softball</b>Billing status reads Trial through Dec 31</div><div class="skip"><b>Ridge Rockets 13U</b>Skipped: a Coaches Portal</div><div><b>Grimsby Girls Fastpitch</b>Billing status reads Trial through Dec 31</div></div>
+      </div></div>
+    </div></div>
+
+    <p class="cap">While we are here · the Plan change note says something the server stopped doing (Ask 13)</p>
+    <div class="scroller"><div class="rowf">
+      <div class="fx" style="width:540px"><div class="pad col" style="padding:18px 20px">
+        <p class="cap" style="margin:0">Before · today</p>
+        <div class="note"><span><b>This changes access only — not billing.</b> A plan change here updates each org’s plan and resets its tournament limit to the new plan’s default. It does <b>not</b> touch Stripe — no charge, refund, proration, or cancellation. Any paid org keeps billing at its old price and goes out of sync. Re-price each org from its own Billing &amp; Access screen (downgrades, prorated) or the Stripe Dashboard (upgrades).</span></div>
+      </div></div>
+      <div class="fx" style="width:540px"><div class="pad col" style="padding:18px 20px">
+        <p class="cap" style="margin:0">After</p>
+        <div class="note"><span><b>This changes access only, not billing.</b> Each account’s plan and tournament limit change. A club that Stripe still bills is skipped and keeps its plan: its owner moves plan on their Plan &amp; billing page.<button class="mkb" data-tag="CHANGED" data-note="The server now skips every club Stripe still bills, so 'goes out of sync' and the red 'unlinks the subscription' paragraph are no longer true. The second paragraph (what each move does: trial, Founding comp, archived tournaments) stays as it is. Ask 13.">6</button></span></div>
+      </div></div>
+    </div></div>
+  </section>
+
+  <!-- 4 · PRICE SWITCH -->
+  <section class="tab" id="t4" data-title="4 · Production price">
+    <div class="stack">
+      <h2>Switching a Production price: the window opens at Approve &amp; apply</h2>
+      <p>The switch happens in the Approval queue, in the request’s detail window. For a <b>Production</b> price request, one sentence above the buttons says what will be asked. Pressing <b>Approve &amp; apply</b> (or <b>Apply price</b> on an approved one) opens the small window over the detail window. Test price requests, plan availability and trial-day changes look exactly as they do today.</p>
+    </div>
+    <p class="cap">Before · today · the detail window over the Approval queue · 1440</p>
+    <div class="scroller"><div class="fx" data-nav="queue" data-ex="Example price">
+      <div class="ph"><h1>Approval queue</h1></div>
+      <div class="card2" style="height:520px"></div>
+      <div class="scrimL" style="align-items:flex-start;padding-top:70px"><div class="dm">
+        <div class="mh"><div><div class="mono" style="text-transform:uppercase;letter-spacing:.08em">Approval detail</div><div style="font:700 16px/1.3 var(--font-body);margin-top:2px">Update Production Club annual Stripe price</div></div><span class="x">✕</span></div>
+        <div class="mb">
+          <div style="display:flex;gap:6px"><span class="chip warn">Needs review</span><span class="chip">High</span><span class="chip">Product approver</span></div>
+          <div class="facts"><div><span class="k">Type</span>Pricing</div><div><span class="k">Target</span>Club · annual</div><div><span class="k">Submitted by</span>you@fieldlogichq.ca</div><div><span class="k">Last updated</span>Nov 2, 9:02 a.m.</div></div>
+          <div><b style="font-size:13px">Summary</b><p class="sub" style="font-size:13px;color:var(--i2)">Update live annual Club Stripe price from price_1Mz…7A to price_1Nx…Q4.</p></div>
+          <div><b style="font-size:13px">Stripe price check</b><div class="chk"><div><span class="g">✓</span>Price exists in Stripe</div><div><span class="g">✓</span>Price is active</div><div><span class="g">✓</span>Billing frequency matches slot</div><div><span class="g">✓</span>Currency is CAD</div><div><span class="g">✓</span>Same Stripe product as this plan</div></div></div>
+        </div>
+        <div class="mf"><span class="btn">Close</span><span style="margin-left:auto"></span><span class="btn danger">✕ Reject</span><span class="btn lime">✓ Approve &amp; apply</span></div>
+      </div></div>
+    </div></div>
+
+    <p class="cap">After · the same window · 1440</p>
+    <div class="scroller"><div class="fx" data-nav="queue" data-ex="Example price">
+      <div class="ph same"><h1>Approval queue</h1></div>
+      <div class="card2 same" style="height:560px"></div>
+      <div class="scrimL" style="align-items:flex-start;padding-top:70px"><div class="dm">
+        <div class="mh same"><div><div class="mono" style="text-transform:uppercase;letter-spacing:.08em">Approval detail</div><div style="font:700 16px/1.3 var(--font-body);margin-top:2px">Update Production Club annual Stripe price</div></div><span class="x">✕</span></div>
+        <div class="mb">
+          <div class="same" style="display:flex;gap:6px"><span class="chip warn">Needs review</span><span class="chip">High</span><span class="chip">Product approver</span></div>
+          <div class="facts same"><div><span class="k">Type</span>Pricing</div><div><span class="k">Target</span>Club · annual</div><div><span class="k">Submitted by</span>you@fieldlogichq.ca</div><div><span class="k">Last updated</span>Nov 2, 9:02 a.m.</div></div>
+          <div><b style="font-size:13px" class="same">Summary</b><p class="sub" style="font-size:13px;color:var(--i2)">Update Production annual Club Stripe price from price_1Mz…7A to price_1Nx…Q4.<button class="mkb" data-tag="CHANGED" data-note="'live' becomes 'Production', the word the mode field and chip already use. The window and the email say Production too, so one spelling everywhere. Ask 13.">1</button></p></div>
+          <div><b style="font-size:13px" class="same">Why</b><p style="font-size:13px;color:var(--i2)">Club annual rises to $660.00 for new customers from Dec 1.<button class="mkb" data-tag="NEW" data-note="A Production price request now needs a reason (today the 'Change note' is optional, so the audit log can read 'Not recorded'). Every staff change carries a why, and the email quotes it. Ask 13.">2</button></p></div>
+          <div class="same"><b style="font-size:13px">Stripe price check</b><div class="chk"><div><span class="g">✓</span>Price exists in Stripe</div><div><span class="g">✓</span>Price is active</div><div><span class="g">✓</span>Billing frequency matches slot</div><div><span class="g">✓</span>Currency is CAD</div><div><span class="g">✓</span>Same Stripe product as this plan</div></div></div>
+          <p class="newline">A Production price: asks for your password if it was last entered more than 10 minutes ago, then emails the owner.<button class="mkb" data-tag="NEW" data-note="The last line of the body, just above the buttons. This window is today's own bespoke one with Close at the left of the foot, so the sentence sits above the foot rather than among the buttons. Only on Production price requests. Ask 6.">3</button></p>
+        </div>
+        <div class="mf same"><span class="btn">Close</span><span style="margin-left:auto"></span><span class="btn danger">✕ Reject</span><span class="btn lime">✓ Approve &amp; apply</span></div>
+      </div></div>
+    </div></div>
+
+    <p class="cap">After · pressed “Approve &amp; apply” · the small window over the detail window · 1440</p>
+    <div class="scroller"><div class="fx" data-nav="queue" data-ex="Example price">
+      <div class="ph"><h1>Approval queue</h1></div>
+      <div class="card2" style="height:560px"></div>
+      <div class="scrimL" style="align-items:flex-start;padding-top:70px"><div class="dm" style="opacity:.9">
+        <div class="mh"><div><div class="mono" style="text-transform:uppercase;letter-spacing:.08em">Approval detail</div><div style="font:700 16px/1.3 var(--font-body);margin-top:2px">Update Production Club annual Stripe price</div></div><span class="x">✕</span></div>
+        <div class="mb" style="height:330px"></div>
+        <div class="mf"><span class="btn">Close</span><span style="margin-left:auto"></span><span class="btn danger">✕ Reject</span><span class="btn lime">✓ Approve &amp; apply</span></div>
+      </div></div>
+      <div class="scrimL" style="z-index:7"><div class="kd">
+        <div class="h"><h2>Sign in again to switch this price</h2><div class="idt">you@fieldlogichq.ca</div></div>
+        <div class="b"><p>From now on, new Club annual customers are charged price_1Nx…Q4 ($660.00 a year). The 41 customers on today’s price keep it. The switch is made as soon as your password is accepted.<button class="mkb" data-tag="NEW" data-note="Says who is affected and who is not, in the same sentence. The amount comes from the Stripe price check already on the request; if Stripe could not be read, the amount is left out, never guessed. The 41 is the request's own impact count.">4</button></p><div class="fld"><span class="fl">Password <span class="rq">*</span></span><div class="inp focus"><span class="caret"></span><span class="eye"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span></div></div></div>
+        <div class="f"><span class="l">You get an email after it is switched.</span><span class="btn">Cancel</span><span class="btn lime">Sign in and switch<button class="mkb" data-tag="NEW" data-note="A small task over a big window opens on top of it (the window ruling). Cancel returns to the detail window with nothing changed.">5</button></span></div>
+      </div></div>
+    </div></div>
+
+    <p class="cap">After · it switched · the finish, two ways (cropped)</p>
+    <div class="scroller"><div class="rowf">
+      <div class="fx" style="width:712px"><div class="pad col" style="padding:20px 24px"><p class="cap" style="margin:0">The email went</p><div class="notice">Approved, applied, and marked implemented. <b>The owner was emailed.</b></div></div></div>
+      <div class="fx" style="width:712px"><div class="pad col" style="padding:20px 24px"><p class="cap" style="margin:0">The email could not be sent</p><div class="notice">Approved, applied, and marked implemented.</div><div class="notice warn">The email to the owner could not be sent. The change stands, and the audit log has it.</div></div></div>
+    </div></div>
+    <p class="cap">While we are here · the request window on Plans &amp; pricing, for a Production price only (Ask 13)</p>
+    <div class="scroller"><div class="rowf">
+      <div class="fx" style="width:540px"><div class="pad col" style="padding:18px 20px"><p class="cap" style="margin:0">Before</p><div class="fld"><span class="fl">Change note</span><div class="inp area" style="color:var(--i3)">Why is this Stripe price ID changing?</div></div></div></div>
+      <div class="fx" style="width:540px"><div class="pad col" style="padding:18px 20px"><p class="cap" style="margin:0">After</p><div class="fld"><span class="fl">Why <span class="rq">*</span></span><div class="inp area" style="color:var(--i3)">Why is this Production price changing?</div><span class="hintx">Goes in the audit log and the owner’s email.<button class="mkb" data-tag="CHANGED" data-note="Required on Production requests, optional on Test, as today. The label becomes 'Why', the word every other staff change uses.">6</button></span></div></div></div>
+    </div></div>
+  </section>
+
+  <!-- 5 · THE EMAIL -->
+  <section class="tab" id="t5" data-title="5 · The email">
+    <div class="stack">
+      <h2>One email after each run, to the owner’s inbox</h2>
+      <p>It goes after the change finishes, so it can say what actually happened, including a partial result. It is not sent when nothing happened (a wrong password, Cancel, a refusal before anything changed). It uses the warm email envelope, light only. The clock is the product’s one clock, Eastern.</p>
+    </div>
+    <div class="ctl"><span class="lbl">Email</span><div class="sw" data-grp="em"><button type="button" data-v="st" aria-pressed="true">Bulk · billing status</button><button type="button" data-v="pl" aria-pressed="false">Bulk · plan</button><button type="button" data-v="fe" aria-pressed="false">Bulk · extra feature</button><button type="button" data-v="pr" aria-pressed="false">Production price</button></div></div>
+    <div class="scroller"><div class="rowf">
+      <div>
+        <div class="env envpane" data-grp="em" data-v="st">
+          <div class="eh"><span>From FieldLogicHQ · to fieldlogichq@gmail.com</span><b>Bulk change: 37 accounts now read Trial through Dec 31<button class="mkb" data-tag="NEW" data-note="The subject says the whole thing, so the inbox list is enough to spot a surprise.">1</button></b></div>
+          <div class="ec">
+            <span class="wm">FieldLogicHQ</span>
+            <p>you@fieldlogichq.ca set the billing status of 37 accounts to Trial through Dec 31, 2026, at 9:14 a.m. Eastern on Nov 2.<button class="mkb" data-tag="NEW" data-note="The person by their sign-in email, never 'You' (Ask 8). The time uses the product's clock: '9:14 a.m.'.">2</button></p>
+            <ul><li>Result: 35 changed, 2 skipped (Coaches Portals)</li><li>Reason: Trial extended for the clubs at the Oct 28 coaches clinic.</li><li>Password last entered at 9:13 a.m.</li></ul>
+            <p class="q">Their real billing in Stripe is unchanged.</p>
+            <p>If you did not expect this, open the audit log now. Each account can be put back from its own record.<button class="mkb" data-tag="NEW" data-note="The alarm sentence and the way back, in one line. 'Audit log' is how the menu spells it.">3</button></p>
+            <span class="eb">Open the audit log</span>
+          </div>
+          <div class="ft">Sent to the owner after every bulk change and Production price switch.</div>
+        </div>
+        <div class="env envpane" data-grp="em" data-v="pl" hidden>
+          <div class="eh"><span>From FieldLogicHQ · to fieldlogichq@gmail.com</span><b>Bulk change: 12 accounts moved to Tournament Plus</b></div>
+          <div class="ec">
+            <span class="wm">FieldLogicHQ</span>
+            <p>you@fieldlogichq.ca moved 12 accounts to Tournament Plus at 9:14 a.m. Eastern on Nov 2.</p>
+            <ul><li>Result: 10 changed, 2 skipped (Stripe still bills them)</li><li>Also: 1 Club trial started · 3 tournaments over the new limit archived across 2 accounts</li><li>Reason: Moving the spring pilot clubs off League Plus.</li><li>Password last entered at 9:13 a.m.</li></ul>
+            <p class="q">Nothing in Stripe was changed.</p>
+            <p>If you did not expect this, open the audit log now. Each account can be put back from its own record.</p>
+            <span class="eb">Open the audit log</span>
+          </div>
+          <div class="ft">Sent to the owner after every bulk change and Production price switch.</div>
+        </div>
+        <div class="env envpane" data-grp="em" data-v="fe" hidden>
+          <div class="eh"><span>From FieldLogicHQ · to fieldlogichq@gmail.com</span><b>Bulk change: House league removed from 8 accounts</b></div>
+          <div class="ec">
+            <span class="wm">FieldLogicHQ</span>
+            <p>you@fieldlogichq.ca removed House league as an extra feature from 8 accounts at 9:14 a.m. Eastern on Nov 2.</p>
+            <ul><li>Result: 6 removed, 2 already removed</li><li>Reason: The house league pilot ended Oct 31.</li><li>Password last entered at 9:13 a.m.</li></ul>
+            <p>If you did not expect this, open the audit log now. Each account can be put back from its own record.</p>
+            <span class="eb">Open the audit log</span>
+          </div>
+          <div class="ft">Sent to the owner after every bulk change and Production price switch.</div>
+        </div>
+        <div class="env envpane" data-grp="em" data-v="pr" hidden>
+          <div class="eh"><span>From FieldLogicHQ · to fieldlogichq@gmail.com</span><b>Production price switched: Club annual</b></div>
+          <div class="ec">
+            <span class="wm">FieldLogicHQ</span>
+            <p>you@fieldlogichq.ca switched the Production Club annual price at 9:14 a.m. Eastern on Nov 2. New customers are charged price_1Nx…Q4 ($660.00 a year) from now on.</p>
+            <ul><li>Before: price_1Mz…7A ($600.00 a year)</li><li>The 41 customers on the old price keep it.</li><li>Reason: Club annual rises to $660.00 for new customers from Dec 1.</li><li>Password last entered at 9:13 a.m.</li></ul>
+            <p>If you did not expect this, open the audit log now. Switching back is a new request with the old price.<button class="mkb" data-tag="NEW" data-note="No Test-mode email: a Test switch charges nobody and does not ask for the password.">4</button></p>
+            <span class="eb">Open the audit log</span>
+          </div>
+          <div class="ft">Sent to the owner after every bulk change and Production price switch.</div>
+        </div>
+      </div>
+      <div class="fx" style="width:720px"><div class="pad col" style="padding:20px 24px">
+        <p class="cap" style="margin:0">When the email could not be sent · the audit log</p>
+        <div class="card2"><table class="t"><thead><tr><th>Timestamp</th><th>Superuser</th><th>Org</th><th>Action</th><th>Reason</th></tr></thead><tbody>
+          <tr><td>Nov 2, 2026<div class="mono">9:14:22 a.m.</div></td><td>you@fieldlogichq.ca</td><td>-</td><td>Owner email: not sent<button class="mkb" data-tag="NEW" data-note="A second row next to the change it names, in the same 'not made / not sent' shape the log already uses. Opening it shows which change and what the mail service answered. Ask 9.">5</button></td><td>-</td></tr>
+          <tr><td>Nov 2, 2026<div class="mono">9:14:07 a.m.</div></td><td>you@fieldlogichq.ca</td><td>-</td><td>Run bulk operation</td><td>Trial extended for the clubs at the Oct 28 coaches clinic.</td></tr>
+          <tr><td>Nov 2, 2026<div class="mono">9:13:58 a.m.</div></td><td>you@fieldlogichq.ca</td><td>-</td><td>Signed in again</td><td>-</td></tr>
+          <tr><td>Nov 2, 2026<div class="mono">9:13:41 a.m.</div></td><td>you@fieldlogichq.ca</td><td>-</td><td>Sign in again: wrong password<button class="mkb" data-tag="NEW" data-note="Each wrong try is a row, no email (Ask 7). Typos in the log are cheap; a run of them before a bulk change is exactly what you would want to find later.">6</button></td><td>-</td></tr>
+        </tbody></table></div>
+        <p class="sub">The person who ran it also sees it on the screen, in the finish notice (tabs 3 and 4). Nothing else changes: the change is not undone, and the email is not retried later.</p>
+      </div></div>
+    </div></div>
+  </section>
+
+  <!-- 6 · PHONE -->
+  <section class="tab" id="t6" data-title="6 · Phone and desk">
+    <div class="stack">
+      <h2>On a phone it stays the small centred card, and lifts above the keyboard</h2>
+      <p>A form fills the phone. A question stays a small card. This window is a question with one field, so it stays a card: 20 px sides, 44 px field and buttons, the foot sentence on its own line above the buttons. When the keyboard opens, the card moves up so the field and both buttons stay in view. The desk version is tab 2, at 416 wide.</p>
+    </div>
+    <div class="scroller"><div class="rowf">
+      <div><p class="cap">Bulk changes, step 3 · 390</p>
+      <div class="fx ph390" style="height:844px"><div class="pbar"><span class="mk"></span>Bulk changes<span class="r">☰</span></div><div class="pmain">
+        <h2 class="sec same"><span class="stp">3</span>Preview and confirm</h2>
+        <div class="card2 pad col">
+          <div class="preview"><span class="eye2">Billing status override</span><span class="big">37 accounts</span><span class="sub">Billing status reads Trial through December 31, 2026. The club’s real billing is unchanged.</span><span class="sub">Up to 100 accounts at a time.</span></div>
+          <div class="sel-list same"><div><b>Burlington Minor Ball</b><span class="sub">Club / Trial</span></div><div><b>Caledon Rep Softball</b><span class="sub">League Plus / Trial</span></div><div><span class="sub">35 more</span><span class="sub">Included</span></div></div>
+          <span class="btn lime full same">Confirm bulk operation</span>
+          <p class="newline">Asks for your password if it was last entered more than 10 minutes ago. The owner gets an email after it runs.<button class="mkb" data-tag="NEW" data-note="Same sentence as the desk, under the button.">1</button></p>
+        </div>
+      </div></div></div>
+      <div><p class="cap">The window, keyboard open · 390</p>
+      <div class="fx ph390" style="height:844px"><div class="pbar"><span class="mk"></span>Bulk changes<span class="r">☰</span></div>
+        <div class="scrimL" style="align-items:flex-start;padding-top:96px"><div class="kd">
+          <div class="h"><h2>Sign in again to run this change</h2><div class="idt">you@fieldlogichq.ca</div></div>
+          <div class="b"><p>This changes 37 accounts at once, and your password was last entered more than 10 minutes ago. The change runs as soon as it is accepted.</p><div class="fld"><span class="fl">Password <span class="rq">*</span></span><div class="inp focus"><span class="dots">•••</span><span class="caret" style="margin-left:2px"></span><span class="eye"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span></div></div></div>
+          <div class="f"><span class="l">You get an email after it runs.</span><span class="btn">Cancel</span><span class="btn lime">Sign in and run<button class="mkb" data-tag="NEW" data-note="Both buttons in words, 44 px tall, sharing the row. Cancel keeps its word (not a symbol) because it is the way out of a password prompt. The card sits in the space above the keyboard, never under it.">2</button></span></div>
+        </div></div>
+        <div class="kbd"><div class="bar2">🔑 Passwords</div><div class="r"><span>q</span><span>w</span><span>e</span><span>r</span><span>t</span><span>y</span><span>u</span><span>i</span><span>o</span><span>p</span></div><div class="r"><span>a</span><span>s</span><span>d</span><span>f</span><span>g</span><span>h</span><span>j</span><span>k</span><span>l</span></div><div class="r"><span>⇧</span><span>z</span><span>x</span><span>c</span><span>v</span><span>b</span><span>n</span><span>m</span><span>⌫</span></div><div class="r"><span style="width:80px">123</span><span style="width:170px">space</span><span style="width:80px">go</span></div></div>
+      </div></div>
+      <div><p class="cap">Wrong password · 390</p>
+      <div class="fx ph390" style="height:844px"><div class="pbar"><span class="mk"></span>Bulk changes<span class="r">☰</span></div>
+        <div class="scrimL" style="align-items:flex-start;padding-top:96px"><div class="kd">
+          <div class="h"><h2>Sign in again to run this change</h2><div class="idt">you@fieldlogichq.ca</div></div>
+          <div class="b"><p>This changes 37 accounts at once, and your password was last entered more than 10 minutes ago. The change runs as soon as it is accepted.</p><div class="fld"><span class="fl">Password <span class="rq">*</span></span><div class="inp bad focus"><span class="dots">•••••••••</span><span class="eye"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span></div><span class="ferr">That password doesn’t match. Nothing was changed.</span></div></div>
+          <div class="f"><span class="l">You get an email after it runs.</span><span class="btn">Cancel</span><span class="btn lime">Sign in and run</span></div>
+        </div></div>
+        <div class="kbd"><div class="bar2">🔑 Passwords</div><div class="r"><span>q</span><span>w</span><span>e</span><span>r</span><span>t</span><span>y</span><span>u</span><span>i</span><span>o</span><span>p</span></div><div class="r"><span>a</span><span>s</span><span>d</span><span>f</span><span>g</span><span>h</span><span>j</span><span>k</span><span>l</span></div><div class="r"><span>⇧</span><span>z</span><span>x</span><span>c</span><span>v</span><span>b</span><span>n</span><span>m</span><span>⌫</span></div><div class="r"><span style="width:80px">123</span><span style="width:170px">space</span><span style="width:80px">go</span></div></div>
+      </div></div>
+    </div></div>
+    <p class="hint">The Approval queue’s detail window is today’s own, not the shared window, and it does not yet fill the phone. The small window opens over it the same way as on Bulk changes. Moving that detail window onto the shared window is Stage 2 work, not this build.</p>
+  </section>
+
+  <!-- 7 · WITHOUT IT -->
+  <section class="tab" id="t7" data-title="7 · What stays without it">
+    <div class="stack">
+      <h2>One-customer work stays as it is. I agree with the spec.</h2>
+      <p>A password prompt on everyday support work teaches the hand to type the password without reading. Then it protects nothing on the two doors where it matters. Each of these touches one customer, needs a reason, and is written to the log before it happens.</p>
+    </div>
+    <div class="tbl"><table class="doc">
+      <thead><tr><th>One customer</th><th>Why it can stay without it</th></tr></thead>
+      <tbody>
+        <tr><td><b>Refund a charge</b></td><td>Money only goes back to that customer’s own card, never anywhere else. It is capped at that charge, and Stage 0 already emails you every refund on a subscription charge.</td></tr>
+        <tr><td><b>End now / cancel at renewal</b></td><td>One customer, the red button, a reason. Cancel at renewal has “Keep” to undo it.</td></tr>
+        <tr><td><b>Plan change, free time, sections</b></td><td>Access only. A club Stripe bills is refused. “Put it back” undoes each one.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="stack">
+      <h3>Many customers, but not in this build</h3>
+      <div class="tbl"><table class="doc">
+        <thead><tr><th>Door</th><th>Recommendation</th></tr></thead>
+        <tbody>
+          <tr><td><b>Campaigns · Send now</b> (one email to a whole audience)</td><td><b>The next door</b> (Ask 11). It cannot be taken back and it reaches every customer in the audience. It gets its own short drawing, because its screen is not drawn here.</td></tr>
+          <tr><td>Plan availability (Live / Early access) and plan trial days or limits</td><td>Stay out (Ask 1). They change what <i>new</i> customers can buy, but nobody is charged, and the queue can switch them straight back.</td></tr>
+          <tr><td>Email templates, Retention “Process expiry”</td><td>Stay out. A template edit can be reset; retention runs on its own schedule anyway.</td></tr>
+          <tr><td>Stage 3–8 doors: schedule the price moves, Stop a change</td><td>Already ruled (Ask 17, Oct 31). They use this same window when they are built.</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card stack"><h3>The honest limit</h3>
+      <p class="hint">Staff sign in with a password alone; there is no second factor anywhere in the console. This window proves the password again. It defeats a copied session, for example a stolen cookie. It does not defeat someone sitting at an unlocked computer whose browser fills the password in. For that case the email is the alarm. A code from an authenticator app at sign-in would close the gap, and it would be its own project for all staff (Ask 12). Until then: let the password manager ask before it fills, and lock the screen.</p>
+    </div>
+  </section>
+
+  <!-- 8 · ASKS -->
+  <section class="tab" id="t8" data-title="8 · Asks">
+    <div class="stack">
+      <h2>Thirteen asks, each with my recommendation ticked</h2>
+      <p class="hint">Untick what you disagree with, tick an alternative, add a note, then copy the summary at the bottom and paste it back. A blank ask counts as undecided, never as a yes.</p>
+    </div>
+    <div class="ask" data-k="1"><span class="for">Ask 1 · tabs 1, 3, 4</span><div class="q">Which actions ask: “many customers at once, or what every new customer pays”?</div><div class="rec"><b>Recommend yes:</b> all three Bulk changes actions, and Approve &amp; apply / Apply price on a <b>Production</b> Stripe price request. Not Submit, not Test requests, not plan availability or trial days. Later doors (schedule moves, Stop) join by the same rule.</div><div class="opts"><label><input type="checkbox" checked data-v="Rule = many at once or what new customers pay: Bulk changes x3 + Production price Approve/Apply"> Yes (recommended)</label><label><input type="checkbox" data-v="Also plan availability and trial days/limits"> Also plan availability and trial days</label><label><input type="checkbox" data-v="Bulk changes: only billing status and plan, not extra feature"> Bulk changes without extra feature</label></div><textarea id="n1" placeholder="Notes"></textarea></div>
+    <div class="ask" data-k="2"><span class="for">Ask 2 · tab 3</span><div class="q">Bulk changes asks on every run, whatever the count?</div><div class="rec"><b>Recommend yes.</b> A threshold (“only above 10”) is one more rule to remember, and a one-account change belongs on that account’s record anyway.</div><div class="opts"><label><input type="checkbox" checked data-v="Every bulk run asks"> Yes, every run (recommended)</label><label><input type="checkbox" data-v="Only above a count (say in notes)"> Only above a count</label></div><textarea id="n2" placeholder="Notes"></textarea></div>
+    <div class="ask" data-k="3"><span class="for">Ask 3 · tab 2</span><div class="q">How long does a typed password count: 10 minutes from the last time it was typed?</div><div class="rec"><b>Recommend 10 minutes, counted from the last password entry</b> (a sign-in or this window), not from the last click. These actions come in runs: monthly and annual prices together, or a bulk change and then a fix to it. Asking twice in two minutes trains reflex typing. “Every time” is the stricter choice.</div><div class="opts"><label><input type="checkbox" checked data-v="10 minutes from last password entry"> 10 minutes (recommended)</label><label><input type="checkbox" data-v="Every time"> Every time</label><label><input type="checkbox" data-v="30 minutes"> 30 minutes</label></div><textarea id="n3" placeholder="Notes"></textarea></div>
+    <div class="ask" data-k="4"><span class="for">Ask 4 · tab 2</span><div class="q">After the password is accepted, the change goes ahead by itself?</div><div class="rec"><b>Recommend yes.</b> You already confirmed it on the screen. The window names the change, and its button is the action (“Sign in and run”, “Sign in and switch”). Pressing the screen’s button a second time adds nothing.</div><div class="opts"><label><input type="checkbox" checked data-v="Carries on by itself"> Yes, it carries on (recommended)</label><label><input type="checkbox" data-v="Signs in only; press the button again"> Signs in only; press again</label></div><textarea id="n4" placeholder="Notes"></textarea></div>
+    <div class="ask" data-k="5"><span class="for">Ask 5 · tabs 2, 6</span><div class="q">It is the shipped small question window: 416 wide, no ×, a centred card on a phone that lifts above the keyboard?</div><div class="rec"><b>Recommend yes.</b> One field and a yes/no is a question, not a form. A typed confirmation already uses this window. A full-screen phone form would hide the screen you were confirming.</div><div class="opts"><label><input type="checkbox" checked data-v="Small question window; centred card on phone"> Yes (recommended)</label><label><input type="checkbox" data-v="Form window; full screen on phone"> The form window, full screen on a phone</label></div><textarea id="n5" placeholder="Notes"></textarea></div>
+    <div class="ask" data-k="6"><span class="for">Ask 6 · tabs 3, 4</span><div class="q">Each screen says beforehand, in one fixed sentence, that a password may be asked and an email follows?</div><div class="rec"><b>Recommend yes, always shown:</b> under Bulk changes’ button, and above the buttons of a Production price request. No timer, no “in 4 minutes”.</div><div class="opts"><label><input type="checkbox" checked data-v="One fixed sentence, always shown"> Yes (recommended)</label><label><input type="checkbox" data-v="No warning; the window explains itself"> No warning</label></div><textarea id="n6" placeholder="Notes"></textarea></div>
+    <div class="ask" data-k="7"><span class="for">Ask 7 · tabs 2, 5</span><div class="q">A wrong password: red line, window stays open, nothing runs, each try written to the audit log, no email?</div><div class="rec"><b>Recommend yes.</b> The sign-in service sets the “too many tries” wait. An email per typo is noise. A run of wrong tries in the log is what you would look for later.</div><div class="opts"><label><input type="checkbox" checked data-v="Logged, no email"> Yes (recommended)</label><label><input type="checkbox" data-v="Also email the owner after 3 wrong tries"> Also email you after 3 wrong tries</label></div><textarea id="n7" placeholder="Notes"></textarea></div>
+    <div class="ask" data-k="8"><span class="for">Ask 8 · tab 5</span><div class="q">The email: names the person by email, says the result, the reason, and when the password was entered, links to the audit log, on the warm envelope?</div><div class="rec"><b>Recommend yes.</b> One email per run, sent after it finishes (a partial result too). Not sent when nothing happened. Owner’s inbox only. Clock “9:14 a.m. Eastern”.</div><div class="opts"><label><input type="checkbox" checked data-v="Email as drawn, names the person"> Yes, as drawn (recommended)</label><label><input type="checkbox" data-v="Say 'You' as in the spec"> Say “You” as the spec has it</label><label><input type="checkbox" data-v="Also send a copy to the staff member who did it"> Also copy the staff member</label></div><textarea id="n8" placeholder="Notes"></textarea></div>
+    <div class="ask" data-k="9"><span class="for">Ask 9 · tabs 3, 4, 5</span><div class="q">When the email cannot be sent: the change stands, the audit log gets “Owner email: not sent”, and the finish notice says so?</div><div class="rec"><b>Recommend yes</b> (the spec’s choice). The log is the record, the email is the alarm. No retry later: a late alarm is worse than an honest “not sent” on the screen of the person who did it.</div><div class="opts"><label><input type="checkbox" checked data-v="Change stands; log row; notice says so"> Yes (recommended)</label></div><textarea id="n9" placeholder="Notes"></textarea></div>
+    <div class="ask" data-k="10"><span class="for">Ask 10 · tab 7</span><div class="q">Single-customer refunds, cancels, plan changes and free time stay without it?</div><div class="rec"><b>Recommend yes</b> (the spec’s choice). One customer each, a reason, logged first. A refund can only go back to that customer’s card, and refunds already email you.</div><div class="opts"><label><input type="checkbox" checked data-v="One-customer actions stay without it"> Yes (recommended)</label><label><input type="checkbox" data-v="Refunds ask too"> Refunds ask too</label></div><textarea id="n10" placeholder="Notes"></textarea></div>
+    <div class="ask" data-k="11"><span class="for">Ask 11 · tab 7 · wider than asked</span><div class="q">Campaigns “Send now” becomes the next door that asks, drawn on its own later?</div><div class="rec"><b>Recommend yes, later.</b> It emails a whole audience and cannot be taken back. Not built in Part 10: its screen gets its own drawing first.</div><div class="opts"><label><input type="checkbox" checked data-v="Send now = next door, drawn later, not in Part 10"> Yes, later (recommended)</label><label><input type="checkbox" data-v="Send now never asks"> It never asks</label></div><textarea id="n11" placeholder="Notes"></textarea></div>
+    <div class="ask" data-k="12"><span class="for">Ask 12 · tab 7</span><div class="q">Accept the honest limit now (a saved password fills the window in), with a second sign-in factor as its own later project?</div><div class="rec"><b>Recommend yes.</b> This window still defeats a copied session. A second factor changes sign-in for every staff member, so it needs its own plan.</div><div class="opts"><label><input type="checkbox" checked data-v="Accept; second factor = its own later project"> Yes (recommended)</label><label><input type="checkbox" data-v="Plan a second factor before Part 10 ships"> Plan a second factor first</label></div><textarea id="n12" placeholder="Notes"></textarea></div>
+    <div class="ask" data-k="13"><span class="for">Ask 13 · tabs 3, 4 · small fixes the window relies on</span><div class="q">Do these ride along in the Part 10 build?</div><div class="rec"><b>Recommend all four.</b> (a) and (b) make the window and the email true; (c) avoids typing a password only to be refused; (d) is a note that tells staff something the server no longer does.</div><div class="opts"><label><input type="checkbox" checked data-v="(a) Production price request needs a Why"> (a) A Production price request needs a “Why”</label><label><input type="checkbox" checked data-v="(b) 'live'/'sandbox' read Production/Test in the queue"> (b) The queue says Production / Test, never live / sandbox</label><label><input type="checkbox" checked data-v="(c) Bulk shows the 100 limit; server asks for the password last"> (c) Bulk changes shows the 100 limit; the password is checked last</label><label><input type="checkbox" checked data-v="(d) Bulk plan-change note rewritten to what the server does"> (d) The Bulk plan-change note says what the server does now</label></div><textarea id="n13" placeholder="Notes"></textarea></div>
+    <div class="paste">
+      <span class="lbl">Paste this back</span>
+      <textarea id="out" readonly aria-label="Summary to paste back"></textarea>
+      <button type="button" class="btn-doc" id="copy">Copy the summary</button><span class="hint" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="build"><b>For the build session, once ruled:</b> Part 10 may build the sign-in-again step on the shipped small question window, on Bulk changes (all three actions, every run) and on Approve &amp; apply / Apply price for a Production Stripe price request. It includes the fixed warning sentence on both screens, the 10-minute check (counted from the last password entry, run after the request’s own checks), one owner email per completed run, the “Owner email: not sent” log row and finish notice, audit rows for “Signed in again” and each wrong password, and the four Ask 13 fixes as ruled. Nothing else: no Send now door, no second factor, no change to one-customer actions.</div>
+  </section>
+</div>
+
+<dialog id="dlg" aria-labelledby="dtag"><p><span id="dtag" class="t-new">NEW</span></p><p id="dnote" style="margin-top:8px"></p><div class="foot"><button type="button" class="close" id="dclose">Close</button></div></dialog>
+
+<script>
+(function () {
+  function sidebar(nav) {
+    function it(label, on) { return '<div class="it' + (on ? " on" : "") + '">' + label + "</div>"; }
+    function gl(label, open) { return '<div class="gl">' + label + '<span class="cv">' + (open ? "⌄" : "›") + "</span></div>"; }
+    return it("Today", false) + gl("Customers", false) + gl("Health", false) + gl("Growth", false) + gl("Product", true) +
+      it("Plans &amp; pricing") + it("Approval queue", nav === "queue") + it("Bulk changes", nav === "bulk") + it("Email templates") + it("Export registry") +
+      gl("Records", false) + gl("System", false) + '<div class="foot">Help<br>Collapse sidebar</div>';
+  }
+  var strip = '<div class="strip same"><div class="lock"><span class="mk"></span>FieldLogicHQ<small>SUPPORT CONSOLE</small></div><div class="find">Find a club, person or Stripe number</div><div class="end">●</div></div>';
+  document.querySelectorAll(".fx[data-nav]").forEach(function (el) {
+    var nav = el.getAttribute("data-nav"), ex = el.getAttribute("data-ex");
+    var overlays = Array.prototype.filter.call(el.children, function (c) { return c.classList.contains("scrimL"); });
+    overlays.forEach(function (o) { el.removeChild(o); });
+    var inner = el.innerHTML;
+    el.removeAttribute("data-nav");
+    el.innerHTML = strip + '<div class="app"><aside class="side same">' + sidebar(nav) + '</aside><main class="main"><div class="page">' + inner + "</div></main></div>" + (ex ? '<span class="ex">' + ex + "</span>" : "");
+    overlays.forEach(function (o) { el.appendChild(o); });
+  });
+
+  var tabs = document.getElementById("tabs"), secs = Array.prototype.slice.call(document.querySelectorAll("section.tab"));
+  secs.forEach(function (s, i) {
+    var b = document.createElement("button"); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", "false");
+    var t = s.getAttribute("data-title"); b.innerHTML = '<span class="n">' + t.split(" · ")[0] + "</span>" + t.split(" · ")[1];
+    b.addEventListener("click", function () { show(i, true); }); tabs.appendChild(b);
+  });
+  function show(i, push) {
+    secs.forEach(function (s, j) { s.classList.toggle("on", i === j); tabs.children[j].setAttribute("aria-selected", i === j ? "true" : "false"); });
+    if (push) { try { history.replaceState(null, "", "#tab-" + (i + 1)); } catch (e) {} }
+    window.scrollTo(0, 0);
+  }
+  var start = 0, m = /^#tab-(\d+)$/.exec(location.hash || ""); if (m && secs[+m[1] - 1]) start = +m[1] - 1; show(start, false);
+  window.addEventListener("hashchange", function () { var mm = /^#tab-(\d+)$/.exec(location.hash || ""); if (mm && secs[+mm[1] - 1]) show(+mm[1] - 1, false); });
+
+  document.querySelectorAll("#viewsw button").forEach(function (b) { b.addEventListener("click", function () {
+    document.body.classList.toggle("diff", b.getAttribute("data-d") === "1");
+    document.querySelectorAll("#viewsw button").forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+  }); });
+  document.querySelectorAll("#themesw button").forEach(function (b) { b.addEventListener("click", function () {
+    var dark = b.getAttribute("data-t") === "dark";
+    document.querySelectorAll(".fx").forEach(function (f) { f.classList.toggle("dark", dark); });
+    document.querySelectorAll("#themesw button").forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+  }); });
+  document.querySelectorAll(".sw[data-grp]").forEach(function (sw) {
+    var g = sw.getAttribute("data-grp");
+    sw.querySelectorAll("button").forEach(function (b) { b.addEventListener("click", function () {
+      sw.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+      document.querySelectorAll('.envpane[data-grp="' + g + '"]').forEach(function (p) { p.hidden = p.getAttribute("data-v") !== b.getAttribute("data-v"); });
+    }); });
+  });
+
+  var dlg = document.getElementById("dlg");
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest ? e.target.closest(".mkb") : null; if (!t) return;
+    var tag = t.getAttribute("data-tag"), d = document.getElementById("dtag");
+    d.textContent = tag; d.className = tag === "NEW" ? "t-new" : tag === "CHANGED" ? "t-chg" : "t-same";
+    document.getElementById("dnote").textContent = t.getAttribute("data-note");
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+  });
+  document.getElementById("dclose").addEventListener("click", function () { if (dlg.close) dlg.close(); else dlg.removeAttribute("open"); });
+
+  var KEY = "signin-again-asks-v1";
+  function save() {
+    var st = {};
+    document.querySelectorAll(".ask").forEach(function (a) {
+      var k = a.getAttribute("data-k");
+      st[k] = { c: Array.prototype.map.call(a.querySelectorAll("input"), function (i) { return i.checked; }), n: a.querySelector("textarea").value };
+    });
+    try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {}
+  }
+  function load() {
+    var st = null; try { st = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) {}
+    if (!st) return;
+    document.querySelectorAll(".ask").forEach(function (a) {
+      var s = st[a.getAttribute("data-k")]; if (!s) return;
+      a.querySelectorAll("input").forEach(function (i, j) { if (typeof s.c[j] === "boolean") i.checked = s.c[j]; });
+      a.querySelector("textarea").value = s.n || "";
+    });
+  }
+  var out = document.getElementById("out");
+  function summary() {
+    var lines = ["STAGE 0 PART 10, SIGN IN AGAIN: drawn Nov 2, 2026. Unticked asks are open."];
+    document.querySelectorAll(".ask").forEach(function (a) {
+      var k = a.getAttribute("data-k"), q = a.querySelector(".q").textContent;
+      var picked = Array.prototype.map.call(a.querySelectorAll("input:checked"), function (i) { return i.getAttribute("data-v"); });
+      var note = a.querySelector("textarea").value.trim();
+      lines.push("Ask " + k + " (" + q + "): " + (picked.length ? picked.join("; ") : "no ruling yet") + (note ? " | Notes: " + note : ""));
+    });
+    out.value = lines.join("\n");
+  }
+  load();
+  document.querySelectorAll(".ask input, .ask textarea").forEach(function (el) {
+    el.addEventListener("input", function () { summary(); save(); });
+    el.addEventListener("change", function () { summary(); save(); });
+  });
+  summary();
+  document.getElementById("copy").addEventListener("click", function () {
+    var msg = document.getElementById("copied");
+    function fallback() { out.select(); msg.textContent = "Selected. Press Ctrl+C."; }
+    try { navigator.clipboard.writeText(out.value).then(function () { msg.textContent = "Copied."; }, fallback); } catch (e) { fallback(); }
+  });
+})();
+</script>
