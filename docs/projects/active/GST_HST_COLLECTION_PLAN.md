@@ -22,7 +22,8 @@ Every outstanding piece of work in this plan has a home in one of these stages. 
 - **Stage 0 — Admin, no code (owner):** IN PROGRESS — effective date found (2026-09-26) and production sales answered
   (owner replies, §4); still open: Stripe invoice settings, foreign-vendor number, ITC receipts, accountant package,
   counsel add-ons. Waits on nothing; gates nothing.
-- **Stage 1 — Know where every buyer is:** NOT STARTED — country, province/state, address and US declaration on our own
+- **Stage 1 — Know where every buyer is:** IN PROGRESS — Parts 1+2 committed `fd55a1df3` 2026-11-04 (mig 433 dev only), Part 3
+  committed `32d466e59` 2026-11-04; Part 4, the `/accounting` review, `/docs` and the owner walk owed — country, province/state, address and US declaration on our own
   records. Needs T1 (ruled).
 - **Stage 2 — Subscriptions charge the right tax:** NOT STARTED — Stripe Tax registration, tax on every checkout path and
   preview, "plus applicable taxes", province test matrix; exit step re-runs the Stripe audit. Needs Stage 1, T4, T5.

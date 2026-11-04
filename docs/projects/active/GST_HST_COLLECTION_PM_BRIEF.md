@@ -1,6 +1,6 @@
 # PM brief — FieldLogicHQ charges its own sales tax correctly
 
-**Plan:** [GST_HST_COLLECTION_PLAN.md](GST_HST_COLLECTION_PLAN.md) · **Status:** planned 2026-10-31, nothing built ·
+**Plan:** [GST_HST_COLLECTION_PLAN.md](GST_HST_COLLECTION_PLAN.md) · **Status:** planned 2026-10-31; Stage 1 Parts 1–3 committed 2026-11-04 (`fd55a1df3`, `32d466e59`), Part 4 + walk owed ·
 **Priority:** gates the first paid subscription
 
 ## Stages and when the project is done (owner, 2026-10-31)

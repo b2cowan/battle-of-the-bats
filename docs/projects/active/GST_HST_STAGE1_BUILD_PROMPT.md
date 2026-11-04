@@ -124,7 +124,8 @@ Part 0 findings (2026-11-03):
   8. Low: the cycle choice (Yearly) is lost when the buyer uses "Change" on the Billed-to line; separate gates on one screen do
      not share a saved address; the sign-up page's Next can double-fire while the first address read is pending; Stripe stamp
      errors at checkout are a 500 where the save swallows them; the address read is fetched on mount even when never needed.
-- [ ] Part 3 · keeping it current (portal edits, payout-country comparison, US evidence flag). Prompt written 2026-11-04:
+- [x] Part 3 · keeping it current (portal edits, payout-country comparison, US evidence flag). **COMMITTED `32d466e59`
+  2026-11-04 on dev, not pushed (no migration).** Next: Part 4 (the guard). Prompt written 2026-11-04:
   `GST_HST_STAGE1_PART3_BUILD_PROMPT.md` (3 owner asks first; the refused-move Stripe stamp must be fixed in this part because
   reading portal edits back would turn it into a wrong home address).
   **Verify findings 2026-11-04 [V]:** `customer.updated` was on neither endpoint's event list (stripe-setup-guide Stage 3 Step 5);
