@@ -175,7 +175,29 @@ Part 0 findings (2026-11-03):
   Verified: billing tests 327 (1 failing = Plans-end-at-renewal Part B's in-progress `workspace-move-money` reactivation
   test, theirs); typecheck clean on my files (other sessions' errors: plan-ending, email-preview, seasons routes); lint,
   spelling, dictionary, contrast, dates, observability OK; `check:layout` n/a (the club record is not in the sweep).
-- [ ] Part 4 · the guard (a new checkout path cannot skip the location)
+- [x] Part 4 · the guard (a new checkout path cannot skip the location). **COMMITTED `95dbdcbec` 2026-11-04 on dev (tests
+  only, no migration).** Prompt: `GST_HST_STAGE1_PART4_BUILD_PROMPT.md` (it replaces the "Part 4 · The guard" section below).
+  `tests/unit/billing-location-every-path-guard.test.ts`: a census of every charging Stripe call in `app/`, `lib/`,
+  `components/` (`scripts/` left out on purpose), each `checked` or `allowed` with its reason and pinned facts, exact counts,
+  stale entries fail; every `applyMove` caller pinned; the dead add-on checkout fails the day anything calls it; the matcher
+  proved on fixture strings.
+  **Verify findings 2026-11-04 [V]:** census unchanged since the prompt (plus `invoices.finalizeInvoice`, same fee file);
+  **`applyMove` has a SECOND caller**, `rescheduleMove` in `lib/plan-ending-server.ts` (Keep {Plan} rebuilding a waiting
+  move): safe, it refuses anything but a move down before the call, now pinned; `startOrgTeamAddonCheckout` has no importer,
+  and the only plan naming it (archived `CLUB_REPACKAGING_PLAN.md`) says remove it after the cutover, so "the bring-in program
+  may revive it" is unsupported (it is on `DEAD_CODE_REPORT.md`); `mock-apply` answers 404 whenever `isProduction()`.
+  **Owner rulings 2026-11-04 (all as recommended):** Ask 1 leave the dead add-on checkout, guarded. Ask 2 allow the Connect
+  family payment and the Stripe-fee recovery invoice, reasons in the guard; until Stage 5 the fee invoice is the ONE
+  FieldLogicHQ charge that can go out with no address on file. Ask 3 fix the two UAT walks: each seeds a Canadian home
+  address for its new coach (cascades with the user); the team-direct walk also signs in from an explicitly empty session.
+  **UAT run on the dev server 2026-11-04 — neither walk passes, for reasons that are not the address (follow-up for the
+  Plan & billing program, whose screens moved):** team-direct-checkout-smoke now gets through the checkout (applied, portal
+  made) and fails later on "Coaches Portal ready", text no longer in the product. premium-to-club-path group C never opens
+  the window: its `#billing-change`-scoped "Start my club" locator is not found although the button is on the page (group A
+  fails the same way); group B fails on the lapsed fixture portal's state (no wall). So the in-place club address prefill is
+  verified from code only, not by the walk.
+  Verified: new guard 20/20, and a mutated copy fails as it should (unlisted call, wrong count, a loosened `rescheduleMove`);
+  `billing-location*` 94/94; lint and spelling clean; typecheck not needed (tests only). `/review` skipped by the owner.
 - [ ] Part 5 · closeout (`/accounting` review, `/simplify` and `/review` offered, `/docs`, dictionary + snapshots, walk, records)
 
 ## What the owner sees after this build (PM summary: present this BEFORE any code)
