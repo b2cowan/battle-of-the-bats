@@ -25,10 +25,12 @@
 .swatch:focus-visible,
 .pill:focus-visible,
 .tile:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 3px; }
-@media (max-width: 640px) {
-  /* A fingertip each: 44 px circles. */
-  .swatches { gap: 4px 6px; }
+@media (max-width: 768px) {
+  /* A fingertip each: 44 px circles, from tablet width down (owner 2026-11-03, §448 call 5). */
   .swatch { width: 44px; height: 44px; }
+}
+@media (max-width: 640px) {
+  .swatches { gap: 4px 6px; }
 }
 .pill {
   display: inline-flex;
