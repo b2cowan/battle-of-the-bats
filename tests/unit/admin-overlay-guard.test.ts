@@ -87,6 +87,7 @@ const WINDOWS: Record<string, { layers: string[] } | { notAForm: string }> = {
   'components/admin/LeagueCapUpgrade.tsx': { layers: ['leagueCap'] },
   'components/shared/KitDialog.tsx': { layers: ['kitForm'] },
   'components/admin/kit/club/money/AllocationWindow.tsx': { notAForm: 'reads its KitDialog (`closest(\'[role="dialog"]\')`); draws none' },
+  'components/admin/kit/club/PhoneWindow.tsx': { notAForm: 'an INERT preview in the page\'s flow (the Look card\'s band at a phone\'s width): its createPortal fills its own iframe, never an overlay; no focus, no clicks, no input' },
   // (MoneyKit.tsx left 2026-10-19: FormError is KitDialog's own refusal line now, `DialogReason`, One Window 2b.)
   'components/admin/kit/club/league/teams/TeamsBoard.tsx': { notAForm: 'a row mark\'s READ-ONLY window (a family\'s children, a sign-up note, an amount owing): a popover at a desk, a SheetFrame menu on a phone; it takes no input' },
   'components/admin/tournament/PrintedPage.tsx': { notAForm: 'a print-only portal; never on screen' },
