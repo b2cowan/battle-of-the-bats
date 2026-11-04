@@ -30,7 +30,7 @@
 
 ## ▶ Progress (read first when resuming)
 
-- **2026-11-04 · S1 done, S2 built (commit owed).** Facts below were read from the code on 2026-11-04 by five helpers, and each one this prompt relies on
+- **2026-11-04 · S1 done, S2 committed `5c3acb04c`.** Facts below were read from the code on 2026-11-04 by five helpers, and each one this prompt relies on
   was opened at the cited lines by the author. Line numbers drift; re-check them.
 - **S1 · the season window (14a)** — **BUILT + committed `59722b97a` 2026-11-04** (Parts 0–4; `/simplify`, `/review` and
   `/docs` done; **owner walk §453 WRITTEN and owed**, https://claude.ai/artifact/SbzSAt6P9RGg5ysD7jgtKm, 61 steps in eight
@@ -103,7 +103,7 @@
       read its output after the first real one (walk step E1).** The coach window's heading reads "Birth years for the 2027
       Season" (capital S) while the club's Team details says "…2027 season" — a one-word mismatch to settle.
   - **Help + marketing owed via `/docs`:** DONE (see above); `lib/walkthrough-content.ts:215` stays `/marketing`'s.
-- **S2 · the child record underneath (14b data)** — **BUILT 2026-11-04 (Parts 0–4); commit owed (owner's word), `/simplify` +
+- **S2 · the child record underneath (14b data)** — **BUILT + committed `5c3acb04c` 2026-11-04 (Parts 0–4); `/simplify` +
   `/review` owed (offered), prod mig 435 owed (MANUAL_PROD_STEPS, `pending`).** No walk (no screen changes). What landed:
   - **Mig 435 `a_child_is_one_record_across_seasons`** (applied to DEV): `org_children` (id, org, first/last name, birth date;
     service role only); NOT NULL `child_id` on `rep_roster_players`, `rep_tryout_registrations`, `league_registrations`.

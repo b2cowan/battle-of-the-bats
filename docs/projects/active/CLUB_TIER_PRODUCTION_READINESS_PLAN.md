@@ -3191,7 +3191,7 @@ between the coach's idea of a team (kids who age up) and the club's (a slot that
 > **Side findings (not Stage 14's; recorded so they are not lost):** the roster delete/Undo check `ROSTER_PLAYER_DEPENDENTS`
 > (`lib/db.ts:4638-4656`) omits `rep_player_notes`, `rep_player_observations`, `rep_development_goal_reviews` and
 > `rep_evaluation_not_assessed`, so an entry holding only those passes and they cascade away (TODO line) — **FIXED in S2
-> 2026-11-04 (commit owed), with a fifth (`rep_fundraiser_credit_plan`, a sponsor's agreed split); the cause was the guard
+> 2026-11-04 (committed `5c3acb04c`), with a fifth (`rep_fundraiser_credit_plan`, a sponsor's agreed split); the cause was the guard
 > test's completeness scan matching upper-case SQL only, now case-insensitive** · the families-file
 > exclusion test (`tests/unit/families-stage5a-guard.test.ts:63`) lists stale table names and would not catch a new one · the
 > tryout list's returning chip takes the best match at ANY tier (`tryout-candidates/route.ts:52-60`), so twins get the chip; the UI
@@ -3221,7 +3221,7 @@ between the coach's idea of a team (kids who age up) and the club's (a slot that
   confirmation says about the roster). Open: what (a) does to a team's name and public listing, and whether a coach (not only the
   club) may change a team's age group, since no coach screen edits it today.
 - [ ] **14b · One child, many seasons (the design question this stage exists for):** — **the DATA (S2 of the build prompt) BUILT
-  2026-11-04, commit owed; mig 435 `org_children` applied to dev, prod owed (MANUAL_PROD_STEPS); the Families book read the same
+  2026-11-04, committed `5c3acb04c`; mig 435 `org_children` applied to dev, prod owed (MANUAL_PROD_STEPS); the Families book read the same
   before and after on dev (710 rows, 708 children, 249 households, 373 household children); the screens are S3.** A **player record that outlives a season**,
   anchored to the family library, with each season's roster entry as that season's membership of it (jersey, position, status),
   so a returning child is picked, not retyped. **The shape is not decided.** Options to draw: (i) the smallest — a **"bring back a
