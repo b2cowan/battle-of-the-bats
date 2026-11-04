@@ -52,7 +52,10 @@ describe('the public team page', () => {
   });
   it('its share card shows the record only where the page does', () => {
     const og = readCode('app/[orgSlug]/[tournamentSlug]/teams/[id]/opengraph-image.tsx');
-    assert.match(og, /const showRecord = isPublicPageEnabled\(data\.tournament, 'standings'\) && \(division\?\.scheduleVisibility \?\? 'unpublished'\) !== 'unpublished';/);
+    // A held-back division never reaches the card (it returns first), so Standings is the record's only remaining gate.
+    assert.ok(og.indexOf("if (division?.scheduleVisibility !== 'published') return null;") > -1);
+    assert.ok(og.indexOf("if (division?.scheduleVisibility !== 'published') return null;") < og.indexOf('const showRecord'));
+    assert.match(og, /const showRecord = isPublicPageEnabled\(data\.tournament, 'standings'\);/);
     assert.match(og, /for \(const g of showRecord \? data\.games : \[\]\)/);
     assert.match(og, /\{c\.showRecord \? \(/);
   });

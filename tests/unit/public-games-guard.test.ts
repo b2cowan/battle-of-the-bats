@@ -28,7 +28,7 @@ const PUBLIC_SURFACES = [
 const GATED_READERS = [
   'lib/public-tournament-data.ts',
   'app/api/public/team-profile/route.ts',
-  'app/[orgSlug]/[tournamentSlug]/playoffs/page.tsx',
+  // (The Playoffs page left this list in Stage 8 Part 3c: it reads only through getPublicTournamentPageData now.)
   'app/[orgSlug]/[tournamentSlug]/champions/page.tsx',
   'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx',
 ];

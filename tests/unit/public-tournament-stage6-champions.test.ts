@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { billingTestLoader as componentLoader } from './_billing-test-loader.ts';
-import { readCode } from './_source-code.ts';
+import { between, readCode, sourceExists } from './_source-code.ts';
 import { visibleTournamentTabs } from '../../lib/tournament-page-tabs.ts';
 import type { Division, Game, Team, Tournament } from '../../lib/types.ts';
 
@@ -30,7 +30,10 @@ function fixture(kind: 'one' | 'several' | 'none' | 'partial' | 'held' | 'submit
 }
 type Fixture = ReturnType<typeof fixture>;
 
-function loader(data: Fixture, frameOn = true) {
+/** Stage 8 Part 3c: Champions, its preview section and the share images read no switch — a read now fails loudly. */
+const SWITCH_GONE = async () => { throw new Error('the preview switch is gone from Champions and the share images'); };
+
+function loader(data: Fixture) {
   const db = {
     getOrganizationBySlug: async () => ({ id: 'org', name: 'Club', subscriptionStatus: 'active' }),
     getPublicTournamentBySlug: async () => data.tournament,
@@ -44,7 +47,7 @@ function loader(data: Fixture, frameOn = true) {
     '@/lib/db': db,
     '@/lib/public-games': { onlyPublishedGames, getPublicStandingsByDivision: async () => ({}) },
     '@/lib/club-forward': { forwardToOwnAddress: async () => {} },
-    '@/lib/public-frame-server': { isPublicFrameOn: async () => frameOn, publicTournamentContactEmail: async () => null },
+    '@/lib/public-frame-server': { isPublicFrameOn: SWITCH_GONE, publicTournamentContactEmail: async () => null },
     '@/lib/tournament-preview': { getTournamentPreviewContext: async () => ({ org: { id: 'org' }, tournament: data.tournament }) },
     '@/lib/org-links': { orgLinks: async () => (path: string) => `/club${path}` },
     '@/lib/public-tournament-data': { toPublicTeam: (team: Team) => team,
@@ -55,16 +58,16 @@ function loader(data: Fixture, frameOn = true) {
     'next/og': { ImageResponse: class { html: string; constructor(node: ReactNode) { this.html = renderToStaticMarkup(node); } } },
   });
 }
-async function renderPage(data: Fixture, preview = false, frameOn = true) {
+async function renderPage(data: Fixture, preview = false) {
   const path = preview ? 'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx'
     : 'app/[orgSlug]/[tournamentSlug]/champions/page.tsx';
-  const { default: Page } = loader(data, frameOn)(path) as {
+  const { default: Page } = loader(data)(path) as {
     default: (props: { params: Promise<{ orgSlug: string; tournamentSlug: string; section: string }> }) => Promise<ReactNode>;
   };
   return renderToStaticMarkup(await Page({ params: Promise.resolve({ orgSlug: 'club', tournamentSlug: 'cup', section: 'champions' }) }));
 }
-async function renderImage(data: Fixture, frameOn = true) {
-  const { default: Image } = loader(data, frameOn)('app/[orgSlug]/[tournamentSlug]/opengraph-image.tsx') as {
+async function renderImage(data: Fixture) {
+  const { default: Image } = loader(data)('app/[orgSlug]/[tournamentSlug]/opengraph-image.tsx') as {
     default: (props: { params: Promise<{ orgSlug: string; tournamentSlug: string }> }) => Promise<{ html: string }>;
   };
   return (await Image({ params: Promise.resolve({ orgSlug: 'club', tournamentSlug: 'cup' }) })).html;
@@ -97,11 +100,12 @@ describe('Stage 6 Part 3: the live and preview Champions readers use the existin
       assert.doesNotMatch(html, /Winner a|Share results|<article/);
     });
   }
-  it('keeps the switch-off recap, with no share button (owner 2026-11-01)', async () => {
-    const html = await renderPage(fixture(), false, false);
-    assert.match(html, /class="hero"/);
-    assert.match(html, /the final results are in/);
-    assert.doesNotMatch(html, /Share results/);
+  it('the old recap is gone: no hero, no old states, no old styles (Stage 8 Part 3c)', async () => {
+    const html = await renderPage(fixture());
+    assert.doesNotMatch(html, /class="hero"|the final results are in|Full Standings/);
+    const page = readCode('app/[orgSlug]/[tournamentSlug]/champions/page.tsx');
+    assert.doesNotMatch(page, /isPublicFrameOn|frameOn|PublicTournamentState|ChampionsRecap|tierBadgeLabel|getPublicStandingsByDivision/);
+    assert.ok(!sourceExists('components/public/ChampionsRecap.module.css'), 'the old recap styles are back');
   });
   for (const preview of [false, true]) {
     it(`withholds the ${preview ? 'preview' : 'live'} recap even if an unpublished division has no games`, async () => {
@@ -121,14 +125,20 @@ describe('Stage 6 Part 3: the live and preview Champions readers use the existin
     assert.equal((html.match(/<article/g) ?? []).length, 2);
     assert.doesNotMatch(html, /Share results/);
   });
-  it('retains the club forward and leaves the legacy JSX below the frame return', () => {
+  it('runs the club forward first, and every return is the new body', () => {
     const page = readCode('app/[orgSlug]/[tournamentSlug]/champions/page.tsx');
-    assert.match(page, /await forwardToOwnAddress\(orgSlug, `\/\$\{tournamentSlug\}\/champions`\)/);
-    assert.ok(page.indexOf('if (frameOn) {') < page.indexOf('const heroTitle'));
+    const forward = page.indexOf('await forwardToOwnAddress(orgSlug, `/${tournamentSlug}/champions`)');
+    assert.ok(forward > -1 && forward < page.indexOf('getOrganizationBySlug(orgSlug)'));
+    const returns = page.match(/return <\w+/g) ?? [];
+    assert.equal(returns.length, 3);
+    assert.ok(returns.every(r => r === 'return <PublicChampionsPage'), returns.join(', '));
+    const preview = between(readCode('app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx'),
+      "if (section === 'champions')", 'const [registerDivisions');
+    assert.doesNotMatch(preview, /isPublicFrameOn|notFound/);
   });
 });
 
-describe('the inherited tournament share image follows the frame-on Champions reveal', () => {
+describe('the tournament share image always follows the Champions reveal (Stage 8 Part 3c: no switch)', () => {
   it('shows decided champions using the existing image', async () => {
     assert.match(await renderImage(fixture('several')), /Winner a/);
   });
@@ -141,8 +151,10 @@ describe('the inherited tournament share image follows the frame-on Champions re
     const data = fixture(); data.tournament.publicHiddenPages = ['standings'];
     assert.doesNotMatch(await renderImage(data), /Winner a/);
   });
-  it('preserves the switch-off image, including its existing partial-results behaviour', async () => {
-    assert.match(await renderImage(fixture('partial'), false), /Winner a/);
+  it('privacy: the switch-off partial reveal is gone — the gate is unconditional', () => {
+    const image = readCode('app/[orgSlug]/[tournamentSlug]/opengraph-image.tsx');
+    assert.doesNotMatch(image, /isPublicFrameOn|public-frame-server/);
+    assert.match(image, /const canShowChampions = isPublicPageEnabled\(t, 'standings'\) && divisions\.every\(d => d\.scheduleVisibility === 'published'\) &&\s*isTournamentPlayoffsComplete\(games, divisions\);/);
   });
 });
 

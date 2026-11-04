@@ -1,7 +1,5 @@
 import { forwardToOwnAddress } from '@/lib/club-forward';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { Trophy, ChevronRight, Crown } from 'lucide-react';
 import {
   getOrganizationBySlug,
   getPublicTournamentBySlug,
@@ -10,17 +8,12 @@ import {
   getDivisions,
 } from '@/lib/db';
 import { toPublicTeam } from '@/lib/public-tournament-data';
-import { getPublicStandingsByDivision, onlyPublishedGames } from '@/lib/public-games';
-import { deriveTierChampions, isTournamentPlayoffsComplete, tierBadgeLabel } from '@/lib/champions';
+import { onlyPublishedGames } from '@/lib/public-games';
+import { deriveTierChampions, isTournamentPlayoffsComplete } from '@/lib/champions';
 import { championCards } from '@/lib/public-host-card';
-import type { DivisionStandingRow } from '@/lib/tie-breakers';
 import { isPublicPageEnabled, isPublicBracketVisible } from '@/lib/public-pages';
-import { formatPoolName } from '@/lib/utils';
-import PublicTournamentState from '@/components/public/PublicTournamentState';
 import PublicChampionsPage from '@/components/public/PublicChampionsPage';
-import styles from '@/components/public/ChampionsRecap.module.css';
 import { orgLinks } from '@/lib/org-links';
-import { isPublicFrameOn } from '@/lib/public-frame-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,29 +31,11 @@ export default async function ChampionsPage({
 
   const orgHref = await orgLinks(orgSlug);
   const publicBase = orgHref(`/${tournamentSlug}`);
-  // Public tournament pages Stage 6: the server decides the preview switch, same as schedule/page.tsx.
-  const frameOn = await isPublicFrameOn();
 
-  // The Champions recap shows final results + closing standings, so it inherits the
-  // Standings page's visibility — an organizer who hid Standings must not have the final
-  // results leaked through this URL (same rule as the Playoff Picture).
+  // The Champions recap shows final results, so it inherits the Standings page's visibility — an organizer who hid
+  // Standings must not have the final results leaked through this URL (same rule as the Playoff Picture).
   if (!isPublicPageEnabled(tournament, 'standings')) {
-    if (frameOn) return <PublicChampionsPage standingsHidden cards={[]} homeHref={publicBase} />;
-    return (
-      <div className="page-content">
-        <div className="section">
-          <div className="container">
-            <PublicTournamentState
-              icon={<Trophy size={40} />}
-              eyebrow="Champions"
-              title="Final results unavailable"
-              description="The organizer has hidden results and standings for this tournament."
-              actions={[{ href: publicBase, label: 'Tournament Home', variant: 'ghost' as const }]}
-            />
-          </div>
-        </div>
-      </div>
-    );
+    return <PublicChampionsPage standingsHidden cards={[]} homeHref={publicBase} />;
   }
 
   const readOptions = { admin: true } as const;
@@ -77,152 +52,18 @@ export default async function ChampionsPage({
   const sortedDivisions = [...divisions].sort((a, b) => a.order - b.order);
 
   const tierChampions = deriveTierChampions(allGames, teams, sortedDivisions);
-  const showSchedule = isPublicPageEnabled(tournament, 'schedule');
 
-  // Only crown once the WHOLE tournament's playoffs are complete — same gate as the
-  // home hero and the one-time announcement. This stops the recap from surfacing a
-  // winner from a final that's been score-entered but not yet finalized ('submitted').
-  // And never while a division's schedule is still held back (D1): its final is not one families can see.
+  // Only crown once the WHOLE tournament's playoffs are complete — same gate as the home hero and the one-time
+  // announcement. This stops the recap from surfacing a winner from a final that's been score-entered but not yet
+  // finalized ('submitted'). And never while a division's schedule is still held back (D1): the reveal is
+  // all-or-nothing, so one held-back division withholds every champion.
   const playoffsComplete = allGames.length === rawGames.length && isTournamentPlayoffsComplete(allGames, sortedDivisions);
-
-  const frameResultsWithheld = frameOn && divisions.some(division => division.scheduleVisibility !== 'published');
-  if (!playoffsComplete || tierChampions.length === 0 || frameResultsWithheld) {
-    if (frameOn) return <PublicChampionsPage standingsHidden={false} cards={[]} homeHref={publicBase}
-      showPlayoffs={isPublicBracketVisible(tournament)} />;
-    return (
-      <div className="page-content">
-        <div className="section">
-          <div className="container">
-            <PublicTournamentState
-              icon={<Trophy size={40} />}
-              eyebrow="Champions"
-              title="No champions crowned yet"
-              description="Once the playoff finals are decided, the champion(s) and final results will appear here."
-              actions={[
-                { href: `${publicBase}/playoffs`, label: 'Playoff Picture', variant: 'ghost' as const },
-                { href: publicBase, label: 'Tournament Home', variant: 'ghost' as const },
-              ]}
-            />
-          </div>
-        </div>
-      </div>
-    );
+  const resultsWithheld = divisions.some(division => division.scheduleVisibility !== 'published');
+  const showPlayoffs = isPublicBracketVisible(tournament);
+  if (!playoffsComplete || tierChampions.length === 0 || resultsWithheld) {
+    return <PublicChampionsPage standingsHidden={false} cards={[]} homeHref={publicBase} showPlayoffs={showPlayoffs} />;
   }
 
-  if (frameOn) {
-    return <PublicChampionsPage standingsHidden={false} cards={championCards(tierChampions, sortedDivisions.length > 1)}
-      homeHref={publicBase} showPlayoffs={isPublicBracketVisible(tournament)} />;
-  }
-
-  // Final standings per division.
-  const standingsByDivision: Record<string, DivisionStandingRow[]> =
-    await getPublicStandingsByDivision(tournament, sortedDivisions, { games: allGames, teams: allTeams });
-
-  const topChampions = tierChampions.filter(c => c.isTopTier);
-  const heroTitle = topChampions.length === 1 ? topChampions[0].champion : 'Champions';
-
-  return (
-    <div className="page-content">
-      {/* Hero */}
-      <div className={styles.hero}>
-        <div className={styles.heroBg} aria-hidden="true" />
-        <div className={`container ${styles.heroInner}`}>
-          <span className={styles.heroEyebrow}><Trophy size={13} /> Champions</span>
-          <h1 className={styles.heroTitle}>{heroTitle}</h1>
-          <p className={styles.heroSub}>{tournament.name} — the final results are in. Congratulations to every team that competed.</p>
-          <div className={styles.heroActions}>
-            <Link href={`${publicBase}/standings`} className="btn btn-outline btn-sm">
-              Full Standings <ChevronRight size={14} />
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      <div className="section">
-        <div className="container">
-          <div className={styles.divisionStack}>
-            {sortedDivisions.map(div => {
-              const champs = tierChampions.filter(c => c.division === div.name);
-              if (champs.length === 0) return null;
-              const rows = standingsByDivision[div.id] ?? [];
-              const multiPool = (div.pools?.length ?? 0) >= 2;
-              const poolNameOf = (poolId?: string) => div.pools?.find(p => p.id === poolId)?.name;
-
-              return (
-                <section key={div.id} className={styles.division}>
-                  <header className={styles.divisionHeader}>
-                    <div>
-                      <span className={styles.divisionKicker}>Final Results</span>
-                      <h2 className={styles.divisionName}>{div.name}</h2>
-                    </div>
-                  </header>
-
-                  {/* Champion(s) — top tier first, headlined; lower tiers beneath. */}
-                  <div className={styles.championList}>
-                    {champs.map((c, i) => (
-                      <div
-                        key={`${c.division}-${c.tierLabel ?? 'single'}-${i}`}
-                        className={`${styles.championCard} ${c.isTopTier ? styles.championTop : ''}`}
-                      >
-                        <span className={styles.crown}><Crown size={c.isTopTier ? 26 : 20} /></span>
-                        <div className={styles.championBody}>
-                          <span className={styles.tierBadge}>{tierBadgeLabel(c.tierLabel, c.isTopTier)}</span>
-                          <span className={styles.championName}>{c.champion}</span>
-                          {c.runnerUp && (
-                            <span className={styles.championMeta}>
-                              Defeated {c.runnerUp}
-                              {c.championScore != null && c.runnerUpScore != null && (
-                                <> <strong>{c.championScore}–{c.runnerUpScore}</strong></>
-                              )}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Final standings */}
-                  {rows.length > 0 && (
-                    <div className={styles.standingsBlock}>
-                      <h3 className={styles.blockTitle}>Final standings</h3>
-                      <ol className={styles.standingsList}>
-                        {rows.map((r, idx) => (
-                          <li key={r.teamId} className={idx === 0 ? styles.rankFirst : undefined}>
-                            <div className={styles.standingsRow}>
-                              <span className={styles.rankNum}>{idx + 1}</span>
-                              <span className={styles.rankName}>
-                                {r.teamName}
-                                {multiPool && poolNameOf(r.poolId) ? (
-                                  <span className={styles.rankPool}>{formatPoolName(poolNameOf(r.poolId)!)}</span>
-                                ) : null}
-                              </span>
-                              <span className={styles.rankRecord}>{r.w}-{r.l}-{r.t}</span>
-                              <span className={r.rdRaw > 0 ? styles.rankRdPos : r.rdRaw < 0 ? styles.rankRdNeg : styles.rankRd}>
-                                {r.rdRaw > 0 ? `+${r.rdRaw}` : r.rdRaw}
-                              </span>
-                            </div>
-                          </li>
-                        ))}
-                      </ol>
-                    </div>
-                  )}
-                </section>
-              );
-            })}
-          </div>
-
-          <div className={styles.footerActions}>
-            <Link href={`${publicBase}/standings`} className="btn btn-primary">
-              Full standings <ChevronRight size={16} />
-            </Link>
-            {showSchedule && (
-              <Link href={`${publicBase}/schedule`} className="btn btn-outline">
-                Game results <ChevronRight size={16} />
-              </Link>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <PublicChampionsPage standingsHidden={false} cards={championCards(tierChampions, sortedDivisions.length > 1)}
+    homeHref={publicBase} showPlayoffs={showPlayoffs} />;
 }

@@ -13,8 +13,8 @@ const load = billingTestLoader({
   '@/lib/use-public-pathname': { useOrgHref: () => (path: string) => `/club${path}` },
   '@/lib/follow': { isTournamentInProgress: () => false },
   '@/lib/hooks/usePublicTournamentLive': { usePublicTournamentLive() {} },
-  './LogicSyncBracket': { LogicSyncBracket: () => createElement('div', { 'data-legacy-bracket': true }) },
 });
+// `glow-primary` was the old SVG bracket's halo filter (deleted, Stage 8 Part 3c): the real bracket renders below.
 const Body = (load('components/public/PublicPlayoffs.tsx') as { default: ComponentType<{
   orgSlug: string; tournamentSlug: string; initialData: PublicTournamentPageData; initialNow: string;
 }> }).default;
@@ -50,7 +50,7 @@ describe('the real Playoffs body and preview bracket', () => {
     assert.match(html, /data-public-live-card/);
     assert.match(html, /The winner takes the title/);
     assert.match(html, /Best offence/); assert.match(html, /Stingiest defence/); assert.match(html, /Playoff cut line/);
-    assert.doesNotMatch(html, /Best offense|Stingiest defense|data-legacy-bracket|Full Bracket/);
+    assert.doesNotMatch(html, /Best offense|Stingiest defense|glow-primary|Full Bracket/);
     assert.equal((html.match(/data-bracket-game=/g) ?? []).length, 3);
     assert.doesNotMatch(html, /aria-label="Full screen"/, 'four-team brackets fit without controls');
   });
@@ -89,7 +89,7 @@ describe('the real Playoffs body and preview bracket', () => {
     assert.match(html, /Hamilton-Wentworth Girls Fastpitch Development/);
     assert.match(html, /aria-label="Zoom in"/); assert.match(html, /aria-label="Fit bracket"/); assert.match(html, /aria-label="Full screen"/);
     assert.equal((html.match(/data-bracket-game=/g) ?? []).length, 7);
-    assert.doesNotMatch(html, /data-legacy-bracket|Standings unavailable/);
+    assert.doesNotMatch(html, /glow-primary|Standings unavailable/);
   });
   it('has no held-back division, team, seed or next game in the unavailable and empty states', () => {
     const data = fixture(); data.divisions[0].scheduleVisibility = 'unpublished';

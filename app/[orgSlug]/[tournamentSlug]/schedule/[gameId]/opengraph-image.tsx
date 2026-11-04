@@ -2,16 +2,12 @@ import { ImageResponse } from 'next/og';
 import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
 import { shareImageTheme } from '@/lib/tournament-share-look';
 import { teamColor, teamInitials } from '@/lib/team-color';
-import { publicGameStatus, publicGameStatusLabel, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
-import { bracketRoundLabel } from '@/lib/playoff-bracket';
-import { isPublicFrameOn } from '@/lib/public-frame-server';
+import { publicGameStatus, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { publicGameDetailView } from '@/lib/public-game-detail';
 
 export const alt = 'Tournament score';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
-
-const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 
 interface CardData {
   tournamentName: string;
@@ -30,19 +26,6 @@ interface CardData {
   metaLine: string;
 }
 
-function teamName(
-  id: string | null | undefined,
-  placeholder: string | null | undefined,
-  teams: { id: string; name: string }[],
-) {
-  // Published schedules always show real team names (mig 129); placeholder only for
-  // a genuinely unassigned slot (bye / unseeded bracket spot).
-  if (id && id !== NIL_UUID) {
-    return teams.find(t => t.id === id)?.name ?? placeholder ?? 'TBD';
-  }
-  return placeholder ?? 'TBD';
-}
-
 async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: string; gameId: string }>): Promise<CardData | null> {
   try {
     const { orgSlug, tournamentSlug, gameId } = await params;
@@ -51,25 +34,21 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
 
     const game = data.games.find(g => g.id === gameId);
     if (!game) return null;
-    // The preview's words follow its page; the existing artwork and switch-off data path stay intact.
-    const view = await isPublicFrameOn() ? publicGameDetailView(game, { ...data, requireFinalization: data.organization.requireScoreFinalization ?? true }) : null;
-
-    const teams = data.teams.map(t => ({ id: t.id, name: t.name }));
-    const away = view?.sides[0].name ?? teamName(game.awayTeamId, game.awayPlaceholder, teams);
-    const home = view?.sides[1].name ?? teamName(game.homeTeamId, game.homePlaceholder, teams);
-
-    const hasScore = view?.hasScore ?? ((game.status === 'completed' || game.status === 'submitted') &&
-      game.homeScore != null && game.awayScore != null);
+    const requireFinalization = data.organization.requireScoreFinalization ?? true;
+    // The card's words follow the game's page: names, score, state and round come from the page's own view.
+    const view = publicGameDetailView(game, { ...data, requireFinalization });
+    const away = view.sides[0].name;
+    const home = view.sides[1].name;
+    const hasScore = view.hasScore;
     const awayScore = game.awayScore ?? 0;
     const homeScore = game.homeScore ?? 0;
 
-    const requireFinalization = data.organization.requireScoreFinalization ?? true;
     // One shared definition (J6-013): a game in its time-window is LIVE; a submitted
     // score awaiting confirmation is UNOFFICIAL, never "PENDING" on a share card (J6-015).
     const state = publicGameStatus(game, game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES, requireFinalization);
     const isLive = state === 'live';
     const isUnofficial = state === 'unofficial';
-    const statusLabel = (view ? view.cancelled ? 'Cancelled' : view.stateLabel ?? 'Up next' : publicGameStatusLabel(state)).toUpperCase();
+    const statusLabel = (view.cancelled ? 'Cancelled' : view.stateLabel ?? 'Up next').toUpperCase();
 
     const t = data.tournament;
     const theme = await shareImageTheme(orgSlug, t);
@@ -77,7 +56,7 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
     const dateLabel = game.date
       ? new Date(`${game.date}T12:00:00`).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
       : '';
-    const gameType = view?.round ?? (game.isPlayoff ? bracketRoundLabel(game.bracketCode) : 'Pool Play');
+    const gameType = view.round;
 
     return {
       tournamentName: t.name,

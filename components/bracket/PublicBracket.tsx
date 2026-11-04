@@ -9,7 +9,7 @@ import { useOrgHref } from '@/lib/use-public-pathname';
 import type { Division, Game, PublicTeam, Venue } from '@/lib/types';
 import styles from './PublicBracket.module.css';
 
-/** Frame-only presentation of the canonical bracket columns. It never seeds, advances or computes a bracket. */
+/** The public presentation of the canonical bracket columns. It never seeds, advances or computes a bracket. */
 export default function PublicBracket({ games, teams, divisions, venues, orgSlug, tournamentSlug, requireFinalization, now }: {
   games: Game[]; teams: PublicTeam[]; divisions: Division[]; venues: Venue[]; orgSlug: string; tournamentSlug: string;
   requireFinalization: boolean; now: Date;

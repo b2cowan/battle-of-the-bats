@@ -8,16 +8,19 @@ import { readCode } from './_source-code.ts';
 import { profileFixture } from './_public-team-profile-fixture.ts';
 import { teamProfilePreview, teamProfileView } from '../../lib/public-team-profile.ts';
 
+// PRIVACY (Stage 8 Part 3c): the image withholds a held-back division ALWAYS. Until 3c it did so only with the
+// preview switch on; "dropping the gate" meant always withholding, never that it stops withholding.
 describe('Stage 5 review: the held-back team share image', () => {
-  const card = async (published: boolean, frameOn = true) => {
+  const card = async (visibility: 'published' | 'unpublished' | undefined) => {
     const load = billingTestLoader({
       'next/og': { ImageResponse: class { body: string; constructor(node: ReactNode) { this.body = renderToStaticMarkup(node); } } },
       '@/lib/public-tournament-data': { getPublicTournamentPageData: async () => ({
         tournament: { name:'Classic' }, games: [],
         teams: [{ id:'secret',name:'Held-back Rapids',divisionId:'d' }],
-        divisions: [{ id:'d',name:'Held-back Division',scheduleVisibility:published ? 'published' : 'unpublished' }],
+        divisions: [{ id:'d',name:'Held-back Division',scheduleVisibility:visibility }],
       }) },
-      '@/lib/public-frame-server': { isPublicFrameOn: async () => frameOn },
+      // The image reads no switch; a read would throw, its catch would hand back the generic card, and the public case fails.
+      '@/lib/public-frame-server': { isPublicFrameOn: async () => { throw new Error('the switch is gone from the share image'); } },
       '@/lib/themes': { resolveTheme: () => ({ primary:'#123456',primaryRgb:'18,52,86' }) },
     });
     const { default: Image } = load('app/[orgSlug]/[tournamentSlug]/teams/[id]/opengraph-image.tsx') as {
@@ -25,14 +28,16 @@ describe('Stage 5 review: the held-back team share image', () => {
     };
     return (await Image({ params:Promise.resolve({orgSlug:'club',tournamentSlug:'cup',id:'secret'}) })).body;
   };
-  it('uses the generic image for a held-back team, with no name or division', async () => {
-    const html = await card(false);
-    assert.match(html, /FieldLogicHQ/);
-    assert.doesNotMatch(html, /Held-back|RECORD|Classic/);
-  });
-  it('keeps the public image and the switch-off behaviour', async () => {
-    assert.match(await card(true), /Held-back Rapids/);
-    assert.match(await card(false, false), /Held-back Rapids/);
+  for (const visibility of ['unpublished', undefined] as const) {
+    it(`always uses the generic image for a held-back team (${visibility ?? 'no visibility set'}), with no name or division`, async () => {
+      const html = await card(visibility);
+      assert.match(html, /FieldLogicHQ/);
+      assert.doesNotMatch(html, /Held-back|RECORD|Classic/);
+    });
+  }
+  it('a published team keeps its public image, and the route reads no switch', async () => {
+    assert.match(await card('published'), /Held-back Rapids/);
+    assert.doesNotMatch(readCode('app/[orgSlug]/[tournamentSlug]/teams/[id]/opengraph-image.tsx'), /isPublicFrameOn|public-frame-server/);
   });
 });
 

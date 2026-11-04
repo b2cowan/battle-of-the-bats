@@ -313,9 +313,9 @@ describe('Part 2: the desk, the footer and the admin preview', () => {
 describe('Part 3: the readable baseline, A', () => {
   const css = readCode(FRAME_CSS);
   const KEYED = /^(:global\(\[data-public-frame='light'\]\)|\[data-public-frame='light'\]) \./;
+  // The old Schedule's sheet left with the old Playoffs (Stage 8 Part 3c; its deletion is pinned by the Stage 3 guard).
   const PART3_SHEETS = [
     'app/[orgSlug]/Home.module.css',
-    'app/[orgSlug]/schedule/schedule.module.css',
     'app/[orgSlug]/register/register.module.css',
     'components/public/PublicTournamentState.module.css',
     'components/public/FollowTournamentStrip.module.css',
@@ -362,18 +362,15 @@ describe('Part 3: the readable baseline, A', () => {
     assert.match(schedule, /<ol className=\{styles\.placements\}>/);
     assert.match(readCode('components/public/PublicSchedule.module.css'), /^\.placements li \{[^}]*border-bottom: 1px solid var\(--club-line\);/m,
       'the frame\'s own line token, not the organizer\'s colour');
-    assert.doesNotMatch(readCode('app/[orgSlug]/schedule/schedule.module.css'), /\.placementStandings/);
   });
 });
 
 describe('Part 4: the readable baseline, B', () => {
   const KEYED = /^(:global\(\[data-public-frame='light'\]\)|\[data-public-frame='light'\]) \./;
-  // Stage 8 Part 3a deleted the old Standings, Teams, team-page and Rules sheets with their pages (each group's guard).
+  // Stage 8 Part 3a deleted the old Standings, Teams, team-page and Rules sheets with their pages, and Part 3c the old
+  // bracket's, the old Playoffs' and the old Champions' (each pinned by its group's guard: Stage 4, 5, 6-rules, 6-champions).
   const PART4_SHEETS = [
-    'components/bracket/LogicSyncBracket.module.css',
-    'components/public/PlayoffPicture.module.css',
     'app/[orgSlug]/news/news.module.css',
-    'components/public/ChampionsRecap.module.css',
   ];
 
   it('every readable-baseline rule in the pages\' own stylesheets is keyed to the marker', () => {
@@ -384,17 +381,12 @@ describe('Part 4: the readable baseline, B', () => {
     }
   });
 
-  it('the bracket card and the champion banner moved out of inline styles unchanged, so the frame can reach them', () => {
-    const bracket = readCode('components/bracket/LogicSyncBracket.tsx');
-    assert.doesNotMatch(bracket, /rgba\(var\(--primary-rgb\), 0\.(85|08)\)/, 'no inline wash or edge of the organizer\'s colour is left');
-    assert.doesNotMatch(bracket, /drop-shadow/);
-    const css = readCode('components/bracket/LogicSyncBracket.module.css');
-    assert.match(css, /^\.nodeCard \{\s*fill: var\(--bracket-card, var\(--surface\)\);\s*stroke: rgba\(var\(--primary-rgb\), 0\.85\);\s*stroke-width: 1\.25;/m);
-    // The halo is an SVG attribute (a stylesheet's url(#…) is not resolved alike everywhere); the frame's CSS outranks it.
-    assert.match(bracket, /filter=\{node\.isLive \|\| showHighlightRing \? 'url\(#glow-primary\)' : undefined\}/);
-    assert.doesNotMatch(css, /url\(#/, 'no fragment reference from the stylesheet');
-    assert.match(css, /:global\(\[data-public-frame='light'\]\) \.nodeCardHalo,/);
-    assert.match(css, /^\.nodeMeta \{ fill: rgba\(var\(--primary-rgb\), 0\.08\); \}/m);
+  // The old SVG bracket (whose card and banner this part had moved out of inline styles) left in Stage 8 Part 3c; the
+  // same rule now holds for the only bracket the public pages draw.
+  it('the public bracket carries no inline wash of the organizer\'s colour; its own sheet paints it with the frame\'s tokens', () => {
+    const bracket = readCode('components/bracket/PublicBracket.tsx');
+    assert.doesNotMatch(bracket, /primary-rgb|drop-shadow|fill=|stroke=/, 'no inline organizer colour or SVG paint');
+    assert.match(readCode('components/bracket/PublicBracket.module.css'), /^\.bracket \{[^}]*border: 1px solid var\(--club-line-2\);[^}]*background: var\(--club-card\);/m);
   });
 
   it('the Teams monogram and its readable ink left with the old Teams pages (Stage 8 Part 3a)', () => {

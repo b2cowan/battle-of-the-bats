@@ -1,4 +1,4 @@
-/* Opt-in only through TieredBracket's publicFrame prop; legacy SVG and its styles remain untouched. */
+/* The public bracket (TieredBracket → PublicBracket); the only bracket the public pages draw. */
 .bracket { min-width: 0; padding: 12px; border: 1px solid var(--club-line-2); border-radius: 8px; background: var(--club-card); color: var(--club-text); }
 .tools { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; margin-bottom: 12px; }
 .tools button { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 6px 8px; border: 1px solid var(--club-field); border-radius: 6px; background: var(--club-card); color: var(--club-ink); font: 600 0.875rem/1.2 var(--club-text-face); cursor: pointer; }

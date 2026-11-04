@@ -109,8 +109,8 @@ export default function PublicPlayoffs({ orgSlug, tournamentSlug, initialData, i
       </section>
       <section className={styles.bracket} data-sandbox-tour="playoff-bracket" aria-label="Playoff bracket">
         <PublicSectionHead title="Bracket" />
-        <TieredBracket games={games} teams={teams} pools={division?.pools ?? []} tournamentId={tournament.id}
-          orgSlug={orgSlug} tournamentSlug={tournamentSlug} venues={data.venues} divisions={data.divisions} requireFinalization={requireFinalization} publicFrame now={clock} />
+        <TieredBracket games={games} teams={teams} pools={division?.pools ?? []}
+          orgSlug={orgSlug} tournamentSlug={tournamentSlug} venues={data.venues} divisions={data.divisions} requireFinalization={requireFinalization} now={clock} />
       </section>
       {picture && <div className={styles.seeding}><PublicDisclosure title="How seeding works" modalOnDesktop
         sub={`${picture.formatLabel}${qualifier ? `, ${qualifier}` : ''}`}>

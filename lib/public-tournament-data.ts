@@ -17,7 +17,7 @@ import { getPublicStandingsByDivision, onlyPublishedGames } from './public-games
 import { isPublicPageEnabled, isPublicBracketVisible, withInviteOnlyPages, type PublicPageKey } from './public-pages';
 import { runsInviteOnlyEvents } from './invite-only-event';
 import { publishedCompetitionData } from './public-standings';
-import { publicTeamsData } from './public-teams';
+import { publicFrameGame, publicTeamsData } from './public-teams';
 import type { Announcement, Division, Venue, Game, Organization, Resource, RuleSection, Team, PublicTeam, Tournament, TournamentRegistrationField } from './types';
 
 export type PublicTournamentSection = Extract<PublicPageKey, 'schedule' | 'standings' | 'teams' | 'rules' | 'register'> | 'context' | 'scores' | 'standings-preview' | 'playoffs' | 'teams-preview' | 'schedule-preview';
@@ -215,7 +215,11 @@ export async function getPublicTournamentPageData(
       venues,
       standingsByDivision: await getPublicStandingsByDivision(tournament, divisions, { games, teams }),
     };
-    return section === 'standings-preview' || section === 'playoffs' ? publishedCompetitionData(data) : data;
+    if (section !== 'standings-preview' && section !== 'playoffs') return data;
+    // The new Standings and Playoffs bodies ship their games to the browser (initial data + the live feed): published
+    // divisions only, and never a game's private notes or the scorekeeper's identity (Stage 8 Part 3c, found at /review).
+    const published = publishedCompetitionData(data);
+    return { ...published, games: published.games.map(publicFrameGame) };
   }
 
   if (section === 'rules') {

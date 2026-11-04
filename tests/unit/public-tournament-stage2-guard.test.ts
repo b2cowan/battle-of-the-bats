@@ -208,12 +208,13 @@ describe('Stage 6 (Ask 14, "tabs follow what there is"): News, Rules, Register, 
       assert.match(readCode(file), /championsCrownedAt: tournament\.championsCrownedAt/, file);
     }
   });
-  it('Rules has one body (its old half left in Stage 8 Part 3a); the legacy Champions body is untouched until Part 3c', () => {
+  it('Rules and Champions each have one body (their old halves left in Stage 8 Parts 3a and 3c)', () => {
     const rules = readCode('app/[orgSlug]/[tournamentSlug]/rules/page.tsx');
     assert.match(rules, /return <PublicRules\s/);
     assert.doesNotMatch(rules, /isPublicFrameOn|RulesContent|rulesLayout|resourcesLayout/);
     const champions = readCode('app/[orgSlug]/[tournamentSlug]/champions/page.tsx');
-    assert.match(champions, /<ChampionsRecap|styles\.hero/, 'the legacy hero JSX still renders for the switch-off reader');
+    assert.match(champions, /return <PublicChampionsPage\s/);
+    assert.doesNotMatch(champions, /isPublicFrameOn|frameOn|ChampionsRecap|styles\.|PublicTournamentState/);
   });
   it('Register\'s body is not touched by Stage 6 — no RegisterContent.tsx edit, no frameOn import there', () => {
     assert.doesNotMatch(readSource('components/public/RegisterContent.tsx'), /isPublicFrameOn|frameOn/);

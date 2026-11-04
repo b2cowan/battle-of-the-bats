@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
 import { describe, it } from 'node:test';
 import { between, cssRule, filesUnder, readCode, readSource, sourceExists } from './_source-code.ts';
+import { publicFrameGame } from '../../lib/public-teams.ts';
+import type { Game } from '../../lib/types.ts';
 
 const STANDINGS_PAGE = 'app/[orgSlug]/[tournamentSlug]/standings/page.tsx';
 /** The old client wrapper — the server page renders PublicStandings directly since Stage 8 Part 3a. */
 const STANDINGS_CLIENT = 'app/[orgSlug]/[tournamentSlug]/standings/StandingsPageClient.tsx';
 const PLAYOFFS_PAGE = 'app/[orgSlug]/[tournamentSlug]/playoffs/page.tsx';
 const PREVIEW = 'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx';
-const digest = (text: string) => createHash('sha256').update(text.replace(/\r\n/g, '\n')).digest('hex');
 
 /** Follow the rendered public components, not just a direct bracket import (Part 1 delegates to the old body). */
 function bracketOwners(file: string, visited = new Set<string>()): Set<string> {
@@ -29,27 +29,25 @@ function bracketOwners(file: string, visited = new Set<string>()): Set<string> {
   return owners;
 }
 
-describe('Stage 4 Part 1: Standings has one body (Stage 8 Part 3a); Playoffs keeps its server-decided branch', () => {
-  it('Standings renders only the new body and Playoffs preserves its legacy fallback until Part 3c', () => {
+describe('Stage 4 Part 1: Standings and Playoffs each have one body (Stage 8 Parts 3a and 3c)', () => {
+  it('Standings and Playoffs render only the new body, straight from the server page, after the forward', () => {
     const server = readCode(STANDINGS_PAGE);
     assert.match(server, /return <PublicStandings orgSlug=\{orgSlug\} tournamentSlug=\{tournamentSlug\} \/>/);
     assert.doesNotMatch(server, /isPublicFrameOn|frameOn/);
     const page = readCode(PLAYOFFS_PAGE);
-    assert.match(page, /const frameOn = await isPublicFrameOn\(\);/);
-    assert.match(page, /if \(frameOn\) \{[\s\S]*getPublicTournamentPageData\(orgSlug, tournamentSlug, 'playoffs'\)/);
-    assert.match(page, /return <PublicPlayoffs[^;]+initialData=\{initialData\}/);
-    assert.ok(page.indexOf('return <PublicPlayoffs') < page.indexOf('const org = await getOrganizationBySlug'));
-    assert.match(page, /return legacyBody;/);
+    assert.doesNotMatch(page, /isPublicFrameOn|frameOn|legacyBody|getOrganizationBySlug|PlayoffPicture\.module|schedule\.module/);
+    const forward = page.indexOf("await forwardToOwnAddress(orgSlug, `/${tournamentSlug}/playoffs`)");
+    const read = page.indexOf("getPublicTournamentPageData(orgSlug, tournamentSlug, 'playoffs')");
+    assert.ok(forward > -1 && read > forward, 'the forward runs before the read');
+    assert.match(page, /if \(!initialData\?\.tournament\) notFound\(\);\s*return <PublicPlayoffs orgSlug=\{orgSlug\} tournamentSlug=\{tournamentSlug\} initialData=\{initialData\}/);
+    assert.equal((page.match(/return </g) ?? []).length, 1, 'one body');
     assert.doesNotMatch(readCode('components/public/PublicPlayoffs.tsx'), /legacyBody|children/);
   });
-  it('the old Standings body and its styles are gone; the old Playoffs JSX is byte-for-byte preserved', () => {
-    for (const path of ['components/public/StandingsContent.tsx', STANDINGS_CLIENT, 'app/[orgSlug]/standings/standings.module.css']) {
+  it('the old Standings and Playoffs bodies and their styles are gone', () => {
+    for (const path of ['components/public/StandingsContent.tsx', STANDINGS_CLIENT, 'app/[orgSlug]/standings/standings.module.css',
+      'components/public/PlayoffPicture.module.css', 'app/[orgSlug]/schedule/schedule.module.css']) {
       assert.ok(!sourceExists(path), `${path} is back`);
     }
-    const page = readSource(PLAYOFFS_PAGE).replace(/\r\n/g, '\n');
-    const start = page.indexOf('  const legacyBody = ') + '  const legacyBody = '.length;
-    const end = page.indexOf('\n  return legacyBody;', start);
-    assert.equal(digest(page.slice(start, end)), 'a31e5296cc76ab27e75a4fd2a07e7aed2c7a676f4ccbc8997caa8c0a36c5cc2a');
   });
   it('exactly one frame-on page owns the bracket, now on Playoffs with both doors pointing there', () => {
     const standings = bracketOwners('components/public/PublicStandings.tsx');
@@ -79,7 +77,16 @@ describe('Stage 4 Part 2: the table-first body follows the revised drawing', () 
     const data = readCode('lib/public-tournament-data.ts');
     assert.match(body, /fetchPublicTournamentData\(orgSlug, tournamentSlug, 'standings-preview'\)/);
     assert.match(data, /section === 'standings-preview' \? 'standings' : section/);
-    assert.match(data, /return section === 'standings-preview' \|\| section === 'playoffs' \? publishedCompetitionData\(data\) : data;/);
+    assert.match(data, /if \(section !== 'standings-preview' && section !== 'playoffs'\) return data;\s*const published = publishedCompetitionData\(data\);\s*return \{ \.\.\.published, games: published\.games\.map\(publicFrameGame\) \};/);
+    // PRIVACY (Stage 8 Part 3c /review): those games reach the browser, so the scrub must actually remove the private fields.
+    const game = { id: 'g', notes: 'PRIVATE_NOTE', scoreSubmittedByEmail: 'keeper@example.com', scoreSubmittedByUserId: 'u1',
+      scoreSubmittedAt: '2026-11-04T10:00:00Z', scoreSubmissionSource: 'scorekeeper', homeScore: 4, awayScore: 2 } as unknown as Game;
+    const scrubbed = publicFrameGame(game);
+    for (const key of ['notes', 'scoreSubmittedByEmail', 'scoreSubmittedByUserId', 'scoreSubmittedAt', 'scoreSubmissionSource']) {
+      assert.ok(!(key in scrubbed), `${key} reaches the browser`);
+    }
+    assert.equal(scrubbed.homeScore, 4, 'the game facts stay');
+    assert.equal(game.notes, 'PRIVATE_NOTE', 'the server copy is untouched');
     assert.match(readCode('app/api/public/tournament-data/route.ts'), /'standings-preview'/);
     assert.match(body, /enabled: !isPreview && isTournamentInProgress/);
     assert.match(body, /setFetched\(next\)/);
@@ -129,15 +136,18 @@ describe('Stage 4 Part 3: a live, published-only Playoffs body', () => {
     assert.match(body, /buildPlayoffPicture\(/);
     assert.match(body, /<PublicDisclosure title="How seeding works"/);
     assert.match(body, /data-sandbox-tour="playoff-bracket"/);
-    assert.match(body, /publicFrame now=\{clock\}/);
+    assert.match(body, /requireFinalization=\{requireFinalization\} now=\{clock\} \/>/);
     assert.ok(body.indexOf('<PublicLiveCard') < body.indexOf('<TieredBracket'));
   });
-  it('keeps all legacy bracket styles and renderer choices behind the opt-in', () => {
+  it('draws only the public bracket: the old SVG bracket, its styles and its types are gone (Stage 8 Part 3c)', () => {
     const tiered = readCode('components/bracket/TieredBracket.tsx');
-    assert.match(tiered, /publicFrame = false/);
-    assert.match(tiered, /if \(publicFrame\) return/);
-    assert.ok(tiered.indexOf('<PublicBracket') < tiered.indexOf('const bracketHasPools'));
-    assert.match(tiered, /return <LogicSyncBracket games=\{games\}/);
+    assert.match(tiered, /publicBracketSections\(games, teams, pools\)\.map/);
+    assert.match(tiered, /<PublicBracket games=\{section\.games\}/);
+    assert.doesNotMatch(tiered, /publicFrame|LogicSyncBracket|bracketHasPools|inferGamePool|SectionHeader/);
+    for (const path of ['components/bracket/LogicSyncBracket.tsx', 'components/bracket/LogicSyncBracket.module.css', 'lib/types/bracket.ts']) {
+      assert.ok(!sourceExists(path), `${path} is back`);
+    }
+    assert.doesNotMatch(readCode('lib/playoff-bracket.ts'), /export function inferGamePool\b/);
     const preview = readCode('components/bracket/PublicBracket.tsx');
     assert.match(preview, /publicBracketRounds\(games\)/);
     assert.match(preview, /publicGameDetailView\(game/);

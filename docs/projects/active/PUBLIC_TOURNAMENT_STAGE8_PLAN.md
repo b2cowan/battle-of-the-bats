@@ -1,7 +1,8 @@
 # Public tournament pages — Stage 8: the new look on for everyone (plan)
 
 **Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 committed `d4af280e6` 2026-11-03** (record §10; it releases with the flip, ruling D). **Part 2 committed `02e29f453` 2026-11-03** (record §11; it releases with the flip too). **Part 3a committed `3304c77fe` 2026-11-03**
-(record §12; releases with the flip). **Part 3b committed `9b6252e8a` 2026-11-04** (record §13; releases with the flip). Next Part 3c. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
+(record §12; releases with the flip). **Part 3b committed `9b6252e8a` 2026-11-04** (record §13; releases with the flip). **Part 3c built 2026-11-04**
+(record §14; releases with the flip). Next Part 3d. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
 **Sequencing rule (standing):** by dependency and rework risk, never by date. One part per session, `/clear` between.
@@ -547,3 +548,114 @@ alone" (advisory; both files use it).
   (pre-existing for switch-on visitors); look at it with the layout's frame branches.
 - Still owed, not this part: the Rules layout menus (§12 → Part 4); the admin strip's 34 px "Dismiss"; `/release` §1d-2's sharp
   probe; the club editor's unlabelled 18 px input; re-seeding the Stage 4 clones.
+
+## 14. Part 3c record (Playoffs, Champions, the three share images; built 2026-11-04; releases with the flip)
+
+**What a customer sees:** nothing (nothing promoted). **An owner on dev, switch on (the default):** nothing changes — Playoffs,
+Champions, the admin preview's Champions section and the three link-preview images already followed the new look. **Switch
+off:** Playoffs and Champions show the new body inside the OLD layout (the accepted half-state of §12/§13); the preview's
+Champions section shows instead of "not found"; and the three link-preview images follow the new rules for everyone — the
+team image never names a team in a held-back division, the tournament image names a champion only when Standings is shown,
+every division is published and every final is done (switch-off used to name one as soon as any final was decided, Standings
+hidden or not), and the game image uses the new words. Both image rules are privacy tightenings, pinned in tests. ⚠ Not
+promotable before Parts 4–6 (§5).
+
+**Owner ruling in-session (2026-11-04):** the old SVG bracket goes in 3c. The brief said "delete only if no importer survives";
+the code said `TieredBracket`'s only caller (the new Playoffs) always took its new branch, so `LogicSyncBracket` was reachable
+only through a dead branch. ⚠ **Correction to §12's "Kept" line:** the old Playoffs never drew the bracket (its body only linked
+to Standings; the Stage 4 guard already asserted it). The old SVG's last live renderer was the old Schedule, gone in 3b.
+
+**What changed.** `playoffs/page.tsx` → `PublicPlayoffs` **directly from the server page** after `forwardToOwnAddress` (the old
+switch-on branch alone; the old body read games itself, the page now reads only `getPublicTournamentPageData(…, 'playoffs')`).
+`champions/page.tsx` → `PublicChampionsPage` on all three returns (Standings hidden / not crowned or withheld / crowned), the
+same check order as the old switch-on path; the held-back-division withholding is unconditional. The admin preview's Champions
+section lost its `notFound()` gate; the preview page no longer imports `isPublicFrameOn`. Share images: the team's always
+returns the generic card for a division that is not published (`showRecord` reduces to the Standings switch — after the early
+return the division is published); the tournament's `canShowChampions` is the old switch-on expression, unconditional; the
+game's always builds `publicGameDetailView` (names, score, state, round), its hand-rolled `teamName`/`NIL_UUID`, the old status
+labels and `bracketRoundLabel` fallback gone. `TieredBracket` is the old `publicFrame` branch alone (props narrowed:
+`publicFrame`, `tournamentId`, `highlightTeamId` gone; `requireFinalization`, `now`, `divisions` required — its one caller
+passes them).
+
+**Data feeds (3a's lesson):** no feed the new bodies or the images call reads a switch, cookie or header
+(`getPublicTournamentPageData`, `app/api/public/tournament-data`, `tournament-share-look`, `public-games`, `champions`,
+`public-host-card`). **Found at `/review` and fixed here:** the `playoffs` and `standings-preview` sections (one branch) sent
+every game's full record to the browser — the private `notes` and the scorekeeper's `scoreSubmittedByEmail`/`UserId`/`At`/
+`Source` — in the page's initial data and the live JSON. The old switch-off Playoffs rendered on the server and never shipped
+them; `schedule-preview` and `teams-preview` already scrubbed through `publicFrameGame`. Both sections now map their games
+through it (neither body reads those fields). Read back on the restarted server: no `scoreSubmittedBy*` and no game `notes` in
+the Lakeshore or Stage 4 Playoffs payload. The `standings-preview` half is 3a's surface, fixed here because it is the same
+expression.
+
+**Deleted, each with its importer check (grep re-run immediately before each removal; only tests pinning the deletion and
+historic `tests/uat/results/**` named them):**
+- `components/bracket/LogicSyncBracket.tsx` (1,013 lines) + `.module.css` — importer `TieredBracket` only (its dead branch).
+- `lib/types/bracket.ts` (`BracketNode`) — `LogicSyncBracket` only; the now-empty `lib/types/` directory removed.
+- `lib/playoff-bracket.ts` `inferGamePool` — its last caller was `TieredBracket`'s dead branch (the admin bracket view has its
+  own local copy); `poolPlaceholderTag` and `PoolInferableGame` stay (`inferGamePoolSides`).
+- `components/public/PlayoffPicture.module.css` — the old Playoffs body only. `components/public/ChampionsRecap.module.css` —
+  the old Champions body only. `app/[orgSlug]/schedule/schedule.module.css` — the old Playoffs' LIVE chip only (§13 hand-on).
+- No `composes` reached any deleted sheet; no baseline held an entry for one.
+
+**CSS selector check:** exactly §12/§13's 4 orphans + 10 dead classes (all other sessions'); none of the deleted TSX rendered
+those names, so the deletion exposed nothing new. **Baselines:** none touched.
+
+**Kept, and why:** the switch, cookie and the layout's frame branches (3d/Part 4); `TieredBracket`, `PublicBracket`,
+`lib/playoff-picture.ts`, `PublicTournamentState` (the new bodies use them); `lib/champions` `tierBadgeLabel` (home, host card).
+
+**Tests (rewritten, not deleted):** Stage 4 guard (one Playoffs body after the forward; old Standings/Playoffs bodies and
+sheets gone; the bracket is the public one, the old SVG + types + `inferGamePool` gone; the feed's scrub pinned in source AND
+behaviourally on `publicFrameGame`), Stage 6 champions (the switch mock now **throws**, so any switch read fails the per-kind
+cases; the old recap gone; every return the new body, forward first; the preview section via `between()`; the share image's
+gate unconditional), Stage 5 review (**privacy pin**: a held-back team — unpublished or no visibility set — always gets the
+generic card; a published one keeps its image; no switch import), team-reads guard (the withhold precedes the record), Stage 3
+guard (the old sheet gone; the game image always uses the view), Stage 2 guard (Champions one body), Stage 1 frame guard (the
+deleted sheets left the readable-baseline lists; the bracket-colour test now holds `PublicBracket`), `public-playoffs-render`
+(the dead mock gone), `public-games-guard` (Playoffs left the self-reading list, so the "no `getGames`" rule now covers it),
+`playoff-plan` (the caption comes from `qualificationCaption`). **Non-vacuity checked by mutation:** putting the old switch-off
+behaviour back in the team and tournament images fails 8 tests.
+
+**Checks run:** touched + neighbouring unit files 606/606, then 359/359 after the feed fix; `npm test` 13,675/13,681 — the **6
+failures are all other sessions' uncommitted work** (Stage 6 walk HTML ×3, support console foot, Stripe key prefix,
+plan-billing usage), none reads a file of this part. Typecheck clean (`NODE_OPTIONS=--max-old-space-size=6144`; an earlier run
+showed only another session's billing errors). ESLint clean on every changed file; spelling clean; public tokens, public type,
+module purity, contrast, text contrast, date correctness, marketing-shots `--check`: pass; admin type and admin old look: only
+other sessions' files; `check:demos` crashes loading a foreign module (as §12). Demo tour guard passes (step 2's anchor is on
+the new Playoffs). Smoke on the restarted dev server (`next dev` relaunched by the `dev.mjs` wrapper): login, two Playoffs
+pages and a Champions page answer 200.
+
+**Layout** (`check-layout-invariants.mjs --only=pubt-playoffs-live,pubt-playoffs-seeded,pubt-playoffs-eight,pubt-playoffs-pale,
+pubt-champions-after`, every listed width, on the dev server already up; a first attempt found the server mid-recompile and
+was re-run): **0 findings on the 8 screen-width pairs that measured** (`pubt-playoffs-pale`, `pubt-champions-after`, ×4).
+`pubt-playoffs-live`, `-seeded`, `-eight` — **expired fixture**, not this part: read back with `seed-public-stage4-fixtures.mjs
+show` (read-only), the live clone's final was 2026-10-30 and every seeded/eight game is dated ≤ 2026-11-02, so all three render
+`data-public-playoffs="none"` and their "live"/"upcoming" ready markers can never be met. Nothing baselined; memory never neared
+the floor.
+
+**`/simplify`:** skipped — no new abstraction (deletions, narrowed props, one removed export, one reused scrubber).
+
+**`/review` (high-risk tier for `lib/**`; lenses correctness/contract, regression/blast-radius, privacy):** one defect, fixed
+(the feed scrub above). Confirmed clean: each collapsed page and image matches the old switch-on path; the team image's
+simplification holds (`scheduleVisibility` is `'unpublished' | 'published'`); no surviving reference to a deleted file, export
+or class; `@/lib/types` still resolves to the file; the demo anchor survives. Advisory, not acted on: the game image reads
+live/unofficial from `publicGameStatus` and its label from the view's `publicGameState` (same as switch-on; two helpers for one
+fact).
+
+**Handed on:**
+- ⚠ **Pre-existing privacy findings, NOT this part (found by `/review`'s privacy lens; owner attention before the flip):**
+  (a) `app/api/public/team-profile` withholds a held-back team only when the caller sends `publicFrame=1` — anyone omitting it
+  gets the team's name, coach (if shown), seed, pool and division. The new page is the route's only caller and always sends
+  it, so the withhold can be made unconditional now; Part 4 owns the flag (§12). (b) The legacy `schedule`/`teams`/`standings`
+  sections of `/api/public/tournament-data` filter teams by status only, so a held-back division's team and division names
+  are readable there (and as 0-0-0 standings rows), and they still ship game notes; their remaining callers are the game page
+  and the share images (which filter through the view / the gates above). (c) The tournament share image's team and division
+  counts include held-back divisions; its live score line ignores a hidden Schedule. (d) Venue and field `notes` reach the
+  browser on Playoffs (empty on the fixtures). **Owner question:** are game notes private? `publicFrameGame` says so, but the
+  new game page shows them as a public "Notes" fact (Stage 3).
+- **Part 5e (`/demos`):** the `playoff-bracket` and `fan-live-score` marketing shots (§12) — both now wait on the bracket
+  anchor at `/standings`, which draws none, and `playoff-bracket`'s clip selectors (`a[aria-label^="View game details"]`,
+  `svg text`) match nothing in `PublicBracket`; retarget to `/playoffs` and `[data-bracket-game]`.
+- **Fixtures:** re-prepare the Stage 4 clones before the next Playoffs/Standings measure (with §12/§13's Stage 3 clone).
+- Still owed, not this part: the Rules layout menus (§12 → Part 4); the "Schedule unavailable" state's old page classes (§13 →
+  3d/4); the two stale `/The bracket/` layout screens (§13); white text on team-colour fills in the share images (advisory); the
+  admin strip's 34 px "Dismiss"; `/release` §1d-2's sharp probe; the club editor's unlabelled 18 px input.

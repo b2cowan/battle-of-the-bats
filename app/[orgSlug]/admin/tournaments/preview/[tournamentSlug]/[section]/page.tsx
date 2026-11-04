@@ -9,7 +9,7 @@ import {
   getTeams,
   getTournamentRegistrationFields,
 } from '@/lib/db';
-import { isPublicFrameOn, publicTournamentContactEmail } from '@/lib/public-frame-server';
+import { publicTournamentContactEmail } from '@/lib/public-frame-server';
 import { getTournamentPreviewContext } from '@/lib/tournament-preview';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { isPublicPageEnabled, type PublicPageKey } from '@/lib/public-pages';
@@ -169,9 +169,8 @@ export default async function TournamentPreviewSectionPage({
       rules={rules} resources={resources} divisions={divisions} prefName={null} contactEmail={contactEmail} isPreview />;
   }
 
-  // ── Champions (new in Stage 6 — no legacy preview existed for this page) ───
+  // ── Champions ─────────────────────────────────────────────────────────────
   if (section === 'champions') {
-    if (!(await isPublicFrameOn())) notFound();
     if (!isPublicPageEnabled(tournament, 'standings')) {
       return <PublicChampionsPage standingsHidden cards={[]} homeHref={`/${orgSlug}/admin/tournaments/preview/${tournamentSlug}`}
         isPreview />;

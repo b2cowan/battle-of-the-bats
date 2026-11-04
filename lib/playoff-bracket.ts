@@ -942,44 +942,6 @@ function poolPlaceholderTag(poolName: string): string {
   return `Pool ${poolName.replace(/^Pool\s+/i, '').trim()}`;
 }
 
-/**
- * Attribute a playoff game to the pool it descends from, by walking its
- * `Pool X` / `Winner <code>` / `Loser <code>` placeholders (and, as a last
- * resort, its bracket-id siblings). Returns the matching pool name, or null when
- * the game can't be tied to a pool (cross-pool / un-pooled bracket). Shared by
- * the public Schedule list, the playoff bracket split, and the tiered bracket so
- * pool attribution stays identical across surfaces.
- */
-export function inferGamePool<G extends PoolInferableGame>(
-  game: G,
-  allGames: G[],
-  pools: { name: string }[],
-): string | null {
-  for (const pool of pools) {
-    const tag = poolPlaceholderTag(pool.name);
-    if (game.homePlaceholder?.includes(tag) || game.awayPlaceholder?.includes(tag)) return pool.name;
-  }
-  const ph = game.homePlaceholder || game.awayPlaceholder || '';
-  const winnerCode = ph.match(/(?:Winner|Loser) ([\w-]+)/)?.[1];
-  if (winnerCode) {
-    const source = allGames.find(g =>
-      g.bracketCode === winnerCode && g.isPlayoff && g.id !== game.id &&
-      (game.bracketId ? g.bracketId === game.bracketId : true),
-    );
-    if (source) return inferGamePool(source, allGames, pools);
-  }
-  if (game.bracketId) {
-    for (const sibling of allGames) {
-      if (sibling.id === game.id || sibling.bracketId !== game.bracketId || !sibling.isPlayoff) continue;
-      for (const pool of pools) {
-        const tag = poolPlaceholderTag(pool.name);
-        if (sibling.homePlaceholder?.includes(tag) || sibling.awayPlaceholder?.includes(tag)) return pool.name;
-      }
-    }
-  }
-  return null;
-}
-
 /** PoolInferableGame plus the resolved team slots per-side attribution reads. */
 export interface SidePoolInferableGame extends PoolInferableGame {
   homeTeamId?: string | null;
@@ -997,16 +959,15 @@ function mergeSidePools(home: SidePoolResult, away: SidePoolResult): SidePoolRes
 }
 
 /**
- * Per-side pool attribution with cross-pool detection — the display variant of
- * `inferGamePool`. Each slot resolves independently (seeded team's pool via
- * `teamPoolNameById`, then the placeholder's `Pool X` tag, then up the
- * Winner/Loser feed chain), and the sides merge: same pool → that pool; sides
- * in different pools — directly, or via feeds ("winner could be either") →
- * null; no evidence at all → null. Unlike `inferGamePool`, this never files a
- * cross-pool matchup (or a final fed by cross-pool semis) under one side's
- * pool — use it where the answer is DISPLAYED per game (schedule row tags);
- * `inferGamePool` remains the section-bucketing attribution, where every game
- * must land in exactly one section.
+ * Per-side pool attribution with cross-pool detection. Each slot resolves
+ * independently (seeded team's pool via `teamPoolNameById`, then the
+ * placeholder's `Pool X` tag, then up the Winner/Loser feed chain), and the
+ * sides merge: same pool → that pool; sides in different pools — directly, or
+ * via feeds ("winner could be either") → null; no evidence at all → null. It
+ * never files a cross-pool matchup (or a final fed by cross-pool semis) under
+ * one side's pool. (The one-section-per-game bucketing variant, `inferGamePool`,
+ * left with the old SVG bracket — Public tournament pages Stage 8 Part 3c; the
+ * admin bracket view keeps its own local copy.)
  */
 export function inferGamePoolSides<G extends SidePoolInferableGame>(
   game: G,

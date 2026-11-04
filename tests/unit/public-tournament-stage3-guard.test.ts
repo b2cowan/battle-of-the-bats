@@ -10,7 +10,8 @@ import { between, readCode, readSource, sourceExists } from './_source-code.ts';
  *
  * Stage 8 Part 3b (docs/projects/active/PUBLIC_TOURNAMENT_STAGE8_PLAN.md §13) deleted the old halves: the Schedule, the
  * admin preview's Schedule section and a game's page each render their new body with no switch, and the old bodies, the
- * client wrapper, and the parts only they drew are gone. The switch itself lives on until Part 4.
+ * client wrapper, and the parts only they drew are gone. Part 3c (§14) took the old Schedule sheet's last remnant (the
+ * LIVE chip the old Playoffs drew) and the game's share image's switch branch. The switch itself lives on until Part 4.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -44,11 +45,9 @@ describe('the Schedule has one body', () => {
     assert.doesNotMatch(schedule, /isPublicFrameOn|frameOn|ScheduleContent/);
   });
 
-  it('what is left of the old Schedule\'s sheet is the LIVE chip the old Playoffs still draws (3c deletes both)', () => {
-    const css = readCode('app/[orgSlug]/schedule/schedule.module.css');
-    const classes = new Set([...css.matchAll(/\.([a-zA-Z][\w-]*)/g)].map(m => m[1]));
-    assert.deepEqual([...classes].sort(), ['liveBadge', 'liveDot']);
-    assert.match(readCode('app/[orgSlug]/[tournamentSlug]/playoffs/page.tsx'), /liveStyles\.liveBadge/);
+  it('the old Schedule\'s sheet is gone with its last importer, the old Playoffs (Stage 8 Part 3c)', () => {
+    assert.ok(!sourceExists('app/[orgSlug]/schedule/schedule.module.css'), 'the old Schedule sheet is back');
+    assert.doesNotMatch(readCode('app/[orgSlug]/[tournamentSlug]/playoffs/page.tsx'), /liveStyles|schedule\.module/);
   });
 
   it('the new parts and model are used only by the guarded Schedule or explicit shared-part variants', () => {
@@ -106,13 +105,16 @@ describe('a game\'s page and desktop (Part 3)', () => {
       assert.ok(!sourceExists(path), `${path} is back`);
     }
   });
-  it('the page\'s title and description use the new names and rounds always; the share image keeps its switch until 3c', () => {
+  it('the page\'s title, description and share image use the new names and rounds always (the image since Part 3c)', () => {
     const metadata = between(readCode(file), 'export async function generateMetadata', 'export default async function');
     assert.match(metadata, /const view = publicGameDetailView\(game, /);
     assert.doesNotMatch(metadata, /isPublicFrameOn|frameOn/);
     const og = readCode('app/[orgSlug]/[tournamentSlug]/schedule/[gameId]/opengraph-image.tsx');
-    assert.match(og, /await isPublicFrameOn\(\) \? publicGameDetailView/);
-    assert.match(og, /view\?\.round \?\?/);
+    assert.match(og, /const view = publicGameDetailView\(game, \{ \.\.\.data, requireFinalization \}\);/);
+    assert.match(og, /const away = view\.sides\[0\]\.name;/);
+    assert.match(og, /const gameType = view\.round;/);
+    // The old words' path is gone: no switch, no old status labels or round names, no hand-resolved team names.
+    assert.doesNotMatch(og, /isPublicFrameOn|view\?\.|publicGameStatusLabel|bracketRoundLabel|'Pool Play'|function teamName/);
   });
   it('Up next belongs to game day only, and no day folds its finished games away', () => {
     const schedule = readCode('components/public/PublicSchedule.tsx');

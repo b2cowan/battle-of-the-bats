@@ -68,7 +68,9 @@ describe('every reader: no plan = no cut line, no "Top N advance"', () => {
     assert.equal(pic.divisions[0].teamsQualifying, 0);
     assert.equal(pic.divisions[0].seeds.some(s => s.qualified), false);
     assert.doesNotMatch(pic.divisions[0].narrative.join(' '), /advancing/);
-    assert.match(src('app/[orgSlug]/[tournamentSlug]/playoffs/page.tsx'), /div\.teamsQualifying > 0 \? ` · Top \$\{div\.teamsQualifying\} advance` : ''/);
+    // Since Stage 8 Part 3c the Playoffs page has one body; its "top N advance" words come from the same caption
+    // helper as Standings (`qualificationCaption`, tested behaviourally below: no count → '').
+    assert.match(src('components/public/PublicPlayoffs.tsx'), /const qualifier = division \? qualificationCaption\(division\)/);
   });
   test('the public standings: no cut line and no caption without a count', () => {
     // Read by the new Standings since Stage 8 Part 3a deleted the old body (which carried its own copy of this rule).

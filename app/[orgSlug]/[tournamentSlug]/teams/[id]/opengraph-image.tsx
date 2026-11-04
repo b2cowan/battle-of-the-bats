@@ -3,7 +3,6 @@ import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { shareImageTheme } from '@/lib/tournament-share-look';
 import { teamColor, teamInitials } from '@/lib/team-color';
-import { isPublicFrameOn } from '@/lib/public-frame-server';
 
 export const alt = 'Team';
 export const size = { width: 1200, height: 630 };
@@ -30,11 +29,12 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
     const team = data.teams.find(t => t.id === id);
     if (!team) return null;
 
-    // The record shows where the team page shows it (2026-10-16): Standings on and the division's schedule published.
     const division = data.divisions.find(d => d.id === team.divisionId);
-    // A held-back direct link may show its minimal message, but must not advertise its identity in a share card.
-    if (await isPublicFrameOn() && division?.scheduleVisibility !== 'published') return null;
-    const showRecord = isPublicPageEnabled(data.tournament, 'standings') && (division?.scheduleVisibility ?? 'unpublished') !== 'unpublished';
+    // Privacy: a team in a held-back division never reaches a share card. Its page may show a minimal message on a
+    // direct link, but the card would advertise its name and division to everyone the link is sent to.
+    if (division?.scheduleVisibility !== 'published') return null;
+    // The record shows where the team page shows it (2026-10-16): Standings on (the division is published, above).
+    const showRecord = isPublicPageEnabled(data.tournament, 'standings');
 
     let w = 0, l = 0, tie = 0;
     for (const g of showRecord ? data.games : []) {
