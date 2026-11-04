@@ -198,7 +198,48 @@ Part 0 findings (2026-11-03):
   verified from code only, not by the walk.
   Verified: new guard 20/20, and a mutated copy fails as it should (unlisted call, wrong count, a loosened `rescheduleMove`);
   `billing-location*` 94/94; lint and spelling clean; typecheck not needed (tests only). `/review` skipped by the owner.
-- [ ] Part 5 · closeout (`/accounting` review, `/simplify` and `/review` offered, `/docs`, dictionary + snapshots, walk, records)
+- [x] Part 5 · closeout (`/accounting` review, `/docs`, the owner walk, the open owner questions in one list, records). Prompt
+  `GST_HST_STAGE1_PART5_BUILD_PROMPT.md` (it replaces the "Part 5 · Closeout" section below, whose "edit in Stripe's portal"
+  walk step is void since Part 3). **COMMITTED `1ab0bfb6f` 2026-11-04 on dev; owner walk §454 written, owed.**
+  **Verify findings 2026-11-04 [V]:** census 94/94, no new charging path; Parts 1–4 were not on `origin/dev`; the dev site
+  (Amplify branch `dev`) runs Stripe TEST keys, no mock billing, the same Supabase project as local (mig 433 present), and its
+  billing webhook receives `payment_method.attached`; **`US_SALES_OPEN` was absent on the dev site, and a console variable alone
+  does not reach the runtime: `amplify.yml` copies an explicit list into `.env.production`** (a helper found this; verified);
+  Stripe's usual test card 4242 is US-issued, so a Canadian walker paying with it is flagged (the walk uses 4000 0012 4000 0000
+  for Canadian buyers and 4242 on purpose for the disagreeing-card step); **bug: the first-time plan screen (`?choosePlan=1`)
+  never rendered the Billing address window, so a paid choice with no address dead-ended** (fixed, owner yes).
+  **Owner rulings 2026-11-04:** (walk site) push dev and turn US sales on for the dev site: `US_SALES_OPEN=true` added to the
+  Amplify `dev` branch variables (all 19 others kept) and an `amplify.yml` copy line (production has no value, so US stays
+  closed); dev pushed `b5f42ea47`. (Ask 1) strictness → Stage 2 (province vs postal code decides the tax rate once tax is on;
+  PO Box workarounds and US territories low); the small UX leftovers (Yearly reset on Change, gates not sharing an answer,
+  sign-up Next double-fire, the Stripe-stamp 500, the eager address read) → one polish line in Stage 2; the removed-last-card
+  gap → the Plan & billing program (card-on-file reminders own it); the three Stage 2 resolve items (flag after CA→US→CA, a
+  refused club row left saved, an abandoned in-place checkout leaving the club address on the lapsed Premium customer) →
+  Stage 2's resolve. (Ask 2) **fix the two Plan & billing UAT walks HERE** (reverses the prompt's recommendation). (US wording)
+  change now to v2. (Privacy) a `/legal` agent shaped like `/accounting` is to be built (TODO line). (`/docs`) yes.
+  **`/accounting` verdicts (topic files current, no re-research):** (1) CASCADE: OK for Stage 1; the wider point is that
+  `billing_locations` is the CURRENT location (overwritten on change), never a six-year record — Stage 3 keeps a COPY of the
+  evidence per charge that survives deleting the buyer, before the first zero-rated sale (plan §4 Stage 3 note,
+  `RECORDS_RETENTION_AND_LOCATION.md`); no migration now. (2) fee-recovery invoice with no address: OK while nothing is
+  taxed; Stage 5 is the home and asks a club for its address at payout set-up (plan §4 Stage 5 note). (3) family payment: no
+  family address needed while the fee is our charge to the club (T3). (4) the provisional US wording missed "managed and
+  controlled" and "not GST/HST-registered" → v2 `us-2026-11-v2` (owner yes; every wording kept in `US_DECLARATION_TEXTS`);
+  the accountant still approves it before the first US sale (not a gate). (5) privacy: the window already states the purpose;
+  FieldLogicHQ has no privacy policy of its own (Stage 6), not a tax matter → the `/legal` agent.
+  **Built:** onboarding PlanStep renders `address.dialog`; v2 wording + test (95/95 billing-location); dictionary note;
+  `amplify.yml` line; help (`org.tsx` subtopic `club-plan-and-billing-t-address`, `coaches.tsx` FAQ
+  `faq-premium-billing-address`); UAT specs repaired by a helper and run on the local dev server: team-direct-checkout-smoke
+  1/1 (asserts the landing Overview, Premium chip, team name), premium-to-club-path A 2/2 · B 3/3 · C 4/4 (region-scoped
+  locator — `#billing-change` sits on the heading; group B follows the fixture's free-time state; **group C now checks the
+  Club billing address prefill in a browser**; the fake-clock test counts real reads). Walk §454
+  `GST_HST_STAGE1_WALK.html`, https://claude.ai/artifact/QgAJzYxD2WAPDDApn2eTX5 (10 parts, 34 steps; D the Founding
+  choice is NOT reachable on dev until 2027-06-01; reactivate is code-proven).
+  **Verified:** typecheck clean (0 errors in the tree); lint clean on touched files; spelling OK; billing-location tests 95/95.
+  **Follow-ups (not fixed):** the shared UAT fixture `uat-free-team-coaches-portal` was given free time on 10-28, so group B
+  now walks the free-time wall, not the plain cancelled one (clear its `free_time_given_at` + grant to restore); a stale-compile
+  "setOrgNav is not a function" seen once during the UAT runs (another session's uncommitted nav work, cleared on rerun).
+  ⚠ Commit note: another session committed `5b0d27fc0` five seconds before this part's first commit, which was built on the
+  older base and reverted theirs; it was replaced (CAS) by `1ab0bfb6f` on top of `5b0d27fc0` before any push.
 
 ## What the owner sees after this build (PM summary: present this BEFORE any code)
 

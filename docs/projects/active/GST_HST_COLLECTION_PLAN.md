@@ -23,7 +23,8 @@ Every outstanding piece of work in this plan has a home in one of these stages. 
   (owner replies, §4); still open: Stripe invoice settings, foreign-vendor number, ITC receipts, accountant package,
   counsel add-ons. Waits on nothing; gates nothing.
 - **Stage 1 — Know where every buyer is:** IN PROGRESS — Parts 1+2 committed `fd55a1df3` 2026-11-04 (mig 433 dev only), Part 3
-  committed `32d466e59` 2026-11-04, Part 4 (the guard) committed `95dbdcbec` 2026-11-04; the `/accounting` review, `/docs` and the owner walk owed — country, province/state, address and US declaration on our own
+  committed `32d466e59` 2026-11-04, Part 4 (the guard) committed `95dbdcbec` 2026-11-04, Part 5 (closeout: `/accounting` review, help, the first-time plan screen
+  fix, US wording v2) committed `1ab0bfb6f` 2026-11-04; owner walk §454 written, owed; closes when it passes — country, province/state, address and US declaration on our own
   records. Needs T1 (ruled).
 - **Stage 2 — Subscriptions charge the right tax:** NOT STARTED — Stripe Tax registration, tax on every checkout path and
   preview, "plus applicable taxes", province test matrix; exit step re-runs the Stripe audit. Needs Stage 1, T4, T5.
@@ -196,6 +197,14 @@ Bookkeeping plan; tax stays here.
   Facts doc records tax-exclusive pricing → `/strategy`).
 - **Test matrix**: one test buyer per province/territory group (ON, NS, NB/NL/PE, AB/territories, BC, SK, MB, QC) plus a
   US buyer and a mismatched buyer; renewals, plan changes, refunds and credit notes in each.
+- **Carried from Stage 1 (owner 2026-11-04, Part 5 Ask 1; detail in `GST_HST_STAGE1_BUILD_PROMPT.md` ▶ Progress):**
+  (a) **address strictness before tax goes live** — check the province against the postal code (the province sets the rate:
+  "Ontario" with a BC postal code would be taxed wrong); PO Box workarounds ("Lockbox 5") and US territories/military codes
+  are low. (b) **the resolve** for a country-change flag: a CA→US→CA buyer stays flagged and its sentence names the old move;
+  a refused "Start your club" can leave the club row saved (a retry with the other country flags it); an abandoned in-place
+  checkout leaves the club address on the coach's lapsed Premium customer. (c) **one polish line:** Yearly resets to Monthly
+  after Change on "Billed to"; two gates on one screen don't share a saved answer; the sign-up Next can double-fire while the
+  first address read is pending; a Stripe stamp error at checkout is a 500; the address read runs on mount even when unused.
 - **Exit step (owner, 2026-10-31):** re-run the read-only revenue-readiness Stripe audit
   (`scripts/audit-revenue-readiness.mjs`, §6) after Stage 2 ships, and record that the tax settings it reads now match.
 
