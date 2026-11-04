@@ -30,7 +30,7 @@
 
 ## ▶ Progress (read first when resuming)
 
-- **2026-11-04 · Not started.** Facts below were read from the code on 2026-11-04 by five helpers, and each one this prompt relies on
+- **2026-11-04 · S1 done, S2 built (commit owed).** Facts below were read from the code on 2026-11-04 by five helpers, and each one this prompt relies on
   was opened at the cited lines by the author. Line numbers drift; re-check them.
 - **S1 · the season window (14a)** — **BUILT + committed `59722b97a` 2026-11-04** (Parts 0–4; `/simplify`, `/review` and
   `/docs` done; **owner walk §453 WRITTEN and owed**, https://claude.ai/artifact/SbzSAt6P9RGg5ysD7jgtKm, 61 steps in eight
@@ -103,7 +103,57 @@
       read its output after the first real one (walk step E1).** The coach window's heading reads "Birth years for the 2027
       Season" (capital S) while the club's Team details says "…2027 season" — a one-word mismatch to settle.
   - **Help + marketing owed via `/docs`:** DONE (see above); `lib/walkthrough-content.ts:215` stays `/marketing`'s.
-- **S2 · the child record underneath (14b data)** — Not started. Needs S1 committed or at least walked (S2 changes the roll S1 edits).
+- **S2 · the child record underneath (14b data)** — **BUILT 2026-11-04 (Parts 0–4); commit owed (owner's word), `/simplify` +
+  `/review` owed (offered), prod mig 435 owed (MANUAL_PROD_STEPS, `pending`).** No walk (no screen changes). What landed:
+  - **Mig 435 `a_child_is_one_record_across_seasons`** (applied to DEV): `org_children` (id, org, first/last name, birth date;
+    service role only); NOT NULL `child_id` on `rep_roster_players`, `rep_tryout_registrations`, `league_registrations`.
+    `rep_child_components(team, child?)` = THE same-team rule (non-call-up roster rows + tryout sign-ups; edges = accept
+    (roster row ↔ its sign-up) + CONFIRMED links). Triggers: `org_child_for_entry` (BEFORE INSERT / UPDATE OF child_id —
+    mints a child when none is given, an accepted tryout takes its sign-up's, refuses another org's child; SECURITY DEFINER
+    because of the old anon insert policies), `org_child_follows_entry` (a LIVE entry's name/DOB edit writes through),
+    `org_child_follows_link` (confirm → `org_children_join`, keeping the prior's record; a confirmed link undone →
+    `org_children_split_team`). Backfill: one child per same-team component, one per remaining entry; deletes nothing.
+    `move_team_into_club` re-created from 351 with `org_children` in `c_moves` (diffed: the only two changed lines).
+    The house-league placement RPC and `accept_tryout_and_create_dues` were NOT touched (pinned by a test).
+  - **App:** the roll passes the carried entry's `childId` (set explicitly — the link mint is best-effort);
+    `pickCarriedPlayers` carries one entry per child (the build gate); `RepRosterPlayer.childId`; the Families book
+    (`families-read.ts`) keys children by `child_id` (`childKeyOfRow`) and no longer reads continuity links; the family
+    file export adds a house-league sign-up to its child instead of replacing it.
+  - **S2-3:** `ROSTER_PLAYER_DEPENDENTS` gains notes, observations, goal reviews, not-assessed marks AND
+    `rep_fundraiser_credit_plan`; `roster-delete-guard.test.ts`'s completeness scan is now case-insensitive (the cause:
+    migs 268/295/296 write lower-case SQL). TODO line moved to the archive.
+  - **The owner check ("the Families book reads the same")** — `.probe/s2-child/compare.mjs` ran the OLD read-time rule and
+    the stored child side by side on every dev org: 710 rows (500 roster, 210 house league), **708 children both ways, 0
+    splits, 0 joins, 249 households, 373 household children both ways, 0 households differing.** Dev has only 2 confirmed
+    links, so the logic is proved by the fixture: **`tests/sql/org-children-fixture.sql` (dev, one DO block that rolls itself
+    back) — 11/11 rules** (3-season chain; the roll mints nothing; cross-team same name apart; twins + a high suggestion apart;
+    house-league repeat apart; accept takes the confirmed sign-up's child; call-up apart; live vs closed write-through;
+    another org's child refused; undo splits at the link; the components rule = the stored children). Two deliberate mutants
+    failed as they should. Run it: `node .probe/s2-child/q.mjs --file tests/sql/org-children-fixture.sql`.
+  - **Found and fixed while testing:** the "newest entry" that names a backfilled or split child was ordered by write time
+    only, so rows written in one moment (a seed) named it at random; now newest SEASON, roster before sign-up, then write
+    time, then id. Dev was brought level (split function re-created, multi-entry children re-named); prod runs the final file.
+  - **Checks:** unit tests touched 110/110 (`season-roll-path` +2 build-gate tests, `roster-delete-guard`, `team-move-coverage`,
+    `migration-table-grants-guard`, `families-stage5a-guard`, new `org-children-guard` 6); `typecheck` clean; lint 0 errors on
+    every touched file; `check:dictionary` OK. `verify:changed`: the full `npm test` has 9 failures, none in this work
+    (practice plans phone, billing free time, public focused page, tournament Stage 1 frame + Stage 6 walk, series dates,
+    support console); the chain's later checks run separately — schema parity lists `org_children` as dev-only (prod owed, as
+    expected); the rest (lint config, admin look/lettering, org-slug, demos, CSS selectors, export catalog, root files) are
+    other sessions'.
+  - **Defaults taken (raise with the owner):** (1) the child holds name + birth date only in S2 — the medical note and
+    emergency contact join it in S4 with their readers (S2-1 narrowed so the medical note never has two homes);
+    (2) an undone confirmed link splits the child (not in the prompt; without it the Families book would keep a coach's "not
+    the same player" joined); (3) a tryout sign-up a coach confirmed as a returning player BEFORE accept is already that child
+    (a person's yes; the old read ignored unaccepted sign-ups — no household count moved on dev); (4) a call-up is its own
+    child; (5) a removed entry's child is kept, invisible (S4-1), and a JOIN deletes the absorbed record — **S4 must carry the
+    child's health facts across before that delete once it holds them**; (6) "live" for write-through = rep season draft/active,
+    house-league season not completed/archived.
+  - **Records:** dictionary (`org_children` entry, three `child_id` lines, a ⚠ on `rep_player_continuity_links`), the plan's
+    14b line + the corrected "Migrations" line (it said the backfill "merges what the matcher is sure of" — Ask 4 overrules),
+    TODO line. Probe scripts in `.probe/s2-child/` (dev only: `q.mjs`, `compare.mjs`, the migration builder).
+  - **For S3:** `child_id` is on every entry; the picker reads `rep_roster_players.child_id` of this team's earlier seasons and
+    creates working-season entries WITH that `child_id` (and mints the history link as the roll does — the link trigger is then a
+    no-op). A stored "no" (S3's migration) is separate from `rep_player_continuity_links`' rejected tombstones.
 - **S3 · Bring back a past player + "Same child?" (14b screens)** — Not started. Needs S2.
 - **S4 · documents and the health check (14c)** — Not started. Needs S2.
 - **S5 · the child's page, the household list, the club's doors (14d part 1)** — Not started. Needs S2 (S4 for the documents block).

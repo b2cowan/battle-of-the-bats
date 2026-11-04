@@ -144,10 +144,15 @@ describe('undo guard — completeness is acknowledged, not assumed', () => {
       const sql = readFileSync(join(dir, file), 'utf8');
       if (!/rep_roster_players/.test(sql)) continue;
       // Walk CREATE TABLE blocks and record the table when its body references the roster table.
-      const re = /CREATE TABLE (?:IF NOT EXISTS )?(?:public\.)?([a-z_]+)\s*\(([\s\S]*?)\n\);/g;
+      /* ⚠⚠ CASE-INSENSITIVE, ALL OF IT (Club Tier Stage 14 S2, 2026-11-04). The scan used to match
+         upper-case SQL only, and migrations 295/296 write `create table … references` in lower case,
+         so rep_player_notes, rep_player_observations, rep_development_goal_reviews and
+         rep_evaluation_not_assessed were invisible here AND missing from the guard: a roster entry
+         holding only those passed the undo check and lost them. */
+      const re = /CREATE TABLE (?:IF NOT EXISTS )?(?:public\.)?([a-z_]+)\s*\(([\s\S]*?)\n\);/gi;
       let m: RegExpExecArray | null;
       while ((m = re.exec(sql)) !== null) {
-        if (/REFERENCES\s+(?:public\.)?rep_roster_players/.test(m[2])) referencing.add(m[1]);
+        if (/REFERENCES\s+(?:public\.)?rep_roster_players/i.test(m[2])) referencing.add(m[1].toLowerCase());
       }
       /* ⚠⚠ AND `ALTER TABLE … ADD COLUMN … REFERENCES`, WHICH THIS SCAN WAS BLIND TO. A table that
          GAINS a roster FK later never appeared in `referencing`, so it was neither guarded nor
@@ -156,9 +161,9 @@ describe('undo guard — completeness is acknowledged, not assumed', () => {
          `rep_payable_payments.paid_by_player_id` that way and nothing noticed (money centralization
          P4). Fixing the SCANNER rather than adding the one table is the point: the next such
          column would have slipped through too. */
-      const alter = /ALTER TABLE (?:IF EXISTS )?(?:ONLY )?(?:public\.)?([a-z_]+)([\s\S]*?);/g;
+      const alter = /ALTER TABLE (?:IF EXISTS )?(?:ONLY )?(?:public\.)?([a-z_]+)([\s\S]*?);/gi;
       while ((m = alter.exec(sql)) !== null) {
-        if (/REFERENCES\s+(?:public\.)?rep_roster_players/.test(m[2])) referencing.add(m[1]);
+        if (/REFERENCES\s+(?:public\.)?rep_roster_players/i.test(m[2])) referencing.add(m[1].toLowerCase());
       }
     }
 

@@ -358,6 +358,10 @@ export async function startNextRepSeason(params: {
           teamId,
           orgId,
           source: 'admin_manual', // a season roll is a coach action, not a tryout conversion
+          // ⚠ THE SAME CHILD, a fact (Club Tier Stage 14 S2, Ask 4): the new season's entry is this player carried
+          // forward, so it is that entry's child — never a new one. Set here rather than left to the confirmed link
+          // minted below, because that mint is best-effort; a failed link must not split the child.
+          childId: p.childId,
           playerFirstName: p.playerFirstName,
           playerLastName: p.playerLastName,
           playerDateOfBirth: p.playerDateOfBirth,

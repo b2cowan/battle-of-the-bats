@@ -3190,7 +3190,9 @@ between the coach's idea of a team (kids who age up) and the club's (a slot that
 >
 > **Side findings (not Stage 14's; recorded so they are not lost):** the roster delete/Undo check `ROSTER_PLAYER_DEPENDENTS`
 > (`lib/db.ts:4638-4656`) omits `rep_player_notes`, `rep_player_observations`, `rep_development_goal_reviews` and
-> `rep_evaluation_not_assessed`, so an entry holding only those passes and they cascade away (TODO line) · the families-file
+> `rep_evaluation_not_assessed`, so an entry holding only those passes and they cascade away (TODO line) — **FIXED in S2
+> 2026-11-04 (commit owed), with a fifth (`rep_fundraiser_credit_plan`, a sponsor's agreed split); the cause was the guard
+> test's completeness scan matching upper-case SQL only, now case-insensitive** · the families-file
 > exclusion test (`tests/unit/families-stage5a-guard.test.ts:63`) lists stale table names and would not catch a new one · the
 > tryout list's returning chip takes the best match at ANY tier (`tryout-candidates/route.ts:52-60`), so twins get the chip; the UI
 > never shows the tier · `DATA_DICTIONARY.md` still marks `rep_player_continuity_links`, `basic_coach_team_players` and
@@ -3218,7 +3220,9 @@ between the coach's idea of a team (kids who age up) and the club's (a slot that
   following the choice, the same words in both portals. Mockup first (the window on a phone and a computer, both paths, what the
   confirmation says about the roster). Open: what (a) does to a team's name and public listing, and whether a coach (not only the
   club) may change a team's age group, since no coach screen edits it today.
-- [ ] **14b · One child, many seasons (the design question this stage exists for):** a **player record that outlives a season**,
+- [ ] **14b · One child, many seasons (the design question this stage exists for):** — **the DATA (S2 of the build prompt) BUILT
+  2026-11-04, commit owed; mig 435 `org_children` applied to dev, prod owed (MANUAL_PROD_STEPS); the Families book read the same
+  before and after on dev (710 rows, 708 children, 249 households, 373 household children); the screens are S3.** A **player record that outlives a season**,
   anchored to the family library, with each season's roster entry as that season's membership of it (jersey, position, status),
   so a returning child is picked, not retyped. **The shape is not decided.** Options to draw: (i) the smallest — a **"bring back a
   past player"** picker over this team's earlier seasons (including players the roll skipped), plus a "same kid?" nudge when
@@ -3250,7 +3254,9 @@ between the coach's idea of a team (kids who age up) and the club's (a slot that
   duplicate for a child already on the new season's roster.
 **Migrations (expected, each with its dictionary line and snapshot refresh):** a child record that outlives a season (or a stable
 child key on the roster entry), the link from a season's entry to it, document ownership moved from the roster entry to the
-child, and the backfill that merges what the matcher is sure of. **Definition of done:** the window asks and each path does what
+child, and the backfill that joins what a person or the roll already confirmed (⚠ corrected 2026-11-04: this line said "merges
+what the matcher is sure of", which Ask 4 overrules — a match is always a question, never a join; mig 435 built it that way).
+**Definition of done:** the window asks and each path does what
 it says; a returning child is picked, never retyped, and arrives with their history and their still-valid documents; a duplicate
 typed anyway is flagged on every add door; existing duplicates have a review path; the privacy rulings are built into the reads;
 the demos carry it; unit tests for the roll, the picker's reads and the merge; the layout sweep on staging; **the Stage 14

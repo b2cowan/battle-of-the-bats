@@ -1516,6 +1516,9 @@ export interface RepRosterPlayer {
   teamId: string;
   orgId: string;
   tryoutRegistrationId: string | null;
+  /** The child this entry is one season of (`org_children`, mig 435 — Club Tier Stage 14 S2). Every entry has one; two
+   *  entries share it only by a fact (the roll, an accepted tryout) or a person's yes (a confirmed returning-player link). */
+  childId: string;
   source: 'tryout' | 'admin_manual';
   playerFirstName: string;
   playerLastName: string | null;

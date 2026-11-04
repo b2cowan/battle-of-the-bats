@@ -4653,6 +4653,17 @@ const ROSTER_PLAYER_DEPENDENTS: { table: string; column: string; label: string }
   { table: 'rep_player_documents',          column: 'player_id',        label: 'a document' },
   { table: 'rep_season_refund_adjustments', column: 'player_id',        label: 'a season settlement entry' },
   { table: 'family_links',                  column: 'player_id',        label: 'a linked family' },
+  // ⚠ These four were missing until Club Tier Stage 14 S2 (2026-11-04): migrations 295/296 write
+  // `create table … references` in lower case, which the completeness scan in
+  // tests/unit/roster-delete-guard.test.ts could not see, so an entry holding only a coach's dated
+  // notes, observations, goal reviews or not-assessed marks passed this check and lost them.
+  { table: 'rep_player_notes',              column: 'player_id',        label: 'a note' },
+  { table: 'rep_player_observations',       column: 'player_id',        label: 'an observation' },
+  { table: 'rep_development_goal_reviews',  column: 'player_id',        label: 'a goal review' },
+  { table: 'rep_evaluation_not_assessed',   column: 'player_id',        label: 'an evaluation mark' },
+  // Found by the same now case-insensitive scan: mig 268 writes it in lower case too. A sponsor's
+  // agreed split naming this family — the money is in rep_dues_credits, but the agreement is a record.
+  { table: 'rep_fundraiser_credit_plan',    column: 'player_id',        label: 'a sponsor credit share' },
 ];
 
 export async function rosterPlayerDependencies(playerId: string): Promise<string[]> {
@@ -5181,6 +5192,7 @@ function mapRepRosterPlayer(r: any): RepRosterPlayer {
     programYearId: r.program_year_id,
     teamId: r.team_id,
     orgId: r.org_id,
+    childId: r.child_id,
     tryoutRegistrationId: r.tryout_registration_id,
     playerFirstName: r.player_first_name,
     playerLastName: r.player_last_name,
@@ -5316,6 +5328,12 @@ export async function createRepRosterPlayer(fields: {
   lineupProfile?: LineupProfile | null;
   sourceBasicPlayerId?: string | null;
   /**
+   * The child this entry is another season of (`org_children`, mig 435). Omit for a new child — the database's
+   * `org_child_for_entry` trigger mints one (or, for an accepted tryout, takes the sign-up's). Set it ONLY from a fact or
+   * a person's yes: the roll passes the carried entry's own child (Club Tier Stage 14 S2, Ask 4).
+   */
+  childId?: string | null;
+  /**
    * What KIND of entry this is. Omit for a roster player.
    *
    * ⚠ Added with mig 309 so a call-up can be created in ONE write. The call-up route used to insert
@@ -5348,6 +5366,8 @@ export async function createRepRosterPlayer(fields: {
       source: fields.source ?? 'admin_manual',
       status: fields.status ?? 'active',
       tryout_registration_id: fields.tryoutRegistrationId ?? null,
+      // null → the trigger mints the child (never a guessed match; Ask 4).
+      child_id: fields.childId ?? null,
       player_first_name: fields.playerFirstName,
       player_last_name: fields.playerLastName,
       player_date_of_birth: fields.playerDateOfBirth ?? null,

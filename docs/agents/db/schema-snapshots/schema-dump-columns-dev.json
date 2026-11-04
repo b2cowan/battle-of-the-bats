@@ -8766,6 +8766,24 @@
     "ordinal_position": 42
   },
   {
+    "table_name": "league_registrations",
+    "column_name": "guardian_email_2",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 43
+  },
+  {
+    "table_name": "league_registrations",
+    "column_name": "child_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 44
+  },
+  {
     "table_name": "league_schedule_emails",
     "column_name": "id",
     "data_type": "uuid",
@@ -9241,6 +9259,15 @@
     "is_nullable": "NO",
     "column_default": "1",
     "ordinal_position": 28
+  },
+  {
+    "table_name": "league_seasons",
+    "column_name": "started_from",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 29
   },
   {
     "table_name": "league_slot_uses",
@@ -11333,6 +11360,69 @@
   {
     "table_name": "org_budget_periods",
     "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "org_children",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "org_children",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "org_children",
+    "column_name": "first_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "org_children",
+    "column_name": "last_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "org_children",
+    "column_name": "date_of_birth",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "org_children",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "org_children",
+    "column_name": "updated_at",
     "data_type": "timestamp with time zone",
     "udt_name": "timestamptz",
     "is_nullable": "NO",
@@ -20628,6 +20718,15 @@
     "ordinal_position": 31
   },
   {
+    "table_name": "rep_roster_players",
+    "column_name": "child_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 32
+  },
+  {
     "table_name": "rep_season_refund_adjustments",
     "column_name": "id",
     "data_type": "uuid",
@@ -24964,6 +25063,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 32
+  },
+  {
+    "table_name": "rep_tryout_registrations",
+    "column_name": "child_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 33
   },
   {
     "table_name": "rep_tryout_rubrics",

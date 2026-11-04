@@ -1,17 +1,61 @@
 {
-  "generated": "2026-11-03",
-  "total": 209,
+  "generated": "2026-11-04",
+  "total": 269,
   "counts": {
-    "tables": 8,
-    "columns": 105,
-    "indexes": 32,
-    "constraints": 36,
-    "rls": 28
+    "tables": 10,
+    "columns": 135,
+    "indexes": 40,
+    "constraints": 44,
+    "rls": 40
   },
   "items": [
     {
       "key": "check:changed:league_season_notices.league_season_notices_kind_check",
       "sig": "(kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text, 'practices_sent'::text])) :: (kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text]))"
+    },
+    {
+      "key": "check:only-dev:billing_locations.billing_locations_card_country_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:billing_locations.billing_locations_city_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:billing_locations.billing_locations_country_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:billing_locations.billing_locations_line1_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:billing_locations.billing_locations_line2_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:billing_locations.billing_locations_one_buyer",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:billing_locations.billing_locations_postal_code_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:billing_locations.billing_locations_region_code_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:billing_locations.billing_locations_review_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:billing_locations.billing_locations_review_set_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:billing_locations.billing_locations_us_declaration_check",
+      "sig": ""
     },
     {
       "key": "check:only-dev:billing_retention_intents.billing_retention_intents_change_log_check",
@@ -78,6 +122,10 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:league_registrations.league_registrations_guardian_email_2_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:league_registrations.league_registrations_link_version_check",
       "sig": ""
     },
@@ -119,6 +167,78 @@
     },
     {
       "key": "check:only-dev:stripe_billing_events.stripe_billing_events_ignored_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_locations.card_country",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_locations.city",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_locations.confirmed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_locations.country",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_locations.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_locations.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_locations.line1",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_locations.line2",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_locations.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_locations.postal_code",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_locations.region_code",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_locations.review_note",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_locations.review_reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_locations.review_set_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_locations.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_locations.us_declaration_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_locations.us_declaration_version",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:billing_locations.user_id",
       "sig": ""
     },
     {
@@ -374,11 +494,23 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:league_registrations.child_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registrations.guardian_email_2",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:league_registrations.link_replaced_at",
       "sig": ""
     },
     {
       "key": "column:only-dev:league_registrations.link_version",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_seasons.started_from",
       "sig": ""
     },
     {
@@ -422,6 +554,34 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:org_children.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_children.date_of_birth",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_children.first_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_children.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_children.last_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_children.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_children.updated_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:organizations.subscription_amount_cents",
       "sig": ""
     },
@@ -431,6 +591,14 @@
     },
     {
       "key": "column:only-dev:organizations.tournament_look_policy",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_roster_players.child_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_tryout_registrations.child_id",
       "sig": ""
     },
     {
@@ -539,6 +707,18 @@
     },
     {
       "key": "column:only-dev:stripe_price_ids_retired.retired_by_email",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:billing_locations.billing_locations_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:billing_locations.billing_locations_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:billing_locations.billing_locations_user_id_fkey",
       "sig": ""
     },
     {
@@ -654,6 +834,10 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:league_registrations.league_registrations_child_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:league_team_practices_told.league_team_practices_told_notice_id_fkey",
       "sig": ""
     },
@@ -674,6 +858,22 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:org_children.org_children_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_children.org_children_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_roster_players.rep_roster_players_child_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_tryout_registrations.rep_tryout_registrations_child_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:stripe_billing_drift_checks.stripe_billing_drift_checks_pkey",
       "sig": ""
     },
@@ -686,7 +886,19 @@
       "sig": ""
     },
     {
-      "key": "index:only-dev:billing_retention_intents_one_pending_cancellation",
+      "key": "index:only-dev:billing_locations_one_per_org",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:billing_locations_one_per_user",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:billing_locations_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:billing_retention_intents_one_pending_change",
       "sig": ""
     },
     {
@@ -770,6 +982,10 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:league_registrations_child_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:league_team_practices_told_notice_idx",
       "sig": ""
     },
@@ -783,6 +999,22 @@
     },
     {
       "key": "index:only-dev:league_team_practices_told_season_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_children_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_children_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_roster_players_child_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_tryout_registrations_child_idx",
       "sig": ""
     },
     {
@@ -814,6 +1046,10 @@
       "sig": ""
     },
     {
+      "key": "table:only-dev:billing_locations",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:league_game_scores",
       "sig": ""
     },
@@ -831,6 +1067,10 @@
     },
     {
       "key": "table:only-dev:league_team_practices_told",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:org_children",
       "sig": ""
     },
     {

@@ -1,24 +1,26 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-11-03 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-11-04 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 209 divergence(s)** across dev/prod.
+**⚠️ 269 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 8 | 0 | — |
-| Columns | 105 | 0 | 0 |
-| Indexes | 32 | 0 | 0 |
-| Constraints | 36 | 0 | — |
-| RLS / CHECK | 27 | 0 | 0 (RLS state) |
+| Tables | 10 | 0 | — |
+| Columns | 135 | 0 | 0 |
+| Indexes | 40 | 0 | 0 |
+| Constraints | 44 | 0 | — |
+| RLS / CHECK | 39 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (8)
+### Only in DEV (10)
+- `billing_locations`
 - `league_game_scores`
 - `league_practice_emails`
 - `league_practice_tells`
 - `league_rainouts`
 - `league_team_practices_told`
+- `org_children`
 - `stripe_billing_drift_checks`
 - `stripe_billing_events`
 - `stripe_price_ids_retired`
@@ -27,7 +29,25 @@
 _none_
 
 ## Columns
-### Only in DEV (105)
+### Only in DEV (135)
+- `billing_locations.card_country`
+- `billing_locations.city`
+- `billing_locations.confirmed_at`
+- `billing_locations.country`
+- `billing_locations.created_at`
+- `billing_locations.id`
+- `billing_locations.line1`
+- `billing_locations.line2`
+- `billing_locations.org_id`
+- `billing_locations.postal_code`
+- `billing_locations.region_code`
+- `billing_locations.review_note`
+- `billing_locations.review_reason`
+- `billing_locations.review_set_at`
+- `billing_locations.updated_at`
+- `billing_locations.us_declaration_at`
+- `billing_locations.us_declaration_version`
+- `billing_locations.user_id`
 - `billing_retention_intents.change_log`
 - `billing_retention_intents.ended_email_sent_at`
 - `billing_retention_intents.ends_on_email_sent_at`
@@ -91,8 +111,11 @@ _none_
 - `league_rainouts.put_back_by`
 - `league_rainouts.season_id`
 - `league_rainouts.verb`
+- `league_registrations.child_id`
+- `league_registrations.guardian_email_2`
 - `league_registrations.link_replaced_at`
 - `league_registrations.link_version`
+- `league_seasons.started_from`
 - `league_team_coaches.calendar_last_read_on`
 - `league_team_coaches.calendar_link_generation`
 - `league_team_practices_told.coaches_copied_at`
@@ -103,9 +126,18 @@ _none_
 - `league_team_practices_told.team_id`
 - `league_team_practices_told.told_at`
 - `league_team_practices_told.updated_at`
+- `org_children.created_at`
+- `org_children.date_of_birth`
+- `org_children.first_name`
+- `org_children.id`
+- `org_children.last_name`
+- `org_children.org_id`
+- `org_children.updated_at`
 - `organizations.subscription_amount_cents`
 - `organizations.subscription_currency`
 - `organizations.tournament_look_policy`
+- `rep_roster_players.child_id`
+- `rep_tryout_registrations.child_id`
 - `stripe_billing_drift_checks.checked_at`
 - `stripe_billing_drift_checks.differences`
 - `stripe_billing_drift_checks.environment`
@@ -141,8 +173,11 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (32)
-- `billing_retention_intents_one_pending_cancellation`
+### Only in DEV (40)
+- `billing_locations_one_per_org`
+- `billing_locations_one_per_user`
+- `billing_locations_pkey`
+- `billing_retention_intents_one_pending_change`
 - `league_game_scores_org_idx`
 - `league_game_scores_pkey`
 - `league_game_scores_season_idx`
@@ -163,10 +198,15 @@ _none_
 - `league_rainouts_org_idx`
 - `league_rainouts_pkey`
 - `league_rainouts_season_idx`
+- `league_registrations_child_idx`
 - `league_team_practices_told_notice_idx`
 - `league_team_practices_told_org_idx`
 - `league_team_practices_told_pkey`
 - `league_team_practices_told_season_idx`
+- `org_children_org_idx`
+- `org_children_pkey`
+- `rep_roster_players_child_idx`
+- `rep_tryout_registrations_child_idx`
 - `stripe_billing_drift_checks_checked_idx`
 - `stripe_billing_drift_checks_pkey`
 - `stripe_billing_events_customer_idx`
@@ -182,7 +222,10 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (36)
+### Only in DEV (44)
+- `billing_locations.billing_locations_org_id_fkey`
+- `billing_locations.billing_locations_pkey`
+- `billing_locations.billing_locations_user_id_fkey`
 - `league_game_scores.league_game_scores_checked_by_fkey`
 - `league_game_scores.league_game_scores_corrected_by_fkey`
 - `league_game_scores.league_game_scores_entered_by_fkey`
@@ -211,11 +254,16 @@ _none_
 - `league_rainouts.league_rainouts_pkey`
 - `league_rainouts.league_rainouts_put_back_by_fkey`
 - `league_rainouts.league_rainouts_season_id_fkey`
+- `league_registrations.league_registrations_child_id_fkey`
 - `league_team_practices_told.league_team_practices_told_notice_id_fkey`
 - `league_team_practices_told.league_team_practices_told_org_id_fkey`
 - `league_team_practices_told.league_team_practices_told_pkey`
 - `league_team_practices_told.league_team_practices_told_season_id_fkey`
 - `league_team_practices_told.league_team_practices_told_team_id_fkey`
+- `org_children.org_children_org_id_fkey`
+- `org_children.org_children_pkey`
+- `rep_roster_players.rep_roster_players_child_id_fkey`
+- `rep_tryout_registrations.rep_tryout_registrations_child_id_fkey`
 - `stripe_billing_drift_checks.stripe_billing_drift_checks_pkey`
 - `stripe_billing_events.stripe_billing_events_pkey`
 - `stripe_price_ids_retired.stripe_price_ids_retired_pkey`
@@ -227,7 +275,18 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (27)
+### CHECK only in DEV (39)
+- `billing_locations.billing_locations_card_country_check`
+- `billing_locations.billing_locations_city_check`
+- `billing_locations.billing_locations_country_check`
+- `billing_locations.billing_locations_line1_check`
+- `billing_locations.billing_locations_line2_check`
+- `billing_locations.billing_locations_one_buyer`
+- `billing_locations.billing_locations_postal_code_check`
+- `billing_locations.billing_locations_region_code_check`
+- `billing_locations.billing_locations_review_reason_check`
+- `billing_locations.billing_locations_review_set_check`
+- `billing_locations.billing_locations_us_declaration_check`
 - `billing_retention_intents.billing_retention_intents_change_log_check`
 - `league_game_scores.league_game_scores_entered_side_check`
 - `league_game_scores.league_game_scores_report_note_check`
@@ -244,6 +303,7 @@ _none_
 - `league_rainouts.league_rainouts_check`
 - `league_rainouts.league_rainouts_line_check`
 - `league_rainouts.league_rainouts_verb_check`
+- `league_registrations.league_registrations_guardian_email_2_check`
 - `league_registrations.league_registrations_link_version_check`
 - `league_team_coaches.league_team_coaches_calendar_generation_nonneg`
 - `league_team_practices_told.league_team_practices_told_snapshot_check`

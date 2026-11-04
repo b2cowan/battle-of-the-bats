@@ -10,7 +10,7 @@ import { getFamilySuppressionList } from './family-email';
 import { resolvePersonNamer, getRepDuesPaidBackByCredit } from './db';
 import { FAMILY_MESSAGE_CAP, FAMILY_PAGE_WORDS as PW, FAMILY_DUPLICATE_WORDS } from './families-words';
 import { fmt } from './coach-money-summary';
-import { proposeDuplicates, unionFind, type DuplicateChildIn, type DuplicatePersonIn, type DuplicateProposal } from './families-duplicates';
+import { proposeDuplicates, type DuplicateChildIn, type DuplicatePersonIn, type DuplicateProposal } from './families-duplicates';
 import { isCurrentLeagueSeason, isCurrentRepYear, isLiveRegStatus, type AudiencePerson, type SeasonRow } from './families-audience';
 import { listsByPerson } from './families-lists';
 import { registrationOwes } from './league-price';
@@ -268,7 +268,7 @@ async function loadOrgFamilyWorld(orgId: string, opts: { attach?: boolean; forDu
   if (opts.attach) await attachPeopleForOrg(orgId);
   const unless = <T>(skip: boolean | undefined, read: () => Promise<T[]>): Promise<T[]> => (skip ? Promise.resolve([]) : read());
 
-  const [people, addresses, rosterRows, leagueRegs, links, optouts, consents, continuity] = await Promise.all([
+  const [people, addresses, rosterRows, leagueRegs, links, optouts, consents] = await Promise.all([
     orgRows<any>('org_people', 'id, email_normalized, first_name, last_name, phone, created_at', orgId),
     orgRows<any>('org_person_emails', 'id, person_id, email_normalized, is_current, first_seen_at, last_seen_at', orgId),
     /**
@@ -278,17 +278,14 @@ async function loadOrgFamilyWorld(orgId: string, opts: { attach?: boolean; forDu
      * `person_id`, the database forbids giving them a guardian email, and the player page 404s on one.
      */
     orgRows<any>('rep_roster_players',
-      'id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, status, team_id, program_year_id, tryout_registration_id, created_at, rep_teams(name, slug), rep_program_years(year, status, name, credit_application)',
+      'id, child_id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, status, team_id, program_year_id, tryout_registration_id, created_at, rep_teams(name, slug), rep_program_years(year, status, name, credit_application)',
       orgId, q => q.neq('status', 'callup')),
     orgRows<any>('league_registrations',
-      'id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, guardian_email_2, guardian_last_name, status, registration_fee_paid, fee_amount, waiver_accepted_at, registered_at, season_id, division_id, team_id, pay_link_sent_at, league_seasons(name, slug, status, registration_fee), league_divisions(name)',
+      'id, child_id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, guardian_email_2, guardian_last_name, status, registration_fee_paid, fee_amount, waiver_accepted_at, registered_at, season_id, division_id, team_id, pay_link_sent_at, league_seasons(name, slug, status, registration_fee), league_divisions(name)',
       orgId),
     orgRows<any>('family_links', 'id, person_id, player_id, user_id, status, role, relationship, invited_email, claimed_email, updated_at', orgId),
     orgRows<any>('family_email_optouts', 'id, email, source, opted_out_at', orgId),
     unless(opts.forDuplicates, () => orgRows<any>('family_consents', 'id, guardian_email, basis, scope, basis_started_at, withdrawn_at', orgId)),
-    // E08: a child's rep seasons are ONE child only where a person confirmed it (suggested and rejected links never join).
-    unless(opts.forDuplicates, () => orgRows<any>('rep_player_continuity_links', 'id, current_roster_id, current_registration_id, prior_roster_id, prior_registration_id', orgId,
-      q => q.eq('status', 'confirmed'))),
   ]);
   // 9b-2's two money reads, together (not on the duplicates path, which shows no money).
   const [received, changes] = opts.forDuplicates || leagueRegs.length === 0
@@ -316,7 +313,7 @@ async function loadOrgFamilyWorld(orgId: string, opts: { attach?: boolean; forDu
     return m;
   };
   return {
-    people, addresses, rosterRows, leagueRegs, links, optouts, consents, childKeyOf: childKeys(rosterRows, continuity),
+    people, addresses, rosterRows, leagueRegs, links, optouts, consents, childKeyOf: childKeys(rosterRows),
     // Looked up per person on every page of the area — built once, never a scan of the org's rows per person.
     personById: new Map(people.map((p: any) => [p.id as string, p])),
     rosterByPerson: byKey(rosterRows, r => r.person_id),
@@ -329,24 +326,18 @@ async function loadOrgFamilyWorld(orgId: string, opts: { attach?: boolean; forDu
 type World = Awaited<ReturnType<typeof loadOrgFamilyWorld>>;
 
 /**
- * E08 — which rep roster rows are ONE child. Union over CONFIRMED `rep_player_continuity_links`, minding the alias
- * rule (DATA_DICTIONARY gotcha 4): a link's side may name the tryout REGISTRATION a roster row came from, never
- * rewritten when the registration was accepted, so a registration id resolves to the roster row that carries it as
- * `tryout_registration_id`. A side naming a registration no roster row came from joins nothing.
+ * E08 — which rows are ONE child: the ones that carry the same `org_children` record (Club Tier Stage 14 S2, mig 435).
+ * Before it, this file unioned a team's CONFIRMED continuity links at read time; the migration's backfill ran that
+ * same union (with its registration alias rule) once, and from then on the database keeps it — the roll, a confirmed
+ * accept and a confirmed or undone returning-player link write it. Every row carries a child (a BEFORE INSERT trigger
+ * mints one), so the fallbacks below are for a row read mid-deploy, before the column existed.
  */
-function childKeys(rosterRows: any[], links: any[]): (rosterId: string) => string {
-  const { find, union } = unionFind();
-  const rosterIds = new Set(rosterRows.map(r => r.id as string));
-  const rosterOfRegistration = new Map<string, string>();
-  for (const r of rosterRows) if (r.tryout_registration_id) rosterOfRegistration.set(r.tryout_registration_id, r.id);
-  const side = (rosterId: string | null, registrationId: string | null) =>
-    rosterId && rosterIds.has(rosterId) ? rosterId : registrationId ? rosterOfRegistration.get(registrationId) ?? null : null;
-  for (const l of links) {
-    const a = side(l.current_roster_id, l.current_registration_id);
-    const b = side(l.prior_roster_id, l.prior_registration_id);
-    if (a && b) union(a, b);
-  }
-  return (rosterId: string) => `rep:${find(rosterId)}`;
+export const childKeyOfRow = (r: { id: string; child_id?: string | null }, source: 'rep' | 'league') =>
+  r.child_id ? `child:${r.child_id}` : `${source}:${r.id}`;
+
+function childKeys(rosterRows: any[]): (rosterId: string) => string {
+  const byId = new Map<string, any>(rosterRows.map(r => [r.id as string, r]));
+  return (rosterId: string) => childKeyOfRow(byId.get(rosterId) ?? { id: rosterId }, 'rep');
 }
 
 // The three row predicates live in lib/families-audience.ts (pure, so Email families' audience is unit-tested against
@@ -366,7 +357,7 @@ function childRowFromLeague(r: any): FamilyChildRow {
   const div = r.league_divisions?.name ? ` · ${r.league_divisions.name}` : '';
   const current = isCurrentLeagueSeason(r);
   return {
-    source: 'league', sourceRowId: r.id, childKey: `league:${r.id}`,
+    source: 'league', sourceRowId: r.id, childKey: childKeyOfRow(r, 'league'),
     childName: fullName(r.player_first_name, r.player_last_name),
     where: `${r.league_seasons?.name ?? 'House league'}${div}`,
     year: null,

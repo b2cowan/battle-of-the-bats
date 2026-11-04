@@ -205,7 +205,7 @@ export function bringAnywayNote(pickerBuilt = PAST_PLAYER_PICKER_BUILT): string 
  * team's). An unknown id refuses the whole roll BEFORE anything is written, rather than quietly dropping a
  * child the person ticked.
  */
-export function pickCarriedPlayers<T extends { id: string; status: string }>(
+export function pickCarriedPlayers<T extends { id: string; status: string; childId?: string | null }>(
   players: readonly T[], ids: readonly string[],
 ): { ok: true; carried: T[]; stayed: T[] } | { ok: false } {
   const wanted = new Set(ids);
@@ -215,7 +215,18 @@ export function pickCarriedPlayers<T extends { id: string; status: string }>(
     if (!p || p.status === 'callup') return { ok: false };
   }
   const listed = rollPlayerChoices(players);
-  return { ok: true, carried: listed.filter(p => wanted.has(p.id)), stayed: listed.filter(p => !wanted.has(p.id)) };
+  /* ⚠ ONE ENTRY PER CHILD on the new season (Club Tier Stage 14 S2 — the plan's build gate: "a roll never invents a
+     duplicate for a child already on the new season"). Each carried entry brings its own child (the roll sets it), so two
+     ticked entries of ONE child would put that child on the new roster twice. The list's own order decides which comes
+     (active before inactive); the other is neither carried nor "stayed" — the child is coming. */
+  const coming = new Set<string>();
+  const carried: T[] = [];
+  for (const p of listed) {
+    if (!wanted.has(p.id) || (p.childId && coming.has(p.childId))) continue;
+    if (p.childId) coming.add(p.childId);
+    carried.push(p);
+  }
+  return { ok: true, carried, stayed: listed.filter(p => !wanted.has(p.id) && !(p.childId && coming.has(p.childId))) };
 }
 
 // ── The request ────────────────────────────────────────────────────────────────────────────────

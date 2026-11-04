@@ -3231,6 +3231,16 @@
   },
   {
     "table_name": "league_registrations",
+    "constraint_name": "league_registrations_child_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "child_id",
+    "foreign_table": "org_children",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_registrations",
     "constraint_name": "league_registrations_division_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "division_id",
@@ -4232,6 +4242,26 @@
   {
     "table_name": "org_budget_periods",
     "constraint_name": "org_budget_periods_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_children",
+    "constraint_name": "org_children_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_children",
+    "constraint_name": "org_children_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,
@@ -8191,6 +8221,16 @@
   },
   {
     "table_name": "rep_roster_players",
+    "constraint_name": "rep_roster_players_child_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "child_id",
+    "foreign_table": "org_children",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_roster_players",
     "constraint_name": "rep_roster_players_id_team_uniq",
     "constraint_type": "UNIQUE",
     "column_name": "id",
@@ -10527,6 +10567,16 @@
     "foreign_table": "rep_tryouts",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_tryout_registrations",
+    "constraint_name": "rep_tryout_registrations_child_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "child_id",
+    "foreign_table": "org_children",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
     "update_rule": "NO ACTION"
   },
   {

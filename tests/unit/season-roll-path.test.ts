@@ -137,6 +137,25 @@ describe('who comes (Ask 2): active ticked, inactive at the bottom unticked, cal
     assert.equal(out.carried.length, 0);
     assert.deepEqual(out.stayed.map(p => p.id), ['a1', 'a2', 'i1']);
   });
+  /* ⚠ THE PLAN'S BUILD GATE (Club Tier Stage 14 S2): "a roll never invents a duplicate for a child already on the new
+     season". Two halves: the new entry IS the old entry's child (never a fresh one), and one child comes once. The
+     database half — an entry inserted with the old child plus its confirmed link mints nothing — is rule 2 of
+     tests/sql/org-children-fixture.sql. */
+  it('a roll never invents a duplicate: one child comes once, and is not also "stayed"', () => {
+    const twice = [
+      { id: 'a1', status: 'active', childId: 'k1' }, { id: 'a1b', status: 'active', childId: 'k1' },
+      { id: 'i1', status: 'inactive', childId: 'k1' }, { id: 'a2', status: 'active', childId: 'k2' },
+    ];
+    const out = pickCarriedPlayers(twice, ['a1', 'a1b', 'a2']);
+    assert.ok(out.ok);
+    assert.deepEqual(out.carried.map(p => p.id), ['a1', 'a2']);
+    assert.deepEqual(out.stayed.map(p => p.id), [], 'k1 is coming, so none of its entries "stayed"');
+  });
+  it('the carried entry is the same child — the roll passes it, never leaves it to the best-effort link', () => {
+    const roll = read('lib/rep-season-rollover.ts');
+    const call = roll.slice(roll.indexOf('await createRepRosterPlayer({'), roll.indexOf('playerIdMap.set(p.id, created.id)'));
+    assert.match(call, /childId: p\.childId,/);
+  });
   it('the roll carries the pick, not every active player, and checks it before writing anything', () => {
     const roll = read('lib/rep-season-rollover.ts');
     assert.match(roll, /for \(const p of picked\.carried\)/);

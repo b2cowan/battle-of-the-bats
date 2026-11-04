@@ -1,7 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { fetchAll, fetchAllIn } from './supabase-paging';
-import { loadOrgFamilyWorld, householdOf, fullName, personDisplayName, readRepMoney, leagueRegOwes } from './families-read';
+import { loadOrgFamilyWorld, householdOf, fullName, personDisplayName, readRepMoney, leagueRegOwes, childKeyOfRow } from './families-read';
 import { familyFileStatement, type FamilyFile, type FamilyFileChild } from './family-file';
 import { readHandoffs, handoffNamer } from './families-payment';
 import { NOTE_COLUMNS } from './families-notes';
@@ -92,15 +92,18 @@ export async function buildFamilyFile(orgId: string, orgName: string, personId: 
   }
   for (const r of league) {
     const d = leagueById.get(r.id) ?? {};
-    children.set(`league:${r.id}`, {
-      name: fullName(r.player_first_name, r.player_last_name), birthDate: d.player_date_of_birth ?? null,
-      registrations: [{
-        kind: 'league' as const, where: r.league_divisions?.name ?? 'House league', season: r.league_seasons?.name ?? 'House league',
-        status: d.status ?? r.status, since: d.registered_at ?? r.registered_at ?? null,
-        medicalNotes: null, emergencyContact: null,
-        notes: [...note('Notes from the family', d.player_notes), ...note('Staff note', d.admin_notes)],
-      }],
+    // The sign-up's own child (mig 435): one child per sign-up until a person joins two (Stage 14 S6) — then it is ADDED
+    // to that child's registrations, beside the rep seasons above, never written over them.
+    const key = childKeyOfRow(r, 'league');
+    const c: FamilyFileChild = children.get(key) ?? { name: fullName(r.player_first_name, r.player_last_name), birthDate: d.player_date_of_birth ?? null, registrations: [] };
+    c.birthDate = c.birthDate ?? d.player_date_of_birth ?? null;
+    c.registrations.push({
+      kind: 'league' as const, where: r.league_divisions?.name ?? 'House league', season: r.league_seasons?.name ?? 'House league',
+      status: d.status ?? r.status, since: d.registered_at ?? r.registered_at ?? null,
+      medicalNotes: null, emergencyContact: null,
+      notes: [...note('Notes from the family', d.player_notes), ...note('Staff note', d.admin_notes)],
     });
+    children.set(key, c);
   }
 
   // ── Money: the team's own figures per season, every payment, credits by kind, reminders, league fees ──

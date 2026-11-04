@@ -2844,6 +2844,11 @@ moment it lands.
 **`guardian_first_name` / `guardian_last_name` / `guardian_email` / `guardian_phone`** — guardian contact; **all nullable as of mig 139** (Coach Premium Upgrade Phase 3c — so a free team's roster carries over on upgrade without fabricating guardian data). The manual roster-add route still requires first/last/email app-side, so in practice only **migrated rows** (or edits that clear the field) are null. `guardian_email` indexed (`email_idx`, non-unique). TS types are already `string | null` and every reader is null-safe (dues reminders skip null emails; displays/exports coalesce). `guardian_phone` nullable.
 
 <!-- dict:col:rep_roster_players.person_id -->
+<!-- dict:col:rep_roster_players.child_id -->
+**`child_id`** (uuid NOT NULL, FK → `org_children`, indexed; **mig 435**) — the child this roster entry (a call-up is always its own child). The roll passes the carried entry's; an accepted tryout takes its sign-up's is one season of. Set by
+the BEFORE INSERT trigger `org_child_for_entry` when omitted (a new child; never a guessed match), or explicitly from a fact.
+See `org_children` for the rules (confirm joins, undo splits, live name edits write through).
+
 **`person_id`** (uuid, nullable, FK → `org_people` ON DELETE SET NULL; **mig 251**) — which adult this child's guardian actually IS, rather than which address someone typed. **Nullable forever**: 64 of 163 live roster rows name no guardian at all, and a child with no attachable guardian must stay a usable roster row. `guardian_email` is untouched beside it, as the honest record of what was entered.
 
 ⚠ **Resolve it through `org_person_emails`, never through `org_people.email_normalized`** — a row still carrying a parent's OLD address must land on the same person as one carrying their new address. ⚠ Attaching a person is **not an edit anyone made**: the backfill deliberately does not bump `updated_at`, because touching it would make whole rosters look freshly changed to every surface that reads recency (mig 214's precedent). _Read by:_ the Families area — `lib/families-read.ts` groups roster rows into households by it (and `lib/family-email.ts` resolves the household's addresses through it). (Corrected 2026-09-25; this line said "nothing reads it yet" from P1 until the Club Tier Readiness evaluation.)
@@ -4229,6 +4234,12 @@ moment it lands.
 <!-- dict:table:rep_player_continuity_links -->
 
 **Purpose:** coach-confirmed identity links between a CURRENT entity (roster row OR tryout registration) and a PRIOR season's entity (roster row OR registration), same team — the "possible returning player — verify" record (Player Development 3C, migration 191; design = DBA Finding #31). Mig 192 (3D) adds the carry-forward decision audit. **⚠ DEV-ONLY / PROD-PENDING — promote with migs 189+190+191+192 (192 ALTERs the table 191 creates, so 191 must apply first).**
+⚠ **Since mig 435 (Club Tier Stage 14 S2) a status change here moves `org_children`.** The AFTER trigger
+`org_child_follows_link` JOINS the two sides' children when a link becomes `confirmed` (the prior side's record is kept) and
+SPLITS the team's entries of that child again when a confirmed link is undone. The link stays the HISTORY of the coach's yes;
+`child_id` on the entry tables is now the identity every reader uses (the Families book stopped unioning these links at read
+time). A `suggested` link — any confidence — moves nothing.
+
 
 **Gotchas (read first):**
 1. **One row per (current, prior) PAIR for its whole lifecycle** — `suggested → confirmed | rejected` are status transitions on that single row (pair-unique expression index on the coalesced side ids). A `rejected` row IS the never-re-suggest tombstone, by construction — do NOT delete it to "clean up". Transitions are guarded in the UPDATE itself (`decideContinuityLink`): confirm only from `suggested`, reject from `suggested|confirmed` — a tombstone can never resurrect, even from a stale-tab replay.
@@ -4315,6 +4326,11 @@ moment it lands.
 **`guardian_first_name` / `guardian_last_name` / `guardian_email` / `guardian_phone`** — first/last/email NOT NULL; `guardian_email` targets all transactional emails + is indexed (gotcha 8); all copied to the roster on accept.
 
 <!-- dict:col:rep_tryout_registrations.person_id -->
+<!-- dict:col:rep_tryout_registrations.child_id -->
+**`child_id`** (uuid NOT NULL, FK → `org_children`, indexed; **mig 435**) — the child this tryout sign-up (a coach's confirmed returning-player link on it joins it to the prior season's child before it is accepted) is one season of. Set by
+the BEFORE INSERT trigger `org_child_for_entry` when omitted (a new child; never a guessed match), or explicitly from a fact.
+See `org_children` for the rules (confirm joins, undo splits, live name edits write through).
+
 **`person_id`** (uuid, nullable, FK → `org_people` ON DELETE SET NULL; **mig 251**) — same meaning as on `rep_roster_players`. ⚠ **A candidate who never made the team still gets a person record, deliberately.** The club already holds their data, mig 214 already files a `family_consents` row for them, and "export everything you hold about me" cannot answer for a family with no record. A candidate who later makes the roster resolves to the **same** person, because the person is keyed on the address — so the only records this creates are for people who *only* ever tried out.
 
 <!-- dict:col:rep_tryout_registrations.status -->
@@ -6223,6 +6239,69 @@ from `created_at`/`updated_at`**, which record when we wrote this row.
 **`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()).
 
 ## `org_person_match_rejections`
+## `org_children`
+<!-- dict:table:org_children -->
+
+**Purpose:** **one row per CHILD of an organization** (Club Tier Stage 14 S2, **mig 435**; owner rulings 2026-11-04, Asks
+4–5). Every roster entry (`rep_roster_players`), tryout sign-up (`rep_tryout_registrations`) and house-league sign-up
+(`league_registrations`) points at one through its NOT NULL `child_id`; one season's entry is one season of a child.
+RLS on, no policies, **service role only**. Plan of record: `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` Stage 14; build prompt
+`CLUB_TIER_STAGE14_BUILD_PROMPT.md` S2.
+
+**Gotchas (read first):**
+1. **A child is NEVER inferred (Ask 4).** Two entries share a child only by a FACT — the season roll (it passes the carried
+   entry's `child_id`), an accepted tryout (the roster row takes its sign-up's child) — or a PERSON'S YES — a head coach's
+   confirmed returning-player link (`rep_player_continuity_links`), later the S3 picker, "Same child?" and the S6 Children
+   queue. A shared name and birth date join nothing; the continuity matcher's `high` tier admits twins and only ever
+   SUGGESTS. Never write `child_id` from a match.
+2. **One writer mints a child: the BEFORE INSERT trigger `org_child_for_entry`** on the three entry tables (SECURITY
+   DEFINER — two old anon insert policies still exist on the sign-up tables). An entry inserted without `child_id` gets a new
+   child named from its own columns; a roster row with `tryout_registration_id` takes that sign-up's child. It also refuses
+   (23514 `org_child_other_org`) an entry whose child is in another organization, on insert and on UPDATE OF child_id. No
+   app code inserts here (`tests/unit/org-children-guard.test.ts`). The house-league placement RPC and
+   `accept_tryout_and_create_dues` were NOT changed — their locking and duplicate refusal are as shipped.
+3. **Confirm joins, undo splits — in the database.** `org_child_follows_link` (AFTER INSERT OR UPDATE OF status on
+   `rep_player_continuity_links`): a link becoming `confirmed` runs `org_children_join(prior's child, current's child)`
+   (every entry of the current side's child moves to the prior's; the emptied record is DELETED); a `confirmed` link
+   leaving `confirmed` runs `org_children_split_team(team, child, prior entry)`, which regroups the TEAM's entries of that
+   child by `rep_child_components` — the group holding the prior entry keeps the record, each other group gets a new one.
+   Entries of the child elsewhere (a call-up, another team, the house league) stay with it. A call-up is never a node.
+4. **`rep_child_components(team, child?)` is THE same-team rule** — the components of the team's non-call-up roster rows
+   and tryout sign-ups joined by (a) a roster row and the sign-up it was accepted from, (b) a confirmed continuity link.
+   The backfill ran it once per team; the split runs it on one child. It is the Families book's old read-time `childKeys`
+   union (with its registration alias rule) moved into the database, plus one honest widening: a sign-up a coach confirmed
+   as a returning player BEFORE it was accepted is already that child.
+5. **Each entry keeps its own name/DOB** as that season's copy (S2-1). Editing `player_first_name` / `player_last_name` /
+   `player_date_of_birth` on a LIVE entry writes through (`org_child_follows_entry`: rep season `draft`/`active`;
+   house-league season not `completed`/`archived`); a past entry stays as recorded.
+6. **A removed entry leaves its child behind**, unreferenced and invisible (every read goes entry → child); S4-1 rules a
+   child with no entries is kept. Only a JOIN deletes a record — S4, once the child holds health facts, must carry them
+   across before that delete.
+7. **The team move** (`move_team_into_club`, re-created by mig 435 from 351 with this table in `c_moves`) moves a
+   standalone coach's children into the club with the team (Ask 7). The club's queue proposes matches (S6); nothing joins
+   on the way in.
+8. **The backfill (mig 435)**: one child per same-team component, one per remaining entry (call-ups, every house-league
+   sign-up). Deleted nothing. Names come from the entry on the component's newest season (roster before sign-up, then
+   newest written, then id). On dev 2026-11-04: 747 children; the Families book's partition was identical before and after
+   (710 rows, 708 children, 249 households, 373 household children — `.probe/s2-child/compare.mjs`).
+
+<!-- dict:col:org_children.id -->
+<!-- dict:col:org_children.org_id -->
+**`id`** / **`org_id`** (FK → `organizations` CASCADE; indexed) — whose child.
+
+<!-- dict:col:org_children.first_name -->
+<!-- dict:col:org_children.last_name -->
+<!-- dict:col:org_children.date_of_birth -->
+**`first_name`** (text NOT NULL) / **`last_name`** (text, nullable — a roster row's may be blank) / **`date_of_birth`**
+(date, nullable) — the child's name and birth date: from the newest season's entry at the backfill, the entry that minted
+it, or the latest edit on a live entry (gotcha 5). The season entries keep their own copies.
+
+<!-- dict:col:org_children.created_at -->
+<!-- dict:col:org_children.updated_at -->
+**`created_at`** / **`updated_at`** (timestamptz NOT NULL, default now()) — `updated_at` moves on a write-through.
+
+---
+
 <!-- dict:table:org_person_match_rejections -->
 
 **Purpose:** the duplicate queue's MEMORY — "not the same person" as a durable decision (mig 253,
@@ -7368,6 +7447,11 @@ Sent and By).
 **`org_id`** (uuid, **NOT NULL**, FK → `organizations` ON DELETE CASCADE, indexed `league_registrations_org_id_idx`; **mig 251**) — **denormalized tenancy, added because this was the one family-bearing table that could not name its own tenant.** It previously reached an org only 2-hop via `season_id → league_seasons.org_id`, so every tenant-scoped read of it was a join, against the standing 1-hop rule (Findings #4/#5). Backfilled from the season; verified total before the NOT NULL (all live rows reached an org), so a row that somehow could not would have failed the migration rather than silently becoming untenanted. ⚠ **Keep it in step with `season_id`** — moving a registration to a season in another org (not a flow that exists today) would have to move this too.
 
 <!-- dict:col:league_registrations.person_id -->
+<!-- dict:col:league_registrations.child_id -->
+**`child_id`** (uuid NOT NULL, FK → `org_children`, indexed; **mig 435**) — the child this house-league sign-up (one child per sign-up until a person joins two — S6's Children queue; the Families book reads it as the child key) is one season of. Set by
+the BEFORE INSERT trigger `org_child_for_entry` when omitted (a new child; never a guessed match), or explicitly from a fact.
+See `org_children` for the rules (confirm joins, undo splits, live name edits write through).
+
 **`person_id`** (uuid, nullable, FK → `org_people` ON DELETE SET NULL; **mig 251**) — same meaning as on `rep_roster_players`. **This column is why League was brought into the Families Book alongside Club:** a household with one child in house league and one on a rep team is invisible in *both* modules today, and a shared person is the only thing that could join them. A family is read as the union of the rep and league rows carrying the same `person_id`. ⚠ As of 2026-08-17 **no organization on either database has both** rep and league families, so that union is unexercised by real data — see `scripts/report-families-backfill.mjs`.
 
 <!-- dict:col:league_registrations.season_id -->
