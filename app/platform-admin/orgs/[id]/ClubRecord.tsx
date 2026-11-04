@@ -98,6 +98,8 @@ export type ClubRecordProps = {
   /** Plans end at the renewal date (Stage 1): a cancel waiting for its date — who asked (`door`, `by`), when, and why. */
   ending: {
     endsAt: string; reason: string | null; door: string | null; by: string | null; at: string | null;
+    /** Stage 2: a waiting MOVE to the free plan — the plan it moves to on the date (its label); null for a waiting cancel. */
+    movesTo: string | null;
     /** A cheaper move the cancel set aside; Keep puts it back (gap review G1). */
     heldMovePlanLabel: string | null;
     /** Part C (G3): more than three days past its date and still waiting — Stripe's message never arrived. */
@@ -415,16 +417,17 @@ export default function ClubRecord(props: ClubRecordProps) {
   ) : props.ending?.overdue ? (
     // Part C (G3): past its date and Stripe never said it ended — what our record says, not a confirmed end.
     <div className={kit.bandCell}>
-      <span className={kit.bandLabel}>Should have ended</span>
+      <span className={kit.bandLabel}>{props.ending.movesTo ? 'Should have moved' : 'Should have ended'}</span>
       <span className={`${kit.bandValue} ${kit.bandValueSm}`}>{consoleDate(props.ending.endsAt)}</span>
       <span className={kit.bandNote}>{pluralize(props.ending.daysOver, 'day')} over · not confirmed</span>
     </div>
   ) : props.ending ? (
-    // A cancel waits for its date (Plans end at renewal): the date it ends replaces the renewal it no longer has.
+    // A cancel waits for its date (Plans end at renewal): the date it ends replaces the renewal it no longer has. A move
+    // to the free plan (Stage 2) waits the same way: the date it moves.
     <div className={kit.bandCell}>
-      <span className={kit.bandLabel}>Ends</span>
+      <span className={kit.bandLabel}>{props.ending.movesTo ? 'Moves' : 'Ends'}</span>
       <span className={`${kit.bandValue} ${kit.bandValueSm}`}>{consoleDate(props.ending.endsAt)}</span>
-      <span className={kit.bandNote}>cancelled · from Stripe</span>
+      <span className={kit.bandNote}>{props.ending.movesTo ? `to ${props.ending.movesTo} · from Stripe` : 'cancelled · from Stripe'}</span>
     </div>
   ) : (
     <div className={kit.bandCell}>
@@ -532,7 +535,9 @@ export default function ClubRecord(props: ClubRecordProps) {
       {!editing && props.ending?.overdue && (
         <div className={`${kit.callout} ${kit.calloutBad}`}>
           <span>
-            <strong>Overdue.</strong> This plan should have ended on {consoleDate(props.ending.endsAt)} and is still open. Stripe’s end-of-period message never reached us.
+            <strong>Overdue.</strong> {props.ending.movesTo
+              ? <>This plan should have moved to {props.ending.movesTo} on {consoleDate(props.ending.endsAt)} and is still on its paid plan.</>
+              : <>This plan should have ended on {consoleDate(props.ending.endsAt)} and is still open.</>} Stripe’s end-of-period message never reached us.
           </span>
           {can.billing && (
             <span className={kit.calloutEnd}>
@@ -544,8 +549,11 @@ export default function ClubRecord(props: ClubRecordProps) {
       {!editing && props.ending && !props.ending.overdue && (
         <div className={`${kit.callout} ${kit.calloutWarn}`}>
           <span>
-            <strong>Ending.</strong> Ends {consoleDate(props.ending.endsAt)}, at the period end.
-            <> Cancelled by {askedBy(props.ending)}{props.ending.at && <> on {consoleDate(props.ending.at)}</>}</>
+            {/* Stage 2: a waiting move to the free plan is said as a move, never as a cancel (it is not a suspension). */}
+            {props.ending.movesTo
+              ? <><strong>Moving to {props.ending.movesTo}.</strong> Moves</>
+              : <><strong>Ending.</strong> Ends</>} {consoleDate(props.ending.endsAt)}, at the period end.
+            <> {props.ending.movesTo ? 'Asked' : 'Cancelled'} by {askedBy(props.ending)}{props.ending.at && <> on {consoleDate(props.ending.at)}</>}</>
             {props.ending.reason ? <>: “{props.ending.reason}”</> : '.'}
             {props.ending.heldMovePlanLabel && <> If the plan is kept, it renews as {props.ending.heldMovePlanLabel}, the move the owner chose.</>}
           </span>
@@ -1247,7 +1255,9 @@ function EndPlanNowWindow({ orgId, orgName, hasStripe, ending, onDone, onClose }
       }}
       onClose={onClose}
     >
-      {ending && <p className={kit.caption}>It was already set to end on {consoleDate(ending.endsAt)}. This finishes it today instead.</p>}
+      {ending && <p className={kit.caption}>{ending.movesTo
+        ? <>It was set to move to {ending.movesTo} on {consoleDate(ending.endsAt)}. Ending it now replaces that move.</>
+        : <>It was already set to end on {consoleDate(ending.endsAt)}. This finishes it today instead.</>}</p>}
       {pre?.shutsDown && pre.shutsDown.length > 0 && (
         <div className={kit.fieldGroup}>
           <span className={kit.label}>What stops now</span>
@@ -1310,13 +1320,17 @@ function FinishEndingWindow({ orgId, orgName, ending, tournamentCount: count, on
       title="Finish this ending now?"
       sentence={<>
         <p>We read Stripe first.</p>
-        <p>
+        {/* Stage 2: Finish over a waiting move runs the move on its date, never a suspension. */}
+        {ending.movesTo ? <p>
+          If Stripe has ended the subscription, {orgName} moves to {ending.movesTo} the way it would have on {consoleDate(ending.endsAt)}. It is not suspended.
+          {' '}The tournaments it did not keep are archived and kept until {consoleDate(ending.retentionUntil)}.
+        </p> : <p>
           If Stripe has ended the subscription, {orgName} is suspended the way it would have been on {consoleDate(ending.endsAt)}.
           {count > 0
             ? <> Its {count} tournament{count === 1 ? ' is' : 's are'} archived and kept until {consoleDate(ending.retentionUntil)}</>
             : <> Its data is kept until {consoleDate(ending.retentionUntil)}</>}
           {ending.notifyOwner ? <>, and the owner gets the “cancelled” email.</> : '.'}
-        </p>
+        </p>}
         <p>If Stripe says the subscription is still live, the account is not touched, and our record is corrected to match Stripe.</p>
       </>}
       whyPlaceholder=""

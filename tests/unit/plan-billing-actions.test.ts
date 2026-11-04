@@ -578,7 +578,7 @@ describe('a waiting cancel: Keep {Plan} and the dated Cancel window', () => {
   const endsAt = '2027-03-01T05:00:00Z';
   const label = planConfig.PLAN_CONFIG.tournament_plus.label;
   const waiting = (heldMovePlan: OrgPlan | null = null): BillingCancellation => ({
-    ...cancellation, ending: { waits: true, endsOn: endsAt, pending: { endsAt, heldMovePlan } },
+    ...cancellation, ending: { waits: true, endsOn: endsAt, pending: { endsAt, heldMovePlan, kind: 'cancellation', move: null } },
   });
   const keepWindow = (tree: React.ReactNode) => find(tree, element => element.props.kind === 'question' && Object.hasOwn(element.props, 'footer'));
   const text = (node: unknown) => elements(node).filter(e => e.type === 'p').map(e => e.props.children);

@@ -8,6 +8,8 @@ import {
 import { withObservability } from '@/lib/observability';
 import { ownPlanOf } from '@/lib/entitlement-grants';
 import { endingSection } from '@/lib/online-payment-endings';
+import { waitingDate } from '@/lib/plan-ending';
+import { readEndingAccount } from '@/lib/plan-ending-server';
 
 export const POST = withObservability(async (req: Request) => {
   // Scope to the org the caller is viewing (multi-org owners), NOT their home org — fail closed.
@@ -28,7 +30,14 @@ export const POST = withObservability(async (req: Request) => {
     return Response.json({ error: 'Downgrade review only applies when moving to a lower plan.' }, { status: 400 });
   }
 
-  const preflight = await buildDowngradePreflight(ctx.org, targetPlan);
-  // 12d-2 (words §4.2): a move to a plan without online payments says what stops and what is still owed today.
-  return Response.json({ ...preflight, onlinePayments: await endingSection(ctx.org.id, { targetPlan }) });
+  const [preflight, onlinePayments, account] = await Promise.all([
+    buildDowngradePreflight(ctx.org, targetPlan),
+    // 12d-2 (words §4.2): a move to a plan without online payments says what stops and what is still owed.
+    endingSection(ctx.org.id, { targetPlan }),
+    readEndingAccount(ctx.org.id),
+  ]);
+  // Plans end at the renewal date, Stage 2 Part B: a paying subscription's move waits for its renewal date (the window's
+  // dated words); with none to wait for it happens at the click (ruling 3). The cancel review's rule (`waitingDate`).
+  const { waits, on } = waitingDate(account, ctx.org.currentPeriodEnd, new Date());
+  return Response.json({ ...preflight, onlinePayments, when: { waits, movesOn: on } });
 }, { route: '/api/billing/downgrade/preflight' });

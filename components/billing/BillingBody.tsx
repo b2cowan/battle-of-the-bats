@@ -16,6 +16,8 @@ import type { BillingCycle } from '@/lib/plan-config';
 import type { PanelPlanKey } from '@/lib/plan-upgrade';
 import { NO_LIMIT } from '@/lib/platform-labels';
 import type { BillingRead, BillingSnapshot, BillingUsage, BillingCancellation, BillingDowngrade, BillingFreeTime, BillingFounding, BillingMove } from '@/lib/plan-billing-data';
+import type { WaitingMoveView } from '@/lib/plan-ending';
+import { joinWithAnd } from '@/lib/utils';
 import { CoachCard, CoachEyebrow, CoachChip } from '@/components/coaches/kit';
 import LoadingState from '@/components/shared/LoadingState';
 import PageNotice, { useNotice, type Notice } from '@/components/shared/PageNotice';
@@ -58,6 +60,8 @@ type Action = {
   portal: () => void; card: () => void; reactivate: () => void; keep: () => void; cancel: () => void;
   /** Keep {Plan}: opens the question window that undoes a waiting cancel (Plans end at renewal, Stage 0 ruling 4). */
   keepPlan: () => void;
+  /** Change which tournament you keep (Stage 2, G2): opens its form window while a move to the free plan waits. */
+  changePick?: () => void;
   /** A checkout change asks how to pay first (the payment step) unless the cycle is already chosen, as in the details panel. */
   change: (change: BillingPlanChange<string>, cycle?: BillingCycle) => void; details: (key: string) => void;
   choose: (key: string, cycle: BillingCycle) => void; retry: () => void;
@@ -89,6 +93,70 @@ function LockedCard({ orgName }: { orgName: string }) {
   return <div className={styles.lockedCard}>
     <h2 className={styles.lockedTitle}>{W.page.lockedTitle}</h2><p className={styles.lockedBody}>{W.page.lockedBody(orgName)}</p>
   </div>;
+}
+
+/**
+ * The band under the plan card while a move to the free plan waits (Stage 2 Part B, G2; Stage 0 drawing "The page"): the
+ * white callout with an olive edge naming what stays and what goes on the date. Amber only when the kept tournament is
+ * gone and there is a choice to make (Stage 0 Ask 8). The door appears only when there is a choice at all.
+ */
+function MoveBand({ move, movesAt, retentionDays, onChange, disabled }: {
+  move: WaitingMoveView; movesAt: string; retentionDays: number; onChange?: () => void; disabled: boolean;
+}) {
+  const B = W.downgrade.band;
+  const target = PLAN_CONFIG[move.targetPlan];
+  const gone = move.fellBack && move.choose;
+  return <div className={`${styles.waitCallout} ${styles.moveBandFrame} ${gone ? '' : styles.moveBand}`} id="billing-move-band">
+    <CoachEyebrow>{B.eyebrow(movesAt)}</CoachEyebrow>
+    <p className={styles.moveBandText}>{gone ? B.gone(move.keepIds.length > 0, move.kept[0]?.name ?? '', movesAt)
+      : move.kept.length > 0 ? <>{B.youKeep} <strong>{joinWithAnd(move.kept.map(t => t.name))}</strong>. {B.archived(move.archived.map(t => t.name), retentionDays)}</>
+      : B.none(target.label, target.tournamentLimit, retentionDays)}</p>
+    {move.choose && onChange && <button type="button" className={styles.link} onClick={onChange} disabled={disabled}>{gone ? B.choose : B.change}</button>}
+  </div>;
+}
+
+/** The downgrade's tournament checkboxes: the Downgrade window's pick and Change which tournament you keep (one list). */
+function TournamentChoices({ tournaments, ids, onToggle, note }: {
+  tournaments: BillingDowngrade['tournaments']; ids: string[]; onToggle: (id: string, on: boolean) => void;
+  note?: (tournament: BillingDowngrade['tournaments'][number]) => ReactNode;
+}) {
+  return <ul className={styles.choices}>{tournaments.map(t => <li key={t.id}><label>
+    <input type="checkbox" checked={ids.includes(t.id)} onChange={event => onToggle(t.id, event.target.checked)} />
+    {note ? <span>{t.name}<small className={`${styles.hint} ${styles.choiceNote}`}>{note(t)}</small></span> : t.name}
+  </label></li>)}</ul>;
+}
+
+type PickState = { read: BillingRead<BillingDowngrade>; ids: string[]; stored: string[]; error: string | null };
+/**
+ * Change which tournament you keep (Stage 2 Part B, G2; Stage 0 drawing): a 520px form window over a fresh read of what
+ * holds a slot now. The stored pick reads "your choice so far"; one made after the move was scheduled, "added {date}".
+ */
+function PickWindow({ orgName, endsAt, since, pick, busy, onToggle, onSave, onClose }: {
+  orgName: string; endsAt: string; since: string; pick: PickState; busy: boolean;
+  onToggle: (id: string, on: boolean) => void; onSave: () => void; onClose: () => void;
+}) {
+  const P = W.downgrade.pick;
+  const data = pick.read.status === 'ready' ? pick.read.data : null;
+  const changed = pick.ids.length !== pick.stored.length || pick.ids.some(id => !pick.stored.includes(id));
+  // Compared as instants: the database's and the change log's timestamps are written differently.
+  const sinceAt = Date.parse(since);
+  const note = (t: BillingDowngrade['tournaments'][number]) => {
+    const extra = pick.stored.includes(t.id) ? P.yourChoice : t.createdAt && Date.parse(t.createdAt) > sinceAt ? P.added(t.createdAt) : null;
+    return extra ? `${P.status(t.status)} · ${extra}` : P.status(t.status);
+  };
+  return <KitDialog kind="form" title={P.title} onClose={onClose} busy={busy} dirty={changed}
+    footerStart={<span>{P.footer(endsAt)}</span>}
+    footer={<><DialogCancel>{W.downgrade.close}</DialogCancel>
+      <button type="button" className="btn btn-lime" onClick={onSave} disabled={busy || !data || !changed || pick.ids.length !== data.allowedKeepCount}>{busy ? P.saving : P.save}</button></>}
+  >
+    <DialogReason className={styles.dangerText}>{pick.error}</DialogReason>
+    {pick.read.status === 'loading' && <LoadingState inline label={P.loading} />}
+    {pick.read.status === 'error' && <PageNotice notice={{ tone: 'bad', text: pick.read.error }} />}
+    {data && <>
+      <p>{P.intro(orgName, data.targetPlanLabel, endsAt, data.allowedKeepCount, data.retentionDays)}</p>
+      <TournamentChoices tournaments={data.tournaments} ids={pick.ids} onToggle={onToggle} note={note} />
+    </>}
+  </KitDialog>;
 }
 
 /** The actual billing presentation, also rendered by the isolated profile fixtures. No portal chrome or providers. */
@@ -127,11 +195,18 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   // Plans end at the renewal date (Stage 0 rulings 1–3): a waiting cancel takes the plan card's waiting-change line, and
   // the change doors and Reduce or cancel are absent until it is kept.
   const pending = ownBilling && !cancelled ? preflight?.ending?.pending ?? null : null;
+  // Stage 2: the waiting change is a cancel or a MOVE to the free plan. A move keeps the Active chip and Reduce or cancel
+  // (a cancel replaces it, ruling 4); its line is the waiting-move line, and the band below the card names what stays.
+  const pendingMove = pending?.kind === 'downgrade' ? pending : null;
+  const pendingCancel = pending && !pendingMove ? pending : null;
+  const moveTarget = pendingMove?.move.targetPlan ?? null;
   const keepLabel = pending ? W.cancel.keepDoor(ownProfile.key as OrgPlan) : '';
   // "Ends on {date}" with Keep {Plan}: the olive link on a desk, the full-width lime button on a phone (Stage 0 ruling 7).
   // The door is the lime button beside "Payment method & invoices" at every width (owner 2026-11-03: the sentence-end link
   // was the least noticeable thing on the card); the line above it is the date alone.
-  const keepLine = pending && <p className={styles.scheduled}>{W.plan.endsOn(pending.endsAt, org.subscriptionStatus === 'trialing')}</p>;
+  const keepLine = pending && <p className={styles.scheduled}>{pendingMove
+    ? W.plan.scheduled(PLAN_CONFIG[pendingMove.move.targetPlan].label, pendingMove.endsAt)
+    : W.plan.endsOn(pending.endsAt, org.subscriptionStatus === 'trialing')}</p>;
   const keepButton = pending && <button type="button" className={`btn btn-lime ${styles.keepButton}`} disabled={a.busy !== null} onClick={a.keepPlan}>{keepLabel}</button>;
   const trialingNow = org.subscriptionStatus === 'trialing';
   const changes = ownProfile.changes;
@@ -261,7 +336,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     <CoachCard className={styles.planCard}>
       <div className={styles.planGrid}>
         <div className={styles.planSide}>
-          <CoachEyebrow chip={<CoachChip tone={pending ? 'warn' : staffFree ? band?.tone === 'amber' ? 'warn' : 'good' : org.subscriptionStatus === 'canceled' ? 'danger' : org.subscriptionStatus === 'past_due' ? 'warn' : 'good'}>{pending ? W.plan.ending : portalCopy?.band.eyebrow ?? (staffFree ? freeCopy?.band.eyebrow : W.plan.status(org.subscriptionStatus))}</CoachChip>}>{W.page.sections.plan}</CoachEyebrow>
+          <CoachEyebrow chip={<CoachChip tone={pendingCancel ? 'warn' : staffFree ? band?.tone === 'amber' ? 'warn' : 'good' : org.subscriptionStatus === 'canceled' ? 'danger' : org.subscriptionStatus === 'past_due' ? 'warn' : 'good'}>{pendingCancel ? W.plan.ending : portalCopy?.band.eyebrow ?? (staffFree ? freeCopy?.band.eyebrow : W.plan.status(org.subscriptionStatus))}</CoachChip>}>{W.page.sections.plan}</CoachEyebrow>
           <h2 className={styles.planName}>{profile.config.label}</h2>
           {s.freeTime.status === 'loading' ? <LoadingState inline label={W.page.loading} /> : <p className={styles.planPrice}>{price}</p>}
           {freeCard && <p className={styles.hint}>{freeCard.from}</p>}
@@ -318,6 +393,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
         </div>
       </div>
     </CoachCard>
+    {pendingMove && <MoveBand move={pendingMove.move} movesAt={pendingMove.endsAt} retentionDays={preflight?.retentionDays ?? ownProfile.retentionDays} onChange={a.changePick} disabled={disabled} />}
     {band && <FreeTimeBand band={band} action={endingContact ? { label: W.change.contact, href: CONTACT_HREF } : undefined} />}
     {freeCopy?.billingCard && <p className={styles.hint}>{freeCopy.billingCard}{endingContact && <> <a href={CONTACT_HREF} className={styles.link}>{W.change.contact}</a></>}</p>}
     {portalCopy?.billingCard && <p className={styles.hint}>{portalCopy.billingCard}</p>}
@@ -352,7 +428,9 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
       {/* Part C (f): held until the cancel read lands — a waiting cancel makes these doors absent, so they never flash first. */}
       {showChanges && changes.length > 0 && s.cancellation.status === 'loading' && <LoadingState inline label={W.page.loading} />}
       {showChanges && changes.length > 0 && s.cancellation.status !== 'loading' && <>
-        {pending && <p className={styles.waitCallout}>{W.cancel.endingRefusal(ownProfile.key as OrgPlan, pending.endsAt)}</p>}
+        {pending && <p className={styles.waitCallout}>{pendingMove
+          ? W.downgrade.waitingRefusal(ownProfile.key as OrgPlan, pendingMove.move.targetPlan, pendingMove.endsAt)
+          : W.cancel.endingRefusal(ownProfile.key as OrgPlan, pending.endsAt)}</p>}
         <div className={styles.tableFrame}><table className={styles.table}>
           <thead><tr><th scope="col">{W.change.headings.plan}</th><th scope="col">{W.change.headings.holds}</th><th scope="col" className={styles.num}>{W.change.headings.monthly}</th><th scope="col" className={styles.num}>{W.change.headings.annual}</th><th scope="col"><span className={styles.srOnly}>{W.change.headings.choice}</span></th></tr></thead>
           <tbody>{changeKeys.map(key => {
@@ -364,8 +442,9 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
               <td data-label={W.change.headings.monthly} className={styles.num}>{target.config.monthlyPrice === 0 ? W.plan.free : formatPriceAmount(target.config.monthlyPrice)}</td>
               <td data-label={W.change.headings.annual} className={styles.num}>{target.config.annualPrice === 0 ? W.plan.free : formatPriceAmount(target.config.annualPrice)}</td>
               <td data-label={W.change.headings.choice}>{key === ownProfile.key ? <CoachChip tone="good">{W.change.current}</CoachChip>
-                // A waiting cancel: the doors are absent, not disabled; the line above the table says why (Stage 0 ruling 3).
-                : pending ? null
+                // A waiting cancel or move: the doors are absent, not disabled; the line above the table says why (Stage 0
+                // ruling 3). A waiting move's own plan shows the "From {date}" chip, as a waiting paid move's does.
+                : pending ? key === moveTarget ? <CoachChip tone="warn">{W.plan.scheduledFrom(pending.endsAt)}</CoachChip> : null
                 : scheduled?.toPlan === key ? <CoachChip tone="warn">{W.plan.scheduledFrom(scheduled.effectiveAt)}</CoachChip>
                   // A Founding Season comp has no subscription to reduce; the old page hid the downgrade with Cancel.
                   : founding && change?.mechanism === 'downgrade' ? null
@@ -392,7 +471,8 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
         {profiles[key].cancellationKind === 'premium' && s.gating.status !== 'loading' && (sale(key) ? <a href={COACHES_START_PATH} className={`btn btn-outline ${styles.discoveryAction}`}>{W.shelf.startCoach}</a> : <a href={CONTACT_HREF} className={`${styles.link} ${styles.discoveryAction}`}>{W.change.contact}</a>)}
       </CoachCard>)}</div>
     </Section>}
-    {controlsReady && paid && ownBilling && !founding && !pending && <Section id="billing-cancel" title={W.page.sections.cancel}>
+    {/* A waiting cancel hides this; a waiting move keeps it — a cancel replaces the move (Stage 2 ruling 4). */}
+    {controlsReady && paid && ownBilling && !founding && !pendingCancel && <Section id="billing-cancel" title={W.page.sections.cancel}>
       {/* A subscription that waits for a date it can't name: no door that would promise one, or wrongly say "now". */}
       {preflight?.ending?.waits && !preflight.ending.endsOn ? <><p role="alert" className={styles.hint}>{W.errors.read('the renewal date')}</p>{retry}</>
         : preflight ? <>
@@ -477,7 +557,42 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
   const cancellation = useBillingRead<BillingCancellation>(`/api/billing/cancel/preflight?${scope}`, version);
   const move = useBillingRead<BillingMove>(ownProfile.changes.some(c => c.mechanism === 'move') && org.subscriptionStatus !== 'canceled' ? `/api/billing/move?${scope}` : null, version);
   const pendingEnding = cancellation.status === 'ready' && org.subscriptionStatus !== 'canceled' ? cancellation.data.ending?.pending ?? null : null;
+  // Stage 2: the waiting change is a move to the free plan (its band, Change which tournament you keep, the Keep sentence).
+  const waitingMove = pendingEnding?.kind === 'downgrade' ? pendingEnding : null;
   const openKeep = () => { setKeepError(null); setKeepOpen(true); };
+  // Change which tournament you keep (G2): a fresh read of what holds a slot NOW (the downgrade review, so a tournament
+  // made during the wait is in the list), the stored pick ticked where it still holds one.
+  const [pick, setPick] = useState<PickState | null>(null);
+  async function openPick() {
+    if (!waitingMove || busyRef.current) return;
+    const stored = waitingMove.move.keepIds;
+    setPick({ read: { status: 'loading' }, ids: [], stored, error: null });
+    try {
+      // org-slug-ok: post() adds orgSlug to every body
+      const data = await post('/api/billing/downgrade/preflight', { targetPlan: waitingMove.move.targetPlan }) as BillingDowngrade;
+      if (!live.current) return;
+      const holding = new Set(data.tournaments.map(t => t.id));
+      // The stored pick as far as it still holds a slot: a gone one is neither ticked nor counted as a change to discard.
+      const stillHeld = stored.filter(id => holding.has(id));
+      setPick(p => p && { ...p, read: { status: 'ready', data }, ids: stillHeld, stored: stillHeld });
+    } catch (error) {
+      if (live.current) setPick(p => p && { ...p, read: { status: 'error', error: error instanceof Error ? error.message : W.errors.downgradeReview } });
+    }
+  }
+  async function savePick() {
+    if (!pick || pick.read.status !== 'ready' || !waitingMove) return;
+    const { ids, read: { data } } = pick;
+    await run('pick', async () => {
+      try {
+        // org-slug-ok: post() adds orgSlug to every body
+        await post('/api/billing/downgrade/pick', { keepTournamentIds: ids });
+        if (!live.current) return;
+        setPick(null);
+        setNotice({ tone: 'good', text: W.downgrade.pick.saved(waitingMove.endsAt, data.tournaments.filter(t => ids.includes(t.id)).map(t => t.name)) });
+        reloadAfterAction();
+      } catch (error) { if (live.current) setPick(p => p && { ...p, error: error instanceof Error ? error.message : W.errors.generic }); }
+    });
+  }
   const [retrying, setRetrying] = useState(false);
   const reload = useCallback(async () => {
     try { await refresh(); }
@@ -587,6 +702,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
     // A `keep_plan` arrival that found nothing waiting must not open Keep over the cancel this starts.
     cancel: () => { if (cancellation.status === 'ready') { setKeepOpen(false); setReason(''); setReviewError(null); setReview({ kind: 'cancel', data: cancellation.data }); } },
     keepPlan: openKeep,
+    changePick: () => void openPick(),
     change: (change, chosen) => {
       if (change.mechanism === 'move') setMoveTo(change.target as OrgPlan);
       else if (change.mechanism === 'downgrade') void openDowngrade(change.target as OrgPlan);
@@ -618,6 +734,10 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
   const trialing = org.subscriptionStatus === 'trialing';
   // A cheaper move waiting at renewal: the cancel sets it aside, and Keep {Plan} brings it back (gap review G1).
   const heldMove = move.status === 'ready' ? move.data.scheduledMove : null;
+  // Stage 2 Part B: a paying subscription's move to the free plan waits for its date; none to wait for, it moves at the
+  // click (ruling 3). A waiting move whose date is missing says so and offers no confirm (as the Cancel section does).
+  const movesOn = downgrade?.when?.waits ? downgrade.when.movesOn : null;
+  const moveDateMissing = Boolean(downgrade?.when?.waits && !movesOn);
   const period = org.subscriptionPeriod ?? 'monthly';
   const listPrice = (key: OrgPlan) => W.plan.charge(key, period);
   // The Keep window names the charge: what the subscription charges when the webhook recorded it, else the price list.
@@ -636,6 +756,9 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
       if (cancel && result.outcome === 'scheduled') {
         if (typeof result.notice === 'string') setWaitNotice(result.notice);
         else setNotice({ tone: 'good', text: W.notice.ending(premium ? 'Premium' : org.name, result.endsAt ?? null) });
+      // A move to the free plan that waits for its date: the notice says when, never "your plan is now" (Stage 2).
+      } else if (downgrade && result.outcome === 'scheduled') {
+        setNotice({ tone: 'good', text: W.move.scheduled(org.name, target!.config.label, result.movesAt ?? null) });
       } else setNotice({ tone: 'good', text: cancel ? premium ? W.notice.premiumCancelled(cancel.retentionDays) : W.notice.cancelled(org.name, cancel.retentionDays)
         : W.notice.downgraded(target!.config.label, result.retainedCount ?? 0, downgrade!.retentionDays) });
       reloadAfterAction();
@@ -684,13 +807,16 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
         <p>{W.cancel.keepThenMove(PLAN_CONFIG[pendingEnding.heldMovePlan].label, listPrice(pendingEnding.heldMovePlan))}</p>
       </> : <>
         <p>{(trialing ? W.cancel.keepTrial : W.cancel.keepRenews)(org.name, ownProfile.config.label, pendingEnding.endsAt, ownPrice)}</p>
-        <p>{W.cancel.keepNothingElse}</p>
+        <p>{waitingMove ? W.downgrade.keepMoveOff(PLAN_CONFIG[waitingMove.move.targetPlan].label) : W.cancel.keepNothingElse}</p>
       </>}
     </KitDialog>}
+    {pick && waitingMove && <PickWindow orgName={org.name} endsAt={waitingMove.endsAt} since={waitingMove.move.since} pick={pick} busy={busy !== null}
+      onToggle={(id, on) => setPick(p => p && { ...p, error: null, ids: on ? [...p.ids, id] : p.ids.filter(x => x !== id) })}
+      onSave={() => void savePick()} onClose={() => setPick(null)} />}
     {review && <KitDialog kind="form" title={review.kind === 'cancel' ? endsOn && !premium ? W.cancel.waitTitle(ownProfile.config.label) : premium ? W.cancel.premiumTitle : W.cancel.orgTitle(org.name) : target ? W.downgrade.title(target.config.label) : W.page.sections.change} onClose={closeReview} busy={busy !== null} dirty={reason.trim().length > 0 || Boolean(downgrade?.requiresTournamentChoice && keepIds.length)}
-      footerStart={cancel || downgrade ? <span>{endsOn ? W.cancel.waitFooter(endsOn) : W.cancel.footer((cancel ?? downgrade)!.retentionDays)}</span> : undefined}
+      footerStart={cancel || downgrade ? <span>{endsOn ? W.cancel.waitFooter(endsOn) : movesOn ? W.downgrade.movesFooter(movesOn) : W.cancel.footer((cancel ?? downgrade)!.retentionDays)}</span> : undefined}
       footer={<><DialogCancel>{keepLabel}</DialogCancel>
-        {(cancel || downgrade) && <button type="button" className={cancel ? 'btn btn-danger' : 'btn btn-lime'} onClick={() => void confirmReview()} disabled={busy !== null || Boolean(downgrade?.requiresTournamentChoice && keepIds.length !== downgrade.allowedKeepCount)}>{busy === 'confirm' ? cancel ? W.cancel.working : W.downgrade.applying : cancel ? endsOn ? W.cancel.waitConfirm(endsOn) : premium ? W.cancel.premiumConfirm : W.cancel.confirm : W.downgrade.confirm(target!.config.label)}</button>}</>}
+        {(cancel || downgrade) && <button type="button" className={cancel ? 'btn btn-danger' : 'btn btn-lime'} onClick={() => void confirmReview()} disabled={busy !== null || moveDateMissing || Boolean(downgrade?.requiresTournamentChoice && keepIds.length !== downgrade.allowedKeepCount)}>{busy === 'confirm' ? cancel ? W.cancel.working : W.downgrade.applying : cancel ? endsOn ? W.cancel.waitConfirm(endsOn) : premium ? W.cancel.premiumConfirm : W.cancel.confirm : movesOn ? W.downgrade.confirmOn(movesOn) : W.downgrade.confirm(target!.config.label)}</button>}</>}
     >
       <DialogReason className={styles.dangerText}>{reviewError}</DialogReason>
       {review.kind === 'downgrade' && review.read.status === 'loading' && <LoadingState inline label="Loading plan-change review…" />}
@@ -698,6 +824,8 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
       {cancel && endsOn && <>
         <p className={styles.waitCallout}>{trialing ? W.cancel.trialStays(org.name, endsOn) : premium ? W.cancel.premiumStays(endsOn) : W.cancel.stays(org.name, endsOn)}</p>
         {heldMove && <p className={styles.waitCallout}>{W.cancel.moveSetAside(PLAN_CONFIG[heldMove.toPlan].label, heldMove.effectiveAt, keepLabel)}</p>}
+        {/* Stage 2 ruling 4: a cancel over a waiting move to the free plan replaces it; a later Keep returns the full plan. */}
+        {waitingMove && <p className={styles.waitCallout}>{W.cancel.replacesMove(PLAN_CONFIG[waitingMove.move.targetPlan].label, waitingMove.endsAt, ownProfile.config.label)}</p>}
         <p>{premium ? W.cancel.premiumOnDate(endsOn, cancel.retentionDays) : W.cancel.onDate(org.name, cancel.shortShutsDown, endsOn, cancel.retentionDays)}</p>
         <p>{W.cancel.keepAnyTime(premium ? 'Premium' : ownProfile.config.label, endsOn)}</p>
         <h3 className={`${styles.sectionTitle} ${styles.reviewHeading}`}>{premium ? W.cancel.premiumOfflineOn(endsOn) : W.cancel.offlineOn(endsOn)}</h3>
@@ -714,12 +842,16 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
         <PaymentsEndingSection section={cancel.onlinePayments} ending={{ kind: 'cancel' }} />
       </>}
       {downgrade && target && <>
-        <p>{W.downgrade.when}</p>
+        {/* Stage 2 Part B: the move waits for the date (the drawing's words); no paid period → it moves now, and says why. */}
+        {moveDateMissing ? <p role="alert" className={styles.hint}>{W.errors.read('the renewal date')}</p>
+          : movesOn ? <p>{W.downgrade.whenOn(movesOn, ownProfile.config.label, trialing)}</p>
+          : downgrade.when ? <p className={styles.waitCallout}>{W.downgrade.noPeriod(org.name)}</p>
+          : <p>{W.downgrade.when}</p>}
         <p>{W.downgrade.capacity(downgrade.targetTournamentLimit)}</p><p>{W.downgrade.inUse(downgrade.activeTournamentCount)}</p>
         <p>{W.downgrade.lost(target.config.label, ownProfile.config.label, ownProfile.downgradeLosses ?? [])}</p>
-        <p>{downgrade.requiresTournamentChoice ? W.downgrade.choose(downgrade.allowedKeepCount, downgrade.retentionDays) : W.downgrade.fits}</p>
-        {downgrade.requiresTournamentChoice && <ul className={styles.choices}>{downgrade.tournaments.map(tournament => <li key={tournament.id}><label><input type="checkbox" checked={keepIds.includes(tournament.id)} onChange={event => setKeepIds(ids => event.target.checked ? [...ids, tournament.id] : ids.filter(id => id !== tournament.id))} />{tournament.name}</label></li>)}</ul>}
-        <PaymentsEndingSection section={downgrade.onlinePayments} ending={{ kind: 'move', dateLong: moveDateLong(null) }} />
+        <p>{downgrade.requiresTournamentChoice ? movesOn ? W.downgrade.chooseOn(downgrade.allowedKeepCount, movesOn, downgrade.retentionDays) : W.downgrade.choose(downgrade.allowedKeepCount, downgrade.retentionDays) : W.downgrade.fits}</p>
+        {downgrade.requiresTournamentChoice && <TournamentChoices tournaments={downgrade.tournaments} ids={keepIds} onToggle={(id, on) => setKeepIds(ids => on ? [...ids, id] : ids.filter(x => x !== id))} />}
+        <PaymentsEndingSection section={downgrade.onlinePayments} ending={{ kind: 'move', dateLong: moveDateLong(movesOn) }} />
       </>}
       {(cancel || downgrade) && <div className={`${styles.field} ${styles.reviewField}`}>
         <label className={styles.label} htmlFor="billing-reason">{cancel ? W.cancel.reason : W.downgrade.reason}</label>

@@ -276,6 +276,15 @@
   background: var(--card-bg); border: 1px solid var(--home-line); border-left: 3px solid var(--warning); border-radius: 8px;
   font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary);
 }
+/* Stage 2 (Stage 0 drawing "Moves to the free plan"): the band under the plan card while a move to the free plan waits is
+   the wait callout above with an OLIVE edge (it says what stays, not a warning); it keeps the amber edge only when the
+   kept tournament is gone and the owner is asked again. */
+.moveBandFrame { display: grid; gap: 0.35rem; }
+.moveBand { border-left-color: var(--home-olive); }
+.moveBandText { margin: 0; }
+.moveBandFrame .link { justify-self: start; }
+/* Change which tournament you keep: the grey line (`.hint`) under a choice ("Draft · your choice so far"). */
+.choiceNote { display: block; }
 /* Keep {Plan}: a lime button beside "Payment method & invoices" on a desk (owner 2026-11-03, replacing the sentence-end
    link); on a phone full width at the 44px tap floor, on its own row (Stage 0 ruling 7). */
 .keepButton.keepButton { display: inline-flex; align-items: center; }

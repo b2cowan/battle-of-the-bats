@@ -21,7 +21,7 @@ import { syncTeamWorkspaceSubscription } from './team-checkout';
 import { PLAN_BILLING_WORDS as W } from './plan-billing-words';
 import { endingEmail, type EndingEmailFacts } from './plan-ending-emails';
 import {
-  askingDoor, clickedAt, daysOverdue, endingEmailTiming, isOverdueEnding, pickAppliedEnding, sendDueEndingEmails,
+  askingDoor, clickedAt, daysOverdue, endingEmailTiming, isOverdueEnding, moveTargetOf, pickAppliedEnding, sendDueEndingEmails,
   type EndingAccount, type EndingDeps, type EndingEmail, type EndingEmailStamp, type EndingIntent, type NewEndingIntent, type OverdueEnding,
 } from './plan-ending';
 import { INTENT_COLUMNS, findPending, fromRow, toRow, updateIntent, type IntentRow } from './plan-ending-store';
@@ -180,6 +180,7 @@ export async function readOverdueEndings(now: Date): Promise<OverdueEnding[]> {
       daysOver: daysOverdue(i, now),
       door: asked?.door ?? null,
       by: asked?.by ?? i.createdByEmail,
+      movesTo: i.intentType === 'downgrade' ? PLAN_CONFIG[moveTargetOf(i)].label : null,
     };
   });
 }

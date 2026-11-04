@@ -24,7 +24,7 @@ import {
   OVERDUE_GRACE_DAYS, applyEnding, clickedAt, keepInProgress, keptOnTheDate, scheduleDowngrade, waitingState, endedAtFor, endingForDeletedSubscription, finishOverdueEnding, futureMoveAnswer, hasRealSubscription,
   askingDoor, endingEmailTiming, reminderDue, sendDueEndingEmails, stripeIdToStopNow, upcomingDate,
   isOverdueEnding, keepEnding, pickAppliedEnding, recordStripeSignal, retentionUntilFrom, scheduleEnding, stripeCancelSignal,
-  waitingMoveOf, type EndedEvent, type EndingAccount, type EndingActor, type EndingDeps, type EndingEmail, type EndingIntent,
+  waitingMoveOf, waitingMoveView, changeKeptTournaments, type EndedEvent, type EndingAccount, type EndingActor, type EndingDeps, type EndingEmail, type EndingIntent,
   type RetainedRecordRow, type DowngradedEvent, type SlotHolder,
 } from '../../lib/plan-ending.ts';
 import { formatStoredDate } from '../../lib/timezone.ts';
@@ -608,8 +608,9 @@ describe('7 · the doors', () => {
   });
 
   it('while a cancel waits, a move and a downgrade are refused (decision 5); other immediate endings withdraw it', () => {
-    // Stage 2: the refusal reads the waiting row only to name what comes on the date (an end or a move to the free plan).
-    assert.match(readCode('lib/plan-move.ts'), /const ending = stripeCancelSignal\(live\.sub\);\s*if \(ending\.scheduled\) \{\s*const waiting = await readPendingEnding\(org\.id\)[^;]*;\s*const answer = futureMoveAnswer\('plan_move'/);
+    // Stage 2: the refusal reads the waiting row to name what comes on the date (an end or a move to the free plan) — and
+    // since Part B, the row alone refuses too (a click whose Stripe answer was lost has no flag yet).
+    assert.match(readCode('lib/plan-move.ts'), /const ending = stripeCancelSignal\(live\.sub\);[\s\S]{0,400}const waiting = await readPendingEnding\(org\.id\)[^;]*;\s*if \(ending\.scheduled \|\| waiting\) \{[\s\S]{0,200}const answer = futureMoveAnswer\('plan_move'/);
     // Stage 2: the downgrade route writes nothing itself; scheduleDowngrade asks the one rule before its first write.
     const downgrade = readCode('app/api/billing/downgrade/confirm/route.ts');
     assert.doesNotMatch(downgrade, /\.from\('billing_retention_intents'\)/);
@@ -1321,5 +1322,131 @@ describe('8 · a move to the free plan waits for the renewal date (Stage 2)', ()
     assert.ok(code.indexOf("account.subscriptionStatus === 'canceled'") < code.indexOf('scheduleDowngrade('));
     assert.match(code, /scheduleDowngrade\(account,/);
     assert.doesNotMatch(code, /create_prorations|subscriptions\.update|\.from\('tournaments'\)/, 'no immediate price swap, no archive of its own');
+  });
+});
+
+// Plans end at the renewal date, Stage 2 Part B (screens): the band's view of a waiting move and Change which you keep (G2).
+describe('9 · a waiting move: the band and Change which tournament you keep (Stage 2 Part B)', () => {
+  const MOVE = { targetPlan: 'tournament' as const, keepTournamentIds: ['t-1'], reason: null };
+  async function waitingMove(tournaments = ['t-1', 't-2']) {
+    const w = world({ tournaments });
+    const result = await scheduleDowngrade(account(), OWNER, MOVE, w.deps);
+    assert.equal(result.outcome, 'scheduled');
+    return w;
+  }
+  const holdersOf = (w: World) => w.deps.slotHolders('org-1');
+
+  it('the band says what the DATE would do — the same rule, so it can never name another tournament', async () => {
+    const w = await waitingMove();
+    const view = waitingMoveView(w.only(), await holdersOf(w));
+    const onTheDate = keptOnTheDate(await holdersOf(w), w.only().keepTournamentIds, 1);
+    assert.deepEqual(view.kept.map(t => t.id), onTheDate.kept.map(t => t.id));
+    assert.deepEqual(view.kept.map(t => t.id), ['t-1']);
+    assert.deepEqual(view.archived.map(t => t.id), ['t-2']);
+    assert.equal(view.fellBack, false);
+    assert.equal(view.choose, true, 'two slot holders, the free plan holds one: there is a choice');
+    assert.equal(view.targetPlan, 'tournament');
+    assert.equal(view.since, clickedAt(w.only()), 'the click: a tournament made after it reads "added {date}"');
+  });
+
+  it('a tournament made during the wait is in the band as archived — and choosable', async () => {
+    const w = await waitingMove();
+    w.live.add('t-new');
+    w.created.set('t-new', '2026-12-01T00:00:00.000Z');
+    const view = waitingMoveView(w.only(), await holdersOf(w));
+    assert.deepEqual(view.archived.map(t => t.id).sort(), ['t-2', 't-new']);
+    const saved = await changeKeptTournaments(account(), OWNER, ['t-new'], w.deps);
+    assert.deepEqual(saved, { outcome: 'saved', keepIds: ['t-new'] });
+    assert.deepEqual(w.only().keepTournamentIds, ['t-new']);
+    assert.equal(w.only().status, 'pending', 'the move still waits');
+    assert.equal(w.only().changeLog.at(-1)?.action, 'pick_changed');
+  });
+
+  it('the kept one gone: the band falls back to the newest, and asks again only when there is a choice', async () => {
+    const w = await waitingMove(['t-1', 't-2', 't-3']);
+    w.live.delete('t-1');
+    const gone = waitingMoveView(w.only(), await holdersOf(w));
+    assert.equal(gone.fellBack, true);
+    assert.equal(gone.choose, true);
+    assert.deepEqual(gone.kept.map(t => t.id), ['t-3'], 'the newest (Stage 0 Ask 8)');
+    w.live.delete('t-2');
+    const one = waitingMoveView(w.only(), await holdersOf(w));
+    assert.equal(one.choose, false, 'one left: it is simply kept — no amber ask, no door');
+    assert.deepEqual(one.kept.map(t => t.id), ['t-3']);
+  });
+
+  it('changing the pick touches nothing else: no Stripe call, no archive, no plan change', async () => {
+    const w = await waitingMove();
+    const before = w.calls.length;
+    await changeKeptTournaments(account(), OWNER, ['t-2'], w.deps);
+    const after = w.calls.slice(before);
+    assert.ok(after.every(c => c === 'slotHolders' || c === 'db:update'), after.join(' → '));
+    assert.deepEqual([...w.live].sort(), ['t-1', 't-2']);
+    assert.equal(w.sub.cancel_at_period_end, true);
+  });
+
+  it('refuses in plain words: nothing waiting, a cancel waiting, nothing to choose, the wrong count, a gone tournament', async () => {
+    const none = world();
+    assert.deepEqual(await changeKeptTournaments(account(), OWNER, ['t-1'], none.deps), { outcome: 'refused', error: W.downgrade.noMoveWaiting, status: 409 });
+    const cancelling = world();
+    await scheduleEnding(account(), OWNER, { reason: null, notifyOwner: true }, cancelling.deps);
+    assert.deepEqual(await changeKeptTournaments(account(), OWNER, ['t-1'], cancelling.deps), { outcome: 'refused', error: W.downgrade.noMoveWaiting, status: 409 });
+    const single = await waitingMove(['t-1']);
+    assert.deepEqual(await changeKeptTournaments(account(), OWNER, ['t-1'], single.deps), { outcome: 'refused', error: W.downgrade.nothingToChoose, status: 409 });
+    const w = await waitingMove();
+    assert.deepEqual(await changeKeptTournaments(account(), OWNER, ['t-1', 't-2'], w.deps), { outcome: 'refused', error: W.downgrade.chooseCount(1), status: 400 });
+    assert.deepEqual(await changeKeptTournaments(account(), OWNER, ['t-gone'], w.deps), { outcome: 'refused', error: W.downgrade.pickGone, status: 409 });
+    assert.deepEqual(w.only().keepTournamentIds, ['t-1'], 'a refusal changes nothing');
+  });
+
+  it('a pick saved over a row Keep withdrew a moment before is refused, never written', async () => {
+    const w = await waitingMove();
+    const row = w.only();
+    const deps: EndingDeps = { ...w.deps, findPending: async () => row }; // read before Keep landed
+    w.intents.set(row.id, { ...row, status: 'canceled' });
+    assert.deepEqual(await changeKeptTournaments(account(), OWNER, ['t-2'], deps), { outcome: 'refused', error: W.downgrade.changedMeanwhile, status: 409 });
+    assert.deepEqual(w.only().keepTournamentIds, ['t-1']);
+  });
+
+  it('/review · the choice closes on the date: the move may already be running, so a pick then is refused, not "saved" and lost', async () => {
+    const w = await waitingMove();
+    w.state.now = new Date(RENEWAL);
+    assert.deepEqual(await changeKeptTournaments(account(), OWNER, ['t-2'], w.deps), { outcome: 'refused', error: W.downgrade.pickTooLate, status: 409 });
+    w.state.now = new Date(new Date(RENEWAL).getTime() + 5 * 86_400_000);
+    assert.equal((await changeKeptTournaments(account(), OWNER, ['t-2'], w.deps)).outcome, 'refused', 'overdue too');
+    assert.deepEqual(w.only().keepTournamentIds, ['t-1']);
+  });
+
+  it('a changed pick does not reset the click’s 15-minute window (a late Stripe event of the click is still ours)', async () => {
+    const w = await waitingMove();
+    await changeKeptTournaments(account(), OWNER, ['t-2'], w.deps);
+    assert.equal(keepInProgress(w.only(), NOW), true, 'the click’s "scheduled" is still the entry that counts');
+    assert.equal(keepInProgress(w.only(), new Date(NOW.getTime() + 16 * 60_000)), false);
+  });
+
+  it('the date keeps the CHANGED pick, and moves — never suspends', async () => {
+    const w = await waitingMove();
+    await changeKeptTournaments(account(), OWNER, ['t-2'], w.deps);
+    const result = await endingForDeletedSubscription(account(), { ...w.sub, status: 'canceled', ended_at: unix(RENEWAL) } as unknown as Stripe.Subscription, w.deps);
+    assert.equal(result.kind, 'moved');
+    assert.deepEqual([...w.live], ['t-2']);
+    assert.deepEqual([...w.archived], ['t-1']);
+    assert.equal(w.suspensions.length, 0);
+  });
+
+  it('the wiring: the pick route is owner-only, live accounts only, and goes through the one function', () => {
+    const code = readCode('app/api/billing/downgrade/pick/route.ts');
+    assert.match(code, /ctx\.role !== 'owner'\) return forbidden\(\)/);
+    assert.doesNotMatch(code, /allowSuspendedOrg/);
+    assert.match(code, /changeKeptTournaments\(\{ orgId: ctx\.org\.id \},/);
+    assert.doesNotMatch(code, /\.from\('billing_retention_intents'\)|getStripe/, 'no write of its own, no Stripe');
+    const review = readCode('app/api/billing/cancel/preflight/route.ts');
+    assert.match(review, /waitingMoveView\(pending, await getSlotHoldingTournaments/);
+    assert.match(review, /kind: 'downgrade', move: waitingMoveView/);
+    // /billing 2026-11-04: our waiting row alone refuses a move (a click whose Stripe answer was lost has no flag yet).
+    const move = readCode('lib/plan-move.ts');
+    assert.match(move, /const waiting = await readPendingEnding\(org\.id\)[^\n]*\n\s*if \(ending\.scheduled \|\| waiting\) \{/);
+    const downgradeReview = readCode('app/api/billing/downgrade/preflight/route.ts');
+    assert.match(downgradeReview, /waitingDate\(account, ctx\.org\.currentPeriodEnd, new Date\(\)\)/);
   });
 });

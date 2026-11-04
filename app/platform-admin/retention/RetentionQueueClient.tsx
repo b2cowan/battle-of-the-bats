@@ -74,7 +74,7 @@ function OverdueEndings({ overdue }: { overdue: OverdueEnding[] | 'failed' }) {
                   return (
                     <tr key={row.orgId}>
                       <td className="table-cards-title"><Link href={href} className={kit.nameLink}>{row.orgName}</Link></td>
-                      <td data-label="Plan">{row.planLabel} · cancel</td>
+                      <td data-label="Plan">{row.planLabel} · {row.movesTo ? `move to ${row.movesTo}` : 'cancel'}</td>
                       <td data-label="Should have ended" className={kit.nowrap}>{consoleDate(row.shouldHaveEnded)}</td>
                       <td data-label="Days over" className={kit.num}>{row.daysOver}</td>
                       <td data-label="Asked by">{askedBy(row)}</td>

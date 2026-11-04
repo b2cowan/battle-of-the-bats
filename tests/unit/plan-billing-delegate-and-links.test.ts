@@ -74,7 +74,7 @@ describe('Plan & billing is the owner’s alone', () => {
     }
   });
   it('the server doors stay owner-only', () => {
-    for (const route of ['cancel/preflight', 'cancel/confirm', 'downgrade/preflight', 'downgrade/confirm']) {
+    for (const route of ['cancel/preflight', 'cancel/confirm', 'downgrade/preflight', 'downgrade/confirm', 'downgrade/pick']) {
       assert.match(readCode(`app/api/billing/${route}/route.ts`), /ctx\.role !== 'owner'\) return forbidden\(\)/, route);
     }
   });

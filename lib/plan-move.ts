@@ -164,11 +164,14 @@ async function validateMove(org: MoveOrg, toPlan: OrgPlan): Promise<
   // charge a proration on a plan that still ends, and a down move would build a schedule on a subscription set to cancel.
   // Keep {Plan} first. Either Stripe signal counts (G8); the refusal is the one rule for a subscription's future.
   const ending = stripeCancelSignal(live.sub);
-  if (ending.scheduled) {
-    // Stage 2: the same Stripe signal is a waiting move to the free plan when our row says so — the refusal names it.
-    const waiting = await readPendingEnding(org.id).catch(() => null);
-    const answer = futureMoveAnswer('plan_move', { ownPlan: ownPlanOf(org), ...waitingState(waiting), pending: true, pendingEndsAt: ending.endsAt });
-    if (answer.answer === 'refuse') return { ok: false, refusal: { code: 'subscription_ending', error: answer.reason, endsAt: ending.endsAt } };
+  // Stage 2: the same Stripe signal is a waiting move to the free plan when our row says so — the refusal names it. And
+  // our row alone refuses too (Part B /billing, 2026-11-04): a click whose Stripe answer was lost leaves the row waiting
+  // with no flag yet, and a move then would run over the waiting change.
+  const waiting = await readPendingEnding(org.id).catch(() => null);
+  if (ending.scheduled || waiting) {
+    const endsAt = ending.endsAt ?? waiting?.effectiveAt ?? null;
+    const answer = futureMoveAnswer('plan_move', { ownPlan: ownPlanOf(org), ...waitingState(waiting), pending: true, pendingEndsAt: endsAt });
+    if (answer.answer === 'refuse') return { ok: false, refusal: { code: 'subscription_ending', error: answer.reason, endsAt } };
   }
 
   // Stage 4b: a Premium coach moves onto Club only on a subscription that is paying. A failing payment is allowed to be MOVED by

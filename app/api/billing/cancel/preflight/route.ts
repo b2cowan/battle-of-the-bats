@@ -1,9 +1,9 @@
 import { getAuthContextWithRole, forbidden, unauthorized } from '@/lib/api-auth';
-import { buildCancellationPreflight } from '@/lib/billing-retention';
+import { buildCancellationPreflight, getSlotHoldingTournaments } from '@/lib/billing-retention';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { endingSection } from '@/lib/online-payment-endings';
-import { hasRealSubscription, upcomingDate } from '@/lib/plan-ending';
+import { waitingDate, waitingMoveView } from '@/lib/plan-ending';
 import { readEndingAccount, readPendingEnding } from '@/lib/plan-ending-server';
 import type { BillingEnding } from '@/lib/plan-billing-data';
 
@@ -54,12 +54,16 @@ export const GET = withObservability(async (req: Request) => {
   let ending: BillingEnding | null = null;
   if (endingRead) {
     const [account, pending] = endingRead;
-    const waits = !!account && hasRealSubscription(account);
+    // A stored date already past (a missed invoice webhook) is no end date to promise: it reads as missing (Part C, a).
+    const { waits, on } = waitingDate(account, ctx.org.currentPeriodEnd, new Date());
+    const waiting = pending && { endsAt: pending.effectiveAt, heldMovePlan: pending.heldMovePlan };
     ending = {
-      waits,
-      // A stored date already past (a missed invoice webhook) is no end date to promise: it reads as missing (Part C, a).
-      endsOn: waits ? upcomingDate(ctx.org.currentPeriodEnd, new Date()) : null,
-      pending: pending ? { endsAt: pending.effectiveAt, heldMovePlan: pending.heldMovePlan } : null,
+      waits, endsOn: on,
+      // Stage 2 Part B: a waiting MOVE to the free plan carries its band, read from what holds a slot now (G2) through the
+      // date's own rule; a waiting cancel carries none.
+      pending: !pending || !waiting ? null : pending.intentType === 'downgrade'
+        ? { ...waiting, kind: 'downgrade', move: waitingMoveView(pending, await getSlotHoldingTournaments(ctx.org.id)) }
+        : { ...waiting, kind: 'cancellation', move: null },
     };
   }
 

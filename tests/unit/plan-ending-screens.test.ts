@@ -32,11 +32,11 @@ function page(key: OrgPlan, ending: BillingEnding | null, canManageBilling = tru
     move: ready({ live: true, scheduledMove: null }),
   };
   const noop = () => {};
-  const actions = { busy: null, cycle: 'monthly' as const, setCycle: noop, portal: noop, card: noop, reactivate: noop, keep: noop, keepPlan: noop, cancel: noop, change: noop, details: noop, choose: noop, retry: noop };
+  const actions = { busy: null, cycle: 'monthly' as const, setCycle: noop, portal: noop, card: noop, reactivate: noop, keep: noop, keepPlan: noop, changePick: noop, cancel: noop, change: noop, details: noop, choose: noop, retry: noop };
   return renderToStaticMarkup(createElement(BillingBodyView, { snapshot, profile, ownProfile: profile, actions }))
     .replaceAll('&#x27;', "'").replaceAll('&amp;', '&');
 }
-const waiting = (endsAt = ENDS, heldMovePlan: OrgPlan | null = null): BillingEnding => ({ waits: true, endsOn: endsAt, pending: { endsAt, heldMovePlan } });
+const waiting = (endsAt = ENDS, heldMovePlan: OrgPlan | null = null): BillingEnding => ({ waits: true, endsOn: endsAt, pending: { endsAt, heldMovePlan, kind: 'cancellation', move: null } });
 const count = (haystack: string, needle: string) => haystack.split(needle).length - 1;
 
 describe('the owner billing page while a cancel waits (Stage 0 rulings 1–3, 7)', () => {
@@ -163,5 +163,102 @@ describe('the operator record while a cancel waits (source)', () => {
     assert.doesNotMatch(W.cancel.moveNotRestoredStaff('Club', 'Tournament Plus', ENDS), /Your plan/);
     assert.match(W.cancel.moveNotRestoredStaff('Club', 'Tournament Plus', ENDS), /they can choose it again/);
     assert.match(readCode('app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts'), /moveNotRestoredStaff/);
+  });
+});
+
+// Plans end at the renewal date, Stage 2 Part B: the owner's page while a MOVE to the free plan waits (Stage 0 drawing
+// "Moves to the free plan"; owner rulings 2026-11-04 — Move to Club absent, band colours as drawn, the gone words).
+describe('the owner billing page while a move to the free plan waits (Stage 2 Part B)', () => {
+  const T = (id: string, name: string) => ({ id, name });
+  const moving = (move: Partial<NonNullable<NonNullable<BillingEnding['pending']>['move']>> = {}): BillingEnding => ({
+    waits: true, endsOn: ENDS, pending: { endsAt: ENDS, heldMovePlan: null, kind: 'downgrade', move: {
+      targetPlan: 'tournament', kept: [T('t-1', 'Spring Classic 2027')], archived: [T('t-2', 'Fall Invitational 2026')],
+      fellBack: false, choose: true, keepIds: ['t-1'], since: '2026-10-20T12:00:00Z', ...move,
+    } },
+  });
+
+  it('the plan card keeps Active and says the move, with ONE lime Keep button; no Ending chip, no renewal line', () => {
+    const html = page('tournament_plus', moving());
+    assert.ok(html.includes(W.plan.scheduled('Tournament', ENDS)), 'Moves to Tournament on March 1, 2027.');
+    assert.doesNotMatch(html, />Ending</);
+    assert.doesNotMatch(html, /Ends on March|Renews March/);
+    assert.match(html, /btn btn-lime[^"]*"[^>]*>Keep Tournament Plus</);
+  });
+
+  it('the band names what stays and what goes, a tournament made before the date too, with the Change door', () => {
+    const html = page('tournament_plus', moving());
+    assert.match(html, /id="billing-move-band"/);
+    assert.match(html, /On March 1, 2027/);
+    assert.match(html, /You keep <strong>Spring Classic 2027<\/strong>\. Fall Invitational 2026 is archived then and kept for 90 days, so it can come back\. So is any other tournament you make before then\./);
+    assert.ok(html.includes(W.downgrade.band.change));
+    assert.match(html, /class="waitCallout moveBandFrame moveBand" id="billing-move-band"/, 'olive, not amber: it says what stays, it is not a warning');
+  });
+
+  it('no choice to make: no door (absent, not disabled)', () => {
+    const html = page('tournament_plus', moving({ archived: [], choose: false }));
+    assert.ok(!html.includes(W.downgrade.band.change));
+    assert.match(html, /Any other tournament you make before then is archived then and kept for 90 days/);
+  });
+
+  it('the kept one gone, with a choice: the amber re-ask names the newest, without claiming why it went', () => {
+    const html = page('tournament_plus', moving({ kept: [T('t-3', 'Winter Cup 2027')], archived: [T('t-2', 'Fall Invitational 2026')], fellBack: true }));
+    assert.match(html, /class="waitCallout moveBandFrame " id="billing-move-band"/, 'the wait callout keeps its amber edge');
+    assert.match(html, /The tournament you chose to keep is no longer a draft or active event, so choose the one you keep\. If you don’t choose by March 1, we keep Winter Cup 2027, your newest\./);
+    assert.ok(html.includes(W.downgrade.band.choose));
+    assert.doesNotMatch(html, /was deleted/);
+  });
+
+  it('every change door is ABSENT — Move to Club included — the Tournament row shows "From", and one line says why', () => {
+    const html = page('tournament_plus', moving());
+    assert.ok(html.includes(W.downgrade.waitingRefusal('tournament_plus', 'tournament', ENDS)));
+    assert.doesNotMatch(html, /Downgrade to Tournament|Upgrade to|Move to Club|Contact us to move/);
+    assert.ok(html.includes(W.plan.scheduledFrom(ENDS)));
+  });
+
+  it('Reduce or cancel STAYS while a move waits (a cancel replaces it — ruling 4)', () => {
+    const html = page('tournament_plus', moving());
+    assert.match(html, /Reduce or cancel/);
+    assert.match(html, /billing-cancel-btn/);
+  });
+});
+
+describe('the windows over a waiting move (source)', () => {
+  const body = readCode('components/billing/BillingBody.tsx');
+  it('the Downgrade window says its date, and with no paid period says it moves at the click', () => {
+    assert.match(body, /W\.downgrade\.whenOn\(movesOn, ownProfile\.config\.label, trialing\)/);
+    assert.match(W.downgrade.whenOn('2027-03-01T05:00:00Z', 'Tournament Plus', true), /when your trial ends/);
+    assert.doesNotMatch(W.downgrade.whenOn('2027-03-01T05:00:00Z', 'Tournament Plus', true), /paid for|credited/, 'a trial paid for nothing');
+    assert.match(body, /W\.downgrade\.noPeriod\(org\.name\)/);
+    assert.match(body, /W\.downgrade\.confirmOn\(movesOn\)/);
+    assert.match(body, /W\.downgrade\.movesFooter\(movesOn\)/);
+    assert.match(body, /moveDateLong\(movesOn\)/, 'Online payments stop on the date, not today');
+    assert.match(body, /disabled=\{busy !== null \|\| moveDateMissing/, 'a missing date offers no confirm');
+  });
+  it('the success notice is a wait ("moves on {date}"), never "your plan is now"', () => {
+    assert.match(body, /downgrade && result\.outcome === 'scheduled'\) \{\s*setNotice\(\{ tone: 'good', text: W\.move\.scheduled\(/);
+  });
+  it('Keep over a move says the move is called off; Cancel over a move says it replaces it', () => {
+    assert.match(body, /W\.downgrade\.keepMoveOff\(/);
+    assert.match(body, /W\.cancel\.replacesMove\(/);
+  });
+  it('Change which tournament you keep is a 520px form window over a fresh read, saved through its own route', () => {
+    assert.match(body, /<KitDialog kind="form" title=\{P\.title\}/);
+    assert.match(body, /post\('\/api\/billing\/downgrade\/preflight', \{ targetPlan: waitingMove\.move\.targetPlan \}\)/);
+    assert.match(body, /post\('\/api\/billing\/downgrade\/pick', \{ keepTournamentIds: ids \}\)/);
+  });
+});
+
+describe('the operator record says a waiting move as a move (source)', () => {
+  const record = readCode('app/platform-admin/orgs/[id]/ClubRecord.tsx');
+  it('the line, the band cell, the overdue callout, End now and Finish all branch on the kind', () => {
+    assert.match(record, /<strong>Moving to \{props\.ending\.movesTo\}/);
+    assert.match(record, /props\.ending\.movesTo \? 'Moves' : 'Ends'/);
+    assert.match(record, /should have moved to/);
+    assert.match(record, /Ending it now replaces that move\./);
+    assert.match(record, /It is not suspended\./);
+  });
+  it('the record page passes the kind and the target', () => {
+    const page_ = readCode('app/platform-admin/orgs/[id]/page.tsx');
+    assert.match(page_, /movesTo: waiting\.intent\.intentType === 'downgrade' \? planLabel\(moveTargetOf\(waiting\.intent\)\) : null/);
   });
 });

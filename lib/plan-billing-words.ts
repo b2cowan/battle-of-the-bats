@@ -18,6 +18,7 @@ import { portalFreeTimeCopy, KEEP_PREMIUM_LINE, PORTAL_FREE_TIME_HOSTING_LINE } 
 import { STRIPE_FEE_WORDS } from './online-payment-words';
 import { PLAN_BILLING_TITLE } from './plan-billing-title';
 import type { OrgPlan as OrgPlanKey } from './types';
+import { STATUS_WORD } from './tournament-status-words';
 
 const day = (iso: string) => formatStoredDate(iso, { longMonth: true });
 /** "November 30" — a date the sentence has already given with its year. */
@@ -27,6 +28,8 @@ const dayOnly = (iso: string) => formatStoredDate(iso, { longMonth: true, withYe
 const retainedUntil = (iso: string, days: number) => new Date(new Date(iso).getTime() + days * 86_400_000).toISOString();
 /** The door that undoes a waiting cancel (Plans end at renewal, Stage 0 ruling 2): "Keep {Plan}", and "Keep Premium" for a Coaches Portal. */
 const keepDoor = (plan: OrgPlanKey) => plan === 'team' ? 'Keep Premium' : `Keep ${PLAN_CONFIG[plan].label}`;
+/** "Choose 1 tournament to keep active." — the Downgrade window's choice, its dated form, and the server's refusal. */
+const chooseCount = (count: number) => `Choose ${pluralize(count, 'tournament')} to keep active.`;
 const cycle = (value: BillingCycle) => value === 'annual' ? 'yearly' : 'monthly';
 const period = (value: BillingCycle) => value === 'annual' ? 'year' : 'month';
 const price = (amount: number, billing: BillingCycle) => amount === 0 ? formatPriceAmount(amount) : `${formatPriceAmount(amount)} CAD / ${period(billing)}`;
@@ -153,6 +156,8 @@ export const PLAN_BILLING_WORDS = {
     stays: (org: string, iso: string) => `${org} stays open until ${day(iso)}, the end of the period you paid for. Nothing more is charged and nothing is refunded.`,
     premiumStays: (iso: string) => `Premium stays on until ${day(iso)}, the end of the period you paid for. Nothing more is charged and nothing is refunded.`,
     trialStays: (org: string, iso: string) => `Your trial runs until ${day(iso)}. ${org} stays open until then. Your card is not charged.`,
+    /** Stage 2 ruling 4: a cancel over a waiting move to the free plan replaces it — a later Keep returns the full plan. */
+    replacesMove: (move: string, iso: string, current: string) => `You chose to move to ${move} on ${dayOnly(iso)}. Cancelling replaces that move. If you then keep ${current}, you stay on ${current}.`,
     moveSetAside: (move: string, iso: string | null, keep: string) => `You chose to move to ${move}${iso ? ` on ${dayOnly(iso)}` : ' at renewal'}. Cancelling sets that move aside. ${keep} before then and the move to ${move} comes back.`,
     onDate: (org: string, offline: readonly string[], iso: string, days: number) => `On ${day(iso)} ${org} is suspended: ${joinWithAnd(offline)} go offline. Your data is kept for ${days} days after that, until ${day(retainedUntil(iso, days))}.`,
     premiumOnDate: (iso: string, days: number) => `On ${day(iso)} Premium tools stop. Premium team data is kept for ${days} days after that, until ${day(retainedUntil(iso, days))}. Basic tournament records stay available.`,
@@ -293,7 +298,7 @@ export const PLAN_BILLING_WORDS = {
       : `${limit} tournaments at a time: drafts and active events hold the slots, and finished ones stay online.`,
     inUse: (count: number) => `In use now: ${count}.`,
     lost: (target: string, current: string, features: readonly string[]) => `Moving to ${target} turns off these tools that come only with ${current}: ${joinWithAnd(features)}. Saved branding is kept; public tournament pages use FieldLogicHQ defaults until you upgrade again.`,
-    choose: (count: number, days: number) => `Choose ${pluralize(count, 'tournament')} to keep active. The rest move to archive retention for ${days} days.`,
+    choose: (count: number, days: number) => `${chooseCount(count)} The rest move to archive retention for ${days} days.`,
     fits: 'Your current tournament usage fits this plan. No tournaments need to move into retention.',
     reason: 'Why are you downgrading?', reasonHelp: 'For your records and ours. You can leave it empty.',
     keep: (label: string) => `Keep ${label}`, confirm: (label: string) => `Downgrade to ${label}`,
@@ -310,6 +315,45 @@ export const PLAN_BILLING_WORDS = {
     useTheMove: 'A move to a cheaper paid plan waits for your renewal date. Choose it under Change plan.',
     /** A Coaches Portal changes plan on its own billing page, never through a club's downgrade. */
     notHere: 'This plan isn’t changed here.',
+    // Stage 2 Part B (screens): the Downgrade window's dated words (Stage 0 drawing, tab "Moves to the free plan").
+    whenOn: (iso: string, current: string, trialing = false) => trialing
+      ? `This takes effect on ${day(iso)}, when your trial ends. Until then you keep every ${current} tool, and your card is not charged.`
+      : `This takes effect on ${day(iso)}, the end of the period you paid for. Until then you keep every ${current} tool. Nothing is credited.`,
+    chooseOn: (count: number, iso: string, days: number) => `${chooseCount(count)} On ${dayOnly(iso)} the rest move to archive retention for ${days} days.`,
+    chooseCount,
+    movesFooter: (iso: string) => `Moves on ${day(iso)}.`,
+    confirmOn: (iso: string) => `Downgrade on ${dayOnly(iso)}`,
+    /** No live paid period (ruling 3): the move still happens at the click, and the window says why. */
+    noPeriod: (org: string) => `${org} has no paid period to wait for, so the move happens when you confirm.`,
+    /** The band under the plan card while a move to the free plan waits (G2). The kept tournament's name is set in bold. */
+    band: {
+      eyebrow: (iso: string) => `On ${day(iso)}`,
+      youKeep: 'You keep',
+      archived: (names: readonly string[], days: number) => names.length > 0
+        ? `${joinWithAnd(names)} ${names.length === 1 ? 'is' : 'are'} archived then and kept for ${days} days, so ${names.length === 1 ? 'it' : 'they'} can come back. So is any other tournament you make before then.`
+        : `Any other tournament you make before then is archived then and kept for ${days} days, so it can come back.`,
+      none: (target: string, limit: number, days: number) => `${target} holds ${limit === 1 ? 'one draft or active tournament' : `${limit} draft or active tournaments`} at a time. If you have more than that on the date, the newest ${limit === 1 ? 'is' : 'are'} kept and the rest are archived for ${days} days.`,
+      // Stage 0 Ask 8, ruled 2026-11-04: the reason it is gone is not claimed (deleted, archived and finished all read alike).
+      gone: (picked: boolean, newest: string, iso: string) => `${picked ? 'The tournament you chose to keep is no longer a draft or active event' : 'You haven’t chosen a tournament to keep'}, so choose the one you keep. If you don’t choose by ${dayOnly(iso)}, we keep ${newest}, your newest.`,
+      change: 'Change which tournament you keep', choose: 'Choose the tournament you keep',
+    },
+    /** Change which tournament you keep (G2): a 520px form window over the waiting move's pick. */
+    pick: {
+      title: 'Change which tournament you keep', loading: 'Loading your tournaments…',
+      intro: (org: string, target: string, iso: string, limit: number, days: number) => `On ${day(iso)}, ${org} moves to ${target}, which holds ${pluralize(limit, 'tournament')} at a time. Choose ${limit === 1 ? 'the one that stays' : `the ${limit} that stay`} active. The rest are archived then and kept for ${days} days.`,
+      yourChoice: 'your choice so far', added: (iso: string) => `added ${dayOnly(iso)}`,
+      /** A slot holder's status word, from the one home of status words. */
+      status: (status: string) => STATUS_WORD[status as keyof typeof STATUS_WORD] ?? status,
+      footer: (iso: string) => `Nothing changes until ${dayOnly(iso)}.`,
+      save: 'Save choice', saving: 'Saving…',
+      saved: (iso: string, names: readonly string[]) => `On ${day(iso)} you keep ${joinWithAnd(names)}.`,
+    },
+    /** The Keep window over a waiting move: the second sentence (a cancel's is "Nothing else changes."). */
+    keepMoveOff: (target: string) => `The move to ${target} is called off, and no tournament is archived.`,
+    noMoveWaiting: 'No move to the free plan is waiting, so there is no choice to change.',
+    nothingToChoose: 'Every tournament you have fits the free plan, so there is nothing to choose.',
+    pickTooLate: 'The date of your move has come, so the tournament you keep can no longer be changed.',
+    pickGone: 'One of the tournaments you chose is no longer a draft or active event. Close this window and open it again to see the current list.',
   },
   move: {
     title: (label: string) => `Move to ${label}?`, loading: 'Loading what the move changes…',

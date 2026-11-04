@@ -45,7 +45,8 @@ export type EndingStatus = 'pending' | 'applied' | 'canceled' | 'restored' | 'pu
 
 export type EndingLogEntry = {
   at: string;
-  action: 'scheduled' | 'rescheduled' | 'kept' | 'withdrawn' | 'ended';
+  /** `pick_changed`: Change which tournament you keep (Stage 2 Part B) — the waiting move's pick, nothing in Stripe. */
+  action: 'scheduled' | 'rescheduled' | 'kept' | 'withdrawn' | 'ended' | 'pick_changed';
   door: EndingDoor;
   by: string | null;
   /** What happened to a cheaper-plan move waiting at renewal (the one rule above). */
@@ -293,6 +294,27 @@ export function upcomingDate(iso: string | null | undefined, now: Date): string 
   return iso && new Date(iso).getTime() > now.getTime() ? iso : null;
 }
 
+/**
+ * Whether a change made now waits for a date, and which: a real subscription waits for its stored renewal (or trial end),
+ * one already past reading as missing (`on` null while `waits`). The cancel review's `endsOn` and the downgrade review's
+ * `movesOn` (Stage 2 Part B) — one rule. Never keyed off the stored date alone: a comp can carry one with no subscription.
+ */
+export function waitingDate(account: Pick<EndingAccount, 'subscriptionId' | 'subscriptionStatus'> | null, periodEnd: string | null | undefined, now: Date): { waits: boolean; on: string | null } {
+  const waits = !!account && hasRealSubscription(account);
+  return { waits, on: waits ? upcomingDate(periodEnd, now) : null };
+}
+
+/** Where a waiting move goes: its stored target, the free plan when an older row names none. */
+export function moveTargetOf(intent: Pick<EndingIntent, 'targetPlan'>): OrgPlan {
+  return intent.targetPlan ?? 'tournament';
+}
+
+/** The owner's pick as sent: the string ids, each once (the downgrade's confirm and Change which tournament you keep). */
+export function normalizeKeepIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.filter((v): v is string => typeof v === 'string'))];
+}
+
 /** The seven-day reminder (G6 c). */
 export const REMINDER_DAYS = 7;
 /** How long a keep that is putting a cheaper move back owns its row against Stripe's own "renewed" event. */
@@ -309,8 +331,13 @@ export const KEEP_IN_PROGRESS_MS = 15 * 60_000;
  * no flag yet. The cost, accepted: a real Renew in Stripe's portal within those minutes is read on Stripe's next event or by
  * the safety net (Finish this ending now), not at once.
  */
+/** The change-log entries that reached Stripe (a changed pick does not). */
+const STRIPE_ACTIONS: ReadonlySet<EndingLogEntry['action']> = new Set(['scheduled', 'rescheduled', 'kept', 'withdrawn', 'ended']);
+
 export function keepInProgress(intent: Pick<EndingIntent, 'status' | 'changeLog' | 'intentType'>, now: Date): boolean {
-  const last = intent.changeLog.at(-1);
+  // Only an entry that reached Stripe opens or closes the window: a changed pick (Stage 2 Part B) touches nothing there, so
+  // a pick changed minutes after the click must not let the click's own late Stripe event read as a Renew in the portal.
+  const last = intent.changeLog.findLast(e => STRIPE_ACTIONS.has(e.action));
   const persons = last?.action === 'kept' || (last?.action === 'scheduled' && intent.intentType === 'downgrade');
   return intent.status === 'pending' && !!last && persons && last.door !== 'stripe_portal'
     && now.getTime() - new Date(last.at).getTime() < KEEP_IN_PROGRESS_MS;
@@ -903,6 +930,63 @@ export function keptOnTheDate(holders: SlotHolder[], keepIds: string[], limit: n
   return { kept, archive: holders.filter(t => !keptIds.has(t.id)), fellBack };
 }
 
+/**
+ * The billing page's band over a waiting move (G2, Stage 2 Part B): what the date would do if it came NOW — through
+ * `keptOnTheDate` itself, so the band can never name a different tournament than the date keeps. `choose` is whether
+ * there is a choice at all (more slot holders than the free plan holds): only then is there a Change door, and only then
+ * is a fallen-back pick the amber "choose the tournament you keep" (with one left, it is simply kept).
+ */
+export type WaitingMoveView = {
+  targetPlan: OrgPlan;
+  kept: Array<{ id: string; name: string }>;
+  archived: Array<{ id: string; name: string }>;
+  fellBack: boolean;
+  choose: boolean;
+  /** The stored pick, for the Change window's "your choice so far". */
+  keepIds: string[];
+  /** When the move was scheduled: a tournament made after it reads "added {date}" in the Change window. */
+  since: string;
+};
+export function waitingMoveView(intent: Pick<EndingIntent, 'targetPlan' | 'keepTournamentIds' | 'changeLog' | 'createdAt'>, holders: SlotHolder[]): WaitingMoveView {
+  const targetPlan = moveTargetOf(intent);
+  const limit = PLAN_CONFIG[targetPlan].tournamentLimit;
+  const { kept, archive, fellBack } = keptOnTheDate(holders, intent.keepTournamentIds, limit);
+  const named = (list: SlotHolder[]) => list.map(t => ({ id: t.id, name: t.name }));
+  return {
+    targetPlan, kept: named(kept), archived: named(archive), fellBack, choose: holders.length > limit,
+    keepIds: intent.keepTournamentIds, since: clickedAt(intent),
+  };
+}
+
+export type PickResult =
+  | { outcome: 'saved'; keepIds: string[] }
+  | { outcome: 'refused'; error: string; status: number };
+
+/**
+ * Change which tournament you keep (G2, Stage 2 Part B) — the owner's door while a move to the free plan waits. It
+ * re-runs the downgrade's own choice against what holds a slot NOW (a tournament made during the wait is choosable),
+ * and changes the waiting row's pick only, while it still waits. Nothing moves until the date; Stripe is not touched.
+ */
+export async function changeKeptTournaments(account: Pick<EndingAccount, 'orgId'>, actor: EndingActor, keepIds: unknown, deps: EndingDeps): Promise<PickResult> {
+  const refused = (error: string, status: number): PickResult => ({ outcome: 'refused', error, status });
+  const [pending, holders] = await Promise.all([deps.findPending(account.orgId), deps.slotHolders(account.orgId)]);
+  if (!pending || pending.status !== 'pending' || pending.intentType !== 'downgrade') return refused(W.downgrade.noMoveWaiting, 409);
+  // On or after the date the move may already be running (it read the pick at its start and writes what it kept last), so a
+  // pick saved then could be told "saved" and be lost. The choice closes on the date (/review 2026-11-04).
+  if (deps.now().getTime() >= new Date(pending.effectiveAt).getTime()) return refused(W.downgrade.pickTooLate, 409);
+  const limit = PLAN_CONFIG[moveTargetOf(pending)].tournamentLimit;
+  if (holders.length <= limit) return refused(W.downgrade.nothingToChoose, 409);
+  const ids = normalizeKeepIds(keepIds);
+  if (ids.length !== limit) return refused(W.downgrade.chooseCount(limit), 400);
+  const live = new Set(holders.map(t => t.id));
+  if (ids.some(id => !live.has(id))) return refused(W.downgrade.pickGone, 409);
+  const saved = await deps.updateIntent(pending.id, {
+    keepTournamentIds: ids, changeLog: [...pending.changeLog, logEntry(deps.now(), actor, 'pick_changed')],
+  }, ['pending']);
+  if (!saved) return refused(W.downgrade.changedMeanwhile, 409);
+  return { outcome: 'saved', keepIds: saved.keepTournamentIds };
+}
+
 export type DowngradeScheduleResult =
   | { outcome: 'scheduled'; movesAt: string; intentId: string; heldMovePlan: OrgPlan | null }
   | { outcome: 'moved'; moved: DowngradeResult }
@@ -1046,7 +1130,7 @@ export async function applyDowngrade(
     };
   }
   const now = deps.now();
-  const target = intent.targetPlan ?? 'tournament';
+  const target = moveTargetOf(intent);
   const fromPlan = (intent.fromPlan ?? account.ownPlan) as OrgPlan;
   const movedAt = endedAtFor(intent, now, p.stripeEndedAt);
   const retentionUntil = retentionUntilFrom(movedAt, deps.retentionDays(account));
@@ -1217,6 +1301,8 @@ export async function sendDueEndingEmails(
 export type OverdueEnding = {
   orgId: string; orgName: string; planLabel: string; shouldHaveEnded: string; daysOver: number;
   door: EndingDoor | null; by: string | null;
+  /** Stage 2: the plan a waiting MOVE goes to (its label); null for a cancel. */
+  movesTo: string | null;
 };
 
 export type FinishResult =

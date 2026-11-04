@@ -14,7 +14,7 @@ import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 import { ownPlanOf } from '@/lib/entitlement-grants';
 import { getBillingHref } from '@/lib/billing-urls';
-import { scheduleDowngrade, stripeIdToStopNow } from '@/lib/plan-ending';
+import { normalizeKeepIds, scheduleDowngrade, stripeIdToStopNow } from '@/lib/plan-ending';
 import { endingDeps, readEndingAccount } from '@/lib/plan-ending-server';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 
@@ -24,11 +24,6 @@ type ConfirmBody = {
   reason?: unknown;
   orgSlug?: unknown;
 };
-
-function normalizeKeepIds(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return [...new Set(value.filter((v): v is string => typeof v === 'string'))];
-}
 
 /**
  * POST /api/billing/downgrade/confirm — the owner moves to the free plan. Owner-only.
@@ -80,10 +75,7 @@ export const POST = withObservability(async (req: Request) => {
     const knownIds = new Set(preflight.tournaments.map(t => t.id));
     if (preflight.requiresTournamentChoice) {
       if (chosen.length !== preflight.allowedKeepCount) {
-        return Response.json(
-          { error: `Choose ${preflight.allowedKeepCount} tournament${preflight.allowedKeepCount === 1 ? '' : 's'} to keep active.` },
-          { status: 400 },
-        );
+        return Response.json({ error: W.downgrade.chooseCount(preflight.allowedKeepCount) }, { status: 400 });
       }
       if (chosen.some(id => !knownIds.has(id))) {
         return Response.json({ error: 'One selected tournament does not belong to this organization.' }, { status: 400 });
