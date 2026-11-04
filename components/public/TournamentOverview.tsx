@@ -136,8 +136,10 @@ export default function TournamentOverview({
       <PublicGameRows views={upNextViews} href={gameHref} />
     </section>
   ) : null;
+  // data-sandbox-tour: the demo tour's first step rings it (the finished semifinals are the newest results). Inert off a
+  // demo; tests/unit/demo-destinations-guard.test.ts reads this literal.
   const latestEl = latestViews.length > 0 ? (
-    <section className={styles.section} aria-labelledby="overview-results">
+    <section className={styles.section} aria-labelledby="overview-results" data-sandbox-tour="latest-results">
       <PublicSectionHead id="overview-results" title="Latest results" link={{ href: scheduleHref, label: 'All results' }} />
       <PublicGameRows views={latestViews} href={gameHref} />
     </section>

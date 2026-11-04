@@ -69,10 +69,13 @@ export interface TournamentBandProps {
   basePath?: string;
   /** Public tournament pages Stage 6 (Ask 14): News/Rules/Register/Champions tab facts, forwarded to the tab row. */
   frameContent?: FrameTabContent;
+  /** Next's `prefetch`, on the name and every tab. `false` only in the Look card's inert window, whose links would each
+   *  prefetch a 404 (`/…/branding/schedule` and the like; Stage 8 call 4). Omitted wherever the links lead somewhere. */
+  prefetch?: boolean;
 }
 
 export default function TournamentBand({
-  orgSlug, tournamentSlug, name, logoUrl, initials, dates, status, hiddenPages, hasBracket, host, basePath, frameContent,
+  orgSlug, tournamentSlug, name, logoUrl, initials, dates, status, hiddenPages, hasBracket, host, basePath, frameContent, prefetch,
 }: TournamentBandProps) {
   const pathname = usePublicPathname() ?? '';
   const preview = !!basePath;
@@ -104,7 +107,7 @@ export default function TournamentBand({
       {/* The way to the Overview from any page: the whole identity is one link, the band's full height (the club bar's
           shape). Its text is the full name — two lines on screen, then an ellipsis, all of it read aloud — then the dates
           and the state word. */}
-      <Link href={homeHref} className={clubStyles.identity}>
+      <Link href={homeHref} prefetch={prefetch} className={clubStyles.identity}>
         {mark}
         <span className={clubStyles.name}>
           <span className={clubStyles.nameText}>{name}</span>
@@ -143,6 +146,7 @@ export default function TournamentBand({
         hasBracket={hasBracket}
         basePath={basePath}
         frameContent={frameContent}
+        prefetch={prefetch}
         className={`${clubStyles.tabsSlot} ${styles.tabs}`}
       />
     </header>

@@ -56,9 +56,11 @@ type TournamentTopTabsProps = {
   /** Public tournament pages Stage 6 (Ask 14): News/Rules/Register/Champions tab facts. The band passes this
    *  through from the layout; omitted (every switch-off mount), the row is exactly what it has always been. */
   frameContent?: FrameTabContent;
+  /** Next's `prefetch`, on every tab (see TournamentBand: `false` only inside the Look card's window). */
+  prefetch?: boolean;
 };
 
-export default function TournamentTopTabs({ basePath, hiddenPages, fixed, hasBracket: hasBracketProp, skin, className, frameContent }: TournamentTopTabsProps = {}) {
+export default function TournamentTopTabs({ basePath, hiddenPages, fixed, hasBracket: hasBracketProp, skin, className, frameContent, prefetch }: TournamentTopTabsProps = {}) {
   const pathname = usePublicPathname();
   const params = useParams();
   const orgSlug = (params?.orgSlug as string) || '';
@@ -118,6 +120,7 @@ export default function TournamentTopTabs({ basePath, hiddenPages, fixed, hasBra
       <Link
         key={href}
         href={spell(href)}
+        prefetch={prefetch}
         ref={active ? activeRef : undefined}
         className={`${frameTabs.tab} ${active ? frameTabs.active : ''}`}
         aria-current={active ? 'page' : undefined}
@@ -142,6 +145,7 @@ export default function TournamentTopTabs({ basePath, hiddenPages, fixed, hasBra
         <div className={styles.track}>
           <Link
             href={spell(homeHref)}
+            prefetch={prefetch}
             ref={overviewActive ? activeRef : undefined}
             className={`${styles.tab} ${overviewActive ? styles.active : ''}`}
             aria-current={overviewActive ? 'page' : undefined}
@@ -156,6 +160,7 @@ export default function TournamentTopTabs({ basePath, hiddenPages, fixed, hasBra
               <Link
                 key={key}
                 href={spell(href)}
+                prefetch={prefetch}
                 ref={active ? activeRef : undefined}
                 className={`${styles.tab} ${active ? styles.active : ''}`}
                 aria-current={active ? 'page' : undefined}

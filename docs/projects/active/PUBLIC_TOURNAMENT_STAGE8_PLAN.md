@@ -1,6 +1,6 @@
 # Public tournament pages — Stage 8: the new look on for everyone (plan)
 
-**Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 committed `d4af280e6` 2026-11-03** (record §10; it releases with the flip, ruling D). Next Part 2. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
+**Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 committed `d4af280e6` 2026-11-03** (record §10; it releases with the flip, ruling D). **Part 2 built 2026-11-03** (record §11; it releases with the flip too). Next Part 3a. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
 **Sequencing rule (standing):** by dependency and rework risk, never by date. One part per session, `/clear` between.
@@ -183,3 +183,147 @@ the three icon settings (it only guarded the client's save body). Re-run: 3 unit
   `lib/stock-logo-render.ts` and `lib/sponsor-logo-image.ts`; the release checklist needs a new probe on one of those paths before the promote
   (owner's call to change `.claude/commands/release.md`).
 - **Part 5:** help copy, PLAN_PRICING_FACTS' custom app name, and the demo are untouched here, as scoped.
+- *(Part 2 (c) decided them: §11.)*
+
+## 11. Part 2 record (flip preparation; built 2026-11-03; releases with the flip)
+
+**What a customer sees:** nothing (nothing promoted). An owner walking dev with the new look on would notice two things in the
+demo tour, nothing else: step 1 rings the Overview's **Latest results** (the two finished semifinals its sentence names), and
+step 2 lands on **Playoffs**, where the new pages draw the bracket. ⚠ **This part releases WITH the flip, never alone** — with the
+switch off, step 2 would land on the old Playoffs page, which draws no bracket (the exact defect the owner's third QA pass caught
+when the first build sent it there). §5 already guarantees that; stated here because it is now true of Part 2 as well as Part 1.
+
+**(a) The demo tour's anchors.** `lib/sandbox-chrome.ts`: step 1 `#today` (an id only the switch-off Overview's day panel wrote)
+→ `[data-sandbox-tour="latest-results"]`, a marker on the new Overview's Latest results section
+(`components/public/TournamentOverview.tsx`; the newest three finished games, so the semifinals in the demo's daily snapshot; absent
+only before any game is final, when the step's sentence still delivers). Step 2 href `/standings` → `/playoffs`; its marker
+`playoff-bracket` was already on the new Playoffs (`PublicPlayoffs.tsx`, guarded by `public-tournament-stage4-guard` and
+`public-playoffs-render`; the new Standings' absence of it by `public-standings-render`). The comment above step 2 rewritten (it
+explained why the bracket was on Standings). **The guard had two holes, both closed** (`tests/unit/demo-destinations-guard.test.ts`):
+- a bare `#id` anchor was allowed and **never checked**, so deleting the old Overview would have passed in silence. Anchors must now
+  be `data-sandbox-tour` markers;
+- the marker had only to exist **somewhere**. `playoff-bracket` is written by both the old Standings and the new Playoffs, so step 2
+  left on `/standings` would have passed after Part 3a deleted the old Standings, ringing nothing. New check: the marker must be in
+  the source the destination page imports, via `reachableFrom` — **promoted** from `notification-open-in-place-guard` into
+  `tests/unit/_source-code.ts` (now cached per file; that guard imports it) rather than written a fifth time. Markers are read as code
+  (comments stripped), the sweep included. Layouts are not walked (none holds a marker); while an old and a new half share a page
+  both count, so the page check bites as each old half is deleted. Plus a non-vacuity test that the walk reaches
+  `TournamentOverview.tsx` from the Overview page.
+- **Mutation-tested** (each reverted after): step 1 back on `#today` → caught; the new Playoffs losing its marker while the old
+  Standings still writes it → caught (the case the old guard missed); the new Overview losing its marker → caught; **Part 3a's state**
+  (old Standings' marker gone, step 2 still on `/standings`) → caught, naming the page. Step 2 on `/standings` *today* passes, correctly:
+  the old Standings still draws the bracket there until Part 3a.
+- No demo was re-seeded (demos follow the product).
+
+**(b) Prefetch off on the Look card's preview links (call 4).** `TournamentBand` takes Next's own `prefetch` and carries it to the
+name link and to `TournamentTopTabs`, which puts it on every tab it draws; only the Look card passes `false` (its window is an inert iframe at the Branding
+address, so the tabs point at `/…/branding/schedule` etc. — 404s a production build would fetch). The live band and the admin preview
+(whose links lead somewhere) omit it and keep Next's default. Source guard in `tournament-look.test.ts`: the card passes it, the band
+forwards it to both, the frame tab carries it, and the preview's host line is a span (the other Links never render there).
+
+**(c) The swatches re-measured at 768** (`check:layout --only=admin-t-branding,admin-t-branding-look,admin-t-branding-look-club,
+admin-public-site-look`, every listed width, on the dev server already up; `--changed` was not used: it reads the whole working tree's
+diff, which holds other sessions' files, and measures only 361 + 1440, which skips 768). Part 1's 10 findings, decided:
+- **"Public site" link (15 px at 361/390/768) — FIXED.** A link inside a sentence; stood 44 px tall at ≤768 without moving the sentence
+  (`LookCard.module.css` `.inlineDoor`: inline-flex, 44 px, `margin-block: -14px` — the club editor's `.textLink` recipe, adopted
+  at `/review` over FiscalYear's, which grows the line). "Change the club's look" (`.door`) had the same gap at 641–768 (32 px; it
+  renders only under *Always*, so the fixture never showed it) — its compact height now starts at 769.
+- **"The club's look" pill (36 px at 768) — FIXED, in the shared Look controls.** Call 5 moved the swatches to 44 px from 768 down but
+  left the pill and the Custom colour pickers beside them at 640. Both now follow the swatches, and the four controls' 768 rules are
+ONE block so they cannot drift apart again (`LookControls.module.css`). Blast radius:
+  the Look controls' two screens only (the tournament Look card and the club editor's Look row). **It also fixed the club editor's
+  "From your logo" pill**, 36 px at 768 on the committed code (measured both ways).
+- **"Dismiss" (34 px square at 361/390/768) — NOT touched, NOT baselined.** It is the admin context strip's close
+  (`components/admin/AdminContextStrip.module.css` `.dismiss`, 34 × 34), mounted by `AdminKitBottomNav`: the phone bar of **every admin
+  screen**. It is already in the baseline on all **27** tournament admin screens (reason: null); it reads NEW on
+  `admin-t-branding-look` only because that screen was added after the baseline. Baselining it there would record one more
+  reasonless copy of a known defect; the honest fix is one rule (44 × 44) in shared chrome, which changes the phone bar on every
+  admin screen and clears ~160 baseline entries. **Owner's call; recommend its own small change, not part of Stage 8.**
+- **Found, not mine, not baselined:** the club editor (`admin-public-site-look`) has an unlabelled `<input>` 18 px tall at
+  361/390/768. Present on the committed code too (measured with this part's CSS reverted). Not in the Look controls. Handed on.
+- After the fixes: `admin-t-branding-look-club` clean at every width; `admin-t-branding` and `admin-t-branding-look` carry only the
+  Dismiss button; `admin-public-site-look` only the 18 px input.
+
+**(d) The hero banner's removal list (ask A ruled: retire it; delete the upload, stop counting it in "branding done", KEEP the
+column).** For Part 4; nothing deleted here. Census 2026-11-03, every line re-opened. **Old look only** on the public side:
+`TournamentHomeContent` returns `<TournamentOverview>` early under the frame, and `TournamentOverview` never reads it; on the Branding
+page the card sits inside `{!frameOn && (<>`.
+- **Column (KEEP, ruling C):** `tournaments.hero_banner_url`; no repo migration creates it (base schema, older than `001`).
+  `lib/types.ts:332` (`Tournament.heroBannerUrl`), `lib/db.ts:1854` (`mapTournament`). Dictionary: `DATA_DICTIONARY.md:731` anchor,
+  `:741` the branding block. `memory/reference_db_schema.md:79`.
+- **Copy lists (writers to a new tournament — decide in Part 4 with the other dead columns):** `lib/db.ts:289` (`cloneTournament`
+  with `includeBranding`), `lib/db.ts:446` (`populateTournamentFrom`, `publicPresence`).
+- **Public reader (old look, goes with Part 3d's Overview):** `components/public/TournamentHomeContent.tsx:448-450` (the URL, falling
+  back to the **org's** banner), `:1027-1037` (the hero's banner + overlay).
+- **Upload route (DELETE):** `app/api/admin/tournament-hero-banner/route.ts` — POST writes `:68-72`, DELETE nulls `:103-107`; bucket
+  `org-assets`, path `${orgId}/${tournamentId}/hero-banner.{ext}` (`:56`), 4 MB, plan gate `advanced_tournament_branding`. Stored files
+  are not removed by deleting the route (a storage clean-up, if wanted, is a separate step).
+- **Branding API (stop reading):** `app/api/admin/tournament-branding/route.ts:47` (select), `:78` (`heroBannerUrl` in the response).
+  The PATCH never wrote it.
+- **Branding page (old look; goes with Part 4's cards):** `app/[orgSlug]/admin/tournaments/branding/page.tsx` — `:57` the type, `:169`
+  `:171` `:173` `:179` state and input ref, `:220` `setBannerUrl`, `:282-303` `upload()`'s banner branch (`:291` the route name), `:305-318`
+  `removeUpload()` (`:312`), `:498-516` the card (`sectionId="hero-banner"`), `:555` `bannerUploading` in the SavePill; comments `:11`
+  `:440`. `LookCard.tsx:4` header comment names it.
+- **The "branding done" flag (stop counting it):** `app/api/admin/tournament-dashboard/route.ts:109` (row type), `:154` (select),
+  `:268` `hasBranding = Boolean(t.logo_url || t.hero_banner_url || t.theme_preset || t.theme_primary)` → drop only the banner term.
+  Read by `dashboard/DraftBoard.tsx:109` (the "public" checklist row) and `dashboard/page.tsx:292` (default). No test asserts it.
+- **Words:** `lib/tournament-settings-words.ts` `heroBanner` `:244`, `uploadBanner` `:252`, `replaceBanner` `:253`, `bannerHint` `:261`,
+  `bannerLine` `:262` (none used elsewhere; `uploading`/`remove` are shared with the Logo card — keep). `lib/invite-only-words.ts:18`
+  `LOCK_WORDS.branding` ("…theme, banner and fonts…", the switch-off lock line; Part 4/5d).
+- **Help (Part 5c):** `lib/help-content/tournaments.tsx:443` (searchText), `:453`, `:516` + `:521` ("…hero banner, fonts, and app icon
+  are all unaffected"), `:2444` (the six-cards FAQ — already stale since Part 1).
+- **Styles:** `branding.module.css:178-204` (`.bannerDesc` `.bannerPreview` `.bannerImg` `.bannerHint`) and those two in the shared
+  colour group at `:375`/`:378` (remove the two selectors only). ⚠ `app/[orgSlug]/Home.module.css` `.heroBanner`/`.heroBannerOverlay`
+  and the `:has(.heroBanner)` rules are **shared with the club home page** — keep.
+- **Tests:** `tournament-stage5-public-site.test.ts:53` (loops over the cards incl. `W.heroBanner`); `:77` and `tournament-look.test.ts:459`
+  assert the lock-word line. No test asserts the route or `hasBranding`.
+- **Baseline:** `scripts/.layout-baseline.json` — the `admin-t-branding|361/390/768|tap-floor|button·Hero Banner` entries go stale
+  with the card (prune after Part 4's re-measure).
+- **No seed or demo** writes a tournament banner.
+- ⚠ **NOT the tournament banner — do not delete:** `organizations.hero_banner_url` (migration `005`), `Organization.heroBannerUrl`
+  (`lib/types.ts:268`), `mapOrg` (`lib/db.ts:1800`), `lib/api-auth.ts:102`/`:239`, `lib/server-organizations.ts:25`/`:62`, the org
+  upload route `app/api/admin/org-hero-banner/route.ts`, `org-settings` route, the club editor's banner (`LookPanel.tsx`,
+  `lib/public-site-words.ts`), the club home (`app/[orgSlug]/page.tsx`, `ClubHome.module.css`, `lib/club-home-data.ts:110`,
+  `ClubSiteHome`), the org help copy (`lib/help-content/org.tsx`), `public-site-builder.test.ts`, `seed-club-fixture.mjs`. The preview
+  layout's `heroBannerUrl: undefined` (`preview/[tournamentSlug]/layout.tsx:44`) is an org-field strip in tournament code: it goes with
+  that code, the org field stays.
+
+**`/simplify` (2026-11-03):** the walker promoted and cached (above; the guard's run fell from ~2.2 s to ~1.2 s), one marker
+pattern and one step loop, the prefetch prop on every tab of the row, looser source-guard patterns, the 768 rules merged, comments
+cut. Skipped: the global `.tap-target` utility for "Public site" (it starts at 900 px, the card's floor is 768 — a behaviour change);
+one tap-token spelling per file (cosmetic, all resolve to 44 px).
+
+**`/review` (2026-11-03, standard tier; lenses correctness + regression):** no defect in the code. Fixed: the "Public site" link
+grew its sentence's line (now the `.textLink` recipe, re-measured clean at 361 and 768); one new count assertion could pass with
+both counts zero (now requires > 0). Verified: step 1's ring appears on the demo's game day (the two semifinals are the newest
+results); step 2's Playoffs draws the bracket for the default division (U11); `prefetch={undefined}` is Next 16's default
+(`prefetch: prefetchProp = null`), so every other band and tab mount is unchanged; the promoted walker is equivalent for the
+notification guard (36/36), and (a review helper's measurement, not re-run here) its regex agreed with TypeScript's own import
+parser on all but one file under app/ components/ lib/ (`lib/observability/dashboard.ts`, nowhere near these routes); the merged 768 block sits after
+every base rule. Accepted as known: the release coupling above (nothing at build time can see it — the guard counts a page's
+old and new halves together until the old one goes).
+
+**Checks run:** unit tests reading every touched file, 20 files 454/454 after `/simplify`; 61/61 for the two re-touched after
+`/review`; `verify:changed` 13,494/13,501 — the **7 failures are the same 7 Part 1 recorded** (the admin window guard, the
+plan-billing ended band, Stage 6 walk HTML ×3, the key-prefix guard, the console foot), none in this part's files. ⚠ One of them is
+**this project's**: `admin-overlay-guard` names `components/admin/kit/club/PhoneWindow.tsx` (the Look card's window, committed
+`cb9e17d3b`, Stage 1a) as an admin window missing from its `WINDOWS` list; it fails on HEAD, not on this part; `demo-destinations-guard` 12/12 plus the mutations above;
+ESLint clean on the 7 changed TS files; spelling clean; CSS selectors — no finding in this part's files (the 4 orphans + 10 dead
+classes are other sessions' platform-admin / public-site / schedule / coaches files); typecheck clean (`NODE_OPTIONS=--max-old-space-size=6144`);
+layout as (c).
+
+**Handed on:**
+- **Owner's call:** the admin context strip's 34 px "Dismiss" (shared chrome, every admin screen; recommend its own small change).
+- **Club editor:** the unlabelled 18 px input on `admin-public-site-look` (pre-existing; identify and fix with the club editor's next
+  touch).
+- **Stage 1a's window and the admin window guard:** name `PhoneWindow.tsx` in `admin-overlay-guard`'s `WINDOWS` (it is an inert
+  preview, not a form or a menu — a one-line entry with its reason). Owner's go; fits Part 3a's opening or any session.
+- **Part 5e (`/demos`):** the marketing shot `fan-live-score` (`lib/marketing-shots.ts:143-150`) is taken on `/standings` waiting
+  for `playoff-bracket` — "the same anchor the tour's step 2 points at". After the flip the new Standings draws no bracket, so the
+  shot's wait times out; retarget it to `/playoffs` with its alt text ("…public standings page…") at the re-curate. No guard covers it.
+- **Advisory, owner's call (not new):** pressing tour step 1 while on any tournament page (e.g. Playoffs, where step 2 leaves the
+  visitor) reads as "already here" (prefix match), so it narrates without the ring; `exactPath: true` on step 1 would fix it. The
+  tournament tour was deliberately left on prefix matching. And a visitor whose remembered division is not U11 sees no bracket on
+  step 2 (the old Standings had the same exposure).
+- **Part 6 (release), still owed from Part 1:** `/release` §1d-2's sharp probe uses the deleted apple-icon route; changing
+  `.claude/commands/release.md` is the owner's call.

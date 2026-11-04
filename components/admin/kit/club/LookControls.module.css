@@ -25,10 +25,6 @@
 .swatch:focus-visible,
 .pill:focus-visible,
 .tile:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 3px; }
-@media (max-width: 768px) {
-  /* A fingertip each: 44 px circles, from tablet width down (owner 2026-11-03, §448 call 5). */
-  .swatch { width: 44px; height: 44px; }
-}
 @media (max-width: 640px) {
   .swatches { gap: 4px 6px; }
 }
@@ -48,7 +44,6 @@
 }
 .pillOn { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--home-olive); }
 .dual { width: 28px; height: 28px; border-radius: 50%; flex: none; }
-@media (max-width: 640px) { .pill { min-height: 44px; } }
 .ownColours { display: flex; flex-wrap: wrap; gap: 12px 18px; }
 .ownColour {
   display: inline-flex;
@@ -67,7 +62,6 @@
   background: var(--home-card);
   cursor: pointer;
 }
-@media (max-width: 640px) { .ownColour input { height: 44px; } }
 /* A colour with its hex code beside it: the picker and its name, then the code (wraps under on a narrow phone). */
 .ownColourHex { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 /* The two codes line up: each picker-and-name is as wide as the longer name. */
@@ -89,7 +83,12 @@
 }
 .hexInput:focus { outline: none; border-color: var(--home-olive); }
 .mistake { margin: 0.25rem 0 0; font-size: var(--type-support); font-weight: 600; color: var(--danger-light); }
+/* The colour controls' tap floor, ONE block so they move together: from tablet width down (owner 2026-11-03, §448
+   call 5). It was split once, and the pill and the pickers stayed at 640 when the swatches moved. After every base rule. */
 @media (max-width: 768px) {
+  .swatch { width: 44px; height: 44px; }
+  .pill { min-height: 44px; }
+  .ownColour input { height: 44px; }
   .hexInput { min-height: var(--tap-min, 44px); }
 }
 

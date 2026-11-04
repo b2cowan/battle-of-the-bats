@@ -25,7 +25,7 @@ import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { describe, it } from 'node:test';
-import { readCode, readSource, functionBody, callbackBody, cssRule } from './_source-code.ts';
+import { readCode, readSource, functionBody, callbackBody, cssRule, reachableFrom } from './_source-code.ts';
 import { ADMIN_PAGE } from '../../lib/notification-view.ts';
 import { accountingTabs, kitBillingLink, kitPrograms } from '../../lib/admin-kit-nav.ts';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
@@ -320,39 +320,6 @@ describe('Step 2 · the bell opens a drawer, and a click opens a notification be
     );
   });
 });
-
-/**
- * Every repo file a module loads, at any depth — static imports, re-exports and `import('…')` — through
- * `@/` and relative specifiers only (packages are not ours to walk). Comments are stripped first, so a
- * comment that NAMES a stylesheet is not an import of it. ⚠ A stylesheet is walked too: a CSS module's
- * `composes: x from '…'` and `@import` load the sheet they name, and `composes` is exactly how the coach
- * stylesheet has been borrowed before — a leak through one would pass a walker that stopped at `.css`.
- */
-function reachableFrom(entry: string): Set<string> {
-  const seen = new Set<string>();
-  const resolve = (from: string, spec: string): string | null => {
-    const base = spec.startsWith('@/') ? path.join(REPO, spec.slice(2)) : path.resolve(path.dirname(path.join(REPO, from)), spec);
-    for (const ext of ['', '.tsx', '.ts', '/index.tsx', '/index.ts']) {
-      const abs = base + ext;
-      if (existsSync(abs) && /\.(tsx?|css)$/.test(abs)) return path.relative(REPO, abs).split(path.sep).join('/');
-    }
-    return null;
-  };
-  const walk = (rel: string) => {
-    if (seen.has(rel)) return;
-    seen.add(rel);
-    const specs = rel.endsWith('.css')
-      ? [...readSource(rel).replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/(?:composes:[^;]*?from\s+|@import\s+(?:url\(\s*)?)['"]([^'"]+)['"]/g)].map(m => m[1])
-      : [...readCode(rel).matchAll(/(?:from\s+|import\s*\(\s*|import\s+)['"]([^'"]+)['"]/g)].map(m => m[1]);
-    for (const spec of specs) {
-      if (!spec.startsWith('@/') && !spec.startsWith('.')) continue;
-      const next = resolve(rel, spec);
-      if (next) walk(next);
-    }
-  };
-  walk(entry);
-  return seen;
-}
 
 describe('Step 3 · the admin\'s Notifications page opens notifications (D5)', () => {
   it('a tap opens the reader on the admin page, in the admin\'s words', () => {

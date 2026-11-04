@@ -49,8 +49,14 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-@media (min-width: 641px) { .door { min-height: 32px; } }
+/* The tap floor holds to tablet width (768), the rest of the card's rule; a desk takes the compact line. */
+@media (min-width: 769px) { .door { min-height: 32px; } }
 
+/* "Public site" inside the follow line: a fingertip's height at touch widths without moving the sentence — the tap area
+   grows, the line does not (the club editor's .textLink, public-site.module.css). */
 .inlineDoor { color: var(--home-olive); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 768px) {
+  .inlineDoor { display: inline-flex; align-items: center; min-height: 44px; margin-block: -14px; }
+}
 
 .preview { display: flex; flex-direction: column; gap: 8px; min-width: 0; }

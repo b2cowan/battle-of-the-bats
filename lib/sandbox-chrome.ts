@@ -387,7 +387,8 @@ export function sandboxTourSteps(
       // docs/projects/active/TOURNAMENT_SANDBOX_DAILY_SNAPSHOT_PLAN.md.
       label: 'See what game day looks like',
       href: org.landingPath,
-      anchor: '#today',
+      // The Overview's newest results: the two finished semifinals the sentence names.
+      anchor: '[data-sandbox-tour="latest-results"]',
       said: 'Both semifinals are already final, real scores and all. The championship is on the schedule for later today, waiting to be played.',
       nextLabel: 'Next: the bracket',
     },
@@ -395,15 +396,11 @@ export function sandboxTourSteps(
       n: 2,
       label: 'See the bracket, already filled in',
       /**
-       * The bracket DIAGRAM lives on Standings, not on the Playoffs page.
-       *
-       * `/playoffs` is the Playoff Picture — seeding, matchups and the numbers behind them — and
-       * its own "Full Bracket →" button points here. The first build sent this step to
-       * `/playoffs`, so a visitor was told "that final slot read Winner of SF1" while looking at a
-       * page that does not draw the slot. Owner, third QA pass: *"'see the bracket fill itself in'
-       * brings me to this screen, which doesn't show the brackets."* Right again.
+       * Wherever the bracket DIAGRAM is drawn: on the new public pages, Playoffs (the new Standings
+       * draws none). ⚠ The old pages had it the other way round, and sending this step to the page
+       * without the diagram is a defect the owner has caught once — so this releases WITH the flip.
        */
-      href: `${org.landingPath}/standings`,
+      href: `${org.landingPath}/playoffs`,
       anchor: '[data-sandbox-tour="playoff-bracket"]',
       said: 'The championship slot already shows a real team name, not "Winner of SF1." Nobody dragged it in there — finishing the semifinal did that on its own, the same way it would for a real tournament.',
       nextLabel: "Next: the organizer's seat",

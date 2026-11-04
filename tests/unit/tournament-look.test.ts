@@ -491,4 +491,18 @@ describe('Part 3: the Branding page and its route (source guards)', () => {
     assert.match(win, /aria-hidden inert/);
     assert.match(win, /createPortal\(children, root\)/);
   });
+
+  it('the window\'s band prefetches nothing: its links point at Branding sub-pages that do not exist (Stage 8 call 4)', () => {
+    const band = readCode('components/public/TournamentBand.tsx');
+    const tabs = readCode('components/public/TournamentTopTabs.tsx');
+    // The card asks for it (it renders one band)…
+    assert.match(card, /prefetch=\{false\}/);
+    // …the band carries it to the name and to the tab row (the visitor's doors never render in the preview)…
+    assert.equal(band.match(/prefetch=\{prefetch\}/g)?.length, 2);
+    assert.match(band, /<Link href=\{homeHref\} prefetch=\{prefetch\}/);
+    // …and the row puts it on every tab it draws.
+    const linkCount = tabs.match(/<Link\b/g)?.length ?? 0;
+    assert.ok(linkCount > 0, 'the tab row draws its tabs as Links');
+    assert.equal(tabs.match(/prefetch=\{prefetch\}/g)?.length ?? 0, linkCount);
+  });
 });

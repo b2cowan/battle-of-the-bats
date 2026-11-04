@@ -116,8 +116,9 @@ export default function LookCard({ org, tournament, draft: d, logoUrl, facts, in
             hasBracket={false}
             frameContent={facts?.frameContent}
             // This page's own address: the band reads as on the Overview (its tab chosen). Its links go nowhere — the
-            // window is inert.
+            // window is inert — so nothing prefetches them either.
             basePath={pathname}
+            prefetch={false}
           />
         </div>
       </PhoneWindow>

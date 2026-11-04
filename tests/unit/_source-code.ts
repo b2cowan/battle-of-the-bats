@@ -18,7 +18,7 @@
  * not try to run a module with no tests in it.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 const REPO = path.join(import.meta.dirname, '..', '..');
@@ -162,6 +162,49 @@ export function filesUnder(dir: string, ext: string): string[] {
   };
   walk(dir.replace(/\\/g, '/').replace(/\/$/, ''));
   return out;
+}
+
+/** Each file's resolved local imports, read once per run (several guards walk overlapping graphs). */
+const importsCache = new Map<string, string[]>();
+
+function localImportsOf(rel: string): string[] {
+  const hit = importsCache.get(rel);
+  if (hit) return hit;
+  const specs = rel.endsWith('.css')
+    ? [...readSource(rel).replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/(?:composes:[^;]*?from\s+|@import\s+(?:url\(\s*)?)['"]([^'"]+)['"]/g)].map(m => m[1])
+    : [...readCode(rel).matchAll(/(?:from\s+|import\s*\(\s*|import\s+)['"]([^'"]+)['"]/g)].map(m => m[1]);
+  const out: string[] = [];
+  for (const spec of specs) {
+    if (!spec.startsWith('@/') && !spec.startsWith('.')) continue;
+    const base = spec.startsWith('@/') ? path.join(REPO, spec.slice(2)) : path.resolve(path.dirname(path.join(REPO, rel)), spec);
+    for (const ext of ['', '.tsx', '.ts', '/index.tsx', '/index.ts']) {
+      const abs = base + ext;
+      if (existsSync(abs) && /\.(tsx?|css)$/.test(abs)) { out.push(path.relative(REPO, abs).split(path.sep).join('/')); break; }
+    }
+  }
+  importsCache.set(rel, out);
+  return out;
+}
+
+/**
+ * Every repo file a module loads, at any depth — static imports, re-exports and `import('…')` — through
+ * `@/` and relative specifiers only (packages are not ours to walk). Comments are stripped first, so a
+ * comment that NAMES a module is not an import of it. ⚠ A stylesheet is walked too: a CSS module's
+ * `composes: x from '…'` and `@import` load the sheet they name, and `composes` is exactly how the coach
+ * stylesheet has been borrowed before — a leak through one would pass a walker that stopped at `.css`.
+ * Paths are repo-relative with forward slashes. (First written in notification-open-in-place-guard;
+ * promoted for the demo tour's destination guard, Public tournament pages Stage 8 Part 2.)
+ */
+export function reachableFrom(...entries: string[]): Set<string> {
+  const seen = new Set<string>();
+  const stack = [...entries];
+  while (stack.length) {
+    const rel = stack.pop()!;
+    if (seen.has(rel)) continue;
+    seen.add(rel);
+    stack.push(...localImportsOf(rel));
+  }
+  return seen;
 }
 
 /**
