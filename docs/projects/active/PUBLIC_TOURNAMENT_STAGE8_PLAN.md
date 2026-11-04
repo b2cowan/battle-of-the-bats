@@ -1,6 +1,6 @@
 # Public tournament pages — Stage 8: the new look on for everyone (plan)
 
-**Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 built on `dev` 2026-11-03** (record §10; it releases with the flip, ruling D). Next Part 2. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
+**Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 committed `d4af280e6` 2026-11-03** (record §10; it releases with the flip, ruling D). Next Part 2. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
 **Sequencing rule (standing):** by dependency and rework risk, never by date. One part per session, `/clear` between.
@@ -128,7 +128,7 @@ Read-through of the old Branding page's frame branch was not done (it is not yet
 look today — Part 1 starts there); the importer lists are the census's and are re-opened per removal; no prod state beyond the count above.
 *(Answered by Part 1, §10: the card DID show under the new look, all but its App name field.)*
 
-## 10. Part 1 record (built 2026-11-03 on `dev`; releases with the flip)
+## 10. Part 1 record (committed `d4af280e6` 2026-11-03; releases with the flip)
 
 **What changed for a customer (on dev; nothing promoted):** the Branding page's **App icon card is gone** on both the old page and
 the new-look page. The plan's open question is answered: under the frame (`frameOn` true) the card rendered everything but the App name
