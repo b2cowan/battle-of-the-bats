@@ -118,8 +118,7 @@ export function defaultKeeper(people: readonly DuplicatePersonIn[]): string {
 const pairKey = (x: string, y: string) => (x < y ? `${x}|${y}` : `${y}|${x}`);
 
 /** Joined sets of ids (path-compressed; the smaller id roots its set, so a set's root never depends on the order of
- *  joins). (lib/families-read.ts's `childKeys` used it until Club Tier Stage 14 S2, when which rows are one child moved
- *  into the database — `org_children`, mig 435.) */
+ *  joins). Shared with lib/families-audience.ts. */
 export function unionFind(): { find: (x: string) => string; union: (a: string, b: string) => void } {
   const parent = new Map<string, string>();
   const find = (x: string): string => {

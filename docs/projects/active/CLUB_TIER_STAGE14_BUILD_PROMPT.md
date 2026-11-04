@@ -104,7 +104,7 @@
       Season" (capital S) while the club's Team details says "…2027 season" — a one-word mismatch to settle.
   - **Help + marketing owed via `/docs`:** DONE (see above); `lib/walkthrough-content.ts:215` stays `/marketing`'s.
 - **S2 · the child record underneath (14b data)** — **BUILT + committed `5c3acb04c` 2026-11-04 (Parts 0–4); `/simplify` +
-  `/review` owed (offered), prod mig 435 owed (MANUAL_PROD_STEPS, `pending`).** No walk (no screen changes). What landed:
+  `/review` (high) DONE 2026-11-04 — see "Review outcome" below; the fixes landed in the commit after `5c3acb04c`; prod mig 435 owed (MANUAL_PROD_STEPS, `pending`).** No walk (no screen changes). What landed:
   - **Mig 435 `a_child_is_one_record_across_seasons`** (applied to DEV): `org_children` (id, org, first/last name, birth date;
     service role only); NOT NULL `child_id` on `rep_roster_players`, `rep_tryout_registrations`, `league_registrations`.
     `rep_child_components(team, child?)` = THE same-team rule (non-call-up roster rows + tryout sign-ups; edges = accept
@@ -148,6 +148,31 @@
     child; (5) a removed entry's child is kept, invisible (S4-1), and a JOIN deletes the absorbed record — **S4 must carry the
     child's health facts across before that delete once it holds them**; (6) "live" for write-through = rep season draft/active,
     house-league season not completed/archived.
+  - **Review outcome (2026-11-04, `/simplify` then `/review` high; five lenses — join/split, trigger safety, data/contract,
+    callers, duplicate-child writers; no Critical or High found).** Fixed in the 435 file + dev (the commit after `5c3acb04c`):
+    (1) **the undo-splits keep rule** (reproduced by two lenses): an undone link used to regroup the WHOLE child by links, so
+    a roll's fact with no link row (the mint is best-effort) was torn apart by an unrelated undo — it now moves ONLY the group
+    holding the link's current entry (`org_children_split_team` gained a 4th argument); (2) the kept child kept the split-off
+    entry's written-through name, and a join kept the older record's — both now re-named from the newest entry
+    (`org_child_rename_from_entries`; the backfill and the split share ONE newest-entry rule, `org_child_newest_entry`);
+    (3) a fix to an OLDER entry still live no longer renames the child over a newer season; (4) join/split lock the child
+    records first (id order) — races could wrong-merge; (5) the `child_id` FKs are DEFERRABLE INITIALLY DEFERRED (an organization
+    delete depends on trigger-name order otherwise); (6) apply takes the three tables' locks up front with a 15 s
+    lock_timeout, the backfill updates guard `child_id is null`; (7) link triggers + name write-through have WHEN filters,
+    the org check is skipped for a child the trigger just minted, the split evaluates the rule once; (8) TS: `childKeyOfRow`
+    has no fallback key (a missing column fails loudly), `childKeys`/`childKeyOf` removed, the export shares one child-building
+    step, `createRepRosterPlayer` sends `child_id` only when a fact supplies it, the guard test uses the shared source helpers.
+    Proof: fixture 15/15 (rules 12–15 new), the reviewers' four reproductions re-run clean, `compare.mjs` identical (708 / 373 / 0),
+    naming equivalence 531 components 0 differing, org delete with entries OK, and the WHOLE final file replayed on dev's real rows
+    in a rolled-back transaction (`.probe/s2-child/replay.cjs`: same partition, same names). 110/110 unit tests, typecheck clean.
+    **Not changed, for the owner:** (a) a unique index on (child, season) so no writer can put a child on a roster twice — real
+    guard, but it rejects writes and needs a data check first; today only the roll's picker enforces it; (b) a deleted or
+    re-pointed confirmed link does not unjoin children (only a status change does); (c) `org_children` has no erasure path —
+    a minor's name and birth date outlive the entry (S4-1 "keep" is the ruling; the privacy plan should say how erasure reaches
+    them); (d) the old anon INSERT policies on the sign-up tables are inert only because mig 311 revoked the grants — if a
+    grant is ever restored, a supplied `child_id` would need guarding. **Prod mig 435: apply in a quiet window, run the two
+    org pre-checks in its MANUAL_PROD_STEPS note first.** The DEV schema snapshots were not refreshed for the FK deferral
+    (`npm run refresh:snapshots` when the commit is made).
   - **Records:** dictionary (`org_children` entry, three `child_id` lines, a ⚠ on `rep_player_continuity_links`), the plan's
     14b line + the corrected "Migrations" line (it said the backfill "merges what the matcher is sure of" — Ask 4 overrules),
     TODO line. Probe scripts in `.probe/s2-child/` (dev only: `q.mjs`, `compare.mjs`, the migration builder).

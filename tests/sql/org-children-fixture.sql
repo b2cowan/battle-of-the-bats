@@ -16,7 +16,11 @@
 --   8. a live entry's name edit writes through; a closed season's does not;
 --   9. an entry cannot point at another organization's child;
 --  10. undoing a confirmed link splits the chain at that link, and the remaining link keeps its side together;
---  11. rep_child_components (the backfill's rule) groups the team the same way the triggers left it.
+--  11. rep_child_components (the backfill's rule) groups the team the same way the triggers left it;
+--  12. an undo separates ITS two sides only: entries the roll joined by a fact with no link row stay together;
+--  13. after an undo the kept child is re-named from what it still holds (the split-off entry's write-through is undone);
+--  14. a join names the child from its newest entry, not from the older record it kept;
+--  15. a fix to an OLDER entry that is still live never renames the child over a newer season's spelling.
 do $fixture$
 declare
   v_org uuid;
@@ -26,6 +30,8 @@ declare
   s1 uuid; s2 uuid;
   a1 uuid; a2 uuid; a3 uuid; a4 uuid; b1 uuid; cu uuid; ava uuid; mia uuid; mia_prev uuid; noah uuid; noah_new uuid;
   r_noah uuid; l1 uuid; l2 uuid; link_32 uuid;
+  k1 uuid; k2 uuid; k3 uuid; k_link uuid; c_k uuid; lou1 uuid; lou2 uuid; lou_link uuid; m1 uuid; m2 uuid;
+  p1 uuid; p2 uuid; yb2 uuid;
   c_a1 uuid; c_stray uuid; n_before int; n_after int; v_name text; v_err text;
   dob constant date := date '2014-05-02';
   procedure_ok boolean;
@@ -181,6 +187,71 @@ begin
     raise exception 'FIXTURE_FAIL: 11 — rep_child_components disagrees with the stored children';
   end if;
 
-  raise exception 'FIXTURE_OK: 11 rules held (rolled back; nothing kept)';
+  -- 12. The roll's FACT without a link row survives an unrelated undo. (Rule 11 is about the rows above, before this: a fact
+  -- with no link is exactly what the components rule cannot see, so from here the stored children may exceed its groups.)
+  insert into rep_roster_players (program_year_id, team_id, org_id, player_first_name, player_last_name, player_date_of_birth)
+    values (y1, v_team_a, v_org, 'Kai', 'Wu', dob) returning id into k1;
+  select child_id into c_k from rep_roster_players where id = k1;
+  insert into rep_roster_players (program_year_id, team_id, org_id, player_first_name, player_last_name, player_date_of_birth, child_id)
+    values (y2, v_team_a, v_org, 'Kai', 'Wu', dob, c_k) returning id into k2;          -- the roll: a fact, its link mint failed
+  insert into rep_roster_players (program_year_id, team_id, org_id, player_first_name, player_last_name, player_date_of_birth)
+    values (y3, v_team_a, v_org, 'Kai', 'Wu', dob) returning id into k3;
+  insert into rep_player_continuity_links (org_id, team_id, current_roster_id, prior_roster_id, status, confidence)
+    values (v_org, v_team_a, k3, k2, 'confirmed', 'high') returning id into k_link;
+  if (select child_id from rep_roster_players where id = k3) <> c_k then
+    raise exception 'FIXTURE_FAIL: 12 — the confirmed link did not join the chain';
+  end if;
+  update rep_player_continuity_links set status = 'rejected' where id = k_link;
+  if (select child_id from rep_roster_players where id = k1) <> (select child_id from rep_roster_players where id = k2) then
+    raise exception 'FIXTURE_FAIL: 12 — an undo tore apart two entries the roll joined by a fact';
+  end if;
+  if (select child_id from rep_roster_players where id = k3) = (select child_id from rep_roster_players where id = k2) then
+    raise exception 'FIXTURE_FAIL: 12 — the undo did not separate the undone link''s two sides';
+  end if;
+
+  -- 13. Kept name after an undo: the live entry's fix wrote through to the shared child; once it is split off, the kept
+  -- child must read as the entry it still holds.
+  insert into rep_roster_players (program_year_id, team_id, org_id, player_first_name, player_last_name, player_date_of_birth)
+    values (y3, v_team_a, v_org, 'Lou', 'Day', dob) returning id into lou1;
+  insert into rep_roster_players (program_year_id, team_id, org_id, player_first_name, player_last_name, player_date_of_birth)
+    values (y4, v_team_a, v_org, 'Lou', 'Day', dob) returning id into lou2;
+  insert into rep_player_continuity_links (org_id, team_id, current_roster_id, prior_roster_id, status, confidence)
+    values (v_org, v_team_a, lou2, lou1, 'confirmed', 'high') returning id into lou_link;
+  update rep_roster_players set player_first_name = 'Louis' where id = lou2;
+  select first_name into v_name from org_children where id = (select child_id from rep_roster_players where id = lou1);
+  if v_name <> 'Louis' then raise exception 'FIXTURE_FAIL: 13 — the live fix did not reach the joined child (%)', v_name; end if;
+  update rep_player_continuity_links set status = 'rejected' where id = lou_link;
+  select first_name into v_name from org_children where id = (select child_id from rep_roster_players where id = lou1);
+  if v_name <> 'Lou' then raise exception 'FIXTURE_FAIL: 13 — the kept child still carries the split-off entry''s name (%)', v_name; end if;
+  select first_name into v_name from org_children where id = (select child_id from rep_roster_players where id = lou2);
+  if v_name <> 'Louis' then raise exception 'FIXTURE_FAIL: 13 — the split-off child is not named from its entry (%)', v_name; end if;
+
+  -- 14. A join names the child from its NEWEST entry.
+  insert into rep_roster_players (program_year_id, team_id, org_id, player_first_name, player_last_name, player_date_of_birth)
+    values (y3, v_team_a, v_org, 'Mo-old', 'Ng', dob) returning id into m1;
+  insert into rep_roster_players (program_year_id, team_id, org_id, player_first_name, player_last_name, player_date_of_birth)
+    values (y4, v_team_a, v_org, 'Mo-new', 'Ng', dob) returning id into m2;
+  insert into rep_player_continuity_links (org_id, team_id, current_roster_id, prior_roster_id, status, confidence)
+    values (v_org, v_team_a, m2, m1, 'confirmed', 'high');
+  select first_name into v_name from org_children where id = (select child_id from rep_roster_players where id = m1);
+  if v_name <> 'Mo-new' then raise exception 'FIXTURE_FAIL: 14 — the joined child kept the older record''s name (%)', v_name; end if;
+
+  -- 15. Two LIVE seasons (the roll opens the new one before it closes the old): a fix to the older entry must not rename
+  -- the child over the newer one; a fix to the newer one does.
+  insert into rep_program_years (team_id, org_id, name, year, status) values (v_team_b, v_org, '2026 Season', 2026, 'draft') returning id into yb2;
+  insert into rep_roster_players (program_year_id, team_id, org_id, player_first_name, player_last_name, player_date_of_birth)
+    values (yb, v_team_b, v_org, 'Pat', 'Roy', dob) returning id into p1;
+  insert into rep_roster_players (program_year_id, team_id, org_id, player_first_name, player_last_name, player_date_of_birth)
+    values (yb2, v_team_b, v_org, 'Pat', 'Roy', dob) returning id into p2;
+  insert into rep_player_continuity_links (org_id, team_id, current_roster_id, prior_roster_id, status, confidence)
+    values (v_org, v_team_b, p2, p1, 'confirmed', 'high');
+  update rep_roster_players set player_first_name = 'Patrick' where id = p1;
+  select first_name into v_name from org_children where id = (select child_id from rep_roster_players where id = p1);
+  if v_name <> 'Pat' then raise exception 'FIXTURE_FAIL: 15 — a fix to the older live entry renamed the child over the newer season (%)', v_name; end if;
+  update rep_roster_players set player_first_name = 'Patty' where id = p2;
+  select first_name into v_name from org_children where id = (select child_id from rep_roster_players where id = p1);
+  if v_name <> 'Patty' then raise exception 'FIXTURE_FAIL: 15 — a fix to the newest live entry did not reach the child (%)', v_name; end if;
+
+  raise exception 'FIXTURE_OK: 15 rules held (rolled back; nothing kept)';
 end
 $fixture$;

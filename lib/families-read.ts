@@ -47,8 +47,9 @@ import { secondParentsOf, SECOND_PARENT_WORDS } from './league-second-parent';
 export interface FamilyChildRow {
   source: 'rep_roster' | 'league';
   sourceRowId: string;
-  /** One child, however many seasons (E08): rep rows a CONFIRMED continuity link joins share a key; a league row is
-   *  never folded into a rep row. */
+  /** One child, however many seasons (E08): rows that carry the same `org_children` record share a key (the roll, an
+   *  accepted tryout, or a person's confirmed link put them there); a house-league sign-up is its own child until a person
+   *  joins it (Stage 14 S6). */
   childKey: string;
   childName: string;
   /** Team name (rep) or "Season · Division" (league). */
@@ -260,7 +261,7 @@ function orgRows<T>(table: string, select: string, orgId: string, narrow?: (q: a
 
 /**
  * `forDuplicates`: the duplicate rule's read (the club brief's count, the Duplicates tab, the merge route's re-check) —
- * it never reads consents or continuity links, so those two org-wide reads are skipped (and every child is its own key).
+ * it never reads consents, so that org-wide read is skipped.
  */
 async function loadOrgFamilyWorld(orgId: string, opts: { attach?: boolean; forDuplicates?: boolean } = {}) {
   // One idempotent attach per VISIT, so rows written since the last visit join their person the moment an admin
@@ -313,7 +314,7 @@ async function loadOrgFamilyWorld(orgId: string, opts: { attach?: boolean; forDu
     return m;
   };
   return {
-    people, addresses, rosterRows, leagueRegs, links, optouts, consents, childKeyOf: childKeys(rosterRows),
+    people, addresses, rosterRows, leagueRegs, links, optouts, consents,
     // Looked up per person on every page of the area — built once, never a scan of the org's rows per person.
     personById: new Map(people.map((p: any) => [p.id as string, p])),
     rosterByPerson: byKey(rosterRows, r => r.person_id),
@@ -329,23 +330,18 @@ type World = Awaited<ReturnType<typeof loadOrgFamilyWorld>>;
  * E08 — which rows are ONE child: the ones that carry the same `org_children` record (Club Tier Stage 14 S2, mig 435).
  * Before it, this file unioned a team's CONFIRMED continuity links at read time; the migration's backfill ran that
  * same union (with its registration alias rule) once, and from then on the database keeps it — the roll, a confirmed
- * accept and a confirmed or undone returning-player link write it. Every row carries a child (a BEFORE INSERT trigger
- * mints one), so the fallbacks below are for a row read mid-deploy, before the column existed.
+ * accept and a confirmed or undone returning-player link write it. Every row carries a child (NOT NULL, a BEFORE INSERT
+ * trigger mints one), and both reads select the column — against a database before mig 435 the read errors loudly, so
+ * there is deliberately no fallback key (a guessed one would silently split one child into several).
  */
-export const childKeyOfRow = (r: { id: string; child_id?: string | null }, source: 'rep' | 'league') =>
-  r.child_id ? `child:${r.child_id}` : `${source}:${r.id}`;
-
-function childKeys(rosterRows: any[]): (rosterId: string) => string {
-  const byId = new Map<string, any>(rosterRows.map(r => [r.id as string, r]));
-  return (rosterId: string) => childKeyOfRow(byId.get(rosterId) ?? { id: rosterId }, 'rep');
-}
+export const childKeyOfRow = (r: { child_id: string }) => `child:${r.child_id}`;
 
 // The three row predicates live in lib/families-audience.ts (pure, so Email families' audience is unit-tested against
 // the SAME definitions this file reads with) — imported, never restated.
 
-function childRowFromRoster(r: any, keyOf: (id: string) => string): FamilyChildRow {
+function childRowFromRoster(r: any): FamilyChildRow {
   return {
-    source: 'rep_roster', sourceRowId: r.id, childKey: keyOf(r.id),
+    source: 'rep_roster', sourceRowId: r.id, childKey: childKeyOfRow(r),
     childName: fullName(r.player_first_name, r.player_last_name),
     where: r.rep_teams?.name ?? 'Rep team',
     year: r.rep_program_years?.year ?? null,
@@ -357,7 +353,7 @@ function childRowFromLeague(r: any): FamilyChildRow {
   const div = r.league_divisions?.name ? ` · ${r.league_divisions.name}` : '';
   const current = isCurrentLeagueSeason(r);
   return {
-    source: 'league', sourceRowId: r.id, childKey: childKeyOfRow(r, 'league'),
+    source: 'league', sourceRowId: r.id, childKey: childKeyOfRow(r),
     childName: fullName(r.player_first_name, r.player_last_name),
     where: `${r.league_seasons?.name ?? 'House league'}${div}`,
     year: null,
@@ -377,9 +373,9 @@ const fullName = (first: string | null, last: string | null) =>
 
 /** ONE comparator for a family's child rows — the worklist and the family page
  *  must never drift on this order. */
-function buildChildRows(roster: any[], league: any[], keyOf: (id: string) => string): FamilyChildRow[] {
+function buildChildRows(roster: any[], league: any[]): FamilyChildRow[] {
   return [
-    ...roster.map(r => childRowFromRoster(r, keyOf)),
+    ...roster.map(childRowFromRoster),
     ...league.map(childRowFromLeague),
   ].sort((a, b) => a.childName.localeCompare(b.childName) || (b.year ?? 0) - (a.year ?? 0));
 }
@@ -485,14 +481,14 @@ export async function readRepMoney(orgId: string, rosterRows: readonly any[]): P
 }
 
 /** One child's figures in cents, summed across the child's rows this season (a child on two teams this season). */
-function childMoney(rows: readonly any[], figures: Map<string, PlayerDuesFigures>, keyOf: (id: string) => string): FamilyChildMoney[] {
+function childMoney(rows: readonly any[], figures: Map<string, PlayerDuesFigures>): FamilyChildMoney[] {
   const out = new Map<string, FamilyChildMoney>();
   for (const r of rows) {
     const f = figures.get(r.id);
     if (!f) continue;
-    // One line per child PER SEASON: a confirmed continuity link joins a child's seasons, but a season's figures are that
+    // One line per child PER SEASON: a child spans seasons (one org_children record), but a season's figures are that
     // season's book — two live seasons never sum into one line (/review 2026-10-17).
-    const key = `${keyOf(r.id)}|${r.program_year_id}`;
+    const key = `${childKeyOfRow(r)}|${r.program_year_id}`;
     const m = out.get(key) ?? {
       childKey: key, childName: fullName(r.player_first_name, r.player_last_name), where: r.rep_teams?.name ?? 'Rep team',
       year: r.rep_program_years?.year ?? null,
@@ -525,7 +521,7 @@ export async function buildWorklist(orgId: string, orgSlug: string): Promise<Wor
 /** Every person of the club as the list shows them — the ONE place a family's money, forms and consent are worked out
  *  (the Families tab and Email families' lists both read it). */
 async function worklistFamilies(orgId: string, world: Awaited<ReturnType<typeof loadOrgFamilyWorld>>): Promise<WorklistFamily[]> {
-  const { people, addresses, rosterRows, optouts, consents, childKeyOf } = world;
+  const { people, addresses, rosterRows, optouts, consents } = world;
 
   const addressesByPerson = new Map<string, any[]>();
   for (const a of addresses) {
@@ -563,7 +559,7 @@ async function worklistFamilies(orgId: string, world: Awaited<ReturnType<typeof 
     // must be reachable: search and the All lens are their only doors, and a
     // person the UI cannot reach cannot answer "what do you hold about me".
 
-    const children = buildChildRows(myRoster, myLeague, childKeyOf);
+    const children = buildChildRows(myRoster, myLeague);
     const myCurrentRoster = myRoster.filter(isCurrentRepYear);
 
     let repOwedCents = 0; let chasedAt: string | null = null;
@@ -762,7 +758,7 @@ export async function buildFamilyPage(orgId: string, personId: string): Promise<
 
   const household = householdOf(world, p);
   const { roster: myRoster, league: myLeague, guardians } = household;
-  const children = buildChildRows(myRoster, myLeague, world.childKeyOf);
+  const children = buildChildRows(myRoster, myLeague);
 
   // Money — READ through the team's own derivation (header note). Current rep years only.
   const currentRoster = myRoster.filter(isCurrentRepYear);
@@ -774,7 +770,7 @@ export async function buildFamilyPage(orgId: string, personId: string): Promise<
   ]);
   const message = messageState(log, guardians, suppressed);
 
-  const moneyChildren = childMoney(currentRoster, money.figures, world.childKeyOf);
+  const moneyChildren = childMoney(currentRoster, money.figures);
 
   const myOptouts = world.optouts.filter((o: any) => addressSet.has(o.email));
   const forms: FamilyPagePayload['forms'] = [];
@@ -838,8 +834,9 @@ export async function buildFamilyPage(orgId: string, personId: string): Promise<
   const feeLines = childLines.filter(l => l.league?.feeCents != null);
   const feeSum = (f: (l: LeagueFeeLine) => number) => feeLines.reduce((s, l) => s + f(l.league!), 0);
   // Not back this season: each such child once, at the season they were last in (`children` is newest year first).
-  // ⚠ A league registration is its own key every season, and a rep row joins its earlier seasons only through a
-  // CONFIRMED continuity link — so a child who IS back under a new row would read "not back" beside this season's line.
+  // ⚠ A league registration is its own key every season, and a rep row shares its earlier seasons' key only by a fact (the
+  // roll, an accepted tryout) or a confirmed link — so a child who IS back under a new row would read "not back" beside this
+  // season's line.
   // Within one family a name already on this season's lines is that child (/review 2026-10-17).
   const currentNames = new Set(childLines.map(l => l.childName.trim().toLowerCase()));
   for (const c of children) {

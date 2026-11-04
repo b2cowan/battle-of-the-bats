@@ -75,12 +75,17 @@ export async function buildFamilyFile(orgId: string, orgName: string, personId: 
 
   // ── Children: each child once, every registration under them (E08: confirmed continuity joins rep seasons) ──
   const children = new Map<string, FamilyFileChild>();
-  for (const r of roster) {
-    const d = detailById.get(r.id) ?? {};
-    const key = world.childKeyOf(r.id);
+  // The child an entry belongs to (mig 435): the first entry read names it, a later one fills a missing birth date.
+  const childFor = (r: any, d: any): FamilyFileChild => {
+    const key = childKeyOfRow(r);
     const c: FamilyFileChild = children.get(key) ?? { name: fullName(r.player_first_name, r.player_last_name), birthDate: d.player_date_of_birth ?? null, registrations: [] };
     c.birthDate = c.birthDate ?? d.player_date_of_birth ?? null;
-    c.registrations.push({
+    children.set(key, c);
+    return c;
+  };
+  for (const r of roster) {
+    const d = detailById.get(r.id) ?? {};
+    childFor(r, d).registrations.push({
       kind: 'rep' as const, where: r.rep_teams?.name ?? 'Rep team', season: seasonOf(r),
       status: d.status ?? r.status ?? 'active', since: r.created_at ?? null,
       medicalNotes: d.medical_notes ?? null,
@@ -88,22 +93,17 @@ export async function buildFamilyFile(orgId: string, orgName: string, personId: 
       // The club's staff note only — the coach's pinned note stays with the team (Stage 5c, Ask 29).
       notes: note('Staff note', d.admin_notes),
     });
-    children.set(key, c);
   }
   for (const r of league) {
     const d = leagueById.get(r.id) ?? {};
-    // The sign-up's own child (mig 435): one child per sign-up until a person joins two (Stage 14 S6) — then it is ADDED
-    // to that child's registrations, beside the rep seasons above, never written over them.
-    const key = childKeyOfRow(r, 'league');
-    const c: FamilyFileChild = children.get(key) ?? { name: fullName(r.player_first_name, r.player_last_name), birthDate: d.player_date_of_birth ?? null, registrations: [] };
-    c.birthDate = c.birthDate ?? d.player_date_of_birth ?? null;
-    c.registrations.push({
+    // The sign-up's own child: one child per sign-up until a person joins two (Stage 14 S6) — then it is ADDED to that
+    // child's registrations, beside the rep seasons above, never written over them.
+    childFor(r, d).registrations.push({
       kind: 'league' as const, where: r.league_divisions?.name ?? 'House league', season: r.league_seasons?.name ?? 'House league',
       status: d.status ?? r.status, since: d.registered_at ?? r.registered_at ?? null,
       medicalNotes: null, emergencyContact: null,
       notes: [...note('Notes from the family', d.player_notes), ...note('Staff note', d.admin_notes)],
     });
-    children.set(key, c);
   }
 
   // ── Money: the team's own figures per season, every payment, credits by kind, reminders, league fees ──

@@ -48,6 +48,12 @@
 
 begin;
 
+-- The first ALTER below would take these locks one table at a time and hold them to the commit; taking all three up front
+-- (in one statement, so no sign-up or accept can interleave a deadlock) with a bounded wait means a busy moment makes the
+-- apply FAIL CLEANLY and re-runnable instead of hanging sign-ups. Apply in a quiet window.
+set local lock_timeout = '15s';
+lock table public.rep_roster_players, public.rep_tryout_registrations, public.league_registrations in access exclusive mode;
+
 -- ── 1. The record ─────────────────────────────────────────────────────────────────────────────────────────────────────
 create table if not exists public.org_children (
   id            uuid        primary key default gen_random_uuid(),
@@ -113,6 +119,47 @@ as $$
    group by n.kind, n.id;
 $$;
 
+-- The child's name and birth date: the entry on a group's NEWEST SEASON (the roster entry before a sign-up in the same
+-- season), then the newest written, then the id — a total order, so rows written in one moment (a seed, an import) still
+-- name the child the same way every time. ONE definition: the backfill below and org_children_split_team both call it.
+create or replace function public.org_child_newest_entry(p_rosters uuid[], p_regs uuid[])
+returns table (org_id uuid, first_name text, last_name text, date_of_birth date)
+language sql
+stable
+set search_path = public
+as $$
+  select e.org_id, e.first_name, e.last_name, e.dob
+    from (
+      select p.org_id, p.player_first_name as first_name, p.player_last_name as last_name,
+             p.player_date_of_birth as dob, y.year, 1 as pref, p.created_at as at, p.id
+        from public.rep_roster_players p join public.rep_program_years y on y.id = p.program_year_id
+       where p.id = any (p_rosters)
+      union all
+      select t.org_id, t.player_first_name, t.player_last_name, t.player_date_of_birth, y.year, 0, t.submitted_at, t.id
+        from public.rep_tryout_registrations t join public.rep_program_years y on y.id = t.program_year_id
+       where t.id = any (p_regs)
+    ) e
+   order by e.year desc, e.pref desc, e.at desc, e.id desc
+   limit 1;
+$$;
+
+-- Re-name one child from the rep entries it holds (newest first, as above). A join, a split and a write-through all end
+-- here, so a child's name never depends on HOW its entries came to share it. No rep entry (a house-league-only child) =
+-- nothing to do.
+create or replace function public.org_child_rename_from_entries(p_child uuid)
+returns void
+language sql
+set search_path = public
+as $$
+  update public.org_children c
+     set first_name = n.first_name, last_name = n.last_name, date_of_birth = n.date_of_birth, updated_at = now()
+    from public.org_child_newest_entry(
+           array(select id from public.rep_roster_players where child_id = p_child),
+           array(select id from public.rep_tryout_registrations where child_id = p_child)) n
+   where c.id = p_child
+     and (c.first_name, c.last_name, c.date_of_birth) is distinct from (n.first_name, n.last_name, n.date_of_birth);
+$$;
+
 -- ── 3. The backfill (deletes nothing) ─────────────────────────────────────────────────────────────────────────────────
 create temporary table s2_comp on commit drop as
   select t.org_id, c.kind, c.entry_id, c.root
@@ -122,32 +169,25 @@ create temporary table s2_comp on commit drop as
 create temporary table s2_root on commit drop as
   select d.root, gen_random_uuid() as child_id from (select distinct root from s2_comp) d;
 
--- The child's name and birth date: the entry on the component's NEWEST SEASON (the roster entry before a sign-up in the
--- same season), then the newest written, then the id — a total order, so rows written in one moment (a seed, an import)
--- still name the child the same way every time. org_children_split_team uses the same order.
+-- Each component's child is named from its newest entry (org_child_newest_entry).
 insert into public.org_children (id, org_id, first_name, last_name, date_of_birth)
-select distinct on (c.root) r.child_id, c.org_id, e.first_name, e.last_name, e.dob
-  from s2_comp c
+select r.child_id, n.org_id, n.first_name, n.last_name, n.date_of_birth
+  from (
+    select root,
+           array_agg(entry_id) filter (where kind = 'roster') as rosters,
+           array_agg(entry_id) filter (where kind = 'registration') as regs
+      from s2_comp group by root
+  ) c
   join s2_root r on r.root = c.root
-  join lateral (
-    select p.player_first_name as first_name, p.player_last_name as last_name, p.player_date_of_birth as dob,
-           y.year, 1 as pref, p.created_at as at, p.id
-      from public.rep_roster_players p join public.rep_program_years y on y.id = p.program_year_id
-     where c.kind = 'roster' and p.id = c.entry_id
-    union all
-    select t.player_first_name, t.player_last_name, t.player_date_of_birth, y.year, 0, t.submitted_at, t.id
-      from public.rep_tryout_registrations t join public.rep_program_years y on y.id = t.program_year_id
-     where c.kind = 'registration' and t.id = c.entry_id
-  ) e on true
- order by c.root, e.year desc, e.pref desc, e.at desc, e.id desc;
+ cross join lateral public.org_child_newest_entry(c.rosters, c.regs) n;
 
 update public.rep_roster_players p set child_id = r.child_id
   from s2_comp c join s2_root r on r.root = c.root
- where c.kind = 'roster' and p.id = c.entry_id;
+ where c.kind = 'roster' and p.id = c.entry_id and p.child_id is null;
 
 update public.rep_tryout_registrations t set child_id = r.child_id
   from s2_comp c join s2_root r on r.root = c.root
- where c.kind = 'registration' and t.id = c.entry_id;
+ where c.kind = 'registration' and t.id = c.entry_id and t.child_id is null;
 
 -- Everything the rule did not reach is its own child: call-ups, every house-league sign-up (one child per sign-up, as the
 -- Families book read them), and any entry of a team no longer in rep_teams (none expected; the FK cascades).
@@ -173,17 +213,22 @@ insert into public.org_children (id, org_id, first_name, last_name, date_of_birt
 select child_id, org_id, player_first_name, player_last_name, player_date_of_birth from minted;
 
 -- ── 4. Every entry has a child, in its own organization ──────────────────────────────────────────────────────────────
--- NO ACTION (the default), not RESTRICT: an organization's delete cascades to both sides in one statement, and NO ACTION
--- checks at the statement's end.
+-- DEFERRABLE INITIALLY DEFERRED (checked at COMMIT): an organization's delete cascades to the entries and to org_children
+-- in separate nested statements, fired in trigger-NAME order (a string sort of OIDs, so not something to depend on); an
+-- immediate check would refuse the delete whenever org_children happened to go first. Deferred, the check sees the end
+-- state. It also lets a join delete the absorbed record in the same transaction that moves its entries.
 alter table public.rep_roster_players
   alter column child_id set not null,
-  add constraint rep_roster_players_child_id_fkey foreign key (child_id) references public.org_children(id);
+  add constraint rep_roster_players_child_id_fkey foreign key (child_id) references public.org_children(id)
+    deferrable initially deferred;
 alter table public.rep_tryout_registrations
   alter column child_id set not null,
-  add constraint rep_tryout_registrations_child_id_fkey foreign key (child_id) references public.org_children(id);
+  add constraint rep_tryout_registrations_child_id_fkey foreign key (child_id) references public.org_children(id)
+    deferrable initially deferred;
 alter table public.league_registrations
   alter column child_id set not null,
-  add constraint league_registrations_child_id_fkey foreign key (child_id) references public.org_children(id);
+  add constraint league_registrations_child_id_fkey foreign key (child_id) references public.org_children(id)
+    deferrable initially deferred;
 
 create index if not exists rep_roster_players_child_idx       on public.rep_roster_players (child_id);
 create index if not exists rep_tryout_registrations_child_idx on public.rep_tryout_registrations (child_id);
@@ -198,6 +243,10 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  -- Only a child someone SUPPLIED (or an UPDATE of child_id) needs its organization checked: one this trigger just minted
+  -- for new.org_id, or took from the same organization's sign-up, cannot be another organization's.
+  v_check boolean := tg_op = 'UPDATE' or new.child_id is not null;
 begin
   if tg_op = 'INSERT' and new.child_id is null then
     -- An accepted tryout carries its sign-up's child (a FACT, and the returning-player link the head coach confirmed on
@@ -216,7 +265,7 @@ begin
     end if;
   end if;
 
-  if new.child_id is not null and not exists (
+  if v_check and new.child_id is not null and not exists (
     select 1 from public.org_children c where c.id = new.child_id and c.org_id = new.org_id
   ) then
     raise exception 'org_child_other_org: an entry''s child must belong to the entry''s organization'
@@ -246,11 +295,7 @@ as $$
 declare
   v_live boolean;
 begin
-  if new.player_first_name is not distinct from old.player_first_name
-     and new.player_last_name is not distinct from old.player_last_name
-     and new.player_date_of_birth is not distinct from old.player_date_of_birth then
-    return null;
-  end if;
+  -- (The triggers' WHEN already skips an UPDATE that re-sent the same name and birth date.)
   if tg_table_name = 'league_registrations' then
     select s.status not in ('completed', 'archived') into v_live
       from public.league_seasons s where s.id = new.season_id;
@@ -259,10 +304,19 @@ begin
       from public.rep_program_years y where y.id = new.program_year_id;
   end if;
   if coalesce(v_live, false) then
-    update public.org_children
-       set first_name = new.player_first_name, last_name = new.player_last_name,
-           date_of_birth = new.player_date_of_birth, updated_at = now()
-     where id = new.child_id;
+    if tg_table_name = 'league_registrations' then
+      -- A house-league sign-up is its own child in S2 (nothing newer to defer to).
+      update public.org_children
+         set first_name = new.player_first_name, last_name = new.player_last_name,
+             date_of_birth = new.player_date_of_birth, updated_at = now()
+       where id = new.child_id
+         and (first_name, last_name, date_of_birth)
+             is distinct from (new.player_first_name, new.player_last_name, new.player_date_of_birth);
+    else
+      -- A rep child is named from its NEWEST season's entry, so a fix to an older entry that is still live (the roll opens
+      -- the new season before it closes the old one) never puts the older spelling back over the newer one.
+      perform public.org_child_rename_from_entries(new.child_id);
+    end if;
   end if;
   return null;
 end;
@@ -270,16 +324,33 @@ $$;
 
 create trigger rep_roster_players_child_follows
   after update of player_first_name, player_last_name, player_date_of_birth on public.rep_roster_players
-  for each row execute function public.org_child_follows_entry();
+  for each row
+  when (new.player_first_name is distinct from old.player_first_name
+     or new.player_last_name is distinct from old.player_last_name
+     or new.player_date_of_birth is distinct from old.player_date_of_birth)
+  execute function public.org_child_follows_entry();
 create trigger rep_tryout_registrations_child_follows
   after update of player_first_name, player_last_name, player_date_of_birth on public.rep_tryout_registrations
-  for each row execute function public.org_child_follows_entry();
+  for each row
+  when (new.player_first_name is distinct from old.player_first_name
+     or new.player_last_name is distinct from old.player_last_name
+     or new.player_date_of_birth is distinct from old.player_date_of_birth)
+  execute function public.org_child_follows_entry();
 create trigger league_registrations_child_follows
   after update of player_first_name, player_last_name, player_date_of_birth on public.league_registrations
-  for each row execute function public.org_child_follows_entry();
+  for each row
+  when (new.player_first_name is distinct from old.player_first_name
+     or new.player_last_name is distinct from old.player_last_name
+     or new.player_date_of_birth is distinct from old.player_date_of_birth)
+  execute function public.org_child_follows_entry();
 
 -- ── 7. Joining and splitting ──────────────────────────────────────────────────────────────────────────────────────────
--- Join: every entry of p_absorb becomes p_keep's, and the emptied record goes (S2: it held only a copy of a name).
+-- Join: every entry of p_absorb becomes p_keep's, and the emptied record goes (S2: it held only a copy of a name; S4 must
+-- carry its health facts across BEFORE this delete once it holds any). The kept record is then re-named from its newest
+-- entry, so a joined child reads the same as a backfilled or split one.
+-- ⚠ Both records are locked FIRST, in id order: a join and a split (or two joins) racing over the same children would
+-- otherwise act on ids the other had already moved — a wrong merge. Under READ COMMITTED the statements after the lock see
+-- what the winner committed; a record already gone means the work is already done.
 create or replace function public.org_children_join(p_keep uuid, p_absorb uuid)
 returns void
 language plpgsql
@@ -288,6 +359,8 @@ set search_path = public
 as $$
 begin
   if p_keep is null or p_absorb is null or p_keep = p_absorb then return; end if;
+  perform 1 from public.org_children where id in (p_keep, p_absorb) order by id for update;
+  if (select count(*) from public.org_children where id in (p_keep, p_absorb)) < 2 then return; end if;
   if (select org_id from public.org_children where id = p_keep)
      is distinct from (select org_id from public.org_children where id = p_absorb) then
     raise exception 'org_child_other_org: two children of different organizations cannot be joined' using errcode = '23514';
@@ -296,52 +369,49 @@ begin
   update public.rep_tryout_registrations set child_id = p_keep where child_id = p_absorb;
   update public.league_registrations     set child_id = p_keep where child_id = p_absorb;
   delete from public.org_children where id = p_absorb;
+  perform public.org_child_rename_from_entries(p_keep);
 end;
 $$;
 
--- Split: the team's entries of p_child, regrouped by the rule. The group holding p_keep_entry keeps the record (the
--- smallest root when that entry is not in it); every other group gets a new child named from its newest entry. Entries
--- of p_child elsewhere (a call-up, another team, the house league — S6 joins) stay with it.
-create or replace function public.org_children_split_team(p_team uuid, p_child uuid, p_keep_entry uuid)
+-- Split: an undone link separates ITS two sides and nothing else. Of the team's entries of p_child, grouped by the rule,
+-- ONLY the group holding p_split_entry (the link's current side) moves — to a new child named from its newest entry —
+-- unless it is still joined to p_keep_entry (the prior side) by another confirmed link or an accept; every other entry
+-- stays on the kept record, which is re-named from what it still holds. Entries of p_child elsewhere (a call-up, another
+-- team, the house league — S6 joins) stay with it.
+-- ⚠ Why not regroup everything by the rule (what this did first): two entries can share a child by a FACT that has no link
+-- row — the roll sets the child itself and mints its link best-effort — and an unrelated undo then tore them apart.
+-- Locks the record first (see org_children_join).
+create or replace function public.org_children_split_team(p_team uuid, p_child uuid, p_keep_entry uuid, p_split_entry uuid)
 returns void
 language plpgsql
 security definer
 set search_path = public
 as $$
 declare
-  v_keep_root text;
   v_new uuid;
   g record;
 begin
-  select c.root into v_keep_root from public.rep_child_components(p_team, p_child) c where c.entry_id = p_keep_entry;
-  if v_keep_root is null then
-    select min(c.root) into v_keep_root from public.rep_child_components(p_team, p_child) c;
-  end if;
+  perform 1 from public.org_children where id = p_child for update;
+  if not found then return; end if;
+  -- The rule is evaluated ONCE (the loop below changes child_id mid-way, so it must not be re-read).
   for g in
+    with comp as materialized (select * from public.rep_child_components(p_team, p_child)),
+         sides as (select (select k.root from comp k where k.entry_id = p_keep_entry)  as keep_root,
+                          (select k.root from comp k where k.entry_id = p_split_entry) as split_root)
     select c.root,
            array_agg(c.entry_id) filter (where c.kind = 'roster') as rosters,
            array_agg(c.entry_id) filter (where c.kind = 'registration') as regs
-      from public.rep_child_components(p_team, p_child) c
+      from comp c
      group by c.root
+    having c.root = (select split_root from sides) and c.root is distinct from (select keep_root from sides)
   loop
-    continue when g.root = v_keep_root;
     v_new := gen_random_uuid();
     insert into public.org_children (id, org_id, first_name, last_name, date_of_birth)
-    select v_new, e.org_id, e.first_name, e.last_name, e.dob
-      from (
-        select p.org_id, p.player_first_name as first_name, p.player_last_name as last_name,
-               p.player_date_of_birth as dob, y.year, 1 as pref, p.created_at as at, p.id
-          from public.rep_roster_players p join public.rep_program_years y on y.id = p.program_year_id
-         where p.id = any (g.rosters)
-        union all
-        select t.org_id, t.player_first_name, t.player_last_name, t.player_date_of_birth, y.year, 0, t.submitted_at, t.id
-          from public.rep_tryout_registrations t join public.rep_program_years y on y.id = t.program_year_id
-         where t.id = any (g.regs)
-      ) e
-     order by e.year desc, e.pref desc, e.at desc, e.id desc   -- the backfill's order: newest season, roster first
-     limit 1;
+    select v_new, n.org_id, n.first_name, n.last_name, n.date_of_birth
+      from public.org_child_newest_entry(g.rosters, g.regs) n;
     update public.rep_roster_players       set child_id = v_new where id = any (g.rosters);
     update public.rep_tryout_registrations set child_id = v_new where id = any (g.regs);
+    perform public.org_child_rename_from_entries(p_child);
   end loop;
 end;
 $$;
@@ -375,26 +445,38 @@ begin
     end if;
   elsif tg_op = 'UPDATE' and old.status = 'confirmed' and new.status <> 'confirmed' then
     if v_current is not null and v_current = v_prior then
-      perform public.org_children_split_team(new.team_id, v_current, coalesce(new.prior_roster_id, new.prior_registration_id));
+      perform public.org_children_split_team(new.team_id, v_current,
+        coalesce(new.prior_roster_id, new.prior_registration_id), coalesce(new.current_roster_id, new.current_registration_id));
     end if;
   end if;
   return null;
 end;
 $$;
 
-create trigger rep_player_continuity_links_child
-  after insert or update of status on public.rep_player_continuity_links
-  for each row execute function public.org_child_follows_link();
+-- Two triggers because an UPDATE's WHEN may read OLD and an INSERT's may not; each fires only when a decision that matters
+-- happened (a link becoming confirmed, or leaving confirmed) — a suggested or rejected link costs nothing here.
+-- ⚠ The ENTRY's child_id is the fact; the link records who the person said was the same child. The roll sets the new
+-- entry's child itself, so the join above is then a no-op, and the link's other readers (Skills & goals history) are unaffected.
+create trigger rep_player_continuity_links_child_confirmed
+  after insert on public.rep_player_continuity_links
+  for each row when (new.status = 'confirmed')
+  execute function public.org_child_follows_link();
+create trigger rep_player_continuity_links_child_changed
+  after update of status on public.rep_player_continuity_links
+  for each row when (old.status is distinct from new.status and (new.status = 'confirmed' or old.status = 'confirmed'))
+  execute function public.org_child_follows_link();
 
 revoke all on function public.rep_child_components(uuid, uuid) from public, anon, authenticated;
 revoke all on function public.org_children_join(uuid, uuid) from public, anon, authenticated;
-revoke all on function public.org_children_split_team(uuid, uuid, uuid) from public, anon, authenticated;
+revoke all on function public.org_children_split_team(uuid, uuid, uuid, uuid) from public, anon, authenticated;
+revoke all on function public.org_child_rename_from_entries(uuid) from public, anon, authenticated;
+revoke all on function public.org_child_newest_entry(uuid[], uuid[]) from public, anon, authenticated;
 revoke all on function public.org_child_for_entry() from public, anon, authenticated;
 revoke all on function public.org_child_follows_entry() from public, anon, authenticated;
 revoke all on function public.org_child_follows_link() from public, anon, authenticated;
 grant execute on function public.rep_child_components(uuid, uuid) to service_role;
 grant execute on function public.org_children_join(uuid, uuid) to service_role;
-grant execute on function public.org_children_split_team(uuid, uuid, uuid) to service_role;
+grant execute on function public.org_children_split_team(uuid, uuid, uuid, uuid) to service_role;
 
 comment on table public.org_children is
   'One row per child of an organization (Club Tier Stage 14 S2, mig 435): roster entries, tryout sign-ups and house-league '

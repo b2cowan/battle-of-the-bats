@@ -5366,8 +5366,9 @@ export async function createRepRosterPlayer(fields: {
       source: fields.source ?? 'admin_manual',
       status: fields.status ?? 'active',
       tryout_registration_id: fields.tryoutRegistrationId ?? null,
-      // null → the trigger mints the child (never a guessed match; Ask 4).
-      child_id: fields.childId ?? null,
+      // Omitted → the trigger mints the child (never a guessed match; Ask 4). Only sent when a fact supplies it, so a
+      // roster add never depends on the column existing before it has to.
+      ...(fields.childId ? { child_id: fields.childId } : {}),
       player_first_name: fields.playerFirstName,
       player_last_name: fields.playerLastName,
       player_date_of_birth: fields.playerDateOfBirth ?? null,

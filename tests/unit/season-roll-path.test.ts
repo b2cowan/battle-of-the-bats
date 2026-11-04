@@ -8,6 +8,7 @@ import {
   rollRequestFields, rollWaitReason, type RollPlayer,
 } from '../../lib/season-roll-path.ts';
 import { startLead } from '../../lib/club-season-words.ts';
+import { between } from './_source-code.ts';
 
 /**
  * Club Tier Stage 14a — "What is the team doing next season?" (drawn + ruled 2026-11-04, Asks 1–3, all A).
@@ -153,7 +154,7 @@ describe('who comes (Ask 2): active ticked, inactive at the bottom unticked, cal
   });
   it('the carried entry is the same child — the roll passes it, never leaves it to the best-effort link', () => {
     const roll = read('lib/rep-season-rollover.ts');
-    const call = roll.slice(roll.indexOf('await createRepRosterPlayer({'), roll.indexOf('playerIdMap.set(p.id, created.id)'));
+    const call = between(roll, 'await createRepRosterPlayer({', 'playerIdMap.set(p.id, created.id)');
     assert.match(call, /childId: p\.childId,/);
   });
   it('the roll carries the pick, not every active player, and checks it before writing anything', () => {

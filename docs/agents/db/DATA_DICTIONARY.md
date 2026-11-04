@@ -2845,7 +2845,7 @@ moment it lands.
 
 <!-- dict:col:rep_roster_players.person_id -->
 <!-- dict:col:rep_roster_players.child_id -->
-**`child_id`** (uuid NOT NULL, FK → `org_children`, indexed; **mig 435**) — the child this roster entry (a call-up is always its own child). The roll passes the carried entry's; an accepted tryout takes its sign-up's is one season of. Set by
+**`child_id`** (uuid NOT NULL, FK → `org_children`, indexed; **mig 435**) — the child this roster entry is one season of (a call-up is always its own child). The roll passes the carried entry's; an accepted tryout takes its sign-up's. Set by
 the BEFORE INSERT trigger `org_child_for_entry` when omitted (a new child; never a guessed match), or explicitly from a fact.
 See `org_children` for the rules (confirm joins, undo splits, live name edits write through).
 
@@ -6260,20 +6260,31 @@ RLS on, no policies, **service role only**. Plan of record: `CLUB_TIER_PRODUCTIO
    (23514 `org_child_other_org`) an entry whose child is in another organization, on insert and on UPDATE OF child_id. No
    app code inserts here (`tests/unit/org-children-guard.test.ts`). The house-league placement RPC and
    `accept_tryout_and_create_dues` were NOT changed — their locking and duplicate refusal are as shipped.
-3. **Confirm joins, undo splits — in the database.** `org_child_follows_link` (AFTER INSERT OR UPDATE OF status on
-   `rep_player_continuity_links`): a link becoming `confirmed` runs `org_children_join(prior's child, current's child)`
-   (every entry of the current side's child moves to the prior's; the emptied record is DELETED); a `confirmed` link
-   leaving `confirmed` runs `org_children_split_team(team, child, prior entry)`, which regroups the TEAM's entries of that
-   child by `rep_child_components` — the group holding the prior entry keeps the record, each other group gets a new one.
-   Entries of the child elsewhere (a call-up, another team, the house league) stay with it. A call-up is never a node.
+3. **Confirm joins, undo splits — in the database.** `org_child_follows_link` (two triggers on
+   `rep_player_continuity_links`, each with a WHEN so a suggested or rejected link costs nothing: AFTER INSERT when
+   `confirmed`; AFTER UPDATE OF status when it moves to or from `confirmed`): a link becoming `confirmed` runs `org_children_join(prior's child, current's child)`
+   (every entry of the current side's child moves to the prior's; the emptied record is DELETED, the kept one re-named
+   from its newest entry); a `confirmed` link leaving `confirmed` runs
+   `org_children_split_team(team, child, prior entry, current entry)`: of the TEAM's entries of that child grouped by
+   `rep_child_components`, ONLY the group holding the current entry moves (to a new child named from its newest entry) —
+   unless another confirmed link or an accept still joins it to the prior entry. Everything else stays on the kept record,
+   which is re-named from what it still holds. ⚠ It deliberately does NOT regroup the whole child: two entries can share a
+   child by a FACT with no link row (the roll sets the child itself and mints its link best-effort), and an unrelated undo
+   must not tear them apart. Join and split lock the child records first (id order). Entries of the child elsewhere (a
+   call-up, another team, the house league) stay with it. A call-up is never a node.
 4. **`rep_child_components(team, child?)` is THE same-team rule** — the components of the team's non-call-up roster rows
    and tryout sign-ups joined by (a) a roster row and the sign-up it was accepted from, (b) a confirmed continuity link.
-   The backfill ran it once per team; the split runs it on one child. It is the Families book's old read-time `childKeys`
+   The backfill ran it once per team; the split runs it on one child; both name a child from a group's newest entry through
+   `org_child_newest_entry(rosters, regs)` (newest season, roster before sign-up, then newest written, then id). It is the Families book's old read-time `childKeys`
    union (with its registration alias rule) moved into the database, plus one honest widening: a sign-up a coach confirmed
    as a returning player BEFORE it was accepted is already that child.
 5. **Each entry keeps its own name/DOB** as that season's copy (S2-1). Editing `player_first_name` / `player_last_name` /
    `player_date_of_birth` on a LIVE entry writes through (`org_child_follows_entry`: rep season `draft`/`active`;
-   house-league season not `completed`/`archived`); a past entry stays as recorded.
+   house-league season not `completed`/`archived`); a past entry stays as recorded. A rep child is re-named from its
+   NEWEST season's entry (`org_child_rename_from_entries`), so a fix to an older entry that is still live (the roll opens the
+   new season before it closes the old one) never puts the older spelling back. The `child_id` foreign keys are DEFERRABLE
+   INITIALLY DEFERRED (checked at commit): an organization delete cascades to the entries and to this table in separate
+   nested statements, fired in trigger-name order.
 6. **A removed entry leaves its child behind**, unreferenced and invisible (every read goes entry → child); S4-1 rules a
    child with no entries is kept. Only a JOIN deletes a record — S4, once the child holds health facts, must carry them
    across before that delete.
