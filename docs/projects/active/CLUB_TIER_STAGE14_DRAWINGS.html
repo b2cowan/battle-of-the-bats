@@ -1,0 +1,936 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>One Child, Every Season</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) holding true-size specimens of the coaches portal and the club
+   admin on the Warm kit. Sticky tabs, one section at a time, an Everything / Show only what differs switch where a
+   section compares. Desktop frames are 1440 wide and scroll sideways inside their own box on a narrow window.
+   Round 2 (2026-11-04): /design round applied — plain-face titles, sentence-case chips, the One Window ladder
+   (520 / 640 / 416), the shipped pick-many list, the pill ViewSwitch, the real rails, tabs and success view. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.doc{max-width:1480px;margin:0 auto;padding-block:16px 90px}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:22px;margin:6px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:17px;margin:20px 0 6px}
+.doc p,.doc li{max-width:86ch}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16px;max-width:90ch}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 13px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+section.pane[hidden]{display:none}
+.viewrow{display:flex;align-items:center;gap:10px;margin:8px 0 12px;flex-wrap:wrap}
+.viewrow .lab{font:600 11.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sw{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px}
+.sw button{font:600 13.5px/1 var(--f-doc);min-height:36px;padding:0 14px;border-radius:7px;border:0;background:none;color:var(--muted);cursor:pointer}
+.sw button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px;box-shadow:var(--shadow);margin:12px 0}
+.card h3{margin-top:0}
+.card ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.read{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+.read.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.read.one{grid-template-columns:minmax(0,1fr)}
+@media (max-width:900px){.read,.read.two{grid-template-columns:minmax(0,1fr)}}
+.read>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.read h4{margin:0 0 6px;font:700 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.read .w h4{color:var(--fix)} .read .g h4{color:var(--flag)} .read .c h4{color:var(--t-res)} .read .a h4{color:var(--ask)}
+.read ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.read p{margin:0;font-size:14px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:760px}
+table.t.narrow{min-width:0}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+.y{color:var(--fix);font-weight:700} .x{color:var(--flag);font-weight:700} .am{color:var(--ask);font-weight:700}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:24px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)} .mk.askm{color:var(--ask)}
+.cap{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 6px;font:600 12px/1.3 var(--f-mono);color:var(--muted)}
+.cap b{color:var(--ink)}
+.pair{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;margin:8px 0}
+.pair>div{min-width:0;max-width:100%}
+.fx{overflow-x:auto;max-width:100%;padding-bottom:6px}
+.fr{border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;max-width:100%}
+.fx .fr{max-width:none}
+.w1440{width:1440px} .w390{width:390px} .w520{width:520px} .w640{width:640px} .w460{width:460px} .w416{width:416px}
+.side{max-width:540px;min-width:0;flex:1 1 300px}
+.samebar{display:none;border:1px dashed var(--line);border-radius:8px;padding:8px 12px;margin:2px 0;font:600 12px/1.4 var(--f-mono);color:var(--muted);text-align:center}
+body[data-view="diff"] .same{display:none}
+body[data-view="diff"] .samebar{display:block}
+/* ===== the product kit, Warm (coaches portal + club admin) ===== */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.22);--inset:rgba(70,55,30,.05);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--olive-line:rgba(87,101,30,.45);--lime:#D9F99D;--lime-ink:#1F2A07;--red:#B03A22;--red-soft:rgba(176,58,34,.08);--amber:#835006;--amber-soft:rgba(131,80,6,.09);--amber-line:rgba(131,80,6,.4);
+  --quiet:rgba(70,55,30,.08);--new:rgba(75,46,131,.08);--newl:#4B2E83;--scrim:rgba(36,30,21,.34);
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative;text-align:left}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ak{--paper:#1A1712;--card:#241F18;--ink:#F3EDE2;--soft:rgba(243,237,226,.8);--dim:rgba(243,237,226,.62);--line:rgba(255,255,255,.1);--line2:rgba(255,255,255,.2);--inset:rgba(255,255,255,.04);--olive:#C9E58A;--olive-soft:rgba(201,229,138,.12);--olive-line:rgba(201,229,138,.45);--lime:#D9F99D;--lime-ink:#1F2A07;--red:#F08A74;--red-soft:rgba(240,138,116,.12);--amber:#E8B75A;--amber-soft:rgba(232,183,90,.12);--amber-line:rgba(232,183,90,.45);--quiet:rgba(255,255,255,.08);--new:rgba(187,166,238,.13);--newl:#BBA6EE;--scrim:rgba(0,0,0,.5)}}
+:root[data-theme="dark"] .ak{--paper:#1A1712;--card:#241F18;--ink:#F3EDE2;--soft:rgba(243,237,226,.8);--dim:rgba(243,237,226,.62);--line:rgba(255,255,255,.1);--line2:rgba(255,255,255,.2);--inset:rgba(255,255,255,.04);--olive:#C9E58A;--olive-soft:rgba(201,229,138,.12);--olive-line:rgba(201,229,138,.45);--lime:#D9F99D;--lime-ink:#1F2A07;--red:#F08A74;--red-soft:rgba(240,138,116,.12);--amber:#E8B75A;--amber-soft:rgba(232,183,90,.12);--amber-line:rgba(232,183,90,.45);--quiet:rgba(255,255,255,.08);--new:rgba(187,166,238,.13);--newl:#BBA6EE;--scrim:rgba(0,0,0,.5)}
+.ak *{box-sizing:border-box}
+.ak .shell{display:grid;grid-template-columns:240px 1fr;min-height:0}
+.ak .sb{background:var(--card);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .org{font:700 15px/1.2 'Inter';padding:4px 10px 2px}
+.ak .sb .orgs{font:500 12px/1.3 'Inter';color:var(--dim);padding:0 10px 10px}
+.ak .sb .grp{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:12px 10px 5px}
+.ak .sb .it{font:500 14px/1 'Inter';color:var(--soft);padding:9px 10px;border-radius:7px}
+.ak .sb .it.on{background:var(--olive-soft);color:var(--ink);font-weight:650}
+.ak .sb hr{border:0;border-top:1px solid var(--line);margin:8px 10px}
+.ak .main{padding:24px 32px 36px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.ak .c960{max-width:1040px;width:100%;display:flex;flex-direction:column;gap:16px}
+.ak .bar{display:flex;align-items:center;gap:10px;min-height:52px;padding:0 8px 0 4px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .bar .menu{width:44px;height:44px;display:grid;place-items:center;color:var(--soft);font-size:18px}
+.ak .crumbs{font:500 12px/1.3 'Inter';color:var(--dim)}
+.ak .ptitle{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ak .ptitle h1{font:700 20px/1.25 'Inter',system-ui,sans-serif;margin:0}
+.ak .ptitle .act{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.ak .sect{background:var(--card);border:1px solid var(--line);border-radius:8px}
+.ak .sect-h{display:flex;align-items:center;gap:10px;padding:14px 16px 8px;flex-wrap:wrap}
+.ak .sect-h h3{font:700 16px/1.25 'Inter';margin:0;display:flex;align-items:center;gap:8px}
+.ak .sect-h .acts{margin-left:auto;display:flex;gap:8px;align-items:center}
+.ak .sect-b{padding:4px 16px 16px;display:flex;flex-direction:column;gap:12px}
+/* chips: mono 700, pill, tinted border, sentence case */
+.ak .kc{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.05em;border-radius:999px;padding:5px 9px;border:1px solid var(--line2);color:var(--soft);background:var(--card);white-space:nowrap;display:inline-flex;align-items:center}
+.ak .kc.good{color:var(--olive);border-color:var(--olive-line);background:var(--olive-soft)}
+.ak .kc.warn{color:var(--amber);border-color:var(--amber-line);background:var(--amber-soft)}
+/* quiet identity chip: body face 600, faint fill, no border */
+.ak .kq{font:600 12px/1 'Inter';border-radius:999px;padding:5px 8px;background:var(--quiet);color:var(--soft);white-space:nowrap;display:inline-flex}
+.ak .b{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:0 13px;border-radius:6px;font:650 14px/1 'Inter';white-space:nowrap;border:1px solid var(--line2);background:var(--card);color:var(--soft)}
+.ak .b.lime{background:var(--lime);color:var(--lime-ink);border-color:transparent}
+.ak .b.ghost{border-color:transparent;background:none}
+.ak .b.dis{opacity:.45}
+.ak .b.ph44{min-height:44px}
+.ak .b.ico{width:44px;min-height:44px;padding:0;font-size:17px}
+.ak .door{font:600 14px/1.3 'Inter';color:var(--olive);display:inline-flex;align-items:center;gap:6px;min-height:32px}
+.ak .door::after{content:"→"}
+.ak .qlink{font:600 13px/1 'Inter';color:var(--olive)}
+.ak .f{display:flex;flex-direction:column;gap:5px;min-width:0}
+.ak .lbl{font:650 12px/1.3 'Inter';color:var(--soft)}
+.ak .in{min-height:36px;border:1px solid var(--line2);border-radius:6px;background:var(--paper);padding:0 10px;display:flex;align-items:center;font-size:14px;color:var(--ink);min-width:0;overflow:hidden;white-space:nowrap}
+.ak .in.ph{color:var(--dim)}
+.ak .in.focus{border-color:var(--olive)}
+.ak .in.num{width:56px;justify-content:center}
+.ak .hint{font-size:12px;line-height:1.45;color:var(--dim);margin:0}
+.ak .flag{font-size:12.5px;line-height:1.4;color:var(--amber);margin:0}
+.ak .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.ak .g2>*{min-width:0}
+.ak .call{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--olive);border-radius:0 8px 8px 0;padding:10px 14px;font-size:14px;line-height:1.45;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.ak .call.warn{border-left-color:var(--amber)}
+.ak .call .grow{flex:1;min-width:0}
+.ak .call small{display:block;font-size:12.5px;color:var(--soft);margin-top:2px}
+.ak .call .acts{display:flex;gap:8px;flex-wrap:wrap}
+.ak table.kt{width:100%;border-collapse:collapse;font-size:14px}
+.ak table.kt th{font:700 12.5px/1.2 'Barlow Condensed',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--soft);text-align:left;padding:10px 14px;background:var(--paper);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.ak table.kt td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+.ak table.kt tr:last-child td{border-bottom:0}
+.ak table.kt td.n{font-weight:600}
+.ak table.kt td.num{font-variant-numeric:tabular-nums;color:var(--soft)}
+.ak table.kt td.grip{color:var(--dim);width:28px;padding-right:0;letter-spacing:-2px}
+.ak .sub2{display:block;font-size:12.5px;color:var(--dim);font-weight:400;margin-top:1px}
+.ak .fam{font-size:13px;line-height:1.4;color:var(--soft)} .ak .fam b{color:var(--ink);font-weight:600;display:block}
+/* the ONE window (QuestionShell / KitDialog): 520 form · 640 medium · 416 question */
+.ak .scrim{background:var(--scrim);display:grid;place-items:start center;padding:48px 16px}
+.ak .qs{background:var(--card);border:1px solid var(--line);border-radius:12px;width:520px;max-width:100%;box-shadow:0 18px 40px rgba(36,30,21,.18)}
+.ak .qs.med{width:640px}
+.ak .qs.q{width:416px}
+.ak .qs.flat{box-shadow:none;border:0;border-radius:0;width:100%}
+.ak .qs .qh{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.ak .qs .qh b{font:700 17px/1.25 'Inter';flex:1}
+.ak .qs .qh .ey{display:block;font:600 12px/1.3 'Inter';color:var(--dim);margin-bottom:3px}
+.ak .qs .qh .x{width:32px;height:32px;display:grid;place-items:center;color:var(--dim);font-size:16px}
+.ak .qs .qh .bk{width:44px;height:44px;display:grid;place-items:center;color:var(--soft);font-size:18px;margin-left:-12px}
+.ak .qs .qh .cnt{font:600 12px/1 'Inter';color:var(--dim)}
+.ak .qs .qb{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+.ak .qs .qf{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:12px 20px;border-top:1px solid var(--line);flex-wrap:wrap}
+.ak .qs .qf .l{flex:1 1 100%;font-size:12.5px;color:var(--dim);text-align:right}
+.ak .qs .qf .l.why{color:var(--amber)}
+.ak .qs.sheet{width:390px;border-radius:0;border:0;box-shadow:none;min-height:760px;display:flex;flex-direction:column}
+.ak .qs.sheet .qb{flex:1}
+.ak .qs.sheet .qf .b{min-height:44px}
+.ak .closes{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:11px 13px}
+.ak .closes b{display:block;font-size:14px}
+.ak .closes span{font-size:13px;color:var(--soft)}
+.ak .bul{margin:0;padding-left:18px;font-size:13px;color:var(--soft);display:flex;flex-direction:column;gap:5px}
+/* radio card (the ruled question) */
+.ak .rq{display:flex;flex-direction:column;gap:8px}
+.ak .rq .lg{font:650 15px/1.3 'Inter'}
+.ak .rc{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line2);border-radius:8px;padding:12px 14px;background:var(--card);min-height:44px}
+.ak .rc.on{border-color:var(--olive);background:var(--olive-soft)}
+.ak .rc .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line2);flex:none;margin-top:1px;background:var(--card)}
+.ak .rc.on .dot{border-color:var(--olive);box-shadow:inset 0 0 0 3px var(--card);background:var(--olive)}
+.ak .rc b{display:block;font-size:14.5px}
+.ak .rc span{font-size:13px;color:var(--soft)}
+/* the branded checkbox: 18 px, 2 px radius, tinted fill + olive tick when on */
+.ak i.cb{width:18px;height:18px;border:1.5px solid var(--line2);border-radius:2px;flex:none;background:var(--card);position:relative;display:inline-block}
+.ak i.cb.on{background:var(--olive-soft);border-color:var(--olive)}
+.ak i.cb.on::after{content:"";position:absolute;left:5px;top:1px;width:5px;height:10px;border:solid var(--olive);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.ak .ckl{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.4;min-height:44px;padding:10px 0}
+.ak .ckl small{display:block;color:var(--dim);font-size:12.5px}
+/* the pick-many list (the Pay out sheet's tick list): whole row is the target, 44 floor, checked row washed */
+.ak .tl{border:1px solid var(--line);border-radius:8px;background:var(--card);overflow:hidden}
+.ak .tl .tlh{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);font:650 12px/1.3 'Inter';color:var(--soft)}
+.ak .tl .tlh .sp{flex:1}
+.ak .tl .tlb{max-height:232px;overflow:auto}
+.ak .tl .tlb.tall{max-height:none}
+.ak .tl .tr{display:flex;gap:12px;align-items:center;padding:10px 12px;border-top:1px solid var(--line);min-height:44px}
+.ak .tl .tr:first-child{border-top:0}
+.ak .tl .tr.on{background:var(--inset)}
+.ak .tl .tr .grow{flex:1;min-width:0}
+.ak .tl .tr .t{font:600 14px/1.3 'Inter';display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ak .tl .tr .s{font-size:12.5px;color:var(--dim);margin-top:2px}
+.ak .search{min-height:36px;border:1px solid var(--line2);border-radius:6px;background:var(--paper);padding:0 10px;display:flex;align-items:center;gap:8px;color:var(--dim);font-size:14px}
+/* the kit ViewSwitch: one white rounded track, chosen in soft olive */
+.ak .vsw{display:inline-flex;background:var(--card);border:1px solid var(--line2);border-radius:999px;padding:3px;gap:2px}
+.ak .vsw span{font:600 13px/1 'Inter';min-height:34px;display:inline-flex;align-items:center;padding:0 14px;border-radius:999px;color:var(--soft)}
+.ak .vsw span.on{background:var(--olive-soft);color:var(--olive)}
+.ak .ptabs{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto}
+.ak .ptabs span{font:600 14px/1 'Inter';padding:12px 11px;color:var(--soft);border-bottom:2px solid transparent;margin-bottom:-1px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.ak .ptabs span.on{color:var(--ink);border-bottom-color:var(--olive)}
+.ak .wc{font:700 11px/1 'Inter';border-radius:999px;padding:3px 7px;background:var(--amber-soft);color:var(--amber)}
+.ak .newbox{background:var(--new);outline:2px solid var(--newl);outline-offset:3px;border-radius:8px}
+.ak .kv{display:grid;grid-template-columns:150px 1fr;gap:8px 14px;font-size:14px;margin:0}
+.ak .kv dt{color:var(--dim)} .ak .kv dd{margin:0;overflow-wrap:anywhere}
+.ak .okline{display:flex;gap:8px;align-items:flex-start;font-size:14px}
+.ak .okline::before{content:"✓";color:var(--olive);font-weight:700}
+.ak .seg{display:inline-flex;border:1px solid var(--line2);border-radius:6px;overflow:hidden}
+.ak .seg span{font:600 12.5px/1 'Inter';padding:10px 10px;color:var(--soft);background:var(--card)}
+.ak .seg span+span{border-left:1px solid var(--line2)}
+.ak .seg span.on{background:var(--olive-soft);color:var(--olive)}
+.ak .faint{color:var(--dim)}
+.ak .tabbar{display:flex;justify-content:space-around;background:var(--card);border-top:1px solid var(--line);padding:6px 0 10px}
+.ak .tabbar span{font:600 11px/1 'Inter';color:var(--dim);display:flex;flex-direction:column;align-items:center;gap:5px;min-width:56px}
+.ak .tabbar span::before{content:"";width:20px;height:20px;border-radius:5px;background:var(--line2)}
+.ak .tabbar span.on{color:var(--olive)}
+.ak .tabbar span.on::before{background:var(--olive)}
+.ak .pair2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ak .pair2>*{min-width:0}
+.ak .dcard{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.ak .dcard .why{font:700 15px/1.3 'Inter'}
+.ak .sidec{border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--card);display:flex;flex-direction:column;gap:5px;min-width:0}
+.ak .sidec.keep{border-color:var(--olive);background:var(--olive-soft)}
+.ak .sidec .rad{display:flex;gap:8px;align-items:center;font:600 13px/1 'Inter';min-height:28px}
+.ak .sidec .rad i{width:16px;height:16px;border-radius:50%;border:2px solid var(--line2);background:var(--card)}
+.ak .sidec.keep .rad i{border-color:var(--olive);box-shadow:inset 0 0 0 3px var(--card);background:var(--olive)}
+.ak .sidec .nm{font:700 15px/1.3 'Inter'}
+.ak .sidec .r{font-size:13px;color:var(--soft)}
+.ak .sidec .r b{color:var(--ink);font-weight:600}
+.ak .ph-in{padding:12px 16px 20px;display:flex;flex-direction:column;gap:14px}
+/* diagram boxes (parent link) */
+.dg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media (max-width:900px){.dg{grid-template-columns:minmax(0,1fr)}}
+.dg .col{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+.dg h4{margin:0 0 10px;font:700 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.node{border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface-2);font-size:14px}
+.node b{display:block}
+.node small{color:var(--muted);font-size:12.5px}
+.node.person{border-color:var(--t-res)}
+.node.child{border-color:var(--fix);background:var(--fix-soft)}
+.node.bad{border-color:var(--flag);background:var(--flag-soft)}
+.arrow{font:600 12px/1.3 var(--f-mono);color:var(--muted);padding:6px 0 6px 18px;border-left:2px solid var(--line);margin-left:16px}
+.arrow.bad{color:var(--flag);border-color:var(--flag)}
+.arrow.good{color:var(--fix);border-color:var(--fix)}
+.seasons{display:flex;flex-direction:column;gap:8px;margin-left:34px}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:14px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .tag{font:700 10.5px/1 var(--f-mono);letter-spacing:.05em;text-transform:uppercase;border-radius:5px;padding:4px 6px;margin-left:8px;vertical-align:2px;background:var(--ask-soft);color:var(--ask)}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted);margin:4px 0}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:48px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:240px;font:12.5px/1.5 var(--f-mono)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:16px;flex:1}
+dialog.note .nh button{font-size:22px;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px}
+</style>
+
+<div class="doc">
+<div class="eyebrow">Club Tier · Stage 14 · drawings · 2026-11-04 · round 2</div>
+<h1>One child, every season</h1>
+<p class="lede">Today a child is typed in again every season, and on every team. Their papers are collected again on a new record, and a parent’s connection points at one season’s roster row. This page draws the season window asking what the team is doing (14a), bringing a past player back, the “same child?” question on every add door, a child’s page across three seasons, joining duplicate records, and the parent link that Signed-in family accounts Stage 4 stands on. Only the window’s two choices are ruled. Everything else waits on the asks in the last tab.</p>
+
+<div class="tabs" role="tablist" id="tabs">
+  <button role="tab" aria-selected="true" data-t="p1">1 · Today</button>
+  <button role="tab" aria-selected="false" data-t="p2">2 · The season window</button>
+  <button role="tab" aria-selected="false" data-t="p3">3 · Bring back a past player</button>
+  <button role="tab" aria-selected="false" data-t="p4">4 · Same child?</button>
+  <button role="tab" aria-selected="false" data-t="p5">5 · The child’s page</button>
+  <button role="tab" aria-selected="false" data-t="p6">6 · Joining records</button>
+  <button role="tab" aria-selected="false" data-t="p7">7 · The parent link</button>
+  <button role="tab" aria-selected="false" data-t="p8">8 · Edges &amp; the club’s door</button>
+  <button role="tab" aria-selected="false" data-t="p9">9 · Asks</button>
+</div>
+
+<!-- ================= 1 · TODAY ================= -->
+<section class="pane" id="p1">
+  <h2>What the code does today (read 2026-11-04)</h2>
+  <p class="muted">Five readers went through the code. I checked each claim below at the cited lines before writing it here. The plan’s census from 2026-10-22 was mostly right. Where it was wrong is in the third column.</p>
+  <div class="tw"><table class="t"><thead><tr><th>Where a child lives today</th><th>What identifies them</th><th>Joined to their other seasons?</th><th>Duplicate check when added</th></tr></thead><tbody>
+    <tr><td><b>House-league sign-up</b></td><td>Name, birth date (asked, not required), parent’s email typed on the row</td><td class="x">Never. Each sign-up is a new child, even in the Families book.</td><td>Yes, refused in the same season: same name and birth date, or same name and email when neither has a birth date</td></tr>
+    <tr><td><b>Tryout sign-up</b></td><td>Name, birth date (required), parent typed on the row</td><td class="am">By the returning-player check, same team only, confirmed by the head coach</td><td>None</td></tr>
+    <tr><td><b>Rep roster entry</b> (coach portal)</td><td>Name, birth date (optional, in a folded section on Add player), parent typed on the row</td><td class="am">By the season roll (automatic) or a confirmed tryout match. Same team only, and the database refuses a link to another team.</td><td>Single add: none. Paste a list: a warning on the same name in this season, birth date ignored. Tryout accept: none, so a child already on the roster gets a second entry.</td></tr>
+    <tr><td><b>Call-up</b></td><td>A name only; no email allowed</td><td class="x">Never</td><td>None. Re-uses this season’s call-up names only.</td></tr>
+    <tr><td><b>Free-tier roster</b></td><td>Name, birth date, contact</td><td>Has no seasons. One list for the life of the team.</td><td>None</td></tr>
+  </tbody></table></div>
+  <div class="read">
+    <div class="w"><h4>Already true, and worth keeping</h4><ul>
+      <li>The Families book already reads a rep child as <b>one child</b> across a team’s seasons, by following the confirmed history links. Stage 14 makes that a stored fact instead of something worked out on every read.</li>
+      <li>The season roll copies the child’s <b>medical note, emergency contact, positions, bats and throws, jersey size and the coach’s pinned note</b> into the new season. The plan said nothing carries. Documents don’t carry. These do, as copies that drift apart once anyone edits one.</li>
+      <li>The returning-player check and the Families book’s duplicate-parent queue both <b>propose, then a person decides</b>, and both remember a “no”. That is the model for joining children.</li>
+    </ul></div>
+    <div class="g"><h4>Broken now, and Stage 14’s to fix</h4><ul>
+      <li><b>The roll does both of the ruled answers at once.</b> It always carries the active kids (“same group moving up”), and it always moves the birth years one year later (“new group, same age”). A team that keeps its kids gets its birth years wrong. A team that takes a new cohort gets last year’s kids.</li>
+      <li><b>A parent’s connection stays on last season’s row.</b> It isn’t moved, and it isn’t closed. That parent still gets the team’s schedule, so access doesn’t end with the season. A new invitation to this season’s row is refused: <i>“That address already has a connection to this player.”</i> The guardian tier is off, so no family meets this today.</li>
+      <li>Accepting a tryout for a child who is already on the roster makes a <b>second entry</b>, with no warning.</li>
+      <li>On the tryout list, the returning-player chip shows a strong match and a weak one with the same words. The strong tier lets twins through: same birth date, same family email, different first name.</li>
+    </ul></div>
+    <div class="c"><h4>Where the records were wrong</h4><ul>
+      <li>The data dictionary says a parent’s link “is re-established at continuity-confirm”. No code does that. Corrected today.</li>
+      <li>The coach’s <i>Start next season</i> window promises “each returning player’s profile will offer to bring their open goals forward”. That offer was removed on 2026-09-16. Its first line also reads “This closes the 2026 Season season.” 14a fixes both.</li>
+      <li>The plan says a “released” player isn’t carried. There is no released status. What isn’t carried is <b>inactive players and call-ups</b>.</li>
+      <li>Standalone coaches have <b>no family library</b>. The Families book is a League and Club feature, and nothing on the coach side reads it.</li>
+    </ul></div>
+  </div>
+  <div class="card"><h3>Also found (not Stage 14’s; recorded in the plan as findings)</h3><ul>
+    <li>When a roster entry is deleted, the check for what hangs on it skips dated notes, observations and goal reviews. An entry holding only notes can be deleted, and the notes go with it. Added to the task list.</li>
+    <li>The test that keeps coaches’ private notes out of the family file checks old table names. It would not catch a new one being added.</li>
+    <li>The club admin’s roster read shows medical notes for any season, without the coach-side privacy filter. That is by design today. Ask 9 decides whether that holds once a child spans teams.</li>
+  </ul></div>
+</section>
+
+<!-- ================= 2 · THE SEASON WINDOW ================= -->
+<section class="pane" id="p2" hidden>
+  <h2>The season window asks what the team is doing (14a)</h2>
+  <p class="muted">The owner ruled this on 2026-10-22: two choices, and the roster is a carry choice on the first. Not built in either portal. Drawn on the coach’s window (standalone head coach) at its real 520 width, then the club’s copy. The defaults are Asks 1–3.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div><div class="cap"><b>Today</b> · coach window, desktop</div>
+      <div class="fr w520"><div class="ak"><div class="qs flat">
+        <div class="qh"><b>Start next season</b><span class="x">✕</span></div>
+        <div class="qb">
+          <div class="closes"><b>This closes the 2026 Season season.</b><span><b style="display:inline">2026 Season</b> becomes a record you can open any time — results, roster, practices and money. Nothing is lost, but you will not be able to change it.</span></div>
+          <p style="margin:0;font-size:14px;color:var(--soft)">Your active roster comes with you (you can prune or add after), and the schedule starts fresh.</p>
+          <div class="g2 same"><div class="f"><span class="lbl">Season name</span><div class="in">2027 Season</div></div><div class="f"><span class="lbl">Year</span><div class="in">2027</div></div></div>
+          <div class="same faint" style="font-size:13px">Planned budget · Fee plan · Carry your money forward?</div>
+          <ul class="bul"><li><b>Development history</b> stays with this season. Each returning player’s profile will offer to bring their open goals forward — measurements always start fresh.</li><li class="same"><b>Awards</b> stay on the team’s all-time record — nothing to carry.</li></ul>
+        </div>
+        <div class="qf"><span class="b ghost">Cancel</span><span class="b lime">Start next season</span></div>
+      </div></div></div>
+      <div class="side" style="margin-top:12px"><div class="read one"><div class="g"><h4>What is wrong with it</h4><ul>
+        <li>One sentence tells the coach what happens to the roster. The coach has no choice in it.</li>
+        <li>The birth years move a year later without saying so. A standalone team usually has none set, so nothing moves.</li>
+        <li>The Development history line promises a per-player offer that no longer exists.</li>
+        <li>The first line reads “This closes the 2026 Season season.”</li></ul></div></div></div>
+    </div>
+    <div><div class="cap"><b>Proposed</b> · path (a), the same players moving up <button class="mk new" data-note="NEW: the question, first after the consequence panel. Nothing is chosen when the window opens (Ask 1). Until one is picked, “Start next season” stays disabled with the reason in the foot, the way Add Player waits for a first name.">NEW</button></div>
+      <div class="fr w520"><div class="ak"><div class="qs flat">
+        <div class="qh"><b>Start next season</b><span class="x">✕</span></div>
+        <div class="qb">
+          <div class="closes"><b>This closes the 2026 Season.</b><span class="same"><b style="display:inline">2026 Season</b> becomes a record you can open any time — results, roster, practices and money. Nothing is lost, but you will not be able to change it.</span></div>
+          <div class="rq newbox" style="padding:8px">
+            <div class="lg">What is the team doing next season?</div>
+            <div class="rc on"><span class="dot"></span><div><b>The same players, moving up an age group</b><span>11U AAA becomes 12U AAA. Your players come with you.</span></div></div>
+            <div class="rc"><span class="dot"></span><div><b>A new group of players, same age group</b><span>Stays 11U AAA. Last season’s players don’t come with the team.</span></div></div>
+          </div>
+          <div class="f newbox" style="padding:8px"><span class="lbl">Division</span><div class="in focus">12U AAA</div><p class="hint">Moved up from 11U AAA. Change it if your league names it differently. <button class="mk askm" data-note="Ask 3. The division moves up only when it starts with an age (11U, U11). Otherwise the box shows the old division and the coach types the new one. The team’s name is never changed for them, because it is part of the team’s public web address.">Ask 3</button></p></div>
+          <div class="f newbox" style="padding:8px">
+            <span class="lbl">Players coming with the team</span>
+            <div class="tl"><div class="tlh"><span class="sp">13 of 14 coming</span><span class="qlink">All</span><span class="faint">·</span><span class="qlink">None</span></div>
+              <div class="tlb">
+                <div class="tr on"><i class="cb on"></i><div class="grow"><div class="t">Maya Chen <span class="faint" style="font-weight:500">#7</span></div></div></div>
+                <div class="tr on"><i class="cb on"></i><div class="grow"><div class="t">Theo Marchetti <span class="faint" style="font-weight:500">#12</span></div></div></div>
+                <div class="tr on"><i class="cb on"></i><div class="grow"><div class="t">Ines Okafor <span class="faint" style="font-weight:500">#3</span></div></div></div>
+                <div class="tr on"><i class="cb on"></i><div class="grow"><div class="t">Ella Brooks <span class="faint" style="font-weight:500">#15</span></div></div></div>
+                <div class="tr"><i class="cb"></i><div class="grow"><div class="t">Jonah Ruiz <span class="kq">Inactive</span></div><div class="s">Inactive since Jun 2, 2026</div></div></div>
+              </div></div>
+            <p class="hint">The list scrolls. Active players are ticked; inactive players sit at the bottom, unticked. Call-ups aren’t listed: they play for another team. <button class="mk askm" data-note="Ask 2. Unticking a player leaves them on 2026, and they can be brought back from the Roster any time (tab 3).">Ask 2</button></p>
+          </div>
+          <div class="same faint" style="font-size:13px">Season name · Year · Planned budget · Fee plan · Carry your money forward? (unchanged)</div>
+          <div class="samebar">Season name, budget, fee plan, money · unchanged</div>
+          <ul class="bul newbox" style="padding:8px 8px 8px 26px"><li><b>Development history</b> reads straight through for every player who comes with the team.</li><li><b>Waivers and the code of conduct</b> need signing again for 2027. Medical forms carry.</li><li class="same"><b>Awards</b> stay on the team’s all-time record — nothing to carry.</li></ul>
+        </div>
+        <div class="qf"><span class="b ghost">Cancel</span><span class="b lime">Start next season</span></div>
+      </div></div></div>
+    </div>
+    <div><div class="cap"><b>Proposed</b> · path (b), a new group in the same age group</div>
+      <div class="fr w520"><div class="ak"><div class="qs flat">
+        <div class="qh"><b>Start next season</b><span class="x">✕</span></div>
+        <div class="qb">
+          <div class="closes"><b>This closes the 2026 Season.</b><span class="same">Nothing is lost, but you will not be able to change it.</span></div>
+          <div class="rq newbox" style="padding:8px">
+            <div class="lg">What is the team doing next season?</div>
+            <div class="rc"><span class="dot"></span><div><b>The same players, moving up an age group</b><span>11U AAA becomes 12U AAA. Your players come with you.</span></div></div>
+            <div class="rc on"><span class="dot"></span><div><b>A new group of players, same age group</b><span>Stays 11U AAA. Last season’s players don’t come with the team.</span></div></div>
+          </div>
+          <div class="f newbox" style="padding:8px"><span class="lbl">Birth years for the 2027 Season</span><div style="font-size:14px">Born 2016–2017 <span class="faint" style="font-size:12.5px">(was 2015–2016)</span></div><p class="hint">Shown only when the team has birth years. A club team’s are set by the club.</p></div>
+          <div class="newbox" style="padding:0 8px"><span class="ckl"><i class="cb"></i><span>Bring last season’s players anyway<small>Leave this off for a new group. You can bring anyone back from the Roster later.</small></span></span></div>
+          <div class="same faint" style="font-size:13px">Season name · Year · Planned budget · Fee plan · Carry your money forward? (unchanged)</div>
+          <div class="samebar">Season name, budget, fee plan, money · unchanged</div>
+        </div>
+        <div class="qf"><span class="b ghost">Cancel</span><span class="b lime">Start next season</span></div>
+      </div></div></div>
+    </div>
+  </div>
+
+  <h3>After it starts: the shipped success view, with the roster sentence</h3>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · after path (a) <button class="mk res" data-note="RESTYLED: the same window and foot as today (“New season started”; every way out goes to the new season). Only the bullet that read “13 players carried forward.” changes: it names who stayed behind and where to bring them back.">RESTYLED</button></div>
+      <div class="fr w520"><div class="ak"><div class="qs flat">
+        <div class="qh"><b>New season started</b></div>
+        <div class="qb"><div class="okline"><span><b>2027 Season</b> is now your active season.</span></div>
+          <ul class="bul"><li class="newbox" style="padding:4px 6px">13 players came with the team as 12U AAA. Jonah Ruiz stayed on the 2026 Season. Bring Jonah back from Roster any time.</li><li class="newbox" style="padding:4px 6px">Waivers and the code of conduct need signing for 2027. Each player shows “Needs signing”.</li><li class="same">Planned budget and fee plan carried; $1,240.00 opening balance.</li></ul></div>
+        <div class="qf"><span class="b">See 2026 Season’s Season Wrapped</span><span class="b lime">Go to 2027 Season</span></div></div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · after path (b)</div>
+      <div class="fr w520"><div class="ak"><div class="qs flat">
+        <div class="qh"><b>New season started</b></div>
+        <div class="qb"><div class="okline"><span><b>2027 Season</b> is now your active season.</span></div>
+          <ul class="bul"><li class="newbox" style="padding:4px 6px">The roster is empty. Add players, open tryouts, or bring back a past player from Roster.</li><li class="same">Planned budget and fee plan carried; $1,240.00 opening balance.</li></ul></div>
+        <div class="qf"><span class="b">See 2026 Season’s Season Wrapped</span><span class="b lime">Go to 2027 Season</span></div></div></div></div></div>
+  </div>
+
+  <h3>On a phone (390 px, true size), and the club’s copy</h3>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · phone, nothing picked yet</div>
+    <div class="fr w390"><div class="ak"><div class="qs sheet">
+      <div class="qh"><span class="bk">←</span><b>Start next season</b></div>
+      <div class="qb">
+        <div class="closes"><b>This closes the 2026 Season.</b><span>It becomes a record you can open any time. Nothing is lost, but you will not be able to change it.</span></div>
+        <div class="rq"><div class="lg">What is the team doing next season?</div>
+          <div class="rc"><span class="dot"></span><div><b>The same players, moving up an age group</b><span>11U AAA becomes 12U AAA. Your players come with you.</span></div></div>
+          <div class="rc"><span class="dot"></span><div><b>A new group of players, same age group</b><span>Stays 11U AAA. Last season’s players don’t come with the team.</span></div></div></div>
+      </div>
+      <div class="qf"><span class="l why">Choose what the team is doing.</span><span class="b ghost">Cancel</span><span class="b lime dis">Start next season</span></div>
+    </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · the club’s window (club admin, desktop) <button class="mk res" data-note="RESTYLED: the club’s “What comes with the team” loses its fixed roster row and asks the same question in the same words. The club already sets birth years, so path (a) says they stay and path (b) shows the new ones.">RESTYLED</button></div>
+      <div class="fr w520"><div class="ak"><div class="qs flat">
+        <div class="qh"><div style="flex:1"><span class="ey">Lynx 11U AAA</span><b>Start the 2027 Season?</b></div><span class="x">✕</span></div>
+        <div class="qb">
+          <p style="margin:0;font-size:14px;color:var(--soft)">This closes the 2026 Season. It becomes a record anyone can open. Nothing is lost, but it can’t be changed.</p>
+          <div class="rq newbox" style="padding:8px"><div class="lg">What is the team doing next season?</div>
+            <div class="rc on"><span class="dot"></span><div><b>The same players, moving up an age group</b><span>11U AAA becomes 12U AAA. Birth years stay 2015–2016.</span></div></div>
+            <div class="rc"><span class="dot"></span><div><b>A new group of players, same age group</b><span>Stays 11U AAA. Birth years move to 2016–2017.</span></div></div></div>
+          <div class="f"><span class="lbl">What comes with the team</span>
+            <div class="ckl newbox" style="padding:8px"><i class="cb on"></i><span><b>Players</b> · 13 of 14<small>Choose who on the next step. The coach adds and removes players after.</small></span></div>
+            <div class="ckl same"><i class="cb on"></i><span><b>Budget</b><small>The planned lines only. What was spent stays with the 2026 Season.</small></span></div>
+            <div class="ckl same"><i class="cb on"></i><span><b>Fee plan</b><small>Amounts and installments, with due dates a year later.</small></span></div></div>
+        </div>
+        <div class="qf"><span class="b ghost">Cancel</span><span class="b lime">Start the 2027 Season</span></div></div></div></div>
+      <div class="side" style="margin-top:12px"><div class="read one">
+        <div class="w"><h4>What this does</h4><ul>
+          <li>A coach who keeps their kids gets them, with the birth years left alone and the division moved up.</li>
+          <li>A club slot that takes a new cohort starts empty, with the birth years moved on, as today’s roll already does.</li>
+          <li>Nothing is chosen when the window opens, so the coach can’t start a season without answering.</li>
+          <li>Every child who comes with the team stays the <b>same child</b>. The roll links a season’s entry to the child, and no longer makes a copy (tab 5).</li></ul></div>
+        <div class="g"><h4>Cost</h4><ul><li>One more question in a window that already has five. It sits above them because it decides what the rest mean.</li></ul></div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 3 · BRING BACK A PAST PLAYER ================= -->
+<section class="pane" id="p3" hidden>
+  <h2>Bring back a past player</h2>
+  <p class="muted">The picker lists children who played for <b>this team</b> in an earlier season and aren’t on this season’s roster. That covers players the roll left behind, a child who sat out a year, and everyone after a path (b) roll. The door sits on the Add Player window’s first line, next to “Adding several? Paste a list”. A cross-team picker is held (Ask 5).</p>
+  <div class="cap"><b>Proposed</b> · desktop, 1440 wide, true size (scrolls sideways on a narrow window) <button class="mk new" data-note="NEW: the one window at its medium width (640), because each row carries a trailing chip. It opens from “Played for this team before? Bring back a past player →” on Add Player, the same way the paste-a-list door works.">NEW</button></div>
+  <div class="fx"><div class="fr w1440"><div class="ak"><div class="shell">
+    <nav class="sb"><div class="org">Hawks 11U AAA</div><div class="orgs">2027 Season</div><span class="it">Overview</span><div class="grp">Season</div><span class="it">Schedule</span><span class="it">Practice plans</span><span class="it">Lineups</span><span class="it">Tournaments</span><div class="grp">Progress</div><span class="it">Skills &amp; goals</span><span class="it">Insights</span><div class="grp">Money</div><span class="it">Money</span><div class="grp">Communication</div><span class="it">Chat</span><span class="it">Email families</span><div class="grp">Team</div><span class="it on">Roster</span><span class="it">Tryouts</span><span class="it">Staff</span><span class="it">Documents</span><span class="it">Settings</span></nav>
+    <div style="position:relative">
+      <div class="main">
+        <div class="ptitle"><h1>Roster</h1><span class="act"><span class="b">Import</span><span class="b lime">+ Add player</span></span></div>
+        <div class="sect"><table class="kt"><thead><tr><th></th><th>#</th><th>Player</th><th>Positions</th><th>Family</th></tr></thead><tbody>
+          <tr><td class="grip">⋮⋮</td><td class="num">7</td><td class="n">Maya Chen</td><td>SS · 2B</td><td class="fam"><b>Grace Chen</b>grace.chen@example.com</td></tr>
+          <tr><td class="grip">⋮⋮</td><td class="num">12</td><td class="n">Theo Marchetti</td><td>C</td><td class="fam"><b>Luca Marchetti</b>luca.m@example.com</td></tr>
+          <tr><td class="grip">⋮⋮</td><td class="num">3</td><td class="n">Ines Okafor</td><td>P · CF</td><td class="fam"><b>Ada Okafor</b>ada.okafor@example.com</td></tr></tbody></table></div>
+      </div>
+      <div class="scrim" style="position:absolute;inset:0">
+        <div class="qs med">
+          <div class="qh"><b>Bring back a past player</b><span class="cnt">2 chosen</span><span class="x">✕</span></div>
+          <div class="qb">
+            <p class="hint" style="font-size:13px">Players from the Hawks’ earlier seasons who aren’t on the 2027 Season roster. They come back with their history. Their contact details come from their last season with the team.</p>
+            <div class="search">⌕ <span>Search by name</span></div>
+            <div class="tl"><div class="tlb tall">
+              <div class="tr on"><i class="cb on"></i><div class="grow"><div class="t">Jonah Ruiz <span class="kq">Inactive</span></div><div class="s">Last played the <b>2026 Season</b> · #9 · born Jan 14, 2015 · Marisol Ruiz</div></div><span class="kc good">2026 dues settled</span></div>
+              <div class="tr on"><i class="cb on"></i><div class="grow"><div class="t">Priya Nair</div><div class="s">Last played the <b>2025 Season</b> · #4 · born Aug 2, 2015 · Dev Nair</div></div><span class="kc warn">$120.00 owing from 2025</span></div>
+              <div class="tr"><i class="cb"></i><div class="grow"><div class="t">Sam Ferreira</div><div class="s">Last played the <b>2025 Season</b> · #21 · born Oct 30, 2014 · Ana Ferreira</div></div><span class="kc warn">Born 2014</span></div>
+              <div class="tr"><i class="cb"></i><div class="grow"><div class="t">Leo Park <span class="kq">Call-up</span></div><div class="s">Called up for 3 games in the <b>2026 Season</b> · no family on file</div></div></div>
+            </div></div>
+            <p class="hint">Players already on the 2027 roster aren’t listed.</p>
+          </div>
+          <div class="qf"><span class="l">They join the 2027 Season as active players.</span><span class="b ghost">Cancel</span><span class="b lime">Bring back 2 players</span></div>
+        </div>
+      </div>
+    </div>
+  </div></div></div></div>
+
+  <div class="pair" style="margin-top:18px">
+    <div><div class="cap"><b>Proposed</b> · phone, 390 px, true size</div>
+      <div class="fr w390"><div class="ak"><div class="qs sheet">
+        <div class="qh"><span class="bk">←</span><b>Bring back a past player</b><span class="cnt">2 chosen</span></div>
+        <div class="qb">
+          <div class="search">⌕ <span>Search by name</span></div>
+          <div class="tl"><div class="tlb tall">
+            <div class="tr on"><i class="cb on"></i><div class="grow"><div class="t">Jonah Ruiz <span class="kq">Inactive</span></div><div class="s">Last played the <b>2026 Season</b> · #9</div></div></div>
+            <div class="tr on"><i class="cb on"></i><div class="grow"><div class="t">Priya Nair</div><div class="s">Last played the <b>2025 Season</b> · #4</div><div class="s" style="color:var(--amber)">$120.00 owing from 2025</div></div></div>
+            <div class="tr"><i class="cb"></i><div class="grow"><div class="t">Sam Ferreira</div><div class="s">Last played the <b>2025 Season</b> · #21</div><div class="s" style="color:var(--amber)">Born 2014. The team is 2015–2016.</div></div></div>
+            <div class="tr"><i class="cb"></i><div class="grow"><div class="t">Leo Park <span class="kq">Call-up</span></div><div class="s">3 games in the <b>2026 Season</b></div></div></div>
+          </div></div>
+        </div>
+        <div class="qf"><span class="b ghost">Cancel</span><span class="b lime">Bring back 2 players</span></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · the returning child, once picked <button class="mk new" data-note="NEW: a caption under the name on the roster row until the first game, in the place the Player cell already uses for small flags; and the Family & paperwork tab showing the documents’ state for 2027.">NEW</button></div>
+      <div class="fr w520"><div class="ak" style="padding:16px;display:flex;flex-direction:column;gap:14px">
+        <div class="sect"><table class="kt"><thead><tr><th></th><th>#</th><th>Player</th><th>Positions</th><th>Family</th></tr></thead><tbody>
+          <tr class="newbox"><td class="grip">⋮⋮</td><td class="num">4</td><td class="n">Priya Nair<span class="sub2">Back from the 2025 Season</span></td><td>2B</td><td class="fam"><b>Dev Nair</b>dev.nair@example.com</td></tr></tbody></table></div>
+        <div class="sect"><div class="sect-h"><h3>Priya Nair</h3><span class="acts"><span class="faint" style="font-size:13px">With the Hawks 2024 · 2025 · 2027</span></span></div>
+          <div class="ptabs" style="padding:0 8px"><span>Details</span><span>This season</span><span>Skills &amp; goals</span><span>Notes</span><span class="on">Family &amp; paperwork</span></div>
+          <div class="sect-b" style="padding-top:12px">
+            <div class="call warn"><div class="grow"><b>Waiver · Needs signing for the 2027 Season</b><small>Last signed for the 2025 Season, Apr 3, 2025</small></div><span class="b">Upload</span></div>
+            <div class="call"><div class="grow"><b>Medical consent · On file</b><small>Uploaded Apr 3, 2025. Good until it’s replaced.</small></div></div>
+            <p class="hint">$120.00 still owing from the 2025 Season stays on the 2025 book. It is shown here and is not added to 2027.</p>
+          </div></div>
+      </div></div></div>
+  </div>
+  <div class="read">
+    <div class="w"><h4>What the coach gains</h4><ul>
+      <li>A returning child is <b>picked</b> and not retyped. Their birth date, family, positions and medical note come back as they were last recorded.</li>
+      <li>Every row names the season it reads from (“Last played the 2025 Season”), so a stale phone number is visibly old.</li>
+      <li>Unpaid dues from a past season are shown and left on that season’s book. Nothing moves money. The birth-year flag warns and never blocks (Ask 12).</li></ul></div>
+    <div class="c"><h4>The look-back rule: the three questions</h4><ul>
+      <li><b>Record or instrument?</b> A record read that feeds one write to the working season, the add. Nothing in the picker changes a past season.</li>
+      <li><b>Does the whole subtree carry the year?</b> The picker has no subtree. Picking adds to 2027, and no row opens the old season.</li>
+      <li><b>Could the coach tell which season they are reading?</b> Yes, each row names its season. The build registers the route on purpose as a cross-season reader; it does not take a year.</li></ul></div>
+    <div class="g"><h4>Held, on purpose</h4><ul>
+      <li>Children from <b>other teams</b> or the house league aren’t in this list until Ask 9 (privacy) is ruled. That needs the club-level record from Ask 5, which this is built on.</li>
+      <li>Call-ups appear only if they once played <i>for this team</i>.</li>
+      <li>An assistant without the roster-details grant sees names and seasons only.</li></ul></div>
+  </div>
+</section>
+
+<!-- ================= 4 · SAME CHILD? ================= -->
+<section class="pane" id="p4" hidden>
+  <h2>“Same child?” on every add door</h2>
+  <p class="muted">When what is typed matches a child this team has had, the door asks before it adds anyone. A match is only ever a question. Nothing joins without a yes (Ask 4). The question uses the same rule everywhere: the same first and last name, checked against this team’s seasons. A birth date or the family’s email makes the question more certain. It never answers it.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div><div class="cap"><b>Today</b> · Add Player window</div>
+      <div class="fr w520"><div class="ak"><div class="qs flat">
+        <div class="qh"><b>Add Player</b><span class="x">✕</span></div>
+        <div class="qb">
+          <span class="door" style="font-size:13.5px">Adding several? Paste a list</span>
+          <div class="g2"><div class="f"><span class="lbl">First name *</span><div class="in">Jonah</div></div><div class="f"><span class="lbl">Last name</span><div class="in focus">Ruiz</div></div></div>
+          <div class="same faint" style="font-size:13px">Jersey # · Best position · Add parent / guardian contact · More details</div>
+        </div>
+        <div class="qf"><span class="b ghost">Save &amp; add another</span><span class="b lime">Add Player</span></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · the same window, once the name matches <button class="mk new" data-note="NEW: one callout under the name as soon as first and last name match a past player of this team. While it is open, Save & add another and Add Player wait, with the reason in the foot (the one-window rule: the main button never runs past an open question). “Yes, it’s Jonah” fills in Jonah’s saved details and brings him back; “No, a different child” closes the question and remembers the answer.">NEW</button></div>
+      <div class="fr w520"><div class="ak"><div class="qs flat">
+        <div class="qh"><b>Add Player</b><span class="x">✕</span></div>
+        <div class="qb">
+          <div style="display:flex;flex-direction:column;gap:2px"><span class="door" style="font-size:13.5px">Adding several? Paste a list</span><span class="door newbox" style="font-size:13.5px;padding:2px 6px">Played for this team before? Bring back a past player</span></div>
+          <div class="g2"><div class="f"><span class="lbl">First name *</span><div class="in">Jonah</div></div><div class="f"><span class="lbl">Last name</span><div class="in focus">Ruiz</div></div></div>
+          <div class="call warn newbox"><div class="grow"><b>Jonah Ruiz played for the Hawks in the 2026 Season.</b><small>#9 · born Jan 14, 2015 · Marisol Ruiz. Is this the same child?</small></div><div class="acts"><span class="b">Yes, it’s Jonah</span><span class="b">No, a different child</span></div></div>
+          <div class="same faint" style="font-size:13px">Jersey # · Best position · Add parent / guardian contact · More details</div>
+        </div>
+        <div class="qf"><span class="l why newbox" style="padding:2px 6px">Is this Jonah Ruiz from the 2026 Season? Answer above.</span><span class="b ghost dis">Save &amp; add another</span><span class="b lime dis">Add Player</span></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · the same, on a phone (390)</div>
+      <div class="fr w390"><div class="ak"><div class="qs sheet" style="min-height:560px">
+        <div class="qh"><span class="bk">←</span><b>Add Player</b></div>
+        <div class="qb">
+          <div class="f"><span class="lbl">First name *</span><div class="in" style="min-height:44px">Jonah</div></div>
+          <div class="f"><span class="lbl">Last name</span><div class="in focus" style="min-height:44px">Ruiz</div></div>
+          <div class="call warn"><div class="grow"><b>Jonah Ruiz played for the Hawks in the 2026 Season.</b><small>#9 · born Jan 14, 2015. Same child?</small></div><div class="acts" style="width:100%"><span class="b ph44" style="flex:1">Yes, it’s Jonah</span><span class="b ph44" style="flex:1">No, a different child</span></div></div>
+        </div>
+        <div class="qf"><span class="l why">Answer the question above first.</span><span class="b ghost dis">Save &amp; add another</span><span class="b lime dis">Add Player</span></div>
+      </div></div></div></div>
+  </div>
+
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · Paste a list, the check step <button class="mk res" data-note="RESTYLED: the shipped “Check before adding” rows (jersey, first name, last name, ×) keep their look. Today a matching row only says “Theo Marchetti is already on your roster.”, compares this season only, and ignores the birth date. Now a row matching a PAST player gets an amber line and a two-way choice. Add waits until each is answered, with the reason in the foot.">RESTYLED</button></div>
+      <div class="fr w520"><div class="ak"><div class="qs flat">
+        <div class="qh"><b>Add players</b><span class="cnt">Check before adding</span><span class="x">✕</span></div>
+        <div class="qb" style="gap:10px">
+          <div class="same" style="display:flex;gap:8px;align-items:center"><div class="in num">15</div><div class="in" style="flex:1">Ella</div><div class="in" style="flex:1">Brooks</div><span class="faint">✕</span></div>
+          <div class="newbox" style="padding:6px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;gap:8px;align-items:center"><div class="in num">4</div><div class="in" style="flex:1">Priya</div><div class="in" style="flex:1">Nair</div><span class="faint">✕</span></div>
+            <p class="flag">Played for the Hawks in the 2025 Season · born Aug 2, 2015</p><span class="seg"><span>Same child</span><span>New player</span></span></div>
+          <div class="newbox" style="padding:6px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;gap:8px;align-items:center"><div class="in num">21</div><div class="in" style="flex:1">Sam</div><div class="in" style="flex:1">Ferreira</div><span class="faint">✕</span></div>
+            <p class="flag">Played for the Hawks in the 2025 Season · born Oct 30, 2014</p><span class="seg"><span class="on">Same child</span><span>New player</span></span></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;gap:8px;align-items:center"><div class="in num">12</div><div class="in" style="flex:1">Theo</div><div class="in" style="flex:1">Marchetti</div><span class="faint">✕</span></div><p class="flag">Theo Marchetti is already on your roster.</p></div>
+        </div>
+        <div class="qf"><span class="l why">1 player needs an answer: same child or new?</span><span class="b ghost">Cancel</span><span class="b lime dis">Add 15 players</span></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · accepting a tryout, played here before <button class="mk new" data-note="NEW: today “Add to roster” on the Decision Board acts at once and makes a second entry for a child already on the roster. Now: if the head coach already confirmed “same player” on the board, it acts at once and attaches to that child. If a match is unconfirmed, this window asks first.">NEW</button></div>
+      <div class="fr w520"><div class="ak"><div class="qs flat">
+        <div class="qh"><b>Add Sam Ferreira to the roster?</b><span class="x">✕</span></div>
+        <div class="qb"><div class="call warn"><div class="grow"><b>Sam Ferreira played for the Hawks in the 2025 Season.</b><small>#21 · born Oct 30, 2014 · Ana Ferreira. Is this the same child?</small></div><div class="acts"><span class="b">Yes, same child</span><span class="b">No, a different child</span></div></div></div>
+        <div class="qf"><span class="l why">Answer the question above first.</span><span class="b ghost">Cancel</span><span class="b lime dis">Add to roster</span></div></div></div></div>
+      <div class="cap" style="margin-top:14px"><b>Proposed</b> · accepting a tryout, already on this season’s roster</div>
+      <div class="fr w416"><div class="ak"><div class="qs q flat">
+        <div class="qh"><b>Ella Brooks is already on the 2027 roster</b></div>
+        <div class="qb"><p style="margin:0;color:var(--soft)">Accepting would add Ella twice. Open Ella’s roster entry instead.</p></div>
+        <div class="qf"><span class="b ghost">Close</span><span class="b lime">Open Ella’s entry</span></div></div></div></div>
+    </div>
+  </div>
+  <div class="read">
+    <div class="w"><h4>What this closes</h4><ul><li>The single-add form’s missing duplicate check, and the paste check that ignored birth dates and past seasons.</li><li>The silent second entry from a tryout accept.</li></ul></div>
+    <div class="c"><h4>Twins</h4><p>Ava and Alex Rao share a birth date and a family email. The question needs the <b>same first and last name</b>, so twins are never asked about, and never joined, by this door.</p></div>
+    <div class="g"><h4>Where it never asks</h4><ul>
+      <li><b>Public sign-up forms</b> (tryouts, house league). A public form must never tell a stranger that a child of that name and birth date exists. The coach is asked later, on the Decision Board, as today.</li>
+      <li><b>Call-ups</b>, in the first build. A call-up is usually another team’s child, which is the held cross-team case.</li>
+      <li>A “no” is remembered, like the Families book’s “Not the same person”, and never asked again.</li></ul></div>
+  </div>
+</section>
+
+<!-- ================= 5 · THE CHILD'S PAGE ================= -->
+<section class="pane" id="p5" hidden>
+  <h2>A child’s page across three seasons</h2>
+  <p class="muted">Drawn as the club admin sees it, opened from the Families book. It is the one place every season meets. A coach sees the documents on the player page’s <b>Family &amp; paperwork</b> tab, and only the seasons with <b>their own team</b> (phone, below). Maya Chen played house league in summer 2025, then the Lynx 11U AAA in 2026, and stayed with the team as it moved up to 12U AAA for 2027.</p>
+  <div class="cap"><b>Proposed</b> · club admin, desktop 1440, true size <button class="mk new" data-note="NEW: the child’s page. The club admin has no add-player door today and gets none here (Ask 8). Their door to a child is this page, opened from a household in the Families book, from a name on a team’s roster, or from search.">NEW</button></div>
+  <div class="fx"><div class="fr w1440"><div class="ak"><div class="shell">
+    <nav class="sb"><div class="org">Lakeshore Lynx</div><div class="orgs">Club admin</div><span class="it">Rep teams</span><span class="it">Accounting</span><span class="it on">Families</span><span class="it">Public site</span><span class="it">House league</span><span class="it">Tournaments</span><hr><span class="it">Audit log</span><span class="it">Settings</span><span class="it">Venue library</span></nav>
+    <div class="main"><div class="c960">
+      <div class="crumbs">Families · Chen household</div>
+      <div class="ptitle"><h1>Maya Chen</h1><span class="kq">Born Mar 8, 2015</span><span class="kc good">Lynx 12U AAA · 2027</span><span class="act"><span class="b">Split records</span></span></div>
+      <div class="sect"><div class="sect-h"><h3>Seasons</h3></div>
+        <table class="kt"><thead><tr><th>Season</th><th>Team or division</th><th>#</th><th>Status</th><th>Fees</th></tr></thead><tbody>
+          <tr><td class="n">2027 Season</td><td>Lynx 12U AAA</td><td class="num">7</td><td><span class="kc good">Active</span></td><td class="num">$1,450.00 · $725.00 paid</td></tr>
+          <tr><td class="n">2026 Season</td><td>Lynx 11U AAA</td><td class="num">7</td><td><span class="kq">Finished</span></td><td class="num">Paid in full</td></tr>
+          <tr><td class="n">Summer 2025 <span class="sub2">House league</span></td><td>U10 Rookie · Blue Jays</td><td class="num">—</td><td><span class="kq">Finished</span></td><td class="num">Paid in full</td></tr></tbody></table></div>
+      <div class="pair2">
+        <div class="sect"><div class="sect-h"><h3>Documents</h3><span class="acts"><span class="kc warn">2 to sign</span></span></div>
+          <table class="kt"><thead><tr><th>Document</th><th>For 2027</th><th>History</th></tr></thead><tbody>
+            <tr><td class="n">Waiver<span class="sub2">Signed each season</span></td><td><span class="kc warn">Needs signing</span></td><td class="num">2026 Season · Summer 2025 waiver</td></tr>
+            <tr><td class="n">Code of conduct<span class="sub2">Signed each season</span></td><td><span class="kc warn">Needs signing</span></td><td class="num">2026 Season</td></tr>
+            <tr><td class="n">Medical consent<span class="sub2">Good until replaced</span></td><td><span class="kc good">On file</span></td><td class="num">Apr 12, 2026</td></tr></tbody></table></div>
+        <div class="sect"><div class="sect-h"><h3>Health and emergency</h3></div><div class="sect-b">
+          <dl class="kv"><dt>Medical note</dt><dd>Peanut allergy. EpiPen in her bag.</dd><dt>Emergency contact</dt><dd>Wei Chen · (416) 555-0181</dd></dl>
+          <div class="call warn"><div class="grow"><b>Still right for the 2027 Season?</b><small>Last checked for the 2026 Season. The coach or a parent confirms it once a season.</small></div><span class="b">Confirm</span></div></div></div>
+      </div>
+      <div class="sect"><div class="sect-h"><h3>Parents</h3></div><table class="kt"><tbody>
+        <tr><td class="n">Grace Chen</td><td class="fam">grace.chen@example.com · (416) 555-0181</td></tr></tbody></table></div>
+    </div></div>
+  </div></div></div></div>
+
+  <div class="pair" style="margin-top:18px">
+    <div><div class="cap"><b>Proposed</b> · coach’s player page, Family &amp; paperwork tab, phone 390 <button class="mk res" data-note="RESTYLED: the shipped five tabs (Details · Season · Skills · Notes · Family on a phone). Documents and the emergency contact live on Family today; this adds the state for 2027 and the once-a-season check. Upload is the icon-only 44 × 44 button, as shipped on a phone. The medical note itself stays on Details.">RESTYLED</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="bar"><span class="menu">←</span>Maya Chen</div>
+        <div class="ph-in">
+          <div class="faint" style="font-size:13px">With the Lynx 2026 · 2027 · #7</div>
+          <div class="ptabs"><span>Details</span><span>Season</span><span>Skills</span><span>Notes</span><span class="on">Family</span></div>
+          <div class="sect"><div class="sect-h"><h3>Documents <span class="kc warn">2 to sign</span></h3></div>
+            <div class="tl" style="border:0;border-top:1px solid var(--line);border-radius:0"><div class="tlb tall">
+              <div class="tr"><div class="grow"><div class="t">Waiver</div><div class="s" style="color:var(--amber)">Needs signing for 2027 · last signed 2026</div></div><span class="b ico">⇪</span></div>
+              <div class="tr"><div class="grow"><div class="t">Code of conduct</div><div class="s" style="color:var(--amber)">Needs signing for 2027</div></div><span class="b ico">⇪</span></div>
+              <div class="tr"><div class="grow"><div class="t">Medical consent</div><div class="s">On file · Apr 12, 2026</div></div></div></div></div></div>
+          <div class="call warn"><div class="grow"><b>Emergency contact still right for 2027?</b><small>Wei Chen · (416) 555-0181</small></div><span class="b ph44">Confirm</span></div>
+        </div>
+        <div class="tabbar"><span>Overview</span><span>Schedule</span><span class="on">Roster</span><span>Practices</span><span>More</span></div>
+      </div></div></div>
+    <div><div class="cap"><b>Proposed</b> · the club’s child page, phone 390</div>
+      <div class="fr w390"><div class="ak">
+        <div class="bar"><span class="menu">←</span>Maya Chen</div>
+        <div class="ph-in">
+          <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="kq">Born Mar 8, 2015</span><span class="kc good">Lynx 12U AAA · 2027</span></div>
+          <div class="sect"><div class="sect-h"><h3>Seasons</h3></div><div class="tl" style="border:0;border-top:1px solid var(--line);border-radius:0"><div class="tlb tall">
+            <div class="tr"><div class="grow"><div class="t">2027 Season · Lynx 12U AAA</div><div class="s">#7 · $725.00 of $1,450.00 paid</div></div><span class="kc good">Active</span></div>
+            <div class="tr"><div class="grow"><div class="t">2026 Season · Lynx 11U AAA</div><div class="s">#7 · paid in full</div></div></div>
+            <div class="tr"><div class="grow"><div class="t">Summer 2025 · House league</div><div class="s">U10 Rookie · Blue Jays · paid in full</div></div></div></div></div></div>
+          <div class="sect"><div class="sect-h"><h3>Documents <span class="kc warn">2 to sign</span></h3></div><div class="sect-b"><p class="hint" style="font-size:13px">Waiver and code of conduct need signing for 2027. Medical consent on file.</p></div></div>
+        </div></div></div></div>
+    <div class="side"><div class="read one">
+      <div class="w"><h4>What the record is</h4><ul>
+        <li>One child, with each season’s entry pointing at them. An entry keeps what belongs to that season: number, positions, status, dues, attendance, stats and the coach’s notes.</li>
+        <li>What belongs to the child is kept <b>once</b>: name, birth date, medical note, emergency contact, documents with their history, and the parents.</li></ul></div>
+      <div class="c"><h4>Documents, honestly</h4><p>A waiver is usually good for one season, so the win isn’t skipping it. The win is <b>one place</b> with its history and a plain “Needs signing for 2027” state. The club decides, per document, whether it is signed each season or good until replaced (Ask 10). Photo consent doesn’t exist as a document today. It would be added as a document like any other.</p></div>
+      <div class="g"><h4>What the coach does not see</h4><p>The coach’s page lists seasons with <b>their own team</b> only. Maya’s house-league season shows on the club’s page and not the coach’s, until Ask 9 is ruled. <button class="mk askm" data-note="Ask 9. Counsel’s read parked. Drawn on the narrowest default.">Ask 9</button></p></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ================= 6 · JOINING RECORDS ================= -->
+<section class="pane" id="p6" hidden>
+  <h2>Joining records that are one child (14d)</h2>
+  <p class="muted">Every club already has years of the same child typed again. The Families book’s duplicate-parent queue is the model, extended: a <b>Parents · Children</b> switch on the same Duplicates tab, with the same card. Records the roll already linked, or a coach already confirmed, are joined when the build first runs, because those links were made from a known fact or by a person. Everything else is proposed here.</p>
+  <div class="cap"><b>Proposed</b> · club admin, Families → Duplicates, desktop 1440, true size <button class="mk new" data-note="NEW: the Children half of the Duplicates tab. The switch is the kit’s ViewSwitch (one white rounded track, chosen in soft olive). The card is the shipped duplicate card: the reason first, two sides each with “Keep this record”, one consequence sentence, then the actions. One lime on the page, on the first card.">NEW</button></div>
+  <div class="fx"><div class="fr w1440"><div class="ak"><div class="shell">
+    <nav class="sb"><div class="org">Lakeshore Lynx</div><div class="orgs">Club admin</div><span class="it">Rep teams</span><span class="it">Accounting</span><span class="it on">Families</span><span class="it">Public site</span><span class="it">House league</span><span class="it">Tournaments</span><hr><span class="it">Audit log</span><span class="it">Settings</span><span class="it">Venue library</span></nav>
+    <div class="main"><div class="c960">
+      <div class="ptitle"><h1>Families</h1></div>
+      <div class="ptabs"><span>Families</span><span class="on">Duplicates <span class="wc">7</span></span><span>Emails</span></div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span class="vsw"><span>Parents · 2</span><span class="on">Children · 5</span></span><span class="hint" style="font-size:13px">Records that may be one child. Nothing joins until you choose.</span></div>
+      <div class="dcard">
+        <div class="why">Same name, same birth date and the same parent</div>
+        <div class="pair2">
+          <div class="sidec keep"><span class="rad"><i></i>Keep this record</span><div class="nm">Maya Chen</div><div class="r">Born <b>Mar 8, 2015</b></div><div class="r">Lynx 11U AAA, 2026 Season · Lynx 12U AAA, 2027 Season</div><div class="r">Parent: Grace Chen · grace.chen@example.com</div><div class="r">3 documents · medical note on file</div></div>
+          <div class="sidec"><span class="rad"><i></i>Keep this record</span><div class="nm">Maya Chen</div><div class="r">Born <b>Mar 8, 2015</b></div><div class="r">House league, Summer 2025 · U10 Rookie · Blue Jays</div><div class="r">Parent: Grace Chen · grace.chen@example.com</div><div class="r">Waiver accepted May 2, 2025</div></div>
+        </div>
+        <p class="hint" style="font-size:13px">Joining keeps Maya Chen, born Mar 8, 2015, as one child with all three seasons. Every season keeps its own entry, and you can split them again from Maya’s page.</p>
+        <div style="display:flex;gap:8px"><span class="b lime">Join as one child</span><span class="b">Not the same child</span></div>
+      </div>
+      <div class="dcard">
+        <div class="why">Same name and birth date, different parent email</div>
+        <div class="pair2">
+          <div class="sidec keep"><span class="rad"><i></i>Keep this record</span><div class="nm">Owen Patel</div><div class="r">Born <b>Jun 19, 2014</b></div><div class="r">Lynx 12U AA, 2026 Season</div><div class="r">Parent: Raj Patel · raj@example.com</div></div>
+          <div class="sidec"><span class="rad"><i></i>Keep this record</span><div class="nm">Owen Patel</div><div class="r">Born <b>Jun 19, 2014</b></div><div class="r">House league, Summer 2026 · U13 · Orioles</div><div class="r">Parent: Nina Patel · nina.p@example.com</div></div></div>
+        <p class="hint" style="font-size:13px">Joining keeps both parents on the one child. If they are one parent, the Parents queue proposes that separately.</p>
+        <div style="display:flex;gap:8px"><span class="b">Join as one child</span><span class="b">Not the same child</span></div></div>
+    </div></div>
+  </div></div></div></div>
+
+  <div class="pair" style="margin-top:18px">
+    <div><div class="cap"><b>Proposed</b> · the pair card on a phone (390)</div>
+      <div class="fr w390"><div class="ak"><div class="ph-in">
+        <div class="dcard">
+          <div class="why">Same name, same birth date and the same parent</div>
+          <div class="sidec keep"><span class="rad"><i></i>Keep this record</span><div class="nm">Maya Chen</div><div class="r">Born <b>Mar 8, 2015</b> · Lynx 11U AAA 2026, 12U AAA 2027</div></div>
+          <div class="sidec"><span class="rad"><i></i>Keep this record</span><div class="nm">Maya Chen</div><div class="r">Born <b>Mar 8, 2015</b> · House league, Summer 2025</div></div>
+          <p class="hint" style="font-size:13px">Joining keeps Maya Chen as one child with all three seasons. You can split them again.</p>
+          <span class="b lime ph44">Join as one child</span><span class="b ph44">Not the same child</span>
+        </div></div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · the confirm step (the small question window, 416)</div>
+      <div class="fr w416"><div class="ak"><div class="qs q flat">
+        <div class="qh"><b>Join Maya Chen’s records?</b></div>
+        <div class="qb"><p style="margin:0;color:var(--soft)">Maya becomes one child with three seasons. Nothing in any season changes. You can split them again from Maya’s page.</p></div>
+        <div class="qf"><span class="b ghost">Cancel</span><span class="b lime">Join</span></div></div></div></div></div>
+    <div class="side" style="flex-basis:520px;max-width:600px"><div class="tw" style="margin:0"><table class="t narrow"><thead><tr><th>On a join</th><th>What happens</th></tr></thead><tbody>
+      <tr><td>Each season’s entry</td><td class="y">Kept, unchanged. It now points at the one child.</td></tr>
+      <tr><td>History links on a team</td><td class="y">Kept. A team’s confirmed links become part of the child.</td></tr>
+      <tr><td>Name and birth date</td><td>The kept record’s. That is what “Keep this record” chooses.</td></tr>
+      <tr><td>Documents</td><td class="y">All kept, listed together, newest first.</td></tr>
+      <tr><td>Medical note, emergency contact</td><td class="am">The newest season’s values are kept. Older ones stay as history and can be read.</td></tr>
+      <tr><td>Parents</td><td class="y">Both kept on the child.</td></tr>
+      <tr><td>Undo</td><td class="y">“Split records” on the child’s page. Nothing was deleted, so a split is exact. A parent merge can’t be undone; a child join can.</td></tr>
+      <tr><td>Two entries in one season on one team</td><td class="x">Refused: “Both are on the Lynx 12U AAA 2027 roster. Remove the extra entry first, then join them.”</td></tr>
+    </tbody></table></div></div>
+  </div>
+  <div class="read">
+    <div class="w"><h4>Joined when the build first runs</h4><ul><li>Entries the season roll linked, because it copied them, so that is a fact.</li><li>Entries a head coach confirmed as “same player”.</li><li>Nothing else. A name and birth date match is never joined without a person.</li></ul></div>
+    <div class="c"><h4>What gets proposed</h4><ul><li>Same first and last name and the same birth date, across teams and the house league.</li><li>The same name with a birth date missing on one side, and the same parent email.</li><li>Never: a different first name (twins), or a pair someone already said no to.</li></ul></div>
+    <div class="a"><h4>A queue that stays</h4><p>New pairs keep arriving from public sign-ups, so the Children half stays open like the Parents half, with its count on the tab. It isn’t a one-time clean-up (Ask 11).</p></div>
+  </div>
+</section>
+
+<!-- ================= 7 · THE PARENT LINK ================= -->
+<section class="pane" id="p7" hidden>
+  <h2>The parent link points at the child, not at a season</h2>
+  <p class="muted">The hand-off to Signed-in family accounts Stage 4. Only the link is drawn here, not the parent app. Today a connected parent hangs on one season’s roster entry. After Stage 14, they hang on the child, and every season points at that child. The next roster can no longer disconnect them (Ask 13).</p>
+  <div class="dg">
+    <div class="col"><h4 style="color:var(--flag)">Today</h4>
+      <div class="node person"><b>Grace Chen</b><small>connected parent (guardian tier, off)</small></div>
+      <div class="arrow bad">points at one roster entry</div>
+      <div class="node"><b>Maya Chen · Lynx 11U AAA · 2026 Season</b><small>roster entry</small></div>
+      <div class="arrow">the roll copies Maya into a new entry</div>
+      <div class="node bad"><b>Maya Chen · Lynx 12U AAA · 2027 Season</b><small>roster entry, no parent connected</small></div>
+      <ul style="font-size:13.5px;margin:12px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:6px">
+        <li>Grace still gets the team’s schedule through the 2026 entry, because access does not look at the season.</li>
+        <li>The coach’s Family list for 2027 shows Maya with no parent.</li>
+        <li>Inviting Grace again is refused: “That address already has a connection to this player.”</li>
+        <li>Her house-league season can’t be connected at all, because a link can only point at a rep roster entry.</li></ul>
+    </div>
+    <div class="col"><h4 style="color:var(--fix)">After Stage 14</h4>
+      <div class="node person"><b>Grace Chen</b><small>a person, signed in (Stage 4)</small></div>
+      <div class="arrow good">linked once, to the child</div>
+      <div class="node child"><b>Maya Chen</b><small>born Mar 8, 2015 · one record</small></div>
+      <div class="seasons" style="margin-top:8px">
+        <div class="node"><b>Summer 2025 · house league · U10 Rookie</b><small>sign-up</small></div>
+        <div class="node"><b>Lynx 11U AAA · 2026 Season</b><small>roster entry</small></div>
+        <div class="node"><b>Lynx 12U AAA · 2027 Season</b><small>roster entry · live</small></div></div>
+      <ul style="font-size:13.5px;margin:12px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:6px">
+        <li>What Grace sees follows Maya’s <b>live</b> seasons, so the 2026 team stops reaching her when 2026 closes.</li>
+        <li>The roll and the picker change nothing for Grace. There is nothing to re-invite.</li>
+        <li>The second parent’s email from Stage 3 attaches to the same child.</li></ul>
+    </div>
+  </div>
+  <div class="cap" style="margin-top:16px"><b>Later, not this build</b> · the coach’s roster after the roll, once the guardian tier is switched on <button class="mk unc" data-note="Drawn only to show the link survives the roll. Today the roster carries no ‘connected’ marker on purpose, because the guardian tier is off; nothing here adds one. Whether a marker appears, and what it looks like, belongs to Signed-in family accounts Stage 4.">LATER</button></div>
+  <div class="fr w520"><div class="ak" style="padding:16px"><div class="sect"><table class="kt"><thead><tr><th></th><th>#</th><th>Player</th><th>Positions</th><th>Family</th></tr></thead><tbody>
+    <tr><td class="grip">⋮⋮</td><td class="num">7</td><td class="n">Maya Chen</td><td>SS · 2B</td><td class="fam"><b>Grace Chen</b>grace.chen@example.com<br><span style="color:var(--olive)">Still connected after the roll</span></td></tr>
+    <tr><td class="grip">⋮⋮</td><td class="num">12</td><td class="n">Theo Marchetti</td><td>C</td><td class="fam"><b>Luca Marchetti</b>luca.m@example.com</td></tr></tbody></table></div></div></div>
+  <div class="read two">
+    <div class="a"><h4>Raised, not decided: Ask 14</h4><p>The 10-29 P3 proposal, “a parent account is a person, not an organization member”, is still open. The child record is the club’s. The parent is a person who can have children at two clubs, or at a club and a standalone team. This link depends on P3 being ruled.</p></div>
+    <div class="c"><h4>Counsel’s read parked</h4><p>What a connected parent may see of a past season, and whether a link carries consent across seasons, wait for the privacy review the owner parked until after the project. Nothing here turns the guardian tier on.</p></div>
+  </div>
+</section>
+
+<!-- ================= 8 · EDGES & THE CLUB'S DOOR ================= -->
+<section class="pane" id="p8" hidden>
+  <h2>Empty states, refusals, and the club admin’s door</h2>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · the picker on a team’s first season</div>
+      <div class="fr w520"><div class="ak"><div class="qs flat">
+        <div class="qh"><b>Bring back a past player</b><span class="x">✕</span></div>
+        <div class="qb"><p style="margin:0;font-weight:600">No past players yet.</p><p class="hint" style="font-size:13px">Players from the Hawks’ earlier seasons appear here once a season has finished.</p></div>
+        <div class="qf"><span class="b ghost">Close</span></div></div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · everyone from past seasons is already back</div>
+      <div class="fr w520"><div class="ak"><div class="qs flat">
+        <div class="qh"><b>Bring back a past player</b><span class="x">✕</span></div>
+        <div class="qb"><p style="margin:0;font-weight:600">Everyone who played for the Hawks is on the 2027 roster.</p></div>
+        <div class="qf"><span class="b ghost">Close</span></div></div></div></div></div>
+  </div>
+  <div class="tw"><table class="t"><thead><tr><th>Where</th><th>Situation</th><th>The words</th></tr></thead><tbody>
+    <tr><td>Picker</td><td>Two coaches pick the same child at once</td><td>“Jonah Ruiz is already on the 2027 roster.” That pick is skipped and the rest are added.</td></tr>
+    <tr><td>Picker</td><td>The season has closed while the window was open</td><td>“The 2027 Season is closed, so no one can be added. Reopen it from Settings first.”</td></tr>
+    <tr><td>Picker</td><td>A child born outside the team’s years is picked</td><td>Warns and never blocks: “Born 2014. The team is 2015–2016.” (Ask 12)</td></tr>
+    <tr><td>Same child?</td><td>The coach says Yes, but that child is already on this season’s roster</td><td>“Jonah Ruiz is already on the 2027 roster. Open Jonah’s entry instead.”</td></tr>
+    <tr><td>Joining</td><td>Two entries in the same season on the same team</td><td>“Both are on the Lynx 12U AAA 2027 roster. Remove the extra entry first, then join them.”</td></tr>
+    <tr><td>Joining</td><td>The pair has changed since the page loaded</td><td>“These records aren’t proposed as one child any more. The list has been refreshed.” (as the Parents queue says today)</td></tr>
+    <tr><td>Split</td><td>Splitting a child whose parent is connected</td><td>“Grace Chen stays linked to the record you keep. Link Grace to the other one from its page if Grace is that child’s parent too.”</td></tr>
+    <tr><td>Assistant coach</td><td>Without the roster-details grant</td><td>The picker shows names and seasons only: no birth date, no family, no dues. This is the same grant that hides those details on the roster today.</td></tr>
+  </tbody></table></div>
+
+  <h3>The club admin’s door</h3>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div><div class="cap"><b>Today</b> · a household’s children</div>
+      <div class="fr w520"><div class="ak" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+        <div class="crumbs">Families · Chen household</div>
+        <div class="sect"><div class="sect-h"><h3>Children</h3></div><table class="kt"><tbody>
+          <tr><td class="n">Maya Chen</td><td class="fam">Lynx 12U AAA · 2027 Season</td></tr>
+          <tr><td class="n">Maya Chen</td><td class="fam">Lynx 11U AAA · 2026 Season</td></tr>
+          <tr><td class="n">Maya Chen</td><td class="fam">House league · Summer 2025</td></tr>
+          <tr class="same"><td class="n">Leo Chen</td><td class="fam">House league · Summer 2027 · U8</td></tr></tbody></table></div>
+        <p class="hint">The two rep seasons are read as one child behind the scenes, but each season still lists on its own line here.</p>
+      </div></div></div>
+    <div><div class="cap"><b>Proposed</b> · one line per child, each opening the child’s page <button class="mk new" data-note="NEW: one line per child, opening the child’s page (tab 5). The club admin still gets no add-player door, which the recommendation keeps (Ask 8).">NEW</button></div>
+      <div class="fr w520"><div class="ak" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+        <div class="crumbs">Families · Chen household</div>
+        <div class="sect"><div class="sect-h"><h3>Children</h3></div><table class="kt"><tbody>
+          <tr class="newbox"><td class="n">Maya Chen<span class="sub2">3 seasons · 2 documents to sign</span></td><td class="fam">Lynx 12U AAA · 2027 Season</td><td><span class="door">Open</span></td></tr>
+          <tr class="same"><td class="n">Leo Chen</td><td class="fam">House league · Summer 2027 · U8</td><td><span class="door">Open</span></td></tr></tbody></table></div>
+      </div></div></div>
+    <div class="side"><div class="read one">
+      <div class="w"><h4>The club admin’s doors</h4><ul><li>A household’s children, one line each, opening the child’s page (tab 5).</li><li>A name on any team’s roster, read-only, opening the same page.</li><li>The Children queue (tab 6).</li></ul></div>
+      <div class="g"><h4>Not given</h4><ul><li>No add-player door on a team. The coach owns the roster, and the club adds through tryouts, as today (Ask 8).</li></ul></div>
+      <div class="c"><h4>Standalone coach</h4><p>Has no Families book. On the recommended answer (Ask 7), their team still gets the same child record. They see it only on the player page and in the picker, and they answer the “same child?” questions themselves. When their team moves into a club, its children come with it, and the club’s queue proposes any matches.</p></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ================= 9 · ASKS ================= -->
+<section class="pane" id="p9" hidden>
+  <h2>Asks</h2>
+  <p class="muted">Pick one per ask. The green row is my recommendation. Ask 4 carries the most weight: everything else follows from it. Asks marked “counsel’s read parked” are owner rulings now, and counsel reads them after the project.</p>
+  <div id="asks"></div>
+  <div class="paste"><div class="row"><button class="btn-d pri" id="mk">Make my answers</button><button class="btn-d" id="cp">Copy</button><span class="muted" id="cpmsg" role="status"></span></div>
+    <textarea id="out" readonly aria-label="Your answers" placeholder="Press “Make my answers”, then copy this text back into the chat."></textarea></div>
+</section>
+</div>
+
+<dialog class="note" id="nd"><div class="nh"><h3>About this</h3><button id="nx" aria-label="Close">×</button></div><div class="nb" id="nt"></div></dialog>
+
+<script>
+(function(){
+  var ASKS=[
+   {id:1,t:"The season window: what is chosen when it opens, and the roster default on each path",tag:"14a",
+    r:"Tab 2. The two choices are ruled. Their defaults were proposed on 2026-10-22, not ruled. Today’s roll carries the kids and moves the birth years, so it does both paths at once.",
+    o:[["A","Nothing is chosen when it opens. Path (a): players come, birth years stay, division moves up. Path (b): players don’t come (a box to bring them anyway), birth years move one year later","rec"],["B","Path (a) is chosen when it opens, with the same defaults otherwise",""],["C","Players come on both paths; the coach unticks on (b)",""]]},
+   {id:2,t:"On path (a), does the coach choose who comes?",tag:"14a",
+    r:"Tab 2. Today every active player comes, and nobody else. Inactive players are left on the old season with no way back except retyping.",
+    o:[["A","A list: active players ticked, inactive players listed unticked, call-ups left out","rec"],["B","One box: all active players or none",""]]},
+   {id:3,t:"On path (a), what happens to the division and the team’s name?",tag:"14a",
+    r:"Tab 2. A standalone coach edits their division in Settings today. A club team’s division is the club’s. The team’s name is part of its public web address.",
+    o:[["A","The division moves up when it starts with an age (11U → 12U), shown in an editable box. The team’s name is never changed for them","rec"],["B","Neither changes; the coach edits them in Settings afterwards",""],["C","Both move up, the name included",""]]},
+   {id:4,t:"⚠ Rule first: how does a child get one record without it being inferred?",tag:"14b",
+    r:"Tabs 4 and 6. The Families book rules that a household is confirmed by a person, not inferred. The code already has two honest ways to say “same child”: the roll copied the entry, so it is a fact, and a head coach confirming a match is a person. The prompt’s options A and B land in the same place once written down.",
+    o:[["A","Every new entry starts its own child. Two become one only by a fact (the roll, the picker, accepting a tryout already confirmed) or a person’s yes. A match is always a question, never a join","rec"],["B","A child is made only when a person confirms; until then an entry has no child",""],["C","Name and birth date matches join automatically; people review afterwards",""]]},
+   {id:5,t:"The shape: a picker over this team’s seasons, or a club-level child record?",tag:"14b",
+    r:"Tab 3. The database refuses to link two teams’ entries, and the guardian link and documents hang on a season’s entry. A picker built on the same-team links would have to be rebuilt for the cross-team case.",
+    o:[["A","Build the club-level child record now (every roster entry, tryout and house-league sign-up points at it), and show only this team’s picker first. Hold the cross-team picker until Ask 9 is ruled","rec"],["B","Build only the same-team picker on today’s history links; design the child record later",""],["C","Build the child record and the cross-team picker together",""]]},
+   {id:6,t:"Who may say “same child” and join records?",tag:"14b",
+    r:"Tabs 4 and 6. Today only the head coach confirms a returning player, on the Decision Board. The Families book’s merges are the club admin’s.",
+    o:[["A","The head coach, for their own team’s seasons (picker, “same child?”, tryout accept). The club admin, for anything across teams or the house league, and the Children queue","rec"],["B","The club admin only; coaches ask and the club decides",""],["C","Any coach with the roster grant",""]]},
+   {id:7,t:"Standalone coaches: the same child record?",tag:"14d",
+    r:"Tab 8. They have no Families book, but their team has its own organization, so a record scoped to the organization fits them unchanged.",
+    o:[["A","Yes. Same record, no Families book. Their children move with the team if it joins a club","rec"],["B","No. Stage 14 is a club feature; standalone teams keep today’s copies",""]]},
+   {id:8,t:"Does the club admin get an add-player door on a team?",tag:"club",
+    r:"Tab 8. They have none today. The coach owns the roster; the club adds through the tryout accept.",
+    o:[["A","No. The club admin’s doors are the child’s page and the Children queue","rec"],["B","Yes, an Add player on the club’s team page",""]]},
+   {id:9,t:"Privacy across teams (counsel’s read parked)",tag:"14b",
+    r:"Tab 5. Today a coach only ever sees their own team’s seasons, and the club admin sees everything unfiltered. The Notes feature already keeps a coach’s private note out of the family file.",
+    o:[["A","Narrowest. A coach sees their own team’s seasons only. If a cross-team picker ships later, it shows a name and the teams and years played, and the medical note and family details arrive only once the child is on the roster. Notes, evaluations and tryout scores never leave the team that wrote them. A club admin may widen development history (goals and measurements, never notes) to the club’s teams","rec"],["B","Within the club, every coach of a child sees all of that child’s seasons except private notes",""],["C","Nothing crosses teams; a family re-enters details for a new team",""]]},
+   {id:10,t:"Documents: which carry, and which are signed each season?",tag:"14c",
+    r:"Tab 5. There is no season or valid-until on a document today, and the roll leaves them all behind. Photo consent does not exist as a document type.",
+    o:[["A","The club sets it per document: “signed each season” or “good until replaced”. Waiver and code of conduct default to each season, medical consent to until replaced. Medical note and emergency contact carry with a once-a-season “still right?”","rec"],["B","Everything is signed each season; only the history and the state are new",""],["C","Everything carries until replaced",""]]},
+   {id:11,t:"Existing duplicates: a one-time pass, or a queue that stays?",tag:"14d",
+    r:"Tab 6. Public sign-ups keep making new pairs, and the Parents queue already stays open.",
+    o:[["A","A queue that stays (Families → Duplicates → Children). Roll-linked and coach-confirmed records join when the build first runs. A child join can be split again","rec"],["B","A one-time clean-up run by the club admin, then only the add-door questions",""]]},
+   {id:12,t:"The birth-year check when a child is picked or added",tag:"14b",
+    r:"Tab 3. Club teams have birth years; most standalone teams have none.",
+    o:[["A","Warn, never block: “Born 2014. The team is 2015–2016.”","rec"],["B","Block unless the club allows it",""],["C","No check",""]]},
+   {id:13,t:"The parent link points at the child",tag:"hand-off",
+    r:"Tab 7. Today it points at one roster entry. It stays live after the season ends and blocks a new invitation. The alternative is to keep it on the entry and move it at every roll.",
+    o:[["A","The link points at the child. What a parent sees follows the child’s live seasons","rec"],["B","Keep the link on the season’s entry and copy it forward at each roll",""]]},
+   {id:14,t:"Raise: is a parent account a person, not a club member? (10-29 P3, open)",tag:"owner",
+    r:"Tab 7. Proposed 2026-10-29 and still unruled. The child record is the club’s. A parent can have children at two clubs, or at a club and a standalone team, and the one-home-organization rules would collide.",
+    o:[["A","Rule P3 yes: a parent account is a person, kept clear of the one-home-organization rules","rec"],["B","Not now; decide it with Signed-in family accounts Stage 4",""]]}
+  ];
+  var host=document.getElementById('asks');
+  ASKS.forEach(function(a){
+    var d=document.createElement('div');d.className='ask';d.id='ask-'+a.id;
+    var h='<h3><span class="no">Ask '+a.id+'</span>'+a.t+'<span class="tag">'+a.tag+'</span></h3><p class="rides">'+a.r+'</p><div class="opts">';
+    a.o.forEach(function(o){h+='<label class="'+o[2]+'"><input type="radio" name="a'+a.id+'" value="'+o[0]+'"'+(o[2]?' checked':'')+'><span><b>'+o[0]+'.</b> '+o[1]+'</span></label>';});
+    h+='</div><textarea id="n'+a.id+'" aria-label="Note for ask '+a.id+'" placeholder="Note"></textarea>';
+    d.innerHTML=h;host.appendChild(d);
+  });
+  var tabs=document.getElementById('tabs');
+  tabs.addEventListener('click',function(e){var b=e.target.closest('button[data-t]');if(!b)return;var id=b.getAttribute('data-t');
+    [].forEach.call(tabs.querySelectorAll('button'),function(x){x.setAttribute('aria-selected',x===b?'true':'false')});
+    [].forEach.call(document.querySelectorAll('section.pane'),function(s){s.hidden=s.id!==id});
+    window.scrollTo(0,0);});
+  document.addEventListener('click',function(e){
+    var v=e.target.closest('.sw button');
+    if(v){var val=v.getAttribute('data-v');document.body.setAttribute('data-view',val);
+      [].forEach.call(document.querySelectorAll('.sw button'),function(x){x.setAttribute('aria-pressed',x.getAttribute('data-v')===val?'true':'false')});return;}
+    var m=e.target.closest('.mk[data-note]');
+    if(m){document.getElementById('nt').textContent=m.getAttribute('data-note');var d=document.getElementById('nd');if(d.showModal)d.showModal();}
+  });
+  document.getElementById('nx').onclick=function(){document.getElementById('nd').close()};
+  document.getElementById('mk').onclick=function(){
+    var L=['Stage 14 drawings, my answers:'];
+    ASKS.forEach(function(a){var c=document.querySelector('input[name=a'+a.id+']:checked');var n=document.getElementById('n'+a.id).value.trim();
+      L.push('Ask '+a.id+': '+(c?c.value:'(none)')+(n?' — '+n:''));});
+    document.getElementById('out').value=L.join('\n');};
+  document.getElementById('cp').onclick=function(){
+    var t=document.getElementById('out');var msg=document.getElementById('cpmsg');
+    function sel(){t.select();msg.textContent='Selected. Press Ctrl+C.';}
+    if(navigator.clipboard&&t.value){navigator.clipboard.writeText(t.value).then(function(){msg.textContent='Copied.'},sel);}else{sel();}};
+})();
+</script>

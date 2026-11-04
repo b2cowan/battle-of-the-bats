@@ -538,6 +538,19 @@ the same kids and re-collecting the same papers) and is the foundation for a chi
 inside the Club release; the season window first (small), then the player record. Success: a returning child is picked, not
 retyped, and appears once in the family library no matter how many teams and seasons they have played.
 
+**Stage 14 drawn 2026-11-04, and the owner ruled all 14 asks the same day, each as recommended.** The drawings (linked in the plan) show: the *Start next season* window asking
+what the team is doing, with a tick list of who comes on "the same players, moving up"; a **Bring back a past player** window
+on the roster; a **"same child?"** question when a coach types, pastes or accepts a child the team has had before; **one page per
+child** across every season, with documents marked "Needs signing for 2027" and a once-a-season "still right?" on the medical
+note; a **Children** half of the Families book's Duplicates tab for joining records (a join can be split again); and the parent
+link pointing at the child rather than a season. What the code read changed: today's roll already does *both* of the ruled answers
+at once (it keeps the kids and moves the birth years), and a parent's connection is left on last season's roster entry, still
+live, which would block Signed-in family accounts Stage 4 — so Stage 14 is that stage's real foundation, not a nicety. The central
+ruling: a child becomes one record only by a known fact (the roll copied them, the coach picked them) or a person's yes, never
+by a name match on its own. Also ruled: the club-wide child record is built now with only the team's own picker shown first;
+coaches see only their own team's seasons (counsel reads that later); and a parent account is a person, not a club member.
+Priority unchanged: the season window first, then the record.
+
 **Stage 7 closed 2026-10-22 (all four parts built and walked by the owner):** A club that hosts a tournament now enters its own teams in one window, with no fee for its own team (7b). Visiting teams' fees land in the tournament's own book, so the club sees the tournament's money beside its other activities (7a). A club admin can email every family, some teams' families or one house-league season from Families, and the Emails tab keeps a record of what was sent (7c). A coach's Tournaments is now one banded list and one page named for the tournament, in both portals, and only the event's head coach can change who it names (7d). Still open and not blocking: a review pass on the family email, the owner's three questions about who may change an event's head coach, and moving the house-league season email onto the same sender.
 
 ## Trade-offs made in this plan

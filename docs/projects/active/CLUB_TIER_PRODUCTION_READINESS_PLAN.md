@@ -3108,7 +3108,7 @@ unwritten departures.
 **Migrations:** none expected. **Definition of done:** the inventory walked; every crossing ruled and built; parity holds or is
 written as an exception; `NAV_STANDARD.md` updated; the guards in the build; the walk passed.
 
-### Stage 14 — One player across seasons and teams: current and historical players (⚖ added by the owner 2026-10-22; inside the release; not yet drawn)
+### Stage 14 — One player across seasons and teams: current and historical players (⚖ added by the owner 2026-10-22; inside the release; DRAWN + RULED 2026-11-04, all 14 asks A)
 > **Why this stage exists:** the owner, 2026-10-22, asking what *Start next season* does to a team that keeps its kids and moves up
 > an age group: *"we already have the family library but need to figure out a way to not have to also make duplicate players with
 > duplicate documents etc. year by year."* **What the code does today (a census of 2026-10-22; re-read the cited places when the
@@ -3126,13 +3126,93 @@ written as an exception; `NAV_STANDARD.md` updated; the guards in the build; the
 > **⚖ Ruled 2026-10-22 (owner), the first slice only:** *Start next season* **asks what the team is doing** — **(a) the same group
 > moving up an age group** or **(b) a new group in the same age group** (a coach who keeps their kids and a club that keeps its
 > slot are both served; today's single behavior is (b) with the roster carried). On (a) the **roster is a carry choice** beside
-> the budget, the dues and the cash. **Proposed, not ruled:** on (b) the roster carry defaults **off** (the birth years roll to the
+> the budget, the dues and the cash. **Proposed 2026-10-22, RULED 2026-11-04 (Ask 1 A; nothing is chosen when the window
+> opens):** on (b) the roster carry defaults **off** (the birth years roll to the
 > next cohort, so last year's kids are the wrong kids; today they are carried and the coach deletes them); on (a) the team's age
 > group moves up one (11U → 12U) and its birth years stay.
 **Closes:** the same child created again every season · documents and waivers re-collected on a new record · a returning kid
 who was released or sat out a year arriving with no history · the single-add form's missing duplicate check · the open gap
 between the coach's idea of a team (kids who age up) and the club's (a slot that gets a new cohort).
-- [ ] **14a · The season window asks what the team is doing (the ruled slice):** the *Start next season* window for the coach and
+
+> **📐 Drawn 2026-11-04 · ⚖ RULED 2026-11-04 by the owner: all 14 asks A, as recommended** (pasted from the page's answer box,
+> no notes). **Build prompt written 2026-11-04: `docs/projects/active/CLUB_TIER_STAGE14_BUILD_PROMPT.md`** — six one-session
+> chunks (S1 the window · S2 the child record + backfill · S3 picker + "same child?" · S4 documents + health · S5 the child's page +
+> household list · S6 joining + the parent link), five push-backs to raise at each session's Part 0, progress kept in its block.
+> Page: https://claude.ai/artifact/YRZjgsXZwkeNPnGmpPAapN · source `docs/projects/active/CLUB_TIER_STAGE14_DRAWINGS.html`
+> (republish the SAME path). Tabs: 1 Today (the code read) · 2 the season window, both paths + the confirmation + phone · 3 Bring
+> back a past player (1440 + 390, the returning child once picked, the look-back three questions) · 4 "Same child?" on single
+> add, paste a list and the tryout accept (never on public forms or call-ups) · 5 the child's page (club admin, three seasons,
+> documents with "Needs signing for 2027", health "still right?") + the coach's player page at 390 · 6 joining records (Families →
+> Duplicates → a Parents · Children switch; join can be SPLIT, unlike a parent merge) · 7 the parent link (hand-off to Signed-in
+> family accounts Stage 4; the app itself not drawn) · 8 empty states, refusal words, the club admin's door · 9 the asks.
+> **Rulings (all A — each is the recommendation as drawn on page version 2):** 1 nothing chosen when the window opens; (a) players come + birth years stay + division moves up,
+> (b) players don't come (a box to bring them anyway) + birth years +1 · 2 on (a) a tick list (active ticked, inactive unticked,
+> call-ups left out) · 3 division moves up only when it starts with an age; the team's name never changes for them · **4 (rule
+> first) every new entry starts its own child; two become one only by a FACT (the roll, the picker, a tryout accept already
+> confirmed) or a PERSON's yes; a match is always a question** — this answers the Families-book tension (`CLUB_FAMILIES_BOOK_PLAN.md`
+> :449-455): provenance and confirmation are not inference · 5 build the club-level child record now (roster entries, tryout and
+> house-league sign-ups point at it), show only this team's picker first, hold the cross-team picker for Ask 9 (the same-team
+> continuity links cannot grow into it: the composite FKs refuse cross-team, mig 191:72-78) · 6 head coach for their own team's
+> seasons; club admin across teams + the Children queue · 7 standalone coaches get the same record, no Families book · 8 no club
+> add-player door · 9 (counsel's read parked) narrowest: own team's seasons only; notes, evaluations, tryout scores never leave
+> the team that wrote them; club admin may widen development history (never notes) · 10 per document "signed each season" / "good
+> until replaced", set by the club; waiver + code of conduct each season, medical consent until replaced; medical note + emergency
+> contact carry with a once-a-season "still right?" · 11 a standing Children queue; roll-linked and coach-confirmed chains join at
+> first run · 12 birth-year check warns, never blocks · 13 the parent link points at the child; what a parent sees follows the
+> child's LIVE seasons · 14 10-29 P3 RULED YES: a parent account is a person, kept clear of the one-home-organization rules
+> (to be logged in `BUSINESS_DECISIONS.md` by `/strategy`, where P3 sits as Proposed). Ask 9 is an owner ruling with counsel's read
+> parked until after the project, as the stage opened.
+>
+> **Corrections to the 2026-10-22 census (the code read 2026-11-04, each re-checked at the cited lines):**
+> - **14a is not built, and the roll does BOTH paths at once:** it always carries the active roster (`lib/rep-season-rollover.ts:303-351`)
+>   AND always moves the birth years one year later (`:218-239`). The club's Team details note ("If this team keeps its players,
+>   change it back", `app/[orgSlug]/admin/rep-teams/teams/[teamId]/page.tsx:735-738`) is the only trace of the choice.
+> - **"Nothing carries" is half true.** Documents don't (`:353`; the documents route 404s a past season's row). But the roll COPIES
+>   the medical note, emergency contact, the coach's pinned note, positions, bats/throws, jersey size, the lineup profile and the
+>   guardian fields by value (`:310-339`) — copies that drift once edited. `adminNotes` and the tryout provenance are dropped.
+> - **There is no "released" status** — `active | inactive | callup` (`lib/types.ts:1178`); the roll carries `active` only (`:307`).
+> - **The Families book already reads a rep child as ONE child** across a team's chain of confirmed continuity links
+>   (`lib/families-read.ts:337-350`); a house-league child is a new child per sign-up (`:369`).
+> - **⚠ The parent link is NOT re-established at continuity-confirm**, whatever the dictionary says (`DATA_DICTIONARY.md` 5898,
+>   corrected 2026-11-04). No code moves it (`lib/db.ts:4655` is the only `family_links` reference there). It stays on last season's
+>   row, still LIVE: family access has no season check (`lib/family-access.ts`), and a new invitation to the new row is refused,
+>   "That address already has a connection to this player." (`lib/family-guardian.ts:349-352`, the live-unique index). Latent —
+>   the guardian tier is off. Ask 13 is the fix.
+> - **Accepting a tryout for a child already on the roster makes a second entry, silently** (RPC `accept_tryout_and_create_dues`,
+>   mig 169; no name check). Drawn as a "same child?" question (tab 4).
+> - **Standalone coaches have no family library** — `module_families` is League/Club only (`lib/plan-config.ts`), every families
+>   route gates on it (`lib/families-auth.ts:26-38`), and mig 313 clears `person_id` when a coach's team moves into its club.
+> - **The coach's window copy is stale:** "Each returning player's profile will offer to bring their open goals forward"
+>   (`components/coaches/StartNextSeasonModal.tsx:383-386`) — the offer left on 2026-09-16 (the roll's own comment, `:356-363`);
+>   and the first line renders "This closes the 2026 Season season." (`:280`, the name already ends in "Season"). Both fixed by 14a.
+> - The census §4 cites `BUSINESS_DECISIONS.md:157` for P3; it is `docs/agents/strategy/BUSINESS_DECISIONS.md:465` (P2 at :464).
+>
+> **Side findings (not Stage 14's; recorded so they are not lost):** the roster delete/Undo check `ROSTER_PLAYER_DEPENDENTS`
+> (`lib/db.ts:4638-4656`) omits `rep_player_notes`, `rep_player_observations`, `rep_development_goal_reviews` and
+> `rep_evaluation_not_assessed`, so an entry holding only those passes and they cascade away (TODO line) · the families-file
+> exclusion test (`tests/unit/families-stage5a-guard.test.ts:63`) lists stale table names and would not catch a new one · the
+> tryout list's returning chip takes the best match at ANY tier (`tryout-candidates/route.ts:52-60`), so twins get the chip; the UI
+> never shows the tier · `DATA_DICTIONARY.md` still marks `rep_player_continuity_links`, `basic_coach_team_players` and
+> `tournament_roster_players.source_player_id` dev-only though prod has them.
+>
+> **For the build prompt:** the picker reads all of a team's past seasons with no `?year=`, so it is a cross-season reader —
+> register it ON PURPOSE (`CROSS_SEASON_READERS`, or `HISTORY_ENDPOINTS` if it takes a year) in
+> `tests/unit/coach-history-endpoint-guard.test.ts`; the guard is blind to a season id in a request body (its lines 33-39).
+> **Help (`/docs` step):** `coaches.tsx` `recipe-add-player`, `premium-bulk-roster`, `recipe-start-next-season`,
+> `premium-season-end`, `premium-team-settings`, `premium`, `recipe-run-tryouts`, `premium-portal-tour`; `rep-teams.tsx`
+> `recipe-seasons`, `recipe-create-team-program-year`, `recipe-accept-player-to-roster`. **Demos (`/demos` step):** no tour stop
+> points at the roster add or the roll; the coach tour's "Read what a parent gets" (`lib/sandbox-chrome.ts:548-555`) and the
+> off-season team that "has rolled over" (`lib/demo-coach.ts:1839`) are the two the seed must keep true.
+> **`/design` round applied 2026-11-04 (page version 2):** windows on the One Window ladder (520 form · 640 picker · 416
+> question); the pick lists are the Pay out sheet's tick list, not `CoachRowList` (it has no checkbox slot); the "same child?"
+> question disables the window's main button with the reason in the foot; the success view stays "New season started" with only
+> its roster bullet changed; documents live on the player page's **Family & paperwork** tab; the Children queue reuses the shipped
+> duplicate card (reason first, "Keep this record" sides, one lime). Build notes it raised: write birth years with `bornLine`
+> (`lib/born-years.ts`, "Born 2015–2016"), not by hand; the coach's document-type labels are Title Case today ("Medical Consent",
+> `PlayerDocumentsSection.tsx:12-13`) and the club's are sentence case, so the build fixes the coach constants; a composed label
+> says "House league", and a club's own season name stays data.
+- [ ] **14a · The season window asks what the team is doing (the ruled slice):** **BUILT + committed `59722b97a` 2026-11-04 (S1 of the build prompt;
+  `/simplify`, `/review` and `/docs` done; owner walk §453 owed — the prompt's Progress block has every call and the defaults taken).** the *Start next season* window for the coach and
   the club's own copy of it — the two choices above, roster as a carry choice on (a), the birth years and the age group each
   following the choice, the same words in both portals. Mockup first (the window on a phone and a computer, both paths, what the
   confirmation says about the roster). Open: what (a) does to a team's name and public listing, and whether a coach (not only the
