@@ -8,7 +8,8 @@
  *                 event is a draft ("Preview"), the public page in a new tab after ("Online"; never "Live", which is
  *                 one game). On a phone and a tablet there was no door to the site from any setup screen.
  *   Pages         first (the part every plan uses): 52px switch rows, two columns at a desk; Show coaches' names
- *   six parts     Logo, App icon, Theme, Hero banner, Font, Card style — closed cards that say what each holds
+ *   five parts    Logo, Theme, Hero banner, Font, Card style — closed cards that say what each holds (the App icon card
+ *                 went with Stage 8 Part 1: the home-screen icon is always FieldLogicHQ's, owner ruling 2026-11-03)
  *                 (Event settings' model). The theme's drawn mock went (the door shows the real page); a colour can
  *                 be typed as a hex code beside its picker.
  *   saving        every change saves itself with the floating pill: a choice at once, typing after a pause, and
@@ -16,7 +17,7 @@
  *                 the success pop-ups after an upload went; nothing is lost by leaving (a theme change was, silently).
  *   free plan     the door and Pages as every plan; the advanced part locked as today (the free tier review decides).
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image as ImageIcon, Upload } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -27,7 +28,6 @@ import HelpButton from '@/components/help/HelpButton';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
 import { ClubSection, LoadFailed, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
 import { FormError } from '@/components/admin/kit/club/money/MoneyKit';
-import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { SwitchRow, SwitchRows } from '@/components/admin/tournament/SwitchRows';
 import { BoardDoor } from '../dashboard/GameDayBoard';
 import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS, resolveTheme } from '@/lib/themes';
@@ -38,23 +38,19 @@ import { LOCK_WORDS } from '@/lib/invite-only-words';
 import PlanLockLine, { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { hasCapability } from '@/lib/roles';
 import { publicHref, useClubPublicOrigin } from '@/lib/use-club-public-origin';
-import { PUBLIC_SITE_WORDS as W, appIconSummary, themeSummary } from '@/lib/tournament-settings-words';
-import { HexField, sameHex } from '@/components/admin/kit/club/LookControls';
+import { PUBLIC_SITE_WORDS as W, themeSummary } from '@/lib/tournament-settings-words';
+import { HexField } from '@/components/admin/kit/club/LookControls';
 import { lookNounOf } from '@/lib/tournament-look-words';
-import { hasOwnTournamentColours, hasClubTournamentLook, resolveTournamentLook } from '@/lib/tournament-look';
+import { hasOwnTournamentColours, hasClubTournamentLook } from '@/lib/tournament-look';
 import { mayOpenSiteEditor, mayWriteSite } from '@/lib/public-site-rules';
 import LookCard, { type LookBandFacts } from './LookCard';
-import { ICON_SCALE_DEFAULT, frameBodyOf, lookOfDraft } from './look-draft';
+import { frameBodyOf } from './look-draft';
 import styles from './branding.module.css';
 import pageCss from './site.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
 /** Public site's "?" (A56): its own help sub-topic. */
 const SITE_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['public-site-preview'], subtopicId: 'public-site-cards' };
-
-// Mirror of lib/pwa-icon ICON_DARK (that module is server-only — it can't be imported into this client component).
-// The shared truth lives there; this is the UI default shown when no logo colour has been sampled yet.
-const ICON_DARK_FALLBACK = '#0a0a12';
 
 interface BrandingSettings {
   logoUrl: string | null;
@@ -65,10 +61,6 @@ interface BrandingSettings {
   themeFont: string | null;
   themeCardStyle: string | null;
   colorMode: 'dark' | 'light';
-  iconBgColor: string | null;
-  iconBgSuggested: string | null;
-  appName: string | null;
-  iconScale: number | null;
   publicHiddenPages: PublicPageKey[];
   coachNamesShowOnPublic: boolean;
   /** The public pages' new frame is on for this browser (Stage 1a Part 3): the page draws the Look card. */
@@ -85,9 +77,6 @@ type Draft = {
   fontKey: string;
   cardStyle: string;
   colorMode: 'dark' | 'light';
-  iconBg: string | null;
-  appName: string;
-  iconScale: number;
   publicHiddenPages: PublicPageKey[];
   coachNamesShowOnPublic: boolean;
   /** Under the frame (the Look card): colours of its own are chosen — false follows the club (or is the plain look). */
@@ -95,11 +84,6 @@ type Draft = {
   /** Under the frame: the type look's stored value, or null to follow. */
   typeKey: string | null;
 };
-
-// App-icon "Logo size" slider: relative to the tuned default (100). Stored null = 100.
-const ICON_SCALE_MIN = 70;
-const ICON_SCALE_MAX = 125;
-
 
 function draftOf(data: BrandingSettings, advanced: boolean): Draft {
   const custom = Boolean(data.themePrimary && advanced);
@@ -110,9 +94,6 @@ function draftOf(data: BrandingSettings, advanced: boolean): Draft {
     fontKey: advanced ? data.themeFont ?? 'system' : 'system',
     cardStyle: advanced ? data.themeCardStyle ?? 'default' : 'default',
     colorMode: data.colorMode ?? 'dark',
-    iconBg: advanced ? data.iconBgColor ?? null : null,
-    appName: advanced ? data.appName ?? '' : '',
-    iconScale: advanced ? data.iconScale ?? ICON_SCALE_DEFAULT : ICON_SCALE_DEFAULT,
     publicHiddenPages: normalizeHiddenPublicPages(data.publicHiddenPages),
     coachNamesShowOnPublic: data.coachNamesShowOnPublic === true,
     own: advanced && hasOwnTournamentColours(data),
@@ -143,9 +124,6 @@ function bodyOf(d: Draft, advanced: boolean, themeChanged: boolean) {
     themeFont: d.fontKey,
     themeCardStyle: d.cardStyle,
     colorMode: d.colorMode,
-    iconBgColor: d.iconBg,
-    appName: d.appName.trim() || null,
-    iconScale: d.iconScale === ICON_SCALE_DEFAULT ? null : d.iconScale,
     ...pages,
   };
 }
@@ -189,7 +167,6 @@ export default function TournamentBrandingPage() {
   const [loadError, setLoadError] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
-  const [iconBgSuggested, setIconBgSuggested] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
   const [bannerUploading, setBannerUploading] = useState(false);
   const [logoError, setLogoError] = useState('');
@@ -241,7 +218,6 @@ export default function TournamentBrandingPage() {
       if (currentUrl.current !== brandingUrl) return; // another event's read owns the page now
       setLogoUrl(data.logoUrl);
       setBannerUrl(data.heroBannerUrl);
-      setIconBgSuggested(data.iconBgSuggested ?? null);
       setFrameOn(data.frameOn === true);
       setBandFacts(data.band ?? null);
       // An edit made while this read was out stays: a late read never overwrites it.
@@ -302,19 +278,6 @@ export default function TournamentBrandingPage() {
     return () => window.removeEventListener('pagehide', flushWaiting);
   }, [flushWaiting]);
 
-  const previewTheme = useMemo(() => {
-    if (!draft) return resolveTheme('platform', null, null);
-    if (frameOn && currentOrg) {
-      // Under the frame the app icon's "Brand" is the colour the band wears (lib/tournament-look.ts): the club's while the
-      // tournament follows it, never the FieldLogicHQ blue an unset theme drafts as.
-      const look = resolveTournamentLook(currentOrg, lookOfDraft(draft, logoUrl));
-      return resolveTheme(look.preset, look.primary, look.accent);
-    }
-    return draft.presetKey === 'custom' && advanced
-      ? resolveTheme('platform', draft.customPrimary || null, draft.customAccent || null)
-      : resolveTheme(draft.presetKey, null, null);
-  }, [draft, advanced, frameOn, currentOrg, logoUrl]);
-
   // ── Uploads save on their own, as today; the pill says so (no pop-up), a failure says so in its card ──
   async function upload(kind: 'logo' | 'banner', file: File) {
     if (!tournamentId || !advanced) return;
@@ -327,9 +290,9 @@ export default function TournamentBrandingPage() {
       fd.append('file', file);
       const route = kind === 'logo' ? 'tournament-logo' : 'tournament-hero-banner';
       const res = await fetch(`/api/admin/${route}?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, { method: 'POST', body: fd });
-      const data = await res.json().catch(() => null) as { logoUrl?: string; heroBannerUrl?: string; iconBgSuggested?: string | null; error?: string } | null;
+      const data = await res.json().catch(() => null) as { logoUrl?: string; heroBannerUrl?: string; error?: string } | null;
       if (!res.ok) throw new Error(data?.error && res.status < 500 ? data.error : W.uploadFailed);
-      if (kind === 'logo') { setLogoUrl(data?.logoUrl ?? null); setIconBgSuggested(data?.iconBgSuggested ?? null); }
+      if (kind === 'logo') setLogoUrl(data?.logoUrl ?? null);
       else setBannerUrl(data?.heroBannerUrl ?? null);
     } catch (e) {
       setError(e instanceof Error ? e.message : W.uploadFailed);
@@ -349,7 +312,7 @@ export default function TournamentBrandingPage() {
       const route = kind === 'logo' ? 'tournament-logo' : 'tournament-hero-banner';
       const res = await fetch(`/api/admin/${route}?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('remove');
-      if (kind === 'logo') { setLogoUrl(null); setIconBgSuggested(null); }
+      if (kind === 'logo') setLogoUrl(null);
       else setBannerUrl(null);
     } catch {
       setError(W.removeFailed);
@@ -397,14 +360,10 @@ export default function TournamentBrandingPage() {
   if (!draft) return loadingLine;
 
   const d = draft;
-  const effectiveIconBg = (d.iconBg ?? iconBgSuggested ?? ICON_DARK_FALLBACK).toLowerCase();
-  // The preview tile tracks the iOS framing: the 156/180 base box scaled by the slider, clamped to the apple-touch
-  // icon route's 110–172 safe range, as a % of the tile.
-  const iconPreviewPct = `${(Math.max(110, Math.min(172, Math.round(156 * d.iconScale / 100))) / 180 * 100).toFixed(1)}%`;
-  const iconBgWord = d.iconBg === null ? 'auto'
-    : sameHex(d.iconBg, '#ffffff') ? 'white'
-      : sameHex(d.iconBg, ICON_DARK_FALLBACK) ? 'dark'
-        : sameHex(d.iconBg, previewTheme.primary) ? 'brand' : 'custom';
+  // The switch-off Theme card's low-contrast warning reads the theme as drafted.
+  const previewTheme = d.presetKey === 'custom' && advanced
+    ? resolveTheme('platform', d.customPrimary || null, d.customAccent || null)
+    : resolveTheme(d.presetKey, null, null);
   const presetName = d.presetKey === 'custom' ? null : PRESETS[d.presetKey]?.name ?? null;
   const togglePage = (key: PublicPageKey) => change({
     publicHiddenPages: d.publicHiddenPages.includes(key) ? d.publicHiddenPages.filter(k => k !== key) : [...d.publicHiddenPages, key],
@@ -418,12 +377,6 @@ export default function TournamentBrandingPage() {
   // The logo's fallback, said as it now is under the frame: the club's (the league's) logo, none on Tournament Plus.
   const logoHint = !frameOn ? W.logoHint
     : clubLayer ? W.logoHintFallback[lookNounOf(currentOrg?.planId)] : W.logoHintOwn;
-  const iconBgButton = (label: string, value: string | null, chip: string, pressed: boolean) => (
-    <button type="button" aria-pressed={pressed} className={`${styles.iconBgOption} ${pressed ? styles.iconBgOptionActive : ''}`}
-      onClick={() => change({ iconBg: value })}>
-      <span className={styles.iconBgChip} style={{ background: chip }} aria-hidden />{' '}{label}
-    </button>
-  );
 
   return (
     <div className={repKit.page}>
@@ -482,67 +435,6 @@ export default function TournamentBrandingPage() {
             </div>
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden
               onChange={e => { const f = e.target.files?.[0]; if (f) void upload('logo', f); }} />
-          </CollapsibleCard>
-
-          {/* ── App icon ── */}
-          <CollapsibleCard title={W.appIcon} sectionId="app-icon" defaultOpen={false} meta={appIconSummary(Boolean(logoUrl), iconBgWord)}>
-            <p className={styles.compactNote}>
-              Your event&apos;s branded icon and short name: its identity inside the one FieldLogicHQ app fans use. The
-              background matches your logo automatically; choose another below for a different colour or a border, and
-              use the slider to size your logo.
-            </p>
-            <div className={styles.iconLayout}>
-              <div className={styles.iconPreview}>
-                <div className={styles.iconTile} style={{ background: effectiveIconBg }}>
-                  {logoUrl
-                    ? <img src={logoUrl} alt="" className={styles.iconTileImg} style={{ width: iconPreviewPct, height: iconPreviewPct }} />
-                    : <span className={styles.iconTilePlaceholder} aria-hidden="true"><ImageIcon size={26} /></span>}
-                </div>
-                <span className={styles.iconAppName}>{d.appName.trim() || currentTournament?.name || 'Your event'}</span>
-              </div>
-              <div className={styles.iconControls}>
-                {/* App name: not shown under the frame (Ask 11, D9) — its saved value is kept and still read. */}
-                {!frameOn && (
-                  <div className={styles.iconNameField}>
-                    <label className={styles.label} htmlFor="app-name">App name</label>
-                    <input id="app-name" type="text" className={ck.input} maxLength={30} value={d.appName}
-                      placeholder={currentTournament?.name ?? 'Your event'} onChange={e => change({ appName: e.target.value }, true)} />
-                    <p className={styles.inheritNote}>Shown under the icon. About 12 characters fit: try initials if your name is long. Leave blank to use the event name.</p>
-                  </div>
-                )}
-                <span className={styles.label}>{W.background}</span>
-                <div className={styles.iconBgOptions}>
-                  {iconBgButton('Auto', null, iconBgSuggested ?? ICON_DARK_FALLBACK, d.iconBg === null)}
-                  {iconBgButton('White', '#ffffff', '#ffffff', sameHex(d.iconBg, '#ffffff'))}
-                  {iconBgButton('Dark', ICON_DARK_FALLBACK, ICON_DARK_FALLBACK, sameHex(d.iconBg, ICON_DARK_FALLBACK))}
-                  {iconBgButton('Brand', previewTheme.primary.toLowerCase(), previewTheme.primary, sameHex(d.iconBg, previewTheme.primary))}
-                </div>
-                <div className={styles.iconCustomRow}>
-                  <label className={styles.label} htmlFor="icon-bg-custom">Custom colour</label>
-                  <div className={pageCss.hexRow}>
-                    <input id="icon-bg-custom" type="color" className={styles.colorInput} value={effectiveIconBg}
-                      onChange={e => change({ iconBg: e.target.value }, true)} />
-                    <HexField id="icon-bg-hex" label="Custom colour" value={effectiveIconBg} onChange={hex => change({ iconBg: hex }, true)} />
-                    {d.iconBg !== null && (
-                      <button type="button" className="btn btn-ghost btn-data" onClick={() => change({ iconBg: null })}>Back to auto</button>
-                    )}
-                  </div>
-                </div>
-                <p className={styles.inheritNote}>A colour that contrasts with your logo shows as a border. Leave on Auto to match seamlessly.</p>
-                <div className={styles.iconSizeField}>
-                  <div className={styles.iconSizeHeader}>
-                    <label className={styles.label} htmlFor="icon-scale">Logo size</label>
-                    {d.iconScale !== ICON_SCALE_DEFAULT && (
-                      <button type="button" className="btn btn-ghost btn-data" onClick={() => change({ iconScale: ICON_SCALE_DEFAULT })}>Reset</button>
-                    )}
-                  </div>
-                  <input id="icon-scale" type="range" className={styles.iconSizeSlider} min={ICON_SCALE_MIN} max={ICON_SCALE_MAX} step={1}
-                    value={d.iconScale} onChange={e => change({ iconScale: Number(e.target.value) }, true)} aria-label="App icon logo size" />
-                  <div className={styles.iconSizeScale} aria-hidden="true"><span>Small</span><span>Default</span><span>Large</span></div>
-                  <p className={styles.inheritNote}>Drag to size your logo in the icon. Android keeps a little more edge padding so its round icon never crops your logo.</p>
-                </div>
-              </div>
-            </div>
           </CollapsibleCard>
 
           {/* ── Switch off only: Theme, Hero banner, Font and Card style (under the frame, the Look card holds what stays) ── */}

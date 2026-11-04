@@ -2,7 +2,8 @@
  * PUBLIC SITE (Tournament admin redesign Stage 5, Part 7 — E7, A53; F29, F90's page half, J1-064). What the build must
  * keep true:
  *   - a door card to the site at the top, at every width: "Preview" while a draft, "Online" after (never "Live");
- *   - Pages first, as 52px switch rows, on every plan; the six branding parts as closed cards that say what each holds;
+ *   - Pages first, as 52px switch rows, on every plan; the branding parts as closed cards that say what each holds (five
+ *     since Public tournament pages Stage 8 Part 1 took the App icon card: the home-screen icon is always FieldLogicHQ's);
  *   - every change saves itself (no bottom Save, no "Unsaved changes", no success pop-ups); nothing is lost by leaving;
  *   - the theme's drawn mock is gone; a colour can be typed as a hex code;
  *   - the free plan's locked view stays as today (the free tier review decides it);
@@ -11,7 +12,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { PUBLIC_SITE_WORDS as W, appIconSummary, parseHex, themeSummary } from '../../lib/tournament-settings-words.ts';
+import { PUBLIC_SITE_WORDS as W, parseHex, themeSummary } from '../../lib/tournament-settings-words.ts';
 
 const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const code = (p: string) => read(p).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
@@ -27,8 +28,6 @@ describe('the words (E7)', () => {
   it('the cards say what they hold', () => {
     assert.equal(themeSummary('Forest Green', 'light'), 'Forest Green · light');
     assert.equal(themeSummary(null, 'dark'), 'Custom colours · dark');
-    assert.equal(appIconSummary(true, 'white'), 'The logo on white');
-    assert.equal(appIconSummary(false, 'auto'), 'No logo yet');
   });
   it('a hex code is read with or without its #, in either case', () => {
     assert.equal(parseHex('1E3A8A'), '#1e3a8a');
@@ -49,11 +48,14 @@ describe('the screen (E7)', () => {
     assert.match(page, /latest\.current && latest\.current\.url === held\.url \? latest\.current : held/);
     assert.match(page, /if \(edits\.current !== editsAtStart && latest\.current\?\.url === brandingUrl\) return;/);
   });
-  it('Pages are switch rows on every plan; the six parts are closed cards with their summaries', () => {
+  it('Pages are switch rows on every plan; the five parts are closed cards with their summaries — no App icon card', () => {
     assert.match(page, /<SwitchRows label=\{W\.pages\} columns=\{2\}>/);
-    for (const t of ['W.logo', 'W.appIcon', 'W.theme', 'W.heroBanner', 'W.font', 'W.cardStyle']) {
+    for (const t of ['W.logo', 'W.theme', 'W.heroBanner', 'W.font', 'W.cardStyle']) {
       assert.match(page, new RegExp(`<CollapsibleCard title=\\{${t.replace('.', '\\.')}\\}[^>]*defaultOpen=\\{false\\} meta=`));
     }
+    // Stage 8 Part 1 (owner ruling 2026-11-03): the home-screen icon is always FieldLogicHQ's, so nothing on the page sets it.
+    assert.doesNotMatch(page, /app-icon|appName|iconBg|iconScale|App name|Logo size/);
+    assert.equal('appIcon' in W, false);
   });
   it('every change saves itself, and anything waiting is sent on leaving', () => {
     assert.doesNotMatch(page, /Save Changes|Unsaved changes|FeedbackModal|successOpen/);
@@ -66,7 +68,6 @@ describe('the screen (E7)', () => {
   it('the drawn mock is gone; a colour takes a hex code', () => {
     assert.doesNotMatch(page, /themePreview|modePreview|previewHeroText/);
     assert.match(page, /<HexField id="t-primary-hex"/);
-    assert.match(page, /<HexField id="icon-bg-hex"/);
   });
   // "As today" was Stage 5's (the free tier review owned it). The free tournament tier (screen 6, 2026-10-16): ONE lock
   // line replaces the Unlock box and six Locked cards, and an invite-only event has no Registration switch.

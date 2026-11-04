@@ -131,144 +131,6 @@
   font-size: 0.78rem;
 }
 
-/* ── App Icon ──────────────────────────────────── */
-.iconLayout {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-  align-items: flex-start;
-}
-
-.iconPreview {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
-
-/* Approximates the iOS/Android home-screen tile: rounded square, logo near edge-to-edge. */
-.iconTile {
-  width: 84px;
-  height: 84px;
-  border-radius: 19px;
-  border: 1px solid var(--border-2);
-  box-shadow: var(--shadow-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.iconTileImg {
-  width: 80%;
-  height: 80%;
-  object-fit: contain;
-}
-
-.iconTilePlaceholder {
-  color: var(--white-30);
-  display: flex;
-}
-
-.iconAppName {
-  max-width: 96px;
-  font-size: 0.8rem;
-  color: var(--white-70);
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.iconControls {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  flex: 1 1 240px;
-  min-width: 220px;
-}
-
-.iconNameField {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-bottom: 0.2rem;
-}
-
-.iconBgOptions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.iconBgOption {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.6rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.iconBgOption:hover {
-  color: var(--white);
-  border-color: rgba(var(--logic-lime-rgb), 0.4);
-}
-
-.iconBgOptionActive {
-  color: var(--white);
-  border-color: rgba(var(--logic-lime-rgb), 0.6);
-}
-
-.iconBgChip {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  border: 1px solid var(--border-2);
-  flex-shrink: 0;
-}
-
-.iconCustomRow {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-/* App-icon "Logo size" slider (mig 154) */
-.iconSizeField {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-top: 0.6rem;
-  padding-top: 0.6rem;
-  border-top: 1px solid var(--border-2);
-}
-
-.iconSizeHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.iconSizeSlider {
-  width: 100%;
-  max-width: 260px;
-  cursor: pointer;
-}
-
-.iconSizeScale {
-  display: flex;
-  justify-content: space-between;
-  max-width: 260px;
-  font-size: 0.68rem;
-  color: var(--white-40);
-}
-
 .modeToggleRow {
   display: flex;
   align-items: center;
@@ -379,7 +241,7 @@
 
 .fontBtnSample {
   font-size: 1.1rem;
-  color: var(--white-60);
+  color: var(--text-secondary);
 }
 
 /* ── Card style grid ───────────────────────── */
@@ -475,7 +337,7 @@
 
 /* ── The kit's look for the cards, labels and controls above (folded from its `[data-admin-kit]` layer; it comes after
    the rules it overrode, so it still wins over them). The organization's own colours stay exactly as set: the swatches,
-   the custom-colour wheel, the app-icon tile and its chips, the font samples' face, the logo and banner images. ── */
+   the custom-colour wheel, the font samples' face, the logo and banner images. ── */
 
 /* A label over a value, or a group header within a card, → the kit eyebrow. */
 .modeToggleLabel {
@@ -514,14 +376,8 @@
 .compactNote,
 .logoHint,
 .bannerHint,
-.iconTilePlaceholder,
-.inheritNote,
-.iconSizeScale {
+.inheritNote {
   color: var(--text-tertiary);
-}
-.iconAppName,
-.fontBtnSample {
-  color: var(--text-secondary);
 }
 .lowContrastWarning { color: var(--warning-light); }
 
@@ -547,21 +403,6 @@
   composes: fieldLabel from '../../../../../components/shared/FieldLabel.module.css';
   font-family: var(--font-sans, system-ui, sans-serif);
 }
-
-/* ── App icon: the tile and its background chips stay the icon's real look (R2) — only the chrome
-   around them (the background-choice buttons, the size slider) moves. ── */
-.iconBgOption {
-  background: var(--card-bg);
-  border: 1px solid var(--home-line-strong);
-  color: var(--text-secondary);
-}
-.iconBgOption:hover,
-.iconBgOptionActive {
-  border-color: var(--home-olive);
-  color: var(--text-primary);
-}
-.iconBgOptionActive { background: var(--home-olive-soft); }
-.iconSizeSlider { accent-color: var(--home-olive); }
 
 /* ── Font grid / card-style grid: unchosen tile → chosen tile ── */
 .fontBtn,
@@ -598,16 +439,12 @@
 
 
 /* The branding controls at the admin's height on a computer and the tap floor on touch (Stage 5, A54: nothing a thumb
-   taps under 38px, the floor 44) — the background chips, the light / dark choice, the swatches, a colour's picker,
-   the logo-size slider; and on touch Event settings' two- and three-way choices (On / Off, the timing and
-   tie-breaker scopes), which were 38px on a phone and padding-sized (≈28px) on a tablet. */
-.iconBgOption,
+   taps under 38px, the floor 44) — the light / dark choice, the swatches, a colour's picker; and on touch Event
+   settings' two- and three-way choices (On / Off, the timing and tie-breaker scopes), which were 38px on a phone and
+   padding-sized (≈28px) on a tablet. */
 .modeToggleBtn { min-height: var(--admin-control-h); }
-.iconSizeSlider { height: var(--admin-control-h); }
 @media (max-width: 768px) {
-  .iconBgOption,
   .modeToggleBtn { min-height: var(--tap-min, 44px); }
   .swatch,
   .colorInput { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
-  .iconSizeSlider { height: var(--tap-min, 44px); }
 }

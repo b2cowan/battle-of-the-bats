@@ -3,8 +3,9 @@
  *
  * The Branding page's save under the public pages' new frame (Public tournament pages Stage 1a Part 3). D7's rule, kept
  * and widened: the theme rides only once changed, and so does the TYPE (`typeLook`, the three looks, stored as picked —
- * null follows the club). What the page no longer shows never rides at all: the retired font list, the card style,
- * Dark/Light and the App name keep their saved values (the switch-off pages still read some of them). "The club's look"
+ * null follows the club). What the page no longer shows never rides at all: the retired font list, the card style and
+ * Dark/Light keep their saved values (the switch-off pages still read some of them). The App icon's settings went with
+ * Stage 8 Part 1 (the home-screen icon is always FieldLogicHQ's) and no save carries them. "The club's look"
  * writes the theme and the type null. Switch off, the page sends its own body (page.tsx `bodyOf`), unchanged.
  */
 import { normalizeHiddenPublicPages, type PublicPageKey } from '../../../../../lib/public-pages';
@@ -35,13 +36,8 @@ export function lookOfDraft(d: Pick<LookDraft, 'own' | 'presetKey' | 'customPrim
 }
 
 export type FrameBodyDraft = LookDraft & {
-  iconBg: string | null;
-  iconScale: number;
   coachNamesShowOnPublic: boolean;
 };
-
-/** The App icon's logo size stored as null at its tuned default (the page's slider). */
-export const ICON_SCALE_DEFAULT = 100;
 
 export function frameBodyOf(d: FrameBodyDraft, advanced: boolean, themeChanged: boolean, typeChanged: boolean) {
   const pages = { publicHiddenPages: normalizeHiddenPublicPages(d.publicHiddenPages), coachNamesShowOnPublic: d.coachNamesShowOnPublic };
@@ -52,8 +48,6 @@ export function frameBodyOf(d: FrameBodyDraft, advanced: boolean, themeChanged: 
   return {
     ...theme,
     ...(typeChanged ? { typeLook: d.typeKey } : {}),
-    iconBgColor: d.iconBg,
-    iconScale: d.iconScale === ICON_SCALE_DEFAULT ? null : d.iconScale,
     ...pages,
   };
 }

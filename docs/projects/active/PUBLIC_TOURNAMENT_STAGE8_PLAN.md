@@ -1,6 +1,6 @@
 # Public tournament pages — Stage 8: the new look on for everyone (plan)
 
-**Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). Nothing built. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
+**Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 built on `dev` 2026-11-03** (record §10; it releases with the flip, ruling D). Next Part 2. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
 **Sequencing rule (standing):** by dependency and rework risk, never by date. One part per session, `/clear` between.
@@ -126,3 +126,60 @@ refers to the switch; the build, the unit suite and the staging layout sweep are
 
 Read-through of the old Branding page's frame branch was not done (it is not yet confirmed whether the App icon card shows under the new
 look today — Part 1 starts there); the importer lists are the census's and are re-opened per removal; no prod state beyond the count above.
+*(Answered by Part 1, §10: the card DID show under the new look, all but its App name field.)*
+
+## 10. Part 1 record (built 2026-11-03 on `dev`; releases with the flip)
+
+**What changed for a customer (on dev; nothing promoted):** the Branding page's **App icon card is gone** on both the old page and
+the new-look page. The plan's open question is answered: under the frame (`frameOn` true) the card rendered everything but the App name
+field (colour chips, custom colour, Logo size slider), so the ruling reached both pages. An iPhone "Add to Home Screen" from a
+tournament page now gets the FieldLogicHQ icon: the tournament page's `<head>` carries one `apple-touch-icon`,
+`/icons/fl-apple-180.png` (root layout), checked on `riverdale-minor-ball/summer-classic`; `/apple-icon` and `/icon-maskable` under a
+tournament now 404. Existing home-screen icons are frozen on the phone and do not change (iOS snapshots at add time).
+
+**Removed:** `app/[orgSlug]/[tournamentSlug]/apple-icon.tsx`, `.../icon-maskable/route.tsx`, `lib/pwa-icon.tsx` (no importer left).
+Branding page: the card and everything only it used (App name, the four chips, custom colour, Logo size, `ICON_SCALE_MIN/MAX`,
+`ICON_DARK_FALLBACK`, `iconBgSuggested`, `effectiveIconBg`, `iconPreviewPct`, `iconBgWord`, the three draft fields and their
+`draftOf`/`bodyOf` lines, the `sameHex` and `ck` imports) and **the frame branch of `previewTheme`**, which existed only for the icon's
+"Brand" chip (the switch-off Theme card's low-contrast warning still reads it, now computed inline). `look-draft.ts`: `ICON_SCALE_DEFAULT`,
+`iconBg`/`iconScale` in `FrameBodyDraft` and `frameBodyOf`. `branding.module.css`: every `.icon*` rule (base, kit fold, tap floor);
+`.fontBtnSample`'s colour folded into its base rule (the `.iconAppName` group had been carrying it). Words: `appIcon`, `appIconSummary`.
+API `tournament-branding`: the three fields out of `PLUS_VISUAL_FIELDS`, the GET select and response, the PATCH, `APP_NAME_MAX`, the
+icon-scale clamp, `suggestIconBg`, and the **logo fetch + colour sample that ran on every Branding page load** (and its org-logo read);
+the band read is now awaited directly (nothing left to run beside it). API `tournament-logo`: the `iconBgSuggested` sample.
+`knip.jsonc` entry, the `.tsx-token-baseline.json` entry, the manifest-redirect route's stale comment.
+
+**Kept (as ruled):** the three columns; `lib/db.ts` still reads and clones them and `lib/types.ts` still declares them (Part 4 trims the
+clone list with the other dead columns). Everything Part 4 owns (Theme, Hero banner, Font, Card style, `LOCK_WORDS.branding`).
+An old browser tab that still sends `iconBgColor`/`appName`/`iconScale` gets 200 and nothing is written (probed).
+
+**Tests:** `public-face-s4-identity` now asserts the two routes and the helper are GONE (plus no file-convention icon under a tournament)
+and that the root layout's `fl-apple-180.png` applies; `tournament-look` (the save body carries no icon field; the read guard; the
+`PLUS_VISUAL_FIELDS` anchor; the shared `HexField` import) and `tournament-stage5-public-site` (five cards, no App icon words).
+
+**Checks run:** typecheck clean (needs `NODE_OPTIONS=--max-old-space-size=6144`: the default 4 GB heap now runs out on this repo,
+unrelated to this change); the 3 affected unit files 73/73; full `npm test` 13,485/13,492, the **7 failures all in other sessions'
+uncommitted work** (PhoneWindow overlay guard, plan-billing 503, Stage 6 walk HTML, `seed-plan-ending-walk.mjs` Stripe prefix,
+bookkeeping ExpenseFormWindow foot); ESLint clean on every changed file (the changed-files lint runner crashes on a foreign file's
+config); tokens, spelling, CSS selectors (after the fold), admin old-look and admin type: no Branding finding. Other gates fail on
+foreign work (schema parity, index coverage, org-slug callers, demos, export catalog, root files) — none touch this part. Knip not run
+(report-only, no gate runs it). Branding probe (UAT club owner, Tournament Plus owner, three tournaments): page 200, read 200 with no
+icon field, save 200, retired columns untouched. Dev server: fully restarted by another session at 9:24 p.m., after this part's file
+deletions; `/platform-admin/login` 200, tournament page rendered from the database.
+
+**Review (`/review` 2026-11-03):** no defect found. Confirmed unchanged: no surviving reader of the removed fields outside the kept
+`lib/db.ts`/`lib/types.ts` (ruling C); the Theme card's low-contrast warning renders only with the switch off, where the inline
+`previewTheme` is the old memo's switch-off branch exactly; the band read gives the same result and the same `.catch → null`; the
+`.fontBtnSample` colour is unchanged (the kit-layer override folded into the base rule); `sharp` is still used by four live modules, so no
+build config went stale. One gap in the guards closed: `tournament-look` now also asserts the branding route neither reads nor writes
+the three icon settings (it only guarded the client's save body). Re-run: 3 unit files 74/74, typecheck, ESLint, spelling, selectors clean.
+
+**Handed on:**
+- **Part 2 (c):** `check:layout --only=admin-t-branding,admin-t-branding-look,admin-t-branding-look-club` found 10 NEW tap-floor findings,
+  none in this part's code: the Look card's "Public site" link (15 px at 361/390/768) and "The club's look" button (36 px at 768), and a
+  shared-chrome "Dismiss" button (34 px square at 361/390/768). Not baselined; Part 2's re-measure decides them.
+- **Part 6 (release):** `/release` §1d-2 uses `/{org}/{tournament}/apple-icon` as the canonical deployed `sharp` probe. That route is gone,
+  so the probe will 404 and the checklist says STOP. `sharp` is still loaded by `lib/club-email-context.ts`, `lib/export/resolve-pdf-settings.ts`,
+  `lib/stock-logo-render.ts` and `lib/sponsor-logo-image.ts`; the release checklist needs a new probe on one of those paths before the promote
+  (owner's call to change `.claude/commands/release.md`).
+- **Part 5:** help copy, PLAN_PRICING_FACTS' custom app name, and the demo are untouched here, as scoped.

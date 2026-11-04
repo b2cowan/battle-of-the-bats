@@ -331,8 +331,9 @@ describe('Part 2: the club editor (source guards)', () => {
     assert.match(look, /<LookTypeTiles /);
     assert.doesNotMatch(look, /Object\.entries\(PRESETS\)/);
     const branding = readCode('app/[orgSlug]/admin/tournaments/branding/page.tsx');
-    assert.match(branding, /import \{ HexField, sameHex \} from '@\/components\/admin\/kit\/club\/LookControls';/);
-    assert.doesNotMatch(branding, /function HexField\(/);
+    // sameHex left with the App icon card (Stage 8 Part 1); the hex field is still the shared one.
+    assert.match(branding, /import \{ HexField \} from '@\/components\/admin\/kit\/club\/LookControls';/);
+    assert.doesNotMatch(branding, /function (HexField|sameHex)\(/);
   });
 });
 
@@ -388,22 +389,23 @@ describe('Part 3: the Look card\'s draft reads through the one rule', () => {
 describe('Part 3: the save under the frame (D7\'s rule, widened to the type)', () => {
   const d = {
     own: false, presetKey: 'platform', customPrimary: '#1E3A8A', customAccent: '#D9F99D', typeKey: null as string | null,
-    iconBg: null, iconScale: 100, publicHiddenPages: [], coachNamesShowOnPublic: false,
+    publicHiddenPages: [], coachNamesShowOnPublic: false,
   };
 
   it('a save that touched neither carries no theme and no type — nor anything the page no longer shows', () => {
     const body = frameBodyOf(d, true, false, false) as Record<string, unknown>;
-    for (const k of ['themePreset', 'themePrimary', 'themeAccent', 'typeLook', 'themeFont', 'themeCardStyle', 'colorMode', 'appName']) {
+    // The App icon's three settings went with Stage 8 Part 1 (the home-screen icon is always FieldLogicHQ's).
+    for (const k of ['themePreset', 'themePrimary', 'themeAccent', 'typeLook', 'themeFont', 'themeCardStyle', 'colorMode',
+      'appName', 'iconBgColor', 'iconScale']) {
       assert.equal(k in body, false, k);
     }
-    assert.equal(body.iconScale, null);
     assert.equal('publicHiddenPages' in body, true);
   });
 
   it('"The club\'s look" writes the theme and the type null', () => {
     assert.deepEqual(frameBodyOf(d, true, true, true), {
       themePreset: null, themePrimary: null, themeAccent: null, typeLook: null,
-      iconBgColor: null, iconScale: null, publicHiddenPages: [], coachNamesShowOnPublic: false,
+      publicHiddenPages: [], coachNamesShowOnPublic: false,
     });
   });
 
@@ -446,8 +448,7 @@ describe('Part 3: the Branding page and its route (source guards)', () => {
 
   it('the read says whether the switch is on, with the band\'s facts only under it', () => {
     assert.match(route, /const frameOn = await isPublicFrameOn\(\);/);
-    assert.match(route, /const bandRead = frameOn && advanced\s*\? publicFrameBandFacts\(/);
-    assert.match(route, /const band = await bandRead;/);
+    assert.match(route, /const band = frameOn && advanced\s*\? await publicFrameBandFacts\(/);
     assert.match(route, /frameOn,\s*band,\s*\}\);/);
     assert.match(page, /setFrameOn\(data\.frameOn === true\);/);
   });
@@ -455,7 +456,6 @@ describe('Part 3: the Branding page and its route (source guards)', () => {
   it('switch off is today\'s page: its body, its eight cards, its lock words', () => {
     assert.match(page, /held\.frameOn\s*\? frameBodyOf\([^)]*\)\s*: bodyOf\(held\.draft, held\.advanced, held\.themeChanged\)/);
     assert.match(page, /\{!frameOn && \(<>[\s\S]{0,120}?<CollapsibleCard title=\{W\.theme\}/);
-    assert.match(page, /\{!frameOn && \(\s*<div className=\{styles\.iconNameField\}>/);
     assert.match(page, /\{frameOn \? LOCK_WORDS\.brandingLook : LOCK_WORDS\.branding\}/);
     assert.match(page, /const logoHint = !frameOn \? W\.logoHint/);
   });
@@ -466,10 +466,15 @@ describe('Part 3: the Branding page and its route (source guards)', () => {
   });
 
   it('the type is stored as picked, Classic included, and nothing outside the three', () => {
-    assert.match(route, /'iconScale',\s*'typeLook',\s*\] as const;/);
+    assert.match(route, /'colorMode',\s*'typeLook',\s*\] as const;/);
     assert.match(route, /if \(!\(TOURNAMENT_TYPE_LOOKS as readonly string\[\]\)\.includes\(look\)\)/);
     assert.match(route, /updates\.theme_font = look;/);
     assert.match(route, /updates\.theme_font = font === 'system' \? null : font;/, 'the switch-off body keeps today\'s rule');
+  });
+
+  it('the App icon\'s settings are neither read nor written: a stale tab\'s save cannot set them (Stage 8 Part 1)', () => {
+    // The columns stay (Stage 8 ask C); the route is what keeps them dormant.
+    assert.doesNotMatch(route, /icon_bg_color|app_name|app_icon_scale|iconBgColor|iconScale|appName|iconBgSuggested/);
   });
 
   it('"Change the club\'s look" only for who may edit it; the Public site link only for who may open the editor', () => {

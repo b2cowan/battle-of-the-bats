@@ -9,8 +9,9 @@
  * existing install in place, so those old icons stay frozen either way — this just
  * stops serving a distinct per-event id/scope.)
  *
- * The branded composited icon (icon-maskable/route.tsx) is intentionally KEPT and
- * repurposed for in-app hero / QR / share surfaces in later phases.
+ * The per-tournament branded icons (apple-icon.tsx, icon-maskable/route.tsx) are gone:
+ * the home-screen icon is always FieldLogicHQ's (Public tournament pages Stage 8 Part 1,
+ * owner ruling 2026-11-03).
  */
 export const dynamic = 'force-dynamic';
 

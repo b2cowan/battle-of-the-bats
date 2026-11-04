@@ -33,7 +33,6 @@
     "app/**/not-found.tsx",
     "app/**/opengraph-image.tsx",
     "app/**/twitter-image.tsx",
-    "app/**/apple-icon.tsx",
     "app/**/icon.tsx",
     "app/**/sitemap.ts",
     "app/**/robots.ts",

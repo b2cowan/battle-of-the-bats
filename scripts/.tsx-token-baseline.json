@@ -1,8 +1,4 @@
 {
-  "app/[orgSlug]/[tournamentSlug]/apple-icon.tsx": {
-    "hex": 1,
-    "rgba": 0
-  },
   "app/[orgSlug]/[tournamentSlug]/opengraph-image.tsx": {
     "hex": 13,
     "rgba": 0

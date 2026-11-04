@@ -240,7 +240,6 @@ export const PUBLIC_SITE_WORDS = {
   coachNames: 'Show coaches’ names',
   coachNamesLine: 'On Teams and team pages',
   logo: 'Logo',
-  appIcon: 'App icon',
   theme: 'Theme',
   heroBanner: 'Hero banner',
   font: 'Font',
@@ -285,16 +284,6 @@ export const PUBLIC_SITE_WORDS = {
 /** "Forest Green · light" / "Custom colours · dark". */
 export const themeSummary = (presetName: string | null, mode: 'dark' | 'light') =>
   `${presetName ?? PUBLIC_SITE_WORDS.custom} · ${mode}`;
-
-/** The app icon's summary: "The logo on white" / "The logo, its colour matched" / "No logo yet". */
-export function appIconSummary(hasLogo: boolean, bg: 'auto' | 'white' | 'dark' | 'brand' | 'custom'): string {
-  if (!hasLogo) return 'No logo yet';
-  return bg === 'auto' ? 'The logo, its colour matched'
-    : bg === 'white' ? 'The logo on white'
-      : bg === 'dark' ? 'The logo on dark'
-        : bg === 'brand' ? 'The logo on the brand colour'
-          : 'The logo on a custom colour';
-}
 
 /** A hex code typed beside a colour picker: "#1e3a8a" from "1E3A8A" or "#1E3A8A"; null when it isn't one. */
 export function parseHex(typed: string): string | null {

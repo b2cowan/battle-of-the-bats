@@ -131,11 +131,22 @@ describe('S4 Part B — icons, manifest and launch colours', () => {
     const named = new Set<string>();
     const scan = (rel: string) => { for (const m of readSource(rel).matchAll(/\/icons\/[\w.-]+\.png|\/favicon\.ico/g)) named.add(m[0]); };
     for (const f of ['app/layout.tsx', 'app/manifest.json/route.ts', 'public/sw.js', 'components/InstallAppPrompt.tsx',
-      'lib/export/brand-mark.ts', 'app/[orgSlug]/[tournamentSlug]/apple-icon.tsx', 'app/[orgSlug]/[tournamentSlug]/icon-maskable/route.tsx']) scan(f);
+      'lib/export/brand-mark.ts']) scan(f);
     assert.ok(named.size >= 6, `found ${[...named].join(', ')}`);
     const missing = [...named].filter((p) => (p === '/favicon.ico' ? !existsSync(path.join(REPO, 'app/favicon.ico')) : !onDisk(p)));
     assert.deepEqual(missing, []);
     for (const p of named) assert.doesNotMatch(p, /pwa-|badge-72/, `${p} is an old icon name (caches would keep the old mark)`);
+  });
+
+  it('the home-screen icon is always FieldLogicHQ\'s: no per-tournament icon, the root layout\'s applies (Stage 8 Part 1)', () => {
+    // Owner ruling 2026-11-03: one branded ecosystem, so a tournament page never offers its own Add to Home Screen icon.
+    // A file-convention apple-icon (or icon) under a tournament would override the root layout's link on every page there.
+    for (const f of ['apple-icon.tsx', 'apple-icon.png', 'icon.tsx', 'icon.png', 'icon-maskable/route.tsx']) {
+      assert.ok(!existsSync(path.join(REPO, 'app/[orgSlug]/[tournamentSlug]', f)), `${f} is back under the tournament`);
+    }
+    assert.ok(!existsSync(path.join(REPO, 'lib/pwa-icon.tsx')), 'the logo-to-icon helper is gone');
+    assert.match(readCode('app/layout.tsx'), /<link rel="apple-touch-icon" href="\/icons\/fl-apple-180\.png" \/>/);
+    assert.ok(onDisk('/icons/fl-apple-180.png'));
   });
 
   it('the service worker dropped the old caches and the tab has no SVG icon drawn from the main cut at 16', () => {

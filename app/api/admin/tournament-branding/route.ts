@@ -7,7 +7,6 @@ import { normalizeHiddenPublicPages } from '@/lib/public-pages';
 import { hasPlanFeature } from '@/lib/plan-features';
 import type { PublicPageKey } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
-import { fetchAsDataUrl, detectBackgroundHex } from '@/lib/pwa-icon';
 import { isPublicFrameOn, publicFrameBandFacts } from '@/lib/public-frame-server';
 import { TOURNAMENT_TYPE_LOOKS } from '@/lib/tournament-look';
 
@@ -22,25 +21,11 @@ const PLUS_VISUAL_FIELDS = [
   'themeFont',
   'themeCardStyle',
   'colorMode',
-  'iconBgColor',
-  'appName',
-  'iconScale',
   'typeLook',
 ] as const;
-
-const APP_NAME_MAX = 30;
-// App-icon logo size (zoom): relative to the tuned default (100). Clamped server-side
-// regardless of client; each icon route then clamps further to its own safe ceiling.
-const ICON_SCALE_MIN = 70;
-const ICON_SCALE_MAX = 125;
-
-/** Auto-detect the app-icon tile colour the same way the icon routes do: sample the
- *  effective logo's own background. Used to seed/show the "Auto" option in the UI. */
-async function suggestIconBg(logoUrl: string | null): Promise<string | null> {
-  if (!logoUrl) return null;
-  const dataUrl = await fetchAsDataUrl(logoUrl);
-  return dataUrl ? detectBackgroundHex(dataUrl) : null;
-}
+// The App icon's colour, name and logo size (icon_bg_color, app_name, app_icon_scale) are neither read nor written: the
+// home-screen icon is always FieldLogicHQ's (Public tournament pages Stage 8 Part 1, owner ruling 2026-11-03). The
+// columns stay until a later /db pass (Stage 8 ask C).
 
 export const GET = withObservability(async (req: Request) => {
   const url = new URL(req.url);
@@ -59,7 +44,7 @@ export const GET = withObservability(async (req: Request) => {
 
   const { data, error } = await supabaseAdmin
     .from('tournaments')
-    .select('logo_url, hero_banner_url, theme_preset, theme_primary, theme_accent, theme_font, theme_card_style, color_mode, icon_bg_color, app_name, app_icon_scale, require_score_finalization, status, start_date, end_date, champions_crowned_at')
+    .select('logo_url, hero_banner_url, theme_preset, theme_primary, theme_accent, theme_font, theme_card_style, color_mode, require_score_finalization, status, start_date, end_date, champions_crowned_at')
     .eq('id', tournamentId)
     .eq('org_id', ctx.org.id)
     .single();
@@ -74,35 +59,19 @@ export const GET = withObservability(async (req: Request) => {
     .eq('org_id', ctx.org.id)
     .maybeSingle();
 
-  // For the App Icon control: auto-sample the colour the icon would use by default.
-  // The icon resolves the effective logo as tournament logo → org logo, so mirror that
-  // fallback here. Only worth computing for plans that can use advanced branding.
   const advanced = hasPlanFeature(ctx.org.planId, 'advanced_tournament_branding');
 
   // Public tournament pages Stage 1a Part 3: the preview switch decides which Branding page draws (switch off, today's),
   // and under it the Look card's band preview needs the two facts the band reads from the event's records. Nothing is
   // skipped: the draft can switch a hidden page back on before it saves. The card draws only on a plan with advanced
-  // branding, so no other plan pays for the read; it starts now and runs beside the logo sampling below.
+  // branding, so no other plan pays for the read.
   const frameOn = await isPublicFrameOn();
-  const bandRead = frameOn && advanced
-    ? publicFrameBandFacts(
+  const band = frameOn && advanced
+    ? await publicFrameBandFacts(
       { id: tournamentId, status: data.status, startDate: data.start_date, endDate: data.end_date, championsCrownedAt: data.champions_crowned_at },
       { register: false, news: false, rules: false },
     ).catch(() => null)
-    : Promise.resolve(null);
-
-  let iconBgSuggested: string | null = null;
-  if (advanced) {
-    let effectiveLogo = data.logo_url as string | null;
-    if (!effectiveLogo) {
-      const { data: orgRow } = await supabaseAdmin
-        .from('organizations').select('logo_url').eq('id', ctx.org.id).maybeSingle();
-      effectiveLogo = orgRow?.logo_url ?? null;
-    }
-    iconBgSuggested = await suggestIconBg(effectiveLogo);
-  }
-
-  const band = await bandRead;
+    : null;
 
   return NextResponse.json({
     logoUrl:                  data.logo_url,
@@ -113,10 +82,6 @@ export const GET = withObservability(async (req: Request) => {
     themeFont:                data.theme_font,
     themeCardStyle:           data.theme_card_style,
     colorMode:                data.color_mode ?? 'dark',
-    iconBgColor:              data.icon_bg_color ?? null,
-    iconBgSuggested,
-    appName:                  data.app_name ?? null,
-    iconScale:                data.app_icon_scale ?? null,
     requireScoreFinalization: data.require_score_finalization,
     publicHiddenPages:        normalizeHiddenPublicPages(pageData?.public_hidden_pages),
     coachNamesShowOnPublic:   pageData?.coach_names_show_on_public === true,
@@ -144,9 +109,6 @@ export const PATCH = withObservability(async (req: Request) => {
     themeFont?: string | null;
     themeCardStyle?: string | null;
     colorMode?: 'dark' | 'light' | null;
-    iconBgColor?: string | null;
-    appName?: string | null;
-    iconScale?: number | null;
     typeLook?: string | null;
     publicHiddenPages?: PublicPageKey[] | null;
     coachNamesShowOnPublic?: boolean | null;
@@ -257,37 +219,6 @@ export const PATCH = withObservability(async (req: Request) => {
       );
     }
     updates.theme_card_style = style === 'default' ? null : style;
-  }
-
-  if ('iconBgColor' in body) {
-    if (body.iconBgColor === null) {
-      updates.icon_bg_color = null;
-    } else {
-      const hex = String(body.iconBgColor);
-      if (!HEX_RE.test(hex)) {
-        return NextResponse.json({ error: 'Invalid hex color for iconBgColor' }, { status: 400 });
-      }
-      updates.icon_bg_color = hex;
-    }
-  }
-
-  if ('appName' in body) {
-    const trimmed = body.appName == null ? '' : String(body.appName).trim();
-    updates.app_name = trimmed ? trimmed.slice(0, APP_NAME_MAX) : null;
-  }
-
-  if ('iconScale' in body) {
-    if (body.iconScale == null) {
-      updates.app_icon_scale = null;
-    } else {
-      const n = Math.round(Number(body.iconScale));
-      if (!Number.isFinite(n)) {
-        return NextResponse.json({ error: 'Invalid app icon scale' }, { status: 400 });
-      }
-      const clamped = Math.max(ICON_SCALE_MIN, Math.min(ICON_SCALE_MAX, n));
-      // Store the default (100) as NULL so "unset = default" stays clean.
-      updates.app_icon_scale = clamped === 100 ? null : clamped;
-    }
   }
 
   if ('colorMode'                in body) updates.color_mode                 = body.colorMode === 'light' ? 'light' : null;
