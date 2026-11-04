@@ -40,11 +40,11 @@ const waiting = (endsAt = ENDS, heldMovePlan: OrgPlan | null = null): BillingEnd
 const count = (haystack: string, needle: string) => haystack.split(needle).length - 1;
 
 describe('the owner billing page while a cancel waits (Stage 0 rulings 1–3, 7)', () => {
-  it('the plan card says Ending and the date, with Keep {Plan} as the desk link AND the phone button; no renewal line', () => {
+  it('the plan card says Ending and the date, with Keep {Plan} as ONE lime button at every width; no renewal line', () => {
     const html = page('tournament_plus', waiting());
     assert.match(html, />Ending</);
     assert.match(html, /Ends on March 1, 2027, the last day you paid for\./);
-    assert.equal(count(html, 'Keep Tournament Plus'), 3, 'the olive link (desk), the lime button (phone; CSS shows one of the two) and the change-plan line');
+    assert.equal(count(html, 'Keep Tournament Plus'), 2, 'the lime button and the change-plan line (the sentence-end link is gone)');
     assert.doesNotMatch(html, /Renews March/);
   });
 
@@ -59,7 +59,7 @@ describe('the owner billing page while a cancel waits (Stage 0 rulings 1–3, 7)
   it('a Premium coach sees the same line with Keep Premium, and no Start my club door', () => {
     const html = page('team', waiting());
     assert.match(html, /Ends on March 1, 2027/);
-    assert.equal(count(html, 'Keep Premium'), 3);
+    assert.equal(count(html, 'Keep Premium'), 2);
     assert.ok(!html.includes(W.clubUpgrade.start));
   });
 
@@ -97,11 +97,12 @@ describe('Reduce or cancel before a cancel: words that are true at the click', (
   });
 });
 
-describe('the phone Keep door and the wait callout (source)', () => {
+describe('the Keep door and the wait callout (source)', () => {
   const css = readCode('components/billing/Billing.module.css');
-  it('the lime button shows only at phone width, full width at the 44px tap floor; the link hides there', () => {
-    assert.match(css, /\.keepButton\.keepButton \{ display: none; \}/);
-    assert.match(css, /@media \(max-width: 640px\) \{\s*\.keepLink \{ display: none; \}\s*\.keepButton\.keepButton \{[^}]*width: 100%; min-height: var\(--tap-min, 44px\)/);
+  it('the lime button shows at every width (no sentence-end link); full width at the 44px tap floor on a phone', () => {
+    assert.match(css, /\.keepButton\.keepButton \{ display: inline-flex;/);
+    assert.doesNotMatch(css, /\.keepLink/);
+    assert.match(css, /@media \(max-width: 640px\) \{\s*\.keepButton\.keepButton \{[^}]*width: 100%; min-height: var\(--tap-min, 44px\)/);
   });
   it('a wait is the white callout with an amber left edge — PageNotice gains no amber tone', () => {
     assert.match(css, /\.waitCallout \{[^}]*background: var\(--card-bg\);[^}]*border-left: 3px solid var\(--warning\)/);

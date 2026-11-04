@@ -276,10 +276,9 @@
   background: var(--card-bg); border: 1px solid var(--home-line); border-left: 3px solid var(--warning); border-radius: 8px;
   font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary);
 }
-/* Keep {Plan}: the olive link on a desk; on a phone a full-width 44px lime button under the line (Stage 0 ruling 7).
-   Doubled classes beat the global .btn display on bundle order. */
-.keepButton.keepButton { display: none; }
+/* Keep {Plan}: a lime button beside "Payment method & invoices" on a desk (owner 2026-11-03, replacing the sentence-end
+   link); on a phone full width at the 44px tap floor, on its own row (Stage 0 ruling 7). */
+.keepButton.keepButton { display: inline-flex; align-items: center; }
 @media (max-width: 640px) {
-  .keepLink { display: none; }
-  .keepButton.keepButton { display: inline-flex; justify-content: center; width: 100%; min-height: var(--tap-min, 44px); margin-top: 0.35rem; }
+  .keepButton.keepButton { justify-content: center; width: 100%; min-height: var(--tap-min, 44px); }
 }

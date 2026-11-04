@@ -111,13 +111,17 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   const founding = profile.showFoundingSeason && !staffFree && Boolean(fd?.isFoundingSeason);
   const comp = founding && foundingActive;
   const paid = ownProfile.config.monthlyPrice > 0;
+  // The row that holds "Payment method & invoices"; the Keep button joins it, and stands alone only where this row is absent.
+  const actionsShown = controlsReady && paid && !staffFree && !endedPortal && !founding;
   const preflight = s.cancellation.status === 'ready' ? s.cancellation.data : null;
   // Plans end at the renewal date (Stage 0 rulings 1–3): a waiting cancel takes the plan card's waiting-change line, and
   // the change doors and Reduce or cancel are absent until it is kept.
   const pending = ownBilling && !cancelled ? preflight?.ending?.pending ?? null : null;
   const keepLabel = pending ? W.cancel.keepDoor(ownProfile.key as OrgPlan) : '';
   // "Ends on {date}" with Keep {Plan}: the olive link on a desk, the full-width lime button on a phone (Stage 0 ruling 7).
-  const keepLine = pending && <p className={styles.scheduled}>{W.plan.endsOn(pending.endsAt, org.subscriptionStatus === 'trialing')} <button type="button" className={`${styles.link} ${styles.keepLink}`} disabled={a.busy !== null} onClick={a.keepPlan}>{keepLabel}</button></p>;
+  // The door is the lime button beside "Payment method & invoices" at every width (owner 2026-11-03: the sentence-end link
+  // was the least noticeable thing on the card); the line above it is the date alone.
+  const keepLine = pending && <p className={styles.scheduled}>{W.plan.endsOn(pending.endsAt, org.subscriptionStatus === 'trialing')}</p>;
   const keepButton = pending && <button type="button" className={`btn btn-lime ${styles.keepButton}`} disabled={a.busy !== null} onClick={a.keepPlan}>{keepLabel}</button>;
   const trialingNow = org.subscriptionStatus === 'trialing';
   const changes = ownProfile.changes;
@@ -159,8 +163,8 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
       <h2 className={styles.planName}>{profile.config.label}</h2>
       <ReadFailure read={s.freeTime} section="free time" />
       {/* Part C (b): a cancel that waits doesn't depend on free time, so its line and Keep stay when that read fails. */}
-      {keepLine}{keepButton}
-      <div className={styles.planActions}>{retry}<a href={CONTACT_HREF} className="btn btn-outline">{W.change.contact}</a></div>
+      {keepLine}
+      <div className={styles.planActions}>{keepButton}{retry}<a href={CONTACT_HREF} className="btn btn-outline">{W.change.contact}</a></div>
     </CoachCard>
     {fees}
   </div>{panel}</>;
@@ -256,10 +260,11 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
           {pending && <>
             {keepLine}
             {pending.heldMovePlan && <p className={styles.hint}>{W.plan.renewsAs(PLAN_CONFIG[pending.heldMovePlan].label)}</p>}
-            {keepButton}
+            {!actionsShown && keepButton}
           </>}
           {ownBilling && scheduled && !pending && <p className={styles.scheduled}>{W.plan.scheduled(profiles[scheduled.toPlan].config.label, scheduled.effectiveAt)} <button type="button" className={styles.link} disabled={disabled} onClick={a.keep}>{W.plan.keep(ownProfile.config.label)}</button></p>}
-          {controlsReady && paid && !staffFree && !endedPortal && !founding && <div className={styles.planActions}>
+          {actionsShown && <div className={styles.planActions}>
+            {keepButton}
             <button type="button" className="btn btn-outline" id="billing-manage-btn" onClick={a.portal} disabled={disabled}><CreditCard size={14} aria-hidden />{a.busy === 'portal' ? W.plan.openingPortal : W.plan.payment}</button>
           </div>}
           <ReadFailure read={s.freeTime} section="free time" />
