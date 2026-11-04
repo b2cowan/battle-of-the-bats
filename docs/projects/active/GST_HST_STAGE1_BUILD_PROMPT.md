@@ -60,7 +60,7 @@ Part 0 findings (2026-11-03):
   until the US work is done. The prompt's "a US buyer ticks one box" then pays is out of step (Ask 5).
 
 - [x] Part 0 · verify the facts, count production subscribers, present the PM summary, get the asks answered (owner) — 2026-11-03
-- [x] Part 1 · the stored location — BUILT 2026-11-03, UNCOMMITTED: mig **433** `433_every_buyer_has_a_billing_address.sql`
+- [x] Part 1 · the stored location — BUILT 2026-11-03, committed `fd55a1df3` 2026-11-04: mig **433** `433_every_buyer_has_a_billing_address.sql`
   (table `billing_locations`, applied to DEV only; `MANUAL_PROD_STEPS.json` entry `pending`; dictionary section added,
   `check:dictionary` OK; snapshots refreshed by the hook); `lib/billing-location.ts` (pure: lists reuse
   `lib/canadian-provinces.ts`, `checkBillingLocation` with `usSalesOpen`, PO Box rule, postal/ZIP normalizing, the words,
@@ -71,7 +71,7 @@ Part 0 findings (2026-11-03):
   A–D, the window (tab 2), the sign-up Address step (tab 4), the Start your club fields (tab 5), the plan-card line +
   button (tab 6).
 - [x] Part 2 · collecting it on every paid checkout path — BUILT 2026-11-03 (prompt `GST_HST_STAGE1_PART2_BUILD_PROMPT.md`).
-  **Stopped at: `/simplify` then `/review` offered, owner's answer owed; the commit (Part 1 + Part 2 together) follows them.**
+  **COMMITTED `fd55a1df3` 2026-11-04 (Parts 1 + 2 together, on dev, not pushed; mig 433 dev only, prod apply owed in `MANUAL_PROD_STEPS.json`).**
   Server: `lib/billing-location-server.ts` (the buyer: a club's org row, a Coaches Portal's = the signed-in owner's own user
   row; `requireBillingLocation` 409 `billing_address_required`; save stamps the US declaration + version, flags a Canada↔US
   change by a buyer who has paid, copies to the buyer's Stripe customers non-fatally), `app/api/billing/location` GET + PUT
