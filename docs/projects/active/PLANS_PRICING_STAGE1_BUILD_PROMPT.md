@@ -16,7 +16,7 @@ Three pieces from the plan of record: (A) a new-plan checklist and a price-agree
 
 ## ▶ Progress (read first when resuming)
 
-All five parts built 2026-11-03 in one session; the commit hash goes here when the owner says commit.
+All five parts built 2026-11-03 in one session; **committed `a404e57d9` 2026-11-03** on the owner's go, after /simplify, /review and /strategy (decision logged Decided 2026-11-03). Not pushed.
 
 - [x] Part 1 · promotions ruling (owner) — **ruled A, record-only, 2026-11-03.** Built: the section line, a hint under Status
   ("Active gives no one a discount; checkout never reads promotions.") and under Coupon code, "Not applied at checkout" under an

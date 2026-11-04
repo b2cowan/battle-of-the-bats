@@ -25,7 +25,7 @@ has a home in one of these stages. Order is by dependency and rework risk, never
    (8) S8 our own pinned portal settings; (9) S9 subscription disputes and refunds handled; (10) S10 one Stripe customer per buyer plus the trial-history
    rule; (11) the sales-tax decision (met by the GST/HST plan's Stripe Tax stage); (12) G8 fresh sign-in before many-customer money actions, plus an email
    to the owner. Exit check: re-run Stripe Walk 6 (recommended, not ruled). Waits on Plan & billing 4b Part 4; S5 lands before renewal Stage 1; S8 before renewal G13.
-1. **Stage 1 — guards and housekeeping.** **Built 2026-11-03** (`PLANS_PRICING_STAGE1_BUILD_PROMPT.md`, whose Progress block holds the commit). New-plan
+1. **Stage 1 — guards and housekeeping.** **Built and committed `a404e57d9` 2026-11-03** (`PLANS_PRICING_STAGE1_BUILD_PROMPT.md` Progress block). New-plan
    checklist enforced by the build (`tests/unit/new-plan-checklist.test.ts` + the human half in `PLAN_PRICING_FACTS.md` "Adding a plan: the checklist"),
    plus the price-agreement build check (`tests/unit/plan-pricing-facts-agreement.test.ts`; of the H8 price guard, Phases 1–2 were already built and
    Phase 3, the in-app Upgrade guard, stays unbuilt: `isPlanCheckoutPriceConfigured` has no caller). **Promotions: owner ruled 2026-11-03 option A,
