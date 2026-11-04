@@ -1215,8 +1215,8 @@ const orgHelp: HelpPageContent = {
           title: 'Branding and appearance',
           content: (
             <>
-              <p><strong>Branding</strong> is no longer in Settings. Your logo, colours, type and banner photo are in <strong>Public site &rsaquo; Look</strong>, and the owner <em>or</em> an admin can change them (see <strong>Running your public site</strong>). This is <strong>organization-level</strong> branding and it comes with <strong>League and Club</strong> plans. Tournament and Tournament Plus brand each <strong>event</strong> individually instead — from that tournament&rsquo;s own settings, with full control per event — and their organization&rsquo;s home page keeps FieldLogicHQ&rsquo;s default styling.</p>
-              <p><strong>Card style</strong> is no longer a club setting. It only ever changed tournament pages, so each tournament picks its own on its <strong>Branding</strong> page.</p>
+              <p><strong>Branding</strong> is no longer in Settings. Your logo, colours, type and banner photo are in <strong>Public site &rsaquo; Look</strong>, and the owner <em>or</em> an admin can change them (see <strong>Running your public site</strong>). This is <strong>organization-level</strong> branding and it comes with <strong>League and Club</strong> plans. Tournament and Tournament Plus brand each <strong>event</strong> individually instead — its logo, colours and type, from that tournament&rsquo;s <strong>Public site</strong> page — and their organization&rsquo;s home page keeps FieldLogicHQ&rsquo;s default styling.</p>
+              <p><strong>Card style</strong> is no longer a setting anywhere: the club&rsquo;s look is its logo, colours and type, and tournament pages draw their cards one way.</p>
             </>
           ),
         },

@@ -197,3 +197,39 @@ describe('Stage 8 Part 4b: the club editor has no switch half', () => {
     assert.doesNotMatch(readCode('app/api/admin/public-site/route.ts'), /frameOn|isPublicFrameOn/);
   });
 });
+
+/**
+ * Stage 8 Part 5c (2026-11-04): the in-app help describes the page as it is. The help is the single source customers
+ * read, so a guide that still offers a retired control is the same lie as the control itself (PLAN §4 Part 5).
+ */
+describe('Stage 8 Part 5c: the help says what the Public site page does, and nothing it no longer does', () => {
+  const help = readSource('lib/help-content/tournaments.tsx');
+  const org = readSource('lib/help-content/org.tsx');
+
+  it('no guide offers a retired control: the six cards, the App icon, the hero banner, fonts, card style, Layout menus', () => {
+    for (const old of [
+      /six closed cards/, /<strong>App icon<\/strong>/i, /<strong>Hero banner<\/strong>/, /<strong>Font<\/strong>/,
+      /<strong>Card style<\/strong>, and/, /Branding → App Icon/, /hero banner, fonts/, /icon background colour and a short app name/,
+      /Each card&apos;s <strong>Layout<\/strong>/, /Logo size<\/strong> slider/,
+    ]) assert.doesNotMatch(help, old, `the tournament help still offers ${old}`);
+    assert.doesNotMatch(org, /each tournament picks its own on its <strong>Branding<\/strong> page/);
+  });
+
+  it('the page guide names the two cards after Pages, the band preview, and the lock line in the page’s own words', () => {
+    const cards = between(help, "id: 'public-site-cards'", "id: 'public-site-standings'");
+    assert.match(cards, /two cards follow\. <strong>Look<\/strong>/);
+    assert.match(cards, /<strong>Classic<\/strong>, <strong>Serif<\/strong> or <strong>Clean<\/strong>/);
+    assert.match(cards, /<strong>On a phone<\/strong>/);
+    assert.match(cards, /<strong>Logo<\/strong> holds/);
+    assert.ok(cards.includes(`<strong>${LOCK_WORDS.brandingLook}</strong>`), 'the lock line is quoted exactly as the page says it');
+  });
+
+  it('the app-icon answer is "No": the home-screen icon is always FieldLogicHQ’s, and the anchor survives for old links', () => {
+    const faq = between(help, "id: 'faq-app-icon'", "id: 'faq-post-event-results-email'");
+    assert.match(faq, /answerText: 'No\. /);
+    assert.match(faq, /always FieldLogicHQ/);
+    assert.doesNotMatch(faq, /answerText: 'Yes/);
+    // Search still lands a "logo size" or "app name" question on the answer that says there is no such setting.
+    for (const k of ['app icon', 'app name', 'logo size', 'icon background']) assert.ok(faq.includes(`'${k}'`), k);
+  });
+});

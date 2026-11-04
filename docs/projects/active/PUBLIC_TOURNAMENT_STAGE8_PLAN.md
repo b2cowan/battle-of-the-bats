@@ -7,8 +7,9 @@ switch-off half-state ends for every public tournament page). **The public feed 
 releasable on its own; it does not cherry-pick onto production — §16 handed on). **Part 4 split (owner 2026-11-04): Part 4a (the public side —
 the pay page, the admin preview's old chrome, the old tab row and rail, the Rules layout menus, the team page's flag) committed `ecffa177f`
 2026-11-04** (record §17; releases with the flip). **Part 4b (the admin side, then the switch itself — deleted) committed
-`72cd94a46` 2026-11-04** (record §18; releases with the flip). **Part 4 committed.** Next: Part 5 (data and the wording
-around it, §4; no build prompt yet). Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
+`72cd94a46` 2026-11-04** (record §18; releases with the flip). **Part 4 committed.** **Part 5 (the data and the wording
+around it: no second `theme_font` empty, 426's prod timing note; the dictionary and the dead fields un-mapped; the help;
+the drift check; the demos) built 2026-11-04** (record §19; releases with the flip). Next: Part 6 (verify, walk, release). Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
 **Sequencing rule (standing):** by dependency and rework risk, never by date. One part per session, `/clear` between.
@@ -1229,3 +1230,130 @@ and Part 5a's empty repeats it.
   already listed as "remove the old-state theme-variant seed").
 - **Part 5b (`/db`):** the dead fields stay on `lib/types.ts` and the row mapper with their columns (ask C).
 - Still owed, not this part: as §16/§17.
+
+## 19. Part 5 record (the data and the wording around it; built 2026-11-04; releases with the flip)
+
+**What a customer sees:** nothing (nothing promoted). **An organizer on dev, in the help:** the Public site page is
+described as it is: the door, Pages, then **Look** (colours, a preset or your own two with a hex code each; type Classic /
+Serif / Clean; the band preview "On a phone") and **Logo**. A plan without Tournament Plus branding gets one lock line,
+"Your logo, colours and type on this site". The app-icon FAQ now answers **No**: the home-screen icon is always
+FieldLogicHQ's (its anchor kept). ⚠ Not promotable before Part 6 (§5).
+
+**The brief against the code.** Every claim re-opened held, with three corrections:
+- **5a's filter would have been wrong on prod.** The old font list is `system | inter | barlow | dm-serif`. Prod stores
+  System as null, so a prod value is `inter`, `barlow` or `dm-serif`, and **two of those are type-look words** (Clean,
+  Serif). A `NOT IN ('system','dm-serif','inter')` empty would keep exactly the old picks that collide. Every prod value
+  predates the Look card: Stage 1a is not in prod HEAD `3ca835a53` (checked with `merge-base`). So 426's blanket empty
+  is right there.
+- **5e's "delete the seed" would have broken three seeds.** `seed-byedemo.mts`, `seed-bl-u18-splitpool.mts` and
+  `seed-bl-u15-doubleelim.mts` clone the `branded-light` event it creates, and `mobile-review-capture.mjs` opens both
+  variants. It was reduced instead.
+- **The page's menu name is "Public site"**, not "Branding" (`admin-nav-config.ts`). The help said "Branding" in
+  several places; corrected where this part touched them.
+
+**5a: no second empty (the prompt's "not needed" branch).**
+- Prod has never run 426: it is pending, and prod is at the 10-30 release.
+- Dev held **0 non-null of 68** (`SELECT theme_font, count(*) … GROUP BY 1`, 2026-11-04).
+- So a second migration would be a no-op on dev and a repeat of 426 on prod.
+- The real risk is timing. Prod's old page sends its font on **every** save, so a fresh pick, or a tab opened before 426,
+  refills the column.
+- `MANUAL_PROD_STEPS.json`'s 426 note is amended. Apply it **in the promote window, immediately before the push**
+  (Stage 1a and Stage 8 promote together), blanket, never filtered. Verify count 0 just before the push, and re-check
+  once live.
+- Tournaments has no `updated_at`, so a non-null row found after the deploy cannot be dated. `barlow` is always old;
+  anything else is looked at with the owner first.
+- No migration file, so no `check:migrations`.
+
+**5b: `/db`.** `DATA_DICTIONARY.md`:
+- **The tournament branding block** is split in two.
+  - **Live:** logo, the colours three, and `theme_font` = the type look, with the prod timing warning.
+  - **⚰ Dead, kept per ask C:** `hero_banner_url`, `theme_card_style`, `color_mode`, `icon_bg_color`, `app_name`,
+    `app_icon_scale`. No reader or writer, re-proved.
+- **The settings catalog** marks `rulesLayout` / `resourcesLayout` RETIRED.
+- **The organization block's** stale line "defaults each tournament overrides" is replaced by who reads what:
+  - the colours and `theme_font` are the club layer of a tournament's look (`resolveTournamentLook`);
+  - `hero_banner_url` is the club home's banner only;
+  - `theme_card_style` has **no writer on any screen**. The org layout still stamps `data-card-style`, and the
+    `globals.css` variants still restyle a non-kit, non-frame `.card`. Dev: all 56 orgs are `'default'`; prod was not
+    counted. It is a candidate for the drop pass.
+- **The call on the code: the six dead fields left the `Tournament` type and `mapTournament` now.**
+  - No reader: the property, destructuring, string-key and JSON-consumer searches were all empty, and tests reference
+    the fields only in `doesNotMatch`.
+  - Tournaments are read with `select('*')`, so no query changes.
+  - A typed field invites a new reader of a column queued for a drop. With the fields gone, the drop is a migration
+    plus the dictionary entry. Typecheck clean.
+- **The drop pass** is its own TODO line ("Retired branding columns — drop pass"). `seed-public-frame-fixtures.mjs`
+  lost its `color_mode: null` write, so no script writes a column the drop removes.
+- No schema change, so no snapshot refresh. `check:dictionary` passes.
+
+**5c: `/docs`.**
+- **`lib/help-content/tournaments.tsx`:**
+  - Branding, scoring and event settings: the body, the link label "Public site", keywords and searchText. Out: hero
+    banner, App icon tile, app name, logo size. In: look, type, Classic / Serif / Clean.
+  - The "Built on" FAQ: "logo, colours and type".
+  - `faq-tournament-branding`: where the Look and Logo cards are, following the club, the club's Always, and that each
+    tournament keeps its logo.
+  - `faq-app-icon`: rewritten to "No". Its keywords are kept, so an "app name" or "logo size" search lands on it.
+  - `public-site-cards`: "six closed cards" becomes Look + Logo + the lock line, in the page's own words.
+  - The fan app: the home-screen icon is always FieldLogicHQ's.
+  - The preview guide's searchText.
+  - Rules & resources: the Layout sentence removed.
+  - The setup wizard's two pointers: "Branding" becomes the Public site page.
+- **`org.tsx`:** the card-style line, and "from that tournament's Public site page".
+- **Review:** `/review`'s copy lens found no High. Two Low precisions were applied: the lock line also reaches a Premium
+  coach's hosted event, and the band preview sits beside the controls on a computer.
+- Spelling passes; no section touched is over the length standard.
+
+**5d: `/strategy`.** The drift check is recorded under the 2026-11-03 entry in `BUSINESS_DECISIONS.md`.
+- **(b) closed:** `LOCK_WORDS.branding` is gone. One record still quoted the old line, `PRICING_PAGE_COPY.md`'s
+  free-plan lock-line list. It is struck through with a pointer (a record fix, no new copy).
+- **(d) closed by 5c.**
+- **(c) re-checked clean.**
+- `PLAN_PRICING_FACTS.md` "Tournament branding reframe": "not yet built" becomes built on `dev` with its anchors. The
+  release state points at the release-history record.
+- **No price, plan, gate or feature key moved.**
+
+**5e: `/demos`, scoped (logged as a scoped check, not a pass).**
+- The tournament dock's three lines and the tour's four steps don't describe the old look, and the dock's two figures
+  stay checker-computed. **0 sentences changed, 0 moments.**
+- `seed-theme-variants.mjs` was reduced (above) and now writes colours only.
+- Its two events were renamed "(Branded · Upcoming)" / "(Branded · Live)" for the next re-run; the slugs are kept. The
+  dev seed was not re-run.
+
+**Tests:** `public-tournament-stage8-branding-page.test.ts` gains a Part 5c block of 3 tests:
+- no guide offers a retired control;
+- the page guide names Look, the type looks, the band preview, Logo, and the lock line quoted from `LOCK_WORDS`;
+- the app-icon answer is "No", with its search keywords kept.
+
+**Non-vacuity:** the committed (old) help files, put back, fail all 3; the files were restored with an identical sha1.
+No guard pinned the old help wording (searched).
+
+**Checks run:**
+- Touched and neighbouring unit files are green: Stage 8 Branding, help articles and subtopics, tournament look, Stage 5
+  public site, `demo-destinations-guard`.
+- Full `npm test`, 13,963 tests: **8 failures, all other sessions'.** They are the seven §18 records, plus
+  `coach-history-endpoint-guard.test.ts`, whose uncommitted foreign edit lost a backslash in a regex.
+- Typecheck clean (`NODE_OPTIONS=--max-old-space-size=6144`). ESLint on changed files: 0 errors. Spelling and
+  dictionary pass.
+- `verify:changed` stops at `npm test` (`&&`) on the foreign failures. Its ratchets, run one by one, name no file of
+  this part. The reds are all foreign: admin old look and type, schema parity, index coverage, org-slug callers, CSS
+  selectors, export catalog, root files, and `check:demos`, which hits the tournament-seed import fault recorded at the
+  10-27 release. Its focused ESLint step crashes on the tree's 55-file list (a react-hooks plugin config fault).
+- No layout sweep: no screen changed.
+- The dev server was not restarted: no file added or deleted.
+
+**`/simplify`:** not run (no new abstraction).
+
+**`/review`** (high-risk tier for `lib/**`): **no defect.** Lenses: blast radius on the six fields (main loop),
+data/contract on 426 (main loop), copy correctness (Sonnet finder). Acted on: 426's note made exact (prod stores System
+as null; a stale tab re-writes its pick), and the two copy precisions.
+
+**Handed on:**
+- **Part 6:** as §16–§18, plus 426 on prod **in the promote window** (the amended note) and the post-deploy re-check.
+- **The drop pass** (its TODO line): the six tournament columns, and `organizations.theme_card_style` with its layout
+  stamp and the `globals.css` variants. Count prod first. The org-settings PATCH still accepts `themeCardStyle` and
+  should stop.
+- The other "Branding" mentions in the help are generic and were left: the tournament workflow lists and the "branding
+  preview" search words. A help-wide rename to the menu's "Public site" is a later `/docs` call.
+- The dev rows of `branded-light` / `branded-dark` still hold their old Dark/Light and card-style values. They are
+  inert, and go with the drop.

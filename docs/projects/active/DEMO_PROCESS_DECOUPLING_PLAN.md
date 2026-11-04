@@ -139,3 +139,10 @@ release-history record (its one home); nothing was lost.
   line "Next year starts from one button" could not be kept). The seed now writes the plan's own limit; the
   tournament checker asserts a free slot. Dev reseeded and green; the world fingerprint moved, so the next master
   build reseeds production. Left for the full pass: F52's other half — `post-event-summary` is rung by no tour step.
+- 2026-11-04 — **a scoped check, NOT a pass** (the next pass's window still starts 2026-09-13): Public tournament pages
+  Stage 8 Part 5e, the new look on for everyone. The tournament dock's three lines and the tour's four tournament steps
+  were read against the new look: none describes the old dark ground, a hero banner, a card style or a branded icon,
+  and the dock's two figures (eleven teams, U11 full) stay computed by the tournament checker. **Sentences changed: 0.
+  Moments proposed: 0.** The anchors moved in Part 2 (`demo-destinations-guard` green). The dev-only theme-variant seed
+  was reduced, not deleted: three other seeds clone its `branded-light` event, so it now writes colours only, without
+  Dark/Light or card style. Walked by owner: no (the Stage 8 walk, Part 6).

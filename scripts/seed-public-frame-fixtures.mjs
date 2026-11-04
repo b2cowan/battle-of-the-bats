@@ -154,7 +154,7 @@ async function build(f) {
   const row = {
     ...srcT, id: tid, org_id: org.id, slug: f.t.slug, name: f.t.name, status: f.t.status, is_active: false,
     start_date: f.t.start, end_date: addDays(srcT.end_date ?? srcT.start_date, delta),
-    theme_preset: null, theme_primary: f.t.theme_primary ?? null, theme_accent: null, color_mode: null,
+    theme_preset: null, theme_primary: f.t.theme_primary ?? null, theme_accent: null,
     logo_url: f.t.logo ? LOGO : null, list_in_directory: false,
   };
   for (const k of ['created_at', 'results_notified_at', 'results_notification_sent_count', 'champions_crowned_at']) delete row[k];

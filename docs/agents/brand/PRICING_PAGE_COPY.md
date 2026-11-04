@@ -74,7 +74,7 @@ formatters; `{slots}` are filled by code. **A lock line = padlock + these words 
 only where the limit is the point). Paid events keep today's words everywhere a line below says so.
 
 1. **Lock lines:** Export the team list · Excel and CSV · Reuse a past tournament’s setup · Email the teams when you publish the schedule ·
-   Email every team a game-day reminder · Email every team the final results · Your logo, theme, banner and fonts on this site ·
+   Email every team a game-day reminder · Email every team the final results · ~~Your logo, theme, banner and fonts on this site~~ → **Your logo, colours and type on this site** (record fix 2026-11-04, `/strategy` Stage 8 Part 5d drift check: the old line went with the Branding page's old cards, Part 4b; the current words are `LOCK_WORDS.brandingLook`, approved in Public tournament pages Stage 1a) ·
    Choose which teams get it · Reopen registration · Record payments.
 2. **Founding Season:** second line under a lock line, quiet grey, no full stop: `Free for you through {date}`. Tools-menu foot (once):
    `Tournament Plus is free for you through {date}.` ({date} = "September 30, 2027", from the plan-config constant.)

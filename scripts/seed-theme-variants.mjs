@@ -1,7 +1,15 @@
 /**
- * Seed branded / light-mode / card-style tournament variants into dev-test-org so
- * the Phase E QA matrix can be walked by toggling the URL slug. Each variant clones
- * `dev-tournament-2026` (full pool schedule + bracket) and overrides theme columns.
+ * Seed two branded tournament variants into dev-test-org — one upcoming, one live on game
+ * day — each cloning `dev-tournament-2026` (full pool schedule + bracket) with its own colour
+ * preset. Other dev seeds build on them (`branded-light` is the source for seed-byedemo.mts,
+ * seed-bl-u18-splitpool.mts and seed-bl-u15-doubleelim.mts; mobile-review-capture.mjs opens both),
+ * so this stays even though the light/dark × card-style matrix it was written for is gone.
+ *
+ * ⚠ Writes ONLY what a public tournament page reads — the colours (and, through the clone, the
+ * logo and the type look). Dark/Light (`color_mode`) and the card style (`theme_card_style`) are
+ * read by nothing since Public tournament pages Stage 8 and are queued for a column drop; they
+ * were removed from this seed in Stage 8 Part 5e (2026-11-04). The slugs keep their old names
+ * because other seeds and records point at them.
  *
  * Advanced branding is plan-gated (tournament_plus+), so this bumps dev-test-org's
  * plan if needed. SIDE EFFECT: the free-plan acquisition banner / PoweredBy badge
@@ -9,8 +17,8 @@
  * 'tournament' to test those.
  *
  * Variants:
- *   branded-light → Crimson preset · LIGHT mode · glass cards · UPCOMING (countdown hero)
- *   branded-dark  → Battle Purple preset · DARK mode · outlined cards · LIVE game day
+ *   branded-light → Crimson preset · UPCOMING
+ *   branded-dark  → Battle Purple preset · LIVE game day
  *
  * Idempotent: re-running wipes + recreates each variant.
  * Run: node --env-file=.env.local scripts/seed-theme-variants.mjs
@@ -26,12 +34,12 @@ const PLAN_RANK = { tournament: 0, tournament_plus: 1, league: 2, club: 3 };
 
 const VARIANTS = [
   {
-    slug: 'branded-light', name: 'Crimson Cup (Branded · Light)', live: false,
-    theme: { theme_preset: 'crimson', theme_primary: null, theme_accent: null, color_mode: 'light', theme_card_style: 'glass' },
+    slug: 'branded-light', name: 'Crimson Cup (Branded · Upcoming)', live: false,
+    theme: { theme_preset: 'crimson', theme_primary: null, theme_accent: null },
   },
   {
-    slug: 'branded-dark', name: 'Purple Classic (Branded · Dark)', live: true,
-    theme: { theme_preset: 'bats', theme_primary: null, theme_accent: null, color_mode: 'dark', theme_card_style: 'outlined' },
+    slug: 'branded-dark', name: 'Purple Classic (Branded · Live)', live: true,
+    theme: { theme_preset: 'bats', theme_primary: null, theme_accent: null },
   },
 ];
 
@@ -137,8 +145,8 @@ async function seedVariant(v) {
     if (live) { Object.assign(row, live, { score_submitted_at: now, score_submission_source: 'admin_results' }); liveCount++; }
     await chk('game', await db.from('games').insert(row));
   }
-  console.log(`✅ ${v.name}  →  /${ORG_SLUG}/${v.slug}/schedule   [${v.theme.theme_preset} · ${v.theme.color_mode} · ${v.theme.theme_card_style}${v.live ? ` · LIVE (${liveCount})` : ' · upcoming'}]`);
+  console.log(`✅ ${v.name}  →  /${ORG_SLUG}/${v.slug}/schedule   [${v.theme.theme_preset}${v.live ? ` · LIVE (${liveCount})` : ' · upcoming'}]`);
 }
 
 for (const v of VARIANTS) await seedVariant(v);
-console.log('\nDone. Toggle between: dev-tournament-2026 (default·dark·upcoming), live-demo (default·dark·live), branded-light, branded-dark.');
+console.log('\nDone. Toggle between: dev-tournament-2026 (upcoming), live-demo (live), branded-light (Crimson, upcoming), branded-dark (Battle Purple, live).');
