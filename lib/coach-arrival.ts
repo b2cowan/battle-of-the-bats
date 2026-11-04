@@ -11,6 +11,7 @@
  * datetime), so a preset that would cross midnight — a 12:30 a.m. start with "1 hour before" —
  * is not offered: `arrivalClockFor` returns null and the dropdown greys that answer.
  */
+import { utcToZonedInputs } from './timezone.ts';
 
 /** The seven answers, in the order the dropdown offers them. Mirrors the CHECK on `rep_teams`. */
 export const ARRIVAL_PRESET_MINUTES = [15, 30, 45, 60, 90, 120] as const;
@@ -64,6 +65,26 @@ export function arrivalPresetOf(startHHmm: string, arrivalHHmm: string): Arrival
   const diff = start - arrival;
   return (ARRIVAL_PRESET_MINUTES as readonly number[]).includes(diff) ? (diff as ArrivalPresetMinutes) : null;
 }
+
+/**
+ * Is the arrival LATER than the start? (Stage 6e, D-6 / F12.) Both are same-day `HH:mm` clocks. Equal is
+ * not "after" — arriving at the start is a plain answer. False when either is not a clock.
+ */
+export function arrivalIsAfterStart(startHHmm: string, arrivalHHmm: string): boolean {
+  const start = toMinutes(startHHmm);
+  const arrival = toMinutes(arrivalHHmm);
+  if (start === null || arrival === null) return false;
+  return arrival > start;
+}
+
+/** The same question for a stored start INSTANT (the sheets hold `starts_at`, not a form clock). */
+export function arrivalIsAfterStartAt(startsAt: string | null | undefined, arrivalHHmm: string | null | undefined): boolean {
+  if (!startsAt || !arrivalHHmm) return false;
+  return arrivalIsAfterStart(utcToZonedInputs(startsAt).time, arrivalHHmm);
+}
+
+/** The words every surface uses beside an arrival that is later than the start. */
+export const ARRIVAL_AFTER_START_NOTE = 'after the start';
 
 /**
  * The FOLLOW rule (D1's second half): when the start moves, an arrival that was a preset moves

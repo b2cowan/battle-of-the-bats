@@ -1,0 +1,253 @@
+<title>Event Form 6e Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Coaches portal · Event form 6e · Ledger §452</span>
+    <h1>The event form warns about a late arrival, and each date of a weekly game picks its opponent</h1>
+    <p class="sub">Written 2026-11-04 for Club Tier Stage 6e (built, reviewed). One purpose: two small corrections to the coach’s Add/Edit event form. Nothing else on the form or the schedule changed.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Two things. First, when a coach sets an arrival time later than the start, the form now says so under the Arrival field (a warning, never a block), and the same note rides beside “Arrive …” on the event window, the game page and the practice sheet. Second, when a coach adds a weekly repeating game, each date’s opponent box is now the same opponent picker a single game uses, so the team’s book of opponents is offered on every date.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>An arrival later than the start shows “That’s after the {time} start.” under the field, and not otherwise (earlier, or equal, shows nothing).</li>
+    <li>The form still saves with that warning showing.</li>
+    <li>The event window, the game page and the practice sheet read “Arrive … (after the start)” for a late arrival and nothing extra for a normal one.</li>
+    <li>Each date row of a weekly game offers the team’s opponents with their records, takes a pick or a new name, and its list is never cut off.</li>
+  </ul></section>
+  <section class="card"><h2>Known before the walk</h2><ul>
+    <li>No fixture. Use the coach team you normally walk on dev. It needs at least one finished game, so the opponent book has something to offer.</li>
+    <li>The practice “send to families” message does not carry the note (deliberately left alone).</li>
+    <li>The helper that looked at the code believes editing an existing series shows no per-date opponent boxes (only Add does). Step D1 asks you to confirm.</li>
+    <li>Not walked here, proved by unit tests: the equal-times and not-a-clock cases, and the club-zone reading of a stored start.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li>Everything else on the event form, the schedule views, and the calendar export.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Server</dt><dd>The dev server serves this build as soon as it hot-reloads; no restart needed (no new files were added to the app).</dd>
+    <dt>Who</dt><dd>Signed in as a head coach (or any coach who can edit the schedule) on a rep team. Dev only; keep this page private.</dd>
+    <dt>Clean-up</dt><dd>Part F deletes the test events you add.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>The words</strong> “That’s after the 3:07 p.m. start.” and “(after the start)” are mine, not from the accepted copy. Say if either should change.</li>
+    <li><strong>Equal times are not flagged.</strong> Arriving at the start reads as a plain answer. Say if it should warn.</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "coach-event-form-6e-walk-v1";
+  var TITLE = "Event form 6e walk (2026-11-04) · §452";
+  var COACH = "Coach, on the team’s Schedule";
+  var PARTS = [
+ { id: "A", title: "The warning under Arrival", steps: [
+  { who: COACH, do: "Press Add event and choose <strong>Game</strong>. Set the start to <strong>3:07 p.m.</strong> and leave Arrival on <strong>None</strong>.",
+    see: "No line under Arrival." },
+  { who: COACH, do: "Set Arrival to <strong>A specific time…</strong> and type <strong>5:30 p.m.</strong>.",
+    see: "Under the field, “Arrive by 5:30 p.m. — shows on the event and the calendar export.” and below it <strong>That’s after the 3:07 p.m. start.</strong>" },
+  { who: COACH, do: "Change Arrival to <strong>1 hour before</strong>.",
+    see: "The new line disappears; only the “Arrive by 2:07 p.m. …” line remains." },
+  { who: COACH, do: "Set a specific time equal to the start (3:07 p.m.).",
+    see: "No “after the start” line (equal is not late)." },
+  { who: COACH, do: "Set it back to 5:30 p.m., add an opponent, and press Save.",
+    see: "The game saves; the warning did not block it. Keep this game for part B." },
+  { who: COACH, do: "Add event, choose <strong>Practice</strong>, start 4:00 p.m., Arrival a specific <strong>6:00 p.m.</strong>.",
+    see: "<strong>That’s after the 4:00 p.m. start.</strong> shows here too. Save it and keep it for part B." }
+ ]},
+ { id: "B", title: "The note where Arrive is shown", steps: [
+  { who: COACH, do: "Open the late game from the schedule (the event window).",
+    see: "The meta line reads <strong>Arrive 5:30 p.m. (after the start)</strong>." },
+  { who: COACH, do: "Open the game’s own page.",
+    see: "The Arrive chip reads <strong>Arrive 5:30 p.m. (after the start)</strong>." },
+  { who: COACH, do: "Open the late practice (its sheet and its page head).",
+    see: "<strong>Arrive by 6:00 p.m. (after the start)</strong>." },
+  { who: COACH, do: "Open any existing game or practice whose arrival is before the start.",
+    see: "The usual “Arrive …” with <strong>no</strong> note." }
+ ]},
+ { id: "C", title: "A weekly game picks each date’s opponent", steps: [
+  { who: COACH, do: "Add event, <strong>Game</strong>, turn on <strong>Repeat weekly</strong>, choose at least 4 weeks. Leave the main Opponent blank.",
+    see: "A list of dates, each with an opponent box whose placeholder reads “Opponent”." },
+  { who: COACH, do: "Click the first date’s box.",
+    see: "A list opens of teams you have met, most recent first, each with its record and last meeting." },
+  { who: COACH, do: "Pick one.",
+    see: "The box fills with the book’s spelling and the list closes." },
+  { who: COACH, do: "On the second date, type a name that is not in the book (for example “Walk Wolves”).",
+    see: "The list says it is a new name (one quiet line); the text stays as typed." },
+  { who: COACH, do: "Type a main Opponent at the top of the form.",
+    see: "Dates with an empty box show that name as their placeholder." },
+  { who: COACH, do: "Open the picker on the <strong>last</strong> date row and on the second to last.",
+    see: "The list is fully visible: not clipped by the date list, not under the form’s footer. It may open above the box; that is fine." },
+  { who: COACH, do: "Remove one date (its Remove button).",
+    see: "The row reads <strong>Removed</strong> and has no picker; Put back restores it with what you typed." },
+  { who: COACH, do: "Save the series.",
+    see: "Each game exists with the opponent you gave its date; dates left blank took the main Opponent (or none)." }
+ ]},
+ { id: "D", title: "Editing a series", steps: [
+  { who: COACH, do: "Open one of the series games, press the pencil, and edit the series (all, or this and future).",
+    see: "<strong>Report what shows:</strong> words and chips for the dates (no per-date opponent boxes) is expected. If per-date boxes appear, note whether they are the picker or plain text boxes.",
+    call: "A plain text box here would mean the fix missed the edit view." }
+ ]},
+ { id: "E", title: "On a phone", steps: [
+  { who: "Phone, or 375 px wide", do: "Repeat part A’s warning (steps A2–A3) on the Add form.",
+    see: "The line wraps cleanly inside the form and nothing scrolls sideways." },
+  { who: "Phone, or 375 px wide", do: "Repeat C2 and C6 (open the picker, including on the last date).",
+    see: "The list is readable, tappable (rows at least finger-sized) and not cut off; the date list still fits the screen." }
+ ]},
+ { id: "F", title: "Put back", steps: [
+  { who: COACH, do: "Delete the test games, the weekly series and the late practice you added.",
+    see: "The schedule is as it was before the walk." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

@@ -27659,3 +27659,14 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **Owner calls: CLOSED 2026-11-04, all three left as built** — the dates line above the club's description; "It started {date}." on a finished season with only a start day; the card above the status chip (P3's placement).
 <!-- /§451 -->
+
+## §452 · Coaches portal · Event form 6e owner walk — **the event form warns when an arrival is later than the start (under the field, on the event window, the game page and the practice sheet), and each date of a weekly repeating game picks its opponent from the team's book**
+<!-- §452 -->
+**Built + reviewed 2026-11-04:** Club Tier Stage 6e (the deep dive's stage 5). Two of its three leftovers were open when checked; the practice's "More" label and "Edit details keeps its Save" were already settled. No migration. `/review`: no Critical, High or Medium findings; one Low (the new warning line is a status region that mounts with its text, so a screen reader may not announce it). Unit tests pass; lint and type checks clean on the touched files. `check:layout` was **not run**: the UAT fixture was unavailable (the free coach's team is linked to a paid workspace; repair is `node scripts/seed-free-coach-fixture.mjs`, not run).
+
+**The walk (checkable):** https://claude.ai/artifact/7kVS5g7pYm6ZcKJMX3iyat (source [COACH_EVENT_FORM_6E_WALK.html](COACH_EVENT_FORM_6E_WALK.html)). One purpose, 22 steps in six parts: A the warning under Arrival (6) · B the note where Arrive is shown (4) · C a weekly game picks each date's opponent (8) · D editing a series (1) · E on a phone (2) · F put back (1). No fixture: any dev rep team with one finished game.
+
+**Known before the walk:** the practice "send to families" message does not carry the note (left alone); editing an existing series is believed to show no per-date opponent boxes (D1 confirms); the picker's list inside the date list is untested in a browser (C6, E2 are the risk).
+
+**Owner calls open with it:** the words "That's after the 3:07 p.m. start." and "(after the start)" are the build's own; equal times are not flagged.
+<!-- /§452 -->

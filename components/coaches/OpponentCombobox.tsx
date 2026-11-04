@@ -43,6 +43,8 @@ export default function OpponentCombobox({
   clubSpellings = [],
   onOpen,
   disabled = false,
+  placeholder = 'Team name',
+  ariaLabel,
 }: {
   id?: string;
   /** The game's opponent text — what is saved, verbatim (trimmed by the host). */
@@ -55,6 +57,9 @@ export default function OpponentCombobox({
   /** The host's re-read when the list opens (the tag picker's rule) — a merge made elsewhere shows next open. */
   onOpen?: () => void;
   disabled?: boolean;
+  /** A row of a series asks "who, on this date?" — it names its date and shows the series opponent as the fallback. */
+  placeholder?: string;
+  ariaLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   /**
@@ -152,7 +157,8 @@ export default function OpponentCombobox({
         id={id}
         className={styles.input}
         value={value}
-        placeholder="Team name"
+        placeholder={placeholder}
+        aria-label={ariaLabel}
         autoComplete="off"
         disabled={disabled}
         onChange={e => type(e.target.value)}

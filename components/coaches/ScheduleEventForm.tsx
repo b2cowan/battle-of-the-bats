@@ -804,12 +804,17 @@ export default function ScheduleEventForm({
               <span className={styles.occRemoved}>Removed</span>
             ) : (
               <span className={styles.occCol}>
-                <input
-                  className={styles.input}
+                {/* Stage 6e (F13b): each date's opponent reads the same Scouting Book as the single game's field. */}
+                <OpponentCombobox
+                  id={`event-opponent-${date}`}
                   placeholder={opponentFallback || 'Opponent'}
-                  aria-label={`Opponent on ${shortDate(date)}`}
+                  ariaLabel={`Opponent on ${shortDate(date)}`}
                   value={occurrenceOpponents[date] ?? ''}
-                  onChange={e => setOccurrenceOpponents(o => ({ ...o, [date]: e.target.value }))}
+                  onChange={text => setOccurrenceOpponents(o => ({ ...o, [date]: text }))}
+                  entries={bookEntries}
+                  clubSpellings={clubSpellings}
+                  onOpen={loadBook}
+                  disabled={saving}
                 />
                 {mark && <span className={styles.occMark}>{mark}</span>}
                 {permitMark && <span className={styles.occPlain}>{permitMark}</span>}

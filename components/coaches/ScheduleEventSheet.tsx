@@ -16,6 +16,7 @@ import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/Coa
 import ScheduleAttendanceRoom, { type AttendanceRoomRow } from '@/components/coaches/ScheduleAttendanceRoom';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { formatStoredClock as fmtClock } from '@/lib/utils';
+import { ARRIVAL_AFTER_START_NOTE, arrivalIsAfterStartAt } from '@/lib/coach-arrival';
 import { surfaceLabel, type SportPack } from '@/lib/sports';
 import type { ScheduleDrawerDoors } from '@/lib/coach-schedule-doors';
 import type { CoachCapabilities } from '@/lib/coach-capabilities';
@@ -593,7 +594,7 @@ export default function ScheduleEventSheet({
     (!isTournamentContainer && ev.startsAt)
       ? `${fmtTime(ev.startsAt)}${ev.endsAt ? ` – ${fmtTime(ev.endsAt)}` : ''}`
       : null,
-    ev.arrivalTime ? `Arrive ${fmtClock(ev.arrivalTime)}` : null,
+    ev.arrivalTime ? `Arrive ${fmtClock(ev.arrivalTime)}${arrivalIsAfterStartAt(ev.startsAt, ev.arrivalTime) ? ` (${ARRIVAL_AFTER_START_NOTE})` : ''}` : null,
     // A tournament game is TITLED by its matchup (drawing 8: "vs Guelph Royals 15U"), so the meta does not say it
     // twice; the tournament's name is the road-back row's title below.
     ev.opponent && !gameTitled ? `${matchupSep} ${ev.opponent}${ev.homeAway === 'neutral' ? ' (neutral)' : ''}` : null,

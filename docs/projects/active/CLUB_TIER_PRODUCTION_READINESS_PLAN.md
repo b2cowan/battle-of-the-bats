@@ -2530,6 +2530,8 @@ likely settled. Left to check: the practice's More label still promising an addr
 boxes taking the Opponent Picker (F13); an arrival after the start flagged under the field and on the sheet (D-6, F12).
 Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 2026-10-12 (owner, §7). Was: No.
 
+**BUILT 2026-11-04** (`/review` done, no migration): checked against the code first, the practice's More label (F13a) and "Edit details keeps its Save" (R6) were already settled, so only two items were built: a weekly game's per-date opponent boxes now use the Opponent Picker (F13b), and an arrival later than the start is warned under the field and beside "Arrive …" on the event window, the game page and the practice sheet (D-6 / F12; a warning, never a block). Owner walk **§452** written and owed: https://claude.ai/artifact/7kVS5g7pYm6ZcKJMX3iyat (`COACH_EVENT_FORM_6E_WALK.html`).
+
 ### Stage 7 — Tournaments inside a club + one door to every family
 > **✅ STAGE 7 CLOSED 2026-10-22 (owner).** All four parts are built and owner-walked: 7a tournament money (§354 ✅, all seven parts), 7b Add our teams
 > (§358 ✅ 28/28), 7c Email families (§359 ✅ 40/40) and 7d the coach's Tournaments (§361 ✅ 35/35). Closed on the owner's instruction. The items below

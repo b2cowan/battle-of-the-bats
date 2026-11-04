@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   ARRIVAL_PRESET_MINUTES, arrivalClockFor, arrivalPresetOf, arrivalAfterStartChange,
-  arrivalPresetLabel, normalizeArrivalDefault,
+  arrivalPresetLabel, normalizeArrivalDefault, arrivalIsAfterStart, arrivalIsAfterStartAt,
 } from '../../lib/coach-arrival.ts';
 import { matchPlace, applyPlaceToEvent, filterPlaces, readPlaceFields, placeKey } from '../../lib/coach-places.ts';
 import { surfaceLabel } from '../../lib/sports.ts';
@@ -128,5 +128,25 @@ describe('a field number reads as a sentence — a bare code takes the sport\'s 
     assert.equal(surfaceLabel('baseball', '   '), '');
     assert.equal(surfaceLabel('baseball', null), '');
     assert.equal(surfaceLabel('baseball', undefined), '');
+  });
+});
+
+describe('arrival after the start (Stage 6e, D-6 / F12)', () => {
+  it('flags only an arrival later than the start', () => {
+    assert.equal(arrivalIsAfterStart('15:07', '17:30'), true);
+    assert.equal(arrivalIsAfterStart('18:00', '17:15'), false);
+    assert.equal(arrivalIsAfterStart('18:00', '18:00'), false);
+  });
+  it('is quiet when either clock is missing or not a clock', () => {
+    assert.equal(arrivalIsAfterStart('', '17:30'), false);
+    assert.equal(arrivalIsAfterStart('18:00', ''), false);
+    assert.equal(arrivalIsAfterStart('soon', 'later'), false);
+  });
+  it('reads a stored start instant in the club\'s zone', () => {
+    // 2026-06-10 15:07 Toronto (EDT, UTC-4) = 19:07 UTC.
+    assert.equal(arrivalIsAfterStartAt('2026-06-10T19:07:00Z', '17:30'), true);
+    assert.equal(arrivalIsAfterStartAt('2026-06-10T19:07:00Z', '14:22'), false);
+    assert.equal(arrivalIsAfterStartAt(null, '17:30'), false);
+    assert.equal(arrivalIsAfterStartAt('2026-06-10T19:07:00Z', null), false);
   });
 });
