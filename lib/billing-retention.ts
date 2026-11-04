@@ -155,17 +155,18 @@ export async function getNonArchivedTournaments(orgId: string): Promise<BillingT
  * downgrade chooses among THESE only: a finished event holds no slot, so a plan change never archives it (and never
  * takes its public site offline).
  */
-export async function getSlotHoldingTournaments(orgId: string): Promise<BillingTournamentSummary[]> {
+export async function getSlotHoldingTournaments(orgId: string): Promise<Array<BillingTournamentSummary & { createdAt: string }>> {
   const { data, error } = await supabaseAdmin
     .from('tournaments')
-    .select('id, name, slug, status, year, start_date, end_date')
+    .select('id, name, slug, status, year, start_date, end_date, created_at')
     .eq('org_id', orgId)
     .in('status', [...SLOT_STATUSES])
     .order('year', { ascending: false })
     .order('name', { ascending: true });
 
   if (error) throw error;
-  return ((data ?? []) as TournamentRow[]).map(mapTournament);
+  // When it was made: a move to the free plan keeps the NEWEST when its pick is gone by the date (Stage 0 Ask 8).
+  return ((data ?? []) as Array<TournamentRow & { created_at: string }>).map(row => ({ ...mapTournament(row), createdAt: row.created_at }));
 }
 
 export async function buildDowngradePreflight(

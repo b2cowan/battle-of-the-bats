@@ -6,7 +6,7 @@ import 'server-only';
  */
 import { getStripe } from './stripe';
 import { supabaseAdmin, getOrgOwnerEmail } from './supabase-admin';
-import { buildCancellationPreflight, getNonArchivedTournaments, retentionDateLabel, retentionDaysFor } from './billing-retention';
+import { buildCancellationPreflight, getNonArchivedTournaments, getSlotHoldingTournaments, retentionDateLabel, retentionDaysFor } from './billing-retention';
 import { closePagesIfPaymentsEnded } from './online-payment-endings';
 import { writePlatformEvent } from './platform-events';
 import { sendTransactionalEmail } from './platform-email-templates';
@@ -140,15 +140,14 @@ async function endingEmailFacts(email: EndingEmail): Promise<EndingEmailFacts> {
   };
 }
 
-/** Every cancel waiting for its date — the daily job's rows. A handful at most; read whole. */
+/** Every change waiting for its date (a cancel or a move to the free plan) — the daily job's rows. A handful at most; read whole. */
 async function readPendingEndings(): Promise<EndingIntent[]> {
   const { data, error } = await supabaseAdmin
     .from('billing_retention_intents')
     .select(INTENT_COLUMNS)
-    .eq('intent_type', 'cancellation')
     .eq('status', 'pending')
     .order('effective_at');
-  if (error) throw new Error(`Couldn't read the waiting cancels: ${error.message}`);
+  if (error) throw new Error(`Couldn't read the waiting changes: ${error.message}`);
   return ((data ?? []) as unknown as IntentRow[]).map(fromRow);
 }
 
@@ -204,27 +203,25 @@ export const endingDeps: EndingDeps = {
   async findAppliedFor(orgId, subscriptionId, subscriptionCreatedAt) {
     const { data, error } = await supabaseAdmin
       .from('billing_retention_intents')
-      .select(`${INTENT_COLUMNS}, intent_type, target_plan`)
+      .select(INTENT_COLUMNS)
       .eq('org_id', orgId)
       .eq('status', 'applied')
       .in('intent_type', ['cancellation', 'downgrade'])
       .order('applied_at', { ascending: false })
       .limit(20);
     if (error) throw new Error(`Couldn't read the account's endings: ${error.message}`);
-    const rows = ((data ?? []) as unknown as Array<IntentRow & { intent_type: 'cancellation' | 'downgrade'; target_plan: string | null }>)
-      .map(r => ({ ...fromRow(r), intentType: r.intent_type, targetPlan: r.target_plan }));
-    return pickAppliedEnding(rows, subscriptionId, subscriptionCreatedAt);
+    return pickAppliedEnding(((data ?? []) as unknown as IntentRow[]).map(fromRow), subscriptionId, subscriptionCreatedAt);
   },
 
   async insertIntent(row: NewEndingIntent) {
     const { data, error } = await supabaseAdmin
       .from('billing_retention_intents')
-      .insert({ org_id: row.orgId, intent_type: 'cancellation', target_plan: null, keep_tournament_ids: [], ...toRow(row) })
+      .insert({ org_id: row.orgId, ...toRow(row) })
       .select(INTENT_COLUMNS)
       .single<IntentRow>();
     if (error) {
       if (error.code === '23505') return 'conflict';
-      throw new Error(`Couldn't record the cancel: ${error.message}`);
+      throw new Error(`Couldn't record the waiting change: ${error.message}`);
     }
     return fromRow(data);
   },
@@ -275,6 +272,42 @@ export const endingDeps: EndingDeps = {
     if (error) throw new Error(`Couldn't archive the tournaments: ${error.message}`);
   },
 
+  // Read ON THE DATE (G2): a tournament made during the wait is here — the same slot-holder read the downgrade window offers.
+  slotHolders: getSlotHoldingTournaments,
+
+  async setPlan(orgId, plan) {
+    // The move to the free plan, on its date: the plan and its limit; the account stays active (never suspended).
+    const { error } = await supabaseAdmin
+      .from('organizations')
+      .update({ plan_id: plan, tournament_limit: PLAN_CONFIG[plan].tournamentLimit, subscription_status: 'active' })
+      .eq('id', orgId);
+    if (error) throw new Error(`Couldn't move the plan: ${error.message}`);
+  },
+
+  async writeDowngradedEvent(e) {
+    await writePlatformEvent({
+      eventType: 'plan_downgraded',
+      source: 'app',
+      sourceEventId: e.sourceEventId,
+      orgId: e.account.orgId,
+      actorUserId: e.actorUserId,
+      actorEmail: e.actorEmail,
+      previousPlanId: e.fromPlan,
+      planId: e.targetPlan,
+      previousSubscriptionStatus: e.account.subscriptionStatus,
+      subscriptionStatus: 'active',
+      metadata: {
+        reason: e.reason,
+        movedAt: e.movedAt,
+        retentionUntil: e.retentionUntil,
+        retainedTournamentIds: e.retainedTournamentIds,
+        keepTournamentIds: e.keptTournamentIds,
+        keptByDefault: e.keptByDefault,
+        intentId: e.intentId,
+      },
+    });
+  },
+
   async suspend(account, { endedAt, reason }) {
     const now = new Date().toISOString();
     if (account.isCoachesPortal) {
@@ -303,6 +336,11 @@ export const endingDeps: EndingDeps = {
   async closePayPages(orgId, where) {
     // 12d-2 (ask 11): an ending stops online payments — the open pay pages close (the account stays connected, ask 4).
     await closePagesIfPaymentsEnded(orgId, where, { ended: true });
+  },
+
+  async closePayPagesIfPlanHasNone(orgId) {
+    // A move to the free plan: closed only when that plan has no online payments (read after the plan was written).
+    await closePagesIfPaymentsEnded(orgId, 'owner downgrade');
   },
 
   async writeEndedEvent(e) {

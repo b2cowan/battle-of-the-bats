@@ -34282,8 +34282,8 @@
       },
       {
         "tablename": "billing_retention_intents",
-        "indexname": "billing_retention_intents_one_pending_cancellation",
-        "indexdef": "CREATE UNIQUE INDEX billing_retention_intents_one_pending_cancellation ON public.billing_retention_intents USING btree (org_id) WHERE ((intent_type = 'cancellation'::text) AND (status = 'pending'::text))"
+        "indexname": "billing_retention_intents_one_pending_change",
+        "indexdef": "CREATE UNIQUE INDEX billing_retention_intents_one_pending_change ON public.billing_retention_intents USING btree (org_id) WHERE (status = 'pending'::text)"
       },
       {
         "tablename": "billing_retention_intents",

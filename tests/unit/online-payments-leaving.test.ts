@@ -89,7 +89,10 @@ describe('every ending, against each kind of money in flight', () => {
   const ENDS: [string, string, RegExp][] = [
     ['Disconnect', 'app/api/admin/payouts/route.ts', /closeClubPayPages\(ctx\.org\.id, 'disconnect'\)/],
     ['a plan move on its date (the webhook’s flip, the operator’s change, an in-app move)', 'lib/plan-move.ts', /closePagesIfPaymentsEnded\(p\.orgId, `plan move/],
-    ['the owner’s downgrade (it takes effect now)', 'app/api/billing/downgrade/confirm/route.ts', /closePagesIfPaymentsEnded\(ctx\.org\.id, 'owner downgrade'\)/],
+    // Plans end at renewal (Stage 2): the owner's move to the free plan closes them through the move itself — on its date, or
+    // now with no paid period — and only when the free plan has no online payments (no `ended: true`).
+    ['the owner’s downgrade (on its date)', 'lib/plan-ending.ts', /await deps\.closePayPagesIfPlanHasNone\(account\.orgId\);/],
+    ['the owner’s downgrade, by the plan it moves to', 'lib/plan-ending-server.ts', /closePagesIfPaymentsEnded\(orgId, 'owner downgrade'\)/],
     // Plans end at renewal (Stage 1): every cancel ends through ONE ending (lib/plan-ending.ts) — on its date, or now for End
     // now / no subscription — which names the door and closes the pages with `ended: true` (lib/plan-ending-server.ts).
     ['the owner’s cancel', 'lib/plan-ending.ts', /if \(door === 'owner' \|\| door === 'stripe_portal'\) return 'owner cancel';/],

@@ -181,6 +181,8 @@ export const PLAN_BILLING_WORDS = {
     notRecorded: 'Your cancel is scheduled with the payment provider. We’re still recording it here — refresh the page in a minute.',
     nothingToKeep: 'Your plan isn’t set to end, so there’s nothing to keep.',
     alreadyEnded: 'This plan has already ended.',
+    /** Stage 2: a cancel that could not replace a waiting move to the free plan — the move still waits, nothing was cancelled. */
+    moveStillWaiting: 'Your move to the free plan is still waiting, so the cancel wasn’t made. Try again in a moment.',
     /** Finish this ending now (G3, staff): the refusals. The two outcomes are the record's own notices. */
     finish: {
       nothingWaiting: 'Nothing is waiting to end on this account, so there is nothing to finish.',
@@ -196,6 +198,11 @@ export const PLAN_BILLING_WORDS = {
           ? `${org} is suspended and ${tournaments === 1 ? 'its tournament is' : `its ${pluralize(tournaments, 'tournament')} are`} archived${until ? ` until ${day(until)}` : ''}.`
           : `${org} is suspended${until ? ` and its data is kept until ${day(until)}` : ''}.`,
         emailed ? 'The owner was emailed.' : '',
+      ].filter(Boolean).join(' '),
+      /** Stage 2: the waiting change was a move to the free plan — the club moved on its date, never suspended. */
+      moved: (org: string, target: string, movedAt: string | null, tournaments: number, until: string | null) => [
+        `Stripe ended this subscription${movedAt ? ` on ${day(movedAt)}` : ''}, so ${org} moved to ${target} as it chose. It is not suspended.`,
+        tournaments > 0 ? `${tournaments === 1 ? 'One tournament it did not keep is' : `${pluralize(tournaments, 'tournament')} it did not keep are`} archived${until ? ` until ${day(until)}` : ''}.` : '',
       ].filter(Boolean).join(' '),
       liveLead: 'Nothing changed.',
       correctedLead: 'Record corrected.',
@@ -290,6 +297,19 @@ export const PLAN_BILLING_WORDS = {
     fits: 'Your current tournament usage fits this plan. No tournaments need to move into retention.',
     reason: 'Why are you downgrading?', reasonHelp: 'For your records and ours. You can leave it empty.',
     keep: (label: string) => `Keep ${label}`, confirm: (label: string) => `Downgrade to ${label}`,
+    // Plans end at the renewal date, Stage 2 (owner rulings 2026-11-03): a move to the free plan waits for its date.
+    /** Another change while a move to the free plan waits (the one rule's refusal, named for what comes on the date). */
+    waitingRefusal: (plan: OrgPlanKey, target: OrgPlanKey, iso: string | null) =>
+      `Your plan moves to ${PLAN_CONFIG[target].label}${iso ? ` on ${day(iso)}` : ' at renewal'}. ${keepDoor(plan)} first, then change it.`,
+    foreignSchedule: 'A change made outside FieldLogicHQ is waiting on this subscription, so the plan can’t be changed here. Contact us and we’ll sort it out.',
+    stripeRefused: 'The payment provider didn’t accept the change. Nothing was changed — try again in a moment.',
+    changedMeanwhile: 'Another change to this plan was just made. Refresh the page to see it.',
+    /** A move with no paid period happened here, but the payment provider would not stop the (unpaid) subscription. */
+    stripeNotStopped: 'Your plan was moved here, but the payment provider could not stop the subscription. Contact support to stop your billing.',
+    /** The old immediate move to a cheaper PAID plan is closed: that move waits for renewal under Change plan (§1.3). */
+    useTheMove: 'A move to a cheaper paid plan waits for your renewal date. Choose it under Change plan.',
+    /** A Coaches Portal changes plan on its own billing page, never through a club's downgrade. */
+    notHere: 'This plan isn’t changed here.',
   },
   move: {
     title: (label: string) => `Move to ${label}?`, loading: 'Loading what the move changes…',

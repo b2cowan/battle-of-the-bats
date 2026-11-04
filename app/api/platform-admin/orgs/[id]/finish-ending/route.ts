@@ -5,6 +5,7 @@ import { withObservability, captureAndJson } from '@/lib/observability';
 import { finishOverdueEnding } from '@/lib/plan-ending';
 import { endingDeps, readEndingAccount, readPendingEnding } from '@/lib/plan-ending-server';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
+import { PLAN_CONFIG } from '@/lib/plan-config';
 
 /**
  * POST /api/platform-admin/orgs/[id]/finish-ending — Finish this ending now (Plans end at the renewal date, Part C, G3;
@@ -51,7 +52,12 @@ export const POST = withObservability(async (req: NextRequest, { params }: { par
     }
     return NextResponse.json({
       ok: true, ...result,
-      notice: { tone: 'good', lead: W.cancel.finish.finishedLead, text: W.cancel.finish.finished(account.name, result.endedAt, result.retainedTournaments, result.retentionUntil, result.emailed) },
+      notice: {
+        tone: 'good', lead: W.cancel.finish.finishedLead,
+        text: result.moved
+          ? W.cancel.finish.moved(account.name, PLAN_CONFIG.tournament.label, result.endedAt, result.retainedTournaments, result.retentionUntil)
+          : W.cancel.finish.finished(account.name, result.endedAt, result.retainedTournaments, result.retentionUntil, result.emailed),
+      },
     });
   } catch (error) {
     await changeFailed(error);

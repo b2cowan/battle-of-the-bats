@@ -750,7 +750,8 @@ async function runVerifiedBillingEvent(event: Stripe.Event, customerId: string |
         if (account) await endingForDeletedSubscription(account, sub, endingDeps);
 
         // Every path: the Stripe subscription fields become accurate only now that Stripe confirms the deletion. A downgrade
-        // to free keeps its plan and status (the confirm route set them); an ending has already set canceled and suspended.
+        // to free keeps its plan and status (the move just set them — Stage 2: a waiting move runs here, on its date, through
+        // `applyDowngrade`, never the suspension); an ending has already set canceled and suspended.
         await supabaseAdmin
           .from('organizations')
           .update({

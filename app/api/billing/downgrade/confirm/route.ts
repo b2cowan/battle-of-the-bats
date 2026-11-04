@@ -4,23 +4,19 @@ import {
   isLowerPlan,
   isOrganizationDowngradeTarget,
   normalizePlan,
-  retentionDeadline,
+  retentionDateLabel,
   writeOrgBillingAudit,
 } from '@/lib/billing-retention';
 import { PLAN_CONFIG } from '@/lib/plan-config';
-import { stripe } from '@/lib/stripe';
-import { getPlanFromPriceId, getStripePriceId } from '@/lib/stripe-prices';
-import { supabaseAdmin } from '@/lib/supabase-admin';
-import { writePlatformEvent } from '@/lib/platform-events';
+import { getStripe } from '@/lib/stripe';
 import { planDowngradedHtml, SITE_URL } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
-import type { OrgPlan } from '@/lib/types';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 import { ownPlanOf } from '@/lib/entitlement-grants';
-import { closePagesIfPaymentsEnded } from '@/lib/online-payment-endings';
 import { getBillingHref } from '@/lib/billing-urls';
-import { futureMoveAnswer } from '@/lib/plan-ending';
-import { readPendingEnding } from '@/lib/plan-ending-server';
+import { scheduleDowngrade, stripeIdToStopNow } from '@/lib/plan-ending';
+import { endingDeps, readEndingAccount } from '@/lib/plan-ending-server';
+import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 
 type ConfirmBody = {
   targetPlan?: unknown;
@@ -34,6 +30,20 @@ function normalizeKeepIds(value: unknown): string[] {
   return [...new Set(value.filter((v): v is string => typeof v === 'string'))];
 }
 
+/**
+ * POST /api/billing/downgrade/confirm — the owner moves to the free plan. Owner-only.
+ *
+ * Plans end at the renewal date, Stage 2 (owner rulings 2026-11-03; lib/plan-ending.ts): a paying Stripe subscription's
+ * move is SCHEDULED for its renewal date — the waiting row (target, the owner's pick) then Stripe's `cancel_at_period_end`
+ * — and nothing is archived, limited, closed or emailed as done now; the paid plan stays fully live until the date, when
+ * the webhook runs the move (`applyDowngrade`). With no live paid period (ruling 3: comped, Founding Season, no
+ * subscription, a dev mock) there is no date: the move happens now, through the same `applyDowngrade` and its safe order
+ * (restore records BEFORE the archive — G11; the old route archived first).
+ *
+ * ⚠ The old immediate move to a cheaper PAID plan is closed: that move waits for renewal through Change plan (§1.3), and
+ * this branch (with its `create_prorations`) let a direct call skip the wait — and, with no paying subscription, it handed
+ * out a cheaper paid plan unbilled. This route now moves to the free plan only (/review 2026-11-03).
+ */
 export const POST = withObservability(async (req: Request) => {
   // Scope to the org the caller is viewing (multi-org owners), NOT their home org — fail closed.
   const body = await req.json().catch(() => ({})) as ConfirmBody;
@@ -49,222 +59,97 @@ export const POST = withObservability(async (req: Request) => {
   if (!isOrganizationDowngradeTarget(targetPlan)) {
     return Response.json({ error: 'Team is a standalone product, not an organization downgrade target.' }, { status: 400 });
   }
-  if (!isLowerPlan(ownPlanOf(ctx.org), targetPlan)) {
+  const fromPlan = ownPlanOf(ctx.org);
+  if (!isLowerPlan(fromPlan, targetPlan)) {
     return Response.json({ error: 'You can only confirm a downgrade to a lower plan.' }, { status: 400 });
   }
-  // Plans end at renewal (Stage 1): while a cancel waits, a downgrade would drop the plan now and the end date would then
-  // suspend a free account. Keep {Plan} first (the one rule for a subscription's future — refuse in plain words).
-  const pendingEnding = await readPendingEnding(ctx.org.id);
-  const refusal = futureMoveAnswer('downgrade', { ownPlan: ownPlanOf(ctx.org), pending: !!pendingEnding, pendingEndsAt: pendingEnding?.effectiveAt ?? null });
-  if (refusal.answer === 'refuse') return Response.json({ error: refusal.reason, code: 'subscription_ending' }, { status: 409 });
 
-  const preflight = await buildDowngradePreflight(ctx.org, targetPlan);
-  const keepTournamentIds = normalizeKeepIds(body.keepTournamentIds);
-  const knownIds = new Set(preflight.tournaments.map(t => t.id));
+  try {
+    const [account, preflight] = await Promise.all([readEndingAccount(ctx.org.id), buildDowngradePreflight(ctx.org, targetPlan)]);
+    if (!account) return Response.json({ error: 'Organization not found' }, { status: 404 });
+    // A Coaches Portal's plan changes on its own billing page (the move to free would skip its workspace and Premium tools).
+    if (account.isCoachesPortal) return Response.json({ error: W.downgrade.notHere }, { status: 400 });
+    // A cancelled (suspended) account comes back through Reactivation, never a downgrade that would half-revive it.
+    if (account.subscriptionStatus === 'canceled') return Response.json({ error: W.cancel.alreadyEnded }, { status: 409 });
+    // The old immediate paid branch, closed for EVERY account: a cheaper paid plan is the move at renewal (refused in plain
+    // words, with its door). Without a paying subscription it would hand out a paid plan unbilled (an unpaid or
+    // incomplete subscription, a comp) — no screen offers it; the operator's plan change is the door for those.
+    if (targetPlan !== 'tournament') return Response.json({ error: W.downgrade.useTheMove, code: 'use_the_move' }, { status: 409 });
 
-  if (preflight.requiresTournamentChoice) {
-    if (keepTournamentIds.length !== preflight.allowedKeepCount) {
-      return Response.json(
-        { error: `Choose ${preflight.allowedKeepCount} tournament${preflight.allowedKeepCount === 1 ? '' : 's'} to keep active.` },
-        { status: 400 },
-      );
-    }
-    if (keepTournamentIds.some(id => !knownIds.has(id))) {
-      return Response.json({ error: 'One selected tournament does not belong to this organization.' }, { status: 400 });
-    }
-  }
-
-  const keepSet = new Set(keepTournamentIds);
-  const retainedTournaments = preflight.requiresTournamentChoice
-    ? preflight.tournaments.filter(t => !keepSet.has(t.id))
-    : [];
-  const retentionUntil = retentionDeadline();
-  const targetCfg = PLAN_CONFIG[targetPlan];
-  const actorEmail = ctx.user.email ?? null;
-  const reason = typeof body.reason === 'string' && body.reason.trim()
-    ? body.reason.trim()
-    : null;
-
-  const { data: intent, error: intentError } = await supabaseAdmin
-    .from('billing_retention_intents')
-    .insert({
-      org_id: ctx.org.id,
-      intent_type: 'downgrade',
-      status: 'applied',
-      from_plan: ownPlanOf(ctx.org),
-      target_plan: targetPlan,
-      keep_tournament_ids: keepTournamentIds,
-      retention_until: retentionUntil,
-      reason,
-      created_by: ctx.user.id,
-      created_by_email: actorEmail,
-      applied_at: new Date().toISOString(),
-    })
-    .select('id')
-    .single();
-  if (intentError) {
-    return captureAndJson(intentError, { error: intentError.message }, 500);
-  }
-
-  if (retainedTournaments.length > 0) {
-    const retainedIds = retainedTournaments.map(t => t.id);
-    const { error: archiveError } = await supabaseAdmin
-      .from('tournaments')
-      .update({ status: 'archived', is_active: false })
-      .eq('org_id', ctx.org.id)
-      .in('id', retainedIds);
-    if (archiveError) return captureAndJson(archiveError, { error: archiveError.message }, 500);
-
-    const { error: recordError } = await supabaseAdmin
-      .from('billing_retained_records')
-      .insert(retainedTournaments.map(t => ({
-        intent_id: intent.id,
-        org_id: ctx.org.id,
-        record_type: 'tournament',
-        record_id: t.id,
-        display_name: t.name,
-        retained_state: 'retained_inactive',
-        retention_until: retentionUntil,
-        metadata: {
-          previousStatus: t.status,
-          slug: t.slug,
-          year: t.year,
-          startDate: t.startDate,
-          endDate: t.endDate,
-          retentionReason: 'plan_downgrade',
-          fromPlan: ownPlanOf(ctx.org),
-          targetPlan,
-        },
-      })));
-    if (recordError) return captureAndJson(recordError, { error: recordError.message }, 500);
-  }
-
-  const { error: orgError } = await supabaseAdmin
-    .from('organizations')
-    .update({
-      plan_id: targetPlan,
-      tournament_limit: targetCfg.tournamentLimit,
-      subscription_status: 'active',
-    })
-    .eq('id', ctx.org.id);
-  if (orgError) return captureAndJson(orgError, { error: orgError.message }, 500);
-  // 12d-2 (ask 11): this downgrade takes effect now, so a plan without online payments closes the open pay pages now.
-  await closePagesIfPaymentsEnded(ctx.org.id, 'owner downgrade');
-
-  await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_downgrade_confirmed', {
-    fromPlan: ownPlanOf(ctx.org),
-    targetPlan,
-    retainedTournamentIds: retainedTournaments.map(t => t.id),
-    keepTournamentIds,
-    retentionUntil,
-  });
-
-  await writePlatformEvent({
-    eventType: 'plan_downgraded',
-    source: 'app',
-    orgId: ctx.org.id,
-    actorUserId: ctx.user.id,
-    actorEmail,
-    previousPlanId: ownPlanOf(ctx.org),
-    planId: targetPlan,
-    previousSubscriptionStatus: ctx.org.subscriptionStatus,
-    subscriptionStatus: 'active',
-    metadata: {
-      retainedTournamentIds: retainedTournaments.map(t => t.id),
-      keepTournamentIds,
-      retentionUntil,
-      reason,
-    },
-  });
-
-  // — D4: Stripe reconciliation —
-  // All DB writes have succeeded. Now apply the matching change in Stripe so
-  // billing stops at the old rate. If there is no Stripe subscription (e.g. the
-  // org was on a free trial or never completed checkout), skip silently.
-  const stripeSubscriptionId = ctx.org.stripeSubscriptionId ?? null;
-  if (stripeSubscriptionId) {
-    try {
-      if (targetPlan === 'tournament') {
-        // Downgrading to the free tier — cancel the Stripe subscription entirely.
-        // customer.subscription.deleted will fire; the dedup guard in the webhook
-        // will find this intent (status='applied', intent_type='downgrade') and
-        // skip retention logic while only clearing the Stripe subscription fields.
-        await stripe.subscriptions.cancel(stripeSubscriptionId);
-      } else {
-        // Downgrading to a lower paid plan — swap the price on the existing
-        // subscription. Retrieve first to get the subscription item ID and derive
-        // the billing cycle from the current price.
-        const currentSub = await stripe.subscriptions.retrieve(stripeSubscriptionId);
-        const currentItem = currentSub.items.data[0];
-        const currentMatch = await getPlanFromPriceId(currentItem.price.id);
-        const billingCycle = currentMatch?.billingCycle ?? 'monthly';
-
-        const newPriceId = await getStripePriceId(targetPlan, billingCycle);
-        if (!newPriceId) {
-          throw new Error(
-            `No Stripe price ID found for plan "${targetPlan}" / cycle "${billingCycle}". ` +
-            'Enter it in Platform Admin → Stripe Prices.'
-          );
-        }
-
-        await stripe.subscriptions.update(stripeSubscriptionId, {
-          items: [{ id: currentItem.id, price: newPriceId }],
-          proration_behavior: 'create_prorations',
-        });
+    const chosen = normalizeKeepIds(body.keepTournamentIds);
+    const knownIds = new Set(preflight.tournaments.map(t => t.id));
+    if (preflight.requiresTournamentChoice) {
+      if (chosen.length !== preflight.allowedKeepCount) {
+        return Response.json(
+          { error: `Choose ${preflight.allowedKeepCount} tournament${preflight.allowedKeepCount === 1 ? '' : 's'} to keep active.` },
+          { status: 400 },
+        );
       }
-    } catch (stripeErr) {
-      const message = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
-      console.error('[downgrade/confirm] Stripe reconciliation failed:', message);
-      await captureError(stripeErr, { ctx, route: '/api/billing/downgrade/confirm', method: 'POST', statusCode: 500 });
-      await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_stripe_reconciliation_failed', {
-        action: 'downgrade',
-        targetPlan,
-        stripeSubscriptionId,
-        error: message,
-      });
-      return Response.json(
-        {
-          error:
-            'Your plan was updated in FieldLogicHQ but the Stripe subscription could not be changed. ' +
-            'Contact support to reconcile your billing.',
-          targetPlan,
-          retainedCount: retainedTournaments.length,
-          retentionUntil,
-        },
-        { status: 500 },
-      );
+      if (chosen.some(id => !knownIds.has(id))) {
+        return Response.json({ error: 'One selected tournament does not belong to this organization.' }, { status: 400 });
+      }
     }
-  }
+    // The pick is stored either way: with no choice to make, every tournament holding a slot now is the pick, so one made
+    // during the wait is not in it and is archived on the date (G2).
+    const keepTournamentIds = preflight.requiresTournamentChoice ? chosen : preflight.tournaments.map(t => t.id);
+    const reason = typeof body.reason === 'string' && body.reason.trim() ? body.reason.trim() : null;
+    const actorEmail = ctx.user.email ?? null;
 
-  if (actorEmail) {
-    const fromPlanLabel = PLAN_CONFIG[ownPlanOf(ctx.org) as OrgPlan]?.label ?? ownPlanOf(ctx.org);
-    const toPlanLabel = PLAN_CONFIG[targetPlan]?.label ?? targetPlan;
-    const retentionDate = new Date(retentionUntil).toLocaleDateString('en-CA', {
-      year: 'numeric', month: 'long', day: 'numeric',
-    });
-    const billingUrl = `${SITE_URL}${getBillingHref({ ...ctx.org, planId: ownPlanOf(ctx.org) })}`;
-    await sendTransactionalEmail({
-      key: 'plan_downgraded',
-      to: actorEmail,
-      vars: { orgName: ctx.org.name, fromPlanLabel, toPlanLabel, billingUrl },
-      defaultSubject: `Your ${ctx.org.name} plan has been updated`,
-      defaultHtml: planDowngradedHtml({
-        orgName: ctx.org.name,
-        fromPlanLabel,
-        toPlanLabel,
-        retainedTournaments: retainedTournaments.length,
-        retentionUntil: retentionDate,
-        billingUrl,
-      }),
-      orgId: ctx.org.id,
-      askedBy: ctx.user.id,
-    });
-  }
+    const result = await scheduleDowngrade(account, { door: 'owner', userId: ctx.user.id, email: actorEmail }, { targetPlan, keepTournamentIds, reason }, endingDeps);
+    if (result.outcome === 'refused') return Response.json({ error: result.error, code: 'plan_change_waiting' }, { status: result.status });
 
-  return Response.json({
-    ok: true,
-    targetPlan,
-    retainedCount: retainedTournaments.length,
-    retentionUntil,
-  });
+    if (result.outcome === 'scheduled') {
+      await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_downgrade_scheduled', {
+        fromPlan, targetPlan, keepTournamentIds, movesAt: result.movesAt, heldMovePlan: result.heldMovePlan,
+      });
+      return Response.json({ ok: true, outcome: 'scheduled', targetPlan, movesAt: result.movesAt });
+    }
+
+    // Moved now (no live paid period).
+    const moved = result.moved;
+    await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_downgrade_confirmed', {
+      fromPlan, targetPlan, retainedTournamentIds: moved.retainedTournamentIds, keepTournamentIds: moved.keptTournamentIds,
+      retentionUntil: moved.retentionUntil,
+    });
+    // A real subscription that is not paying (unpaid, incomplete) has no date to wait for, but Stripe still holds it open:
+    // stop it, or a late payment could switch the paid plan back on (as an immediate cancel does).
+    const stopId = stripeIdToStopNow(account);
+    if (stopId) {
+      try {
+        await getStripe().subscriptions.cancel(stopId);
+      } catch (stripeErr) {
+        const message = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
+        await captureError(stripeErr, { ctx, route: '/api/billing/downgrade/confirm', method: 'POST', statusCode: 500 });
+        await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_stripe_reconciliation_failed', { action: 'downgrade', targetPlan, stripeSubscriptionId: stopId, error: message });
+        return Response.json({
+          error: W.downgrade.stripeNotStopped, targetPlan, retainedCount: moved.retainedTournamentIds.length, retentionUntil: moved.retentionUntil,
+        }, { status: 500 });
+      }
+    }
+
+    // The move happened now, so "your plan has been updated" is true now. (Part C moves this email into the move itself.)
+    if (actorEmail) {
+      const fromPlanLabel = PLAN_CONFIG[fromPlan]?.label ?? fromPlan;
+      const toPlanLabel = PLAN_CONFIG[targetPlan]?.label ?? targetPlan;
+      const billingUrl = `${SITE_URL}${getBillingHref({ ...ctx.org, planId: ownPlanOf(ctx.org) })}`;
+      await sendTransactionalEmail({
+        key: 'plan_downgraded',
+        to: actorEmail,
+        vars: { orgName: ctx.org.name, fromPlanLabel, toPlanLabel, billingUrl },
+        defaultSubject: `Your ${ctx.org.name} plan has been updated`,
+        defaultHtml: planDowngradedHtml({
+          orgName: ctx.org.name, fromPlanLabel, toPlanLabel, retainedTournaments: moved.retainedTournamentIds.length,
+          retentionUntil: retentionDateLabel(moved.retentionUntil), billingUrl,
+        }),
+        orgId: ctx.org.id,
+        askedBy: ctx.user.id,
+      });
+    }
+
+    return Response.json({
+      ok: true, outcome: 'moved', targetPlan, retainedCount: moved.retainedTournamentIds.length, retentionUntil: moved.retentionUntil,
+    });
+  } catch (error) {
+    return captureAndJson(error, { error: error instanceof Error ? error.message : 'The downgrade could not be completed.' }, 500);
+  }
 }, { route: '/api/billing/downgrade/confirm' });

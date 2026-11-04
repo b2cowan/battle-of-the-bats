@@ -6,7 +6,8 @@ import { getStripePriceId } from './stripe-prices';
 import { foundingCompAppliesToPlan, revokeFoundingSeasonComp } from './founding-season';
 import { writeGrowthEvent } from './platform-events';
 import { MOVE_METADATA_KEY } from './plan-growth';
-import { futureMoveAnswer, stripeCancelSignal } from './plan-ending';
+import { futureMoveAnswer, stripeCancelSignal, waitingState } from './plan-ending';
+import { readPendingEnding } from './plan-ending-store';
 import type { OrgPlan } from './types';
 import { ownPlanOf } from './entitlement-grants';
 import { PAYING_STATUSES } from './stripe-billing-state';
@@ -164,7 +165,9 @@ async function validateMove(org: MoveOrg, toPlan: OrgPlan): Promise<
   // Keep {Plan} first. Either Stripe signal counts (G8); the refusal is the one rule for a subscription's future.
   const ending = stripeCancelSignal(live.sub);
   if (ending.scheduled) {
-    const answer = futureMoveAnswer('plan_move', { ownPlan: ownPlanOf(org), pending: true, pendingEndsAt: ending.endsAt });
+    // Stage 2: the same Stripe signal is a waiting move to the free plan when our row says so — the refusal names it.
+    const waiting = await readPendingEnding(org.id).catch(() => null);
+    const answer = futureMoveAnswer('plan_move', { ownPlan: ownPlanOf(org), ...waitingState(waiting), pending: true, pendingEndsAt: ending.endsAt });
     if (answer.answer === 'refuse') return { ok: false, refusal: { code: 'subscription_ending', error: answer.reason, endsAt: ending.endsAt } };
   }
 

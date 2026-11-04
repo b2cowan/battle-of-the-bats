@@ -20,12 +20,20 @@
  * ⚠⚠ ONE RULE FOR A SUBSCRIPTION'S FUTURE (Plans & pricing G5, owner sequence ruling 3). A cheaper-plan move waiting at
  * renewal is CARRIED by a cancel (remembered on the row), PUT BACK by Keep, DROPPED on the record when the plan ends, and
  * any other change while a cancel waits is REFUSED in plain words. `futureMoveAnswer` is that rule, in one place.
+ *
+ * ⚠⚠ A MOVE TO THE FREE PLAN WAITS TOO (Stage 2, owner rulings 2026-11-03). The waiting row is then a 'downgrade' with the
+ * target plan and the owner's pick of tournaments; Stripe holds the same `cancel_at_period_end`. So Stripe's signal alone
+ * cannot say "cancel" — the ROW says which: `recordStripeSignal` never records a cancel over a waiting move, and the
+ * deletion runs `applyDowngrade` (plan → free, the unpicked slot holders archived, the account stays active), NEVER the
+ * suspension. One waiting change per account (migration 431): a cancel or an end REPLACES a waiting move (its row is
+ * withdrawn, a cheaper move it set aside carries over), and any other change while a move waits is refused.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 import type Stripe from 'stripe';
 import type { OrgPlan } from './types';
 import type { BillingTournamentSummary } from './billing-retention-types';
 import { PLAN_BILLING_WORDS as W } from './plan-billing-words';
+import { PLAN_CONFIG } from './plan-config';
 
 /** Stripe retries a failed webhook for up to three days; a waiting cancel still pending after that has been missed (G3). */
 export const OVERDUE_GRACE_DAYS = 3;
@@ -46,9 +54,17 @@ export type EndingLogEntry = {
   note?: string;
 };
 
+/** What a waiting row is: a cancel (Stage 1) or a move to the free plan (Stage 2). */
+export type IntentKind = 'cancellation' | 'downgrade';
+
 export type EndingIntent = {
   id: string;
   orgId: string;
+  intentType: IntentKind;
+  /** A move's destination (the free plan); null for a cancel. Not `heldMovePlan`, a cheaper PAID move set aside. */
+  targetPlan: OrgPlan | null;
+  /** A move's pick: the tournaments that stay active. Read against what is live ON THE DATE (G2); after the move, what was kept. */
+  keepTournamentIds: string[];
   status: EndingStatus;
   effectiveAt: string;
   retentionUntil: string;
@@ -108,8 +124,8 @@ export interface EndingDeps {
 
   findPending(orgId: string): Promise<EndingIntent | null>;
   /** The applied ending of THIS subscription: its own id on the row, or (older rows, no id) applied after it was created. */
-  findAppliedFor(orgId: string, subscriptionId: string, subscriptionCreatedAt: string | null): Promise<(EndingIntent & { intentType: 'cancellation' | 'downgrade' }) | null>;
-  /** Resolves 'conflict' when the one-pending-cancel index refused it (someone else's row landed first). */
+  findAppliedFor(orgId: string, subscriptionId: string, subscriptionCreatedAt: string | null): Promise<EndingIntent | null>;
+  /** Resolves 'conflict' when the one-waiting-change index refused it (someone else's row landed first). */
   insertIntent(row: NewEndingIntent): Promise<EndingIntent | 'conflict'>;
   /** Writes only while the row's status is one of `onlyIf`; null when it was not (another writer moved it). */
   updateIntent(id: string, patch: EndingIntentPatch, onlyIf: EndingStatus[]): Promise<EndingIntent | null>;
@@ -121,6 +137,13 @@ export interface EndingDeps {
   supersedeOthers(orgId: string, tournamentIds: string[], intentId: string): Promise<void>;
   insertRecords(rows: RetainedRecordRow[]): Promise<void>;
   archive(orgId: string, tournamentIds: string[]): Promise<void>;
+  /** A move to the free plan, read ON THE DATE: the tournaments that hold a slot (Draft and Active — a finished one stays). */
+  slotHolders(orgId: string): Promise<SlotHolder[]>;
+  /** The move itself: the plan and its tournament limit; the account stays active (a move is never a suspension). */
+  setPlan(orgId: string, plan: OrgPlan): Promise<void>;
+  /** After a move: the open pay pages close only when the plan now held has no online payments. */
+  closePayPagesIfPlanHasNone(orgId: string): Promise<void>;
+  writeDowngradedEvent(p: DowngradedEvent): Promise<void>;
   suspend(account: EndingAccount, p: { endedAt: string; reason: string | null }): Promise<void>;
   closePayPages(orgId: string, where: PayPagesWhere): Promise<void>;
   writeEndedEvent(p: EndedEvent): Promise<void>;
@@ -148,6 +171,27 @@ export interface EndingDeps {
 }
 
 export type PayPagesWhere = 'owner cancel' | 'operator cancel' | 'stripe suspension';
+
+/** A tournament that holds a slot, with when it was made — "the newest" is the date's fallback (Stage 0 Ask 8). */
+export type SlotHolder = BillingTournamentSummary & { createdAt: string };
+
+export type DowngradedEvent = {
+  account: EndingAccount;
+  intentId: string;
+  actorUserId: string | null;
+  actorEmail: string | null;
+  fromPlan: OrgPlan;
+  targetPlan: OrgPlan;
+  reason: string | null;
+  movedAt: string;
+  retentionUntil: string;
+  retainedTournamentIds: string[];
+  keptTournamentIds: string[];
+  /** The pick was gone on the date, so the newest was kept. */
+  keptByDefault: boolean;
+  /** The idempotency key: one `plan_downgraded` per move, whichever door, whichever replay. */
+  sourceEventId: string;
+};
 
 /** The three Part C emails (G6), each stamped once on its row. The "cancelled" email on the end date is `sendEndedEmail`. */
 export type EndingEmailStamp = 'ends_on' | 'reminder' | 'kept';
@@ -255,15 +299,26 @@ export const REMINDER_DAYS = 7;
 export const KEEP_IN_PROGRESS_MS = 15 * 60_000;
 
 /**
- * A Keep {Plan} under way: the row's last entry is a person's keep, minutes old, and the row still waits. Keep marks the
+ * A person's change under way: the row's last entry is a person's keep, minutes old, and the row still waits. Keep marks the
  * row so before the slow calls that put a cheaper move back; Stripe's "renewed" event (fired by Keep's own clear) then
  * leaves the row alone instead of reading it as a Renew in its portal — and a keep that died part-way leaves the row
  * waiting, so Keep again finishes it, the move included (/review 2026-11-02).
+ *
+ * Stage 2: a waiting MOVE's own click counts too. Its row is written BEFORE Stripe holds the flag (so the click's Stripe
+ * events find a move, never "a cancel in the portal"), and the event of its first Stripe call — a released schedule — shows
+ * no flag yet. The cost, accepted: a real Renew in Stripe's portal within those minutes is read on Stripe's next event or by
+ * the safety net (Finish this ending now), not at once.
  */
-export function keepInProgress(intent: Pick<EndingIntent, 'status' | 'changeLog'>, now: Date): boolean {
+export function keepInProgress(intent: Pick<EndingIntent, 'status' | 'changeLog' | 'intentType'>, now: Date): boolean {
   const last = intent.changeLog.at(-1);
-  return intent.status === 'pending' && last?.action === 'kept' && last.door !== 'stripe_portal'
+  const persons = last?.action === 'kept' || (last?.action === 'scheduled' && intent.intentType === 'downgrade');
+  return intent.status === 'pending' && !!last && persons && last.door !== 'stripe_portal'
     && now.getTime() - new Date(last.at).getTime() < KEEP_IN_PROGRESS_MS;
+}
+
+/** The emails of a waiting CANCEL (ends on, the reminder). A move to the free plan gets its own (Stage 2 Part C), never these. */
+export function hasCancelEmails(intent: Pick<EndingIntent, 'intentType'>): boolean {
+  return intent.intentType === 'cancellation';
 }
 
 /** Whole days past an overdue ending's date (the record's band, the retention page's "Days over"). */
@@ -335,7 +390,7 @@ export async function sendEndingEmailOnce(email: EndingEmail, notify: boolean, d
  * id on the row, or — older rows, written before the id was kept — applied after the subscription was created. A downgrade
  * counts only when it was to the free plan (a paid→paid one never ended a subscription).
  */
-export function pickAppliedEnding<T extends { intentType: 'cancellation' | 'downgrade'; targetPlan: string | null; stripeSubscriptionId: string | null; appliedAt: string | null }>(
+export function pickAppliedEnding<T extends { intentType: IntentKind; targetPlan: string | null; stripeSubscriptionId: string | null; appliedAt: string | null }>(
   rows: T[], subscriptionId: string, subscriptionCreatedAt: string | null,
 ): T | null {
   return rows.find(r => (r.intentType === 'cancellation' || r.targetPlan === 'tournament')
@@ -367,6 +422,8 @@ export type FutureMoveAnswer =
   | { answer: 'drop'; plan: OrgPlan; why: string }
   | { answer: 'refuse'; reason: string }
   | { answer: 'withdraw' }
+  /** A cancel or an end over a waiting move to the free plan: the move's row is withdrawn and the cancel takes its place. */
+  | { answer: 'replace' }
   | { answer: 'none' };
 
 /**
@@ -374,11 +431,16 @@ export type FutureMoveAnswer =
  * remembered on a waiting cancel, a waiting cancel's date — it says what the action must do. Nothing may leave a customer
  * on a price or plan they did not choose with no screen saying so.
  *
- *   schedule_cancel  a move waiting → CARRY it (remember it on the row); a schedule that isn't ours → REFUSE
+ *   schedule_cancel  a move to the free plan waiting → REPLACE it (Stage 2 ruling 4; End now too)
+ *                    a cheaper move waiting → CARRY it (remember it on the row); a schedule that isn't ours → REFUSE
+ *   downgrade        (a move to the free plan) while a cancel or another move waits → REFUSE; otherwise as a cancel:
+ *                    a cheaper move waiting → CARRY it; a schedule that isn't ours → REFUSE
  *   keep             a remembered move → RESTORE it at renewal
  *   end              a remembered move → DROP it, on the record, because the plan it would apply to has ended
- *   plan_move / downgrade / operator_plan_change   while a cancel waits → REFUSE ("Keep {Plan} first")
- *   replace_subscription / reactivation            while a cancel waits → WITHDRAW it (the old subscription is going)
+ *   plan_move / operator_plan_change   while a cancel or a move waits → REFUSE ("Keep {Plan} first")
+ *   replace_subscription / reactivation while a cancel or a move waits → WITHDRAW it (the old subscription is going)
+ *
+ * `pendingKind` says which waiting change it is (a cancel when absent): the refusal names what is coming on the date.
  */
 export function futureMoveAnswer(action: FutureMoveAction, state: {
   ownPlan: OrgPlan;
@@ -386,10 +448,24 @@ export function futureMoveAnswer(action: FutureMoveAction, state: {
   heldMovePlan?: OrgPlan | null;
   pendingEndsAt?: string | null;
   pending?: boolean;
+  pendingKind?: IntentKind | null;
+  pendingTarget?: OrgPlan | null;
 }): FutureMoveAnswer {
+  const waits = !!(state.pending || state.pendingEndsAt);
+  const refusal = (): FutureMoveAnswer => ({
+    answer: 'refuse',
+    reason: state.pendingKind === 'downgrade'
+      ? W.downgrade.waitingRefusal(state.ownPlan, state.pendingTarget ?? 'tournament', state.pendingEndsAt ?? null)
+      : W.cancel.endingRefusal(state.ownPlan, state.pendingEndsAt ?? null),
+  });
   switch (action) {
     case 'schedule_cancel':
+      if (state.pendingKind === 'downgrade') return { answer: 'replace' };
       if (state.waitingMove === 'foreign') return { answer: 'refuse', reason: W.cancel.foreignSchedule };
+      return state.waitingMove ? { answer: 'carry', plan: state.waitingMove.plan } : { answer: 'none' };
+    case 'downgrade':
+      if (waits) return refusal();
+      if (state.waitingMove === 'foreign') return { answer: 'refuse', reason: W.downgrade.foreignSchedule };
       return state.waitingMove ? { answer: 'carry', plan: state.waitingMove.plan } : { answer: 'none' };
     case 'keep':
       return state.heldMovePlan ? { answer: 'restore', plan: state.heldMovePlan } : { answer: 'none' };
@@ -398,15 +474,68 @@ export function futureMoveAnswer(action: FutureMoveAction, state: {
         ? { answer: 'drop', plan: state.heldMovePlan, why: 'The plan ended before the move’s date, so there was no plan left to move.' }
         : { answer: 'none' };
     case 'plan_move':
-    case 'downgrade':
     case 'operator_plan_change':
-      return state.pending || state.pendingEndsAt
-        ? { answer: 'refuse', reason: W.cancel.endingRefusal(state.ownPlan, state.pendingEndsAt ?? null) }
-        : { answer: 'none' };
+      return waits ? refusal() : { answer: 'none' };
     case 'replace_subscription':
     case 'reactivation':
-      return state.pending || state.pendingEndsAt ? { answer: 'withdraw' } : { answer: 'none' };
+      return waits ? { answer: 'withdraw' } : { answer: 'none' };
   }
+}
+
+/** What a waiting row's refusal needs to name what comes on its date (the one rule's `pendingKind` and `pendingTarget`). */
+export function waitingState(intent: Pick<EndingIntent, 'intentType' | 'targetPlan' | 'effectiveAt'> | null) {
+  return { pending: !!intent, pendingEndsAt: intent?.effectiveAt ?? null, pendingKind: intent?.intentType ?? null, pendingTarget: intent?.targetPlan ?? null };
+}
+
+/** Who asked for a waiting change: the door that scheduled it (its first log entry). The date acts in their name. */
+function askerOf(intent: EndingIntent): EndingActor {
+  const door = intent.changeLog[0]?.door ?? (intent.createdByEmail === 'stripe-webhook' ? 'stripe_portal' : 'owner');
+  return { door, userId: intent.createdBy, email: door === 'stripe_portal' ? null : intent.createdByEmail };
+}
+
+/** A waiting move to the free plan, which a cancel or an end REPLACES (Stage 2 ruling 4 — the one rule's 'replace'); else null. */
+function replaceableMove(intent: EndingIntent | null, ownPlan: OrgPlan): EndingIntent | null {
+  return intent?.status === 'pending' && futureMoveAnswer('schedule_cancel', { ownPlan, pendingKind: intent.intentType }).answer === 'replace'
+    ? intent : null;
+}
+
+/**
+ * Restore records FIRST (G11), for every tournament about to be archived that this intent has not recorded yet (G7: a replay
+ * records nothing twice). Resolves every tournament this intent now holds a record for — the ending's and the move's list.
+ */
+async function recordTournaments(
+  account: EndingAccount, intentId: string, tournaments: BillingTournamentSummary[],
+  recorded: Array<{ recordType: string; recordId: string | null }>, retentionUntil: string, metadata: Record<string, unknown>, deps: EndingDeps,
+): Promise<string[]> {
+  const already = new Set(recorded.filter(r => r.recordType === 'tournament').map(r => r.recordId));
+  const toRecord = tournaments.filter(t => !already.has(t.id));
+  if (toRecord.length > 0) {
+    await deps.supersedeOthers(account.orgId, toRecord.map(t => t.id), intentId);
+    await deps.insertRecords(toRecord.map(t => ({
+      intentId, orgId: account.orgId, recordType: 'tournament' as const, recordId: t.id, displayName: t.name, retentionUntil,
+      metadata: { previousStatus: t.status, slug: t.slug, year: t.year, startDate: t.startDate, endDate: t.endDate, ...metadata },
+    })));
+  }
+  return [...already].filter((id): id is string => !!id).concat(toRecord.map(t => t.id));
+}
+
+/** The row's "ended" entry: any notes, and a cheaper move set aside DROPPED on the record with why (the one rule's "end"). */
+function endedEntry(
+  now: Date, actor: EndingActor, ownPlan: OrgPlan, heldMovePlan: OrgPlan | null, notes: Array<string | null | undefined>, dropWhy?: string,
+): EndingLogEntry {
+  const dropped = futureMoveAnswer('end', { ownPlan, heldMovePlan });
+  const said = [...notes, dropped.answer === 'drop' ? dropWhy ?? dropped.why : null].filter((n): n is string => !!n);
+  return logEntry(now, actor, 'ended', {
+    ...(dropped.answer === 'drop' ? { move: 'dropped' as const, plan: dropped.plan } : {}),
+    ...(said.length ? { note: said.join(' ') } : {}),
+  });
+}
+
+/** Withdraws a waiting row, on its log. Null when another writer moved it first. */
+function withdrawRow(intent: EndingIntent, actor: EndingActor, note: string, deps: EndingDeps): Promise<EndingIntent | null> {
+  return deps.updateIntent(intent.id, {
+    status: 'canceled', changeLog: [...intent.changeLog, logEntry(deps.now(), actor, 'withdrawn', { note })],
+  }, ['pending']);
 }
 
 function payPagesWhere(door: EndingDoor): PayPagesWhere {
@@ -455,23 +584,28 @@ export async function scheduleEnding(
 
   let heldMovePlan: OrgPlan | null = null;
   const existing = await deps.findPending(account.orgId);
+  // Stage 2 ruling 4: a cancel REPLACES a waiting move to the free plan. Its row is withdrawn just before the cancel's is
+  // written (one waiting change per account); a cheaper move it had set aside carries over to the cancel.
+  const replacing = replaceableMove(existing, account.ownPlan);
   if (!stripeCancelSignal(sub).scheduled) {
     const answer = futureMoveAnswer('schedule_cancel', { ownPlan: account.ownPlan, waitingMove: waitingMoveOf(sub) });
     if (answer.answer === 'refuse') return { outcome: 'refused', error: answer.reason, status: 409 };
     const waiting = waitingMoveOf(sub);
+    let released: OrgPlan | null = null;
     if (answer.answer === 'carry' && waiting && waiting !== 'foreign') {
       try {
         await deps.releaseSchedule(waiting.scheduleId);
       } catch {
         return { outcome: 'refused', error: W.cancel.stripeRefused, status: 502 };
       }
-      heldMovePlan = answer.plan;
+      released = answer.plan;
     }
+    heldMovePlan = released ?? replacing?.heldMovePlan ?? null;
     try {
       sub = await deps.scheduleCancel(subscriptionId);
     } catch {
       // The move was released for nothing: put it back, so a refused cancel changes nothing at all.
-      if (heldMovePlan) await deps.rescheduleMove(account, heldMovePlan, actor.email ?? 'plan-ending').catch(() => undefined);
+      if (released) await deps.rescheduleMove(account, released, actor.email ?? 'plan-ending').catch(() => undefined);
       return { outcome: 'refused', error: W.cancel.stripeRefused, status: 502 };
     }
   } else {
@@ -496,11 +630,14 @@ export async function scheduleEnding(
   const entry = logEntry(now, actor, 'scheduled', heldMovePlan ? { move: 'carried', plan: heldMovePlan } : {});
 
   try {
-    const written = await writePending(account.orgId, fields, entry, deps);
+    const written = await writePending(account.orgId, { ...fields, intentType: 'cancellation', targetPlan: null, keepTournamentIds: [] }, entry, actor, deps);
     if (written) await announceEndsOn(account, written, deps);
     return { outcome: 'scheduled', endsAt, intentId: written?.id ?? null, recorded: !!written, heldMovePlan };
   } catch {
-    // Stripe holds the cancel; the `subscription.updated` arm records it from Stripe. Never a plain failure.
+    // Stripe holds the cancel; the `subscription.updated` arm records it from Stripe — but NOT over a waiting move (its row
+    // is ours, so Stripe's flag reads as the move's): a move still in place means the cancel was not made, said plainly.
+    const left = await deps.findPending(account.orgId).catch(() => null);
+    if (left?.intentType === 'downgrade') return { outcome: 'refused', error: W.cancel.moveStillWaiting, status: 409 };
     return { outcome: 'scheduled', endsAt, intentId: null, recorded: false, heldMovePlan };
   }
 }
@@ -512,18 +649,33 @@ export async function scheduleEnding(
 async function announceEndsOn(account: EndingAccount, intent: EndingIntent, deps: EndingDeps): Promise<void> {
   // Stripe gave no end date (the row fell back to now): no date to promise, so no "ends on" email.
   if (!upcomingDate(intent.effectiveAt, deps.now())) return;
+  if (!hasCancelEmails(intent)) return;
   await sendEndingEmailOnce({ kind: 'ends_on', account, intent }, intent.notifyOwner, deps);
 }
 
-/** Find-then-write the one waiting row: update the one that is there (the webhook's, a double click's), else insert. */
+/**
+ * Find-then-write the one waiting CANCEL row: update the one that is there (the webhook's, a double click's), else insert.
+ * A waiting move to the free plan is never overwritten as a cancel (its kind is not a field a patch changes): the cancel
+ * REPLACES it (Stage 2 ruling 4) — the move's row withdrawn, a cheaper move it set aside carried — wherever it is met, so a
+ * move that landed after the click's own read is replaced too.
+ */
 async function writePending(
   orgId: string,
   fields: Omit<NewEndingIntent, 'orgId' | 'status' | 'changeLog'>,
   entry: EndingLogEntry,
+  actor: EndingActor,
   deps: EndingDeps,
 ): Promise<EndingIntent | null> {
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
     const existing = await deps.findPending(orgId);
+    if (existing && existing.intentType !== 'cancellation') {
+      await withdrawRow(existing, actor, 'Replaced by a cancel', deps);
+      if (!fields.heldMovePlan && existing.heldMovePlan) {
+        fields = { ...fields, heldMovePlan: existing.heldMovePlan };
+        entry = { ...entry, move: 'carried', plan: existing.heldMovePlan };
+      }
+      continue;
+    }
     if (existing) {
       return deps.updateIntent(existing.id, { ...fields, changeLog: [...existing.changeLog, entry] }, ['pending']);
     }
@@ -644,6 +796,14 @@ export async function applyEnding(
 ): Promise<ApplyResult> {
   const now = deps.now();
   let intent = p.intent ?? await deps.findPending(account.orgId);
+  // Stage 2 ruling 4: an end (End now, a cancel with no paid period left) REPLACES a waiting move to the free plan. A
+  // cheaper move that move set aside is carried here, so this end drops it on the record (the one rule's "end").
+  const replacing = replaceableMove(intent, account.ownPlan);
+  const carried = replacing?.heldMovePlan ?? null;
+  if (replacing) {
+    await withdrawRow(replacing, p.actor, 'Replaced by an end', deps);
+    intent = null;
+  }
   if (intent && intent.status === 'applied') {
     return { applied: false, intentId: intent.id, retentionUntil: intent.retentionUntil, retainedTournamentIds: [], emailed: false, endedAt: intent.effectiveAt };
   }
@@ -654,10 +814,11 @@ export async function applyEnding(
     const inserted = await deps.insertIntent({
       orgId: account.orgId, status: 'pending', effectiveAt: endedAt, retentionUntil, reason: p.reason, fromPlan: account.ownPlan,
       createdBy: p.actor.userId, createdByEmail: p.actor.email, stripeSubscriptionId: account.subscriptionId?.startsWith('sub_') ? account.subscriptionId : null,
-      heldMovePlan: null, notifyOwner: p.notifyOwner, changeLog: [],
+      heldMovePlan: carried, notifyOwner: p.notifyOwner, changeLog: [], intentType: 'cancellation', targetPlan: null, keepTournamentIds: [],
     });
     intent = inserted === 'conflict' ? await deps.findPending(account.orgId) : inserted;
-    if (!intent) throw new Error('The ending could not be recorded.');
+    // Never end on a waiting MOVE's row (a move that landed after the replacement): that would suspend a move to free.
+    if (!intent || intent.intentType !== 'cancellation') throw new Error('The ending could not be recorded.');
   } else if (p.notifyOwner !== intent.notifyOwner && p.actor.door === 'operator') {
     intent = { ...intent, notifyOwner: p.notifyOwner };
   }
@@ -675,18 +836,7 @@ export async function applyEnding(
   // 1 · restore records, before anything is archived away (only what this intent has not recorded yet).
   const { tournaments, shutsDown } = await deps.preflight(account);
   const recorded = await deps.recordedFor(intent.id);
-  const recordedTournaments = new Set(recorded.filter(r => r.recordType === 'tournament').map(r => r.recordId));
-  const toRecord = tournaments.filter(t => !recordedTournaments.has(t.id));
-  if (toRecord.length > 0) {
-    await deps.supersedeOthers(account.orgId, toRecord.map(t => t.id), intent.id);
-    await deps.insertRecords(toRecord.map(t => ({
-      intentId: intent!.id, orgId: account.orgId, recordType: 'tournament' as const, recordId: t.id, displayName: t.name, retentionUntil,
-      metadata: {
-        previousStatus: t.status, slug: t.slug, year: t.year, startDate: t.startDate, endDate: t.endDate,
-        retentionReason, fromPlan: account.ownPlan, ...initiated,
-      },
-    })));
-  }
+  const allRetained = await recordTournaments(account, intent.id, tournaments, recorded, retentionUntil, { retentionReason, fromPlan: account.ownPlan, ...initiated }, deps);
   if (!recorded.some(r => r.recordType === 'account')) {
     await deps.insertRecords([{
       intentId: intent.id, orgId: account.orgId, recordType: 'account', recordId: null, retentionUntil,
@@ -704,7 +854,6 @@ export async function applyEnding(
   await deps.suspend(account, { endedAt, reason });
 
   // 4 · one event per ending, at the END date, with who asked (churn dates here, not at the click).
-  const allRetained = [...recordedTournaments].filter((id): id is string => !!id).concat(toRecord.map(t => t.id));
   await deps.writeEndedEvent({
     account, intentId: intent.id, source: isRequest ? 'app' : 'stripe', requestedBy: p.actor.door,
     actorUserId: p.actor.userId ?? intent.createdBy, actorEmail: p.actor.email ?? intent.createdByEmail, reason, endedAt, retentionUntil,
@@ -726,18 +875,221 @@ export async function applyEnding(
   }
 
   // 7 · LAST: the row says it is done.
-  const dropped = futureMoveAnswer('end', { ownPlan: account.ownPlan, heldMovePlan: intent.heldMovePlan });
-  const notes = [p.note, dropped.answer === 'drop' ? dropped.why : null].filter((n): n is string => !!n);
-  const entry = logEntry(now, p.actor, 'ended', {
-    ...(dropped.answer === 'drop' ? { move: 'dropped' as const, plan: dropped.plan } : {}),
-    ...(notes.length ? { note: notes.join(' ') } : {}),
-  });
+  const entry = endedEntry(now, p.actor, account.ownPlan, intent.heldMovePlan, [p.note]);
   await deps.updateIntent(intent.id, {
     status: 'applied', appliedAt: now.toISOString(), effectiveAt: endedAt, retentionUntil, notifyOwner: intent.notifyOwner,
     endedEmailSentAt, changeLog: [...intent.changeLog, entry],
   }, ['pending']);
 
   return { applied: true, intentId: intent.id, retentionUntil, retainedTournamentIds: allRetained, emailed, endedAt };
+}
+
+// ── A move to the free plan (Stage 2) ─────────────────────────────────────────────────────────────
+
+/**
+ * G2 + Stage 0 Ask 8 · which tournaments stay on the date. The pick, as far as it is still live (a picked one deleted or
+ * archived during the wait drops out), up to the plan's limit. A pick with nothing left keeps the NEWEST slot holder — the
+ * band says which beforehand (`fellBack` is the band's "choose again" too). Everything else holding a slot, a tournament
+ * made during the wait included, is archived. A finished tournament holds no slot and is never here.
+ * "The newest" is the owner's ruling (Stage 0 Ask 8), deliberately NOT lib/billing-downgrade-order.ts's keep priority —
+ * the band names it beforehand, so nothing happens the owner was not told.
+ */
+export function keptOnTheDate(holders: SlotHolder[], keepIds: string[], limit: number): { kept: SlotHolder[]; archive: SlotHolder[]; fellBack: boolean } {
+  const pick = new Set(keepIds);
+  let kept = holders.filter(t => pick.has(t.id)).slice(0, limit);
+  const fellBack = kept.length === 0 && holders.length > 0;
+  if (fellBack) kept = [...holders].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, limit);
+  const keptIds = new Set(kept.map(t => t.id));
+  return { kept, archive: holders.filter(t => !keptIds.has(t.id)), fellBack };
+}
+
+export type DowngradeScheduleResult =
+  | { outcome: 'scheduled'; movesAt: string; intentId: string; heldMovePlan: OrgPlan | null }
+  | { outcome: 'moved'; moved: DowngradeResult }
+  | { outcome: 'refused'; error: string; status: number };
+
+export type DowngradeResult = {
+  applied: boolean;
+  intentId: string;
+  movedAt: string;
+  retentionUntil: string;
+  retainedTournamentIds: string[];
+  keptTournamentIds: string[];
+  keptByDefault: boolean;
+  /** The "you are now on the free plan" email went in this run (Stage 2 Part C). */
+  emailed: boolean;
+};
+
+/**
+ * The owner's move to the free plan (Stage 2). A paying Stripe subscription: the waiting row FIRST — so the `updated`
+ * events our own Stripe calls fire find a waiting MOVE and never record "a cancel in the portal" — then Stripe (release a
+ * cheaper move's schedule, which is carried; set `cancel_at_period_end`). If Stripe refuses, the row is withdrawn and the
+ * carried move put back: nothing changed. With no live paid period (comped, Founding Season, no subscription, a dev
+ * `mock_…` id — ruling 3) there is no date to wait for: the move happens now, through the same `applyDowngrade`.
+ */
+export async function scheduleDowngrade(
+  account: EndingAccount,
+  actor: EndingActor,
+  opts: { targetPlan: OrgPlan; keepTournamentIds: string[]; reason: string | null },
+  deps: EndingDeps,
+): Promise<DowngradeScheduleResult> {
+  const existing = await deps.findPending(account.orgId);
+  // A live paid period to wait for: a paying Stripe subscription Stripe has not already ended (our record can lag).
+  let sub: Stripe.Subscription | null = null;
+  if (hasRealSubscription(account)) {
+    try {
+      sub = await deps.retrieveSubscription(account.subscriptionId!);
+    } catch {
+      return { outcome: 'refused', error: W.downgrade.stripeRefused, status: 502 };
+    }
+    if (ENDED.has(sub.status)) sub = null;
+  }
+  // A waiting move with no paid period left to wait for (an immediate move that died part-way, or one whose subscription
+  // Stripe has since ended): finish it — the move is safe to run again — rather than refuse the owner's retry.
+  if (!sub && existing?.intentType === 'downgrade') {
+    return { outcome: 'moved', moved: await applyDowngrade(account, { actor, intent: existing }, deps) };
+  }
+  const signal = sub ? stripeCancelSignal(sub) : null;
+  // Stripe already holds a cancel our record has not caught up with (one just set in its billing portal): never turn it
+  // into a move unseen — Keep {Plan} first, as for a recorded cancel.
+  if (signal?.scheduled && !existing) {
+    return { outcome: 'refused', error: W.cancel.endingRefusal(account.ownPlan, signal.endsAt), status: 409 };
+  }
+  const waiting = sub && !signal!.scheduled ? waitingMoveOf(sub) : null;
+  const answer = futureMoveAnswer('downgrade', { ownPlan: account.ownPlan, ...waitingState(existing), waitingMove: waiting });
+  if (answer.answer === 'refuse') return { outcome: 'refused', error: answer.reason, status: 409 };
+  const release = answer.answer === 'carry' && waiting && waiting !== 'foreign' ? { plan: answer.plan, scheduleId: waiting.scheduleId } : null;
+
+  // 1 · the row, before Stripe hears anything.
+  const now = deps.now();
+  const effectiveAt = signal?.endsAt ?? now.toISOString();
+  const heldMovePlan = release?.plan ?? null;
+  const inserted = await deps.insertIntent({
+    orgId: account.orgId, status: 'pending', intentType: 'downgrade', targetPlan: opts.targetPlan, keepTournamentIds: opts.keepTournamentIds,
+    effectiveAt, retentionUntil: retentionUntilFrom(effectiveAt, deps.retentionDays(account)), reason: opts.reason, fromPlan: account.ownPlan,
+    createdBy: actor.userId, createdByEmail: actor.email, notifyOwner: true, heldMovePlan,
+    stripeSubscriptionId: account.subscriptionId?.startsWith('sub_') ? account.subscriptionId : null,
+    changeLog: [logEntry(now, actor, 'scheduled', heldMovePlan ? { move: 'carried', plan: heldMovePlan } : {})],
+  });
+  if (inserted === 'conflict') return { outcome: 'refused', error: W.downgrade.changedMeanwhile, status: 409 };
+
+  // No live paid period (ruling 3): nothing to wait for — the move happens now, through the same move as the date's.
+  if (!sub || !signal) return { outcome: 'moved', moved: await applyDowngrade(account, { actor, intent: inserted }, deps) };
+
+  // 2 · Stripe: a carried move's schedule released (Stripe will not set the flag on a schedule-managed subscription), then
+  // the flag. Refused → the row is withdrawn and a released move put back: nothing changed. Unknown (Stripe's answer and our
+  // re-read both lost) → the row STAYS: a flag with no row would read as a portal cancel and suspend the club on the date,
+  // while a row with no flag is withdrawn by Stripe's renewal event (or Finish this ending now) — the safe way to be wrong.
+  const held = await holdInStripe(account, sub.id, release, actor, deps);
+  if (held === 'refused') {
+    await withdrawRow(inserted, actor, 'The payment provider refused the move', deps);
+    return { outcome: 'refused', error: W.downgrade.stripeRefused, status: 502 };
+  }
+  if (held === 'unknown') return { outcome: 'scheduled', movesAt: effectiveAt, intentId: inserted.id, heldMovePlan };
+  sub = held;
+
+  // 3 · Stripe's own date, when it differs from the period end read before — only while the row still waits. A row gone
+  // in the meantime (Keep in another tab, a reactivation) leaves Stripe's flag with nothing to say it is a move: clear it.
+  const endsAt = stripeCancelSignal(sub).endsAt ?? effectiveAt;
+  const written = await deps.updateIntent(inserted.id, { effectiveAt: endsAt, retentionUntil: retentionUntilFrom(endsAt, deps.retentionDays(account)) }, ['pending']);
+  if (!written) {
+    await deps.clearCancel(sub.id, stripeCancelSignal(sub).clear).catch(() => undefined);
+    return { outcome: 'refused', error: W.downgrade.changedMeanwhile, status: 409 };
+  }
+  return { outcome: 'scheduled', movesAt: written.effectiveAt, intentId: written.id, heldMovePlan };
+}
+
+/**
+ * Step 2 of the move's click: the subscription now holding the flag; 'refused' when Stripe certainly did not set it (a
+ * released move put back); 'unknown' when the call failed AND the re-read failed — Stripe may hold the flag.
+ */
+async function holdInStripe(
+  account: EndingAccount, subscriptionId: string, release: { plan: OrgPlan; scheduleId: string } | null, actor: EndingActor, deps: EndingDeps,
+): Promise<Stripe.Subscription | 'refused' | 'unknown'> {
+  if (release) {
+    try {
+      await deps.releaseSchedule(release.scheduleId);
+    } catch {
+      return 'refused';
+    }
+  }
+  try {
+    return await deps.scheduleCancel(subscriptionId);
+  } catch {
+    // A timeout can hide a success: ask Stripe what is true before undoing anything.
+    const after = await deps.retrieveSubscription(subscriptionId).catch(() => null);
+    if (!after) return 'unknown';
+    if (stripeCancelSignal(after).scheduled) return after;
+    if (release) await deps.rescheduleMove(account, release.plan, actor.email ?? 'plan-ending').catch(() => undefined);
+    return 'refused';
+  }
+}
+
+/**
+ * THE move to the free plan, on its date (Stripe's deletion, Finish this ending now) or at once (no paid period). The
+ * shared teardown's order (G11, G7) — restore records FIRST, then archive, then the plan, then the one `plan_downgraded`
+ * event, then the pay pages, then (Part C) the email, then the flip to applied LAST — so a replay after a crash at any step
+ * finishes the work and a replay after success does nothing. The tournaments are RE-READ here, never taken from the click:
+ * a tournament made during the wait is archived unless it is the pick (G2). The data clock starts on the date (ruling 2).
+ * The account stays active: a move is never a suspension.
+ */
+export async function applyDowngrade(
+  account: EndingAccount,
+  p: { actor: EndingActor; intent: EndingIntent; stripeEndedAt?: string | null; note?: string },
+  deps: EndingDeps,
+): Promise<DowngradeResult> {
+  const { intent } = p;
+  if (intent.status === 'applied') {
+    return {
+      applied: false, intentId: intent.id, movedAt: intent.effectiveAt, retentionUntil: intent.retentionUntil, retainedTournamentIds: [],
+      keptTournamentIds: intent.keepTournamentIds, keptByDefault: false, emailed: false,
+    };
+  }
+  const now = deps.now();
+  const target = intent.targetPlan ?? 'tournament';
+  const fromPlan = (intent.fromPlan ?? account.ownPlan) as OrgPlan;
+  const movedAt = endedAtFor(intent, now, p.stripeEndedAt);
+  const retentionUntil = retentionUntilFrom(movedAt, deps.retentionDays(account));
+
+  // 1 · restore records for every slot holder not kept, before anything is archived (only what this intent has not recorded).
+  const holders = await deps.slotHolders(account.orgId);
+  const { kept, archive, fellBack } = keptOnTheDate(holders, intent.keepTournamentIds, PLAN_CONFIG[target].tournamentLimit);
+  // The downgrade's own reason: the upgrade path restores by it (restoreRetainedDowngradeTournaments).
+  const retained = await recordTournaments(account, intent.id, archive, await deps.recordedFor(intent.id), retentionUntil,
+    { retentionReason: 'plan_downgrade', fromPlan, targetPlan: target }, deps);
+
+  // 2 · archive what still holds a slot and is not kept (a replay finds them archived and does not re-read them).
+  if (archive.length > 0) await deps.archive(account.orgId, archive.map(t => t.id));
+
+  // 3 · the plan moves; the account stays active.
+  await deps.setPlan(account.orgId, target);
+
+  // 4 · one event per move, on the date (not the click).
+  await deps.writeDowngradedEvent({
+    account, intentId: intent.id, actorUserId: p.actor.userId ?? intent.createdBy, actorEmail: p.actor.email ?? intent.createdByEmail,
+    fromPlan, targetPlan: target, reason: intent.reason, movedAt, retentionUntil, retainedTournamentIds: retained,
+    keptTournamentIds: kept.map(t => t.id), keptByDefault: fellBack, sourceEventId: `intent:${intent.id}:plan_downgraded`,
+  });
+
+  // 5 · the pay pages close when the free plan has no online payments (checked against the plan just written).
+  await deps.closePayPagesIfPlanHasNone(account.orgId);
+
+  // 6 · (Part C) "You are now on {plan}", once per move.
+
+  // 7 · LAST: the row says it is done, and what was kept.
+  const fellBackNote = !fellBack || !kept[0] ? null : intent.keepTournamentIds.length === 0
+    ? `No tournament was picked to keep, so the newest, ${kept[0].name}, was kept.`
+    : `The tournament picked to keep no longer holds a slot (finished, archived or deleted), so the newest, ${kept[0].name}, was kept.`;
+  await deps.updateIntent(intent.id, {
+    status: 'applied', appliedAt: now.toISOString(), effectiveAt: movedAt, retentionUntil, keepTournamentIds: kept.map(t => t.id),
+    changeLog: [...intent.changeLog, endedEntry(now, p.actor, fromPlan, intent.heldMovePlan, [p.note, fellBackNote],
+      'The club moved to the free plan on its date, so the cheaper paid plan it had set aside does not apply.')],
+  }, ['pending']);
+
+  return {
+    applied: true, intentId: intent.id, movedAt, retentionUntil, retainedTournamentIds: retained,
+    keptTournamentIds: kept.map(t => t.id), keptByDefault: fellBack, emailed: false,
+  };
 }
 
 // ── What Stripe says (the webhook) ───────────────────────────────────────────────────────────────
@@ -756,6 +1108,9 @@ export async function recordStripeSignal(account: EndingAccount, sub: Stripe.Sub
   const now = deps.now();
   const stripe: EndingActor = { door: 'stripe_portal', userId: null, email: 'stripe-webhook' };
 
+  // Stage 2: a waiting MOVE to the free plan holds the same Stripe flag as a cancel. Its row is always there, so a "cancel in
+  // the portal" is recorded only with NO row — never over a move (that would suspend the club on the date). Everything below
+  // (a new date, a Renew withdrawing it with the "stays on" email) is the same for both kinds.
   if (signal.scheduled) {
     const effectiveAt = signal.endsAt ?? now.toISOString();
     const retentionUntil = retentionUntilFrom(effectiveAt, deps.retentionDays(account));
@@ -763,7 +1118,7 @@ export async function recordStripeSignal(account: EndingAccount, sub: Stripe.Sub
       const inserted = await deps.insertIntent({
         orgId: account.orgId, status: 'pending', effectiveAt, retentionUntil, reason: 'Cancelled in the billing portal', fromPlan: account.ownPlan,
         createdBy: null, createdByEmail: 'stripe-webhook', stripeSubscriptionId: sub.id, heldMovePlan: null, notifyOwner: true,
-        changeLog: [logEntry(now, stripe, 'scheduled')],
+        changeLog: [logEntry(now, stripe, 'scheduled')], intentType: 'cancellation', targetPlan: null, keepTournamentIds: [],
       });
       if (inserted === 'conflict') return 'unchanged';
       await announceEndsOn(account, inserted, deps);
@@ -780,9 +1135,7 @@ export async function recordStripeSignal(account: EndingAccount, sub: Stripe.Sub
   if (!pending || (pending.stripeSubscriptionId && pending.stripeSubscriptionId !== sub.id)) return 'unchanged';
   // Our own Keep cleared the cancel and is still putting a cheaper move back: the keep withdraws the row, not this event.
   if (keepInProgress(pending, now)) return 'unchanged';
-  const withdrawn = await deps.updateIntent(pending.id, {
-    status: 'canceled', changeLog: [...pending.changeLog, logEntry(now, stripe, 'withdrawn', { note: 'Renewed in Stripe' })],
-  }, ['pending']);
+  const withdrawn = await withdrawRow(pending, stripe, 'Renewed in Stripe', deps);
   // G6 b · Renew in Stripe's portal is a keep too (owner 2026-11-02): the same email, once per row. A cheaper move the cancel
   // set aside is NOT put back on this path (see plan §4 item 1) — the email names the price it renews at, so nothing is silent.
   if (withdrawn) {
@@ -793,7 +1146,9 @@ export async function recordStripeSignal(account: EndingAccount, sub: Stripe.Sub
 
 export type DeletedResult =
   | { kind: 'ended'; result: ApplyResult }
-  | { kind: 'already'; intentType: 'cancellation' | 'downgrade' };
+  /** A waiting move to the free plan reached its date: the club moved, nothing was suspended. */
+  | { kind: 'moved'; result: DowngradeResult }
+  | { kind: 'already'; intentType: IntentKind };
 
 /**
  * `customer.subscription.deleted`: the end date (or an early end). The waiting row first — it carries the owner's reason
@@ -807,11 +1162,13 @@ export type DeletedResult =
 export async function endingForDeletedSubscription(account: EndingAccount, sub: Stripe.Subscription, deps: EndingDeps, note?: string): Promise<DeletedResult> {
   const stripeEndedAt = iso(sub.ended_at) ?? iso(sub.canceled_at);
   const pending = await deps.findPending(account.orgId);
+  // Stage 2: a waiting MOVE first — the deletion is its date, and the club moves to the free plan; it is never suspended.
+  if (pending?.intentType === 'downgrade') {
+    return { kind: 'moved', result: await applyDowngrade(account, { actor: askerOf(pending), intent: pending, stripeEndedAt, note }, deps) };
+  }
   if (pending) {
     // Who asked is the door that scheduled it (its first log entry); the ending acts in their name.
-    const door = pending.changeLog[0]?.door ?? (pending.createdByEmail === 'stripe-webhook' ? 'stripe_portal' : 'owner');
-    const asker: EndingActor = { door, userId: pending.createdBy, email: door === 'stripe_portal' ? null : pending.createdByEmail };
-    return { kind: 'ended', result: await applyEnding(account, { actor: asker, reason: pending.reason, notifyOwner: pending.notifyOwner, origin: 'request', intent: pending, stripeEndedAt, note }, deps) };
+    return { kind: 'ended', result: await applyEnding(account, { actor: askerOf(pending), reason: pending.reason, notifyOwner: pending.notifyOwner, origin: 'request', intent: pending, stripeEndedAt, note }, deps) };
   }
   const applied = await deps.findAppliedFor(account.orgId, sub.id, iso(sub.created));
   if (applied) return { kind: 'already', intentType: applied.intentType };
@@ -838,6 +1195,7 @@ export async function sendDueEndingEmails(
   const now = deps.now();
   const tally = { endsOn: 0, reminders: 0, failed: 0 };
   for (const intent of intents) {
+    if (!hasCancelEmails(intent)) continue;
     const owedEndsOn = endsOnEmailOwed(intent, now);
     if (!owedEndsOn && !reminderDue(intent, now)) continue;
     const account = await readAccount(intent.orgId).catch(() => null);
@@ -862,7 +1220,8 @@ export type OverdueEnding = {
 };
 
 export type FinishResult =
-  | { outcome: 'finished'; endedAt: string | null; retentionUntil: string | null; retainedTournaments: number; emailed: boolean }
+  /** `moved`: the waiting change was a move to the free plan, so the club moved (the date's move), never suspended. */
+  | { outcome: 'finished'; moved: boolean; endedAt: string | null; retentionUntil: string | null; retainedTournaments: number; emailed: boolean }
   /** Stripe still bills it: the account is untouched. `nextDate` is its renewal, or the date it is set to end when
    *  `cancelScheduled`; `record` is what became of our waiting row (made to agree with Stripe, or left when it already did). */
   | { outcome: 'live'; status: string; nextDate: string | null; cancelScheduled: boolean; record: 'withdrawn' | 'rescheduled' | 'unchanged' }
@@ -907,8 +1266,16 @@ export async function finishOverdueEnding(account: EndingAccount, actor: EndingA
   await deps.clearEndedSubscription(account, sub);
   const ended = await endingForDeletedSubscription(account, sub, deps, `Finished by ${actor.email ?? 'an operator'}: ${why}`);
   const result = ended.kind === 'ended' ? ended.result : null;
+  const moved = ended.kind === 'moved' ? ended.result : null;
+  if (moved) {
+    return {
+      outcome: 'finished', moved: true, endedAt: moved.movedAt, retentionUntil: moved.retentionUntil,
+      retainedTournaments: moved.retainedTournamentIds.length, emailed: moved.emailed,
+    };
+  }
   return {
     outcome: 'finished',
+    moved: false,
     endedAt: result?.endedAt ?? null,
     retentionUntil: result?.retentionUntil ?? null,
     retainedTournaments: result?.retainedTournamentIds.length ?? 0,
