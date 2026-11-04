@@ -82,6 +82,9 @@ export default async function CoachTeamPage({ params }: { params: Promise<{ orgS
         <p className={styles.notice}>{team.seasonName} has finished. This page stays until {formatStoredDate(page.openUntil, { withYear: false })}.</p>
       )}
 
+      {/* A finished season's page has no Schedule section, link included (9f·6): nothing is ahead, and the schedule stays
+          on the public site. The live page is unchanged. */}
+      {view !== 'finished' && (
       <section className={styles.section} aria-labelledby="coach-schedule">
         <div className={styles.sectionHead}>
           <h2 id="coach-schedule" className={styles.sectionTitle}>Schedule</h2>
@@ -96,15 +99,17 @@ export default async function CoachTeamPage({ params }: { params: Promise<{ orgS
         )}
         <p className={`${kit.sub} ${styles.seeAll}`}><Link href={scheduleHref} className={styles.link}>{SCHEDULE_PUBLIC_WORDS.coachSeeSeason}</Link></p>
       </section>
+      )}
 
       <section className={styles.section} aria-labelledby="coach-scores">
-        {/* 9e·6: the team's standing, one quiet line — only while families see the table (published and on). */}
+        {/* 9e·6: the team's standing, one quiet line — only while families see the table (published and on). On a
+            finished season it is the final place (9f·6), and the link names the "Final standings" page it opens. */}
         <h2 id="coach-scores" className={styles.sectionTitle}>{STANDINGS_WORDS.coach.heading(!!page.standing)}</h2>
         {page.standing && (
           <>
             <p className={kit.sub}>{page.standing.text}</p>
             <p className={`${kit.sub} ${styles.seeAll}`}>
-              <Link href={`/${orgSlug}/league/${seasonSlug}/standings?d=${page.standing.divisionId}`} className={styles.link}>{STANDINGS_WORDS.coach.link}</Link>
+              <Link href={`/${orgSlug}/league/${seasonSlug}/standings?d=${page.standing.divisionId}`} className={styles.link}>{view === 'finished' ? STANDINGS_WORDS.coach.finalLink : STANDINGS_WORDS.coach.link}</Link>
             </p>
           </>
         )}

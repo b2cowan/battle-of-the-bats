@@ -4,6 +4,7 @@ import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getLeagueSeasons, getLeagueSeasonSummary } from '@/lib/db';
 import { houseLeagueSeasonCap, isFreeFloorLeague, leagueCapHit } from '@/lib/free-floor';
+import { readSlotHolders, slotBlocker } from '@/lib/league-season-slot';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { withObservability } from '@/lib/observability';
 import { DEFAULT_SPORT } from '@/lib/sports';
@@ -38,17 +39,13 @@ export const POST = withObservability(async (req: Request) => {
   const slugRefused = seasonSlugRefusal(slug);
   if (slugRefused) return NextResponse.json({ error: slugRefused }, { status: 400 });
 
-  // Free-floor (League Starter) cap: one non-archived season (draft or in-progress both count;
-  // archiving an old season frees the slot for a new one). Server-enforced because house-league
-  // is module-gated, not cap-gated. Paid plans are uncapped (Infinity).
+  // Free-floor (League Starter) cap (9f·5): one LIVE season at a time — getting ready, registration open or closed, or
+  // running; a finished season holds nothing, so completing one frees the slot. The count is lib/league-season-slot.ts,
+  // the same one Reopen reads. Server-enforced because house-league is module-gated, not cap-gated. Paid plans are uncapped.
   const seasonCap = houseLeagueSeasonCap(ctx!.org);
   if (seasonCap < Infinity) {
-    const { count } = await supabaseAdmin
-      .from('league_seasons')
-      .select('id', { count: 'exact', head: true })
-      .eq('org_id', ctx!.org.id)
-      .neq('status', 'archived');
-    if ((count ?? 0) >= seasonCap) {
+    const holders = await readSlotHolders(supabaseAdmin, ctx!.org.id);
+    if (holders.length >= seasonCap) {
       await writePlatformEvent({
         eventType: 'scope_wall_hit',
         source: 'app',
@@ -57,7 +54,7 @@ export const POST = withObservability(async (req: Request) => {
         actorEmail: ctx!.user?.email ?? null,
         metadata: { freeFloor: 'league_starter', capHit: 'league_season' },
       });
-      return NextResponse.json(leagueCapHit('league_season'), { status: 403 });
+      return NextResponse.json(leagueCapHit('league_season', slotBlocker(holders, seasonCap)), { status: 403 });
     }
   }
 

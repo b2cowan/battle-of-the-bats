@@ -11,9 +11,10 @@
  *     its whole record in place (9b-1, Part 2; the checklist's five lines are lib/house-league-season.ts seasonChecklist,
  *     the same function the server refuses Open registration with);
  *   Season and Registration — each reads first and edits whole;
- *   the rare door — Complete (and on a finished season Archive / Reopen) ends the body, a sentence and a link. A shell that
+ *   the rare door — Complete (and on a finished season Reopen) ends the body, a sentence and a link. A shell that
  *   has not opened registration and has nothing real attached ends with "Delete the season…" instead (owner 2026-10-25).
- * EVERY STATUS CHANGE ASKS (SeasonStatusWindow). A finished season (completed / archived) reads in place, every write
+ * EVERY STATUS CHANGE ASKS (SeasonStatusWindow). A finished season (completed, or archived before Archive was retired in
+ * 9f·4 — it reads exactly as a completed one) reads in place, every write
  * control absent, through the one gate (Q16): `houseLeagueAccess(…, season)` says `run: false` and the page renders from
  * it. The registrar reads it all with no pencils and no doors (frame C).
  */
@@ -51,6 +52,8 @@ interface SeasonDetail {
   season: LeagueSeason;
   /** A shell the season may still be deleted from: not yet open, nothing real attached (decided by the server). */
   deletable?: boolean;
+  /** A finished season's Reopen facts (9f-1): the newer seasons it leaves alone, and the free plan's holder that blocks it. */
+  reopen?: { newer: string[]; blockedBy: { name: string; status: string } | null };
   birthdayCutoff?: Cutoff;
   divisions: SeasonDivision[];
   summary: {
@@ -171,6 +174,7 @@ export default function SeasonOverviewPage() {
     pendingReviewCount: summary.pendingReviewCount,
     waitlistCount: summary.waitlistCount,
     unpaidFeeCount: summary.unpaidFeeCount,
+    reopen: detail.reopen,
   };
   const teams = divisions.reduce((n, d) => n + d.teamCount, 0);
 
@@ -182,7 +186,7 @@ export default function SeasonOverviewPage() {
   ) : undefined;
   const pastItsEnd = canMove && moves.includes('complete') && isPastItsEnd(season);
   // Once Complete has its own Next step card above, the door at the end of the page would only repeat it.
-  const rare = canMove ? (['complete', 'archive', 'reopen'] as const).filter(m => moves.includes(m) && !(m === 'complete' && pastItsEnd)) : [];
+  const rare = canMove ? (['complete', 'reopen'] as const).filter(m => moves.includes(m) && !(m === 'complete' && pastItsEnd)) : [];
 
   return (
     <div className={repKit.page}>

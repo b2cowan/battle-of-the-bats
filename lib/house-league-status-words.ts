@@ -1,6 +1,7 @@
 import { formatStoredDate, tournamentToday } from './timezone';
-import { registrationDay } from './house-league-season';
+import { publicSeasonState, registrationDay } from './house-league-season';
 import { clubDay, type RegState } from './league-registration-state';
+import { reopenRefusal } from './free-floor';
 import type { LeagueSeasonStatus } from './types';
 
 /**
@@ -11,12 +12,14 @@ import type { LeagueSeasonStatus } from './types';
  * blocking. Desk title "{Verb} {season}?"; on a phone "{Verb} the season?" with the name as the body's first line. Foot:
  * the sentence at the left, then Cancel, then the primary — whose verb matches the title's.
  *
- * Status moves (the season PATCH's table): draft → registration_open → registration_closed → active → completed → archived,
- * and back: registration_closed → registration_open (only before play, owner 2026-10-24), completed/archived → active.
+ * Status moves (the season PATCH's table): draft → registration_open → registration_closed → active → completed, and back:
+ * registration_closed → registration_open (only before play, owner 2026-10-24), completed → active.
+ * ⚰ Archive is retired (9f·4, owner 2026-11-04): a finished season is Finished, full stop. A season archived before then
+ * still reads as a completed one everywhere and can still be reopened (`archived → active`); nothing moves INTO archived.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-export type StatusMove = 'open' | 'close' | 'reopenRegistration' | 'start' | 'complete' | 'archive' | 'reopen';
+export type StatusMove = 'open' | 'close' | 'reopenRegistration' | 'start' | 'complete' | 'reopen';
 
 /** Where each move goes. */
 export const MOVE_TO: Record<StatusMove, LeagueSeasonStatus> = {
@@ -25,7 +28,6 @@ export const MOVE_TO: Record<StatusMove, LeagueSeasonStatus> = {
   reopenRegistration: 'registration_open',
   start: 'active',
   complete: 'completed',
-  archive: 'archived',
   reopen: 'active',
 };
 
@@ -39,7 +41,7 @@ export function movesFrom(status: LeagueSeasonStatus | string, regState?: RegSta
     case 'registration_open': return regState === 'closedByDate' ? ['start', 'reopenRegistration'] : ['close'];
     case 'registration_closed': return ['start', 'reopenRegistration'];
     case 'active': return ['complete'];
-    case 'completed': return ['archive', 'reopen'];
+    case 'completed':
     case 'archived': return ['reopen'];
     default: return [];
   }
@@ -57,6 +59,12 @@ export type MoveFacts = {
   pendingReviewCount: number;
   waitlistCount: number;
   unpaidFeeCount: number;
+  /**
+   * Reopen only (9f·5, 9f·7; the season GET's `reopen` block): the club's seasons that started after this one, newest first,
+   * and the season holding the free League plan's one slot when reopening this one would make two live seasons (null on a
+   * paid plan, or when the slot is free).
+   */
+  reopen?: { newer: string[]; blockedBy: { name: string; status: string } | null };
 };
 
 export type MoveWords = {
@@ -68,6 +76,11 @@ export type MoveWords = {
   foot: string;
   button: string;
   busy: string;
+  /**
+   * The move is refused before the tap (the free League plan's Reopen, copy 9f §6.2): the window shows these sentences in
+   * place of "What changes", its primary button is absent (absent beats disabled, 9a·4) and its only button is Close.
+   */
+  refused?: string[];
 };
 
 const NOT_EMAILED = 'Families are not emailed.';
@@ -172,9 +185,11 @@ export function moveWords(move: StatusMove, f: MoveFacts, today: string = tourna
         lead: 'The season moves to Past seasons. What changes:',
         changes: [
           'Registrations, teams and the schedule can no longer be changed.',
-          'Money stays open: you can still mark fees received.',
+          'Money stays open: you can still mark fees received and record refunds.',
           'You can still email its families.',
           'Your public site lists it under Past seasons, and its schedule and standings stay up.',
+          // The finish erases them (mig 377's trigger, 9c·2b); 9f·7 says so where it happens.
+          'Player ratings are erased.',
           NOT_EMAILED,
         ],
         looseEnds: [...ahead, ...(end ? [end] : [])],
@@ -182,42 +197,47 @@ export function moveWords(move: StatusMove, f: MoveFacts, today: string = tourna
         button: 'Complete season', busy: 'Completing…',
       };
     }
-    case 'archive': {
-      const end = looseEndSentence(f.unpaidFeeCount ? [owing(f.unpaidFeeCount)] : []);
-      return {
-        title: `Archive ${name}?`, phoneTitle: 'Archive the season?',
-        lead: 'The season is put away. What changes:',
-        changes: [
-          'Its public page says "This season has been archived."',
-          'It stays under Past seasons, and its schedule and standings stay up.',
-          'Nothing else changes: it stays locked, and Money stays open.',
-          NOT_EMAILED,
-        ],
-        looseEnds: end ? [end] : [],
-        foot: 'You can reopen it from Past seasons.',
-        button: 'Archive season', busy: 'Archiving…',
-      };
-    }
-    case 'reopen':
-      return {
+    case 'reopen': {
+      const base = {
         title: `Reopen ${name}?`, phoneTitle: 'Reopen the season?',
-        lead: 'The season comes back to Running now. What changes:',
-        changes: [
-          'Registrations, teams and the schedule can be changed again.',
-          'Your public site lists it as Playing now, or as Final standings if its dates have passed.',
-          'If its end date has passed it reads "Ended {date}", so you can complete it again.'
-            .replace('{date}', f.seasonEndDate ? formatStoredDate(f.seasonEndDate, { withYear: false }) : 'its last day'),
-          NOT_EMAILED,
-        ],
-        looseEnds: [],
         foot: 'You can complete it again at any time.',
         button: 'Reopen season', busy: 'Reopening…',
       };
+      // The free League plan's one season (9f·5): refused in words on the window, before the tap.
+      const holder = f.reopen?.blockedBy;
+      if (holder) return { ...base, lead: '', changes: [], looseEnds: [], refused: reopenRefusal(holder) };
+      // What the public site will call it once it is running again, read from the site's own tag (9f·3) so the window
+      // can never promise a different word or date: "Ended Aug 28" (with the year for another year, as the site writes
+      // it) once its last day has passed, "Starts {date}" before its first, else Playing now.
+      const shown = publicSeasonState({ status: 'active', seasonStartDate: f.seasonStartDate, seasonEndDate: f.seasonEndDate }, today)!;
+      return {
+        ...base,
+        lead: 'The season comes back to Running now. What changes:',
+        changes: [
+          'Registrations, teams and the schedule can be changed again.',
+          shown.label.startsWith('Ended ')
+            ? `Your public site lists it as ${shown.label} until you complete it again.`
+            : `Your public site lists it as ${shown.label}.`,
+          'Player ratings were erased when it finished. They don’t come back.',
+          ...newerSentence(f.reopen?.newer ?? []),
+          NOT_EMAILED,
+        ],
+        looseEnds: [],
+      };
+    }
   }
 }
 
+/** The newer seasons a Reopen leaves alone (9f·7): one name, two names, or a count from three. */
+export function newerSentence(newer: readonly string[]): string[] {
+  if (newer.length === 0) return [];
+  if (newer.length === 1) return [`${newer[0]} is not changed.`];
+  if (newer.length === 2) return [`${newer[0]} and ${newer[1]} are not changed.`];
+  return [`Your ${newer.length} newer seasons are not changed.`];
+}
+
 /** The rare door's sentence and link at the end of the season page (copy §4, button summary). */
-export function rareDoor(move: 'complete' | 'archive' | 'reopen', f: Pick<MoveFacts, 'seasonEndDate'>, today: string = tournamentToday()) {
+export function rareDoor(move: 'complete' | 'reopen', f: Pick<MoveFacts, 'seasonEndDate'>, today: string = tournamentToday()) {
   if (move === 'complete') {
     const ended = f.seasonEndDate && dayOf(f.seasonEndDate) < today;
     return {
@@ -225,14 +245,13 @@ export function rareDoor(move: 'complete' | 'archive' | 'reopen', f: Pick<MoveFa
       link: 'Complete the season…',
     };
   }
-  if (move === 'archive') return { sentence: 'Finished and settled?', link: 'Archive the season…' };
   return { sentence: 'Need to change something?', link: 'Reopen the season…' };
 }
 
 /**
  * DELETING A SEASON THAT IS ONLY A SHELL (owner, 2026-10-25). Not a status move: it removes the season. Offered only while the
- * season has not opened registration and nothing real (a family, a team, a game, an email) is attached; after that the way out
- * is Archive. Same window shape as the moves: sentence at the left, Cancel · the action at the right.
+ * season has not opened registration and nothing real (a family, a team, a game, an email) is attached; after that it is
+ * official, and it ends by being completed. Same window shape as the moves: sentence at the left, Cancel · the action at the right.
  */
 export function deleteSeasonWords(seasonName: string): MoveWords {
   return {

@@ -52,7 +52,10 @@ export function freeFloorModules(freeFloor: FreeFloor | undefined): Capability[]
   return [];
 }
 
-/** Max active (non-archived) house-league seasons. Infinity for paid (uncapped). */
+/**
+ * How many live house-league seasons the plan runs at once (9f·5): getting ready, registration open or closed, or running.
+ * A finished season holds nothing — `lib/league-season-slot.ts` is the one home of that count. Infinity for paid (uncapped).
+ */
 export function houseLeagueSeasonCap(org: FloorOrg): number {
   return isFreeFloorLeague(org) ? FREE_FLOOR_LIMITS.league_starter.houseLeagueSeasons : Infinity;
 }
@@ -71,16 +74,51 @@ export function houseLeagueTeamCap(org: FloorOrg): number {
 export type LeagueCapKind = 'league_season' | 'league_division' | 'league_team';
 
 const CAP_MESSAGES: Record<LeagueCapKind, string> = {
-  league_season: 'Your free League plan includes one active season. Upgrade to League Plus to run multiple seasons.',
+  league_season: 'Your free League plan runs one season at a time, and a finished one stays on your site. Complete your current season to start the next, or upgrade to League Plus to run several seasons.',
   league_division: 'Your free League plan includes one division. Multiple divisions are part of League Plus.',
   league_team: 'Your free League plan includes up to 8 teams. Upgrade to League Plus for more.',
 };
 
+/** The season holding the free League plan's one slot, named so a refusal can say which one (9f·5). */
+export type SeasonSlotHolder = { name: string; status: string };
+
 /**
  * Standard cap-hit body. Routes return this with HTTP 403 (mirrors the tournament-slot 403 shape);
- * the admin UI switches on `capHit` to render an upgrade-aware (express-interest) panel.
+ * the admin UI switches on `capHit` to render an upgrade-aware (express-interest) panel. A season refusal also carries the
+ * season holding the slot, so the window can name it (copy 9f §6.1).
  * Kept framework-agnostic so both server routes and client gating can import it.
  */
-export function leagueCapHit(kind: LeagueCapKind): { error: string; capHit: LeagueCapKind } {
-  return { error: CAP_MESSAGES[kind], capHit: kind };
+export function leagueCapHit(kind: LeagueCapKind, holder?: SeasonSlotHolder | null): { error: string; capHit: LeagueCapKind; holder?: SeasonSlotHolder } {
+  return { error: CAP_MESSAGES[kind], capHit: kind, ...(holder ? { holder: { name: holder.name, status: holder.status } } : {}) };
 }
+
+// ── The free League plan's one season, in words (copy HOUSE_LEAGUE_STAGE9F_COPY.md §6) ─────────────────────────────
+
+const LEAGUE_PLUS_LINE = 'League Plus runs several seasons and age groups side by side.';
+
+/**
+ * The Create season refusal window's body (copy §6.1): the holder named when one season holds the slot — a getting-ready
+ * one cannot be completed, so it is only stated — and the generic body when no single holder is named.
+ */
+export function seasonCapBody(holder?: SeasonSlotHolder | null): string {
+  if (!holder) {
+    return `Your free League plan runs one season at a time, and a finished one stays on your site. Complete your current season to start the next. ${LEAGUE_PLUS_LINE}`;
+  }
+  if (holder.status === 'draft') {
+    return `Your free League plan runs one season at a time, and ${holder.name} holds it while it’s getting ready. ${LEAGUE_PLUS_LINE}`;
+  }
+  return `Your free League plan runs one season at a time, and ${holder.name} holds it. Once you complete it, you can start the next. It stays on your site. ${LEAGUE_PLUS_LINE}`;
+}
+
+/** The Reopen window's refusal, in place of "What changes" (copy §6.2): the holder named, then the League Plus line. */
+export function reopenRefusal(holder: SeasonSlotHolder): string[] {
+  return [
+    holder.status === 'draft'
+      ? `Your free League plan runs one season at a time, and ${holder.name} is still getting ready.`
+      : `Your free League plan runs one season at a time, and ${holder.name} isn’t finished. Complete it first, then you can reopen this one.`,
+    LEAGUE_PLUS_LINE,
+  ];
+}
+
+/** The season PATCH's refusal when a request skips the Reopen window (copy §6.2). */
+export const REOPEN_CAP_ERROR = 'Your free League plan runs one season at a time. Complete your current season before you reopen this one.';

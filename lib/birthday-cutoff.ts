@@ -20,7 +20,7 @@ export type BirthdaySportRow = {
   label: string;
   /** Non-archived rep teams of this sport. */
   repTeams: number;
-  /** Non-archived house-league seasons of this sport. */
+  /** House-league seasons of this sport, finished ones too (an archived one reads as completed, 9f·4). */
   houseLeagueSeasons: number;
   /** Teams (live season) with at least one birth year, by name. */
   teams: BirthdayPlace[];
@@ -44,7 +44,7 @@ export type BirthdaySeasonInput = {
 const byName = (a: BirthdayPlace, b: BirthdayPlace) => a.name.localeCompare(b.name, 'en', { numeric: true });
 
 /**
- * The sports a club RUNS — a non-archived rep team or a non-archived house-league season of that sport (sport compared
+ * The sports a club RUNS — a non-archived rep team or any house-league season of that sport (sport compared
  * through `normalizeSportId`) — each with its counts and the places that carry years. Known sports, in the platform's
  * own order; a sport the club does not run is not listed.
  */
@@ -70,7 +70,6 @@ export function birthdaySportRows(teams: readonly BirthdayTeamInput[], seasons: 
     }
   }
   for (const s of seasons) {
-    if (s.status === 'archived') continue;
     const r = row(s.sport);
     r.houseLeagueSeasons += 1;
     // A finished season's divisions are history: only a live season's years can be left unshowable by a move.

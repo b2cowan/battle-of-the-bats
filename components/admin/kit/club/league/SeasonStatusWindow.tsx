@@ -15,6 +15,8 @@ import s from './LeagueSeason.module.css';
  * there the title is "{Verb} the season?" and the season's name leads the body. A refusal is said in the window.
  * "Reopen until…" (9b-1 Part 4, S2·b) asks for the new close date: the form runs until the end of that day. A season the
  * close date closed is still "open" by status, so its reopen sends only the date.
+ * A move refused before the tap (the free League plan's Reopen, 9f·5) shows its sentences in place of "What changes", with
+ * the primary absent and Close the only button: nothing is being asked.
  */
 export default function SeasonStatusWindow({ move, seasonId, orgSlug, facts, status, onClose, onDone }: {
   move: StatusMove;
@@ -60,11 +62,27 @@ export default function SeasonStatusWindow({ move, seasonId, orgSlug, facts, sta
     }
   }
 
+  const title = <><span className={s.deskOnly}>{w.title}</span><span className={s.phoneOnly}>{w.phoneTitle}</span></>;
+  if (w.refused) {
+    return (
+      <KitDialog
+        kind="form"
+        ariaLabel={w.title}
+        title={title}
+        onClose={onClose}
+        footer={<button type="button" className="btn btn-outline" onClick={onClose}>Close</button>}
+      >
+        <p className={`${s.phoneOnly} ${s.windowName}`}>{facts.seasonName}</p>
+        {w.refused.map(line => <p key={line} className={s.windowLead}>{line}</p>)}
+      </KitDialog>
+    );
+  }
+
   return (
     <KitDialog
       kind="form"
       ariaLabel={w.title}
-      title={<><span className={s.deskOnly}>{w.title}</span><span className={s.phoneOnly}>{w.phoneTitle}</span></>}
+      title={title}
       onClose={onClose}
       busy={busy}
       footerStart={<span className={repKit.footNote}>{w.foot}</span>}

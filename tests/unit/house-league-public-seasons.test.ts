@@ -18,12 +18,14 @@ const TODAY = '2026-10-24';
 describe('1 · what families read beside a season (copy §8)', () => {
   const at = (status: string, start: string | null = null, end: string | null = null) =>
     publicSeasonState({ status, seasonStartDate: start, seasonEndDate: end }, TODAY);
-  it('Registration open / closed, Starts, Playing now, Final standings; a finished season has no tag', () => {
+  it('Registration open / closed, Starts, Playing now, Ended {date}; a finished season has no tag (9f·3)', () => {
     assert.equal(at('registration_open')?.label, 'Registration open');
     assert.equal(at('registration_closed')?.label, 'Registration closed');
     assert.equal(at('active', '2027-05-31', '2027-08-30')?.label, 'Starts May 31, 2027');
     assert.equal(at('active', '2026-05-31', '2026-12-30')?.label, 'Playing now');
-    assert.equal(at('active', '2026-05-31', '2026-08-30')?.label, 'Final standings');
+    // "Final" only once the club completes it: a running season past its last day has Ended, in a neutral tone.
+    assert.deepEqual(at('active', '2026-05-31', '2026-08-30'), { label: 'Ended Aug 30', tone: 'neutral' });
+    assert.equal(at('active', '2025-05-31', '2025-08-30')?.label, 'Ended Aug 30, 2025');
     assert.equal(at('completed'), null);
     assert.equal(at('archived'), null);
   });
@@ -52,6 +54,15 @@ describe('2 · the three public surfaces draw the one list', () => {
     assert.match(page, /liveLeagueSeasons\(visibleSeasons\)/);
     assert.match(page, /<div className=\{kit\.band\}>Running now<\/div>\s*<LeagueSeasonRows/);
     assert.doesNotMatch(page, /\.find\(s => ACTIVE_STATUSES|Current season|Season active|Season complete/);
+  });
+  it('the season page: its header chip is the row’s tag, none when finished; the retired words are gone (9f·3, 9f·4)', () => {
+    const page = readCode('app/[orgSlug]/league/[seasonSlug]/page.tsx');
+    assert.match(page, /const chip = publicSeasonState\(season, today\);/);
+    assert.match(page, /\{chip && \(/);
+    assert.match(page, /\{finished && 'This season has concluded\.'\}/);
+    assert.doesNotMatch(page, /STATUS_LABEL|Season active|Season complete|'Archived'|has been archived/);
+    // The link was already right: "Final standings →" once completed, "Standings →" while running.
+    assert.match(page, /\{finished \? 'Final standings →' : 'Standings →'\}/);
   });
   it('the site home: every live season is a row', () => {
     assert.match(readCode('lib/club-home-data.ts'), /seasons: \(await withEarlyBird\(liveLeagueSeasons\(publicLeagueSeasons\), today\)\)\.map/);

@@ -8,7 +8,7 @@ import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
 import { orgLinks } from '@/lib/org-links';
 import { SCHEDULE_PUBLIC_WORDS as P } from '@/lib/league-schedule-words';
 import {
-  STANDINGS_WORDS as W, diffWords, recordWords,
+  STANDINGS_WORDS as W, diffWords, recordWords, standingsTitle,
   type LeagueStandings, type LeagueStandingsRow, type StandingsLabels,
 } from '@/lib/league-standings';
 import type { LeagueDivision } from '@/lib/types';
@@ -73,7 +73,7 @@ export default async function PublicStandingsPage({
         </Link>
 
         <div style={{ marginBottom: '1.75rem' }}>
-          <h1 className={kit.title}>{W.title}</h1>
+          <h1 className={kit.title}>{standingsTitle(season.status)}</h1>
           <p className={kit.sub}>{season.name}</p>
         </div>
 

@@ -73,8 +73,10 @@ export async function computeClubChecklist(org: Org): Promise<ClubChecklist> {
     fiscal.id
       ? supabaseAdmin.from('org_budget_lines').select('id', { count: 'exact', head: true }).eq('fiscal_year_id', fiscal.id)
       : Promise.resolve({ count: 0, error: null }),
+    // Any season counts, finished ones too: a club that ran one runs house league (an archived season, from before
+    // Archive was retired in 9f·4, reads exactly as a completed one).
     supabaseAdmin.from('league_seasons').select('id', { count: 'exact', head: true })
-      .eq('org_id', org.id).neq('status', 'archived'),
+      .eq('org_id', org.id),
     supabaseAdmin.from('tournaments').select('id', { count: 'exact', head: true })
       .eq('org_id', org.id).neq('status', 'archived'),
   ]);

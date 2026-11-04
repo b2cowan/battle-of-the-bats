@@ -1,0 +1,290 @@
+<title>9f-1 Finished Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+table.nums { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.nums th, table.nums td { text-align: left; padding: 4px 8px 4px 0; border-top: 1px solid var(--line); vertical-align: top; font-variant-numeric: tabular-nums; }
+table.nums th { color: var(--muted); font-weight: 600; border-top: 0; }
+.scroll { overflow-x: auto; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · House League · Stage 9f-1 · Ledger §449</span>
+    <h1>Finished, honestly: a season ends one way, and every page says which</h1>
+    <p class="sub">Written 2026-11-03 for Stage 9f-1 (built, reviewed, help updated). One purpose: a house-league season is either running or finished, Archive is gone, the words “Final” and “Ended” mean what they say, and the free League plan counts only live seasons.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>A finished season now has one name, <strong>Finished</strong>, and one rare door, <strong>Reopen</strong>. <strong>Archive</strong> is gone, and a season someone archived before reads exactly like a completed one. A season whose last day has passed but that the club has not completed reads <strong>Ended {date}</strong>; only a completed season is <strong>Final standings</strong>. The Complete and Reopen windows say what happens to player ratings, refunds and newer seasons. A coach of a finished team sees the team’s <strong>Final place</strong>. On the free League plan, last year’s finished season no longer blocks next year’s, and both refusals name the season that holds the one place.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>No Archive door, window or word appears anywhere a league runner looks.</li>
+    <li>The Complete and Reopen windows carry the new lines, with the right date (“Ended Aug 28, 2025” for last year, “Ended Oct 25” for this year) and the newer season named.</li>
+    <li>Families read “Ended Oct 25” for a season past its last day, and “Final standings” only after the club completes it.</li>
+    <li>The coach’s finished page shows “Final place: …” when families could see the table, and no line when standings were off.</li>
+    <li>On the free League plan, Create season and Reopen each refuse in words naming the season that holds the place, Reopen with only a Close button, and a finished season never blocks.</li>
+    <li>A legacy archived season reads exactly as a completed one: Finished, Reopen only, “This season has concluded.”, Final standings, the setup checklist and the birthday card.</li>
+  </ul></section>
+  <section class="card"><h2>Known before the walk</h2><ul>
+    <li><strong>The dev server must be restarted first.</strong> This build adds a new shared module; it was restarted at hand-off.</li>
+    <li><strong>The fixture is three throwaway clubs</strong> with their own sign-ins (below). It touches no other club, walk or sign-in, and a re-run rebuilds only them. Dev only; it refuses production.</li>
+    <li><strong>Walk Fall 2025 finished “today”.</strong> The fixture completes it when it runs, so the coach’s page is open for 30 days from then. Its last day is still Aug 28, 2025.</li>
+    <li><strong>No data change was needed.</strong> Dev and production had no archived house-league seasons. Walk Spring 2024 is archived by the fixture only so you can see one.</li>
+    <li><strong>The free League plan is parked</strong> (off for everyone in production). The fixture switches it on for Walk 9f-1 Free League only.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>“Tied for 3rd of 6”</strong> on the coach’s line, and three or more newer seasons (“Your 3 newer seasons are not changed.”). Both are proved by the tests.</li>
+    <li><strong>A request that skips the Reopen window</strong> on the free plan. The server refuses it too; proved by the tests.</li>
+    <li><strong>Start next season from this one</strong>: that is Stage 9f-2.</li>
+    <li><strong>The help articles.</strong> Read them if you like (Help › House league › The season’s lifecycle, Plans and limits, Closing out a season); they are not walk steps.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd>Restarted after this build. The login page answers 200.</dd>
+    <dt>Fixture</dt><dd>In the project folder: <code>node --env-file=.env.local .probe/9f1-walk/fixture.mjs</code>. It (re)builds the three clubs and prints every link below with the season ids. <strong>The season and team links change every time it runs</strong>, so use the ones it printed. When done: <code>--reset</code> removes the clubs and the four sign-ins.</dd>
+    <dt>Walk 9f-1 Club</dt><dd><strong>Walk Fall 2025</strong> (finished; last day Aug 28, 2025): U11 Walk with standings on, Hawks coached by Casey, six scores; U9 Walk with standings <strong>off</strong>, Owls coached by Casey. <strong>Walk Summer 2026</strong> (running; last day Oct 25, 2026 has passed; never completed).</dd>
+    <dt>Legacy Club</dt><dd><strong>Walk Spring 2024</strong>, soccer, <strong>archived</strong>: the club’s only season and only sport.</dd>
+    <dt>Free League</dt><dd>Free League plan. <strong>Walk Free 2026</strong> (running, playing now) and <strong>Walk Free 2025</strong> (finished).</dd>
+  </dl></section>
+  <section class="card"><h2>Sign in as</h2><p>One browser window per person (private windows for the others). Password <code>devpass123</code> for all four. Dev only, keep this page private.</p><dl class="facts">
+    <dt>Walk 9f-1 Club</dt><dd><code>walk-9f1-admin@dev.local</code> (Riley, the owner)</dd>
+    <dt>Coach</dt><dd><code>walk-9f1-coach@dev.local</code> (Casey Walker: Hawks and Owls)</dd>
+    <dt>Legacy Club</dt><dd><code>walk-9f1-legacy@dev.local</code> (Lee, the owner)</dd>
+    <dt>Free League</dt><dd><code>walk-9f1-free@dev.local</code> (Frankie, the owner)</dd>
+  </dl></section>
+  <section class="card"><h2>Where</h2><dl class="facts">
+    <dt>Club house league</dt><dd><code>http://localhost:3000/walk-9f1-club/admin/house-league</code></dd>
+    <dt>Club public</dt><dd><code>http://localhost:3000/walk-9f1-club/league</code></dd>
+    <dt>Legacy public</dt><dd><code>http://localhost:3000/walk-9f1-legacy/league/walk-spring-2024</code></dd>
+    <dt>Free house league</dt><dd><code>http://localhost:3000/walk-9f1-free/admin/house-league</code></dd>
+    <dt>Season pages, coach pages</dt><dd>The links the fixture printed.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>The free plan’s Reopen refusal when the holder is open for registration.</strong> It says “… isn’t finished. Complete it first …”, which a season still taking registrations can’t do yet. Your accepted copy splits out only the getting-ready case, so the build keeps it. Not in the fixture; say if it should change.</li>
+    <li><strong>The build’s choices</strong> (say if any should change): a season archived before keeps the word “archived” in the database but reads as completed everywhere; it can still be reopened; the Reopen window takes its public-site sentence from the site’s own label, so it can’t promise a different date.</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "hl9f1-walk-finished-honestly-v1";
+  var TITLE = "9f-1 walk · Finished, honestly (2026-11-03) · §449";
+  var FX = "<code>node --env-file=.env.local .probe/9f1-walk/fixture.mjs";
+  var RA = "Riley (Walk 9f-1 Club owner) · walk-9f1-admin@dev.local";
+  var CA = "Casey Walker (coach) · walk-9f1-coach@dev.local (private window)";
+  var LE = "Lee (Legacy Club owner) · walk-9f1-legacy@dev.local (private window)";
+  var FR = "Frankie (Free League owner) · walk-9f1-free@dev.local (private window)";
+  var OUT = "Signed out (a private window)";
+  var PARTS = [
+ { id: "A", title: "Archive is gone", steps: [
+  { who: "Terminal", do: "With the dev server restarted, run " + FX + "</code>.",
+    see: "<strong>Stop check:</strong> “Built …”, five seasons (Walk Spring 2024 <em>archived</em>, Walk Fall 2025 and Walk Free 2025 <em>completed</em>, Walk Summer 2026 and Walk Free 2026 <em>active</em>), the four sign-ins and the links. Keep it open." },
+  { who: RA, do: "Sign in and open the club’s house league page.",
+    see: "Walk Summer 2026 with an amber <strong>Ended Oct 25</strong> pill; Walk Fall 2025 among the finished seasons. No “Archived” anywhere." },
+  { who: RA, do: "Open <strong>Walk Fall 2025</strong> (the A1 link) and scroll to the very end of its Overview.",
+    see: "One door: “Need to change something?” <strong>Reopen the season…</strong>. <strong>No</strong> “Finished and settled? Archive the season…”, and no Archive button or word anywhere on the page." }
+ ]},
+ { id: "B", title: "Families read Ended, not Final", steps: [
+  { who: OUT, do: "Open the club’s public house league page.",
+    see: "<strong>Running now</strong>: Walk Summer 2026 tagged <strong>Ended Oct 25</strong> (never “Final standings”) with Schedule and Standings. <strong>Past seasons</strong>: Walk Fall 2025 with no tag." },
+  { who: OUT, do: "Open Walk Summer 2026’s season page, then its Standings.",
+    see: "At the top of the season page, the chip <strong>Ended Oct 25</strong>; no “Season active”. The line “This season is currently active. Registration is closed.” stays (you kept it). The standings page is titled <strong>Standings</strong>." },
+  { who: OUT, do: "Open Walk Fall 2025’s season page, then its standings.",
+    see: "No chip at the top (no “Season complete”), the line <strong>This season has concluded.</strong> and <strong>Final standings →</strong>. The standings page is titled <strong>Final standings</strong>: U11 Walk has Hawks 1st (2-0-1, 5 points), Wolves, Lions, Bears." }
+ ]},
+ { id: "C", title: "The Complete and Reopen windows", steps: [
+  { who: RA, do: "Open <strong>Walk Summer 2026</strong> (A2) and scroll to the end of its Overview.",
+    see: "“This season ended Oct 25.” and <strong>Complete the season…</strong>." },
+  { who: RA, do: "Press Complete the season… and read the window. Don’t press anything yet.",
+    see: "Title <strong>Complete Walk Summer 2026?</strong>, “The season moves to Past seasons. What changes:”, then in order: Registrations, teams and the schedule can no longer be changed. · <strong>Money stays open: you can still mark fees received and record refunds.</strong> · You can still email its families. · Your public site lists it under Past seasons, and its schedule and standings stay up. · <strong>Player ratings are erased.</strong> · Families are not emailed. Foot: “You can reopen it from Past seasons.”, button <strong>Complete season</strong>." },
+  { who: RA, do: "Press <strong>Complete season</strong>. Then, signed out, reload Walk Summer 2026’s season page and its standings.",
+    see: "The season is under Past seasons on both the admin and public pages. Its public page has no chip and says “This season has concluded.”; the standings page is now titled <strong>Final standings</strong>." },
+  { who: RA, do: "At the end of Walk Summer 2026’s Overview, press <strong>Reopen the season…</strong> and read the window.",
+    see: "Title <strong>Reopen Walk Summer 2026?</strong>, “The season comes back to Running now. What changes:” Registrations, teams and the schedule can be changed again. · <strong>Your public site lists it as Ended Oct 25 until you complete it again.</strong> · <strong>Player ratings were erased when it finished. They don’t come back.</strong> · Families are not emailed. No “not changed” line (nothing is newer). Button <strong>Reopen season</strong>." },
+  { who: RA, do: "Press Reopen season. Then open <strong>Walk Fall 2025</strong>, press Reopen the season… and read the window. <strong>Cancel</strong> it.",
+    see: "Walk Summer 2026 is running again and the public page tags it Ended Oct 25. Walk Fall 2025’s window says <strong>Your public site lists it as Ended Aug 28, 2025 until you complete it again.</strong> (with the year: it is last year’s), the ratings line, and <strong>Walk Summer 2026 is not changed.</strong>" }
+ ]},
+ { id: "D", title: "The coach’s final place", steps: [
+  { who: CA, do: "Signed out, open the <strong>Casey · Hawks</strong> link. Sign in as Casey when asked.",
+    see: "You come back to the Hawks page: “U11 Walk · Walk Fall 2025”, then “Walk Fall 2025 has finished. This page stays until {a date 30 days from the fixture run}.”" },
+  { who: CA, do: "Read the page from the top.",
+    see: "<strong>No Schedule section</strong>: no Schedule heading and no “See the season’s schedule” link. The heading <strong>Scores and standings</strong>, the line <strong>Final place: 1st of 4 · 2-0-1 · 5 points</strong> and the link <strong>See the final standings</strong>." },
+  { who: CA, do: "Press See the final standings.",
+    see: "The page titled <strong>Final standings</strong>, on U11 Walk, with Hawks 1st and the same record and points as the line." },
+  { who: CA, do: "Open the <strong>Casey · Owls</strong> link (U9 Walk, standings off).",
+    see: "The heading is just <strong>Scores</strong>, with <strong>no</strong> place line and no standings link. No Schedule section either." }
+ ]},
+ { id: "E", title: "The free League plan counts live seasons", steps: [
+  { who: FR, do: "Sign in and open the free club’s house league page. Press <strong>Create season</strong>.",
+    see: "A window titled <strong>One season at a time on your free plan</strong>: “Your free League plan runs one season at a time, and Walk Free 2026 holds it. Once you complete it, you can start the next. It stays on your site. League Plus runs several seasons and age groups side by side.”, with the League Plus link and a way to close it. No create form." },
+  { who: FR, do: "Open <strong>Walk Free 2025</strong> (finished) and press Reopen the season… at the end of its Overview.",
+    see: "Title Reopen Walk Free 2025?, and in place of “What changes”: “Your free League plan runs one season at a time, and Walk Free 2026 isn’t finished. Complete it first, then you can reopen this one.” and “League Plus runs several seasons and age groups side by side.” <strong>The only button is Close</strong>: no Reopen season, not even a faded one." },
+  { who: FR, do: "Open <strong>Walk Free 2026</strong> and complete it (Complete the season… › Complete season). Back on the house league page, press Create season.",
+    see: "The ordinary create window opens: two finished seasons hold nothing. Create <strong>Walk Free 2027</strong> (any sport, any dates). Its page opens, Getting ready." },
+  { who: FR, do: "Open Walk Free 2025 again and press Reopen the season….",
+    see: "“Your free League plan runs one season at a time, and Walk Free 2027 is still getting ready.” and the League Plus line. Only Close." },
+  { who: FR, do: "On the house league page, press Create season again.",
+    see: "“Your free League plan runs one season at a time, and Walk Free 2027 holds it while it’s getting ready. League Plus runs several seasons and age groups side by side.”" }
+ ]},
+ { id: "F", title: "A season archived before reads as completed", steps: [
+  { who: LE, do: "Sign in and open the Legacy Club’s house league page, then <strong>Walk Spring 2024</strong> (B1 link).",
+    see: "It sits with the finished seasons and reads <strong>Finished</strong>, exactly as Walk Fall 2025 does in the other club. At the end of its Overview, only <strong>Reopen the season…</strong>. No “Archived” anywhere." },
+  { who: LE, do: "Press Reopen the season… and read the window. <strong>Cancel</strong> it.",
+    see: "“Your public site lists it as <strong>Ended Jun 22, 2024</strong> until you complete it again.”, the ratings line, no “not changed” line, button Reopen season." },
+  { who: OUT, do: "Open the Legacy public season page, then its standings.",
+    see: "No “Archived” chip; <strong>This season has concluded.</strong> (not “This season has been archived.”) and Final standings →. The standings page is titled <strong>Final standings</strong>." },
+  { who: LE, do: "Open the setup checklist (the Setup checklist link).",
+    see: "<strong>No</strong> “Running a house league too? Set up a season” line: a club whose only season is archived runs house league." },
+  { who: LE, do: "Open Settings (the Settings link) and find <strong>When birthdays count from</strong>.",
+    see: "A <strong>Soccer</strong> row (the archived season’s sport), not “Your sports show here once you add a rep team or a house-league season.”" },
+  { who: "Terminal", do: "When you are finished, run " + FX + " --reset</code>.",
+    see: "“Reset: the three walk clubs, their seasons and the four walk sign-ins are gone.”" }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

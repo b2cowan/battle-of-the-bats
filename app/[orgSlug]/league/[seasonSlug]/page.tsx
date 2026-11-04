@@ -10,8 +10,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { LeagueDivision } from '@/lib/types';
 import { bornFactsOf } from '@/lib/club-born-public';
 import { formatStoredDate, tournamentToday } from '@/lib/timezone';
-import { clubDay, promotesEarlyBird, publicRegistrationLine, registrationChip, takesSignups } from '@/lib/league-registration-state';
-import { dollarsLine, saveWords } from '@/lib/house-league-season';
+import { clubDay, promotesEarlyBird, publicRegistrationLine, takesSignups } from '@/lib/league-registration-state';
+import { dollarsLine, publicSeasonState, saveWords } from '@/lib/house-league-season';
 import { earlyBirdOffer, leaguePrice, seasonPriceRange } from '@/lib/league-price';
 import column from '../league-column.module.css';
 import kit from '@/components/public/ClubKit.module.css';
@@ -26,15 +26,6 @@ export async function generateMetadata({ params }: { params: Promise<{ orgSlug: 
     return season && season.status !== 'draft' ? season.name : null;
   }, { path: `/league/${seasonSlug}` });
 }
-
-const STATUS_LABEL: Record<string, string> = {
-  draft:                'Draft',
-  registration_open:    'Registration open',
-  registration_closed:  'Registration closed',
-  active:               'Season active',
-  completed:            'Season complete',
-  archived:             'Archived',
-};
 
 /** A stored day, read as stored (9b-1 Part 4): registration times are kept as the club typed them, so the first ten
  *  characters ARE the club's day — re-zoning them showed an early-morning close as the day before. */
@@ -96,6 +87,9 @@ export default async function LeagueSeasonPage({
   const priceToday = (d: LeagueDivision) => leaguePrice(d, season, today);
   const earlyRange = offer ? seasonPriceRange(divisions.map(d => ({ price: priceToday(d)?.amount ?? null, earlyPrice: null })), { registrationFee: null }) : null;
   const finished = season.status === 'completed' || season.status === 'archived';
+  // The header chip is the index row's tag (9f·3, 9f·4): Registration open · closed · Starts {date} · Playing now · Ended
+  // {date}, and none on a finished season — one function, so a season is never named two ways.
+  const chip = publicSeasonState(season, today);
 
   // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
   return (
@@ -104,11 +98,13 @@ export default async function LeagueSeasonPage({
       <div className={`container ${column.column}`}>
         {/* Season header */}
         <div className={column.header}>
-          <div className={kit.chipRow}>
-            <span className={`${kit.chip} ${registrationOpen ? kit.chipOk : kit.chipNeutral}`}>
-              {registrationChip(season) ?? STATUS_LABEL[season.status] ?? season.status}
-            </span>
-          </div>
+          {chip && (
+            <div className={kit.chipRow}>
+              <span className={`${kit.chip} ${registrationOpen || chip.tone === 'ok' ? kit.chipOk : kit.chipNeutral}`}>
+                {chip.label}
+              </span>
+            </div>
+          )}
           <h1 className={kit.title}>{season.name}</h1>
           {season.description && (
             <p className={kit.body} style={{ maxWidth: '600px', marginTop: '0.5rem' }}>
@@ -254,8 +250,7 @@ export default async function LeagueSeasonPage({
             >
               {regLine}
               {season.status === 'active' && 'This season is currently active. Registration is closed.'}
-              {season.status === 'completed' && 'This season has concluded.'}
-              {season.status === 'archived' && 'This season has been archived.'}
+              {finished && 'This season has concluded.'}
             </div>
 
             {/* Quick-access links once registration has closed: the schedule always (teams are set before the first game),

@@ -30,7 +30,7 @@ describe('1 · the windows’ words (copy §4)', () => {
   });
   it('Complete keeps Money and Email families open and says so; its loose ends are one amber sentence', () => {
     const w = moveWords('complete', F, TODAY);
-    assert.ok(w.changes.includes('Money stays open: you can still mark fees received.'));
+    assert.ok(w.changes.includes('Money stays open: you can still mark fees received and record refunds.'));
     assert.ok(w.changes.includes('You can still email its families.'));
     assert.deepEqual(w.looseEnds, ['1 registration is still waiting for review, and 4 players still owe fees.']);
   });
@@ -62,8 +62,64 @@ describe('1 · the windows’ words (copy §4)', () => {
   it('the rare door: "This season ended {date}." once it has, "Done with this season?" before', () => {
     assert.equal(rareDoor('complete', F, TODAY).sentence, 'This season ended Aug 30.');
     assert.equal(rareDoor('complete', { seasonEndDate: '2026-12-30' }, TODAY).sentence, 'Done with this season?');
-    assert.equal(rareDoor('archive', F, TODAY).link, 'Archive the season…');
     assert.equal(rareDoor('reopen', F, TODAY).link, 'Reopen the season…');
+  });
+});
+
+describe('1b · finished, honestly (House League 9f-1; words HOUSE_LEAGUE_STAGE9F_COPY.md §1–§3, §6.2)', () => {
+  const reopen = (over: Partial<MoveFacts> = {}) => moveWords('reopen', { ...F, ...over }, TODAY);
+  it('Complete says ratings are erased, after the public-site line and before "not emailed" (9f·7)', () => {
+    const c = moveWords('complete', F, TODAY).changes;
+    const at = (line: string) => c.indexOf(line);
+    assert.ok(at('Player ratings are erased.') > at('Your public site lists it under Past seasons, and its schedule and standings stay up.'));
+    assert.equal(c[c.length - 1], 'Families are not emailed.');
+    assert.equal(c[c.length - 2], 'Player ratings are erased.');
+  });
+  it('Reopen names the public site by the dates: Ended {date} once its last day has passed, else Playing now (9f·3)', () => {
+    assert.ok(reopen().changes.includes('Your public site lists it as Ended Aug 30 until you complete it again.'));
+    assert.ok(reopen({ seasonEndDate: '2026-12-30' }).changes.includes('Your public site lists it as Playing now.'));
+    assert.ok(reopen({ seasonEndDate: null }).changes.includes('Your public site lists it as Playing now.'));
+    // The window reads the site's own tag, so it never promises another word or date than the site then shows.
+    assert.ok(reopen({ seasonStartDate: '2025-05-31', seasonEndDate: '2025-08-28' }).changes
+      .includes('Your public site lists it as Ended Aug 28, 2025 until you complete it again.'), 'last year’s season carries its year');
+    assert.ok(reopen({ seasonStartDate: '2027-01-05', seasonEndDate: '2027-03-30' }).changes
+      .includes('Your public site lists it as Starts Jan 5, 2027.'), 'a first day still ahead');
+    assert.ok(reopen().changes.every(l => !/Final standings/.test(l)), '"Final" never names a running season');
+  });
+  it('Reopen says ratings do not come back, and names the newer seasons as not changed (9f·7)', () => {
+    assert.ok(reopen().changes.includes('Player ratings were erased when it finished. They don’t come back.'));
+    const newer = (names: string[]) => reopen({ reopen: { newer: names, blockedBy: null } }).changes;
+    assert.ok(!newer([]).some(l => /not changed/.test(l)));
+    assert.ok(newer(['Draft Test 2028']).includes('Draft Test 2028 is not changed.'));
+    assert.ok(newer(['Draft Test 2028', 'Fall Ball 2028']).includes('Draft Test 2028 and Fall Ball 2028 are not changed.'));
+    assert.ok(newer(['A', 'B', 'C']).includes('Your 3 newer seasons are not changed.'));
+    const c = newer(['Draft Test 2028']);
+    assert.equal(c[c.length - 1], 'Families are not emailed.', '"not emailed" stays last');
+  });
+  it('Reopen on the free League plan is refused before the tap: the holder named, no Reopen button (9f·5, §6.2)', () => {
+    const w = reopen({ reopen: { newer: [], blockedBy: { name: 'Fall Ball 2027', status: 'active' } } });
+    assert.deepEqual(w.refused, [
+      'Your free League plan runs one season at a time, and Fall Ball 2027 isn’t finished. Complete it first, then you can reopen this one.',
+      'League Plus runs several seasons and age groups side by side.',
+    ]);
+    assert.deepEqual(w.changes, []);
+    const draft = reopen({ reopen: { newer: [], blockedBy: { name: 'Draft Test 2028', status: 'draft' } } });
+    assert.equal(draft.refused?.[0], 'Your free League plan runs one season at a time, and Draft Test 2028 is still getting ready.');
+    assert.equal(reopen().refused, undefined);
+    const win = readCode('components/admin/kit/club/league/SeasonStatusWindow.tsx');
+    // The refused window's only button is Close (never Cancel, nothing is asked), and it never draws the primary.
+    assert.match(win, /if \(w\.refused\) \{[\s\S]*?footer=\{<button type="button" className="btn btn-outline" onClick=\{onClose\}>Close<\/button>\}/);
+  });
+  it('Archive is retired: no move, no door, no window word (9f·4)', () => {
+    assert.ok(!('archive' in MOVE_TO));
+    assert.deepEqual(movesFrom('completed'), ['reopen']);
+    assert.deepEqual(movesFrom('archived'), ['reopen'], 'a season archived before 9f-1 reads exactly as a completed one');
+    const words = readCode('lib/house-league-status-words.ts');
+    assert.doesNotMatch(words, /Archive the season|Archive season|Archiving…|has been archived|Finished and settled/);
+    const route = readCode('app/api/admin/house-league/seasons/[seasonId]/route.ts');
+    assert.match(route, /completed:\s*\['active'\],/, 'nothing moves INTO archived');
+    assert.match(route, /archived:\s*\['active'\],/, 'a legacy archived season keeps its way back');
+    assert.doesNotMatch(route, /Archive it instead/);
   });
 });
 
@@ -116,8 +172,9 @@ describe('3 · the season’s page', () => {
     assert.match(win, /footerStart=\{<span className=\{repKit\.footNote\}>\{w\.foot\}<\/span>\}/, 'the foot: sentence left');
     assert.match(win, /kind="form"/, 'a phone gets the full-screen window');
   });
-  it('Complete, Archive and Reopen are rare doors ending the body; Close / Reopen registration sit on the Registration block', () => {
-    assert.match(page, /\(\['complete', 'archive', 'reopen'\] as const\)\.filter\(m => moves\.includes\(m\)/);
+  it('Complete and Reopen are rare doors ending the body; Close / Reopen registration sit on the Registration block', () => {
+    assert.match(page, /\(\['complete', 'reopen'\] as const\)\.filter\(m => moves\.includes\(m\)/);
+    assert.match(page, /reopen: detail\.reopen,/, 'the Reopen window gets the newer seasons and the free plan’s holder');
     assert.match(page, /<RegistrationBlock[^>]*door=\{regDoor\}/);
   });
   it('the figures band is one joined band of four, without today’s money figure (9b-2)', () => {

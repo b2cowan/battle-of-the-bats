@@ -141,6 +141,14 @@ function newestFirst<T extends Dated & { createdAt?: string | null }>(a: T, b: T
   return kb.localeCompare(ka);
 }
 
+/**
+ * The club's seasons newer than this one (the Reopen window's "{season} is not changed.", 9f·7): started after it, by the
+ * same key the switcher sorts on (its first day, then when it was made), newest first. This season itself never counts.
+ */
+export function newerSeasons<T extends Dated & { id: string; createdAt?: string | null }>(season: T, seasons: readonly T[]): T[] {
+  return seasons.filter(s => s.id !== season.id && newestFirst(s, season) < 0).sort(newestFirst);
+}
+
 /** The switcher's order (copy §7): live seasons first, newest first; then the finished ones, newest first. */
 export function orderSeasons<T extends Dated & { createdAt?: string | null }>(seasons: readonly T[]): T[] {
   const finished = (s: T) => seasonGroup(s) === 'past';
@@ -156,8 +164,10 @@ export function liveLeagueSeasons<T extends Dated & { createdAt?: string | null 
 
 /**
  * What a family reads beside a live season (copy §8): Registration open · Registration closed · Starts {date} · Playing now
- * · Final standings (a season past its last day the club has not completed yet). A finished season has no tag (its shelf
- * is the label). The admin's "Ended {date}" is the club's working word; families read "Final standings".
+ * · Ended {date} (a season past its last day the club has not completed yet). A finished season has no tag (its shelf is
+ * the label). "Ended" is the admin pill's word too, so one state has one name (9f·3): "Final" is kept for a season the club
+ * has completed — its link and its standings page title — never for a date that has passed.
+ * The season page's header chip reads this same function, so a season is never named two ways.
  */
 export function publicSeasonState(season: Dated, today: string = tournamentToday()): { label: string; tone: 'ok' | 'neutral' } | null {
   if (season.status === 'registration_open' || season.status === 'registration_closed') {
@@ -166,7 +176,8 @@ export function publicSeasonState(season: Dated, today: string = tournamentToday
   if (season.status !== 'active') return null;
   const p = phase(season, today);
   if (p.kind === 'upcoming') return { label: `Starts ${dayLabel(p.start, today)}`, tone: 'neutral' };
-  if (p.kind === 'ended') return { label: 'Final standings', tone: 'ok' };
+  // Neutral on the public side: a family should not read the club's not-yet-completed season as a warning (9f copy §4.1).
+  if (p.kind === 'ended') return { label: `Ended ${dayLabel(p.end, today)}`, tone: 'neutral' };
   return { label: 'Playing now', tone: 'ok' };
 }
 

@@ -34,7 +34,7 @@ const team = (name: string, sport: string | null, years: [number | null, number 
 });
 
 describe('the sports a club runs', () => {
-  it('lists a sport for a non-archived rep team or house-league season, compared through the sport id', () => {
+  it('lists a sport for a non-archived rep team or any house-league season, compared through the sport id', () => {
     const rows = birthdaySportRows(
       [team('13U Softball', 'Softball', [2013, 2014]), team('11U Softball', 'softball', null), team('9U Ball', 'baseball', null)],
       [{ sport: 'SOFTBALL', status: 'active', divisions: [] }],
@@ -45,12 +45,21 @@ describe('the sports a club runs', () => {
     ]);
   });
 
-  it('leaves out a sport only an archived team or an archived season carries', () => {
-    const rows = birthdaySportRows(
-      [team('Old', 'hockey', null, { isArchived: true }), team('Live', 'softball', null)],
-      [{ sport: 'baseball', status: 'archived', divisions: [] }],
-    );
+  it('leaves out a sport only an archived team carries', () => {
+    const rows = birthdaySportRows([team('Old', 'hockey', null, { isArchived: true }), team('Live', 'softball', null)], []);
     assert.deepEqual(rows.map(r => r.id), ['softball']);
+  });
+
+  it('counts a sport an archived season carries, as a completed one (House League 9f·4: archived reads as completed)', () => {
+    const rows = birthdaySportRows(
+      [team('Live', 'softball', null)],
+      [{ sport: 'baseball', status: 'archived', divisions: [{ name: 'U11', bornFromYear: 2015, bornToYear: 2016 }] }],
+    );
+    assert.deepEqual(rows.map(r => r.id), ['softball', 'baseball']);
+    // A finished season's divisions are history either way: none is listed.
+    assert.deepEqual(rows.find(r => r.id === 'baseball')?.divisions, []);
+    assert.doesNotMatch(read('lib/birthday-cutoff.ts'), /status === 'archived'\) continue/);
+    assert.doesNotMatch(read('lib/birthday-cutoff-server.ts'), /status !== 'archived'/);
   });
 
   it('a blank sport is the legacy softball, an unknown one is other', () => {

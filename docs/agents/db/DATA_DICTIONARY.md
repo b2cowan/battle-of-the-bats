@@ -6703,11 +6703,11 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 ## `league_seasons`
 <!-- dict:table:league_seasons -->
 
-**Purpose:** one row per house-league **season** (e.g. "U11 Summer 2025") — the module's spine. Carries the public slug, registration window, fee + automation flags, waiver, a forward-only status lifecycle, and a transient player-draft working state. Mapped by `mapLeagueSeason` ([lib/db.ts:2904](../../../lib/db.ts#L2904)).
+**Purpose:** one row per house-league **season** (e.g. "U11 Summer 2025") — the module's spine. Carries the public slug, registration window, fee + automation flags, waiver, a status lifecycle (forward, with two ways back), and a transient player-draft working state. Mapped by `mapLeagueSeason` ([lib/db.ts:2311](../../../lib/db.ts#L2311)).
 
 **Gotchas (read first):**
 1. **A season's old `division` (text) was NOT `league_divisions`** — it was the legacy `age_group` label renamed by mig 093 (a free-text season badge). **Dropped on dev by mig 360 (2026-10-25); nothing writes it any more, and prod keeps it until the held drop.** Structured divisions are the separate table.
-2. **`status` is a forward-only, single-hop lifecycle enforced in APP code, not by the CHECK.** The CHECK allows all 6 values in any order, but `ALLOWED_TRANSITIONS` ([seasons/[seasonId]/route.ts:21-28](../../../app/api/admin/house-league/seasons/[seasonId]/route.ts#L21-L28)) permits only `draft → registration_open → registration_closed → active → completed → archived`, one hop at a time; `archived` is terminal; `draft → registration_open` requires ≥1 division ([:127-135](../../../app/api/admin/house-league/seasons/[seasonId]/route.ts#L127-L135)). Raw SQL could set an illegal state.
+2. **`status` is a single-hop lifecycle enforced in APP code, not by the CHECK.** The CHECK allows all 6 values in any order, but `ALLOWED_TRANSITIONS` ([seasons/[seasonId]/route.ts:34-42](../../../app/api/admin/house-league/seasons/[seasonId]/route.ts#L34-L42)) permits only `draft → registration_open → registration_closed → active → completed` (an opened season whose close date has passed may go `registration_open → active`), plus two ways back: `registration_closed → registration_open` and Reopen, `completed → active` / `archived → active`. **Nothing moves INTO `archived`** since Archive was retired (House League 9f·4, 2026-11-04); a row archived before then reads exactly as `completed` everywhere (`isFinishedLeagueSeason`) and can still be reopened. `draft → registration_open` requires the setup checklist (`openRegistrationRefusal`, [:261](../../../app/api/admin/house-league/seasons/[seasonId]/route.ts#L261)). On the free League plan a Reopen is refused when another live season holds the one slot (`lib/league-season-slot.ts`, 9f·5). Raw SQL could set an illegal state.
 3. **Naming collision:** season `status = 'draft'` (unpublished season) is unrelated to **`draft_state`** (the live player-draft snapshot, gotcha 5).
 4. **`auto_generate_fees` is a legacy season setting; Stage 7a's paid-only fee write does not depend on it** (see `fee_entry_id` on `league_registrations`).
 5. **`draft_state` (jsonb) is a transient draft-room snapshot** — null when no draft is running, cleared on finalize.
@@ -6722,7 +6722,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 **`name`** (text, NOT NULL) — season display name; ≤120 chars (app-only cap). Feeds the UI's `slugify()` default.
 
 <!-- dict:col:league_seasons.slug -->
-**`slug`** (text, NOT NULL) — URL segment for `/{orgSlug}/league/{seasonSlug}`; `UNIQUE(org_id, slug)` [`league_seasons_org_id_slug_key`]. Client-supplied; 409 on collision (gotcha 6). Public lookup `getLeagueSeasonBySlug` ([lib/db.ts:3009](../../../lib/db.ts#L3009)).
+**`slug`** (text, NOT NULL) — URL segment for `/{orgSlug}/league/{seasonSlug}`; `UNIQUE(org_id, slug)` [`league_seasons_org_id_slug_key`]. Client-supplied; 409 on collision (gotcha 6). Public lookup `getLeagueSeasonBySlug` ([lib/db.ts:2449](../../../lib/db.ts#L2449)).
 
 <!-- dict:col:league_seasons.sport -->
 **`sport`** (text, NOT NULL, default `'softball'`) — free-text sport label, no enum (the season PATCH stores any string). **Read only through `getSportPack(value)`** ([lib/sports.ts](../../../lib/sports.ts)), which gives an unknown value the neutral pack. Code does branch on it: the birth-year cut-off (`cutoffFor`), the field noun, and (House League 9e-1, ruling 9e·2) **the standings** — their column words (RF / RA / RD for ball) and their win and tie points (`rankStandings`, [lib/league-standings.ts](../../../lib/league-standings.ts)). The house-league season form offers softball and baseball only.
@@ -6731,7 +6731,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 **`division`** (text, nullable) — **DROPPED on dev by mig 360 (2026-10-25); prod still has it until the held drop is applied after the code promote** (then delete this entry). Was a free-text age/division badge for the whole season; the legacy `age_group` renamed by mig 093. **Nothing reads or writes it any more.** The season's divisions are the `league_divisions` table (gotcha 1).
 
 <!-- dict:col:league_seasons.status -->
-**`status`** (text, NOT NULL, default `'draft'`; CHECK `draft|registration_open|registration_closed|active|completed|archived`) — lifecycle; forward-only single-hop in app code (gotcha 2). RLS public-read policy keys off the open-or-later subset (`registration_open`/`registration_closed`/`active`/`completed` — excludes both `draft` and `archived`).
+**`status`** (text, NOT NULL, default `'draft'`; CHECK `draft|registration_open|registration_closed|active|completed|archived`) — lifecycle; single-hop in app code, forward with two ways back (gotcha 2). `archived` is legacy: no move reaches it since 9f·4, and it reads as `completed`. RLS public-read policy keys off the open-or-later subset (`registration_open`/`registration_closed`/`active`/`completed` — excludes both `draft` and `archived`).
 
 <!-- dict:col:league_seasons.description -->
 **`description`** (text, nullable) — optional blurb.

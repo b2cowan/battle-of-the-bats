@@ -7,7 +7,7 @@ import { DELETE_DOOR, deleteSeasonWords } from '../../lib/house-league-status-wo
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  * DELETING A SEASON THAT IS ONLY A SHELL (owner, 2026-10-25). A season may be deleted only while it has NOT opened
  * registration and nothing real is attached (a family, a team, a game, a sent email, an entry in its book); once it is
- * official it is archived, never deleted. The server enforces the rule; the page only leaves the door out.
+ * official it ends by being completed, never deleted. The server enforces the rule; the page only leaves the door out.
  *   1. The server: same people as editing, a finished season refused through the one gate, draft-only, nothing attached,
  *      and the status guard is inside the delete itself (a season that opened a moment ago is not deleted).
  *   2. What counts as attached: families, teams, games, both email logs and the BOOK'S ENTRIES — not setup. The book has no

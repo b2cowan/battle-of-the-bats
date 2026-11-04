@@ -95,7 +95,7 @@ async function buildProgress(
     .from('league_seasons')
     .select('id')
     .eq('org_id', orgId)
-    .neq('status', 'archived')
+    // Any season counts (9f·4): an archived one reads exactly as a completed one.
     .limit(1);
 
   if (leagueSeasonError) throw leagueSeasonError;

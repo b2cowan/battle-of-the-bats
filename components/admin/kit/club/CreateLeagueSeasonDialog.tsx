@@ -4,7 +4,7 @@ import KitDialog from './KitDialog';
 import ck from './ClubKit.module.css';
 import DateInput from '@/components/shared/DateInput';
 import { repKit } from './RepKit';
-import type { LeagueCapKind } from '@/lib/free-floor';
+import type { LeagueCapKind, SeasonSlotHolder } from '@/lib/free-floor';
 import { OFFERED_SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 
 /**
@@ -20,7 +20,8 @@ export default function CreateLeagueSeasonDialog({ orgSlug, onClose, onCreated, 
   orgSlug: string;
   onClose: () => void;
   onCreated: (season: { id: string; name: string }) => void;
-  onCapHit: (kind: LeagueCapKind) => void;
+  /** The free League plan refused it; the season holding the slot comes with the refusal so the window can name it (9f·5). */
+  onCapHit: (kind: LeagueCapKind, holder?: SeasonSlotHolder) => void;
 }) {
   const [form, setForm] = useState<Form>(BLANK);
   const [busy, setBusy] = useState(false);
@@ -52,7 +53,7 @@ export default function CreateLeagueSeasonDialog({ orgSlug, onClose, onCreated, 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setBusy(false);
-        if (data.capHit) { onCapHit(data.capHit); return; }
+        if (data.capHit) { onCapHit(data.capHit, data.holder); return; }
         setError(data.error ?? 'We couldn’t create the season. Try again.');
         return;
       }

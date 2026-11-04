@@ -191,8 +191,9 @@ export const diffWords = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : 
  * so a word the owner changes is one edit. The switch's read words (`switch.yes` / `switch.no`) are the build's own.
  */
 export const STANDINGS_WORDS = {
-  // §1.1 the table
+  // §1.1 the table. "Final" only once the club has completed the season (9f·3): a date that has passed is "Ended", not final.
   title: 'Standings',
+  finalTitle: 'Final standings',
   col: { rank: '#', team: 'Team', gp: 'GP', w: 'W', l: 'L', t: 'T', pts: 'Pts', record: 'W-L-T' },
   tip: {
     gp: 'Games played', w: 'Wins', l: 'Losses', t: 'Ties', pts: 'Points', record: 'Wins-losses-ties',
@@ -257,17 +258,28 @@ export const STANDINGS_WORDS = {
     heading: (shows: boolean) => (shows ? 'Scores and standings' : 'Scores'),
     none: 'Standings start with the first score.',
     link: 'See the standings',
+    // A finished season's page (9f·6, copy 9f §5): the page it opens is titled "Final standings".
+    finalLink: 'See the final standings',
   },
 } as const;
+
+/** The standings page's title by the season's status (9f·3): "Final standings" once the club has completed it. */
+export function standingsTitle(status: string): string {
+  return status === 'completed' || status === 'archived' ? STANDINGS_WORDS.finalTitle : STANDINGS_WORDS.title;
+}
 
 /** The coach's standing line (copy §4), or null when it is absent. Pure: the page decides when to ask. */
 export type CoachStandingLine = { kind: 'none'; text: string } | { kind: 'ranked'; text: string };
 
-export function coachStandingLine<T extends { id: string }>(standings: Standings<T>, teamId: string): CoachStandingLine | null {
+/**
+ * `final` (a finished season's page, 9f·6): the ranked line reads "Final place: 2nd of 6 · …" from the same live table
+ * (9f·2: nothing is stored).
+ */
+export function coachStandingLine<T extends { id: string }>(standings: Standings<T>, teamId: string, opts: { final?: boolean } = {}): CoachStandingLine | null {
   const row = standings.rows.find(r => r.team.id === teamId);
   if (!row) return null;
   if (!standings.scored || row.place == null) return { kind: 'none', text: STANDINGS_WORDS.coach.none };
   const of = standings.rows.length;
   const where = row.tied ? `Tied for ${ordinal(row.place)} of ${of}` : `${ordinal(row.place)} of ${of}`;
-  return { kind: 'ranked', text: `${where} · ${recordWords(row)} · ${pluralize(row.points, 'point')}` };
+  return { kind: 'ranked', text: `${opts.final ? 'Final place: ' : ''}${where} · ${recordWords(row)} · ${pluralize(row.points, 'point')}` };
 }

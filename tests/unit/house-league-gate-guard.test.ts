@@ -91,6 +91,8 @@ describe('2 · a season-scoped write asks about its season (a finished season is
     assert.match(code, /registration_closed:\s*\[[^\]]*'registration_open'/);
     assert.match(code, /completed:\s*\[[^\]]*'active'/);
     assert.match(code, /archived:\s*\[[^\]]*'active'/);
+    // Archive is retired (9f·4): nothing moves INTO archived; a legacy archived season keeps its way back above.
+    assert.doesNotMatch(code, /completed:\s*\[[^\]]*'archived'/);
     assert.doesNotMatch(code, /active:\s*\[[^\]]*'registration_open'/, 'reopen registration is offered only before play (owner 2026-10-24)');
   });
 });
@@ -171,7 +173,7 @@ describe('3b · a finished season reads in place, locked, Money and Email famili
     assert.equal(isFinishedLeagueSeason(null), false);
   });
   for (const role of ['owner', 'admin', 'league_admin'] as const) {
-    it(`${role}: reads, takes fees, emails families and can reopen or archive; edits nothing`, () => {
+    it(`${role}: reads, takes fees, emails families and can reopen it; edits nothing`, () => {
       const a = access(role, CLUB, DONE);
       assert.equal(a.finished, true);
       assert.deepEqual(pick(a), { ...ALL, run: false, register: false });

@@ -211,8 +211,9 @@ export async function readCoachTeamPage(
   if (view === 'none') return null;
 
   const division = one(team.league_divisions);
-  // The standing line (9e·6): a live season, the division's schedule published and its "Show standings" on — else absent.
-  const ranks = view === 'open' && !!team.division_id && !!division?.schedule_published_at && division.show_standings !== false;
+  // The standing line (9e·6): the division's schedule published and its "Show standings" on — else absent. On a finished
+  // season's page it is the final place (9f·6), from the same live table (9f·2: nothing is stored).
+  const ranks = (view === 'open' || view === 'finished') && !!team.division_id && !!division?.schedule_published_at && division.show_standings !== false;
   const scored = (view === 'open' || view === 'finished') && !!team.division_id && !!division?.schedule_published_at;
   const [coachRows, players, myTeams, contactEmail, practices, games, tell, standings, scores] = await Promise.all([
     view === 'gone' ? Promise.resolve([] as { name: string }[]) : readCoachNames(teamId),
@@ -242,7 +243,7 @@ export async function readCoachTeamPage(
     games: games.games,
     gamesPublished: games.published,
     practiceTold,
-    standing: standingOf(standings, teamId, team.division_id),
+    standing: standingOf(standings, teamId, team.division_id, view === 'finished'),
     scores,
     scoresStandings: division?.show_standings !== false,
   };
@@ -302,9 +303,13 @@ function placeNamer(places: Awaited<ReturnType<typeof getOrgPlaceNames>>) {
   };
 }
 
-/** The coach's standing line, with the division it links to ("See the standings" opens that division's table). */
-function standingOf(standings: LeagueStandings | null, teamId: string, divisionId: string | null) {
-  const line = standings && divisionId ? coachStandingLine(standings, teamId) : null;
+/**
+ * The coach's standing line, with the division it links to ("See the standings" opens that division's table). A finished
+ * season's line is "Final place: …"; with nothing scored it writes no line at all (copy 9f §5 `coach.final.none`).
+ */
+function standingOf(standings: LeagueStandings | null, teamId: string, divisionId: string | null, final: boolean) {
+  const line = standings && divisionId ? coachStandingLine(standings, teamId, { final }) : null;
+  if (final && line?.kind === 'none') return null;
   return line && divisionId ? { ...line, divisionId } : null;
 }
 

@@ -3,16 +3,16 @@
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { isEffectivelyGated } from '@/lib/plan-config';
 import { fireLeagueEvent } from '@/lib/league-events-client';
-import type { LeagueCapKind } from '@/lib/free-floor';
+import { seasonCapBody, type LeagueCapKind, type SeasonSlotHolder } from '@/lib/free-floor';
 
 const CAP_TITLE: Record<LeagueCapKind, string> = {
-  league_season: 'One season on your free plan',
+  league_season: 'One season at a time on your free plan',
   league_division: 'One division on your free plan',
   league_team: 'Up to 8 teams on your free plan',
 };
 
-const CAP_BODY: Record<LeagueCapKind, string> = {
-  league_season: 'Your free League plan includes one active season. League Plus lets you run multiple seasons and age groups side by side.',
+// The season's body names the season holding the slot (9f·5, copy §6.1): `seasonCapBody` in lib/free-floor.ts.
+const CAP_BODY: Record<Exclude<LeagueCapKind, 'league_season'>, string> = {
   league_division: 'Your free League plan includes one division. Multiple divisions — each with its own schedule and standings — are part of League Plus.',
   league_team: 'Your free League plan includes up to 8 teams. Upgrade to League Plus for unlimited teams.',
 };
@@ -52,7 +52,14 @@ export function LeagueUpgradeCta({
  * Names the operation the operator hit + offers the upgrade CTA. z-index sits just below the
  * early-access overlay (1000) so that form layers on top when the CTA is clicked.
  */
-export function LeagueCapUpgradeModal({ capHit, onClose, orgId }: { capHit: LeagueCapKind; onClose: () => void; orgId?: string | null }) {
+export function LeagueCapUpgradeModal({ capHit, holder, onClose, orgId }: {
+  capHit: LeagueCapKind;
+  /** The season holding the free plan's one slot (a season refusal only): the body names it, the generic one otherwise. */
+  holder?: SeasonSlotHolder | null;
+  onClose: () => void;
+  orgId?: string | null;
+}) {
+  const body = capHit === 'league_season' ? seasonCapBody(holder) : CAP_BODY[capHit];
   return (
     <div
       role="presentation"
@@ -80,7 +87,7 @@ export function LeagueCapUpgradeModal({ capHit, onClose, orgId }: { capHit: Leag
           {CAP_TITLE[capHit]}
         </h2>
         <p style={{ fontSize: '0.88rem', lineHeight: 1.55, color: 'var(--data-gray)', margin: '0 0 1.25rem' }}>
-          {CAP_BODY[capHit]}
+          {body}
         </p>
         <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap' }}>
           <button type="button" onClick={onClose} className="btn btn-ghost" style={{ fontSize: '0.82rem' }}>

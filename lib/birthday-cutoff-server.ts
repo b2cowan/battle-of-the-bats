@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { LIVE_SEASON_STATUSES } from '@/lib/season-live';
-import { birthdaySportRows, type BirthdaySeasonInput, type BirthdaySportRow, type BirthdayTeamInput } from '@/lib/birthday-cutoff';
+import { birthdaySportRows, isLiveHouseLeagueStatus, type BirthdaySeasonInput, type BirthdaySportRow, type BirthdayTeamInput } from '@/lib/birthday-cutoff';
 
 /**
  * The sports a club runs, with what the "When birthdays count from" card says about each (Club Tier Stage 4c-2 Part A).
@@ -19,7 +19,9 @@ export async function loadBirthdaySports(orgId: string): Promise<BirthdaySportRo
   const seasonRows = seasonsRes.data ?? [];
 
   const teamIds = teamRows.filter(t => !t.is_archived).map(t => t.id as string);
-  const seasonIds = seasonRows.filter(s => s.status !== 'archived').map(s => s.id as string);
+  // Every season counts its sport (9f·4: an archived one reads as completed), but only a live one's divisions are listed
+  // (birthdaySportRows), so only those are read: a club's history never grows this read.
+  const seasonIds = seasonRows.filter(s => isLiveHouseLeagueStatus(s.status as string)).map(s => s.id as string);
   const [yearsRes, divisionsRes] = await Promise.all([
     teamIds.length
       ? supabaseAdmin.from('rep_program_years').select('team_id, status, created_at, born_from_year, born_to_year').in('team_id', teamIds).in('status', [...LIVE_SEASON_STATUSES])

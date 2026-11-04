@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { readCode } from './_source-code.ts';
 import {
-  rankStandings, gameCounts, coachStandingLine, recordWords, diffWords, STANDINGS_WORDS as W, type StandingsGame,
+  rankStandings, gameCounts, coachStandingLine, recordWords, diffWords, standingsTitle, STANDINGS_WORDS as W, type StandingsGame,
 } from '../../lib/league-standings.ts';
 
 /** House League 9e-1 (rulings 9e·2–9e·4): one table, ranked one way, explained by its own rules. */
@@ -170,6 +171,31 @@ describe('the coach line (copy §4)', () => {
   });
   it('a team not in the division: no line', () => {
     assert.equal(coachStandingLine(rankStandings(teams, [], 'softball'), 'nobody'), null);
+  });
+  it('a finished season: "Final place: …", the same line from the same live table (9f·6, 9f·2)', () => {
+    const s = rankStandings(teams, [g('Twins', 'Cubs', 5, 1)], 'softball');
+    assert.deepEqual(coachStandingLine(s, 'twins', { final: true }), { kind: 'ranked', text: 'Final place: 1st of 6 · 1-0-0 · 2 points' });
+    const tied = rankStandings(teams, [g('Twins', 'Cubs', 2, 2), g('Royals', 'Hawks', 2, 2)], 'softball');
+    assert.deepEqual(coachStandingLine(tied, 'twins', { final: true }), { kind: 'ranked', text: 'Final place: Tied for 1st of 6 · 0-0-1 · 1 point' });
+  });
+});
+
+describe('"Final" means completed (9f·3, 9f·6)', () => {
+  it('the standings page title: Final standings for a completed (or archived) season, Standings otherwise', () => {
+    assert.equal(standingsTitle('completed'), 'Final standings');
+    assert.equal(standingsTitle('archived'), 'Final standings');
+    for (const s of ['active', 'registration_closed', 'registration_open']) assert.equal(standingsTitle(s), 'Standings');
+    assert.match(readCode('app/[orgSlug]/league/[seasonSlug]/standings/page.tsx'), /<h1 className=\{kit\.title\}>\{standingsTitle\(season\.status\)\}<\/h1>/);
+  });
+  it('the coach: the link names the page it opens; a finished page has no Schedule section and no "nothing scored" line', () => {
+    assert.equal(W.coach.finalLink, 'See the final standings');
+    assert.equal(W.coach.link, 'See the standings');
+    const page = readCode('app/[orgSlug]/league/[seasonSlug]/team/[teamId]/page.tsx');
+    assert.match(page, /view === 'finished' \? STANDINGS_WORDS\.coach\.finalLink : STANDINGS_WORDS\.coach\.link/);
+    assert.match(page, /\{view !== 'finished' && \(\s*<section className=\{styles\.section\} aria-labelledby="coach-schedule">/);
+    const read = readCode('lib/house-league-coach.ts');
+    assert.match(read, /const ranks = \(view === 'open' \|\| view === 'finished'\) && !!team\.division_id && !!division\?\.schedule_published_at && division\.show_standings !== false;/);
+    assert.match(read, /if \(final && line\?\.kind === 'none'\) return null;/);
   });
 });
 

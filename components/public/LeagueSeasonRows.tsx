@@ -10,7 +10,7 @@ import s from './LeagueSeasonRows.module.css';
  * EVERY LIVE HOUSE-LEAGUE SEASON, ONE ROW EACH (Club Tier Stage 9a, Part 5; owner Q14; frame E; words
  * HOUSE_LEAGUE_STAGE9A_COPY.md §8). The league page and the club home (both the public-site home and the fallback home)
  * draw this one list, so a season is never named two ways: its name (the row's door to its page), what is happening
- * (Registration open · Registration closed · Starts {date} · Playing now · Final standings), and its own links at 44 px.
+ * (Registration open · Registration closed · Starts {date} · Playing now · Ended {date}, 9f·3), and its own links at 44 px.
  * Before 9a every one of those surfaces showed only the newest live season (F04).
  */
 export type PublicLeagueSeason = {

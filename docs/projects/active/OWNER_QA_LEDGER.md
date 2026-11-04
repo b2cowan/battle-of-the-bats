@@ -27618,3 +27618,14 @@ performed over the shared working tree. The original walk result is not claimed 
 4. **The Look card's preview links** are real links to pages that do not exist at the Branding address; a production build may prefetch them (harmless 404s). Decide at Stage 8 (a no-prefetch flag on the band).
 5. **The phone-width swatches** are 32 px at 768 (44 px only at 640 and under); one line in the shared controls fixes both screens, and also changes the club editor. Not changed.
 <!-- /§448 -->
+
+## §449 · House League · Stage 9f-1 owner walk — **a season is running or finished and Archive is gone (a legacy archived season reads exactly as a completed one), "Final standings" means the club completed it and a season past its last day reads "Ended {date}", the Complete and Reopen windows say what happens to ratings, refunds and newer seasons, the coach of a finished team sees its final place, and the free League plan counts only live seasons and names the holder in both refusals**
+<!-- §449 -->
+**Built + reviewed 2026-11-03:** Parts 1–5, `/review` and the `/docs` pass of [HOUSE_LEAGUE_STAGE9F1_BUILD_PROMPT.md](HOUSE_LEAGUE_STAGE9F1_BUILD_PROMPT.md) (Progress block has every detail). No migration. Archived house-league seasons counted read-only: dev 0, prod 0.
+
+**OWED.** **The walk (checkable):** https://claude.ai/artifact/FZRSfkFFfX8tgL3MoHHrHP (source [HOUSE_LEAGUE_STAGE9F1_WALK.html](HOUSE_LEAGUE_STAGE9F1_WALK.html)). One purpose, 26 steps in six parts: A Archive is gone (3) · B families read Ended, not Final (3) · C the Complete and Reopen windows (5) · D the coach's final place (4) · E the free League plan counts live seasons (5) · F a season archived before reads as completed (6). Fixture `.probe/9f1-walk/fixture.mjs` (dev only; three throwaway clubs with their own four sign-ins, `free_floor` on the free one only; `--reset` removes them). Needs the dev server restarted after the build.
+
+**Known before the walk:** the fixture completes Walk Fall 2025 when it runs, so the coach's page is open 30 days from then; "Tied for" and three-or-more newer seasons are proved by tests, not walked.
+
+**Owner calls open with it:** the free-plan Reopen refusal tells a club whose holder is open for registration to "Complete it first", which that season can't do yet (accepted copy kept unless ruled otherwise).
+<!-- /§449 -->

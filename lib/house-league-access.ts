@@ -18,13 +18,14 @@ import type { LeagueSeasonStatus, OrgRole } from './types';
  *   · Email families — the same people as registrations, and only they read the sent log (it lists families' email).
  *   · Money — read by everyone who opens house league, AND by whoever holds the club's Accounting (the treasurer), on an org
  *     that carries house league. Nobody "edits" Money: it is written only by marking a fee received or recording a refund.
- *   · Status changes (open, close, reopen, complete, archive) — the people who edit the season.
+ *   · Status changes (open, close, start, complete, reopen) — the people who edit the season.
  * "Opens house league" is `canOpenModule` (the person's capability AND the plan), so a member whose House league program was
  * switched off reads nothing, whatever their role.
  *
  * ⚖ A finished season (Q16) reads in place, locked through THIS gate, not a branch per screen: once a season is completed or
- * archived, registrations, teams, the schedule and the season's settings are refused. Three things stay open: fees received
- * and refunds (money arrives after the last game), the status change that reopens or archives it, and Email families
+ * archived (a status no move reaches since Archive was retired in 9f·4; an archived season reads exactly as a completed
+ * one), registrations, teams, the schedule and the season's settings are refused. Three things stay open: fees received
+ * and refunds (money arrives after the last game), the status change that reopens it, and Email families
  * (owner 2026-10-24, 9a build: a note to families is not a change to the season's record, and the Families window cannot
  * reach a finished season). Pass the season to get that answer; leave it out (a new season) and nothing is finished.
  *

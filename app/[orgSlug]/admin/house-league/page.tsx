@@ -22,7 +22,7 @@ import CreateLeagueSeasonDialog from '@/components/admin/kit/club/CreateLeagueSe
 import { announceSeasonsChanged, useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import { orderSeasons, seasonFactsLine, seasonGroup, seasonNoteLine, toReviewLabel } from '@/lib/house-league-season';
 import { sportLabel } from '@/lib/sports';
-import type { LeagueCapKind } from '@/lib/free-floor';
+import type { LeagueCapKind, SeasonSlotHolder } from '@/lib/free-floor';
 import type { LeagueSeasonSummary } from '@/lib/types';
 import styles from '@/components/admin/kit/club/HouseLeagueHome.module.css';
 
@@ -37,7 +37,7 @@ export default function HouseLeagueHome() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [capHit, setCapHit] = useState<LeagueCapKind | null>(null);
+  const [capHit, setCapHit] = useState<{ kind: LeagueCapKind; holder?: SeasonSlotHolder } | null>(null);
   const [pastOpen, setPastOpen] = useState(false);
 
   const load = useCallback(async () => {
@@ -169,7 +169,7 @@ export default function HouseLeagueHome() {
         <CreateLeagueSeasonDialog
           orgSlug={orgSlug}
           onClose={() => setCreating(false)}
-          onCapHit={kind => { setCreating(false); setCapHit(kind); }}
+          onCapHit={(kind, holder) => { setCreating(false); setCapHit({ kind, holder }); }}
           onCreated={season => {
             announceSeasonsChanged();
             // A new season's next step is its own page (the checklist, 9a·4). ⚠ Navigate with the window STILL OPEN:
@@ -180,7 +180,7 @@ export default function HouseLeagueHome() {
           }}
         />
       )}
-      {capHit && <LeagueCapUpgradeModal capHit={capHit} onClose={() => setCapHit(null)} orgId={currentOrg?.id} />}
+      {capHit && <LeagueCapUpgradeModal capHit={capHit.kind} holder={capHit.holder} onClose={() => setCapHit(null)} orgId={currentOrg?.id} />}
     </div>
   );
 }

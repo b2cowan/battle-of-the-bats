@@ -6,15 +6,20 @@ import {
   deleteDraftLeagueSeason,
   getLeagueSeasonAttachments,
   getLeagueSeasonById,
+  getLeagueSeasons,
   getDivisionsForSeason,
   getRegistrationsForSeason,
   getTeamsForSeason,
   updateLeagueSeason,
 } from '@/lib/db';
-import type { LeagueSeasonStatus } from '@/lib/types';
+import type { LeagueSeason, LeagueSeasonStatus, Organization } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { cutoffFor } from '@/lib/born-years';
-import { openRegistrationRefusal } from '@/lib/house-league-season';
+import { newerSeasons, openRegistrationRefusal } from '@/lib/house-league-season';
+import { isFinishedLeagueSeason } from '@/lib/house-league-access';
+import { houseLeagueSeasonCap, REOPEN_CAP_ERROR } from '@/lib/free-floor';
+import { needsFreeSlot, readSlotHolders, slotBlocker } from '@/lib/league-season-slot';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { registrationOwes, seasonCharges } from '@/lib/league-price';
 import { isCalendarDate } from '@/lib/timezone';
 import { clubWallClock, registrationState } from '@/lib/league-registration-state';
@@ -25,15 +30,34 @@ import { seedLeagueSeasonBudget } from '@/lib/house-league-budget';
 // Two steps go back (Club Tier Stage 9a; owner 2026-10-24): Reopen registration only while registration is closed and play
 // has not started, and Reopen a finished season (completed or archived) back to running. A finished season is locked
 // through the one gate (Q16), so without the way back that lock would be permanent.
+// ⚰ Archive is retired (9f·4): nothing moves INTO archived. A season archived before then keeps its way back to running.
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   draft:                ['registration_open'],
   // An opened season whose close date has passed may start straight away (9b-1 Part 4: the dates closed it; checked below).
   registration_open:    ['registration_closed', 'active'],
   registration_closed:  ['active', 'registration_open'],
   active:               ['completed'],
-  completed:            ['archived', 'active'],
+  completed:            ['active'],
   archived:             ['active'],
 };
+
+/**
+ * What the Reopen window needs to know (9f·5, 9f·7), for a finished season only: the club's seasons newer than this one,
+ * and the season that would block it on the free League plan (the one count, lib/league-season-slot.ts). A failed read
+ * takes nothing down: the newer list reads empty and the block is left to the PATCH, which reads it again and refuses.
+ */
+async function reopenFacts(season: LeagueSeason, org: Pick<Organization, 'id' | 'freeFloor'>) {
+  const cap = houseLeagueSeasonCap(org);
+  const [all, holders] = await Promise.all([
+    getLeagueSeasons(org.id).catch(() => [] as LeagueSeason[]),
+    cap < Infinity ? readSlotHolders(supabaseAdmin, org.id, season.id).catch(() => []) : Promise.resolve([]),
+  ]);
+  const blocker = slotBlocker(holders, cap);
+  return {
+    newer: newerSeasons(season, all).map(s => s.name),
+    blockedBy: blocker ? { name: blocker.name, status: blocker.status } : null,
+  };
+}
 
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
@@ -90,6 +114,8 @@ export const GET = withObservability(async (_req: Request,
   return NextResponse.json({
     season,
     deletable,
+    // The Reopen window's facts (9f-1), on a finished season only.
+    ...(isFinishedLeagueSeason(season) ? { reopen: await reopenFacts(season, ctx!.org) } : {}),
     // The club's cut-off for this season's sport — what the division windows' birth years count from (Stage 4c-2).
     birthdayCutoff: cutoffFor(ctx!.org.birthdayCutoffs, season.sport),
     divisions: divisionsWithStats,
@@ -186,7 +212,7 @@ export const PATCH = withObservability(async (req: Request,
     }
   }
 
-  // A status move is its own permission (it stays open on a finished season, to reopen or archive it); a field edit is a
+  // A status move is its own permission (it stays open on a finished season, to reopen it); a field edit is a
   // season edit, refused once the season is finished (Q16). Decided on the fields this route writes, not the body's keys.
   if (Object.keys(patch).length > 0) {
     const refused = houseLeagueRefusal(ctx, 'run', season);
@@ -203,6 +229,15 @@ export const PATCH = withObservability(async (req: Request,
         { error: `Cannot transition from '${season.status}' to '${newStatus}'` },
         { status: 422 },
       );
+    }
+
+    // The free League plan runs one live season at a time (9f·5): a Reopen that would make two is refused, with the same
+    // count the Reopen window read (lib/league-season-slot.ts), so a request that skips the window is refused too.
+    const cap = houseLeagueSeasonCap(ctx!.org);
+    if (cap < Infinity && needsFreeSlot(season.status, newStatus)) {
+      if ((await readSlotHolders(supabaseAdmin, ctx!.org.id, seasonId)).length >= cap) {
+        return NextResponse.json({ error: REOPEN_CAP_ERROR }, { status: 422 });
+      }
     }
 
     if (season.status === 'registration_open' && newStatus === 'active' && registrationState(season) !== 'closedByDate') {
@@ -255,7 +290,7 @@ export const PATCH = withObservability(async (req: Request,
 }, { route: '/api/admin/house-league/seasons/[seasonId]' });
 
 // A season is deleted only while it is a shell (owner, 2026-10-25): it has not opened registration, and no family, team, game
-// or sent email is attached. After that it is official, and it ends by being archived, never deleted. Same people as editing it.
+// or sent email is attached. After that it is official, and it ends by being completed, never deleted. Same people as editing it.
 export const DELETE = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
@@ -268,10 +303,10 @@ export const DELETE = withObservability(async (req: Request,
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
 
   if (season.status !== 'draft') {
-    return NextResponse.json({ error: 'Only a season that has not opened registration can be deleted. Archive it instead.' }, { status: 409 });
+    return NextResponse.json({ error: 'Only a season that has not opened registration can be deleted.' }, { status: 409 });
   }
   if ((await getLeagueSeasonAttachments(seasonId, ctx!.org.id)).any) {
-    return NextResponse.json({ error: 'This season already has families, teams, games, email or money entries attached, so it can’t be deleted. Archive it instead.' }, { status: 409 });
+    return NextResponse.json({ error: 'This season already has families, teams, games, email or money entries attached, so it can’t be deleted.' }, { status: 409 });
   }
   if (!(await deleteDraftLeagueSeason(seasonId, ctx!.org.id))) {
     return NextResponse.json({ error: 'This season just changed, so it can’t be deleted. Reload the page.' }, { status: 409 });
