@@ -27670,6 +27670,7 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **Owner calls open with it:** the words "That's after the 3:07 p.m. start." and "(after the start)" are the build's own; equal times are not flagged.
 **Result 2026-11-04: PASSED, 21 of 22 steps ticked** (A 5/6 · B 4/4 · C 8/8 · D 1/1 · E 2/2 · F 1/1; every part marked pass). **A6 (the same warning on the practice form) was not ticked** in the paste and part A was still marked pass; it is recorded as not ticked, not as walked. No notes came back and no change was asked. The two owner calls (the wording, and equal times not flagged) were not answered, so they stay open.
+**✅ STAGE 6e CLOSED 2026-11-04 (owner: "you can skip docs and close 6e").** Closed on the owner's word. The `/docs` pass was skipped at the owner's instruction, so any help article that mentions arrival times or a weekly series' opponent boxes is not re-read. A6 and the two wording calls were not separately answered; closing leaves the build as it is.
 <!-- /§452 -->
 
 ## §453 · Club Tier · Stage 14 S1 Start next season owner walk — **"Start next season" in both portals opens with "What is the team doing next season?" and nothing chosen; the same players moving up brings a tick list and moves the division up, a new group brings nobody unless one box says so and moves the birth years a year later**

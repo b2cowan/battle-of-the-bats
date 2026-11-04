@@ -2523,6 +2523,7 @@ club's clock. 6d designs the feed; nothing else of Stage 11 is 6d's.
 >   the calendar's clash read is built for one page view, the costliest part to serve).
 
 ### Stage 6e — The event form's last corrections (the deep dive's stage 5)
+> **✅ STAGE 6e CLOSED 2026-11-04 (owner).** Two items built (F13b, D-6 / F12), walk §452 PASSED 21 of 22; `/docs` skipped at the owner's instruction. It no longer holds the release.
 **Re-read against the product first: 2026-10-09 changed this form.** The event window reads first and its pencil opens the
 form with a held save (`0366fb04`); a change that tells families is held until ✓ and asks (Tournament Stage 3 A36, the
 edit-autosaves exception); a series edit asks its scope at the pencil (§287). So R6 ("Edit details keeps its Save") is
