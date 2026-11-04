@@ -3,8 +3,8 @@
 **Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 committed `d4af280e6` 2026-11-03** (record §10; it releases with the flip, ruling D). **Part 2 committed `02e29f453` 2026-11-03** (record §11; it releases with the flip too). **Part 3a committed `3304c77fe` 2026-11-03**
 (record §12; releases with the flip). **Part 3b committed `9b6252e8a` 2026-11-04** (record §13; releases with the flip). **Part 3c committed `62f5841f9` 2026-11-04**
 (record §14; releases with the flip). **Part 3d committed `33386d5df` 2026-11-04** (record §15; releases with the flip; the
-switch-off half-state ends for every public tournament page). **The public feed fix built 2026-11-04** (record §16; its own change,
-releasable on its own, held for the owner's go to commit; it does not cherry-pick onto production — §16 handed on). Next: Part 4. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
+switch-off half-state ends for every public tournament page). **The public feed fix committed `55045ecf4` 2026-11-04** (record §16; its own change,
+releasable on its own; it does not cherry-pick onto production — §16 handed on). Next: Part 4. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
 **Sequencing rule (standing):** by dependency and rework risk, never by date. One part per session, `/clear` between.
@@ -849,7 +849,7 @@ preview's (above); the feed findings (handed on).
   images (advisory); the admin strip's 34 px "Dismiss"; `/release` §1d-2's sharp probe; the club editor's unlabelled 18 px
   input; `scripts/mobile-review-capture.mjs`'s "ticker precedence" comment.
 
-## 16. The public feed fix (built 2026-11-04, held for the owner's go to commit; its own change, not part of Parts 1–3d)
+## 16. The public feed fix (committed `55045ecf4` 2026-11-04; its own change, not part of Parts 1–3d)
 
 **What a customer sees:** nothing on a page that was working. Schedule, Standings, Teams, Playoffs, Register (payment
 instructions on the form included), News, the Overview and a game's page read the same. **Three small differences:** (1) a game's
