@@ -63,6 +63,12 @@
   tests 1156/1156, help tests 19/19; `tsc` errors only in another session's uncommitted tournament branding files (none in
   this build's). Hash recorded in plan §0j, the TODO 9f line and `PLAN_PRICING_FACTS.md` line 118 (separate commit);
   `/strategy` asked to flip `BUSINESS_DECISIONS.md` 9f·5 to built. **Next: the owner's walk §449**, then the 9f-2 prompt.
+- **2026-11-03 · Walk §449 PASSED 26/26** (A 3/3 · B 3/3 · C 5/5 · D 4/5→4/4 · E 5/5 · F 6/6; no note, no change asked). The
+  one open owner call (free-plan Reopen refusal says "Complete it first" to a holder open for registration) was not
+  answered, so the accepted copy stands. **9f-2 prompt written 2026-11-03: `HOUSE_LEAGUE_STAGE9F2_BUILD_PROMPT.md`.**
+- **2026-11-03 · `/strategy` done + dev server restarted.** 9f·5 flipped to built (uncommitted, in a file with other
+  sessions' hunks); drift check clean for 9f·5, one stale line found (Facts line 119 still calls 9e-2/9e-3 not built; for
+  `/billing`). Dev server stopped, `.next` deleted, `npm run dev` with network: login page 200, no EACCES.
 
 ## What a person sees after this build (the PM / UX summary to present before any code)
 

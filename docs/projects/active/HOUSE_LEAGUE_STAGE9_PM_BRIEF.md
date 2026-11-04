@@ -159,7 +159,9 @@ gets sign-ups and money ready for online payment, which is the stage after this 
    is where it is, and a wet evening is one action. Priority: standings first (the season-end work freezes that table).
    Whether the rainout is a paid-plan feature is a question for /strategy, not decided.
 9. **9f · Season end.** Finishing a season, looking back at past seasons, and starting next season from this one.
-   *Status 2026-11-03:* drawn, seventeen asks open (plan §0j). Proposed: the convenor's **New season** window gains "Start
+   *Status 2026-11-04:* drawn 2026-11-03 and **ruled 2026-11-04, every ask as recommended** (plan §0j). Two builds: first
+   "finished, honestly", then "Start next season". On the free League plan a finished season no longer holds the one
+   season slot (to be logged by /strategy). Ruled: the convenor's **New season** window gains "Start
    from last season". It brings the season's settings, its age groups (born years moved up a year), team names and practice
    settings, with the dates moved to the same weekdays next year. It never brings families, money, games or the club's time, and it
    leaves last season exactly as it was. Coaches come only if the convenor ticks them, and nobody is invited until teams are
@@ -169,6 +171,14 @@ gets sign-ups and money ready for online payment, which is the stage after this 
    group, price and team by hand. Success: next season set up in one window and a check of each line, with nothing from last year's
    families leaking in. Priority: the small "finished, honestly" build first, then Start next season. Whether Start next season is
    a paid-plan feature is for /strategy, not decided.
+   *Added 2026-11-04 (plan §0k):* **the public season page once registration closes**, ruled 2026-11-04 as recommended. Once
+   families can no longer sign up, the season's public page stops showing the price and the "spots filled" tiles and leads with
+   the top three of each age group's table ("Standings" while playing, "Final standings" once the club completes it), with a
+   link to each full table and the Schedule. An old season's page shows a slim line at the top when the club has a newer season
+   taking sign-ups. "Email me my link" stays, because a family who still owes can get back in through it. Why it matters: a
+   family who opens a finished season wants to know how it went, and one who arrives from an old link wants next season. Success:
+   the result is on the first screen of a phone, and nothing on the page describes buying a spot nobody can buy. Words pass, then a
+   small build, independent of Start next season.
 
 ## Who it affects
 

@@ -115,9 +115,9 @@
   `MANUAL_PROD_STEPS.json` (433). Verified: 683 house-league and help unit tests pass; `check:dictionary` and `check:spelling`
   pass. Known failures that are NOT 9f-2: mig 433 billing grants, plan-ending, the bookkeeping expense window, the billing-location
   census, `check-css-selectors`, `check-admin-old-look`, `check-demos`, schema parity (`started_from` dev-only until the prod apply).
-- **STILL OWED:** walk §450 (one purpose; a fixture in `.probe/` giving a throwaway club a finished season with 4 age groups, 22
-  teams, coaches and an owing family plus a running season; outline A–K in Part 6), with the dev server restarted first (new files,
-  `lib/types.ts`, `lib/db.ts`); apply mig 432 to prod before the promote that ships 9f-2.
+- **2026-11-04 · Walk §450 WRITTEN:** https://claude.ai/artifact/RNbdUmMsWZMuGRr1PUyw7m (`HOUSE_LEAGUE_STAGE9F2_WALK.html`, 60 steps in parts A–K, one purpose). Fixture `.probe/9f2-walk/fixture.mjs` (dev only; two throwaway clubs, five sign-ins, `--reset`) and `.probe/9f2-walk/look.mjs` (a no-browser probe of the real routes: the copy gave 4 age groups, 22 teams, 0 coaches / 31 when ticked with none invited, dates +364 days, birth years +1, the live source with chosen age groups, the free plan and a registrar refused, another club's season 404, a malformed id 400, a duplicate name 409; the source unchanged). The dev server was running and had restarted after the build (7:33 a.m.).
+- **2026-11-04 · Walk §450 PASSED 60/60** (A–K all clear, no change asked); its four owner calls (the banner's "and", the "53 weeks" gap sentence, the door on a running season, the help's free-League-plan clause) were closed 2026-11-04, all left as built.
+- **STILL OWED:** apply mig 432 to prod before the promote that ships 9f-2.
 
 ## What the owner gets (the PM summary you will present, in this shape)
 

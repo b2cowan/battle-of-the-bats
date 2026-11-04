@@ -27625,12 +27625,27 @@ performed over the shared working tree. The original walk result is not claimed 
 <!-- §449 -->
 **Built + reviewed 2026-11-03:** Parts 1–5, `/review` and the `/docs` pass of [HOUSE_LEAGUE_STAGE9F1_BUILD_PROMPT.md](HOUSE_LEAGUE_STAGE9F1_BUILD_PROMPT.md) (Progress block has every detail). No migration. Archived house-league seasons counted read-only: dev 0, prod 0.
 
-**OWED.** **The walk (checkable):** https://claude.ai/artifact/FZRSfkFFfX8tgL3MoHHrHP (source [HOUSE_LEAGUE_STAGE9F1_WALK.html](HOUSE_LEAGUE_STAGE9F1_WALK.html)). One purpose, 26 steps in six parts: A Archive is gone (3) · B families read Ended, not Final (3) · C the Complete and Reopen windows (5) · D the coach's final place (4) · E the free League plan counts live seasons (5) · F a season archived before reads as completed (6). Fixture `.probe/9f1-walk/fixture.mjs` (dev only; three throwaway clubs with their own four sign-ins, `free_floor` on the free one only; `--reset` removes them). Needs the dev server restarted after the build.
+**✅ PASSED 2026-11-03, 26 of 26 steps** (owner paste-back, every part pass: A 3/3 · B 3/3 · C 5/5 · D 4/4 · E 5/5 · F 6/6); no step failed, no note came back and no change was asked. The open owner call below was not answered in the paste-back, so it stays open (accepted copy stands as built).
+
+**The walk (checkable):** https://claude.ai/artifact/FZRSfkFFfX8tgL3MoHHrHP (source [HOUSE_LEAGUE_STAGE9F1_WALK.html](HOUSE_LEAGUE_STAGE9F1_WALK.html)). One purpose, 26 steps in six parts: A Archive is gone (3) · B families read Ended, not Final (3) · C the Complete and Reopen windows (5) · D the coach's final place (4) · E the free League plan counts live seasons (5) · F a season archived before reads as completed (6). Fixture `.probe/9f1-walk/fixture.mjs` (dev only; three throwaway clubs with their own four sign-ins, `free_floor` on the free one only; `--reset` removes them). Needs the dev server restarted after the build.
 
 **Known before the walk:** the fixture completes Walk Fall 2025 when it runs, so the coach's page is open 30 days from then; "Tied for" and three-or-more newer seasons are proved by tests, not walked.
 
 **Owner calls open with it:** the free-plan Reopen refusal tells a club whose holder is open for registration to "Complete it first", which that season can't do yet (accepted copy kept unless ruled otherwise).
 <!-- /§449 -->
+
+## §450 · House League · Start next season owner walk — **a league runner starts a new season from an earlier one in one window: Start from, what comes across and what never does, and a new season that says which lines to check**
+<!-- §450 -->
+**Built + reviewed 2026-11-04:** Parts 0–5, `/simplify`, `/review` and `/docs` of [HOUSE_LEAGUE_STAGE9F2_BUILD_PROMPT.md](HOUSE_LEAGUE_STAGE9F2_BUILD_PROMPT.md) (Progress block has every call). Committed `d907b02b7` (record `4557ed012`). Migration 432 (`league_seasons.started_from`) is on **dev only**; prod before the promote that ships 9f-2. Plan `HOUSE_LEAGUE_STAGE9_PLAN.md` §0j.
+
+**The walk (checkable):** https://claude.ai/artifact/RNbdUmMsWZMuGRr1PUyw7m (source [HOUSE_LEAGUE_STAGE9F2_WALK.html](HOUSE_LEAGUE_STAGE9F2_WALK.html)). One purpose, 60 steps in eleven parts: A the door and the window open (8) · B the picker (3) · C the statement and the owing line (4) · D name and dates (6) · E Bring with it (5) · F the new season (15) · G what did not come across (5) · H a running season as the source (4) · I coaches ticked (4) · J on a phone (5) · K put back (1). Fixture `.probe/9f2-walk/fixture.mjs` (dev only; two throwaway clubs with five sign-ins: owner, league admin, registrar, treasurer, and a free-plan owner; `--reset` removes them). `.probe/9f2-walk/look.mjs` proved the walk's numbers against the real routes before it was written (22 teams, 31 coaches, 3 players owing $525, dates 364 days later, free plan and registrar refused, another club's season 404).
+
+**Known before the walk:** Walk Fall 2026 ends Dec 12, 2026 (re-run the fixture after that); the dev server was restarted at 7:33 a.m. 2026-11-04, after the build.
+
+**Owner calls open with it:** the banner joins its list with "and" (the drawing had commas); moving the first day makes the sentence and the mark say the real gap ("53 weeks"); the door also shows on a running season; the help's one clause naming the free League plan (strike if plan words are off-limits while 9f·16 is open).
+
+**Result 2026-11-04: PASSED 60/60** (A 8/8 · B 3/3 · C 4/4 · D 6/6 · E 5/5 · F 15/15 · G 5/5 · H 4/4 · I 4/4 · J 5/5 · K 1/1). No change asked. **Owner calls: CLOSED 2026-11-04, all four left as built** (the owner agreed with the recommendations: keep the "and", the "53 weeks" sentence, the door on a running season, and the help clause).
+<!-- /§450 -->
 
 ## §451 · House League · Public season page owner walk — **from the day registration closes a season's public page drops the price, dates and spots for one dates line and each age group's top three (Standings, Final standings only once completed), a finished season reads "This season has concluded. It ran …" with no chip, an old season's page names the club's newer season taking sign-ups (one, two or none), and "Email me my link" stays in every state**
 <!-- §451 -->

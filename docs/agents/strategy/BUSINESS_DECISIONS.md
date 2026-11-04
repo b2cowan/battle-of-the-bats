@@ -8,6 +8,54 @@
 
 ---
 
+### 2026-11-04 — House League 9f: Start next season rides house league as a whole; the parked free League floor is excluded, as the tournament's Reuse this setup is (Decided)
+**Status:** **Decided** (owner, 2026-11-04: "i accept the proposal"; recommended by `/strategy` the same day on House League 9f·16, which the owner had flagged for `/strategy`). **Not yet built:** the 9f-2 build gates nothing beyond house league itself today, so the server-side check below is owed to `/billing`.
+**The question:** is *Start next season* a paid-plan feature? It is the "Start from" choice in the New season window. It copies a season's settings, age groups with born years moved up, team names and colours, and practice settings. It never copies families, money, ratings, games or club time.
+**Recommendation:**
+1. **It rides house league as a whole: League Plus, Club and Club · Association, identically.** No new price, band, SKU or plan name.
+2. **Never an upgrade lever between League Plus and Club**, the same as the scheduler (2026-10-08), permits (2026-10-11) and game day (2026-11-02). No copy may offer it as a reason to move up.
+3. **No new feature key: it reuses `tournament_cloning`**, the key behind the tournament's *Reuse this setup*. That key sits at `tournament_plus`, and League Plus and both Club bands pass it by the rank ladder (its own upgrade line already names "League Plus, and Club"). This is the same move as the rainout reusing `bulk_reschedule` (2026-11-02).
+4. **The free League floor (held, flag off) is excluded by that key**, because it sits on `plan_id='tournament'`. That matches the tournament's own line: the free Tournament organizer may start next year (2026-10-10, one at a time) but not from last year's setup, which is a Tournament Plus convenience. Under 9f·5 (logged below), a free League organizer may also start next season once the old one is finished. They type it in themselves.
+**Rationale:** the copy is a convenience for a *returning* organizer. It is not the tool that runs a season, so the line the tournament side already draws between free and paid fits it exactly. Withholding it from League Plus would make the paid house-league plan feel half-built at the one moment a club comes back every year. ⚠ **Pre-revenue hypothesis:** League Plus is parked (2026-07-28) and has never been sold. The free-floor half matters only if the floor un-parks.
+**The tradeoff:** the free floor's job is acquisition, and a returning free organizer re-typing four age groups is friction at the very moment they decide to stay. The other way (include it on the free floor) is defensible. It would break the symmetry with the tournament's Reuse this setup, which the owner has kept at Plus. Rule it at floor un-park if not before.
+**Affects:** the 9f-2 build (one server-side check reusing an existing key); `PLAN_PRICING_FACTS.md` only once ruled.
+**Handoff (ruled 2026-11-04; the check and the Facts line are owed):**
+```
+HANDOFF → /billing
+- 9f-2: the Start from route and window check `tournament_cloning` server side (absent for a plan without it, never disabled). No new key. Facts doc inclusions line + drift check in the same unit of work.
+HANDOFF → /marketing
+- Nothing now. At floor un-park: the `tournament_cloning` upgrade line reads for a tournament; reword it for a house league. Never present Start next season as a League Plus → Club reason.
+HANDOFF → /plan
+- HOUSE_LEAGUE_STAGE9_PLAN.md §0j 9f·16: ruling recorded 2026-11-04.
+```
+**Supersedes:** nothing. **Relates to:** 2026-11-02 game day (same shape); 2026-10-10 one at a time (Reuse this setup stays Plus); free League floor (Proposed, held).
+
+---
+
+### 2026-11-04 — House League 9f·5: on the free League floor, a FINISHED season no longer holds the one season (one at a time, as the tournament)
+**Status:** **Decided** (owner, 2026-11-04, House League 9f paste-back, 9f·5: *"Yes: getting-ready, open and running seasons hold the one slot; a finished season holds nothing; Reopen checks the same limit (as the tournament ruled 2026-10-10)."*). **Built `9e6795518` (9f-1), 2026-11-03** on dev: `lib/league-season-slot.ts` is the one count, read by Create season, the Reopen window and the status PATCH; the refusal words are the 9f copy §6; help synced; `PLAN_PRICING_FACTS.md` line 118 updated (`013cb7ad0`). The handoffs below are done. Owner walk §449 owed. **Dormant:** the free League floor is held with its flag off, parked since 2026-07-28. No organization meets this rule today.
+**Decision:**
+- On the free League floor (`league_starter`, "1 season"), only a **getting-ready** (draft), **registration open / closed** or **running** (active) season holds the one season. A **finished** season (completed, or archived until 9f-1 retires Archive) holds nothing.
+- **Reopen** (finished → running) is refused at the limit, in words, before the tap, like the tournament's Reopen.
+- Last year's season stays listed and readable: admin shelf, switcher, public Past seasons (9f·15). A free club starts next year without taking anything down.
+- **Unchanged:** the count ("1 season / 1 division / 8 teams"), every price, plan name, band, SKU and feature key. `lib/plan-config.ts` values do not move.
+**Rationale:** the 2026-10-10 tournament reasoning, applied to house league. Today's rule never forced an upgrade: a free club could always archive and carry on free. Its only real effect was that the club paid for next year with a hidden step, and the refusal misdescribed it ("one active season" while counting finished ones). 9f-1 retires Archive (9f·4), so without this change a free club would have **no way at all** to start a second season. **Tradeoff, as on the tournament side:** it gives up the one upgrade prompt that fires by itself for a returning free club. Pre-revenue hypothesis; revisit with the first real season's conversion data.
+**Affects:** the free-floor season count and its refusal; Reopen's limit check (it has none today); `PLAN_PRICING_FACTS.md`'s free-floor line (updated this session: Decided, not built).
+**Handoff:**
+```
+HANDOFF → /billing
+- 9f-1: the free-floor season count = draft + registration_open + registration_closed + active (not completed, not archived), at season create AND at the status change into a live state (Reopen). Refusal words come from the 9f /marketing pass. Facts doc line to "built" + drift check in the same unit of work. No plan-config value moves.
+HANDOFF → /marketing
+- The 9f words pass: the free floor's refusal (it must stop saying "active" while counting finished seasons, and say Complete frees the season). Dormant copy while the floor is parked; write it, ship it with 9f-1.
+HANDOFF → /docs
+- At 9f-1, only if a house-league help answer says archiving frees the free season (check, don't assume).
+HANDOFF → /plan
+- Done: HOUSE_LEAGUE_STAGE9_PLAN.md §0j records 9f·5 as ruled (2026-11-04).
+```
+**Supersedes:** nothing (the free floor's occupancy was never logged). **Relates to:** 2026-10-10 one at a time (the tournament precedent); 2026-07-28 League park (the floor stays held, flag off; nothing here un-parks it).
+
+---
+
 ### 2026-11-03 — Promotions stay record-only: a promotion in Plans & pricing gives no customer a discount, and its coupon is never created in Stripe (Plans & pricing Stage 1, Part 1, option A)
 **Status:** **Decided** (owner, 2026-11-03, Plans & pricing Stage 1 Part 1, option A). The screen's wording and a build guard were made the same day (`tests/unit/promotions-record-only-guard.test.ts`).
 **Decision:** Promotions stay **record-only**. A promotion in Plans & pricing gives no customer a discount, and its coupon is never created in Stripe. **Enforcing promotions is a future stage of its own**, taken only after a ruling on how a discount stacks with operator free time, Founding Season comps and the Club trial, and then an `/accounting` review. **Founding Season, operator free time and the Club trial are not promotions.**

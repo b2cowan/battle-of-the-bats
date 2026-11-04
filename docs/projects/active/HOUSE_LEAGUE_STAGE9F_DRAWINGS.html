@@ -700,6 +700,17 @@ body.only-diff .same-st{display:none}
 .cmpt .nw{color:var(--fix);font-weight:600}
 .cmpt .gone{color:var(--flag);font-weight:600}
 @media (max-width:700px){.ak .blk .bd{grid-template-columns:1fr}.ak .two{grid-template-columns:1fr}}
+/* /design pass 2026-11-03 */
+.ak .lock{background:none;padding:0;border-radius:0;font-size:13px;color:var(--soft)}
+.ak .mk.res{display:inline-block;flex-direction:row;border-radius:5px;padding:4px 6px;font:700 10.5px/1 var(--f-mono);color:var(--t-res);background:var(--surface);border:1.5px solid currentColor}
+.ak.ph-in .rare{min-height:44px;flex-wrap:wrap}.ak.ph-in .rare a{display:inline-flex;align-items:center;min-height:44px}
+.ak table.kt th.c,.ak table.kt td.c{text-align:center}
+.pub .stt .n{text-align:center}.pub .stt tr.lead td{background:#FBF1DC}
+.mk,.fl,.vsw button{position:relative}.mk::after,.fl::after{content:"";position:absolute;inset:-10px -4px}
+.ak .dfld{justify-content:space-between;min-width:180px}
+.ak .menu.anch{max-width:none;margin-top:-6px}
+@media (max-width:600px){.tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.tabs button,.tabs .thm{flex:none}}
+.viewrow[hidden]{display:none}
 </style>
 
 <div class="doc">
@@ -779,7 +790,7 @@ body.only-diff .same-st{display:none}
 <p class="who">The league runners (owner, club admin, league admin) see the doors; a registrar or treasurer sees the page without them, as today.</p>
 <div class="spec">
 <div class="col" style="flex:1 1 520px"><p class="sp-cap">TODAY · desk</p>
-<div class="dt-wrap same"><div class="dt ak">
+<div class="dt-wrap"><div class="dt ak">
   <div class="tb"><span class="lg"></span>Dev League Org<span class="ar">ADMIN</span><span class="sp"></span><span class="ic"></span></div>
   <div class="shell">
     <div class="sb"><span class="grp">House league</span><span class="sw">Draft Test 2027 · Finished <i class="chev"></i></span>
@@ -787,7 +798,7 @@ body.only-diff .same-st{display:none}
     <div class="mn"><div class="pg">
       <div class="ph1"><div><span class="ey">House league</span><h1>Draft Test 2027</h1></div></div>
       <p class="sub" style="display:flex;gap:10px;align-items:center;margin:-8px 0 0">May 1 – Aug 28, 2027 · Softball <span class="pill">Finished</span></p>
-      <div class="lock">This season is finished, so this page is locked. Money stays open for late fees and refunds.</div>
+      <div class="lock">This season is finished, so this page is locked. Money stays open for late fees.</div>
       <div class="band"><div><div class="k">Players</div><div class="v">212</div><div class="h">of 240 spots</div></div><div><div class="k">To review</div><div class="v">0</div><div class="h">Registrations</div></div><div><div class="k">Waitlist</div><div class="v">0</div></div><div><div class="k">Teams</div><div class="v">22</div></div><div><div class="k">Owed</div><div class="v">$37,100</div><div class="h">212 players</div></div><div><div class="k">Still owing</div><div class="v am">$525</div><div class="h">3 players</div></div></div>
       <div class="blk"><div class="hd">Season</div><div class="bd"><span>Name</span><span>Draft Test 2027</span><span>Dates</span><span>Sat, May 1 – Sat, Aug 28, 2027</span><span>Sport</span><span>Softball</span></div></div>
       <div class="blk"><div class="hd">Registration</div><div class="bd"><span>Opened</span><span>Mon, Mar 1, 2027, 8:00 a.m.</span><span>Closed</span><span>Fri, Apr 16, 2027, 11:59 p.m.</span><span>Early price until</span><span>Mon, Mar 15, 2027</span><span>How to pay</span><span>E-transfer to treasurer@devleague.ca …</span></div></div>
@@ -807,7 +818,7 @@ body.only-diff .same-st{display:none}
       <div class="same" style="display:flex;flex-direction:column;gap:16px">
       <div class="ph1"><div><span class="ey">House league</span><h1>Draft Test 2027</h1></div></div>
       <p class="sub" style="display:flex;gap:10px;align-items:center;margin:-8px 0 0">May 1 – Aug 28, 2027 · Softball <span class="pill">Finished</span></p>
-      <div class="lock">This season is finished, so this page is locked. Money stays open for late fees and refunds.</div>
+      <div class="lock">This season is finished, so this page is locked. Money stays open for late fees.</div>
       <div class="band"><div><div class="k">Players</div><div class="v">212</div><div class="h">of 240 spots</div></div><div><div class="k">To review</div><div class="v">0</div><div class="h">Registrations</div></div><div><div class="k">Waitlist</div><div class="v">0</div></div><div><div class="k">Teams</div><div class="v">22</div></div><div><div class="k">Owed</div><div class="v">$37,100</div><div class="h">212 players</div></div><div><div class="k">Still owing</div><div class="v am">$525</div><div class="h">3 players</div></div></div>
       <div class="blk"><div class="hd">Season</div><div class="bd"><span>Name</span><span>Draft Test 2027</span><span>Dates</span><span>Sat, May 1 – Sat, Aug 28, 2027</span><span>Sport</span><span>Softball</span></div></div>
       <div class="blk"><div class="hd">Registration</div><div class="bd"><span>Opened</span><span>Mon, Mar 1, 2027, 8:00 a.m.</span><span>Closed</span><span>Fri, Apr 16, 2027, 11:59 p.m.</span><span>Early price until</span><span>Mon, Mar 15, 2027</span><span>How to pay</span><span>E-transfer to treasurer@devleague.ca …</span></div></div>
@@ -821,48 +832,49 @@ body.only-diff .same-st{display:none}
 </div>
 <div class="spec">
 <div class="col"><p class="sp-cap">TODAY · phone, 390 · the end of the page</p>
-<div class="ph same"><div class="ak ph-in" style="display:flex;flex-direction:column">
-  <div class="pbar"><span>Overview</span><span class="sp"></span><span class="pill">Finished</span></div>
+<div class="ph"><div class="ak ph-in" style="display:flex;flex-direction:column">
+  <div class="pswitch"><div class="t"><span class="ey">House league</span><b>Draft Test 2027</b></div><span class="pill">Finished</span><span class="btn ic" aria-label="Switch season"><i class="chev"></i></span></div>
+  <div class="ptabs"><span class="on">Overview</span><span>Registrations</span><span>Teams</span><span>Schedule</span><span>Standings</span><span>Money</span></div>
   <div class="pin">
-    <div class="lock">This season is finished, so this page is locked. Money stays open for late fees and refunds.</div>
+    <div class="lock">This season is finished, so this page is locked. Money stays open for late fees.</div>
     <div class="band" style="grid-auto-flow:row;grid-template-columns:1fr 1fr"><div><div class="k">Players</div><div class="v">212</div></div><div><div class="k">Still owing</div><div class="v am">$525</div><div class="h">3 players</div></div></div>
     <p class="hint">… Season, Registration and Age groups, read only …</p>
     <div class="rare">Finished and settled? <a>Archive the season…</a></div>
     <div class="rare">Need to change something? <a>Reopen the season…</a></div>
   </div>
-  <div class="bnav"><span class="on"><i></i>Overview</span><span><i></i>Sign-ups</span><span><i></i>Teams</span><span><i></i>Schedule</span><span><i></i>More</span></div>
 </div></div></div>
 <div class="col"><p class="sp-cap">AFTER · phone, 390 · the end of the page</p>
 <div class="ph"><div class="ak ph-in" style="display:flex;flex-direction:column">
-  <div class="pbar"><span>Overview</span><span class="sp"></span><span class="pill">Finished</span></div>
+  <div class="pswitch"><div class="t"><span class="ey">House league</span><b>Draft Test 2027</b></div><span class="pill">Finished</span><span class="btn ic" aria-label="Switch season"><i class="chev"></i></span></div>
+  <div class="ptabs"><span class="on">Overview</span><span>Registrations</span><span>Teams</span><span>Schedule</span><span>Standings</span><span>Money</span></div>
   <div class="pin">
     <div class="same" style="display:flex;flex-direction:column;gap:14px">
-    <div class="lock">This season is finished, so this page is locked. Money stays open for late fees and refunds.</div>
+    <div class="lock">This season is finished, so this page is locked. Money stays open for late fees.</div>
     <div class="band" style="grid-auto-flow:row;grid-template-columns:1fr 1fr"><div><div class="k">Players</div><div class="v">212</div></div><div><div class="k">Still owing</div><div class="v am">$525</div><div class="h">3 players</div></div></div>
     <p class="hint">… Season, Registration and Age groups, read only …</p>
     </div>
     <div class="rare" style="flex-wrap:wrap">Running it again? <a>Start next season from this one…</a></div>
     <div class="rare">Need to change something? <a>Reopen the season…</a></div>
   </div>
-  <div class="bnav"><span class="on"><i></i>Overview</span><span><i></i>Sign-ups</span><span><i></i>Teams</span><span><i></i>Schedule</span><span><i></i>More</span></div>
 </div></div></div>
 </div>
-<p class="cap">The only change to the whole screen is its last two lines. The Start next season door is a rare door because it is pressed once a year; it ends the body, never a foot row. It sits <b>below</b> what the season holds, so the live and finished content stays the focus. On a season that is still live but past its last day, the door appears under the “Next step: Complete the season” card too (tab 6, edge 5).</p>
+<p class="cap">The only change to the whole screen is its last two lines. The Start next season door is a rare door because it is pressed once a year; it ends the body, never a foot row. It sits <b>below</b> what the season holds, so the live and finished content stays the focus. On a season that is still live but past its last day, the door is in the same place, at the body’s end, below the “Next step: Complete the season” card (tab 6, edge 5).</p>
 </div>
 
-<div class="st same-st"><h2>s2 · The house-league home and its Past seasons shelf <button class="mk unc" data-note="UNCHANGED: the shelf is collapsed with a count; each row opens the season’s Overview; finished rows carry no pill (the shelf is the label). The New season button already exists; 9f changes the window it opens (tab 5).">UNCHANGED</button></h2>
+<div class="st same-st"><h2>s2 · The house-league home and its Past seasons shelf <button class="mk unc" data-note="UNCHANGED: the page reads Running now, Getting ready, then the Past seasons shelf (collapsed with its count; drawn open here). Each row opens the season’s Overview; only running rows carry a pill. The New season button already exists; 9f changes the window it opens (tab 5).">UNCHANGED</button></h2>
 <p class="who">Everyone who can read house league. New season is the league runners’ only.</p>
 <div class="spec">
 <div class="col" style="flex:1 1 520px"><p class="sp-cap">TODAY = AFTER · desk fragment</p>
 <div class="ak" style="max-width:860px;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);padding:20px;display:flex;flex-direction:column;gap:14px">
   <div class="ph1"><div><span class="ey">Dev League Org</span><h1>House league</h1></div><span class="sp"></span><span class="btn pri">New season</span></div>
-  <div class="panel"><div class="rows"><div class="r"><div class="m"><b>Draft Test 2028</b><div class="d">Getting ready · Sat, Apr 29 – Sat, Aug 26, 2028</div></div><span class="pill reg">Getting ready</span><i class="chev" style="transform:rotate(-45deg)"></i></div></div></div>
-  <div class="panel"><div class="fold"><b>Past seasons</b><span class="pill">3</span><i class="chev"></i></div>
-    <div class="rows"><div class="r"><div class="m"><b>Draft Test 2027</b><div class="d">May 1 – Aug 28, 2027 · 212 players · 22 teams</div></div><i class="chev" style="transform:rotate(-45deg)"></i></div>
-    <div class="r"><div class="m"><b>Spring 2026</b><div class="d">May 2 – Aug 29, 2026 · 198 players · 20 teams</div></div><i class="chev" style="transform:rotate(-45deg)"></i></div></div></div>
+  <div class="panel"><div class="hd"><h2>Running now</h2></div><div class="rows"><div class="r"><div class="m"><b>Fall Ball 2027</b><div class="d">Sep 11 – Oct 30, 2027 · Softball · 2 divisions</div></div><span class="pill live">Playing now</span><i class="chev" style="transform:rotate(-45deg)"></i></div></div></div>
+  <div class="panel"><div class="hd"><h2>Getting ready</h2></div><div class="rows"><div class="r"><div class="m"><b>Draft Test 2028</b><div class="d">Apr 29 – Aug 26, 2028 · Softball · 4 divisions</div></div><i class="chev" style="transform:rotate(-45deg)"></i></div></div></div>
+  <div class="panel"><div class="fold"><b>Past seasons</b><span class="pill">2</span><i class="chev" style="transform:rotate(-135deg);margin-top:4px"></i></div>
+    <div class="rows"><div class="r"><div class="m"><b>Draft Test 2027</b><div class="d">May 1 – Aug 28, 2027 · Softball · 4 divisions</div></div><i class="chev" style="transform:rotate(-45deg)"></i></div>
+    <div class="r"><div class="m"><b>Spring 2026</b><div class="d">May 2 – Aug 29, 2026 · Softball · 4 divisions</div></div><i class="chev" style="transform:rotate(-45deg)"></i></div></div></div>
 </div></div>
 </div>
-<p class="cap">Drawn with the next season already made, so you can see where it lands: a running season is a row above the shelf with its pill. Nothing on the shelf gains a door. A door on each past row (the prompt’s idea) would put a once-a-year act on every row of a list that grows by one a year; Start from in the New season window covers it with one control (9f·8).</p>
+<p class="cap">Drawn with the next season already made, so you can see where it lands: under Getting ready, above the shelf. Fall Ball 2027 is running beside it (Q14). Nothing on the shelf gains a door. A door on each past row (the prompt’s idea) would put a once-a-year act on every row of a list that grows by one a year; Start from in the New season window covers it with one control (9f·8).</p>
 </div>
 
 <div class="st"><h2>s3 · The Complete window <button class="mk res" data-note="RESTYLED by one line (9f·7): “Player ratings are erased.” Everything else is as built in 9a·4: it says what locks first, warns about money and never blocks, and says families are not emailed.">RESTYLED</button></h2>
@@ -872,8 +884,7 @@ body.only-diff .same-st{display:none}
 <div class="ak win" style="border-radius:12px;max-width:640px"><div class="dlg" style="max-width:560px">
   <div class="dh"><div class="tt"><h4>Complete Draft Test 2027?</h4></div><span class="xx">×</span></div>
   <div class="db"><p style="margin:0">The season moves to Past seasons. What changes:</p>
-    <ul class="same"><li>Registrations, teams and the schedule can no longer be changed.</li><li>Money stays open: you can still mark fees received and record refunds.</li><li>You can still email its families.</li><li>Your public site lists it under Past seasons, and its schedule and standings stay up.</li></ul>
-    <ul><li><b>Player ratings are erased.</b> <button class="mk new" data-note="NEW (9f·7): Complete erases the season’s ratings (9c·2b, ruled) and no window says so today. Complete is the moment they are lost, so the line belongs here first.">NEW</button></li><li>Families are not emailed.</li></ul>
+    <ul><li class="same">Registrations, teams and the schedule can no longer be changed.</li><li class="same">Money stays open: you can still mark fees received and record refunds.</li><li class="same">You can still email its families.</li><li class="same">Your public site lists it under Past seasons, and its schedule and standings stay up.</li><li><b>Player ratings are erased.</b> <button class="mk new" data-note="NEW (9f·7): Complete erases the season’s ratings (9c·2b, ruled) and no window says so today. Complete is the moment they are lost, so the line belongs here first.">NEW</button></li><li>Families are not emailed.</li></ul>
     <div class="note">3 players still owing fees.</div></div>
   <div class="df"><span class="s">You can reopen it from Past seasons.</span><span class="btn">Cancel</span><span class="btn pri">Complete season</span></div>
 </div></div></div>
@@ -983,11 +994,11 @@ body.only-diff .same-st{display:none}
 <div class="col" style="flex:1 1 520px"><p class="sp-cap">TODAY = AFTER · desk fragment</p>
 <div class="ak" style="max-width:860px;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);padding:20px;display:flex;flex-direction:column;gap:12px">
   <div class="ph1"><div><span class="ey">Draft Test 2027</span><h1>Standings</h1></div><span class="sp"></span><span class="fld" style="min-width:150px">U10 ▾</span><span class="btn">Export</span></div>
-  <div class="lock">This season is finished, so this page is locked. Money stays open for late fees and refunds.</div>
-  <div class="panel"><table class="kt"><thead><tr><th>#</th><th>Team</th><th>GP</th><th>W</th><th>L</th><th>T</th><th>Pts</th><th>RF</th><th>RA</th><th>RD</th></tr></thead><tbody>
-    <tr><td>1</td><td><b>Royals</b></td><td>12</td><td>9</td><td>3</td><td>0</td><td>18</td><td>88</td><td>51</td><td>+37</td></tr>
-    <tr><td>2</td><td><b>Twins</b></td><td>12</td><td>8</td><td>3</td><td>1</td><td>17</td><td>80</td><td>55</td><td>+25</td></tr>
-    <tr><td>3</td><td><b>Rays</b></td><td>12</td><td>6</td><td>6</td><td>0</td><td>12</td><td>61</td><td>64</td><td>−3</td></tr></tbody></table></div>
+  <div class="lock">This season is finished, so this page is locked. Money stays open for late fees.</div>
+  <div class="panel"><table class="kt"><thead><tr><th>#</th><th>Team</th><th class="c">GP</th><th class="c">W</th><th class="c">L</th><th class="c">T</th><th class="c">Pts</th><th class="c">RF</th><th class="c">RA</th><th class="c">RD</th></tr></thead><tbody>
+    <tr><td>1</td><td><b>Royals</b></td><td class="c">12</td><td class="c">9</td><td class="c">3</td><td class="c">0</td><td class="c">18</td><td class="c">88</td><td class="c">51</td><td class="c">+37</td></tr>
+    <tr><td>2</td><td><b>Twins</b></td><td class="c">12</td><td class="c">8</td><td class="c">3</td><td class="c">1</td><td class="c">17</td><td class="c">80</td><td class="c">55</td><td class="c">+25</td></tr>
+    <tr><td>3</td><td><b>Rays</b></td><td class="c">12</td><td class="c">6</td><td class="c">6</td><td class="c">0</td><td class="c">12</td><td class="c">61</td><td class="c">64</td><td class="c">−3</td></tr></tbody></table></div>
 </div></div>
 </div>
 </div>
@@ -996,7 +1007,7 @@ body.only-diff .same-st{display:none}
 <p class="who">A family on the public site. Three states of the same season, phone.</p>
 <div class="spec">
 <div class="col"><p class="sp-cap">TODAY · past its last day, never completed</p>
-<div class="ph pub same"><div style="background:#1F3A8A;color:#fff;height:56px;display:flex;align-items:center;padding:0 16px;font:700 18px/1 'Barlow Condensed',sans-serif">Dev League Org</div>
+<div class="ph pub"><div style="background:#1F3A8A;color:#fff;height:56px;display:flex;align-items:center;padding:0 16px;font:700 18px/1 'Barlow Condensed',sans-serif">Dev League Org</div>
   <div class="in" style="padding:16px">
     <div><span class="tag g">Final standings</span> <button class="fl" data-f="F04">F04</button></div>
     <h3 style="font-size:22px">Draft Test 2027</h3>
@@ -1029,7 +1040,7 @@ body.only-diff .same-st{display:none}
 <div class="st"><h2>s10 · The coach keeps the team’s final place for the 30 days <button class="mk new" data-note="NEW (9f·6): the finished coach page carries “Final place: 2nd of 6” under the notice while the page lasts. Shown only when the division’s schedule was published and Show standings is on (the live line’s rule). The empty Schedule heading goes.">NEW</button></h2>
 <div class="spec">
 <div class="col"><p class="sp-cap">TODAY · coach, phone</p>
-<div class="ph same"><div class="ak ph-in" style="min-height:430px">
+<div class="ph"><div class="ak ph-in" style="min-height:430px">
   <div class="pbar"><span>Twins · U10</span></div>
   <div class="pin">
     <div class="note blue">Draft Test 2027 has finished. This page stays until Sun, Oct 3.</div>
@@ -1063,7 +1074,7 @@ body.only-diff .same-st{display:none}
 <div class="st"><h2>s12 · The Reopen window <button class="mk res" data-note="RESTYLED (9f·7): two lines added. The ratings line always (they were erased at finish and the reopen does not restore them). The newer-season line only when another season was created after this one (9f·7, edge 2).">RESTYLED</button></h2>
 <div class="spec">
 <div class="col"><p class="sp-cap">TODAY · desk</p>
-<div class="ak win same" style="border-radius:12px;max-width:600px"><div class="dlg" style="max-width:520px">
+<div class="ak win" style="border-radius:12px;max-width:600px"><div class="dlg" style="max-width:520px">
   <div class="dh"><div class="tt"><h4>Reopen Draft Test 2027?</h4></div><span class="xx">×</span></div>
   <div class="db"><p style="margin:0">The season comes back to Running now. What changes:</p>
     <ul><li>Registrations, teams and the schedule can be changed again.</li><li>Your public site lists it as Playing now, or as Final standings if its dates have passed.</li><li>If its end date has passed it reads “Ended Aug 28”, so you can complete it again.</li><li>Families are not emailed.</li></ul></div>
@@ -1078,7 +1089,7 @@ body.only-diff .same-st{display:none}
 </div></div></div>
 <div class="col"><p class="sp-cap">AFTER · phone sheet</p>
 <div class="ph"><div class="ak ph-in fsw" style="min-height:600px">
-  <div class="fh"><span class="btn ic">×</span>Reopen the season?</div>
+  <div class="fh"><span class="btn ic" aria-label="Back">←</span>Reopen the season?</div>
   <div class="fb"><p style="margin:0">The season comes back to Running now. What changes:</p><ul><li>Registrations, teams and the schedule can be changed again.</li><li>Your public site lists it as Ended Aug 28 until you complete it again.</li><li><b>Player ratings were erased when it finished. They don’t come back.</b></li><li>Draft Test 2028 is not changed.</li><li>Families are not emailed.</li></ul></div>
   <div class="ff"><span class="s">You can complete it again at any time.</span><div class="bb"><span class="btn">Cancel</span><span class="btn pri">Reopen season</span></div></div>
 </div></div></div>
@@ -1097,18 +1108,19 @@ body.only-diff .same-st{display:none}
   <li><b>Result:</b> a new “Getting ready” season with no club time, no families and no invites sent. Publish rules unchanged: coaches are invited only at Publish (9c·10).</li>
 </ul></div>
 
-<div class="st"><h2>s13 · The New season window, starting from last season <button class="mk new" data-note="NEW (9f·8, 9f·12, 9f·13): the existing window (name, sport, first and last day) gains Start from, the copy list and the shifted dates. With Start from on “A blank season” it is exactly today’s window.">NEW</button></h2>
-<p class="who">League runners. Opened from New season (Start from defaults to the most recent season) or from a season’s rare door (preset to that season).</p>
+<div class="st"><h2>s13 · The New season window, starting from last season <button class="mk new" data-note="NEW (9f·8, 9f·12, 9f·13): the existing window, “Create a house-league season” (name, sport, season dates), gains Start from, the copy list and the shifted dates. With Start from on “A blank season” it is exactly today’s window.">NEW</button></h2>
+<p class="who">League runners. Opened from New season (Start from defaults to the most recent season) or from a season’s rare door (preset to that season). Title, Name, Sport and Season dates are today’s window as built; everything else is new.</p>
 <div class="spec">
 <div class="col" style="flex:1 1 620px"><p class="sp-cap">AFTER · desk window, 640</p>
 <div class="ak win" style="border-radius:12px;max-width:760px"><div class="dlg" style="max-width:640px">
-  <div class="dh"><div class="tt"><span class="ey">House league</span><h4>New season</h4></div><span class="xx">×</span></div>
+  <div class="dh"><div class="tt"><h4>Create a house-league season</h4></div><span class="xx">×</span></div>
   <div class="db">
-    <span class="flbl">Start from</span>
+    <span class="flbl">Start from <button class="mk new" data-note="NEW (9f·8): our own picker, not a browser select, because each choice carries a second line (built on the filter-menu look the Teams division picker uses). On a phone it opens a drawer titled Start from. On “A blank season” the window is exactly today’s.">NEW</button></span>
     <span class="fld wide" style="justify-content:space-between">Draft Test 2027 · Finished <i class="chev"></i></span>
     <div class="stmt">Draft Test 2027 isn’t changed. Its families, payments, games and scores stay with it. <button class="mk new" data-note="NEW: the coach plan’s lesson, say what happens to the old season FIRST, in a plain statement, not an amber alert. The copy is the ordinary end-of-year act.">NEW</button></div>
-    <div class="two"><div style="display:flex;flex-direction:column;gap:6px"><span class="flbl">Name</span><span class="tx">Draft Test 2028</span></div><div style="display:flex;flex-direction:column;gap:6px"><span class="flbl">Sport</span><span class="fld wide">Softball</span></div></div>
-    <div class="two"><div style="display:flex;flex-direction:column;gap:6px"><span class="flbl">First day</span><span class="dfld"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Sat, Apr 29, 2028</span></div><div style="display:flex;flex-direction:column;gap:6px"><span class="flbl">Last day</span><span class="dfld"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Sat, Aug 26, 2028</span></div></div>
+    <div class="two"><div style="display:flex;flex-direction:column;gap:6px"><span class="flbl">Name <span style="color:var(--red)">*</span></span><span class="tx">Draft Test 2028</span></div><div style="display:flex;flex-direction:column;gap:6px"><span class="flbl">Sport</span><span class="fld wide" style="justify-content:space-between">Softball <i class="chev"></i></span></div></div>
+    <span class="flbl">Season dates</span>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><span class="dfld">Apr 29, 2028<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span><span class="dim">to</span><span class="dfld">Aug 26, 2028<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span></div>
     <p class="hint">52 weeks after Draft Test 2027’s, so every date falls on the same weekday. Registration dates and the early price move the same way; check them on the new season’s Overview. <button class="mk new" data-note="NEW (9f·13): five dates move by 52 weeks (364 days): first and last day, registration opens and closes, early price until. Same weekday, one or two calendar days earlier. Every date is the shared date field.">9f·13</button></p>
     <span class="lbl">Bring with it</span>
     <div class="clist">
@@ -1120,10 +1132,10 @@ body.only-diff .same-st{display:none}
     </div>
     <div class="empt2"><b>Always starts empty:</b> registrations and payments, ratings, games and scores, practices, emails and notices, and club time. The club gives the new season its time, as it does every season.</div>
   </div>
-  <div class="df"><span class="s">Families are not emailed.</span><span class="btn">Cancel</span><span class="btn pri">Create season</span></div>
+  <div class="df"><span class="s">Families are not emailed. <button class="mk res" data-note="RESTYLED: today’s create window has no foot sentence. With a copy it says families are not emailed, as every season window does (9a·4).">RESTYLED</button></span><span class="btn">Cancel</span><span class="btn pri">Create season</span></div>
 </div></div></div>
-<div class="col"><p class="sp-cap">AFTER · Start from, opened</p>
-<div class="ak" style="padding:14px;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow)"><div class="menu">
+<div class="col"><p class="sp-cap">AFTER · Start from, opened (hangs under the field, at its width)</p>
+<div class="ak" style="padding:14px;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);width:380px;max-width:100%"><span class="fld wide" style="justify-content:space-between">Draft Test 2027 · Finished <i class="chev"></i></span><div class="menu anch">
   <div>A blank season<small>Name, sport and dates only, as today</small></div>
   <div class="gh">Copy a season</div>
   <div class="on">Draft Test 2027<small>Finished · 4 age groups · 22 teams</small></div>
@@ -1140,13 +1152,13 @@ body.only-diff .same-st{display:none}
 <div class="spec">
 <div class="col"><p class="sp-cap">AFTER · phone sheet, 390 (scrolls)</p>
 <div class="ph"><div class="ak ph-in fsw" style="min-height:760px">
-  <div class="fh"><span class="btn ic">×</span>New season</div>
+  <div class="fh"><span class="btn ic" aria-label="Back">←</span>Create a house-league season</div>
   <div class="fb" style="gap:12px">
     <span class="flbl">Start from</span><span class="fld wide" style="justify-content:space-between;min-height:44px">Draft Test 2027 · Finished <i class="chev"></i></span>
     <div class="stmt">Draft Test 2027 isn’t changed. Its families, payments, games and scores stay with it.</div>
-    <span class="flbl">Name</span><span class="tx" style="min-height:44px">Draft Test 2028</span>
-    <span class="flbl">First day</span><span class="dfld" style="min-height:44px">Sat, Apr 29, 2028</span>
-    <span class="flbl">Last day</span><span class="dfld" style="min-height:44px">Sat, Aug 26, 2028</span>
+    <span class="flbl">Name <span style="color:var(--red)">*</span></span><span class="tx" style="min-height:44px">Draft Test 2028</span>
+    <span class="flbl">Sport</span><span class="fld wide" style="justify-content:space-between;min-height:44px">Softball <i class="chev"></i></span>
+    <span class="flbl">Season dates</span><span class="dfld" style="min-height:44px">2028-04-29 <span class="dim">phone’s own date control</span></span><span class="dfld" style="min-height:44px">2028-08-26 <span class="dim">phone’s own date control</span></span>
     <p class="hint">52 weeks after Draft Test 2027’s, on the same weekdays.</p>
     <span class="lbl">Bring with it</span>
     <div class="clist">
@@ -1161,7 +1173,7 @@ body.only-diff .same-st{display:none}
   <div class="ff"><span class="s">Families are not emailed.</span><div class="bb"><span class="btn">Cancel</span><span class="btn pri">Create season</span></div></div>
 </div></div></div>
 </div>
-<p class="cap">On a phone each date is the phone’s own date wheel (the shared field’s touch face); on a desk it is our calendar.</p>
+<p class="cap">On a phone each date is the phone’s own date control (the shared field’s touch face, its text the phone’s own); on a desk it is our calendar. Start from opens a drawer titled Start from. The head’s ← closes the sheet, as every form sheet does.</p>
 </div>
 
 <div class="st"><h2>s15 · How the dates and born years move <button class="mk new" data-note="NEW (9f·13): the rule drawn as numbers. 52 weeks keeps the weekday; a straight “plus one year” would move a Saturday opener to a Sunday.">9f·13</button></h2>
@@ -1188,11 +1200,11 @@ body.only-diff .same-st{display:none}
   <div class="qdone">Started from Draft Test 2027: settings, 4 age groups, 22 team names. Check each line, then open registration.</div>
   <div class="panel"><div class="hd"><h2>Before you open registration</h2><span class="btn pri">Open registration</span></div>
     <ul class="steps">
-      <li><span class="tick">✓</span><span class="tt"><b>Age groups</b><span>U8, U10, U12, U14 · born years moved up one</span></span><span class="from">From Draft Test 2027</span></li>
-      <li><span class="tick">✓</span><span class="tt"><b>Prices</b><span>$150 – $195</span></span><span class="from">From Draft Test 2027</span></li>
+      <li><span class="tick">✓</span><span class="tt"><b>Age groups</b><span>4 divisions, each with birth years and a size · born years moved up one</span></span><span class="from">From Draft Test 2027</span></li>
+      <li><span class="tick">✓</span><span class="tt"><b>Prices</b><span>$150 – $195 · early bird through Mon, Mar 13</span></span><span class="from">From Draft Test 2027</span></li>
       <li><span class="tick">✓</span><span class="tt"><b>Registration dates</b><span>Mon, Feb 28 – Fri, Apr 14, 2028</span></span><span class="from">Moved 52 weeks</span></li>
       <li><span class="tick">✓</span><span class="tt"><b>How to pay</b><span>E-transfer to treasurer@devleague.ca …</span></span><span class="from">From Draft Test 2027</span></li>
-      <li><span class="tick">✓</span><span class="tt"><b>Waiver</b><span>Optional</span></span><span class="from">From Draft Test 2027</span></li>
+      <li><span class="tick">✓</span><span class="tt"><b>Waiver</b><span>On. Families agree on the form.</span></span><span class="from">From Draft Test 2027</span></li>
     </ul></div>
   <div class="note blue">No club time yet. The club gives this season its time in the club’s Schedules; games and practices can be made once it has. <button class="mk new" data-note="NEW line (9d2·15): a copied season never carries last year’s slots; those belong to specific club dates. Shown on a season with no club time, copied or not.">NEW</button></div>
 </div></div>
@@ -1201,11 +1213,11 @@ body.only-diff .same-st{display:none}
   <div class="pbar"><span>Draft Test 2028</span><span class="sp"></span><span class="pill reg">Getting ready</span></div>
   <div class="pin">
     <div class="qdone">Started from Draft Test 2027. Check each line, then open registration.</div>
-    <div class="panel"><div class="hd"><h2>Before you open registration</h2></div>
-      <ul class="steps"><li><span class="tick">✓</span><span class="tt"><b>Age groups</b><span>From Draft Test 2027</span></span></li><li><span class="tick">✓</span><span class="tt"><b>Prices</b><span>From Draft Test 2027</span></span></li><li><span class="tick">✓</span><span class="tt"><b>Registration dates</b><span>Moved 52 weeks</span></span></li><li><span class="tick">✓</span><span class="tt"><b>How to pay</b><span>From Draft Test 2027</span></span></li></ul>
-      <div style="padding:0 16px 14px"><span class="btn pri" style="width:100%;justify-content:center">Open registration</span></div></div>
+    <div class="panel"><div class="hd"><h2>Before you open registration</h2><span class="btn pri">Open registration</span></div>
+      <ul class="steps"><li><span class="tick">✓</span><span class="tt"><b>Age groups</b><span>From Draft Test 2027</span></span></li><li><span class="tick">✓</span><span class="tt"><b>Prices</b><span>From Draft Test 2027</span></span></li><li><span class="tick">✓</span><span class="tt"><b>Registration dates</b><span>Moved 52 weeks</span></span></li><li><span class="tick">✓</span><span class="tt"><b>How to pay</b><span>From Draft Test 2027</span></span></li></ul></div>
     <div class="note blue">No club time yet. The club gives this season its time.</div>
   </div></div></div>
+</div>
 </div>
 <p class="cap">Every line is ticked because everything came across. So Open registration is offered at once, and it still asks in its window (9a·4). The “From Draft Test 2027” marks are why a ticked list is safe here: they say “this was copied, check it”, and they go once the line is edited. Published marks start empty, so Teams and Schedule both start unpublished. <b>Where Stage 14 plugs in:</b> a signed-in returning parent’s pre-filled form lives on this season’s registration form, not in this window. Nothing is drawn for it.</p>
 </div>
@@ -1412,7 +1424,7 @@ body.only-diff .same-st{display:none}
 <div class="tw"><table class="t" id="askIndex"><thead><tr><th>Ask</th><th>Where</th><th>Your answer so far</th></tr></thead><tbody></tbody></table></div>
 <div class="paste"><div class="row"><button type="button" class="btn-d pri" id="build">Build the paste-back</button><button type="button" class="btn-d" id="copy">Copy</button><span id="copied" class="muted"></span></div>
 <textarea id="out" readonly aria-label="Paste-back text"></textarea></div>
-<div class="card" id="reviews"><h3>What /design changed before the hand-off</h3><ul id="revlist"><li>Pending.</li></ul></div>
+<div class="card" id="reviews"><h3>What /design changed before the hand-off</h3><ul id="revlist"><li>A missing closing tag in s16 nested s17 inside it; closed.</li><li>The lock line is one quiet line, not a banner, with its shipped words (“Money stays open for late fees.”).</li><li>The New season window drawn from the shipped one: its title, Name required, Season dates, Sport a dropdown; Start from named as our own picker; the open list hangs under the field.</li><li>Desk dates read as the shared field shows them (“Apr 29, 2028”, calendar at the right); phone dates are the phone’s own control; phone sheets close with ←, as every form sheet does.</li><li>Standings figures centred (admin as shipped; public W-L-T and points per the table standard, leader row tinted).</li><li>The house-league home drawn as shipped: Running now, Getting ready, Past seasons; only running rows carry a pill; counts agree.</li><li>“Show only what differs” no longer fades the TODAY frames; the View row shows only on tabs that compare.</li><li>The Complete window is one list, as shipped; the getting-ready checklist uses the shipped lines.</li><li>A season on a phone uses its header and page strip (no invented bottom bar); phone rare doors and annotation chips have 44px tap areas; the tab row scrolls sideways on a phone.</li><li>Kept: asks use checkboxes as every earlier round did, so contradictory ticks are possible; the paste-back shows them as ticked.</li></ul></div>
 </section>
 </div>
 
@@ -1449,7 +1461,7 @@ document.addEventListener('click',function(e){
 }, true);
 var tabs=$$('.tabs [role=tab]');
 function show(p, scrollTo){ tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p}); if(p==='asks') buildIndex(); try{localStorage.setItem('hl9f-tab',p)}catch(e){}
-  fitAll(); if(scrollTo){ var el=document.getElementById(scrollTo); if(el) el.scrollIntoView({block:'start'}); } else window.scrollTo(0, $('.tabs').offsetTop - 4); }
+  var vr=$('.viewrow'); if(vr) vr.hidden = ['today','archive','record','next'].indexOf(p)<0; fitAll(); if(scrollTo){ var el=document.getElementById(scrollTo); if(el) el.scrollIntoView({block:'start'}); } else window.scrollTo(0, $('.tabs').offsetTop - 4); }
 tabs.forEach(function(t){ t.addEventListener('click',function(){ show(t.getAttribute('data-pane')) }) });
 function thm(v){ $$('.ak').forEach(function(a){ a.classList.toggle('dk', v==='dark') }); $$('[data-thm]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-thm')===v)) }); try{localStorage.setItem('hl9-thm',v)}catch(e){} }
 $$('[data-thm]').forEach(function(b){ b.addEventListener('click',function(){ thm(b.getAttribute('data-thm')) }) });
@@ -1476,7 +1488,7 @@ window.addEventListener('resize',fitAll);
 var p0='why', t0='warm'; try{ p0=localStorage.getItem('hl9f-tab')||'why'; t0=localStorage.getItem('hl9-thm')||'warm' }catch(e){}
 var h=(location.hash||'').slice(1); if(tabs.map(function(t){return t.getAttribute('data-pane')}).indexOf(h)>=0) p0=h;
 if(tabs.map(function(t){return t.getAttribute('data-pane')}).indexOf(p0)<0) p0='why';
-thm(t0); tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p0))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p0}); if(p0==='asks') buildIndex();
+var vr0=$('.viewrow'); if(vr0) vr0.hidden = ['today','archive','record','next'].indexOf(p0)<0; thm(t0); tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p0))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p0}); if(p0==='asks') buildIndex();
 fitAll();
 })();
 </script>
