@@ -6,8 +6,9 @@ import { loadSeasonSettlement } from '@/lib/coach-season-settlement';
 import { unsettledFamilyCounts } from '@/lib/season-close-warning';
 import { isLiveSeasonStatus, latestClosedSeasonOf, liveSeasonOf, openSeasonsSentence } from '@/lib/season-live';
 import {
-  closeOpenSeason, reopenLatestClosedSeason, startNextRepSeason, SeasonRolloverError,
+  closeOpenSeason, reopenLatestClosedSeason, seasonWindowFacts, startNextRepSeason, SeasonRolloverError,
 } from '@/lib/rep-season-rollover';
+import { parseRollChoice } from '@/lib/season-roll-path';
 import { tellClubTeamStaff } from '@/lib/club-season-notify';
 import { seasonOwedToClub } from '@/lib/club-money-reads';
 import { withObservability } from '@/lib/observability';
@@ -64,7 +65,7 @@ export const GET = withObservability(async (req: Request,
   const { teamId } = await params;
   const resolved = await resolveClubTeam(req, teamId, { write: true });
   if ('error' in resolved) return resolved.error;
-  const { team } = resolved;
+  const { ctx, team } = resolved;
 
   const seasons = await getRepProgramYears(team.id);
   const live = liveSeasonOf(seasons);
@@ -72,6 +73,12 @@ export const GET = withObservability(async (req: Request,
   const rollsFrom = live ?? lastClosed;
   const reopenSeason = !live && lastClosed?.status === 'completed' ? lastClosed : null;
 
+  // What the window asks with (Stage 14a) — quiet like the reads below; the window refuses to start without it.
+  // Started now, awaited after them: the three reads are independent, so they run side by side.
+  const rollRead = rollsFrom
+    ? seasonWindowFacts({ season: rollsFrom, team, cutoffs: ctx.org.birthdayCutoffs })
+      .catch(e => { console.error('[club seasons GET] season window facts failed:', e); return null; })
+    : Promise.resolve(null);
   // The two preflight reads are independent — read side by side, each quiet on its own.
   const [owedToClub, unsettled] = live
     ? await Promise.all([
@@ -93,6 +100,7 @@ export const GET = withObservability(async (req: Request,
           }),
       ])
     : [null, null];
+  const roll = await rollRead;
 
   return NextResponse.json({
     season: live ? seasonShape(live) : null,
@@ -105,10 +113,11 @@ export const GET = withObservability(async (req: Request,
     hasSeasons: seasons.length > 0,
     unsettled,
     owedToClub,
+    roll,
   });
 }, { route: ROUTE });
 
-/** POST — Start next season: `{ year, name?, carryBudget?, carryFees? }`. */
+/** POST — Start next season: `{ year, name?, carryBudget?, carryFees?, path, carryPlayerIds, division? }` (Stage 14a). */
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ teamId: string }> },) => {
   const { teamId } = await params;
@@ -141,6 +150,9 @@ export const POST = withObservability(async (req: Request,
   }
   const carryBudget = body.carryBudget !== false; // default on
   const carryFees = body.carryFees !== false; // default on
+  // ⚖ What is the team doing next season? (Stage 14a) — asked, never assumed: no path, no roll.
+  const choice = parseRollChoice(body);
+  if (!choice.ok) return NextResponse.json({ error: choice.error, code: 'roll_choice' }, { status: 400 });
 
   try {
     const summary = await startNextRepSeason({
@@ -158,6 +170,10 @@ export const POST = withObservability(async (req: Request,
       carryFees,
       // ⚠ Always the register's own closing figure — never an amount from the request.
       carryCash: { mode: 'all' },
+      path: choice.path,
+      carryPlayerIds: choice.carryPlayerIds,
+      division: choice.division, // the roll writes it on path (a) only
+      currentDivision: team.division ?? null,
     });
     await tellClubTeamStaff({
       org: ctx.org, team, actorUserId: ctx.user.id, action: 'started', seasonName: summary.newSeason.name,

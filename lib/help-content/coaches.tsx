@@ -1633,7 +1633,7 @@ const coachesHelp: HelpPageContent = {
             <>
               <p>On a standalone Premium team, the head coach has <strong>two ways out of a season</strong>, and both live on the Overview&apos;s <strong>Season check</strong> — the gentle nudge that appears once games stop and nothing new is scheduled for a couple of quiet weeks.</p>
               <ul>
-                <li><strong>Start next season</strong> — the usual one. Your roster and coaching staff carry forward, and you can bring the budget and the dues structure with them. It closes this season on the way.</li>
+                <li><strong>Start next season</strong> — the usual one. You say who comes with the team (the same players moving up an age group, or a new group), your coaching staff carries forward, and you can bring the budget and the dues structure with them. It closes this season on the way.</li>
                 <li><strong>&ldquo;No next season — just close it&rdquo;</strong> — quieter, and there for the team that has aged out or the coach who isn&apos;t ready to plan next year. It ends the season and starts nothing.</li>
               </ul>
               <p>Closing tells you first if anything is still outstanding — families who still owe, or money waiting to go back — with a way straight to Money. <strong>It never stops you closing</strong>: you might have settled in cash, or forgiven a balance, and the app can&apos;t see that.</p>
@@ -1654,7 +1654,7 @@ const coachesHelp: HelpPageContent = {
           question: 'What carries into the new season, and what stays behind?',
           answer: (
             <>
-              <p><strong>Carries:</strong> your active roster and your coaching staff, plus — your choice at rollover — the planned budget (projected buckets only) and the fee plan (amounts and installments, with due dates shifted forward; paid history stays behind).</p>
+              <p><strong>Carries:</strong> the players you choose (the active players are ticked when the team is moving up; a new group brings nobody unless you tick <em>Bring last season&rsquo;s players anyway</em>) and your coaching staff, plus — your choice at rollover — the planned budget (projected buckets only) and the fee plan (amounts and installments, with due dates shifted forward; paid history stays behind).</p>
               <p><strong>Stays with the old season:</strong> the schedule, results, payments, and spending — its record is kept in Season&apos;s End and the Past seasons list. <strong>Development history</strong> stays too: each carried player&apos;s goals and results from the old season read under <strong>Previous seasons</strong> on their Skills &amp; goals tab, and nothing carries into the new season on its own. <strong>Awards</strong> never need carrying — they live on the team&apos;s all-time record. A <strong>tryout in progress doesn&apos;t carry either</strong> — the start-next-season screen warns you if candidates are still awaiting an outcome, so finish your picks first.</p>
             </>
           ),
@@ -5992,7 +5992,7 @@ const coachesHelp: HelpPageContent = {
           id: 'premium-team-settings-season',
           title: 'Season',
           content: (
-            <p>The <strong>Season</strong> group shows which season you&rsquo;re in and whether it&rsquo;s still open. If you run your own team, this is also where you <strong>start next season</strong> — your roster comes with you and last season becomes a record you can open any time. (Full walkthrough: <em>How to start your next season</em>.)</p>
+            <p>The <strong>Season</strong> group shows which season you&rsquo;re in and whether it&rsquo;s still open. If you run your own team, this is also where you <strong>start next season</strong> — you choose who comes with you, and last season becomes a record you can open any time. (Full walkthrough: <em>How to start your next season</em>.)</p>
           ),
         },
         {
@@ -6138,15 +6138,17 @@ const coachesHelp: HelpPageContent = {
       id: 'recipe-start-next-season',
       group: 'Premium Coaches Portal',
       heading: 'How to start your next season & set your division (Premium)',
-      summary: 'Roll your team into a new season yourself — your roster comes with you, the schedule starts fresh, and last year becomes a one-page record you can open any time.',
+      summary: 'Roll your team into a new season yourself — you say who comes with you, the schedule starts fresh, and last year becomes a one-page record you can open any time.',
       keywords: ['start next season', 'new season', 'next season', 'roll over season', 'season rollover', 'team settings', 'division', 'edit division', 'past seasons', 'premium'],
-      searchText: 'start next season new season next year roll over rollover carry roster forward fee plan fee template planned budget schedule starts fresh previous season read only past seasons history season review insights team settings edit change division head coach year end premium club owned admin manages seasons lineup rules innings cap rotation pitching cap minimum innings min play playing time auto-fill caps this season vs last comparison winning percentage record roster size trend up down improving better than last year are we improving dues collected expenses assistant coaches can see who is earning it awards leaderboard season awards mvp leaderboard award history development history linked bring forward focus areas carry forward development notes',
+      searchText: 'start next season new season next year roll over rollover carry roster forward what is the team doing next season same players moving up an age group new group of players same age group choose what the team is doing tick list players coming all none inactive players call-ups not listed bring last season’s players anyway division moves up 11U to 12U birth years stay birth years move one year later who stayed on last season fee plan fee template planned budget schedule starts fresh previous season read only past seasons history season review insights team settings edit change division head coach year end premium club owned admin manages seasons lineup rules innings cap rotation pitching cap minimum innings min play playing time auto-fill caps this season vs last comparison winning percentage record roster size trend up down improving better than last year are we improving dues collected expenses assistant coaches can see who is earning it awards leaderboard season awards mvp leaderboard award history development history linked bring forward focus areas carry forward development notes',
       content: (
         <>
           <p>In the <strong>Premium</strong> portal, a new <strong>Settings</strong> area lets you run your team from one year to the next yourself — without waiting on an organization admin.</p>
-          <p><strong>Start next season.</strong> When a season wraps, open <strong>Settings</strong> and choose <strong>Start next season</strong>. Confirm the new season&apos;s name and year, then pick what to bring over:</p>
+          <p><strong>Start next season.</strong> When a season wraps, open <strong>Settings</strong> and choose <strong>Start next season</strong>. The window opens with one question and nothing chosen — <strong>Start</strong> waits until you answer it. Confirm the new season&apos;s name and year, then say what the team is doing and what to bring over:</p>
           <ul>
-            <li>Your <strong>active roster carries forward automatically</strong> — trim or add players from there. Each carried player&apos;s <strong>development history is linked</strong> to last season — it reads under <strong>Previous seasons</strong> on their Skills &amp; goals tab (nothing carries into the new season on its own).</li>
+            <li><strong>The same players, moving up an age group.</strong> Last season&apos;s players are listed with the active ones ticked and any inactive players at the bottom, unticked. Untick anyone who isn&apos;t coming, or use <strong>All</strong> and <strong>None</strong>. Call-ups aren&apos;t listed — they play for another team. If your team&apos;s division starts with an age, the box moves it up (11U AAA becomes 12U AAA); change it if your league names it differently. Your team&apos;s name and web address don&apos;t change, and the birth years stay as they are.</li>
+            <li><strong>A new group of players, same age group.</strong> Nobody comes with the team unless you tick <strong>Bring last season&apos;s players anyway</strong>, which brings the active players. The division stays, and the team&apos;s birth years move one year later (if it has any).</li>
+            <li>Each player who comes has their <strong>development history linked</strong> to last season — it reads under <strong>Previous seasons</strong> on their Skills &amp; goals tab (nothing carries into the new season on its own). When the new season starts, the confirmation names anyone who stayed on last season.</li>
             <li>Optionally bring over your <strong>fee plan</strong> (amounts and installments; due dates shift forward a year) and your <strong>planned budget</strong> (your projected buckets).</li>
             <li>The <strong>schedule starts fresh</strong>, and last season&apos;s money — payments, spending, and paid history — stays behind with that season.</li>
           </ul>
@@ -6160,11 +6162,11 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-start-next-season',
           question: 'How do I start a new season without an admin?',
-          answerText: 'On a standalone Premium team, the head coach can do it directly: open Settings and choose Start next season. Your active roster carries forward, you can optionally bring over your fee plan and planned budget, the schedule starts fresh, and last season becomes a one-page record, listed under Insights → “How are we doing?”. If your team is owned by a club or league, the club admin starts seasons for you.',
+          answerText: 'On a standalone Premium team, the head coach can do it directly: open Settings and choose Start next season. You say whether the same players are moving up an age group (tick who comes) or it is a new group of players (nobody comes unless you bring them), you can optionally bring over your fee plan and planned budget, the schedule starts fresh, and last season becomes a one-page record, listed under Insights → “How are we doing?”. If your team is owned by a club or league, the club admin starts seasons for you.',
           keywords: ['start new season', 'next season', 'no admin', 'rollover', 'head coach'],
           popular: true,
           answer: (
-            <p>On a standalone Premium team, the <strong>head coach</strong> can do it directly: open <strong>Settings</strong> and choose <strong>Start next season</strong>. Your active roster carries forward, you can optionally bring over your fee plan and planned budget, the schedule starts fresh, and last season becomes a one-page record, reached from <strong>Insights</strong> → <strong>How are we doing?</strong>. If your team is owned by a club or league, the club admin starts seasons for you.</p>
+            <p>On a standalone Premium team, the <strong>head coach</strong> can do it directly: open <strong>Settings</strong> and choose <strong>Start next season</strong>. You say whether the same players are moving up an age group (tick who comes) or it is a new group of players (nobody comes unless you bring them), you can optionally bring over your fee plan and planned budget, the schedule starts fresh, and last season becomes a one-page record, reached from <strong>Insights</strong> → <strong>How are we doing?</strong>. If your team is owned by a club or league, the club admin starts seasons for you.</p>
           ),
         },
         {

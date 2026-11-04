@@ -8,7 +8,7 @@ import {
   nextEventLines,
 } from '../../lib/club-board-view.ts';
 import {
-  closeWarning, closedCardLine, rosterCarryDetail, startLead, startToldLine, startWarningTail, twoOpenBody,
+  closeWarning, closedCardLine, startLead, startToldLine, startWarningTail, twoOpenBody,
   unsettledLines,
 } from '../../lib/club-season-words.ts';
 import { clubSeasonNotice, clubSeasonStartedCard, clubWelcomeCard } from '../../lib/club-season-notice.ts';
@@ -116,7 +116,7 @@ describe('the season windows (specimen 3, Ask 1 (a))', () => {
 
   it('COUNTS, never dollars, anywhere in the window\'s words (D1 until Stage 3)', () => {
     const words = [
-      startLead({ fromName: '2026 Season', fromIsLive: true }), rosterCarryDetail(14),
+      startLead({ fromName: '2026 Season', fromIsLive: true }),
       startWarningTail({ headCoachName: null, seasonName: '2026 Season' }), closeWarning({ familiesOwing: 2, familiesWaitingToReturn: 1 }) ?? '',
     ].join(' ');
     assert.doesNotMatch(words, /\$\s?\d/);
@@ -126,7 +126,6 @@ describe('the season windows (specimen 3, Ask 1 (a))', () => {
     assert.match(startLead({ fromName: '2026 Season', fromIsLive: true }), /^This closes the 2026 Season\./);
     assert.equal(startToldLine('Tom Becker'), 'Tom Becker and the team’s staff are told when it starts.');
     assert.equal(startToldLine(null), 'The team’s staff are told when it starts.');
-    assert.equal(rosterCarryDetail(14), 'the 14 active players');
   });
 
   it('the closed card and the two-open refusal say it in words', () => {

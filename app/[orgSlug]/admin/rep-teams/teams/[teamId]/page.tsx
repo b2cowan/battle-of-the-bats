@@ -205,7 +205,6 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
   // The season whose birth years Team details edits: the team's live season — the newest one if two are open.
   const birthSeason = liveSeasonOf(read.programYears);
   const headCoachName = board.headCoach.people[0]?.name ?? null;
-  const rollsFromRoster = seasons.find(s => s.id === preflight?.rollsFrom?.id)?.rosterCount ?? live?.rosterCount ?? 0;
 
   async function reopen() {
     if (busy) return;
@@ -371,12 +370,15 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
           teamId={teamId}
           teamName={team.name}
           preflight={preflight}
-          rosterCount={rollsFromRoster}
           headCoachName={headCoachName}
           onClose={() => setWindowOpen(null)}
-          onStarted={async name => {
+          onStarted={async (name, warnings) => {
             setWindowOpen(null);
-            setNotice({ tone: 'good', text: `The ${name} has started. ${possessive(team.name)} coaches have been told.` });
+            const started = `The ${name} has started. ${possessive(team.name)} coaches have been told.`;
+            // A warning keeps the notice up (a "good" one fades) so a division that did not move is read, not missed.
+            setNotice(warnings.length > 0
+              ? { tone: 'bad', text: `${started} ${warnings.join(' ')}` }
+              : { tone: 'good', text: started });
             await load();
           }}
         />

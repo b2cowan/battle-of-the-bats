@@ -240,7 +240,7 @@ export function parseBornParam(v: string | string[] | undefined | null): number 
   return s && /^(?:19|20)\d{2}$/.test(s.trim()) ? Number(s.trim()) : null;
 }
 
-/** Start next season: one year later; an empty box stays empty. */
+/** Start next season, "new group" path only (the "moving up" path leaves the pair): one year later; an empty box stays empty. */
 export function rollBornYears(years: BornYears): BornYears {
   return { from: years.from == null ? null : years.from + 1, to: years.to == null ? null : years.to + 1 };
 }

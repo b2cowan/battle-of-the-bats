@@ -11,8 +11,10 @@ import { loadSeasonSettlement } from '@/lib/coach-season-settlement';
 import { unsettledFamilyCounts } from '@/lib/season-close-warning';
 import { mayManageSeasons } from '@/lib/season-doors';
 import {
-  closeOpenSeason, reopenLatestClosedSeason, startNextRepSeason, SeasonRolloverError, type SeasonCarryChoice,
+  closeOpenSeason, reopenLatestClosedSeason, seasonWindowFacts, startNextRepSeason, SeasonRolloverError,
+  type SeasonCarryChoice,
 } from '@/lib/rep-season-rollover';
+import { parseRollChoice } from '@/lib/season-roll-path';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
@@ -84,7 +86,7 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { ctx, programYear, assignment, capabilities } = resolved;
+  const { ctx, programYear, assignment, capabilities, team } = resolved;
 
   if (!mayManageSeasons(ctx.org, assignment.coachRole)) {
     return NextResponse.json(NOT_YOURS_TO_MANAGE, { status: 403 });
@@ -99,6 +101,12 @@ export const GET = withObservability(async (_req: Request,
    * OLDER year from the compare list.
    */
   const canReopen = !isLive && programYear.status === 'completed';
+
+  /* What Start next season asks with (Stage 14a): last season's players, the division, the birth years. Quiet like
+     the money read — a window that cannot list the players says so and refuses to start, it never guesses.
+     Started now, awaited after the money read: the two are independent, so they run side by side. */
+  const rollRead = seasonWindowFacts({ season: programYear, team, cutoffs: ctx.org.birthdayCutoffs })
+    .catch(e => { console.error('[seasons GET] season window facts failed:', e); return null; });
 
   let money: { familiesOwing: number; duesOutstanding: number; waitingToReturn: number } | null = null;
   if (isLive && canViewMoney(capabilities)) {
@@ -118,6 +126,8 @@ export const GET = withObservability(async (_req: Request,
     }
   }
 
+  const roll = await rollRead;
+
   return NextResponse.json({
     season: {
       id: programYear.id,
@@ -128,6 +138,7 @@ export const GET = withObservability(async (_req: Request,
     },
     canReopen,
     money,
+    roll,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/seasons' });
 
@@ -247,6 +258,9 @@ export const POST = withObservability(async (req: Request,
   }
   const carryBudget = body.carryBudget !== false; // default on
   const carryFees = body.carryFees !== false; // default on
+  // ⚖ What is the team doing next season? (Stage 14a) — asked, never assumed: no path, no roll.
+  const choice = parseRollChoice(body);
+  if (!choice.ok) return NextResponse.json({ error: choice.error, code: 'roll_choice' }, { status: 400 });
 
   /* ── What happens to the money the closing season is holding (mig 262) ──────────────────────
      ⚠⚠ THE MODE IS THE CLIENT'S; THE FIGURE FOR "carry all" IS NOT. The dialog shows a coach the
@@ -295,6 +309,11 @@ export const POST = withObservability(async (req: Request,
       carryBudget,
       carryFees,
       carryCash,
+      path: choice.path,
+      carryPlayerIds: choice.carryPlayerIds,
+      // The division box is path (a)'s; a standalone head coach is the person Team settings lets edit it.
+      division: choice.division, // the roll writes it on path (a) only
+      currentDivision: resolved.team.division ?? null,
     });
     return NextResponse.json({ summary }, { status: 201 });
   } catch (e) {

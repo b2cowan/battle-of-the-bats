@@ -15678,6 +15678,38 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
 .debtWhat b { display: block; font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
 /* The kind and the date — what a description alone does not say three months later. */
 .debtWhat span { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* ── Start next season asks what the team is doing (Club Tier Stage 14a, drawn + ruled 2026-11-04) ──
+   Two choice cards, then — on "the same players" — the Pay out sheet's tick list above (`.debtList` /
+   `.debtRow`, the /design round's pick-many idiom), with a count and All · None in its head. The list scrolls
+   inside the 520 window rather than pushing the money questions below a long roster. */
+.rollChoices { display: flex; flex-direction: column; gap: 0.5rem; border: 0; margin: 0 0 1rem; padding: 0; min-width: 0; }
+.rollChoices legend { padding: 0; margin-bottom: 0.45rem; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+.rollChoice {
+  display: flex; gap: 0.6rem; align-items: flex-start;
+  padding: 0.65rem 0.8rem; min-height: 44px;
+  border: 1px solid var(--border); border-radius: 8px;
+  cursor: pointer;
+}
+.rollChoiceOn { border-color: var(--logic-lime); background: var(--bg-inset); }
+.rollChoice input { flex: none; margin-top: 0.2rem; width: 16px; height: 16px; }
+.rollChoice b { display: block; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+.rollChoice span { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+.rollListHead {
+  display: flex; align-items: center; gap: 0.45rem;
+  padding: 0.35rem 0.7rem;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: var(--type-support); color: var(--text-tertiary);
+}
+.rollListHead > span:first-child { margin-right: auto; font-weight: 600; color: var(--text-secondary); }
+.rollListHead button { min-height: 2rem; }
+.rollListBody { max-height: 15rem; overflow-y: auto; }
+.rollNum { margin-left: 0.3rem; font-size: var(--type-body); font-weight: 500; color: var(--text-tertiary); }
+.rollWas { margin-left: 0.35rem; font-size: var(--type-support); color: var(--text-tertiary); }
+.rollFootNote { flex: 1 1 12rem; margin-right: auto; font-size: var(--type-support); line-height: 1.4; color: var(--text-tertiary); }
+@media (max-width: 768px) {
+  .rollListHead button { min-height: var(--tap-min, 44px); padding: 0 0.35rem; }
+}
 .debtAmt {
   font-size: var(--type-body);
   font-variant-numeric: tabular-nums;

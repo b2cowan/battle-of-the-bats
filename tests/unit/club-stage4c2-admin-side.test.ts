@@ -124,14 +124,17 @@ describe('"Start from last season’s words" (Ask 10)', () => {
   });
 });
 
-describe('Start next season writes the new season’s pair one year later (Ask 4 A)', () => {
+/* ⚖ Stage 14a (ruled 2026-11-04, Ask 1) narrowed Ask 4 A: the pair moves one year later on path (b), a new group,
+   and STAYS on path (a), the same players moving up. The path rule is `bornYearsForPath`, tested in
+   `season-roll-path.test.ts`; this pins that the roll writes what it decides, in the season's one insert. */
+describe('Start next season writes the new season’s pair the path decides (Ask 4 A, narrowed by Stage 14a)', () => {
   const src = readFileSync(new URL('../../lib/rep-season-rollover.ts', import.meta.url), 'utf8');
-  it('rolls the closing season’s pair through the one rule and marks it carried only when a side was set', () => {
-    assert.match(src, /rollBornYears\(\{ from: currentSeason\.bornFromYear \?\? null, to: currentSeason\.bornToYear \?\? null \}\)/);
+  it('reads the closing season’s pair through the path rule and marks it carried only when it moved', () => {
+    assert.match(src, /bornYearsForPath\(path, \{ from: currentSeason\.bornFromYear \?\? null, to: currentSeason\.bornToYear \?\? null \}\)/);
     assert.match(src, /born_from_year: rolledYears\.from/);
     assert.match(src, /born_to_year: rolledYears\.to/);
     assert.match(src, /born_years_carried: bornCarried/);
-    assert.match(src, /bornCarried = rolledYears\.from != null \|\| rolledYears\.to != null/);
+    assert.match(src, /const bornCarried = born\.carried;/);
   });
   it('rides the season’s own insert (one statement), so a failed roll leaves no half-written pair', () => {
     const insert = src.slice(src.indexOf(".from('rep_program_years')"), src.indexOf('.select(\'id\')'));

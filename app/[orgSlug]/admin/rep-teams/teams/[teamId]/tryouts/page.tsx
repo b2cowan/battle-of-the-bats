@@ -534,7 +534,6 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
           teamId={teamId}
           teamName={team.name}
           preflight={preflight}
-          rosterCount={read.seasons.find(x => x.id === preflight.rollsFrom?.id)?.rosterCount ?? 0}
           headCoachName={headName}
           onClose={() => setStarting(false)}
           onStarted={async name => {

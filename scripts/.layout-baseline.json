@@ -10823,6 +10823,18 @@
     "free-coach-help|768|tap-floor|input·Search this guide": {
       "reason": "Accepted on the owner’s word (Free coach tap targets Q6, 2026-10-19): the help page’s What’s New link and its Search this guide box belong to the help layout EVERY help page uses, the admin help hub included, so they are not the free portal’s to fix alone. The touch-target debt plan (COACH_TOUCH_TARGET_DEBT_PLAN.md) owns them, as it does the paid help page’s identical entries. The key carries no fixture name.",
       "detail": "42px tall (floor 44)"
+    },
+    "admin-rep-team-start-season-players|361|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred (Club Tier Stage 14a, the same decision as admin-rep-team-start-season). The TARGET is the label row, not this box: each choice, carry and player in the Start next season window is a <label> with a 44px min-height at touch widths, and a tap anywhere in it toggles the box. A 44px native checkbox is the wrong fix.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-rep-team-start-season-players|390|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred (Club Tier Stage 14a, the same decision as admin-rep-team-start-season). The TARGET is the label row, not this box: each choice, carry and player in the Start next season window is a <label> with a 44px min-height at touch widths, and a tap anywhere in it toggles the box. A 44px native checkbox is the wrong fix.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-rep-team-start-season-players|768|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred (Club Tier Stage 14a, the same decision as admin-rep-team-start-season). The TARGET is the label row, not this box: each choice, carry and player in the Start next season window is a <label> with a 44px min-height at touch widths, and a tap anywhere in it toggles the box. A 44px native checkbox is the wrong fix.",
+      "detail": "16px tall (floor 44)"
     }
   }
 }

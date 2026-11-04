@@ -9,6 +9,7 @@ import {
   suggestContinuityLinksBulk,
   getActiveRepProgramYear,
   getLatestClosedRepProgramYear,
+  updateRepTeam,
 } from './db';
 import { addStaffMember, projectMembershipsOntoProgramYear } from './coach-membership';
 import { seasonClosingCashCents } from './coach-register-book';
@@ -16,8 +17,13 @@ import { openingBalanceFor, carriesProvenance, type SeasonCarryChoice } from './
 import { carryBudgetPlan, shiftDateYears } from './rep-budget-carry';
 import { createRepPlayerDuesSchedule, replaceRepDuesInstallments } from './db';
 import { decideStrayOpenSeasons, isLiveSeasonStatus, twoOpenSeasonsMessage } from './season-live';
-import { rollBornYears } from './born-years';
-import type { RepProgramYear } from './types';
+import {
+  bornYearsForPath, pickCarriedPlayers, rollPlayerChoices, ROLL_PLAYERS_STALE,
+  type RollPlayer, type SeasonRollPath, type SeasonWindowFacts,
+} from './season-roll-path';
+import { playerName } from './coach-roster-name';
+import { cutoffFor } from './born-years';
+import type { RepProgramYear, RepRosterPlayer } from './types';
 
 /**
  * Coach Premium — Phase 5: "Start next season" for a standalone Premium coach.
@@ -28,7 +34,12 @@ import type { RepProgramYear } from './types';
  * Rolls a team into a NEW rep_program_years season WITHOUT an org admin (today admin-only).
  * Per the locked owner decisions (docs/projects/active/COACH_PREMIUM_PHASE5_SEASON_DIVISION_PLAN.md):
  *
- * - The ACTIVE roster always carries forward (the coach prunes/adds after).
+ * - ⚖ THE WINDOW ASKS WHAT THE TEAM IS DOING (Club Tier Stage 14a, ruled 2026-11-04, Asks 1–3): `path` is
+ *   REQUIRED. (a) `moving_up` — the players the window ticked come, the birth years STAY, and the division
+ *   may move up (`division`); (b) `new_group` — no players unless ticked anyway, the birth years move one
+ *   year later. Which players come is `carryPlayerIds`, checked against the closing season before anything
+ *   is written (`pickCarriedPlayers`, pure, in `lib/season-roll-path.ts`). It used to carry every active
+ *   player AND move the birth years, both paths at once. The team's NAME is never touched.
  * - The coach OPTIONALLY carries (a) a fee template (prior dues structure, paid state stripped) and
  *   (b) the previous season's PLANNED budget (line items + periods + the budget envelope). The
  *   SCHEDULE starts fresh; actual spending / dues payments / paid history do NOT carry.
@@ -52,7 +63,12 @@ export type RepSeasonRolloverSummary = {
   newSeason: { id: string; name: string; year: number };
   previousSeason: { id: string; name: string; year: number };
   coaches: { copied: number };
-  roster: { copied: number; failed: number };
+  /** Which way the window answered "What is the team doing next season?" (Stage 14a). */
+  path: SeasonRollPath;
+  /** `stayed`: last season's players who did not come (call-ups never listed) — the success view names them. */
+  roster: { copied: number; failed: number; stayed: { firstName: string; name: string }[] };
+  /** The team's division once the roll is done (moved up on path (a) when the window said so). */
+  division: string | null;
   budget: { carried: boolean; linesCopied: number; periodsCopied: number; failed: number };
   fees: { carried: boolean; playersCopied: number; failed: number; dueDatesShifted: boolean };
   /**
@@ -126,8 +142,16 @@ export async function startNextRepSeason(params: {
   managedBy: 'coach' | 'club';
   /** For the two-open-seasons refusal's sentence. */
   teamName?: string;
+  /** The window's answer (Stage 14a) — required, so no caller rolls without asking. */
+  path: SeasonRollPath;
+  /** The closing season's entries that come with the team (never a call-up). Empty on path (b) unless ticked anyway. */
+  carryPlayerIds: string[];
+  /** Path (a) only: the division the window's box held. Absent = leave it; null = no division. */
+  division?: string | null;
+  /** The team's division as it stands, so an unchanged box writes nothing. */
+  currentDivision: string | null;
 }): Promise<RepSeasonRolloverSummary> {
-  const { orgId, teamId, workspaceId, currentSeason, initiatorUserId, newName, newYear, carryBudget, carryFees, managedBy } = params;
+  const { orgId, teamId, workspaceId, currentSeason, initiatorUserId, newName, newYear, carryBudget, carryFees, managedBy, path } = params;
   const carryCash: SeasonCarryChoice = params.carryCash ?? { mode: 'none' };
 
   const summary: RepSeasonRolloverSummary = {
@@ -135,7 +159,9 @@ export async function startNextRepSeason(params: {
     newSeason: { id: '', name: newName, year: newYear },
     previousSeason: { id: currentSeason.id, name: currentSeason.name, year: currentSeason.year },
     coaches: { copied: 0 },
-    roster: { copied: 0, failed: 0 },
+    path,
+    roster: { copied: 0, failed: 0, stayed: [] },
+    division: params.currentDivision,
     budget: { carried: carryBudget, linesCopied: 0, periodsCopied: 0, failed: 0 },
     fees: { carried: carryFees, playersCopied: 0, failed: 0, dueDatesShifted: false },
     openingBalance: { carried: false, amount: 0 },
@@ -165,6 +191,24 @@ export async function startNextRepSeason(params: {
       { openSeasons: stray.open },
     );
   }
+  /* WHO COMES (Stage 14a, Ask 2) — decided BEFORE anything is written. The window ticked entries of the
+     season being closed; an id that is not one of them, or is a call-up, refuses the whole roll with nothing
+     changed, rather than quietly leaving behind a child the person ticked. A failed read refuses too: a
+     roll that cannot see the roster cannot honour the ticks. */
+  let lastRoster: RepRosterPlayer[];
+  try {
+    lastRoster = await getRepRosterPlayers(currentSeason.id);
+  } catch (e) {
+    console.error('[rep-season-rollover] roster read before the roll failed:', e);
+    throw new SeasonRolloverError('roster_read_failed', 500, 'Could not read last season’s roster. Nothing was changed — please try again.');
+  }
+  const picked = pickCarriedPlayers(lastRoster, params.carryPlayerIds);
+  if (!picked.ok) throw new SeasonRolloverError('players_changed', 409, ROLL_PLAYERS_STALE);
+  summary.roster.stayed = picked.stayed.map(p => ({
+    firstName: p.playerFirstName,
+    name: playerName(p),
+  }));
+
   if (stray.action === 'complete') {
     for (const staleId of stray.seasonIds) {
       try {
@@ -215,13 +259,15 @@ export async function startNextRepSeason(params: {
      shows a line saying so. Same number, different facts — decided in ONE tested place. */
   const openingBalance = openingBalanceFor(carryCash, closingCents);
 
-  /* BIRTH YEARS roll one year later with the season (Club Tier Stage 4c-2, Ask 4 A): the season's players are a year
-     older, so a September that shows last year's years would be wrong. An empty box stays empty; `bornCarried` is the
-     marker the team page's note reads ("Moved one year later when the 2028 season started…") until the admin saves
-     the years or the first game starts. Set only when a side was set — nothing to explain otherwise. Nothing is sent
-     to anyone. The pair rides the same single insert as the season. */
-  const rolledYears = rollBornYears({ from: currentSeason.bornFromYear ?? null, to: currentSeason.bornToYear ?? null });
-  const bornCarried = rolledYears.from != null || rolledYears.to != null;
+  /* BIRTH YEARS FOLLOW THE PATH (Stage 14a, Ask 1; was Club Tier Stage 4c-2, Ask 4 A, which always rolled them).
+     (b) a new group: one year later — the next cohort, so a September showing last year's years would be wrong.
+     (a) the same players moving up: they STAY, because the children are the same children. An empty box stays
+     empty either way; `bornCarried` is the marker the team page's note reads ("Moved one year later when the 2028
+     season started…") until the admin saves the years or the first game starts — set only when the years MOVED.
+     Nothing is sent to anyone. The pair rides the same single insert as the season. */
+  const born = bornYearsForPath(path, { from: currentSeason.bornFromYear ?? null, to: currentSeason.bornToYear ?? null });
+  const rolledYears = born.years;
+  const bornCarried = born.carried;
 
   // ── Critical core: new active season + coaching access (revert + throw on failure) ──
   // Insert the season already-active in ONE statement (no draft->active window that could strand a
@@ -300,12 +346,12 @@ export async function startNextRepSeason(params: {
     }
   }
 
-  // ── Roster carry (always): copy ACTIVE players; build old->new id map for the fee carry ──
+  // ── Roster carry: the players the window chose (Stage 14a); build old->new id map for the fee carry ──
+  // ⚠ `picked.carried` never holds a call-up (`pickCarriedPlayers` refuses one): a player borrowed for one game is
+  // never carried onto next season's roster. A ticked INACTIVE player comes as active — they are coming with the team.
   const playerIdMap = new Map<string, string>();
   try {
-    const players = await getRepRosterPlayers(currentSeason.id);
-    const active = players.filter(p => p.status === 'active');
-    for (const p of active) {
+    for (const p of picked.carried) {
       try {
         const created = await createRepRosterPlayer({
           programYearId: newSeason.id,
@@ -382,6 +428,22 @@ export async function startNextRepSeason(params: {
     }
   }
 
+  /* ── The age group moves up (Stage 14a, Ask 3) — path (a) only, and only what the window's box held ──
+     ⚠ The DIVISION, never the team's name: a name is part of the team's public web address. Both callers may
+     write it — the coach route admits only a standalone head coach (the same person Team settings lets edit the
+     division) and the club route only the club. Best-effort like the data carries: the season has started, so a
+     failure warns rather than undoing it. */
+  if (path === 'moving_up' && params.division !== undefined
+    && (params.division ?? null) !== (params.currentDivision ?? null)) {
+    try {
+      const team = await updateRepTeam(teamId, { division: params.division });
+      summary.division = team.division ?? null;
+    } catch (e) {
+      summary.warnings.push(`The team’s division could not be changed to ${params.division ?? 'none'}. Change it where you edit the team’s details.`);
+      console.error('[rep-season-rollover] division move failed:', e);
+    }
+  }
+
   // ── Planned budget carry (optional): lines + periods + the legacy budget envelope ──
   // ⚠ The line/period copy EXTRACTED to lib/rep-budget-carry.ts (§6.3, 2026-09-02): the empty-plan
   // "Bring last season's plan" door runs the same copy, and two spellings of it would be two
@@ -421,7 +483,7 @@ export async function startNextRepSeason(params: {
         .eq('org_id', orgId);
       for (const sched of (oldSchedules ?? []) as Array<{ id: string; player_id: string; total_amount: number; notes: string | null }>) {
         const newPlayerId = playerIdMap.get(sched.player_id);
-        if (!newPlayerId) continue; // player not carried (inactive/pruned) — their dues don't carry
+        if (!newPlayerId) continue; // player not carried (unticked, inactive or pruned) — their dues don't carry
         let createdScheduleId: string | null = null;
         try {
           const newSchedule = await createRepPlayerDuesSchedule({
@@ -506,6 +568,33 @@ export async function startNextRepSeason(params: {
     summary.fees.failed === 0;
 
   return summary;
+}
+
+/**
+ * WHAT THE SEASON WINDOW NEEDS TO ASK (Stage 14a) — read by both preflights (the portal's and the club's
+ * `GET …/seasons`), from the season the roll would close. The words are the window's (`lib/season-roll-path.ts`);
+ * this is only the facts: last season's players as the list shows them (call-ups left out, active first), the
+ * team's division, the season's birth years and the club's cut-off for the team's sport.
+ * ⚠ Names and numbers only — the people who open this window (a standalone head coach, the club's owner or
+ * admin) see the roster already, and nothing private (dates of birth, families) is sent.
+ */
+export async function seasonWindowFacts(p: {
+  season: RepProgramYear;
+  team: { division: string | null; sport: string | null };
+  cutoffs: unknown;
+}): Promise<SeasonWindowFacts> {
+  const players = rollPlayerChoices(await getRepRosterPlayers(p.season.id)).map(r => ({
+    id: r.id,
+    name: playerName(r),
+    number: r.playerNumber,
+    status: r.status as RollPlayer['status'],
+  }));
+  return {
+    players,
+    division: p.team.division ?? null,
+    born: { from: p.season.bornFromYear ?? null, to: p.season.bornToYear ?? null },
+    cutoff: cutoffFor(p.cutoffs, p.team.sport),
+  };
 }
 
 // ── Close and reopen — the other two season doors, one copy for both callers ─────────────────

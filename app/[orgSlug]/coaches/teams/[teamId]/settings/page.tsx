@@ -640,8 +640,10 @@ export default function TeamSettingsPage({
                   <div className={styles.settingRowMain}>
                     <span className={styles.settingRowLabel}>Start next season</span>
                     <span className={styles.settingRowDesc}>
-                      Your active roster carries forward; the schedule starts fresh; and {season.name} closes
-                      into one page — its wrap-up, results, roster, practices and money.
+                      {/* Stage 14a: the window ASKS who comes — the roster no longer carries by itself. */}
+                      Asks whether the same players are moving up or a new group is starting; the schedule
+                      starts fresh; and {season.name} closes into one page — its wrap-up, results, roster,
+                      practices and money.
                     </span>
                   </div>
                   <div className={styles.settingRowCtl}>

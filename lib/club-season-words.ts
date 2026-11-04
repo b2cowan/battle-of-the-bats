@@ -15,6 +15,7 @@
  */
 import { joinWithAnd, pluralize, possessive } from './utils';
 import { fmt } from './coach-money-summary';
+import { closesLine, theSeason } from './season-roll-path';
 
 export interface UnsettledCounts { familiesOwing: number; familiesWaitingToReturn: number }
 
@@ -44,18 +45,14 @@ function owedLines(o: OwedToClub | null | undefined, clauses = false): string[] 
 
 /** The Start window's first line — the consequence, before anything else (season-close plan §3.2). */
 export function startLead(p: { fromName: string; fromIsLive: boolean }): string {
+  // "the 2026 Season", "the Fall 2026 season" — the one rule the coach's window uses too (Stage 14a).
+  const the = theSeason(p.fromName);
   return p.fromIsLive
-    ? `This closes the ${p.fromName}. It becomes a record that you and the team’s coaches can open any time: results, roster, practices and money. Nothing is lost, but it can’t be changed.`
-    : `The ${p.fromName} stays closed, as a record. The new season starts from it.`;
-}
-
-/** The roster carry's detail: "the 14 active players". */
-export function rosterCarryDetail(players: number): string {
-  return players === 0 ? 'nobody is on it yet' : `the ${pluralize(players, 'active player')}`;
+    ? `${closesLine(p.fromName)} It becomes a record that you and the team’s coaches can open any time: results, roster, practices and money. Nothing is lost, but it can’t be changed.`
+    : `${the.charAt(0).toUpperCase()}${the.slice(1)} stays closed, as a record. The new season starts from it.`;
 }
 
 export const START_CARRIES = {
-  roster: { title: 'The roster', note: 'The coach adds and removes players after.' },
   budget: { title: 'The budget', note: (from: string) => `The planned lines only. What was spent stays with the ${from}.` },
   fees: { title: 'The fee plan', note: (from: string) => `Amounts and installments, with due dates a year later. Paid history stays with the ${from}.` },
   balance: { title: 'The opening balance', note: (from: string) => `Whatever the team’s books hold when the ${from} closes. The coach can change it in Team settings.` },

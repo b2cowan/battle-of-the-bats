@@ -159,6 +159,14 @@ async function openKitDialogBy(page, locator) {
   await page.locator('[data-kit-dialog]').first().waitFor({ state: 'attached', timeout: 15_000 });
   await page.waitForTimeout(300);
 }
+/** Start next season, then the question's first answer (Stage 14a) — so the sweep measures the list, not an empty form. */
+async function openSeasonWindowMovingUp(page, locator) {
+  await openKitDialogBy(page, locator);
+  const choice = page.locator('[data-kit-dialog] label:has-text("The same players, moving up an age group")').first();
+  if (await choice.count() === 0) return;
+  await choice.click();
+  await page.waitForTimeout(300);
+}
 /** Members › Invite. */
 async function openKitInvite(page) {
   await openKitDialogBy(page, page.locator('#members-invite-btn:visible'));
@@ -1306,6 +1314,9 @@ export const SCREENS = [
      depth chart, so these sweep the genuine open state, not a fixture-only mode.
      Two entries, not six: `money` carries the new row grammar and `lineup-rules` the numeric
      inputs and the save row — between them every widget shape on the page is measured. */
+  /* ⚠ No screen for the COACH's Start next season window (Club Tier Stage 14a): only a standalone head coach holds that
+     door, and the 'coach' fixture coaches a CLUB team — an entry here would measure Team settings and claim the window.
+     The club's copy below is the measured one; the coach's is walked (Owner QA, the season window walk). */
   { id: 'coach-settings-money',   session: 'coach', path: (c) => `${team(c)}/settings?section=money`,        ready: 'h1' },
   { id: 'coach-settings-lineups', session: 'coach', path: (c) => `${team(c)}/settings?section=lineup-rules`, ready: 'h1' },
   /* One Tag Idiom P4 (2026-09-01): the Tags shelf is a third widget shape on this page — library
@@ -1574,6 +1585,9 @@ export const SCREENS = [
   { id: 'admin-rep-team',              area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}` },
   { id: 'admin-rep-team-start-season', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}`,
     interact: (page) => openKitDialogBy(page, page.locator('button[aria-label="Start next season"]:visible')), scope: '[data-kit-dialog]' },
+  // Club Tier Stage 14a: the same window with "the same players" picked — the division box and the inline tick list.
+  { id: 'admin-rep-team-start-season-players', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}`,
+    interact: (page) => openSeasonWindowMovingUp(page, page.locator('button[aria-label="Start next season"]:visible')), scope: '[data-kit-dialog]' },
   { id: 'admin-rep-team-closed',       area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubClosedTeamId}` },
   { id: 'admin-rep-team-coaches',      area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/coaches` },
   { id: 'admin-rep-team-coach-invite', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/coaches`,

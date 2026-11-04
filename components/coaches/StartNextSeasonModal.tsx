@@ -5,6 +5,12 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { useCoaches } from '@/lib/coaches-context';
 import { possessive } from '@/lib/utils';
+import {
+  BRING_ANYWAY_LABEL, DEVELOPMENT_HISTORY_BULLET, ROLL_CHOICE_TITLE, ROLL_LIST_EMPTY, ROLL_LIST_HINT,
+  ROLL_LIST_LABEL, ROLL_QUESTION, bornBoxLabel, bornMovedLine, bringAnywayNote, closesLine, comingCount, defaultTicked,
+  divisionForMovingUp, divisionHint, rollChoiceLine, rollRequestFields, rollWaitReason, rosterOutcomeLine, DIVISION_MAX,
+  type SeasonRollPath, type SeasonWindowFacts,
+} from '@/lib/season-roll-path';
 
 /** Local mirror of the parts of RepSeasonRolloverSummary this modal renders (the source type lives
  *  in the server-only lib/rep-season-rollover.ts). */
@@ -20,7 +26,9 @@ interface RolloverSummary {
    */
   previousSeason: { id: string; name: string; year: number };
   coaches: { copied: number };
-  roster: { copied: number; failed: number };
+  path: SeasonRollPath;
+  roster: { copied: number; failed: number; stayed: { firstName: string; name: string }[] };
+  division: string | null;
   budget: { carried: boolean; linesCopied: number; periodsCopied: number; failed: number };
   fees: { carried: boolean; playersCopied: number; failed: number; dueDatesShifted: boolean };
   /** What the new season opened with — the SERVER's figure, not the one this dialog displayed. */
@@ -73,6 +81,16 @@ export default function StartNextSeasonModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [summary, setSummary] = useState<RolloverSummary | null>(null);
+  /* ⚖ WHAT IS THE TEAM DOING NEXT SEASON? (Club Tier Stage 14a, Asks 1–3, ruled 2026-11-04). NOTHING is chosen when
+     the window opens, and the main button waits for an answer with the reason in the foot. (a) the players come — a
+     tick list, active ticked, inactive unticked, call-ups never listed — and the division moves up in a box; (b) a new
+     group: nobody comes unless the box brings them anyway, and the birth years move a year later. */
+  const [path, setPath] = useState<SeasonRollPath | null>(null);
+  const [facts, setFacts] = useState<SeasonWindowFacts | null>(null);
+  const [factsFailed, setFactsFailed] = useState(false);
+  const [ticked, setTicked] = useState<string[]>([]);
+  const [division, setDivision] = useState('');
+  const [bringAnyway, setBringAnyway] = useState(false);
   // Chunk E WI-12: rollover carries roster/coaches/budget/fees and ZERO tryout data — a
   // mid-flight tryout becomes silently unreachable. Warn (never block) when unresolved
   // candidates or open scoring exist. Best-effort: a coach without the tryouts grant (or a
@@ -138,12 +156,39 @@ export default function StartNextSeasonModal({
     return () => { alive = false; };
   }, [orgSlug, teamId]);
 
+  /* Last season's players, the division and the birth years — the seasons preflight's `roll`. ⚠ Without them the
+     window cannot honour a tick, so it says so and does not start; it never guesses who comes. */
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/seasons`);
+        const data = res.ok ? await res.json() : null;
+        if (!alive) return;
+        if (data?.roll) {
+          const roll = data.roll as SeasonWindowFacts;
+          setFacts(roll);
+          // Path (a)'s starting state, ready before it is picked: the active players ticked, the age group up.
+          setTicked(defaultTicked(roll.players));
+          setDivision(divisionForMovingUp(roll.division));
+        } else setFactsFailed(true);
+      } catch { if (alive) setFactsFailed(true); }
+    })();
+    return () => { alive = false; };
+  }, [orgSlug, teamId]);
+
+  const showsDivision = !!facts?.division?.trim();
+  const bornMoved = facts ? bornMovedLine(facts.born, facts.cutoff) : null;
+  const choiceFacts = { portal: 'coach' as const, division: facts?.division ?? null, born: facts?.born ?? { from: null, to: null }, cutoff: facts?.cutoff ?? { m: 1, d: 1 } };
+  const waitReason = rollWaitReason(path, facts, factsFailed);
+
   // Anything changed from where the form opened would be lost on close.
   const dirty = !summary && (name !== `${defaultNextYear} Season` || year !== String(defaultNextYear) || !carryBudget || !carryFees
-    || carryCash !== 'all' || carryAmount !== '');
+    || carryCash !== 'all' || carryAmount !== '' || path !== null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!path || !facts) return;
     setSubmitting(true);
     setError('');
     try {
@@ -155,6 +200,7 @@ export default function StartNextSeasonModal({
           carryCash: carryCash === 'amount'
             ? { mode: 'amount', amount: Number(carryAmount.trim().replace(/[$,]/g, '')) }
             : { mode: carryCash },
+          ...rollRequestFields({ path, ticked, bringAnyway, facts, division }),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -197,11 +243,12 @@ export default function StartNextSeasonModal({
       ) : (
         <>
           <QuestionCancel className={styles.btnSecondary} />
-          <button type="submit" form="start-next-season-form" className={styles.btnPrimary} disabled={submitting}>
+          <button type="submit" form="start-next-season-form" className={styles.btnPrimary} disabled={submitting || !!waitReason}>
             {submitting ? 'Starting...' : 'Start next season'}
           </button>
         </>
-      )}>
+      )}
+      footerStart={!summary && waitReason ? <span className={styles.rollFootNote}>{waitReason}</span> : undefined}>
       {summary ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -212,7 +259,14 @@ export default function StartNextSeasonModal({
           </div>
 
           <ul style={{ margin: 0, paddingLeft: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem', fontSize: '0.88rem', color: 'var(--white-70)' }}>
-            <li>{summary.roster.copied} player{summary.roster.copied === 1 ? '' : 's'} carried forward{summary.roster.failed > 0 ? ` (${summary.roster.failed} couldn't be copied)` : ''}.</li>
+            {/* ⚖ The one bullet the drawing changed (Stage 14a): who came, as what, who stayed and where. */}
+            <li>
+              {rosterOutcomeLine({
+                path: summary.path, copied: summary.roster.copied, division: summary.division,
+                stayed: summary.roster.stayed, fromSeasonName: summary.previousSeason.name,
+              })}
+              {summary.roster.failed > 0 ? ` ${summary.roster.failed} couldn’t be copied.` : ''}
+            </li>
             {summary.budget.carried && (
               <li>{summary.budget.linesCopied} planned budget line{summary.budget.linesCopied === 1 ? '' : 's'} carried.</li>
             )}
@@ -276,8 +330,9 @@ export default function StartNextSeasonModal({
             background: 'var(--white-05)', border: '1px solid var(--home-line, rgba(255,255,255,0.1))',
             borderRadius: 8, padding: '0.8rem 0.9rem', marginBottom: '1rem',
           }}>
+            {/* "This closes the 2026 Season." — it read "…2026 Season season." (Stage 14a fixed it in one place). */}
             <p style={{ margin: '0 0 0.4rem', fontSize: '0.92rem', fontWeight: 650, color: 'var(--white-90)' }}>
-              This closes the {currentSeasonName} season.
+              {closesLine(currentSeasonName)}
             </p>
             <p style={{ margin: 0, fontSize: '0.86rem', color: 'var(--white-70)', lineHeight: 1.55 }}>
               <strong>{currentSeasonName}</strong> becomes a record you can open any time — results,
@@ -285,10 +340,89 @@ export default function StartNextSeasonModal({
             </p>
           </div>
 
-          <p style={{ margin: '0 0 1rem', fontSize: '0.88rem', color: 'var(--white-70)' }}>
-            Your active roster comes with you (you can prune or add after), and the schedule starts
-            fresh.
-          </p>
+          {/* ── THE QUESTION (Stage 14a) — first after the consequence, because it decides what the rest mean.
+              It replaces the one-sentence roster promise that stood here (every active player, always). */}
+          <fieldset className={styles.rollChoices}>
+            <legend>{ROLL_QUESTION}</legend>
+            {(['moving_up', 'new_group'] as const).map(p => (
+              <label key={p} className={`${styles.rollChoice} ${path === p ? styles.rollChoiceOn : ''}`}>
+                <input type="radio" name="rollPath" checked={path === p} onChange={() => setPath(p)} />
+                <span>
+                  <b>{ROLL_CHOICE_TITLE[p]}</b>
+                  <span>{rollChoiceLine(p, choiceFacts)}</span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+
+          {path === 'moving_up' && facts && (
+            <>
+              {showsDivision && (
+                <div className={styles.field} style={{ marginBottom: '1rem' }}>
+                  <label className={styles.label} htmlFor="snsDivision">Division</label>
+                  <input id="snsDivision" className={styles.input} value={division} maxLength={DIVISION_MAX}
+                    onChange={e => setDivision(e.target.value)} />
+                  <p className={styles.formHint}>{divisionHint(facts.division)}</p>
+                </div>
+              )}
+              <div className={styles.field} style={{ marginBottom: '1rem' }}>
+                <span className={styles.label} id="snsPlayersLabel">{ROLL_LIST_LABEL}</span>
+                {facts.players.length === 0 ? (
+                  <p className={styles.formHint}>{ROLL_LIST_EMPTY}</p>
+                ) : (
+                  <>
+                    <div className={styles.debtList} role="group" aria-labelledby="snsPlayersLabel">
+                      <div className={styles.rollListHead}>
+                        <span aria-live="polite">{comingCount(ticked.length, facts.players.length)}</span>
+                        <button type="button" className={styles.linkBtnAccent}
+                          onClick={() => setTicked(facts.players.map(p => p.id))}>All</button>
+                        <span aria-hidden>·</span>
+                        <button type="button" className={styles.linkBtnAccent} onClick={() => setTicked([])}>None</button>
+                      </div>
+                      <div className={styles.rollListBody}>
+                        {facts.players.map(p => {
+                          const on = ticked.includes(p.id);
+                          return (
+                            <label key={p.id} className={`${styles.debtRow} ${on ? styles.debtRowOn : ''}`}>
+                              <input type="checkbox" checked={on}
+                                onChange={e => setTicked(t => e.target.checked ? [...t, p.id] : t.filter(id => id !== p.id))} />
+                              <span className={styles.debtWhat}>
+                                <b>{p.name}{p.number ? <small className={styles.rollNum}>#{p.number}</small> : null}</b>
+                              </span>
+                              {p.status === 'inactive' && <span className={styles.chipQuiet}>Inactive</span>}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <p className={styles.formHint}>{ROLL_LIST_HINT}</p>
+                  </>
+                )}
+              </div>
+            </>
+          )}
+
+          {path === 'new_group' && facts && (
+            <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {bornMoved && (
+                <div className={styles.field}>
+                  <span className={styles.label}>{bornBoxLabel(name.trim() || `${year} Season`)}</span>
+                  <p style={{ margin: 0, fontSize: 'var(--type-body)', color: 'var(--text-primary)' }}>
+                    {bornMoved.now}<span className={styles.rollWas}>{bornMoved.was}</span>
+                  </p>
+                </div>
+              )}
+              {facts.players.some(p => p.status === 'active') && (
+                <label style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--white-80)' }}>
+                  <input type="checkbox" checked={bringAnyway} onChange={e => setBringAnyway(e.target.checked)} style={{ marginTop: 3 }} />
+                  <span>
+                    <strong>{BRING_ANYWAY_LABEL}</strong>
+                    <span style={{ display: 'block', fontSize: 'var(--type-support)', color: 'var(--text-tertiary)' }}>{bringAnywayNote()}</span>
+                  </span>
+                </label>
+              )}
+            </div>
+          )}
 
           <div className={styles.formGrid}>
             <div className={`${styles.field} ${styles.formGridFull}`}>
@@ -380,9 +514,10 @@ export default function StartNextSeasonModal({
           {/* What ISN'T a choice — the two things families ask about that this dialog used to
               omit (readiness review f5-7): development history and awards. */}
           <ul style={{ margin: '1rem 0 0', paddingLeft: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.85rem', color: 'var(--white-70)' }}>
+            {/* ⚖ Replaced 2026-11-04 (Stage 14a): the old line promised a per-player goals offer that left the
+                player's page on 2026-09-16 (the roll's own comment says so). */}
             <li>
-              <strong>Development history</strong> stays with this season. Each returning player&apos;s profile
-              will offer to bring their open goals forward — measurements always start fresh.
+              <strong>{DEVELOPMENT_HISTORY_BULLET.title}</strong>{DEVELOPMENT_HISTORY_BULLET.rest}
             </li>
             <li>
               <strong>Awards</strong> stay on the team&apos;s all-time record — nothing to carry.

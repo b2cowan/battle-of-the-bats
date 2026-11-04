@@ -222,13 +222,19 @@ describe('call-ups — the surfaces a borrowed player must never reach', () => {
     );
   });
 
+  /* Stage 14a (2026-11-04): the window now picks who comes (active ticked, inactive offered), so the rule moved from
+     "active only" to "never a call-up" — enforced by the server's own check of the ticks, which refuses one. */
   it('next season\'s rollover carries the roster, not call-ups', () => {
-    const src = read('lib/rep-season-rollover.ts');
+    const roll = read('lib/rep-season-rollover.ts');
+    assert.match(roll, /pickCarriedPlayers\(lastRoster, params\.carryPlayerIds\)/);
+    assert.match(roll, /for \(const p of picked\.carried\)/);
+    const rule = read('lib/season-roll-path.ts');
     assert.match(
-      src, /status === 'active'/,
-      'The season rollover no longer filters to active players, so a player borrowed for one game '
-      + 'in 2026 would be carried onto the 2027 roster.',
+      rule, /if \(!p \|\| p\.status === 'callup'\) return \{ ok: false \};/,
+      'The season roll\'s pick no longer refuses a call-up, so a player borrowed for one game '
+      + 'in 2026 could be carried onto the 2027 roster.',
     );
+    assert.match(rule, /p\.status === 'active' \|\| p\.status === 'inactive'/, 'the window must never list a call-up');
   });
 
   it('the season playing-time report is built from the active roster', () => {

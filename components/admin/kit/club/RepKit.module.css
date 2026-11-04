@@ -743,12 +743,38 @@
 .carryText { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
 .carryText b { font-weight: 650; }
 .carryNote { font-size: var(--type-support); color: var(--text-tertiary); }
+/* Start next season's question and its inline tick list (Club Tier Stage 14a) — the carry rows, one picked. */
+.rollChoices { border: 0; margin: 0; padding: 0; min-width: 0; }
+.rollChoices > legend { padding: 0; margin-top: 0; }
+.carryRowOn { background: var(--home-olive-soft); }
+.rollDivision { margin-top: 0.9rem; }
+.rollHead {
+  display: flex; align-items: center; gap: 0.45rem;
+  padding: 0.35rem 0.85rem;
+  border-bottom: 1px solid var(--home-line);
+  font-size: var(--type-support); color: var(--text-tertiary);
+}
+.rollHead > span:first-child { margin-right: auto; font-weight: 650; color: var(--text-secondary); }
+.rollLink {
+  background: none; border: 0; padding: 0 0.2rem; min-height: 2rem; cursor: pointer;
+  font: inherit; font-weight: 650; color: var(--home-olive);
+}
+.rollLink:hover { text-decoration: underline; }
+.rollBody { max-height: 15rem; overflow-y: auto; }
+.rollBody > .carryRow:first-child { border-top: 0; }
+.rollNum { margin-left: 0.3rem; font-weight: 500; color: var(--text-tertiary); font-size: var(--type-body); }
+.rollChip {
+  margin-left: auto; flex: none;
+  font-size: var(--type-support); font-weight: 600; color: var(--text-secondary);
+  background: var(--home-line); border-radius: 999px; padding: 0.1rem 0.5rem;
+}
 .windowWarn { margin-top: 1rem; }
 .windowWarn > .callout { margin: 0; }
 .windowNote { margin: 0.6rem 0 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
 .footNote { flex: 1 1 14rem; font-size: var(--type-support); line-height: 1.4; color: var(--text-tertiary); margin-right: auto; }
 @media (max-width: 768px) {
   .carryRow { min-height: var(--tap-min, 44px); }
+  .rollLink { min-height: var(--tap-min, 44px); }
 }
 
 /* ── The team groups section's add row ── */
