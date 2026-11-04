@@ -5,7 +5,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { billingTestLoader } from './_billing-test-loader.ts';
 import { publishedCompetitionData } from '../../lib/public-standings.ts';
 import type { PublicTournamentPageData } from '../../lib/public-tournament-data.ts';
-import type { Division, Game, PublicTeam, Tournament } from '../../lib/types.ts';
+import type { Division, Game, PublicTeam } from '../../lib/types.ts';
+import type { PublicTournament } from '../../lib/public-tournament-shape.ts';
 import type { DivisionStandingRow } from '../../lib/tie-breakers.ts';
 
 const load = billingTestLoader({
@@ -29,7 +30,7 @@ function fixture(): PublicTournamentPageData {
     pts: 6 - 2 * index, rf: 20 - index, ra: 5 + index, rd: 10 - index, rdRaw: 10 - index,
     runDiffCap: null, needsCoinToss: false, coinTossGroupKey: null, hasPendingGame: false })) as DivisionStandingRow[];
   return { organization: { id: 'o', name: 'Club', slug: 'club', requireScoreFinalization: true },
-    tournament: { id: 't', name: 'Cup', slug: 'cup', status: 'active' } as Tournament, tournaments: [], pageEnabled: true,
+    tournament: { id: 't', name: 'Cup', slug: 'cup', status: 'active' } as unknown as PublicTournament, pageEnabled: true,
     divisions: [{ id: 'd', name: 'U11', scheduleVisibility: 'published', pools: [], playoffConfig: { teamsQualifying: 2, format: 'single' } } as unknown as Division],
     teams, games: [game({ id: 'sf1', bracketCode: 'SF1' }), game({ id: 'sf2', bracketCode: 'SF2', homeTeamId: 'c', awayTeamId: 'd' }),
       game({ id: 'fin', bracketCode: 'FIN', homeTeamId: 'a', awayTeamId: 'c', homePlaceholder: 'Winner SF1', awayPlaceholder: 'Winner SF2',

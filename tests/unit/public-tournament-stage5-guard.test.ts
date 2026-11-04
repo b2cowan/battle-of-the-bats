@@ -35,7 +35,8 @@ describe('Stage 5 Part 1: one body per page (the old halves left in Stage 8 Part
   it('the new Teams body cannot reach the unfiltered legacy reader on load or refresh', () => {
     const data = readCode('lib/public-tournament-data.ts');
     assert.match(data, /section === 'teams-preview' \? 'teams'/);
-    assert.match(data, /return section === 'teams-preview' \? publicTeamsData\(data\) : data/);
+    assert.match(data, /if \(section === 'teams-preview'\) \{[\s\S]*?return publicTeamsData\(\{/);
+    assert.doesNotMatch(data, /section === 'teams'/, 'the plain teams section is gone');
     assert.match(readCode('app/api/public/tournament-data/route.ts'), /'teams-preview'/);
     const body = readCode('components/public/PublicTeams.tsx');
     assert.match(body, /fetchPublicTournamentData\(orgSlug, tournamentSlug, 'teams-preview'\)/);
@@ -44,9 +45,9 @@ describe('Stage 5 Part 1: one body per page (the old halves left in Stage 8 Part
   });
   it('the profile exception follows the new caller\'s flag alone — no switch (Stage 8 Part 3a: its other caller left)', () => {
     const route = readCode('app/api/public/team-profile/route.ts');
-    assert.match(route, /const frameOn = searchParams.get\('publicFrame'\) === '1';/);
-    assert.doesNotMatch(route, /isPublicFrameOn/, 'with the switch off the new page would get the plain shape and fail');
-    assert.match(route, /if \(frameOn && division.scheduleVisibility !== 'published'\)/);
+    // The public feed fix (Stage 8 §16): the withhold and the published-only shape no longer depend on the caller's flag.
+    assert.doesNotMatch(route, /frameOn|isPublicFrameOn|searchParams\.get\('publicFrame'\)/);
+    assert.match(route, /if \(division\.scheduleVisibility !== 'published'\) \{/);
     assert.match(route, /return NextResponse.json\(withheldTeamProfile\(team, division.name\)\)/);
     assert.ok(route.indexOf("team.status !== 'accepted'") < route.indexOf('withheldTeamProfile(team,'));
     assert.ok(route.indexOf('withheldTeamProfile(team,') < route.indexOf('const scheduleShown'));
@@ -158,7 +159,7 @@ describe('Stage 5 Part 3: the team page and installed-app mounts', () => {
       assert.match(code,/fetchPublicTournamentData\(orgSlug, tournamentSlug, 'schedule-preview'\)/,file);
       assert.doesNotMatch(code,/'schedule'|publicFrame/,`${file} can still reach the legacy feed`);
     }
-    assert.match(readCode('lib/public-tournament-data.ts'),/section === 'schedule-preview' \? publicTeamsData\(data\) : data/);
+    assert.match(readCode('lib/public-tournament-data.ts'),/if \(section === 'schedule-preview'\) \{[\s\S]*?return publicTeamsData\(\{/);
     assert.match(readCode('components/public/TodaysResultsLine.tsx'),/useTodaysTournamentGames\(\)/);
     assert.ok(!sourceExists('components/public/ScoreTicker.tsx'),'the old ticker (the hook\'s legacy-feed caller) is gone');
   });
@@ -183,8 +184,8 @@ describe('Stage 5 Part 3: the team page and installed-app mounts', () => {
   });
   it('metadata is opt-in only and the old privacy gates still decide what it may describe', () => {
     const route=readCode('app/api/public/team-profile/route.ts');
-    assert.match(route,/NextResponse.json\(frameOn \? teamProfilePreview\(profile/);
+    assert.match(route,/NextResponse.json\(teamProfilePreview\(profile/);
     assert.match(route,/rows: standingsRows, standingsShown/);
-    assert.match(route,/\}\) : profile\)/);
+    assert.doesNotMatch(route,/\}\) : profile\)/, 'the unscrubbed profile shape is gone');
   });
 });

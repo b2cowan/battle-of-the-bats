@@ -5,7 +5,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { billingTestLoader } from './_billing-test-loader.ts';
 import { publicTeamsData } from '../../lib/public-teams.ts';
 import type { PublicTournamentPageData } from '../../lib/public-tournament-data.ts';
-import type { Division, Game, PublicTeam, Tournament } from '../../lib/types.ts';
+import type { Division, Game, PublicTeam } from '../../lib/types.ts';
+import type { PublicTournament } from '../../lib/public-tournament-shape.ts';
 import type { DivisionStandingRow } from '../../lib/tie-breakers.ts';
 
 const load = billingTestLoader({
@@ -24,7 +25,7 @@ function fixture(): PublicTournamentPageData {
     id: ['a', 'b', 'c'][index], name, tournamentId: 't', divisionId: 'd', coach: '', status: 'accepted',
   })) as PublicTeam[];
   return { organization: { id: 'o', name: 'Club', slug: 'club', requireScoreFinalization: true },
-    tournament: { id: 't', name: 'Cup', status: 'active' } as Tournament, tournaments: [], pageEnabled: true,
+    tournament: { id: 't', name: 'Cup', status: 'active' } as unknown as PublicTournament, pageEnabled: true,
     divisions: [{ id: 'd', name: 'U11', scheduleVisibility: 'published', pools: [] } as unknown as Division], teams,
     games: [{ id: 'live', tournamentId: 't', divisionId: 'd', homeTeamId: 'a', awayTeamId: 'b', date: '2026-10-30', time: '10:00', status: 'scheduled', location: '' } as Game],
     standingsByDivision: { d: teams.map((t, index) => ({ teamId: t.id, teamName: t.name, w: 2 - index, l: index, t: 0 })) as DivisionStandingRow[] },

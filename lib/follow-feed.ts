@@ -73,7 +73,7 @@ export async function getFollowFeed(entries: FollowFeedInput[]): Promise<FollowF
   const tournamentResults = await Promise.allSettled(
     uniqueTournaments.map(async key => {
       const [orgSlug, tournamentSlug] = key.split('/');
-      const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'schedule');
+      const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'schedule-preview');
       return [key, data] as const;
     }),
   );

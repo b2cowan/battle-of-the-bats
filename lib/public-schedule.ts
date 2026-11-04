@@ -1,5 +1,6 @@
 /** The preview Schedule's selection rules. All inputs come from the published-only public feed. */
-import type { Division, Game, PublicTeam, Tournament } from './types';
+import type { Division, Game, PublicTeam } from './types';
+import type { PublicTournamentFacts } from './public-tournament-shape';
 import { publicGameState } from './game-status';
 import { fanPlaceholder, gameSideNames } from './public-game-row';
 import { inferGamePoolSides } from './playoff-bracket';
@@ -40,7 +41,7 @@ export function scheduleLandingDay(dates: string[], today: string, pick: string 
 }
 
 export function scheduleInitialSelection({ games, divisions, teams, tournament, preference, followedTeamId, highlightId, today, now }: {
-  games: Game[]; divisions: Division[]; teams: PublicTeam[]; tournament: Tournament | null;
+  games: Game[]; divisions: Division[]; teams: PublicTeam[]; tournament: PublicTournamentFacts | null;
   preference: string | null; followedTeamId: string | null; highlightId: string | null; today: string; now: Date;
 }): { division: string; stage: ScheduleStage; day: string | null; highlight: string | null } {
   const visible = visibleScheduleGames(games, divisions);

@@ -12,6 +12,7 @@ import { getRegistrationState } from './registration-state';
 import { tournamentToday, daysBetweenDateStrings } from './timezone';
 import { relativeDayLabel, formatTime } from './utils';
 import type { Division, Game, Team, Tournament } from './types';
+import type { PublicTournamentFacts } from './public-tournament-shape';
 import type { TournamentFollowCard, OrgFollowCard } from './home-following';
 
 /**
@@ -67,7 +68,7 @@ function formatDateRange(startDate: string | null | undefined, endDate: string |
 
 /** Compute the current-state status for one tournament from its public data (F5 vocabulary). */
 function computeTournamentStatus(
-  tournament: Tournament,
+  tournament: PublicTournamentFacts,
   games: Game[],
   teams: Array<{ id: string; name: string }>,
   divisions: Division[],

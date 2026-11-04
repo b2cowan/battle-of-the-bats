@@ -1,7 +1,8 @@
 /** Stage 4's ranking explainer and the new Standings' readings (the old body was deleted in Stage 8 Part 3a). */
 import { BREAKER_LABELS, resolveTieBreakers } from './tie-breakers';
 import type { DivisionStandingRow } from './tie-breakers';
-import type { Division, Game, PlayoffConfig, PublicTeam, Tournament, TournamentSettings } from './types';
+import type { Division, Game, PlayoffConfig, PublicTeam, TournamentSettings } from './types';
+import type { PublicTournamentFacts } from './public-tournament-shape';
 import { publicGameState } from './game-status';
 import { isPublicBracketVisible } from './public-pages';
 
@@ -72,7 +73,7 @@ export function qualificationCaption(division: Division): string {
   return count > 0 ? `Top ${count}${perPool ? ' per pool' : ''} advance` : '';
 }
 
-export function standingsCounts(tournament: Tournament, division: Division, games: Game[], requireFinalization: boolean, now: Date): string {
+export function standingsCounts(tournament: PublicTournamentFacts, division: Division, games: Game[], requireFinalization: boolean, now: Date): string {
   if (division.scheduleVisibility !== 'published') return '';
   const counts = { final: 0, submitted: 0, remaining: 0 };
   for (const game of games) {
@@ -91,7 +92,7 @@ export function standingsCounts(tournament: Tournament, division: Division, game
 }
 
 /** Preserve the engine's order, including lower tie-breakers; never re-rank by points in the presenter. */
-export function standingsAdvancing(tournament: Tournament, division: Division, rows: DivisionStandingRow[]): Set<string> {
+export function standingsAdvancing(tournament: PublicTournamentFacts, division: Division, rows: DivisionStandingRow[]): Set<string> {
   const count = division.playoffConfig?.teamsQualifying ?? 0;
   if (division.scheduleVisibility !== 'published' || !isPublicBracketVisible(tournament) || count <= 0 || !rows.some(row => row.gp > 0)) return new Set();
   const pools = division.pools ?? [];

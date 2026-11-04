@@ -5,7 +5,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { billingTestLoader } from './_billing-test-loader.ts';
 import { publishedCompetitionData } from '../../lib/public-standings.ts';
 import type { PublicTournamentPageData } from '../../lib/public-tournament-data.ts';
-import type { Division, Game, Tournament } from '../../lib/types.ts';
+import type { Division, Game } from '../../lib/types.ts';
+import type { PublicTournament } from '../../lib/public-tournament-shape.ts';
 import type { DivisionStandingRow } from '../../lib/tie-breakers.ts';
 
 // Reuse the repo's TSX loader: React renders the shipped body, with only its feed/follow/bracket boundaries adapted.
@@ -27,8 +28,8 @@ const division = { id: 'd', name: 'U11', scheduleVisibility: 'published', pools:
 function fixture(): PublicTournamentPageData {
   return {
     organization: { id: 'o', name: 'Club', slug: 'club', requireScoreFinalization: true, contactEmail: 'hidden@example.test' },
-    tournament: { id: 't', slug: 'cup', name: 'Cup', status: 'active' } as Tournament,
-    tournaments: [], pageEnabled: true, divisions: [division], games: [], teams: [], venues: [], resources: [], rules: [], registrationFields: [],
+    tournament: { id: 't', slug: 'cup', name: 'Cup', status: 'active' } as unknown as PublicTournament,
+    pageEnabled: true, divisions: [division], games: [], teams: [], venues: [], resources: [], rules: [], registrationFields: [],
     standingsByDivision: { d: [row('winner', 'Engine’s first team'), row('second', 'Other team (Coach)')] },
   };
 }

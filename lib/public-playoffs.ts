@@ -10,9 +10,10 @@ import { publicGameRound } from './public-game-detail';
 import { formatShortWeekdayDate } from './timezone';
 import { formatPoolName } from './utils';
 import type { Division, Game, PublicTeam, Tournament } from './types';
+import type { PublicTournamentFacts } from './public-tournament-shape';
 
 interface PlayoffDoorData {
-  tournament: Tournament;
+  tournament: PublicTournamentFacts;
   divisions: Division[];
   games: Game[];
   teams: PublicTeam[];
@@ -20,7 +21,7 @@ interface PlayoffDoorData {
 }
 
 /** Same structural rule as the public tab: a saved plan or a published playoff game, including bracket-only events. */
-export function hasPublicPlayoffBracket(tournament: Tournament, divisions: Division[], games: Game[]): boolean {
+export function hasPublicPlayoffBracket(tournament: PublicTournamentFacts, divisions: Division[], games: Game[]): boolean {
   const published = new Set(divisions.filter(d => d.scheduleVisibility === 'published').map(d => d.id));
   return isPublicBracketVisible(tournament) && (divisions.some(d => hasPlayoffPlan(d.playoffConfig))
     || games.some(g => g.isPlayoff && published.has(g.divisionId)));

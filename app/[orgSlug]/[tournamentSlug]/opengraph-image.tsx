@@ -26,6 +26,8 @@ interface CardData {
   dateLabel: string;
   teamCount: number;
   divisionCount: number;
+  /** False while every division is held back: the card says nothing about counts rather than a row of dashes. */
+  showCounts: boolean;
   primary: string;
   rgb: string;
   /** Decided division champions (one per division whose final is settled). */
@@ -51,7 +53,8 @@ function fmtRange(start?: string, end?: string): string {
 async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: string }>): Promise<CardData | null> {
   try {
     const { orgSlug, tournamentSlug } = await params;
-    const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'teams');
+    // Published-only: the counts and the live line never include a division the organizer is holding back.
+    const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'teams-preview', { look: true });
     if (!data?.tournament) return null;
     const t = data.tournament;
     const theme = await shareImageTheme(orgSlug, t);
@@ -68,7 +71,7 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
     // Privacy: the share card follows the Champions page's all-or-nothing reveal — Standings shown, every division
     // published, every final complete. These games are already D1-filtered by the public reader; the division gate
     // also prevents a partial reveal while another schedule is held back.
-    const canShowChampions = isPublicPageEnabled(t, 'standings') && divisions.every(d => d.scheduleVisibility === 'published') &&
+    const canShowChampions = isPublicPageEnabled(t, 'standings') && !data.teamsWithheld &&
       isTournamentPlayoffsComplete(games, divisions);
     const champions: ChampionInfo[] = canShowChampions ? deriveChampions(games, teams, divisions) : [];
 
@@ -77,7 +80,8 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
     const today = tournamentToday(now);
     const todayGames = games.filter(g => g.date === today && g.status !== 'cancelled');
     let liveInfo: LiveInfo | null = null;
-    if (todayGames.length > 0) {
+    // The live score line is the Schedule's content: a hidden Schedule page hides it here too.
+    if (todayGames.length > 0 && isPublicPageEnabled(t, 'schedule')) {
       const liveGames = todayGames.filter(g =>
         isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES, now),
       );
@@ -97,6 +101,7 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
       dateLabel: fmtRange(t.startDate, t.endDate),
       teamCount: teams.length,
       divisionCount: divisions.length,
+      showCounts: !(data.teamsWithheld && teams.length === 0 && divisions.length === 0),
       primary: theme.primary,
       rgb: theme.primaryRgb,
       champions,
@@ -262,8 +267,8 @@ export default async function Image({ params }: { params: Promise<{ orgSlug: str
 
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', gap: 56 }}>
-            {stat(c.teamCount, 'TEAMS')}
-            {stat(c.divisionCount, 'DIVISIONS')}
+            {c.showCounts && stat(c.teamCount, 'TEAMS')}
+            {c.showCounts && stat(c.divisionCount, 'DIVISIONS')}
           </div>
           <div style={{ display: 'flex', color: 'rgba(255,255,255,0.62)', fontSize: 26, fontWeight: 700 }}>Live on FieldLogicHQ</div>
         </div>

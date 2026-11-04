@@ -51,7 +51,13 @@ function loader(data: Fixture) {
     '@/lib/tournament-preview': { getTournamentPreviewContext: async () => ({ org: { id: 'org' }, tournament: data.tournament }) },
     '@/lib/org-links': { orgLinks: async () => (path: string) => `/club${path}` },
     '@/lib/public-tournament-data': { toPublicTeam: (team: Team) => team,
-      getPublicTournamentPageData: async () => ({ ...data, games: onlyPublishedGames(data.games, data.divisions), organization: { name: 'Club' } }) },
+      // What the published-only 'teams-preview' section hands the image: published divisions, their teams and games, and the yes/no.
+      getPublicTournamentPageData: async () => {
+        const divisions = data.divisions.filter(d => d.scheduleVisibility === 'published');
+        const shown = new Set(divisions.map(d => d.id));
+        return { ...data, divisions, teams: data.teams.filter(t => shown.has(t.divisionId)), games: onlyPublishedGames(data.games, data.divisions),
+          teamsWithheld: divisions.length !== data.divisions.length, organization: { name: 'Club' } };
+      } },
     '@/lib/public-standings': {}, '@/lib/public-teams': {},
     '@/lib/use-club-public-origin': { useClubPublicOrigin: () => '' },
     'next/navigation': { notFound: () => { throw new Error('not found'); } },
@@ -154,7 +160,8 @@ describe('the tournament share image always follows the Champions reveal (Stage 
   it('privacy: the switch-off partial reveal is gone — the gate is unconditional', () => {
     const image = readCode('app/[orgSlug]/[tournamentSlug]/opengraph-image.tsx');
     assert.doesNotMatch(image, /isPublicFrameOn|public-frame-server/);
-    assert.match(image, /const canShowChampions = isPublicPageEnabled\(t, 'standings'\) && divisions\.every\(d => d\.scheduleVisibility === 'published'\) &&\s*isTournamentPlayoffsComplete\(games, divisions\);/);
+    // The image reads the published-only feed, so "every division published" is its yes/no flag, not a list it can count.
+    assert.match(image, /const canShowChampions = isPublicPageEnabled\(t, 'standings'\) && !data\.teamsWithheld &&\s*isTournamentPlayoffsComplete\(games, divisions\);/);
   });
 });
 

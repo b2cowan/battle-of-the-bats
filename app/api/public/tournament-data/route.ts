@@ -7,14 +7,13 @@ import { withObservability } from '@/lib/observability';
 
 export const dynamic = 'force-dynamic';
 
+// Only the published-only sections are public. The plain schedule / teams / standings sections (every division, held-back
+// names, game notes) and the consumer feeds' 'scores' are server-side only — see PublicTournamentSection.
 const VALID_SECTIONS = new Set<PublicTournamentSection>([
   'context',
-  'schedule',
   'schedule-preview',
-  'standings',
   'standings-preview',
   'playoffs',
-  'teams',
   'teams-preview',
   'rules',
   'register',

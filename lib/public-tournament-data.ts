@@ -16,11 +16,19 @@ import { hasPlanFeature } from './plan-features';
 import { getPublicStandingsByDivision, onlyPublishedGames } from './public-games';
 import { isPublicPageEnabled, isPublicBracketVisible, withInviteOnlyPages, type PublicPageKey } from './public-pages';
 import { runsInviteOnlyEvents } from './invite-only-event';
-import { publishedCompetitionData } from './public-standings';
-import { publicFrameGame, publicTeamsData, publicVenue } from './public-teams';
-import type { Announcement, Division, Venue, Game, Organization, Resource, RuleSection, Team, PublicTeam, Tournament, TournamentRegistrationField } from './types';
+import { publishedCompetitionData, publishedGameTeams } from './public-standings';
+import { publicFrameGame, publicTeamsData, publicVenue, type PublicVenue } from './public-teams';
+import { publicDivisions, publicNotices, publicTournament, type PublicNotice, type PublicTournament, type PublicTournamentOptions } from './public-tournament-shape';
+import type { Division, Game, Organization, Resource, RuleSection, Team, PublicTeam, Tournament, TournamentRegistrationField } from './types';
 
-export type PublicTournamentSection = Extract<PublicPageKey, 'schedule' | 'standings' | 'teams' | 'rules' | 'register'> | 'context' | 'scores' | 'standings-preview' | 'playoffs' | 'teams-preview' | 'schedule-preview';
+/**
+ * The sections of the public feed. The plain `schedule`, `teams` and `standings` sections are gone (the public feed
+ * fix, Stage 8 §16): they carried every division, held-back teams, 0-0-0 standings rows and each game's private
+ * notes, and everything still asking for them was server-side. A public reader gets the published-only `-preview`
+ * family, `playoffs`, and the two pages that are public by design (`rules`, `register`). `scores` is the consumer
+ * feeds' own and server-only — the HTTP route does not serve it.
+ */
+export type PublicTournamentSection = Extract<PublicPageKey, 'rules' | 'register'> | 'context' | 'scores' | 'standings-preview' | 'playoffs' | 'teams-preview' | 'schedule-preview';
 
 /**
  * Strip a {@link Team} down to its public-safe fields ({@link PublicTeam}). The single
@@ -50,22 +58,21 @@ export function toPublicTeam(t: Team, showCoachName: boolean): PublicTeam {
 
 export type PublicTournamentPageData = {
   organization: Pick<Organization, 'id' | 'name' | 'slug' | 'logoUrl' | 'contactEmail' | 'requireScoreFinalization'>;
-  tournaments: Tournament[];
-  tournament: Tournament | null;
+  /** The public shape of the event (lib/public-tournament-shape.ts) — never the internal record. */
+  tournament: PublicTournament | null;
   pageEnabled: boolean;
   divisions: Division[];
-  venues: Venue[];
+  venues: PublicVenue[];
   games: Game[];
   resources: Resource[];
   rules: RuleSection[];
   /** Public-safe teams only — see {@link toPublicTeam} / J6-001. */
   teams: PublicTeam[];
   registrationFields: TournamentRegistrationField[];
-  /** Tournament announcements — populated for the schedule section so a pinned
-   *  rain-delay/operational notice can surface on game day (J6-033). Optional so
-   *  manual payload constructors (e.g. admin preview) don't have to set it;
-   *  consumers treat undefined as an empty list. */
-  announcements?: Announcement[];
+  /** Pinned notices for the Schedule's game-day strip (J6-033): only while News is shown, never one aimed at a
+   *  held-back division, and only the fields the strip reads — see {@link publicNotices}. Optional so manual payload
+   *  constructors (e.g. admin preview) don't have to set it; consumers treat undefined as an empty list. */
+  announcements?: PublicNotice[];
   standingsByDivision: Record<string, Awaited<ReturnType<typeof getStandings>>>;
   /** True while the organizer holds some division's games back (Stage 0 · D1). Only the yes/no leaves the server —
    *  it keeps a reader from calling the event finished on the divisions it can show. Set by the game sections. */
@@ -112,20 +119,22 @@ async function getPublicContext(orgSlug: string, tournamentSlug: string | null) 
   if (tournamentSlug && !tournament) return null;
 
   // An invite-only event has no Registration page (R6): every public reader sees its switch off.
-  return { org, tournaments, tournament: tournament ? withInviteOnlyPages(tournament, runsInviteOnlyEvents(org.planId)) : null };
+  return { org, tournament: tournament ? withInviteOnlyPages(tournament, runsInviteOnlyEvents(org.planId)) : null };
 }
 
 export async function getPublicTournamentPageData(
   orgSlug: string,
   tournamentSlug: string | null,
   section: PublicTournamentSection = 'context',
+  /** Server-only callers: `{ look: true }` puts the event's theme and logo on `tournament`. The HTTP route never passes it. */
+  load: Pick<PublicTournamentOptions, 'look'> = {},
 ): Promise<PublicTournamentPageData | null> {
   const context = await getPublicContext(orgSlug, tournamentSlug);
   if (!context) return null;
 
-  const { org, tournaments, tournament } = context;
+  const { org, tournament } = context;
   // 'scores' is the cross-tournament consumer feed (My Games) — gate it on the SCHEDULE
-  // page's visibility, exactly like the 'schedule' section, so a hidden schedule never
+  // page's visibility, exactly like the 'schedule-preview' section, so a hidden schedule never
   // leaks games here either.
   const sectionKey = section === 'context' || section === 'playoffs' ? null : section === 'scores' || section === 'schedule-preview' ? 'schedule' : section === 'teams-preview' ? 'teams' : section === 'standings-preview' ? 'standings' : section;
   const pageEnabled = section === 'playoffs' ? isPublicBracketVisible(tournament) : !sectionKey || isPublicPageEnabled(tournament, sectionKey);
@@ -138,10 +147,12 @@ export async function getPublicTournamentPageData(
     ? await resolveTournamentContactEmail(tournament.id, org.contactEmail ?? null, 'public')
     : (org.contactEmail ?? null);
 
+  // The event as the public sees it: a fixed list of fields, never the record (lib/public-tournament-shape.ts).
+  // The fee schedule and how-to-pay text travel only on the Register section, as far as the organizer shows them — and
+  // not at all while the organizer has the Register page off (an invite-only event always does).
   const base: PublicTournamentPageData = {
     organization: { ...publicOrganization(org, tournament), contactEmail: publicContactEmail },
-    tournaments,
-    tournament: tournament ? { ...tournament, contactEmail: publicContactEmail ?? undefined } : null,
+    tournament: tournament ? publicTournament(tournament, publicContactEmail ?? undefined, { register: section === 'register' && pageEnabled, look: load.look }) : null,
     pageEnabled,
     divisions: [],
     venues: [],
@@ -159,9 +170,13 @@ export async function getPublicTournamentPageData(
     return base;
   }
 
+  // Divisions travel without their fee schedule everywhere but a Register page that shows fees.
+  const sendDivisions = (divisions: Division[], register = false) => publicDivisions(divisions, tournament.settings, register);
+
   // Cross-tournament consumer scores feed (Unified Home Scores tab): only games + teams are
-  // read downstream, so skip the schedule section's venues / divisions / announcements fetches
-  // — this path is polled, so those extra round-trips would repeat every tick.
+  // read downstream, so skip the schedule-preview section's venues / divisions / announcements fetches
+  // — this path is polled, so those extra round-trips would repeat every tick. Server-only: the
+  // HTTP route does not serve it.
   if (section === 'scores') {
     const [games, teams, divisions] = await Promise.all([
       getGames(tournament.id, { admin: true }),
@@ -169,56 +184,66 @@ export async function getPublicTournamentPageData(
       getDivisions(tournament.id, { admin: true }),
     ]);
     const shown = onlyPublishedGames(games, divisions);
-    return { ...base, games: shown, gamesWithheld: shown.length !== games.length, teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)) };
+    // A published division's crossover game must not name a held-back opponent: this feed's consumers resolve names from
+    // `teams`, which keeps every accepted team (the follow status counts them), so blank the held-back sides here.
+    const publishedIds = new Set(divisions.filter(d => d.scheduleVisibility === 'published').map(d => d.id));
+    // Every team of a published division, whatever its status: a withdrawn finalist is still the one who played the final.
+    const openTeamIds = new Set(teams.filter(t => publishedIds.has(t.divisionId)).map(t => t.id));
+    return { ...base, games: shown.map(g => publicFrameGame(publishedGameTeams(g, openTeamIds))), gamesWithheld: shown.length !== games.length, teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)) };
   }
 
-  if (section === 'schedule' || section === 'schedule-preview') {
+  if (section === 'schedule-preview') {
     const [games, teams, venues, divisions, announcements] = await Promise.all([
       getGames(tournament.id, { admin: true }),
       getTeams(tournament.id, { admin: true }),
       getVenues(tournament.id, { admin: true, includeFacilities: true }),
       getDivisions(tournament.id, { admin: true }),
-      getAnnouncements(tournament.id, { admin: true }),
+      // Read only when the strip could show them: a hidden News page sends none.
+      isPublicPageEnabled(tournament, 'news') ? getAnnouncements(tournament.id, { admin: true }) : Promise.resolve([]),
     ]);
-    const data = { ...base, games: onlyPublishedGames(games, divisions), teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)), venues: venues.map(publicVenue), divisions, announcements };
-    return section === 'schedule-preview' ? publicTeamsData(data) : data;
+    return publicTeamsData({
+      ...base,
+      games: onlyPublishedGames(games, divisions),
+      teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)),
+      venues: venues.map(publicVenue),
+      divisions: sendDivisions(divisions),
+      // Judged against the full division list: a post aimed at a held-back division must not reach the strip.
+      announcements: publicNotices(announcements, tournament, divisions),
+    });
   }
 
-  if (section === 'teams' || section === 'teams-preview') {
+  if (section === 'teams-preview') {
     const [teams, divisions, games] = await Promise.all([
       getTeams(tournament.id, { admin: true }),
       getDivisions(tournament.id, { admin: true }),
       getGames(tournament.id, { admin: true }),
     ]);
-    const data: PublicTournamentPageData = {
+    return publicTeamsData({
       ...base,
       teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)),
-      divisions,
+      divisions: sendDivisions(divisions),
       games: onlyPublishedGames(games, divisions),
       standingsByDivision: await getPublicStandingsByDivision(tournament, divisions, { games, teams }),
-    };
-    return section === 'teams-preview' ? publicTeamsData(data) : data;
+    });
   }
 
-  if (section === 'standings' || section === 'standings-preview' || section === 'playoffs') {
+  if (section === 'standings-preview' || section === 'playoffs') {
     const [divisions, games, teams, venues] = await Promise.all([
       getDivisions(tournament.id, { admin: true }),
       getGames(tournament.id, { admin: true }),
       getTeams(tournament.id, { admin: true }),
       getVenues(tournament.id, { admin: true, includeFacilities: true }),
     ]);
-    const data: PublicTournamentPageData = {
+    // The new Standings and Playoffs bodies ship their games to the browser (initial data + the live feed): published
+    // divisions only, and never a game's private notes or the scorekeeper's identity (Stage 8 Part 3c, found at /review).
+    const published = publishedCompetitionData({
       ...base,
-      divisions,
+      divisions: sendDivisions(divisions),
       games: onlyPublishedGames(games, divisions),
       teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)),
       venues: venues.map(publicVenue),
       standingsByDivision: await getPublicStandingsByDivision(tournament, divisions, { games, teams }),
-    };
-    if (section !== 'standings-preview' && section !== 'playoffs') return data;
-    // The new Standings and Playoffs bodies ship their games to the browser (initial data + the live feed): published
-    // divisions only, and never a game's private notes or the scorekeeper's identity (Stage 8 Part 3c, found at /review).
-    const published = publishedCompetitionData(data);
+    });
     return { ...published, games: published.games.map(publicFrameGame) };
   }
 
@@ -228,7 +253,7 @@ export async function getPublicTournamentPageData(
       getResources(tournament.id, { admin: true }),
       getDivisions(tournament.id, { admin: true }),
     ]);
-    return { ...base, rules, resources, divisions };
+    return { ...base, rules, resources, divisions: sendDivisions(divisions) };
   }
 
   if (section === 'register') {
@@ -238,7 +263,7 @@ export async function getPublicTournamentPageData(
         ? getTournamentRegistrationFields(tournament.id)
         : Promise.resolve([]),
     ]);
-    return { ...base, divisions, registrationFields };
+    return { ...base, divisions: sendDivisions(divisions, true), registrationFields };
   }
 
   return base;

@@ -8,7 +8,8 @@
  * standings tie-breaker order (see lib/tie-breakers.ts); `Seed #N` resolves against the
  * combined division order, which is how the wizard/tiers assign seeds.
  */
-import type { Division, Game, PublicTeam, Tournament, PlayoffConfig } from './types';
+import type { Division, Game, PublicTeam, PlayoffConfig } from './types';
+import type { PublicTournamentFacts } from './public-tournament-shape';
 import type { DivisionStandingRow } from './tie-breakers';
 import { bracketGameLabel, fanRoundLabel } from './playoff-bracket';
 import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from './game-status';
@@ -291,7 +292,7 @@ function buildDivisionPicture(
 }
 
 export function buildPlayoffPicture(
-  _tournament: Tournament,
+  _tournament: PublicTournamentFacts,
   divisions: Division[],
   _teams: PublicTeam[],
   games: Game[],

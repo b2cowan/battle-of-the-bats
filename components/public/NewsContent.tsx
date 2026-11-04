@@ -111,7 +111,8 @@ export default async function NewsContent({
           {hasTaggedContent && prefName && divisions.length > 0 && (
             <DivisionFilterBar
               orgSlug={orgSlug}
-              divisions={divisions}
+              // The filter bar is a client component: send it a division's id and name, not its fee schedule and settings.
+              divisions={divisions.map(d => ({ id: d.id, name: d.name }))}
               activeName={prefName}
               isFiltering={isFiltering}
               viewAllHref={href(`/${tournamentSlug}/news?view=all`)}

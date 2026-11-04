@@ -15,7 +15,7 @@ type GameDetailParams = Promise<{
 export async function generateMetadata({ params }: { params: GameDetailParams }): Promise<Metadata> {
   try {
     const { orgSlug, tournamentSlug, gameId } = await params;
-    const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'schedule');
+    const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'schedule-preview');
     const game = data?.games.find(item => item.id === gameId);
     if (!data?.tournament || !game) return {};
 
@@ -37,7 +37,7 @@ export default async function PublicGameDetailsPage({
 }) {
   const { orgSlug, tournamentSlug, gameId } = await params;
   await forwardToOwnAddress(orgSlug, `/${tournamentSlug}/schedule/${gameId}`);
-  const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'schedule');
+  const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'schedule-preview');
   if (!data) notFound();
 
   const orgHref = await orgLinks(orgSlug);

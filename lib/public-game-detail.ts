@@ -89,7 +89,6 @@ export function publicGameDetailView(game: Game, { games, teams, divisions, venu
       { key: 'division', label: 'Division', text: division },
       { key: 'round', label: 'Round', text: round },
       { key: 'length', label: 'Game length', text: `${game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES} min` },
-      ...(game.notes?.trim() ? [{ key: 'notes', label: 'Notes', text: game.notes.trim() }] : []),
     ],
     refreshSignature: faceSignature(game, state),
   };

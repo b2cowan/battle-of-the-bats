@@ -19,7 +19,8 @@ import PublicSchedule from '@/components/public/PublicSchedule';
 import PublicStandings from '@/components/public/PublicStandings';
 import { publishedCompetitionData } from '@/lib/public-standings';
 import PublicTeams from '@/components/public/PublicTeams';
-import { publicTeamsData } from '@/lib/public-teams';
+import { publicTeamsData, publicVenue } from '@/lib/public-teams';
+import { publicDivisions, publicTournament } from '@/lib/public-tournament-shape';
 import NewsContent from '@/components/public/NewsContent';
 import PublicRules from '@/components/public/PublicRules';
 import PublicChampionsPage from '@/components/public/PublicChampionsPage';
@@ -49,6 +50,9 @@ export default async function TournamentPreviewSectionPage({
   // email → org fallback, honoring visibility) so the preview shows what the public sees.
   const contactEmail = await publicTournamentContactEmail(tournament.id, org.contactEmail ?? null);
 
+  // The event in the public shape, exactly as the live feed sends it (the compiler refuses a raw record).
+  const previewTournament = publicTournament(tournament, contactEmail ?? undefined);
+
   // ── Schedule ──────────────────────────────────────────────────────────────
   if (section === 'schedule') {
     // The preview is what families see: only published divisions' games (D1).
@@ -65,11 +69,10 @@ export default async function TournamentPreviewSectionPage({
         contactEmail: org.contactEmail ?? null,
         requireScoreFinalization: tournament.requireScoreFinalization ?? org.requireScoreFinalization,
       },
-      tournaments: [tournament],
-      tournament,
+      tournament: previewTournament,
       pageEnabled: true,
       divisions,
-      venues,
+      venues: venues.map(publicVenue),
       games: onlyPublishedGames(rawGames, divisions),
       resources: [],
       rules: [],
@@ -91,8 +94,7 @@ export default async function TournamentPreviewSectionPage({
         contactEmail: org.contactEmail ?? null,
         requireScoreFinalization: tournament.requireScoreFinalization ?? org.requireScoreFinalization,
       },
-      tournaments: [tournament],
-      tournament,
+      tournament: previewTournament,
       pageEnabled: true,
       divisions,
       venues: [],
@@ -120,8 +122,7 @@ export default async function TournamentPreviewSectionPage({
         contactEmail: org.contactEmail ?? null,
         requireScoreFinalization: tournament.requireScoreFinalization ?? org.requireScoreFinalization,
       },
-      tournaments: [tournament],
-      tournament,
+      tournament: previewTournament,
       pageEnabled: true,
       divisions,
       venues: [],
@@ -211,10 +212,9 @@ export default async function TournamentPreviewSectionPage({
       contactEmail: contactEmail ?? null,
       requireScoreFinalization: tournament.requireScoreFinalization ?? org.requireScoreFinalization,
     },
-    tournaments: [tournament],
-    tournament: { ...tournament, contactEmail: contactEmail ?? undefined },
+    tournament: publicTournament(tournament, contactEmail ?? undefined, { register: true }),
     pageEnabled: true,
-    divisions: registerDivisions,
+    divisions: publicDivisions(registerDivisions, tournament.settings, true),
     venues: [],
     games: [],
     resources: [],

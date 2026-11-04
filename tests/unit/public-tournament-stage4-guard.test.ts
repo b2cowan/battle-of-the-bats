@@ -77,7 +77,8 @@ describe('Stage 4 Part 2: the table-first body follows the revised drawing', () 
     const data = readCode('lib/public-tournament-data.ts');
     assert.match(body, /fetchPublicTournamentData\(orgSlug, tournamentSlug, 'standings-preview'\)/);
     assert.match(data, /section === 'standings-preview' \? 'standings' : section/);
-    assert.match(data, /if \(section !== 'standings-preview' && section !== 'playoffs'\) return data;\s*const published = publishedCompetitionData\(data\);\s*return \{ \.\.\.published, games: published\.games\.map\(publicFrameGame\) \};/);
+    assert.match(data, /if \(section === 'standings-preview' \|\| section === 'playoffs'\) \{[\s\S]*?const published = publishedCompetitionData\(\{[\s\S]*?return \{ \.\.\.published, games: published\.games\.map\(publicFrameGame\) \};/);
+    assert.doesNotMatch(data, /section === 'standings'/, 'the plain standings section is gone');
     // PRIVACY (Stage 8 Part 3c /review): those games reach the browser, so the scrub must actually remove the private fields.
     const game = { id: 'g', notes: 'PRIVATE_NOTE', scoreSubmittedByEmail: 'keeper@example.com', scoreSubmittedByUserId: 'u1',
       scoreSubmittedAt: '2026-11-04T10:00:00Z', scoreSubmissionSource: 'scorekeeper', homeScore: 4, awayScore: 2 } as unknown as Game;

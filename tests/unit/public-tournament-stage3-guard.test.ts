@@ -84,7 +84,8 @@ describe('a game\'s page and desktop (Part 3)', () => {
   const file = 'app/[orgSlug]/[tournamentSlug]/schedule/[gameId]/page.tsx';
   it('the game body follows the published-only lookup, with no switch', () => {
     const page = readCode(file);
-    assert.match(page, /getPublicTournamentPageData\(orgSlug, tournamentSlug, 'schedule'\)/);
+    assert.match(page, /getPublicTournamentPageData\(orgSlug, tournamentSlug, 'schedule-preview'\)/);
+    assert.doesNotMatch(page, /getPublicTournamentPageData\([^)]*'schedule'\)/, 'the plain section carried a game\'s private notes');
     assert.ok(page.indexOf('if (!game) notFound();') > -1);
     assert.ok(page.indexOf('if (!game) notFound();') < page.indexOf('return <PublicGameDetails'));
     assert.doesNotMatch(page, /isPublicFrameOn|frameOn/);

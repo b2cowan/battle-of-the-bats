@@ -320,7 +320,7 @@ async function buildScoresPayload(params: {
   const results = await Promise.allSettled(
     uniqueKeys.map(async key => {
       const [orgSlug, tournamentSlug] = key.split('/');
-      const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'scores');
+      const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'scores', { look: true });
       return [key, data] as const;
     }),
   );

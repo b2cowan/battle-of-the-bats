@@ -179,9 +179,11 @@ describe('every surface that reads a fee reads the answer (the census)', () => {
   });
 
   // The plan-aware answer (`eventPayments` / `eventAreas`, lib/invite-only-event — the free tournament tier, 2026-10-16)
-  // reads `tournamentTracksPayments` itself and adds the plan: a screen that reads it reads the answer.
+  // reads `tournamentTracksPayments` itself and adds the plan: a screen that reads it reads the answer. So does
+  // `registerShowsFees` (lib/public-tournament-shape.ts — the public feed fix, Stage 8 §16): "tracked, and not switched off on
+  // the Register page", the one answer the Register page and the public feed both use.
   it('each reads `tournamentTracksPayments` (or the plan-aware answer) or is exempt with a reason', () => {
-    const readsAnswer = (src: string) => /tournamentTracksPayments|eventPayments\(|eventAreas\(/.test(src);
+    const readsAnswer = (src: string) => /tournamentTracksPayments|registerShowsFees\(|eventPayments\(|eventAreas\(/.test(src);
     const missing = files.filter(f => !readsAnswer(f.src) && !(f.rel in EXEMPT)).map(f => f.rel);
     assert.deepEqual(missing, [], 'a file reads an event\'s fee set-up but not whether the event tracks payments');
   });

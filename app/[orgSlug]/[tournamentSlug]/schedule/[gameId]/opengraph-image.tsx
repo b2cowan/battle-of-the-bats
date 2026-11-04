@@ -29,7 +29,7 @@ interface CardData {
 async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: string; gameId: string }>): Promise<CardData | null> {
   try {
     const { orgSlug, tournamentSlug, gameId } = await params;
-    const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'schedule');
+    const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'schedule-preview', { look: true });
     if (!data?.tournament) return null;
 
     const game = data.games.find(g => g.id === gameId);

@@ -60,7 +60,8 @@ describe('the public team page', () => {
     assert.match(og, /\{c\.showRecord \? \(/);
   });
   it('shows games only where the public Schedule does, and the record only where Standings do', () => {
-    assert.match(route, /const scheduleShown = isPublicPageEnabled\(tournament, 'schedule'\) && \(division\.scheduleVisibility \?\? 'unpublished'\) !== 'unpublished';/);
+    assert.match(route, /if \(division\.scheduleVisibility !== 'published'\) \{\s*return NextResponse\.json\(withheldTeamProfile\(team, division\.name\)\);\s*\}/);
+    assert.match(route, /const scheduleShown = isPublicPageEnabled\(tournament, 'schedule'\);/);
     assert.match(route, /const standingsShown = scheduleShown && isPublicPageEnabled\(tournament, 'standings'\);/);
     assert.match(route, /= !scheduleShown \? \[\] : games/);
     assert.match(route, /standings: standingsShown\s*\?/);

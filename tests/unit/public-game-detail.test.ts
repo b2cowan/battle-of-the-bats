@@ -64,12 +64,12 @@ describe('the preview game page: when, where and the score', () => {
     assert.equal(v.sides[1].teamId, 'h');
     assert.doesNotMatch(JSON.stringify(v), /Secret opponent/);
   });
-  it('Notes is the last fact and absent when empty; forfeit is a finished state', () => {
+  it('private game notes are never a fact (owner 2026-11-04); forfeit is a finished state', () => {
     const g = game({ status: 'forfeit', awayScore: 7, homeScore: 0, isPlayoff: true, bracketCode: 'FIN', notes: ' Bring water. ' });
     const v = view(g);
     assert.equal(v.stateLabel, 'Final'); assert.equal(v.round, 'Championship');
-    assert.equal(v.facts.at(-1)?.text, 'Bring water.'); assert.equal(v.facts.at(-1)?.label, 'Notes');
-    assert.equal(view({ ...g, notes: ' ' }).facts.length, 3);
+    assert.equal(v.facts.length, 3); assert.equal(v.facts.at(-1)?.label, 'Game length');
+    assert.doesNotMatch(JSON.stringify(v), /Bring water/);
     assert.equal(v.foot, null);
     assert.equal(view({ ...g, status: 'scheduled', awayScore: null, homeScore: null }).foot, 'The winner takes the title');
   });

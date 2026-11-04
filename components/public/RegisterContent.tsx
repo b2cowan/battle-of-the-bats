@@ -6,12 +6,12 @@ import { useParams, useRouter } from 'next/navigation';
 import { useOrgHref, usePublicPathname, useWwwHref } from '@/lib/use-public-pathname';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { getRegistrationState } from '@/lib/registration-state';
-import { Division, Tournament, TournamentRegistrationField } from '@/lib/types';
+import { Division, TournamentRegistrationField } from '@/lib/types';
+import { registerShowsFees, type PublicTournament } from '@/lib/public-tournament-shape';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import Countdown from '@/components/public/Countdown';
 import styles from '@/app/[orgSlug]/register/register.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
-import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import {
   alreadyRegisteredLine, differentTeamSentence, isChoosableTeam, pickEntryHeadCoach, TEAM_ALREADY_REGISTERED, whoRegistersSentence,
   type CardHeadCoach, type RegistrableTeam,
@@ -119,7 +119,7 @@ function formatDate(date: string | null) {
   });
 }
 
-function resolveFeeSchedule(tournament: Tournament | null, group: Division | undefined): FeeSchedule | null {
+function resolveFeeSchedule(tournament: PublicTournament | null, group: Division | undefined): FeeSchedule | null {
   if (!tournament || !group) return null;
 
   if (tournament.feeScheduleMode === 'division' && group.totalFeeAmount != null) {
@@ -210,7 +210,7 @@ function toIcsDate(date: string, addDays = 0): string {
 }
 
 /** Build + download a universal .ics all-day event covering the tournament dates. */
-function downloadTournamentCalendar(tournament: Tournament, url: string) {
+function downloadTournamentCalendar(tournament: PublicTournament, url: string) {
   if (!tournament.startDate) return;
   const end = tournament.endDate || tournament.startDate;
   const escape = (s: string) => s.replace(/([,;\\])/g, '\\$1').replace(/\n/g, '\\n');
@@ -268,7 +268,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   const www            = useWwwHref();
 
   const [divisions, setDivisions]   = useState<Division[]>([]);
-  const [tournament, setTournament] = useState<Tournament | null>(null);
+  const [tournament, setTournament] = useState<PublicTournament | null>(null);
   // Club Tier Stage 12a: does this tournament take payments online? Any doubt is no (today's box).
   const [takesOnline, setTakesOnline] = useState(false);
   const [registrationFields, setRegistrationFields] = useState<TournamentRegistrationField[]>([]);
@@ -887,7 +887,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   }, [tournamentId, isPreview]);
   // Organizer payment-display controls (settings JSONB; no migration). Default = show. An event that doesn't track
   // payments ("Not tracked here") has no payment panel at all — no fee, no how-to-pay, whatever was typed before.
-  const showFees = tournamentTracksPayments(tournament?.settings) && tournament?.settings?.show_fees_on_register !== false;
+  const showFees = registerShowsFees(tournament?.settings);
   const paymentInstructions = (tournament?.settings?.payment_instructions ?? '').trim();
   const formInstructions =
     paymentInstructions && tournament?.settings?.payment_instructions_on_form ? paymentInstructions : '';

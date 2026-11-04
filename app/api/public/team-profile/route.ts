@@ -58,17 +58,16 @@ export const GET = withObservability(async (req: Request) => {
   const division = divisions.find(d => d.id === team.divisionId);
   if (!division) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  // Opt-in by the caller. Until Stage 8 Part 3a this also required the preview switch, to keep the old team page's
-  // contract; that page (the only caller without the flag) was deleted, and with the switch off the new page — which
-  // always sends the flag — could only show "Couldn't load this team". Part 4 drops the flag and the plain shape.
-  const frameOn = searchParams.get('publicFrame') === '1';
-  if (frameOn && division.scheduleVisibility !== 'published') {
+  // A held-back team is withheld for EVERY caller (the public feed fix, Stage 8 §16). Until then this applied only when
+  // the caller sent `publicFrame=1`, so anyone leaving it off read the team's coach, seed, pool and division. The new page
+  // always sends the flag; it is now ignored (the page's param goes in Part 4) because nothing may be shaped by it.
+  if (division.scheduleVisibility !== 'published') {
     return NextResponse.json(withheldTeamProfile(team, division.name));
   }
 
   // The team's games show only where the public Schedule shows them (the page is on and the division is published);
   // its record only where the public Standings show (that page is on, and the games behind it are shown).
-  const scheduleShown = isPublicPageEnabled(tournament, 'schedule') && (division.scheduleVisibility ?? 'unpublished') !== 'unpublished';
+  const scheduleShown = isPublicPageEnabled(tournament, 'schedule'); // the division is published: a held-back one returned above
   const standingsShown = scheduleShown && isPublicPageEnabled(tournament, 'standings');
 
   const gameDurationMinutes =
@@ -165,11 +164,12 @@ export const GET = withObservability(async (req: Request) => {
     games: teamGames,
     teamNames,
   };
-  return NextResponse.json(frameOn ? teamProfilePreview(profile, {
+  // The published-only shape for everyone: a crossover game never names a held-back opponent, whoever asks.
+  return NextResponse.json(teamProfilePreview(profile, {
     division, divisions, teams: teams.map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)),
     games, rows: standingsRows, standingsShown, tournament,
     requireFinalization: tournament.requireScoreFinalization ?? org.requireScoreFinalization ?? true, now: new Date(),
     crownStamp: tournament.championsCrownedAt ?? null,
     defaultDuration: tournament.settings?.game_duration_minutes ?? DEFAULT_GAME_DURATION_MINUTES,
-  }) : profile);
+  }));
 }, { route: '/api/public/team-profile' });

@@ -127,7 +127,8 @@ export default function CoachLiveSchedule({
   usePublicTournamentLive({
     orgSlug,
     tournamentSlug,
-    section: 'schedule',
+    // Published-only: this reads scores, status, date, time and place. The plain section also carried game notes.
+    section: 'schedule-preview',
     enabled: pollEnabled,
     intervalMs: pollIntervalMs,
     onData: data => {

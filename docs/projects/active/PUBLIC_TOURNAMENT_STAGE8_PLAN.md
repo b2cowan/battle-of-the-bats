@@ -3,8 +3,8 @@
 **Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 committed `d4af280e6` 2026-11-03** (record §10; it releases with the flip, ruling D). **Part 2 committed `02e29f453` 2026-11-03** (record §11; it releases with the flip too). **Part 3a committed `3304c77fe` 2026-11-03**
 (record §12; releases with the flip). **Part 3b committed `9b6252e8a` 2026-11-04** (record §13; releases with the flip). **Part 3c committed `62f5841f9` 2026-11-04**
 (record §14; releases with the flip). **Part 3d committed `33386d5df` 2026-11-04** (record §15; releases with the flip; the
-switch-off half-state ends for every public tournament page). Next: the public feed fix (owner-approved 2026-11-04, its own
-change, §15 handed on), then Part 4. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
+switch-off half-state ends for every public tournament page). **The public feed fix built 2026-11-04** (record §16; its own change,
+releasable on its own, held for the owner's go to commit; it does not cherry-pick onto production — §16 handed on). Next: Part 4. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
 **Sequencing rule (standing):** by dependency and rework risk, never by date. One part per session, `/clear` between.
@@ -848,3 +848,155 @@ preview's (above); the feed findings (handed on).
   `/The bracket/` layout screens and the expired Stage 3 / Stage 4 fixtures; white text on team-colour fills in the share
   images (advisory); the admin strip's 34 px "Dismiss"; `/release` §1d-2's sharp probe; the club editor's unlabelled 18 px
   input; `scripts/mobile-review-capture.mjs`'s "ticker precedence" comment.
+
+## 16. The public feed fix (built 2026-11-04, held for the owner's go to commit; its own change, not part of Parts 1–3d)
+
+**What a customer sees:** nothing on a page that was working. Schedule, Standings, Teams, Playoffs, Register (payment
+instructions on the form included), News, the Overview and a game's page read the same. **Three small differences:** (1) a game's
+page no longer shows a "Notes" line (owner ruling, below; the page is new on `dev`, so nothing is taken from a customer on
+production); (2) the tournament's share image counts only the divisions the organizer has published, shows no count tiles at all
+while every division is held back (rather than a row of dashes), and its live score line follows the Schedule switch; (3) a
+held-back team's page is withheld for everyone, not only for a caller that sends a flag. **For the organizer:** the Register
+switch, the News switch, "show fees" and "show how to pay on the form" now decide what leaves the server, not only what the
+page draws.
+
+**Owner rulings in-session (2026-11-04):** Q1 **a game's notes are private** (the game page's "Notes" fact goes; the plain feeds
+no longer carry them). Q2 **fold the team-profile gap in** (the withhold is unconditional). Q3 **own commits on `dev`, a small
+hand-port for production** (below: it is not a straight cherry-pick).
+
+**Where the brief was wrong, argued from the code:** (a) *"the scorekeeper's identity (`scoreSubmittedBy*`)"* is not in the
+feed: `getGames` never maps those columns, so only `notes` leaked; the strip stays as defence and is now tested with the fields
+on the fixture. (b) *"stop serving the plain sections"* is safe **on `dev`** (every browser reader was already on a published-only
+section but the coach portal's live schedule) and **unsafe on production**: production's legacy `ScheduleContent`,
+`StandingsContent`, `TeamsContent`, `MyTeamDock`, `TournamentNavStatus` and `useTodaysTournamentGames` still poll the plain
+sections from the browser, so the production port must **scrub** them, not remove them. (c) *"keep it for server callers"*: with
+notes private every server caller moved to a published-only section too, so the plain sections have no caller left and are
+deleted (`scores`, the consumer feed, stays, server-only).
+
+**What changed.**
+- `lib/public-tournament-shape.ts` (new): the feed's `tournament` is a branded `PublicTournament`, built only by
+  `publicTournament()` (a raw `Tournament` does not type-check against it). Fields: id, name, slug, status, dates, the public
+  contact, hidden pages, finalization, champions stamp, and settings `format` / `game_duration_minutes` / `tie_breakers` /
+  `tie_breaker_scope`. **Register only, and only while the page is on and the organizer shows fees** (`registerShowsFees`, the one
+  answer the server and the Register page both read): the fee schedule, `fee_scope`, `show_fees_on_register`, the coach-email
+  confirmation flags, and the how-to-pay text only when it is also set to appear on the form. The event's look (theme, logo) rides
+  only for server readers that pass `{ look: true }` (the three share images, the scores feed); the HTTP route cannot. Also:
+  `publicDivisions` (a division's fee schedule goes only where the Register page shows fees), `publicNotices` (below),
+  `PublicTournamentFacts` (the structural type the pure helpers read).
+- `lib/public-tournament-data.ts`: `tournaments` removed from the result; the plain `schedule` / `teams` / `standings` sections
+  deleted; `getAnnouncements` is read only while News is on; the `scores` branch blanks a held-back opponent in a published
+  division's crossover game and strips notes; a hidden Register page sends no fee schedule (found at `/review`: it did).
+- `lib/public-teams.ts`: `PublicVenue` (`notes?: never`, compiler-held, venue and field).
+- `app/api/public/tournament-data/route.ts`: serves `context`, `schedule-preview`, `teams-preview`, `standings-preview`,
+  `playoffs`, `rules`, `register`. `schedule`, `teams`, `standings`, `scores` answer 400.
+- `app/api/public/team-profile/route.ts`: a held-back team is withheld for every caller, and the published-only shape is the only
+  shape (a crossover game no longer names a held-back opponent whatever the caller sends). `PublicTeamPage` still sends
+  `publicFrame=1`; the route ignores it (the param goes with Part 4).
+- Callers moved to `schedule-preview`: the coach portal's live schedule, a game's page and its share image, the team share image,
+  `lib/follow-feed.ts`. The tournament share image reads `teams-preview` (counts of published divisions; champions need
+  `!teamsWithheld`; the live line needs the Schedule page on). A game's page has no Notes fact.
+- The admin preview builds its public data through the same shape (`publicTournament`, `publicVenue`, `publicDivisions`).
+- Consumers narrowed to `PublicTournamentFacts` / `PublicTournament`: `public-standings`, `public-playoffs`, `public-schedule`,
+  `playoff-picture`, `entity-follow-status`, `RegisterContent` (which now calls `registerShowsFees`). The compiler found no
+  reader of a field outside the shape — the census held.
+- `components/public/NewsContent.tsx` (not in the feed, found at `/review`): the client division filter gets id and name, not the
+  whole division (fees, settings) in the page's RSC payload.
+
+**Data feeds, before → after (an anonymous caller):**
+| | before | after |
+|---|---|---|
+| `tournament` | the whole record (settings incl. `payment_instructions`, fees, directory and notification flags, `organizationId`…) | 10 fields + 4 settings keys; Register adds fees/instructions only as shown and only if the page is on |
+| `tournaments` | every active/completed event of the club, raw `contact_email` | gone (nothing read it) |
+| announcements | every site post, whatever News's switch or the post's division | pinned only, News on, none aimed at a held-back division |
+| plain `schedule` / `teams` / `standings` | all divisions, held-back team names, 0-0-0 rows, game notes | 400 |
+| `schedule-preview` etc. | notes stripped; division fees, venue notes (since 3d) | + no fee schedule, no `tournament` extras |
+| team profile (no flag) | held-back team's coach, seed, pool; crossover opponent names | withheld / published-only shape |
+| share image | counts and live line included held-back divisions and a hidden Schedule | published only; no tiles when nothing is published |
+
+**Decisions made here, easy to flip:** a pinned post naming several divisions is hidden if **any** is held back (a post that
+names a held-back division would give it away; the cost is that a published division's families wait for the post);
+division age/capacity/closed fields still ship (the Register page shows them); `rules` and `register` still list every division
+name (registration and rule tags need them; no team is named); `scores` keeps every accepted team (server-only; the follow
+status counts them) but its games no longer point at a held-back team.
+
+**Tests (`tests/unit/public-feed-privacy.test.ts`, new, 51; plus rewritten guards).** It runs the **real feed** against a fake
+database holding the things that must not leave (payment text, waiver text, other events' contacts, held-back team and division
+names, game and venue and field notes, scorekeeper identity, a notice aimed at a held-back division, internal flags) and reads the
+JSON of **every section the route's own source lists**, so a section added there is swept without anyone remembering. Also: the
+route's behaviour (a plain section is refused before the feed is asked; the look cannot be passed), the Register on/off and
+fees-hidden and page-hidden cases, the crossover door on every game-bearing section, the pieces one by one, a compiler pair
+(`@ts-expect-error` for the raw record, the raw venue and a raw field — enforced by `npm run typecheck`, not `npm test`), and a
+source sweep. Rewritten, not loosened: the Stage 3/4/5/6 guards that pinned the old shapes, the team-reads guard, the game-detail
+test (now proves the Notes line is gone), the three render fixtures; the payments-tracked census now also accepts
+`registerShowsFees`. **Non-vacuity by mutation, 25 of 25** (each old behaviour put back, the test watched fail, restored
+byte-for-byte, restore verified by `cmp`): the whole record back; `tournaments` back; every announcement; a notice aimed at a
+held-back division; News ignored; venue notes; instructions regardless of the form switch; fees though hidden; fees while the
+Register page is off; division fees everywhere; the look on every response; the plain schedule or `scores` served by the route;
+an unknown section not refused; the route passing the look; the withhold only with the flag; the game page's notes; the share
+image's live line ignoring a hidden Schedule; the coach portal and the game page back on the plain section; the scores crossover
+door; scorekeeper/notes unscrubbed on standings and playoffs; the crossover door in the published-only feeds; the organization
+contact ignoring the switch; `teamsWithheld` dropped.
+
+**Checks run:** public unit tests 764 with the 3 foreign Stage 6 walk failures only; full `npm test` 13,853 — **8 failures, none
+read a file of this change**: Stage 6 walk HTML ×3, support console foot, billing ended state (the foreign five of §15), the
+practice-plan door N1 and the series date-removal taps (recent commits of other sessions), and one of mine, found and fixed in
+the last run (the payments-tracked census, above). Typecheck (`NODE_OPTIONS=--max-old-space-size=6144`) clean; ESLint clean on
+every changed file; spelling, public tokens, public type, CSS purity, date correctness: pass. `check-org-slug-callers` (club
+own-address panel) and `check-demos` (a missing `lib/tournament-teams` under `registration-attention.ts`) fail on other
+sessions' files. **Payload readback on the restarted dev server** (Lakeshore `stage1-lakeshore-lightning/fall-classic`,
+Riverdale `riverdale-minor-ball/summer-classic`, Hamilton `stage1-hamilton-wentworth/spring-invitational`): all 7 sections ×
+3 events: 200, no `payment_instructions`, `notes`, `scoreSubmittedBy`, `tournaments`, directory or notification field in any;
+`schedule`, `teams`, `standings`, `scores`: 400; Hamilton's Register (show fees off) sends no fee schedule; the team profile
+without the flag answers the published-only shape. The seeded events hold **no** held-back division and no instructions set to
+show on the form, so those two rules were proved by the unit tests, not by the readback. Pages: the Overview, Schedule, Standings,
+Teams, Playoffs, News, Rules, a game, a team, Register and the four share images all answer 200.
+
+**Layout** (`--only=` on the changed public screens, 4 widths, `--workers=1`, dev server): **0 findings** on `pubt-schedule-pale`,
+`-game-pale`, `-standings-own`, `-teams-free`, `-team-own`, `-playoffs-pale`, `-rules-pale`; `pubt-register-open` @768: the 3
+known 36 px doors (§15), nothing new. Nothing baselined; memory never neared the floor.
+
+**`/simplify`** (four lenses): applied — the look type is the existing `LookTournament`; one options type; the Register page
+calls `registerShowsFees` instead of its own copy; one owner for the fee decision (`publicDivisions`, also used by the admin
+preview's Register); the announcements read skipped when News is hidden; an early return and a local flag; stale comments; a
+no-op assertion. Skipped, with reasons: a pick-list allow-list generator (a second spelling of the same list is checked by the
+tests), per-function `Pick`s instead of `PublicTournamentFacts`, the team-profile route's now-dead `pool`/`teamsQualifying` (a
+type in another file and Part 4 deletes the plain shape), the page's `publicFrame` param (Part 4), moving `isDivisionSchedulePublished`
+into the shape module (it imports a server-only module that the Register page loads in the browser), a dedicated share-image
+section.
+
+**`/review`** (high-risk tier; lenses privacy (mandatory), correctness/contract, regression/blast radius, test non-vacuity):
+**three defects found and fixed** — a hidden Register page still sent the fee schedule and how-to-pay text; the `scores` games
+could name a held-back opponent to a follower of the published team (and the first fix blanked a withdrawn finalist, which would
+have cost a champions card); the News page's client filter carried whole divisions. **One customer-visible regression found and
+fixed:** the event's share image would have read "— TEAMS / — DIVISIONS" before any schedule is published. **Test gaps closed:**
+payment instructions were never exercised off the Register section (the fixture had them switched off); the crossover door and
+the scorekeeper fields were never on the fixture; no test ran the route; the facility-level `notes` type was unpinned.
+Confirmed clean: every consumer of the narrowed shape, the Register page for tracked/untracked/hidden-fee events, the admin
+preview, the hot paths (the polled schedule read costs what the plain one did, and drops the announcements read when News is
+hidden), the team-profile caller.
+
+**Handed on:**
+- ⚠ **Production port (Q3).** This change **will not cherry-pick onto production's branch** (`origin/master`, 114 commits behind
+  `dev`): `lib/public-teams.ts` (`publicVenue`, `publicFrameGame`, the `teams-preview` / `schedule-preview` scrubbers) does not
+  exist there; the feed file differs by about 25 lines; the `playoffs` and `standings-preview` feeds there still ship game notes
+  and venue notes; and production's legacy pages still poll the **plain** sections from the browser, so the port must scrub them
+  (published divisions' teams only, no notes, the narrowed tournament, no `tournaments`, notices as above) rather than remove them.
+  Production's legacy components also read more of the tournament than `dev`'s do — **re-run the field census on production's
+  components before narrowing there.** The new logic is in new files (`public-tournament-shape.ts`) and the conflicts are
+  `public-tournament-data.ts`, the two routes, `public-teams.ts` and every caller listed above. Not touched: `master`, production.
+- **The service worker keeps old payloads.** `public/sw.js` caches `/api/public/*` JSON network-first under `CACHE_VERSION` `v13`;
+  an installed device holds old full responses (raw tournament, notes) for its offline fallback until the version is bumped.
+  Left alone (a shared file, every device re-downloads); bump it in the release that carries this. An open tab from before the
+  deploy that polls a removed section gets a 400 and silently stops updating until reloaded (no error state, no loop).
+- **Same privacy class, not in the feed, left:** the News page and the Overview's news list show a post aimed at a held-back
+  division to everyone, and the News division filter lists every division name (the NewsContent change above only shrinks what
+  the browser is sent). `scores` still lists every accepted team to its server-side consumers. A free-text game placeholder an
+  organizer types is shown as typed.
+- `getDivisions` never fills `contactMemberId`, `acceptedCount` or `settings`, so they never leave; `lib/public-teams.ts` and
+  `public-team-profile.ts` read `division.settings?.game_duration_minutes`, which is therefore always empty from this feed
+  (a latent default-duration bug; not verified, not this change).
+- Still owed, not this change: Stage 8 Part 4 (the admin side, the switch, the pay page's focused branch, the admin preview's
+  switch-off branch, the Rules layout menus, the team page's `publicFrame` param); the demo sandbox chrome's 19 tap-floor findings
+  and the old Register/News 36 px doors; the playoff-bracket and fan-live-score marketing shots (5e); the two stale `/The bracket/`
+  screens and the expired Stage 3 / Stage 4 fixtures; white text on team-colour fills in the share images (advisory); the admin
+  strip's 34 px "Dismiss"; `/release` §1d-2's sharp probe; the club editor's unlabelled 18 px input.
