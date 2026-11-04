@@ -2,7 +2,7 @@
 
 **Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 committed `d4af280e6` 2026-11-03** (record §10; it releases with the flip, ruling D). **Part 2 committed `02e29f453` 2026-11-03** (record §11; it releases with the flip too). **Part 3a committed `3304c77fe` 2026-11-03**
 (record §12; releases with the flip). **Part 3b committed `9b6252e8a` 2026-11-04** (record §13; releases with the flip). **Part 3c committed `62f5841f9` 2026-11-04**
-(record §14; releases with the flip). **Part 3d built 2026-11-04** (record §15; releases with the flip; the
+(record §14; releases with the flip). **Part 3d committed `33386d5df` 2026-11-04** (record §15; releases with the flip; the
 switch-off half-state ends for every public tournament page). Next: the public feed fix (owner-approved 2026-11-04, its own
 change, §15 handed on), then Part 4. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
@@ -662,7 +662,7 @@ fact).
   3d/4); the two stale `/The bracket/` layout screens (§13); white text on team-colour fills in the share images (advisory); the
   admin strip's 34 px "Dismiss"; `/release` §1d-2's sharp probe; the club editor's unlabelled 18 px input.
 
-## 15. Part 3d record (the Overview, the tournament layout, the ticker, the side rail's legacy mode, the Navbar's tournament branch; built 2026-11-04; releases with the flip)
+## 15. Part 3d record (the Overview, the tournament layout, the ticker, the side rail's legacy mode, the Navbar's tournament branch; committed `33386d5df` 2026-11-04; releases with the flip)
 
 **What a customer sees:** nothing (nothing promoted). **An owner on dev, switch on (the default):** nothing changes — the
 Overview, every public tournament page's chrome and the admin preview's Overview already showed the new look. **Switch
