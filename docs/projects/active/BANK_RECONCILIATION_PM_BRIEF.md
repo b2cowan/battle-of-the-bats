@@ -2,7 +2,7 @@
 
 **Plan:** `BANK_RECONCILIATION_PLAN.md` · **Priority:** High (inside the Club release, owner 2026-10-12; planned and
 drawn before Stage 8) · **Status:** planned; all twelve asks (B1–B12) ruled A by the owner 2026-11-04, as recommended.
-Next: the owner mockup session.
+Drawings approved 2026-11-04. **R1 built 2026-11-04** (behind the scenes, nothing a customer sees yet): the bank account, the statement and the tick are stored; the arithmetic is proven against both example statements; a Stripe payout was measured to add up to the cent when the family pays the fee (the club-pays case still needs one test payment). Next: R2, the club's Bank tab.
 
 ---
 

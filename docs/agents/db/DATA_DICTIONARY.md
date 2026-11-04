@@ -2510,7 +2510,7 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 **`flip_workspace_into_club(p_org_id, p_plan, p_club_name, p_tournament_limit, p_actor)`** (mig 414, Plan & billing Stage 4b Part 1, SECURITY DEFINER, service-role EXECUTE only; **not yet applied to any database**). The sibling of `move_team_into_club` for the OTHER door: a coach's standalone Coaches Portal organization turns into the club **in place** (the team, roles and web address do not move). One transaction, repeatable (`alreadyFlipped`), one `org_audit_log` row (`workspace_flipped_into_club`). Sets `organizations.account_kind='organization'`, `team_workspace_status` NULL, `plan_id`, `tournament_limit` (passed in — plan-config is TypeScript), `name` (when given), `billing_suspended_*` cleared. Leaves alone `slug`, `team_limit`, `free_floor`, `is_discoverable` (stays false until the coach opts in), the org's own Stripe columns (the real Club subscription writes them), the owner and head-coach memberships and the `basic_coach_teams` shadow. Tombstones the `team_workspaces` row (see `billing_mode`); ends `team_entitlements` (`cancelled`, `ends_at` = now); revokes a staff-given free-time grant (`org_overrides` type `subscription_status`; a grant with no end counts as running) with a `platform_audit_log` `revoke_override` entry; revokes open `team_org_links`; strips the workspace-only staff grants (`tournaments`, `registerTournaments` set false) from `rep_team_staff_memberships`, `rep_team_coaches` and pending `assistant_invite_tokens`, and the tournament bundle keys from coach-role `organization_members.capabilities`. **Refusals (raised, nothing written):** `workspace_flip_not_a_workspace`, `_org_not_found`, `_workspace_closed` (archived, or moved into someone else's club), `_not_a_club_plan` (only `club`/`club_large`), `_plan_mismatch` (the stored plan is not the one asked for), `_not_settled` (no subscription id, or status not `active`/`trialing`), `_holds_other_teams` (more than one team). Called by the app (`lib/workspace-flip.ts`) from `applyPlanChangeSideEffects` after a plan is written; no Stripe call. ⚠ The Stripe ids it NULLs on the workspace row are what keep a later Club cancellation out of the portal's retention and email.
 
 **`move_team_into_club(p_link_id, p_approving_side, p_actor_user_id, p_actor_email, p_team_cap)`** (mig 313, SECURITY DEFINER, service-role EXECUTE only; replaces 067's `complete_team_workspace_ownership_transfer`, which it DROPS). Records the approving side's yes AND moves the whole team into the club in ONE transaction; returns jsonb (`alreadyMoved`, `clubSlug`, `teamSlug`, `slugChanged`, `previousStripeSubscriptionId`, `staffSeats`, `moved` = per-table row counts).
-- **What moves is decided by rule, and a build gate holds it:** a coach's own org holds exactly one team (guarded: `team_move_workspace_holds_other_teams`), so every row it holds in a team table is the team's. `c_moves` (≈65 tables — every `rep_*` except `rep_team_groups`/`rep_team_tournament_registrations`, plus `assistant_invite_tokens`, `budget_categories`, `budget_items`, `family_links`, `family_recap_views`, `org_payees`) moves every row by `org_id`; `c_moves_some` moves the team's part only (`accounting_ledgers` = the team ledger, `chat_rooms` = the team's staff room re-keyed `ref_id` → the club, `chat_message_reports` on it, `family_email_optouts` / `family_consents` unless the club already holds the same one). **Every other table carrying `org_id` stays for a written reason in `tests/unit/team-move-coverage.test.ts`, which fails the build when the snapshot grows an `org_id` table none of the three lists names.**
+- **What moves is decided by rule, and a build gate holds it:** a coach's own org holds exactly one team (guarded: `team_move_workspace_holds_other_teams`), so every row it holds in a team table is the team's. `c_moves` (≈65 tables — every `rep_*` except `rep_team_groups`/`rep_team_tournament_registrations`, plus `assistant_invite_tokens`, `bank_accounts` (mig 437: the team's bank account, with every statement and tick under it), `budget_categories`, `budget_items`, `family_links`, `family_recap_views`, `org_payees`) moves every row by `org_id`; `c_moves_some` moves the team's part only (`accounting_ledgers` = the team ledger, `chat_rooms` = the team's staff room re-keyed `ref_id` → the club, `chat_message_reports` on it, `family_email_optouts` / `family_consents` unless the club already holds the same one). **Every other table carrying `org_id` stays for a written reason in `tests/unit/team-move-coverage.test.ts`, which fails the build when the snapshot grows an `org_id` table none of the three lists names.**
 - **Re-pointed, never left across two orgs:** `person_id` on roster / tryout / family-link rows is cleared and re-attached IN THE CLUB by `families_attach_people(club)`; `rep_team_payment_requests.budget_line_id` / `rep_cost_allocations.source_budget_line_id` pointing at the coach org's `org_budget_lines` are cleared; the team's `group_id` is cleared; library rows the coach org held with `team_id` NULL (tags, drills, award types, budget categories/items, payees, document templates) become the team's (`team_id` set) so they don't land in the club's shared library.
 - **Staff:** every ACTIVE `rep_team_staff_memberships` user gets a capability-less `coach` seat in the club; an existing real role keeps its role AND status (067 re-activated any conflicting row — a suspended admin would have come back).
 - **Refusals (raised, all-or-nothing):** `team_move_not_waiting` (not open, or this side already said yes / asked), `team_move_open_tournament` (the coach org's own tournament is draft/active — it does not move), `team_move_team_limit` (club's non-archived teams ≥ `p_team_cap`, counted under the club's row lock), `team_move_team_ledger_conflict`, `team_move_workspace_archived`, `team_move_target_not_a_club`. A slug taken in the club is NOT a refusal: the first free `-2`, `-3`… is used. An `org_owned` link answers `alreadyMoved` (idempotent).
@@ -8554,6 +8554,7 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 8. **⚠ A VOID NOW CARRIES ITS RECORD (mig 315)** — `void_reason` / `voided_by` / `voided_at`. A club void (undo, reversal, transfer void) writes all three on both halves; `voidEntry` writes `voided_at` always and the other two when given. NULL on every pre-315 void.
 9. **⚖ WHICH WORD A CLUB LINE COUNTS UNDER (mig 317, `filedCategory` / `fileLine` in [lib/club-budget-report.ts](../../../lib/club-budget-report.ts)).** A line the money loop wrote files itself by its SOURCE, never by a word: an allocation received → "From the teams" (under its allocation), money received on a To-club request → "From the teams › On request", a request paid to a team → the standard club-only word **"Team support › Paid to teams on request"** (fixed ids `3b5e7a00-0317-4c1b-8a50-7ea0507c0001` / `…0002`, `TEAM_SUPPORT_WORD_IDS`). A typed line files under its word, else "Not filed"; a transfer between the club's own books is filed nowhere and moves no money in total. Only POSTED lines on the **Club books** (`entity_type='org'`; a hosted tournament's book since Stage 7a; **a house-league season's book since 9b-2** — its fees file under the season's word, mig 371 `league_season_fee_words`, and a house-league REFUND nets the fees row and the band's Collected, never Spent: `isFeeRefund` in lib/club-money-figures.ts) count in Budget vs. Actual; every book the club owns (Club, Tournament, House league — never a team's) counts in Cash on hand and the Months balance. A book's sums are ONE SQL aggregate, `club_book_totals(p_ledgers, p_from, p_to)` (mig 317, C14 — it replaced the page-by-page walk in `getLedgerSummary`).
 10. **⚖ CLOSED FISCAL YEARS ARE LOCKED (mig 318, `accounting_entries_fiscal_lock`).** A line on a book the club owns (`org` / `tournament` / `league_season` — never a team's) dated on or before `club_books_closed_through(org)` can't be inserted, edited, voided or deleted (`year_closed`), and an edit can't MOVE a line into the closed stretch. Exempt: a relabel (only `payee_id` / `budget_category_id` / `budget_item_id` / `linked_entry_id` change — a merge reaches every year, and a removed partner line clears its link); a PENDING line clearing to POSTED with its date moved into an open year (the trigger keeps the old date in `written_on`); a delete while the club or the book is being removed. Routes pre-check (`refuseIfClosed` / `refuseIfClosedFor`) and map the trigger's message to the same 409 (`isClosedYearError`).
+11. **A BANK TICK IS NOT ON THIS ROW (mig 436, Bank reconciliation).** A line ticked against a bank statement is a row in `bank_check_marks` keyed `entry:{id}`, never a column here, so ticking a line in a closed fiscal year is not an edit and the lock (gotcha 10) never sees it. Editing or voiding a ticked line is still allowed (B4: checking locks nothing); the edit routes stamp `bank_check_changes` (R3).
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
@@ -8877,6 +8878,250 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 <!-- dict:col:org_fiscal_year_reopenings.was_closing_balance -->
 <!-- dict:col:org_fiscal_year_reopenings.was_closing_snapshot -->
 **`was_closed_at`** (timestamptz, NOT NULL) / **`was_closed_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) / **`was_closing_balance`** (numeric(12,2), NOT NULL) / **`was_closing_snapshot`** (jsonb, nullable) — the close this Reopen undid, kept whole.
+
+---
+
+## `bank_accounts`
+<!-- dict:table:bank_accounts -->
+
+**Purpose:** a bank account a club or a team checks its statements against (Bank reconciliation R1, **mig 436**; plan
+`BANK_RECONCILIATION_PLAN.md`, B1/B3/B10/B12). The unit of a bank check is the **account**, never a book (P1).
+
+**Gotchas (read first):**
+1. **A NAME, NEVER A NUMBER (B12).** There is no bank, transit or account-number column, and there must never be one.
+2. **A team has exactly one live account** (partial unique `bank_accounts_one_per_team`), and it belongs to the **team**: it moves with a standalone team into a club (`move_team_into_club` `c_moves`, mig 437), and
+   not a season (B10): no `program_year_id`, no year column anywhere in the bank tables. A club may have several
+   (C10: a gaming account); its **first** account is the oldest live **club-kind** account (`owner_kind='club'`, never a
+   team account moved in by `move_team_into_club`, which can be older), and every club book not in
+   `bank_account_books` belongs to it. ⚠ R2's lookup must filter `owner_kind='club'`.
+3. **Service role only** (RLS on, no policies, grants revoked). Access is decided in the routes: club read =
+   `canOpenModule(member, org, 'module_accounting')`, club write = `canMoveClubMoney` (B7); team read = `canViewMoney`,
+   write = money write.
+
+**Fields** (boilerplate `id` omitted):
+
+<!-- dict:col:bank_accounts.org_id -->
+<!-- dict:col:bank_accounts.owner_kind -->
+<!-- dict:col:bank_accounts.team_id -->
+**`org_id`** (FK → `organizations.id` CASCADE, NOT NULL) / **`owner_kind`** (`club|team`) / **`team_id`** (FK →
+`rep_teams.id` CASCADE; set iff `owner_kind='team'`, CHECK `bank_accounts_owner_shape`) — whose account. A standalone
+team's account sits on its shadow org.
+
+<!-- dict:col:bank_accounts.name -->
+**`name`** (text, trimmed 1–80) — "Club chequing", "Team account". Unique per club among live accounts (case-insensitive).
+
+<!-- dict:col:bank_accounts.opening_date -->
+<!-- dict:col:bank_accounts.opening_balance_cents -->
+<!-- dict:col:bank_accounts.set_up_by -->
+<!-- dict:col:bank_accounts.set_up_at -->
+**`opening_date`** (date) / **`opening_balance_cents`** (bigint) / **`set_up_by`** / **`set_up_at`** — the first check's
+starting date and the bank balance on it (B3, C1/K1), set together (CHECK `bank_accounts_opening_pair`). Null = not set up
+yet. Every later statement starts where the previous one ended (derived in `lib/bank-check.ts`, never stored twice).
+The items still outstanding then are `bank_saved_lines` (`opening_*`).
+
+<!-- dict:col:bank_accounts.created_by -->
+<!-- dict:col:bank_accounts.archived_at -->
+**`created_by`** (FK → `auth.users` SET NULL) / **`archived_at`** — no archive flow is built in R1; the column frees the
+team/name uniqueness if one ever is.
+
+---
+
+## `bank_account_books`
+<!-- dict:table:bank_account_books -->
+
+**Purpose:** which club book's money is in which club account (Ask 13, mig 436). A mapping table, **not** a column on
+`accounting_ledgers`, so the fiscal-year lock's ledger trigger never refuses a move.
+
+**Gotchas (read first):**
+1. **No row = the club's first account.** A row exists only once a book has been moved off it.
+2. **Trigger `bank_account_books_guard`** refuses a team book (`bank_book_is_team_book`), a team account
+   (`bank_book_not_club_account`) and another club's account (`bank_book_other_club`).
+3. **A move takes the book's UNTICKED lines with it; lines already ticked stay on the old account's checks** (their
+   `bank_check_marks` rows keep the old `bank_account_id`). `bank_line_exclusions` for the moved lines must move with
+   them (the R2 move route's job).
+
+<!-- dict:col:bank_account_books.ledger_id -->
+<!-- dict:col:bank_account_books.bank_account_id -->
+<!-- dict:col:bank_account_books.moved_by -->
+<!-- dict:col:bank_account_books.moved_at -->
+**`ledger_id`** (PK, FK → `accounting_ledgers.id` CASCADE) / **`bank_account_id`** (FK → `bank_accounts.id` CASCADE) /
+**`moved_by`** / **`moved_at`** — one account per book.
+
+---
+
+## `bank_checks`
+<!-- dict:table:bank_checks -->
+
+**Purpose:** one bank statement checked against the book (B3, mig 436): its end date and ending balance, typed.
+
+**Gotchas (read first):**
+1. **No starting balance column.** A statement starts where the previous one (by end date) ended, or at the account's
+   `opening_*`. One statement per end date per account (UNIQUE).
+2. **`status` is `open|checked` only.** Undo (latest checked only, B4/Ask 9) puts it back to `open` **with its ticks
+   kept**; the history is `bank_check_events`. Several may be open after stepping back; they re-check oldest first.
+3. **`outstanding_snapshot`** (jsonb array of `{key,date,direction,amountCents,label?}`) is what was still outstanding
+   when it was marked checked (B10). The next statement reads it for lines the source no longer reads (a coach season
+   rolled over), so nothing ever reads another season. Required when `checked` (CHECK `bank_checks_checked_has_when`).
+4. **Checking locks nothing** (B4). "Changed since" is `bank_check_changes` plus a comparison of the marks.
+5. **The statement figures are the route's to protect, not the database's.** A later statement's start is derived from
+   the previous one's `statement_ending_balance_cents`, and the account's from `opening_*`; no trigger stops an UPDATE of
+   `statement_end_date` / `statement_ending_balance_cents` on a checked row, or of `opening_*` once statements exist.
+   R2/R4 must refuse both (Undo, then re-enter, is the way). Order ("every earlier statement checked", "ends after the
+   last") is likewise route-enforced (`canStartCheck`); the database holds only one statement per end date.
+6. **A stale `outstanding_snapshot`/`checked_at` can remain after Undo** (the CHECK is one-way); the engine reads a
+   snapshot only from a `checked` statement, so it is ignored while the row is `open`.
+7. **`UNIQUE (id, bank_account_id)`** (`bank_checks_id_account`) exists so `bank_check_marks` can hold a composite FK:
+   a tick can only point at a statement of its own account.
+
+**Fields** (boilerplate `id` omitted):
+
+<!-- dict:col:bank_checks.bank_account_id -->
+<!-- dict:col:bank_checks.statement_end_date -->
+<!-- dict:col:bank_checks.statement_ending_balance_cents -->
+<!-- dict:col:bank_checks.status -->
+<!-- dict:col:bank_checks.checked_by -->
+<!-- dict:col:bank_checks.checked_at -->
+<!-- dict:col:bank_checks.outstanding_snapshot -->
+<!-- dict:col:bank_checks.created_by -->
+<!-- dict:col:bank_checks.created_at -->
+**`bank_account_id`** (FK CASCADE) / **`statement_end_date`** (date) / **`statement_ending_balance_cents`** (bigint,
+signed: an overdrawn statement is negative) / **`status`** / **`checked_by`** / **`checked_at`** (the latest
+check or check-again) / **`outstanding_snapshot`** / **`created_by`** / **`created_at`**.
+
+---
+
+## `bank_check_events`
+<!-- dict:table:bank_check_events -->
+
+**Purpose:** a statement's own history (mig 436): `checked`, `undone` (reason required, trimmed 1–500, Ask 9),
+`checked_again` (Ask 11), with `by_user` and `at`. Like `org_fiscal_year_reopenings`; not a money audit table.
+
+<!-- dict:col:bank_check_events.check_id -->
+<!-- dict:col:bank_check_events.kind -->
+<!-- dict:col:bank_check_events.reason -->
+<!-- dict:col:bank_check_events.by_user -->
+<!-- dict:col:bank_check_events.at -->
+**`check_id`** (FK CASCADE) / **`kind`** / **`reason`** / **`by_user`** (FK → `auth.users` SET NULL) / **`at`**.
+
+---
+
+## `bank_check_marks`
+<!-- dict:table:bank_check_marks -->
+
+**Purpose:** **the tick** (mig 436): a mark **beside** the money, never a column on `accounting_entries` or any rep table
+(architectural decision 1). It keeps the line **as it was checked** (date, direction, amount), refreshed when the statement
+is marked checked or checked again, so "changed since" is a comparison and a line its source no longer reads still shows.
+
+**Gotchas (read first):**
+1. **`line_key`** — `entry:{accounting_entries.id}` (club); the **register row id of a SETTLED coach row**
+   (`money-in-{uuid}`, `dues-payment-{uuid}`, `dues-payout-{uuid}`, `fundraiser-{uuid}`, `allocation-{uuid}`,
+   `request-{uuid}`, `expense-{expenseId}-payment-{paymentId}`; minted once in `lib/coach-register-book.ts`, verified
+   stable R1 — a scheduled row's id is NOT stable and never ticks); `payout:{po_id}` (an automatic Stripe payout);
+   `typed:{bank_saved_lines.id}`.
+2. **One line ticks once per account** (UNIQUE `bank_account_id, line_key`). **A tick and its statement share an
+   account** — composite FK `bank_check_marks_check_same_account` `(check_id, bank_account_id)` → `bank_checks (id,
+   bank_account_id)`, `ON DELETE CASCADE`. A payout tick and its members' ticks (`payout_key` set) are written and
+   removed together by the route; the database does not tie them.
+3. **A payout tick stamps its members:** the `payout:` row plus one row per member line with `payout_key` set, because
+   payouts are read live and never stored.
+4. **Ticking a line in a closed fiscal year is allowed** — a mark, not money (B4).
+
+<!-- dict:col:bank_check_marks.bank_account_id -->
+<!-- dict:col:bank_check_marks.check_id -->
+<!-- dict:col:bank_check_marks.line_key -->
+<!-- dict:col:bank_check_marks.line_date -->
+<!-- dict:col:bank_check_marks.direction -->
+<!-- dict:col:bank_check_marks.amount_cents -->
+<!-- dict:col:bank_check_marks.payout_key -->
+<!-- dict:col:bank_check_marks.marked_by -->
+<!-- dict:col:bank_check_marks.marked_at -->
+**`bank_account_id`** / **`check_id`** (FK CASCADE) / **`line_key`** / **`line_date`** / **`direction`** (`in|out`) /
+**`amount_cents`** (≥ 0) / **`payout_key`** / **`marked_by`** / **`marked_at`**.
+
+---
+
+## `bank_check_added_lines`
+<!-- dict:table:bank_check_added_lines -->
+
+**Purpose:** a line written into a book **from** a statement's helper (mig 436): `bank_fee`, `interest` (B5; club: the
+account's own first book, Ask 1; coach: a cost/income record with a category, Ask 2) or `payment_processing` (a payout
+gap, Ask 7). It ticks on **that** statement whatever its date: a fee re-dated to today because the statement is in a
+closed fiscal year still ticks there (Ask 8, `bankFeeDate`).
+
+<!-- dict:col:bank_check_added_lines.check_id -->
+<!-- dict:col:bank_check_added_lines.line_key -->
+<!-- dict:col:bank_check_added_lines.kind -->
+<!-- dict:col:bank_check_added_lines.added_by -->
+<!-- dict:col:bank_check_added_lines.added_at -->
+**`check_id`** (FK CASCADE) / **`line_key`** / **`kind`** / **`added_by`** / **`added_at`** — UNIQUE (`check_id`, `line_key`).
+
+---
+
+## `bank_check_changes`
+<!-- dict:table:bank_check_changes -->
+
+**Purpose:** a ticked line edited or voided **after** its statement was checked (B4, Ask 11; mig 436): the line as checked
+(`was_*`), as it is now (`now_*`, null when `removed`), who changed it and when. Stamped by the edit/void/delete routes
+(R3 club, R6 coach). **Cleared** (`cleared_by`/`cleared_at`) by "Mark checked again" at $0.00 — never by putting the line
+back alone.
+
+<!-- dict:col:bank_check_changes.check_id -->
+<!-- dict:col:bank_check_changes.line_key -->
+<!-- dict:col:bank_check_changes.was_date -->
+<!-- dict:col:bank_check_changes.was_direction -->
+<!-- dict:col:bank_check_changes.was_amount_cents -->
+<!-- dict:col:bank_check_changes.now_date -->
+<!-- dict:col:bank_check_changes.now_direction -->
+<!-- dict:col:bank_check_changes.now_amount_cents -->
+<!-- dict:col:bank_check_changes.removed -->
+<!-- dict:col:bank_check_changes.changed_by -->
+<!-- dict:col:bank_check_changes.changed_at -->
+<!-- dict:col:bank_check_changes.cleared_by -->
+<!-- dict:col:bank_check_changes.cleared_at -->
+**`check_id`** / **`line_key`** / **`was_date`** / **`was_direction`** / **`was_amount_cents`** / **`now_date`** /
+**`now_direction`** / **`now_amount_cents`** / **`removed`** / **`changed_by`** / **`changed_at`** / **`cleared_by`** /
+**`cleared_at`** — an uncleared row is what turns the Overview line amber (B9).
+
+---
+
+## `bank_line_exclusions`
+<!-- dict:table:bank_line_exclusions -->
+
+**Purpose:** "Didn't go through the bank" (B6, Ask 6; mig 436): the line leaves the tick list and counts in "Kept out of
+the bank". **Deleting the row is "Put it back".** Lines left out *automatically* (same-account transfer pairs, a bill a
+family paid the vendor, void, pending) have no row: the engine decides them.
+
+<!-- dict:col:bank_line_exclusions.bank_account_id -->
+<!-- dict:col:bank_line_exclusions.line_key -->
+<!-- dict:col:bank_line_exclusions.excluded_by -->
+<!-- dict:col:bank_line_exclusions.excluded_at -->
+**`bank_account_id`** (FK CASCADE) / **`line_key`** / **`excluded_by`** / **`excluded_at`** — UNIQUE per account and key.
+
+---
+
+## `bank_saved_lines`
+<!-- dict:table:bank_saved_lines -->
+
+**Purpose:** lines the account holds itself, outside any book (mig 436).
+- `opening_picked` — a book line dated before the starting date that the first check said was still outstanding (Ask 3).
+- `opening_typed` — one typed in because no book has it; `line_key` = `typed:{id}` **exactly its own `id`** (CHECK
+  `bank_saved_lines_typed_shape`; the route generates the uuid first), description required. No other kind may carry a
+  `typed:` key. It lives **only** in the check, never in a book.
+- `carried` — at **Start next season** (Ask 12, amends B10), the closing season's unticked lines no saved list holds,
+  so the new season's first check can list them under "Still outstanding from your last check" without reading last
+  season. R4 wires the trigger, from the bank side (Stage 14's rollover file is not touched).
+
+<!-- dict:col:bank_saved_lines.bank_account_id -->
+<!-- dict:col:bank_saved_lines.kind -->
+<!-- dict:col:bank_saved_lines.line_key -->
+<!-- dict:col:bank_saved_lines.line_date -->
+<!-- dict:col:bank_saved_lines.direction -->
+<!-- dict:col:bank_saved_lines.amount_cents -->
+<!-- dict:col:bank_saved_lines.description -->
+<!-- dict:col:bank_saved_lines.saved_by -->
+<!-- dict:col:bank_saved_lines.saved_at -->
+**`bank_account_id`** / **`kind`** / **`line_key`** / **`line_date`** / **`direction`** / **`amount_cents`** (> 0) /
+**`description`** / **`saved_by`** / **`saved_at`** — UNIQUE per account and key.
 
 ---
 

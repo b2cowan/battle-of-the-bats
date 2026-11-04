@@ -11,7 +11,9 @@
 > https://claude.ai/artifact/6s8iTzaxGQDfAqugrSMbmZ. **Drawing asks 1–14 RULED 2026-11-04, all A (as recommended),
 > pasted back with no notes.** Asks 12 and 1 amend B10 and B5 (recorded under each). §6 records what was drawn and the
 > rulings. **Drawings approved by the owner 2026-11-04 (R0 closed).**
-> **Next:** build Stages R1–R7 (§7), one session each, starting with R1.
+> **R1 built 2026-11-04** (migs 436 + 437 applied to dev; prod owed before the promote that ships R2, recorded in
+> `MANUAL_PROD_STEPS.json`; engine `lib/bank-check.ts` + 21 tests; P4 measured; /simplify, /review and the commit owed).
+> **Next:** R2 (the club's Bank tab).
 
 ## Goal
 
@@ -413,7 +415,60 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
   ruled A the same day; **drawings approved by the owner 2026-11-04**.)*
 
 ### R1 — The account, the check, and the engine (no screens; prompt `BANK_RECONCILIATION_R1_BUILD_PROMPT.md`, written 2026-11-04)
-- [ ] **Migration** `supabase/migrations/4xx_bank_checks.sql` (number taken at build time; Stage 14 and others are
+> **✅ Built 2026-11-04.** What landed, and where it differs from the sketch below (the sketch is kept as written):
+> - **Mig 436 `436_bank_checks.sql`**, nine tables: `bank_accounts` (holds the first check's `opening_date` +
+>   `opening_balance_cents`), `bank_account_books` (+ trigger `bank_account_books_guard`: club account, own club, never a
+>   team book), `bank_checks` (status `open|checked` only; **no starting-balance column**, it is derived from the previous
+>   statement; Undo is an event, Ask 9), `bank_check_events` (checked / undone + reason / checked_again), `bank_check_marks`
+>   (keeps the line **as checked**: date, direction, amount), `bank_check_added_lines` (fee / interest /
+>   payment-processing added from a statement, Ask 8), `bank_check_changes` (as checked / as now / who / when / cleared,
+>   Ask 11), `bank_line_exclusions` (B6; delete = Put it back), `bank_saved_lines` (`opening_picked` / `opening_typed`
+>   Ask 3, and `carried` Ask 12: one table, not a jsonb on the account). No bank or account number column.
+> - **⚖ Access deviates from the sketch, on the house rule.** The sketch said "RLS: club rows by membership with
+>   Accounting; team rows by team money access". `DATA_DICTIONARY.md` maintenance rule 7 (migs 310/311) says every
+>   product table is **service role only, no policies**, and no money table has a policy today. So: RLS on, no policies,
+>   grants revoked; the R2/R4 routes decide access with the existing permissions (club read `canOpenModule(…,
+>   'module_accounting')`, write `canMoveClubMoney`; team `canViewMoney` / money write), which is B7 exactly.
+> - **Mig 437** re-creates `move_team_into_club` from 435 exactly, with `bank_accounts` in `c_moves`: a standalone team's
+>   account (and every statement and tick under it) moves with the team into a club. Caught by
+>   `tests/unit/team-move-coverage.test.ts`; B10's "belongs to the team" decides it. ⚠ A later re-creation of the move
+>   must start from 437.
+> - **Proved on dev** (`.probe/bank-r1-guard-check.sql`, rolled back, `BANK_R1_GUARD_PASSED`): the guard's three
+>   refusals, one team account, the opening pair, one tick per line, checked needs when + snapshot, undo needs a reason,
+>   typed lines need a `typed:` key, no anon/authenticated grant.
+> - **Engine `lib/bank-check.ts`** (pure, integer cents): `evaluateCheck` (band, ticked/outstanding, kept out,
+>   auto-excluded, waiting, payout gaps, changed since), `canStartCheck` / `canMarkChecked` / `canUndo` /
+>   `canMarkCheckedAgain`, `snapshotForMarking`, `payoutTickMarks`, `carriedAtRollover`, `bankFeeDate`. Tests
+>   `tests/unit/bank-check.test.ts` (21): both tab-2 statements to the cent, Ask 3, the fiscal-year straddle + closed-year
+>   tick + re-dated fee (Ask 8), rollover (Ask 12), moved book (Ask 13), undo + step back (Ask 9), changed since + checked
+>   again (Ask 11).
+> - **Engine choices R2/R4 build on** (none adds to a ruling except the first, said out loud):
+>   - **Ask 12, one step wider:** `carriedAtRollover` carries every unticked line no saved list holds, including one
+>     back-dated INTO an already-checked month after that check. The ruling named "dated after the last check"; a
+>     back-dated line is the same case (otherwise it is in nobody's list). Narrow it in one line if the owner says so.
+>   - A **stamped** change stays listed until "Mark checked again", even if the line is put back (Ask 11 A: only Mark
+>     checked again clears the amber). A line a coach's rolled-over season no longer reads is **not** a change.
+>   - A new statement can start only when every statement is checked; after stepping back (Ask 9), they re-check oldest
+>     first.
+>   - A ticked payout counts its **book** side in the band; its gap is added as a named amount, so the Difference never
+>     carries it (Ask 7).
+>   - If the Stripe read fails, a payout's member lines fall back to ordinary rows (ticked ones stay ticked by their
+>     stamped marks).
+> - **/simplify + /review before the commit (2026-11-04), fixed in the same commit** (engine tests now 26):
+>   - *Engine:* re-marking while the Stripe read is down keeps the payout tick and each member's link to it; a member
+>     ticked on its own (a plain mark) is no longer folded under a payout that reappears; `snapshotForMarking` drops a
+>     line voided after it was ticked, so "Mark checked again" can clear its amber; a ticked line the book deleted
+>     (stamped `removed`) counts for nothing; a picked opening item the book still reads stays outstanding on later
+>     statements without the caller re-passing the opening items (the engine keeps every key a saved list has placed).
+>   - *Mig 436 (dev dropped and re-applied, all nine tables were empty):* a tick can only point at a statement of its own
+>     account (`bank_checks_id_account` + composite FK on the marks); a typed opening line's key must equal its own id.
+>     Mig 437 diffed against 435: identical except `bank_accounts` in `c_moves` and the comment line.
+>   - *Recorded for R2/R4, not built into the database:* a club's "first account" is the oldest live **club-kind**
+>     account (a team account moved in by 437 can be older); statement figures and `opening_*` are the route's to
+>     protect once statements exist (no trigger); a payout tick and its members' ticks are written and removed together
+>     by the route; team delete cascades a team's checked history (consistent with "belongs to the team").
+
+- [x] **Migration** `supabase/migrations/4xx_bank_checks.sql` (number taken at build time; Stage 14 and others are
   allocating). Sketch, final shape set at build:
   - `bank_accounts` (id, org_id, `owner_kind` club|team, team_id NULL for club, name, created_by/at, archived_at).
     **No bank or account number column, ever.**
@@ -427,13 +482,15 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
     tick time, because payouts are not stored.
   - `bank_line_exclusions` (bank_account_id, line_key, by/at): B6.
   - RLS: club rows by org membership with Accounting; team rows by team money access. Writes only through routes.
-- [ ] `docs/agents/db/DATA_DICTIONARY.md` + `npm run refresh:snapshots` (dev+prod).
-- [ ] Pure engine `lib/bank-check.ts`, integer cents, no IO: lines in → ticked balance, difference, outstanding list,
+- [x] `docs/agents/db/DATA_DICTIONARY.md` + `npm run refresh:snapshots` (dev+prod). *(Nine table entries after
+  `org_fiscal_year_reopenings`; `accounting_entries` gotcha 11; the team-move entry names `bank_accounts`.)*
+- [x] Pure engine `lib/bank-check.ts`, integer cents, no IO: lines in → ticked balance, difference, outstanding list,
   changed-since detection, the B6 exclusions. Unit tests including straddling a fiscal year end and a rollover.
-- [ ] **Prove P4:** in test mode, sum each automatic payout's book side vs its amount, in both fee cases. Record the
-  result in this plan; if it doesn't sum, R2 shows the gap as a named line.
-- [ ] Confirm the coach register row `id` is stable across reads (derived from source table + id); if not, add a stable
-  source key the engine can mark.
+- [x] **Prove P4:** in test mode, sum each automatic payout's book side vs its amount, in both fee cases. Record the
+  result in this plan; if it doesn't sum, R2 shows the gap as a named line. *(Answered under Open questions: holds for
+  family-pays, measured; club-pays has no dev data.)*
+- [x] Confirm the coach register row `id` is stable across reads (derived from source table + id); if not, add a stable
+  source key the engine can mark. *(Answered under Open questions: stable for every settled row; no new key needed.)*
 
 ### R2 — Club: the Bank tab (desk + phone)
 - [ ] Routes under `app/api/admin/accounting/bank/**` via `resolveClubMoney({write})`; lines from posted club-book
@@ -489,8 +546,39 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 - **No money audit table is introduced;** a check carries its own who/when/undo/reason, like the fiscal-year reopen.
 
 ## Open questions (build-time, not owner asks)
-- [ ] P4: does a payout's book side sum to its deposit in both fee cases? (R1)
-- [ ] Is the coach register row id a stable source key? (R1)
+- [x] P4: does a payout's book side sum to its deposit in both fee cases? (R1) **Answered 2026-11-04, measured in Stripe
+  test mode on `uat-rep-club` (`acct_1UUWAvFuSuqPawyy`, 4 automatic payouts; read-only scripts
+  `.probe/bank-r1-p4-{cols,main,detail}.cjs`, re-run and read line by line in the main session):**
+  - **Family pays: P4 HOLDS, to the cent.** Every app charge's balance transaction carries only an `application_fee`
+    (no `stripe_fee`: on these direct charges Stripe takes no processing fee from the club's balance), so its net is the
+    base, which is exactly the income booked (e.g. 156.75 charged, fee 6.75, net 150.00 = income 150.00). Refunds:
+    fee 0, amount = the refund's own entries (156.75 = 150 + 6.75). Book side = Σ net on all app items, every payout.
+  - **Club pays: NOT MEASURED.** All 16 `online_payments` on dev are `fee_payer='family'`. The code predicts it holds
+    (total = base, application fee = fee, income base − "Payment processing" cost fee = net), and the mechanism is the
+    one measured above, but it is a prediction. **R2 owes one club-pays test payment through to a payout** before the
+    grouped tick ships.
+  - **⚠ Where a payout does NOT sum, and R2 must say so by name (not "payment processing"):**
+    1. **An open dispute.** Stripe withdraws the amount + its $15.00 dispute fee at once (po_1UVKmq…: −171.75), but the
+       book records a dispute only when it is lost (`online_payment_disputes.lost_booked_at`). Gap until it resolves; both
+       figures are stored on our side (`amount`, `stripe_fee`), so R2 can name it "Dispute held: $171.75" without reading
+       Stripe. **Ask 7's "Add it as payment processing" is wrong for this gap** — R2 offers it only when the gap is not
+       explained by an open dispute.
+    2. **Stripe activity with no record of ours** (the 12d-1/12d-2 probe charges, debits and a standalone −5.00
+       `stripe_fee`): dev-only in practice, but R2 needs a quiet "Not from FieldLogicHQ" line inside the payout rather than
+       a silent gap.
+  - **Side finding (not this project's; routed to the owner):** on dev, a refunded house-league payment (charge in
+    po_1UWmVf…) has **no income entry** (`online_payment_items.entry_id` null) and its refund booked only the 6.75 fee.
+    The payout still sums because the missing +150 and −150 cancel, but the book omits a payment and its refund. Worth a
+    look by the Stage 12 owner (it may be a probe-era row).
+- [x] Is the coach register row id a stable source key? (R1) **Yes, for every SETTLED row (verified 2026-11-04 in
+  `lib/coach-register-book.ts`):** each id is a fixed source prefix plus the record's own uuid, minted once
+  (`money-in-{id}` :368, `dues-payment-{id}` :436, `dues-payout-{id}` :446, `fundraiser-{id}` :522, `allocation-{id}` :595,
+  `request-{id}` :659, `expense-{expenseId}-payment-{paymentId}` :292); nothing uses an index, a clock or read order, and
+  one record never makes two rows. **Scheduled rows are NOT stable** (an installment row vanishes when paid; the grouped
+  dues row `dues-installment-group-{n}-{date}` is rebuilt per read) — and never tick, because they have not moved. So the
+  coach `line_key` is the register row id of a settled row; no new source key. R4 must pass only `!scheduled` rows, and
+  `movesCash: false` → `familyPaidVendor`. ⚠ An `allocation-{id}` row's amount is "still due after credit", so a credit
+  applied after a tick shows as "changed since" (correct: the money changed).
 - [ ] Pending club lines: excluded from ticking (recommended: they haven't moved). Confirm with the 12c bank-debit
   "still clearing" state.
 - [x] Gaming-account requirement in BC/AB: confirm before C10 is drawn (B1). **Confirmed 2026-11-04, read in the
