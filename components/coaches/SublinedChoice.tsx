@@ -48,6 +48,11 @@ export interface SublinedOption<T extends string> {
   name: string;
   /** The muted second line in the open list ("latest result", "test with a range"). Empty string renders no second line (e.g. "Current focus"). */
   sub: string;
+  /**
+   * With `showClosedSub`, what the CLOSED field says after the name when it should be shorter than the list's second line
+   * (Start next season's "Draft Test 2027 · Finished", whose list line goes on to the counts). Absent: `sub`. Empty: nothing.
+   */
+  closedSub?: string;
   /** Draws a `.convWhatGroup` header above this option when it differs from the option before it. Omit for an ungrouped run. */
   group?: string;
   /**
@@ -198,7 +203,7 @@ export default function SublinedChoice<T extends string>({
       >
         <span>
           {chosen ? chosen.name : placeholder}
-          {chosen && showClosedSub && chosen.sub && <span className={styles.convChoiceClosedSub}> · {chosen.sub}</span>}
+          {chosen && showClosedSub && (chosen.closedSub ?? chosen.sub) && <span className={styles.convChoiceClosedSub}> · {chosen.closedSub ?? chosen.sub}</span>}
         </span>
         <ChevronDown size={15} className={variant === 'field' ? styles.convWhatCaret : styles.convChoiceToolbarCaret} aria-hidden />
       </button>

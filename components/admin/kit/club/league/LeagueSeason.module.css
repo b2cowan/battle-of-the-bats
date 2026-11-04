@@ -201,3 +201,14 @@ td .amberText { display: inline; font-size: inherit; }
 /* The owing threshold's box and its "days" (9b-2, the Registration block). */
 .daysField { display: inline-flex; align-items: center; gap: 0.5rem; }
 .daysField input { width: 6rem; }
+
+/* ── Start next season (9f-2, copy §11): the new season's line, its marks, and the club's-time note ── */
+/* One quiet line under the header, as the lock line is: a banner would shout over the checklist it points at. */
+.startedLine { margin: 0 0 0.9rem; font-size: var(--type-support); color: var(--text-secondary); }
+/* A mark on a checklist line that came across: the kit's neutral chip, clickable (every highlight opens something). */
+.stepMark { flex: none; position: relative; cursor: pointer; text-decoration: none; }
+.stepMark:hover { color: var(--text-primary); }
+.stepMark:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+/* The chip stays small; its tap area grows to the house floor. */
+.stepMark::after { content: ''; position: absolute; inset: -0.6rem -0.25rem; }
+.timeNote { margin: 0 0 1rem; font-size: var(--type-support); color: var(--text-secondary); }

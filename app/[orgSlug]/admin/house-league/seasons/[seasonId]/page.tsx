@@ -39,7 +39,11 @@ import { fireLeagueEvent } from '@/lib/league-events-client';
 import { checklistFoot, checklistLeft, isPastItsEnd, seasonChecklist, seasonDates } from '@/lib/house-league-season';
 import { registrationState } from '@/lib/league-registration-state';
 import { seasonCharges } from '@/lib/league-price';
-import { DELETE_DOOR, movesFrom, rareDoor, type StatusMove } from '@/lib/house-league-status-words';
+import { DELETE_DOOR, START_DOOR, movesFrom, rareDoor, type StatusMove } from '@/lib/house-league-status-words';
+import { START_FROM_WORDS as SF, markedLines, readStartedFrom, startedLine } from '@/lib/house-league-start-from';
+import { isFinishedLeagueSeason } from '@/lib/house-league-access';
+import CreateLeagueSeasonDialog from '@/components/admin/kit/club/CreateLeagueSeasonDialog';
+import type { SeasonSlotHolder } from '@/lib/free-floor';
 import { JAN_1, type Cutoff } from '@/lib/born-years';
 import { sportLabel } from '@/lib/sports';
 import { pluralize } from '@/lib/utils';
@@ -65,6 +69,8 @@ interface SeasonDetail {
   };
   /** The season's money band (9b-2, lib/league-money.ts seasonMoney): the Owed · Still owing tiles. */
   money?: SeasonMoney;
+  /** Has the club given this season any of its time (9f-2 mk.noTime)? Null where the club's schedule does not exist. */
+  clubTime?: { given: boolean } | null;
 }
 
 export default function SeasonOverviewPage() {
@@ -80,7 +86,8 @@ export default function SeasonOverviewPage() {
   const [deleting, setDeleting] = useState(false);
   const [adding, setAdding] = useState(false);
   const [openRegistration, setOpenRegistration] = useState(0);
-  const [capHit, setCapHit] = useState<LeagueCapKind | null>(null);
+  const [capHit, setCapHit] = useState<{ kind: LeagueCapKind; holder?: SeasonSlotHolder } | null>(null);
+  const [startingNext, setStartingNext] = useState(false);
 
   const access = useHouseLeagueAccess(detail?.season ?? null);
 
@@ -187,6 +194,24 @@ export default function SeasonOverviewPage() {
   const pastItsEnd = canMove && moves.includes('complete') && isPastItsEnd(season);
   // Once Complete has its own Next step card above, the door at the end of the page would only repeat it.
   const rare = canMove ? (['complete', 'reopen'] as const).filter(m => moves.includes(m) && !(m === 'complete' && pastItsEnd)) : [];
+  // Start next season (9f-2, 9f·8): every season but a getting-ready one, for whoever moves a season; never on the free League
+  // plan, whose window has no Start from. It sits after Complete and before Reopen (copy §12).
+  const startDoor = canMove && season.status !== 'draft' && !!currentOrg && !isFreeFloorLeague(currentOrg);
+  // A season started from another (mig 432): its line and marks while it is getting ready, for the people who run it.
+  const startedFrom = season.status === 'draft' && canRun ? readStartedFrom(season.startedFrom) : null;
+  const marks = startedFrom ? markedLines(startedFrom, season, divisions) : new Set<string>();
+  const markFor = (key: string) => {
+    if (!startedFrom || !marks.has(key)) return null;
+    // Every highlight opens something: "Moved 52 weeks" opens the registration dates; "From …" opens the season it came from.
+    if (key === 'dates') {
+      return startedFrom.shiftDays == null ? null
+        : <button type="button" className={`${ck.chip} ${s.stepMark}`} onClick={editRegistration}>{SF.markMoved(startedFrom.shiftDays)}</button>;
+    }
+    return <Link href={`/${orgSlug}/admin/house-league/seasons/${startedFrom.sourceId}`} className={`${ck.chip} ${s.stepMark}`}>{SF.markFrom(startedFrom.sourceName)}</Link>;
+  };
+  // The club's time (copy §11 mk.noTime): any live season the club has not given time to yet, for the people who run it.
+  // Where the club's schedule exists, placing a game anywhere is exactly the owner's and the admin's: the people who give time.
+  const showNoTime = canRun && !isFinishedLeagueSeason(season) && !!detail.clubTime && !detail.clubTime.given;
 
   return (
     <div className={repKit.page}>
@@ -195,6 +220,12 @@ export default function SeasonOverviewPage() {
         <span>{[dates ?? 'Dates not set', sport].join(' · ')}</span>
         <SeasonStatePill season={season} />
       </p>
+      {startedFrom && (
+        <p className={s.startedLine}>
+          <span className={s.deskOnly}>{startedLine(startedFrom, false)}</span>
+          <span className={s.phoneOnly}>{startedLine(startedFrom, true)}</span>
+        </p>
+      )}
 
       {/* The next step: a getting-ready season's checklist, with Open registration once it is done (9a·4). */}
       {season.status === 'draft' && (
@@ -218,8 +249,15 @@ export default function SeasonOverviewPage() {
                   </span>
                   <span className={s.stepText}>
                     <span className={s.stepTitle}>{st.title}</span>
-                    <span className={s.stepLine}>{st.line}</span>
+                    <span className={s.stepLine}>
+                      {st.line}
+                      {/* mk.ageLine (desk only): the birth years that moved, while the line is as it arrived. */}
+                      {st.key === 'ageGroups' && startedFrom && marks.has('ageGroups') && startedFrom.bornShift > 0 && (
+                        <span className={s.deskOnly}> · {SF.ageLineMoved(startedFrom.bornShift)}</span>
+                      )}
+                    </span>
                   </span>
+                  {markFor(st.key)}
                   {door && <button type="button" className="btn btn-outline" onClick={door.onClick}>{door.label}</button>}
                 </li>
               );
@@ -227,6 +265,12 @@ export default function SeasonOverviewPage() {
           </ul>
           {foot && <p className={s.emptyLine}>{foot}</p>}
         </ClubSection>
+      )}
+      {showNoTime && (
+        <p className={s.timeNote}>
+          {SF.noTime}
+          <span className={s.deskOnly}> {access?.placeAnywhere ? SF.noTimeHowAdmin : SF.noTimeHowLeagueAdmin}</span>
+        </p>
       )}
       {moves.includes('start') && canMove && (
         <ClubSection
@@ -309,15 +353,17 @@ export default function SeasonOverviewPage() {
       />
 
       {/* The rare doors end the body (a sentence and a link that asks), never a pinned row. */}
-      {rare.map(m => {
-        const door = rareDoor(m, season);
-        return (
-          <p key={m} className={s.rareDoor}>
-            {door.sentence}{' '}
-            <button type="button" className={repKit.inlineLink} onClick={() => setMove(m)}>{door.link}</button>
-          </p>
-        );
-      })}
+      {/* In order: Complete, Start next season, Reopen (copy §12: Start next season comes before Reopen). */}
+      {[
+        ...(rare.includes('complete') ? [{ key: 'complete', ...rareDoor('complete', season), open: () => setMove('complete') }] : []),
+        ...(startDoor ? [{ key: 'start', ...START_DOOR, open: () => setStartingNext(true) }] : []),
+        ...(rare.includes('reopen') ? [{ key: 'reopen', ...rareDoor('reopen', season), open: () => setMove('reopen') }] : []),
+      ].map(door => (
+        <p key={door.key} className={s.rareDoor}>
+          {door.sentence}{' '}
+          <button type="button" className={repKit.inlineLink} onClick={door.open}>{door.link}</button>
+        </p>
+      ))}
 
       {canRun && detail.deletable && (
         <p className={s.rareDoor}>
@@ -361,10 +407,20 @@ export default function SeasonOverviewPage() {
           defaultPrice={season.registrationFee ?? (divisions.length ? divisions[divisions.length - 1].price : null)}
           onClose={() => setAdding(false)}
           onAdded={() => { setAdding(false); changed(); }}
-          onCapHit={kind => { setAdding(false); setCapHit(kind); }}
+          onCapHit={kind => { setAdding(false); setCapHit({ kind }); }}
         />
       )}
-      {capHit && <LeagueCapUpgradeModal capHit={capHit} onClose={() => setCapHit(null)} orgId={currentOrg?.id} />}
+      {startingNext && (
+        <CreateLeagueSeasonDialog
+          orgSlug={orgSlug}
+          startFromId={season.id}
+          onClose={() => setStartingNext(false)}
+          onCapHit={(kind, holder) => { setStartingNext(false); setCapHit({ kind, holder }); }}
+          // ⚠ Navigate with the window STILL OPEN (the house-league home's reason): the page unmounts and takes it along.
+          onCreated={made => { announceSeasonsChanged(); router.push(`/${orgSlug}/admin/house-league/seasons/${made.id}`); }}
+        />
+      )}
+      {capHit && <LeagueCapUpgradeModal capHit={capHit.kind} holder={capHit.holder} onClose={() => setCapHit(null)} orgId={currentOrg?.id} />}
     </div>
   );
 }

@@ -982,6 +982,8 @@ export interface LeagueSeason {
   /** Schedule health's rules (mig 412, frame d3): a team may play twice in a day; home and away may differ by this many. */
   twiceInADayAllowed: boolean;
   homeAwayTolerance: number;
+  /** Start next season (mig 432, 9f-2): the stored record, raw; read it only through `readStartedFrom`. Null when not started from another. */
+  startedFrom?: unknown;
   createdAt: string;
   updatedAt: string;
 }

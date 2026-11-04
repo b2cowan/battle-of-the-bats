@@ -1,0 +1,49 @@
+/* The Create season window's Start from parts (House League 9f-2, drawings s13/s14; copy Part B). */
+
+/* The statement under Start from (§8): plain text, never amber — it closes nothing. */
+.statement { margin: -0.35rem 0 1rem; font-size: var(--type-support); color: var(--text-secondary); }
+.statement p { margin: 0; }
+.statement p + p { margin-top: 0.25rem; }
+
+/* Name and Sport side by side at the desk (640), stacked on a phone. */
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 13rem); gap: 0 1rem; }
+@media (max-width: 640px) { .pair { grid-template-columns: minmax(0, 1fr); } }
+
+/* Bring with it (§10): a framed tick list; each row a checkbox, its words, and a count at the right. */
+.bringTitle { margin: 0.25rem 0 0.4rem; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+.rows { margin: 0 0 0.75rem; border: 1px solid var(--home-line); border-radius: var(--radius-md, 10px); background: var(--card-bg); }
+.row { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.65rem 0.85rem; }
+.row + .row { border-top: 1px solid var(--home-line); }
+.row > input { flex: none; margin: 0.2rem 0 0; width: 1.05rem; height: 1.05rem; accent-color: var(--home-olive); cursor: pointer; }
+.rowMain { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+/* The label holds only the words its checkbox names; the chips sit outside it (a click on a chip must not tick the row). */
+.rowLabel { display: flex; flex-direction: column; gap: 0.1rem; color: var(--text-primary); font-size: var(--type-body); cursor: pointer; }
+.rowLabel strong { font-weight: 650; }
+.rowLabel small { font-size: var(--type-support); color: var(--text-secondary); }
+.rowOff > input, .rowOff .rowLabel { cursor: default; }
+.rowOff .rowLabel, .rowOff .rowLabel small, .rowOff .count { color: var(--text-tertiary); }
+.count { flex: none; font-size: var(--type-support); font-variant-numeric: tabular-nums; color: var(--text-secondary); padding-top: 0.1rem; }
+/* A live source's age groups (§10 bw.ageGroups.live): one chip each, all on, under the row's words. */
+.chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
+@media (max-width: 640px) {
+  .row { min-height: var(--tap-min, 44px); }
+}
+
+/* What always starts empty (§10.1): one quiet line under the list. */
+.empty { margin: 0 0 0.25rem; font-size: var(--type-support); color: var(--text-secondary); }
+
+/* The phone's Start from (s14): the field opens a drawer titled Start from. */
+.phoneField {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; width: 100%;
+  min-height: var(--tap-min, 44px); text-align: left;
+}
+.phoneField span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.phoneFieldSub { color: var(--text-secondary); }
+.sheetList { list-style: none; margin: 0; padding: 0.25rem 0 0.75rem; }
+.sheetOption {
+  display: flex; flex-direction: column; gap: 0.1rem; width: 100%; min-height: var(--tap-min, 44px);
+  padding: 0.6rem 1rem; border: 0; background: none; text-align: left; font: inherit; color: var(--text-primary); cursor: pointer;
+}
+.sheetOption[aria-selected='true'] { background: var(--home-olive-soft); }
+.sheetOption strong { font-weight: 650; }
+.sheetOption small { font-size: var(--type-support); color: var(--text-secondary); }

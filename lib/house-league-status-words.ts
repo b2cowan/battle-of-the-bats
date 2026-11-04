@@ -270,3 +270,10 @@ export function deleteSeasonWords(seasonName: string): MoveWords {
 
 /** The rare door's sentence and link for a shell, at the end of the season page. */
 export const DELETE_DOOR = { sentence: 'Made this by mistake?', link: 'Delete the season…' } as const;
+
+/**
+ * START NEXT SEASON's rare door (9f-2, 9f·8; copy §12 `door.start`): every season but a getting-ready one, for the people
+ * who move a season (the league runners), and never on the free League plan (its window has no Start from). It opens the
+ * Create season window with Start from preset to this season. On a finished season it comes before Reopen.
+ */
+export const START_DOOR = { sentence: 'Running it again?', link: 'Start next season from this one…' } as const;

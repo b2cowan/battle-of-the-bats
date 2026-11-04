@@ -574,6 +574,10 @@
     "430_a_second_parent_gets_the_signup_emails.sql": {
       "prod": "pending",
       "note": "Signed-in family accounts Stage 3 Part 1 (docs/projects/active/SIGNED_IN_FAMILY_STAGE3_BUILD_PROMPT.md; all six asks ruled A 2026-11-03): a second parent's email on the house-league sign-up. Visible: one column league_registrations.guardian_email_2 (text, nullable) and CHECK league_registrations_guardian_email_2_check (null, or lowercased + trimmed + non-empty + <= 200 + not equal to guardian_email). INVISIBLE to check:migrations: league_registration_place(uuid,uuid,uuid,jsonb,text,text,integer,numeric) redefined (CREATE OR REPLACE, grants kept) to write guardian_email_2 from p_child->>'guardianEmail2'; the duplicate rule is unchanged. No default, no row changed; re-runnable. Apply to prod BEFORE the promote that ships Stage 3 (the public sign-up route and the registration reads select the column: without it every house-league sign-up answers 500). Applied to dev 2026-11-03. Verify on prod: SELECT count(*) FROM information_schema.columns WHERE table_name = 'league_registrations' AND column_name = 'guardian_email_2' -> 1; the constraint exists in pg_constraint."
+    },
+    "432_a_season_remembers_where_it_started.sql": {
+      "prod": "pending",
+      "note": "House League 9f-2 Start next season (docs/projects/active/HOUSE_LEAGUE_STAGE9F2_BUILD_PROMPT.md; owner ruled the column 2026-11-03): one nullable jsonb column league_seasons.started_from (a season started from another remembers its source, what came across and a fingerprint per checklist line). No default, no backfill, no row changed; re-runnable. Prod order: either way round, but apply BEFORE the promote that ships 9f-2 (the create route writes the column on a Start from: without it every Start from answers 500; the season reads take every column, so nothing else notices). Applied to dev 2026-11-03. Verify on prod: SELECT count(*) FROM information_schema.columns WHERE table_name = 'league_seasons' AND column_name = 'started_from' -> 1."
     }
   }
 }

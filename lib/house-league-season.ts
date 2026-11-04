@@ -149,6 +149,11 @@ export function newerSeasons<T extends Dated & { id: string; createdAt?: string 
   return seasons.filter(s => s.id !== season.id && newestFirst(s, season) < 0).sort(newestFirst);
 }
 
+/** Every season, newest first, finished or not (Start next season's picker, 9f-2 copy §7): the switcher's key, one list. */
+export function newestFirstSeasons<T extends Dated & { createdAt?: string | null }>(seasons: readonly T[]): T[] {
+  return [...seasons].sort(newestFirst);
+}
+
 /** The switcher's order (copy §7): live seasons first, newest first; then the finished ones, newest first. */
 export function orderSeasons<T extends Dated & { createdAt?: string | null }>(seasons: readonly T[]): T[] {
   const finished = (s: T) => seasonGroup(s) === 'past';

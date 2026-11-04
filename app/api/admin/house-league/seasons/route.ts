@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole } from '@/lib/api-auth';
+import { forbidden, getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getLeagueSeasons, getLeagueSeasonSummary } from '@/lib/db';
@@ -9,6 +9,9 @@ import { writePlatformEvent } from '@/lib/platform-events';
 import { withObservability } from '@/lib/observability';
 import { DEFAULT_SPORT } from '@/lib/sports';
 import { seasonSlugFrom, seasonSlugRefusal } from '@/lib/house-league-season';
+import { loadStartSource, readStartFromBody, startSeasonFrom } from '@/lib/house-league-start-from-server';
+
+const NAME_TAKEN = 'You already have a season with this name. Give this one a different name.';
 
 export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
@@ -70,6 +73,31 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'Registration can’t close before it opens.' }, { status: 400 });
   }
 
+  // Start next season (9f-2, 9f·8–9f·13): "Start from" names a season of THIS club to copy from. The free League plan is not
+  // offered it (its window has no field, §15.16), and a direct request is refused too, so the server is not the only thing
+  // holding its one-age-group and eight-team limits. The source is only read; see lib/house-league-start-from-server.ts.
+  const startFrom = readStartFromBody(body.startFrom);
+  if (startFrom === 'bad') return NextResponse.json({ error: 'Season not found' }, { status: 400 });
+  if (startFrom) {
+    if (isFreeFloorLeague(ctx!.org)) return forbidden();
+    const source = await loadStartSource(ctx!.org.id, startFrom.seasonId);
+    if (!source) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+    try {
+      const made = await startSeasonFrom({
+        orgId: ctx!.org.id, userId: ctx!.user.id, name, slug,
+        sport: typeof body.sport === 'string' && body.sport ? body.sport : DEFAULT_SPORT,
+        seasonStartDate: seasonStart || null, seasonEndDate: seasonEnd || null,
+      }, source, startFrom);
+      return NextResponse.json(made, { status: 201 });
+    } catch (e) {
+      if ((e as { code?: string })?.code === '23505') {
+        return NextResponse.json({ error: NAME_TAKEN }, { status: 409 });
+      }
+      console.error('[house-league seasons] start from did not finish:', e instanceof Error ? e.message : String(e));
+      return NextResponse.json({ error: 'We couldn’t create the season. Try again.' }, { status: 500 });
+    }
+  }
+
   const { data, error } = await supabaseAdmin
     .from('league_seasons')
     .insert({
@@ -96,7 +124,7 @@ export const POST = withObservability(async (req: Request) => {
 
   if (error) {
     if (error.code === '23505') {
-      return NextResponse.json({ error: 'You already have a season with this name. Give this one a different name.' }, { status: 409 });
+      return NextResponse.json({ error: NAME_TAKEN }, { status: 409 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

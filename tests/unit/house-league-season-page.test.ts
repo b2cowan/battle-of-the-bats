@@ -177,6 +177,19 @@ describe('3 · the season’s page', () => {
     assert.match(page, /reopen: detail\.reopen,/, 'the Reopen window gets the newer seasons and the free plan’s holder');
     assert.match(page, /<RegistrationBlock[^>]*door=\{regDoor\}/);
   });
+  it('Start next season is a rare door on every season but a getting-ready one, after Complete and before Reopen (9f-2)', () => {
+    assert.match(page, /const startDoor = canMove && season\.status !== 'draft' && !!currentOrg && !isFreeFloorLeague\(currentOrg\);/,
+      'the runners who move a season; never a getting-ready one; never the free League plan (its window has no Start from)');
+    const order = /rare\.includes\('complete'\)[\s\S]*?startDoor \? \[\{ key: 'start', \.\.\.START_DOOR[\s\S]*?rare\.includes\('reopen'\)/;
+    assert.match(page, order, 'Complete, then Start next season, then Reopen');
+    assert.match(page, /<CreateLeagueSeasonDialog[\s\S]*?startFromId=\{season\.id\}/, 'the door opens the Create season window preset to this season');
+    const words = readCode('lib/house-league-status-words.ts');
+    assert.match(words, /START_DOOR = \{ sentence: 'Running it again\?', link: 'Start next season from this one…' \}/);
+  });
+  it('a season started from another shows its line and its marks while it is getting ready, for its runners (9f-2)', () => {
+    assert.match(page, /const startedFrom = season\.status === 'draft' && canRun \? readStartedFrom\(season\.startedFrom\) : null;/);
+    assert.match(page, /markedLines\(startedFrom, season, divisions\)/, 'a mark shows only while its line still matches what arrived');
+  });
   it('the figures band is one joined band of four, without today’s money figure (9b-2)', () => {
     assert.match(page, /<div className=\{s\.band\} role="group" aria-label="This season">/);
     assert.doesNotMatch(page, /Outstanding|still owing|Fees still owing/i);

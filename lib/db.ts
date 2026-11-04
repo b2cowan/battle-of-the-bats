@@ -2333,6 +2333,7 @@ function mapLeagueSeason(row: any): LeagueSeason {
     owingAmberDays:            row.owing_amber_days ?? 14,
     twiceInADayAllowed:        row.twice_in_a_day_allowed ?? false,
     homeAwayTolerance:         row.home_away_tolerance ?? 1,
+    startedFrom:               row.started_from ?? null,
     createdAt:                 row.created_at,
     updatedAt:                 row.updated_at,
   };
