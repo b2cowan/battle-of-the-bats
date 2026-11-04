@@ -8,6 +8,16 @@
 
 ---
 
+### 2026-11-03 — Promotions stay record-only: a promotion in Plans & pricing gives no customer a discount, and its coupon is never created in Stripe (Plans & pricing Stage 1, Part 1, option A)
+**Status:** **Decided** (owner, 2026-11-03, Plans & pricing Stage 1 Part 1, option A). The screen's wording and a build guard were made the same day (`tests/unit/promotions-record-only-guard.test.ts`).
+**Decision:** Promotions stay **record-only**. A promotion in Plans & pricing gives no customer a discount, and its coupon is never created in Stripe. **Enforcing promotions is a future stage of its own**, taken only after a ruling on how a discount stacks with operator free time, Founding Season comps and the Club trial, and then an `/accounting` review. **Founding Season, operator free time and the Club trial are not promotions.**
+**Rationale:** a staff member could set a promotion to Active and believe customers were getting a discount; no checkout reads the table. The owner chose to make the screen impossible to misread rather than to build enforcement now. Enforcement is not a small change: it needs a stacking rule against three mechanisms that already give money away, and a change to what FieldLogicHQ charges goes through `/accounting`.
+**Affects:** the Promotions section of the staff Plans & pricing screen and its help article (wording only, done); no checkout, price, plan name, band, gate or Stripe configuration.
+**Handoff:** none outstanding. If enforcement is ever wanted: `/strategy` for the stacking rule, `/accounting`, then `/plan` for a stage of its own (`STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md`, "Promotions: record vs enforce", option C), editing the guard test in the same change.
+**Supersedes:** nothing. **Relates to:** 2026-10-31 "How a price change reaches customers", item 5 ("Promotions are labelled record only"), which it makes a standing ruling rather than a label; 2026-09-07 Founding Season 2027 (not a promotion in this sense).
+
+---
+
 ### 2026-11-03 — Tournament branding is a logo, colours and type: the home-screen icon is always FieldLogicHQ's; the custom app name and the tournament hero banner are retired (Public tournament pages Stage 8)
 **Status:** Decided (owner, 2026-11-03; the icon in the owner's words: "always use the FieldLogicHQ logo"; Stage 8 plan asks A to D "agreed")
 **Decision:**

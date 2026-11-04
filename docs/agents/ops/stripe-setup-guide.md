@@ -1,16 +1,43 @@
-# Stripe Billing Setup Guide
-## Battle of the Bats — Tournament Platform
+# Stripe Setup Guide
+## FieldLogicHQ — plan subscriptions and online payments
+
+> Rewritten 2026-11-03 against the code (Plans & pricing Stage 1 Part 4). The subscription half used to describe an
+> earlier product ("Battle of the Bats", Starter / Pro / Elite in USD, price IDs in environment variables); none of
+> that is true any more. The Stripe Connect half (online payments) was already current and is unchanged.
+
+**Who this is for:** the owner, setting up Stripe for a site and checking that test and live agree (the test ↔ live
+reconciliation, item R of `docs/projects/active/STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md`) and making the first live purchase.
+Every step here is a dashboard or hosting setting, so it is the owner's: **a build session describes what to set and never
+changes Stripe settings or keys itself.**
+
+**Prices are not in this guide.** Plan names and amounts live in one place,
+[`docs/agents/strategy/PLAN_PRICING_FACTS.md`](../strategy/PLAN_PRICING_FACTS.md) ("Plans at a glance"), and the test run
+(`npm test`, and so `verify:changed`) fails if the product disagrees with it. The hosted build does not run it. All prices are **CAD**, monthly and annual.
 
 This guide covers three stages:
-1. **Dev** — no Stripe at all, mock mode in your local environment
-2. **Test** — real Stripe checkout with fake cards, no real money, deployed to your staging/test environment
+1. **Dev** — no Stripe at all, mock mode on your own computer
+2. **Test** — real Stripe checkout with fake cards and no real money (Stripe calls this the sandbox)
 3. **Live** — production Stripe with real customers and real payments
+
+### What the product reads, and where (read this once)
+
+| Thing | Where it comes from | What you do |
+|---|---|---|
+| The secret key | `STRIPE_SECRET_KEY`. Its prefix decides the mode: `sk_live_` / `rk_live_` = live, `sk_test_` / `rk_test_` = test, anything else or none = test | Set it per site in Amplify (or `.env.local`) |
+| The billing webhook's signing secret | `STRIPE_WEBHOOK_SECRET` | Copy it from the webhook endpoint |
+| Each plan's Stripe price | The price slots in **Platform admin → Plans & pricing**, one per plan, billing period and mode (Test or Production). **No price ID is an environment variable any more** | Paste each `price_…` ID into its slot |
+| The customer portal's settings | Pinned in our code; the app creates the portal configuration itself | Nothing (see Stage 2, Step 5) |
+| Trial length | The plan config (Club and Club · Association 90 days, Tournament Plus 14, League Plus 30, Premium Coaches Portal and the free plan none). A customer who had a subscription before gets no second trial | Nothing. **Never put a free trial on a Stripe price** |
+| The two Connect secrets | `STRIPE_CONNECT_WEBHOOK_SECRET`, `STRIPE_CONNECT_ACCOUNT_WEBHOOK_SECRET` | See "Online payments — Stripe Connect" below |
+
+The build copies all four `STRIPE_*` values into the production bundle (`amplify.yml`), so a change in Amplify needs a
+redeploy.
 
 ---
 
 ## Stage 1: Dev (Mock Mode)
 
-No Stripe account required. The billing system detects that `STRIPE_SECRET_KEY` is absent and switches to a local simulation automatically.
+No Stripe account required.
 
 ### What you need in `.env.local`
 
@@ -18,117 +45,121 @@ No Stripe account required. The billing system detects that `STRIPE_SECRET_KEY` 
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-That's it. Do not add any Stripe keys.
+Leave `STRIPE_SECRET_KEY` out. To get the mock customer portal as well, add `ENABLE_BILLING_MOCK_PORTAL=true` (a platform
+admin can also switch mock billing on and off for the running server in Platform admin's dev tools).
 
 ### What mock mode does
 
 | Action | Behaviour |
 |--------|-----------|
-| Click "Upgrade to Pro" or "Upgrade to Elite" | Instantly upgrades your org in the database, redirects to `?success=1` with a success banner |
-| Click "Manage Subscription" | Opens a local mock portal page at `/admin/billing/mock-portal` |
-| Mock portal | Lets you freely switch plan (Starter / Pro / Elite) and subscription status (Active / Trialing / Past Due / Canceled) — applies directly to the database |
-| `/api/billing/mock-apply` | Blocked with a 403 if `STRIPE_SECRET_KEY` is ever present, so it cannot be called in production |
+| Choose a paid plan on Plan & billing, with no Stripe key | The plan is written straight to the database and you come back with the success message. No Stripe page opens |
+| Open the customer portal in mock mode | A local mock portal at `/{org}/admin/org/billing/mock-portal` lets you set any plan and subscription status (active, trialing, past due, canceled) directly |
+| `/api/billing/mock-apply` | Answers 404 unless mock mode is on |
 
-Use mock mode for all day-to-day development and UI work. Switch to Test mode (Stage 2) only when you need to verify the real Stripe checkout flow end-to-end.
+**Mock mode is always off in production**, whatever the settings say, and production with no key answers "Stripe checkout
+is not configured" rather than giving a plan away.
+
+Use mock mode for day-to-day work. Use Stage 2 when you need the real Stripe checkout end to end.
 
 ---
 
 ## Stage 2: Test Mode (Real Stripe, No Real Money)
 
-This uses a real Stripe account but with test keys and fake card numbers. Nothing is ever charged. This is the right mode to run in your deployed test/staging environment before going live.
+A real Stripe account with test keys and fake cards. Nothing is ever charged. This is the mode for local Stripe testing
+and the dev/staging site.
 
 ### Step 1 — Create a Stripe account
 
-Go to [stripe.com](https://stripe.com) and sign up. You do not need to activate your account (i.e. submit your bank details) to use Test mode — test mode works immediately on any account.
+Go to [stripe.com](https://stripe.com) and sign up. Test mode works on any account without activating it.
 
 ### Step 2 — Switch to Test mode in the dashboard
 
-Open [dashboard.stripe.com](https://dashboard.stripe.com). In the top-left corner there is a toggle that says **Test mode**. Make sure it is **on**. The dashboard header will turn orange as a reminder that you are in test mode.
+Open [dashboard.stripe.com](https://dashboard.stripe.com) and switch to **Test mode** (sandbox). Everything you create
+here (products, prices, customers, webhooks, the portal configuration) is separate from Live mode, so you repeat these
+steps in Stage 3.
 
-> **Important:** Everything you create while in Test mode — products, prices, customers, webhooks — is completely separate from Live mode. You will repeat some of these steps later when you go live.
+### Step 3 — Create one product per plan, with a monthly and an annual price
 
-### Step 3 — Create your products and prices
+Go to **Product catalog → Add product**. For each paid plan in the Facts doc's table (today: Tournament Plus, League
+Plus, Club, Club · Association, Premium Coaches Portal; the free plan has no price):
 
-Go to **Product catalog** in the left sidebar, then click **Add product**.
+1. Name the product after the plan's public name.
+2. Add a **recurring monthly** price and a **recurring annual** price on that **same product**, in **CAD**, at the Facts
+   doc's amounts.
+3. **Do not set a free trial on either price.** The app sets the trial at checkout from the plan config.
+4. Copy each **Price ID** (`price_…`).
 
-**Pro Plan**
-- Name: `Pro`
-- Pricing model: Standard pricing
-- Price: `29.00` USD
-- Billing period: Monthly
-- Click **Save product**
-- After saving, find the price row, click the `...` menu → **Edit**
-- Scroll to **Free trial** → set `14` days → Save
-- Copy the **Price ID** (starts with `price_`) — you will need this for `STRIPE_PRICE_PRO_MONTHLY`
+Plans & pricing also lists two add-on slots, the org team add-on and the extra rep team. Both are marked **Retired**
+there, and the extra rep team's slot is read by nothing. Leave them empty.
 
-**Elite Plan**
-- Name: `Elite`
-- Same steps as above with price `79.00` USD, 14-day trial
-- Copy the Price ID → `STRIPE_PRICE_ELITE_MONTHLY`
+### Step 4 — Paste each price into Plans & pricing (Test)
 
-### Step 4 — Configure the Customer Portal
+In **Platform admin → Plans & pricing**, set the Stripe mode picker to **Test / Sandbox Mode**, find each plan's monthly
+and annual slot, and paste its Price ID. You need the catalogue power to do this.
 
-The Customer Portal is the Stripe-hosted page where subscribers manage their own billing. You must configure it before it will work.
+Before saving, the app reads the price from Stripe and checks it against the slot:
 
-Go to **Settings → Billing → Customer Portal** (or visit `dashboard.stripe.com/settings/billing/portal` directly).
+- **Refused:** a price that does not exist, is archived, is one-time rather than recurring, bills on the wrong interval,
+  is not in CAD, or belongs to the other mode.
+- **Warned, and you must confirm:** the amount differs from the plan config, the price is already in another slot, or the
+  plan's two prices are on different Stripe products.
 
-Turn on the following:
-- ✅ Allow customers to update payment methods
-- ✅ Show invoices
+A Test slot can only be checked from a site running a test key (your local server with a test key, or dev/staging).
 
-Keep these **off** (owner ruling 2026-10-29):
-- ⛔ Allow customers to cancel subscriptions
-- ⛔ Allow customers to update subscriptions (plan changes)
+### Step 5 — The customer portal: nothing to switch on, one thing to check
 
-Cancelling and changing plans happen only on the app's Plan & billing page, which the owner alone can open. That is where the app records the change, so a cancel or plan switch made inside Stripe would leave the app out of step with the money.
+**The app owns the portal's settings** (owner sequence ruling, 2026-10-31: "portal settings live in our code"). The first
+time anyone opens the portal in a mode, the app creates a portal configuration named **"FieldLogicHQ portal v1"** in that
+mode and uses it for every portal visit after that. It offers exactly:
 
-Under **Business information**, fill in your business name and support URL — Stripe requires this before the portal will activate.
+- updating the payment method
+- invoice history
+- updating name, email, address and tax ID
+- **cancelling at the end of the period**, with no refund for the unused part (the owner's ruling: a plan runs to its
+  renewal date, and the app ends it then)
+- **no** plan switching: plan moves happen only on the app's own Plan & billing page
 
-Click **Save**.
+> ⚠ This replaces the 2026-10-29 instruction to keep cancelling off in the dashboard. The dashboard's default portal
+> settings are no longer used at all, so changing them does nothing. **Do not edit "FieldLogicHQ portal v1" in the
+> dashboard either:** a change to what the portal offers is a code change, which creates a v2 and switches v1 off.
 
-> Stripe keeps a separate portal configuration for Test and for Live mode. Set the same four options in each mode.
+The one dashboard check: if Stripe refuses to create the portal, look at the account's **public business details**
+under Settings and fill them in (once per mode). The code sends none of them, so this is Stripe's own requirement and
+is not verified here.
 
-### Step 5 — Set up the webhook for local testing
+### Step 6 — The billing webhook
 
-When Stripe processes a subscription event (trial started, payment failed, subscription cancelled) it sends a webhook POST to your server. In local development you need the Stripe CLI to forward those events to your laptop.
+When Stripe processes a subscription event it posts to `/api/billing/webhook`. The webhook:
 
-**Install the Stripe CLI**
+- refuses an event whose signature does not match `STRIPE_WEBHOOK_SECRET` (answers 400);
+- **ignores an event from the other mode** (a test event at a live site, or the reverse) and records that it did;
+- keeps a record of every event it receives, so a repeat delivery is recognised and not run twice;
+- re-reads the subscription, the charge and the platform-fee invoice from Stripe before acting, so the order events
+  arrive in does not matter. A dispute is the exception: it is taken from the event itself.
 
-Download the Windows installer from [stripe.com/docs/stripe-cli](https://stripe.com/docs/stripe-cli) and run it. After installation, open a terminal and run:
-
-```
-stripe login
-```
-
-Follow the browser prompt to authenticate.
-
-**Start the local webhook listener**
-
-In a terminal (leave it running while you test):
+**Locally**, install the [Stripe CLI](https://stripe.com/docs/stripe-cli), run `stripe login`, then leave this running:
 
 ```
 stripe listen --forward-to localhost:3000/api/billing/webhook
 ```
 
-The CLI will print a **webhook signing secret** that looks like `whsec_...`. Copy it — this is your `STRIPE_WEBHOOK_SECRET` for local testing.
+It prints a signing secret (`whsec_…`); put it in `.env.local` as `STRIPE_WEBHOOK_SECRET` and restart the dev server.
+(On this PC the CLI's path is in "Local — two listen windows" below.)
 
-### Step 6 — Set your test environment variables
+**For a deployed test site**, create an event destination in the dashboard (test mode) instead, pointing at
+`https://<site address>/api/billing/webhook`, with the event list in Stage 3, Step 5. Copy its signing secret.
 
-In your deployed test environment (Amplify test branch, or a separate `.env.local` if testing locally with Stripe):
+### Step 7 — Set your test environment variables
 
 ```
-STRIPE_SECRET_KEY          = sk_test_...      ← Developers → API keys → Secret key (Test mode)
-STRIPE_WEBHOOK_SECRET      = whsec_...        ← from stripe listen output (local) or Stripe dashboard (deployed)
-STRIPE_PRICE_PRO_MONTHLY   = price_...        ← Pro price ID you copied in Step 3
-STRIPE_PRICE_ELITE_MONTHLY = price_...        ← Elite price ID you copied in Step 3
-NEXT_PUBLIC_APP_URL        = https://your-test-domain.com
+STRIPE_SECRET_KEY      = sk_test_...      ← Developers → API keys → Secret key (Test mode)
+STRIPE_WEBHOOK_SECRET  = whsec_...        ← from stripe listen (local) or the event destination (deployed)
+NEXT_PUBLIC_APP_URL    = https://<site address>   (http://localhost:3000 locally; no trailing slash)
 ```
 
-> If you are testing against a deployed URL (not localhost), skip the Stripe CLI and instead create a webhook endpoint in the Stripe dashboard pointing at `https://your-test-domain.com/api/billing/webhook` (same steps as Step 1 of Stage 3 below, but while still in Test mode).
+### Step 8 — Test card numbers
 
-### Step 7 — Test card numbers
-
-On the Stripe-hosted checkout page, enter these fake card numbers. Use any future expiry date and any 3-digit CVC.
+Any future expiry and any 3-digit CVC.
 
 | Scenario | Card number |
 |----------|-------------|
@@ -137,112 +168,136 @@ On the Stripe-hosted checkout page, enter these fake card numbers. Use any futur
 | Requires 3D Secure authentication | `4000 0025 0000 3155` |
 | Card fails after trial ends | `4000 0000 0000 0341` |
 
-### Step 8 — Verify the full flow
+### Step 9 — Verify the full flow
 
-Work through this checklist before considering the integration ready:
-
-- [ ] Click **Upgrade to Pro** → Stripe checkout page loads → enter test card `4242 4242 4242 4242` → completes → redirected back with success banner
-- [ ] Billing page shows **Pro** plan and **Trialing** status
-- [ ] Click **Manage Subscription** → Stripe Customer Portal opens → can update payment method, view invoice
-- [ ] Cancel the subscription in the portal → returns to billing page → status updates to **Canceled**, plan reverts to **Starter**
-- [ ] The Stripe CLI terminal shows the webhook events being received and forwarded
-- [ ] Check your Supabase `organizations` table — `plan_id`, `subscription_status`, `stripe_subscription_id`, `stripe_customer_id` all update correctly
+- [ ] On **Plan & billing**, choose a paid plan → the Stripe checkout page opens → pay with `4242 4242 4242 4242` → you
+      come back with the success message.
+- [ ] Plan & billing shows the new plan, trialing if the plan has a trial.
+- [ ] Open the customer portal → it offers payment method, invoices and your details; cancelling says it takes effect at
+      the end of the period; there is no plan switching.
+- [ ] Cancel in the portal → the plan keeps running to its renewal date; nothing ends today.
+- [ ] The listen window (or the destination's recent deliveries) shows each event answered 200.
+- [ ] Run the read-only audit against the test account:
+      `node scripts/audit-stripe-billing.mjs --env .env.local --environment sandbox --allow-test`
 
 ---
 
 ## Stage 3: Go Live (Real Payments)
 
-When you are satisfied with testing, follow these steps to switch to live keys. This is the only time real money will be involved.
-
 ### Step 1 — Activate your Stripe account
 
-Before live keys will work, Stripe requires you to verify your business. In the Stripe dashboard, click **Activate your account** in the top banner (or go to **Settings → Account details**) and complete:
-
-- Business type and details
-- Bank account for payouts
-- Identity verification if prompted
-
-Activation typically takes a few minutes to a few hours.
+In the dashboard, **Activate your account** (Settings → Account details): business details, the bank account for payouts,
+identity if asked. Live keys do not work until this is done.
 
 ### Step 2 — Switch to Live mode in the dashboard
 
-Click the **Test mode** toggle in the top-left to turn it off. The orange header goes away.
+Turn Test mode off.
 
-### Step 3 — Recreate your products and prices in Live mode
+### Step 3 — Create the products and prices again in Live mode
 
-Live mode has no knowledge of your test products. Repeat Step 3 from Stage 2 while in Live mode.
+Live mode knows nothing about test products. Repeat Stage 2, Step 3 in Live mode, at the Facts doc's amounts, CAD,
+monthly and annual on one product per plan, no trial on the price.
 
-**Pro Plan** — $29.00/mo, 14-day trial → copy the new Live Price ID  
-**Elite Plan** — $79.00/mo, 14-day trial → copy the new Live Price ID
+### Step 4 — Paste the live prices into Plans & pricing (Production)
 
-> Stripe keeps the Customer Portal configuration separately for Live mode. Repeat Step 4 of Stage 2 here: payment methods and invoices on, cancel and plan changes off.
+Set the Stripe mode picker to **Production / Live Mode** and paste each live Price ID into its slot. A Production slot
+asks you to **sign in again** and to give a **reason**, which goes in the audit log. The same checks as Stage 2, Step 4
+run, but Stripe can only be asked from a site holding the live key: **paste live prices from production's own Plans &
+pricing.** From dev, a Production slot is saved without being checked against Stripe (the screen says so).
 
-### Step 4 — Create the production webhook endpoint
+A slot you replace is not forgotten: a subscription already on the old price is still recognised as that plan.
 
-Go to **Developers → Webhooks → Add endpoint**.
+### Step 5 — Create the production webhook endpoint
 
-- **Endpoint URL:** `https://yourdomain.com/api/billing/webhook`
-- **Events to listen to** (every event `app/api/billing/webhook/route.ts` acts on, re-checked 2026-10-27; this list
-  used to stop at the first four and was behind the code):
-  - `customer.subscription.created`
-  - `customer.subscription.updated`
-  - `customer.subscription.deleted`
-  - `customer.subscription.trial_will_end`
-  - `checkout.session.completed` (the Founding Season card on file)
+**Workbench → Webhooks → Create an event destination** (older dashboards: Developers → Webhooks), in **Live mode**:
+
+- **Endpoint URL:** `https://www.fieldlogichq.ca/api/billing/webhook` — **with `www`**. The bare domain redirects to
+  `www`, and Stripe does not follow redirects, so an endpoint without it never delivers.
+- **API version:** `2026-04-22.dahlia` (the version the app is built for; the audit warns on any other).
+- **Events** (every event the billing webhook acts on, re-checked against the code 2026-11-03):
+  - `checkout.session.completed`
+  - `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`,
+    `customer.subscription.trial_will_end`
+  - `invoice.payment_succeeded`, `invoice.payment_failed`
   - `payment_method.attached`, `payment_method.detached`
-  - `invoice.payment_succeeded`
-  - `invoice.payment_failed`
+  - `charge.dispute.created`, `charge.dispute.updated`, `charge.dispute.closed`, `charge.refunded` — a disputed or
+    refunded **subscription** payment (Plans & pricing Stage 0; the owner added these to test mode 2026-11-03, and the
+    live endpoint gets them in the reconciliation)
   - `invoice.paid`, `invoice.voided`, `invoice.marked_uncollectible`, `invoice.finalized` — a club's own **Stripe-fees
-    invoice** (Stage 12d-1, below). The route sends every `invoice.*` event that carries the fee-invoice metadata to
-    that invoice's own row and nothing else, and re-reads the invoice from Stripe, so any of these keeps it current. The
-    two `invoice.payment_*` events above already cover a paid one; these four add a voided or written-off one.
+    invoice** (Club Tier Stage 12d-1). The webhook sends every `invoice.*` event that carries the fee-invoice marker to
+    that invoice's own record and nothing else, and re-reads the invoice from Stripe.
 
 > **Stripe-fees invoices (Club Tier Stage 12d-1).** A club with no subscription invoice to carry its Stripe fees (a
 > comped or free club, or a discounted subscription) gets its own monthly invoice on the 1st, raised on the **platform**
 > account, so its events arrive here, not at the Connect webhook. The product raises it to be paid on Stripe's hosted page
-> (`send_invoice`), with auto-advance off and Stripe's own invoice email never sent; FieldLogicHQ sends the email. The daily job (migration 395) also
-> re-reads every open fee invoice, so a missed event is caught the next morning.
+> (`send_invoice`), with auto-advance off and Stripe's own invoice email never sent; FieldLogicHQ sends the email. A daily
+> job also re-reads every open fee invoice, so a missed event is caught the next morning.
 
-Click **Add endpoint**. On the next screen, click **Reveal** under **Signing secret** to see your live `whsec_...`. Copy it.
+Save, then reveal the destination's **signing secret** (`whsec_…`) and copy it.
 
-### Step 5 — Get your live API keys
+### Step 6 — The live API key
 
-Go to **Developers → API keys** (while still in Live mode).
+**Developers → API keys** in Live mode: copy the **Secret key** (`sk_live_…`).
 
-- Copy the **Secret key** (`sk_live_...`)
-- Copy the **Publishable key** (`pk_live_...`) for future reference
+The mode check also accepts a restricted key (`rk_live_…`), but **production keeps the full secret key**: the support
+console refunds and cancels, and Stripe grants refunds only together with charge writes, so a restricted key would need
+nearly everything anyway (owner ruling T23, `PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md`). Family online payments also open
+only on a full `sk_live_` key. No permission list for a restricted key has been worked out; do not switch to one without
+a decision.
 
-### Step 6 — Update your production environment variables
+### Step 7 — Update the production environment variables
 
-In Amplify → your production environment → Environment variables, replace the test values:
+In Amplify → production → Environment variables:
 
 ```
-STRIPE_SECRET_KEY          = sk_live_...      ← live secret key
-STRIPE_WEBHOOK_SECRET      = whsec_...        ← live webhook signing secret
-STRIPE_PRICE_PRO_MONTHLY   = price_...        ← live Pro price ID
-STRIPE_PRICE_ELITE_MONTHLY = price_...        ← live Elite price ID
-NEXT_PUBLIC_APP_URL        = https://yourdomain.com
+STRIPE_SECRET_KEY      = sk_live_...      ← the live secret key
+STRIPE_WEBHOOK_SECRET  = whsec_...        ← the live destination's signing secret
+NEXT_PUBLIC_APP_URL    = https://www.fieldlogichq.ca
 ```
 
-Redeploy the production environment after saving.
+Redeploy after saving. (The two Connect secrets stay unset while production keeps online payments switched off.)
 
-### Step 7 — Smoke test with a real card
+### Step 8 — The daily billing comparison
 
-Make one real purchase to confirm end-to-end:
+Every day at 12:15 GMT the app compares every Stripe subscription that is not cancelled with our own records: whether it
+still exists, its status, plan, billing period, renewal date and price, and whether we are following it. It **never
+repairs anything**. It keeps each day's result and emails the owner (once a day per outcome) when anything differs or
+Stripe could not be read; a day it could not read is reported as "could not compare", never as a difference. A platform
+admin can also run it by hand.
 
-- [ ] Go to the billing page as an owner-role account
-- [ ] Upgrade to Pro using a real card
-- [ ] Confirm the Supabase `organizations` row updates
-- [ ] Confirm the success banner appears
-- [ ] Open the Customer Portal and verify it loads correctly
-- [ ] Check the Stripe dashboard → **Customers** — your customer record should appear
-- [ ] Check **Developers → Webhooks → your endpoint** → recent deliveries should show successful 200 responses
+It is switched on for production as a release step, after the code that serves it is live (see the release's manual
+production steps), not before.
 
-If everything looks good, you are live.
+### Step 9 — Reconcile test and live (item R)
 
-### Step 8 — Keep test mode available for future development
+Before the first live sale, check each of these in both modes:
 
-Your test products, prices, and customers remain untouched in Stripe. Your dev environment still uses mock mode (no keys). If you ever want to test a billing change before deploying it, repeat Stage 2 using your existing test keys and prices — they never expire.
+- [ ] Every paid plan has a monthly and an annual price slot filled in Plans & pricing, for Production and for Test.
+- [ ] The billing webhook destination exists in both modes with the full event list in Step 5 (the four dispute and
+      refund events are the ones most likely missing in Live).
+- [ ] Each site uses the key you think it does: production a live key, dev/staging a test key.
+- [ ] Run the read-only audit against production:
+      `node scripts/audit-stripe-billing.mjs --env .env.production.local`.
+      ⚠ **Known gap (found 2026-11-03, not yet fixed):** the audit's own list of expected price slots still has Club at
+      its old price and has no Club · Association slot, so it will flag Club even when Plans & pricing is right. Trust
+      Plans & pricing's own check for Club until the audit is updated.
+
+### Step 10 — The first live purchase
+
+Make one real purchase, on the day of the release, to confirm end to end:
+
+- [ ] As an organization owner, choose a paid plan on Plan & billing and pay with a real card.
+- [ ] The success message appears and Plan & billing shows the plan.
+- [ ] Open the customer portal. **This first live open creates the live "FieldLogicHQ portal v1".** Check it offers what
+      Stage 2, Step 5 lists.
+- [ ] Stripe dashboard → **Customers** shows the customer.
+- [ ] The live destination's recent deliveries show 200s.
+- [ ] Cancel or refund it the way you intend to handle a real customer (the support console can refund it).
+
+### Step 11 — Keep test mode for future work
+
+Test products, prices and customers stay in Stripe untouched. Dev keeps mock mode or a test key; repeat Stage 2 with the
+same test prices whenever a billing change needs checking.
 
 ---
 
@@ -334,25 +389,37 @@ path to save one secret.
 
 | Environment | STRIPE_SECRET_KEY | Behaviour |
 |-------------|-------------------|-----------|
-| Local dev | Not set | Mock mode — direct DB writes, local mock portal |
-| Test / staging | `sk_test_...` | Real Stripe UI, fake cards, no real money |
-| Production | `sk_live_...` | Real Stripe, real payments |
+| Local dev | Not set | Mock mode — direct database writes, local mock portal |
+| Local / dev / staging with Stripe | `sk_test_...` (or `rk_test_...`) | Real Stripe pages, fake cards, test price slots |
+| Production | `sk_live_...` | Real Stripe, real payments, live price slots. Production never runs mock mode |
 
 ---
 
 ## Troubleshooting
 
-**Checkout redirects back immediately without completing**  
-The `NEXT_PUBLIC_APP_URL` env var is likely wrong or missing. It must match the domain Stripe redirects back to exactly — no trailing slash.
+**Checkout says "checkout is not configured for {plan} yet"**
+That plan's price slot is empty for this site's mode. Paste the price in Platform admin → Plans & pricing (Test for a
+test key, Production for a live key).
 
-**Webhook events are not updating the database**  
-Run `stripe listen --forward-to localhost:3000/api/billing/webhook` and watch the terminal. If you see a 400 response, the signing secret does not match — double-check `STRIPE_WEBHOOK_SECRET`. If you see a 401, the auth cookie is not being read (webhooks are unauthenticated by design — the route should not call `getAuthContext`).
+**Checkout redirects back immediately without completing**
+`NEXT_PUBLIC_APP_URL` is likely wrong or missing. It must match the address Stripe sends people back to exactly, with no
+trailing slash.
 
-**Customer Portal returns "This link has expired"**  
-Portal sessions expire after a few minutes. The user must click the Manage Subscription button each time to get a fresh session link — do not store or reuse the URL.
+**Webhook events are not updating the database**
+Watch the listen window or the destination's recent deliveries. A 400 means the signing secret does not match
+`STRIPE_WEBHOOK_SECRET`. A 200 that says `ignored: wrong_mode` means the event came from the other mode: the site's key
+and the destination are in different modes. A 200 that says `duplicate` is a repeat delivery the webhook already handled.
 
-**Plan does not update after a successful checkout**  
-The webhook is the source of truth for plan updates, not the checkout success redirect. Check the Stripe dashboard → Webhooks → your endpoint → recent deliveries to see if the `customer.subscription.created` event was delivered and what response your server returned.
+**The portal says it is not configured**
+The app could not find or create its portal configuration in this mode. The usual cause is missing public business
+details in Stripe's settings (Stage 2, Step 5). The app never falls back to the dashboard's default portal.
 
-**Going live: "Your account cannot currently make live charges"**  
-Your Stripe account is not yet activated. Complete the business verification in Settings → Account details.
+**Customer Portal returns "This link has expired"**
+Portal sessions expire after a few minutes. Open the portal from the app each time; never store or reuse the address.
+
+**Plan does not update after a successful checkout**
+The webhook, not the return page, is what records the plan. Check the destination's recent deliveries for
+`customer.subscription.created` and the answer the site gave.
+
+**Going live: "Your account cannot currently make live charges"**
+The Stripe account is not activated yet. Complete Settings → Account details.

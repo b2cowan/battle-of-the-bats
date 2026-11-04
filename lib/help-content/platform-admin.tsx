@@ -1533,7 +1533,7 @@ const platformAdminHelp: HelpPageContent = {
                 <li><strong>A club&rsquo;s Access tab and pencil</strong> — a single-customer exception (see <em>How to give an unsubscribed account extra features</em> and <em>How to temporarily override billing access</em>).</li>
               </ul>
               <p>Live feature matrix publishing must come from an approved Feature Matrix request.</p>
-              <p><strong>Promotions</strong> (on the Product catalog tab, in the Planning workspace) is the list of coupons, promos, trials, launches and retention offers, kept <em>for the record</em>. A promotion here is not linked to checkout or Stripe: adding or changing one never gives a customer a discount. A Promotions request still goes through the Approval queue like any other catalog change. It was called Campaign tracking before; <strong>Campaigns</strong> in the Growth menu is a different thing (planned marketing emails).</p>
+              <p><strong>Promotions</strong> (on the Product catalog tab, in the Planning workspace) is the list of coupons, promos, trials, launches and retention offers, kept <em>for the record</em>. A promotion here is not linked to checkout or Stripe: adding or changing one, even setting it to Active, never gives a customer a discount, and its coupon code is never created in Stripe. A Promotions request still goes through the Approval queue like any other catalog change. It was called Campaign tracking before; <strong>Campaigns</strong> in the Growth menu is a different thing (planned marketing emails).</p>
             </>
           ),
         },

@@ -1921,7 +1921,7 @@ export default function PlansPricingClient({
             <section className={kit.section}>
               <div>
                 <h2 className={kit.sectionTitle}>Promotions</h2>
-                <p className={kit.sectionLede}>For the record · not linked to checkout or Stripe</p>
+                <p className={kit.sectionLede}>For the record only · not linked to checkout or Stripe, whatever the status</p>
               </div>
 
               {canManageProduct && (
@@ -1959,6 +1959,7 @@ export default function PlansPricingClient({
                           <option key={option.value} value={option.value}>{option.label}</option>
                         ))}
                       </select>
+                      <span className={kit.hint}>Active gives no one a discount; checkout never reads promotions.</span>
                     </label>
                     <label className={kit.fieldGroup}>
                       <span className={kit.label}>Starts</span>
@@ -1984,6 +1985,7 @@ export default function PlansPricingClient({
                         placeholder="Optional"
                         onChange={event => setCampaignDraft(draft => ({ ...draft, coupon_code: event.target.value }))}
                       />
+                      <span className={kit.hint}>Not created in Stripe; customers cannot enter it.</span>
                     </label>
                     <label className={kit.fieldGroup}>
                       <span className={kit.label}>Trial days</span>
@@ -2072,6 +2074,9 @@ export default function PlansPricingClient({
                             <span className={`${kit.chip} ${statusClass(campaign.status)}`}>
                               {optionLabel(CAMPAIGN_STATUSES, campaign.status)}
                             </span>
+                            {(campaign.status === 'active' || campaign.status === 'scheduled') && (
+                              <span className={kit.sub}>Not applied at checkout</span>
+                            )}
                           </td>
                           <td data-label="Type" className={kit.muted}>{optionLabel(CAMPAIGN_TYPES, campaign.campaign_type)}</td>
                           <td data-label="Target plans" className={kit.muted}>{formatPlanList(campaign.target_plan_ids)}</td>

@@ -67,6 +67,20 @@ Drawings: https://claude.ai/artifact/QJ3t9cHTLPski7xvL2uFcX (source `PLANS_PRICI
   The live dispute events (O3) are done there. What existing customers pay is not looked back on (O5, ruled no). The first
   live portal test (O6) is recommended for the day Stage 0 reaches production, and is repeated in the reconciliation.
 
+## Stage 1 · guards and housekeeping (built 2026-11-03)
+- **Adding a plan or changing a price can no longer go quietly wrong.** The build now fails, naming the plan and the
+  place, if a plan is missing from any of the lists a new plan must join, or if the pricing Facts doc and the site
+  disagree about a plan's name or price. The steps a test cannot check (database, Stripe, words, tax) are a short
+  checklist beside the drift check in the Facts doc. Today everything agrees.
+- **Promotions stay a record (owner ruling 2026-11-03).** The staff screen now says plainly that an Active promotion
+  gives no one a discount and that its coupon code is never created in Stripe; the build fails if checkout ever starts
+  applying a discount without that decision being revisited. Real discounts would be their own stage, after a ruling on
+  how they stack with free time, Founding comps and trials.
+- **The Stripe setup guide describes the product as it is**, as the script for the test ↔ live reconciliation and the
+  first live purchase.
+- **Found on the way:** a Club · Association workspace showed its internal plan code in the workspace switcher (fixed);
+  the read-only Stripe audit still expects Club's old price (flagged for the owner).
+
 ## Priority and risk
 Start the planning session at the end of the billing project. The invoice list is the natural first deliverable. The bulk
 price-change tool is the highest-risk piece and comes last.
