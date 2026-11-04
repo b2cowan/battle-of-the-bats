@@ -9,6 +9,8 @@ import { getStripe } from './stripe';
 import { getPlanConfigOverride } from './plan-config-db';
 import { restoreAfterReactivation } from './billing-reactivation';
 import type { OrgPlan } from './types';
+import { operatorPlanChangeRefusal } from './plan-ending';
+import { findPending } from './plan-ending-store';
 
 /**
  * An operator's plan change — the ONE rule both platform-admin paths run: the single-org Plan and
@@ -85,10 +87,14 @@ async function subscriptionEndedInStripe(subscriptionId: string): Promise<boolea
     return e.statusCode === 404 || e.code === 'resource_missing';
   }
 }
-/** A staff plan change the rule refuses before writing anything; `message` is the sentence the person reads. */
+/**
+ * A staff plan change the rule refuses before writing anything; `message` is the sentence the person reads. `code` says
+ * which rule: Stripe still bills the club (Q9), or a cancel or move waits for its date (Plans end at renewal, Stage 2).
+ */
 export class PlanRefusedError extends Error {
-  readonly code = 'paying_through_stripe' as const;
-  constructor(message: string = PAYING_CLUB_PLAN_REFUSAL) { super(message); }
+  constructor(message: string = PAYING_CLUB_PLAN_REFUSAL, readonly code: 'paying_through_stripe' | 'change_waiting' = 'paying_through_stripe') {
+    super(message);
+  }
 }
 
 /** Why a plan move on a Coaches Portal staff gave free time is refused (Stage 4b review): its plan is the portal's own. */
@@ -132,9 +138,19 @@ export async function applyOperatorPlanChange(input: OperatorPlanChangeInput): P
   const billedPerRecord = !!current
     && stripeStillBills({ stripeSubscriptionId: current.stripe_subscription_id, subscriptionStatus: current.subscription_status });
   let subscriptionEnded = !billedPerRecord;
-  if (current && billedPerRecord && (current.plan_id !== planId || currentEffectiveLimit !== effectiveTournamentLimit)) {
+  const movesPlan = !!current && (current.plan_id !== planId || currentEffectiveLimit !== effectiveTournamentLimit);
+  if (current && billedPerRecord && movesPlan) {
     subscriptionEnded = await subscriptionEndedInStripe(current.stripe_subscription_id!);
     if (!subscriptionEnded) throw new PlanRefusedError();
+  }
+
+  // Plans end at the renewal date, Stage 2 Part C (owner 2026-11-04): a change waiting for its date (a cancel, or a move to
+  // the free plan) is answered first — the one rule's 'operator_plan_change' REFUSES. Reached only once Stripe no longer
+  // bills (Q9 refused above otherwise): typically a deletion we missed, whose waiting row a later Finish (or a late Stripe
+  // event) would run ON TOP of the plan set here — suspending, or moving to free, the plan staff just gave.
+  if (current && movesPlan) {
+    const refusal = operatorPlanChangeRefusal(current.plan_id as OrgPlan, await findPending(orgId), new Date());
+    if (refusal) throw new PlanRefusedError(refusal, 'change_waiting');
   }
 
   const { count: nonArchivedTournamentCount } = await supabaseAdmin

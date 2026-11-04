@@ -307,13 +307,18 @@ const ACCOUNT: Preview[] = [
 // A plan that ends on its renewal date (Plans end at the renewal date, Stage 1 Part C, G6), and the two plan emails that
 // were missing here (the drawings' Asks tab): the "cancelled" email on the end date and the trial-ending email.
 const ENDING_SAMPLE: EndingEmailFacts = {
-  kind: 'ends_on', portal: false, orgName: 'Riverside Minor Ball', plan: 'tournament_plus', planLabel: 'Tournament Plus', door: 'owner',
+  kind: 'ends_on', move: null, portal: false, orgName: 'Riverside Minor Ball', plan: 'tournament_plus', planLabel: 'Tournament Plus', door: 'owner',
   clickedAt: '2026-10-31T15:00:00Z', date: '2026-12-01T02:00:00Z', retentionUntil: '2027-03-01T02:00:00Z', tournaments: 3, trialing: false,
   remindLater: true, daysLeft: 7, renewsAs: null, price: PLAN_BILLING_WORDS.plan.price(PLAN_CONFIG.tournament_plus.monthlyPrice, 'monthly'),
   keepUrl: 'https://dev.fieldlogichq.ca/riverside-minor-ball/admin/tournaments/settings/subscription?keep_plan=1',
   billingUrl: 'https://dev.fieldlogichq.ca/riverside-minor-ball/admin/tournaments/settings/subscription',
 };
 const PORTAL_ENDING: EndingEmailFacts = { ...ENDING_SAMPLE, portal: true, orgName: 'Toronto Blue Jays U13', plan: 'team', planLabel: 'Premium', tournaments: 0 };
+// A move to the free plan that waits (Stage 2 Part C): what the date keeps and archives, as the band says it.
+const MOVE_SAMPLE: EndingEmailFacts = {
+  ...ENDING_SAMPLE,
+  move: { target: PLAN_CONFIG.tournament.label, kept: ['Spring Classic 2027'], archived: ['Fall Invitational', 'Winter Cup'], fellBack: false, picked: true, choose: true },
+};
 const ending = (id: string, label: string, trigger: string, facts: EndingEmailFacts): Preview => {
   const out = endingEmail(facts);
   return { id, label, subject: out.subject, trigger, html: out.html };
@@ -325,6 +330,12 @@ const PLAN: Preview[] = [
   ending('plan-kept', 'Your plan will renew', 'Keep {Plan} (the owner’s, or the operator’s when ticked), or Renew in Stripe’s billing portal.', { ...ENDING_SAMPLE, kind: 'kept' }),
   ending('plan-kept-cheaper', 'Your plan will renew as a cheaper plan', 'Keep {Plan} when a cheaper-plan move the cancel set aside came back (G1).',
     { ...ENDING_SAMPLE, kind: 'kept', orgName: 'Falcons Community Club', plan: 'club_large', planLabel: PLAN_CONFIG.club_large.label, renewsAs: PLAN_CONFIG.club.label, price: PLAN_BILLING_WORDS.plan.price(PLAN_CONFIG.club.monthlyPrice, 'monthly') }),
+  ending('plan-downgrade-scheduled', 'Your move to the free plan is scheduled', 'The click: an owner’s move from a paid plan to the free plan, waiting for the renewal date. Once per waiting move; the daily job sends it late if it failed.', MOVE_SAMPLE),
+  ending('plan-downgrade-reminder', 'Seven days before the move', 'The daily job, once per waiting move; skipped when it was made with under seven days left or kept. Names what the date keeps then.',
+    { ...MOVE_SAMPLE, kind: 'reminder', move: { ...MOVE_SAMPLE.move!, kept: ['Winter Cup'], archived: ['Fall Invitational'], fellBack: true } }),
+  ending('plan-downgraded', 'Now on the free plan', 'The date of the move (or the click, with no paid period to wait for). Once per move.',
+    { ...MOVE_SAMPLE, kind: 'moved', date: '2026-12-01T02:00:00Z' }),
+  ending('plan-kept-move', 'Your plan will renew (the move is called off)', 'Keep {Plan} over a waiting move to the free plan, or Renew in Stripe’s billing portal.', { ...MOVE_SAMPLE, kind: 'kept' }),
   {
     id: 'cancellation-confirmation', label: 'Subscription cancelled', subject: 'Your Riverside Minor Ball subscription has been cancelled',
     trigger: 'The end date (or End now): the plan has ended. Its data date counts from the end date.',

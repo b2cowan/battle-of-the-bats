@@ -640,11 +640,12 @@ describe('6 · the webhook: the reactivation verdict, and the event that follows
   it('REACTIVATION ON A FRESHLY FLIPPED ORGANIZATION IS HARMLESS: it unsuspends nothing, restores nothing, and only closes the old cancellation clock', async () => {
     // The state after the flip: not suspended (the flip cleared it), no retained records filed under the organization reasons
     // (a portal's cancellation is filed under its own tag), and an old applied cancellation intent. The only write is closing it.
+    // The withdraw's log append (Plans end at renewal Stage 2 Part C) reads the row's status, log and stamp first.
     stubDatabase({
       organizations: { one: { billing_suspended_at: null, is_public: true } },
       billing_retained_records: { many: [] },
       tournaments: { count: 0 },
-      billing_retention_intents: { many: [{ id: 'intent_1' }] },
+      billing_retention_intents: { many: [{ id: 'intent_1' }], one: { id: 'intent_1', status: 'pending', change_log: [], updated_at: '2026-11-01T00:00:00.000000+00:00' } },
     });
     const result = await restoreAfterReactivation('org_1', PLAN_CONFIG.club.tournamentLimit);
     assert.deepEqual(result, { unsuspended: false, siteBackOnline: false, restoredTournamentIds: [], stillRetainedTournaments: 0, closedIntents: 1 });

@@ -34,7 +34,8 @@ export function fromRow(r: IntentRow): EndingIntent {
   };
 }
 
-export function toRow(p: EndingIntentPatch): Record<string, unknown> {
+/** A row's columns from an insert (which carries the whole first log) or a patch (whose `log` the store appends — never here). */
+export function toRow(p: EndingIntentPatch & { changeLog?: EndingLogEntry[] }): Record<string, unknown> {
   const map: Record<string, string> = {
     intentType: 'intent_type', targetPlan: 'target_plan', keepTournamentIds: 'keep_tournament_ids', status: 'status', effectiveAt: 'effective_at', retentionUntil: 'retention_until', reason: 'reason', fromPlan: 'from_plan',
     createdBy: 'created_by', createdByEmail: 'created_by_email', appliedAt: 'applied_at', stripeSubscriptionId: 'stripe_subscription_id',
@@ -76,21 +77,53 @@ export async function withdrawPendingEnding(where: { orgId: string } | { subscri
   for (const row of (data ?? []) as unknown as IntentRow[]) {
     const intent = fromRow(row);
     const entry: EndingLogEntry = { at: new Date().toISOString(), action: 'withdrawn', door: 'system', by: null, note };
-    const updated = await updateIntent(intent.id, { status: 'canceled', changeLog: [...intent.changeLog, entry] }, ['pending']);
+    const updated = await updateIntent(intent.id, { status: 'canceled', log: [entry] }, ['pending']);
     if (updated) withdrawn += 1;
   }
   return withdrawn;
 }
 
+/** How many times a log append re-reads after another writer got in between (each retry is one more writer's line kept). */
+const APPEND_TRIES = 5;
+
+/**
+ * Writes `patch` while the row's status is one of `onlyIf`; null when it is not (another writer moved it).
+ *
+ * ⚠⚠ THE CHANGE LOG IS AN APPEND (Stage 2 Part C, owner 2026-11-04). `patch.log` is added to the log the row holds AT THE
+ * WRITE, never to the writer's own earlier read — before, every writer rewrote the whole log from its read, so two writers
+ * close together (a Keep and Stripe's event, a changed pick and the click) dropped one line. PostgREST cannot write
+ * `change_log = change_log || $1`, so the append is a compare-and-swap on `updated_at`: read the log and its stamp, write
+ * the longer log only while the stamp is unchanged, re-read and try again when it moved. An append's new stamp is always LATER
+ * than the one it read, so two APPENDERS can never both pass on the same read. (A plain write — no log — stamps the app's
+ * clock, which could in theory land exactly on a stamp an appender read; it never touches the log, so the only miss is that
+ * millisecond-exact, clock-skewed collision — accepted; /review 2026-11-04.)
+ */
 export async function updateIntent(id: string, patch: EndingIntentPatch, onlyIf: EndingStatus[]): Promise<EndingIntent | null> {
-  const { data, error } = await supabaseAdmin
-    .from('billing_retention_intents')
-    .update({ ...toRow(patch), updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .in('status', onlyIf)
-    .select(INTENT_COLUMNS)
-    .maybeSingle<IntentRow>();
-  if (error) throw new Error(`Couldn't update the waiting change: ${error.message}`);
-  return data ? fromRow(data) : null;
+  const { log, ...fields } = patch;
+  /** The one write: `row` while the status allows (and, for an append, while `updated_at` is still what was read). */
+  const write = async (row: Record<string, unknown>, readStamp?: string): Promise<EndingIntent | null> => {
+    let query = supabaseAdmin.from('billing_retention_intents').update(row).eq('id', id).in('status', onlyIf);
+    if (readStamp) query = query.eq('updated_at', readStamp);
+    const { data, error } = await query.select(INTENT_COLUMNS).maybeSingle<IntentRow>();
+    if (error) throw new Error(`Couldn't update the waiting change: ${error.message}`);
+    return data ? fromRow(data) : null;
+  };
+  if (!log || log.length === 0) return write({ ...toRow(fields), updated_at: new Date().toISOString() });
+  for (let attempt = 0; attempt < APPEND_TRIES; attempt += 1) {
+    const { data: current, error: readError } = await supabaseAdmin
+      .from('billing_retention_intents')
+      .select('status, change_log, updated_at')
+      .eq('id', id)
+      .maybeSingle<{ status: EndingStatus; change_log: EndingLogEntry[] | null; updated_at: string }>();
+    if (readError) throw new Error(`Couldn't read the waiting change: ${readError.message}`);
+    if (!current || !onlyIf.includes(current.status)) return null;
+    const stamp = new Date(Math.max(Date.now(), new Date(current.updated_at).getTime() + 1)).toISOString();
+    const written = await write(
+      { ...toRow(fields), change_log: [...(Array.isArray(current.change_log) ? current.change_log : []), ...log], updated_at: stamp },
+      current.updated_at,
+    );
+    if (written) return written;
+  }
+  throw new Error('The waiting change kept changing while it was being written. Try again in a moment.');
 }
 

@@ -45,6 +45,8 @@ type BulkResult = {
   portal?: boolean;
   /** Skipped because Stripe still bills it (a plan change), or because the staff member belongs to it (a status). */
   billed?: boolean;
+  /** Skipped because a cancel or a move to the free plan waits for its date (Plans end at renewal, Stage 2 Part C). */
+  waiting?: boolean;
   ownClub?: boolean;
   /** Extra feature only: it was already as asked, so nothing changed. */
   already?: boolean;
@@ -346,11 +348,13 @@ export const POST = withObservability(async (req: Request) => {
         }
       }
     } catch (err) {
-      // A paying club's plan changes in Stripe, never here (owner Q9): the club is skipped with the one sentence, and the
-      // batch carries on.
+      // A paying club's plan changes in Stripe, never here (owner Q9), and a club whose cancel or move waits for its date is
+      // refused until that change is kept or finished: the club is skipped with the one sentence, and the batch carries on.
       if (err instanceof PlanRefusedError) {
         results.push({ orgId: org.id, name: org.name, slug: org.slug, ok: false,
-          portal: err.message === PORTAL_FREE_TIME_PLAN_REFUSAL || undefined, billed: err.message !== PORTAL_FREE_TIME_PLAN_REFUSAL || undefined,
+          portal: err.message === PORTAL_FREE_TIME_PLAN_REFUSAL || undefined,
+          billed: (err.message !== PORTAL_FREE_TIME_PLAN_REFUSAL && err.code !== 'change_waiting') || undefined,
+          waiting: err.code === 'change_waiting' || undefined,
           skipped: true, message: `Skipped: ${err.message}` });
         continue;
       }
@@ -408,6 +412,7 @@ export const POST = withObservability(async (req: Request) => {
             portals: results.filter(result => result.portal).length,
             billed: results.filter(result => result.billed).length,
             ownClubs: results.filter(result => result.ownClub).length,
+            waiting: results.filter(result => result.waiting).length,
           },
           also: sideEffects,
         })

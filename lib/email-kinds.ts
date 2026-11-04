@@ -50,6 +50,9 @@ export const EMAIL_KINDS = {
   team_workspace_ends_on:               { klass: 'account', label: 'Coaches Portal Premium ends on a date' },
   team_workspace_ending_reminder:       { klass: 'account', label: 'Coaches Portal Premium ending reminder' },
   team_workspace_kept:                  { klass: 'account', label: 'Coaches Portal Premium kept' },
+  // Stage 2 Part C: a move to the free plan that waits — scheduled, its reminder (the date's own email is plan_downgraded).
+  plan_downgrade_scheduled:             { klass: 'account', label: 'Move to the free plan scheduled' },
+  plan_downgrade_reminder:              { klass: 'account', label: 'Move to the free plan reminder' },
   welcome_back:                         { klass: 'account', label: 'Welcome back' },
   trial_ending:                         { klass: 'account', label: 'Trial ending' },
   portal_free_time_ending:              { klass: 'account', label: 'Free time ending' },

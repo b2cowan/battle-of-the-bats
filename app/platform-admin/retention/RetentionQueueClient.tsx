@@ -38,6 +38,13 @@ function askedBy(row: OverdueEnding): string {
   return row.by ?? 'Stripe';
 }
 
+/** The date column's heading, for the rows it holds: a cancel "should have ended", a move "should have moved" (Stage 2 Part C). */
+function dueHeading(rows: OverdueEnding[]): string {
+  const moves = rows.filter(r => r.movesTo).length;
+  if (moves === 0) return 'Should have ended';
+  return moves === rows.length ? 'Should have moved' : 'Should have ended or moved';
+}
+
 /**
  * ENDINGS STRIPE HASN'T FINISHED (Plans end at the renewal date, Part C, G3; Stage 0 Tab 6). A plan more than three days past
  * its end date and still open: Stripe's end-of-period message never reached us. Rare by design, so the section is absent
@@ -62,7 +69,7 @@ function OverdueEndings({ overdue }: { overdue: OverdueEnding[] | 'failed' }) {
                 <tr>
                   <th>Org</th>
                   <th>Plan</th>
-                  <th>Should have ended</th>
+                  <th>{dueHeading(overdue)}</th>
                   <th className={kit.num}>Days over</th>
                   <th>Asked by</th>
                   <th aria-label="Open" />
@@ -75,7 +82,7 @@ function OverdueEndings({ overdue }: { overdue: OverdueEnding[] | 'failed' }) {
                     <tr key={row.orgId}>
                       <td className="table-cards-title"><Link href={href} className={kit.nameLink}>{row.orgName}</Link></td>
                       <td data-label="Plan">{row.planLabel} · {row.movesTo ? `move to ${row.movesTo}` : 'cancel'}</td>
-                      <td data-label="Should have ended" className={kit.nowrap}>{consoleDate(row.shouldHaveEnded)}</td>
+                      <td data-label={row.movesTo ? 'Should have moved' : 'Should have ended'} className={kit.nowrap}>{consoleDate(row.shouldHaveEnded)}</td>
                       <td data-label="Days over" className={kit.num}>{row.daysOver}</td>
                       <td data-label="Asked by">{askedBy(row)}</td>
                       <td className={kit.rowDoor}><Link href={href} className={kit.rowDoorLink} tabIndex={-1} aria-hidden>›</Link></td>

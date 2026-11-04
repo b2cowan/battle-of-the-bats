@@ -4,16 +4,11 @@ import {
   isLowerPlan,
   isOrganizationDowngradeTarget,
   normalizePlan,
-  retentionDateLabel,
   writeOrgBillingAudit,
 } from '@/lib/billing-retention';
-import { PLAN_CONFIG } from '@/lib/plan-config';
 import { getStripe } from '@/lib/stripe';
-import { planDowngradedHtml, SITE_URL } from '@/lib/email';
-import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 import { ownPlanOf } from '@/lib/entitlement-grants';
-import { getBillingHref } from '@/lib/billing-urls';
 import { normalizeKeepIds, scheduleDowngrade, stripeIdToStopNow } from '@/lib/plan-ending';
 import { endingDeps, readEndingAccount } from '@/lib/plan-ending-server';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
@@ -33,7 +28,8 @@ type ConfirmBody = {
  * — and nothing is archived, limited, closed or emailed as done now; the paid plan stays fully live until the date, when
  * the webhook runs the move (`applyDowngrade`). With no live paid period (ruling 3: comped, Founding Season, no
  * subscription, a dev mock) there is no date: the move happens now, through the same `applyDowngrade` and its safe order
- * (restore records BEFORE the archive — G11; the old route archived first).
+ * (restore records BEFORE the archive — G11; the old route archived first). Either way the "now on {plan}" email is the
+ * move's own (Stage 2 Part C) — sent once by `applyDowngrade`, never by this route.
  *
  * ⚠ The old immediate move to a cheaper PAID plan is closed: that move waits for renewal through Change plan (§1.3), and
  * this branch (with its `create_prorations`) let a direct call skip the wait — and, with no paying subscription, it handed
@@ -117,25 +113,6 @@ export const POST = withObservability(async (req: Request) => {
           error: W.downgrade.stripeNotStopped, targetPlan, retainedCount: moved.retainedTournamentIds.length, retentionUntil: moved.retentionUntil,
         }, { status: 500 });
       }
-    }
-
-    // The move happened now, so "your plan has been updated" is true now. (Part C moves this email into the move itself.)
-    if (actorEmail) {
-      const fromPlanLabel = PLAN_CONFIG[fromPlan]?.label ?? fromPlan;
-      const toPlanLabel = PLAN_CONFIG[targetPlan]?.label ?? targetPlan;
-      const billingUrl = `${SITE_URL}${getBillingHref({ ...ctx.org, planId: ownPlanOf(ctx.org) })}`;
-      await sendTransactionalEmail({
-        key: 'plan_downgraded',
-        to: actorEmail,
-        vars: { orgName: ctx.org.name, fromPlanLabel, toPlanLabel, billingUrl },
-        defaultSubject: `Your ${ctx.org.name} plan has been updated`,
-        defaultHtml: planDowngradedHtml({
-          orgName: ctx.org.name, fromPlanLabel, toPlanLabel, retainedTournaments: moved.retainedTournamentIds.length,
-          retentionUntil: retentionDateLabel(moved.retentionUntil), billingUrl,
-        }),
-        orgId: ctx.org.id,
-        askedBy: ctx.user.id,
-      });
     }
 
     return Response.json({

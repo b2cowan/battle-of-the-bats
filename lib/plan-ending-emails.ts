@@ -10,12 +10,17 @@
  * A club's version and a Coaches Portal's (Premium) version of each. Pure: the facts in, the subject, the house-layout
  * HTML and the template variables out (the stored template is used only when an operator has customised it).
  *
+ * A MOVE TO THE FREE PLAN THAT WAITS (Stage 2 Part C, owner rulings 2026-11-03 ruling 5 and 2026-11-04): the same row
+ * kinds in a move's words — "Your move to {plan} is scheduled for {date}" at the click, its reminder seven days before,
+ * the kept email with the Keep window's "The move to {plan} is called off" — and `moved`, "{Org} is now on {plan}" on the
+ * date (or at the click, with no paid period to wait for). A club only: a Coaches Portal never moves to the free plan here.
+ *
  * ⚠ ONE DATE (G4): every date here goes through `formatStoredDate`, the page's own formatter (Toronto) — never
  * `toLocaleDateString`, which reads an evening-Eastern period end as the next day on a UTC server.
- * Words are Stage 1's: correct and plain. Stage 4 polishes them with the rest of the help pass.
+ * Words are Stage 1's and Stage 2's: correct and plain. Stage 4 polishes them with the rest of the help pass.
  */
 import { formatStoredDate } from './timezone';
-import { pluralize } from './utils';
+import { joinWithAnd, pluralize } from './utils';
 import {
   warmEmailButton, warmEmailDocument, warmEmailHeading, warmEmailParagraph, warmEmailSmall, warmPanelStyle, WARM_EMAIL, WARM_EMAIL_STYLE,
 } from './email-envelope-warm';
@@ -24,8 +29,25 @@ import type { OrgPlan as OrgPlanKey } from './types';
 import type { EmailKind } from './email-kinds';
 import type { EndingDoor } from './plan-ending';
 
+/** What a move to the free plan does on its date, as the email says it (re-read for each email; what it did, for `moved`). */
+export type MoveEmailFacts = {
+  /** The plan it moves to, as the email says it ("Tournament"). */
+  target: string;
+  /** The tournaments that stay (or stayed) active, and the ones archived then (or now). */
+  kept: string[];
+  archived: string[];
+  /** The pick is gone (or was, on the date), so the newest is (was) kept. */
+  fellBack: boolean;
+  /** Whether a pick was ever made — the "gone" words differ (Stage 0 Ask 8). */
+  picked: boolean;
+  /** More tournaments hold a slot than the free plan keeps: there is a choice to make. */
+  choose: boolean;
+};
+
 export type EndingEmailFacts = {
-  kind: 'ends_on' | 'reminder' | 'kept';
+  kind: 'ends_on' | 'reminder' | 'kept' | 'moved';
+  /** A waiting (or done) move to the free plan; null for a cancel. `planLabel` is then the plan it moves FROM. */
+  move: MoveEmailFacts | null;
   /** A Coaches Portal: the Premium version. `orgName` is then the team's name (the portal's display name). */
   portal: boolean;
   orgName: string;
@@ -55,11 +77,21 @@ export type EndingEmailFacts = {
 
 export type EndingEmailOut = { key: EmailKind; subject: string; html: string; vars: Record<string, string> };
 
-const KEYS: Record<EndingEmailFacts['kind'], { club: EmailKind; portal: EmailKind }> = {
+const KEYS: Record<Exclude<EndingEmailFacts['kind'], 'moved'>, { club: EmailKind; portal: EmailKind }> = {
   ends_on: { club: 'plan_ends_on', portal: 'team_workspace_ends_on' },
   reminder: { club: 'plan_ending_reminder', portal: 'team_workspace_ending_reminder' },
   kept: { club: 'plan_kept', portal: 'team_workspace_kept' },
 };
+
+/** A move's own keys (owner 2026-11-04); its kept email stays `plan_kept` (from KEYS), with one sentence of its own. */
+const MOVE_KEYS: Record<Exclude<EndingEmailFacts['kind'], 'kept'>, EmailKind> = {
+  ends_on: 'plan_downgrade_scheduled', reminder: 'plan_downgrade_reminder', moved: 'plan_downgraded',
+};
+
+function keyOf(f: EndingEmailFacts): EmailKind {
+  if (f.kind === 'moved' || (f.move && f.kind !== 'kept')) return MOVE_KEYS[f.kind];
+  return KEYS[f.kind][f.portal ? 'portal' : 'club'];
+}
 
 // Local, as the other pure email modules keep theirs (lib/email.ts is not importable without the app's path aliases).
 const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -143,25 +175,113 @@ function kept(f: EndingEmailFacts): { subject: string; body: string[] } {
   const renews = f.trialing && f.date
     ? `Your trial ends on ${day(f.date)}${f.price ? `, and then it’s ${escapeHtml(f.price)}` : ''}.`
     : `It renews ${when}${at}.`;
+  // Over a waiting move, the Keep window's own second sentence (Stage 2 Part B ruling) in place of "Nothing else changes."
+  const rest = f.move ? escapeHtml(W.downgrade.keepMoveOff(f.move.target)) : W.cancel.keepNothingElse;
   return {
     subject: f.portal ? `${what(f, false)} will renew ${when}` : `${f.planLabel} will renew ${when}`,
     body: [
       warmEmailHeading(`${escapeHtml(f.planLabel)} stays on`),
-      warmEmailParagraph(`${who} ${what(f, true)}${how}. ${renews} Nothing else changes.`),
+      warmEmailParagraph(`${who} ${what(f, true)}${how}. ${renews} ${rest}`),
       button,
     ],
   };
 }
 
-export function endingEmail(f: EndingEmailFacts): EndingEmailOut {
-  const { subject, body } = f.kind === 'kept' ? kept(f) : f.kind === 'reminder' ? reminder(f, f.date!) : endsOn(f, f.date!);
+// ── A move to the free plan (Stage 2 Part C) ─────────────────────────────────────────────────────
+
+const names = (list: readonly string[]) => joinWithAnd(list.map(b));
+const isAre = (list: readonly string[]) => (list.length === 1 ? 'is' : 'are');
+const itThey = (list: readonly string[]) => (list.length === 1 ? 'it' : 'they');
+/** Sentences, the empty ones left out. */
+const sentences = (...parts: string[]) => parts.filter(Boolean).join(' ');
+
+/** What the date does, in the band's words: the one kept (or the ask to choose), and what is archived and kept until when. */
+function moveOnTheDay(f: EndingEmailFacts, m: MoveEmailFacts, end: string): string {
+  const keep = m.fellBack && m.choose
+    ? escapeHtml(W.downgrade.band.gone(m.picked, m.kept[0] ?? '', end))
+    : m.kept.length > 0 ? `You keep ${names(m.kept)}.` : '';
+  const archived = m.archived.length > 0
+    ? `${names(m.archived)} ${isAre(m.archived)} archived then and kept until ${b(day(f.retentionUntil))}, so ${itThey(m.archived)} can come back if you upgrade before then. So is any other tournament you make before then.`
+    : `Any other tournament you make before then is archived then and kept until ${b(day(f.retentionUntil))}.`;
+  return sentences(`${escapeHtml(f.orgName)} moves to ${b(m.target)}.`, keep, archived, `Tools that come only with ${escapeHtml(f.planLabel)} turn off.`);
+}
+
+function moveScheduled(f: EndingEmailFacts, m: MoveEmailFacts, end: string): { subject: string; body: string[] } {
+  // The Downgrade window's own dated words (Stage 2 Part B), so the email and the window say the same thing.
+  const stays = escapeHtml(W.downgrade.whenOn(end, f.planLabel, f.trialing));
   return {
-    key: KEYS[f.kind][f.portal ? 'portal' : 'club'],
+    subject: `Your move to ${m.target} is scheduled for ${day(end)}`,
+    body: [
+      warmEmailHeading(`Your move to ${escapeHtml(m.target)} is scheduled`),
+      warmEmailParagraph(`You chose to move ${b(f.orgName)} from ${b(f.planLabel)} to ${b(m.target)} on ${day(f.clickedAt)}. ${stays}`),
+      panel(`On ${day(end)}`, moveOnTheDay(f, m, end)),
+      warmEmailParagraph(`Changed your mind? ${escapeHtml(W.cancel.keepAnyTime(f.planLabel, end))}${m.choose ? ` To change which tournament you keep, open ${escapeHtml(W.page.title)}.` : ''}`),
+      warmEmailButton(escapeHtml(W.cancel.keepDoor(f.plan)), f.keepUrl),
+      ...(f.remindLater ? [warmEmailSmall('We’ll remind you seven days before the move.')] : []),
+    ],
+  };
+}
+
+function moveReminder(f: EndingEmailFacts, m: MoveEmailFacts, end: string): { subject: string; body: string[] } {
+  const left = pluralize(f.daysLeft, 'day');
+  return {
+    subject: `Your move to ${m.target} is in ${left}`,
+    body: [
+      warmEmailHeading(`${left} until your move to ${escapeHtml(m.target)}`),
+      warmEmailParagraph(`${b(f.orgName)} moves from ${b(f.planLabel)} to ${b(m.target)} on ${day(end)}. Until then everything stays open.`),
+      panel(`On ${day(end)}`, moveOnTheDay(f, m, end)),
+      warmEmailButton(escapeHtml(W.cancel.keepDoor(f.plan)), f.keepUrl),
+    ],
+  };
+}
+
+/** Done: "{Org} is now on Tournament" — what was kept, what was archived and until when, and how it comes back. */
+function moved(f: EndingEmailFacts, m: MoveEmailFacts, on: string): { subject: string; body: string[] } {
+  // The fallback says why, as the row's own note does (applyDowngrade): nothing picked, or the pick no longer held a slot.
+  const keep = m.kept.length === 0 ? ''
+    : !m.fellBack ? `You kept ${names(m.kept)}.`
+      : m.picked ? `The tournament you chose to keep was no longer a draft or active event, so we kept ${names(m.kept)}, your newest.`
+        : `You hadn’t chosen a tournament to keep, so we kept ${names(m.kept)}, your newest.`;
+  const archived = m.archived.length > 0
+    ? `${names(m.archived)} ${isAre(m.archived)} archived and kept until ${b(day(f.retentionUntil))}. Upgrade before then and ${itThey(m.archived)} ${m.archived.length === 1 ? 'comes' : 'come'} back.`
+    : 'No tournament needed to be archived.';
+  return {
+    subject: `${f.orgName} is now on ${m.target}`,
+    body: [
+      warmEmailHeading(`You’re now on ${escapeHtml(m.target)}`),
+      warmEmailParagraph(`${b(f.orgName)} moved from ${b(f.planLabel)} to ${b(m.target)} on ${day(on)}, as you chose.`),
+      panel('What changed', sentences(keep, archived, `Tools that came only with ${escapeHtml(f.planLabel)} are off.`)),
+      warmEmailButton(escapeHtml(`Open ${W.page.title}`), f.billingUrl),
+    ],
+  };
+}
+
+function bodyOf(f: EndingEmailFacts): { subject: string; body: string[] } {
+  if (f.kind === 'kept') return kept(f);
+  const m = f.move;
+  if (f.kind === 'moved') {
+    if (!m) throw new Error('A "now on" email needs the move it is about.');
+    return moved(f, m, f.date!);
+  }
+  if (m) return f.kind === 'reminder' ? moveReminder(f, m, f.date!) : moveScheduled(f, m, f.date!);
+  return f.kind === 'reminder' ? reminder(f, f.date!) : endsOn(f, f.date!);
+}
+
+export function endingEmail(f: EndingEmailFacts): EndingEmailOut {
+  const { subject, body } = bodyOf(f);
+  const m = f.move;
+  return {
+    key: keyOf(f),
     subject,
     html: warmEmailDocument(body.join('\n')),
     vars: {
       orgName: f.orgName, planLabel: f.planLabel, date: f.date ? day(f.date) : '', retentionUntil: day(f.retentionUntil),
       keepUrl: f.keepUrl, billingUrl: f.billingUrl, renewsAs: f.renewsAs ?? '', price: f.price ?? '',
+      // A move's (and the old `plan_downgraded` template's own names, so a customised row still fills in).
+      ...(m ? {
+        targetPlanLabel: m.target, fromPlanLabel: f.planLabel, toPlanLabel: m.target,
+        keptTournaments: joinWithAnd(m.kept), archivedTournaments: joinWithAnd(m.archived),
+      } : {}),
     },
   };
 }

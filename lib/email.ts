@@ -1586,29 +1586,6 @@ export function trialEndingHtml(p: {
   `);
 }
 
-export function planDowngradedHtml(p: {
-  orgName: string;
-  fromPlanLabel: string;
-  toPlanLabel: string;
-  retainedTournaments: number;
-  retentionUntil?: string;
-  billingUrl: string;
-}) {
-  const retainedNote = p.retainedTournaments > 0 && p.retentionUntil
-    ? `<p style="margin:0;line-height:1.75;color:${WARM_EMAIL.ink};">${p.retainedTournaments} tournament${p.retainedTournaments === 1 ? '' : 's'} that exceed the ${p.toPlanLabel} limit have been archived and retained until <strong>${p.retentionUntil}</strong>. They will be restored if you upgrade again before that date.</p>`
-    : `<p style="margin:0;line-height:1.75;color:${WARM_EMAIL.ink};">Your account is active on the ${p.toPlanLabel} plan.</p>`;
-
-  return wrap(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Plan updated</h2>
-    <p style="margin:0 0 1rem;">Your <strong>${p.orgName}</strong> subscription has been changed from <strong>${p.fromPlanLabel}</strong> to <strong>${p.toPlanLabel}</strong>.</p>
-    <div style="${warmPanelStyle('secondary')}">
-      <p style="${WARM_EMAIL_STYLE.panelLabel}">What changed</p>
-      ${retainedNote}
-    </div>
-    ${warmEmailButton('Manage Billing', p.billingUrl)}
-  `);
-}
-
 export function teamWorkspaceCancelledHtml(p: {
   workspaceName: string;
   resubscribeUrl: string;

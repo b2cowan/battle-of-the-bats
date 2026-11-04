@@ -582,6 +582,10 @@
     "433_every_buyer_has_a_billing_address.sql": {
       "prod": "pending",
       "note": "GST/HST Stage 1 Part 1 (docs/projects/active/GST_HST_STAGE1_BUILD_PROMPT.md; owner rulings 2026-11-03): where each buyer is billed. Visible: table billing_locations (one row per buyer, a club by org_id or a coach by user_id; RLS on, no policies, grants revoked from anon and authenticated; service role only), its CHECKs and two partial unique indexes. No change to any existing table, function or row; no backfill (prod had 0 live subscriptions 2026-11-03); re-runnable. Apply to prod BEFORE the promote that ships Stage 1 Part 2 (the checkout check reads the table: without it every paid checkout answers 500). Applied to dev 2026-11-03. Verify on prod: SELECT count(*) FROM information_schema.tables WHERE table_name = 'billing_locations' -> 1; SELECT relrowsecurity FROM pg_class WHERE relname = 'billing_locations' -> true."
+    },
+    "434_a_move_that_waits_has_its_emails.sql": {
+      "prod": "pending",
+      "note": "Plans end at the renewal date, Stage 2 Part C: DATA-ONLY. Inserts two platform_email_templates rows (plan_downgrade_scheduled, plan_downgrade_reminder) so the emails of a move to the free plan that waits are listed on the platform-admin Email templates page (ON CONFLICT DO NOTHING), corrects plan_downgraded's description (it is now sent on the date of the move, not at the click) and, only where is_customised = false, its subject, heading, body, button and variables. No schema change; re-runnable. Apply on prod after 424, 425 and 431, before the promote that ships Stage 2 Part C (without it the emails still send — the app's own words — but the two are missing from the Email templates page and plan_downgraded's note is wrong). Applied to dev 2026-11-04. Verify: SELECT count(*) FROM platform_email_templates WHERE key IN ('plan_downgrade_scheduled','plan_downgrade_reminder') -> 2; SELECT description FROM platform_email_templates WHERE key = 'plan_downgraded' -> starts 'Sent on the date a move to the free plan happens'."
     }
   }
 }

@@ -169,8 +169,8 @@ describe('every billing link resolves the tier', () => {
   const sites: [string, RegExp][] = [
     ['app/api/billing/webhook/route.ts', /getBillingHref\(billingUrlOrgFromRow\(currentOrg, 'past_due'\)\)/],
     ['app/api/billing/webhook/route.ts', /getBillingHref\(billingUrlOrgFromRow\(org\)\)/],
-    // The plan the club holds (plan-reader-door-guard): a billing action never reads the door's planId.
-    ['app/api/billing/downgrade/confirm/route.ts', /getBillingHref\(\{ \.\.\.ctx\.org, planId: ownPlanOf\(ctx\.org\) \}\)/],
+    // (The downgrade confirm route's link left with its email: Plans end at renewal Stage 2 Part C — the move's own "now on"
+    // email is built by lib/plan-ending-server.ts, from the plan the club holds.)
     ['lib/billing-retention.ts', /getBillingHref\(billingUrlOrgFromRow\(org\)\)/],
     ['lib/online-payment-owner-notices.ts', /getBillingHref\(org\)/],
     // Plans end at renewal (Stage 1): the owner's and the operator's cancel email is sent by the one ending, with the plan

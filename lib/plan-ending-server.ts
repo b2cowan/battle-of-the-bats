@@ -19,9 +19,9 @@ import { moveDirection } from './plan-move-options';
 import type { Organization, OrgPlan } from './types';
 import { syncTeamWorkspaceSubscription } from './team-checkout';
 import { PLAN_BILLING_WORDS as W } from './plan-billing-words';
-import { endingEmail, type EndingEmailFacts } from './plan-ending-emails';
+import { endingEmail, type EndingEmailFacts, type MoveEmailFacts } from './plan-ending-emails';
 import {
-  askingDoor, clickedAt, daysOverdue, endingEmailTiming, isOverdueEnding, moveTargetOf, pickAppliedEnding, sendDueEndingEmails,
+  askingDoor, clickedAt, daysOverdue, endingEmailTiming, isOverdueEnding, moveTargetOf, pickAppliedEnding, sendDueEndingEmails, waitingMoveView,
   type EndingAccount, type EndingDeps, type EndingEmail, type EndingEmailStamp, type EndingIntent, type NewEndingIntent, type OverdueEnding,
 } from './plan-ending';
 import { INTENT_COLUMNS, findPending, fromRow, toRow, updateIntent, type IntentRow } from './plan-ending-store';
@@ -98,12 +98,33 @@ function asOrganization(account: EndingAccount): Organization {
 
 const STAMP_COLUMN: Record<EndingEmailStamp, string> = {
   ends_on: 'ends_on_email_sent_at', reminder: 'reminder_email_sent_at', kept: 'kept_email_sent_at',
+  // A move's "now on {plan}" email: a move never sends a cancel's "cancelled" email, so its row's column is free.
+  moved: 'ended_email_sent_at',
 };
+
+/**
+ * A move's words (Stage 2 Part C). Waiting: what the date would keep and archive if it came now — through the band's own
+ * `waitingMoveView`, so the email can never name a different tournament than the page and the date. Done: what it did.
+ */
+async function moveEmailFacts(email: EndingEmail): Promise<MoveEmailFacts | null> {
+  const { intent } = email;
+  if (intent.intentType !== 'downgrade') return null;
+  const target = PLAN_CONFIG[moveTargetOf(intent)].label;
+  const picked = intent.keepTournamentIds.length > 0;
+  if (email.kind === 'moved') {
+    return { target, kept: email.kept, archived: email.archived, fellBack: email.keptByDefault, picked, choose: false };
+  }
+  if (email.kind === 'kept') return { target, kept: [], archived: [], fellBack: false, picked, choose: false };
+  const view = waitingMoveView(intent, await getSlotHoldingTournaments(intent.orgId));
+  return { target, kept: view.kept.map(t => t.name), archived: view.archived.map(t => t.name), fellBack: view.fellBack, picked, choose: view.choose };
+}
 
 /** What a Part C email says, read fresh: the plan, the charge, the live tournaments the date archives, the links. */
 async function endingEmailFacts(email: EndingEmail): Promise<EndingEmailFacts> {
   const { account, intent } = email;
-  const { data: org, error } = await supabaseAdmin
+  const move = await moveEmailFacts(email);
+  // The charge is said only by a cancel's emails and by any kept email; a move's own three never name a price.
+  const { data: org, error } = move && email.kind !== 'kept' ? { data: null, error: null } : await supabaseAdmin
     .from('organizations')
     .select('subscription_period, subscription_amount_cents, subscription_currency')
     .eq('id', account.orgId)
@@ -116,19 +137,22 @@ async function endingEmailFacts(email: EndingEmail): Promise<EndingEmailFacts> {
     : PLAN_CONFIG[account.ownPlan] ? W.plan.charge(account.ownPlan, period, org?.subscription_amount_cents, org?.subscription_currency) : null;
   const timing = endingEmailTiming(intent, new Date());
   // What the end date archives: every tournament not archived yet (the same read the ending makes on the day).
-  const tournaments = email.kind === 'kept' ? 0 : (await getNonArchivedTournaments(account.orgId)).length;
+  const tournaments = email.kind === 'kept' || move ? 0 : (await getNonArchivedTournaments(account.orgId)).length;
   const billingUrl = `${SITE_URL}${getBillingHref(billingUrlOrgFromRow({ slug: account.slug, plan_id: account.ownPlan, account_kind: account.accountKind, name: account.name }), { purpose: 'return' })}`;
-  const date = email.kind === 'kept' ? email.renewsOn : intent.effectiveAt;
+  const date = email.kind === 'kept' ? email.renewsOn : email.kind === 'moved' ? email.movedAt : intent.effectiveAt;
+  // A move names the plan it moves FROM: on the date (or a replay after it) the account's own plan is already the free one.
+  const fromPlan = (move ? intent.fromPlan ?? account.ownPlan : account.ownPlan) as OrgPlan;
   return {
     kind: email.kind,
+    move,
     portal: account.isCoachesPortal,
     orgName: account.isCoachesPortal ? teamWorkspaceDisplayName(account.name) : account.name,
-    plan: account.isCoachesPortal ? 'team' : account.ownPlan,
-    planLabel: account.isCoachesPortal ? 'Premium' : PLAN_CONFIG[account.ownPlan]?.label ?? account.ownPlan,
+    plan: account.isCoachesPortal ? 'team' : fromPlan,
+    planLabel: account.isCoachesPortal ? 'Premium' : PLAN_CONFIG[fromPlan]?.label ?? fromPlan,
     door: email.kind === 'kept' ? email.door : askingDoor(intent),
     clickedAt: clickedAt(intent),
     date,
-    retentionUntil: intent.retentionUntil,
+    retentionUntil: email.kind === 'moved' ? email.retentionUntil : intent.retentionUntil,
     tournaments,
     trialing: account.subscriptionStatus === 'trialing',
     remindLater: email.kind === 'ends_on' && timing.remindLater,
@@ -157,7 +181,7 @@ export async function sendEndingEmails(now: Date): Promise<{ endsOn: number; rem
 }
 
 /**
- * G3 · the endings Stripe hasn't finished: a cancel still waiting more than three days past its date. The daily job counts
+ * G3 · the endings Stripe hasn't finished: a cancel (or a move to the free plan) still waiting more than three days past its date. The daily job counts
  * them; the retention page and the club's record list them. A read only — it never acts.
  */
 export async function readOverdueEndings(now: Date): Promise<OverdueEnding[]> {
@@ -237,10 +261,11 @@ export const endingDeps: EndingDeps = {
   async recordedFor(intentId) {
     const { data, error } = await supabaseAdmin
       .from('billing_retained_records')
-      .select('record_type, record_id')
+      .select('record_type, record_id, display_name')
       .eq('intent_id', intentId);
     if (error) throw new Error(`Couldn't read the kept records: ${error.message}`);
-    return ((data ?? []) as Array<{ record_type: string; record_id: string | null }>).map(r => ({ recordType: r.record_type, recordId: r.record_id }));
+    return ((data ?? []) as Array<{ record_type: string; record_id: string | null; display_name: string | null }>)
+      .map(r => ({ recordType: r.record_type, recordId: r.record_id, displayName: r.display_name }));
   },
 
   async supersedeOthers(orgId, tournamentIds, intentId) {

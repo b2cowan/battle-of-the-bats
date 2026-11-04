@@ -35,7 +35,8 @@ export type BulkChangeAlert = Common & {
   already: number;
   failed: number;
   /** Skipped on purpose, by why (the run's own result lines). */
-  skipped: { portals: number; billed: number; ownClubs: number };
+  /** `waiting`: a cancel or a move to the free plan waits for its date (Plans end at renewal, Stage 2 Part C). */
+  skipped: { portals: number; billed: number; ownClubs: number; waiting?: number };
   /** A plan change's side effects, counted ("Also: 1 Club trial started · …"). */
   also: { clubTrials: number; compsEnded: number; archived: number; archivedAccounts: number };
 };
@@ -86,7 +87,8 @@ function bulkResultLine(a: BulkChangeAlert): string {
   if (a.skipped.portals) why.push(a.skipped.portals === 1 ? 'a Coaches Portal' : 'Coaches Portals');
   if (a.skipped.billed) why.push('Stripe still bills them');
   if (a.skipped.ownClubs) why.push(`clubs ${a.actor} belongs to`);
-  const skipped = a.skipped.portals + a.skipped.billed + a.skipped.ownClubs;
+  if (a.skipped.waiting) why.push('a cancel or move waits for its date');
+  const skipped = a.skipped.portals + a.skipped.billed + a.skipped.ownClubs + (a.skipped.waiting ?? 0);
   if (skipped) parts.push(`${skipped} skipped (${why.join('; ')})`);
   if (a.failed) parts.push(`${a.failed} failed`);
   return `Result: ${parts.join(', ')}`;

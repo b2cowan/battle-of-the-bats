@@ -34,6 +34,7 @@ import type { OrgPlan } from './types';
 import type { BillingTournamentSummary } from './billing-retention-types';
 import { PLAN_BILLING_WORDS as W } from './plan-billing-words';
 import { PLAN_CONFIG } from './plan-config';
+import { formatStoredDate } from './timezone';
 
 /** Stripe retries a failed webhook for up to three days; a waiting cancel still pending after that has been missed (G3). */
 export const OVERDUE_GRACE_DAYS = 3;
@@ -88,7 +89,12 @@ export type EndingIntent = {
 
 export type NewEndingIntent = Omit<EndingIntent,
   'id' | 'status' | 'appliedAt' | 'endedEmailSentAt' | 'endsOnEmailSentAt' | 'reminderEmailSentAt' | 'keptEmailSentAt' | 'createdAt'> & { status: 'pending' };
-export type EndingIntentPatch = Partial<Omit<EndingIntent, 'id' | 'orgId'>>;
+/**
+ * A write to a waiting row. ⚠ The change log is never rewritten from the writer's own read: `log` lists the entries to ADD,
+ * and the store appends them to whatever the row holds at the moment of the write (Stage 2 Part C, owner 2026-11-04) — so
+ * two near-simultaneous writers (a Keep and Stripe's event, a changed pick and the click's own update) each keep their line.
+ */
+export type EndingIntentPatch = Partial<Omit<EndingIntent, 'id' | 'orgId' | 'changeLog'>> & { log?: EndingLogEntry[] };
 
 /** The account a cancel is about. A Coaches Portal's subscription may sit only on its workspace row. */
 export type EndingAccount = {
@@ -133,7 +139,8 @@ export interface EndingDeps {
 
   /** Read at the END date, never the click: what is still un-archived and what the plan switches off. */
   preflight(account: EndingAccount): Promise<{ tournaments: BillingTournamentSummary[]; shutsDown: string[] }>;
-  recordedFor(intentId: string): Promise<Array<{ recordType: string; recordId: string | null }>>;
+  /** The records this intent already wrote (a replay writes none twice); `displayName` names them in the move's email. */
+  recordedFor(intentId: string): Promise<Array<{ recordType: string; recordId: string | null; displayName?: string | null }>>;
   /** Supersedes OTHER intents' live records for these tournaments (a stale one would break the unique index). */
   supersedeOthers(orgId: string, tournamentIds: string[], intentId: string): Promise<void>;
   insertRecords(rows: RetainedRecordRow[]): Promise<void>;
@@ -194,16 +201,27 @@ export type DowngradedEvent = {
   sourceEventId: string;
 };
 
-/** The three Part C emails (G6), each stamped once on its row. The "cancelled" email on the end date is `sendEndedEmail`. */
-export type EndingEmailStamp = 'ends_on' | 'reminder' | 'kept';
+/**
+ * The emails of a waiting row (G6; Stage 2 Part C), each stamped once on its row. The "cancelled" email on a cancel's end
+ * date is `sendEndedEmail`. A waiting MOVE to the free plan has its own words for the first three, chosen by the row's kind
+ * ("Your move to Tournament is scheduled for {date}", its reminder, and the kept email's "the move is called off"), and
+ * `moved` — "{Org} is now on Tournament", on the date — stamped on the row's `ended_email_sent_at` (a move never has a
+ * cancel's "cancelled" email, so the column is free on its row).
+ */
+export type EndingEmailStamp = 'ends_on' | 'reminder' | 'kept' | 'moved';
 export type EmailSendOutcome = 'sent' | 'not_sent' | 'unknown';
 export type EndingEmail =
-  /** "Your plan ends on {date}" — once per waiting cancel, whichever door it came through. */
+  /** "Your plan ends on {date}" — once per waiting cancel, whichever door it came through; a move's "scheduled for {date}". */
   | { kind: 'ends_on'; account: EndingAccount; intent: EndingIntent }
-  /** Seven days before the end, from the daily job. */
+  /** Seven days before the end (or the move), from the daily job. */
   | { kind: 'reminder'; account: EndingAccount; intent: EndingIntent }
   /** Keep {Plan}: "renews on {date}", or "renews as {cheaper plan}" when the move came back (G1). */
-  | { kind: 'kept'; account: EndingAccount; intent: EndingIntent; door: EndingDoor; renewsOn: string | null; renewsAs: OrgPlan | null };
+  | { kind: 'kept'; account: EndingAccount; intent: EndingIntent; door: EndingDoor; renewsOn: string | null; renewsAs: OrgPlan | null }
+  /** A move to the free plan, done (on its date, or at once with no paid period): what was kept and what was archived. */
+  | {
+    kind: 'moved'; account: EndingAccount; intent: EndingIntent; movedAt: string; retentionUntil: string;
+    kept: string[]; archived: string[]; keptByDefault: boolean;
+  };
 
 export type EndedEvent = {
   account: EndingAccount;
@@ -343,11 +361,6 @@ export function keepInProgress(intent: Pick<EndingIntent, 'status' | 'changeLog'
     && now.getTime() - new Date(last.at).getTime() < KEEP_IN_PROGRESS_MS;
 }
 
-/** The emails of a waiting CANCEL (ends on, the reminder). A move to the free plan gets its own (Stage 2 Part C), never these. */
-export function hasCancelEmails(intent: Pick<EndingIntent, 'intentType'>): boolean {
-  return intent.intentType === 'cancellation';
-}
-
 /** Whole days past an overdue ending's date (the record's band, the retention page's "Days over"). */
 export function daysOverdue(intent: Pick<EndingIntent, 'effectiveAt'>, now: Date): number {
   return Math.max(0, Math.floor((now.getTime() - new Date(intent.effectiveAt).getTime()) / DAY_MS));
@@ -387,7 +400,8 @@ export function endsOnEmailOwed(intent: Pick<EndingIntent, 'status' | 'effective
   return intent.status === 'pending' && intent.notifyOwner && !intent.endsOnEmailSentAt && new Date(intent.effectiveAt).getTime() > now.getTime();
 }
 
-const STAMP_STATUS: Record<EndingEmailStamp, EndingStatus[]> = { ends_on: ['pending'], reminder: ['pending'], kept: ['canceled'] };
+// `moved` is claimed by the move itself while its row still waits (the flip to applied is the move's LAST step).
+const STAMP_STATUS: Record<EndingEmailStamp, EndingStatus[]> = { ends_on: ['pending'], reminder: ['pending'], kept: ['canceled'], moved: ['pending'] };
 
 /**
  * ⚠⚠ ONE EMAIL, NOT TWO (G6, G7). The email service forgets a repeat after 24 hours — exactly the daily job's beat — so
@@ -509,6 +523,32 @@ export function futureMoveAnswer(action: FutureMoveAction, state: {
   }
 }
 
+/**
+ * Stage 2 Part C (owner 2026-11-04) · the operator's plan change while a change waits: the one rule's REFUSAL, in staff
+ * words naming the record's door that comes first — Keep the plan while the date is ahead (or Stripe's retries are not
+ * over: the record still shows Keep then), Finish this ending now once it is overdue. Null when nothing waits.
+ * Called by `applyOperatorPlanChange` (lib/operator-plan-change.ts), which every operator plan door runs.
+ */
+export function operatorPlanChangeRefusal(
+  ownPlan: OrgPlan, waiting: Pick<EndingIntent, 'intentType' | 'targetPlan' | 'effectiveAt' | 'status'> | null, now: Date,
+): string | null {
+  if (!waiting || waiting.status !== 'pending') return null;
+  if (futureMoveAnswer('operator_plan_change', { ownPlan, ...waitingState(waiting) }).answer !== 'refuse') return null;
+  const what = waiting.intentType === 'downgrade' ? `A move to ${PLAN_CONFIG[moveTargetOf(waiting)].label}` : 'A cancel';
+  const day = (iso: string) => formatStoredDate(iso, { longMonth: true });
+  const on = day(waiting.effectiveAt);
+  // "the club's record": the words are read on the record AND in a bulk change's results, where no record is open.
+  if (isOverdueEnding(waiting, now)) {
+    return `${what} that should have happened on ${on} is still waiting. Use Finish this ending now on the club’s record first, then try again.`;
+  }
+  if (!upcomingDate(waiting.effectiveAt, now)) {
+    // Finish opens when the overdue rule does: OVERDUE_GRACE_DAYS whole days after the date.
+    const opens = day(retentionUntilFrom(waiting.effectiveAt, OVERDUE_GRACE_DAYS));
+    return `${what} due on ${on} hasn’t finished yet. Use Keep the plan on the club’s record, or Finish this ending now after ${opens}, then try again.`;
+  }
+  return `${what} is waiting for ${on}. Use Keep the plan on the club’s record first, then try again.`;
+}
+
 /** What a waiting row's refusal needs to name what comes on its date (the one rule's `pendingKind` and `pendingTarget`). */
 export function waitingState(intent: Pick<EndingIntent, 'intentType' | 'targetPlan' | 'effectiveAt'> | null) {
   return { pending: !!intent, pendingEndsAt: intent?.effectiveAt ?? null, pendingKind: intent?.intentType ?? null, pendingTarget: intent?.targetPlan ?? null };
@@ -561,7 +601,7 @@ function endedEntry(
 /** Withdraws a waiting row, on its log. Null when another writer moved it first. */
 function withdrawRow(intent: EndingIntent, actor: EndingActor, note: string, deps: EndingDeps): Promise<EndingIntent | null> {
   return deps.updateIntent(intent.id, {
-    status: 'canceled', changeLog: [...intent.changeLog, logEntry(deps.now(), actor, 'withdrawn', { note })],
+    status: 'canceled', log: [logEntry(deps.now(), actor, 'withdrawn', { note })],
   }, ['pending']);
 }
 
@@ -670,13 +710,13 @@ export async function scheduleEnding(
 }
 
 /**
- * G6 a · "Your plan ends on {date}", once per waiting row whichever door wrote it (owner, operator — only with the "tell
- * the owner" tick — or Stripe's portal through the webhook); the row's stamp makes an `updated` storm send one.
+ * G6 a · "Your plan ends on {date}" — or a move's "Your move to {plan} is scheduled for {date}" (Stage 2 Part C) — once per
+ * waiting row whichever door wrote it (owner, operator — only with the "tell the owner" tick — or Stripe's portal through
+ * the webhook); the row's stamp makes an `updated` storm send one.
  */
 async function announceEndsOn(account: EndingAccount, intent: EndingIntent, deps: EndingDeps): Promise<void> {
   // Stripe gave no end date (the row fell back to now): no date to promise, so no "ends on" email.
   if (!upcomingDate(intent.effectiveAt, deps.now())) return;
-  if (!hasCancelEmails(intent)) return;
   await sendEndingEmailOnce({ kind: 'ends_on', account, intent }, intent.notifyOwner, deps);
 }
 
@@ -704,7 +744,7 @@ async function writePending(
       continue;
     }
     if (existing) {
-      return deps.updateIntent(existing.id, { ...fields, changeLog: [...existing.changeLog, entry] }, ['pending']);
+      return deps.updateIntent(existing.id, { ...fields, log: [entry] }, ['pending']);
     }
     const inserted = await deps.insertIntent({ ...fields, orgId, status: 'pending', changeLog: [entry] });
     if (inserted !== 'conflict') return inserted;
@@ -759,7 +799,8 @@ export async function keepEnding(account: EndingAccount, actor: EndingActor, dep
 
   if (answer.answer === 'restore') {
     // A keep in progress (keepInProgress): marked BEFORE the slow calls, withdrawn only AFTER the move is back.
-    if (pending) await deps.updateIntent(pending.id, { changeLog: [...pending.changeLog, logEntry(now, actor, 'kept')] }, ['pending']);
+    // (Its own line on the history now the log appends: the keep's final entry below says whether the move came back.)
+    if (pending) await deps.updateIntent(pending.id, { log: [logEntry(now, actor, 'kept', { note: 'Putting the cheaper plan’s move back' })] }, ['pending']);
     const restored = await deps.rescheduleMove(account, answer.plan, actor.email ?? 'plan-ending')
       .catch(error => ({ ok: false as const, error: error instanceof Error ? error.message : String(error) }));
     if (restored.ok) renewsAs = answer.plan;
@@ -770,7 +811,7 @@ export async function keepEnding(account: EndingAccount, actor: EndingActor, dep
   const kept = pending
     ? await deps.updateIntent(pending.id, {
       status: 'canceled',
-      changeLog: [...pending.changeLog, logEntry(now, actor, 'kept', answer.answer === 'restore'
+      log: [logEntry(now, actor, 'kept', answer.answer === 'restore'
         ? { move: moveNotRestored ? 'restore_failed' : 'restored', plan: answer.plan, ...(moveNotRestored ? { note: moveNotRestored } : {}) }
         : {})],
     }, ['pending', 'canceled'])
@@ -905,7 +946,7 @@ export async function applyEnding(
   const entry = endedEntry(now, p.actor, account.ownPlan, intent.heldMovePlan, [p.note]);
   await deps.updateIntent(intent.id, {
     status: 'applied', appliedAt: now.toISOString(), effectiveAt: endedAt, retentionUntil, notifyOwner: intent.notifyOwner,
-    endedEmailSentAt, changeLog: [...intent.changeLog, entry],
+    endedEmailSentAt, log: [entry],
   }, ['pending']);
 
   return { applied: true, intentId: intent.id, retentionUntil, retainedTournamentIds: allRetained, emailed, endedAt };
@@ -981,7 +1022,7 @@ export async function changeKeptTournaments(account: Pick<EndingAccount, 'orgId'
   const live = new Set(holders.map(t => t.id));
   if (ids.some(id => !live.has(id))) return refused(W.downgrade.pickGone, 409);
   const saved = await deps.updateIntent(pending.id, {
-    keepTournamentIds: ids, changeLog: [...pending.changeLog, logEntry(deps.now(), actor, 'pick_changed')],
+    keepTournamentIds: ids, log: [logEntry(deps.now(), actor, 'pick_changed')],
   }, ['pending']);
   if (!saved) return refused(W.downgrade.changedMeanwhile, 409);
   return { outcome: 'saved', keepIds: saved.keepTournamentIds };
@@ -1080,6 +1121,9 @@ export async function scheduleDowngrade(
     await deps.clearCancel(sub.id, stripeCancelSignal(sub).clear).catch(() => undefined);
     return { outcome: 'refused', error: W.downgrade.changedMeanwhile, status: 409 };
   }
+  // 4 · "Your move to {plan} is scheduled for {date}" (ruling 5), once — only now Stripe holds it. A send that failed, or a
+  // click whose Stripe answer was lost ('unknown' above), is caught up by the daily job while the row still waits.
+  await announceEndsOn(account, written, deps);
   return { outcome: 'scheduled', movesAt: written.effectiveAt, intentId: written.id, heldMovePlan };
 }
 
@@ -1139,8 +1183,13 @@ export async function applyDowngrade(
   const holders = await deps.slotHolders(account.orgId);
   const { kept, archive, fellBack } = keptOnTheDate(holders, intent.keepTournamentIds, PLAN_CONFIG[target].tournamentLimit);
   // The downgrade's own reason: the upgrade path restores by it (restoreRetainedDowngradeTournaments).
-  const retained = await recordTournaments(account, intent.id, archive, await deps.recordedFor(intent.id), retentionUntil,
+  const recorded = await deps.recordedFor(intent.id);
+  const retained = await recordTournaments(account, intent.id, archive, recorded, retentionUntil,
     { retentionReason: 'plan_downgrade', fromPlan, targetPlan: target }, deps);
+  // What THIS move archived, by name, for its email: a replay after step 2 no longer finds those tournaments among the slot
+  // holders, so the names come from the move's own records as well as this run's list (/review 2026-11-04).
+  const archivedNames = new Map(recorded.filter(r => r.recordType === 'tournament' && r.recordId).map(r => [r.recordId!, r.displayName ?? '']));
+  for (const t of archive) archivedNames.set(t.id, t.name);
 
   // 2 · archive what still holds a slot and is not kept (a replay finds them archived and does not re-read them).
   if (archive.length > 0) await deps.archive(account.orgId, archive.map(t => t.id));
@@ -1158,7 +1207,13 @@ export async function applyDowngrade(
   // 5 · the pay pages close when the free plan has no online payments (checked against the plan just written).
   await deps.closePayPagesIfPlanHasNone(account.orgId);
 
-  // 6 · (Part C) "You are now on {plan}", once per move.
+  // 6 · "{Org} is now on {plan}", once per move (its stamp is claimed while the row still waits, so a replay after the
+  // flip — or a second run racing this one — finds it taken). As the row says: a move's row always tells its owner today
+  // (a move is only ever the owner's own — scheduleDowngrade writes notifyOwner true).
+  const sent = await sendEndingEmailOnce({
+    kind: 'moved', account, intent, movedAt, retentionUntil, keptByDefault: fellBack,
+    kept: kept.map(t => t.name), archived: [...archivedNames.values()].filter(Boolean),
+  }, intent.notifyOwner, deps);
 
   // 7 · LAST: the row says it is done, and what was kept.
   const fellBackNote = !fellBack || !kept[0] ? null : intent.keepTournamentIds.length === 0
@@ -1166,13 +1221,13 @@ export async function applyDowngrade(
     : `The tournament picked to keep no longer holds a slot (finished, archived or deleted), so the newest, ${kept[0].name}, was kept.`;
   await deps.updateIntent(intent.id, {
     status: 'applied', appliedAt: now.toISOString(), effectiveAt: movedAt, retentionUntil, keepTournamentIds: kept.map(t => t.id),
-    changeLog: [...intent.changeLog, endedEntry(now, p.actor, fromPlan, intent.heldMovePlan, [p.note, fellBackNote],
+    log: [endedEntry(now, p.actor, fromPlan, intent.heldMovePlan, [p.note, fellBackNote],
       'The club moved to the free plan on its date, so the cheaper paid plan it had set aside does not apply.')],
   }, ['pending']);
 
   return {
     applied: true, intentId: intent.id, movedAt, retentionUntil, retainedTournamentIds: retained,
-    keptTournamentIds: kept.map(t => t.id), keptByDefault: fellBack, emailed: false,
+    keptTournamentIds: kept.map(t => t.id), keptByDefault: fellBack, emailed: sent === 'sent',
   };
 }
 
@@ -1211,7 +1266,7 @@ export async function recordStripeSignal(account: EndingAccount, sub: Stripe.Sub
     if (new Date(pending.effectiveAt).getTime() === new Date(effectiveAt).getTime()) return 'unchanged';
     await deps.updateIntent(pending.id, {
       effectiveAt, retentionUntil, stripeSubscriptionId: sub.id,
-      changeLog: [...pending.changeLog, logEntry(now, stripe, 'rescheduled', { note: `Stripe moved the end to ${effectiveAt}` })],
+      log: [logEntry(now, stripe, 'rescheduled', { note: `Stripe moved the end to ${effectiveAt}` })],
     }, ['pending']);
     return 'rescheduled';
   }
@@ -1278,8 +1333,8 @@ export async function sendDueEndingEmails(
 ): Promise<{ endsOn: number; reminders: number; failed: number }> {
   const now = deps.now();
   const tally = { endsOn: 0, reminders: 0, failed: 0 };
+  // Both kinds of waiting row: a cancel's "ends on" and reminder, a move's "scheduled" and reminder (Stage 2 ruling 6).
   for (const intent of intents) {
-    if (!hasCancelEmails(intent)) continue;
     const owedEndsOn = endsOnEmailOwed(intent, now);
     if (!owedEndsOn && !reminderDue(intent, now)) continue;
     const account = await readAccount(intent.orgId).catch(() => null);
