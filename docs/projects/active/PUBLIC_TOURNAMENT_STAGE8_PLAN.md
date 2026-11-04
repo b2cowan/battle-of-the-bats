@@ -9,7 +9,7 @@ the pay page, the admin preview's old chrome, the old tab row and rail, the Rule
 2026-11-04** (record §17; releases with the flip). **Part 4b (the admin side, then the switch itself — deleted) committed
 `72cd94a46` 2026-11-04** (record §18; releases with the flip). **Part 4 committed.** **Part 5 (the data and the wording
 around it: no second `theme_font` empty, 426's prod timing note; the dictionary and the dead fields un-mapped; the help;
-the drift check; the demos) built 2026-11-04** (record §19; releases with the flip). Next: Part 6 (verify, walk, release). Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
+the drift check; the demos) committed `393b78045` 2026-11-04** (record §19; releases with the flip). **Part 5 committed.** Next: Part 6 (verify, walk, release). Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
 **Sequencing rule (standing):** by dependency and rework risk, never by date. One part per session, `/clear` between.
@@ -1231,7 +1231,7 @@ and Part 5a's empty repeats it.
 - **Part 5b (`/db`):** the dead fields stay on `lib/types.ts` and the row mapper with their columns (ask C).
 - Still owed, not this part: as §16/§17.
 
-## 19. Part 5 record (the data and the wording around it; built 2026-11-04; releases with the flip)
+## 19. Part 5 record (the data and the wording around it; committed `393b78045` 2026-11-04; releases with the flip)
 
 **What a customer sees:** nothing (nothing promoted). **An organizer on dev, in the help:** the Public site page is
 described as it is: the door, Pages, then **Look** (colours, a preset or your own two with a hex code each; type Classic /
