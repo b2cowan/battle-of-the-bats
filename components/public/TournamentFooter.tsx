@@ -1,7 +1,7 @@
 'use client';
 /**
  * components/public/TournamentFooter.tsx — one footer on every public tournament page (Public tournament pages Stage 1
- * Part 2, behind the preview switch — lib/public-frame.ts; hub "The end state" and "Ask B" footers, plan §4).
+ * Part 2 — lib/public-frame.ts; hub "The end state" and "Ask B" footers, plan §4).
  *
  * The club footer's shape (ClubFooter, ClubFrame.module.css `.footer`), in the organizer's colour: the event's name;
  * "Questions? Email the tournament" over the address with a Copy button (the same address the Rules and News pages
@@ -13,7 +13,7 @@
  * a free event keeps its FieldLogicHQ badge exactly as it is, and the footer carries no second credit (WI-10: stacking
  * them says the same thing twice). The demo carries none (the caller decides `showCredit`).
  *
- * The tab row and this page list replace the Overview's old row of "Explore" buttons (behind the switch only).
+ * The tab row and this page list replace the Overview's old row of "Explore" buttons.
  *
  * In the organizer's admin preview (`basePath`) every link stays inside the preview, and the host line is plain text —
  * the preview never sends the organizer out to the live site.
@@ -47,7 +47,7 @@ export interface TournamentFooterProps {
   /** The admin preview's `/…/preview/{tournament}` base: links stay in the preview, the host line is text. */
   basePath?: string;
   /** Public tournament pages Stage 6 (Ask 14): News/Rules/Register/Champions tab facts, passed explicitly by
-   *  both layouts (the footer only ever renders with the switch on, which is also when this is meaningful). */
+   *  both layouts (the footer renders only inside the frame). */
   frameContent?: FrameTabContent;
 }
 

@@ -6,11 +6,10 @@ import {
   PUBLIC_FRAME_ATTR,
   publicFrameAttr,
   publicFrameBand,
-  publicFrameFromCookie,
   publicFrameHost,
   publicFrameRoles,
-  safePublicFrameReturn,
 } from '../../lib/public-frame.ts';
+import * as publicFrame from '../../lib/public-frame.ts';
 import type { LookOrg } from '../../lib/tournament-look.ts';
 import { CLUB_GROUND, CLUB_NEAR_BLACK } from '../../lib/club-colour-roles.ts';
 import { contrastRatio } from '../../lib/color-contrast.ts';
@@ -40,7 +39,7 @@ function importersOf(target: string): string[] {
  * Plan: docs/projects/active/PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md §4, §9, §10a; build prompt
  * PUBLIC_TOURNAMENT_STAGE1_BUILD_PROMPT.md. Rulings: Asks 1, 2, 8, 16; the app-bar direction.
  *
- *   · the new frame is behind ONE server-decided switch, and with it off nothing a customer sees changes;
+ *   · the new frame was behind ONE server-decided switch (deleted with Stage 8 Part 4b — see "the switch is gone");
  *   · the band's colour goes through the club's roles, and a plan without tournament branding gets the neutral band;
  *   · the band says one of the four state words, never "Game day" / "In progress" / "Tournament Day";
  *   · the visitor's door and the app bar follow where the page is opened, decided by CSS at first paint.
@@ -49,7 +48,7 @@ function importersOf(target: string): string[] {
  *   · at a desk the band runs the full width, "Hosted by {club} ›" on its right, over the white full-height rail;
  *   · every page ends in the organizer-colour footer; the paid credit moves into it, a free event keeps its badge;
  *   · in a browser there is no app bar at any width — the platform's desk strip too; inside the installed app it stays;
- *   · the organizer's admin preview follows the same switch, its links kept inside the preview.
+ *   · the organizer's admin preview wears the same frame, its links kept inside the preview.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -60,29 +59,27 @@ const FRAME_CSS = 'components/public/TournamentFrame.module.css';
 // marker. That also keeps it a pure CSS Module rule (a bare attribute selector fails the production build).
 const SCOPED = /:has\(\.frame\)/;
 
-describe('the preview switch', () => {
-  it('the browser\'s cookie decides; with none, on in development only', () => {
-    assert.equal(publicFrameFromCookie('on', false), true, 'the preview link turns it on anywhere');
-    assert.equal(publicFrameFromCookie('off', true), false, 'its twin turns it off, even on dev');
-    assert.equal(publicFrameFromCookie(undefined, true), true, 'on in development with no step');
-    assert.equal(publicFrameFromCookie(undefined, false), false, 'off for every customer and the public demo');
-    assert.equal(publicFrameFromCookie('yes', false), false, 'an unknown value is no answer');
-  });
-
-  it('the link only ever returns to a path on this site', () => {
-    assert.equal(safePublicFrameReturn('/riverdale-minor-ball/summer-classic'), '/riverdale-minor-ball/summer-classic');
-    for (const bad of ['//evil.example', '/\\evil.example', '/\t//evil.example', '/\n/evil.example', '/.//evil.example', '/a/..//evil.example', '/%2e//evil.example', 'https://evil.example/x', 'evil', '', null, undefined]) {
-      assert.equal(safePublicFrameReturn(bad), '/', `refuses ${String(bad)}`);
+/**
+ * STAGE 8 PART 4b (2026-11-04): the preview switch is gone. Stage 1 built the frame behind a cookie (a preview link set it,
+ * on in development); Parts 3a–4a removed every page's switch-off half and 4b the two admin readers. What is left is the
+ * frame's own helpers — the marker, the band, the roles — which every public tournament page uses.
+ */
+describe('the preview switch is gone (Stage 8 Part 4b)', () => {
+  it('no cookie name, no reader, no redirect helper — only the frame\'s live helpers stay', () => {
+    for (const gone of ['PUBLIC_FRAME_COOKIE', 'publicFrameFromCookie', 'safePublicFrameReturn']) {
+      assert.equal(gone in publicFrame, false, `lib/public-frame.ts no longer exports ${gone}`);
+    }
+    assert.doesNotMatch(readCode('lib/public-frame-server.ts'), /isPublicFrameOn|cookies\(|next\/headers/);
+    for (const kept of ['PUBLIC_FRAME_ATTR', 'publicFrameAttr', 'publicFrameBand', 'publicFrameHost', 'publicFrameRoles', 'publicFrameRoleCss']) {
+      assert.equal(kept in publicFrame, true, `${kept} is the frame's, and stays`);
     }
   });
 
-  it('is decided on the server by the one helper, never in proxy.ts — and the live layout no longer asks it', () => {
-    // Stage 8 Part 3d: every public tournament page wears the frame; the switch survives only for Part 4's surfaces.
-    assert.doesNotMatch(readCode(LAYOUT), /isPublicFrameOn|frameOn/);
+  it('no setter route, and nothing hands out the preview link', () => {
+    assert.equal(sourceExists('app/api/public-frame/route.ts'), false);
+    assert.doesNotMatch(readSource('scripts/seed-public-frame-fixtures.mjs'), /api\/public-frame|frame=(on|off)/);
     assert.doesNotMatch(readCode('proxy.ts'), /public-frame|publicFrame/i);
-    const route = readCode('app/api/public-frame/route.ts');
-    assert.match(route, /safePublicFrameReturn\(/, 'the redirect target is checked');
-    assert.match(route, /resolveSameHostOrigin\(/, 'the redirect stays on a host we trust');
+    assert.doesNotMatch(readSource('public/sw.js'), /flhq_public_frame|public-frame/);
   });
 });
 
@@ -459,23 +456,20 @@ describe('Part 4: the readable baseline, B', () => {
 });
 
 /**
- * STAGE 8 PART 4a (2026-11-04): the public side has no switch-off half left. The switch is read only by the two admin
- * screens Part 4b removes, and by its own definition; 4b deletes the reader and this list becomes empty.
+ * STAGE 8 PART 4a (2026-11-04) left the switch read by two admin routes, the setter and its definition; PART 4b deleted
+ * them all. The census stays, EMPTY: a new reader — by name, a `frameOn` prop or flag, the cookie spelled out by hand, or
+ * a link to the old setter — fails here.
  */
-describe('Stage 8 Part 4a: who still reads the switch', () => {
-  it('only the two admin routes Part 4b owns (and the reader itself)', () => {
-    const readers = [...filesUnder('app', '.tsx'), ...filesUnder('app', '.ts'), ...filesUnder('components', '.tsx'),
-      ...filesUnder('components', '.ts'), ...filesUnder('lib', '.ts'), ...filesUnder('lib', '.tsx'),
-      ...filesUnder('scripts', '.mjs'), 'proxy.ts']
-      // The names, or the cookie spelled out by hand.
-      .filter(f => /\bisPublicFrameOn\b|\bpublicFrameFromCookie\b|\bPUBLIC_FRAME_COOKIE\b|flhq_public_frame/.test(readCode(f)))
+describe('Stage 8 Part 4b: nothing reads the switch', () => {
+  it('the census is empty across app, components, lib, scripts, proxy and the service worker', () => {
+    // Every script-like file in the four trees (the .js/.mjs/.cjs ones too), read RAW as well as comment-stripped: the
+    // stripper's block pass is not string-aware, so a `/*` inside a string could hide a reader from `readCode` alone.
+    const files = ['app', 'components', 'lib', 'scripts'].flatMap(dir => ['.ts', '.tsx', '.js', '.mjs', '.cjs'].flatMap(ext => filesUnder(dir, ext)));
+    const READER = /\bisPublicFrameOn\b|\bpublicFrameFromCookie\b|\bPUBLIC_FRAME_COOKIE\b|\bsafePublicFrameReturn\b|flhq_public_frame|\bframeOn\b|\/api\/public-frame(?![\w-])/;
+    const readers = [...files, 'proxy.ts']
+      .filter(f => READER.test(readCode(f)) || /\bisPublicFrameOn\b|\bpublicFrameFromCookie\b|flhq_public_frame|\/api\/public-frame(?![\w-])/.test(readSource(f).replace(/^\s*(\/\/|\*).*$/gm, '')))
       .sort();
-    assert.deepEqual(readers, [
-      'app/api/admin/public-site/route.ts',
-      'app/api/admin/tournament-branding/route.ts',
-      'app/api/public-frame/route.ts',
-      'lib/public-frame-server.ts',
-      'lib/public-frame.ts',
-    ]);
+    assert.deepEqual(readers, []);
+    assert.doesNotMatch(readSource('public/sw.js'), /flhq_public_frame/);
   });
 });

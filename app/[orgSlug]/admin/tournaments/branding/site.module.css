@@ -12,7 +12,5 @@
 .pagesLine { margin: 0; padding: 0 1.1rem 0.5rem; font-size: var(--type-support); color: var(--text-tertiary); }
 .coachRow { border-top: 1px solid var(--home-line); }
 
-/* A colour: its picker and its hex code side by side. */
-.hexRow { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 .quiet { margin: 0; padding: 1.25rem 0.1rem; font-size: var(--type-body); color: var(--text-tertiary); }
 

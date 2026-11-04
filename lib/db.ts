@@ -248,10 +248,10 @@ export async function cloneTournament(
       delete clonedSettings.payment_instructions;
       delete clonedSettings.payment_instructions_on_form;
     }
-    if (!options.includeRulesResources) {
-      delete clonedSettings.rulesLayout;
-      delete clonedSettings.resourcesLayout;
-    }
+    // The retired Rules & resources Layout menus' keys (Public tournament pages Stage 8 Part 4a) have no reader: a copy
+    // never carries them, whatever the rules flag says (Part 4b). The source keeps its stored values.
+    delete clonedSettings.rulesLayout;
+    delete clonedSettings.resourcesLayout;
 
     const tournamentInsert: Record<string, unknown> = {
       org_id: orgId,
@@ -285,17 +285,14 @@ export async function cloneTournament(
     }
 
     if (options.includeBranding) {
+      // What the public pages read: the logo, the colours and the type look (theme_font, mig 426). The dead columns —
+      // the hero banner, Dark/Light, card style and the App icon's three — are not carried (Public tournament pages
+      // Stage 8 Parts 1 and 4b; the columns stay until a later /db pass, ask C).
       tournamentInsert.logo_url = source.logo_url ?? null;
-      tournamentInsert.hero_banner_url = source.hero_banner_url ?? null;
       tournamentInsert.theme_preset = source.theme_preset ?? null;
       tournamentInsert.theme_primary = source.theme_primary ?? null;
       tournamentInsert.theme_accent = source.theme_accent ?? null;
       tournamentInsert.theme_font = source.theme_font ?? null;
-      tournamentInsert.theme_card_style = source.theme_card_style ?? null;
-      tournamentInsert.color_mode = source.color_mode ?? null;
-      tournamentInsert.icon_bg_color = source.icon_bg_color ?? null;
-      tournamentInsert.app_name = source.app_name ?? null;
-      tournamentInsert.app_icon_scale = source.app_icon_scale ?? null;
     }
 
     if (options.themePreset) {
@@ -405,7 +402,8 @@ export async function populateTournamentFrom(
   const destSettings = toSettingsObject(destination.settings);
   const sourceSettings = toSettingsObject(source.settings);
   const FEE_KEYS = ['fee_scope', 'show_fees_on_register', 'payment_instructions', 'payment_instructions_on_form'];
-  const RULES_KEYS = ['rulesLayout', 'resourcesLayout'];
+  // The retired Rules & resources Layout keys (Stage 8 Part 4a) have no reader: never copied (Part 4b).
+  const RETIRED_KEYS = ['rulesLayout', 'resourcesLayout'];
   // The draft's own fee approach (any of it) is kept whole: half of one approach and half of another is no approach.
   const draftHasFees = !unset(destSettings.fee_scope) || destination.total_fee_amount != null || destination.deposit_amount != null
     || (draftDivisionFees ?? 0) > 0;
@@ -417,11 +415,11 @@ export async function populateTournamentFrom(
   };
 
   // Settings, key by key: the event's configuration (game timing, tie-breakers, roster rules, coach-email toggles)
-  // with its structure, the fee keys with its fees, the rules layout with its content. The draft's own keys win.
+  // with its structure, the fee keys with its fees. The draft's own keys win.
   const mergedSettings = { ...destSettings };
   let settingsChanged = false;
   for (const [key, value] of Object.entries(sourceSettings)) {
-    const allowed = FEE_KEYS.includes(key) ? takeFees : RULES_KEYS.includes(key) ? areas.content : areas.structure;
+    const allowed = RETIRED_KEYS.includes(key) ? false : FEE_KEYS.includes(key) ? takeFees : areas.structure;
     if (!allowed || !unset(mergedSettings[key]) || unset(value)) continue;
     mergedSettings[key] = value;
     settingsChanged = true;
@@ -442,10 +440,9 @@ export async function populateTournamentFrom(
     for (const column of ['deposit_amount', 'deposit_due_date', 'total_fee_amount', 'total_fee_due_date']) fill(column);
   }
   if (areas.publicPresence) {
-    for (const column of [
-      'logo_url', 'hero_banner_url', 'theme_preset', 'theme_primary', 'theme_accent', 'theme_font', 'theme_card_style',
-      'color_mode', 'icon_bg_color', 'app_name', 'app_icon_scale',
-    ]) fill(column);
+    // What the public pages read (as cloneTournament): the dead banner, Dark/Light, card style and App icon columns stay
+    // behind (Stage 8 Parts 1 and 4b).
+    for (const column of ['logo_url', 'theme_preset', 'theme_primary', 'theme_accent', 'theme_font']) fill(column);
     const draftHidden = Array.isArray(destination.public_hidden_pages) ? destination.public_hidden_pages : [];
     if (draftHidden.length === 0 && Array.isArray(source.public_hidden_pages) && source.public_hidden_pages.length > 0) {
       patch.public_hidden_pages = source.public_hidden_pages;

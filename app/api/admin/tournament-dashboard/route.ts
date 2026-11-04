@@ -106,7 +106,7 @@ type TournamentFeeRow = {
   total_fee_amount: number | null;
   total_fee_due_date: string | null;
   logo_url: string | null;
-  hero_banner_url: string | null;
+  theme_font: string | null;
   theme_preset: string | null;
   theme_primary: string | null;
   settings: Record<string, unknown> | null;
@@ -151,7 +151,7 @@ export const GET = withObservability(async (req: Request) => {
 
   const { data: tournament, error: tournamentError } = await supabaseAdmin
     .from('tournaments')
-    .select('start_date, end_date, contact_email, default_contact_member_id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary, settings, status, sport, public_hidden_pages, notify_teams_on_complete, results_notified_at, chat_reminder_last_sent_at')
+    .select('start_date, end_date, contact_email, default_contact_member_id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, logo_url, theme_preset, theme_primary, theme_font, settings, status, sport, public_hidden_pages, notify_teams_on_complete, results_notified_at, chat_reminder_last_sent_at')
     .eq('id', tournamentId)
     .eq('org_id', ctx.org.id)
     .maybeSingle();
@@ -265,7 +265,9 @@ export const GET = withObservability(async (req: Request) => {
   });
   const hasPublicContact = true;
   const hasOpenDivision = hasDivisions && divisions.some(group => !group.is_closed);
-  const hasBranding = Boolean(t.logo_url || t.hero_banner_url || t.theme_preset || t.theme_primary);
+  // Branding done: a logo, colours of its own, or a chosen type look (the Look card's choices — owner 2026-11-04,
+  // Stage 8 Part 4b). The retired hero banner no longer counts (ask A).
+  const hasBranding = Boolean(t.logo_url || t.theme_preset || t.theme_primary || t.theme_font);
   const hasVenues   = (venuesRes.count ?? 0) > 0;
   const hasRules    = (rulesRes.count ?? 0) > 0;
 

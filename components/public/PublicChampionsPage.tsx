@@ -1,11 +1,10 @@
 /**
- * components/public/PublicChampionsPage.tsx — Public tournament pages Stage 6 (Ask 14), Champions behind the
- * preview switch.
+ * components/public/PublicChampionsPage.tsx — Public tournament pages Stage 6 (Ask 14), the Champions page's body.
  *
  * Closes the "Stage 8 debt" plan §5 flagged: the Overview's finished body already shows `PublicChampions`
  * (Stage 2); this is the frame's ONE other copy of that card, replacing the legacy page's own hand-built hero +
- * per-division standings recap for the frame-on reader only (`app/[orgSlug]/[tournamentSlug]/champions/page.tsx`'s
- * `frameOn` branch; the legacy body is untouched, pinned by the Stage 2 guard's `FRAME_ONLY_USERS`).
+ * per-division standings recap (the legacy body went with Stage 8 Part 3c; `app/[orgSlug]/[tournamentSlug]/champions/page.tsx`
+ * renders only this).
  *
  * D1 is the caller's job, not this component's: `champions/page.tsx` already builds `cards` from
  * `onlyPublishedGames` — the same held-back-division filter Stage 4/5 applied to Standings, Playoffs, Teams and a

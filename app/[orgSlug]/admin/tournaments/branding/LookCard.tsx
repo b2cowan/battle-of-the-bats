@@ -138,7 +138,7 @@ export default function LookCard({ org, tournament, draft: d, logoUrl, facts, in
           <div className={css.controls}>
             <div className={css.part}>
               <h3 className={css.partTitle} id="t-look-colours">{words.coloursPart}</h3>
-              <LookSwatches labelledBy="t-look-colours" idPrefix="t-look" hex
+              <LookSwatches labelledBy="t-look-colours" idPrefix="t-look"
                 before={clubLayer && (
                   <LookPill primary={club.primary} accent={club.accent} label={words.pill} on={follows}
                     onClick={() => { setOwnOpen(false); if (d.own || d.typeKey !== null) onChange({ own: false, typeKey: null }); }} />

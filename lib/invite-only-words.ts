@@ -15,8 +15,8 @@ export const LOCK_WORDS = {
   exportTeamList: 'Export the team list',
   excelAndCsv: 'Excel and CSV',
   reuseSetup: 'Reuse a past tournament’s setup',
-  branding: 'Your logo, theme, banner and fonts on this site',
-  /** The same lock under the public pages' new frame (Stage 1a): the banner and the font list are gone there. */
+  /** The Branding page's lock (Public tournament pages Stage 1a; the older "theme, banner and fonts" line went with
+   *  those cards, Stage 8 Part 4b). */
   brandingLook: 'Your logo, colours and type on this site',
   // The composer's targeting lock is COMMS_LOCK.chooseTeams (lib/communication-words.ts), its one home.
   reopenRegistration: 'Reopen registration',

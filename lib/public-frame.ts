@@ -2,49 +2,25 @@
  * lib/public-frame.ts — the public tournament pages' new frame (Public tournament pages, Stage 1; plan
  * docs/projects/active/PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md §4 and §9, build prompt PUBLIC_TOURNAMENT_STAGE1_BUILD_PROMPT.md).
  *
- * THE PREVIEW SWITCH. Stage 1 builds the frame — the organizer's colour band, the club site's light ground and type, the
- * pinned white tab row — behind one switch, decided on the server before the first paint:
- *   · ON in development, so the owner sees it on dev with no step;
- *   · ON in any browser that opened the preview link (`/api/public-frame?frame=on&to=…` sets a first-party cookie), and
- *     OFF again through its twin (`frame=off`), which also turns a dev browser back to today's pages;
- *   · OFF for everyone else — every customer and the public demo see today's pages, unchanged.
- * Stage 8 turns it on for everyone, once. The precedent is the coaches portal's warm release (lib/coach-warm-preview.ts):
- * a marker on the shell, styles keyed to it, then a single public release.
+ * THE FRAME — the organizer's colour band, the club site's light ground and type, the pinned white tab row — is the one
+ * look of every public tournament page, the admin preview and the Look card's preview. Stage 1 built it behind a preview
+ * switch (a cookie set by a preview link, on in development); Stage 8 turned it on for everyone and deleted the switch
+ * (Parts 3–4b: the old halves, then the cookie, its reader and the setter route). The marker below stays: every frame
+ * style is keyed to it.
  *
- * This file is the PURE half (the decision, the marker, the colour roles), safe in a test and in the browser;
- * lib/public-frame-server.ts reads the cookie. One answer serves the tournament layout, the admin preview and, when a
- * later stage asks, the share image.
+ * This file is the PURE half (the marker, the band, the colour roles), safe in a test and in the browser;
+ * lib/public-frame-server.ts holds the server reads (the contact, the band's record facts).
  */
 import { CLUB_NEAR_BLACK, clubColourRoles, hexChannels, type ClubColourRoles } from './club-colour-roles';
 import { resolveTournamentLook, type LookOrg, type LookTournament, type TournamentFace, type TournamentLook } from './tournament-look';
 import { TOURNAMENT_STATUS_WORD, tournamentHomeStatus } from './club-site-home';
 import { formatEventDateRange } from './timezone';
 import { clubInitials } from './club-site';
-import { safeNextPath } from './safe-redirect';
 import type { Tournament } from './types';
-
-/** The browser's own answer, set by the preview link and its twin. */
-export const PUBLIC_FRAME_COOKIE = 'flhq_public_frame';
 
 /** The marker on the tournament layout's outer element. Every frame style is keyed to it. */
 export const PUBLIC_FRAME_ATTR = 'data-public-frame';
 export const publicFrameAttr: Record<string, string> = { [PUBLIC_FRAME_ATTR]: 'light' };
-
-/** Is the new frame on? The browser's cookie decides when it has one; otherwise on in development only. */
-export function publicFrameFromCookie(value: string | null | undefined, isDevelopment: boolean): boolean {
-  if (value === 'on') return true;
-  if (value === 'off') return false;
-  return isDevelopment;
-}
-
-/**
- * Where the preview link may send the visitor afterwards: a path on this site, never another site (`//evil`, `/\evil`,
- * a tab-smuggled `/<TAB>//evil` and a full URL are refused — an open redirect would let anyone's link wear our
- * address). The repo's one same-origin check, lib/safe-redirect.ts; never a hand-rolled prefix test.
- */
-export function safePublicFrameReturn(to: string | null | undefined): string {
-  return to?.startsWith('/') ? safeNextPath(to, '/') : '/';
-}
 
 
 export interface PublicFrameRoles extends ClubColourRoles {

@@ -57,7 +57,7 @@ export function LookPill({ primary, accent, label, on, onClick }: {
   );
 }
 
-export function LookSwatches({ labelledBy, idPrefix, before, chosenPreset, ownChosen, ownOpen, onPreset, onOwnToggle, own, onOwnChange, hex = false }: {
+export function LookSwatches({ labelledBy, idPrefix, before, chosenPreset, ownChosen, ownOpen, onPreset, onOwnToggle, own, onOwnChange }: {
   labelledBy: string;
   /** Names the hex fields' ids, unique on the page. */
   idPrefix: string;
@@ -72,7 +72,6 @@ export function LookSwatches({ labelledBy, idPrefix, before, chosenPreset, ownCh
   onOwnToggle: () => void;
   own: OwnColours;
   onOwnChange: (next: OwnColours) => void;
-  hex?: boolean;
 }) {
   const colour = (field: keyof OwnColours, name: string) => {
     const picker = (
@@ -81,7 +80,8 @@ export function LookSwatches({ labelledBy, idPrefix, before, chosenPreset, ownCh
         <span>{name}</span>
       </label>
     );
-    if (!hex) return picker;
+    // Each colour takes a typed hex code beside its picker (Stage 1a; always, since the preview switch went — Stage 8
+    // Part 4b).
     return (
       <div className={css.ownColourHex}>
         {picker}

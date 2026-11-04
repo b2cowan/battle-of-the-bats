@@ -193,8 +193,7 @@ function openBuilderRow(id) {
 
 /** The question before "Always the club's look" (Public tournament pages Stage 1a, Part 2): the Look row opened and the
  *  rule's second radio picked. It asks only when a tournament has colours of its own (`.probe/stage1a-look-fixture.mjs`
- *  gives the rep club three) and saves nothing until its lime answer — Not now is never pressed here. Behind the public
- *  pages' preview switch, which is on in development. Tolerant of a club with nothing to ask (then the row is measured). */
+ *  gives the rep club three) and saves nothing until its lime answer — Not now is never pressed here. Tolerant of a club with nothing to ask (then the row is measured). */
 async function openTournamentLookQuestion(page) {
   await openBuilderRow('look')(page);
   const always = page.getByRole('radio', { name: /^Always the (club|league)'s look/ });
@@ -1893,8 +1892,8 @@ export const SCREENS = [
    * ══════════════════════════════════════════════════════════════════════════════════════════
    * A TOURNAMENT'S PUBLIC PAGES IN THE NEW FRAME (Public tournament pages Stage 1 — the organizer's colour band, the
    * club site's light ground, the pinned tab row). Until Stage 1 no public tournament page had a rendered gate (only the
-   * admin's preview of them did). Behind the preview switch, which is ON on dev, so the sweep measures the new frame;
-   * `ready` waits for the band, so a run where the switch is off fails loudly instead of measuring today's pages.
+   * admin's preview of them did). The frame is the only look (Stage 8 deleted the preview switch); `ready` waits for
+   * the band, so a page that ever renders without it fails loudly instead of being measured.
    * The four organizers are scripts/seed-public-frame-fixtures.mjs's (Riverdale is the demo seed's), named literally as
    * the club's are. The layout file under `[tournamentSlug]` wears the frame, so the Overview's `route` is the folder.
    * ══════════════════════════════════════════════════════════════════════════════════════════

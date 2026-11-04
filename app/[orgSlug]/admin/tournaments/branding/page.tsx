@@ -8,10 +8,10 @@
  *                 event is a draft ("Preview"), the public page in a new tab after ("Online"; never "Live", which is
  *                 one game). On a phone and a tablet there was no door to the site from any setup screen.
  *   Pages         first (the part every plan uses): 52px switch rows, two columns at a desk; Show coaches' names
- *   five parts    Logo, Theme, Hero banner, Font, Card style — closed cards that say what each holds (the App icon card
- *                 went with Stage 8 Part 1: the home-screen icon is always FieldLogicHQ's, owner ruling 2026-11-03)
- *                 (Event settings' model). The theme's drawn mock went (the door shows the real page); a colour can
- *                 be typed as a hex code beside its picker.
+ *   Look, Logo    the Look card (colours, type and the band preview — Public tournament pages Stage 1a) and the Logo
+ *                 card. Nothing else: every control here is read by a public page. The App icon card went with Stage 8
+ *                 Part 1 (the home-screen icon is always FieldLogicHQ's, owner ruling 2026-11-03); Theme with
+ *                 Dark/Light, Hero banner, Font and Card style went with Stage 8 Part 4b (asks A/B, ruled 2026-11-03).
  *   saving        every change saves itself with the floating pill: a choice at once, typing after a pause, and
  *                 anything still waiting is sent as you leave — the bottom Save Changes, its "Unsaved changes" and
  *                 the success pop-ups after an upload went; nothing is lost by leaving (a theme change was, silently).
@@ -30,7 +30,6 @@ import { ClubSection, LoadFailed, SavePill, repKit } from '@/components/admin/ki
 import { FormError } from '@/components/admin/kit/club/money/MoneyKit';
 import { SwitchRow, SwitchRows } from '@/components/admin/tournament/SwitchRows';
 import { BoardDoor } from '../dashboard/GameDayBoard';
-import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS, resolveTheme } from '@/lib/themes';
 import { PUBLIC_PAGE_OPTIONS, normalizeHiddenPublicPages, type PublicPageKey } from '@/lib/public-pages';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
@@ -38,13 +37,12 @@ import { LOCK_WORDS } from '@/lib/invite-only-words';
 import PlanLockLine, { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { hasCapability } from '@/lib/roles';
 import { publicHref, useClubPublicOrigin } from '@/lib/use-club-public-origin';
-import { PUBLIC_SITE_WORDS as W, themeSummary } from '@/lib/tournament-settings-words';
-import { HexField } from '@/components/admin/kit/club/LookControls';
+import { PUBLIC_SITE_WORDS as W } from '@/lib/tournament-settings-words';
 import { lookNounOf } from '@/lib/tournament-look-words';
 import { hasOwnTournamentColours, hasClubTournamentLook } from '@/lib/tournament-look';
 import { mayOpenSiteEditor, mayWriteSite } from '@/lib/public-site-rules';
 import LookCard, { type LookBandFacts } from './LookCard';
-import { frameBodyOf } from './look-draft';
+import { frameBodyOf, type FrameBodyDraft } from './look-draft';
 import styles from './branding.module.css';
 import pageCss from './site.module.css';
 import LoadingState from '@/components/shared/LoadingState';
@@ -54,36 +52,19 @@ const SITE_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['public-sit
 
 interface BrandingSettings {
   logoUrl: string | null;
-  heroBannerUrl: string | null;
   themePreset: string | null;
   themePrimary: string | null;
   themeAccent: string | null;
+  /** The type look's stored value (mig 426's meaning): it seeds the draft's `typeKey`. */
   themeFont: string | null;
-  themeCardStyle: string | null;
-  colorMode: 'dark' | 'light';
   publicHiddenPages: PublicPageKey[];
   coachNamesShowOnPublic: boolean;
-  /** The public pages' new frame is on for this browser (Stage 1a Part 3): the page draws the Look card. */
-  frameOn?: boolean;
-  /** Under the frame, what the band reads from the event's records, for the Look card's preview. */
+  /** What the band reads from the event's records, for the Look card's preview (asked for with `with=look`). */
   band?: LookBandFacts | null;
 }
 
-/** What the page edits — sent on every save, the theme only once it was changed (`bodyOf`). */
-type Draft = {
-  presetKey: string;
-  customPrimary: string;
-  customAccent: string;
-  fontKey: string;
-  cardStyle: string;
-  colorMode: 'dark' | 'light';
-  publicHiddenPages: PublicPageKey[];
-  coachNamesShowOnPublic: boolean;
-  /** Under the frame (the Look card): colours of its own are chosen — false follows the club (or is the plain look). */
-  own: boolean;
-  /** Under the frame: the type look's stored value, or null to follow. */
-  typeKey: string | null;
-};
+/** What the page edits — sent on every save, the theme and the type only once changed (look-draft.ts `frameBodyOf`). */
+type Draft = FrameBodyDraft;
 
 function draftOf(data: BrandingSettings, advanced: boolean): Draft {
   const custom = Boolean(data.themePrimary && advanced);
@@ -91,9 +72,6 @@ function draftOf(data: BrandingSettings, advanced: boolean): Draft {
     presetKey: custom ? 'custom' : data.themePreset ?? 'platform',
     customPrimary: custom ? data.themePrimary! : '#1E3A8A',
     customAccent: custom ? data.themeAccent ?? '#D9F99D' : '#D9F99D',
-    fontKey: advanced ? data.themeFont ?? 'system' : 'system',
-    cardStyle: advanced ? data.themeCardStyle ?? 'default' : 'default',
-    colorMode: data.colorMode ?? 'dark',
     publicHiddenPages: normalizeHiddenPublicPages(data.publicHiddenPages),
     coachNamesShowOnPublic: data.coachNamesShowOnPublic === true,
     own: advanced && hasOwnTournamentColours(data),
@@ -106,38 +84,14 @@ const THEME_FIELDS = ['presetKey', 'customPrimary', 'customAccent', 'own'] as co
 /** The draft field that IS the type (the Look card): it rides a save only once touched, as the theme does. */
 const TYPE_FIELDS = ['typeKey'] as const satisfies readonly (keyof Draft)[];
 
-/**
- * The PATCH body. The theme rides along only once the organizer has changed it on this visit: an unset theme drafts as
- * 'platform' (the swatch the card shows), so sending it with every save — a page switch, the colour mode — wrote
- * theme_preset='platform' and the club's colours stopped applying to the tournament (public pages D7, 2026-10-27).
- * The route updates only the keys it is sent, so a body without them leaves the stored theme exactly as it was.
- */
-function bodyOf(d: Draft, advanced: boolean, themeChanged: boolean) {
-  const pages = { publicHiddenPages: normalizeHiddenPublicPages(d.publicHiddenPages), coachNamesShowOnPublic: d.coachNamesShowOnPublic };
-  if (!advanced) return pages;
-  const theme = !themeChanged ? {}
-    : d.presetKey === 'custom'
-      ? { themePreset: 'platform', themePrimary: d.customPrimary, themeAccent: d.customAccent }
-      : { themePreset: d.presetKey, themePrimary: null, themeAccent: null };
-  return {
-    ...theme,
-    themeFont: d.fontKey,
-    themeCardStyle: d.cardStyle,
-    colorMode: d.colorMode,
-    ...pages,
-  };
-}
-
 /** The draft with the address it was read from (and the plan's body): a save always goes to ITS tournament.
  *  `themeChanged` stays true from the first theme change until the next read, so choosing a theme and then
- *  choosing back still writes the second choice (`typeChanged` the same, for the type). `frameOn` picks the body. */
-type Held = { url: string; advanced: boolean; draft: Draft; themeChanged: boolean; typeChanged: boolean; frameOn: boolean };
+ *  choosing back still writes the second choice (`typeChanged` the same, for the type). */
+type Held = { url: string; advanced: boolean; draft: Draft; themeChanged: boolean; typeChanged: boolean };
 const send = (held: Held, keepalive = false) => fetch(held.url, {
   method: 'PATCH',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(held.frameOn
-    ? frameBodyOf(held.draft, held.advanced, held.themeChanged, held.typeChanged)
-    : bodyOf(held.draft, held.advanced, held.themeChanged)),
+  body: JSON.stringify(frameBodyOf(held.draft, held.advanced, held.themeChanged, held.typeChanged)),
   keepalive,
 });
 
@@ -166,17 +120,10 @@ export default function TournamentBrandingPage() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
-  const [bannerUploading, setBannerUploading] = useState(false);
   const [logoError, setLogoError] = useState('');
-  const [bannerError, setBannerError] = useState('');
-  // The public pages' new frame (Stage 1a Part 3), as the read says it is for this browser: on, the Look card and the
-  // five-card page; off, today's page untouched.
-  const [frameOn, setFrameOn] = useState(false);
   const [bandFacts, setBandFacts] = useState<LookBandFacts | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const bannerInputRef = useRef<HTMLInputElement>(null);
 
   // ── Saving: a choice at once, typing after a pause, one save at a time, anything waiting sent on leaving ──
   // The draft carries the address it was read from: a save always goes to ITS tournament, so switching events mid-edit
@@ -212,18 +159,18 @@ export default function TournamentBrandingPage() {
     setLoadError(false);
     const editsAtStart = edits.current;
     try {
-      const res = await fetch(brandingUrl, { cache: 'no-store' });
+      // `with=look`: only this page asks for the Look card's band facts — event settings and the setup wizard share the
+      // route and read none of them, so they never pay for that read.
+      const res = await fetch(`${brandingUrl}&with=look`, { cache: 'no-store' });
       if (!res.ok) throw new Error('load');
       const data = await res.json() as BrandingSettings;
       if (currentUrl.current !== brandingUrl) return; // another event's read owns the page now
       setLogoUrl(data.logoUrl);
-      setBannerUrl(data.heroBannerUrl);
-      setFrameOn(data.frameOn === true);
       setBandFacts(data.band ?? null);
       // An edit made while this read was out stays: a late read never overwrites it.
       if (edits.current !== editsAtStart && latest.current?.url === brandingUrl) return;
       const d = draftOf(data, advanced);
-      latest.current = { url: brandingUrl, advanced, draft: d, themeChanged: false, typeChanged: false, frameOn: data.frameOn === true };
+      latest.current = { url: brandingUrl, advanced, draft: d, themeChanged: false, typeChanged: false };
       setDraft(d);
     } catch {
       if (currentUrl.current === brandingUrl) setLoadError(true);
@@ -278,46 +225,38 @@ export default function TournamentBrandingPage() {
     return () => window.removeEventListener('pagehide', flushWaiting);
   }, [flushWaiting]);
 
-  // ── Uploads save on their own, as today; the pill says so (no pop-up), a failure says so in its card ──
-  async function upload(kind: 'logo' | 'banner', file: File) {
-    if (!tournamentId || !advanced) return;
-    const setBusy = kind === 'logo' ? setLogoUploading : setBannerUploading;
-    const setError = kind === 'logo' ? setLogoError : setBannerError;
-    setBusy(true);
-    setError('');
+  // ── The logo saves on its own, as today; the pill says so (no pop-up), a failure says so in its card ──
+  const logoRoute = tournamentId ? `/api/admin/tournament-logo?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}` : '';
+  async function uploadLogo(file: File) {
+    if (!logoRoute || !advanced) return;
+    setLogoUploading(true);
+    setLogoError('');
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const route = kind === 'logo' ? 'tournament-logo' : 'tournament-hero-banner';
-      const res = await fetch(`/api/admin/${route}?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, { method: 'POST', body: fd });
-      const data = await res.json().catch(() => null) as { logoUrl?: string; heroBannerUrl?: string; error?: string } | null;
+      const res = await fetch(logoRoute, { method: 'POST', body: fd });
+      const data = await res.json().catch(() => null) as { logoUrl?: string; error?: string } | null;
       if (!res.ok) throw new Error(data?.error && res.status < 500 ? data.error : W.uploadFailed);
-      if (kind === 'logo') setLogoUrl(data?.logoUrl ?? null);
-      else setBannerUrl(data?.heroBannerUrl ?? null);
+      setLogoUrl(data?.logoUrl ?? null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : W.uploadFailed);
+      setLogoError(e instanceof Error ? e.message : W.uploadFailed);
     } finally {
-      setBusy(false);
-      const input = kind === 'logo' ? fileInputRef.current : bannerInputRef.current;
-      if (input) input.value = '';
+      setLogoUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   }
-  async function removeUpload(kind: 'logo' | 'banner') {
-    if (!tournamentId || !advanced) return;
-    const setBusy = kind === 'logo' ? setLogoUploading : setBannerUploading;
-    const setError = kind === 'logo' ? setLogoError : setBannerError;
-    setBusy(true);
-    setError('');
+  async function removeLogo() {
+    if (!logoRoute || !advanced) return;
+    setLogoUploading(true);
+    setLogoError('');
     try {
-      const route = kind === 'logo' ? 'tournament-logo' : 'tournament-hero-banner';
-      const res = await fetch(`/api/admin/${route}?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, { method: 'DELETE' });
+      const res = await fetch(logoRoute, { method: 'DELETE' });
       if (!res.ok) throw new Error('remove');
-      if (kind === 'logo') setLogoUrl(null);
-      else setBannerUrl(null);
+      setLogoUrl(null);
     } catch {
-      setError(W.removeFailed);
+      setLogoError(W.removeFailed);
     } finally {
-      setBusy(false);
+      setLogoUploading(false);
     }
   }
 
@@ -360,23 +299,17 @@ export default function TournamentBrandingPage() {
   if (!draft) return loadingLine;
 
   const d = draft;
-  // The switch-off Theme card's low-contrast warning reads the theme as drafted.
-  const previewTheme = d.presetKey === 'custom' && advanced
-    ? resolveTheme('platform', d.customPrimary || null, d.customAccent || null)
-    : resolveTheme(d.presetKey, null, null);
-  const presetName = d.presetKey === 'custom' ? null : PRESETS[d.presetKey]?.name ?? null;
   const togglePage = (key: PublicPageKey) => change({
     publicHiddenPages: d.publicHiddenPages.includes(key) ? d.publicHiddenPages.filter(k => k !== key) : [...d.publicHiddenPages, key],
   });
-  // Under the frame (Stage 1a Part 3): who may open the club's Public site editor (its "Public site" link in the Look
+  // The Look card (Stage 1a Part 3): who may open the club's Public site editor (its "Public site" link in the Look
   // card), and who may change the club's look there (the owner or an admin — "Change the club's look"; never a coach).
   const mayOpenEditor = !!currentOrg && !!userRole
     && mayOpenSiteEditor({ role: userRole, capabilities: userCapabilities, org: currentOrg });
   const editorHref = mayOpenEditor ? `/${currentOrg.slug}/admin/public-site` : null;
   const clubLayer = !!currentOrg && hasClubTournamentLook(currentOrg);
-  // The logo's fallback, said as it now is under the frame: the club's (the league's) logo, none on Tournament Plus.
-  const logoHint = !frameOn ? W.logoHint
-    : clubLayer ? W.logoHintFallback[lookNounOf(currentOrg?.planId)] : W.logoHintOwn;
+  // The logo's fallback, said as it is: the club's (the league's) logo, none on Tournament Plus (lib/tournament-look.ts).
+  const logoHint = clubLayer ? W.logoHintFallback[lookNounOf(currentOrg?.planId)] : W.logoHintOwn;
 
   return (
     <div className={repKit.page}>
@@ -403,12 +336,11 @@ export default function TournamentBrandingPage() {
       {!advanced ? (
         // A plan without advanced branding: ONE lock line under Pages (screen 6, "one line instead of six cards") — it
         // replaces the Unlock box and six Locked cards, the boxed-lock shape the 2026-09-30 ruling retired (F09, F18).
-        <PlanLockLine href={tournamentPlusPanelHref(currentOrg ?? 'admin')}>{frameOn ? LOCK_WORDS.brandingLook : LOCK_WORDS.branding}</PlanLockLine>
+        <PlanLockLine href={tournamentPlusPanelHref(currentOrg ?? 'admin')}>{LOCK_WORDS.brandingLook}</PlanLockLine>
       ) : (
         <>
-          {/* ── Look (under the frame only): Theme, Font, Card style, Dark/Light and the banner as one card, first after
-              Pages (Stage 1a, drawing ask 6) ── */}
-          {frameOn && currentOrg && currentTournament && (
+          {/* ── Look: the colours and the type as one card, first after Pages (Stage 1a, drawing ask 6) ── */}
+          {currentOrg && currentTournament && (
             <LookCard org={currentOrg} tournament={currentTournament} draft={d} logoUrl={logoUrl} facts={bandFacts}
               inviteOnly={inviteOnly} editorHref={editorHref} mayChangeClubLook={mayOpenEditor && mayWriteSite(userRole ?? '')}
               onChange={change} />
@@ -428,131 +360,19 @@ export default function TournamentBrandingPage() {
                   <Upload size={13} aria-hidden /> {logoUploading ? W.uploading : logoUrl ? W.replaceLogo : W.uploadLogo}
                 </button>
                 {logoUrl && (
-                  <button type="button" className="btn btn-ghost btn-data" onClick={() => void removeUpload('logo')} disabled={logoUploading}>{W.remove}</button>
+                  <button type="button" className="btn btn-ghost btn-data" onClick={() => void removeLogo()} disabled={logoUploading}>{W.remove}</button>
                 )}
                 <p className={styles.logoHint}>{logoHint}</p>
               </div>
             </div>
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden
-              onChange={e => { const f = e.target.files?.[0]; if (f) void upload('logo', f); }} />
+              onChange={e => { const f = e.target.files?.[0]; if (f) void uploadLogo(f); }} />
           </CollapsibleCard>
-
-          {/* ── Switch off only: Theme, Hero banner, Font and Card style (under the frame, the Look card holds what stays) ── */}
-          {!frameOn && (<>
-          {/* ── Theme: the presets and light / dark; the drawn mock went (the door shows the real page) ── */}
-          <CollapsibleCard title={W.theme} sectionId="theme" defaultOpen={false} meta={themeSummary(presetName, d.colorMode)}>
-            <p className={styles.compactNote}>{W.themeLine}</p>
-            <div className={styles.swatchGrid}>
-              {Object.entries(PRESETS).map(([key, preset]) => (
-                <button key={key} type="button" title={preset.name} aria-label={preset.name} aria-pressed={d.presetKey === key}
-                  className={`${styles.swatch} ${d.presetKey === key ? styles.swatchActive : ''}`} style={{ background: preset.primary }}
-                  onClick={() => change({ presetKey: key })}>
-                  {d.presetKey === key && <span className={styles.swatchCheck}>✓</span>}
-                </button>
-              ))}
-              <button type="button" title={W.custom} aria-label={W.custom} aria-pressed={d.presetKey === 'custom'}
-                className={`${styles.swatch} ${styles.swatchCustom} ${d.presetKey === 'custom' ? styles.swatchActive : ''}`}
-                onClick={() => {
-                  if (d.presetKey === 'custom') return;
-                  // Custom starts from the colours on show, so opening it to look changes nothing families see.
-                  const from = PRESETS[d.presetKey];
-                  change({ presetKey: 'custom', customPrimary: from?.primary ?? d.customPrimary, customAccent: from?.accent ?? d.customAccent });
-                }}>
-                {d.presetKey === 'custom' && <span className={styles.swatchCheck}>✓</span>}
-              </button>
-            </div>
-            {d.presetKey === 'custom' && (
-              <div className={styles.customPickers}>
-                <div className={styles.colorPickerField}>
-                  <label className={styles.label} htmlFor="t-primary">{W.primary}</label>
-                  <div className={pageCss.hexRow}>
-                    <input id="t-primary" type="color" className={styles.colorInput} value={d.customPrimary} onChange={e => change({ customPrimary: e.target.value }, true)} />
-                    <HexField id="t-primary-hex" label={W.primary} value={d.customPrimary} onChange={hex => change({ customPrimary: hex }, true)} />
-                  </div>
-                </div>
-                <div className={styles.colorPickerField}>
-                  <label className={styles.label} htmlFor="t-accent">{W.accent}</label>
-                  <div className={pageCss.hexRow}>
-                    <input id="t-accent" type="color" className={styles.colorInput} value={d.customAccent} onChange={e => change({ customAccent: e.target.value }, true)} />
-                    <HexField id="t-accent-hex" label={W.accent} value={d.customAccent} onChange={hex => change({ customAccent: hex }, true)} />
-                  </div>
-                </div>
-              </div>
-            )}
-            <div className={styles.modeToggleRow}>
-              <h3 className={styles.modeToggleLabel}>{W.background}</h3>
-              <div className={styles.modeToggle} role="group" aria-label={W.background}>
-                {(['dark', 'light'] as const).map(m => (
-                  <button key={m} type="button" aria-pressed={d.colorMode === m}
-                    className={`${styles.modeToggleBtn} ${d.colorMode === m ? styles.modeToggleBtnActive : ''}`}
-                    onClick={() => change({ colorMode: m })}>
-                    {m === 'dark' ? W.dark : W.light}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {previewTheme.isLowContrast && <div className={styles.lowContrastWarning}>{W.lowContrast}</div>}
-            <p className={styles.inheritNote}>{W.inheritTheme}</p>
-          </CollapsibleCard>
-
-          {/* ── Hero banner ── */}
-          <CollapsibleCard title={W.heroBanner} sectionId="hero-banner" defaultOpen={false} meta={fileName(bannerUrl)}>
-            <FormError>{bannerError}</FormError>
-            <p className={styles.bannerDesc}>{W.bannerLine}</p>
-            {bannerUrl && (
-              <div className={styles.bannerPreview}><img src={bannerUrl} alt="Hero banner preview" className={styles.bannerImg} /></div>
-            )}
-            <div className={styles.logoActions}>
-              <button type="button" className="btn btn-outline btn-data" onClick={() => bannerInputRef.current?.click()} disabled={bannerUploading}>
-                <ImageIcon size={13} aria-hidden /> {bannerUploading ? W.uploading : bannerUrl ? W.replaceBanner : W.uploadBanner}
-              </button>
-              {bannerUrl && (
-                <button type="button" className="btn btn-ghost btn-data" onClick={() => void removeUpload('banner')} disabled={bannerUploading}>{W.remove}</button>
-              )}
-            </div>
-            <p className={styles.bannerHint}>{W.bannerHint}</p>
-            <input ref={bannerInputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden
-              onChange={e => { const f = e.target.files?.[0]; if (f) void upload('banner', f); }} />
-          </CollapsibleCard>
-
-          {/* ── Font ── */}
-          <CollapsibleCard title={W.font} sectionId="font" defaultOpen={false} meta={FONT_OPTIONS[d.fontKey]?.label ?? d.fontKey}>
-            <div className={styles.fontGrid}>
-              {Object.entries(FONT_OPTIONS).map(([key, opt]) => (
-                <button key={key} type="button" aria-pressed={d.fontKey === key}
-                  className={`${styles.fontBtn} ${d.fontKey === key ? styles.fontBtnActive : ''}`} style={{ fontFamily: opt.sampleStyle }}
-                  onClick={() => change({ fontKey: key })}>
-                  <span className={styles.fontBtnLabel}>{opt.label}</span>
-                  <span className={styles.fontBtnSample}>Aa 123</span>
-                </button>
-              ))}
-            </div>
-            <p className={styles.inheritNote}>{W.inheritFont}</p>
-          </CollapsibleCard>
-
-          {/* ── Card style ── */}
-          <CollapsibleCard title={W.cardStyle} sectionId="card-style" defaultOpen={false} meta={CARD_STYLE_OPTIONS[d.cardStyle]?.label ?? d.cardStyle}>
-            <div className={styles.cardStyleGrid}>
-              {Object.entries(CARD_STYLE_OPTIONS).map(([key, opt]) => (
-                <button key={key} type="button" aria-pressed={d.cardStyle === key}
-                  className={`${styles.cardStyleBtn} ${d.cardStyle === key ? styles.cardStyleBtnActive : ''}`}
-                  onClick={() => change({ cardStyle: key })}>
-                  <div className={`${styles.cardStyleThumb} ${styles[`cardThumb_${key}` as keyof typeof styles]}`}>
-                    <div className={styles.cardThumbLine} />
-                    <div className={styles.cardThumbLine} style={{ width: '60%' }} />
-                  </div>
-                  <span className={styles.cardStyleLabel}>{opt.label}</span>
-                </button>
-              ))}
-            </div>
-            <p className={styles.inheritNote}>{W.inheritCard}</p>
-          </CollapsibleCard>
-          </>)}
         </>
       )}
 
       <SavePill
-        saving={saving || logoUploading || bannerUploading}
+        saving={saving || logoUploading}
         dirty={waiting}
         error={saveError}
         onRetry={saveNow}

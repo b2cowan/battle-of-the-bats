@@ -100,7 +100,7 @@
   }
 }
 
-/* Under the public tournament pages' frame (Stage 1 Part 3, behind the preview switch — lib/public-frame.ts): a white
+/* Under the public tournament pages' frame (Stage 1 Part 3 — lib/public-frame.ts): a white
    card with a hairline, no wash of the organizer's colour and no glow (plan §4); nothing under 12 px (Ask 2). */
 :global([data-public-frame='light']) .state {
   background: var(--surface);

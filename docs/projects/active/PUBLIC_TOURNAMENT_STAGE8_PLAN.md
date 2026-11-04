@@ -1128,3 +1128,103 @@ footer's); an open old team-page tab loses the dropped fields until reload (no r
 - Still owed, not this part: as §16 (production port of the feed fix; the service worker's `CACHE_VERSION`; the News/
   Overview held-back-division post; the demo chrome's tap floors; the old Register/News 36 px doors; 5e's shots; the admin
   strip's 34 px "Dismiss"; `/release` §1d-2's sharp probe; the club editor's unlabelled 18 px input).
+
+## 18. Part 4b record (the admin side, then the switch itself; built 2026-11-04; releases with the flip)
+
+**What a customer sees:** nothing (nothing promoted). **An owner on dev:** the Branding page is the door, Pages, the
+**Look** card and **Logo** — for every browser, no step taken; a plan without advanced branding sees one lock line,
+"Your logo, colours and type on this site". The club's Public site editor always shows the Tournaments part (on a plan
+that carries tournaments) and always takes a typed hex code. The preview link is gone (`/api/public-frame` answers 404).
+The dashboard's "branding done" ticks for a logo, own colours **or a chosen type look**, never the retired banner.
+⚠ Not promotable before Parts 5–6 (§5).
+
+**Owner ruling in-session (2026-11-04):** `hasBranding` counts a chosen type look (`theme_font`), as recommended.
+**Design choice (said up front):** a stale tab's `themeFont` / `themeCardStyle` / `colorMode` is **ignored, not refused**
+— refusing would drop the same save's Pages and coach-names change, and nothing reads those values; it also stops the old
+font list writing values like `barlow` that clash with mig 426's meaning.
+
+**The brief against the code:** every claim re-opened held (the three switch readers, the hero-banner route's one caller,
+the two other callers of the Branding API, the words census). One adjustment: the band flag rides the GET only
+(`${brandingUrl}&with=look`), so the draft's PATCH address — its identity in the edit-race guard — is unchanged.
+
+**What changed.**
+- Branding page: the old Theme (swatches, Custom, hex, Dark/Light, low-contrast, inherit note), Hero banner, Font and
+  Card style cards; `bodyOf`; the `frameOn` state and Held field; the Draft's `fontKey`/`cardStyle`/`colorMode` (`Draft`
+  is now look-draft.ts's `FrameBodyDraft`); `BrandingSettings.heroBannerUrl/themeCardStyle/colorMode/frameOn`;
+  `previewTheme`/`presetName`; all banner state and the `'banner'` upload/remove branches (now `uploadLogo`/`removeLogo`);
+  the imports only that half used; the lock line → `LOCK_WORDS.brandingLook` always; the logo hint → the frame's always.
+- Words: the 19 old-half `PUBLIC_SITE_WORDS` keys and `themeSummary`; `LOCK_WORDS.branding` (its one user went). The
+  lock line's wording stays a Part 5d `/strategy` drift check.
+- CSS: `branding.module.css` → the six logo classes only (the kit overrides folded in; `.page`/`.card` gone);
+  `site.module.css` `.hexRow`. The one-window guard's `branding.module.css .label` entry rewritten (the class went).
+- Branding API: GET drops `hero_banner_url`, `theme_card_style`, `color_mode` and `frameOn`; keeps `themeFont` (seeds
+  `typeKey`); band facts only on `with=look` (event settings and the setup wizard never pay for them — tested). PATCH:
+  `VALID_FONTS`, `VALID_CARD_STYLES`, the old `themeFont` rule, `themeCardStyle`, `colorMode` gone; `PLUS_VISUAL_FIELDS`
+  = the theme three + `typeLook`; `theme_font` is written only from `typeLook`.
+- Hero banner (ask A): `app/api/admin/tournament-hero-banner/route.ts` deleted. Dashboard: the select swaps the banner for
+  `theme_font`; `hasBranding` per the ruling. `organizations.hero_banner_url` and its route untouched (the club home's
+  banner is live).
+- Copy lists (ask C keeps the columns): `cloneTournament` and `populateTournamentFrom` copy `logo_url`, the theme three
+  and `theme_font` only; the retired `rulesLayout`/`resourcesLayout` keys never travel (clone deletes them
+  unconditionally; populate's `RETIRED_KEYS` are never allowed). `lib/types.ts` and the `lib/db.ts` row mapper keep the
+  dead fields (the dictionary still lists the columns — Part 5b's `/db` pass decides).
+- Club editor: the route's `frameOn` read and response, the page's `frameOn` state; `tournamentRule = carries.tournaments`;
+  LookPanel's and LookSwatches' `hex` prop → the typed hex field always.
+- The switch: `PUBLIC_FRAME_COOKIE`, `publicFrameFromCookie`, `safePublicFrameReturn` (lib/public-frame.ts, header
+  rewritten), `isPublicFrameOn` (lib/public-frame-server.ts), the setter route `app/api/public-frame/route.ts`, the seed's
+  preview-link lines (the marker string kept). `proxy.ts` and `public/sw.js` never named the cookie. Stale "behind the
+  preview switch" comments rewritten across the frame's stylesheets and components, ConsumerNav, TournamentLookPart,
+  PublicChampionsPage and `layout-screens.mjs`.
+- Baselines, BY HAND for exactly the removed code: `.admin-restyled-baseline.json` (the branding sheet's entry gone; the
+  page held at its two literals), `.tsx-token-baseline.json` (the page 10 → 3 hex), `.layout-baseline.json` (59
+  `admin-t-branding*` rows for the removed cards pruned with `--prune --only=` the three Branding screens; the six
+  "Dismiss" rows stay). `.css-selector-baseline.json` / `.public-type-baseline.json`: no entry for these files.
+
+**Tests (rewritten, not deleted):** Stage 1 frame guard ("the preview switch is gone": no cookie/reader/redirect export,
+the frame's live helpers kept, no setter route, no preview link; the census is now EMPTY and widened to every
+.ts/.tsx/.js/.mjs/.cjs under app/components/lib/scripts, read raw as well as comment-stripped), tournament look, Stage 5
+public site, Stage 0 small fixes (D7 now pinned on `frameBodyOf`), one-window guard. **NEW**
+`public-tournament-stage8-branding-page.test.ts` (16 tests): the page's controls are exactly Pages, coach names, the Look
+card and the Logo (raw form controls inventoried), each with its public reader NAMED — Pages → the layout's hidden list /
+`isPublicPageEnabled`, coach names → `toPublicTeam`, colours + type → `resolveTournamentLook`, Logo → `publicFrameBand`
+(the real code runs wherever it imports cleanly); the old cards, words and CSS gone; the band flag; PATCH ignores the
+stale keys; the banner route, `hasBranding`, the copy lists; the editor without its switch half.
+**Non-vacuity by mutation, 36 of 36** (each old behaviour put back, the tests watched fail, reversed on a fresh read,
+sha1 identical after): the reader / cookie / redirect helper back; the setter route back; the seed's link; the cookie in
+sw.js; a `frameOn` in a component; the editor's `frameOn` response and gate; LookPanel's and LookSwatches' `hex`; band
+facts for every caller; event settings sending `with=look`; GET reading the banner; PATCH validating `colorMode`, writing
+the old font rule, writing card style; a Theme card; the old lock line (page and words); a second body; Held's
+`frameOn`; the save sending the font; a Theme word; `themeSummary`; a swatch rule; the hex row; the banner route back;
+the dashboard counting the banner / ignoring the type look; clone copying the banner; populate copying card style; clone
+carrying the Rules keys with the rules; populate letting a Rules key through; the coach-name reader leaking; the
+one-window entry back.
+
+**Checks run:** touched + neighbouring unit files green (frame guard 39, Stage 8 Branding 16, tournament look 51, Stage 5
+public site 10, Stage 0 8, one-window 17, and 237 across the public-tournament stage guards, feed privacy, focused page,
+site builder, Stage 5 settings and `demo-destinations-guard`); full `npm test` 13,908 — **7 failures, all other
+sessions' and the same seven §16/§17 record** (Stage 6 walk HTML ×3, support console foot, billing ended state,
+practice-plan door N1, series date-removal taps). Typecheck (`NODE_OPTIONS=--max-old-space-size=6144`): one error,
+another session's (`tryout-report.test.ts` `childId`, Stage 14). ESLint: 0 errors on changed files (pre-existing warnings
+only). Spelling, public tokens (all scopes), public type, `verify:changed`: pass. CSS selectors: only foreign findings
+(4 orphans + 11 dead classes, none in these files). Dead-code report (`knip@5`): nothing deleted is still imported,
+nothing kept went dead. **Layout** (`--only=`, 4 widths, `--workers=1`, dev server): 0 new findings of this part's — the
+admin strip's 34 px "Dismiss" (owed since §11) and the club editor's 18 px input (owed, §17) are the only rows. Dev
+server restarted (files deleted): the first restart answered 500 from a cache naming the deleted banner route — stopped,
+`.next` cleared, restarted; login, Schedule, Register and Playoffs answer 200, the old preview link 404, and the
+Branding page, its Look screens, the editor, the dashboard, event settings and the pay page all rendered in the layout run.
+
+**`/simplify`:** not run — no new abstraction (one query flag). **`/review`** (high-risk tier; lenses blast radius
+(mandatory), correctness + data/contract, test non-vacuity): **no defect in the code.** Acted on (test gaps): the
+control inventory made as strict as its title; the census widened (.js/.mjs/.cjs, raw read) and `/api/public-frame`
+matched exactly; the CSS class scan made selector-only. Recorded: the coach-names reader is pinned by source (its module
+imports the database); the PATCH "ignored" claim is pinned by source; mig 426's prod step (it empties `theme_font`) must
+be applied before the promote or a legacy font value would tick "branding done" — it is already a Stage 1a prod step,
+and Part 5a's empty repeats it.
+
+**Handed on:**
+- **Part 5c (`/docs`), add:** the Branding help article (`lib/help-content/tournaments.tsx` ~205, ~443 searchText, ~453,
+  ~521) still says a tournament has a "hero banner" and "fonts".
+- **Part 5e (`/demos`):** `scripts/seed-theme-variants.mjs` still writes `color_mode` / `theme_card_style` (inert now;
+  already listed as "remove the old-state theme-variant seed").
+- **Part 5b (`/db`):** the dead fields stay on `lib/types.ts` and the row mapper with their columns (ask C).
+- Still owed, not this part: as §16/§17.

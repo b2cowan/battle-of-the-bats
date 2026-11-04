@@ -751,7 +751,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Under the public tournament pages' frame (Stage 1 Part 3, behind the preview switch — lib/public-frame.ts): the same
+/* Under the public tournament pages' frame (Stage 1 Part 3 — lib/public-frame.ts): the same
    form, read on the light ground (plan §4, Ask 2). The boxes that were a faint white wash on the dark ground (invisible
    on a white card) take the ground; washes of the organizer's colour and the old lime become hairlines; the progress
    bar fills in the organizer's ink; nothing under 12 px. The pay page shares these. */

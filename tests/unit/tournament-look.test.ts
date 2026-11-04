@@ -305,12 +305,12 @@ describe('Part 2: the club editor (source guards)', () => {
   const part = readCode('app/[orgSlug]/admin/public-site/TournamentLookPart.tsx');
   const look = readCode('app/[orgSlug]/admin/public-site/LookPanel.tsx');
 
-  it('the editor learns the switch from its own read; off, no part, no hex fields', () => {
-    assert.match(readCode('app/api/admin/public-site/route.ts'), /isPublicFrameOn\(\),[\s\S]*?NextResponse\.json\(\{[^}]*frameOn \}\)/);
-    assert.match(editor, /setFrameOn\(data\.frameOn === true\)/);
-    assert.match(editor, /const tournamentRule = frameOn && carries\.tournaments;/);
+  it('the part shows on every plan that carries tournaments — no switch (Stage 8 Part 4b)', () => {
+    assert.doesNotMatch(readCode('app/api/admin/public-site/route.ts'), /isPublicFrameOn|frameOn/);
+    assert.doesNotMatch(editor, /frameOn/);
+    assert.match(editor, /const tournamentRule = carries\.tournaments;/);
     assert.match(editor, /\{tournamentRule && \(\s*<TournamentLookPart/);
-    assert.match(editor, /<LookPanel [^>]*hex=\{frameOn\}>/);
+    assert.match(editor, /<LookPanel [^>]*readOnly=\{!canWrite\}>/);
     assert.match(editor, /\.\.\.\(tournamentRule \? \[tournamentLookWords\(lookNoun\)\.summary\[tournamentLook\]\] : \[\]\)/);
   });
 
@@ -331,13 +331,13 @@ describe('Part 2: the club editor (source guards)', () => {
   });
 
   it('one colour control and one type control: the club\'s Look and the Branding page share them', () => {
-    assert.match(look, /<LookSwatches [^]*?hex=\{hex\}/);
+    assert.match(look, /<LookSwatches labelledBy="site-colours" idPrefix="site"\s/);
     assert.match(look, /<LookTypeTiles /);
     assert.doesNotMatch(look, /Object\.entries\(PRESETS\)/);
     const branding = readCode('app/[orgSlug]/admin/tournaments/branding/page.tsx');
-    // sameHex left with the App icon card (Stage 8 Part 1); the hex field is still the shared one.
-    assert.match(branding, /import \{ HexField \} from '@\/components\/admin\/kit\/club\/LookControls';/);
-    assert.doesNotMatch(branding, /function (HexField|sameHex)\(/);
+    // sameHex left with the App icon card (Stage 8 Part 1), the page's own HexField use with the Theme card (Part 4b):
+    // the hex field lives in the shared LookSwatches, and no copy of it grows back here.
+    assert.doesNotMatch(branding, /HexField|function sameHex\(/);
   });
 });
 
@@ -450,30 +450,29 @@ describe('Part 3: the Branding page and its route (source guards)', () => {
   const route = readCode('app/api/admin/tournament-branding/route.ts');
   const win = readCode('components/admin/kit/club/PhoneWindow.tsx');
 
-  it('the read says whether the switch is on, with the band\'s facts only under it', () => {
-    assert.match(route, /const frameOn = await isPublicFrameOn\(\);/);
-    assert.match(route, /const band = frameOn && advanced\s*\? await publicFrameBandFacts\(/);
-    assert.match(route, /frameOn,\s*band,\s*\}\);/);
-    assert.match(page, /setFrameOn\(data\.frameOn === true\);/);
+  it('the read carries the band\'s facts only when the Branding page asks (with=look), and no switch', () => {
+    assert.doesNotMatch(route, /isPublicFrameOn|frameOn/);
+    assert.match(route, /const band = advanced && url\.searchParams\.get\('with'\) === 'look'\s*\? await publicFrameBandFacts\(/);
+    assert.match(route, /\s+band,\s*\}\);/);
+    assert.doesNotMatch(page, /frameOn/);
   });
 
-  it('switch off is today\'s page: its body, its eight cards, its lock words', () => {
-    assert.match(page, /held\.frameOn\s*\? frameBodyOf\([^)]*\)\s*: bodyOf\(held\.draft, held\.advanced, held\.themeChanged\)/);
-    assert.match(page, /\{!frameOn && \(<>[\s\S]{0,120}?<CollapsibleCard title=\{W\.theme\}/);
-    assert.match(page, /\{frameOn \? LOCK_WORDS\.brandingLook : LOCK_WORDS\.branding\}/);
-    assert.match(page, /const logoHint = !frameOn \? W\.logoHint/);
+  it('one page for everyone (Stage 8 Part 4b): one body, one lock line, the logo hint said as it is', () => {
+    assert.match(page, /body: JSON\.stringify\(frameBodyOf\(held\.draft, held\.advanced, held\.themeChanged, held\.typeChanged\)\)/);
+    assert.match(page, /\{LOCK_WORDS\.brandingLook\}/);
+    assert.match(page, /const logoHint = clubLayer \? W\.logoHintFallback\[lookNounOf\(currentOrg\?\.planId\)\] : W\.logoHintOwn;/);
   });
 
-  it('under the frame the Look card comes first after Pages, before the Logo', () => {
+  it('the Look card comes first after Pages, before the Logo', () => {
     const at = (s: string) => page.indexOf(s);
     assert.ok(at('id="pages"') < at('<LookCard ') && at('<LookCard ') < at('title={W.logo}'));
   });
 
   it('the type is stored as picked, Classic included, and nothing outside the three', () => {
-    assert.match(route, /'colorMode',\s*'typeLook',\s*\] as const;/);
+    assert.match(route, /'themeAccent',\s*'typeLook',\s*\] as const;/);
     assert.match(route, /if \(!\(TOURNAMENT_TYPE_LOOKS as readonly string\[\]\)\.includes\(look\)\)/);
     assert.match(route, /updates\.theme_font = look;/);
-    assert.match(route, /updates\.theme_font = font === 'system' \? null : font;/, 'the switch-off body keeps today\'s rule');
+    assert.doesNotMatch(route, /'themeFont' in body|font === 'system'/, 'the retired font list\'s rule went (Stage 8 Part 4b)');
   });
 
   it('the App icon\'s settings are neither read nor written: a stale tab\'s save cannot set them (Stage 8 Part 1)', () => {

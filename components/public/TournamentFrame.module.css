@@ -1,10 +1,10 @@
-/* The public tournament pages' new frame (Public tournament pages Stage 1, behind the preview switch — lib/public-frame.ts).
+/* The public tournament pages' new frame (Public tournament pages Stage 1 — lib/public-frame.ts).
    Values are the hub's "Stage 1 · The frame" drawings (`.tf` specimens), which are the club site's own (Stage 4).
 
    EVERY rule here is keyed to the frame: `.frame` is the class on the tournament layout's outer element, which also
    carries the `data-public-frame="light"` marker the `:has()` rules read, and the club's token block
-   (ClubFrame.module.css `.tokens`) — the ONE light set, so club → tournament is one place. With the switch off nothing
-   carries the marker, so nothing here applies and today's pages render unchanged. */
+   (ClubFrame.module.css `.tokens`) — the ONE light set, so club → tournament is one place. Every public tournament page
+   carries the marker (the preview switch that once withheld it went with Stage 8). */
 
 /* ── The geometry: the band is in the page's flow and scrolls away; on a phone only the tab row (48 px) pins ─────── */
 .frame {
@@ -376,7 +376,7 @@ a.footHost:focus-visible {
 }
 
 /* Stage 6 measurements exposed undersized free-event promotion controls outside the frame, and a badge hidden by
-   a wrapped banner. Geometry only, gated by the preview marker: switch-off promotions keep their existing rendering. */
+   a wrapped banner. Geometry only, gated by the frame's marker. */
 :global(html):has(.frame) :global([data-growth-banner]) a,
 :global(html):has(.frame) :global([aria-label='Tournament platform attribution']) a {
   display: inline-flex; align-items: center; min-height: 44px;

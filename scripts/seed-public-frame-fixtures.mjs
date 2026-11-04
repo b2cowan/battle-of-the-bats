@@ -189,10 +189,8 @@ const made = [['riverdale-minor-ball', '/riverdale-minor-ball/summer-classic', '
 for (const f of FIXTURES) made.push([f.org.slug, await build(f), f.shows]);
 
 const base = process.env.FIXTURE_BASE_URL ?? 'http://localhost:3000';
-console.log('Made (dev). The new frame is ON by default on dev; each line also has its preview links:\n');
+console.log('Made (dev). Every browser sees the frame (the preview switch went with Stage 8 Part 4b):\n');
 for (const [, path, shows] of made) {
   console.log(`  ${base}${path}`);
-  console.log(`     ${shows}`);
-  console.log(`     on:  ${base}/api/public-frame?frame=on&to=${encodeURIComponent(path)}`);
-  console.log(`     off: ${base}/api/public-frame?frame=off&to=${encodeURIComponent(path)}\n`);
+  console.log(`     ${shows}\n`);
 }

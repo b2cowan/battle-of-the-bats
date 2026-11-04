@@ -231,50 +231,28 @@ export const PUBLIC_SITE_WORDS = {
   coachNames: 'Show coaches’ names',
   coachNamesLine: 'On Teams and team pages',
   logo: 'Logo',
-  theme: 'Theme',
-  heroBanner: 'Hero banner',
-  font: 'Font',
-  cardStyle: 'Card style',
   none: 'None',
   uploaded: 'Uploaded',
   uploading: 'Uploading…',
   uploadLogo: 'Upload logo',
   replaceLogo: 'Replace logo',
-  uploadBanner: 'Upload banner',
-  replaceBanner: 'Replace banner',
   remove: 'Remove',
-  logoHint: 'JPG, PNG, or WebP · max 2 MB. Falls back to the organization’s logo when not set.',
-  // Under the public pages' new frame (Stage 1a Part 3): the Look card, and the logo's fallback said as it now is — the
-  // club's (or the league's) where there is a club layer, none on Tournament Plus (lib/tournament-look.ts).
+  // The Look card (Stage 1a Part 3), and the logo's fallback said as it is — the club's (or the league's) where there is
+  // a club layer, none on Tournament Plus (lib/tournament-look.ts). The old Theme / Hero banner / Font / Card style
+  // cards' words went with them (Stage 8 Part 4b).
   look: 'Look',
   logoHintFallback: { club: 'JPG, PNG, or WebP · max 2 MB. Falls back to the club’s logo when not set.', league: 'JPG, PNG, or WebP · max 2 MB. Falls back to the league’s logo when not set.' },
   logoHintOwn: 'JPG, PNG, or WebP · max 2 MB.',
-  bannerHint: 'JPG, PNG, or WebP · max 4 MB. Recommended 16:5 ratio.',
-  bannerLine: 'A full-width image at the top of this tournament’s public page. Falls back to the organization’s banner when not set.',
   uploadFailed: 'Couldn’t upload it. Nothing was changed.',
   removeFailed: 'Couldn’t remove it. Nothing was changed.',
   hexCode: 'Hex code',
   hexHeld: 'A hex code is # and six digits or letters, like #1E3A8A.',
-  primary: 'Primary',
-  accent: 'Accent',
   custom: 'Custom colours',
-  background: 'Background',
-  dark: 'Dark',
-  light: 'Light',
-  lowContrast: 'Low contrast: text may be hard to read.',
-  themeLine: 'The colours and background of this tournament’s public site.',
-  inheritTheme: 'When not set, this tournament uses the organization’s colours.',
-  inheritFont: 'When not set, this tournament uses the organization’s font.',
-  inheritCard: 'When not set, this tournament uses the organization’s card style.',
   saveFailed: 'Couldn’t save',
   loadFailed: 'The public site’s settings didn’t load.',
   noAccess: 'You don’t have access to manage this tournament’s public site.',
   noTournament: 'Select a tournament from the sidebar to manage its public site.',
 } as const;
-
-/** "Forest Green · light" / "Custom colours · dark". */
-export const themeSummary = (presetName: string | null, mode: 'dark' | 'light') =>
-  `${presetName ?? PUBLIC_SITE_WORDS.custom} · ${mode}`;
 
 /** A hex code typed beside a colour picker: "#1e3a8a" from "1E3A8A" or "#1E3A8A"; null when it isn't one. */
 export function parseHex(typed: string): string | null {

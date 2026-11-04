@@ -84,13 +84,14 @@ describe('D4 · the countdown is sport-neutral', () => {
 
 describe('D7 · the Branding page keeps the club\'s colours', () => {
   const code = readCode(BRANDING);
-  it('the theme rides in the body only once it was changed', () => {
-    assert.match(code, /function bodyOf\(d: Draft, advanced: boolean, themeChanged: boolean\)/);
-    assert.match(code, /const theme = !themeChanged \? \{\}/);
-    assert.match(code, /bodyOf\(held\.draft, held\.advanced, held\.themeChanged\)/);
+  it('the theme rides in the body only once it was changed (one body since Stage 8 Part 4b: look-draft.ts frameBodyOf)', () => {
+    const draft = readCode('app/[orgSlug]/admin/tournaments/branding/look-draft.ts');
+    assert.match(draft, /const theme = themeChanged \? \{ themePreset, themePrimary, themeAccent \} : \{\};/);
+    assert.match(code, /frameBodyOf\(held\.draft, held\.advanced, held\.themeChanged, held\.typeChanged\)/);
+    assert.doesNotMatch(code, /\bbodyOf\b/);
   });
   it('a fresh read starts unchanged; touching a theme field marks it, and the mark stays', () => {
-    assert.match(code, /draft: d, themeChanged: false, typeChanged: false, frameOn: data\.frameOn === true \}/);
+    assert.match(code, /draft: d, themeChanged: false, typeChanged: false \}/);
     assert.match(code, /themeChanged: held\.themeChanged \|\| THEME_FIELDS\.some\(k => k in patch\)/);
     // Stage 1a Part 3 added `own` (the Look card's "The club's look" vs a colour of its own), a theme field like the rest.
     assert.match(code, /THEME_FIELDS = \['presetKey', 'customPrimary', 'customAccent', 'own'\]/);

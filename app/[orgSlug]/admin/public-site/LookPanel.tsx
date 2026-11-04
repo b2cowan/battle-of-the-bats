@@ -72,11 +72,9 @@ function useLogoColours(url: string | null | undefined): LogoColours | null {
   return src && read?.url === src ? read.colours : null;
 }
 
-export default function LookPanel({ org, orgSlug, run, onChanged, readOnly = false, hex = false, children }: {
+export default function LookPanel({ org, orgSlug, run, onChanged, readOnly = false, children }: {
   org: Organization;
   orgSlug: string;
-  /** Custom's two colours take a typed hex code too (Stage 1a, behind the public pages' preview switch). */
-  hex?: boolean;
   /** Parts after the Look's own, in its column (the Tournaments part). */
   children?: ReactNode;
   /** Staff who may read the editor but not write it: the look in words, no controls. */
@@ -246,7 +244,7 @@ export default function LookPanel({ org, orgSlug, run, onChanged, readOnly = fal
       {/* ── Colours ── */}
       <div className={styles.lookPart}>
         <h3 className={styles.lookPartTitle} id="site-colours">{W.colours}</h3>
-        <LookSwatches labelledBy="site-colours" idPrefix="site" hex={hex}
+        <LookSwatches labelledBy="site-colours" idPrefix="site"
           before={fromLogo && (
             <LookPill primary={fromLogo.primary} accent={fromLogo.accent} label={W.fromLogo} on={colourPick.kind === 'logo'} onClick={pickFromLogo} />
           )}

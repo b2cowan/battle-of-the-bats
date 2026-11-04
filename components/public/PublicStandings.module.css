@@ -1,4 +1,4 @@
-/* Stage 4's new body is reachable only through the server's preview switch. No legacy selectors are changed. */
+/* Stage 4's Standings body — the only one since Stage 8 Part 3a. */
 .standings {
   display: flex; flex-direction: column; gap: 16px; min-width: 0; padding: 16px;
   background: var(--club-ground); color: var(--club-text); font-family: var(--club-text-face);

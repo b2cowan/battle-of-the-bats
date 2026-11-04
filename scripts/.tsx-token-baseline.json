@@ -112,7 +112,7 @@
     "rgba": 0
   },
   "app/[orgSlug]/admin/tournaments/branding/page.tsx": {
-    "hex": 10,
+    "hex": 3,
     "rgba": 0
   },
   "app/[orgSlug]/admin/tournaments/registrations/page.tsx": {

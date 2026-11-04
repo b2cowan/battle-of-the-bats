@@ -52,7 +52,7 @@ describe('Q1 — one field label, sentence case, in both portals', () => {
       ['app/[orgSlug]/admin/rep-teams/rep-teams.module.css', '.label'],
       ['app/[orgSlug]/admin/house-league/house-league.module.css', '.label'],
       ['app/[orgSlug]/admin/onboarding/onboarding.module.css', '.fieldLabel'],
-      ['app/[orgSlug]/admin/tournaments/branding/branding.module.css', '.label'],
+      // The Branding page's `.label` went with its custom-colour pickers (Public tournament pages Stage 8 Part 4b).
       ['app/[orgSlug]/admin/tournaments/schedule/components/BracketBuilder.module.css', '.teamLabel'],
       ['components/coaches/DevelopmentHandoutPreview.module.css', '.nextStep'],
       // Composed from the source, never through `.label`: `composes` is not transitive under Turbopack.

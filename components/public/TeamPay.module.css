@@ -11,7 +11,7 @@
 .choice input { margin-top: 0.25rem; }
 .choice > span { display: flex; flex-direction: column; gap: 0.1rem; color: var(--text-primary); }
 
-/* ── The focused page (Public tournament pages Stage 7, under the preview switch, so the club's tokens are set) ───────
+/* ── The focused page (Public tournament pages Stage 7, under the frame, so the club's tokens are set) ───────
    The team at the written page-title size (A7, 20 px), and the one contact line under the pay block (A1): the footer's
    own pattern — a 12 px label over the address at 16 px and a Copy button, both 44 px tall, in the organizer's ink. */
 .titleFocused { font-size: var(--type-title); }

@@ -1,23 +1,10 @@
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════
-   THE SETTINGS SHEET — Public site's branding parts (and the free plan's locked view of them). Its old look folded
-   onto the kit look it wore (Tournament admin redesign Stage 5, Part 7: all three screens that used it rebuilt —
-   Event settings, Registration questions, Public site); the rules nothing renders any more (the accordion, the save
-   footer, the theme's drawn mock, the old headers) went. Event settings left it for the kit's own parts in the Stage 5
-   addendum (A71, 2026-10-12), and the rules only it rendered went with it. TOKENS ONLY.
+   THE LOGO CARD — Public site's one card besides the Look card (LookCard.module.css). Its old look folded onto the kit
+   look it wore (Tournament admin redesign Stage 5, Part 7). The Theme (swatches, Dark/Light), Hero banner, Font and Card
+   style cards' rules went with the cards (Public tournament pages Stage 8 Part 4b), and the unreferenced `.page` /
+   `.card` with them. TOKENS ONLY.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
-/* The page wrapper: the admin shell lays it out. */
-.page {}
-
-.card {
-  padding: 1rem 1.25rem;
-  border-radius: 8px;
-  background: var(--card-bg);
-  border: 1px solid var(--home-line);
-  margin-bottom: 0.75rem;
-}
-
-/* ── Logo ──────────────────────────────────── */
 .logoRow {
   display: flex;
   align-items: center;
@@ -33,6 +20,8 @@
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
+  background: var(--home-olive-soft);
+  border: 1px solid var(--home-line-strong);
 }
 
 .logoImg {
@@ -48,6 +37,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--home-olive);
+  background: var(--home-olive-soft);
+  border: 1px solid var(--home-line-strong);
 }
 
 .logoActions {
@@ -60,391 +52,13 @@
 .logoHint {
   width: 100%;
   font-size: 0.78rem;
-  color: var(--white-30);
-  margin: 0;
-}
-
-/* ── Swatches ──────────────────────────────── */
-.swatchGrid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.swatch {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  cursor: pointer;
-  position: relative;
-  transition: transform 0.1s, border-color 0.15s;
-}
-
-.swatch:hover {
-  transform: scale(1.12);
-}
-
-.swatchCheck {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.swatchCustom {
-  /* token-exempt: decorative "pick a color" wheel — categorical rainbow gradient stops, not semantic status colors */
-  background: conic-gradient(#f87171, #fb923c, #fcd34d, #4ade80, #60a5fa, #c084fc, #f87171);
-}
-
-.customPickers {
-  display: flex;
-  gap: 1.5rem;
-  margin-top: 0.75rem;
-}
-
-.colorPickerField {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.label {
-  margin-bottom: 0.35rem;
-  display: block;
-}
-
-.colorInput {
-  width: 48px;
-  height: 32px;
-  padding: 0;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  border-radius: 2px;
-  background: transparent;
-  cursor: pointer;
-}
-
-.lowContrastWarning {
-  margin-top: 0.5rem;
-  font-size: 0.78rem;
-}
-
-.modeToggleRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-/* Its lettering is the kit eyebrow, further down (one rule per property — check:css-selectors). */
-.modeToggleLabel {
-  margin: 0;
-}
-
-/* The kit values folded in (admin type sweep Stage 5): the old console twin and its later override are one rule. */
-.modeToggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  padding: 0.25rem;
-  border-radius: var(--radius-sm);
-  background: var(--card-bg);
-  border: 1px solid var(--home-line-strong);
-}
-
-.modeToggleBtn {
-  min-width: 4.5rem;
-  padding: 0.42rem 0.8rem;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
   color: var(--text-tertiary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: 0.76rem;
-  font-weight: 650;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
-}
-
-.fontBtn:disabled,
-.cardStyleBtn:disabled {
-  cursor: not-allowed;
-  opacity: 0.58;
-}
-
-/* ── Banner ──────────────────────────────── */
-
-.bannerDesc {
-  font-size: 0.85rem;
-  color: var(--white-50);
-  margin: 0 0 0.75rem;
-}
-
-.bannerPreview {
-  margin-bottom: 0.75rem;
-  border-radius: 2px;
-  overflow: hidden;
-  max-height: 160px;
-}
-
-.bannerImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.bannerHint {
-  margin-top: 0.5rem;
-  font-size: 0.78rem;
-  color: var(--white-30);
-}
-
-/* ── Font grid ─────────────────────────────── */
-.fontGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem;
-}
-
-.fontBtn {
-  padding: 0.75rem 1rem;
-  background: var(--bg-2);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  border-radius: 2px;
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.fontBtn:hover {
-  border-color: rgba(var(--primary-rgb), 0.4);
-  background: rgba(var(--primary-rgb), 0.06);
-}
-
-.fontBtnActive {
-  border-color: var(--primary);
-  background: rgba(var(--primary-rgb), 0.1);
-}
-
-.fontBtnLabel {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--white-80);
-}
-
-.fontBtnSample {
-  font-size: 1.1rem;
-  color: var(--text-secondary);
-}
-
-/* ── Card style grid ───────────────────────── */
-.cardStyleGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.cardStyleBtn {
-  padding: 0.75rem 1rem;
-  background: var(--bg-2);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  border-radius: 2px;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.4rem;
-}
-
-.cardStyleBtn:hover {
-  border-color: rgba(var(--primary-rgb), 0.4);
-  background: rgba(var(--primary-rgb), 0.06);
-}
-
-.cardStyleBtnActive {
-  border-color: var(--primary);
-  background: rgba(var(--primary-rgb), 0.1);
-}
-
-.cardStyleThumb {
-  width: 100%;
-  height: 28px;
-  border-radius: 2px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-  padding: 4px 6px;
-}
-
-.cardThumb_glass    { backdrop-filter: blur(4px); }
-
-.cardThumbLine {
-  height: 3px;
-  border-radius: 2px;
-  width: 80%;
-}
-
-.cardStyleLabel {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--white-70);
-}
-
-/* ── Inherit note ────────────────────────── */
-.inheritNote {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.72rem;
-  color: var(--white-35);
-  font-style: italic;
-  font-family: var(--font-sans, system-ui, sans-serif);
-  margin-top: 0.75rem;
-}
-
-.compactNote {
-  margin: -0.25rem 0 0.85rem;
-  font-size: 0.82rem;
-  color: var(--white-45);
-  font-style: italic;
+  margin: 0;
 }
 
 @media (max-width: 600px) {
-  .fontGrid, .cardStyleGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .modeToggleRow {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
   .logoRow {
     flex-direction: column;
     align-items: flex-start;
   }
-}
-
-/* ── The kit's look for the cards, labels and controls above (folded from its `[data-admin-kit]` layer; it comes after
-   the rules it overrode, so it still wins over them). The organization's own colours stay exactly as set: the swatches,
-   the custom-colour wheel, the font samples' face, the logo and banner images. ── */
-
-/* A label over a value, or a group header within a card, → the kit eyebrow. */
-.modeToggleLabel {
-  font-family: var(--font-data); /* type-ok: eyebrow */
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase; /* type-ok: eyebrow */
-  color: var(--text-secondary);
-}
-
-/* A tile's name is the option's own name as written (Inter, DM Serif, Glass…) — the body face, never a label.
-   The font tile's button wears its sample face inline, so the name sets the body face itself (owner A12). */
-.fontBtnLabel,
-.cardStyleLabel {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-body);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--text-primary);
-}
-
-/* ── Mode toggle → the chosen-option idiom (its ground and ink are on the base rules above) ── */
-.modeToggleBtn:hover { color: var(--text-primary); }
-/* The chosen mode: after the rule above, which inks every mode button tertiary (same specificity — order decides). */
-.modeToggleBtnActive {
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-  border-color: var(--home-olive);
-  box-shadow: none;
-}
-
-/* ── Body copy: descriptions, hints and notes leave the console's dim mono ramp ── */
-.bannerDesc,
-.compactNote,
-.logoHint,
-.bannerHint,
-.inheritNote {
-  color: var(--text-tertiary);
-}
-.lowContrastWarning { color: var(--warning-light); }
-
-/* ── Logo ── */
-.logoPreview {
-  background: var(--home-olive-soft);
-  border: 1px solid var(--home-line-strong);
-}
-.logoPlaceholder {
-  color: var(--home-olive);
-  background: var(--home-olive-soft);
-  border: 1px solid var(--home-line-strong);
-}
-
-/* ── Swatches (R2 — only the chosen ring's ink moves; the fills stay the organization's colours) ── */
-.swatchActive { border-color: var(--home-olive); }
-/* The chosen swatch's tick sits ON the organization's colour, so it keeps today's white in both themes
-   (`--white` turns to the warm INK in Warm — 1.59:1 on the navy preset, the slice 4a sweep). */
-.swatchCheck { color: var(--white-fixed); }
-
-/* ── Form field labels (the custom-colour wheel itself, `.colorInput`, is R2 content — untouched) ── */
-.label {
-  composes: fieldLabel from '../../../../../components/shared/FieldLabel.module.css';
-  font-family: var(--font-sans, system-ui, sans-serif);
-}
-
-/* ── Font grid / card-style grid: unchosen tile → chosen tile ── */
-.fontBtn,
-.cardStyleBtn {
-  background: var(--card-bg);
-  border: 1px solid var(--home-line-strong);
-  border-radius: 8px;
-}
-.fontBtn:hover,
-.cardStyleBtn:hover {
-  background: var(--home-olive-soft);
-  border-color: var(--home-olive);
-}
-.fontBtnActive,
-.cardStyleBtnActive {
-  background: var(--home-olive-soft);
-  border-color: var(--home-olive);
-}
-.fontBtn:disabled:hover,
-.cardStyleBtn:disabled:hover {
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-}
-
-/* The card-style thumbnails are drawn for a dark ground (white alphas) and vanish on Warm cream —
-   redrawn as small icons of each style in theme tokens, kept distinguishable: default = card ground
-   + a hairline; glass = a soft olive wash + a stronger hairline; outlined = transparent + an olive
-   edge; flat = the soft olive wash, no edge. */
-.cardThumb_default { background: var(--card-bg); border: 1px solid var(--home-line); }
-.cardThumb_glass { background: var(--home-olive-soft); border: 1px solid var(--home-line-strong); }
-.cardThumb_outlined { background: transparent; border: 1px solid var(--home-olive); }
-.cardThumb_flat { background: var(--home-olive-soft); border: none; }
-.cardThumbLine { background: var(--home-line-strong); }
-
-
-/* The branding controls at the admin's height on a computer and the tap floor on touch (Stage 5, A54: nothing a thumb
-   taps under 38px, the floor 44) — the light / dark choice, the swatches, a colour's picker; and on touch Event
-   settings' two- and three-way choices (On / Off, the timing and tie-breaker scopes), which were 38px on a phone and
-   padding-sized (≈28px) on a tablet. */
-.modeToggleBtn { min-height: var(--admin-control-h); }
-@media (max-width: 768px) {
-  .modeToggleBtn { min-height: var(--tap-min, 44px); }
-  .swatch,
-  .colorInput { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
 }

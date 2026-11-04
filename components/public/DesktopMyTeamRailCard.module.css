@@ -92,7 +92,7 @@
   text-decoration: underline;
 }
 
-/* Under the public tournament pages' frame (Stage 1 Part 3, behind the preview switch — lib/public-frame.ts): nothing
+/* Under the public tournament pages' frame (Stage 1 Part 3 — lib/public-frame.ts): nothing
    under 12 px (Ask 2). */
 :global([data-public-frame='light']) .nextLabel,
 :global([data-public-frame='light']) .link {

@@ -1,7 +1,7 @@
 'use client';
 /**
  * THE LOOK ROW'S "TOURNAMENTS" PART — the club's one rule for its tournaments' look (Public tournament pages Stage 1a,
- * the drawing's tabs 1–2, ruled 2026-11-02; mig 426). Behind the public pages' preview switch until Stage 8.
+ * the drawing's tabs 1–2, ruled 2026-11-02; mig 426). (The preview switch it waited behind went with Stage 8 Part 4b.)
  *
  * ⚖ Ask 13: whoever may edit the club's Look sets it (owner or admin), NOT the owner alone — so it lives in the Look row
  * and reads as the rest of that row does: a reader who may not write sees the rule in words, never a greyed radio.

@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 /**
  * components/public/TournamentBand.tsx — the organizer's colour band over every public tournament page (Public tournament
- * pages Stage 1, behind the preview switch — lib/public-frame.ts; plan PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md §4, hub
+ * pages Stage 1 — lib/public-frame.ts; plan PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md §4, hub
  * "Stage 1 · The frame", ruled Asks 1, 2, 8, 16 and the app-bar direction §10a).
  *
  * Built from the club bar's own parts (ClubBar, OrgSectionTabs, ClubFrame.module.css), so a club and its tournament read
