@@ -15,7 +15,6 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { isPublicPageEnabled, type PublicPageKey } from '@/lib/public-pages';
 import { toPublicTeam, type PublicTournamentPageData } from '@/lib/public-tournament-data';
 import { getPublicStandingsByDivision, onlyPublishedGames } from '@/lib/public-games';
-import ScheduleContent from '@/components/public/ScheduleContent';
 import PublicSchedule from '@/components/public/PublicSchedule';
 import PublicStandings from '@/components/public/PublicStandings';
 import { publishedCompetitionData } from '@/lib/public-standings';
@@ -78,16 +77,7 @@ export default async function TournamentPreviewSectionPage({
       registrationFields: [],
       standingsByDivision: {},
     };
-    const frameOn = await isPublicFrameOn();
-    if (frameOn) return <PublicSchedule orgSlug={orgSlug} tournamentSlug={tournamentSlug} isPreview initialData={publicTeamsData(initialData)} />;
-    return (
-      <ScheduleContent
-        orgSlug={orgSlug}
-        tournamentSlug={tournamentSlug}
-        isPreview
-        initialData={initialData}
-      />
-    );
+    return <PublicSchedule orgSlug={orgSlug} tournamentSlug={tournamentSlug} isPreview initialData={publicTeamsData(initialData)} />;
   }
 
   // ── Standings ─────────────────────────────────────────────────────────────

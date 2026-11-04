@@ -1063,37 +1063,6 @@
 
 .healthJumpChip[data-tone="warning"]:hover { background: rgba(var(--warning-rgb), 0.2); }
 
-/* ── Mobile-visible stage toggle (Round Robin / Playoffs) ────
-   Pulled out of the settings sheet onto the Division row so the most important
-   context switch is one tap. Desktop keeps the segmented control. */
-
-@media (max-width: 900px) {
-
-  .mobileStageBtn {
-    flex: 1 1 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 34px;
-    padding: 0 0.6rem;
-    border: none;
-    background: transparent;
-    color: var(--data-gray);
-    font-family: var(--font-data);
-    font-size: 0.62rem;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease;
-  }
-
-  .mobileStageBtn + .mobileStageBtn {
-    border-left: 1px solid var(--border-2);
-  }
-}
-
 /* ── "All divisions" List view — per-division section headers ─────────────── */
 
 /* Playoff row "edit in bracket builder" icon (List view). On very narrow phones
@@ -1408,23 +1377,6 @@
    status chips), the phone settings sheet and its nested venue list, the summary strip, the
    temporary-facility and typed-location banners, the "All divisions" list headers, the venue filter
    menu, and the shared error banner (the generator and the locations window read it too). ── */
-
-/* ── Mobile-visible Stage toggle (Round Robin / Playoffs) — a hand-rolled segmented control;
-   mirrors the shared ToolbarSegmentedControl's kit recipe (TournamentAdminUI.module.css) for
-   house consistency. Legacy sets these colours inside the same breakpoint, so the kit restates
-   inside it too. */
-@media (max-width: 900px) {
-  :global([data-admin-kit]) .mobileStageBtn {
-    font-family: var(--font-sans, system-ui, sans-serif);
-    font-weight: 650;
-    letter-spacing: normal;
-    text-transform: none;
-    color: var(--text-tertiary);
-  }
-  :global([data-admin-kit]) .mobileStageBtn + .mobileStageBtn {
-    border-left-color: var(--home-line-strong);
-  }
-}
 
 /* ── Mobile settings bottom sheet ── */
 :global([data-admin-kit]) .sheetBackdrop { background: var(--home-scrim); }

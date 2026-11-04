@@ -1,7 +1,7 @@
 # Public tournament pages — Stage 8: the new look on for everyone (plan)
 
 **Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 committed `d4af280e6` 2026-11-03** (record §10; it releases with the flip, ruling D). **Part 2 committed `02e29f453` 2026-11-03** (record §11; it releases with the flip too). **Part 3a committed `3304c77fe` 2026-11-03**
-(record §12; releases with the flip). Next Part 3b. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
+(record §12; releases with the flip). **Part 3b built 2026-11-03** (record §13; releases with the flip). Next Part 3c. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
 **Sequencing rule (standing):** by dependency and rework risk, never by date. One part per session, `/clear` between.
@@ -443,3 +443,107 @@ rewritten guard is vacuous.
 - **Advisory, not this part:** white text on `teamColor()` fills survives in the game and team share images and several consumer
   monograms — the warm-gold contrast case `teamInk` solved. Pre-existing.
 - Still owed, not this part: the admin strip's 34 px "Dismiss"; `/release` §1d-2's sharp probe; the club editor's 18 px input.
+
+## 13. Part 3b record (Schedule + a game's page; built 2026-11-03; releases with the flip)
+
+**What a customer sees:** nothing (nothing promoted). **An owner on dev, switch on (the default):** nothing changes — the
+Schedule, a game's page and the admin preview's Schedule section already showed the new look. **Switch off:** those three now
+show the new body inside the OLD layout (half-styled, the same accepted half-state as §12), and a game's link-preview title and
+description use the new words (round names, "Location TBD") for everyone. ⚠ Not promotable before Parts 4–6 (§5, §12).
+
+**What changed.** `schedule/page.tsx` → `PublicSchedule` **directly from the server page** (the `SchedulePageClient` wrapper only
+read `useParams` and chose between the two bodies — deleted, as 3a did for Teams/Standings); `forwardToOwnAddress` still runs
+first. `schedule/[gameId]/page.tsx` → `PublicGameDetails` after the same forward → not-found → "Schedule unavailable" →
+not-found order; `generateMetadata` is the old switch-on branch alone. The "Schedule unavailable" state is unchanged: both halves
+already rendered it before the switch was read. The admin preview's Schedule section collapsed the same way (same published-only
+data, `publicTeamsData`). `GameDetailLiveRefresher`'s score-only mode (no `requireFinalization`, the `schedule` section) existed
+only for the old page: `requireFinalization` is now required and it always polls `schedule-preview` with
+`publicGameRefreshSignature` — the same signature the server computes. `getPlayoffStakes`' old wording and loose `includes` match
+(the default, `fanWords = false`) had the old page as its last caller (found at `/review`): the parameter is gone and the four
+callers dropped their `true`; its test now pins the exact-reference rule (SF1 is not SF10) instead of the old words.
+
+**Data feeds (3a's lesson):** `app/api/public/tournament-data` and `getPublicTournamentPageData` read no switch, cookie or header;
+`schedule-preview` (the new Schedule and the refresher) and `schedule` (the game page) answer the same with the switch off.
+Nothing to fix.
+
+**Deleted, each with its importer check (grep re-run immediately before each removal; no importer outside the deleted set):**
+- `components/public/ScheduleContent.tsx` — importers: `SchedulePageClient.tsx` + the admin preview (both collapsed).
+- `app/[orgSlug]/[tournamentSlug]/schedule/SchedulePageClient.tsx` — `schedule/page.tsx` only.
+- `components/YearSelector.tsx` + `.module.css` — `ScheduleContent` only (the last of 3a's kept list); with it the stale path in
+  `scripts/check-public-tokens.mjs`' public `files` list (the check skips a missing file, so this was hygiene, not a failure).
+- `components/public/MyTeamCard.tsx` + `.module.css` — `ScheduleContent` only (3a's kept list).
+- `components/public/TeamFollowStar.tsx` + `.module.css` — the old game page only. Its follow helpers (`useFollowedTeam`,
+  `useAccountFollowedTeamIds`, `unfollowTeamEverywhere`) all keep callers.
+- `app/[orgSlug]/schedule/schedule.module.css` **trimmed, not deleted** (2,412 → ~60 lines): the old Playoffs' switch-off half
+  still imports it for `liveBadge`/`liveDot` and nothing else, so only those rules, their two keyframes and their three
+  frame-keyed overrides remain, unchanged in effect. **Part 3c deletes the file with the old Playoffs.** No `composes` or
+  outward-reaching `:global` rule lived in the deleted part (every `:global` paired with a local class).
+- **Dead CSS the deletion exposed:** `schedule-admin.module.css` `.mobileStageBtn` (base rule in its 900 px block + the kit
+  restatement) — kept "alive" by NAME by the old Schedule's own `styles.mobileStageBtn`; no TS file renders it from the admin
+  module (incl. `styles['…']` and template forms). Removed.
+- **Baselines, by hand (never `--init`):** `.css-selector-baseline.json` lost only `schedule.module.css`'s entry (`sheetSegmented`,
+  deleted); `.admin-type-baseline.json` schedule-admin face/caps/heavy 9/6/4 → 8/5/3 — exactly the removed rule's data face,
+  capitals and 800 weight. `.admin-old-look-baseline.json` NOT touched: schedule-admin `kitScope` was already above its 100
+  baseline at HEAD (106, another session's committed work); this part lowers it to 104, but locking 103/104 would absorb theirs.
+
+**Kept, and why:** the switch, cookie and the layout's frame branches (3d/Part 4); the old Playoffs and Champions halves, the
+bracket, and all three share-image routes incl. the game's `opengraph-image.tsx` (3c); `PublicTournamentState`, `RollingNumber`,
+`Countdown`, `ShareScoreButton`, `FollowTeamPicker`, `FollowAlertsToggle`, `TieredBracket`, `lib/follow.ts`, `lib/team-color.ts`,
+the `playoff-bracket` helpers (`fanGameLabel`, `clearFollowedTeam` are used inside their own modules) — all still have callers.
+
+**Tests (rewritten, not deleted):** Stage 3 guard (one Schedule body from the server page, forward first, no switch; the old body,
+wrapper, YearSelector and MyTeamCard gone; the preview section via `between()`; the trimmed sheet declares exactly
+`liveBadge`/`liveDot` and Playoffs still reads it; the game page has no switch and no old helpers, TeamFollowStar gone; metadata
+via a `between()` slice; the refresher's required rule and single signature path — replacing the old body's byte hash), Stage 2
+guard (the three bodies render with no switch; comment names 3b), Stage 0 small fixes (D2's live-score list moves to the new view
+models `lib/public-game-detail.ts` + `lib/public-game-row.ts`; D4 "no First pitch" adds them, `PublicGameDetails` and
+`PublicSchedule` — the review's advisory), Stage 1 frame guard (MyTeamCard's sheet left the readable-baseline list; the
+final-standings test now holds `PublicSchedule` — no inline organizer wash, the frame's own line token on `.placements`), Stage 6
+champions (loader mock list), `public-game-detail` (stakes, above).
+
+**Checks run:** the touched + neighbouring unit files (27 files) 506/509 — the 3 are the Stage 6 walk-HTML tests (other session, §12), and
+`public-game-detail` + team-profile + playoffs + schedule tests 111/111 after the stakes change; `npm test` 13,644/13,681 — the **37
+failures are all other sessions' uncommitted work**: billing/plan (`plan-billing-actions`, `-admin-host`, `-host-links`, `-usage`,
+`plan-reader-door-guard`, `org-billing-access-guard`, `account-first-signup`), Stripe key prefix ×2 (`stripe-mode`), support
+console foot ×2, Stage 6 walk HTML ×3; none reads a file of this part. Typecheck clean; ESLint clean on every changed file;
+spelling clean; CSS selectors back to exactly §12's 4 orphans + 10 dead classes (none in this part's files); public tokens,
+public type, module purity, contrast, text contrast, date correctness, admin org context, observability, marketing-shots `--check`:
+pass; admin type: only other sessions' files left (their new lettering + their drops); admin old look: only the foreign
+schedule-admin increase above; org-slug callers, export catalog, root files: other sessions' files. Demo tour guard 12/12 — no tour
+step and no marketing shot points at the public Schedule or a game's page (the only public shots are the two Standings ones §12
+handed to 5e). Smoke on the restarted dev server: the Schedule and a Lakeshore game's page answer 200, the game page renders the
+new body with the new title.
+
+**Layout** (`check:layout --only=` the seven `pubt-schedule-*`/`pubt-game-*` screens, every listed width, on the dev server already
+up): **0 findings on the 8 screen-width pairs that measured** (`pubt-schedule-pale`, `pubt-game-pale`, ×4 widths). Not measured,
+and NOT this part:
+- `pubt-schedule-live`, `pubt-schedule-many-days`, `pubt-game-live` — **expired fixture**: the Stage 3 Lakeshore clone was
+  prepared 2026-10-29 (read back with `seed-public-stage3-fixtures.mjs show`, read-only): its live semifinal was 2026-10-29
+  17:50 and its pool days end 2026-11-01, so on 2026-11-03 there is no live card and no "today" chip to wait for.
+- `pubt-schedule-playoffs`, `pubt-schedule-bracket-only` — **stale screen definition**: both wait for a link named `/The bracket/`;
+  the door has read "The playoff bracket" since Stage 5 (`f2e208cb9`, 2026-10-31), so the wait can never succeed (the page's ready
+  marker does render).
+- The first run **aborted** on the memory floor (1,486 MB free) at `pubt-game-live`; the unreached screens were re-run alone.
+  Nothing baselined. The dev server was restarted afterwards (deleted files + the abort), under the existing `dev.mjs` wrapper.
+
+**`/simplify`:** skipped — no new abstraction (deletions, one narrowed prop, one removed parameter).
+
+**`/review` (standard tier; lenses correctness/contract + regression/blast-radius):** no defect. Confirmed clean: each collapsed
+page matches the old switch-on path (component, props, check order); server-passed slugs equal `useParams()`'s, incl. a club's own
+address; the refresher's only caller passes the rule and both signatures share one format; no data feed reads the switch; the new
+metadata cannot produce empty parts; no surviving reference to a deleted file, export or class (code, tests, UAT specs, scripts,
+`.claude/commands`, knip, baselines); the removed CSS has no renderer; the baseline arithmetic is exact; no rewritten guard is
+vacuous. Acted on: the stakes helper's dead old mode (above); D4 widened to the new view models; the standings test pins its
+stylesheet rule. Dropped: the old-look ratchet and the 10 dead classes (other sessions'); "`NO_SCORE_YET` could be met by an import
+alone" (advisory; both files use it).
+
+**Handed on:**
+- **Layout screens (owner/next measure):** retarget `pubt-schedule-playoffs` and `pubt-schedule-bracket-only` to
+  `/The playoff bracket/` (`scripts/layout-screens.mjs`), and re-prepare the Stage 3 clone (`seed-public-stage3-fixtures.mjs
+  prepare`, dev only) before the next Schedule/game measure — with the Stage 4 clones (§12).
+- **Part 3c:** delete `schedule.module.css` with the old Playoffs half (its only importer); the game's share image still has its
+  switch branch.
+- **Part 3d/4:** the "Schedule unavailable" state on a game's page wears the old global page classes inside the new frame
+  (pre-existing for switch-on visitors); look at it with the layout's frame branches.
+- Still owed, not this part: the Rules layout menus (§12 → Part 4); the admin strip's 34 px "Dismiss"; `/release` §1d-2's sharp
+  probe; the club editor's unlabelled 18 px input; re-seeding the Stage 4 clones.

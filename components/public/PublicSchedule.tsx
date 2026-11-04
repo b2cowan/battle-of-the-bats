@@ -29,7 +29,7 @@ import parts from './PublicParts.module.css';
 import kit from './ClubKit.module.css';
 import styles from './PublicSchedule.module.css';
 
-/** Frame-on body only. ScheduleContent remains the switch-off body, including its own styles and behaviour. */
+/** The Schedule's only body — the public page's and the admin preview's (Stage 8 Part 3b deleted the old one). */
 export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = false, initialData }: {
   orgSlug: string; tournamentSlug: string; isPreview?: boolean; initialData?: PublicTournamentPageData;
 }) {
@@ -174,7 +174,7 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
     const state = publicGameState(g, requireFinalization, clock);
     if (state === 'live') {
       const when = g.time ? formatTime(g.time) : 'TBD';
-      const stakes = getPlayoffStakes(g, games, true);
+      const stakes = getPlayoffStakes(g, games);
       return <PublicLiveCard view={liveCardView(g, names(g), divisionName(g), null, null)} href={gameHref(g.id)}
         schedule={{ time: when, division: divisionName(g), pool: selection.poolTags.get(g.id), round: round(g) }} foot={stakes?.gold ? stakes.text : undefined} />;
     }

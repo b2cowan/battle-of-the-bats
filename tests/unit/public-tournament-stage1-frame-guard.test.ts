@@ -320,7 +320,6 @@ describe('Part 3: the readable baseline, A', () => {
     'components/public/PublicTournamentState.module.css',
     'components/public/FollowTournamentStrip.module.css',
     'components/public/FollowAlertsToggle.module.css',
-    'components/public/MyTeamCard.module.css',
     'components/public/MyTeamDock.module.css',
     'components/public/DesktopMyTeamRailCard.module.css',
     'components/public/ShareScoreButton.module.css',
@@ -355,13 +354,15 @@ describe('Part 3: the readable baseline, A', () => {
     }
   });
 
-  it('the playoffs\' format badge and final standings moved out of inline styles unchanged, so the frame can reach them', () => {
-    const content = readCode('components/public/ScheduleContent.tsx');
-    assert.doesNotMatch(content, /rgba\(var\(--primary-rgb\)/, 'no inline wash of the organizer\'s colour is left');
-    assert.match(content, /className=\{styles\.placementStandings\}/);
-    const schedule = readCode('app/[orgSlug]/schedule/schedule.module.css');
-    assert.match(schedule, /^\.placementStandings \{[^}]*border: 1px solid rgba\(var\(--primary-rgb\), 0\.25\);/m);
-    assert.match(schedule, /^\.placementStandingsRow \+ \.placementStandingsRow \{\s*border-top: 1px solid var\(--white-10\);/m);
+  // Stage 8 Part 3b deleted the old Schedule (whose playoffs' format badge and final standings this part had moved out
+  // of inline styles) and MyTeamCard with it; the same rule now holds for the Schedule's only body.
+  it('the Schedule\'s final standings carry no inline wash of the organizer\'s colour; the frame reaches them by class', () => {
+    const schedule = readCode('components/public/PublicSchedule.tsx');
+    assert.doesNotMatch(schedule, /rgba\(var\(--primary-rgb\)/, 'no inline wash of the organizer\'s colour');
+    assert.match(schedule, /<ol className=\{styles\.placements\}>/);
+    assert.match(readCode('components/public/PublicSchedule.module.css'), /^\.placements li \{[^}]*border-bottom: 1px solid var\(--club-line\);/m,
+      'the frame\'s own line token, not the organizer\'s colour');
+    assert.doesNotMatch(readCode('app/[orgSlug]/schedule/schedule.module.css'), /\.placementStandings/);
   });
 });
 

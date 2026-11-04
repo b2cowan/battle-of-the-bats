@@ -1,42 +1,54 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { createHash } from 'node:crypto';
-import { readCode, readSource } from './_source-code.ts';
+import { between, readCode, readSource, sourceExists } from './_source-code.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
- * PUBLIC TOURNAMENT PAGES — STAGE 3, PART 1: THE SWITCH REACHES THE SCHEDULE (2026-10-28).
+ * PUBLIC TOURNAMENT PAGES — STAGE 3: THE NEW SCHEDULE AND A GAME'S PAGE (built 2026-10-28 behind the preview switch).
  * Plan: docs/projects/active/PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md §9; build prompt PUBLIC_TOURNAMENT_STAGE3_BUILD_PROMPT.md.
  * Rulings: Ask 17 (the ticker leaves the Schedule and a game's page), Ask 15, the installed-app-only rulings.
  *
- *   · the Schedule's server page asks the one switch and tells the client; the client's old body is untouched;
- *   · today's ScheduleContent knows nothing of the frame, so with the switch off the Schedule is what it was;
- *   · every new Stage 3 part renders only under the switch (the later parts add their lines here).
+ * Stage 8 Part 3b (docs/projects/active/PUBLIC_TOURNAMENT_STAGE8_PLAN.md §13) deleted the old halves: the Schedule, the
+ * admin preview's Schedule section and a game's page each render their new body with no switch, and the old bodies, the
+ * client wrapper, and the parts only they drew are gone. The switch itself lives on until Part 4.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
 const SCHEDULE_PAGE = 'app/[orgSlug]/[tournamentSlug]/schedule/page.tsx';
-const SCHEDULE_CLIENT = 'app/[orgSlug]/[tournamentSlug]/schedule/SchedulePageClient.tsx';
+const PREVIEW = 'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx';
 
-describe('the switch reaches the Schedule', () => {
-  it('the server page asks the one helper and tells the client', () => {
+describe('the Schedule has one body', () => {
+  it('the server page forwards first, then renders the new Schedule with no switch', () => {
     const page = readCode(SCHEDULE_PAGE);
-    assert.match(page, /const frameOn = await isPublicFrameOn\(\);/);
-    assert.match(page, /<SchedulePageClient frameOn=\{frameOn\} \/>/);
+    assert.ok(page.indexOf('await forwardToOwnAddress(orgSlug, `/${tournamentSlug}/schedule`);') > -1);
+    assert.ok(page.indexOf('forwardToOwnAddress(') < page.indexOf('return <PublicSchedule'));
+    assert.match(page, /return <PublicSchedule orgSlug=\{orgSlug\} tournamentSlug=\{tournamentSlug\} \/>/);
+    assert.doesNotMatch(page, /isPublicFrameOn|frameOn|ScheduleContent|SchedulePageClient/);
   });
 
-  it('the client still renders today\'s body, and that body does not know the frame exists', () => {
-    assert.match(readCode(SCHEDULE_CLIENT), /<ScheduleContent\b/);
-    const old = readCode('components/public/ScheduleContent.tsx');
-    assert.doesNotMatch(old, /isPublicFrameOn|PUBLIC_FRAME|data-public-frame/);
+  it('the old body, its client wrapper and the parts only it drew stay deleted', () => {
+    for (const path of [
+      'components/public/ScheduleContent.tsx',
+      'app/[orgSlug]/[tournamentSlug]/schedule/SchedulePageClient.tsx',
+      'components/YearSelector.tsx', 'components/YearSelector.module.css',
+      'components/public/MyTeamCard.tsx', 'components/public/MyTeamCard.module.css',
+    ]) {
+      assert.ok(!sourceExists(path), `${path} is back`);
+    }
   });
 
-  it('only the preview switch renders the new Schedule, including the admin twin', () => {
-    assert.match(readCode(SCHEDULE_CLIENT), /if \(frameOn\) return <PublicSchedule/);
-    const preview = readCode('app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx');
-    assert.match(preview, /const frameOn = await isPublicFrameOn\(\)/);
-    assert.match(preview, /if \(frameOn\) return <PublicSchedule[^;]+isPreview initialData=\{publicTeamsData\(initialData\)\}/);
-    assert.match(preview, /<ScheduleContent/);
+  it('the admin preview\'s Schedule section renders the same body over published-only data, with no switch', () => {
+    const schedule = between(readCode(PREVIEW), "if (section === 'schedule')", "if (section === 'standings')");
+    assert.match(schedule, /games: onlyPublishedGames\(rawGames, divisions\)/);
+    assert.match(schedule, /return <PublicSchedule[^;]+isPreview initialData=\{publicTeamsData\(initialData\)\}/);
+    assert.doesNotMatch(schedule, /isPublicFrameOn|frameOn|ScheduleContent/);
+  });
+
+  it('what is left of the old Schedule\'s sheet is the LIVE chip the old Playoffs still draws (3c deletes both)', () => {
+    const css = readCode('app/[orgSlug]/schedule/schedule.module.css');
+    const classes = new Set([...css.matchAll(/\.([a-zA-Z][\w-]*)/g)].map(m => m[1]));
+    assert.deepEqual([...classes].sort(), ['liveBadge', 'liveDot']);
+    assert.match(readCode('app/[orgSlug]/[tournamentSlug]/playoffs/page.tsx'), /liveStyles\.liveBadge/);
   });
 
   it('the new parts and model are used only by the guarded Schedule or explicit shared-part variants', () => {
@@ -69,13 +81,14 @@ describe('the switch reaches the Schedule', () => {
   });
 });
 
-describe('the game page and desktop (Part 3) stay behind the switch', () => {
+describe('a game\'s page and desktop (Part 3)', () => {
   const file = 'app/[orgSlug]/[tournamentSlug]/schedule/[gameId]/page.tsx';
-  it('the new game body follows the published-only lookup and the server switch', () => {
+  it('the game body follows the published-only lookup, with no switch', () => {
     const page = readCode(file);
     assert.match(page, /getPublicTournamentPageData\(orgSlug, tournamentSlug, 'schedule'\)/);
-    assert.ok(page.indexOf('if (!game) notFound();') < page.indexOf('if (frameOn) return <PublicGameDetails'));
-    assert.match(page, /const frameOn = await isPublicFrameOn\(\);/);
+    assert.ok(page.indexOf('if (!game) notFound();') > -1);
+    assert.ok(page.indexOf('if (!game) notFound();') < page.indexOf('return <PublicGameDetails'));
+    assert.doesNotMatch(page, /isPublicFrameOn|frameOn/);
     const body = readCode('components/public/PublicGameDetails.tsx');
     assert.match(body, /publicGameDetailView\(game/);
     assert.match(body, /PublicGameDetails.module.css/);
@@ -86,13 +99,17 @@ describe('the game page and desktop (Part 3) stay behind the switch', () => {
     assert.doesNotMatch(body, /TeamFollowStar|from '@\/lib\/follow'/);
     assert.match(body, /view.hasScore && <ShareScoreButton iconOnly/);
   });
-  it('the switch-off game body remains byte-for-byte the Part 2 body', () => {
-    const page = readSource(file);
-    const legacy = page.slice(page.indexOf('  const division = data.divisions.find'));
-    assert.equal(createHash('sha256').update(legacy).digest('hex'), '5144af23d99e8476aa1043d918ad0488ea638b4ae3e58e8aa19667559b701d14');
+  it('the old game body, its helpers, its sheet and the follow star only it drew stay deleted', () => {
+    const page = readCode(file);
+    assert.doesNotMatch(page, /getStatusBadge|getVenueDisplay|getTeamDisplay|TeamFollowStar|schedule\.module\.css|className=\{styles\./);
+    for (const path of ['components/public/TeamFollowStar.tsx', 'components/public/TeamFollowStar.module.css']) {
+      assert.ok(!sourceExists(path), `${path} is back`);
+    }
   });
-  it('metadata and OG use new names/rounds only in their preview branches', () => {
-    assert.match(readCode(file), /if \(await isPublicFrameOn\(\)\) \{/);
+  it('the page\'s title and description use the new names and rounds always; the share image keeps its switch until 3c', () => {
+    const metadata = between(readCode(file), 'export async function generateMetadata', 'export default async function');
+    assert.match(metadata, /const view = publicGameDetailView\(game, /);
+    assert.doesNotMatch(metadata, /isPublicFrameOn|frameOn/);
     const og = readCode('app/[orgSlug]/[tournamentSlug]/schedule/[gameId]/opengraph-image.tsx');
     assert.match(og, /await isPublicFrameOn\(\) \? publicGameDetailView/);
     assert.match(og, /view\?\.round \?\?/);
@@ -104,11 +121,13 @@ describe('the game page and desktop (Part 3) stay behind the switch', () => {
     assert.match(schedule, /upNextToday && !upNextShown && state === 'upcoming' && \(gameStartMs\(g\) \?\? 0\) > clock\.getTime\(\)/);
     assert.match(schedule, /groupPoolPlayoffs\(input, selection\.poolTags\)/);
   });
-  it('the 30-second refresher tracks state/removal only for the new body', () => {
+  it('the 30-second refresher tracks score, state and removal — its old score-only mode left with the old page', () => {
     const refresh = readCode('components/public/GameDetailLiveRefresher.tsx');
     assert.match(refresh, /intervalMs = 30_000/);
-    assert.match(refresh, /requireFinalization !== undefined\) signature = publicGameRefreshSignature\(game \?\? null, requireFinalization\)/);
-    assert.match(refresh, /else if \(game\) signature = `\$\{game\.homeScore/);
+    assert.match(refresh, /requireFinalization: boolean;/, 'required: there is no caller without it');
+    assert.match(refresh, /fetchPublicTournamentData\(orgSlug, tournamentSlug, 'schedule-preview'\)/);
+    assert.match(refresh, /const signature = publicGameRefreshSignature\(data\.games\.find\(g => g\.id === gameId\) \?\? null, requireFinalization\)/);
+    assert.doesNotMatch(refresh, /requireFinalization !== undefined|game\.homeScore/);
     assert.match(refresh, /document.visibilityState === 'hidden'/);
     assert.match(refresh, /signature !== signatureRef.current/);
     assert.match(readCode('components/public/PublicGameDetails.tsx'), /requireFinalization=\{requireFinalization\} \/>/);

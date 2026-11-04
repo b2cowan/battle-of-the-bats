@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { filesUnder, readCode, readSource } from './_source-code.ts';
+import { between, filesUnder, readCode, readSource } from './_source-code.ts';
 import { visibleTournamentTabs } from '../../lib/tournament-page-tabs.ts';
 
 /**
@@ -16,7 +16,7 @@ const PARTS = ['PublicGameRow', 'PublicLiveCard', 'PublicSectionHead', 'PublicDo
   'PublicRegisterCard', 'PublicFactsList', 'PublicHostCard', 'PublicChampions', 'PublicRules'];
 /** The files that may draw the shared parts: each renders only with the switch on (Part 2: the frame-on body, and the
  *  old Overview's one frame branch that hands over to it — held below), or — once Stage 8 deleted its page's old half
- *  (Part 3a: Rules, Teams, the team page, Standings) — is that page's only body. */
+ *  (Part 3a: Rules, Teams, the team page, Standings; Part 3b: the Schedule, a game's page) — is that page's only body. */
 const FRAME_ONLY_USERS = ['components/public/TournamentOverview.tsx', 'components/public/PublicSchedule.tsx', 'components/public/PublicGameDetails.tsx',
   'components/public/PublicStandings.tsx', 'components/public/PublicPlayoffs.tsx',
   'components/public/PublicTeams.tsx', 'components/public/PublicTeamPage.tsx',
@@ -29,10 +29,12 @@ describe('the shared parts render only inside the new frame', () => {
       .filter(f => !PARTS.some(p => f.endsWith(`/${p}.tsx`)))
       .filter(f => PARTS.some(p => new RegExp(`from ['"][^'"]*/${p}['"]`).test(readSource(f))));
     assert.deepEqual(users.filter(f => !FRAME_ONLY_USERS.includes(f)), [], 'a shared part reached a page outside the switch');
-    // Stage 3 reuses the parts; its body is allowed only through the same server-decided switch.
-    assert.match(readCode('app/[orgSlug]/[tournamentSlug]/schedule/SchedulePageClient.tsx'), /if \(frameOn\) return <PublicSchedule/);
-    assert.match(readCode('app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx'), /if \(frameOn\) return <PublicSchedule/);
-    assert.match(readCode('app/[orgSlug]/[tournamentSlug]/schedule/[gameId]/page.tsx'), /if \(frameOn\) return <PublicGameDetails/);
+    // Stage 3 reuses the parts; since Stage 8 Part 3b the Schedule, its preview twin and a game's page render the new body
+    // as their only body (the old halves are gone, so there is no switch left on these three to hold).
+    assert.match(readCode('app/[orgSlug]/[tournamentSlug]/schedule/page.tsx'), /return <PublicSchedule /);
+    assert.match(between(readCode('app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx'),
+      "if (section === 'schedule')", "if (section === 'standings')"), /return <PublicSchedule /);
+    assert.match(readCode('app/[orgSlug]/[tournamentSlug]/schedule/[gameId]/page.tsx'), /return <PublicGameDetails /);
   });
   it('their styles read only the frame\'s own light token set (they have no meaning outside it)', () => {
     const css = readSource('components/public/PublicParts.module.css');

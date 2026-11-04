@@ -266,9 +266,6 @@
       "selectWrap",
       "successInfo"
     ],
-    "app/[orgSlug]/schedule/schedule.module.css": [
-      "sheetSegmented"
-    ],
     "app/coaches/team/[basicTeamId]/team.module.css": [
       "contentGrid"
     ],

@@ -36,7 +36,7 @@ function loader(data: Fixture, frameOn = true) {
     getPublicTournamentBySlug: async () => data.tournament,
     getGames: async () => data.games, getTeams: async () => data.teams, getDivisions: async () => data.divisions,
   };
-  const unused = Object.fromEntries(['ScheduleContent', 'PublicSchedule', 'PublicStandings',
+  const unused = Object.fromEntries(['PublicSchedule', 'PublicStandings',
     'PublicTeams', 'NewsContent', 'PublicRules', 'RegisterContent']
     .map(name => [`@/components/public/${name}`, { __esModule: true, default: () => null }]));
   return componentLoader({

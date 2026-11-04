@@ -70,7 +70,7 @@ export default function PublicPlayoffs({ orgSlug, tournamentSlug, initialData, i
     teamName, game => resolveGameVenueLabel(game, data.venues), tournamentToday(clock)).divisions[0];
   const nextGame = selected.kind === 'live' || selected.kind === 'upcoming' ? selected.game : null;
   const names = nextGame ? gameSideNames(nextGame, teamName, fanPlaceholder) : null;
-  const stakes = nextGame ? getPlayoffStakes(nextGame, games, true) : null;
+  const stakes = nextGame ? getPlayoffStakes(nextGame, games) : null;
   const card = nextGame && names ? liveCardView(selected.kind === 'live' ? nextGame : { ...nextGame, homeScore: null, awayScore: null }, names,
     publicGameRound(nextGame), resolveGameVenueLabel(nextGame, data.venues), gameDirections(nextGame, data.venues)) : null;
   if (card && selected.kind === 'upcoming') card.noScore = null;

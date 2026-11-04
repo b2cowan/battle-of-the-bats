@@ -1,15 +1,13 @@
 import { forwardToOwnAddress } from '@/lib/club-forward';
-import { isPublicFrameOn } from '@/lib/public-frame-server';
-import SchedulePageClient from './SchedulePageClient';
+import PublicSchedule from '@/components/public/PublicSchedule';
 
 /**
- * The tournament's schedule. The page itself is a client component (./SchedulePageClient); this server page exists so a club
- * with its own web address can forward the old address to it first (Club Tier Stage 4e, lib/club-forward.ts), and so the
- * preview switch is decided on the server (Public tournament pages Stage 3): the client is told, not left to find out.
+ * The tournament's schedule. A server page so a club with its own web address can forward the old address to it first
+ * (Club Tier Stage 4e, lib/club-forward.ts); the body is the client component PublicSchedule (Stage 8 Part 3b deleted the
+ * old body and the client wrapper that chose between the two).
  */
 export default async function SchedulePage({ params }: { params: Promise<{ orgSlug: string; tournamentSlug: string }> }) {
   const { orgSlug, tournamentSlug } = await params;
   await forwardToOwnAddress(orgSlug, `/${tournamentSlug}/schedule`);
-  const frameOn = await isPublicFrameOn();
-  return <SchedulePageClient frameOn={frameOn} />;
+  return <PublicSchedule orgSlug={orgSlug} tournamentSlug={tournamentSlug} />;
 }

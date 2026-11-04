@@ -85,18 +85,19 @@ describe('the shared stakes line', () => {
   it('names the singular downstream round within this division and bracket, using a whole code', () => {
     const source = game({ isPlayoff: true, bracketCode: 'QF1', bracketId: 'gold' });
     const next = game({ id: 'next', isPlayoff: true, bracketCode: 'SF1', bracketId: 'gold', homePlaceholder: 'Winner QF1' });
-    assert.deepEqual(getPlayoffStakes(source, [source, next], true), { text: 'Winner advances to the Semifinal', gold: false });
-    assert.equal(getPlayoffStakes(source, [source, next])?.text, 'Winner advances to the Semifinals');
-    assert.equal(getPlayoffStakes(source, [{ ...next, divisionId: 'u13' }], true), null);
-    assert.equal(getPlayoffStakes(source, [{ ...next, bracketId: 'silver' }], true), null);
-    assert.equal(getPlayoffStakes(source, [{ ...next, homePlaceholder: 'Winner QF10' }], true), null);
+    assert.deepEqual(getPlayoffStakes(source, [source, next]), { text: 'Winner advances to the Semifinal', gold: false });
+    assert.equal(getPlayoffStakes(source, [{ ...next, divisionId: 'u13' }]), null);
+    assert.equal(getPlayoffStakes(source, [{ ...next, bracketId: 'silver' }]), null);
+    assert.equal(getPlayoffStakes(source, [{ ...next, homePlaceholder: 'Winner QF10' }]), null);
+    // The old wording's loose `includes` match would have taken this one (Stage 8 Part 3b deleted it with the old page).
+    assert.equal(getPlayoffStakes(game({ isPlayoff: true, bracketCode: 'SF1' }), [game({ id: 'x', isPlayoff: true, bracketCode: 'FIN', homePlaceholder: 'Winner SF10' })])?.text,
+      undefined, 'SF1 is not SF10');
   });
-  it('retains legacy words by default while new pages use the ruled championship foot', () => {
+  it('uses the ruled championship foot and the other fixed lines', () => {
     const g = game({ isPlayoff: true, bracketCode: 'FIN' });
-    assert.equal(getPlayoffStakes(g, [])?.text, 'Championship — winner takes the title');
-    assert.equal(getPlayoffStakes(g, [], true)?.text, 'The winner takes the title');
-    assert.equal(getPlayoffStakes(game({ isPlayoff: true, bracketCode: 'P3' }), [], true)?.text, 'Battling for 3rd place');
-    assert.equal(getPlayoffStakes(game({ isPlayoff: true, bracketCode: 'CON' }), [], true)?.text, 'Consolation final');
+    assert.equal(getPlayoffStakes(g, [])?.text, 'The winner takes the title');
+    assert.equal(getPlayoffStakes(game({ isPlayoff: true, bracketCode: 'P3' }), [])?.text, 'Battling for 3rd place');
+    assert.equal(getPlayoffStakes(game({ isPlayoff: true, bracketCode: 'CON' }), [])?.text, 'Consolation final');
   });
 });
 

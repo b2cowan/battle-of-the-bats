@@ -67,7 +67,6 @@ const SCOPES = {
       'components/consumer/ConsumerShell.module.css',
       'components/rep-teams/register.module.css',
       'components/league/register.module.css',
-      'components/YearSelector.module.css',
     ],
     excludeSegments: new Set(['admin', 'scorekeeper', 'coaches']),
     baseline: 'scripts/.public-token-baseline.json',

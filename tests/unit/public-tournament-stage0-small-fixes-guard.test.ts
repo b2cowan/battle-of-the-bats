@@ -17,8 +17,12 @@ import { hasNoScoreYet, NO_SCORE_YET } from '../../lib/game-status.ts';
  */
 
 const HOME = 'components/public/TournamentHomeContent.tsx';
-const GAME = 'app/[orgSlug]/[tournamentSlug]/schedule/[gameId]/page.tsx';
-const SCHEDULE = 'components/public/ScheduleContent.tsx';
+// Stage 8 Part 3b deleted the old game page body and the old Schedule (with the MyTeamCard only it drew); their
+// successors ask the rule in their view models — a game's page through public-game-detail, the Schedule's rows through
+// public-game-row — and the game body is where the countdown now lives.
+const GAME = 'components/public/PublicGameDetails.tsx';
+const GAME_VIEW = 'lib/public-game-detail.ts';
+const SCHEDULE_ROWS = 'lib/public-game-row.ts';
 const MY_TEAM = 'components/public/MyTournamentCard.tsx';
 const FALLBACK = 'app/[orgSlug]/page.tsx';
 const BRANDING = 'app/[orgSlug]/admin/tournaments/branding/page.tsx';
@@ -32,12 +36,11 @@ describe('D2 · a live game nobody has scored', () => {
     assert.equal(hasNoScoreYet({ homeScore: 2, awayScore: null }), false);
   });
   it('every public surface that shows a live score asks the one rule', () => {
-    // The /review of this change found three more live-score surfaces beyond the four the defect named; all seven ask.
+    // The /review of this change found three more live-score surfaces beyond the four the defect named; all ask.
     for (const file of [
-      HOME, GAME, SCHEDULE, MY_TEAM,
+      HOME, GAME_VIEW, SCHEDULE_ROWS, MY_TEAM,
       'components/public/MyTeamDock.tsx',
       'components/public/DesktopMyTeamRailCard.tsx',
-      'components/public/MyTeamCard.tsx',
     ]) {
       const code = readCode(file);
       assert.match(code, /hasNoScoreYet\(/, `${file} asks whether the game has a score`);
@@ -64,7 +67,7 @@ describe('D3 · the club fallback list', () => {
 describe('D4 · the countdown is sport-neutral', () => {
   it('no public tournament surface (or the wizard\'s preview of one) says "First pitch"', () => {
     for (const file of [
-      HOME, GAME,
+      HOME, GAME, GAME_VIEW, SCHEDULE_ROWS, 'components/public/PublicSchedule.tsx',
       'components/public/TournamentNavStatus.tsx',
       'components/admin/TournamentCreationPreview.tsx',
       'lib/entity-follow-status.ts',

@@ -59,7 +59,7 @@ export function teamProfilePreview(profile: TeamProfile, { division, divisions, 
         settings: { game_duration_minutes: d.settings?.game_duration_minutes ?? defaultDuration },
       })),
       stakes: Object.fromEntries(shownGames.flatMap(game => {
-        const stakes = getPlayoffStakes(game as Game, games, true);
+        const stakes = getPlayoffStakes(game as Game, games);
         return stakes ? [[game.id, stakes]] : [];
       })) as Record<string, { text: string; gold: boolean }>,
     },

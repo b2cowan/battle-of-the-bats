@@ -31,9 +31,9 @@
     "face": 2
   },
   "app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css": {
-    "face": 9,
-    "caps": 6,
-    "heavy": 4
+    "face": 8,
+    "caps": 5,
+    "heavy": 3
   },
   "app/[orgSlug]/admin/tournaments/settings/event/event-settings.module.css": {
     "face": 1

@@ -3,7 +3,9 @@
  * components/public/GameDetailLiveRefresher.tsx
  * Keeps the server-rendered game-detail page live without duplicating its UI:
  * polls the public schedule data on game day and calls router.refresh() only
- * when this game's score/status actually changes. Renders nothing.
+ * when this game's signature changes (score, state — incl. kickoff and the end
+ * of the live window — or the game being withheld/deleted). Renders nothing.
+ * (Stage 8 Part 3b deleted the old game page and, with it, the score-only mode.)
  */
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -14,16 +16,13 @@ interface Props {
   orgSlug: string;
   tournamentSlug: string;
   gameId: string;
-  /** "homeScore:awayScore:status" computed server-side at render time. */
+  /** `publicGameRefreshSignature` of the game, computed server-side at render time. */
   initialSignature: string;
   /** Gate — only poll while the tournament is in progress. */
   enabled: boolean;
   intervalMs?: number;
-  /**
-   * Set by the preview body: it also refreshes at kickoff/end and when a game is withheld/deleted, which needs the
-   * event's finalization rule. Left unset, only a score or status change refreshes (today's page).
-   */
-  requireFinalization?: boolean;
+  /** The event's finalization rule — the signature's state depends on it. */
+  requireFinalization: boolean;
 }
 
 export default function GameDetailLiveRefresher({
@@ -50,13 +49,9 @@ export default function GameDetailLiveRefresher({
     async function tick() {
       if (document.visibilityState === 'hidden') return;
       try {
-        const data = await fetchPublicTournamentData(orgSlug, tournamentSlug, requireFinalization !== undefined ? 'schedule-preview' : 'schedule');
+        const data = await fetchPublicTournamentData(orgSlug, tournamentSlug, 'schedule-preview');
         if (!data) return;
-        const game = data.games.find(g => g.id === gameId);
-        let signature: string;
-        if (requireFinalization !== undefined) signature = publicGameRefreshSignature(game ?? null, requireFinalization);
-        else if (game) signature = `${game.homeScore ?? ''}:${game.awayScore ?? ''}:${game.status}`;
-        else return;
+        const signature = publicGameRefreshSignature(data.games.find(g => g.id === gameId) ?? null, requireFinalization);
         if (!cancelled && signature !== signatureRef.current) {
           signatureRef.current = signature;
           router.refresh();
