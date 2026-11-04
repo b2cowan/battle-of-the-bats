@@ -39,7 +39,7 @@ retiring an old price; **5** our own branded invoices for staff, with our tax nu
 (designed first); **7** the new price for new customers; **8** moving existing customers to the new price, last and most careful; **9** closeout:
 help articles, demo check, going live on production. The program is done when all ten are done.
 
-## Stage 0, Part 10: "sign in again" (drawn 2026-11-02; all 13 asks ruled 2026-11-02, as recommended; built, reviewed and committed 2026-11-02; walk owed)
+## Stage 0, Part 10: "sign in again" (drawn 2026-11-02; all 13 asks ruled 2026-11-02, as recommended; built, reviewed and committed 2026-11-02; walked 2026-11-03)
 Drawings: https://claude.ai/artifact/QJ3t9cHTLPski7xvL2uFcX (source `PLANS_PRICING_STAGE0_PART10_SIGN_IN_AGAIN_DRAWINGS.html`).
 - **What staff see:** when they press the last button of a bulk change, or approve a Production price switch, and their
   password was last typed more than 10 minutes ago, the product's small question window asks for it. Once accepted, the
@@ -60,7 +60,7 @@ Drawings: https://claude.ai/artifact/QJ3t9cHTLPski7xvL2uFcX (source `PLANS_PRICI
   holding a copied session could set a new password and then pass the check (found in review, 2026-11-02). That setting
   covers a session more than a day old only; "Require current password when changing password" closes the rest, once a
   dev test shows invites and password resets still work with it on (2026-11-03).
-- **Walk owed:** Owner QA Ledger §446 (written 2026-11-03). **Next small build:** the change log cannot be edited
+- **Walked 2026-11-03:** Owner QA Ledger §446, all 25 steps passed (the phone check, F1, accepted unwalked by the owner). **Next small build:** the change log cannot be edited
   (O11, build prompt `PLANS_PRICING_STAGE0_O11_AUDIT_LOCK_BUILD_PROMPT.md`).
 - **Before Club goes on sale (owner ask, 2026-11-03):** one full Stripe test ↔ live reconciliation. Compare both Stripe
   accounts and both of our databases, clean up what is old or inconsistent, and finish with a real purchase on production.

@@ -182,7 +182,7 @@
   password doesn't match": the staff sign-in is password-only, so rare. (5) A Production request created before today with
   no Why can still be approved; its email reads "Reason: Not recorded". (6) Bulk's portal/billed split reads the refusal's
   sentence, not a code (`PlanRefusedError.code` is one value for both); rewording that sentence would move the counts.
-  **Committed `1e18e9e4f` 2026-11-02.** Browser walk owed.
+  **Committed `1e18e9e4f` 2026-11-02.** Browser walk §446 WALKED 2026-11-03: all 25 steps passed, none failed; A6 was skipped, and F1 (the phone check) was accepted unwalked by the owner.
   **Walk written 2026-11-03: Owner QA Ledger §446,** https://claude.ai/artifact/37WEGfaCvyLLQNDtXqZ2R1 (source
   `PLANS_PRICING_STAGE0_PART10_WALK.html`), runs on localhost (the email path there is "could not be sent"); its E and F
   parts need the build on the dev site. Found while writing it and fixed: the Bulk changes finish notice had no full stop
@@ -652,8 +652,9 @@ anchor (date, commit, walk §), never deletes it.
 
 - [x] **O1 · Simplify + review of Parts 1–7** (commit `63988b38c`), run by the owner in another chat 2026-11-01; its fixes committed
   `46cb0d55a` 2026-11-01.
-- [ ] **O2 · Stripe dashboard, TEST mode:** add `charge.dispute.created`, `charge.dispute.updated`, `charge.dispute.closed`, `charge.refunded`
+- [x] **O2 · Stripe dashboard, TEST mode:** add `charge.dispute.created`, `charge.dispute.updated`, `charge.dispute.closed`, `charge.refunded`
   to the **billing** webhook endpoint (not the Connect one). Before the Stage 0 walk, which exercises a test dispute.
+  **Confirmed on in test mode by the owner 2026-11-03.**
 - [ ] **O3 · Stripe dashboard, LIVE mode:** the same four events on the live billing endpoint. Before the Stage 0 release reaches production.
   Confirm with `node scripts/audit-stripe-billing.mjs` (its expected-event list carries the four).
   **Owner 2026-11-03: done as part of the Stripe test ↔ live reconciliation before Club goes on sale** (Stripe plan,
@@ -679,15 +680,15 @@ anchor (date, commit, walk §), never deletes it.
 - [x] **O7 · Go for Part 11's daily comparison job** (watched automation, its own commit). Given 2026-11-01 in the Session 4
   chat ("Go, schedule on dev too"; an email when Stripe cannot be read: yes, once a day). Dev cron job 15. Prod scheduling
   (mig 422) still needs its own yes after the code is serving: carried in O8.
-- [ ] **O8 · Production order:** migrations 416, 417, 418 and 421 applied to production BEFORE the promote that ships the code
+- [ ] **O8 · Production order** (owner 2026-11-03: done at release time, as usual; migration 429 rides with the same list): migrations 416, 417, 418 and 421 applied to production BEFORE the promote that ships the code
   (`MANUAL_PROD_STEPS.json`); migration 422 (the daily job's schedule) AFTER the code is serving, on its own yes.
 - [x] **O9 · Exit walks:** re-run Stripe Walk 6 (webhook hardening) and the Stage 0 walk (both test mode). Stage 0 walk §438 WALKED
   COMPLETE 2026-11-02; Walk 6 marked complete by the owner 2026-11-02 (no counts given; ledger §419).
 - [ ] **O10 · `/design` session for Part 10 (sign in again), then its own build session** (owner ruling 2026-11-01, Session 3).
   **Design half DONE 2026-11-02: drawn, all 13 asks ruled (see Part 10's status line above). BUILT, simplified and reviewed
-  2026-11-02, committed `1e18e9e4f` on the owner's go; the browser walk (§446, written 2026-11-03) and the sign-in
+  2026-11-02, committed `1e18e9e4f` on the owner's go; the browser walk (§446) WALKED 2026-11-03 (25/25 steps passed; A6 and F1 phone skipped) and the sign-in
   settings (Part 10's note and its 2026-11-03 correction) are DONE 2026-11-03: both on in dev and production, invite + reset
-  tried on dev and both pass; the walk is the only thing still owed, so this line stays open until it ships.** The
+  tried on dev and both pass; the phone check (F1) was accepted UNWALKED by the owner 2026-11-03, so nothing is owed on this line; it ticks when Part 10 ships to production.** The
   round-2 drawings place the sentence on the Stage 3–8 screens only; they draw no sign-in-again window and no frame for today's Bulk
   changes or today's price-slot change. Draw: the window (password only), where it opens on those two screens, the owner email.
   Note for the session: today's Bulk changes never calls Stripe (status overrides and sections), so it is a many-customer
@@ -695,7 +696,7 @@ anchor (date, commit, walk §), never deletes it.
 - [x] **O11 · Ruling: a narrower lock on the change log?** **RULED YES 2026-11-02 (owner, agreeing with the recommendation). BUILT
   2026-11-03: migration 429 (`429_the_change_log_cannot_be_edited.sql`) applied to dev 2026-11-03, proved by
   `scripts/platform-audit-log-lock-check.sql` (PLATFORM_AUDIT_LOG_LOCK_PASSED, T1–T9), guarded by
-  `tests/unit/platform-audit-log-lock.test.ts`; prod apply pending in `MANUAL_PROD_STEPS.json` (any time). Committed `aef88a5e4`
+  `tests/unit/platform-audit-log-lock.test.ts`; prod apply pending in `MANUAL_PROD_STEPS.json` (owner 2026-11-03: apply with the other migrations at release time). Committed `aef88a5e4`
   2026-11-03 (owner: "review then commit").** Build prompt: `PLANS_PRICING_STAGE0_O11_AUDIT_LOCK_BUILD_PROMPT.md`. (Part 9, 2026-11-01.) The full append-only lock was not built: deleting a
   club blanks the club on its log rows, and the October lead-privacy fix rewrote old rows. Option: refuse every edit except that
   blanking, and refuse deletes (a migration; a future privacy erasure would then need the lock lifted on purpose). Recommend yes,
