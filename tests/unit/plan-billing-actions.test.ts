@@ -129,6 +129,11 @@ function environment() {
   } });
   globalThis.fetch = (async (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
     const endpoint = String(input);
+    // GST/HST Stage 1: the billing-address read is a background lookup (an address on file, so every paid button goes on);
+    // these contracts are about the money requests, so it is answered here and not logged.
+    if (endpoint.startsWith('/api/billing/location') && !init?.method) {
+      return { ok: true, json: async () => ({ location: ADDRESS_ON_FILE, buyer: 'club', name: 'Falcons', usSalesOpen: false }) } as Response;
+    }
     requests.push({ endpoint, init });
     const queued = answers.get(endpoint)?.shift();
     let data: unknown;
@@ -161,6 +166,13 @@ function environment() {
     },
   };
 }
+
+/** The address every harness has on file (GST/HST Stage 1), and the club address "Start your club" sends from it. */
+const ADDRESS_ON_FILE = {
+  country: 'CA', regionCode: 'ON', line1: '18 Oak Crescent', line2: null, city: 'Guelph', postalCode: 'N1E 2K7',
+  confirmedAt: '2026-11-03T12:00:00Z', usDeclarationAt: null, usDeclarationVersion: null,
+};
+const CLUB_ADDRESS_SENT = { country: 'CA', regionCode: 'ON', line1: '18 Oak Crescent', line2: null, city: 'Guelph', postalCode: 'N1E 2K7', usDeclared: false };
 
 function assertRequest(request: Request | undefined, endpoint: string, method: string, body?: Record<string, unknown>) {
   assert.ok(request, `Missing ${method} ${endpoint}`);
@@ -407,7 +419,7 @@ describe('real move dialog request contracts', () => {
       dialog = render();
       click(find(dialog.props.footer, e => e.props.children === W.clubUpgrade.start));
       await new Promise<void>(resolve => setImmediate(resolve)); dialog = render();
-      assertRequest(env.requests[1], '/api/billing/move', 'POST', { orgSlug: 'falcons-club', planKey: 'club', prorationDate: 123, clubName: 'Falcons Baseball' });
+      assertRequest(env.requests[1], '/api/billing/move', 'POST', { orgSlug: 'falcons-club', planKey: 'club', prorationDate: 123, clubName: 'Falcons Baseball', billingAddress: CLUB_ADDRESS_SENT });
       assert.deepEqual(moved, [W.clubUpgrade.finishing]);
       assert.equal(dialog.props.footer, null);
     } finally { runner.dispose(); env.dispose(); }
@@ -422,11 +434,12 @@ describe('real move dialog request contracts', () => {
       render(); await new Promise<void>(resolve => setImmediate(resolve)); let dialog = render();
       const copy = find(dialog, e => e.type === 'p' && e.props.children === (trialDays ? W.clubUpgrade.trial(trialDays) : W.clubUpgrade.noTrial));
       assert.ok(copy);
-      assert.equal(elements(dialog).some(e => e.props.role === 'group'), trialDays > 0);
+      // The Monthly/Yearly toggle (named; the club billing address block is a group of its own).
+      assert.equal(elements(dialog).some(e => e.props.role === 'group' && e.props['aria-label'] === W.clubUpgrade.billing), trialDays > 0);
       change(find(dialog, e => e.type === 'input'), 'Falcons Club'); dialog = render();
       click(find(dialog.props.footer, e => e.props.children === W.move.checkout));
       await new Promise<void>(resolve => setImmediate(resolve));
-      assertRequest(env.requests[1], '/api/billing/create-checkout', 'POST', { orgSlug: 'falcons-club', planKey: 'club', billingCycle: 'monthly', returnTo: '/falcons-club/coaches/billing', clubName: 'Falcons Club' });
+      assertRequest(env.requests[1], '/api/billing/create-checkout', 'POST', { orgSlug: 'falcons-club', planKey: 'club', billingCycle: 'monthly', returnTo: '/falcons-club/coaches/billing', clubName: 'Falcons Club', billingAddress: CLUB_ADDRESS_SENT });
       assert.deepEqual(env.assigned, ['https://stripe.test/club-checkout']);
     } finally { runner.dispose(); env.dispose(); }
   });

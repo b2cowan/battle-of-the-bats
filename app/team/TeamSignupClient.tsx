@@ -24,6 +24,13 @@ import {
 } from '@/components/auth/AccountForm';
 import ChoicePair from '@/components/shared/ChoicePair';
 import { KEEP_PREMIUM_LINE } from '@/lib/portal-free-time';
+import { BILLING_ADDRESS_FORM_WORDS, BILLING_LOCATION_WORDS, formatBilledTo } from '@/lib/billing-location';
+import BillingAddressFields, { useAddressDraft } from '@/components/billing/BillingAddressFields';
+import { addressOnFile, isAddressRefusal, saveBillingAddress, useBillingAddressGate } from '@/components/billing/BillingAddressDialog';
+import addressStyles from '@/components/billing/BillingAddress.module.css';
+
+/** The checkout found no home address on file: the page shows the Address step instead of an error. */
+class AddressNeededError extends Error {}
 
 type BillingCycle = 'monthly' | 'annual';
 type AuthMode = 'signup' | 'signin';
@@ -176,6 +183,24 @@ export default function TeamSignupClient({
     ? (founding ? 'Upgrade to Premium' : 'Continue to checkout')
     : founding ? 'Create team' : 'Continue to checkout';
 
+  // GST/HST Stage 1 (drawing tab 4): a coach buys Premium as themselves, so a paid checkout needs their home address first.
+  // With none on file, a third step "Address" follows Team (whose button becomes Next); with one, a "Billed to … Change"
+  // line sits above Continue to checkout. The comped Founding path charges nothing and is never asked.
+  const paid = !founding;
+  const billingAddress = useBillingAddressGate(isAuthenticated && paid ? { scope: 'person' } : null);
+  const usSalesOpen = billingAddress.info?.usSalesOpen ?? false;
+  const addressForm = useAddressDraft(null, usSalesOpen);
+  const [addressStep, setAddressStep] = useState(false);
+  const [changingAddress, setChangingAddress] = useState(false);
+  const [prefilledAddress, setPrefilledAddress] = useState(false);
+  if (!prefilledAddress && billingAddress.info) {
+    setPrefilledAddress(true);
+    addressForm.reset(billingAddress.info.location);
+  }
+  const addressOnFileNow = billingAddress.location;
+  const needsAddressStep = paid && !addressOnFileNow;
+  const addressFieldsShown = addressStep || changingAddress;
+
   // The two notices sit just above whichever step's button is showing.
   const notices = (
     <>
@@ -292,6 +317,8 @@ export default function TeamSignupClient({
       window.location.assign(`/auth/login?next=${encodeURIComponent(COACHES_START_PATH)}`);
       return;
     }
+    // No home address on file after all (saved in another tab, then removed, or US sales closed since): the Address step.
+    if (!response.ok && isAddressRefusal(payload)) throw new AddressNeededError();
     if (!response.ok) {
       throw new Error(getPayloadError(payload, 'Could not start Coaches Portal checkout.'));
     }
@@ -318,9 +345,10 @@ export default function TeamSignupClient({
     }
   }
 
-  /** Step 2: one tap starts the checkout (never automatically, V1). */
+  /** Step 2: one tap starts the checkout (never automatically, V1) — or, paid with no home address on file, goes to Address. */
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy) return;
     setError('');
 
     const validationError = validateTeam();
@@ -329,9 +357,39 @@ export default function TeamSignupClient({
       return;
     }
 
+    if (paid && !changingAddress && !addressOnFile(await billingAddress.load())) {
+      setAddressStep(true);
+      return;
+    }
+    if (changingAddress && !(await saveAddress())) return;
+    await checkoutOrSay();
+  }
+
+  /** Step 3 (and Change on step 2): save the home address first ("Saving…", once); a failed save keeps everything typed. */
+  async function saveAddress(): Promise<boolean> {
+    if (!addressForm.check().ok) return false;
+    setBusyLabel(BILLING_ADDRESS_FORM_WORDS.saving);
+    const saved = await saveBillingAddress({ scope: 'person' }, addressForm.body);
+    if (saved.ok) { billingAddress.remember(saved.location); return true; }
+    setBusyLabel('');
+    if (saved.errors) addressForm.setErrors(saved.errors);
+    else setError(BILLING_LOCATION_WORDS.saveFailed);
+    return false;
+  }
+
+  async function handleAddress(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy) return;
+    setError('');
+    if (!(await saveAddress())) return;
+    await checkoutOrSay();
+  }
+
+  async function checkoutOrSay() {
     try {
       await startCheckout();
     } catch (err) {
+      if (err instanceof AddressNeededError) { setBusyLabel(''); setAddressStep(true); return; }
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setBusyLabel('');
     }
@@ -346,7 +404,7 @@ export default function TeamSignupClient({
 
   // The step line every start sign-up wears (A2): on step 1, and on step 2 when the person has just come through step 1.
   const steps = ((onAccountStep && !isReactivation) || cameThroughStep1)
-    ? <StartSteps current={onAccountStep ? 1 : 2} labels={['Account', 'Team']} />
+    ? <StartSteps current={onAccountStep ? 1 : addressStep ? 3 : 2} labels={needsAddressStep || addressStep ? ['Account', 'Team', 'Address'] : ['Account', 'Team']} />
     : undefined;
 
   return (
@@ -407,6 +465,27 @@ export default function TeamSignupClient({
             )}
           </>
         )
+      ) : addressStep ? (
+        <>
+          <form className={accountForm.form} onSubmit={handleAddress}>
+            <p className={accountForm.hint}>{BILLING_ADDRESS_FORM_WORDS.personIntro}</p>
+            <BillingAddressFields form={addressForm} idPrefix="premium-address" subject={{ kind: 'person' }}
+              variant="start" disabled={busy} />
+            {notices}
+            {/* A US address while US sales are closed: the amber line under Country says why, and there is no button. */}
+            {!addressForm.usClosed && (
+              <button type="submit" className={accountForm.primary} disabled={busy || teamIsGated}>
+                {busyLabel || 'Continue to checkout'}
+              </button>
+            )}
+          </form>
+
+          <StartFoot>
+            <p>
+              <button type="button" className={accountForm.footLink} onClick={() => { setError(''); setAddressStep(false); }} disabled={busy}>Back</button>
+            </p>
+          </StartFoot>
+        </>
       ) : (
         <>
           <form className={accountForm.form} onSubmit={handleSubmit}>
@@ -448,11 +527,24 @@ export default function TeamSignupClient({
               {founding && <p className={accountForm.hint} id="premium-billing-hint">Change it any time before then. No card today.</p>}
             </div>
 
+            {paid && addressOnFileNow && !changingAddress && (
+              <p className={addressStyles.billedTo}>
+                <span>{BILLING_ADDRESS_FORM_WORDS.billedTo(formatBilledTo(addressOnFileNow))}</span>
+                <button type="button" className={addressStyles.change} onClick={() => setChangingAddress(true)} disabled={busy}>{BILLING_ADDRESS_FORM_WORDS.change}</button>
+              </p>
+            )}
+            {paid && changingAddress && (
+              <BillingAddressFields form={addressForm} idPrefix="premium-address" subject={{ kind: 'person' }}
+                variant="start" disabled={busy} />
+            )}
+
             {notices}
             {/* Tappable whenever it can work: a missing name or the wrong account says so beside it (validateTeam). */}
-            <button type="submit" className={accountForm.primary} disabled={busy || teamIsGated}>
-              {busyLabel || submitLabel}
-            </button>
+            {!(addressFieldsShown && addressForm.usClosed) && (
+              <button type="submit" className={accountForm.primary} disabled={busy || teamIsGated}>
+                {busyLabel || (needsAddressStep && !changingAddress ? 'Next' : submitLabel)}
+              </button>
+            )}
             {isWarmUpgrade && (
               <p className={accountForm.fine}>Your roster, schedule and fees come with you; your free team stays as history. Cancel anytime.</p>
             )}

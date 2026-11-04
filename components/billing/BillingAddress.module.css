@@ -1,0 +1,44 @@
+/* GST/HST Stage 1: the Billing address window, the coach sign-up's Address step and the "Start your club" block
+   (owner drawing 2026-11-03, tabs 2–6). The window's fields are the billing kit's own (Billing.module.css: 36 px on a
+   computer, 44 at 768 and below); the sign-up step uses the sign-up page's fields (AccountForm.module.css). */
+
+.fields { display: flex; flex-direction: column; gap: 0.9rem; }
+.intro { margin: 0; }
+.postal { max-width: 160px; }
+
+/* One red line under the field that needs fixing (errors appear on press, not while typing). */
+.error { margin: 0; font-size: var(--type-support); line-height: 1.45; color: var(--danger-light); }
+/* The sign-up page's own red, as its other field errors (AccountForm `.hintError`). */
+.errorStart { margin: 0; font-size: var(--type-body); line-height: 1.45; color: var(--home-live); }
+
+/* A standing reason the main action is absent (US sales closed): amber, never red — nobody made a mistake. */
+.amber { color: var(--badge-warning-ink); }
+.amberLine { margin: 0; font-size: var(--type-support); line-height: 1.45; color: var(--badge-warning-ink); }
+
+.declaration { display: flex; align-items: flex-start; gap: 0.6rem; line-height: 1.45; cursor: pointer; }
+.declaration input { flex: none; width: 18px; height: 18px; margin: 0.15rem 0 0; accent-color: var(--accent-lime, currentColor); }
+
+/* "Billed to … · Change": one bordered line above the choices, the line Stage 2 hangs the tax on. */
+.billedTo {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  padding: 0.55rem 0.75rem; margin: 0 0 0.75rem;
+  border: 1px solid var(--home-line-strong); border-radius: 8px; background: var(--card-bg);
+  font-size: var(--type-support); line-height: 1.4; color: var(--text-primary);
+}
+.billedTo span { min-width: 0; overflow-wrap: anywhere; }
+.change {
+  flex: none; padding: 0; border: 0; background: none; cursor: pointer;
+  font: inherit; font-weight: 650; color: var(--text-secondary);
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.change:hover { color: var(--text-primary); }
+
+/* The "Start your club" window's block under the club name. */
+.clubBlock { display: flex; flex-direction: column; gap: 0.9rem; margin-top: 1.25rem; }
+.subhead { margin: 0; font-weight: 700; color: var(--text-primary); }
+
+@media (max-width: 768px) {
+  .postal { max-width: none; }
+  .declaration { min-height: var(--tap-min, 44px); }
+  .change { min-height: var(--tap-min, 44px); }
+}

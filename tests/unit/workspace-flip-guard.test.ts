@@ -436,6 +436,8 @@ const SPECIAL: Record<string, [Klass, string]> = {
   'app/api/coaches/[orgSlug]/teams/[teamId]/upgrade-summary/retry/route.ts': ['tombstone-aware', 'the banner\'s retry skips workspace_state org_owned, so nothing re-copies from the free team into a club'],
   // Plans & pricing Stage 0 Part 7: the buyer's own Stripe customer for a new portal checkout.
   'app/api/billing/create-team-checkout/route.ts': ['tombstone-aware', 'the buyer\'s-customer read skips workspace_state org_owned (a portal that became a club bills on the club\'s customer now) and org_team_addon, so a club\'s customer is never lent to a coach\'s checkout'],
+  // GST/HST Stage 1 Part 2: whose billing address a Plan & billing page reads and which Stripe customers a save copies it to.
+  'lib/billing-location-server.ts': ['tombstone-aware', 'billingBuyerOf asks the one portal test of the org row its caller just read, so a flipped club bills as the club (its own row, saved by "Start your club"); the coach\'s customer read skips workspace_state org_owned and org_team_addon, as create-team-checkout does'],
 };
 
 /** Every other production file that reads the tag: the list the scan found on 2026-10-30, each opened or read by the census helper. */

@@ -22,6 +22,10 @@ import { withObservability, captureAndJson } from '@/lib/observability';
 import { ownPlanOf } from '@/lib/entitlement-grants';
 import { inPlaceMetadata, inPlaceReturnPath, inPlaceUpgradeOf } from '@/lib/workspace-upgrade';
 import { workspaceCannotBecomeClub } from '@/lib/workspace-upgrade-status';
+import {
+  billingAddressFromBody, billingBuyerOf, requireBillingLocation, type BillingBuyer,
+} from '@/lib/billing-location-server';
+import type { BillingLocation } from '@/lib/billing-location';
 
 /** Welcome email fires this many days after a user selects Tournament Plus at onboarding. */
 const PLUS_WELCOME_DELAY_DAYS = 1;
@@ -72,6 +76,8 @@ export const POST = withObservability(async (req: Request) => {
     billingCycle?: unknown;
     /** Required when a Coaches Portal buys Club (Stage 4b): the name of the club it becomes. Ignored otherwise. */
     clubName?: unknown;
+    /** With `clubName` (GST/HST Stage 1): the club's billing address from the "Start your club" window. Ignored otherwise. */
+    billingAddress?: unknown;
   };
   const orgSlug = typeof body.orgSlug === 'string' ? body.orgSlug : undefined;
   const auth = await getAuthContext(orgSlug ? { orgSlug, allowSuspendedOrg: true } : { allowSuspendedOrg: true });
@@ -166,6 +172,29 @@ export const POST = withObservability(async (req: Request) => {
   const isOnboardingPlanSelection = safeReturnTo.includes('/admin/onboarding');
   const shouldApplyDirectly = isBillingMockEnabled() || (!isStripeConfigured() && process.env.NODE_ENV !== 'production');
 
+  // Founding Season: Tournament plan owners get Tournament Plus without Stripe — while the SIGNUP
+  // window is open. After the close, only an organization that holds the Founding comp (given when it
+  // was made) and is making its FIRST plan choice (owner 2026-10-19, lib/founding-season.ts); a free
+  // org upgrading after that pays the list price through Stripe.
+  const isFoundingSeasonTournamentUpgrade =
+    !shouldApplyDirectly &&
+    planKey === 'tournament_plus' &&
+    ownPlanOf(auth.org) === 'tournament' &&
+    (await foundingSeasonOfferOnPlanChoice(auth.org));
+
+  // GST/HST Stage 1: a purchase needs the buyer's billing address on file (the comped Founding choice charges nothing, so it
+  // is never asked). A portal becoming the club in place sends the CLUB's address with its name; it is saved to the club's own
+  // row here — the coach's home address stays theirs. The mock path is a purchase too, so the dev walk meets the window.
+  let billingLocation: BillingLocation | null = null;
+  if (!isFoundingSeasonTournamentUpgrade) {
+    const buyer: BillingBuyer = inPlaceClubName
+      ? { kind: 'org', orgId: auth.org.id, name: inPlaceClubName, stripeCustomerId: auth.org.stripeCustomerId ?? null }
+      : billingBuyerOf(auth.org, auth.user);
+    const located = await requireBillingLocation(buyer, inPlaceClubName ? billingAddressFromBody(body.billingAddress) : null);
+    if (!located.ok) return located.response;
+    billingLocation = located.location;
+  }
+
   // ── Dev mock: no Stripe, write directly to DB ──────────────────────────────
   if (shouldApplyDirectly) {
     const { error: orgError } = await supabaseAdmin
@@ -257,16 +286,6 @@ export const POST = withObservability(async (req: Request) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   }
-
-  // Founding Season: Tournament plan owners get Tournament Plus without Stripe — while the SIGNUP
-  // window is open. After the close, only an organization that holds the Founding comp (given when it
-  // was made) and is making its FIRST plan choice (owner 2026-10-19, lib/founding-season.ts); a free
-  // org upgrading after that pays the list price through Stripe.
-  const isFoundingSeasonTournamentUpgrade =
-    !shouldApplyDirectly &&
-    planKey === 'tournament_plus' &&
-    ownPlanOf(auth.org) === 'tournament' &&
-    (await foundingSeasonOfferOnPlanChoice(auth.org));
 
   if (isFoundingSeasonTournamentUpgrade) {
     const { error: orgError } = await supabaseAdmin
@@ -368,7 +387,7 @@ export const POST = withObservability(async (req: Request) => {
   const { stripe } = await import('@/lib/stripe');
   const { ensureStripeCustomer } = await import('@/lib/billing-setup');
 
-  const customerId = await ensureStripeCustomer(auth.org, auth.user.email);
+  const customerId = await ensureStripeCustomer(auth.org, auth.user.email, billingLocation);
 
   // NO SECOND TRIAL (Ask 4, 2026-09-25). An organization that has already had a paid subscription
   // — a cancelled club coming back is the common case — pays from day one; the trial is for a

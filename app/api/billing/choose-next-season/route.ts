@@ -21,6 +21,7 @@ import { withObservability } from '@/lib/observability';
 import type { OrgPlan } from '@/lib/types';
 import { ownPlanOf } from '@/lib/entitlement-grants';
 import { getBillingHref } from '@/lib/billing-urls';
+import { billingBuyerOf, requireBillingLocation } from '@/lib/billing-location-server';
 
 /**
  * POST /api/billing/choose-next-season
@@ -94,6 +95,11 @@ export const POST = withObservability(async (req: Request) => {
     return json({ error: 'This plan is not open for self-serve checkout yet.' }, 403);
   }
 
+  // ── 5. GST/HST Stage 1: the buyer's billing address is on file ────────────
+  // A choice is a subscription that will charge, so it is a purchase (the club's address, or a coach's own home address).
+  const located = await requireBillingLocation(billingBuyerOf(auth.org, auth.user));
+  if (!located.ok) return located.response;
+
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
   const billingPath = getBillingHref(auth.org, { purpose: 'return' });
   const successUrl = `${appUrl}${billingPath}?next_season=1`;
@@ -133,7 +139,7 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   const { stripe } = await import('@/lib/stripe');
-  const customerId = await ensureStripeCustomer(auth.org, auth.user.email);
+  const customerId = await ensureStripeCustomer(auth.org, auth.user.email, located.location);
 
   // ⚠⚠ CANCEL ANY PRIOR CHOICE BEFORE MAKING A NEW ONE, OR OCTOBER 1 CHARGES TWICE.
   // Every choice creates a real Stripe subscription whose first charge is the same instant. A second

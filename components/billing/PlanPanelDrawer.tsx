@@ -21,6 +21,7 @@ import { ownPlanOf } from '@/lib/free-time';
 import KitDialog from '@/components/shared/KitDialog';
 import { NoticePill } from '@/components/admin/kit/club/RepKit';
 import PlanArticlePanel from './PlanArticlePanel';
+import { useBillingAddressGate } from './BillingAddressDialog';
 
 type Outcome = { title: string; message: string; type: 'success' | 'danger' };
 
@@ -31,6 +32,7 @@ export default function PlanPanelDrawer({ plan, onClose }: { plan: PanelPlanKey;
   const [loading, setLoading] = useState(false);
   // Once the Upgrade answers, the panel gives way to what it came to; closing that closes the whole thing.
   const [outcome, setOutcome] = useState<Outcome | null>(null);
+  const address = useBillingAddressGate(currentOrg ? { orgSlug: currentOrg.slug } : null);
 
   // Back from Stripe's checkout through the browser's own cache: the page comes back as it was left — loading.
   useEffect(() => {
@@ -55,6 +57,13 @@ export default function PlanPanelDrawer({ plan, onClose }: { plan: PanelPlanKey;
       setOutcome({ title: 'Something went wrong', message: err instanceof Error ? err.message : 'Something went wrong. Please try again.', type: 'danger' });
       return;
     }
+    // GST/HST Stage 1: no billing address on file → the Billing address window, then the same upgrade again. Asked by the
+    // server, not here: a comped Founding upgrade charges nothing and is never asked.
+    if ('addressRequired' in result) {
+      setLoading(false);
+      address.refused(() => void upgrade(key));
+      return;
+    }
     // Leaving for checkout: Upgrade stays busy while the page unloads, so a second press starts no second checkout.
     if (!result.applied) {
       window.location.assign(result.url);
@@ -72,8 +81,10 @@ export default function PlanPanelDrawer({ plan, onClose }: { plan: PanelPlanKey;
 
   return (
     <>
+      {/* The Billing address window takes the panel's place while it is open; Cancel brings the panel back. */}
+      {address.dialog}
       <PlanArticlePanel
-        planKey={outcome ? null : plan}
+        planKey={outcome || address.open ? null : plan}
         billingCycle="monthly"
         onClose={onClose}
         onUpgrade={key => { void upgrade(key); }}

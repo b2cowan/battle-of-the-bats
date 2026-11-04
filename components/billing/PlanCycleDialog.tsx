@@ -4,11 +4,16 @@ import { useState } from 'react';
 import KitDialog from '@/components/shared/KitDialog';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import type { BillingCycle } from '@/lib/plan-config';
+import { BILLING_ADDRESS_FORM_WORDS as F } from '@/lib/billing-location';
 import styles from './Billing.module.css';
+import address from './BillingAddress.module.css';
 
-/** The payment step of an Upgrade: Monthly or Yearly, side by side with both prices, chosen where the money is committed. */
-export default function PlanCycleDialog({ label, monthlyPrice, annualPrice, savings, initial, onClose, onContinue }: {
+/** The payment step of an Upgrade: Monthly or Yearly, side by side with both prices, chosen where the money is committed.
+ *  GST/HST Stage 1: it opens only once a billing address is on file, and names it on one "Billed to … Change" line above
+ *  the choices (the line Stage 2 hangs the tax on); Change swaps this window for the Billing address window. */
+export default function PlanCycleDialog({ label, monthlyPrice, annualPrice, savings, initial, billedTo = null, onChangeAddress, onClose, onContinue }: {
   label: string; monthlyPrice: number; annualPrice: number; savings: string | null; initial: BillingCycle;
+  billedTo?: string | null; onChangeAddress?: () => void;
   onClose: () => void; onContinue: (cycle: BillingCycle) => void;
 }) {
   const [pick, setPick] = useState<BillingCycle>(initial);
@@ -23,6 +28,10 @@ export default function PlanCycleDialog({ label, monthlyPrice, annualPrice, savi
         <button type="button" className="btn btn-lime" onClick={() => onContinue(pick)} data-autofocus="">{W.pay.continue}</button>
       </>}
     >
+      {billedTo && <p className={address.billedTo}>
+        <span>{F.billedTo(billedTo)}</span>
+        {onChangeAddress && <button type="button" className={address.change} onClick={onChangeAddress}>{F.change}</button>}
+      </p>}
       <div className={styles.payChoices} role="radiogroup" aria-label={W.pay.cycleLabel}>
         {options.map(option => (
           <label key={option.id} className={`${styles.payChoice}${pick === option.id ? ` ${styles.payChoiceOn}` : ''}`}>

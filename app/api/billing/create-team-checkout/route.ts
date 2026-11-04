@@ -20,6 +20,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { captureError, withObservability } from '@/lib/observability';
 import { buyerStripeCustomer } from '@/lib/team-checkout-customer';
 import { hadSubscriptionBefore } from '@/lib/plan-move';
+import { requireBillingLocation, stampStripeCustomerAddress } from '@/lib/billing-location-server';
+import { toStripeAddress } from '@/lib/billing-location';
 
 function appendSuccess(url: string) {
   return `${url}${url.includes('?') ? '&' : '?'}success=1`;
@@ -182,6 +184,12 @@ export const POST = withObservability(async (req: Request) => {
     }
   }
 
+  // GST/HST Stage 1: a coach buys Premium as a PERSON, so the address is their own home address, saved by the sign-up page's
+  // Address step before this request. The comped Founding path above charges nothing and is never asked; the mock path below
+  // is a purchase, so the dev walk meets the step.
+  const located = await requireBillingLocation({ kind: 'user', userId: user.id });
+  if (!located.ok) return located.response;
+
   const shouldApplyDirectly = isBillingMockEnabled() || (!isStripeConfigured() && process.env.NODE_ENV !== 'production');
 
   if (shouldApplyDirectly) {
@@ -307,11 +315,14 @@ export const POST = withObservability(async (req: Request) => {
       const customer = await stripe.customers.create({
         email: user.email,
         metadata: { checkoutKind: metadata.checkoutKind, ownerUserId: user.id, planKey: 'team' },
+        address: toStripeAddress(located.location),
       });
       return customer.id;
     },
     report: error => void captureError(error, { user: { id: user.id, email: user.email }, route: '/api/billing/create-team-checkout', method: 'POST' }),
   });
+  // A customer found again (an earlier portal, or a checkout left before paying) carries the address it is charged at.
+  if (source !== 'created') await stampStripeCustomerAddress(customerId, located.location);
 
   // Keep Premium is a coach who already had Premium free: a trial on top would only push the first charge out. And, as the
   // club checkout rules, no second trial for a customer that ever held a subscription (a new customer has held none).

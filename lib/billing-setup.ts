@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { CardDetails } from '@/lib/billing-format';
 import type Stripe from 'stripe';
 import { getBillingHref } from './billing-urls';
+import { toStripeAddress, type BillingLocation } from './billing-location';
 
 /**
  * Org-level Stripe provisioning shared by the billing endpoints
@@ -42,8 +43,11 @@ async function linkWorkspaceStripeCustomer(orgId: string, customerId: string): P
 export async function ensureStripeCustomer(
   org: { id: string; stripeCustomerId?: string | null; accountKind?: string | null },
   email: string | undefined,
+  /** GST/HST Stage 1: a checkout passes the buyer's billing address, so the customer it charges carries it too. */
+  billingLocation?: BillingLocation | null,
 ): Promise<string> {
   let customerId: string;
+  let createdWithAddress = false;
 
   if (org.stripeCustomerId) {
     customerId = org.stripeCustomerId;
@@ -51,6 +55,7 @@ export async function ensureStripeCustomer(
     const customer = await stripe.customers.create({
       email,
       metadata: { orgId: org.id },
+      ...(billingLocation ? { address: toStripeAddress(billingLocation) } : {}),
     });
     // First-writer-wins link: concurrent requests (e.g. two billing buttons clicked
     // back-to-back before the org has a customer) each create a candidate customer.
@@ -66,6 +71,7 @@ export async function ensureStripeCustomer(
 
     if (linked?.stripe_customer_id === customer.id) {
       customerId = customer.id;
+      createdWithAddress = Boolean(billingLocation);
     } else {
       // Lost the race (or the caller's auth context was stale): use the customer
       // already linked and discard ours — nothing has been attached to it yet.
@@ -79,8 +85,14 @@ export async function ensureStripeCustomer(
         customerId = row.stripe_customer_id;
       } else {
         customerId = customer.id;
+        createdWithAddress = Boolean(billingLocation);
       }
     }
+  }
+
+  // A customer made before the address existed (or by the request that won the race) is given it now.
+  if (billingLocation && !createdWithAddress && !customerId.startsWith('mock_')) {
+    await stripe.customers.update(customerId, { address: toStripeAddress(billingLocation) });
   }
 
   // Only a coach workspace has a row to mirror onto. Callers carry `accountKind` from their auth

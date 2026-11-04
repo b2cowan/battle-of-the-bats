@@ -27,6 +27,10 @@ import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import styles from './Billing.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import FreeTimeBand from './FreeTimeBand';
+import { BILLING_ADDRESS_FORM_WORDS, BILLING_LOCATION_WORDS } from '@/lib/billing-location';
+import BillingAddressFields, { useAddressDraft } from './BillingAddressFields';
+import { isAddressRefusal, useBillingAddressGate } from './BillingAddressDialog';
+import addressStyles from './BillingAddress.module.css';
 
 /** Where "Contact us" goes until a band is on sale (the Stage 8 flip) and above the largest band.
  *  The company's one inbox (owner 2026-09-26), the same address `lib/email.ts` falls back to. */
@@ -63,6 +67,29 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
   const [cycle, setCycle] = useState<'monthly' | 'annual'>(org.subscriptionPeriod ?? 'monthly');
   const [revision, setRevision] = useState(0);
   const nameInput = useRef<HTMLInputElement>(null);
+  // GST/HST Stage 1. The club's billing address: in place, a block under the club name filled in from the coach's own home
+  // address (drawing tab 5) and saved to the CLUB's row with the purchase; otherwise the Billing address window, opened when
+  // the move or checkout says none is on file.
+  const address = useBillingAddressGate({ orgSlug: org.slug });
+  const clubAddress = useAddressDraft(null, address.info?.usSalesOpen ?? false);
+  const prefilled = useRef(false);
+  const homeAddress = address.info?.location ?? null;
+  useEffect(() => {
+    if (!inPlace || prefilled.current || !address.info) return;
+    prefilled.current = true;
+    // A slow answer must not overwrite what the coach has already typed for the club.
+    if (homeAddress && !clubAddress.dirty) clubAddress.reset(homeAddress);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, when the coach's address first arrives
+  }, [inPlace, address.info, homeAddress]);
+  const clubHold = inPlace && clubAddress.usClosed;
+  /** In place: the name and the address, checked together on press; null when either needs fixing. */
+  function checkedClub(): Record<string, unknown> | null {
+    if (!inPlace) return {};
+    const name = checkedName();
+    const located = clubAddress.check();
+    if (name === null || !located.ok) return null;
+    return { clubName: name, billingAddress: clubAddress.body };
+  }
   useEffect(() => {
     const restore = (event: PageTransitionEvent) => {
       if (event.persisted) { leaving.current = false; busyRef.current = false; setWorking(false); }
@@ -106,8 +133,8 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
   }
   async function confirm() {
     if (state.status !== 'preview' || busyRef.current) return;
-    const name = checkedName();
-    if (name === null) return;
+    const club = checkedClub();
+    if (club === null) return;
     busyRef.current = true; setWorking(true); setFailure(null);
     let accepted = false;
     try {
@@ -115,12 +142,14 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orgSlug: org.slug, planKey: toPlan,
           ...(state.preview.direction === 'up' ? { prorationDate: state.preview.prorationDate } : {}),
-          ...(inPlace ? { clubName: name } : {}),
+          ...club,
         }),
       });
       const d = await res.json().catch(() => ({}));
       if (!live.current) return;
       if (!res.ok) {
+        if (isAddressRefusal(d)) { address.refused(() => void confirm()); return; }
+        if (inPlace && d.code === 'invalid_billing_address' && d.errors) { clubAddress.setErrors(d.errors); return; }
         // The move already landed (a lost answer, then a second try): the workspace is the club now, so finish on the setup screen.
         if (inPlace && d.code === 'not_a_move') { leaving.current = true; window.location.replace(inPlaceReturnPath(org.slug)); return; }
         // A band move keeps its figures on screen and says what went wrong; the Premium window has a door for each refusal.
@@ -164,19 +193,21 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
   }
   async function checkout() {
     if (busyRef.current || (inPlace && !quote)) return;
-    const name = checkedName();
-    if (name === null) return;
+    const club = checkedClub();
+    if (club === null) return;
     busyRef.current = true; setWorking(true); setFailure(null);
     try {
       const res = await fetch('/api/billing/create-checkout', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ planKey: toPlan, billingCycle: quote?.billingCycle ?? org.subscriptionPeriod ?? 'monthly', orgSlug: org.slug, returnTo,
-          ...(inPlace ? { clubName: name } : {}),
+          ...club,
         }),
       });
       const d = await res.json().catch(() => ({}));
       if (!live.current) return;
       if (!res.ok) {
+        if (isAddressRefusal(d)) { address.refused(() => void checkout()); return; }
+        if (inPlace && d.code === 'invalid_billing_address' && d.errors) { clubAddress.setErrors(d.errors); return; }
         if (d.code === 'subscription_exists') { retry(); return; }
         if (d.code === 'cannot_become_club') setState({ status: 'refused', refusal: d });
         else setFailure(refusalText({ ...d, code: d.code ?? 'error', error: d.error ?? W.errors.checkout }));
@@ -201,8 +232,8 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
   const retryable = refusal && (refusal.code === 'no_live_subscription' ? inPlace && !quote : !['band_too_small', 'plan_not_on_sale', 'payment_failing', 'cannot_become_club', 'subscription_ending'].includes(refusal.code));
   const footer = <>
     {cancel}
-    {preview && <button type="button" className="btn btn-lime" onClick={() => void confirm()} disabled={working} data-autofocus="">{working ? inPlace ? W.clubUpgrade.starting : W.move.moving : inPlace ? W.clubUpgrade.start : W.change.move(target.label)}</button>}
-    {canCheckout && <button type="button" className="btn btn-lime" onClick={() => void checkout()} disabled={working}>{working ? W.plan.openingCheckout : W.move.checkout}</button>}
+    {preview && !clubHold && <button type="button" className="btn btn-lime" onClick={() => void confirm()} disabled={working} data-autofocus="">{working ? inPlace ? W.clubUpgrade.starting : W.move.moving : inPlace ? W.clubUpgrade.start : W.change.move(target.label)}</button>}
+    {canCheckout && !clubHold && <button type="button" className="btn btn-lime" onClick={() => void checkout()} disabled={working}>{working ? W.plan.openingCheckout : W.move.checkout}</button>}
     {refusal?.code === 'band_too_small' && <Link href={teamsHref} className="btn btn-lime">{W.move.repTeams}</Link>}
     {refusal?.code === 'plan_not_on_sale' && <a href={CONTACT_HREF} className="btn btn-lime">{W.change.contact}</a>}
     {refusal?.code === 'subscription_ending' && (onKeep
@@ -213,9 +244,12 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
     {retryable && <button type="button" className="btn btn-lime" onClick={retry}>{W.clubUpgrade.checkAgain}</button>}
   </>;
   const foot = !inPlace ? undefined : state.status === 'finished' ? W.clubUpgrade.finishing : quote ? W.clubUpgrade.checkoutFoot : preview?.direction === 'up' ? W.clubUpgrade.payingFoot : undefined;
+  // The Billing address window takes this window's place while it is open (the move or checkout found no address on file).
+  if (address.open) return address.dialog;
   return <KitDialog kind={inPlace ? 'form' : 'question'} title={inPlace ? W.clubUpgrade.title : W.move.title(target.label)}
-    onClose={onClose} busy={working} dirty={inPlace && clubName.trim().length > 0 && state.status !== 'finished'} openOn={inPlace ? 'panel' : 'field'}
-    footerStart={foot ? <span>{foot}</span> : undefined} footer={state.status === 'finished' ? null : footer}>
+    onClose={onClose} busy={working} dirty={inPlace && (clubName.trim().length > 0 || clubAddress.dirty) && state.status !== 'finished'} openOn={inPlace ? 'panel' : 'field'}
+    footerStart={clubHold && (preview || quote) ? <span className={addressStyles.amber}>{BILLING_LOCATION_WORDS.usClosed}</span> : foot ? <span>{foot}</span> : undefined}
+    footer={state.status === 'finished' ? null : footer}>
     {failure && <PageNotice notice={{ tone: 'bad', text: failure }} />}
     {state.status === 'loading' && <LoadingState inline label={W.move.loading} />}
     {state.status === 'finished' && <PageNotice notice={{ tone: 'good', text: W.clubUpgrade.finishing }} />}
@@ -230,6 +264,12 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
           placeholder={W.clubUpgrade.namePlaceholder} aria-invalid={Boolean(nameError)} aria-describedby="upgrade-name-help"
           onChange={event => { setClubName(Array.from(event.target.value).slice(0, CLUB_NAME_MAX).join('')); setNameError(null); }} disabled={working} />
         <p id="upgrade-name-help" className={styles.hint} role={nameError ? 'alert' : undefined}>{nameError ?? W.clubUpgrade.nameHelp}</p>
+      </div>
+      <div className={addressStyles.clubBlock} role="group" aria-labelledby="upgrade-billing-address">
+        <p id="upgrade-billing-address" className={addressStyles.subhead}>{BILLING_ADDRESS_FORM_WORDS.clubSubhead}</p>
+        {homeAddress && <p className={styles.hint}>{BILLING_ADDRESS_FORM_WORDS.clubPrefilled}</p>}
+        <BillingAddressFields form={clubAddress} idPrefix="upgrade-billing"
+          subject={{ kind: 'club', name: clubName.trim() || org.name }} disabled={working} />
       </div>
       <div className={styles.upgradeAddress}><span>{W.clubUpgrade.address}</span><span>{W.clubUpgrade.addressValue(org.slug)}</span><p className={styles.hint}>{W.clubUpgrade.addressHelp}</p></div>
       {quote && quote.trialDays > 0 && <div className={styles.cycle} role="group" aria-label={W.clubUpgrade.billing}>

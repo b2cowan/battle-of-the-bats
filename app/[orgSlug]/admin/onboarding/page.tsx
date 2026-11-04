@@ -28,6 +28,7 @@ import styles from './onboarding.module.css';
 import { tournamentToday } from '@/lib/timezone';
 import DateInput from '@/components/shared/DateInput';
 import DateTimeInput from '@/components/shared/DateTimeInput';
+import { isAddressRefusal, useBillingAddressGate } from '@/components/billing/BillingAddressDialog';
 
 /*
  * THE FIRST RUN (Tournament admin redesign Stage 5, E1 and A47 — ruled 2026-10-10). Plan selection is a standalone gate
@@ -282,6 +283,8 @@ function OnboardingPageLegacy() {
   }));
   const [planLoading, setPlanLoading] = useState<OrgPlan | null>(null);
   const [planError, setPlanError] = useState('');
+  // GST/HST Stage 1: a paid plan choice with no billing address on file opens the Billing address window, then goes on.
+  const address = useBillingAddressGate(currentOrg ? { orgSlug: currentOrg.slug } : null);
   const [leagueDraftSkipped, setLeagueDraftSkipped] = useState<LeagueDraftSkippedState>(getDefaultLeagueDraftSkipped);
   const [leagueSeasonForm, setLeagueSeasonForm] = useState<LeagueSeasonForm>(getDefaultLeagueSeasonForm);
   const [leagueDivisionPreset, setLeagueDivisionPreset] = useState<LeagueDivisionPreset>('youth');
@@ -563,6 +566,7 @@ function OnboardingPageLegacy() {
         }),
       });
       const data = await res.json();
+      if (!res.ok && isAddressRefusal(data)) { address.refused(() => void choosePlan(planKey, selectedBillingCycle)); return; }
       if (!res.ok) throw new Error(data.error ?? 'Plan selection failed');
       if (data.applied === true) {
         await refreshOrgContext();
@@ -1421,6 +1425,7 @@ function OnboardingPageLegacy() {
       <div className={styles.workflowOnlyPage}>
         {renderActiveModal()}
         {planChooserOpen && <div className={styles.modalOverlay} role="presentation">{renderPlanChooser()}</div>}
+        {address.dialog}
       </div>
     );
   }
@@ -1554,6 +1559,7 @@ function OnboardingPageLegacy() {
 
       {renderActiveModal()}
       {planChooserOpen && <div className={styles.modalOverlay} role="presentation">{renderPlanChooser()}</div>}
+      {address.dialog}
     </div>
   );
 }

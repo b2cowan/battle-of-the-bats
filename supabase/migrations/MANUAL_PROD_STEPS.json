@@ -578,6 +578,10 @@
     "432_a_season_remembers_where_it_started.sql": {
       "prod": "pending",
       "note": "House League 9f-2 Start next season (docs/projects/active/HOUSE_LEAGUE_STAGE9F2_BUILD_PROMPT.md; owner ruled the column 2026-11-03): one nullable jsonb column league_seasons.started_from (a season started from another remembers its source, what came across and a fingerprint per checklist line). No default, no backfill, no row changed; re-runnable. Prod order: either way round, but apply BEFORE the promote that ships 9f-2 (the create route writes the column on a Start from: without it every Start from answers 500; the season reads take every column, so nothing else notices). Applied to dev 2026-11-03. Verify on prod: SELECT count(*) FROM information_schema.columns WHERE table_name = 'league_seasons' AND column_name = 'started_from' -> 1."
+    },
+    "433_every_buyer_has_a_billing_address.sql": {
+      "prod": "pending",
+      "note": "GST/HST Stage 1 Part 1 (docs/projects/active/GST_HST_STAGE1_BUILD_PROMPT.md; owner rulings 2026-11-03): where each buyer is billed. Visible: table billing_locations (one row per buyer, a club by org_id or a coach by user_id; RLS on, no policies, grants revoked from anon and authenticated; service role only), its CHECKs and two partial unique indexes. No change to any existing table, function or row; no backfill (prod had 0 live subscriptions 2026-11-03); re-runnable. Apply to prod BEFORE the promote that ships Stage 1 Part 2 (the checkout check reads the table: without it every paid checkout answers 500). Applied to dev 2026-11-03. Verify on prod: SELECT count(*) FROM information_schema.tables WHERE table_name = 'billing_locations' -> 1; SELECT relrowsecurity FROM pg_class WHERE relname = 'billing_locations' -> true."
     }
   }
 }

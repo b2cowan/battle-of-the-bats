@@ -29,6 +29,12 @@ import PaymentsEndingSection, { moveDateLong } from './PaymentsEndingSection';
 import styles from './Billing.module.css';
 import ClubUpgradeSetup from './ClubUpgradeSetup';
 import { inPlaceReturnPath, isInPlaceReturn } from '@/lib/workspace-upgrade';
+import { BILLING_ADDRESS_FORM_WORDS, formatBilledTo, formatBillingAddress } from '@/lib/billing-location';
+import { NoticePill } from '@/components/admin/kit/club/RepKit';
+import { isAddressRefusal, useBillingAddressGate } from './BillingAddressDialog';
+
+/** What `post` answers when a paid route refused for want of a billing address (the caller opens the window and retries). */
+const ADDRESS_REFUSED = Symbol('address-refused');
 
 type Registry = Record<string, PlanBillingProfile<string>>;
 /** Consume return flags without discarding an explicitly requested drawer or another query parameter. */
@@ -64,6 +70,9 @@ export type BillingBodyViewProps = {
   cardWindowOpen?: boolean; foundingActive?: boolean; fees?: ReactNode;
   /** The plan whose details panel is open (`?plan=` or a Details link), and how it closes. */
   detail?: string | null; onCloseDetail?: () => void;
+  /** GST/HST Stage 1 (drawing tab 6): the billing address on file, read on the plan card, and its Billing address button.
+   *  Absent before anything is bought (nothing new shows). */
+  billingAddress?: { line: string; onEdit: () => void } | null;
 };
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
@@ -85,6 +94,7 @@ function LockedCard({ orgName }: { orgName: string }) {
 /** The actual billing presentation, also rendered by the isolated profile fixtures. No portal chrome or providers. */
 export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = PLAN_BILLING_PROFILES, actions: a,
   notice, waitNotice = null, justChose = false, cardWindowOpen = false, foundingActive = false, fees, detail = null, onCloseDetail = () => {},
+  billingAddress = null,
 }: BillingBodyViewProps) {
   const org = s.org;
   if (!s.canManageBilling) return <LockedCard orgName={org.name} />;
@@ -263,9 +273,11 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
             {!actionsShown && keepButton}
           </>}
           {ownBilling && scheduled && !pending && <p className={styles.scheduled}>{W.plan.scheduled(profiles[scheduled.toPlan].config.label, scheduled.effectiveAt)} <button type="button" className={styles.link} disabled={disabled} onClick={a.keep}>{W.plan.keep(ownProfile.config.label)}</button></p>}
+          {actionsShown && billingAddress && <p className={styles.hint}>{BILLING_ADDRESS_FORM_WORDS.onFile(billingAddress.line)}</p>}
           {actionsShown && <div className={styles.planActions}>
             {keepButton}
             <button type="button" className="btn btn-outline" id="billing-manage-btn" onClick={a.portal} disabled={disabled}><CreditCard size={14} aria-hidden />{a.busy === 'portal' ? W.plan.openingPortal : W.plan.payment}</button>
+            {billingAddress && <button type="button" className="btn btn-outline" onClick={billingAddress.onEdit} disabled={disabled}>{BILLING_ADDRESS_FORM_WORDS.title}</button>}
           </div>}
           <ReadFailure read={s.freeTime} section="free time" />
         </div>
@@ -443,6 +455,8 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
   const [notice, setNotice] = useNotice(initialReturn.notice);
   const [moveTo, setMoveTo] = useState<OrgPlan | null>(null);
   const [payFor, setPayFor] = useState<OrgPlan | null>(null);
+  // GST/HST Stage 1: the buyer's billing address (a Coaches Portal's is the coach's own home address).
+  const address = useBillingAddressGate({ orgSlug: org.slug });
   const [review, setReview] = useState<{ kind: 'cancel'; data: BillingCancellation } | { kind: 'downgrade'; read: BillingRead<BillingDowngrade> } | null>(null);
   const [reason, setReason] = useState('');
   const [reviewError, setReviewError] = useState<string | null>(null);
@@ -514,7 +528,11 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
   async function post(endpoint: string, input: Record<string, unknown> = {}, method = 'POST') {
     const response = await fetch(endpoint, { method, headers: { 'Content-Type': 'application/json' }, body: method === 'DELETE' ? undefined : JSON.stringify({ ...input, orgSlug: org.slug }) });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error ?? W.errors.generic);
+    if (!response.ok) {
+      // GST/HST Stage 1: a paid route with no billing address on file opens the Billing address window, not an error.
+      if (isAddressRefusal(data)) return ADDRESS_REFUSED;
+      throw new Error(data.error ?? W.errors.generic);
+    }
     return data;
   }
   async function run(key: string, work: () => Promise<void>) {
@@ -535,6 +553,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
     await run('checkout', async () => {
       const result = await post('/api/billing/create-checkout', { planKey: target, billingCycle: chosen, returnTo: billingBase });
       if (!live.current) return;
+      if (result === ADDRESS_REFUSED) { address.refused(() => void checkout(target, chosen)); return; }
       if (result.applied) { setNotice({ tone: 'good', text: W.notice.updated(PLAN_BILLING_PROFILES[target].config.label, result.restoredCount, result.remainingRetainedCount) }); reloadAfterAction(); }
       else if (result.url) leave(result.url);
       else throw new Error(W.errors.checkout);
@@ -553,11 +572,17 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
       } catch (error) { if (live.current) setReview({ kind: 'downgrade', read: { status: 'error', error: error instanceof Error ? error.message : W.errors.downgradeReview } }); }
     });
   }
+  // A comped Founding plan choice charges nothing, so it is not asked for an address first. The server decides for certain:
+  // if it disagrees, the checkout's refusal opens the window anyway.
+  const freeChoice = (target: OrgPlan) => target === 'tournament_plus' && ownProfile.key === 'tournament'
+    && founding.status === 'ready' && founding.data.isFoundingSeason;
+  const askFirst = (target: OrgPlan, next: () => void) => { if (freeChoice(target)) next(); else address.ensure(next); };
   const actions: Action = {
     busy: busy ?? (retrying ? 'retry' : null), cycle, setCycle, retry: retryReads,
     portal: () => void run('portal', async () => { const result = await post('/api/billing/portal', { returnTo: billingBase }); if (result.url) leave(result.url); else if (live.current) throw new Error(W.errors.portal); }),
     card: () => void run('card', async () => { const result = await post('/api/billing/setup-payment-method', { returnTo: billingBase }); if (result.url) leave(result.url); else if (live.current) throw new Error(W.errors.card); }),
-    reactivate: () => void checkout(ownProfile.key),
+    // Every paid button asks for the billing address first when none is on file (GST/HST Stage 1): window → question → Stripe.
+    reactivate: () => address.ensure(() => void checkout(ownProfile.key)),
     keep: () => void run('keep', async () => { await post(`/api/billing/move?${scope}`, {}, 'DELETE'); if (live.current) { setNotice({ tone: 'good', text: W.plan.kept(org.name, ownProfile.config.label) }); reloadAfterAction(); } }),
     // A `keep_plan` arrival that found nothing waiting must not open Keep over the cancel this starts.
     cancel: () => { if (cancellation.status === 'ready') { setKeepOpen(false); setReason(''); setReviewError(null); setReview({ kind: 'cancel', data: cancellation.data }); } },
@@ -565,18 +590,22 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
     change: (change, chosen) => {
       if (change.mechanism === 'move') setMoveTo(change.target as OrgPlan);
       else if (change.mechanism === 'downgrade') void openDowngrade(change.target as OrgPlan);
-      else if (chosen) { setCycle(chosen); void checkout(change.target as OrgPlan, chosen); }
-      else setPayFor(change.target as OrgPlan);
+      else if (chosen) askFirst(change.target as OrgPlan, () => { setCycle(chosen); void checkout(change.target as OrgPlan, chosen); });
+      else askFirst(change.target as OrgPlan, () => setPayFor(change.target as OrgPlan));
     },
     details: setDetail,
-    choose: (key, billingCycle) => void run('choose', async () => {
+    choose: (key, billingCycle) => address.ensure(() => void choose(key, billingCycle)),
+  };
+  function choose(key: string, billingCycle: BillingCycle) {
+    return run('choose', async () => {
       const result = await post('/api/billing/choose-next-season', { planKey: key, billingCycle, returnTo: billingBase });
       if (!live.current) return;
+      if (result === ADDRESS_REFUSED) { address.refused(() => void choose(key, billingCycle)); return; }
       if (result.applied || result.url) { choiceRetries.current = 0; setJustChose(true); }
       if (result.applied) { setNotice({ tone: 'good', text: W.notice.nextSeason }); reloadAfterAction(); }
       else if (result.url) leave(result.url); else throw new Error(W.errors.nextSeason);
-    }),
-  };
+    });
+  }
   const downgrade = review?.kind === 'downgrade' && review.read.status === 'ready' ? review.read.data : null;
   const cancel = review?.kind === 'cancel' ? review.data : null;
   const target = downgrade ? PLAN_BILLING_PROFILES[downgrade.targetPlan] : null;
@@ -627,7 +656,8 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
     });
   }
   return <>
-    <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, founding, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} waitNotice={waitNotice} justChose={justChose} detail={detail} onCloseDetail={() => setDetail(null)} cardWindowOpen={isFoundingSeasonCardWindowOpen()} foundingActive={isFoundingSeasonActive()} fees={<StripeFeesList key={org.id} slug={org.slug} />} />
+    <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, founding, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} waitNotice={waitNotice} justChose={justChose} detail={detail} onCloseDetail={() => setDetail(null)} cardWindowOpen={isFoundingSeasonCardWindowOpen()} foundingActive={isFoundingSeasonActive()} fees={<StripeFeesList key={org.id} slug={org.slug} />}
+      billingAddress={address.info?.location ? { line: formatBillingAddress(address.info.location), onEdit: () => address.edit() } : null} />
     {moveTo && <PlanMoveDialog key={`${org.id}:${moveTo}`} org={{ ...org, planId: ownProfile.key }} toPlan={moveTo} returnTo={billingBase} teamsHref={teamsHref}
       freeThrough={freeTime.status === 'ready' ? freeTime.data.portal?.lastDay ?? freeTime.data.freeTime?.lastDay ?? (founding.status === 'ready' && founding.data.isFoundingSeason ? founding.data.compUntil : null) : null}
       // A waiting cancel refuses every move: the window's door is Keep {Plan}, here the same question window.
@@ -639,7 +669,11 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
       } }} />}
     {payFor && <PlanCycleDialog key={`${org.id}:${payFor}`} label={PLAN_BILLING_PROFILES[payFor].config.label} monthlyPrice={PLAN_BILLING_PROFILES[payFor].config.monthlyPrice}
       annualPrice={PLAN_BILLING_PROFILES[payFor].config.annualPrice} savings={W.plan.savings(payFor)} initial={cycle} onClose={() => setPayFor(null)}
+      billedTo={address.location ? formatBilledTo(address.location) : null}
+      onChangeAddress={() => { const plan = payFor; setPayFor(null); address.edit(() => setPayFor(plan)); }}
       onContinue={chosen => { setPayFor(null); setCycle(chosen); void checkout(payFor, chosen); }} />}
+    {address.dialog}
+    {address.savedAt !== null && <NoticePill key={address.savedAt} message={BILLING_ADDRESS_FORM_WORDS.saved} onDone={address.clearSaved} />}
     {keepOpen && pendingEnding && <KitDialog kind="question" title={W.cancel.keepTitle(ownKey)} onClose={() => setKeepOpen(false)} busy={busy !== null}
       footer={<><DialogCancel>{W.cancel.notNow}</DialogCancel>
         <button type="button" className="btn btn-lime" onClick={() => void confirmKeep()} disabled={busy !== null}>{busy === 'keepPlan' ? W.cancel.keeping : pendingEnding.heldMovePlan ? W.cancel.keepAndMove(PLAN_CONFIG[pendingEnding.heldMovePlan].label) : keepLabel}</button></>}

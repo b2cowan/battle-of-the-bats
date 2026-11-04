@@ -458,7 +458,8 @@ describe('Coach Premium, account first (Part 3)', () => {
     assert.match(card, /setIsAuthenticated\(true\);[\s\S]{0,300}?router\.refresh\(\);/);
     // a waiting account that signs in gets the check-your-email block with its resend, not a dead end (/review)
     assert.match(card, /if \(signin\.error === 'email_not_confirmed'\) \{[\s\S]{0,200}?setVerificationEmail\(/);
-    assert.match(card, /<StartSteps current=\{onAccountStep \? 1 : 2\} labels=\{\['Account', 'Team'\]\} \/>/, 'D3, D-F5');
+    // GST/HST Stage 1 drawing tab 4 (owner, 2026-11-03): a paid checkout with no home address on file adds a third step, Address.
+    assert.match(card, /<StartSteps current=\{onAccountStep \? 1 : addressStep \? 3 : 2\} labels=\{needsAddressStep \|\| addressStep \? \['Account', 'Team', 'Address'\] : \['Account', 'Team'\]\} \/>/, 'D3, D-F5');
     assert.match(card, /import StartSteps from '@\/components\/auth\/StartSteps';/, 'one step line, shared with the start forms');
     assert.match(card, /\{busyLabel \|\| \(authMode === 'signup' \? 'Create account' : 'Sign in'\)\}\s*<\/button>/, 'D7: no arrow');
     assert.match(card, /\{confirmed && <p className=\{accountForm\.body\}>Your email is confirmed\.<\/p>\}/, 'D5');

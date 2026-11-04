@@ -1,0 +1,620 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Billing Address Drawings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) holding true-size specimens of the Warm product kit. Sticky tabs, one
+   section at a time, an Everything / Show only what differs switch where a tab compares. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.doc{max-width:1240px;margin:0 auto;padding-block:16px 90px}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:22px;margin:6px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:17px;margin:18px 0 6px}
+.doc p,.doc li{max-width:82ch}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16px;max-width:82ch}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+section.pane[hidden]{display:none}
+.viewrow{display:flex;align-items:center;gap:10px;margin:8px 0 12px;flex-wrap:wrap}
+.viewrow .lab{font:600 11.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sw{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px}
+.sw button{font:600 13.5px/1 var(--f-doc);min-height:36px;padding:0 14px;border-radius:7px;border:0;background:none;color:var(--muted);cursor:pointer}
+.sw button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px;box-shadow:var(--shadow);margin:12px 0}
+.card h3{margin-top:0}
+.card ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:760px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:24px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)} .mk.ask{color:var(--ask)}
+.cap{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 6px;font:600 12px/1.3 var(--f-mono);color:var(--muted)}
+.cap b{color:var(--ink)}
+.pair{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin:8px 0}
+.pair>div{min-width:0;max-width:100%}
+.fr{border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;max-width:100%}
+.w600{width:600px} .w390{width:390px} .w960{width:960px} .w760{width:760px}
+.scroll{overflow-x:auto;max-width:100%;padding-bottom:4px}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0 4px}
+.flow span{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:14px;font-weight:600}
+.flow span.n{border:2px solid var(--t-new);color:var(--t-new)}
+.flow i{font-style:normal;color:var(--muted)}
+.samebar{display:none;border:1px dashed var(--line);border-radius:8px;padding:8px 12px;margin:10px 16px;font:600 12px/1.4 var(--f-mono);color:var(--muted);text-align:center}
+body[data-view="diff"] .same{display:none}
+body[data-view="diff"] .samebar{display:block}
+
+/* ---------- the product kit (Warm), drawn from the shipped components ---------- */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.20);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--edge:rgba(87,101,30,.3);--cta:#D9F99D;--cta-ink:#241E15;--red:#B03A22;--amber:#835006;
+  --scrim:rgba(36,30,21,.34);--new:rgba(75,46,131,.08);
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;text-align:left}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ak{--paper:#1A1712;--card:#241F18;--ink:#F3EDE2;--soft:rgba(243,237,226,.78);--dim:rgba(243,237,226,.6);--line:rgba(255,255,255,.1);--line2:rgba(255,255,255,.2);--olive:#D9F99D;--olive-soft:rgba(217,249,157,.10);--edge:rgba(217,249,157,.25);--red:#F08A74;--amber:#E8B75A;--scrim:rgba(0,0,0,.5);--new:rgba(187,166,238,.12)}}
+:root[data-theme="dark"] .ak{--paper:#1A1712;--card:#241F18;--ink:#F3EDE2;--soft:rgba(243,237,226,.78);--dim:rgba(243,237,226,.6);--line:rgba(255,255,255,.1);--line2:rgba(255,255,255,.2);--olive:#D9F99D;--olive-soft:rgba(217,249,157,.10);--edge:rgba(217,249,157,.25);--red:#F08A74;--amber:#E8B75A;--scrim:rgba(0,0,0,.5);--new:rgba(187,166,238,.12)}
+.ak *{box-sizing:border-box}
+.ak .newbox{background:var(--new);outline:2px solid var(--t-new);outline-offset:3px;border-radius:6px}
+/* window (KitDialog) */
+.ak.scrimbg{background:var(--scrim);padding:28px 40px;display:flex;justify-content:center}
+.ak .win{width:520px;max-width:100%;background:var(--card);border:1px solid var(--edge);border-radius:12px;display:flex;flex-direction:column}
+.ak .win.q{width:416px}
+.ak .wh{display:flex;align-items:flex-start;gap:10px;padding:18px 24px 6px}
+.ak .wh .tb{flex:1;min-width:0}
+.ak .wh h4{margin:0;font:700 16px/1.25 'Inter';color:var(--ink)}
+.ak .wh .id{font-size:12px;color:var(--dim);margin-top:2px}
+.ak .wh .x{width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:20px;line-height:1}
+.ak .wh .back{width:44px;height:44px;margin:-10px 0 -10px -12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--ink)}
+.ak .wb{padding:10px 24px 16px;color:var(--soft);display:flex;flex-direction:column;gap:14px}
+.ak .wb p{margin:0}
+.ak .wf{display:flex;align-items:center;gap:10px;padding:14px 24px;border-top:1px solid var(--line)}
+.ak .wf .fs{flex:1;font-size:12px;color:var(--dim);min-width:0}
+.ak .wf .fs.amber{color:var(--amber);font-weight:600}
+.ak .wf .fe{display:flex;gap:8px}
+.ak .btn{font:650 14px/1.25 'Inter';border-radius:6px;padding:7px 14px;min-height:34px;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
+.ak .btn.lime{background:var(--cta);color:var(--cta-ink)}
+.ak .btn.out{background:var(--card);color:var(--soft);border:1px solid var(--line2)}
+.ak .door{color:var(--olive);font-weight:650}
+/* window fields */
+.ak .fld{display:flex;flex-direction:column;gap:5px}
+.ak .lb{font:650 12px/1.3 'Inter';color:var(--soft)}
+.ak .in{height:36px;border:1px solid var(--line2);background:var(--paper);border-radius:6px;padding:0 10px;font-size:14px;color:var(--ink);display:flex;align-items:center;min-width:0;white-space:nowrap;overflow:hidden}
+.ak .in.sel{justify-content:space-between}
+.ak .in.sel::after{content:"";width:7px;height:7px;border-right:1.5px solid var(--dim);border-bottom:1.5px solid var(--dim);transform:rotate(45deg) translate(-2px,-2px);flex:none;margin-left:10px}
+.ak .in.ph{color:var(--dim)}
+.ak .in.bad{border-color:var(--red)}
+.ak .hint{font-size:12px;line-height:1.45;color:var(--dim);margin:0}
+.ak .err{font-size:12px;line-height:1.45;color:var(--red);margin:0}
+.ak .chk{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--ink)}
+.ak .chk b{width:16px;height:16px;border-radius:2px;border:1px solid var(--edge);flex:none;margin-top:2px;position:relative;background:var(--paper)}
+.ak .chk b.on{background:var(--olive-soft);border-color:var(--olive)}
+.ak .chk b.on::after{content:"";position:absolute;left:5px;top:1px;width:4px;height:8px;border:solid var(--olive);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.ak .billed{border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--soft);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.ak .billed .door{margin-left:auto}
+.ak .pc{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ak .pc>div{border:1px solid var(--line2);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:3px;background:var(--card)}
+.ak .pc>div.on{border-color:var(--olive);background:var(--olive-soft)}
+.ak .pc b{color:var(--ink)} .ak .pc span{font-variant-numeric:tabular-nums;color:var(--ink)}
+.ak dl.fig{margin:0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.ak dl.fig>div{display:flex;justify-content:space-between;align-items:baseline;padding:9px 11px;border-bottom:1px solid var(--line);background:var(--card)}
+.ak dl.fig>div:last-child{border-bottom:0}
+.ak dl.fig dt{font-size:12px;color:var(--soft)} .ak dl.fig dd{margin:0;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.ak .subhead{font:700 14px/1.3 'Inter';color:var(--ink);margin:4px 0 -6px}
+/* phone window = full screen */
+.ak.phone{width:390px;max-width:100%;min-height:700px;display:flex;flex-direction:column;background:var(--card)}
+.ak.phone .wh{padding:14px 20px 6px}
+.ak.phone .wb{padding:10px 20px 16px;flex:1}
+.ak.phone .wf{padding:12px 20px 16px}
+.ak.phone .in,.ak.phone .btn{min-height:44px;height:44px}
+.ak .sbar{height:24px;display:flex;justify-content:space-between;align-items:center;padding:0 20px;font:600 11px/1 'Inter';color:var(--dim);background:var(--card)}
+/* sign-up page (StartColumn / AccountForm) */
+.ak.start{width:390px;max-width:100%;padding:12px 16px 24px;display:flex;flex-direction:column}
+.ak .sh{text-align:center;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:18px}
+.ak .sh h4{margin:0;font:700 32px/1.05 'Barlow Condensed','Arial Narrow',sans-serif;color:var(--ink)}
+.ak .sh p{margin:6px 0 10px;font-size:16px;color:var(--dim)}
+.ak .steps{display:flex;justify-content:center;align-items:center;gap:10px;font:700 12px/1 'Inter';letter-spacing:.05em;text-transform:uppercase;color:var(--dim)}
+.ak .steps i{width:32px;height:1px;background:var(--line2);display:block}
+.ak .steps .on{color:var(--ink)}
+.ak .sf{display:flex;flex-direction:column;gap:14px}
+.ak .sf .lb2{font:600 14px/1.3 'Inter';color:var(--soft);display:block;margin-bottom:6px}
+.ak .sf .in{height:48px;border-radius:10px;background:var(--card);font-size:16px;padding:0 14px}
+.ak .sf .hint{font-size:14px}
+.ak .sf .err{font-size:14px}
+.ak .pair2{display:flex;gap:8px}
+.ak .pair2 span{flex:1;min-height:44px;border:1px solid var(--line2);border-radius:8px;display:flex;align-items:center;justify-content:center;font:600 14px/1 'Inter';color:var(--soft);background:var(--card)}
+.ak .pair2 span.on{border:2px solid var(--olive);color:var(--ink)}
+.ak .bigbtn{min-height:48px;border-radius:10px;background:var(--cta);color:var(--cta-ink);font:700 16px/1 'Inter';display:flex;align-items:center;justify-content:center;margin-top:4px}
+.ak .sfoot{border-top:1px solid var(--line);margin-top:18px;padding-top:4px;text-align:center}
+.ak .sfoot span{display:inline-flex;min-height:44px;align-items:center;color:var(--olive);font-weight:600}
+.ak .callout{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:8px;padding:12px 14px;font-size:14px;color:var(--soft)}
+/* billing page */
+.ak.page{padding:22px 32px 26px}
+.ak .pgh .eye{font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.ak .pgh h4{margin:2px 0 18px;font:700 20px/1.2 'Inter'}
+.ak .kc{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:18px 20px}
+.ak .plan{display:grid;grid-template-columns:1.1fr 1fr;gap:24px;margin-bottom:28px}
+.ak .plan .eye,.ak .eye2{font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--soft);display:flex;gap:8px;align-items:center}
+.ak .chip{font:700 10px/1.4 'IBM Plex Mono',monospace;letter-spacing:.05em;border-radius:999px;padding:2px 8px;border:1px solid}
+.ak .chip.ok{color:var(--olive);border-color:rgba(52,102,42,.25);background:rgba(52,102,42,.07)}
+.ak .chip.warn{color:var(--amber);border-color:rgba(131,80,6,.3);background:rgba(131,80,6,.08)}
+.ak .plan h5{margin:6px 0 2px;font:750 20px/1.2 'Inter'}
+.ak .plan .price{margin:0;color:var(--soft);font-variant-numeric:tabular-nums}
+.ak .plan .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.ak .bar{height:10px;border-radius:5px;background:var(--line);overflow:hidden;margin:6px 0}
+.ak .bar i{display:block;height:100%;width:40%;background:var(--olive)}
+.ak .sect{margin-bottom:22px}
+.ak .sect h5{margin:0 0 10px;font:700 16px/1.2 'Inter'}
+.ak .ghost{border:1px dashed var(--line2);border-radius:8px;padding:12px 14px;color:var(--dim);font-size:12.5px}
+/* platform admin record */
+.ak .rtabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:10px 0 16px}
+.ak .rtabs span{padding:10px 14px;font-weight:600;color:var(--soft)}
+.ak .rtabs span.on{color:var(--olive);box-shadow:inset 0 -2px 0 var(--olive)}
+.ak .band{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.ak .band>div{background:var(--card);padding:14px 16px}
+.ak .band b{display:block;font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.ak .band span{font:700 24px/1.2 'Inter';font-variant-numeric:tabular-nums}
+.ak .hr{display:flex;align-items:center;gap:10px;margin:0 0 10px}
+.ak .hr h5{margin:0;font:700 16px/1.2 'Inter';flex:1}
+.ak .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 24px}
+.ak .facts .eye3{font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);display:block;margin-bottom:3px}
+.ak .facts span{font-size:14px;color:var(--ink)}
+.ak .pcall{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--soft);margin-bottom:12px}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:14px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted);margin:4px 0}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:48px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:200px;font:12.5px/1.5 var(--f-mono)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(520px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:16px;flex:1}
+dialog.note .nh button{font-size:22px;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px}
+</style>
+
+<div class="doc">
+<div class="eyebrow">GST/HST · Stage 1 · drawings · 2026-11-03</div>
+<h1>Where every buyer is: the billing address step</h1>
+<p class="lede">Before anyone pays us for the first time, we ask where they are billed: country, province and street address. This page draws where that question appears on each way of buying, what it looks like on a computer and a phone, what happens with a US address while US sales are closed, where the owner changes it later, and what platform staff see. No tax is charged and no price changes in this stage. All addresses are made-up examples. Everything is a proposal until you rule on the asks in the last tab.</p>
+
+<div class="tabs" role="tablist" id="tabs">
+  <button role="tab" aria-selected="true" data-t="p1">1 · Where it’s asked</button>
+  <button role="tab" aria-selected="false" data-t="p2">2 · The window</button>
+  <button role="tab" aria-selected="false" data-t="p3">3 · A US address</button>
+  <button role="tab" aria-selected="false" data-t="p4">4 · Coach Premium</button>
+  <button role="tab" aria-selected="false" data-t="p5">5 · Premium becomes a Club</button>
+  <button role="tab" aria-selected="false" data-t="p6">6 · Plan &amp; billing</button>
+  <button role="tab" aria-selected="false" data-t="p7">7 · Platform admin</button>
+  <button role="tab" aria-selected="false" data-t="p8">8 · Asks</button>
+</div>
+
+<!-- ============ 1 ============ -->
+<section class="pane" id="p1">
+  <h2>Asked once, at the first paid button, on every way of buying</h2>
+  <p>A club owner who has never paid sees one new window between choosing a plan and choosing monthly or yearly. After that, the address is on file and the step is skipped. <button class="mk ask" data-note="Ask 1. The address comes BEFORE the monthly-or-yearly question because Stage 2 will show the tax in that question, and the tax depends on the address. Putting it after would mean reworking the flow in Stage 2.">Ask 1</button></p>
+  <div class="flow"><span>Choose a plan</span><i>→</i><span class="n">Billing address (first time only)</span><i>→</i><span>Monthly or yearly?</span><i>→</i><span>Stripe’s payment page</span></div>
+  <div class="tw"><table class="t">
+    <thead><tr><th>How they buy</th><th>Where the address is asked</th><th>When it is on file already</th></tr></thead>
+    <tbody>
+      <tr><td><b>A club or tournament buys a plan</b><br><span class="muted">From Plan &amp; billing, the upgrade panel, or first-time setup</span></td><td>The Billing address window (tab 2), then the monthly-or-yearly question</td><td>Skipped. The monthly-or-yearly question shows one “Billed to …” line with Change (tab 2)</td></tr>
+      <tr><td><b>Founding Season: choose next season’s plan</b></td><td>The same window, then Stripe</td><td>Skipped</td></tr>
+      <tr><td><b>A coach buys, restarts or keeps Premium</b></td><td>A new third step on the sign-up page, “Address” (tab 4)</td><td>Skipped. One “Billed to …” line above Continue to checkout</td></tr>
+      <tr><td><b>A coach’s Premium portal becomes a Club</b></td><td>Inside the existing “Start your club” window, filled in from the coach’s home address (tab 5)</td><td>Still shown, filled in: a club’s address can differ from the coach’s home</td></tr>
+      <tr><td><b>Moving up a plan on a live subscription</b></td><td>Not asked. Every subscription started after this stage already has an address, and there are none from before</td><td>—</td></tr>
+      <tr><td><b>Free, comped and trial workspaces</b></td><td>Nothing changes until they press a paid button</td><td>—</td></tr>
+    </tbody></table></div>
+  <p class="muted" style="font-size:13.5px">Every paid button opens this window first, wherever the button sits, including the ones added later: if a buyer somehow reaches checkout without an address, the server refuses and the screen opens the window instead of showing an error. A build check fails if a new way to pay skips it.</p>
+  <div class="card"><h3>Who sees it</h3><ul>
+    <li><b>The owner only.</b> Plan &amp; billing is owner-only (ruled 10-29), so nobody else in the club sees or edits the address. This replaces the build prompt’s “others see it read only”: there is no screen for them to see it on.</li>
+    <li><b>A coach</b> enters their own home address. It covers every portal they pay for.</li>
+    <li><b>Platform staff</b> read it on the club record’s Money tab and never edit it there (tab 7).</li>
+  </ul></div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="pane" id="p2" hidden>
+  <h2>The window: six fields, one sentence of why</h2>
+  <p>A standard form window at the form width. Country comes first because it decides the next list (provinces or states) and the postal-code format. The required fields carry a plain asterisk. Apartment carries nothing. <button class="mk new" data-note="NEW. The shared window, form kind, 520 wide. Title and × pinned top, buttons pinned bottom, only the fields scroll. Fields are the window field (36 high on a computer, 44 on a phone). One lime button.">NEW</button></p>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>Desktop</b> · first time, filled in · 520 wide <button class="mk new" data-note="NEW window.">NEW</button></div>
+      <div class="fr w600"><div class="ak scrimbg"><div class="win">
+        <div class="wh"><div class="tb"><h4>Billing address</h4><div class="id">Riverdale Minor Ball</div></div><div class="x">×</div></div>
+        <div class="wb">
+          <p>Where your club is billed. We use it to work out the sales tax on your plan, and it prints on your invoices.</p>
+          <div class="fld"><span class="lb">Country *</span><span class="in sel">Canada</span></div>
+          <div class="fld"><span class="lb">Province or territory *</span><span class="in sel">Ontario</span></div>
+          <div class="fld"><span class="lb">Street address *</span><span class="in">120 Elm Street</span><p class="hint">A PO Box on its own can’t be used.</p></div>
+          <div class="fld"><span class="lb">Apartment, suite or unit</span><span class="in"></span></div>
+          <div class="fld"><span class="lb">City *</span><span class="in">Guelph</span></div>
+          <div class="fld"><span class="lb">Postal code *</span><span class="in" style="width:160px">N1H 4H2</span></div>
+        </div>
+        <div class="wf"><span class="fs"></span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Continue</span></span></div>
+      </div></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>Phone</b> · the window fills the screen · 390 wide</div>
+      <div class="fr w390"><div class="ak phone">
+        <div class="sbar"><span>9:41</span><span>●●●</span></div>
+        <div class="wh"><div class="back">←</div><div class="tb"><h4>Billing address</h4><div class="id">Riverdale Minor Ball</div></div></div>
+        <div class="wb">
+          <p>Where your club is billed. We use it to work out the sales tax on your plan, and it prints on your invoices.</p>
+          <div class="fld"><span class="lb">Country *</span><span class="in sel">Canada</span></div>
+          <div class="fld"><span class="lb">Province or territory *</span><span class="in sel">Ontario</span></div>
+          <div class="fld"><span class="lb">Street address *</span><span class="in">120 Elm Street</span><p class="hint">A PO Box on its own can’t be used.</p></div>
+          <div class="fld"><span class="lb">Apartment, suite or unit</span><span class="in"></span></div>
+          <div class="fld"><span class="lb">City *</span><span class="in">Guelph</span></div>
+          <div class="fld"><span class="lb">Postal code *</span><span class="in">N1H 4H2</span></div>
+        </div>
+        <div class="wf"><span class="fs"></span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Continue</span></span></div>
+      </div></div>
+      <p class="muted" style="font-size:13px;max-width:390px">The province and state lists open the phone’s own picker. <button class="mk ask" data-note="Ask 5. No ruling covers a form dropdown on a phone. Date fields already use the device's own picker on touch; a list of 13 provinces or 51 states is the same kind of thing.">Ask 5</button></p>
+    </div>
+  </div>
+
+  <h3>When something is wrong</h3>
+  <p>Each problem is one red line under its field, saying what to type instead. Errors appear when the owner presses Continue, not while typing.</p>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>Desktop</b> · two errors, fields only</div>
+      <div class="fr w600"><div class="ak" style="padding:18px 24px;background:var(--card)"><div class="wb" style="padding:0">
+        <div class="fld"><span class="lb">Street address *</span><span class="in bad">PO Box 412</span><p class="err">Enter a street address. A PO Box on its own can’t be a billing address.</p></div>
+        <div class="fld"><span class="lb">City *</span><span class="in">Guelph</span></div>
+        <div class="fld"><span class="lb">Postal code *</span><span class="in bad" style="width:160px">N1H 4H</span><p class="err">Enter a postal code like N1H 4H2.</p></div>
+      </div></div></div>
+    </div>
+    <div class="card" style="max-width:520px;margin:0">
+      <h3>What the check refuses</h3>
+      <ul>
+        <li>A missing country, province, street, city or postal code: “Enter your city.” and so on.</li>
+        <li>A province that doesn’t belong to the country (only possible if the country changes after a province was picked; the province resets instead).</li>
+        <li>A postal code in the wrong shape: Canada “A1A 1A1” (space optional); US “12345” or “12345-6789”.</li>
+        <li>A street line that is only a PO Box (“PO Box”, “P.O. Box”, “Box 12”, “CP 34”, “Case postale”). “120 Elm Street, Box 3” is accepted.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card"><h3>While saving, and when it goes wrong</h3><ul>
+    <li><b>Saving:</b> Continue reads “Saving…” and can’t be pressed twice. The address is saved before Stripe opens, so a buyer who leaves Stripe’s page and comes back is not asked again.</li>
+    <li><b>Saving fails:</b> one red sentence at the left of the footer, “We couldn’t save your address. Try again.”, and everything typed stays.</li>
+    <li><b>Closing with something typed:</b> ×, Cancel, Esc or Back asks “Keep writing” or “Discard” in the footer, as every form window does. A tap outside does nothing.</li>
+    <li><b>Changing the country:</b> street, unit and city stay; the province or state resets, and the postal code is checked again against the new country.</li>
+  </ul></div>
+
+  <h3>The next window, when the address is on file</h3>
+  <p>The monthly-or-yearly question gains one line naming where the plan is billed, with Change. It is the line Stage 2 will hang the tax on. <button class="mk res" data-note="RESTYLED. The shipped monthly-or-yearly question gains one bordered line above the two choices. Change closes the question and opens the Billing address window with the address filled in; Save brings the question back.">RESTYLED</button></p>
+  <div class="cap"><b>Desktop</b> · the shipped question, 416 wide</div>
+  <div class="fr" style="width:520px;max-width:100%"><div class="ak scrimbg"><div class="win q">
+    <div class="wh"><div class="tb"><h4>How would you like to pay for Club · Association?</h4></div></div>
+    <div class="wb">
+      <div class="billed newbox"><span>Billed to 120 Elm Street, Guelph, Ontario</span><span class="door">Change</span></div>
+      <div class="pc"><div class="on"><b>Monthly</b><span>$379 CAD / month</span><p class="hint">Billed every month.</p></div><div><b>Yearly</b><span>$3,790 CAD / year</span><p class="hint">Save $758 — 2 months free. Billed once a year.</p></div></div>
+    </div>
+    <div class="wf"><span class="fs"></span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Continue to checkout</span></span></div>
+  </div></div></div>
+  <p class="muted" style="font-size:13px">Club · Association list prices; the window reads them from the plan list as today.</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="pane" id="p3" hidden>
+  <h2>A US address: closed in production, ready on the dev site</h2>
+  <p>You ruled that nobody in the US is sold anything until the US payments work is done. So in production, choosing United States ends the step: the rest of the fields go away, the footer says why, and only Cancel is left. On the dev site one switch opens the US side so it can be walked. Opening US sales later flips that switch. <button class="mk ask" data-note="Ask 4. The house rule for a main action that can't go for a standing reason: the button is absent and the foot says why, in amber. A greyed button would suggest the owner can fix something inside the form.">Ask 4</button></p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>Production today</b> · US sales closed</div>
+      <div class="fr w600"><div class="ak scrimbg"><div class="win">
+        <div class="wh"><div class="tb"><h4>Billing address</h4><div class="id">Riverdale Minor Ball</div></div><div class="x">×</div></div>
+        <div class="wb">
+          <p class="same">Where your club is billed. We use it to work out the sales tax on your plan, and it prints on your invoices.</p>
+          <div class="fld"><span class="lb">Country *</span><span class="in sel">United States</span></div>
+          <div class="samebar">Nothing else is asked</div>
+        </div>
+        <div class="wf newbox"><span class="fs amber">We’re not selling in the United States yet.</span><span class="fe"><span class="btn out">Cancel</span></span></div>
+      </div></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>Dev site, and production once US sales open</b></div>
+      <div class="fr w600"><div class="ak scrimbg"><div class="win">
+        <div class="wh"><div class="tb"><h4>Billing address</h4><div class="id">Riverdale Minor Ball</div></div><div class="x">×</div></div>
+        <div class="wb">
+          <p class="same">Where your club is billed. We use it to work out the sales tax on your plan, and it prints on your invoices.</p>
+          <div class="fld"><span class="lb">Country *</span><span class="in sel">United States</span></div>
+          <div class="fld"><span class="lb">State *</span><span class="in sel">New York</span></div>
+          <div class="fld same"><span class="lb">Street address *</span><span class="in">88 Delaware Avenue</span><p class="hint">A PO Box on its own can’t be used.</p></div>
+          <div class="fld same"><span class="lb">Apartment, suite or unit</span><span class="in">Suite 400</span></div>
+          <div class="fld same"><span class="lb">City *</span><span class="in">Buffalo</span></div>
+          <div class="fld"><span class="lb">ZIP code *</span><span class="in" style="width:160px">14202</span></div>
+          <div class="chk newbox"><b class="on"></b><span>I confirm that Riverdale Minor Ball is located in the United States and is buying this subscription for use in the United States. *</span></div>
+        </div>
+        <div class="wf"><span class="fs"></span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Continue</span></span></div>
+      </div></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>The tick-box</h3>
+    <ul>
+      <li>Wording is the provisional text you approved, in the club’s name (“Riverdale Minor Ball is … and is buying”) or the coach’s own (“I am … and am buying”). It is saved with the date and a wording label, so the accountant’s replacement doesn’t lose what each buyer agreed to.</li>
+      <li>Pressing Continue without the tick shows one red line under it: “Tick the box to confirm you’re buying from the United States.”</li>
+      <li>The list says “State” and includes the District of Columbia. US territories are not listed (their own check comes later, per U4).</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="pane" id="p4" hidden>
+  <h2>Coach Premium: a third step, “Address”</h2>
+  <p>A coach buys Premium as themselves, so we ask for their home address. The sign-up page already runs in steps (Account, then Team). The address becomes a third step, so the Team step stays short on a phone. The Team step’s button becomes Next. <button class="mk ask" data-note="Ask 2. Putting six address fields under team name, sport and billing would make one long phone form. A third step keeps each screen to what fits.">Ask 2</button></p>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>Team step</b> · phone · the button changes <button class="mk res" data-note="RESTYLED: only the button text, Continue to checkout becomes Next, and the step row gains ADDRESS.">RESTYLED</button></div>
+      <div class="fr w390"><div class="ak start">
+        <div class="sh"><h4>Coach a team</h4><p>Premium Coaches Portal. $29/month or $290/year.</p><div class="steps"><span>Account</span><i></i><span class="on">Team</span><i></i><span class="newbox">Address</span></div></div>
+        <div class="sf">
+          <div><span class="lb2">Team name</span><span class="in">Guelph Royals U13</span></div>
+          <div><span class="lb2">Sport</span><span class="in sel">Baseball</span></div>
+          <div><span class="lb2">Billing</span><div class="pair2"><span class="on">$29/month</span><span>$290/year</span></div></div>
+          <div class="bigbtn newbox">Next</div>
+        </div>
+        <div class="sfoot"><span>Not now, go to Home</span></div>
+      </div></div>
+    </div>
+    <div>
+      <div class="cap"><b>Address step</b> · phone <button class="mk new" data-note="NEW step on the sign-up page. It uses the sign-up page's own fields (48 high, white), not the window's, as every sign-up step does.">NEW</button></div>
+      <div class="fr w390"><div class="ak start">
+        <div class="sh"><h4>Coach a team</h4><p>Premium Coaches Portal. $29/month or $290/year.</p><div class="steps"><span>Account</span><i></i><span>Team</span><i></i><span class="on">Address</span></div></div>
+        <div class="sf">
+          <p class="hint" style="margin:0">You buy Premium as yourself, so we ask for your home address. We use it only to work out sales tax, and it prints on your receipts.</p>
+          <div><span class="lb2">Country *</span><span class="in sel">Canada</span></div>
+          <div><span class="lb2">Province or territory *</span><span class="in sel">Ontario</span></div>
+          <div><span class="lb2">Street address *</span><span class="in">18 Oak Crescent</span></div>
+          <div><span class="lb2">Apartment, suite or unit</span><span class="in"></span></div>
+          <div><span class="lb2">City *</span><span class="in">Guelph</span></div>
+          <div><span class="lb2">Postal code *</span><span class="in">N1E 2K7</span></div>
+          <div class="bigbtn">Continue to checkout</div>
+        </div>
+        <div class="sfoot"><span>Back</span></div>
+      </div></div>
+    </div>
+    <div>
+      <div class="cap"><b>Keep or restart Premium</b> · address on file</div>
+      <div class="fr w390"><div class="ak start">
+        <div class="sh"><h4>Reactivate Premium</h4><p>Premium Coaches Portal. $29/month or $290/year.</p></div>
+        <div class="sf">
+          <div><span class="lb2">Billing</span><div class="pair2"><span class="on">$29/month</span><span>$290/year</span></div></div>
+          <div class="billed newbox" style="font-size:14px"><span>Billed to 18 Oak Crescent, Guelph, Ontario</span><span class="door">Change</span></div>
+          <div class="bigbtn">Continue to checkout</div>
+        </div>
+        <div class="sfoot"><span>Not now, go to Home</span></div>
+      </div></div>
+      <p class="muted" style="font-size:13px;max-width:390px">Change opens the same six fields in place, filled in. The sign-up page has no footer, so a US address while US sales are closed shows one amber line under Country, “We’re not selling in the United States yet.”, and Continue to checkout is absent.</p>
+    </div>
+  </div>
+  <div class="card"><h3>Moving between steps</h3><ul>
+    <li><b>Back</b> on the Address step returns to Team with everything kept; Next brings the address back as typed.</li>
+    <li><b>Continue to checkout</b> saves the address first (“Saving…”, can’t be pressed twice). If saving fails, one red line above the button, “We couldn’t save your address. Try again.”, and nothing typed is lost.</li>
+    <li>A coach who leaves Stripe’s page and comes back skips the Address step: it is on file.</li>
+  </ul></div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="pane" id="p5" hidden>
+  <h2>Premium becomes a Club: the club’s address joins the window it already has</h2>
+  <p>The coach is already in the “Start your club” window, typing the club’s name. The club needs its own billing address, so the same window asks for it, filled in from the coach’s home address. Most small clubs will just press Continue. <button class="mk ask" data-note="Ask 6. One window instead of two. The body scrolls between the pinned title and buttons, so the extra fields don't push the charge out of reach.">Ask 6</button></p>
+  <div class="cap"><b>Desktop</b> · the shipped window, 520 wide <button class="mk res" data-note="RESTYLED: the address block is new inside the existing form window. The club name field and the charge summary are unchanged.">RESTYLED</button></div>
+  <div class="fr w600"><div class="ak scrimbg"><div class="win">
+    <div class="wh"><div class="tb"><h4>Start your club</h4><div class="id">Guelph Royals U13</div></div><div class="x">×</div></div>
+    <div class="wb">
+      <div class="fld"><span class="lb">Club name *</span><span class="in ph">Your club’s name</span></div>
+      <div class="newbox" style="display:flex;flex-direction:column;gap:14px;padding:4px 0">
+        <p class="subhead">Club billing address</p>
+        <p class="hint">We filled in your home address. Change it if the club has its own.</p>
+        <div class="fld"><span class="lb">Country *</span><span class="in sel">Canada</span></div>
+        <div class="fld"><span class="lb">Province or territory *</span><span class="in sel">Ontario</span></div>
+        <div class="fld"><span class="lb">Street address *</span><span class="in">18 Oak Crescent</span></div>
+        <div class="fld"><span class="lb">Apartment, suite or unit</span><span class="in"></span></div>
+        <div class="fld"><span class="lb">City *</span><span class="in">Guelph</span></div>
+        <div class="fld"><span class="lb">Postal code *</span><span class="in" style="width:160px">N1E 2K7</span></div>
+      </div>
+      <dl class="fig"><div><dt>Due today</dt><dd>$190.00 CAD</dd></div><div><dt>First charge, December 3, 2026</dt><dd>$219 CAD / month</dd></div></dl>
+    </div>
+    <div class="wf"><span class="fs">Next, you add a payment method on our secure payment page.</span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Continue to checkout</span></span></div>
+  </div></div></div>
+  <p class="muted" style="font-size:13px">The Club list price; “Due today” is drawn for shape only. The coach’s own home address stays theirs; changing the club’s here doesn’t change it.</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="pane" id="p6" hidden>
+  <h2>Plan &amp; billing: one line on the plan card, and a way to change it</h2>
+  <p>After the first purchase the owner can read the address on the plan card and change it with a button beside “Payment method &amp; invoices”. Nothing else on the page moves. Before anything is bought, nothing new shows. <button class="mk ask" data-note="Ask 3. Stripe's own billing page also lets the owner change the address, and that change now comes back to us. This button keeps it on our own page, where Stage 2's tax line will sit.">Ask 3</button></p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="cap"><b>After</b> · the whole page, desktop, 960 reading column</div>
+  <div class="scroll"><div class="fr w960"><div class="ak page">
+    <div class="pgh"><div class="eye">Organization</div><h4>Plan &amp; billing</h4></div>
+    <div class="kc plan">
+      <div>
+        <div class="eye">Your plan <span class="chip ok">ACTIVE</span></div>
+        <h5>Club · Association</h5>
+        <p class="price">$379 CAD / month</p>
+        <p class="hint">Renews December 3, 2026</p>
+        <p class="hint newbox">Billing address: 120 Elm Street, Guelph, Ontario N1H 4H2</p>
+        <div class="acts"><span class="btn out">Payment method &amp; invoices</span><span class="btn out newbox">Billing address</span></div>
+      </div>
+      <div class="same" style="border-left:1px solid var(--line);padding-left:24px">
+        <div class="eye">What’s in use</div>
+        <p style="margin:6px 0 0;font:750 16px/1.2 Inter">18 of 30 teams</p>
+        <div class="bar"><i></i></div>
+        <p class="hint">Room for 12 more teams on this plan.</p>
+      </div>
+    </div>
+    <div class="samebar">The rest of the page is unchanged</div>
+    <div class="sect same"><h5>Change plan</h5><div class="ghost">The plan table, unchanged</div></div>
+    <div class="sect same"><h5>What’s included</h5><div class="ghost">The included list, unchanged</div></div>
+    <div class="sect same" style="margin:0"><h5>Reduce or cancel</h5><div class="ghost">Unchanged</div></div>
+  </div></div></div>
+  <div class="card"><h3>How it behaves</h3><ul>
+    <li><b>Billing address</b> opens the tab 2 window with the address filled in; its button reads Save. A saved change shows the save pill, as other saves do.</li>
+    <li>The same line and button show on a coach’s own Plan &amp; billing, titled “Your home address” in the window.</li>
+    <li>An owner who changes the country between Canada and the US after paying is saved, and flagged for staff review rather than applied silently (your Ask 4 ruling). The owner sees no difference.</li>
+    <li>An edit made on Stripe’s own billing page comes back to this line. If it isn’t a valid address (a PO Box, say), we keep the old one and flag it for review.</li>
+  </ul></div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="pane" id="p7" hidden>
+  <h2>Platform admin: a read-only block on the Money tab</h2>
+  <p>The club record staff already open gains one section under the subscription. It never edits. A flag shows as an amber chip on the section heading, with one sentence saying what disagrees.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>No flag</b> · Canada · desktop <button class="mk new" data-note="NEW section on the shipped Money tab. Heading above the card (the record's rule); facts are eyebrow-over-value, as the record's summary is.">NEW</button></div>
+      <div class="scroll"><div class="fr w760"><div class="ak page" style="padding:18px 24px">
+        <div class="rtabs same"><span>Story</span><span class="on">Money</span><span>Access</span><span>People &amp; tournaments</span></div>
+        <div class="band same"><div><b>Plan</b><span>$379</span></div><div><b>Paid to date</b><span>$758</span></div><div><b>Next charge</b><span>Dec 3</span></div><div><b>Refunds</b><span>$0</span></div></div>
+        <div class="sect same"><h5>The subscription</h5><div class="ghost">Our record beside Stripe, unchanged</div></div>
+        <div class="samebar">The tab above is unchanged</div>
+        <div class="newbox" style="padding:2px">
+          <div class="hr"><h5>Billing address</h5></div>
+          <div class="kc"><div class="facts">
+            <div><span class="eye3">Address</span><span>120 Elm Street, Guelph, Ontario N1H 4H2</span></div>
+            <div><span class="eye3">Country</span><span>Canada</span></div>
+            <div><span class="eye3">Confirmed</span><span>November 3, 2026</span></div>
+            <div><span class="eye3">Card country</span><span>Canada</span></div>
+          </div></div>
+        </div>
+      </div></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>Flagged</b> · a US address, a Canadian card</div>
+      <div class="scroll"><div class="fr w760"><div class="ak page" style="padding:18px 24px">
+        <div class="samebar">The tab above is unchanged</div>
+        <div class="newbox" style="padding:2px">
+          <div class="hr"><h5>Billing address</h5><span class="chip warn">NEEDS REVIEW</span></div>
+          <div class="pcall">The address is in the United States, but the card was issued in Canada. Until this is looked at, the club is treated as Canadian.</div>
+          <div class="kc"><div class="facts">
+            <div><span class="eye3">Address</span><span>88 Delaware Avenue, Suite 400, Buffalo, New York 14202</span></div>
+            <div><span class="eye3">Country</span><span>United States</span></div>
+            <div><span class="eye3">Confirmed</span><span>November 3, 2026</span></div>
+            <div><span class="eye3">US declaration</span><span>Ticked November 3, 2026 · wording 2026-11, provisional</span></div>
+            <div><span class="eye3">Card country</span><span>Canada</span></div>
+            <div><span class="eye3">Payout country</span><span>Canada</span></div>
+          </div></div>
+        </div>
+      </div></div></div>
+    </div>
+  </div>
+  <div class="card"><h3>Notes</h3><ul>
+    <li><b>Payout country</b> shows only for a club that takes online payments; <b>Card country</b> only once a card is on file.</li>
+    <li>For a coach’s portal the heading reads “Billing address · the coach’s own”, because the address belongs to the person.</li>
+    <li>Nothing here clears a flag. It clears itself when the facts agree again (the owner fixes the address or the card). A staff “looked at it” button belongs with Stage 3’s tax record, not here. Because US sales are closed, a flag can only appear on the dev site until they open.</li>
+    <li>Reasons a flag shows: a US address with a card or payout country outside the US; a Canadian address with a US card or payout country; a country changed after paying; an invalid edit made on Stripe’s billing page.</li>
+  </ul></div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="pane" id="p8" hidden>
+  <h2>Asks</h2>
+  <p class="muted">Already applied from the design check: the read-only view for non-owners is gone (Plan &amp; billing is owner-only); the US hold removes the button and says why in the footer instead of greying it; required fields carry a plain asterisk and Apartment carries nothing; window fields are 36 high on a computer and 44 on a phone; the sign-up step uses the sign-up page’s own fields; the staff section’s heading sits above its card. From the flow check: saving, a failed save, closing with something typed, changing the country, and moving back between sign-up steps are now written down (tabs 2 and 4), and tab 1 says every paid button, present or future, opens the window first. Pick one per ask. The green row is my recommendation. Notes are optional.</p>
+  <div id="asks"></div>
+  <div class="paste"><div class="row"><button class="btn-d pri" id="mk">Make my answers</button><button class="btn-d" id="cp">Copy</button><span class="muted" id="cpmsg"></span></div>
+    <textarea id="out" readonly aria-label="Your answers" placeholder="Press “Make my answers”, then copy this text back into the chat."></textarea></div>
+</section>
+</div>
+
+<dialog class="note" id="nd"><div class="nh"><h3>About this</h3><button id="nx" aria-label="Close">×</button></div><div class="nb" id="nt"></div></dialog>
+
+<script>
+(function(){
+  var ASKS=[
+   {id:1,t:"For a club, where does the address step sit?",
+    r:"Tab 1 and 2. Stage 2 shows tax in the monthly-or-yearly question, so the address has to exist before it opens.",
+    o:[["A","Its own window before the monthly-or-yearly question, first time only; after that, a “Billed to … Change” line in the question","rec"],["B","The six fields inside the monthly-or-yearly question itself (it becomes a long form every time)",""]]},
+   {id:2,t:"For a coach buying Premium, where does it sit?",
+    r:"Tab 4. The sign-up page already runs in steps.",
+    o:[["A","A third step, “Address”, after Team; the Team step’s button becomes Next","rec"],["B","The six fields at the bottom of the Team step",""]]},
+   {id:3,t:"Where does the owner read and change it after paying?",
+    r:"Tab 6. Stripe’s own billing page can change it too, and that change now comes back to us.",
+    o:[["A","One line on the plan card, and a “Billing address” button beside “Payment method & invoices”","rec"],["B","Nowhere on our page; only at the next checkout and on Stripe’s billing page",""]]},
+   {id:4,t:"While US sales are closed, what does choosing United States do?",
+    r:"Tab 3. A standing reason means the button is absent and the footer says why.",
+    o:[["A","The other fields go away; the footer says “We’re not selling in the United States yet.” and only Cancel is left","rec"],["B","All the fields stay; the footer says the same and the button is absent",""]]},
+   {id:5,t:"On a phone, how do the province and state lists open?",
+    r:"Tab 2. No ruling covers a form dropdown on a phone; date fields already use the phone’s own picker.",
+    o:[["A","The phone’s own picker","rec"],["B","The product’s menu sheet, as the toolbar’s pick-one lists do",""]]},
+   {id:6,t:"When a Premium portal becomes a Club, where is the club’s address asked?",
+    r:"Tab 5. One window, filled in from the coach’s home address.",
+    o:[["A","In the existing “Start your club” window, under the club name, filled in from the coach’s home address","rec"],["B","A separate Billing address window after “Start your club”",""]]}
+  ];
+  var host=document.getElementById('asks');
+  ASKS.forEach(function(a){
+    var d=document.createElement('div');d.className='ask';
+    var h='<h3><span class="no">Ask '+a.id+'</span>'+a.t+'</h3><p class="rides">'+a.r+'</p><div class="opts">';
+    a.o.forEach(function(o){h+='<label class="'+o[2]+'"><input type="radio" name="a'+a.id+'" value="'+o[0]+'"'+(o[2]?' checked':'')+'><span><b>'+o[0]+'.</b> '+o[1]+'</span></label>';});
+    h+='</div><textarea id="n'+a.id+'" aria-label="Note for ask '+a.id+'" placeholder="Note (optional)"></textarea>';
+    d.innerHTML=h;host.appendChild(d);
+  });
+  var tabs=document.getElementById('tabs');
+  tabs.addEventListener('click',function(e){var b=e.target.closest('button[data-t]');if(!b)return;
+    [].forEach.call(tabs.querySelectorAll('button'),function(x){x.setAttribute('aria-selected',x===b?'true':'false')});
+    [].forEach.call(document.querySelectorAll('section.pane'),function(s){s.hidden=s.id!==b.getAttribute('data-t')});
+    window.scrollTo(0,0);});
+  document.addEventListener('click',function(e){
+    var v=e.target.closest('.sw button');
+    if(v){var val=v.getAttribute('data-v');document.body.setAttribute('data-view',val);
+      [].forEach.call(document.querySelectorAll('.sw button'),function(x){x.setAttribute('aria-pressed',x.getAttribute('data-v')===val?'true':'false')});return;}
+    var m=e.target.closest('.mk[data-note]');
+    if(m){document.getElementById('nt').textContent=m.getAttribute('data-note');var d=document.getElementById('nd');if(d.showModal)d.showModal();}
+  });
+  document.getElementById('nx').onclick=function(){document.getElementById('nd').close()};
+  document.getElementById('mk').onclick=function(){
+    var L=['GST/HST Stage 1 drawings, my answers:'];
+    ASKS.forEach(function(a){var c=document.querySelector('input[name=a'+a.id+']:checked');var n=document.getElementById('n'+a.id).value.trim();
+      L.push('Ask '+a.id+': '+(c?c.value:'(none)')+(n?' — '+n:''));});
+    document.getElementById('out').value=L.join('\n');};
+  document.getElementById('cp').onclick=function(){
+    var t=document.getElementById('out');var msg=document.getElementById('cpmsg');
+    function sel(){t.select();msg.textContent='Selected. Press Ctrl+C.';}
+    if(navigator.clipboard&&t.value){navigator.clipboard.writeText(t.value).then(function(){msg.textContent='Copied.'},sel);}else{sel();}};
+})();
+</script>

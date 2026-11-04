@@ -200,6 +200,21 @@
     "indexdef": "CREATE INDEX basic_coach_teams_workspace_idx ON public.basic_coach_teams USING btree (team_workspace_id)"
   },
   {
+    "tablename": "billing_locations",
+    "indexname": "billing_locations_one_per_org",
+    "indexdef": "CREATE UNIQUE INDEX billing_locations_one_per_org ON public.billing_locations USING btree (org_id) WHERE (org_id IS NOT NULL)"
+  },
+  {
+    "tablename": "billing_locations",
+    "indexname": "billing_locations_one_per_user",
+    "indexdef": "CREATE UNIQUE INDEX billing_locations_one_per_user ON public.billing_locations USING btree (user_id) WHERE (user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "billing_locations",
+    "indexname": "billing_locations_pkey",
+    "indexdef": "CREATE UNIQUE INDEX billing_locations_pkey ON public.billing_locations USING btree (id)"
+  },
+  {
     "tablename": "billing_retained_records",
     "indexname": "billing_retained_records_intent_id_idx",
     "indexdef": "CREATE INDEX billing_retained_records_intent_id_idx ON public.billing_retained_records USING btree (intent_id)"

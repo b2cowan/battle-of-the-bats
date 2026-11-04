@@ -13,6 +13,7 @@
  */
 import type { OrgPlan } from './types';
 import { PLAN_CONFIG } from './plan-config';
+import { BILLING_ADDRESS_REQUIRED } from './billing-location';
 
 /** The plans a panel can be opened for. */
 const PANEL_PLANS = ['tournament_plus', 'league', 'club', 'team'] as const;
@@ -48,7 +49,9 @@ export type PlanUpgradeResult =
   /** The plan was applied at once (Founding Season, or the dev mock): nothing to leave for. */
   | ({ applied: true; foundingSeason?: boolean; compUntil?: string } & Retention)
   /** Stripe's checkout — the caller leaves for it. */
-  | { applied?: false; url: string };
+  | { applied?: false; url: string }
+  /** No billing address on file (GST/HST Stage 1): the caller opens the Billing address window, then asks again. */
+  | { applied?: false; addressRequired: true };
 
 /** Ask for the plan. Throws with the server's own words when it refuses (owner-only, a gated plan, …). */
 export async function requestPlanUpgrade(input: {
@@ -63,8 +66,9 @@ export async function requestPlanUpgrade(input: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
-  const data = await res.json().catch(() => ({})) as { applied?: boolean; url?: string; error?: string } & Retention
+  const data = await res.json().catch(() => ({})) as { applied?: boolean; url?: string; error?: string; code?: string } & Retention
     & { foundingSeason?: boolean; compUntil?: string };
+  if (!res.ok && data.code === BILLING_ADDRESS_REQUIRED) return { addressRequired: true };
   if (!res.ok) throw new Error(data.error ?? 'Checkout failed');
   if (data.applied) return { ...data, applied: true };
   if (!data.url) throw new Error('Checkout did not return a destination.');

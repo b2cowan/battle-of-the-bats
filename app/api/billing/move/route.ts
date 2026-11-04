@@ -7,6 +7,7 @@ import { writeOrgBillingAudit } from '@/lib/billing-retention';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
 import { ownPlanOf } from '@/lib/entitlement-grants';
+import { billingAddressFromBody, requireBillingLocation } from '@/lib/billing-location-server';
 
 /**
  * The move between plans — one subscription, never a second checkout (Ask 4, D7; A06).
@@ -45,7 +46,7 @@ export const GET = withObservability(async (req: Request) => {
 }, { route: '/api/billing/move' });
 
 export const POST = withObservability(async (req: Request) => {
-  const body = await req.json().catch(() => ({})) as { orgSlug?: unknown; planKey?: unknown; prorationDate?: unknown; clubName?: unknown };
+  const body = await req.json().catch(() => ({})) as { orgSlug?: unknown; planKey?: unknown; prorationDate?: unknown; clubName?: unknown; billingAddress?: unknown };
   const authorized = await authorizeMove(typeof body.orgSlug === 'string' ? body.orgSlug : undefined);
   if (!authorized.ok) return authorized.response;
   const { org, actor } = authorized;
@@ -54,6 +55,16 @@ export const POST = withObservability(async (req: Request) => {
   if (!toPlan) return NextResponse.json({ error: 'Choose a plan to move to.', code: 'not_a_move' }, { status: 400 });
   const gated = await refuseIfGated(toPlan);
   if (gated) return gated;
+
+  // GST/HST Stage 1: a move UP charges today, so the buyer's billing address must be on file (a safety net: every subscription
+  // started after this stage already has one). A move up from Premium makes the portal the club, so the buyer is the CLUB: the
+  // "Start your club" window sends its address with the name, saved to the club's own row first. A move down charges nothing.
+  if (moveDirection(ownPlanOf(org), toPlan) === 'up') {
+    const clubName = ownPlanOf(org) === 'team' && typeof body.clubName === 'string' ? body.clubName.trim() : null;
+    const buyer = { kind: 'org' as const, orgId: org.id, name: clubName || org.name, stripeCustomerId: org.stripeCustomerId ?? null };
+    const located = await requireBillingLocation(buyer, clubName ? billingAddressFromBody(body.billingAddress) : null);
+    if (!located.ok) return located.response;
+  }
 
   const prorationDate = typeof body.prorationDate === 'number' ? Math.floor(body.prorationDate) : undefined;
   // Only a Premium coach's portal becoming the club uses the name (and is refused without one); every other move ignores it.

@@ -261,6 +261,8 @@ describe('the body-identified guard (public writes the proxy cannot see)', () =>
    */
   const ACTOR_IDENTIFIED_WRITES = [
     'app/api/events/league/route.ts',
+    // GST/HST Stage 1: the save names its org only in the body, and the demo organizer holds the billing power.
+    'app/api/billing/location/route.ts',
   ] as const;
 
   for (const routeFile of ACTOR_IDENTIFIED_WRITES) {
