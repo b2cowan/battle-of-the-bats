@@ -58,11 +58,13 @@ describe('2 · the three public surfaces draw the one list', () => {
   it('the season page: its header chip is the row’s tag, none when finished; the retired words are gone (9f·3, 9f·4)', () => {
     const page = readCode('app/[orgSlug]/league/[seasonSlug]/page.tsx');
     assert.match(page, /const chip = publicSeasonState\(season, today\);/);
-    assert.match(page, /\{chip && \(/);
-    assert.match(page, /\{finished && 'This season has concluded\.'\}/);
-    assert.doesNotMatch(page, /STATUS_LABEL|Season active|Season complete|'Archived'|has been archived/);
-    // The link was already right: "Final standings →" once completed, "Standings →" while running.
-    assert.match(page, /\{finished \? 'Final standings →' : 'Standings →'\}/);
+    assert.match(page, /const chipRow = chip && \(/);
+    // "This season has concluded." moved from the grey box to the line under the title (§0k), built by seasonDatesLine;
+    // tests/unit/house-league-public-season-page.test.ts pins the line and the rest of the season shape.
+    assert.match(page, /const datesLine = seasonDatesLine\(season, today\);/);
+    assert.doesNotMatch(page, /STATUS_LABEL|Season active|Season complete|'Archived'|has been archived|currently active/);
+    // The "Final standings →" / "Standings →" button gave way to each age group's Full table link (§0k).
+    assert.doesNotMatch(page, /Final standings →|'Standings →'/);
   });
   it('the site home: every live season is a row', () => {
     assert.match(readCode('lib/club-home-data.ts'), /seasons: \(await withEarlyBird\(liveLeagueSeasons\(publicLeagueSeasons\), today\)\)\.map/);

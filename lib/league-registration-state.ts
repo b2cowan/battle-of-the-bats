@@ -61,6 +61,17 @@ export function takesSignups(season: RegDated, nowWall: string = clubWallClock()
 }
 
 /**
+ * Which page the season's public address shows (House league §0k P1, owner 2026-11-04): the sign-up page while the form
+ * opens soon or takes sign-ups, and the season's own page — its dates, its standings, its schedule — from the day
+ * registration closes (the club closed it, or its close date passed), through playing, ended and finished.
+ */
+export type SeasonPageShape = 'signup' | 'season';
+export function seasonPageShape(season: RegDated, nowWall: string = clubWallClock()): SeasonPageShape {
+  const state = registrationState(season, nowWall);
+  return state === 'opensAhead' || state === 'open' ? 'signup' : 'season';
+}
+
+/**
  * Does the public side promote the early bird for this season? While the form takes sign-ups, and while it is still
  * ahead of opening (families see the discount before the door opens: that is when it entices), but not once registration
  * is closed, and not when the form would open only after the early-bird day (nobody could sign up at that price).

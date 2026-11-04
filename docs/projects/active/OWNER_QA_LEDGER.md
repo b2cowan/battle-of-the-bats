@@ -27631,3 +27631,16 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **Owner calls open with it:** the free-plan Reopen refusal tells a club whose holder is open for registration to "Complete it first", which that season can't do yet (accepted copy kept unless ruled otherwise).
 <!-- /§449 -->
+
+## §451 · House League · Public season page owner walk — **from the day registration closes a season's public page drops the price, dates and spots for one dates line and each age group's top three (Standings, Final standings only once completed), a finished season reads "This season has concluded. It ran …" with no chip, an old season's page names the club's newer season taking sign-ups (one, two or none), and "Email me my link" stays in every state**
+<!-- §451 -->
+**Built + reviewed 2026-11-04:** Parts 1–5, `/review` and the `/docs` pass of [HOUSE_LEAGUE_PUBLIC_SEASON_PAGE_BUILD_PROMPT.md](HOUSE_LEAGUE_PUBLIC_SEASON_PAGE_BUILD_PROMPT.md) (Progress block has every detail). No migration. Plan `HOUSE_LEAGUE_STAGE9_PLAN.md` §0k. §450 is reserved for the 9f-2 walk.
+
+**The walk (checkable):** https://claude.ai/artifact/XBVRrJDBkK7uksrfX6CyS1 (source [HOUSE_LEAGUE_PUBLIC_SEASON_PAGE_WALK.html](HOUSE_LEAGUE_PUBLIC_SEASON_PAGE_WALK.html)). One purpose, 20 steps in six parts: A taking sign-ups looks as it did (2) · B registration closed (3) · C playing: each age group's top three (5) · D ended and finished (3) · E the newer season's card (4) · F on a phone (3). Fixture `.probe/season-page-walk/fixture.mjs` (dev only; three throwaway clubs, every page public; `--reset` removes them).
+
+**Known before the walk:** dates fixed for a walk before Dec 12, 2026; three-or-more newer seasons, one-date and one-day seasons, and a season stuck on "Registration closed" past its last day are proved by tests, not walked.
+
+**Result 2026-11-04: PASSED 20/20** (A 2/2 · B 3/3 · C 5/5 · D 3/3 · E 4/4 · F 3/3). Afterwards the standings card's "Full table →" link was set to 14px (it had inherited 16px) — worth a glance on the next look at C.
+
+**Owner calls: CLOSED 2026-11-04, all three left as built** — the dates line above the club's description; "It started {date}." on a finished season with only a start day; the card above the status chip (P3's placement).
+<!-- /§451 -->

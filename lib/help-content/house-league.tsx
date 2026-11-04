@@ -1603,14 +1603,12 @@ const houseLeagueHelp: HelpPageContent = {
       id: 'public-page',
       group: 'Running the season',
       heading: 'Sharing the public season page',
-      summary: 'Once a season leaves Getting ready it gets a public page, and your club’s pages list every live season.',
-      keywords: ['public page', 'public url', 'share', 'registration link', 'opens', 'closed', 'price range', 'early bird', 'early bird discount', 'early bird ends', 'save', 'discount', 'running now', 'playing now', 'ended', 'final standings', 'past seasons', 'season has concluded'],
-      searchText: 'public season page url share registration link schedule standings view public page getting ready no public page league page running now registration open registration closed starts playing now ended final standings only once completed this season has concluded past seasons club home open now every live season early bird shown to families save $20 discount line on the season row ends in days countdown last week price today regular price after the early-bird date save up to',
+      summary: 'Once a season leaves Getting ready it gets a public page: a sign-up page while registration is open, and a season page with dates and standings once it closes.',
+      keywords: ['public page', 'public url', 'share', 'registration link', 'opens', 'closed', 'price range', 'early bird', 'early bird discount', 'early bird ends', 'save', 'discount', 'running now', 'playing now', 'ended', 'final standings', 'past seasons', 'season has concluded', 'standings', 'full table', 'season dates', 'taking sign-ups', 'newer season', 'old season link', 'bookmark'],
+      searchText: 'public season page url share registration link schedule standings view public page getting ready no public page league page running now registration open registration closed starts playing now ended final standings only once completed this season has concluded past seasons club home open now every live season early bird shown to families save $20 discount line on the season row ends in days countdown last week price today regular price after the early-bird date save up to registration closes price spots age groups gone season dates line runs ran it ran first three teams each age group first place bold full table standings start with the first score no scores yet schedule button standings off schedule not published not listed taking sign-ups at this club newer season card see the house league last season bookmark already signed up email me my link',
       content: (
         <>
-          <p>A season has no public page while it&apos;s <strong>Getting ready</strong>. Once you open registration, a <strong>View public page</strong> button appears at the top of the season&apos;s page. That page is where families register and, later, follow the schedule and standings; share its link directly.</p>
-          <p>Your club&apos;s house league page lists <strong>every</strong> live season under <strong>Running now</strong>, newest first, each labelled by what is happening: <strong>Opens</strong> and its date, <strong>Registration open</strong>, <strong>Closed</strong> and its date (when the close date has passed) or <strong>Registration closed</strong> (when you closed it), <strong>Starts</strong> and its first day, <strong>Playing now</strong>, or <strong>Ended</strong> and its last day once the season&apos;s dates have passed but you haven&apos;t completed it yet. The season&apos;s own page shows the same label at the top. Each row has its own links (<strong>Register</strong>, <strong>Schedule</strong>, <strong>Standings</strong>, <strong>Season page</strong>). Finished seasons sit below under <strong>Past seasons</strong>, with no label; their page says <em>This season has concluded.</em> and the standings page is titled <strong>Final standings</strong>, which it is only once you complete the season. The season&apos;s own page shows families the price range and each division&apos;s note for families, and never says who closed registration. Your club&apos;s home page lists every live season too, and a season that is taking registrations also shows under <strong>Open now</strong>.</p>
-          <p>While a season&apos;s early bird is running, families see it before they register. Its row on your club&apos;s pages carries one line, such as <strong>Save $20 · early bird through Oct 31</strong>, which counts down (<strong>ends in 6 days</strong>, <strong>ends tomorrow</strong>, <strong>ends today</strong>) in its last week. On the season&apos;s own page, the price at the top leads with what a child pays today, and each division with an early amount shows <strong>$145 · Save $20</strong> with the date and the regular price under it. It says <strong>Save up to</strong> when the saving differs by division or a division has no early amount. The day after the early-bird date, all of it goes back to the regular prices.</p>
+          <p>A season has no public page while it&apos;s <strong>Getting ready</strong>. Once you open registration, a <strong>View public page</strong> button appears at the top of the season&apos;s page; share its link directly. The page changes shape when registration closes: before, it sells the season; after, it follows it.</p>
         </>
       ),
     },
@@ -1637,3 +1635,47 @@ const houseLeagueHelp: HelpPageContent = {
 };
 
 export default houseLeagueHelp;
+      subtopics: [
+        {
+          id: 'public-page-listed',
+          title: 'Where families find your seasons',
+          content: (
+            <>
+              <p>Your club&apos;s house league page lists <strong>every</strong> live season under <strong>Running now</strong>, newest first, each labelled by what is happening:</p>
+              <ul>
+                <li><strong>Opens</strong> and its date, then <strong>Registration open</strong>.</li>
+                <li><strong>Closed</strong> and its date when the close date has passed, or <strong>Registration closed</strong> when you closed it.</li>
+                <li><strong>Starts</strong> and its first day, then <strong>Playing now</strong>.</li>
+                <li><strong>Ended</strong> and its last day once the season&apos;s dates have passed but you haven&apos;t completed it yet.</li>
+              </ul>
+              <p>The season&apos;s own page shows the same label at the top. Each row has its own links (<strong>Register</strong>, <strong>Schedule</strong>, <strong>Standings</strong>, <strong>Season page</strong>). Finished seasons sit below under <strong>Past seasons</strong>, with no label. Your club&apos;s home page lists every live season too, and a season that is taking registrations also shows under <strong>Open now</strong>.</p>
+            </>
+          ),
+        },
+        {
+          id: 'public-page-signup',
+          title: 'The season page while registration is open',
+          content: (
+            <>
+              <p>From the day registration opens until it closes, the season&apos;s page is a sign-up page: the price range, the registration dates, each age group with its spots and your note for families, and <strong>Register now</strong>.</p>
+              <p>While the early bird is running, families see it before they register. The season&apos;s row on your club&apos;s pages carries one line, such as <strong>Save $20 · early bird through Oct 31</strong>, which counts down (<strong>ends in 6 days</strong>, <strong>ends tomorrow</strong>, <strong>ends today</strong>) in its last week. On the season&apos;s page, the price at the top leads with what a child pays today, and each age group with an early amount shows <strong>$145 · Save $20</strong> with the date and the regular price under it. It says <strong>Save up to</strong> when the saving differs by age group or one has no early amount. The day after the early-bird date, all of it goes back to the regular prices.</p>
+            </>
+          ),
+        },
+        {
+          id: 'public-page-season',
+          title: 'The season page once registration closes',
+          content: (
+            <>
+              <p>From the day registration closes, whether you closed it or its close date passed, the page stops describing a purchase. The price, the registration dates and the age groups&apos; spots are gone, and one line under the title gives the season&apos;s dates, such as <em>Runs May 2 to October 25, 2026.</em> (<em>Ran</em> once its last day has passed).</p>
+              <HelpDefs>
+                <HelpDef term="Standings">Once a game has a score, the page shows each age group&apos;s first three teams, first place in bold, with <strong>Full table →</strong> to that age group on the standings page. Before any score there is no table, and <strong>Schedule</strong> is the one button. An age group that keeps no standings, or whose schedule isn&apos;t published, is not listed.</HelpDef>
+                <HelpDef term="Final standings">The same band takes this title only once you complete the season, as the standings page does.</HelpDef>
+                <HelpDef term="A finished season">No label at the top, and the line reads <em>This season has concluded. It ran May 2 to October 25, 2026.</em></HelpDef>
+                <HelpDef term="A newer season">On a season past its last day, or finished, a slim card above the title names your newer season that is taking sign-ups today, with a button to its page. When two or more are, it names them and links to your house league page. When none is, there is no card. A family arriving from last year&apos;s link finds this year&apos;s.</HelpDef>
+              </HelpDefs>
+              <p><strong>Already signed up? Email me my link</strong> stays on the page in every state, so a family who still owes can reach their registration after the season.</p>
+            </>
+          ),
+        },
+      ],

@@ -2,7 +2,7 @@ import { forwardToOwnAddress } from '@/lib/club-forward';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { getDivisionsForSeason } from '@/lib/db';
+import { computeStandings, getDivisionsForSeason, getLeagueSeasons } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
 import { orgLinks } from '@/lib/org-links';
@@ -10,9 +10,10 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { LeagueDivision } from '@/lib/types';
 import { bornFactsOf } from '@/lib/club-born-public';
 import { formatStoredDate, tournamentToday } from '@/lib/timezone';
-import { clubDay, promotesEarlyBird, publicRegistrationLine, takesSignups } from '@/lib/league-registration-state';
-import { dollarsLine, publicSeasonState, saveWords } from '@/lib/house-league-season';
+import { clubDay, promotesEarlyBird, publicRegistrationLine, seasonPageShape, takesSignups } from '@/lib/league-registration-state';
+import { NEXT_SEASON_WORDS, dollarsLine, isOldSeason, nextSeasonDoor, publicSeasonState, saveWords, seasonDatesLine } from '@/lib/house-league-season';
 import { earlyBirdOffer, leaguePrice, seasonPriceRange } from '@/lib/league-price';
+import { STANDINGS_WORDS as W, recordWords, standingsTitle, type LeagueStandingsRow } from '@/lib/league-standings';
 import column from '../league-column.module.css';
 import kit from '@/components/public/ClubKit.module.css';
 
@@ -45,6 +46,13 @@ const rangeLine = (r: { low: number; high: number }) => r.low === r.high ? dolla
 const factValue: React.CSSProperties = { fontSize: '0.875rem', color: 'var(--club-text)', fontWeight: 600 };
 const factBand: React.CSSProperties = { marginBottom: '0.2rem' };
 
+/**
+ * THE SEASON'S PUBLIC PAGE — TWO SHAPES (House league §0k, owner 2026-11-04; words HOUSE_LEAGUE_PUBLIC_SEASON_PAGE_COPY.md).
+ *   - the SIGN-UP shape while the form opens soon or takes sign-ups: price, early bird, age groups with spots, Register now;
+ *   - the SEASON shape from the day registration closes (P1): the dates line, each age group's top three (P2, P5), the
+ *     next season's card on an old season's page (P3), Schedule. Price, registration dates, spots and the grey box are gone.
+ * "Already signed up? Email me my link" is in both (P4).
+ */
 export default async function LeagueSeasonPage({
   params,
 }: {
@@ -64,7 +72,132 @@ export default async function LeagueSeasonPage({
   if (season.status === 'draft') notFound();
 
   const rawDivisions = await getDivisionsForSeason(season.id);
+  const today = tournamentToday();
+  // The header chip is the index row's tag (9f·3, 9f·4): Registration open · closed · Starts {date} · Playing now · Ended
+  // {date}, and none on a finished season — one function, so a season is never named two ways.
+  const chip = publicSeasonState(season, today);
+  const registrationOpen = takesSignups(season);
+  const chipRow = chip && (
+    <div className={kit.chipRow}>
+      <span className={`${kit.chip} ${registrationOpen || chip.tone === 'ok' ? kit.chipOk : kit.chipNeutral}`}>
+        {chip.label}
+      </span>
+    </div>
+  );
 
+  // A family who already signed up finds their child's status here, whatever state the season is in. Hidden only before registration opens, when nobody can have signed up yet.
+  const signedUp = !(season.registrationOpenAt && new Date(season.registrationOpenAt) > new Date()) && (
+    <p style={{ marginTop: '1.25rem', fontSize: '0.875rem', color: 'var(--club-soft)' }}>
+      Already signed up? <Link href={href(`/league/${seasonSlug}/status`)}>Email me my link</Link>
+    </p>
+  );
+
+  // ── The season shape (§0k P1): from the day registration closes. ──
+  if (seasonPageShape(season) === 'season') {
+    // An age group is listed when the standings page would show its table: standings on and its schedule published (9e·4,
+    // 9e·5). Their tables in parallel — the standings page's own read, one per age group — and the club's seasons for the card.
+    const listed = rawDivisions.filter(d => d.showStandings && d.schedulePublishedAt);
+    const [tables, seasons] = await Promise.all([
+      Promise.all(listed.map(d => computeStandings(d.id, season.sport))),
+      // The club's seasons only where the card can show: an old season's page.
+      isOldSeason(season, today) ? getLeagueSeasons(org.id) : Promise.resolve([]),
+    ]);
+    // No table before the first score anywhere: the band is absent and Schedule is the one button.
+    const anyScored = tables.some(t => t.scored);
+    const door = nextSeasonDoor(season, seasons, today);
+    const datesLine = seasonDatesLine(season, today);
+
+    return (
+      <div>
+        <div className={`container ${column.column}`}>
+          <div className={column.header}>
+            {door && (
+              <aside className={`${kit.door} ${column.nextDoor}`} aria-label={NEXT_SEASON_WORDS.region}>
+                <p className={kit.doorTitle}>{door.head}</p>
+                {door.line && <p className={kit.sub}>{door.line}</p>}
+                <Link
+                  href={href(door.kind === 'one' ? `/league/${door.season.slug}` : '/league')}
+                  className={`${kit.btn} ${kit.btnSecondary} ${kit.btnSm}`}
+                >
+                  {door.button}
+                </Link>
+              </aside>
+            )}
+            {chipRow}
+            <h1 className={kit.title}>{season.name}</h1>
+            {datesLine && <p className={kit.sub}>{datesLine}</p>}
+            {season.description && (
+              <p className={kit.body} style={{ maxWidth: '600px', marginTop: '0.5rem' }}>
+                {season.description}
+              </p>
+            )}
+          </div>
+
+          {/* Each age group's top three (P2, P5): "Standings" while played or ended, "Final standings" once completed. */}
+          {anyScored && (
+            <div style={{ marginBottom: '2rem' }}>
+              <div className={kit.band}>{standingsTitle(season.status)}</div>
+              <div className={column.topGrid}>
+                {listed.map((d, i) => {
+                  const t = tables[i];
+                  const headId = `standings-${d.id}`;
+                  const more = t.rows.length - 3;
+                  return (
+                    <div key={d.id} className={`${kit.card} ${column.topCard}`}>
+                      <div className={column.topHead}>
+                        <h2 id={headId} className={column.topName}>{d.name}</h2>
+                        {t.scored && (
+                          <Link href={href(`/league/${seasonSlug}/standings`) + `?d=${d.id}`} className={column.standLink}>
+                            {W.card.link}<span className={kit.srOnly}> {W.card.linkFor(d.name)}</span> <span aria-hidden>→</span>
+                          </Link>
+                        )}
+                      </div>
+                      {t.scored ? (
+                        <>
+                          <table className={column.standTable} aria-labelledby={headId}>
+                            <thead>
+                              <tr>
+                                <th scope="col" className={column.standLeft}>{W.col.rank}</th>
+                                <th scope="col" className={column.standLeft}>{W.col.team}</th>
+                                <th scope="col" title={W.tip.record} aria-label={W.tip.record}>{W.col.record}</th>
+                                <th scope="col" title={W.tip.pts} aria-label={W.tip.pts}>{W.col.pts}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {t.rows.slice(0, 3).map(row => <TopRow key={row.team.id} row={row} />)}
+                            </tbody>
+                          </table>
+                          {more > 0 && <p className={column.topMore}>{W.card.more(more)}</p>}
+                        </>
+                      ) : (
+                        // W5: an age group with no scored game keeps its card, so a family's group is not silently missing.
+                        <p className={kit.cardText}>{W.coach.none}</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Each card's Full table link replaces the old "Final standings →" button; Schedule stays, the lead button when
+              there is no table yet. */}
+          <div className={kit.btnRow}>
+            <Link
+              href={href(`/league/${seasonSlug}/schedule`)}
+              className={`${kit.btn} ${anyScored ? kit.btnSecondary : kit.btnPrimary}`}
+            >
+              Schedule
+            </Link>
+          </div>
+
+          {signedUp}
+        </div>
+      </div>
+    );
+  }
+
+  // ── The sign-up shape: opens soon, or taking sign-ups (unchanged by §0k). ──
   const divisions: DivisionWithCount[] = await Promise.all(
     rawDivisions.map(async d => {
       const { count } = await supabaseAdmin
@@ -78,18 +211,12 @@ export default async function LeagueSeasonPage({
   );
 
   // The dates and the status together (9b-1 Part 4, lib/league-registration-state.ts): the form, the chip and the line agree.
-  const registrationOpen = takesSignups(season);
   const regLine = publicRegistrationLine(season);
   const priceRange = seasonPriceRange(divisions, season);
   // The early bird while it runs (owner 2026-10-25): the price a family pays today leads, with what it saves and until when.
-  const today = tournamentToday();
   const offer = promotesEarlyBird(season) ? earlyBirdOffer(divisions, season, today) : null;
   const priceToday = (d: LeagueDivision) => leaguePrice(d, season, today);
   const earlyRange = offer ? seasonPriceRange(divisions.map(d => ({ price: priceToday(d)?.amount ?? null, earlyPrice: null })), { registrationFee: null }) : null;
-  const finished = season.status === 'completed' || season.status === 'archived';
-  // The header chip is the index row's tag (9f·3, 9f·4): Registration open · closed · Starts {date} · Playing now · Ended
-  // {date}, and none on a finished season — one function, so a season is never named two ways.
-  const chip = publicSeasonState(season, today);
 
   // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
   return (
@@ -98,13 +225,7 @@ export default async function LeagueSeasonPage({
       <div className={`container ${column.column}`}>
         {/* Season header */}
         <div className={column.header}>
-          {chip && (
-            <div className={kit.chipRow}>
-              <span className={`${kit.chip} ${registrationOpen || chip.tone === 'ok' ? kit.chipOk : kit.chipNeutral}`}>
-                {chip.label}
-              </span>
-            </div>
-          )}
+          {chipRow}
           <h1 className={kit.title}>{season.name}</h1>
           {season.description && (
             <p className={kit.body} style={{ maxWidth: '600px', marginTop: '0.5rem' }}>
@@ -224,7 +345,8 @@ export default async function LeagueSeasonPage({
           </div>
         )}
 
-        {/* CTA */}
+        {/* CTA: Register now while the form takes sign-ups; before it opens, when it opens and the schedule (teams can be
+            set before the first game). */}
         {registrationOpen ? (
           <div>
             <Link
@@ -249,21 +371,9 @@ export default async function LeagueSeasonPage({
               }}
             >
               {regLine}
-              {season.status === 'active' && 'This season is currently active. Registration is closed.'}
-              {finished && 'This season has concluded.'}
             </div>
 
-            {/* Quick-access links once registration has closed: the schedule always (teams are set before the first game),
-                the standings once games are being played. */}
             <div className={kit.btnRow}>
-              {(season.status === 'active' || finished) && (
-                <Link
-                  href={href(`/league/${seasonSlug}/standings`)}
-                  className={`${kit.btn} ${finished ? kit.btnPrimary : kit.btnSecondary}`}
-                >
-                  {finished ? 'Final standings →' : 'Standings →'}
-                </Link>
-              )}
               <Link
                 href={href(`/league/${seasonSlug}/schedule`)}
                 className={`${kit.btn} ${kit.btnSecondary}`}
@@ -274,13 +384,35 @@ export default async function LeagueSeasonPage({
           </div>
         )}
 
-        {/* A family who already signed up finds their child's status here, whatever state the season is in. Hidden only before registration opens, when nobody can have signed up yet. */}
-        {!(season.registrationOpenAt && new Date(season.registrationOpenAt) > new Date()) && (
-          <p style={{ marginTop: '1.25rem', fontSize: '0.875rem', color: 'var(--club-soft)' }}>
-            Already signed up? <Link href={href(`/league/${seasonSlug}/status`)}>Email me my link</Link>
-          </p>
-        )}
+        {signedUp}
       </div>
     </div>
+  );
+}
+
+/** One row of an age group's top three: the standings page's own cells — place (T-2 when shared), the team's dot and name
+ *  (first place by weight alone, DC-02), W-L-T and points; a team with no counted game reads dashes, not zeros. */
+function TopRow({ row }: { row: LeagueStandingsRow }) {
+  const place = row.place!;
+  const tip = row.tied ? W.placeTip(place) : undefined;
+  const dash = <td className={column.standDash}><span aria-hidden>{W.dash}</span><span className={kit.srOnly}>{W.tip.dash}</span></td>;
+  return (
+    <tr>
+      <td className={`${column.standLeft} ${column.standRank}`} title={tip} aria-label={tip}>{W.place(place, row.tied)}</td>
+      <td className={column.standLeft}>
+        <span className={`${column.standTeam}${place === 1 ? ` ${column.standLead}` : ''}`}>
+          {row.team.color && <span className={column.standDot} style={{ background: row.team.color }} />}
+          {row.team.name}
+        </span>
+      </td>
+      {row.counted ? (
+        <>
+          <td>{recordWords(row)}</td>
+          <td className={column.standStrong}>{row.points}</td>
+        </>
+      ) : (
+        <>{dash}{dash}</>
+      )}
+    </tr>
   );
 }

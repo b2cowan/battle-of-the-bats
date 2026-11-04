@@ -430,6 +430,45 @@ no carried marker; a new age group's defaults come from the same season's last a
 dictionary's `league_seasons` gotcha 2 (forward-only, "archived is terminal", stale line references) is wrong: completed and
 archived both go back to active.
 
+## 0k · The public season page once registration closes — drawn 2026-11-03, RULED 2026-11-04 (all five as recommended)
+
+Drawings: https://claude.ai/artifact/VpHxm3YFtkfjPeYrT3bPJK (source `HOUSE_LEAGUE_PUBLIC_SEASON_PAGE_DRAWINGS.html`; `/design`
+pass applied before the hand-off). Raised by the owner during walk §449: the public season page of a finished season still
+wore the sign-up page (price, "0 / 40 spots filled", a grey "This season has concluded." box, the result one click away).
+Owner paste-back 2026-11-04:
+
+- **P1** The page switches to the **season shape from the day registration closes**: registration closed, playing, ended and
+  finished all use it. Price, registration dates, the age-group spots tiles and the grey notice box go in those states; the
+  sign-up shape (opens soon, registration open) is unchanged.
+- **P2** The page shows **the top three of each age group's table**, first place highlighted, with **Full table →** to that age
+  group on the standings page.
+- **P3** **The club's next season** shows on an old season's page **as a slim line at the top, above the title.**
+- **P4** **"Already signed up? Email me my link" is kept, unchanged, in every state.**
+- **P5** **A season being played shows the same top-three table, titled Standings**, so the page has one layout from closing to
+  finished.
+
+What the drawings carried with these (drawn, not separately asked): "Final standings" on the band only once the club completes
+the season and "Standings" before (9f·3); no chip on a finished season (9f·4), with "This season has concluded." moved to the
+line under the title beside the dates; no table before the first game, Schedule the only button; an age group with standings
+off is not listed; the table matches the standings page (first place by weight alone, DC-02; shared places as T-2); the
+"Final standings →" button gives way to each card's Full table link; Schedule stays. The next-season line means *every newer
+season at this club taking sign-ups today* (nothing links one season to the next): one is named with its registration line and
+links to its season page; two or more are named and link to the club's House league page; none shows nothing. It is drawn as
+the club kit's existing door card. Words are provisional until a `/marketing` pass.
+
+**Not ruled, recommended:** words pass next, then a small build prompt. It depends on nothing in 9f-2 and 9f-2 depends on
+nothing in it.
+
+**Words proposed 2026-11-04** (`/marketing`): `HOUSE_LEAGUE_PUBLIC_SEASON_PAGE_COPY.md`, open questions W1–W7 each with a
+recommendation; **owner ACCEPTED all seven as recommended 2026-11-04**. The drawing's next-season line was corrected to the site's real sentence ("Registration
+closes Sep 13."). **Build prompt written 2026-11-04:** `HOUSE_LEAGUE_PUBLIC_SEASON_PAGE_BUILD_PROMPT.md` (size S, no migration;
+its first gate is the words' acceptance).
+
+**BUILT 2026-11-04** (Parts 1–5, `/review`, `/docs`; no migration; Progress block in the build prompt has every detail). Owner
+walk **§451** written 2026-11-04 (§450 is the 9f-2 walk's): https://claude.ai/artifact/XBVRrJDBkK7uksrfX6CyS1 (source
+`HOUSE_LEAGUE_PUBLIC_SEASON_PAGE_WALK.html`, fixture `.probe/season-page-walk/fixture.mjs`, three throwaway clubs, all public
+pages). **Walk §451 PASSED 20/20 2026-11-04** (A 2/2 · B 3/3 · C 5/5 · D 3/3 · E 4/4 · F 3/3). **The three open owner calls were closed 2026-11-04, all left as built.** Commit when the owner says.
+
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 
 - The trust list re-verified (§3); the coupling check for a standalone League Plus club; the ledger seam under D1 (C18);

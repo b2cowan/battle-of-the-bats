@@ -1,0 +1,559 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Public Season Page Drawings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700;800&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) holding true-size drawings of the club's PUBLIC site.
+   The public site is fixed light, as the product is; the chrome follows the reader's theme. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.doc{max-width:1280px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 90px}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc>h1{font-size:30px;margin:6px 0;letter-spacing:-.01em}
+.pane h2{font-size:23px;margin:22px 0 6px;letter-spacing:-.01em}
+.pane h3{font-size:17px;margin:18px 0 6px}
+.doc p,.doc li{max-width:84ch}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16.5px}
+/* tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+@media (max-width:600px){.tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.tabs button{flex:none}}
+.viewrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:4px 0 6px;font-size:13.5px;color:var(--muted)}
+.viewrow[hidden]{display:none}
+.vsw{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+.vsw button{font:600 13px/1 var(--f-doc);min-height:34px;padding:0 14px;border-radius:999px;border:0;background:none;color:var(--muted);cursor:pointer}
+.vsw button[aria-pressed="true"]{background:var(--fix-soft);color:var(--ink)}
+body.only-diff .same{opacity:.16;filter:grayscale(1)}
+section.pane[hidden]{display:none}
+/* doc pieces */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);margin:14px 0}
+.card h3{margin-top:0}
+.card ul{margin:6px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--fix);border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.verdict.push{border-left-color:var(--ask)}
+.verdict h3{margin:0 0 6px}
+.verdict ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start;margin:12px 0}
+@media (max-width:1100px){.pair{grid-template-columns:minmax(0,1fr)}}
+.pair>*{min-width:0}
+.lbl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font:700 12px/1.3 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.lbl.after{color:var(--fix)}
+.cap{font-size:13.5px;color:var(--muted);margin:8px 0 0;max-width:84ch}
+.phones{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;margin:12px 0}
+.phones>div{width:390px;max-width:100%;min-width:0}
+/* tags + flags */
+.fl,.mk{position:relative;cursor:pointer;white-space:nowrap;font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;min-height:22px;vertical-align:1px}
+.fl::after,.mk::after{content:"";position:absolute;inset:-10px -4px}
+.fl{border:1.5px solid var(--flag);color:var(--flag);background:var(--flag-soft)}
+.fl.fix{border-color:var(--fix);color:var(--fix);background:var(--fix-soft)}
+.mk{border:1.5px solid currentColor;background:var(--surface)}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)} .mk.gone{color:var(--flag)}
+/* tables in the doc */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:760px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2);vertical-align:bottom}
+table.t td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td:first-child{font-weight:600}
+.y{color:var(--fix);font-weight:700} .x{color:var(--flag);font-weight:700} .k{color:var(--muted)}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;box-sizing:border-box;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .why{font-size:13.5px;color:var(--muted);margin:4px 0}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:52px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:200px;font:12.5px/1.5 var(--f-mono)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+/* dialog */
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:17px;flex:1}
+dialog.note .xb{font-size:22px;line-height:1;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px;display:flex;flex-direction:column;gap:10px}
+dialog.note .nb h4{margin:0;font:700 11px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+dialog.note .nb p{margin:0}
+
+/* ===== the club's public site, fixed light (default club tokens + the club's own blue) ===== */
+.frame{border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;background:#F6F5F2}
+.frame .chrome{font:600 11px/1.3 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:#5E646B;background:#ECEEF0;padding:6px 12px;border-bottom:1px solid #D2D7DD}
+.dtw{overflow:hidden}
+.dt{width:1200px;zoom:var(--z,1)}
+.club{--g:#F6F5F2;--card:#FFFFFF;--tx:#1F1B16;--soft:#4E473D;--dim:#6F675B;--ln:#E4E0D8;--ln2:#D6D0C4;--field:#948B7D;--ok:#2C6A2A;--okbg:#E6F0E2;--fill:#1E3A8A;--onfill:#FFFFFF;--ink:#1E3A8A;--edge:#1E3A8A;--accent:#17306F;
+  background:var(--g);color:var(--tx);font:16px/1.5 'Inter',system-ui,sans-serif;text-align:left}
+.club *{box-sizing:border-box}
+.club .bar{background:var(--fill);color:var(--onfill);border-bottom:3px solid var(--accent)}
+.club .bar .in{display:flex;align-items:center;gap:12px;height:72px;padding:0 24px}
+.club .logo{width:44px;height:44px;border-radius:10px;background:#fff;color:var(--fill);display:grid;place-items:center;font:700 14px/1 'Barlow Condensed',sans-serif;flex:none}
+.club .cn{font:700 24px/1 'Barlow Condensed',sans-serif;color:#fff;margin-right:20px}
+.club .nv{display:inline-flex;align-items:center;min-height:44px;font:600 16px/1 'Inter',sans-serif;color:#fff;padding:0 12px;border-radius:8px}
+.club .nv.on{box-shadow:inset 0 -3px 0 #fff}
+.club .col{padding:32px 24px 48px}
+.club .col>*{max-width:760px}
+.club .hd{margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid var(--ln)}
+.club h1.tt{font:700 32px/1.1 'Barlow Condensed',sans-serif;margin:0;color:var(--tx);letter-spacing:0}
+.club .sub{font-size:14px;color:var(--soft);margin:6px 0 0}
+.club .band{font:700 12px/1.3 'Inter',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--soft);margin:0 0 10px}
+.club .facts{display:flex;gap:2rem;flex-wrap:wrap;margin-top:12px}
+.club .facts .v{font-size:14px;font-weight:600;color:var(--tx)}
+.club .chip{display:inline-flex;align-items:center;border-radius:20px;padding:6px 10px;font:600 12px/1 'Inter',sans-serif;background:var(--g);color:var(--soft);border:1px solid var(--ln2);margin-bottom:10px}
+.club .chip.ok{border-color:transparent}
+.club .chip.ok{background:var(--okbg);color:var(--ok)}
+.club .kcard{background:var(--card);border:1px solid var(--ln);border-radius:8px}
+.club .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:28px}
+.club .dcard{padding:16px 20px}
+.club .dcard b{display:block;font-size:16px;font-weight:700;margin-bottom:10px}
+.club .meter{height:6px;background:var(--ln);border-radius:3px;overflow:hidden;margin-bottom:8px}
+.club .meter i{display:block;height:100%;background:var(--fill)}
+.club .dcard span{font-size:14px;color:var(--soft)}
+.club .notice{padding:16px 20px;font-size:14px;color:var(--soft);margin-bottom:20px}
+.club .btns{display:flex;gap:10px;flex-wrap:wrap}
+.club .btn{display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:8px;font:600 16px/1 'Inter',sans-serif;white-space:nowrap}
+.club .btn.p{background:var(--fill);color:var(--onfill);border:1.5px solid var(--fill)}
+.club .btn.s{background:var(--card);color:var(--tx);border:1px solid var(--field)}
+.club .foot{font-size:14px;color:var(--soft);margin:20px 0 0}
+.club .foot a{color:var(--ink)}
+.club .btn.sm{padding:0 16px;font-size:14px}
+/* after: the record */
+.club .door{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:14px 16px;border:1px solid var(--ln);border-left:3px solid var(--edge);border-radius:0 8px 8px 0;background:var(--card);margin-bottom:24px}
+.club .door .dh{margin:0;font:700 16px/1.25 'Inter',sans-serif;color:var(--tx)}
+.club .door .dl{margin:-6px 0 0;font-size:14px;color:var(--soft)}
+.club .res{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:28px}
+.club .res.one{grid-template-columns:minmax(0,1fr)}
+.club .rcard{overflow:hidden}
+.club .rcard .rh{display:flex;align-items:center;gap:10px;padding:12px 16px 8px}
+.club .rcard .rh b{flex:1;font-size:16px;font-weight:700}
+.club .rcard .rh a{display:inline-flex;align-items:center;min-height:44px;margin:-10px -6px -10px 0;padding:0 6px;font-size:14px;font-weight:600;color:var(--ink);text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.club table.mt{width:100%;border-collapse:collapse;font:400 14px 'Inter',sans-serif;font-variant-numeric:tabular-nums}
+.club table.mt th{font:700 12px 'Inter',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--soft);text-align:center;padding:.55rem .75rem;border-bottom:1px solid var(--ln2);white-space:nowrap}
+.club table.mt td{padding:.6rem .75rem;border-bottom:1px solid var(--ln);color:var(--soft);text-align:center;white-space:nowrap}
+.club table.mt tr:last-child td{border-bottom:0}
+.club table.mt th:nth-child(-n+2),.club table.mt td:nth-child(-n+2){text-align:left}
+.club table.mt th:first-child,.club table.mt td:first-child{padding-left:16px}
+.club table.mt .rk{width:44px;color:var(--dim);font-weight:600}
+.club table.mt .tm{font-weight:600;color:var(--tx);white-space:normal}
+.club table.mt td b{font-weight:700;color:var(--tx)}
+.club table.mt .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:.45rem;vertical-align:1px}
+.club table.mt tr.lead .tm{font-weight:700}
+.club .more{font-size:12px;color:var(--dim);padding:8px 16px 12px;border-top:1px solid var(--ln)}
+/* phone */
+.club.ph .bar{border-bottom:0}
+.club.ph .bar .in{height:72px;padding:0 8px 0 16px;gap:12px}
+.club.ph .cn{font-size:20px;margin-right:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.club.ph .acct{width:44px;height:44px;display:grid;place-items:center;flex:none}
+.club.ph .acct i{display:block;width:22px;height:22px;border:2px solid #fff;border-radius:50%;box-sizing:border-box}
+.club.ph .ptabs{display:flex;background:var(--card);border-top:3px solid var(--accent);border-bottom:1px solid var(--ln);height:48px;padding:0 8px}
+.club.ph .ptabs span{display:inline-flex;align-items:center;padding:0 12px;font:600 16px/1 'Inter',sans-serif;color:var(--soft)}
+.club.ph .ptabs span.on{color:var(--tx);box-shadow:inset 0 -3px 0 var(--fill)}
+.club.ph .col{padding:32px 16px 40px}
+.club.ph .res{grid-template-columns:minmax(0,1fr)}
+.club.ph .grid{grid-template-columns:minmax(0,1fr)}
+.club.ph .btns .btn{flex:1;justify-content:center}
+/* markers placed on a frame */
+.club .pin{display:inline-flex;gap:6px;align-items:center;margin-left:8px;vertical-align:middle}
+.club .rel{position:relative}
+.club .tagrow{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 6px}
+</style>
+
+<div class="doc">
+<p class="eyebrow">FieldLogicHQ · house league · the public season page · drawn 2026-11-03</p>
+<h1>A finished season should read as a result, not a closed sign-up form</h1>
+<p class="lede">Today a family who opens a finished season sees the sign-up page with one sentence swapped in: the price, a “0 / 40 spots filled” bar, a grey notice and two buttons. The thing they came for (who won, how their child’s team did) is a click away. These drawings give the page two shapes: the <b>sign-up shape</b> while families can register, and the <b>season shape</b> once registration closes, which leads with the standings.</p>
+
+<div class="verdict"><h3>Ruled 2026-11-04: all five asks as recommended</h3>
+<ul>
+  <li>P1 the season shape from the day registration closes · P2 the top three of each age group · P3 the next-season line at the top · P4 “Email me my link” kept in every state · P5 the same table, titled Standings, while the season is played. Recorded in the house league plan, §0k. Words proposed 2026-11-04 (HOUSE_LEAGUE_PUBLIC_SEASON_PAGE_COPY.md, W1–W7 open); the next-season line now shows the site’s real registration sentence. Build prompt written 2026-11-04.</li>
+  <li><b>Not reopened:</b> the 9f words (“Ended {date}”, “Final standings” only once the club completes a season, no chip on a finished season, “This season has concluded.”), Q16 (a house-league season reads in place), the club’s league page with its Running now and Past seasons rows, and the signed-in family rulings. The standings page and the schedule page are not changed.</li>
+</ul></div>
+
+<div class="card">
+  <h3>How to read this</h3>
+  <ul>
+    <li>Tags: <button class="mk new" data-note="NEW marks something the page does not have today.">NEW</button> <button class="mk res" data-note="RESTYLED marks something that exists today and is moved or reworded.">RESTYLED</button> <button class="mk unc" data-note="UNCHANGED marks something kept exactly as it is.">UNCHANGED</button> <button class="mk gone" data-note="GONE marks something the season shape no longer shows. The sign-up shape keeps it.">GONE</button>. Red flags are problems in today’s page. Every tag and flag opens an explanation when clicked.</li>
+    <li>Today’s frames are drawn from the page’s code and your screenshot, not captured. The public site is fixed light, as the product is.</li>
+    <li><b>View</b> switches between every element and only what changes: unchanged parts dim.</li>
+    <li>Desktop frames fit your screen. Open this page on a phone to judge the phone frames. All words are provisional and go through /marketing after you rule.</li>
+  </ul>
+  <p class="muted" style="margin:10px 0 0;font-size:13.5px">The example is <b>Northfield Minor Ball</b>, season <b>Summer 2026</b>, Saturday May 2 to Sunday October 25, 2026, with three age groups: U9 (6 teams), U11 (4 teams) and U13 (standings turned off). <b>Fall 2026</b> is taking sign-ups. <b>Every name, record and date is an example.</b></p>
+</div>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" data-pane="idea" aria-selected="true">1 · Two shapes</button>
+  <button role="tab" data-pane="fin" aria-selected="false">2 · A finished season</button>
+  <button role="tab" data-pane="run" aria-selected="false">3 · Closed, playing, ended</button>
+  <button role="tab" data-pane="next" aria-selected="false">4 · The next season</button>
+  <button role="tab" data-pane="asks" aria-selected="false">5 · Asks</button>
+</nav>
+<div class="viewrow" hidden><span>View</span><div class="vsw" role="group" aria-label="View"><button data-view="all" aria-pressed="true">Everything</button><button data-view="diff" aria-pressed="false">Show only what differs</button></div></div>
+
+<!-- ============ 1 · Two shapes ============ -->
+<section class="pane" data-pane="idea">
+<h2>The page’s job changes when registration closes</h2>
+<p>Before then, a family is deciding whether to sign up: price, age groups, spots left and the Register button are the page. After registration closes nobody can sign up, and the family wants the season itself: the table, the games, and (once it is over) the result. Today the page keeps the sign-up content for the life of the season and adds a grey sentence underneath.</p>
+
+<div class="tw"><table class="t">
+<thead><tr><th>On the page</th><th>Opens soon ·<br>Registration open</th><th>Registration closed<br>(before the first day)</th><th>Playing now</th><th>Ended {date}<br>(club hasn’t completed it)</th><th>Finished</th></tr></thead>
+<tbody>
+<tr><td>Header chip</td><td>Opens {day} · Registration open</td><td>Registration closed</td><td>Playing now</td><td>Ended Oct 25</td><td class="k">none (9f·4)</td></tr>
+<tr><td>Registration dates</td><td class="y">kept</td><td class="x">gone</td><td class="x">gone</td><td class="x">gone</td><td class="x">gone</td></tr>
+<tr><td>Season dates</td><td class="y">kept</td><td>a line under the title</td><td>a line under the title</td><td>a line under the title</td><td>a line under the title</td></tr>
+<tr><td>Price and early bird</td><td class="y">kept</td><td class="x">gone</td><td class="x">gone</td><td class="x">gone</td><td class="x">gone</td></tr>
+<tr><td>Age-group tiles with spots filled</td><td class="y">kept</td><td class="x">gone</td><td class="x">gone</td><td class="x">gone</td><td class="x">gone</td></tr>
+<tr><td>Grey notice box</td><td class="k">n/a</td><td class="x">gone (chip says it)</td><td class="x">gone (chip says it)</td><td class="x">gone (chip says it)</td><td>the sentence moves under the title</td></tr>
+<tr><td>Standings, top three per age group</td><td class="k">n/a</td><td class="k">no games yet</td><td class="y">NEW · “Standings”</td><td class="y">NEW · “Standings”</td><td class="y">NEW · “Final standings”</td></tr>
+<tr><td>Register now</td><td class="y">kept</td><td class="k">n/a</td><td class="k">n/a</td><td class="k">n/a</td><td class="k">n/a</td></tr>
+<tr><td>Schedule button</td><td class="k">n/a</td><td class="y">kept</td><td class="y">kept</td><td class="y">kept</td><td class="y">kept</td></tr>
+<tr><td>The club’s next season, if one is taking sign-ups</td><td class="k">n/a</td><td class="k">n/a</td><td class="k">n/a</td><td class="y">NEW</td><td class="y">NEW</td></tr>
+<tr><td>Already signed up? Email me my link</td><td class="y">kept</td><td class="y">kept</td><td class="y">kept</td><td class="y">kept</td><td class="y">kept (see below)</td></tr>
+</tbody></table></div>
+
+<div class="verdict"><h3>Where I changed my mind since the chat</h3>
+<ul>
+  <li><b>“Email me my link” stays on a finished season.</b> I said it had no purpose there. It does: a family’s sign-up page stays open for 30 days after the club completes the season, and for as long as they still owe a fee. A family who owes money or needs a receipt gets back in through this line. It stays where it is, unchanged.</li>
+  <li><b>There is no champion in house league.</b> Nothing records a playoff or a winner; the closest thing is first place on the final table. The drawings say “Final standings” and highlight the first-place row. They never write “Champion”, which would claim something the product doesn’t record.</li>
+  <li><b>Seasons are not linked to each other.</b> Nothing records that Fall 2026 follows Summer 2026. The “next season” line can only mean “a newer season at this club that is taking sign-ups”. Tab 4 shows what that means for a club running two seasons at once.</li>
+</ul></div>
+</section>
+
+<!-- ============ 2 · A finished season ============ -->
+<section class="pane" data-pane="fin" hidden>
+<h2>A finished season, desktop: today and after</h2>
+<p class="muted" style="margin:0">Summer 2026, completed by the club on Wednesday October 28. Desktop frames are drawn at 1200 wide (the club’s page column) and scaled to fit.</p>
+<div class="pair">
+  <div>
+    <p class="lbl">Today <button class="fl" data-f="F1">F1</button><button class="fl" data-f="F2">F2</button><button class="fl" data-f="F3">F3</button><button class="fl" data-f="F4">F4</button></p>
+    <div class="frame"><div class="chrome">Club public site · desktop · today</div><div class="dtw"><div class="dt">
+      <div class="club">
+        <div class="bar same"><div class="in"><div class="logo">NM</div><div class="cn">Northfield Minor Ball</div><div class="nv">Home</div><div class="nv on">House league</div></div></div>
+        <div class="col">
+          <div class="hd">
+            <h1 class="tt same">Summer 2026</h1>
+            <div class="facts">
+              <div><p class="band" style="margin:0 0 3px">Season dates</p><div class="v">May 2, 2026 — October 25, 2026</div></div>
+              <div><p class="band" style="margin:0 0 3px">Price</p><div class="v" style="font-weight:700">$165 – $185</div></div>
+            </div>
+          </div>
+          <p class="band">Divisions</p>
+          <div class="grid">
+            <div class="kcard dcard"><b>U9</b><div class="meter"><i style="width:92%"></i></div><span>55 / 60 spots filled</span></div>
+            <div class="kcard dcard"><b>U11</b><div class="meter"><i style="width:95%"></i></div><span>38 / 40 spots filled</span></div>
+            <div class="kcard dcard"><b>U13</b><div class="meter"><i style="width:78%"></i></div><span>47 / 60 spots filled</span></div>
+          </div>
+          <div class="kcard notice">This season has concluded.</div>
+          <div class="btns"><span class="btn p">Final standings →</span><span class="btn s">Schedule</span></div>
+          <p class="foot same">Already signed up? <a>Email me my link</a></p>
+        </div>
+      </div>
+    </div></div></div>
+  </div>
+  <div>
+    <p class="lbl after">After <button class="fl fix" data-f="F1">fixes F1–F4</button></p>
+    <div class="frame"><div class="chrome">Club public site · desktop · after</div><div class="dtw"><div class="dt">
+      <div class="club">
+        <div class="bar same"><div class="in"><div class="logo">NM</div><div class="cn">Northfield Minor Ball</div><div class="nv">Home</div><div class="nv on">House league</div></div></div>
+        <div class="col">
+          <div class="tagrow"><button class="mk new" data-note="The club’s next season, when one is taking sign-ups (tab 4). Drawn as the club site’s existing door card (the white card with the club’s colour on its left edge, a heading, a line and one small button: the same card the team page uses for tryouts), so nothing new is styled. It is quiet on purpose: the page is still about Summer 2026. Ask 3 decides whether it sits here at the top or at the bottom. When no newer season is taking sign-ups, it is not there.">NEW · next season</button></div>
+          <div class="door"><p class="dh">Fall 2026 · Registration open</p><p class="dl">Registration closes Sep 13.</p><span class="btn s sm">See Fall 2026 →</span></div>
+          <div class="hd">
+            <h1 class="tt same">Summer 2026</h1>
+            <p class="sub">This season has concluded. It ran May 2 to October 25, 2026. <button class="mk res" data-note="The ruled 9f sentence, “This season has concluded.”, moves out of the grey box and becomes the line under the title, with the season’s dates. A finished season still has no chip (9f·4). The registration dates and the price are gone: a finished season can’t be bought.">RESTYLED</button></p>
+          </div>
+          <p class="band">Final standings <button class="mk new" data-note="The top three of each age group’s final table, read from the same standings the Final standings page shows (same order, same shared places like T-2, same tiebreaks). First place is highlighted, as it is on the standings page. Each card’s “Full table” opens that age group on the standings page. An age group with standings turned off is not listed; it is still on the Schedule. Ask 2 decides top three, the whole table, or first place only.">NEW</button></p>
+          <div class="res">
+            <div class="kcard rcard"><div class="rh"><b>U9</b><a>Full table →</a></div>
+              <table class="mt"><thead><tr><th>#</th><th>Team</th><th class="n">W-L-T</th><th class="n">Pts</th></tr></thead><tbody>
+              <tr class="lead"><td class="rk">1</td><td class="tm"><i class="dot" style="background:#B03A22"></i>Comets</td><td class="n">8-1-1</td><td class="n"><b>17</b></td></tr>
+              <tr><td class="rk">2</td><td class="tm"><i class="dot" style="background:#1D4A8A"></i>Rockets</td><td class="n">7-2-1</td><td class="n"><b>15</b></td></tr>
+              <tr><td class="rk">3</td><td class="tm"><i class="dot" style="background:#34662A"></i>Jets</td><td class="n">6-4-0</td><td class="n"><b>12</b></td></tr>
+              </tbody></table><div class="more">3 more teams</div></div>
+            <div class="kcard rcard"><div class="rh"><b>U11</b><a>Full table →</a></div>
+              <table class="mt"><thead><tr><th>#</th><th>Team</th><th class="n">W-L-T</th><th class="n">Pts</th></tr></thead><tbody>
+              <tr class="lead"><td class="rk">1</td><td class="tm"><i class="dot" style="background:#835006"></i>Hawks</td><td class="n">9-2-1</td><td class="n"><b>19</b></td></tr>
+              <tr><td class="rk">2</td><td class="tm"><i class="dot" style="background:#4B2E83"></i>Wolves</td><td class="n">7-4-1</td><td class="n"><b>15</b></td></tr>
+              <tr><td class="rk">3</td><td class="tm"><i class="dot" style="background:#1F6F78"></i>Lions</td><td class="n">5-6-1</td><td class="n"><b>11</b></td></tr>
+              </tbody></table><div class="more">1 more team</div></div>
+          </div>
+          <div class="btns"><span class="btn s">Schedule</span> <button class="mk unc" data-note="Schedule stays, and still shows every game with its score. “Final standings →” as a button is replaced by each card’s Full table link, so the page has no two doors to one place. The standings page itself is unchanged and is still titled Final standings.">UNCHANGED</button></div>
+          <p class="foot same">Already signed up? <a>Email me my link</a> <button class="mk unc" data-note="Kept. A family’s own page stays open for 30 days after the club completes the season, and for as long as they owe a fee; this line is how they get back to pay or find a receipt.">UNCHANGED</button></p>
+        </div>
+      </div>
+    </div></div></div>
+    <p class="cap">Gone from this page: <button class="mk gone" data-note="The price, the early bird and the registration dates describe buying a spot. Nobody can buy a spot in a finished season.">price</button> <button class="mk gone" data-note="Spots filled measures sign-ups against the age group’s size. Once registration closes it never changes again, and on a club that never recorded sign-ups (your walk club) it reads 0 / 40 beside a full season of games.">spots filled</button> <button class="mk gone" data-note="The grey box said the season has concluded where an empty state goes. The sentence survives as the line under the title.">notice box</button></p>
+  </div>
+</div>
+
+<h2>The same, on a phone</h2>
+<div class="phones">
+  <div>
+    <p class="lbl">Today</p>
+    <div class="frame"><div class="chrome">Phone · 390 · today</div>
+      <div class="club ph">
+        <div class="bar same"><div class="in"><div class="logo">NM</div><div class="cn">Northfield Minor Ball</div><div class="acct"><i></i></div></div><div class="ptabs"><span>Home</span><span class="on">House league</span></div></div>
+        <div class="col">
+          <div class="hd"><h1 class="tt same">Summer 2026</h1>
+            <div class="facts"><div><p class="band" style="margin:0 0 3px">Season dates</p><div class="v">May 2, 2026 — October 25, 2026</div></div><div><p class="band" style="margin:0 0 3px">Price</p><div class="v" style="font-weight:700">$165 – $185</div></div></div></div>
+          <p class="band">Divisions</p>
+          <div class="grid">
+            <div class="kcard dcard"><b>U9</b><div class="meter"><i style="width:92%"></i></div><span>55 / 60 spots filled</span></div>
+            <div class="kcard dcard"><b>U11</b><div class="meter"><i style="width:95%"></i></div><span>38 / 40 spots filled</span></div>
+            <div class="kcard dcard"><b>U13</b><div class="meter"><i style="width:78%"></i></div><span>47 / 60 spots filled</span></div>
+          </div>
+          <div class="kcard notice">This season has concluded.</div>
+          <div class="btns"><span class="btn p">Final standings →</span><span class="btn s">Schedule</span></div>
+          <p class="foot same">Already signed up? <a>Email me my link</a></p>
+        </div>
+      </div></div>
+    <p class="cap">On a phone the result sits below three tiles and a notice, roughly two screens down.</p>
+  </div>
+  <div>
+    <p class="lbl after">After</p>
+    <div class="frame"><div class="chrome">Phone · 390 · after</div>
+      <div class="club ph">
+        <div class="bar same"><div class="in"><div class="logo">NM</div><div class="cn">Northfield Minor Ball</div><div class="acct"><i></i></div></div><div class="ptabs"><span>Home</span><span class="on">House league</span></div></div>
+        <div class="col">
+          <div class="door"><p class="dh">Fall 2026 · Registration open</p><p class="dl">Registration closes Sep 13.</p><span class="btn s sm">See Fall 2026 →</span></div>
+          <div class="hd"><h1 class="tt same">Summer 2026</h1><p class="sub">This season has concluded. It ran May 2 to October 25, 2026.</p></div>
+          <p class="band">Final standings</p>
+          <div class="res">
+            <div class="kcard rcard"><div class="rh"><b>U9</b><a>Full table →</a></div>
+              <table class="mt"><thead><tr><th>#</th><th>Team</th><th class="n">W-L-T</th><th class="n">Pts</th></tr></thead><tbody>
+              <tr class="lead"><td class="rk">1</td><td class="tm"><i class="dot" style="background:#B03A22"></i>Comets</td><td class="n">8-1-1</td><td class="n"><b>17</b></td></tr>
+              <tr><td class="rk">2</td><td class="tm"><i class="dot" style="background:#1D4A8A"></i>Rockets</td><td class="n">7-2-1</td><td class="n"><b>15</b></td></tr>
+              <tr><td class="rk">3</td><td class="tm"><i class="dot" style="background:#34662A"></i>Jets</td><td class="n">6-4-0</td><td class="n"><b>12</b></td></tr>
+              </tbody></table><div class="more">3 more teams</div></div>
+            <div class="kcard rcard"><div class="rh"><b>U11</b><a>Full table →</a></div>
+              <table class="mt"><thead><tr><th>#</th><th>Team</th><th class="n">W-L-T</th><th class="n">Pts</th></tr></thead><tbody>
+              <tr class="lead"><td class="rk">1</td><td class="tm"><i class="dot" style="background:#835006"></i>Hawks</td><td class="n">9-2-1</td><td class="n"><b>19</b></td></tr>
+              <tr><td class="rk">2</td><td class="tm"><i class="dot" style="background:#4B2E83"></i>Wolves</td><td class="n">7-4-1</td><td class="n"><b>15</b></td></tr>
+              <tr><td class="rk">3</td><td class="tm"><i class="dot" style="background:#1F6F78"></i>Lions</td><td class="n">5-6-1</td><td class="n"><b>11</b></td></tr>
+              </tbody></table><div class="more">1 more team</div></div>
+          </div>
+          <div class="btns"><span class="btn s">Schedule</span></div>
+          <p class="foot same">Already signed up? <a>Email me my link</a></p>
+        </div>
+      </div></div>
+    <p class="cap">The table matches the standings page: same headings, first place by weight alone (no row tint), the team’s colour dot, a shared place as T-2. It keeps only W-L-T and Pts. With the next-season card at the top, the card takes about 120 px above the title on a phone and the U9 table still starts on the first screen; with the card at the bottom (ask 3), the title is the first thing under the club’s tabs.</p>
+  </div>
+</div>
+</section>
+
+<!-- ============ 3 · Closed, playing, ended ============ -->
+<section class="pane" data-pane="run" hidden>
+<h2>The season shape before the season is over</h2>
+<p>The same layout from the day registration closes. Only the chip, the band’s word and what is under it change. These are drawn as phones to keep the three side by side; the desktop is the tab 2 layout with these words. Ask 1 decides whether the season shape starts here or only at finished.</p>
+<div class="phones">
+  <div>
+    <p class="lbl after">Registration closed · Apr 20</p>
+    <div class="frame"><div class="chrome">Phone · before the first day</div>
+      <div class="club ph">
+        <div class="bar same"><div class="in"><div class="logo">NM</div><div class="cn">Northfield Minor Ball</div><div class="acct"><i></i></div></div><div class="ptabs"><span>Home</span><span class="on">House league</span></div></div>
+        <div class="col">
+          <div class="hd"><span class="chip same">Registration closed</span><h1 class="tt same">Summer 2026</h1><p class="sub">Runs May 2 to October 25, 2026. <button class="mk res" data-note="Today this state shows the price, the age-group tiles with spots filled, and a grey box repeating that registration is closed. After: the chip says it once, and the season’s dates become the line under the title.">RESTYLED</button></p></div>
+          <div class="btns"><span class="btn p">Schedule</span> <button class="mk res" data-note="With no games played there is no table, so the page is the schedule door. It becomes the primary button because it is the only one.">RESTYLED</button></div>
+          <p class="foot same">Already signed up? <a>Email me my link</a></p>
+        </div>
+      </div></div>
+    <p class="cap">No table before any game is played. The page is short on purpose: one door, and the family link.</p>
+  </div>
+  <div>
+    <p class="lbl after">Playing now · Jul 18</p>
+    <div class="frame"><div class="chrome">Phone · mid-season</div>
+      <div class="club ph">
+        <div class="bar same"><div class="in"><div class="logo">NM</div><div class="cn">Northfield Minor Ball</div><div class="acct"><i></i></div></div><div class="ptabs"><span>Home</span><span class="on">House league</span></div></div>
+        <div class="col">
+          <div class="hd"><span class="chip ok same">Playing now</span><h1 class="tt same">Summer 2026</h1><p class="sub">Runs May 2 to October 25, 2026.</p></div>
+          <p class="band">Standings <button class="mk new" data-note="The live table’s top three, titled Standings as the standings page is for a live season. It changes as scores come in; no “as of” date is added. Ask 5 decides whether a live season shows the table here or only the buttons.">NEW</button></p>
+          <div class="res">
+            <div class="kcard rcard"><div class="rh"><b>U11</b><a>Full table →</a></div>
+              <table class="mt"><thead><tr><th>#</th><th>Team</th><th class="n">W-L-T</th><th class="n">Pts</th></tr></thead><tbody>
+              <tr class="lead"><td class="rk">1</td><td class="tm"><i class="dot" style="background:#4B2E83"></i>Wolves</td><td class="n">5-1-0</td><td class="n"><b>10</b></td></tr>
+              <tr><td class="rk">T-2</td><td class="tm"><i class="dot" style="background:#835006"></i>Hawks</td><td class="n">4-1-1</td><td class="n"><b>9</b></td></tr>
+              <tr><td class="rk">T-2</td><td class="tm"><i class="dot" style="background:#1F6F78"></i>Lions</td><td class="n">4-1-1</td><td class="n"><b>9</b></td></tr>
+              </tbody></table><div class="more">1 more team</div></div>
+          </div>
+          <div class="btns"><span class="btn s">Schedule</span></div>
+          <p class="foot same">Already signed up? <a>Email me my link</a></p>
+        </div>
+      </div></div>
+    <p class="cap">One age group shown to keep the frame short. A shared place reads T-2, exactly as the standings page shows it.</p>
+  </div>
+  <div>
+    <p class="lbl after">Ended Oct 25 · not completed</p>
+    <div class="frame"><div class="chrome">Phone · past its last day</div>
+      <div class="club ph">
+        <div class="bar same"><div class="in"><div class="logo">NM</div><div class="cn">Northfield Minor Ball</div><div class="acct"><i></i></div></div><div class="ptabs"><span>Home</span><span class="on">House league</span></div></div>
+        <div class="col">
+          <div class="hd"><span class="chip same">Ended Oct 25</span><h1 class="tt same">Summer 2026</h1><p class="sub">Ran May 2 to October 25, 2026.</p></div>
+          <p class="band">Standings <button class="mk unc" data-note="Still “Standings”, never “Final”: under 9f·3 the word Final waits until the club completes the season, because scores can still be corrected until then. When the club completes it, this band becomes Final standings and the chip goes, with no other change.">9f·3</button></p>
+          <div class="res">
+            <div class="kcard rcard"><div class="rh"><b>U11</b><a>Full table →</a></div>
+              <table class="mt"><thead><tr><th>#</th><th>Team</th><th class="n">W-L-T</th><th class="n">Pts</th></tr></thead><tbody>
+              <tr class="lead"><td class="rk">1</td><td class="tm"><i class="dot" style="background:#835006"></i>Hawks</td><td class="n">9-2-1</td><td class="n"><b>19</b></td></tr>
+              <tr><td class="rk">2</td><td class="tm"><i class="dot" style="background:#4B2E83"></i>Wolves</td><td class="n">7-4-1</td><td class="n"><b>15</b></td></tr>
+              <tr><td class="rk">3</td><td class="tm"><i class="dot" style="background:#1F6F78"></i>Lions</td><td class="n">5-6-1</td><td class="n"><b>11</b></td></tr>
+              </tbody></table><div class="more">1 more team</div></div>
+          </div>
+          <div class="btns"><span class="btn s">Schedule</span></div>
+          <p class="foot same">Already signed up? <a>Email me my link</a></p>
+        </div>
+      </div></div>
+    <p class="cap">The next-season line can appear here too (tab 4), since the season is over for families even before the club completes it.</p>
+  </div>
+</div>
+</section>
+
+<!-- ============ 4 · The next season ============ -->
+<section class="pane" data-pane="next" hidden>
+<h2>“The next season” has to mean something the product knows</h2>
+<p>An old season’s page is what a family finds through a search or an old bookmark. If the club is taking sign-ups for a newer season, that is the most useful line on the page. But <b>nothing links one season to the next</b>: Fall 2026 is not recorded as following Summer 2026. So the honest rule is <b>“every newer season at this club that is taking sign-ups, by name”</b>. That is right for a club running one house league at a time, which is the common case. For a club running two seasons side by side (allowed since Q14), a U9 family might also see a U13-only season. I think that is acceptable: it is the same club, and both are named.</p>
+<div class="phones">
+  <div>
+    <p class="lbl after">One newer season taking sign-ups</p>
+    <div class="frame"><div class="chrome">The line · one season</div><div class="club ph"><div class="col" style="padding-bottom:16px">
+      <div class="door"><p class="dh">Fall 2026 · Registration open</p><p class="dl">Registration closes Sep 13.</p><span class="btn s sm">See Fall 2026 →</span></div>
+    </div></div></div>
+    <p class="cap">The second line is the season’s own registration line, the same one its page shows. It links to the new season’s page, not straight to the form, so the family sees the price and age groups first.</p>
+  </div>
+  <div>
+    <p class="lbl after">Two newer seasons taking sign-ups</p>
+    <div class="frame"><div class="chrome">The line · two seasons</div><div class="club ph"><div class="col" style="padding-bottom:16px">
+      <div class="door"><p class="dh">Taking sign-ups now</p><p class="dl">Fall 2026 · Winter Skills 2027</p><span class="btn s sm">See the house league →</span></div>
+    </div></div></div>
+    <p class="cap">With more than one, the line names them and links to the club’s House league page, where both are listed under Running now with their own Register buttons. No choice is made on the family’s behalf.</p>
+  </div>
+  <div>
+    <p class="lbl after">None</p>
+    <div class="frame"><div class="chrome">The line · nothing open</div><div class="club ph"><div class="col" style="padding-bottom:16px">
+      <p style="margin:0;font-size:14px;color:#6F675B">Nothing is shown. The page starts at the season’s title.</p>
+    </div></div></div>
+    <p class="cap">No “check back later” filler. A season that only opens later (Opens {day}) does not count; only one taking sign-ups today does.</p>
+  </div>
+</div>
+</section>
+
+<!-- ============ 5 · Asks ============ -->
+<section class="pane" data-pane="asks" hidden>
+<h2>Five asks</h2>
+<p class="muted">Tick one per ask (or write a note), then <b>Build my answers</b> and paste the text back into the chat.</p>
+
+<div class="ask" data-ask="P1"><h3><span class="no">P1</span>When does the page switch to the season shape?</h3>
+<p class="why">The price and the spots tiles stop meaning anything the day registration closes, not the day the club completes the season.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" value="a"><span>From the day registration closes: closed, playing, ended and finished all use the season shape (tabs 2 and 3)</span></label>
+<label><input type="checkbox" value="b"><span>Only once the club completes the season; until then, today’s page</span></label>
+</div><textarea placeholder="Note (optional)" aria-label="Note for P1"></textarea></div>
+
+<div class="ask" data-ask="P2"><h3><span class="no">P2</span>How much of the table does the page show?</h3>
+<p class="why">House league records no champion, so first place on the final table is the result.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" value="a"><span>The top three of each age group, first place highlighted, with Full table →</span></label>
+<label><input type="checkbox" value="b"><span>The whole table for each age group (long for a club with six or more teams per age group)</span></label>
+<label><input type="checkbox" value="c"><span>First place only, one line per age group</span></label>
+<label><input type="checkbox" value="d"><span>No table; keep the Final standings → button</span></label>
+</div><textarea placeholder="Note (optional)" aria-label="Note for P2"></textarea></div>
+
+<div class="ask" data-ask="P3"><h3><span class="no">P3</span>The club’s next season on an old season’s page</h3>
+<p class="why">Shown only when a newer season at the club is taking sign-ups today. Two or more link to the House league page (tab 4).</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" value="a"><span>Yes, as a slim line at the top, above the title</span></label>
+<label><input type="checkbox" value="b"><span>Yes, at the bottom, under the Schedule button</span></label>
+<label><input type="checkbox" value="c"><span>No</span></label>
+</div><textarea placeholder="Note (optional)" aria-label="Note for P3"></textarea></div>
+
+<div class="ask" data-ask="P4"><h3><span class="no">P4</span>“Already signed up? Email me my link” on a finished season</h3>
+<p class="why">A family’s own page stays open for 30 days after the season is completed, and for as long as they owe a fee.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" value="a"><span>Keep it, unchanged, in every state</span></label>
+<label><input type="checkbox" value="b"><span>Hide it on a finished season (a family who owes would need the club’s email instead)</span></label>
+</div><textarea placeholder="Note (optional)" aria-label="Note for P4"></textarea></div>
+
+<div class="ask" data-ask="P5"><h3><span class="no">P5</span>A season being played: table on the page, or buttons only?</h3>
+<p class="why">Only matters if P1 is answered “from the day registration closes”.</p>
+<div class="opts">
+<label class="rec"><input type="checkbox" value="a"><span>The same top-three table, titled Standings, so the page has one layout from closing to finished</span></label>
+<label><input type="checkbox" value="b"><span>Buttons only while playing; the table appears once the season has ended</span></label>
+</div><textarea placeholder="Note (optional)" aria-label="Note for P5"></textarea></div>
+
+<div class="paste">
+  <div class="row"><button class="btn-d pri" id="build">Build my answers</button><button class="btn-d" id="copy">Copy</button><span id="copied" class="muted" style="font-size:13px"></span></div>
+  <textarea id="out" readonly aria-label="Answers to paste back"></textarea>
+</div>
+</section>
+</div>
+
+<dialog class="note" id="dlg"><div class="nh"><h3 id="dlgT"></h3><button class="xb" id="dlgX" aria-label="Close">×</button></div><div class="nb" id="dlgB"></div></dialog>
+
+<script>
+(function(){
+var FINDINGS = {
+ F1:{t:"Spots filled on a season nobody can join", today:"Each age-group tile shows a bar and “{n} / {size} spots filled”, counting accepted and received sign-ups, in every state the page can be in. After registration closes the number never changes again.", here:"On your walk club it reads 0 / 40 beside a season of four teams and real standings, because that club never recorded sign-ups. The number is noise at best and wrong-looking at worst.", fix:"The age-group tiles leave the page once registration closes. They stay, unchanged, while families can sign up."},
+ F2:{t:"A price for something that can’t be bought", today:"The header shows the price (or “Free” when none is set) and, while it runs, the early bird, whatever state the season is in.", here:"“Free” on your walk club most likely means no price was set, not that the season cost nothing.", fix:"Price and registration dates leave the page once registration closes."},
+ F3:{t:"The page opens on what is missing", today:"Once registration closes, a grey card holds “This season has concluded.” (or “This season is currently active. Registration is closed.”). It sits where an empty state goes.", here:"On a finished season it is the most prominent sentence on the page.", fix:"The chip says the state once; on a finished season the ruled sentence becomes the line under the title, with the dates."},
+ F4:{t:"The result is a click away", today:"The page links to Final standings; it shows no part of the table.", here:"A family asking “how did we do?” has to open another page. On a phone the button is about two screens down.", fix:"The top three of each age group is on the page, first place highlighted, each with a link to its full table."}
+};
+function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+var dlg=$("#dlg"), dT=$("#dlgT"), dB=$("#dlgB");
+function esc(t){return String(t).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
+function open(title, parts){ dT.textContent=title; dB.innerHTML=parts.map(function(p){return "<div><h4>"+esc(p[0])+"</h4><p>"+esc(p[1])+"</p></div>"}).join(""); if(dlg.showModal) dlg.showModal(); else dlg.setAttribute("open",""); }
+$("#dlgX").addEventListener("click",function(){dlg.close()});
+dlg.addEventListener("click",function(e){ if(e.target===dlg) dlg.close(); });
+document.addEventListener("click",function(e){
+  var f=e.target.closest(".fl"); if(f){ e.preventDefault(); e.stopPropagation(); var k=f.getAttribute("data-f"), F=FINDINGS[k]; if(!F) return;
+    if(f.classList.contains("fix")){ open("What the after page fixes", Object.keys(FINDINGS).map(function(key){return [key+" · "+FINDINGS[key].t, FINDINGS[key].fix]})); return; }
+    open(k+" · "+F.t, [["What the page does today",F.today],["Where you are looking",F.here],["What the proposal does",F.fix]]); return; }
+  var m=e.target.closest(".mk"); if(m){ e.preventDefault(); e.stopPropagation(); var kind=m.classList.contains("new")?"NEW":m.classList.contains("res")?"RESTYLED":m.classList.contains("gone")?"GONE":"UNCHANGED";
+    open(m.textContent.trim(), [[kind, m.getAttribute("data-note")||""]]); return; }
+}, true);
+var tabs=$$(".tabs [role=tab]"); var DIFF=["fin","run"];
+function show(p){ tabs.forEach(function(t){t.setAttribute("aria-selected", String(t.getAttribute("data-pane")===p))}); $$("section.pane").forEach(function(s){s.hidden = s.getAttribute("data-pane")!==p}); $(".viewrow").hidden = DIFF.indexOf(p)<0; try{localStorage.setItem("pubseason-tab",p)}catch(e){} fitAll(); window.scrollTo(0, $(".tabs").offsetTop - 4); }
+tabs.forEach(function(t){ t.addEventListener("click",function(){ show(t.getAttribute("data-pane")) }) });
+function view(v){ document.body.classList.toggle("only-diff", v==="diff"); $$("[data-view]").forEach(function(b){ b.setAttribute("aria-pressed", String(b.getAttribute("data-view")===v)) }); }
+$$("[data-view]").forEach(function(b){ b.addEventListener("click",function(){ view(b.getAttribute("data-view")) }) });
+function fitAll(){ $$(".dtw").forEach(function(w){ var avail=w.clientWidth; if(!avail) return; var z=Math.min(1, avail/1200); w.firstElementChild.style.setProperty("--z", z); }) }
+window.addEventListener("resize",fitAll);
+var KEY="pubseason-asks";
+function save(){ var st={}; $$(".ask").forEach(function(a){ st[a.getAttribute("data-ask")]={c:$$("input:checked",a).map(function(i){return i.value}), n:$("textarea",a).value} }); try{ localStorage.setItem(KEY, JSON.stringify(st)) }catch(e){} }
+(function restore(){ var st={}; try{ st=JSON.parse(localStorage.getItem(KEY)||"{}") }catch(e){} $$(".ask").forEach(function(a){ var v=st[a.getAttribute("data-ask")]; if(!v) return; $$("input",a).forEach(function(i){ i.checked = v.c.indexOf(i.value)>=0 }); $("textarea",a).value=v.n||""; }) })();
+document.addEventListener("change",function(e){ if(e.target.closest(".ask")) save() });
+document.addEventListener("input",function(e){ if(e.target.closest(".ask")) save() });
+$("#build").addEventListener("click",function(){ var L=["Public season page · rulings ("+new Date().toISOString().slice(0,10)+")",""]; $$(".ask").forEach(function(a){ var h=$("h3",a), no=$(".no",h).textContent.trim(), t=h.textContent.replace(no,"").trim(); var ch=$$("input:checked",a).map(function(i){return i.closest("label").textContent.trim()}); var n=$("textarea",a).value.trim(); L.push(no+" "+t); L.push("  → "+(ch.length?ch.join(" + "):"(no answer)")); if(n) L.push("  note: "+n.replace(/\n+/g," / ")); }); $("#out").value=L.join("\n"); });
+$("#copy").addEventListener("click",function(){ var t=$("#out"); if(!t.value) $("#build").click(); try{ navigator.clipboard.writeText(t.value).then(function(){ $("#copied").textContent="Copied" }, function(){ t.select(); $("#copied").textContent="Selected; press Ctrl+C" }) }catch(e){ t.select(); $("#copied").textContent="Selected; press Ctrl+C" } });
+var p0="idea"; try{ p0=localStorage.getItem("pubseason-tab")||"idea" }catch(e){}
+if(tabs.map(function(t){return t.getAttribute("data-pane")}).indexOf(p0)<0) p0="idea";
+tabs.forEach(function(t){t.setAttribute("aria-selected", String(t.getAttribute("data-pane")===p0))}); $$("section.pane").forEach(function(s){s.hidden = s.getAttribute("data-pane")!==p0}); $(".viewrow").hidden = DIFF.indexOf(p0)<0;
+fitAll();
+})();
+</script>

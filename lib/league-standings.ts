@@ -253,6 +253,15 @@ export const STANDINGS_WORDS = {
     no: 'Off',
   },
 
+  // The season page's top-three cards (§0k P2; HOUSE_LEAGUE_PUBLIC_SEASON_PAGE_COPY.md §2, §5, W4). The link reads
+  // "Full table →" and a screen reader hears "Full table for U11" (the arrow is hidden).
+  card: {
+    link: 'Full table',
+    linkFor: (division: string) => `for ${division}`,
+    /** The rows the card does not show: "3 more teams", "1 more team". */
+    more: (n: number) => `${n} more ${n === 1 ? 'team' : 'teams'}`,
+  },
+
   // §4 the coach's line
   coach: {
     heading: (shows: boolean) => (shows ? 'Scores and standings' : 'Scores'),

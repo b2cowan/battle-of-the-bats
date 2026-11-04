@@ -227,6 +227,41 @@
 .rankBox p { margin: 0; }
 
 .standLink { color: var(--club-ink); font-weight: 600; }
+/* The card's "Full table →" is a quiet link beside the 16px name: 14px, in the club's face (it inherited the page default). */
+.topHead .standLink { font: 600 0.875rem var(--club-text-face); }
+
+/* The season page's top three (§0k P2): one card per age group, two to a row at a desk and one on a phone. Each card is
+   the kit card with its name and "Full table →" on one line, then the standings table above, cut to three rows. */
+.topGrid {
+  display: grid;
+  /* min(): a 320 px phone leaves 272 px inside the container's gutters, so a bare 280 px track would overflow. */
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  gap: 0.75rem;
+}
+.topGrid > .topCard { padding: 0; overflow: hidden; }
+.topHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 14px 16px 6px;
+}
+.topName {
+  margin: 0;
+  font: 700 1rem/1.25 var(--club-text-face);
+  letter-spacing: 0;
+  color: var(--club-text);
+}
+.topCard tbody tr:last-child td { border-bottom: 0; }
+.topMore {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border-top: 1px solid var(--club-line);
+  font: 400 0.75rem/1.45 var(--club-text-face);
+  color: var(--club-dim);
+}
+/* The card above an old season's title (§0k P3): the kit's door, set apart from the chip and title under it. */
+.nextDoor { margin-bottom: 1.25rem; }
 
 .phoneOnly { display: none; }
 @media (max-width: 480px) {

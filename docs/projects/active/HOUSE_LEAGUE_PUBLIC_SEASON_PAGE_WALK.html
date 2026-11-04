@@ -1,0 +1,255 @@
+<title>Season Page Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · House League · Public season page · Ledger §451</span>
+    <h1>An old season’s page follows the season, and points to the next one</h1>
+    <p class="sub">Written 2026-11-04 for the public season page build (built, reviewed, help updated). One purpose: from the day registration closes, a season’s public page stops selling the season and shows its dates and standings, and an old season’s page names the club’s newer season that is taking sign-ups.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>While a season opens soon or takes sign-ups, its page is today’s sign-up page. From the day registration closes (the club closed it, or its close date passed), the price, the registration dates, the “spots filled” tiles and the grey notice box go. One line under the title gives the season’s dates. Once a game has a score, each age group’s first three teams show, first place in bold, with <strong>Full table →</strong>. The band reads <strong>Standings</strong>, and <strong>Final standings</strong> only once the club completes the season. An old season’s page (past its last day, or finished) shows a slim card above the title when the club has a newer season taking sign-ups today.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>A season taking sign-ups looks exactly as it did before.</li>
+    <li>A closed, playing, ended or finished season shows no price, no registration dates, no spots and no grey box, and one dates line that reads “Runs”, “Ran” or “This season has concluded. It ran …”.</li>
+    <li>The top three match the standings page, ties read T-1, an unscored age group says “Standings start with the first score.”, and an age group with standings off or an unpublished schedule is not listed.</li>
+    <li>The card names one newer open season with its own button, names two with a button to the house league page, and is absent when there is none or the season is not old.</li>
+    <li>“Already signed up? Email me my link” is on every page.</li>
+  </ul></section>
+  <section class="card"><h2>Known before the walk</h2><ul>
+    <li>The fixture’s dates are fixed for November 2026; walk it before Dec 12, 2026, or the playing season turns into an ended one.</li>
+    <li>Three or more newer seasons (“· 1 more”), a season with only one of its dates, a one-day season and a season stuck on “Registration closed” past its last day are proved by unit tests, not walked.</li>
+    <li>§450 is reserved for the 9f-2 walk (Start next season), so this walk is §451.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li>The standings page and the schedule page (unchanged), the house league index and the club home (unchanged), Start next season (9f-2).</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Server</dt><dd>The dev server already serves this build (checked 2026-11-04 by fetching every page below).</dd>
+    <dt>Fixture</dt><dd><code>node --env-file=.env.local .probe/season-page-walk/fixture.mjs</code> builds three throwaway clubs on dev; <code>--reset</code> removes them.</dd>
+    <dt>Who</dt><dd>Every page is public. Walk signed out (a private window). Dev only; keep this page private.</dd>
+  </dl></section>
+  <section class="card"><h2>Where</h2><dl class="facts">
+    <dt>Season Page Club</dt><dd><code>localhost:3000/walk-spp-club/league</code>, seven seasons: Winter 2027 and Spring 2027 taking sign-ups, Fall Ball 2026 closed by the club, Indoor 2026 closed by its date, Summer 2026 playing, Spring 2026 ended, Fall 2025 finished.</dd>
+    <dt>One Door Club</dt><dd><code>localhost:3000/walk-spp-one/league</code>, Fall 2025 finished and Winter 2027 taking sign-ups.</dd>
+    <dt>No Door Club</dt><dd><code>localhost:3000/walk-spp-none/league</code>, Fall 2025 finished, nothing else.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>Choices the build made beyond the accepted words</strong> (say if either should change): the dates line sits directly under the title, above the club’s description (the drawing’s order); a finished season with only a start day reads “This season has concluded. It started May 2, 2026.” (the words named the end-only case, not this one).</li>
+    <li><strong>The card sits above the status chip</strong>, so on an ended season it comes before “Ended Jun 27”. That is where P3 put it (“at the top, above the title”). Say if it should sit between the chip and the title instead.</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "hl-public-season-page-walk-v1";
+  var TITLE = "Public season page walk (2026-11-04) · §451";
+  var FX = "<code>node --env-file=.env.local .probe/season-page-walk/fixture.mjs";
+  var OUT = "Signed out (a private window)";
+  var A = "localhost:3000/walk-spp-club/league/";
+  var PARTS = [
+ { id: "A", title: "Taking sign-ups looks as it did", steps: [
+  { who: "Terminal", do: "Run " + FX + "</code>.",
+    see: "<strong>Stop check:</strong> “Built …” and eleven public links in three clubs. Keep it open." },
+  { who: OUT, do: "Open <code>" + A + "walk-winter-2027</code>.",
+    see: "Today’s sign-up page: chip <strong>Registration open</strong>, the Registration (October 1, 2026 — December 15, 2026), Season dates and Price ($150 – $165) blocks, Divisions with U9 Walk (“Saturday mornings.”) and U11 Walk at <strong>0 / 12 spots filled</strong>, <strong>Register now</strong>, “Registration closes Dec 15.” and “Already signed up? Email me my link”. No card above the title." }
+ ]},
+ { id: "B", title: "Registration closed", steps: [
+  { who: OUT, do: "Open <code>" + A + "walk-fall-ball-2026</code> (the club closed registration; first game Nov 14).",
+    see: "Chip <strong>Registration closed</strong>, the title, and the line <strong>Runs November 14 to December 19, 2026.</strong> No Registration, Season dates or Price block, no Divisions tiles, no spots, no grey box. No standings band. <strong>Schedule</strong> is the one button and it is the filled (primary) one. No card above the title." },
+  { who: OUT, do: "Open <code>" + A + "walk-indoor-2026</code> (still “open” in the admin, but its close date, Oct 31, has passed).",
+    see: "Chip <strong>Closed Oct 31</strong> and the same shape as B1. The line keeps each year because the season crosses into the new year: <strong>Runs November 28, 2026 to February 20, 2027.</strong>" },
+  { who: OUT, do: "On either page, look under the Schedule button.",
+    see: "“Already signed up? <strong>Email me my link</strong>” is there." }
+ ]},
+ { id: "C", title: "Playing: each age group’s top three", steps: [
+  { who: OUT, do: "Open <code>" + A + "walk-summer-2026</code>.",
+    see: "Chip <strong>Playing now</strong>, the title, <strong>Runs September 5 to December 12, 2026.</strong>, then the club’s line “Weeknight games at Walk Park.” No card above the title." },
+  { who: OUT, do: "Read the <strong>Standings</strong> band (titled Standings, not Final standings).",
+    see: "Cards for U9 Walk, U11 Walk and U13 Walk, two per row on a desk. <strong>U9 Walk</strong>: 1 Comets 3-0-0 6 (Comets in bold), 2 Rockets 2-1-0 4, 3 Jets 1-2-0 2, and <strong>2 more teams</strong> under it. Columns # · Team · W-L-T · Pts." },
+  { who: OUT, do: "Read the <strong>U11 Walk</strong> and <strong>U13 Walk</strong> cards.",
+    see: "U11 Walk: <strong>T-1 Bears</strong> 1-0-1 3, <strong>T-1 Lions</strong> 1-0-1 3 (both bold), <strong>T-3 Moose</strong> 0-1-1 1, and <strong>1 more team</strong> (Otters is level with Moose and falls to row four). U13 Walk: its name and <strong>Standings start with the first score.</strong>, no table and no Full table link." },
+  { who: OUT, do: "Look for <strong>U7 Walk</strong> (standings off) and <strong>U15 Walk</strong> (schedule not published). Both have scored games.",
+    see: "Neither is listed anywhere on the page." },
+  { who: OUT, do: "Press <strong>Full table →</strong> on the U11 Walk card, then go back.",
+    see: "The standings page opens on U11 Walk, with the same order as the card plus Otters. Back on the season page, <strong>Schedule</strong> is the outlined (secondary) button below the band." }
+ ]},
+ { id: "D", title: "Ended and finished", steps: [
+  { who: OUT, do: "Open <code>" + A + "walk-spring-2026</code> (its last day, Jun 27, has passed; the club has not completed it).",
+    see: "Chip <strong>Ended Jun 27</strong>, the line <strong>Ran April 11 to June 27, 2026.</strong>, and the band titled <strong>Standings</strong> (never Final): U11 Walk with 1 Hawks 3-0-0 6, 2 Wolves 2-1-0 4, 3 Lions 1-2-0 2, <strong>1 more team</strong>." },
+  { who: OUT, do: "Open <code>" + A + "walk-fall-2025</code> (completed by the club).",
+    see: "<strong>No chip.</strong> The line <strong>This season has concluded. It ran September 6 to November 29, 2025.</strong> and the band titled <strong>Final standings</strong> with the same three teams. No grey box." },
+  { who: OUT, do: "Search both pages for the words “Champion”, “winner”, “Top three” or “Season complete”.",
+    see: "None of them appear." }
+ ]},
+ { id: "E", title: "The newer season’s card", steps: [
+  { who: OUT, do: "On Walk Spring 2026 and Walk Fall 2025 (part D), look above the title.",
+    see: "A slim card: <strong>Taking sign-ups now</strong>, the line <strong>Walk Spring 2027 · Walk Winter 2027</strong> (newest first), and the button <strong>See the house league →</strong>. Fall Ball 2026 and Indoor 2026 are not named: they are not taking sign-ups." },
+  { who: OUT, do: "Press <strong>See the house league →</strong>.",
+    see: "The club’s house league page, with both seasons under Running now, each with its own Register button." },
+  { who: OUT, do: "Open <code>localhost:3000/walk-spp-one/league/walk-fall-2025</code>.",
+    see: "The card names one season: <strong>Walk Winter 2027 · Registration open</strong>, <strong>Registration closes Nov 30.</strong>, and <strong>See Walk Winter 2027 →</strong>. Pressing it opens that season’s sign-up page." },
+  { who: OUT, do: "Open <code>localhost:3000/walk-spp-none/league/walk-fall-2025</code>.",
+    see: "<strong>No card</strong>: the page starts with the title. The rest matches D2." }
+ ]},
+ { id: "F", title: "On a phone", steps: [
+  { who: OUT, do: "On a phone, or at 375 px wide in the browser, open Walk Summer 2026.",
+    see: "One card per row, each table fits, and the page never scrolls sideways." },
+  { who: OUT, do: "At the same width, open Season Page Club’s Walk Fall 2025.",
+    see: "The card above the title wraps cleanly, with its button fully visible; the concluded line and the Final standings card read without clipping." },
+  { who: "Terminal", do: "When you are finished, run " + FX + " --reset</code>.",
+    see: "“Removed the three walk clubs and their sign-ins.”" }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

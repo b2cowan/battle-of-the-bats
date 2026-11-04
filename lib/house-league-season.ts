@@ -2,7 +2,7 @@ import { formatStoredDate, tournamentToday } from './timezone';
 import { pluralize } from './utils';
 import { isFinishedLeagueSeason, type HouseLeagueAccess } from './house-league-access';
 import { seasonCharges, seasonPriceRange, type EarlyBirdOffer } from './league-price';
-import { clubDay, clubWallClock, registrationChip, registrationState, type RegDated } from './league-registration-state';
+import { clubDay, clubWallClock, publicRegistrationLine, registrationChip, registrationState, type RegDated } from './league-registration-state';
 import type { LeagueSeasonStatus } from './types';
 
 /**
@@ -186,6 +186,89 @@ export type PublicSeasonLink = { label: string; href: string; primary?: boolean 
 /**
  * One public row's links (copy §8), beside the row's own door to the season page: Register (and the season page) while it
  * takes sign-ups; the season page while sign-ups are closed; Schedule and Standings once it is under way or done.
+// ── The season's own page once registration closes (§0k; words HOUSE_LEAGUE_PUBLIC_SEASON_PAGE_COPY.md, accepted 2026-11-04) ──
+
+/** A day in a sentence: "October 25, 2026", or "May 2" when the year is said once at the end (copy §1 `line.fmt`). */
+const longDay = (day: string, withYear = true) => formatStoredDate(day, { longMonth: true, withYear });
+
+/** "May 2 to October 25, 2026"; each day keeps its year across a new year; a one-day season reads once ("May 2, 2026"). */
+function datesSpan(start: string, end: string): string {
+  if (start === end) return longDay(start);
+  return `${longDay(start, start.slice(0, 4) !== end.slice(0, 4))} to ${longDay(end)}`;
+}
+
+export const SEASON_CONCLUDED = 'This season has concluded.';
+
+/**
+ * The line under the season page's title once registration closes (copy §1, W1, W2). "Runs" or "Ran" follows the end day
+ * against the club's today (the end day itself still runs), not the status: a season stuck on "Registration closed" after
+ * its last day reads "Ran". A finished season always reads "This season has concluded." first. A day missing: the start
+ * alone reads "Starts" / "Started"; the end alone "Runs until" while it runs and nothing once it has passed (the chip says
+ * "Ended {date}"). Neither day: the finished sentence alone, otherwise no line.
+ */
+export function seasonDatesLine(season: Dated, today: string = tournamentToday()): string | null {
+  const start = dayOf(season.seasonStartDate), end = dayOf(season.seasonEndDate);
+  if (isFinishedLeagueSeason(season)) {
+    const tail = start && end ? ` It ran ${datesSpan(start, end)}.`
+      : start ? ` It started ${longDay(start)}.`
+      : end ? ` It ended ${longDay(end)}.`
+      : '';
+    return SEASON_CONCLUDED + tail;
+  }
+  if (start && end) return `${end < today ? 'Ran' : 'Runs'} ${datesSpan(start, end)}.`;
+  if (start) return `${start > today ? 'Starts' : 'Started'} ${longDay(start)}.`;
+  if (end) return end < today ? null : `Runs until ${longDay(end)}.`;
+  return null;
+}
+
+/** The next-season card's words (copy §4, W6, W7). */
+export const NEXT_SEASON_WORDS = {
+  region: 'Taking sign-ups at this club',
+  oneHead: (name: string) => `${name} · Registration open`,
+  oneButton: (name: string) => `See ${name} →`,
+  manyHead: 'Taking sign-ups now',
+  manyButton: 'See the house league →',
+} as const;
+
+/**
+ * An old season (§0k P3): finished, or past its last day whatever its status — a season the club left on "Registration
+ * closed" after its last day is as old to a family as one that reads "Ended" (/review 2026-11-04).
+ */
+export function isOldSeason(season: Dated, today: string = tournamentToday()): boolean {
+  const end = dayOf(season.seasonEndDate);
+  return isFinishedLeagueSeason(season) || (end != null && today > end);
+}
+
+export type NextSeasonDoor<T> =
+  | { kind: 'one'; season: T; head: string; line: string | null; button: string }
+  | { kind: 'many'; head: string; line: string; button: string };
+
+/**
+ * The card above an old season's title (§0k P3): every newer season at this club taking sign-ups today (nothing links one
+ * season to the next, so "newer" is the switcher's own order). Shown only on an old season's page — past its last day
+ * ("Ended {date}") or finished. One season is named with its registration line and opens its page; two or more are named,
+ * newest first, three at most then "· {n} more", and open the club's House league page. None: no card.
+ */
+export function nextSeasonDoor<T extends Dated & { id: string; name: string; createdAt?: string | null }>(
+  season: T, seasons: readonly T[], today: string = tournamentToday(),
+): NextSeasonDoor<T> | null {
+  if (!isOldSeason(season, today)) return null;
+  const wallNow = wallFor(today);
+  const open = newerSeasons(season, seasons.filter(s => s.status !== 'draft'))
+    .filter(s => registrationState(regOf(s), wallNow) === 'open');
+  if (open.length === 0) return null;
+  if (open.length === 1) {
+    const [only] = open;
+    return {
+      kind: 'one', season: only, head: NEXT_SEASON_WORDS.oneHead(only.name),
+      line: publicRegistrationLine(regOf(only), wallNow), button: NEXT_SEASON_WORDS.oneButton(only.name),
+    };
+  }
+  const names = open.slice(0, 3).map(s => s.name);
+  if (open.length > 3) names.push(`${open.length - 3} more`);
+  return { kind: 'many', head: NEXT_SEASON_WORDS.manyHead, line: names.join(' · '), button: NEXT_SEASON_WORDS.manyButton };
+}
+
  * `seasonHref` is the season's public page; its sub-pages hang off it.
  */
 export function publicSeasonLinks(season: Dated, seasonHref: string, today: string = tournamentToday()): PublicSeasonLink[] {
