@@ -1,7 +1,7 @@
 # Public tournament pages — Stage 8: the new look on for everyone (plan)
 
-**Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 committed `d4af280e6` 2026-11-03** (record §10; it releases with the flip, ruling D). **Part 2 committed `02e29f453` 2026-11-03** (record §11; it releases with the flip too). **Part 3a built 2026-11-03** (record §12;
-releases with the flip). Next Part 3b. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
+**Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 committed `d4af280e6` 2026-11-03** (record §10; it releases with the flip, ruling D). **Part 2 committed `02e29f453` 2026-11-03** (record §11; it releases with the flip too). **Part 3a committed `3304c77fe` 2026-11-03**
+(record §12; releases with the flip). Next Part 3b. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
 **Sequencing rule (standing):** by dependency and rework risk, never by date. One part per session, `/clear` between.
@@ -329,7 +329,7 @@ layout as (c).
 - **Part 6 (release), still owed from Part 1:** `/release` §1d-2's sharp probe uses the deleted apple-icon route; changing
   `.claude/commands/release.md` is the owner's call.
 
-## 12. Part 3a record (Rules, Teams + the team page, Standings; built 2026-11-03; releases with the flip)
+## 12. Part 3a record (Rules, Teams + the team page, Standings; committed `3304c77fe` 2026-11-03; releases with the flip)
 
 **What a customer sees:** nothing (nothing promoted). **An owner on dev, switch on (the default):** nothing changes — the four
 pages and the admin preview's Rules, Teams and Standings sections already showed the new look. **Switch off:** those four pages and
@@ -392,7 +392,7 @@ frame guard (the four deleted sheets left the readable-baseline list; the monogr
 (loader mocks), the coin-toss guard (now reads `PublicStandings`), `playoff-plan` (the source regex on the old Standings became a
 **behavioural** test of `qualificationCaption` + `standingsAdvancing`, incl. a non-vacuous planned case). `tests/unit/_source-code.ts`
 gained `sourceExists` (pin a deletion) and `between` (anchor-checked slice — a missing anchor throws instead of handing a
-`doesNotMatch` an empty string). Its own commit: `admin-overlay-guard` names `components/admin/kit/club/PhoneWindow.tsx` (an inert
+`doesNotMatch` an empty string). Its own commit (`765c44638` 2026-11-03): `admin-overlay-guard` names `components/admin/kit/club/PhoneWindow.tsx` (an inert
 preview; Part 2's hand-on).
 
 **Checks run:** the touched + neighbouring unit files 457/457, then 200/200 after the route fix (incl. `demo-destinations-guard`
