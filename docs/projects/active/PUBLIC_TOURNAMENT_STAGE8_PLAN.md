@@ -6,8 +6,9 @@
 switch-off half-state ends for every public tournament page). **The public feed fix committed `55045ecf4` 2026-11-04** (record §16; its own change,
 releasable on its own; it does not cherry-pick onto production — §16 handed on). **Part 4 split (owner 2026-11-04): Part 4a (the public side —
 the pay page, the admin preview's old chrome, the old tab row and rail, the Rules layout menus, the team page's flag) committed `ecffa177f`
-2026-11-04** (record §17; releases with the flip). Next: Part 4b (the admin side, then the switch itself; build prompt
-`PUBLIC_TOURNAMENT_STAGE8_PART4B_BUILD_PROMPT.md`). Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
+2026-11-04** (record §17; releases with the flip). **Part 4b (the admin side, then the switch itself — deleted) committed
+`72cd94a46` 2026-11-04** (record §18; releases with the flip). **Part 4 committed.** Next: Part 5 (data and the wording
+around it, §4; no build prompt yet). Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
 **Sequencing rule (standing):** by dependency and rework risk, never by date. One part per session, `/clear` between.
@@ -1129,7 +1130,7 @@ footer's); an open old team-page tab loses the dropped fields until reload (no r
   Overview held-back-division post; the demo chrome's tap floors; the old Register/News 36 px doors; 5e's shots; the admin
   strip's 34 px "Dismiss"; `/release` §1d-2's sharp probe; the club editor's unlabelled 18 px input).
 
-## 18. Part 4b record (the admin side, then the switch itself; built 2026-11-04; releases with the flip)
+## 18. Part 4b record (the admin side, then the switch itself; committed `72cd94a46` 2026-11-04; releases with the flip)
 
 **What a customer sees:** nothing (nothing promoted). **An owner on dev:** the Branding page is the door, Pages, the
 **Look** card and **Logo** — for every browser, no step taken; a plan without advanced branding sees one lock line,
