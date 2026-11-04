@@ -2760,7 +2760,10 @@ Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 20
 > when it opens.
 **What it is (the index's words):** a treasurer checks each club book against the bank statement and marks the period done; a coach
 does the same with the team's Ledger.
-- [ ] Planned (its own PLAN/PM brief) and drawn (owner mockup session) — before Stage 8.
+**Planned 2026-11-04:** `BANK_RECONCILIATION_PLAN.md` + `BANK_RECONCILIATION_PM_BRIEF.md`. The plan's premise P1 corrects
+the index's words: the unit is a bank account, not a book. Asks B1–B12 ruled 2026-11-04 (all A); stages R0–R7.
+- [x] Planned (its own PLAN/PM brief) — ✅ 2026-11-04, asks ruled · drawn (owner mockup session) — before Stage 8. ✅
+  Drawn and **approved 2026-11-04** (`BANK_RECONCILIATION_DRAWINGS.html`; 14 drawing asks ruled A). Build R1–R7 next.
 - [ ] Built for the club (Accounting) and for the coach (the team's Ledger).
 - [ ] Walked (its own checkable page, a § in the Owner QA Ledger).
 - [ ] **Marketing truth:** "payment reconciliation" comes back into the Club copy (pricing section, Club plan article, homepage,

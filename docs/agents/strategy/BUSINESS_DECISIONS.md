@@ -8,6 +8,35 @@
 
 ---
 
+### 2026-11-04 — Bank reconciliation rides Accounting (Club) and the Premium Coaches Portal's Ledger (everywhere); no new key, no add-on (Decided)
+**Status:** **Decided** (owner, 2026-11-04, Bank reconciliation ask **B11 = A**, pasted back with no notes; option A was `/strategy`'s proposal the same day). **Not built:** the project is planned, drawn and its drawings approved (R0, 2026-11-04); build stages R1–R7 follow. Plan of record `docs/projects/active/BANK_RECONCILIATION_PLAN.md` §4 B11.
+**Decision:**
+1. **Club side: part of Accounting** (Club and Club · Association, `module_accounting`). No new feature key, no add-on, the same per-person Accounting access.
+2. **Coach side: the Premium Coaches Portal, everywhere** (standalone Premium and Club-included alike), riding the Ledger. No new key. The Basic (free) portal stays on its fee list, **with no tease**.
+3. **The Club plan's difference is the club-wide view** of every team's "bank checked through" mark (Teams tab), not whether a team can check.
+4. No price, plan name, band, SKU or `lib/plan-config.ts` change.
+**Rationale:** a bank check is part of keeping the books, so it belongs where the books already are. Gating the coach half to Club-included teams only would take a core money job away from the paid standalone portal, which was sold on money, and would sharpen the open Premium → Club price-step concern (2026-10-30).
+**Affects:** packaging (one more inclusion each for Accounting and the Premium portal's Ledger); `PLAN_PRICING_FACTS.md` (coach Ledger inclusions bullet added, a gap found, not drift; change-log line added); marketing truth (below).
+**Marketing truth (2026-10-19 entry, still binding):** "payment reconciliation" / "bank reconciliation" stays off all Club copy until the project's owner walk (R7) passes. Checked 2026-11-04: the pricing copy appendix and pricing section carry no such claim. Three overclaims found by the plan (§2) are **still live** and are routed below.
+**Handoff:**
+```
+HANDOFF → /marketing
+- At R7 (after the walk passes): "bank reconciliation" back into the Club copy (pricing section, Club plan article, homepage,
+  in-app plan list, PRICING_PAGE_COPY.md); the coach Premium list may name it then too. Never on the Basic portal (no tease).
+- Now, independent of this project (they break the 2026-10-19 rule today): onboarding "track invoices"; the marketing email
+  default "team invoicing"; the module catalog's "reconciliation workflows" (check first whether the feature matrix reading it
+  is public).
+- The plan §5 word drafts and the "reconciliation" collision on the coach Money hub, once per build stage.
+HANDOFF → /billing
+- Nothing to flip: the Bank tab is gated by the existing Accounting module and the coach Bank view by the existing Ledger
+  (Premium) entitlement, server side. Confirm both at R2/R5; absent, never disabled, on Basic.
+HANDOFF → /plan
+- BANK_RECONCILIATION_PLAN.md §4 B11: logged 2026-11-04.
+```
+**Supersedes:** nothing. **Relates to:** 2026-10-19 "Marketing claims only what ships"; 2026-10-30 Premium → Club in place.
+
+---
+
 ### 2026-11-04 — House League 9f: Start next season rides house league as a whole; the parked free League floor is excluded, as the tournament's Reuse this setup is (Decided)
 **Status:** **Decided** (owner, 2026-11-04: "i accept the proposal"; recommended by `/strategy` the same day on House League 9f·16, which the owner had flagged for `/strategy`). **Not yet built:** the 9f-2 build gates nothing beyond house league itself today, so the server-side check below is owed to `/billing`.
 **The question:** is *Start next season* a paid-plan feature? It is the "Start from" choice in the New season window. It copies a season's settings, age groups with born years moved up, team names and colours, and practice settings. It never copies families, money, ratings, games or club time.

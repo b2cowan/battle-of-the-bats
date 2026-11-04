@@ -1,0 +1,520 @@
+<title>Bank Reconciliation Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a sticky numbered tab row; one section visible at a time; the last tab holds the owner's asks with a paste-back block. */
+:root {
+  --bg: #f4f6f4;
+  --surface: #ffffff;
+  --fg: #1c2521;
+  --muted: #5a6761;
+  --line: #d7ded9;
+  --accent: #1d6b58;
+  --accent-soft: #e2efe9;
+  --warn: #8a5300;
+  --warn-soft: #fbf0dc;
+  --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Spline Sans Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111614; --surface: #171e1b; --fg: #e3eae6; --muted: #9aa8a1; --line: #29332e;
+  --accent: #62c3a5; --accent-soft: #1a2d27; --warn: #f0b45a; --warn-soft: #2e2414; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #111614; --surface: #171e1b; --fg: #e3eae6; --muted: #9aa8a1; --line: #29332e;
+  --accent: #62c3a5; --accent-soft: #1a2d27; --warn: #f0b45a; --warn-soft: #2e2414; color-scheme: dark; }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.wrap { max-width: 980px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top { padding-block: 22px 14px; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+h1 { font-size: 26px; line-height: 1.2; margin: 4px 0 6px; text-wrap: balance; }
+h2 { font-size: 20px; margin: 0 0 8px; text-wrap: balance; }
+h3 { font-size: 16px; margin: 0 0 6px; text-wrap: balance; }
+p { margin: 0 0 10px; max-width: 68ch; }
+.lede { color: var(--muted); max-width: 70ch; }
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.tabs .wrap { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: thin; }
+.tabs button { flex: 0 0 auto; font: inherit; font-size: 14px; font-weight: 500; color: var(--muted); background: none; border: 0; border-bottom: 3px solid transparent; padding: 12px 10px 9px; cursor: pointer; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tabs button:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+main { padding-block: 22px 60px; }
+section.panel { display: grid; gap: 18px; }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; min-width: 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+.tag.warn { background: var(--warn-soft); color: var(--warn); }
+.muted { color: var(--muted); }
+.mono, .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* worked example: a statement check */
+.check { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.check .row { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 9px 14px; border-top: 1px solid var(--line); align-items: baseline; }
+.check .row:first-child { border-top: 0; }
+.check .row.head { background: var(--accent-soft); font-weight: 600; }
+.check .row .num { text-align: right; }
+.check .row.total { font-weight: 700; }
+.band { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.band div { padding: 10px 14px; border-left: 1px solid var(--line); min-width: 0; }
+.band div:first-child { border-left: 0; }
+.band .k { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.band .v { font-family: var(--font-mono); font-size: 18px; font-variant-numeric: tabular-nums; }
+.band .zero .v { color: var(--accent); font-weight: 600; }
+@media (max-width: 520px) { .band { grid-template-columns: 1fr; } .band div { border-left: 0; border-top: 1px solid var(--line); } .band div:first-child { border-top: 0; } }
+
+.premise { display: grid; grid-template-columns: 34px 1fr; gap: 12px; }
+.premise .n { font-family: var(--font-mono); font-weight: 600; color: var(--accent); font-size: 15px; padding-top: 1px; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-top: 1px solid var(--line); }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; border-top: 0; }
+td:first-child { font-family: var(--font-mono); white-space: nowrap; }
+
+/* asks */
+.askhead { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.ask { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.ask.first { border-color: var(--accent); }
+.ask .q { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.ask .id { font-family: var(--font-mono); font-weight: 600; color: var(--accent); }
+.opts { display: grid; gap: 6px; }
+.opt { display: grid; grid-template-columns: 22px 1fr; gap: 8px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; align-items: start; }
+.opt:hover { border-color: var(--accent); }
+.opt input { margin: 3px 0 0; accent-color: var(--accent); }
+.opt:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); }
+.opt .rec { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .05em; margin-left: 6px; }
+.why { font-size: 14px; color: var(--muted); }
+.why b { color: var(--fg); font-weight: 600; }
+textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 14px; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; min-height: 40px; resize: vertical; }
+.btn { font: inherit; font-size: 14px; font-weight: 600; border-radius: 6px; padding: 8px 14px; cursor: pointer; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); }
+.btn.ghost { background: transparent; color: var(--accent); }
+.paste { position: sticky; bottom: 0; background: var(--surface); border: 1px solid var(--accent); border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; box-shadow: 0 -6px 18px rgba(0,0,0,.06); margin-bottom: env(safe-area-inset-bottom, 0px); }
+.paste pre { margin: 0; font-family: var(--font-mono); font-size: 13px; white-space: pre-wrap; word-break: break-word; max-height: 140px; overflow: auto; background: var(--bg); border-radius: 6px; padding: 8px 10px; }
+.paste .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.count { font-size: 13px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<header class="top"><div class="wrap">
+  <div class="eyebrow">Club Tier · inside the Club release · planning, 2026-11-04</div>
+  <h1>Checking the books against the bank</h1>
+  <p class="lede">Both portals: the club's Accounting and a coach's team Ledger. The plan, what it corrects, and twelve asks for you to rule. Nothing here is drawn yet. The drawing session comes after the asks.</p>
+</div></header>
+
+<nav class="tabs" aria-label="Sections"><div class="wrap" role="tablist">
+  <button role="tab" data-tab="idea">1 · What changes</button>
+  <button role="tab" data-tab="corrections">2 · Three corrections</button>
+  <button role="tab" data-tab="today">3 · What exists today</button>
+  <button role="tab" data-tab="screens">4 · Screens to draw</button>
+  <button role="tab" data-tab="stages">5 · Stages</button>
+  <button role="tab" data-tab="asks">6 · Asks</button>
+</div></nav>
+
+<main class="wrap">
+
+<!-- 1 -->
+<section class="panel" id="p-idea" data-panel="idea">
+  <div class="box">
+    <h2>What a treasurer and a coach do after this ships</h2>
+    <p>Once a month they open the bank statement beside FieldLogicHQ. They type the statement's end date and closing balance, tick each line the bank shows, and watch the difference reach $0.00. Then they mark the statement checked. The club and the team each carry a quiet <b>"Bank checked through March 31"</b>, and the club sees that line for every one of its teams.</p>
+  </div>
+  <div class="grid2">
+    <div class="box">
+      <span class="tag">Club</span>
+      <h3 style="margin-top:8px">A Bank tab in Accounting</h3>
+      <ul class="plain">
+        <li>First visit: name the account, its starting balance, and which books belong to it (all of them, by default).</li>
+        <li>Each statement is one check.</li>
+        <li>A Stripe deposit arrives as <b>one line</b> that ticks every family payment inside it, instead of thirty lines to hunt for.</li>
+        <li>Each team's "checked through" date shows on the Teams tab.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <span class="tag">Coach</span>
+      <h3 style="margin-top:8px">A Bank view of the Ledger</h3>
+      <ul class="plain">
+        <li>A fourth view beside Timeline, Bills and Payment schedule. Same book, arranged against the statement.</li>
+        <li>A cash line that never went to the bank is marked <b>"Didn't go through the bank"</b>, so a team that pays refs in cash can still balance.</li>
+        <li>A cheque written before the rollover can still be ticked when it cashes after it.</li>
+      </ul>
+    </div>
+  </div>
+  <div>
+    <h3>A worked example <span class="tag warn">Example figures</span></h3>
+    <p class="muted">The arithmetic every check does. This is not a drawing of the screen.</p>
+    <div class="check">
+      <div class="row head"><span>Statement ending Mar 31 · Club chequing</span><span></span></div>
+      <div class="row"><span>Bank balance at the start (last check's ending)</span><span class="num">$6,120.45</span></div>
+      <div class="row"><span>Ticked in: 14 lines, including 1 Stripe payout ($1,284.50)</span><span class="num">+ $3,910.00</span></div>
+      <div class="row"><span>Ticked out: 9 lines</span><span class="num">− $1,617.55</span></div>
+      <div class="row total"><span>Ticked balance</span><span class="num">$8,412.90</span></div>
+      <div class="row"><span class="muted">Still outstanding: cheque #214 to the arena, written Mar 29</span><span class="num muted">$450.00</span></div>
+    </div>
+    <div class="band" style="margin-top:10px">
+      <div><div class="k">Statement says</div><div class="v">$8,412.90</div></div>
+      <div><div class="k">Ticked balance</div><div class="v">$8,412.90</div></div>
+      <div class="zero"><div class="k">Difference</div><div class="v">$0.00</div></div>
+    </div>
+  </div>
+  <div class="box">
+    <h3>Why it matters</h3>
+    <ul class="plain">
+      <li><b>It's the one money job the product sends somewhere else.</b> Today a treasurer keeps the books here and checks them against the bank in a spreadsheet, or doesn't check.</li>
+      <li><b>Associations require it.</b> Canadian minor-hockey associations commonly want each team's bank reconciliation monthly and at season end. Cochrane: "must be performed on a monthly basis". North Durham: emailed to the Director of Finance by the 10th.</li>
+      <li><b>It puts back a claim we took off the Club page.</b> "Payment reconciliation" came off every Club page on 2026-10-19 because nothing did it. It goes back after this walk passes, and not before.</li>
+      <li><b>The team apps don't do it.</b> TeamSnap and Jersey Watch track payments but don't check a statement. QuickBooks and Wave do, but a volunteer doesn't run a team in QuickBooks.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="panel" id="p-corrections" data-panel="corrections" hidden>
+  <p class="lede">The project index defines this in one sentence: <i>"a treasurer checks each club book against the bank statement and marks the period done; a coach does the same with the team's Ledger."</i> Three parts of that sentence don't hold up against the product, and a fourth is unproven.</p>
+  <div class="box premise"><div class="n">P1</div><div>
+    <h3>A club doesn't check a book. It checks a bank account.</h3>
+    <p>A club keeps a General book, one per tournament, and one per house-league season, and they almost always share one chequing account. A single Stripe deposit can carry tournament and house-league money at once, so a book-by-book check can never reach $0.00. A transfer between two books in the same account never reaches the bank at all.</p>
+    <p class="muted">So: the check is per bank account, and each club book belongs to one account. Ask B1.</p>
+  </div></div>
+  <div class="box premise"><div class="n">P2</div><div>
+    <h3>A coach's Cash on hand isn't the bank balance.</h3>
+    <p>Cash on hand counts every dollar the team holds: the envelope, an undeposited cheque, the bank. Measured straight against a statement, it is off by exactly the cash that never went in. A bill a family paid straight to the vendor never touched the team's account either.</p>
+    <p class="muted">So: a line can be marked "Didn't go through the bank". Ask B6.</p>
+  </div></div>
+  <div class="box premise"><div class="n">P3</div><div>
+    <h3>The coach half has a reader the sentence doesn't name: the club.</h3>
+    <p>Associations ask every team for its bank reconciliation. A coach's "checked through" date that the club can read is the half's real payoff, and it stays inside D1: the club reads the coach's fact, and no second team number is created.</p>
+    <p class="muted">So: each team's date shows on the club's Teams tab. A full "send to the club for review" flow is recommended for later. Asks B9 and B12.</p>
+  </div></div>
+  <div class="box premise"><div class="n">P4</div><div>
+    <h3>Unproven: does a Stripe deposit add up to what the books say?</h3>
+    <p>The books record each family payment at its full amount; the bank receives one deposit, net of Stripe's fee. Whether the book side of a payout sums exactly to the deposit, both when the family pays the fee and when the club does, has not been checked. The first build stage proves it before the grouped line is built. If it doesn't sum, the gap shows as a named line, never a silent difference.</p>
+  </div></div>
+  <div class="box">
+    <h3>Where the sentence is right</h3>
+    <p>Both portals is right, and one engine should serve both. The arithmetic is identical; only where the lines come from differs.</p>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="panel" id="p-today" data-panel="today" hidden>
+  <div class="grid2">
+    <div class="box">
+      <span class="tag">Club Accounting today</span>
+      <ul class="plain" style="margin-top:8px">
+        <li><b>No bank account, statement, or "cleared" mark exists</b> anywhere in the product.</li>
+        <li>The only lock is the fiscal-year close: a closed year's lines can't be added, changed or voided. It warns about open money and never blocks; only the latest year reopens, with a reason.</li>
+        <li>Who moves money: the owner, plus admins and treasurers by default. Registrars and coaches can't.</li>
+        <li>The Payouts tab already lists what is inside each automatic Stripe deposit, read live from Stripe, with nothing stored. A manual payout shows only its total.</li>
+        <li>Cash, cheques, e-transfers and desk payments are all typed in by hand. Nothing matches them to the bank.</li>
+        <li>There's no record of who edited a money line or what changed. Only voids, undos and year closes leave a trail.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <span class="tag">Coach Ledger today</span>
+      <ul class="plain" style="margin-top:8px">
+        <li>The Ledger is a view over the team's dues, bills, payments, income and fundraising. Nothing is stored in the Ledger itself.</li>
+        <li>Everything belongs to one season. The opening balance is carried once at Start next season.</li>
+        <li>Who writes: the head coach, plus a manager or treasurer by default. Assistants and helpers are off unless the head coach turns them on.</li>
+        <li>Online family payments don't reach a coach's Ledger. Rep-team dues online were left out of Stage 12.</li>
+        <li>The Ledger is Premium only. The free portal has a paid/unpaid fee list.</li>
+        <li>The money income records have no "how it was paid" field, so the product can't guess which lines were cash.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="box">
+    <h3>The word "reconcile" already on screen</h3>
+    <ul class="plain">
+      <li><b>True and kept:</b> the help article on matching a Stripe payout to the bank statement.</li>
+      <li><b>A different meaning, on the coach's Money hub:</b> the Budget vs. Actual export's header "Reconciliation — spending to cash", and the Budget's "reconcile the estimate". Once a Bank view exists, one hub uses the word two ways. Sent to <code>/marketing</code>.</li>
+      <li><b>Found, not this project's:</b> three places that still promise invoicing or reconciliation workflows that don't exist: club onboarding, a marketing email default, and an admin catalog line. Each breaks the "claims only what ships" rule today. Sent to <code>/marketing</code>.</li>
+    </ul>
+  </div>
+  <div class="box">
+    <h3>How others do it <span class="muted" style="font-weight:400">(research, sourced unless marked)</span></h3>
+    <ul class="plain">
+      <li><b>QuickBooks Online:</b> type the statement date and ending balance, tick, the difference must reach $0.00; undoing is discouraged.</li>
+      <li><b>Wave and Xero:</b> the same tick-off, plus statement upload or bank feeds. Even they tell users to prefer bank files over CSV, because layouts vary bank by bank.</li>
+      <li><b>A live bank connection in Canada:</b> the open-banking law got Royal Assent on 2026-03-26; the regulations are still proposed; accreditation consultation opened 2026-11-02. No start date. Plaid and Flinks cover most banks, but pricing isn't published.</li>
+      <li><b>Good practice:</b> the person who prepares a reconciliation and the person who reviews it should differ (SectorSource).</li>
+      <li><b>Inference:</b> a sports platform with a real tick-off would fill a genuine gap.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="panel" id="p-screens" data-panel="screens" hidden>
+  <p class="lede">What the owner mockup session must draw, at desk 1440 and phone 390. Each screen is named by the question it answers. Every one except the printable reports needs a phone version. These assume the recommended answers; a different ruling changes the list.</p>
+  <div class="grid2">
+    <div class="box">
+      <span class="tag">Club · Accounting → Bank</span>
+      <div class="tablewrap" style="margin-top:8px"><table>
+        <tr><th>#</th><th>The question</th></tr>
+        <tr><td>C1</td><td>I've never done this here. Where do I start?</td></tr>
+        <tr><td>C2</td><td>Does my book agree with this statement? (with a Stripe payout as one row)</td></tr>
+        <tr><td>C3</td><td>It's $12.40 off. Now what?</td></tr>
+        <tr><td>C4</td><td>What have I checked? (and undo the latest)</td></tr>
+        <tr><td>C5</td><td>Someone changed a line I'd checked.</td></tr>
+        <tr><td>C6</td><td>Am I about to break a check? (the Ledger's edit warning)</td></tr>
+        <tr><td>C7</td><td>Where the mark shows: Overview line, fiscal-year close warning</td></tr>
+        <tr><td>C8</td><td>Is every team keeping up? (the Teams tab)</td></tr>
+        <tr><td>C9</td><td>What do I hand the board? (printable report)</td></tr>
+        <tr><td>C10</td><td>We keep gaming money in a second account.</td></tr>
+      </table></div>
+    </div>
+    <div class="box">
+      <span class="tag">Coach · Money → Ledger → Bank</span>
+      <div class="tablewrap" style="margin-top:8px"><table>
+        <tr><th>#</th><th>The question</th></tr>
+        <tr><td>K1</td><td>My first check: what was in the bank when I started?</td></tr>
+        <tr><td>K2</td><td>Does my book agree? (with "Didn't go through the bank")</td></tr>
+        <tr><td>K3</td><td>It's off by an amount. Now what?</td></tr>
+        <tr><td>K4</td><td>What have I checked this season?</td></tr>
+        <tr><td>K5</td><td>Am I about to break a check? (record edit and delete)</td></tr>
+        <tr><td>K6</td><td>Across the rollover: still outstanding from last check; the warning in Start next season and Close the season</td></tr>
+        <tr><td>K7</td><td>Where the mark shows: Money Overview; read-only for a money-read helper</td></tr>
+        <tr><td>K8</td><td>The printable report</td></tr>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="panel" id="p-stages" data-panel="stages" hidden>
+  <p class="lede">One build session each, started only once the asks are ruled and the drawing is approved.</p>
+  <div class="box tablewrap"><table>
+    <tr><th>Stage</th><th>Covers</th><th>Needs from the neighbours</th></tr>
+    <tr><td>R0</td><td>Owner mockup session: C1–C10, K1–K8</td><td>Asks ruled</td></tr>
+    <tr><td>R1</td><td>The account, the check, and the arithmetic, with no screens. Proves whether a Stripe deposit adds up (P4).</td><td>Stage 12's test-mode payouts</td></tr>
+    <tr><td>R2</td><td>Club: the Bank tab, desk and phone</td><td>Reuses the Payouts reader</td></tr>
+    <tr><td>R3</td><td>Club: edit warnings, the fiscal-year close line, the Overview line, the report, help</td><td>—</td></tr>
+    <tr><td>R4</td><td>Coach: where the lines come from, "Didn't go through the bank", no screen</td><td>—</td></tr>
+    <tr><td>R5</td><td>Coach: the Ledger's Bank view, desk and phone</td><td>—</td></tr>
+    <tr><td>R6</td><td>Coach: edit warnings, the season-close and rollover line, the Overview line, the club's Teams tab mark, help</td><td>Waits for Stage 14 (it owns the rollover's neighbourhood)</td></tr>
+    <tr><td>R7</td><td>Your walk, both portals. Then "bank reconciliation" goes back into the Club copy.</td><td>Stage 13 re-checks the new doors</td></tr>
+  </table></div>
+  <div class="box">
+    <h3>What it never touches</h3>
+    <ul class="plain">
+      <li>No existing money figure changes. A tick is a mark beside the money, never a change to it.</li>
+      <li>The fiscal-year lock is untouched: ticking a line in a closed year is allowed, because a tick isn't an edit.</li>
+      <li>No family, roster, children, season-window or rollover code (Stage 14's ground).</li>
+      <li>No bank account numbers are ever stored. An account is a name.</li>
+      <li>Nothing FieldLogicHQ charges changes.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="panel" id="p-asks" data-panel="asks" hidden>
+  <div class="askhead">
+    <p class="lede" style="margin:0"><span class="tag">Ruled 2026-11-04</span> All twelve asks ruled A, as recommended. Next: the drawing session for the screens on tab 4.</p>
+    <button class="btn ghost" type="button" id="take-rec">Take the recommended answer for every ask I haven't picked</button>
+  </div>
+
+  <div class="ask first" data-ask="B1">
+    <div class="q"><span class="id">B1</span><h3>What is being checked: a bank account, or each book?</h3><span class="tag">Rule first</span></div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="B1" value="A" id="B1-A"><span><b>A bank account</b><span class="rec">Recommended</span><br>The club names an account; every club book belongs to it by default. A club can add a second account and move a book to it (some keep gaming money separate; to be confirmed). A team has exactly one account.</span></label>
+      <label class="opt"><input type="radio" name="B1" value="B" id="B1-B"><span><b>Each book on its own</b><br>The index's words. Breaks on any shared account; a Stripe deposit spanning two books can never be ticked.</span></label>
+      <label class="opt"><input type="radio" name="B1" value="C" id="B1-C"><span><b>One account per club, no second</b><br>Smaller. Fails the club with a gaming account.</span></label>
+    </div>
+    <p class="why"><b>Why A:</b> it's the shape of the bank. <b>If B:</b> the grouped Stripe line is impossible, and transfers between books show as false outstanding items.</p>
+    <textarea id="B1-note" placeholder="Note (optional)" aria-label="B1 note"></textarea>
+  </div>
+
+  <div class="ask first" data-ask="B2">
+    <div class="q"><span class="id">B2</span><h3>What do you check against?</h3><span class="tag">Rule first</span></div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="B2" value="A" id="B2-A"><span><b>The statement, typed in</b><span class="rec">Recommended</span><br>Type the end date and closing balance, tick lines off. An automatic Stripe deposit is one row that ticks everything inside it.</span></label>
+      <label class="opt"><input type="radio" name="B2" value="B" id="B2-B"><span><b>Upload the statement file and match it</b><br>Needs per-bank column layouts, duplicate checks and a "doesn't match" path. Roughly doubles the project.</span></label>
+      <label class="opt"><input type="radio" name="B2" value="C" id="B2-C"><span><b>Stripe deposits only</b><br>Accurate, but it skips the cash, cheques and e-transfers volunteers actually struggle with.</span></label>
+      <label class="opt"><input type="radio" name="B2" value="D" id="B2-D"><span><b>A live bank connection</b><br>A vendor contract, a cost per account, privacy consent work, and a Canadian regime with no start date.</span></label>
+    </div>
+    <p class="why"><b>Why A:</b> it's the core of what QuickBooks and Wave do, needs no vendor and no bank, and the grouped Stripe row beats both. <b>If B:</b> two more build stages and an importer drawing. <b>If D:</b> a scoping plan of its own first.</p>
+    <textarea id="B2-note" placeholder="Note (optional)" aria-label="B2 note"></textarea>
+  </div>
+
+  <div class="ask" data-ask="B3">
+    <div class="q"><span class="id">B3</span><h3>What is "the period"?</h3></div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="B3" value="A" id="B3-A"><span><b>A statement</b><span class="rec">Recommended</span><br>Whatever the bank's statement covers. Each check starts where the last one ended. The first check asks for a start date, the bank balance then, and anything still outstanding then.</span></label>
+      <label class="opt"><input type="radio" name="B3" value="B" id="B3-B"><span><b>A calendar month</b><br>Fails a bank whose statement ends on the 20th.</span></label>
+      <label class="opt"><input type="radio" name="B3" value="C" id="B3-C"><span><b>Any date range</b><br>Invites gaps and overlaps that A rules out.</span></label>
+      <label class="opt"><input type="radio" name="B3" value="D" id="B3-D"><span><b>The fiscal year or season</b><br>Too coarse; associations want monthly.</span></label>
+    </div>
+    <p class="why"><b>How it meets the year:</b> a statement may straddle a fiscal year end or a rollover. Nothing about a check is tied to a year.</p>
+    <textarea id="B3-note" placeholder="Note (optional)" aria-label="B3 note"></textarea>
+  </div>
+
+  <div class="ask" data-ask="B4">
+    <div class="q"><span class="id">B4</span><h3>What does "checked" do?</h3></div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="B4" value="A" id="B4-A"><span><b>Records the check; locks nothing</b><span class="rec">Recommended</span><br>Editing or voiding a ticked line warns first. If it goes ahead, the check shows "Changed since it was checked" until re-checked. A line back-dated into a checked period is simply outstanding next time. Undo: the latest check only, with a reason, recorded with who and when.</span></label>
+      <label class="opt"><input type="radio" name="B4" value="B" id="B4-B"><span><b>Ticked lines lock</b><br>No edit or void without undoing the check first.</span></label>
+      <label class="opt"><input type="radio" name="B4" value="C" id="B4-C"><span><b>The whole period locks</b><br>No line on or before the checked date can change.</span></label>
+    </div>
+    <p class="why"><b>Why A:</b> the club already has one lock, the fiscal year. A second lock with different edges is a second set of rules for a volunteer, and the coach side is bound by "warns, never blocks". <b>If C:</b> it collides with the fiscal-year lock.</p>
+    <textarea id="B4-note" placeholder="Note (optional)" aria-label="B4 note"></textarea>
+  </div>
+
+  <div class="ask" data-ask="B5">
+    <div class="q"><span class="id">B5</span><h3>Must the difference be $0.00 to mark it checked?</h3></div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="B5" value="A" id="B5-A"><span><b>Yes, with three helpers</b><span class="rec">Recommended</span><br>Add a bank fee or interest (a real line in the book), Find by amount, Finish later (keeps the ticks).</span></label>
+      <label class="opt"><input type="radio" name="B5" value="B" id="B5-B"><span><b>Allow "checked with a difference" plus a note</b><br>The mark then reads "checked through Mar 31 · $12.40 unexplained".</span></label>
+    </div>
+    <p class="why"><b>Why A:</b> an unbalanced "checked" is the one thing an association would reject, and the club reads the team's mark. <b>If B:</b> the mark grows a second state everywhere it shows.</p>
+    <textarea id="B5-note" placeholder="Note (optional)" aria-label="B5 note"></textarea>
+  </div>
+
+  <div class="ask first" data-ask="B6">
+    <div class="q"><span class="id">B6</span><h3>Money that never goes through the bank</h3><span class="tag">Rule first</span></div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="B6" value="A" id="B6-A"><span><b>A one-tap "Didn't go through the bank"</b><span class="rec">Recommended</span><br>The line leaves the tick list for good and shows in a small "Kept out of the bank" total. Dropped automatically: transfers between two books in the same account, bills a family paid straight to the vendor, and void and pending lines.</span></label>
+      <label class="opt"><input type="radio" name="B6" value="B" id="B6-B"><span><b>No mark</b><br>Everything is assumed to go through the bank; cash in hand stays outstanding forever.</span></label>
+    </div>
+    <p class="why"><b>Why A:</b> without it, a team that pays refs in cash can never reach $0.00. <b>If B:</b> B5 has to become "checked with a difference", or coaches will stop using it.</p>
+    <textarea id="B6-note" placeholder="Note (optional)" aria-label="B6 note"></textarea>
+  </div>
+
+  <div class="ask" data-ask="B7">
+    <div class="q"><span class="id">B7</span><h3>Who may check, and who only reads</h3></div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="B7" value="A" id="B7-A"><span><b>Whoever can already move the money</b><span class="rec">Recommended</span><br>Club: owner, plus admins and treasurers by default; anyone who opens Accounting reads. Coach: money write checks; money read reads. Each check records who and when. No second approver yet.</span></label>
+      <label class="opt"><input type="radio" name="B7" value="B" id="B7-B"><span><b>Club: treasurer and owner only</b><br>Admins excluded.</span></label>
+      <label class="opt"><input type="radio" name="B7" value="C" id="B7-C"><span><b>A preparer and a separate reviewer</b><br>Good practice, but adds a review state, a sign-off screen and a notification: about one more stage.</span></label>
+    </div>
+    <textarea id="B7-note" placeholder="Note (optional)" aria-label="B7 note"></textarea>
+  </div>
+
+  <div class="ask" data-ask="B8">
+    <div class="q"><span class="id">B8</span><h3>Where does it live?</h3></div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="B8" value="A" id="B8-A"><span><b>Club: a "Bank" tab after Ledger. Coach: a "Bank" view inside the Ledger.</b><span class="rec">Recommended</span><br>The club's Ledger shows one book at a time, so it can't host an account-wide check. The coach's Ledger already is the whole team book.</span></label>
+      <label class="opt"><input type="radio" name="B8" value="B" id="B8-B"><span><b>A "Bank" tab in both portals</b><br>Same depth on both; the coach's Money tab row grows to 8 on a phone.</span></label>
+      <label class="opt"><input type="radio" name="B8" value="C" id="B8-C"><span><b>Club: inside Payouts</b><br>Payouts only shows once Stripe is connected; most clubs would never find it.</span></label>
+    </div>
+    <p class="why"><b>The cost of A:</b> the feature sits at different depths in the two portals. Stage 13 re-checks that crossing.</p>
+    <textarea id="B8-note" placeholder="Note (optional)" aria-label="B8 note"></textarea>
+  </div>
+
+  <div class="ask" data-ask="B9">
+    <div class="q"><span class="id">B9</span><h3>What shows elsewhere?</h3></div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="B9" value="A" id="B9-A"><span><b>The quiet set</b><span class="rec">Recommended</span><br>One line on each Overview ("Bank checked through Mar 31", amber only when changed since). Each linked team's date on the club's Teams tab, for people who can already see that tab. A printable one-page report. A warning in the fiscal-year close and the season close. Nothing on Budget vs. Actual, the exports, or the closed-season page.</span></label>
+      <label class="opt"><input type="radio" name="B9" value="B" id="B9-B"><span><b>The same, without the club's Teams tab date</b></span></label>
+      <label class="opt"><input type="radio" name="B9" value="C" id="B9-C"><span><b>The same, plus a ✓ on each matched Ledger line</b><br>Makes the most-used money screen noisier.</span></label>
+    </div>
+    <textarea id="B9-note" placeholder="Note (optional)" aria-label="B9 note"></textarea>
+  </div>
+
+  <div class="ask" data-ask="B10">
+    <div class="q"><span class="id">B10</span><h3>Across a coach's seasons</h3></div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="B10" value="A" id="B10-A"><span><b>The account belongs to the team, not the season</b><span class="rec">Recommended</span><br>Each checked statement keeps its own outstanding list, so the next check, even after the rollover, shows "Still outstanding from your last check". The closed-season page gets nothing for now (a shelf there needs its own drawing session).</span></label>
+      <label class="opt"><input type="radio" name="B10" value="B" id="B10-B"><span><b>Each season starts fresh</b><br>Simpler, but a cheque written in August that cashes in September is lost.</span></label>
+    </div>
+    <textarea id="B10-note" placeholder="Note (optional)" aria-label="B10 note"></textarea>
+  </div>
+
+  <div class="ask" data-ask="B11">
+    <div class="q"><span class="id">B11</span><h3>Which plans have it?</h3><span class="tag warn">Proposed by /strategy</span></div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="B11" value="A" id="B11-A"><span><b>Club: part of Accounting. Coach: Premium everywhere.</b><span class="rec">Recommended</span><br>Club and Club · Association get it inside Accounting. The coach side gets it in both standalone and Club-included Premium. Basic stays on its fee list. The Club plan's edge is the club-wide view of every team's date.</span></label>
+      <label class="opt"><input type="radio" name="B11" value="B" id="B11-B"><span><b>Coach side only for Club-included teams</b><br>The steward advises against it: it takes a core money job away from the paid standalone portal.</span></label>
+      <label class="opt"><input type="radio" name="B11" value="C" id="B11-C"><span><b>A paid add-on</b><br>Against the standing no-new-SKU posture.</span></label>
+    </div>
+    <p class="why">No price or plan name changes. Once ruled, <code>/strategy</code> logs it.</p>
+    <textarea id="B11-note" placeholder="Note (optional)" aria-label="B11 note"></textarea>
+  </div>
+
+  <div class="ask" data-ask="B12">
+    <div class="q"><span class="id">B12</span><h3>What stays out of the first release</h3></div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="B12" value="A" id="B12-A"><span><b>Out, written down</b><span class="rec">Recommended</span><br>Statement upload; a live bank feed; a second person's sign-off; "send to the club" and the club returning a check; a closed-season shelf; a ✓ on Ledger lines; undoing any check but the latest; the free portal; Stripe on the coach side; storing account numbers.</span></label>
+      <label class="opt"><input type="radio" name="B12" value="B" id="B12-B"><span><b>Pull one of these in</b><br>Name it in the note.</span></label>
+    </div>
+    <textarea id="B12-note" placeholder="Note (optional)" aria-label="B12 note"></textarea>
+  </div>
+
+  <div class="paste" aria-live="polite">
+    <div class="bar"><b>Your answers</b><span class="count" id="count">0 of 12 ruled</span></div>
+    <pre id="out">Bank reconciliation asks: nothing picked yet.</pre>
+    <div class="bar"><span class="muted" style="font-size:13px" id="copied"></span><button class="btn" type="button" id="copy">Copy answers</button></div>
+  </div>
+</section>
+</main>
+
+<script>
+(function () {
+  var TABS = ["idea", "corrections", "today", "screens", "stages", "asks"];
+  var REC = { B1: "A", B2: "A", B3: "A", B4: "A", B5: "A", B6: "A", B7: "A", B8: "A", B9: "A", B10: "A", B11: "A", B12: "A" };
+  var ASKS = Object.keys(REC);
+  var KEY = "flhq-bankrec-asks-v1";
+
+  function show(name) {
+    if (TABS.indexOf(name) < 0) name = "idea";
+    document.querySelectorAll("[data-panel]").forEach(function (p) { p.hidden = p.getAttribute("data-panel") !== name; });
+    document.querySelectorAll("[data-tab]").forEach(function (b) { b.setAttribute("aria-selected", b.getAttribute("data-tab") === name ? "true" : "false"); });
+  }
+  document.querySelectorAll("[data-tab]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var t = b.getAttribute("data-tab");
+      if (location.hash !== "#" + t) location.hash = t; else show(t);
+      window.scrollTo(0, 0);
+    });
+  });
+  window.addEventListener("hashchange", function () { show(location.hash.slice(1)); });
+  show(location.hash.slice(1));
+
+  function readState() {
+    var s = {};
+    ASKS.forEach(function (id) {
+      var r = document.querySelector('input[name="' + id + '"]:checked');
+      var n = document.getElementById(id + "-note");
+      s[id] = { v: r ? r.value : "", n: n ? n.value.trim() : "" };
+    });
+    return s;
+  }
+  function render() {
+    var s = readState(); var lines = []; var done = 0;
+    ASKS.forEach(function (id) {
+      if (s[id].v) done++;
+      if (s[id].v || s[id].n) lines.push(id + ": " + (s[id].v || "?") + (s[id].n ? " - " + s[id].n : ""));
+    });
+    document.getElementById("count").textContent = done + " of 12 ruled";
+    document.getElementById("out").textContent = lines.length ? "Bank reconciliation asks\n" + lines.join("\n") : "Bank reconciliation asks: nothing picked yet.";
+    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
+  }
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || "null");
+    if (saved) ASKS.forEach(function (id) {
+      if (!saved[id]) return;
+      if (saved[id].v) { var el = document.getElementById(id + "-" + saved[id].v); if (el) el.checked = true; }
+      var n = document.getElementById(id + "-note"); if (n && saved[id].n) n.value = saved[id].n;
+    });
+  } catch (e) {}
+  document.querySelectorAll('[data-panel="asks"] input, [data-panel="asks"] textarea').forEach(function (el) {
+    el.addEventListener("input", render); el.addEventListener("change", render);
+  });
+  document.getElementById("take-rec").addEventListener("click", function () {
+    ASKS.forEach(function (id) {
+      if (!document.querySelector('input[name="' + id + '"]:checked')) { var el = document.getElementById(id + "-" + REC[id]); if (el) el.checked = true; }
+    });
+    render();
+  });
+  document.getElementById("copy").addEventListener("click", function () {
+    var text = document.getElementById("out").textContent; var msg = document.getElementById("copied");
+    function fallback() {
+      var range = document.createRange(); range.selectNodeContents(document.getElementById("out"));
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      msg.textContent = "Selected. Press Ctrl+C (or Cmd+C) to copy.";
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied. Paste it into the chat."; }, fallback);
+    } catch (e) { fallback(); }
+  });
+  render();
+})();
+</script>

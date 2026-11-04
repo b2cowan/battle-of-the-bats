@@ -1,0 +1,1504 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Bank Check Drawings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) holding true-size specimens of the club admin and the coaches
+   portal in the Warm theme (the default every account sees). Sticky numbered tabs, one section at a time, an
+   Everything / Show only what differs switch only where a section compares. Desktop frames are 1440 wide and scroll
+   sideways inside their own box on a narrow window; phone frames are 390. The specimens keep the Warm theme in a
+   dark viewer too: the product has no warm-dark look, and drawing one would invent it. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.doc{max-width:1480px;margin:0 auto;padding-block:16px 90px}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:22px;margin:6px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:17px;margin:22px 0 6px}
+.doc p,.doc li{max-width:88ch}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16px;max-width:92ch}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{flex:none;font:600 14px/1 var(--f-doc);min-height:40px;padding:0 12px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+section.pane[hidden]{display:none}
+.viewrow{display:flex;align-items:center;gap:10px;margin:8px 0 12px;flex-wrap:wrap}
+.viewrow .lab{font:600 11.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sw{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px}
+.sw button{font:600 13.5px/1 var(--f-doc);min-height:36px;padding:0 14px;border-radius:7px;border:0;background:none;color:var(--muted);cursor:pointer}
+.sw button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px;box-shadow:var(--shadow);margin:12px 0}
+.card h3{margin-top:0}
+.card ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.read{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+.read.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.read.one{grid-template-columns:minmax(0,1fr)}
+@media (max-width:900px){.read,.read.two{grid-template-columns:minmax(0,1fr)}}
+.read>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.read h4{margin:0 0 6px;font:700 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.read .w h4{color:var(--fix)} .read .g h4{color:var(--flag)} .read .c h4{color:var(--t-res)} .read .a h4{color:var(--ask)}
+.read ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.read p{margin:0;font-size:14px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:720px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:24px;vertical-align:1px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)} .mk.askm{color:var(--ask)}
+.cap{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 6px;font:600 12px/1.3 var(--f-mono);color:var(--muted)}
+.cap b{color:var(--ink)}
+.pair{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start;margin:10px 0}
+.pair>div{min-width:0;max-width:100%;overflow-x:auto;padding-bottom:4px}
+.fr.w390{max-width:none}
+img.shot{max-width:none}
+.fx{overflow-x:auto;max-width:100%;padding-bottom:6px}
+.fr{border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;max-width:100%}
+.fx .fr{max-width:none}
+.w1440{width:1440px} .w1200{width:1200px} .w390{width:390px} .w520{width:520px} .w640{width:640px} .w416{width:416px} .w800{width:800px} .w816{width:816px}
+.side{max-width:540px;min-width:0;flex:1 1 300px}
+.shot{display:block;max-width:none;border-radius:12px;outline:1px solid var(--line)}
+.samebar{display:none;border:1px dashed var(--line);border-radius:8px;padding:8px 12px;margin:2px 0;font:600 12px/1.4 var(--f-mono);color:var(--muted);text-align:center}
+body[data-view="diff"] .same{display:none}
+body[data-view="diff"] .samebar{display:block}
+
+/* ===== the product, Warm theme (club admin kit + coaches portal read one token set) ===== */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.20);--fill:rgba(70,55,30,.08);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--olive-line:rgba(87,101,30,.40);--lime:#D9F99D;--lime-ink:#241E15;
+  --in:#34662A;--good:#2A5222;--good-soft:rgba(52,102,42,.08);--amber:#835006;--amber-ink:#6B4105;--amber-soft:rgba(131,80,6,.08);--amber-line:rgba(131,80,6,.32);
+  --red:#B03A22;--info:#134FD3;--new:rgba(75,46,131,.07);--newl:#4B2E83;--scrim:rgba(36,30,21,.34);
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative;text-align:left;color-scheme:light}
+.ak *{box-sizing:border-box}
+.ak .shell{display:grid;grid-template-columns:240px 1fr}
+.ak .sb{background:var(--card);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .org{font:700 15px/1.2 'Inter';padding:4px 10px 2px}
+.ak .sb .orgs{font:500 12px/1.3 'Inter';color:var(--dim);padding:0 10px 10px}
+.ak .sb .grp{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:12px 10px 5px}
+.ak .sb .it{font:500 14px/1 'Inter';color:var(--soft);padding:9px 10px;border-radius:7px}
+.ak .sb .it.on{background:var(--olive-soft);color:var(--ink);font-weight:650}
+.ak .sb hr{border:0;border-top:1px solid var(--line);margin:8px 10px}
+.ak .main{padding:0 32px;min-width:0}
+.ak .pg{max-width:1200px;margin:0 auto;padding:24px 0 36px;display:flex;flex-direction:column;gap:14px}
+.ak .top{display:flex;align-items:center;gap:14px;height:48px;padding:0 20px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .top>span:not(.b):not(.sp){font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);border-left:1px solid var(--line2);padding-left:14px}
+.ak .top .sp,.ak .orghd .sp{flex:1}
+.ak .orghd{display:flex;align-items:center;gap:10px;margin:0 -32px;padding:12px 32px;background:var(--card);border-bottom:1px solid var(--line);font-size:18px}
+.ak .orghd b{font:700 18px/1.2 'Inter'}
+.ak .sb .it{display:flex;align-items:center}
+.ak .ph{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ak .ph h1{font:700 20px/1.1 'Inter';margin:0}
+.ak .ph .ic{width:34px;height:34px;border-radius:12px;background:var(--olive-soft);color:var(--olive);display:grid;place-items:center;font:700 15px/1 'Inter'}
+.ak .ph .act{margin-left:auto;display:flex;gap:8px}
+/* HubTabBar: underline, olive when on */
+.ak .hub{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;margin:0 0 6px}
+.ak .hub span{font:600 14px/1 'Inter';min-height:44px;display:inline-flex;align-items:center;gap:6px;padding:0 13.6px;color:var(--dim);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.ak .hub span.on{color:var(--olive);border-bottom-color:var(--olive)}
+.ak .hub span.nw{background:var(--new);outline:2px solid var(--newl);outline-offset:-3px;border-radius:6px 6px 0 0}
+/* MoneySummaryBand: tiles joined by a hairline */
+.ak .band{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .band.t3{grid-template-columns:repeat(3,1fr)} .ak .band.t4{grid-template-columns:repeat(4,1fr)}
+.ak .tile{background:var(--card);padding:13.6px 16px;display:flex;flex-direction:column;gap:3.5px;min-width:0}
+.ak .bl{font:700 11px/1.2 'Inter';letter-spacing:.07em;text-transform:uppercase;color:var(--dim)}
+.ak .bf{font:700 24px/1.1 'Inter';letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.ak .bf.good{color:var(--in)} .ak .bf.warn{color:var(--amber-ink)}
+.ak .bc{font-size:12px;line-height:1.45;color:var(--dim)}
+.ak .bnote{font-size:12px;color:var(--dim);margin:0}
+/* toolbar: lead pill, quiet pills, search field, buttons */
+.ak .tb{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ak .tb .sp{flex:1}
+.ak .lead{display:inline-flex;align-items:center;gap:6px;padding:4.5px 10px;border:1px solid var(--olive-line);background:var(--olive-soft);border-radius:999px;font:12px/1.4 'Inter';white-space:nowrap}
+.ak .lead i{font-style:normal;color:var(--olive)} .ak .lead b{font-weight:600} .ak .lead::after{content:"▾";color:var(--dim);font-size:10px}
+.ak .qp{display:inline-flex;align-items:center;gap:6px;padding:4.5px 10px;border:1px solid var(--line2);border-radius:999px;font:12px/1.4 'Inter';color:var(--soft);white-space:nowrap}
+.ak .qp::after{content:"▾";color:var(--dim);font-size:10px}
+.ak .sf{display:inline-flex;align-items:center;gap:8px;min-height:34px;width:16rem;padding:0 13.6px;border-radius:999px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line2);font-size:14px;color:var(--dim);white-space:nowrap;overflow:hidden}
+.ak .sf::before{content:"⌕";font-size:15px;color:var(--dim)}
+.ak .sf.on{box-shadow:inset 0 0 0 1.5px var(--olive);color:var(--ink)}
+.ak .sf.fill{width:100%}
+.ak .b{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:0 14.4px;border-radius:6px;font:650 14px/1.25 'Inter';white-space:nowrap;border:1px solid var(--line2);background:var(--card);color:var(--soft)}
+.ak .b.lime{background:var(--lime);color:var(--lime-ink);border-color:transparent}
+.ak .b.ghost{border-color:transparent;background:none;color:var(--dim)}
+.ak .b.dis{opacity:.5}
+.ak .b.t44{min-height:44px}
+.ak .b.full{width:100%}
+.ak .lk{font:600 13px/1.3 'Inter';color:var(--olive);white-space:nowrap}
+.ak .door{font:600 14px/1.3 'Inter';color:var(--olive);display:inline-flex;align-items:center;gap:6px}
+.ak .door::after{content:"→"}
+/* register table */
+.ak .tf{border:1px solid var(--line);border-radius:8px;background:var(--card);overflow:hidden}
+.ak table.rg{width:100%;border-collapse:collapse;font-size:12px;line-height:1.25}
+.ak table.rg th{font:700 12px/1.2 'Barlow Condensed',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--soft);text-align:left;padding:6.7px 9.6px;border-bottom:1px solid var(--line2);background:var(--card);white-space:nowrap}
+.ak table.rg td{padding:4.5px 9.6px;border-bottom:1px solid var(--line);vertical-align:middle}
+.ak table.rg tr:last-child td{border-bottom:0}
+.ak table.rg th.r,.ak table.rg td.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ak table.rg td.d{color:var(--dim);white-space:nowrap;width:64px}
+.ak table.rg td.bk{color:var(--dim)}
+.ak table.rg td.cin{color:var(--in)}
+.ak table.rg td.cx{width:34px;padding-right:0}
+.ak table.rg td.ch{width:28px;color:var(--dim);text-align:center}
+.ak table.rg .det{color:var(--dim)}
+.ak table.rg tr.bal td{background:var(--fill);font-weight:700;color:var(--soft)}
+.ak table.rg tr.bal.end td{border-top:2px solid var(--line2);color:var(--ink)}
+.ak table.rg tr.grp td{background:var(--fill);font:700 11px/1.2 'Inter';letter-spacing:.07em;text-transform:uppercase;color:var(--dim);padding-top:7px;padding-bottom:7px}
+.ak table.rg tr.ticked td{background:rgba(87,101,30,.035)}
+.ak table.rg tr.hov td{background:var(--olive-soft)}
+.ak table.rg tr.sub td{background:#FBF9F5;font-size:12px}
+.ak table.rg tr.sub td:nth-child(3){padding-left:26px}
+.ak table.rg tr.gap td{background:var(--amber-soft);color:var(--amber-ink);font-weight:600}
+.ak table.rg tr.out td{color:var(--dim)}
+.ak table.rg.roomy td{padding:9px 12px;font-size:13px} .ak table.rg.roomy th{padding:9px 12px}
+.ak .nb{font:600 12px/1.2 'Inter';color:var(--dim);border:0;background:none;padding:0;white-space:nowrap;text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
+/* the global checkbox: 16px, 2px radius, olive tick in Warm */
+.ak i.cb{width:16px;height:16px;border:1px solid rgba(87,101,30,.42);border-radius:2px;background:var(--card);position:relative;display:inline-block;vertical-align:middle;flex:none}
+.ak i.cb.on{background:rgba(87,101,30,.14);border-color:rgba(87,101,30,.85)}
+.ak i.cb.on::after{content:"";position:absolute;left:5px;top:1.5px;width:4px;height:8px;border:solid var(--olive);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.ak i.cb.mix::after{content:"";position:absolute;left:3px;top:6.5px;width:8px;height:2px;background:var(--olive)}
+.ak i.cb.mix{background:rgba(87,101,30,.14);border-color:rgba(87,101,30,.85)}
+/* chips */
+.ak .chip{font:700 10px/1.4 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:2.2px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--soft);background:var(--olive-soft);white-space:nowrap;display:inline-block;vertical-align:1px}
+.ak .chip.warn{color:var(--amber-ink);background:var(--amber-soft);border-color:rgba(131,80,6,.3)}
+.ak .chip.good{color:var(--good);background:var(--good-soft);border-color:rgba(52,102,42,.28)}
+.ak .chip.info{color:var(--info);background:rgba(19,79,211,.06);border-color:rgba(19,79,211,.25)}
+.ak .rchip{font:500 11px/1.3 'Inter';padding:1px 7px;border-radius:999px;border:1px solid var(--line);background:rgba(70,55,30,.04);color:var(--dim);white-space:nowrap}
+.ak .cnt{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;font:700 10px/1 'IBM Plex Mono',monospace;color:var(--amber);background:rgba(131,80,6,.11);border:1px solid rgba(131,80,6,.32)}
+/* callout + notice */
+.ak .call{display:flex;gap:10px;align-items:flex-start;padding:12.8px 16px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--olive);border-radius:8px;font-size:14px;line-height:1.45}
+.ak .call.warn{border-left-color:#B7791F} .ak .call .ico{color:var(--olive);font-weight:700} .ak .call.warn .ico{color:#B7791F}
+.ak .call .grow{flex:1;min-width:0} .ak .call small{display:block;font-size:12.5px;color:var(--soft);margin-top:2px}
+.ak .call .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ak .notice{padding:10.4px 13.6px;border-radius:8px;font-size:12px;line-height:1.45;border:1px solid var(--line2);background:var(--olive-soft);color:var(--soft)}
+.ak .notice.warn{border-color:rgba(183,121,31,.35);background:rgba(183,121,31,.08)}
+.ak .before{background:rgba(183,121,31,.10);border:1px solid rgba(183,121,31,.3);border-radius:8px;padding:12.8px 14.4px;display:flex;flex-direction:column;gap:7px}
+.ak .before .h{font:700 12px/1 'Inter';letter-spacing:.06em;text-transform:uppercase;color:#946112}
+.ak .before .r{display:flex;gap:8px;font-size:13.8px;line-height:1.4} .ak .before .r::before{content:"⚠";color:#B7791F}
+.ak .before .f{font-size:12.5px;color:var(--soft)}
+.ak .hint{font-size:12px;line-height:1.45;color:var(--dim);margin:0}
+.ak .faint{color:var(--dim)}
+/* fields */
+.ak .f{display:flex;flex-direction:column;gap:5px;min-width:0}
+.ak .lbl{font:650 12px/1.3 'Inter';color:var(--soft)}
+.ak .lbl em{font-style:normal;color:var(--red)}
+.ak .in{min-height:34px;border:1px solid var(--line2);border-radius:6px;background:var(--card);padding:0 10px;display:flex;align-items:center;font-size:14px;color:var(--ink);min-width:0;white-space:nowrap;overflow:hidden;font-variant-numeric:tabular-nums}
+.ak .in.ph{color:var(--dim)} .ak .in.focus{border-color:var(--olive);box-shadow:0 0 0 2px var(--olive-soft)}
+.ak .in.t44{min-height:44px}
+.ak .in.cal::after{content:"▦";margin-left:auto;color:var(--dim);font-size:12px}
+.ak .in.dd::after{content:"▾";margin-left:auto;color:var(--dim);font-size:11px}
+.ak .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px} .ak .g2>*{min-width:0}
+.ak .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px 14px} .ak .g3>*{min-width:0}
+.ak .seg{display:inline-flex;border:1px solid var(--line2);border-radius:999px;padding:3px;gap:2px;background:var(--card)}
+.ak .seg span{font:600 12px/1 'Inter';min-height:34px;display:inline-flex;align-items:center;padding:0 12px;border-radius:999px;color:var(--soft)}
+.ak .seg span.on{background:var(--olive-soft);color:var(--olive)}
+/* sections and cards inside the product */
+.ak .sect{background:var(--card);border:1px solid var(--line);border-radius:8px}
+.ak .sect-h{display:flex;align-items:center;gap:10px;padding:14px 16px 8px;flex-wrap:wrap}
+.ak .sect-h h3{font:700 16px/1.25 'Inter';margin:0}
+.ak .sect-h .acts{margin-left:auto;display:flex;gap:8px;align-items:center}
+.ak .sect-b{padding:4px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.ak .line1{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:var(--soft)}
+.ak .line1 b{color:var(--ink);font-weight:650}
+.ak .newbox{background:var(--new);outline:2px solid var(--newl);outline-offset:3px;border-radius:8px}
+.ak .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13px;margin:0}
+.ak .kv dt{color:var(--dim)} .ak .kv dd{margin:0;font-variant-numeric:tabular-nums}
+/* KitDialog: question 416 · form 520 · medium 640 · wide 800 */
+.ak .scrim{background:var(--scrim);display:grid;place-items:start center;padding:40px 16px}
+.ak .dlg{background:var(--card);border:1px solid rgba(87,101,30,.3);border-radius:12px;width:520px;max-width:100%;box-shadow:0 18px 40px rgba(36,30,21,.18)}
+.ak .dlg.q{width:416px} .ak .dlg.med{width:640px} .ak .dlg.wide{width:800px}
+.ak .dlg.flat{box-shadow:none;border:0;border-radius:0;width:100%}
+.ak .dh{display:flex;align-items:flex-start;gap:10px;padding:17.6px 24px 6.4px}
+.ak .dh .tt{flex:1;min-width:0}
+.ak .dh .ey{display:block;font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--soft);margin-bottom:4px}
+.ak .dh b{font:700 16px/1.25 'Inter';display:block}
+.ak .dh .x{width:32px;height:32px;display:grid;place-items:center;color:var(--dim);font-size:16px;border-radius:7px}
+.ak .dh .bk{width:44px;height:44px;display:grid;place-items:center;color:var(--soft);font-size:18px;margin:-10px 0 0 -14px}
+.ak .dh .pill{font:600 12px/1 'Inter';color:var(--dim);padding:6px 0}
+.ak .db{padding:9.6px 24px 16px;display:flex;flex-direction:column;gap:14px;font-size:14px;line-height:1.5;color:var(--soft)}
+.ak .db p{margin:0}
+.ak .df{display:flex;align-items:center;gap:9.6px;padding:13.6px 24px;border-top:1px solid var(--line);flex-wrap:wrap}
+.ak .df .st{margin-right:auto;font-size:12px;color:var(--dim);display:flex;gap:9.6px;align-items:center;flex-wrap:wrap}
+.ak .dlg.sheet{width:390px;border:0;border-radius:0;box-shadow:none;min-height:760px;display:flex;flex-direction:column}
+.ak .dlg.sheet .db{flex:1}
+.ak .dlg.sheet .df .b{min-height:44px}
+/* phone chrome */
+.ak .pbar{display:flex;align-items:center;gap:6px;min-height:52px;padding:0 8px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .pbar .m{width:44px;height:44px;display:grid;place-items:center;color:var(--soft);font-size:18px}
+.ak .pin{padding:14px 16px 20px;display:flex;flex-direction:column;gap:12px}
+.ak .pin .band.t3{grid-template-columns:1fr 1fr} .ak .pin .band.t3 .tile:last-child{grid-column:1 / -1}
+.ak .pin .tile{padding:11.2px 12px} .ak .pin .bf{font-size:20px}
+.ak .pin .hub span{padding:0 9.6px}
+.ak .pin .b{min-height:44px}
+.ak .pin .in{min-height:44px}
+.ak .pin .lead,.ak .pin .qp{min-height:44px;padding:0 14px;font-size:13px}
+.ak .nav{display:flex;justify-content:space-around;background:rgba(248,244,237,.95);border-top:1px solid var(--line);padding:7px 0 12px}
+.ak .nav span{font:700 10px/1 'Inter';color:var(--dim);display:flex;flex-direction:column;align-items:center;gap:5px;min-width:60px}
+.ak .nav span::before{content:"";width:46px;height:30px;border-radius:999px;background:linear-gradient(var(--line2),var(--line2)) center/20px 20px no-repeat}
+.ak .nav span.on{color:var(--olive)} .ak .nav span.on::before{background:var(--olive-soft) linear-gradient(var(--olive),var(--olive)) center/20px 20px no-repeat}
+/* phone tick rows */
+.ak .pl{border:1px solid var(--line);border-radius:10px;background:var(--card);overflow:hidden}
+.ak .pr{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border-top:1px solid var(--line);min-height:56px}
+.ak .pr:first-child{border-top:0}
+.ak .pr .cbw{width:28px;min-height:36px;display:grid;place-items:center}
+.ak .pr .g{flex:1;min-width:0}
+.ak .pr .t{font:600 14px/1.3 'Inter'}
+.ak .pr .s{font-size:12px;color:var(--dim);margin-top:2px}
+.ak .pr .a{font:600 14px/1.3 'Inter';font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
+.ak .pr .a.cin{color:var(--in)}
+.ak .pr.ticked{background:rgba(87,101,30,.035)}
+.ak .pr .nb{display:inline-block;margin-top:8px;min-height:24px}
+.ak .phd{font:700 11px/1.2 'Inter';letter-spacing:.07em;text-transform:uppercase;color:var(--dim);padding:8px 12px;background:var(--fill)}
+.ak .pin .nb,.ak .pr .nb,.ak .pin .lk,.ak .pin .door{min-height:44px;display:inline-flex;align-items:center}
+.ak .pin .seg span,.ak .dlg.sheet .seg span{min-height:44px}
+.ak .pr .cbw{width:44px;min-height:44px;margin:-6px -8px -6px -12px}
+.ak .main{background-image:linear-gradient(rgba(70,55,30,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(70,55,30,.045) 1px,transparent 1px);background-size:24px 24px}
+.ak .newbox{cursor:pointer}
+.ak .dock{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px 14px;display:flex;flex-direction:column;gap:6px}
+.ak .stick{position:sticky;top:0;z-index:2;background:var(--paper);padding:6px 0}
+/* the printed page */
+.paper{--new:rgba(75,46,131,.07);--newl:#4B2E83;background:#FFFFFF;color:#1C1C1C;font:12.5px/1.45 'IBM Plex Sans',system-ui,sans-serif;padding:56px 64px;min-height:1056px;display:flex;flex-direction:column;gap:16px;color-scheme:light}
+.paper h4{margin:0;font:700 20px/1.2 'Inter',system-ui,sans-serif}
+.paper .pe{font:600 10.5px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#5A5A5A}
+.paper table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.paper td,.paper th{padding:6px 0;border-bottom:1px solid #DDDDDD;text-align:left;vertical-align:top}
+.paper th{font:600 10px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:#5A5A5A}
+.paper td.r,.paper th.r{text-align:right;white-space:nowrap}
+.paper tr.tot td{font-weight:700;border-top:1.5px solid #1C1C1C;border-bottom:0}
+.paper tr.zero td{font-weight:700;background:#F2F5EE}
+.paper .sig{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:auto;padding-top:24px}
+.paper .sig div{border-top:1px solid #1C1C1C;padding-top:6px;font-size:11px;color:#444444}
+.paper .foot{font-size:10.5px;color:#666666;border-top:1px solid #DDDDDD;padding-top:8px}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:14px 0;box-shadow:var(--shadow)}
+.ask.first{border-left-color:var(--ask)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .tag{font:700 10.5px/1 var(--f-mono);letter-spacing:.05em;text-transform:uppercase;border-radius:5px;padding:4px 6px;margin-left:8px;vertical-align:2px;background:var(--ask-soft);color:var(--ask)}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted);margin:4px 0}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:48px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:240px;font:12.5px/1.5 var(--f-mono)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:16px;flex:1}
+dialog.note .nh button{font-size:22px;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="doc">
+<div class="eyebrow">Bank reconciliation · both portals · R0 drawings · 2026-11-04 · round 1</div>
+<h1>Checking the books against the bank</h1>
+<p class="lede">A club treasurer, or a team’s coach or treasurer, sits down with a bank statement, ticks off what the bank shows, reaches a difference of $0.00, and marks the statement checked. The twelve asks were ruled on 2026-11-04 (all A). This page draws option A of each, exactly as ruled. Where drawing it raised a choice the rulings didn’t make, the choice is on the last tab with a recommendation. Two of them push back on a ruling once it is on screen (Asks 12 and 1). Every word on a screen is a <b>draft</b> for <code>/marketing</code>. Every figure comes from one example statement per portal, and tab 2 shows the sums.</p>
+
+<div class="tabs" role="tablist" id="tabs">
+  <button role="tab" aria-selected="true" data-t="p1">1 · Whole screen</button>
+  <button role="tab" aria-selected="false" data-t="p2">2 · Setting up</button>
+  <button role="tab" aria-selected="false" data-t="p3">3 · Ticking a statement</button>
+  <button role="tab" aria-selected="false" data-t="p4">4 · Off by an amount</button>
+  <button role="tab" aria-selected="false" data-t="p5">5 · Checked statements</button>
+  <button role="tab" aria-selected="false" data-t="p6">6 · A ticked line changes</button>
+  <button role="tab" aria-selected="false" data-t="p7">7 · Where the mark shows</button>
+  <button role="tab" aria-selected="false" data-t="p8">8 · A second account</button>
+  <button role="tab" aria-selected="false" data-t="p9">9 · The report</button>
+  <button role="tab" aria-selected="false" data-t="p10">10 · Asks</button>
+</div>
+
+<!-- ================= 1 · WHOLE SCREEN ================= -->
+<section class="pane" id="p1">
+  <h2>Does anything get noisier? The whole screen, today and with this feature</h2>
+  <p class="muted">Tabs 2–9 draw the desktop chrome simplified (no sidebar icons, notification bell or footer links); this tab shows the real chrome. Windows follow the shipped rule on a phone: a question stays a small card, a form goes full screen. Each “today” is a capture of the dev site (Nov 4, 2026, Warm theme, 1440 × 900 at true size). Each “with this feature” is the same capture with only the changes drawn on top, in place, so nothing else can drift. The dark badge at the bottom left of some captures is the dev server’s, not the product’s. The captures use the dev fixtures’ names and figures (“UAT Rep Club”, “UAT Standalone Team”). The rest of this page uses the example clubs.</p>
+  <div class="read">
+    <div class="w"><h4>Club Accounting</h4><p>One tab is added after Ledger. One line goes on the right of the existing “Where the club stands” row. No row is added at rest, and the band is untouched.</p></div>
+    <div class="w"><h4>Coach Money Overview</h4><p>One line in the empty foot of the Cash on hand card. No card grows.</p></div>
+    <div class="w"><h4>Coach Ledger</h4><p>One more option inside the View dropdown. At rest, the Ledger is identical.</p></div>
+  </div>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+
+  <h3>Club · Accounting → Overview</h3>
+  <div class="same"><div class="cap"><b>Today</b> · capture <button class="mk unc" data-note="UNCHANGED: today's screen, captured from the dev site on Nov 4, 2026.">UNCHANGED</button></div>
+    <div class="fx"><img class="shot" src="bank-reconciliation-shots/a-overview-d-viewport.png" width="1440" height="900" alt="Today's club Accounting Overview: tab row, fiscal-year pill, the three-tile band and the open items table"></div></div>
+  <div class="samebar">Today’s capture · hidden while showing only what differs</div>
+  <div class="cap" style="margin-top:14px"><b>With this feature</b> · the same capture, changes drawn in place <button class="mk new" data-note="NEW: the 'Bank' tab after Ledger. Every tab to its right moves one place along, and nothing wraps at 1440. The bank line sits on the right of the eyebrow row, where today there is nothing.">NEW</button></div>
+  <div class="fx"><div style="position:relative;width:1440px;height:900px">
+    <img class="shot" src="bank-reconciliation-shots/a-overview-d-viewport.png" width="1440" height="900" alt="">
+    <div class="ak" style="position:absolute;left:258px;top:165px;width:1150px;height:49px;background:#F8F4ED;padding:0 14px;color-scheme:light"><div class="hub" style="margin:0;border-bottom-color:rgba(70,55,30,.16)"><span class="on" style="font-size:14.5px">Overview</span><span style="font-size:14.5px">Budget</span><span style="font-size:14.5px">Teams</span><span style="font-size:14.5px">Ledger</span><span class="nw" style="font-size:14.5px">Bank</span><span style="font-size:14.5px">Allocations</span><span style="font-size:14.5px">Payment requests</span><span style="font-size:14.5px">Budget vs. Actual</span><span style="font-size:14.5px">Payouts</span></div></div>
+    <div class="ak" style="position:absolute;right:32px;top:281px;background:transparent;color-scheme:light"><span class="line1 newbox" style="font-size:13px;padding:1px 6px">Bank: <b>Club chequing</b> checked through <b>Oct 31, 2026</b> <span class="faint">›</span></span></div>
+  </div></div>
+
+  <div class="pair" style="margin-top:16px">
+    <div class="same"><div class="cap"><b>Today</b> · phone capture <button class="mk unc" data-note="UNCHANGED: today's screen on a phone, captured from the dev site on Nov 4, 2026.">UNCHANGED</button></div><img class="shot" src="bank-reconciliation-shots/a-overview-p.png" width="390" alt="Today's club Accounting Overview on a phone"></div>
+    <div><div class="cap"><b>With this feature</b> · phone, the top of the Overview</div>
+      <div class="fr w390"><div class="ak">
+        <div class="pbar" style="padding-left:16px">UAT Rep Club<span style="margin-left:auto" class="m">◍</span></div>
+        <div class="pin">
+          <div class="ph"><h1>Accounting</h1></div>
+          <div class="hub"><span class="on">Overview</span><span>Budget</span><span>Teams</span><span>Ledger</span><span style="opacity:.45">Ba…</span><span class="faint">›</span></div>
+          <div class="tb"><span class="lead"><i>Fiscal year</i><b>2026–27 <span style="color:#57651E">●</span></b></span><span class="sp"></span><span class="b" style="width:44px;padding:0">⤓</span></div>
+          <span style="font:700 11.5px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--soft)">Where the club stands · today, Nov 4</span>
+          <div class="line1 newbox" style="font-size:13px;padding:0 6px;min-height:44px;flex-wrap:nowrap">Bank checked through <b>Oct 31, 2026</b> <span class="faint" style="margin-left:auto">›</span></div>
+          <div class="band t3"><div class="tile"><span class="bl">Cash on hand</span><span class="bf">$5,987.00</span><span class="bc">the club’s 4 books · a $640.00 cheque not yet cleared</span></div><div class="tile"><span class="bl">Owed by the teams</span><span class="bf">$34,044.00</span><span class="bc">$14,001.00 overdue</span></div><div class="tile"><span class="bl">Waiting on you</span><span class="bf warn">$2,238.50</span><span class="bc">9 requests · 5 holding up a payout</span></div></div>
+        </div>
+        <div class="nav"><span>Overview</span><span>Calendar</span><span>Rep teams</span><span class="on">Accounting</span><span>More</span></div>
+      </div></div></div>
+    <div class="side"><div class="read one">
+      <div class="g"><h4>The one place it costs height</h4><p>On a phone the eyebrow row fills the width, so the bank line takes a 44px row of its own under it (the whole row is the link). That pushes the band down by one row. The alternative is to put it in the Cash on hand tile’s caption, but that caption already wraps to three lines on a phone.</p></div>
+      <div class="c"><h4>The tab row on a phone</h4><p>“Bank” comes after Ledger, so on first load it sits just past the visible edge, behind the shipped scroll arrow. The row scrolls to the active tab, so on the Bank tab itself it is in view.</p></div>
+    </div></div>
+  </div>
+
+  <h3>Coach · Money → Overview</h3>
+  <div class="same"><div class="cap"><b>Today</b> · capture <button class="mk unc" data-note="UNCHANGED: today's screen, captured from the dev site on Nov 4, 2026.">UNCHANGED</button></div>
+    <div class="fx"><img class="shot" src="bank-reconciliation-shots/g-money-overview-d-viewport.png" width="1440" height="900" alt="Today's coach Money Overview: Bills settled, Cash on hand and Budget cards"></div></div>
+  <div class="samebar">Today’s capture · hidden while showing only what differs</div>
+  <div class="cap" style="margin-top:14px"><b>With this feature</b> · one line in the Cash on hand card <button class="mk new" data-note="NEW: one link in the Cash on hand card’s foot row, beside “Ledger →”. Nothing grows. It opens Ledger → View: Bank.">NEW</button></div>
+  <div class="fx"><div style="position:relative;width:1440px;height:900px">
+    <img class="shot" src="bank-reconciliation-shots/g-money-overview-d-viewport.png" width="1440" height="900" alt="">
+    <div class="ak" style="position:absolute;left:790px;top:500px;background:#FFFFFF;color-scheme:light"><span class="line1 newbox" style="font-size:13px;padding:1px 6px">Bank checked through <b>Oct 31, 2026</b> <span class="faint">›</span></span></div>
+  </div></div>
+
+  <h3>Coach · Money → Ledger, with the View dropdown open</h3>
+  <div class="same"><div class="cap"><b>Today</b> · capture <button class="mk unc" data-note="UNCHANGED: today's screen, captured from the dev site on Nov 4, 2026.">UNCHANGED</button></div>
+    <div class="fx"><img class="shot" src="bank-reconciliation-shots/h-ledger-view-switch-open-d.png" width="1440" height="900" alt="Today's coach Ledger with the View dropdown open: Timeline, Bills, Payment schedule"></div></div>
+  <div class="samebar">Today’s capture · hidden while showing only what differs</div>
+  <div class="cap" style="margin-top:14px"><b>With this feature</b> · a fourth option <button class="mk new" data-note="NEW: 'Bank' as the fourth option of the shipped View dropdown (B8). Closed, the Ledger looks exactly as it does today. Choosing Bank swaps the toolbar's controls for the check's own, as the other views already do.">NEW</button></div>
+  <div class="fx"><div style="position:relative;width:1440px;height:900px">
+    <img class="shot" src="bank-reconciliation-shots/h-ledger-view-switch-open-d.png" width="1440" height="900" alt="">
+    <div class="ak" style="position:absolute;left:253px;top:291px;width:189px;background:#FFFFFF;border:1px solid rgba(70,55,30,.2);border-radius:10px;box-shadow:0 8px 24px rgba(36,30,21,.18);padding:6px 0;color-scheme:light;font-size:15px">
+      <div style="padding:5px 12px 5px 13px;display:flex;align-items:center;gap:9px;font-weight:600"><span style="width:6px;height:6px;border-radius:50%;background:#57651E"></span>Timeline</div>
+      <div style="padding:5px 12px 5px 28px">Bills</div><div style="padding:5px 12px 5px 28px">Payment schedule</div>
+      <div class="newbox" style="margin:2px 4px;padding:4px 8px 4px 24px">Bank</div></div>
+  </div></div>
+</section>
+
+<!-- ================= 2 · SETTING UP ================= -->
+<section class="pane" id="p2" hidden>
+  <h2>Setting up: the first visit (C1, K1) and starting a statement</h2>
+  <p class="muted">B1: the club checks a <b>bank account</b> it names; every club book is in the first account by default; a team has one account. B3: the first check asks for a starting date, the bank balance on that date, and anything still outstanding then. After that, each statement starts where the last one ended, and nobody types a starting balance again.</p>
+
+  <div class="card"><h3>The two example statements every figure on this page comes from</h3>
+    <div class="read two" style="margin:6px 0 0">
+      <div><h4 style="color:var(--t-res)">Club · Lakeshore Lynx · Club chequing · statement ending Oct 31, 2026</h4>
+        <div class="tw" style="margin:6px 0 0"><table class="t" style="min-width:0"><tbody>
+          <tr><td>Starting balance (where Sep 30, 2026’s check ended)</td><td class="r">$6,120.45</td></tr>
+          <tr><td>Money in ticked: 14 lines, one of them a Stripe payout of $1,284.50</td><td class="r">+ $3,910.00</td></tr>
+          <tr><td>Money out ticked: 9 lines</td><td class="r">− $1,617.55</td></tr>
+          <tr><td><b>Ticked balance</b></td><td class="r"><b>$8,412.90</b></td></tr>
+          <tr><td>The statement’s ending balance</td><td class="r">$8,400.50</td></tr>
+          <tr><td>Off by (the bank’s monthly fee, not yet in the book: tab 4)</td><td class="r">$12.40</td></tr>
+          <tr><td><b>After the fee is added and ticked</b></td><td class="r"><b>$8,400.50 · $0.00</b></td></tr>
+          <tr><td class="muted">Kept out of the bank: officials paid in cash from the concession float, Oct 27</td><td class="r muted">$120.00 out</td></tr>
+          <tr><td class="muted">Still outstanding: cheque #214, indoor training, written Oct 29</td><td class="r muted">$450.00</td></tr>
+        </tbody></table></div>
+        <p class="muted" style="font-size:13px;margin:6px 0 0">The review page’s worked example, with one change: the bank charged a $12.40 fee the book didn’t have. The plan’s C3 question (“It’s $12.40 off. Now what?”) needed a real reason to be off.</p></div>
+      <div><h4 style="color:var(--t-res)">Coach · Lynx 12U AAA · Team account · statement ending Sep 30, 2026 (the team’s first check)</h4>
+        <div class="tw" style="margin:6px 0 0"><table class="t" style="min-width:0"><tbody>
+          <tr><td>Bank balance on Sep 1, 2026 (typed once, K1)</td><td class="r">$1,180.00</td></tr>
+          <tr><td>Money in ticked: 5 lines</td><td class="r">+ $2,462.35</td></tr>
+          <tr><td>Money out ticked: 2 lines, then the bank’s $4.95 fee (tab 4)</td><td class="r">− $1,138.15</td></tr>
+          <tr><td><b>Ticked balance = the statement</b></td><td class="r"><b>$2,504.20 · $0.00</b></td></tr>
+          <tr><td>Kept out of the bank: dues paid in cash, spent in cash on officials</td><td class="r">$120.00 in · $120.00 out</td></tr>
+          <tr><td>Left out automatically: the Okafor family paid the hotel directly</td><td class="r">$160.00</td></tr>
+          <tr><td class="muted">Still outstanding: cheque #032, hotel deposit, written Sep 28</td><td class="r muted">$500.00</td></tr>
+        </tbody></table></div>
+        <p class="muted" style="font-size:13px;margin:6px 0 0">On Sep 30, 2026 the Money Overview’s Cash on hand read $2,064.20. That is $60.00 more than the bank less the outstanding cheque ($2,004.20). The $60.00 is the cash the team held when the season opened with $1,240.00 (P2: Cash on hand is not a bank balance). The figures agree. They are two different numbers.</p></div>
+    </div></div>
+
+  <h3>C1 · Club: the Bank tab, first visit · desktop</h3>
+  <div class="cap"><b>Proposed</b> · Accounting → Bank, before anything is set up <button class="mk new" data-note="NEW: the Bank tab, placed after Ledger (B8). On a first visit its whole body is this one setup card. There is no empty list and no tour. The card asks for exactly what B1 and B3 ruled: the account's name, which books keep their money there (all of them, by default), and where to start.">NEW</button> <button class="mk askm" data-note="Ask 3: where the 'still outstanding then' lines come from. Drawn here as picked from the book's own lines dated before the starting date, plus 'Add one the book doesn't have' for anything older than the books.">Ask 3</button></div>
+  <div class="fx"><div class="fr w1440"><div class="ak"><div class="top"><b>FieldLogicHQ</b><span>Admin area</span></div><div class="shell">
+    <nav class="sb"><span class="it">Overview</span><span class="it">Calendar</span><span class="it">Schedules</span><div class="grp">Programs</div><span class="it">Rep teams ›</span><span class="it">House league ›</span><span class="it on">Accounting <span class="cnt" style="margin-left:auto">9</span></span><span class="it">Families</span><span class="it">Public site</span><span class="it">Tournaments</span><div class="grp">Organization</div><span class="it">Organization ›</span></nav>
+    <div class="main"><div class="orghd"><b>Lakeshore Lynx</b><span class="sp"></span><span class="b" style="border-radius:999px;min-height:30px">Public site</span></div><div class="pg">
+      <div class="ph"><h1>Accounting</h1></div>
+      <div class="hub"><span>Overview</span><span>Budget</span><span>Teams</span><span>Ledger</span><span class="on nw">Bank</span><span>Allocations</span><span>Payment requests</span><span>Budget vs. Actual</span><span>Payouts</span></div>
+      <div class="sect newbox" style="max-width:760px">
+        <div class="sect-h"><h3>Check the club’s books against the bank</h3></div>
+        <div class="sect-b">
+          <p style="margin:0;font-size:14px;color:var(--soft)">Name the bank account and say where to start. After this, each statement starts where the last one ended.</p>
+          <div class="f" style="max-width:360px"><span class="lbl">Account name <em>*</em></span><div class="in focus">Club chequing</div><p class="hint">A name only. Never the account number.</p></div>
+          <div class="f"><span class="lbl">Books whose money is in this account</span>
+            <div class="tf"><table class="rg roomy"><tbody>
+              <tr><td class="cx"><i class="cb on"></i></td><td><b>General</b></td><td class="r faint">$5,147.10</td></tr>
+              <tr><td class="cx"><i class="cb on"></i></td><td><b>House league · Fall 2026</b></td><td class="r faint">$495.00</td></tr>
+              <tr><td class="cx"><i class="cb on"></i></td><td><b>Lynx Fall Classic 2026</b></td><td class="r faint">$0.00</td></tr>
+            </tbody></table></div>
+            <p class="hint">All of the club’s books, to start. You can add a second account later and move a book to it. Teams keep their own accounts.</p></div>
+          <div class="g2" style="max-width:520px">
+            <div class="f"><span class="lbl">Starting date <em>*</em></span><div class="in cal">Aug 31, 2026</div><p class="hint">Usually the end date of a statement you already have.</p></div>
+            <div class="f"><span class="lbl">Bank balance on that date <em>*</em></span><div class="in">$5,402.10</div><p class="hint">From that statement’s ending balance.</p></div>
+          </div>
+          <div class="f"><span class="lbl">Still outstanding on Aug 31, 2026</span>
+            <div class="tf"><table class="rg roomy"><thead><tr><th></th><th>Date</th><th>What</th><th>Book</th><th class="r">Money out</th><th class="r">Money in</th></tr></thead><tbody>
+              <tr><td class="cx"><i class="cb on"></i></td><td class="d">Aug 29</td><td>Cheque #201 · Officials, Aug 29–30</td><td class="bk">General</td><td class="r">$240.00</td><td class="r"></td></tr>
+              <tr><td class="cx"><i class="cb"></i></td><td class="d">Aug 27</td><td>Concession supplies</td><td class="bk">General</td><td class="r">$96.20</td><td class="r"></td></tr>
+              <tr><td class="cx"><i class="cb"></i></td><td class="d">Aug 24</td><td>Sponsor · Lakeside Dental</td><td class="bk">General</td><td class="r"></td><td class="r cin">$300.00</td></tr>
+            </tbody></table></div>
+            <p class="hint">Lines from your books dated in the 30 days before the starting date. Tick any the bank hadn’t shown by Aug 31. <span class="lk">Add one the books don’t have</span></p></div>
+          <div class="tb"><span class="sp"></span><span class="b lime">Save and check a statement</span></div>
+        </div></div>
+    </div></div></div></div></div></div>
+
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · the window that starts every statement after the first · both portals <button class="mk new" data-note="NEW: the one-window form (520). Two fields only, both from the paper statement. The starting balance is never typed after the first check (B3). The window says where it comes from, so a treasurer who expected a different figure sees it before ticking anything.">NEW</button></div>
+      <div class="fr w520"><div class="ak"><div class="dlg flat">
+        <div class="dh"><div class="tt"><span class="ey">Bank · Club chequing</span><b>Check a statement</b></div><span class="x">✕</span></div>
+        <div class="db">
+          <p>Starts at <b style="color:var(--ink)">$6,120.45</b>, where the statement ending Sep 30, 2026 ended.</p>
+          <div class="g2"><div class="f"><span class="lbl">Statement ends <em>*</em></span><div class="in cal focus">Oct 31, 2026</div></div>
+            <div class="f"><span class="lbl">Ending balance on the statement <em>*</em></span><div class="in">$8,400.50</div></div></div>
+          <p class="hint">Both are printed on the statement, usually at the top.</p>
+        </div>
+        <div class="df"><span class="st"></span><span class="b">Cancel</span><span class="b lime">Start checking</span></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · C1 · phone <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="pbar" style="padding-left:16px">Lakeshore Lynx<span style="margin-left:auto" class="m">◍</span></div>
+        <div class="pin">
+          <div class="ph"><h1>Accounting</h1></div>
+          <div class="hub"><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>Allocations</span><span>Payme…</span></div>
+          <div class="sect"><div class="sect-h"><h3>Check the club’s books against the bank</h3></div>
+            <div class="sect-b">
+              <div class="f"><span class="lbl">Account name <em>*</em></span><div class="in">Club chequing</div></div>
+              <div class="f"><span class="lbl">Books whose money is in this account</span><div class="in dd">All 3 club books</div></div>
+              <div class="f"><span class="lbl">Starting date <em>*</em></span><div class="in cal">Aug 31, 2026</div></div>
+              <div class="f"><span class="lbl">Bank balance on that date <em>*</em></span><div class="in">$5,402.10</div></div>
+              <div class="f"><span class="lbl">Still outstanding on Aug 31, 2026</span>
+                <div class="pl"><div class="pr"><span class="cbw"><i class="cb on"></i></span><div class="g"><div class="t">Cheque #201 · Officials</div><div class="s">Aug 29 · General</div></div><div class="a">$240.00</div></div>
+                  <div class="pr"><span class="cbw"><i class="cb"></i></span><div class="g"><div class="t">Concession supplies</div><div class="s">Aug 27 · General</div></div><div class="a">$96.20</div></div></div>
+                <span class="lk" style="padding:10px 0">Add one the books don’t have</span></div>
+              <span class="b lime full">Save and check a statement</span>
+            </div></div>
+        </div><div class="nav"><span>Overview</span><span>Calendar</span><span>Rep teams</span><span class="on">Accounting</span><span>More</span></div></div></div></div>
+    <div class="side"><div class="read one">
+      <div class="w"><h4>What it answers</h4><p>“I’ve never done this here. Where do I start?” One card with five answers, all from a statement the treasurer already holds. On the phone the book list folds into the shipped pick-many dropdown (“All 3 club books”), because a phone has no room for a second list.</p></div>
+      <div class="c"><h4>Drawn, not decided</h4><p>Where the outstanding lines come from (Ask 3). Drawn as a list from the club’s own books, since a club already using FieldLogicHQ has those cheques in its books. Typing them again would make a duplicate.</p></div>
+    </div></div>
+  </div>
+
+  <h3>K1 · Coach: the first check, in the Ledger’s Bank view</h3>
+  <p class="muted">B8: a fourth Ledger view, “Bank”. <b>Correction to the drawing prompt:</b> the Ledger’s view control ships as the <b>View</b> pill dropdown (Timeline · Bills · Payment schedule), not a white track. The white track is the calendar and Roster switch. So “Bank” is a fourth option in that dropdown, drawn here open.</p>
+  <div class="cap"><b>Proposed</b> · Money → Ledger → View: Bank, first visit, a team with a carried opening balance <button class="mk new" data-note="NEW: 'Bank' added as the fourth option of the Ledger's shipped View dropdown. The other toolbar controls swap with the view, as they already do between Timeline, Bills and Payment schedule. So the phone toolbar doesn't grow a row.">NEW</button></div>
+  <div class="fx"><div class="fr w1440"><div class="ak"><div class="top"><b>FieldLogicHQ</b><span>Coaches portal</span><span class="sp"></span><span class="b" style="border-radius:999px;min-height:30px;font-size:13px">Workspaces ▾</span></div><div class="shell">
+    <nav class="sb"><span class="it">Overview</span><div class="grp">Season</div><span class="it">Schedule</span><span class="it">Practice plans</span><span class="it">Lineups</span><span class="it">Tournaments</span><div class="grp">Progress</div><span class="it">Skills &amp; goals</span><span class="it">Insights</span><div class="grp">Money</div><span class="it on">Money</span><div class="grp">Communication</div><span class="it">Email families</span><div class="grp">Team ›</div></nav>
+    <div class="main"><div class="orghd"><div><b>Lynx 12U AAA</b><div class="faint" style="font:500 11px/1.4 'IBM Plex Mono',monospace">2026 Season</div></div></div><div class="pg">
+      <div class="ph"><span class="ic">$</span><h1>Money</h1><span class="act"><span class="b lime">+ Record</span><span class="b">Import ▾</span></span></div>
+      <div class="hub"><span>Overview</span><span>Budget</span><span>Player dues</span><span>Fundraising</span><span class="on">Ledger</span><span>Club</span><span>Budget vs. Actual</span></div>
+      <div class="tb" style="position:relative"><span class="lead newbox"><i>View</i><b>Bank</b></span>
+        <div style="position:absolute;top:36px;left:0;z-index:3;width:220px;background:var(--card);border:1px solid var(--line2);border-radius:10px;box-shadow:0 8px 24px rgba(36,30,21,.18);padding:6px">
+          <div style="padding:8px 10px;font-size:14px">Timeline</div><div style="padding:8px 10px;font-size:14px">Bills</div><div style="padding:8px 10px;font-size:14px">Payment schedule</div>
+          <div class="newbox" style="padding:8px 10px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--olive)"></span>Bank</div></div></div>
+      <div class="sect" style="max-width:760px;margin-top:150px">
+        <div class="sect-h"><h3>Check the team’s account against the bank</h3></div>
+        <div class="sect-b">
+          <p style="margin:0;font-size:14px;color:var(--soft)">Say where to start, once. After this, each statement starts where the last one ended, even into next season.</p>
+          <div class="f" style="max-width:360px"><span class="lbl">Account name <em>*</em></span><div class="in">Team account</div><p class="hint">A name only. Never the account number.</p></div>
+          <div class="g2" style="max-width:520px">
+            <div class="f"><span class="lbl">Starting date <em>*</em></span><div class="in cal">Sep 1, 2026</div><p class="hint">The 2026 Season started Sep 1, 2026.</p></div>
+            <div class="f"><span class="lbl">Bank balance on that date <em>*</em></span><div class="in focus">$1,180.00</div></div>
+          </div>
+          <div class="call newbox"><span class="ico">i</span><div class="grow">The season opened with <b>$1,240.00</b> carried from the 2025 Season.<small>That figure is cash and bank together, so the bank’s balance can be lower. Type what the bank showed.</small></div></div>
+          <div class="f"><span class="lbl">Still outstanding on Sep 1, 2026</span><p class="hint" style="font-size:13px">Nothing in the team’s Ledger is dated before Sep 1, 2026. <span class="lk">Add one the Ledger doesn’t have</span></p></div>
+          <div class="tb"><span class="sp"></span><span class="b lime">Save and check a statement</span></div>
+        </div></div>
+    </div></div></div></div></div></div>
+
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · K1, a team with a carried opening balance <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr w640"><div class="ak" style="padding:16px"><div class="sect"><div class="sect-b" style="padding-top:16px">
+        <div class="f same"><span class="lbl">Account name <em>*</em></span><div class="in">Team account</div></div>
+        <div class="g2 same"><div class="f"><span class="lbl">Starting date <em>*</em></span><div class="in cal">Sep 1, 2026</div></div><div class="f"><span class="lbl">Bank balance on that date <em>*</em></span><div class="in">$1,180.00</div></div></div>
+        <div class="samebar">Name, starting date, bank balance · the same</div>
+        <div class="call newbox"><span class="ico">i</span><div class="grow">The season opened with <b>$1,240.00</b> carried from the 2025 Season.<small>That figure is cash and bank together, so the bank’s balance can be lower. Type what the bank showed.</small></div></div>
+      </div></div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · K1, a team in its first season (no opening balance) <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr w640"><div class="ak" style="padding:16px"><div class="sect"><div class="sect-b" style="padding-top:16px">
+        <div class="f same"><span class="lbl">Account name <em>*</em></span><div class="in">Team account</div></div>
+        <div class="g2"><div class="f"><span class="lbl">Starting date <em>*</em></span><div class="in cal">Sep 1, 2026</div></div><div class="f"><span class="lbl">Bank balance on that date <em>*</em></span><div class="in ph">$0.00</div></div></div>
+        <div class="samebar">Name · the same</div>
+        <div class="samebar" style="display:block">No carried-balance note</div>
+      </div></div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · K1 · phone <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="pbar"><span class="m">←</span>Money</div>
+        <div class="pin">
+          <div class="hub"><span>Player dues</span><span>Fundraising</span><span class="on">Ledger</span><span>Club</span></div>
+          <span class="lead" style="align-self:flex-start"><i>View</i><b>Bank</b></span>
+          <div class="sect"><div class="sect-h"><h3>Check the team’s account against the bank</h3></div>
+            <div class="sect-b">
+              <div class="f"><span class="lbl">Account name <em>*</em></span><div class="in">Team account</div></div>
+              <div class="f"><span class="lbl">Starting date <em>*</em></span><div class="in cal">Sep 1, 2026</div></div>
+              <div class="f"><span class="lbl">Bank balance on that date <em>*</em></span><div class="in">$1,180.00</div></div>
+              <div class="call"><span class="ico">i</span><div class="grow">The season opened with <b>$1,240.00</b> carried from the 2025 Season.<small>That’s cash and bank together, so the bank’s balance can be lower.</small></div></div>
+              <span class="lk" style="padding:8px 0">Add something still outstanding</span>
+              <span class="b lime full">Save and check a statement</span>
+            </div></div>
+        </div>
+        <div class="nav"><span>Overview</span><span>Schedule</span><span>Practices</span><span>Roster</span><span>More</span></div>
+      </div></div></div>
+  </div>
+</section>
+
+<!-- ================= 3 · TICKING ================= -->
+<section class="pane" id="p3" hidden>
+  <h2>Ticking a statement (C2, K2)</h2>
+  <p class="muted">B2: the statement is typed (end date and ending balance) and each line is ticked off. An automatic Stripe payout is <b>one row</b> that ticks everything inside it. B6: one tap marks a line “Didn’t go through the bank”, and a small total keeps count. Same-account transfers, bills a family paid straight to the vendor, and void and pending lines are left out automatically. The band is the shipped money band, three tiles joined: <b>Statement · Ticked · Difference</b>.</p>
+
+  <h3>C2 · Club: an open check, part-way through · desktop</h3>
+  <div class="cap"><b>Proposed</b> · 18 of 25 lines ticked <button class="mk new" data-note="NEW: the check itself. One list in date order, the way a bank statement reads, with the Ledger's own columns plus Book. The band is the shipped MoneySummaryBand. Difference carries no colour while lines are still unticked; it turns amber only when every line is ticked and it still isn't $0.00 (tab 4), and green at $0.00.">NEW</button> <button class="mk askm" data-note="Ask 4: one list in date order (drawn), or money in and money out side by side as QuickBooks lays it out.">Ask 4</button> <button class="mk askm" data-note="Ask 6: 'Didn't go through the bank' is drawn on the row under the pointer (desktop). One tap, as B6 ruled, without putting a button on all 24 rows.">Ask 6</button></div>
+  <div class="fx"><div class="fr w1440"><div class="ak"><div class="top"><b>FieldLogicHQ</b><span>Admin area</span></div><div class="shell">
+    <nav class="sb"><span class="it">Overview</span><span class="it">Calendar</span><span class="it">Schedules</span><div class="grp">Programs</div><span class="it">Rep teams ›</span><span class="it">House league ›</span><span class="it on">Accounting <span class="cnt" style="margin-left:auto">9</span></span><span class="it">Families</span><span class="it">Public site</span><span class="it">Tournaments</span><div class="grp">Organization</div><span class="it">Organization ›</span></nav>
+    <div class="main"><div class="orghd"><b>Lakeshore Lynx</b><span class="sp"></span><span class="b" style="border-radius:999px;min-height:30px">Public site</span></div><div class="pg">
+      <div class="ph"><h1>Accounting</h1></div>
+      <div class="hub"><span>Overview</span><span>Budget</span><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>Allocations</span><span>Payment requests</span><span>Budget vs. Actual</span><span>Payouts</span></div>
+      <div class="tb"><div><div class="bl" style="margin-bottom:3px">Club chequing · checking</div><div style="font:700 16px/1.25 Inter">Statement ending Oct 31, 2026 <span class="lk" style="font-size:12px;margin-left:6px">Edit</span></div></div><span class="sp"></span><span class="b">Finish later</span><span class="b lime dis">Mark this statement checked</span></div>
+      <div class="band t3 newbox">
+        <div class="tile"><span class="bl">Statement</span><span class="bf">$8,400.50</span><span class="bc">Ending balance on Oct 31, 2026</span></div>
+        <div class="tile"><span class="bl">Ticked</span><span class="bf">$8,542.65</span><span class="bc">From $6,120.45 · 18 of 25 lines ticked</span></div>
+        <div class="tile"><span class="bl">Difference</span><span class="bf">$142.15</span><span class="bc">You’ve ticked $142.15 more than the statement shows</span></div>
+      </div>
+      <div class="tb"><span class="sf">Find an amount or a name…</span><span class="qp">Show: All lines</span><span class="sp"></span><span class="bnote">3 lines left out automatically · <span class="lk" style="font-size:12px">Show</span></span></div>
+      <div class="tf"><table class="rg"><thead><tr><th style="width:34px"><i class="cb mix"></i></th><th>Date</th><th>What</th><th>Book</th><th class="r">Money out</th><th class="r">Money in</th><th style="width:160px"></th></tr></thead><tbody>
+        <tr class="bal"><td></td><td colspan="4">Starting balance · Sep 30, 2026 <span class="faint" style="font-weight:500">(where the last check ended)</span></td><td class="r">$6,120.45</td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 1</td><td>Cheque #209 · Facility rental, fall</td><td class="bk">General</td><td class="r">$420.00</td><td class="r"></td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 2</td><td>Sponsor · Lakeside Dental <span class="det">· E-Transfer</span></td><td class="bk">General</td><td class="r"></td><td class="r cin">$400.00</td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 3</td><td>Fall registration · Patel <span class="det">· cheque</span></td><td class="bk">House league · Fall 2026</td><td class="r"></td><td class="r cin">$225.00</td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 4</td><td>Concession supplies <span class="det">· debit</span></td><td class="bk">General</td><td class="r">$186.42</td><td class="r"></td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 5</td><td>Concession, Oct 4 <span class="det">· cash deposit</span></td><td class="bk">General</td><td class="r"></td><td class="r cin">$312.75</td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 7</td><td>Cheque #210 · Officials, Oct 5–6</td><td class="bk">House league · Fall 2026</td><td class="r">$240.00</td><td class="r"></td><td></td></tr>
+        <tr class="ticked newbox"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 8</td><td><b>Stripe payout</b> <span class="det">· 8 lines inside · arrived Oct 8</span> <span class="faint">›</span></td><td class="bk">2 books</td><td class="r"></td><td class="r cin">$1,284.50</td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 9</td><td>Fall registration · Nguyen <span class="det">· E-Transfer</span></td><td class="bk">House league · Fall 2026</td><td class="r"></td><td class="r cin">$225.00</td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 10</td><td>Equipment repair <span class="det">· E-Transfer</span></td><td class="bk">General</td><td class="r">$95.00</td><td class="r"></td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 12</td><td>Concession, Oct 11 <span class="det">· cash deposit</span></td><td class="bk">General</td><td class="r"></td><td class="r cin">$268.25</td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 14</td><td>Fall registration · Okafor <span class="det">· E-Transfer</span></td><td class="bk">House league · Fall 2026</td><td class="r"></td><td class="r cin">$225.00</td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 15</td><td>Cheque #211 · Officials, Oct 12–13</td><td class="bk">House league · Fall 2026</td><td class="r">$240.00</td><td class="r"></td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 16</td><td>Team entry · Ridgeview Hawks <span class="det">· cheque</span></td><td class="bk">Lynx Fall Classic 2026</td><td class="r"></td><td class="r cin">$350.00</td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 18</td><td>Concession supplies <span class="det">· debit</span></td><td class="bk">General</td><td class="r">$143.88</td><td class="r"></td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 19</td><td>Bake sale <span class="det">· cash deposit</span></td><td class="bk">General</td><td class="r"></td><td class="r cin">$184.50</td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 21</td><td>Fall registration · Brooks, 1 of 2 <span class="det">· E-Transfer</span></td><td class="bk">House league · Fall 2026</td><td class="r"></td><td class="r cin">$112.50</td><td></td></tr>
+        <tr><td class="cx"><i class="cb"></i></td><td class="d">Oct 22</td><td>Cheque #212 · Trophies</td><td class="bk">Lynx Fall Classic 2026</td><td class="r">$212.25</td><td class="r"></td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 24</td><td>Equipment sale <span class="det">· E-Transfer</span></td><td class="bk">General</td><td class="r"></td><td class="r cin">$60.00</td><td></td></tr>
+        <tr><td class="cx"><i class="cb"></i></td><td class="d">Oct 25</td><td>Refund · Fall registration · Singh <span class="det">· E-Transfer</span></td><td class="bk">House league · Fall 2026</td><td class="r">$60.00</td><td class="r"></td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 26</td><td>Sponsor · Cedar Lake Auto Glass <span class="det">· cheque</span></td><td class="bk">General</td><td class="r"></td><td class="r cin">$100.00</td><td></td></tr>
+        <tr class="hov"><td class="cx"><i class="cb"></i></td><td class="d">Oct 27</td><td>Officials, Oct 26–27 <span class="det">· cash, from the concession float</span></td><td class="bk">House league · Fall 2026</td><td class="r">$120.00</td><td class="r"></td><td class="r"><span class="nb newbox" style="padding:2px 4px" data-note="NEW (Ask 6): one tap takes this line out of the check for good, into 'Kept out of the bank'. It shows on the row under the pointer, and only on lines paid in cash or with no method recorded. A cheque, E-Transfer, card or debit went through a bank by definition.">Didn’t go through the bank</span></td></tr>
+        <tr><td class="cx"><i class="cb"></i></td><td class="d">Oct 28</td><td>Fall registration · Marchetti, 1 of 4 <span class="det">· E-Transfer</span></td><td class="bk">House league · Fall 2026</td><td class="r"></td><td class="r cin">$62.50</td><td></td></tr>
+        <tr><td class="cx"><i class="cb"></i></td><td class="d">Oct 29</td><td>Printer ink, registration desk <span class="det">· debit</span></td><td class="bk">General</td><td class="r">$20.00</td><td class="r"></td><td></td></tr>
+        <tr><td class="cx"><i class="cb"></i></td><td class="d">Oct 29</td><td>Cheque #214 · Indoor training, November</td><td class="bk">General</td><td class="r">$450.00</td><td class="r"></td><td></td></tr>
+        <tr><td class="cx"><i class="cb"></i></td><td class="d">Oct 30</td><td>Fall registration · Chen, 1 of 2 <span class="det">· E-Transfer</span></td><td class="bk">House league · Fall 2026</td><td class="r"></td><td class="r cin">$100.00</td><td></td></tr>
+      </tbody></table></div>
+      <p class="hint">Ticks save as you go. Lines dated after Oct 31, 2026 wait for the next statement.</p>
+    </div></div></div></div></div></div>
+
+  <h3>The Stripe payout row, opened · and the state if a payout doesn’t add up</h3>
+  <p class="muted">Drawn at the list’s true width. Tab 3’s sidebar and tab row are unchanged and not repeated. The payout reuses the Payouts tab’s reader, so its contents are the ones that tab lists. Here they sit in the check’s own columns (Book, Money out, Money in), in date order, because the check is about which book each line belongs to.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · payout opened: it adds up <button class="mk new" data-note="NEW: the grouped row opened. Its lines have no ticks of their own, because the payout's tick covers all of them. Each line names its book, so a treasurer can see that one deposit holds house-league and tournament money. That deposit is why the check is per account (B1, P1).">NEW</button></div>
+      <div class="fr" style="width:1136px"><div class="ak" style="padding:12px"><div class="tf"><table class="rg"><thead><tr><th style="width:34px"></th><th>Date</th><th>What</th><th>Book</th><th class="r">Money out</th><th class="r">Money in</th></tr></thead><tbody>
+        <tr class="ticked same"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 7</td><td>Cheque #210 · Officials, Oct 5–6</td><td class="bk">House league · Fall 2026</td><td class="r">$240.00</td><td class="r"></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 8</td><td><b>Stripe payout</b> <span class="det">· 8 lines inside · arrived Oct 8</span> <span class="faint">⌄</span></td><td class="bk">2 books</td><td class="r"></td><td class="r cin">$1,284.50</td></tr>
+        <tr class="sub same"><td></td><td class="d">Oct 5</td><td>Team entry · Cedar Lake Comets <span class="det">· card</span></td><td class="bk">Lynx Fall Classic 2026</td><td class="r"></td><td class="r">$200.00</td></tr>
+        <tr class="sub same"><td></td><td class="d">Oct 6</td><td>Fall registration · Ali <span class="det">· card</span></td><td class="bk">House league · Fall 2026</td><td class="r"></td><td class="r">$225.00</td></tr>
+        <tr class="sub same"><td></td><td class="d">Oct 6</td><td>Fall registration · Dubois <span class="det">· card</span></td><td class="bk">House league · Fall 2026</td><td class="r"></td><td class="r">$225.00</td></tr>
+        <tr class="sub same"><td></td><td class="d">Oct 7</td><td>Fall registration · Kowalski <span class="det">· bank debit</span></td><td class="bk">House league · Fall 2026</td><td class="r"></td><td class="r">$225.00</td></tr>
+        <tr class="sub same"><td></td><td class="d">Oct 7</td><td>Fall registration · Mensah <span class="det">· card</span></td><td class="bk">House league · Fall 2026</td><td class="r"></td><td class="r">$225.00</td></tr>
+        <tr class="sub same"><td></td><td class="d">Oct 6</td><td>Team entry · Ridgeview Owls <span class="det">· card</span></td><td class="bk">Lynx Fall Classic 2026</td><td class="r"></td><td class="r">$200.00</td></tr>
+        <tr class="sub same"><td></td><td class="d">Oct 8</td><td>Payment processing <span class="det">· Stripe’s fee on 4 payments</span></td><td class="bk">House league · Fall 2026</td><td class="r">$10.70</td><td class="r"></td></tr>
+        <tr class="sub same"><td></td><td class="d">Oct 8</td><td>Payment processing <span class="det">· Stripe’s fee on 2 payments</span></td><td class="bk">Lynx Fall Classic 2026</td><td class="r">$4.80</td><td class="r"></td></tr>
+                <tr class="sub"><td></td><td></td><td colspan="3" style="font-weight:600">These 8 lines add up to $1,284.50, the amount Stripe paid in. <span style="color:var(--in)">✓</span></td><td class="r" style="font-weight:600">$1,284.50</td></tr>
+      </tbody></table></div><div class="samebar">The six payments and both fee lines · the same in both</div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · payout opened: it doesn’t add up (only if R1 proves P4 false) <button class="mk askm" data-note="Ask 7. P4 is unproven: a payout's lines in the books may not sum to the deposit in both who-pays-the-fee cases. R1 proves it with real test payouts. If they don't sum, the gap is a named line inside the payout, never a silent part of the Difference.">Ask 7</button></div>
+      <div class="fr" style="width:1136px"><div class="ak" style="padding:12px"><div class="tf"><table class="rg"><thead><tr><th style="width:34px"></th><th>Date</th><th>What</th><th>Book</th><th class="r">Money out</th><th class="r">Money in</th></tr></thead><tbody>
+        <tr class="ticked same"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 7</td><td>Cheque #210 · Officials, Oct 5–6</td><td class="bk">House league · Fall 2026</td><td class="r">$240.00</td><td class="r"></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Oct 8</td><td><b>Stripe payout</b> <span class="det">· 8 lines inside · arrived Oct 8</span> <span class="faint">⌄</span></td><td class="bk">2 books</td><td class="r"></td><td class="r cin">$1,284.50</td></tr>
+        <tr class="sub same"><td></td><td class="d">Oct 6</td><td>Fall registration · Ali, Dubois, Kowalski, Mensah</td><td class="bk">House league · Fall 2026</td><td class="r"></td><td class="r">$900.00</td></tr>
+        <tr class="sub same"><td></td><td class="d">Oct 5</td><td>Team entry · Cedar Lake Comets, Ridgeview Owls</td><td class="bk">Lynx Fall Classic 2026</td><td class="r"></td><td class="r">$400.00</td></tr>
+        <tr class="sub"><td></td><td class="d">Oct 8</td><td>Payment processing <span class="det">· both books</span></td><td class="bk">2 books</td><td class="r">$13.90</td><td class="r"></td></tr>
+        <tr class="gap newbox"><td></td><td></td><td colspan="2">Not in your books: Stripe paid in $1.60 less than these lines add up to. <span class="lk" style="color:var(--amber-ink);text-decoration:underline">Add it as payment processing</span></td><td class="r">$1.60</td><td class="r"></td></tr>
+      </tbody></table></div><p class="hint" style="padding:8px 4px 0">The lines are shown summed here only to fit. The real row lists all eight, as on the left.</p></div></div></div>
+  </div>
+  <div class="read two">
+    <div class="c"><h4>A payout someone started by hand in Stripe</h4><p>Stripe lists only the total of a manual payout (the Payouts tab already says “Stripe lists what’s inside automatic payouts only.”). Its payments appear here as ordinary lines and are ticked one by one, as B2 ruled. The statement shows one deposit. The treasurer ticks the lines that add up to it, and “Find by amount” helps.</p></div>
+    <div class="c"><h4>Left out automatically (the “Show” beside the search box)</h4><p>Three lines this month. Oct 6, $500.00 moved from General to House league · Fall 2026. Both books are in Club chequing, so the bank never saw it. One void line, and one family’s bank debit still clearing. A pending line joins the list once it clears. Nothing here can be ticked.</p></div>
+  </div>
+
+  <h3>C2 · phone</h3>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · the band pins under the tab row while the list scrolls <button class="mk askm" data-note="Ask 5: on a phone the band pins and 'Mark this statement checked' docks at the foot. Otherwise the treasurer scrolls up after every tick to see the Difference.">Ask 5</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="pbar" style="padding-left:16px">Lakeshore Lynx<span style="margin-left:auto" class="m">◍</span></div>
+        <div class="pin" style="padding-bottom:0">
+          <div class="hub"><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>Allocations</span><span>Payme…</span></div>
+          <div><div class="bl" style="margin-bottom:3px">Club chequing · checking</div><div style="font:700 16px/1.25 Inter">Statement ending Oct 31, 2026</div></div>
+          <div class="stick newbox" style="display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);font-size:13px" data-note="NEW (Ask 5): a one-line strip pins while the list scrolls. It holds the Difference and the count, about 44px. The full band above it scrolls away."><span class="bl">Difference</span><b style="font-size:15px;font-variant-numeric:tabular-nums">$142.15</b><span class="faint">· 18 of 25 ticked</span></div><div class="band t3">
+            <div class="tile"><span class="bl">Statement</span><span class="bf">$8,400.50</span></div>
+            <div class="tile"><span class="bl">Ticked</span><span class="bf">$8,542.65</span><span class="bc">18 of 25 lines</span></div>
+            <div class="tile"><span class="bl">Difference</span><span class="bf">$142.15</span><span class="bc">$142.15 over</span></div></div>
+          <span class="sf fill" style="min-height:44px">Find an amount or a name…</span>
+          <div class="pl">
+            <div class="pr ticked"><span class="cbw"><i class="cb on"></i></span><div class="g"><div class="t">Concession supplies</div><div class="s">Oct 18 · General · debit</div></div><div class="a">−$143.88</div></div>
+            <div class="pr ticked"><span class="cbw"><i class="cb on"></i></span><div class="g"><div class="t">Bake sale</div><div class="s">Oct 19 · General · cash deposit</div></div><div class="a cin">+$184.50</div></div>
+            <div class="pr ticked"><span class="cbw"><i class="cb on"></i></span><div class="g"><div class="t">Fall registration · Brooks, 1 of 2</div><div class="s">Oct 21 · House league · Fall 2026</div></div><div class="a cin">+$112.50</div></div>
+            <div class="pr"><span class="cbw"><i class="cb"></i></span><div class="g"><div class="t">Cheque #212 · Trophies</div><div class="s">Oct 22 · Lynx Fall Classic 2026 · cheque</div></div><div class="a">−$212.25</div></div>
+            <div class="pr ticked"><span class="cbw"><i class="cb on"></i></span><div class="g"><div class="t">Equipment sale</div><div class="s">Oct 24 · General · E-Transfer</div></div><div class="a cin">+$60.00</div></div>
+            <div class="pr"><span class="cbw"><i class="cb"></i></span><div class="g"><div class="t">Refund · Fall registration · Singh</div><div class="s">Oct 25 · House league · Fall 2026 · E-Transfer</div></div><div class="a">−$60.00</div></div>
+            <div class="pr"><span class="cbw"><i class="cb"></i></span><div class="g"><div class="t">Officials, Oct 26–27</div><div class="s">Oct 27 · House league · cash, from the float</div><span class="nb newbox">Didn’t go through the bank</span></div><div class="a">−$120.00</div></div>
+          </div>
+        </div>
+        <div class="dock newbox"><div style="display:flex;gap:8px"><span class="b t44" style="flex:1">Finish later</span><span class="b lime t44 dis" style="flex:1.6">Mark checked</span></div><span class="hint" style="text-align:right">The difference must be $0.00 first.</span></div>
+        <div class="nav"><span>Overview</span><span>Calendar</span><span>Rep teams</span><span class="on">Accounting</span><span>More</span></div>
+      </div></div></div>
+    <div class="side"><div class="read one">
+      <div class="w"><h4>What it answers</h4><p>“Does my book agree with this statement?” The whole row is the tick target (44px floor). On a phone, “Didn’t go through the bank” sits under each unticked cash line (or one with no method recorded), since there is no pointer to show it on. Cheques and E-Transfers never show it. The dock label shortens to “Mark checked” to fit two 44px buttons side by side.</p></div>
+      <div class="c"><h4>A question this drawing raises</h4><p>Should “Didn’t go through the bank” show on the club side at all? B6 rules it for “a line” and is written for the coach. A club’s concession float is the same case: cash taken in and spent in cash, never deposited. Drawn on both, because one engine serves both (plan, Architectural decisions).</p></div>
+    </div></div>
+  </div>
+
+  <h3>K2 · Coach: an open check, part-way through · desktop</h3>
+  <div class="cap"><b>Proposed</b> · the team’s first statement, Sep 1–30, 2026, two cash lines just marked <button class="mk new" data-note="NEW: the same check, fed by the team's Ledger. The two cash lines have left the tick list and show only in the 'Kept out of the bank' line (B6). The hotel the Okafor family paid directly is left out automatically, because it never touched the team's account.">NEW</button></div>
+  <div class="fx"><div class="fr w1440"><div class="ak"><div class="top"><b>FieldLogicHQ</b><span>Coaches portal</span><span class="sp"></span><span class="b" style="border-radius:999px;min-height:30px;font-size:13px">Workspaces ▾</span></div><div class="shell">
+    <nav class="sb"><span class="it">Overview</span><div class="grp">Season</div><span class="it">Schedule</span><span class="it">Practice plans</span><span class="it">Lineups</span><span class="it">Tournaments</span><div class="grp">Progress</div><span class="it">Skills &amp; goals</span><span class="it">Insights</span><div class="grp">Money</div><span class="it on">Money</span><div class="grp">Communication</div><span class="it">Email families</span><div class="grp">Team ›</div></nav>
+    <div class="main"><div class="orghd"><div><b>Lynx 12U AAA</b><div class="faint" style="font:500 11px/1.4 'IBM Plex Mono',monospace">2026 Season</div></div></div><div class="pg">
+      <div class="ph"><span class="ic">$</span><h1>Money</h1><span class="act"><span class="b lime">+ Record</span><span class="b">Import ▾</span></span></div>
+      <div class="hub"><span>Overview</span><span>Budget</span><span>Player dues</span><span>Fundraising</span><span class="on">Ledger</span><span>Club</span><span>Budget vs. Actual</span></div>
+      <div class="tb"><span class="lead"><i>View</i><b>Bank</b></span><span class="sp"></span><span class="b">Finish later</span><span class="b lime dis">Mark this statement checked</span></div>
+      <div><div class="bl" style="margin-bottom:3px">Team account · checking</div><div style="font:700 16px/1.25 Inter">Statement ending Sep 30, 2026 <span class="lk" style="font-size:12px;margin-left:6px">Edit</span></div></div>
+      <div class="band t3">
+        <div class="tile"><span class="bl">Statement</span><span class="bf">$2,504.20</span><span class="bc">Ending balance on Sep 30, 2026</span></div>
+        <div class="tile"><span class="bl">Ticked</span><span class="bf">$2,096.80</span><span class="bc">From $1,180.00 · 6 of 8 lines ticked</span></div>
+        <div class="tile"><span class="bl">Difference</span><span class="bf">$407.40</span><span class="bc">The statement shows $407.40 more than you’ve ticked</span></div>
+      </div>
+      <div class="tb"><span class="sf">Find an amount or a name…</span><span class="sp"></span><span class="bnote newbox" style="padding:4px 8px">Kept out of the bank: 2 lines · $120.00 in · $120.00 out · <span class="lk" style="font-size:12px">Show</span></span><span class="bnote">· 1 line left out automatically · <span class="lk" style="font-size:12px">Show</span></span></div>
+      <div class="tf"><table class="rg"><thead><tr><th style="width:34px"><i class="cb mix"></i></th><th>Date</th><th>What</th><th>Category</th><th class="r">Money out</th><th class="r">Money in</th><th style="width:160px"></th></tr></thead><tbody>
+        <tr class="bal"><td></td><td colspan="4">Starting balance · Sep 1, 2026 <span class="faint" style="font-weight:500">(the bank, as you typed it)</span></td><td class="r">$1,180.00</td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Sep 3</td><td>Dues payment · Chen <span class="det">· E-Transfer</span></td><td class="bk">Player dues</td><td class="r"></td><td class="r cin">$600.00</td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Sep 4</td><td>Dues payment · Marchetti <span class="det">· E-Transfer</span></td><td class="bk">Player dues</td><td class="r"></td><td class="r cin">$600.00</td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Sep 10</td><td>Dues payment · Okafor <span class="det">· cheque</span></td><td class="bk">Player dues</td><td class="r"></td><td class="r cin">$600.00</td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Sep 12</td><td>Cheque #031 · Cedar Lake Invitational entry</td><td class="bk">Tournaments</td><td class="r">$450.00</td><td class="r"></td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Sep 15</td><td>Sponsor · Lakeside Dental</td><td class="bk">Sponsorship</td><td class="r"></td><td class="r cin">$250.00</td><td></td></tr>
+        <tr class="ticked"><td class="cx"><i class="cb on"></i></td><td class="d">Sep 18</td><td>Jerseys · Diamond Sports <span class="det">· debit</span></td><td class="bk">Team Gear</td><td class="r">$683.20</td><td class="r"></td><td></td></tr>
+        <tr class="hov"><td class="cx"><i class="cb"></i></td><td class="d">Sep 21</td><td>Bottle drive</td><td class="bk">Fundraising</td><td class="r"></td><td class="r cin">$412.35</td><td class="r"><span class="nb">Didn’t go through the bank</span></td></tr>
+        <tr><td class="cx"><i class="cb"></i></td><td class="d">Sep 28</td><td>Cheque #032 · Hotel deposit, Lakeside Inn</td><td class="bk">Travel</td><td class="r">$500.00</td><td class="r"></td><td></td></tr>
+      </tbody></table></div>
+      <div class="sect newbox" style="max-width:760px"><div class="sect-h"><h3 style="font-size:14px">Kept out of the bank · 2 lines</h3><div class="acts"><span class="lk">Hide</span></div></div>
+        <table class="rg"><tbody>
+          <tr><td class="d">Sep 2</td><td>Dues payment · Ruiz <span class="det">· cash</span></td><td class="r cin">$120.00</td><td class="r"><span class="nb">Put it back</span></td></tr>
+          <tr><td class="d">Sep 13</td><td>Officials, Cedar Lake Invitational <span class="det">· paid in cash</span></td><td class="r">$120.00</td><td class="r"><span class="nb">Put it back</span></td></tr>
+        </tbody></table></div>
+    </div></div></div></div></div></div>
+  <div class="read two">
+    <div class="c"><h4>The coach’s list is the team’s Ledger, nothing new</h4><p>Same rows as the Timeline view, with Category instead of Book (a team has one book). Nothing is created by ticking. The tick is a mark beside the record. This season’s Ledger supplies the lines, plus anything still outstanding from the last check (tab 7).</p></div>
+    <div class="c"><h4>“Put it back”</h4><p>B6 says a marked line “leaves the tick list for good”, meaning it doesn’t come back next month. A mis-tap still needs undoing, so the kept-out list offers “Put it back”. Ask 6 holds this.</p></div>
+  </div>
+
+  <h3>K2 · phone</h3>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · coach, phone <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="pbar"><span class="m">←</span>Money</div>
+        <div class="pin" style="padding-bottom:0">
+          <div class="hub"><span>Player dues</span><span>Fundraising</span><span class="on">Ledger</span><span>Club</span></div>
+          <span class="lead" style="align-self:flex-start"><i>View</i><b>Bank</b></span>
+          <div><div class="bl" style="margin-bottom:3px">Team account · checking</div><div style="font:700 16px/1.25 Inter">Statement ending Sep 30, 2026</div></div>
+          <div class="stick" style="display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);font-size:13px"><span class="bl">Difference</span><b style="font-size:15px;font-variant-numeric:tabular-nums">$407.40</b><span class="faint">· 6 of 8 ticked</span></div><div class="band t3">
+            <div class="tile"><span class="bl">Statement</span><span class="bf">$2,504.20</span></div>
+            <div class="tile"><span class="bl">Ticked</span><span class="bf">$2,096.80</span><span class="bc">6 of 8 lines</span></div>
+            <div class="tile"><span class="bl">Difference</span><span class="bf">$407.40</span><span class="bc">$407.40 under</span></div></div>
+          <p class="bnote newbox" style="padding:6px 8px">Kept out of the bank: 2 lines · $120.00 in · $120.00 out · <span class="lk" style="font-size:12px">Show</span></p>
+          <div class="pl">
+            <div class="pr ticked"><span class="cbw"><i class="cb on"></i></span><div class="g"><div class="t">Sponsor · Lakeside Dental</div><div class="s">Sep 15 · Sponsorship</div></div><div class="a cin">+$250.00</div></div>
+            <div class="pr ticked"><span class="cbw"><i class="cb on"></i></span><div class="g"><div class="t">Jerseys · Diamond Sports</div><div class="s">Sep 18 · Team Gear · debit</div></div><div class="a">−$683.20</div></div>
+            <div class="pr"><span class="cbw"><i class="cb"></i></span><div class="g"><div class="t">Bottle drive</div><div class="s">Sep 21 · Fundraising</div><span class="nb">Didn’t go through the bank</span></div><div class="a cin">+$412.35</div></div>
+            <div class="pr"><span class="cbw"><i class="cb"></i></span><div class="g"><div class="t">Cheque #032 · Hotel deposit</div><div class="s">Sep 28 · Travel · cheque</div></div><div class="a">−$500.00</div></div>
+          </div>
+        </div>
+        <div class="dock"><div style="display:flex;gap:8px"><span class="b t44" style="flex:1">Finish later</span><span class="b lime t44 dis" style="flex:1.6">Mark checked</span></div><span class="hint" style="text-align:right">The difference must be $0.00 first.</span></div>
+        <div class="nav"><span>Overview</span><span>Schedule</span><span>Practices</span><span>Roster</span><span>More</span></div>
+      </div></div></div>
+    <div class="side"><div class="read one">
+      <div class="w"><h4>What it answers</h4><p>“Why can’t my team ever balance?” Officials paid in cash out of cash dues never touch the account. One tap per line takes them out, and the total stays on screen so nothing goes missing quietly.</p></div>
+      <div class="g"><h4>Watch on the phone</h4><p>The strip, the dock and the coach’s bottom bar stack to about 190px of fixed chrome, which leaves room for about seven tick rows on a 390 × 844 phone. Pinning the whole band would leave four. Ask 5 weighs it.</p></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ================= 4 · OFF BY AN AMOUNT ================= -->
+<section class="pane" id="p4" hidden>
+  <h2>“It’s $12.40 off. Now what?” (C3, K3)</h2>
+  <p class="muted">B5: a statement is marked checked only at <b>$0.00</b>. Beside a difference sit three helpers: <b>Add a bank fee or interest</b> (writes a real line), <b>Find by amount</b> (the Payouts tab’s search box, pointed at this list), and <b>Finish later</b> (the ticks are kept). The helpers show only once every line the treasurer means to tick is ticked. Until then, a difference is just work in progress.</p>
+
+  <h3>C3 · Club: everything ticked, still $12.40 off</h3>
+  <div class="cap"><b>Proposed</b> · the top of the Bank tab, at the list’s true width (sidebar and tab row as in tab 3) <button class="mk new" data-note="NEW: the helpers. They appear as one amber callout under the band, once the Difference is not $0.00 and the treasurer has stopped ticking (every line is either ticked or left for next month). The callout says which way the money is off in words, never with a minus sign a volunteer has to interpret.">NEW</button></div>
+  <div class="fr" style="width:1136px"><div class="ak" style="padding:16px;display:flex;flex-direction:column;gap:14px">
+    <div class="tb"><div><div class="bl" style="margin-bottom:3px">Club chequing · checking</div><div style="font:700 16px/1.25 Inter">Statement ending Oct 31, 2026</div></div><span class="sp"></span><span class="hint">The difference must be $0.00 first.</span><span class="b lime dis">Mark this statement checked</span></div>
+    <div class="band t3">
+      <div class="tile"><span class="bl">Statement</span><span class="bf">$8,400.50</span><span class="bc">Ending balance on Oct 31, 2026</span></div>
+      <div class="tile"><span class="bl">Ticked</span><span class="bf">$8,412.90</span><span class="bc">From $6,120.45 · 23 of 24 lines ticked</span></div>
+      <div class="tile"><span class="bl">Difference</span><span class="bf warn">$12.40</span><span class="bc">You’ve ticked $12.40 more than the statement shows</span></div>
+    </div>
+    <div class="call warn newbox"><span class="ico">!</span><div class="grow"><b>The statement shows $12.40 less than you’ve ticked.</b><small>Often it’s a bank fee the books don’t have yet, or a line ticked that the bank hasn’t shown.</small></div>
+      <div class="acts"><span class="b">Add a bank fee or interest</span><span class="b">Find by amount</span><span class="b ghost">Finish later</span></div></div>
+    <div class="tb"><span class="sf on">12.40<span style="margin-left:auto;padding-left:8px">×</span></span><span class="sp"></span><span class="bnote">Kept out of the bank: 1 line · $120.00 out · <span class="lk" style="font-size:12px">Show</span></span></div>
+    <div class="tf"><table class="rg"><thead><tr><th style="width:34px"></th><th>Date</th><th>What</th><th>Book</th><th class="r">Money out</th><th class="r">Money in</th></tr></thead><tbody>
+      <tr class="out"><td colspan="6" style="text-align:center;padding:10px">No lines match.</td></tr></tbody></table></div>
+  </div></div>
+
+  <h3>The bank-fee window, and what happens in a closed fiscal year</h3>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · Add a bank fee or interest <button class="mk new" data-note="NEW: the one-window form (520). It opens with the Difference as the amount and the statement's end date as the date, so a $12.40 fee is two taps. It writes a real line in a club book (B5) and ticks it on this statement. The Book field is Ask 1: B5 ruled 'the General book', and tab 8 shows why that breaks for a gaming account.">NEW</button> <button class="mk askm" data-note="Ask 1. B5 ruled the line goes to the General book. Drawn as the account's own first book, which is General for Club chequing, as a dropdown the treasurer can change. For a Gaming account it would be the Gaming book.">Ask 1</button></div>
+      <div class="fr w520"><div class="ak"><div class="dlg flat">
+        <div class="dh"><div class="tt"><span class="ey">Bank · Club chequing</span><b>Add a bank fee or interest</b></div><span class="x">✕</span></div>
+        <div class="db">
+          <div class="seg same"><span class="on">Bank fee</span><span>Interest</span></div>
+          <div class="g2"><div class="f same"><span class="lbl">Amount <em>*</em></span><div class="in">$12.40</div></div>
+            <div class="f"><span class="lbl">Date <em>*</em></span><div class="in cal">Oct 31, 2026</div></div></div>
+          <div class="f same"><span class="lbl">What</span><div class="in">Monthly account fee</div></div>
+          <div class="f same"><span class="lbl">Book</span><div class="in dd">General</div></div>
+          <div class="samebar">Fee or interest, amount, what, book · the same</div>
+          <p class="hint">Adds a line to the General book and ticks it on this statement.</p>
+        </div>
+        <div class="df"><span class="st"></span><span class="b">Cancel</span><span class="b lime">Add and tick</span></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · the same window, checking a statement from a closed year <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr w520"><div class="ak"><div class="dlg flat">
+        <div class="dh"><div class="tt"><span class="ey">Bank · Club chequing</span><b>Add a bank fee or interest</b></div><span class="x">✕</span></div>
+        <div class="db">
+          <div class="seg same"><span class="on">Bank fee</span><span>Interest</span></div>
+          <div class="g2"><div class="f same"><span class="lbl">Amount <em>*</em></span><div class="in">$12.40</div></div>
+            <div class="f newbox" style="padding:4px"><span class="lbl">Date <em>*</em></span><div class="in cal" style="border-color:var(--red)">Dec 31, 2025</div></div></div>
+          <div class="notice warn newbox">2025 is closed, so nothing can be dated in it. <b>Date it today, Nov 4, 2026?</b> It still ticks on this statement, and the report notes the date. <span class="b" style="min-height:28px;margin-left:6px">Use Nov 4, 2026</span> <button class="mk askm" data-note="Ask 8. A line dated after a statement's end normally waits for the next statement. This one is the exception: the helper's own line ticks on the statement it was added from, whatever its date.">Ask 8</button></div>
+          <div class="f same"><span class="lbl">What</span><div class="in">Monthly account fee</div></div>
+          <div class="f same"><span class="lbl">Book</span><div class="in dd">General</div></div>
+        </div>
+        <div class="df"><span class="st"></span><span class="b">Cancel</span><span class="b lime dis">Add and tick</span></div>
+      </div></div></div></div>
+    <div class="side"><div class="read one">
+      <div class="w"><h4>What it answers</h4><p>“It’s $12.40 off. Now what?” The commonest answer is a fee, so it gets the first button. The window fills itself in from the Difference.</p></div>
+      <div class="c"><h4>The year lock, as B4 ruled</h4><p>The tick is a mark, so a 2025 cheque can be ticked on any statement, closed year or not. The fee is a real line, so the fiscal-year lock refuses a 2025 date, as it does today. The window says so and offers today’s date. The ruling didn’t say which statement that line then ticks on. Ask 8 does.</p></div>
+    </div></div>
+  </div>
+
+  <h3>After the fee: $0.00</h3>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · ready to mark checked <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr" style="width:1136px"><div class="ak" style="padding:16px;display:flex;flex-direction:column;gap:14px">
+        <div class="tb"><div><div class="bl" style="margin-bottom:3px">Club chequing · checking</div><div style="font:700 16px/1.25 Inter">Statement ending Oct 31, 2026</div></div><span class="sp"></span><span class="b">Finish later</span><span class="b lime">Mark this statement checked</span></div>
+        <div class="band t3">
+          <div class="tile"><span class="bl">Statement</span><span class="bf">$8,400.50</span><span class="bc">Ending balance on Oct 31, 2026</span></div>
+          <div class="tile"><span class="bl">Ticked</span><span class="bf">$8,400.50</span><span class="bc">From $6,120.45 · 24 of 25 lines ticked</span></div>
+          <div class="tile"><span class="bl">Difference</span><span class="bf good">$0.00</span><span class="bc">Ready to mark checked · 1 line still outstanding ($450.00)</span></div>
+        </div>
+      </div></div></div>
+  </div>
+
+  <h3>C3 · phone</h3>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · the helpers stack under the band <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="pbar" style="padding-left:16px">Lakeshore Lynx<span style="margin-left:auto" class="m">◍</span></div>
+        <div class="pin">
+          <div class="hub"><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>Allocations</span><span>Payme…</span></div>
+          <div class="band t3">
+            <div class="tile"><span class="bl">Statement</span><span class="bf">$8,400.50</span></div>
+            <div class="tile"><span class="bl">Ticked</span><span class="bf">$8,412.90</span><span class="bc">23 of 24 lines</span></div>
+            <div class="tile"><span class="bl">Difference</span><span class="bf warn">$12.40</span><span class="bc">You’ve ticked $12.40 more than the statement</span></div></div>
+          <div class="call warn" style="flex-direction:column;gap:10px"><div><b>The statement shows $12.40 less than you’ve ticked.</b><small>Often a bank fee the books don’t have yet.</small></div>
+            <span class="b t44 full">Add a bank fee or interest</span><span class="b t44 full">Find by amount</span><span class="b ghost t44 full">Finish later</span></div>
+        </div><div class="nav"><span>Overview</span><span>Calendar</span><span>Rep teams</span><span class="on">Accounting</span><span>More</span></div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · the fee window, full screen on a phone <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="dlg sheet">
+        <div class="dh" style="align-items:center"><span class="bk">←</span><div class="tt"><span class="ey">Bank · Club chequing</span><b>Add a bank fee or interest</b></div></div>
+        <div class="db">
+          <div class="seg"><span class="on">Bank fee</span><span>Interest</span></div>
+          <div class="f"><span class="lbl">Amount <em>*</em></span><div class="in t44">$12.40</div></div>
+          <div class="f"><span class="lbl">Date <em>*</em></span><div class="in t44 cal">Oct 31, 2026</div></div>
+          <div class="f"><span class="lbl">What</span><div class="in t44">Monthly account fee</div></div>
+          <div class="f"><span class="lbl">Book</span><div class="in t44 dd">General</div></div>
+          <p class="hint">Adds a line to the General book and ticks it on this statement.</p>
+        </div>
+        <div class="df"><span class="b" style="flex:1">Cancel</span><span class="b lime" style="flex:1.4">Add and tick</span></div>
+      </div></div></div></div>
+  </div>
+
+  <h3>K3 · Coach: off by $4.95, the fee as a cost record</h3>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · the same window on the coach side <button class="mk new" data-note="NEW on the coach side: the same window, writing a cost record (or an income record for interest) in the team's Ledger, ticked on this statement. A coach's cost needs a category like any other. Ask 2 asks which one.">NEW</button> <button class="mk askm" data-note="Ask 2: the coach's fee needs a category. Drawn as the shipped category dropdown, required, so the fee lands where the coach's budget expects it, or Off-plan if nothing budgets it.">Ask 2</button></div>
+      <div class="fr w520"><div class="ak"><div class="dlg flat">
+        <div class="dh"><div class="tt"><span class="ey">Bank · Team account</span><b>Add a bank fee or interest</b></div><span class="x">✕</span></div>
+        <div class="db">
+          <div class="seg"><span class="on">Bank fee</span><span>Interest</span></div>
+          <div class="g2"><div class="f"><span class="lbl">Amount <em>*</em></span><div class="in">$4.95</div></div><div class="f"><span class="lbl">Date <em>*</em></span><div class="in cal">Sep 30, 2026</div></div></div>
+          <div class="f"><span class="lbl">What</span><div class="in">Monthly account fee</div></div>
+          <div class="f newbox" style="padding:4px"><span class="lbl">Category <em>*</em></span><div class="in dd ph">Choose a category</div><p class="hint">Nothing in your budget is called “Bank fees”. Pick one, or the fee shows as off-plan in Budget vs. Actual.</p></div>
+          <p class="hint">Adds a cost to the team’s Ledger and ticks it on this statement.</p>
+        </div>
+        <div class="df"><span class="st"></span><span class="b">Cancel</span><span class="b lime">Add and tick</span></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · K3 · phone, the band and helpers <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="pbar"><span class="m">←</span>Money</div>
+        <div class="pin">
+          <span class="lead" style="align-self:flex-start"><i>View</i><b>Bank</b></span>
+          <div class="band t3">
+            <div class="tile"><span class="bl">Statement</span><span class="bf">$2,504.20</span></div>
+            <div class="tile"><span class="bl">Ticked</span><span class="bf">$2,509.15</span><span class="bc">7 of 8 lines</span></div>
+            <div class="tile"><span class="bl">Difference</span><span class="bf warn">$4.95</span><span class="bc">You’ve ticked $4.95 more than the statement</span></div></div>
+          <div class="call warn" style="flex-direction:column;gap:10px"><div><b>The statement shows $4.95 less than you’ve ticked.</b><small>Often a bank fee the Ledger doesn’t have yet.</small></div>
+            <span class="b t44 full">Add a bank fee or interest</span><span class="b t44 full">Find by amount</span><span class="b ghost t44 full">Finish later</span></div>
+        </div>
+        <div class="nav"><span>Overview</span><span>Schedule</span><span>Practices</span><span>Roster</span><span>More</span></div>
+      </div></div></div>
+    <div class="side"><div class="read one">
+      <div class="c"><h4>The coach’s figures</h4><p>Every line is ticked except cheque #032 ($500.00, still outstanding). The bottle drive was ticked. Ticked is $2,509.15 against a statement of $2,504.20. Adding the $4.95 fee brings it to $0.00.</p></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ================= 5 · CHECKED STATEMENTS ================= -->
+<section class="pane" id="p5" hidden>
+  <h2>“What have I checked?” (C4, K4)</h2>
+  <p class="muted">B4: checking <b>records, and locks nothing</b>. Only the latest checked statement can be undone, by anyone who may check, with a reason, recorded with who and when (like the fiscal-year reopen). B7: every check shows who checked it and when. There is no second approver.</p>
+
+  <h3>C4 · Club: the Bank tab once a statement is checked · desktop</h3>
+  <div class="cap"><b>Proposed</b> · after Oct 31, 2026 is marked checked <button class="mk new" data-note="NEW: the Bank tab at rest. One line says how far the account is checked, then the list of checked statements, newest first, ending with the starting point from the first visit. Each row opens its check, read-only. Undo appears on the latest row only.">NEW</button> <button class="mk askm" data-note="Ask 9: undoing reopens the statement with its ticks kept (drawn), or clears them.">Ask 9</button></div>
+  <div class="fx"><div class="fr w1440"><div class="ak"><div class="top"><b>FieldLogicHQ</b><span>Admin area</span></div><div class="shell">
+    <nav class="sb"><span class="it">Overview</span><span class="it">Calendar</span><span class="it">Schedules</span><div class="grp">Programs</div><span class="it">Rep teams ›</span><span class="it">House league ›</span><span class="it on">Accounting <span class="cnt" style="margin-left:auto">9</span></span><span class="it">Families</span><span class="it">Public site</span><span class="it">Tournaments</span><div class="grp">Organization</div><span class="it">Organization ›</span></nav>
+    <div class="main"><div class="orghd"><b>Lakeshore Lynx</b><span class="sp"></span><span class="b" style="border-radius:999px;min-height:30px">Public site</span></div><div class="pg">
+      <div class="ph"><h1>Accounting</h1></div>
+      <div class="hub"><span>Overview</span><span>Budget</span><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>Allocations</span><span>Payment requests</span><span>Budget vs. Actual</span><span>Payouts</span></div>
+      <div class="tb"><div class="line1"><span class="chip good">Checked</span><span><b>Club chequing</b> is checked through <b>Oct 31, 2026</b> · by Priya Shah, Nov 3, 2026</span></div><span class="sp"></span><span class="b lime">Check a statement</span></div>
+      <div class="tf"><table class="rg roomy"><thead><tr><th>Statement ends</th><th class="r">Ending balance</th><th class="r">Lines ticked</th><th>Still outstanding</th><th>Checked</th><th></th></tr></thead><tbody>
+        <tr><td><b>Oct 31, 2026</b></td><td class="r">$8,400.50</td><td class="r">24</td><td>1 line · $450.00</td><td>Priya Shah · Nov 3, 2026, 8:14 p.m.</td><td class="r"><span class="lk">Report</span> &nbsp; <span class="b" style="min-height:28px">Undo</span></td></tr>
+        <tr><td><b>Sep 30, 2026</b></td><td class="r">$6,120.45</td><td class="r">31</td><td class="faint">None</td><td>Priya Shah · Oct 4, 2026, 7:40 p.m.</td><td class="r"><span class="lk">Report</span></td></tr>
+        <tr class="bal"><td>Started Aug 31, 2026</td><td class="r">$5,402.10</td><td class="r"></td><td>1 line · $240.00</td><td style="font-weight:500">Priya Shah · Sep 2, 2026</td><td></td></tr>
+      </tbody></table></div>
+      <p class="hint">A row opens its check, read-only. Undo is on the latest check only.</p>
+    </div></div></div></div></div></div>
+
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · undo the latest check <button class="mk new" data-note="NEW: a question window (416). The reason is required. The fiscal-year reopen asks for one the same way. Who undid it, when and why stay on the row afterwards.">NEW</button></div>
+      <div class="fr w416"><div class="ak"><div class="dlg q flat">
+        <div class="dh"><div class="tt"><span class="ey">Bank · Club chequing</span><b>Undo the check of the Oct 31, 2026 statement?</b></div></div>
+        <div class="db">
+          <p>It opens again with its ticks, so you can fix it and mark it checked again. Only the latest check can be undone.</p>
+          <div class="f"><span class="lbl">Why? <em>*</em></span><div class="in focus">Typed the ending balance wrong</div></div>
+          <p class="hint">Recorded with your name and the time.</p>
+        </div>
+        <div class="df"><span class="st"></span><span class="b">Keep it checked</span><span class="b">Undo the check</span></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · the list after the undo <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr" style="width:760px"><div class="ak" style="padding:16px"><div class="tf"><table class="rg roomy"><thead><tr><th>Statement ends</th><th class="r">Ending balance</th><th>Checked</th><th></th></tr></thead><tbody>
+        <tr><td><b>Oct 31, 2026</b> <span class="chip info">Checking</span></td><td class="r">$8,400.50</td><td><span class="faint">Undone by Priya Shah, Nov 4, 2026, 9:02 a.m.: “Typed the ending balance wrong”</span></td><td class="r"><span class="b" style="min-height:28px">Continue</span></td></tr>
+        <tr><td><b>Sep 30, 2026</b></td><td class="r">$6,120.45</td><td>Priya Shah · Oct 4, 2026, 7:40 p.m.</td><td class="r"><span class="lk">Report</span> &nbsp; <span class="b" style="min-height:28px">Undo</span></td></tr>
+      </tbody></table></div></div></div>
+      <p class="hint" style="max-width:760px;color:var(--muted);font-size:13px;margin-top:8px">Sep 30, 2026 is now the latest checked statement, so it gains the Undo. That follows from “latest only”: a treasurer can step back one check at a time. Ask 9 asks whether that is intended.</p></div>
+  </div>
+
+  <h3>C4 · phone</h3>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · the checked list as cards <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="pbar" style="padding-left:16px">Lakeshore Lynx<span style="margin-left:auto" class="m">◍</span></div>
+        <div class="pin">
+          <div class="hub"><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>Allocations</span><span>Payme…</span></div>
+          <div class="line1"><span class="chip good">Checked</span><span><b>Club chequing</b> through <b>Oct 31, 2026</b></span></div>
+          <span class="b lime full">Check a statement</span>
+          <div class="pl">
+            <div class="pr"><div class="g"><div class="t">Oct 31, 2026 · $8,400.50</div><div class="s">24 lines · 1 outstanding ($450.00)<br>Priya Shah · Nov 3, 2026</div></div><span class="faint" style="font-size:18px">›</span></div>
+            <div class="pr"><div class="g"><div class="t">Sep 30, 2026 · $6,120.45</div><div class="s">31 lines · nothing outstanding<br>Priya Shah · Oct 4, 2026</div></div><span class="faint" style="font-size:18px">›</span></div>
+            <div class="phd">Started Aug 31, 2026 · $5,402.10</div>
+          </div>
+          <p class="hint">Report and Undo are inside each check, at its foot.</p>
+        </div><div class="nav"><span>Overview</span><span>Calendar</span><span>Rep teams</span><span class="on">Accounting</span><span>More</span></div></div></div></div>
+    <div class="side"><div class="read one">
+      <div class="w"><h4>What it answers</h4><p>“What have I checked?” and “who did it?” Undo needs a reason, so a mistaken undo is visible to everyone who reads Accounting (B7).</p></div>
+    </div></div>
+  </div>
+
+  <h3>K4 · Coach: this season’s checks</h3>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · Ledger → View: Bank, at rest · desktop content width <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr" style="width:1136px"><div class="ak" style="padding:16px;display:flex;flex-direction:column;gap:14px">
+        <div class="tb"><span class="lead"><i>View</i><b>Bank</b></span><span class="sp"></span><span class="b lime">Check a statement</span></div>
+        <div class="line1 newbox" style="padding:4px 6px"><span class="chip good">Checked</span><span><b>Team account</b> last checked through <b>Oct 31, 2026</b> · by Sam Ortiz, Nov 3, 2026</span></div>
+        <div class="tf"><table class="rg roomy"><thead><tr><th>Statement ends</th><th class="r">Ending balance</th><th class="r">Lines ticked</th><th>Still outstanding</th><th>Kept out of the bank</th><th>Checked</th><th></th></tr></thead><tbody>
+          <tr><td><b>Oct 31, 2026</b></td><td class="r">$2,318.70</td><td class="r">12</td><td class="faint">None</td><td>1 line · $85.00</td><td>Sam Ortiz · Nov 3, 2026, 8:50 p.m.</td><td class="r"><span class="lk">Report</span> &nbsp; <span class="b" style="min-height:28px">Undo</span></td></tr>
+          <tr><td><b>Sep 30, 2026</b></td><td class="r">$2,504.20</td><td class="r">8</td><td>1 line · $500.00</td><td>2 lines · $120.00 in, $120.00 out</td><td>Sam Ortiz · Oct 6, 2026, 9:30 p.m.</td><td class="r"><span class="lk">Report</span></td></tr>
+          <tr class="bal"><td>Started Sep 1, 2026</td><td class="r">$1,180.00</td><td></td><td>None</td><td></td><td style="font-weight:500">Sam Ortiz · Oct 5, 2026</td><td></td></tr>
+        </tbody></table></div>
+        <p class="hint">This season’s checks. Earlier seasons’ checks stay with those seasons and aren’t shown here (B10).</p>
+      </div></div></div>
+    <div><div class="cap"><b>Proposed</b> · K4 · phone <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="pbar"><span class="m">←</span>Money</div>
+        <div class="pin">
+          <span class="lead" style="align-self:flex-start"><i>View</i><b>Bank</b></span>
+          <div class="line1"><span class="chip good">Checked</span><span><b>Team account</b> through <b>Oct 31, 2026</b></span></div>
+          <span class="b lime full">Check a statement</span>
+          <div class="pl">
+            <div class="pr"><div class="g"><div class="t">Oct 31, 2026 · $2,318.70</div><div class="s">12 lines · nothing outstanding<br>Sam Ortiz · Nov 3, 2026</div></div><span class="faint" style="font-size:18px">›</span></div>
+            <div class="pr"><div class="g"><div class="t">Sep 30, 2026 · $2,504.20</div><div class="s">8 lines · 1 outstanding ($500.00)<br>Sam Ortiz · Oct 6, 2026</div></div><span class="faint" style="font-size:18px">›</span></div>
+            <div class="phd">Started Sep 1, 2026 · $1,180.00</div>
+          </div>
+        </div>
+        <div class="nav"><span>Overview</span><span>Schedule</span><span>Practices</span><span>Roster</span><span>More</span></div>
+      </div></div></div>
+  </div>
+</section>
+
+<!-- ================= 6 · A TICKED LINE CHANGES ================= -->
+<section class="pane" id="p6" hidden>
+  <h2>“Am I about to break a check?” and “someone changed a line I’d checked” (C6, C5, K5)</h2>
+  <p class="muted">B4: nothing locks. Changing the <b>amount or date</b> of a ticked line, or voiding (club) or deleting (coach) it, warns first. Afterwards the check shows <b>“Changed since it was checked”</b> with the line until it is re-checked. Renaming a line or changing its category never touches a check. A new line back-dated into a checked month is simply outstanding on the next check.</p>
+
+  <h3>C6 · Club: the Ledger’s line window, for a ticked line</h3>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="cap"><b>Restyled</b> · the shipped edit window (it autosaves) gains one warning line at the top <button class="mk res" data-note="RESTYLED: the Ledger's shipped edit window (medium, autosaving, 'Void this line' at the foot's start, 'Done' at its end) is unchanged except for the amber callout at the top. The window autosaves, so there is no Save button to stop at. The warning must already be showing when the window opens, before the first keystroke. That is what 'a warning before editing' becomes here.">RESTYLED</button> <button class="mk askm" data-note="Ask 10: whether the warning is this line at the top of the window (drawn), or the window opens read-only with a 'Change it anyway' step.">Ask 10</button></div>
+  <div class="pair">
+    <div><div class="fr w640"><div class="ak"><div class="dlg med flat">
+      <div class="dh"><div class="tt"><span class="ey">Lakeshore Lynx — General · Oct 18</span><b>Concession supplies</b></div><span class="x">✕</span></div>
+      <div class="db">
+        <div class="call warn newbox"><span class="ico">!</span><div class="grow"><b>This line was matched to the statement ending Oct 31, 2026.</b><small>Changing its amount or date, or voiding it, shows that check as changed. Its name, category and note are safe to change.</small></div></div>
+        <div class="g2 same"><div class="f"><span class="lbl">Money <em>*</em></span><div class="in dd">Out — the club paid</div></div><div class="f"><span class="lbl">Date <em>*</em></span><div class="in cal">Oct 18, 2026</div></div></div>
+        <div class="f same"><span class="lbl">What <em>*</em></span><div class="in">Concession supplies</div></div>
+        <div class="f same"><span class="lbl">Amount <em>*</em></span><div class="in">143.88</div></div>
+        <div class="f same"><span class="lbl">Filed under <em>*</em></span><div class="in dd">Concession · Food and drink</div><p class="hint">On the 2026–27 plan · $1,200.00 planned.</p></div>
+        <div class="f same"><span class="lbl">Paid to</span><div class="in">Costco<span style="margin-left:auto" class="faint">×</span></div></div>
+        <div class="g2 same"><div class="f"><span class="lbl">How it was paid</span><div class="in dd">Card</div></div><div class="f"><span class="lbl">Reference</span><div class="in ph"></div></div></div>
+        <div class="f same"><span class="lbl">Status</span><div class="in dd">Posted</div></div>
+        <div class="f same"><span class="lbl">Notes</span><div class="in ph" style="min-height:56px"></div></div>
+        <div class="samebar">Every field as shipped · unchanged</div>
+      </div>
+      <div class="df"><span class="st"><span class="b">Void this line</span><span>Recorded by Priya Shah, Oct 19. Changes save as you type.</span></span><span class="b">Done</span></div>
+    </div></div></div></div>
+    <div><div class="cap"><b>Restyled</b> · voiding it: the matched sentence joins the shipped question</div>
+      <div class="fr w416"><div class="ak"><div class="dlg q flat">
+        <div class="dh"><div class="tt"><b>Void this line?</b></div></div>
+        <div class="db"><p>$143.88 out · Concession supplies. It stays on Lakeshore Lynx — General, marked void, with your reason, and counts nowhere.</p>
+          <p class="newbox" style="padding:4px 6px;color:var(--amber-ink)">It was matched to the statement ending Oct 31, 2026. That check will show as changed.</p>
+          <div class="f"><span class="lbl">Why are you voiding it? <em>*</em></span><div class="in ph" style="min-height:64px;align-items:flex-start;padding-top:8px">For example: entered twice</div><p class="hint">Your reason and your name print under the line.</p></div></div>
+        <div class="df"><span class="st"></span><span class="b">Keep it</span><span class="b">Void the line</span></div>
+      </div></div></div>
+      <p class="hint" style="max-width:416px;color:var(--muted);font-size:13px;margin-top:8px">Today’s void question, word for word, with one sentence added.</p></div>
+    <div><div class="cap"><b>Restyled</b> · C6 · phone (the window is full screen)</div>
+      <div class="fr w390"><div class="ak"><div class="dlg sheet" style="min-height:640px">
+        <div class="dh" style="align-items:center"><span class="bk">←</span><div class="tt"><span class="ey">Lakeshore Lynx — General · Oct 18</span><b>Concession supplies</b></div></div>
+        <div class="db">
+          <div class="call warn"><span class="ico">!</span><div class="grow"><b>Matched to the statement ending Oct 31, 2026.</b><small>Changing its amount or date, or voiding it, shows that check as changed.</small></div></div>
+          <div class="f"><span class="lbl">Money <em>*</em></span><div class="in t44 dd">Out — the club paid</div></div>
+          <div class="f"><span class="lbl">Date <em>*</em></span><div class="in t44 cal">Oct 18, 2026</div></div>
+          <div class="f"><span class="lbl">What <em>*</em></span><div class="in t44">Concession supplies</div></div>
+          <div class="f"><span class="lbl">Amount <em>*</em></span><div class="in t44">143.88</div></div>
+        </div>
+        <div class="df"><span class="b" style="flex:1">Void this line</span><span class="b" style="flex:1">Done</span></div>
+      </div></div></div></div>
+  </div>
+
+  <h3>C5 · Club: the check, after the line was changed</h3>
+  <div class="cap"><b>Proposed</b> · Dana Kim changed the amount on Nov 4 <button class="mk new" data-note="NEW: the 'changed since' state. An amber chip on the account line and on the statement's row. The row opens to show the line as it was checked and as it is now, who changed it and when. The Accounting Overview's bank line goes amber too (tab 7). Nothing else in the product changes colour.">NEW</button> <button class="mk askm" data-note="Ask 11: what 're-check' means. Drawn: 'Look again' reopens the statement read-only with today's figures. If the difference is back to $0.00, 'Mark checked again' clears the amber, recorded with who and when. If it isn't, the amber stays until the line is put right, or the check is undone (latest only).">Ask 11</button></div>
+  <div class="fr" style="width:1136px"><div class="ak" style="padding:16px;display:flex;flex-direction:column;gap:14px">
+    <div class="tb"><div class="line1"><span class="chip warn">Changed since it was checked</span><span><b>Club chequing</b> was checked through <b>Oct 31, 2026</b> · 1 line has changed since</span></div><span class="sp"></span><span class="b lime">Check a statement</span></div>
+    <div class="tf"><table class="rg roomy"><thead><tr><th>Statement ends</th><th class="r">Ending balance</th><th class="r">Lines ticked</th><th>Still outstanding</th><th>Checked</th><th></th></tr></thead><tbody>
+      <tr class="newbox"><td><b>Oct 31, 2026</b> <span class="chip warn">Changed since it was checked</span></td><td class="r">$8,400.50</td><td class="r">24</td><td>1 line · $450.00</td><td>Priya Shah · Nov 3, 2026</td><td class="r"><span class="b" style="min-height:28px">Look again</span> &nbsp; <span class="b" style="min-height:28px">Undo</span></td></tr>
+      <tr class="sub"><td colspan="6" style="padding-left:24px">
+        <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap"><span><b>Concession supplies</b> · Oct 18 · General</span><span>$143.88 when checked</span><span style="font-weight:650">$148.38 now</span><span class="faint">Changed by Dana Kim, Nov 4, 2026, 10:21 a.m.</span></div></td></tr>
+      <tr><td><b>Sep 30, 2026</b></td><td class="r">$6,120.45</td><td class="r">31</td><td class="faint">None</td><td>Priya Shah · Oct 4, 2026, 7:40 p.m.</td><td class="r"><span class="lk">Report</span></td></tr>
+    </tbody></table></div>
+  </div></div>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · “Look again”: the checked statement with today’s figures <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr" style="width:760px"><div class="ak" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+        <div class="band t3">
+          <div class="tile"><span class="bl">Statement</span><span class="bf">$8,400.50</span><span class="bc">Oct 31, 2026</span></div>
+          <div class="tile"><span class="bl">Ticked now</span><span class="bf">$8,396.00</span><span class="bc">$8,400.50 when checked</span></div>
+          <div class="tile"><span class="bl">Difference</span><span class="bf warn">$4.50</span><span class="bc">Since Concession supplies changed</span></div></div>
+        <div class="call warn"><span class="ico">!</span><div class="grow"><b>Concession supplies went from $143.88 to $148.38.</b><small>The bank paid $143.88. Put the line back, or if the bank was wrong, undo this check and fix the statement.</small></div><div class="acts"><span class="b">Open the line</span></div></div>
+        <div class="tb"><span class="sp"></span><span class="b ghost">Close</span><span class="b lime dis">Mark checked again</span></div>
+      </div></div></div>
+    <div class="side"><div class="read one">
+      <div class="w"><h4>What it answers</h4><p>“Someone changed a line I’d checked.” The treasurer sees which line, from what to what, and who changed it, without searching. The check isn’t broken or locked. It stays amber until it adds up again.</p></div>
+      <div class="c"><h4>Back-dated lines</h4><p>A line added on Nov 5 but dated Oct 20 doesn’t turn October amber. It appears as an unticked line on the next statement, which is what it is (B4).</p></div>
+    </div></div>
+  </div>
+
+  <h3>K5 · Coach: a ticked record’s edit and delete</h3>
+  <div class="pair">
+    <div><div class="cap"><b>Restyled</b> · the shipped “Edit income” window, on a ticked record <button class="mk res" data-note="RESTYLED: the shipped window, field for field. Only the amber callout at the top is new.">RESTYLED</button></div>
+      <div class="fr w520"><div class="ak"><div class="dlg flat">
+        <div class="dh"><div class="tt"><b>Edit income</b></div><span class="x">✕</span></div>
+        <div class="db">
+          <div class="call warn newbox" data-note="NEW: the matched-line warning, at the top of the shipped Edit income window. That window saves on Save, so the warning could also wait for Save. Showing it first keeps both portals the same."><span class="ico">!</span><div class="grow"><b>This was matched to the statement ending Sep 30, 2026.</b><small>Changing its amount or date, or deleting it, shows that check as changed. You can still do it.</small></div></div>
+          <p class="same" style="font-size:13px">Income — money the team earned or was given. Wrong kind? Delete this and add it again.</p>
+          <div class="f same"><span class="lbl">What is this? <em>*</em></span><div class="in dd">Sponsorship</div></div>
+          <div class="f same"><span class="lbl">Description</span><div class="in">Lakeside Dental</div></div>
+          <div class="g2 same"><div class="f"><span class="lbl">Amount <em>*</em></span><div class="in">250.00</div></div><div class="f"><span class="lbl">Date received <em>*</em></span><div class="in cal">Sep 15, 2026</div></div></div>
+          <div class="f same"><span class="lbl">Notes</span><div class="in ph" style="min-height:48px"></div></div>
+          <div class="same"><span class="rchip">Cash on hand ▲ $250.00</span></div>
+          <div class="samebar">Every field as shipped · unchanged</div>
+          
+        </div>
+        <div class="df"><span class="st"><span style="color:var(--red);font:650 14px/1 Inter">🗑 Delete</span></span><span class="b ghost">Cancel</span><span class="b lime">Save</span></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>Restyled</b> · Delete opens the shipped inline confirm, with one sentence added <button class="mk res" data-note="RESTYLED: today's delete confirm sits inside the window, red-tinted, with Keep it and Delete. It gains the matched sentence and nothing else.">RESTYLED</button></div>
+      <div class="fr w520"><div class="ak"><div class="dlg flat">
+        <div class="dh"><div class="tt"><b>Edit income</b></div><span class="x">✕</span></div>
+        <div class="db">
+          <div class="call warn newbox" data-note="NEW: the matched-line warning, at the top of the shipped Edit income window. That window saves on Save, so the warning could also wait for Save. Showing it first keeps both portals the same."><span class="ico">!</span><div class="grow"><b>This was matched to the statement ending Sep 30, 2026.</b><small>Changing its amount or date, or deleting it, shows that check as changed. You can still do it.</small></div></div>
+          <p class="same" style="font-size:13px">Income — money the team earned or was given. Wrong kind? Delete this and add it again.</p>
+          <div class="f same"><span class="lbl">What is this? <em>*</em></span><div class="in dd">Sponsorship</div></div>
+          <div class="f same"><span class="lbl">Description</span><div class="in">Lakeside Dental</div></div>
+          <div class="g2 same"><div class="f"><span class="lbl">Amount <em>*</em></span><div class="in">250.00</div></div><div class="f"><span class="lbl">Date received <em>*</em></span><div class="in cal">Sep 15, 2026</div></div></div>
+          <div class="f same"><span class="lbl">Notes</span><div class="in ph" style="min-height:48px"></div></div>
+          <div class="same"><span class="rchip">Cash on hand ▲ $250.00</span></div>
+          <div class="samebar">Every field as shipped · unchanged</div>
+          <div style="border:1px solid rgba(176,58,34,.3);background:rgba(176,58,34,.06);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px"><b style="color:var(--ink)">Delete this income entry?</b><span class="same" style="font-size:13px">Nobody’s dues change either way.</span><span class="newbox" style="font-size:13px;color:var(--amber-ink);padding:2px 4px" data-note="NEW: one sentence added to the shipped inline delete confirm.">It was matched to the statement ending Sep 30, 2026. That check will show as changed.</span><div style="display:flex;gap:8px;justify-content:flex-end"><span class="b">Keep it</span><span class="b" style="color:var(--red);border-color:rgba(176,58,34,.35)">Delete</span></div></div>
+        </div>
+        <div class="df"><span class="st"><span style="color:var(--red);font:650 14px/1 Inter">🗑 Delete</span></span><span class="b ghost">Cancel</span><span class="b lime">Save</span></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>Restyled</b> · K5 · phone: the same window full screen, the confirm inline <button class="mk res" data-note="RESTYLED: on a phone the form window is full screen (shipped). The inline confirm keeps its place at the foot of the body.">RESTYLED</button></div>
+      <div class="fr w390"><div class="ak"><div class="dlg sheet" style="min-height:520px">
+        <div class="dh" style="align-items:center"><span class="bk">←</span><div class="tt"><b>Edit income</b></div></div>
+        <div class="db">
+          <div class="call warn"><span class="ico">!</span><div class="grow"><b>Matched to the statement ending Sep 30, 2026.</b><small>Changing its amount or date, or deleting it, shows that check as changed.</small></div></div>
+          <div class="f"><span class="lbl">Amount <em>*</em></span><div class="in t44">250.00</div></div>
+          <div style="border:1px solid rgba(176,58,34,.3);background:rgba(176,58,34,.06);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px"><b style="color:var(--ink)">Delete this income entry?</b><span style="font-size:13px;color:var(--amber-ink)">It was matched to the statement ending Sep 30, 2026. That check will show as changed.</span><div style="display:flex;gap:8px"><span class="b t44" style="flex:1">Keep it</span><span class="b t44" style="flex:1;color:var(--red);border-color:rgba(176,58,34,.35)">Delete</span></div></div>
+        </div>
+      </div></div></div>
+  </div>
+  <p class="muted" style="font-size:13px">Drawn from the shipped “Edit income” window (it saves on Save, not as you type). A bill’s paid installment carries the same warning on its Change and Remove. Records another tab wrote (dues, fundraising) open their read window, which names where to change them. The warning then goes on that tab’s edit, since that is where the change happens.</p>
+</section>
+
+<!-- ================= 7 · WHERE THE MARK SHOWS ================= -->
+<section class="pane" id="p7" hidden>
+  <h2>Where the mark shows, and across a season (C7, C8, K6, K7)</h2>
+  <p class="muted">B9: <b>one line</b> on each Overview, amber only when the latest check has changed since. Each linked team’s date appears on the club’s Teams tab. A warning line goes in the fiscal-year close and in the coach’s Close the season and Start next season. <b>Nothing</b> appears on Budget vs. Actual, the exports, or the closed-season page. B10: the account belongs to the team, and the next check, even in a new season, shows “Still outstanding from your last check”. Tab 1 shows the Overview line in place on the whole screen.</p>
+
+  <h3>C7 / K7 · The Overview line, in its three states</h3>
+  <p class="muted">Placed where it adds no height. On the club Overview, it sits on the right of the existing “Where the club stands · today” line, above the band. On the coach’s Money Overview, it sits in the empty space at the foot of the Cash on hand card, above “Ledger →”. Tab 1 shows both on the whole screen.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · club Overview, the top of the page at content width <button class="mk new" data-note="NEW: one line on the right of the shipped 'Where the club stands · today' eyebrow. It needs no new row. It links to the Bank tab and never shows a figure: the band already holds the money, and a second balance there would read as a competing number.">NEW</button></div>
+      <div class="fr" style="width:1136px"><div class="ak" style="padding:16px;display:flex;flex-direction:column;gap:10px">
+        <div class="tb same"><span class="lead"><i>Fiscal year</i><b>2026–27</b></span><span class="sp"></span><span class="b">Export</span></div>
+        <div class="tb"><span style="font:700 11.5px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--soft)">Where the club stands · today, Nov 4</span><span class="sp"></span>
+          <span class="line1 newbox" style="font-size:13px;padding:2px 6px">Bank: <b>Club chequing</b> checked through <b>Oct 31, 2026</b> <span class="faint">›</span></span></div>
+        <div class="tb" style="justify-content:flex-end"><span class="line1 newbox" style="font-size:13px;padding:2px 6px"><span class="chip warn">Changed since it was checked</span> Bank: <b>Club chequing</b> · Oct 31, 2026 <span class="faint">›</span></span></div>
+        <div class="tb" style="justify-content:flex-end"><span class="line1 newbox" style="font-size:13px;padding:2px 6px">Bank: not checked yet <span class="faint">›</span></span></div>
+        <div class="band t3 same"><div class="tile"><span class="bl">Cash on hand</span><span class="bf">$5,987.00</span><span class="bc">the club’s 4 books · a $640.00 cheque not yet cleared</span></div><div class="tile"><span class="bl">Owed by the teams</span><span class="bf">$34,044.00</span><span class="bc">$14,001.00 overdue · $450.00 sent, waiting for you</span></div><div class="tile"><span class="bl">Waiting on you</span><span class="bf warn">$2,238.50</span><span class="bc">9 requests · 5 holding up a payout</span></div></div>
+        <div class="samebar">The fiscal-year pill, Export and the band · unchanged</div>
+        <p class="hint">The second and third lines are the other two states, drawn here only to compare. The page shows one. The figures are the dev club’s, from today’s capture.</p>
+      </div></div></div>
+  </div>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · coach Money Overview, the Cash on hand card <button class="mk new" data-note="NEW: one line in the Cash on hand card's empty foot, above 'Ledger →'. The card is already as tall as its Budget neighbour, so nothing grows. 'Bank' links to Ledger → View: Bank.">NEW</button></div>
+      <div class="fr" style="width:376px"><div class="ak" style="padding:12px">
+        <div class="sect" style="padding:16px;display:flex;flex-direction:column;gap:10px;min-height:290px">
+          <span style="font:700 11.5px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--soft)">Cash on hand</span>
+          <span class="bf" style="color:var(--in)">$2,378.70</span>
+          <div style="display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;font-size:12px"><span class="faint" style="font-family:'IBM Plex Mono',monospace">IN</span><span style="height:8px;border-radius:4px;background:#3F6B2A"></span><b style="color:var(--in)">$5,214.35</b><span class="faint" style="font-family:'IBM Plex Mono',monospace">OUT</span><span style="height:8px;border-radius:4px;background:linear-gradient(90deg,#B6531C 35%,var(--fill) 35%)"></span><b>$4,075.65</b></div>
+          <span style="flex:1"></span>
+          <div style="border-top:1px solid var(--line);padding-top:12px;display:flex;align-items:center;gap:10px"><span class="door">Ledger</span><span class="sp" style="flex:1"></span><span class="line1 newbox" style="font-size:13px;padding:2px 6px">Bank checked through <b>Oct 31, 2026</b> <span class="faint">›</span></span></div>
+        </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · K7 · phone, the same card <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="pbar"><span class="m">←</span>Money</div>
+        <div class="pin">
+          <div class="hub"><span class="on">Overview</span><span>Budget</span><span>Player dues</span><span>Fundra…</span></div>
+          <div class="sect" style="padding:14px;display:flex;flex-direction:column;gap:10px">
+            <span style="font:700 11.5px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--soft)">Cash on hand</span>
+            <span class="bf" style="color:var(--in)">$2,378.70</span>
+            <div style="border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column"><span class="door">Ledger</span><span class="line1 newbox" style="font-size:13px;padding:0 6px;min-height:44px">Bank checked through <b>Oct 31, 2026</b> <span class="faint" style="margin-left:auto">›</span></span></div>
+          </div>
+        </div>
+        <div class="nav"><span>Overview</span><span>Schedule</span><span>Practices</span><span>Roster</span><span>More</span></div>
+      </div></div></div>
+    <div class="side"><div class="read one">
+      <div class="w"><h4>What it answers</h4><p>“Is the bank checked?” A glance at the Overview answers it, without adding a row to either Overview. The line is amber only when a checked line has changed since. “Not checked yet” stays quiet, because most months the answer is only “not yet”.</p></div>
+      <div class="g"><h4>Kept off, as ruled</h4><p>Budget vs. Actual, the Statement, the money exports and the closed-season page show nothing about the bank. A coach’s helper with money <b>read</b> sees the same line, and reads the checks without the buttons (below).</p></div>
+    </div></div>
+  </div>
+
+  <h3>C7 · The fiscal-year close window</h3>
+  <div class="cap"><b>Restyled</b> · one row joins the shipped “Still open” list <button class="mk res" data-note="RESTYLED: the shipped close window (wide) is unchanged except for one row in its 'Still open' list, worded like its neighbours. It shows only when the latest check ends before the year ends, or has changed since. It warns and never blocks; the list already says 'None of these stop the close.'">RESTYLED</button></div>
+  <div class="fr w800"><div class="ak"><div class="dlg wide flat">
+    <div class="dh"><div class="tt"><span class="ey">Accounting · 2026–27</span><b>Close 2026–27?</b></div><span class="x">✕</span></div>
+    <div class="db">
+      <div class="same" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden"><div class="tile"><span class="bl">Locks</span><span style="font-weight:650;color:var(--ink)">4 books, 92 lines, and its plan</span></div><div class="tile"><span class="bl">Closing balance</span><span style="font-weight:650;color:var(--ink)">$7,212.80</span></div><div class="tile"><span class="bl">Carries into</span><span style="font-weight:650;color:var(--ink)">2027–28</span><span class="bc">as its opening balance, locked</span></div></div>
+      <div class="samebar">The year’s path · unchanged</div>
+      <div><span class="ey" style="font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--soft)">Still open</span> <span class="hint" style="display:inline">None of these stop the close.</span></div>
+      <div class="tf">
+        <div class="same" style="display:grid;grid-template-columns:1.5rem 1fr auto 1rem;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)"><span class="cnt">3</span><span>installments owed <span class="faint">· from 2 teams</span></span><span style="font-variant-numeric:tabular-nums">$1,350.00</span><span class="faint">›</span></div>
+        <div class="same" style="display:grid;grid-template-columns:1.5rem 1fr auto 1rem;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)"><span class="cnt">1</span><span>lines not cleared <span class="faint">· counts in 2027–28 when it clears</span></span><span style="font-variant-numeric:tabular-nums">$225.00</span><span class="faint">›</span></div>
+        <div class="newbox" style="display:grid;grid-template-columns:1.5rem 1fr auto 1rem;gap:10px;align-items:center;padding:10px 12px"><span class="cnt">2</span><span>statements not checked <span class="faint">· Club chequing is checked through Jun 30, 2027, two months before 2026–27 ends</span></span><span></span><span class="faint">›</span></div>
+      </div>
+    </div>
+    <div class="df"><span class="st" style="flex:1;min-width:0">Nothing is deleted, and you can reopen it while it is the latest closed year.</span><span class="b">Not yet</span><span class="b lime">Close 2026–27</span></div>
+  </div></div></div>
+  <p class="hint" style="color:var(--muted);font-size:13px;margin-top:8px">Drawn as of Sep 2027, the year after this page’s October example. The count is statements: Jul 31 and Aug 31, 2027 aren’t checked. A club with two accounts gets one row per account. The window can’t be opened on any dev club today (no year has ended and stayed open), so it is drawn from its shipped words, not a capture.</p>
+
+  <h3>C8 · The club’s Teams tab</h3>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · one column, the coach’s own mark, read-only <button class="mk new" data-note="NEW: one column, 'Bank checked', beside the team cash the tab already shows. It is the coach's fact read by the club (D1); there is no second number. A standalone Premium team isn't on this tab, so no club reads it. The amber chip is the team's own 'changed since'.">NEW</button></div>
+      <div class="fr" style="width:1136px"><div class="ak" style="padding:16px;display:flex;flex-direction:column;gap:10px"><div class="tb same"><span class="lead"><i>Fiscal year</i><b>2026–27</b></span><span class="qp">Group</span><span class="sp"></span><span class="b">Export</span></div><div class="tf"><table class="rg roomy"><thead><tr><th>Team</th><th class="r">Allocated</th><th class="r">Collected</th><th class="r">Outstanding</th><th class="r">Requests</th><th class="r">Cash on hand · held by the team</th><th class="newbox">Bank checked</th></tr></thead><tbody>
+        <tr class="grp"><td colspan="7">Junior</td></tr>
+        <tr><td><b>Lynx 10U AA</b></td><td class="r">$3,200.00</td><td class="r">$2,400.00</td><td class="r">$800.00</td><td class="r faint">—</td><td class="r">$640.00</td><td class="faint">Not checked yet</td></tr>
+        <tr><td><b>Lynx 11U A</b></td><td class="r">$2,800.00</td><td class="r">$2,800.00</td><td class="r">$0.00</td><td class="r faint">—</td><td class="r">$0.00</td><td class="faint">Not checked yet</td></tr>
+        <tr><td><b>Lynx 12U AAA</b></td><td class="r">$4,600.00</td><td class="r">$3,450.00</td><td class="r">$1,150.00</td><td class="r">1</td><td class="r">$2,378.70</td><td>Through Oct 31, 2026</td></tr>
+        <tr class="grp"><td colspan="7">Senior</td></tr>
+        <tr><td><b>Lynx 13U AA</b></td><td class="r">$5,100.00</td><td class="r">$5,100.00</td><td class="r">$0.00</td><td class="r faint">—</td><td class="r">$1,410.00</td><td>Through Sep 30, 2026</td></tr>
+        <tr><td><b>Lynx 15U AAA</b></td><td class="r">$6,400.00</td><td class="r">$4,800.00</td><td class="r">$1,600.00</td><td class="r">2</td><td class="r">$3,276.45</td><td>Through Oct 31, 2026 <span class="chip warn">Changed since</span></td></tr>
+        <tr class="bal"><td colspan="7">5 teams</td></tr>
+      </tbody></table></div><p class="hint">Held by the teams: $7,705.15 across 5 teams. The coaches’ own books, never part of the club’s figures.</p></div></div>
+      <p class="hint" style="max-width:1136px;color:var(--muted);font-size:13px;margin-top:8px">The columns, grouping and footnote are today’s Teams tab, from the capture. Only “Bank checked” is new. A row opens the team as it does today.</p></div>
+    <div><div class="cap"><b>Proposed</b> · C8 · phone, the cards gain one line <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="pin">
+        <div class="hub"><span>Budget</span><span class="on">Teams</span><span>Ledger</span><span>Bank</span></div>
+        <div class="pl">
+          <div class="pr"><div class="g"><div class="t">Lynx 12U AAA</div><div class="s">Jordan Reyes · cash held $2,378.70</div><div class="s newbox" style="padding:2px 4px;color:var(--soft)">Bank checked through Oct 31, 2026</div></div><span class="faint" style="font-size:18px">›</span></div>
+          <div class="pr"><div class="g"><div class="t">Lynx 15U AAA</div><div class="s">Chris Ndlovu · cash held $3,276.45</div><div class="s" style="color:var(--soft)">Bank checked through Oct 31, 2026 <span class="chip warn">Changed since</span></div></div><span class="faint" style="font-size:18px">›</span></div>
+        </div></div></div></div></div>
+  </div>
+
+  <h3>K7 · Read-only, for a helper with money read</h3>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · the Bank view, no buttons <button class="mk new" data-note="NEW: money read sees the checks, the mark and each check's report (B7). There is no 'Check a statement' and no Undo, and they are absent rather than greyed. Opening a check shows its ticks without checkboxes.">NEW</button></div>
+      <div class="fr" style="width:960px"><div class="ak" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+        <div class="tb"><span class="lead"><i>View</i><b>Bank</b></span></div>
+        <div class="line1"><span class="chip good">Checked</span><span><b>Team account</b> last checked through <b>Oct 31, 2026</b> · by Sam Ortiz, Nov 3, 2026</span></div>
+        <div class="tf"><table class="rg roomy"><thead><tr><th>Statement ends</th><th class="r">Ending balance</th><th>Still outstanding</th><th>Checked</th><th></th></tr></thead><tbody>
+          <tr><td><b>Oct 31, 2026</b></td><td class="r">$2,318.70</td><td class="faint">None</td><td>Sam Ortiz · Nov 3, 2026, 8:50 p.m.</td><td class="r"><span class="lk">Report</span></td></tr>
+          <tr><td><b>Sep 30, 2026</b></td><td class="r">$2,504.20</td><td>1 line · $500.00</td><td>Sam Ortiz · Oct 6, 2026, 9:30 p.m.</td><td class="r"><span class="lk">Report</span></td></tr></tbody></table></div>
+      </div></div></div>
+  </div>
+
+  <h3>K6 · Across the rollover</h3>
+  <p class="muted">The example moves on a season, and shows two cases. <b>First</b>, the good case: the 2026 Season’s last check was the statement ending Aug 31, 2027, cheque #047 had not cleared, and then the team started the 2027 Season. <b>Then</b>, the two windows, opened on a team that has only checked through Jul 31, 2027.</p>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · the first check of the 2027 Season <button class="mk new" data-note="NEW: the section 'Still outstanding from your last check' (B10). It is read from what the last check saved, never from last season's records, so no year reaches a route. Each line carries the season it came from.">NEW</button></div>
+      <div class="fr" style="width:1136px"><div class="ak" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+        <div><div class="bl" style="margin-bottom:3px">Team account · checking</div><div style="font:700 16px/1.25 Inter">Statement ending Sep 30, 2027</div></div>
+        <div class="band t3 same"><div class="tile"><span class="bl">Statement</span><span class="bf">$905.10</span></div><div class="tile"><span class="bl">Ticked</span><span class="bf">$1,180.10</span><span class="bc">From $1,612.40 · 9 of 11 lines</span></div><div class="tile"><span class="bl">Difference</span><span class="bf">$275.00</span><span class="bc">You’ve ticked $275.00 more than the statement shows</span></div></div>
+        <div class="tf"><table class="rg"><thead><tr><th style="width:34px"></th><th>Date</th><th>What</th><th>Category</th><th class="r">Money out</th><th class="r">Money in</th></tr></thead><tbody>
+          <tr class="grp newbox"><td colspan="6">Still outstanding from your last check (statement ending Aug 31, 2027)</td></tr>
+          <tr><td class="cx"><i class="cb"></i></td><td class="d">Aug 28</td><td>Cheque #047 · Year-end party, Lakeside Lanes <span class="rchip">2026 Season</span></td><td class="bk">Team events</td><td class="r">$275.00</td><td class="r"></td></tr>
+          <tr class="grp"><td colspan="6">This season</td></tr>
+          <tr class="ticked same"><td class="cx"><i class="cb on"></i></td><td class="d">Sep 2</td><td>Dues payment · Chen <span class="det">· E-Transfer</span></td><td class="bk">Player dues</td><td class="r"></td><td class="r cin">$650.00</td></tr>
+          <tr class="ticked same"><td class="cx"><i class="cb on"></i></td><td class="d">Sep 9</td><td>Tournament entry · Ridgeview Fall Open</td><td class="bk">Tournaments</td><td class="r">$475.00</td><td class="r"></td></tr>
+        </tbody></table></div>
+      </div></div></div>
+  </div>
+  <div class="pair">
+    <div><div class="cap"><b>Restyled</b> · Start next season gains an amber block (today it has none) · its fields as shipped, listed not redrawn <button class="mk res" data-note="RESTYLED: today’s window has no warning list. It says settling up happens before this step. The bank block borrows the window’s own tryout-warning recipe (amber, a triangle per line), placed under the consequence panel. It shows only when the latest check ends before the season’s last record.">RESTYLED</button></div>
+      <div class="fr w520"><div class="ak"><div class="dlg flat">
+        <div class="dh"><div class="tt"><b>Start next season</b></div><span class="x">✕</span></div>
+        <div class="db">
+          <div class="same" style="background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:11px 13px"><b style="color:var(--ink);display:block">This closes the 2026 Season.</b><span style="font-size:13px"><b>2026 Season</b> becomes a record you can open any time — results, roster, practices and money. Nothing is lost, but you will not be able to change it.</span></div>
+          <div class="samebar">The consequence panel and the season’s fields · unchanged</div>
+          <div class="before newbox"><span class="h">Before you do</span>
+            <span class="r"><span>The bank is checked through <b>Jul 31, 2027</b>. Check August while the 2026 Season is open: its records can’t be ticked once the new season starts.</span></span>
+            <span class="f">You can still start the new season.</span></div>
+          <div class="same faint" style="font-size:13px">What is the team doing next season? · Season name · Year · Carry over the planned budget and fee plan · Carry your money forward?</div>
+        </div>
+        <div class="df"><span class="st">Choose what the team is doing.</span><span class="b">Cancel</span><span class="b lime">Start next season</span></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>Restyled</b> · Close the season: the bank joins “Before you do”</div>
+      <div class="fr w416"><div class="ak"><div class="dlg q flat">
+        <div class="dh"><div class="tt"><b>Close 2026 Season?</b></div></div>
+        <div class="db"><p class="same">This season becomes a record. You keep everything (the results, the roster, the money, the practices) on one page you can open any time.</p>
+          <div class="before"><span class="h">Before you do</span>
+            <span class="r same"><span><b>2 families</b> still owe $480.00</span></span>
+            <span class="r newbox"><span>The bank is checked through <b>Jul 31, 2027</b>. After closing, the team has no Bank view to check August in.</span></span>
+            <span class="f">You can still close, but these get harder to sort out afterwards.</span></div></div>
+        <div class="df"><span class="st"></span><span class="b">Not yet — take me to Money</span><span class="b lime">Close the season</span></div>
+      </div></div></div></div>
+    <div class="side"><div class="read one">
+      <div class="g"><h4>Said out loud: a gap in B10 as ruled</h4><p>The last check saves what was <b>still outstanding</b> on its statement. It does not save the season’s lines dated <b>after</b> that statement. In the example, if August isn’t checked before the rollover, August’s 2026 Season records are in nobody’s list. The 2027 Season’s first check can’t read them (no year parameter), so it can never reach $0.00. The warning above tells the coach. Ask 12 asks whether a warning is enough.</p></div>
+      <div class="c"><h4>Close the season is worse</h4><p>An aged-out team that closes gets the one closed-season page and no live tools, so nothing is left to check August with. The warning says so plainly. It still warns and never blocks (R-e).</p></div>
+    </div></div>
+  </div>
+  <div class="pair">
+    <div><div class="cap"><b>Restyled</b> · K6 · phone, Start next season</div>
+      <div class="fr w390"><div class="ak"><div class="dlg sheet" style="min-height:560px">
+        <div class="dh" style="align-items:center"><span class="bk">←</span><div class="tt"><b>Start next season</b></div></div>
+        <div class="db">
+          <div style="background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:11px 13px"><b style="color:var(--ink)">This closes the 2026 Season.</b></div>
+          <div class="before"><span class="h">Before you do</span><span class="r"><span>The bank is checked through <b>Jul 31, 2027</b>. Check August while the 2026 Season is open.</span></span><span class="f">You can still start the new season.</span></div>
+          <div class="faint" style="font-size:13px">Season name · Year · Planned budget · …</div>
+        </div>
+        <div class="df"><span class="b" style="flex:1">Cancel</span><span class="b lime" style="flex:1.4">Start next season</span></div>
+      </div></div></div></div>
+  </div>
+</section>
+
+<!-- ================= 8 · A SECOND ACCOUNT ================= -->
+<section class="pane" id="p8" hidden>
+  <h2>“We keep gaming money in a second account” (C10)</h2>
+  <p class="muted">B1: a club can add a second account and move a book to it. The plan asked for the gaming rules to be confirmed before this screen was drawn. They are confirmed, and they are stricter than the plan assumed.</p>
+  <div class="read two">
+    <div class="c"><h4>British Columbia · required (read in the source)</h4><p>Community Gaming Grants, <i>Conditions for a Program Grant and Capital Project Grant</i> (effective Feb 1, 2026), condition 19(a): “Maintain a separate Gaming Account held in British Columbia … for the exclusive purpose of receiving, holding and disbursing gaming funds.” Condition 18 counts the account’s <b>interest</b> as gaming funds. Condition 20: “Cash transactions from the Gaming Account are not permitted.” <a href="https://www2.gov.bc.ca/assets/gov/sports-recreation-arts-and-culture/gambling/grants/cond-cgg.pdf" target="_blank" rel="noopener">gov.bc.ca (PDF)</a>. <span class="muted">Inferred: “exclusive purpose” rules out non-gaming money. The text has no explicit sentence saying so.</span></p></div>
+    <div class="c"><h4>Alberta · required, one account per gaming type (read in the source)</h4><p>AGLC <i>Charitable Gaming Policies Handbook</i> (Mar 13, 2026), 4.1.7: deposit gaming revenue “into the group’s designated gaming account. (Note: Separate bank accounts must be established for each gaming type…)”. 4.1.9(a): pay vendors directly from the gaming account. 4.1.10: transfers to a non-gaming account only for approved wages. <a href="https://www.aglc.ca/sites/aglc.ca/files/2026-03/26-03-13%20CGPH.pdf" target="_blank" rel="noopener">aglc.ca (PDF)</a>. <span class="muted">Ontario’s designated lottery trust account is similar, from search summaries only, not read in the manual.</span></p></div>
+  </div>
+  <div class="read two">
+    <div class="w"><h4>What this means for the drawing</h4><ul><li>An Alberta club with a casino and a bingo can have <b>three</b> accounts. The account picker is a list, not a pair.</li><li>The money needs a book of its own to move. A club can already open one: Accounting → <i>Add ledger</i> → <i>The club, a book of its own</i>, named “Gaming · casino”. Drawn here as already opened.</li></ul></div>
+    <div class="g"><h4>Where the ruling breaks</h4><p>B5 ruled that a bank fee or interest is written to the <b>General</b> book. In BC, a gaming account’s interest is gaming money and must stay in it. Written to General, it lands in Club chequing’s books, so the gaming check can never reach $0.00, and Club chequing gains a line its bank never saw. Ask 1 proposes the account’s own book.</p></div>
+  </div>
+
+  <h3>The account picker, and adding an account</h3>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · the Bank tab with two accounts: a lead pill appears <button class="mk new" data-note="NEW: the Account pill, the shipped lead dropdown and the same control as the Ledger's Book pill. It appears only once a club has a second account. With one account, the name is plain text (tab 5). Each option shows how far that account is checked. 'Add an account' is the foot item, as 'Add ledger' is on the Book pill.">NEW</button></div>
+      <div class="fr" style="width:760px"><div class="ak" style="padding:16px;display:flex;flex-direction:column;gap:12px;min-height:300px">
+        <div class="tb" style="position:relative"><span class="lead"><i>Account</i><b>Club chequing</b></span><span class="sp"></span><span class="b lime">Check a statement</span>
+          <div style="position:absolute;top:36px;left:0;z-index:3;width:320px;background:var(--card);border:1px solid var(--line2);border-radius:10px;box-shadow:0 8px 24px rgba(36,30,21,.18);padding:6px">
+            <div style="padding:8px 10px;display:flex;gap:8px;align-items:center"><span style="width:6px;height:6px;border-radius:50%;background:var(--olive)"></span><span style="flex:1;font-weight:600">Club chequing</span><span class="faint" style="font-size:12px">through Oct 31, 2026</span></div>
+            <div style="padding:8px 10px 8px 24px;display:flex;gap:8px"><span style="flex:1">Gaming account</span><span class="faint" style="font-size:12px">not checked yet</span></div>
+            <div style="border-top:1px solid var(--line);margin-top:4px;padding:9px 10px;color:var(--olive);font-weight:600">+ Add an account</div></div></div>
+      </div></div></div>
+    <div><div class="cap"><b>Proposed</b> · Add an account: name it, then choose the books that move <button class="mk new" data-note="NEW: the one-window form (520). The account is a name and never a number (B12). The books list shows where each book's money is today. Ticking one moves it here. Next comes the same setup card as C1 (tab 2): starting date, balance, outstanding.">NEW</button> <button class="mk askm" data-note="Ask 13: what a move takes with it. Drawn: the book's unticked lines move with it. Lines already ticked stay on the old account's checks, so no checked statement changes.">Ask 13</button></div>
+      <div class="fr w520"><div class="ak"><div class="dlg flat">
+        <div class="dh"><div class="tt"><span class="ey">Bank</span><b>Add an account</b></div><span class="x">✕</span></div>
+        <div class="db">
+          <div class="f"><span class="lbl">Account name <em>*</em></span><div class="in focus">Gaming account</div><p class="hint">A name only. Never the account number.</p></div>
+          <div class="f"><span class="lbl">Books whose money is in this account</span>
+            <div class="tf"><table class="rg roomy"><tbody>
+              <tr><td class="cx"><i class="cb"></i></td><td>General</td><td class="faint">in Club chequing</td></tr>
+              <tr><td class="cx"><i class="cb"></i></td><td>House league · Fall 2026</td><td class="faint">in Club chequing</td></tr>
+              <tr><td class="cx"><i class="cb"></i></td><td>Lynx Fall Classic 2026</td><td class="faint">in Club chequing</td></tr>
+              <tr class="newbox"><td class="cx"><i class="cb on"></i></td><td><b>Gaming · casino</b></td><td style="color:var(--amber-ink)">moves from Club chequing</td></tr>
+            </tbody></table></div>
+            <p class="hint">Its lines not yet ticked move with it. Lines already ticked stay on Club chequing’s checks.</p></div>
+        </div>
+        <div class="df"><span class="st"></span><span class="b">Cancel</span><span class="b lime">Add and set it up</span></div>
+      </div></div></div></div>
+  </div>
+  <div class="read two">
+    <div class="c"><h4>A transfer between the two accounts</h4><p>A transfer from the General book to Gaming · casino now crosses banks, so it is no longer left out. It shows as money out on Club chequing’s check and money in on the Gaming account’s, and each side is ticked on its own statement. A transfer between two books in the same account is still left out automatically.</p></div>
+    <div class="c"><h4>Teams</h4><p>A team has exactly one account (B1), so the coach’s Bank view never shows a picker. A team that keeps a gaming account of its own is out of scope for the first release. Nothing in the plan asks for it.</p></div>
+  </div>
+
+  <h3>C10 · phone</h3>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · the Account pill opens the shipped dropdown sheet <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr w390"><div class="ak" style="min-height:520px;display:flex;flex-direction:column">
+        <div class="pin" style="flex:1"><div class="hub"><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>Allocations</span></div><span class="lead" style="align-self:flex-start"><i>Account</i><b>Club chequing</b></span></div>
+        <div style="background:var(--card);border-radius:18px 18px 0 0;box-shadow:0 -8px 24px rgba(36,30,21,.14);padding:10px 16px 20px">
+          <div style="width:38px;height:4px;border-radius:2px;background:var(--line2);margin:0 auto 12px"></div>
+          <div style="font:700 15px/1.3 Inter;margin-bottom:6px">Account</div>
+          <div style="min-height:52px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)"><span style="width:6px;height:6px;border-radius:50%;background:var(--olive)"></span><div style="flex:1"><div style="font-weight:600">Club chequing</div><div class="faint" style="font-size:12px">through Oct 31, 2026</div></div></div>
+          <div style="min-height:52px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding-left:16px"><div style="flex:1"><div>Gaming account</div><div class="faint" style="font-size:12px">not checked yet</div></div></div>
+          <div style="min-height:52px;display:flex;align-items:center;color:var(--olive);font-weight:600">+ Add an account</div>
+        </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · Add an account, full screen <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="dlg sheet" style="min-height:520px">
+        <div class="dh" style="align-items:center"><span class="bk">←</span><div class="tt"><span class="ey">Bank</span><b>Add an account</b></div></div>
+        <div class="db">
+          <div class="f"><span class="lbl">Account name <em>*</em></span><div class="in t44">Gaming account</div></div>
+          <div class="f"><span class="lbl">Books whose money is in this account</span><div class="in t44 dd">Gaming · casino</div><p class="hint">Moves from Club chequing. Its lines not yet ticked move with it.</p></div>
+        </div>
+        <div class="df"><span class="b" style="flex:1">Cancel</span><span class="b lime" style="flex:1.4">Add and set it up</span></div>
+      </div></div></div></div>
+  </div>
+</section>
+
+<!-- ================= 9 · THE REPORT ================= -->
+<section class="pane" id="p9" hidden>
+  <h2>“What do I hand the board?” (C9, K8)</h2>
+  <p class="muted">B9: a printable one-page report of a checked statement. It carries the statement and book balances, the outstanding lines, who checked it and when, and signature lines. It opens from <b>Report</b> on any checked statement and prints on US Letter. There is no phone version (none was asked for). The coach’s report is the same page with two more blocks. The toggle shows only what differs.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · C9 · the club’s report, 8.5 × 11 in at 96 dpi <button class="mk new" data-note="NEW: one page. Totals first, then the lines that explain the gap between bank and books: outstanding, left out, kept out. Then who checked it, and two signature lines for the board's own sign-off on paper. There is no in-app sign-off (B12).">NEW</button> <button class="mk askm" data-note="Ask 14: the signature lines. Drawn as 'Prepared by' and 'Reviewed by' at the foot, each with a date line.">Ask 14</button></div>
+      <div class="fr w816"><div class="paper">
+        <div><div class="pe">Lakeshore Lynx · Bank check</div><h4>Club chequing · statement ending October 31, 2026</h4><div style="color:#555;margin-top:4px">Books in this account: General · House league · Fall 2026 · Lynx Fall Classic 2026</div></div>
+        <table><tbody>
+          <tr><td>Starting balance · Sep 30, 2026 (the last check)</td><td class="r">$6,120.45</td></tr>
+          <tr><td>Money in ticked · 14 lines (one a Stripe payout of 8 lines)</td><td class="r">$3,910.00</td></tr>
+          <tr><td>Money out ticked · 10 lines (one a bank fee added at this check)</td><td class="r">($1,629.95)</td></tr>
+          <tr class="tot"><td>Ticked balance</td><td class="r">$8,400.50</td></tr>
+          <tr><td>Ending balance on the statement</td><td class="r">$8,400.50</td></tr>
+          <tr class="zero"><td>Difference</td><td class="r">$0.00</td></tr>
+        </tbody></table>
+        <div><div class="pe" style="margin-bottom:4px">Still outstanding on Oct 31, 2026</div>
+          <table><thead><tr><th>Date</th><th>What</th><th>Book</th><th class="r">Amount</th></tr></thead><tbody>
+            <tr><td>Oct 29</td><td>Cheque #214 · Indoor training, November</td><td>General</td><td class="r">($450.00)</td></tr>
+            <tr class="tot"><td colspan="3">The books, after outstanding lines</td><td class="r">$7,950.50</td></tr></tbody></table></div>
+        <div><div class="pe" style="margin-bottom:4px">Kept out of the bank</div>
+          <table><tbody><tr><td>Oct 27</td><td>Officials, Oct 26–27 · paid in cash from the concession float</td><td class="r">($120.00)</td></tr></tbody></table></div>
+        <div class="same"><div class="pe" style="margin-bottom:4px">Not counted</div><div>1 transfer between two books in this account ($500.00) · 1 void line · 1 line still clearing</div></div>
+        <div class="samebar" style="border-color:#ccc;color:#666">Not counted · the same shape</div>
+        <div><div class="pe" style="margin-bottom:4px">Checked</div><div>By <b>Priya Shah</b> (Treasurer), Nov 3, 2026 at 8:14 p.m. · No lines changed since.</div></div>
+        <div class="sig"><div>Prepared by &nbsp;·&nbsp; date</div><div>Reviewed by &nbsp;·&nbsp; date</div></div>
+        <div class="foot">Printed Nov 4, 2026 from FieldLogicHQ · Lakeshore Lynx · Accounting → Bank</div>
+      </div></div></div>
+    <div><div class="cap"><b>Proposed</b> · K8 · the team’s report <button class="mk new" data-note="NEW: drawn for this feature. Nothing like it ships today. The section text above says what it answers.">NEW</button></div>
+      <div class="fr w816"><div class="paper">
+        <div><div class="pe">Lynx 12U AAA · 2026 Season · Bank check</div><h4>Team account · statement ending September 30, 2026</h4></div>
+        <table><tbody>
+          <tr><td>Starting balance · Sep 1, 2026 (the first check)</td><td class="r">$1,180.00</td></tr>
+          <tr><td>Money in ticked · 5 lines</td><td class="r">$2,462.35</td></tr>
+          <tr><td>Money out ticked · 3 lines (one a bank fee added at this check)</td><td class="r">($1,138.15)</td></tr>
+          <tr class="tot"><td>Ticked balance</td><td class="r">$2,504.20</td></tr>
+          <tr><td>Ending balance on the statement</td><td class="r">$2,504.20</td></tr>
+          <tr class="zero"><td>Difference</td><td class="r">$0.00</td></tr>
+        </tbody></table>
+        <div><div class="pe" style="margin-bottom:4px">Still outstanding on Sep 30, 2026</div>
+          <table><thead><tr><th>Date</th><th>What</th><th>Category</th><th class="r">Amount</th></tr></thead><tbody>
+            <tr><td>Sep 28</td><td>Cheque #032 · Hotel deposit, Lakeside Inn</td><td>Travel</td><td class="r">($500.00)</td></tr>
+            <tr class="tot"><td colspan="3">The bank, after outstanding lines</td><td class="r">$2,004.20</td></tr></tbody></table></div>
+        <div style="background:var(--new);outline:2px solid var(--newl);outline-offset:3px;border-radius:6px;padding:4px"><div class="pe" style="margin-bottom:4px">Kept out of the bank</div>
+          <table><tbody><tr><td>Sep 2</td><td>Dues payment · Ruiz · cash</td><td class="r">$120.00</td></tr><tr><td>Sep 13</td><td>Officials, Cedar Lake Invitational · paid in cash</td><td class="r">($120.00)</td></tr></tbody></table></div>
+        <div style="background:var(--new);outline:2px solid var(--newl);outline-offset:3px;border-radius:6px;padding:4px"><div class="pe" style="margin-bottom:4px">Against the team’s Ledger</div>
+          <div>Cash on hand in the Ledger on Sep 30, 2026 is <b>$2,064.20</b>, which is $60.00 more than the bank after outstanding lines.</div></div>
+        <div class="same"><div class="pe" style="margin-bottom:4px">Not counted</div><div>Sep 25 · Hotel · the Okafor family paid the hotel directly ($160.00)</div></div>
+        <div class="samebar" style="border-color:#ccc;color:#666">Not counted · the same shape</div>
+        <div><div class="pe" style="margin-bottom:4px">Checked</div><div>By <b>Sam Ortiz</b> (Team treasurer), Oct 6, 2026 at 9:30 p.m. · No lines changed since.</div></div>
+        <div class="sig"><div>Prepared by &nbsp;·&nbsp; date</div><div>Reviewed by &nbsp;·&nbsp; date</div></div>
+        <div class="foot">Printed Nov 4, 2026 from FieldLogicHQ · Lynx 12U AAA · Money → Ledger → Bank</div>
+      </div></div></div>
+  </div>
+  <div class="read two">
+    <div class="w"><h4>Why the coach’s report has one more block</h4><p>“Against the team’s Ledger” answers the question an association treasurer asks first: why doesn’t this match Cash on hand? It is a subtraction of two figures the product already has, stated as a fact. It doesn’t say where the $60.00 is; the coach knows (here, cash held since the season opened).</p></div>
+    <div class="c"><h4>What the report doesn’t carry</h4><p>No account number (B12), no ticked-line listing (it would run past one page; the screen has it), and no Budget vs. Actual figures (B9 keeps the bank off them).</p></div>
+  </div>
+</section>
+
+<!-- ================= 10 · ASKS ================= -->
+<section class="pane" id="p10" hidden>
+  <h2>Asks</h2>
+  <div class="card" style="border-left:5px solid var(--fix)"><b>Ruled 2026-11-04: all fourteen A, as recommended, no notes.</b> Asks 12 and 1 amend B10 and B5 in the plan. The green rows below are now the rulings.</div>
+  <p class="muted">These are choices the drawing met that the twelve rulings didn’t make. Pick one per ask. The green row is my recommendation. <b>Rule 12 and 1 first:</b> both push back on a ruling once it is drawn, and both change what R1 (the engine, no screens) builds. The rest are screen choices for R2 and R5. Press “Make my answers” and paste the text back into the chat.</p>
+  <p class="muted" style="font-size:14px"><b>Words for <code>/marketing</code>, not asks:</b> the drawing uses “Check a statement” (button) → “Start checking” (window) → “Mark this statement checked” (“Mark checked” on a phone), and “Save and check a statement” on the first visit. One verb pair would be better. All words on this page are drafts.</p>
+  <div id="asks"></div>
+  <div class="paste"><div class="row"><button class="btn-d pri" id="mk">Make my answers</button><button class="btn-d" id="cp">Copy</button><span class="muted" id="cpmsg" role="status"></span></div>
+    <textarea id="out" readonly aria-label="Your answers" placeholder="Press “Make my answers”, then copy this text back into the chat."></textarea></div>
+</section>
+
+<!--END-->
+
+<!--END-->
+</div>
+
+<dialog class="note" id="nd"><div class="nh"><h3>About this</h3><button id="nx" aria-label="Close">×</button></div><div class="nb" id="nt"></div></dialog>
+<script>
+(function(){
+  var ASKS=[
+   {id:12,first:1,t:"Rule first · the rollover gap in B10: is a warning enough?",tag:"pushes back on B10",
+    r:"Tab 7. The last check saves what was still outstanding on its statement, not the season’s lines dated after that statement. If a coach starts next season before checking the last month, those records are in nobody’s list. The new season’s first check can’t read last season (no year parameter), so it never reaches $0.00. Changes R4 (the coach line source).",
+    o:[["A","When Start next season runs, the team account also saves every unticked line of the closing season dated after the last check, and the next check lists them under “Still outstanding from your last check”. Still no year parameter; nothing reads last season later. The warning line stays","rec"],["B","The warning only, as drawn. A coach who rolls over first re-enters those lines by hand in the new season to balance",""],["C","Start next season refuses until the bank is checked through the season’s last record",""]]},
+   {id:1,first:1,t:"Rule first · which book a bank fee or interest is written to",tag:"pushes back on B5",
+    r:"Tabs 4 and 8. B5 ruled the club’s line goes to the General book. In BC, a gaming account’s interest is gaming money and must stay in it (condition 18). Written to General, it lands in Club chequing’s books, so neither account balances. Changes R1 and R2.",
+    o:[["A","The account’s own first book (General for Club chequing; Gaming · casino for the Gaming account), as a dropdown of that account’s books only","rec"],["B","General, always, as ruled. A gaming club books the interest by hand in its Gaming book",""]]},
+   {id:3,t:"The first check’s “still outstanding then”: where the lines come from",tag:"B3",
+    r:"Tab 2. B3 ruled “one line each”. A club already using FieldLogicHQ has those cheques in its books, so typing them would make duplicates. A club new to the product has nothing to pick.",
+    o:[["A","Picked from the books’ own lines dated in the 30 days before the starting date, plus “Add one the books don’t have” for anything older (that line lives only in the check, never in a book)","rec"],["B","Typed only, one line each",""]]},
+   {id:4,t:"Desktop tick list: one list or two",tag:"C2 · K2",
+    r:"Tab 3. A paper or online statement lists money in and out together, by date. QuickBooks splits them into two lists side by side.",
+    o:[["A","One list in date order, with Money out and Money in columns like the Ledger","rec"],["B","Two lists side by side: money out | money in",""]]},
+   {id:5,t:"Phone: does the band pin while ticking?",tag:"C2 · K2",
+    r:"Tab 3. Without it, the treasurer scrolls up after each tick to see the Difference. Pinning the whole band costs about 165px; a one-line strip costs 44px.",
+    o:[["A","A one-line strip (Difference and the count, 44px) pins under the tab row; the full band scrolls away; “Finish later · Mark checked” docks at the foot","rec"],["B","The whole band pins (about 165px) and the dock stays",""],["C","Nothing pins; the buttons sit at the end of the list",""]]},
+   {id:6,t:"“Didn’t go through the bank”: where it sits, on which portal, and undoing it",tag:"B6",
+    r:"Tab 3. B6 ruled one tap and “leaves the tick list for good”. A button on every row would be the noisiest thing on the screen, and most rows are cheques or E-Transfers that can’t have missed the bank. A mis-tap needs a way back.",
+    o:[["A","Only on lines paid in cash or with no method recorded (a cheque, E-Transfer, card or debit went through a bank by definition). Desktop: on the row under the pointer or focus; phone: under each such unticked line. Both portals (a club’s concession float is the same case). “Put it back” in the kept-out list","rec"],["B","As A, coach portal only",""],["C","Behind each row’s ⋯ menu (two taps), both portals",""]]},
+   {id:7,t:"If a Stripe payout doesn’t add up (only if R1 proves P4 false)",tag:"P4",
+    r:"Tab 3. The plan already says the gap shows as a named line, never a silent difference. This asks what the line offers.",
+    o:[["A","“Not in your books: $1.60” inside the payout, with “Add it as payment processing”, which writes the cost line to the payout’s book and ticks it","rec"],["B","The named line only; the treasurer uses Add a bank fee or interest",""]]},
+   {id:8,t:"A fee re-dated to today because its statement is in a closed year: which statement does it tick on?",tag:"B4",
+    r:"Tab 4. Normally a line dated after a statement’s end waits for the next statement. B4 ruled the helper offers today’s date. It didn’t say where that line then ticks.",
+    o:[["A","On the statement it was added from, whatever its date. The report notes it (“added Nov 4, 2026 for the bank’s Dec 31, 2025 fee”)","rec"],["B","On the next statement, by its date; this one can’t reach $0.00 until then",""]]},
+   {id:9,t:"Undoing the latest check",tag:"B4",
+    r:"Tab 5. B4 ruled latest only, with a reason. After an undo, the one before becomes the latest, so a treasurer can step back one at a time.",
+    o:[["A","The statement reopens with its ticks kept, and stepping back one at a time is allowed","rec"],["B","The statement reopens with its ticks cleared",""],["C","Ticks kept, but only one undo in a row: the previous check can’t be undone until this one is checked again",""]]},
+   {id:10,t:"The warning on a ticked line’s window, which autosaves",tag:"B4 · C6 · K5",
+    r:"Tab 6. The club’s line window saves as you type, so there is no Save to stop at. The warning must be on screen when the window opens.",
+    o:[["A","An amber line at the top of the window, and the void or delete question repeats it","rec"],["B","The window opens read-only with “Change it anyway” to unlock it",""]]},
+   {id:11,t:"What “re-checks” means for a changed statement",tag:"B4 · C5",
+    r:"Tab 6. B4 ruled the amber shows “until the treasurer re-checks”. An older statement can’t be undone (latest only), so re-checking needs its own meaning.",
+    o:[["A","“Look again” shows the statement with today’s figures. At $0.00, “Mark checked again” clears the amber (who and when recorded). Otherwise it stays until the line is put right","rec"],["B","The amber clears only when the changed line is put back to its checked figures",""],["C","“I’ve seen this” clears the amber whatever the difference",""]]},
+   {id:13,t:"Moving a book to another account",tag:"B1 · C10",
+    r:"Tab 8. A book can hold lines already ticked on Club chequing and lines not yet ticked.",
+    o:[["A","Its unticked lines move with it; lines already ticked stay on the old account’s checks, so no checked statement changes","rec"],["B","A move takes effect from a date the treasurer picks; lines before it stay in the old account",""]]},
+   {id:2,t:"The coach’s bank fee: which category",tag:"B5 · K3",
+    r:"Tab 4. A coach cost needs a category, and Budget vs. Actual files anything unbudgeted as off-plan.",
+    o:[["A","The shipped category dropdown, required, with no default. The fee is off-plan unless the budget has a line for it","rec"],["B","A fixed “Bank fees” category the product creates",""]]},
+   {id:14,t:"The report’s signature lines",tag:"B9 · C9 · K8",
+    r:"Tab 9. B9 ruled “with signature lines”. Associations ask for a preparer and a reviewer.",
+    o:[["A","Two at the foot, “Prepared by · date” and “Reviewed by · date”, printed blank","rec"],["B","One, “Reviewed by · date”, since the checker is already printed",""]]}
+  ];
+  var host=document.getElementById('asks');
+  ASKS.forEach(function(a){
+    var d=document.createElement('div');d.className='ask'+(a.first?' first':'');d.id='ask-'+a.id;
+    var h='<h3><span class="no">Ask '+a.id+'</span>'+a.t+'<span class="tag">'+a.tag+'</span></h3><p class="rides">'+a.r+'</p><div class="opts">';
+    a.o.forEach(function(o){h+='<label class="'+o[2]+'"><input type="radio" id="a'+a.id+o[0]+'" name="a'+a.id+'" value="'+o[0]+'"'+(o[2]?' checked':'')+'><span><b>'+o[0]+'.</b> '+o[1]+'</span></label>';});
+    h+='</div><textarea id="n'+a.id+'" aria-label="Note for ask '+a.id+'" placeholder="Note"></textarea>';
+    d.innerHTML=h;host.appendChild(d);
+  });
+  var tabs=document.getElementById('tabs');
+  function show(id){
+    [].forEach.call(tabs.querySelectorAll('button'),function(x){x.setAttribute('aria-selected',x.getAttribute('data-t')===id?'true':'false')});
+    [].forEach.call(document.querySelectorAll('section.pane'),function(s){s.hidden=s.id!==id});
+  }
+  tabs.addEventListener('click',function(e){var b=e.target.closest('button[data-t]');if(!b)return;show(b.getAttribute('data-t'));window.scrollTo(0,0);});
+  document.addEventListener('click',function(e){
+    var v=e.target.closest('.sw button');
+    if(v){var val=v.getAttribute('data-v');document.body.setAttribute('data-view',val);
+      [].forEach.call(document.querySelectorAll('.sw button'),function(x){x.setAttribute('aria-pressed',x.getAttribute('data-v')===val?'true':'false')});return;}
+    var m=e.target.closest('.mk[data-note]');
+    if(m){document.getElementById('nt').textContent=m.getAttribute('data-note');var d=document.getElementById('nd');if(d.showModal)d.showModal();return;}
+    var nb=e.target.closest('.newbox');
+    if(nb){var note=nb.getAttribute('data-note');
+      if(!note){var host=nb.closest('.pair>div')||nb.closest('section');var c=host&&host.querySelector('.cap .mk[data-note]');
+        if(!c){var p=nb.closest('.fx,.fr');while(p&&!c){p=p.previousElementSibling;if(p&&p.matches('.cap'))c=p.querySelector('.mk[data-note]');}}
+        note=c?c.getAttribute('data-note'):'NEW: added by this feature.';}
+      document.getElementById('nt').textContent=note;var d2=document.getElementById('nd');if(d2.showModal)d2.showModal();}
+  });
+  [].forEach.call(document.querySelectorAll('.newbox'),function(el){el.setAttribute('tabindex','0');el.setAttribute('role','button');});
+  document.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('newbox')){e.preventDefault();e.target.click();}});
+  document.getElementById('nx').onclick=function(){document.getElementById('nd').close()};
+  document.getElementById('mk').onclick=function(){
+    var L=['Bank reconciliation R0 drawings, my answers:'];
+    ASKS.slice().sort(function(a,b){return a.id-b.id}).forEach(function(a){var c=document.querySelector('input[name=a'+a.id+']:checked');var n=document.getElementById('n'+a.id).value.trim();
+      L.push('Ask '+a.id+': '+(c?c.value:'(none)')+(n?' — '+n:''));});
+    document.getElementById('out').value=L.join('\n');};
+  document.getElementById('cp').onclick=function(){
+    var t=document.getElementById('out');var msg=document.getElementById('cpmsg');
+    function sel(){t.select();msg.textContent='Selected. Press Ctrl+C.';}
+    if(navigator.clipboard&&t.value){navigator.clipboard.writeText(t.value).then(function(){msg.textContent='Copied.'},sel);}else{sel();}};
+})();
+</script>
