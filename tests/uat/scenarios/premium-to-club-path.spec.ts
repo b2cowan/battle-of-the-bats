@@ -263,6 +263,12 @@ test.describe.serial('C · a coach on free time becomes the club (mock billing)'
     if (error || !user.user) throw error ?? new Error('no user');
     const partial: Partial<Made> = { userId: user.user.id, email };
     try {
+      // GST/HST Stage 1: the Start my club window fills the club's billing address in from the coach's own home address, and a
+      // checkout refuses without one. Give the new coach a home address (the row goes with the user, ON DELETE CASCADE).
+      const { error: addressError } = await supabaseAdmin.from('billing_locations').insert({
+        user_id: user.user.id, country: 'CA', region_code: 'ON', line1: '120 Elm Street', city: 'Guelph', postal_code: 'N1H 4H2',
+      });
+      if (addressError) throw addressError;
       const { ctx, page } = await logIn(browser, email);
       const team = await page.request.post('/api/coaches/teams', { data: { name: `UAT Path ${suffix}`, sport: 'baseball' } });
       expect(team.ok(), 'the free team').toBe(true);

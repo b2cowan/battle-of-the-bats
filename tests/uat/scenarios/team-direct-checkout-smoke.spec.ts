@@ -79,7 +79,16 @@ test.describe.serial('standalone Team direct checkout smoke', () => {
     if (!coachUser.user?.id) throw new Error('Smoke coach user was not created.')
     createdCoachUserIds.add(coachUser.user.id)
 
-    const coachContext = await browser.newContext()
+    // GST/HST Stage 1: a paid checkout refuses a buyer with no billing address on file, and the Premium buyer is the coach.
+    // The row goes with the user (ON DELETE CASCADE).
+    const { error: addressError } = await supabaseAdmin.from('billing_locations').insert({
+      user_id: coachUser.user.id, country: 'CA', region_code: 'ON', line1: '120 Elm Street', city: 'Guelph', postal_code: 'N1H 4H2',
+    })
+    if (addressError) throw addressError
+
+    // An EXPLICITLY empty session: a bare newContext() inherits the project's org-owner storageState, and the sign-in page
+    // forwards a signed-in visitor away, so the form never appears (as premium-to-club-path's logIn says).
+    const coachContext = await browser.newContext({ storageState: { cookies: [], origins: [] } })
     const coachPage = await coachContext.newPage()
 
     await coachPage.goto('/auth/login')
