@@ -1,6 +1,6 @@
 # Public tournament pages — Stage 8: the new look on for everyone (plan)
 
-**Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 committed `d4af280e6` 2026-11-03** (record §10; it releases with the flip, ruling D). **Part 2 built 2026-11-03** (record §11; it releases with the flip too). Next Part 3a. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
+**Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 committed `d4af280e6` 2026-11-03** (record §10; it releases with the flip, ruling D). **Part 2 committed `02e29f453` 2026-11-03** (record §11; it releases with the flip too). Next Part 3a. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
 **Sequencing rule (standing):** by dependency and rework risk, never by date. One part per session, `/clear` between.
@@ -185,7 +185,7 @@ the three icon settings (it only guarded the client's save body). Re-run: 3 unit
 - **Part 5:** help copy, PLAN_PRICING_FACTS' custom app name, and the demo are untouched here, as scoped.
 - *(Part 2 (c) decided them: §11.)*
 
-## 11. Part 2 record (flip preparation; built 2026-11-03; releases with the flip)
+## 11. Part 2 record (flip preparation; committed `02e29f453` 2026-11-03; releases with the flip)
 
 **What a customer sees:** nothing (nothing promoted). An owner walking dev with the new look on would notice two things in the
 demo tour, nothing else: step 1 rings the Overview's **Latest results** (the two finished semifinals its sentence names), and
