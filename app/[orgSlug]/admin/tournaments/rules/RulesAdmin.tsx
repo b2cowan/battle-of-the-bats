@@ -12,14 +12,14 @@
  *               the icon families see beside it (owner, 2026-10-12).
  *   order       the portal's reorder standard (ReorderList, owner 2026-10-12 — superseding A54's Reorder mode): each
  *               row's handle drags (hold it on a phone), a tap on it offers Move up · Move down · Cancel; each move
- *               saves. Each card's Layout menu holds its own public layout — one column or two for rules, a list or
- *               two columns for resources — beside its add, absent while the card is empty (owner, 2026-10-12: one
- *               Tools on the Rules card held both cards' layouts, and nothing else).
- *   saving      every write reports its failure — the record's pill, or this page's for an order or a layout. No
+ *               saves. (The cards' Layout menus — one column or two, a list or two columns — went in Public tournament
+ *               pages Stage 8 Part 4a, owner 2026-11-04: the new public Rules page never read them. The stored
+ *               settings stay, unread.)
+ *   saving      every write reports its failure — the record's pill, or this page's for an order. No
  *               browser alert, no leave dialog, no patched browser Back (there is nothing unsaved to protect).
  */
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { ChevronDown, MoreHorizontal, Plus } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Plus } from 'lucide-react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import HelpButton from '@/components/help/HelpButton';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
@@ -28,9 +28,6 @@ import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import { ReorderList, ReorderRow } from '@/components/admin/tournament/ReorderList';
 import { arrayMove } from '@dnd-kit/sortable';
 import { useSaveQueue } from '@/components/admin/tournament/useSaveQueue';
-import tb from '@/components/admin/tournament/AdminToolbar.module.css';
-import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
-import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { createRuleSection, getResources, getRules, saveResource, saveResourceOrder, saveRuleOrder } from '@/lib/db';
 import { ORDER_WORDS, RULES_WORDS as W, resourceCaption, sectionCaption } from '@/lib/tournament-settings-words';
 import { RuleIcon } from '@/lib/rule-icons';
@@ -55,8 +52,6 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
   const [openResource, setOpenResource] = useState<string | null>(null);
   /** Which card's samples are open: each card has its own Start from a sample. */
   const [samplesFor, setSamplesFor] = useState<'sections' | 'links' | null>(null);
-  const [rulesLayout, setRulesLayout] = useState<'columns' | 'single'>(tournament.settings?.rulesLayout ?? 'columns');
-  const [resourcesLayout, setResourcesLayout] = useState<'list' | 'grid'>(tournament.settings?.resourcesLayout ?? 'list');
 
   /** Re-reads both lists and the divisions; false when they didn't load. */
   const refresh = useCallback(async (): Promise<boolean> => {
@@ -103,18 +98,6 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
     setResources(next);
     void runPageSave(() => saveResourceOrder(next.map(r => r.id)), ORDER_WORDS.saveFailed);
   }
-  function chooseLayout(key: 'rulesLayout' | 'resourcesLayout', value: string) {
-    if (key === 'rulesLayout') setRulesLayout(value as 'columns' | 'single');
-    else setResourcesLayout(value as 'list' | 'grid');
-    void runPageSave(async () => {
-      const res = await fetch(`/api/admin/tournaments${orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : ''}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'patch-settings', id: tournament.id, data: { settings: { [key]: value } } }),
-      });
-      if (!res.ok) throw new Error('layout');
-    }, W.layoutFailed);
-  }
 
   // ── Samples: add as today, each failure said in the window ──
   async function addSampleSection(sample: SampleSection) {
@@ -133,34 +116,6 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
   const sIdx = openSection && openSection !== 'new' ? rules.findIndex(s => s.id === openSection) : -1;
   const rIdx = openResource && openResource !== 'new' ? resources.findIndex(r => r.id === openResource) : -1;
 
-  // A desk reads "Layout"; a phone the ⋯ (the word and chevron go at ≤640). Its name says whose layout it is, since
-  // both cards carry one.
-  const layoutMenu = (name: string, choices: ReactNode) => (
-    <CoachToolbarMenu
-      label={name}
-      collapseOnPhone
-      bareOnPhone
-      drawerOnPhone
-      drawerTitle={name}
-      triggerClassName={`${tb.tool} ${styles.tool}`}
-      triggerContent={<>
-        <MoreHorizontal size={18} className={tb.toolsGlyph} aria-hidden />
-        <span className={shared.headerBtnLabel}>{W.layout}</span>
-        <ChevronDown size={14} aria-hidden />
-      </>}
-    >
-      <CoachToolbarMenuHeading>{W.onPublicSite}</CoachToolbarMenuHeading>
-      {choices}
-    </CoachToolbarMenu>
-  );
-  const rulesLayoutMenu = layoutMenu(W.rulesLayout, <>
-    <CoachToolbarMenuItem label={W.oneColumn} checked={rulesLayout === 'single'} onSelect={() => chooseLayout('rulesLayout', 'single')} />
-    <CoachToolbarMenuItem label={W.twoColumns} checked={rulesLayout === 'columns'} onSelect={() => chooseLayout('rulesLayout', 'columns')} />
-  </>);
-  const resourcesLayoutMenu = layoutMenu(W.resourcesLayout, <>
-    <CoachToolbarMenuItem label={W.aList} checked={resourcesLayout === 'list'} onSelect={() => chooseLayout('resourcesLayout', 'list')} />
-    <CoachToolbarMenuItem label={W.twoColumns} checked={resourcesLayout === 'grid'} onSelect={() => chooseLayout('resourcesLayout', 'grid')} />
-  </>);
   const addButton = (label: string, onClick: () => void) => (
     <button type="button" className={`btn btn-outline btn-data ${screenParts.headerButton}`} onClick={onClick}
       aria-label={label} title={label} aria-haspopup="dialog">
@@ -187,7 +142,7 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
             list
             className={styles.headCard}
             title={<>{W.rules}<span className={styles.headCaption}>{W.rulesCaption}</span></>}
-            actions={<>{rules.length > 0 && rulesLayoutMenu}{addButton(W.addSection, () => setOpenSection('new'))}</>}
+            actions={addButton(W.addSection, () => setOpenSection('new'))}
           >
             {rules.length === 0 && <p className={styles.cardEmpty}>{W.noRules}</p>}
             <ClubRowList inset label={W.rules}>
@@ -213,7 +168,7 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
             list
             className={styles.headCard}
             title={W.resources}
-            actions={<>{resources.length > 0 && resourcesLayoutMenu}{addButton(W.addResource, () => setOpenResource('new'))}</>}
+            actions={addButton(W.addResource, () => setOpenResource('new'))}
           >
             {resources.length === 0 && <p className={styles.cardEmpty}>{W.noResources}</p>}
             <ClubRowList inset label={W.resources}>

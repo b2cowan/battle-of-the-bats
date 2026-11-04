@@ -1,9 +1,4 @@
 {
-  "components/Navbar.module.css": {
-    "heavy": 1,
-    "caps": 1,
-    "face": 1
-  },
   "components/auth/StartSteps.module.css": {
     "caps": 1,
     "heavy": 1

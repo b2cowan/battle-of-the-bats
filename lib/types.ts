@@ -60,9 +60,10 @@ export interface TournamentSettings {
    * `hasRoundRobin()` / `hasPlayoffs()` in lib/tournament-phase.ts.
    */
   format?: TournamentFormat;
-  /** Public rules page layout for the rule-section grid. Default: 'columns' (2-col). */
+  /** RETIRED (Public tournament pages Stage 8 Part 4a, owner 2026-11-04): the old Rules page's layout choices. Nothing
+   *  reads or writes them; stored values stay (like ask C's columns) and still travel with a copied event's rules. */
   rulesLayout?: 'columns' | 'single';
-  /** Public rules page layout for the resources list. Default: 'list' (stacked). */
+  /** RETIRED with `rulesLayout`. */
   resourcesLayout?: 'list' | 'grid';
   /**
    * Default game duration in minutes for all divisions in this tournament.

@@ -133,7 +133,9 @@ describe('2 · the platform\'s phone bar leaves club pages; tournament pages kee
   it('the carve-out: a tournament page still gets the Primary bar', () => {
     assert.match(consumer, /bottomNavTournament[^\n]*aria-label="Primary"|aria-label="Primary"[^\n]*bottomNavTournament/);
     // The tournament's tab row is the band's (Stage 8 Part 3d deleted the platform bar's tournament branch that held it).
-    assert.match(readCode('components/public/TournamentBand.tsx'), /<TournamentTopTabs\s+skin="frame"/);
+    // Its one look since the old dark row went (Stage 8 Part 4a): no skin to choose.
+    assert.match(readCode('components/public/TournamentBand.tsx'), /<TournamentTopTabs\b/);
+    assert.doesNotMatch(readCode('components/public/TournamentTopTabs.tsx'), /\bskin\??:|\bfixed\??:|skin !==|styles\.tabsFixed/);
     assert.doesNotMatch(readCode('components/Navbar.tsx'), /TournamentTopTabs/);
   });
   it('the 4a refusal no longer needs the phone bar\'s label to hide it', () => {

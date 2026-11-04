@@ -15,10 +15,9 @@ export function profileFixture() {
   const games = [game({ id: 'older', date: '2026-10-28', status: 'completed', homeScore: 6, awayScore: 2 }),
     game({ id: 'recent', date: '2026-10-29', status: 'completed', homeScore: 4, awayScore: 2 }),
     game({ id: 'final', isPlayoff: true, bracketCode: 'FIN' })];
-  const profile: TeamProfile = { team: teams[0], divisionName: 'U11', poolName: 'A', gameDurationMinutes: 90, tournamentName: 'Classic',
+  const profile: TeamProfile = { team: teams[0], divisionName: 'U11', gameDurationMinutes: 90, tournamentName: 'Classic',
     teamNames: Object.fromEntries(teams.map(t => [t.id, t.name])), games,
-    standings: { w: 2, l: 0, t: 0, pts: 4, rf: 10, ra: 4, rd: 6, poolRank: 1, poolRankLabel: '1st',
-      inPlayoffSpot: true, isChampion: false, isRunnerUp: false } };
+    standings: { w: 2, l: 0, t: 0, pts: 4, rf: 10, ra: 4, rd: 6, isRunnerUp: false } };
   const rows = teams.map((t, i) => ({ teamId: t.id, teamName: t.name, poolId: 'a', w: 2-i, l:i, t:0, gp: 2 })) as DivisionStandingRow[];
   return { profile, options: { division, divisions: [division], teams, games, rows,
     tournament: { id: 't', settings: {} } as Tournament, standingsShown: true, requireFinalization: true, now } };

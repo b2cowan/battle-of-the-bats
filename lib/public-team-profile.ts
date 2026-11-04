@@ -13,11 +13,10 @@ import { formatPoolName } from './utils';
 export interface TeamProfile {
   team: PublicTeam;
   divisionName: string;
-  poolName: string | null;
   gameDurationMinutes: number;
   tournamentName: string;
-  standings: { w: number; l: number; t: number; pts: number; rf: number; ra: number; rd: number;
-    poolRank: number | null; poolRankLabel: string | null; inPlayoffSpot: boolean; isChampion: boolean; isRunnerUp: boolean };
+  /** The record and the runner-up fact; `teamProfilePreview` adds the pool name and "in a playoff spot" (its own rules). */
+  standings: { w: number; l: number; t: number; pts: number; rf: number; ra: number; rd: number; isRunnerUp: boolean };
   games: (Omit<Game, 'notes'> & { homeTeamName: string; awayTeamName: string })[];
   teamNames: Record<string, string>;
 }

@@ -14,7 +14,7 @@
  *   paid           the receipt(s); the balance still owed, if any, under them
  *   nothing / already paid / refused, and NOT TAKING PAYMENTS — today's panel, word for word (A6)
  *
- * FOCUSED (Public tournament pages Stage 7, under the preview switch — the layout's slim band and short footer around it):
+ * FOCUSED (Public tournament pages Stage 7 — the layout's slim band and short footer around it):
  * the heading line is "Team payment" (the band names the event) over the team at the page-title size (A7), and one
  * contact line follows the pay block on every state (A1) — but clearing, which names the club in its own sentence, and a
  * real link opened under another tournament's address, whose organizer cannot send a new one (A2). The pay block inside
@@ -38,37 +38,30 @@ import styles from './TeamPay.module.css';
 
 const day = (d: string | null) => (d ? formatStoredDate(d, { withYear: false }) : null);
 
-export default function TeamPayContent({ token, view, returnedSession, left, focused = false, contactEmail = null }: {
+export default function TeamPayContent({ token, view, returnedSession, left, contactEmail }: {
   token: string; view: PayPageView; returnedSession: string | null; left: boolean;
-  /** The preview switch is on: the focused page (Stage 7). */
-  focused?: boolean;
-  /** The address's organizer's public contact, focused only; null when the organizer hides it. */
-  contactEmail?: string | null;
+  /** The address's organizer's public contact; null when the organizer hides it. */
+  contactEmail: string | null;
 }) {
   // Back from Stripe: wait for the record. Paid reloads the page from the server; nothing here ever says Paid by itself.
   const { confirming, slow } = usePaymentConfirming(s => `/api/pay/team/${token}/status?session=${encodeURIComponent(s)}`, returnedSession);
 
   // A1: every state but clearing (its own sentence names the club); A2: not under another tournament's address.
-  const contact = focused && contactEmail && view.kind !== 'clearing' && !view.misaddressed
+  const contact = contactEmail && view.kind !== 'clearing' && !view.misaddressed
     ? <ContactLine email={contactEmail} /> : null;
 
-  // `page-content` pads a page below the old fixed event header and is a screen tall at the least. The focused page has no
-  // fixed header, and its short footer already sits at the foot of the screen, so the floor only left a gap above it.
-  const wrap = focused ? undefined : 'page-content';
-
+  // No `page-content` wrapper (it padded a page below the old fixed event header and was a screen tall at the least): the
+  // focused page has no fixed header, and its short footer already sits at the foot of the screen.
   if (view.kind === 'invalid') {
-    return <div className={wrap}><div className={styles.page}><div className={focused ? `${reg.errorCard} ${styles.errorFocused}` : reg.errorCard}><p>{view.message}</p></div>{contact}</div></div>;
+    return <div className={styles.page}><div className={`${reg.errorCard} ${styles.errorFocused}`}><p>{view.message}</p></div>{contact}</div>;
   }
 
-  // `page-content` is what every other tournament page wraps in: it pads the page below the fixed event header (date and
-  // countdown line) and the ticker, which otherwise print over the heading.
   return (
-    <div className={wrap}>
-    <div className={styles.page} data-pay-focused={focused ? '' : undefined}>
+    <div className={styles.page} data-pay-focused="">
       <div className={reg.formCard}>
         <PayFrame>
-          <p className={styles.eyebrow}>{focused ? W.focusedEyebrow : view.tournamentName}</p>
-          <h1 className={focused ? `${styles.title} ${styles.titleFocused}` : styles.title}>{W.who(view.teamName, view.divisionName)}</h1>
+          <p className={styles.eyebrow}>{W.focusedEyebrow}</p>
+          <h1 className={`${styles.title} ${styles.titleFocused}`}>{W.who(view.teamName, view.divisionName)}</h1>
           {view.testMode && <TestLine text={W.testLine} />}
 
           {confirming ? (
@@ -107,7 +100,6 @@ export default function TeamPayContent({ token, view, returnedSession, left, foc
         </PayFrame>
         {contact}
       </div>
-    </div>
     </div>
   );
 }

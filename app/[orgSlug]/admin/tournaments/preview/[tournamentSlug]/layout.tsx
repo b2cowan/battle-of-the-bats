@@ -1,23 +1,13 @@
-import TournamentPreviewNav from '@/components/public/TournamentPreviewNav';
-import TournamentTopTabs from '@/components/public/TournamentTopTabs';
 import TournamentSideRail from '@/components/public/TournamentSideRail';
 import PreviewExitPill from '@/components/public/PreviewExitPill';
-import railStyles from '@/components/public/TournamentSideRail.module.css';
-import {
-  buildPublicLightModeCssVars,
-  buildPublicThemeCssVars,
-  getPreviewColorMode,
-  getPreviewCardStyle,
-  getTournamentPreviewContext,
-} from '@/lib/tournament-preview';
-import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
+import { buildPublicThemeCssVars, getTournamentPreviewContext } from '@/lib/tournament-preview';
 import { hasRoundRobin } from '@/lib/tournament-phase';
 import { resolveOrgHomeHref } from '@/lib/module-entitlements';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import { showsFreeCredit } from '@/lib/plan-config';
 import { isDemoOrgSlug } from '@/lib/demo-org';
 import { tournamentToday } from '@/lib/timezone';
-import { isPublicFrameOn, publicFrameBandFacts, publicTournamentContactEmail } from '@/lib/public-frame-server';
+import { publicFrameBandFacts, publicTournamentContactEmail } from '@/lib/public-frame-server';
 import { publicFrameAttr, publicFrameBand, publicFrameHost, publicFrameRoleCss } from '@/lib/public-frame';
 import TournamentBand from '@/components/public/TournamentBand';
 import TournamentFooter from '@/components/public/TournamentFooter';
@@ -36,12 +26,6 @@ export default async function TournamentPreviewLayout({
   const { orgSlug, tournamentSlug } = await params;
   const { org, tournament } = await getTournamentPreviewContext(orgSlug, tournamentSlug);
   const themeVars = buildPublicThemeCssVars(org, tournament);
-  const colorMode = getPreviewColorMode(org, tournament);
-  const lightModeVars = colorMode === 'light' ? buildPublicLightModeCssVars() : null;
-  const cardStyle = getPreviewCardStyle(org, tournament);
-  const navOrg = canUseAdvancedTournamentBranding(org)
-    ? { ...org, logoUrl: tournament.logoUrl ?? org.logoUrl }
-    : { ...org, logoUrl: undefined, heroBannerUrl: undefined };
   // Bracket-only tournaments have no round-robin standings — hide that nav tab,
   // matching the live public layout (the preview nav otherwise can't detect this
   // because it only receives the hidden-pages list, not the tournament settings).
@@ -50,102 +34,56 @@ export default async function TournamentPreviewLayout({
     : (tournament.publicHiddenPages ?? []);
   const previewBase = `/${orgSlug}/admin/tournaments/preview/${tournamentSlug}`;
 
-  // Public tournament pages Stage 1 Part 2: the organizer's preview follows the same preview switch as the live pages
-  // (lib/public-frame.ts — the one helper), so it shows the frame exactly when the live page would. Off: today's preview.
-  if (await isPublicFrameOn()) {
-    // Public tournament pages Stage 6 (Ask 14): same facts the live layout computes, same skip-when-hidden rule — one read
-    // shared with the Branding page's Look card preview (lib/public-frame-server.ts).
-    const [{ registrationOpen, frameContent }, orgHomeHref, contactEmail] = await Promise.all([
-      publicFrameBandFacts(tournament, {
-        register: hiddenPages.includes('register') || runsInviteOnlyEvents(org.planId),
-        news: hiddenPages.includes('news'),
-        rules: hiddenPages.includes('rules'),
-      }),
-      resolveOrgHomeHref(org).catch(() => null),
-      publicTournamentContactEmail(tournament.id, org.contactEmail ?? null).catch(() => null),
-    ]);
-    const band = publicFrameBand(org, tournament, tournamentToday(), registrationOpen);
-    const host = publicFrameHost(org.name, tournament.name, orgHomeHref);
-    return (
-      <>
-        <style dangerouslySetInnerHTML={{ __html: `:root { ${themeVars} }` }} />
-        <style dangerouslySetInnerHTML={{ __html: publicFrameRoleCss(band.roles) }} />
-        {/* The live frame's one outer element, its marker and token block; data-live-chrome too, since under the frame
-            the preview has the band that the in-page titles would repeat (preview ↔ live parity). */}
-        <div className={`${clubFrameStyles.tokens} ${frameStyles.frame}`} data-club-face={band.face} {...publicFrameAttr}>
-          {/* No card style under the frame (Ask 11), as on the live page: the marker stays 'default' for the light wrapper rule. */}
-          <div className={`${railStyles.shell} ${frameStyles.deskShell}`} data-card-style="default" data-color-mode="light" data-live-chrome="">
-            <TournamentBand
-              orgSlug={orgSlug}
-              tournamentSlug={tournamentSlug}
-              name={tournament.name}
-              logoUrl={band.logoUrl}
-              initials={band.initials}
-              dates={band.dates}
-              status={band.status}
-              hiddenPages={hiddenPages}
-              hasBracket={false}
-              host={host}
-              frameContent={frameContent}
-              basePath={previewBase}
-            />
-            <TournamentSideRail basePath={previewBase} heading={tournament.name} colorMode="light" hiddenPages={hiddenPages} frameContent={frameContent} />
-            <div className={frameStyles.main}>{children}</div>
-            <TournamentFooter
-              name={tournament.name}
-              contactEmail={contactEmail}
-              host={host}
-              hiddenPages={hiddenPages}
-              hasBracket={false}
-              showCredit={!showsFreeCredit(org.planId) && !isDemoOrgSlug(orgSlug)}
-              basePath={previewBase}
-              frameContent={frameContent}
-            />
-          </div>
-        </div>
-        <PreviewExitPill dashboardHref={`/${orgSlug}/admin/tournaments/dashboard`} />
-      </>
-    );
-  }
-
+  // Public tournament pages Stage 6 (Ask 14): the same facts the live layout computes, the same skip-when-hidden rule — one
+  // read shared with the Branding page's Look card preview (lib/public-frame-server.ts). The preview wears the live frame.
+  const [{ registrationOpen, frameContent }, orgHomeHref, contactEmail] = await Promise.all([
+    publicFrameBandFacts(tournament, {
+      register: hiddenPages.includes('register') || runsInviteOnlyEvents(org.planId),
+      news: hiddenPages.includes('news'),
+      rules: hiddenPages.includes('rules'),
+    }),
+    resolveOrgHomeHref(org).catch(() => null),
+    publicTournamentContactEmail(tournament.id, org.contactEmail ?? null).catch(() => null),
+  ]);
+  const band = publicFrameBand(org, tournament, tournamentToday(), registrationOpen);
+  const host = publicFrameHost(org.name, tournament.name, orgHomeHref);
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: `:root { ${themeVars} }` }} />
-      {lightModeVars && (
-        <style dangerouslySetInnerHTML={{ __html: `:root { ${lightModeVars} }` }} />
-      )}
-      {/* Phase 3 preview parity: the fixed top-tab row adds ~45px below the preview top bar
-          (which reuses .nav = --nav-height) ≤900px, so seed BOTH chrome-top vars past both —
-          --nav-event-h (page-content padding) and --nav-visual-h (the sticky day-label / rail,
-          via --chrome-top-h). Derived from --nav-height (not a hardcoded 72) so it can't drift;
-          unlike the live seed there is NO ResizeObserver here to self-correct. */}
-      <style dangerouslySetInnerHTML={{ __html: `@media (max-width: 900px) { :root { --nav-event-h: calc(var(--nav-height) + 45px); --nav-visual-h: calc(var(--nav-height) + 45px); } }` }} />
-      {/* Desktop-only (≥1024px) left rail — mirrors the live public shell. Links stay
-          inside the preview (basePath) so navigation doesn't escape to the live site. */}
-      <TournamentSideRail
-        basePath={previewBase}
-        logoUrl={navOrg.logoUrl ?? null}
-        heading={tournament.name}
-        colorMode={colorMode}
-        hiddenPages={hiddenPages}
-      />
-      <div className={railStyles.shell} data-card-style={cardStyle} data-color-mode={colorMode}>
-        <TournamentPreviewNav
-          org={navOrg}
-          orgSlug={orgSlug}
-          tournamentSlug={tournamentSlug}
-          tournamentName={tournament.name}
-          colorMode={colorMode}
-          hiddenPages={hiddenPages}
-        />
-        {children}
+      <style dangerouslySetInnerHTML={{ __html: publicFrameRoleCss(band.roles) }} />
+      {/* The live frame's one outer element, its marker and token block; data-live-chrome too, since under the frame
+          the preview has the band that the in-page titles would repeat (preview ↔ live parity). */}
+      <div className={`${clubFrameStyles.tokens} ${frameStyles.frame}`} data-club-face={band.face} {...publicFrameAttr}>
+        {/* No card style under the frame (Ask 11), as on the live page: the marker stays 'default' for the light wrapper rule. */}
+        <div className={frameStyles.deskShell} data-card-style="default" data-color-mode="light" data-live-chrome="">
+          <TournamentBand
+            orgSlug={orgSlug}
+            tournamentSlug={tournamentSlug}
+            name={tournament.name}
+            logoUrl={band.logoUrl}
+            initials={band.initials}
+            dates={band.dates}
+            status={band.status}
+            hiddenPages={hiddenPages}
+            hasBracket={false}
+            host={host}
+            frameContent={frameContent}
+            basePath={previewBase}
+          />
+          <TournamentSideRail basePath={previewBase} hiddenPages={hiddenPages} frameContent={frameContent} />
+          <div className={frameStyles.main}>{children}</div>
+          <TournamentFooter
+            name={tournament.name}
+            contactEmail={contactEmail}
+            host={host}
+            hiddenPages={hiddenPages}
+            hasBracket={false}
+            showCredit={!showsFreeCredit(org.planId) && !isDemoOrgSlug(orgSlug)}
+            basePath={previewBase}
+            frameContent={frameContent}
+          />
+        </div>
       </div>
-      {/* Mobile (≤900px) section nav — Phase 3 preview parity: the same scrolling top-tab
-          row fans see live (basePath keeps links in-preview; `fixed` pins it below the
-          preview top bar). No global app bar / account / chat here — a preview shows the
-          event, not the personal app. */}
-      <TournamentTopTabs basePath={previewBase} hiddenPages={hiddenPages} fixed />
-      {/* The Flip (B14): the one exit door out of the preview back to the admin dashboard. */}
       <PreviewExitPill dashboardHref={`/${orgSlug}/admin/tournaments/dashboard`} />
     </>
   );

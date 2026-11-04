@@ -132,7 +132,7 @@ export default function PublicTeamPage({ orgSlug, tournamentSlug, teamId }: {
       if (inFlight) return;
       inFlight = true;
       try {
-        const query = new URLSearchParams({ orgSlug, tournamentSlug, teamId, publicFrame: '1' });
+        const query = new URLSearchParams({ orgSlug, tournamentSlug, teamId });
         const response = await fetch(`/api/public/team-profile?${query}`);
         if (cancelled) return;
         if (response.status === 404) { received = true; setEntry({ key, data: null, error: 'missing', now: new Date() }); return; }

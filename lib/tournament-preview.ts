@@ -2,13 +2,8 @@ import { notFound } from 'next/navigation';
 import { getAuthContextWithScope } from '@/lib/api-auth';
 import { isOrgBillingSuspended } from '@/lib/org-billing-access';
 import { getTournamentBySlug } from '@/lib/db';
-import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import { resolvePublicTournamentTheme } from '@/lib/public-tournament-theme';
 import type { Organization, Tournament } from '@/lib/types';
-
-// The light-mode CSS var block is shared with the live public layout so the two
-// can never drift. Re-exported here for the preview layout's existing import.
-export { buildPublicLightModeCssVars } from '@/lib/public-tournament-theme';
 
 export async function getTournamentPreviewContext(orgSlug: string, tournamentSlug: string): Promise<{
   org: Organization;
@@ -54,12 +49,3 @@ export function buildPublicThemeCssVars(org: Organization, tournament?: Tourname
   ].join('; ');
 }
 
-export function getPreviewCardStyle(org: Organization, tournament?: Tournament | null): string {
-  if (!canUseAdvancedTournamentBranding(org)) return 'default';
-  return tournament?.themeCardStyle ?? org.themeCardStyle ?? 'default';
-}
-
-export function getPreviewColorMode(org: Organization, tournament?: Tournament | null): 'dark' | 'light' {
-  if (!canUseAdvancedTournamentBranding(org)) return 'dark';
-  return tournament?.colorMode === 'light' ? 'light' : 'dark';
-}

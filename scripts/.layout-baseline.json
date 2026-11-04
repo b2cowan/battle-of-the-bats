@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-21T18:18:39.552Z",
+  "generated": "2026-11-04T20:36:57.963Z",
   "entries": {
     "admin-families-show|768|content-overflow|details·ShowAll families 94No family on file12Ow": {
       "reason": "Deliberate: the Show pill drawn OPEN (Club Tier Stage 5b, P1) — its list of six questions with counts hangs under the pill wider than the pill itself, as every pick-one dropdown does; it is a popover over the page, not content the page lays out (a field’s list hangs over its window, 2026-10-09).",
@@ -5485,73 +5485,13 @@
       "reason": null,
       "detail": "36px wide (floor 44) — icon-only control"
     },
-    "admin-t-preview|361|tap-floor|a·Register": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-t-preview|361|tap-floor|a·Full Schedule": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "admin-t-preview|361|tap-floor|a·uat-owner@uat-test-org.local": {
-      "reason": null,
-      "detail": "43px tall (floor 44)"
-    },
     "admin-t-preview|361|tap-floor|a·Exit preview and return to the dashboard": {
       "reason": null,
       "detail": "38px tall (floor 44)"
     },
-    "admin-t-preview|361|content-overflow|div·<div>": {
-      "reason": null,
-      "detail": "content spills 103px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-preview|361|contrast|span·Results·rgba(255, 255, 255, 0.4)on17,24,39": {
-      "reason": null,
-      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 11px"
-    },
-    "admin-t-preview|361|contrast|span·North Stars U13 Boys·rgba(255, 255, 255, 0.4)on28,35,49": {
-      "reason": null,
-      "detail": "3.70:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(28, 35, 49) at 14px"
-    },
-    "admin-t-preview|361|contrast|span·Final·rgba(255, 255, 255, 0.45)on28,35,49": {
-      "reason": null,
-      "detail": "4.30:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(28, 35, 49) at 12px"
-    },
-    "admin-t-preview|361|contrast|span·Storm U11 Girls·rgba(255, 255, 255, 0.4)on28,35,49": {
-      "reason": null,
-      "detail": "3.70:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(28, 35, 49) at 14px"
-    },
-    "admin-t-preview|361|contrast|span·Status·rgba(255, 255, 255, 0.4)on17,24,39": {
-      "reason": null,
-      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 11px"
-    },
-    "admin-t-preview-schedule|361|tap-floor|a·Register": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "admin-t-preview-schedule|361|tap-floor|a·Exit preview and return to the dashboard": {
       "reason": null,
       "detail": "38px tall (floor 44)"
-    },
-    "admin-t-preview-schedule|361|content-overflow|div·11:30 a.m.": {
-      "reason": null,
-      "detail": "content spills 5px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-preview-schedule|361|content-overflow|span·11:30 a.m.": {
-      "reason": null,
-      "detail": "content spills 5px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-preview-schedule|361|contrast|span·0/1·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 10px"
-    },
-    "admin-t-preview-schedule|361|contrast|span·Cancelled·rgb(239, 68, 68)on43,29,42": {
-      "reason": null,
-      "detail": "4.23:1 (needs 4.5:1) — rgb(239, 68, 68) on rgb(43, 29, 42) at 8px"
-    },
-    "admin-t-preview-schedule|361|contrast|span·Lions Diamond · Blue Pool·rgba(255, 255, 255, 0.4)on17,24,39": {
-      "reason": null,
-      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 9px"
     },
     "admin-t-dashboard|390|tap-floor|a·2 games to finalize": {
       "reason": null,
@@ -6269,65 +6209,13 @@
       "reason": null,
       "detail": "36px wide (floor 44) — icon-only control"
     },
-    "admin-t-preview|390|tap-floor|a·Register": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-t-preview|390|tap-floor|a·Full Schedule": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "admin-t-preview|390|tap-floor|a·uat-owner@uat-test-org.local": {
-      "reason": null,
-      "detail": "43px tall (floor 44)"
-    },
     "admin-t-preview|390|tap-floor|a·Exit preview and return to the dashboard": {
       "reason": null,
       "detail": "38px tall (floor 44)"
     },
-    "admin-t-preview|390|content-overflow|div·<div>": {
-      "reason": null,
-      "detail": "content spills 71px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-preview|390|contrast|span·Results·rgba(255, 255, 255, 0.4)on17,24,39": {
-      "reason": null,
-      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 11px"
-    },
-    "admin-t-preview|390|contrast|span·North Stars U13 Boys·rgba(255, 255, 255, 0.4)on28,35,49": {
-      "reason": null,
-      "detail": "3.70:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(28, 35, 49) at 14px"
-    },
-    "admin-t-preview|390|contrast|span·Final·rgba(255, 255, 255, 0.45)on28,35,49": {
-      "reason": null,
-      "detail": "4.30:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(28, 35, 49) at 12px"
-    },
-    "admin-t-preview|390|contrast|span·Storm U11 Girls·rgba(255, 255, 255, 0.4)on28,35,49": {
-      "reason": null,
-      "detail": "3.70:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(28, 35, 49) at 14px"
-    },
-    "admin-t-preview|390|contrast|span·Status·rgba(255, 255, 255, 0.4)on17,24,39": {
-      "reason": null,
-      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 11px"
-    },
-    "admin-t-preview-schedule|390|tap-floor|a·Register": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "admin-t-preview-schedule|390|tap-floor|a·Exit preview and return to the dashboard": {
       "reason": null,
       "detail": "38px tall (floor 44)"
-    },
-    "admin-t-preview-schedule|390|content-overflow|div·11:30 a.m.": {
-      "reason": null,
-      "detail": "content spills 5px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-preview-schedule|390|content-overflow|span·11:30 a.m.": {
-      "reason": null,
-      "detail": "content spills 5px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-preview-schedule|390|contrast|span·0/1·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 10px"
     },
     "admin-t-dashboard|768|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
@@ -7225,149 +7113,17 @@
       "reason": null,
       "detail": "36px wide (floor 44) — icon-only control"
     },
-    "admin-t-preview|768|tap-floor|a·UAT Phase 2C Plus Championship 2026": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-t-preview|768|tap-floor|a·Register": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-t-preview|768|tap-floor|a·Full Schedule": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "admin-t-preview|768|tap-floor|a·View News": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "admin-t-preview|768|tap-floor|a·uat-owner@uat-test-org.local": {
-      "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-t-preview|768|tap-floor|a·View Schedule": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
     "admin-t-preview|768|tap-floor|a·Exit preview and return to the dashboard": {
       "reason": null,
       "detail": "38px tall (floor 44)"
-    },
-    "admin-t-preview|768|content-overflow|div·<div>": {
-      "reason": null,
-      "detail": "content spills 77px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-preview|768|contrast|span·Results·rgba(255, 255, 255, 0.4)on17,24,39": {
-      "reason": null,
-      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 11px"
-    },
-    "admin-t-preview|768|contrast|span·North Stars U13 Boys·rgba(255, 255, 255, 0.4)on28,35,49": {
-      "reason": null,
-      "detail": "3.70:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(28, 35, 49) at 14px"
-    },
-    "admin-t-preview|768|contrast|span·Final·rgba(255, 255, 255, 0.45)on28,35,49": {
-      "reason": null,
-      "detail": "4.30:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(28, 35, 49) at 12px"
-    },
-    "admin-t-preview|768|contrast|span·Storm U11 Girls·rgba(255, 255, 255, 0.4)on28,35,49": {
-      "reason": null,
-      "detail": "3.70:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(28, 35, 49) at 14px"
-    },
-    "admin-t-preview|768|contrast|span·Status·rgba(255, 255, 255, 0.4)on17,24,39": {
-      "reason": null,
-      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 11px"
-    },
-    "admin-t-preview-schedule|768|tap-floor|a·UAT Phase 2C Plus Championship 2026": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-t-preview-schedule|768|tap-floor|a·Register": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-t-preview-schedule|768|tap-floor|button·Pool Play": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-t-preview-schedule|768|tap-floor|button·Playoffs": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-t-preview-schedule|768|tap-floor|input·Search team...": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
     },
     "admin-t-preview-schedule|768|tap-floor|a·Exit preview and return to the dashboard": {
       "reason": null,
       "detail": "38px tall (floor 44)"
     },
-    "admin-t-preview-schedule|768|contrast|span·0/1·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 10px"
-    },
     "admin-t-schedule|1440|type-ladder|table·Team": {
       "reason": null,
       "detail": "cells at 12.48px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)"
-    },
-    "admin-t-preview|1440|content-overflow|div·<div>": {
-      "reason": null,
-      "detail": "content spills 119px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-preview|1440|contrast|div·Live on FieldLogicHQ·rgba(255, 255, 255, 0.4)on17,24,39": {
-      "reason": null,
-      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 10px"
-    },
-    "admin-t-preview|1440|contrast|span·Results·rgba(255, 255, 255, 0.4)on17,24,39": {
-      "reason": null,
-      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 11px"
-    },
-    "admin-t-preview|1440|contrast|span·North Stars U13 Boys·rgba(255, 255, 255, 0.4)on28,35,49": {
-      "reason": null,
-      "detail": "3.70:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(28, 35, 49) at 14px"
-    },
-    "admin-t-preview|1440|contrast|span·Final·rgba(255, 255, 255, 0.45)on28,35,49": {
-      "reason": null,
-      "detail": "4.30:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(28, 35, 49) at 12px"
-    },
-    "admin-t-preview|1440|contrast|span·Storm U11 Girls·rgba(255, 255, 255, 0.4)on28,35,49": {
-      "reason": null,
-      "detail": "3.70:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(28, 35, 49) at 14px"
-    },
-    "admin-t-preview|1440|contrast|span·Status·rgba(255, 255, 255, 0.4)on17,24,39": {
-      "reason": null,
-      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 11px"
-    },
-    "admin-t-preview-schedule|1440|contrast|div·Live on FieldLogicHQ·rgba(255, 255, 255, 0.4)on17,24,39": {
-      "reason": null,
-      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 10px"
-    },
-    "admin-t-preview-schedule|1440|contrast|span·0/1·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 10px"
-    },
-    "admin-t-preview-schedule|1440|contrast|span·- 11:30 a.m.·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 12px"
-    },
-    "admin-t-preview-schedule|1440|contrast|span·Cancelled·rgb(239, 68, 68)on43,29,42": {
-      "reason": null,
-      "detail": "4.23:1 (needs 4.5:1) — rgb(239, 68, 68) on rgb(43, 29, 42) at 12px"
-    },
-    "admin-t-preview-schedule|768|contrast|span·- 11:30 a.m.·rgba(255, 255, 255, 0.45)on24,30,45": {
-      "reason": null,
-      "detail": "4.39:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(24, 30, 45) at 11px"
-    },
-    "admin-t-preview-schedule|768|contrast|span·Cancelled·rgb(239, 68, 68)on49,35,48": {
-      "reason": null,
-      "detail": "3.92:1 (needs 4.5:1) — rgb(239, 68, 68) on rgb(49, 35, 48) at 8px"
-    },
-    "admin-t-preview-schedule|390|contrast|span·Cancelled·rgb(239, 68, 68)on43,29,42": {
-      "reason": null,
-      "detail": "4.23:1 (needs 4.5:1) — rgb(239, 68, 68) on rgb(43, 29, 42) at 8px"
-    },
-    "admin-t-preview-schedule|390|contrast|span·Lions Diamond · Blue Pool·rgba(255, 255, 255, 0.4)on17,24,39": {
-      "reason": null,
-      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 9px"
     },
     "admin-hl-registrations-registrar|361|tap-floor|a·Public site": {
       "reason": null,

@@ -4,7 +4,10 @@
 (record §12; releases with the flip). **Part 3b committed `9b6252e8a` 2026-11-04** (record §13; releases with the flip). **Part 3c committed `62f5841f9` 2026-11-04**
 (record §14; releases with the flip). **Part 3d committed `33386d5df` 2026-11-04** (record §15; releases with the flip; the
 switch-off half-state ends for every public tournament page). **The public feed fix committed `55045ecf4` 2026-11-04** (record §16; its own change,
-releasable on its own; it does not cherry-pick onto production — §16 handed on). Next: Part 4. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
+releasable on its own; it does not cherry-pick onto production — §16 handed on). **Part 4 split (owner 2026-11-04): Part 4a (the public side —
+the pay page, the admin preview's old chrome, the old tab row and rail, the Rules layout menus, the team page's flag) built 2026-11-04, not yet
+committed** (record §17; releases with the flip). Next: Part 4b (the admin side, then the switch itself; build prompt
+`PUBLIC_TOURNAMENT_STAGE8_PART4B_BUILD_PROMPT.md`). Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
 **Sequencing rule (standing):** by dependency and rework risk, never by date. One part per session, `/clear` between.
@@ -1000,3 +1003,128 @@ hidden), the team-profile caller.
   and the old Register/News 36 px doors; the playoff-bracket and fan-live-score marketing shots (5e); the two stale `/The bracket/`
   screens and the expired Stage 3 / Stage 4 fixtures; white text on team-colour fills in the share images (advisory); the admin
   strip's 34 px "Dismiss"; `/release` §1d-2's sharp probe; the club editor's unlabelled 18 px input.
+
+## 17. Part 4a record (the public side of the switch's removal; built 2026-11-04, not yet committed — releases with the flip)
+
+**What a customer sees:** nothing (nothing promoted). **An owner on dev, switch on (the default):** nothing on a public page;
+the organizer's **Rules & resources** page has no "Layout" menu on either card. **Switch off (the preview link's `off`):**
+the public pages, the pay page and the admin preview now all wear the frame whatever the cookie says — the pay page's heading
+is "Team payment" with the organizer's contact line, and the preview has the band, the white rail and the footer, never the
+old dark bar. What the switch still changes, until 4b: the **Branding page** (the four old cards and the Look card's band
+preview) and the **public-site editor** (its tournament-look part and typed colour codes) — a dev-only admin half-state
+(the review's blast-radius finding), accepted by the split. ⚠ Not promotable before Parts 4b–6 (§5).
+
+**Owner rulings in-session (2026-11-04), all as recommended:** Q1 **split Part 4**: 4a the public side (this), 4b the
+admin side then the switch itself (build prompt `PUBLIC_TOURNAMENT_STAGE8_PART4B_BUILD_PROMPT.md`). Q2 **remove both Rules
+layout menus** and stop accepting their keys; keep the stored values (like ask C). Q3 **production losses accepted as
+ruled** (asks A/B: Dark/Light, the hero banner photo, the per-tournament font, card style; plus the Rules menus): no
+production count.
+
+**Where the brief was wrong, argued from the code (said before building):** (a) *"delete `lib/public-frame.ts` and
+`lib/public-frame-server.ts`"* would break every public page — they also hold the frame's live helpers (`publicFrameAttr`,
+`publicFrameBand`, `publicFrameHost`, `publicFrameRoleCss`, `publicTournamentContactEmail`, `publicFrameBandFacts`); only the
+cookie pieces go (4b). (b) *"~29 stylesheets carrying switch rules"*: 18 carry `data-public-frame`, and nearly all of it is
+the frame's live look (the marker is on every live page); four sheets held rules that can never match (below). (c) *"move
+the tournament facts out of the root context, if small"*: not small — the installed app's bottom bar (`ConsumerNav`,
+mounted by the root layout outside the tournament layout) needs `tournamentId`; moving half would leave two channels.
+**Recorded, not done.** What WAS dead there is gone (below).
+
+**What changed.**
+- Pay page: `isPublicFrameOn` and `focused` gone; the contact is always looked up (it already was on dev, switch on);
+  `TeamPayContent` always renders the focused heading, the contact line rule (A1/A2 unchanged), no `page-content` floor.
+  `PayPageView.tournamentName` (the old eyebrow, its one reader) dropped.
+- Admin preview layout: the frame branch only — the old dark top bar (`TournamentPreviewNav` + its sheet), the old tab row
+  (`TournamentTopTabs` default skin + `fixed` + its whole sheet), the light-mode `:root` block (`buildPublicLightModeCssVars`,
+  no caller since 3d), `getPreviewColorMode`/`getPreviewCardStyle`, the `navOrg` logo juggling — all deleted.
+- `TournamentTopTabs`: one look, no `skin`/`fixed` (the band stops passing `skin`). `lib/tournament-page-tabs.ts`: the tab
+  list carries no icons (its last two icon consumers went).
+- `TournamentSideRail`: links only — no identity header/crumb/logo/name, no icons, no "Live on FieldLogicHQ" line (all
+  hidden or never drawn under the frame), no `logoUrl`/`heading`/`colorMode` props, no nav-context read; its sheet keeps the
+  marker-keyed rules and the bare hooks, `.shell` gone (both layouts drop the class; the desk grid places the rail).
+- Nav context: the org's name/logo/home link and the tournament's name had one reader, the rail's hidden header — removed
+  with `OrgNavSync` (its three mounts: the org layout, the tournament layout, the public-site editor's logo updates) and
+  `TournamentNavSync`'s `name`. What stays: `tournamentId` (the flip pill, the app bar), the dates and status (today's line).
+- Rules & resources: both Layout menus, their state, save, words and `.tool` sizing; the tournaments API's settings
+  allow-list no longer accepts `rulesLayout`/`resourcesLayout` (a stale write is dropped); the type marks them RETIRED.
+- Team page: `publicFrame=1` no longer sent; the team-profile route stops sending `poolRank`, `poolRankLabel`,
+  `isChampion` (no reader anywhere) and stops computing the pool name and a top-N "playoff spot" the contract overwrote
+  (`teamProfilePreview` supplies both through the ruled advancing rule). The runner-up fact is unchanged.
+- Stylesheets: deleted rules that can never match — the club home sheet's `[data-public-frame]` and `[data-live-chrome]`
+  blocks (its only importer is the club's own home page), the preview exit pill's (it mounts beside the frame), the
+  rep-team subscribe panel's (outside the tournament layout), the news badge's (no renderer); `Navbar.module.css`'s old bar
+  classes (`.nav`, `.inner`, `.logo`, `.logoImg`, `.orgName`, `.links`, `.link`, `.actions` and their media rules — only the
+  preview bar used them); stale `globals.css` comments.
+- `scripts/layout-screens.mjs`: the two admin-preview screens wait for the band (`[data-public-frame-band]`), not an `h1` —
+  the frame draws no page heading, so they could not render on dev since Stage 1 Part 2; now measured.
+
+**Importer checks (grep re-run before each deletion; nothing outside the deleted set):** `TournamentPreviewNav.tsx` + sheet
+(only the preview's old branch), `TournamentTopTabs.module.css` (only the old skin), `OrgNavSync.tsx` (three mounts, all
+write-only), `buildPublicLightModeCssVars` / `getPreviewColorMode` / `getPreviewCardStyle` (only the preview's old branch),
+the Navbar classes (`Navbar.tsx` uses only `marketing*`/`bottomNav*`), the rail classes, `TOURNAMENT_PAGE_TABS[].Icon`, the
+RULES_WORDS layout keys. Two comments elsewhere named `OrgNavSync` as a pattern (CoachPortalShell, SandboxChrome) — fixed.
+Dead-code report (`knip@5`): none of this part's files listed; nothing it deleted is still imported.
+
+**Tests (rewritten, not deleted):** Stage 1 frame guard (the preview always wears the frame and its old half's files are
+gone; the rail is links only and the old rail CSS gone; the context has no identity fields and `OrgNavSync` is gone;
+the band passes no skin and hands the row its `basePath`; a sheet whose classes never render in the frame carries no
+frame rule — `importersOf`, a local resolved-import finder; **NEW census: who still reads the switch** — exactly the two
+admin routes, the setter and the two definition files, across app/components/lib/scripts/proxy, names or the literal
+cookie), focused page (the pay page is focused for everyone; no switch, no floor, no tournament-name eyebrow), club frame
+guard (one tab-row look), Stage 5 guard (the team page sends no flag; the route sends nothing unread), tournament look (no
+`OrgNavSync`; the preview's shell), Stage 5 settings (no Layout menus, words, API keys; the readers census), Stage 6 review
+(the context mock is empty: any field read fails), playoff plan (the playoff spot is the contract's rule), the team-profile
+fixture. **Non-vacuity by mutation, 33 of 33** (each old behaviour put back, the test watched fail, restored, every file's
+sha1 identical after): the pay page reading the switch / the tournament-name eyebrow / the page floor; the preview's old
+bar / switch read; the light-mode block and the preview helpers back; the rail reading the context / drawing an icon /
+its header and page padding back; the rail shell back in the layout; the club home's frame and live-chrome rules; the exit
+pill's, the subscribe panel's and the news badge's rules; the context's org name; an org sync in the org layout, the
+public-site editor and the tournament layout; the tab row's `fixed`; the band's `skin`; the band dropping `basePath`; a
+Rules Layout menu; the API accepting the key; a layout word; a component reading the retired key; the team page's flag;
+the route's pool-rank label; a rail render reading the context; a new switch reader; the cookie spelled out by hand.
+
+**Checks run:** touched + neighbouring unit files 512/512 (`demo-destinations-guard` included — the tour's anchors
+survive); full `npm test` 13,868 — **7 failures, all other sessions' and recorded in §16** (Stage 6 walk HTML ×3, support
+console foot, billing ended state, practice-plan door N1, series date-removal taps); one of mine found and fixed (the
+playoff-plan test pinned the route's top-N copy). Typecheck (`NODE_OPTIONS=--max-old-space-size=6144`) clean, whole project.
+ESLint clean on every changed file (two pre-existing warnings in `team-profile/route.ts` and `lib/types.ts`). Spelling,
+public tokens, CSS purity: pass. Public type: `Navbar.module.css` left the baseline (its heavy/caps/face were the old bar's)
+— entry removed BY HAND. CSS selectors: exactly the foreign 4 + 10 (§15). `check-demos` fails on another session's missing
+`lib/tournament-teams` (§16).
+
+**Layout** (`check-layout-invariants.mjs --only=`, 4 widths, `--workers=1`, dev server): **0 new findings** on
+`pubt-schedule-pale`, `-overview-long`, `-playoffs-pale`, `-team-own`, `-rules-pale`, `-pay-focused`, `admin-t-rules`
+(its baselined findings are the admin strip's 34 px "Dismiss", owed since §11), `admin-public-site-look`, and — newly
+measurable — `admin-t-preview` and `-schedule`; `admin-t-branding`, `-branding-look`, `admin-public-site` @1440 clean.
+**Baseline pruned: 61 `admin-t-preview*` entries** that no longer reproduce (the old dark preview's contrast and tap-floor
+rows, recorded 2026-10-21) — `--prune` scoped by `--only` to those two screens, nothing else touched. The first batch's
+preview screens timed out on the `h1` wait (above) and the run neared the memory floor; the dev server was restarted
+(deleted files) and the preview re-run alone. After the restart the login page, an Overview, Schedule, Register, Playoffs,
+Rules, Teams, the pay page and two club homes answer 200; the Branding page and editor render signed in.
+
+**`/simplify`:** not run — no new abstraction in product code (the one new helper, `importersOf`, is local to a test).
+**`/review`** (high-risk tier: `lib/**`, the org layout, `globals.css`, the shared Navbar sheet, a public endpoint; lenses
+correctness, regression/blast-radius (mandatory), data & contract + privacy, test non-vacuity): **no defect in the code.**
+Confirmed clean: the preview equals the old frame branch; the rail/tab row/pay page behave as before with the switch on;
+the team profile's response is a superset of every reader's needs and held-back teams stay withheld; a hidden organizer
+contact stays hidden on the pay page; no surviving reference to any deleted file, export, prop, class or field (code,
+tests, UAT, scripts, shots, tour anchors, baselines). Acted on (test gaps): the census walks widened (components `.ts`,
+scripts, proxy, the literal cookie); `importersOf` sees bare and dynamic imports; the playoff-plan test reads code without
+comments; four over-pinned patterns loosened; the band's `basePath` hop pinned (unpinned since Stage 1). Recorded: the
+admin half-state (above, 4b); the pay page's contact read now runs for every view (as on dev today; cached with the
+footer's); an open old team-page tab loses the dropped fields until reload (no reader).
+
+**Handed on:**
+- **Part 4b** (build prompt written): the Branding page's old half and API legacy fields (+ make only the Branding page pay
+  for the band-facts read — event settings and the setup wizard share the route), the hero-banner route and the dashboard's
+  banner term (owner ask: count a chosen type look too?), the copy lists (dead columns; the retired Rules keys still
+  travel with a copied event's rules), the public-site editor's `frameOn`/`hex`, then the cookie, its reader, the setter
+  route, the preview-link lines, the stale "behind the preview switch" comments (incl. `lib/public-frame.ts`'s header and
+  `layout-screens.mjs` ~1891), and the census test's list → empty.
+- **Part 5c (`/docs`), add to its list:** the Rules & resources guide still describes the Layout menus
+  (`lib/help-content/tournaments.tsx` ~397: "Each card's Layout sets how the public page lays it out…") — the control is gone.
+- **Recorded, not done:** moving `tournamentId`/dates/status out of the root context (needs a root channel for the app bar).
+- `Home.module.css` (club home) still carries the old Overview's other classes (pre-event panel, countdown…) — whether the
+  club home uses them is a club-home question, not this switch's; `.featuredBadge`'s base rule is baselined dead.
+- Still owed, not this part: as §16 (production port of the feed fix; the service worker's `CACHE_VERSION`; the News/
+  Overview held-back-division post; the demo chrome's tap floors; the old Register/News 36 px doors; 5e's shots; the admin
+  strip's 34 px "Dismiss"; `/release` §1d-2's sharp probe; the club editor's unlabelled 18 px input).

@@ -17,7 +17,6 @@
  */
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { ImageIcon, Library, Upload } from 'lucide-react';
-import { useOrgNav } from '@/components/OrgNavContext';
 import StockLogoWindow from '@/components/admin/kit/club/StockLogoWindow';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { LookPill, LookSwatches, LookTypeTiles } from '@/components/admin/kit/club/LookControls';
@@ -87,7 +86,6 @@ export default function LookPanel({ org, orgSlug, run, onChanged, readOnly = fal
   /** After a save: the org is read again and the preview redrawn. */
   onChanged: () => Promise<void>;
 }) {
-  const { setOrgNav } = useOrgNav();
   const query = `?orgSlug=${encodeURIComponent(orgSlug)}`;
   const logoInput = useRef<HTMLInputElement>(null);
   const bannerInput = useRef<HTMLInputElement>(null);
@@ -125,10 +123,7 @@ export default function LookPanel({ org, orgSlug, run, onChanged, readOnly = fal
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
-        const data = await res.json().catch(() => ({})) as { logoUrl?: string | null };
         if (!res.ok) throw new Error(W.lookFailed);
-        // A stock logo is made in the main colour, so a new colour can come back as a new logo.
-        if (data.logoUrl !== undefined && data.logoUrl !== (org.logoUrl ?? null)) setOrgNav(data.logoUrl ?? null, org.name);
         await onChanged();
       } finally {
         setPicked(p => {
@@ -170,15 +165,14 @@ export default function LookPanel({ org, orgSlug, run, onChanged, readOnly = fal
   };
 
   /** One image's change — an upload or a removal — one at a time through the editor's queue, then the org read again. */
-  function change(kind: ImageKind, init: RequestInit, afterOk: (data: { logoUrl?: string }) => void) {
+  function change(kind: ImageKind, init: RequestInit) {
     void run(async () => {
       setRefusal(null);
       setBusy(kind);
       try {
         const res = await fetch(`/api/admin/${IMAGE[kind].route}${query}`, init);
-        const data = await res.json().catch(() => ({})) as { error?: string; logoUrl?: string };
+        const data = await res.json().catch(() => ({})) as { error?: string };
         if (!res.ok) { setRefusal({ kind, text: data.error ?? W.lookFailed }); throw new Error(data.error ?? W.lookFailed); }
-        afterOk(data);
         await onChanged();
       } finally {
         setBusy(null);
@@ -197,10 +191,10 @@ export default function LookPanel({ org, orgSlug, run, onChanged, readOnly = fal
     }
     const body = new FormData();
     body.append('file', file);
-    change(kind, { method: 'POST', body }, data => { if (kind === 'logo') setOrgNav(data.logoUrl ?? null, org.name); });
+    change(kind, { method: 'POST', body });
   }
 
-  const remove = (kind: ImageKind) => change(kind, { method: 'DELETE' }, () => { if (kind === 'logo') setOrgNav(null, org.name); });
+  const remove = (kind: ImageKind) => change(kind, { method: 'DELETE' });
 
   // The club's bar as families see it — below the desk width that holds the preview (a phone, a narrow window).
   const strip = (
@@ -302,9 +296,8 @@ export default function LookPanel({ org, orgSlug, run, onChanged, readOnly = fal
           planId={org.planId}
           theme={{ preset: org.themePreset, primary: org.themePrimary, accent: org.themeAccent }}
           onClose={() => setStockOpen(false)}
-          onPicked={url => {
+          onPicked={() => {
             setStockOpen(false);
-            setOrgNav(url, org.name);
             void run(onChanged, W.lookFailed);
           }}
         />

@@ -7,6 +7,7 @@ import { BRACKET_WORDS } from '../../lib/schedule-words.ts';
 import { qualificationCaption, standingsAdvancing } from '../../lib/public-standings.ts';
 import type { Division, Game, PlayoffConfig, Tournament } from '../../lib/types';
 import type { DivisionStandingRow } from '../../lib/tie-breakers.ts';
+import { readCode } from './_source-code.ts';
 
 /**
  * Tournament admin redesign, Stage 3 addendum — A63 (ruled 2026-10-12): the division's playoff PLAN is saved with the
@@ -84,9 +85,11 @@ describe('every reader: no plan = no cut line, no "Top N advance"', () => {
     assert.deepEqual([...standingsAdvancing(tournament, planned, rows)], ['a', 'b']);
   });
   test('a team\'s public page: no playoff spot without a count', () => {
-    const s = src('app/api/public/team-profile/route.ts');
-    assert.match(s, /const teamsQualifying = division\.playoffConfig\?\.teamsQualifying \?\? null;/);
-    assert.match(s, /teamsQualifying !== null && poolRank !== null && poolRank <= teamsQualifying/);
+    // The page's answer is the contract's, through the one advancing rule (which draws no line without a count — the
+    // test above). The route's own top-N copy never reached the page (the contract overwrote it); it went in Stage 8
+    // Part 4a, so a second rule cannot drift from this one.
+    assert.match(readCode('lib/public-team-profile.ts'), /inPlayoffSpot: standingsShown && standingsAdvancing\(/);
+    assert.doesNotMatch(readCode('app/api/public/team-profile/route.ts'), /teamsQualifying|inPlayoffSpot|poolRank/);
   });
   test('the Bracket view\'s caption is the format alone', () => {
     assert.equal(BRACKET_WORDS.caption('Single elimination', 0, true), 'Single elimination');

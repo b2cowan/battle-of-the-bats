@@ -1735,11 +1735,12 @@ export const SCREENS = [
   { id: 'admin-t-settings-members', area: 'tournaments', session: 'orgOwner', ready: 'h1',
     path: (c) => `/${c.tournOrgSlug}/admin/tournaments/settings/members?tournamentId=${c.tournamentId}`,
     identityMask: ['[class*="tableWrap"]'] },
-  // The admin's PREVIEW of the public pages — org-branded by ruling (R2), so slice 1 must leave it
-  // looking exactly like this with the switch ON as well as off.
-  { id: 'admin-t-preview', area: 'tournaments', session: 'orgOwner', ready: 'h1',
+  // The admin's PREVIEW of the public pages — org-branded by ruling (R2). It wears the public frame (the only look since
+  // Stage 8 Part 4a), which draws no page heading — the band carries the name — so it waits for the band, as the public
+  // tournament screens do.
+  { id: 'admin-t-preview', area: 'tournaments', session: 'orgOwner', ready: '[data-public-frame-band]',
     path: (c) => `/${c.tournOrgSlug}/admin/tournaments/preview/${c.tournamentSlug}` },
-  { id: 'admin-t-preview-schedule', area: 'tournaments', session: 'orgOwner', ready: 'h1',
+  { id: 'admin-t-preview-schedule', area: 'tournaments', session: 'orgOwner', ready: '[data-public-frame-band]',
     path: (c) => `/${c.tournOrgSlug}/admin/tournaments/preview/${c.tournamentSlug}/schedule`,
     route: 'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]' },
   // The schedule's surfaces behind a control (slice 4c; Stage 3) — see `pickTournamentScheduleView` above. The rain

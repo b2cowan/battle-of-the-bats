@@ -219,10 +219,12 @@ describe('the gate, the band and the doors (source guards)', () => {
     assert.match(live, /data-club-face=\{frameBand\.face\}/);
     assert.match(live, /data-card-style="default"/);
     assert.doesNotMatch(live, /cardStyle|themeCardStyle/);
-    assert.match(live, /logoUrl=\{frameBand\.logoUrl\}\s+orgName=\{org\.name\}/, 'the nav context gets the one rule\'s mark');
+    // The mark reaches the band only (the nav context's copy had one reader, the old rail's hidden header: Part 4a).
+    assert.match(live, /logoUrl=\{frameBand\.logoUrl\}/);
+    assert.doesNotMatch(live, /OrgNavSync/);
     const preview = readCode('app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/layout.tsx');
     assert.match(preview, /data-club-face=\{band\.face\}/);
-    assert.match(preview, /deskShell\}`\} data-card-style="default" data-color-mode="light"/);
+    assert.match(preview, /className=\{frameStyles\.deskShell\} data-card-style="default" data-color-mode="light"/);
     // The org layout's wrapper still carries the org's style: every card variant excludes a frame card.
     const css = readCode('app/globals.css');
     for (const v of ['glass', 'outlined', 'flat']) {

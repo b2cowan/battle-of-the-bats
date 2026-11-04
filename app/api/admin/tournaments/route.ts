@@ -707,8 +707,8 @@ export const POST = withObservability(async (req: Request) => {
       // Whitelist known settings keys so arbitrary data can't be injected.
       const ALLOWED_SETTINGS_KEYS = new Set([
         'format',
-        'rulesLayout',
-        'resourcesLayout',
+        // (`rulesLayout` / `resourcesLayout` are retired: the public Rules page never read them, and their menus went in
+        // Public tournament pages Stage 8 Part 4a. Stored values stay; a write of either is now dropped here.)
         'game_duration_minutes',
         'buffer_minutes',
         'schedule_travel_venue_buffer_minutes',
@@ -743,8 +743,6 @@ export const POST = withObservability(async (req: Request) => {
         'roster_max_players',
       ]);
       const FORMAT_VALUES           = new Set<string>(TOURNAMENT_FORMAT_VALUES);
-      const RULES_LAYOUT_VALUES     = new Set(['columns', 'single']);
-      const RESOURCES_LAYOUT_VALUES = new Set(['list', 'grid']);
       const GAME_TIMING_SCOPE_VALUES  = new Set(['tournament', 'allow_override', 'per_division']);
       const TIE_BREAKER_SCOPE_VALUES  = new Set(['tournament', 'allow_override', 'per_division']);
       const FEE_SCOPE_VALUES          = new Set(['tournament', 'allow_override', 'per_division', 'free']);
@@ -754,8 +752,6 @@ export const POST = withObservability(async (req: Request) => {
       for (const [k, v] of Object.entries(data.settings as Record<string, unknown>)) {
         if (!ALLOWED_SETTINGS_KEYS.has(k)) continue;
         if (k === 'format'          && !FORMAT_VALUES.has(String(v))) continue;
-        if (k === 'rulesLayout'     && !RULES_LAYOUT_VALUES.has(String(v))) continue;
-        if (k === 'resourcesLayout' && !RESOURCES_LAYOUT_VALUES.has(String(v))) continue;
         if (k === 'game_duration_minutes') {
           const n = Number(v);
           if (!Number.isInteger(n) || n < 1 || n > 600) continue;

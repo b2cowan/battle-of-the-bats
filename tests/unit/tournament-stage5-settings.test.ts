@@ -16,6 +16,7 @@ import {
   QUESTION_WORDS, RULES_WORDS, archiveQuestion, deleteResourceQuestion, deleteSectionQuestion, questionCaption,
   resourceCaption, sectionCaption,
 } from '../../lib/tournament-settings-words.ts';
+import { filesUnder, readCode } from './_source-code.ts';
 
 const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const code = (p: string) => read(p).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
@@ -109,13 +110,23 @@ describe('order: the portal\'s reorder standard (owner 2026-10-12, superseding A
     assert.doesNotMatch(read('components/admin/kit/club/RepKit.module.css'), /\.rowGrip \{ display: none; \}/);
     assert.doesNotMatch(read(`${RULES}/rules.module.css`), /\.pointGrip \{ display: none; \}/);
   });
-  it('each card carries its own Layout, absent while the card is empty — no shared Tools (owner, 2026-10-12)', () => {
+  it('no card offers a Layout: the public Rules page never read one (Stage 8 Part 4a, owner 2026-11-04)', () => {
     const src = code(`${RULES}/RulesAdmin.tsx`);
-    assert.match(src, /const rulesLayoutMenu = layoutMenu\(W\.rulesLayout, <>\s*<CoachToolbarMenuItem[^\n]*chooseLayout\('rulesLayout', 'single'\)/);
-    assert.match(src, /const resourcesLayoutMenu = layoutMenu\(W\.resourcesLayout, <>\s*<CoachToolbarMenuItem[^\n]*chooseLayout\('resourcesLayout', 'list'\)/);
-    assert.match(src, /\{rules\.length > 0 && rulesLayoutMenu\}\{addButton\(W\.addSection/);
-    assert.match(src, /\{resources\.length > 0 && resourcesLayoutMenu\}\{addButton\(W\.addResource/);
-    assert.doesNotMatch(src, /W\.tools\b/);
+    assert.doesNotMatch(src, /layoutMenu|chooseLayout|rulesLayout|resourcesLayout|CoachToolbarMenu|W\.tools\b/);
+    // Each card's head is its add, nothing else.
+    assert.match(src, /actions=\{addButton\(W\.addSection, \(\) => setOpenSection\('new'\)\)\}/);
+    assert.match(src, /actions=\{addButton\(W\.addResource, \(\) => setOpenResource\('new'\)\)\}/);
+    assert.doesNotMatch(code('lib/tournament-settings-words.ts'), /rulesLayout|resourcesLayout|oneColumn|twoColumns|aList|layoutFailed|onPublicSite/);
+    assert.doesNotMatch(read(`${RULES}/rules.module.css`), /\.tool\b/);
+    // The save path drops a write of either key (the stored values stay, unread — like ask C's columns).
+    const api = code('app/api/admin/tournaments/route.ts');
+    assert.doesNotMatch(api, /'rulesLayout'|'resourcesLayout'|RULES_LAYOUT_VALUES|RESOURCES_LAYOUT_VALUES/);
+    // …and nothing outside the copy lists (lib/db.ts) and the retired type reads them: the public Rules page never did.
+    // (Part 4b may trim the copy lists; then this list shrinks to the type.)
+    const readers = [...filesUnder('app', '.tsx'), ...filesUnder('app', '.ts'), ...filesUnder('components', '.tsx'),
+      ...filesUnder('components', '.ts'), ...filesUnder('lib', '.ts'), ...filesUnder('lib', '.tsx')]
+      .filter(f => /rulesLayout|resourcesLayout/.test(readCode(f)));
+    assert.deepEqual(readers.sort(), ['lib/db.ts', 'lib/types.ts']);
   });
   it('each card has its own Start from a sample, and its window offers that card\'s kind only (owner, 2026-10-12)', () => {
     const src = code(`${RULES}/RulesAdmin.tsx`);

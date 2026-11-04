@@ -46,7 +46,6 @@ export interface PayPageView {
   kind: PayPageKind;
   message: string | null;
   clubName: string;
-  tournamentName: string;
   teamName: string;
   divisionName: string | null;
   testMode: boolean;
@@ -82,7 +81,7 @@ export interface PayPageView {
 }
 
 const blank = (message: string): PayPageView => ({
-  kind: 'invalid', message, clubName: '', tournamentName: '', teamName: '', divisionName: null, testMode: false, payerEmail: null,
+  kind: 'invalid', message, clubName: '', teamName: '', divisionName: null, testMode: false, payerEmail: null,
   feePaidByPayer: false, refundPolicy: null, howToPay: null, choices: [], preselected: null, savingCents: null, savingBankCents: null,
   debit: null, clearingBalance: null, clubContact: null, totalPaidCents: 0,
   schedule: { totalCents: null, totalDue: null, depositCents: null, depositDue: null }, receipts: [],
@@ -152,7 +151,6 @@ export async function buildTeamPayView(token: string, at?: { orgSlug: string; to
     kind,
     message: kind === 'refused' ? refusalMessage(f) : null,
     clubName: f.org.name,
-    tournamentName: f.tournament.name,
     teamName: f.teamName,
     divisionName: f.divisionName,
     testMode: f.account ? !f.account.livemode : false,

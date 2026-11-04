@@ -35,8 +35,10 @@ describe('Stage 6 review: navigation agrees before effects or a saved context ex
     const load = componentLoader({
       'next/navigation': { useParams: () => ({ orgSlug: 'club', tournamentSlug: 'cup' }) },
       '@/lib/use-public-pathname': { useOrgHref: () => (path = '') => `/club${path}`, usePublicPathname: () => '/club/cup/champions' },
-      // Stage 8 Part 3d: the tab facts left the nav context; any surface that still reached for one there fails here.
-      '@/components/OrgNavContext': { useOrgNav: () => new Proxy({ logoUrl: null, orgName: '', orgHomeHref: null, tournamentName: null } as Record<string, unknown>, {
+      // Stage 8 Part 3d: the tab facts left the nav context; Part 4a: the rail's identity fields did too, so no surface
+      // here needs a field from it — any field one reached for fails here (the context's own type is pinned by the
+      // Stage 1 frame guard).
+      '@/components/OrgNavContext': { useOrgNav: () => new Proxy({} as Record<string, unknown>, {
         get(ctx, key) {
           if (typeof key === 'string' && !(key in ctx)) throw new Error(`reads ${key} from the nav context`);
           return ctx[key as string];
@@ -53,7 +55,7 @@ describe('Stage 6 review: navigation agrees before effects or a saved context ex
     };
     const keys = (html: string) => [...html.matchAll(/href="([^"#]+)"/g)].map(m => m[1].split('/').at(-1))
       .filter(key => ['champions', 'news', 'schedule', 'standings', 'playoffs', 'teams', 'rules', 'register'].includes(key!));
-    const top = keys(render('TournamentTopTabs', { ...shared, skin: 'frame' }));
+    const top = keys(render('TournamentTopTabs', shared));
     const rail = keys(render('TournamentSideRail', shared));
     const footer = keys(render('TournamentFooter', { ...shared, name: 'Cup', contactEmail: null, host: null, showCredit: false }));
     assert.deepEqual(top, ['champions', 'schedule', 'standings', 'playoffs', 'teams', 'register']);

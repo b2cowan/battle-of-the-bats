@@ -1,35 +1,28 @@
-import { Megaphone, Calendar, Trophy, GitFork, Users, ScrollText, Crown, UserPlus, type LucideIcon } from 'lucide-react';
 import type { PublicPageKey } from './public-pages';
 import type { Division } from './types';
 
 /**
- * Canonical order + label + icon for a tournament's public page nav — the single
- * source consumed by every surface that renders those tabs: the desktop side rail,
- * the mobile top-tab row, the admin-preview bottom bar, and the tablet top-bar
- * links. Filter against the tournament's hidden pages at each call site; the landing
- * "Overview" tab is NOT here (it isn't a PublicPageKey and is never hideable — each
- * surface renders it explicitly). Register is intentionally absent (CTA-only).
+ * Canonical order + label for a tournament's public page nav — the single source consumed by every surface that
+ * renders those tabs: the band's tab row, the desktop side rail and the footer's page list. Filter against the
+ * tournament's hidden pages at each call site; the landing "Overview" tab is NOT here (it isn't a PublicPageKey and is
+ * never hideable — each surface renders it explicitly). Words only on every surface since the old dark rail and tab
+ * row went (Public tournament pages Stage 8 Part 4a), so the list carries no icons.
  *
- * Kept icon-carrying but plain-data so a text-only consumer (the desktop top-bar
- * links) can ignore `Icon` while the icon consumers share one list — one edit to
- * add/relabel/re-icon a tab, everywhere.
- *
- * Register stays absent here even behind the preview switch (Stage 6): it is never structural, only ever
- * conditionally inserted by `visibleTournamentTabs`'s `frameContent` argument, below.
+ * Register is absent here (Stage 6): it is never structural, only ever conditionally inserted by
+ * `visibleTournamentTabs`'s `frameContent` argument, below.
  */
-export const TOURNAMENT_PAGE_TABS: { key: PublicPageKey; label: string; Icon: LucideIcon }[] = [
-  { key: 'news', label: 'News', Icon: Megaphone },
-  { key: 'schedule', label: 'Schedule', Icon: Calendar },
-  { key: 'standings', label: 'Standings', Icon: Trophy },
-  { key: 'teams', label: 'Teams', Icon: Users },
-  { key: 'rules', label: 'Rules', Icon: ScrollText },
+export const TOURNAMENT_PAGE_TABS: { key: PublicPageKey; label: string }[] = [
+  { key: 'news', label: 'News' },
+  { key: 'schedule', label: 'Schedule' },
+  { key: 'standings', label: 'Standings' },
+  { key: 'teams', label: 'Teams' },
+  { key: 'rules', label: 'Rules' },
 ];
 
 /** A rendered tab: `key` is the URL segment under `/{org}/{tournament}/`. */
 export interface TournamentTab {
   key: string;
   label: string;
-  Icon: LucideIcon;
 }
 
 /**
@@ -46,14 +39,14 @@ export interface TournamentTab {
  * obvious — its tour sent strangers there and left them with no way back — but the gap belonged
  * to every customer.
  */
-const PLAYOFFS_TAB: TournamentTab = { key: 'playoffs', label: 'Playoffs', Icon: GitFork };
-const CHAMPIONS_TAB: TournamentTab = { key: 'champions', label: 'Champions', Icon: Crown };
-const REGISTER_TAB: TournamentTab = { key: 'register', label: 'Register', Icon: UserPlus };
+const PLAYOFFS_TAB: TournamentTab = { key: 'playoffs', label: 'Playoffs' };
+const CHAMPIONS_TAB: TournamentTab = { key: 'champions', label: 'Champions' };
+const REGISTER_TAB: TournamentTab = { key: 'register', label: 'Register' };
 
 /**
- * Public tournament pages Stage 6 (Ask 14, "tabs follow what there is"): the extra facts the frame-on row needs
- * beyond `hiddenPages`/`hasBracket`. Omit this argument entirely (every switch-off caller does) and the row is
- * byte-for-byte what it has always been — News/Rules always show, Register and Champions never do.
+ * Public tournament pages Stage 6 (Ask 14, "tabs follow what there is"): the extra facts the row needs beyond
+ * `hiddenPages`/`hasBracket`. Every layout passes them; omitted (a bare call), News/Rules always show and Register and
+ * Champions never do.
  *
  *   · `hasNews` / `hasRules`   — does the page currently have anything to show (the same "empty" each page's own
  *     body already uses: zero announcements; zero rule sections AND zero resources).
@@ -99,7 +92,7 @@ export function tournamentFrameTabContent(input: {
  * @param hiddenPages the tournament's hidden public pages (already resolved for playoff-only).
  * @param hasBracket  the organizer configured a bracket AND Standings is public. Structural, so
  *                    the tab does not appear and disappear as pool play finishes.
- * @param frameContent the frame-on extras above; omitted with the switch off.
+ * @param frameContent the extras above (every layout passes them).
  */
 export function visibleTournamentTabs(
   hiddenPages: PublicPageKey[],

@@ -141,7 +141,6 @@ export default function TournamentBand({
       </div>
 
       <TournamentTopTabs
-        skin="frame"
         hiddenPages={hiddenPages}
         hasBracket={hasBracket}
         basePath={basePath}

@@ -14,13 +14,6 @@ import { DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 
 export const dynamic = 'force-dynamic';
 
-function ordinal(n: number): string {
-  if (n === 1) return '1st';
-  if (n === 2) return '2nd';
-  if (n === 3) return '3rd';
-  return `${n}th`;
-}
-
 export const GET = withObservability(async (req: Request) => {
   const { searchParams } = new URL(req.url);
   const teamId = searchParams.get('teamId');
@@ -59,8 +52,8 @@ export const GET = withObservability(async (req: Request) => {
   if (!division) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   // A held-back team is withheld for EVERY caller (the public feed fix, Stage 8 §16). Until then this applied only when
-  // the caller sent `publicFrame=1`, so anyone leaving it off read the team's coach, seed, pool and division. The new page
-  // always sends the flag; it is now ignored (the page's param goes in Part 4) because nothing may be shaped by it.
+  // the caller sent a `publicFrame=1` flag, so anyone leaving it off read the team's coach, seed, pool and division. No
+  // caller sends a flag since Stage 8 Part 4a, and nothing here reads one.
   if (division.scheduleVisibility !== 'published') {
     return NextResponse.json(withheldTeamProfile(team, division.name));
   }
@@ -74,11 +67,6 @@ export const GET = withObservability(async (req: Request) => {
     division.settings?.game_duration_minutes ??
     tournament.settings?.game_duration_minutes ??
     90;
-
-  const pool = division.pools?.find(p => p.id === team.poolId) ?? null;
-  const poolName = pool?.name ?? null;
-
-  const teamsQualifying = division.playoffConfig?.teamsQualifying ?? null;
 
   // Pool-play standings from the canonical engine — the SAME ranking the standings
   // table uses (H2H, run-diff cap, coin toss). Computing it locally here is what let
@@ -105,21 +93,13 @@ export const GET = withObservability(async (req: Request) => {
         w: 0, l: 0, t: 0, pts: 0, rf: 0, ra: 0, rd: 0,
       };
 
-  // Rank within pool (or division if no pool)
-  const rankPool = team.poolId
-    ? standingsRows.filter(s => s.poolId === team.poolId)
-    : standingsRows;
-  const poolRank = rankPool.findIndex(s => s.teamId === teamId) + 1 || null;
-  const poolRankLabel = poolRank ? ordinal(poolRank) : null;
-
-  const inPlayoffSpot =
-    teamsQualifying !== null && poolRank !== null && poolRank <= teamsQualifying;
-
-  // Champion / runner-up from the decided division final (J6-025).
+  // The pool name, the pool rank and "in a playoff spot" are the page contract's own answers (lib/public-team-profile.ts:
+  // the ruled advancing rule, not a top-N count); this route sends only the record and the runner-up fact. Runner-up
+  // from the decided division final (J6-025); the champion is the contract's crown, not this.
   const decidedFinal = decidedFinalFor(games, division.id);
-  const isChampion = !!decidedFinal &&
-    ((decidedFinal.homeScore! > decidedFinal.awayScore! ? decidedFinal.homeTeamId : decidedFinal.awayTeamId) === teamId);
-  const isRunnerUp = !!decidedFinal && !isChampion &&
+  const winnerId = decidedFinal
+    ? (decidedFinal.homeScore! > decidedFinal.awayScore! ? decidedFinal.homeTeamId : decidedFinal.awayTeamId) : null;
+  const isRunnerUp = !!decidedFinal && winnerId !== teamId &&
     (decidedFinal.homeTeamId === teamId || decidedFinal.awayTeamId === teamId);
 
   // Team's games (pool play + playoffs, excluding cancelled) — none while its schedule isn't public. Accepted teams'
@@ -153,14 +133,12 @@ export const GET = withObservability(async (req: Request) => {
     // on this anonymous endpoint (J6-001). Coach NAME honors the per-tournament toggle (mig 150).
     team: toPublicTeam(team, tournament.coachNamesShowOnPublic === true),
     divisionName: division.name,
-    poolName,
     gameDurationMinutes,
     tournamentName: tournament.name,
     // The record reads as no games played while the public Standings are off or the schedule isn't published.
     standings: standingsShown
-      ? { ...teamStats, poolRank, poolRankLabel, inPlayoffSpot, isChampion, isRunnerUp }
-      : { teamId, poolId: team.poolId ?? null, w: 0, l: 0, t: 0, pts: 0, rf: 0, ra: 0, rd: 0,
-          poolRank: null, poolRankLabel: null, inPlayoffSpot: false, isChampion: false, isRunnerUp: false },
+      ? { ...teamStats, isRunnerUp }
+      : { teamId, poolId: team.poolId ?? null, w: 0, l: 0, t: 0, pts: 0, rf: 0, ra: 0, rd: 0, isRunnerUp: false },
     games: teamGames,
     teamNames,
   };

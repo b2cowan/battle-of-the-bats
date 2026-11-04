@@ -91,19 +91,26 @@ describe('the focused page — the chrome asks the rule', () => {
     assert.match(foot, /\{!isDemoOrgSlug\(orgSlug\) && <BuiltOnCredit className=\{clubStyles\.credit\} \/>\}/);
   });
 
-  it('the pay page reads "frame on" as "focused" only because its section is the focused one', () => {
-    // The content side (heading, contact line, no page floor) keys on the switch; the chrome keys on the rule. They
-    // agree only while the pay route is a focused section — the day it is not, this fails before they disagree.
+  it('the pay page is always focused only because its section is the focused one', () => {
+    // The content side (heading, contact line, no page floor) is unconditional since Stage 8 Part 4a; the chrome keys on
+    // the rule. They agree only while the pay route is a focused section — the day it is not, this fails before they
+    // disagree.
     assert.ok((FOCUSED_SECTIONS as readonly string[]).includes('pay'));
     assert.equal(isFocusedPublicPage('/o/t/pay/abc', 'o', 't'), true);
   });
 
-  it('the pay page is focused only with the switch on, and only then looks up the contact', () => {
+  it('the pay page is the focused page for everyone (Stage 8 Part 4a): no switch, the contact always looked up', () => {
     const page = readCode('app/[orgSlug]/[tournamentSlug]/pay/[token]/page.tsx');
-    assert.match(page, /const focused = await isPublicFrameOn\(\)/);
-    assert.match(page, /focused \? addressContact\(orgSlug, tournamentSlug\)/);
+    assert.doesNotMatch(page, /isPublicFrameOn|focused/);
+    assert.match(page, /addressContact\(orgSlug, tournamentSlug\)\.catch\(\(\) => null\)/);
     const content = readCode('components/public/TeamPayContent.tsx');
     // A1 / A2: no contact line on clearing (its own sentence names the club) or under another tournament's address.
-    assert.match(content, /focused && contactEmail && view\.kind !== 'clearing' && !view\.misaddressed/);
+    assert.match(content, /const contact = contactEmail && view\.kind !== 'clearing' && !view\.misaddressed/);
+    // The old page's half is gone: no prop, no page floor, no tournament-name eyebrow; the focused heading always.
+    assert.doesNotMatch(content, /[\s{(,]focused\b|page-content|view\.tournamentName/);
+    assert.match(content, /<div className=\{styles\.page\} data-pay-focused="">/);
+    assert.match(content, /<p className=\{styles\.eyebrow\}>\{W\.focusedEyebrow\}<\/p>/);
+    assert.match(content, /<h1 className=\{`\$\{styles\.title\} \$\{styles\.titleFocused\}`\}>/);
+    assert.doesNotMatch(readCode('lib/team-pay-view.ts'), /tournamentName/, 'the eyebrow was its one reader');
   });
 });

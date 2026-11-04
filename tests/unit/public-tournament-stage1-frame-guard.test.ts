@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { readCode, sourceExists } from './_source-code.ts';
+import path from 'node:path';
+import { between, filesUnder, readCode, readSource, sourceExists } from './_source-code.ts';
 import {
   PUBLIC_FRAME_ATTR,
   publicFrameAttr,
@@ -13,6 +14,25 @@ import {
 import type { LookOrg } from '../../lib/tournament-look.ts';
 import { CLUB_GROUND, CLUB_NEAR_BLACK } from '../../lib/club-colour-roles.ts';
 import { contrastRatio } from '../../lib/color-contrast.ts';
+
+/** Every app/components/lib file that imports `target` (resolved, so `ClubHome.module.css` is not `Home.module.css`;
+ *  a stylesheet's `composes … from` counts as an import). Stage 8 Part 4a: a frame rule is dead when nothing that
+ *  renders inside the frame imports its sheet. */
+function importersOf(target: string): string[] {
+  const noExt = target.replace(/\.tsx?$/, '');
+  const files = [...filesUnder('app', '.tsx'), ...filesUnder('app', '.ts'), ...filesUnder('app', '.css'),
+    ...filesUnder('components', '.tsx'), ...filesUnder('components', '.ts'), ...filesUnder('components', '.css'),
+    ...filesUnder('lib', '.ts'), ...filesUnder('lib', '.tsx')];
+  return files.filter(f => {
+    const src = f.endsWith('.css') ? readSource(f).replace(/\/\*[\s\S]*?\*\//g, '') : readCode(f);
+    // `… from '…'`, a bare `import '…'`, `import('…')` (next/dynamic too) and a sheet's `@import '…'`.
+    return [...src.matchAll(/(?:from\s+|import\s*\(\s*|import\s+|@import\s+(?:url\(\s*)?)['"]([^'"]+)['"]/g)].some(([, spec]) => {
+      const rel = spec.startsWith('@/') ? spec.slice(2)
+        : spec.startsWith('.') ? path.posix.normalize(path.posix.join(path.posix.dirname(f), spec)) : null;
+      return rel === target || rel === noExt;
+    });
+  }).sort();
+}
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -106,6 +126,13 @@ describe('every public tournament page wears the frame (Stage 8 Part 3d deleted 
     assert.ok(!sourceExists('components/public/TournamentNavStatus.tsx') && !sourceExists('lib/tournament-phase-display.ts'));
     const ctx = readCode('components/OrgNavContext.tsx');
     assert.doesNotMatch(ctx, /publicFrame|tournamentColorMode|tournamentHiddenPages|tournamentHasBracket|tournamentRegisterCta|tournamentFinished|fanAlertsEnabled/);
+    // Stage 8 Part 4a: the old rail's identity block was the last reader of the org's name, logo and home link and the
+    // tournament's name; they left the context, and the sync that only wrote them went too.
+    assert.doesNotMatch(ctx, /logoUrl|orgName|orgHomeHref|tournamentName|setOrgNav|\bname: string/);
+    assert.ok(!sourceExists('components/OrgNavSync.tsx'));
+    for (const f of ['app/[orgSlug]/layout.tsx', LAYOUT, 'app/[orgSlug]/admin/public-site/LookPanel.tsx']) {
+      assert.doesNotMatch(readCode(f), /OrgNavSync|setOrgNav/, f);
+    }
   });
 
   it('the old ticker is gone: the frame\'s line is today\'s one games surface, on the scrubbed feed', () => {
@@ -224,7 +251,10 @@ describe('the band (Asks 2, 8, 16 and the app-bar direction)', () => {
 
   it('is built from the club bar\'s parts, and the tab row pins by the club bar\'s own rule', () => {
     assert.match(band, /<header className=\{clubStyles\.bar\} data-public-frame-band="">/);
-    assert.match(band, /skin="frame"/);
+    assert.match(band, /<TournamentTopTabs\b/);
+    assert.doesNotMatch(band, /skin=/, 'the row has one look (Stage 8 Part 4a): no skin to pass');
+    // The one hop that keeps the admin preview's tab links inside the preview: the band hands the row its base.
+    assert.match(between(band, '<TournamentTopTabs', '/>'), /basePath=\{basePath\}/);
     assert.match(band, /className=\{`\$\{clubStyles\.tabsSlot\} \$\{styles\.tabs\}`\}/);
   });
 
@@ -263,7 +293,9 @@ describe('Part 2: the desk, the footer and the admin preview', () => {
     assert.match(layout, /const showBuiltOnCredit = !isFreeTournamentPlan && !isDemoOrgSlug\(orgSlug\);/, 'the credit rules do not change');
     // Stage 7: the rail goes through the focused-page gate (public-focused-page.test.ts); one mount, frame facts passed.
     assert.match(layout, /\{unlessFocused\(<TournamentSideRail hiddenPages=\{navHiddenPages\} hasBracket=\{hasPublicBracket\}\s+frameContent=\{frameContent\} \/>\)\}/);
-    assert.match(layout, /className=\{`\$\{railStyles\.shell\} \$\{frameStyles\.deskShell\}`\}/);
+    // The rail's old `.shell` (it padded the page past a fixed dark rail) went with it in Stage 8 Part 4a: the grid places it.
+    assert.match(layout, /className=\{frameStyles\.deskShell\}/);
+    assert.doesNotMatch(layout, /railStyles/);
     assert.match(layout, /const frameContactPromise = publicTournamentContactEmail\(tournament\.id, org\.contactEmail \?\? null\)\.catch\(\(\) => null\);/,
       'the footer\'s address is the one Rules and News show');
   });
@@ -275,14 +307,20 @@ describe('Part 2: the desk, the footer and the admin preview', () => {
     assert.match(layout, /showCredit=\{showBuiltOnCredit\}/);
   });
 
-  it('the rail\'s and the Overview\'s frame looks are keyed to the marker', () => {
+  it('the rail\'s frame look is keyed to the marker, and the old dark rail is gone (Stage 8 Part 4a)', () => {
     const rail = readCode('components/public/TournamentSideRail.module.css');
     for (const l of rail.split('\n').filter(x => x.includes(':global('))) {
       assert.match(l, /:global\(\[data-public-frame='light'\]\) \./, `a rail rule outside the frame: ${l.trim()}`);
     }
-    assert.match(rail, /^\.stick \{ display: contents; \}/m, 'the wrapper is nothing when the frame is off');
+    // Only the frame's rules and the bare hooks they need: no fixed box, page padding, identity header, icons or footer.
+    assert.doesNotMatch(rail, /\.shell\b|\.railHeader|\.railIdentity|\.railCrumb|\.railLogo|\.railName|\.railFooter|\bsvg\b|::before|position: fixed/);
+    const comp = readCode('components/public/TournamentSideRail.tsx');
+    assert.doesNotMatch(comp, /useOrgNav|\blogoUrl\b|\bheading\b|\bcolorMode\b|data-color-mode|<Icon\b|Live on FieldLogicHQ/);
+    // The club home's sheet never sits inside the frame (its only importer is the club's own home page), so it carries no
+    // frame or live-chrome rule: those served the old Overview, which shared it until Stage 8 Part 3d.
+    assert.deepEqual(importersOf('app/[orgSlug]/Home.module.css'), ['app/[orgSlug]/page.tsx']);
     const home = readCode('app/[orgSlug]/Home.module.css');
-    assert.match(home, /^\[data-public-frame='light'\] \.hero \{ display: none; \}/m);
+    assert.doesNotMatch(home, /data-public-frame|data-live-chrome/);
     // The old Overview's Explore row went with it (Stage 8 Part 3d): the tab row and the footer's page list are those doors.
     assert.doesNotMatch(readCode('components/public/TournamentHomeContent.tsx'), /exploreRow|btn-ghost/);
     assert.doesNotMatch(home, /\.exploreRow\b/);
@@ -295,13 +333,19 @@ describe('Part 2: the desk, the footer and the admin preview', () => {
       'inside the app on a desk the strip carries the operator door, so the band\'s steps aside');
   });
 
-  it('the admin preview follows the same switch, with its links kept inside the preview', () => {
+  it('the admin preview always wears the frame, with its links kept inside the preview (Stage 8 Part 4a)', () => {
     const preview = readCode('app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/layout.tsx');
-    assert.match(preview, /if \(await isPublicFrameOn\(\)\) \{/);
+    // No switch and no old half: the dark top bar, the fixed tab row, the light-mode :root block and card style all went.
+    assert.doesNotMatch(preview, /isPublicFrameOn|TournamentPreviewNav|TournamentTopTabs|getPreviewColorMode|getPreviewCardStyle|lightModeVars|cardStyle|railStyles/);
+    for (const gone of ['components/public/TournamentPreviewNav.tsx', 'components/public/TournamentPreviewNav.module.css',
+      'components/public/TournamentTopTabs.module.css']) assert.ok(!sourceExists(gone), `${gone} left with the preview's old half`);
+    assert.doesNotMatch(readCode('lib/tournament-preview.ts'), /getPreviewColorMode|getPreviewCardStyle|buildPublicLightModeCssVars/);
+    assert.doesNotMatch(readCode('lib/public-tournament-theme.ts'), /buildPublicLightModeCssVars/);
+    assert.equal((preview.match(/<TournamentBand\b/g) ?? []).length, 1);
+    assert.equal((preview.match(/<TournamentSideRail\b/g) ?? []).length, 1);
     assert.match(preview, /const band = publicFrameBand\(org, tournament, tournamentToday\(\), registrationOpen\);/,
       'the live band\'s one helper');
     assert.match(preview, /basePath=\{previewBase\}\s*\/>\s*<TournamentSideRail basePath=\{previewBase\}/);
-    assert.match(preview, /<TournamentPreviewNav/, 'today\'s preview, when off');
     assert.match(band, /\{!preview && <SharePageButton/);
     // The visitor's doors share one read of the viewer's hats (BandDoors); the sandbox shows no account menu but keeps its door.
     assert.match(band, /\{!inSandbox && !preview \? \(\s*<BandDoors/);
@@ -319,8 +363,10 @@ describe('Part 3: the readable baseline, A', () => {
   const KEYED = /^(:global\(\[data-public-frame='light'\]\)|\[data-public-frame='light'\]) \./;
   // The old Schedule's sheet left with the old Playoffs (Stage 8 Part 3c; its deletion is pinned by the Stage 3 guard).
   // The old Overview's follow strip and team picker sheets left with it (Stage 8 Part 3d; pinned below).
+  // Three sheets left this list in Stage 8 Part 4a, their frame rule deleted because nothing they style ever renders
+  // inside the frame (pinned below): the club home's (its only importer is the club's own home page), the preview's exit
+  // pill (mounted beside the frame, not in it) and the rep-team page's subscribe panel (outside the tournament layout).
   const PART3_SHEETS = [
-    'app/[orgSlug]/Home.module.css',
     'app/[orgSlug]/register/register.module.css',
     'components/public/PublicTournamentState.module.css',
     'components/public/FollowAlertsToggle.module.css',
@@ -329,17 +375,15 @@ describe('Part 3: the readable baseline, A', () => {
     'components/public/ShareScoreButton.module.css',
     'components/public/AlertsNudge.module.css',
     'components/public/FollowDeepLinkPrompt.module.css',
-    'components/public/PreviewExitPill.module.css',
-    'components/public/TeamSubscribeButton.module.css',
     'components/shared/FlipPill.module.css',
   ];
 
   it('today\'s Light mode cannot hand the organizer\'s raw colour back to text inside the frame', () => {
     // globals.css re-declares these on the shell, which sits INSIDE the frame; the frame re-points them one step more
-    // specific. The live shell always carries `deskShell`; the admin preview's only in its frame branch.
+    // specific. The live shell and the admin preview's both carry `deskShell` (the preview has no other branch since Part 4a).
     assert.match(readCode('app/globals.css'), /\[data-card-style\]\[data-color-mode="light"\] \{\s*--primary-light: var\(--primary\);/);
     assert.match(css, /\.frame \.deskShell\[data-color-mode\] \{[^}]*--primary-light: +var\(--club-ink\);[^}]*--success-strong: +var\(--club-ok\);/);
-    assert.match(readCode(LAYOUT), /className=\{`\$\{railStyles\.shell\} \$\{frameStyles\.deskShell\}`\}/);
+    assert.match(readCode(LAYOUT), /className=\{frameStyles\.deskShell\}/);
     assert.match(css, /\.frame \.deskShell\[data-color-mode\] :global\(\.btn-outline\) \{[^}]*color: var\(--club-ink\);/);
   });
 
@@ -358,6 +402,17 @@ describe('Part 3: the readable baseline, A', () => {
     for (const gone of ['components/public/FollowTournamentStrip.module.css', 'components/public/FollowTeamPicker.module.css']) {
       assert.ok(!sourceExists(gone), `${gone} left with the old Overview`);
     }
+  });
+
+  it('a sheet whose classes never render inside the frame carries no frame rule (Stage 8 Part 4a)', () => {
+    for (const file of ['app/[orgSlug]/Home.module.css', 'components/public/PreviewExitPill.module.css',
+      'components/public/TeamSubscribeButton.module.css']) {
+      assert.doesNotMatch(readCode(file), /data-public-frame/, file);
+    }
+    const preview = readCode('app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/layout.tsx');
+    assert.ok(preview.indexOf('<PreviewExitPill') > preview.lastIndexOf('</div>'), 'the exit pill sits after the frame, not in it');
+    assert.deepEqual(importersOf('components/public/TeamSubscribeButton.tsx'), ['components/public/RepTeamPublicSchedule.tsx']);
+    assert.doesNotMatch(readCode('app/[orgSlug]/news/news.module.css'), /data-public-frame='light'\]\) \.featuredBadge/);
   });
 
   // Stage 8 Part 3b deleted the old Schedule (whose playoffs' format badge and final standings this part had moved out
@@ -400,5 +455,27 @@ describe('Part 4: the readable baseline, B', () => {
     // monogram, so nothing needs the ink; the helper went with its last caller.
     for (const body of ['PublicTeams', 'PublicTeamPage']) assert.doesNotMatch(readCode(`components/public/${body}.tsx`), /teamColor|teamInk|--team-ink/);
     assert.doesNotMatch(readCode('lib/team-color.ts'), /export function teamInk/);
+  });
+});
+
+/**
+ * STAGE 8 PART 4a (2026-11-04): the public side has no switch-off half left. The switch is read only by the two admin
+ * screens Part 4b removes, and by its own definition; 4b deletes the reader and this list becomes empty.
+ */
+describe('Stage 8 Part 4a: who still reads the switch', () => {
+  it('only the two admin routes Part 4b owns (and the reader itself)', () => {
+    const readers = [...filesUnder('app', '.tsx'), ...filesUnder('app', '.ts'), ...filesUnder('components', '.tsx'),
+      ...filesUnder('components', '.ts'), ...filesUnder('lib', '.ts'), ...filesUnder('lib', '.tsx'),
+      ...filesUnder('scripts', '.mjs'), 'proxy.ts']
+      // The names, or the cookie spelled out by hand.
+      .filter(f => /\bisPublicFrameOn\b|\bpublicFrameFromCookie\b|\bPUBLIC_FRAME_COOKIE\b|flhq_public_frame/.test(readCode(f)))
+      .sort();
+    assert.deepEqual(readers, [
+      'app/api/admin/public-site/route.ts',
+      'app/api/admin/tournament-branding/route.ts',
+      'app/api/public-frame/route.ts',
+      'lib/public-frame-server.ts',
+      'lib/public-frame.ts',
+    ]);
   });
 });

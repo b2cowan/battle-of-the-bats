@@ -61,15 +61,6 @@ export const RULES_WORDS = {
   addResource: 'Add a link or file',
   noResources: 'No links or files yet. Add one, or start from a sample.',
   linkSampleCaption: 'Common links to add and fill in',
-  /** Each card's own layout menu (owner, 2026-10-12): the word a desk reads; the menu's name says whose it is. */
-  layout: 'Layout',
-  rulesLayout: 'Rules layout',
-  resourcesLayout: 'Resources layout',
-  onPublicSite: 'On the public site',
-  oneColumn: 'One column',
-  twoColumns: 'Two columns',
-  aList: 'A list',
-  layoutFailed: 'Couldn’t save the layout',
   loadFailed: 'The rules didn’t load.',
   // The section's record
   sectionTitle: 'Section title',

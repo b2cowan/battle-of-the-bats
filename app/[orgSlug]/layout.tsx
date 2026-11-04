@@ -8,7 +8,6 @@ import { clubDescription } from '@/lib/club-site';
 import { getClubBySlug, getClubSiteContent } from '@/lib/club-page-meta';
 import { loadClubFrame } from '@/lib/club-frame-data';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
-import { OrgNavSync } from '@/components/OrgNavSync';
 import ClubFrame from '@/components/public/ClubFrame';
 import { getDemoOrgBySlug } from '@/lib/demo-org';
 import { getAuthUserCached } from '@/lib/supabase-server';
@@ -184,7 +183,6 @@ export default async function OrgLayout({
         landingPath: demoOrg?.landingPath ?? null,
       }}
     >
-      <OrgNavSync logoUrl={org.logoUrl ?? null} orgName={org.name} />
       {/* Sets vars on :root so globally-mounted components (Navbar, ConsumerNav) inherit the org theme */}
       <style dangerouslySetInnerHTML={{ __html: `:root { ${cssVars} }` }} />
       {demoOrg && (

@@ -628,46 +628,6 @@
 }
 .preFactLink:hover { text-decoration: underline; }
 
-/* ── G3: the unified event header owns identity on mobile — the marketing hero
-   retires below 900px (its pre-event jobs move to .preEventPanel above). Scoped
-   to the live shell; the admin preview (no event header) keeps its hero. ────── */
-@media (max-width: 900px) {
-  [data-live-chrome] .hero { display: none; }
-  [data-live-chrome] .preEventPanel { display: block; }
-}
-
-/* Under the public frame (Public tournament pages Stage 1 Part 2, behind the preview switch — lib/public-frame.ts) the
-   organizer's band carries the event's name at EVERY width, so the hero retires at a desk too (hub "The end state": "the
-   band replaces the 48 px centred hero, so the name appears once") and its pre-event jobs show in .preEventPanel, as on a
-   phone. The Overview's new order is Stage 2's; this is only the name appearing once. Keyed to the marker, which the
-   admin preview carries too when the switch is on. */
-[data-public-frame='light'] .hero { display: none; }
-[data-public-frame='light'] .preEventPanel { display: block; }
-
-/* The readable baseline (Stage 1 Part 3): the same cards in the same order, on the club's light ground — white cards
-   with a hairline, no washes of the organizer's colour, no shadows or glows (plan §4), nothing under 12 px (Ask 2).
-   Later in the file than today's Light-mode lines, so these win under the frame and nowhere else. */
-[data-public-frame='light'] .recordSection,
-[data-public-frame='light'] .preLogoCard {
-  background: none;
-}
-[data-public-frame='light'] .registrationStatus,
-[data-public-frame='light'] .previewBanner,
-[data-public-frame='light'] .stats {
-  border-color: var(--border);
-  background: var(--surface);
-  box-shadow: none;
-}
-[data-public-frame='light'] .orgLogo { border-color: var(--border); }
-[data-public-frame='light'] .vs { color: var(--primary-light); }
-[data-public-frame='light'] .vs,
-[data-public-frame='light'] .teamName { font-weight: var(--club-title-weight); }
-[data-public-frame='light'] .preCountdownLabel,
-[data-public-frame='light'] .preCountdownDate,
-[data-public-frame='light'] .preCtaDetail {
-  font-size: 0.75rem;
-}
-
 /* Explore links (every public page reachable from the Overview — J6-006). */
 
 .preCountdownDate {

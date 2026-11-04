@@ -51,7 +51,9 @@ describe('Stage 5 Part 1: one body per page (the old halves left in Stage 8 Part
     assert.match(route, /return NextResponse.json\(withheldTeamProfile\(team, division.name\)\)/);
     assert.ok(route.indexOf("team.status !== 'accepted'") < route.indexOf('withheldTeamProfile(team,'));
     assert.ok(route.indexOf('withheldTeamProfile(team,') < route.indexOf('const scheduleShown'));
-    assert.match(readCode('components/public/PublicTeamPage.tsx'), /publicFrame: '1'/);
+    // Stage 8 Part 4a: the page sends no flag either — the route has read none since the feed fix.
+    assert.doesNotMatch(readCode('components/public/PublicTeamPage.tsx'), /publicFrame/);
+    assert.doesNotMatch(route, /publicFrame|poolRankLabel|ordinal\(|teamsQualifying/, 'nothing the page never read is sent');
     // The old team page was the route's other caller (without the flag); since Stage 8 Part 3a the new page is the only one.
     const callers = [...filesUnder('app', '.tsx'), ...filesUnder('components', '.tsx'), ...filesUnder('lib', '.ts')]
       .filter(f => !f.startsWith('app/api/') && readSource(f).includes('/api/public/team-profile')

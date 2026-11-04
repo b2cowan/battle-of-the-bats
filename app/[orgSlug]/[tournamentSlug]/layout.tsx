@@ -16,7 +16,6 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import { showsFreeCredit } from '@/lib/plan-config';
 import { hasOwnTournamentTheme, resolvePublicTournamentTheme } from '@/lib/public-tournament-theme';
-import { OrgNavSync } from '@/components/OrgNavSync';
 import TournamentNavSync from '@/components/TournamentNavSync';
 import PoweredByBadge from '@/components/marketing/PoweredByBadge';
 import TournamentAcquisitionBanner from '@/components/marketing/TournamentAcquisitionBanner';
@@ -29,7 +28,6 @@ import AlertsNudge from '@/components/public/AlertsNudge';
 import FollowAccountNudge from '@/components/public/FollowAccountNudge';
 import AccountFollowSync from '@/components/public/AccountFollowSync';
 import TournamentSideRail from '@/components/public/TournamentSideRail';
-import railStyles from '@/components/public/TournamentSideRail.module.css';
 import TodaysResultsLine from '@/components/public/TodaysResultsLine';
 import TournamentBand from '@/components/public/TournamentBand';
 import TournamentFooter from '@/components/public/TournamentFooter';
@@ -309,18 +307,7 @@ export default async function TournamentLayout({
       {/* The frame's one outer element: the marker every frame style is keyed to, and the club site's token block (the ONE
           light set). Fixed parts inside it (the rail, the dock, the prompts) inherit its tokens like everything else. */}
       <div className={`${clubFrameStyles.tokens} ${frameStyles.frame}`} data-club-face={frameBand.face} {...publicFrameAttr}>
-        <OrgNavSync
-          // The mark is the one rule's (lib/tournament-look.ts — Tournament Plus never borrows an org logo).
-          logoUrl={frameBand.logoUrl}
-          orgName={org.name}
-          orgHomeHref={orgHomeHref}
-          // Restore the ORG identity on unmount: navigating up to /{orgSlug} via the crumb keeps the parent org layout
-          // mounted, so its own sync never re-fires — without this, the org page's nav went blank (/review find).
-          restoreLogoUrl={org.logoUrl ?? null}
-          restoreOrgName={org.name}
-        />
         <TournamentNavSync
-          name={tournament.name}
           tournamentId={tournament.id}
           startDate={tournament.startDate ?? null}
           endDate={tournament.endDate ?? null}
@@ -343,7 +330,7 @@ export default async function TournamentLayout({
             frame (Ask 11): the marker stays 'default', since the light wrapper rule (globals.css
             `[data-card-style][data-color-mode="light"]`) keys on it; the org layout's style is excluded there too. */}
         <div
-          className={`${railStyles.shell} ${frameStyles.deskShell}`}
+          className={frameStyles.deskShell}
           data-card-style="default"
           data-color-mode="light"
           data-live-chrome=""

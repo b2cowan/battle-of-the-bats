@@ -304,7 +304,7 @@ export default function CoachPortalShell({
   // then — the element stays mounted for exactly that reason).
   // Layout effect (not useEffect): on a scroll-restored paint (browser Back) the var's
   // 0px fallback would put the quick-jump row BEHIND the header for a frame — measure
-  // before first paint instead (house pattern: OrgNavSync / ChatPanel).
+  // before first paint instead (house pattern: ChatPanel).
   const shellRef = useRef<HTMLDivElement>(null);
   const mheadRef = useRef<HTMLElement>(null);
   useLayoutEffect(() => {

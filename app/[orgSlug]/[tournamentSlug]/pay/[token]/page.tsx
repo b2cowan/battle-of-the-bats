@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { buildTeamPayView } from '@/lib/team-pay-view';
 import { getOrganizationBySlug, getPublicTournamentBySlug } from '@/lib/db';
-import { isPublicFrameOn, publicTournamentContactEmail } from '@/lib/public-frame-server';
+import { publicTournamentContactEmail } from '@/lib/public-frame-server';
 import TeamPayContent from '@/components/public/TeamPayContent';
 
 export const dynamic = 'force-dynamic';
@@ -22,8 +22,8 @@ async function addressContact(orgSlug: string, tournamentSlug: string): Promise<
  * card, and its receipts — under the tournament's own address and theme. `?paid={session}` is Stripe's return (the page
  * then waits for the record); `?left=1` is a team that left Stripe's page before paying.
  *
- * Under the preview switch it is the focused page (Public tournament pages Stage 7): the layout's chrome asks
- * lib/public-focused-page.ts, and this page adds the focused heading and the contact line.
+ * It is the focused page (Public tournament pages Stage 7): the layout's chrome asks lib/public-focused-page.ts, and this
+ * page adds the focused heading and the contact line.
  */
 export default async function TeamPayPage({
   params,
@@ -34,13 +34,11 @@ export default async function TeamPayPage({
 }) {
   const { orgSlug, tournamentSlug, token } = await params;
   const { paid, left } = await searchParams;
-  const focused = await isPublicFrameOn();
   const [view, contactEmail] = await Promise.all([
     buildTeamPayView(token, { orgSlug, tournamentSlug }),
-    focused ? addressContact(orgSlug, tournamentSlug).catch(() => null) : Promise.resolve(null),
+    addressContact(orgSlug, tournamentSlug).catch(() => null),
   ]);
   return (
-    <TeamPayContent token={token} view={view} returnedSession={paid ?? null} left={left === '1'}
-      focused={focused} contactEmail={contactEmail} />
+    <TeamPayContent token={token} view={view} returnedSession={paid ?? null} left={left === '1'} contactEmail={contactEmail} />
   );
 }

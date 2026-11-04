@@ -349,8 +349,7 @@ export default function SandboxChrome({
    * is free to scroll the PAGE vertically as well, which on arrival would jump a visitor past the
    * banner they are meant to read first. Setting `scrollLeft` can only ever move this one row.
    *
-   * ⚠ Layout effect, not `useEffect` (house pattern: `OrgNavSync`, `ChatPanel`,
-   * `CoachPortalShell`). A dock's native scroll position on mount is 0 — the far left — so with a
+   * ⚠ Layout effect, not `useEffect` (house pattern: `ChatPanel`, `CoachPortalShell`). A dock's native scroll position on mount is 0 — the far left — so with a
    * post-paint effect the visitor gets one frame of exactly the state this exists to prevent (no
    * highlighted chip anywhere on screen) followed by a visible snap. Measuring before paint means
    * the row simply arrives correct.

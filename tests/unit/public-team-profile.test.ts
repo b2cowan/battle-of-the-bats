@@ -110,7 +110,6 @@ describe('preview-only team-profile metadata and the shared team view', () => {
   it('only a decided, completed division crowns a winner; the final enters Results once', () => {
     const { profile, options } = profileFixture();
     Object.assign(profile.games[2], { status:'completed', homeScore:5, awayScore:2 });
-    profile.standings.isChampion = true;
     const view = teamProfileView(teamProfilePreview(profile, options), now);
     assert.equal(view.moment.kind,'champion');
     assert.equal(view.chip,'Division Champion');

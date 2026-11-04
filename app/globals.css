@@ -326,9 +326,8 @@
                            ticker) — for sticky/fixed elements that ride it.
      --chrome-top-static-h uses the EXPANDED header height — for page top
                            padding, so the collapse never shifts the layout.
-     --nav-visual-h / --nav-event-h are seeded by the admin preview's switch-off
-     layout and the tournament layout (≤900px); the public frame resets both on
-     its own element. Nothing sets --ticker-h since Public tournament pages
+     --nav-visual-h / --nav-event-h are seeded by the tournament layout
+     (≤900px); the public frame resets both on its own element. Nothing sets --ticker-h since Public tournament pages
      Stage 8 Part 3d deleted the ScoreTicker (and the Navbar's event header that
      published the nav heights) — it stays a 0 fallback. --desktop-strip-h by the
      tournament layout ≥901px (the Phase 3 global strip). All fall back cleanly
@@ -362,13 +361,10 @@
 }
 
 /* ─── Light Mode Token Overrides ────────────────────────────────────────────── */
-/* ONE authority for light-mode base tokens: buildPublicLightModeCssVars()
-   (lib/public-tournament-theme.ts), injected at :root by the public/preview
-   layouts. This block must NEVER re-declare a token the builder also sets —
-   because it matches the wrapper/nav elements directly, its values would win
-   over the :root injection and silently shadow the builder (that's exactly how
-   the boosted muted-text tokens regressed to ~2.6:1). Only alias/derived
-   tokens the builder does not know about may live here. */
+/* Alias/derived tokens for a light-mode wrapper. (The public tournament pages' old
+   light-mode :root block, buildPublicLightModeCssVars(), went with the preview
+   switch in Public tournament pages Stage 8 Part 4a: the frame is light on its
+   own tokens.) */
 [data-color-mode="light"] {
   --bg-inset:    rgba(15, 17, 35, 0.04);
 
@@ -579,11 +575,8 @@ body:has([data-chat-fullbleed]) {
      light surfaces where raw lime measures ~1.1:1 on the near-white bar. Lime as a FILL
      keeps --logic-lime and is untouched (E3: lime-as-TEXT darkens on paper, lime-as-FILL
      never does).
-       ⚠ The public light theme deepens this in buildPublicLightModeCssVars()
-     (lib/public-tournament-theme.ts) rather than in the [data-color-mode="light"] block
-     below, ON PURPOSE: that block sits on the tournament shell DIV, and the desktop nav
-     strip is mounted ABOVE it — so a deepening declared there can never reach the strip.
-     The light block lands on :root, which does. */
+       (The old public light theme deepened this at :root; that block went with the
+     preview switch, Public tournament pages Stage 8 Part 4a.) */
   --lime-strong:         var(--logic-lime);
   --lime-strong-rgb:     var(--logic-lime-rgb);
   /* THE SAME lime, declared as a token no theme gate is allowed to remap — the single
