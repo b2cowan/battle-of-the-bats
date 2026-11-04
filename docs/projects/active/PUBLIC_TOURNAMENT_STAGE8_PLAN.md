@@ -5,8 +5,8 @@
 (record §14; releases with the flip). **Part 3d committed `33386d5df` 2026-11-04** (record §15; releases with the flip; the
 switch-off half-state ends for every public tournament page). **The public feed fix committed `55045ecf4` 2026-11-04** (record §16; its own change,
 releasable on its own; it does not cherry-pick onto production — §16 handed on). **Part 4 split (owner 2026-11-04): Part 4a (the public side —
-the pay page, the admin preview's old chrome, the old tab row and rail, the Rules layout menus, the team page's flag) built 2026-11-04, not yet
-committed** (record §17; releases with the flip). Next: Part 4b (the admin side, then the switch itself; build prompt
+the pay page, the admin preview's old chrome, the old tab row and rail, the Rules layout menus, the team page's flag) committed `ecffa177f`
+2026-11-04** (record §17; releases with the flip). Next: Part 4b (the admin side, then the switch itself; build prompt
 `PUBLIC_TOURNAMENT_STAGE8_PART4B_BUILD_PROMPT.md`). Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
@@ -1004,7 +1004,7 @@ hidden), the team-profile caller.
   screens and the expired Stage 3 / Stage 4 fixtures; white text on team-colour fills in the share images (advisory); the admin
   strip's 34 px "Dismiss"; `/release` §1d-2's sharp probe; the club editor's unlabelled 18 px input.
 
-## 17. Part 4a record (the public side of the switch's removal; built 2026-11-04, not yet committed — releases with the flip)
+## 17. Part 4a record (the public side of the switch's removal; committed `ecffa177f` 2026-11-04; releases with the flip)
 
 **What a customer sees:** nothing (nothing promoted). **An owner on dev, switch on (the default):** nothing on a public page;
 the organizer's **Rules & resources** page has no "Layout" menu on either card. **Switch off (the preview link's `off`):**
