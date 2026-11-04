@@ -1,7 +1,7 @@
 # Public tournament pages — Stage 8: the new look on for everyone (plan)
 
 **Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 committed `d4af280e6` 2026-11-03** (record §10; it releases with the flip, ruling D). **Part 2 committed `02e29f453` 2026-11-03** (record §11; it releases with the flip too). **Part 3a committed `3304c77fe` 2026-11-03**
-(record §12; releases with the flip). **Part 3b built 2026-11-03** (record §13; releases with the flip). Next Part 3c. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
+(record §12; releases with the flip). **Part 3b committed `9b6252e8a` 2026-11-04** (record §13; releases with the flip). Next Part 3c. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
 **Sequencing rule (standing):** by dependency and rework risk, never by date. One part per session, `/clear` between.
@@ -444,7 +444,7 @@ rewritten guard is vacuous.
   monograms — the warm-gold contrast case `teamInk` solved. Pre-existing.
 - Still owed, not this part: the admin strip's 34 px "Dismiss"; `/release` §1d-2's sharp probe; the club editor's 18 px input.
 
-## 13. Part 3b record (Schedule + a game's page; built 2026-11-03; releases with the flip)
+## 13. Part 3b record (Schedule + a game's page; built 2026-11-03, committed `9b6252e8a` 2026-11-04; releases with the flip)
 
 **What a customer sees:** nothing (nothing promoted). **An owner on dev, switch on (the default):** nothing changes — the
 Schedule, a game's page and the admin preview's Schedule section already showed the new look. **Switch off:** those three now
