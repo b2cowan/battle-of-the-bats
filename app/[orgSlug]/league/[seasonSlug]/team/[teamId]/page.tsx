@@ -7,6 +7,7 @@ import { readCoachTeamPage } from '@/lib/house-league-coach';
 import { coachTeamPath } from '@/lib/house-league-coach-invites';
 import { formatStoredDate } from '@/lib/timezone';
 import { coachesLine } from '@/lib/house-league-teams-words';
+import { householdRecipients } from '@/lib/league-second-parent';
 import CopyEmails from './CopyEmails';
 import CoachSchedule from './CoachSchedule';
 import CoachSubscribe from './CoachSubscribe';
@@ -123,7 +124,8 @@ export default async function CoachTeamPage({ params }: { params: Promise<{ orgS
       <section className={styles.section} aria-labelledby="coach-players">
         <div className={styles.sectionHead}>
           <h2 id="coach-players" className={styles.sectionTitle}>Players <span className={styles.count}>{page.players.length}</span></h2>
-          {page.players.length > 0 && <CopyEmails emails={[...new Set(page.players.map(p => p.guardianEmail.trim().toLowerCase()).filter(Boolean))]} />}
+          {/* Signed-in family accounts Stage 3 (ask 5): both parents of each player, nothing twice. */}
+          {page.players.length > 0 && <CopyEmails emails={[...new Set(page.players.flatMap(p => householdRecipients(p.guardianEmail, [p])))]} />}
         </div>
         {page.players.length === 0 ? (
           <p className={kit.sub}>No players on this team right now.</p>
@@ -133,13 +135,16 @@ export default async function CoachTeamPage({ params }: { params: Promise<{ orgS
               <span>Player</span><span>Parent or guardian</span><span>Email</span><span>Phone</span>
             </div>
             <ul className={styles.players}>
-              {page.players.map(p => (
+              {page.players.map(p => {
+                const both = householdRecipients(p.guardianEmail, [p]);
+                return (
                 <li key={p.id} className={styles.player}>
                   <span className={styles.playerName}>{p.firstName} {p.lastName}</span>
                   <span className={styles.parent}>{p.guardianName}</span>
-                  <a href={`mailto:${p.guardianEmail}`} aria-label={`Email ${p.guardianName}`} className={`${styles.contact} ${styles.mail}`}>
+                  {/* One mail door to both parents (ask 5); the second address reads under the first on a desk. */}
+                  <a href={`mailto:${both.join(',')}`} aria-label={both.length > 1 ? `Email ${p.guardianName} and the second parent` : `Email ${p.guardianName}`} className={`${styles.contact} ${styles.mail}`}>
                     <Mail size={22} strokeWidth={1.8} className={styles.contactIcon} aria-hidden />
-                    <span className={styles.contactText}>{p.guardianEmail}</span>
+                    <span className={styles.contactText}>{both.length > 0 ? both.map((e, i) => <span key={e} className={i > 0 ? styles.contactSecond : undefined}>{e}</span>) : p.guardianEmail}</span>
                   </a>
                   {p.guardianPhone && (
                     <a href={`tel:${p.guardianPhone.replace(/[^\d+]/g, '')}`} aria-label={`Call ${p.guardianName}`} className={`${styles.contact} ${styles.tel}`}>
@@ -148,7 +153,8 @@ export default async function CoachTeamPage({ params }: { params: Promise<{ orgS
                     </a>
                   )}
                 </li>
-              ))}
+                );
+              })}
             </ul>
           </div>
         )}

@@ -179,6 +179,15 @@ for it (decide from the snapshots, never from migration files).
 
 Draw first: the form field and how the club sees two guardians on a registration.
 
+**DRAWN + RULED 2026-11-03 (all six asks A, as recommended).** [Drawings](https://claude.ai/artifact/5NRGyGJgJU11DaVuhL9fHY) · [source](SIGNED_IN_FAMILY_STAGE3_DRAWINGS.html). **BUILT and committed 2026-11-03** (Sessions 1–3 in one commit; /simplify and /review done, the review's fixes and six owner questions are in the build prompt's Progress block; mig 430 applied to dev, prod pending; walk, /docs and /marketing owed).
+1. **Placement:** an always-visible box "Second parent's email" under Email and Phone, no name asked, no "(optional)" tag (the 2026-08-26 required-marker ruling).
+2. **Emails:** the second address gets every email about the sign-up, including the "Your sign-up" link and the pay link, with a "who added you / not you? tell the club" line on its copy. Receipts and refunds stay with whoever paid, as today. Known cost: the address is typed by the first parent and unconfirmed, so a wrong address can see the child's name and the amount owed; the added line is the only safeguard.
+3. **Marketing consent:** the tick-box covers the first parent only; the second address is never on the marketing list.
+4. **Club "Email families":** reaches both parents of each household, counted once.
+5. **Coach:** sees the second email; the form's coach line is updated to say so.
+6. **Club screens:** record window (view and edit), "Add registration" window, export column, and search. The Families book and its second-guardian write are untouched.
+Also drawn: one address per sign-up (not per child); the same address as the first is refused inline; the second address has its own hourly send limit; no parent-side edit until Stage 4. A migration is needed (no column exists today). The PIPEDA / CASL counsel review that gates Stage 4 should also be shown this page; nothing here waits on it. Build prompt written 2026-11-03: [SIGNED_IN_FAMILY_STAGE3_BUILD_PROMPT.md](SIGNED_IN_FAMILY_STAGE3_BUILD_PROMPT.md) (six Parts, two sessions).
+
 ### Stage 4 — The invitation at team placement; "Your sign-up" inside the app · needs counsel AND Stage 14
 
 1. **Placing a child on a team invites the guardian(s)** — the placement email is the invitation; never a separate

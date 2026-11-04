@@ -2,6 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { fetchAllIn } from './supabase-paging';
 import { sendFamilyServiceBatch, type FamilyServiceMessage } from './family-email';
+import { sendSecondParentServiceCopies } from './league-second-parent-mail';
 import { leaguePracticesChangedHtml } from './email';
 import { systemMailFace, type ClubEmailOrg } from './club-email-context';
 import { seasonEmailReason } from './families-words';
@@ -137,6 +138,11 @@ export async function sendPracticeChangeNotices(p: {
           .update({ reached_count: sent, failed_count: list.length - sent }).eq('id', notice.id);
         if (upErr) console.error('[club-schedule-league-mail] a notice\'s counts were not updated (the emails went):', upErr.message);
       }
+      // Signed-in family accounts Stage 3: the second parents' copies, after the counts (they never change one or "told").
+      await sendSecondParentServiceCopies({
+        kind: 'house_league_practice_change', fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null, results,
+        households: list.map(({ h }, i) => ({ firstEmail: h.email, registrationIds: h.children.map(c => c.registrationId), message: messages[i] })),
+      });
     }
   } catch (e) {
     // Every household not yet tried counts as failed, so the send's result never reads clean when families weren't told

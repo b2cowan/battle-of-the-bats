@@ -10,6 +10,7 @@ import { systemMailFace, type ClubEmailOrg } from './club-email-context';
 import { leaguePayUrl } from './league-pay-link';
 import { signupsOwingNow } from './league-pay-facts';
 import { movedMail, placedMail } from './house-league-teams-words';
+import { sendSecondParentServiceCopies } from './league-second-parent-mail';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -164,11 +165,15 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
 
   const messages: FamilyServiceMessage[] = [];
   const messageRows: string[] = [];
+  // Signed-in family accounts Stage 3: each message's household (its first address and the children it names), so the
+  // second parents' copies follow the first batch (lib/league-second-parent-mail.ts).
+  const households: { firstEmail: string; registrationIds: string[] }[] = [];
   const nothingToSay: string[] = [];
   for (const row of rows) {
     // Only children still accepted and on a team are named; a child moved off since is not news.
     const children = row.registration_ids.map(id => regs.get(id)).filter((r): r is RegRow => !!r && r.status === 'active' && !!r.team_id);
     if (children.length === 0) { nothingToSay.push(row.id); continue; }
+    households.push({ firstEmail: row.guardian_email, registrationIds: children.map(c => c.id) });
     const division = divisionName.get(row.division_id) ?? '';
     const guardianFirstName = children[0].guardian_first_name?.trim() || 'there';
     const url = signupUrl(org, season, children[0], owing);
@@ -222,6 +227,11 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
     outcome[status] += list.length;
     await recordOutcome(list, status);
   }
+  // After the households' rows are recorded: the second parents' copies never change an outcome or a count.
+  await sendSecondParentServiceCopies({
+    kind: 'house_league_placement', fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null,
+    households: households.map((h, i) => ({ ...h, message: messages[i] })), results,
+  });
   return outcome;
 }
 

@@ -212,7 +212,8 @@ describe('Part 6: the club’s "Send a new link" (drawing tab 4; asks 4 and 6)',
     assert.ok(reset.indexOf("return { error: 'no_secret' }") < reset.indexOf('.update('));
     assert.ok(reset.indexOf("return { error: 'no_email' }") < reset.indexOf('.update('));
     // After the update the old link is stopped: a send that throws is the plain "couldn't send", never a 500.
-    assert.match(reset, /\}\)\.catch\(\(\) => null\);\s+return !sent \|\| sent\.status === 'provider_error' \? \{ error: 'send_failed' \}/);
+    // (Signed-in family accounts Stage 3: the second parent's copy sits between, and never changes the answer.)
+    assert.match(reset, /\}\)\.catch\(\(\) => null\);[\s\S]*?return !sent \|\| sent\.status === 'provider_error' \? \{ error: 'send_failed' \}/);
     // The token layer: version n opens only at version n.
     const secret = 'test-secret';
     const SIB = '6f1c2d3e-4a5b-4c6d-8e9f-0a1b2c3d4e5f';

@@ -38,6 +38,8 @@ import { leagueCardShares, refundLeagueToCard, resolveLeagueRefundAnotherWay } f
 import { clubPayoutsConnected, loadRegistrationDebits, returnedCardRefunds, unrecordedCardShares, isRegClearing } from '@/lib/league-pay-facts';
 import { onlinePaymentsOn } from '@/lib/online-payments-switch';
 import { writeOrgAudit } from '@/lib/org-audit';
+import { readSecondParentEmail, secondParentRefusalWords, SECOND_PARENT_WORDS } from '@/lib/league-second-parent';
+import { sendSecondParentTransactional, sendTransactionalToBothParents, went } from '@/lib/league-second-parent-mail';
 import { isSendableGuardianEmail, normalizeGuardianEmail } from '@/lib/guardian-email';
 
 
@@ -69,7 +71,7 @@ function emailPromoted(
       }
       // The "Your sign-up" button only while money is owed (Stage 1 ask 3); 12b's card words while the club takes cards.
       const [face, link] = await Promise.all([systemMailFace(org), leagueMailLink(next.id)]);
-      await sendTransactionalEmail({
+      await sendTransactionalToBothParents(next, {
         key: 'league_waitlist_promoted',
         to: next.guardianEmail,
         vars: {
@@ -440,10 +442,40 @@ export const PATCH = withObservability(async (req: Request,
       if (sameErr) throw sameErr;
       ids.push(...(same ?? []).filter(r => normalizeGuardianEmail(r.guardian_email as string | null) === was).map(r => r.id as string));
     }
+    // Signed-in family accounts Stage 3: the database holds the two addresses apart (mig 430's CHECK), so a first email
+    // changed to the second parent's is refused in words before it gets there.
+    const { data: seconds, error: secErr } = await supabaseAdmin.from('league_registrations')
+      .select('guardian_email_2').in('id', ids).eq('season_id', seasonId);
+    if (secErr) throw secErr;
+    if ((seconds ?? []).some(r => r.guardian_email_2 === next)) {
+      return NextResponse.json({ error: SECOND_PARENT_WORDS.staff.firstIsSecond, code: 'second_email' }, { status: 409 });
+    }
     const { error: upErr } = await supabaseAdmin.from('league_registrations')
       .update({ guardian_email: next, updated_at: new Date().toISOString() }).in('id', ids).eq('season_id', seasonId);
     if (upErr) throw upErr;
     await writeOrgAudit(ctx!.org.id, ctx!.user.id, regId, 'league_guardian_email_changed', { seasonId, had: !!was });
+    return NextResponse.json({ registration: await fetchReg(regId, seasonId) });
+  }
+
+  // ── the second parent's email (Signed-in family accounts Stage 3, ask 6: the record window views and edits it) ─────────
+  // The desk (the registrar too, as "Add registration" types it). One address per SIGN-UP: every child of the signup_ref
+  // this season takes it; a child staff added by hand (no reference) is its own sign-up. Empty clears it. The form's rules
+  // in staff words. ⚠ A staff edit SENDS NOTHING (build prompt Part 5): the next email about the sign-up reaches it.
+  if ('guardianEmail2' in body) {
+    const refused = houseLeagueRefusal(ctx, 'register', season);
+    if (refused) return refused;
+    const second = readSecondParentEmail(typeof body.guardianEmail2 === 'string' ? body.guardianEmail2 : null, reg.guardianEmail);
+    if ('refusal' in second) {
+      return NextResponse.json({ error: secondParentRefusalWords(second.refusal, 'club'), code: 'second_email' }, { status: 400 });
+    }
+    let q = supabaseAdmin.from('league_registrations')
+      .update({ guardian_email_2: second.email, updated_at: new Date().toISOString() }).eq('season_id', seasonId);
+    // A sign-up is its reference AND its first email (as every other reader defines it): a reference that collided with
+    // another family's must never carry this edit to them, and every row written shares the first address it was checked against.
+    q = reg.signupRef ? q.eq('signup_ref', reg.signupRef).eq('guardian_email', reg.guardianEmail ?? '').eq('org_id', ctx!.org.id) : q.eq('id', regId);
+    const { error: upErr } = await q;
+    if (upErr) throw upErr;
+    await writeOrgAudit(ctx!.org.id, ctx!.user.id, regId, 'league_second_parent_email_changed', { seasonId, had: !!reg.guardianEmail2, has: !!second.email });
     return NextResponse.json({ registration: await fetchReg(regId, seasonId) });
   }
 
@@ -581,7 +613,7 @@ export const PATCH = withObservability(async (req: Request,
         try {
           // The "Your sign-up" button only while money is owed (Stage 1 ask 3); 12b's card words while the club takes cards.
           const [face, link] = await Promise.all([faceOnce(), leagueMailLink(regId)]);
-          await sendTransactionalEmail({
+          await sendTransactionalToBothParents(reg, {
             key: 'league_registration_approved',
             to: reg.guardianEmail,
             vars: {
@@ -609,7 +641,7 @@ export const PATCH = withObservability(async (req: Request,
       void (async () => {
         try {
           const face = await faceOnce();
-          await sendTransactionalEmail({
+          await sendTransactionalToBothParents(reg, {
             key: 'league_registration_waitlisted',
             to: reg.guardianEmail,
             vars: {
@@ -752,7 +784,7 @@ export const PATCH = withObservability(async (req: Request,
                 subject: `Registration update — ${season.name}`,
                 html: leagueRegistrationWithdrawnHtml({ ...emailBase, divisionName, face, money: mailMoney! }),
               };
-          await sendTransactionalEmail({
+          const ending = {
             key: mail.key,
             to: reg.guardianEmail,
             vars: {
@@ -765,9 +797,12 @@ export const PATCH = withObservability(async (req: Request,
             defaultSubject: mail.subject,
             defaultHtml: mail.html,
             family: familyOf(face, reg.playerFirstName),
-          });
-          // The record's "Family emailed" for the card refund this email carried.
+          };
+          const firstSent = await sendTransactionalEmail(ending);
+          // The record's "Family emailed" for the card refund this email carried — the FIRST parent's send decides it.
           await stampRefundEmailed(cardRefundIds, true);
+          // Stage 3: the second parent's copy after the stamp, so its own failure can never mark the refund un-emailed.
+          if (went(firstSent)) await sendSecondParentTransactional(reg, ending);
         } catch (e) {
           console.error('[email] house-league ending email failed', e);
           await stampRefundEmailed(cardRefundIds, false).catch(() => null);

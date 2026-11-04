@@ -219,13 +219,18 @@ export async function sendTransactionalEmail(opts: {
   askedBy?: string | null;
   /** The mail service's once-only key (24 hours): a retried send under the same key goes once (Plans end at renewal, G7). */
   idempotencyKey?: string;
+  /** Send the caller's default even when the template is customised: for a copy whose words a template cannot carry
+   *  (the second parent's sign-up confirmation, Signed-in family accounts Stage 3). Same kind, log and envelope. */
+  builtInOnly?: boolean;
 }): Promise<SendEmailResult> {
-  const { subject, html } = await renderResolvedEmail({
-    key: opts.key,
-    vars: opts.vars,
-    fallback: { subject: opts.defaultSubject, html: opts.defaultHtml },
-    family: opts.family,
-  });
+  const { subject, html } = opts.builtInOnly
+    ? { subject: opts.defaultSubject, html: opts.defaultHtml }
+    : await renderResolvedEmail({
+      key: opts.key,
+      vars: opts.vars,
+      fallback: { subject: opts.defaultSubject, html: opts.defaultHtml },
+      family: opts.family,
+    });
   const log = { kind: opts.key, orgId: opts.orgId, askedBy: opts.askedBy, ...(opts.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : {}) };
   if (!opts.family) return sendEmail(opts.to, subject, html, log);
   return sendEmail(opts.to, subject, html, {

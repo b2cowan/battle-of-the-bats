@@ -240,6 +240,13 @@
   color: var(--text-secondary);
 }
 .recordFee { margin: 0 0 0.5rem; }
+/* Signed-in family accounts Stage 3: the "Second parent" fact's Add / Change door and its edit (the See them fix's shape). */
+.secondDoor { margin-left: 0.5rem; padding: 0; background: none; border: 0; cursor: pointer; }
+.secondFix { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.25rem; }
+.secondFix input { flex: 1 1 14rem; min-width: 0; }
+@media (max-width: 640px) {
+  .secondDoor { min-height: var(--tap-min, 44px); }
+}
 
 /* ── 12c: the "To the card" block, one per card refund, under the Fee facts ── */
 .cardRefund { margin: 0.75rem 0 0; padding: 0.75rem 0 0; border-top: 1px solid var(--home-line); }

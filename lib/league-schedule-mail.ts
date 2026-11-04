@@ -3,6 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { chunked, fetchAll, fetchAllIn } from './supabase-paging';
 import { getOrgPlaceNames, getSeasonGamesEveryStatus } from './db';
 import { sendFamilyServiceBatch, type FamilyServiceMessage } from './family-email';
+import { sendSecondParentServiceCopies } from './league-second-parent-mail';
 import { isSendableGuardianEmail, normalizeGuardianEmail } from './guardian-email';
 import { leagueScheduleNoticeHtml } from './email';
 import { systemMailFace, type ClubEmailOrg } from './club-email-context';
@@ -311,8 +312,9 @@ async function sendClaimed(p: { org: ScheduleMailOrg; season: ScheduleMailSeason
   const reachedByTeam = new Map<string, number>();
   const reachedEmails = new Map<string, Set<string>>();
   if (messages.length) {
-    await sendFamilyServiceBatch({
-      kind: notice.kind === 'schedule_published' ? 'house_league_schedule_published' : 'house_league_games_changed',
+    const kind = notice.kind === 'schedule_published' ? 'house_league_schedule_published' : 'house_league_games_changed';
+    const results = await sendFamilyServiceBatch({
+      kind,
       messages, fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null,
       onBatch: async (indexes, result) => {
         const status = result.status === 'sent' ? 'sent' : result.status === 'skipped' && quietTransport() ? 'skipped' : 'failed';
@@ -326,6 +328,16 @@ async function sendClaimed(p: { org: ScheduleMailOrg; season: ScheduleMailSeason
     });
     // Anything the batches never answered for is a failure, once (recordOutcome only touches rows still `sending`).
     await recordOutcome(messageRows.map(m => m.id), 'failed');
+    // Signed-in family accounts Stage 3: the second parents' copies, after the households' rows are recorded (they never
+    // change an outcome or the family count). A coach who is a second parent this send reached is skipped as a parent is.
+    const registrationIdsByRow = new Map(rows.map(r => [r.id, r.registration_ids]));
+    const reached = await sendSecondParentServiceCopies({
+      kind, fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null, results,
+      households: messageRows.map((m, i) => ({ firstEmail: m.email, registrationIds: registrationIdsByRow.get(m.id) ?? [], message: messages[i] })),
+    });
+    for (const r of reached) for (const t of messageRows[r.household].teams) {
+      (reachedEmails.get(t) ?? reachedEmails.set(t, new Set()).get(t)!).add(r.to);
+    }
   }
 
   if (notice.kind === 'games_changed' && p.copyCoachesFor) {

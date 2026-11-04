@@ -20,6 +20,8 @@ import { buildLeaguePayView, leagueMailLink } from '@/lib/league-pay-view';
 import { getClubSiteContent } from '@/lib/club-page-meta';
 import { leaguePayToken, leaguePayUrl } from '@/lib/league-pay-link';
 import { SIGNUP_LINK_WORDS as SW } from '@/lib/league-pay-words';
+import { readSecondParentEmail, secondParentRefusalWords, SECOND_PARENT_WORDS as SP } from '@/lib/league-second-parent';
+import { went } from '@/lib/league-second-parent-mail';
 
 export const dynamic = 'force-dynamic';
 
@@ -107,6 +109,9 @@ export const POST = withObservability(async (req: Request,
   const guardianLast  = str(body.guardianLastName, 80);
   const guardianEmail = str(body.guardianEmail, 200);
   const guardianPhone = str(body.guardianPhone, 30);
+  // Signed-in family accounts Stage 3: the second parent's email, one for the whole sign-up. Empty changes nothing.
+  const second = readSecondParentEmail(str(body.guardianEmail2, 200), guardianEmail);
+  const guardianEmail2 = 'email' in second ? second.email : null;
   const waiverAccepted = body.waiverAccepted === true;
   const emailConsent = body.emailConsent === true;
 
@@ -136,6 +141,7 @@ export const POST = withObservability(async (req: Request,
   if (!guardianLast) errors.guardianLastName = 'Enter your last name.';
   if (!guardianEmail) errors.guardianEmail = 'Enter your email address.';
   else if (!isValidEmail(guardianEmail)) errors.guardianEmail = 'Enter a valid email address.';
+  if ('refusal' in second) errors.guardianEmail2 = secondParentRefusalWords(second.refusal, 'parent');
   if (season.waiverText && !waiverAccepted) errors.waiverAccepted = 'Agree to the waiver to sign up.';
   if (Object.keys(errors).length > 0) return NextResponse.json({ errors }, { status: 400 });
   if (chosen.every(c => c === 'nofit')) {
@@ -143,9 +149,13 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: `No division takes children born in ${year}. Contact ${org.name} to ask what is available.`, code: 'nofit' }, { status: 409 });
   }
 
-  // Last gate before the writes and the mail, so a family retrying after a late refusal has not spent its budget.
+  // Last gate before the writes and the mail. (Each address spends one of its own hourly tokens as it is checked, so a
+  // sign-up refused for the SECOND address has already spent one of the first's — a cost of the per-address cap.)
   const recipientThrottled = throttlePublicFormRecipient(guardianEmail!);
   if (recipientThrottled) return recipientThrottled;
+  // The second address has its own hourly cap (drawing tab 5): a refused one refuses the whole sign-up, before any write.
+  const secondThrottled = guardianEmail2 ? throttlePublicFormRecipient(guardianEmail2) : null;
+  if (secondThrottled) return secondThrottled;
 
   // 4. Each child through the one locked step, in the form's order; its own outcome.
   const reference = newReference();
@@ -167,7 +177,7 @@ export const POST = withObservability(async (req: Request,
       signupRef: reference, signupPosition: ++position,
       child: {
         firstName: k.firstName!, lastName: k.lastName!, dateOfBirth: k.dob, jerseyPref: k.jersey, positionPref: k.position, notes: k.notes,
-        guardianFirstName: guardianFirst!, guardianLastName: guardianLast!, guardianEmail: guardianEmail!, guardianPhone,
+        guardianFirstName: guardianFirst!, guardianLastName: guardianLast!, guardianEmail: guardianEmail!, guardianEmail2, guardianPhone,
         source: 'public_form', waiverAcceptedAt,
       },
       // With waiverAcceptedAt this files the consent-ledger row (mig 252) beside the placement.
@@ -218,25 +228,45 @@ export const POST = withObservability(async (req: Request,
   const children: PlacedChild[] = placedKids.map(r => ({
     firstName: r.firstName, lastName: r.lastName, divisionName: r.divisionName, status: r.status, waitlistPosition: r.waitlistPosition, fee: r.fee,
   }));
-  try {
-    const face = await systemMailFace(org);
-    await sendTransactionalEmail({
-      key: 'league_signup',
-      to: guardianEmail!,
-      vars: { guardianFirstName: guardianFirst!, seasonName: season.name, reference },
-      defaultSubject: signupSubject(children, season.name),
-      defaultHtml: leagueSignupHtml({
-        guardianFirstName: guardianFirst!, seasonName: season.name, clubName: org.name, reference,
-        howToPay: anyAccepted ? season.howToPay : null, signupUrl, children, face,
-        online,
-      }),
-      family: face ? {
-        face,
-        reason: children.length === 1 ? `${children[0].firstName} was signed up for ${season.name}` : `your children were signed up for ${season.name}`,
-      } : undefined,
-    });
-  } catch (e) {
-    console.error('[league-register] email send failed:', e);
+  // The club's face never throws (a face that cannot be read is a plainer email), so both parents' copies share it.
+  const face = await systemMailFace(org);
+  // Stage 3 ask 2: the second parent gets the same confirmation and the same "Your sign-up" link (both open one page),
+  // greeted "Hi," with the "who added you" line on top — its own message, never a Cc. ALWAYS the built-in email: a
+  // customised template has no place for that line and would greet the first parent by name. Each copy in its own try:
+  // one failing never fails the sign-up or the other parent's copy.
+  const copies = [
+    { to: guardianEmail!, secondParentLine: null },
+    ...(guardianEmail2 ? [{
+      to: guardianEmail2,
+      secondParentLine: SP.addedYou(`${guardianFirst} ${guardianLast}`, children.map(c => c.firstName), { name: org.name, contact: face?.contact ?? null }),
+    }] : []),
+  ];
+  let firstWent = true;
+  for (const copy of copies) {
+    // The second parent's copy follows only a first copy that went (the rule every other sender holds).
+    if (copy.secondParentLine && !firstWent) break;
+    try {
+      const result = await sendTransactionalEmail({
+        key: 'league_signup',
+        to: copy.to,
+        vars: { guardianFirstName: guardianFirst!, seasonName: season.name, reference },
+        defaultSubject: signupSubject(children, season.name),
+        defaultHtml: leagueSignupHtml({
+          guardianFirstName: guardianFirst!, seasonName: season.name, clubName: org.name, reference,
+          howToPay: anyAccepted ? season.howToPay : null, signupUrl, children, face,
+          online, secondParentLine: copy.secondParentLine,
+        }),
+        family: face ? {
+          face,
+          reason: children.length === 1 ? `${children[0].firstName} was signed up for ${season.name}` : `your children were signed up for ${season.name}`,
+        } : undefined,
+        builtInOnly: copy.secondParentLine != null,
+      });
+      if (!copy.secondParentLine) firstWent = went(result);
+    } catch (e) {
+      if (!copy.secondParentLine) firstWent = false;
+      console.error(`[league-register] ${copy.secondParentLine ? 'second parent ' : ''}email send failed:`, e);
+    }
   }
   try {
     const n = signupNotice(children, `${guardianFirst} ${guardianLast}`, season.name);
@@ -254,6 +284,8 @@ export const POST = withObservability(async (req: Request,
   return NextResponse.json({
     reference,
     guardianEmail: guardianEmail!,
+    // Stage 3: the finish screen names both addresses ("We've emailed this to {a} and {b}."); null reads as before.
+    guardianEmail2,
     howToPay: anyAccepted ? season.howToPay : null,
     // 12b: the pay block for the confirmation, while the club takes card payments; null keeps today's words (A6).
     pay: pay?.kind === 'owing' ? pay : null,

@@ -23,6 +23,8 @@ const COLS: ExportColumnDef[] = [
   { label: 'Date of Birth',  key: 'playerDateOfBirth', format: 'date', sensitive: true },
   { label: 'Guardian Name',  key: 'guardianName',      format: 'text', sensitive: true },
   { label: 'Guardian Email', key: 'guardianEmail',     format: 'text', sensitive: true },
+  // Signed-in family accounts Stage 3: beside the first address, private the same way (drawing tab 3).
+  { label: 'Second Parent Email', key: 'guardianEmail2', format: 'text', sensitive: true },
   { label: 'Guardian Phone', key: 'guardianPhone',     format: 'text', sensitive: true },
   { label: 'Registered At',  key: 'registeredAt',      format: 'date' },
   { label: 'Status',         key: 'status',            format: 'text' },
@@ -58,6 +60,7 @@ function source(rows: readonly ExportRow[]) {
     playerDateOfBirth: r.playerDateOfBirth ?? '',
     guardianName: guardianName(r),
     guardianEmail: r.guardianEmail,
+    guardianEmail2: r.guardianEmail2 ?? '',
     guardianPhone: r.guardianPhone ?? '',
     registeredAt: orgDayKey(r.registeredAt),
     status: statusWord(r),

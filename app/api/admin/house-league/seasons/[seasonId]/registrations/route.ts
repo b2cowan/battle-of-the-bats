@@ -3,6 +3,7 @@ import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getLeagueSeasonById, mapLeagueRegistration } from '@/lib/db';
 import { placeLeagueRegistration } from '@/lib/league-registration-place';
+import { readSecondParentEmail, secondParentRefusalWords } from '@/lib/league-second-parent';
 import { leaguePrice } from '@/lib/league-price';
 import { isCalendarDate, tournamentToday } from '@/lib/timezone';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -37,7 +38,7 @@ export const GET = withObservability(async (req: Request,
   if (search) {
     const s = search.trim().replace(/[%_]/g, '\\$&');
     q = q.or(
-      `player_first_name.ilike.%${s}%,player_last_name.ilike.%${s}%,guardian_email.ilike.%${s}%`,
+      `player_first_name.ilike.%${s}%,player_last_name.ilike.%${s}%,guardian_email.ilike.%${s}%,guardian_email_2.ilike.%${s}%`,
     );
   }
 
@@ -128,6 +129,12 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Division not found' }, { status: 404 });
   }
 
+  // Signed-in family accounts Stage 3 (ask 6): the same optional box as the sign-up form, read the same way.
+  const second = readSecondParentEmail(typeof body.guardianEmail2 === 'string' ? body.guardianEmail2 : null, guardianEmail);
+  if ('refusal' in second) {
+    return NextResponse.json({ error: secondParentRefusalWords(second.refusal, 'club'), code: 'second_email' }, { status: 400 });
+  }
+
   const playerDob = typeof body.playerDateOfBirth === 'string' && body.playerDateOfBirth.trim() ? body.playerDateOfBirth.trim() : null;
   if (playerDob && !isCalendarDate(playerDob)) {
     return NextResponse.json({ error: 'Enter a real date of birth' }, { status: 400 });
@@ -160,6 +167,7 @@ export const POST = withObservability(async (req: Request,
       guardianFirstName,
       guardianLastName,
       guardianEmail,
+      guardianEmail2: second.email,
       guardianPhone: typeof body.guardianPhone === 'string' ? body.guardianPhone : null,
       source: 'admin_manual',
     },

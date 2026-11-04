@@ -2386,6 +2386,7 @@ export function mapLeagueRegistration(row: any): LeagueRegistration {
     guardianFirstName:   row.guardian_first_name,
     guardianLastName:    row.guardian_last_name,
     guardianEmail:       row.guardian_email,
+    guardianEmail2:      row.guardian_email_2 ?? null,
     guardianPhone:       row.guardian_phone ?? null,
     status:              row.status,
     waitlistPosition:    row.waitlist_position ?? null,

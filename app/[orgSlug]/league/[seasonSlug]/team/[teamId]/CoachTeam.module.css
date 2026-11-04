@@ -227,4 +227,8 @@
   .contactText {
     display: inline;
   }
+  /* Signed-in family accounts Stage 3 (ask 5): the second parent's address on its own line under the first. */
+  .contactSecond {
+    display: block;
+  }
 }

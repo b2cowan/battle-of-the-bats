@@ -31,6 +31,8 @@ describe('the sign-up route', () => {
     assert.match(ROUTE, /bornFitsDate\(\{ from: d\.bornFromYear, to: d\.bornToYear \}, cutoff, k\.dob!\)/);
     assert.match(ROUTE, /if \(d === 'nofit'\) \{ results\.push\(/);
   });
+  // Signed-in family accounts Stage 3: "one email" is per sign-up PER PARENT — the second parent's copy goes through the
+  // same one call, in a loop over the sign-up's addresses (tests/unit/league-second-parent.test.ts).
   it('one email per sign-up, AWAITED, and one notice for the club (F23)', () => {
     assert.equal((ROUTE.match(/sendTransactionalEmail\(/g) ?? []).length, 1);
     assert.match(ROUTE, /await sendTransactionalEmail\(\{\s*key: 'league_signup'/);

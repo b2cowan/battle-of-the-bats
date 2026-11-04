@@ -18,6 +18,7 @@ import {
 } from './families-words';
 import { writeOrgAudit } from './org-audit';
 import { seasonState } from './house-league-season';
+import { secondParentsOf } from './league-second-parent';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -421,10 +422,16 @@ export async function resendMissedFamilies(ctx: AuthContextWithRole, sendId: str
 
   const world = await loadFamilyAudience(ctx.org.id, ctx.org.slug, { attach: true });
   const emailOf = new Map(world.people.map(p => [p.personId, p.email]));
+  // Signed-in family accounts Stage 3 (ask 4): a season's email reached its households' second parents too, so its resend
+  // does — each person's registrations in that season, their second address as it is now.
+  const peopleById = new Map(world.people.map(p => [p.personId, p]));
+  const secondsOf = (personId: string): string[] => taken.season_id
+    ? secondParentsOf(null, (peopleById.get(personId)?.seasonRows ?? []).filter(r => r.seasonId === taken.season_id && r.status === 'active').map(r => ({ guardianEmail2: r.secondParentEmail ?? null })))
+    : [];
   const sender = (ctx.user.email ?? '').trim().toLowerCase();
   // Each missed family, at its address as it is now: reachable (sent below), opted out since, or no address at all.
   const now = missed.map(r => {
-    const all = [...new Set((r.person_ids as string[]).map(id => emailOf.get(id)).filter((a): a is string => !!a && a !== sender))];
+    const all = [...new Set((r.person_ids as string[]).flatMap(id => [emailOf.get(id), ...secondsOf(id)]).filter((a): a is string => !!a && a !== sender))];
     return { r, all, reachable: all.filter(a => !world.suppressed.has(a)).sort() };
   });
   const going = now.filter(x => x.reachable.length > 0);
@@ -495,7 +502,7 @@ export async function messageOneFamily(ctx: AuthContextWithRole, personId: strin
 
   // A send is an ACTION: it attaches first, so an email a coach changed since the last worklist visit is followed
   // before anyone is mailed (/review 2026-10-17). Reads stay attach-free; the worklist is the visit's one attach.
-  const reach = await loadHouseholdReach(ctx.org.id, personId, { attach: true });
+  const reach = await loadHouseholdReach(ctx.org.id, personId, { attach: true, seasonId: season?.id ?? null });
   if (!reach) return no(404, 'Not found', 'not_found');
   // The reach, decided on the press — never trusted from the window.
   const to = [...new Set(reach.recipients.filter(r => !r.optedOut).map(r => r.email))];

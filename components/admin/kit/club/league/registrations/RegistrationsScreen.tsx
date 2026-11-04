@@ -788,6 +788,13 @@ export default function RegistrationsScreen() {
           isPhone={isPhone}
           focus={openReg.id === openedLink ? linkedAt : openReg.id === feeFocus ? 'fee' : null}
           onAnotherWay={id => openAnotherWay(openReg, id)}
+          // Signed-in family accounts Stage 3 (ask 6): the desk (as "Add registration") adds or changes it; sends nothing.
+          onSecondEmail={rights.register ? async value => {
+            const r = await patchRegistration(orgQuery, seasonId, openReg.id, { guardianEmail2: value });
+            if (!r.ok) return r.error;
+            await load({ season: false, teams: false });
+            return null;
+          } : null}
         />
       )}
 

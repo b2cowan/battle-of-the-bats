@@ -15,6 +15,9 @@ https://claude.ai/artifact/QmPoKvcyF3Bg1xpjCWw54C
   that makes sense.
 - **Tournament parents and fans** never need an account.
 - **A second parent's email** can be added on the house-league form, so both parents get the team invitation.
+  Drawn and ruled 2026-11-03: an always-visible "Second parent's email" box (no name asked). The second parent gets every
+  email about the sign-up, with a line saying who added them; receipts and refunds still go to whoever paid. The coach and the
+  club see it; it is never put on the marketing list.
 - **Next season**, a signed-in parent finds the form filled in.
 
 ## Why it matters

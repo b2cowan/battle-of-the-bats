@@ -444,7 +444,8 @@ export function bulkActions(tab: RegTab, rights: RegRights, charges: boolean): B
 export function matchesSearch(r: LeagueRegistration, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
-  return [playerName(r), guardianName(r), r.guardianEmail].some(s => s.toLowerCase().includes(q));
+  // Signed-in family accounts Stage 3 (ask 6): the second parent's email finds the registration too.
+  return [playerName(r), guardianName(r), r.guardianEmail, r.guardianEmail2 ?? ''].some(s => s.toLowerCase().includes(q));
 }
 
 /** The Fee filter: several picks widen it (any of them). */

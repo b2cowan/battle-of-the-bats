@@ -11,6 +11,7 @@ import { repKit } from '../../RepKit';
 import { FormError } from '../../money/MoneyKit';
 import DateInput from '@/components/shared/DateInput';
 import { ADD_REG_WORDS as W } from '@/lib/house-league-money-words';
+import { SECOND_PARENT_WORDS } from '@/lib/league-second-parent';
 import type { RegsDivision } from '@/lib/house-league-registrations';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 import { postJson } from './api';
@@ -20,12 +21,14 @@ interface Form {
   divisionId: string;
   playerFirstName: string; playerLastName: string; playerDateOfBirth: string; playerJerseyPref: string; playerPositionPref: string; playerNotes: string;
   guardianFirstName: string; guardianLastName: string; guardianEmail: string; guardianPhone: string;
+  /** Signed-in family accounts Stage 3 (ask 6): the same optional box as the sign-up form. */
+  guardianEmail2: string;
   status: LeagueRegistrationStatus;
 }
 
 const BLANK: Form = {
   divisionId: '', playerFirstName: '', playerLastName: '', playerDateOfBirth: '', playerJerseyPref: '', playerPositionPref: '', playerNotes: '',
-  guardianFirstName: '', guardianLastName: '', guardianEmail: '', guardianPhone: '', status: 'active',
+  guardianFirstName: '', guardianLastName: '', guardianEmail: '', guardianPhone: '', guardianEmail2: '', status: 'active',
 };
 
 export default function AddRegistrationWindow({ seasonName, divisions, today, orgQuery, seasonId, onClose, onAdded }: {
@@ -70,6 +73,7 @@ export default function AddRegistrationWindow({ seasonName, divisions, today, or
       guardianLastName: form.guardianLastName.trim(),
       guardianEmail: form.guardianEmail.trim(),
       guardianPhone: form.guardianPhone || null,
+      guardianEmail2: form.guardianEmail2.trim() || null,
       status: form.status,
     });
     if (!r.ok) { setError(r.error); setBusy(false); return; }
@@ -115,6 +119,7 @@ export default function AddRegistrationWindow({ seasonName, divisions, today, or
         {text('guardianEmail', W.email, { required: true, type: 'email' })}
         {text('guardianPhone', W.phone)}
       </div>
+      {text('guardianEmail2', SECOND_PARENT_WORDS.label, { type: 'email' })}
       <h3 className={css.formSection}>{W.assignment}</h3>
       <div className={repKit.fieldGrid}>
         <label className={ck.field} htmlFor="regs-add-division">

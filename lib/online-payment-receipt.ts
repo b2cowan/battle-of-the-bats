@@ -17,6 +17,8 @@ import { transactionalFamilyFooterHtml } from './family-mail-footer';
 import { leaguePayUrl } from './league-pay-link';
 import { LEAGUE_PAY_WORDS as LW, SIGNUP_LINK_WORDS as SW, childList } from './league-pay-words';
 import { REGS_WORDS } from './house-league-money-words';
+import { secondParentsOf } from './league-second-parent';
+import { readSecondParents, went } from './league-second-parent-mail';
 
 /**
  * The payer's emails (Club Tier Stage 12a, copy §14 and §17): one receipt per payment and one email per refund, from our
@@ -294,6 +296,16 @@ export async function sendLeaguePayLink(
   if (result.status === 'provider_error') return { error: 'Couldn’t send the pay link. Try again.' };
   const sentAt = new Date().toISOString();
   await supabaseAdmin.from('league_registrations').update({ pay_link_sent_at: sentAt }).in('id', facts.shares.map(s => s.registrationId));
+  // Signed-in family accounts Stage 3 (ask 2): the second parent gets the pay link too — its own message, the same email
+  // (it greets no one). NOT the refund's answer (`refunded`): that one carries a refund block, and refund notices stay with
+  // whoever paid. After the stamp, each copy in its own try: it never changes the answer or the "Pay link sent" stamp.
+  if (!refunded && went(result)) {
+    const seconds = await readSecondParents([registrationId, ...facts.shares.map(s => s.registrationId)]).catch(() => new Map<string, string>());
+    for (const to of secondParentsOf(facts.guardianEmail, [...seconds.values()].map(e => ({ guardianEmail2: e })))) {
+      await sendEmail(to, L.subject(names, facts.season.name), html, { ...face?.sendOpts, kind: 'league_pay_link' })
+        .catch(e => console.error('[pay-link] second parent copy failed:', e instanceof Error ? e.message : String(e)));
+    }
+  }
   return { sentTo: facts.guardianEmail, sentAt };
 }
 

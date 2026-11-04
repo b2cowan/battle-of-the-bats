@@ -5,6 +5,7 @@ import { nameList, ordinal, signupHeadline, signupToPay, type PlacedChild } from
 import { dollarsLine } from './house-league-season';
 import { methodInBrackets } from './house-league-money-words';
 import { LEAGUE_PAY_WORDS, SIGNUP_LINK_WORDS } from './league-pay-words';
+import { SECOND_PARENT_WORDS } from './league-second-parent';
 import { formatStoredDate } from './timezone';
 import { STAFF_KIND_COPY, staffKindCopyFor, type StaffKind } from '@/lib/coach-capabilities';
 import {
@@ -934,9 +935,15 @@ export function leagueSignupHtml(input: {
   face?: FamilyMailFace | null;
   /** 12b: card payment's words, while the club takes card payments. */
   online?: LeagueMailPay | null;
+  /** Signed-in family accounts Stage 3: the second parent's copy. Greets "Hi," (no name is asked) and opens with this
+   *  "who added you" line (lib/league-second-parent.ts, escaped here). Absent = the first parent's email, unchanged. */
+  secondParentLine?: string | null;
 }) {
   const p = escapeEmailFields(input);
   const kids = input.children;
+  const greeting = p.secondParentLine
+    ? `<p>${escapeEmailHtml(SECOND_PARENT_WORDS.greeting)}</p>\n    <p>${p.secondParentLine}</p>`
+    : `<p>Hi <strong>${p.guardianFirstName}</strong>,</p>`;
   const first = (c: SignupMailChild) => escapeEmailHtml(c.firstName);
   const full = (c: SignupMailChild) => escapeEmailHtml(`${c.firstName} ${c.lastName}`);
   const accepted = kids.filter(c => c.status === 'active');
@@ -980,7 +987,7 @@ export function leagueSignupHtml(input: {
 
   return familyNotice(`
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">${escapeEmailHtml(signupHeadline(kids))}</h2>
-    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
+    ${greeting}
     <p>${lead}</p>
     <div style="${warmPanelStyle('secondary')}">
       <p style="${WARM_EMAIL_STYLE.panelLabel}">${panelLabel}</p>

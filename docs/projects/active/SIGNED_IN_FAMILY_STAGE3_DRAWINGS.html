@@ -1,0 +1,391 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Second Parent Email Drawings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) holding true-size specimens of the house-league sign-up and the club
+   admin. Sticky tabs, one section at a time, an Everything / Show only what differs switch where a frame compares. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.doc{max-width:1240px;margin:0 auto;padding-block:16px 90px}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:22px;margin:6px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:17px;margin:18px 0 6px}
+.doc p,.doc li{max-width:82ch}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16px;max-width:82ch}
+/* sticky tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+.tabs .sp{flex:1}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+section.pane[hidden]{display:none}
+/* view switch: ONE white track, two options */
+.viewrow{display:flex;align-items:center;gap:10px;margin:8px 0 12px;flex-wrap:wrap}
+.viewrow .lab{font:600 11.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sw{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px}
+.sw button{font:600 13.5px/1 var(--f-doc);min-height:36px;padding:0 14px;border-radius:7px;border:0;background:none;color:var(--muted);cursor:pointer}
+.sw button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+/* cards, notes, tables */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px;box-shadow:var(--shadow);margin:12px 0}
+.card h3{margin-top:0}
+.card ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.read{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+@media (max-width:900px){.read{grid-template-columns:minmax(0,1fr)}}
+.read>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.read h4{margin:0 0 6px;font:700 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.read .w h4{color:var(--fix)} .read .g h4{color:var(--flag)} .read .c h4{color:var(--t-res)}
+.read ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:720px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+.y{color:var(--fix);font-weight:700} .x{color:var(--flag);font-weight:700} .am{color:var(--ask);font-weight:700}
+/* marks */
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:24px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)}
+.cap{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 6px;font:600 12px/1.3 var(--f-mono);color:var(--muted)}
+.cap b{color:var(--ink)}
+/* frames */
+.pair{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;margin:8px 0}
+.pair>div{min-width:0;max-width:100%}
+.fr{border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;max-width:100%}
+.w540{width:540px} .w390{width:390px} .w460{width:460px} .w520{width:520px}
+.samebar{display:none;border:1px dashed var(--line2,var(--line));border-radius:8px;padding:8px 12px;margin:10px 16px;font:600 12px/1.4 var(--f-mono);color:var(--muted);text-align:center}
+body[data-view="diff"] .same{display:none}
+body[data-view="diff"] .samebar{display:block}
+/* the product kit, for specimens (Warm) */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.24);
+  --olive:#57651E;--cta:#D9F99D;--cta-ink:#1F2A07;--red:#B03A22;--green:#34662A;--green-soft:#E6F0E2;--new:rgba(75,46,131,.09);
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;text-align:left}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ak{--paper:#1A1712;--card:#241F18;--ink:#F3EDE2;--soft:rgba(243,237,226,.78);--dim:rgba(243,237,226,.6);--line:rgba(255,255,255,.1);--line2:rgba(255,255,255,.2);--olive:#D9F99D;--red:#F08A74;--green:#9BD58C;--green-soft:rgba(155,213,140,.13);--new:rgba(187,166,238,.14)}}
+:root[data-theme="dark"] .ak{--paper:#1A1712;--card:#241F18;--ink:#F3EDE2;--soft:rgba(243,237,226,.78);--dim:rgba(243,237,226,.6);--line:rgba(255,255,255,.1);--line2:rgba(255,255,255,.2);--olive:#D9F99D;--red:#F08A74;--green:#9BD58C;--green-soft:rgba(155,213,140,.13);--new:rgba(187,166,238,.14)}
+.ak *{box-sizing:border-box}
+.ak .hd{padding:12px 18px;background:var(--card);border-bottom:1px solid var(--line);font:700 14px/1.2 'Inter'}
+.ak .hd small{display:block;font:500 12px/1.4 'Inter';color:var(--dim);margin-top:2px}
+.ak .bd{padding:14px 18px;display:flex;flex-direction:column;gap:12px}
+.ak .sec{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.ak .sec h5{margin:0;font:700 13px/1.2 'Inter'}
+.ak .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ak .lbl{font:600 12px/1.3 'Inter';color:var(--soft);margin-bottom:4px;display:block}
+.ak .lbl i{color:var(--red);font-style:normal}
+.ak .lbl em{font-style:normal;font-weight:500;color:var(--dim)}
+.ak .in{border:1px solid var(--line2);background:var(--paper);border-radius:7px;min-height:44px;padding:8px 10px;font-size:13.5px;line-height:1.3;color:var(--ink);min-width:0;overflow-wrap:anywhere}
+.ak .in.ph{color:var(--dim)}
+.ak .hint{font-size:12px;line-height:1.4;color:var(--dim);margin:4px 0 0}
+.ak .err{font-size:12px;color:var(--red);margin:4px 0 0}
+.ak .in.bad{border-color:var(--red)}
+.ak .chk{display:flex;gap:8px;font-size:12.5px;line-height:1.4;align-items:flex-start}
+.ak .chk b{width:16px;height:16px;border:1.5px solid var(--line2);border-radius:4px;flex:none;margin-top:1px;background:var(--paper)}
+.ak .chk b.on{background:var(--olive);border-color:var(--olive)}
+.ak .btn{background:var(--cta);color:var(--cta-ink);border-radius:8px;min-height:44px;display:flex;align-items:center;justify-content:center;font:700 14px/1 'Inter'}
+.ak .newbox{background:var(--new);outline:2px solid var(--t-new);outline-offset:4px;border-radius:8px}
+.ak .kv{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;font-size:13.5px}
+.ak .kv dt{color:var(--dim)} .ak .kv dd{margin:0;overflow-wrap:anywhere}
+.ak .okc{background:var(--green-soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.ak .okc h5{margin:0 0 4px;font:700 15px/1.3 'Inter';color:var(--green)}
+.ak .okc p{margin:0;font-size:13.5px}
+.ak .btn2{border:1px solid var(--line2);border-radius:8px;min-height:40px;display:inline-flex;align-items:center;padding:0 14px;font:600 13px/1 'Inter';color:var(--ink);background:var(--card)}
+.ak .mail{background:var(--card);padding:16px 18px;display:flex;flex-direction:column;gap:10px;font-size:13.5px}
+.ak .mail .meta{font-size:12px;color:var(--dim);border-bottom:1px solid var(--line);padding-bottom:8px;line-height:1.5}
+.ak .mail p{margin:0}
+.ak table.csv{border-collapse:collapse;font-size:12px;width:100%}
+.ak table.csv th,.ak table.csv td{border:1px solid var(--line);padding:6px 8px;text-align:left;white-space:nowrap}
+.ak table.csv th{background:var(--card);font-weight:700}
+.ak table.csv .nw{background:var(--new);outline:2px solid var(--t-new);outline-offset:-2px}
+.csvw{overflow-x:auto}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:14px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted);margin:4px 0}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:48px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:220px;font:12.5px/1.5 var(--f-mono)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(520px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:16px;flex:1}
+dialog.note .nh button{font-size:22px;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px}
+</style>
+
+<div class="doc">
+<div class="eyebrow">Signed-in family accounts · Stage 3 · drawings</div>
+<h1>A second parent’s email on the house-league sign-up</h1>
+<p class="lede">A parent signing up a child can add one more email, the other parent’s. Both addresses then get the emails about that child’s season. This page draws the form, what the parent sees after sending, what the second parent receives, and what the club and coach see. Everything is a proposal until you rule on the asks in the last tab.</p>
+
+<div class="tabs" role="tablist" id="tabs">
+  <button role="tab" aria-selected="true" data-t="p1">1 · The form</button>
+  <button role="tab" aria-selected="false" data-t="p2">2 · After they send</button>
+  <button role="tab" aria-selected="false" data-t="p3">3 · What the club sees</button>
+  <button role="tab" aria-selected="false" data-t="p4">4 · Who gets which email</button>
+  <button role="tab" aria-selected="false" data-t="p5">5 · When it goes wrong</button>
+  <button role="tab" aria-selected="false" data-t="p6">6 · Asks</button>
+</div>
+
+<!-- ============ 1 · THE FORM ============ -->
+<section class="pane" id="p1">
+  <h2>The form: one optional box under the email</h2>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>Today</b> · desktop, whole sign-up screen</div>
+      <div class="fr w540"><div class="ak">
+        <div class="hd">House League 2027 sign-up<small>Riverdale Minor Ball League</small></div>
+        <div class="bd">
+          <div class="sec same"><h5>Child 1</h5><div class="row2"><div><span class="lbl">First name <i>*</i></span><div class="in">Aarav</div></div><div><span class="lbl">Last name <i>*</i></span><div class="in">Shah</div></div></div><div class="row2"><div><span class="lbl">Date of birth <i>*</i></span><div class="in">2018-04-12</div></div><div><span class="lbl">Division</span><div class="in">U9 Rookie</div></div></div></div>
+          <div class="samebar">Child 1 · unchanged</div>
+          <div class="sec"><h5>Parent or guardian</h5>
+            <div class="row2"><div><span class="lbl">First name <i>*</i></span><div class="in">Priya</div></div><div><span class="lbl">Last name <i>*</i></span><div class="in">Shah</div></div></div>
+            <div class="row2"><div><span class="lbl">Email <i>*</i></span><div class="in">priya.shah@example.com</div><p class="hint">We’ll send the confirmation here. You’ll need this email and your reference to check your status later.</p></div><div><span class="lbl">Phone</span><div class="in">(416) 555-0142</div></div></div>
+            <p class="hint">Your child’s coach will see your name, email and phone to reach you about the team.</p>
+          </div>
+          <div class="sec same"><h5>Waiver and agreement</h5><div class="chk"><b class="on"></b><span>I have read and agree to the waiver.</span></div></div>
+          <div class="samebar">Waiver and button · unchanged</div>
+          <div class="btn same">Sign up · $120.00</div>
+        </div></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>Proposed</b> · same screen <button class="mk new" data-note="A new optional box. No name is asked for, only the address, so the form stays about the same length. It is not required, and leaving it empty changes nothing for anyone.">NEW</button></div>
+      <div class="fr w540"><div class="ak">
+        <div class="hd">House League 2027 sign-up<small>Riverdale Minor Ball League</small></div>
+        <div class="bd">
+          <div class="sec same"><h5>Child 1</h5><div class="row2"><div><span class="lbl">First name <i>*</i></span><div class="in">Aarav</div></div><div><span class="lbl">Last name <i>*</i></span><div class="in">Shah</div></div></div><div class="row2"><div><span class="lbl">Date of birth <i>*</i></span><div class="in">2018-04-12</div></div><div><span class="lbl">Division</span><div class="in">U9 Rookie</div></div></div></div>
+          <div class="samebar">Child 1 · unchanged</div>
+          <div class="sec"><h5>Parent or guardian</h5>
+            <div class="row2"><div><span class="lbl">First name <i>*</i></span><div class="in">Priya</div></div><div><span class="lbl">Last name <i>*</i></span><div class="in">Shah</div></div></div>
+            <div class="row2"><div><span class="lbl">Email <i>*</i></span><div class="in">priya.shah@example.com</div><p class="hint">We’ll send the confirmation here. You’ll need this email and your reference to check your status later.</p></div><div><span class="lbl">Phone</span><div class="in">(416) 555-0142</div></div></div>
+            <div class="newbox" style="padding:8px"><span class="lbl">Second parent’s email</span><div class="in">dev.shah@example.com</div><p class="hint">They’ll get the same emails you do about this sign-up. We only need their email, not their name.</p></div>
+            <p class="hint">Your child’s coach will see your name, email and phone, and the second parent’s email if you add one. <button class="mk res" data-note="The coach reads both parents’ details to reach the family, so the line says so. Ask 5 asks whether the coach should see the second address at all.">RESTYLED</button></p>
+          </div>
+          <div class="sec same"><h5>Waiver and agreement</h5><div class="chk"><b class="on"></b><span>I have read and agree to the waiver.</span></div></div>
+          <div class="samebar">Waiver and button · unchanged</div>
+          <div class="btn same">Sign up · $120.00</div>
+        </div></div></div>
+    </div>
+  </div>
+  <div class="cap" style="margin-top:14px"><b>Proposed</b> · phone (390 px, true size) <button class="mk new" data-note="On a phone the box sits on its own row under Email and Phone. Open this page on your phone to judge the size.">NEW</button></div>
+  <div class="pair"><div class="fr w390"><div class="ak"><div class="bd">
+    <div class="sec"><h5>Parent or guardian</h5>
+      <div><span class="lbl">Email <i>*</i></span><div class="in">priya.shah@example.com</div></div>
+      <div><span class="lbl">Phone</span><div class="in">(416) 555-0142</div></div>
+      <div class="newbox" style="padding:8px"><span class="lbl">Second parent’s email</span><div class="in ph">name@example.com</div><p class="hint">They’ll get the same emails you do about this sign-up. We only need their email, not their name.</p></div>
+    </div></div></div></div>
+    <div style="max-width:560px"><div class="read" style="grid-template-columns:1fr"><div class="w"><h4>What this does</h4><ul>
+      <li>One address per sign-up, not per child. A parent signing up three children adds it once.</li>
+      <li>No name field. The second parent’s greeting in emails is “Hi,” as already ruled for the first-practice email.</li>
+      <li>Nothing about the box is required, so the sign-up takes no longer for anyone who skips it.</li></ul></div>
+      <div class="g"><h4>Cost</h4><ul><li>One more row on a long form. It sits with the other parent details rather than at the end, so it is found where it is expected.</li></ul></div></div></div></div>
+</section>
+
+<!-- ============ 2 · AFTER THEY SEND ============ -->
+<section class="pane" id="p2" hidden>
+  <h2>After they send: the finish screen and the second parent’s email</h2>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div><div class="cap"><b>Today</b> · finish screen</div>
+      <div class="fr w460"><div class="ak"><div class="bd">
+        <div class="okc"><h5>You’re signed up</h5><p>We’ve emailed this to priya.shah@example.com.</p></div>
+        <div class="sec same"><h5>Aarav Shah · U9 Rookie</h5><div class="kv"><dt>Reference</dt><dd>HL-4Q7M2K</dd><dt>Status</dt><dd>Registered</dd></div></div>
+        <div class="samebar">Reference and status · unchanged</div>
+        <div><span class="btn2">Your sign-up →</span></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · finish screen <button class="mk res" data-note="Only the sentence changes: it names both addresses. If no second address was entered, it reads exactly as it does today.">RESTYLED</button></div>
+      <div class="fr w460"><div class="ak"><div class="bd">
+        <div class="okc"><h5>You’re signed up</h5><p>We’ve emailed this to priya.shah@example.com and dev.shah@example.com.</p></div>
+        <div class="sec same"><h5>Aarav Shah · U9 Rookie</h5><div class="kv"><dt>Reference</dt><dd>HL-4Q7M2K</dd><dt>Status</dt><dd>Registered</dd></div></div>
+        <div class="samebar">Reference and status · unchanged</div>
+        <div><span class="btn2">Your sign-up →</span></div>
+      </div></div></div></div>
+  </div>
+  <div class="cap" style="margin-top:16px"><b>What the second parent receives</b> · the confirmation email <button class="mk new" data-note="The same confirmation the first parent gets, with one added line at the top saying who added this address. The greeting is ‘Hi,’ because we do not ask for their name. Words are a draft for the copy pass.">NEW</button></div>
+  <div class="pair"><div class="fr w520"><div class="ak"><div class="mail">
+    <div class="meta"><b>From</b> Riverdale Minor Ball League<br><b>To</b> dev.shah@example.com<br><b>Subject</b> Aarav is signed up for House League 2027</div>
+    <p>Hi,</p>
+    <p class="newbox" style="padding:8px">Priya Shah added your email to Aarav’s sign-up so you get the same updates. If you aren’t Aarav’s parent or guardian, tell the club at info@riverdaleminor.example and we’ll remove your address.</p>
+    <p>Aarav Shah is signed up for U9 Rookie. Your reference is <b>HL-4Q7M2K</b>.</p>
+    <p><span class="btn2">Your sign-up →</span></p>
+  </div></div></div>
+  <div style="max-width:520px"><div class="read" style="grid-template-columns:1fr"><div class="w"><h4>What this does</h4><ul>
+    <li>The second parent gets the same emails as the first from then on, so a missed message in one inbox is not a missed message.</li>
+    <li>The “who added you” line is the safeguard for a mistyped or stranger’s address, and the only extra wording.</li></ul></div>
+    <div class="c"><h4>Not on this page</h4><ul><li>No account is created for either parent here. That stays with Stage 4, at team placement.</li></ul></div></div></div></div>
+</section>
+
+<!-- ============ 3 · WHAT THE CLUB SEES ============ -->
+<section class="pane" id="p3" hidden>
+  <h2>What the club sees: one more line on the record, one more column in the export</h2>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div><div class="cap"><b>Today</b> · registration record window</div>
+      <div class="fr w460"><div class="ak"><div class="hd">Aarav Shah<small>U9 Rookie · Registered</small></div><div class="bd">
+        <div class="sec same"><h5>Child</h5><dl class="kv" style="margin:0"><dt>Date of birth</dt><dd>2018-04-12</dd><dt>Division</dt><dd>U9 Rookie</dd></dl></div>
+        <div class="samebar">Child · unchanged</div>
+        <div class="sec"><h5>Parent or guardian</h5><dl class="kv" style="margin:0"><dt>Guardian</dt><dd>Priya Shah</dd><dt>Email</dt><dd>priya.shah@example.com</dd><dt>Phone</dt><dd>(416) 555-0142</dd></dl></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · registration record window <button class="mk new" data-note="A new row under Email. Shows a dash when there is none. Club staff can change it in the same place they can change the first email today.">NEW</button></div>
+      <div class="fr w460"><div class="ak"><div class="hd">Aarav Shah<small>U9 Rookie · Registered</small></div><div class="bd">
+        <div class="sec same"><h5>Child</h5><dl class="kv" style="margin:0"><dt>Date of birth</dt><dd>2018-04-12</dd><dt>Division</dt><dd>U9 Rookie</dd></dl></div>
+        <div class="samebar">Child · unchanged</div>
+        <div class="sec"><h5>Parent or guardian</h5><dl class="kv" style="margin:0"><dt>Guardian</dt><dd>Priya Shah</dd><dt>Email</dt><dd>priya.shah@example.com</dd><dt class="newbox">Second parent</dt><dd class="newbox">dev.shah@example.com</dd><dt>Phone</dt><dd>(416) 555-0142</dd></dl></div>
+      </div></div></div></div>
+  </div>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · “Add registration” window (staff signing a family up) <button class="mk new" data-note="Staff adding a registration by hand get the same optional box, so a sign-up taken at a desk or by phone can include the second parent.">NEW</button></div>
+      <div class="fr w460"><div class="ak"><div class="hd">Add a registration</div><div class="bd">
+        <div class="sec"><h5>Parent or guardian</h5>
+          <div><span class="lbl">Email <i>*</i></span><div class="in">priya.shah@example.com</div></div>
+          <div class="newbox" style="padding:8px"><span class="lbl">Second parent’s email</span><div class="in ph">name@example.com</div></div>
+        </div></div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · the spreadsheet export <button class="mk new" data-note="One new column, marked sensitive like the guardian email already is. Search on the registrations list also finds a registration by the second address.">NEW</button></div>
+      <div class="fr w520"><div class="ak" style="padding:12px"><div class="csvw"><table class="csv"><tr><th>Child</th><th>Guardian</th><th>Guardian Email</th><th class="nw">Second Parent Email</th><th>Phone</th></tr>
+        <tr><td>Aarav Shah</td><td>Priya Shah</td><td>priya.shah@example.com</td><td class="nw">dev.shah@example.com</td><td>(416) 555-0142</td></tr>
+        <tr><td>Maya Cho</td><td>Eun Cho</td><td>eun.cho@example.com</td><td class="nw"></td><td>(416) 555-0177</td></tr></table></div></div></div></div>
+  </div>
+  <div class="read"><div class="w"><h4>What the club gains</h4><ul><li>A way to reach the other parent when the first one is away, without asking the family again.</li></ul></div>
+    <div class="c"><h4>Left alone</h4><ul><li>The Families book, the draft board and the household counts. A household still counts once, as ruled for the first-practice email.</li><li>The Families book’s own second-guardian write stays “Not yet”, waiting on the guardian tier.</li></ul></div>
+    <div class="g"><h4>Watch</h4><ul><li>The registrations list has no email column today, so none is added. Search is the only change there.</li></ul></div></div>
+</section>
+
+<!-- ============ 4 · WHO GETS WHICH EMAIL ============ -->
+<section class="pane" id="p4" hidden>
+  <h2>Who gets which email</h2>
+  <p class="muted">Recommended answers shown. “Both” means the registration’s first parent and the second parent’s address. Rows marked with an ask change if you rule differently.</p>
+  <div class="tw"><table class="t"><thead><tr><th>Email</th><th>First parent</th><th>Second parent</th><th>Note</th></tr></thead><tbody>
+    <tr><td>Sign-up confirmation (with “Your sign-up”)</td><td class="y">Yes</td><td class="y">Yes</td><td>The second parent’s copy has the “who added you” line. Ask 2.</td></tr>
+    <tr><td>Accepted, moved off the waitlist, spot released, declined, withdrawn</td><td class="y">Yes</td><td class="y">Yes</td><td>These are about the child’s place, so both should know.</td></tr>
+    <tr><td>Placed on a team, moved to another team</td><td class="y">Yes</td><td class="y">Yes</td><td>Ruled 2026-10-31. Becomes the team invitation in Stage 4.</td></tr>
+    <tr><td>Schedule published, games changed, practice times and practice changes</td><td class="y">Yes</td><td class="y">Yes</td><td>Practice times already ruled to go to both, counted once.</td></tr>
+    <tr><td>Pay link (“Your sign-up” payment reminder)</td><td class="y">Yes</td><td class="am">Ask 2</td><td>The page behind the link can show what is owed and take a payment.</td></tr>
+    <tr><td>Payment receipt, refund notice</td><td colspan="2">Whoever paid / the first parent, as today</td><td>Unchanged. A receipt goes to the address on the payment.</td></tr>
+    <tr><td>Club “Email families” messages</td><td class="y">Yes</td><td class="am">Ask 4</td><td>Counted once per household in “Will be sent”.</td></tr>
+    <tr><td>“Future seasons and club news” marketing list</td><td>Only if they ticked the box</td><td class="x">Never</td><td>Nobody can agree to marketing on someone else’s behalf. Ask 3.</td></tr>
+  </tbody></table></div>
+  <div class="read"><div class="w"><h4>Why the marketing line is firm</h4><ul><li>The tick-box is one person’s consent. The second address was typed by someone else, so it stays out of the marketing list unless that parent ticks it themselves later.</li></ul></div>
+    <div class="c"><h4>Unsubscribing</h4><ul><li>Emails about a sign-up carry no unsubscribe link today, and that stays. The “not you? tell the club” line is how a wrong address comes off.</li></ul></div>
+    <div class="g"><h4>For counsel</h4><ul><li>The privacy-law review already gating Stage 4 should also see this page. Nothing here is built on its outcome.</li></ul></div></div>
+</section>
+
+<!-- ============ 5 · WHEN IT GOES WRONG ============ -->
+<section class="pane" id="p5" hidden>
+  <h2>When it goes wrong</h2>
+  <div class="fr w460" style="margin-bottom:14px"><div class="ak"><div class="bd">
+    <div><span class="lbl">Second parent’s email</span><div class="in bad">priya.shah@example.com</div><p class="err">That’s the same email as yours. Leave this empty or enter the other parent’s.</p></div>
+  </div></div></div>
+  <div class="tw"><table class="t"><thead><tr><th>Situation</th><th>What happens</th></tr></thead><tbody>
+    <tr><td>Box left empty</td><td>Nothing changes anywhere. The finish screen names one address.</td></tr>
+    <tr><td>Same address as the first email</td><td>The box shows the message above and the form does not send. Capital letters and spaces are ignored when comparing.</td></tr>
+    <tr><td>Not a valid address</td><td>“Enter a valid email address.” in the same words as the first email.</td></tr>
+    <tr><td>A mistyped or stranger’s address</td><td>They get the confirmation with the “who added you” line and a way to ask the club to remove them. They get nothing else unless a later email goes out to the household.</td></tr>
+    <tr><td>Someone using the form to mail strangers</td><td>The form’s existing limits apply to the second address on its own: the same hourly cap per address as the first, plus the per-visitor and overall caps.</td></tr>
+    <tr><td>Several children in one sign-up</td><td>One second address for the whole sign-up. Siblings stay one household.</td></tr>
+    <tr><td>Parent wants to change it later</td><td>Asks the club. Staff change it on the registration record. There is no parent-side edit until the parent has an account (Stage 4).</td></tr>
+    <tr><td>The second parent has already unsubscribed from this club</td><td>They still get emails about the sign-up, which are not marketing. They stay off the marketing list.</td></tr>
+    <tr><td>Both parents sign up separately, each with the other as second parent</td><td>Two sign-ups, two households, as today. Duplicate matching is Stage 14’s job.</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- ============ 6 · ASKS ============ -->
+<section class="pane" id="p6" hidden>
+  <h2>Asks</h2>
+  <p class="muted">Review fixes already applied: the box carries no (optional) tag, because the house form rule is an asterisk on required fields only, and inputs are drawn at the 44 px floor. Pick one per ask. The green row is my recommendation. Notes are optional.</p>
+  <div id="asks"></div>
+  <div class="paste"><div class="row"><button class="btn-d pri" id="mk">Make my answers</button><button class="btn-d" id="cp">Copy</button><span class="muted" id="cpmsg"></span></div>
+    <textarea id="out" readonly aria-label="Your answers" placeholder="Press “Make my answers”, then copy this text back into the chat."></textarea></div>
+</section>
+</div>
+
+<dialog class="note" id="nd"><div class="nh"><h3>About this</h3><button id="nx" aria-label="Close">×</button></div><div class="nb" id="nt"></div></dialog>
+
+<script>
+(function(){
+  var ASKS=[
+   {id:1,t:"Where does the box sit, and how loud is it?",
+    r:"Tab 1. A visible optional box means more families fill it in, which is the point of the feature. A quiet link would keep the form shorter but most parents would never see it.",
+    o:[["A","Always visible, no asterisk, under Email and Phone","rec"],["B","A small “Add a second parent’s email” link that opens the box",""],["C","Do not put it on the form; staff add it only",""]]},
+   {id:2,t:"Does the second parent get the “Your sign-up” link and the pay link?",
+    r:"Tab 4. The page behind that link shows what is owed, takes a payment and lets someone ask to withdraw the child. The address was typed by the first parent and not confirmed. Receipts and refunds are unchanged either way.",
+    o:[["A","Yes, both parents get every email about the sign-up, with the “who added you” line on the second parent’s copy","rec"],["B","The second parent gets the confirmation and team emails but not the pay link",""],["C","The second parent gets the confirmation without the link, and team emails only",""]]},
+   {id:3,t:"Does the marketing tick-box cover the second parent?",
+    r:"Tab 4. The box says “may email me about future seasons and club news”, which is about the person who ticked it.",
+    o:[["A","No. The second address is never on the marketing list unless that parent ticks it themselves later","rec"],["B","Yes, if the first parent ticks it, the second address joins the list",""]]},
+   {id:4,t:"Do the club’s “Email families” messages reach the second parent?",
+    r:"Tab 4. These are messages about the season, sent by staff to a chosen group. The count shows each household once either way.",
+    o:[["A","Yes, both parents of each household","rec"],["B","First parent only",""]]},
+   {id:5,t:"Can the coach see the second parent’s email?",
+    r:"Tab 1. The coach team page has a mailto link and a copy-all-emails button. The form’s coach line would change to say so.",
+    o:[["A","Yes, with the form’s line updated","rec"],["B","No, the club sees it and the coach does not",""]]},
+   {id:6,t:"How far does the box reach inside the club’s screens?",
+    r:"Tab 3. The record window row and the export column are the minimum. The rest is cheap once the column exists.",
+    o:[["A","Record window (view and edit), “Add registration” window, export column, and search","rec"],["B","Record window and export only",""]]}
+  ];
+  var host=document.getElementById('asks');
+  ASKS.forEach(function(a){
+    var d=document.createElement('div');d.className='ask';
+    var h='<h3><span class="no">Ask '+a.id+'</span>'+a.t+'</h3><p class="rides">'+a.r+'</p><div class="opts">';
+    a.o.forEach(function(o){h+='<label class="'+o[2]+'"><input type="radio" name="a'+a.id+'" value="'+o[0]+'"'+(o[2]?' checked':'')+'><span><b>'+o[0]+'.</b> '+o[1]+'</span></label>';});
+    h+='</div><textarea id="n'+a.id+'" aria-label="Note for ask '+a.id+'" placeholder="Note (optional)"></textarea>';
+    d.innerHTML=h;host.appendChild(d);
+  });
+  var tabs=document.getElementById('tabs');
+  tabs.addEventListener('click',function(e){var b=e.target.closest('button[data-t]');if(!b)return;
+    [].forEach.call(tabs.querySelectorAll('button'),function(x){x.setAttribute('aria-selected',x===b?'true':'false')});
+    [].forEach.call(document.querySelectorAll('section.pane'),function(s){s.hidden=s.id!==b.getAttribute('data-t')});
+    window.scrollTo(0,0);});
+  document.addEventListener('click',function(e){
+    var v=e.target.closest('.sw button');
+    if(v){var val=v.getAttribute('data-v');document.body.setAttribute('data-view',val);
+      [].forEach.call(document.querySelectorAll('.sw button'),function(x){x.setAttribute('aria-pressed',x.getAttribute('data-v')===val?'true':'false')});return;}
+    var m=e.target.closest('.mk[data-note]');
+    if(m){document.getElementById('nt').textContent=m.getAttribute('data-note');var d=document.getElementById('nd');if(d.showModal)d.showModal();}
+  });
+  document.getElementById('nx').onclick=function(){document.getElementById('nd').close()};
+  document.getElementById('mk').onclick=function(){
+    var L=['Stage 3 drawings, my answers:'];
+    ASKS.forEach(function(a){var c=document.querySelector('input[name=a'+a.id+']:checked');var n=document.getElementById('n'+a.id).value.trim();
+      L.push('Ask '+a.id+': '+(c?c.value:'(none)')+(n?' — '+n:''));});
+    document.getElementById('out').value=L.join('\n');};
+  document.getElementById('cp').onclick=function(){
+    var t=document.getElementById('out');var msg=document.getElementById('cpmsg');
+    function sel(){t.select();msg.textContent='Selected. Press Ctrl+C.';}
+    if(navigator.clipboard&&t.value){navigator.clipboard.writeText(t.value).then(function(){msg.textContent='Copied.'},sel);}else{sel();}};
+})();
+</script>

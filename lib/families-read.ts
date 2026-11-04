@@ -16,6 +16,7 @@ import { listsByPerson } from './families-lists';
 import { registrationOwes } from './league-price';
 import { loadOrgLeagueReceivedCents } from './league-money-read';
 import { orgDayKey } from './timezone';
+import { secondParentsOf, SECOND_PARENT_WORDS } from './league-second-parent';
 
 /**
  * lib/families-read.ts — server-side assembly for the Families area (P2 chunks C–E; Club Tier Stage 5a).
@@ -280,7 +281,7 @@ async function loadOrgFamilyWorld(orgId: string, opts: { attach?: boolean; forDu
       'id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, status, team_id, program_year_id, tryout_registration_id, created_at, rep_teams(name, slug), rep_program_years(year, status, name, credit_application)',
       orgId, q => q.neq('status', 'callup')),
     orgRows<any>('league_registrations',
-      'id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, guardian_last_name, status, registration_fee_paid, fee_amount, waiver_accepted_at, registered_at, season_id, division_id, team_id, pay_link_sent_at, league_seasons(name, slug, status, registration_fee), league_divisions(name)',
+      'id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, guardian_email_2, guardian_last_name, status, registration_fee_paid, fee_amount, waiver_accepted_at, registered_at, season_id, division_id, team_id, pay_link_sent_at, league_seasons(name, slug, status, registration_fee), league_divisions(name)',
       orgId),
     orgRows<any>('family_links', 'id, person_id, player_id, user_id, status, role, relationship, invited_email, claimed_email, updated_at', orgId),
     orgRows<any>('family_email_optouts', 'id, email, source, opted_out_at', orgId),
@@ -989,21 +990,28 @@ export interface HouseholdReach {
 }
 
 /** Who a message reaches — the send decides on this, on the press (the window only shows it). */
-export async function loadHouseholdReach(orgId: string, personId: string, opts: { attach?: boolean } = {}): Promise<HouseholdReach | null> {
-  const [world, suppressed] = await Promise.all([loadOrgFamilyWorld(orgId, opts), getFamilySuppressionList(orgId)]);
+export async function loadHouseholdReach(orgId: string, personId: string, opts: { attach?: boolean; seasonId?: string | null } = {}): Promise<HouseholdReach | null> {
+  const [world, suppressed] = await Promise.all([loadOrgFamilyWorld(orgId, { attach: opts.attach }), getFamilySuppressionList(orgId)]);
   const p: any = world.personById.get(personId);
   if (!p) return null;
   const { guardians } = householdOf(world, p);
-  return {
-    familyName: personDisplayName(p),
-    recipients: guardians.map(g => ({ name: g.name, email: g.email, optedOut: !g.email || suppressed.has(g.email) })),
-    suppressed,
-  };
+  const recipients = guardians.map(g => ({ name: g.name, email: g.email, optedOut: !g.email || suppressed.has(g.email) }));
+  // Signed-in family accounts Stage 3 (ask 4): from a house-league SEASON, the household's registrations in that season
+  // bring their second parent's email too (the one recipient rule). The Families book's own door passes no season and
+  // reads persons only, as before.
+  if (opts.seasonId) {
+    const rows = guardians.flatMap(g => (world.leagueByPerson.get(g.personId) ?? []).filter((r: any) => r.season_id === opts.seasonId && isLiveRegStatus(r.status)));
+    const have = recipients.map(r => r.email).filter(Boolean);
+    for (const email of secondParentsOf(null, rows.map((r: any) => ({ guardianEmail2: r.guardian_email_2 ?? null })))) {
+      if (!have.includes(email)) recipients.push({ name: SECOND_PARENT_WORDS.staff.row, email, optedOut: suppressed.has(email) });
+    }
+  }
+  return { familyName: personDisplayName(p), recipients, suppressed };
 }
 
 /** What the message window shows before anything is typed (P4): the reach, then the last send and the cap. */
-export async function loadMessageWindow(orgId: string, personId: string): Promise<{ familyName: string; recipients: HouseholdReach['recipients']; state: FamilyMessageState } | null> {
-  const [reach, log] = await Promise.all([loadHouseholdReach(orgId, personId), readMessageLog(orgId, personId)]);
+export async function loadMessageWindow(orgId: string, personId: string, seasonId: string | null = null): Promise<{ familyName: string; recipients: HouseholdReach['recipients']; state: FamilyMessageState } | null> {
+  const [reach, log] = await Promise.all([loadHouseholdReach(orgId, personId, { seasonId }), readMessageLog(orgId, personId)]);
   if (!reach) return null;
   const reached = reach.recipients.filter(r => !r.optedOut).length;
   return {
@@ -1033,6 +1041,7 @@ function seasonRowOf(r: any): SeasonRow {
     regId: r.id, seasonId: r.season_id, seasonName: r.league_seasons?.name ?? 'House league',
     seasonStatus: r.league_seasons?.status ?? '', status: r.status, divisionId: r.division_id ?? null, teamId: r.team_id ?? null,
     childFirst: r.player_first_name ?? '', childLast: r.player_last_name ?? '', guardianLast: r.guardian_last_name ?? null,
+    secondParentEmail: r.guardian_email_2 ?? null,
   };
 }
 

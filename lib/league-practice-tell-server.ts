@@ -4,6 +4,7 @@ import { chunked, fetchAll, fetchAllIn, inParallel } from './supabase-paging';
 import { getOrgPlaceNames } from './db';
 import { isFinishedLeagueSeason } from './house-league-access';
 import { sendFamilyServiceBatch, type FamilyServiceMessage } from './family-email';
+import { sendSecondParentServiceCopies } from './league-second-parent-mail';
 import { isSendableGuardianEmail, normalizeGuardianEmail } from './guardian-email';
 import { leaguePracticesChangedHtml } from './email';
 import { systemMailFace, type ClubEmailOrg } from './club-email-context';
@@ -499,6 +500,8 @@ async function sendClaimed(p: { org: TellMailOrg; season: LeagueSeason; noticeId
 
   const messages: FamilyServiceMessage[] = [];
   const messageRows: string[] = [];
+  // Signed-in family accounts Stage 3 (9d-3's "both parents, counted once" lands here): each message's household.
+  const households: { firstEmail: string; registrationIds: string[] }[] = [];
   const nothingToSay: string[] = [];
   for (const row of rows) {
     // Each child still on the team the row is about (a child who moved since is told by the moved email, 9c·12).
@@ -515,11 +518,12 @@ async function sendClaimed(p: { org: TellMailOrg; season: LeagueSeason; noticeId
       html: leaguePracticesChangedHtml({ greeting: w.greeting, intro: w.paragraphs[0] ?? null, parts: w.lists, outro: w.outro, foot: w.foot ?? null, reason: seasonEmailReason(p.season.name), face }),
     });
     messageRows.push(row.id);
+    households.push({ firstEmail: row.guardian_email, registrationIds: row.registration_ids });
   }
   if (nothingToSay.length) await recordOutcome(nothingToSay, 'skipped');
   if (!messages.length) return;
   const answered = new Set<string>();
-  await sendFamilyServiceBatch({
+  const results = await sendFamilyServiceBatch({
     kind: 'house_league_practice_times', messages, fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null,
     onBatch: async (indexes, result) => {
       const batch = indexes.map(i => messageRows[i]);
@@ -535,6 +539,11 @@ async function sendClaimed(p: { org: TellMailOrg; season: LeagueSeason; noticeId
   // Anything the batches never answered for is a failure, once (recordOutcome only touches rows still `sending`).
   const unanswered = messageRows.filter(id => !answered.has(id));
   if (unanswered.length) await recordOutcome(unanswered, 'failed');
+  // The second parents' copies, after the households are marked (they never change "told", a count or a row's status).
+  await sendSecondParentServiceCopies({
+    kind: 'house_league_practice_times', fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null, results,
+    households: households.map((h, i) => ({ ...h, message: messages[i] })),
+  });
 }
 
 /**

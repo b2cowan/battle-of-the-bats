@@ -1,6 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
-import { normalizeGuardianEmailRequired } from './guardian-email';
+import { normalizeGuardianEmail, normalizeGuardianEmailRequired } from './guardian-email';
 import type { LeagueRegistrationStatus } from './types';
 
 /**
@@ -37,6 +37,9 @@ export interface PlaceChild {
   guardianFirstName: string;
   guardianLastName: string;
   guardianEmail: string;
+  /** The second parent's email (Signed-in family accounts Stage 3, mig 430), already read through
+   *  `readSecondParentEmail`; the same on every child of the sign-up. Never part of the duplicate rule. */
+  guardianEmail2?: string | null;
   guardianPhone?: string | null;
   source: 'public_form' | 'admin_manual';
   /** When the guardian accepted the waiver on the public form; null for a child staff added. */
@@ -71,6 +74,7 @@ export async function placeLeagueRegistration(input: PlaceInput): Promise<{ plac
       first: c.firstName, last: c.lastName, dob: c.dateOfBirth ?? '',
       jersey: c.jerseyPref ?? '', position: c.positionPref ?? '', notes: c.notes ?? '',
       guardianFirst: c.guardianFirstName, guardianLast: c.guardianLastName, guardianEmail: email,
+      guardianEmail2: normalizeGuardianEmail(c.guardianEmail2) ?? '',
       guardianPhone: c.guardianPhone ?? '', source: c.source, waiverAt: c.waiverAcceptedAt ?? '',
     },
     p_want: input.want,

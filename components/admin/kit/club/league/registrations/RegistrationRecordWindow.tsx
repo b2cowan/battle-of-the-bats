@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 /**
  * A REGISTRATION'S RECORD (Club Tier Stage 9b-2, Part 3): the whole row opens it, on a phone and at a desk. It READS first
  * (design decisions: "a record reads first, edits whole") — and nothing on a registration is typed here, so it has no
@@ -21,10 +21,63 @@ import type { DisputeRecord } from '@/lib/online-payment-dispute';
 import { isShown, newestFirst, type CardRefund } from '@/lib/league-card-refunds';
 import { Note, type RegRowModel } from './RegistrationsList';
 import css from './Registrations.module.css';
+import { repKit } from '../../RepKit';
+import { SECOND_PARENT_WORDS } from '@/lib/league-second-parent';
+
+const SP = SECOND_PARENT_WORDS.staff;
+
+/**
+ * The "Second parent" fact (Signed-in family accounts Stage 3, drawing tab 3): the address or a dash, and — for the desk —
+ * Add / Change opening a box in place. The record still reads first; this one fact is typed because ask 6 ruled it
+ * editable here, and nothing else on the record became so. Saving applies to the whole sign-up and sends nothing.
+ */
+function SecondParentFact({ reg, onSave }: { reg: LeagueRegistration; onSave: ((value: string) => Promise<string | null>) | null }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const shown = reg.guardianEmail2 ?? SP.none;
+
+  async function save() {
+    if (!onSave || saving) return;
+    setSaving(true); setError(null);
+    const refused = await onSave(value);
+    setSaving(false);
+    if (refused) { setError(refused); return; }
+    setEditing(false);
+  }
+
+  if (!editing) {
+    return (
+      <>
+        {shown}
+        {onSave && (
+          <button type="button" className={`${ck.link} ${css.secondDoor}`}
+            onClick={() => { setEditing(true); setValue(reg.guardianEmail2 ?? ''); setError(null); }}>
+            {reg.guardianEmail2 ? SP.change : SP.add}
+          </button>
+        )}
+      </>
+    );
+  }
+  return (
+    <>
+      <span className={css.secondFix}>
+        <input className={ck.input} type="email" autoComplete="off" value={value} disabled={saving} autoFocus
+          aria-label={SECOND_PARENT_WORDS.label} onChange={e => setValue(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void save(); } }} />
+        <button type="button" className="btn btn-outline" disabled={saving} onClick={() => { setEditing(false); setError(null); }}>{SP.cancel}</button>
+        <button type="button" className="btn btn-lime" disabled={saving} onClick={() => void save()}>{SP.save}</button>
+      </span>
+      <span className={ck.hint}>{SP.editHint}</span>
+      {error && <span className={repKit.formError} role="alert">{error}</span>}
+    </>
+  );
+}
 
 export default function RegistrationRecordWindow({
   model, season, seasonName, teamName, lines, changes, today, showFee, statusWord, steps, onPick, onNote, onClose,
-  cardRefunds = [], dispute = null, orgSlug = '', canDesk = false, isPhone = false, focus = null, onAnotherWay,
+  cardRefunds = [], dispute = null, orgSlug = '', canDesk = false, isPhone = false, focus = null, onAnotherWay, onSecondEmail = null,
 }: {
   model: RegRowModel;
   season: RegsSeason;
@@ -53,6 +106,8 @@ export default function RegistrationRecordWindow({
   /** Opened from a Needs-attention item (F5): 'card' scrolls the newest card refund into view. */
   focus?: 'fee' | 'card' | null;
   onAnotherWay?: (refundId: string) => void;
+  /** The desk may add or change the second parent's email (null when this reader may not): resolves to a refusal or null. */
+  onSecondEmail?: ((value: string) => Promise<string | null>) | null;
 }) {
   const reg: LeagueRegistration = model.reg;
   const got = receivedOf(lines);
@@ -69,6 +124,8 @@ export default function RegistrationRecordWindow({
     reg.status === 'waitlisted' && reg.waitlistPosition != null ? [F.position, REGS_WORDS.waitingPosition(reg.waitlistPosition)] as const : null,
     [F.guardian, model.guardian] as const,
     [F.email, reg.guardianEmail.trim() ? reg.guardianEmail : REGS_WORDS.noEmail] as const,
+    // Signed-in family accounts Stage 3 (ask 6): under Email, a dash when none; the desk adds or changes it here.
+    [SP.row, <SecondParentFact key="second" reg={reg} onSave={onSecondEmail} />] as const,
     reg.guardianPhone ? [F.phone, reg.guardianPhone] as const : null,
     reg.playerDateOfBirth ? [F.born, regDay(reg.playerDateOfBirth, today)] as const : null,
     [reg.source === 'admin_manual' ? F.addedByHand : F.signedUp, regDay(reg.registeredAt, today)] as const,

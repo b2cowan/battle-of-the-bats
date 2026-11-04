@@ -1035,6 +1035,9 @@ export interface LeagueRegistration {
   guardianFirstName: string;
   guardianLastName: string;
   guardianEmail: string;
+  /** The second parent's email (Signed-in family accounts Stage 3, mig 430): one per sign-up, null when none. It gets
+   *  every email about the sign-up; it is NEVER a household key and never reaches a marketing or consent list. */
+  guardianEmail2: string | null;
   guardianPhone: string | null;
   status: LeagueRegistrationStatus;
   waitlistPosition: number | null;

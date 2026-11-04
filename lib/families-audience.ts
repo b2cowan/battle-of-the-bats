@@ -3,6 +3,10 @@
  * parts 1, 2 and 6). Pure: no database, so the rule is unit-tested and the screen, the server's re-count and the send
  * cannot hold two versions of it.
  *
+ * Signed-in family accounts Stage 3 (ask 4): in a SEASON scope a household's addresses also take each of its
+ * registrations' second parent's email (`SeasonRow.secondParentEmail`). It is one more address of the same family — the
+ * counts below stay households.
+ *
  * ⚠⚠ ONE AUDIENCE, COUNTED FOUR TIMES. The window's preview, the number on the lime ("Send to 88"), the server's re-count
  * on the press and the send itself all come from `familyAudience`, fed by what the sender confirmed (the kind, and the
  * team or season ids) — never a list from the browser. Its input is built from Families' one world by
@@ -37,6 +41,7 @@
 import { unionFind } from './families-duplicates';
 import { FAMILY_LIST_KEYS, isFamilyListKey, type FamilyListKey } from './families-lists';
 import { isUuid } from './utils';
+import { secondParentsOf } from './league-second-parent';
 
 /** A row of Families' world is live unless it was declined or withdrawn (a call-up never reaches the world). */
 export const isLiveRegStatus = (s: string) => !['declined', 'withdrawn'].includes(s);
@@ -155,6 +160,9 @@ export interface SeasonRow {
   childFirst: string;
   childLast: string;
   guardianLast: string | null;
+  /** The registration's second parent's email (Signed-in family accounts Stage 3, ask 4): a season's "Email families"
+   *  reaches it as one more address of the household — never a person, never a household key. */
+  secondParentEmail?: string | null;
 }
 
 /** A child the email is about, as "See who gets it" names them. */
@@ -256,7 +264,17 @@ export function familyAudience(
   const coachTeams = new Set<string>();
   for (const ids of households.values()) {
     const guardians = [...ids].map(id => byId.get(id)!).filter(Boolean);
-    let addresses = [...new Set(guardians.map(g => norm(g.email)).filter(Boolean))];
+    // The children who put the household in a season scope (a co-guardian outside it brings none of their own).
+    const rows = guardians.filter(g => memberIds.has(g.personId)).flatMap(g => seasonRowsIn(g, scope, picked));
+    // Signed-in family accounts Stage 3 (ask 4): a season's "Email families" reaches both parents — the household's own
+    // addresses, then each of its registrations' second address (the one recipient rule, lib/league-second-parent.ts).
+    // Still ONE family: "Will be sent" and the history count households, never addresses. Suppression, below, is per
+    // address, so an opted-out second parent stays out. Only a season scope has registrations; the club-wide scopes and
+    // the Families book read persons, as before.
+    let addresses = [...new Set([
+      ...guardians.map(g => norm(g.email)).filter(Boolean),
+      ...secondParentsOf(null, rows.map(r => ({ guardianEmail2: r.secondParentEmail ?? null }))),
+    ])];
     if (sender && addresses.includes(sender)) {
       senderSkipped = true;
       addresses = addresses.filter(a => a !== sender);
@@ -264,8 +282,6 @@ export function familyAudience(
     }
     const teamIds = [...new Set(guardians.flatMap(g => g.roster.filter(r => r.current).map(r => r.teamId)))].sort();
     for (const t of teamIds) if (scope.kind === 'every' || (scope.kind === 'teams' && picked.has(t))) coachTeams.add(t);
-    // The children who put the household in a season scope (a co-guardian outside it brings none of their own).
-    const rows = guardians.filter(g => memberIds.has(g.personId)).flatMap(g => seasonRowsIn(g, scope, picked));
     const children = [...new Map(rows.map(r => [r.regId, { regId: r.regId, first: r.childFirst, last: r.childLast, teamId: r.teamId }])).values()].sort(byName);
     const familyName = rows.map(r => r.guardianLast?.trim()).find(Boolean)
       ?? guardians.map(g => g.lastName?.trim()).find(Boolean) ?? null;

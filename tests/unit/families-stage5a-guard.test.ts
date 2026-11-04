@@ -107,7 +107,8 @@ describe('E07 — the message door, the attach, the audit log', () => {
     assert.equal((src.match(/attach: true/g) ?? []).length, 1, 'a Families READ other than the worklist runs the attach');
     assert.match(src, /buildWorklist[\s\S]{0,200}loadOrgFamilyWorld\(orgId, \{ attach: true \}\)/);
     assert.match(readCode('lib/families-export.ts'), /loadOrgFamilyWorld\(orgId, \{ attach: true \}\)/, 'the export no longer attaches first');
-    assert.match(readCode('lib/families-email.ts'), /loadHouseholdReach\(ctx\.org\.id, personId, \{ attach: true \}\)/, 'the send no longer attaches first');
+    // Signed-in family accounts Stage 3: a season's send also names its season (the second parent's address), still attaching first.
+    assert.match(readCode('lib/families-email.ts'), /loadHouseholdReach\(ctx\.org\.id, personId, \{ attach: true(, seasonId: season\?\.id \?\? null)? \}\)/, 'the send no longer attaches first');
     assert.doesNotMatch(readCode('app/api/admin/families/[personId]/message/route.ts').split('export const POST')[0], /attach: true/, 'the window\'s read attaches');
   });
 

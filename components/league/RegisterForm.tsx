@@ -13,6 +13,7 @@ import kit from '@/components/public/ClubKit.module.css';
 import LeaguePayBlock from '@/components/public/LeaguePayBlock';
 import type { LeaguePayView } from '@/lib/league-pay-view';
 import PhoneInput from '@/components/shared/PhoneInput';
+import { SECOND_PARENT_WORDS as SP } from '@/lib/league-second-parent';
 
 /**
  * THE FAMILY'S SIGN-UP FORM (Club Tier Stage 9b-1, Part 5; drawing §4, words HOUSE_LEAGUE_STAGE9B1_COPY.md §7–§8; owner Q5,
@@ -33,6 +34,8 @@ const MAX_CHILDREN = 8;
 type Result = {
   reference: string;
   guardianEmail: string;
+  /** Stage 3: the second parent's email, when one was added. */
+  guardianEmail2?: string | null;
   howToPay: string | null;
   children: (PlacedChild & { outcome: 'active' | 'pending_review' | 'waitlisted' | 'duplicate' | 'nofit' })[];
   /** 12b: the pay block while the club takes card payments and something is owed; null keeps today's words. */
@@ -66,7 +69,7 @@ export default function RegisterForm({
   const bands = hasAgeBands(divisions);
   const [children, setChildren] = useState<Child[]>([blankChild(1)]);
   const [nextKey, setNextKey] = useState(2);
-  const [guardian, setGuardian] = useState({ firstName: '', lastName: '', email: '', phone: '' });
+  const [guardian, setGuardian] = useState({ firstName: '', lastName: '', email: '', phone: '', email2: '' });
   const [waiver, setWaiver] = useState(false);
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -108,6 +111,7 @@ export default function RegisterForm({
           guardianLastName: guardian.lastName,
           guardianEmail: guardian.email,
           guardianPhone: guardian.phone || undefined,
+          guardianEmail2: guardian.email2 || undefined,
           waiverAccepted: waiver,
           emailConsent: consent,
         }),
@@ -312,8 +316,19 @@ export default function RegisterForm({
               onChange={v => setGuardian(g => ({ ...g, phone: v }))} maxLength={30} autoComplete="tel" />
           </div>
         </div>
-        {/* Club Tier 9c, ruling 9c·9 (copy §12): the coach sees these three, so the form says so, every season. */}
-        <p className={formKit.hint}>Your child’s coach will see your name, email and phone to reach you about the team.</p>
+        {/* Signed-in family accounts Stage 3 (ask 1): always visible, bare label (only required fields carry a mark),
+            one address for the whole sign-up. */}
+        <div className={formKit.field}>
+          <label className={formKit.label} htmlFor="g-email2">{SP.label}</label>
+          <input id="g-email2" className={`${formKit.input}${errors.guardianEmail2 ? ` ${formKit.inputError}` : ''}`} type="email" value={guardian.email2}
+            onChange={e => { setGuardian(g => ({ ...g, email2: e.target.value })); clear('guardianEmail2'); }} maxLength={200} autoComplete="off"
+            placeholder="name@example.com" />
+          <p className={formKit.hint}>{SP.hint}</p>
+          {errors.guardianEmail2 && <p className={formKit.errorMsg}>{errors.guardianEmail2}</p>}
+        </div>
+        {/* Club Tier 9c, ruling 9c·9 (copy §12): the coach sees these, so the form says so, every season (Stage 3 ask 5:
+            and the second parent's email). */}
+        <p className={formKit.hint}>{SP.coachLine}</p>
       </div>
 
       {(waiverText || askEmailConsent) && (
@@ -436,7 +451,7 @@ function Confirmation({ result, seasonName, orgName, statusHref, forecast }: {
         <p className={styles.fitDim}>Nothing to pay unless a spot opens. We’ll email you if one does.</p>
       ) : null}
 
-      <p className={formKit.successBody} style={{ marginTop: '1.5rem' }}>We’ve emailed this to <strong>{result.guardianEmail}</strong>. Keep your reference to quote if you contact the club.</p>
+      <p className={formKit.successBody} style={{ marginTop: '1.5rem' }}>We’ve emailed this to <strong>{result.guardianEmail}</strong>{result.guardianEmail2 && <> and <strong>{result.guardianEmail2}</strong></>}. Keep your reference to quote if you contact the club.</p>
       <p className={styles.fitDim}>Didn’t get it? Check your spam folder.</p>
       <p className={styles.successStatusLink}><a href={statusHref}>{result.signupToken ? 'Your sign-up →' : 'Email me my link →'}</a></p>
     </div>

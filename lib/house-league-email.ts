@@ -160,7 +160,8 @@ export async function seasonEmailPreview(ctx: AuthContextWithRole, season: Leagu
   const personId = oneFamilyPerson(world, audience, scope);
   let one: OneFamily | null = null;
   if (personId) {
-    const read = await loadMessageWindow(ctx.org.id, personId);
+    // Stage 3 (ask 4): read in the season, so the preview names the second parent the send will reach.
+    const read = await loadMessageWindow(ctx.org.id, personId, season.id);
     const f = [...audience.families, ...audience.optedOutFamilies][0];
     if (read) {
       one = {

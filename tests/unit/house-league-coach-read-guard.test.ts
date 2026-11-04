@@ -22,7 +22,8 @@ describe('1 · the columns a coach reads (9c·9)', () => {
   it('are exactly the player and their guardian contact', () => {
     assert.ok(cols, 'COACH_PLAYER_COLUMNS is gone');
     assert.deepEqual(cols!.split(',').map(c => c.trim()).sort(), [
-      'guardian_email', 'guardian_first_name', 'guardian_last_name', 'guardian_phone', 'id', 'player_first_name', 'player_last_name',
+      // guardian_email_2: the second parent's email, ruled for the coach 2026-11-03 (Signed-in family accounts Stage 3, ask 5).
+      'guardian_email', 'guardian_email_2', 'guardian_first_name', 'guardian_last_name', 'guardian_phone', 'id', 'player_first_name', 'player_last_name',
     ]);
   });
   it('the registration table is read only through those columns', () => {

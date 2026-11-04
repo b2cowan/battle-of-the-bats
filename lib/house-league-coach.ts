@@ -34,7 +34,7 @@ import type { LeagueGame } from './types';
 
 /** The ONLY registration columns a coach's page reads. Adding one here is a decision about children's data (9c·9). */
 export const COACH_PLAYER_COLUMNS =
-  'id, player_first_name, player_last_name, guardian_first_name, guardian_last_name, guardian_email, guardian_phone' as const;
+  'id, player_first_name, player_last_name, guardian_first_name, guardian_last_name, guardian_email, guardian_email_2, guardian_phone' as const;
 
 export interface CoachTeamCard {
   teamId: string;
@@ -53,6 +53,8 @@ export interface CoachPlayer {
   lastName: string;
   guardianName: string;
   guardianEmail: string;
+  /** The second parent's email (Signed-in family accounts Stage 3, ask 5: the coach sees it; the form says so). */
+  guardianEmail2: string | null;
   guardianPhone: string | null;
 }
 
@@ -474,6 +476,7 @@ async function readTeamPlayers(teamId: string): Promise<CoachPlayer[]> {
     lastName: r.player_last_name,
     guardianName: [r.guardian_first_name, r.guardian_last_name].filter(Boolean).join(' '),
     guardianEmail: r.guardian_email,
+    guardianEmail2: r.guardian_email_2 ?? null,
     guardianPhone: r.guardian_phone?.trim() ? r.guardian_phone.trim() : null,
   }));
 }
