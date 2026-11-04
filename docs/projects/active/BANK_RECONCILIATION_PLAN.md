@@ -11,8 +11,9 @@
 > https://claude.ai/artifact/6s8iTzaxGQDfAqugrSMbmZ. **Drawing asks 1–14 RULED 2026-11-04, all A (as recommended),
 > pasted back with no notes.** Asks 12 and 1 amend B10 and B5 (recorded under each). §6 records what was drawn and the
 > rulings. **Drawings approved by the owner 2026-11-04 (R0 closed).**
-> **R1 built 2026-11-04** (migs 436 + 437 applied to dev; prod owed before the promote that ships R2, recorded in
-> `MANUAL_PROD_STEPS.json`; engine `lib/bank-check.ts` + 21 tests; P4 measured; /simplify, /review and the commit owed).
+> **R1 built and committed `502a69d39` 2026-11-04** (migs 436 + 437 applied to dev; prod owed before the promote that
+> ships R2, recorded in `MANUAL_PROD_STEPS.json`; engine `lib/bank-check.ts` + 26 tests; P4 measured; /simplify and
+> /review done and fixed in that commit; schema snapshots left out of it, they also carry other sessions' tables).
 > **Next:** R2 (the club's Bank tab).
 
 ## Goal
@@ -415,7 +416,7 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
   ruled A the same day; **drawings approved by the owner 2026-11-04**.)*
 
 ### R1 — The account, the check, and the engine (no screens; prompt `BANK_RECONCILIATION_R1_BUILD_PROMPT.md`, written 2026-11-04)
-> **✅ Built 2026-11-04.** What landed, and where it differs from the sketch below (the sketch is kept as written):
+> **✅ Built 2026-11-04, committed `502a69d39` 2026-11-04.** What landed, and where it differs from the sketch below (the sketch is kept as written):
 > - **Mig 436 `436_bank_checks.sql`**, nine tables: `bank_accounts` (holds the first check's `opening_date` +
 >   `opening_balance_cents`), `bank_account_books` (+ trigger `bank_account_books_guard`: club account, own club, never a
 >   team book), `bank_checks` (status `open|checked` only; **no starting-balance column**, it is derived from the previous
