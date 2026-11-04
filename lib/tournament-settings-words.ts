@@ -37,7 +37,7 @@ export const ORDER_WORDS = {
 } as const;
 
 // ── Rules & resources ─────────────────────────────────────────────────────────────────────────────────────────────
-/** The public page's section icons (`components/public/RulesContent`), named for the organizer. */
+/** The public page's section icons (`components/public/PublicRuleSections`), named for the organizer. */
 export const RULE_ICONS = [
   { value: 'Shield', label: 'Shield' },
   { value: 'BookOpen', label: 'Book' },

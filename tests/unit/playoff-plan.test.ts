@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { PLAYOFF_PLAN_KEYS, hasPlayoffPlan, mergePlayoffPlan, pickPlayoffPlan } from '../../lib/playoff-plan.ts';
 import { buildPlayoffPicture } from '../../lib/playoff-picture.ts';
 import { BRACKET_WORDS } from '../../lib/schedule-words.ts';
+import { qualificationCaption, standingsAdvancing } from '../../lib/public-standings.ts';
 import type { Division, Game, PlayoffConfig, Tournament } from '../../lib/types';
 import type { DivisionStandingRow } from '../../lib/tie-breakers.ts';
 
@@ -70,10 +71,15 @@ describe('every reader: no plan = no cut line, no "Top N advance"', () => {
     assert.match(src('app/[orgSlug]/[tournamentSlug]/playoffs/page.tsx'), /div\.teamsQualifying > 0 \? ` · Top \$\{div\.teamsQualifying\} advance` : ''/);
   });
   test('the public standings: no cut line and no caption without a count', () => {
-    const s = src('components/public/StandingsContent.tsx');
-    assert.match(s, /const teamsQualifying = playoffCfg\?\.teamsQualifying \?\? 0;/);
-    assert.match(s, /const advanceCaption = teamsQualifying > 0/);
-    assert.match(s, /if \(teamsQualifying <= 0 \|\| !gamesStarted\) return ids;/);
+    // Read by the new Standings since Stage 8 Part 3a deleted the old body (which carried its own copy of this rule).
+    const tournament = { id: 't', settings: {} } as Tournament;
+    const planless = { id: 'u11', name: 'U11', scheduleVisibility: 'published', pools: [], playoffConfig: undefined } as unknown as Division;
+    const rows = ['a', 'b', 'c'].map(teamId => ({ teamId, gp: 2 })) as unknown as DivisionStandingRow[];
+    assert.equal(qualificationCaption(planless), '');
+    assert.equal(standingsAdvancing(tournament, planless, rows).size, 0);
+    const planned = { ...planless, playoffConfig: { teamsQualifying: 2 } } as unknown as Division;
+    assert.equal(qualificationCaption(planned), 'Top 2 advance', 'non-vacuous: a count does draw the line');
+    assert.deepEqual([...standingsAdvancing(tournament, planned, rows)], ['a', 'b']);
   });
   test('a team\'s public page: no playoff spot without a count', () => {
     const s = src('app/api/public/team-profile/route.ts');

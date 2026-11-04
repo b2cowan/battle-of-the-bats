@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { describe, it } from 'node:test';
-import { cssRule, filesUnder, readCode, readSource } from './_source-code.ts';
+import { between, cssRule, filesUnder, readCode, readSource, sourceExists } from './_source-code.ts';
 
 const STANDINGS_PAGE = 'app/[orgSlug]/[tournamentSlug]/standings/page.tsx';
+/** The old client wrapper — the server page renders PublicStandings directly since Stage 8 Part 3a. */
 const STANDINGS_CLIENT = 'app/[orgSlug]/[tournamentSlug]/standings/StandingsPageClient.tsx';
 const PLAYOFFS_PAGE = 'app/[orgSlug]/[tournamentSlug]/playoffs/page.tsx';
 const PREVIEW = 'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx';
@@ -28,12 +29,11 @@ function bracketOwners(file: string, visited = new Set<string>()): Set<string> {
   return owners;
 }
 
-describe('Stage 4 Part 1: both pages have one server-decided preview branch', () => {
-  it('the Standings server asks the switch and both clients preserve their legacy fallback', () => {
-    assert.match(readCode(STANDINGS_PAGE), /const frameOn = await isPublicFrameOn\(\);/);
-    assert.match(readCode(STANDINGS_PAGE), /<StandingsPageClient frameOn=\{frameOn\} \/>/);
-    assert.match(readCode(STANDINGS_CLIENT), /if \(frameOn\) return <PublicStandings/);
-    assert.match(readCode(STANDINGS_CLIENT), /<StandingsContent\b/);
+describe('Stage 4 Part 1: Standings has one body (Stage 8 Part 3a); Playoffs keeps its server-decided branch', () => {
+  it('Standings renders only the new body and Playoffs preserves its legacy fallback until Part 3c', () => {
+    const server = readCode(STANDINGS_PAGE);
+    assert.match(server, /return <PublicStandings orgSlug=\{orgSlug\} tournamentSlug=\{tournamentSlug\} \/>/);
+    assert.doesNotMatch(server, /isPublicFrameOn|frameOn/);
     const page = readCode(PLAYOFFS_PAGE);
     assert.match(page, /const frameOn = await isPublicFrameOn\(\);/);
     assert.match(page, /if \(frameOn\) \{[\s\S]*getPublicTournamentPageData\(orgSlug, tournamentSlug, 'playoffs'\)/);
@@ -42,8 +42,10 @@ describe('Stage 4 Part 1: both pages have one server-decided preview branch', ()
     assert.match(page, /return legacyBody;/);
     assert.doesNotMatch(readCode('components/public/PublicPlayoffs.tsx'), /legacyBody|children/);
   });
-  it('the old Standings source and Playoffs JSX are byte-for-byte preserved', () => {
-    assert.equal(digest(readSource('components/public/StandingsContent.tsx')), 'fd1bd4d471c4b00690fca96251a804d85e457d17ecc086338a31441762ba13e3');
+  it('the old Standings body and its styles are gone; the old Playoffs JSX is byte-for-byte preserved', () => {
+    for (const path of ['components/public/StandingsContent.tsx', STANDINGS_CLIENT, 'app/[orgSlug]/standings/standings.module.css']) {
+      assert.ok(!sourceExists(path), `${path} is back`);
+    }
     const page = readSource(PLAYOFFS_PAGE).replace(/\r\n/g, '\n');
     const start = page.indexOf('  const legacyBody = ') + '  const legacyBody = '.length;
     const end = page.indexOf('\n  return legacyBody;', start);
@@ -59,9 +61,11 @@ describe('Stage 4 Part 1: both pages have one server-decided preview branch', ()
     assert.match(readCode('lib/public-schedule.ts'), /SCHEDULE_BRACKET_DOOR = \{ path: 'playoffs', label: 'The playoff bracket' \}/);
     assert.match(readCode('components/public/PublicSchedule.tsx'), /hasPublicPlayoffBracket\(tournament, divisions, games\)/);
   });
-  it('admin preview adopts the Standings branch without adding a Playoffs section', () => {
+  it('admin preview renders the new Standings body without adding a Playoffs section', () => {
     const preview = readCode(PREVIEW);
-    assert.match(preview, /if \(frameOn\) return <PublicStandings[^;]+isPreview initialData=\{publishedCompetitionData\(initialData\)\}/);
+    const standings = between(preview, "if (section === 'standings')", "if (section === 'teams')");
+    assert.match(standings, /return <PublicStandings[^;]+isPreview initialData=\{publishedCompetitionData\(initialData\)\}/);
+    assert.doesNotMatch(standings, /isPublicFrameOn|frameOn/);
     const sections = preview.match(/const VALID_SECTIONS = new Set\(\[([^\]]+)\]/)![1];
     assert.doesNotMatch(sections, /playoffs/);
     assert.match(readCode('components/public/TournamentTopTabs.tsx'), /hasBracket/);

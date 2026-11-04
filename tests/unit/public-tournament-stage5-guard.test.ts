@@ -1,34 +1,34 @@
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
 import { describe, it } from 'node:test';
-import { readCode, readSource } from './_source-code.ts';
+import { between, filesUnder, readCode, readSource, sourceExists } from './_source-code.ts';
 
 const ROOT = 'app/[orgSlug]/[tournamentSlug]/teams';
 const PREVIEW = 'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx';
-const digest = (text: string) => createHash('sha256').update(text.replace(/\r\n/g, '\n')).digest('hex');
 
-describe('Stage 5 Part 1: server-selected bodies, legacy preserved', () => {
-  it('both server pages ask the preview switch and retain the old fallback', () => {
-    assert.match(readCode(`${ROOT}/page.tsx`), /const frameOn = await isPublicFrameOn\(\);[\s\S]*<TeamsPageClient frameOn=\{frameOn\}/);
-    assert.match(readCode(`${ROOT}/TeamsPageClient.tsx`), /if \(frameOn\) return <PublicTeams/);
-    assert.match(readCode(`${ROOT}/TeamsPageClient.tsx`), /<TeamsContent/);
+/** Stage 8 Part 3a (2026-11-03): the switch-off halves were deleted, so each page has one body and no fallback. */
+describe('Stage 5 Part 1: one body per page (the old halves left in Stage 8 Part 3a)', () => {
+  it('the Teams list and the team page render only the new body — no switch, no fallback', () => {
+    const list = readCode(`${ROOT}/page.tsx`);
+    assert.match(list, /return <PublicTeams orgSlug=\{orgSlug\} tournamentSlug=\{tournamentSlug\} \/>/);
+    assert.doesNotMatch(list, /isPublicFrameOn|frameOn/);
     const page = readCode(`${ROOT}/[id]/page.tsx`);
-    assert.match(page, /const frameOn = await isPublicFrameOn\(\);\s*if \(frameOn\)/);
-    assert.match(page, /return <PublicTeamPage/);
-    assert.match(page, /return <LegacyTeamProfile params=\{params\} \/>/);
+    assert.match(page, /return <PublicTeamPage orgSlug=\{orgSlug\} tournamentSlug=\{tournamentSlug\} teamId=\{id\} \/>/);
+    assert.doesNotMatch(page, /isPublicFrameOn|frameOn|LegacyTeamProfile/);
     assert.match(readCode(`${ROOT}/[id]/layout.tsx`), /forwardToOwnAddress\(orgSlug, `\/\$\{tournamentSlug\}\/teams\/\$\{id\}`\)/);
   });
-  it('the complete old bodies and their styles retain their bytes', () => {
-    for (const [path, hash] of [
-      ['components/public/TeamsContent.tsx', '7f200dae903de81ebe556ee7940c44725e2541f2ae153395b6719167771005ab'],
-      [`${ROOT}/[id]/LegacyTeamProfile.tsx`, '7071c1db5de25d65b28e6ad927f7e349b77ef2435fedb3fb7aa2fa16fb42c58f'],
-      ['app/[orgSlug]/teams/teams.module.css', '40217be79c184858c6faf9f486025b729d4a747a7b1c9c91db120dff568181c3'],
-      [`${ROOT}/[id]/team-profile.module.css`, '64067fa3a959ff77eb4bd31b0cb07c8f5561dec7726f02ce14f24e2f2c31bc36'],
-    ]) assert.equal(digest(readSource(path)), hash, path);
+  it('the old bodies and their styles are gone, and nothing reads them', () => {
+    for (const path of ['components/public/TeamsContent.tsx', `${ROOT}/[id]/LegacyTeamProfile.tsx`, `${ROOT}/TeamsPageClient.tsx`,
+      'app/[orgSlug]/teams/teams.module.css', `${ROOT}/[id]/team-profile.module.css`]) {
+      assert.ok(!sourceExists(path), `${path} is back`);
+    }
   });
-  it('the admin Teams preview uses the filtered branch with no team-page preview', () => {
+  it('the admin Teams preview renders the filtered new body with no team-page preview', () => {
     const preview = readCode(PREVIEW);
-    assert.match(preview, /if \(frameOn\) \{\s*const games = await getGames[\s\S]*?return <PublicTeams[^;]+isPreview initialData=\{publicTeamsData\(initialData\)\}/);
+    const teams = between(preview, "if (section === 'teams')", "if (section === 'news')");
+    assert.match(teams, /games: onlyPublishedGames\(games, divisions\)/);
+    assert.match(teams, /standingsByDivision: await getPublicStandingsByDivision\(tournament, divisions, \{ games, teams \}\)/);
+    assert.match(teams, /return <PublicTeams[^;]+isPreview initialData=\{publicTeamsData\(initialData\)\}/);
+    assert.doesNotMatch(teams, /isPublicFrameOn|frameOn/);
     assert.match(readCode('components/public/PublicTeams.tsx'), /enabled: !isPreview && isTournamentInProgress/);
     assert.doesNotMatch(preview.match(/const VALID_SECTIONS = new Set\(\[([^\]]+)\]/)![1], /team-profile|team-page/);
   });
@@ -42,15 +42,20 @@ describe('Stage 5 Part 1: server-selected bodies, legacy preserved', () => {
     assert.match(body, /section: 'teams-preview'/);
     assert.doesNotMatch(body, /TeamsContent|section: 'teams'|localStorage/);
   });
-  it('the profile exception requires both an explicit new caller and the server preview switch', () => {
+  it('the profile exception follows the new caller\'s flag alone — no switch (Stage 8 Part 3a: its other caller left)', () => {
     const route = readCode('app/api/public/team-profile/route.ts');
-    assert.match(route, /const frameOn = searchParams.get\('publicFrame'\) === '1' && await isPublicFrameOn\(\)/);
+    assert.match(route, /const frameOn = searchParams.get\('publicFrame'\) === '1';/);
+    assert.doesNotMatch(route, /isPublicFrameOn/, 'with the switch off the new page would get the plain shape and fail');
     assert.match(route, /if \(frameOn && division.scheduleVisibility !== 'published'\)/);
     assert.match(route, /return NextResponse.json\(withheldTeamProfile\(team, division.name\)\)/);
     assert.ok(route.indexOf("team.status !== 'accepted'") < route.indexOf('withheldTeamProfile(team,'));
     assert.ok(route.indexOf('withheldTeamProfile(team,') < route.indexOf('const scheduleShown'));
     assert.match(readCode('components/public/PublicTeamPage.tsx'), /publicFrame: '1'/);
-    assert.doesNotMatch(readCode(`${ROOT}/[id]/LegacyTeamProfile.tsx`), /publicFrame/);
+    // The old team page was the route's other caller (without the flag); since Stage 8 Part 3a the new page is the only one.
+    const callers = [...filesUnder('app', '.tsx'), ...filesUnder('components', '.tsx'), ...filesUnder('lib', '.ts')]
+      .filter(f => !f.startsWith('app/api/') && readSource(f).includes('/api/public/team-profile')
+        && readCode(f).includes('/api/public/team-profile')); // raw text first: strip comments only on the few hits
+    assert.deepEqual(callers, ['components/public/PublicTeamPage.tsx']);
   });
   it('the new profile owns one non-overlapping 30-second poll with hidden-tab pause and catch-up', () => {
     const body = readCode('components/public/PublicTeamPage.tsx');

@@ -140,7 +140,7 @@ export async function getFollowFeed(entries: FollowFeedInput[]): Promise<FollowF
         lastResult,
         lastResult.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES,
         // Fail toward "Unofficial" on an unknown value, matching every other
-        // consumer of this field (StandingsContent, ScheduleContent, the
+        // consumer of this field (ScheduleContent, the
         // game-detail page) — this branch is unreachable today since the org
         // is always resolved in this codepath, but keep the polarity aligned.
         data.organization.requireScoreFinalization ?? true,

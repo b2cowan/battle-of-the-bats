@@ -3,8 +3,11 @@
  * Single source for a team's auto-generated identity colour + monogram, so the
  * schedule avatars, scorebug, dock, broadcast card, and the team-profile page all
  * agree on what colour/initials a given team gets. Pure (name → deterministic).
+ *
+ * `teamInk` (dark-or-white text ON a teamColor() fill, crossover 0.20 — warm golds fail white at ~2.9:1) had two
+ * callers, the old Teams list and the old team page; both were deleted in Public tournament pages Stage 8 Part 3a.
+ * Restore it from that commit's parent rather than re-deriving the threshold.
  */
-import { hslChannels01, relativeLuminance01, pickInk } from './color-contrast';
 
 /**
  * Stable hue (0–359) derived from the team name, shifted out of the lime band
@@ -20,22 +23,6 @@ export function teamAvatarHue(name: string): number {
 /** Concrete avatar/identity colour for a team (default mid-tone fill). */
 export function teamColor(name: string, saturation = 58, lightness = 45): string {
   return `hsl(${teamAvatarHue(name)}, ${saturation}%, ${lightness}%)`;
-}
-
-/**
- * Text ink for content sitting ON a teamColor() fill. Warm hues (0–79 pass the
- * lime-shift untouched) land light enough that white text fails WCAG AA — same
- * problem lib/themes.ts solves for org primaries with onPrimaryColor(), same
- * luminance threshold here so the two guards agree.
- */
-export function teamInk(name: string, saturation = 58, lightness = 45): string {
-  const [r, g, b] = hslChannels01(teamAvatarHue(name) / 360, saturation / 100, lightness / 100);
-  // 0.2 = the equal-contrast crossover between white and near-black ink
-  // ((L+0.05)² = 0.05·1.05) — NOT themes.ts's 0.42, which is tuned for arbitrary
-  // full-range brand colors; teamColor()'s fixed 45% lightness tops out at
-  // L≈0.43, so 0.42 would leave warm golds (e.g. hue 44 ⇒ L≈0.31) on white
-  // text at ~2.9:1. Above the crossover, ink always contrasts better.
-  return pickInk(relativeLuminance01(r, g, b), 0.2);
 }
 
 /**

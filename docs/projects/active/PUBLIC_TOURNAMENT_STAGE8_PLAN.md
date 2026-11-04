@@ -1,6 +1,7 @@
 # Public tournament pages — Stage 8: the new look on for everyone (plan)
 
-**Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 committed `d4af280e6` 2026-11-03** (record §10; it releases with the flip, ruling D). **Part 2 committed `02e29f453` 2026-11-03** (record §11; it releases with the flip too). Next Part 3a. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
+**Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 committed `d4af280e6` 2026-11-03** (record §10; it releases with the flip, ruling D). **Part 2 committed `02e29f453` 2026-11-03** (record §11; it releases with the flip too). **Part 3a built 2026-11-03** (record §12;
+releases with the flip). Next Part 3b. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
 **Sequencing rule (standing):** by dependency and rework risk, never by date. One part per session, `/clear` between.
@@ -327,3 +328,118 @@ layout as (c).
   step 2 (the old Standings had the same exposure).
 - **Part 6 (release), still owed from Part 1:** `/release` §1d-2's sharp probe uses the deleted apple-icon route; changing
   `.claude/commands/release.md` is the owner's call.
+
+## 12. Part 3a record (Rules, Teams + the team page, Standings; built 2026-11-03; releases with the flip)
+
+**What a customer sees:** nothing (nothing promoted). **An owner on dev, switch on (the default):** nothing changes — the four
+pages and the admin preview's Rules, Teams and Standings sections already showed the new look. **Switch off:** those four pages and
+three preview sections now show the new body inside the OLD layout (the frame's `--club-*` tokens and `data-public-frame` are set
+only by the layout's frame branch, which Part 3d/4 owns), so they look half-styled. Accepted half-state; it ends when Part 4
+deletes the switch. ⚠ **This part must not be promoted before Parts 4–6** (§5 already says so; stated because it is now true of
+the public pages themselves, not only the icon and the demo).
+
+**What changed.** Each page renders its new body with no switch: `rules/page.tsx` → `PublicRules`; `teams/page.tsx` →
+`PublicTeams` and `standings/page.tsx` → `PublicStandings` **directly from the server page** (the `TeamsPageClient` /
+`StandingsPageClient` wrappers only read `useParams` and forwarded two strings — deleted at `/simplify`); `teams/[id]/page.tsx` →
+`PublicTeamPage`. `forwardToOwnAddress` still runs first (the team page's lives in its `[id]/layout.tsx`). The admin preview's
+Standings, Teams and Rules sections collapsed the same way (they rendered the same old components behind the same switch); its
+Teams section now reads games in the one `Promise.all` (same data as the old frame branch). Its Schedule, Champions, News and
+Register sections and its nav are untouched (3b–4).
+
+**Found at `/review` and fixed here — the team page's data under the switch-off state.** `app/api/public/team-profile/route.ts`
+answered in the new shape only when `publicFrame=1` **and** the switch was on (to keep the old team page's contract). The new
+page always sends the flag, so with the switch off it received the plain shape and showed "Couldn't load this team" with a Retry
+that could never succeed. The old page was the route's only flag-less caller and is gone (guard: the new page is now the route's
+only caller), so the flag alone opts in now; `isPublicFrameOn` left the route. Part 4 drops the flag and the plain shape. Not a
+privacy change for customers: the plain shape already ran through `onlyPublishedGames` and the shown/hidden gates; the new shape
+adds the held-back-division "withheld" answer.
+
+**Deleted, each with its importer check (grep re-run immediately before each removal; no importer outside the deleted set):**
+- `components/public/RulesContent.tsx` — importers: `rules/page.tsx` + the admin preview (both collapsed).
+- `components/public/TeamsContent.tsx` — `TeamsPageClient.tsx` + the admin preview.
+- `components/public/StandingsContent.tsx` — `StandingsPageClient.tsx` + the admin preview.
+- `app/[orgSlug]/[tournamentSlug]/teams/[id]/LegacyTeamProfile.tsx` — `teams/[id]/page.tsx` only.
+- `…/teams/[id]/team-profile.module.css` — `LegacyTeamProfile.tsx` only.
+- `app/[orgSlug]/standings/standings.module.css`, `…/teams/teams.module.css`, `…/rules/rules.module.css` — each imported only by
+  its old body. ⚠ The census's worry that the org-level standings styles are "shared with club/house-league pages" does not hold
+  for these files: the club's `/standings` and `/rules` addresses are `clubShortcutPage` redirects that import no styles, and no
+  `composes` reaches them. (`app/[orgSlug]/admin/tournaments/rules/rules.module.css` is a different file and stays.)
+- `teams/TeamsPageClient.tsx`, `standings/StandingsPageClient.tsx` — their server pages only (see above).
+- `app/[orgSlug]/results/results.module.css` — **no importer at all** since Club Tier Stage 4a made `/{org}/results` a redirect;
+  the selector check only saw it alive by NAME through the old Standings (below).
+- `lib/team-color.ts` `teamInk` — callers were `TeamsContent` and `LegacyTeamProfile`, nothing else; with it `lib/color-contrast.ts`
+  `hslChannels01` (only `teamInk` used it) and the `export` on `relativeLuminance01` (now internal only). The 0.20 crossover's
+  reasoning is kept in `team-color.ts`'s header (restore from this commit's parent if a team fill ever needs ink again).
+- **Dead CSS rules the deletion exposed** (not in this group's files, but new findings because of it): the selector check matches
+  class NAMES across modules, so the old Standings' own `styles.statValue` / `desktopOnly` / `mobileOnly` / `standingsTable`… kept
+  same-named, never-rendered rules "alive" elsewhere. Removed after a whole-repo check that no TS file renders the names:
+  `admin-common.module.css` `.desktopOnly`/`.mobileOnly` (+ their 900 px block), `house-league.module.css` `.statValue` (base +
+  kit override), `coaches.module.css` `.statValue`. Baselines: `.css-selector-baseline.json` lost only the deleted files' entries
+  (`standings`, `teams`, `results`); `.admin-old-look-baseline.json` house-league `kitScope` 71 → 70 (that one removed kit rule),
+  set by hand — `--init` would also have absorbed another session's schedule-admin increase.
+
+**Kept, and why:** the switch, its cookie and the layout's frame branches (Part 3d/4); the bracket (`TieredBracket`/
+`LogicSyncBracket` — the old Playoffs still draws it, 3c); `schedule.module.css` (Schedule, Playoffs, the game page); `YearSelector`
+and `MyTeamCard` (the old Schedule, 3b); `DivisionFilterBar` (News, `PublicRules`); `UnfollowConfirmSheet`, `FollowAlertsToggle`,
+`lib/team-calendar.ts`, `lib/follow.ts`, `lib/rule-icons.ts` (all still used); the global classes the old bodies used (`container`,
+`card`, `badge` — shared); the team page's share image (3c).
+
+**Tests (rewritten, not deleted):** Stage 5 guard (one body per page, no switch; the old bodies, wrapper and sheets gone; the preview
+Teams section's filtered data via a section slice; the route's flag-alone opt-in; the new page is the team-profile route's only
+caller), Stage 4 guard (one Standings body; old body, wrapper and sheet gone; preview section), Stage 6 rules (one body on both routes;
+old body and sheet gone), Stage 2 guard (Rules has one body, no layout settings reach it; the shared-parts list's comment), Stage 1
+frame guard (the four deleted sheets left the readable-baseline list; the monogram ink left with its pages), Stage 6 champions
+(loader mocks), the coin-toss guard (now reads `PublicStandings`), `playoff-plan` (the source regex on the old Standings became a
+**behavioural** test of `qualificationCaption` + `standingsAdvancing`, incl. a non-vacuous planned case). `tests/unit/_source-code.ts`
+gained `sourceExists` (pin a deletion) and `between` (anchor-checked slice — a missing anchor throws instead of handing a
+`doesNotMatch` an empty string). Its own commit: `admin-overlay-guard` names `components/admin/kit/club/PhoneWindow.tsx` (an inert
+preview; Part 2's hand-on).
+
+**Checks run:** the touched + neighbouring unit files 457/457, then 200/200 after the route fix (incl. `demo-destinations-guard`
+12/12 — step 2 on `/playoffs` passes with the old Standings gone, and nothing else in the tour points at its bracket);
+`npm test` 13,503/13,513 — the **10 failures are all other sessions' uncommitted work**: Part 2's list minus the window guard (fixed
+here): plan-billing ×2, Stage 6 walk HTML ×3, key-prefix ×2 (`seed-plan-ending-walk.mjs`), console foot ×1 (`ExpenseFormWindow`);
+new since Part 2: families stage 5a attach, house-league gate (registrations routes), league sign-up link. Typecheck clean
+(`NODE_OPTIONS=--max-old-space-size=6144`); ESLint clean on every changed file (the route's one `_notes` warning predates this
+part); spelling clean; CSS selectors — back to exactly Part 2's 4 orphans + 10 dead classes, none in this part's files; admin type,
+public type, module purity, contrast, text contrast, public tokens, date correctness, admin org context, observability: no finding
+of this part's; admin old look: only the foreign schedule-admin increase; `check:demos` crashes loading a foreign module
+(`lib/registration-attention.ts` → `lib/tournament-teams`); org-slug callers: two foreign public-site files; marketing-shots
+`--check` passes (it checks the image files, not the anchors).
+
+**Layout** (`check:layout --only=pubt-standings-own,pubt-standings-mid-pool,pubt-standings-playoffs,pubt-standings-finished,
+pubt-teams-free,pubt-team-own,pubt-rules-pale`, every listed width, on the dev server already up): **0 findings** on six screens.
+`pubt-standings-playoffs` could not be measured at any width, twice: its clone's championship is dated 2026-10-30, so the screen's
+"championship is live now" wait can never be met on 2026-11-03 — **an expired fixture** (re-prepare with
+`seed-public-stage4-fixtures.mjs`), not this part (the body is unchanged for a switch-on visitor; the other three Standings
+screens measured clean). Nothing baselined.
+
+**`/simplify`:** wrappers deleted; `between` promoted and used for the three preview-section slices; the caller scan reads raw text
+first (strips comments only on hits); duplicate comments trimmed; each sheet's deletion pinned once. Skipped: folding
+`coach-lineup-phone-guard`'s / `game-references-guard`'s local `between` and `team-claim-link-removed`'s `gone` into the shared
+helpers (outside this part's files); caching repeated reads in tests (negligible).
+
+**`/review` (high-risk tier for shared lib + a shared stylesheet; lenses correctness/contract + regression/blast-radius):** one
+defect, fixed (the team-profile route above). Confirmed clean: the collapsed pages match the old switch-on path; the
+`teams-preview`/`standings-preview` feeds are not switch-gated and stay published-only; no surviving reference to any deleted file,
+export or class (code, tests, UAT specs, scripts, baselines, knip, `.claude/commands`); the removed CSS rules have no renderer; no
+rewritten guard is vacuous.
+
+**Handed on:**
+- **NEW owner ask — the Rules layout menus are dead controls.** Rules & resources offers "Rules layout: one column / two columns"
+  and "Resources layout: a list / two columns" (`RulesAdmin.tsx`, `tournament.settings.rulesLayout`/`resourcesLayout`). Only the
+  deleted `RulesContent` read them; the new Rules page never did (since Stage 6), so they do nothing on dev now and for customers
+  at the flip — the same "a setting that does nothing is a lie" ground the plan used for the App icon card and the hero banner.
+  *Recommend:* remove both menus and stop writing the keys in Part 4 (keep the stored values, like ruling C); the alternative is
+  to have the new Rules page honour them. Not in any plan before this.
+- **Part 5e (`/demos`):** besides `fan-live-score`, the **`playoff-bracket`** marketing shot (`lib/marketing-shots.ts:186-202`,
+  slide #14) photographs `/standings` and clips the OLD bracket's markup (`a[aria-label^="View game details"]`, `svg text`). With
+  the old Standings gone it has nothing to photograph; retarget it to `/playoffs` and re-derive the clip from the new bracket.
+- **Part 3c:** the team share image (`teams/[id]/opengraph-image.tsx:36`) still withholds a held-back division only when the
+  switch is on; drop the gate with that group.
+- **Part 4:** the team-profile route's `publicFrame` flag and plain shape (above); the layout's frame chrome is what the new bodies
+  need with the switch off.
+- **Fixture:** re-prepare the Stage 4 clones (`seed-public-stage4-fixtures.mjs`) before the next Standings/Playoffs measure.
+- **Advisory, not this part:** white text on `teamColor()` fills survives in the game and team share images and several consumer
+  monograms — the warm-gold contrast case `teamInk` solved. Pre-existing.
+- Still owed, not this part: the admin strip's 34 px "Dismiss"; `/release` §1d-2's sharp probe; the club editor's 18 px input.

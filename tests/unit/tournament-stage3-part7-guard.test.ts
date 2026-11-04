@@ -15,7 +15,8 @@ const PAGE = 'app/[orgSlug]/admin/tournaments/schedule/page.tsx';
 const RESULTS = 'app/[orgSlug]/admin/tournaments/results/page.tsx';
 const DASHBOARD = 'app/[orgSlug]/admin/tournaments/dashboard/page.tsx';
 const DASHBOARD_ROUTE = 'app/api/admin/tournament-dashboard/route.ts';
-const STANDINGS = 'components/public/StandingsContent.tsx';
+// The public Standings body (the old StandingsContent, which once carried the recorder, was deleted in Stage 8 Part 3a).
+const STANDINGS = 'components/public/PublicStandings.tsx';
 const PREVIEW = 'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx';
 
 describe('S6 — the bracket reads who played, the score, who won and the champion', () => {

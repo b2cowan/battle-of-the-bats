@@ -36,6 +36,22 @@ const REPO = path.join(import.meta.dirname, '..', '..');
 export const readSource = (rel: string): string =>
   readFileSync(path.join(REPO, rel), 'utf8').replace(/\r\n/g, '\n');
 
+/** Whether a repo-relative file exists — for the guards that pin a deletion (a file that must stay gone). */
+export const sourceExists = (rel: string): boolean => existsSync(path.join(REPO, rel));
+
+/**
+ * The text from one anchor up to the next — throwing when either is missing, so a moved anchor fails the guard instead
+ * of handing it an empty or wrong slice (`slice(indexOf(a), indexOf(b))` silently reads -1, and a `doesNotMatch` on
+ * the result then passes on nothing).
+ */
+export function between(source: string, from: string, to: string, label = `${from} … ${to}`): string {
+  const a = source.indexOf(from);
+  if (a === -1) throw new Error(`${label}: start anchor missing`);
+  const b = source.indexOf(to, a + from.length);
+  if (b === -1) throw new Error(`${label}: end anchor missing`);
+  return source.slice(a, b);
+}
+
 /**
  * `source` with its comments removed.
  *

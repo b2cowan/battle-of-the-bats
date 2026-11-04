@@ -1,15 +1,12 @@
 /**
  * lib/color-contrast.ts
- * Single source for WCAG relative-luminance + ink-picking, shared by lib/themes.ts
- * (org brand primaries, parsed from hex) and lib/team-color.ts (auto-generated team
- * colours, derived from HSL). Consolidates two prior hand-copies of the sRGB-linearize
- * luminance formula into one implementation.
+ * Single source for WCAG relative-luminance + ink-picking. Consolidated two prior
+ * hand-copies of the sRGB-linearize luminance formula into one implementation.
  *
- * The two callers keep their own, individually-justified ink crossovers — 0.42 for
- * arbitrary full-range brand hex, 0.20 for the team palette's fixed 45%-lightness band
- * (see the note at each call site). This module PARAMETERIZES the crossover via
- * pickInk() rather than collapsing them to one constant; merging naively would
- * under-contrast warm team golds. Do not "simplify" the two thresholds into one.
+ * pickInk() PARAMETERIZES the crossover on purpose: 0.42 suits arbitrary full-range
+ * brand hex (lib/themes.ts); a fill from a narrow lightness band needs its own (the team
+ * palette needed 0.20 — see lib/team-color.ts). Do not "simplify" the crossover into one
+ * constant: merging naively under-contrasts warm golds.
  */
 
 export const INK_DARK = '#0F1123';
@@ -21,7 +18,7 @@ function linearize(c: number): number {
 }
 
 /** WCAG relative luminance from normalized 0–1 sRGB channels. */
-export function relativeLuminance01(r: number, g: number, b: number): number {
+function relativeLuminance01(r: number, g: number, b: number): number {
   return 0.2126 * linearize(r) + 0.7152 * linearize(g) + 0.0722 * linearize(b);
 }
 
@@ -39,24 +36,6 @@ export function contrastRatio(a: string, b: string): number {
   const la = relativeLuminance(a);
   const lb = relativeLuminance(b);
   return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
-}
-
-/**
- * HSL → normalized 0–1 sRGB channels (h, s, l all 0–1). Same standard conversion
- * lib/team-color.ts used inline; extracted so the luminance formula has one home.
- */
-export function hslChannels01(h: number, s: number, l: number): [number, number, number] {
-  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-  const p = 2 * l - q;
-  const channel = (t: number) => {
-    if (t < 0) t += 1;
-    if (t > 1) t -= 1;
-    if (t < 1 / 6) return p + (q - p) * 6 * t;
-    if (t < 1 / 2) return q;
-    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-    return p;
-  };
-  return [channel(h + 1 / 3), channel(h), channel(h - 1 / 3)];
 }
 
 /**

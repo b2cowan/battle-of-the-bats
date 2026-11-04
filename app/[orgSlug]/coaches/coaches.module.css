@@ -2986,7 +2986,6 @@ a.oneChip:hover { border-color: currentColor; }
 
 .statItem { display: flex; flex-direction: column; gap: 0.1rem; }
 .statLabel { font-size: var(--type-label); color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
-.statValue { font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
 
 /* ── Summary cards ──────────────────────────────────────────────────────── */
 /* ⚠ auto-FIT, NEVER auto-FILL (owner call 2026-08-15). `auto-fill` keeps generating empty

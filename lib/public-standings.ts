@@ -1,4 +1,4 @@
-/** Stage 4's ranking explainer. The switch-off body keeps its original copy until Stage 8. */
+/** Stage 4's ranking explainer and the new Standings' readings (the old body was deleted in Stage 8 Part 3a). */
 import { BREAKER_LABELS, resolveTieBreakers } from './tie-breakers';
 import type { DivisionStandingRow } from './tie-breakers';
 import type { Division, Game, PlayoffConfig, PublicTeam, Tournament, TournamentSettings } from './types';

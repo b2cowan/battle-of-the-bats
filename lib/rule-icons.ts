@@ -1,5 +1,5 @@
 /**
- * THE RULES PAGE'S SECTION ICONS, DRAWN — one map for the public page (`components/public/RulesContent`) and the admin
+ * THE RULES PAGE'S SECTION ICONS, DRAWN — one map for the public page (`components/public/PublicRuleSections`) and the admin
  * that picks them (Rules & resources: each section's row, its Icon field, the samples). `RULE_ICONS` names them for the
  * organizer; this draws them.
  *

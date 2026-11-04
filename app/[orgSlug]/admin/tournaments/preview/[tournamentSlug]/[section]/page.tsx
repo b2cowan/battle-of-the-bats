@@ -17,14 +17,11 @@ import { toPublicTeam, type PublicTournamentPageData } from '@/lib/public-tourna
 import { getPublicStandingsByDivision, onlyPublishedGames } from '@/lib/public-games';
 import ScheduleContent from '@/components/public/ScheduleContent';
 import PublicSchedule from '@/components/public/PublicSchedule';
-import StandingsContent from '@/components/public/StandingsContent';
 import PublicStandings from '@/components/public/PublicStandings';
 import { publishedCompetitionData } from '@/lib/public-standings';
-import TeamsContent from '@/components/public/TeamsContent';
 import PublicTeams from '@/components/public/PublicTeams';
 import { publicTeamsData } from '@/lib/public-teams';
 import NewsContent from '@/components/public/NewsContent';
-import RulesContent from '@/components/public/RulesContent';
 import PublicRules from '@/components/public/PublicRules';
 import PublicChampionsPage from '@/components/public/PublicChampionsPage';
 import { deriveTierChampions, isTournamentPlayoffsComplete } from '@/lib/champions';
@@ -116,23 +113,15 @@ export default async function TournamentPreviewSectionPage({
       registrationFields: [],
       standingsByDivision,
     };
-    const frameOn = await isPublicFrameOn();
-    if (frameOn) return <PublicStandings orgSlug={orgSlug} tournamentSlug={tournamentSlug} isPreview initialData={publishedCompetitionData(initialData)} />;
-    return (
-      <StandingsContent
-        orgSlug={orgSlug}
-        tournamentSlug={tournamentSlug}
-        isPreview
-        initialData={initialData}
-      />
-    );
+    return <PublicStandings orgSlug={orgSlug} tournamentSlug={tournamentSlug} isPreview initialData={publishedCompetitionData(initialData)} />;
   }
 
   // ── Teams ─────────────────────────────────────────────────────────────────
   if (section === 'teams') {
-    const [teams, divisions] = await Promise.all([
+    const [teams, divisions, games] = await Promise.all([
       getTeams(tournament.id, readOptions),
       getDivisions(tournament.id, readOptions),
+      getGames(tournament.id, readOptions),
     ]);
     const initialData: PublicTournamentPageData = {
       organization: {
@@ -146,28 +135,14 @@ export default async function TournamentPreviewSectionPage({
       pageEnabled: true,
       divisions,
       venues: [],
-      games: [],
+      games: onlyPublishedGames(games, divisions),
       resources: [],
       rules: [],
       teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)),
       registrationFields: [],
-      standingsByDivision: {},
+      standingsByDivision: await getPublicStandingsByDivision(tournament, divisions, { games, teams }),
     };
-    const frameOn = await isPublicFrameOn();
-    if (frameOn) {
-      const games = await getGames(tournament.id, readOptions);
-      initialData.games = onlyPublishedGames(games, divisions);
-      initialData.standingsByDivision = await getPublicStandingsByDivision(tournament, divisions, { games, teams });
-      return <PublicTeams orgSlug={orgSlug} tournamentSlug={tournamentSlug} isPreview initialData={publicTeamsData(initialData)} initialNow={new Date().toISOString()} />;
-    }
-    return (
-      <TeamsContent
-        orgSlug={orgSlug}
-        tournamentSlug={tournamentSlug}
-        isPreview
-        initialData={initialData}
-      />
-    );
+    return <PublicTeams orgSlug={orgSlug} tournamentSlug={tournamentSlug} isPreview initialData={publicTeamsData(initialData)} initialNow={new Date().toISOString()} />;
   }
 
   // ── News ──────────────────────────────────────────────────────────────────
@@ -199,23 +174,9 @@ export default async function TournamentPreviewSectionPage({
       getResources(tournament.id, readOptions),
       getDivisions(tournament.id, readOptions),
     ]);
-    if (await isPublicFrameOn()) return <PublicRules
+    return <PublicRules
       orgSlug={orgSlug} tournamentSlug={tournamentSlug} pageEnabled
       rules={rules} resources={resources} divisions={divisions} prefName={null} contactEmail={contactEmail} isPreview />;
-    return (
-      <RulesContent
-        orgSlug={orgSlug}
-        tournamentSlug={tournamentSlug}
-        pageEnabled
-        rules={rules}
-        resources={resources}
-        divisions={divisions}
-        prefName={null}
-        contactEmail={contactEmail}
-        rulesLayout={tournament.settings?.rulesLayout ?? 'columns'}
-        resourcesLayout={tournament.settings?.resourcesLayout ?? 'list'}
-      />
-    );
   }
 
   // ── Champions (new in Stage 6 — no legacy preview existed for this page) ───

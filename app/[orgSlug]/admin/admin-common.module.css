@@ -223,15 +223,7 @@
   margin-top: 0.25rem;
 }
 
-.desktopOnly { display: block; }
-.mobileOnly { display: none; }
-
 /* ─── Mobile Responsive ───────────────────────────────────────────────────── */
-@media (max-width: 900px) {
-  .desktopOnly { display: none; }
-  .mobileOnly { display: block; }
-}
-
 @media (max-width: 768px) {
   .pageHeader {
     align-items: flex-start;

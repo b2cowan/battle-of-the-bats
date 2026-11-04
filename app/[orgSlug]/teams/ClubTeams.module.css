@@ -1,5 +1,5 @@
-/* The club's Teams page (Club Tier Stage 4b-2a; End state 2). NOT `teams.module.css` beside it — that is the
-   tournament's teams list (components/public/TeamsContent.tsx). The club's tokens come from its frame
+/* The club's Teams page (Club Tier Stage 4b-2a; End state 2). Not the tournament's teams list (that is
+   components/public/PublicTeams.module.css). The club's tokens come from its frame
    (ClubFrame.module.css `.site`); the list, row, band and chip pieces are the club kit's.
    Phone: one frame of hairlined rows. Desk: a table — Team · Tryouts — headings in the text face, capitals, soft ink. */
 

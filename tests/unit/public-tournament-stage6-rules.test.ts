@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import { createElement, type ComponentType, type ReactElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { billingTestLoader as componentLoader } from './_billing-test-loader.ts';
-import { readCode, readSource } from './_source-code.ts';
+import { between, readCode, readSource, sourceExists } from './_source-code.ts';
 import { visibleTournamentTabs } from '../../lib/tournament-page-tabs.ts';
 import type PublicRules from '../../components/public/PublicRules.tsx';
 import type PublicDisclosure from '../../components/public/PublicDisclosure.tsx';
@@ -123,10 +123,18 @@ describe('News/Rules tab decisions agree on every navigation surface', () => {
     const navbar = readCode('components/Navbar.tsx');
     assert.ok(navbar.indexOf('if (tournamentPublicFrame) return null;') < navbar.indexOf('visibleTournamentTabs(tournamentHiddenPages'));
   });
-  it('Rules has a guarded body on both routes, and News keeps its existing body and direct link', () => {
-    for (const file of ['app/[orgSlug]/[tournamentSlug]/rules/page.tsx', 'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx']) {
-      assert.match(readCode(file), /if \(await isPublicFrameOn\(\)\) return <PublicRules/);
+  it('Rules has one body on both routes (Stage 8 Part 3a), and News keeps its existing body and direct link', () => {
+    const preview = readCode('app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx');
+    const bodies = {
+      live: readCode('app/[orgSlug]/[tournamentSlug]/rules/page.tsx'),
+      preview: between(preview, "if (section === 'rules')", "if (section === 'champions')"),
+    };
+    for (const [route, code] of Object.entries(bodies)) {
+      assert.match(code, /return <PublicRules\s/, route);
+      assert.doesNotMatch(code, /isPublicFrameOn|RulesContent/, route);
     }
+    assert.ok(!sourceExists('components/public/RulesContent.tsx'), 'the old Rules body is back');
+    assert.ok(!sourceExists('app/[orgSlug]/rules/rules.module.css'), 'the old Rules styles are back');
     const news = readCode('app/[orgSlug]/[tournamentSlug]/news/page.tsx');
     assert.match(news, /<NewsContent/);
     assert.doesNotMatch(news, /isPublicFrameOn|hasNews|frameContent/);

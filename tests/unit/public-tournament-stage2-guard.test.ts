@@ -15,7 +15,8 @@ const HOME = 'components/public/TournamentHomeContent.tsx';
 const PARTS = ['PublicGameRow', 'PublicLiveCard', 'PublicSectionHead', 'PublicDoorRow', 'PublicPostList', 'FollowTournamentLine', 'TournamentOverview',
   'PublicRegisterCard', 'PublicFactsList', 'PublicHostCard', 'PublicChampions', 'PublicRules'];
 /** The files that may draw the shared parts: each renders only with the switch on (Part 2: the frame-on body, and the
- *  old Overview's one frame branch that hands over to it — held below). */
+ *  old Overview's one frame branch that hands over to it — held below), or — once Stage 8 deleted its page's old half
+ *  (Part 3a: Rules, Teams, the team page, Standings) — is that page's only body. */
 const FRAME_ONLY_USERS = ['components/public/TournamentOverview.tsx', 'components/public/PublicSchedule.tsx', 'components/public/PublicGameDetails.tsx',
   'components/public/PublicStandings.tsx', 'components/public/PublicPlayoffs.tsx',
   'components/public/PublicTeams.tsx', 'components/public/PublicTeamPage.tsx',
@@ -205,9 +206,10 @@ describe('Stage 6 (Ask 14, "tabs follow what there is"): News, Rules, Register, 
       assert.match(readCode(file), /championsCrownedAt: tournament\.championsCrownedAt/, file);
     }
   });
-  it('the legacy Rules and Champions bodies are untouched — the frame branch returns before any of their JSX', () => {
+  it('Rules has one body (its old half left in Stage 8 Part 3a); the legacy Champions body is untouched until Part 3c', () => {
     const rules = readCode('app/[orgSlug]/[tournamentSlug]/rules/page.tsx');
-    assert.match(rules, /if \(await isPublicFrameOn\(\)\) return <PublicRules\s[\s\S]*?\/>;\s*\n\s*return \(\s*\n\s*<RulesContent/);
+    assert.match(rules, /return <PublicRules\s/);
+    assert.doesNotMatch(rules, /isPublicFrameOn|RulesContent|rulesLayout|resourcesLayout/);
     const champions = readCode('app/[orgSlug]/[tournamentSlug]/champions/page.tsx');
     assert.match(champions, /<ChampionsRecap|styles\.hero/, 'the legacy hero JSX still renders for the switch-off reader');
   });

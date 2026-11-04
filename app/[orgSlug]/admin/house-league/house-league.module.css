@@ -42,12 +42,6 @@
   color: var(--white-40);
 }
 
-.statValue {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--white-80);
-}
-
 /* ── Status badges ────────────────────────────────────────────────────────── */
 .statusBadge {
   display: inline-block;
@@ -733,7 +727,6 @@
   text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--text-secondary);
 }
-:global([data-admin-kit]) .statValue { color: var(--text-primary); font-variant-numeric: tabular-nums; }
 
 /* ── Chips: status, division, game state, round, practice → the kit's chips ── */
 :global([data-admin-kit]) .statusBadge,

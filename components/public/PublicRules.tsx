@@ -6,7 +6,7 @@ import PublicTournamentState from './PublicTournamentState';
 import PublicRuleSections from './PublicRuleSections';
 import styles from './PublicRules.module.css';
 
-/** Preview-only Rules body. The legacy RulesContent and the tournament-wide text stay unchanged. */
+/** The Rules body, live and in the admin preview (the old RulesContent was deleted in Stage 8 Part 3a). */
 export default async function PublicRules({
   orgSlug, tournamentSlug, pageEnabled, rules, resources, divisions, prefName, view, contactEmail, isPreview = false,
 }: {

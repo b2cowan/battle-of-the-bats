@@ -8,7 +8,6 @@ import { withObservability } from '@/lib/observability';
 import { toPublicTeam } from '@/lib/public-tournament-data';
 import { resolveGameVenueLabel } from '@/lib/venue-label';
 import { decidedFinalFor } from '@/lib/champions';
-import { isPublicFrameOn } from '@/lib/public-frame-server';
 import { withheldTeamProfile } from '@/lib/public-teams';
 import { teamProfilePreview } from '@/lib/public-team-profile';
 import { DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
@@ -59,8 +58,10 @@ export const GET = withObservability(async (req: Request) => {
   const division = divisions.find(d => d.id === team.divisionId);
   if (!division) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  // Opt-in only: the old page/API contract stays unchanged with the frame off.
-  const frameOn = searchParams.get('publicFrame') === '1' && await isPublicFrameOn();
+  // Opt-in by the caller. Until Stage 8 Part 3a this also required the preview switch, to keep the old team page's
+  // contract; that page (the only caller without the flag) was deleted, and with the switch off the new page — which
+  // always sends the flag — could only show "Couldn't load this team". Part 4 drops the flag and the plain shape.
+  const frameOn = searchParams.get('publicFrame') === '1';
   if (frameOn && division.scheduleVisibility !== 'published') {
     return NextResponse.json(withheldTeamProfile(team, division.name));
   }

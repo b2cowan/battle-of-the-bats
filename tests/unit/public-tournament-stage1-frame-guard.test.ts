@@ -367,14 +367,11 @@ describe('Part 3: the readable baseline, A', () => {
 
 describe('Part 4: the readable baseline, B', () => {
   const KEYED = /^(:global\(\[data-public-frame='light'\]\)|\[data-public-frame='light'\]) \./;
+  // Stage 8 Part 3a deleted the old Standings, Teams, team-page and Rules sheets with their pages (each group's guard).
   const PART4_SHEETS = [
-    'app/[orgSlug]/standings/standings.module.css',
     'components/bracket/LogicSyncBracket.module.css',
     'components/public/PlayoffPicture.module.css',
-    'app/[orgSlug]/teams/teams.module.css',
-    'app/[orgSlug]/[tournamentSlug]/teams/[id]/team-profile.module.css',
     'app/[orgSlug]/news/news.module.css',
-    'app/[orgSlug]/rules/rules.module.css',
     'components/public/ChampionsRecap.module.css',
   ];
 
@@ -399,10 +396,10 @@ describe('Part 4: the readable baseline, B', () => {
     assert.match(css, /^\.nodeMeta \{ fill: rgba\(var\(--primary-rgb\), 0\.08\); \}/m);
   });
 
-  it('the Teams monogram\'s readable ink is read only under the frame', () => {
-    assert.match(readCode('components/public/TeamsContent.tsx'), /'--team-ink': teamInk\(name\)/);
-    const teams = readCode('app/[orgSlug]/teams/teams.module.css');
-    assert.match(teams, /^\.teamAvatar \{[^}]*color: var\(--on-team-color\);/m, 'today\'s monogram ink, unchanged');
-    assert.match(teams, /:global\(\[data-public-frame='light'\]\) \.teamAvatar \{ color: var\(--team-ink, var\(--on-team-color\)\); \}/);
+  it('the Teams monogram and its readable ink left with the old Teams pages (Stage 8 Part 3a)', () => {
+    // The sheets' deletion is pinned by each page group's own guard (Stage 4, 5 and 6-rules). The new list and page draw no
+    // monogram, so nothing needs the ink; the helper went with its last caller.
+    for (const body of ['PublicTeams', 'PublicTeamPage']) assert.doesNotMatch(readCode(`components/public/${body}.tsx`), /teamColor|teamInk|--team-ink/);
+    assert.doesNotMatch(readCode('lib/team-color.ts'), /export function teamInk/);
   });
 });
