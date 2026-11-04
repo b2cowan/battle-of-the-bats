@@ -215,9 +215,11 @@ describe('the gate, the band and the doors (source guards)', () => {
 
   it('the frame wears the face and no card style, on the live page and the admin preview', () => {
     const live = readCode('app/[orgSlug]/[tournamentSlug]/layout.tsx');
-    assert.match(live, /data-club-face=\{frameBand\?\.face\}/);
-    assert.match(live, /data-card-style=\{frameOn \? 'default' : cardStyle\}/);
-    assert.match(live, /logoUrl=\{frameBand \? frameBand\.logoUrl :/);
+    // Stage 8 Part 3d: the live layout has no switch-off branch left, so these are unconditional.
+    assert.match(live, /data-club-face=\{frameBand\.face\}/);
+    assert.match(live, /data-card-style="default"/);
+    assert.doesNotMatch(live, /cardStyle|themeCardStyle/);
+    assert.match(live, /logoUrl=\{frameBand\.logoUrl\}\s+orgName=\{org\.name\}/, 'the nav context gets the one rule\'s mark');
     const preview = readCode('app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/layout.tsx');
     assert.match(preview, /data-club-face=\{band\.face\}/);
     assert.match(preview, /deskShell\}`\} data-card-style="default" data-color-mode="light"/);

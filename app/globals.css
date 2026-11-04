@@ -326,10 +326,13 @@
                            ticker) — for sticky/fixed elements that ride it.
      --chrome-top-static-h uses the EXPANDED header height — for page top
                            padding, so the collapse never shifts the layout.
-     --nav-visual-h / --nav-event-h are published by the Navbar on mobile
-     tournament routes and unset elsewhere; --ticker-h by the ScoreTicker on
-     game day; --desktop-strip-h by the tournament layout ≥901px (the Phase 3
-     global strip). All fall back cleanly to the plain fixed bar. */
+     --nav-visual-h / --nav-event-h are seeded by the admin preview's switch-off
+     layout and the tournament layout (≤900px); the public frame resets both on
+     its own element. Nothing sets --ticker-h since Public tournament pages
+     Stage 8 Part 3d deleted the ScoreTicker (and the Navbar's event header that
+     published the nav heights) — it stays a 0 fallback. --desktop-strip-h by the
+     tournament layout ≥901px (the Phase 3 global strip). All fall back cleanly
+     to the plain fixed bar. */
   /* --sandbox-chrome-h rides in --chrome-top-h (whose consumers are sticky/fixed tops, which a
      body padding cannot move) but deliberately NOT in --chrome-top-static-h, whose consumers are
      page PADDING — the sandbox rule below already pads the document, and adding it twice would

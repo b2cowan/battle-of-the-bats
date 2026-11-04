@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { FOCUSED_SECTIONS, isFocusedPublicPage } from '../../lib/public-focused-page.ts';
 import { pageCarriesTicker, TICKER_PAGES } from '../../lib/public-ticker-pages.ts';
-import { readCode, filesUnder } from './_source-code.ts';
+import { readCode, filesUnder, openingTags } from './_source-code.ts';
 
 /**
  * The focused page (Stage 7, Ask 6): the team pay page wears no event chrome. ONE rule says which page that is
@@ -44,8 +44,9 @@ describe('the focused page — one rule', () => {
 });
 
 /**
- * Part 2: the focused page as built. The layout wraps every piece that goes away there in the one gate, under the frame
- * only; the band and the footer change shape by asking the same rule; the pay page decides "focused" from the switch.
+ * Part 2: the focused page as built. The layout wraps every piece that goes away there in the one gate (every live page
+ * wears the frame since Stage 8 Part 3d); the band and the footer change shape by asking the same rule; the pay page
+ * decides "focused" from the switch (Part 4).
  */
 describe('the focused page — the chrome asks the rule', () => {
   const layout = readCode('app/[orgSlug]/[tournamentSlug]/layout.tsx');
@@ -55,21 +56,29 @@ describe('the focused page — the chrome asks the rule', () => {
     assert.match(gate, /isFocusedPublicPage\(pathname, orgSlug, tournamentSlug\) \? null/);
   });
 
-  it('the layout gates only under the frame', () => {
-    assert.match(layout, /const unlessFocused = \(node: React\.ReactNode\) => \(frameOn\s*\? <NotOnFocusedPage/);
+  it('the layout always gates: it reads no switch (Stage 8 Part 3d)', () => {
+    assert.match(layout, /const unlessFocused = \(node: React\.ReactNode\) => \(\s*<NotOnFocusedPage orgSlug=\{orgSlug\} tournamentSlug=\{tournament\.slug\}>\{node\}<\/NotOnFocusedPage>\s*\);/);
+    assert.doesNotMatch(layout, /frameOn|isPublicFrameOn/);
   });
 
-  it('every piece that goes away on the focused page is wrapped in the frame-on branch', () => {
-    for (const piece of ['TournamentSideRail publicFrame', 'PublicAppOnly><MyTeamDock', 'PublicAppOnly><FollowDeepLinkPrompt',
-      'PublicAppOnly><FollowAccountNudge', 'PublicAppOnly><AccountFollowSync']) {
-      assert.ok(layout.includes(`unlessFocused(<${piece}`), `${piece} is not gated`);
+  it('every piece that goes away on the focused page is wrapped, and mounted once', () => {
+    assert.ok(layout.includes('unlessFocused(<TournamentSideRail hiddenPages'), 'the rail is not gated');
+    // Two gated fragments: the free plan's badge and banner (outside, before, the frame's element) and the fan's pieces.
+    const gated = [...layout.matchAll(/\{unlessFocused\(<>([\s\S]*?)<\/>\)\}/g)].map(m => m[1]);
+    const growth = gated.find(g => g.includes('<PoweredByBadge'));
+    const fan = gated.find(g => g.includes('<MyTeamDock'));
+    assert.ok(growth && fan, 'both gated fragments are there');
+    assert.match(growth, /\{isFreeTournamentPlan && \(\s*<PoweredByBadge[\s\S]*?\{showAcquisitionBanner && \(\s*<TournamentAcquisitionBanner/);
+    assert.ok(layout.indexOf('<PoweredByBadge') < layout.indexOf('<div className={`${clubFrameStyles.tokens}'), 'the badge renders outside the frame');
+    for (const piece of ['<PublicAppOnly><MyTeamDock', '<PublicAppOnly><FollowDeepLinkPrompt', '<PublicAppOnly><FollowAccountNudge',
+      '<PublicAppOnly><AccountFollowSync', '{!effectivelyFinished && <AlertsNudge', '<InstallAppPrompt']) {
+      assert.ok(fan.includes(piece), `${piece} is not inside the gate`);
     }
-    assert.match(layout, /unlessFocused\(\s*<AlertsNudge/);
-    assert.match(layout, /unlessFocused\(\s*<InstallAppPrompt/);
-    assert.match(layout, /\{unlessFocused\(growthChrome\)\}<div className=\{`\$\{clubFrameStyles\.tokens\}/);
-    // Switch off keeps today's markup: the off branch of the dock and the follow prompt is not wrapped.
-    assert.match(layout, /\) : <MyTeamDock\s+orgSlug/);
-    assert.match(layout, /\{!frameOn && growthChrome\}/);
+    // No second, ungated mount survives (the old switch-off branches rendered each of these bare).
+    for (const name of ['MyTeamDock', 'FollowDeepLinkPrompt', 'FollowAccountNudge', 'AccountFollowSync', 'TournamentSideRail',
+      'PoweredByBadge', 'TournamentAcquisitionBanner', 'AlertsNudge', 'InstallAppPrompt']) {
+      assert.equal(openingTags(layout, name, 'the tournament layout').length, 1, `<${name}> is mounted once`);
+    }
   });
 
   it('the band and the footer change shape by the rule, never in the admin preview', () => {

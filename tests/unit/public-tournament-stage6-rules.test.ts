@@ -116,12 +116,11 @@ describe('News/Rules tab decisions agree on every navigation surface', () => {
       assert.ok(hidden.every(t => t.key !== 'news' && t.key !== 'rules'));
     });
   }
-  it('all three frame renderers pass content to the shared list; Navbar steps aside before its legacy list', () => {
+  it('all three frame renderers pass content to the shared list; the Navbar has no tournament list left (Stage 8 Part 3d)', () => {
     for (const component of ['TournamentTopTabs', 'TournamentSideRail', 'TournamentFooter']) {
       assert.match(readCode(`components/public/${component}.tsx`), /visibleTournamentTabs\([^;\n]*, (?:resolvedFrameContent|frameContent)\)/);
     }
-    const navbar = readCode('components/Navbar.tsx');
-    assert.ok(navbar.indexOf('if (tournamentPublicFrame) return null;') < navbar.indexOf('visibleTournamentTabs(tournamentHiddenPages'));
+    assert.doesNotMatch(readCode('components/Navbar.tsx'), /visibleTournamentTabs|TournamentTopTabs/);
   });
   it('Rules has one body on both routes (Stage 8 Part 3a), and News keeps its existing body and direct link', () => {
     const preview = readCode('app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx');

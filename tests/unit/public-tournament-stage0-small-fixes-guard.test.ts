@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { readCode } from './_source-code.ts';
+import { readCode, sourceExists } from './_source-code.ts';
 import { hasNoScoreYet, NO_SCORE_YET } from '../../lib/game-status.ts';
 
 /**
@@ -16,14 +16,15 @@ import { hasNoScoreYet, NO_SCORE_YET } from '../../lib/game-status.ts';
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-const HOME = 'components/public/TournamentHomeContent.tsx';
+// Stage 8 Part 3d deleted the old Overview body (and the MyTournamentCard and nav status pill only the old chrome drew);
+// the new Overview body draws its live cards through public-game-row's view, like the Schedule.
+const HOME = 'components/public/TournamentOverview.tsx';
 // Stage 8 Part 3b deleted the old game page body and the old Schedule (with the MyTeamCard only it drew); their
 // successors ask the rule in their view models — a game's page through public-game-detail, the Schedule's rows through
 // public-game-row — and the game body is where the countdown now lives.
 const GAME = 'components/public/PublicGameDetails.tsx';
 const GAME_VIEW = 'lib/public-game-detail.ts';
 const SCHEDULE_ROWS = 'lib/public-game-row.ts';
-const MY_TEAM = 'components/public/MyTournamentCard.tsx';
 const FALLBACK = 'app/[orgSlug]/page.tsx';
 const BRANDING = 'app/[orgSlug]/admin/tournaments/branding/page.tsx';
 
@@ -38,7 +39,7 @@ describe('D2 · a live game nobody has scored', () => {
   it('every public surface that shows a live score asks the one rule', () => {
     // The /review of this change found three more live-score surfaces beyond the four the defect named; all ask.
     for (const file of [
-      HOME, GAME_VIEW, SCHEDULE_ROWS, MY_TEAM,
+      GAME_VIEW, SCHEDULE_ROWS,
       'components/public/MyTeamDock.tsx',
       'components/public/DesktopMyTeamRailCard.tsx',
     ]) {
@@ -46,12 +47,16 @@ describe('D2 · a live game nobody has scored', () => {
       assert.match(code, /hasNoScoreYet\(/, `${file} asks whether the game has a score`);
       assert.match(code, /\bNO_SCORE_YET\b/, `${file} says so in the one spelling`);
     }
+    // The Overview's live cards are the shared row view's, not a hand-rolled score.
+    assert.match(readCode(HOME), /liveCardView\(g, /);
+    assert.ok(!sourceExists('components/public/MyTournamentCard.tsx'), 'the old Overview\'s My Team card is gone');
   });
   it('the follower dock has no share at all, so it can never share a live game nobody has scored (owner 2026-11-01)', () => {
     assert.doesNotMatch(readCode('components/public/MyTeamDock.tsx'), /ShareScoreButton|shareGame/);
   });
   it('the home never prints the raw scores either side of a dash', () => {
-    assert.doesNotMatch(readCode(HOME), /\{game\.awayScore\}–\{game\.homeScore\}/);
+    // Stronger than the old pattern: the Overview body reads no raw score at all — the row and live views word it.
+    assert.doesNotMatch(readCode(HOME), /awayScore|homeScore/);
   });
 });
 
@@ -68,7 +73,6 @@ describe('D4 · the countdown is sport-neutral', () => {
   it('no public tournament surface (or the wizard\'s preview of one) says "First pitch"', () => {
     for (const file of [
       HOME, GAME, GAME_VIEW, SCHEDULE_ROWS, 'components/public/PublicSchedule.tsx',
-      'components/public/TournamentNavStatus.tsx',
       'components/admin/TournamentCreationPreview.tsx',
       'lib/entity-follow-status.ts',
       'lib/sandbox-chrome.ts',

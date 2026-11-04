@@ -1,9 +1,5 @@
 {
   "dead": {
-    "app/[orgSlug]/Home.module.css": [
-      "championsHero",
-      "draftPublicNotice"
-    ],
     "app/[orgSlug]/admin/admin-common.module.css": [
       "chip_accepted",
       "chip_all",
@@ -277,10 +273,6 @@
       "coachesCalloutLabel",
       "coachesCalloutPrice",
       "coachesCalloutPriceSub"
-    ],
-    "components/Navbar.module.css": [
-      "logoSub",
-      "logoText"
     ],
     "components/PricingSection.module.css": [
       "planAnnualTotal",

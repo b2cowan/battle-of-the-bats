@@ -1,22 +1,22 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { between, filesUnder, readCode, readSource } from './_source-code.ts';
+import { between, filesUnder, readCode, readSource, sourceExists } from './_source-code.ts';
 import { visibleTournamentTabs } from '../../lib/tournament-page-tabs.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  * PUBLIC TOURNAMENT PAGES · STAGE 2, THE OVERVIEW (build prompt docs/projects/active/PUBLIC_TOURNAMENT_STAGE2_BUILD_PROMPT.md;
- * plan §5, Asks 3, 4, 17). Everything is built behind the preview switch: with it off, today's Overview, ticker, band and
- * explore row are exactly as they were. This guard holds that, and the rules the stage stands on.
+ * plan §5, Asks 3, 4, 17). Built behind the preview switch; Stage 8 Part 3d deleted the old Overview, the ticker and the
+ * explore row, so the new body is the Overview's only body. This guard holds that, and the rules the stage stands on.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
 const HOME = 'components/public/TournamentHomeContent.tsx';
 const PARTS = ['PublicGameRow', 'PublicLiveCard', 'PublicSectionHead', 'PublicDoorRow', 'PublicPostList', 'FollowTournamentLine', 'TournamentOverview',
   'PublicRegisterCard', 'PublicFactsList', 'PublicHostCard', 'PublicChampions', 'PublicRules'];
-/** The files that may draw the shared parts: each renders only with the switch on (Part 2: the frame-on body, and the
- *  old Overview's one frame branch that hands over to it — held below), or — once Stage 8 deleted its page's old half
- *  (Part 3a: Rules, Teams, the team page, Standings; Part 3b: the Schedule, a game's page) — is that page's only body. */
+/** The files that may draw the shared parts: each is its page's only body since Stage 8 deleted the old halves (Part 3a:
+ *  Rules, Teams, the team page, Standings; Part 3b: the Schedule, a game's page; Part 3c: Playoffs, Champions; Part 3d:
+ *  the Overview, whose loader hands over to TournamentOverview — held below). */
 const FRAME_ONLY_USERS = ['components/public/TournamentOverview.tsx', 'components/public/PublicSchedule.tsx', 'components/public/PublicGameDetails.tsx',
   'components/public/PublicStandings.tsx', 'components/public/PublicPlayoffs.tsx',
   'components/public/PublicTeams.tsx', 'components/public/PublicTeamPage.tsx',
@@ -54,12 +54,10 @@ describe('the shared parts render only inside the new frame', () => {
 });
 
 describe('the moment helper is today\'s finished rule, exactly', () => {
-  it('the old Overview keeps its own copy, unchanged, until Stage 8 deletes it — edit both or neither', () => {
+  it('the helper is the one copy: the old Overview\'s own copy went with it (Stage 8 Part 3d)', () => {
     const home = readCode(HOME);
-    assert.match(home, /const noUnplayedGames = !allGames\.some\(g => g\.status === 'scheduled'\);/);
-    assert.match(home, /const eventEnded = !endDate \|\| now >= endDate;/);
-    assert.match(home, /const roundRobinComplete = !hasPlayoffGames && allGamesTerminal && eventEnded;/);
-    assert.match(home, /isCompletedTournament \|\|\s*\(!scheduleWithheld && \(\(playoffsComplete && noUnplayedGames\) \|\| roundRobinComplete\)\);/);
+    assert.doesNotMatch(home, /noUnplayedGames|roundRobinComplete|isCompletedTournament|playoffsComplete/);
+    assert.match(home, /const moment = tournamentMoment\(\{/);
     const moment = readCode('lib/tournament-moment.ts');
     assert.match(moment, /tournament\.status === 'completed' \|\|\s*\(!scheduleWithheld && \(\(playoffsComplete && noUnplayedGames\) \|\| roundRobinComplete\)\);/);
     assert.match(moment, /const roundRobinComplete = !hasPlayoffGames && allGamesTerminal && eventEnded;/);
@@ -84,14 +82,14 @@ describe('the host card\'s Open now list (Ask 4 / Ask B)', () => {
   });
 });
 
-describe('game day (Part 2): the new body is the frame\'s alone, and the old one is untouched', () => {
-  it('the old Overview hands over only inside its frame branch, for every moment (Part 3: before and after too)', () => {
+describe('game day (Part 2): the new body is the Overview\'s only body', () => {
+  it('the loader hands every moment to TournamentOverview, reads no switch and draws nothing of its own (Stage 8 Part 3d)', () => {
     const home = readCode(HOME);
-    const branch = home.slice(home.indexOf('if (frameOn) {'), home.indexOf('// Honor the tournament'));
-    assert.match(branch, /<TournamentOverview/);
-    assert.match(branch, /moment={moment.moment}/);
-    assert.doesNotMatch(branch, /if (moment.moment === 'gameDay')/, 'a moment must not fall back to the old body');
-    assert.equal(home.split('<TournamentOverview').length, 2, 'one hand-over, inside the branch');
+    assert.match(home, /<TournamentOverview/);
+    assert.match(home, /moment=\{moment\.moment\}/);
+    assert.equal(home.split('<TournamentOverview').length, 2, 'one hand-over');
+    assert.doesNotMatch(home, /isPublicFrameOn|frameOn|moment\.moment === 'gameDay'/, 'no switch, and no moment falls back to an old body');
+    assert.doesNotMatch(home, /<(?!TournamentOverview\b)[A-Za-z][\w.]*[\s/>]|Home\.module\.css/, 'the loader draws no markup of its own; the old body\'s sheet is gone');
   });
   it('Up next, Latest results and Live now come from the games families can see (a held-back division never, D1)', () => {
     const home = readCode(HOME);
@@ -113,30 +111,27 @@ describe('game day (Part 2): the new body is the frame\'s alone, and the old one
     assert.match(css, /\.appOnly \{ display: none; \}\s*@media \(display-mode: standalone\) \{\s*\.appOnly \{ display: block; \}/);
     assert.match(css, /\.followStar \{[^}]*width: 44px;[^}]*height: 44px/);
   });
-  it('today\'s follow strip and the new line are one behaviour', () => {
-    for (const f of ['components/public/FollowTournamentStrip.tsx', 'components/public/FollowTournamentLine.tsx']) {
-      assert.match(readCode(f), /useTournamentFollowToggle\(orgSlug, tournamentSlug, tournamentName\)/, f);
-    }
+  it('the old follow strip left with the old Overview; the line keeps the shared follow behaviour', () => {
+    assert.ok(!sourceExists('components/public/FollowTournamentStrip.tsx'), 'the old Overview\'s strip is gone (Stage 8 Part 3d)');
+    assert.match(readCode('components/public/FollowTournamentLine.tsx'), /useTournamentFollowToggle\(orgSlug, tournamentSlug, tournamentName\)/);
   });
 });
 
 describe('the ticker leaves the Overview (Ask 17)', () => {
-  it('the line asks its page list before it loads a game; the switch-off ticker is unchanged', () => {
+  it('the line asks its page list before it loads a game; the old ticker is gone (Stage 8 Part 3d)', () => {
     const line = readCode('components/public/TodaysResultsLine.tsx');
     assert.match(line, /return pageCarriesTicker\(pathname, [^)]*\) \? <ResultsLine \/> : null;/);
-    const layout = readCode('app/[orgSlug]/[tournamentSlug]/layout.tsx');
-    assert.match(layout, /\{!frameOn && <ScoreTicker \/>\}/);
+    assert.doesNotMatch(readCode('app/[orgSlug]/[tournamentSlug]/layout.tsx'), /ScoreTicker/);
+    assert.ok(!sourceExists('components/public/ScoreTicker.tsx'));
   });
 });
 
 
 describe('before and after the event, and the host card (Part 3)', () => {
-  const branch = () => {
-    const home = readCode(HOME);
-    return home.slice(home.indexOf('if (frameOn) {'), home.indexOf('// Honor the tournament'));
-  };
+  // The loader is the Overview's only body since Stage 8 Part 3d, so its whole source is what these read.
+  const branch = () => readCode(HOME);
   it('the champions come from the games families can see, and a round robin still has a way in', () => {
-    assert.match(branch(), /deriveTierChampions\(allGames, teams, frameDivisions\)/);
+    assert.match(branch(), /deriveTierChampions\(allGames, teams, sortedDivisions\)/);
     assert.match(branch(), /champions\.length === 0 && showSchedulePage/);
   });
   it("the spots count follows the team list's visibility, the capacity never does", () => {

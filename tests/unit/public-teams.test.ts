@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { publicTeamsData, teamMoment, teamPlace, teamRowLine, teamsGroups, withheldTeamProfile } from '../../lib/public-teams.ts';
+import { publicTeamsData, publicVenue, teamMoment, teamPlace, teamRowLine, teamsGroups, withheldTeamProfile } from '../../lib/public-teams.ts';
+import { readCode } from './_source-code.ts';
 import { zonedWallClockToUtc } from '../../lib/timezone.ts';
-import type { Division, Game, PublicTeam, Tournament } from '../../lib/types.ts';
+import type { Division, Game, PublicTeam, Tournament, Venue } from '../../lib/types.ts';
 import type { DivisionStandingRow } from '../../lib/tie-breakers.ts';
 
 const division = { id: 'd', name: 'U11', scheduleVisibility: 'published', pools: [] } as unknown as Division;
@@ -196,5 +197,36 @@ describe('Teams grouping, sorting and search', () => {
     assert.deepEqual(group({ divisions: [{ ...pooled, scheduleVisibility: 'unpublished' }] }), []);
     assert.deepEqual(group({ divisions: [] }), []);
     assert.deepEqual(group({ teams: [{ ...list[0], status: 'pending' }] }), []);
+  });
+});
+
+// PRIVACY (owner ruling 2026-11-04, Stage 8 Part 3d): venue and field notes are the organizer's own, like a game's notes.
+describe('a venue as the public feed sends it', () => {
+  const venue = { id: 'v', tournamentId: 't', name: 'Riverside Park', address: '1 Main St', notes: 'GATE_CODE_4412',
+    facilities: [{ id: 'f', venueId: 'v', tournamentId: 't', name: 'Field 2', facilityType: 'diamond', displayOrder: 1, notes: 'KEY_UNDER_MAT' }] } as unknown as Venue;
+  it('carries no venue or field notes, and keeps everything a page shows', () => {
+    const shown = publicVenue(venue);
+    assert.ok(!('notes' in shown), 'the venue\'s notes reach the browser');
+    assert.ok(shown.facilities!.every(f => !('notes' in f)), 'a field\'s notes reach the browser');
+    assert.equal(shown.name, 'Riverside Park');
+    assert.equal(shown.address, '1 Main St');
+    assert.equal(shown.facilities![0].name, 'Field 2');
+    assert.equal(venue.notes, 'GATE_CODE_4412', 'the server copy is untouched');
+    assert.equal(venue.facilities![0].notes, 'KEY_UNDER_MAT');
+    assert.equal(publicVenue({ ...venue, facilities: undefined }).facilities, undefined, 'no facilities list is invented');
+  });
+  it('every venue read of the public feed leaves through it (one scrub per read, the games gate\'s shape)', () => {
+    const data = readCode('lib/public-tournament-data.ts');
+    const reads = (data.match(/\bgetVenues\(/g) ?? []).length;
+    assert.ok(reads > 0);
+    assert.equal((data.match(/venues: venues\.map\(publicVenue\)/g) ?? []).length, reads, 'a section sends the raw venue rows');
+  });
+  it('the Overview hands its raw venue rows only to a server-rendered body (so they never serialize to a browser)', () => {
+    // TournamentHomeContent reads venues unscrubbed and passes them to TournamentOverview; that is safe only while the
+    // body renders on the server and gives its client children derived words, never a Venue.
+    const body = readCode('components/public/TournamentOverview.tsx');
+    assert.doesNotMatch(body, /^['"]use client['"]/m);
+    assert.doesNotMatch(body, /<(FollowTournamentLine|Countdown|RollingNumber)\b[^>]*\bvenues?=/);
+    assert.match(readCode('components/public/TournamentHomeContent.tsx'), /venues=\{venues\}/);
   });
 });

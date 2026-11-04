@@ -98,9 +98,10 @@ describe('1 · the club\'s bar replaces the platform\'s (Ask 7)', () => {
   it('the platform\'s top bar has no club branch left: it steps aside on a club page', () => {
     const nav = readCode('components/Navbar.tsx');
     assert.doesNotMatch(nav, /org_discover|orgSectionCrumb|data-club-chrome/);
-    // Every club section is a static folder Next.js matches before [tournamentSlug], so "no tournament param" IS "a
-    // club page or an operator shell (which SiteChrome already drops)".
-    assert.match(nav, /if \(!urlTournamentSlug\) return null;/);
+    // Public tournament pages Stage 8 Part 3d: the tournament branch went too, so past the marketing bar the platform's
+    // bar draws nothing on ANY org page — a club page draws the club's bar, a tournament page the organizer's band.
+    assert.doesNotMatch(nav, /tournamentSlug|useOrgNav|data-tournament-nav/i, 'no tournament param (any spelling, e.g. urlTournamentSlug)');
+    assert.match(nav, /if \(isAdmin \|\| !onMarketing\) return null;/, 'past the admin check, only a marketing path draws a bar');
   });
   it('the staff door is this club\'s only, outermost — never the everywhere-chooser (Ask S1)', () => {
     const bar = readCode(BAR);
@@ -131,7 +132,9 @@ describe('2 · the platform\'s phone bar leaves club pages; tournament pages kee
   });
   it('the carve-out: a tournament page still gets the Primary bar', () => {
     assert.match(consumer, /bottomNavTournament[^\n]*aria-label="Primary"|aria-label="Primary"[^\n]*bottomNavTournament/);
-    assert.match(readCode('components/Navbar.tsx'), /TournamentTopTabs/);
+    // The tournament's tab row is the band's (Stage 8 Part 3d deleted the platform bar's tournament branch that held it).
+    assert.match(readCode('components/public/TournamentBand.tsx'), /<TournamentTopTabs\s+skin="frame"/);
+    assert.doesNotMatch(readCode('components/Navbar.tsx'), /TournamentTopTabs/);
   });
   it('the 4a refusal no longer needs the phone bar\'s label to hide it', () => {
     assert.doesNotMatch(readSource('components/public/ClubNotFound.module.css'), /aria-label='Primary'/);

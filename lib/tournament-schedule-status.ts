@@ -3,7 +3,8 @@
  *
  * The words the tournament SCHEDULE calls a game's state — used by the screen's status filter and
  * by the printed schedule, so the two can never disagree about what a game is called. Same pattern
- * and same reason as `lib/tournament-phase-display.ts`.
+ * and same reason as the old tournament bar's phase words had (`lib/tournament-phase-display.ts`, gone in Public tournament
+ * pages Stage 8 Part 3d).
  *
  * ⚠ SCOPE, honestly stated: this is the schedule's vocabulary, NOT a canonical map for every
  * surface. The public game page and the bracket resolve `submitted` to **Unofficial** or **Final**

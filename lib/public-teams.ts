@@ -9,7 +9,7 @@ import { fanPlaceholder, gameSideNames } from './public-game-row';
 import { ordinal } from './playoff-bracket';
 import { daysBetweenDateStrings, formatShortWeekdayDate, tournamentToday } from './timezone';
 import { formatPoolName, formatTime, relativeDayLabel, splitTeamQualifier } from './utils';
-import type { Division, Game, PublicTeam, Tournament } from './types';
+import type { Division, Game, PublicTeam, Tournament, Venue } from './types';
 import type { DivisionStandingRow } from './tie-breakers';
 
 export const TEAM_SCHEDULE_WITHHELD = "The schedule isn't published yet";
@@ -29,6 +29,15 @@ export function publicFrameGame<T extends Game>(game: T): T {
   delete publicGame.scoreSubmittedAt;
   delete publicGame.scoreSubmissionSource;
   return publicGame;
+}
+
+/** A venue as the public feed sends it: venue and field notes are the organizer's own (owner ruling 2026-11-04, Stage 8
+ *  Part 3d — private, like a game's notes); no public page shows them. */
+export function publicVenue(venue: Venue): Venue {
+  const shown = { ...venue };
+  delete shown.notes;
+  if (shown.facilities) shown.facilities = shown.facilities.map(f => { const field = { ...f }; delete field.notes; return field; });
+  return shown;
 }
 
 /** Both the initial read and each replacement feed use the same server-only boundary. */

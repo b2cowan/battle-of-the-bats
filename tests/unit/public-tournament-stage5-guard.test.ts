@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { between, filesUnder, readCode, readSource, sourceExists } from './_source-code.ts';
+import { between, filesUnder, openingTags, readCode, readSource, sourceExists } from './_source-code.ts';
 
 const ROOT = 'app/[orgSlug]/[tournamentSlug]/teams';
 const PREVIEW = 'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx';
@@ -132,27 +132,54 @@ describe('Stage 5 Part 3: the team page and installed-app mounts', () => {
     assert.match(body, /<h3>Results<\/h3>/);
     assert.match(readSource('components/public/PublicTeamPage.module.css'),/grid-template-columns: 56px minmax\(0, 1fr\) auto/);
   });
-  it('does not mount browser dock/card/prompts and preserves the legacy fallbacks', () => {
+  it('mounts the dock, the rail card and the prompt only inside the installed app, once each (Stage 8 Part 3d: no legacy mount)', () => {
     const gate=readCode('components/public/PublicAppOnly.tsx');
     assert.match(gate,/useSyncExternalStore\(subscribe, installed, server\)/);
     assert.match(gate,/const server = \(\) => false/);
     assert.match(gate,/active \? children : null/);
-    // Stage 7: under the frame both also pass through the focused-page gate (public-focused-page.test.ts).
-    assert.match(layout,/frameOn \? unlessFocused\(<PublicAppOnly><MyTeamDock\s+publicFrame/);
-    assert.match(layout,/: <MyTeamDock/);
-    assert.match(layout,/frameOn \? unlessFocused\(<PublicAppOnly><FollowDeepLinkPrompt/);
-    assert.match(readCode('components/public/TournamentSideRail.tsx'),/publicFrame \? <PublicAppOnly><DesktopMyTeamRailCard publicFrame/);
+    // Stage 7: both also pass through the focused-page gate (public-focused-page.test.ts).
+    assert.match(layout,/<PublicAppOnly><MyTeamDock orgSlug/);
+    assert.match(layout,/<PublicAppOnly><FollowDeepLinkPrompt orgSlug/);
+    for(const name of ['MyTeamDock','FollowDeepLinkPrompt'])
+      assert.equal(openingTags(layout,name,'the tournament layout').length,1,`<${name}> has no second, browser mount`);
+    assert.doesNotMatch(layout,/\bpublicFrame\b/,'no surface gets the old frame prop (publicFrameBand, Host and Attr are the frame helpers)');
+    const rail=readCode('components/public/TournamentSideRail.tsx');
+    assert.match(rail,/\{!basePath && <PublicAppOnly><DesktopMyTeamRailCard \/><\/PublicAppOnly>\}/);
+    assert.equal(openingTags(rail,'DesktopMyTeamRailCard','the side rail').length,1,'the rail card has no browser mount');
     for(const file of ['PublicSchedule','PublicStandings','TournamentOverview','PublicTeams','PublicTeamPage'])
       assert.doesNotMatch(readCode(`components/public/${file}.tsx`),/<MyTeamCard/);
   });
-  it('the installed-app readers also use published-only feeds', () => {
-    assert.match(readCode('components/public/FollowDeepLinkPrompt.tsx'),/publicFrame \? 'teams-preview' : 'teams'/);
-    for(const file of ['MyTeamDock','DesktopMyTeamRailCard'])
-      assert.match(readCode(`components/public/${file}.tsx`),/publicFrame \? 'schedule-preview' : 'schedule'/);
+  it('the installed-app readers use ONLY the published-only feeds (Stage 8 Part 3d: their legacy-feed branches went)', () => {
+    const prompt=readCode('components/public/FollowDeepLinkPrompt.tsx');
+    assert.match(prompt,/fetchPublicTournamentData\(orgSlug, tournamentSlug, 'teams-preview'\)/);
+    assert.doesNotMatch(prompt,/'teams'|publicFrame/);
+    for(const file of ['components/public/MyTeamDock.tsx','components/public/DesktopMyTeamRailCard.tsx','lib/hooks/useTodaysTournamentGames.ts']){
+      const code=readCode(file);
+      assert.match(code,/fetchPublicTournamentData\(orgSlug, tournamentSlug, 'schedule-preview'\)/,file);
+      assert.doesNotMatch(code,/'schedule'|publicFrame/,`${file} can still reach the legacy feed`);
+    }
     assert.match(readCode('lib/public-tournament-data.ts'),/section === 'schedule-preview' \? publicTeamsData\(data\) : data/);
-    assert.match(readCode('components/public/TodaysResultsLine.tsx'),/useTodaysTournamentGames\(true\)/);
-    assert.match(readCode('lib/hooks/useTodaysTournamentGames.ts'),/publicFrame \? 'schedule-preview' : 'schedule'/);
-    assert.match(readCode('components/public/ScoreTicker.tsx'),/useTodaysTournamentGames\(\)/);
+    assert.match(readCode('components/public/TodaysResultsLine.tsx'),/useTodaysTournamentGames\(\)/);
+    assert.ok(!sourceExists('components/public/ScoreTicker.tsx'),'the old ticker (the hook\'s legacy-feed caller) is gone');
+  });
+  it('no public browser part asks for an unscrubbed feed — a sweep, not a list of names (Stage 8 Part 3d /review)', () => {
+    // The plain schedule / teams / standings sections ship whole games (notes, the scorekeeper\'s identity); every browser
+    // reader of the public pages asks for a published-only section instead. A new or renamed reader is caught here.
+    const readers=[...filesUnder('components/public','.tsx'),...filesUnder('lib/hooks','.ts')]
+      .filter(f=>/^['"]use client['"]/m.test(readSource(f)))
+      .filter(f=>/fetchPublicTournamentData\(|usePublicTournamentLive\(/.test(readCode(f)));
+    assert.ok(readers.length>=8,'the sweep finds the public readers (else its filter broke)');
+    // Every section argument must be a published-only section written out; a constant, a variable or a legacy name fails.
+    const SAFE=/^'(schedule-preview|teams-preview|standings-preview|playoffs|register)'$/;
+    const offenders:string[]=[];
+    for(const f of readers){
+      const code=readCode(f);
+      const args=[...code.matchAll(/fetchPublicTournamentData\(\s*[^,()]+,\s*[^,()]+,\s*([^)]+?)\s*\)/g),...code.matchAll(/\bsection:\s*([^,;}\n]+?)\s*[,;}\n]/g)].map(m=>m[1]);
+      // The live hook itself only forwards its caller's section (each caller is in this sweep).
+      const passThrough=f==='lib/hooks/usePublicTournamentLive.ts'?['section','PublicTournamentSection']:[];
+      for(const a of args) if(!SAFE.test(a)&&!passThrough.includes(a)) offenders.push(`${f}: ${a}`);
+    }
+    assert.deepEqual(offenders,[],'a public browser reader asks for a feed that is not published-only');
   });
   it('metadata is opt-in only and the old privacy gates still decide what it may describe', () => {
     const route=readCode('app/api/public/team-profile/route.ts');

@@ -192,12 +192,6 @@
   background: #F6F5F2; /* token-exempt: a copy of --club-ground — <body> is outside the element that declares it */
 }
 
-/* The platform's event header and its tab row step aside from the first paint (the Navbar also unmounts its tournament
-   branch once the page is live, so the operator door mounts once). */
-:global(html):has(.frame) :global([data-tournament-nav]) {
-  display: none;
-}
-
 /* ── The band (the club bar, with the event's lines) ─────────────────────────────────────────────────────────────────
    Its pinning is the club bar's own rule (ClubFrame.module.css `.bar:has(.tabsSlot)`, a phone only, where the platform
    strip is 0 px), and its identity link is the club bar's own `.identity`, so the band adds only its own lines. */

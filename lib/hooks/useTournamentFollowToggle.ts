@@ -1,8 +1,8 @@
 'use client';
 /**
- * Following a whole tournament (Unified Home Phase 6, F1): the one behaviour behind today's follow strip
- * (components/public/FollowTournamentStrip.tsx) and the frame Overview's app-only line (FollowTournamentLine.tsx, Public
- * tournament pages Stage 2), so the two cannot drift.
+ * Following a whole tournament (Unified Home Phase 6, F1): the behaviour behind the Overview's app-only line
+ * (FollowTournamentLine.tsx, Public tournament pages Stage 2). The old Overview's follow strip, its other caller, went in
+ * Stage 8 Part 3d.
  *
  * Free-first: the device write (lib/follow) is the source of truth and always happens first; the account mirror is
  * fire-and-forget. Signed-in state is hydrated CLIENT-SIDE (GET ?entity=tournament) so a follow made on another device

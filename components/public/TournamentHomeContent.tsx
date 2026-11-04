@@ -1,37 +1,15 @@
-import Link from 'next/link';
-import { Calendar, Trophy, ChevronRight, Megaphone, Star, Eye, Clock, CheckCircle, Crown } from 'lucide-react';
-import { getAnnouncements, getTeams, getDivisions, getVenues, getStandings } from '@/lib/db';
-import { readPublicGames, getPublicStandingsByDivision } from '@/lib/public-games';
-import type { Game, Organization, Tournament } from '@/lib/types';
-import { formatTime } from '@/lib/utils';
+import { getAnnouncements, getTeams, getDivisions, getVenues } from '@/lib/db';
+import { readPublicGames } from '@/lib/public-games';
+import type { Organization, Tournament } from '@/lib/types';
 import { isPublicPageEnabled } from '@/lib/public-pages';
-import { hasPlanFeature } from '@/lib/plan-features';
-import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import { getRegistrationState } from '@/lib/registration-state';
 import { tournamentToday } from '@/lib/timezone';
-import {
-  formatHeroDateRange,
-  heroCountdownText,
-  heroFirstPitchISO,
-  tournamentDayCount,
-} from '@/lib/tournament-hero-copy';
-import { deriveTierChampions, tierBadgeLabel, isTournamentPlayoffsComplete } from '@/lib/champions';
-import { fanRoundLabel } from '@/lib/playoff-bracket';
-import { isGameLive, gameStartMs, hasNoScoreYet, NO_SCORE_YET, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
-import LocationLink from '@/components/LocationLink';
-import { resolveGameVenueLabel } from '@/lib/venue-label';
-import MyTournamentCard from '@/components/public/MyTournamentCard';
+import { heroFirstPitchISO } from '@/lib/tournament-hero-copy';
+import { deriveTierChampions } from '@/lib/champions';
 import { toPublicTeam } from '@/lib/public-tournament-data';
-import PublicTournamentState from '@/components/public/PublicTournamentState';
-import CountUp from '@/components/public/CountUp';
-import Countdown from '@/components/public/Countdown';
-import FollowTournamentStrip from '@/components/public/FollowTournamentStrip';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import { orgLinks } from '@/lib/org-links';
-import { isPublicFrameOn, publicTournamentContactEmail } from '@/lib/public-frame-server';
-import { TOURNAMENT_STATUS_WORD } from '@/lib/club-site-home';
 import { tournamentMoment } from '@/lib/tournament-moment';
-import { gameSideNames } from '@/lib/public-game-row';
 import { preEventFacts, registerCardView, teamSpotsLine, totalSpots } from '@/lib/public-pre-event';
 import { championCards, hostCardView } from '@/lib/public-host-card';
 import { loadHostClubOpenNow } from '@/lib/club-home-data';
@@ -40,8 +18,13 @@ import { resolveOrgHomeHref } from '@/lib/module-entitlements';
 import { clubColourRoles } from '@/lib/club-colour-roles';
 import { directionsHref } from '@/lib/family-schedule-format';
 import TournamentOverview from '@/components/public/TournamentOverview';
-import styles from '@/app/[orgSlug]/Home.module.css';
 
+/**
+ * The Overview's one loader, shared by the public page and the organizer's admin preview (`isPreview`). All three
+ * moments — before the event, game day, after it — are the new body (TournamentOverview), fed by what is loaded here and
+ * worded by lib/public-pre-event.ts and lib/public-host-card.ts. Public tournament pages Stage 8 Part 3d deleted the old
+ * Overview that rendered here with the preview switch off; the page no longer reads the switch.
+ */
 export default async function TournamentHomeContent({
   orgSlug,
   tournamentSlug,
@@ -56,31 +39,22 @@ export default async function TournamentHomeContent({
   isPreview?: boolean;
 }) {
   const readOptions = { admin: true };
-  // Public tournament pages Stage 1 (lib/public-frame.ts): behind the switch the page speaks the four state words only
-  // (Ask 8). The layout of this page is Stage 2's; only its words follow the switch here. The organizer's admin preview
-  // follows the same switch (Part 2), so it shows what the live page shows.
-  const frameOn = await isPublicFrameOn();
-
-  const allAnnouncements = await getAnnouncements(tournament.id, readOptions);
-  const announcements = allAnnouncements.slice(0, 3);
-
-  // Only published divisions' games — an unpublished schedule never reaches this page or its client cards (D1).
-  const divisions = await getDivisions(tournament.id, readOptions);
+  // The independent reads in one round trip; the games read needs the divisions.
+  const [allAnnouncements, divisions, allTeams, venues, href] = await Promise.all([
+    getAnnouncements(tournament.id, readOptions),
+    getDivisions(tournament.id, readOptions),
+    getTeams(tournament.id, readOptions),
+    getVenues(tournament.id, { ...readOptions, includeFacilities: true }),
+    // The public pages are spelled for the address the visitor is on (a club's own web address has no club name in it);
+    // the admin preview is always on our host.
+    orgLinks(orgSlug),
+  ]);
+  // Only published divisions' games — an unpublished schedule never reaches this page (D1).
   const { games: allGames, withheld: scheduleWithheld } = await readPublicGames(tournament.id, divisions);
   const now = tournamentToday();
-  const sortedGames = [...allGames].sort((a, b) => {
-    if (a.date !== b.date) return (a.date || '').localeCompare(b.date || '');
-    return (a.time || '').localeCompare(b.time || '');
-  });
-  const upcomingGames = sortedGames
-    .filter(g => g.status === 'scheduled' && g.date >= now)
-    .slice(0, 4);
 
-  const allTeams  = await getTeams(tournament.id, readOptions);
-  // Sanitize before any of these rows reach a client component (MyTournamentCard) —
-  // see J6-001 / toPublicTeam. allTeams stays raw for server-only registration math.
-  const teams     = allTeams.filter(team => team.status === 'accepted').map(team => toPublicTeam(team, tournament.coachNamesShowOnPublic === true));
-  const venues  = await getVenues(tournament.id, { ...readOptions, includeFacilities: true });
+  // Sanitized (J6-001 / toPublicTeam); allTeams stays raw for the server-only registration maths.
+  const teams = allTeams.filter(team => team.status === 'accepted').map(team => toPublicTeam(team, tournament.coachNamesShowOnPublic === true));
   const activeRegistrations = allTeams.filter(team => team.status !== 'rejected');
 
   const registration = getRegistrationState(tournament, divisions, activeRegistrations);
@@ -89,1130 +63,95 @@ export default async function TournamentHomeContent({
   // on any plan hides the same blocks — the switch the nav and the other pages already honoured.
   const inviteOnly = runsInviteOnlyEvents(org.planId);
   const registerOn = !inviteOnly && isPublicPageEnabled(tournament, 'register');
-  // The public pages are spelled for the address the visitor is on (a club's own web address has no club name in it); the
-  // admin preview below is always on our host.
-  const href = await orgLinks(orgSlug);
   const publicBase = href(`/${tournamentSlug}`);
-  const adminTournamentBase = `/${orgSlug}/admin/tournaments`;
-  const previewBase = `${adminTournamentBase}/preview/${tournamentSlug}`;
-  const usePreviewLinks = isPreview;
   const showNewsPage = isPublicPageEnabled(tournament, 'news');
   const showSchedulePage = isPublicPageEnabled(tournament, 'schedule');
   const showStandingsPage = isPublicPageEnabled(tournament, 'standings');
   const showTeamsPage = isPublicPageEnabled(tournament, 'teams');
   const showRulesPage = isPublicPageEnabled(tournament, 'rules');
 
-  // Public tournament pages Stage 2: under the frame, all three moments — before the event, game day, after it — are
-  // the new body (TournamentOverview), fed by what is loaded above and worded by lib/public-pre-event.ts and
-  // lib/public-host-card.ts. Everything below is today's Overview, untouched, which Stage 8 deletes.
-  if (frameOn) {
-    const moment = tournamentMoment({
-      tournament, today: now, games: allGames, divisions, scheduleWithheld,
-      registrationOpen: registerOn && !!registration.cta,
-    });
-    const frameBase = isPreview ? previewBase : publicBase;
-    const frameScheduleHref = `${frameBase}/schedule`;
-    const frameDivisions = [...divisions].sort((a, b) => a.order - b.order);
-    const frameDivisionNames = frameDivisions.map(d => d.name);
-
-    // Before the event: the Register card (today's two inline blocks, one) and the facts list.
-    const startDay = tournament.startDate ?? null;
-    const firstGame = sortedGames.find(g => g.status === 'scheduled' && (!startDay || g.date >= startDay));
-    const register = moment.moment === 'before'
-      ? registerCardView({
-          startDate: startDay,
-          firstPitchISO: heroFirstPitchISO(firstGame?.time ? firstGame.date : startDay, firstGame?.time),
-          spotsLine: teamSpotsLine({
-            inviteOnly, showTeamsPage, accepted: teams.length,
-            capacity: totalSpots(divisions, inviteOnly), divisionNames: frameDivisionNames,
-          }),
-          registration, registerOn, registerHref: `${frameBase}/register`, isPreview,
-        })
-      : null;
-    const facts = moment.moment === 'before'
-      ? preEventFacts({
-          divisionNames: frameDivisionNames,
-          venue: venues[0] ? { name: venues[0].name, href: directionsHref(venues[0].address ?? null), others: venues.length - 1 } : null,
-          showSchedulePage, hasVisibleGames: allGames.length > 0, scheduleHref: frameScheduleHref,
-          showRulesPage, rulesHref: `${frameBase}/rules`,
-        })
-      : [];
-
-    // After the event: the champions of the games families can see, then the doors.
-    const champions = moment.moment === 'after'
-      ? championCards(deriveTierChampions(allGames, teams, frameDivisions), divisions.length > 1)
-      : [];
-    const afterDoors = moment.moment === 'after'
-      ? [
-          ...(showStandingsPage ? [{ href: `${frameBase}/standings`, label: 'Final standings' }] : []),
-          // No champion to lead with (a round robin): the results are the way in, rather than a page that ends.
-          ...(champions.length === 0 && showSchedulePage ? [{ href: frameScheduleHref, label: 'Game results' }] : []),
-        ]
-      : [];
-
-    // The host card (Ask 4 / Ask B): the club's own Open now list, asked only when the club's public site is open and its
-    // plan has one; the door is the layout's own answer (lib/public-frame.ts publicFrameHost), so the card, the band and the
-    // footer cannot disagree. A failed read costs the card, never the page.
-    const openNow = await loadHostClubOpenNow(org, href).catch(() => null);
-    const host = openNow === null ? null : hostCardView({
-      host: publicFrameHost(org.name, tournament.name, await resolveOrgHomeHref(org).catch(() => null)),
-      openNow, logoUrl: org.logoUrl ?? null, isPreview, clubHref: href(),
-    });
-    const clubRoles = clubColourRoles(org.themePreset, org.themePrimary, org.themeAccent);
-
-    return (
-      <TournamentOverview
-        orgSlug={orgSlug}
-        tournamentSlug={tournamentSlug}
-        tournament={tournament}
-        isPreview={isPreview}
-        moment={moment.moment}
-        today={now}
-        games={allGames}
-        teamName={id => teams.find(t => t.id === id)?.name ?? 'TBD'}
-        divisions={divisions}
-        venues={venues}
-        announcements={announcements}
-        scheduleWithheld={scheduleWithheld}
-        showSchedulePage={showSchedulePage}
-        showNewsPage={showNewsPage}
-        playoffPictureHref={moment.bracketSet && showStandingsPage && !isPreview ? `${publicBase}/playoffs` : null}
-        scheduleHref={frameScheduleHref}
-        newsHref={`${frameBase}/news`}
-        gameHref={id => (isPreview ? frameScheduleHref : `${frameScheduleHref}/${id}`)}
-        register={register}
-        facts={facts}
-        champions={champions}
-        afterDoors={afterDoors}
-        host={host}
-        hostColours={{ fill: clubRoles.fill, onFill: clubRoles.onFill, edge: clubRoles.edge }}
-      />
-    );
-  }
-
-  // Honor the tournament's "show contact email publicly" privacy toggle and resolve
-  // the designated contact (member email) — the raw `tournament.contactEmail ?? org`
-  // fallback skipped both (J1-045). Returns null when the organizer hid it.
-  const contactEmail = await publicTournamentContactEmail(tournament.id, org.contactEmail ?? null);
-  const standingsEntries = showStandingsPage
-    ? Object.entries(await getPublicStandingsByDivision(tournament, divisions, { games: allGames, teams: allTeams }))
-    : [];
-  const standingsByDivision = new Map(standingsEntries);
-  const previewLabel = tournament.status === 'draft'
-    ? 'Admin preview. This draft tournament is not publicly visible until it is activated.'
-    : 'Admin preview. You are viewing this tournament page from inside the admin workspace.';
-  const scheduleHref = usePreviewLinks ? `${previewBase}/schedule` : `${publicBase}/schedule`;
-  const newsHref = usePreviewLinks ? `${previewBase}/news` : `${publicBase}/news`;
-  const primaryBase = usePreviewLinks ? previewBase : publicBase;
-
-  const startDate = tournament.startDate;
-  const endDate   = tournament.endDate;
-
-  // "Game time" = tournament is in progress (today within the event window). Once
-  // live, the home page leads with games and the full-viewport marketing hero
-  // collapses (binding 2026-06-01: home page is state-dependent).
-  const isInProgress = Boolean(startDate && endDate && now >= startDate && now <= endDate);
-  const isCompletedTournament = tournament.status === 'completed';
-
-  // Playoff "hero takeover": the bracket is only truly "set" once pool play is done.
-  // Organizers routinely pre-build the playoff bracket (placeholder seeds) before the
-  // event even starts, so the mere existence of is_playoff games is NOT "playoffs are here."
-  // Gate on: playoff games exist, the event has started, pool play is complete (no
-  // round-robin game still waiting to be played), and the tournament isn't finished.
-  const poolPlayGames = allGames.filter(g => !g.isPlayoff);
-  const poolPlayComplete =
-    poolPlayGames.length === 0 ||
-    poolPlayGames.every(g => g.status === 'completed' || g.status === 'cancelled');
-  const eventHasStarted = !startDate || now >= startDate;
-
-  // "Effectively finished" — the SINGLE public signal that the event is over, so the
-  // overview shows ONE finished experience (final champions + record, no live sections)
-  // whether or not the organizer has formally marked it complete. Manual 'completed'
-  // status stays an admin/reporting override (and force-finishes an event that ended
-  // without a decided bracket). Three ways to be finished:
-  //   1. admin marked it complete, OR
-  //   2. the bracket is decided (every playoff game terminal + a championship final), OR
-  //   3. a no-bracket (round-robin) event has played out — every game terminal and the
-  //      end date has passed (no final to key off, so we wait for the calendar).
-  const playoffsComplete = isTournamentPlayoffsComplete(allGames, divisions);
-  const hasPlayoffGames = allGames.some(g => g.isPlayoff);
-  const allGamesTerminal = allGames.length > 0 && allGames.every(
-    g => g.status === 'completed' || g.status === 'forfeit' || g.status === 'cancelled',
-  );
-  // A decided bracket doesn't mean the event is over if a NON-playoff game is still on the
-  // board — isTournamentPlayoffsComplete only inspects bracket games, so a rain-delayed pool
-  // game or a placement/exhibition game rescheduled after the final would otherwise be hidden.
-  // Require nothing still waiting to be played before declaring the event finished.
-  const noUnplayedGames = !allGames.some(g => g.status === 'scheduled');
-  // Inclusive of the final calendar day — a round-robin that plays out ON its end date should
-  // show the finished experience that day, not only the day after.
-  const eventEnded = !endDate || now >= endDate;
-  const roundRobinComplete = !hasPlayoffGames && allGamesTerminal && eventEnded;
-  // An event still holding a division's schedule back is not finished on the strength of the divisions it shows (D1).
-  const isFinished =
-    isCompletedTournament ||
-    (!scheduleWithheld && ((playoffsComplete && noUnplayedGames) || roundRobinComplete));
-
-  const playoffsSet =
-    hasPlayoffGames &&
-    !isFinished &&
-    eventHasStarted &&
-    poolPlayComplete;
-  const firstPlayoffGame = sortedGames.find(g => g.isPlayoff && g.status === 'scheduled');
-  const firstPlayoffISO = heroFirstPitchISO(firstPlayoffGame?.date, firstPlayoffGame?.time);
-
-  // Badge strings come from lib/tournament-hero-copy.ts — shared with the setup wizard's
-  // live preview (components/admin/TournamentCreationPreview.tsx) so an organizer never
-  // watches a hero assemble itself in wording the published page does not use.
-  const dateDisplay = formatHeroDateRange(startDate, endDate);
-  let countdownText = heroCountdownText(startDate, endDate, tournamentToday());
-  // A bracket can be decided before the last calendar day — keep the hero badge honest
-  // with the finished body rather than reading "in progress".
-  if (isFinished) countdownText = 'Tournament complete';
-
-  // Pre-event "Starts in…" (sport-neutral, D4) — counts down to the earliest scheduled game on or
-  // after the start date (falling back to the start date at a sensible default).
-  const isPreEvent = Boolean(startDate && now < startDate);
-  const firstScheduledGame = sortedGames.find(g => g.status === 'scheduled' && (!startDate || g.date >= startDate));
-  // A scheduled game with no start time does NOT move the countdown to that game's day —
-  // it falls back to 9 AM on the tournament's own start date. (Games are entered before
-  // times are; pointing "first pitch" at a timeless day-two game would be wrong twice.)
-  const firstPitchISO = isPreEvent
-    ? heroFirstPitchISO(firstScheduledGame?.time ? firstScheduledGame.date : startDate, firstScheduledGame?.time)
-    : null;
-
+  const moment = tournamentMoment({
+    tournament, today: now, games: allGames, divisions, scheduleWithheld,
+    registrationOpen: registerOn && !!registration.cta,
+  });
+  const base = isPreview ? `/${orgSlug}/admin/tournaments/preview/${tournamentSlug}` : publicBase;
+  const scheduleHref = `${base}/schedule`;
   const sortedDivisions = [...divisions].sort((a, b) => a.order - b.order);
+  const divisionNames = sortedDivisions.map(d => d.name);
 
-  // Champions for the completed-home banner — EVERY decided tier winner (Tier 1 headlined,
-  // lower tiers shown as crowned tier winners: they medalled in their own bracket). A
-  // single-bracket division yields one row (tierLabel null). Shown whenever the event is
-  // effectively finished, not only when an organizer has formally marked it complete.
-  const tierChampions = isFinished
-    ? deriveTierChampions(allGames, teams, sortedDivisions)
-    : [];
-  // Third hero stat — adaptive. When every division name parses as an age (U13,
-  // 13U, "Under 13"), show a true low-to-high age range, ordered by the actual
-  // number rather than the organizer's list order. When any division isn't
-  // age-style (Gold, Senior, Blue — names with no inherent order), a range is
-  // meaningless, so fall back to the tournament length in days, which is always
-  // valid regardless of how divisions are named.
-  const parseDivisionAge = (name: string): number | null => {
-    const m = name.match(/\bu[\s-]?(\d{1,2})\b/i)      // U13, U-13, U 13
-           || name.match(/\b(\d{1,2})\s?u\b/i)         // 13U
-           || name.match(/\bunder[\s-]?(\d{1,2})\b/i); // Under 13
-    return m ? parseInt(m[1], 10) : null;
-  };
-  const divisionAges = sortedDivisions.map(d => parseDivisionAge(d.name));
-  const allAgeStyle = sortedDivisions.length > 0 && divisionAges.every(n => n !== null);
-
-  let thirdStatLabel = 'Days';
-  let thirdStatValue = 'TBA';
-  if (allAgeStyle) {
-    const nums = divisionAges as number[];
-    const minAge = Math.min(...nums);
-    const maxAge = Math.max(...nums);
-    thirdStatLabel = 'Age Range';
-    thirdStatValue = minAge === maxAge ? `U${minAge}` : `U${minAge} - U${maxAge}`;
-  } else {
-    const dayCount = tournamentDayCount(startDate, endDate);
-    if (dayCount != null) thirdStatValue = String(dayCount);
-  }
-
-  const getTeamName     = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';
-  const getDivisionName = (id: string) => divisions.find(g => g.id === id)?.name ?? '';
-  const getVenue      = (id?: string) => id ? (venues.find(d => d.id === id) ?? null) : null;
-
-  function formatDate(dateStr: string) {
-    if (!dateStr) return 'TBD';
-    return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-CA', {
-      weekday: 'short', month: 'short', day: 'numeric',
-    });
-  }
-
-  // Latest-Finals row — same stacked format as the Recent-Scores cards (away over
-  // home, winner trophy + green score, loser dimmed). Used by both finals lists.
-  function renderFinalRow(game: Game, href: string, meta: string) {
-    const aScore = game.awayScore;
-    const hScore = game.homeScore;
-    const winner = aScore == null || hScore == null ? null
-      : hScore > aScore ? 'home' : aScore > hScore ? 'away' : 'tie';
-    const { away: awayName, home: homeName } = liveRowNames(game);
-    return (
-      <Link key={game.id} href={href} className={styles.finalRow}>
-        <div className={styles.finalMatch}>
-          <div className={`${styles.finalTeam} ${winner === 'away' ? styles.finalWin : winner === 'home' ? styles.finalLose : ''}`}>
-            <span className={styles.finalWinIconSlot}>{winner === 'away' && <Trophy size={13} aria-label="Winner" />}</span>
-            <span className={styles.finalName}>{awayName}</span>
-            <span className={styles.finalScore}>{aScore}</span>
-          </div>
-          <div className={`${styles.finalTeam} ${winner === 'home' ? styles.finalWin : winner === 'away' ? styles.finalLose : ''}`}>
-            <span className={styles.finalWinIconSlot}>{winner === 'home' && <Trophy size={13} aria-label="Winner" />}</span>
-            <span className={styles.finalName}>{homeName}</span>
-            <span className={styles.finalScore}>{hScore}</span>
-          </div>
-        </div>
-        <span className={styles.finalMeta}>{meta}</span>
-      </Link>
-    );
-  }
-
-  // ── Live Now (A1): games genuinely inside their live window lead the page body.
-  // Server-rendered snapshot (the page is force-dynamic); the ticker + My Team card
-  // carry the realtime pulse. "Up next" keeps today's remaining games visible —
-  // including a championship whose sides are still unresolved feeder refs (A7),
-  // rendered in fan language, never raw "Winner SF2" jargon (A9).
-  // eslint-disable-next-line react-hooks/purity -- async server component (force-dynamic): Date.now() is a legitimate server-render snapshot, not a client re-render hazard. Pre-existing (surfaced when this file entered the focused-lint set).
-  const nowMs = Date.now();
-  const liveNowGames = !isFinished
-    ? sortedGames.filter(g => isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES))
-    : [];
-  // "Up next" = today's genuinely-future games only: a scheduled game already in
-  // its live window belongs to the live list (never both), and a past-due
-  // unreported game must not pin as NEXT all day (the dock's J6-039 rule).
-  const upNextToday = !isFinished
-    ? sortedGames
-        .filter(g => {
-          if (g.status !== 'scheduled' || g.date !== now) return false;
-          if (isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES)) return false;
-          // No start time → no honest "up next at …" caption; the schedule page
-          // still lists it. Past-due unstarted games don't pin either (J6-039).
-          const start = gameStartMs(g);
-          return start != null && start > nowMs;
-        })
-        .slice(0, 2)
-    : [];
-
-  // Both sides' names, "Winner of SF2" for a bracket placeholder (A9): the shared words of lib/public-game-row.ts.
-  const liveRowNames = (game: Game) => gameSideNames(game, getTeamName);
-
-  /** Fan-facing context label: round name for playoff games, division otherwise. */
-  function roundOrDivisionLabel(game: Game): string {
-    return game.isPlayoff && game.bracketCode ? fanRoundLabel(game.bracketCode) : getDivisionName(game.divisionId);
-  }
-
-  function liveRowContext(game: Game): string {
-    const where = resolveGameVenueLabel(game, venues);
-    return [roundOrDivisionLabel(game), where].filter(Boolean).join(' · ');
-  }
-
-  function renderLiveRow(game: Game) {
-    const { away, home } = liveRowNames(game);
-    const a = game.awayScore ?? 0;
-    const h = game.homeScore ?? 0;
-    const leader: 'away' | 'home' | null = a > h ? 'away' : h > a ? 'home' : null;
-    return (
-      <Link key={game.id} href={getGameHref(game.id)} className={styles.liveNowRow}>
-        <div className={styles.liveNowWho}>
-          <span className={`${styles.liveNowName} ${leader === 'away' ? styles.liveNowLeading : ''}`}>{away}</span>
-          <span className={`${styles.liveNowName} ${leader === 'home' ? styles.liveNowLeading : ''}`}>{home}</span>
-          <span className={styles.liveNowContext}>{liveRowContext(game)}</span>
-        </div>
-        <div className={styles.liveNowScore}>
-          {/* Live by the clock before anyone has entered a score: say so, never a lone "–" or an invented 0–0 (D2). */}
-          {hasNoScoreYet(game)
-            ? <span className={styles.liveNowNoScore}>{NO_SCORE_YET}</span>
-            : <span className={styles.liveNowDigits}>{a}–{h}</span>}
-          <span className={styles.liveNowCaption}><span className="live-dot" /> Live</span>
-        </div>
-      </Link>
-    );
-  }
-
-  function renderUpNextRow(game: Game) {
-    const bothUnresolved = !game.awayTeamId && !game.homeTeamId;
-    const round = roundOrDivisionLabel(game);
-    // Fan-friendly matchup for unresolved feeders: "Winners of SF1 & SF2".
-    const feederCodes = [game.awayPlaceholder, game.homePlaceholder]
-      .map(p => p?.match(/^Winner\s+(.+)$/i)?.[1])
-      .filter((c): c is string => !!c);
-    const { away, home } = liveRowNames(game);
-    const matchLine = bothUnresolved && feederCodes.length === 2
-      ? `Winners of ${feederCodes[0]} & ${feederCodes[1]}`
-      : `${away} vs ${home}`;
-    return (
-      <Link key={game.id} href={getGameHref(game.id)} className={`${styles.liveNowRow} ${styles.liveNowUpcoming}`}>
-        <div className={styles.liveNowWho}>
-          <span className={`${styles.liveNowName} ${styles.liveNowLeading}`}>{bothUnresolved ? round || 'Up next' : matchLine}</span>
-          <span className={styles.liveNowContext}>
-            {[bothUnresolved ? matchLine : round, resolveGameVenueLabel(game, venues)].filter(Boolean).join(' · ')}
-          </span>
-        </div>
-        <div className={styles.liveNowScore}>
-          <span className={styles.liveNowDigitsFaint}>–</span>
-          <span className={styles.liveNowCaptionQuiet}>{formatTime(game.time)}</span>
-        </div>
-      </Link>
-    );
-  }
-
-  const heroBanner = canUseAdvancedTournamentBranding(org)
-    ? tournament.heroBannerUrl ?? org.heroBannerUrl ?? null
+  // Before the event: the Register card and the facts list.
+  const startDay = tournament.startDate ?? null;
+  const firstGame = allGames
+    .filter(g => g.status === 'scheduled' && (!startDay || g.date >= startDay))
+    .sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.time || '').localeCompare(b.time || ''))[0];
+  const register = moment.moment === 'before'
+    ? registerCardView({
+        startDate: startDay,
+        firstPitchISO: heroFirstPitchISO(firstGame?.time ? firstGame.date : startDay, firstGame?.time),
+        spotsLine: teamSpotsLine({
+          inviteOnly, showTeamsPage, accepted: teams.length,
+          capacity: totalSpots(divisions, inviteOnly), divisionNames,
+        }),
+        registration, registerOn, registerHref: `${base}/register`, isPreview,
+      })
     : null;
-  // Same branding gate the chrome used to apply — the logo's home is now the
-  // pre-event brand card (the mobile header is deliberately text-only).
-  const eventLogo = canUseAdvancedTournamentBranding(org)
-    ? tournament.logoUrl ?? org.logoUrl ?? null
-    : null;
+  const facts = moment.moment === 'before'
+    ? preEventFacts({
+        divisionNames,
+        venue: venues[0] ? { name: venues[0].name, href: directionsHref(venues[0].address ?? null), others: venues.length - 1 } : null,
+        showSchedulePage, hasVisibleGames: allGames.length > 0, scheduleHref,
+        showRulesPage, rulesHref: `${base}/rules`,
+      })
+    : [];
 
-  const todayGames = sortedGames
-    .filter(game => game.date === now && game.status !== 'cancelled')
-    .slice(0, 6);
-  const latestResults = [...sortedGames]
-    .filter(game => game.status === 'completed' && game.homeScore != null && game.awayScore != null)
-    .sort((a, b) => {
-      if (a.date !== b.date) return b.date.localeCompare(a.date);
-      return (b.time || '').localeCompare(a.time || '');
-    })
-    .slice(0, 4);
-  const finalGames = [...sortedGames].filter(game =>
-    game.status === 'completed' && game.homeScore != null && game.awayScore != null
-  );
-  const pendingScoreGames = [...sortedGames].filter(game =>
-    game.status === 'submitted' && game.homeScore != null && game.awayScore != null
-  );
-  const remainingScheduledGames = sortedGames.filter(game => game.status === 'scheduled');
-  // "Top Standings" recap. With multiple divisions, show each division's leader (a
-  // "who won each division" summary). With a SINGLE division, that would show just one
-  // team — so instead show that division's top few as a real mini-leaderboard (ranked).
-  type StandingRow = Awaited<ReturnType<typeof getStandings>>[number];
-  const topStandingsRows: Array<{ key: string; label: string; leader: StandingRow }> =
-    sortedDivisions.length === 1
-      ? (standingsByDivision.get(sortedDivisions[0].id) ?? [])
-          .filter(row => row.gp > 0)
-          .slice(0, 5)
-          .map((leader, i) => ({ key: `rank-${i}`, label: `#${i + 1}`, leader }))
-      : sortedDivisions
-          .map(division => {
-            const divisionStandings = standingsByDivision.get(division.id) ?? [];
-            const leader = divisionStandings.find(row => row.gp > 0) ?? divisionStandings[0] ?? null;
-            return leader ? { key: division.id, label: division.name, leader } : null;
-          })
-          .filter((r): r is { key: string; label: string; leader: StandingRow } => r !== null)
-          .slice(0, 6);
-  const venueShortcuts = todayGames.reduce<Array<{ key: string; label: string; location: string; venue: ReturnType<typeof getVenue> }>>((acc, game) => {
-    const venue = getVenue(game.venueId);
-    const label = venue?.name ?? game.location;
-    const key = game.venueId || game.location;
-    if (!label || acc.some(item => item.key === key)) return acc;
-    acc.push({ key, label, location: game.location, venue });
-    return acc;
-  }, []).slice(0, 4);
-  const hasTournamentDayPanel = !isFinished && showSchedulePage && (isInProgress || todayGames.length > 0 || latestResults.length > 0);
+  // After the event: the champions of the games families can see, then the doors.
+  const champions = moment.moment === 'after'
+    ? championCards(deriveTierChampions(allGames, teams, sortedDivisions), divisions.length > 1)
+    : [];
+  const afterDoors = moment.moment === 'after'
+    ? [
+        ...(showStandingsPage ? [{ href: `${base}/standings`, label: 'Final standings' }] : []),
+        // No champion to lead with (a round robin): the results are the way in, rather than a page that ends.
+        ...(champions.length === 0 && showSchedulePage ? [{ href: scheduleHref, label: 'Game results' }] : []),
+      ]
+    : [];
 
-  function gameStatusLabel(status: string) {
-    if (status === 'completed') return 'Final';
-    if (status === 'submitted') return 'Unofficial';
-    return 'Scheduled';
-  }
-
-  function getGameHref(gameId: string) {
-    if (usePreviewLinks) return scheduleHref;
-    return `${scheduleHref}/${gameId}`;
-  }
-
-  // ── Live Now leads the body whenever a game is genuinely in progress (A1). ──
-  const liveNowSection = !isFinished && showSchedulePage && liveNowGames.length > 0 ? (
-    <section className={`section ${styles.liveNowSection}`} id="live-now">
-      <div className="container">
-        <div className={styles.liveNowHeader}>
-          <span className={styles.liveNowKicker}>
-            <span className="live-dot" /> Live now
-          </span>
-          <span className={styles.liveNowCount}>
-            {liveNowGames.length} game{liveNowGames.length === 1 ? '' : 's'}
-          </span>
-        </div>
-        <div className={styles.liveNowList}>
-          {liveNowGames.slice(0, 4).map(renderLiveRow)}
-          {upNextToday.map(renderUpNextRow)}
-        </div>
-        {playoffsSet && showStandingsPage && (
-          <div className={styles.liveNowMore}>
-            <Link href={`${publicBase}/playoffs`} className="btn btn-ghost btn-sm">
-              Playoff picture <ChevronRight size={14} />
-            </Link>
-          </div>
-        )}
-      </div>
-    </section>
-  ) : null;
-
-  // Total team capacity across divisions — a number that is never private
-  // (unlike registration counts, which follow the team list's own visibility:
-  // if the Teams page is public the count is already public; if it's hidden,
-  // the home page must not leak it — owner direction 2026-07-15).
-  const totalCapacity =
-    !inviteOnly && divisions.length > 0 && divisions.every(d => d.capacity != null && d.capacity > 0)
-      ? divisions.reduce((s, d) => s + (d.capacity ?? 0), 0)
-      : null;
-  // The concrete date matters most to arriving teams — it rides with the
-  // countdown, formatted by the same helpers every other date/time on this
-  // page uses (one format spec, no drift).
-  const firstPitchDateLabel = !firstPitchISO
-    ? null
-    : firstScheduledGame?.date
-      ? `${formatDate(firstScheduledGame.date)}${firstScheduledGame.time ? ` · ${formatTime(firstScheduledGame.time)}` : ''}`
-      : startDate
-        ? formatDate(startDate)
-        : null;
-
-  // ── Mobile pre-event panel: the hero retires below 900px (the unified event
-  // header owns identity — G3), so the pre-event jobs the hero carried live here:
-  // countdown, the one Register CTA (capacity-honest, lifecycle-gated), and the
-  // event facts. Desktop keeps the hero and hides this. ──
-  const preEventPanel = !isInProgress && !isFinished ? (
-    <section className={`section ${styles.preEventPanel}`} id="pre-event">
-      <div className="container">
-        {/* Brand moment (owner 2026-07-15): an uploaded event/org logo takes the
-            lead card — the header already carries the dates + starts-in line, so
-            the countdown card only renders when there's no logo to show. */}
-        {eventLogo ? (
-          <div className={styles.preLogoCard}>
-            <img src={eventLogo} alt={`${tournament.name} logo`} className={styles.preLogoImg} />
-          </div>
-        ) : isPreEvent && firstPitchISO ? (
-          <div className={styles.preCountdownCard}>
-            <span className={styles.preCountdownLabel}>Starts in</span>
-            <span className={styles.preCountdownValue}>
-              <Countdown target={firstPitchISO} whenPast="Under way" />
-            </span>
-            {firstPitchDateLabel && <span className={styles.preCountdownDate}>{firstPitchDateLabel}</span>}
-          </div>
-        ) : null}
-        {!isPreview && registerOn && registration.cta && (
-          <div className={styles.preCtaWrap}>
-            <Link href={`${primaryBase}/register`} className={`btn btn-primary btn-lg ${styles.preCtaBtn}`} id="mobile-register-btn">
-              {registration.cta === 'waitlist' ? 'Join Waitlist' : 'Register a Team'}
-            </Link>
-            <span className={styles.preCtaDetail}>{registration.label} · {registration.detail}</span>
-            <span className={styles.preCtaNote}>
-              {registration.cta === 'waitlist' ? 'Joining the waitlist' : 'Registering'} also sets up your free
-              Coaches Portal — schedule, status, and organizer updates in one place.{' '}
-              <span className={styles.preCtaNoteQuiet}>Just here to follow along? You don&apos;t need an account.</span>
-            </span>
-          </div>
-        )}
-        {!isPreview && registerOn && !registration.cta && (
-          <div className={styles.preCtaWrap}>
-            <span className={styles.preCtaDetail}>{registration.label} · {registration.detail}</span>
-          </div>
-        )}
-        <div className={`card ${styles.dayCard}`}>
-          <div className={styles.statusList}>
-            <div className={styles.statusItem}>
-              <span>{divisions.length ? sortedDivisions.map(d => d.name).slice(0, 4).join(' · ') : 'TBA'}</span>
-              <strong>Divisions</strong>
-            </div>
-            {/* Registration COUNTS follow the team list's visibility; capacity is
-                never private. Hidden team list + no caps → no row at all. */}
-            {(showTeamsPage || totalCapacity != null) && (
-              <div className={styles.statusItem}>
-                <span>
-                  {showTeamsPage
-                    ? (teams.length ? `${teams.length}${totalCapacity ? ` of ${totalCapacity} spots` : inviteOnly ? '' : ' accepted'}` : 'TBA')
-                    : `${totalCapacity} team spots`}
-                </span>
-                <strong>Teams</strong>
-              </div>
-            )}
-            {venues.length > 0 && (
-              <div className={styles.statusItem}>
-                <span>
-                  <LocationLink location={venues[0].name} venue={venues[0]} size="sm" />
-                  {venues.length > 1 && <span className={styles.preFactMore}>+{venues.length - 1} more</span>}
-                </span>
-                <strong>Where</strong>
-              </div>
-            )}
-            {showRulesPage && (
-              <div className={styles.statusItem}>
-                <span><Link href={`${primaryBase}/rules`} className={styles.preFactLink}>Format &amp; rules</Link></span>
-                <strong>Rules</strong>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </section>
-  ) : null;
-
-  const tournamentDayPanel = hasTournamentDayPanel ? (
-    <section className={`section ${styles.dayPanelSection}`} id="today">
-      <div className="container">
-        <div className={styles.dayPanelHeader}>
-          <div>
-            <span className="eyebrow"><Clock size={12} /> {frameOn ? TOURNAMENT_STATUS_WORD.live : 'Tournament Day'}</span>
-            <h2 className="display-md">What To Check Now</h2>
-          </div>
-          <Link href={scheduleHref} className="btn btn-outline btn-sm">
-            Full Schedule <ChevronRight size={14} />
-          </Link>
-        </div>
-
-        <div className={styles.dayGrid}>
-          {!isPreview && (
-            <MyTournamentCard
-              orgSlug={orgSlug}
-              tournamentSlug={tournamentSlug}
-              tournamentName={tournament.name}
-              teams={teams}
-              games={allGames}
-              divisions={divisions}
-              venues={venues}
-              standingsByDivision={Object.fromEntries(standingsByDivision)}
-              scheduleHref={scheduleHref}
-              fanAlertsEnabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
-              isCompleted={isFinished}
-            />
-          )}
-
-          <div className={`card ${styles.dayCard}`}>
-            <div className={styles.dayCardHeader}>
-              <div className={styles.dayCardIcon}><Trophy size={16} /></div>
-              <div>
-                <span className={styles.dayCardKicker}>Results</span>
-                <h3>Latest Finals</h3>
-              </div>
-            </div>
-            {latestResults.length === 0 ? (
-              <p className={styles.dayCardSub}>Final scores will appear here once games are completed.</p>
-            ) : (
-              <div className={styles.quickGameList}>
-                {latestResults.map(game => renderFinalRow(game, scheduleHref, gameStatusLabel(game.status)))}
-              </div>
-            )}
-          </div>
-
-          <div className={`card ${styles.dayCard}`}>
-            <div className={styles.dayCardHeader}>
-              <div className={styles.dayCardIcon}><CheckCircle size={16} /></div>
-              <div>
-                <span className={styles.dayCardKicker}>Status</span>
-                <h3>Event Snapshot</h3>
-              </div>
-            </div>
-            <div className={styles.statusList}>
-              {registerOn && (
-                <div className={styles.statusItem}>
-                  <span>{registration.label}</span>
-                  <strong>Registration</strong>
-                </div>
-              )}
-              <div className={styles.statusItem}>
-                <span>{todayGames.length > 0 ? `${todayGames.length} today` : `${upcomingGames.length} upcoming`}</span>
-                <strong>Schedule</strong>
-              </div>
-              <div className={styles.statusItem}>
-                <span>{latestResults.length > 0 ? `${latestResults.length} recent` : 'No results yet'}</span>
-                <strong>Results</strong>
-              </div>
-              {/* Field shortcuts fold in here (C6) — a lone venue link no longer
-                  costs a whole card of chrome. */}
-              {venueShortcuts.slice(0, 2).map(item => (
-                <div key={item.key} className={styles.statusItem}>
-                  <span><LocationLink location={item.label} venue={item.venue} size="sm" /></span>
-                  <strong>Fields</strong>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  ) : null;
-
-  const multiDivision = divisions.length > 1;
-  // Headline a single centered card ONLY when the whole tournament produced exactly one
-  // crowned team AND it's a genuine top-tier champion (one division, one bracket). Any
-  // tiers or extra divisions → the per-division podium below, so every medalling tier
-  // winner is shown. The isTopTier guard covers the early-close edge case: if the event
-  // is marked complete with a top-tier final still unresolved but a lower tier decided,
-  // that lone winner falls through to the podium (badged "Tier N Champion") instead of
-  // being mis-shown as THE champion.
-  const singleTierChampion = tierChampions.length === 1 && tierChampions[0].isTopTier;
-
-  const championBanner = isFinished && tierChampions.length > 0 ? (
-    <section className={`section ${styles.championSection}`} id="champions">
-      <div className="container">
-        <div className="section-header">
-          <span className="eyebrow"><Trophy size={12} /> Tournament Champions</span>
-          {!singleTierChampion && <h2 className="display-md">Champions</h2>}
-        </div>
-
-        {singleTierChampion ? (
-          <div className={`${styles.championCard} ${styles.championSingle}`}>
-            {multiDivision && <span className={styles.championDivision}>{tierChampions[0].division}</span>}
-            <div className={styles.championName}>{tierChampions[0].champion}</div>
-            {tierChampions[0].runnerUp && (
-              <div className={styles.championRunnerUp}>
-                <span className={styles.runnerUpLabel}>Runner-up</span>
-                {tierChampions[0].runnerUp}
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className={styles.championDivisions}>
-            {sortedDivisions.map(div => {
-              const champs = tierChampions.filter(c => c.division === div.name);
-              if (champs.length === 0) return null;
-              return (
-                <div key={div.id} className={styles.championDivisionBlock}>
-                  {multiDivision && <span className={styles.championDivisionName}>{div.name}</span>}
-                  <div className={styles.championTierList}>
-                    {champs.map((c, i) => (
-                      <div
-                        key={`${c.division}-${c.tierLabel ?? 'single'}-${i}`}
-                        className={`${styles.championTierCard} ${c.isTopTier ? styles.championTierTop : ''}`}
-                      >
-                        <span className={styles.championTierCrown}>
-                          <Crown size={c.isTopTier ? 22 : 17} />
-                        </span>
-                        <div className={styles.championTierBody}>
-                          <span className={styles.championTierBadge}>{tierBadgeLabel(c.tierLabel, c.isTopTier)}</span>
-                          <span className={styles.championTierName}>{c.champion}</span>
-                          {c.runnerUp && (
-                            <span className={styles.championTierMeta}>
-                              def. {c.runnerUp}
-                              {c.championScore != null && c.runnerUpScore != null && (
-                                <> <strong>{c.championScore}–{c.runnerUpScore}</strong></>
-                              )}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* The Champions recap inherits Standings visibility (it shows final
-            results/standings), so only offer it when Standings is public — same
-            gate as the pre-complete hero takeover. */}
-        {/* Differentiated from the record panel's primary "Full Standings" (C5):
-            this is the recap/story page, so it wears the outline weight and a
-            name that doesn't echo "Final ___". */}
-        {showStandingsPage && (
-          <div className={styles.championShareRow}>
-            <Link href={`${publicBase}/champions`} className="btn btn-outline btn-sm">
-              <Trophy size={16} /> Champions Recap
-            </Link>
-          </div>
-        )}
-      </div>
-    </section>
-  ) : null;
-
-  const completedRecordPanel = isFinished ? (
-    <section className={`section ${styles.recordSection}`} id="final-record">
-      <div className="container">
-        <div className={styles.recordHeader}>
-          <div>
-            <span className="eyebrow"><Trophy size={12} /> Final Public Record</span>
-            <h2 className="display-md">Tournament Complete</h2>
-            <p>
-              Final standings, posted scores, and the game log remain available for coaches,
-              parents, and visitors after the event.
-            </p>
-          </div>
-          <div className={styles.recordActions}>
-            {showStandingsPage && (
-              <Link href={`${primaryBase}/standings`} className="btn btn-primary btn-sm">
-                Full Standings <ChevronRight size={14} />
-              </Link>
-            )}
-            {showSchedulePage && (
-              <Link href={scheduleHref} className="btn btn-outline btn-sm">
-                Game Log <ChevronRight size={14} />
-              </Link>
-            )}
-          </div>
-        </div>
-
-        <div className={styles.recordGrid}>
-          <div className={`card ${styles.recordCard}`}>
-            <div className={styles.dayCardHeader}>
-              <div className={styles.dayCardIcon}><CheckCircle size={16} /></div>
-              <div>
-                <span className={styles.dayCardKicker}>Record</span>
-                <h3>Event Summary</h3>
-              </div>
-            </div>
-            <div className={styles.recordStats}>
-              <div>
-                <strong>{finalGames.length}</strong>
-                <span>final scores</span>
-              </div>
-              <div>
-                <strong>{pendingScoreGames.length}</strong>
-                <span>unconfirmed</span>
-              </div>
-              <div>
-                <strong>{remainingScheduledGames.length}</strong>
-                <span>not played</span>
-              </div>
-              <div>
-                <strong>{teams.length}</strong>
-                <span>accepted teams</span>
-              </div>
-            </div>
-          </div>
-
-          {showStandingsPage && (
-            <div className={`card ${styles.recordCard}`}>
-              <div className={styles.dayCardHeader}>
-                <div className={styles.dayCardIcon}><Trophy size={16} /></div>
-                <div>
-                  <span className={styles.dayCardKicker}>Standings</span>
-                  <h3>Top Standings</h3>
-                </div>
-              </div>
-              {topStandingsRows.length === 0 ? (
-                <p className={styles.dayCardSub}>Final standings will appear once scores have been posted.</p>
-              ) : (
-                <div className={styles.recordList}>
-                  {topStandingsRows.map(({ key, label, leader }) => (
-                    <div key={key} className={styles.recordListRow}>
-                      <span>{label}</span>
-                      <strong>{leader.teamName}</strong>
-                      <em>{leader.w}-{leader.l}-{leader.t} - {leader.pts} pts</em>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {showSchedulePage && (
-            <div className={`card ${styles.recordCard} ${styles.recordWideCard}`}>
-              <div className={styles.dayCardHeader}>
-                <div className={styles.dayCardIcon}><Calendar size={16} /></div>
-                <div>
-                  <span className={styles.dayCardKicker}>Scores</span>
-                  <h3>Latest Finals</h3>
-                </div>
-              </div>
-              {latestResults.length === 0 ? (
-                <p className={styles.dayCardSub}>No final scores have been posted yet.</p>
-              ) : (
-                <div className={styles.quickGameList}>
-                  {latestResults.map(game => renderFinalRow(game, getGameHref(game.id), formatDate(game.date)))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
-  ) : null;
-
-  // Extracted so it can lead the page when the tournament is in progress, or sit
-  // after announcements otherwise.
-  const scheduleBlock = showSchedulePage ? (
-    <section className="section" id="schedule">
-      <div className="container">
-        <div className="section-header">
-          <span className="eyebrow"><Calendar size={12} /> Upcoming Games</span>
-          <h2 className="display-md">Next On The Schedule</h2>
-          <p>Here are the next scheduled games for this tournament.</p>
-        </div>
-
-        {upcomingGames.length === 0 ? (
-          <PublicTournamentState
-            icon={<Calendar size={36} />}
-            eyebrow="Schedule"
-            title="No upcoming games yet"
-            description="Games will appear here once the organizer publishes the schedule."
-            contactEmail={contactEmail}
-            actions={[{ href: scheduleHref, label: 'View Schedule', variant: 'ghost' as const }]}
-            compact
-          />
-        ) : (
-          <div className={styles.gamesGrid}>
-            {upcomingGames.map(game => (
-              <div key={game.id} className={`card ${styles.gameCard}`}>
-                <div className={styles.gameHeader}>
-                  <span className="badge badge-primary">
-                    {roundOrDivisionLabel(game)}
-                  </span>
-                  <span className={styles.gameDate}>{formatDate(game.date)} - {formatTime(game.time)}</span>
-                </div>
-                <div className={styles.matchup}>
-                  <span className={styles.teamName}>{getTeamName(game.homeTeamId)}</span>
-                  <span className={styles.vs}>VS</span>
-                  <span className={styles.teamName}>{getTeamName(game.awayTeamId)}</span>
-                </div>
-                <div className={styles.gameLocation}>
-                  <LocationLink location={resolveGameVenueLabel(game, venues)} venue={getVenue(game.venueId)} size="sm" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="text-center mt-3">
-          <Link href={scheduleHref} className="btn btn-outline" id="home-all-schedule-btn">
-            Full Schedule <ChevronRight size={16} />
-          </Link>
-        </div>
-      </div>
-    </section>
-  ) : null;
+  // The host card (Ask 4 / Ask B): the club's own Open now list, asked only when the club's public site is open and its
+  // plan has one; the door is the layout's own answer (lib/public-frame.ts publicFrameHost), so the card, the band and the
+  // footer cannot disagree. A failed read costs the card, never the page.
+  const openNow = await loadHostClubOpenNow(org, href).catch(() => null);
+  const host = openNow === null ? null : hostCardView({
+    host: publicFrameHost(org.name, tournament.name, await resolveOrgHomeHref(org).catch(() => null)),
+    openNow, logoUrl: org.logoUrl ?? null, isPreview, clubHref: href(),
+  });
+  const clubRoles = clubColourRoles(org.themePreset, org.themePrimary, org.themeAccent);
 
   return (
-    <div className={styles.page}>
-      {/* F1: the mobile event ACTION ROW (Follow) — HOME tab only, directly under the
-          event header. Inside .page so it sits below the mobile header clearance (padding-top).
-          Live public affordance — never in the admin preview. */}
-      {!isPreview && (
-        <FollowTournamentStrip
-          orgSlug={orgSlug}
-          tournamentSlug={tournamentSlug}
-          tournamentName={tournament.name}
-        />
-      )}
-      {playoffsSet && (
-        <section className={`${styles.hero} ${styles.heroCompact} ${styles.playoffHero}`} id="preview-home">
-          <div className={styles.heroBg}>
-            <div className={styles.heroOrb1} />
-            <div className={styles.heroOrb2} />
-            <div className={styles.heroGrid} />
-          </div>
-          <div className={`container ${styles.heroContent}`}>
-            {isPreview && (
-              <div className={styles.previewBanner}>
-                <Eye size={14} />
-                {previewLabel}
-              </div>
-            )}
-            <div className={styles.playoffHeroBadge}>
-              <Trophy size={13} fill="currentColor" /> Playoffs
-            </div>
-            <h1 className={`display-xl ${styles.heroTitle}`}>The Bracket Is Set</h1>
-            <p className={styles.heroSub}>
-              Hosted by <strong>{org.name}</strong>. The playoff bracket is locked — see the seeding and who plays who.
-            </p>
-            {firstPlayoffISO && (
-              <div className={styles.playoffCountdown}>
-                <Countdown target={firstPlayoffISO} prefix="First playoff game in " whenPast="Playoffs underway" />
-              </div>
-            )}
-            <div className={styles.playoffHeroActions}>
-              {/* The Playoff Picture inherits Standings visibility (it's a seeding view),
-                  so only offer it when Standings is public — no dead CTA. */}
-              {showStandingsPage && (
-                <Link href={`${publicBase}/playoffs`} className="btn btn-primary btn-lg">
-                  <Trophy size={16} /> Playoff Picture
-                </Link>
-              )}
-              {/* One lead CTA (C4): the Playoff Picture carries the seeding story;
-                  the raw bracket demotes to a quiet link (it's also one tap away
-                  inside both Standings and the Playoff Picture itself). */}
-              {showStandingsPage && (
-                <Link href={`${primaryBase}/standings`} className="btn btn-ghost btn-sm">
-                  See the bracket <ChevronRight size={14} />
-                </Link>
-              )}
-            </div>
-          </div>
-          <div className={styles.heroScroll}>
-            <div className={styles.scrollLine} />
-          </div>
-        </section>
-      )}
-      {!playoffsSet && (
-      <section className={`${styles.hero} ${isInProgress || isFinished ? styles.heroCompact : ''}`} id="preview-home">
-        {heroBanner ? (
-          <>
-            <div className={styles.heroBanner} style={{ backgroundImage: `url(${heroBanner})` }} />
-            <div className={styles.heroBannerOverlay} />
-          </>
-        ) : (
-          <div className={styles.heroBg}>
-            <div className={styles.heroOrb1} />
-            <div className={styles.heroOrb2} />
-            <div className={styles.heroGrid} />
-          </div>
-        )}
-
-        <div className={`container ${styles.heroContent}`}>
-          {isPreview && (
-            <div className={styles.previewBanner}>
-              <Eye size={14} />
-              {previewLabel}
-            </div>
-          )}
-          <div className={styles.heroBadge}>
-            <div className={styles.badgeText}>
-              <span className={styles.dateLine}>
-                <Star size={12} fill="currentColor" />
-                {dateDisplay}
-              </span>
-              {isPreEvent && firstPitchISO ? (
-                <span className={styles.countdown}>
-                  <span className={styles.badgeSeparator}>·</span>
-                  <Countdown target={firstPitchISO} prefix="Starts in " whenPast={countdownText} />
-                </span>
-              ) : countdownText ? (
-                <span className={styles.countdown}>
-                  <span className={styles.badgeSeparator}>·</span>
-                  {countdownText}
-                </span>
-              ) : null}
-            </div>
-          </div>
-
-          <h1 className={`display-xl ${styles.heroTitle}`}>
-            {tournament.name}
-          </h1>
-          <p className={styles.heroSub}>
-            Hosted by <strong>{org.name}</strong>.
-            {isFinished
-              ? ' Thanks for following along — final scores and standings are preserved below.'
-              : ' View tournament details and updates in one place.'}
-          </p>
-
-          {/* "Get the app" lives in the More sheet now (owner 2026-07-15) —
-              mobile-gated there; the desktop hero never showed it anyway. */}
-
-          {!isInProgress && !isFinished && registerOn && (
-            <div className={styles.registrationStatus}>
-              <strong>{registration.label}</strong>
-              <span>{registration.detail}</span>
-            </div>
-          )}
-
-          {/* The one conversion CTA lives on the hero (not in the persistent
-              header, which stays logo + name + share). Lifecycle-gated. */}
-          {!isPreview && registerOn && registration.cta && (
-            <>
-              <div className={styles.heroCta}>
-                <Link href={`${primaryBase}/register`} className="btn btn-primary btn-lg" id="hero-register-btn">
-                  {registration.cta === 'waitlist' ? 'Join Waitlist' : 'Register'}
-                </Link>
-              </div>
-              <p className={styles.heroCtaNote}>
-                {registration.cta === 'waitlist' ? 'Joining the waitlist' : 'Registering'} also sets up your free
-                Coaches Portal — your team&apos;s schedule, status, and updates from the organizer in one place.{' '}
-                <span className={styles.heroCtaNoteQuiet}>Just here to follow along? You don&apos;t need an account.</span>
-              </p>
-            </>
-          )}
-
-          {!isInProgress && !isFinished && (
-            <div className={styles.stats}>
-              <div className={styles.stat}>
-                <span className={styles.statNum}>
-                  {divisions.length ? <CountUp value={divisions.length} /> : 'TBA'}
-                </span>
-                <span className={styles.statLabel}>Divisions</span>
-              </div>
-              <div className={styles.statDivider} />
-              {/* Same privacy rule as the mobile facts card: registration counts
-                  follow the team list's visibility; capacity is never private. */}
-              <div className={styles.stat}>
-                <span className={styles.statNum}>
-                  {showTeamsPage
-                    ? (teams.length ? <CountUp value={teams.length} /> : 'TBA')
-                    : (totalCapacity != null ? <CountUp value={totalCapacity} /> : 'TBA')}
-                </span>
-                <span className={styles.statLabel}>{showTeamsPage || inviteOnly ? 'Teams' : 'Team Spots'}</span>
-              </div>
-              <div className={styles.statDivider} />
-              <div className={styles.stat}>
-                <span className={allAgeStyle && thirdStatValue.includes('-') ? `${styles.statNum} ${styles.ageRangeText}` : styles.statNum}>{thirdStatValue}</span>
-                <span className={styles.statLabel}>{thirdStatLabel}</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className={styles.heroScroll}>
-          <div className={styles.scrollLine} />
-        </div>
-      </section>
-      )}
-
-      {liveNowSection}
-      {preEventPanel}
-      {championBanner}
-      {completedRecordPanel}
-      {tournamentDayPanel}
-      {/* A finished tournament has no upcoming games — its date window can still include
-          today (so isInProgress is true on the final day), so exclude it explicitly. */}
-      {isInProgress && !isFinished && scheduleBlock}
-
-      {showNewsPage && (
-      <section className={`section ${styles.announcementsSection}`} id="announcements">
-        <div className="container">
-          <div className="section-header">
-            <span className="eyebrow"><Megaphone size={12} /> Latest News</span>
-            <h2 className="display-md">Announcements</h2>
-          </div>
-
-          {announcements.length === 0 ? (
-            <PublicTournamentState
-              icon={<Megaphone size={36} />}
-              eyebrow="News"
-              title="No announcements yet"
-              description="Tournament announcements will appear here when the organizer posts them."
-              actions={[{ href: newsHref, label: 'View News', variant: 'ghost' as const }]}
-              compact
-            />
-          ) : (
-            <div className={styles.annGrid}>
-              {announcements.map((ann, i) => (
-                <div key={ann.id} className={`card ${styles.annCard} ${i === 0 ? styles.annFeatured : ''}`}>
-                  <div className={styles.annHeader}>
-                    {ann.pinned && (
-                      <span className="badge badge-primary"><Star size={10} fill="currentColor" />&nbsp;Pinned</span>
-                    )}
-                    <span className={styles.annDate}>
-                      {new Date(ann.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </span>
-                  </div>
-                  <h3 className={styles.annTitle}>{ann.title}</h3>
-                  <p className={styles.annBody}>
-                    {ann.body ? (
-                      <>{ann.body.slice(0, 200)}{ann.body.length > 200 ? '...' : ''}</>
-                    ) : (
-                      'No content provided.'
-                    )}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {announcements.length > 0 && (
-            <div className="text-center mt-3">
-              <Link href={newsHref} className="btn btn-outline" id="home-all-news-btn">
-                All Announcements <ChevronRight size={16} />
-              </Link>
-            </div>
-          )}
-        </div>
-      </section>
-      )}
-
-      {!isInProgress && !isFinished && scheduleBlock}
-
-      {/* Explore sections — guarantees every public page (especially Rules, which is
-          not a mobile bottom-nav tab) is reachable from the Overview in every state
-          (J6-006 / J6-034). Gated per-link on page visibility.
-          Under the public frame (Stage 1 Part 2) the tab row and the footer's page list are those doors, on every page, so
-          this row steps aside. */}
-      {!frameOn && (showSchedulePage || showStandingsPage || showTeamsPage || showRulesPage || showNewsPage) && (
-        <div className={styles.exploreRow}>
-          {showSchedulePage && <Link href={`${primaryBase}/schedule`} className="btn btn-ghost btn-sm">Schedule</Link>}
-          {showStandingsPage && <Link href={`${primaryBase}/standings`} className="btn btn-ghost btn-sm">Standings</Link>}
-          {showTeamsPage && <Link href={`${primaryBase}/teams`} className="btn btn-ghost btn-sm">Teams</Link>}
-          {showRulesPage && <Link href={`${primaryBase}/rules`} className="btn btn-ghost btn-sm">Rules</Link>}
-          {showNewsPage && <Link href={`${primaryBase}/news`} className="btn btn-ghost btn-sm">News</Link>}
-        </div>
-      )}
-    </div>
+    <TournamentOverview
+      orgSlug={orgSlug}
+      tournamentSlug={tournamentSlug}
+      tournament={tournament}
+      isPreview={isPreview}
+      moment={moment.moment}
+      today={now}
+      games={allGames}
+      teamName={id => teams.find(t => t.id === id)?.name ?? 'TBD'}
+      divisions={divisions}
+      venues={venues}
+      announcements={allAnnouncements.slice(0, 3)}
+      scheduleWithheld={scheduleWithheld}
+      showSchedulePage={showSchedulePage}
+      showNewsPage={showNewsPage}
+      playoffPictureHref={moment.bracketSet && showStandingsPage && !isPreview ? `${publicBase}/playoffs` : null}
+      scheduleHref={scheduleHref}
+      newsHref={`${base}/news`}
+      gameHref={id => (isPreview ? scheduleHref : `${scheduleHref}/${id}`)}
+      register={register}
+      facts={facts}
+      champions={champions}
+      afterDoors={afterDoors}
+      host={host}
+      hostColours={{ fill: clubRoles.fill, onFill: clubRoles.onFill, edge: clubRoles.edge }}
+    />
   );
 }

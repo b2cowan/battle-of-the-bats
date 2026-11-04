@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
+import { Calendar, ChevronLeft } from 'lucide-react';
 import type { Game } from '@/lib/types';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 import { publicGameDetailView } from '@/lib/public-game-detail';
@@ -9,10 +9,25 @@ import Countdown from './Countdown';
 import DirectionsLink from './DirectionsLink';
 import GameDetailLiveRefresher from './GameDetailLiveRefresher';
 import PublicFactsList from './PublicFactsList';
+import PublicTournamentState from './PublicTournamentState';
 import RollingNumber from './RollingNumber';
 import ShareScoreButton from './ShareScoreButton';
 import kit from './ClubKit.module.css';
 import styles from './PublicGameDetails.module.css';
+
+/** The game page when the organizer hid the Schedule: the state card inside the page's own frame body (Stage 8 Part 3d —
+ *  it used to sit in the old global page wrappers, whose top padding cleared a bar the frame no longer has). */
+export function PublicGameUnavailable({ homeHref }: { homeHref: string }) {
+  return <div className={styles.page} data-public-game data-state="unavailable">
+    <PublicTournamentState
+      icon={<Calendar size={40} />}
+      eyebrow="Schedule"
+      title="Schedule unavailable"
+      description="The organizer has hidden the schedule for this tournament."
+      actions={[{ href: homeHref, label: 'Tournament Home', variant: 'ghost' as const }]}
+    />
+  </div>;
+}
 
 /** Server-rendered preview body. The route has already applied the public schedule and division gates. */
 export default function PublicGameDetails({ game, data, orgSlug, tournamentSlug, orgHref }: {

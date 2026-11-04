@@ -915,14 +915,6 @@
 /* ─── Venue sub-line inside the date cell (planning + scoring) ───────────── */
 /* Row 1 = venue name, row 2 = facility name (when set). Each line is short   */
 /* enough to fit in 155px without wrapping.                                   */
-/* Date/time + live chip share one line; the chip is inline (no own row). */
-.dateLine {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-  row-gap: 0.1rem;
-}
 
 /* ─── Schedule Status Filter Chips ──────────────────────────────────────── */
 /* Combined with s.statusFilters (admin-common) which provides base flex.   */

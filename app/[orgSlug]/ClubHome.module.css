@@ -1,6 +1,6 @@
 /* The club's home on the club's light frame (Club Tier Stage 4b-1).
 
-   Home.module.css is SHARED with the tournament home and MyTournamentCard, so it is not edited. On a club page the
+   Home.module.css was shared with the tournament home until Stage 8 Part 3d deleted the old Overview; it is not edited here. On a club page the
    frame (components/public/ClubFrame.module.css `.site`) already redefines the tokens those classes read, so most of
    the page goes light by itself. This file answers only what a shared class still gets wrong on a club's page: the
    hero's dark decoration, forced capitals, tints, the platform-chrome clearances, and off-step sizes.

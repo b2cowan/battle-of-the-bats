@@ -253,9 +253,9 @@ export function dueNextForPlayer(
 
 /* ⚰ `daysUntil()` LIVED HERE and is deleted (2026-09-03). Its one caller wrote the Collection
    schedule band's "due in 12 days" caption, and the band was replaced by a timeline that prints the
-   date itself. Nothing is orphaned: `lib/marketing-schedule.ts` and `lib/tournament-phase-display.ts`
-   each keep their own, both with callers and tests, so a future need has two homes to pick from
-   rather than one unused export sitting in the dues module pretending to be shared. */
+   date itself. Nothing is orphaned: `lib/marketing-schedule.ts` keeps its own, with callers and tests
+   (`lib/tournament-phase-display.ts` had the other, and went with the old tournament bar in Public tournament pages
+   Stage 8 Part 3d), rather than one unused export sitting in the dues module pretending to be shared. */
 
 /**
  * How far ahead the team-wide on-demand "Send due reminders" looks — past due, or due within this

@@ -1,12 +1,10 @@
 import { forwardToOwnAddress } from '@/lib/club-forward';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { Calendar } from 'lucide-react';
 import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
-import PublicTournamentState from '@/components/public/PublicTournamentState';
 import { orgLinks } from '@/lib/org-links';
 import { publicGameDetailView } from '@/lib/public-game-detail';
-import PublicGameDetails from '@/components/public/PublicGameDetails';
+import PublicGameDetails, { PublicGameUnavailable } from '@/components/public/PublicGameDetails';
 
 type GameDetailParams = Promise<{
   orgSlug: string;
@@ -45,23 +43,7 @@ export default async function PublicGameDetailsPage({
   const orgHref = await orgLinks(orgSlug);
   const homeHref = orgHref(`/${tournamentSlug}`);
 
-  if (!data.pageEnabled || !data.tournament) {
-    return (
-      <div className="page-content">
-        <div className="section">
-          <div className="container">
-            <PublicTournamentState
-              icon={<Calendar size={40} />}
-              eyebrow="Schedule"
-              title="Schedule unavailable"
-              description="The organizer has hidden the schedule for this tournament."
-              actions={[{ href: homeHref, label: 'Tournament Home', variant: 'ghost' as const }]}
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (!data.pageEnabled || !data.tournament) return <PublicGameUnavailable homeHref={homeHref} />;
 
   const game = data.games.find(item => item.id === gameId);
   if (!game) notFound();

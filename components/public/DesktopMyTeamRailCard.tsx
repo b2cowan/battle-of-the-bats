@@ -21,7 +21,7 @@ import FollowAlertsToggle from '@/components/public/FollowAlertsToggle';
 import styles from './DesktopMyTeamRailCard.module.css';
 
 import { hideOnClubOwnHost } from '@/components/public/hideOnClubOwnHost';
-function DesktopMyTeamRailCard({ publicFrame = false }: { publicFrame?: boolean }) {
+function DesktopMyTeamRailCard() {
   const params = useParams();
   const orgSlug = (params?.orgSlug as string) || '';
   const tournamentSlug = (params?.tournamentSlug as string) || '';
@@ -38,7 +38,7 @@ function DesktopMyTeamRailCard({ publicFrame = false }: { publicFrame?: boolean 
   useEffect(() => {
     if (!followedTeamId || !orgSlug || !tournamentSlug) return;
     let cancelled = false;
-    void fetchPublicTournamentData(orgSlug, tournamentSlug, publicFrame ? 'schedule-preview' : 'schedule').then(data => {
+    void fetchPublicTournamentData(orgSlug, tournamentSlug, 'schedule-preview').then(data => {
       if (cancelled || !data) return;
       setTeams(data.teams ?? []);
       setGames(data.games ?? []);
@@ -48,7 +48,7 @@ function DesktopMyTeamRailCard({ publicFrame = false }: { publicFrame?: boolean 
       setLoaded(true);
     });
     return () => { cancelled = true; };
-  }, [followedTeamId, orgSlug, tournamentSlug, publicFrame]);
+  }, [followedTeamId, orgSlug, tournamentSlug]);
 
   if (!followedTeamId || !loaded) return null;
   const team = teams.find(t => t.id === followedTeamId) ?? null;

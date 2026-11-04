@@ -74,15 +74,17 @@ describe('every public surface goes through it', () => {
       assert.doesNotMatch(src, /\bgetStandings\(/);
     });
   }
-  it('the home reads its games and standings through the gate', () => {
+  it('the home reads its games through the gate, and reads no standings (Stage 8 Part 3d: the old Overview went)', () => {
     const home = readCode('components/public/TournamentHomeContent.tsx');
     assert.match(home, /const \{ games: allGames, withheld: scheduleWithheld \} = await readPublicGames\(tournament\.id, divisions\);/);
-    assert.match(home, /getPublicStandingsByDivision\(tournament, divisions, \{ games: allGames, teams: allTeams \}\)/);
+    assert.doesNotMatch(home, /getPublicStandingsByDivision|getStandings|getGames\(/);
   });
   it('an event holding a division back is not finished, or crowned, on the divisions it shows', () => {
     assert.match(readCode('lib/public-games.ts'), /return \{ games, withheld: games\.length !== all\.length \};/);
-    assert.match(readCode('components/public/TournamentHomeContent.tsx'),
-      /isCompletedTournament \|\|\s*\(!scheduleWithheld && \(\(playoffsComplete && noUnplayedGames\) \|\| roundRobinComplete\)\);/);
+    // The Overview's one finished rule is the moment helper's (the old Overview's own copy went in Stage 8 Part 3d).
+    assert.match(readCode('lib/tournament-moment.ts'),
+      /tournament\.status === 'completed' \|\|\s*\(!scheduleWithheld && \(\(playoffsComplete && noUnplayedGames\) \|\| roundRobinComplete\)\);/);
+    assert.match(readCode('components/public/TournamentHomeContent.tsx'), /tournamentMoment\(\{\s*tournament, today: now, games: allGames, divisions, scheduleWithheld,/);
     assert.match(readCode('app/[orgSlug]/[tournamentSlug]/champions/page.tsx'),
       /const playoffsComplete = allGames\.length === rawGames\.length && isTournamentPlayoffsComplete\(allGames, sortedDivisions\);/);
   });

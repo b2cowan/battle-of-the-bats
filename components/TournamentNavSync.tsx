@@ -1,60 +1,22 @@
 'use client';
 import { useEffect } from 'react';
 import { useOrgNav } from './OrgNavContext';
-import type { PublicPageKey } from '@/lib/public-pages';
 
-export default function TournamentNavSync({
-  slug,
-  tournamentName,
-  colorMode,
-  hiddenPages = [],
-  registerCta = null,
-  startDate = null,
-  endDate = null,
-  status = null,
-  finished = false,
-  tournamentId = null,
-  fanAlertsEnabled = false,
-  hasPublicBracket = false,
-  publicFrame = false,
-}: {
-  slug: string;
-  tournamentName: string;
-  colorMode?: 'dark' | 'light' | null;
-  hiddenPages?: PublicPageKey[];
-  registerCta?: 'register' | 'waitlist' | null;
-  startDate?: string | null;
-  endDate?: string | null;
-  status?: string | null;
-  finished?: boolean;
-  tournamentId?: string | null;
-  fanAlertsEnabled?: boolean;
-  /** True when the organizer has configured a bracket and Standings is public — adds the
-   *  Playoffs tab to every nav surface. Resolved in the layout; see the note there. */
-  hasPublicBracket?: boolean;
-  /** Public tournament pages Stage 1: the page draws the new frame (lib/public-frame.ts). */
-  publicFrame?: boolean;
+/** Hands the tournament being viewed to the shell's context (the side rail's heading, the flip pill's id, today's-games
+ *  window). The tab facts no longer ride here: the band, rail and footer take them from the layout as props. */
+export default function TournamentNavSync({ name, tournamentId, startDate, endDate, status }: {
+  name: string;
+  tournamentId: string;
+  startDate: string | null;
+  endDate: string | null;
+  status: string | null;
 }) {
-  const { setTournamentNav, setTournamentStatus } = useOrgNav();
+  const { setTournamentNav } = useOrgNav();
 
   useEffect(() => {
-    setTournamentNav({
-      slug,
-      name: tournamentName,
-      colorMode: colorMode ?? 'dark',
-      hiddenPages,
-      registerCta,
-      tournamentId,
-      fanAlertsEnabled,
-      hasBracket: hasPublicBracket,
-      publicFrame,
-    });
-    setTournamentStatus(startDate, endDate, status, finished);
-    return () => {
-      setTournamentNav(null);
-      setTournamentStatus(null, null, null);
-    };
-  }, [slug, tournamentName, colorMode, hiddenPages, registerCta, startDate, endDate, status, finished, tournamentId, fanAlertsEnabled, hasPublicBracket, publicFrame, setTournamentNav, setTournamentStatus]);
+    setTournamentNav({ name, tournamentId, startDate, endDate, status });
+    return () => setTournamentNav(null);
+  }, [name, tournamentId, startDate, endDate, status, setTournamentNav]);
 
   return null;
 }

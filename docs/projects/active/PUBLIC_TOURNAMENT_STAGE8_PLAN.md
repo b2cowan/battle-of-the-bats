@@ -2,7 +2,9 @@
 
 **Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 committed `d4af280e6` 2026-11-03** (record §10; it releases with the flip, ruling D). **Part 2 committed `02e29f453` 2026-11-03** (record §11; it releases with the flip too). **Part 3a committed `3304c77fe` 2026-11-03**
 (record §12; releases with the flip). **Part 3b committed `9b6252e8a` 2026-11-04** (record §13; releases with the flip). **Part 3c committed `62f5841f9` 2026-11-04**
-(record §14; releases with the flip). Next Part 3d. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
+(record §14; releases with the flip). **Part 3d built 2026-11-04** (record §15; releases with the flip; the
+switch-off half-state ends for every public tournament page). Next: the public feed fix (owner-approved 2026-11-04, its own
+change, §15 handed on), then Part 4. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
 **Sequencing rule (standing):** by dependency and rework risk, never by date. One part per session, `/clear` between.
@@ -659,3 +661,190 @@ fact).
 - Still owed, not this part: the Rules layout menus (§12 → Part 4); the "Schedule unavailable" state's old page classes (§13 →
   3d/4); the two stale `/The bracket/` layout screens (§13); white text on team-colour fills in the share images (advisory); the
   admin strip's 34 px "Dismiss"; `/release` §1d-2's sharp probe; the club editor's unlabelled 18 px input.
+
+## 15. Part 3d record (the Overview, the tournament layout, the ticker, the side rail's legacy mode, the Navbar's tournament branch; built 2026-11-04; releases with the flip)
+
+**What a customer sees:** nothing (nothing promoted). **An owner on dev, switch on (the default):** nothing changes — the
+Overview, every public tournament page's chrome and the admin preview's Overview already showed the new look. **Switch
+off:** every public tournament page now wears the frame — the organizer's band, the white rail, the footer and the
+app-only pieces — whatever the cookie says. **The switch-off half-state of §12–§14 ends here for every public tournament
+page.** What the switch still changes, until Part 4: the pay page's focused heading and contact line (switch off, the
+layout already drops the pay page's chrome but the page renders its ordinary heading — a new dev-only half-state, found
+at `/review`, kept because the brief keeps the pay page's branch for Part 4), the admin preview's outer frame (switch off,
+its Overview now shows the new body inside the old dark preview chrome — the same accepted half-state as 3a–3c's preview
+sections), and the Branding page and public-site editor. One visible fix: a game's page with the Schedule hidden showed
+"Schedule unavailable" inside the old global page wrappers, whose top padding cleared a bar the frame no longer has
+(§13 → 3d/4); it now sits in the game page's own body (`PublicGameUnavailable`), same words. ⚠ Not promotable before
+Parts 4–6 (§5).
+
+**Owner rulings in-session (2026-11-04):** (1) **the public feed's wider leak is its own fix, straight after this part**
+(recommended option) — not folded in here (below, handed on); (2) **venue and field notes are private** — stripped from
+the public feed in this part (below).
+
+**What changed.**
+- `TournamentHomeContent.tsx` is the Overview's one loader (shared with the admin preview's Overview, so it stays a
+  loader rather than being copied into two server pages — a deliberate departure from 3a–3c's "straight from the server
+  page", said up front): the old `frameOn` block alone, ~1,200 → ~150 lines, no switch read; its independent reads run
+  in one `Promise.all` (`/simplify`). `forwardToOwnAddress` still runs first in `page.tsx`. The demo tour's step 1 anchor
+  is in `TournamentOverview` (Part 2) and survives.
+- `app/[orgSlug]/[tournamentSlug]/layout.tsx`: every `frameOn` branch collapsed to its frame-on side — the band, the host,
+  the contact email, the tab-content reads, `deskShell`, `data-card-style="default"`/`data-color-mode="light"`, the frame's
+  role colours, the footer (the paid credit lives only there), the rail's frame mount, the app-only dock / prompt /
+  nudges; `isPublicFrameOn`, `canUseAdvancedTournamentBranding`, `effectiveColorMode`, `cardStyle`, `lightModeVars` and
+  the old `BuiltOnCredit` mount went. `/simplify`: the fan's six gated pieces sit in ONE `unlessFocused(<>…</>)` (each
+  keeps its own `PublicAppOnly` wrapper — that gate draws a `<div>`, so the DOM is unchanged); the ≤900 px `--nav-event-h:
+  161px` seed (the old event header's height) dropped — the frame sets its own chrome heights on `.frame`, and nothing
+  outside it on a tournament page reads them.
+- `components/Navbar.tsx`: the tournament branch, its event header, the `hasEventHead` effect and its `--nav-event-h` /
+  `--nav-visual-h` publishing went; past the admin check only a marketing path draws a bar (`if (isAdmin || !onMarketing)
+  return null;`), and the scroll listener runs only there. Checked: the only other `[tournamentSlug]` route is the admin
+  preview, which the admin check drops.
+- `OrgNavContext` / `TournamentNavSync`: the fields only the old bar read went (`tournamentSlug`, colour mode, hidden
+  pages, bracket, register call, finished, the frame flag, and the already-unread `fanAlertsEnabled`); the context keeps
+  one tournament record (`name`, `tournamentId`, start/end/status) behind one setter (`/simplify`).
+- `TournamentSideRail`: the no-props legacy mode went — `hiddenPages` required, no context fallbacks for tab facts,
+  `data-color-mode` defaults to light (the preview's switch-off branch passes its own), the rail card always app-only.
+  `TournamentTopTabs`: the context fallback (the Navbar's no-props mount) went; `hiddenPages` required.
+- `MyTeamDock`, `DesktopMyTeamRailCard`, `FollowDeepLinkPrompt`, `useTodaysTournamentGames`: the `publicFrame` prop / param
+  went; each reads only the published-only section (`schedule-preview`, `teams-preview`).
+
+**Data feeds (3a's and 3c's lessons).** The layout and the Overview read no switch, cookie or header; `getPublicTournamentPageData`
+and `/api/public/tournament-data` read none either (query params only). What the chrome ships to the browser: the dock,
+rail card, results line and deep-link prompt now always use `schedule-preview` / `teams-preview` (published divisions only;
+games through `publicFrameGame`, so no game notes or `scoreSubmittedBy*`), where the old switch-off branches used the plain
+`schedule` / `teams` sections — a strict tightening for switch-off visitors. The Overview hands raw `games`/`venues` only to
+the server-rendered `TournamentOverview`, whose client children get derived words. **Fixed here (owner ruling):**
+`publicVenue` (`lib/public-teams.ts`) strips venue and field `notes`; both venue reads of the public feed send through it
+(no public page renders them — checked). **Recorded, not fixed (the follow-up):** the feed's `tournament` record and the
+org's `tournaments` list go out whole (settings incl. `payment_instructions`; the list's raw `contact_email` skips the
+contact switch); `schedule`/`schedule-preview` send every site announcement whatever News's visibility and regardless of a
+post's held-back division; the plain `schedule`/`teams`/`standings` sections are still served to anyone (raw games incl.
+notes, all divisions; `CoachLiveSchedule` polls `schedule` from the coach portal).
+
+**Deleted, each with its importer check (grep re-run immediately before each removal; only tests pinning the deletion,
+comments and historic `tests/uat/results/**` named them):**
+- `components/public/ScoreTicker.tsx` + `.module.css` — the layout only.
+- `components/public/TournamentNavStatus.tsx` + `.module.css` — the Navbar's tournament branch only; with it
+  `lib/tournament-phase-display.ts` (its only other importer was the Navbar).
+- `components/public/MyTournamentCard.tsx` — the old Overview only; with it `components/public/FollowTeamPicker.tsx` +
+  `.module.css` (MyTournamentCard only). `FollowAlertsToggle`, `UnfollowConfirmSheet`, `lib/team-calendar.ts`,
+  `LocationLink` keep callers.
+- `components/public/FollowTournamentStrip.tsx` + `.module.css` — the old Overview only (`useTournamentFollowToggle` keeps
+  `FollowTournamentLine`).
+- `components/public/CountUp.tsx` — the old Overview only (`components/admin/CountUp.tsx` is a different file).
+- **Dead CSS the deletions exposed** (selector check, attributed): `Home.module.css` — 95 classes of the old Overview (hero
+  grid/orbs/scroll, live-now, day cards, My Team card, champions, record, explore row…) + the keyframes `myTeamLivePulse`,
+  `float`, `scrollPulse` that only they used; the club home's classes (`hero`, `heroBanner`, `tournamentCard*`, `stats`…)
+  and `fadeInUp` stay, and its frame-keyed rules on live classes stay. `Navbar.module.css` — the event header's 11 classes
+  (`hasEventHead`, `eventHead`, `eh*`, `navActions`, `navStatusSlot`); the classes `TournamentPreviewNav` (the admin
+  preview's switch-off bar, Part 4) shares — `nav`, `scrolled`, `inner`, `logo`, `links`, `link`, `active`, `actions` —
+  stay. `schedule-admin.module.css` `.dateLine` (kept "alive" by NAME by the old Overview's `styles.dateLine`; no renderer).
+  `TournamentFrame.module.css`'s `[data-tournament-nav]` hide rule (nothing renders the attribute). Removed structurally
+  (postcss: a selector is dropped only if it names a dead class; a rule only when all its selectors went), never by
+  pattern. Also the two long-dead baselined classes in the touched sheets: Home `championsHero`/`draftPublicNotice`, Navbar
+  `logoSub`/`logoText`.
+- **Baselines, by hand (never `--init`):** `.css-selector-baseline.json` lost the Home and Navbar dead entries (both
+  gone); `.public-type-baseline.json` Navbar.module.css face/caps/heavy 3/4/3 → 1/1/1 and `components/Navbar.tsx` left it
+  (face 4 → none) — exactly the removed rules' lettering. The check is back to exactly §12–§14's 4 orphans + 10 dead
+  classes (other sessions').
+
+**Kept, and why:** `isPublicFrameOn`, the cookie, the setter route, the pay page's focused branch, the admin preview
+layout's branch, the Branding page's and the public-site editor's `frameOn` (Part 4); `TournamentTopTabs`' default skin and
+`TournamentSideRail`'s dark rules (the preview's switch-off branch); `buildPublicLightModeCssVars` (the preview);
+`Home.module.css` (club home); the light-mode rules in `globals.css` (live under the frame); `--ticker-h` /
+`--nav-visual-h` fallbacks in `globals.css` (0-defaults, harmless; the comment now says nothing sets `--ticker-h`).
+
+**Census — who still reads the switch (Part 4 starts here):** `lib/public-frame.ts` (cookie name, `publicFrameFromCookie`,
+`safePublicFrameReturn`), `lib/public-frame-server.ts` (`isPublicFrameOn`), `app/api/public-frame/route.ts` (the setter),
+`scripts/seed-public-frame-fixtures.mjs` (the preview link), `app/[orgSlug]/[tournamentSlug]/pay/[token]/page.tsx`
+(`focused`), `app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/layout.tsx`, `app/[orgSlug]/admin/tournaments/branding/page.tsx`
+(+ `LookCard.tsx`), `app/[orgSlug]/admin/public-site/page.tsx`, `app/api/admin/public-site/route.ts`,
+`app/api/admin/tournament-branding/route.ts`, `app/api/public/team-profile/route.ts` + `PublicTeamPage.tsx` (the
+`publicFrame=1` flag, §12/§14); a stale comment in `PublicChampionsPage.tsx`. ~29 stylesheets still carry
+`data-public-frame` rules (the marker stays on the frame's element; the rules are the frame's look, not the switch).
+
+**Tests (rewritten, not deleted):** Stage 1 frame guard (the layout reads no switch; marker/band/line/role colours
+unconditional; light ground, no card style, no `:root` light block; the old bar and its context fields gone; the old ticker
+gone and the hook on `schedule-preview` only; the footer is the credit's one home; the follow-strip/picker sheets gone),
+Stage 2 guard (the loader hands every moment to `TournamentOverview`, reads no switch, draws no markup of its own; the
+moment helper is the one finished rule; the strip and ticker gone), Stage 5 guard (the dock/card/prompt are app-only and
+mounted once; **a sweep**: every `'use client'` reader under `components/public` and `lib/hooks` must name a
+published-only section literally — a legacy name, a constant or a variable fails; found at `/review`), Stage 0 small fixes
+(the Overview body reads no raw score and draws live cards through the row view; MyTournamentCard gone; the nav-status pill
+left D4), Stage 6 review (the nav-context mock **throws** on any tab-fact field, so a surface that read one from the context
+fails the render test), Stage 6 rules (the Navbar has no tab list), focused page (one gate per piece, everything mounted
+once — `openingTags`), public games (the home reads no standings; the finished rule is the moment helper's), club frame
+(the Navbar has no tournament param, any spelling), marketing set (the marketing branch is everything after the early
+return), tournament look (face and card style unconditional), public teams (**privacy**: `publicVenue` drops every notes
+field and keeps the facts; one scrub per venue read of the feed; the Overview's raw venues reach only a server body).
+**Non-vacuity by mutation** (each old behaviour put back, the test watched fail, restored byte-for-byte, restore confirmed
+by grep): the dock, the prompt and the hook back on the legacy feed; venue notes back in the Schedule feed; the scrub
+keeping the notes; the layout and the Overview reading the switch again; a bare ungated dock mount; the rail reading a tab
+fact from the context; a reader asking for the plain schedule / plain standings / a section through a constant — **12 of
+12 fail as they should.**
+
+**Checks run:** touched + neighbouring unit files 589/589 after the last fix (`demo-destinations-guard` included — the
+tour's anchors survive); `npm test` 13,751/13,757 — the **6 failures are all other sessions' uncommitted work** (Stage 6
+walk HTML ×3, support console foot, Stripe key prefix, billing ended state), none reads a file of this part. Typecheck
+(`NODE_OPTIONS=--max-old-space-size=6144`): no error in this part's files (the last run showed only another session's
+`billing-location-server.ts`). ESLint clean on every changed file; spelling clean; public tokens, public type (the lowered
+lock above): pass; CSS selectors: exactly the foreign 4 + 10.
+
+**Layout** (`check-layout-invariants.mjs --only=`, every listed width, on the dev server; never a whole-product sweep):
+- **0 findings** on `pubt-overview-long`, `pubt-overview-after`, `pubt-schedule-pale`, `pubt-game-pale`, `pubt-standings-own`,
+  `-mid-pool`, `-finished`, `pubt-teams-free`, `pubt-team-own`, `pubt-rules-pale`, `pubt-playoffs-pale`,
+  `pubt-champions-after`, `pubt-pay-focused` (×4 widths each).
+- **24 tap-floor findings, all pre-existing and not this part's** (attributed: their files are untouched here, and the
+  layout baseline has never held these screens — last written 2026-10-21, before they joined the sweep): `pubt-overview`
+  ×19 — the demo sandbox's own chrome (`Start your own — free`, the three time-travel moments, the tour's four steps and
+  "See what game day looks like", `components/sandbox/SandboxChrome.tsx` / `lib/sandbox-chrome.ts`); `pubt-register-open`
+  @768 ×3 and `pubt-news-pale` @768 ×2 — the old Register and News bodies' `btn-sm` doors (36 px). **Nothing baselined**:
+  they are real findings for the demo chrome's and Register/News's owners, not decisions.
+- The first batch **aborted on the memory floor** at `pubt-pay-focused` (4 pages at once; two other sessions' `tsc` runs
+  held ~6 GB); the dev server was restarted (deleted files) and the unreached and flagged screens re-run alone at one page
+  at a time.
+- **Not measured, and NOT this part** (`--width=390`, one page at a time): `pubt-schedule-live`, `-many-days`, `pubt-game-live`,
+  `pubt-standings-playoffs`, `pubt-playoffs-live`, `-seeded`, `-eight` — **expired fixtures** (§13/§14: the Stage 3 and Stage 4
+  clones' live and upcoming games are dated before 2026-11-04, so their ready markers can never be met); `pubt-schedule-playoffs`,
+  `pubt-schedule-bracket-only` — the **stale `/The bracket/` wait** (§13). Each page itself answers 200 on the restarted
+  server, and with the switch cookie set to `off` the demo Overview and a Schedule still render `data-public-frame` and the
+  band — the half-state is gone. Nothing baselined.
+
+**`/simplify`** (four lenses): applied — one focused-page gate for the fan's pieces; the dead 161 px seed; the context's one
+record + one setter; required props (`TournamentNavSync`, `MyTeamDock.fanAlertsEnabled`); the Navbar's one early return;
+the loader's one round trip and plain names; `openingTags` for mount counts. Skipped: the layout's count-only News/Rules
+reads and the layout + page double reads (need `React.cache` / count queries in `lib/db.ts` — shared, outside this diff);
+moving the tournament facts out of the root context (Part 4); a `PublicVenue` type (the feed follow-up); one wording for
+"schedule hidden" across the Schedule and a game's page (customer copy → `/docs`); deciding the Navbar mount in `SiteChrome`
+(shared site chrome outside this diff).
+
+**`/review`** (high-risk tier for `lib/**` + the shared Navbar/context; lenses correctness/contract, regression/blast-radius,
+privacy, test non-vacuity): **no defect in this part.** Confirmed clean: the collapse equals the old switch-on path in the
+layout and the loader (mount order, wrappers, attributes, props, data); no surviving reference to a deleted file, export,
+field, prop, class or keyframe (code, tests, UAT specs, scripts, knip, marketing shots, demo anchors); the shared sheets'
+importers (club home, `TournamentPreviewNav`) use only surviving classes; publicVenue is complete; held-back divisions
+cannot reach the chrome. Acted on: the feed sweep and four weak pins strengthened (above); stale comments in
+`useTodaysTournamentGames`, `NotOnFocusedPage`, `useTournamentFollowToggle`, `ClubHome.module.css`,
+`dues-installment-view.ts`, `tournament-schedule-status.ts`. Recorded: the pay page's switch-off half-state and the
+preview's (above); the feed findings (handed on).
+
+**Handed on:**
+- ⚠ **NEXT, owner-approved 2026-11-04 — the public feed fix (its own change, releasable on its own):** send an allow-listed
+  tournament (the fields pages read — `RegisterContent` reads `settings.payment_instructions` when it is shown on the form)
+  and cut or scrub the org's `tournaments` list; gate `announcements` on News's visibility and a post's divisions; decide
+  whether the plain `schedule`/`teams`/`standings` sections should stop being public (their callers: the game page, the share
+  images, `CoachLiveSchedule`, `lib/follow-feed.ts`); a `PublicVenue` type so the notes rule is compiler-held. Privacy lens.
+- ⚠ **The team-profile feed withholds a held-back team only when the caller sends `publicFrame=1`** (pre-existing, live on
+  prod; §14) — Part 4 owns the flag. **Owner question:** are game notes private? (§14: `publicFrameGame` says yes; the new
+  game page shows them.)
+- **Part 4:** the pay page's `focused` (now the only thing the switch changes on a live tournament page); the admin
+  preview's switch-off branch (dark chrome around the new Overview); `TournamentTopTabs`' default skin + `fixed`,
+  `TournamentPreviewNav` and the Navbar.module.css classes it shares; the rail's dark rules; the Rules layout menus (§12);
+  moving the tournament facts out of the root `OrgNavContext` into the tournament layout (`/simplify`'s altitude note).
+- **Layout owners, not this stage:** the demo sandbox chrome's tap targets (19 findings above); the old Register and News
+  bodies' 36 px doors at 768.
+- Still owed, not this part: the legacy tournament-data sections exposing held-back team and division names; the tournament
+  share image's counts (§14 handed on); the playoff-bracket and fan-live-score marketing shots (5e); the two stale
+  `/The bracket/` layout screens and the expired Stage 3 / Stage 4 fixtures; white text on team-colour fills in the share
+  images (advisory); the admin strip's 34 px "Dismiss"; `/release` §1d-2's sharp probe; the club editor's unlabelled 18 px
+  input; `scripts/mobile-review-capture.mjs`'s "ticker precedence" comment.

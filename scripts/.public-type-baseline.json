@@ -1,11 +1,8 @@
 {
   "components/Navbar.module.css": {
-    "heavy": 3,
-    "caps": 4,
-    "face": 3
-  },
-  "components/Navbar.tsx": {
-    "face": 4
+    "heavy": 1,
+    "caps": 1,
+    "face": 1
   },
   "components/auth/StartSteps.module.css": {
     "caps": 1,

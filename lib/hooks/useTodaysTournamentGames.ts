@@ -1,10 +1,11 @@
 'use client';
 /**
  * lib/hooks/useTodaysTournamentGames.ts
- * Today's games of the public tournament the visitor is on, kept current by the live feed. Shared by today's scrolling
- * ticker (ScoreTicker) and the new frame's results line (TodaysResultsLine, Public tournament pages Stage 1): one
- * fetch rule, one "today", one publish gate (the public read already drops unpublished divisions). Self-gating: outside
- * the tournament's days, or once it is finished, it fetches nothing and returns no games.
+ * Today's games of the public tournament the visitor is on, kept current by the live feed, for the frame's results line
+ * (TodaysResultsLine, Public tournament pages Stage 1): one fetch rule, one "today", one publish gate. It reads the
+ * `schedule-preview` section — published divisions only, no game notes or scorekeeper identity (lib/public-teams.ts
+ * publicTeamsData). Its other caller, the old score ticker (which read the plain `schedule` feed through this hook), went in
+ * Stage 8 Part 3d. Self-gating: outside the tournament's days, or once it is finished, it fetches nothing and returns no games.
  */
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -45,7 +46,7 @@ function readFeed(d: PublicTournamentPageData): TodayFeed {
   };
 }
 
-export function useTodaysTournamentGames(publicFrame = false) {
+export function useTodaysTournamentGames() {
   const params = useParams();
   const orgSlug = (params?.orgSlug as string) || '';
   const tournamentSlug = (params?.tournamentSlug as string) || '';
@@ -63,16 +64,16 @@ export function useTodaysTournamentGames(publicFrame = false) {
   useEffect(() => {
     if (!active) return;
     let cancelled = false;
-    void fetchPublicTournamentData(orgSlug, tournamentSlug, publicFrame ? 'schedule-preview' : 'schedule').then(d => {
+    void fetchPublicTournamentData(orgSlug, tournamentSlug, 'schedule-preview').then(d => {
       if (!cancelled && d) setFeed(readFeed(d));
     }).catch(() => { /* a network blip: the live poll below fills the feed on its next turn */ });
     return () => { cancelled = true; };
-  }, [active, orgSlug, tournamentSlug, publicFrame]);
+  }, [active, orgSlug, tournamentSlug]);
 
   usePublicTournamentLive({
     orgSlug,
     tournamentSlug,
-    section: publicFrame ? 'schedule-preview' : 'schedule',
+    section: 'schedule-preview',
     enabled: active,
     onData: d => setFeed(readFeed(d)),
   });

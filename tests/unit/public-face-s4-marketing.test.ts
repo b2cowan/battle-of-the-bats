@@ -37,11 +37,13 @@ const MARKETING_FILES = [
   'components/PricingSection.tsx', 'components/PricingSection.module.css',
 ].filter(exists);
 
-/** The marketing bar shares Navbar with the org and tournament bars, so only its own branch and rules are read. */
+/** The marketing bar is all Navbar draws (Public tournament pages Stage 8 Part 3d deleted its tournament bar; every other
+ *  path returns null first), so its branch is everything after that early return. Its stylesheet is also the admin
+ *  preview's old top bar's until Part 4, so only the marketing rules are read. */
 function marketingBarCode(): string {
   const tsx = readCode('components/Navbar.tsx');
-  const from = tsx.indexOf('if (isMarketingPath(pathname))');
-  const to = tsx.indexOf('if (!urlTournamentSlug) return null;');
+  const from = tsx.indexOf('if (isAdmin || !onMarketing) return null;');
+  const to = tsx.length;
   assert.ok(from > 0 && to > from, 'the marketing branch of Navbar.tsx moved; teach this guard where it is');
   return tsx.slice(from, to);
 }

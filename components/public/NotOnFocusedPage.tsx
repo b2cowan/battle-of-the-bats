@@ -5,8 +5,8 @@
  * the desk rail, the my-team dock, the follow / alerts / install prompts and the free plan's badge and banner — so none
  * of them has to know which pages are focused. The band and the footer change shape instead, and ask the rule themselves.
  *
- * Frame-only: the layout uses it in its switch-on branch, so the switch-off page is unchanged. The path resolves during
- * the server render, so a focused page paints without the chrome from the first frame (nothing appears and then goes).
+ * Every live page wears the frame since Stage 8 Part 3d, so the layout always gates. The path resolves during the server
+ * render, so a focused page paints without the chrome from the first frame (nothing appears and then goes).
  */
 import type { ReactNode } from 'react';
 import { usePublicPathname } from '@/lib/use-public-pathname';

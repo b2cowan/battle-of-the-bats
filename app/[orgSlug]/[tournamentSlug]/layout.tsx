@@ -15,16 +15,10 @@ import { tournamentToday } from '@/lib/timezone';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import { showsFreeCredit } from '@/lib/plan-config';
-import {
-  buildPublicLightModeCssVars,
-  hasOwnTournamentTheme,
-  resolvePublicTournamentTheme,
-} from '@/lib/public-tournament-theme';
-import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
+import { hasOwnTournamentTheme, resolvePublicTournamentTheme } from '@/lib/public-tournament-theme';
 import { OrgNavSync } from '@/components/OrgNavSync';
 import TournamentNavSync from '@/components/TournamentNavSync';
 import PoweredByBadge from '@/components/marketing/PoweredByBadge';
-import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
 import TournamentAcquisitionBanner from '@/components/marketing/TournamentAcquisitionBanner';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import MyTeamDock from '@/components/public/MyTeamDock';
@@ -36,13 +30,12 @@ import FollowAccountNudge from '@/components/public/FollowAccountNudge';
 import AccountFollowSync from '@/components/public/AccountFollowSync';
 import TournamentSideRail from '@/components/public/TournamentSideRail';
 import railStyles from '@/components/public/TournamentSideRail.module.css';
-import ScoreTicker from '@/components/public/ScoreTicker';
 import TodaysResultsLine from '@/components/public/TodaysResultsLine';
 import TournamentBand from '@/components/public/TournamentBand';
 import TournamentFooter from '@/components/public/TournamentFooter';
 import clubFrameStyles from '@/components/public/ClubFrame.module.css';
 import frameStyles from '@/components/public/TournamentFrame.module.css';
-import { isPublicFrameOn, publicTournamentContactEmail } from '@/lib/public-frame-server';
+import { publicTournamentContactEmail } from '@/lib/public-frame-server';
 import { publicFrameAttr, publicFrameBand, publicFrameHost, publicFrameRoleCss } from '@/lib/public-frame';
 
 export const dynamic = 'force-dynamic';
@@ -104,17 +97,14 @@ export default async function TournamentLayout({
   const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
   if (!tournament) notFound();
 
-  const canUseAdvancedBranding = canUseAdvancedTournamentBranding(org);
-  // Public tournament pages Stage 1: the new frame (the organizer's colour band on the club site's light ground), behind
-  // the preview switch (lib/public-frame.ts). Decided here, on the server, so the first paint is already the right one.
-  // Off — every customer and the public demo unless they used the preview link — and everything below renders exactly as
-  // it did.
-  const frameOn = await isPublicFrameOn();
+  // Every public tournament page wears the frame: the organizer's colour band on the club site's light ground (Public
+  // tournament pages Stage 1; the switch-off chrome — the dark top bar, the score ticker, the old rail — went in Stage 8
+  // Part 3d). This layout no longer reads the preview switch.
   // The free presentation (the badge and the banner): the free plan's and a Premium coach's event's (R6).
   const isFreeTournamentPlan = showsFreeCredit(org.planId);
 
-  // Stage B.2 — the event chrome's conditional door UP to the org's public page (phone
-  // eyebrow link + desktop rail breadcrumb), via the ONE shared resolver. That resolver owns
+  // Stage B.2 — the event chrome's conditional door UP to the org's public page (the band's
+  // "Hosted by" door, the footer's host line and the desk rail's crumb), via the ONE shared resolver. That resolver owns
   // BOTH halves of the rule — the answer, and whether the head-count query is needed at all
   // (League/Club and non-public orgs are decided without it) — so this layout and the coaches
   // wall cannot drift apart the way the callers of the bare predicate did (audit D1).
@@ -128,9 +118,7 @@ export default async function TournamentLayout({
   const orgHomeHrefPromise = resolveOrgHomeHref(org).catch(() => null);
   // The frame's footer shows the address the Rules and News pages already show (the organizer's public-contact switch
   // decides it). Kicked off here and awaited with the host answer, for the same reason; failing to null drops the line.
-  const frameContactPromise = frameOn
-    ? publicTournamentContactEmail(tournament.id, org.contactEmail ?? null).catch(() => null)
-    : Promise.resolve(null);
+  const frameContactPromise = publicTournamentContactEmail(tournament.id, org.contactEmail ?? null).catch(() => null);
 
   // Acquisition banner (free events only) — hidden from members of THIS org. Resolving a
   // Supabase session is the expensive part, so it only runs when (a) the plan is free —
@@ -151,9 +139,6 @@ export default async function TournamentLayout({
   // offline-caches this page's HTML as anonymous content, so the pill fetches its identity
   // client-side via /api/public/tournament-viewer instead (see TournamentFlipPill /
   // lib/use-public-flip). Do not thread per-user data into this layout.
-  // Under the frame the ground is light whatever the organizer saved (Ask 1); its Dark/Light option leaves the Branding
-  // page in Stage 1a.
-  const effectiveColorMode = frameOn ? 'light' : canUseAdvancedBranding ? tournament.colorMode ?? 'dark' : 'dark';
   // Free public tournament pages always use the FieldLogicHQ default theme, even if old branding
   // values exist. Nothing is emitted when the tournament has no theme of its own — the org
   // layout's vars then stand. (The rule itself lives in lib/public-tournament-theme.ts, shared
@@ -174,16 +159,11 @@ export default async function TournamentLayout({
     ].join('; ');
   }
 
-  const cardStyle = canUseAdvancedBranding
-    ? tournament.themeCardStyle ?? org.themeCardStyle ?? 'default'
-    : 'default';
-
   // Game-day window — gates the My-Team dock (mirrors lib/follow isTournamentInProgress
   // without importing the client module into this server component). Tournament-local
   // date so the dock survives the UTC day boundary on the final evening (J6-056).
   const todayISO = tournamentToday();
-  // "Effectively finished" for the shell (top-bar pill, install/alert nudges, game-day
-  // dock): marked complete, the bracket's champion already stamped (champions_crowned_at
+  // "Effectively finished" for the shell (the install/alert nudges): marked complete, the bracket's champion already stamped (champions_crowned_at
   // is on the loaded record — no extra query), or the event has run past its end date.
   // Mirrors the games-derived finished signal the overview body uses, kept cheap for every
   // tournament sub-page so the whole shell agrees the event is over.
@@ -194,7 +174,7 @@ export default async function TournamentLayout({
   // NB: kept in step with lib/follow.isTournamentInProgress (date-window + active) — the
   // game-day dock self-gates to a followed team's live games, so it must NOT go dark the
   // moment a champion is stamped while other games may still be on today. Shell "finished"
-  // signals (pill, install/alert nudges) use effectivelyFinished; live game-day surfaces do not.
+  // signals (the install/alert nudges) use effectivelyFinished; live game-day surfaces do not.
   const tournamentInProgress =
     tournament.status === 'active' &&
     !!tournament.startDate && !!tournament.endDate &&
@@ -216,9 +196,9 @@ export default async function TournamentLayout({
   // round-trip into two on the layout that wraps every public tournament page. The only added cost
   // is one query on the tournaments that hide their register page, which previously fetched neither.
   const bracketVisible = isPublicBracketVisible(tournament);
-  // Public tournament pages Stage 6 (Ask 14): the frame-on tab row hides News/Rules while they have nothing to
-  // show. Skipped (and never fetched) when the organizer already hid the page, or the switch is off — no tab row
-  // reads this then. Raced into the same round trip rather than a second serial await.
+  // Public tournament pages Stage 6 (Ask 14): the frame's tab row hides News/Rules while they have nothing to
+  // show. Skipped (and never fetched) when the organizer already hid the page. Raced into the same round trip rather
+  // than a second serial await.
   const newsHidden = navHiddenPages.includes('news');
   const rulesHidden = navHiddenPages.includes('rules');
   // A playoff game counts only in a published division (D1): an unpublished bracket's games never surface the tab.
@@ -226,9 +206,9 @@ export default async function TournamentLayout({
     getDivisions(tournament.id, { admin: true }),
     registerHidden ? Promise.resolve(null) : getTeams(tournament.id, { admin: true }),
     bracketVisible ? hasPublicPlayoffGames(tournament.id) : Promise.resolve(false),
-    frameOn && !newsHidden ? getAnnouncements(tournament.id, { admin: true }) : Promise.resolve([]),
-    frameOn && !rulesHidden ? getRules(tournament.id, { admin: true }) : Promise.resolve([]),
-    frameOn && !rulesHidden ? getResources(tournament.id, { admin: true }) : Promise.resolve([]),
+    !newsHidden ? getAnnouncements(tournament.id, { admin: true }) : Promise.resolve([]),
+    !rulesHidden ? getRules(tournament.id, { admin: true }) : Promise.resolve([]),
+    !rulesHidden ? getResources(tournament.id, { admin: true }) : Promise.resolve([]),
   ]);
 
   const registration = regTeams
@@ -238,14 +218,13 @@ export default async function TournamentLayout({
         regTeams.filter(t => t.status !== 'rejected'),
       )
     : null;
-  const registerCta: 'register' | 'waitlist' | null = registration?.cta ?? null;
   // Champions: `championsCrownedAt` is the one-time, D1-safe stamp lib/champions-notify.ts only claims once no
   // division's schedule is held back and the whole tournament's playoffs are decided — exactly Ask 14's "the
   // whole tournament is Finished, matching the Overview's own PublicChampions trigger" ruling, at no extra query.
-  const frameContent = frameOn ? tournamentFrameTabContent({
+  const frameContent = tournamentFrameTabContent({
     announcementCount: frameAnnouncements.length, ruleCount: frameRules.length, resourceCount: frameResources.length,
-    registrationCta: registerCta, championsCrownedAt: tournament.championsCrownedAt, divisions,
-  }) : undefined;
+    registrationCta: registration?.cta ?? null, championsCrownedAt: tournament.championsCrownedAt, divisions,
+  });
 
   /**
    * Does this tournament have a bracket a fan should be able to navigate to?
@@ -285,129 +264,90 @@ export default async function TournamentLayout({
     bracketVisible &&
     (divisions.some(d => hasPlayoffPlan(d.playoffConfig)) || playoffGamesExist);
 
-  // Light mode: override :root tokens so body background and all descendants flip.
-  // Shared with the admin preview layout via lib/public-tournament-theme so the
-  // two render light themes identically.
-  // Never under the frame: its light set is the club's, on the frame's own element. :root stays as it is today, so what is
-  // drawn outside the frame for a dark page (the demo's dock, the free plan's badge and banner) stays exactly as it was.
-  const lightModeVars = !frameOn && effectiveColorMode === 'light' ? buildPublicLightModeCssVars() : null;
-
   // Stage B.2 (resolution): the resolver kicked off near the top has had the whole render to
   // complete in parallel. Null here = "no door": the rail's crumb line falls back to the org's
-  // name as inert text and the phone eyebrow does the same, exactly as for any org whose home
-  // isn't a real place.
+  // name as inert text, exactly as for any org whose home isn't a real place.
   const orgHomeHref = await orgHomeHrefPromise;
   const frameContactEmail = await frameContactPromise;
 
   // The frame's band (Stage 1): its colour through the club's roles, its mark, dates and one of the four state words, all
   // worked out by the one helper the admin preview also calls (lib/public-frame.ts publicFrameBand).
-  const frameBand = frameOn ? publicFrameBand(org, tournament, todayISO, registration?.state === 'open') : null;
+  const frameBand = publicFrameBand(org, tournament, todayISO, registration?.state === 'open');
   // Who runs it — ONE answer for the desk band and the footer, from the same door as the rail's crumb (Part 2).
-  const frameHost = frameOn ? publicFrameHost(org.name, tournament.name, orgHomeHref) : null;
-  // The paid plan's credit (WI-10), never the demo's. Under the frame it sits in the footer; a free event keeps its badge.
+  const frameHost = publicFrameHost(org.name, tournament.name, orgHomeHref);
+  // The paid plan's credit (WI-10), never the demo's. It sits in the footer; a free event keeps its badge.
   const showBuiltOnCredit = !isFreeTournamentPlan && !isDemoOrgSlug(orgSlug);
-
-  // The free plan's FieldLogicHQ badge and its acquisition banner. Under the frame they render OUTSIDE the frame's element
-  // (both are fixed, so where they sit in the markup moves nothing), keeping today's look exactly (Stage 1: unchanged).
-  const growthChrome = (
-    <>
-      {isFreeTournamentPlan && (
-        <PoweredByBadge
-          orgSlug={orgSlug}
-          tournamentSlug={tournament.slug}
-          offsetForBanner={showAcquisitionBanner}
-        />
-      )}
-      {showAcquisitionBanner && (
-        <TournamentAcquisitionBanner
-          orgSlug={orgSlug}
-          tournamentSlug={tournament.slug}
-          tournamentName={tournament.name}
-        />
-      )}
-    </>
-  );
+  const fanAlertsEnabled = hasPlanFeature(org.planId, 'fan_score_alerts');
 
   // Stage 7 (Ask 6): the focused page (the team pay page, lib/public-focused-page.ts) wears none of the event's chrome.
-  // Under the frame only, each piece that simply goes away there is wrapped in the one gate that asks the rule; the band
-  // and the footer change shape instead and ask it themselves. Switch off, nothing is wrapped.
-  const unlessFocused = (node: React.ReactNode) => (frameOn
-    ? <NotOnFocusedPage orgSlug={orgSlug} tournamentSlug={tournament.slug}>{node}</NotOnFocusedPage>
-    : node);
+  // Each piece that simply goes away there is wrapped in the one gate that asks the rule; the band and the footer change
+  // shape instead and ask it themselves.
+  const unlessFocused = (node: React.ReactNode) => (
+    <NotOnFocusedPage orgSlug={orgSlug} tournamentSlug={tournament.slug}>{node}</NotOnFocusedPage>
+  );
 
-  const page = (
+  return (
     <>
-      <OrgNavSync
-        // Under the frame the mark is the one rule's (lib/tournament-look.ts — Tournament Plus never borrows an org logo).
-        logoUrl={frameBand ? frameBand.logoUrl : canUseAdvancedBranding ? tournament.logoUrl ?? org.logoUrl ?? null : null}
-        orgName={org.name}
-        orgHomeHref={orgHomeHref}
-        // Restore the ORG identity on unmount: navigating up to /{orgSlug} via the new
-        // eyebrow/crumb links keeps the parent org layout mounted, so its own sync never
-        // re-fires — without this, the org page's nav went blank (/review find).
-        restoreLogoUrl={org.logoUrl ?? null}
-        restoreOrgName={org.name}
-      />
-      <TournamentNavSync
-        slug={tournament.slug}
-        tournamentName={tournament.name}
-        colorMode={effectiveColorMode}
-        hiddenPages={navHiddenPages}
-        registerCta={registerCta}
-        startDate={tournament.startDate ?? null}
-        endDate={tournament.endDate ?? null}
-        status={tournament.status ?? null}
-        finished={effectivelyFinished}
-        tournamentId={tournament.id}
-        fanAlertsEnabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
-        hasPublicBracket={hasPublicBracket}
-        publicFrame={frameOn}
-      />
-      {!frameOn && growthChrome}
-      {tournamentCssVars && (
-        <style dangerouslySetInnerHTML={{ __html: `:root { ${tournamentCssVars} }` }} />
-      )}
-      {/* Chrome vars for the nav merge.
-          Desktop (default) — Phase 3:
-          • --desktop-strip-h → 48px: the global desktop STRIP's height; the tournament nav,
-            side rail, score ticker, top-anchored toasts and page top-padding all offset by it.
-          ≤900px — Phase 5 (mobile: no strip, a bottom bar instead):
-          • --desktop-strip-h → 0: zeroed at the SAME 900px boundary that hides the strip
-            (ConsumerShell .topbarStrip), so no fractional-width gap (900–901px) can leave the
-            strip visible while nothing offsets for it.
-          • --nav-event-h seed (≈116px header + ≈45px tabs) so SSR page padding is right on
-            first paint; Navbar's ResizeObserver corrects the real value after hydration.
-          • --bottom-nav-height → 4.5rem: the global bottom bar's height, unified with the main
-            consumer shell (72px, top-aligned tabs) so the persistent tab bar reads as the same
-            app chrome on tournament routes as everywhere else. Canonical bottom-bar var
-            (MyTeamDock, install prompt, growth chrome, page clearances read it). */}
-      <style dangerouslySetInnerHTML={{ __html: `:root { --desktop-strip-h: var(--chrome-bar-h); } @media (max-width: 900px) { :root { --nav-event-h: 161px; --bottom-nav-height: 4.5rem; --desktop-strip-h: 0px; } }` }} />
-      {lightModeVars && (
-        <style dangerouslySetInnerHTML={{ __html: `:root { ${lightModeVars} }` }} />
-      )}
-      {/* The frame's colour roles, on <html> for the frame only: the frame's element reads them through the club's token
-          block, and the app's own bar (mounted outside it) reads the ink. Outranks the org layout's :root block. */}
-      {frameBand && (
+      {/* The free plan's FieldLogicHQ badge and its acquisition banner render OUTSIDE the frame's element (both are fixed,
+          so where they sit in the markup moves nothing). */}
+      {unlessFocused(<>
+        {isFreeTournamentPlan && (
+          <PoweredByBadge
+            orgSlug={orgSlug}
+            tournamentSlug={tournament.slug}
+            offsetForBanner={showAcquisitionBanner}
+          />
+        )}
+        {showAcquisitionBanner && (
+          <TournamentAcquisitionBanner
+            orgSlug={orgSlug}
+            tournamentSlug={tournament.slug}
+            tournamentName={tournament.name}
+          />
+        )}
+      </>)}
+      {/* The frame's one outer element: the marker every frame style is keyed to, and the club site's token block (the ONE
+          light set). Fixed parts inside it (the rail, the dock, the prompts) inherit its tokens like everything else. */}
+      <div className={`${clubFrameStyles.tokens} ${frameStyles.frame}`} data-club-face={frameBand.face} {...publicFrameAttr}>
+        <OrgNavSync
+          // The mark is the one rule's (lib/tournament-look.ts — Tournament Plus never borrows an org logo).
+          logoUrl={frameBand.logoUrl}
+          orgName={org.name}
+          orgHomeHref={orgHomeHref}
+          // Restore the ORG identity on unmount: navigating up to /{orgSlug} via the crumb keeps the parent org layout
+          // mounted, so its own sync never re-fires — without this, the org page's nav went blank (/review find).
+          restoreLogoUrl={org.logoUrl ?? null}
+          restoreOrgName={org.name}
+        />
+        <TournamentNavSync
+          name={tournament.name}
+          tournamentId={tournament.id}
+          startDate={tournament.startDate ?? null}
+          endDate={tournament.endDate ?? null}
+          status={tournament.status ?? null}
+        />
+        {tournamentCssVars && (
+          <style dangerouslySetInnerHTML={{ __html: `:root { ${tournamentCssVars} }` }} />
+        )}
+        {/* Chrome vars. Desktop: --desktop-strip-h → the global desktop STRIP's height (top-anchored toasts and page
+            top-padding offset by it). ≤900px (no strip, a bottom bar instead): --desktop-strip-h → 0, zeroed at the SAME
+            900px boundary that hides the strip (ConsumerShell .topbarStrip); --bottom-nav-height → 4.5rem, the global
+            bottom bar's height (MyTeamDock, the install prompt, the growth chrome and page clearances read it). No
+            header-height seed: the frame's element sets its own chrome heights (TournamentFrame.module.css), and the
+            platform's old event header that the 161px seed stood in for went in Stage 8 Part 3d. */}
+        <style dangerouslySetInnerHTML={{ __html: `:root { --desktop-strip-h: var(--chrome-bar-h); } @media (max-width: 900px) { :root { --bottom-nav-height: 4.5rem; --desktop-strip-h: 0px; } }` }} />
+        {/* The frame's colour roles, on <html>: the frame's element reads them through the club's token block, and the app's
+            own bar (mounted outside it) reads the ink. Outranks the org layout's :root block. */}
         <style dangerouslySetInnerHTML={{ __html: publicFrameRoleCss(frameBand.roles) }} />
-      )}
-      {/* Desktop-only (≥1024px) persistent left nav rail — self-hides below that. Under the frame it is a cell of the
-          frame's desk grid instead (below). */}
-      {!frameOn && <TournamentSideRail />}
-      {/* Broadcast score ticker — self-gates to game day (reserves --ticker-h). Under the frame today's games are one
-          line under the band instead (TodaysResultsLine, below; owner ruling 2026-10-28). */}
-      {!frameOn && <ScoreTicker />}
-      {/* data-live-chrome scopes mobile-chrome CSS (retired page titles/hero) to the
-          LIVE shell only — the admin preview has no unified event header to hand
-          identity to, so it keeps the in-page titles (preview↔public parity). */}
-      <div
-        className={frameOn ? `${railStyles.shell} ${frameStyles.deskShell}` : railStyles.shell}
-        // Card style leaves with the frame (Ask 11): 'default' under it — the marker stays, since the light wrapper rule
-        // (globals.css `[data-card-style][data-color-mode="light"]`) keys on it; the org layout's style is excluded there too.
-        data-card-style={frameOn ? 'default' : cardStyle}
-        data-color-mode={effectiveColorMode}
-        data-live-chrome=""
-      >
-        {frameBand && (
+        {/* data-live-chrome scopes mobile-chrome CSS (retired page titles/hero) to the LIVE shell. Card style left with the
+            frame (Ask 11): the marker stays 'default', since the light wrapper rule (globals.css
+            `[data-card-style][data-color-mode="light"]`) keys on it; the org layout's style is excluded there too. */}
+        <div
+          className={`${railStyles.shell} ${frameStyles.deskShell}`}
+          data-card-style="default"
+          data-color-mode="light"
+          data-live-chrome=""
+        >
           <TournamentBand
             orgSlug={orgSlug}
             tournamentSlug={tournament.slug}
@@ -421,27 +361,14 @@ export default async function TournamentLayout({
             host={frameHost}
             frameContent={frameContent}
           />
-        )}
-        {frameOn && unlessFocused(<TournamentSideRail publicFrame hiddenPages={navHiddenPages}
-          hasBracket={hasPublicBracket} frameContent={frameContent} />)}
-        {frameOn ? (
+          {/* The desk grid's rail cell (self-hides below 1,024 px). */}
+          {unlessFocused(<TournamentSideRail hiddenPages={navHiddenPages} hasBracket={hasPublicBracket}
+            frameContent={frameContent} />)}
+          {/* Today's games are one line under the band (owner ruling 2026-10-28). */}
           <div className={frameStyles.main}>
             <TodaysResultsLine />
             {children}
           </div>
-        ) : children}
-        {/* WI-10 — paid tiers only. Free events already carry the richer PoweredByBadge +
-            acquisition banner; stacking a second credit would say the same thing twice, so this
-            is the strict complement of `isFreeTournamentPlan`.
-            INSIDE the shell and AFTER {children} on purpose: unlike its two siblings, which are
-            `position: fixed` and so don't care about DOM order, this is a static in-flow block.
-            Mounted earlier it rendered at the TOP of the page, tucked under the nav strip and
-            covered by it — a "quiet path back to the platform" that was 100% unclickable. */}
-        {/* …and never inside the "See it live" demo, where this quiet path back to the platform
-            is a way OUT of the thing a prospect was brought here to look at. The banner's own
-            "Start your own — free" is the intended door, and it is always on screen. */}
-        {!frameOn && showBuiltOnCredit && <BuiltOnCredit />}
-        {frameOn && (
           <TournamentFooter
             name={tournament.name}
             contactEmail={frameContactEmail}
@@ -451,65 +378,35 @@ export default async function TournamentLayout({
             showCredit={showBuiltOnCredit}
             frameContent={frameContent}
           />
-        )}
+        </div>
+        {/* The fan's own pieces, all gone on the focused page — one gate, in today's order:
+            · the game-day "now playing" dock for the followed team (self-gates: followers on game day only; mobile-only);
+            · self-onboarding shared links: ?follow=teamId → one-tap "Follow [team]?" (J6-012);
+            · the post-install one-time nudge → turn on score alerts (J6-048; installed app + a followed team);
+            · the fan app install prompt (J6-054) — both suppressed once the event is finished;
+            · "Create an account to follow everywhere", offered (never forced) right after a follow (unified-app Phase 2;
+              checks sign-in lazily, so no auth call per view);
+            · N2: hydrates the signed-in account's follows into the client follow layer (client-only identity — never
+              SSR'd into this SW-cached layout, see the note above). */}
+        {/* One app-only gate each: the gate draws its own wrapper, so each piece keeps its own as before. */}
+        {unlessFocused(<>
+          <PublicAppOnly><MyTeamDock orgSlug={orgSlug} tournamentSlug={tournament.slug} inProgress={tournamentInProgress} fanAlertsEnabled={fanAlertsEnabled} /></PublicAppOnly>
+          <PublicAppOnly><FollowDeepLinkPrompt orgSlug={orgSlug} tournamentSlug={tournament.slug} /></PublicAppOnly>
+          {!effectivelyFinished && <AlertsNudge orgSlug={orgSlug} tournamentSlug={tournament.slug} enabled={fanAlertsEnabled} />}
+          {!effectivelyFinished && (
+            <InstallAppPrompt
+              appName="FieldLogicHQ"
+              subtitle={fanAlertsEnabled
+                ? 'Live scores, schedule & alerts — add to your home screen.'
+                : 'Live scores & schedule — add to your home screen.'}
+              orgSlug={orgSlug}
+              tournamentSlug={tournament.slug}
+            />
+          )}
+          <PublicAppOnly><FollowAccountNudge orgSlug={orgSlug} tournamentSlug={tournament.slug} /></PublicAppOnly>
+          <PublicAppOnly><AccountFollowSync orgSlug={orgSlug} tournamentSlug={tournament.slug} /></PublicAppOnly>
+        </>)}
       </div>
-      {/* Game-day "now playing" dock for the followed team (self-gates: followers
-          on game day only; mobile-only). */}
-      {frameOn ? unlessFocused(<PublicAppOnly><MyTeamDock
-        publicFrame
-        orgSlug={orgSlug}
-        tournamentSlug={tournament.slug}
-        inProgress={tournamentInProgress}
-        fanAlertsEnabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
-      /></PublicAppOnly>) : <MyTeamDock
-        orgSlug={orgSlug}
-        tournamentSlug={tournament.slug}
-        inProgress={tournamentInProgress}
-        fanAlertsEnabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
-      />}
-      {/* Self-onboarding shared links: ?follow=teamId → one-tap "Follow [team]?" (J6-012). */}
-      {frameOn ? unlessFocused(<PublicAppOnly><FollowDeepLinkPrompt orgSlug={orgSlug} tournamentSlug={tournament.slug} publicFrame /></PublicAppOnly>)
-        : <FollowDeepLinkPrompt orgSlug={orgSlug} tournamentSlug={tournament.slug} />}
-      {/* Post-install one-time nudge → turn on score alerts (J6-048). Self-gates to
-          the installed app + a followed team; suppressed once the event is finished. */}
-      {!effectivelyFinished && unlessFocused(
-        <AlertsNudge
-          orgSlug={orgSlug}
-          tournamentSlug={tournament.slug}
-          enabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
-        />
-      )}
-      {/* Fan app install — active/upcoming events only; suppressed once finished
-          (no live scores/alerts left to follow — J6-054). */}
-      {!effectivelyFinished && unlessFocused(
-        <InstallAppPrompt
-          appName="FieldLogicHQ"
-          subtitle={
-            hasPlanFeature(org.planId, 'fan_score_alerts')
-              ? 'Live scores, schedule & alerts — add to your home screen.'
-              : 'Live scores & schedule — add to your home screen.'
-          }
-          orgSlug={orgSlug}
-          tournamentSlug={tournament.slug}
-        />
-      )}
-      {/* "Create an account to follow everywhere" — offered (never forced) to signed-out
-          visitors right after they follow a team. The follow already saved locally; this is
-          a non-blocking upsell with a "just this device" escape (unified-app Phase 2). It
-          self-gates (checks sign-in lazily, only after a follow), so no auth call per view. */}
-      {frameOn ? unlessFocused(<PublicAppOnly><FollowAccountNudge orgSlug={orgSlug} tournamentSlug={tournament.slug} /></PublicAppOnly>)
-        : <FollowAccountNudge orgSlug={orgSlug} tournamentSlug={tournament.slug} />}
-      {/* N2: hydrates the signed-in account's follows into the client follow layer
-          (pin seeding + "Following" buttons). Client-only identity — never SSR'd
-          into this SW-cached layout (see the account-chip note above). */}
-      {frameOn ? unlessFocused(<PublicAppOnly><AccountFollowSync orgSlug={orgSlug} tournamentSlug={tournament.slug} /></PublicAppOnly>)
-        : <AccountFollowSync orgSlug={orgSlug} tournamentSlug={tournament.slug} />}
     </>
   );
-
-  // The frame's one outer element: the marker every frame style is keyed to, and the club site's token block (the ONE
-  // light set). Fixed parts inside it (the rail, the dock, the prompts) inherit its tokens like everything else.
-  return frameOn
-    ? <>{unlessFocused(growthChrome)}<div className={`${clubFrameStyles.tokens} ${frameStyles.frame}`} data-club-face={frameBand?.face} {...publicFrameAttr}>{page}</div></>
-    : page;
 }

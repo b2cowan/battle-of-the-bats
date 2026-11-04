@@ -9,17 +9,18 @@
  * bar + bottom nav untouched.
  *
  * Two callers, one component (drift-proof):
- *  - The live public layout renders <TournamentSideRail/> with NO props — it reads
- *    the OrgNav context + route params and links to `/{org}/{tournament}/…`.
+ *  - The live public layout passes the tab facts (hidden pages, the bracket, the frame's tab content) and links to
+ *    `/{org}/{tournament}/…` from the route params; the crumb and heading come from the OrgNav context.
  *  - The admin tournament PREVIEW passes an explicit `basePath` (+ branding props)
  *    so the rail links stay inside `/…/preview/{tournament}/…` and active-state
  *    matches the preview pathname.
  *
- * UNDER THE PUBLIC FRAME (Public tournament pages Stage 1 Part 2, behind the preview switch — lib/public-frame.ts) the rail
- * is the same links in the club site's look: white on the light ground, running the page's full height beside it, under
- * the organizer's band (the layout places it in the frame's desk grid). The band carries the event's name, logo and host,
- * so the rail's identity block steps aside, and the footer carries the credit, so its "Live on FieldLogicHQ" line does
- * too. All of it is CSS keyed to the frame's marker (TournamentSideRail.module.css); with the switch off nothing changes.
+ * UNDER THE PUBLIC FRAME (Public tournament pages Stage 1 Part 2) the rail is the same links in the club site's look: white
+ * on the light ground, running the page's full height beside it, under the organizer's band (the layout places it in the
+ * frame's desk grid). The band carries the event's name, logo and host, so the rail's identity block steps aside, and the
+ * footer carries the credit, so its "Live on FieldLogicHQ" line does too. All of it is CSS keyed to the frame's marker
+ * (TournamentSideRail.module.css). Every live page wears the frame since Stage 8 Part 3d; only the admin preview's
+ * switch-off branch still draws the old dark rail (Part 4 deletes it).
  */
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -38,9 +39,10 @@ type TournamentSideRailProps = {
   basePath?: string;
   logoUrl?: string | null;
   heading?: string | null;
+  /** The live frame is light; only the preview's switch-off branch passes its own. */
   colorMode?: 'dark' | 'light' | null;
-  hiddenPages?: PublicPageKey[];
-  publicFrame?: boolean;
+  hiddenPages: PublicPageKey[];
+  /** The live layout's server answer; the preview has no Playoffs route, so it is ignored there. */
   hasBracket?: boolean;
   /** Both frame layouts pass their facts explicitly so the server's first paint agrees with the band/footer. */
   frameContent?: FrameTabContent;
@@ -52,10 +54,9 @@ export default function TournamentSideRail({
   heading,
   colorMode,
   hiddenPages,
-  publicFrame = false,
-  hasBracket,
+  hasBracket = false,
   frameContent,
-}: TournamentSideRailProps = {}) {
+}: TournamentSideRailProps) {
   const pathname = usePublicPathname();
   const params = useParams();
   const ctx = useOrgNav();
@@ -66,22 +67,19 @@ export default function TournamentSideRail({
   // SAYS is spelled for the address the visitor is on. The preview's basePath is not the club's public address: unchanged.
   const spell = (p: string) => (basePath ? p : orgHref(p.slice(orgSlug.length + 1)));
 
-  // Public usage: no props → derive everything from route params + context (unchanged).
-  // Preview usage: an explicit basePath (and branding props) is passed.
+  // Public usage: links from the route params. Preview usage: an explicit basePath (and branding props) is passed.
   const homeHref = basePath ?? (orgSlug && tournamentSlug ? `/${orgSlug}/${tournamentSlug}` : null);
   if (!homeHref) return null;
 
   const resolvedLogo = logoUrl !== undefined ? logoUrl : ctx.logoUrl;
   const resolvedHeading = heading !== undefined ? heading : (ctx.tournamentName || ctx.orgName);
-  const resolvedColorMode = colorMode ?? ctx.tournamentColorMode ?? 'dark';
-  const resolvedHidden = hiddenPages ?? ctx.tournamentHiddenPages;
-  // Legacy mounts keep the context fallback. Preview has no Playoffs route; live frame facts arrive from the server.
-  const items = visibleTournamentTabs(resolvedHidden, !basePath && (hasBracket ?? ctx.tournamentHasBracket), frameContent);
+  // Preview has no Playoffs route; the live layout's bracket answer arrives from the server.
+  const items = visibleTournamentTabs(hiddenPages, !basePath && hasBracket, frameContent);
 
   return (
     <aside
       className={styles.rail}
-      data-color-mode={resolvedColorMode}
+      data-color-mode={colorMode ?? 'light'}
       aria-label="Tournament sections"
     >
       {/* Identity block — no longer a link to the event home (Nav Unification Stage B.4:
@@ -141,7 +139,7 @@ export default function TournamentSideRail({
         })}
       </nav>
       {/* Persistent followed-team card — live public rail only, not admin preview (J6-042). */}
-      {!basePath && (publicFrame ? <PublicAppOnly><DesktopMyTeamRailCard publicFrame /></PublicAppOnly> : <DesktopMyTeamRailCard />)}
+      {!basePath && <PublicAppOnly><DesktopMyTeamRailCard /></PublicAppOnly>}
       <div className={styles.railFooter}>Live on FieldLogicHQ</div>
       </div>
     </aside>

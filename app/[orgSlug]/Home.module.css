@@ -18,13 +18,7 @@
    stay aligned and don't reflow as values change. */
 .statNum,
 .countdown,
-.scorePill,
-.finalScore,
-.myTeamLiveScore,
-.myTeamRecord strong,
-.myTeamCountdown,
-.recordStats strong,
-.recordListRow span {
+.finalScore {
   font-variant-numeric: tabular-nums;
 }
 
@@ -63,12 +57,6 @@
   .hero { padding-top: 0; }
 }
 
-.heroBg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-
 .heroBanner {
   position: absolute;
   inset: 0;
@@ -94,36 +82,6 @@
   z-index: 2;
 }
 
-.heroOrb1 {
-  position: absolute;
-  top: -20%;
-  right: -10%;
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(var(--primary-rgb),0.35) 0%, transparent 65%);
-  animation: float 8s ease-in-out infinite;
-}
-
-.heroOrb2 {
-  position: absolute;
-  bottom: -20%;
-  left: -10%;
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, rgba(var(--primary-rgb),0.2) 0%, transparent 65%);
-  animation: float 10s ease-in-out infinite reverse;
-}
-
-.heroGrid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(var(--primary-rgb),0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(var(--primary-rgb),0.06) 1px, transparent 1px);
-  background-size: 60px 60px;
-  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
-}
-
 .heroContent {
   position: relative;
   z-index: 1;
@@ -131,31 +89,6 @@
   /* Nav clearance now lives on .hero (padding-top); this is just breathing room. */
   padding-top: 2rem;
   padding-bottom: 4rem;
-}
-
-.heroBadge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.5rem 1.25rem;
-  background: var(--primary-faint);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  font-family: var(--font-display);
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--primary-light);
-  margin-bottom: 2rem;
-  animation: fadeInUp 0.6s ease;
-  text-align: center;
-}
-
-.dateLine {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
 }
 
 .badgeText {
@@ -174,11 +107,6 @@
 .badgeSeparator { display: none; }
 
 @media (min-width: 769px) {
-  .heroBadge {
-    align-items: center;
-    border-radius: 999px;
-    padding: 0.35rem 1.25rem;
-  }
   .badgeText {
     flex-direction: row;
     align-items: center;
@@ -205,12 +133,6 @@
   text-shadow: 0 0 80px rgba(var(--primary-rgb),0.5);
 }
 
-/* The desktop top bar already shows the date + countdown status, so the in-hero
-   badge is redundant there — keep it only on mobile/tablet (which have no top bar). */
-@media (min-width: 1024px) {
-  .heroBadge { display: none; }
-}
-
 /* On a banner photo the title always sits on a darkened image — keep it light
    even in light mode (where --white flips to near-black). */
 .hero:has(.heroBanner) .heroTitle,
@@ -233,21 +155,6 @@
 
 /* "Get the app" moved into the More sheet (2026-07-15) — its hero link styles
    retired with it. */
-
-.draftPublicNotice {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  max-width: 680px;
-  margin: 0 auto;
-  padding: 0.65rem 1rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  border-radius: var(--radius);
-  background: rgba(0,0,0,0.45);
-  color: var(--logic-lime);
-  font-size: 0.88rem;
-  line-height: 1.45;
-}
 
 .previewBanner,
 .registrationStatus {
@@ -288,31 +195,6 @@
   color: var(--white-50);
 }
 
-.heroCta {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 0.25rem;
-  animation: fadeInUp 0.7s ease 0.3s both;
-}
-
-/* A4.2/A4.5 — the desktop CTA carried NO supporting text, so the first mention that
-   registering creates an account was a password field halfway down the form (the point a
-   cautious volunteer bails). One line sets the expectation; the quiet half is the
-   follow-only off-ramp, so a parent who just wants scores never starts a registration. */
-.heroCtaNote {
-  max-width: 34rem;
-  margin: 0 auto 0.25rem;
-  text-align: center;
-  font-size: 0.8rem;
-  line-height: 1.5;
-  color: var(--white-60);
-  animation: fadeInUp 0.7s ease 0.35s both;
-}
-
-.heroCtaNoteQuiet {
-  color: var(--white-45);
-}
-
 /* Stats */
 .stats {
   display: flex;
@@ -342,10 +224,6 @@
   line-height: 1;
 }
 
-.ageRangeText {
-  font-size: clamp(1rem, 3vw, 2rem);
-}
-
 .statLabel {
   display: block;
   font-size: 0.75rem;
@@ -356,102 +234,9 @@
   margin-top: 0.25rem;
 }
 
-.statDivider {
-  width: 1px;
-  height: 40px;
-  background: var(--border);
-}
-
-.heroScroll {
-  position: absolute;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1;
-}
-
-.scrollLine {
-  width: 1px;
-  height: 60px;
-  background: linear-gradient(to bottom, var(--primary), transparent);
-  margin: 0 auto;
-  animation: scrollPulse 2s ease-in-out infinite;
-}
-
-/* Live/in-progress: collapse the full-viewport marketing hero so game data leads,
-   especially on mobile (binding 2026-06-01: home page is state-dependent). */
-.heroCompact { min-height: auto; }
-
-@media (max-width: 768px) {
-  .heroCompact .heroContent {
-    /* .hero already reserves --nav-height; this is the extra compact gap. */
-    padding-top: 1rem;
-    padding-bottom: 2rem;
-  }
-  .heroCompact .heroTitle {
-    font-size: clamp(2.25rem, 9vw, 3.25rem);
-  }
-  .heroCompact .stats { margin-top: 2rem; }
-  .heroCompact .heroScroll { display: none; }
-}
-
-/* Tournament day panel */
-.dayPanelSection {
-  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
-}
-
-.dayPanelHeader {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.dayPanelHeader h2 {
-  margin-top: 0.35rem;
-}
-
-.dayGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  align-items: stretch;
-}
-
-.dayCard,
-.myTeamCard {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.myTeamCard {
-  border-color: rgba(var(--primary-rgb),0.45);
-  background: linear-gradient(135deg, rgba(var(--primary-rgb),0.12), var(--surface));
-  box-shadow: var(--shadow), var(--glow-sm);
-}
-
-/* The "glass" card style applies backdrop-filter to every .card, which makes each
-   card its own stacking context — trapping an open dropdown's z-index inside the card
-   and letting the next card paint over the part that overflows. While a card owns an
-   open control (e.g. the follow-team picker), lift it above its grid siblings so the
-   dropdown stays on top. */
-.myTeamCard:has([aria-expanded="true"]),
-.dayCard:has([aria-expanded="true"]) {
-  position: relative;
-  z-index: 10;
-}
-
 /* ── Playoff hero takeover (auto on bracket creation) ─────────────────────────
    The home hero flips to a Playoffs theme: a stronger primary wash, a "Playoffs"
    badge, a countdown to the first knockout game, and the Playoff Picture CTA. */
-.playoffHero .heroBg {
-  background:
-    radial-gradient(900px 340px at 50% -20%, rgba(var(--primary-rgb), 0.34), transparent 70%),
-    var(--surface);
-}
 
 .playoffHeroBadge {
   display: inline-flex;
@@ -486,153 +271,8 @@
   margin-top: 1.5rem;
 }
 
-/* ── Champions hero takeover (auto once the whole bracket is decided) ──────────
-   The finish-line counterpart to the playoff takeover: a gold wash, a "Champion(s)"
-   badge, the winner headlined, and the Final Results (recap) CTA. */
-.championsHero .heroBg {
-  background:
-    radial-gradient(900px 340px at 50% -20%, rgba(var(--gold-rgb), 0.30), transparent 70%),
-    var(--surface);
-}
-
-/* Secondary host attribution — sits under the result, de-emphasised so the
-   champion + final lead the hero. */
-
-.dayCardHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.dayCardIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  border-radius: var(--radius-sm);
-  background: var(--primary-faint);
-  border: 1px solid rgba(var(--primary-rgb),0.25);
-  color: var(--primary-light);
-}
-
-/* Interactive variant (unfollow star) — same look, but a real button under it. */
-.dayCardIconBtn {
-  padding: 0;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.dayCardIconBtn:hover,
-.dayCardIconBtn:focus-visible {
-  background: rgba(var(--primary-rgb), 0.3);
-  border-color: rgba(var(--primary-rgb), 0.45);
-}
-
-.dayCardKicker {
-  display: block;
-  margin-bottom: 0.12rem;
-  color: var(--white-40);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.dayCardHeader h3 {
-  margin: 0;
-  color: var(--white);
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 800;
-}
-
-.dayCardSub {
-  margin: 0;
-  color: var(--white-60);
-  line-height: 1.5;
-}
-
-.quickGameList,
-.statusList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.scorePill {
-  color: var(--primary-light);
-  font-family: var(--font-data);
-  font-size: 0.82rem;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.scorePill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 54px;
-  min-height: 28px;
-  padding: 0.2rem 0.45rem;
-  border: 1px solid rgba(var(--primary-rgb),0.35);
-  border-radius: var(--radius-sm);
-  background: rgba(var(--primary-rgb),0.12);
-}
-
 /* Latest-Finals card — same stacked language as the Recent-Scores cards: away
    over home, scores in a fixed right column, winner trophy + green / loser dim. */
-.finalRow {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  background: var(--white-5);
-  text-decoration: none;
-  transition: border-color 0.16s ease, background 0.16s ease;
-}
-
-.finalRow:hover {
-  border-color: rgba(var(--primary-rgb), 0.45);
-  background: var(--white-10);
-}
-
-.finalMatch {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.finalTeam {
-  display: grid;
-  grid-template-columns: 1rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--white-60);
-}
-
-.finalWinIconSlot {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1rem;
-  flex-shrink: 0;
-}
-
-.finalName {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-height: 1.25;
-  font-size: 0.85rem;
-  font-weight: 700;
-}
 
 .finalScore {
   justify-self: end;
@@ -645,189 +285,9 @@
 
 .finalWin { color: var(--white); }
 .finalWin .finalScore { color: var(--success-strong); }
-.finalWin .finalWinIconSlot { color: var(--success-strong); }
 .finalLose { color: var(--white-50); }
 
-.finalMeta {
-  color: var(--white-45);
-  font-size: 0.73rem;
-}
-
-.myTeamGame {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  background: rgba(0,0,0,0.16);
-}
-
-.myTeamGameTop {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--white-55);
-  font-size: 0.82rem;
-}
-
-.myTeamGame strong {
-  color: var(--white);
-  line-height: 1.35;
-  overflow-wrap: anywhere;
-}
-
-/* ── My Team card: record badge in header ──────────────────────────────────── */
-.myTeamRecord {
-  margin-left: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.06rem;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.myTeamRecord strong {
-  font-family: var(--font-data);
-  font-size: 0.95rem;
-  font-weight: 900;
-  color: var(--white);
-  line-height: 1;
-}
-
-.myTeamRecord span {
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--primary-light);
-  text-transform: uppercase;
-}
-
-/* ── My Team card: live state ──────────────────────────────────────────────── */
-.myTeamLive {
-  border-color: rgba(var(--danger-rgb), 0.4);
-  background: rgba(var(--danger-rgb), 0.08);
-}
-
-.myTeamLiveTop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.myTeamLiveBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.12rem 0.45rem;
-  border: 1px solid rgba(var(--danger-rgb), 0.5);
-  border-radius: 2px;
-  background: rgba(var(--danger-rgb), 0.15);
-  color: var(--danger-strong);
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.myTeamLiveDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--danger);
-  animation: myTeamLivePulse 1.4s ease-in-out infinite;
-}
-
-@keyframes myTeamLivePulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.35; }
-}
-
-.myTeamLiveScore {
-  font-family: var(--font-data);
-  font-size: 1.5rem;
-  font-weight: 900;
-  color: var(--white);
-  line-height: 1;
-  letter-spacing: 0.04em;
-}
-
-/* ── My Team card: countdown chip on the next-game row ─────────────────────── */
-.myTeamCountdown {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  padding: 0.1rem 0.5rem;
-  border: 1px solid rgba(var(--primary-rgb), 0.35);
-  border-radius: var(--radius-xl);
-  background: rgba(var(--primary-rgb), 0.12);
-  color: var(--primary-light);
-  font-family: var(--font-data);
-  font-size: 0.66rem;
-  font-weight: 900;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-}
-
-.dayCardActions {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  margin-top: auto;
-}
-
-.statusItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  min-height: 44px;
-  padding: 0.6rem 0.7rem;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  background: var(--white-5);
-}
-
-.statusItem span {
-  color: var(--primary-light);
-  font-size: 0.8rem;
-  font-weight: 800;
-  text-align: right;
-}
-
-.statusItem strong {
-  order: -1;
-  color: var(--white);
-  font-size: 0.85rem;
-}
-
 /* ── Champion banner (completed tournament) — medal gold (--gold), J6-052 ────── */
-.championSection {
-  background: linear-gradient(135deg, rgba(var(--gold-rgb), 0.16) 0%, rgba(var(--gold-rgb), 0.05) 50%, var(--bg) 80%);
-  border-bottom: 1px solid rgba(var(--gold-rgb), 0.22);
-}
-
-.championCard {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  padding: 1.25rem 1.5rem;
-  border: 1px solid rgba(var(--gold-rgb), 0.35);
-  border-radius: var(--radius-lg);
-  background: rgba(var(--gold-rgb), 0.08);
-}
-
-.championDivision {
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--gold-strong);
-}
 
 .championName {
   font-size: clamp(1.5rem, 4vw, 2.5rem);
@@ -836,177 +296,9 @@
   line-height: 1.05;
 }
 
-.championRunnerUp {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  margin-top: 0.85rem;
-  padding-top: 0.85rem;
-  border-top: 1px solid rgba(var(--gold-rgb), 0.25);
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--white-70);
-}
-
-.runnerUpLabel {
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--white-60);
-}
-
-.championSingle {
-  text-align: center;
-  align-items: center;
-  max-width: 680px;
-  margin-inline: auto;
-  padding: 2rem;
-}
-
-.championSingle .championName {
-  font-size: clamp(2rem, 6vw, 3.5rem);
-}
-
-/* Divider spans the full card width in the centred single-champion card,
-   while the runner-up text stays centred. */
-.championSingle .championRunnerUp {
-  align-self: stretch;
-}
-
-/* ── Multi-division / tiered podium — every crowned tier winner, grouped by division.
-   Mirrors the /champions recap card language (crown + tier badge), gold-forward. ─────── */
-.championDivisions {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.75rem 1.25rem;
-  margin-top: 1.5rem;
-}
-
-.championDivisionBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-}
-
-.championDivisionName {
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--gold-strong);
-}
-
-.championTierList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.championTierCard {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--bg-card);
-}
-
-/* The top-tier winner is the overall division champion — gold-forward + larger. */
-.championTierTop {
-  border-color: rgba(var(--gold-rgb), 0.4);
-  background: linear-gradient(135deg, rgba(var(--gold-rgb), 0.16) 0%, rgba(var(--gold-rgb), 0.05) 60%, var(--bg-card) 100%);
-}
-
-.championTierCrown {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  border-radius: var(--radius-md);
-  background: rgba(var(--gold-rgb), 0.16);
-  border: 1px solid rgba(var(--gold-rgb), 0.35);
-  color: var(--gold-strong);
-}
-
-.championTierTop .championTierCrown {
-  width: 48px;
-  height: 48px;
-}
-
-.championTierBody {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  min-width: 0;
-}
-
-.championTierBadge {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--gold-strong);
-}
-
-.championTierName {
-  font-size: 1.15rem;
-  font-weight: 900;
-  color: var(--fl-text);
-  line-height: 1.15;
-  overflow-wrap: anywhere;
-}
-
-.championTierTop .championTierName {
-  font-size: 1.4rem;
-}
-
-.championTierMeta {
-  font-size: 0.82rem;
-  color: var(--white-60);
-}
-
-.championTierMeta strong {
-  color: var(--success-strong);
-  font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
-}
-
-.championShareRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  justify-content: flex-end;
-  margin-top: 1.5rem;
-}
-
 /* Completed tournament public record */
 .recordSection {
   background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
-}
-
-.recordHeader {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1.25rem;
-  margin-bottom: 1.5rem;
-}
-
-.recordHeader h2 {
-  margin-top: 0.35rem;
-}
-
-.recordHeader p {
-  max-width: 680px;
-  margin: 0.55rem 0 0;
-  color: var(--white-60);
-  line-height: 1.6;
 }
 
 .recordActions {
@@ -1030,103 +322,21 @@
   min-width: 0;
 }
 
-.recordWideCard {
-  grid-column: 1 / -1;
-}
-
-.recordStats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.65rem;
-}
-
-.recordStats div {
-  min-width: 0;
-  padding: 0.75rem;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  background: var(--white-5);
-}
-
-.recordStats strong {
-  display: block;
-  color: var(--white);
-  font-family: var(--font-data);
-  font-size: 1.35rem;
-  font-weight: 950;
-  line-height: 1;
-}
-
-.recordStats span {
-  display: block;
-  margin-top: 0.35rem;
-  color: var(--white-50);
-  font-size: 0.76rem;
-  font-weight: 750;
-  line-height: 1.25;
-}
-
 .recordList {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
 }
 
-.recordListRow {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.65rem;
-  min-height: 44px;
-  padding: 0.6rem 0.7rem;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  background: var(--white-5);
-}
-
-.recordListRow span {
-  color: var(--primary-light);
-  font-family: var(--font-data);
-  font-size: 0.78rem;
-  font-weight: 900;
-}
-
-.recordListRow strong {
-  min-width: 0;
-  color: var(--white);
-  font-size: 0.86rem;
-  overflow-wrap: anywhere;
-}
-
-.recordListRow em {
-  color: var(--white-45);
-  font-size: 0.76rem;
-  font-style: normal;
-  white-space: nowrap;
-}
-
 @media (max-width: 860px) {
-  .dayGrid {
-    grid-template-columns: 1fr;
-  }
 
   .recordGrid {
     grid-template-columns: 1fr;
   }
-
-  .recordStats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 640px) {
-  .dayPanelHeader,
-  .recordHeader {
-    align-items: stretch;
-    flex-direction: column;
-  }
 
-  .dayPanelHeader > a,
   .recordActions > * {
     justify-content: center;
   }
@@ -1135,39 +345,11 @@
     align-items: stretch;
     flex-direction: column;
   }
-
-  .dayCardActions > * {
-    flex: 1;
-    justify-content: center;
-  }
-
-  .recordListRow {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .recordListRow em {
-    grid-column: 2;
-    white-space: normal;
-  }
 }
 
 /* Games grid */
-.gamesGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.25rem;
-}
 
 .gameCard { animation: fadeInUp 0.5s ease both; }
-
-.gameHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
 
 .gameDate {
   font-size: 0.8rem;
@@ -1204,31 +386,9 @@
   flex-shrink: 0;
 }
 
-.gameLocation {
-  font-size: 0.8rem;
-  color: var(--white-60);
-  text-align: center;
-}
-
 /* Announcements */
-.announcementsSection { background: var(--bg-2); }
-
-.annGrid {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  margin-bottom: 2rem;
-  max-width: 900px;
-  margin-inline: auto;
-}
 
 .annCard { display: flex; flex-direction: column; gap: 0.75rem; }
-
-.annFeatured {
-  grid-column: 1 / -1;
-  background: linear-gradient(135deg, rgba(var(--primary-rgb),0.12), rgba(0,0,0,0.5));
-  border-color: var(--primary);
-}
 
 .annHeader { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 
@@ -1259,31 +419,11 @@
     linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
 }
 
-[data-color-mode="light"] .heroBg {
-  background: linear-gradient(180deg, rgba(var(--primary-rgb), 0.08), rgba(255, 255, 255, 0));
-}
-
-[data-color-mode="light"] .heroOrb1,
-[data-color-mode="light"] .heroOrb2 {
-  opacity: 0.35;
-}
-
-[data-color-mode="light"] .heroOrb2 {
-  background: radial-gradient(circle, rgba(var(--logic-lime-rgb), 0.35) 0%, transparent 65%);
-}
-
-[data-color-mode="light"] .heroGrid {
-  background-image:
-    linear-gradient(rgba(var(--primary-rgb), 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(var(--primary-rgb), 0.08) 1px, transparent 1px);
-}
-
 [data-color-mode="light"] .heroTitle {
   text-shadow: 0 12px 40px rgba(var(--primary-rgb), 0.16);
 }
 
 [data-color-mode="light"] .heroSub strong,
-[data-color-mode="light"] .heroBadge,
 [data-color-mode="light"] .previewBanner,
 [data-color-mode="light"] .countdown,
 [data-color-mode="light"] .vs {
@@ -1298,25 +438,6 @@
   box-shadow: 0 18px 50px rgba(15, 17, 35, 0.08);
 }
 
-[data-color-mode="light"] .annFeatured {
-  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.1), rgba(255, 255, 255, 0.92));
-}
-
-[data-color-mode="light"] .announcementsSection {
-  background: var(--bg-2);
-}
-
-/* Animations */
-@keyframes float {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50%       { transform: translateY(-30px) scale(1.05); }
-}
-
-@keyframes scrollPulse {
-  0%, 100% { opacity: 1; transform: scaleY(1); }
-  50%       { opacity: 0.4; transform: scaleY(0.6); }
-}
-
 @media (max-width: 600px) {
   .stats {
     display: grid;
@@ -1325,13 +446,10 @@
     gap: 1rem;
     padding: 1rem;
   }
-  .statDivider { display: none; }
 }
 
 @media (max-width: 768px) {
   .stats { gap: 1.5rem; padding: 1.25rem 1.5rem; }
-  .annGrid { grid-template-columns: 1fr; }
-  .annFeatured { grid-column: 1; }
   .page {
     padding-bottom: calc(var(--bottom-nav-height, 72px) + 3.5rem + env(safe-area-inset-bottom));
   }
@@ -1434,151 +552,6 @@
   flex-shrink: 0;
 }
 
-/* ── Live Now (A1) — games in their live window lead the page body. ─────────── */
-.liveNowSection {
-  padding-top: 1.1rem;
-  padding-bottom: 0.4rem;
-}
-
-.liveNowHeader {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: 0 0.15rem 0.35rem;
-}
-
-.liveNowKicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--danger-strong, var(--danger));
-}
-
-.liveNowCount {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--white-40);
-}
-
-/* Live dot: the shared global .live-dot glyph (one definition, no drift). */
-
-.liveNowList {
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm), var(--highlight-top);
-  overflow: hidden;
-}
-
-.liveNowRow {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  min-height: var(--tap-min, 44px);
-  padding: 0.6rem 0.9rem;
-  border-bottom: 1px solid var(--white-5);
-  transition: var(--transition);
-}
-.liveNowRow:last-child { border-bottom: 0; }
-.liveNowRow:hover { background: var(--white-5); }
-
-.liveNowWho { flex: 1; min-width: 0; }
-
-.liveNowName {
-  display: block;
-  font-size: 0.92rem;
-  line-height: 1.3;
-  color: var(--white-60);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.liveNowLeading {
-  color: var(--white);
-  font-weight: 680;
-}
-
-.liveNowContext {
-  display: block;
-  margin-top: 0.15rem;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--white-40);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.liveNowScore {
-  flex: 0 0 auto;
-  text-align: right;
-}
-
-.liveNowDigits {
-  display: block;
-  font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
-  font-size: 1.2rem;
-  font-weight: 700;
-  line-height: 1.1;
-  color: var(--white);
-}
-.liveNowDigitsFaint {
-  display: block;
-  font-family: var(--font-data);
-  font-size: 1rem;
-  line-height: 1.1;
-  color: var(--white-30);
-}
-
-.liveNowNoScore {
-  display: block;
-  font-family: var(--font-data);
-  font-size: 0.8rem;
-  line-height: 1.1;
-  white-space: nowrap;
-  color: var(--white-70);
-}
-
-.liveNowCaption {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--danger-strong, var(--danger));
-}
-.liveNowCaption :global(.live-dot) { width: 5px; height: 5px; }
-
-.liveNowCaptionQuiet {
-  display: block;
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--white-40);
-}
-
-.liveNowUpcoming .liveNowName { color: var(--white-80); }
-
-.liveNowMore {
-  display: flex;
-  justify-content: center;
-  padding-top: 0.5rem;
-}
-
 /* ── Mobile pre-event panel — carries the hero's pre-event jobs below 900px ──── */
 .preEventPanel {
   display: none;
@@ -1674,16 +647,10 @@
 /* The readable baseline (Stage 1 Part 3): the same cards in the same order, on the club's light ground — white cards
    with a hairline, no washes of the organizer's colour, no shadows or glows (plan §4), nothing under 12 px (Ask 2).
    Later in the file than today's Light-mode lines, so these win under the frame and nowhere else. */
-[data-public-frame='light'] .dayPanelSection,
 [data-public-frame='light'] .recordSection,
-[data-public-frame='light'] .championSection,
 [data-public-frame='light'] .preLogoCard {
   background: none;
 }
-[data-public-frame='light'] .myTeamCard,
-[data-public-frame='light'] .championTierTop,
-[data-public-frame='light'] .annFeatured,
-[data-public-frame='light'] .draftPublicNotice,
 [data-public-frame='light'] .registrationStatus,
 [data-public-frame='light'] .previewBanner,
 [data-public-frame='light'] .stats {
@@ -1691,41 +658,17 @@
   background: var(--surface);
   box-shadow: none;
 }
-[data-public-frame='light'] .myTeamGame { background: var(--bg-inset); }
-[data-public-frame='light'] .myTeamCountdown,
-[data-public-frame='light'] .scorePill {
-  border-color: var(--border);
-  background: var(--bg-inset);
-}
-[data-public-frame='light'] .dayCardIcon,
 [data-public-frame='light'] .orgLogo { border-color: var(--border); }
-[data-public-frame='light'] .finalRow:hover { border-color: var(--primary-light); }
 [data-public-frame='light'] .vs { color: var(--primary-light); }
 [data-public-frame='light'] .vs,
 [data-public-frame='light'] .teamName { font-weight: var(--club-title-weight); }
-[data-public-frame='light'] .dayCardKicker,
 [data-public-frame='light'] .preCountdownLabel,
 [data-public-frame='light'] .preCountdownDate,
-[data-public-frame='light'] .preCtaDetail,
-[data-public-frame='light'] .finalMeta,
-[data-public-frame='light'] .myTeamCountdown,
-[data-public-frame='light'] .myTeamRecord span {
+[data-public-frame='light'] .preCtaDetail {
   font-size: 0.75rem;
 }
 
 /* Explore links (every public page reachable from the Overview — J6-006). */
-.exploreRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: center;
-  margin: 2.5rem 0 0.5rem;
-}
-@media (max-width: 768px) {
-  .exploreRow :global(.btn) {
-    min-height: var(--tap-min, 44px);
-  }
-}
 
 .preCountdownDate {
   font-family: var(--font-data);
@@ -1792,11 +735,8 @@
   /* Centered hero prose — widened, but kept short of the banners: a subtitle set to the
      full 880px runs past a comfortable reading measure. */
   .heroSub { max-width: 760px; }
-  .recordHeader p { max-width: 760px; }
 
   /* Full-width blocks: status ribbons and the champion card are chrome, not prose. */
-  .draftPublicNotice,
   .previewBanner,
-  .registrationStatus,
-  .championSingle { max-width: 880px; }
+  .registrationStatus { max-width: 880px; }
 }

@@ -1,8 +1,7 @@
 'use client';
 /**
  * components/public/TodaysResultsLine.tsx
- * Today's games, one at a time — the new frame's ticker (Public tournament pages Stage 1, behind the preview switch,
- * lib/public-frame.ts). Owner ruling 2026-10-28 (build prompt Part 4 step 2): option F's behaviour in option D's look.
+ * Today's games, one at a time — the frame's ticker (Public tournament pages Stage 1). Owner ruling 2026-10-28 (build prompt Part 4 step 2): option F's behaviour in option D's look.
  *
  * One still 44 px line under the tab row that scrolls away with the page (only the tab row pins). Each game fades in, holds, and fades out; the state word is one of three —
  * Live, Final, or the start time of a game later today. On opening it goes through the day once, then rests on the
@@ -71,7 +70,7 @@ export default function TodaysResultsLine() {
 }
 
 function ResultsLine() {
-  const { tournamentSlug, today, teams, todayGames, requireFinalization, gameHref } = useTodaysTournamentGames(true);
+  const { tournamentSlug, today, teams, todayGames, requireFinalization, gameHref } = useTodaysTournamentGames();
 
   // The × — hidden for the rest of the tournament's day on this device. `undefined` until storage is read, so the line
   // never draws and then vanishes.
@@ -199,8 +198,8 @@ function ResultsLine() {
     return () => clearTimeout(t);
   }, [show, mode, held, out, currentId]);
 
-  // The line scrolls away, so it reserves no height for chrome that rides under the pinned rows (today's ticker does, as
-  // it pins): only the attribute says scores are showing.
+  // The line scrolls away, so it reserves no height for chrome that rides under the pinned rows: only the attribute says
+  // scores are showing.
   useEffect(() => {
     const el = document.documentElement;
     if (show) el.dataset.ticker = 'scores';

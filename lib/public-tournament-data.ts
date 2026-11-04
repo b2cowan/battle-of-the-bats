@@ -17,7 +17,7 @@ import { getPublicStandingsByDivision, onlyPublishedGames } from './public-games
 import { isPublicPageEnabled, isPublicBracketVisible, withInviteOnlyPages, type PublicPageKey } from './public-pages';
 import { runsInviteOnlyEvents } from './invite-only-event';
 import { publishedCompetitionData } from './public-standings';
-import { publicFrameGame, publicTeamsData } from './public-teams';
+import { publicFrameGame, publicTeamsData, publicVenue } from './public-teams';
 import type { Announcement, Division, Venue, Game, Organization, Resource, RuleSection, Team, PublicTeam, Tournament, TournamentRegistrationField } from './types';
 
 export type PublicTournamentSection = Extract<PublicPageKey, 'schedule' | 'standings' | 'teams' | 'rules' | 'register'> | 'context' | 'scores' | 'standings-preview' | 'playoffs' | 'teams-preview' | 'schedule-preview';
@@ -180,7 +180,7 @@ export async function getPublicTournamentPageData(
       getDivisions(tournament.id, { admin: true }),
       getAnnouncements(tournament.id, { admin: true }),
     ]);
-    const data = { ...base, games: onlyPublishedGames(games, divisions), teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)), venues, divisions, announcements };
+    const data = { ...base, games: onlyPublishedGames(games, divisions), teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)), venues: venues.map(publicVenue), divisions, announcements };
     return section === 'schedule-preview' ? publicTeamsData(data) : data;
   }
 
@@ -212,7 +212,7 @@ export async function getPublicTournamentPageData(
       divisions,
       games: onlyPublishedGames(games, divisions),
       teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)),
-      venues,
+      venues: venues.map(publicVenue),
       standingsByDivision: await getPublicStandingsByDivision(tournament, divisions, { games, teams }),
     };
     if (section !== 'standings-preview' && section !== 'playoffs') return data;
