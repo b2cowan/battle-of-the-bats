@@ -1,6 +1,6 @@
 # Public tournament pages — Stage 8: the new look on for everyone (plan)
 
-**Status:** DRAFT 2026-11-03 (Claude), for the owner's rulings in §6. Nothing built. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
+**Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). Nothing built. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
 **Sequencing rule (standing):** by dependency and rework risk, never by date. One part per session, `/clear` between.
@@ -51,7 +51,7 @@ also a **packaging statement** (§7): PLAN_PRICING_FACTS still promises a custom
 
 ## 4. The parts (one per session)
 
-**Part 1 — The icon ruling (ships on its own; not behind the switch).** Delete the iOS per-tournament icon (so the platform icon applies),
+**Part 1 — The icon ruling (built on `dev` first; it releases WITH the flip, ruling D; the icon route is not behind the switch, so it must not be promoted alone).** Delete the iOS per-tournament icon (so the platform icon applies),
 the orphaned maskable route and the logo helper; remove the **App icon card and the App name field** from the old Branding page (a setting
 that does nothing is a lie); stop the Branding API reading/writing icon colour, app name and logo size. Keep the three DB columns for now
 (§6 ask C). Edit the icon-existence test and the dead-code entry list. *Rework note:* removing the card from the old Branding page is
@@ -89,14 +89,14 @@ view: no preview link needed); read the release-history record; promote; post-re
 
 ## 5. Guardrails that keep this safe
 
-- **Customers never see a half-state:** nothing ships until Part 6. Parts 1–5 land on `dev`; Part 1's icon change is the one
-  deliberate exception (its own release, or with Part 6 — owner's choice, ask D).
+- **Customers never see a half-state:** nothing ships until Part 6. Parts 1–5 all land on `dev` and are promoted together in Part 6 (ruling D:
+  the icon change goes WITH the flip, never as its own release).
 - **Delete only what has no importer.** Each removal names its importers first; the census flags the shared files (`Home`, `register`,
   `news`, `globals`, `BottomSheet`, `ConsumerShell`, the bracket) that must not go.
 - **The migration is data-only and applies BEFORE the code that depends on it** (same rule as 426).
 - **No new customer words without `/docs`** and `check:spelling`.
 
-## 6. Asks for the owner (each with my recommendation)
+## 6. Asks for the owner (each with my recommendation) — **A, B, C, D all RULED 2026-11-03 as recommended; E needs no ruling**
 
 - **A. The tournament hero banner.** The new look has no hero banner; only the old Overview reads it, and a dashboard "branding done"
   flag still counts it. *Recommend retire it* (delete the upload, stop counting it; keep the column) — a banner the page never shows is the
