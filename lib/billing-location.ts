@@ -127,16 +127,30 @@ export interface StoredBillingLocation extends BillingLocation {
   usDeclarationVersion: string | null;
 }
 
-/** Provisional wording (owner Ask 2, 2026-11-03; T7: reviewed with the accountant package, not before launch). A new
- *  wording gets a NEW version; the old text stays here so what each buyer saw can still be read. */
-export const US_DECLARATION_VERSION = 'us-2026-11-provisional';
+/** The wording a US buyer ticks (T7: reviewed with the accountant package, not before launch). A new wording gets a NEW
+ *  version; every old text stays in US_DECLARATION_TEXTS so what each buyer saw can still be read.
+ *  · `us-2026-11-provisional` (owner Ask 2, 2026-11-03): "located in the United States … for use in the United States".
+ *  · `us-2026-11-v2` (owner 2026-11-04, `/accounting` on the Stage 1 closeout): CRA's zero rate for a non-resident rests on
+ *    where a club is MANAGED AND CONTROLLED (Memo 4.5.1) and on the buyer NOT being GST/HST-registered (Memo 4-5-3), which
+ *    the first wording did not say (docs/agents/accounting/ZERO_RATED_SALES_TO_US_CUSTOMERS.md). */
+export const US_DECLARATION_VERSION = 'us-2026-11-v2';
 
 export type DeclarationSubject = { kind: 'club'; name: string } | { kind: 'person' };
 
-export function usDeclarationText(subject: DeclarationSubject): string {
-  return subject.kind === 'club'
+export const US_DECLARATION_TEXTS: Record<string, (subject: DeclarationSubject) => string> = {
+  'us-2026-11-provisional': (subject) => subject.kind === 'club'
     ? `I confirm that ${subject.name} is located in the United States and is buying this subscription for use in the United States.`
-    : 'I confirm that I am located in the United States and am buying this subscription for use in the United States.';
+    : 'I confirm that I am located in the United States and am buying this subscription for use in the United States.',
+  'us-2026-11-v2': (subject) => subject.kind === 'club'
+    ? `I confirm that ${subject.name} is managed and controlled in the United States, is not registered for Canadian GST/HST, and is buying this subscription for use outside Canada.`
+    : 'I confirm that I live in the United States, am not registered for Canadian GST/HST, and am buying this subscription for use outside Canada.',
+};
+
+/** The wording a buyer ticks today, or (with a stored version) the wording that buyer saw. */
+export function usDeclarationText(subject: DeclarationSubject, version: string = US_DECLARATION_VERSION): string {
+  const text = US_DECLARATION_TEXTS[version];
+  if (!text) throw new Error(`Unknown US declaration version: ${version}`);
+  return text(subject);
 }
 
 // ---------------------------------------------------------------------------------------------------------------

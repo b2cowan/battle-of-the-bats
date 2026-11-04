@@ -433,8 +433,9 @@ address window, the sign-up's Address step or "Start your club" (Stripe's billin
 <!-- dict:col:billing_locations.us_declaration_at -->
 <!-- dict:col:billing_locations.us_declaration_version -->
 **`us_declaration_at`** / **`us_declaration_version`** (nullable, set together; CHECK: a `US` row always has them) — T7's
-declaration: the day the buyer ticked it and which wording they saw (`US_DECLARATION_VERSION`, today
-`us-2026-11-provisional`; the accountant's wording gets a new version and the old text stays in the code). Every US
+declaration: the day the buyer ticked it and which wording they saw (`US_DECLARATION_VERSION`, today `us-2026-11-v2`
+since 2026-11-04, before it `us-2026-11-provisional`; every wording's text stays in `US_DECLARATION_TEXTS` in
+`lib/billing-location.ts`, and the accountant's wording will get a new version). Every US
 save on our own form stamps them again; nothing else writes a US address (Stripe's page cannot edit it, Part 3).
 
 <!-- dict:col:billing_locations.card_country -->

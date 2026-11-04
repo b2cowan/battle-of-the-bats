@@ -266,9 +266,9 @@ const orgHelp: HelpPageContent = {
     {
       id: 'club-plan-and-billing',
       heading: 'Club plan & billing',
-      summary: 'Your plan, what’s in use, changing plan, what’s included, and reducing or cancelling your subscription.',
-      keywords: ['club plan', 'club billing', 'plan and billing', 'teams on your plan', 'club association', 'move to club association', 'team cap', 'add team at the cap', 'cancel club', 'reactivate club', 'capacity', 'free time', 'free through', 'free time ended'],
-      searchText: 'free through free time from fieldlogichq a plan given for a while goes back automatically free time ended last 14 days amber contact us to keep the plan nothing is charged club plan and billing rail foot beside help more you owner only your plan whats in use change plan whats included reduce or cancel capacity readout club two sizes club association move up prorated today move down at renewal no credit keep current band add team at the cap archive a team contact us custom plan what club includes families rep teams accounting public site house league tournaments unlimited board and staff cancel and suspend goes offline ninety days retention reactivate within retention plan limits retained remainder public site online coach portals reopen archived tournaments return',
+      summary: 'Your plan, what’s in use, your billing address, changing plan, what’s included, and reducing or cancelling your subscription.',
+      keywords: ['club plan', 'club billing', 'plan and billing', 'teams on your plan', 'club association', 'move to club association', 'team cap', 'add team at the cap', 'cancel club', 'reactivate club', 'capacity', 'free time', 'free through', 'free time ended', 'billing address', 'change billing address', 'club address', 'billed to', 'sales tax', 'tax', 'GST', 'HST', 'PO Box', 'United States', 'US club'],
+      searchText: 'billing address where the club is billed asked once before the first paid checkout billed to remembered sales tax work out the tax prints on your invoices nothing charged differently club address start your club club billing address filled in from the coach home address po box street address change it billing address button plan card stripe billing page payment method no longer changes the address united states not selling in the united states yet gst hst free through free time from fieldlogichq a plan given for a while goes back automatically free time ended last 14 days amber contact us to keep the plan nothing is charged club plan and billing rail foot beside help more you owner only your plan whats in use change plan whats included reduce or cancel capacity readout club two sizes club association move up prorated today move down at renewal no credit keep current band add team at the cap archive a team contact us custom plan what club includes families rep teams accounting public site house league tournaments unlimited board and staff cancel and suspend goes offline ninety days retention reactivate within retention plan limits retained remainder public site online coach portals reopen archived tournaments return',
       links: [
         { label: 'Plan & billing', href: '../org/billing' },
       ],
@@ -292,6 +292,23 @@ const orgHelp: HelpPageContent = {
           title: 'What’s in use',
           content: (
             <p>The plan card shows how many active teams you&rsquo;re using against your size&rsquo;s limit — archived teams don&rsquo;t count. The bar turns amber as you approach the limit, and once you&rsquo;re at it, the card names the size to move to.</p>
+          ),
+        },
+        {
+          id: 'club-plan-and-billing-t-address',
+          title: 'Your billing address',
+          content: (
+            <>
+              <p>Before your club&rsquo;s first paid checkout, a <strong>Billing address</strong> window asks where the club is billed. You answer once: later purchases go straight through and say <strong>Billed to</strong> the address on file.</p>
+              <ul>
+                <li>We use it to work out the sales tax on your plan, and it prints on your invoices. Nothing is charged differently today.</li>
+                <li>Give the club&rsquo;s own address. When a coach turns a Coaches Portal into a club with <strong>Start your club</strong>, the <strong>Club billing address</strong> is filled in from the coach&rsquo;s home address &mdash; change it if the club has its own.</li>
+                <li>A PO Box on its own can&rsquo;t be a billing address. Enter a street address.</li>
+                <li>A free or comped plan isn&rsquo;t asked until someone presses a button that pays.</li>
+                <li>Choosing United States says &ldquo;We&rsquo;re not selling in the United States yet.&rdquo;</li>
+              </ul>
+              <HelpNote variant="info" title="Changing it">Open Plan &amp; billing and choose <strong>Billing address</strong> on the plan card, which shows the address on file. Stripe&rsquo;s billing page (Payment method &amp; invoices) updates your card and invoices, but no longer changes the address.</HelpNote>
+            </>
           ),
         },
         {

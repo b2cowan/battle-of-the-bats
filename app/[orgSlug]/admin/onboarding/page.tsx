@@ -1403,14 +1403,19 @@ function OnboardingPageLegacy() {
 
   if (planChoiceRequired) {
     return (
-      <PlanStep
-        orgName={currentOrg.name}
-        pricing={pricing}
-        foundingOfferHeld={foundingOfferHeld}
-        loading={planLoading}
-        error={planError}
-        onChoose={choosePlan}
-      />
+      <>
+        <PlanStep
+          orgName={currentOrg.name}
+          pricing={pricing}
+          foundingOfferHeld={foundingOfferHeld}
+          loading={planLoading}
+          error={planError}
+          onChoose={choosePlan}
+        />
+        {/* GST/HST Stage 1 Part 5: a paid choice with no billing address on file is refused (choosePlan →
+            address.refused); the Billing address window must render here too or the button dead-ends. */}
+        {address.dialog}
+      </>
     );
   }
 

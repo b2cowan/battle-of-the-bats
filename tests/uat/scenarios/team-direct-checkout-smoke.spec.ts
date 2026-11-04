@@ -128,9 +128,16 @@ test.describe.serial('standalone Team direct checkout smoke', () => {
     expect(checkoutJson.teamWorkspaceId).toBeTruthy()
 
     await coachPage.goto(checkoutJson.url ?? `/${workspaceSlug}/coaches?success=1`)
-    await expect(coachPage.getByText('Coaches Portal ready')).toBeVisible({
-      timeout: 30_000,
-    })
+    // The portal is "ready" when the checkout lands the coach on the new team's Overview: /coaches forwards to the team
+    // (app/[orgSlug]/coaches/page.tsx), whose title is "Overview" with the Premium chip and whose header names the team
+    // (app/[orgSlug]/coaches/teams/[teamId]/page.tsx, CoachPageHeader). The old "Coaches Portal ready" panel is gone.
+    await coachPage.waitForURL(
+      new RegExp(`/${workspaceSlug}/coaches/teams/${checkoutJson.repTeamId}`),
+      { timeout: 60_000 },
+    )
+    await expect(coachPage.getByRole('heading', { name: 'Overview', level: 1 })).toBeVisible({ timeout: 30_000 })
+    await expect(coachPage.getByText('Premium', { exact: true }).first()).toBeVisible()
+    await expect(coachPage.getByText(teamName).first()).toBeVisible()
 
     const { data: workspace, error: workspaceError } = await supabaseAdmin
       .from('team_workspaces')

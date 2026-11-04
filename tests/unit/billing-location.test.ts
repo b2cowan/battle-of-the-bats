@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
 import {
-  BILLING_COUNTRIES, BILLING_LOCATION_WORDS as W, REVIEW_REASONS, US_DECLARATION_VERSION,
+  BILLING_COUNTRIES, BILLING_LOCATION_WORDS as W, REVIEW_REASONS, US_DECLARATION_TEXTS, US_DECLARATION_VERSION,
   checkBillingLocation, countryChangeReview, countryInfo, evidenceReview, formatBilledTo, formatBillingAddress,
   currentReview, isPoBoxOnly, normalizeCanadianPostalCode, normalizeZipCode, regionName, reviewSentence,
   toStripeAddress, usDeclarationText,
@@ -160,13 +160,19 @@ describe('reading it back', () => {
   });
 });
 
-describe('the US declaration (T7, provisional wording)', () => {
-  it('in the club’s name and in the coach’s own', () => {
+describe('the US declaration (T7; v2 wording owner 2026-11-04)', () => {
+  it('in the club’s name and in the coach’s own: managed and controlled / lives, not GST/HST-registered, used outside Canada', () => {
     assert.equal(usDeclarationText({ kind: 'club', name: 'Riverdale Minor Ball' }),
-      'I confirm that Riverdale Minor Ball is located in the United States and is buying this subscription for use in the United States.');
+      'I confirm that Riverdale Minor Ball is managed and controlled in the United States, is not registered for Canadian GST/HST, and is buying this subscription for use outside Canada.');
     assert.equal(usDeclarationText({ kind: 'person' }),
+      'I confirm that I live in the United States, am not registered for Canadian GST/HST, and am buying this subscription for use outside Canada.');
+    assert.equal(US_DECLARATION_VERSION, 'us-2026-11-v2');
+  });
+  it('keeps every earlier wording readable by its version, and refuses an unknown one', () => {
+    assert.equal(usDeclarationText({ kind: 'person' }, 'us-2026-11-provisional'),
       'I confirm that I am located in the United States and am buying this subscription for use in the United States.');
-    assert.equal(US_DECLARATION_VERSION, 'us-2026-11-provisional');
+    assert.ok(US_DECLARATION_VERSION in US_DECLARATION_TEXTS);
+    assert.throws(() => usDeclarationText({ kind: 'person' }, 'us-1999-nope'));
   });
 });
 

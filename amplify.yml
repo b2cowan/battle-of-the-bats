@@ -45,6 +45,10 @@ frontend:
         # runtime. Unset ⇒ the Subscribe window says links are unavailable and every coach feed
         # answers 503 (fail-closed). Changing the value later stops every coach's link.
         - echo "CALENDAR_LINK_SECRET=$CALENDAR_LINK_SECRET" >> .env.production
+        # US sales (GST/HST Stage 1, owner Ask 5): the literal 'true' opens the United States at the billing address step.
+        # Set ONLY on the dev branch's console variables (owner 2026-11-04, for the Stage 1 walk). Production has no value,
+        # so the line writes an empty one and US sales stay closed ("We're not selling in the United States yet").
+        - echo "US_SALES_OPEN=$US_SALES_OPEN" >> .env.production
         # A club's own web address (Club Tier 4e): the app asks Amplify to serve the club's domain. The app id and the branch
         # come from the build's own AWS_APP_ID / AWS_BRANCH (`master` on master, `dev` on dev), so no console variable needs a
         # per-branch override and none can be forgotten at a promote. Only the two keys are console variables (all branches,

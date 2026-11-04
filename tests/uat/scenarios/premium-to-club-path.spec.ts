@@ -41,6 +41,7 @@ import fs from 'fs';
 import path from 'path';
 import { supabaseAdmin } from '../../../lib/supabase-admin';
 import { PLAN_BILLING_WORDS as W } from '../../../lib/plan-billing-words';
+import { BILLING_ADDRESS_FORM_WORDS } from '../../../lib/billing-location';
 import { PLAN_BILLING_TITLE } from '../../../lib/plan-billing-title';
 import { PORTAL_FREE_TIME_GRANT_TYPE } from '../../../lib/portal-free-time';
 
@@ -56,7 +57,9 @@ const SESSIONS = {
 };
 const FREE_TIME_PORTAL = process.env.UAT_FREE_TIME_PORTAL_SLUG ?? 'uat-standalone';
 const LAPSED_PORTAL = process.env.UAT_LAPSED_PORTAL_SLUG ?? 'uat-free-team-coaches-portal';
-const STATUS_ROUTE = '/api/billing/club-upgrade-status';
+/** The home address group C gives its new coach; the Start my club window must fill the club's billing address from it. */
+const HOME_ADDRESS = { country: 'CA', region_code: 'ON', line1: '120 Elm Street', city: 'Guelph', postal_code: 'N1H 4H2' };
+const STATUS_ROUTE ='/api/billing/club-upgrade-status';
 const DESKTOP = { width: 1440, height: 900 };
 const PHONE = { width: 390, height: 844 };
 
@@ -71,7 +74,9 @@ async function sessionContext(browser: Browser, file: string, options: Parameter
  * not on sale (the pre-sale row reads "Contact us to move"), or no quote (no Stripe test key, or no Club price row).
  */
 async function openClubWindow(page: Page) {
-  const change = page.locator('#billing-change');
+  // `#billing-change` is the section's HEADING id now (components/billing/BillingBody.tsx Section: <section aria-labelledby>), so the
+  // buttons are not inside it; the section itself is the labelled region.
+  const change = page.getByRole('region', { name: W.page.sections.change });
   await expect(change, 'the Change plan section (a Premium owner sees the Club row)').toBeVisible({ timeout: 20_000 });
   const start = change.getByRole('button', { name: W.clubUpgrade.start });
   const contact = change.getByRole('link', { name: W.change.contactMove });
@@ -154,7 +159,19 @@ test.describe('A · the Club row and the window, read-only', () => {
 // ── B · the lapsed portal and the header gap ────────────────────────────────────────────────────────
 
 test.describe('B · the way back from a lapsed portal (Walk 6)', () => {
-  const ENDED = /subscription has ended/i;
+  // The lapsed fixture portal can be in either of two states, and the product walls each with its own words (app/[orgSlug]/coaches/layout.tsx):
+  //   · a cancelled subscription   → SubscriptionEndedWall "…subscription has ended", the owner's billing door is #billing-reactivate-btn;
+  //   · staff-given free time that ran out (free_time_given_at set; the walk that gave this fixture free time did that on 2026-10-28)
+  //     → FreeTimeEndedWall "Your free time has ended", the billing door is #billing-keep-premium.
+  // The wall, the bare billing frame and the forged-header refusal are the same layout branch for both, so read which one this
+  // environment holds and assert that one. (A fixture that never had free time keeps the original cancelled-wall assertions.)
+  let ENDED = /subscription has ended/i;
+  let BILLING_DOOR = '#billing-reactivate-btn';
+  test.beforeAll(async () => {
+    const { data: org } = await supabaseAdmin.from('organizations').select('id').eq('slug', LAPSED_PORTAL).maybeSingle();
+    const { data: ws } = org ? await supabaseAdmin.from('team_workspaces').select('free_time_given_at').eq('workspace_org_id', org.id).maybeSingle() : { data: null };
+    if (ws?.free_time_given_at) { ENDED = /free time has ended/i; BILLING_DOOR = '#billing-keep-premium'; }
+  });
 
   test('every address but billing keeps the wall', async ({ browser }) => {
     const ctx = await sessionContext(browser, SESSIONS.lapsedOwner, { viewport: DESKTOP });
@@ -175,7 +192,7 @@ test.describe('B · the way back from a lapsed portal (Walk 6)', () => {
     try {
       await page.goto(`/${LAPSED_PORTAL}/coaches/billing`, { waitUntil: 'networkidle' });
       await expect(page.getByRole('heading', { name: ENDED })).toHaveCount(0);
-      await expect(page.locator('#billing-reactivate-btn')).toBeVisible();
+      await expect(page.locator(BILLING_DOOR)).toBeVisible();
       await expect(page.locator('#coaches-billing'), 'the bare frame: no left menu').toHaveCount(0);
     } finally {
       await ctx.close();
@@ -265,9 +282,7 @@ test.describe.serial('C · a coach on free time becomes the club (mock billing)'
     try {
       // GST/HST Stage 1: the Start my club window fills the club's billing address in from the coach's own home address, and a
       // checkout refuses without one. Give the new coach a home address (the row goes with the user, ON DELETE CASCADE).
-      const { error: addressError } = await supabaseAdmin.from('billing_locations').insert({
-        user_id: user.user.id, country: 'CA', region_code: 'ON', line1: '120 Elm Street', city: 'Guelph', postal_code: 'N1H 4H2',
-      });
+      const { error: addressError } = await supabaseAdmin.from('billing_locations').insert({ user_id: user.user.id, ...HOME_ADDRESS });
       if (addressError) throw addressError;
       const { ctx, page } = await logIn(browser, email);
       const team = await page.request.post('/api/coaches/teams', { data: { name: `UAT Path ${suffix}`, sport: 'baseball' } });
@@ -304,16 +319,27 @@ test.describe.serial('C · a coach on free time becomes the club (mock billing)'
     const { ctx, page } = await signedIn(browser);
     try {
       // The return marker on a portal that has not paid: every read answers "not yet", which is the slow path.
+      const reads: number[] = [];
+      page.on('response', r => { if (r.url().includes(STATUS_ROUTE)) reads.push(r.status()); });
       await page.clock.install();
       await page.goto(`/${made!.slug}/admin/org/billing?inPlace=club`, { waitUntil: 'networkidle' });
       await expect(page.getByRole('heading', { name: W.clubUpgrade.settingTitle })).toBeVisible();
       await expect(page.getByText(W.clubUpgrade.settingBody)).toBeVisible();
       await expect(page.getByRole('button', { name: W.move.checkout }), 'no payment door while waiting').toHaveCount(0);
-      for (let read = 1; read <= 20; read++) {
-        const answered = page.waitForResponse(r => r.url().includes(STATUS_ROUTE));
-        await page.clock.runFor(2_600);
-        expect((await answered).status()).toBe(200);
+      // ⚠ page.clock.install() keeps the clock RUNNING: on a slow first compile the page's own 2.5 s timer can fire during goto, so
+      // "one read per runFor" miscounts by one and the last wait never resolves. Count the reads the page actually made instead,
+      // and tick until the screen reaches the state under test.
+      async function tickUntil(heading: string) {
+        const target = page.getByRole('heading', { name: heading });
+        for (let tick = 0; tick < 40; tick++) {
+          if (await target.waitFor({ timeout: 1_500 }).then(() => true, () => false)) return;
+          const before = reads.length;
+          await page.clock.runFor(2_600);
+          await expect.poll(() => reads.length, { message: 'a tick of the page clock makes one status read', timeout: 20_000 }).toBeGreaterThan(before);
+        }
       }
+      await tickUntil(W.clubUpgrade.longerTitle);
+      expect(reads, 'twenty reads, every one answered "not yet", then the slow state').toEqual(Array(20).fill(200));
       await expect(page.getByRole('heading', { name: W.clubUpgrade.longerTitle })).toBeVisible();
       await expect(page.getByRole('button', { name: W.clubUpgrade.checkAgain })).toBeVisible();
 
@@ -321,11 +347,9 @@ test.describe.serial('C · a coach on free time becomes the club (mock billing)'
       await page.route(`**${STATUS_ROUTE}*`, route => route.fulfill({ status: 500, body: '{}' }));
       await page.getByRole('button', { name: W.clubUpgrade.checkAgain }).click();
       await expect(page.getByRole('heading', { name: W.clubUpgrade.settingTitle })).toBeVisible();
-      for (let read = 1; read <= 3; read++) {
-        const failed = page.waitForResponse(r => r.url().includes(STATUS_ROUTE));
-        await page.clock.runFor(2_600);
-        expect((await failed).status()).toBe(500);
-      }
+      reads.length = 0;
+      await tickUntil(W.clubUpgrade.unconfirmedTitle);
+      expect(reads, 'three failed reads in a row, then "could not confirm"').toEqual([500, 500, 500]);
       await expect(page.getByRole('heading', { name: W.clubUpgrade.unconfirmedTitle })).toBeVisible();
       await expect(page.getByRole('button', { name: W.move.checkout }), 'never a second payment').toHaveCount(0);
       await expect(page.getByText(W.clubUpgrade.unconfirmedBody)).toBeVisible();
@@ -340,6 +364,16 @@ test.describe.serial('C · a coach on free time becomes the club (mock billing)'
       await page.goto(`/${made!.slug}/coaches/billing`, { waitUntil: 'networkidle' });
       await expect(page.locator('#coaches-billing'), 'before: the portal rail carries Plan & billing').toBeVisible();
       const { dialog } = await openClubWindow(page);
+      // GST/HST Stage 1: the window carries the CLUB's billing address in place (components/billing/PlanMoveDialog.tsx), filled in from
+      // the coach's own home address (the row the first test seeded) and said so in one line; the coach can change it.
+      const clubBlock = dialog.getByRole('group', { name: BILLING_ADDRESS_FORM_WORDS.clubSubhead });
+      await expect(clubBlock, 'the club billing address block').toBeVisible();
+      await expect(clubBlock.getByText(BILLING_ADDRESS_FORM_WORDS.clubPrefilled)).toBeVisible();
+      await expect(clubBlock.locator('#upgrade-billing-country')).toHaveValue(HOME_ADDRESS.country);
+      await expect(clubBlock.locator('#upgrade-billing-region')).toHaveValue(HOME_ADDRESS.region_code);
+      await expect(clubBlock.locator('#upgrade-billing-line1')).toHaveValue(HOME_ADDRESS.line1);
+      await expect(clubBlock.locator('#upgrade-billing-city')).toHaveValue(HOME_ADDRESS.city);
+      await expect(clubBlock.locator('#upgrade-billing-postal')).toHaveValue(HOME_ADDRESS.postal_code);
       await dialog.getByLabel(new RegExp(`^${W.clubUpgrade.name}`)).fill(clubName);
 
       // Every full document load the page makes from here on. The checkout leaves this document on its own, so a marker set

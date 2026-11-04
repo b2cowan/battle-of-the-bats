@@ -1493,6 +1493,26 @@ const coachesHelp: HelpPageContent = {
           ),
         },
         {
+          id: 'faq-premium-billing-address',
+          question: 'Why am I asked for my home address before I pay?',
+          answerText: 'You buy Premium as yourself, so before your first paid checkout we ask for your home address: on the sign-up page it is the third step, Address; anywhere else a Your home address window opens. You answer once. It covers every portal you pay for, and later purchases go straight through and say Billed to your address. We use it only to work out sales tax, and it prints on your receipts. Nothing is charged differently today. A PO Box on its own cannot be a billing address. To change it, open Plan & billing and choose Billing address on the plan card. Stripe\'s billing page updates your card and invoices but no longer changes the address. Choosing United States says We\'re not selling in the United States yet. If you turn your portal into a club with Start your club, the club gets its own billing address, filled in from yours, and you can change it. On the free Coaches Portal you are not asked until you press a button that pays.',
+          keywords: ['billing address', 'home address', 'why my address', 'address before paying', 'change billing address', 'change my address', 'billed to', 'sales tax', 'tax', 'GST', 'HST', 'receipt address', 'PO Box', 'United States', 'american coach', 'club billing address', 'start your club address'],
+          answer: (
+            <>
+              <p>You buy Premium as yourself, so before your first paid checkout we ask for your home address. On the sign-up page it&rsquo;s the third step, <strong>Address</strong>; anywhere else a <strong>Your home address</strong> window opens.</p>
+              <ul>
+                <li>You answer once. It covers every portal you pay for, and later purchases go straight through and say <strong>Billed to</strong> your address.</li>
+                <li>We use it only to work out sales tax, and it prints on your receipts. Nothing is charged differently today.</li>
+                <li>A PO Box on its own can&rsquo;t be a billing address. Enter a street address.</li>
+                <li>Choosing United States says &ldquo;We&rsquo;re not selling in the United States yet.&rdquo;</li>
+                <li>If you turn your portal into a club with <strong>Start your club</strong>, the club gets its own <strong>Club billing address</strong>, filled in from yours. Change it if the club has its own.</li>
+                <li>On the free Coaches Portal you aren&rsquo;t asked until you press a button that pays.</li>
+              </ul>
+              <HelpNote variant="info" title="Changing it">Open <strong>Plan &amp; billing</strong> and choose <strong>Billing address</strong> on the plan card. Stripe&rsquo;s billing page updates your card and invoices, but no longer changes the address.</HelpNote>
+            </>
+          ),
+        },
+        {
           id: 'faq-premium-who-pays',
           question: 'Who pays for my team?',
           answerText: 'Open Team settings. If a club pays for your team\'s Coaches Portal, the first card at the top says Plan, Covered by and the club\'s name. There is nothing to manage there: no price, no button, no card to enter. The billing belongs to the club, and its owner looks after it. Every coach on the team sees the card, assistant coaches included. It is not shown when your own team pays for itself, when you are on the free Coaches Portal, or when we have given your team free time. The club\'s own owners and admins do not see it either, because they are the club. If you own a team that pays for itself, Plan & billing shows your plan and your card. If the card names a club you do not recognize, or you think the wrong club is paying, ask your club administrator.',

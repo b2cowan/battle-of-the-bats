@@ -203,6 +203,11 @@ Bookkeeping plan; tax stays here.
 *Owner: revenue plan (D17) + Support console Money tab.*
 - For each FieldLogicHQ charge, keep: jurisdiction, tax type and rate, tax amount, **reason** (taxed / zero-rated
   export / not registered in that province) and the location evidence used at the time of sale.
+  **(`/accounting` 2026-11-04, Stage 1 closeout):** the evidence is a COPY on the charge's own record (address,
+  province/country, declaration version + date, card and payout country, review state), not a link to the buyer's
+  `billing_locations` row: that row is the CURRENT location, is overwritten on a change and deletes with the club or person
+  (ON DELETE CASCADE). The charge record must survive deleting the buyer for six years
+  (`docs/agents/accounting/RECORDS_RETENTION_AND_LOCATION.md`). Required before the first zero-rated US sale (Stage 8).
 - Platform admin's per-organization Money tab shows the tax on each charge and the buyer's tax location; a list of
   any charge whose reason is missing or contradicts the address.
 - Business numbers report revenue **before tax** (tax collected is not revenue).
@@ -225,6 +230,11 @@ that input tax credits are claimable.*
 **Depends on Club Stage 12 and closes with it (owner, 2026-10-31) — it is a required stage of this project, not a standing
 trigger:** this plan is not done until Club Stage 12's fee-tax work ships.*
 - If taxable: tax by the **club's** province, 0% for a verified US club (Stage 1 evidence applies to clubs too).
+  **(`/accounting` 2026-11-04, Stage 1 closeout):** Stage 1 asks for the address only at a paid plan checkout, so a club
+  taking payments with no paid plan (comped, free time, Founding) has no address on file, and the payout account's verified
+  country gives no province. This stage asks the club for its billing address when it sets up payouts (or before its first
+  fee or cost-recovery invoice), and the cost-recovery invoice joins the every-path guard then. The families' location is
+  never needed while the fee is our charge to the club (T3).
 - A **monthly fee statement per club** — fees taken, tax on them, our GST/HST number — because Stripe's application fee
   is not a tax invoice and Stripe Tax does not tax it.
 - How the tax is collected: added to the application fee at payment time vs billed monthly — decide with T2.
@@ -243,7 +253,9 @@ trigger:** this plan is not done until Club Stage 12's fee-tax work ships.*
   the fee, fee not refunded, who carries disputes.
 - Québec: the French-language / standard-form contract review already listed as revenue plan D20.
 - A privacy policy for FieldLogicHQ itself (today only clubs' own privacy links exist) — not tax, but the same lawyer
-  session.
+  session. **(owner 2026-11-04, Stage 1 closeout):** a `/legal` agent, shaped like `/accounting`, is to be built to draft
+  these terms and policies (TODO line); the Stage 1 address window already states the purpose at collection ("We use it
+  only to work out sales tax…").
 
 ### Stage 7 — Provincial registrations as they come due
 - Stripe Tax monitors other provinces' thresholds for a Canada-based seller; it does not register you.

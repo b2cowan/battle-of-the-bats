@@ -20,7 +20,20 @@
   the GST/HST plan's Stage 2, Stripe's tax-bearing invoices). The app's own logs (`stripe_billing_events`, the platform
   change log, `stripe_billing_drift_checks`) are operational controls: useful evidence, not the books.
 
+- **The buyer-location evidence (added 2026-11-04, `/accounting` on GST/HST Stage 1):** the stored billing address,
+  US declaration (date + wording version) and card/payout country are the "satisfactory evidence" a zero-rated sale rests
+  on (ZERO_RATED_SALES_TO_US_CUSTOMERS.md). Stripe's finalized invoice keeps a copy of the customer's address, so a
+  Canadian sale's address survives on Stripe; **the US declaration and the card-country corroborator do not** (they live
+  only in our `billing_locations`). That table holds the buyer's CURRENT location, deletes with the club or person (ON
+  DELETE CASCADE), and is overwritten on a change, so it is not by itself a six-year record of what a sale relied on.
+  Harmless while nothing is taxed and US sales are closed; it must be fixed before the first taxed or zero-rated sale.
+
 ## Recommendation
+- Per charge, from GST/HST Stage 3 (before the first taxed sale, and before the first zero-rated US sale in any case):
+  keep a **copy** of the location evidence used at the time of sale (address, country/province, declaration text version
+  and date, card and payout country, review state) on the charge's own record, not a link to the buyer's current row,
+  and do not let it delete with the club or person. A person's deletion request does not override the six-year tax
+  retention for that evidence.
 - Once a year (after December 31) export the year's Stripe invoices, charges, refunds, disputes and payouts, plus the
   owner's Bookkeeping, to storage **in Canada** (the owner's own machine/drive in Ontario is enough), and keep each
   year's export for six full years after that year ends.
