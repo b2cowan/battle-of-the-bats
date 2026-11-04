@@ -4,8 +4,8 @@ import { readFileSync } from 'node:fs';
 import {
   BILLING_COUNTRIES, BILLING_LOCATION_WORDS as W, REVIEW_REASONS, US_DECLARATION_VERSION,
   checkBillingLocation, countryChangeReview, countryInfo, evidenceReview, formatBilledTo, formatBillingAddress,
-  fromStripeAddress, isPoBoxOnly, normalizeCanadianPostalCode, normalizeZipCode, regionName, reviewSentence,
-  sameBillingLocation, toStripeAddress, usDeclarationText,
+  currentReview, isPoBoxOnly, normalizeCanadianPostalCode, normalizeZipCode, regionName, reviewSentence,
+  toStripeAddress, usDeclarationText,
 } from '../../lib/billing-location.ts';
 
 /**
@@ -72,8 +72,8 @@ describe('the check', () => {
     assert.equal(r.ok, false);
     if (!r.ok) assert.deepEqual(r.errors, { usDeclared: W.usDeclaration });
   });
-  it('an edit read back from Stripe needs no tick (the declaration on file stands)', () => {
-    assert.equal(checkBillingLocation({ ...buffalo, usDeclared: undefined }, { usSalesOpen: true, requireDeclaration: false }).ok, true);
+  it('every US address needs the tick: nothing reads an address back from Stripe (Part 3, owner 2026-11-04)', () => {
+    assert.equal(checkBillingLocation({ ...buffalo, usDeclared: undefined }, open).ok, false);
   });
   it('Canada ignores the tick', () => {
     assert.equal(checkBillingLocation({ ...guelph, usDeclared: false }, closed).ok, true);
@@ -155,16 +155,8 @@ describe('reading it back', () => {
     assert.equal(formatBillingAddress({ ...loc, country: 'CA', regionCode: 'ON', line2: null, line1: '120 Elm Street', city: 'Guelph', postalCode: 'N1H 4H2' }), '120 Elm Street, Guelph, Ontario N1H 4H2');
     assert.equal(formatBilledTo({ country: 'CA', regionCode: 'ON', line1: '120 Elm Street', line2: null, city: 'Guelph', postalCode: 'N1H 4H2' }), '120 Elm Street, Guelph, Ontario');
   });
-  it('to and from Stripe round-trips through the check', () => {
-    const s = toStripeAddress(loc);
-    assert.deepEqual(s, { line1: '88 Delaware Avenue', line2: 'Suite 400', city: 'Buffalo', state: 'NY', postal_code: '14202', country: 'US' });
-    const back = checkBillingLocation(fromStripeAddress({ ...s, country: 'us', state: 'ny' }), { usSalesOpen: true, requireDeclaration: false });
-    assert.ok(back.ok && sameBillingLocation(back.value, loc));
-    assert.deepEqual(fromStripeAddress(null), { country: null, regionCode: null, line1: null, line2: null, city: null, postalCode: null });
-  });
-  it('same location ignores nothing', () => {
-    assert.equal(sameBillingLocation(loc, { ...loc }), true);
-    assert.equal(sameBillingLocation(loc, { ...loc, line2: null }), false);
+  it('onto the Stripe customer (one way only)', () => {
+    assert.deepEqual(toStripeAddress(loc), { line1: '88 Delaware Avenue', line2: 'Suite 400', city: 'Buffalo', state: 'NY', postal_code: '14202', country: 'US' });
   });
 });
 
@@ -199,6 +191,19 @@ describe('needs review', () => {
     assert.equal(countryChangeReview('CA', 'US', false), null);
     assert.equal(countryChangeReview('CA', 'CA', true), null);
     assert.equal(countryChangeReview(null, 'US', true), null);
+  });
+  it('needs review is worked out when read: a stored flag wins and stays, the evidence sets and clears (Part 3 Ask 1)', () => {
+    const stored = 'The country changed from Canada to the United States after paying.';
+    assert.deepEqual(currentReview({ country: 'US', cardCountry: 'US', storedReason: 'country_changed_after_paying', storedNote: stored }),
+      { reason: 'country_changed_after_paying', note: stored });
+    assert.deepEqual(currentReview({ country: 'US', cardCountry: 'CA', storedReason: 'country_changed_after_paying', storedNote: stored }),
+      { reason: 'country_changed_after_paying', note: stored });
+    assert.equal(currentReview({ country: 'US', storedReason: 'stripe_edit_invalid', storedNote: null })?.reason, 'stripe_edit_invalid');
+    assert.deepEqual(currentReview({ country: 'US', cardCountry: 'CA' }),
+      { reason: 'card_country_mismatch', note: 'The address is in the United States, but the card was issued in Canada.' });
+    assert.equal(currentReview({ country: 'US', cardCountry: 'US' }), null);
+    assert.equal(currentReview({ country: 'CA', cardCountry: 'CA', payoutCountry: 'US' })?.reason, 'payout_country_mismatch');
+    assert.equal(currentReview({ country: 'CA', cardCountry: null, payoutCountry: null }), null);
   });
   it('every reason has a sentence', () => {
     assert.equal(reviewSentence('card_country_mismatch', { country: 'US', cardCountry: 'CA' }), 'The address is in the United States, but the card was issued in Canada.');

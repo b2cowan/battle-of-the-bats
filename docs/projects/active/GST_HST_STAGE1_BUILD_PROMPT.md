@@ -124,7 +124,56 @@ Part 0 findings (2026-11-03):
   8. Low: the cycle choice (Yearly) is lost when the buyer uses "Change" on the Billed-to line; separate gates on one screen do
      not share a saved address; the sign-up page's Next can double-fire while the first address read is pending; Stripe stamp
      errors at checkout are a 500 where the save swallows them; the address read is fetched on mount even when never needed.
-- [ ] Part 3 · keeping it current (portal edits, payout-country comparison, US evidence flag)
+- [ ] Part 3 · keeping it current (portal edits, payout-country comparison, US evidence flag). Prompt written 2026-11-04:
+  `GST_HST_STAGE1_PART3_BUILD_PROMPT.md` (3 owner asks first; the refused-move Stripe stamp must be fixed in this part because
+  reading portal edits back would turn it into a wrong home address).
+  **Verify findings 2026-11-04 [V]:** `customer.updated` was on neither endpoint's event list (stripe-setup-guide Stage 3 Step 5);
+  the refused "Start your club" stamp confirmed (and that customer maps to BOTH the coach and the not-yet-club until the flip);
+  subscription cards stored no country anywhere; `org_payment_accounts.country` has one writer (`syncPayoutsAccount`) and every
+  payout account is created Canadian (`createClubAccount`, `identity.country 'ca'`), so the payout check only ever flags a
+  US-address club; `hadSubscriptionBefore` also decides trials in four other places (club checkout, team checkout, operator
+  Club trial, the upgrade preview). **Re-frame accepted by the owner:** with Stripe's page editable, a refused edit there looks
+  saved to the buyer, Stripe keeps an address we refused (Stage 2 taxes from Stripe's copy), and a US edit skips the tick.
+  **Owner rulings 2026-11-04 (all as recommended):** (R) Stripe's billing page no longer edits the address, tax ID stays (portal
+  config v2; reverses the plan's "keeps address and tax ID editable"); NO `customer.updated` handler, so no new Stripe event to
+  switch on; `stripe_edit_invalid` retired (CHECK still allows it). Ask 1 evidence flags set AND clear with the evidence,
+  country-change flag stays until Stage 2, one reason at a time. Ask 2 fix now: the "Start your club"
+  address reaches Stripe only after the move is accepted. Ask 3 a Founding next-season choice counts as paying for the
+  country-change flag ONLY (`paidOrPromisedToPay`), trials unchanged. Carried strictness items left for a later pass.
+  **BUILT 2026-11-04:** portal v2 (`lib/stripe-portal-settings.ts`, the audit follows the constants); card country = newest card
+  across the buyer's customers, read from Stripe's current list on `payment_method.attached`/`detached` (swap-order safe) and on
+  a save whose row has none; **the evidence flags are worked out when READ (`currentReview`), never stored** (the /simplify
+  altitude finding: a stored copy went stale on the two payout-disconnect paths that skip the sync; the payouts module is
+  untouched) — only the country-change flag is stored; **Stage 2's tax decision must ask `currentReview`**; reverse
+  customer→buyer map (coach's own portal first, then a non-portal org; ambiguous = nobody; one shared `coachOwnPortals` rule); the move route copies the club address after `applyMove`, the
+  in-place checkout through the customer its session charges; platform admin's Money tab gets one read-only "Billing address"
+  block (`find_stripe` power, like the tab's panels). Tests: `tests/unit/billing-location-evidence.test.ts` (behaviour +
+  source guards incl. one writer of `billing_locations`); plan-reader door guard lists the file as `identity`.
+  ⚠ **Stage 2 note:** a move up charges a prorated invoice INSIDE `applyMove`; once tax is on, the club-address copy must land
+  after the move's checks and before its Stripe update (comment on `copyBillingLocationToStripe`).
+  ⚠ Not changed (report-only): `scripts/audit-stripe-billing.mjs`'s FAIL text still says "address and tax ID are needed for
+  GST/HST" — its check follows the constants, only the sentence is stale.
+  **`/simplify` + `/review` DONE 2026-11-04** (high-risk tier; 4 cleanup + 4 review lenses). Applied: evidence computed at read
+  (above); one `coachOwnPortals` rule for both directions AND the console (a club-paid portal shows no coach's home address);
+  a first-time coach's card found through the customer's `ownerUserId` metadata (the card attaches before the portal exists);
+  `recordCardCountry` writes compare-and-set and re-reads once (two card events at once); save's reads in parallel; the
+  "Start your club" check no longer re-reads what it saved; uuid guard on the console read. **Owner questions / follow-ups
+  (none blocks the commit):**
+  1. **A removed LAST card never clears anything (pre-existing, found by review):** Stripe's `payment_method.detached` names
+     no customer (it is in `previous_attributes`), and the webhook returns `no_customer` before its card arms — so the
+     card-on-file clear (`clearCardOnFileIfNoCardsLeft`, the "no card yet" reminder audience) has never run either. A swap
+     is fine (the attach refreshes). Fix belongs to whoever owns the card-on-file reminders; it changes who gets reminders.
+  2. A country-change flag stays even when the buyer changes back (CA→US→CA) and its sentence then names the old move;
+     Stage 2 taxes that buyer as Canadian until staff resolve it. As ruled; confirm when Stage 2 builds the resolve.
+  3. A refused "Start your club" can still leave the CLUB row saved; a retry with the other country by a coach who has paid
+     Premium flags the new club (the Premium customer's history counts). Rare; Stage 2's resolve answers it.
+  4. An abandoned in-place "Start your club" CHECKOUT still stamps the club address on the coach's lapsed Premium customer
+     (Checkout needs it on the customer when the session opens); the coach's next Premium checkout puts the home address back.
+  5. Owner step after the deploy: open Stripe's billing page once in test and once in live mode, so v2 is created and v1
+     switched off (until then v1 still offers the address; `audit-stripe-billing` warns "v2 does not exist yet").
+  Verified: billing tests 327 (1 failing = Plans-end-at-renewal Part B's in-progress `workspace-move-money` reactivation
+  test, theirs); typecheck clean on my files (other sessions' errors: plan-ending, email-preview, seasons routes); lint,
+  spelling, dictionary, contrast, dates, observability OK; `check:layout` n/a (the club record is not in the sweep).
 - [ ] Part 4 · the guard (a new checkout path cannot skip the location)
 - [ ] Part 5 · closeout (`/accounting` review, `/simplify` and `/review` offered, `/docs`, dictionary + snapshots, walk, records)
 

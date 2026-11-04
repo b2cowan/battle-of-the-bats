@@ -115,6 +115,7 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/portal-keep-premium.ts': ['portal', 'Keep Premium (Support console 4b): the checkout writes a free-time portal coach-paid'],
   // ── identity ──
   'lib/coach-membership.ts': ['identity', "plan_id 'team' = the portal stub"],
+  'lib/billing-location-server.ts': ['identity', "plan_id 'team' = the portal stub (isTeamWorkspaceOrg): a portal's billing address is its coach's own person row (GST/HST Stage 1 Part 3)"],
   'lib/org-membership-policy.ts': ['identity', "plan_id 'team' = the portal stub"],
   'lib/team-org-links.ts': ['identity', "plan_id 'team' = the portal stub"],
   'app/coaches/welcome/page.tsx': ['identity', "plan_id 'team' = the portal stub"],

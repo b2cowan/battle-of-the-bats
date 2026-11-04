@@ -7,7 +7,10 @@ import type Stripe from 'stripe';
  * under plain node.
  *
  *   · payment method update, invoice history: the two jobs the billing page sends people there for.
- *   · customer update (name, email, address, tax ID): the GST/HST plan's Stage 2 needs address and tax ID editable.
+ *   · customer update (name, email, tax ID): tax ID stays editable for the GST/HST plan's Stage 2. NOT the address
+ *     (owner ruling 2026-11-04, GST/HST Stage 1 Part 3): the billing address changes only in our own Plan & billing
+ *     window, which holds the rules Stripe's page cannot (the US declaration, no PO Box) and can tell the buyer when an
+ *     address is refused. Our saves copy it onto the Stripe customer, so Stripe never holds an address we refused.
  *   · cancel AT PERIOD END, no proration: the owner's ruling. The subscription runs to its renewal date and the
  *     webhook's `customer.subscription.deleted` arm ends the plan then (retention for a club, Coaches Portal retention).
  *   · NO plan switching: plan moves are the app's own. Pause is not a portal feature Stripe offers in this API version,
@@ -18,10 +21,10 @@ import type Stripe from 'stripe';
  */
 
 export const PORTAL_CONFIG_KEY = 'fieldlogichq_portal_version';
-export const PORTAL_CONFIG_VERSION = '1';
+export const PORTAL_CONFIG_VERSION = '2';
 
 export const PORTAL_FEATURES: Stripe.BillingPortal.ConfigurationCreateParams['features'] = {
-  customer_update: { enabled: true, allowed_updates: ['name', 'email', 'address', 'tax_id'] },
+  customer_update: { enabled: true, allowed_updates: ['name', 'email', 'tax_id'] },
   invoice_history: { enabled: true },
   payment_method_update: { enabled: true },
   subscription_cancel: { enabled: true, mode: 'at_period_end', proration_behavior: 'none' },

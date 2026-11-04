@@ -25,6 +25,7 @@ import kit from '../../console.module.css';
 import styles from '../../record.module.css';
 import money from './money.module.css';
 import StripeFeesPanel from './StripeFeesPanel';
+import BillingAddressPanel from './BillingAddressPanel';
 
 /** What the server knows of this person and club before any click (the refund route asks the same rule with them). */
 type RefundGate = { role: string; ownClub: boolean; demoClub: boolean; refundsLast24h: number };
@@ -263,6 +264,9 @@ export default function MoneyTab({
 
       {/* 12d-1 Part 4: the Stripe fees the club's online payments caused, billed to the club; ours, read from our rows. */}
       <StripeFeesPanel orgId={orgId} canRetry={billsClub} />
+
+      {/* GST/HST Stage 1 Part 3: where the buyer is billed, and any "Needs review"; ours, read only. */}
+      <BillingAddressPanel orgId={orgId} />
 
       <p className={kit.caption}>Families’ payments to this club are the club’s own money, on its own Stripe account. They are never shown or refunded here.</p>
 

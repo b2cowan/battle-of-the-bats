@@ -468,9 +468,23 @@ const NEVER_STARTED = new Set(['incomplete', 'incomplete_expired']);
  * next-season choice (`choiceKind` — a promise to pay, not a subscription they used).
  */
 export async function hadSubscriptionBefore(customerId: string): Promise<boolean> {
+  return anySubscription(customerId, sub => !sub.metadata?.choiceKind);
+}
+
+/**
+ * Has this customer paid, or promised to pay? The question behind GST/HST's "the country changed after paying" flag, and
+ * ONLY that flag (owner Part 3 Ask 3, 2026-11-04): unlike the trial rule above, a Founding next-season choice COUNTS, because
+ * it is a real subscription that will charge on its first renewal. Never use this for a trial: the Founding choice must not
+ * cost anyone their trial.
+ */
+export async function paidOrPromisedToPay(customerId: string): Promise<boolean> {
+  return anySubscription(customerId, () => true);
+}
+
+async function anySubscription(customerId: string, counts: (sub: Stripe.Subscription) => boolean): Promise<boolean> {
   // Every page of the history, not the newest twenty: an old subscription is still a used trial.
   for await (const sub of getStripe().subscriptions.list({ customer: customerId, status: 'all', limit: 100 })) {
-    if (!sub.metadata?.choiceKind && !NEVER_STARTED.has(sub.status)) return true;
+    if (counts(sub) && !NEVER_STARTED.has(sub.status)) return true;
   }
   return false;
 }

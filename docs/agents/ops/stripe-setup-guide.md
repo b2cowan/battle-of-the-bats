@@ -109,19 +109,22 @@ A Test slot can only be checked from a site running a test key (your local serve
 ### Step 5 — The customer portal: nothing to switch on, one thing to check
 
 **The app owns the portal's settings** (owner sequence ruling, 2026-10-31: "portal settings live in our code"). The first
-time anyone opens the portal in a mode, the app creates a portal configuration named **"FieldLogicHQ portal v1"** in that
+time anyone opens the portal in a mode, the app creates a portal configuration named **"FieldLogicHQ portal v2"** in that
 mode and uses it for every portal visit after that. It offers exactly:
 
 - updating the payment method
 - invoice history
-- updating name, email, address and tax ID
+- updating name, email and tax ID. **Not the billing address** (v2, owner ruling 2026-11-04, GST/HST Stage 1 Part 3): it
+  changes only on the app's own Plan & billing window, which copies it onto the Stripe customer. v1 offered the address;
+  the first portal open after v2 ships creates v2 and switches v1 off, in each mode.
 - **cancelling at the end of the period**, with no refund for the unused part (the owner's ruling: a plan runs to its
   renewal date, and the app ends it then)
 - **no** plan switching: plan moves happen only on the app's own Plan & billing page
 
 > ⚠ This replaces the 2026-10-29 instruction to keep cancelling off in the dashboard. The dashboard's default portal
-> settings are no longer used at all, so changing them does nothing. **Do not edit "FieldLogicHQ portal v1" in the
-> dashboard either:** a change to what the portal offers is a code change, which creates a v2 and switches v1 off.
+> settings are no longer used at all, so changing them does nothing. **Do not edit "FieldLogicHQ portal v2" in the
+> dashboard either:** a change to what the portal offers is a code change, which creates the next version and switches
+> the old one off.
 
 The one dashboard check: if Stripe refuses to create the portal, look at the account's **public business details**
 under Settings and fill them in (once per mode). The code sends none of them, so this is Stripe's own requirement and
@@ -288,7 +291,7 @@ Make one real purchase, on the day of the release, to confirm end to end:
 
 - [ ] As an organization owner, choose a paid plan on Plan & billing and pay with a real card.
 - [ ] The success message appears and Plan & billing shows the plan.
-- [ ] Open the customer portal. **This first live open creates the live "FieldLogicHQ portal v1".** Check it offers what
+- [ ] Open the customer portal. **This first live open creates the live "FieldLogicHQ portal v2"** (and switches off a live v1 if one exists). Check it offers what
       Stage 2, Step 5 lists.
 - [ ] Stripe dashboard → **Customers** shows the customer.
 - [ ] The live destination's recent deliveries show 200s.

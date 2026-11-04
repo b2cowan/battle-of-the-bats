@@ -3,8 +3,8 @@ import { CANADIAN_PROVINCES } from './canadian-provinces';
 /**
  * WHERE A BUYER IS BILLED (GST/HST Stage 1; build prompt docs/projects/active/GST_HST_STAGE1_BUILD_PROMPT.md, owner
  * rulings 2026-11-03). Pure: no I/O, no env. The one place that decides what a valid billing address is, used by the
- * Billing address window, the coach sign-up's Address step, the server's save and checkout check, and the webhook that
- * copies an edit made on Stripe's billing page. The database CHECKs on billing_locations (migration 433) hold the same
+ * Billing address window, the coach sign-up's Address step, the server's save and checkout check, and platform admin's
+ * record. The database CHECKs on billing_locations (migration 433) hold the same
  * shapes, so a row that passed here always stores.
  *
  *   · Countries: Canada and the United States (T1). US sales are CLOSED until the US work is done (T1 follow-up); the
@@ -101,6 +101,22 @@ export const BILLING_ADDRESS_FORM_WORDS = {
   onFile: (where: string) => `Billing address: ${where}`,
 } as const;
 
+/** Platform admin's read-only block on the organization record's Money tab (Part 3). Staff read it; nobody edits it there. */
+export const BILLING_LOCATION_CONSOLE_WORDS = {
+  heading: 'Billing address',
+  club: 'Where the club is billed. Read only: the club changes it on Plan & billing.',
+  person: 'A coach buys Premium as a person, so this is the coach’s own home address. It covers every portal they pay for.',
+  none: 'No billing address yet. The buyer is asked for one before their first paid checkout.',
+  noOwner: 'This portal isn’t billed to a coach, so there is no address to show here.',
+  readFailed: 'The billing address couldn’t be read.',
+  address: 'Address',
+  country: 'Country',
+  declaration: 'US declaration',
+  declared: (date: string, version: string) => `Ticked ${date} (wording ${version})`,
+  review: 'Review',
+  needsReview: 'Needs review',
+} as const;
+
 /** The stable code every paid path refuses with when the buyer has no valid address (409). */
 export const BILLING_ADDRESS_REQUIRED = 'billing_address_required';
 
@@ -155,8 +171,6 @@ export type BillingLocationCheck =
 export interface BillingLocationOptions {
   /** False in production until US sales open (owner Ask 5, 2026-11-03). */
   usSalesOpen: boolean;
-  /** False for an address read back from Stripe's billing page, which has no tick-box: the declaration on file stands. */
-  requireDeclaration?: boolean;
 }
 
 const LINE_MAX = 200;
@@ -214,7 +228,7 @@ export function checkBillingLocation(input: BillingLocationInput, opts: BillingL
   const postalCode = country.code === 'CA' ? normalizeCanadianPostalCode(input.postalCode) : normalizeZipCode(input.postalCode);
   if (!postalCode) errors.postalCode = W.postal[country.code];
 
-  if (country.code === 'US' && opts.requireDeclaration !== false && input.usDeclared !== true) errors.usDeclared = W.usDeclaration;
+  if (country.code === 'US' && input.usDeclared !== true) errors.usDeclared = W.usDeclaration;
 
   if (Object.keys(errors).length > 0) return { ok: false, errors, usClosed: false };
   return { ok: true, value: { country: country.code, regionCode, line1, line2: line2 || null, city, postalCode: postalCode as string } };
@@ -241,27 +255,13 @@ export function formatBilledTo(loc: BillingLocation): string {
   return `${loc.line1}, ${loc.city}, ${regionName(loc.country, loc.regionCode) ?? loc.regionCode}`;
 }
 
-/** The Stripe customer's address, so invoices and Stripe Tax read the same place we do. */
+/** The Stripe customer's address, so invoices and Stripe Tax read the same place we do. ONE WAY ONLY (owner ruling
+ *  2026-11-04, GST/HST Stage 1 Part 3): Stripe's billing page no longer edits the address (lib/stripe-portal-settings.ts),
+ *  so nothing reads a Stripe customer's address back into our record. */
 export function toStripeAddress(loc: BillingLocation): {
   line1: string; line2: string; city: string; state: string; postal_code: string; country: string;
 } {
   return { line1: loc.line1, line2: loc.line2 ?? '', city: loc.city, state: loc.regionCode, postal_code: loc.postalCode, country: loc.country };
-}
-
-/** An address edited on Stripe's billing page, as input for the same check (Stripe may send nulls or lower case). */
-export function fromStripeAddress(addr: {
-  line1?: string | null; line2?: string | null; city?: string | null; state?: string | null;
-  postal_code?: string | null; country?: string | null;
-} | null | undefined): BillingLocationInput {
-  return {
-    country: addr?.country ?? null, regionCode: addr?.state ?? null, line1: addr?.line1 ?? null,
-    line2: addr?.line2 ?? null, city: addr?.city ?? null, postalCode: addr?.postal_code ?? null,
-  };
-}
-
-export function sameBillingLocation(a: BillingLocation, b: BillingLocation): boolean {
-  return a.country === b.country && a.regionCode === b.regionCode && a.line1 === b.line1
-    && (a.line2 ?? null) === (b.line2 ?? null) && a.city === b.city && a.postalCode === b.postalCode;
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -269,7 +269,10 @@ export function sameBillingLocation(a: BillingLocation, b: BillingLocation): boo
 
 export const REVIEW_REASONS = [
   'country_changed_after_paying',
+  // RETIRED 2026-11-04 (Part 3: Stripe's page no longer edits the address, so no edit there can be invalid). Kept because
+  // migration 433's CHECK still allows it; nothing sets it, and a valid save on our own form still clears it.
   'stripe_edit_invalid',
+  // Worked out when read (`currentReview`), never stored since Part 3; the CHECK allows them as migration 433 wrote it.
   'card_country_mismatch',
   'payout_country_mismatch',
 ] as const;
@@ -299,6 +302,11 @@ export function reviewSentence(
   }
 }
 
+/** What platform admin's Money tab reads (lib/billing-location-server.ts readBillingLocationForConsole). */
+export type ConsoleBillingLocation =
+  | { buyer: 'club' | 'person'; location: StoredBillingLocation | null; review: { reason: ReviewReason; note: string | null; setAt: string | null } | null }
+  | { buyer: 'none' };
+
 export const REVIEW_CONSEQUENCE = 'Until this is looked at, the buyer is treated as Canadian.';
 
 /** T7's outside-Canada sign, compared: a US address wants a US card and US payouts; a Canadian address with a US card
@@ -314,6 +322,23 @@ export function evidenceReview(facts: {
   if (disagrees(card)) return 'card_country_mismatch';
   if (disagrees(payout)) return 'payout_country_mismatch';
   return null;
+}
+
+/**
+ * THE "needs review" answer, worked out when it is READ (owner Part 3 Ask 1, 2026-11-04): platform admin's record now, Stage
+ * 2's tax decision later (a buyer with an answer here is taxed as Canadian). One reason at a time:
+ *   · a STORED flag wins and stays: a Canada↔US change after paying (nothing in Stage 1 answers it; Stage 2's tax-reason
+ *     record gives staff the way), or the retired invalid-Stripe-edit flag (until the buyer's own valid save);
+ *   · otherwise the card and payout evidence as it stands now, so its flag appears and clears with the facts (a corrected
+ *     address, a new card, a payout account in the right country, a disconnected one) and is never stored to go stale.
+ */
+export function currentReview(facts: {
+  country: string; cardCountry?: string | null; payoutCountry?: string | null;
+  storedReason?: ReviewReason | null; storedNote?: string | null;
+}): { reason: ReviewReason; note: string } | null {
+  if (facts.storedReason) return { reason: facts.storedReason, note: facts.storedNote ?? reviewSentence(facts.storedReason, facts) };
+  const evidence = evidenceReview(facts);
+  return evidence ? { reason: evidence, note: reviewSentence(evidence, facts) } : null;
 }
 
 /** Owner Ask 4: a change between Canada and the US after a paid subscription exists is saved AND flagged. */

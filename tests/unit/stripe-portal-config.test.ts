@@ -89,10 +89,10 @@ describe('what our portal offers (owner ruling 2026-10-31; GST/HST Stage 2)', ()
     assert.deepEqual(PORTAL_FEATURES.subscription_cancel, { enabled: true, mode: 'at_period_end', proration_behavior: 'none' });
     assert.deepEqual(PORTAL_FEATURES.subscription_update, { enabled: false });
   });
-  it('card, invoices, and name, email, address and tax ID', () => {
+  it('card, invoices, and name, email and tax ID: never the address (GST/HST Stage 1 Part 3, owner 2026-11-04)', () => {
     assert.equal(PORTAL_FEATURES.payment_method_update?.enabled, true);
     assert.equal(PORTAL_FEATURES.invoice_history?.enabled, true);
-    assert.deepEqual([...(PORTAL_FEATURES.customer_update?.allowed_updates as string[])].sort(), ['address', 'email', 'name', 'tax_id']);
+    assert.deepEqual([...(PORTAL_FEATURES.customer_update?.allowed_updates as string[])].sort(), ['email', 'name', 'tax_id']);
   });
 });
 

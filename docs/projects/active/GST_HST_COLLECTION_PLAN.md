@@ -166,7 +166,10 @@ Bookkeeping plan; tax stays here.
 - For a US address, the declaration (T7) as a required tick-box, stored with the date and terms version; capture the
   card-issuing country as the corroborator. Mismatches fall back to Canadian tax until resolved.
 - Store the country Stripe verifies when a club sets up payouts (already stored) and compare it.
-- Address changes later (customer portal) flow back to our records and to the next invoice's tax.
+- Address changes later happen on our own Plan & billing window only, which copies them onto the Stripe customer (owner
+  ruling 2026-11-04, Stage 1 Part 3: Stripe's billing page no longer edits the address, so a refused edit can never sit on
+  Stripe looking saved, and the US tick cannot be skipped). The card and payout countries are compared again whenever the
+  address, the card or the payout account changes.
 - No backfill is needed — there are no subscribers. Free and comped workspaces simply meet the step at their first paid
   checkout.
 
@@ -185,7 +188,8 @@ Bookkeeping plan; tax stays here.
   Plans end at renewal Part C):** the billing page's Keep {Plan} window and the "Your plan will renew on {date} at {price}"
   email quote the renewal charge from one helper (`W.plan.charge`, `lib/plan-billing-words.ts`) with no tax — it gains
   "plus applicable taxes" (T4) in the same pass.
-- Customer portal: a FieldLogicHQ configuration (not Stripe's default) that keeps address and tax ID editable.
+- Customer portal: a FieldLogicHQ configuration (not Stripe's default) that keeps tax ID editable. **Not the address**
+  (owner ruling 2026-11-04, Stage 1 Part 3: portal v2; the address is edited on Plan & billing only).
 - **Shown before paying**: the amount, the tax by name ("HST 13%"), and the total, on every paid step.
 - Pricing pages, plan panels and marketing: "**plus applicable taxes**" beside every price (→ `/marketing`; the Pricing
   Facts doc records tax-exclusive pricing → `/strategy`).

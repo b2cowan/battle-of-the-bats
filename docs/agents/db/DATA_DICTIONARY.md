@@ -395,7 +395,15 @@ to the Stripe customer). Stage 2's tax reads it. The rules of a valid address li
    every row is `CA` until the switch opens. The CHECK still allows `US` so the dev site can walk it.
 3. **`review_reason` never blocks anything.** It is a flag for platform staff (the club record's Money tab, read only).
    Stage 2 taxes a flagged buyer as Canadian until it clears. A Canada↔US change after paying is SAVED and flagged (owner
-   Ask 4's "held": the flag gives the hold's tax effect in both directions). Nothing in Stage 1 clears a flag by hand; the one exception is `stripe_edit_invalid`, which the buyer's next valid save on our own form clears (it answers the invalid edit made on Stripe's page).
+   Ask 4's "held": the flag gives the hold's tax effect in both directions). **Only ONE flag is ever stored** (Part 3, owner Ask 1, 2026-11-04): a Canada↔US change after paying (a
+   Founding next-season choice counts as paying here, Ask 3), which STAYS — nothing in Stage 1 clears it until Stage 2's
+   tax-reason record. The card and payout evidence (`card_country_mismatch`, `payout_country_mismatch`) is NOT stored: it
+   is worked out whenever it is read (`currentReview`, lib/billing-location.ts) from `card_country` and the live
+   `org_payment_accounts.country`, so it appears and clears with the facts and cannot go stale. **Stage 2's tax decision
+   must ask `currentReview`, not `review_reason` alone.** `stripe_edit_invalid` is
+   **retired** (Part 3: Stripe's billing page no longer edits the address, so nothing reads a Stripe address back); the
+   CHECK still allows it, nothing sets it, and a valid save clears one. Only `lib/billing-location-server.ts` writes this
+   table (guard: `tests/unit/billing-location-evidence.test.ts`).
 
 <!-- dict:col:billing_locations.id -->
 <!-- dict:col:billing_locations.org_id -->
@@ -420,28 +428,29 @@ Canada `A1A 1A1` with the space, US `12345` or `12345-6789`). All trimmed and wh
 
 <!-- dict:col:billing_locations.confirmed_at -->
 **`confirmed_at`** (timestamptz NOT NULL, default now) — when the buyer last confirmed the address: a save from the Billing
-address window or the sign-up's Address step, or a valid edit read back from Stripe's billing page.
+address window, the sign-up's Address step or "Start your club" (Stripe's billing page cannot edit it since Part 3).
 
 <!-- dict:col:billing_locations.us_declaration_at -->
 <!-- dict:col:billing_locations.us_declaration_version -->
 **`us_declaration_at`** / **`us_declaration_version`** (nullable, set together; CHECK: a `US` row always has them) — T7's
 declaration: the day the buyer ticked it and which wording they saw (`US_DECLARATION_VERSION`, today
-`us-2026-11-provisional`; the accountant's wording gets a new version and the old text stays in the code). A later edit
-on Stripe's page keeps the declaration on file.
+`us-2026-11-provisional`; the accountant's wording gets a new version and the old text stays in the code). Every US
+save on our own form stamps them again; nothing else writes a US address (Stripe's page cannot edit it, Part 3).
 
 <!-- dict:col:billing_locations.card_country -->
-**`card_country`** (char(2), nullable, CHECK two capitals) — the issuing country of the card on file for the buyer's
-subscription, read from the Stripe payment method by the billing webhook (Part 3). T7's outside-Canada sign; compared by
-`evidenceReview`. Distinct from `online_payments.card_country` (a family's card on a registration payment). The payout
+**`card_country`** (char(2), nullable, CHECK two capitals) — the issuing country of the buyer's NEWEST-created card (not
+necessarily the default one), upper case, across the buyer's Stripe customers, read from Stripe's current card list on
+every `payment_method.attached` / `detached` (so a swap whose "detached" arrives last still reads the new card), and on a
+save when the row has none yet. NULL = no card = no evidence. T7's outside-Canada sign; read through `currentReview`. ⚠ A last card REMOVED does not clear it today: Stripe sends `payment_method.detached` with no customer, and the webhook stops before its card arms (pre-existing, also `clearCardOnFileIfNoCardsLeft`). Distinct from `online_payments.card_country` (a family's card on a registration payment). The payout
 country is NOT copied here: it is read live from `org_payment_accounts.country`.
 
 <!-- dict:col:billing_locations.review_reason -->
 <!-- dict:col:billing_locations.review_note -->
 <!-- dict:col:billing_locations.review_set_at -->
 **`review_reason`** (text, nullable; CHECK `country_changed_after_paying` · `stripe_edit_invalid` · `card_country_mismatch`
-· `payout_country_mismatch`, = `REVIEW_REASONS`) / **`review_note`** (text, nullable: the staff sentence, e.g. what an
-invalid Stripe edit said) / **`review_set_at`** (set exactly when a reason is; CHECK `billing_locations_review_set_check`)
-— needs review. Written by the save and the webhook; read by the platform-admin record. See gotcha 3.
+· `payout_country_mismatch`, = `REVIEW_REASONS`) / **`review_note`** (text, nullable: the staff sentence, `reviewSentence`, written when the flag is) / **`review_set_at`** (set exactly when a reason is; CHECK `billing_locations_review_set_check`)
+— the STORED half of needs review. Written by the save only; read through `currentReview` by platform admin's Money tab
+(read only). See gotcha 3.
 
 <!-- dict:col:billing_locations.created_at -->
 <!-- dict:col:billing_locations.updated_at -->

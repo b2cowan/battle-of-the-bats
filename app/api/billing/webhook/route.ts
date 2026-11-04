@@ -16,6 +16,7 @@ import {
   clearNextSeasonChoice, orgIdForNextSeasonSubscription,
 } from '@/lib/billing-setup';
 import { NEXT_SEASON_CHOICE_KIND, classifyNextSeasonSubscription } from '@/lib/next-season-choice';
+import { recordCardCountry } from '@/lib/billing-location-server';
 import { PLAN_RANK } from '@/lib/plan-features';
 import { applyPlanChangeSideEffects } from '@/lib/plan-move';
 import { isInAppUpMove } from '@/lib/plan-growth';
@@ -350,7 +351,8 @@ async function runVerifiedBillingEvent(event: Stripe.Event, customerId: string |
         // The event delivers the whole payment method — passing it saves a Stripe round trip
         // inside a webhook handler, which is the one place latency has a consequence (Stripe
         // retries a slow endpoint).
-        await recordCardOnFile({ customerId, paymentMethod: pm });
+        // GST/HST Stage 1 Part 3: the card's issuing country beside the billing address (evidence only, never acted on).
+        await Promise.all([recordCardOnFile({ customerId, paymentMethod: pm }), recordCardCountry(customerId)]);
       }
       break;
     }
@@ -362,7 +364,7 @@ async function runVerifiedBillingEvent(event: Stripe.Event, customerId: string |
     case 'payment_method.detached': {
       const pm = event.data.object as Stripe.PaymentMethod;
       if (pm.type === 'card') {
-        await clearCardOnFileIfNoCardsLeft(customerId, pm);
+        await Promise.all([clearCardOnFileIfNoCardsLeft(customerId, pm), recordCardCountry(customerId)]);
       }
       break;
     }
