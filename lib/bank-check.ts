@@ -64,6 +64,9 @@ export interface BankPayout {
   /** Signed cents: + a deposit, − a debit (refunds can outrun payments). */
   amountCents: number;
   label?: string;
+  /** Rebuilt from its tick, not read from Stripe: the read no longer reaches back to it (a checked statement), or failed.
+   *  Its deposit and day are the tick's own figures; nothing is known of why its gap is what it is. */
+  fromMark?: true;
 }
 
 /** A line saved by the account itself: a checked statement's outstanding list (B10) or the carried list (Ask 12). */
@@ -146,6 +149,8 @@ export type TickRow =
   | {
       kind: 'payout'; key: string; date: string; direction: BankDirection; amountCents: number; label?: string;
       members: BankLine[]; bookCents: number; gapCents: number;
+      /** Rebuilt from its tick (see `BankPayout.fromMark`): its gap is counted, but no reason is known for it. */
+      fromMark?: true;
     };
 
 export interface PayoutGap { key: string; depositCents: number; bookCents: number; gapCents: number }
@@ -267,6 +272,14 @@ export function evaluateCheck(state: BankAccountState, checkId: string): CheckEv
     live.set(l.key, l);
   }
   const payouts = new Map((state.payouts ?? []).map(p => [p.key, p]));
+  /* A ticked payout counts through its OWN tick, not through whether Stripe is asked about it today. The Stripe read starts
+     at the last checked statement's end (and fails now and then), so a payout ticked on an earlier statement is not in
+     `state.payouts`; without it the members tick as plain lines and the payout's gap, deposit minus book side, drops out of
+     the Difference. The tick holds what it was ticked at (its deposit and day), and its members' ticks name it. */
+  for (const m of state.marks) {
+    if (!isPayoutKey(m.key) || payouts.has(m.key)) continue;
+    payouts.set(m.key, { key: m.key, arrivalDate: m.date, amountCents: signed(m.direction, m.amountCents), fromMark: true });
+  }
 
   /* Candidates, by key, first source wins: the book now → a mark → the last check's saved list → the carried
      list → the first check's opening items. A saved copy only stands in for a line the book no longer reads. */
@@ -317,11 +330,18 @@ export function evaluateCheck(state: BankAccountState, checkId: string): CheckEv
 
   for (const { line, origin } of cands.values()) {
     const mark = marksByKey.get(line.key);
-    // A member rides its payout unless it was ticked on its own (a plain mark, e.g. while Stripe could not be read).
-    if (line.payoutKey && payouts.has(line.payoutKey) && (!mark || mark.payoutKey === line.payoutKey)) {
-      const list = membersOf.get(line.payoutKey) ?? [];
+    // A member rides its payout unless it was ticked on its own (a plain mark, e.g. while Stripe could not be read). A ticked
+    // member rides the payout ITS TICK names (the book may now name another, or none, for a payout Stripe is no longer asked
+    // about; the payout row is rebuilt from that same tick, so the two must agree or the member is counted twice); an
+    // unticked one rides the book's.
+    const payoutKey = mark?.payoutKey ?? line.payoutKey ?? null;
+    if (payoutKey && payouts.has(payoutKey) && (!mark || mark.payoutKey === payoutKey)) {
+      // A member the book has since DELETED (a route stamped it removed) is read from its tick only: it is not inside the
+      // payout any more, so the gap grows by it and "Mark checked again" does not write its tick back.
+      if (origin === 'mark' && removedKeys.has(line.key)) continue;
+      const list = membersOf.get(payoutKey) ?? [];
       list.push(line);
-      membersOf.set(line.payoutKey, list);
+      membersOf.set(payoutKey, list);
       continue;
     }
     const row: TickRow = { kind: 'line', key: line.key, date: line.date, direction: line.direction,
@@ -348,7 +368,8 @@ export function evaluateCheck(state: BankAccountState, checkId: string): CheckEv
     const members = (membersOf.get(p.key) ?? []).filter(m => m.status === 'posted').sort(byDateThenKey);
     const bookCents = members.reduce((s, m) => s + signed(m.direction, m.amountCents), 0);
     const gapCents = p.amountCents - bookCents;
-    const row: TickRow = { kind: 'payout', ...payoutAsSaved(p), label: p.label, members, bookCents, gapCents };
+    const row: TickRow = { kind: 'payout', ...payoutAsSaved(p), label: p.label, members, bookCents, gapCents,
+      ...(p.fromMark ? { fromMark: true as const } : {}) };
     const mark = marksByKey.get(p.key);
     if (mark) {
       if (mark.checkId !== check.id) continue;

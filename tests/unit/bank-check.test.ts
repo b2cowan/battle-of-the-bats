@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import {
   bankFeeDate, canMarkChecked, canMarkCheckedAgain, canStartCheck, canUndo, carriedAtRollover, evaluateCheck,
   payoutTickMarks, snapshotForMarking,
-  type BankAccountState, type BankCheckRecord, type BankLine, type BankMark,
+  type BankAccountState, type BankCheckRecord, type BankLine, type BankMark, type BankPayout,
 } from '../../lib/bank-check.ts';
 
 /**
@@ -455,6 +455,117 @@ describe('review findings (R1 /review) — re-marking, individual ticks, voids, 
     const ev = evaluateCheck(healthy, 'c1');
     assert.equal(ev.differenceCents, 0, 'the payout is still ticked once Stripe is back');
     assert.deepEqual(ev.outstanding, []);
+  });
+
+  // R2c finding: the reader asks Stripe only from the last CHECKED statement's end, and a book line carries no payout key
+  // for a payout it did not read. A payout ticked on that checked statement then dropped out: its members counted as
+  // plain lines and the gap (deposit minus book side) fell out of the Difference.
+  describe('a payout ticked on a checked statement Stripe is no longer asked about (R2c finding)', () => {
+    const unread = () => {
+      // The deposit is $89.00; the book side is $90.00 ($1.00 of Stripe fee the book never recorded): a gap of -$1.00.
+      const a = line('entry:a', '2026-10-06', 'in', 5000);
+      const b = line('entry:b', '2026-10-07', 'in', 4000);
+      const po = { key: 'payout:p1', arrivalDate: '2026-10-05', amountCents: 8900 };
+      const state = (payouts: BankPayout[]): BankAccountState => ({
+        setup: { openingDate: '2026-09-30', openingBalanceCents: 100000 },
+        lines: [a, b], payouts,
+        checks: [check('c1', '2026-10-31', 108900, { status: 'checked', outstandingSnapshot: [] })],
+        marks: [tick({ key: po.key, date: po.arrivalDate, direction: 'in', amountCents: po.amountCents }, 'c1'),
+          tick(a, 'c1', po.key), tick(b, 'c1', po.key)],
+      });
+      return { po, state };
+    };
+
+    it('reads $0.00 off, the same as when Stripe still lists it', () => {
+      const { po, state } = unread();
+      const unlisted = evaluateCheck(state([]), 'c1');
+      assert.equal(unlisted.differenceCents, 0);
+      assert.equal(unlisted.payoutGapCents, -100, 'the gap is counted, not dropped');
+      assert.deepEqual(unlisted.payoutGaps, [{ key: po.key, depositCents: 8900, bookCents: 9000, gapCents: -100 }]);
+      const listed = evaluateCheck(state([po]), 'c1');
+      assert.equal(listed.differenceCents, unlisted.differenceCents);
+      assert.equal(listed.tickedBalanceCents, unlisted.tickedBalanceCents);
+    });
+
+    it('is one payout row with its members, not two plain lines', () => {
+      const ev = evaluateCheck(unread().state([]), 'c1');
+      assert.deepEqual(ev.ticked.map(r => [r.kind, r.key]), [['payout', 'payout:p1']]);
+      const row = ev.ticked[0];
+      assert.ok(row.kind === 'payout' && row.fromMark && row.members.map(m => m.key).join() === 'entry:a,entry:b');
+    });
+
+    it('does not read as changed since, and Mark checked again keeps the members’ link to it', () => {
+      const s = unread().state([]);
+      assert.deepEqual(evaluateCheck(s, 'c1').changedSince, []);
+      const { marks } = snapshotForMarking(s, 'c1');
+      assert.deepEqual(marks.map(m => m.key).sort(), ['entry:a', 'entry:b', 'payout:p1']);
+      assert.equal(marks.find(m => m.key === 'entry:a')?.payoutKey, 'payout:p1');
+    });
+
+    it('a member the book has since deleted is not inside the rebuilt payout: the gap grows, and re-marking drops its tick', () => {
+      const { state } = unread();
+      const s = state([]);
+      s.lines = [s.lines[0]]; // entry:b is gone from the book; a route stamped it removed
+      s.stampedChanges = [{ key: 'entry:b', checkId: 'c1', changedBy: null, changedAt: '2026-11-01T00:00:00Z', removed: true }];
+      const ev = evaluateCheck(s, 'c1');
+      const row = ev.ticked[0];
+      assert.ok(row.kind === 'payout' && row.members.map(m => m.key).join() === 'entry:a');
+      assert.equal(ev.differenceCents, 0, 'the deposit is still counted once; the gap absorbs the deleted line');
+      assert.deepEqual(ev.changedSince.map(c => c.key), ['entry:b'], 'and it still reads as changed since');
+      assert.deepEqual(snapshotForMarking(s, 'c1').marks.map(m => m.key).sort(), ['entry:a', 'payout:p1']);
+    });
+
+    it('a ticked member rides the payout its tick names, even when the book now names another (review: counted twice)', () => {
+      // Payout P ($97.00) was ticked with e:1 ($60.00) and e:2 ($40.00). The book now says e:1 rode a LATER payout Q.
+      const e1 = line('entry:e1', '2026-10-06', 'in', 6000, { payoutKey: 'payout:q' });
+      const e2 = line('entry:e2', '2026-10-07', 'in', 4000);
+      const s: BankAccountState = {
+        setup: { openingDate: '2026-09-30', openingBalanceCents: 0 },
+        lines: [e1, e2], payouts: [],
+        checks: [check('c1', '2026-10-31', 9700, { status: 'checked', outstandingSnapshot: [] })],
+        marks: [tick({ key: 'payout:p', date: '2026-10-05', direction: 'in', amountCents: 9700 }, 'c1'),
+          tick(e1, 'c1', 'payout:p'), tick(e2, 'c1', 'payout:p')],
+      };
+      const ev = evaluateCheck(s, 'c1');
+      assert.equal(ev.differenceCents, 0, 'the deposit is counted once');
+      assert.deepEqual(ev.ticked.map(r => r.key), ['payout:p']);
+      assert.equal(ev.payoutGapCents, -300);
+    });
+
+    it('a payout Stripe still lists is read from Stripe, not from the tick', () => {
+      const { po, state } = unread();
+      // Stripe now says $88.00 (the tick was $89.00): Stripe's figure is the one read, and the statement shows it.
+      const ev = evaluateCheck(state([{ ...po, amountCents: 8800 }]), 'c1');
+      const row = ev.ticked[0];
+      assert.ok(row.kind === 'payout' && !row.fromMark && row.amountCents === 8800);
+      assert.equal(ev.payoutGapCents, -200);
+      assert.equal(ev.differenceCents, 100);
+      assert.deepEqual(ev.changedSince.map(c => c.key), ['payout:p1'], 'and the changed deposit is flagged');
+    });
+
+    it('a payout ticked on ANOTHER statement shows nothing here: no row, no members, no gap', () => {
+      const s = unread().state([]);
+      s.checks = [...s.checks, check('c2', '2026-11-30', 108900)];
+      const ev = evaluateCheck(s, 'c2');
+      assert.deepEqual([ev.ticked, ev.outstanding], [[], []]);
+      assert.equal(ev.payoutGapCents, 0);
+      assert.equal(ev.differenceCents, 0);
+    });
+
+    it('a debit payout (refunds outran payments) is rebuilt in the out direction', () => {
+      const a = line('entry:r1', '2026-10-06', 'out', 5200);
+      const s: BankAccountState = {
+        setup: { openingDate: '2026-09-30', openingBalanceCents: 100000 },
+        lines: [a], payouts: [],
+        checks: [check('c1', '2026-10-31', 95000, { status: 'checked', outstandingSnapshot: [] })],
+        marks: [tick({ key: 'payout:p9', date: '2026-10-05', direction: 'out', amountCents: 5000 }, 'c1'), tick(a, 'c1', 'payout:p9')],
+      };
+      const ev = evaluateCheck(s, 'c1');
+      const row = ev.ticked[0];
+      assert.ok(row.kind === 'payout' && row.direction === 'out' && row.amountCents === 5000 && row.bookCents === -5200);
+      assert.equal(ev.payoutGapCents, 200);
+      assert.equal(ev.differenceCents, 0);
+    });
   });
 
   it('a member ticked on its own while its payout was unreadable stays ticked when the payout reappears', () => {

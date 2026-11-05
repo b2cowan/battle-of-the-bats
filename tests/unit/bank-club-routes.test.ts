@@ -58,12 +58,16 @@ describe('rule 3: a payout tick and its members are written and removed together
     assert.ok(p.ok);
     assert.deepEqual(p.remove.sort(), ['entry:p1', 'entry:p2', 'payout:po_1']);
   });
-  it('unticking a stamped member while Stripe is down removes the whole group, not the member alone', () => {
+  it('unticking a payout while Stripe is down removes the whole group (the payout is a row from its tick; its members ride it)', () => {
     const s = state({ payouts: [], marks: [mark('payout:po_1', 'c1', PO.arrivalDate, 'in', 15_000),
       mark('entry:p1', 'c1', P1.date, 'in', 10_000, 'payout:po_1'), mark('entry:p2', 'c1', P2.date, 'in', 5_000, 'payout:po_1')] });
-    const p = tickPlan(s, 'c1', 'entry:p1', false);
+    const p = tickPlan(s, 'c1', 'payout:po_1', false);
     assert.ok(p.ok);
     assert.deepEqual(p.remove.sort(), ['entry:p1', 'entry:p2', 'payout:po_1']);
+    // A member is not a row of its own any more, so a stale member-only untick finds nothing to remove (a double tap).
+    const stale = tickPlan(s, 'c1', 'entry:p1', false);
+    assert.ok(stale.ok);
+    assert.deepEqual(stale.remove, []);
   });
   it('a plain line ticks alone and keeps no payout link', () => {
     const p = tickPlan(state({ payouts: [] }), 'c1', 'entry:p1', true);
@@ -213,6 +217,18 @@ describe('a payout\'s gap, named by reason, and the payment-processing offer (P4
   const view = (s: BankAccountState, f: PayoutGapFacts, members = ['entry:p1', 'entry:p2']) =>
     payoutGapViews(evaluateCheck(s, 'c1'), { 'payout:po_1': f }, { 'payout:po_1': members })['payout:po_1'];
 
+  it('a payout rebuilt from its tick (Stripe is no longer asked about it) counts its gap but names and offers nothing', () => {
+    const marks = [
+      { key: 'payout:po_1', checkId: 'c1', date: PO.arrivalDate, direction: 'in' as const, amountCents: 14_500 },
+      ...[P1, P2].map(l => ({ key: l.key, checkId: 'c1', date: l.date, direction: l.direction, amountCents: l.amountCents, payoutKey: 'payout:po_1' })),
+    ];
+    const ev = evaluateCheck(state({ payouts: [], marks }), 'c1');
+    const row = ev.ticked.find(r => r.kind === 'payout');
+    assert.ok(row && row.kind === 'payout' && row.fromMark, 'the payout is a row again');
+    assert.equal(row.gapCents, 14_500 - row.bookCents, 'its gap is counted');
+    assert.deepEqual(payoutGapViews(ev, { 'payout:po_1': facts({ stripeFeeCents: -500 }) }, { 'payout:po_1': ['entry:p1', 'entry:p2'] }), {},
+      'no reason is known, so none is named and the payment-processing line is not offered');
+  });
   it('a Stripe fee the books lack is offered, at the server\'s figure', () => {
     const v = view(withDeposit(14_500), facts({ stripeFeeCents: -500 }));
     assert.equal(v.gapCents, -500);

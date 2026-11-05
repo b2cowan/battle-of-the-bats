@@ -279,7 +279,8 @@ export function payoutGapViews(ev: CheckEvaluation, facts: Record<string, Payout
   members: Record<string, string[]>): Record<string, PayoutGapView> {
   const out: Record<string, PayoutGapView> = {};
   for (const r of [...ev.ticked, ...ev.outstanding]) {
-    if (r.kind !== 'payout') continue;
+    // A payout rebuilt from its tick has no Stripe facts behind its gap: nothing to name and nothing to offer.
+    if (r.kind !== 'payout' || r.fromMark) continue;
     const f = facts[r.key];
     const g = nameGap(r.gapCents, f);
     const posted = new Set(r.members.map(m => m.key));

@@ -873,13 +873,39 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 >   page errors. `check:layout --only=admin-accounting-bank,admin-accounting,admin-accounting-ledger --width=1440`: no new
 >   findings (`--changed` swept 348 screens because other sessions' shared files are in the tree, which the dev server
 >   does not take; the Bank screen measured in its first-visit state).
-> - **⚠ FOUND, server side (R2b-3 owns those files; reported, not fixed):** **a ticked Stripe payout drops out of its own
->   statement once that statement is checked.** The reader asks Stripe only from the last CHECKED statement's end, and a
+> - **✅ FIXED 2026-11-05 (owner asked; engine only, no migration, no screen change; see the last bullet of this block):**
+>   found by R2c's walk, **a ticked Stripe payout dropped out of its own statement once that statement was checked.** The reader asks Stripe only from the last CHECKED statement's end, and a
 >   payout's tick is not a line the engine can read alone, so the checked Oct 31 statement on dev read **$193.25 off**
 >   with the payout gone (probe: `difference=19325 payoutTicked=false`). On screen that is the C5 band ("Ticked now")
->   and, worse, **"Mark checked again" can never reach $0.00** on a statement holding a payout. Needs: the payouts a
->   checked statement's marks name read (or the payout mark carry its amount and members) — an R2b-3 follow-up before
->   R3 stamps changes for real.
+>   and, worse, **"Mark checked again" can never reach $0.00** on a statement holding a payout.
+> - **✅ The payout fix, 2026-11-05 (said out loud):** the cause was wider than the reader's start date. A book line carries no
+>   payout link for a payout Stripe was not asked about, so a ticked payout's members counted as plain lines and its gap
+>   (deposit minus book side) fell out of the Difference; the same happened on ANY statement while Stripe's read failed. Fix
+>   in the engine, not the reader: `evaluateCheck` rebuilds a ticked payout from its own tick (the deposit and day it was
+>   ticked at; its members' ticks name it) when Stripe's list lacks it, flagged `fromMark`. So a checked statement reads
+>   the same with Stripe asked or not, no extra Stripe read, nothing new to fail. A rebuilt payout counts its gap but names
+>   no reason and offers no payment-processing line (`payoutGapViews` skips it: no Stripe facts behind it); its members now
+>   ride it as they do when Stripe lists it, and Mark checked again keeps their link to it (it used to drop it). One earlier
+>   test said a stamped member could be unticked alone while Stripe was down; now the payout is the row, so that test
+>   unticks the payout and a stray member-only untick is a no-op. Proof: `bank-check.test.ts` (+4), `bank-club-routes.test.ts`
+>   (+1, one reworded), the dev walk's checked statement went from `difference=19325 payoutTicked=false` to
+>   **`difference=0 payoutTicked=true`**, `BANK_R2C_WALK_PASSED`.
+> - **/review (high) of the payout fix, 2026-11-05** (three lenses: engine correctness, callers and blast radius, money
+>   integrity and tests; none found a way to reach $0.00 on figures that do not reconcile, because the Difference is still
+>   anchored on the bank's own ending balance). *Fixed:* a ticked line now follows the payout ITS TICK names (the book may
+>   name another payout once the first is no longer read, and the line was counted twice); a member the book has since
+>   deleted is not counted inside a rebuilt payout (its gap absorbs it, "changed since" still lists it, re-marking drops
+>   its tick); three tests strengthened or added (Stripe's figure wins when Stripe lists the payout, a payout ticked on
+>   another statement shows nothing here, a debit payout). Bank tests 203/203, walk passed again, no page errors.
+>   *Left as findings (owner calls or small follow-ups):* (a) **marking is no longer blocked while Stripe is down and a
+>   ticked payout is on the statement** (the old code blocked it by accident: the payout's gap fell out and the
+>   Difference was off); the stored deposit is Stripe's figure at tick time and still has to match the bank's ending
+>   balance, so this loosens a guard rather than opening a hole, but a refusal or a notice while Stripe is down would say
+>   so; (b) **the "Stripe didn’t answer" callout is now out of date for ticked payouts** (they show grouped, held at
+>   the figures they were ticked at; its words are in `lib/bank-tab-words.ts`, so a wording change is an owner ask under §5);
+>   (c) a payment-processing POST for a rebuilt payout answers `not_outstanding` (nothing is written; only a stale page
+>   can send it); (d) a stale member-only untick is a silent no-op that answers ok; (e) a rebuilt payout can never read as
+>   changed (it is compared with its own tick); the bank pays a payout once, so this is the same blind spot the old code had.
 > - **Checks:** typecheck and focused lint clean; `npm test` 14,201/14,209 at first run, the one Bank failure (the
 >   possessive guard on "{account}'s checks") fixed with the shared `possessive`; the 7 left are the known ones elsewhere
 >   (coach-practice-plans-phone-guard, plan-billing-usage ×2, public-tournament-stage6-walk ×3, series-date-groups,
