@@ -4,6 +4,7 @@ import { orgLinks } from '@/lib/org-links';
 import DivisionFilterBar from '@/components/DivisionFilterBar';
 import PublicTournamentState from './PublicTournamentState';
 import PublicRuleSections from './PublicRuleSections';
+import PublicPage from './PublicPage';
 import styles from './PublicRules.module.css';
 
 /** The Rules body, live and in the admin preview (the old RulesContent was deleted in Stage 8 Part 3a). */
@@ -15,14 +16,14 @@ export default async function PublicRules({
   prefName: string | null; view?: string; contactEmail: string | null; isPreview?: boolean;
 }) {
   if (!pageEnabled || (rules.length === 0 && resources.length === 0)) {
-    return <div className={styles.rules}><div className={styles.state}>
+    return <PublicPage><div className={styles.state}>
       <PublicTournamentState icon={<BookOpen size={40} />} eyebrow="Rules"
         title={pageEnabled ? 'Rules coming soon' : 'Rules unavailable'}
         description={pageEnabled
           ? 'Rules and resources have not been published yet. Check back before game day.'
           : 'The organizer has hidden public rules and resources for this tournament.'}
         contactEmail={isPreview ? null : contactEmail} />
-    </div></div>;
+    </div></PublicPage>;
   }
 
   // Keep the existing saved-division preference; rules remain tournament-wide, with no schedule-publish gate (D1).
@@ -47,7 +48,7 @@ export default async function PublicRules({
     anchor: sectionAnchors.get(section.id)!, title: section.title, icon: section.icon ?? null, items: section.items.map(item => item.content),
   }));
 
-  return <div className={styles.rules}>
+  return <PublicPage>
     <h1 className="sr-only">Tournament Rules</h1>
     <p className={styles.note}>These rules are subject to change at the discretion of the tournament director.
       {' '}Updates will be posted on the News &amp; Announcements page.
@@ -60,5 +61,5 @@ export default async function PublicRules({
     </div>}
     <PublicRuleSections sections={sections} resources={resources.map(r => ({ label: r.label, url: r.url }))}
       isPreview={isPreview} shareAllDivisions={hasTaggedContent} />
-  </div>;
+  </PublicPage>;
 }

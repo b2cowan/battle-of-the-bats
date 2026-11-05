@@ -164,9 +164,12 @@ describe('before and after the event, and the host card (Part 3)', () => {
     assert.match(css, /\.openItem \{[^}]*min-height: 60px/);
     assert.match(css, /\.regCount \{[^}]*font-variant-numeric: tabular-nums/);
   });
-  it('a desk stands the two columns side by side from 1,024 px, and a phone stacks them main-then-side', () => {
+  it('a desk stands the two columns side by side from a 1,200 px window, and below that they stack main-then-side', () => {
+    // Public page layout standard R1 (owner 2026-11-04): the Overview, a game's page and a team's page share ONE column
+    // rule, and between 1,024 and 1,199 px they stack (was: side by side from 1,024). The page's edges are the shared
+    // page's (public-page-layout-guard.test.ts), not the Overview's own.
     const css = readSource('components/public/PublicParts.module.css');
-    assert.match(css, /@media \(min-width: 1024px\) \{\s*\.overview \{ padding: 28px 32px; \}\s*\.cols \{\s*display: grid;\s*grid-template-columns: minmax\(0, 1\.35fr\) minmax\(0, 1fr\);/);
+    assert.match(css, /@media \(min-width: 1200px\) \{\s*\.cols \{\s*display: grid;\s*grid-template-columns: minmax\(0, 1\.35fr\) minmax\(0, 1fr\);/);
     const overview = readCode('components/public/TournamentOverview.tsx');
     assert.match(overview, /const main = moment === 'before' \? \[registerEl, factsEl\] : gameDay \? \[liveEl, playoffDoorEl, upNextEl, withheldEl\] : \[championsEl, afterDoorsEl\];/);
     assert.match(overview, /const side = moment === 'before' \? \[hostEl, newsEl\] : gameDay \? \[latestEl, newsEl, hostEl\] : \[hostEl\];/);

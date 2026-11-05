@@ -1,9 +1,5 @@
-/* Stage 4's Standings body — the only one since Stage 8 Part 3a. */
-.standings {
-  display: flex; flex-direction: column; gap: 16px; min-width: 0; padding: 16px;
-  background: var(--club-ground); color: var(--club-text); font-family: var(--club-text-face);
-}
-.standings > * { min-width: 0; }
+/* Stage 4's Standings body — the only one since Stage 8 Part 3a. Its edges, column and rhythm are the shared page's
+   (PublicPage, PublicParts.module.css `.page`; Public page layout standard R1–R3). */
 .division { display: block; }
 .division select {
   width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--club-field); border-radius: 6px;
@@ -60,10 +56,9 @@
   .table tr[data-followed] > .teamCol { box-shadow: inset 3px 0 0 var(--club-ink); }
 }
 @media (min-width: 1024px) {
-  .standings { padding: 24px; }
-  /* Eight short columns read best close together; stretched across a wide screen the eye loses the row. */
-  .standings > * { max-width: 720px; }
-  .standings > .division { max-width: 360px; }
+  /* The tables take the page's 960 column (R1 replaced the old 720 cap). The division picker is a control, not the
+     page's width; the toolbar pass sets it to 200 (R8). */
+  .division { max-width: 360px; }
   .table { width: 100%; }
   .runsCol { width: auto; }
   .table .teamCol { width: 240px; min-width: 240px; max-width: 240px; }

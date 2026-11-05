@@ -1,13 +1,6 @@
-.page {
-  padding: 16px; min-width: 0; background: var(--club-ground); color: var(--club-text);
-  font-family: var(--club-text-face); font-variant-numeric: tabular-nums;
-}
-.content { display: flex; flex-direction: column; gap: 12px; min-width: 0; max-width: 860px; }
-.content > * { min-width: 0; }
-.content p { overflow-wrap: anywhere; }
+/* The Champions page. Its edges, column and rhythm are the shared page's (PublicPage, PublicParts.module.css `.page`;
+   Public page layout standard R1–R3); figures are tabular frame-wide (TournamentFrame.module.css `.frame .main`). */
+.champions p { overflow-wrap: anywhere; }
 .doors { display: flex; flex-direction: column; gap: 8px; }
 .state > div { width: 100%; padding: 28px 16px; }
 .state a { min-height: 44px; }
-@media (min-width: 1024px) {
-  .page { padding: 28px 32px; }
-}

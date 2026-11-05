@@ -12,13 +12,15 @@ import PublicFactsList from './PublicFactsList';
 import PublicTournamentState from './PublicTournamentState';
 import RollingNumber from './RollingNumber';
 import ShareScoreButton from './ShareScoreButton';
+import PublicPage from './PublicPage';
 import kit from './ClubKit.module.css';
+import parts from './PublicParts.module.css';
 import styles from './PublicGameDetails.module.css';
 
 /** The game page when the organizer hid the Schedule: the state card inside the page's own frame body (Stage 8 Part 3d —
  *  it used to sit in the old global page wrappers, whose top padding cleared a bar the frame no longer has). */
 export function PublicGameUnavailable({ homeHref }: { homeHref: string }) {
-  return <div className={styles.page} data-public-game data-state="unavailable">
+  return <PublicPage data-public-game data-state="unavailable">
     <PublicTournamentState
       icon={<Calendar size={40} />}
       eyebrow="Schedule"
@@ -26,7 +28,7 @@ export function PublicGameUnavailable({ homeHref }: { homeHref: string }) {
       description="The organizer has hidden the schedule for this tournament."
       actions={[{ href: homeHref, label: 'Tournament Home', variant: 'ghost' as const }]}
     />
-  </div>;
+  </PublicPage>;
 }
 
 /** Server-rendered preview body. The route has already applied the public schedule and division gates. */
@@ -39,11 +41,11 @@ export default function PublicGameDetails({ game, data, orgSlug, tournamentSlug,
   const view = publicGameDetailView(game, { ...data, requireFinalization });
   const [away, home] = view.sides;
   const gameHref = orgHref(`/${tournamentSlug}/schedule/${game.id}`);
-  return <div className={styles.page} data-public-game data-state={view.state}>
+  return <PublicPage data-public-game data-state={view.state}>
     <GameDetailLiveRefresher orgSlug={orgSlug} tournamentSlug={tournamentSlug} gameId={game.id}
       initialSignature={view.refreshSignature} enabled={tournament.status === 'active' && isWithinEventDates(tournament.startDate, tournament.endDate)} requireFinalization={requireFinalization} />
     <Link className={styles.back} href={orgHref(`/${tournamentSlug}/schedule`)}><ChevronLeft size={20} aria-hidden />Schedule</Link>
-    <div className={styles.columns}>
+    <div className={parts.cols}>
       <div className={styles.main}>
         <section className={styles.whenWhere} aria-label="When and where">
           <div className={styles.timeLine}><h1 className={view.cancelled ? styles.softTime : undefined}>{view.time}</h1>
@@ -75,6 +77,6 @@ export default function PublicGameDetails({ game, data, orgSlug, tournamentSlug,
       </div>
       <div className={styles.facts}><PublicFactsList rows={view.facts} /></div>
     </div>
-  </div>;
+  </PublicPage>;
 }
 

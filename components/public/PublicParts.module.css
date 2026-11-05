@@ -189,15 +189,43 @@ a.row:hover .teams { text-decoration: underline; }
   color: var(--club-dim);
 }
 
-/* ── The frame Overview's body (Stage 2 Part 2, hub "Game day, phone browser" `.body` / `.sec`) ─────────────────────── */
-.overview {
+/* ── The page: every public tournament page's body (PublicPage.tsx; Public page layout standard R1–R3, owner ruling
+   2026-11-04, docs/agents/design/PUBLIC_PAGE_LAYOUT_STANDARD.md) ───────────────────────────────────────────────────
+   One column, 960 px of content at most, left-aligned to the frame's own edge (32 px right of the menu at a desk, 16 px
+   on a phone); the first thing 28 px under the band or the today's-games line (16 on a phone); 24 px between sections,
+   phone too. A page's own sheet sets none of this — tests/unit/public-page-layout-guard.test.ts holds it. The cap
+   counts the sides in, so the 960 is the content's, whatever the edge. */
+.page {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: calc(960px + 2 * 16px);
+  min-width: 0;
   padding: 16px;
   background: var(--club-ground);
   color: var(--club-text);
+  font-family: var(--club-text-face);
 }
+.page > * { min-width: 0; }
+/* R1 is left-aligned: a child whose shared sheet centres it (the register form's 680 px column, which club forms share)
+   sits on the column's left edge here instead. Two classes, so it outranks that sheet's one without depending on
+   which stylesheet loads last. */
+.page > .leftEdge { margin-inline: 0; }
+/* A page's toolbar is ONE section: its rows (the controls, Schedule's day chips, Standings' counts line) 12 px apart
+   (R3), the drawing's `.tools`. */
+.tools {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+@media (min-width: 1024px) {
+  .page { max-width: calc(960px + 2 * 32px); padding: 28px 32px; }
+}
+
+/* ── The frame Overview's body (Stage 2 Part 2, hub "Game day, phone browser" `.body` / `.sec`) ─────────────────────── */
 .section {
   display: flex;
   flex-direction: column;
@@ -209,9 +237,10 @@ a.row:hover .teams { text-decoration: underline; }
   flex-direction: column;
   gap: 10px;
 }
-/* A phone is one column in reading order: the main column, then the side column. From 1,024 px (the desk, where the white
-   rail carries the tabs) they stand side by side, as the hub's desk frame draws them (padding 28 / 32, columns 1.35 : 1,
-   gaps 28 and 24). Between 901 and 1,023 px Stage 1 keeps the phone's white tab row, so the page stays one column. */
+/* The two-column pages' ONE column rule (R1): the Overview, a game's page and a team's page. A phone is one column in
+   reading order: the main column, then the side column. From a 1,200 px window the two stand side by side, splitting
+   the 960 about 540 + 392 (1.35 : 1, 28 between); below 1,200 they stack, main then side — between 1,024 and 1,199 the
+   rail leaves under 900 px, and two columns there were too narrow to read a game in. */
 .cols {
   display: flex;
   flex-direction: column;
@@ -223,8 +252,7 @@ a.row:hover .teams { text-decoration: underline; }
   gap: 24px;
   min-width: 0;
 }
-@media (min-width: 1024px) {
-  .overview { padding: 28px 32px; }
+@media (min-width: 1200px) {
   .cols {
     display: grid;
     grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);

@@ -2,6 +2,7 @@ import { Megaphone, Star, Calendar } from 'lucide-react';
 import type { Announcement, Division } from '@/lib/types';
 import DivisionFilterBar from '@/components/DivisionFilterBar';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
+import PublicPage from '@/components/public/PublicPage';
 import { orgLinks } from '@/lib/org-links';
 import styles from '@/app/[orgSlug]/news/news.module.css';
 
@@ -69,19 +70,15 @@ export default async function NewsContent({
   const href = await orgLinks(orgSlug);
   if (!pageEnabled) {
     return (
-      <div className="page-content">
-        <div className="section">
-          <div className="container">
-            <PublicTournamentState
-              icon={<Megaphone size={40} />}
-              eyebrow="News"
-              title="News unavailable"
-              description="The organizer has hidden public announcements for this tournament."
-              contactEmail={contactEmail}
-            />
-          </div>
-        </div>
-      </div>
+      <PublicPage>
+        <PublicTournamentState
+          icon={<Megaphone size={40} />}
+          eyebrow="News"
+          title="News unavailable"
+          description="The organizer has hidden public announcements for this tournament."
+          contactEmail={contactEmail}
+        />
+      </PublicPage>
     );
   }
 
@@ -97,82 +94,72 @@ export default async function NewsContent({
   const regular = announcements.filter(a => !a.pinned);
 
   return (
-    <div className="page-content">
-      <div className="public-page-header">
-        <div className="container">
-          <span className="eyebrow"><Megaphone size={12} /> News</span>
-          <h1>News & Announcements</h1>
-          <p className="text-muted">Stay up to date with the latest tournament news, schedule changes, and announcements.</p>
-        </div>
-      </div>
+    // The page's one column (R1–R3). No page title: the menu names the page (R2), so the heading is for screen readers.
+    <PublicPage>
+      <h1 className="sr-only">News & Announcements</h1>
+      {hasTaggedContent && prefName && divisions.length > 0 && (
+        <div className={styles.filter}><DivisionFilterBar
+          orgSlug={orgSlug}
+          // The filter bar is a client component: send it a division's id and name, not its fee schedule and settings.
+          divisions={divisions.map(d => ({ id: d.id, name: d.name }))}
+          activeName={prefName}
+          isFiltering={isFiltering}
+          viewAllHref={href(`/${tournamentSlug}/news?view=all`)}
+          backHref={href(`/${tournamentSlug}/news`)}
+        /></div>
+      )}
 
-      <div className="section">
-        <div className="container">
-          {hasTaggedContent && prefName && divisions.length > 0 && (
-            <DivisionFilterBar
-              orgSlug={orgSlug}
-              // The filter bar is a client component: send it a division's id and name, not its fee schedule and settings.
-              divisions={divisions.map(d => ({ id: d.id, name: d.name }))}
-              activeName={prefName}
-              isFiltering={isFiltering}
-              viewAllHref={href(`/${tournamentSlug}/news?view=all`)}
-              backHref={href(`/${tournamentSlug}/news`)}
-            />
+      {announcements.length === 0 ? (
+        <PublicTournamentState
+          icon={<Megaphone size={40} />}
+          eyebrow="News"
+          title={isFiltering ? `No announcements for ${prefName}` : 'No announcements yet'}
+          description={
+            isFiltering
+              ? 'There are no announcements tagged to this division.'
+              : 'Tournament announcements will appear here when the organizer posts them.'
+          }
+          contactEmail={contactEmail}
+          actions={isFiltering
+            ? [{ href: href(`/${tournamentSlug}/news?view=all`), label: 'View All News', variant: 'ghost' as const }]
+            : [
+                // Not a dead end — route fans to the surfaces that do have content
+                // (same Home-empty-state pattern, same ghost weight).
+                { href: href(`/${tournamentSlug}/schedule`), label: 'View Schedule', variant: 'ghost' as const },
+                { href: href(`/${tournamentSlug}/standings`), label: 'View Standings', variant: 'ghost' as const },
+              ]}
+        />
+      ) : (
+        <>
+          {pinned.length > 0 && (
+            <div className={styles.pinnedSection}>
+              <div className={styles.sectionLabel}>
+                <Star size={13} fill="currentColor" /> Pinned Announcements
+              </div>
+              <div className={styles.annList}>
+                {pinned.map(ann => (
+                  <AnnouncementCard key={ann.id} ann={ann} pinned />
+                ))}
+              </div>
+            </div>
           )}
 
-          {announcements.length === 0 ? (
-            <PublicTournamentState
-              icon={<Megaphone size={40} />}
-              eyebrow="News"
-              title={isFiltering ? `No announcements for ${prefName}` : 'No announcements yet'}
-              description={
-                isFiltering
-                  ? 'There are no announcements tagged to this division.'
-                  : 'Tournament announcements will appear here when the organizer posts them.'
-              }
-              contactEmail={contactEmail}
-              actions={isFiltering
-                ? [{ href: href(`/${tournamentSlug}/news?view=all`), label: 'View All News', variant: 'ghost' as const }]
-                : [
-                    // Not a dead end — route fans to the surfaces that do have content
-                    // (same Home-empty-state pattern, same ghost weight).
-                    { href: href(`/${tournamentSlug}/schedule`), label: 'View Schedule', variant: 'ghost' as const },
-                    { href: href(`/${tournamentSlug}/standings`), label: 'View Standings', variant: 'ghost' as const },
-                  ]}
-            />
-          ) : (
-            <>
+          {regular.length > 0 && (
+            <div>
               {pinned.length > 0 && (
-                <div className={styles.pinnedSection}>
-                  <div className={styles.sectionLabel}>
-                    <Star size={13} fill="currentColor" /> Pinned Announcements
-                  </div>
-                  <div className={styles.annList}>
-                    {pinned.map(ann => (
-                      <AnnouncementCard key={ann.id} ann={ann} pinned />
-                    ))}
-                  </div>
+                <div className={styles.sectionLabel}>
+                  <Calendar size={13} /> Recent Announcements
                 </div>
               )}
-
-              {regular.length > 0 && (
-                <div>
-                  {pinned.length > 0 && (
-                    <div className={styles.sectionLabel}>
-                      <Calendar size={13} /> Recent Announcements
-                    </div>
-                  )}
-                  <div className={styles.annList}>
-                    {regular.map(ann => (
-                      <AnnouncementCard key={ann.id} ann={ann} pinned={false} />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
+              <div className={styles.annList}>
+                {regular.map(ann => (
+                  <AnnouncementCard key={ann.id} ann={ann} pinned={false} />
+                ))}
+              </div>
+            </div>
           )}
-        </div>
-      </div>
-    </div>
+        </>
+      )}
+    </PublicPage>
   );
 }

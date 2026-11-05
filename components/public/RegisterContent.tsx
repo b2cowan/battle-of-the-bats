@@ -22,6 +22,8 @@ import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
 import PasswordInput from '@/components/auth/PasswordInput';
 import { PAY_WORDS } from '@/lib/online-payment-words';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
+import PublicPage from '@/components/public/PublicPage';
+import parts from '@/components/public/PublicParts.module.css';
 
 /**
  * The steps, EMAIL FIRST (owner A1, 2026-10-13 — `COACH_REGISTER_EXISTING_TEAM_PLAN.md`):
@@ -936,9 +938,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
 
   if (tournament && !isPublicPageEnabled(tournament, 'register')) {
     return (
-      <div className="page-content">
-        <div className="section">
-          <div className="container">
+      <PublicPage>
             <PublicTournamentState
               icon={<UserPlus size={40} />}
               eyebrow="Registration"
@@ -951,9 +951,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                 ...(isPublicPageEnabled(tournament, 'rules') ? [{ href: rulesHref, label: 'Tournament Rules', variant: 'ghost' as const }] : []),
               ]}
             />
-          </div>
-        </div>
-      </div>
+      </PublicPage>
     );
   }
 
@@ -1256,10 +1254,9 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   );
 
   return (
-    <div className="page-content">
+    // The page's one column (Public page layout standard R1–R3): the form's 680 px column on its left edge.
+    <PublicPage>
       {isPreview && (
-        <div className="section" style={{ paddingBottom: 0 }}>
-          <div className="container">
             <div style={{
               display: 'flex', alignItems: 'center', gap: '0.5rem',
               padding: '0.6rem 0.9rem', borderRadius: 8,
@@ -1270,15 +1267,11 @@ export default function RegisterContent({ isPreview = false, initialData = null 
               <Eye size={14} style={{ flexShrink: 0 }} />
               <span>Preview — this is exactly how registrants will see your form. Submissions are disabled here.</span>
             </div>
-          </div>
-        </div>
       )}
       {/* No page-level header here: the tournament identity is carried by the shell's
           top context bar (desktop) and the card header below (all breakpoints), so a
           "Team Registration" h1 + paragraph would be the third redundant identity block. */}
-      <div className="section">
-        <div className="container">
-          <div className={styles.formWrap}>
+          <div className={`${styles.formWrap} ${parts.leftEdge}`}>
 
             {!ready && onFormStep && (
               <PublicTournamentState eyebrow="Registration" title="Loading registration…" compact />
@@ -1735,8 +1728,6 @@ export default function RegisterContent({ isPreview = false, initialData = null 
               </div>
             )}
           </div>
-        </div>
-      </div>
-    </div>
+    </PublicPage>
   );
 }

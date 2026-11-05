@@ -1,11 +1,11 @@
-/* Used only by the preview Playoffs body and its explicit game-card variant. */
-.playoffs { display: flex; flex-direction: column; gap: 16px; min-width: 0; padding: 16px; background: var(--club-ground); color: var(--club-text); font-family: var(--club-text-face); }
-.playoffs > *, .columns > * { min-width: 0; }
+/* Used only by the Playoffs body and its explicit game-card variant. Its edges, column and rhythm are the shared page's
+   (PublicPage, PublicParts.module.css `.page`; Public page layout standard R1–R3). */
+.columns > * { min-width: 0; }
 .controls { display: flex; align-items: center; gap: 8px; }
 .division { flex: 1; min-width: 0; }
 .division select { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--club-field); border-radius: 6px; background: var(--club-card); color: var(--club-text); color-scheme: light; font: 400 1rem/1.4 var(--club-text-face); }
 .division select:focus-visible, .gameLink:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 2px; }
-.columns { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.columns { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
 .next, .bracket { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .gameCard { min-width: 0; padding: 12px 14px; background: var(--club-card); border: 1px solid var(--club-line-2); border-radius: 8px; }
 .gameCard[data-live] { border-left: 3px solid var(--club-ok); }
@@ -41,7 +41,6 @@
 .endCut { border-top: 2px dashed var(--club-field); padding-top: 8px; margin: 0; color: var(--club-soft); font-size: 0.75rem; }
 .srOnly { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (min-width: 1024px) {
-  .playoffs { padding: 28px 32px; }
   .division { flex: 0 1 360px; }
   /* One column: the game gets the full width, the seeding row sits under it (its detail opens in a window), then the bracket. */
   .columns { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: 'next' 'seeding' 'bracket'; gap: 24px 28px; align-items: start; }

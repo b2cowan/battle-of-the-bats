@@ -23,6 +23,7 @@ import PublicDisclosure from './PublicDisclosure';
 import PublicSectionHead from './PublicSectionHead';
 import PublicTournamentState from './PublicTournamentState';
 import PublicChampions from './PublicChampions';
+import PublicPage from './PublicPage';
 import styles from './PublicPlayoffs.module.css';
 
 interface Props {
@@ -57,9 +58,9 @@ export default function PublicPlayoffs({ orgSlug, tournamentSlug, initialData, i
   });
 
   const tournament = data.tournament;
-  if (!tournament || !data.pageEnabled) return <div className={styles.playoffs} data-public-playoffs="unavailable">
+  if (!tournament || !data.pageEnabled) return <PublicPage data-public-playoffs="unavailable">
     <PublicTournamentState title="Playoff Picture unavailable" description="The organizer has hidden results and standings for this tournament." />
-  </div>;
+  </PublicPage>;
 
   const requireFinalization = data.organization.requireScoreFinalization ?? tournament.requireScoreFinalization ?? true;
   const games = division ? data.games.filter(game => game.divisionId === division.id && game.isPlayoff) : [];
@@ -79,7 +80,7 @@ export default function PublicPlayoffs({ orgSlug, tournamentSlug, initialData, i
   const base = orgHref(`/${tournamentSlug}`);
   const qualifier = division ? qualificationCaption(division).replace(/^Top/, 'top') : '';
 
-  return <div className={styles.playoffs} data-public-playoffs-ready data-public-playoffs={games.length ? selected.kind : 'empty'}>
+  return <PublicPage data-public-playoffs-ready data-public-playoffs={games.length ? selected.kind : 'empty'}>
     {division && <div className={styles.controls}>
       <label className={styles.division}><span className={styles.srOnly}>Division</span>
         <select value={division.id} onChange={event => {
@@ -134,5 +135,5 @@ export default function PublicPlayoffs({ orgSlug, tournamentSlug, initialData, i
         </div>
       </PublicDisclosure></div>}
     </div> : <PublicTournamentState title="The bracket isn't set yet" description="The organizer will publish the playoff bracket when it is ready." compact />}
-  </div>;
+  </PublicPage>;
 }

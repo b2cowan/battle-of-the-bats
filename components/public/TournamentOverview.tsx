@@ -18,6 +18,7 @@ import PublicFactsList from './PublicFactsList';
 import PublicChampions from './PublicChampions';
 import PublicHostCard, { type HostCardColours } from './PublicHostCard';
 import FollowTournamentLine from './FollowTournamentLine';
+import PublicPage from './PublicPage';
 import styles from './PublicParts.module.css';
 
 /**
@@ -170,12 +171,12 @@ export default function TournamentOverview({
   const keyed = (parts: ReactNode[]) => parts.map((p, i) => (p ? <Fragment key={i}>{p}</Fragment> : null));
 
   return (
-    <div className={styles.overview}>
+    <PublicPage>
       {!isPreview && <FollowTournamentLine orgSlug={orgSlug} tournamentSlug={tournamentSlug} tournamentName={tournament.name} />}
       <div className={styles.cols}>
         {main.some(Boolean) && <div className={styles.colMain}>{keyed(main)}</div>}
         {side.some(Boolean) && <div className={styles.colSide}>{keyed(side)}</div>}
       </div>
-    </div>
+    </PublicPage>
   );
 }

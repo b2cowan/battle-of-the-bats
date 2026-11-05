@@ -1,5 +1,6 @@
-.page { display: flex; flex-direction: column; gap: 16px; min-width: 0; padding: 16px; background: var(--club-ground); color: var(--club-text); font-family: var(--club-text-face); }
-.page > *, .columns > *, .main, .side { min-width: 0; }
+/* The page's edges, column and rhythm are the shared page's (PublicPage, PublicParts.module.css `.page`), its two columns
+   the shared `.cols` rule (stacked below a 1,200 px window); Public page layout standard R1–R3. */
+.main, .side { min-width: 0; }
 .back { display: inline-flex; align-items: center; align-self: flex-start; gap: 2px; min-height: 44px; margin: -8px 0; color: var(--club-ink); text-decoration: none; font: 400 0.875rem/1.4 var(--club-text-face); }
 .identity { display: flex; align-items: flex-start; gap: 12px; }
 .initials { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border: 1px solid var(--club-line-2); border-radius: 8px; background: var(--club-card); font: 700 1rem/1 var(--club-text-face); }
@@ -14,7 +15,7 @@
 .symbol[aria-pressed='true'] svg { fill: currentColor; }
 .symbol > svg { width: 22px; height: 22px; }
 .back:focus-visible, .symbol:focus-visible, .result:focus-visible, .retry:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 2px; }
-.columns, .main, .side { display: flex; flex-direction: column; gap: 16px; }
+.main, .side { display: flex; flex-direction: column; gap: 24px; }
 .section { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .section h3 { margin: 0; font: 600 1rem/1.3 var(--club-text-face); text-transform: none; letter-spacing: normal; }
 .results, .record { border: 1px solid var(--club-line-2); border-radius: 8px; background: var(--club-card); }
@@ -37,9 +38,8 @@
 .stateCard h2 { font: 600 1.375rem/1.3 var(--club-text-face); }
 .stateCard p { font: 400 0.875rem/1.5 var(--club-text-face); color: var(--club-soft); }
 .retry { min-height: 44px; margin-top: 16px; padding: 8px 16px; border: 1px solid var(--club-field); border-radius: 6px; background: var(--club-card); color: var(--club-text); font: 400 1rem/1.4 var(--club-text-face); cursor: pointer; }
-@media (min-width: 1024px) {
-  .page { padding: 28px 32px; }
-  .columns { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+/* Only where the two columns stand side by side (the shared `.cols` rule's 1,200 px). */
+@media (min-width: 1200px) {
   /* Heading line (1rem × 1.3) + the section's 8px gap, so the Record card top meets the first card's top. */
   .sideBelowHeading { padding-top: calc(1rem * 1.3 + 8px); }
 }

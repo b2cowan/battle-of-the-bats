@@ -1,0 +1,135 @@
+# Public page layout standard — plan
+
+**Status:** DRAWN round 1 2026-11-04; **A1–A9 RULED as recommended 2026-11-04** (owner: "I agree with your recommendations"); A10 (ways to the club) resolved the same day on the recommendation (the host card only when something is open); round 2 (game page + team page) DRAWN 2026-11-04 after /design; **A11–A14 RULED as recommended 2026-11-04** ("I agree with your recommendations, go ahead and make the build prompt"). **Build prompt written 2026-11-04:** `PUBLIC_PAGE_LAYOUT_STANDARD_BUILD_PROMPT.md` (six sessions: 1, 2a, 2b, 3, 4, 5). **Club round session prompt written 2026-11-04:** `PUBLIC_CLUB_PAGE_LAYOUT_REVIEW_PROMPT.md` (two sessions: census + drawings + asks, then the build prompt; its build waits on the tournament build's Parts 1–2b, which share the club kit). **Part 1 built 2026-11-05** — the written standard (`docs/agents/design/PUBLIC_PAGE_LAYOUT_STANDARD.md`), every page body on one wrapper (`PublicPage`), the two-column pages stacking below 1,200 px, the guard (`tests/unit/public-page-layout-guard.test.ts`); next = Part 2a.
+**Drawings:** https://claude.ai/artifact/NC6Y7ijjYtd3Kr4cGPgbep (source `PUBLIC_PAGE_LAYOUT_STANDARD_DRAWINGS.html`, same folder).
+**PM brief:** `PUBLIC_PAGE_LAYOUT_STANDARD_PM_BRIEF.md`.
+**Parent:** the public tournament site review (`PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md`); this pass follows its Stage 8 switch-on and reuses every part it built.
+
+## 1. Why
+
+Owner, 2026-11-04, on the desktop Overview and then every public tournament page: the pages feel jumbled and do not
+flow from one to the next — spacing and layout formats differ page to page. After the tournament pass is approved and
+built, the same exercise runs on the club's public pages, because families toggle between a club and its tournament.
+
+Each Stage (2–6) built its page on its own, so each picked its own edges and recipes. Measured 2026-11-04 (code census,
+desk ≥1,024 px, CSS px):
+
+| Page | Padding | Content width | Starts |
+|---|---|---|---|
+| Overview | 28/32 | fills the main column | 28 |
+| Schedule | 16 | children 860 | 16 |
+| Standings | 24 | children 720, division 360 | 24 (+ ticker) |
+| Playoffs | 28/32 | fills | 28 (+ ticker) |
+| Teams | 28/32 | filters 640, groups 860 | 28 (+ ticker) |
+| Rules | 28/32 | 860 | 28 (+ ticker) |
+| Game page | 0/16/16 | fills | 0 |
+| News / Register | old `.container` | 1,200 centred | 24 |
+
+Also: a game is drawn eight ways (Overview live card, Overview rows, Schedule row, Schedule live card, Playoffs card,
+bracket match, team results, game page), "live" is shown nine ways (band black dot, ticker red, Schedule green pill,
+Playoffs/Teams green text, bracket green edge, a heading, a chip), corners are 6/8/9/10/12/20, box borders use three
+colours, and text uses ten sizes (12, 13, 14, 16, 18, 20, 22, 24, 28, 32).
+
+The club frame (measured the same day) puts tabs in the band, centres one 1,200 column and keeps 744/760/960 reading
+measures left-aligned inside it. It shares tokens, band parts, footer and the club kit with the tournament frame.
+
+## 2. The proposed standard (R1–R11, drawn)
+
+**Written up (Part 1, 2026-11-05) as the living reference `docs/agents/design/PUBLIC_PAGE_LAYOUT_STANDARD.md`** — the
+rules word for word from the drawing, each rule's "Keeps" line, the Exceptions, and how to check a new page. That file
+is the standard from now on; the summary below is the plan's record of what was drawn.
+
+1. **Width** — one content column, max 960, left-aligned to the frame's own edge (tournament: 32 px right of the menu); the Overview's two columns split the 960 and stack below a 1,200 px window. Phone: full width, 16 sides. Club pages keep their centred 1,200 column with the 960 on its left edge (club round). Exception: a 3+ round bracket scrolls in its own box.
+2. **Top** — content starts 28 below the band or the today's-games line; a page opens with its toolbar or first heading; no page title (phone: the tab row names the page).
+3. **Rhythm** — 24 between sections, 12 between toolbar rows, hairlines (no gap) between list rows.
+4. **Three heading levels** — division heading 18 px (ruled 2026-10-30); section heading = `PublicSectionHead` (16/700, count pill, right link); pool band = the club kit's `.listBand` inside a list. A pool with its own table takes a section heading.
+5. **Lists** — rows of the same kind are one framed list; separate boxes only for different kinds; two lines max. Registered exception: a game row (head + two teams, no chevron, whole row is the link — `PublicGameRow.tsx:47`).
+6. **One game, two forms** — order when · who · status. Stacked (any column < 600 px, every phone) = the phone recipe ruled 2026-10-29. One line (wide desk list: Schedule, Playoffs) = the desktop row kept 2026-10-29, on the 104 · rest · 104 grid for EVERY state — the live card's `1fr 2.2fr 1fr` grid (`PublicSchedule.module.css` live override) is what wraps long names and goes. Full-ink names; winner bold / loser soft only when final (`lib/public-game-row.ts:101-109`). No field on the all-games list (ruled 10-29); Overview Live now + Up next keep field, Live now keeps Directions. Team page: that team first and bold (ruled 10-30). Bracket = stacked compact. Game page keeps 28 px.
+7. **Link row** — the club kit's `.row` (60 tall, 16/600 title, optional 12 px dim line, drawn chevron) replaces `PublicDoorRow` (56) and `PublicDisclosure` (52); rows that open a window look the same; one name per destination. Named "link row" because the club kit's `.door` is a different part.
+8. **Toolbar** — Division 200 · Pool 160 · view switch · Search (fills, max 320) · calendar; 44 tall, radius 8; a page shows only the controls it has; day chips their own row (as shipped); "Search teams" / "Search teams or coaches".
+9. **Live** — green pill + 3 px green edge; said once (no pill under a "Live now" heading); green text inside a sentence; band keeps its dot; ticker keeps "Live" (ruled 2026-10-28) in green. A 3 px left edge always marks a state (green live; club colour "open" on club pages).
+10. **Boxes and type** — radius 8 (pills round, logo 10, view-switch track 9 = 3 + 6 nested); light hairline on boxes; tables keep the table standard's darker frame and their shipped 52 px rows; field colour on inputs only; no shadows; type 12 · 14 · 16 · 18 · 20 · 24 (+28 game page). Frame chrome (band, menu, ticker) exempt.
+11. **Weight** — a filled button only for the page's main job (Register, Pay); a selection inside a control is a fill, not a button; "Visit the club" is outlined.
+
+## 3. Asks (A1–A9, on the drawings' Asks tab)
+
+A1 960 width · A2 wide lists keep the ruled one-line row and the live game moves onto its grid (alternative: stack
+everywhere, rows 60 → ~84 px) · A3 Overview lists use the stacked form · A4 live green incl. the ticker · A5 "The
+playoff bracket" everywhere · A6 Overview bracket link to the right column · A7 "Visit the club" outlined (its filled
+club-colour button was ruled with the host card) · A8 Rules/Teams as joined lists, Teams rows two lines, pools as band
+rows · A9 write the standard into `docs/agents/design/` with an exception register. **All nine RULED as recommended
+2026-11-04.**
+
+**A10 — RESOLVED 2026-11-04 on the recommendation** (owner: "we can leave it if you don't think its too much" —
+he left it to the assessment, and the assessment is that the empty card is too much): band + footer stay; the host
+card shows only when the club has something open now. Owner also asked the same day for the game page and the single
+team page to be reviewed (missed in round 1) — round 2. **The question as raised:** the Overview shows three ways to the club (the band's "Hosted by ›" from
+1,024 px, the host card's Visit the club, the footer's "Hosted by ›"); other pages two. The three were ruled together
+on 10-27 (Ask 4: "host card with the club's open-now list + footer line + desk band link"), for the reason "the way
+from a tournament back to the club should advertise the club, not just be a back link". Facts: the band link is
+desk-only, so a phone has only the card and the footer; the card exists whenever the club has a public site, and with
+nothing open it falls back to "runs teams and programs all year" (`lib/public-host-card.ts`) — a third link with
+nothing to advertise. Recommendation: band + footer stay (wayfinding, every page); the host card shows only when the
+club has something open now.
+
+**Round 2 — a game's page and a team's page (drawn 2026-11-04, after `/design`; A11–A14 RULED as recommended 2026-11-04):**
+- Census: game page padding `0 16 16` (top 0, no desk override), fills, time h1 32 px (off-scale), score 28, when/where
+  card then score card then a facts list (Division / Round / Game length — division and round said twice), Final chip
+  green like Live now. Team page 28/32, fills, name 22 px (off-scale), h3 headings (not `PublicSectionHead`), `line-2`
+  boxes, radius-6 icon/retry buttons, Up next on the one-line Schedule row in a ~690 px column with the day inside the
+  104 px time slot (time and long names wrap), its own Results row, record card padded to align.
+- A11 desk: score card left, when-and-where right (Directions on its title line, game length folded in), time 32 → 28;
+  phone keeps the Stage 3 order (when and where first, Directions ~303 px down — `PUBLIC_TOURNAMENT_STAGE3_BUILD_PROMPT.md:44-46`).
+  Final pill neutral (R9: green = live only). The time stays the page's h1; team names stay links.
+- A12 division and round said once (score card top line); the facts list goes.
+- A13 team page Up next / Next games → stacked row, team first and bold, day leading the time on its own line;
+  Results keep their team-view row (ruled 10-30) as a registered exception; record card keeps no heading ("no new label",
+  10-30). Name 24 px title face = registered exception to R4.
+- A14 drop "‹ Schedule" and "‹ All Teams" (the club pages' 10-20 rule: a back link stays only when it goes somewhere the
+  tab row does not; both are fixed links to tabs). Also fixes the withheld team state having none.
+- Build notes: the shipped two-column breakpoint is 1,024 (R1 says stack below 1,200 — a build change); shipped stakes
+  on the team page's Up next row: none (PublicGameRow draws no foot), so none drawn.
+
+**Not asked now (club round):** menu-on-the-left vs tabs-in-the-band; band 88 vs 72; the club's own measures.
+
+## 4. Build shape (after the rulings — sequenced by dependency, not dated)
+
+1. Write the standard (`docs/agents/design/PUBLIC_PAGE_LAYOUT_STANDARD.md` + exception register) — A7.
+2. Frame layer: one page wrapper (padding, 960 cap, top, gap) used by every public tournament page; News/Register/game page brought onto it.
+3. Shared parts: `PublicGameRow` grows the when/who/where anatomy (narrow, wide, compact) and replaces the Overview live card, Schedule row, Playoffs card, bracket match and team results; one door recipe (`PublicDoorRow` + `PublicDisclosure` share it); toolbar widths; live look; radius/type sweep.
+4. Page passes: Overview (A5), Schedule (A2), Standings, Playoffs, Teams + Rules (A6).
+5. `/simplify`, `/review`, layout check on the touched screens, then one owner walk.
+6. Club round: same census + drawings on the club's public pages against this standard.
+
+## 5. Notes
+
+- The "12:00 a.m." championship time on the dev fixture is real seeded data (`scripts/seed-public-stage3-fixtures.mjs`
+  places the final three hours after the semifinal), not a missing-time bug; a null time renders "TBD".
+- Drift to report in the build (not drawn): the Overview prints the place as "lions park — diamond #2" (organizer
+  data, em dash) where the table standard's C5 asks "Venue · Facility"; Standings' table cells ship 8/6 padding while
+  register K-16 still says 16 px — reconcile the register.
+
+## 6. Log
+
+- 2026-11-04 — census (tournament + club frames), drawings round 1 published (v1), plan + brief written.
+- 2026-11-04 — `/design` review of v1 (20 findings; applied before the owner saw it, v2). Must-fixes it caught: v1's
+  game row reversed three standing rulings unannounced (no field on the all-games list, the phone recipe, the desktop
+  one-line Schedule row — all 2026-10-29) and dropped the 18 px division heading (2026-10-30); it bolded the leader of
+  a live game (shipped bolds only a final winner); R5 contradicted the game row; tables were wrongly pulled onto the
+  light hairline. Also: missing states (unofficial, cancelled, no score yet, tie, stakes, long name in the 397 column,
+  phone 360) now drawn; toolbar now shows Pool + calendar; link row = the club kit row; A5 split into A6 + A7.
+  Net change of direction: "one game row" became "one game, two forms" built from the two ruled recipes.
+- 2026-11-05 — **Build Part 1.** `docs/agents/design/PUBLIC_PAGE_LAYOUT_STANDARD.md` written (R1–R11 word for word from
+  tab 2, each rule's Keeps line, the Exceptions, how to check a new page), linked from `TABLE_AND_LIST_STANDARD.md` and
+  §2 here. Every public tournament page body (all eleven: Overview, Schedule, Standings, Playoffs, Teams, Rules,
+  Champions, game, team, News, Register — every branch, loading and unavailable included) renders in `PublicPage`
+  (`PublicParts.module.css` `.page`: 960 + sides, 28/32 desk, 16 phone, 24 gap); each page's own padding, 720/860/800
+  caps and section gaps deleted; a page's toolbar rows are one section (`.tools`, 12 px — the drawing's `.tools`).
+  The Overview, game page and team page share `.cols` (1.35 : 1, 28) from 1,200 px; the game page left its 1.45 : 1 / 24.
+  News and Register left the old centred `.container`; News lost its desk-only page title for a screen-reader `h1` (R2);
+  Register's form sits on the left edge (`.leftEdge`). Guard: `tests/unit/public-page-layout-guard.test.ts`; Stage 2 and
+  Stage 5 guards moved to the new frame. Register reconciled: **K-16** now records Standings' shipped 52 px rows / 8 × 6
+  cells; **K-28** turned out to be the ORGANIZER's admin Schedule, not the public one — clarified, not rewritten (the build
+  prompt's "it now stops at 960" would have mis-recorded an admin page this build does not touch). Registered as held for
+  later parts: the Teams toolbar's 640 cap (2b) and the state card's 620 box (4). Also registered: the team pay page
+  (focused, own 640 column) — the census table had missed it.

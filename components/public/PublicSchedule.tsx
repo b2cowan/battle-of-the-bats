@@ -25,6 +25,7 @@ import PublicDoorRow from './PublicDoorRow';
 import { PublicGameRow } from './PublicGameRow';
 import PublicLiveCard from './PublicLiveCard';
 import PublicSectionHead from './PublicSectionHead';
+import PublicPage from './PublicPage';
 import parts from './PublicParts.module.css';
 import kit from './ClubKit.module.css';
 import styles from './PublicSchedule.module.css';
@@ -156,10 +157,10 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
     if (ready && datesVisible && selection.dates.length > 5) rail.current?.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest', inline: 'center' });
   }, [ready, datesVisible, selection.dates.length, effectiveDay]);
 
-  if (failed) return <div className={styles.schedule}><div className={styles.state} role="alert">The schedule could not be loaded. Please refresh to try again.</div></div>;
-  if (!data || !clock) return <div className={styles.schedule} role="status">Loading schedule…</div>;
+  if (failed) return <PublicPage className={styles.schedule}><div className={styles.state} role="alert">The schedule could not be loaded. Please refresh to try again.</div></PublicPage>;
+  if (!data || !clock) return <PublicPage className={styles.schedule} role="status">Loading schedule…</PublicPage>;
   const { tournament, divisions, teams } = data;
-  if (!tournament || !data.pageEnabled) return <div className={styles.schedule}><div className={styles.state}>The schedule is not available.</div></div>;
+  if (!tournament || !data.pageEnabled) return <PublicPage className={styles.schedule}><div className={styles.state}>The schedule is not available.</div></PublicPage>;
   // The data layer already lays the tournament's own rule over the organization's.
   const requireFinalization = data.organization.requireScoreFinalization ?? true;
   const allWithheld = divisions.length > 0 && divisions.every(d => d.scheduleVisibility !== 'published');
@@ -223,11 +224,11 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
     {canRegister && <PublicDoorRow href={orgHref(`${basePath}/register`)} label="Register" />}
   </>;
 
-  return <div className={styles.schedule} data-public-schedule-ready>
+  return <PublicPage className={styles.schedule} data-public-schedule-ready>
     {notices.map(a => <aside key={a.id} className={styles.notice} aria-label="Tournament notice"><div><strong>{a.title}</strong><p>{a.body}</p></div>
       <button type="button" className={styles.symbol} aria-label={`Dismiss announcement: ${a.title}`} onClick={() => setDismissed(new Set([...dismissed, a.id]))}><X size={22} aria-hidden /></button></aside>)}
     {allWithheld ? <><div className={styles.state}><h2>Schedule coming soon</h2><p>The organizer has not posted the schedule yet.</p></div>{heldBackDoors}</> : <>
-      <div className={styles.controls}>
+      <div className={parts.tools}><div className={styles.controls}>
         <div className={styles.controlRow}>
           <label className={styles.division}><span className={kit.srOnly}>Division</span><select aria-label="Division" value={division} onChange={e => {
             setDivision(e.target.value); setQuery(''); setMyGames(false);
@@ -254,7 +255,7 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
         {selection.dates.map(d => <button type="button" key={d} aria-pressed={effectiveDay === d} data-today={d === today || undefined} onClick={() => setDay(d)}>
           {d === today ? 'Today' : formatShortWeekdayDate(d).split(',')[0]}<small>{formatStoredDate(d, { withYear: false })}</small>
         </button>)}
-      </div>}
+      </div>}</div>
       {divisionWithheld ? <div className={styles.state}><h2>Division schedule coming soon</h2><p>The organizer has not posted this division’s schedule yet.</p></div> : <>
         {effectiveStage === 'playoff' && activeDivisions.filter(d => d.playoffConfig?.format === 'placement').map(d => {
           const standings = computePlacementStandings(games.filter(g => g.divisionId === d.id && g.isPlayoff), teams);
@@ -272,5 +273,5 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
           sub={doorDivision ? playoffDoorSub({ tournament, divisions, games, teams, requireFinalization }, doorDivision, clock) : null} />}
       </>}
     </>}
-  </div>;
+  </PublicPage>;
 }

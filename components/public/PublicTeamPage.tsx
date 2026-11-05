@@ -17,6 +17,7 @@ import PublicLiveCard from './PublicLiveCard';
 import { PublicGameRow } from './PublicGameRow';
 import PublicDoorRow from './PublicDoorRow';
 import UnfollowConfirmSheet from './UnfollowConfirmSheet';
+import PublicPage from './PublicPage';
 import parts from './PublicParts.module.css';
 import styles from './PublicTeamPage.module.css';
 
@@ -65,7 +66,7 @@ export function PublicTeamBody({ data, now, orgSlug, tournamentSlug }: {
     foot={item.stakes?.gold ? item.stakes.text : undefined} /></div>;
   const gameRows = (items: Item[]) => <ul className={parts.rows}>{items.map(item =>
     <PublicGameRow key={item.game.id} view={item.row} schedule href={gameHref(item)} />)}</ul>;
-  return <div className={styles.page} data-public-team={view.moment.kind} data-public-team-ready>
+  return <PublicPage data-public-team={view.moment.kind} data-public-team-ready>
     <Back href={`${base}/teams`} />
     <div>
       <div className={styles.identity}>
@@ -84,7 +85,7 @@ export function PublicTeamBody({ data, now, orgSlug, tournamentSlug }: {
     </div>
     {view.noMoreGames && <p className={styles.quiet}>No more games</p>}
     {!hasGames ? <div className={styles.stateCard}><PublicTournamentState title="No games scheduled yet"
-      description="Check back when the organizer publishes the games." /></div> : <div className={styles.columns}>
+      description="Check back when the organizer publishes the games." /></div> : <div className={parts.cols}>
       <div className={styles.main}>
         {view.moment.kind === 'champion' && <div className={styles.champion}>Champion · {data.divisionName}</div>}
         {view.focus && <section className={styles.section} aria-label={live ? 'Live now' : 'Up next'}>
@@ -111,7 +112,7 @@ export function PublicTeamBody({ data, now, orgSlug, tournamentSlug }: {
     </div>}
     <UnfollowConfirmSheet open={confirm} teamName={team.name} onCancel={() => setConfirm(false)}
       onConfirm={() => { if (isStandalonePWA()) unfollowTeamEverywhere(orgSlug, tournamentSlug, team.id); setConfirm(false); }} />
-  </div>;
+  </PublicPage>;
 }
 
 /** One profile request every 30 seconds, with hidden-tab pause, catch-up and no overlapping requests. */
@@ -173,15 +174,15 @@ export default function PublicTeamPage({ orgSlug, tournamentSlug, teamId }: {
   const back = orgHref(`/${tournamentSlug}/teams`);
   if (current?.data && !withheld(current.data)) return <PublicTeamBody key={key} data={current.data} now={current.now}
     orgSlug={orgSlug} tournamentSlug={tournamentSlug} />;
-  if (current?.data && withheld(current.data)) return <div className={styles.page} data-public-team="withheld" data-public-team-ready>
+  if (current?.data && withheld(current.data)) return <PublicPage data-public-team="withheld" data-public-team-ready>
     <div className={styles.nameBlock}><h2>{current.data.team.name}</h2><p className={styles.subtitle}>{current.data.divisionName}</p></div>
     <p className={styles.message}>{TEAM_SCHEDULE_WITHHELD}</p>
-  </div>;
-  return <div className={styles.page} data-public-team={current?.error ?? 'loading'}><Back href={back} />
+  </PublicPage>;
+  return <PublicPage data-public-team={current?.error ?? 'loading'}><Back href={back} />
     {!current?.error ? <p className={styles.loading}>Loading team…</p> : <div className={styles.stateCard}>
       <PublicTournamentState title={current.error === 'missing' ? 'Team not found' : "Couldn't load this team"}
         description={current.error === 'missing' ? "This team isn't in this tournament." : 'Check your connection and try again.'} />
       {current.error === 'failed' && <button type="button" className={styles.retry} onClick={() => { setEntry(null); setAttempt(n => n + 1); }}>Try again</button>}
     </div>}
-  </div>;
+  </PublicPage>;
 }

@@ -1,8 +1,9 @@
 /* Only the preview game-page branch wears these classes. */
-.page { display: flex; flex-direction: column; gap: 16px; padding: 0 16px 16px; color: var(--club-text); background: var(--club-ground); font-family: var(--club-text-face); }
 .back { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; min-height: 44px; color: var(--club-ink); font: 600 0.875rem/1.3 var(--club-text-face); text-decoration: none; margin-bottom: -8px; }
 .back:hover { text-decoration: underline; }
-.columns, .main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+/* The page's edges, column and rhythm are the shared page's (PublicPage, PublicParts.module.css `.page`), its two columns
+   the shared `.cols` rule (stacked below a 1,200 px window); Public page layout standard R1–R3. */
+.main { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
 .whenWhere, .scoreCard { min-width: 0; padding: 16px; border: 1px solid var(--club-line); border-radius: 8px; background: var(--club-card); }
 .timeLine { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .timeLine h1 { margin: 0; color: var(--club-text); font: 700 2rem/1.1 var(--club-title-face); font-variant-numeric: tabular-nums; }
@@ -30,5 +31,4 @@ a.team:hover { text-decoration: underline; }
 .back:focus-visible, .team:focus-visible, .share:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 2px; }
 @media (min-width: 1024px) {
   .share, .footShareOnly { display: none; }
-  .columns { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); align-items: start; gap: 24px; }
 }

@@ -16,6 +16,7 @@
 import { Trophy } from 'lucide-react';
 import type { ChampionCardView } from '@/lib/public-host-card';
 import PublicTournamentState from './PublicTournamentState';
+import PublicPage from './PublicPage';
 import PublicChampions from './PublicChampions';
 import PublicDoorRow from './PublicDoorRow';
 import styles from './PublicChampionsPage.module.css';
@@ -37,7 +38,7 @@ export default function PublicChampionsPage({
 }) {
   if (standingsHidden) {
     return (
-      <div className={styles.page}>
+      <PublicPage>
           <div className={styles.state}>
             <PublicTournamentState
               icon={<Trophy size={40} />}
@@ -47,13 +48,13 @@ export default function PublicChampionsPage({
               actions={isPreview ? [] : [{ href: homeHref, label: 'Tournament Home', variant: 'ghost' as const }]}
             />
           </div>
-      </div>
+      </PublicPage>
     );
   }
 
   if (cards.length === 0) {
     return (
-      <div className={styles.page}>
+      <PublicPage>
           <div className={styles.state}>
             <PublicTournamentState
               icon={<Trophy size={40} />}
@@ -66,19 +67,17 @@ export default function PublicChampionsPage({
               ]}
             />
           </div>
-      </div>
+      </PublicPage>
     );
   }
 
-  return <div className={styles.page}>
+  return <PublicPage className={styles.champions}>
     <h1 className="sr-only">Champions</h1>
-    <div className={styles.content}>
-      <PublicChampions cards={cards} />
-      <div className={styles.doors}>
-        {showPlayoffs && <PublicDoorRow href={isPreview ? null : `${homeHref}/playoffs`}
-          label="The playoff bracket" sub="Every playoff game and score" />}
-        <PublicDoorRow href={isPreview ? null : `${homeHref}/standings`} label="Final standings" />
-      </div>
+    <PublicChampions cards={cards} />
+    <div className={styles.doors}>
+      {showPlayoffs && <PublicDoorRow href={isPreview ? null : `${homeHref}/playoffs`}
+        label="The playoff bracket" sub="Every playoff game and score" />}
+      <PublicDoorRow href={isPreview ? null : `${homeHref}/standings`} label="Final standings" />
     </div>
-  </div>;
+  </PublicPage>;
 }

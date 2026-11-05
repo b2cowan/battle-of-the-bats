@@ -1,9 +1,5 @@
-/* Stage 5's preview-only Teams list. The legacy sheets and shared frame remain unchanged. */
-.teams {
-  display: flex; flex-direction: column; gap: 16px; min-width: 0; padding: 16px;
-  background: var(--club-ground); color: var(--club-text); font-family: var(--club-text-face);
-}
-.teams > * { min-width: 0; }
+/* Stage 5's Teams list. Its edges, column and rhythm are the shared page's (PublicPage, PublicParts.module.css `.page`;
+   Public page layout standard R1–R3). */
 /* Phone: the division picker and a magnifier; the magnifier opens the search below, as on Schedule. */
 .filters { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 8px; }
 .search { display: none; grid-column: 1 / -1; }
@@ -22,7 +18,7 @@
 .filters select:focus-visible, .filters input:focus-visible, .searchToggle:focus-visible, .teamLink:focus-visible, .star:focus-visible, .retry:focus-visible {
   outline: 2px solid var(--club-edge); outline-offset: 2px;
 }
-.groups { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.groups { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
 .division { min-width: 0; }
 .heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
 .heading h2 { margin: 0; font: 600 1.125rem/1.3 var(--club-text-face); color: var(--club-text); }
@@ -55,10 +51,7 @@
   background: var(--club-card); color: var(--club-text); font: 400 1rem/1.4 var(--club-text-face); cursor: pointer;
 }
 @media (min-width: 1024px) {
-  .teams { padding: 28px 32px; }
   .filters { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); max-width: 640px; }
   .search { display: block; grid-column: auto; }
   .searchToggle { display: none; }
-  /* One column, like Schedule: divisions read top to bottom in order, however many there are and whatever their length. */
-  .groups { max-width: 860px; gap: 28px; }
 }

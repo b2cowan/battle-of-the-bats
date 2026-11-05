@@ -1,9 +1,5 @@
-.rules {
-  display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 16px;
-  background: var(--club-ground); color: var(--club-text); font-family: var(--club-text-face);
-  font-variant-numeric: tabular-nums;
-}
-.rules > * { min-width: 0; }
+/* The Rules page. Its edges, column and rhythm are the shared page's (PublicPage, PublicParts.module.css `.page`;
+   Public page layout standard R1–R3); figures are tabular frame-wide (TournamentFrame.module.css `.frame .main`). */
 .note { margin: 0; color: var(--club-soft); font: 400 0.875rem/1.5 var(--club-text-face); overflow-wrap: anywhere; }
 .note a { display: inline-flex; align-items: center; min-height: 44px; color: var(--club-ink); }
 .filter button, .filter a { min-height: 44px; display: inline-flex; align-items: center; }
@@ -30,7 +26,3 @@
 }
 .resource svg { flex: none; }
 .state > div { width: 100%; padding: 28px 16px; }
-@media (min-width: 1024px) {
-  .rules { padding: 28px 32px; }
-  .note, .sections, .filter { max-width: 860px; }
-}

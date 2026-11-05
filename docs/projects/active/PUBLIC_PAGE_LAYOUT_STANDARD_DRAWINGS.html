@@ -1,0 +1,1103 @@
+<title>Tournament Page Standards</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: sticky numbered tab row -> one section at a time -> a View row where the section compares -> the framed desk
+   specimen (drawn at the owner's 1536 px screen, scaled to fit) with its explanation above it. */
+:root {
+  /* the drawing sheet: a cool grey ground, so the warm product frames read as specimens */
+  --doc-bg: #ECEEF1; --doc-panel: #FFFFFF; --doc-ink: #1A1E24; --doc-soft: #59616C; --doc-line: #D5DAE0;
+  --doc-accent: #2F5D8A; --doc-accent-bg: #E3ECF5; --doc-mark: #C2410C; --doc-mark-ink: #FFFFFF; --doc-bad: #B42318; --doc-good: #2C6A2A;
+  /* the product (the club's light set, fixed in both themes, as the product is) */
+  --p-ground: #F6F5F2; --p-card: #FFFFFF; --p-text: #1F1B16; --p-soft: #4E473D; --p-dim: #6F675B; --p-line: #E4E0D8; --p-line2: #D6D0C4;
+  --p-field: #948B7D; --p-ok: #2C6A2A; --p-okbg: #E6F0E2; --p-warn: #8A5300; --p-band: #F2C94C; --p-bandrule: #5C4A12; --p-ink: #6B5414;
+  --p-railact: #F1EEE8; --p-danger: #B42318;
+  --f-text: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-title: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg: #14171B; --doc-panel: #1D2126; --doc-ink: #E8EBEF; --doc-soft: #A3ABB5; --doc-line: #333A42;
+    --doc-accent: #8DB6DE; --doc-accent-bg: #22303D; --doc-mark: #F97316; --doc-mark-ink: #1A1E24; --doc-bad: #F87171; --doc-good: #86C77F;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg: #14171B; --doc-panel: #1D2126; --doc-ink: #E8EBEF; --doc-soft: #A3ABB5; --doc-line: #333A42;
+  --doc-accent: #8DB6DE; --doc-accent-bg: #22303D; --doc-mark: #F97316; --doc-mark-ink: #1A1E24; --doc-bad: #F87171; --doc-good: #86C77F;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font: 400 15px/1.55 var(--f-text); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--doc-panel); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; max-width: 1640px; margin: 0 auto; }
+
+/* header + sticky tabs */
+.top { padding-block: 22px 14px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; }
+.top h1 { margin: 0; font: 700 30px/1.1 var(--f-title); letter-spacing: .01em; text-wrap: balance; }
+.top p { margin: 0; color: var(--doc-soft); font-size: 14px; }
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; display: flex; gap: 4px; padding: 5px; overflow-x: auto; }
+.tabs button { all: unset; cursor: pointer; white-space: nowrap; padding: 9px 14px; border-radius: 7px; font: 600 14px var(--f-text); color: var(--doc-soft); }
+.tabs button[aria-selected="true"] { background: var(--doc-accent-bg); color: var(--doc-accent); }
+.tabs button:focus-visible, .seg button:focus-visible, .mk:focus-visible, .pick button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+section.view { padding-top: 22px; }
+section.view[hidden] { display: none; }
+.lede { max-width: 76ch; margin: 0 0 18px; }
+.lede b { font-weight: 600; }
+h2.sec { font: 700 22px/1.2 var(--f-title); margin: 0 0 6px; letter-spacing: .01em; }
+.panel { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 18px 20px; }
+.callout { background: var(--doc-panel); border: 1px solid var(--doc-line); border-left: 3px solid var(--doc-accent); border-radius: 0 10px 10px 0; padding: 12px 16px; margin: 0 0 18px; max-width: 110ch; font-size: 14px; }
+.callout b { font-weight: 600; }
+
+/* counters */
+.counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 0 0 22px; }
+.count-t { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 12px 14px; }
+.count-t b { display: block; font: 700 32px/1 var(--f-title); color: var(--doc-bad); }
+.count-t span { font-size: 13px; color: var(--doc-soft); }
+
+/* edge map */
+.emap { display: grid; grid-template-columns: 112px minmax(0, 1fr) 132px; gap: 6px 12px; align-items: center; font-size: 13px; }
+.emap .hd { font: 500 12px var(--f-mono); color: var(--doc-soft); }
+.emap .pn { font-weight: 600; }
+.etrack { position: relative; height: 22px; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 1px), var(--doc-line) calc(10% - 1px) 10%); border-radius: 4px; }
+.etrack .rail { position: absolute; left: 0; top: 0; bottom: 0; width: calc(248 / 1536 * 100%); background: var(--doc-line); border-radius: 4px 0 0 4px; }
+.etrack .bar { position: absolute; top: 4px; bottom: 4px; border-radius: 3px; background: var(--doc-bad); opacity: .85; }
+.etrack .bar.ok { background: var(--doc-good); }
+.emap .tp { font: 500 12px var(--f-mono); color: var(--doc-soft); }
+.emap-gap { height: 14px; grid-column: 1 / -1; }
+.emap-h { grid-column: 1 / -1; font: 700 16px var(--f-title); letter-spacing: .02em; margin-top: 4px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--doc-soft); margin-top: 12px; }
+.legend i { display: inline-block; width: 18px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+
+/* rule sheet */
+.rules { display: flex; flex-direction: column; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; overflow: hidden; }
+.rule { display: grid; grid-template-columns: 54px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.5fr); gap: 16px; padding: 14px 18px; border-top: 1px solid var(--doc-line); transition: background .4s; }
+.rule:first-child { border-top: 0; }
+.rule.hd { font: 500 12px var(--f-mono); color: var(--doc-soft); text-transform: uppercase; letter-spacing: .05em; padding-block: 10px; }
+.rule .rn { font: 700 22px/1 var(--f-title); color: var(--doc-mark); }
+.rule h3 { margin: 0 0 2px; font: 600 15px var(--f-text); }
+.rule .today { color: var(--doc-soft); font-size: 14px; }
+.rule .std { font-size: 14px; }
+.rule .std em { font-style: normal; font-family: var(--f-mono); font-size: 13px; background: var(--doc-accent-bg); color: var(--doc-accent); padding: 1px 5px; border-radius: 4px; }
+.rule .ph { display: block; margin-top: 6px; color: var(--doc-soft); font-size: 13px; }
+.rule .rul { display: block; margin-top: 6px; color: var(--doc-good); font-size: 13px; }
+.rule.flash { background: var(--doc-accent-bg); }
+
+/* view row + switches (one white track, two options) */
+.viewrow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin: 0 0 14px; }
+.viewrow .lbl { font: 600 13px var(--f-text); color: var(--doc-soft); margin-right: 8px; }
+.seg { display: inline-flex; padding: 3px; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 9px; }
+.seg button { all: unset; cursor: pointer; padding: 7px 14px; border-radius: 6px; font: 600 13px var(--f-text); color: var(--doc-soft); }
+.seg button[aria-pressed="true"] { background: var(--doc-accent-bg); color: var(--doc-accent); }
+.pick { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.pick button { all: unset; cursor: pointer; padding: 7px 12px; border-radius: 7px; border: 1px solid var(--doc-line); background: var(--doc-panel); font: 600 13px var(--f-text); color: var(--doc-ink); }
+.pick button[aria-pressed="true"] { border-color: var(--doc-accent); color: var(--doc-accent); background: var(--doc-accent-bg); }
+.chk { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--doc-soft); }
+
+.changes { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 6px 22px; margin: 0 0 14px; padding: 0; list-style: none; font-size: 14px; }
+.changes li { display: flex; gap: 8px; align-items: baseline; }
+.tag { flex: none; font: 600 10px/1 var(--f-mono); letter-spacing: .05em; padding: 4px 6px; border-radius: 4px; border: 1px solid currentColor; }
+.tag.new { color: var(--doc-mark); } .tag.res { color: var(--doc-accent); } .tag.unc { color: var(--doc-soft); }
+.rref { color: var(--doc-mark); font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; background: none; border: 0; padding: 0; font-size: 13px; font-family: inherit; }
+
+.stagebox { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 10px; }
+.stagecap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font: 500 12px var(--f-mono); color: var(--doc-soft); padding: 2px 4px 10px; text-transform: uppercase; letter-spacing: .04em; }
+.stage { position: relative; overflow: hidden; }
+.stage.actual { overflow-x: auto; }
+.stage > .tf { transform-origin: top left; }
+
+/* game-row sheet */
+.rowsheet { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; }
+.spec { margin-bottom: 16px; }
+.spec .cap { font: 500 12px/1.45 var(--f-mono); color: var(--doc-soft); margin-bottom: 6px; }
+.spec .cap b { color: var(--doc-ink); font-weight: 500; text-transform: uppercase; letter-spacing: .04em; }
+.specbed { background: var(--p-ground); padding: 14px; border-radius: 8px; overflow-x: auto; }
+.specbed > .tf { width: auto; background: transparent; }
+
+/* asks */
+.asks { display: flex; flex-direction: column; gap: 12px; }
+.ask { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 18px; display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 4px 14px; }
+.ask .an { font: 700 22px/1 var(--f-title); color: var(--doc-accent); grid-row: span 3; }
+.ask h3 { margin: 0; font: 600 16px var(--f-text); }
+.ask p { margin: 0; font-size: 14px; color: var(--doc-soft); max-width: 96ch; }
+.ask .rec { color: var(--doc-ink); }
+.ask .rec b { color: var(--doc-good); }
+.paste { margin-top: 18px; font: 500 13px var(--f-mono); background: var(--doc-panel); border: 1px dashed var(--doc-line); border-radius: 8px; padding: 12px 14px; color: var(--doc-soft); user-select: all; }
+.later { margin-top: 22px; }
+.later ul { margin: 6px 0 0; padding-left: 20px; font-size: 14px; color: var(--doc-soft); max-width: 96ch; }
+.later li + li { margin-top: 6px; }
+
+@media (max-width: 860px) {
+  .rule { grid-template-columns: 40px minmax(0, 1fr); }
+  .rule .today, .rule .std { grid-column: 2; }
+  .rule.hd { display: none; }
+  .rowsheet { grid-template-columns: minmax(0, 1fr); }
+  .emap { grid-template-columns: 84px minmax(0, 1fr); }
+  .emap .tp, .emap .hd.tph { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .rule { transition: none; } }
+
+/* ===================== the product, drawn (.tf = tournament frame at 1536 px) ===================== */
+.tf { width: 1536px; background: var(--p-ground); color: var(--p-text); font: 400 14px/1.4 var(--f-text); position: relative; text-align: left; }
+.tf * { box-sizing: border-box; }
+.tf .band { height: 91px; background: var(--p-band); border-bottom: 3px solid var(--p-bandrule); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; }
+.tf .bl { display: flex; align-items: center; gap: 14px; }
+.tf .logo { width: 44px; height: 44px; border-radius: 10px; background: var(--p-text); color: var(--p-band); display: grid; place-items: center; font: 700 15px var(--f-text); }
+.tf .bname { font: 700 26px/1.1 var(--f-title); }
+.tf .bsub { font: 500 13px/1.3 var(--f-text); margin-top: 3px; display: flex; align-items: center; gap: 6px; }
+.tf .bdot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+.tf .br { display: flex; gap: 28px; font: 600 15px var(--f-text); }
+.tf .shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 720px; }
+.tf .rail { background: var(--p-card); border-right: 1px solid var(--p-line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px; }
+.tf .rail button { all: unset; cursor: pointer; display: flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 6px; font: 500 16px var(--f-text); color: var(--p-text); }
+.tf .rail button.on { background: var(--p-railact); box-shadow: inset 3px 0 0 var(--p-bandrule); font-weight: 600; }
+.tf .rail button:hover { background: var(--p-railact); }
+.tf .rail button:focus-visible { outline: 2px solid var(--doc-accent); }
+.tf .main { min-width: 0; }
+.tf .tick { height: 46px; border-bottom: 1px solid var(--p-line); display: flex; align-items: center; gap: 8px; padding: 0 20px; font: 400 13px var(--f-text); color: var(--p-soft); }
+.tf .tick b { font: 700 16px var(--f-title); color: var(--p-text); }
+.tf .tick .tn { color: var(--p-text); font-weight: 500; }
+.tf .tick .x { margin-left: auto; font-size: 20px; color: var(--p-text); }
+.tf .foot { background: var(--p-band); border-top: 3px solid var(--p-bandrule); padding: 28px 32px 26px; display: flex; justify-content: space-between; align-items: center; font: 600 15px var(--f-text); }
+.tf .foot .fn { font: 700 24px var(--f-title); }
+.tf .foot nav { display: flex; gap: 22px; text-decoration: underline; text-underline-offset: 3px; }
+
+.tf .pg { display: flex; flex-direction: column; }
+.tf .cols { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.tf .col { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.tf .sec { display: flex; flex-direction: column; min-width: 0; }
+.tf .sh { display: flex; align-items: center; justify-content: space-between; min-height: 44px; gap: 12px; }
+.tf .sh h3 { margin: 0; font: 700 16px/1.25 var(--f-text); display: flex; align-items: center; gap: 10px; }
+.tf .sh.div h3 { font: 600 18px/1.25 var(--f-text); }
+.tf .count { font: 600 12px/1 var(--f-text); padding: 5px 9px; border-radius: 20px; background: var(--p-ground); border: 1px solid var(--p-line2); }
+.tf .lk { font: 600 14px var(--f-text); color: var(--p-ink); }
+.tf .list { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; overflow: hidden; }
+.tf .list > * + * { border-top: 1px solid var(--p-line); }
+.tf .list.l2 { border-color: var(--p-line2); }
+.tf .list.l2 > * + * { border-top-color: var(--p-line2); }
+.tf .box { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; }
+.tf .box.l2 { border-color: var(--p-line2); }
+.tf .note { font: 400 14px/1.5 var(--f-text); color: var(--p-soft); margin: 0; }
+.tf .meta { font: 400 14px var(--f-text); color: var(--p-soft); margin: 0; }
+.tf .lb { padding: 8px 16px; background: var(--p-ground); font: 700 12px/1.2 var(--f-text); text-transform: uppercase; letter-spacing: .06em; color: var(--p-soft); }
+.tf .anch { position: relative; }
+.tf svg { display: block; }
+
+/* the game row, STACKED form (the ruled phone recipe; any column under 600 px) */
+.tf .gr { display: flex; flex-direction: column; padding: 12px 16px; position: relative; background: var(--p-card); }
+.tf .gr.live { box-shadow: inset 3px 0 0 var(--p-ok); }
+.tf .gh { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: start; }
+.tf .gm { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.tf .gw { font: 600 14px/1.25 var(--f-text); font-variant-numeric: tabular-nums; }
+.tf .gc { font: 400 14px/1.25 var(--f-text); color: var(--p-dim); overflow-wrap: anywhere; }
+.tf .pill { padding: 4px 8px; border: 1px solid var(--p-line); border-radius: 20px; background: var(--p-ground); color: var(--p-soft); font: 600 12px/1.2 var(--f-text); white-space: nowrap; }
+.tf .pill.live { color: var(--p-ok); background: var(--p-okbg); border-color: var(--p-okbg); }
+.tf .pill.unof { color: var(--p-warn); }
+.tf .pill.canc { color: var(--p-danger); }
+.tf .gt { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; min-width: 0; }
+.tf .side { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: first baseline; min-width: 0; }
+.tf .side .nm { font: 500 16px/1.35 var(--f-text); overflow-wrap: anywhere; }
+.tf .side.ph .nm { color: var(--p-dim); }
+.tf .side.win .nm { font-weight: 700; }
+.tf .side.lose { color: var(--p-soft); }
+.tf .side .sc { min-width: 28px; text-align: right; font: 700 20px/1.08 var(--f-title); font-variant-numeric: tabular-nums; }
+.tf .gr.canc .nm, .tf .gr.canc .gw, .tf .g1.canc .nm, .tf .g1.canc .gw { color: var(--p-dim); }
+.tf .nos { display: block; margin-top: 6px; color: var(--p-dim); font: 400 14px/1.4 var(--f-text); }
+.tf .stk { display: block; margin-top: 6px; color: var(--p-warn); font: 600 14px/1.4 var(--f-text); }
+.tf .gp { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 6px; font: 400 14px/1.35 var(--f-text); color: var(--p-dim); }
+.tf .gp.strip { margin: 10px -16px -12px; padding: 6px 6px 6px 16px; min-height: 56px; border-top: 1px solid var(--p-line); }
+.tf .gr.cmp { padding: 10px 12px; }
+.tf .gr.cmp .side .nm { font-size: 14px; }
+.tf .gr.cmp .side .sc { font-size: 16px; }
+.tf .gr.cmp .gt { margin-top: 4px; }
+
+/* the game row, ONE-LINE form (the desktop row kept 10-29; a wide list) - one grid for every state */
+.tf .g1 { display: grid; grid-template-columns: 104px minmax(0, 1fr) 104px; align-items: center; gap: 8px 12px; min-height: 60px; padding: 10px 14px; position: relative; background: var(--p-card); }
+.tf .g1.live { box-shadow: inset 3px 0 0 var(--p-ok); }
+.tf .g1.bad { grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr) minmax(0, 1fr); }
+.tf .g1 .l { display: flex; flex-direction: column; gap: 3px; }
+.tf .g1 .l .gd { font: 400 12px var(--f-text); color: var(--p-dim); }
+.tf .g1 .mid { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; column-gap: 10px; }
+.tf .g1 .sa, .tf .g1 .sb { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.tf .g1 .sa { justify-content: flex-end; text-align: right; }
+.tf .g1 .nm { font: 500 16px/1.35 var(--f-text); overflow-wrap: anywhere; }
+.tf .g1 .win .nm { font-weight: 700; }
+.tf .g1 .lose { color: var(--p-soft); }
+.tf .g1 .sc { min-width: 24px; text-align: center; font: 700 24px/1 var(--f-title); font-variant-numeric: tabular-nums; color: var(--p-text); }
+.tf .g1 .vs { color: var(--p-dim); font: 400 16px var(--f-text); text-align: center; }
+.tf .g1 .r { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; color: var(--p-dim); font-size: 14px; text-align: right; }
+
+.tf .btn-o { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 1px solid var(--p-field); border-radius: 8px; background: var(--p-card); font: 600 16px var(--f-text); color: var(--p-text); white-space: nowrap; }
+.tf .btn-o svg { width: 18px; height: 18px; }
+.tf .btn-f { min-height: 44px; border-radius: 8px; background: var(--p-band); border: 1px solid var(--p-bandrule); display: grid; place-items: center; font: 600 16px var(--f-text); }
+
+/* today's door (PublicDoorRow / PublicDisclosure, as shipped) */
+.tf .door { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center; min-height: 56px; padding: 8px 14px; background: var(--p-card); font: 600 16px/1.3 var(--f-text); }
+.tf .door .ds { display: block; font: 400 14px/1.3 var(--f-text); color: var(--p-dim); }
+.tf .door .cv { font-size: 22px; line-height: 1; color: var(--p-dim); }
+.tf .door.r52 { min-height: 52px; }
+.tf .door .dl { display: flex; align-items: center; gap: 12px; }
+/* the proposed link row = the club kit's .row: 60 tall, 16 title, 12 line, a drawn chevron */
+.tf .lr { position: relative; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 12px 40px 12px 16px; background: var(--p-card); }
+.tf .lr::after { content: ''; position: absolute; right: 16px; top: 50%; width: 9px; height: 9px; border: solid var(--p-dim); border-width: 2px 2px 0 0; transform: translateY(-50%) rotate(45deg); }
+.tf .lr .lm { flex: 1; min-width: 0; }
+.tf .lr .ln { display: block; font: 600 16px/1.3 var(--f-text); overflow-wrap: anywhere; }
+.tf .lr .ls { display: block; margin-top: 2px; font: 400 12px/1.4 var(--f-text); color: var(--p-dim); font-variant-numeric: tabular-nums; }
+.tf .lr .ls .lv { color: var(--p-ok); font-weight: 600; }
+.tf .ic { width: 20px; height: 20px; flex: none; color: var(--p-text); }
+
+/* toolbar */
+.tf .tools { display: flex; flex-direction: column; gap: 12px; }
+.tf .trow { display: flex; gap: 12px; align-items: center; }
+.tf .sel, .tf .srch, .tf .ibtn { height: 44px; border: 1px solid var(--p-field); border-radius: 8px; background: var(--p-card); display: flex; align-items: center; justify-content: space-between; padding: 0 12px 0 14px; font: 400 16px var(--f-text); flex: none; }
+.tf .srch { color: var(--p-dim); }
+.tf .srch.fill { flex: 1 1 0; max-width: 320px; min-width: 160px; }
+.tf .ibtn { width: 44px; padding: 0; justify-content: center; }
+.tf .sel svg, .tf .ibtn svg { width: 18px; height: 18px; }
+.tf .r6 { border-radius: 6px; }
+.tf .track { display: flex; padding: 3px; border: 1px solid var(--p-field); border-radius: 9px; background: var(--p-card); flex: none; }
+.tf .track span { display: grid; place-items: center; min-width: 136px; height: 42px; border-radius: 6px; font: 500 16px var(--f-text); }
+.tf .track span.on { background: var(--p-band); font-weight: 600; }
+.tf .days { display: flex; gap: 8px; max-width: 560px; }
+.tf .day { flex: 1 1 0; height: 48px; border: 1px solid var(--p-field); border-radius: 8px; background: var(--p-card); display: flex; flex-direction: column; align-items: center; justify-content: center; font: 500 16px/1.2 var(--f-text); position: relative; }
+.tf .day small { font: 400 12px var(--f-text); color: var(--p-dim); }
+.tf .day.on { background: var(--p-band); border-color: var(--p-band); }
+.tf .day.on small { color: var(--p-text); }
+.tf .day.on::after { content: ""; position: absolute; top: 6px; right: 6px; width: 6px; height: 6px; border-radius: 50%; background: var(--p-text); }
+
+/* standings table (as shipped: the table standard's darker frame, 52 px rows, 8/6 cells, the leader's ground tint) */
+.tf table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--p-card); border: 1px solid var(--p-line2); border-radius: 8px; overflow: hidden; font: 400 16px var(--f-text); }
+.tf th { font: 600 14px var(--f-text); text-align: center; padding: 8px 6px; height: 44px; border-bottom: 1px solid var(--p-line2); }
+.tf td { text-align: center; padding: 8px 6px; height: 52px; border-top: 1px solid var(--p-line2); font-variant-numeric: tabular-nums; }
+.tf tr:first-child td { border-top: 0; }
+.tf tr.lead td { background: var(--p-ground); }
+.tf th:first-child, .tf td:first-child { text-align: left; padding-left: 12px; border-right: 1px solid var(--p-line2); width: 34%; }
+.tf td:last-child { font-weight: 700; }
+.tf td small { display: block; font: 400 14px var(--f-text); color: var(--p-dim); }
+.tf .tn { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.tf .tn svg { width: 15px; height: 15px; color: var(--p-ok); }
+.tf .tn svg.cup { color: var(--p-warn); }
+
+/* bracket */
+.tf .brk { display: grid; grid-template-columns: 1fr 1fr; gap: 0 22px; padding: 16px; }
+.tf .rnd { display: flex; flex-direction: column; gap: 12px; }
+.tf .rnd.c { justify-content: center; }
+.tf .rl { font: 700 12px/1 var(--f-text); text-transform: uppercase; letter-spacing: .06em; color: var(--p-soft); padding-bottom: 12px; }
+.tf .rl.t { text-transform: none; letter-spacing: 0; color: var(--p-text); font: 600 14px var(--f-text); }
+.tf .mt { border: 1px solid var(--p-line); border-radius: 8px; background: var(--p-card); overflow: hidden; }
+.tf .mtt { border: 1px solid var(--p-field); border-radius: 6px; background: var(--p-card); padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.tf .mtt .gd { font-size: 12px; color: var(--p-dim); }
+.tf .mtt .rw { display: flex; justify-content: space-between; gap: 8px; }
+
+/* host card */
+.tf .host { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+.tf .hh { display: flex; gap: 14px; align-items: center; }
+.tf .hl { width: 44px; height: 44px; border-radius: 10px; background: var(--p-band); display: grid; place-items: center; font: 700 15px var(--f-text); }
+.tf .hk { font: 400 12px var(--f-text); color: var(--p-dim); }
+.tf .hn { font: 700 20px/1.1 var(--f-title); }
+.tf .hn.t22 { font-size: 22px; }
+
+/* today's recipes (drawn from the shipped CSS) */
+.tf .tlive .tt { padding: 14px 16px 10px; display: flex; flex-direction: column; gap: 6px; }
+.tf .tlive .tm { display: flex; justify-content: space-between; align-items: baseline; font: 500 16px/1.35 var(--f-text); }
+.tf .tlive .tm .sc { font: 700 24px/1.1 var(--f-title); }
+.tf .tlive .mstrip { border-top: 1px solid var(--p-line); padding: 6px 6px 6px 16px; min-height: 56px; display: flex; justify-content: space-between; align-items: center; color: var(--p-dim); font-size: 14px; }
+.tf .tres { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px; padding: 10px 14px; align-items: center; min-height: 60px; background: var(--p-card); }
+.tf .tres .tm { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font: 500 16px/1.35 var(--f-text); }
+.tf .tres .tm.w { font-weight: 700; }
+.tf .tres .tm.l { color: var(--p-soft); }
+.tf .tres .sc { font: 700 20px/1.1 var(--f-title); color: var(--p-text); }
+.tf .tnext { display: grid; grid-template-columns: 90px auto minmax(0, 1fr); gap: 12px; padding: 12px 14px; align-items: center; min-height: 60px; background: var(--p-card); }
+.tf .tnext .vs { font: 500 16px var(--f-text); }
+.tf .tnext .vs i { font-style: normal; color: var(--p-dim); }
+.tf .tnext .pl { text-align: right; color: var(--p-dim); font-size: 13px; }
+.tf .tteam { padding: 12px 14px; min-height: 72px; display: flex; flex-direction: column; gap: 3px; background: var(--p-card); }
+.tf .tteam .nm { font: 600 16px var(--f-text); }
+.tf .tteam .sb { color: var(--p-soft); font-size: 15px; }
+.tf .tteam .sb .lv { color: var(--p-ok); font-weight: 600; }
+.tf .h18 { font: 700 18px var(--f-text); margin: 0; }
+.tf .t-ttl { display: flex; justify-content: space-between; align-items: baseline; }
+
+/* a game's page and a team's page */
+.tf .back { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; align-self: flex-start; color: var(--p-ink); font: 600 14px/1.3 var(--f-text); margin: -8px 0; }
+.tf .back .bc { font-size: 20px; line-height: 1; }
+.tf .back.t2 { font-weight: 400; gap: 2px; }
+.tf .back.t2 .bc { font-size: 16px; }
+.tf .card { padding: 16px; border: 1px solid var(--p-line); border-radius: 8px; background: var(--p-card); min-width: 0; }
+.tf .tline { display: flex; align-items: center; gap: 10px; }
+.tf .tline .t32 { font: 700 32px/1.1 var(--f-title); }
+.tf .tline .t28 { font: 700 28px/1.1 var(--f-title); font-variant-numeric: tabular-nums; }
+.tf .gr.big .stk.gold { color: var(--p-warn); }
+.tf .gr.big .stk.plain { color: var(--p-soft); font-weight: 400; }
+.tf .tline .btn-o, .tf .btn-o.sm { margin-left: auto; font-size: 14px; }
+.tf .where { margin: 8px 0 0; font: 600 16px/1.3 var(--f-text); }
+.tf .where.w0 { margin: 0; }
+.tf .addr { margin: 6px 0 0; color: var(--p-dim); font: 400 14px/1.4 var(--f-text); }
+.tf .stop { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; color: var(--p-dim); font: 600 12px/1.3 var(--f-text); }
+.tf .chipk { font: 600 12px/1 var(--f-text); padding: 5px 9px; border-radius: 20px; background: var(--p-okbg); color: var(--p-ok); }
+.tf .gside { display: flex; justify-content: space-between; align-items: center; min-height: 44px; font: 600 16px/1.3 var(--f-text); }
+.tf .gside.trail { color: var(--p-soft); font-weight: 500; }
+.tf .gside b { font: 700 28px/1 var(--f-title); color: var(--p-text); }
+.tf .gfoot { display: flex; align-items: center; min-height: 44px; margin-top: 10px; border-top: 1px solid var(--p-line); color: var(--p-soft); font: 400 14px/1.4 var(--f-text); }
+.tf .facts { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; margin: 0; }
+.tf .facts > div { display: flex; justify-content: space-between; align-items: center; min-height: 48px; padding: 4px 16px; font: 400 16px var(--f-text); }
+.tf .facts > div + div { border-top: 1px solid var(--p-line); }
+.tf .facts dt { color: var(--p-soft); }
+.tf .facts dd { margin: 0; font-weight: 600; }
+.tf .gr.big { padding: 16px; }
+.tf .gr.big .gw { font: 700 20px/1.15 var(--f-title); }
+.tf .gr.big .gt { margin-top: 8px; gap: 2px; }
+.tf .gr.big .side { align-items: center; min-height: 44px; }
+.tf .gr.big .side .sc { font-size: 28px; }
+.tf .gr.big .stk, .tf .gr.big .nos { margin: 10px -16px -16px; padding: 12px 16px; border-top: 1px solid var(--p-line); }
+.tf .wcard { display: flex; flex-direction: column; gap: 0; }
+.tf .wcard .btn-o { margin-top: 14px; align-self: flex-start; }
+.tf .ident { display: flex; gap: 12px; align-items: flex-start; }
+.tf .init { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border: 1px solid var(--p-line2); border-radius: 8px; background: var(--p-card); font: 700 16px var(--f-text); }
+.tf .init.l1 { border-color: var(--p-line); }
+.tf .tname { margin: 0; font: 600 22px/1.3 var(--f-text); }
+.tf .tname.n24 { font: 700 24px/1.15 var(--f-title); }
+.tf .tchip { display: block; color: var(--p-warn); font: 600 12px/1.3 var(--f-text); margin-top: 4px; }
+.tf .tsub { margin: 4px 0 0; color: var(--p-soft); font: 400 14px/1.4 var(--f-text); }
+.tf .h3s { margin: 0; font: 600 16px/1.3 var(--f-text); }
+.tf .tsec { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.tf .res { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; align-items: baseline; gap: 8px; min-height: 60px; padding: 12px 14px; font: 400 14px/1.4 var(--f-text); background: var(--p-card); }
+.tf .res small { display: block; color: var(--p-soft); font: 400 12px/1.4 var(--f-text); }
+.tf .res b { font: 600 14px/1.4 var(--f-text); white-space: nowrap; }
+.tf .res .dt { color: var(--p-dim); }
+.tf .rec { margin: 0; padding: 0 14px; background: var(--p-card); border: 1px solid var(--p-line2); border-radius: 8px; font: 400 14px/1.5 var(--f-text); }
+.tf .rec.l1 { border-color: var(--p-line); }
+.tf .rec > div { display: flex; justify-content: space-between; padding: 10px 0; }
+.tf .rec > div + div { border-top: 1px solid var(--p-line); }
+.tf .rec dt { color: var(--p-soft); }
+.tf .rec dd { margin: 0; font-variant-numeric: tabular-nums; }
+.tf .open { display: flex; flex-direction: column; gap: 8px; }
+.tf .open > div { border: 1px solid var(--p-line); border-left: 3px solid var(--p-bandrule); border-radius: 0 8px 8px 0; padding: 10px 14px; min-height: 60px; display: flex; flex-direction: column; justify-content: center; }
+.tf .open b { font: 600 16px/1.3 var(--f-text); }
+.tf .open span { font: 400 12px/1.4 var(--f-text); color: var(--p-dim); }
+.tf [data-go] { cursor: pointer; }
+
+/* markers + the differs view */
+.tf .mk { position: absolute; left: -27px; top: 10px; width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--doc-mark); color: var(--doc-mark-ink); font: 700 12px/22px var(--f-text); text-align: center; cursor: pointer; z-index: 3; padding: 0; }
+.tf .mk.in { left: auto; right: 8px; top: 8px; }
+.tf.today .mk { display: none; }
+body.only .tf .same { opacity: .18; filter: grayscale(1); }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Tournament page standards</h1>
+    <p>Public tournament site, desktop · round 2: a game's page and a team's page added · drawn at your screen's width (1,536 px)</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="t-why" data-tab="why">1 · Why it jumps</button>
+    <button role="tab" id="t-rules" data-tab="rules">2 · The eleven rules</button>
+    <button role="tab" id="t-row" data-tab="row">3 · The game row</button>
+    <button role="tab" id="t-pages" data-tab="pages">4 · Every page</button>
+    <button role="tab" id="t-asks" data-tab="asks">5 · Asks</button>
+  </nav>
+
+  <!-- 1 -->
+  <section class="view" id="v-why" role="tabpanel" aria-labelledby="t-why">
+    <h2 class="sec">Why moving between pages feels jumbled</h2>
+    <p class="lede">Each page was built in its own stage, and each one picked its own edges, gaps and ways of drawing the same things.
+      None of the pages is wrong on its own. Moving from one to the next, though, the content <b>starts in a different place,
+      stops at a different place, and draws the same game a different way</b>. Measured from the code:</p>
+    <div class="counts">
+      <div class="count-t"><b>5</b><span>different right edges across six pages</span></div>
+      <div class="count-t"><b>3</b><span>left edges (16, 24 and 32 px from the menu)</span></div>
+      <div class="count-t"><b>8</b><span>ways a single game is drawn</span></div>
+      <div class="count-t"><b>9</b><span>ways of saying a game is live (red, green, black, word, pill, edge)</span></div>
+      <div class="count-t"><b>6</b><span>corner sizes (6, 8, 9, 10, 12, 20 px)</span></div>
+      <div class="count-t"><b>10</b><span>text sizes, where six would do</span></div>
+    </div>
+    <div class="panel">
+      <h2 class="sec" style="font-size:18px">Where each page's content sits on your screen</h2>
+      <p class="lede" style="font-size:14px;color:var(--doc-soft)">Each bar is a page's content, drawn to scale across a 1,536 px window. The grey block is the left menu. "Starts" is how far below the band the first thing sits.</p>
+      <div class="emap" id="emap"></div>
+      <div class="legend"><span><i style="background:var(--doc-line)"></i>the left menu (248 px)</span><span><i style="background:var(--doc-bad)"></i>today</span><span><i style="background:var(--doc-good)"></i>proposed</span><span>"+ ticker": the today's-games line adds 46 px on that page (unchanged; you ruled which pages carry it)</span></div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="view" id="v-rules" role="tabpanel" aria-labelledby="t-rules" hidden>
+    <h2 class="sec">The eleven rules</h2>
+    <p class="lede">These become one written standard for every public tournament page, with an exceptions list beside it, the way the table standard works. The club round is checked against the same sheet. Numbers match the orange markers on the drawings. Lines in green name the earlier ruling a rule keeps.</p>
+    <div class="rules" id="rulelist"></div>
+  </section>
+
+  <!-- 3 -->
+  <section class="view" id="v-row" role="tabpanel" aria-labelledby="t-row" hidden>
+    <h2 class="sec">One game, two forms, one reading order</h2>
+    <p class="lede">A game is what a visitor reads most, and today it changes shape on every page. Both forms below are ones you have already ruled: the <b>stacked</b> form is your phone row (10-29), and the <b>one-line</b> form is the desktop Schedule row you kept the same day. The proposal is to use only these two, everywhere, in the same order: <b>when</b>, then <b>who</b>, then <b>status</b>. All specimens are drawn at true size.</p>
+    <div class="callout"><b>Why the long name wraps today:</b> the live game on the Schedule and Playoffs uses its own grid (the middle gets 2.2 shares of the row), while every other row gives the times and pills a fixed 104 px each and the names everything else. Putting the live game on the same grid as the rest fixes the wrap at 960 px with no other change.</div>
+    <div class="rowsheet">
+      <div>
+        <h2 class="sec" style="font-size:18px">Today: the same live game, four ways</h2>
+        <div id="row-today"></div>
+      </div>
+      <div>
+        <h2 class="sec" style="font-size:18px">Proposed · stacked form, in each state</h2>
+        <div id="row-next"></div>
+      </div>
+    </div>
+    <h2 class="sec" style="font-size:18px;margin-top:6px">Proposed · one-line form, a wide list at 960 px (Schedule, Playoffs)</h2>
+    <div class="spec"><div class="cap">The 104 · rest · 104 grid for every state, live included. No field on the all-games list (it lives on the game page, ruled 10-29).</div><div class="specbed" id="row-wide"></div></div>
+    <h2 class="sec" style="font-size:18px;margin-top:6px">Proposed · a game's own page, in each state (desk, 960 px)</h2>
+    <div class="spec"><div class="cap">The score card (left) is the stacked form, large. When and where (right) comes first on a phone. Today the page's "Final" is green like "Live now"; proposed, it is the neutral Final pill, as on the Schedule.</div><div class="specbed" id="row-game"></div></div>
+  </section>
+
+  <!-- 4 -->
+  <section class="view" id="v-pages" role="tabpanel" aria-labelledby="t-pages" hidden>
+    <div class="viewrow">
+      <div><span class="lbl">Page</span><span class="pick" id="pagepick"></span></div>
+      <div><span class="lbl">Show</span><span class="seg" id="vseg"><button type="button" data-v="today" aria-pressed="false">Today</button><button type="button" data-v="next" aria-pressed="true">Proposed</button></span></div>
+      <div><span class="lbl">View</span><span class="seg" id="dseg"><button type="button" data-d="all" aria-pressed="true">Everything</button><button type="button" data-d="only" aria-pressed="false">Show only what differs</button></span></div>
+      <label class="chk"><input type="checkbox" id="actual"> Actual size (scrolls sideways)</label>
+    </div>
+    <ul class="changes" id="changes"></ul>
+    <div class="stagebox">
+      <div class="stagecap"><span id="capL">Tournament · desktop · public frame</span><span>Click the menu inside the drawing to move between pages</span></div>
+      <div class="stage" id="stage"></div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="view" id="v-asks" role="tabpanel" aria-labelledby="t-asks" hidden>
+    <h2 class="sec">Asks</h2>
+    <p class="lede">Every ask is ruled (11-04). Round 2's four (a game's page and a team's page) are below; A1–A10 are kept underneath for the record. The build follows these drawings.</p>
+    <div class="asks" id="asklist"></div>
+    <details class="later panel">
+      <summary style="cursor:pointer;font:700 18px var(--f-title)">Already ruled: A1–A10</summary>
+      <div class="asks" id="asklist-ruled" style="margin-top:12px"></div>
+    </details>
+    <div class="later panel">
+      <h2 class="sec" style="font-size:18px">Not asked now: kept for the club round</h2>
+      <ul>
+        <li><b>Menu on the left vs. tabs in the band.</b> The club's pages put their tabs in the band; a tournament puts them in a left menu. That is the biggest jump between the two sites. A tournament has six to nine tabs and a long name, which will not fit in the band, so I would keep the menu and match everything else. Decided in the club round, with both sites drawn side by side.</li>
+        <li><b>Band height.</b> The club band is 72 px; the tournament band is 88 px (it carries the dates and the Live now line).</li>
+        <li><b>The club's own widths.</b> Club pages sit in a centred 1,200 px column and use three reading widths inside it (744, 760, 960). If 960 is approved here, the club round can bring its pages onto 960 on the column's left edge.</li>
+        <li><b>The word "door".</b> The club kit already uses "door" for a card with a coloured edge and a button, so the standard calls the plain row with a chevron a <i>link row</i>, to avoid two meanings.</li>
+        <li><b>News and Register</b> follow these rules but are not drawn. They still sit on an older centred layout and get moved onto the 960 column in the build.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var W = 1536;
+
+  /* ---------- icons ---------- */
+  function svg(path, cls) { return '<svg class="' + (cls || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + path + '</svg>'; }
+  var I = {
+    caret: svg('<path d="M6 9l6 6 6-6"/>'),
+    nav: svg('<path d="M3 11l18-8-8 18-2-8-8-2z"/>'),
+    cal: svg('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
+    ok: svg('<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>'),
+    cup: svg('<path d="M8 4h8v5a4 4 0 0 1-8 0zM6 5H4v2a3 3 0 0 0 3 3M18 5h2v2a3 3 0 0 1-3 3M12 13v4M9 20h6"/>', 'cup'),
+    book: svg('<path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2zM22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z"/>', 'ic'),
+    info: svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>', 'ic'),
+    tick: svg('<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>', 'ic'),
+    alert: svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16h.01"/>', 'ic'),
+    shield: svg('<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>', 'ic'),
+    help: svg('<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7M12 17h.01"/>', 'ic')
+  };
+
+  /* ---------- the rules ---------- */
+  var RULES = [
+    { n: 1, t: 'One page width', today: 'Five right edges: Overview and Playoffs fill the window, Schedule, Teams and Rules stop at 860, Standings at 720, News sits in an older centred column.',
+      std: 'Every page’s content is one column, <em>960 px</em> wide at most, left-aligned to its frame’s own edge: on a tournament, <em>32 px</em> right of the menu. A two-column page (the Overview, a game’s page, a team’s page) splits the 960 into about 540 + 392 and stacks into one column below a <em>1,200 px</em> window.',
+      ph: 'Phone: full width, 16 px sides. A club page keeps its centred 1,200 px column and puts the 960 on that column’s left edge (the club round). Exception: a bracket with three or more rounds scrolls sideways inside its own box.' },
+    { n: 2, t: 'One page top', today: 'The first thing sits 28 px down on most pages, 24 on Standings, 16 on Schedule, 0 on a game’s page. The game and team pages’ back links are styled differently.',
+      std: 'Content starts <em>28 px</em> below the band, or below the today’s-games line where a page carries it. A page opens with its toolbar if it has one, otherwise its first heading. No page title: the menu already names the page. No back link where the menu (or the phone’s tab row) already goes: a game’s page and a team’s page open with their content.',
+      rul: 'Keeps: "a back link stays only when it goes somewhere the tab row does not" (club pages, 10-20), now on both sites.',
+      ph: 'Phone: 16 px; the white tab row names the page.' },
+    { n: 3, t: 'One rhythm', today: 'Space between sections is 24 on the Overview, 16 on Schedule, Standings, Playoffs and Teams, 12 on Rules.',
+      std: '<em>24 px</em> between sections everywhere. <em>12 px</em> between toolbar rows. A heading sits directly on what it heads. Rows inside a list have no gap; a hairline separates them.',
+      ph: 'Same on a phone.' },
+    { n: 4, t: 'Three heading levels, no others', today: 'Four styles: 16 bold (Overview), 18 bold "Standings · A Pool", 18 semi-bold "U11" with a loose "4 teams", 16 semi-bold on a team’s page.',
+      std: 'A <em>division heading</em> (18 px). A <em>section heading</em> (16 px bold, an optional count pill, an optional link on the right such as "Full schedule"). A <em>pool band</em> inside a list (12 px uppercase on the ground colour, the club kit’s band row). A pool with its own table takes a section heading. Registered exception: a team’s own name on its page is <em>24 px</em> in the title face.',
+      ph: 'Same on a phone.', rul: 'Keeps: division headings 18 px (ruled 10-30).' },
+    { n: 5, t: 'Same kind, one list', today: 'Results and Up next are joined lists; the eight Rules are eight separate tiles; Teams rows are three lines tall.',
+      std: 'Rows of the same kind are <em>one framed list</em> with hairlines between them. Separate boxes only for different kinds of thing (a live game, a link row on its own, the host card). A list row is two lines at most.',
+      ph: 'Registered exception: a game row is a head line plus two teams, and it opens its game with no chevron (the whole row is the link, as shipped).' },
+    { n: 6, t: 'One game, two forms', today: 'Eight recipes. Scores at 14, 20, 24 or 28 px. The live game on Schedule and Playoffs uses its own grid, so long names wrap.',
+      std: 'Read in one order, <em>when · who · status</em>. <em>Stacked</em> in any column under 600 px: time and context top left, status pill top right, then each team on its own line owning its score. <em>One line</em> in a wide list on a desk: time and round | away score – score home | status and division, on one 104 · rest · 104 grid for every state, live included. Names in full ink; the winner bold and the loser soft only once a game is final. A bracket uses the stacked form, compact.',
+      ph: 'Phone: always stacked. The all-games list carries no field; the Overview’s Live now and Up next keep the field, and Live now keeps Directions. A team’s page puts that team first, in bold, and its Results keep their own team-view row ("vs Bears U11 · W 7–2", ruled 10-30, a registered exception). A game’s own page: its score card is the stacked form, large (28 px scores), and its when-and-where card leads on a phone.',
+      rul: 'Keeps: the phone recipe, the desktop one-line Schedule row and "no location on the all-games list" (10-29); the team being read first and bold (10-30).' },
+    { n: 7, t: 'One link row', today: 'Three link rows (56, 52 and 72 px tall); the bracket is "Playoff picture" on the Overview and "The playoff bracket" on Schedule and Standings.',
+      std: 'One link row, the club kit’s list row: a 16 px title, an optional 12 px line under it, a drawn chevron, <em>60 px</em> tall. A row that opens a window (a rule, "How seeding works") looks the same. One name per destination.',
+      ph: 'Same on a phone.' },
+    { n: 8, t: 'One toolbar', today: 'The division box is 200 wide on Schedule, 312 on Teams, 360 on Standings and Playoffs; corners are 6 or 8; search says "Search team…" on one page and "Search teams" on another.',
+      std: 'One row, always in this order: <em>Division</em> (200) · <em>Pool</em> (160) · view switch · <em>Search</em> (fills what is left, up to 320) · calendar. 44 px tall, 8 px corners. A page shows only the controls it has. Day chips get their own row under it. Search says "Search teams", or "Search teams or coaches" where coaches are searchable.',
+      ph: 'Phone: as shipped (Division and the switch share a row, Search gets its own).' },
+    { n: 9, t: 'One look for "live"', today: 'Nine treatments: a black dot (band), a red dot and red word (today’s-games line), a green pill (Schedule), green text (Playoffs, Teams), a green edge (bracket), a heading (Overview).',
+      std: 'A game row shows live with the green <em>Live now</em> pill and a <em>3 px green edge</em>. Said once: under a "Live now" heading the pill is left off and the edge stays. Inside a sentence (a team’s line), "Live now" is green text. The band keeps its own dot. The today’s-games line keeps its word "Live", in green instead of red.',
+      ph: 'A 3 px left edge always marks a state: green is live; on club pages the club’s colour is "open".', rul: 'Keeps: the line’s words Live / Final / start time (10-28).' },
+    { n: 10, t: 'One box, one type scale', today: 'Corners of 6, 8, 9, 10, 12 and 20 px; three border colours on boxes; ten text sizes (12, 13, 14, 16, 18, 20, 22, 24, 28, 32).',
+      std: '<em>8 px</em> corners on every box and control. Pills stay round, the logo keeps 10, and the view switch’s track is 9 (its 3 px padding around 6 px buttons). Boxes use the light hairline. Tables keep the table standard’s darker frame. The darker field edge is for inputs. No shadows. Text: <em>12 · 14 · 16 · 18 · 20 · 24</em>, plus 28 for a game page’s time and score.',
+      ph: 'The band, the menu and the today’s-games line are the frame and keep their own sizes.' },
+    { n: 11, t: 'Weight follows purpose', today: 'The loudest thing on the Overview is the yellow "Visit the club" button, louder than the live score.',
+      std: 'A filled button only for the page’s main job (Register, Pay). A choice inside a control (the chosen day, the chosen side of the switch) is a fill, not a button. Everything else, "Visit the club" included, is the white outlined button.',
+      ph: 'Same on a phone.' }
+  ];
+
+  /* ---------- the asks ---------- */
+  var ASKS = [
+    { n: 'A1', t: 'One page width of 960 px, beside the menu, on every page',
+      p: 'Today the Overview and Playoffs fill your whole window while other pages stop short, so the right edge jumps. Other options: 1,120 (uses more of a wide screen, but rows in a single list get long) or filling the window everywhere (rows get hard to read on a wide screen).',
+      r: '<b>Recommend 960.</b> On a typical laptop (1,280–1,440 px) it is nearly all the space there is anyway. On your wider screen it leaves calm space on the right instead of edges that move. It is also the width of the club’s Tournaments page.' },
+    { n: 'A2', t: 'Wide lists keep the one-line row you ruled, and the live game moves onto the same grid',
+      p: 'You kept the desktop Schedule’s one-line row on 10-29. The live game is the one row that uses a different grid, which is why "Milton Bats U11 Purple (Jackson)" wraps. The alternative is to stack every game everywhere: one form only, but Schedule rows grow from 60 to about 84 px, so a 12-game day gets about 290 px longer.',
+      r: '<b>Recommend: keep the one-line row and fix the live game’s grid.</b> The Schedule stays compact, and the two forms read in the same order.' },
+    { n: 'A3', t: 'The Overview’s game lists use the stacked form',
+      p: 'Today the Overview on a desk puts a 72 px "Final" or time column on the left of each result, and writes Up next as one line, "A vs B". The stacked form is your phone row, so the Overview would read the same on a desk and on a phone.',
+      r: '<b>Recommend yes.</b>' },
+    { n: 'A4', t: 'Live is green everywhere, including the today’s-games line',
+      p: 'You ruled the line’s words ("Live / Final / start time") on 10-28; the red came with that drawing and was not ruled on its own.',
+      r: '<b>Recommend green.</b> Red reads as an error or a delay. The band keeps its own dot.' },
+    { n: 'A5', t: 'One name for the bracket link: "The playoff bracket"',
+      p: 'The Overview calls it "Playoff picture"; Schedule and Standings call it "The playoff bracket"; the menu says "Playoffs".',
+      r: '<b>Recommend "The playoff bracket"</b>, with "See who plays who" under it.' },
+    { n: 'A6', t: 'Overview: the bracket link moves to the right column, under Latest results',
+      p: 'The left column then reads as just the games, in time order: Live now, then Up next.',
+      r: '<b>Recommend yes.</b>' },
+    { n: 'A7', t: 'Overview: "Visit the club" becomes the white outlined button',
+      p: 'The host card’s look was ruled, with its button filled in the club’s colour. Today it is the loudest thing on game day, louder than the live score. The card, its place and its words stay as ruled; only the button changes.',
+      r: '<b>Recommend yes.</b> The club stays one click away and stops competing with the score.' },
+    { n: 'A8', t: 'Rules and Teams become joined lists, and a team row is two lines',
+      p: 'The eight rules stop being eight floating tiles. A team row reads "Halton Hawks U11 Jr", then "Johnstone · 3-0-0 · 1st of 3 in A Pool…" on one line, instead of three lines. Pools become band rows inside one list.',
+      r: '<b>Recommend yes.</b> This is the "same kind, one list" rule; the floating tiles are a big part of the jumbled feel.' },
+    { n: 'A9', t: 'Write it down as a standard, with an exceptions list',
+      p: 'The eleven rules go into one living standard in the design reference folder, next to the table standard, with the exceptions named in it. Every later public page, and the club round, is checked against it.',
+      r: '<b>Recommend yes.</b> Without a written standard, the next stage will drift the same way.' }
+  ];
+  ASKS.forEach(function (a) { a.ruled = 'Ruled 11-04 as recommended.'; });
+  ASKS.push({ n: 'A10', t: 'How many ways to the club the Overview needs',
+    p: 'You asked whether three links to the club (the band, the club card, the footer) are too many, and left it to my judgment.',
+    r: '', ruled: 'Resolved 11-04 on the recommendation: the band link and the footer line stay; the club card shows only when the club has something open, since with nothing open it says only "runs teams and programs all year".' });
+
+  var OPEN = [
+    { n: 'A11', t: 'A game’s page on a desk: the score and "when and where" side by side at the top',
+      p: 'Today, on a desk, the when-and-where card (with the time at 32 px) stacks above the score card, and the side list sits alone on the right. Stage 3 ruled that a game’s page opens with when and where so Directions are near the top on a phone, where a visitor is walking to the field. That order stays on a phone. On a desk, there is room for both at the top: the score card on the left (the thing that changes), when and where on the right with Directions on its first line, and the game length folded in. The time drops to 28 px, the same as the score.',
+      r: '<b>Recommend yes.</b> Nothing moves below the fold, the phone keeps its ruled order, and the page uses the same 540 + 392 split as the Overview and a team’s page.' },
+    { n: 'A12', t: 'A game’s page: division and round said once',
+      p: 'Today the score card says "Semifinal · U11" and the side list says Division U11 and Round Semifinal again. The side list would keep only what is not said elsewhere (the game length), under the place.',
+      r: '<b>Recommend yes.</b>' },
+    { n: 'A13', t: 'A team’s page: Up next and Next games use the stacked row',
+      p: 'Today they use the one-line Schedule row squeezed into the left column, with the day inside the time ("Thu, Nov 5 · 6:00 p.m." in a 104 px slot), so both the time and "Halton Hawks U11 Jr (Johnstone)" wrap. The stacked row gives the day and time a full line and keeps this team first and bold (ruled 10-30). Results keep their own short team-view row ("vs Bears U11 · W 7–2", also ruled 10-30); it is listed as an exception rather than changed.',
+      r: '<b>Recommend yes.</b>' },
+    { n: 'A14', t: 'Drop "‹ Schedule" and "‹ All Teams" from a game’s page and a team’s page',
+      p: 'On club pages you ruled on 10-20 that a back link stays only when it goes somewhere the tab row does not, and "← Teams" came off the club’s team page for that reason. These two are the same case: they always go to the Schedule and Teams tabs (not back to wherever the visitor came from), and those tabs are in the menu on a desk and pinned on a phone. Today the two links are also styled differently. The alternative is to keep both and give them one style.',
+      r: '<b>Recommend drop both.</b> It is the club’s rule on the tournament too, which is the seamless feel you want between the two sites; the browser’s own Back still returns to where the visitor was.' }
+  ];
+  OPEN.forEach(function (a) { a.ruled = 'Ruled 11-04 as recommended.'; });
+
+  /* ---------- small builders ---------- */
+  function mk(n, cls) { return '<button type="button" class="mk' + (cls ? ' ' + cls : '') + '" data-rule="' + n + '" aria-label="Rule ' + n + '">' + n + '</button>'; }
+  function sh(title, opt) {
+    opt = opt || {};
+    var c = opt.count ? '<span class="count">' + opt.count + '</span>' : '';
+    var l = opt.link ? '<span class="lk">' + opt.link + '</span>' : '';
+    return '<div class="sh' + (opt.div ? ' div' : '') + '"><h3>' + title + c + '</h3>' + l + '</div>';
+  }
+  /* a side: [name, score, result] where result is 'win' | 'lose' | 'ph' | '' */
+  function side(t) {
+    var sc = (t[1] !== '' && t[1] != null) ? '<b class="sc">' + t[1] + '</b>' : '';
+    return '<div class="side ' + (t[2] || '') + '"><span class="nm">' + t[0] + '</span>' + sc + '</div>';
+  }
+  function pill(kind) {
+    var w = { live: 'Live now', final: 'Final', unof: 'Unofficial', canc: 'Cancelled' }[kind];
+    return '<span class="pill ' + kind + '">' + w + '</span>';
+  }
+  /* the stacked game row */
+  function gr(o) {
+    var cls = 'gr' + (o.live ? ' live' : '') + (o.cmp ? ' cmp' : '') + (o.canc ? ' canc' : '');
+    var head = '<div class="gh"><div class="gm">' + (o.time ? '<span class="gw">' + o.time + '</span>' : '') + (o.ctx ? '<span class="gc">' + o.ctx + '</span>' : '') + '</div>' + (o.pill ? pill(o.pill) : '') + '</div>';
+    var teams = '<div class="gt">' + o.teams.map(side).join('') + '</div>';
+    var extra = (o.nos ? '<span class="nos">' + (o.nos === true ? 'No score yet' : o.nos) + '</span>' : '') + (o.stk ? '<span class="stk' + (o.stkc ? ' ' + o.stkc : '') + '">' + o.stk + '</span>' : '');
+    var place = (o.place || o.act) ? '<div class="gp' + (o.act ? ' strip' : '') + '"><span>' + (o.place || '') + '</span>' + (o.act || '') + '</div>' : '';
+    return '<div class="' + cls + (o.big ? ' big' : '') + '"' + (o.nogo ? '' : ' data-go="game"') + '>' + head + teams + extra + place + '</div>';
+  }
+  /* the one-line game row */
+  function g1(o) {
+    var cls = 'g1' + (o.live ? ' live' : '') + (o.canc ? ' canc' : '') + (o.bad ? ' bad' : '');
+    var a = o.teams[0], b = o.teams[1];
+    var scored = a[1] !== '' && a[1] != null;
+    var l = '<div class="l"><span class="gw">' + o.time + '</span>' + (o.round ? '<span class="gd">' + o.round + '</span>' : '') + '</div>';
+    var mid = '<div class="mid"><div class="sa ' + (a[2] || '') + '"><span class="nm">' + a[0] + '</span>' + (scored ? '<b class="sc">' + a[1] + '</b>' : '') + '</div>' +
+      '<span class="vs">' + (scored ? '–' : 'vs') + '</span>' +
+      '<div class="sb ' + (b[2] || '') + '">' + (scored ? '<b class="sc">' + b[1] + '</b>' : '') + '<span class="nm">' + b[0] + '</span></div></div>';
+    var r = '<div class="r">' + (o.pill ? pill(o.pill) : '') + '<span>' + o.div + '</span></div>';
+    return '<div class="' + cls + '" data-go="game">' + l + mid + r + '</div>';
+  }
+  function lr(t, s, icon, go) {
+    return '<div class="lr"' + (go ? ' data-go="' + go + '"' : '') + '>' + (icon || '') + '<div class="lm"><span class="ln">' + t + '</span>' + (s ? '<span class="ls">' + s + '</span>' : '') + '</div></div>';
+  }
+  function doorT(t, s, icon, r52) {
+    return '<div class="door' + (r52 ? ' r52' : '') + '"><span class="dl">' + (icon || '') + '<span>' + t + (s ? '<span class="ds">' + s + '</span>' : '') + '</span></span><span class="cv">›</span></div>';
+  }
+  function sel(label, w, r6) { return '<div class="sel' + (r6 ? ' r6' : '') + '" style="width:' + w + '"><span>' + label + '</span>' + I.caret + '</div>'; }
+  function srch(label, w, r6) { return '<div class="srch' + (r6 ? ' r6' : '') + (w === 'fill' ? ' fill' : '') + '"' + (w === 'fill' ? '' : ' style="width:' + w + '"') + '>' + label + '</div>'; }
+  function cal() { return '<div class="ibtn" aria-label="Calendar">' + I.cal + '</div>'; }
+  function track() { return '<div class="track"><span>Pool play</span><span class="on">Playoffs</span></div>'; }
+  function days() {
+    return '<div class="days"><div class="day">All</div><div class="day">Thu<small>Oct 29</small></div><div class="day on">Today<small>Nov 4</small></div><div class="day">Thu<small>Nov 5</small></div></div>';
+  }
+  function pg(inner, o) {
+    o = o || {};
+    return '<div class="pg" style="padding:' + (o.pad || '28px 32px') + ';gap:' + (o.gap == null ? 24 : o.gap) + 'px">' + inner + '</div>';
+  }
+  /* proposed pages: 28/32 padding, the content column capped at 960 */
+  function pgN(inner) { return '<div class="pg" style="padding:28px 32px"><div class="anch" style="max-width:960px;display:flex;flex-direction:column;gap:24px">' + inner + '</div></div>'; }
+
+  /* ---------- the frame ---------- */
+  var PAGES = [['overview', 'Overview'], ['schedule', 'Schedule'], ['standings', 'Standings'], ['playoffs', 'Playoffs'], ['teams', 'Teams'], ['rules', 'Rules']];
+  var VIEWS = PAGES.concat([['game', 'A game'], ['team', 'A team']]);
+  var RAILON = { game: 'schedule', team: 'teams' };
+  var TICKER = { standings: 1, playoffs: 1, teams: 1, rules: 1, team: 1 };
+  function band() {
+    return '<div class="band same"><div class="bl"><div class="logo">LL</div><div><div class="bname">Lakeshore Lightning Fall Classic</div><div class="bsub">Nov 1–7 <span>·</span> <span class="bdot"></span> Live now</div></div></div><div class="br"><span>Hosted by Lakeshore Lightning Softball ›</span><span>Sign in</span></div></div>';
+  }
+  function rail(page) {
+    return '<nav class="rail same" aria-label="Tournament pages (drawing)">' + PAGES.map(function (p) {
+      return '<button type="button" data-go="' + p[0] + '" class="' + (p[0] === (RAILON[page] || page) ? 'on' : '') + '">' + p[1] + '</button>';
+    }).join('') + '</nav>';
+  }
+  function ticker() { return '<div class="tick same"><span>Final</span><span>·</span><span class="tn">Lions U11</span><b>4–5</b><span class="tn">Halton Hawks U11 Jr</span><span class="x">×</span></div>'; }
+  function foot() {
+    return '<div class="foot same"><span class="fn">Lakeshore Lightning Fall Classic</span><nav><span>Schedule</span><span>Standings</span><span>Playoffs</span><span>Teams</span><span>Rules</span></nav><span style="text-decoration:underline;text-underline-offset:3px">Hosted by Lakeshore Lightning Softball ›</span></div>';
+  }
+  function frame(page, v) {
+    return '<div class="tf ' + v + '">' + band() + '<div class="shell">' + rail(page) + '<main class="main">' + (TICKER[page] ? ticker() : '') + BODY[v][page]() + '</main></div>' + foot() + '</div>';
+  }
+
+  /* ---------- shared content ---------- */
+  var PLACE = 'Lions Park · Diamond #2';
+  var LIVE_T = [['Milton Bats U11 Purple (Jackson)', 2, ''], ['Lions U11', 3, '']];
+  var NEXT_T = [['Halton Hawks U11 Jr (Johnstone)', '', ''], ['Semifinal 2 winner', '', 'ph']];
+  var RESULTS = [
+    { ctx: 'U13', teams: [['Hawks U13', 5, 'win'], ['Lions U13', 4, 'lose']] },
+    { ctx: 'U13', teams: [['Eagles U13', 5, 'win'], ['Hawks U13', 4, 'lose']] },
+    { ctx: 'U11 · Semifinal 1', teams: [['Halton Hawks U11 Jr (Johnstone)', 7, 'win'], ['Bears U11', 2, 'lose']] }
+  ];
+  var STAND_A = [
+    ['Halton Hawks U11 Jr', 'Johnstone', 3, 0, 0, 18, 10, '+8', 6, true],
+    ['Milton Bats U11 Purple', 'Jackson', 1, 2, 0, 12, 15, '−3', 2],
+    ['Bears U11', '', 0, 3, 0, 10, 18, '−8', 0]
+  ];
+  var STAND_B = [['Lions U11', '', 2, 1, 0, 15, 12, '+3', 4, true]];
+  var TEAMS_A = [
+    ['Halton Hawks U11 Jr', 'Johnstone', '3-0-0 · 1st of 3 in A Pool · next: the Championship, Thu 6:00 p.m.'],
+    ['Milton Bats U11 Purple', 'Jackson', '1-2-0 · 2nd of 3 in A Pool · <span class="lv">Live now</span> vs Lions U11'],
+    ['Bears U11', '', '0-3-0 · 3rd of 3 in A Pool · No more games']
+  ];
+  var TEAMS_B = [['Lions U11', '', '2-1-0 · 1st of 1 in B Pool · <span class="lv">Live now</span> vs Milton Bats U11 Purple (Jackson)']];
+  var RULE_ROWS = [[I.book, 'Format'], [I.info, 'Game length'], [I.tick, 'Ties and tie-breakers'], [I.alert, 'Weather and delays'], [I.shield, 'Rosters and eligibility'], [I.shield, 'Code of conduct'], [I.help, 'Protests'], [I.help, 'On the day: who to ask']];
+  var RULE_NOTE = 'These rules are subject to change at the discretion of the tournament director. Updates will be posted on the News &amp; Announcements page.';
+
+  function table(rows) {
+    var head = '<tr><th>Team</th><th>W</th><th>L</th><th>T</th><th>RF</th><th>RA</th><th>RD</th><th>PTS</th></tr>';
+    var body = rows.map(function (r) {
+      var nm = '<span class="tn">' + (r[9] ? I.cup : '') + r[0] + ' ' + I.ok + '</span>' + (r[1] ? '<small>' + r[1] + '</small>' : '');
+      return '<tr class="' + (r[9] ? 'lead' : '') + '"><td>' + nm + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td><td>' + r[4] + '</td><td>' + r[5] + '</td><td>' + r[6] + '</td><td>' + r[7] + '</td><td>' + r[8] + '</td></tr>';
+    }).join('');
+    return '<table><thead>' + head + '</thead><tbody>' + body + '</tbody></table>';
+  }
+
+  /* today's recipes */
+  function tm(t, cls) { return '<div class="tm ' + (cls || '') + '"><span>' + t[0] + '</span>' + (t[1] !== '' ? '<b class="sc">' + t[1] + '</b>' : '') + '</div>'; }
+  function tLiveCard() {
+    return '<div class="box tlive" data-go="game"><div class="tt">' + tm(LIVE_T[0]) + tm(LIVE_T[1]) + '</div><div class="mstrip"><span>Semifinal · lions park — diamond #2</span><span class="btn-o">' + I.nav + 'Directions</span></div></div>';
+  }
+  function tRes(r) { return '<div class="tres" data-go="game"><span class="gw">Final</span><div>' + tm(r.teams[0], 'w') + tm(r.teams[1], 'l') + '</div></div>'; }
+  function tNext() { return '<div class="tnext" data-go="game"><div class="gm"><span class="gw">6:00 p.m.</span><span class="gc" style="font-size:12px">Thu, Nov 5</span></div><div class="vs">Halton Hawks U11 Jr (Johnstone) <i>vs</i> Semifinal 2 winner</div><div class="pl">Championship · lions park — diamond #2</div></div>'; }
+  function tSch() { return g1({ bad: true, live: true, time: '9:00 p.m.', round: 'Semifinal', teams: LIVE_T, pill: 'live', div: 'U11' }); }
+  function nSch() { return g1({ live: true, time: '9:00 p.m.', round: 'Semifinal', teams: LIVE_T, pill: 'live', div: 'U11' }); }
+  function tHost() {
+    return '<div class="box host"><div class="hh"><div class="hl">LL</div><div><div class="hk">Hosted by</div><div class="hn t22">Lakeshore Lightning Softball</div></div></div><div style="font-size:16px;color:var(--p-soft)">Lakeshore Lightning Softball runs teams and programs all year</div><div class="btn-f">Visit the club</div></div>';
+  }
+  function nHost() {
+    return '<div class="box host anch">' + mk(11) + '<div class="hh same"><div class="hl">LL</div><div><div class="hk">Hosted by</div><div class="hn">Lakeshore Lightning Softball</div></div></div>' +
+      '<div class="open"><div><b>Spring house league</b><span>Registration open until Nov 30</span></div></div><div class="btn-o">Visit the club</div></div>';
+  }
+  function tBracket() {
+    return '<div class="box l2"><div class="brk">' +
+      '<div class="rnd"><div class="rl t">Semifinals</div>' +
+        '<div class="mtt"><span class="gd">Semifinal 1</span><span class="rw"><b>Halton Hawks U11 Jr (Johnstone)</b><b>7</b></span><span class="rw">Bears U11<span>2</span></span><span class="gd">Thu, Oct 29 · 11:25 a.m.</span></div>' +
+        '<div class="mtt" style="box-shadow:inset 3px 0 0 var(--p-ok)"><span class="gd" style="color:var(--p-ok);font-weight:600">Semifinal 2 · Live now</span><span class="rw">Milton Bats U11 Purple (Jackson)<span>2</span></span><span class="rw">Lions U11<span>3</span></span><span class="gd">Today · 9:00 p.m.</span></div></div>' +
+      '<div class="rnd c"><div class="rl t">Championship</div>' +
+        '<div class="mtt"><span class="gd">Championship</span><span>Halton Hawks U11 Jr (Johnstone)</span><span>Semifinal 2 winner</span><span class="gd">Thu, Nov 5 · 6:00 p.m.</span></div></div>' +
+      '</div></div>';
+  }
+  function nBracket() {
+    return '<div class="box"><div class="brk">' +
+      '<div class="rnd"><div class="rl">Semifinals</div>' +
+        '<div class="mt">' + gr({ cmp: true, time: 'Thu, Oct 29', ctx: 'Semifinal 1', pill: 'final', teams: [['Halton Hawks U11 Jr (Johnstone)', 7, 'win'], ['Bears U11', 2, 'lose']] }) + '</div>' +
+        '<div class="mt">' + gr({ cmp: true, live: true, time: '9:00 p.m.', ctx: 'Semifinal 2', pill: 'live', teams: LIVE_T }) + '</div></div>' +
+      '<div class="rnd c"><div class="rl">Championship</div>' +
+        '<div class="mt">' + gr({ cmp: true, time: '6:00 p.m.', ctx: 'Thu, Nov 5', teams: NEXT_T }) + '</div></div>' +
+      '</div></div>';
+  }
+
+  /* ---------- page bodies ---------- */
+  var BODY = { today: {}, next: {} };
+
+  BODY.today.overview = function () {
+    return pg('<div class="cols">' +
+      '<div class="col"><div class="sec">' + sh('Live now', { count: 1 }) + tLiveCard() + '</div>' +
+        '<div class="list">' + doorT('Playoff picture', 'The bracket is set: see who plays who') + '</div>' +
+        '<div class="sec">' + sh('Up next', { link: 'Full schedule' }) + '<div class="list">' + tNext() + '</div></div></div>' +
+      '<div class="col"><div class="sec">' + sh('Latest results', { link: 'All results' }) + '<div class="list">' + RESULTS.map(tRes).join('') + '</div></div>' + tHost() + '</div>' +
+      '</div>', { gap: 0 });
+  };
+  BODY.next.overview = function () {
+    return pgN(mk(1) + '<div class="cols">' +
+      '<div class="col"><div class="sec anch">' + mk(9) + sh('Live now', { count: 1 }) + '<div class="list">' +
+          gr({ live: true, time: '9:00 p.m.', ctx: 'U11 · Semifinal', teams: LIVE_T, place: PLACE, act: '<span class="btn-o">' + I.nav + 'Directions</span>' }) + '</div></div>' +
+        '<div class="sec anch">' + mk(6) + sh('Up next', { link: 'Full schedule' }) + '<div class="list">' +
+          gr({ time: '6:00 p.m.', ctx: 'Thu, Nov 5 · U11 · Championship', teams: NEXT_T, place: PLACE }) + '</div></div></div>' +
+      '<div class="col"><div class="sec anch">' + mk(5) + sh('Latest results', { link: 'All results' }) + '<div class="list">' +
+          RESULTS.map(function (r) { return gr({ ctx: r.ctx, pill: 'final', teams: r.teams }); }).join('') + '</div></div>' +
+        '<div class="list anch">' + mk(7) + lr('The playoff bracket', 'See who plays who') + '</div>' + nHost() + '</div>' +
+      '</div>');
+  };
+
+  BODY.today.schedule = function () {
+    return pg('<div class="tools" style="max-width:860px;gap:10px"><div class="trow" style="gap:10px">' + sel('All divisions', '200px') + sel('All pools', '150px') + track() + '<div class="srch" style="flex:2 1 160px">Search team…</div>' + cal() + '</div>' + days() + '</div>' +
+      '<div class="list" style="max-width:860px">' + tSch() + '</div>' +
+      '<div class="list" style="max-width:860px">' + doorT('The playoff bracket') + '</div>', { pad: '16px', gap: 16 });
+  };
+  BODY.next.schedule = function () {
+    return pgN(mk(1) + '<div class="tools anch">' + mk(8) + '<div class="trow">' + sel('All divisions', '200px') + sel('All pools', '160px') + track() + srch('Search teams or coaches', 'fill') + cal() + '</div><div class="same">' + days() + '</div></div>' +
+      '<div class="list anch">' + mk(6) + nSch() + '</div>' +
+      '<div class="list anch">' + mk(7) + lr('The playoff bracket', 'See who plays who') + '</div>');
+  };
+
+  BODY.today.standings = function () {
+    return pg('<div>' + sel('U11', '360px', true) + '</div><p class="meta">Top 4 advance · 6 games final</p>' +
+      '<div style="max-width:720px;display:flex;flex-direction:column;gap:16px"><h3 class="h18" style="padding-top:12px">Standings · A Pool</h3>' + table(STAND_A) +
+      '<h3 class="h18" style="padding-top:12px">Standings · B Pool</h3>' + table(STAND_B) +
+      '<div class="list">' + doorT('How the table is ranked', '', '', true) + '</div><div class="list">' + doorT('The playoff bracket') + '</div></div>', { pad: '24px', gap: 16 });
+  };
+  BODY.next.standings = function () {
+    return pgN(mk(1) + '<div class="tools anch">' + mk(8) + '<div class="trow">' + sel('U11', '200px') + '</div><p class="meta same">Top 4 advance · 6 games final</p></div>' +
+      '<div class="sec anch">' + mk(4) + sh('A Pool') + '<div class="same">' + table(STAND_A) + '</div></div>' +
+      '<div class="sec">' + sh('B Pool') + '<div class="same">' + table(STAND_B) + '</div></div>' +
+      '<div class="list anch">' + mk(7) + lr('How the table is ranked') + lr('The playoff bracket', 'See who plays who') + '</div>');
+  };
+
+  BODY.today.playoffs = function () {
+    return pg('<div>' + sel('U11', '360px', true) + '</div>' +
+      '<div class="sec">' + sh('Live now') + '<div class="list l2">' + tSch() + '</div></div>' +
+      '<div class="list l2">' + doorT('How seeding works', 'Single elimination, top 4 advance', '', true) + '</div>' +
+      '<div class="sec">' + sh('Bracket') + tBracket() + '</div>', { gap: 16 });
+  };
+  BODY.next.playoffs = function () {
+    return pgN(mk(1) + '<div class="tools anch">' + mk(8) + '<div class="trow">' + sel('U11', '200px') + '</div></div>' +
+      '<div class="sec anch">' + mk(9) + sh('Live now', { count: 1 }) + '<div class="list">' + nSch() + '</div></div>' +
+      '<div class="list anch">' + mk(7) + lr('How seeding works', 'Single elimination, top 4 advance') + '</div>' +
+      '<div class="sec anch">' + mk(6) + sh('Bracket') + nBracket() + '</div>');
+  };
+
+  BODY.today.teams = function () {
+    function rows(list) { return '<div class="list l2">' + list.map(function (t) { return '<div class="tteam" data-go="team"><span class="nm">' + t[0] + '</span>' + (t[1] ? '<span class="sb">' + t[1] + '</span>' : '') + '<span class="sb">' + t[2] + '</span></div>'; }).join('') + '</div>'; }
+    return pg('<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:640px">' + sel('All divisions', 'auto', true) + srch('Search teams', 'auto', true) + '</div>' +
+      '<div style="max-width:860px;display:flex;flex-direction:column;gap:10px"><div class="t-ttl"><h3 class="h18" style="font-weight:600">U11</h3><span class="meta" style="font-size:16px">4 teams</span></div>' +
+      '<div style="font:700 16px var(--f-text)">A Pool</div>' + rows(TEAMS_A) + '<div style="font:700 16px var(--f-text);padding-top:8px">B Pool</div>' + rows(TEAMS_B) + '</div>', { gap: 16 });
+  };
+  BODY.next.teams = function () {
+    function rows(list) { return list.map(function (t) { return lr(t[0], (t[1] ? t[1] + ' · ' : '') + t[2], '', 'team'); }).join(''); }
+    return pgN(mk(1) + '<div class="tools anch">' + mk(8) + '<div class="trow">' + sel('All divisions', '200px') + srch('Search teams', '320px') + '</div></div>' +
+      '<div class="sec anch">' + mk(4) + sh('U11', { count: 4, div: true }) + '<div class="list anch">' + mk(5) + '<div class="lb">A Pool</div>' + rows(TEAMS_A) + '<div class="lb">B Pool</div>' + rows(TEAMS_B) + '</div></div>');
+  };
+
+  BODY.today.rules = function () {
+    return pg('<p class="note" style="max-width:860px;font-size:16px">' + RULE_NOTE + '</p>' +
+      '<div style="max-width:860px;display:flex;flex-direction:column;gap:8px">' + RULE_ROWS.map(function (r) { return '<div class="list">' + doorT(r[1], '', r[0], true) + '</div>'; }).join('') + '</div>', { gap: 12 });
+  };
+  BODY.next.rules = function () {
+    return pgN(mk(1) + '<p class="note same">' + RULE_NOTE + '</p>' +
+      '<div class="list anch">' + mk(5) + RULE_ROWS.map(function (r) { return lr(r[1], '', r[0]); }).join('') + '</div>');
+  };
+
+  /* a game's page */
+  var ADDR = '120 Lakeshore Road, Burlington';
+  BODY.today.game = function () {
+    return pg('<span class="back" style="margin:0 0 -8px"><span class="bc">‹</span>Schedule</span>' +
+      '<div class="cols" style="grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:24px">' +
+        '<div class="col" style="gap:16px">' +
+          '<div class="card"><div class="tline"><span class="t32">9:00 p.m.</span><span class="btn-o">' + I.nav + 'Directions</span></div><p class="where">Wed, Nov 4 · Diamond #2</p><p class="addr">' + ADDR + '</p></div>' +
+          '<div class="card"><div class="stop"><span>Semifinal · U11</span><span class="chipk">Live now</span></div>' +
+            '<div class="gside trail"><span>Milton Bats U11 Purple (Jackson)</span><b>2</b></div><div class="gside"><span>Lions U11</span><b>3</b></div>' +
+            '<div class="gfoot">Winner advances to the Championship</div></div>' +
+        '</div>' +
+        '<dl class="facts"><div><dt>Division</dt><dd>U11</dd></div><div><dt>Round</dt><dd>Semifinal</dd></div><div><dt>Game length</dt><dd>90 min</dd></div></dl>' +
+      '</div>', { pad: '0 16px 16px', gap: 16 });
+  };
+  /* the proposed game page's two cards */
+  function scoreCard(o) {
+    return '<div class="list">' + gr({ big: true, nogo: true, live: o.live, canc: o.canc, ctx: o.ctx || 'Semifinal · U11', pill: o.pill, teams: o.teams || LIVE_T, stk: o.foot, stkc: o.footc || 'plain', nos: o.nos }) + '</div>';
+  }
+  function whereCard(o) {
+    o = o || {};
+    var right = o.canc ? '<span class="pill canc" style="margin-left:auto">Cancelled</span>' : (o.nodir ? '' : '<span class="btn-o">' + I.nav + 'Directions</span>');
+    return '<div class="card"><div class="tline"><span class="t28"' + (o.canc ? ' style="color:var(--p-dim)"' : '') + '>' + (o.time || '9:00 p.m.') + '</span>' + right + '</div>' +
+      '<p class="where">' + (o.where || 'Wed, Nov 4 · Diamond #2') + '</p>' + (o.noaddr ? '' : '<p class="addr">' + ADDR + '</p>') +
+      '<p class="addr">Game length 90 min</p></div>';
+  }
+  BODY.next.game = function () {
+    return pgN('<div class="cols anch">' + mk(2) +
+        '<div class="col anch">' + mk(6, 'in') + scoreCard({ live: true, pill: 'live', foot: 'Winner advances to the Championship' }) + '</div>' +
+        '<div class="col anch">' + mk(5, 'in') + whereCard() + '</div>' +
+      '</div>');
+  };
+
+  /* a team's page */
+  var TRES = [['Oct 29', 'Bears U11', 'Semifinal 1', 'W 7–2'], ['Oct 28', 'Lions U11', 'Crossover', 'W 5–4'], ['Oct 27', 'Milton Bats U11 Purple (Jackson)', 'A Pool', 'W 6–4'], ['Oct 26', 'Bears U11', 'A Pool', 'W 7–2']];
+  function tResT(r) { return '<div class="res" data-go="game"><span class="dt">' + r[0] + '</span><span>vs ' + r[1] + '<small>' + r[2] + '</small></span><b>' + r[3] + '</b></div>'; }
+  var RECORD = '<div><dt>Record</dt><dd>3-0-0</dd></div><div><dt>Place in A Pool</dt><dd>1st of 3</dd></div><div><dt>Points</dt><dd>6</dd></div><div><dt>Run difference</dt><dd>+8</dd></div>';
+  var HAWKS_NEXT = [['Halton Hawks U11 Jr (Johnstone)', '', 'win'], ['Semifinal 2 winner', '', 'ph']];
+  BODY.today.team = function () {
+    return pg('<span class="back t2"><span class="bc">‹</span>All Teams</span>' +
+      '<div class="ident"><div class="init">HH</div><div><h2 class="tname">Halton Hawks U11 Jr</h2><span class="tchip">In playoff spot</span><p class="tsub">U11 · A Pool · coach Johnstone</p></div></div>' +
+      '<div class="cols"><div class="col" style="gap:16px">' +
+        '<div class="tsec"><h3 class="h3s">Up next</h3><div class="list l2">' + g1({ time: 'Thu, Nov 5 · 6:00 p.m.', round: 'Championship', teams: [['Halton Hawks U11 Jr (Johnstone)', '', 'win'], ['Semifinal 2 winner', '', '']], div: 'U11' }) + '</div></div>' +
+        '<div class="tsec"><h3 class="h3s">Results</h3><div class="list l2">' + TRES.map(tResT).join('') + '</div></div>' +
+      '</div><div class="col" style="gap:16px;padding-top:29px"><dl class="rec">' + RECORD + '</dl><div class="list">' + doorT('U11 standings · A Pool') + '</div></div></div>', { gap: 16 });
+  };
+  BODY.next.team = function () {
+    return pgN('<div class="ident anch">' + mk(2) + '<div class="init l1">HH</div><div><h2 class="tname n24">Halton Hawks U11 Jr</h2><span class="tchip same">In playoff spot</span><p class="tsub same">U11 · A Pool · coach Johnstone</p></div></div>' +
+      '<div class="cols anch">' + mk(1) + '<div class="col">' +
+        '<div class="sec anch">' + mk(6) + sh('Up next') + '<div class="list">' + gr({ time: 'Thu, Nov 5 · 6:00 p.m.', ctx: 'U11 · Championship', teams: HAWKS_NEXT }) + '</div></div>' +
+        '<div class="sec anch">' + mk(4) + sh('Results', { count: 4 }) + '<div class="list">' + TRES.map(tResT).join('') + '</div></div>' +
+      '</div><div class="col" style="padding-top:44px"><dl class="rec l1">' + RECORD + '</dl>' +
+        '<div class="list anch">' + mk(7) + lr('U11 standings · A Pool', 'Halton Hawks U11 Jr is 1st of 3', '', 'standings') + '</div></div></div>');
+  };
+
+  /* ---------- per-page change notes ---------- */
+  var CH = {
+    overview: [
+      ['res', 'Live now, Up next and Latest results use the stacked game row, your phone row (A3). Live now keeps its field and Directions.', 6],
+      ['res', 'Live now shows its green edge but no pill: the heading already says it.', 9],
+      ['res', 'The bracket link moves to the right column, under the results, so the left column is just the games (A6).', 7],
+      ['res', 'The club card shows only when the club has something open (A10), drawn here with one open item; with nothing open it is not shown. Its button becomes the white outlined one (A7).', 11],
+      ['res', 'The page stops at 960 px instead of filling your whole window.', 1]
+    ],
+    schedule: [
+      ['res', 'Edges match every other page: 28 px down, 32 px from the menu, 960 px wide (today 16, 16 and 860).', 1],
+      ['res', 'Toolbar in the standard order and widths; "Search teams or coaches".', 8],
+      ['res', 'The live game moves onto the same grid as every other row, so the long name stops wrapping (A2).', 6],
+      ['unc', 'The one-line row, day chips, the Pool play / Playoffs switch, the calendar, the bracket link’s place.', null]
+    ],
+    standings: [
+      ['res', 'Edges 28 and 32 (today 24); the tables run 960 wide (today 720).', 1],
+      ['res', 'The division box is 200 px with 8 px corners (today 360 px, 6 px).', 8],
+      ['res', 'Headings read "A Pool": the menu already says Standings.', 4],
+      ['res', '"How the table is ranked" and the bracket link become one list of link rows.', 7],
+      ['unc', 'The table itself: columns, figures, the leader’s tint and trophy, the darker frame.', null]
+    ],
+    playoffs: [
+      ['res', 'Stops at 960 px (today it fills the window).', 1],
+      ['res', 'The live game uses the fixed one-line grid; the bracket’s games use the stacked row, compact, with 8 px corners and the light edge.', 6],
+      ['res', '"How seeding works" becomes a link row (it still opens its window).', 7],
+      ['unc', 'Section order, the bracket’s shape, the today’s-games line.', null]
+    ],
+    teams: [
+      ['res', 'Division and Search in the standard toolbar, 200 + 320 (today two halves of a 640 grid).', 8],
+      ['res', '"U11" keeps its 18 px division heading and gains a count pill; pools become band rows inside one list.', 4],
+      ['res', 'Rows are two lines: the name, then coach · record · next game, with a chevron (A8).', 5],
+      ['res', '960 px wide (today 860).', 1]
+    ],
+    rules: [
+      ['res', 'The eight rules join into one list (today eight separate tiles 8 px apart) (A8).', 5],
+      ['res', 'Each rule is a link row; it still opens its window.', 7],
+      ['res', '960 px wide (today 860).', 1],
+      ['unc', 'The organizer’s note, the icons, the order.', null]
+    ],
+    game: [
+      ['res', 'Content starts 28 px below the band (today it touches it) and stops at 960 px. "‹ Schedule" goes: the menu already goes there (A14).', 2],
+      ['res', 'On a desk the two cards sit side by side at the top: the score on the left, when and where on the right, Directions on its first line (A11).', 1],
+      ['unc', 'On a phone the order stays as ruled in Stage 3: when and where first, Directions near the top, then the score.', null],
+      ['res', 'The time drops from 32 px to 28, the same as the score: the page’s one large size. It stays the page’s heading for screen readers.', 10],
+      ['res', 'Division and round are said once, in the score card; the game length joins the when-and-where card and the side list goes (A12).', 5],
+      ['unc', 'The score card’s recipe (already the stacked form), team names as links to their pages, Directions, Share on a phone, the countdown, the stakes line.', null]
+    ],
+    team: [
+      ['res', '"‹ All Teams" goes: the menu’s Teams already goes there, the club pages’ rule (A14).', 2],
+      ['res', 'The name is 24 px in the title face (today 22 px, off the scale); a registered exception to the three headings.', 4],
+      ['res', 'Up next and Next games use the stacked row, this team first and bold, the day leading the time, so the long name no longer wraps (A13).', 6],
+      ['res', 'The one section heading, with a count on Results. Results keep their own team-view row (ruled 10-30), on the light hairline.', 4],
+      ['res', 'The record card on the light hairline; the standings link becomes a link row.', 7],
+      ['unc', 'The identity line, "In playoff spot", the record’s words, Live now, "No more games", "No games scheduled yet", the champion banner, the follow star and calendar (inside the app only). Not drawn; same recipes, restyled.', null]
+    ]
+  };
+  var TAGW = { res: 'RESTYLED', new: 'NEW', unc: 'UNCHANGED' };
+
+  /* ---------- edge map (CSS px on a 1536 window) ---------- */
+  var EDGE_T = [
+    ['Overview', 280, 1504, '28'], ['Schedule', 264, 1124, '16'], ['Standings', 272, 992, '24 + ticker'], ['Playoffs', 280, 1504, '28 + ticker'],
+    ['Teams', 280, 1140, '28 + ticker'], ['Rules', 280, 1140, '28 + ticker'], ['Game page', 264, 1520, '0'], ['Team page', 280, 1504, '28 + ticker'], ['News', 316, 1468, '24 + ticker']
+  ];
+  var EDGE_N = EDGE_T.map(function (r) { return [r[0], 280, 1240, /ticker/.test(r[3]) ? '28 + ticker' : '28']; });
+  function renderEdges() {
+    var h = '<span class="hd">Page</span><span class="hd">0 — 1,536 px</span><span class="hd tph">Starts</span>';
+    h += '<div class="emap-h">Today</div>';
+    EDGE_T.forEach(function (r) { h += row(r, false); });
+    h += '<div class="emap-gap"></div><div class="emap-h">Proposed</div>';
+    EDGE_N.forEach(function (r) { h += row(r, true); });
+    document.getElementById('emap').innerHTML = h;
+    function row(r, ok) {
+      var l = r[1] / W * 100, w = (r[2] - r[1]) / W * 100;
+      return '<span class="pn">' + r[0] + '</span><div class="etrack"><div class="rail"></div><div class="bar' + (ok ? ' ok' : '') + '" style="left:' + l + '%;width:' + w + '%"></div></div><span class="tp">' + r[3] + '</span>';
+    }
+  }
+
+  /* ---------- rule sheet ---------- */
+  function renderRules() {
+    var h = '<div class="rule hd"><span>#</span><span>Rule</span><span>Today</span><span>The standard</span></div>';
+    RULES.forEach(function (r) {
+      h += '<div class="rule" id="rule-' + r.n + '"><span class="rn">' + r.n + '</span><div><h3>' + r.t + '</h3></div><div class="today">' + r.today + '</div><div class="std">' + r.std + '<span class="ph">' + r.ph + '</span>' + (r.rul ? '<span class="rul">' + r.rul + '</span>' : '') + '</div></div>';
+    });
+    document.getElementById('rulelist').innerHTML = h;
+  }
+
+  /* ---------- game row sheet ---------- */
+  function spec(cap, html, w) { return '<div class="spec"><div class="cap">' + cap + '</div><div class="specbed"><div class="tf" style="' + (w ? 'max-width:' + w + 'px' : '') + '">' + html + '</div></div></div>'; }
+  function renderRows() {
+    var t = '';
+    t += spec('<b>Overview · Live now</b> · stacked, its own card, 24 px score', tLiveCard(), 540);
+    t += spec('<b>Schedule and Playoffs · live</b> · one line on its own 1 : 2.2 : 1 grid, so the long name wraps (at 860 px)', '<div class="list">' + tSch() + '</div>', 860);
+    t += spec('<b>Bracket</b> · its own box, 6 px corners, the dark field edge, 14 px score', '<div class="mtt" style="box-shadow:inset 3px 0 0 var(--p-ok);max-width:340px"><span class="gd" style="color:var(--p-ok);font-weight:600">Semifinal 2 · Live now</span><span class="rw">Milton Bats U11 Purple (Jackson)<span>2</span></span><span class="rw">Lions U11<span>3</span></span><span class="gd">Today · 9:00 p.m.</span></div>', 360);
+    t += spec('<b>Overview · results and Up next</b> · a 72 px left column; Up next on one line, "A vs B"', '<div class="list">' + tRes(RESULTS[2]) + tNext() + '</div>', 540);
+    document.getElementById('row-today').innerHTML = t;
+
+    var n = '';
+    n += spec('<b>Live, under a "Live now" heading</b> · the edge, no pill (said once); the Overview adds the field and Directions', '<div class="list">' + gr({ live: true, time: '9:00 p.m.', ctx: 'U11 · Semifinal', teams: LIVE_T, place: PLACE, act: '<span class="btn-o">' + I.nav + 'Directions</span>' }) + '</div>', 540);
+    n += spec('<b>Live, anywhere else</b> · the pill top right, names in full ink (nobody is bold until it is final)', '<div class="list">' + gr({ live: true, time: '9:00 p.m.', ctx: 'U11 · Semifinal', pill: 'live', teams: LIVE_T }) + '</div>', 397);
+    n += spec('<b>Live, no score yet</b>', '<div class="list">' + gr({ live: true, time: '9:00 p.m.', ctx: 'U11 · Semifinal', pill: 'live', teams: [['Milton Bats U11 Purple (Jackson)', ''], ['Lions U11', '']], nos: true }) + '</div>', 397);
+    n += spec('<b>Not started</b> · a placeholder team in dim ink; the stakes line where a game decides something', '<div class="list">' + gr({ time: '6:00 p.m.', ctx: 'Thu, Nov 5 · U11 · Championship', teams: NEXT_T, stk: 'The winner takes the U11 title' }) + '</div>', 397);
+    n += spec('<b>Final, in the 397 px right column</b> · the long name wraps under itself and keeps its score on the first line', '<div class="list">' + gr({ ctx: 'U11 · Semifinal 1', pill: 'final', teams: [['Halton Hawks U11 Jr (Johnstone)', 7, 'win'], ['Bears U11', 2, 'lose']] }) + gr({ ctx: 'U13', pill: 'final', teams: [['Eagles U13', 4, ''], ['Hawks U13', 4, '']] }) + '</div>', 397);
+    n += spec('<b>Unofficial and cancelled</b> · a cancelled game dims (table standard C9)', '<div class="list">' + gr({ ctx: 'U13 · B Pool', pill: 'unof', teams: [['Eagles U13', 6, 'win'], ['Lions U13', 5, 'lose']] }) + gr({ canc: true, time: '4:00 p.m.', ctx: 'U13 · B Pool', pill: 'canc', teams: [['Hawks U13', ''], ['Bears U13', '']] }) + '</div>', 397);
+    n += spec('<b>Bracket, compact</b> · the same row: 14 px names, 16 px scores', '<div class="mt">' + gr({ cmp: true, live: true, time: '9:00 p.m.', ctx: 'Semifinal 2', pill: 'live', teams: LIVE_T }) + '</div>', 340);
+    n += spec('<b>Phone, 360 px</b> · unchanged: this is the recipe you ruled on 10-29', '<div class="list">' + gr({ live: true, time: '9:00 p.m.', ctx: 'U11 · Semifinal', pill: 'live', teams: LIVE_T }) + '</div>', 328);
+    document.getElementById('row-next').innerHTML = n;
+
+    document.getElementById('row-wide').innerHTML = '<div class="tf" style="width:960px;background:transparent"><div class="list">' +
+      nSch() +
+      g1({ time: '6:00 p.m.', round: 'Thu, Nov 5 · Championship', teams: [['Halton Hawks U11 Jr (Johnstone)', '', ''], ['Semifinal 2 winner', '', '']], div: 'U11' }) +
+      g1({ time: '11:25 a.m.', round: 'Semifinal 1', teams: [['Halton Hawks U11 Jr (Johnstone)', 7, 'win'], ['Bears U11', 2, 'lose']], pill: 'final', div: 'U11' }) +
+      g1({ canc: true, time: '4:00 p.m.', round: 'B Pool', teams: [['Hawks U13', '', ''], ['Bears U13', '', '']], pill: 'canc', div: 'U13' }) +
+      '</div></div>';
+
+    var STATES = [
+      ['Not started', scoreCard({ ctx: 'Championship · U11', teams: HAWKS_NEXT, nos: 'Starts in 2 h 10 min', foot: 'The winner takes the title', footc: 'gold' }), whereCard({ time: '6:00 p.m.', where: 'Thu, Nov 5 · Diamond #2' })],
+      ['Final', scoreCard({ ctx: 'Semifinal 1 · U11', pill: 'final', teams: [['Halton Hawks U11 Jr (Johnstone)', 7, 'win'], ['Bears U11', 2, 'lose']] }), whereCard({ time: '11:25 a.m.', where: 'Thu, Oct 29 · Diamond #1' })],
+      ['Unofficial', scoreCard({ ctx: 'B Pool · U13', pill: 'unof', teams: [['Eagles U13', 6, 'win'], ['Lions U13', 5, 'lose']], foot: 'Not yet confirmed by the organizer' }), whereCard({ time: '2:00 p.m.', where: 'Wed, Nov 4 · Diamond #3' })],
+      ['Cancelled', scoreCard({ canc: true, ctx: 'B Pool · U13', teams: [['Hawks U13', ''], ['Bears U13', '']], foot: 'This game will not be played.' }), whereCard({ canc: true, time: '4:00 p.m.', where: 'Wed, Nov 4 · Diamond #3' })],
+      ['Time and place not set yet', scoreCard({ ctx: 'Consolation · U13', teams: [['Bears U13', ''], ['Lions U13', '']] }), whereCard({ time: 'Time TBD', where: 'Date TBD · Location TBD', noaddr: true, nodir: true })]
+    ];
+    document.getElementById('row-game').innerHTML = '<div class="tf" style="width:960px;background:transparent;display:flex;flex-direction:column;gap:18px">' + STATES.map(function (s) {
+      return '<div><div class="gl" style="padding-top:0">' + s[0] + '</div><div class="cols">' + '<div class="col">' + s[1] + '</div><div class="col">' + s[2] + '</div></div></div>';
+    }).join('') + '</div>';
+  }
+
+  /* ---------- asks ---------- */
+  function askHtml(a) {
+    return '<div class="ask"><span class="an">' + a.n + '</span><h3>' + a.t + '</h3><p>' + a.p + '</p>' + (a.r ? '<p class="rec">' + a.r + '</p>' : '') + (a.ruled ? '<p class="rec"><b>' + a.ruled + '</b></p>' : '') + '</div>';
+  }
+  function renderAsks() {
+    document.getElementById('asklist').innerHTML = OPEN.map(askHtml).join('');
+    document.getElementById('asklist-ruled').innerHTML = ASKS.map(askHtml).join('');
+  }
+
+  /* ---------- the pages tab: state, frame, scaling ---------- */
+  var state = { page: 'overview', v: 'next' };
+  function store(k, v) { try { localStorage.setItem('tps-' + k, v); } catch (e) { /* storage blocked: fine */ } }
+  function load(k) { try { return localStorage.getItem('tps-' + k); } catch (e) { return null; } }
+
+  function renderPick() {
+    document.getElementById('pagepick').innerHTML = VIEWS.map(function (p) {
+      return '<button type="button" data-p="' + p[0] + '" aria-pressed="' + (p[0] === state.page) + '">' + p[1] + '</button>';
+    }).join('');
+  }
+  function renderChanges() {
+    document.getElementById('changes').innerHTML = CH[state.page].map(function (c) {
+      return '<li><span class="tag ' + c[0] + '">' + TAGW[c[0]] + '</span><span>' + c[1] + (c[2] ? ' <button type="button" class="rref" data-rule="' + c[2] + '">Rule ' + c[2] + '</button>' : '') + '</span></li>';
+    }).join('');
+  }
+  function renderStage() {
+    var st = document.getElementById('stage');
+    st.innerHTML = frame(state.page, state.v);
+    document.getElementById('capL').textContent = 'Tournament · desktop · ' + (state.v === 'next' ? 'proposed' : 'today') + ' · ' + VIEWS.filter(function (p) { return p[0] === state.page; })[0][1];
+    fit();
+  }
+  function fit() {
+    var st = document.getElementById('stage');
+    var f = st.firstElementChild;
+    if (!f) return;
+    var actual = document.getElementById('actual').checked;
+    st.classList.toggle('actual', actual);
+    if (actual) { f.style.transform = 'none'; st.style.height = 'auto'; return; }
+    var s = Math.min(1, st.clientWidth / W);
+    f.style.transform = 'scale(' + s + ')';
+    st.style.height = Math.ceil(f.offsetHeight * s) + 'px';
+  }
+  function setPage(p) { state.page = p; store('page', p); renderPick(); renderChanges(); renderStage(); }
+  function setV(v) {
+    state.v = v; store('v', v);
+    Array.prototype.forEach.call(document.querySelectorAll('#vseg button'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === v)); });
+    renderStage();
+  }
+  function setD(d) {
+    document.body.classList.toggle('only', d === 'only');
+    Array.prototype.forEach.call(document.querySelectorAll('#dseg button'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.d === d)); });
+  }
+
+  /* ---------- tabs ---------- */
+  var TABS = ['why', 'rules', 'row', 'pages', 'asks'];
+  function showTab(id) {
+    if (TABS.indexOf(id) < 0) id = 'why';
+    TABS.forEach(function (t) {
+      document.getElementById('v-' + t).hidden = t !== id;
+      document.getElementById('t-' + t).setAttribute('aria-selected', String(t === id));
+    });
+    if (location.hash !== '#' + id) { try { history.replaceState(null, '', '#' + id); } catch (e) { location.hash = id; } }
+    if (id === 'pages') fit();
+  }
+  function goRule(n) {
+    showTab('rules');
+    var el = document.getElementById('rule-' + n);
+    if (!el) return;
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el.classList.add('flash');
+    setTimeout(function () { el.classList.remove('flash'); }, 1600);
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-tab]'); if (t) { showTab(t.dataset.tab); return; }
+    var r = e.target.closest('[data-rule]'); if (r) { goRule(r.dataset.rule); return; }
+    var g = e.target.closest('[data-go]'); if (g) { setPage(g.dataset.go); return; }
+    var p = e.target.closest('#pagepick [data-p]'); if (p) { setPage(p.dataset.p); return; }
+    var v = e.target.closest('#vseg [data-v]'); if (v) { setV(v.dataset.v); return; }
+    var d = e.target.closest('#dseg [data-d]'); if (d) { setD(d.dataset.d); return; }
+  });
+  document.getElementById('actual').addEventListener('change', fit);
+  window.addEventListener('hashchange', function () { showTab(location.hash.slice(1)); });
+  if (window.ResizeObserver) { new ResizeObserver(function () { fit(); }).observe(document.getElementById('stage')); }
+  else { window.addEventListener('resize', fit); }
+  if (document.fonts && document.fonts.ready) { document.fonts.ready.then(fit); }
+
+  var sp = load('page'); if (sp && CH[sp]) state.page = sp;
+  var sv = load('v'); if (sv === 'today' || sv === 'next') state.v = sv;
+  renderEdges(); renderRules(); renderRows(); renderAsks(); renderPick(); renderChanges();
+  setV(state.v); setD('all');
+  showTab(location.hash.slice(1) || 'why');
+})();
+</script>

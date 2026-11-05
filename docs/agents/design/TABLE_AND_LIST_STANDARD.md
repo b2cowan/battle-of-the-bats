@@ -8,6 +8,8 @@ standard.** Commissioned by the owner out of Owner QA §146 part F3; prompt in
 `TABLE_INVENTORY_2026-09-06.md` (rendered, 74 surfaces). Departures: `TABLE_EXCEPTION_REGISTER.md`.
 Mockups (true-size before/after, both skins, 390 + 1440) and the owner's decision panel:
 https://claude.ai/code/artifact/0aa319dd-a6eb-4fff-b09b-df8591475fe1
+**The public pages' frame and parts** (page width, rhythm, headings, the game row, the link row, "live") are
+`PUBLIC_PAGE_LAYOUT_STANDARD.md` (owner 2026-11-04); a public table follows this standard inside that page.
 
 > **The governing rule — one axis of difference does not license the others.** A surface may
 > deviate from this standard on a *named* axis, for a *stated* reason, recorded in the register.

@@ -121,7 +121,7 @@ describe('Stage 5 Part 3: the team page and installed-app mounts', () => {
   });
   it('the direct-link exception draws identity and one sentence, without actions or coach', () => {
     const start=body.indexOf('if (current?.data && withheld(current.data))');
-    const end=body.indexOf('\n  return <div className={styles.page} data-public-team={current',start);
+    const end=body.indexOf('\n  return <PublicPage data-public-team={current',start);
     assert.ok(start>=0 && end>start);
     const block=body.slice(start,end);
     assert.match(body,/data-public-team="withheld"/);

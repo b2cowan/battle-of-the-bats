@@ -16,6 +16,7 @@ import { useOrgHref } from '@/lib/use-public-pathname';
 import type { PublicTeam } from '@/lib/types';
 import PublicTournamentState from './PublicTournamentState';
 import UnfollowConfirmSheet from './UnfollowConfirmSheet';
+import PublicPage from './PublicPage';
 import parts from './PublicParts.module.css';
 import styles from './PublicTeams.module.css';
 
@@ -84,7 +85,7 @@ export default function PublicTeams({ orgSlug, tournamentSlug, isPreview = false
     requireFinalization: data!.organization.requireScoreFinalization ?? data!.tournament?.requireScoreFinalization ?? true, now })])), [data, now]);
   const groups = data ? teamsGroups({ ...data, divisionId: selectedDivision, query }) : [];  const state = failed ? 'failed' : !data ? 'loading' : !data.pageEnabled || !data.tournament ? 'unavailable'
     : !data.teams.length ? data.teamsWithheld && !data.divisions.length ? 'withheld' : 'empty' : 'ready';
-  return <div className={styles.teams} data-public-teams={state} data-public-teams-ready={data ? true : undefined}>
+  return <PublicPage data-public-teams={state} data-public-teams-ready={data ? true : undefined}>
     {state === 'loading' ? <p className={styles.loading}>Loading teams…</p>
       : state === 'failed' ? <>
         <TeamsState title="Teams unavailable" description="Check your connection and try again." />
@@ -140,5 +141,5 @@ export default function PublicTeams({ orgSlug, tournamentSlug, isPreview = false
         if (unfollowTarget && isStandalonePWA()) unfollowTeamEverywhere(orgSlug, tournamentSlug, unfollowTarget.id);
         setUnfollowId(null);
       }} />}
-  </div>;
+  </PublicPage>;
 }

@@ -1,5 +1,6 @@
 /* Stage 3: only the switch-on Schedule and its explicit shared-part variants use these classes. */
-.schedule { display: flex; flex-direction: column; gap: 16px; padding: 16px; min-width: 0; background: var(--club-ground); color: var(--club-text); font-family: var(--club-text-face); }
+/* The page's edges, column and rhythm are the shared page's (PublicPage, PublicParts.module.css `.page`); `.schedule`
+   only scopes this page's own rules. */
 .controls { display: flex; flex-direction: column; gap: 10px; }
 .search { display: none; }
 .search[data-open='true'] { display: block; }
@@ -79,8 +80,6 @@ a.matchLink:hover .gameName { text-decoration: underline; }
 .schedule button:focus-visible, .schedule input:focus-visible, .schedule select:focus-visible, .matchLink:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 2px; }
 /* The frame's desktop breakpoint. At 901–1,023 px the same two phone control rows remain. */
 @media (min-width: 1024px) {
-  /* A game row reads best close together; stretched across a wide screen the eye loses the row. */
-  .schedule > * { max-width: 860px; }
   .controls { flex-direction: row; align-items: center; flex-wrap: wrap; }
   .controlRow { display: contents; }
   .division { order: 1; flex: 1 1 140px; max-width: 200px; }

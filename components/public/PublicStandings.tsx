@@ -17,6 +17,8 @@ import PublicDisclosure from './PublicDisclosure';
 import PublicSectionHead from './PublicSectionHead';
 import PublicTournamentState from './PublicTournamentState';
 import PublicDoorRow from './PublicDoorRow';
+import PublicPage from './PublicPage';
+import parts from './PublicParts.module.css';
 import styles from './PublicStandings.module.css';
 
 interface Props {
@@ -94,13 +96,13 @@ export default function PublicStandings({ orgSlug, tournamentSlug, isPreview = f
   });
 
   if (failed || (data && (!data.pageEnabled || !data.tournament))) {
-    return <div className={styles.standings} data-public-standings="unavailable">
+    return <PublicPage data-public-standings="unavailable">
       <PublicTournamentState title="Standings unavailable" description={failed
         ? 'We couldn’t load the standings. Please try again.'
         : 'The organizer has hidden results and standings for this tournament.'} />
-    </div>;
+    </PublicPage>;
   }
-  if (!data?.tournament) return <div className={styles.standings} aria-busy="true"><p className={styles.counts}>Loading standings…</p></div>;
+  if (!data?.tournament) return <PublicPage aria-busy="true"><p className={styles.counts}>Loading standings…</p></PublicPage>;
 
   const tournament = data.tournament;
   const rows = division ? data.standingsByDivision[division.id] ?? [] : [];
@@ -113,7 +115,8 @@ export default function PublicStandings({ orgSlug, tournamentSlug, isPreview = f
   const ranking = standingsRanking(division?.playoffConfig, tournament.settings, rows);
   const showPlayoffsDoor = !isPreview && hasPublicPlayoffBracket(tournament, data.divisions, data.games);
 
-  return <div className={styles.standings} data-public-standings-ready data-public-standings={rows.length ? 'table' : 'empty'}>
+  return <PublicPage data-public-standings-ready data-public-standings={rows.length ? 'table' : 'empty'}>
+    {(division || counts) && <div className={parts.tools}>
     {division && <label className={styles.division}>
       <span className={styles.srOnly}>Division</span>
       <select value={division.id} onChange={event => {
@@ -127,6 +130,7 @@ export default function PublicStandings({ orgSlug, tournamentSlug, isPreview = f
       </select>
     </label>}
     {counts && <p className={styles.counts} data-standings-counts>{counts}</p>}
+    </div>}
     {rows.length > 0 ? <>
       {groups.filter(group => group.rows.length > 0).map(group => {
         const started = group.rows.some(row => row.gp > 0);
@@ -191,5 +195,5 @@ export default function PublicStandings({ orgSlug, tournamentSlug, isPreview = f
       : 'Standings will appear when the organizer publishes the schedule.'} compact />}
     {showPlayoffsDoor && <PublicDoorRow href={orgHref(`/${tournamentSlug}/playoffs`)} label="The playoff bracket"
       sub={division ? playoffDoorSub({ ...data, tournament, requireFinalization }, division.id, clock ?? new Date(0)) : null} />}
-  </div>;
+  </PublicPage>;
 }
