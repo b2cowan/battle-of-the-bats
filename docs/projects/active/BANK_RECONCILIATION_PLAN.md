@@ -18,6 +18,8 @@
 > club-pays measured on Stripe's side (holds).
 > **R2b built 2026-11-04** (the routes, server only; mig 439 applied to dev, prod owed with 436 + 437; record under §7 R2).
 > /simplify then /review (high tier) offered before the commit. **Next:** R2c (the Bank tab, desk).
+> **R2b-3 built and committed 2026-11-05** (a book move can't race a tick, a keep-out or a fee; mig 442 applied to dev,
+> prod owed with 436 + 437 + 439 + 440; /simplify + /review (high) done; record under §7 R2).
 
 ## Goal
 
@@ -723,7 +725,97 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 >   making the move also lock both accounts would deadlock against a bank fee being added (that step holds the account, then
 >   needs the book); the safe shape is the move taking both accounts' locks FIRST (in id order), then the book, re-reading
 >   where the book sits, or the tick and keep-out steps checking the line's book still maps to their account. Recommended
->   before R2c builds the Move a book window (C10), as a small step of its own.
+>   before R2c builds the Move a book window (C10), as a small step of its own. **✅ BUILT 2026-11-05 as R2b-3 (both
+>   halves of that shape; record below).**
+
+> **R2b-3 — a book move can't race a tick, a keep-out or a fee ✅ built and committed 2026-11-05** (server only;
+> /simplify then /review (high) done, below). **Mig 442** `442_a_book_move_waits_for_the_accounts.sql` (functions only, `CREATE OR REPLACE`
+> with the SAME signatures, so every route's request and answer is unchanged and R2c builds against them as they are);
+> applied to dev 2026-11-05, prod owed with 436 + 437 + 439 + 440 (`MANUAL_PROD_STEPS.json`).
+> - **One lock order for every bank step:** Add an account's own lock (only Add an account) → the account(s), in id
+>   order → the statement → the book; no bank step locks the club row while it waits for an account (/review, below). `bank_book_move` now reads where the book sits (unlocked), locks the from and to accounts `FOR
+>   UPDATE` in id order, then the book, then reads again (moved meanwhile → `changed`, the route reads again). The account
+>   locks are not simply added after the book's: the fee step holds the account and then needs the book, so that would
+>   deadlock.
+> - **One home for "which account holds this book":** `bank_club_account_of_book(org, ledger)` (its mapping row to a live
+>   club account, else the club's first account; NULL for a team book or another club's) and `bank_club_line_left`
+>   for an `entry:` key (after /review: true only when the line exists in a book this account doesn't hold). The move, the fee step (`bank_check_add_line`, same `book_not_in_account`) and the club tick /
+>   keep-out steps ask it; the guard fails a second live copy of the predicate. (Named `…_of_book` rather than the prompt's
+>   example `…_holds`: returning the account lets the move use it for "where is it now" too, so there is one predicate,
+>   not two.) The owner-agnostic halves do not carry it (a coach account's keys are register rows; R4 wraps its own).
+> - **The club tick and keep-out refuse a line that isn't the account's any more** (`changed`, nothing written): every
+>   `entry:` line a tick would write (a plain line and each payout member) and a keep-out's or put-back's line, checked
+>   under the account lock before anything is written. A `payout:` or `typed:` key is not asked; an untick never is (it
+>   removes this account's own tick); nor is a saved copy of a line the books deleted outright (/review). **A put-back that removes nothing is `changed`, not ok** (in the owner-agnostic half).
+> - **No new refusal code.** `changed` and `book_not_in_account` exist with words and statuses; `moveBook` already maps a
+>   step's `changed` to the coded refusal (confirmed, no TypeScript change). For R2c's screens: a Move a book can now be
+>   refused `changed` (read the account again), and so can a "Put it back" a second tab got to first.
+> - **Checked before building (the prompt's two questions):** (1) every writer of `bank_saved_lines`,
+>   `bank_line_exclusions` and `bank_check_marks` is a mig 439 / 440 / 442 step under the account lock (lib/ and app/ only
+>   read them; guard §5, and §6 now fails a migration outside those three that writes them). (2) The mig 436 guard trigger
+>   on `bank_account_books` only SELECTs (no lock). Also checked: no bank step locks or key-shares `organizations` after an
+>   account (a book line has no org key; its two triggers take only a SHARED advisory lock on the club's books and read),
+>   and nothing else in the migrations locks a book or a bank account row. **Add an account had one exception, found and
+>   fixed here (and a second found by /review, below):** with two or more books its moves locked (A, new) → book 1 →
+>   (B, new), a book before an account, which could deadlock against a single move of book 1 from B. It now locks every
+>   live club account in id order before its first move.
+> - **Tests:** `bank-r2-server-guard` §0 holds mig 442 (grants, search_path, codes with words); §4 and §5 now read each
+>   function's LIVE definition (the latest migration that makes it), so the re-made steps keep R2b's and R2b-2's rules; new
+>   §6 (lock order and re-read in the function text, the all-accounts lock before Add's moves, the club steps ask before
+>   handing to the shared half, no second copy of the predicate, the key's shape checked before its cast, the empty
+>   put-back, the writers census). Bank tests 223/223. `bank-club-routes` unchanged (no pure rule changed).
+> - **Dev proof:** `.probe/bank-r2b3-steps.sql` (rolled back, `BANK_R2B3_SQL_PASSED`): two accounts on `uat-rep-club`, a
+>   book with a kept-out line moved A → B (the keep-out goes with it); then on A a tick, a payout tick with a member from
+>   the moved book, a keep-out and a put-back of the carried row are each `changed` with nothing written; A's own payout
+>   still ticks; the same keys on B are fine; a put-back of a line not kept out is `changed`; a fee on A naming the moved
+>   book is `book_not_in_account`, on B it books and ticks; a team book is `team_book`; a third account taking two books at
+>   once; grants. `.probe/bank-r2b3-all.mjs` runs it with R2b-2's and R2b's SQL proofs and the three route proofs:
+>   **`BANK_R2B3_PASSED`**. R2b-2's SQL proof ticked made-up keys, which a club tick now refuses as not this account's;
+>   it now ticks three real lines of the first account's book (probe only, not committed). A true two-session race was not
+>   staged (the dev SQL runner is one statement per request); the order is held by the function text (guard §6).
+> - `typecheck` and focused lint clean; dictionary (`bank_account_books` gotchas 4–5, `bank_check_marks` gotcha 5,
+>   `bank_line_exclusions` gotcha 1) updated; `check:dictionary` clean. Snapshots refreshed but **left out of the commit**:
+>   442 changes no table, and the refresh also carries other sessions' changes.
+> - **`/simplify` done 2026-11-05** (reuse, simplification, efficiency, altitude). **Applied:** the move locks both
+>   accounts in ONE statement (`IN (v_from, p_to) ORDER BY id FOR UPDATE`, the idiom Add an account uses; mig 442
+>   re-applied to dev, the prod verify query follows it); the guard now FAILS when a migration makes a bank function its
+>   list doesn't name (before, a later migration re-making a step would have been silently ignored by `live()`, the very
+>   drift §4–§6 exist to stop); §6 no longer repeats §0's search_path check; mig 439's path named once. **Probe fix:** R2b's
+>   function proof (and the add-with-two-books step of R2b-3's) made several accounts in one transaction, so "the first
+>   account" was a coin flip on ids; each probe's first account is now an hour older (probe only; a real account is added
+>   in its own request). `BANK_R2B3_PASSED` three runs in a row; bank tests 224/224; typecheck + lint clean.
+> - **`/review` (high) done 2026-11-05** (four lenses: concurrency, correctness, security, regression/test strength; security
+>   found no cross-club path, grants verified on dev's live catalogue). **Fixed before the commit (mig 442 re-applied to
+>   dev):** (1) ⚠ **a three-way deadlock 442 itself had made:** Add an account held the club ROW and then waited for an
+>   account; the fee step holds an account and its book-line insert then waits on the fiscal-year trigger's shared lock
+>   on the club's books; changing the club's first fiscal month (mig 318) holds that lock exclusive and then the club row.
+>   Add an account now serializes on its own advisory lock (`bank_accounts_add:{org}`), locks the accounts BEFORE its insert
+>   (which key-shares the club row) and never locks the club row. (2) ⚠ **a deleted line looped `changed` for ever:** a
+>   saved copy (a checked statement's outstanding list, the carried list, a starting-point item) of a line the books
+>   deleted outright is still offered as outstanding; the first version refused it as "not this account's". The helper is
+>   now `bank_club_line_left`: refused only when the line EXISTS in a book this account doesn't hold (it also folds the
+>   `entry:` prefix the two wrappers repeated, and its case). (3) **The starting point had the same stale-plan race**:
+>   `bank_account_set_up` (re-made) refuses `changed` for a picked item whose book moved away since the route read it.
+>   (4) **"The first account" could flip:** two adds racing on an empty club, the slower-to-commit stamped earlier
+>   (`now()` is the transaction's start); the add now stamps `clock_timestamp()` under its lock. (5) Guard holes: the
+>   no-second-copy check is alias-proof and also catches a hand-rolled "first account holds it"; mig 439's refusal codes are
+>   read from the LIVE definitions; the add's lock order uses positions that can't pass on a missing anchor; the move's
+>   re-check of the target under the lock is pinned; the function finder reads any spelling of CREATE FUNCTION. The earlier
+>   draft's `bank_club_account_of_line` was dropped from dev by hand (never on prod). **Proofs:** the three rolled-back SQL
+>   proofs green after the fixes (R2b-3's now also: a deleted line's saved copy ticks, keeps out and puts back; a starting
+>   point picked from a moved book is refused with nothing saved). They now set aside, inside their own rolled-back block,
+>   a real account the R2c chat made on `uat-rep-club` ("R2c walk chequing", untouched). **The three ROUTE proofs were not
+>   re-run after the fixes**: they write and delete real accounts on that same club, which would appear in the middle of
+>   R2c's walk; re-run them (`.probe/bank-r2b3-all.mjs`) once R2c's walk is done. Bank tests 237/237; typecheck + lint clean.
+>   **Left, recorded:** Mark checked can save an outstanding list a moment stale after a book move (the $0.00 is
+>   unaffected: ticks only) — R3's "changed since" stamps; a second "Put it back" (double tap, second tab) answers
+>   `changed` as ruled (item 4), the screen reads again; Add an account with a book that moved meanwhile refuses the whole
+>   add `changed` (the screen reads again and the treasurer adds it once more); an `unchanged` move answer is from an
+>   unlocked read (nothing written; R2c should not treat it as proof).
+>   **Skipped:** one shared SQL-function extractor for the four guards that each copy one (touches other sessions'
+>   guards); a boolean "line left this account" helper to fold the `entry:` prefix guard the two club wrappers repeat
+>   (worth it when R4 adds the coach wrapper, not before); a set-based tick check (a few ms on a 300-line payout); the
+>   header's function list (439 and 440 carry the same).
 
 ### R3 — Club: the touchpoints
 - [ ] Matched-line warning on the club entry edit/void routes and windows (C6); changed-since stamp.

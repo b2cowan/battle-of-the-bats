@@ -9022,6 +9022,21 @@ team/name uniqueness if one ever is.
    same step moves the old account's `bank_line_exclusions` and `opening_picked` `bank_saved_lines` rows for the book's
    unticked lines (a row the new account already holds for the same line wins). `bank_account_add` calls it for the
    books a new account takes (C10).
+4. **The move takes BOTH accounts' locks first (mig 442, R2b-3).** `bank_book_move` reads where the book sits (unlocked),
+   locks the from and to accounts `FOR UPDATE` **in id order** — the lock every tick, keep-out, Mark checked, Undo and
+   fee step takes — **then** the book row, then reads again (moved meanwhile → `changed`). So nothing lands on either
+   account while the book's rows move. One lock order for every bank step: the "add an account" advisory lock (only
+   `bank_account_add`, which then locks every live club account in id order before its insert and moves) → account(s)
+   → statement → book. ⚠ Never lock the book before an account: the fee step holds the account and then needs the book
+   (its book-line insert key-shares the ledger), so book → account deadlocks. ⚠ **No bank step locks the club ROW while
+   it waits for an account:** the fee step's book-line insert waits on the fiscal-year trigger's shared advisory lock,
+   and changing the club's first fiscal month holds that lock exclusive and then the club row (review 2026-11-05).
+5. **"Which account holds this book" has ONE home: `bank_club_account_of_book(org, ledger)`** (mig 442): this table's row
+   to a live club account, else the club's first account; NULL for a team book or another club's.
+   `bank_club_line_left(org, account, 'entry:{id}')` asks it for a line: true only when the line EXISTS and its book is
+   not this account's (a deleted line's saved copy has not left; any other key has not left). The move, the fee step and
+   the club tick / keep-out / set-up steps all ask it; guard §6 fails a second copy of the predicate in any live bank
+   function.
 
 <!-- dict:col:bank_account_books.ledger_id -->
 <!-- dict:col:bank_account_books.bank_account_id -->
@@ -9124,7 +9139,10 @@ is marked checked or checked again, so "changed since" is a comparison and a lin
    written; so is a plain line kept out since the route read it (a line is never both ticked and kept out). The
    owner-agnostic half is `bank_tick_rows` (the coach portal's step, R4+, wraps it; nothing in `lib/`/`app/` calls it
    directly). The guard `tests/unit/bank-r2-server-guard.test.ts` §5 fails any file in `lib/` or `app/` that writes
-   this table directly.
+   this table directly. **Since mig 442 (R2b-3)** the club step `bank_check_tick` also refuses `changed`, before
+   anything is written, when an `entry:` line it would tick (a plain line or a payout member) is no longer this
+   account's (`bank_club_line_left`): a plan read before a book move. An untick is never refused for it, and nor is a
+   saved copy of a line the books deleted outright (it still ticks, as before mig 442).
 
 <!-- dict:col:bank_check_marks.bank_account_id -->
 <!-- dict:col:bank_check_marks.check_id -->
@@ -9204,9 +9222,11 @@ family paid the vendor, void, pending) have no row: the engine decides them.
    `FOR UPDATE`** (the lock Mark checked takes) and refuses `not_open` once that statement is checked; it also refuses
    `changed` for a line ticked since the route read it, and `not_a_line` for a payout. The owner-agnostic half is
    `bank_keep_out_rows` (the coach step, R4+, wraps it). The guard `tests/unit/bank-r2-server-guard.test.ts` §5 fails a
-   direct write from `lib/` or `app/`. **⚠ The one writer NOT under the account lock:** `bank_book_move` (mig 439)
-   carries a moved book's unticked lines' rows to the new account holding only the BOOK's lock, so a keep-out or a
-   put-back racing a book move can land on the old account (pre-existing; recorded open in the plan §7 R2b-2).
+   direct write from `lib/` or `app/`. **Every writer is under the account lock (mig 442, R2b-3):** `bank_book_move`,
+   which carries a moved book's unticked lines' rows to the new account, now locks BOTH accounts before it moves them
+   (`bank_account_books` gotcha 4), and the club step refuses `changed` for a line whose book is no longer this
+   account's. **A "Put it back" that removes nothing is `changed`, not ok** (the route only asks when its read saw the
+   row, so a book move or a second tab moved it).
 2. **A keep-out never moves the Difference.** The engine counts ticks only (`evaluateCheck`), and a ticked line is never
    kept out, so Mark checked's "nothing moved since" check compares the ticks alone (R2b-2 finding, plan §7 R2).
 
