@@ -10,20 +10,9 @@
   display: none;
 }
 
-/* ── The column: one on a phone (16 px gutter), the sections in the club's order; two at a desk — the programs, and
-   About beside them (1,200 px, the frame's own edge, so the club's logo stands over the first heading). */
-.column {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 16px 16px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.column > * {
-  min-width: 0;
-}
+/* The column is the club page's (PublicPage frame="club"; club round C2 + C5): the sections in the club's order, one
+   column on a phone, the shared two-column split (PublicParts `.cols`) from a 1,024 px window — the programs down the
+   main column and About down the side. This sheet only places About. */
 
 /* ── The team grid (DC-01): a two-column grid of doors under the club's group bands; one column for a group whose
    names will not fit half the width (names never truncate). No tile chevrons. */
@@ -101,18 +90,23 @@
     border-bottom: 1px solid var(--club-line);
   }
 
-  .column {
-    padding: 28px 24px 40px;
+  /* As many columns as fit (three in the ~540 px main column beside About); never a tile too narrow for its name and the
+     Tryouts open chip. */
+  .tiles {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
 
-  /* With About: a grid — the programs down the first column, one row each, and About down the second across all of
-     them (the last row takes whatever height About needs beyond theirs). A club with no About keeps one column. */
+  .tiles.one {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}
+
+/* With About, where the split stands (1,024 px): the programs down the main column, one row each, and About down the side
+   across all of them (the last row takes whatever height About needs beyond theirs). A club with no About keeps one
+   column; About alone takes the whole width (ClubSiteHome.tsx). */
+@media (min-width: 1024px) {
   .withAbout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 380px;
     grid-template-rows: repeat(var(--home-rows, 1), auto) 1fr;
-    align-items: start;
-    gap: 20px 28px;
   }
 
   .withAbout > * {
@@ -122,14 +116,5 @@
   .withAbout > .about {
     grid-column: 2;
     grid-row: 1 / -1;
-  }
-
-  /* As many columns as fit (four at 1440); never a tile too narrow for its name and the Tryouts open chip. */
-  .tiles {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  }
-
-  .tiles.one {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
 }

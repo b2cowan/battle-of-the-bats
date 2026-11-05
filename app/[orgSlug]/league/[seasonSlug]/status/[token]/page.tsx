@@ -12,7 +12,7 @@ import { SIGNUP_LINK_WORDS as SW } from '@/lib/league-pay-words';
 import { maskEmail } from '@/lib/utils';
 import YourSignup from '../YourSignup';
 import EmailMyLinkForm from '../EmailMyLinkForm';
-import column from '../../../league-column.module.css';
+import PublicPage from '@/components/public/PublicPage';
 import kit from '@/components/public/ClubKit.module.css';
 import card from '../EmailMyLinkForm.module.css';
 
@@ -57,41 +57,39 @@ export default async function YourSignupPage({
     ? await Promise.all([buildSignupStatus(season, org.name, link.rows), buildLeaguePayView(link.registrationId, contactEmail)])
     : [null, null];
 
-  const innerStyle = { '--league-measure': '560px' } as React.CSSProperties;
+  // A club form in the club page column (club round C2): 640 on the logo edge (it was 560). The back link opens the title
+  // block; every state below renders in the same column.
   return (
-    <div>
-      <div className={`container ${column.column}`} style={innerStyle}>
+    <PublicPage frame="club" width="form">
+      <div>
         <Link href={href(`/league/${seasonSlug}`)} className={kit.back}>
           ← Back to {season.name}
         </Link>
-
-        <div style={{ marginBottom: '2rem' }}>
-          <div className={kit.sub} style={{ marginBottom: '0.4rem' }}>{org.name}</div>
-          <h1 className={kit.title}>{SW.title}</h1>
-          <p className={kit.sub}>{season.name}</p>
-        </div>
-
-        {link.ok && found ? (
-          <YourSignup
-            orgSlug={orgSlug}
-            seasonSlug={seasonSlug}
-            contactEmail={contactEmail}
-            found={{ ...found, pay }}
-            token={token}
-            emailShown={link.rows[0]?.guardian_email ? maskEmail(link.rows[0].guardian_email) : null}
-            returnedSession={paid ?? null}
-            left={left === '1'}
-          />
-        ) : !link.ok && link.ended === 'finished' ? (
-          <div className={kit.card}>
-            <h2 className={card.heading}>{SW.finishedTitle}</h2>
-            <p style={{ margin: 0, color: 'var(--club-text)' }}>{SW.finishedBody(season.name)}</p>
-            <p className={card.soft} style={{ marginTop: '0.6rem' }}>{SW.finishedQuestions(org.name, contactEmail)}</p>
-          </div>
-        ) : (
-          <EmailMyLinkForm orgSlug={orgSlug} seasonSlug={seasonSlug} seasonName={season.name} clubName={org.name} variant="replaced" />
-        )}
+        <div className={kit.sub} style={{ marginBottom: '0.4rem' }}>{org.name}</div>
+        <h1 className={kit.title}>{SW.title}</h1>
+        <p className={kit.sub}>{season.name}</p>
       </div>
-    </div>
+
+      {link.ok && found ? (
+        <YourSignup
+          orgSlug={orgSlug}
+          seasonSlug={seasonSlug}
+          contactEmail={contactEmail}
+          found={{ ...found, pay }}
+          token={token}
+          emailShown={link.rows[0]?.guardian_email ? maskEmail(link.rows[0].guardian_email) : null}
+          returnedSession={paid ?? null}
+          left={left === '1'}
+        />
+      ) : !link.ok && link.ended === 'finished' ? (
+        <div className={kit.card}>
+          <h2 className={card.heading}>{SW.finishedTitle}</h2>
+          <p style={{ margin: 0, color: 'var(--club-text)' }}>{SW.finishedBody(season.name)}</p>
+          <p className={card.soft} style={{ marginTop: '0.6rem' }}>{SW.finishedQuestions(org.name, contactEmail)}</p>
+        </div>
+      ) : (
+        <EmailMyLinkForm orgSlug={orgSlug} seasonSlug={seasonSlug} seasonName={season.name} clubName={org.name} variant="replaced" />
+      )}
+    </PublicPage>
   );
 }

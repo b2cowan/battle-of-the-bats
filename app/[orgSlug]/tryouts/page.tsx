@@ -27,6 +27,7 @@ import BornInPill from '@/components/public/BornInPill';
 import ClubContactCard from '@/components/public/ClubContactCard';
 import ClubContactLine from '@/components/public/ClubContactLine';
 import TryoutChip from '@/components/public/TryoutChip';
+import PublicPage from '@/components/public/PublicPage';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,10 +91,10 @@ export default async function ClubTryoutsPage({
     // "See all teams" button (the tab row is the way on). The card is the finished tryout page's.
     const last = await lastRead;
     return (
-      <div className={styles.page}>
+      <PublicPage frame="club">
         <div className={styles.head}><h1 className={kit.title}>{tryoutsPageTitle(null)}</h1></div>
         <ClubContactCard sentence={offSeasonSentence(last)} email={email} />
-      </div>
+      </PublicPage>
     );
   }
 
@@ -107,7 +108,7 @@ export default async function ClubTryoutsPage({
   const href = (slug: string) => orgHref(`/teams/${slug}/tryouts`);
 
   return (
-    <div className={`${styles.page} ${styles.wide}`}>
+    <PublicPage frame="club">
       <div className={styles.title}>
         <h1 className={kit.title}>{tryoutsPageTitle(year)}</h1>
         {sub && <p className={kit.sub}>{sub}</p>}
@@ -133,6 +134,6 @@ export default async function ClubTryoutsPage({
       </div>}
 
       <ClubContactLine email={email} />
-    </div>
+    </PublicPage>
   );
 }

@@ -2,12 +2,7 @@
    face. Every tile is the same size (no tiers), and a logo is scaled to fit and never cropped. A phone wraps and never
    scrolls sideways. */
 
-/* The strip's place on the home: below the column, in the column's own width (1,200 px) and gutters. */
-.band {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 16px 32px;
-}
+/* The strip's place on the home: the last section in the page column (PublicPage frame="club"), its width and gaps. */
 
 .strip {
   display: grid;
@@ -89,7 +84,6 @@ a.row:focus-visible {
 }
 
 @media (min-width: 901px) {
-  .band { padding: 0 24px 40px; }
   .strip {
     display: flex;
     flex-wrap: wrap;

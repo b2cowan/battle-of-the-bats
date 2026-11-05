@@ -1,13 +1,7 @@
 /* The club's About page (Club Tier Stage 4c-1, Ask 10; drawings ~L1922–1949). Reading width, the club kit's sections. */
 
-.column {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 16px 16px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+/* The page column is the club page's (PublicPage frame="club"; club round C2 + C5): on the logo edge — it was a centred
+   760, a repair (the 08-01 rule) — 960 at most, 24 between sections. */
 
 .head :global(h1) {
   margin-bottom: 0;

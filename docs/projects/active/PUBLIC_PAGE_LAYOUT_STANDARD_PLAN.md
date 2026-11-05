@@ -369,3 +369,28 @@ applied in v2; C3 split into C3 + C4.
   (Fall Classic's live semifinal, the Stage 5 clones re-dated, the Stage 6 post on); a time-not-set helper in `.probe/` (scratch). The dev server was
   restarted (shared modules changed, the production build had written the cache) and answers on :3000 with no Supabase errors.
 - 2026-11-05 — Part 5 committed `513ad05a4` (a partial commit: this build's 19 files; `TODO.md` and the ledger held other sessions' lines, so only this build's TODO line and the §460 block went in, built from HEAD).
+- 2026-11-05 — **Club build Part 1 built** (`PUBLIC_CLUB_PAGE_LAYOUT_BUILD_PROMPT.md` Part 1; C2 + C5). The wrapper gained the
+  club frame: `PublicPage frame="club"` (PublicParts `.page.club`: the logo edge `max(24px, (100% − 1200px)/2 + 24px)` from
+  901 px, the frame's own expression; 16 on a phone; 28 / 16 down; 40 / 32 at the foot; 960 at most) and `width="form"` (640);
+  `.prose` 720 (and `kit.cardText` / the tryout blurb held to 720 of words); the club's two-column split `.club .cols` from
+  1,024 px. Every club public page in the census renders in it, every branch: the home (banner above, sponsors last inside),
+  Teams, a team's page, Tryouts (both branches), a tryout page (both addresses), the tryout sign-up (both addresses, 640),
+  House league, a season (both shapes), the league sign-up, Email me my link and Your sign-up (640; its parts are now the
+  page's own sections), Schedule, Standings, Tournaments, About and a past tournament's record. Each page's own column,
+  centring, widths and gaps deleted; `league-column.module.css` header rewritten (the 08-01 left-edge rule stands, its
+  per-page measures replaced by C2); its `.column` is kept for the one signed-in page that wears it (the coach's house-league
+  team page, out of scope). **The no-games defect fixed:** `teamScheduleShows()` (lib/club-team-page.ts) decides the schedule
+  part from what renders; the section asks the same; unit-tested. **Guard:** `public-page-layout-guard.test.ts` gained the
+  club round (the frame's numbers, every club route a page or a reasoned exception, every branch `frame="club"`, forms
+  `width="form"`, no club sheet with its own padding / width / centring / split, banner and sponsors placed). **Deferred by
+  the prompt's own placement:** the in-club not-found (Part 4 step 3). **The admin's "How families see it" tryout preview**
+  takes the same column (its 16 px foot is gone — the wrapper's). **Checks:** typecheck clean (8 GB heap; the default ran out
+  of memory); the club guards and the full unit suite — 14,284 pass, 7 fail, none reading a file this part touched (coach
+  practice plans, plan billing usage, the Stage 6 walk, series dates, support console: other sessions' work); token, type,
+  purity, spelling, contrast and demos checks clean; the CSS-selector check flags other areas only; lint clean on this part's
+  files. **Layout check** (dev server, the 14 club screens at the standard widths, then 1,024 / 1,280 / 1,536): one sweep
+  aborted on the memory floor (another session's load) and was re-run; clean apart from one finding, **found, not caused**:
+  the house-league season row's name link measures 21 px tall at phone widths on the home and the House league page
+  (`LeagueSeasonRows`, untouched) — its `::after` stretches the link over the whole card, which the tap-floor probe cannot
+  see; not baselined. A probe (`.probe/club-column-probe.mjs`) measured nine pages at 390 / 1,024 / 1,536: left 16 / 24 / 192,
+  960 wide (640 the form), 16 / 28 / 28 down, 24 between — the drawing's numbers.

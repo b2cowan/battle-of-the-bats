@@ -7,6 +7,8 @@ import { siteEdit } from '@/lib/site-edit-marks';
 import { orgLinks } from '@/lib/org-links';
 import type { SiteSponsor } from '@/lib/types';
 import kit from './ClubKit.module.css';
+import parts from './PublicParts.module.css';
+import PublicPage from './PublicPage';
 import styles from './ClubSiteHome.module.css';
 import {
   teamGridOneColumn,
@@ -202,14 +204,20 @@ export default async function ClubSiteHome(p: ClubSiteHomeProps) {
           `data-site-edit` (here and on each section): the editor's preview opens the row that sets the part clicked
           (Public site builder A9, ruled 2026-10-21) — a name, no behaviour, nothing a family's page acts on. */}
       {p.bannerUrl && <div className={styles.bannerStrip} style={{ backgroundImage: `url(${p.bannerUrl})` }} aria-hidden="true" {...siteEdit('look')} />}
-      {/* --home-rows: how many sections stand beside About at a desk (the grid gives About their full height). */}
-      <div className={twoColumns ? `${styles.column} ${styles.withAbout}` : styles.column}
-        style={twoColumns ? ({ '--home-rows': besideAbout } as CSSProperties) : undefined}>
-        {sections.map(k => <Fragment key={k}>{drawn[k]}</Fragment>)}
-      </div>
-      {/* The sponsors (Stage 4d): the last thing on the home, above the footer — not a section (no order, no hide switch) and
-          not the shared frame's, so no other club page carries it. Absent when there is nothing to show. */}
-      <ClubSponsorStrip sponsors={p.sponsors} />
+      {/* The club page column (club round C2 + C5): under the banner, on the club's logo edge, 960 at most. */}
+      <PublicPage frame="club">
+        {twoColumns ? (
+          // --home-rows: how many sections stand beside About at a desk (the grid gives About their full height). The split
+          // is the shared one (PublicParts `.cols`, from 1,024 px); this sheet only places About down its side.
+          <div className={`${parts.cols} ${styles.withAbout}`} style={{ '--home-rows': besideAbout } as CSSProperties}>
+            {sections.map(k => <Fragment key={k}>{drawn[k]}</Fragment>)}
+          </div>
+        ) : sections.map(k => <Fragment key={k}>{drawn[k]}</Fragment>)}
+        {/* The sponsors (Stage 4d): the last thing on the home, above the footer, in the column's width — not a section (no
+            order, no hide switch) and not the shared frame's, so no other club page carries it. Absent when there is
+            nothing to show. */}
+        <ClubSponsorStrip sponsors={p.sponsors} />
+      </PublicPage>
     </div>
   );
 }

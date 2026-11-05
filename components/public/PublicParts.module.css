@@ -99,6 +99,29 @@
   .page { max-width: calc(960px + 2 * 32px); padding: 28px 32px; }
 }
 
+/* ── The club frame's page (club round C2 + C5, ruled 2026-11-05; standard R1–R3 *Club round*) ─────────────────────────
+   The same column on the club's own frame: 960 px of content at most, 24 px between sections, but its left edge is the
+   club's logo edge — the frame's centred 1,200 px column, 24 px in (`ClubFrame.module.css` desk row) — never centred
+   itself (the 2026-08-01 repair rule, TOP_NAV_REPAIR_PLAN.md R6). A phone (the frame's ≤900 px): 16 px sides, 16 down,
+   32 at the foot. A desk (901+, where the frame's tabs join the band): 28 down, 40 at the foot. The cap counts the two
+   edges in, so the 960 is the content's; a form (`.form`, C2) is 640 the same way. Both percentages resolve against the
+   frame's full width, as the band's padding does, so the content stands under the logo at every width. */
+.page.club {
+  max-width: calc(960px + 2 * 16px);
+  padding: 16px 16px 32px;
+}
+.page.club.form { max-width: calc(640px + 2 * 16px); }
+@media (min-width: 901px) {
+  .page.club {
+    --club-edge: max(24px, calc((100% - 1200px) / 2 + 24px));
+    max-width: calc(960px + 2 * var(--club-edge));
+    padding: 28px var(--club-edge) 40px;
+  }
+  .page.club.form { max-width: calc(640px + 2 * var(--club-edge)); }
+}
+/* Prose in a box (a paragraph of the club's own words) holds to 720 px inside it (R1). */
+.prose { max-width: 720px; }
+
 /* ── The frame Overview's body (Stage 2 Part 2, hub "Game day, phone browser" `.body` / `.sec`) ─────────────────────── */
 .section {
   display: flex;
@@ -126,6 +149,17 @@
     display: grid;
     grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
     gap: 28px;
+    align-items: start;
+  }
+}
+/* The club's two-column pages (the home, a team's page): the same split from a 1,024 px window, where the club's 960
+   fits — no menu beside it (C2). Below that one column, in reading order. The page places its own parts in the grid
+   (the home's About down the side, a team's schedule down the main), so the rows keep the 24 between sections. */
+@media (min-width: 1024px) {
+  .club .cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 24px 28px;
     align-items: start;
   }
 }

@@ -10,6 +10,7 @@ import ClubAboutContacts from '@/components/public/ClubAboutContacts';
 import { ClubSponsorList } from '@/components/public/ClubSponsors';
 import ClubContactLine from '@/components/public/ClubContactLine';
 import kit from '@/components/public/ClubKit.module.css';
+import PublicPage from '@/components/public/PublicPage';
 import styles from '@/components/public/ClubAbout.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -48,8 +49,10 @@ export default async function ClubAboutPage({ params }: { params: Promise<{ orgS
   const questions = content?.questions ?? [];
   const sponsors = sponsorsShowing(content?.sponsors);
 
+  // The club page column (club round C2 + C5): on the logo edge (it was a centred 760), 960 at most, the club's words held
+  // to 720 inside their box (kit.cardText).
   return (
-    <div className={styles.column}>
+    <PublicPage frame="club">
       <div className={styles.head}>
         <h1 className={kit.title}>About the club</h1>
       </div>
@@ -101,6 +104,6 @@ export default async function ClubAboutPage({ params }: { params: Promise<{ orgS
       <ClubSponsorList sponsors={sponsors} />
 
       {!clubAboutPageShows(content) && contactEmail && <ClubContactLine email={contactEmail} />}
-    </div>
+    </PublicPage>
   );
 }

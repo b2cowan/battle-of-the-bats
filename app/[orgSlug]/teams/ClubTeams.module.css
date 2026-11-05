@@ -3,14 +3,7 @@
    (ClubFrame.module.css `.site`); the list, row, band and chip pieces are the club kit's.
    Phone: one frame of hairlined rows. Desk: a table — Team · Tryouts — headings in the text face, capitals, soft ink. */
 
-.column {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 16px 16px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
+/* The page column is the club page's (PublicPage frame="club"; club round C2 + C5): 960 on the logo edge, 24 between. */
 
 .title :global(h1) {
   margin-bottom: 4px;
@@ -106,14 +99,6 @@
 }
 
 @media (min-width: 901px) {
-  .column {
-    padding: 28px 24px 40px;
-    /* The home's and the team page's left column (1,152 − 28 − 380), so the pages share one left edge and width. */
-    max-width: calc(744px + 48px);
-    margin: 0;
-    margin-left: max(0px, calc((100% - 1200px) / 2));
-  }
-
   .phone {
     display: none;
   }

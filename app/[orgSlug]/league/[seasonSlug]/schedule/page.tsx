@@ -21,6 +21,7 @@ import {
 } from '@/lib/league-season-calendar';
 import type { LeagueDivision } from '@/lib/types';
 import column from '../../league-column.module.css';
+import PublicPage from '@/components/public/PublicPage';
 import kit from '@/components/public/ClubKit.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -95,63 +96,62 @@ export default async function PublicSchedulePage({
   const hasGames = bookings.length + needsDate.length > 0;
 
   // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
+  // The club page column (club round C2 + C5): on the logo edge, 960 at most (it was 800), 24 between sections.
   return (
-    <div>
-      {/* R6: the shared 1200px page column; this page's 800px measure left-aligns inside it. */}
-      <div className={`container ${column.column}`} style={{ '--league-measure': '800px' } as React.CSSProperties}>
+    <PublicPage frame="club">
+      <div>
         <Link href={href(`/league/${seasonSlug}`)} className={kit.back}>
           ← {season.name}
         </Link>
-
-        <h1 className={kit.title} style={{ marginBottom: '1.5rem' }}>Schedule</h1>
-
-        {divisions.length > 1 && (
-          <div className={column.tabs}>
-            {divisions.map(d => {
-              const isActive = d.id === activeDivision?.id;
-              return (
-                <Link
-                  key={d.id}
-                  href={href(`/league/${seasonSlug}/schedule`) + `?d=${d.id}`}
-                  className={`${column.tab}${isActive ? ` ${column.tabActive}` : ''}`}
-                >
-                  {published.has(d.id) ? d.name : P.comingTab(d.name)}
-                </Link>
-              );
-            })}
-          </div>
-        )}
-
-        {coming ? (
-          <div className={kit.empty}>{P.coming(activeDivision!.name)}. {P.comingHint}</div>
-        ) : !hasGames ? (
-          <div className={kit.empty}>{SEASON_PUBLIC_WORDS.noGames}</div>
-        ) : (
-          <>
-            <p className={column.zone}>{timesInZoneSentence()}</p>
-            <div className={column.weeks}>
-              {earlier.length > 0 && (
-                <details className={column.earlier}>
-                  <summary>{SEASON_SCHEDULE_WORDS.earlierWeeks(earlier.length)}</summary>
-                  <div className={column.weeks}>
-                    {earlier.map(w => <Week key={w.monday} week={w} today={today} />)}
-                  </div>
-                </details>
-              )}
-              {ahead.map(w => <Week key={w.monday} week={w} today={today} />)}
-              {needsDate.length > 0 && (
-                <section className={column.week}>
-                  <h2 className={column.weekHead}>{SEASON_SCHEDULE_WORDS.needsDate}</h2>
-                  <div className={kit.list}>
-                    {needsDate.map(b => <GameRow key={b.key} booking={b} />)}
-                  </div>
-                </section>
-              )}
-            </div>
-          </>
-        )}
+        <h1 className={kit.title}>Schedule</h1>
       </div>
-    </div>
+
+      {divisions.length > 1 && (
+        <div className={column.tabs}>
+          {divisions.map(d => {
+            const isActive = d.id === activeDivision?.id;
+            return (
+              <Link
+                key={d.id}
+                href={href(`/league/${seasonSlug}/schedule`) + `?d=${d.id}`}
+                className={`${column.tab}${isActive ? ` ${column.tabActive}` : ''}`}
+              >
+                {published.has(d.id) ? d.name : P.comingTab(d.name)}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      {coming ? (
+        <div className={kit.empty}>{P.coming(activeDivision!.name)}. {P.comingHint}</div>
+      ) : !hasGames ? (
+        <div className={kit.empty}>{SEASON_PUBLIC_WORDS.noGames}</div>
+      ) : (
+        <div>
+          <p className={column.zone}>{timesInZoneSentence()}</p>
+          <div className={column.weeks}>
+            {earlier.length > 0 && (
+              <details className={column.earlier}>
+                <summary>{SEASON_SCHEDULE_WORDS.earlierWeeks(earlier.length)}</summary>
+                <div className={column.weeks}>
+                  {earlier.map(w => <Week key={w.monday} week={w} today={today} />)}
+                </div>
+              </details>
+            )}
+            {ahead.map(w => <Week key={w.monday} week={w} today={today} />)}
+            {needsDate.length > 0 && (
+              <section className={column.week}>
+                <h2 className={column.weekHead}>{SEASON_SCHEDULE_WORDS.needsDate}</h2>
+                <div className={kit.list}>
+                  {needsDate.map(b => <GameRow key={b.key} booking={b} />)}
+                </div>
+              </section>
+            )}
+          </div>
+        </div>
+      )}
+    </PublicPage>
   );
 }
 

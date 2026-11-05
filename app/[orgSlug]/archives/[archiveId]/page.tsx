@@ -9,6 +9,7 @@ import { getArchiveById } from '@/lib/db';
 import { requirePublicClubPage } from '@/lib/public-club-page';
 import { clubPageMetadata } from '@/lib/club-page-meta';
 import kit from '@/components/public/ClubKit.module.css';
+import PublicPage from '@/components/public/PublicPage';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import type { Game, Team } from '@/lib/types';
 
@@ -111,271 +112,266 @@ export default async function ArchiveDetailPage({
   const backToList = !hasModuleEntitlement(org, 'module_public_site') ? (await orgLinks(orgSlug))('/tournaments#past') : null;
 
   return (
-    // The pages' own column (`.container`): the club's bar takes the same edge, so the heading sits under its logo.
-    <div className="container" style={{ paddingBlock: '2rem 5rem', fontFamily: 'var(--club-text-face)', color: 'var(--club-text)' }}>
-      <div style={{ maxWidth: '1000px' }}>
+    // The club page column (club round C2 + C5): on the logo edge, 960 at most (it was a 1,000 px block in .container,
+    // 24 from a phone's edge), 24 between sections.
+    <PublicPage frame="club">
+      {/* No "← Past tournaments" (Stage 4f, Ask 6): the Tournaments tab is lit here and is the way back, the rule the
+          About page follows (no back link where the tab row goes). Where there is no tab row, one link back. */}
+      {backToList && (
+        <Link href={backToList} className={kit.back} style={{ marginBottom: 0, alignSelf: 'flex-start' }}>
+          ← Tournaments
+        </Link>
+      )}
 
-        {/* No "← Past tournaments" (Stage 4f, Ask 6): the Tournaments tab is lit here and is the way back, the rule the
-            About page follows (no back link where the tab row goes). Where there is no tab row, one link back. */}
-        {backToList && (
-          <Link href={backToList} className={kit.back} style={{ marginBottom: '0.75rem' }}>
-            ← Tournaments
-          </Link>
-        )}
+      {/* Header */}
+      <div
+        style={{
+          borderBottom: '1px solid var(--club-line)',
+          paddingBottom: '1.25rem',
+        }}
+      >
+        <div className={kit.band} style={{ marginBottom: 0 }}>{season}</div>
+        <h1 className={kit.title} style={{ margin: '0.375rem 0' }}>
+          {tournamentName}
+        </h1>
+        <div style={{ fontSize: '0.875rem', color: 'var(--club-soft)' }}>
+          Results final {sealedDate}
+        </div>
+      </div>
 
-        {/* Header */}
+      {/* Champion block */}
+      {(archive.winnerTeamName || archive.runnerUpName) && (
         <div
+          className={kit.card}
           style={{
-            borderBottom: '1px solid var(--club-line)',
-            paddingBottom: '1.25rem',
-            marginBottom: '2rem',
+            padding: '1.5rem',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '1.5rem',
           }}
         >
-          <div className={kit.band} style={{ marginBottom: 0 }}>{season}</div>
-          <h1 className={kit.title} style={{ margin: '0.375rem 0' }}>
-            {tournamentName}
-          </h1>
-          <div style={{ fontSize: '0.875rem', color: 'var(--club-soft)' }}>
-            Results final {sealedDate}
+          <div>
+            <div className={kit.band} style={{ marginBottom: 0 }}>Division champion</div>
+            <div
+              style={{
+                fontSize: '1.5rem',
+                fontWeight: 700,
+                color: 'var(--club-text)',
+                marginTop: '0.375rem',
+              }}
+            >
+              {archive.winnerTeamName ?? '—'}
+            </div>
           </div>
-        </div>
-
-        {/* Champion block */}
-        {(archive.winnerTeamName || archive.runnerUpName) && (
-          <div
-            className={kit.card}
-            style={{
-              padding: '1.5rem',
-              marginBottom: '2rem',
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '1.5rem',
-            }}
-          >
+          {archive.runnerUpName && (
             <div>
-              <div className={kit.band} style={{ marginBottom: 0 }}>Division champion</div>
+              <div className={kit.band} style={{ marginBottom: 0 }}>Runner-up</div>
               <div
                 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: 700,
+                  fontSize: '1.25rem',
+                  fontWeight: 600,
                   color: 'var(--club-text)',
                   marginTop: '0.375rem',
                 }}
               >
-                {archive.winnerTeamName ?? '—'}
+                {archive.runnerUpName}
               </div>
             </div>
-            {archive.runnerUpName && (
-              <div>
-                <div className={kit.band} style={{ marginBottom: 0 }}>Runner-up</div>
+          )}
+        </div>
+      )}
+
+      {/* Standings — per division, from snapshot */}
+      {divisions.length > 0 && poolGames.length > 0 && (
+        <section>
+          <div className={kit.band} style={{ marginBottom: '1rem' }}>
+            Pool play standings
+          </div>
+          {divisions.map(ag => {
+            const standings = computeStandings(teams, games, ag.id);
+            if (standings.length === 0) return null;
+            return (
+              <div key={ag.id} style={{ marginBottom: '1.5rem' }}>
                 <div
+                  className={kit.band}
                   style={{
-                    fontSize: '1.25rem',
-                    fontWeight: 600,
                     color: 'var(--club-text)',
-                    marginTop: '0.375rem',
+                    marginBottom: '0.5rem',
+                    borderBottom: '1px solid var(--club-line)',
+                    paddingBottom: '0.25rem',
                   }}
                 >
-                  {archive.runnerUpName}
+                  {ag.name}
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                    <thead>
+                      <tr>
+                        <th className={kit.band} style={{ paddingBottom: '0.375rem', textAlign: 'left', paddingRight: '1rem' }}>Team</th>
+                        <th className={kit.band} style={{ paddingBottom: '0.375rem', textAlign: 'center', paddingRight: '0.5rem' }}>GP</th>
+                        <th className={kit.band} style={{ paddingBottom: '0.375rem', textAlign: 'center', paddingRight: '0.5rem' }}>W</th>
+                        <th className={kit.band} style={{ paddingBottom: '0.375rem', textAlign: 'center', paddingRight: '0.5rem' }}>L</th>
+                        <th className={kit.band} style={{ paddingBottom: '0.375rem', textAlign: 'center', paddingRight: '0.5rem' }}>T</th>
+                        <th className={kit.band} style={{ paddingBottom: '0.375rem', textAlign: 'center', paddingRight: '0.5rem' }}>PTS</th>
+                        <th className={kit.band} style={{ paddingBottom: '0.375rem', textAlign: 'center', paddingRight: '0.5rem' }}>RF</th>
+                        <th className={kit.band} style={{ paddingBottom: '0.375rem', textAlign: 'center' }}>RA</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {standings.map((s, idx) => (
+                        <tr key={s.teamId} style={{ borderBottom: '1px solid var(--club-line)' }}>
+                          <td style={{ padding: '0.5rem 1rem 0.5rem 0', color: 'var(--club-text)', fontWeight: idx === 0 ? 700 : 400 }}>
+                            {idx === 0 && (
+                              <span style={{ color: 'var(--club-ink)', marginRight: '0.375rem', fontSize: '0.75rem' }}>★</span>
+                            )}
+                            {s.teamName}
+                          </td>
+                          <td style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--club-soft)' }}>{s.gp}</td>
+                          <td style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--club-text)' }}>{s.w}</td>
+                          <td style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--club-text)' }}>{s.l}</td>
+                          <td style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--club-text)' }}>{s.t}</td>
+                          <td style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--club-text)', fontWeight: 700 }}>{s.pts}</td>
+                          <td style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--club-soft)' }}>{s.rf}</td>
+                          <td style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--club-soft)' }}>{s.ra}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            )}
-          </div>
-        )}
+            );
+          })}
+        </section>
+      )}
 
-        {/* Standings — per division, from snapshot */}
-        {divisions.length > 0 && poolGames.length > 0 && (
-          <section style={{ marginBottom: '2.5rem' }}>
-            <div className={kit.band} style={{ marginBottom: '1rem' }}>
-              Pool play standings
-            </div>
-            {divisions.map(ag => {
-              const standings = computeStandings(teams, games, ag.id);
-              if (standings.length === 0) return null;
-              return (
-                <div key={ag.id} style={{ marginBottom: '1.5rem' }}>
+      {/* Playoff bracket results */}
+      {playoffGames.length > 0 && (
+        <section>
+          <div className={kit.band} style={{ marginBottom: '1rem' }}>
+            Playoff results
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '0.5rem', minWidth: '520px' }}>
+              {playoffGames.map(g => {
+                const hScore = g.homeScore ?? 0;
+                const aScore = g.awayScore ?? 0;
+                const homeWon = hScore > aScore;
+                return (
                   <div
-                    className={kit.band}
+                    key={g.id}
                     style={{
-                      color: 'var(--club-text)',
-                      marginBottom: '0.5rem',
+                      display: 'grid',
+                      gridTemplateColumns: '96px 1fr auto auto 1fr',
+                      gap: '0.75rem',
+                      alignItems: 'center',
                       borderBottom: '1px solid var(--club-line)',
-                      paddingBottom: '0.25rem',
+                      padding: '0.5rem 0',
+                      fontSize: '0.875rem',
                     }}
                   >
-                    {ag.name}
-                  </div>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-                      <thead>
-                        <tr>
-                          <th className={kit.band} style={{ paddingBottom: '0.375rem', textAlign: 'left', paddingRight: '1rem' }}>Team</th>
-                          <th className={kit.band} style={{ paddingBottom: '0.375rem', textAlign: 'center', paddingRight: '0.5rem' }}>GP</th>
-                          <th className={kit.band} style={{ paddingBottom: '0.375rem', textAlign: 'center', paddingRight: '0.5rem' }}>W</th>
-                          <th className={kit.band} style={{ paddingBottom: '0.375rem', textAlign: 'center', paddingRight: '0.5rem' }}>L</th>
-                          <th className={kit.band} style={{ paddingBottom: '0.375rem', textAlign: 'center', paddingRight: '0.5rem' }}>T</th>
-                          <th className={kit.band} style={{ paddingBottom: '0.375rem', textAlign: 'center', paddingRight: '0.5rem' }}>PTS</th>
-                          <th className={kit.band} style={{ paddingBottom: '0.375rem', textAlign: 'center', paddingRight: '0.5rem' }}>RF</th>
-                          <th className={kit.band} style={{ paddingBottom: '0.375rem', textAlign: 'center' }}>RA</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {standings.map((s, idx) => (
-                          <tr key={s.teamId} style={{ borderBottom: '1px solid var(--club-line)' }}>
-                            <td style={{ padding: '0.5rem 1rem 0.5rem 0', color: 'var(--club-text)', fontWeight: idx === 0 ? 700 : 400 }}>
-                              {idx === 0 && (
-                                <span style={{ color: 'var(--club-ink)', marginRight: '0.375rem', fontSize: '0.75rem' }}>★</span>
-                              )}
-                              {s.teamName}
-                            </td>
-                            <td style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--club-soft)' }}>{s.gp}</td>
-                            <td style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--club-text)' }}>{s.w}</td>
-                            <td style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--club-text)' }}>{s.l}</td>
-                            <td style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--club-text)' }}>{s.t}</td>
-                            <td style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--club-text)', fontWeight: 700 }}>{s.pts}</td>
-                            <td style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--club-soft)' }}>{s.rf}</td>
-                            <td style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--club-soft)' }}>{s.ra}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              );
-            })}
-          </section>
-        )}
-
-        {/* Playoff bracket results */}
-        {playoffGames.length > 0 && (
-          <section style={{ marginBottom: '2.5rem' }}>
-            <div className={kit.band} style={{ marginBottom: '1rem' }}>
-              Playoff results
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '0.5rem', minWidth: '520px' }}>
-                {playoffGames.map(g => {
-                  const hScore = g.homeScore ?? 0;
-                  const aScore = g.awayScore ?? 0;
-                  const homeWon = hScore > aScore;
-                  return (
-                    <div
-                      key={g.id}
+                    <span style={{ fontSize: '0.75rem', color: 'var(--club-soft)', fontWeight: 700 }}>
+                      {bracketRoundLabel(g.bracketCode)}
+                    </span>
+                    <span
                       style={{
-                        display: 'grid',
-                        gridTemplateColumns: '96px 1fr auto auto 1fr',
-                        gap: '0.75rem',
-                        alignItems: 'center',
-                        borderBottom: '1px solid var(--club-line)',
-                        padding: '0.5rem 0',
-                        fontSize: '0.875rem',
+                        color: homeWon ? 'var(--club-text)' : 'var(--club-soft)',
+                        fontWeight: homeWon ? 700 : 400,
+                        textAlign: 'right' as const,
                       }}
                     >
-                      <span style={{ fontSize: '0.75rem', color: 'var(--club-soft)', fontWeight: 700 }}>
-                        {bracketRoundLabel(g.bracketCode)}
-                      </span>
-                      <span
-                        style={{
-                          color: homeWon ? 'var(--club-text)' : 'var(--club-soft)',
-                          fontWeight: homeWon ? 700 : 400,
-                          textAlign: 'right' as const,
-                        }}
-                      >
-                        {teamName(g.homeTeamId)}
-                      </span>
-                      <span
-                        style={{
-                          color: 'var(--club-text)',
-                          fontWeight: 700,
-                          minWidth: '3rem',
-                          textAlign: 'center' as const,
-                        }}
-                      >
-                        {hScore} – {aScore}
-                      </span>
-                      <span style={{ color: 'var(--club-soft)', fontSize: '0.75rem' }}>vs</span>
-                      <span
-                        style={{
-                          color: !homeWon ? 'var(--club-text)' : 'var(--club-soft)',
-                          fontWeight: !homeWon ? 700 : 400,
-                        }}
-                      >
-                        {teamName(g.awayTeamId)}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Pool play results */}
-        {poolGames.length > 0 && (
-          <section style={{ marginBottom: '2.5rem' }}>
-            <div className={kit.band} style={{ marginBottom: '1rem' }}>
-              Pool play results
-            </div>
-            {divisions.map(ag => {
-              const agGames = poolGames.filter(g => g.divisionId === ag.id);
-              if (agGames.length === 0) return null;
-              return (
-                <div key={ag.id} style={{ marginBottom: '1.25rem' }}>
-                  <div
-                    className={kit.band}
-                    style={{
-                      color: 'var(--club-text)',
-                      marginBottom: '0.5rem',
-                      borderBottom: '1px solid var(--club-line)',
-                      paddingBottom: '0.25rem',
-                    }}
-                  >
-                    {ag.name}
+                      {teamName(g.homeTeamId)}
+                    </span>
+                    <span
+                      style={{
+                        color: 'var(--club-text)',
+                        fontWeight: 700,
+                        minWidth: '3rem',
+                        textAlign: 'center' as const,
+                      }}
+                    >
+                      {hScore} – {aScore}
+                    </span>
+                    <span style={{ color: 'var(--club-soft)', fontSize: '0.75rem' }}>vs</span>
+                    <span
+                      style={{
+                        color: !homeWon ? 'var(--club-text)' : 'var(--club-soft)',
+                        fontWeight: !homeWon ? 700 : 400,
+                      }}
+                    >
+                      {teamName(g.awayTeamId)}
+                    </span>
                   </div>
-                  <div style={{ overflowX: 'auto' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '0.375rem', minWidth: '560px' }}>
-                      {agGames.map(g => {
-                        const hScore = g.homeScore ?? 0;
-                        const aScore = g.awayScore ?? 0;
-                        const homeWon = hScore > aScore;
-                        return (
-                          <div
-                            key={g.id}
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns: '104px 1fr 60px 1fr 88px',
-                              gap: '0.5rem',
-                              alignItems: 'center',
-                              fontSize: '0.875rem',
-                              borderBottom: '1px solid var(--club-line)',
-                              padding: '0.375rem 0',
-                            }}
-                          >
-                            <span style={{ color: 'var(--club-soft)', fontSize: '0.75rem' }}>{formatDate(g.date)}</span>
-                            <span style={{ color: 'var(--club-text)', fontWeight: homeWon ? 700 : 400, textAlign: 'right' as const }}>
-                              {teamName(g.homeTeamId)}
-                            </span>
-                            <span style={{ color: 'var(--club-text)', fontWeight: 700, textAlign: 'center' as const }}>
-                              {hScore} – {aScore}
-                            </span>
-                            <span style={{ color: 'var(--club-text)', fontWeight: !homeWon ? 700 : 400 }}>
-                              {teamName(g.awayTeamId)}
-                            </span>
-                            <span style={{ color: 'var(--club-soft)', fontSize: '0.75rem', textAlign: 'right' as const }}>
-                              {formatTime(g.time)}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Pool play results */}
+      {poolGames.length > 0 && (
+        <section>
+          <div className={kit.band} style={{ marginBottom: '1rem' }}>
+            Pool play results
+          </div>
+          {divisions.map(ag => {
+            const agGames = poolGames.filter(g => g.divisionId === ag.id);
+            if (agGames.length === 0) return null;
+            return (
+              <div key={ag.id} style={{ marginBottom: '1.25rem' }}>
+                <div
+                  className={kit.band}
+                  style={{
+                    color: 'var(--club-text)',
+                    marginBottom: '0.5rem',
+                    borderBottom: '1px solid var(--club-line)',
+                    paddingBottom: '0.25rem',
+                  }}
+                >
+                  {ag.name}
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '0.375rem', minWidth: '560px' }}>
+                    {agGames.map(g => {
+                      const hScore = g.homeScore ?? 0;
+                      const aScore = g.awayScore ?? 0;
+                      const homeWon = hScore > aScore;
+                      return (
+                        <div
+                          key={g.id}
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '104px 1fr 60px 1fr 88px',
+                            gap: '0.5rem',
+                            alignItems: 'center',
+                            fontSize: '0.875rem',
+                            borderBottom: '1px solid var(--club-line)',
+                            padding: '0.375rem 0',
+                          }}
+                        >
+                          <span style={{ color: 'var(--club-soft)', fontSize: '0.75rem' }}>{formatDate(g.date)}</span>
+                          <span style={{ color: 'var(--club-text)', fontWeight: homeWon ? 700 : 400, textAlign: 'right' as const }}>
+                            {teamName(g.homeTeamId)}
+                          </span>
+                          <span style={{ color: 'var(--club-text)', fontWeight: 700, textAlign: 'center' as const }}>
+                            {hScore} – {aScore}
+                          </span>
+                          <span style={{ color: 'var(--club-text)', fontWeight: !homeWon ? 700 : 400 }}>
+                            {teamName(g.awayTeamId)}
+                          </span>
+                          <span style={{ color: 'var(--club-soft)', fontSize: '0.75rem', textAlign: 'right' as const }}>
+                            {formatTime(g.time)}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              );
-            })}
-          </section>
-        )}
-
-      </div>
-    </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
+    </PublicPage>
   );
 }

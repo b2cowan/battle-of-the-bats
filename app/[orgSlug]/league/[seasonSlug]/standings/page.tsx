@@ -13,6 +13,7 @@ import {
 } from '@/lib/league-standings';
 import type { LeagueDivision } from '@/lib/types';
 import column from '../../league-column.module.css';
+import PublicPage from '@/components/public/PublicPage';
 import kit from '@/components/public/ClubKit.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -64,47 +65,44 @@ export default async function PublicStandingsPage({
   const scheduleHref = (d: LeagueDivision | null) => href(`/league/${seasonSlug}/schedule`) + (d ? `?d=${d.id}` : '');
 
   // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
+  // The club page column (club round C2 + C5): on the logo edge, 960 at most (it was 800), 24 between sections.
   return (
-    <div>
-      {/* R6: the shared 1200px page column; this page's 800px measure left-aligns inside it. */}
-      <div className={`container ${column.column}`} style={{ '--league-measure': '800px' } as React.CSSProperties}>
+    <PublicPage frame="club">
+      <div>
         <Link href={href(`/league/${seasonSlug}`)} className={kit.back}>
           ← {season.name}
         </Link>
-
-        <div style={{ marginBottom: '1.75rem' }}>
-          <h1 className={kit.title}>{standingsTitle(season.status)}</h1>
-          <p className={kit.sub}>{season.name}</p>
-        </div>
-
-        {/* Division tabs: a division that doesn't keep standings has none; a draft one says it is coming. */}
-        {kept.length > 1 && (
-          <div className={column.tabs}>
-            {kept.map(d => (
-              <Link
-                key={d.id}
-                href={href(`/league/${seasonSlug}/standings`) + `?d=${d.id}`}
-                className={`${column.tab}${d.id === active?.id ? ` ${column.tabActive}` : ''}`}
-              >
-                {d.schedulePublishedAt ? d.name : P.comingTab(d.name)}
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {divisions.length === 0 ? (
-          <div className={kit.empty}>{W.noDivisions}</div>
-        ) : !active ? (
-          <Said words={W.offAll} href={scheduleHref(null)} />
-        ) : !active.showStandings ? (
-          <Said words={W.off(active.name)} href={scheduleHref(active)} />
-        ) : !standings ? (
-          <div className={kit.empty}>{W.unpub}</div>
-        ) : (
-          <Table standings={standings} />
-        )}
+        <h1 className={kit.title}>{standingsTitle(season.status)}</h1>
+        <p className={kit.sub}>{season.name}</p>
       </div>
-    </div>
+
+      {/* Division tabs: a division that doesn't keep standings has none; a draft one says it is coming. */}
+      {kept.length > 1 && (
+        <div className={column.tabs}>
+          {kept.map(d => (
+            <Link
+              key={d.id}
+              href={href(`/league/${seasonSlug}/standings`) + `?d=${d.id}`}
+              className={`${column.tab}${d.id === active?.id ? ` ${column.tabActive}` : ''}`}
+            >
+              {d.schedulePublishedAt ? d.name : P.comingTab(d.name)}
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {divisions.length === 0 ? (
+        <div className={kit.empty}>{W.noDivisions}</div>
+      ) : !active ? (
+        <Said words={W.offAll} href={scheduleHref(null)} />
+      ) : !active.showStandings ? (
+        <Said words={W.off(active.name)} href={scheduleHref(active)} />
+      ) : !standings ? (
+        <div className={kit.empty}>{W.unpub}</div>
+      ) : (
+        <Table standings={standings} />
+      )}
+    </PublicPage>
   );
 }
 
@@ -158,8 +156,9 @@ function Table({ standings }: { standings: LeagueStandings }) {
       </table>
     </div>
   );
+  // One section of the page: the table, its foot and "How the table is ranked" keep their own spacing inside it.
   return (
-    <>
+    <div>
       {one(scored ? DESK : DESK_UNRANKED, column.deskOnly)}
       {one(scored ? PHONE : PHONE_UNRANKED, column.phoneOnly)}
       {scored && <p className={`${column.standFoot} ${column.phoneOnly}`}>{W.swipe(labels)}</p>}
@@ -179,7 +178,7 @@ function Table({ standings }: { standings: LeagueStandings }) {
           </div>
         </>
       )}
-    </>
+    </div>
   );
 }
 

@@ -1,39 +1,30 @@
 /**
- * The League/Club public pages' page column (repair ruling R6 · audit finding D5, 2026-08-01).
+ * The house league's public pages' own pieces (the index, a season, its sign-up, Your sign-up, Schedule, Standings).
  *
- * THE DEFECT: the section tab row wore the shared 1200px `.container` *specifically* so it lined up with the
- * org's identity row above it. These pages then centred their own ad hoc 560–800px columns on the raw viewport
- * instead — measured 244–304px of left-edge stagger between the navigation and the content it navigates. Six
- * pages, six hand-copied inline style objects, no shared statement of the rule.
+ * THE PAGE COLUMN IS NOT HERE ANY MORE. These pages render in the club page column (PublicPage frame="club" →
+ * components/public/PublicParts.module.css `.page.club`; club round C2 + C5, ruled 2026-11-05 — plan of record
+ * docs/projects/active/PUBLIC_PAGE_LAYOUT_STANDARD_PLAN.md §5b). What stands from the 2026-08-01 repair ruling (R6 ·
+ * audit finding D5): the content's left edge is the club's logo edge, left-aligned, never centred on the raw viewport —
+ * the stagger it fixed (244–304 px between the navigation and the content) stays fixed. What C2 REPLACED: its per-page
+ * measures (760 px here, 640 for the forms through --league-measure, 800 for Schedule and Standings, 560 for Your sign-up)
+ * — every club page is now the one 960 px column, a form 640 (`width="form"`), prose 720.
  *
- * THE RULE: the OUTER column is the shared 1200px `.container` — the same left edge as the club's bar above it
- * (ClubFrame.module.css takes `.container`'s edge — Club Tier Stage 4b-1). Each page keeps its own reading/form
- * measure (a 760px article and a 640px form should not both be 1200px wide), but that measure sits LEFT-ALIGNED
- * inside the shared column, so a heading lands directly under the club's logo.
- *
- * Per-page measure is set with `--league-measure` at the call site; 760px is the common case.
- *
- * The back link, title, band, card, chip, buttons and empty panel the six pages share live in
+ * The back link, title, band, card, chip, buttons and empty panel the pages share live in
  * components/public/ClubKit.module.css; only the league's own pieces are here.
  */
-/* Worn ALONGSIDE the global `.container` class — `className={`container ${column.column}`}` — so the 1200px column
-   geometry is NOT restated here: these pages and the club's bar read the one declaration in globals.css, so the
-   alignment can't drift. */
+
+/* The old column, kept for ONE page that is not in the club round: the coach's house-league team page (signed in;
+   `team/[teamId]`), worn beside the global `.container` with its own --league-measure. No public page wears it. */
 .column {
-  /* The club's bar is in the flow now (Club Tier Stage 4b-1), so there is no fixed nav to clear. */
   padding-top: 2rem;
   padding-bottom: 5rem;
 }
-
-/* The reading measure, applied to the column's own blocks so no page needs a second wrapper
-   element. Every child of these pages is a normal stacked block — none is full-bleed — so this
-   is equivalent to one inner column, and it left-aligns by default, which is the ruling. */
 .column > * {
   max-width: var(--league-measure, 760px);
 }
 
+/* The title block: the wrapper's 24 px stands under it (C5). */
 .header {
-  margin-bottom: 2rem;
   padding-bottom: 1.5rem;
   border-bottom: 1px solid var(--club-line);
 }
@@ -42,7 +33,6 @@
 .tabs {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 1.5rem;
   flex-wrap: wrap;
 }
 .tab {

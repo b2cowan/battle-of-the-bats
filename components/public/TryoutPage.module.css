@@ -3,24 +3,9 @@
    `.site`); the title, list, row, band, chip and button pieces are the club kit's. Sections stand 20 px apart and the
    title block gives 6 px to its season line and 10 px to its chip (design log 2026-10-20, the drawings' recipe). */
 
-.page {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 16px 16px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/* The club Tryouts page is a list of teams: the Teams page's width, and at a desk its padding, so its edges line up with
-   the club's bar and footer (/design 2026-10-20). */
-.wide { max-width: 1200px; }
-@media (min-width: 901px) {
-  .wide { padding: 28px 24px 40px; }
-}
-
-/* The admin's "How families see it" picture of this page: the page's 32 px foot is a scroll's breathing room, not a picture's. */
-.pagePreview { padding-bottom: 16px; }
+/* Both pages stand in the club page column (PublicPage frame="club"; club round C2 + C5): on the logo edge, 960 at most,
+   24 between sections. A tryout page and off-season Tryouts were a centred 640 until 2026-11-05 (a repair: the 08-01
+   rule puts content under the logo). The admin's "How families see it" picture takes the same column. */
 
 .head {
   display: flex;
@@ -85,6 +70,9 @@
 
 /* "From the club": the tryout blurb, as the club wrote it. */
 .blurb {
+  /* Prose in a box: 720 px of words (R1). */
+  max-width: calc(720px + 2 * 16px);
+  box-sizing: border-box;
   margin: 0;
   padding: 14px 16px;
   font: 400 1rem/1.6 var(--club-text-face);

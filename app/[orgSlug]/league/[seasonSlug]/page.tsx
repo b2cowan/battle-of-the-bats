@@ -16,6 +16,8 @@ import { earlyBirdOffer, leaguePrice, seasonPriceRange } from '@/lib/league-pric
 import { STANDINGS_WORDS as W, recordWords, standingsTitle, type LeagueStandingsRow } from '@/lib/league-standings';
 import column from '../league-column.module.css';
 import kit from '@/components/public/ClubKit.module.css';
+import parts from '@/components/public/PublicParts.module.css';
+import PublicPage from '@/components/public/PublicPage';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,7 +89,7 @@ export default async function LeagueSeasonPage({
 
   // A family who already signed up finds their child's status here, whatever state the season is in. Hidden only before registration opens, when nobody can have signed up yet.
   const signedUp = !(season.registrationOpenAt && new Date(season.registrationOpenAt) > new Date()) && (
-    <p style={{ marginTop: '1.25rem', fontSize: '0.875rem', color: 'var(--club-soft)' }}>
+    <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--club-soft)' }}>
       Already signed up? <Link href={href(`/league/${seasonSlug}/status`)}>Email me my link</Link>
     </p>
   );
@@ -107,93 +109,92 @@ export default async function LeagueSeasonPage({
     const door = nextSeasonDoor(season, seasons, today);
     const datesLine = seasonDatesLine(season, today);
 
+    // The club page column (club round C2 + C5): on the logo edge, 960 at most, 24 between sections.
     return (
-      <div>
-        <div className={`container ${column.column}`}>
-          <div className={column.header}>
-            {door && (
-              <aside className={`${kit.door} ${column.nextDoor}`} aria-label={NEXT_SEASON_WORDS.region}>
-                <p className={kit.doorTitle}>{door.head}</p>
-                {door.line && <p className={kit.sub}>{door.line}</p>}
-                <Link
-                  href={href(door.kind === 'one' ? `/league/${door.season.slug}` : '/league')}
-                  className={`${kit.btn} ${kit.btnSecondary} ${kit.btnSm}`}
-                >
-                  {door.button}
-                </Link>
-              </aside>
-            )}
-            {chipRow}
-            <h1 className={kit.title}>{season.name}</h1>
-            {datesLine && <p className={kit.sub}>{datesLine}</p>}
-            {season.description && (
-              <p className={kit.body} style={{ maxWidth: '600px', marginTop: '0.5rem' }}>
-                {season.description}
-              </p>
-            )}
-          </div>
+      <PublicPage frame="club">
+        <div className={column.header}>
+          {door && (
+            <aside className={`${kit.door} ${column.nextDoor}`} aria-label={NEXT_SEASON_WORDS.region}>
+              <p className={kit.doorTitle}>{door.head}</p>
+              {door.line && <p className={kit.sub}>{door.line}</p>}
+              <Link
+                href={href(door.kind === 'one' ? `/league/${door.season.slug}` : '/league')}
+                className={`${kit.btn} ${kit.btnSecondary} ${kit.btnSm}`}
+              >
+                {door.button}
+              </Link>
+            </aside>
+          )}
+          {chipRow}
+          <h1 className={kit.title}>{season.name}</h1>
+          {datesLine && <p className={kit.sub}>{datesLine}</p>}
+          {season.description && (
+            <p className={`${kit.body} ${parts.prose}`} style={{ marginTop: '0.5rem' }}>
+              {season.description}
+            </p>
+          )}
+        </div>
 
-          {/* Each age group's top three (P2, P5): "Standings" while played or ended, "Final standings" once completed. */}
-          {anyScored && (
-            <div style={{ marginBottom: '2rem' }}>
-              <div className={kit.band}>{standingsTitle(season.status)}</div>
-              <div className={column.topGrid}>
-                {listed.map((d, i) => {
-                  const t = tables[i];
-                  const headId = `standings-${d.id}`;
-                  const more = t.rows.length - 3;
-                  return (
-                    <div key={d.id} className={`${kit.card} ${column.topCard}`}>
-                      <div className={column.topHead}>
-                        <h2 id={headId} className={column.topName}>{d.name}</h2>
-                        {t.scored && (
-                          <Link href={href(`/league/${seasonSlug}/standings`) + `?d=${d.id}`} className={column.standLink}>
-                            {W.card.link}<span className={kit.srOnly}> {W.card.linkFor(d.name)}</span> <span aria-hidden>→</span>
-                          </Link>
-                        )}
-                      </div>
-                      {t.scored ? (
-                        <>
-                          <table className={column.standTable} aria-labelledby={headId}>
-                            <thead>
-                              <tr>
-                                <th scope="col" className={column.standLeft}>{W.col.rank}</th>
-                                <th scope="col" className={column.standLeft}>{W.col.team}</th>
-                                <th scope="col" title={W.tip.record} aria-label={W.tip.record}>{W.col.record}</th>
-                                <th scope="col" title={W.tip.pts} aria-label={W.tip.pts}>{W.col.pts}</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {t.rows.slice(0, 3).map(row => <TopRow key={row.team.id} row={row} />)}
-                            </tbody>
-                          </table>
-                          {more > 0 && <p className={column.topMore}>{W.card.more(more)}</p>}
-                        </>
-                      ) : (
-                        // W5: an age group with no scored game keeps its card, so a family's group is not silently missing.
-                        <p className={kit.cardText}>{W.coach.none}</p>
+        {/* Each age group's top three (P2, P5): "Standings" while played or ended, "Final standings" once completed. */}
+        {anyScored && (
+          <div>
+            <div className={kit.band}>{standingsTitle(season.status)}</div>
+            <div className={column.topGrid}>
+              {listed.map((d, i) => {
+                const t = tables[i];
+                const headId = `standings-${d.id}`;
+                const more = t.rows.length - 3;
+                return (
+                  <div key={d.id} className={`${kit.card} ${column.topCard}`}>
+                    <div className={column.topHead}>
+                      <h2 id={headId} className={column.topName}>{d.name}</h2>
+                      {t.scored && (
+                        <Link href={href(`/league/${seasonSlug}/standings`) + `?d=${d.id}`} className={column.standLink}>
+                          {W.card.link}<span className={kit.srOnly}> {W.card.linkFor(d.name)}</span> <span aria-hidden>→</span>
+                        </Link>
                       )}
                     </div>
-                  );
-                })}
-              </div>
+                    {t.scored ? (
+                      <>
+                        <table className={column.standTable} aria-labelledby={headId}>
+                          <thead>
+                            <tr>
+                              <th scope="col" className={column.standLeft}>{W.col.rank}</th>
+                              <th scope="col" className={column.standLeft}>{W.col.team}</th>
+                              <th scope="col" title={W.tip.record} aria-label={W.tip.record}>{W.col.record}</th>
+                              <th scope="col" title={W.tip.pts} aria-label={W.tip.pts}>{W.col.pts}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {t.rows.slice(0, 3).map(row => <TopRow key={row.team.id} row={row} />)}
+                          </tbody>
+                        </table>
+                        {more > 0 && <p className={column.topMore}>{W.card.more(more)}</p>}
+                      </>
+                    ) : (
+                      // W5: an age group with no scored game keeps its card, so a family's group is not silently missing.
+                      <p className={kit.cardText}>{W.coach.none}</p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          )}
-
-          {/* Each card's Full table link replaces the old "Final standings →" button; Schedule stays, the lead button when
-              there is no table yet. */}
-          <div className={kit.btnRow}>
-            <Link
-              href={href(`/league/${seasonSlug}/schedule`)}
-              className={`${kit.btn} ${anyScored ? kit.btnSecondary : kit.btnPrimary}`}
-            >
-              Schedule
-            </Link>
           </div>
+        )}
 
-          {signedUp}
+        {/* Each card's Full table link replaces the old "Final standings →" button; Schedule stays, the lead button when
+            there is no table yet. */}
+        <div className={kit.btnRow}>
+          <Link
+            href={href(`/league/${seasonSlug}/schedule`)}
+            className={`${kit.btn} ${anyScored ? kit.btnSecondary : kit.btnPrimary}`}
+          >
+            Schedule
+          </Link>
         </div>
-      </div>
+
+        {signedUp}
+      </PublicPage>
     );
   }
 
@@ -219,174 +220,172 @@ export default async function LeagueSeasonPage({
   const earlyRange = offer ? seasonPriceRange(divisions.map(d => ({ price: priceToday(d)?.amount ?? null, earlyPrice: null })), { registrationFee: null }) : null;
 
   // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
+  // The club page column (club round C2 + C5): on the logo edge, 960 at most, 24 between sections.
   return (
-    <div>
-      {/* R6: the shared 1200px page column; this page's 760px measure left-aligns inside it. */}
-      <div className={`container ${column.column}`}>
-        {/* Season header */}
-        <div className={column.header}>
-          {chipRow}
-          <h1 className={kit.title}>{season.name}</h1>
-          {season.description && (
-            <p className={kit.body} style={{ maxWidth: '600px', marginTop: '0.5rem' }}>
-              {season.description}
-            </p>
+    <PublicPage frame="club">
+      {/* Season header */}
+      <div className={column.header}>
+        {chipRow}
+        <h1 className={kit.title}>{season.name}</h1>
+        {season.description && (
+          <p className={`${kit.body} ${parts.prose}`} style={{ marginTop: '0.5rem' }}>
+            {season.description}
+          </p>
+        )}
+
+        {/* Key dates + fee */}
+        <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+          {(season.registrationOpenAt || season.registrationCloseAt) && (
+            <div>
+              <div className={kit.band} style={factBand}>Registration</div>
+              <div style={factValue}>
+                {formatDate(season.registrationOpenAt)} — {formatDate(season.registrationCloseAt)}
+              </div>
+            </div>
           )}
-
-          {/* Key dates + fee */}
-          <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
-            {(season.registrationOpenAt || season.registrationCloseAt) && (
-              <div>
-                <div className={kit.band} style={factBand}>Registration</div>
-                <div style={factValue}>
-                  {formatDate(season.registrationOpenAt)} — {formatDate(season.registrationCloseAt)}
-                </div>
+          {(season.seasonStartDate || season.seasonEndDate) && (
+            <div>
+              <div className={kit.band} style={factBand}>Season dates</div>
+              <div style={factValue}>
+                {formatDate(season.seasonStartDate)} — {formatDate(season.seasonEndDate)}
               </div>
-            )}
-            {(season.seasonStartDate || season.seasonEndDate) && (
-              <div>
-                <div className={kit.band} style={factBand}>Season dates</div>
-                <div style={factValue}>
-                  {formatDate(season.seasonStartDate)} — {formatDate(season.seasonEndDate)}
-                </div>
+            </div>
+          )}
+          {priceRange && (
+            <div>
+              <div className={kit.band} style={factBand}>Price</div>
+              <div style={{ ...factValue, fontWeight: 700 }}>
+                {rangeLine(offer && earlyRange ? earlyRange : priceRange)}
               </div>
-            )}
-            {priceRange && (
-              <div>
-                <div className={kit.band} style={factBand}>Price</div>
-                <div style={{ ...factValue, fontWeight: 700 }}>
-                  {rangeLine(offer && earlyRange ? earlyRange : priceRange)}
-                </div>
-                {offer && (
-                  <span className={kit.rowSub}>{saveWords(offer)} through {clubDay(offer.until)}, then {rangeLine(priceRange)}</span>
-                )}
-              </div>
-            )}
-          </div>
+              {offer && (
+                <span className={kit.rowSub}>{saveWords(offer)} through {clubDay(offer.until)}, then {rangeLine(priceRange)}</span>
+              )}
+            </div>
+          )}
         </div>
+      </div>
 
-        {/* Divisions */}
-        {divisions.length > 0 && (
-          <div style={{ marginBottom: '2rem' }}>
-            <div className={kit.band}>Divisions</div>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-                gap: '0.75rem',
-              }}
-            >
-              {divisions.map(d => {
-                const pct = d.capacity ? Math.min(1, d.activeCount / d.capacity) : 0;
-                const isFull = d.capacity != null && d.activeCount >= d.capacity;
-                // The division's birth years as families read them (Stage 4c-2), under the season's sport's cut-off.
-                const born = bornFactsOf({ from: d.bornFromYear, to: d.bornToYear }, org.birthdayCutoffs, season.sport).line;
-                const cardPrice = priceToday(d);
-                // A saving only when the early amount is really lower, in whole cents (an early amount equal to or above the
-                // price is not a discount; 165.55 − 125.55 is not 40.000000000000014).
-                const cardSave = cardPrice?.early ? Math.max(0, Math.round((cardPrice.regular - cardPrice.amount) * 100) / 100) : 0;
-                return (
-                  <div key={d.id} className={kit.card} style={{ padding: '1rem 1.25rem' }}>
-                    <div style={{ marginBottom: '0.6rem' }}>
-                      <div
-                        style={{
-                          fontSize: '1rem',
-                          fontWeight: 700,
-                          color: 'var(--club-text)',
-                        }}
-                      >
-                        {d.name}
-                      </div>
-                      {born && <span className={kit.rowSub}>{born}</span>}
-                      {d.note && <span className={kit.rowSub}>{d.note}</span>}
-                      {offer && cardPrice && (
-                        <div style={{ marginTop: '0.4rem' }}>
-                          <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: cardSave > 0 ? 'var(--club-ok)' : 'var(--club-text)' }}>
-                            {dollarsLine(cardPrice.amount)}{cardSave > 0 && ` · Save ${dollarsLine(cardSave)}`}
-                          </div>
-                          {cardSave > 0 && <span className={kit.rowSub}>Early bird through {clubDay(offer.until)}, then {dollarsLine(cardPrice.regular)}</span>}
-                        </div>
-                      )}
+      {/* Divisions */}
+      {divisions.length > 0 && (
+        <div>
+          <div className={kit.band}>Divisions</div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+              gap: '0.75rem',
+            }}
+          >
+            {divisions.map(d => {
+              const pct = d.capacity ? Math.min(1, d.activeCount / d.capacity) : 0;
+              const isFull = d.capacity != null && d.activeCount >= d.capacity;
+              // The division's birth years as families read them (Stage 4c-2), under the season's sport's cut-off.
+              const born = bornFactsOf({ from: d.bornFromYear, to: d.bornToYear }, org.birthdayCutoffs, season.sport).line;
+              const cardPrice = priceToday(d);
+              // A saving only when the early amount is really lower, in whole cents (an early amount equal to or above the
+              // price is not a discount; 165.55 − 125.55 is not 40.000000000000014).
+              const cardSave = cardPrice?.early ? Math.max(0, Math.round((cardPrice.regular - cardPrice.amount) * 100) / 100) : 0;
+              return (
+                <div key={d.id} className={kit.card} style={{ padding: '1rem 1.25rem' }}>
+                  <div style={{ marginBottom: '0.6rem' }}>
+                    <div
+                      style={{
+                        fontSize: '1rem',
+                        fontWeight: 700,
+                        color: 'var(--club-text)',
+                      }}
+                    >
+                      {d.name}
                     </div>
-                    {d.capacity != null ? (
-                      <>
-                        <div
-                          style={{
-                            height: '6px',
-                            background: 'var(--club-line)',
-                            borderRadius: '3px',
-                            overflow: 'hidden',
-                            marginBottom: '0.5rem',
-                          }}
-                        >
-                          <div
-                            style={{
-                              height: '100%',
-                              width: `${pct * 100}%`,
-                              borderRadius: '3px',
-                              background: isFull ? 'var(--danger)' : 'var(--club-fill)',
-                            }}
-                          />
+                    {born && <span className={kit.rowSub}>{born}</span>}
+                    {d.note && <span className={kit.rowSub}>{d.note}</span>}
+                    {offer && cardPrice && (
+                      <div style={{ marginTop: '0.4rem' }}>
+                        <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: cardSave > 0 ? 'var(--club-ok)' : 'var(--club-text)' }}>
+                          {dollarsLine(cardPrice.amount)}{cardSave > 0 && ` · Save ${dollarsLine(cardSave)}`}
                         </div>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--club-soft)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          <span>{d.activeCount} / {d.capacity} spots filled</span>
-                          {isFull && <span className={`${kit.chip} ${kit.chipNeutral}`}>Waitlist open</span>}
-                        </div>
-                      </>
-                    ) : (
-                      <div style={{ fontSize: '0.875rem', color: 'var(--club-soft)' }}>
-                        {d.activeCount} registered
+                        {cardSave > 0 && <span className={kit.rowSub}>Early bird through {clubDay(offer.until)}, then {dollarsLine(cardPrice.regular)}</span>}
                       </div>
                     )}
                   </div>
-                );
-              })}
-            </div>
+                  {d.capacity != null ? (
+                    <>
+                      <div
+                        style={{
+                          height: '6px',
+                          background: 'var(--club-line)',
+                          borderRadius: '3px',
+                          overflow: 'hidden',
+                          marginBottom: '0.5rem',
+                        }}
+                      >
+                        <div
+                          style={{
+                            height: '100%',
+                            width: `${pct * 100}%`,
+                            borderRadius: '3px',
+                            background: isFull ? 'var(--danger)' : 'var(--club-fill)',
+                          }}
+                        />
+                      </div>
+                      <div style={{ fontSize: '0.875rem', color: 'var(--club-soft)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span>{d.activeCount} / {d.capacity} spots filled</span>
+                        {isFull && <span className={`${kit.chip} ${kit.chipNeutral}`}>Waitlist open</span>}
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ fontSize: '0.875rem', color: 'var(--club-soft)' }}>
+                      {d.activeCount} registered
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* CTA: Register now while the form takes sign-ups; before it opens, when it opens and the schedule (teams can be
-            set before the first game). */}
-        {registrationOpen ? (
-          <div>
+      {/* CTA: Register now while the form takes sign-ups; before it opens, when it opens and the schedule (teams can be
+          set before the first game). */}
+      {registrationOpen ? (
+        <div>
+          <Link
+            href={href(`/league/${seasonSlug}/register`)}
+            className={`${kit.btn} ${kit.btnPrimary}`}
+          >
+            Register now
+          </Link>
+          {regLine && (
+            <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'var(--club-soft)' }}>{regLine}</p>
+          )}
+        </div>
+      ) : (
+        <div>
+          <div
+            className={kit.card}
+            style={{
+              padding: '1rem 1.25rem',
+              fontSize: '0.875rem',
+              color: 'var(--club-soft)',
+              marginBottom: '1.25rem',
+            }}
+          >
+            {regLine}
+          </div>
+
+          <div className={kit.btnRow}>
             <Link
-              href={href(`/league/${seasonSlug}/register`)}
-              className={`${kit.btn} ${kit.btnPrimary}`}
+              href={href(`/league/${seasonSlug}/schedule`)}
+              className={`${kit.btn} ${kit.btnSecondary}`}
             >
-              Register now
+              Schedule
             </Link>
-            {regLine && (
-              <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'var(--club-soft)' }}>{regLine}</p>
-            )}
           </div>
-        ) : (
-          <div>
-            <div
-              className={kit.card}
-              style={{
-                padding: '1rem 1.25rem',
-                fontSize: '0.875rem',
-                color: 'var(--club-soft)',
-                marginBottom: '1.25rem',
-              }}
-            >
-              {regLine}
-            </div>
+        </div>
+      )}
 
-            <div className={kit.btnRow}>
-              <Link
-                href={href(`/league/${seasonSlug}/schedule`)}
-                className={`${kit.btn} ${kit.btnSecondary}`}
-              >
-                Schedule
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {signedUp}
-      </div>
-    </div>
+      {signedUp}
+    </PublicPage>
   );
 }
 

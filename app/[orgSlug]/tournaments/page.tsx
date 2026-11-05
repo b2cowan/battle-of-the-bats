@@ -14,6 +14,7 @@ import { orgLinks } from '@/lib/org-links';
 import { formatEventDateRange, tournamentToday } from '@/lib/timezone';
 import { pluralize } from '@/lib/utils';
 import kit from '@/components/public/ClubKit.module.css';
+import PublicPage from '@/components/public/PublicPage';
 import styles from './ClubTournaments.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -85,8 +86,9 @@ export default async function ClubTournamentsPage({ params }: { params: Promise<
   if (count === 0) notFound();
   const current = await clubTournamentRows(parts.current, today, href);
 
+  // The club page column (club round C2 + C5): on the logo edge, 960 at most, 24 between sections.
   return (
-    <div className={styles.column}>
+    <PublicPage frame="club">
       <div className={styles.title}>
         <h1 className={kit.title}>Tournaments</h1>
         <p className={kit.sub}>{pluralize(count, 'tournament')}</p>
@@ -172,7 +174,7 @@ export default async function ClubTournamentsPage({ params }: { params: Promise<
           </div>
         </section>
       )}
-    </div>
+    </PublicPage>
   );
 }
 

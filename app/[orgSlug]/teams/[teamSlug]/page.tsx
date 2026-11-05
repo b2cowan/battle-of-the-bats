@@ -11,7 +11,9 @@ import { orgLinks } from '@/lib/org-links';
 import { requirePublicClubPage } from '@/lib/public-club-page';
 import { publicClubRefusal } from '@/lib/public-club-access';
 import { clubPageMetadata, getClubSiteContent, getClubTeam, getClubTeamSeasons } from '@/lib/club-page-meta';
-import { teamMetaLine, teamPageParts } from '@/lib/club-team-page';
+import { teamMetaLine, teamPageParts, teamScheduleShows } from '@/lib/club-team-page';
+import PublicPage from '@/components/public/PublicPage';
+import parts from '@/components/public/PublicParts.module.css';
 import styles from './TeamPage.module.css';
 import { forwardToRunningTournament } from '@/lib/club-shortcut';
 import { isUuid } from '@/lib/utils';
@@ -100,13 +102,13 @@ export default async function TeamPublicPage({
   const email = siteContent?.contactEmail?.trim() || null;
   // End state 3: a part with nothing to show is absent. No Past seasons (DC-07: a door to an old season would be a new
   // look-back surface). Coaches only when a coach switched their name on (4c-2 Part B).
-  const parts = teamPageParts({
-    archived: team.isArchived, tryoutOpen: !!openYear, schedule: !!publicSchedule, about: !!about, coaches: coaches.length > 0,
+  const teamParts = teamPageParts({
+    archived: team.isArchived, tryoutOpen: !!openYear, schedule: teamScheduleShows(publicSchedule), about: !!about, coaches: coaches.length > 0,
   });
 
   // The parts in the phone's order, which is also the reading order; at a desk the schedule takes the left column and
   // the rest stand beside it (TeamPage.module.css grid areas) — the layout moves them, never the order a reader hears.
-  const body = parts.map(part => {
+  const body = teamParts.map(part => {
     if (part === 'concluded') return (
       <div key={part} className={kit.list}>
         <p className={kit.cardText}>This program has concluded.</p>
@@ -186,7 +188,7 @@ export default async function TeamPublicPage({
   });
 
   return (
-    <div className={styles.page}>
+    <PublicPage frame="club">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       {/* No "← Teams" (design log 2026-10-20, amended): the Teams tab exists exactly when the Teams page does, and it is
           pinned on a phone — a back link to the same place only scrolls away above the name. */}
@@ -200,7 +202,9 @@ export default async function TeamPublicPage({
         {meta && <p className={kit.sub}>{meta}</p>}
       </div>
 
-      <div className={`${styles.body} ${parts.includes('schedule') ? styles.withSchedule : ''}`}>{body}</div>
-    </div>
+      {/* With a schedule, the shared split from 1,024 px (PublicParts `.cols`): the schedule down the main column, the rest
+          beside it. Without one, one column — never an empty main column (a team with no games yet). */}
+      {teamParts.includes('schedule') ? <div className={`${parts.cols} ${styles.withSchedule}`}>{body}</div> : body}
+    </PublicPage>
   );
 }

@@ -2,14 +2,7 @@
    (app/[orgSlug]/teams/ClubTeams.module.css): the club's tokens come from its frame, the list, row and chip pieces are
    the club kit's. Phone: one frame of hairlined rows per part. Desk: one table per part, one question per column. */
 
-.column {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 16px 16px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
+/* The page column is the club page's (PublicPage frame="club"; club round C2 + C5): 960 on the logo edge, 24 between. */
 
 .title :global(h1) {
   margin-bottom: 4px;
@@ -107,14 +100,6 @@
 }
 
 @media (min-width: 901px) {
-  .column {
-    padding: 28px 24px 40px;
-    /* Six past columns need more than the Teams page's 744 px; the left edge is the same (drawn at 960, frame c6). */
-    max-width: calc(960px + 48px);
-    margin: 0;
-    margin-left: max(0px, calc((100% - 1200px) / 2));
-  }
-
   .phone {
     display: none;
   }

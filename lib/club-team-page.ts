@@ -25,6 +25,13 @@ export function teamPageParts(has: {
   return out;
 }
 
+/** Whether a team's public schedule draws anything: a view the coach made public AND at least one entry in it. The page
+ *  decides its schedule part (and so its desk's two columns) from this, never from the view existing alone — a team with
+ *  no games yet left an empty main column at a desk (club layout census, 2026-11-05). The schedule section asks the same. */
+export function teamScheduleShows(view: { entries: readonly unknown[] } | null | undefined): boolean {
+  return !!view && view.entries.length > 0;
+}
+
 /** "Provincial AAA · 2026 season" — either part alone, or nothing. */
 export function teamMetaLine(division: string | null | undefined, seasonYear: number | null | undefined): string | null {
   const parts = [division?.trim() || null, seasonYear ? `${seasonYear} season` : null].filter(Boolean);

@@ -35,22 +35,21 @@ function Out({ sponsor, className, children }: { sponsor: SiteSponsor; className
 
 export function ClubSponsorStrip({ sponsors }: { sponsors: readonly SiteSponsor[] }) {
   if (sponsors.length === 0) return null;
+  // The last section in the home's page column (PublicPage), so it takes the column's width and its 24 px above.
   return (
-    <div className={styles.band}>
-      <section className={kit.section} aria-labelledby="sponsors" {...siteEdit('lists')}>
-        <h2 id="sponsors" className={kit.sectionTitle}>{W.sponsorsHeading}</h2>
-        <div className={kit.list}>
-          <div className={styles.strip}>
-            {sponsors.map(s => (
-              <Out key={s.id} sponsor={s} className={styles.tile}>
-                {/* The address is one the save and the read already held to the club's own upload folder. */}
-                {s.logoUrl ? <img src={s.logoUrl} alt={s.name} loading="lazy" /> : <span>{s.name}</span>}
-              </Out>
-            ))}
-          </div>
+    <section className={kit.section} aria-labelledby="sponsors" {...siteEdit('lists')}>
+      <h2 id="sponsors" className={kit.sectionTitle}>{W.sponsorsHeading}</h2>
+      <div className={kit.list}>
+        <div className={styles.strip}>
+          {sponsors.map(s => (
+            <Out key={s.id} sponsor={s} className={styles.tile}>
+              {/* The address is one the save and the read already held to the club's own upload folder. */}
+              {s.logoUrl ? <img src={s.logoUrl} alt={s.name} loading="lazy" /> : <span>{s.name}</span>}
+            </Out>
+          ))}
         </div>
-      </section>
-    </div>
+      </div>
+    </section>
   );
 }
 

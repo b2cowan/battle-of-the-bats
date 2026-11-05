@@ -14,6 +14,7 @@ import { tournamentToday } from '@/lib/timezone';
 import { pluralize } from '@/lib/utils';
 import BornInPill from '@/components/public/BornInPill';
 import kit from '@/components/public/ClubKit.module.css';
+import PublicPage from '@/components/public/PublicPage';
 import styles from './ClubTeams.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -96,7 +97,7 @@ export default async function ClubTeamsPage({
   }));
 
   return (
-    <div className={styles.column}>
+    <PublicPage frame="club">
       <div className={styles.title}>
         <h1 className={kit.title}>Teams</h1>
         <p className={kit.sub}>{pick == null ? pluralize(count, 'team') : bornPlacesSentence(places, pick)}</p>
@@ -179,6 +180,6 @@ export default async function ClubTeamsPage({
         </table>
       </div>
       </>}
-    </div>
+    </PublicPage>
   );
 }

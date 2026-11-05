@@ -11,7 +11,7 @@ import {
 } from '@/lib/family-schedule-format';
 import type { FamilyScheduleEntry, FamilyTeamView } from '@/lib/family-view';
 import TeamSubscribeButton from './TeamSubscribeButton';
-import { splitPublicSchedule } from '@/lib/club-team-page';
+import { splitPublicSchedule, teamScheduleShows } from '@/lib/club-team-page';
 
 /**
  * The standing public team schedule (Chunk D 1.9).
@@ -72,7 +72,7 @@ export default function RepTeamPublicSchedule({ view, subscribe }: {
    *  schedule, because both come from one question (getPublicTeamSchedule), which the public feed asks too. */
   subscribe?: { feedPath: string; calendarName: string };
 }) {
-  if (view.entries.length === 0) return null;
+  if (!teamScheduleShows(view)) return null;
 
   // What already happened folds above Up next (C3); the next few show; the rest of the season is on demand. A season
   // that is all played lists its games plainly — a fold over everything would hide the whole section.

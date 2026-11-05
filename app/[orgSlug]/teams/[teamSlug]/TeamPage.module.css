@@ -2,20 +2,12 @@
    (ClubFrame.module.css `.site`); the title, door, list and section pieces are the club kit's.
    Phone: one column — the tryout door, the schedule, About. Desk: the schedule first, the door and About beside it. */
 
-.page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 16px 16px 32px;
-  display: flex;
-  flex-direction: column;
-}
+/* The page column is the club page's (PublicPage frame="club"; club round C2 + C5): 960 on the logo edge, 28 under the
+   band, 24 between the title block and each part (C5 reverses the 2026-10-20 team page's 20; the title block keeps its
+   own 8 px name-to-line gap). */
 
 /* The title block opens the page: the name, then division · season. No "← Teams" above it (design log 2026-10-20,
    amended): the Teams tab is always in the bar, pinned on a phone, and already goes there. */
-.head {
-  margin-bottom: 20px;
-}
-
 .name {
   display: flex;
   align-items: center;
@@ -42,15 +34,6 @@
   /* A near-white team colour still shows on the light ground (/design). */
   outline: 1px solid var(--club-line-2);
   outline-offset: -1px;
-}
-
-/* The parts stand in the phone's order, which is the reading order. At a desk, with a schedule, the schedule takes the
-   left column and the door, the concluded notice and About stack beside it (grid areas: the layout moves them, never
-   the order a screen reader hears). Without a schedule the page stays one column. */
-.body {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
 }
 
 /* Coaches (Club Tier 4c-2 Part B, G2): a name over its role, one row each — name and role only. */
@@ -83,30 +66,18 @@
   word-break: break-all;
 }
 
-@media (min-width: 901px) {
-  .page {
-    padding: 20px 24px 40px;
-  }
-
-  /* The name stays at 32 px: the drawing's 40 is not one of the club pages' type steps (DC-05). */
-  .body {
-    max-width: 744px;
-  }
-
-  .body.withSchedule {
-    max-width: none;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 380px;
-    /* The side's parts size to themselves; the last row takes the schedule's extra height. */
+/* With a schedule, where the shared split stands (PublicParts `.cols`, 1,024 px): the schedule down the main column, and
+   the tryout part, Coaches and About stacked beside it (grid areas: the layout moves them, never the order a screen reader
+   hears). The side's parts size to themselves; the last row takes the schedule's extra height. Without a schedule the
+   parts are the page's own sections, one column. */
+@media (min-width: 1024px) {
+  .withSchedule {
     grid-template-rows: auto auto auto 1fr;
     grid-template-areas:
       'schedule tryouts'
       'schedule coaches'
       'schedule about'
       'schedule .';
-    align-items: start;
-    column-gap: 28px;
-    row-gap: 20px;
   }
 
   .withSchedule .schedule { grid-area: schedule; min-width: 0; }

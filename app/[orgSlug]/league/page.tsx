@@ -10,6 +10,7 @@ import { tournamentToday } from '@/lib/timezone';
 import LeagueSeasonRows from '@/components/public/LeagueSeasonRows';
 import { withEarlyBird } from '@/lib/league-early-bird';
 import column from './league-column.module.css';
+import PublicPage from '@/components/public/PublicPage';
 import kit from '@/components/public/ClubKit.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -49,30 +50,27 @@ export default async function LeagueIndexPage({
 
   // The light ground and the club's bar and footer come from the club's frame (Club Tier Stage 4b-1); the page only
   // lays out its column. The credit line moved to the frame's footer.
+  // The club page column (club round C2 + C5): on the logo edge, 960 at most, 24 between sections.
   return (
-    <div>
-      {/* R6: the shared 1200px page column, with this page's 760px reading measure left-aligned
-          inside it — so headings sit under the section tab row rather than 244px inboard of it. */}
-      <div className={`container ${column.column}`}>
-        <div className={column.header}>
-          <h1 className={kit.title}>House league</h1>
-          <p className={kit.sub}>{org.name}</p>
-        </div>
-
-        {running.length > 0 && (
-          <div style={{ marginBottom: '2.5rem' }}>
-            <div className={kit.band}>Running now</div>
-            <LeagueSeasonRows seasons={running} today={today} label="Running now" />
-          </div>
-        )}
-
-        {past.length > 0 && (
-          <div>
-            <div className={kit.band}>Past seasons</div>
-            <LeagueSeasonRows seasons={past} today={today} label="Past seasons" />
-          </div>
-        )}
+    <PublicPage frame="club">
+      <div className={column.header}>
+        <h1 className={kit.title}>House league</h1>
+        <p className={kit.sub}>{org.name}</p>
       </div>
-    </div>
+
+      {running.length > 0 && (
+        <div>
+          <div className={kit.band}>Running now</div>
+          <LeagueSeasonRows seasons={running} today={today} label="Running now" />
+        </div>
+      )}
+
+      {past.length > 0 && (
+        <div>
+          <div className={kit.band}>Past seasons</div>
+          <LeagueSeasonRows seasons={past} today={today} label="Past seasons" />
+        </div>
+      )}
+    </PublicPage>
   );
 }

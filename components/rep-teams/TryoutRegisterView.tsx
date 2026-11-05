@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import kit from '@/components/public/ClubKit.module.css';
+import PublicPage from '@/components/public/PublicPage';
 import TryoutRegisterForm from '@/components/rep-teams/TryoutRegisterForm';
 
 /**
@@ -24,18 +25,13 @@ export default function TryoutRegisterView({
   privacyPolicyHref: string | null;
 }) {
   return (
-    <div
-      style={{
-        maxWidth: '640px',
-        margin: '0 auto',
-        padding: '2rem 1.5rem 5rem',
-      }}
-    >
-      <Link href={backHref} className={kit.back}>
-        ← Back to {season ? season.name : team.name}
-      </Link>
-
-      <div style={{ marginBottom: '2rem' }}>
+    // A club form in the club page column (club round C2): 640 on the logo edge, never centred. The back link opens the
+    // title block (the tab row has no entry for one team's form, 2026-10-20).
+    <PublicPage frame="club" width="form">
+      <div>
+        <Link href={backHref} className={kit.back}>
+          ← Back to {season ? season.name : team.name}
+        </Link>
         <div
           style={{
             font: '400 14px var(--club-text-face)',
@@ -92,6 +88,6 @@ export default function TryoutRegisterView({
           privacyPolicyHref={privacyPolicyHref}
         />
       )}
-    </div>
+    </PublicPage>
   );
 }

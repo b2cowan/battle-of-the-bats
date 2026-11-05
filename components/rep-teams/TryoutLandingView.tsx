@@ -5,6 +5,7 @@ import TryoutDays from '@/components/public/TryoutDays';
 import ClubContactCard, { COPY_CLUB_EMAIL } from '@/components/public/ClubContactCard';
 import TryoutQuestionsLine from '@/components/public/TryoutQuestionsLine';
 import TryoutChip from '@/components/public/TryoutChip';
+import PublicPage from '@/components/public/PublicPage';
 import {
   tryoutSeasonMeta,
   tryoutStateSentence,
@@ -81,7 +82,8 @@ export default function TryoutLandingView({
   };
 
   return (
-    <div className={`${styles.page}${preview ? ` ${styles.pagePreview}` : ''}`}>
+    // The club page column (club round C2 + C5): on the logo edge, 960 at most, never centred (it was a centred 640).
+    <PublicPage frame="club">
       {/* The way back to the team stays: the tab row has no entry for one team (design log 2026-10-20). */}
       {!preview && (
         <Link href={teamHref} className={`${kit.back} ${styles.back}`} aria-label={`Back to ${team.name}`}>
@@ -110,6 +112,6 @@ export default function TryoutLandingView({
           {...(coachAsk ?? { email: contactEmail })}
         />
       )}
-    </div>
+    </PublicPage>
   );
 }

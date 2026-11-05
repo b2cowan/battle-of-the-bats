@@ -7,7 +7,7 @@ import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
 import { orgLinks } from '@/lib/org-links';
 import { SIGNUP_LINK_WORDS as SW } from '@/lib/league-pay-words';
 import EmailMyLinkForm from './EmailMyLinkForm';
-import column from '../../league-column.module.css';
+import PublicPage from '@/components/public/PublicPage';
 import kit from '@/components/public/ClubKit.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -37,25 +37,20 @@ export default async function EmailMyLinkPage({
   const season = await getClubSeason(org.id, seasonSlug);
   if (!season) notFound();
 
-  // R6: the shared 1200px page column; this form's 560px measure left-aligns inside it.
-  const innerStyle = { '--league-measure': '560px' } as React.CSSProperties;
-
-  // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
+  // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1). A club form in the club page column
+  // (club round C2): 640 on the logo edge. The back link opens the title block.
   return (
-    <div>
-      <div className={`container ${column.column}`} style={innerStyle}>
+    <PublicPage frame="club" width="form">
+      <div>
         <Link href={href(`/league/${seasonSlug}`)} className={kit.back}>
           ← Back to {season.name}
         </Link>
-
-        <div style={{ marginBottom: '2rem' }}>
-          <div className={kit.sub} style={{ marginBottom: '0.4rem' }}>{org.name}</div>
-          <h1 className={kit.title}>{SW.title}</h1>
-          <p className={kit.sub}>{season.name}</p>
-        </div>
-
-        <EmailMyLinkForm orgSlug={orgSlug} seasonSlug={seasonSlug} seasonName={season.name} clubName={org.name} variant="page" />
+        <div className={kit.sub} style={{ marginBottom: '0.4rem' }}>{org.name}</div>
+        <h1 className={kit.title}>{SW.title}</h1>
+        <p className={kit.sub}>{season.name}</p>
       </div>
-    </div>
+
+      <EmailMyLinkForm orgSlug={orgSlug} seasonSlug={seasonSlug} seasonName={season.name} clubName={org.name} variant="page" />
+    </PublicPage>
   );
 }

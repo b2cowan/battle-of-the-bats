@@ -154,10 +154,11 @@ export default function YourSignup({
   const payBlockOwns = !!pay && (!!returnedSession || pay.kind === 'owing' || pay.kind === 'refused' || pay.receipts.length > 0 || pay.clearing.length > 0);
   const endedOnly = pay?.kind === 'ended' ? regs.filter(ended) : [];
 
+  // Each part is a section of the page itself (PublicPage frame="club" width="form"), 24 px apart (club round C5).
   return (
     <>
       {regs.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <>
           {sharedRef && <p style={soft}>{SW.reference} <strong style={{ color: 'var(--club-text)' }}>{sharedRef}</strong> {SW.referenceQuote}</p>}
           {regs.map(r => {
             const fee = feeLine(r);
@@ -276,8 +277,8 @@ export default function YourSignup({
             </div>
           )}
 
-          <p style={{ ...soft, borderTop: '1px solid var(--club-line)', paddingTop: '0.75rem', marginTop: '0.5rem' }}>{SW.foot}</p>
-        </div>
+          <p style={{ ...soft, borderTop: '1px solid var(--club-line)', paddingTop: '0.75rem' }}>{SW.foot}</p>
+        </>
       )}
     </>
   );

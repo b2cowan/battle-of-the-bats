@@ -13,7 +13,7 @@ import type { FormDivision } from '@/lib/league-signup';
 import { cutoffFor } from '@/lib/born-years';
 import { seasonDates } from '@/lib/house-league-season';
 import { tournamentToday } from '@/lib/timezone';
-import column from '../../league-column.module.css';
+import PublicPage from '@/components/public/PublicPage';
 import kit from '@/components/public/ClubKit.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -72,60 +72,55 @@ export default async function RegisterPage({
     : 'This season hasn’t opened for registration.';
 
   // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
+  // A club form in the club page column (club round C2): 640 on the logo edge. The back link opens the title block.
   return (
-    <div>
-      {/* R6: the shared 1200px page column; this page's 640px measure left-aligns inside it. */}
-      <div className={`container ${column.column}`} style={{ '--league-measure': '640px' } as React.CSSProperties}>
-        {/* Back link */}
+    <PublicPage frame="club" width="form">
+      <div>
         <Link href={href(`/league/${seasonSlug}`)} className={kit.back}>
           ← Back to {season.name}
         </Link>
-
-        {/* Page header */}
-        <div style={{ marginBottom: '2rem' }}>
-          <div className={kit.sub} style={{ marginBottom: '0.4rem' }}>{org.name}</div>
-          <h1 className={kit.title}>Sign up — {season.name}</h1>
-        </div>
-
-        {/* Closed state */}
-        {!registrationOpen ? (
-          <div className={kit.card} style={{ padding: '3rem 2rem', textAlign: 'center' }}>
-            <h2
-              style={{
-                fontSize: '1rem',
-                fontWeight: 700,
-                color: 'var(--club-text)',
-                margin: '0 0 0.5rem',
-                fontFamily: 'var(--club-text-face)',
-                letterSpacing: 0,
-              }}
-            >
-              {notYet ? 'Registration isn’t open yet' : 'Registration is closed'}
-            </h2>
-            <p style={{ fontSize: '0.875rem', color: 'var(--club-soft)', margin: 0 }}>{closedLine}</p>
-            {!notYet && (
-              <p style={{ fontSize: '0.875rem', color: 'var(--club-soft)', margin: '0.5rem 0 0' }}>
-                Already signed up? <Link href={href(`/league/${seasonSlug}/status`)}>Email me my link</Link>
-              </p>
-            )}
-          </div>
-        ) : (
-          <RegisterForm
-            orgSlug={orgSlug}
-            orgName={org.name}
-            seasonSlug={seasonSlug}
-            seasonName={season.name}
-            seasonDates={seasonDates(season)}
-            waiverText={season.waiverText}
-            askEmailConsent={season.askEmailConsent}
-            divisions={divisions}
-            season={{ registrationFee: season.registrationFee, earlyBirdUntil: season.earlyBirdUntil, autoApproveUnderCapacity: season.autoApproveUnderCapacity }}
-            cutoff={cutoffFor(org.birthdayCutoffs, season.sport)}
-            today={tournamentToday()}
-            contact={{ email: siteContent?.contactEmail ?? null, phone: null }}
-          />
-        )}
+        <div className={kit.sub} style={{ marginBottom: '0.4rem' }}>{org.name}</div>
+        <h1 className={kit.title}>Sign up — {season.name}</h1>
       </div>
-    </div>
+
+      {/* Closed state */}
+      {!registrationOpen ? (
+        <div className={kit.card} style={{ padding: '3rem 2rem', textAlign: 'center' }}>
+          <h2
+            style={{
+              fontSize: '1rem',
+              fontWeight: 700,
+              color: 'var(--club-text)',
+              margin: '0 0 0.5rem',
+              fontFamily: 'var(--club-text-face)',
+              letterSpacing: 0,
+            }}
+          >
+            {notYet ? 'Registration isn’t open yet' : 'Registration is closed'}
+          </h2>
+          <p style={{ fontSize: '0.875rem', color: 'var(--club-soft)', margin: 0 }}>{closedLine}</p>
+          {!notYet && (
+            <p style={{ fontSize: '0.875rem', color: 'var(--club-soft)', margin: '0.5rem 0 0' }}>
+              Already signed up? <Link href={href(`/league/${seasonSlug}/status`)}>Email me my link</Link>
+            </p>
+          )}
+        </div>
+      ) : (
+        <RegisterForm
+          orgSlug={orgSlug}
+          orgName={org.name}
+          seasonSlug={seasonSlug}
+          seasonName={season.name}
+          seasonDates={seasonDates(season)}
+          waiverText={season.waiverText}
+          askEmailConsent={season.askEmailConsent}
+          divisions={divisions}
+          season={{ registrationFee: season.registrationFee, earlyBirdUntil: season.earlyBirdUntil, autoApproveUnderCapacity: season.autoApproveUnderCapacity }}
+          cutoff={cutoffFor(org.birthdayCutoffs, season.sport)}
+          today={tournamentToday()}
+          contact={{ email: siteContent?.contactEmail ?? null, phone: null }}
+        />
+      )}
+    </PublicPage>
   );
 }

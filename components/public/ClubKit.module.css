@@ -278,7 +278,11 @@ a.row:focus-visible {
   font: 700 1rem/1.25 var(--club-text-face);
   color: var(--club-text);
 }
+/* Prose in a box holds to 720 px of words inside the 960 column (standard R1, club round C2): the card keeps the column's
+   width, the paragraph wraps at 720 plus its own 16 px sides. Every importer is a club public page. */
 .cardText {
+  max-width: calc(720px + 2 * 16px);
+  box-sizing: border-box;
   margin: 0;
   padding: 4px 16px 14px;
   font: 400 1rem/1.5 var(--club-text-face);

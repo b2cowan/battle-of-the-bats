@@ -9,7 +9,7 @@ import {
   clubHomeTournaments,
   orderOpenNow,
 } from '../../lib/club-site-home.ts';
-import { teamPageParts, teamMetaLine, splitPublicSchedule } from '../../lib/club-team-page.ts';
+import { teamPageParts, teamMetaLine, splitPublicSchedule, teamScheduleShows } from '../../lib/club-team-page.ts';
 import { orgSectionsFor } from '../../lib/org-public-sections.ts';
 import { clubHomeSectionsFor } from '../../lib/club-site-sections.ts';
 
@@ -211,6 +211,17 @@ describe('the team page recipe (End state 3): a part with nothing to show is abs
   });
   it('no about text: no About card', () => {
     assert.deepEqual(teamPageParts({ archived: false, tryoutOpen: true, schedule: false, about: false }), ['tryoutDoor']);
+  });
+  it('a public schedule with no games yet is no schedule part — so a desk never keeps an empty main column', () => {
+    // Club layout census 2026-11-05: the page asked "is there a view?" while the section drew nothing for an empty one.
+    assert.equal(teamScheduleShows(null), false, 'the coach has not chosen Public link');
+    assert.equal(teamScheduleShows(undefined), false);
+    assert.equal(teamScheduleShows({ entries: [] }), false, 'public, but no games or practices yet');
+    assert.equal(teamScheduleShows({ entries: [{}] }), true);
+    assert.deepEqual(
+      teamPageParts({ archived: false, tryoutOpen: false, schedule: teamScheduleShows({ entries: [] }), about: true, coaches: true }),
+      ['tryoutQuiet', 'coaches', 'about'],
+    );
   });
   it('an archived team: concluded, no tryout part at all', () => {
     assert.deepEqual(teamPageParts({ archived: true, tryoutOpen: false, schedule: false, about: true }), ['concluded', 'about']);
